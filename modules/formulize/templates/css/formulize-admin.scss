@@ -254,6 +254,10 @@ div.accordion-box .no-bullets {
 
 /* table overrides */
 
+th a {
+    display: block;
+}
+
 .ui-tabs-panel .content table {
     width: 80%;
     border: 1px solid #0085b6;

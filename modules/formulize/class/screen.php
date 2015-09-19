@@ -149,7 +149,7 @@ class formulizeScreenHandler {
 	}
 
     // returns an array of screen objects
-    function &getObjects($criteria = null, $fid) {
+    function &getObjects($criteria = null, $fid, $sort = null, $order = null) {
         $sql = "SELECT * FROM " . $this->db->prefix("formulize_screen");
         if(is_object($criteria)) {
             $sql .= " WHERE " . $criteria->render();
@@ -161,7 +161,13 @@ class formulizeScreenHandler {
                 $sql .= " WHERE fid=" . intval($fid);
             }
         }
-        $sql .= " order by fid, title";
+        if($sort == null) {
+        	$sort = "fid, title";
+        }
+        if($order == null) {
+        	$order = "ASC";
+        }
+        $sql .= " order by " . $sort . " " . $order;
         $screens = array();
         if($result = $this->db->query($sql)) {
         while($array = $this->db->fetchArray($result)) {

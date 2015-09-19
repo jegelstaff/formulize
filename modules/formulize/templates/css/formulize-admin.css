@@ -356,7 +356,6 @@ h6 {
   margin-bottom: -19px; }
 
 #xo-canvas-content {
-  min-width: 782px;
   margin-left: 30px;
   margin-right: 30px; }
 
@@ -1348,6 +1347,9 @@ div.accordion-box .no-bullets {
   list-style-type: none; }
 
 /* table overrides */
+th a {
+  display: block; }
+
 .ui-tabs-panel .content table {
   width: 80%;
   border: 1px solid #0085b6;
@@ -1553,7 +1555,7 @@ div.description {
 
 .homepage-description {
   margin-bottom: 1em;
-  margin-top: 5px; }
+  margin-top: -20px; }
 
 form textarea {
   width: 80%; }
@@ -1656,5 +1658,3 @@ form .groupselectionbox {
   height: 13em;
   overflow: auto;
   border: 1px solid blue; }
-
-/*# sourceMappingURL=formulize-admin.css.map */

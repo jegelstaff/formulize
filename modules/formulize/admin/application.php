@@ -154,7 +154,9 @@ $relationships = $framework_handler->formatFrameworksAsRelationships($allRelatio
 
 $all_screens = array();
 $screen_types = array("form" => "Single Page", "multiPage" => "Multi-page", "listOfEntries" => "List of Entries");
-foreach ($screen_handler->getObjects(null, null) as $key => $value) {
+$screen_sort = $_GET['sort'];
+$screen_sort_order = $_GET['order'];
+foreach ($screen_handler->getObjects(null, null, $screen_sort, $screen_sort_order) as $key => $value) {
     $sid = $value->getVar("sid");
     $all_screens[$sid] = array(
         'sid'       => $sid,
@@ -163,6 +165,13 @@ foreach ($screen_handler->getObjects(null, null) as $key => $value) {
         'formname'  => $allForms[$value->getVar("fid")]["name"],
         'type'      => $screen_types[$value->getVar("type")],
     );
+}
+
+$common['screenSort'] = $screen_sort;
+if ($screen_sort_order == "DESC") {
+	$common['nextOrder'] = "ASC";
+} else {
+	$common['nextOrder'] = "DESC";
 }
 
 $common['aid'] = $aid;
