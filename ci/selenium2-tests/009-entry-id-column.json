@@ -52,6 +52,13 @@
       "type": "clickElement",
       "locator": {
         "type": "xpath",
+        "value": "//table[@class='outer']/tbody/tr[2]/td[2]//*[@id='popnewcols1']"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "xpath",
         "value": "//table[@class='outer']/tbody/tr[2]/td[2]//*[@id='popnewcols2']"
       }
     },
@@ -59,14 +66,7 @@
       "type": "clickElement",
       "locator": {
         "type": "xpath",
-        "value": "//table[@class='outer']/tbody/tr[2]/td[2]//*[@id='popnewcols8']"
-      }
-    },
-    {
-      "type": "clickElement",
-      "locator": {
-        "type": "xpath",
-        "value": "//table[@class='outer']/tbody/tr[2]/td[2]//*[@id='popnewcols9']"
+        "value": "//table[@class='outer']/tbody/tr[2]/td[2]//*[@id='popnewcols3']"
       }
     },
     {
