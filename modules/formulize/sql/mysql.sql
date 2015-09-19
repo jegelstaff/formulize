@@ -291,7 +291,7 @@ CREATE TABLE formulize_id (
   store_revisions tinyint(1) NOT NULL default '0',
   on_before_save text,
   on_after_save text,
-  custom_edit_code text,
+  custom_edit_check text,
   note text,
   PRIMARY KEY  (`id_form`)
 ) ENGINE=MyISAM;
