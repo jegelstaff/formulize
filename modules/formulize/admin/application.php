@@ -181,6 +181,7 @@ $screen_page = $screen_page < 1 ? 1 : $screen_page;
 $common['prevPage'] = $screen_page - 1;
 $common['nextPage'] = $screen_page + 1;
 $max = count($screen_handler->getObjects(null, null));
+$common['pageNums'] = range(1, $max);
 $common['hasPrevPage'] = $screen_page > 1;
 $common['hasNextPage'] = $screen_page * $screen_limit < $max;
 
