@@ -86,7 +86,7 @@
     },
     {
       "type": "pause",
-      "waitTime": "1000"
+      "waitTime": "5000"
     },
     {
       "type": "clickElement",
@@ -298,20 +298,34 @@
       "text": "PersonB"
     },
     {
+      "type": "setElementSelected",
+      "locator": {
+        "type": "id",
+        "value": "item_4_desubform0x18_5_new_25[]"
+      }
+    },
+    {
       "type": "setElementText",
       "locator": {
         "type": "id",
-        "value": "other[ele_21_new]"
+        "value": "other[ele_25_new]"
       },
-      "text": "A"
+      "text": "PersonARuleA"
+    },
+    {
+      "type": "setElementSelected",
+      "locator": {
+        "type": "id",
+        "value": "item_4_desubform1x18_5_new_25[]"
+      }
     },
     {
       "type": "setElementText",
       "locator": {
         "type": "xpath",
-        "value": "//label[@for='item_4_desubform1x18_5_new_21[]']/input"
+        "value": "//label[@for='item_4_desubform1x18_5_new_25[]']/input"
       },
-      "text": "B"
+      "text": "PersonBRuleB"
     },
     {
       "type": "clickElement",
@@ -322,7 +336,7 @@
     },
     {
       "type": "pause",
-      "waitTime": "543"
+      "waitTime": "1000"
     },
     {
       "type": "verifyTextPresent",
