@@ -158,7 +158,7 @@ $screen_sort = $_GET['sort'];
 $screen_sort_order = $_GET['order'];
 $screen_page = intval($_GET['nav']);
 $screen_limit = 20;
-foreach ($screen_handler->getObjects(null, null, $screen_sort, $screen_sort_order, true, $screen_page, $screen_limit) as $key => $value) {
+foreach ($screen_handler->getObjects(null, null, $aid, $screen_sort, $screen_sort_order, true, $screen_page, $screen_limit) as $key => $value) {
     $sid = $value->getVar("sid");
     $all_screens[$sid] = array(
         'sid'       => $sid,
@@ -181,7 +181,7 @@ $screen_page = $screen_page < 1 ? 1 : $screen_page;
 $common['prevPage'] = $screen_page - 1;
 $common['nextPage'] = $screen_page + 1;
 $max = count($screen_handler->getObjects(null, null));
-$common['pageNums'] = range(1, $max);
+$common['pageNums'] = range(1, $max / $screen_limit);
 $common['hasPrevPage'] = $screen_page > 1;
 $common['hasNextPage'] = $screen_page * $screen_limit < $max;
 
