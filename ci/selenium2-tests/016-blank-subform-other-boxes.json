@@ -286,12 +286,20 @@
       "text": "Fix subform blanks"
     },
     {
+      "type": "pause",
+      "waitTime": "1000"
+    },
+    {
       "type": "setElementText",
       "locator": {
         "type": "id",
         "value": "desubform0x18_5_new_17_user"
       },
       "text": "PersonA"
+    },
+    {
+      "type": "pause",
+      "waitTime": "1000"
     },
     {
       "type": "setElementText",
@@ -302,17 +310,21 @@
       "text": "PersonB"
     },
     {
+      "type": "pause",
+      "waitTime": "3000"
+    },
+    {
       "type": "setElementSelected",
       "locator": {
         "type": "id",
-        "value": "item_4_desubform0x18_5_new_25[]"
+        "value": "item_4_desubform0x18_5_new_20[]"
       }
     },
     {
       "type": "setElementText",
       "locator": {
         "type": "id",
-        "value": "other[ele_25_new]"
+        "value": "other[ele_20_new_0]"
       },
       "text": "PersonARuleA"
     },
@@ -320,14 +332,14 @@
       "type": "setElementSelected",
       "locator": {
         "type": "id",
-        "value": "item_4_desubform1x18_5_new_25[]"
+        "value": "item_4_desubform1x18_5_new_20[]"
       }
     },
     {
       "type": "setElementText",
       "locator": {
-        "type": "xpath",
-        "value": "//label[@for='item_4_desubform1x18_5_new_25[]']/input"
+        "type": "id",
+        "value": "other[ele_20_new_1]"
       },
       "text": "PersonBRuleB"
     },
@@ -335,7 +347,14 @@
       "type": "clickElement",
       "locator": {
         "type": "id",
-        "value": "submitx"
+        "value": "submit_save_and_leave"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "xpath",
+        "value": "//table[@class='outer']/tbody/tr[4]/td[1]/a"
       }
     },
     {
@@ -343,12 +362,34 @@
       "waitTime": "1000"
     },
     {
-      "type": "verifyTextPresent",
-      "text": "PersonARuleA"
+      "type": "verifyElementValue",
+      "locator": {
+        "type": "name",
+        "value": "other[ele_20_6]"
+      },
+      "value": "PersonARuleA"
     },
     {
-      "type": "verifyTextPresent",
-      "text": "PersonBRuleB"
+      "type": "verifyElementValue",
+      "locator": {
+        "type": "name",
+        "value": "other[ele_20_7]"
+      },
+      "value": "PersonBRuleB"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "submit_save_and_leave"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Logout"
+      }
     }
   ],
   "data": {
