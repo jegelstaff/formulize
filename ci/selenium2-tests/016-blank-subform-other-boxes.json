@@ -287,6 +287,7 @@
     },
     {
       "type": "pause",
+      "step_name": "44.",
       "waitTime": "1000"
     },
     {
@@ -302,6 +303,13 @@
       "waitTime": "1000"
     },
     {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "xo-canvas"
+      }
+    },
+    {
       "type": "setElementText",
       "locator": {
         "type": "id",
@@ -311,7 +319,14 @@
     },
     {
       "type": "pause",
-      "waitTime": "3000"
+      "waitTime": "1000"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "xo-canvas"
+      }
     },
     {
       "type": "setElementSelected",
@@ -365,7 +380,7 @@
       "type": "verifyElementValue",
       "locator": {
         "type": "name",
-        "value": "other[ele_20_0]"
+        "value": "other[ele_20_new_0]"
       },
       "value": "PersonARuleA"
     },
@@ -373,7 +388,7 @@
       "type": "verifyElementValue",
       "locator": {
         "type": "name",
-        "value": "other[ele_20_1]"
+        "value": "other[ele_20_new_1]"
       },
       "value": "PersonBRuleB"
     },
