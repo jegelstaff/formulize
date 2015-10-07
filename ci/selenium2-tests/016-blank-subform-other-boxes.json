@@ -365,7 +365,7 @@
       "type": "verifyElementValue",
       "locator": {
         "type": "name",
-        "value": "other[ele_20_6]"
+        "value": "other[ele_20_0]"
       },
       "value": "PersonARuleA"
     },
@@ -373,7 +373,7 @@
       "type": "verifyElementValue",
       "locator": {
         "type": "name",
-        "value": "other[ele_20_7]"
+        "value": "other[ele_20_1]"
       },
       "value": "PersonBRuleB"
     },
