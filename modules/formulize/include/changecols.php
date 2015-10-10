@@ -117,6 +117,7 @@ $options['entry_id'] = _formulize_ENTRY_ID;
 $options['creation_uid'] = _formulize_DE_CALC_CREATOR;
 $options['mod_uid'] = _formulize_DE_CALC_MODIFIER;
 $options['creation_datetime'] = _formulize_DE_CALC_CREATEDATE;
+$options['mod_datetime'] = _formulize_DE_CALC_MODDATE;
 $options['creator_email'] = _formulize_DE_CALC_CREATOR_EMAIL;
 
 $usedvals = array();
