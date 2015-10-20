@@ -158,6 +158,8 @@ class formulizeScreenHandler {
             }
             if ($appid > 0) {
             	$sql .= " AND EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.appid=" . $appid . " AND linktable.fid=screentable.fid)";
+            } else if ($appid === 0) {
+            	$sql .= " AND NOT EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.appid>" . $appid . " AND linktable.fid=screentable.fid)";
             }
         } else {
             if (intval($fid) > 0) {
@@ -165,9 +167,13 @@ class formulizeScreenHandler {
                 
                 if ($appid > 0) {
                 	$sql .= " AND EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.appid=" . $appid . " AND linktable.fid=screentable.fid)";
-                }
+                } else if ($appid === 0) {
+            		$sql .= " AND NOT EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.appid>" . $appid . " AND linktable.fid=screentable.fid)";
+            	}
             } else if ($appid > 0) {
             	$sql .= " WHERE EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.appid=" . $appid . " AND linktable.fid=screentable.fid)";
+            } else if ($appid === 0) {
+            	$sql .= " WHERE NOT EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.appid>" . $appid . " AND linktable.fid=screentable.fid)";
             }
         }
         if($sort == null) {

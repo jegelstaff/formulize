@@ -178,12 +178,50 @@ if ($screen_sort_order == "DESC") {
 }
 
 $screen_page = $screen_page < 1 ? 1 : $screen_page;
-$common['prevPage'] = $screen_page - 1;
-$common['nextPage'] = $screen_page + 1;
-$max = count($screen_handler->getObjects(null, null));
-$common['pageNums'] = range(1, $max / $screen_limit);
-$common['hasPrevPage'] = $screen_page > 1;
-$common['hasNextPage'] = $screen_page * $screen_limit < $max;
+$resultNum = count($screen_handler->getObjects(null, null, $aid, $screen_sort, $screen_sort_order));
+$pageNumbers = ceil($resultNum / $screen_limit);
+
+$pageNav = "";
+
+if($pageNumbers > 1) {
+	if($pageNumbers > 9) {
+		if($screen_page < 6) {
+			$firstDisplayPage = 1;
+			$lastDisplayPage = 9;
+		} elseif($screen_page + 4 > $pageNumbers) { // too close to the end
+			$firstDisplayPage = $screen_page - 4 - ($screen_page+4-$pageNumbers); // the previous four, plus the difference by which we're over the end when we add 4
+			$lastDisplayPage = $pageNumbers;
+		} else { // somewhere in the middle
+			$firstDisplayPage = $screen_page - 4;
+			$lastDisplayPage = $screen_page + 4;
+		}
+	} else {
+		$firstDisplayPage = 1;
+		$lastDisplayPage = $pageNumbers;
+	}
+
+	$pageNav .= "<p><div class=\"formulize-page-navigation\"><span class=\"page-navigation-label\">". _AM_FORMULIZE_LOE_ONPAGE."</span>";
+	if ($screen_page > 1) {
+		$pageNav .= "<a href=\"?page=application&aid=". $aid ."&tab=screens&sort=". $screen_sort ."&order=". $screen_sort_order ."&nav=". ($screen_page - 1) ."\" class=\"page-navigation-prev\" >"._AM_FORMULIZE_LOE_PREVIOUS."</a>";
+	}
+	if($firstDisplayPage > 1) {
+		$pageNav .= "<a href=\"?page=application&aid=". $aid ."&tab=screens&sort=". $screen_sort ."&order=". $screen_sort_order ."&nav=1\">1</a><span class=\"page-navigation-skip\">—</span>";
+	}
+	for($i = $firstDisplayPage; $i <= $lastDisplayPage; $i++) {
+		$pageNav .= "<a href=\"?page=application&aid=". $aid ."&tab=screens&sort=". $screen_sort ."&order=". $screen_sort_order ."&nav=". $i ."\" class=\"page-navigation-active\">$i</a>";
+	}
+	if($lastDisplayPage < $pageNumbers) {
+		$lastPageStart = ($pageNumbers * $numberPerPage) - $numberPerPage;
+		$pageNav .= "<span class=\"page-navigation-skip\">—</span><a href=\"?page=application&aid=". $aid ."&tab=screens&sort=". $screen_sort ."&order=". $screen_sort_order ."&nav=". $pageNumbers ."\">" . $pageNumbers . "</a>";
+	}
+	if ($screen_page < $pageNumbers) {
+		$pageNav .= "<a href=\"?page=application&aid=". $aid ."&tab=screens&sort=". $screen_sort ."&order=". $screen_sort_order ."&nav=". ($screen_page + 1) ."\" class=\"page-navigation-next\">"._AM_FORMULIZE_LOE_NEXT."</a>";
+	}
+	$pageNav .= "</div><span class=\"page-navigation-total\">".
+			sprintf(_AM_FORMULIZE_LOE_TOTAL, $resultNum)."</span></p>\n";
+}
+
+$common['pageNav'] = $pageNav;
 
 $common['aid'] = $aid;
 $common['name'] = $appName;

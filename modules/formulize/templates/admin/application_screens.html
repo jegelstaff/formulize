@@ -20,20 +20,6 @@
 </div>
 <div class="form-item paging">
 	<div class="floatright page-list">
-	<{if $content.hasPrevPage || $content.hasNextPage}>
-		<p>
-		<{foreach from=$content.pageNums item=page}>
-			<a href="?page=application&aid=<{$content.aid}>&tab=screens&sort=<{$content.screenSort}>&order=<{$content.order}>&nav=<{$page}>"><{$page}></a>
-		<{/foreach}>
-		</p>
-	<{/if}>
-	</div>
-	<div class="floatright">
-	<{if $content.hasPrevPage}>
-		<input type=button name=prev id=prev class='formulize_button' value='Previous Page' onclick="window.location.href='?page=application&aid=<{$content.aid}>&tab=screens&sort=<{$content.screenSort}>&order=<{$content.order}>&nav=<{$content.prevPage}>'"/>
-	<{/if}>
-	<{if $content.hasNextPage}>
-		<input type=button name=next id=next class='formulize_button' value='Next Page' onclick="window.location.href='?page=application&aid=<{$content.aid}>&tab=screens&sort=<{$content.screenSort}>&order=<{$content.order}>&nav=<{$content.nextPage}>'"/>
-	<{/if}>
+	   <{$content.pageNav}>
 	</div>
 </div>
