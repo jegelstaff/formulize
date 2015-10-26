@@ -99,7 +99,7 @@ define("_AM_SETTINGS_FORM_ENTRIES_ALLOWED","How many entries are allowed in this
 define("_AM_SETTINGS_FORM_ENTRIES_ONEPERGROUP","One entry per <b>group</b>");
 define("_AM_SETTINGS_FORM_ENTRIES_ONEPERUSER","One entry per <b>user</b>");
 define("_AM_SETTINGS_FORM_ENTRIES_MORETHANONE","<b>More than one entry</b> per user");
-define("_AM_SETTINGS_FORM_SHOWING_LIST","When showing a list of entries in this form, which elements should be displayed by default?");
+define("_AM_SETTINGS_FORM_SHOWING_LIST","When showing a list of entries in this form, which elements should be available by default?");
 define("_AM_SETTINGS_FORM_APP_PART","Which applications is this form part of?");
 define("_AM_SETTINGS_FORM_APPNEW","Create a new application for this form to be part of?");
 define("_AM_SETTINGS_FORM_DEFAULT_GROUP_PERM","Which groups of users should have permission to alter this form's settings?");

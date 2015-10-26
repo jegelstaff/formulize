@@ -112,8 +112,8 @@ function patch40() {
      *
      * ====================================== */
 
-    $checkThisTable = 'formulize_id';
-    $checkThisField = 'on_after_save';
+    $checkThisTable = 'formulize_screen_template';
+    $checkThisField = false; // no particular field to check.
     $checkThisProperty = false;
     $checkPropertyForValue = false;
 

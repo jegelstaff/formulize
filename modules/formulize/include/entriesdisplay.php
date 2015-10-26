@@ -1135,7 +1135,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	if($useDefaultInterface) {
 
 		// if search is not used, generate the search boxes 
-		if(!$useSearch OR ($calc_cols AND !$hcalc)) {
+		if(!$useSearch AND $hcalc) {
 			print "<div style=\"display: none;\"><table>"; // enclose in a table, since drawSearches puts in <tr><td> tags
 			drawSearches($searches, $settings['columns'], $useCheckboxes, $useViewEntryLinks, 0, false, $hiddenQuickSearches);
 			print "</table></div>";
@@ -1475,6 +1475,16 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 		$calc_blanks = $settings['calc_blanks'];
 		$calc_grouping = $settings['calc_grouping'];
 
+        print "<table class=outer>";
+        if($useHeadings) {
+            $headers = getHeaders($cols, true); // second param indicates we're using element headers and not ids
+            drawHeaders($headers, $cols, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), $settings['lockedColumns']); 
+        }
+		if($useSearch) {
+			drawSearches($searches, $cols, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), false, $hiddenQuickSearches);
+		}
+        print "</table>";
+        
         print "<table class=outer><tr><th colspan=2>" . _formulize_DE_CALCHEAD . "</th></tr>\n";
         if(!$settings['lockcontrols'] AND ($useSearchCalcMsgs == 1 OR $useSearchCalcMsgs == 3)) { // AND !$loadview) { // -- loadview removed from this function sept 24 2005
             print "<tr><td class=head colspan=2><input type=button style=\"width: 140px;\" name=mod_calculations value='" .
@@ -2085,43 +2095,6 @@ function clickableSortLink($handle, $contents) {
 	return $output;
 }
 
-
-// this function returns the ele_ids of form elements to show, or the handles of the form elements to show for a framework
-function getDefaultCols($fid, $frid="") {
-	global $xoopsDB, $xoopsUser;
-
-	if($frid) { // expand the headerlist to include the other forms
-		$fids[0] = $fid;
-		$check_results = checkForLinks($frid, $fids, $fid, "", "", "", "", "", "", "0");
-		$fids = $check_results['fids'];
-		$sub_fids = $check_results['sub_fids'];
-		$gperm_handler = &xoops_gethandler('groupperm');
-		$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
-		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
-		$mid = getFormulizeModId();
-		$ele_handles = array();
-		$processedFids = array();
-		foreach($fids as $this_fid) {
-			if(security_check($this_fid, "", $uid, "", $groups, $mid, $gperm_handler) AND !isset($processedFids[$this_fid])) {
-				$ele_handles = array_merge($ele_handles, getHeaderList($this_fid, true, true));
-				$processedFids[$this_fid] = true;
-			}
-		}
-		foreach($sub_fids as $this_fid) {
-			if(security_check($this_fid, "", $uid, "", $groups, $mid, $gperm_handler) AND !isset($processedFids[$this_fid])) {
-				$ele_handles = array_merge($ele_handles, getHeaderList($this_fid, true, true));
-				$processedFids[$this_fid] = true;
-			}
-		}
-
-		return $ele_handles;
-		
-	} else {
-		$ele_handles = getHeaderList($fid, true, true); // third param causes element handles to be returned instead of IDs
-		return $ele_handles;
-	}
-
-} 
 
 // THIS FUNCTION RETURNS THE ELEMENT HANDLE AND FORM ALIAS IN THE CURRENT GETDATA QUERY, WHEN GIVEN THE ELEMENT ID NUMBER
 function getCalcHandleAndFidAlias($id, $fid) {

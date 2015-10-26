@@ -45,7 +45,7 @@
     },
     {
       "type": "get",
-      "url": "http://${test_domain}/modules/formulize/application.php?id=all"
+      "url": "http://${test_domain}/"
     },
     {
       "type": "setElementText",
