@@ -68,33 +68,60 @@
     
   </fieldset>
   <fieldset>
-    <legend><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_VIEW_DATA_TO_DISPLAY_HEADER}></legend>
-    
-      <div class="form-item float-left half-width">
-	<label for="screens-defaultview"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEW}></label>
-	      <select id="screens-defaultview" name="screens-defaultview" size="1">
-	  <{html_options options=$content.defaultviewoptions selected=$content.defaultview}>
-	      </select>
-	<div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_DEFAULTVIEW}></div>
-      </div>
-      
-      <div class="save-view-access">
-      <p><a href="<{$xoops_url}>/modules/formulize/master.php?fid=<{$content.fid}>&frid=<{$content.frid}>" target="_blank"><img src="../images/kedit.png"> <{$smarty.const._AM_FORMULIZE_SCREEN_LOE_EDIT_VIEW}></a></p>
-      <p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_EDIT_VIEW_DETAILS}></p>
-      </div>
-      
-      <div class="form-item clear-both">
-	<label for="screens-usecurrentviewlist"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CURRENTVIEWLIST}></label>
-	<input type="text" id="screens-usecurrentviewlist" name="screens-usecurrentviewlist" value="<{$content.usecurrentviewlist}>" size="20" maxlength="255"/>
-	<div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_LEAVEBLANK_LIST}></div>
-      </div>
-      <div class="form-item">
-	<label for="screens-limitviews"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_LIMITVIEWS}></label>
-	      <select id="screens-limitviews[]" name="screens-limitviews[]" size="8" multiple>
-	  <{html_options options=$content.limitviewoptions selected=$content.limitviews}>
-	      </select>
-	<div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_LIMITVIEWS}></div>
-      </div>
+    <legend><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_VIEW_DATA_TO_DISPLAY_HEADER}></legend>	
+	<div class="form-item float-left half-width">
+	  
+	  <label for="screens-defaultview"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEW}></label>
+
+	  <p><input type="button" name="add_view" class="formButton" value="<{$smarty.const._AM_ELE_ADD_OPT_SUBMIT}> Default View"</p><br /><br />
+
+	  <div class="view-list">
+		<{foreach from=$content.defaultview key=groupid item=viewid}>
+		  <select id="view_group" name="defaultview_group[]">
+			<{html_options options=$content.grouplist selected=$groupid}>
+		  </select>
+		  <select id="view_view" name="defaultview_view[]">
+			<{html_options options=$content.defaultviewoptions selected=$viewid}>
+		  </select>
+		<{/foreach}>
+	  </div>
+
+	  <script>
+		$("[name=add_view]").click(function(){
+		  group = $("#view_group:last");
+		  view = $("#view_view:last");
+
+		  appendContentsGroup ='<select id="view_group" name="defaultview_group[]">' + group.html() + '</select>';
+		  appendContentsView = '<select id="view_view" name="defaultview_view[]">' + view.html() +'</select>';
+
+		  $('div.view-list').append('<br /><br />');
+		  $('div.view-list').append(appendContentsGroup);
+		  $('div.view-list').append('&nbsp;');
+		  $('div.view-list').append(appendContentsView);
+		  $("[name=add_view]").blur();
+		  setDisplay('savewarning','block');
+		});
+	  </script>
+
+	  <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_DEFAULTVIEW}></div>
+	</div>     
+	<div class="save-view-access">
+	<p><a href="<{$xoops_url}>/modules/formulize/master.php?fid=<{$content.fid}>&frid=<{$content.frid}>" target="_blank"><img src="../images/kedit.png"> <{$smarty.const._AM_FORMULIZE_SCREEN_LOE_EDIT_VIEW}></a></p>
+	<p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_EDIT_VIEW_DETAILS}></p>
+	</div>
+	
+	<div class="form-item clear-both">
+	  <label for="screens-usecurrentviewlist"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CURRENTVIEWLIST}></label>
+	  <input type="text" id="screens-usecurrentviewlist" name="screens-usecurrentviewlist" value="<{$content.usecurrentviewlist}>" size="20" maxlength="255"/>
+	  <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_LEAVEBLANK_LIST}></div>
+	</div>
+	<div class="form-item">
+	  <label for="screens-limitviews"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_LIMITVIEWS}></label>
+	  <select id="screens-limitviews[]" name="screens-limitviews[]" size="8" multiple>
+		<{html_options options=$content.limitviewoptions selected=$content.limitviews}>
+	  </select>
+	  <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_LIMITVIEWS}></div>
+	</div>
     
     
     
