@@ -129,7 +129,7 @@
     },
     {
       "type": "pause",
-      "waitTime": "2000"
+      "waitTime": "5000"
     },
     {
       "type": "clickElement",
@@ -137,6 +137,10 @@
         "type": "id",
         "value": "formulize-logo"
       }
+    },
+    {
+      "type": "pause",
+      "waitTime": "5000"
     },
     {
       "type": "clickElement",
