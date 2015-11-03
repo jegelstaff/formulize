@@ -145,8 +145,8 @@
     {
       "type": "clickElement",
       "locator": {
-        "type": "xpath",
-        "value": "//div[@class='CodeMirror-lines']//pre[.=' ']"
+        "type": "id",
+        "value": "elements-ele_value"
       }
     },
     {
