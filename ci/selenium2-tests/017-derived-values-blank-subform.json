@@ -152,8 +152,8 @@
     {
       "type": "setElementText",
       "locator": {
-        "type": "css selector",
-        "value": "div > textarea"
+        "type": "id",
+        "value": "elements-ele_value"
       },
       "text": "${php_derived_value}"
     },
