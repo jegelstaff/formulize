@@ -124,7 +124,7 @@
       "type": "setElementText",
       "locator": {
         "type": "id",
-        "value": "element-subformblanks"
+        "value": "number_of_subform_blanks"
       },
       "text": "2"
     },
