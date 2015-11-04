@@ -94,7 +94,7 @@ CREATE TABLE `formulize_screen_listofentries` (
   `useaddproxy` varchar(255) NOT NULL default '',
   `usecurrentviewlist` varchar(255) NOT NULL default '',
   `limitviews` text NOT NULL, 
-  `defaultview` varchar(20) NOT NULL default '',
+  `defaultview` text NOT NULL,
   `advanceview` text NOT NULL, 
   `usechangecols` varchar(255) NOT NULL default '',
   `usecalcs` varchar(255) NOT NULL default '',
