@@ -246,8 +246,7 @@ li {
 #xo-canvas {
     float: right;
     width: 100%;
-    min-height: 100%;
-    margin-bottom: -19px;   // for the sticky page footer
+    min-height: calc(100% - 19px);   // for the sticky page footer
 }
 
 #xo-canvas-content {
@@ -935,4 +934,20 @@ table.outer {
 }
 #session-timeout-warning p {
     margin: 1em;
+}
+
+#formulize-masquerade-block {
+    margin-right: 1em;
+    color: $colorHeaderBackground;
+    display: inline-block;
+    float: right;
+    form {
+        display: inline;
+    }
+    input[type=submit] {
+        padding: 0px 6px;
+    }
+    input[type=submit]:hover {
+        transform: none;
+    }
 }

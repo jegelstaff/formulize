@@ -1143,7 +1143,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	if($useDefaultInterface) {
 
 		// if search is not used, generate the search boxes 
-		if(!$useSearch OR ($calc_cols AND !$hcalc)) {
+		if(!$useSearch AND $hcalc) {
 			print "<div style=\"display: none;\"><table>"; // enclose in a table, since drawSearches puts in <tr><td> tags
 			drawSearches($searches, $settings['columns'], $useCheckboxes, $useViewEntryLinks, 0, false, $hiddenQuickSearches);
 			print "</table></div>";
@@ -1375,12 +1375,11 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$returnArray = array();
 	$returnArray[0] = $buttonCodeArray; // send this back so it's available in the bottom template if necessary.  MUST USE NUMERICAL KEYS FOR list TO WORK ON RECEIVING END.
 	return $returnArray;
-
 }
+
 
 // THIS FUNCTION DRAWS IN THE RESULTS OF THE QUERY
 function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone="", $currentURL, $gperm_handler, $uid, $mid, $groups, $settings, $member_handler, $screen, $data, $wq, $regeneratePageNumbers, $hiddenQuickSearches, $cResults) { // , $loadview="") { // -- loadview removed from this function sept 24 2005
-
 	// determine if the query reached a limit in the number of entries to return
 	$LOE_limit = 0;
 	if(!is_array($data)) {
@@ -1389,7 +1388,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 	}
 
 	global $xoopsDB;
-	
+
 	$useScrollBox = true;
 	$useHeadings = true;
 	$repeatHeaders = 5;
@@ -1484,10 +1483,29 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 		$calc_blanks = $settings['calc_blanks'];
 		$calc_grouping = $settings['calc_grouping'];
 
- 		print "<table class=outer><tr><th colspan=2>" . _formulize_DE_CALCHEAD . "</th></tr>\n";
- 		if(!$settings['lockcontrols'] AND ($useSearchCalcMsgs == 1 OR $useSearchCalcMsgs == 3)) { // AND !$loadview) { // -- loadview removed from this function sept 24 2005
- 			print "<tr><td class=head colspan=2><input type=button style=\"width: 140px;\" name=mod_calculations value='" . _formulize_DE_MODCALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL ."/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=".urlencode($calc_cols)."&calc_calcs=".urlencode($calc_calcs)."&calc_blanks=".urlencode($calc_blanks)."&calc_grouping=".urlencode($calc_grouping)."');\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=cancelcalcs value='" . _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input>&nbsp;&nbsp<input type=button style=\"width: 140px;\" name=showlist value='" . _formulize_DE_SHOWLIST . "' onclick=\"javascript:showList();\"></input></td></tr>";
- 		}
+        print "<table class=outer>";
+        if($useHeadings) {
+            $headers = getHeaders($cols, true); // second param indicates we're using element headers and not ids
+            drawHeaders($headers, $cols, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), $settings['lockedColumns']); 
+        }
+		if($useSearch) {
+			drawSearches($searches, $cols, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), false, $hiddenQuickSearches);
+		}
+        print "</table>";
+        
+        print "<table class=outer><tr><th colspan=2>" . _formulize_DE_CALCHEAD . "</th></tr>\n";
+        if(!$settings['lockcontrols'] AND ($useSearchCalcMsgs == 1 OR $useSearchCalcMsgs == 3)) { // AND !$loadview) { // -- loadview removed from this function sept 24 2005
+            print "<tr><td class=head colspan=2><input type=button style=\"width: 140px;\" name=mod_calculations value='" .
+                _formulize_DE_MODCALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL .
+                "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=".
+                urlencode($calc_cols)."&calc_calcs=".urlencode($calc_calcs)."&calc_blanks=".
+                urlencode($calc_blanks)."&calc_grouping=".urlencode($calc_grouping)."&cols=".
+                urlencode(implode(",",$cols))."');\"></input>&nbsp;&nbsp;".
+                "<input type=button style=\"width: 140px;\" name=cancelcalcs value='" .
+                _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input>&nbsp;&nbsp".
+                "<input type=button style=\"width: 140px;\" name=showlist value='" . _formulize_DE_SHOWLIST .
+                "' onclick=\"javascript:showList();\"></input></td></tr>";
+        }
 
         $exportFilename = $settings['xport'] == "calcs" ? $filename : "";
         //formulize_benchmark("before printing results");
@@ -1510,15 +1528,21 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 		$count_colspan_calcs = $count_colspan_calcs + count($inlineButtons); // add to the column count for each inline custom button
 		$count_colspan_calcs++; // add one more for the hidden floating column
 		if(!$screen) { print "<tr><th colspan=$count_colspan_calcs>" . _formulize_DE_DATAHEADING . "</th></tr>\n"; }
-	
+
 		if($settings['calc_cols'] AND !$settings['lockcontrols'] AND ($useSearchCalcMsgs == 1 OR $useSearchCalcMsgs == 3)) { // AND !$loadview) { // -- loadview removed from this function sept 24 2005
 			$calc_cols = $settings['calc_cols'];
 			$calc_calcs = $settings['calc_calcs'];
 			$calc_blanks = $settings['calc_blanks'];
 			$calc_grouping = $settings['calc_grouping'];
-			print "<tr><td class=head colspan=$count_colspan_calcs><input type=button style=\"width: 140px;\" name=mod_calculations value='" . _formulize_DE_MODCALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=$calc_cols&calc_calcs=$calc_calcs&calc_blanks=$calc_blanks&calc_grouping=$calc_grouping');\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=cancelcalcs value='" . _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=hidelist value='" . _formulize_DE_HIDELIST . "' onclick=\"javascript:hideList();\"></input></td></tr>";
-		}
-	
+            print "<tr><td class=head colspan=$count_colspan_calcs><input type=button style=\"width: 140px;\" name=mod_calculations value='".
+                _formulize_DE_MODCALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL.
+                "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=$calc_cols&calc_calcs=$calc_calcs&calc_blanks=$calc_blanks&calc_grouping=".
+                urlencode($calc_grouping)."&cols=".urlencode(implode(",",$cols)).
+                "');\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=cancelcalcs value='".
+                _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=hidelist value='".
+                _formulize_DE_HIDELIST . "' onclick=\"javascript:hideList();\"></input></td></tr>";
+        }
+
 		// draw advanced search notification
 		if($settings['as_0'] AND ($useSearchCalcMsgs == 1 OR $useSearchCalcMsgs == 2)) {
 			$writable_q = writableQuery($wq);
@@ -2080,43 +2104,6 @@ function clickableSortLink($handle, $contents) {
 }
 
 
-// this function returns the ele_ids of form elements to show, or the handles of the form elements to show for a framework
-function getDefaultCols($fid, $frid="") {
-	global $xoopsDB, $xoopsUser;
-
-	if($frid) { // expand the headerlist to include the other forms
-		$fids[0] = $fid;
-		$check_results = checkForLinks($frid, $fids, $fid, "", "", "", "", "", "", "0");
-		$fids = $check_results['fids'];
-		$sub_fids = $check_results['sub_fids'];
-		$gperm_handler = &xoops_gethandler('groupperm');
-		$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
-		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
-		$mid = getFormulizeModId();
-		$ele_handles = array();
-		$processedFids = array();
-		foreach($fids as $this_fid) {
-			if(security_check($this_fid, "", $uid, "", $groups, $mid, $gperm_handler) AND !isset($processedFids[$this_fid])) {
-				$ele_handles = array_merge($ele_handles, getHeaderList($this_fid, true, true));
-				$processedFids[$this_fid] = true;
-			}
-		}
-		foreach($sub_fids as $this_fid) {
-			if(security_check($this_fid, "", $uid, "", $groups, $mid, $gperm_handler) AND !isset($processedFids[$this_fid])) {
-				$ele_handles = array_merge($ele_handles, getHeaderList($this_fid, true, true));
-				$processedFids[$this_fid] = true;
-			}
-		}
-
-		return $ele_handles;
-		
-	} else {
-		$ele_handles = getHeaderList($fid, true, true); // third param causes element handles to be returned instead of IDs
-		return $ele_handles;
-	}
-
-} 
-
 // THIS FUNCTION RETURNS THE ELEMENT HANDLE AND FORM ALIAS IN THE CURRENT GETDATA QUERY, WHEN GIVEN THE ELEMENT ID NUMBER
 function getCalcHandleAndFidAlias($id, $fid) {
   if($id == "uid") { $id = "creation_uid"; }
@@ -2375,6 +2362,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		    $groupingValues[$cols[$i]][$calc][$calcId][] = convertRawValuesToRealValues($thisResult["$galias$ghandle"], $ghandle, true);
 		  }
 		}
+        $masterResultsRaw[$cols[$i]][$calc][$calcId]['sum'] = $thisResult["$fidAlias$handle"];
 		$masterResults[$cols[$i]][$calc][$calcId] = _formulize_DE_CALC_SUM . ": ".formulize_numberFormat($thisResult["$fidAlias$handle"], $handle);                
 		break;
 	      case "min":
@@ -2825,13 +2813,13 @@ function calcValuePlusText($value, $handle, $col, $calc, $groupingValue) {
 function printResults($masterResults, $blankSettings, $groupingSettings, $groupingValues, $masterResultsRaw, $filename="", $title="") {
 
 	$output = "";
-	foreach($masterResults as $handle=>$calcs) {
+	foreach($masterResults as $elementId=>$calcs) {
 		$output .= "<tr><td class=head colspan=2>\n";
-		$output .= printSmart(trans(getCalcHandleText($handle)), 100);
+		$output .= printSmart(trans(getCalcHandleText($elementId)), 100);
 		$output .= "\n</td></tr>\n";
 		foreach($calcs as $calc=>$groups) {
 			$countGroups = count($groups);
-			$rowspan = ($countGroups > 1 AND $calc != "count") ? $countGroups : 1;
+			$rowspan = ($countGroups > 1 AND $calc != "count" AND $calc != "sum") ? $countGroups : 1;
      	$output .= "<tr><td class=even rowspan=$rowspan>\n"; // start of row with calculation results (possibly first row among many)
 			switch($calc) {
 				case "sum":
@@ -2854,7 +2842,7 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
 					break;
 			}
 			$output .= "<p><b>$calc_name</b></p>\n";
-			switch($blankSettings[$handle][$calc]) {
+			switch($blankSettings[$elementId][$calc]) {
 				case "all":
 					$bsetting = _formulize_DE_INCLBLANKS;
 					break;
@@ -2872,7 +2860,7 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
 					break;
 				default: // must be custom
 					$bsetting = _formulize_DE_EXCLCUSTOM;
-					$setting = explode(",",substr(str_replace("!@^%*", ",", $blankSettings[$handle][$calc]),6)); // replace back the commas and remove the word custom from the front, and explode it into an array
+					$setting = explode(",",substr(str_replace("!@^%*", ",", $blankSettings[$elementId][$calc]),6)); // replace back the commas and remove the word custom from the front, and explode it into an array
 					$start = 1;
 					foreach($setting as $thissetting) {
 						if(!$start) {
@@ -2896,18 +2884,18 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
 				$output .= "<td class=odd>\n"; // start of cell with calculations results
 
 				if($countGroups > 1) {
-						$theseGroupSettings = explode("!@^%*", $groupingSettings[$handle][$calc]);
+						$theseGroupSettings = explode("!@^%*", $groupingSettings[$elementId][$calc]);
 						$firstGroupSettingText = printSmart(trans(getCalcHandleText($theseGroupSettings[0], true)));
 
 						$output .= "<table style='width: auto;'><tr><th>$firstGroupSettingText</th><td class='count-total' style='padding-left: 2em;'><center><b>"._formulize_DE_CALC_NUMENTRIES."</b><center></td><td class='count-unique' style='padding-left: 2em;'><center><b>"._formulize_DE_CALC_NUMUNIQUE."</b><center></td></tr>\n";
 
 						$totalCount = 0;
 						$totalUnique = 0;
-						foreach($masterResultsRaw[$handle][$calc] as $group=>$rawResult) {
+						foreach($masterResultsRaw[$elementId][$calc] as $group=>$rawResult) {
 								foreach($theseGroupSettings as $id=>$thisGroupSetting) {
 										if($thisGroupSetting === "none") { continue; }
 										$elementMetaData = formulize_getElementMetaData($thisGroupSetting, false);
-										$groupText = formulize_swapUIText($groupingValues[$handle][$calc][$group][$id], unserialize($elementMetaData['ele_uitext']));
+										$groupText = formulize_swapUIText($groupingValues[$elementId][$calc][$group][$id], unserialize($elementMetaData['ele_uitext']));
 										$output .= "<tr><td>".printSmart(trans($groupText))."</td><td class='count-total' style='text-align: right;'>".$rawResult['count']."</td><td class='count-unique' style='text-align: right;'>".$rawResult['countunique']."</td></tr>";
 										$totalCount += $rawResult['count'];
 										$totalUnique += $rawResult['countunique'];
@@ -2917,12 +2905,42 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
 						$output .= "<tr><td style='border-top: 1px solid black;'><b>"._formulize_DE_CALC_GRANDTOTAL."</b></td><td style='border-top: 1px solid black; text-align: right;' class='count-total'><b>$totalCount</b></td><td style='border-top: 1px solid black; text-align: right;' class='count-unique'><b>$totalUnique</b></td></tr>\n";
 						$output .= "</table>";
 				} else {
-						$rawResult = $masterResultsRaw[$handle][$calc][0];
+						$rawResult = $masterResultsRaw[$elementId][$calc][0];
 						$output .= "<div class='count-total'><p><b>"._formulize_DE_CALC_NUMENTRIES." . . . ".$rawResult['count']."</b></p></div><div class='count-unique'><p><b>"._formulize_DE_CALC_NUMUNIQUE." . . . ".$rawResult['countunique']."</b></p></div>\n";
 				}
 
 				$output .= "</td></tr>"; // end of the main row, and the specific cell with the calculations results
 
+            } elseif($calc == "sum") {
+                $output .= "<td class=odd>\n"; // start of cell with calculations results
+                $handle = convertElementIdsToElementHandles($elementId); // returns an array, since it might be passed multiple values
+                $handle = $handle[0];
+                if($countGroups > 1) {
+                    
+                    $theseGroupSettings = explode("!@^%*", $groupingSettings[$elementId][$calc]);
+                    $firstGroupSettingText = printSmart(trans(getCalcHandleText($theseGroupSettings[0], true)));
+                    
+                    $output .= "<table style='width: auto;'><tr><th>$firstGroupSettingText</th><td class='sum-total' style='padding-left: 2em;'><center><b>"._formulize_DE_CALC_SUM."</b><center></td></tr>\n";
+                    $totalSum = 0;
+                    foreach($masterResultsRaw[$elementId][$calc] as $group=>$rawResult) {
+                            foreach($theseGroupSettings as $id=>$thisGroupSetting) {
+                                    if($thisGroupSetting === "none") { continue; }
+                                    $elementMetaData = formulize_getElementMetaData($thisGroupSetting, false);
+                                    $groupText = formulize_swapUIText($groupingValues[$elementId][$calc][$group][$id], unserialize($elementMetaData['ele_uitext']));
+                                    $output .= "<tr><td>".printSmart(trans($groupText))."</td><td class='sum-total' style='text-align: right;'>".formulize_numberFormat($rawResult['sum'],$handle)."</td></tr>";
+                                    $totalSum += $rawResult['sum'];
+                            }
+                    }
+                    
+                    $output .= "<tr><td style='border-top: 1px solid black;'><b>"._formulize_DE_CALC_GRANDTOTAL."</b></td><td style='border-top: 1px solid black; text-align: right;' class='sum-total'><b>".formulize_numberFormat($totalSum,$handle)."</b></td></tr>\n";
+					$output .= "</table>";
+                    
+                } else {
+                    $rawResult = $masterResultsRaw[$elementId][$calc][0];
+                    $output .= "<div class='sum-total'><p><b>"._formulize_DE_CALC_SUM." . . . ".formulize_numberFormat($rawResult['sum'],$handle)."</b></p></div>\n";
+                }
+                $output .= "</td></tr>"; // end of the main row, and the specific cell with the calculations results
+                
 			} else {
       $start = 1;
      	foreach($groups as $group=>$result) {
@@ -2933,14 +2951,14 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
           //if(count($groups)>1) { // OR count($groups)>1) { // output the heading section for this group of results
             $output .= "<p><b>";
             $start2 = true;
-            foreach(explode("!@^%*", $groupingSettings[$handle][$calc]) as $id=>$thisGroupSetting) {
+            foreach(explode("!@^%*", $groupingSettings[$elementId][$calc]) as $id=>$thisGroupSetting) {
               if($thisGroupSetting === "none") { continue; }
               if(!$start2) {
                 $output .= "<br>\n";
               }
               $start2 = false;
               $elementMetaData = formulize_getElementMetaData($thisGroupSetting, false);
-              $groupText = formulize_swapUIText($groupingValues[$handle][$calc][$group][$id], unserialize($elementMetaData['ele_uitext']));
+              $groupText = formulize_swapUIText($groupingValues[$elementId][$calc][$group][$id], unserialize($elementMetaData['ele_uitext']));
               $output .= printSmart(trans(getCalcHandleText($thisGroupSetting, true))) . ": " . printSmart(trans($groupText)) . "\n";
             }
             $output .= "</b></p>\n";
@@ -4239,7 +4257,7 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=changecols value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/changecols.php?fid=$fid&frid=$frid&cols=$colhandles');\"></input>";
 				break;
 			case "calcButton":
-				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=calculations value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=".urlencode($calc_cols)."&calc_calcs=".urlencode($calc_calcs)."&calc_blanks=".urlencode($calc_blanks)."&calc_grouping=".urlencode($calc_grouping)."');\"></input>";
+				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=calculations value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=".urlencode($calc_cols)."&calc_calcs=".urlencode($calc_calcs)."&calc_blanks=".urlencode($calc_blanks)."&calc_grouping=".urlencode($calc_grouping)."&cols=".urlencode($colhandles)."&cols=".urlencode($colhandles)."');\"></input>";
 				break;
       case "advCalcButton":
 				// only if any procedures (advanced calculations) are defined for this form

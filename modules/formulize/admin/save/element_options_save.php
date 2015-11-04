@@ -46,6 +46,7 @@ $element = $element_handler->get($ele_id);
 $ele_type = $element->getVar('ele_type');
 $fid = $element->getVar('id_form');
 
+
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
 $formObject = $form_handler->get($fid);
 if($formObject->getVar('lockedform')) {
@@ -147,9 +148,9 @@ if($ele_type == "select") {
 
     global $xoopsDB;
     $sql_link = "SELECT ele_caption, id_form, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = " . intval($_POST['formlink']);
-		$res_link = $xoopsDB->query($sql_link);
-		$array_link = $xoopsDB->fetchArray($res_link);
-		$processedValues['elements']['ele_value'][2] = $array_link['id_form'] . "#*=:*" . $array_link['ele_handle'];
+    $res_link = $xoopsDB->query($sql_link);
+    $array_link = $xoopsDB->fetchArray($res_link);
+    $processedValues['elements']['ele_value'][2] = $array_link['id_form'] . "#*=:*" . $array_link['ele_handle'];
   } else {
     // a user requests to unlink the select box and select box is currently linked
     if ($_POST['formlink'] == "none" AND $element->isLinked){
@@ -158,35 +159,35 @@ if($ele_type == "select") {
 
     list($_POST['ele_value'], $processedValues['elements']['ele_uitext']) = formulize_extractUIText($_POST['ele_value']);
     foreach($_POST['ele_value'] as $id=>$text) {
-			if($text !== "") {
-				$processedValues['elements']['ele_value'][2][$text] = isset($_POST['defaultoption'][$id]) ? 1 : 0;
-			}
+      if($text !== "") {
+	$processedValues['elements']['ele_value'][2][$text] = isset($_POST['defaultoption'][$id]) ? 1 : 0;
+      }
     }
   }
   $processedValues['elements']['ele_value'][8] = 0;
   if($_POST['elements_listordd'] == 2) {
     $processedValues['elements']['ele_value'][0] = 1; // rows is 1
     $processedValues['elements']['ele_value'][8] = 1; // is autocomplete
-	$processedValues['elements']['ele_value'][1] = 0; // multiple selections not allowed
+    $processedValues['elements']['ele_value'][1] = 0; // multiple selections not allowed
   } else if($_POST['elements_listordd']) {
     $processedValues['elements']['ele_value'][0] = $processedValues['elements']['ele_value'][0] > 1 ? intval($processedValues['elements']['ele_value'][0]) : 1;
-	$processedValues['elements']['ele_value'][1] = $_POST['elements_multiple'];
+    $processedValues['elements']['ele_value'][1] = $_POST['elements_multiple'];
   } else {
     $processedValues['elements']['ele_value'][0] = 1;
-	$processedValues['elements']['ele_value'][1] = 0; // multiple selections not allowed
+    $processedValues['elements']['ele_value'][1] = 0; // multiple selections not allowed
   }
 
-    // if there is a change to the multiple selection status, need to adjust the database!!
-    if (isset($ele_value[1]) AND $ele_value[1] != $_POST['elements_multiple']) {
-        if ($ele_value[1] == 0) {
-            $result = convertSelectBoxToMulti($xoopsDB->prefix('formulize_'.$formObject->getVar('form_handle')), $ele_id);
-        } else {
-            $result = convertSelectBoxToSingle($xoopsDB->prefix('formulize_'.$formObject->getVar('form_handle')), $ele_id);
-        }
-        if (!$result) {
-            print "Could not convert select boxes from multiple options to single option or vice-versa.";
-        }
+  // if there is a change to the multiple selection status, need to adjust the database!!
+  if (isset($ele_value[1]) AND $ele_value[1] != $_POST['elements_multiple']) {
+    if ($ele_value[1] == 0) {
+      $result = convertSelectBoxToMulti($xoopsDB->prefix('formulize_'.$formObject->getVar('form_handle')), $ele_id);
+    } else {
+      $result = convertSelectBoxToSingle($xoopsDB->prefix('formulize_'.$formObject->getVar('form_handle')), $ele_id);
     }
+    if (!$result) {
+       print "Could not convert select boxes from multiple options to single option or vice-versa.";
+    }
+  }
   $processedValues['elements']['ele_value'][3] = implode(",", $_POST['element_formlink_scope']);
 
   // handle conditions
@@ -252,23 +253,45 @@ if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.ph
   }
 }
 
-		// check to see if we should be reassigning user submitted values, and if so, trap the old ele_value settings, and the new ones, and then pass off the job to the handling function that does that change
-		if(isset($_POST['changeuservalues']) AND $_POST['changeuservalues']==1) {
-      include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
-			$data_handler = new formulizeDataHandler($fid);
-			switch($ele_type) {
-				case "radio":
-				case "check":
-					$newValues = $processedValues['elements']['ele_value'];
-					break;
-				case "select":
-					$newValues = $processedValues['elements']['ele_value'][2];
-					break;
-			}
-			if(!$changeResult = $data_handler->changeUserSubmittedValues($ele_id, $newValues)) {
-				print "Error updating user submitted values for the options in element $ele_id";
-			}
-		}
+// check to see if we should be reassigning user submitted values, and if so, trap the old ele_value settings, and the new ones, and then pass off the job to the handling function that does that change
+if(isset($_POST['changeuservalues']) AND $_POST['changeuservalues']==1) {
+  include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+  $data_handler = new formulizeDataHandler($fid);
+  switch($ele_type) {
+    case "radio":
+    case "check":
+      $newValues = $processedValues['elements']['ele_value'];
+      break;
+    case "select":
+      $newValues = $processedValues['elements']['ele_value'][2];
+      break;
+  }
+  if(!$changeResult = $data_handler->changeUserSubmittedValues($ele_id, $newValues)) {
+    print "Error updating user submitted values for the options in element $ele_id";
+  }
+}
+
+/**newly added for autocomplete box to make sure when {USERNAMES} and {FULLNAMES} are selected, system will not allow new entries to be added
+*ele_value[8] ==1 will make sure it's an autocomplete box
+*ele_value[16]=0 means say no match found,
+*	       1 means add as new entry.
+*
+*when $processedValues['elements']['ele_value'][2]['{USERNAMES}'] = 1, that means this one is checked;
+*	if it's 0, then it's not checked
+*							
+*this also applys in database: "{USERNAMES}";i:1; as selected;
+*			       "{USERNAMES}";i:0; for not selected.
+*
+*you can use those lines to check the value. 
+*  error_log("usernames: ".print_r($processedValues['elements']['ele_value'][2]['{USERNAMES}']));
+*  error_log("fullnames: ".print_r($processedValues['elements']['ele_value'][2]['{FULLNAMES}']));
+*
+*Added by Jinfu MAR 2015
+*/
+if($processedValues['elements']['ele_value'][8] == 1 &&
+   ($processedValues['elements']['ele_value'][2]['{USERNAMES}'] == 1 || $processedValues['elements']['ele_value'][2]['{FULLNAMES}'] == 1 )){
+  $processedValues['elements']['ele_value'][16]=0;
+}
 
 foreach($processedValues['elements'] as $property=>$value) {
   // if we're setting something other than ele_value, or

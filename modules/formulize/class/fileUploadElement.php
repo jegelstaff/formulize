@@ -172,8 +172,8 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
             } else {
                 $introToUploadBox = "<div id='formulize_fileStatus_".$element->getVar('ele_id')."_$entry_id' class='no-print'>" . _AM_UPLOAD . "</div>";
             }
-            $htmlForUpload = "$introToUploadBox<div><input type='hidden' name='MAX_FILE_SIZE' value='".($ele_value[0]*1048576)."' /><input type='file' name='fileupload_".$markupName."' size=50 id='".$markupName."' class='no-print' /><input type='hidden' id='$markupName' name='$markupName' value='$markupName' /></div>";
-            $formElement = new xoopsFormLabel($caption, $htmlForUpload); 
+            $htmlForUpload = "$introToUploadBox<div><input type='hidden' name='MAX_FILE_SIZE' value='".($ele_value[0]*1048576)."' /><input type='file' name='fileupload_".$markupName."' size=50 id='".$markupName."' onchange=\"javascript:formulizechanged=1;\"  class='no-print' /><input type='hidden' id='$markupName' name='$markupName' value='$markupName' /></div>";
+            $formElement = new xoopsFormLabel($caption, $htmlForUpload);
         }
         return $formElement;
     }

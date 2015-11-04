@@ -33,6 +33,8 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
+
+
 if (file_exists(XOOPS_ROOT_PATH.'/class/mail/phpmailer/class.phpmailer.php'))
     include_once XOOPS_ROOT_PATH.'/class/mail/phpmailer/class.phpmailer.php';
 
@@ -42,22 +44,20 @@ $GLOBALS['formulize_asynchronousFormDataInAPIFormat'] = array();
 global $xoopsDB, $myts, $xoopsUser, $xoopsModule, $xoopsTpl, $xoopsConfig, $renderedFormulizeScreen;
 
 // load the formulize language constants if they haven't been loaded already
-	if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
-		include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php";
-	} else {
-		include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/main.php";
-	}
+if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
+    include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php";
+} else {
+    include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/main.php";
+}
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
 $thisRendering = microtime(); // setup a flag that is common to this instance of rendering a formulize page
 if(!isset($prevRendering)) {
-	$prevRendering = array();
+    $prevRendering = array();
 }
 $prevRendering[$thisRendering] = isset($GLOBALS['formulize_thisRendering']) ? $GLOBALS['formulize_thisRendering'] : "";
 $GLOBALS['formulize_thisRendering'] = $thisRendering;
-
-// altered sept 8 to use fid instead of title
 
 $fid = ((isset( $_GET['fid'])) AND is_numeric( $_GET['fid'])) ? intval( $_GET['fid']) : "" ;
 $fid = ((isset($_POST['fid'])) AND is_numeric($_POST['fid'])) ? intval($_POST['fid']) : $fid ;
@@ -69,11 +69,11 @@ $frid = ((isset($_POST['frid'])) AND is_numeric($_POST['frid'])) ? intval($_POST
 if(isset($formulize_screen_id) AND is_numeric($formulize_screen_id)) {
   $sid = $formulize_screen_id;
 } elseif(isset($_GET['sid']) AND is_numeric($_GET['sid'])) {
-	$sid = $_GET['sid'];
+    $sid = $_GET['sid'];
 } else {
-	$sid="";
+    $sid="";
 }
-    
+
 // get the global or group permission
 $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
@@ -84,12 +84,11 @@ $view_groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, 
 
 $config_handler =& xoops_gethandler('config');
 $formulizeConfig =& $config_handler->getConfigsByCat(0, $mid);
-    
+
 // query added Oct 2013
 // get the default menu link for the current user, and set the fid or sid based on it
-    
+
 if( !$fid AND !$sid) {
-    
     $groupSQL = "";
     foreach($groups as $group) {
         if(strlen($groupSQL) == 0){
@@ -99,43 +98,42 @@ if( !$fid AND !$sid) {
         }
     }
     $groupSQL .= ")";
-    
+
     $sql = 'SELECT links.screen FROM '.$xoopsDB->prefix("formulize_menu_links").' AS links ';
     $sql .= ' LEFT JOIN '.$xoopsDB->prefix("formulize_menu_permissions").' AS perm ON links.menu_id = perm.menu_id ';
     $sql .= ' WHERE  default_screen = 1'. $groupSQL . 'ORDER BY perm.group_id';
-    
+
     $res = $xoopsDB->query ( $sql ) or die('SQL Error !<br />'.$sql.'<br />'.$xoopsDB->error());
-    
+
     if ( $res ) {
-        $row = $xoopsDB->fetchArray ( $res );	  
+        $row = $xoopsDB->fetchArray ( $res );
         $screenID = $row['screen'];
-        
+
         if ( strpos($screenID,"fid=") !== false){
             $fid = substr($screenID, strpos($screenID,"=")+1 );
         }
         else{
             $sid = substr($screenID, strpos($screenID,"=")+1 );
-        }	
+        }
     }
 }
 
-    
 $screen_handler =& xoops_getmodulehandler('screen', 'formulize');
 if($sid) {
-	$thisscreen1 = $screen_handler->get($sid); // first get basic screen object to determine type
-	$fid = is_object($thisscreen1) ? $thisscreen1->getVar('fid') : 0;
+    $thisscreen1 = $screen_handler->get($sid); // first get basic screen object to determine type
+    $fid = is_object($thisscreen1) ? $thisscreen1->getVar('fid') : 0;
 }
 
 // set the flag to force derived value updates, if it is in the URL
 if(isset($_GET['forceDerivedValueUpdate'])) {
-	$GLOBALS['formulize_forceDerivedValueUpdate'] = true;
+    $GLOBALS['formulize_forceDerivedValueUpdate'] = true;
 }
 
 // query modified to include singleentry - July 28, 2005 -- part of switch to new intnerface
 $sql=sprintf("SELECT singleentry,desc_form FROM ".$xoopsDB->prefix("formulize_id")." WHERE id_form='$fid'");
 $res = $xoopsDB->query ( $sql ) or die('SQL Error !<br />'.$sql.'<br />'.$xoopsDB->error());
 //global $nb_fichier;
- 
+
 if ( $res ) {
   while ( $row = $xoopsDB->fetchArray ( $res ) ) {
     $singleentry = $row['singleentry'];
@@ -146,79 +144,80 @@ if ( $res ) {
 $myts =& MyTextSanitizer::getInstance();
 $title = $myts->displayTarea($desc_form);
 
-
-
 $currentURL = getCurrentURL();
 if($fid AND !$view_form = $gperm_handler->checkRight("view_form", $fid, $groups, $mid)) {
-	if(strstr($currentURL, "/modules/formulize/")) { // if it's a formulize page, reload to login screen
-		redirect_header(XOOPS_URL . "/user.php?xoops_redirect=$currentURL", 3, _formulize_NO_PERMISSION);
-	} else { // if formulize is just being included elsewhere, then simply show error and end script
-		global $user;
-		if(isset($GLOBALS['formulizeHostSystemUserId']) AND is_object($user) AND is_array($user->roles) AND !$xoopsUser) {
-			// Drupal user is not logged in
-			$slashPosition = strpos($currentURL,"/",10);
-			$afterSlashLocation = substr($currentURL,$slashPosition+1);
-			redirect_header("/user?destination=".$afterSlashLocation, 0, _formulize_NO_PERMISSION);
-		} else {
-	       	print "<p>"._formulize_NO_PERMISSION."</p>\n";
-		}
-		return;
-	}
+    if(strstr($currentURL, "/modules/formulize/")) { // if it's a formulize page, reload to login screen
+        redirect_header(XOOPS_URL . "/user.php?op=nopermission&xoops_redirect=$currentURL", 3, _formulize_NO_PERMISSION);
+    } else { // if formulize is just being included elsewhere, then simply show error and end script
+        global $user;
+        if(isset($GLOBALS['formulizeHostSystemUserId']) AND is_object($user) AND is_array($user->roles) AND !$xoopsUser) {
+            // Drupal user is not logged in
+            $slashPosition = strpos($currentURL,"/",10);
+            $afterSlashLocation = substr($currentURL,$slashPosition+1);
+            redirect_header("/user?destination=".$afterSlashLocation, 0, _formulize_NO_PERMISSION);
+        } else {
+            print "<p>"._formulize_NO_PERMISSION."</p>\n";
+        }
+        return;
+    }
 }
 
 // IF A SCREEN IS REQUESTED, GET DETAILS FOR THAT SCREEN AND CALL THE NECESSARY DISPLAY FUNCTION
 $rendered = false;
 $screen = false;
 if($sid) {
-	if(is_object($thisscreen1)) {
-		unset($screen_handler); // reset handler to that type of screen
-		$screen_handler =& xoops_getmodulehandler($thisscreen1->getVar('type').'Screen', 'formulize');
-		$screen = $screen_handler->get($sid); // get the full screen object
-		
-		if($_POST['ventry'] AND $screen->getVar('type') == 'listOfEntries' AND $screen->getVar("viewentryscreen") != "none" AND $screen->getVar("viewentryscreen") AND !strstr($screen->getVar("viewentryscreen"), "p")) { // if the user is viewing an entry off a list, then check what screen gets used to display entries instead, since that's what we're doing (but only if there is a screen specified, and it's not a pageworks page)
-			// do all this to set the Frid properly. That's it. Otherwise, no change. Frid affects behaviour in readelements.php
-			$base_screen_handler = xoops_getmodulehandler('screen', 'formulize');
-			$viewEntryScreenObject = $base_screen_handler->get(intval($screen->getVar('viewentryscreen')));
-			$frid = $viewEntryScreenObject->getVar('frid');
-		} else {
-			$frid = $screen->getVar('frid'); // set these here just in case it's needed in readelements.php
-		}
-	}
-} 
+    if(is_object($thisscreen1)) {
+        unset($screen_handler); // reset handler to that type of screen
+        $screen_handler =& xoops_getmodulehandler($thisscreen1->getVar('type').'Screen', 'formulize');
+        $screen = $screen_handler->get($sid); // get the full screen object
+
+        if($_POST['ventry'] AND $screen->getVar('type') == 'listOfEntries' AND $screen->getVar("viewentryscreen") != "none" AND $screen->getVar("viewentryscreen") AND !strstr($screen->getVar("viewentryscreen"), "p")) { // if the user is viewing an entry off a list, then check what screen gets used to display entries instead, since that's what we're doing (but only if there is a screen specified, and it's not a pageworks page)
+            // do all this to set the Frid properly. That's it. Otherwise, no change. Frid affects behaviour in readelements.php
+            $base_screen_handler = xoops_getmodulehandler('screen', 'formulize');
+            $viewEntryScreenObject = $base_screen_handler->get(intval($screen->getVar('viewentryscreen')));
+            $frid = $viewEntryScreenObject->getVar('frid');
+        } else {
+            $frid = $screen->getVar('frid'); // set these here just in case it's needed in readelements.php
+        }
+    }
+}
 
 // check for $xoopsUser added by skenow.  Forces anons to only see the form itself and never the list of entries view.
-// Really, we should build in better permission/configuration control so that more precise 
+// Really, we should build in better permission/configuration control so that more precise
 // control over anon behaviour is possible
 
 // gather $_GET['ve'] (viewentry), or prefer a global value that has been set
 if(isset($formulize_entry_id) AND is_numeric($formulize_entry_id)) {
-  $entry = $formulize_entry_id;  
+  $entry = $formulize_entry_id;
 } elseif(isset($_GET['ve']) AND is_numeric($_GET['ve'])) {
-	$entry = $_GET['ve'];
+    $entry = $_GET['ve'];
 } else {
-	$entry = "";
+    $entry = "";
 }
 
 $formulize_screen_loadview = (!isset($formulize_screen_loadview) OR !is_numeric($formulize_screen_loadview)) ? intval($_GET['loadview']) : $formulize_screen_loadview;
 $loadThisView = (isset($formulize_screen_loadview) AND is_numeric($formulize_screen_loadview)) ? $formulize_screen_loadview : "";
-if(!$loadThisView) { $loadThisView = ""; } // a 0 could possibly screw things up, so change to ""
+if (!$loadThisView) {
+    // a 0 could possibly screw things up, so change to ""
+    $loadThisView = "";
+}
 
-if($screen) {
-	// this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
-	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
-	$renderedFormulizeScreen = $screen;
-	if($screen->getVar('type') == "listOfEntries" AND ((isset($_GET['iform']) AND $_GET['iform'] == "e") OR isset($_GET['showform']))) { // form itself specifically requested, so force it to load here instead of a list
-		if($screen->getVar('frid')) {
-			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
-			displayForm($screen->getVar('frid'), "", $screen->getVar('fid'), "", "{NOBUTTON}");
-		} else {
-			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
-			displayForm($screen->getVar('fid'), "", "", "", "{NOBUTTON}");
-		}
-	} else {
-		$screen_handler->render($screen, $entry, $loadThisView);	
-	}
-	$rendered = true;
+if ($screen) {
+    // this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
+    $renderedFormulizeScreen = $screen;
+    if($screen->getVar('type') == "listOfEntries" AND ((isset($_GET['iform']) AND $_GET['iform'] == "e") OR isset($_GET['showform']))) { // form itself specifically requested, so force it to load here instead of a list
+        if($screen->getVar('frid')) {
+            include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
+            displayForm($screen->getVar('frid'), "", $screen->getVar('fid'), "", "{NOBUTTON}");
+        } else {
+            include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
+            displayForm($screen->getVar('fid'), "", "", "", "{NOBUTTON}");
+        }
+    } else {
+        $screen_handler->render($screen, $entry, $loadThisView);
+    }
+    $rendered = true;
 }
 
 // IF NO SCREEN IS REQUESTED (or none rendered successfully, ie: a bad screen id was passed), THEN USE THE DEFAULT DISPLAY LOGIC TO DETERMINE WHAT TO SHOW THE USER
@@ -309,3 +308,17 @@ if ($renderedFormulizeScreen AND is_object($xoopsTpl)) {
 
 // go back to the previous rendering flag, in case this operation was nested inside something else
 $GLOBALS['formulize_thisRendering'] = $prevRendering[$thisRendering];
+
+
+/*get the aid and include custom_code if exists
+ *
+ *Added By Jinfu Jan 2015
+ */
+$application_handler = xoops_getmodulehandler('applications','formulize');
+$apps = $application_handler->getAllApplications();
+
+foreach($apps as $appObject){
+    $aid=$appObject->getVar('appid');
+    if(file_exists(XOOPS_ROOT_PATH.'/modules/formulize/temp/application_custom_code_'.$aid.'.php'))
+        include_once(XOOPS_ROOT_PATH.'/modules/formulize/temp/application_custom_code_'.$aid.'.php');
+}

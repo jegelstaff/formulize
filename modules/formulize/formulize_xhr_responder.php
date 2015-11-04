@@ -41,13 +41,13 @@ include_once "../../header.php";
 // check that the user who sent this request is the same user we have a session for now, if not, bail
 $sentUid = $_GET['uid'];
 if(($xoopsUser AND $sentUid != $xoopsUser->getVar('uid')) OR (!$xoopsUser AND $sentUid !== 0)) {
-  exit(); 
+  exit();
 }
 
 $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'] = array();
 $GLOBALS['formulize_asynchronousFormDataInAPIFormat'] = array();
 
-// unpack the op 
+// unpack the op
 $op = $_GET['op'];
 
 // validate op
@@ -69,7 +69,7 @@ switch($op) {
     $value = $_GET['param1'];
     $element = $_GET['param2'];
     $entry = $_GET['param3'];
-    
+
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
     $elementObject = $element_handler->get($element);
     if(is_object($elementObject)) {
@@ -85,19 +85,21 @@ switch($op) {
       print 'invalidelement';
     }
     break;
+
   case 'get_element_option_list':
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
-  	$elementsq = q("SELECT ele_caption, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=" . intval($_GET['fid']) . " AND ele_type != \"ib\" AND ele_type != \"subform\" ORDER BY ele_order");
+    $elementsq = q("SELECT ele_caption, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=" . intval($_GET['fid']) . " AND ele_type != \"ib\" AND ele_type != \"subform\" ORDER BY ele_order");
     $json = "{ \"options\": [";
     $start = true;
-  	foreach($elementsq as $oneele) {
-      if(!$start) { $json .= ", "; }
-      $json .= "{\"id\": \"".$oneele['ele_id']."\", \"value\": \"".printSmart($oneele['ele_caption'])."\"}";
-      $start = false;
-  	}
+    foreach($elementsq as $oneele) {
+        if(!$start) { $json .= ", "; }
+        $json .= "{\"id\": \"".$oneele['ele_id']."\", \"value\": \"".printSmart($oneele['ele_caption'])."\"}";
+        $start = false;
+    }
     $json .= "]}";
     print $json;
     break;
+
   case 'delete_uploaded_file':
     $folderName = $_GET['param1'];
     $element_id = $_GET['param2'];
@@ -116,10 +118,12 @@ switch($op) {
         print json_encode(array("element_id"=>$element_id, "entry_id"=>$entry_id));
     }
     break;
+
   case 'get_element_html':
     include_once XOOPS_ROOT_PATH."/modules/formulize/include/elementdisplay.php";
     displayElement("", formulize_db_escape($_GET['param2']), intval($_GET['param3']));
     break;
+
   case 'get_element_value':
     $handle = $_GET['param1'];
     $entryId = intval($_GET['param3']);
@@ -133,94 +137,95 @@ switch($op) {
     $preppedValue = prepvalues($dbValue,$handle,$entryId);
     print getHTMLForList($preppedValue,$handle,$entryId,1);// 1 is a flag to include the icon for switching to an editable element
     break;
+
   case 'get_element_row_html':
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-	$sendBackValue = array();
+    $sendBackValue = array();
     $element_handler = xoops_getmodulehandler('elements','formulize');
     foreach($_GET as $k=>$v) {
       if($k == 'elementId' OR $k == 'entryId' OR $k == 'fid' OR $k == 'frid' OR substr($k, 0, 8) == 'onetoone') { // serveral onetoone keys can be passed back too
-		if($k == 'onetooneentries' OR $k == 'onetoonefids') {
-		    ${$k} = unserialize($v);
-		} else {
+        if($k == 'onetooneentries' OR $k == 'onetoonefids') {
+            ${$k} = unserialize($v);
+        } else {
             ${$k} = $v;
-		}
+        }
       } elseif(substr($k, 0, 3) == 'de_') {
-		$keyParts = explode("_", $k); // ANY KEY PASSED THAT IS THE NAME OF A DE_ ELEMENT IN MARKUP, WILL GET UNPACKED AS A VALUE THAT CAN BE SUBBED IN WHEN DOING LOOKUPS LATER ON.
-       	$passedEntryId = $keyParts[2];
-       	$passedElementId = $keyParts[3];
-       	$passedElementObject = $element_handler->get($passedElementId);
-       	$handle = $passedElementObject->getVar('ele_handle');
-       	$databaseReadyValue = prepDataForWrite($passedElementObject, $v);
-       	$databaseReadyValue = $databaseReadyValue === "{WRITEASNULL}" ? NULL : $databaseReadyValue;
-       		if(substr($v, 0, 9)=="newvalue:") { $sendBackValue[$k] = $databaseReadyValue; }
-       	$GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$passedEntryId][$handle] = $databaseReadyValue;
-       	$apiFormatValue = prepvalues($databaseReadyValue, $handle, $passedEntryId); // will be an array
-       	if(is_array($apiFormatValue) AND count($apiFormatValue)==1) {
-       	  $apiFormatValue = $apiFormatValue[0]; // take the single value if there's only one, same as display function does
-       	}
-       	$GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$passedEntryId][$handle] = $apiFormatValue;
+        $keyParts = explode("_", $k); // ANY KEY PASSED THAT IS THE NAME OF A DE_ ELEMENT IN MARKUP, WILL GET UNPACKED AS A VALUE THAT CAN BE SUBBED IN WHEN DOING LOOKUPS LATER ON.
+        $passedEntryId = $keyParts[2];
+        $passedElementId = $keyParts[3];
+        $passedElementObject = $element_handler->get($passedElementId);
+        $handle = $passedElementObject->getVar('ele_handle');
+        $databaseReadyValue = prepDataForWrite($passedElementObject, $v);
+        $databaseReadyValue = $databaseReadyValue === "{WRITEASNULL}" ? NULL : $databaseReadyValue;
+            if(substr($v, 0, 9)=="newvalue:") { $sendBackValue[$k] = $databaseReadyValue; }
+        $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$passedEntryId][$handle] = $databaseReadyValue;
+        $apiFormatValue = prepvalues($databaseReadyValue, $handle, $passedEntryId); // will be an array
+        if(is_array($apiFormatValue) AND count($apiFormatValue)==1) {
+          $apiFormatValue = $apiFormatValue[0]; // take the single value if there's only one, same as display function does
+        }
+        $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$passedEntryId][$handle] = $apiFormatValue;
       }
     }
     $elementObject = $element_handler->get($elementId);
     $html = "";
-	if($onetoonekey) {
-	  // the onetoonekey is what changed, not a regular conditional element, so in that case, we need to re-determine the entryId that we should be displaying
-	  // rebuild entries and fids so it only has the main form entry in it, since we want to get the correct other one-to-one entries back
-	  $onetooneentries = array($onetoonefid => array($onetooneentries[$onetoonefid][0]));
-	  $onetoonefids = array($onetoonefid);
-	  $checkForLinksResults = checkForLinks($onetoonefrid, $onetoonefids, $onetoonefid, $onetooneentries);
-	  $entryId = $checkForLinksResults['entries'][$elementObject->getVar('id_form')][0];
-	}
+    if($onetoonekey) {
+      // the onetoonekey is what changed, not a regular conditional element, so in that case, we need to re-determine the entryId that we should be displaying
+      // rebuild entries and fids so it only has the main form entry in it, since we want to get the correct other one-to-one entries back
+      $onetooneentries = array($onetoonefid => array($onetooneentries[$onetoonefid][0]));
+      $onetoonefids = array($onetoonefid);
+      $checkForLinksResults = checkForLinks($onetoonefrid, $onetoonefids, $onetoonefid, $onetooneentries);
+      $entryId = $checkForLinksResults['entries'][$elementObject->getVar('id_form')][0];
+    }
     if(security_check($fid, $entryId)) {
       // "" is framework, ie: not applicable
       $deReturnValue = displayElement("", $elementObject, $entryId, false, null, null, false); // false, null, null, false means it's not a noSave element, no screen, no prevEntry data passed in, and do not render the element on screen
       if(is_array($deReturnValue)) {
-      	$form_ele = $deReturnValue[0];
-      	$isDisabled = $deReturnValue[1];
+        $form_ele = $deReturnValue[0];
+        $isDisabled = $deReturnValue[1];
 
         $label_class = " formulize-label-".$elementObject->getVar("ele_handle");
         $input_class = " formulize-input-".$elementObject->getVar("ele_handle");
 
-      	// rendered HTML code below is taken from the formulize classes at the top of include/formdisplay.php
-      	if($elementObject->getVar('ele_type') == "ib") {// if it's a break, handle it differently...
-      	  $class = ($form_ele[1] != '') ? " class='".$form_ele[1]."'" : '';
-      	  if ($form_ele[0]) {
-      	    $html = "<td colspan='2' $class><div style=\"font-weight: normal;\">" . trans(stripslashes($form_ele[0])) . "</div></td>"; 
-      	  } else {
-      	    $html = "<td colspan='2' $class>&nbsp;</td>";
-      	  }
-      	} else {
-      	  $req = !$isDisabled ? intval($elementObject->getVar('ele_req')) : 0;
-      	  $html = "<td class='head$label_class'>";
-      	  if (($caption = $form_ele->getCaption()) != '') {
-      	    $html .=
-      	    "<div class='xoops-form-element-caption" . ($req ? "-required" : "" ) . "'>"
-      		    . "<span class='caption-text'>{$caption}</span>"
-      		    . "<span class='caption-marker'>*</span>"
-      		    . "</div>";
-      	  }
-      	  if (($desc = $form_ele->getDescription()) != '') {
-      		  $html .= "<div class='xoops-form-element-help'>{$desc}</div>";
-      	  }
-      	  $html .= "</td><td class='even$input_class'>" . $form_ele->render() . "</td>";
-      	}
-      	if(count($sendBackValue)>0) {
-      	  // if we wrote any new values in autocomplete boxes, pass them back so we can alter their values in markup so new entries are not created again!
-      	  print '{ "data" : '.json_encode($html).', "newvalues" : [';
-      	  $start = true;
-      	  foreach($sendBackValue as $key=>$value) {
-      		if(!$start) { print ', '; }
-      		print '{ "name" : "'.$key.'" , "value" : '.json_encode($value).' }';
-      		$start = false;
-      	  }
-      	  print "] }";
-      	} else {
-      	print $html;
-      	}
-	
-      } 
+        // rendered HTML code below is taken from the formulize classes at the top of include/formdisplay.php
+        if($elementObject->getVar('ele_type') == "ib") {// if it's a break, handle it differently...
+          $class = ($form_ele[1] != '') ? " class='".$form_ele[1]."'" : '';
+          if ($form_ele[0]) {
+            $html = "<td colspan='2' $class><div style=\"font-weight: normal;\">" . trans(stripslashes($form_ele[0])) . "</div></td>";
+          } else {
+            $html = "<td colspan='2' $class>&nbsp;</td>";
+          }
+        } else {
+          $req = !$isDisabled ? intval($elementObject->getVar('ele_req')) : 0;
+          $html = "<td class='head$label_class'>";
+          if (($caption = $form_ele->getCaption()) != '') {
+            $html .= "<div class='xoops-form-element-caption" . ($req ? "-required" : "" ) . "'>"
+                . "<span class='caption-text'>{$caption}</span>"
+                . "<span class='caption-marker'>*</span>"
+                . "</div>";
+          }
+          if (($desc = $form_ele->getDescription()) != '') {
+              $html .= "<div class='xoops-form-element-help'>{$desc}</div>";
+          }
+          $html .= "</td><td class='even$input_class'>" . $form_ele->render() . "</td>";
+        }
+        if(count($sendBackValue)>0) {
+          // if we wrote any new values in autocomplete boxes, pass them back so we can alter their values in markup so new entries are not created again!
+          print '{ "data" : '.json_encode($html).', "newvalues" : [';
+          $start = true;
+          foreach($sendBackValue as $key=>$value) {
+            if(!$start) {
+                print ', ';
+            }
+            print '{ "name" : "'.$key.'" , "value" : '.json_encode($value).' }';
+            $start = false;
+          }
+          print "] }";
+        } else {
+            print $html;
+        }
+      }
     }
     break;
 

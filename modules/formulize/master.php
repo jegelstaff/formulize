@@ -47,5 +47,3 @@ if($gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
 }
 
 include "index.php";
-
-

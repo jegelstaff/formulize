@@ -1,7 +1,7 @@
 <{* form elements must be named with their object name hyphen field name *}>
 <{* no other elements should have hyphens, since that tells the saving system that this is a property of an object to update *}>
 <{* securitytoken should be part of the form *}>
-<{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
+<{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we are inserting/updating on *}>
 
 <form id="form-<{$number}>" class="formulize-admin-form">
     <{$securitytoken}>
@@ -61,22 +61,9 @@
 <script>
 jQuery(document).ready(function() {
     jQuery(".savebutton").click(function() {
-        check_php_code("#screens-toptemplate", "Top template");
-        check_php_code("#screens-listtemplate", "List template");
-        check_php_code("#screens-bottomtemplate", "Bottom template");
+        fz_check_php_code(jQuery("#screens-toptemplate").val(), "Top template", "<{$icms_url}>", <{$icms_userid}>);
+        fz_check_php_code(jQuery("#screens-listtemplate").val(), "List template", "<{$icms_url}>", <{$icms_userid}>);
+        fz_check_php_code(jQuery("#screens-bottomtemplate").val(), "Bottom template", "<{$icms_url}>", <{$icms_userid}>);
     });
-    function check_php_code(template_id, template_name) {
-        jQuery.ajax({
-            type: "POST",
-            url: "<{$icms_url}>/modules/formulize/formulize_xhr_responder.php?uid=<{$icms_userid}>&op=validate_php_code",
-            data: {the_code: jQuery(template_id).val()},
-            success: function(result) {
-                if (result.length > 0) {
-                    alert("The "+template_name+" has an error:\n\n"+result+".");
-                }
-            },
-            async: false
-        });
-    }
 });
 </script>

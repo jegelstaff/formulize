@@ -976,7 +976,7 @@ button, input[type='submit'], input[type='button'], input[type='reset'] {
   border: 1px solid;
   border-color: #ccc; }
 
-input:hover, button:hover, .xo-formbuttons:hover, .formButton:hover {
+button:hover, .xo-formbuttons:hover, .formButton:hover {
   transform: scale(1.2);
   box-shadow: 0 0 65px #f4f9fe inset, 0 0 20px #f4f9fe inset, 0 0 15px #333333; }
 
@@ -1179,6 +1179,9 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
 
 #listofentries div.main-cell-div input {
   width: 7em; }
+
+#pageNavTable {
+  margin: 1em 0; }
 
 @media print {
   body {
