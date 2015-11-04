@@ -141,7 +141,7 @@ if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
       }
   }
   $limitViewOptions['allviews'] = _AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEWLIMIT;
-  $limitViewOptions += $defaultViewOptions;
+  $limitViewOptions += $viewOptions;
   unset($limitViewOptions['blank']);
   // get the available screens
   $screen_handler = xoops_getmodulehandler('screen', 'formulize');
@@ -209,7 +209,7 @@ if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   if(!is_array($entries['defaultview'])) {
     $entries['defaultview'] = array(XOOPS_GROUP_USERS => $entries['defaultview']);
   }
-  $entries['viewOptions'] = $viewOptions;
+  $entries['viewoptions'] = $viewOptions;
   $entries['usecurrentviewlist'] = $screen->getVar('usecurrentviewlist');
   $entries['limitviewoptions'] = $limitViewOptions;
   $entries['limitviews'] = $screen->getVar('limitviews');
