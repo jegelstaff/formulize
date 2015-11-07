@@ -217,14 +217,14 @@
       "type": "setElementSelected",
       "locator": {
         "type": "xpath",
-        "value": "//select[@id='de_5_2_22']//option[2]"
+        "value": "//select[@id='de_5_2_23']//option[2]"
       }
     },
     {
       "type": "setElementSelected",
       "locator": {
         "type": "xpath",
-        "value": "//select[@id='de_5_3_22']//option[3]"
+        "value": "//select[@id='de_5_3_23']//option[3]"
       }
     },
     {
