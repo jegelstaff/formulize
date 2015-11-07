@@ -217,14 +217,14 @@
       "type": "setElementSelected",
       "locator": {
         "type": "xpath",
-        "value": "//select[@id='de_5_2_23']//option[2]"
+        "value": "//select[@id='de_5_2_21']//option[2]"
       }
     },
     {
       "type": "setElementSelected",
       "locator": {
         "type": "xpath",
-        "value": "//select[@id='de_5_3_23']//option[3]"
+        "value": "//select[@id='de_5_3_21']//option[3]"
       }
     },
     {
@@ -245,17 +245,17 @@
       "type": "verifyElementValue",
       "locator": {
         "type": "id",
-        "value": "de_5_2_22"
+        "value": "de_5_3_21"
       },
-      "value": "1"
+      "value": "2"
     },
     {
       "type": "verifyElementValue",
       "locator": {
         "type": "id",
-        "value": "de_5_3_22"
+        "value": "de_5_2_21"
       },
-      "value": "2"
+      "value": "1"
     },
     {
       "type": "clickElement",
