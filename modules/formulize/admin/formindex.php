@@ -112,9 +112,10 @@ function patch40() {
 	 * ====================================== */
 	
 	$checkThisTable = 'formulize_screen_listofentries';
-	$checkThisField = 'advanceview';
-	$checkThisProperty = false;
-	$checkPropertyForValue = false;
+	$checkThisField = 'defaultview';
+	$checkThisProperty = 'DATA_TYPE';
+	$checkPropertyForValue = 'text';
+	
 	
 	$needsPatch = false;
 	
@@ -324,6 +325,8 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
 		$sql['add_use_default_when_blank'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_use_default_when_blank` tinyint(1) NOT NULL default '0'";
         $sql['add_global_search_to_saved_view'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_saved_views") . " ADD `sv_global_search` text";
 		$sql['add_advance_view_field'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " ADD `advanceview` text NOT NULL"; 
+		$sql['defaultview_ele_type_text'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " CHANGE `defaultview` `defaultview` TEXT NOT NULL ";
+
 		
 		foreach($sql as $key=>$thissql) {
 			if(!$result = $xoopsDB->query($thissql)) {
@@ -367,7 +370,9 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
 					print "use default when blank already added.  result: OK<br>";
                 } elseif($key === "add_global_search_to_saved_view") {
                         print "global search saved view already added.  result: OK<br>";
-				} elseif($key === "add_advance_view_field") {
+				} elseif($key === "defaultview_ele_type_text") {
+					print "default view field change to text type already. result: OK<br>";
+				}elseif($key === "add_advance_view_field") {
 					print "advance view field already added.  result: OK<br>";
 				} elseif(strstr($key, 'drop_from_formulize_id_')) {
 					continue;
