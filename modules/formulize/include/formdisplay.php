@@ -1804,7 +1804,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
             } elseif(!$sub_single) {
                 $use_simple_add_one_button = (isset($subform_element_object->ele_value["simple_add_one_button"]) ?
                     1 == $subform_element_object->ele_value["simple_add_one_button"] : false);
-                $col_two .= "<p><input type=button name=addsub value='".($use_simple_add_one_button ? $subform_element_object->ele_value['simple_add_one_button_text'] : _formulize_ADD)."' onclick=\"javascript:add_sub('$subform_id', window.document.formulize.addsubentries$subform_id$subformElementId$subformInstance.value, ".$subformElementId.$subformInstance.");\">";
+                $col_two .= "<p><input type=button name=addsub value='".($use_simple_add_one_button ? trans($subform_element_object->ele_value['simple_add_one_button_text']) : _formulize_ADD)."' onclick=\"javascript:add_sub('$subform_id', window.document.formulize.addsubentries$subform_id$subformElementId$subformInstance.value, ".$subformElementId.$subformInstance.");\">";
                 if ($use_simple_add_one_button) {
                     $col_two .= "<input type=\"hidden\" name=addsubentries$subform_id$subformElementId$subformInstance id=addsubentries$subform_id$subformElementId$subformInstance value=\"1\">";
                 } else {

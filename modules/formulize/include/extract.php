@@ -251,25 +251,43 @@ function microtime_float()
    return ((float)$usec + (float)$sec);
 }
 
-function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitStart="", $limitSize="", $sortField="", $sortOrder="", $forceQuery=false, $mainFormOnly=0, $includeArchived=false, $dbTableUidField="", $id_reqsOnly=false, $resultOnly=false, $filterElements=null, $cacheKey="") { // IDREQS ONLY, only works with the main form!! returns array where keys and values are the id_reqs
-     
-     
-     
-     if($framework == "") { $framework = 0; } // we want to afirmatively make this a zero and not a null or anything else, for purposes of having consistent cacheKeys
-     if(is_numeric($framework)) { $framework = intval($framework); } // further standardization, to make cachekeys work better....
-     if(is_numeric($form)) { $form = intval($form); }
-     if(is_numeric($filter)) { $filter = intval($filter); }
-     
-     if(!$cacheKey) { return getDataCached($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $dbTableUidField, $id_reqsOnly, $resultOnly, $filterElements); }
+function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitStart="", $limitSize="", $sortField="",
+    $sortOrder="", $forceQuery=false, $mainFormOnly=0, $includeArchived=false, $dbTableUidField="", $id_reqsOnly=false,
+    $resultOnly=false, $filterElements=null, $cacheKey="")
+{
+    // $id_reqsOnly, only works with the main form!! returns array where keys and values are the id_reqs
+    if ($framework == "") {
+        // we want to afirmatively make this a zero and not a null or anything else, for purposes of having
+        //  consistent cacheKeys
+        $framework = 0;
+    }
+    if (is_numeric($framework)) {
+        // further standardization, to make cachekeys work better
+        $framework = intval($framework);
+    }
+    if (is_numeric($form)) {
+        $form = intval($form);
+    }
+    if (is_numeric($filter)) {
+        $filter = intval($filter);
+    }
+    if (!$cacheKey) {
+        return getDataCached($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField,
+            $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $dbTableUidField, $id_reqsOnly, $resultOnly,
+            $filterElements);
+    }
 
-     global $xoopsDB;
+    global $xoopsDB;
 
-     if(substr($filter, 0, 7) == "SELECT ") { // a proper SQL statement has been passed in so use that instead of constructing one...initially added for the new export feature
-	  $result = dataExtraction(intval($framework), intval($form), $filter, null, null, null, null, null, null, null, null);
-	  return $result;
-     }
-		 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
-		 $sortField = dealWithDeprecatedFrameworkHandles($sortField, $framework);
+    if (substr($filter, 0, 7) == "SELECT ") {
+        // use the SQL statement that has been passed in the $filter variable (for the export feature)
+        $result = dataExtraction(intval($framework), intval($form), $filter, null, null, $limitStart, $limitSize,
+            null, null, null, null);
+        return $result;
+    }
+
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+    $sortField = dealWithDeprecatedFrameworkHandles($sortField, $framework);
 
 	// have to check for the pressence of the Freeform Solutions archived user patch, and if present, then the includeArchived flag can be used
 	// if not present, ignore includeArchived
@@ -280,46 +298,54 @@ function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitS
 	if(isset($archres[0]['archived'])) {
 		$includeArchived = $includeArchived ? true : false;
 	} else {
-		$includeArchived = false;	
+		$includeArchived = false;
 	}*/
 
-     // check to see if this form is a "tableform", ie: a reference to plain db table
-     $isTableForm = false;
-     if(is_numeric($form)) {
-          $checkTableForm = $xoopsDB->query("SELECT tableform, desc_form FROM ".DBPRE."formulize_id WHERE id_form=$form");
-          $tableFormRow = $xoopsDB->fetchRow($checkTableForm);
-          $isTableForm = $tableFormRow[0] == "" ? false : true;
-     }
-     
-     // handle old style sort and order values...
-     $sortOrder = ($sortOrder == "SORT_ASC" OR $sortOrder == "ASC") ? "" : $sortOrder;
-     $sortOrder = ($sortOrder == "SORT_DESC") ? "DESC" : $sortOrder;
-          
-  if($isTableForm) {
-     $result = dataExtractionTableForm($tableFormRow[0], $tableFormRow[1], $form, $filter, $andor, $limitStart, $limitSize, $sortField, $sortOrder);
-  }elseif(substr($framework, 0, 3) == "db:") { // deprecated...tableforms are preferred approach now for direct table access
-		$result = dataExtractionDB(substr($framework, 3), $filter, $andor, $scope, $dbTableUidField);
-	} else {
-     
-	$result = dataExtraction($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $id_reqsOnly, $resultOnly, $filterElements);
-	}
-	
-	if($cacheKey AND !isset($GLOBALS['formulize_doNotCacheDataSet'])) { // doNotCacheDataSet can be set, so that this query will be repeated next time instead of pulled from the cache.  This is most useful to declare in derived value formulas that cause a change to the underlyin dataset by writing things to a form that is involved in this dataset.
-		 $GLOBALS['formulize_cachedGetDataResults'][$cacheKey] = $result;
-	}
-	
-	if(isset($GLOBALS['formulize_doNotCacheDataSet'])) { unset($GLOBALS['formulize_doNotCacheDataSet']); } // this needs to be declared before or during each extraction that should now be cached...caching is too important a cost savings when building the page
-	
-	return $result;
+    // check to see if this form is a "tableform", ie: a reference to plain db table
+    $isTableForm = false;
+    if (is_numeric($form)) {
+        $checkTableForm = $xoopsDB->query("SELECT tableform, desc_form FROM ".DBPRE."formulize_id WHERE id_form=$form");
+        $tableFormRow = $xoopsDB->fetchRow($checkTableForm);
+        $isTableForm = $tableFormRow[0] == "" ? false : true;
+    }
+
+    // handle old style sort and order values...
+    $sortOrder = ($sortOrder == "SORT_ASC" OR $sortOrder == "ASC") ? "" : $sortOrder;
+    $sortOrder = ($sortOrder == "SORT_DESC") ? "DESC" : $sortOrder;
+
+    if ($isTableForm) {
+        $result = dataExtractionTableForm($tableFormRow[0], $tableFormRow[1], $form, $filter, $andor, $limitStart, $limitSize, $sortField, $sortOrder);
+    } elseif (substr($framework, 0, 3) == "db:") {
+        // deprecated...tableforms are preferred approach now for direct table access
+        $result = dataExtractionDB(substr($framework, 3), $filter, $andor, $scope, $dbTableUidField);
+    } else {
+        $result = dataExtraction($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $id_reqsOnly, $resultOnly, $filterElements);
+    }
+
+    if ($cacheKey AND !isset($GLOBALS['formulize_doNotCacheDataSet'])) {
+        // doNotCacheDataSet can be set, so that this query will be repeated next time instead of pulled from the cache.  This is most useful to declare in derived value formulas that cause a change to the underlyin dataset by writing things to a form that is involved in this dataset.
+        $GLOBALS['formulize_cachedGetDataResults'][$cacheKey] = $result;
+    }
+
+    if (isset($GLOBALS['formulize_doNotCacheDataSet'])) {
+        // this needs to be declared before or during each extraction that should now be cached...caching is too important a cost savings when building the page
+        unset($GLOBALS['formulize_doNotCacheDataSet']);
+    }
+
+    return $result;
 }
 
-function getDataCached($framework, $form, $filter="", $andor="AND", $scope="", $limitStart="", $limitSize="", $sortField="", $sortOrder="", $forceQuery=false, $mainFormOnly=0, $includeArchived=false, $dbTableUidField="", $id_reqsOnly=false, $resultOnly=false, $filterElements=null) {
-		 if(isset($GLOBALS['formulize_cachedGetDataResults'][serialize(func_get_args())])) {
-					return $GLOBALS['formulize_cachedGetDataResults'][serialize(func_get_args())];
-		 } else {
-					$cacheKey = serialize(func_get_args());
-					return getData($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $dbTableUidField, $id_reqsOnly, $resultOnly, $filterElements, $cacheKey);
-		 }
+
+function getDataCached($framework, $form, $filter="", $andor="AND", $scope="", $limitStart="", $limitSize="",
+    $sortField="", $sortOrder="", $forceQuery=false, $mainFormOnly=0, $includeArchived=false, $dbTableUidField="",
+    $id_reqsOnly=false, $resultOnly=false, $filterElements=null)
+{
+    if (isset($GLOBALS['formulize_cachedGetDataResults'][serialize(func_get_args())])) {
+        return $GLOBALS['formulize_cachedGetDataResults'][serialize(func_get_args())];
+    } else {
+        $cacheKey = serialize(func_get_args());
+        return getData($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $dbTableUidField, $id_reqsOnly, $resultOnly, $filterElements, $cacheKey);
+    }
 }
 
 
@@ -462,6 +488,11 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	  $linkSelect = "";
 	  $exportOverrideQueries = array();
 
+    $limitClause = "";
+    if ($limitSize) {
+        $limitClause = " LIMIT $limitStart, $limitSize ";
+    }
+
 	  if(is_array($filter) OR (substr($filter, 0, 6) != "SELECT" AND substr($filter, 0, 6) != "INSERT")) { // if the filter is not itself a fully formed SQL statement...
     
 	       $scopeFilter = "";
@@ -516,11 +547,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
          } else {
                $mainFormWhereClause = "";
          }
-         
-	       $limitClause = "";
-	       if($limitSize) {
-		    $limitClause = " LIMIT $limitStart, $limitSize ";
-	       }
+
 	       if($whereClause) {
 		    $whereClause = "AND $whereClause";
 	       }     

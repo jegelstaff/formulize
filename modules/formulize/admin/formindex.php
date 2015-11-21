@@ -112,8 +112,12 @@ function patch40() {
      *
      * ====================================== */
 
+
     $checkThisTable = 'formulize_screen_graph';
     $checkThisField = 'defaultview';
+    // TODO ensure this was right thing to remove
+    // $checkThisTable = 'formulize_screen_template';
+    // $checkThisField = false; // no particular field to check.
     $checkThisProperty = false;
     $checkPropertyForValue = false;
 

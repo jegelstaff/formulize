@@ -5,6 +5,7 @@ CREATE TABLE `formulize_menu_links` (
     `rank` int(11),
     `url` varchar(255),
     `link_text` varchar(255),
+    `note` text,
     PRIMARY KEY (`menu_id`),
     INDEX i_menus_appid (appid)
 ) ENGINE=MyISAM;
@@ -49,6 +50,7 @@ CREATE TABLE `formulize_applications` (
   `appid` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL default '',
   `description` text NOT NULL,
+  `custom_code` mediumtext,
   PRIMARY KEY (`appid`)
 ) ENGINE=MyISAM;
 
@@ -288,7 +290,8 @@ CREATE TABLE formulize_id (
   form_handle varchar(255) NOT NULL default '',
   store_revisions tinyint(1) NOT NULL default '0',
   on_before_save text,
-  custom_edit_code text,
+  on_after_save text,
+  custom_edit_check text,
   note text,
   PRIMARY KEY  (`id_form`)
 ) ENGINE=MyISAM;
@@ -394,5 +397,14 @@ CREATE TABLE `formulize_screen_graph` (
   `limitviews` text NOT NULL,
   `usecurrentviewlist` varchar(255) NOT NULL default 'Current View: ',
   PRIMARY KEY (`formid`),
+  INDEX i_sid (`sid`)
+) ENGINE=MyISAM;
+
+CREATE TABLE formulize_screen_template (
+  templateid int(11) NOT NULL auto_increment,
+  sid int(11) NOT NULL default 0,
+  custom_code text NOT NULL,
+  template text NOT NULL,
+  PRIMARY KEY (`templateid`),
   INDEX i_sid (`sid`)
 ) ENGINE=MyISAM;
