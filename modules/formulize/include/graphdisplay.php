@@ -329,14 +329,14 @@ function dataProcess($graphType, $fid, $frid, $labelEleHandle, $dataEleHandle, $
             }
             break;
         case "sum" :
-        case "display":
+        case "display": // What is the practical difference between display and sum? If same, why have both?
             // TODO: Check this!
             foreach ($dataPoints as $thisLabel => $theseValues) {
                 $dataPoints[$thisLabel] = array_sum($theseValues);
             }
             $dataEleHandle = (($operation == "display") ? "Number of " : "Sum of ") . $dataEleHandle;
             break;
-        case "count-unique":
+        case "unique-count":
             foreach ($dataPoints as $thisLabel => $theseValues) {
                 $dataPoints[$thisLabel] = count(array_unique($theseValues));
             }
@@ -437,10 +437,10 @@ function dataProcess($graphType, $fid, $frid, $labelEleHandle, $dataEleHandle, $
                     }
 
                     break;
-        case "usecurrentviewlist":
-        case "limitviews":
-        case "defaultview":
-          break;
+                case "usecurrentviewlist":
+                case "limitviews":
+                case "defaultview":
+                    break;
                 default:
                     echo "Sorry, the graph option \"$graphoption\" for Bar graph is not supported at the moment!<br>";
                     break;
