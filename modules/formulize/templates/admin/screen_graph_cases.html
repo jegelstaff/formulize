@@ -10,29 +10,23 @@
 
 <div class="panel-content content">
     <fieldset>
-        <legend>Graph Actions</legend>
+        <legend>Graph Data</legend>
         <div class="form-item">
-            <label for="screens-ops">Graph Actions</label>
+            <label for="screens-ops">I want to graph the</label>
             <select id="screens-ops" size="1" name="screens-ops">
-                <option value="count"<{if $content.ops eq 'count'}> selected="selected"<{/if}>>Count Total</option>
-                <option value="unique-count"<{if $content.ops eq 'unique-count'}> selected="selected"<{/if}>>Count Unique</option>
+                <option value="count"<{if $content.ops eq 'count'}> selected="selected"<{/if}>>Count of Total Entries</option>
+                <option value="unique-count"<{if $content.ops eq 'unique-count'}> selected="selected"<{/if}>>Count of Unique Entries</option>
                 <option value="display"<{if $content.ops eq 'display'}> selected="selected"<{/if}>>Display</option>
                 <option value="sum"<{if $content.ops eq 'sum'}> selected="selected"<{/if}>>Sum</option>
             </select>
-        </div>
-    </fieldset>
-    <fieldset>
-        <legend>Graph Label Element</legend>
-        <div class="form-item">
-            <label for="screens-label">Graph Label Element</label>
-            <{$content.labelelem}>
-        </div>
-    </fieldset>
-    <fieldset>
-        <legend>Graph Data Element</legend>
-        <div class="form-item">
-            <label for="screens-data">Graph Data Element</label>
+            <label for="screens-data">of the data in the</label>
             <{$content.dataelem}>
+            <label>field.</label>
+        </div>
+        <div class="form-item">
+            <label for="screens-label">(Optional) I want to group that data based on its relation to the</label>
+            <{$content.labelelem}>
+            <label>field.</label>
         </div>
     </fieldset>
 
