@@ -123,7 +123,7 @@ function graphParamCheck($graphType, $fid, $frid, $labelEleHandle, $dataEleHandl
     $formObject=$form_handler->get($fid);
 
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
-    $labelElemtntObject=$element_handler->get($labelEleHandle);
+    //$labelElemtntObject=$element_handler->get($labelEleHandle);
     $dataEleHandleObject=$element_handler->get($dataEleHandle);
 
 
@@ -138,10 +138,10 @@ function graphParamCheck($graphType, $fid, $frid, $labelEleHandle, $dataEleHandl
     }
     /*if (!isset($frid))
     echo "";*/
-    if (!isset($labelEleHandle) || $labelElemtntObject==null) {
+    /*if (!isset($labelEleHandle) || $labelElemtntObject==null) {
         echo "Label Element did not found.";
         return false;
-    }
+    } */
     if (!isset($dataEleHandle) || $dataEleHandleObject==null) {
         echo "Data Element did not found.";
         return false;
@@ -284,6 +284,10 @@ function dataProcess($graphType, $fid, $frid, $labelEleHandle, $dataEleHandle, $
         $view_globalscope, $prevview, $loadOnlyView, $screen, $lastLoaded);
 
     // End of code from entriesdisplay
+    
+    if (!isset($labelEleHandle)) {
+    	$labelEleHandle = $dataEleHandle;
+    }
 
     foreach ($dbData as $entry) {
         // mayor - OR array of mayors if there's more than one in the dataset, depending on the one-to-may in a relationship
