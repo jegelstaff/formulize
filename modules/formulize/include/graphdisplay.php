@@ -285,6 +285,7 @@ function dataProcess($graphType, $fid, $frid, $labelEleHandle, $dataEleHandle, $
 
     // End of code from entriesdisplay
     
+    // label should default to the same as data if it is not set
     if (!isset($labelEleHandle)) {
     	$labelEleHandle = $dataEleHandle;
     }

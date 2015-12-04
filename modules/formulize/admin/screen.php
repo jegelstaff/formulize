@@ -306,7 +306,7 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
 
     // setup all the elements in this form for use in the listboxes
     include_once XOOPS_ROOT_PATH . "/modules/formulize/class/forms.php";
-    $options = multiPageScreen_addToOptionsList($form_id, array());
+    $options = appendFormElementsToOptions($form_id, array());
 
     // add in elements from other forms in the framework, by looping through each link in the framework and checking if it is a display as one, one-to-one link
     // added March 20 2008, by jwe
@@ -317,7 +317,7 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
         foreach($frameworkObject->getVar("links") as $thisLinkObject) {
             if ($thisLinkObject->getVar("unifiedDisplay") AND $thisLinkObject->getVar("relationship") == 1) {
                 $thisFid = $thisLinkObject->getVar("form1") == $form_id ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
-                $options = multiPageScreen_addToOptionsList($thisFid, $options);
+                $options = appendFormElementsToOptions($thisFid, $options);
             }
         }
     }
@@ -366,18 +366,7 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
 }
 
 if ($screen_id != "new" && $settings['type'] == 'form') {
-    if (!function_exists("multiPageScreen_addToOptionsList")) {
-        function multiPageScreen_addToOptionsList($form_id, $options) {
-            $formObject = new formulizeForm($form_id, true); // true causes all elements, even ones now shown to any user, to be included
-            $elements = $formObject->getVar('elements');
-            $elementCaptions = $formObject->getVar('elementCaptions');
-            foreach($elementCaptions as $key=>$elementCaption) {
-                $options[$elements[$key]] = printSmart(trans(strip_tags($elementCaption))); // need to pull out potential HTML tags from the caption
-            }
-            return $options;
-        }
-    }
-    $element_list = multiPageScreen_addToOptionsList($form_id, array());
+    $element_list = appendFormElementsToOptions($form_id, array());
     $frid = $screen->getVar("frid");
     if ($frid) {
         $framework_handler =& xoops_getModuleHandler('frameworks');
@@ -385,7 +374,7 @@ if ($screen_id != "new" && $settings['type'] == 'form') {
         foreach($frameworkObject->getVar("links") as $thisLinkObject) {
             if ($thisLinkObject->getVar("unifiedDisplay") AND $thisLinkObject->getVar("relationship") == 1) {
                 $thisFid = $thisLinkObject->getVar("form1") == $form_id ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
-                $element_list = multiPageScreen_addToOptionsList($thisFid, $element_list);
+                $element_list = appendFormElementsToOptions($thisFid, $element_list);
             }
         }
     }
@@ -413,9 +402,9 @@ if ($screen_id != "new" && $settings['type'] == "graph") {
     $graph_options['barg'] = $screen->getVar('barg');
     $graph_options['barb'] = $screen->getVar('barb');
     $graph_options['ops'] = $screen->getVar('ops');
-    list($labelelem, $selectedlabelelem) = createFieldList($screen->getVar('labelelem'), false, false, "screens-labelelem", "(Default)");
+    list($labelelem, $selectedlabelelem) = createFieldList($screen->getVar('labelelem'), false, false, "screens-labelelem", "(Default)", false, array(listRelatedForms($screen, $form_id)));
     $graph_options['labelelem'] = $labelelem->render();
-    list($dataelem, $selecteddataelem) = createFieldList($screen->getVar('dataelem'), false, false, "screens-dataelem", false, false, false);
+    list($dataelem, $selecteddataelem) = createFieldList($screen->getVar('dataelem'), false, false, "screens-dataelem", false, false, array(listRelatedForms($screen, $form_id)), false);
     $graph_options['dataelem'] = $dataelem->render();
     $framework_handler =& xoops_getmodulehandler('frameworks', 'formulize');
     $form_handler =& xoops_getmodulehandler('forms', 'formulize');

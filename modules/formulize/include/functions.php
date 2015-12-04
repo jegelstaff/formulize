@@ -2189,11 +2189,21 @@ function writeOtherValues($id_req, $fid, $subformBlankCounter=null) {
     }
 }
 
+function appendFormElementsToOptions($form_id, $options) {
+	$formObject = new formulizeForm($form_id, true); // true causes all elements, even ones now shown to any user, to be included
+    $elements = $formObject->getVar('elements');
+    $elementCaptions = $formObject->getVar('elementCaptions');
+    foreach($elementCaptions as $key=>$elementCaption) {
+    	$options[$elements[$key]] = printSmart(trans(strip_tags($elementCaption))); // need to pull out potential HTML tags from the caption
+    }
+    return $options;
+}
+
 
 // THIS FUNCTION CREATES A SERIES OF ARRAYS THAT CONTAIN ALL THE INFORMATION NECESSARY FOR THE LIST OF ELEMENTS THAT GETS DISPLAYED ON THE ADMIN SIDE WHEN CREATING OR EDITING CERTAIN FORM ELEMENTS
 // new use with textboxes triggers a different value to be used -- just the ele_id from the 'formulize' table, which is all that is necessary to uniquely identify the element
 // note that ele_value has different contents for textboxes and selectboxes
-function createFieldList($val, $textbox=false, $limitToForm=false, $name="", $firstValue="", $multi_select = false, $includeNoneOption = true) {
+function createFieldList($val, $textbox=false, $limitToForm=false, $name="", $firstValue="", $multi_select = false) {
     global $xoopsDB;
     array($formids);
     array($formnames);
@@ -2249,9 +2259,7 @@ function createFieldList($val, $textbox=false, $limitToForm=false, $name="", $fi
 
     // make the select box and add all the options
     $formlink = new XoopsFormSelect($am_ele_formlink, $name, '', $multi_select ? 8 : 1, $multi_select);
-    if ($includeNoneOption) {
-	    $formlink->addOption("none", $am_formlink_none);
-    }
+    $formlink->addOption("none", $am_formlink_none);
     for ($i=0;$i<$captionlistindex;$i++) {
         $formlink->addOption($totalvaluelist[$i], htmlspecialchars(strip_tags($totalcaptionlist[$i])));
     }
