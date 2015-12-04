@@ -9,7 +9,7 @@ CREATE TABLE `formulize_menu_links` (
     PRIMARY KEY (`menu_id`),
     INDEX i_menus_appid (appid)
 ) ENGINE=MyISAM;
-    
+
 CREATE TABLE `formulize_menu_permissions` (
     `permission_id` int(11) unsigned NOT NULL auto_increment,
     `menu_id` int(11) unsigned NOT NULL,
@@ -44,7 +44,7 @@ CREATE TABLE `formulize_advanced_calculations` (
   `fltr_grptitles` text NOT NULL,
   PRIMARY KEY  (`acid`),
   KEY `i_fid` (`fid`)
-) ENGINE=MyISAM; 
+) ENGINE=MyISAM;
 
 CREATE TABLE `formulize_applications` (
   `appid` int(11) NOT NULL auto_increment,
@@ -95,7 +95,7 @@ CREATE TABLE `formulize_screen_listofentries` (
   `useaddmultiple` varchar(255) NOT NULL default '',
   `useaddproxy` varchar(255) NOT NULL default '',
   `usecurrentviewlist` varchar(255) NOT NULL default '',
-  `limitviews` text NOT NULL, 
+  `limitviews` text NOT NULL,
   `defaultview` varchar(20) NOT NULL default '',
   `usechangecols` varchar(255) NOT NULL default '',
   `usecalcs` varchar(255) NOT NULL default '',
@@ -113,8 +113,8 @@ CREATE TABLE `formulize_screen_listofentries` (
   `usesave` varchar(255) NOT NULL default '',
   `usedeleteview` varchar(255) NOT NULL default '',
   `useheadings` tinyint(1) NOT NULL,
-  `usesearch` tinyint(1) NOT NULL, 
-  `usecheckboxes` tinyint(1) NOT NULL, 
+  `usesearch` tinyint(1) NOT NULL,
+  `usecheckboxes` tinyint(1) NOT NULL,
   `useviewentrylinks` tinyint(1) NOT NULL,
   `usescrollbox` tinyint(1) NOT NULL,
   `usesearchcalcmsgs` tinyint(1) NOT NULL,
@@ -124,7 +124,7 @@ CREATE TABLE `formulize_screen_listofentries` (
   `desavetext` varchar(255) NOT NULL default '',
   `columnwidth` int(1) NOT NULL,
   `textwidth` int(1) NOT NULL,
-  `customactions` text NOT NULL, 
+  `customactions` text NOT NULL,
   `toptemplate` text NOT NULL,
   `listtemplate` text NOT NULL,
   `bottomtemplate` text NOT NULL,
@@ -139,9 +139,9 @@ CREATE TABLE `formulize_screen_multipage` (
   `sid` int(11) NOT NULL default 0,
   `introtext` text NOT NULL,
   `thankstext` text NOT NULL,
-  `toptemplate` text NOT NULL,       
-  `elementtemplate` text NOT NULL,   
-  `bottomtemplate` text NOT NULL,	
+  `toptemplate` text NOT NULL,
+  `elementtemplate` text NOT NULL,
+  `bottomtemplate` text NOT NULL,
   `donedest` varchar(255) NOT NULL default '',
   `buttontext` varchar(255) NOT NULL default '',
   `finishisdone` tinyint(1) NOT NULL default 0,
@@ -378,6 +378,28 @@ CREATE TABLE formulize_deletion_logs (
   INDEX i_del_id (del_log_id)
 ) ENGINE=MyISAM;
 
+CREATE TABLE `formulize_screen_graph` (
+  `formid` int(11) NOT NULL auto_increment,
+  `sid` int(11) NOT NULL default 0,
+  `width` int(11) NOT NULL default 500,
+  `height` int(11) NOT NULL default 300,
+  `orientation` varchar(255) NOT NULL default 'horizontal',
+  `bgr` int(8) NOT NULL default 141,
+  `bgg` int(8) NOT NULL default 189,
+  `bgb` int(8) NOT NULL default 225,
+  `barr` int(8) NOT NULL default 143,
+  `barg` int(8) NOT NULL default 190,
+  `barb` int(8) NOT NULL default 88,
+  `ops` varchar(255) NOT NULL default 'count',
+  `labelelem` int(8) NOT NULL default 0,
+  `dataelem` int(8) NOT NULL default 0,
+  `defaultview` varchar(20) NOT NULL default 'all',
+  `limitviews` text NOT NULL,
+  `usecurrentviewlist` varchar(255) NOT NULL default 'Current View: ',
+  PRIMARY KEY (`formid`),
+  INDEX i_sid (`sid`)
+) ENGINE=MyISAM;
+
 CREATE TABLE formulize_screen_template (
   templateid int(11) NOT NULL auto_increment,
   sid int(11) NOT NULL default 0,
@@ -386,4 +408,3 @@ CREATE TABLE formulize_screen_template (
   PRIMARY KEY (`templateid`),
   INDEX i_sid (`sid`)
 ) ENGINE=MyISAM;
-

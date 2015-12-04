@@ -202,17 +202,6 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 
 }
 
-function multiPageScreen_addToOptionsList($fid, $options) {
-		$formObject = new formulizeForm($fid);
-		$elements = $formObject->getVar('elements');
-		$elementCaptions = $formObject->getVar('elementCaptions');
-    foreach($elementCaptions as $key=>$elementCaption) {
-			$options[$elements[$key]] = printSmart(trans(strip_tags($elementCaption))); // need to pull out potential HTML tags from the caption
-		}
-		return $options;
-}
-
-
 
 // $pageNumber is the number of the current page, starting from 0 for the first one
 // $pageTitle is the text of the title of this page

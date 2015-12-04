@@ -65,6 +65,8 @@ if ($screen_id == "new") {
         $screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
     } else if ($settings['type'] == 'multiPage') {
         $screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+    } else if($settings['type'] == 'graph') {
+        $screen_handler = xoops_getmodulehandler('graphScreen', 'formulize');
     } else if ($settings['type'] == 'template') {
         $screen_handler = xoops_getmodulehandler('templateScreen', 'formulize');
     }
@@ -304,7 +306,7 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
 
     // setup all the elements in this form for use in the listboxes
     include_once XOOPS_ROOT_PATH . "/modules/formulize/class/forms.php";
-    $options = multiPageScreen_addToOptionsList($form_id, array());
+    $options = appendFormElementsToOptions($form_id, array());
 
     // add in elements from other forms in the framework, by looping through each link in the framework and checking if it is a display as one, one-to-one link
     // added March 20 2008, by jwe
@@ -315,7 +317,7 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
         foreach($frameworkObject->getVar("links") as $thisLinkObject) {
             if ($thisLinkObject->getVar("unifiedDisplay") AND $thisLinkObject->getVar("relationship") == 1) {
                 $thisFid = $thisLinkObject->getVar("form1") == $form_id ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
-                $options = multiPageScreen_addToOptionsList($thisFid, $options);
+                $options = appendFormElementsToOptions($thisFid, $options);
             }
         }
     }
@@ -364,29 +366,7 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
 }
 
 if ($screen_id != "new" && $settings['type'] == 'form') {
-    if (!function_exists("multiPageScreen_addToOptionsList")) {
-        function multiPageScreen_addToOptionsList($form_id, $options) {
-            $formObject = new formulizeForm($form_id, true); // true causes all elements, even ones now shown to any user, to be included
-            $elements = $formObject->getVar('elements');
-            $elementCaptions = $formObject->getVar('elementCaptions');
-            foreach($elementCaptions as $key=>$elementCaption) {
-                $options[$elements[$key]] = printSmart(trans(strip_tags($elementCaption))); // need to pull out potential HTML tags from the caption
-            }
-            return $options;
-        }
-    }
-    $element_list = multiPageScreen_addToOptionsList($form_id, array());
-    $frid = $screen->getVar("frid");
-    if ($frid) {
-        $framework_handler =& xoops_getModuleHandler('frameworks');
-        $frameworkObject = $framework_handler->get($frid);
-        foreach($frameworkObject->getVar("links") as $thisLinkObject) {
-            if ($thisLinkObject->getVar("unifiedDisplay") AND $thisLinkObject->getVar("relationship") == 1) {
-                $thisFid = $thisLinkObject->getVar("form1") == $form_id ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
-                $element_list = multiPageScreen_addToOptionsList($thisFid, $element_list);
-            }
-        }
-    }
+    $element_list = listFormOptions($form_id, $screen, array());
 
     $options = array();
     $options['donedest'] = $screen->getVar('donedest');
@@ -396,6 +376,64 @@ if ($screen_id != "new" && $settings['type'] == 'form') {
     $options['reloadblank'] = $screen->getVar('reloadblank') ? "blank" : "entry";
     $options['formelements'] = $screen->getVar('formelements');
     $options['element_list'] = $element_list;
+}
+
+
+if ($screen_id != "new" && $settings['type'] == "graph") {
+    $graph_options = array();
+    $graph_options['width'] = $screen->getVar('width');
+    $graph_options['height'] = $screen->getVar('height');
+    $graph_options['orientation'] = $screen->getVar('orientation');
+    $graph_options['bgr'] = $screen->getVar('bgr');
+    $graph_options['bgg'] = $screen->getVar('bgg');
+    $graph_options['bgb'] = $screen->getVar('bgb');
+    $graph_options['barr'] = $screen->getVar('barr');
+    $graph_options['barg'] = $screen->getVar('barg');
+    $graph_options['barb'] = $screen->getVar('barb');
+    $graph_options['ops'] = $screen->getVar('ops');
+    $graph_options['selecteddataelem'] = $screen->getVar('dataelem');
+    $graph_options['selectedlabelelem'] = $screen->getVar('labelelem');
+    $dataOptions = array();
+    $dataelem = listFormOptions($form_id, $screen, $dataOptions);
+    $graph_options['dataelem'] = $dataelem;
+    $labelOptions = array();
+    $labelOptions["none"] = "(Default)";
+    $labelelem = listFormOptions($form_id, $screen, $labelOptions);
+    $graph_options['labelelem'] = $labelelem;
+    $framework_handler =& xoops_getmodulehandler('frameworks', 'formulize');
+    $form_handler =& xoops_getmodulehandler('forms', 'formulize');
+    $formObj = $form_handler->get($form_id, true); // true causes all elements to be included even if they're not visible.
+    $frameworks = $framework_handler->getFrameworksByForm($form_id);
+    $views = $formObj->getVar('views');
+    $viewPublished = $formObj->getVar('viewPublished');
+    $viewNames = $formObj->getVar('viewNames');
+    $viewFrids = $formObj->getVar('viewFrids');
+    $defaultViewOptions = array();
+    $limitViewOptions = array();
+    $defaultViewOptions['blank'] = _AM_FORMULIZE_SCREEN_LOE_BLANK_DEFAULTVIEW;
+    $defaultViewOptions['mine'] = _AM_FORMULIZE_SCREEN_LOE_DVMINE;
+    $defaultViewOptions['group'] = _AM_FORMULIZE_SCREEN_LOE_DVGROUP;
+    $defaultViewOptions['all'] = _AM_FORMULIZE_SCREEN_LOE_DVALL;
+    for ($i=0;$i<count($views);$i++) {
+        if (!$viewPublished[$i]) {
+            continue;
+        }
+        $defaultViewOptions[$views[$i]] = $viewNames[$i];
+        if ($viewFrids[$i]) {
+            $defaultViewOptions[$views[$i]] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_IN_FRAME . $frameworks[$viewFrids[$i]]->getVar('name') . ")";
+        } else {
+            $defaultViewOptions[$views[$i]] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_NO_FRAME . ")";
+        }
+    }
+    $limitViewOptions['allviews'] = _AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEWLIMIT;
+    $limitViewOptions += $defaultViewOptions;
+    unset($limitViewOptions['blank']);
+    unset($defaultViewOptions['blank']);
+    $graph_options['defaultviewoptions'] = $defaultViewOptions;
+    $graph_options['defaultview'] = $screen->getVar('defaultview');
+    $graph_options['usecurrentviewlist'] = $screen->getVar('usecurrentviewlist');
+    $graph_options['limitviewoptions'] = $limitViewOptions;
+    $graph_options['limitviews'] = $screen->getVar('limitviews');
 }
 
 
@@ -502,6 +540,17 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
         'template'  => "db:admin/screen_list_templates.html",
         'content'   => $templates + $common
     );
+}
+
+
+if ($screen_id != "new" && $settings['type'] == "graph") {
+    $adminPage['tabs'][2]['name'] = _AM_GRAPH_SCREEN_OPTIONS;
+    $adminPage['tabs'][2]['template'] = "db:admin/screen_graph_options.html";
+    $adminPage['tabs'][2]['content'] = $graph_options + $common;
+
+    $adminPage['tabs'][3]['name'] = _AM_GRAPH_SCREEN_CASES;
+    $adminPage['tabs'][3]['template'] = "db:admin/screen_graph_cases.html";
+    $adminPage['tabs'][3]['content'] = $graph_options + $common;
 }
 
 

@@ -60,6 +60,8 @@ if($screens['type'] == 'multiPage') {
   $screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
 } else if($screens['type'] == 'form') {
   $screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
+} else if($screens['type'] == 'graph') {
+  $screen_handler = xoops_getmodulehandler('graphScreen', 'formulize');
 } else if($screens['type'] == 'template') {
     $screen_handler = xoops_getmodulehandler('templateScreen', 'formulize');
 }
@@ -111,12 +113,27 @@ if($isNew) {
       $screen->setVar('usereset',_formulize_DE_RESETVIEW);
       $screen->setVar('usesave',_formulize_DE_SAVE);
       $screen->setVar('usedeleteview',_formulize_DE_DELETE);
-    
+
   } else if($screens['type'] == 'form') {
       $screen->setVar('displayheading', 1);
       $screen->setVar('reloadblank', 0);
       $screen->setVar('savebuttontext', _formulize_SAVE);
       $screen->setVar('alldonebuttontext', _formulize_DONE);
+  } else if($screens['type'] == 'graph') {
+    // Defaults settings for graph screen. When trying to load graph screen with default settings
+    // user will be redirected to setting section
+    $screen->setVar('width', 500);
+    $screen->setVar('height', 300);
+    $screen->setVar('orientation', "horizontal");
+    $screen->setVar('bgr', 141);
+    $screen->setVar('bgg', 189);
+    $screen->setVar('bgb', 225);
+    $screen->setVar('barr', 143);
+    $screen->setVar('barg', 190);
+    $screen->setVar('barb', 88);
+    $screen->setVar('labelelem', 0);
+    $screen->setVar('dataelem', 0);
+    $screen->setVar('ops', '');
   } else if ($screens['type'] == 'template') {
       $screen->setVar('custom_code', "");
       $screen->setVar('template', "");
@@ -138,7 +155,7 @@ if(!$sid = $screen_handler->insert($screen)) {
 }
 
 if($isNew) {
-  
+
   // write out the necessary templates...
   // templates - initialize with the necessary php opening tags
   if($screens['type'] == "multiPage") {

@@ -499,6 +499,19 @@ foreach($templateScreens as $screen) {
     $i++;
 }
 
+$graphsScreens = $screen_handler->getObjects(new Criteria('type','graph'), $fid);
+$i = 1;
+foreach ($graphsScreens as $screen) {
+    $screens['graphs'][$i]['sid'] = $screen->getVar('sid');
+    $screens['graphs'][$i]['title'] = $screen->getVar('title');
+
+    // added a field to show what is the type of this graph screen
+    $graph_screen_handler=xoops_getmodulehandler('graphScreen', 'formulize');
+    $tempScreen=$graph_screen_handler->get($screen->getVar('sid'));
+    $screens['graphs'][$i]['type']=$tempScreen->getVar('orientation');
+    $i++;
+}
+
 $settings = array();
 $settings['singleentry'] = $singleentry;
 $settings['menutext'] = $menutext;

@@ -21,13 +21,14 @@
 	  </div>
 	  <div class="form-item">
 		  <label for="screens-type">What kind of screen is this:</label>
-			
-	    <select id="screens-type" size="1" name="screens-type"<{if $content.sid neq 'new'}> disabled<{/if}>>
+
+        <select id="screens-type" size="1" name="screens-type" onchange="toggle('labelEle','dataEle')" <{if $content.sid neq 'new'}> disabled<{/if}>>
 		    <option value="listOfEntries"<{if $content.type eq 'listOfEntries'}> selected="selected"<{/if}>>List of entries</option>
 		    <option value="form"<{if $content.type eq 'form'}> selected="selected"<{/if}>>Regular form</option>
 		    <option value="multiPage"<{if $content.type eq 'multiPage'}> selected="selected"<{/if}>>Multi page form</option>
-          <option value="template"<{if $content.type eq 'template'}> selected="selected"<{/if}>>Template</option>
-	    </select>
+            <option value="graph"<{if $content.type eq 'graph'}> selected="selected"<{/if}>>Graph</option>
+            <option value="template"<{if $content.type eq 'template'}> selected="selected"<{/if}>>Template</option>
+        </select>
 			<{if $content.sid neq 'new'}>
 				<input type="hidden" name="screens-type" value="<{$content.type}>">
 			<{/if}>
@@ -39,7 +40,7 @@
 		<p>To give people access to this screen, send them to this URL:</p>
 		<blockquote><{$xoops_url}>/modules/formulize/index.php?sid=<{$content.sid}></blockquote>
 	</fieldset>
-	
+
 	<fieldset>
 		<legend>PHP code for including this screen anywhere</legend>
 		<p>You can embed this screen in any PHP application or web page that is running on the same web server.<br />Use this snippet of PHP code to include it:</p>

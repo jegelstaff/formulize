@@ -55,7 +55,7 @@ if (!is_object($screen)) {
 // setup all the elements in this form for use in the listboxes
 include_once XOOPS_ROOT_PATH . "/modules/formulize/class/forms.php";
 $fid = $screen->getVar('fid');
-$options = multiPageScreen_addToOptionsList($fid, array());
+$options = appendFormElementsToOptions($fid, array());
 
 // add in elements from other forms in the framework, by looping through each link in the framework and checking if it is a display as one, one-to-one link
 // added March 20 2008, by jwe
@@ -66,7 +66,7 @@ if ($frid) {
     foreach($frameworkObject->getVar("links") as $thisLinkObject) {
         if ($thisLinkObject->getVar("unifiedDisplay") AND $thisLinkObject->getVar("relationship") == 1) {
             $thisFid = $thisLinkObject->getVar("form1") == $fid ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
-            $options = multiPageScreen_addToOptionsList($thisFid, $options);
+            $options = appendFormElementsToOptions($thisFid, $options);
         }
     }
 }

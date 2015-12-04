@@ -36,7 +36,7 @@
     float: left;
     border: 1px solid white;
     padding: 5px;
-    
+
 }
 
 #currentview {
@@ -70,8 +70,8 @@ button, input[type='submit'], input[type='button'], input[type='reset'] {
     border-color: #ccc;
 }
 button:hover, .xo-formbuttons:hover, .formButton:hover {
-    transform: scale(1.2);  
-    box-shadow: 0 0 65px #F4F9FE inset, 0 0 20px #F4F9FE inset, 0 0 15px #333;  
+    transform: scale(1.2);
+    box-shadow: 0 0 65px #F4F9FE inset, 0 0 20px #F4F9FE inset, 0 0 15px #333;
 }
 button:focus, input[type='submit']:focus, input[type='button']:focus, input[type='reset']:focus, .xo-formbuttons:focus, .formButton:focus {
     background-color: #f4f4f4;
@@ -82,7 +82,7 @@ button:focus, input[type='submit']:focus, input[type='button']:focus, input[type
     text-indent:30px;
     border-color: #0076a3;
     color: #fff !important;
-    text-shadow: 0 -1px 0 rgba(0,0,0,.4);    
+    text-shadow: 0 -1px 0 rgba(0,0,0,.4);
     font-size: 15px;
     font-weight: bold;
     height: 36px;
@@ -94,7 +94,7 @@ button:focus, input[type='submit']:focus, input[type='button']:focus, input[type
     text-indent:40px;
     height: 36px;
     color: #fff !important;
-    text-shadow: 0 -1px 0 rgba(0,0,0,.4);    
+    text-shadow: 0 -1px 0 rgba(0,0,0,.4);
     font-size: 15px;
 }
 
@@ -104,13 +104,13 @@ button:focus, input[type='submit']:focus, input[type='button']:focus, input[type
     width: 185px;
     height: 36px;
     color: #fff !important;
-    text-shadow: 0 -1px 0 rgba(0,0,0,.4);    
+    text-shadow: 0 -1px 0 rgba(0,0,0,.4);
     font-size: 15px;
 }
 
 /*=== Formulize Boutons by Francois T ===*/
 #formulize_addButton, #formulize_addProxyButton {
-    text-indent:45px;   
+    text-indent:45px;
     background:#2F85DC url('../../images/contact-new.png') no-repeat 10px;
     width: 210px !important;
 }
@@ -121,7 +121,7 @@ button:focus, input[type='submit']:focus, input[type='button']:focus, input[type
 }
 #formulize_changeColsButton {
     background:#61A6EE url('../../images/table.png') no-repeat 10px;
-    
+
 }
 #formulize_exportButton {
     background:#2F85DC url('../../images/math.png') no-repeat 10px;
@@ -360,4 +360,10 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
         // do not print the edit element link
         display: none;
     }
+}
+
+#graph {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
 }

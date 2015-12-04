@@ -1,0 +1,65 @@
+<{* form elements must be named with their object name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a property of an object to update *}>
+<{* securitytoken should be part of the form *}>
+<{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
+
+<form id="form-<{$number}>" class="formulize-admin-form">
+<{$securitytoken}>
+<input type="hidden" name="formulize_admin_handler" value="screen_graph_cases">
+<input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
+
+<div class="panel-content content">
+    <fieldset>
+        <legend>Graph Data</legend>
+        <div class="form-item">
+            <label for="screens-ops">I want to graph the</label>
+            <select id="screens-ops" size="1" name="screens-ops">
+                <option value="count"<{if $content.ops eq 'count'}> selected="selected"<{/if}>>Count of Total Entries</option>
+                <option value="unique-count"<{if $content.ops eq 'unique-count'}> selected="selected"<{/if}>>Count of Unique Entries</option>
+                <option value="sum"<{if $content.ops eq 'sum'}> selected="selected"<{/if}>>Sum</option>
+            </select>
+            <label for="screens-data">of the data in the</label>
+            <select id="screens-dataelem" name="screens-dataelem">
+            <{html_options options=$content.dataelem selected=$content.selecteddataelem}>
+            </select>
+            
+            <label>field.</label>
+        </div>
+        <div class="form-item">
+            <label for="screens-label">(Optional) I want to group that data based on its relation to the</label>
+            <select id="screens-labelelem" name="screens-labelelem">
+            <{html_options options=$content.labelelem selected=$content.selectedlabelelem}>
+            </select>
+            <label>field.</label>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Views</legend>
+        <div class="form-item float-left half-width">
+            <label for="screens-defaultview"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEW}></label>
+            <select id="screens-defaultview" name="screens-defaultview" size="1">
+                <{html_options options=$content.defaultviewoptions selected=$content.defaultview}>
+            </select>
+            <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_DEFAULTVIEW}></div>
+        </div>
+        <div class="form-item clear-both">
+            <label for="screens-usecurrentviewlist"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CURRENTVIEWLIST}></label>
+            <input type="text" id="screens-usecurrentviewlist" name="screens-usecurrentviewlist" value="<{$content.usecurrentviewlist}>" size="20" maxlength="255"/>
+            <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_LEAVEBLANK_LIST}></div>
+        </div>
+        <div class="form-item">
+            <label for="screens-limitviews"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_LIMITVIEWS}></label>
+            <select id="screens-limitviews[]" name="screens-limitviews[]" size="8" multiple>
+                <{html_options options=$content.limitviewoptions selected=$content.limitviews}>
+            </select>
+            <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_LIMITVIEWS}></div>
+        </div>
+    </fieldset>
+</div>
+
+</form>
+
+<script type="text/javascript">
+    $("#<{$content.reloadblank}>").attr('checked', true);
+</script>

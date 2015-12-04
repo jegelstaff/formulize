@@ -28,7 +28,7 @@
     <table>
 	    <tr>
 		    <th>Name</th>
-			<th>id</th>
+        <th>ID</th>
 		    <th>Type</th>
 		    <th>Default</th>
 		    <th>Action</th>
@@ -62,7 +62,7 @@
     <table>
 	    <tr>
 		    <th>Name</th>
-				<th>id</th>
+				<th>ID</th>
 		    <th>Default</th>
 		    <th>Action</th>
 	    </tr>
@@ -101,6 +101,28 @@
         </table>
     </div>
     <{/if}>
+
+    <h2><{$smarty.const._AM_SCREEN_GRAPHSCREENS}></h2>
+    <div class="form-item">
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>ID</th>
+            <th>Type</th>
+            <th>Action</th>
+        </tr>
+        <{foreach from=$content.graphs item=screen}>
+        <tr>
+            <td><label for="screens-defaultgraph-<{$screen.sid}>"><a class="configscreen" target-sid="<{$screen.sid}>" href="?page=screen&aid=<{$content.aid}>&fid=<{$content.fid}>&sid=<{$screen.sid}>"><img src="../images/kedit.png"> <{$screen.title}></a></label></td>
+            <td><{$screen.sid}></td>
+            <td><{if $screen.type eq 'horizontal'}>Bar Chart,Horizontal<{/if}>
+            <{if $screen.type eq 'vertical'}>Bar Chart,Vertical<{/if}>
+            <{if $screen.type eq 'pie'}> Pie Chart<{/if}></td>
+            <td><a href="<{$xoops_url}>/modules/formulize/index.php?sid=<{$screen.sid}>" target="_blank"><img src="../images/kfind.png"> View</a>&nbsp;&nbsp;&nbsp;&nbsp;<a class="deletescreen" target="<{$screen.sid}>" href=""><img src="../images/editdelete.gif"> Remove</a></td>
+        </tr>
+        <{/foreach}>
+        </table>
+    </div>
 
 </div>
 

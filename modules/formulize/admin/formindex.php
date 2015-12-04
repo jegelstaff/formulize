@@ -112,8 +112,12 @@ function patch40() {
      *
      * ====================================== */
 
-    $checkThisTable = 'formulize_screen_template';
-    $checkThisField = false; // no particular field to check.
+
+    $checkThisTable = 'formulize_screen_graph';
+    $checkThisField = 'defaultview';
+    // TODO ensure this was right thing to remove
+    // $checkThisTable = 'formulize_screen_template';
+    // $checkThisField = false; // no particular field to check.
     $checkThisProperty = false;
     $checkPropertyForValue = false;
 
@@ -293,6 +297,29 @@ function patch40() {
         ) ENGINE=MyISAM;";
         }
 
+        if (!in_array($xoopsDB->prefix("formulize_screen_graph"), $existingTables)) {
+            $sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_screen_graph")."` (
+            `formid` int(11) NOT NULL auto_increment,
+            `sid` int(11) NOT NULL default 0,
+            `width` int(11) NOT NULL default 800,
+            `height` int(11) NOT NULL default 600,
+            `orientation` varchar(255) NOT NULL default 'horizontal',
+            `bgr` int(8) NOT NULL default 141,
+            `bgg` int(8) NOT NULL default 189,
+            `bgb` int(8) NOT NULL default 225,
+            `barr` int(8) NOT NULL default 143,
+            `barg` int(8) NOT NULL default 190,
+            `barb` int(8) NOT NULL default 88,
+            `ops` varchar(255) NOT NULL default 'count',
+            `labelelem` int(8) NOT NULL default 0,
+            `dataelem` int(8) NOT NULL default 0,
+            `limitviews` text NOT NULL,
+            `usecurrentviewlist` varchar(255) NOT NULL default 'Current View: ',
+            PRIMARY KEY (`formid`),
+            INDEX i_sid (`sid`)
+            ) ENGINE=MyISAM;";
+        }
+
         // if this is a standalone installation, then we want to make sure the session id field in the DB is large enough to store whatever session id we might be working with
         if (file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
             $sql['increase_session_id_size'] = "ALTER TABLE ".$xoopsDB->prefix("session")." CHANGE `sess_id` `sess_id` varchar(60) NOT NULL";
@@ -334,6 +361,7 @@ function patch40() {
         $sql['add_on_after_save'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `on_after_save` text";
         $sql['add_custom_edit_check'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `custom_edit_check` text";
         $sql['add_form_note'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `note` text";
+        $sql['add_defaultview']="ALTER TABLE " . $xoopsDB->prefix("formulize_screen_graph") . " ADD `defaultview` varchar(255)";
         $sql['add_use_default_when_blank'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_use_default_when_blank` tinyint(1) NOT NULL default '0'";
         $sql['add_global_search_to_saved_view'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_saved_views") . " ADD `sv_global_search` text";
         $sql['add_application_code'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_applications") . " ADD `custom_code` mediumtext";
@@ -381,6 +409,8 @@ function patch40() {
                     print "custom_edit_check field already added.  result: OK<br>";
                 } elseif ($key === "add_form_note") {
                     print "form note field already added.  result: OK<br>";
+                } elseif($key === "add_defaultview") {
+                    print "defaultview field already added.  result: OK<br>";
                 } elseif ($key === "add_use_default_when_blank") {
                     print "use default when blank already added.  result: OK<br>";
                 } elseif ($key === "add_global_search_to_saved_view") {

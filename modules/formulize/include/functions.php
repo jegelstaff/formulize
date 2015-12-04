@@ -38,7 +38,7 @@ define("EV_MULTIPLE_SPREADSHEET_COLUMNS",   11);    // display multiple columns 
 define("SPREADSHEET_EXPORT_FOLDER",         "/cache/");   // used to be /modules/formulize/export/
 
 $codeToIncludejQueryWhenNecessary = "
-if (typeof jQuery == 'undefined') { 
+if (typeof jQuery == 'undefined') {
     var head = document.getElementsByTagName('head')[0];
     script = document.createElement('script');
     script.id = 'jQuery';
@@ -1277,7 +1277,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
         if (in_array("entry_id", $cols)) {
             $csvfile .= "\"" . _formulize_ENTRY_ID . "\"";
             $lineStarted = true;
-        }        
+        }
         if (in_array("uid", $cols) OR in_array("creation_uid", $cols)) {
             $csvfile .= $lineStarted ? $fd : "";
             $csvfile .= "\"" . _formulize_DE_CALC_CREATOR . "\"";
@@ -1322,7 +1322,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
         $ids = internalRecordIds($entry, $formhandle[0]);
         $id = $ids[0];
         $id_req[] = $id;
-        
+
         $c_uid = display($entry, 'creation_uid');
         $c_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$c_uid'");
         $c_name = $c_name_q[0]['name'];
@@ -1844,7 +1844,7 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
 
         if (is_string($ele) and substr($ele, 0, 9) == "newvalue:") {
             // need to add a new entry to the underlying source form if this is a link
-            // need to add an option to the option list for the element list, if this is not a link. 
+            // need to add an option to the option list for the element list, if this is not a link.
             // check for the value first, in case we are handling a series of quick ajax requests for new elements, in which a new value is being sent with all of them. We don't want to write the new value once per request!
             $newValue = substr($ele, 9);
             if ($element->isLinked) {
@@ -1854,7 +1854,7 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
                 $newEntryId = $dataHandler->findFirstEntryWithValue($sourceHandle, $newValue); // check if this value has been written already, if so, use that ID
                 if(!$newEntryId) {
                     $newEntryId = formulize_writeEntry(array($sourceHandle=>$newValue));
-                } 
+                }
                 $value = $newEntryId;
             } else {
                 $value = $newValue;
@@ -2189,6 +2189,37 @@ function writeOtherValues($id_req, $fid, $subformBlankCounter=null) {
     }
 }
 
+function appendFormElementsToOptions($form_id, $options) {
+	$formObject = new formulizeForm($form_id, true); // true causes all elements, even ones now shown to any user, to be included
+    $elements = $formObject->getVar('elements');
+    $elementCaptions = $formObject->getVar('elementCaptions');
+    foreach($elementCaptions as $key=>$elementCaption) {
+    	$options[$elements[$key]] = printSmart(trans(strip_tags($elementCaption))); // need to pull out potential HTML tags from the caption
+    }
+    return $options;
+}
+
+function listFormOptions($form_id, $screen, $options) {
+	// setup all the elements in this form for use in the listboxes
+	include_once XOOPS_ROOT_PATH . "/modules/formulize/class/forms.php";
+	$options = appendFormElementsToOptions($form_id, $options);
+	
+	// add in elements from other forms in the framework, by looping through each link in the framework and checking if it is a display as one, one-to-one link
+	// added March 20 2008, by jwe
+	$frid = $screen->getVar("frid");
+	if ($frid) {
+		$framework_handler =& xoops_getModuleHandler('frameworks');
+		$frameworkObject = $framework_handler->get($frid);
+		foreach($frameworkObject->getVar("links") as $thisLinkObject) {
+			if ($thisLinkObject->getVar("unifiedDisplay") AND $thisLinkObject->getVar("relationship") == 1) {
+				$thisFid = $thisLinkObject->getVar("form1") == $form_id ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
+				$options = appendFormElementsToOptions($thisFid, $options);
+			}
+		}
+	}
+	return $options;
+}
+
 
 // THIS FUNCTION CREATES A SERIES OF ARRAYS THAT CONTAIN ALL THE INFORMATION NECESSARY FOR THE LIST OF ELEMENTS THAT GETS DISPLAYED ON THE ADMIN SIDE WHEN CREATING OR EDITING CERTAIN FORM ELEMENTS
 // new use with textboxes triggers a different value to be used -- just the ele_id from the 'formulize' table, which is all that is necessary to uniquely identify the element
@@ -2226,7 +2257,7 @@ function createFieldList($val, $textbox=false, $limitToForm=false, $name="", $fi
                 $totalvaluelist[$captionlistindex] = $rowfieldnames[1];
 
                 // if this is the selected entry
-                if ($val == $totalvaluelist[$captionlistindex] OR $val == $rowformlist[0] . "#*=:*" . $rowfieldnames[2]) {
+                if ($val == $totalvaluelist[$captionlistindex] OR $val === ($rowformlist[0] . "#*=:*" . $rowfieldnames[2])) {
                     $defaultlinkselection = $captionlistindex;
                 }
                 $captionlistindex++;
@@ -2428,7 +2459,7 @@ function _formatLinksRegularElement($matchtext, $textWidth, $ele_type, $handle, 
         $elementObject = $elementHandler->get($handle);
         $ele_value = $elementObject->getVar('ele_value');
         if($ele_type == "textarea" AND isset($ele_value['use_rich_text']) AND $ele_value['use_rich_text']) {
-          return printSmart(strip_tags($matchtext), 100); // don't mess with rich text!   
+          return printSmart(strip_tags($matchtext), 100); // don't mess with rich text!
         } else {
         	global $myts;
         	return formulize_text_to_hyperlink($myts->htmlSpecialChars($matchtext), $textWidth);
@@ -2764,9 +2795,9 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
     // start main loop
     $notificationTemplateData = array();
     foreach ($entries as $entry) {
-      
+
 	$notificationTemplateData[$entry] = "";
-      
+
         // user list is potentially different for each entry. ignore anything that was passed in for $groups
         if (count($groups) == 0) { // if no groups specified as the owner of the current entry, then let's get that from the table
             $data_handler = new formulizeDataHandler($fid);
@@ -2835,9 +2866,9 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
                         }
                         continue;
                     }
-                                        
+
                     $terms[$i] = parseUserAndToday($terms[$i]);
-                                        
+
                     if ($start) {
                         $filter = $entry."][".$elements[$i]."/**/".$terms[$i]."/**/".$ops[$i];
                         $start = 0;
@@ -3047,7 +3078,7 @@ function sendNotificationToEmail($email, $event, $tags, $subject, $template) {
 	$emails = array($email);
   }
   $toreturn = true;
-  
+
   foreach($emails as $email) {
 	  $xoopsMailer = getMailer();
     $xoopsMailer->useMail();
@@ -4868,7 +4899,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 							    if($filterOps[$filterId] == "!=") {
 							      $filterOps[$filterId] = "=";
 							      $overrideReturnedOp = "!=";
-							    } 
+							    }
                   $conditionsFilterComparisonValue = " (SELECT ss.entry_id FROM " . $xoopsDB->prefix("formulize_" . $targetSourceFormObject->getVar('form_handle')) . " AS ss WHERE `$targetSourceHandle` " . $filterOps[$filterId] . $quotes . $likebits . $filterTermToUse . $likebits . $quotes . ") ";
 							    // need to change the filterOp being used, so when this is inserted into the main query, we have a different op introducing the subquery
 							    if($filterOps[$filterId] == "LIKE" OR $filterOps[$filterId] == "NOT LIKE") {
@@ -4890,7 +4921,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
     if ($filterOps[$filterId] == "=") {
         $filterTerms[$filterId] = prepareLiteralTextForDB($element_handler->get($filterElementIds[$filterId]), $filterTerms[$filterId], $curlyBracketEntry, $userComparisonId); // prepends checkbox characters and converts yes/nos, {USER}, etc
     }
-    
+
     if ($filterTerms[$filterId]=="{BLANK}") {
       $conditionsFilterComparisonValue = 'NULL';
       $filterTerms[$filterId]="";
@@ -4899,8 +4930,8 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
       } else {
 	$filterOps[$filterId] = 'IS';
       }
-    } 
-    
+    }
+
     if (!$conditionsFilterComparisonValue) {
         $conditionsFilterComparisonValue = $quotes.$likebits.formulize_db_escape($filterTerms[$filterId]).$likebits.$quotes;
     }
@@ -5279,18 +5310,18 @@ function formulize_db_escape($value) {
 }
 
 // THANKS TO baptiste.place@utopiaweb.fr on php.net for this conversion function:
-/** 
- * Convert a date format to a strftime format 
- * 
- * Timezone conversion is done for unix. Windows users must exchange %z and %Z. 
- * 
- * Unsupported date formats : S, n, t, L, B, u, e, I, P, Z, c, r 
- * Unsupported strftime formats : %U, %W, %C, %g, %r, %R, %T, %X, %c, %D, %F, %x 
- * 
- * @param string $dateFormat a date format 
- * @return string 
- */ 
-function dateFormatToStrftime($dateFormat) { 
+/**
+ * Convert a date format to a strftime format
+ *
+ * Timezone conversion is done for unix. Windows users must exchange %z and %Z.
+ *
+ * Unsupported date formats : S, n, t, L, B, u, e, I, P, Z, c, r
+ * Unsupported strftime formats : %U, %W, %C, %g, %r, %R, %T, %X, %c, %D, %F, %x
+ *
+ * @param string $dateFormat a date format
+ * @return string
+ */
+function dateFormatToStrftime($dateFormat) {
 
 
 /*
@@ -5300,7 +5331,7 @@ function dateFormatToStrftime($dateFormat) {
     if(!$check) {
         $check = true;
         print "<pre>";
-                        
+
         // Describe the formats.
         $strftimeFormats = array(
             'A' => 'A full textual representation of the day',
@@ -5357,62 +5388,62 @@ function dateFormatToStrftime($dateFormat) {
             'z' => 'Either the time zone offset from UTC or the abbreviation (depends on operating system)',
             '%' => 'A literal percentage character ("%")',
         );
-        
+
         // Results.
         $strftimeValues = array();
-        
+
         // Evaluate the formats whilst suppressing any errors.
         foreach($strftimeFormats as $format => $description){
             if (False !== ($value = @strftime("%{$format}"))){
                 $strftimeValues[$format] = $value;
             }
         }
-        
+
         // Find the longest value.
         $maxValueLength = 2 + max(array_map('strlen', $strftimeValues));
-        
+
         // Report known formats.
         foreach($strftimeValues as $format => $value){
             echo "Known format   : '{$format}' = ", str_pad("'{$value}'", $maxValueLength), " ( {$strftimeFormats[$format]} )\n";
         }
-        
+
         // Report unknown formats.
         foreach(array_diff_key($strftimeFormats, $strftimeValues) as $format => $description){
             echo "Unknown format : '{$format}'   ", str_pad(' ', $maxValueLength), ($description ? " ( {$description} )" : ''), "\n";
         }
-        
+
         print "</pre>";
     }
 */
 
-    $caracs = array( 
-        // Day - no strf eq : S 
-        'd' => '%d', 'D' => '%a', 'j' => '%e', 'l' => '%A', 'N' => '%u', 'w' => '%w', 'z' => '%j', 
-        // Week - no date eq : %U, %W 
-        'W' => '%V',  
-        // Month - no strf eq : n, t 
-        'F' => '%B', 'm' => '%m', 'M' => '%b', 
-        // Year - no strf eq : L; no date eq : %C, %g 
-        'o' => '%G', 'Y' => '%Y', 'y' => '%y', 
-        // Time - no strf eq : B, u; no date eq : %r, %R, %T, %X 
-        'a' => '%P', 'A' => '%p', 'g' => '%l', 'h' => '%I', 'H' => '%H', 'G' => '%H', 'i' => '%M', 's' => '%S', 
-        // Timezone - no strf eq : e, I, P, Z 
-        'O' => '%z', 'T' => '%Z', 
-        // Full Date / Time - no strf eq : c, r; no date eq : %c, %D, %F, %x  
-        'U' => '%s' 
-    ); 
-    
-    $dateFormat = strtr((string)$dateFormat, $caracs); 
-    
+    $caracs = array(
+        // Day - no strf eq : S
+        'd' => '%d', 'D' => '%a', 'j' => '%e', 'l' => '%A', 'N' => '%u', 'w' => '%w', 'z' => '%j',
+        // Week - no date eq : %U, %W
+        'W' => '%V',
+        // Month - no strf eq : n, t
+        'F' => '%B', 'm' => '%m', 'M' => '%b',
+        // Year - no strf eq : L; no date eq : %C, %g
+        'o' => '%G', 'Y' => '%Y', 'y' => '%y',
+        // Time - no strf eq : B, u; no date eq : %r, %R, %T, %X
+        'a' => '%P', 'A' => '%p', 'g' => '%l', 'h' => '%I', 'H' => '%H', 'G' => '%H', 'i' => '%M', 's' => '%S',
+        // Timezone - no strf eq : e, I, P, Z
+        'O' => '%z', 'T' => '%Z',
+        // Full Date / Time - no strf eq : c, r; no date eq : %c, %D, %F, %x
+        'U' => '%s'
+    );
+
+    $dateFormat = strtr((string)$dateFormat, $caracs);
+
     // Windows follows its own rules....
     if(substr(PHP_OS,0,3) == 'WIN') {
         $dateFormat = str_replace('%e', '%#d', $dateFormat); // day of month
         $dateFormat = str_replace('%l', '%#I', $dateFormat); // 01-12 hour
         $dateFormat = str_replace('%P', '%p', $dateFormat); // AM/PM indicator
     }
-    
+
     return $dateFormat;
-    
+
 }
 
 // THIS FUNCTION PARSES OUT THE {USER} AND {TODAY} KEYWORDS INTO THEIR LITERAL VALUES
@@ -5494,7 +5525,7 @@ function formulize_makeOneToOneLinks($frid, $fid) {
                 $form2EntryIds[] = $form2EntryId;
                 $form1s[] = $form1;
                 $form2s[] = $form2;
-            } 
+            }
         }
         $oneToOneLinksMade[$frid] = true;
     }
@@ -5506,7 +5537,7 @@ function isMetaDataField($field){
     $ucField = strtoupper($field);
     $dataHandler = new formulizeDataHandler(false);
     $metadataFields = $dataHandler->metadataFields;
-    foreach ($metadataFields as $value) 
+    foreach ($metadataFields as $value)
     {
         if($value == $ucField)
         {
@@ -5514,4 +5545,10 @@ function isMetaDataField($field){
         }
     }
     return false;
+}
+
+
+// strip non-alphanumeric characters
+function sanitize_name($name) {
+   return preg_replace("/[^a-zA-Z0-9_]+/", "", $name);
 }
