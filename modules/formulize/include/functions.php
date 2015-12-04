@@ -2199,6 +2199,27 @@ function appendFormElementsToOptions($form_id, $options) {
     return $options;
 }
 
+function listFormOptions($form_id, $screen, $options) {
+	// setup all the elements in this form for use in the listboxes
+	include_once XOOPS_ROOT_PATH . "/modules/formulize/class/forms.php";
+	$options = appendFormElementsToOptions($form_id, $options);
+	
+	// add in elements from other forms in the framework, by looping through each link in the framework and checking if it is a display as one, one-to-one link
+	// added March 20 2008, by jwe
+	$frid = $screen->getVar("frid");
+	if ($frid) {
+		$framework_handler =& xoops_getModuleHandler('frameworks');
+		$frameworkObject = $framework_handler->get($frid);
+		foreach($frameworkObject->getVar("links") as $thisLinkObject) {
+			if ($thisLinkObject->getVar("unifiedDisplay") AND $thisLinkObject->getVar("relationship") == 1) {
+				$thisFid = $thisLinkObject->getVar("form1") == $form_id ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
+				$options = appendFormElementsToOptions($thisFid, $options);
+			}
+		}
+	}
+	return $options;
+}
+
 
 // THIS FUNCTION CREATES A SERIES OF ARRAYS THAT CONTAIN ALL THE INFORMATION NECESSARY FOR THE LIST OF ELEMENTS THAT GETS DISPLAYED ON THE ADMIN SIDE WHEN CREATING OR EDITING CERTAIN FORM ELEMENTS
 // new use with textboxes triggers a different value to be used -- just the ele_id from the 'formulize' table, which is all that is necessary to uniquely identify the element

@@ -16,16 +16,20 @@
             <select id="screens-ops" size="1" name="screens-ops">
                 <option value="count"<{if $content.ops eq 'count'}> selected="selected"<{/if}>>Count of Total Entries</option>
                 <option value="unique-count"<{if $content.ops eq 'unique-count'}> selected="selected"<{/if}>>Count of Unique Entries</option>
-                <option value="display"<{if $content.ops eq 'display'}> selected="selected"<{/if}>>Display</option>
                 <option value="sum"<{if $content.ops eq 'sum'}> selected="selected"<{/if}>>Sum</option>
             </select>
             <label for="screens-data">of the data in the</label>
-            <{$content.dataelem}>
+            <select id="screens-dataelem" name="screens-dataelem">
+            <{html_options options=$content.dataelem selected=$content.selecteddataelem}>
+            </select>
+            
             <label>field.</label>
         </div>
         <div class="form-item">
             <label for="screens-label">(Optional) I want to group that data based on its relation to the</label>
-            <{$content.labelelem}>
+            <select id="screens-labelelem" name="screens-labelelem">
+            <{html_options options=$content.labelelem selected=$content.selectedlabelelem}>
+            </select>
             <label>field.</label>
         </div>
     </fieldset>

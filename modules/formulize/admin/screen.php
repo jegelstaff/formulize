@@ -366,18 +366,7 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
 }
 
 if ($screen_id != "new" && $settings['type'] == 'form') {
-    $element_list = appendFormElementsToOptions($form_id, array());
-    $frid = $screen->getVar("frid");
-    if ($frid) {
-        $framework_handler =& xoops_getModuleHandler('frameworks');
-        $frameworkObject = $framework_handler->get($frid);
-        foreach($frameworkObject->getVar("links") as $thisLinkObject) {
-            if ($thisLinkObject->getVar("unifiedDisplay") AND $thisLinkObject->getVar("relationship") == 1) {
-                $thisFid = $thisLinkObject->getVar("form1") == $form_id ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
-                $element_list = appendFormElementsToOptions($thisFid, $element_list);
-            }
-        }
-    }
+    $element_list = listFormOptions($form_id, $screen, array());
 
     $options = array();
     $options['donedest'] = $screen->getVar('donedest');
@@ -402,10 +391,15 @@ if ($screen_id != "new" && $settings['type'] == "graph") {
     $graph_options['barg'] = $screen->getVar('barg');
     $graph_options['barb'] = $screen->getVar('barb');
     $graph_options['ops'] = $screen->getVar('ops');
-    list($labelelem, $selectedlabelelem) = createFieldList($screen->getVar('labelelem'), false, false, "screens-labelelem", "(Default)");
-    $graph_options['labelelem'] = $labelelem->render();
-    list($dataelem, $selecteddataelem) = createFieldList($screen->getVar('dataelem'), false, false, "screens-dataelem", false);
-    $graph_options['dataelem'] = $dataelem->render();
+    $graph_options['selecteddataelem'] = $screen->getVar('dataelem');
+    $graph_options['selectedlabelelem'] = $screen->getVar('labelelem');
+    $dataOptions = array();
+    $dataelem = listFormOptions($form_id, $screen, $dataOptions);
+    $graph_options['dataelem'] = $dataelem;
+    $labelOptions = array();
+    $labelOptions["none"] = "(Default)";
+    $labelelem = listFormOptions($form_id, $screen, $labelOptions);
+    $graph_options['labelelem'] = $labelelem;
     $framework_handler =& xoops_getmodulehandler('frameworks', 'formulize');
     $form_handler =& xoops_getmodulehandler('forms', 'formulize');
     $formObj = $form_handler->get($form_id, true); // true causes all elements to be included even if they're not visible.
