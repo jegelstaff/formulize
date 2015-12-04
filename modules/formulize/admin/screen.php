@@ -402,9 +402,9 @@ if ($screen_id != "new" && $settings['type'] == "graph") {
     $graph_options['barg'] = $screen->getVar('barg');
     $graph_options['barb'] = $screen->getVar('barb');
     $graph_options['ops'] = $screen->getVar('ops');
-    list($labelelem, $selectedlabelelem) = createFieldList($screen->getVar('labelelem'), false, false, "screens-labelelem", "(Default)", false, array(listRelatedForms($screen, $form_id)));
+    list($labelelem, $selectedlabelelem) = createFieldList($screen->getVar('labelelem'), false, false, "screens-labelelem", "(Default)");
     $graph_options['labelelem'] = $labelelem->render();
-    list($dataelem, $selecteddataelem) = createFieldList($screen->getVar('dataelem'), false, false, "screens-dataelem", false, false, array(listRelatedForms($screen, $form_id)), false);
+    list($dataelem, $selecteddataelem) = createFieldList($screen->getVar('dataelem'), false, false, "screens-dataelem", false);
     $graph_options['dataelem'] = $dataelem->render();
     $framework_handler =& xoops_getmodulehandler('frameworks', 'formulize');
     $form_handler =& xoops_getmodulehandler('forms', 'formulize');
