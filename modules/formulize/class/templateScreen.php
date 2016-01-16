@@ -82,7 +82,7 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
 
         if (!$update) {
             $sql = sprintf("INSERT INTO %s (sid, custom_code, template) VALUES (%u, %s, %s)", $this->db->prefix('formulize_screen_template'),
-                $screen->getVar('sid'), formulize_db_escape($screen->getVar('custom_code')), formulize_db_escape($screen->getVar('template')));
+                $screen->getVar('sid'), $this->db->quoteString(formulize_db_escape($screen->getVar('custom_code'))), $this->db->quoteString(formulize_db_escape($screen->getVar('template'))));
         } else {
             $sql = sprintf("UPDATE %s SET custom_code = %s, template = %s WHERE sid = %u", $this->db->prefix('formulize_screen_template'),
                 formulize_db_escape($screen->getVar('custom_code')), formulize_db_escape($screen->getVar('template')), $sid);
