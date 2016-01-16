@@ -298,7 +298,7 @@ class formulizeApplicationsHandler {
     }
 
     //after executing insertion or updating, we put file in the following path with custom_code
-    $filename=XOOPS_ROOT_PATH."/modules/formulize/temp/application_custom_code_".$appid.".php";
+    $filename=XOOPS_ROOT_PATH."/modules/formulize/custom_code/application_custom_code_".$appid.".php";
     file_put_contents($filename,$custom_code);
     
     if( false != $force ){
