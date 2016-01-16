@@ -6,7 +6,7 @@ defined('DB_INFO_NAME')? NULL : define('DB_INFO_NAME', 'information_schema');
 
 class tableInfo {
 
-    function openConn($dbname) {
+    private function openConn($dbname) {
         try {
             $conn = new \PDO(DB_TYPE.':host='.DB_HOST.';dbname='.$dbname, DB_USER, DB_PASS);
             $conn->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
@@ -17,7 +17,7 @@ class tableInfo {
         }
     }
 
-    function getTableTypes($tableName) {
+    private function getTableTypes($tableName) {
         $conn = $this->openConn(DB_INFO_NAME);
 
         $query = "SELECT DATA_TYPE FROM COLUMNS WHERE TABLE_NAME = '".$tableName."';";
@@ -26,7 +26,7 @@ class tableInfo {
         return $types;
     }
 
-    function getTableCols($tableName) {
+    private function getTableCols($tableName) {
         $conn = $this->openConn(DB_INFO_NAME);
 
         $query = "SELECT COLUMN_NAME FROM COLUMNS WHERE TABLE_NAME = '".$tableName."';";
@@ -35,4 +35,21 @@ class tableInfo {
         return $cols;
     }
 
+    private function getTableRecords($tableName) {
+        $conn = $this->openConn(DB_NAME);
+
+        $query = "SELECT * FROM ".$tableName.";";
+        $records = $conn->query($query)->fetchAll();
+
+        return $records;
+    }
+
+    public function get($tableName) {
+        return array(
+            "name" => $tableName,
+            "columns" => $this->getTableCols($tableName),
+            "types" => $this->getTableTypes($tableName),
+            "records" => $this->getTableRecords($tableName)
+        );
+    }
 }
