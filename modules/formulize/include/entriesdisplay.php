@@ -1412,7 +1412,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 		if($textWidth == 0) { $textWidth = 10000; }
 		$useCheckboxes = $screen->getVar('usecheckboxes');
 		$useViewEntryLinks = $screen->getVar('useviewentrylinks');
-		$useSearch = $screen->getVar('usesearch');
+		$useSearch = ($screen->getVar('usesearch') AND !$screen->getTemplate('listtemplate')) ? 1 : 0;
 		$hiddenColumns = $screen->getVar('hiddencolumns');
 		$deColumns = $screen->getVar('decolumns');
 		$deDisplay = $screen->getVar('dedisplay');
@@ -1898,6 +1898,7 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
         }
     }
 
+    
 	for($i=0;$i<count($cols);$i++) {
 		$classToUse = "head column column".$i;
 		if(!$returnOnly) {
@@ -1905,18 +1906,13 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
 				print "<td class='head floating-column' id='floatingcelladdress_1'>\n";
 			}
 			print "<td class='$classToUse' id='celladdress_1_$i'><div class='main-cell-div' id='cellcontents_1_".$i."'>\n";
-		}
-
-        if (0 == $i) {
-            // if search_help was displayed earlier, this will be blank
-            print $search_help;
+            print $search_help; // if search help was not included in the margin, then it will be included beside each search box now
         }
 
         //formulize_benchmark("drawing one search");
 		$search_text = isset($searches[$cols[$i]]) ? strip_tags(htmlspecialchars($searches[$cols[$i]]), ENT_QUOTES) : "";
 		$search_text = get_magic_quotes_gpc() ? stripslashes($search_text) : $search_text;
 		$boxid = "";
-		$helpText = "";
 		$clear_help_javascript = "";
 		if(count($searches) == 0 AND !$returnOnly) {
 			if($i==0) { 
@@ -1941,7 +1937,7 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
       if(isset($quickSearchBoxes[$cols[$i]]['filter'])) {
         print $quickSearchBoxes[$cols[$i]]['filter'];
       } else {
-        print "<nobr>".$quickSearchBoxes[$cols[$i]]['search']."$helpText</nobr>";
+        print "<nobr>".$quickSearchBoxes[$cols[$i]]['search']."</nobr>";
       }
 		}
     
