@@ -31,7 +31,7 @@
 
 $modversion = array(
 	'name' => _MI_formulize_NAME,
-	'version' => "5.1",
+	'version' => "5.0",
 	'description' => _MI_formulize_DESC,
 	'author' => "Freeform Solutions",
 	'credits' => "",
@@ -49,6 +49,9 @@ $modversion['tables'] = array(
 	"formulize",
 	"formulize_id",
 	"formulize_menu",
+	"formulize_menu_links",
+	"formulize_menu_permissions",
+	"formulize_resource_mapping",
 	"formulize_reports",
 	"formulize_frameworks",
 	"formulize_framework_forms",
@@ -63,6 +66,7 @@ $modversion['tables'] = array(
 	"formulize_screen",
 	"formulize_screen_multipage",
 	"formulize_screen_listofentries",
+	"formulize_screen_template",
 	"formulize_entry_owner_groups",
 	"formulize_application_form_link",
 	"formulize_applications",
@@ -72,7 +76,200 @@ $modversion['tables'] = array(
 	"formulize_groupscope_settings",
 	"formulize_procedure_logs",
 	"formulize_procedure_logs_params",
+	"formulize_deletion_logs",
 );
+
+/*
+ * Table metadata general structure
+ *
+ * table_name: {
+ *      table_fields: {}
+ *      table_joins: {
+ *          { table_to_join,
+ *          fields_table_is_joined_on: {}
+ *          fields_to_return }
+ *      }
+ * }
+ *
+ */
+$modversion['table_metadata'] = array(
+    "formulize" => array(
+        "fields" => array("ele_caption", "ele_type"),
+        "joins" => array()
+    ),
+    "formulize_id" => array(
+        "fields" => array("desc_from"),
+        "joins" => array()
+    ),
+    "formulize_menu" => array(),
+    "formulize_menu_links" => array(
+        "fields" => array("link_text"),
+        "joins" => array()
+    ),
+    "formulize_menu_permissions" => array (
+        "fields" => array(),
+        "joins" => array(
+            array(
+                "join_table" => "formulize_menu",
+                "join_field" => array("menu_id", "menu_id"),
+                "field" => "link_text"
+            )
+        ),
+    ),
+    "formulize_resource_mapping" => array(),
+    "formulize_reports" => array(),
+    "formulize_frameworks" => array(
+        "fields" => array("frame_name"),
+        "joins" => array()
+    ),
+    "formulize_framework_forms" => array(),
+    "formulize_framework_elements" => array(),
+    "formulize_framework_links" => array(
+        "fields" => array(),
+        "joins" => array(
+            array(
+                "join_table" => "formulize_frameworks",
+                "join_field" => array("fl_frame_id", "frame_id"),
+                "field" => "frame_name"
+            ),
+            array(
+                "join_table" => "formulize_id",
+                "join_field" => array("fl_form1_id", "id_form"),
+                "field" => "desc_from"
+            ),
+            array(
+                "join_table" => "formulize",
+                "join_field" => array("fl_form2_id", "id_form"),
+                "field" => "desc_form"
+            )
+        )
+    ),
+    "formulize_menu_cats" => array(),
+    "formulize_saved_views" => array(
+        "fields" => array("sv_name"),
+        "joins" => array()
+    ),
+    "group_lists" => array(
+        "fields" => array("gl_name"),
+        "joins" => array()
+    ),
+    "formulize_other" => array(),
+    "formulize_notification_conditions" => array(
+        "fields" => array(),
+        "joins" => array(
+            array(
+                "join_table" => "formulize_id",
+                "join_field" => array("not_cons_fid", "id_form"),
+                "field" => "desc_form"
+            )
+        )
+    ),
+    "formulize_valid_imports" => array(),
+    "formulize_screen" => array(
+        "fields" => array("title", "type"),
+        "joins" => array()
+    ),
+    "formulize_screen_multipage" => array(
+        "fields" => array(),
+        "joins" => array(
+            array(
+                "join_table" => "formulize_screen",
+                "join_field" => array("sid", "sid"),
+                "field" => "title"
+            )
+        )
+    ),
+    "formulize_screen_listofentries" => array(
+        "fields" => array(),
+        "joins" => array(
+            array(
+                "join_table" => "formulize_screen",
+                "join_field" => array("sid", "sid"),
+                "field" => "title"
+            )
+        )
+    ),
+    "formulize_screen_template" => array(
+        "fields" => array(),
+        "joins" => array(
+            array(
+                "join_table" => "formulize_screen",
+                "join_field" => array("sid", "sid"),
+                "field" => "title"
+            )
+        )
+    ),
+    "formulize_entry_owner_groups" => array(),
+    "formulize_application_form_link" => array(
+        "fields" => array(),
+        "joins" => array(
+            array(
+                array(
+                    "join_table" => "formulize_applications",
+                    "join_field" => array("appid", "appid"),
+                    "field" => "select"
+                ),
+                array(
+                    "join_table" => "formulize_id",
+                    "join_field" => array("fid", "id"),
+                    "field" => "desc_form"
+                )
+            )
+        )
+    ),
+    "formulize_applications" => array(
+        "fields" => array("name"),
+        "joins" => array()
+    ),
+    "formulize_screen_form" => array(
+        "fields" => array(),
+        "joins" => array(
+            array(
+                "join_table" => "formulize_screen",
+                "join_field" => array("sid", "sid"),
+                "field" => "select"
+            )
+        )
+    ),
+    "formulize_advanced_calculations" => array(
+        "fields" => array("name"),
+        "joins" => array()
+    ),
+    "formulize_group_filters" => array(
+        "fields" => array(),
+        "joins" => array(
+            array(
+                "join_table" => "formulize",
+                "join_field" => array("fid", "id"),
+                "field" => "desc_form"
+            ),
+            array(
+                "join_table" => "groups",
+                "join_field" => array("groupid", "groupid"),
+                "field" => "name"
+            )
+        )
+    ),
+    "formulize_groupscope_settings" => array(
+        "fields" => array(),
+        "joins" => array(
+            array(
+                "join_table" => "formulize_id",
+                "join_field" => array("fid", "id"),
+                "field" => "desc_form"
+            ),
+            array(
+                "join_table" => "groups",
+                "join_field" => array("groupid", "groupid"),
+                "field" => "name"
+            )
+        )
+    ),
+    "formulize_procedure_logs" => array(),
+    "formulize_procedure_logs_params" => array(),
+    "formulize_deletion_logs" => array()
+);
+
 
 // Admin things
 $modversion['hasAdmin'] = 1;

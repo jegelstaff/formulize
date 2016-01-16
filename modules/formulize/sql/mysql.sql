@@ -250,13 +250,6 @@ CREATE TABLE group_lists (
   UNIQUE gl_name_id (gl_name)
 ) ENGINE=MyISAM;
 
-CREATE TABLE formulize_menu_cats (
-  cat_id smallint(5) NOT NULL auto_increment,
-  cat_name varchar(255) default NULL,
-  id_form_array varchar(255) default NULL,
-  PRIMARY KEY (`cat_id`)
-) ENGINE=MyISAM;
-
 CREATE TABLE formulize_frameworks (
   frame_id smallint(5) NOT NULL auto_increment,
   frame_name varchar(255) default NULL,
@@ -319,22 +312,6 @@ CREATE TABLE formulize (
   PRIMARY KEY  (`ele_id`),
   KEY `ele_display` (`ele_display` ( 255 ) ),
   KEY `ele_order` (`ele_order`)
-) ENGINE=MyISAM;
-
-CREATE TABLE formulize_menu (
-  menuid int(4) unsigned NOT NULL auto_increment,
-  position int(4) unsigned NOT NULL,
-  indent int(2) unsigned NOT NULL default '0',
-  itemname varchar(255) NOT NULL default '',
-  margintop varchar(12) NOT NULL default '0px',
-  marginbottom varchar(12) NOT NULL default '0px',
-  itemurl varchar(255) NOT NULL default '',
-  bold tinyint(1) NOT NULL default '0',
-  mainmenu tinyint(1) NOT NULL default '0',
-  membersonly tinyint(1) NOT NULL default '1',
-  status tinyint(1) NOT NULL default '1',
-  PRIMARY KEY  (menuid),
-  KEY idxmymenustatus (status)
 ) ENGINE=MyISAM;
 
 CREATE TABLE formulize_entry_owner_groups (
