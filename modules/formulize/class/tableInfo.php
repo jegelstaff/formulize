@@ -1,7 +1,5 @@
 <?php
 
-include_once 'PDO_Conn.php';
-
 defined('DB_INFO_NAME')? NULL : define('DB_INFO_NAME', 'information_schema');
 
 class tableInfo {
