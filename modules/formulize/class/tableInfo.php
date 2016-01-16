@@ -17,20 +17,10 @@ class tableInfo {
         }
     }
 
-    function getTableNames() {
-        $conn = $this->openConn(DB_INFO_NAME);
-
-        // perhaps add LIKE clause for limiting the tables to _formulize_ ?
-        $query = "SELECT table_name from tables;";
-        $tableNames = $conn->query($query)->fetchAll();
-
-        return $tableNames;
-    }
-
     function getTableTypes($tableName) {
         $conn = $this->openConn(DB_INFO_NAME);
 
-        $query = "SELECT data_type FROM columns WHERE table_name = '".$tableName."';";
+        $query = "SELECT DATA_TYPE FROM COLUMNS WHERE TABLE_NAME = '".$tableName."';";
         $types = $conn->query($query)->fetchAll();
 
         return $types;
@@ -46,6 +36,3 @@ class tableInfo {
     }
 
 }
-
-$ti = new tableInfo();
-print_r($ti->getTableTypes  ('if34aeb83_formulize'));
