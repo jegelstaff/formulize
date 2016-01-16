@@ -524,7 +524,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 
 
 	if($frid) { 
-		$linkResults = checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_groups, $mid, $member_handler, $owner); 
+		$linkResults = checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_groups, $mid, $member_handler, $owner, true); // final true means only include entries from unified display linkages
 		unset($entries);
 		unset($fids);
 
@@ -2092,7 +2092,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 				$customCaption = $i->getVar('ele_caption');
 				$customElements = $ele_value[1] ? explode(",", $ele_value[1]) : "";
 				if(isset($GLOBALS['formulize_inlineSubformFrid'])) {
-					$newLinkResults = checkForLinks($GLOBALS['formulize_inlineSubformFrid'][0], array($fid), $fid, array($fid=>array($entry)), null, $owner_groups, $mid, null, $owner);
+					$newLinkResults = checkForLinks($GLOBALS['formulize_inlineSubformFrid'][0], array($fid), $fid, array($fid=>array($entry)), null, $owner_groups, $mid, null, $owner, true); // final true means only include entries from unified display linkages
 					$sub_entries = $newLinkResults['sub_entries'];
 				}
                 // 2 is the number of default blanks, 3 is whether to show the view button or not, 4 is whether to use captions as headings or not, 5 is override owner of entry, $owner is mainform entry owner, 6 is hide the add button, 7 is the conditions settings for the subform element, 8 is the setting for showing just a row or the full form, 9 is text for the add entries button
