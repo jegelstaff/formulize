@@ -1,6 +1,6 @@
 ---
 layout: default
-permalink: developers/scss-sass
+permalink: developers/scss-sass/
 ---
 
 # SCSS and Sass
