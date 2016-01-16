@@ -9,3 +9,5 @@ uploads/profile/
 *.bak
 *.db
 formulize-docs/_site
+.idea/
+ 
