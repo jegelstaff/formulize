@@ -4,14 +4,12 @@
     <?php
         /*
          * TO DO:
-         *      1. createArchive - verify that current implementation can insert files into existing
-         *                          zip file
          *          
-         *      2. createArchive - assert .zip extension for $archiveName parameter
+         *      1. createArchive - assert .zip extension for $archiveName parameter
          *
-         *      3. getTemplateFilePaths - populate paths array
+         *      2. getTemplateFilePaths - populate paths array
          *
-         *      4. createCSVs - integrate with Andrew's code by creating and extracting data from a data object
+         *      3. createCSVs - integrate with Andrew's code by creating and extracting data from a data object
          */
         
 
@@ -60,58 +58,61 @@
         }
 
         /*
-         * getTemplateFilePaths returns array containing all paths for template files of Formulize
+         * getTemplateFilePaths returns array containing all paths for template and custom_code files in Formulize directory
          *
          * return paths     string array containing paths for all template files
          */
         function getTemplateFilePaths(){
+            $screensPath = XOOPS_ROOT_PATH . "/modules/formulize/templates/screens";
+            $customCodePath = XOOPS_ROOT_PATH . "/modules/formulize/custom_code";
             $paths = Array();
             // populate paths array
             // recursively gather all file paths in XOOPS_ROOT_PATH . "/modules/formulize/templates/screens";
             //    and at least one more file - TBD
             // initialize an Iterator object and pass it the directory containing all export files
             $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($archivePath));
-
+            
             // iterate over the directory
             // add each file found to the archive
             foreach ($iterator as $key=>$value) {
-                $zip->addFile(realpath($key), $key) or die ("ERROR: Could not add file: $key");
-            }*/
+                echo $key.", ".$value;
+                //$zip->addFile(realpath($key), $key) or die ("ERROR: Could not add file: $key");
+            }
             return $paths;
         }
 
         /*
          * createArchive function used to create an archive (.zip) file and insert given files into it
          *
-         * param archiveName        string representing path to new or ???existing??? zip file. path should have ".zip" extension
+         * param archiveName        string representing path to new or existing zip file. path should have ".zip" extension
          * param listOfFiles        string array containing 1 path for each file to be inserted into archive
          * return archivePath       path to archive file
          */
         function createArchive($archiveName, $listOfFiles){
-
+            
             $archivePath = XOOPS_ROOT_PATH . "/modules/formulize/export"; // path where archive is created
 
             $zip = new ZipArchive(); // create ZipArchive object
-
+            
             // open archive. ???If it does not already exist??? it is created
             if ($zip->open($archivePath, ZIPARCHIVE::CREATE) !== TRUE) {
                 die ("Could not open archive");
             }
-
-
+            
+            
             // initialize an Iterator object and pass it the directory containing all export files
             $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($archivePath));
-
+            
             // iterate over the directory
             // add each file found to the archive
             foreach ($iterator as $key=>$value) {
                 $zip->addFile(realpath($key), $key) or die ("ERROR: Could not add file: $key");
             }*/
-
+            
             // close and save archive
             $zip->close();
             echo "Archive created successfully.";
-
+            
             return exportZipPath;
         }
 
