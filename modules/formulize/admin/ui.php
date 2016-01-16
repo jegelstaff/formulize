@@ -89,15 +89,8 @@ switch($active_page) {
     case "advanced-calculation":
         include "advanced_calculation.php";
         break;
-    case "export":
-        // do export stuff
-        $_GET['aid'] = 1;
-        include "export.php";
-        break;
-    case "import":
-        // do import stuff
-        $_GET['aid'] = 1;
-        include "import.php";
+    case "synchronize":
+        include "synchronize.php";
         break;
     default:
     case "home":
@@ -119,8 +112,14 @@ if (isset($_GET['tab']) AND (!isset($_POST['tabs_selected']) OR $_POST['tabs_sel
     $adminPage['tabselected']  = intval($_POST['tabs_selected']);
 }
 
+// retrieve the xoops_version info
+$module_handler = xoops_gethandler('module');
+$formulizeModule = $module_handler->getByDirname("formulize");
+$metadata = $formulizeModule->getInfo();
+
 // assign the contents to the template and display
 $adminPage['formulizeModId'] = getFormulizeModId();
+$xoopsTpl->assign('version', $metadata['version']);
 $xoopsTpl->assign('adminPage', $adminPage);
 if (isset($breadcrumbtrail))
     $xoopsTpl->assign('breadcrumbtrail', $breadcrumbtrail);
