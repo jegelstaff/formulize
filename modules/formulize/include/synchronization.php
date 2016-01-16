@@ -108,13 +108,44 @@
             
             return $archivePath;
         }
-        
-        
-        
-        
-        
-        
-        //PROBABLY DON'T NEED writeJSONFile FUNCTION
+
+
+        include_once "../class/PDO_Conn.php";
+
+        /*
+         * syncTablesList function returns a complete list of database tables that are required to be synced
+         */
+        function syncTablesList() {
+            global $xoopsDB;
+
+            // include the tables from modversion['tables'] from xoops_version
+            $module_handler = xoops_gethandler('module');
+            $formulizeModule = $module_handler->getByDirname("formulize");
+            $metadata = $formulizeModule->getInfo();
+
+            // check through forms table to find any generated database table handles that we need
+            $handlesQuery = "SELECT form_handle FROM ".$xoopsDB->prefix('formulize_')."id;";
+            $conn = new Connection();
+            $handles = $conn->connect()->query($handlesQuery)->fetchAll();
+
+            // using the handles generate the list table names
+            foreach ($handles as $key => $handleRec) {
+                $handle = $handleRec[0];
+                $handles[$key] = $xoopsDB->prefix('formulize_').$handle;
+            }
+
+            // add prefix to metadata tables
+            array_walk($metadata['tables'], function(&$value, $key) { $value = Prefix."_".$value; });
+
+            return array_merge($metadata['tables'], $handles);
+        }
+
+
+
+
+
+
+    //PROBABLY DON'T NEED writeJSONFile FUNCTION
         /*
          * writeJSONToFile function writes (exports) data to JSON file having path filepath
          * if the file does not exist it will be created
