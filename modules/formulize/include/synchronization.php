@@ -25,7 +25,9 @@
             
             createArchive($archiveName, array_merge($csvFilePaths, $templateFilePaths));
         }
-        
+
+        doExport("test.zip");
+
         /*
          * createCSVsAndGetPaths function gets data from Formulize database, writes to CSV files and
          * returns array of paths to the CSV files
@@ -36,16 +38,29 @@
         function createCSVsAndGetPaths($tables){
             $date = date_create();
             // create directory in the "export" directory that is unique to the time created. will store export CSVs
-            $exportDir = XOOPS_ROOT_PATH . "/modules/formulize/export/" . date_format($date, 'Y-m-d (U)');
+            $exportDir = XOOPS_ROOT_PATH . "/modules/formulize/export/" . date_format($date, 'Y-m-d (U)') . "/";
             if (!file_exists($exportDir) and !mkdir($exportDir)){
                 die("Export folder could not be created.");
             }
 
             $tableObj = new tableInfo();
-            foreach ($tables as $t){
-                $dataArray = $tableObj->get($t);
-                writeCSVFile($exportDir, $t . ".csv", $dataArray);
+            foreach ($tables as $key => $t){
+                // attempt to cread table data and if that fails remove the table from the list
+                //      -> this can happen if the table does not exist
+                try {
+                    $dataArray = $tableObj->get($t);
+                    writeCSVFile($exportDir, $t . ".csv", $dataArray);
+                }
+                catch (\PDOException $e) {
+                    error_log('Synchronization export table does not exist: '.$t);
+                    unset($tables[$key]);
+                }
             }
+
+            // special case for PREFIX_group_permissions since we only want formulize module records from table
+            $t = XOOPS_DB_PREFIX."_group_permission";
+            $groupPermData = $tableObj->getWithFilter($t, 'gperm_modid', getFormulizeModId());
+            writeCSVFile($exportDir, $t.".csv", $groupPermData);
             
             return $exportDir;
         }
