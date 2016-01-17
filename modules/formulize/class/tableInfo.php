@@ -42,6 +42,15 @@ class tableInfo {
         return $records;
     }
 
+    private function getFilteredTableRecords($tableName, $columnName, $value) {
+        $conn = $this->openConn(DB_NAME);
+
+        $query = "SELECT * FROM ".$tableName." WHERE ".$columnName." = ".$value.";";
+        $records = $conn->query($query)->fetchAll();
+
+        return $records;
+    }
+
     public function get($tableName) {
         return array(
             "name" => $tableName,
@@ -50,4 +59,16 @@ class tableInfo {
             "records" => $this->getTableRecords($tableName)
         );
     }
+
+    // tableInfo->getWithFilter is a function which will retrieve tableInfo but with a filter to select
+    //                  only the records where $columnName is equal to $value
+    public function getWithFilter($tableName, $columnName, $value) {
+        return array(
+            "name" => $tableName,
+            "columns" => $this->getTableCols($tableName),
+            "types" => $this->getTableTypes($tableName),
+            "records" => $this->getFilteredTableRecords($tableName, $columnName, $value)
+        );
+    }
+
 }
