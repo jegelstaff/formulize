@@ -2,6 +2,8 @@
 
 defined('DB_INFO_NAME')? NULL : define('DB_INFO_NAME', 'information_schema');
 
+include_once 'PDO_Config.php';
+
 class tableInfo {
 
     private function openConn($dbname) {

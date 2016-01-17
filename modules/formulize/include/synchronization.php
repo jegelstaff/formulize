@@ -13,8 +13,6 @@
          *      2. createCSVsAndGetPaths - debug
          */
         
-        doExport("test.zip");
-        
         /*
          * doExport function exports template files and current Formulize database state to a ".zip" archive
          * 
@@ -25,7 +23,7 @@
             $csvFilePaths = createCSVsAndGetPaths(syncTablesList()); // syncTablesList() returns string array of tables to pull data from
             $templateFilePaths = getTemplateFilePaths();
             
-            createArchive($archiveName, array_merge($jsonFilePaths, $templateFilePaths));
+            createArchive($archiveName, array_merge($csvFilePaths, $templateFilePaths));
         }
         
         /*
@@ -42,9 +40,9 @@
             if (!file_exists($exportDir) and !mkdir($exportDir)){
                 die("Export folder could not be created.");
             }
-            
+
+            $tableObj = new tableInfo();
             foreach ($tables as $t){
-                $tableObj = new tableInfo();
                 $dataArray = $tableObj->get($t);
                 writeCSVFile($exportDir, $t . ".csv", $dataArray);
             }
@@ -125,7 +123,8 @@
 
 
         //syncTablesList function returns a complete list of database tables that are required to be synced
-        function syncTablesList() {
+        function syncTablesList()
+        {
             global $xoopsDB;
 
             // init with a few hardcoded tables that we need
@@ -138,24 +137,22 @@
             $tablesList = array_merge($tablesList, $metadata['tables']);
 
             // check through forms table to find any generated database table handles that we need
-            $sql = "SELECT form_handle FROM ".XOOPS_DB_PREFIX."_formulize_id;";
+            $sql = "SELECT form_handle FROM " . XOOPS_DB_PREFIX . "_formulize_id;";
             $result = icms::$xoopsDB->query($sql);
 
             while ($row = $xoopsDB->fetchRow($result)) {
                 // extract the form_handle from the data record row and add it to the list
                 $handle = $row[0];
-                array_push($tablesList, "formulize_".$handle);
+                array_push($tablesList, "formulize_" . $handle);
             }
 
             // add prefix to all table names
             foreach ($tablesList as &$value) {
-                $value = XOOPS_DB_PREFIX.'_'.$value;
+                $value = XOOPS_DB_PREFIX . '_' . $value;
             }
 
             return $tablesList;
         }
-
-
 
 
     //PROBABLY DON'T NEED writeJSONFile FUNCTION
