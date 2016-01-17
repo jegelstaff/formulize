@@ -2,6 +2,8 @@
     <head><title>Test</title></head>
     <body>
     <?php
+        include "../../../mainfile.php";
+        //include_once "../class/PDO_Conn.php";
         /*
          * TO DO:
          *          
@@ -10,10 +12,13 @@
          *      2. getTemplateFilePaths - populate paths array
          *
          *      3. createCSVs - integrate with Andrew's code by creating and extracting data from a data object
+         *
+         *  NOTES:
+         *      1. assuming syncTablesList works correctly. On my test environment I get hung up on the "$conn = new Connection();" line
+         *          Andrew has tested it correctly on his environment however
          */
         
-        include_once "../../../mainfile.php";
-
+        
         /*
          * doExport function exports template files and current Formulize database state to a ".zip" archive
          * 
@@ -22,7 +27,7 @@
          */
         function doExport($archiveName, $dataArray){
             // consider asserting ".zip" extension here. If $archiveName does not have .zip extension, add it
-            $csvFilePaths = createCSVsAndGetPaths($dataArray);
+            $csvFilePaths = createCSVsAndGetPaths(syncTablesList()); // syncTablesList() returns string array of tables to pull data from
             $templateFilePaths = getTemplateFilePaths();
             
             createArchive($archiveName, array_merge($jsonFilePaths, $templateFilePaths));
@@ -32,11 +37,14 @@
          * createCSVsAndGetPaths function gets data from Formulize database, writes to CSV files and
          * returns array of paths to the CSV files
          *
-         * param dataArray          string array containing data to be written to CSV file
+         * param tables             string array of table names to pull data from (and write to CSV)
          * return paths             string array containing paths of all CSV files written
          */
-        function createCSVsAndGetPaths($dataArray){
+        function createCSVsAndGetPaths($tables){
             $paths = Array();
+            foreach ($tables as $t){
+                print $t."<br>";
+            }
             /* create query~ object and call method to get data
              * for each dataArray
              *      array_push($csvFilePaths, writeCSVFile(pathToFile, $dataArray));
@@ -68,16 +76,22 @@
             $customCodePath = XOOPS_ROOT_PATH . "/modules/formulize/custom_code";
             $paths = Array();
             
-            // iterate $screenPath directory and store all file paths in $paths array
-            foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($screensPath)) as $filename){
-                if ($filename->isDir()) continue; // skip "." and ".."
-                array_push($paths, $filename);
+            if (file_exists($screensPath)){
+                // iterate $screenPath directory and store all file paths in $paths array
+                foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($screensPath)) as $filename){
+                    if ($filename->isDir()) continue; // skip "." and ".."
+                    print "pushing ".$filename."<br>";
+                    array_push($paths, $filename);
+                }
             }
             
-            // iterate $customCodePath directory and store all file paths in $paths array
-            foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($customCodePath)) as $filename){
-                if ($filename->isDir()) continue; // skip "." and ".."
-                array_push($paths, $filename);
+            if (file_exists($customCodePath)){
+                // iterate $customCodePath directory and store all file paths in $paths array
+                foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($customCodePath)) as $filename){
+                    if ($filename->isDir()) continue; // skip "." and ".."
+                    print "pushing ".$filename."<br>";
+                    array_push($paths, $filename);
+                }
             }
             
             return $paths;
@@ -109,8 +123,7 @@
             
             return $archivePath;
         }
-
-
+        
         /*
          * syncTablesList function returns a complete list of database tables that are required to be synced
          */
@@ -146,9 +159,7 @@
             return array_merge($metadata['tables'], $handles);
         }
 
-        print_r(syncTablesList());
-
-    //PROBABLY DON'T NEED writeJSONFile FUNCTION
+        //PROBABLY DON'T NEED writeJSONFile FUNCTION
         /*
          * writeJSONToFile function writes (exports) data to JSON file having path filepath
          * if the file does not exist it will be created
