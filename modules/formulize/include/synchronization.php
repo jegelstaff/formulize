@@ -110,44 +110,40 @@
             return $archivePath;
         }
 
-
-        /*
-         * syncTablesList function returns a complete list of database tables that are required to be synced
-         */
+        // syncTablesList function returns a complete list of database tables that are required to be synced
         function syncTablesList() {
             global $xoopsDB;
+
+            // init with a few hardcoded tables that we need
+            $tablesList = array("groups");
 
             // include the tables from modversion['tables'] from xoops_version
             $module_handler = xoops_gethandler('module');
             $formulizeModule = $module_handler->getByDirname("formulize");
             $metadata = $formulizeModule->getInfo();
+            $tablesList = array_merge($tablesList, $metadata['tables']);
 
             // check through forms table to find any generated database table handles that we need
-            $sql = "SELECT form_handle FROM ".$xoopsDB->prefix('formulize_')."id;";
+            $sql = "SELECT form_handle FROM ".XOOPS_DB_PREFIX."_formulize_id;";
             $result = icms::$xoopsDB->query($sql);
-            $handles = array();
 
-            while ($row = icms::$xoopsDB->fetchArray($result)) {
-                array_push($handles, $row);
+            while ($row = $xoopsDB->fetchRow($result)) {
+                // extract the form_handle from the data record row and add it to the list
+                $handle = $row[0];
+                array_push($tablesList, "formulize_".$handle);
             }
 
-            // using the handles generate the list table names
-            foreach ($handles as $key => $handleRec) {
-                $handle = $handleRec[0];
-                $handles[$key] = $xoopsDB->prefix('formulize_').$handle;
+            // add prefix to all table names
+            foreach ($tablesList as &$value) {
+                $value = XOOPS_DB_PREFIX.'_'.$value;
             }
 
-            // add prefix to metadata table names
-            array_walk($metadata['tables'], function(&$value, $key) {
-                global $xoopsDB;
-                $value = $xoopsDB->prefix('formulize_')."_".$value;
-            });
-
-            return array_merge($metadata['tables'], $handles);
+            return $tablesList;
         }
 
-        print_r(syncTablesList());
 
+
+    
     //PROBABLY DON'T NEED writeJSONFile FUNCTION
         /*
          * writeJSONToFile function writes (exports) data to JSON file having path filepath
