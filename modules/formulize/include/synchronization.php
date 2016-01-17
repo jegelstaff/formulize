@@ -12,7 +12,8 @@
          *      3. createCSVs - integrate with Andrew's code by creating and extracting data from a data object
          */
         
-        
+        include_once "../../../mainfile.php";
+
         /*
          * doExport function exports template files and current Formulize database state to a ".zip" archive
          * 
@@ -110,8 +111,6 @@
         }
 
 
-        include_once "../class/PDO_Conn.php";
-
         /*
          * syncTablesList function returns a complete list of database tables that are required to be synced
          */
@@ -124,9 +123,13 @@
             $metadata = $formulizeModule->getInfo();
 
             // check through forms table to find any generated database table handles that we need
-            $handlesQuery = "SELECT form_handle FROM ".$xoopsDB->prefix('formulize_')."id;";
-            $conn = new Connection();
-            $handles = $conn->connect()->query($handlesQuery)->fetchAll();
+            $sql = "SELECT form_handle FROM ".$xoopsDB->prefix('formulize_')."id;";
+            $result = icms::$xoopsDB->query($sql);
+            $handles = array();
+
+            while ($row = icms::$xoopsDB->fetchArray($result)) {
+                array_push($handles, $row);
+            }
 
             // using the handles generate the list table names
             foreach ($handles as $key => $handleRec) {
@@ -134,16 +137,16 @@
                 $handles[$key] = $xoopsDB->prefix('formulize_').$handle;
             }
 
-            // add prefix to metadata tables
-            array_walk($metadata['tables'], function(&$value, $key) { $value = Prefix."_".$value; });
+            // add prefix to metadata table names
+            array_walk($metadata['tables'], function(&$value, $key) {
+                global $xoopsDB;
+                $value = $xoopsDB->prefix('formulize_')."_".$value;
+            });
 
             return array_merge($metadata['tables'], $handles);
         }
 
-
-
-
-
+        print_r(syncTablesList());
 
     //PROBABLY DON'T NEED writeJSONFile FUNCTION
         /*
