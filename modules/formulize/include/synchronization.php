@@ -2,27 +2,27 @@
     <head><title>Test</title></head>
     <body>
     <?php
+        include "../../../mainfile.php";
+        include "../class/tableInfo.php";
+
         /*
          * TO DO:
          *          
          *      1. createArchive - assert .zip extension for $archiveName parameter
          *
-         *      2. getTemplateFilePaths - populate paths array
-         *
-         *      3. createCSVs - integrate with Andrew's code by creating and extracting data from a data object
+         *      2. createCSVsAndGetPaths - debug
          */
         
-        include_once "../../../mainfile.php";
-
+        doExport("test.zip");
+        
         /*
          * doExport function exports template files and current Formulize database state to a ".zip" archive
          * 
-         * param archiveName        string representing path to new or ???existing??? zip file. path should have ".zip" extension
-         * param dataArray          string array containing data to be written to CSV file
+         * param archiveName        string representing path to new or existing zip file. path should have ".zip" extension
          */
-        function doExport($archiveName, $dataArray){
+        function doExport($archiveName){
             // consider asserting ".zip" extension here. If $archiveName does not have .zip extension, add it
-            $csvFilePaths = createCSVsAndGetPaths($dataArray);
+            $csvFilePaths = createCSVsAndGetPaths(syncTablesList()); // syncTablesList() returns string array of tables to pull data from
             $templateFilePaths = getTemplateFilePaths();
             
             createArchive($archiveName, array_merge($jsonFilePaths, $templateFilePaths));
@@ -32,16 +32,24 @@
          * createCSVsAndGetPaths function gets data from Formulize database, writes to CSV files and
          * returns array of paths to the CSV files
          *
-         * param dataArray          string array containing data to be written to CSV file
+         * param tables             string array of table names to pull data from (and write to CSV)
          * return paths             string array containing paths of all CSV files written
          */
-        function createCSVsAndGetPaths($dataArray){
-            $paths = Array();
-            /* create query~ object and call method to get data
-             * for each dataArray
-             *      array_push($csvFilePaths, writeCSVFile(pathToFile, $dataArray));
-             */
-            return $paths;
+        function createCSVsAndGetPaths($tables){
+            $date = date_create();
+            // create directory in the "export" directory that is unique to the time created. will store export CSVs
+            $exportDir = XOOPS_ROOT_PATH . "/modules/formulize/export/" . date_format($date, 'Y-m-d (U)');
+            if (!file_exists($exportDir) and !mkdir($exportDir)){
+                die("Export folder could not be created.");
+            }
+            
+            foreach ($tables as $t){
+                $tableObj = new tableInfo();
+                $dataArray = $tableObj->get($t);
+                writeCSVFile($exportDir, $t . ".csv", $dataArray);
+            }
+            
+            return $exportDir;
         }
         
         /*
@@ -51,7 +59,8 @@
          * param filepath       string representing path to save file location
          * param dataArray      string array containing data to be written to CSV file
          */
-        function writeCSVFile($filePath, $dataArray){
+        function writeCSVFile($dirPath, $fileName, $dataArray){
+            $filePath = $dirPath . $fileName;
             print "writing \"".implode(",", $dataArray)."\" to file"; // used for testing
             $fileHandle = fopen($filePath, 'w');
             fputcsv($fileHandle, $dataArray);
@@ -68,16 +77,20 @@
             $customCodePath = XOOPS_ROOT_PATH . "/modules/formulize/custom_code";
             $paths = Array();
             
-            // iterate $screenPath directory and store all file paths in $paths array
-            foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($screensPath)) as $filename){
-                if ($filename->isDir()) continue; // skip "." and ".."
-                array_push($paths, $filename);
+            if (file_exists($screensPath)){
+                // iterate $screenPath directory and store all file paths in $paths array
+                foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($screensPath)) as $filename){
+                    if ($filename->isDir()) continue; // skip "." and ".."
+                    array_push($paths, $filename);
+                }
             }
             
-            // iterate $customCodePath directory and store all file paths in $paths array
-            foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($customCodePath)) as $filename){
-                if ($filename->isDir()) continue; // skip "." and ".."
-                array_push($paths, $filename);
+            if (file_exists($customCodePath)){
+                // iterate $customCodePath directory and store all file paths in $paths array
+                foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($customCodePath)) as $filename){
+                    if ($filename->isDir()) continue; // skip "." and ".."
+                    array_push($paths, $filename);
+                }
             }
             
             return $paths;
@@ -110,7 +123,8 @@
             return $archivePath;
         }
 
-        // syncTablesList function returns a complete list of database tables that are required to be synced
+
+        //syncTablesList function returns a complete list of database tables that are required to be synced
         function syncTablesList() {
             global $xoopsDB;
 
@@ -143,7 +157,7 @@
 
 
 
-    
+
     //PROBABLY DON'T NEED writeJSONFile FUNCTION
         /*
          * writeJSONToFile function writes (exports) data to JSON file having path filepath
