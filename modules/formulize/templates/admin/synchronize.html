@@ -7,17 +7,8 @@
         sit amet enim id eleifend. Nam tincidunt erat eget interdum iaculis. Cras et ultrices velit. Etiam ut sodales
         diam, quis auctor sapien. Nullam sit amet vestibulum ipsum.</p>
 
-    <p align=center>
-    <h3>Select Archive to Synchronize with Current System</h3>
-    <form name="Import" method="post" enctype="multipart/form-data">
-        <input type="file" name="file">
-        <input type="submit" value="Synchronize!">
-    </form>
-
-    <h3>Export Current System</h3>
-    <form name="Export" method="get" enctype="multipart/form-data">
-        <input type="button" value="Export!">
-    </form>
+    <p align="center">
+        <{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/synchronize_sections.html" sections=$adminPage.sync}>
     </p>
 
 </div>

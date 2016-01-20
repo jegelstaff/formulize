@@ -1,0 +1,14 @@
+<{if $sectionContent.type == "import"}>
+    <h3>Select Archive to Synchronize with Current System</h3>
+    <form name="Import" method="post" enctype="multipart/form-data">
+        <input type="file" name="file">
+        <input type="submit" value="Synchronize!">
+    </form>
+<{/if}>
+
+<{if $sectionContent.type == "export"}>
+    <h3>Export Current System</h3>
+    <form name="Export" method="get" enctype="multipart/form-data">
+        <input type="button" value="Export!">
+    </form>
+<{/if}>

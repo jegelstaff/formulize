@@ -31,7 +31,7 @@
 
 $modversion = array(
 	'name' => _MI_formulize_NAME,
-	'version' => "5.0",
+	'version' => "5.1",
 	'description' => _MI_formulize_DESC,
 	'author' => "Freeform Solutions",
 	'credits' => "",
@@ -500,6 +500,12 @@ $modversion['templates'][] = array(
 	'description' => '');
 $modversion['templates'][] = array(
 	'file' => 'admin/export_template.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/synchronize.html',
+	'descrition' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/synchronize_sections.html',
 	'description' => '');
 
 //	Module Configs
