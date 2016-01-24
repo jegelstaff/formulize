@@ -8,7 +8,7 @@
         /*
          * TO DO:
          *          
-         *      1. clean up export files after archive is created
+         *      1. add folder stucture to template file part of archive
          */
         
         /*
@@ -19,8 +19,10 @@
         function doExport($archiveName){
             $csvFilePaths = createCSVsAndGetPaths(syncTablesList()); // syncTablesList() returns string array of tables to pull data from
             $templateFilePaths = getTemplateFilePaths();
-            
-            createArchive($archiveName, array_merge($csvFilePaths, $templateFilePaths));
+            echo count($csvFilePaths)."<br>";
+            $archivePath = createArchive($archiveName, array_merge($csvFilePaths, $templateFilePaths));
+            echo "Archive created in " . $archivePath . "<br>";
+            cleanupCSVs($csvFilePaths);
         }
         
         doExport("test.zip");
@@ -60,6 +62,7 @@
             $t = XOOPS_DB_PREFIX."_group_permission";
             $groupPermData = $tableObj->getWithFilter($t, 'gperm_modid', getFormulizeModId());
             writeCSVFile($exportDir, $t.".csv", $groupPermData);
+            array_push($paths, $exportDir.$t.".csv");
             
             return $paths;
         }
@@ -108,6 +111,8 @@
             return $paths;
         }
         
+        
+        
         /*
          * createArchive function used to create an archive (.zip) file and insert given files into it
          *
@@ -126,7 +131,6 @@
             }
             
             foreach($listOfFiles as $file){
-                echo basename($file)."<br>";
                 $zip->addFile($file, basename($file)) or die ("ERROR: Could not add file: $file");
             }
             
@@ -134,8 +138,23 @@
             
             return $archivePath;
         }
-
-
+        
+        
+        
+        /*
+         * cleanupCSVs function deletes backup csv files created during export. Should be called after archive has been successfully created
+         * 
+         * param csvPaths       String array containing paths to all csv files used for export
+         */
+        function cleanupCSVs($csvPaths){
+            foreach($csvPaths as $file){
+                unlink($file);
+            }
+            if (count($csvPaths) != 0){
+                rmdir(dirname($csvPaths[0]));
+            }
+        }
+        
         //syncTablesList function returns a complete list of database tables that are required to be synced
         function syncTablesList()
         {
