@@ -8,24 +8,21 @@
         /*
          * TO DO:
          *          
-         *      1. createArchive - assert .zip extension for $archiveName parameter
-         *
-         *      2. createCSVsAndGetPaths - debug
+         *      1. clean up export files after archive is created
          */
         
         /*
          * doExport function exports template files and current Formulize database state to a ".zip" archive
          * 
-         * param archiveName        string representing path to new or existing zip file. path should have ".zip" extension
+         * param archiveName        string representing path to new or existing zip file. path must have ".zip" extension
          */
         function doExport($archiveName){
-            // consider asserting ".zip" extension here. If $archiveName does not have .zip extension, add it
             $csvFilePaths = createCSVsAndGetPaths(syncTablesList()); // syncTablesList() returns string array of tables to pull data from
             $templateFilePaths = getTemplateFilePaths();
             
             createArchive($archiveName, array_merge($csvFilePaths, $templateFilePaths));
         }
-
+        
         doExport("test.zip");
 
         /*
@@ -36,6 +33,7 @@
          * return paths             string array containing paths of all CSV files written
          */
         function createCSVsAndGetPaths($tables){
+            $paths = Array();
             $date = date_create();
             // create directory in the "export" directory that is unique to the time created. will store export CSVs
             $exportDir = XOOPS_ROOT_PATH . "/modules/formulize/export/" . date_format($date, 'Y-m-d (U)') . "/";
@@ -45,11 +43,12 @@
 
             $tableObj = new tableInfo();
             foreach ($tables as $key => $t){
-                // attempt to cread table data and if that fails remove the table from the list
+                // attempt to read table data and if that fails remove the table from the list
                 //      -> this can happen if the table does not exist
                 try {
                     $dataArray = $tableObj->get($t);
                     writeCSVFile($exportDir, $t . ".csv", $dataArray);
+                    array_push($paths, $exportDir.$t.".csv");
                 }
                 catch (\PDOException $e) {
                     error_log('Synchronization export table does not exist: '.$t);
@@ -62,7 +61,7 @@
             $groupPermData = $tableObj->getWithFilter($t, 'gperm_modid', getFormulizeModId());
             writeCSVFile($exportDir, $t.".csv", $groupPermData);
             
-            return $exportDir;
+            return $paths;
         }
         
         /*
@@ -74,7 +73,6 @@
          */
         function writeCSVFile($dirPath, $fileName, $dataArray){
             $filePath = $dirPath . $fileName;
-            print "writing \"".implode(",", $dataArray)."\" to file"; // used for testing
             $fileHandle = fopen($filePath, 'w');
             fputcsv($fileHandle, $dataArray);
             fclose($fileHandle);
@@ -103,6 +101,7 @@
                 foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($customCodePath)) as $filename){
                     if ($filename->isDir()) continue; // skip "." and ".."
                     array_push($paths, $filename);
+                    echo "+1<br>";
                 }
             }
             
@@ -117,8 +116,7 @@
          * return archivePath       path to archive file
          */
         function createArchive($archiveName, $listOfFiles){
-            //$archivePath = "C:/xampp/htdocs/".$archiveName;
-            $archivePath = XOOPS_ROOT_PATH . "/modules/formulize/export"; // path where archive is created
+            $archivePath = XOOPS_ROOT_PATH . "/modules/formulize/export/".$archiveName; // path where archive is created
             
             $zip = new ZipArchive(); // create ZipArchive object
             
@@ -128,7 +126,8 @@
             }
             
             foreach($listOfFiles as $file){
-                $zip->addFile($file) or die ("ERROR: Could not add file: $file");
+                echo basename($file)."<br>";
+                $zip->addFile($file, basename($file)) or die ("ERROR: Could not add file: $file");
             }
             
             $zip->close(); // close and save archive
