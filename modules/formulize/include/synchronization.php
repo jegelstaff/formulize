@@ -19,7 +19,6 @@
         function doExport($archiveName){
             $csvFilePaths = createCSVsAndGetPaths(syncTablesList()); // syncTablesList() returns string array of tables to pull data from
             $templateFilePaths = getTemplateFilePaths();
-            echo count($csvFilePaths)."<br>";
             $archivePath = createArchive($archiveName, array_merge($csvFilePaths, $templateFilePaths));
             echo "Archive created in " . $archivePath . "<br>";
             cleanupCSVs($csvFilePaths);
@@ -49,7 +48,26 @@
                 //      -> this can happen if the table does not exist
                 try {
                     $dataArray = $tableObj->get($t);
-                    writeCSVFile($exportDir, $t . ".csv", $dataArray);
+                    
+                    // preprocess dataArray into a 1D array to be written to csv
+                    $linearData = Array();
+                    //echo "<br>table name: " . $dataArray["name"] . "<br>";
+                    array_push($linearData, $dataArray[0]); // add table name
+                    
+                    for($i = 0; $i < count($dataArray["columns"]); $i ++){
+                        //echo $dataArray["types"][$i][0] . ": ";
+                        array_push($linearData, $dataArray["types"][$i][0]); // add column type
+                        //echo $dataArray["columns"][$i][0] . "<br>";
+                        array_push($linearData, $dataArray["columns"][$i][0]); // add column name
+                        
+                        for($j = 0; $j < count($dataArray["records"]); $j ++){ // add all records
+                            //echo $dataArray["records"][$j][$i] . "<br>";
+                            array_push($linearData, $dataArray["records"][$j][$i]); // add column name
+                        }
+                        array_push($linearData, "</column>"); // add column sentinel
+                    }
+                    
+                    writeCSVFile($exportDir, $t . ".csv", $linearData);
                     array_push($paths, $exportDir.$t.".csv");
                 }
                 catch (\PDOException $e) {
@@ -104,7 +122,6 @@
                 foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($customCodePath)) as $filename){
                     if ($filename->isDir()) continue; // skip "." and ".."
                     array_push($paths, $filename);
-                    echo "+1<br>";
                 }
             }
             
@@ -138,6 +155,8 @@
             
             return $archivePath;
         }
+        
+        
         
         
         
@@ -188,7 +207,7 @@
         }
 
 
-    //PROBABLY DON'T NEED writeJSONFile FUNCTION
+        //NOT CURRENTLY USED
         /*
          * writeJSONToFile function writes (exports) data to JSON file having path filepath
          * if the file does not exist it will be created
