@@ -47,27 +47,9 @@
                 // attempt to read table data and if that fails remove the table from the list
                 //      -> this can happen if the table does not exist
                 try {
-                    $dataArray = $tableObj->get($t);
-                    
-                    // preprocess dataArray into a 1D array to be written to csv
-                    $linearData = Array();
-                    //echo "<br>table name: " . $dataArray["name"] . "<br>";
-                    array_push($linearData, $dataArray[0]); // add table name
-                    
-                    for($i = 0; $i < count($dataArray["columns"]); $i ++){
-                        //echo $dataArray["types"][$i][0] . ": ";
-                        array_push($linearData, $dataArray["types"][$i][0]); // add column type
-                        //echo $dataArray["columns"][$i][0] . "<br>";
-                        array_push($linearData, $dataArray["columns"][$i][0]); // add column name
-                        
-                        for($j = 0; $j < count($dataArray["records"]); $j ++){ // add all records
-                            //echo $dataArray["records"][$j][$i] . "<br>";
-                            array_push($linearData, $dataArray["records"][$j][$i]); // add column name
-                        }
-                        array_push($linearData, "</column>"); // add column sentinel
-                    }
-                    
-                    writeCSVFile($exportDir, $t . ".csv", $linearData);
+                    // get dataArray from tableObj and format it to be written to CSV
+                    $dataArray = formatDataArrayForCSV($tableObj->get($t));
+                    writeCSVFile($exportDir, $t . ".csv", $dataArray);
                     array_push($paths, $exportDir.$t.".csv");
                 }
                 catch (\PDOException $e) {
@@ -86,16 +68,55 @@
         }
         
         /*
+         * formatDataArrayForCSV function formats the dataArray from tableInfo class get format to a format that
+         * can be written to a CSV
+         *
+         * param dataArray          Object array (containing String and String[]) having format defined by tableInfo class, get method
+         * return formattedData     Object array (containing String and String[]) having format that can be written to CSV
+         */
+        function formatDataArrayForCSV($dataArray){
+            // preprocess dataArray into a 1D array to be written to csv
+            $formattedData = array();
+            
+            //echo "pushing " . $dataArray["name"] . "<br>";
+            array_push($formattedData, array($dataArray["name"])); // add table name as array
+            
+            $cols = array();
+            $types = array();
+            for($i = 0; $i < count($dataArray["columns"]); $i ++){
+                array_push($cols, $dataArray["columns"][$i][0]); // add each column name
+                array_push($types, $dataArray["types"][$i][0]); // add each column type
+            }
+            array_push($formattedData, $cols); // add column names array
+            array_push($formattedData, $types); // add column types array
+            
+            // push each row of data into formattedData as arrays
+            
+            for($i = 0; $i < count($dataArray["records"]); $i ++){ // row index
+                $row = array();
+                for($j = 0; $j < count($dataArray["columns"]); $j ++){ // column index
+                    array_push($row, $dataArray["records"][$i][$j]); // add column name
+                }
+                array_push($formattedData, $row); // add data row array
+            }
+            
+            return $formattedData;
+        }
+        
+        /*
          * writeCSVFile function writes given array to CSV file having path filepath
          * if the file does not exist it will be created
          * 
          * param filepath       string representing path to save file location
-         * param dataArray      string array containing data to be written to CSV file
+         * param dataArray      Array of String arrays containing data to be written to CSV file, each array in the array will be written to a new line
          */
         function writeCSVFile($dirPath, $fileName, $dataArray){
             $filePath = $dirPath . $fileName;
             $fileHandle = fopen($filePath, 'w');
-            fputcsv($fileHandle, $dataArray);
+            
+            foreach ($dataArray as $row) {
+                fputcsv($fileHandle, $row);
+            }
             fclose($fileHandle);
         }
         
