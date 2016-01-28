@@ -2,13 +2,11 @@
 
 defined('DB_INFO_NAME')? NULL : define('DB_INFO_NAME', 'information_schema');
 
-include_once 'PDO_Config.php';
-
 class tableInfo {
 
     private function openConn($dbname) {
         try {
-            $conn = new \PDO(DB_TYPE.':host='.DB_HOST.';dbname='.$dbname, DB_USER, DB_PASS);
+            $conn = new \PDO('mysql'.':host='.XOOPS_DB_HOST.';dbname='.$dbname, XOOPS_DB_USER, XOOPS_DB_PASS);
             $conn->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
             return $conn;
         }
