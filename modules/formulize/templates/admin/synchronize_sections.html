@@ -1,14 +1,22 @@
 <{if $sectionContent.type == "import"}>
     <h3>Select Archive to Synchronize with Current System</h3>
-    <form name="Import" method="post" enctype="multipart/form-data">
+    <form name="import" method="post">
+        <p>The following action will allow a previously exported system to be imported
+        to the current system. A validation step will appear allowing you to select which elements of
+        of the current system you would like to override.</br>
+        Please select the zip folder to be imported:</p>
         <input type="file" name="file">
-        <input type="submit" value="Synchronize!">
+        <input type="submit" name="import" value="Synchronize!">
     </form>
 <{/if}>
 
 <{if $sectionContent.type == "export"}>
     <h3>Export Current System</h3>
-    <form name="Export" method="get" enctype="multipart/form-data">
-        <input type="button" value="Export!">
+    <form name="export" method="POST" action="">
+        <p>The following actions will allow the current system's information to be saved
+            to a zip folder for importing to another system.</br>
+            Please enter a name for the zip folder:</p>
+        <input type ="text" name ="filepath" value ="">
+        <input type ="Submit" name ="export" value ="Export!">
     </form>
 <{/if}>
