@@ -34,7 +34,7 @@ class tableInfo {
     }
 
     private function getTableRecords($tableName) {
-        $conn = $this->openConn(DB_NAME);
+        $conn = $this->openConn(XOOPS_DB_NAME);
 
         $query = "SELECT * FROM ".$tableName.";";
         $records = $conn->query($query)->fetchAll();
@@ -43,7 +43,7 @@ class tableInfo {
     }
 
     private function getFilteredTableRecords($tableName, $columnName, $value) {
-        $conn = $this->openConn(DB_NAME);
+        $conn = $this->openConn(XOOPS_DB_NAME);
 
         $query = "SELECT * FROM ".$tableName." WHERE ".$columnName." = ".$value.";";
         $records = $conn->query($query)->fetchAll();
