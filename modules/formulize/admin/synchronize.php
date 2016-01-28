@@ -12,11 +12,14 @@ $sync[1]['content']['type'] = "import";
 $sync[2]['name'] = "Export Database for Synchronization";
 $sync[2]['content']['type'] = "export";
 
+// populate the checkboxes for export
+$checks = retrieveTableNamesForCheckboxes();
+
+// retrieve the post information from the export submit
 if (isset($_POST['export'])) {
 
     // get the filename submitted by the user for saving the DB
     $filename = $_POST['filename'];
-
     if ($filename != "") {
 
         // perform the export
@@ -30,14 +33,15 @@ if (isset($_POST['export'])) {
         //doExport($filename);  ** uncomment this when function is complete
     }
 }
+// retrieve the post information from the import submit
+else if(isset($_POST['import'])) {
+
+    $filename = $_POST['file'];
+
+}
 else {
 
-    $filepath ="";
-}
-
-function endsWithZip($filename, $zip) {
-    // search forward starting from end minus needle length characters
-    return $zip === "" || (($temp = strlen($filename) - strlen($zip)) >= 0 && strpos($filename, $zip, $temp) !== FALSE);
+    $filename ="";
 }
 
 $adminPage['sync'] = $sync;
@@ -46,3 +50,29 @@ $adminPage['template'] = "db:admin/synchronize.html";
 $breadcrumbtrail[1]['url'] = "page=home";
 $breadcrumbtrail[1]['text'] = "Home";
 $breadcrumbtrail[2]['text'] = "Synchronize";
+
+/*
+ * Determines if the input from the user ends in .zip
+ * @filename - text input by the user
+ * @zip - string representation for .zip
+ */
+function endsWithZip($filename, $zip) {
+    // search forward starting from end minus needle length characters
+    return $zip === "" || (($temp = strlen($filename) - strlen($zip)) >= 0 && strpos($filename, $zip, $temp) !== FALSE);
+}
+
+/*
+ * Retrieves the data for the export checkboxes and populates it to the ui
+ * @return string of checkboxes
+ */
+function retrieveTableNamesForCheckboxes() {
+
+    $str = '';
+    // list of the data we want to populate to the checkboxes
+    $forms = array('form1'=>1, 'form2'=>2, 'form3'=>3);
+
+    while(list($k,$v)=each($forms)) {
+        $str .= '<input type="checkbox" name="'.$v.'" value="form[]" />'.$k.' ';
+    }
+    return $str;
+}
