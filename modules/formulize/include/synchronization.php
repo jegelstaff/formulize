@@ -5,8 +5,6 @@
         include "../../../mainfile.php";
         include "../class/tableInfo.php";
 
-        
-
         /*
          * TO DO:
          *          
@@ -18,15 +16,17 @@
          * 
          * param archiveName        string representing path to new or existing zip file. path must have ".zip" extension
          */
-        function doExport($archiveName){
-            $csvFilePaths = createCSVsAndGetPaths(syncTablesList()); // syncTablesList() returns string array of tables to pull data from
+        function doExport($archiveName, $tablesList){
+            $csvFilePaths = createCSVsAndGetPaths($tablesList); // syncTablesList() returns string array of tables to pull data from
             $templateFilePaths = getTemplateFilePaths();
             $archivePath = createArchive($archiveName, array_merge($csvFilePaths, $templateFilePaths));
             echo "Archive created in " . $archivePath . "<br>";
             cleanupCSVs($csvFilePaths);
         }
-        
-        doExport("test.zip");
+
+        // sample usage test code
+        $tablesList = array_merge(syncDefaultTablesList(), syncDataTablesList());
+        doExport("test.zip", $tablesList);
 
         /*
          * createCSVsAndGetPaths function gets data from Formulize database, writes to CSV files and
@@ -151,8 +151,6 @@
             return $paths;
         }
         
-        
-        
         /*
          * createArchive function used to create an archive (.zip) file and insert given files into it
          *
@@ -178,11 +176,7 @@
             
             return $archivePath;
         }
-        
-        
-        
-        
-        
+
         /*
          * cleanupCSVs function deletes backup csv files created during export. Should be called after archive has been successfully created
          * 
@@ -198,10 +192,7 @@
         }
         
         //syncTablesList function returns a complete list of database tables that are required to be synced
-        function syncTablesList()
-        {
-            global $xoopsDB;
-
+        function syncDefaultTablesList() {
             // init with a few hardcoded tables that we need
             $tablesList = array("groups");
 
@@ -211,7 +202,19 @@
             $metadata = $formulizeModule->getInfo();
             $tablesList = array_merge($tablesList, $metadata['tables']);
 
-            // check through forms table to find any generated database table handles that we need
+            // add prefix to all table names
+            foreach ($tablesList as &$value) {
+                $value = XOOPS_DB_PREFIX . '_' . $value;
+            }
+
+            return $tablesList;
+        }
+
+        //syncDataTablesList function returns a complete list of database tables that have been generated for forms
+        function syncDataTablesList() {
+            global $xoopsDB;
+            $tablesList = array();
+
             $sql = "SELECT form_handle FROM " . XOOPS_DB_PREFIX . "_formulize_id;";
             $result = icms::$xoopsDB->query($sql);
 
@@ -228,7 +231,6 @@
 
             return $tablesList;
         }
-
 
         //NOT CURRENTLY USED
         /*
