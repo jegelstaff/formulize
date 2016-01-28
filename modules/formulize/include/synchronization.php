@@ -1,5 +1,5 @@
 <?php
-    include "../../../mainfile.php";
+    //include "../../../mainfile.php";
     include "../class/tableInfo.php";
     include_once "../include/functions.php";
 
