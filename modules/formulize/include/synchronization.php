@@ -7,7 +7,7 @@
     /*
      * doExport function exports template files and current Formulize database state to a ".zip" archive
      * 
-     * param archiveName        string representing path to new or existing zip file. path must have ".zip" extension
+     * param archiveName        string representing name of new or existing zip file. path must have ".zip" extension
      */
     function doExport($archiveName, $tableNamesList){
         $csvFilePaths = createCSVsAndGetPaths($tableNamesList); // $tableNamesList is a string array of tables to pull data from
@@ -151,13 +151,13 @@
         $archivePath = XOOPS_ROOT_PATH . "/modules/formulize/export/".$archiveName; // path where archive is created
         
         // zip screens files
-        zipFolder("screens", XOOPS_ROOT_PATH . "/modules/formulize/templates/screens", $archiveName, true);
+        zipFolder("screens", XOOPS_ROOT_PATH . "/modules/formulize/templates/screens", $archivePath, true);
         
         // zip custom_code files
-        zipFolder("custom_code", XOOPS_ROOT_PATH . "/modules/formulize/custom_code", $archiveName, false);
+        zipFolder("custom_code", XOOPS_ROOT_PATH . "/modules/formulize/custom_code", $archivePath, false);
         
         // zip csv files
-        zipFileList("tables", $listOfFiles, $archiveName, false);
+        zipFileList("tables", $listOfFiles, $archivePath, false);
         
         return $archivePath;
     }
@@ -173,8 +173,7 @@
      * param archiveName            String name of archive to be created or added to (if existing)
      * param overwrite              boolean representing whether to overwrite if zip is currently existing
      */
-    function zipFolder($masterFolderName, $rootDirPath, $archiveName, $overwrite){
-        $archivePath = XOOPS_ROOT_PATH . "/modules/formulize/export/".$archiveName; // path where archive is created
+    function zipFolder($masterFolderName, $rootDirPath, $archivePath, $overwrite){
         
         $zip = new ZipArchive();
         // open archive object. ".zip" file is only created once a file has been added to it
@@ -221,8 +220,7 @@
      * param archiveName            String name of archive to be created or added to (if existing)
      * param overwrite              boolean representing whether to overwrite if zip is currently existing
      */
-    function zipFileList($masterFolderName, $listOfFiles, $archiveName, $overwrite){
-        $archivePath = XOOPS_ROOT_PATH . "/modules/formulize/export/".$archiveName; // path where archive is created
+    function zipFileList($masterFolderName, $listOfFiles, $archivePath, $overwrite){
         
         $zip = new ZipArchive(); // create ZipArchive object
         // open archive object. ".zip" file is only created once a file has been added to it
