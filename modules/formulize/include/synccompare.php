@@ -3,11 +3,11 @@
 //include '../../../mainfile.php';
 
 /*
- * compare - given some table information and a table records, compare it to the current database
+ * compareRecToDB - given some table information and a table records, compare it to the current database
  *
  *  returns: indexed array of ('desc', 'sql') associative arrays that are the changes this record would make to the table
  */
-function compare($tableName, $record, $fields, $types=array()) {
+function compareRecToDB($tableName, $record, $fields, $types=array()) {
     $compareResult = array();
 
     // there should be one record value for each field string
