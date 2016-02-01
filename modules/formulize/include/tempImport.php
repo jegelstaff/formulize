@@ -1,7 +1,15 @@
 <html>
     <body>
         <?php
-            doImport(XOOPS_ROOT_PATH . "/modules/formulize/export/test.zip");
+            include "../../../mainfile.php";
+            
+            /*
+             * TO DO:
+             *
+             * 1. Extract folders from archive
+             */
+            
+            //doImport(XOOPS_ROOT_PATH . "/modules/formulize/export/test.zip");
             
             /*
              * doImport function imports template files and current Formulize database state from a ".zip" archive
@@ -47,7 +55,7 @@
             }
             
             /*
-             * getDataRowCSV function parses the given CSV file and returns the desired row of data
+             * getDataRowCSV function parses the given CSV file and returns the desired row of data (1 is the first line, not 0)
              *
              * param filePath       String path to CSV file to parse
              * param line           int line number to return
@@ -57,11 +65,19 @@
                 $dataRow = array();
                 $fileHandle = fopen($filePath, 'r');
                 
-                fgetcsv($fileHandle, $row);
+                fgetcsv($fileHandle); // skip table name
+                fgetcsv($fileHandle); // skip column names
+                fgetcsv($fileHandle); // skip column types
+                
+                for ($i = 0; $i < $line; $i ++){
+                    $dataRow = fgetcsv($fileHandle);
+                }
                 
                 fclose($fileHandle);
                 return $dataRow;
             }
+            
+            
             
             /*
              * getTableColsCSV function parses the given CSV file and returns an array of column names
@@ -70,10 +86,10 @@
              * return cols          String array of column names
              */
             function getTableColsCSV($filePath){
-                $cols = array();
                 $fileHandle = fopen($filePath, 'r');
                 
-                fgetcsv($fileHandle, $row);
+                fgetcsv($fileHandle); // skip table name
+                $cols = fgetcsv($fileHandle); // get column names
                 
                 fclose($fileHandle);
                 return $cols;
@@ -86,10 +102,11 @@
              * return colTypes      String array of column types
              */
             function getTableColTypesCSV($filePath){
-                $colTypes = array();
                 $fileHandle = fopen($filePath, 'r');
                 
-                fgetcsv($fileHandle, $row);
+                fgetcsv($fileHandle); // skip table name
+                fgetcsv($fileHandle); // skip column names
+                $colTypes = fgetcsv($fileHandle); // get column types
                 
                 fclose($fileHandle);
                 return $colTypes;
@@ -105,7 +122,15 @@
                 $numRows = 0;
                 $fileHandle = fopen($filePath, 'r');
                 
-                fgetcsv($fileHandle, $row);
+                fgetcsv($fileHandle); // skip table name
+                fgetcsv($fileHandle); // skip column names
+                fgetcsv($fileHandle); // skip column types
+                while(!feof($fileHandle)){ // iterate through file until eof
+                    $content = fgets($fileHandle);
+                    if($content){ // line is non empty, must be data so increment number of rows
+                        $numRows++;
+                    }
+              }
                 
                 fclose($fileHandle);
                 return $numRows;
