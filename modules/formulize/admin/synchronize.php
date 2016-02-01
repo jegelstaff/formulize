@@ -69,11 +69,16 @@ function retrieveTableNamesForCheckboxes() {
 
     $str = '';
     // list of the data we want to populate to the checkboxes
-//    $forms = array('form1'=>1, 'form2'=>2, 'form3'=>3);
-    $forms = syncDataTablesList();
+    $datalist = syncDataTablesList();
+    $forms = array();
+    $i = 0;
+    foreach ($datalist as $data) {
+        $forms[$i] = $data; // for array, key is index and value is form name
+        $i++;
+    }
 
-    while(list($k,$v)=each($forms)) {
-        $str .= '<input type="checkbox" name="'.$v.'" value="form[]" />'.$k.' ';
+    while(list($key,$value)=each($forms)) {
+        $str .= '<input type="checkbox" name="'.$key.'" value="form[]" />'.$value.' ';
     }
     return $str;
 }
