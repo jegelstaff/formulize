@@ -2,12 +2,11 @@
     <body>
         <?php
             include "../../../mainfile.php";
-            include "syccompare.php";
+            include "synccompare.php";
             /*
              * TO DO:
              *
-             * 1. Talk to Andrew about csvToDatabase() function
-             * 2. Delete temp folder and its CSV files
+             * 1. Further integration with synccompare.php
              */
             
             echo "calling doImport<br>";
@@ -20,8 +19,8 @@
              */
             function doImport($archivePath){
                    $tempCSVFolderPath = extractArchiveFolders($archivePath);
-                   csvToDB($tempCSVFolderPath); // probably Andrew's code will go in this function
-                   // deleteFolder($tempCSVFolderPath); // clean up temp folder and CSV files
+                   csvToDB($tempCSVFolderPath);
+                   deleteDir($tempCSVFolderPath); // clean up temp folder and CSV files
             }
             
             /*
@@ -34,13 +33,8 @@
                     // iterate $csvFolderPath directory and import each file
                     foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($csvFolderPath)) as $filePath){
                         if ($filePath->isDir()) continue; // skip "." and ".."
-                        echo getTableNameCSV($filePath)[0].", ".getNumDataRowsCSV($filePath)."<br>";
-                        //printArr(getTableColsCSV($filePath))."<br>";
-                        //printArr(getTableColTypesCSV($filePath))."<br>";
                         for ($line = 1; $line <= getNumDataRowsCSV($filePath); $line ++){
-                            echo "data: ";
-                            printArr(getDataRowCSV($filePath, $line));
-                            //echo compareRecToDB(getTableNameCSV($filePath), getDataRowCSV($filePath, 1), getTableColsCSV($filePath), getTableColTypesCSV($filePath));
+                            compareRecToDB(getTableNameCSV($filePath), getDataRowCSV($filePath, 1), getTableColsCSV($filePath), getTableColTypesCSV($filePath));
                         }
                     }
                 }else{
@@ -48,11 +42,44 @@
                 }
             }
             
+            
+            /*
+             * printArry utility function prints each element of given 1-D String array with comma separator
+             *
+             * param arr    Stringarray to be printed
+             */
             function printArr($arr){
                 foreach($arr as $elem){
                     echo $elem.", ";
                 }
                 echo "<br>";
+            }
+            
+            /*
+             * deleteFolder function deletes folder at given path and its contents
+             *
+             * param path   String path to folder to delete
+             */
+            function deleteDir($path){
+                echo "Deleting: ".$path."<br>";
+                // delete all files in tables/
+                foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path)) as $file){
+                    if ($file->isDir()){
+                        continue; // skip "." and ".."
+                    }
+                    unlink($file);
+                }
+                //delete empty dirs
+                foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path)) as $dir){
+                    if ($dir->isDir()){
+                        // must be current directory so try to delete
+                        if (strcmp(basename($dir), ".") == 0){
+                            echo "dir: ".basename($dir)."<br>";
+                            rmdir($dir);
+                        }
+                    }
+                }
+                rmdir($path);
             }
             
             /*
