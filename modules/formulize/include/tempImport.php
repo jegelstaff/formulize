@@ -6,28 +6,34 @@
             /*
              * TO DO:
              *
-             * 1. Extract folders from archive
+             * 1. Talk to Andrew about csvToDatabase() function
+             * 2. Delete temp folder and its CSV files
              */
             
-            //doImport(XOOPS_ROOT_PATH . "/modules/formulize/export/test.zip");
-            
+            echo "calling doImport<br>";
+            doImport(XOOPS_ROOT_PATH . "/modules/formulize/export/test.zip");
+            echo "returned from doImport<br>";
             /*
              * doImport function imports template files and current Formulize database state from a ".zip" archive
              *
              * param archivePath        String path to archive file. file should have ".zip" extension
              */
             function doImport($archivePath){
-                   extractArchiveFolders($archivePath);
+                   $tempCSVFolderPath = extractArchiveFolders($archivePath);
+                   // csvToDatabase($tempCSVFolderPath); // probably Andrew's code will go in this function
+                   // deleteFolder($tempCSVFolderPath); // clean up temp folder and CSV files
             }
             
             /*
              * extractArchiveFolders function calls extractFolder for the folders in the archive
+             * WILL OVERWRITE EXISTING FILES CURRENTLY
              *
-             * param  archivePath        String path to archive file
+             * param  archivePath       String path to archive file
+             * return tempFolderPath    String path to newly created temp folder. Will be used to delete temp folder
              */
             function extractArchiveFolders($archivePath){
-                extractFolder($archivePath, "screens", XOOPS_ROOT_PATH . "/modules/formulize/templates/screens");
-                extractFolder($archivePath, "custom_code", XOOPS_ROOT_PATH . "/modules/formulize/custom_code");
+                extractFolder($archivePath, "screens", XOOPS_ROOT_PATH . "/modules/formulize/templates/");
+                extractFolder($archivePath, "custom_code", XOOPS_ROOT_PATH . "/modules/formulize/");
                 
                 // create temporary folder to extract CSV files to. will be deleted later
                 $tempFolderPath = XOOPS_ROOT_PATH . "/modules/formulize/temp" . date_format(date_create(), '(U)');
@@ -35,6 +41,8 @@
                      die("Export folder could not be created.");
                  }
                 extractFolder($archivePath, "tables", $tempFolderPath);
+                
+                return $tempFolderPath;
             }
             
             
@@ -47,12 +55,23 @@
              * param extractToPath      String path to location to be extracted to
              */
             function extractFolder($archivePath, $folderToExtract, $extractToPath){
-                if ($zip->open($archivePath, ZIPARCHIVE::_______) !== TRUE) {
+                $zip = new ZipArchive;
+                if ($zip->open($archivePath) !== TRUE) {
                     die ("Could not open archive");
                 }
                 
+                $files = array();
+                for($i = 0; $i < $zip->numFiles; $i++) {
+                    $entry = $zip->getNameIndex($i);
+                     // strpos() to check if the entry name contains the directory we want to extract
+                    if (strpos($entry, $folderToExtract."/") !== false) {
+                      $files[] = $entry;
+                    }
+                }
                 
+                $zip->extractTo($extractToPath, $files); // extract all files/dirs in $files array to the $extractToPath
             }
+            
             
             /*
              * getDataRowCSV function parses the given CSV file and returns the desired row of data (1 is the first line, not 0)
@@ -71,6 +90,9 @@
                 
                 for ($i = 0; $i < $line; $i ++){
                     $dataRow = fgetcsv($fileHandle);
+                    if ($i == $line - 1 && !$dataRow){
+                        die("invalid line number");
+                    }
                 }
                 
                 fclose($fileHandle);
