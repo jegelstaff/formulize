@@ -2,7 +2,7 @@
     <body>
         <?php
             include "../../../mainfile.php";
-            
+            include "syccompare.php";
             /*
              * TO DO:
              *
@@ -20,8 +20,39 @@
              */
             function doImport($archivePath){
                    $tempCSVFolderPath = extractArchiveFolders($archivePath);
-                   // csvToDatabase($tempCSVFolderPath); // probably Andrew's code will go in this function
+                   csvToDB($tempCSVFolderPath); // probably Andrew's code will go in this function
                    // deleteFolder($tempCSVFolderPath); // clean up temp folder and CSV files
+            }
+            
+            /*
+             * csvToDB function sends each exported table to synccompare.php compareRecToDB() function
+             *
+             * param csvFolderPath      String path to folder containing exported CSV files
+             */
+            function csvToDB($csvFolderPath){
+                if (file_exists($csvFolderPath)){
+                    // iterate $csvFolderPath directory and import each file
+                    foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($csvFolderPath)) as $filePath){
+                        if ($filePath->isDir()) continue; // skip "." and ".."
+                        echo getTableNameCSV($filePath)[0].", ".getNumDataRowsCSV($filePath)."<br>";
+                        //printArr(getTableColsCSV($filePath))."<br>";
+                        //printArr(getTableColTypesCSV($filePath))."<br>";
+                        for ($line = 1; $line <= getNumDataRowsCSV($filePath); $line ++){
+                            echo "data: ";
+                            printArr(getDataRowCSV($filePath, $line));
+                            //echo compareRecToDB(getTableNameCSV($filePath), getDataRowCSV($filePath, 1), getTableColsCSV($filePath), getTableColTypesCSV($filePath));
+                        }
+                    }
+                }else{
+                    die("csv folder path does not exist!");
+                }
+            }
+            
+            function printArr($arr){
+                foreach($arr as $elem){
+                    echo $elem.", ";
+                }
+                echo "<br>";
             }
             
             /*
@@ -99,7 +130,20 @@
                 return $dataRow;
             }
             
-            
+            /*
+             * getTableNameCSV function parses the given CSV file and returns the name of the table
+             *
+             * param filePath       String path to CSV file to parse
+             * return tableName     String name of table
+             */
+            function getTableNameCSV($filePath){
+                $fileHandle = fopen($filePath, 'r');
+                
+                $tableName = fgetcsv($fileHandle); // get table name
+                
+                fclose($fileHandle);
+                return $tableName;
+            }
             
             /*
              * getTableColsCSV function parses the given CSV file and returns an array of column names
