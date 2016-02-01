@@ -24,12 +24,12 @@ function compareRecToDB($tableName, $record, $fields, $types=array()) {
     if (!$tableExists) {
         // create statement for creating table
         $tabledesc = "Creating new table.";
-        $tablesql = ""; // TODO: generate create data table SQL
+        $tablesql = genCreateFormTableSQL($tableName);
         array_push($compareResult, array("desc" => $tabledesc, "sql" => $tablesql));
 
         // create statement for inserting record
         $recdesc = "Inserting record into new table.";
-        $recsql = ""; // TODO: generate insert record SQL
+        $recsql = genInsertSQL($tableName, $record, $fields);
         array_push($compareResult, array("desc" => $recdesc, "sql" => $recsql));
     }
     else {
@@ -38,16 +38,16 @@ function compareRecToDB($tableName, $record, $fields, $types=array()) {
         if (count($result) > 1) {
             throw new Exception("Synchronization compare for table " . $tableName . " returns multiple primary key fields");
         }
-        $primkey_field = $result[0]['Field'];
+        $primkeyField = $result[0]['Field'];
 
         // use the primary key to check if the record currently exists
-        $recordPrimVal = $record[array_search($primkey_field, $fields)];
-        $result = $pdo->query('SELECT * FROM '.$tableName.' WHERE '.$primkey_field.' = '.$recordPrimVal);
+        $recordPrimVal = $record[array_search($primkeyField, $fields)];
+        $result = $pdo->query('SELECT * FROM '.$tableName.' WHERE '.$primkeyField.' = "'.$recordPrimVal.'"');
         $dbRecordExists = $result->rowCount() > 0;
 
         if (!$dbRecordExists) { // if the record doesn't exist add an insert record statement to $compareResult
             $desc = "Inserting new table record: " . join(",", $record);
-            $sql = ""; // TODO: generate insert record SQL
+            $sql = genInsertSQL($tableName, $record, $fields);
             array_push($compareResult, array("desc" => $desc, "sql" => $sql));
         } else {  // if the record exists, compare the data values, add any update statement to $compareResults
             $dbRecord = $result->fetchAll()[0];
@@ -58,8 +58,8 @@ function compareRecToDB($tableName, $record, $fields, $types=array()) {
                 $value = $record[$i];
                 $dbValue = (string)$dbRecord[$field];
                 if ($dbValue != $value) {
-                    $desc = "Updating field '" . $field . "': '" . $dbValue . "''->'" . $value . "'.";
-                    $sql = ""; // TODO: add update record sql
+                    $desc = "Updating field '" . $field . "': '" . $dbValue . "'->'" . $value . "'.";
+                    $sql = genUpdateSQL($tableName, $primkeyField, $recordPrimVal, $field, $value);
                     array_push($compareResult, array("desc" => $desc, "sql" => $sql));
                 }
             }
@@ -69,8 +69,35 @@ function compareRecToDB($tableName, $record, $fields, $types=array()) {
     return $compareResult;
 }
 
+function genCreateFormTableSQL($tableName) {
+    $sql = "";
+    // TODO: might be complicated... see class/forms.php
+    return $sql;
+}
+
+function genInsertSQL($tableName, $record, $fields) {
+    $sql = 'INSERT INTO '.$tableName.' ('.join(", ", $fields).') VALUES (';
+
+    // add comma seperated list of values
+    for ($i = 0; $i < count($fields); $i++) {
+        $value = $record[$i];
+        $sql .= $value;
+        if ($i < count($fields)-1) {
+            $sql .= ', ';
+        }
+    }
+    $sql .= ')';
+
+    return $sql;
+}
+
+function genUpdateSQL($tableName, $primkeyField, $primkeyValue, $field, $value) {
+    $sql = 'UPDATE '.$tableName.' SET '.$field.'="'.$value.'" WHERE '.$primkeyField.'="'.$primkeyValue.'"';
+    return $sql;
+}
+
 /*
-$record = array('1','Webmasters','Webmasters of this site','Admin');
+$record = array('7','Webmasters','Webmasters of this site','Admin');
 $fields = array('groupid', 'name', 'description', 'group_type');
-print_r(compare('if34aeb83_groups', $record, $fields));
+print_r(compareRecToDB('if34aeb83_groups', $record, $fields));
 */
