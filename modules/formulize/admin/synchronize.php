@@ -5,6 +5,8 @@
  * Date: 2016-01-16
  */
 
+include_once '../include/synchronization.php';
+
 $sync = array();
 
 $sync[1]['name'] = "Import Database for Synchronization";
@@ -23,14 +25,12 @@ if (isset($_POST['export'])) {
     if ($filename != "") {
 
         // perform the export
-        include '../include/synchronization.php';
-
         // validate user input - make sure filename has .zip at the end
         $zip = ".zip";
         if (!endsWithZip($filename, $zip)) {
             $filename .= $zip;
         }
-        //doExport($filename);  ** uncomment this when function is complete
+        doExport($filename, $checks);
     }
 }
 // retrieve the post information from the import submit
@@ -69,7 +69,8 @@ function retrieveTableNamesForCheckboxes() {
 
     $str = '';
     // list of the data we want to populate to the checkboxes
-    $forms = array('form1'=>1, 'form2'=>2, 'form3'=>3);
+//    $forms = array('form1'=>1, 'form2'=>2, 'form3'=>3);
+    $forms = syncDataTablesList();
 
     while(list($k,$v)=each($forms)) {
         $str .= '<input type="checkbox" name="'.$v.'" value="form[]" />'.$k.' ';
