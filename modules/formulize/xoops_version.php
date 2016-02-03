@@ -135,7 +135,7 @@ $modversion['table_metadata'] = array(
             array(
                 "join_table" => "formulize_id",
                 "join_field" => array("fl_form1_id", "id_form"),
-                "field" => "desc_from"
+                "field" => "desc_form"
             ),
             array(
                 "join_table" => "formulize",
