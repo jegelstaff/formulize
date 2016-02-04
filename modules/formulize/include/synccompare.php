@@ -75,6 +75,15 @@ class SyncCompareCatalog {
 
     public function commitChanges() {
         // TODO: implement commiting changes to DB
+        /*
+         * method:
+         *          - commit inserts & updated for tables that are not to-be-created
+         *          - create to-be-created tables
+         *          - commit the inserts into the newly created tables
+         *  The reason for this is that the tables that will be created are form data tables which rely upon data already
+         *      being in other tables upon creation. So we must complete all inserts & updates for other records before
+         *      creating the data tables to ensure they are created without errors.
+         */
     }
 
     public function getChanges() {
