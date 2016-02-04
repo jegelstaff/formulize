@@ -6,12 +6,20 @@ class SyncCompareCatalog {
 
     private $db = null;
 
-    // Catalog is an array of structured array, one for each table. The structured arrays contain a list of data about
-    //      a change that was found using the addRecord compare
-    private $catalog = array();
-
-    // A few arrays to contain the information from records for the commitChanges() function to use later
-    public $changes = array();
+    /*
+     * tableName : {
+     *      createTable: TRUE/FALSE
+     *      fields: [...]   # list of fields in this table
+     *      inserts: [
+     *          {fields + metadata}
+     *      ]
+     *      updates: [
+     *          {updated fields + metadata} # Will not contain table fields that are not changing
+     *      ]
+     *      metadataFields: [...] # list of fields for the metadata
+     * }
+     */
+    private $changes = array();
 
     function __construct() {
         $this->db = new \PDO('mysql'.':host='.XOOPS_DB_HOST.';dbname='.XOOPS_DB_NAME, XOOPS_DB_USER, XOOPS_DB_PASS);
@@ -33,14 +41,15 @@ class SyncCompareCatalog {
             $this->addTableChange($tableName, $fields, $record);
         }
         else {
-            $primkeyField = $this->getPrimKey($tableName);
-            $recPrimkeyValue = $record[array_search($primkeyField, $fields)];
+            $primaryField = $this->getPrimaryField($tableName);
+            $recPrimaryValue = $record[array_search($primaryField, $fields)];
 
-            $result = $this->getRecord($tableName, $primkeyField, $recPrimkeyValue);
+            $result = $this->getRecord($tableName, $primaryField, $recPrimaryValue);
             $recordExists = $result->rowCount() > 0;
 
             if (!$recordExists) {
-                $this->addRecChange("insert", $tableName, $fields, $record);
+                $associativeRec = $this->convertRec($record, $fields);
+                $this->addRecChange("insert", $tableName, $fields, $associativeRec);
             } else {  // if the record exists, compare the data values, add any update statement to $compareResults
                 $dbRecord = $result->fetchAll()[0];
 
@@ -54,16 +63,22 @@ class SyncCompareCatalog {
                         $updates[$field] = $value;
                     }
                 }
-                // add in primary key information
-                $data = $updates;
-                $data[$primkeyField] = $recPrimkeyValue;
-                $this->addRecChange("update", $tableName, $fields, $data);
+                if (count($updates) > 0) {
+                    // add in primary key information
+                    $data = $updates;
+                    $data[$primaryField] = $recPrimaryValue;
+                    $this->addRecChange("update", $tableName, $fields, $data);
+                }
             }
         }
     }
 
     public function commitChanges() {
         // TODO: implement commiting changes to DB
+    }
+
+    public function getChanges() {
+        return $this->changes;
     }
 
     private function addTableChange($tableName, $fields, $record) {
@@ -93,6 +108,9 @@ class SyncCompareCatalog {
         // now add record to the correct list
         $changeTypeList = &$this->changes[$tableName][$typeArrayName];
         array_push($changeTypeList, $data);
+
+        // TODO: pull metadata fields from xoops_versions
+        // TODO:
     }
 
     private function tableExists($tableName) {
@@ -101,17 +119,27 @@ class SyncCompareCatalog {
         return $tableExists;
     }
 
-    private function getRecord($tableName, $primkeyField, $primkeyValue) {
-        $result = $this->db->query('SELECT * FROM '.$tableName.' WHERE '.$primkeyField.' = "'.$primkeyValue.'"');
+    private function getRecord($tableName, $primaryField, $primaryValue) {
+        $result = $this->db->query('SELECT * FROM '.$tableName.' WHERE '.$primaryField.' = "'.$primaryValue.'"');
         return $result;
     }
 
-    private function getPrimkey($tableName) {
+    private function getPrimaryField($tableName) {
         $result = $this->db->query('SHOW COLUMNS FROM ' . $tableName . ' WHERE `Key` = "PRI"')->fetchAll();
         if (count($result) > 1) {
             throw new Exception("Synchronization compare for table " . $tableName . " returns multiple primary key fields");
         }
         return $result[0]['Field'];
+    }
+
+    private function convertRec($record, $fields) {
+        $result = array();
+        for ($i = 0; $i < count($record); $i++) {
+            $key = $fields[$i];
+            $val = $record[$i];
+            $result[$key] = $val;
+        }
+        return $result;
     }
 
 }
@@ -135,18 +163,20 @@ class SyncCompareCatalog {
         return $sql;
     }
 
-    private function genUpdateSQL($tableName, $primkeyField, $primkeyValue, $field, $value) {
-        $sql = 'UPDATE '.$tableName.' SET '.$field.'="'.$value.'" WHERE '.$primkeyField.'="'.$primkeyValue.'"';
+    private function genUpdateSQL($tableName, $primaryField, $primaryValue, $field, $value) {
+        $sql = 'UPDATE '.$tableName.' SET '.$field.'="'.$value.'" WHERE '.$primaryField.'="'.$primaryValue.'"';
         return $sql;
     }
  */
 
 /*
 $tableName = 'if34aeb83_groups';
-$record = array('4','Webmasters','Webmasters of this site','Admin');
+$record = array('1','Webmasters','Webmasters of this site','???');
 $fields = array('groupid', 'name', 'description', 'group_type');
 $catalog = new SyncCompareCatalog();
 $catalog->addRecord($tableName, $record, $fields);
-print_r($catalog->changes);
+$record2 = array('7','Webmasters','Webmasters of this site','Admin');
+$catalog->addRecord($tableName, $record2, $fields);
+print_r($catalog->getChanges());
 */
 

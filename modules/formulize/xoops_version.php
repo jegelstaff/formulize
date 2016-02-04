@@ -86,7 +86,7 @@ $modversion['tables'] = array(
  *      table_fields: {}
  *      table_joins: {
  *          { table_to_join,
- *          fields_table_is_joined_on: {}
+ *          fields_table_is_joined_on: {table1field, table2field}
  *          fields_to_return }
  *      }
  * }
