@@ -14,6 +14,10 @@
         $archivePath = createExportArchive($archiveName, $csvFilePaths);
         
         cleanupCSVs($csvFilePaths);
+
+        // ideally this is what should return
+        // TODO :: return array( "success" => $flag, "filepath" => $archivePath );
+        return $archivePath;
     }
 
     /*
