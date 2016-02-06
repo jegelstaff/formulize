@@ -279,18 +279,13 @@
         global $xoopsDB;
         $tablesList = array();
 
-        $sql = "SELECT form_handle FROM " . XOOPS_DB_PREFIX . "_formulize_id;";
+        $sql = "SELECT desc_form FROM " . XOOPS_DB_PREFIX . "_formulize_id;";
         $result = icms::$xoopsDB->query($sql);
 
         while ($row = $xoopsDB->fetchRow($result)) {
             // extract the form_handle from the data record row and add it to the list
             $handle = $row[0];
-            array_push($tablesList, "formulize_" . $handle);
-        }
-
-        // add prefix to all table names
-        foreach ($tablesList as &$value) {
-            $value = XOOPS_DB_PREFIX . '_' . $value;
+            array_push($tablesList, $handle);
         }
 
         return $tablesList;

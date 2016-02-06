@@ -30,6 +30,7 @@ if (isset($_POST['export'])) {
         if (!endsWithZip($filename, $zip)) {
             $filename .= $zip;
         }
+        // needs to return the filepath and success/fail
         doExport($filename, $checks);
     }
 }
@@ -72,11 +73,14 @@ function retrieveTableNamesForCheckboxes() {
     $datalist = syncDataTablesList();
     $forms = array();
     $i = 0;
+
+    // add indexing to the data list
     foreach ($datalist as $data) {
         $forms[$i] = $data; // for array, key is index and value is form name
         $i++;
     }
 
+    // dynamically generate the checkboxes based on number of tables
     while(list($key,$value)=each($forms)) {
         $str .= '<input type="checkbox" name="'.$key.'" value="form[]" />'.$value.' ';
     }
