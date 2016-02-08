@@ -110,7 +110,7 @@ $modversion['table_metadata'] = array(
         "fields" => array(),
         "joins" => array(
             array(
-                "join_table" => "formulize_menu",
+                "join_table" => "formulize_menu_links",
                 "join_field" => array("menu_id", "menu_id"),
                 "field" => "link_text"
             )
