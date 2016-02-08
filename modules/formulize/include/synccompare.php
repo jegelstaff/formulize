@@ -4,8 +4,13 @@
 
 class SyncCompareCatalog {
 
+    // connection to the DB
     private $db = null;
+
+    // $metadata from xoops_versions file
     private $metadata = null;
+
+    // boolean of whether the $changes array has been filled with table metadata
     private $metadataAdded = false;
 
     /*
@@ -24,6 +29,7 @@ class SyncCompareCatalog {
     private $changes = array();
 
     function __construct() {
+        // open a connection to the database
         $this->db = new \PDO('mysql'.':host='.XOOPS_DB_HOST.';dbname='.XOOPS_DB_NAME, XOOPS_DB_USER, XOOPS_DB_PASS);
         $this->db->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 
@@ -34,6 +40,7 @@ class SyncCompareCatalog {
     }
 
     function __destruct() {
+        // explicitly null some variables so they are garbage collected
         $this->db = null;
         $this->metadata = null;
     }
