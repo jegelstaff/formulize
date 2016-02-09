@@ -4,6 +4,7 @@
     //include "../../../mainfile.php";
     include "../class/tableInfo.php";
     include "synccompare.php";
+    include "../include/functions.php";
     
     $successExport = True;
     
@@ -303,6 +304,7 @@
         }
         return $tablesList;
     }
+
     //syncDataTablesList function returns a complete list of database tables that have been generated for forms
     function syncDataTablesList() {
         global $xoopsDB;
@@ -321,15 +323,21 @@
         return $tablesList;
     }
 
+    function getFormsInfo() {
+        $forms_handler = xoops_getmodulehandler('forms', 'formulize');
+        $forms = $forms_handler->getAllForms();
 
+        $formdata = array();
+        foreach($forms as $form) {
+            $form_title = $form->getVar('title');
+            $form_handle = $form->getVar('form_handle');
+            $fid = $form->getVar('id_form');
 
-    
-    
-    
-    
-    
-    
-    
+            array_push($formdata, array("fid" => $fid, "title" => $form_title, "form_handle" => $form_handle));
+        }
+        return $formdata;
+    }
+
     
     /********************************************
      *          IMPORT FUNCTIONS                *
