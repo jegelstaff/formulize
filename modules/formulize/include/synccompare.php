@@ -2,6 +2,8 @@
 
 //include '../../../mainfile.php';
 
+include_once '../class/forms.php';
+
 class SyncCompareCatalog {
 
     // connection to the DB
@@ -9,9 +11,6 @@ class SyncCompareCatalog {
 
     // $metadata from xoops_versions file
     private $metadata = null;
-
-    // boolean of whether the $changes array has been filled with table metadata
-    private $metadataAdded = false;
 
     /*
      * tableName : {
@@ -21,7 +20,7 @@ class SyncCompareCatalog {
      *          { record: [..], metadata: [..] }
      *      ]
      *      updates: [
-     *          { record, metadata} // contains entire record, with updated values in it
+     *          { record: [..], metadata: [..] } // contains entire record, with updated values in it
      *      ]
      *      metadataFields: [...] # list of fields for the metadata
      * }
@@ -44,6 +43,8 @@ class SyncCompareCatalog {
         $this->db = null;
         $this->metadata = null;
     }
+
+    // === PUBLIC FUNCTIONS ===
 
     public function addRecord($tableName, $record, $fields) {
         // there should be one record value for each field string
@@ -68,13 +69,13 @@ class SyncCompareCatalog {
                 $dbRecord = $result->fetchAll()[0];
 
                 // compare each record field for changes
-                $isChanged = false;
+                $isChanged = FALSE;
                 for ($i = 0; $i < count($record); $i++) {
                     $field = $fields[$i];
                     $value = $record[$i];
                     $dbValue = (string)$dbRecord[$field];
                     if ($dbValue != $value) {
-                        $isChanged = true;
+                        $isChanged = TRUE;
                     }
                 }
                 if ($isChanged) {
@@ -84,39 +85,59 @@ class SyncCompareCatalog {
         }
     }
 
-    public function getSQL() {
-        // TODO: return properly ordered array of SQL statements following the below method
-        /*
-         * method:
-         *          - commit inserts & updated for tables that are not to-be-created
-         *          - create to-be-created tables
-         *          - commit the inserts into the newly created tables
-         *  The reason for this is that the tables that will be created are form data tables which rely upon data already
-         *      being in other tables upon creation. So we must complete all inserts & updates for other records before
-         *      creating the data tables to ensure they are created without errors.
-         */
+    public function getChanges() {
+        return $this->changes;
     }
 
-    public function getChanges() {
-        if ($this->metadataAdded) {
-            return $this->changes;
-        }
-        else {
-            // add metadata to all records
-            foreach ($this->changes as $tableName => $tableData) {
-                // inserts
-                foreach ($tableData["inserts"] as &$insertData) {
-                    $insertData["metadata"] = $this->getRecMetadata($tableName, $insertData["record"]);
-                }
-                // updates
-                foreach ($tableData["updates"] as &$insertData) {
-                    $insertData["metadata"] = $this->getRecMetadata($tableName, $insertData["record"]);
+    public function cacheChanges() {
+        // TODO - use Lee's code for saving $this->changes to cache
+    }
+
+    public function loadCachedChanges() {
+        // TODO - use Lee's code to load cached changes back into $this->changes
+    }
+
+    public function commitChanges() {
+        // TODO - commit all changes in $this->changes to DB
+
+        // iterate through, commit all inserts that are not on new tables
+        foreach ($this->changes as $tableName => $tableData) {
+            $fields = $tableData["fields"];
+            if ($tableData["createTable"] == FALSE) {
+                foreach ($tableData["inserts"] as $recordData) {
+                    // TODO - maybe keep track of any that fail?
+                    $this->commitInsert($tableName, $recordData["record"], $fields);
                 }
             }
-            $this->metadataAdded = true;
-            return $this->changes;
+        }
+
+        // now commit all updates not on new tables
+        foreach ($this->changes as $tableName => $tableData) {
+            $fields = $tableData["fields"];
+            if ($tableData["createTable"] == FALSE) {
+                foreach ($tableData["updates"] as $recordData) {
+                    // TODO - maybe keep track of any that fail?
+                    $this->commitUpdate($tableName, $recordData["record"]);
+                }
+            }
+        }
+
+        // now create all the data tables and insert the new records into them
+        foreach ($this->changes as $tableName => $tableData) {
+            $fields = $tableData["fields"];
+            if ($tableData["createTable"] == TRUE) {
+                $this->commitCreateTable($tableName);
+
+                // now insert all records that go into this table
+                foreach ($tableData["inserts"] as $recordData) {
+                    // TODO - maybe keep track of any that fail?
+                    $this->commitInsert($tableName, $recordData["record"], $fields);
+                }
+            }
         }
     }
+
+    // === PRIVATE FUNCTIONS ===
 
     private function addTableChange($tableName, $fields, $record) {
         // if this is the first record of a table, create the data structure for it
@@ -145,9 +166,12 @@ class SyncCompareCatalog {
                 "updates" => array(), "createTable" => FALSE);
         }
 
+        // get all the metadata for the record
+        $metadata =  $this->getRecMetadata($tableName, $data);
+
         // now add record to the correct list
         $changeTypeList = &$this->changes[$tableName][$typeArrayName];
-        array_push($changeTypeList, array("record"=>$data, "metadata"=>array()));
+        array_push($changeTypeList, array("record"=>$data, "metadata"=>$metadata));
     }
 
     private function tableExists($tableName) {
@@ -180,24 +204,19 @@ class SyncCompareCatalog {
     }
 
     private function getRecMetadata($tableName, $record) {
-        // TODO - if required data is not in database then check the $this->changes list
-        // TODO - or check $this->changes first then fall back to database? <----!!!!!
+        // TODO - determine if we need to worry about getting metadata from $this->changes, then fall back to the DB?
 
-        // this will need to search the DB and fall back to the changes struct if not found in DB
-        //      due to newly inserted data maybe only being in changes not DB
+        // table has no metadata if not in the table_metadata list
         $tableMetadata = $this->metadata["table_metadata"];
         if (!array_key_exists($tableName, $tableMetadata)) {
-            // table has no metadata if not in the table_metadata list
             return array();
         }
 
         $tableMetaInfo = $tableMetadata[$tableName];
-        $sql = $this->genRecMetadataJoinSQL($tableName, $tableMetaInfo, $record);
-        $result = $this->db->query($sql);
-        return $result->fetchAll()[0];
+        return $this->getRecMetadataFromDB($tableName, $tableMetaInfo, $record);
     }
 
-    private function genRecMetadataJoinSQL($tableName, $tableMetaInfo, $record) {
+    private function getRecMetadataFromDB($tableName, $tableMetaInfo, $record) {
         $sqlSelect = 'SELECT ';
         $sqlFrom = 'FROM '.prefixTable($tableName).' t';
         $sqlJoins = array();
@@ -241,22 +260,70 @@ class SyncCompareCatalog {
         $primaryFieldVal = $record[$primaryField];
         $sqlWhere .= 't.'.$primaryField.' = '.$primaryFieldVal;
 
-        // combine the pieces of the sql statement and return it
-        return $sqlSelect.' '.$sqlFrom.' '.implode(" ", $sqlJoins).' '.$sqlWhere;
+        // combine the pieces of the sql statement, execute the query, and return the data
+        $sql = $sqlSelect.' '.$sqlFrom.' '.implode(" ", $sqlJoins).' '.$sqlWhere;
+        $result = $this->db->query($sql);
+        return $result->fetchAll()[0];
     }
 
-/*
-        "formulize_menu_permissions" => array (
-            "fields" => array(),
-            "joins" => array(
-                array(
-                    "join_table" => "formulize_menu",
-                    "join_field" => array("menu_id", "menu_id"),
-                    "field" => "link_text"
-                )
-            ),
-        ),
- */
+    // insert a new record into the database
+    private function commitInsert($tableName, $record, $fields) {
+        $sql = 'INSERT INTO '.$tableName.' ('.join(", ", $fields).') VALUES (';
+
+        // add comma separated list of values
+        foreach ($record as $field => $value) {
+            $sql .= '"'.$value.'", ';
+        }
+        $sql = substr($sql, 0, -2); // remove the unnecessary trailing ', '
+        $sql .= ');'; //close values brackets
+
+        print "<br>Insert record: ".$sql."<br>";
+        return;
+
+        $result = $this->db->query($sql);
+        // returns success/failure of query based on number of affected rows
+        return $result->rowCount() == 1;
+    }
+
+    // update an existing record in the database
+    private function commitUpdate($tableName, $record) {
+        $primaryField = $this->getPrimaryField($tableName);
+        $recPrimaryValue = $record[$primaryField];
+
+        $sql = 'UPDATE '.$tableName.' SET ';
+
+        foreach ($record as $field => $value) {
+            $sql .= $field.'="'.$value.'", ';
+        }
+
+        // remove the unnecessary trailing ', '
+        $sql = substr($sql, 0, -2);
+
+        // add the where clause to specify which record to update
+        $sql .= ' WHERE '.$primaryField.'="'.$recPrimaryValue.'"';
+
+        print "<br>Update record: ".$sql."<br>";
+        return;
+
+        $result = $this->db->query($sql);
+        // returns success/failure of query based on number of affected rows
+        return $result->rowCount() == 1;
+    }
+
+    // use the forms class to create a new form data table in the database
+    private function commitCreateTable($tableName) {
+        // get the fid for the data table based on the table name
+        $formHandle = substr($tableName, strlen(XOOPS_DB_PREFIX."_formulize_"));
+        $formHandler =& xoops_getmodulehandler('forms', 'formulize');
+        $fid = $formHandler->getByHandle($formHandle);
+
+        print "<br>".$tableName." would be created.<br>";
+        return;
+
+        // create the data table and return the boolean success result
+        $success = $formHandler->createDataTable($fid);
+        return $success;
+    }
 }
 
 function prefixTable($tableName) {
@@ -264,38 +331,13 @@ function prefixTable($tableName) {
 }
 
 /*
- *
- * // SQL functions not being used but save queries for later
-    private function genInsertSQL($tableName, $record, $fields) {
-        $sql = 'INSERT INTO '.$tableName.' ('.join(", ", $fields).') VALUES (';
-
-        // add comma seperated list of values
-        for ($i = 0; $i < count($fields); $i++) {
-            $value = $record[$i];
-            $sql .= $value;
-            if ($i < count($fields)-1) {
-                $sql .= ', ';
-            }
-        }
-        $sql .= ')';
-
-        return $sql;
-    }
-
-    private function genUpdateSQL($tableName, $primaryField, $primaryValue, $field, $value) {
-        $sql = 'UPDATE '.$tableName.' SET '.$field.'="'.$value.'" WHERE '.$primaryField.'="'.$primaryValue.'"';
-        return $sql;
-    }
- */
-
-/*
-$tableName = 'formulize_menu_permissions';
+$tableName = 'formulize_form_data_2';
 $record = array('2','1','1','0');
 $fields = array("permission_id","menu_id","group_id","default_screen");
 $catalog = new SyncCompareCatalog();
 $catalog->addRecord($tableName, $record, $fields);
-$record2 = array('1','1','2','0');
+$record2 = array('5','1','2','0');
 $catalog->addRecord($tableName, $record2, $fields);
 print_r($catalog->getChanges());
+$catalog->commitChanges();
 */
-
