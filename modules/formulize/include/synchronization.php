@@ -2,9 +2,9 @@
     <body>
 <?php
     //include "../../../mainfile.php";
-    include "../class/tableInfo.php";
-    include "synccompare.php";
-    include "../include/functions.php";
+    include_once "../class/tableInfo.php";
+    include_once "synccompare.php";
+    include_once "../include/functions.php";
     
     $successExport = True;
     
