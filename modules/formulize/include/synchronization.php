@@ -6,7 +6,7 @@
     include_once "synccompare.php";
     include_once "../include/functions.php";
     
-    $successExport = true;
+    $successExport = false;
     
     /*
      * doExport function exports template files and current Formulize database state to a ".zip" archive

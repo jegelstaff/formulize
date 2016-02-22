@@ -1,6 +1,6 @@
 <{if $sectionContent.type == "import"}>
     <h3>Select Archive to Synchronize with Current System</h3>
-    <form name="import" method="POST" action="">
+    <form name="import" method="POST" action=<{$xoops_url}>/modules/formulize/admin/ui.php?page=synchronize">
         <p>The following action will allow a previously exported system to be imported
         to the current system. A validation step will appear allowing you to select which elements of
         of the current system you would like to override.<br/>
@@ -12,7 +12,7 @@
 
 <{if $sectionContent.type == "export"}>
     <h3>Export Current System</h3>
-    <form name="export" method="POST" action="">
+    <form name="export" method="POST">
         <p>The following actions will allow the current system's information to be saved
             to a zip folder for importing to another system.</p>
         <p>Select the user data you would like to include in the export<br/>
@@ -24,5 +24,9 @@
         <input type ="Submit" name ="export" value ="Export!">
         </p>
     </form>
+    <{php}> print $secontionContent.error; <{/php}>
+    <{if $sectionContent.error == "1"}>
+        <span style="color: red; ">an error occurred while exporting</span>
+    <{/if}>
     <br/>
 <{/if}>
