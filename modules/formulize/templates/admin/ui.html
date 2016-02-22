@@ -140,7 +140,19 @@ $(document).ready(function() {
   var redirect = "";
   var newhandle = "";
   var formdata = new Array();
-
+  
+  // If saveLock is turned on, do not display save button to user, instead display "READ ONLY"
+	$( document ).ready(function() {
+		if(saveLock) {
+			console.log("removing save button\n");
+			document.getElementsByClassName('savebutton').style.visibility = 'hidden';
+			document.getElementById('savebutton').html("READ ONLY");
+		} else {
+			document.getElementsByClassName('savebutton').style.visibility = 'visible';
+		}
+		
+	});
+  
   $("input").change(function() {
     setDisplay('savewarning','block');
     });
