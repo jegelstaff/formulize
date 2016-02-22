@@ -24,8 +24,7 @@
         <input type ="Submit" name ="export" value ="Export!">
         </p>
     </form>
-    <{php}> print $secontionContent.error; <{/php}>
-    <{if $sectionContent.error == "1"}>
+    <{if $sectionContent.error == 1}>
         <span style="color: red; ">an error occurred while exporting</span>
     <{/if}>
     <br/>

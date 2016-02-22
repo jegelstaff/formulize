@@ -6,7 +6,7 @@
     include_once "synccompare.php";
     include_once "../include/functions.php";
     
-    $successExport = false;
+    $successfulExport = false;
     
     /*
      * doExport function exports template files and current Formulize database state to a ".zip" archive
@@ -19,7 +19,8 @@
         $archivePath = createExportArchive($archiveName, $csvFilePaths);
         
         cleanupCSVs($csvFilePaths);
-        return array( "success" => $successExport, "filepath" => $archivePath );
+        // TODO: $successfulExport flag needs to be set during the Export process, not hardcoded
+        return array( "success" => $successfulExport, "filepath" => $archivePath );
     }
     
     //doImport(XOOPS_ROOT_PATH . "/modules/formulize/export/test.zip");
@@ -34,9 +35,6 @@
            csvToDB($tempCSVFolderPath);
            deleteDir($tempCSVFolderPath); // clean up temp folder and CSV files
     }
-    
-    
-    
     
     /********************************************
      *          EXPORT FUNCTIONS                *

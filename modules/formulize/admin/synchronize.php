@@ -13,6 +13,7 @@ $sync[1]['name'] = "Import Database for Synchronization";
 $sync[1]['content']['type'] = "import";
 $sync[2]['name'] = "Export Database for Synchronization";
 $sync[2]['content']['type'] = "export";
+$sync[2]['content']['error'] = 0;
 
 // populate the checkboxes for export
 $checks = retrieveTableNamesForCheckboxes();
@@ -32,11 +33,9 @@ if (isset($_POST['export'])) {
         }
         // needs to return the filepath and success/fail
         // TODO: doExport is causing a 500 error, so commented out for now
-//        $export = doExport($filename, $checks);
-        $export["success"] = "false";
-        $export["filepath"] = $filename; // TODO: hardcoded for testing error being printed to synchronize_sections.html on export error
+        $export = doExport($filename, $checks);
 
-        if ($export["success"] == "true") {
+        if ($export["success"] == true) {
             header('Content-Description: File Transfer');
             header('Content-Type: application/zip');
             header('Content-Disposition: attachment; filename=' . $export["filepath"]);
@@ -45,7 +44,7 @@ if (isset($_POST['export'])) {
         }
         else {
             // return error message flag
-            $sync[2]['content']['error'] = "1";
+            $sync[2]['content']['error'] = 1;
         }
     }
 }
