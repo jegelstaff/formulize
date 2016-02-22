@@ -33,14 +33,13 @@ if (isset($_POST['export'])) {
         }
         // needs to return the filepath and success/fail
         $export = doExport($filename, $checks);
-        $save = array( "success" => "true", "filepath" => $export );
 
-        if ($save["success"] == "true") {
+        if ($export["success"] == "true") {
             header('Content-Description: File Transfer');
             header('Content-Type: application/zip');
-            header('Content-Disposition: attachment; filename=' . $save["filepath"]);
-            header('Content-Length: ' . filesize($save["filepath"]));
-            readfile($filepath);
+            header('Content-Disposition: attachment; filename=' . $export["filepath"]);
+            header('Content-Length: ' . filesize($export["filepath"]));
+            readfile($export["filepath"]);
         }
         else {
             // return error message flag

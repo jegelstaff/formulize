@@ -6,7 +6,7 @@
     include_once "synccompare.php";
     include_once "../include/functions.php";
     
-    $successExport = True;
+    $successExport = true;
     
     /*
      * doExport function exports template files and current Formulize database state to a ".zip" archive
@@ -14,7 +14,7 @@
      * param archiveName        String representing name of new or existing zip file. path must have ".zip" extension
      * return array             Key value array containing String path to archive file created from export
      */
-    function doExport($archiveName){
+    function doExport($archiveName, $checks){
         $csvFilePaths = createCSVsAndGetPaths(syncTablesList()); // syncTablesList() returns string array of tables to pull data from
         $archivePath = createExportArchive($archiveName, $csvFilePaths);
         
