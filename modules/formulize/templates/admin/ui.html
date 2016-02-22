@@ -1,10 +1,12 @@
 <script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/jquery/jquery-1.4.2.min.js"></script>
 <script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/jquery/jquery-ui-1.8.2.custom.min.js"></script>
 <script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/codemirror/codemirror-compressed.js"></script>
+<script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/formulize.js"></script>
+<script type="text/javascript" src="<{$xoops_url}>/modules/formulize/selenium_debug.js"></script>
 
 <link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/libraries/jquery/css/start/jquery-ui-1.8.2.custom.css">
-<link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/templates/admin/css/ui.css">
-<link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/libraries/codemirror/codemirror.css">
+<link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/templates/css/formulize-admin.css">
+
 <script type="text/javascript">
  var pagehasaccordion = new Array();
 </script>
@@ -63,7 +65,7 @@ $(document).ready(function() {
 <!-- end jquery -->
 
 <!--[if IE 6]> 
-	<link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/templates/admin/css/ie6.css" />
+	<link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/templates/css/ie6.css" />
 <![endif]-->
 
 <div class="admin-ui">
@@ -87,30 +89,26 @@ $(document).ready(function() {
 <{/if}>
 
 <{if $adminPage.pagetitle}>
-  <h1><{$adminPage.pagetitle}></h1>
-  <p class="smallhead"><{$adminPage.pagesubtitle}></p>
+  <h1><{$adminPage.pagetitle}> <span class="smallhead"><{$adminPage.pagesubtitle}></span></h1>
   <{if $lasturl}>
     <p><a href="ui.php?<{$lasturl}>"><{$smarty.const._AM_HOME_GOBACKTO}><i><{$lasttext}></i></a></p>
   <{/if}>
 <{/if}>
 
 <{if $breadcrumbtrail}>
-<p>
-  <{counter start=0 assign=crumbcount print=false}>
-  <{foreach from=$breadcrumbtrail item=crumb}>
-
-  <{if $crumbcount}> &raquo; <{/if}>
-
-  <{if $crumb.url}>
-    <a href="ui.php?<{$crumb.url}>"><{$crumb.text}></a>
-    <{assign var='lasturl' value=$crumb.url}>
-    <{assign var='lasttext' value=$crumb.text}>
-  <{else}>
-    <{$crumb.text}>
-  <{/if}>
-
-  <{counter}>
-  <{/foreach}>
+<p id="admin-breadcrumbs">
+    <{counter start=0 assign=crumbcount print=false}>
+    <{foreach from=$breadcrumbtrail item=crumb}>
+        <{if $crumbcount}> &raquo; <{/if}>
+        <{if $crumb.url}>
+            <a href="ui.php?<{$crumb.url}>" class="breadcrumb-<{$crumbcount}>"><{$crumb.text}></a>
+            <{assign var='lasturl' value=$crumb.url}>
+            <{assign var='lasttext' value=$crumb.text}>
+        <{else}>
+            <{$crumb.text}>
+        <{/if}>
+    <{counter}>
+    <{/foreach}>
 </p>
 <{/if}>
 
@@ -131,7 +129,7 @@ $(document).ready(function() {
 <{include file="db:admin/ui-tabs.html" tabs=$adminPage.tabs}>
 <{/if}>
   
-<p class="versionnumber">Version 5.0 RC1</p>
+<p class="versionnumber">Version <{$version}></p>
 
 </div><!-- End admin-ui -->
 
@@ -142,19 +140,7 @@ $(document).ready(function() {
   var redirect = "";
   var newhandle = "";
   var formdata = new Array();
-  
-  // If saveLock is turned on, do not display save button to user, instead display "READ ONLY"
-	$( document ).ready(function() {
-		if(saveLock) {
-			console.log("removing save button\n");
-			document.getElementsByClassName('savebutton').style.visibility = 'hidden';
-			document.getElementById('savebutton').html("READ ONLY");
-		} else {
-			document.getElementsByClassName('savebutton').style.visibility = 'visible';
-		}
-		
-	});
-  
+
   $("input").change(function() {
     setDisplay('savewarning','block');
     });
@@ -169,7 +155,6 @@ $(document).ready(function() {
     });
 
   $(".savebutton").click(function() {
-   // do savedisables check here?
     if(validateRequired()) {
       runSaveEvent();
     }
@@ -270,7 +255,7 @@ $(document).ready(function() {
 
   $(document).ready(
     $('.code-textarea').each(function() {
-        if (this.type !== 'textarea') {
+        if (this.type !== 'textarea' || SELENIUM_DEBUG == 'ON') {
             return true; // continue
         }
         CodeMirror.fromTextArea(this, {
