@@ -37,6 +37,11 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
 global $xoopsTpl;
 
+// If saveLock is turned on, exit
+if(saveLock) {
+		exit();
+}
+
 if (!isset($xoopsTpl)) {
     global $xoopsOption, $xoopsConfig, $xoopsModule;
 
