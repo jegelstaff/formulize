@@ -11,6 +11,7 @@ $sync = array();
 
 $sync[1]['name'] = "Import Database for Synchronization";
 $sync[1]['content']['type'] = "import";
+$sync[1]['content']['error'] = 0;
 $sync[2]['name'] = "Export Database for Synchronization";
 $sync[2]['content']['type'] = "export";
 $sync[2]['content']['error'] = 0;
@@ -51,16 +52,24 @@ if (isset($_POST['export'])) {
 // retrieve the post information from the import submit
 else if(isset($_POST['import'])) {
 
-    $filename = $_POST['file'];
+    $filepath = $_POST['file'];
 
-    if ($filename != NULL) {
-        // kick-off the import
+    if ($filepath != NULL) {
+        // import the zip into a temporary folder
+        $tempFolder = extractArchiveFolders($filename);
+
+        if ($tempFolder["success"] == true) {
+            //continue with next phase of import
+        }
+        else {
+            $sync[1]['content']['error'] = 1;
+        }
     }
     // didn't select a file, do nothing
 }
 else {
 
-    $filename ="";
+    $filepath = "";
 }
 
 $adminPage['sync'] = $sync;

@@ -1,6 +1,6 @@
 <{if $sectionContent.type == "import"}>
     <h3>Select Archive to Synchronize with Current System</h3>
-    <form name="import" method="POST" action=<{$xoops_url}>/modules/formulize/admin/ui.php?page=synchronize">
+    <form name="import" method="POST">
         <p>The following action will allow a previously exported system to be imported
         to the current system. A validation step will appear allowing you to select which elements of
         of the current system you would like to override.<br/>
@@ -8,6 +8,9 @@
         <input type="file" name="file">
         <input type="submit" name="import" value="Synchronize!">
     </form>
+    <{if $sectionContent.error == 1}>
+    <span style="color: red; ">an error occurred while importing</span>
+    <{/if}>
 <{/if}>
 
 <{if $sectionContent.type == "export"}>

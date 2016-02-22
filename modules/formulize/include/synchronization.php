@@ -417,8 +417,9 @@
              die("Export folder could not be created.");
          }
         extractFolder($archivePath, "tables", $tempFolderPath);
-        
-        return $tempFolderPath;
+
+        // TODO: This should also return a success/fail flag, which should be set during import
+        return array( "success" => $successfulExport, "tempFolder" => $tempFolderPath );
     }
     
     
