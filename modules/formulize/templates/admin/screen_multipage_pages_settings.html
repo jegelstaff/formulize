@@ -34,7 +34,19 @@
 </div>
 
 <script type="text/javascript">
-
+	
+	// If saveLock is turned on, do not display save button to user, instead display "READ ONLY"
+	$( document ).ready(function() {
+		if(saveLock) {
+			console.log("removing save button\n");
+			document.getElementsByClassName('savebuttonpopup').style.visibility = 'hidden';
+			document.getElementById('popupsavebutton').html("READ ONLY");
+		} else {
+			document.getElementsByClassName('savebuttonpopup').style.visibility = 'visible';
+		}
+		
+	});
+	
   $("input").change(function() {
     window.document.getElementById('popupsavewarning').style.display = 'block';
     });
