@@ -15,7 +15,7 @@
      * return array             Key value array containing String path to archive file created from export
      */
     function doExport($archiveName, $checks){
-        $csvFilePaths = createCSVsAndGetPaths(syncTablesList()); // syncTablesList() returns string array of tables to pull data from
+        $csvFilePaths = createCSVsAndGetPaths(syncDefaultTablesList()); // syncDefaultTablesList() returns string array of tables to pull data from
         $archivePath = createExportArchive($archiveName, $csvFilePaths);
         
         cleanupCSVs($csvFilePaths);
