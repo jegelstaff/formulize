@@ -6,20 +6,21 @@
     include_once "synccompare.php";
     include_once "../include/functions.php";
     
-    $successfulExport = false;
+    $successfulExport = true;
+    $successfulImport = true;
     
     /*
      * doExport function exports template files and current Formulize database state to a ".zip" archive
      * 
      * param archiveName        String representing name of new or existing zip file. path must have ".zip" extension
-     * return array             Key value array containing String path to archive file created from export
+     * return array             Key value array containing boolean success flag and String path to archive file created from export
      */
     function doExport($archiveName, $checks){
-        $csvFilePaths = createCSVsAndGetPaths(syncTablesList()); // syncTablesList() returns string array of tables to pull data from
+        $csvFilePaths = createCSVsAndGetPaths(syncDefaultTablesList()); // syncDefaultTablesList() returns string array of tables to pull data from
         $archivePath = createExportArchive($archiveName, $csvFilePaths);
         
         cleanupCSVs($csvFilePaths);
-        // TODO: $successfulExport flag needs to be set during the Export process, not hardcoded
+        
         return array( "success" => $successfulExport, "filepath" => $archivePath );
     }
     
@@ -29,11 +30,14 @@
      * doImport function imports template files and current Formulize database state from a ".zip" archive
      *
      * param archivePath        String path to archive file. file should have ".zip" extension
+     * return array             Key value array containing boolean success flag
      */
     function doImport($archivePath){
            $tempCSVFolderPath = extractArchiveFolders($archivePath);
            csvToDB($tempCSVFolderPath);
            deleteDir($tempCSVFolderPath); // clean up temp folder and CSV files
+           
+           return array( "success" => $successfulImport);
     }
     
     /********************************************
@@ -54,7 +58,8 @@
         // create directory in the "export" directory that is unique to the time created. will store export CSVs
         $exportDir = XOOPS_ROOT_PATH . "/modules/formulize/export/" . date_format($date, 'Y-m-d (U)') . "/";
         if (!file_exists($exportDir) and !mkdir($exportDir)){
-            die("Export folder could not be created.");
+            $successfulExport = false;
+            error_log("Export folder could not be created.");
         }
 
         $tableObj = new tableInfo();
@@ -70,6 +75,7 @@
             catch (\PDOException $e) {
                 error_log('Synchronization export table does not exist: '.$t);
                 unset($tables[$key]);
+                $successfulExport = false;
             }
         }
 
@@ -83,7 +89,7 @@
     }
     
     /*
-     * formatDataArrayForCSV function formats the dataArray from tableInfo class get format to a format that
+     * formatDataArrayForCSV function formats the dataArray from tableInfo class to a format that
      * can be written to a CSV
      *
      * param dataArray          Object array (containing String and String[]) having format defined by tableInfo class, get method
@@ -105,7 +111,6 @@
         array_push($formattedData, $types); // add column types array
         
         // push each row of data into formattedData as arrays
-        
         for($i = 0; $i < count($dataArray["records"]); $i ++){ // row index
             $row = array();
             for($j = 0; $j < count($dataArray["columns"]); $j ++){ // column index
@@ -135,8 +140,9 @@
     }
     
     
-    // NOT CURRENTLY USED
+    
     /*
+     * // NOT CURRENTLY USED
      * getTemplateFilePaths returns array containing all paths for template and custom_code files in Formulize directory
      *
      * return paths     string array containing paths for all template files
@@ -207,11 +213,13 @@
         // open archive object. ".zip" file is only created once a file has been added to it
         if ($overwrite){
             if ( $zip->open($archivePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== TRUE) {
-                die ("Could not open archive");
+                $successfulExport = false;
+                error_log("Could not create archive file.");
             }
         }else{
             if ($zip->open($archivePath, ZIPARCHIVE::CREATE) !== TRUE) {
-                die ("Could not open archive");
+                $successfulExport = false;
+                error_log("Could not create archive file.");
             }
         }
         $zip->addEmptyDir($masterFolderName);
@@ -254,11 +262,13 @@
         // open archive object. ".zip" file is only created once a file has been added to it
         if ($overwrite){
             if ( $zip->open($archivePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== TRUE) {
-                die ("Could not open archive");
+                $successfulExport = false;
+                error_log("Could not create archive.");
             }
         }else{
             if ($zip->open($archivePath, ZIPARCHIVE::CREATE) !== TRUE) {
-                die ("Could not open archive");
+                $successfulExport = false;
+                error_log("Could not create archive.");
             }
         }
         
@@ -358,7 +368,8 @@
                 }
             }
         }else{
-            die("csv folder path does not exist!");
+            $successfulImport = false;
+            error_log("Path to extracted CSV files does not exist.");
         }
     }
     
@@ -366,7 +377,7 @@
     /*
      * printArry utility function prints each element of given 1-D String array with comma separator
      *
-     * param arr    Stringarray to be printed
+     * param arr    String array to be printed
      */
     function printArr($arr){
         foreach($arr as $elem){
@@ -402,7 +413,7 @@
     
     /*
      * extractArchiveFolders function calls extractFolder for the folders in the archive
-     * WILL OVERWRITE EXISTING FILES CURRENTLY
+     * WILL OVERWRITE EXISTING FILES
      *
      * param  archivePath       String path to archive file
      * return tempFolderPath    String path to newly created temp folder. Will be used to delete temp folder
@@ -414,12 +425,10 @@
         // create temporary folder to extract CSV files to. will be deleted later
         $tempFolderPath = XOOPS_ROOT_PATH . "/modules/formulize/temp" . date_format(date_create(), '(U)');
          if (!file_exists($tempFolderPath) and !mkdir($tempFolderPath)){
-             die("Export folder could not be created.");
+            $successfulImport = false;
+            error_log("Extraction folder for CSV's could not be created.");
          }
         extractFolder($archivePath, "tables", $tempFolderPath);
-
-        // TODO: This should also return a success/fail flag, which should be set during import
-        return array( "success" => $successfulExport, "tempFolder" => $tempFolderPath );
     }
     
     
@@ -434,7 +443,8 @@
     function extractFolder($archivePath, $folderToExtract, $extractToPath){
         $zip = new ZipArchive;
         if ($zip->open($archivePath) !== TRUE) {
-            die ("Could not open archive");
+            $successfulImport = false;
+            error_log("Could not open archive file for extraction.");
         }
         
         $files = array();
@@ -468,7 +478,8 @@
         for ($i = 0; $i < $line; $i ++){
             $dataRow = fgetcsv($fileHandle);
             if ($i == $line - 1 && !$dataRow){
-                die("invalid line number");
+                $successfulImport = false;
+                error_log("Invalid row requested from CSV file: ".$filePath);
             }
         }
         
