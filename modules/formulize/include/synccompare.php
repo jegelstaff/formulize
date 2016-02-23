@@ -1,6 +1,6 @@
 <?php
 
-//include '../../../mainfile.php';
+include '../../../mainfile.php';
 
 include_once '../class/forms.php';
 
@@ -90,11 +90,11 @@ class SyncCompareCatalog {
     }
 
     public function cacheChanges() {
-        // TODO - use Lee's code for saving $this->changes to cache
+        cacheVar($this->changes, "syncChanges");
     }
 
     public function loadCachedChanges() {
-        // TODO - use Lee's code to load cached changes back into $this->changes
+        $this->changes = loadCachedVar("syncChanges");
     }
 
     public function commitChanges() {
@@ -328,6 +328,24 @@ class SyncCompareCatalog {
 
 function prefixTable($tableName) {
     return XOOPS_DB_PREFIX."_".$tableName;
+}
+
+function cacheVar($var, $varname) {
+    // cleanup any old files from this cached variable
+    formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/cache/", $varname);
+
+    // serialize variable and write to file in cache
+    $filepath = XOOPS_ROOT_PATH . "/modules/formulize/cache/" . $varname;
+    file_put_contents($filepath, serialize($var));
+}
+
+function loadCachedVar($varname) {
+    // cleanup any old files from this cached variable
+    formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/cache/", $varname);
+
+    // get cached variable and unserialize
+    $fileStr = file_get_contents(XOOPS_ROOT_PATH . "/modules/formulize/cache/".$varname);
+    return unserialize($fileStr);
 }
 
 /*
