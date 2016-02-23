@@ -609,6 +609,16 @@ $modversion['config'][] = array(
 	'default' => 1,
 );
 
+// this preference is checked when save button is pressed on front end by user | 0 - False | 1 - True
+$modversion['config'][] = array(
+	'name' => 'isSaveLocked',
+	'title' => '_MI_formulize_ISSAVELOCKED',
+	'description' => '_MI_formulize_ISSAVELOCKEDDESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 0, // no is the default
+);
+
 // number formatting options
 $modversion['config'][] = array(
 	'name' =>'number_decimals',
