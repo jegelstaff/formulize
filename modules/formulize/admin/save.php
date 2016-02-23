@@ -30,6 +30,15 @@
 // This file receives ajax form submissions from the new admin UI
 
 include_once "../../../mainfile.php";
+
+$module_handler = xoops_gethandler('module');
+$config_handler = xoops_gethandler('config');
+$formulizeModule = $module_handler->getByDirname("formulize");
+$formulizeConfig = $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
+if ($formulizeConfig['isSaveLocked']){
+  exit();
+}
+
 ob_end_clean();
 ob_end_clean(); // in some cases ther appear to be two buffers active?!  So we must try to end twice.
 global $xoopsUser;
