@@ -5,7 +5,7 @@
 	<input type="hidden" name="reloadpopup" value="">
 	<input type="hidden" name="conditionsdelete" value="">
 	<input type="hidden" name="piforjquery" value=<{$pageIndex}>>
-	<div id=popupsavebutton><input type="button" class="savebuttonpopup" value="Save your changes"/></div>
+	<div id=popupsavebutton><input type="button" class="savebuttonpopup" id="savebuttonpopup" value="Save your changes"/></div>
 	<div id="popupsavewarning">You have unsaved changes!</div>
 	<div style="clear: both"></div>
 	<div class="accordion-box">
@@ -36,16 +36,13 @@
 <script type="text/javascript">
 	
 	// If saveLock is turned on, do not display save button to user, instead display "READ ONLY"
-	/*$( document ).ready(function() {
-		if(saveLock) {
-			console.log("removing save button\n");
-			document.getElementsByClassName('savebuttonpopup').style.visibility = 'hidden';
-			document.getElementById('popupsavebutton').html("READ ONLY");
-		} else {
-			document.getElementsByClassName('savebuttonpopup').style.visibility = 'visible';
-		}
+	$( document ).ready(function() {
+		<{if $content.isSaveLocked}>
+			document.getElementById('savebuttonpopup').style.visibility = 'hidden';
+			document.getElementById('popupsavebutton').innerHTML = "READ ONLY";
+		<{/if}>
 		
-	});*/
+	});
 	
   $("input").change(function() {
     window.document.getElementById('popupsavewarning').style.display = 'block';

@@ -117,6 +117,9 @@ if (isset($_GET['tab']) AND (!isset($_POST['tabs_selected']) OR $_POST['tabs_sel
     $adminPage['tabselected']  = intval($_POST['tabs_selected']);
 }
 
+// make isSaveLocked preference available to template
+$adminPage['isSaveLocked'] = sendSaveLockPrefToTemplate();
+
 // retrieve the xoops_version info
 $module_handler = xoops_gethandler('module');
 $formulizeModule = $module_handler->getByDirname("formulize");

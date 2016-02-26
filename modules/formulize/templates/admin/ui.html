@@ -45,6 +45,7 @@ $(document).ready(function() {
 </script>
 
 <!-- jquery for floating admin bar, added by S.Gray, April 11, 2011 -->
+<!-- and javascript for disabling save button if preference is set -->
 <script type="text/javascript">
 $(document).ready(function() {
 	var offset = $('#admin_toolbar').offset();
@@ -59,7 +60,13 @@ $(document).ready(function() {
 		  $('#admin_toolbar').removeClass('ui-corner-all');
 		};
 	  });
-		
+	  
+	   // If saveLock is turned on, do not display save button to user, instead display "READ ONLY"
+	  <{if $adminPage.isSaveLocked}>
+		document.getElementById('save').style.visibility = 'hidden';
+		document.getElementById('savebutton').innerHTML = "READ ONLY";
+	  <{/if}>
+	  
 	});
 </script>
 <!-- end jquery -->
@@ -115,7 +122,7 @@ $(document).ready(function() {
 <!-- modified by Freeform Solutions, S.Gray, April 11, 2011 -->
 <{if $adminPage.needsave}>
 <div id="admin_toolbar">
-<div id=savebutton><input type="button" class="savebutton" value="<{$smarty.const._AM_HOME_SAVECHANGES}>"/></div>
+<div id=savebutton><input type="button" class="savebutton" id="save" value="<{$smarty.const._AM_HOME_SAVECHANGES}>"/></div>
 <div id="savewarning" class="ui-corner-all"><{$smarty.const._AM_HOME_WARNING_UNSAVED}></div>
 <div id="derivedfinished" class="ui-corner-all" style="display:none"><{$smarty.const._AM_ELE_DERIVED_DONE}></div>
 </div><!-- /admin_toolbar -->
