@@ -1,9 +1,7 @@
-<html>
-    <body>
 <?php
     //include "../../../mainfile.php";
     include_once "../class/tableInfo.php";
-    include_once "synccompare.php";
+    include_once "../include/synccompare.php";
     include_once "../include/functions.php";
     
     $successfulExport = true;
