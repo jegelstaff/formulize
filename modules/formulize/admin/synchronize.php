@@ -11,19 +11,23 @@ $sync = array();
 
 $sync[1]['name'] = "Import Database for Synchronization";
 $sync[1]['content']['type'] = "import";
-$sync[1]['content']['error'] = 0;
+$sync[1]['content']['error'] = "none";
 $sync[2]['name'] = "Export Database for Synchronization";
 $sync[2]['content']['type'] = "export";
 $sync[2]['content']['error'] = 0;
 
 // populate the checkboxes for export
 $checks = retrieveTableNamesForCheckboxes();
+// TODO: need to create the directory "uploads"
+$uploadaddr = XOOPS_ROOT_PATH . "\\uploads\\";
 
 // retrieve the post information from the export submit
 if (isset($_POST['export'])) {
 
     // get the filename submitted by the user for saving the DB
     $filename = $_POST['filename'];
+    $formsChecked = $_POST['forms'];
+
     if ($filename != "") {
 
         // perform the export
@@ -32,9 +36,9 @@ if (isset($_POST['export'])) {
         if (!endsWithZip($filename, $zip)) {
             $filename .= $zip;
         }
-        // needs to return the filepath and success/fail
-        // TODO: doExport is causing a 500 error, so commented out for now
-        $export = doExport($filename, $checks);
+
+        // perform export
+        $export = doExport($filename, $formsChecked);
 
         if ($export["success"] == true) {
             header('Content-Description: File Transfer');
@@ -51,21 +55,47 @@ if (isset($_POST['export'])) {
 }
 // retrieve the post information from the import submit
 else if(isset($_POST['import'])) {
-
-    $filepath = $_POST['file'];
+    $uploadOK = true;                       // todo: should possibly be an associative array with true/false and message ??
+    $filepath = basename($_FILES['fileToUpload']['name']);
 
     if ($filepath != NULL) {
-        // import the zip into a temporary folder
-        $tempFolder = extractArchiveFolders($filename);
+        $uploadPath = $uploadaddr . $filepath;                                  // create temporary path to store zip file
+        $fileType = pathinfo($filepath, PATHINFO_EXTENSION);                  // get file type
 
-        if ($tempFolder["success"] == true) {
-            //continue with next phase of import
+        if (file_exists($uploadPath)){                                          // check if file has already been uploaded
+            $uploadOK = false;
         }
+        if ($fileType != "zip"){                                               // check for correct input file type
+            $uploadOK = false;
+        }
+        // place the file in a temporary folder
+        if ($uploadOK) {
+            if (move_uploaded_file($_FILES['uploadFile']['tmp_name'], $uploadPath)) {
+                $tempFolder = doImport($uploadPath);
+
+                if ($tempFolder["success"] == true) {
+                    // TODO: add functions to continue with import process
+                    $sync[1]['content']['error'] = "success";
+                }
+                // return an error as there were issues importing the file
+                else {
+                    $sync[1]['content']['error'] = "import_err";
+                }
+            }
+            // return an error as there were issues moving the file to a temporary location
+            else {
+                $sync[1]['content']['error'] = "move_err";
+            }
+        }
+        // return error as there were issues with the file selected
         else {
-            $sync[1]['content']['error'] = 1;
+            $sync[1]['content']['error'] = "upload_err";
         }
     }
-    // didn't select a file, do nothing
+    // return an error as no filename was chosen (or set in $filepath)
+    else {
+        $sync[1]['content']['error'] = "file_err";
+    }
 }
 else {
 
@@ -109,7 +139,7 @@ function retrieveTableNamesForCheckboxes() {
 
     // dynamically generate the checkboxes based on number of tables
     while(list($key,$value)=each($forms)) {
-        $str .= '<input type="checkbox" name="'.$key.'" value="form[]" />'.$value.' ';
+        $str .= '<input type="checkbox" name="'.$key.'" id="forms" value="form[]" />'.$value.' ';
     }
     return $str;
 }

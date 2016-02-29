@@ -1,15 +1,27 @@
 <{if $sectionContent.type == "import"}>
     <h3>Select Archive to Synchronize with Current System</h3>
-    <form name="import" method="POST">
+    <form name="import" method="POST" enctype="multipart/form-data">
         <p>The following action will allow a previously exported system to be imported
         to the current system. A validation step will appear allowing you to select which elements of
         of the current system you would like to override.<br/>
         Please select the zip folder to be imported:</p>
-        <input type="file" name="file">
+        <input type="file" name="fileToUpload" id="fileToUpload">
         <input type="submit" name="import" value="Synchronize!">
     </form>
-    <{if $sectionContent.error == 1}>
-    <span style="color: red; ">an error occurred while importing</span>
+    <{if $sectionContent.error == "import_err"}>
+    <span style="color: red; "> an error occurred while importing </span>
+    <{/if}>
+    <{if $sectionContent.error == "upload_err"}>
+    <span style="color: red; "> an error occurred while uploading </span>
+    <{/if}>
+    <{if $sectionContent.error == "move_err"}>
+    <span style="color: red; "> an error occurred while saving the file </span>
+    <{/if}>
+    <{if $sectionContent.error == "file_err"}>
+    <span style="color: red; "> an error occurred while getting the file name </span>
+    <{/if}>
+    <{if $sectionContent.error == "success"}>
+    <span style="color: green; "> import occurred successfully </span>
     <{/if}>
 <{/if}>
 
