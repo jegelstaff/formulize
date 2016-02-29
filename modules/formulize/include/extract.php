@@ -822,7 +822,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	  // need to include the query first, so the SELECT or INSERT is the first thing in the string, so we catch it properly when coming back through the export process
 	  $GLOBALS['formulize_queryForExport'] = $masterQuerySQLForExport." -- SEPARATOR FOR EXPORT QUERIES -- ".$sortIsOnMainFlag; // "$selectClauseToUse FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause $limitClause";
 	  
-     
+        $useFidForCurFormId = false;
   } else { // end of if the filter has a SELECT in it
 	  if(strstr($filter," -- SEPARATOR FOR EXPORT QUERIES -- ")) {
 	       $exportOverrideQueries = explode(" -- SEPARATOR FOR EXPORT QUERIES -- ",$filter);
@@ -831,6 +831,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	  } else {
 	       $masterQuerySQL = $filter; // need to split this based on some separator, because export ends up passing in a series of statements     
 	  }
+      $useFidForCurFormId = true;
   }
   
   // after the export query has been generated, then let's put the limit on:
@@ -849,7 +850,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
      //global $xoopsUser;
      //if($xoopsUser->getVar('uid') == 1) {
      //     print "<br>Count query: $countMasterResults<br><br>";
-     //     print "Master query: $masterQuerySQL<br>";
+    //    print "Master query: $masterQuerySQL<br>";
      //}
      
 		 formulize_benchmark("Before query");
@@ -972,6 +973,11 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	       $prevFormAlias = "";
 	       $prevMainId = "";
 
+        if($useFidForCurFormId) {
+            $curFormId = $fid;
+        }
+           
+           
 	       while($masterQueryArray = $xoopsDB->fetchArray($thisRes)) {
 		    
 		    foreach($masterQueryArray as $field=>$value) {
@@ -997,7 +1003,8 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
         					}
     					   $prevMainId = $masterQueryArray['main_entry_id']; // if the current form is a main, then store it's ID for use later when we're on a new form
     				   }
-			      }  
+			      }
+                  
 			      $prevFieldNotMeta = false;
 			      // setup handles to use for metadata fields
 			      if($curFormAlias == "main") {
@@ -1084,6 +1091,11 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	  $prevFormAlias = "";
 	  $prevMainId = "";
 		      //formulize_benchmark("About to prepare results.");
+              
+    if($useFidForCurFormId) {
+        $curFormId = $fid;
+    }
+              
 	  while($masterQueryArray = $xoopsDB->fetchArray($masterQueryRes)) {
             set_time_limit(120);
 	     //formulize_benchmark("Starting to process one entry.");
@@ -1097,8 +1109,9 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 			 // We account for a mainform entry appearing multiple times in the list, because when there are multiple entries in a subform, and SQL returns one row per subform,  we need to not change the main form and internal record until we pass to a new mainform entry
 					     
 			 if($prevFieldNotMeta) { // only do once for each form
+                
 			      $curFormId = $fieldNameParts[0] == "main" ? $fid : $linkformids[substr($fieldNameParts[0], 1)]; // the table aliases are based on the keys of the linked forms in the linkformids array, so if we get the number out of the table alias, that key will give us the form id of the linked form as stored in the linkformids array
-			      $prevFormAlias = $curFormAlias;
+                  $prevFormAlias = $curFormAlias;
 			      $curFormAlias = $fieldNameParts[0];
 			      if($prevFormAlias == "main") { // if we just finished up a main form entry, then log that
 				   $writtenMains[$prevMainId] = true;
@@ -1118,7 +1131,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 				   $prevMainId = $masterQueryArray['main_entry_id']; // if the current form is a main, then store it's ID for use later when we're on a new form
 			      }
 			 }
-		      
+             
 			 $prevFieldNotMeta = false;
 			 // setup handles to use for metadata fields
 			 if($curFormAlias == "main") {
@@ -1910,6 +1923,8 @@ function dataExtractionDB($table, $filter, $andor, $scope, $uidField) {
 // THIS FUNCTION DOES A SIMPLE QUERY AGAINST A TABLE IN THE DATABASE AND RETURNS THE RESULT IN STANDARD "GETDATA" FORMAT
 function dataExtractionTableForm($tablename, $formname, $fid, $filter, $andor, $limitStart, $limitSize, $sortField, $sortOrder) {
 
+    $GLOBALS['formulize_queryForExport'] = "USETABLEFORM -- $tablename -- $formname -- $fid -- $filter -- $andor -- $limitStart -- $limitSize -- $sortField -- $sortOrder";
+
      global $xoopsDB;
 
      // 2. parse the filter
@@ -1995,7 +2010,7 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter, $andor, $
 					$GLOBALS['formulize_countMasterResultsForPageNumbers'] = $countRow[0]; 
 		      unset($GLOBALS['formulize_getCountForPageNumbers']);
 		 } 
-		 
+         
      return $result;
      
      

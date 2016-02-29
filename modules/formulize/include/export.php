@@ -278,62 +278,78 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
     $GLOBALS['formulize_doingExport'] = true;
     unset($queryData[0]); // get rid of the fid and userid lines
     unset($queryData[1]);
+       
     $data_sql = implode(" ", $queryData); // merge all remaining lines into one string to send to getData
-
-    $limitStart = 0;
-    $limitSize = 50;    // export in batches of 50 records at a time
-
-    do {
-        // load part of the data, since a very large dataset could exceed the PHP memory limit
-        $data = getData($frid, $fid, $data_sql, "AND", null, $limitStart, $limitSize);
-        if (is_array($data)) {
-            foreach ($data as $entry) {
-                $row = array();
-                foreach ($columns as $column) {
-                    switch ($column) {
-                        case "entry_id":
-                        $formhandle = getFormHandlesFromEntry($entry);
-                        $ids = internalRecordIds($entry, $formhandle[0]);
-                        $row[] = $ids[0];
-                        break;
-
-                        case "uid":
-                        $c_uid = display($entry, 'creation_uid');
-                        $c_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$c_uid'");
-                        $row[] = (isset($c_name_q[0]['name']) ? $c_name_q[0]['name'] : $c_name_q[0]['uname']);
-                        break;
-
-                        case "proxyid":
-                        $m_uid = display($entry, 'mod_uid');
-                        if ($m_uid) {
-                            $m_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$m_uid'");
-                            $row[] = (isset($m_name_q[0]['name']) ? $m_name_q[0]['name'] : $m_name_q[0]['uname']);
-                        } else {
-                            $row[] = "";
-                        }
-                        break;
-
-                        case "creation_date":
-                        $row[] = display($entry, 'creation_datetime');
-                        break;
-
-                        case "mod_date":
-                        $row[] = display($entry, 'mod_datetime');
-                        break;
-
-                        default:
-                        $row[] = trans(html_entity_decode(displayTogether($entry, $column, ", "), ENT_QUOTES));
-                    }
-                }
-                // output this row to the browser
-                fputcsv($output_handle, $row);
+    if(substr($data_sql, 0, 12)=="USETABLEFORM") {
+        $params = explode(" -- ", $data_sql);
+        $data = dataExtractionTableForm($params[1], $params[2], $params[3], $params[4], $params[5], FALSE, FALSE, $params[8], $params[9]);
+        foreach($data as $entry) {
+            $row = array();
+            foreach($columns as $column) {
+                $row[] = trans(html_entity_decode(displayTogether($entry, $column, ", "), ENT_QUOTES));    
             }
-
-            // get the next set of data
-            set_time_limit(90);
-            $limitStart += $limitSize;
+            // output this row to the browser
+            fputcsv($output_handle, $row);
         }
-    } while (is_array($data) and count($data) > 0);
+        
+    } else {
 
+        $limitStart = 0;
+        $limitSize = 50;    // export in batches of 50 records at a time
+    
+        do {
+            // load part of the data, since a very large dataset could exceed the PHP memory limit
+            $data = getData($frid, $fid, $data_sql, "AND", null, $limitStart, $limitSize);
+            if (is_array($data)) {
+                foreach ($data as $entry) {
+                    $row = array();
+                    foreach ($columns as $column) {
+                        switch ($column) {
+                            case "entry_id":
+                            $formhandle = getFormHandlesFromEntry($entry);
+                            $ids = internalRecordIds($entry, $formhandle[0]);
+                            $row[] = $ids[0];
+                            break;
+    
+                            case "uid":
+                            $c_uid = display($entry, 'creation_uid');
+                            $c_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$c_uid'");
+                            $row[] = (isset($c_name_q[0]['name']) ? $c_name_q[0]['name'] : $c_name_q[0]['uname']);
+                            break;
+    
+                            case "proxyid":
+                            $m_uid = display($entry, 'mod_uid');
+                            if ($m_uid) {
+                                $m_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$m_uid'");
+                                $row[] = (isset($m_name_q[0]['name']) ? $m_name_q[0]['name'] : $m_name_q[0]['uname']);
+                            } else {
+                                $row[] = "";
+                            }
+                            break;
+    
+                            case "creation_date":
+                            $row[] = display($entry, 'creation_datetime');
+                            break;
+    
+                            case "mod_date":
+                            $row[] = display($entry, 'mod_datetime');
+                            break;
+    
+                            default:
+                            $row[] = trans(html_entity_decode(displayTogether($entry, $column, ", "), ENT_QUOTES));
+                        }
+                    }
+                    // output this row to the browser
+                    fputcsv($output_handle, $row);
+                }
+    
+                // get the next set of data
+                set_time_limit(90);
+                $limitStart += $limitSize;
+            }
+        } while (is_array($data) and count($data) > 0);
+
+    }
+        
     fclose($output_handle);
 }
