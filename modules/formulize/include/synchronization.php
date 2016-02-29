@@ -427,8 +427,8 @@
             error_log("Extraction folder for CSV's could not be created.");
          }
         extractFolder($archivePath, "tables", $tempFolderPath);
-
-        // TODO: is this function supposed to return something or is the documentation wrong?
+        
+        return $tempFolderPath;
     }
     
     
