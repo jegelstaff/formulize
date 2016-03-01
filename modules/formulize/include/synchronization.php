@@ -1,13 +1,20 @@
-<html>
-    <body>
 <?php
-    //include "../../../mainfile.php";
+    
+    /*
+     * TO DO:
+     *      1. To be done after check boxes have been implemented in UI
+     *         a) Update syncDataTablesList to take parameter $checks and query db using the info in it
+     *         b) Change createCSVsAndGetPaths call in doExport to createCSVsAndGetPaths(syncDataTablesList($checks))
+     *      2. Verify that formulize id prefix is always 9 characters - removeFormulizeIdPrefix()
+     */
+    
     include_once "../class/tableInfo.php";
     include_once "synccompare.php";
     include_once "../include/functions.php";
     
-    $successfulExport = true;
-    $successfulImport = true;
+    //global variables
+    $successfulExport = 1;
+    $successfulImport = 1;
     
     /*
      * doExport function exports template files and current Formulize database state to a ".zip" archive
@@ -17,16 +24,16 @@
      * return array             Key value array containing boolean success flag and String path to archive file created from export
      */
     function doExport($archiveName, $checks){
+        global $successfulExport;
+        
         $csvFilePaths = createCSVsAndGetPaths(syncDefaultTablesList()); // syncDataTablesList() returns string array of tables to pull data from
         $archivePath = createExportArchive($archiveName, $csvFilePaths);
         
         cleanupCSVs($csvFilePaths);
-        
         return array( "success" => $successfulExport, "filepath" => $archivePath );
     }
     
-    //doImport(XOOPS_ROOT_PATH . "/modules/formulize/export/test.zip");
-            
+    
     /*
      * doImport function imports template files and current Formulize database state from a ".zip" archive
      *
@@ -34,6 +41,8 @@
      * return array             Key value array containing boolean success flag
      */
     function doImport($archivePath){
+        global $successfulImport;
+        
         $tempCSVFolderPath = extractArchiveFolders($archivePath);
         csvToDB($tempCSVFolderPath);
         deleteDir($tempCSVFolderPath); // clean up temp folder and CSV files
@@ -59,7 +68,7 @@
         // create directory in the "export" directory that is unique to the time created. will store export CSVs
         $exportDir = XOOPS_ROOT_PATH . "/modules/formulize/export/" . date_format($date, 'Y-m-d (U)') . "/";
         if (!file_exists($exportDir) and !mkdir($exportDir)){
-            $successfulExport = false;
+            $successfulExport = 0;
             error_log("Export folder could not be created.");
         }
 
@@ -76,7 +85,7 @@
             catch (\PDOException $e) {
                 error_log('Synchronization export table does not exist: '.$t);
                 unset($tables[$key]);
-                $successfulExport = false;
+                $successfulExport = 0;
             }
         }
 
@@ -100,7 +109,7 @@
         // preprocess dataArray into a 1D array to be written to csv
         $formattedData = array();
         
-        array_push($formattedData, array($dataArray["name"])); // add table name as array
+        array_push($formattedData, array(removeFormulizeIdPrefix($dataArray["name"]))); // add table name as array
         
         $cols = array();
         $types = array();
@@ -121,6 +130,16 @@
         }
         
         return $formattedData;
+    }
+    
+    /*
+     * removeFormulizeIdPrefix function removes the "i##[a-z][a-z][a-z]###_" prefix from the given string
+     *
+     * param string         String with formulize id prefix
+     * return cleanString   String without formulize id prefix
+     */
+    function removeFormulizeIdPrefix($string){
+        return substr($string, 10);
     }
     
     /*
@@ -214,12 +233,12 @@
         // open archive object. ".zip" file is only created once a file has been added to it
         if ($overwrite){
             if ( $zip->open($archivePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== TRUE) {
-                $successfulExport = false;
+                $successfulExport = 0;
                 error_log("Could not create archive file.");
             }
         }else{
             if ($zip->open($archivePath, ZIPARCHIVE::CREATE) !== TRUE) {
-                $successfulExport = false;
+                $successfulExport = 0;
                 error_log("Could not create archive file.");
             }
         }
@@ -263,12 +282,12 @@
         // open archive object. ".zip" file is only created once a file has been added to it
         if ($overwrite){
             if ( $zip->open($archivePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== TRUE) {
-                $successfulExport = false;
+                $successfulExport = 0;
                 error_log("Could not create archive.");
             }
         }else{
             if ($zip->open($archivePath, ZIPARCHIVE::CREATE) !== TRUE) {
-                $successfulExport = false;
+                $successfulExport = 0;
                 error_log("Could not create archive.");
             }
         }
@@ -366,18 +385,18 @@
             foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($csvFolderPath)) as $filePath){
                 if ($filePath->isDir()) continue; // skip "." and ".."
                 for ($line = 1; $line <= getNumDataRowsCSV($filePath); $line ++){
-                    $comparator->addRecord(getTableNameCSV($filePath), getDataRowCSV($filePath, 1), getTableColsCSV($filePath));
+                    $comparator->addRecord(getTableNameCSV($filePath)[0], getDataRowCSV($filePath, $line), getTableColsCSV($filePath));
                 }
             }
         }else{
-            $successfulImport = false;
+            $successfulImport = 0;
             error_log("Path to extracted CSV files does not exist.");
         }
     }
     
     
     /*
-     * printArry utility function prints each element of given 1-D String array with comma separator
+     * printArr utility function prints each element of given 1-D String array with comma separator
      *
      * param arr    String array to be printed
      */
@@ -427,7 +446,7 @@
         // create temporary folder to extract CSV files to. will be deleted later
         $tempFolderPath = XOOPS_ROOT_PATH . "/modules/formulize/temp" . date_format(date_create(), '(U)');
          if (!file_exists($tempFolderPath) and !mkdir($tempFolderPath)){
-            $successfulImport = false;
+            $successfulImport = 0;
             error_log("Extraction folder for CSV's could not be created.");
          }
         extractFolder($archivePath, "tables", $tempFolderPath);
@@ -447,7 +466,7 @@
     function extractFolder($archivePath, $folderToExtract, $extractToPath){
         $zip = new ZipArchive;
         if ($zip->open($archivePath) !== TRUE) {
-            $successfulImport = false;
+            $successfulImport = 0;
             error_log("Could not open archive file for extraction.");
         }
         
@@ -482,7 +501,7 @@
         for ($i = 0; $i < $line; $i ++){
             $dataRow = fgetcsv($fileHandle);
             if ($i == $line - 1 && !$dataRow){
-                $successfulImport = false;
+                $successfulImport = 0;
                 error_log("Invalid row requested from CSV file: ".$filePath);
             }
         }
@@ -562,6 +581,4 @@
         fclose($fileHandle);
         return $numRows;
     }
-    ?>
-    </body>
-</html>
+?>
