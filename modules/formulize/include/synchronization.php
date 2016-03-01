@@ -13,10 +13,11 @@
      * doExport function exports template files and current Formulize database state to a ".zip" archive
      * 
      * param archiveName        String representing name of new or existing zip file. path must have ".zip" extension
+     * param checks             Associative array of form ids, form names to be exported
      * return array             Key value array containing boolean success flag and String path to archive file created from export
      */
     function doExport($archiveName, $checks){
-        $csvFilePaths = createCSVsAndGetPaths(syncDefaultTablesList()); // syncDefaultTablesList() returns string array of tables to pull data from
+        $csvFilePaths = createCSVsAndGetPaths(syncDefaultTablesList()); // syncDataTablesList() returns string array of tables to pull data from
         $archivePath = createExportArchive($archiveName, $csvFilePaths);
         
         cleanupCSVs($csvFilePaths);
@@ -33,11 +34,11 @@
      * return array             Key value array containing boolean success flag
      */
     function doImport($archivePath){
-           $tempCSVFolderPath = extractArchiveFolders($archivePath);
-           csvToDB($tempCSVFolderPath);
-           deleteDir($tempCSVFolderPath); // clean up temp folder and CSV files
-           
-           return array( "success" => $successfulImport);
+        $tempCSVFolderPath = extractArchiveFolders($archivePath);
+        csvToDB($tempCSVFolderPath);
+        deleteDir($tempCSVFolderPath); // clean up temp folder and CSV files
+        
+        return array( "success" => $successfulImport);
     }
     
     /********************************************
@@ -360,11 +361,12 @@
      */
     function csvToDB($csvFolderPath){
         if (file_exists($csvFolderPath)){
+            $comparator = new SyncCompareCatalog();
             // iterate $csvFolderPath directory and import each file
             foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($csvFolderPath)) as $filePath){
                 if ($filePath->isDir()) continue; // skip "." and ".."
                 for ($line = 1; $line <= getNumDataRowsCSV($filePath); $line ++){
-                    addRecord(getTableNameCSV($filePath), getDataRowCSV($filePath, 1), getTableColsCSV($filePath)); // , getTableColTypesCSV($filePath)
+                    $comparator->addRecord(getTableNameCSV($filePath), getDataRowCSV($filePath, 1), getTableColsCSV($filePath));
                 }
             }
         }else{
