@@ -5,7 +5,6 @@
      *      1. To be done after check boxes have been implemented in UI
      *         a) Update syncDataTablesList to take parameter $checks and query db using the info in it
      *         b) Change createCSVsAndGetPaths call in doExport to createCSVsAndGetPaths(syncDataTablesList($checks))
-     *      2. Verify that formulize id prefix is always 9 characters - removeFormulizeIdPrefix()
      */
     
     include_once "../class/tableInfo.php";
@@ -132,14 +131,27 @@
         return $formattedData;
     }
     
+    
     /*
      * removeFormulizeIdPrefix function removes the "i##[a-z][a-z][a-z]###_" prefix from the given string
+     * by removing all characters up to and including the first underscore
      *
      * param string         String with formulize id prefix
      * return cleanString   String without formulize id prefix
      */
     function removeFormulizeIdPrefix($string){
-        return substr($string, 10);
+        $cleanString = "";
+        $i = 0;
+        
+        // skip prefix
+        while($string[$i] != "_"){ $i ++; }
+        
+        // record all chars after prefix
+        for ($i += 1; $i < strlen($string); $i ++){
+            $cleanString .= $string[$i];
+        }
+        return $cleanString;
+        //return substr($string, 10);
     }
     
     /*
@@ -371,23 +383,23 @@
      *          IMPORT FUNCTIONS                *
      ********************************************/
     
-    
-    
     /*
      * csvToDB function sends each exported table to synccompare.php compareRecToDB() function
      *
      * param csvFolderPath      String path to folder containing exported CSV files
      */
     function csvToDB($csvFolderPath){
+        global $xoopsDB;
         if (file_exists($csvFolderPath)){
             $comparator = new SyncCompareCatalog();
             // iterate $csvFolderPath directory and import each file
             foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($csvFolderPath)) as $filePath){
                 if ($filePath->isDir()) continue; // skip "." and ".."
                 for ($line = 1; $line <= getNumDataRowsCSV($filePath); $line ++){
-                    $comparator->addRecord(getTableNameCSV($filePath)[0], getDataRowCSV($filePath, $line), getTableColsCSV($filePath));
+                    $comparator->addRecord($xoopsDB->prefix($form_handle)."_".getTableNameCSV($filePath)[0], getDataRowCSV($filePath, $line), getTableColsCSV($filePath));
                 }
             }
+            $comparator->cacheChanges();
         }else{
             $successfulImport = 0;
             error_log("Path to extracted CSV files does not exist.");
