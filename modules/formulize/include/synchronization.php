@@ -347,7 +347,7 @@
             global $xoopsDB;
             $formTables = array();
             // query the db for the forms that were selected by the user, $formsChecked should consist of all the id_form numbers
-            $sql = "SELECT form_handle FROM " . XOOPS_DB_PREFIX . "_formulize_id;" . "WHERE id_form IN (" . implode(",", $formCheckboxes) . ")";
+            $sql = "SELECT form_handle FROM " . XOOPS_DB_PREFIX . "_formulize_id" . " WHERE id_form IN (" . implode(",", $formsSelected) . ");";
             $result = icms::$xoopsDB->query($sql);
             while ($row = $xoopsDB->fetchRow($result)) {
                 // extract the form_handle from the data record row and add it to the list
@@ -359,7 +359,7 @@
                 array_push($tablesList, XOOPS_DB_PREFIX . '_' . $value);
             }
         }
-        
+
         return $tablesList;
     }
 
