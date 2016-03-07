@@ -397,7 +397,7 @@
             foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($csvFolderPath)) as $filePath){
                 if ($filePath->isDir()) continue; // skip "." and ".."
                 for ($line = 1; $line <= getNumDataRowsCSV($filePath); $line ++){
-                    $comparator->addRecord($xoopsDB->prefix($form_handle)."_".getTableNameCSV($filePath)[0], getDataRowCSV($filePath, $line), getTableColsCSV($filePath));
+                    $comparator->addRecord(getTableNameCSV($filePath)[0], getDataRowCSV($filePath, $line), getTableColsCSV($filePath));
                 }
             }
             $comparator->cacheChanges();
@@ -480,7 +480,7 @@
         $zip = new ZipArchive;
         if ($zip->open($archivePath) !== TRUE) {
             $successfulImport = 0;
-            error_log("Could not open archive file for extraction.");
+            error_log("Could not open archive file at path: '" . $archivePath . "'extraction.");
         }
         
         $files = array();
