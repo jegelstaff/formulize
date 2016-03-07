@@ -20,7 +20,6 @@ class SyncCompareCatalog {
      *      updates: [
      *          { record: [..], metadata: [..] } // contains entire record, with updated values in it
      *      ]
-     *      metadataFields: [...] # list of fields for the metadata
      * }
      */
     private $changes = array();
@@ -102,15 +101,15 @@ class SyncCompareCatalog {
     }
 
     public function commitChanges() {
-        // TODO - commit all changes in $this->changes to DB
+        $numSuccess = 0;
+        $numFail = 0;
 
         // iterate through, commit all inserts that are not on new tables
         foreach ($this->changes as $tableName => $tableData) {
             $fields = $tableData["fields"];
             if ($tableData["createTable"] == FALSE) {
                 foreach ($tableData["inserts"] as $recordData) {
-                    // TODO - maybe keep track of any that fail?
-                    $this->commitInsert($tableName, $recordData["record"], $fields);
+                    ($this->commitInsert($tableName, $recordData["record"], $fields)) ? $numSuccess++ : $numFail++;
                 }
             }
         }
@@ -120,8 +119,7 @@ class SyncCompareCatalog {
             $fields = $tableData["fields"];
             if ($tableData["createTable"] == FALSE) {
                 foreach ($tableData["updates"] as $recordData) {
-                    // TODO - maybe keep track of any that fail?
-                    $this->commitUpdate($tableName, $recordData["record"]);
+                    ($this->commitUpdate($tableName, $recordData["record"])) ? $numSuccess++ : $numFail++;
                 }
             }
         }
@@ -130,15 +128,16 @@ class SyncCompareCatalog {
         foreach ($this->changes as $tableName => $tableData) {
             $fields = $tableData["fields"];
             if ($tableData["createTable"] == TRUE) {
-                $this->commitCreateTable($tableName);
+                ($this->commitCreateTable($tableName)) ? $numSuccess++ : $numFail++;
 
                 // now insert all records that go into this table
                 foreach ($tableData["inserts"] as $recordData) {
-                    // TODO - maybe keep track of any that fail?
-                    $this->commitInsert($tableName, $recordData["record"], $fields);
+                    ($this->commitInsert($tableName, $recordData["record"], $fields)) ? $numSuccess++ : $numFail++;
                 }
             }
         }
+
+        return array("success"=>$numSuccess, "fail"=>$numFail);
     }
 
     // === PRIVATE FUNCTIONS ===

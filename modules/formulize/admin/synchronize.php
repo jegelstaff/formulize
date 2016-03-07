@@ -12,6 +12,7 @@ $sync = array();
 $sync[1]['name'] = "Import Database for Synchronization";
 $sync[1]['content']['type'] = "import";
 $sync[1]['content']['error'] = "none";
+$sync[1]['content']['complete'] = 0;
 $sync[2]['name'] = "Export Database for Synchronization";
 $sync[2]['content']['type'] = "export";
 $sync[2]['content']['error'] = 0;
@@ -67,7 +68,6 @@ else if(isset($_POST['import'])) {
             $tempFolder = doImport($filepath);
 
             if ($tempFolder["success"] == true) {
-                // TODO: add functions to continue with import process
                 $sync[1]['content']['error'] = "success";
             }
             // return an error as there were issues importing the file
@@ -85,8 +85,16 @@ else if(isset($_POST['import'])) {
         $sync[1]['content']['error'] = "file_err";
     }
 }
-else {
+else if (isset($_POST['complete'])) {
+    // if this post was sent then load the cached comparison data and commit it to the database
+    $catalog = new SyncCompareCatalog();
+    $catalog->loadCachedChanges();
+    error_log(print_r($catalog->getChanges(), true)); // debug to make sure the post isset stuff works
 
+    // commit database changes
+    $sync[1]['content']['complete'] = $catalog->commitChanges();
+}
+else {
     $filepath = "";
 }
 
