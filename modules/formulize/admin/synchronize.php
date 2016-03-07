@@ -17,9 +17,8 @@ $sync[2]['content']['type'] = "export";
 $sync[2]['content']['error'] = 0;
 
 // populate the checkboxes for export
-$checks = retrieveTableNamesForCheckboxes();
-// TODO: need to create the directory "uploads"
-$uploadaddr = XOOPS_ROOT_PATH . "\\uploads\\";
+$sync[2]['content']['checkboxes'] = createCheckboxInfo();
+$xoopsTpl->assign('checkboxData', $sync[2]['content']['checkboxes']);
 
 // retrieve the post information from the export submit
 if (isset($_POST['export'])) {
@@ -56,35 +55,24 @@ if (isset($_POST['export'])) {
 // retrieve the post information from the import submit
 else if(isset($_POST['import'])) {
     $uploadOK = true;                       // todo: should possibly be an associative array with true/false and message ??
-    $filepath = basename($_FILES['fileToUpload']['name']);
+    $filepath = basename($_FILES['fileToUpload']['tmp_name']);
 
     if ($filepath != NULL) {
-        $uploadPath = $uploadaddr . $filepath;                                  // create temporary path to store zip file
-        $fileType = pathinfo($filepath, PATHINFO_EXTENSION);                  // get file type
+        $fileType = pathinfo($_FILES['fileToUpload']['name'], PATHINFO_EXTENSION);  // get file type
 
-        if (file_exists($uploadPath)){                                          // check if file has already been uploaded
+        if ($fileType != "zip"){                                                    // check for correct input file type
             $uploadOK = false;
         }
-        if ($fileType != "zip"){                                               // check for correct input file type
-            $uploadOK = false;
-        }
-        // place the file in a temporary folder
         if ($uploadOK) {
-            if (move_uploaded_file($_FILES['fileToUpload']['tmp_name'], $uploadPath)) {
-                $tempFolder = doImport($uploadPath);
+            $tempFolder = doImport($filepath);
 
-                if ($tempFolder["success"] == true) {
-                    // TODO: add functions to continue with import process
-                    $sync[1]['content']['error'] = "success";
-                }
-                // return an error as there were issues importing the file
-                else {
-                    $sync[1]['content']['error'] = "import_err";
-                }
+            if ($tempFolder["success"] == true) {
+                // TODO: add functions to continue with import process
+                $sync[1]['content']['error'] = "success";
             }
-            // return an error as there were issues moving the file to a temporary location
+            // return an error as there were issues importing the file
             else {
-                $sync[1]['content']['error'] = "move_err";
+                $sync[1]['content']['error'] = "import_err";
             }
         }
         // return error as there were issues with the file selected
@@ -119,27 +107,18 @@ function endsWithZip($filename, $zip) {
     return $zip === "" || (($temp = strlen($filename) - strlen($zip)) >= 0 && strpos($filename, $zip, $temp) !== FALSE);
 }
 
-/*
- * Retrieves the data for the export checkboxes and populates it to the ui
- * @return string of checkboxes
- */
-function retrieveTableNamesForCheckboxes() {
+// Function to create the list of forms to display in checkboxes
+// has key value pairings of form id => form name
+function createCheckboxInfo() {
+    global $xoopsDB;
+    $sql = "SELECT id_form, desc_form FROM " . XOOPS_DB_PREFIX . "_formulize_id;";
+    $result = icms::$xoopsDB->query($sql);
 
-    $str = '';
-    // list of the data we want to populate to the checkboxes
-    $datalist = syncDataTablesList();
-    $forms = array();
-    $i = 0;
-
-    // add indexing to the data list
-    foreach ($datalist as $data) {
-        $forms[$i] = $data; // for array, key is index and value is form name
-        $i++;
+    $ids = array();
+    $names = array();
+    while ($row = $xoopsDB->fetchRow($result)) {
+        array_push($ids, $row[0]);
+        array_push($names, $row[1]);
     }
-
-    // dynamically generate the checkboxes based on number of tables
-    while(list($key,$value)=each($forms)) {
-        $str .= '<input type="checkbox" name="'.$key.'" id="forms" value="form[]" />'.$value.' ';
-    }
-    return $str;
+    return array_combine($ids, $names);
 }

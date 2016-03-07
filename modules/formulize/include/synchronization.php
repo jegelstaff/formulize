@@ -1,7 +1,7 @@
 <?php
     
     /*
-     * TO DO:
+     * TODO:
      *      1. To be done after check boxes have been implemented in UI
      *         a) Update syncDataTablesList to take parameter $checks and query db using the info in it
      *         b) Change createCSVsAndGetPaths call in doExport to createCSVsAndGetPaths(syncDataTablesList($checks))
@@ -330,7 +330,7 @@
         }
     }
     
-    //syncTablesList function returns a complete list of database tables that are required to be synced
+    //syncDefaultTables List return a list of default tables used in exporting
     function syncDefaultTablesList() {
         // init with a few hardcoded tables that we need
         $tablesList = array("groups");
@@ -347,10 +347,10 @@
     }
 
     //syncDataTablesList function returns a complete list of database tables that have been generated for forms
-    function syncDataTablesList() {
+    function syncDataTablesList($formCheckboxes) {
         global $xoopsDB;
         $tablesList = array();
-        $sql = "SELECT form_handle FROM " . XOOPS_DB_PREFIX . "_formulize_id;";
+        $sql = "SELECT id_form, desc_form FROM " . XOOPS_DB_PREFIX . "_formulize_id;";
         $result = icms::$xoopsDB->query($sql);
         while ($row = $xoopsDB->fetchRow($result)) {
             // extract the form_handle from the data record row and add it to the list

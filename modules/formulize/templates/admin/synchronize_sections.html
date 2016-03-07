@@ -31,7 +31,7 @@
         <p>The following actions will allow the current system's information to be saved
             to a zip folder for importing to another system.</p>
         <p>Select the user data you would like to include in the export<br/>
-            <{php}> print retrieveTableNamesForCheckboxes(); <{/php}>
+            <{html_checkboxes name='forms' options=$sectionContent.checkboxes separator='<br />'}>
         </p>
 
         <p>Enter a name for the zip folder: <br/>
