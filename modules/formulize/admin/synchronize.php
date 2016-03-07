@@ -55,7 +55,7 @@ if (isset($_POST['export'])) {
 // retrieve the post information from the import submit
 else if(isset($_POST['import'])) {
     $uploadOK = true;                       // todo: should possibly be an associative array with true/false and message ??
-    $filepath = basename($_FILES['fileToUpload']['tmp_name']);
+    $filepath = $_FILES['fileToUpload']['tmp_name'];
 
     if ($filepath != NULL) {
         $fileType = pathinfo($_FILES['fileToUpload']['name'], PATHINFO_EXTENSION);  // get file type
