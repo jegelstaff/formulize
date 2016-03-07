@@ -6,7 +6,7 @@
      *         a) Update syncDataTablesList to take parameter $checks and query db using the info in it
      *         b) Change createCSVsAndGetPaths call in doExport to createCSVsAndGetPaths(syncDataTablesList($checks))
      */
-    
+
     include_once "../class/tableInfo.php";
     include_once "../include/synccompare.php";
     include_once "../include/functions.php";
@@ -32,7 +32,7 @@
         return array( "success" => $successfulExport, "filepath" => $archivePath );
     }
     
-    
+
     /*
      * doImport function imports template files and current Formulize database state from a ".zip" archive
      *
@@ -91,7 +91,8 @@
         // special case for PREFIX_group_permissions since we only want formulize module records from table
         $t = XOOPS_DB_PREFIX."_group_permission";
         $groupPermData = $tableObj->getWithFilter($t, 'gperm_modid', getFormulizeModId());
-        writeCSVFile($exportDir, $t.".csv", $groupPermData);
+        $formattedGroupPermData = formatDataArrayForCSV($groupPermData);
+        writeCSVFile($exportDir, $t.".csv", $formattedGroupPermData);
         array_push($paths, $exportDir.$t.".csv");
         
         return $paths;
