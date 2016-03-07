@@ -342,21 +342,24 @@
         // get the default tables we need for export
         $tablesList = syncDefaultTablesList();
 
-        // get the user selected form tables
-        global $xoopsDB;
-        $formTables = array();
-        // query the db for the forms that were selected by the user, $formsChecked should consist of all the id_form numbers
-        $sql = "SELECT form_handle FROM " . XOOPS_DB_PREFIX . "_formulize_id;" . "WHERE id_form IN (" . implode(",", $formCheckboxes) . ")";
-        $result = icms::$xoopsDB->query($sql);
-        while ($row = $xoopsDB->fetchRow($result)) {
-            // extract the form_handle from the data record row and add it to the list
-            $handle = $row[0];
-            array_push($formTables, "formulize_" . $handle);
+        // get the user selected form tables, if any were selected
+        if (!empty($formsSelected)) {
+            global $xoopsDB;
+            $formTables = array();
+            // query the db for the forms that were selected by the user, $formsChecked should consist of all the id_form numbers
+            $sql = "SELECT form_handle FROM " . XOOPS_DB_PREFIX . "_formulize_id;" . "WHERE id_form IN (" . implode(",", $formCheckboxes) . ")";
+            $result = icms::$xoopsDB->query($sql);
+            while ($row = $xoopsDB->fetchRow($result)) {
+                // extract the form_handle from the data record row and add it to the list
+                $handle = $row[0];
+                array_push($formTables, "formulize_" . $handle);
+            }
+            // add prefix to all form handles
+            foreach ($formTables as &$value) {
+                array_push($tablesList, XOOPS_DB_PREFIX . '_' . $value);
+            }
         }
-        // add prefix to all form handles
-        foreach ($formTables as &$value) {
-            array_push($tablesList, XOOPS_DB_PREFIX . '_' . $value);
-        }
+        
         return $tablesList;
     }
 
