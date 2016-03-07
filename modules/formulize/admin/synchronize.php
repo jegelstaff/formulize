@@ -70,7 +70,7 @@ else if(isset($_POST['import'])) {
         }
         // place the file in a temporary folder
         if ($uploadOK) {
-            if (move_uploaded_file($_FILES['uploadFile']['tmp_name'], $uploadPath)) {
+            if (move_uploaded_file($_FILES['fileToUpload']['tmp_name'], $uploadPath)) {
                 $tempFolder = doImport($uploadPath);
 
                 if ($tempFolder["success"] == true) {
