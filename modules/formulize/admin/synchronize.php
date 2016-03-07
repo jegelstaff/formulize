@@ -89,7 +89,6 @@ else if (isset($_POST['complete'])) {
     // if this post was sent then load the cached comparison data and commit it to the database
     $catalog = new SyncCompareCatalog();
     $catalog->loadCachedChanges();
-    error_log(print_r($catalog->getChanges(), true)); // debug to make sure the post isset stuff works
 
     // commit database changes
     $sync[1]['content']['complete'] = $catalog->commitChanges();
