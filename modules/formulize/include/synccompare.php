@@ -1,7 +1,5 @@
 <?php
 
-include '../../../mainfile.php';
-
 include_once '../class/forms.php';
 
 class SyncCompareCatalog {
@@ -89,12 +87,18 @@ class SyncCompareCatalog {
         return $this->changes;
     }
 
+    public function getFormattedChangeDescrs() {
+        $formattedChanges = array();
+    }
+
     public function cacheChanges() {
-        cacheVar($this->changes, "syncChanges");
+        $sessVarName = "sync-changes-" .  session_id() . ".cache";
+        cacheVar($this->changes, $sessVarName);
     }
 
     public function loadCachedChanges() {
-        $this->changes = loadCachedVar("syncChanges");
+        $sessVarName = "sync-changes-" .  session_id() . ".cache";
+        $this->changes = loadCachedVar($sessVarName);
     }
 
     public function commitChanges() {
@@ -169,9 +173,12 @@ class SyncCompareCatalog {
         // get all the metadata for the record
         $metadata =  $this->getRecMetadata($tableName, $data);
 
+        // create the desc_fields array
+        $descFields = $this->getRecDescFields($tableName);
+
         // now add record to the correct list
         $changeTypeList = &$this->changes[$tableName][$typeArrayName];
-        array_push($changeTypeList, array("record"=>$data, "metadata"=>$metadata));
+        array_push($changeTypeList, array("record"=>$data, "metadata"=>$metadata, "desc_fields"=>$descFields));
     }
 
     private function tableExists($tableName) {
@@ -201,6 +208,20 @@ class SyncCompareCatalog {
             $result[$key] = $val;
         }
         return $result;
+    }
+
+    private function getRecDescFields($tableName) {
+        $tableMetadata = $this->metadata["table_metadata"];
+        if (!array_key_exists($tableName, $tableMetadata)) {
+            return array();
+        }
+
+        $descFields = $tableMetadata["fields"]; // description fields on this table directly
+        foreach ($tableMetadata["joins"] as $joinTableInfo) {
+            array_push($descFields, $joinTableInfo["field"]);
+        }
+
+        return $descFields;
     }
 
     private function getRecMetadata($tableName, $record) {
@@ -268,7 +289,7 @@ class SyncCompareCatalog {
 
     // insert a new record into the database
     private function commitInsert($tableName, $record, $fields) {
-        $sql = 'INSERT INTO '.$tableName.' ('.join(", ", $fields).') VALUES (';
+        $sql = 'INSERT INTO '.prefixTable($tableName).' ('.join(", ", $fields).') VALUES (';
 
         // add comma separated list of values
         foreach ($record as $field => $value) {
@@ -276,9 +297,6 @@ class SyncCompareCatalog {
         }
         $sql = substr($sql, 0, -2); // remove the unnecessary trailing ', '
         $sql .= ');'; //close values brackets
-
-        print "<br>Insert record: ".$sql."<br>";
-        return;
 
         $result = $this->db->query($sql);
         // returns success/failure of query based on number of affected rows
@@ -290,7 +308,7 @@ class SyncCompareCatalog {
         $primaryField = $this->getPrimaryField($tableName);
         $recPrimaryValue = $record[$primaryField];
 
-        $sql = 'UPDATE '.$tableName.' SET ';
+        $sql = 'UPDATE '.prefixTable($tableName).' SET ';
 
         foreach ($record as $field => $value) {
             $sql .= $field.'="'.$value.'", ';
@@ -301,9 +319,6 @@ class SyncCompareCatalog {
 
         // add the where clause to specify which record to update
         $sql .= ' WHERE '.$primaryField.'="'.$recPrimaryValue.'"';
-
-        print "<br>Update record: ".$sql."<br>";
-        return;
 
         $result = $this->db->query($sql);
         // returns success/failure of query based on number of affected rows
@@ -316,9 +331,6 @@ class SyncCompareCatalog {
         $formHandle = substr($tableName, strlen(XOOPS_DB_PREFIX."_formulize_"));
         $formHandler =& xoops_getmodulehandler('forms', 'formulize');
         $fid = $formHandler->getByHandle($formHandle);
-
-        print "<br>".$tableName." would be created.<br>";
-        return;
 
         // create the data table and return the boolean success result
         $success = $formHandler->createDataTable($fid);
@@ -347,15 +359,3 @@ function loadCachedVar($varname) {
     $fileStr = file_get_contents(XOOPS_ROOT_PATH . "/modules/formulize/cache/".$varname);
     return unserialize($fileStr);
 }
-
-/*
-$tableName = 'formulize_form_data_2';
-$record = array('2','1','1','0');
-$fields = array("permission_id","menu_id","group_id","default_screen");
-$catalog = new SyncCompareCatalog();
-$catalog->addRecord($tableName, $record, $fields);
-$record2 = array('5','1','2','0');
-$catalog->addRecord($tableName, $record2, $fields);
-print_r($catalog->getChanges());
-$catalog->commitChanges();
-*/
