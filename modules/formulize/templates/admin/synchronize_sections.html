@@ -15,9 +15,6 @@
         <{if $sectionContent.error == "upload_err"}>
         <span style="color: red;"> an error occurred while uploading </span>
         <{/if}>
-        <{if $sectionContent.error == "move_err"}>
-        <span style="color: red;"> an error occurred while saving the file </span>
-        <{/if}>
         <{if $sectionContent.error == "file_err"}>
         <span style="color: red;"> an error occurred while getting the file name </span>
         <{/if}>
@@ -62,6 +59,9 @@
     </form>
     <{if $sectionContent.error == 1}>
         <span style="color: red; ">an error occurred while exporting</span>
+    <{/if}>
+    <{if $sectionContent.error == 2}>
+    <span style="color: red; ">no forms were selected</span>
     <{/if}>
     <br/>
 <{/if}>

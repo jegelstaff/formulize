@@ -171,9 +171,7 @@
         }
         fclose($fileHandle);
     }
-    
-    
-    
+
     /*
      * // NOT CURRENTLY USED
      * getTemplateFilePaths returns array containing all paths for template and custom_code files in Formulize directory
@@ -203,10 +201,7 @@
         
         return $paths;
     }
-    
-    
-    
-    
+
     /*
      * createExportArchive function used to create an archive (.zip) file and insert given files into it
      *
@@ -274,12 +269,7 @@
         }
         $zip->close();
     }
-    
-    
-    
-    
-    
-    
+
     /*
      * zipFileList function zips each file in the given list of files into a master folder if specified (creates or adds to existing zip file)
      *

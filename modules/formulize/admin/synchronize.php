@@ -38,16 +38,15 @@ if (isset($_POST['export'])) {
         }
 
         // perform export
-        $export = doExport($filename, $formsChecked);
+        $export = doExport($filename, $forms);
 
         if ($export["success"] == true) {
             header('Content-Description: File Transfer');
             header('Content-Type: application/zip');
-            header('Content-Disposition: attachment; filename=' . $export["filepath"]);
+            header('Content-Disposition: attachment; filename=' . basename($export["filepath"]) );
             header('Content-Length: ' . filesize($export["filepath"]));
             readfile($export["filepath"]);
-        }
-        else {
+        } else {
             // return error message flag
             $sync[2]['content']['error'] = 1;
         }
