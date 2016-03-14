@@ -1,21 +1,21 @@
 <div class="panel panel-content">
 
-    <h2>Synchronize Import Details</h2>
+    <h2><{$name}></h2>
 
     <div class="ui-widget ui-widget-content ui-corner-all" style="padding:10px">
 
         <{if !$content.catalog_error}>
         <div>
             <{if !$content.result}>
-            <p>View the synchronization comparison details and select which changes that you would like to commit.</p>
+            <p>Review the synchronize import details before commiting the changes.</p>
 
             <h4>Table Changes:</h4>
             <{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/sync_import_sections.html" sections=$adminPage.syncimport.content.elements}>
 
             <p align="center">
             <form name="syncimport" action="POST">
-                <label for="syncimportbtn">Import selected changes and commit them to the database: </label>
-                <input type="button" id="syncimportbtn" name="syncimport" value="Import Selected"/>
+                <label for="syncimportbtn">Import the above changes to the system: </label>
+                <input type="button" id="syncimportbtn" name="syncimport" value="Synchronize Import"/>
             </form>
             </p>
             <{/if}>

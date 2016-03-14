@@ -4,7 +4,7 @@ include_once '../include/synchronization.php';
 
 $syncimport = array();
 
-$syncimport['name'] = "Synchronize Import Details";
+$syncimport['name'] = "Synchronize Import Review";
 $syncimport['content'] = array();
 $syncimport['content']['elements'] = array();
 
@@ -55,3 +55,4 @@ $breadcrumbtrail[2]['url'] = "page=synchronize";
 $breadcrumbtrail[3]['text'] = "Synchronize Import";
 
 $xoopsTpl->assign('content', $syncimport['content']);
+$xoopsTpl->assign('name', $syncimport['name']);
