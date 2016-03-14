@@ -140,4 +140,3 @@ $xoopsTpl->assign('accordion_active', $accordion_active);
 $xoopsTpl->display("db:admin/ui.html");
 
 xoops_cp_footer();
-error_log(print_r($adminPage, true));
