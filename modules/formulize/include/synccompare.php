@@ -96,8 +96,11 @@ class SyncCompareCatalog {
     }
 
     public function loadCachedChanges() {
+        // TODO - if loaded changes was successful but an empty array then this returns false
+        //           and a "no import data" error is displayed on UI...
         $sessVarName = "sync-changes-" .  session_id() . ".cache";
         $this->changes = loadCachedVar($sessVarName);
+        return boolval($this->changes);
     }
 
     public function commitChanges() {
@@ -355,6 +358,11 @@ function loadCachedVar($varname) {
     formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/cache/", $varname);
 
     // get cached variable and unserialize
-    $fileStr = file_get_contents(XOOPS_ROOT_PATH . "/modules/formulize/cache/".$varname);
+    try {
+        $fileStr = file_get_contents(XOOPS_ROOT_PATH . "/modules/formulize/cache/".$varname);
+    }
+    catch (Exception $e) {
+        throw $e;
+    }
     return unserialize($fileStr);
 }

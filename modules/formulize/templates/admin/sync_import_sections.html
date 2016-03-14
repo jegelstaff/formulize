@@ -1,3 +1,13 @@
-<{if $sectionContent}>
-<span>test</span>
-<{/if}>
+<div>
+
+    <{if count($sectionContent.inserts) > 0}>
+    <span>Number of inserts: <{$sectionContent.inserts|@count}></span>
+    <{/if}>
+
+    <br>
+
+    <{if count($sectionContent.updates) > 0}>
+    <span>Number of updates: <{$sectionContent.updates|@count}></span>
+    <{/if}>
+
+</div>

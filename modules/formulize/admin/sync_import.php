@@ -4,25 +4,45 @@ include_once '../include/synchronization.php';
 
 $syncimport = array();
 
-$syncimport[1]['name'] = "Synchronize Import Details";
-$syncimport[1]['content'] = array();
-$syncimport[1]['content']['elements'] = array();
+$syncimport['name'] = "Synchronize Import Details";
+$syncimport['content'] = array();
+$syncimport['content']['elements'] = array();
 
 if (isset($_POST['syncimport'])) {
     // if this post was sent then load the cached comparison data and commit it to the database
     $catalog = new SyncCompareCatalog();
-    $catalog->loadCachedChanges();
-
-    // commit database changes
-    $syncimport[1]['content']['result'] = $catalog->commitChanges();
-    $syncimport[1]['content']['result']['success'] = true;
+    if ($catalog->loadCachedChanges()) {
+        // commit database changes
+        $syncimport['content']['result'] = $catalog->commitChanges();
+        $syncimport['content']['result']['success'] = true; // TODO catch and display errors from commitChanges()
+    }
+    else {
+        // failed to load cached catalog comparison data
+        $syncimport['content']['catalog_error'] = true;
+    }
 }
 else {
     // load the cached sync compare changes and display the differences
     $catalog = new SyncCompareCatalog();
-    $catalog->loadCachedChanges();
+    if ($catalog->loadCachedChanges()) {
+        $changes = $catalog->getChanges();
 
-    $syncimport[1]['content']['elements'] = $catalog->getChanges();
+        // format the changes as sections for ui-accordion
+        $formattedChanges = array();
+        foreach ($changes as $changeTable => $change) {
+            $section = array();
+            $section['name'] = $changeTable;
+            $section['content'] = $change;
+            $formattedChanges[] = $section;
+        }
+        $syncimport['content']['elements'] = $formattedChanges;
+    }
+    else {
+        // failed to load cached catalog comparison data
+        $syncimport['content']['catalog_error'] = true;
+        error_log(print_r($syncimport['content'], true));
+
+    }
 }
 
 $adminPage['syncimport'] = $syncimport;
@@ -33,3 +53,5 @@ $breadcrumbtrail[1]['url'] = "page=home";
 $breadcrumbtrail[2]['text'] = "Synchronize";
 $breadcrumbtrail[2]['url'] = "page=synchronize";
 $breadcrumbtrail[3]['text'] = "Synchronize Import";
+
+$xoopsTpl->assign('content', $syncimport['content']);
