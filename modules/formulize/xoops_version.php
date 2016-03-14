@@ -98,7 +98,7 @@ $modversion['table_metadata'] = array(
         "joins" => array()
     ),
     "formulize_id" => array(
-        "fields" => array("desc_from"),
+        "fields" => array("desc_form"),
         "joins" => array()
     ),
     "formulize_menu" => array(),
@@ -138,7 +138,7 @@ $modversion['table_metadata'] = array(
                 "field" => "desc_form"
             ),
             array(
-                "join_table" => "formulize",
+                "join_table" => "formulize_id",
                 "join_field" => array("fl_form2_id", "id_form"),
                 "field" => "desc_form"
             )
@@ -207,11 +207,11 @@ $modversion['table_metadata'] = array(
                 array(
                     "join_table" => "formulize_applications",
                     "join_field" => array("appid", "appid"),
-                    "field" => "select"
+                    "field" => "description"
                 ),
                 array(
                     "join_table" => "formulize_id",
-                    "join_field" => array("fid", "id"),
+                    "join_field" => array("fid", "id_form"),
                     "field" => "desc_form"
                 )
             )
@@ -227,7 +227,7 @@ $modversion['table_metadata'] = array(
             array(
                 "join_table" => "formulize_screen",
                 "join_field" => array("sid", "sid"),
-                "field" => "select"
+                "field" => "title"
             )
         )
     ),
@@ -239,8 +239,8 @@ $modversion['table_metadata'] = array(
         "fields" => array(),
         "joins" => array(
             array(
-                "join_table" => "formulize",
-                "join_field" => array("fid", "id"),
+                "join_table" => "formulize_id",
+                "join_field" => array("fid", "id_form"),
                 "field" => "desc_form"
             ),
             array(
@@ -255,7 +255,7 @@ $modversion['table_metadata'] = array(
         "joins" => array(
             array(
                 "join_table" => "formulize_id",
-                "join_field" => array("fid", "id"),
+                "join_field" => array("fid", "id_form"),
                 "field" => "desc_form"
             ),
             array(
@@ -503,9 +503,15 @@ $modversion['templates'][] = array(
 	'description' => '');
 $modversion['templates'][] = array(
 	'file' => 'admin/synchronize.html',
-	'descrition' => '');
+	'description' => '');
 $modversion['templates'][] = array(
 	'file' => 'admin/synchronize_sections.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/sync_import.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/sync_import_sections.html',
 	'description' => '');
 
 //	Module Configs
