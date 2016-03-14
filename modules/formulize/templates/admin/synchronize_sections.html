@@ -18,29 +18,7 @@
         <{if $sectionContent.error == "file_err"}>
         <span style="color: red;"> an error occurred while getting the file name </span>
         <{/if}>
-        <{if $sectionContent.error == "success"}>
-        <span style="color: green;"> import information was loaded successfully </span>
-        <{/if}>
-        <{if $sectionContent.complete && $sectionContent.complete.fail == 0}>
-        <span style="color:green;">
-            Import committed to database successfully!
-        </span>
-        <{/if}>
     </div>
-    <{if $sectionContent.error == "success"}>
-    <div style="padding: 20px;">
-        <fieldset>
-            <legend>Import Comparison Results</legend>
-            <span>TODO</span>
-        </fieldset>
-        <form name="complete" method="POST">
-            <label style="padding:5px;">
-                <strong>Complete import and commit all selected changes to the database? </strong>
-            </label>
-            <input type="submit" name="complete" value="Complete Import">
-        </form>
-    </div>
-    <{/if}>
 <{/if}>
 
 <{if $sectionContent.type == "export"}>

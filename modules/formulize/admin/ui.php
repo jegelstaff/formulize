@@ -97,6 +97,9 @@ switch($active_page) {
     case "synchronize":
         include "synchronize.php";
         break;
+    case "sync-import":
+        include "sync_import.php";
+        break;
     default:
     case "home":
         include "home.php";
@@ -137,3 +140,4 @@ $xoopsTpl->assign('accordion_active', $accordion_active);
 $xoopsTpl->display("db:admin/ui.html");
 
 xoops_cp_footer();
+error_log(print_r($adminPage, true));

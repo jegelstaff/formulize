@@ -1,0 +1,35 @@
+<div class="panel panel-content">
+
+    <h2>Synchronize Import Details</h2>
+
+    <div class="ui-widget ui-widget-content ui-corner-all" style="padding:10px">
+
+        <p>View the synchronization comparison details and select which changes that you would like to commit.</p>
+
+        <{if !$content.result}>
+
+        <{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/nize_import_sections.html" sections=$content.elements}>
+
+        <p align="center">
+            <form name="syncimport" action="POST">
+                <label for="syncimportbtn">Import selected changes and to the commit then to the database</label>
+                <input type="button" id="syncimportbtn" name="syncimport" value="Import Selected"/>
+            </form>
+        </p>
+
+        <{/if}>
+
+        <{if $content.result}>
+        <div style="padding:15px;">
+            <{if $content.result.error}>
+            <span style="color: red;">{$content.result.error}</span>
+            <{/if}>
+
+            <{if $content.result.success}>
+            <span style="color:green;">Successfully completed</span>
+            <{/if}>
+        </div>
+        <{/if}>
+
+    </div>
+</div>

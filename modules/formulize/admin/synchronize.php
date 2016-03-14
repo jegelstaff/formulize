@@ -67,7 +67,7 @@ else if(isset($_POST['import'])) {
             $tempFolder = doImport($filepath);
 
             if ($tempFolder["success"] == true) {
-                $sync[1]['content']['error'] = "success";
+                header("Location: ui.php?page=sync-import");
             }
             // return an error as there were issues importing the file
             else {
@@ -83,14 +83,6 @@ else if(isset($_POST['import'])) {
     else {
         $sync[1]['content']['error'] = "file_err";
     }
-}
-else if (isset($_POST['complete'])) {
-    // if this post was sent then load the cached comparison data and commit it to the database
-    $catalog = new SyncCompareCatalog();
-    $catalog->loadCachedChanges();
-
-    // commit database changes
-    $sync[1]['content']['complete'] = $catalog->commitChanges();
 }
 else {
     $filepath = "";
