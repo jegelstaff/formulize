@@ -27,7 +27,7 @@ if (isset($_POST['export'])) {
     // get the filename submitted by the user for saving the DB
     $filename = $_POST['filename'];
     $formsChecked = $_POST['forms'];
-    var_dump($formsChecked);
+
     if ($filename != "") {
 
         // perform the export

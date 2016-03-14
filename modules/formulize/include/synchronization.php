@@ -27,7 +27,8 @@
         
         $csvFilePaths = createCSVsAndGetPaths(syncDataTablesList($formsSelected)); // syncDataTablesList() returns string array of tables to pull data from
         $archivePath = createExportArchive($archiveName, $csvFilePaths);
-        
+        error_log(print_r($archivePath, true));
+
         cleanupCSVs($csvFilePaths);
         return array( "success" => $successfulExport, "filepath" => $archivePath );
     }
@@ -210,17 +211,17 @@
      * return archivePath       path to archive file
      */
     function createExportArchive($archiveName, $listOfFiles){
-        $archivePath = XOOPS_ROOT_PATH . "/modules/formulize/export/".$archiveName; // path where archive is created
+        $archivePath = XOOPS_ROOT_PATH . "\\modules\\formulize\\export\\".$archiveName; // path where archive is created
         
         // zip screens files
-        zipFolder("screens", XOOPS_ROOT_PATH . "/modules/formulize/templates/screens", $archivePath, true);
+        zipFolder("screens", XOOPS_ROOT_PATH . "\\modules\\formulize\\templates\\screens", $archivePath, true);
         
         // zip custom_code files
-        zipFolder("custom_code", XOOPS_ROOT_PATH . "/modules/formulize/custom_code", $archivePath, false);
+        zipFolder("custom_code", XOOPS_ROOT_PATH . "\\modules\\formulize\\custom_code", $archivePath, false);
         
         // zip csv files
         zipFileList("tables", $listOfFiles, $archivePath, false);
-        
+
         return $archivePath;
     }
     
