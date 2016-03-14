@@ -46,6 +46,7 @@ if (isset($_POST['export'])) {
             header('Content-Disposition: attachment; filename=' . basename($export["filepath"]) );
             header('Content-Length: ' . filesize($export["filepath"]));
             readfile($export["filepath"]);
+            exit();
         } else {
             // return error message flag
             $sync[2]['content']['error'] = 1;
