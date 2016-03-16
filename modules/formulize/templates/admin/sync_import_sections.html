@@ -1,17 +1,36 @@
 <div>
 
     <{if count($sectionContent.inserts) > 0}>
-    <span>Number of inserts: <{$sectionContent.inserts|@count}></span>
+    <fieldset>
+        <legend>Inserts (<{$sectionContent.inserts|@count}>)</legend>
+        <ul>
+            <{foreach from=$sectionContent.inserts item=rec}>
+            <li><{$rec}></li>
+            <{/foreach}>
+        </ul>
+    </fieldset>
     <{/if}>
 
     <{if count($sectionContent.updates) > 0}>
-    <br>
-    <span>Number of updates: <{$sectionContent.updates|@count}></span>
+    <fieldset>
+        <legend>Updates (<{$sectionContent.updates|@count}>)</legend>
+        <ul>
+            <{foreach from=$sectionContent.updates item=rec}>
+            <li><{$rec}></li>
+            <{/foreach}>
+        </ul>
+    </fieldset>
     <{/if}>
 
     <{if count($sectionContent.deletes) > 0}>
-    <br>
-    <span>Number of deletions: <{$sectionContent.deletes|@count}></span>
+    <fieldset>
+        <legend>Deletions (<{$sectionContent.deletes|@count}>)</legend>
+        <ul>
+            <{foreach from=$sectionContent.deletes item=rec}>
+            <li><{$rec}></li>
+            <{/foreach}>
+        </ul>
+    </fieldset>
     <{/if}>
 
 </div>

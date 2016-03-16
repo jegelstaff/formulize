@@ -25,7 +25,7 @@ else {
     // load the cached sync compare changes and display the differences
     $catalog = new SyncCompareCatalog();
     if ($catalog->loadCachedChanges()) {
-        $changes = $catalog->getChanges();
+        $changes = $catalog->getChangeDescrs();
 
         // format the changes as sections for ui-accordion
         $formattedChanges = array();

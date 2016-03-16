@@ -113,7 +113,12 @@ $modversion['table_metadata'] = array(
                 "join_table" => "formulize_menu_links",
                 "join_field" => array("menu_id", "menu_id"),
                 "field" => "link_text"
-            )
+            ),
+			array(
+				"join_table" => "groups",
+				"join_field" => array("group_id", "groupid"),
+				"field" => "name"
+			)
         ),
     ),
     "formulize_resource_mapping" => array(),
@@ -167,7 +172,13 @@ $modversion['table_metadata'] = array(
     "formulize_valid_imports" => array(),
     "formulize_screen" => array(
         "fields" => array("title", "type"),
-        "joins" => array()
+        "joins" => array(
+            array(
+                "join_table" => "formulize_id",
+                "join_field" => array("fid", "id_form"),
+                "field" => "desc_form"
+            )
+        )
     ),
     "formulize_screen_multipage" => array(
         "fields" => array(),
@@ -267,7 +278,26 @@ $modversion['table_metadata'] = array(
     ),
     "formulize_procedure_logs" => array(),
     "formulize_procedure_logs_params" => array(),
-    "formulize_deletion_logs" => array()
+    "formulize_deletion_logs" => array(),
+    "groups" => array(
+        "fields" => array("name", "group_type"),
+        "joins" => array()
+    ),
+	"group_permission" => array(
+		"fields" => array("gperm_name"),
+		"joins" => array(
+			array(
+				"join_table" => "groups",
+				"join_field" => array("gperm_groupid", "groupid"),
+				"field" => "name"
+			),
+			array(
+				"join_table" => "formulize_id",
+				"join_field" => array("gperm_itemid", "id_form"),
+				"field" => "desc_form"
+			)
+		)
+	)
 );
 
 

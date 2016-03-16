@@ -86,8 +86,29 @@ class SyncCompareCatalog {
         return $this->changes;
     }
 
-    public function getFormattedChangeDescrs() {
-        $formattedChanges = array();
+    // returns the record descriptions by table and by updates/inserts/deletes
+    public function getChangeDescrs() {
+        $descrs = array();
+
+        foreach ($this->changes as $tableName => $tableInfo) {
+            $descrs[$tableName] = array("inserts"=>array(), "updates"=>array(), "deletes"=>array());
+
+            foreach ($tableInfo["inserts"] as $rec) {
+                $metadata = $this->getRecMetadata($tableName, "insert", $rec);
+                $descrs[$tableName]["inserts"][] = implode(" / ", $metadata);
+            }
+
+            foreach ($tableInfo["updates"] as $rec) {
+                $metadata = $this->getRecMetadata($tableName, "update", $rec);
+                $descrs[$tableName]["updates"][] = implode(" / ", $metadata);
+            }
+
+            foreach ($tableInfo["deletes"] as $rec) {
+                $metadata = $this->getRecMetadata($tableName, "delete", $rec);
+                $descrs[$tableName]["deletes"][] = implode(" / ", $metadata);
+            }
+        }
+        return $descrs;
     }
 
     public function cacheChanges() {
@@ -111,8 +132,8 @@ class SyncCompareCatalog {
         foreach ($this->changes as $tableName => $tableData) {
             $fields = $tableData["fields"];
             if ($tableData["createTable"] == FALSE) {
-                foreach ($tableData["inserts"] as $recordData) {
-                    ($this->commitInsert($tableName, $recordData["record"], $fields)) ? $numSuccess++ : $numFail++;
+                foreach ($tableData["inserts"] as $rec) {
+                    ($this->commitInsert($tableName, $rec, $fields)) ? $numSuccess++ : $numFail++;
                 }
             }
         }
@@ -121,8 +142,8 @@ class SyncCompareCatalog {
         foreach ($this->changes as $tableName => $tableData) {
             $fields = $tableData["fields"];
             if ($tableData["createTable"] == FALSE) {
-                foreach ($tableData["updates"] as $recordData) {
-                    ($this->commitUpdate($tableName, $recordData["record"])) ? $numSuccess++ : $numFail++;
+                foreach ($tableData["updates"] as $rec) {
+                    ($this->commitUpdate($tableName, $rec)) ? $numSuccess++ : $numFail++;
                 }
             }
         }
@@ -134,8 +155,8 @@ class SyncCompareCatalog {
                 ($this->commitCreateTable($tableName)) ? $numSuccess++ : $numFail++;
 
                 // now insert all records that go into this table
-                foreach ($tableData["inserts"] as $recordData) {
-                    ($this->commitInsert($tableName, $recordData["record"], $fields)) ? $numSuccess++ : $numFail++;
+                foreach ($tableData["inserts"] as $rec) {
+                    ($this->commitInsert($tableName, $rec, $fields)) ? $numSuccess++ : $numFail++;
                 }
             }
         }
@@ -149,14 +170,14 @@ class SyncCompareCatalog {
         // if this is the first record of a table, create the data structure for it
         if (!isset($this->changes[$tableName])) {
             $this->changes[$tableName] = array("fields" => $fields, "inserts" => array(),
-                "updates" => array(), "createTable" => TRUE);
+                "updates" => array(), "deletes" => array(), "createTable" => TRUE);
         }
 
         $this->addRecChange("insert", $tableName, $fields, $record);
     }
 
     private function addRecChange($type, $tableName, $fields, $record) {
-        if ($type !== "insert" && $type !== "update") {
+        if ($type !== "insert" && $type !== "update" && $type !== "delete") {
             throw new Exception("SyncCompareCatalog::addRecChange() only supports 'insert'/'update' change types.");
         }
 
@@ -169,18 +190,12 @@ class SyncCompareCatalog {
         // if this is the first record of a table, create the data structure for it
         if (!isset($this->changes[$tableName])) {
             $this->changes[$tableName] = array("fields" => $fields, "inserts" => array(),
-                "updates" => array(), "createTable" => FALSE);
+                "updates" => array(), "deletes" => array(), "createTable" => FALSE);
         }
-
-        // get all the metadata for the record
-        $metadata =  $this->getRecMetadata($tableName, $data);
-
-        // create the desc_fields array
-        $descFields = $this->getRecDescFields($tableName);
 
         // now add record to the correct list
         $changeTypeList = &$this->changes[$tableName][$typeArrayName];
-        array_push($changeTypeList, array("record"=>$data, "metadata"=>$metadata, "desc_fields"=>$descFields));
+        array_push($changeTypeList, $data);
     }
 
     private function tableExists($tableName) {
@@ -219,16 +234,17 @@ class SyncCompareCatalog {
         }
 
         $descFields = $tableMetadata["fields"]; // description fields on this table directly
-        foreach ($tableMetadata["joins"] as $joinTableInfo) {
-            array_push($descFields, $joinTableInfo["field"]);
+
+        if ($tableMetadata["joins"]) {
+            foreach ($tableMetadata["joins"] as $joinTableInfo) {
+                array_push($descFields, $joinTableInfo["field"]);
+            }
         }
 
         return $descFields;
     }
 
-    private function getRecMetadata($tableName, $record) {
-        // TODO - determine if we need to worry about getting metadata from $this->changes, then fall back to the DB?
-
+    private function getRecMetadata($tableName, $type, $record) {
         // table has no metadata if not in the table_metadata list
         $tableMetadata = $this->metadata["table_metadata"];
         if (!array_key_exists($tableName, $tableMetadata)) {
@@ -236,12 +252,72 @@ class SyncCompareCatalog {
         }
 
         $tableMetaInfo = $tableMetadata[$tableName];
-        return $this->getRecMetadataFromDB($tableName, $tableMetaInfo, $record);
+
+        // if delete use data from this database
+        if ($type == "delete") {
+            $metadata = $this->getRecMetadataFromDB($tableName, $tableMetaInfo, $record);
+        }
+        else { // if update or insert use data in changes, then fall back to database
+            $metadata = $this->getRecMetadataFromChanges($tableName, $tableMetaInfo, $record);
+        }
+
+        return $metadata;
+    }
+
+    // this function will search the changes list first then fallback to the DB
+    private function getRecMetadataFromChanges($tableName, $tableMetaInfo, $record) {
+        $metadata = array();
+
+        // first add the fields from this very table record that might be indicated as metadata
+        if ($tableMetaInfo["fields"]) {
+            foreach ($tableMetaInfo["fields"] as $field) {
+                $metadata[$field] = $record[$field];
+            }
+        }
+
+        // for joined table fields check the changes list, then fallback to DB
+        if ($tableMetaInfo["joins"]) {
+            foreach ($tableMetaInfo["joins"] as $joinTableInfo) {
+                $joinTableName = $joinTableInfo["join_table"];
+                $joinTableKey = $joinTableInfo["join_field"][1];
+                $joinTableField = $joinTableInfo["field"];
+                $recTableKey = $joinTableInfo["join_field"][0];
+                $recTableKeyVal = $record[$recTableKey];
+
+                $changesTable = &$this->changes[$joinTableName];
+                $fieldValue = false;
+                if ($changesTable) {
+                    foreach ($changesTable["inserts"] as $rec) {
+                        if ($rec[$joinTableKey] == $recTableKeyVal) {
+                            $fieldValue = $rec[$joinTableField];
+                        }
+                    }
+                    foreach ($changesTable["updates"] as $rec) {
+                        if ($rec[$joinTableKey] == $recTableKeyVal) {
+                            $fieldValue = $rec[$joinTableField];
+                        }
+                    }
+                    if (!$fieldValue) { // fall back to DB
+                        $sql = "SELECT ".$joinTableField." FROM ".prefixTable($joinTableName)." WHERE ".$joinTableKey."=".$recTableKeyVal.";";
+                        $result = $this->db->query($sql)->fetchAll();
+                        $fieldValue = $result[0][$joinTableField];
+                    }
+                }
+                else { // if table not in changes list, fallback to DB
+                    $sql = "SELECT ".$joinTableField." FROM ".prefixTable($joinTableName)." WHERE ".$joinTableKey."=".$recTableKeyVal.";";
+                    $result = $this->db->query($sql)->fetchAll();
+                    $fieldValue = $result[0][$joinTableField];
+                }
+                $metadata[$joinTableField] = $fieldValue;
+            }
+        }
+
+        return $metadata;
     }
 
     private function getRecMetadataFromDB($tableName, $tableMetaInfo, $record) {
         $sqlSelect = 'SELECT ';
-        $sqlFrom = 'FROM '.prefixTable($tableName).' t';
+        $sqlFrom = 'FROM '.prefixTable($tableName);
         $sqlJoins = array();
         $sqlWhere = 'WHERE ';
 
@@ -250,27 +326,24 @@ class SyncCompareCatalog {
         if ($tableFieldsCount > 0) {
             for ($i = 0; $i < $tableFieldsCount; $i++) {
                 $fieldName = $tableMetaInfo["fields"][$i];
-                $sqlSelect .= "t.".$fieldName.", ";
+                $sqlSelect .= prefixTable($tableName).".".$fieldName.", ";
             }
         }
 
         // now add the information from the join tables
-        $joinTableNum = 0;
         if (count($tableMetaInfo["joins"]) > 0) {
             foreach ($tableMetaInfo["joins"] as $joinTableInfo) {
-                $joinTableNum += 1;
-                $tableAbbrev = "j".$joinTableNum;
                 $joinTableName = $joinTableInfo["join_table"];
                 $mainTableJoinField = $joinTableInfo["join_field"][0];
                 $joinTableJoinField = $joinTableInfo["join_field"][1];
                 $joinField = $joinTableInfo["field"];
 
                 // add field for this table join
-                $sqlSelect .= $tableAbbrev.'.'.$joinField.', ';
+                $sqlSelect .= prefixTable($joinTableName).'.'.$joinField.', ';
 
                 // add the left join information for this table
-                $tableJoinSql = 'LEFT JOIN '.prefixTable($joinTableName).' '.$tableAbbrev.' on ';
-                $tableJoinSql .= 't.'.$mainTableJoinField.' = '.$tableAbbrev.'.'.$joinTableJoinField;
+                $tableJoinSql = 'LEFT JOIN '.prefixTable($joinTableName).' on ';
+                $tableJoinSql .= prefixTable($tableName).'.'.$mainTableJoinField.' = '.prefixTable($joinTableName).'.'.$joinTableJoinField;
                 array_push($sqlJoins, $tableJoinSql);
             }
         }
@@ -281,7 +354,7 @@ class SyncCompareCatalog {
         // generate where clause using table primary key and record values
         $primaryField = $this->getPrimaryField($tableName);
         $primaryFieldVal = $record[$primaryField];
-        $sqlWhere .= 't.'.$primaryField.' = '.$primaryFieldVal;
+        $sqlWhere .= prefixTable($tableName).'.'.$primaryField.' = '.$primaryFieldVal;
 
         // combine the pieces of the sql statement, execute the query, and return the data
         $sql = $sqlSelect.' '.$sqlFrom.' '.implode(" ", $sqlJoins).' '.$sqlWhere;
