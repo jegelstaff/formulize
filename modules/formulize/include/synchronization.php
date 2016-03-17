@@ -66,7 +66,7 @@
         $paths = Array();
         $date = date_create();
         // create directory in the "export" directory that is unique to the time created. will store export CSVs
-        $exportDir = XOOPS_ROOT_PATH . "/modules/formulize/export/" . date_format($date, 'Y-m-d (U)') . "/";
+        $exportDir = XOOPS_ROOT_PATH . "\\modules\\formulize\\export\\" . date_format($date, 'Y-m-d (U)') . "\\";
         if (!file_exists($exportDir) and !mkdir($exportDir)){
             $successfulExport = 0;
             error_log("Export folder could not be created.");
@@ -180,8 +180,8 @@
      * return paths     string array containing paths for all template files
      */
     function getTemplateFilePaths(){
-        $screensPath = XOOPS_ROOT_PATH . "/modules/formulize/templates/screens";
-        $customCodePath = XOOPS_ROOT_PATH . "/modules/formulize/custom_code";
+        $screensPath = XOOPS_ROOT_PATH . "\\modules\\formulize\\templates\\screens";
+        $customCodePath = XOOPS_ROOT_PATH . "\\modules\\formulize\custom_code";
         $paths = Array();
         
         if (file_exists($screensPath)){
@@ -261,7 +261,7 @@
             if (!$file->isDir()){
                 $filePath = $file->getRealPath(); // used to grab actual file from file system
                 if ($masterFolderName != ""){
-                    $relativePath = $masterFolderName . "/" . substr($filePath, strlen($rootDirPath) + 1); // used to represent file in zip
+                    $relativePath = $masterFolderName . "\\" . substr($filePath, strlen($rootDirPath) + 1); // used to represent file in zip
                 }else{
                     $relativePath = substr($filePath, strlen($rootDirPath) + 1); // used to represent file in zip
                 }
@@ -299,7 +299,7 @@
         $zip->addEmptyDir($masterFolderName);
         foreach($listOfFiles as $file){
             if ($masterFolderName != ""){ // add file to master folder
-                $zip->addFile($file, $masterFolderName . "/" . basename($file)) or die ("ERROR: Could not add file: $file");
+                $zip->addFile($file, $masterFolderName . "\\" . basename($file)) or die ("ERROR: Could not add file: $file");
             }else{ // add file to root of zip
                 $zip->addFile($file, basename($file)) or die ("ERROR: Could not add file: $file");
             }
@@ -453,11 +453,11 @@
      * return tempFolderPath    String path to newly created temp folder. Will be used to delete temp folder
      */
     function extractArchiveFolders($archivePath){
-        extractFolder($archivePath, "screens", XOOPS_ROOT_PATH . "/modules/formulize/templates/");
-        extractFolder($archivePath, "custom_code", XOOPS_ROOT_PATH . "/modules/formulize/");
+        extractFolder($archivePath, "screens", XOOPS_ROOT_PATH . "\\modules\\formulize\\templates\\");
+        extractFolder($archivePath, "custom_code", XOOPS_ROOT_PATH . "\\modules\\formulize\\");
         
         // create temporary folder to extract CSV files to. will be deleted later
-        $tempFolderPath = XOOPS_ROOT_PATH . "/modules/formulize/temp" . date_format(date_create(), '(U)');
+        $tempFolderPath = XOOPS_ROOT_PATH . "\\modules\\formulize\\temp" . date_format(date_create(), '(U)');
          if (!file_exists($tempFolderPath) and !mkdir($tempFolderPath)){
             $successfulImport = 0;
             error_log("Extraction folder for CSV's could not be created.");
@@ -487,7 +487,7 @@
         for($i = 0; $i < $zip->numFiles; $i++) {
             $entry = $zip->getNameIndex($i);
              // strpos() to check if the entry name contains the directory we want to extract
-            if (strpos($entry, $folderToExtract."/") !== false) {
+            if (strpos($entry, $folderToExtract."\\") !== false) {
               $files[] = $entry;
             }
         }
