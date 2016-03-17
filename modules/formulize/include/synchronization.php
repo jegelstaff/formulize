@@ -1,12 +1,5 @@
 <?php
     
-    /*
-     * TODO:
-     *      1. To be done after check boxes have been implemented in UI
-     *         a) Update syncDataTablesList to take parameter $checks and query db using the info in it
-     *         b) Change createCSVsAndGetPaths call in doExport to createCSVsAndGetPaths(syncDataTablesList($checks))
-     */
-
     include_once "../class/tableInfo.php";
     include_once "../include/synccompare.php";
     include_once "../include/functions.php";
@@ -19,13 +12,13 @@
      * doExport function exports template files and current Formulize database state to a ".zip" archive
      * 
      * param archiveName        String representing name of new or existing zip file. path must have ".zip" extension
-     * param checks             Associative array of form ids, form names to be exported
+     * param formsSelected      Array of form ids
      * return array             Key value array containing boolean success flag and String path to archive file created from export
      */
     function doExport($archiveName, $formsSelected){
         global $successfulExport;
         
-        $csvFilePaths = createCSVsAndGetPaths(syncDataTablesList($formsSelected)); // syncDataTablesList() returns string array of tables to pull data from
+        $csvFilePaths = createCSVsAndGetPaths(syncDataTablesList($formsSelected));
         $archivePath = createExportArchive($archiveName, $csvFilePaths);
         error_log(print_r($archivePath, true));
 
@@ -35,20 +28,16 @@
     
 
     /*
-     * doImport function imports template files and current Formulize database state from a ".zip" archive
-     *
-     * param archivePath        String path to archive file. file should have ".zip" extension
-     * return array             Key value array containing boolean success flag
+     * doImport function has been split into 3 functions:
+     * 
+     *      1. extractCSVs() - this function extracts the csv files to a temp location and returns its path
+     *      2. csvToDB() - this function compares the data in the csv files with the database and performs necessary insert/removes
+     *      3. extractTemplateFiles() - this function extracts the template and custom code files from the zip to the target system
      */
-    function doImport($archivePath){
-        global $successfulImport;
-        
-        $tempCSVFolderPath = extractArchiveFolders($archivePath);
-        csvToDB($tempCSVFolderPath);
-        deleteDir($tempCSVFolderPath); // clean up temp folder and CSV files
-        
-        return array( "success" => $successfulImport);
-    }
+    
+    
+    
+    
     
     /********************************************
      *          EXPORT FUNCTIONS                *
@@ -388,9 +377,10 @@
      * csvToDB function sends each exported table to synccompare.php compareRecToDB() function
      *
      * param csvFolderPath      String path to folder containing exported CSV files
+     * return array             Key value array containing boolean success flag
      */
     function csvToDB($csvFolderPath){
-        global $xoopsDB;
+        global $successfulImport;
         if (file_exists($csvFolderPath)){
             $comparator = new SyncCompareCatalog();
             // iterate $csvFolderPath directory and import each file
@@ -405,6 +395,8 @@
             $successfulImport = 0;
             error_log("Path to extracted CSV files does not exist.");
         }
+        deleteDir($csvFolderPath); // clean up temp folder and CSV files
+        return array( "success" => $successfulImport);
     }
     
     
@@ -446,16 +438,13 @@
     }
     
     /*
-     * extractArchiveFolders function calls extractFolder for the folders in the archive
-     * WILL OVERWRITE EXISTING FILES
-     *
+     * extractCSVs function extracts the csv files in the given archive to a temp location, ready for comparison with DB
+     * 
      * param  archivePath       String path to archive file
-     * return tempFolderPath    String path to newly created temp folder. Will be used to delete temp folder
+     * return array             Key value array containing boolean success flag and path to temp csv folder
      */
-    function extractArchiveFolders($archivePath){
-        extractFolder($archivePath, "screens", XOOPS_ROOT_PATH . "\\modules\\formulize\\templates\\");
-        extractFolder($archivePath, "custom_code", XOOPS_ROOT_PATH . "\\modules\\formulize\\");
-        
+    function extractCSVs($archivePath){
+        global $successfulImport;
         // create temporary folder to extract CSV files to. will be deleted later
         $tempFolderPath = XOOPS_ROOT_PATH . "\\modules\\formulize\\temp" . date_format(date_create(), '(U)');
          if (!file_exists($tempFolderPath) and !mkdir($tempFolderPath)){
@@ -464,9 +453,23 @@
          }
         extractFolder($archivePath, "tables", $tempFolderPath);
         
-        return $tempFolderPath;
+        return array( "success" => $successfulImport, "csvPath" => $tempFolderPath);
     }
     
+    /*
+     * extractTemplateFiles function extracts the template and custom code files to the target system
+     * WILL OVERWRITE EXISTING FILES
+     * 
+     * param  archivePath       String path to archive file
+     * return array             Key value array containing boolean success flag
+     */
+    function extractTemplateFiles($archivePath){
+        global $successfulImport;
+        extractFolder($archivePath, "screens", XOOPS_ROOT_PATH . "\\modules\\formulize\\templates\\");
+        extractFolder($archivePath, "custom_code", XOOPS_ROOT_PATH . "\\modules\\formulize\\");
+        
+        return array( "success" => $successfulImport);
+    }
     
     
     /*
