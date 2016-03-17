@@ -278,22 +278,7 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
     $GLOBALS['formulize_doingExport'] = true;
     unset($queryData[0]); // get rid of the fid and userid lines
     unset($queryData[1]);
-    
     $data_sql = implode(" ", $queryData); // merge all remaining lines into one string to send to getData
-    if(substr($data_sql, 0, 12)=="USETABLEFORM") {
-        
-        $params = explode(" -- ", $data_sql);
-        $data = dataExtractionTableForm($params[1], $params[2], $params[3], $params[4], $params[5], FALSE, FALSE, $params[8], $params[9]);
-        foreach($data as $entry) {
-            $row = array();
-            foreach($columns as $column) {
-                $row[] = trans(html_entity_decode(displayTogether($entry, $column, ", "), ENT_QUOTES));    
-            }
-            // output this row to the browser
-            fputcsv($output_handle, $row);
-        }
-        
-    } else {
 
     $limitStart = 0;
     $limitSize = 50;    // export in batches of 50 records at a time
@@ -350,8 +335,5 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
         }
     } while (is_array($data) and count($data) > 0);
 
-    }
-        
     fclose($output_handle);
-    
 }
