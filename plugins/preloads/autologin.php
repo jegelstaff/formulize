@@ -9,7 +9,7 @@ class icms_AutologinEventHandler {
 	static public function onSessionStart() {
 		// Autologin if correct cookie present.
 		if (empty($_SESSION['xoopsUserId']) && isset($_COOKIE['autologin_uname']) && isset($_COOKIE['autologin_pass'])) {
-			self::sessionAutologin($_COOKIE['autologin_uname'], $_COOKIE['autologin_pass'], $_POST);
+			self::sessionAutologin($_COOKIE['autologin_uname'], $_COOKIE['autologin_pass']); //, $_POST); // as per Steve's comment in the forums
 		}
 	}
 	static public function onSessionClose() {
@@ -23,7 +23,7 @@ class icms_AutologinEventHandler {
 		setcookie('autologin_pass', '', time() - 3600, $icms_cookie_path, '', 0, 0);
 	}
 
-	static public function sessionAutologin($autologinName, $autologinPass, $post) {
+	static public function sessionAutologin($autologinName, $autologinPass) { // , $post) { // as per Steve's comment in the forums
 		// autologin V2 GIJ
 		if (!empty($post)) {
 			$_SESSION['AUTOLOGIN_POST'] = $post;
