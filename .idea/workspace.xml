@@ -1,0 +1,690 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="937e065b-b95d-4af8-bd20-6ed31ec0f35f" name="Default" comment="" />
+    <ignored path="formulize.iws" />
+    <ignored path=".idea/workspace.xml" />
+    <ignored path=".idea/dataSources.local.xml" />
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="TRACKING_ENABLED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ChangesViewManager" flattened_view="true" show_ignored="false" />
+  <component name="CreatePatchCommitExecutor">
+    <option name="PATCH_PATH" value="" />
+  </component>
+  <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
+  <component name="FavoritesManager">
+    <favorites_list name="formulize" />
+  </component>
+  <component name="FileEditorManager">
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file leaf-file-name="frameCommonElements_dialog.php" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/modules/formulize/admin/frameCommonElements_dialog.php">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="3.0370371">
+              <caret line="85" column="0" selection-start-line="85" selection-start-column="0" selection-end-line="85" selection-end-column="0" />
+              <folding>
+                <element signature="e#6#85#0#PHP" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="HTML File" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="ROOT_SYNC" value="DONT_SYNC" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="C:/Program Files/VertrigoServ/ae58b68487290b3/ce41f3d580bc09a823034917a731ddb5.php" />
+        <option value="C:/Program Files/VertrigoServ/www/formulize/modules/formulize/admin/synchronize.php" />
+        <option value="$PROJECT_DIR$/modules/formulize/class/tableInfo.php" />
+        <option value="C:/Program Files/VertrigoServ/www/formulize/modules/formulize/xoops_version.php" />
+        <option value="$PROJECT_DIR$/modules/formulize/templates/admin/synchronize.html" />
+        <option value="$PROJECT_DIR$/modules/formulize/templates/admin/synchronize_sections.html" />
+        <option value="$PROJECT_DIR$/modules/formulize/include/synchronization.php" />
+        <option value="$PROJECT_DIR$/modules/formulize/admin/synchronize.php" />
+        <option value="$PROJECT_DIR$/modules/formulize/xoops_version.php" />
+        <option value="$PROJECT_DIR$/modules/formulize/class/forms.php" />
+        <option value="$PROJECT_DIR$/modules/formulize/admin/screen_multipage_pages_settings.php" />
+        <option value="$PROJECT_DIR$/modules/formulize/admin/screen.php" />
+        <option value="$PROJECT_DIR$/modules/formulize/admin/frameCommonElements_dialog.php" />
+      </list>
+    </option>
+  </component>
+  <component name="JsBuildToolGruntFileManager" detection-done="true" />
+  <component name="JsBuildToolPackageJson" detection-done="true" />
+  <component name="JsGulpfileManager">
+    <detection-done>true</detection-done>
+  </component>
+  <component name="PhpServers">
+    <servers />
+  </component>
+  <component name="PhpWorkspaceProjectConfiguration" backward_compatibility_performed="true" interpreter_name="PHP from Vertrigo" />
+  <component name="ProjectFrameBounds">
+    <option name="x" value="-8" />
+    <option name="y" value="-8" />
+    <option name="width" value="1382" />
+    <option name="height" value="744" />
+  </component>
+  <component name="ProjectInspectionProfilesVisibleTreeState">
+    <entry key="Project Default">
+      <profile-state>
+        <expanded-state>
+          <State>
+            <id />
+          </State>
+          <State>
+            <id>Blade files</id>
+          </State>
+          <State>
+            <id>Control flow issuesJavaScript</id>
+          </State>
+          <State>
+            <id>Error handlingJavaScript</id>
+          </State>
+          <State>
+            <id>JavaScript</id>
+          </State>
+          <State>
+            <id>JavaScript validity issuesJavaScript</id>
+          </State>
+          <State>
+            <id>PHP</id>
+          </State>
+          <State>
+            <id>Probable bugsJavaScript</id>
+          </State>
+          <State>
+            <id>Type compatibilityPHP</id>
+          </State>
+          <State>
+            <id>UndefinedPHP</id>
+          </State>
+        </expanded-state>
+        <selected-state>
+          <State>
+            <id>Blade files</id>
+          </State>
+        </selected-state>
+      </profile-state>
+    </entry>
+  </component>
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
+    <OptionsSetting value="true" id="Add" />
+    <OptionsSetting value="true" id="Remove" />
+    <OptionsSetting value="true" id="Checkout" />
+    <OptionsSetting value="true" id="Update" />
+    <OptionsSetting value="true" id="Status" />
+    <OptionsSetting value="true" id="Edit" />
+    <ConfirmationsSetting value="0" id="Add" />
+    <ConfirmationsSetting value="0" id="Remove" />
+  </component>
+  <component name="ProjectView">
+    <navigator proportions="" version="1">
+      <flattenPackages />
+      <showMembers />
+      <showModules />
+      <showLibraryContents />
+      <hideEmptyPackages />
+      <abbreviatePackageNames />
+      <autoscrollToSource />
+      <autoscrollFromSource />
+      <sortByType />
+      <manualOrder />
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="settings.editor.selected.configurable" value="project.propVCSSupport.Mappings" />
+    <property name="settings.editor.splitter.proportion" value="0.2" />
+    <property name="last_opened_file_path" value="C:/Program Files/VertrigoServ/Php" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="DefaultHtmlFileTemplate" value="HTML File" />
+  </component>
+  <component name="RunManager" selected="Chromium Remote.formulize">
+    <configuration default="true" type="ChromiumRemoteDebugType" factoryName="Chromium Remote">
+      <method />
+    </configuration>
+    <configuration default="true" type="JavascriptDebugType" factoryName="JavaScript Debug">
+      <method />
+    </configuration>
+    <configuration default="true" type="PHPUnitRunConfigurationType" factoryName="PHPUnit">
+      <TestRunner />
+      <method />
+    </configuration>
+    <configuration default="true" type="PhpLocalRunConfigurationType" factoryName="PHP Console">
+      <method />
+    </configuration>
+    <configuration default="true" type="js.build_tools.gulp" factoryName="Gulp.js">
+      <node-options />
+      <gulpfile />
+      <tasks />
+      <arguments />
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="true" type="js.build_tools.npm" factoryName="npm">
+      <command value="run-script" />
+      <scripts />
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="false" name="formulize" type="ChromiumRemoteDebugType" factoryName="Chromium Remote" port="9000">
+      <method />
+    </configuration>
+    <list size="1">
+      <item index="0" class="java.lang.String" itemvalue="Chromium Remote.formulize" />
+    </list>
+  </component>
+  <component name="ShelveChangesManager" show_recycled="false" />
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="937e065b-b95d-4af8-bd20-6ed31ec0f35f" name="Default" comment="" />
+      <created>1452977439545</created>
+      <option name="number" value="Default" />
+      <updated>1452977439545</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="TodoView">
+    <todo-panel id="selected-file">
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+    <todo-panel id="all">
+      <are-packages-shown value="true" />
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="-8" y="-8" width="1382" height="744" extended-state="6" />
+    <editor active="true" />
+    <layout>
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.35164836" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32843137" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="File Transfer" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.1603928" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3289689" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
+      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32843137" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
+      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="REST Client" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.41503268" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32843137" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.39869282" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+    </layout>
+  </component>
+  <component name="Vcs.Log.UiProperties">
+    <option name="RECENTLY_FILTERED_USER_GROUPS">
+      <collection />
+    </option>
+    <option name="RECENTLY_FILTERED_BRANCH_GROUPS">
+      <collection />
+    </option>
+  </component>
+  <component name="VcsContentAnnotationSettings">
+    <option name="myLimit" value="2678400000" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <ignored-roots>
+      <path value="$PROJECT_DIR$" />
+    </ignored-roots>
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <option name="time" value="5" />
+    </breakpoint-manager>
+    <watches-manager />
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/modules/formulize/templates/admin/home_sections.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="29" column="14" selection-start-line="29" selection-start-column="14" selection-end-line="29" selection-end-column="14" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modules/formulize/xoops_version.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="30" column="0" selection-start-line="30" selection-start-column="0" selection-end-line="30" selection-end-column="0" />
+          <folding>
+            <marker date="1458249674114" expanded="true" signature="12888:12919" placeholder="SELECT id_fo... ${$xoopsDB-&gt;prefix(&quot;formulize_id&quot;)}" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modules/formulize/admin/home.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="50" column="0" selection-start-line="50" selection-start-column="0" selection-end-line="50" selection-end-column="27" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modules/formulize/templates/admin/home.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="31" column="68" selection-start-line="31" selection-start-column="68" selection-end-line="31" selection-end-column="68" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modules/formulize/templates/admin/ui-accordion.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="44" column="16" selection-start-line="44" selection-start-column="16" selection-end-line="44" selection-end-column="16" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modules/formulize/templates/admin/home_sections.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="4" column="7" selection-start-line="4" selection-start-column="7" selection-end-line="4" selection-end-column="7" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modules/formulize/xoops_version.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <marker date="1458249674114" expanded="true" signature="12888:12919" placeholder="SELECT id_fo... ${$xoopsDB-&gt;prefix(&quot;formulize_id&quot;)}" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modules/formulize/admin/home.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="50" column="0" selection-start-line="50" selection-start-column="0" selection-end-line="50" selection-end-column="27" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modules/formulize/templates/admin/home.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="15" column="0" selection-start-line="15" selection-start-column="0" selection-end-line="15" selection-end-column="116" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modules/formulize/templates/admin/ui-accordion.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="44" column="16" selection-start-line="44" selection-start-column="16" selection-end-line="44" selection-end-column="16" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modules/formulize/templates/admin/home_sections.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modules/formulize/xoops_version.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="508" column="25" selection-start-line="508" selection-start-column="25" selection-end-line="508" selection-end-column="25" />
+          <folding>
+            <marker date="1458249674114" expanded="true" signature="12888:12919" placeholder="SELECT id_fo... ${$xoopsDB-&gt;prefix(&quot;formulize_id&quot;)}" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modules/formulize/admin/home.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="50" column="0" selection-start-line="50" selection-start-column="0" selection-end-line="50" selection-end-column="27" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modules/formulize/templates/admin/home.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="15" column="0" selection-start-line="15" selection-start-column="0" selection-end-line="15" selection-end-column="116" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://C:/Program Files/VertrigoServ/bccab6ee363da2b/a749c0ebe2e1cfa5864b1a63181e9260.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-6.6153846">
+          <caret line="36" column="0" selection-start-line="35" selection-start-column="0" selection-end-line="40" selection-end-column="95" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://C:/Program Files/VertrigoServ/ae58b68487290b3/ce41f3d580bc09a823034917a731ddb5.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.80501395">
+          <caret line="40" column="95" selection-start-line="40" selection-start-column="95" selection-end-line="40" selection-end-column="95" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modules/formulize/language/english/admin.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.34829444">
+          <caret line="12" column="8" selection-start-line="12" selection-start-column="8" selection-end-line="12" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://C:/Program Files/VertrigoServ/www/formulize/modules/formulize/admin/synchronize.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.15260324">
+          <caret line="9" column="0" selection-start-line="9" selection-start-column="0" selection-end-line="9" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://C:/Program Files/VertrigoServ/www/formulize/modules/formulize/xoops_version.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.51166964">
+          <caret line="503" column="24" selection-start-line="503" selection-start-column="24" selection-end-line="503" selection-end-column="24" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/admin.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modules/formulize/templates/admin/ui-accordion.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-8.576923">
+          <caret line="44" column="16" selection-start-line="44" selection-start-column="16" selection-end-line="44" selection-end-column="16" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$APPLICATION_HOME_DIR$/plugins/php/lib/php.jar!/com/jetbrains/php/lang/psi/stubs/data/ZendDebugger.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.18941504">
+          <caret line="4" column="9" selection-start-line="4" selection-start-column="9" selection-end-line="4" selection-end-column="9" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modules/formulize/templates/admin/home_sections.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.44846797">
+          <caret line="29" column="14" selection-start-line="29" selection-start-column="14" selection-end-line="29" selection-end-column="14" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modules/formulize/admin/home.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="1.1364902">
+          <caret line="50" column="0" selection-start-line="50" selection-start-column="0" selection-end-line="50" selection-end-column="27" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/mainfile.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modules/system/xoops_version.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modules/formulize/include/export.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.45698926">
+          <caret line="48" column="19" selection-start-line="48" selection-start-column="19" selection-end-line="48" selection-end-column="19" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/themes/reflex/content.css">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.35555556">
+          <caret line="36" column="1" selection-start-line="36" selection-start-column="1" selection-end-line="36" selection-end-column="1" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ci/travis/php.ini">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modules/formulize/admin/ui.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-0.65384614">
+          <caret line="36" column="0" selection-start-line="36" selection-start-column="0" selection-end-line="36" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modules/system/admin/tplsets/main.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="5.786111">
+          <caret line="1079" column="20" selection-start-line="1079" selection-start-column="20" selection-end-line="1079" selection-end-column="20" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modules/formulize/templates/admin/home.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.047222223">
+          <caret line="3" column="108" selection-start-line="3" selection-start-column="108" selection-end-line="3" selection-end-column="108" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/install/templates/mainfile.dist.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.35555556">
+          <caret line="42" column="12" selection-start-line="42" selection-start-column="12" selection-end-line="42" selection-end-column="12" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modules/formulize/include/functions.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.33333334">
+          <caret line="3507" column="9" selection-start-line="3507" selection-start-column="9" selection-end-line="3507" selection-end-column="9" />
+          <folding>
+            <marker date="1458249674261" expanded="true" signature="3438:3495" placeholder="SELECT * FRO... ${$xoopsDB-&gt;prefix(&quot;users&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="4834:4962" placeholder="SELECT frame... ${$xoopsDB-&gt;prefix(&quot;formulize_frameworks&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="5295:5452" placeholder="SELECT ff_fo... ${$xoopsDB-&gt;prefix(&quot;formulize_framework_forms&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="6378:6498" placeholder="SELECT id_fo... ${$xoopsDB-&gt;prefix(&quot;formulize_id&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="13220:13292" placeholder="SELECT name ${$xoopsDB-&gt;prefix(&quot;groups&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="13836:13925" placeholder="SELECT sv_ow... ${$xoopsDB-&gt;prefix(&quot;formulize_saved_views&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="14415:14565" placeholder="SELECT sv_id... ${$xoopsDB-&gt;prefix(&quot;formulize_saved_views&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="14610:14736" placeholder="SELECT sv_id... ${$xoopsDB-&gt;prefix(&quot;formulize_saved_views&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="14829:15008" placeholder="SELECT sv_id... ${$xoopsDB-&gt;prefix(&quot;formulize_saved_views&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="15057:15212" placeholder="SELECT sv_id... ${$xoopsDB-&gt;prefix(&quot;formulize_saved_views&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="18955:19034" placeholder="SELECT singl... ${$xoopsDB-&gt;prefix(&quot;formulize_id&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="21327:21510" placeholder="SELECT sv_cu... ${$xoopsDB-&gt;prefix(&quot;formulize_saved_views&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="22919:23041" placeholder="SELECT count... ${$xoopsDB-&gt;prefix(&quot;formulize_&quot;.$formObject-&gt;getVar('form_handle'))}" />
+            <marker date="1458249674261" expanded="true" signature="23600:23673" placeholder="SELECT mid F... ${$xoopsDB-&gt;prefix(&quot;modules&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="25034:25128" placeholder="SELECT cat_i... ${$xoopsDB-&gt;prefix(&quot;formulize_menu_cats&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="25419:25523" placeholder="SELECT cat_i... ${$xoopsDB-&gt;prefix(&quot;formulize_menu_cats&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="26984:27068" placeholder="SELECT heade... ${$xoopsDB-&gt;prefix(&quot;formulize_id&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="29780:30001" placeholder="SELECT ele_c... ${$xoopsDB-&gt;prefix(&quot;formulize&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="31889:32145" placeholder="SELECT ele_c... ${$xoopsDB-&gt;prefix(&quot;formulize&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="32774:33016" placeholder="SELECT ele_c... ${$xoopsDB-&gt;prefix(&quot;formulize&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="34019:34143" placeholder="SELECT ele_h... ${$xoopsDB-&gt;prefix(&quot;formulize&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="35197:35328" placeholder="SELECT ele_i... ${$xoopsDB-&gt;prefix(&quot;formulize&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="35849:35944" placeholder="SELECT id_fo... ${$xoopsDB-&gt;prefix(&quot;formulize_menu_cats&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="37781:37863" placeholder="SELECT desc_... ${$xoopsDB-&gt;prefix(&quot;formulize_id&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="38831:38935" placeholder="SELECT * FRO... ${$xoopsDB-&gt;prefix(&quot;formulize_menu_cats&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="39231:39327" placeholder="SELECT id_fo... ${$xoopsDB-&gt;prefix(&quot;formulize_menu_cats&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="39527:39636" placeholder="SELECT menui... ${$xoopsDB-&gt;prefix(&quot;formulize_menu&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="42504:42652" placeholder="DELETE FROM " />
+            <marker date="1458249674261" expanded="true" signature="47407:47610" placeholder="SELECT fl_fo... ${$xoopsDB-&gt;prefix(&quot;formulize_framework_links&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="47646:47849" placeholder="SELECT fl_fo... ${$xoopsDB-&gt;prefix(&quot;formulize_framework_links&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="48655:48858" placeholder="SELECT fl_fo... ${$xoopsDB-&gt;prefix(&quot;formulize_framework_links&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="48895:49098" placeholder="SELECT fl_fo... ${$xoopsDB-&gt;prefix(&quot;formulize_framework_links&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="49798:50001" placeholder="SELECT fl_fo... ${$xoopsDB-&gt;prefix(&quot;formulize_framework_links&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="50038:50241" placeholder="SELECT fl_fo... ${$xoopsDB-&gt;prefix(&quot;formulize_framework_links&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="52262:52332" placeholder="SELECT ele_h... ${$xoopsDB-&gt;prefix(&quot;formulize&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="52397:52467" placeholder="SELECT ele_h... ${$xoopsDB-&gt;prefix(&quot;formulize&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="53046:53341" placeholder="SELECT candi... ${$xoopsDB-&gt;prefix(&quot;formulize_&quot;.$oneFormObject-&gt;getVar('form_handle'))}" />
+            <marker date="1458249674261" expanded="true" signature="63882:63958" placeholder="SELECT name,... ${$xoopsDB-&gt;prefix(&quot;users&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="64231:64307" placeholder="SELECT name,... ${$xoopsDB-&gt;prefix(&quot;users&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="65407:65475" placeholder="SELECT name,... ${$xoopsDB-&gt;prefix(&quot;users&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="66825:66959" placeholder="INSERT INTO ${$xoopsDB-&gt;prefix(&quot;formulize_valid_imports&quot;)}... " />
+            <marker date="1458249674261" expanded="true" signature="67759:67887" placeholder="SELECT uid, " />
+            <marker date="1458249674261" expanded="true" signature="67918:68050" placeholder="SELECT proxy... ${$xoopsDB-&gt;prefix(&quot;formulize_form&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="68087:68236" placeholder="SELECT creat... ${$xoopsDB-&gt;prefix(&quot;formulize_form&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="73495:73706" placeholder="SELECT ele_i... ${$xoopsDB-&gt;prefix(&quot;formulize&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="73930:74141" placeholder="SELECT ele_i... ${$xoopsDB-&gt;prefix(&quot;formulize&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="74246:74452" placeholder="SELECT ele_i... ${$xoopsDB-&gt;prefix(&quot;formulize&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="77925:78023" placeholder="SELECT ele_c... ${$xoopsDB-&gt;prefix(&quot;formulize&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="82578:82668" placeholder="SELECT id_re... ${$xoopsDB-&gt;prefix(&quot;formulize_form&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="100800:100879" placeholder="SELECT singl... ${$xoopsDB-&gt;prefix(&quot;formulize_id&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="104528:104639" placeholder="SELECT * FRO... ${$xoopsDB-&gt;prefix(&quot;formulize_other&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="105417:105576" placeholder="INSERT INTO ${$xoopsDB-&gt;prefix(&quot;formulize_other&quot;)}... " />
+            <marker date="1458249674261" expanded="true" signature="105686:105785" placeholder="DELETE FROM " />
+            <marker date="1458249674261" expanded="true" signature="107216:107319" placeholder="SELECT id_fo... ${$xoopsDB-&gt;prefix(&quot;formulize_id&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="107521:107651" placeholder="SELECT ele_c... ${$xoopsDB-&gt;prefix(&quot;formulize&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="114935:115107" placeholder="SELECT ele_i... ${$xoopsDB-&gt;prefix(&quot;formulize&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="116947:117057" placeholder="SELECT uid F... ${$xoopsDB-&gt;prefix(&quot;users&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="121358:121434" placeholder="SELECT isact... ${$xoopsDB-&gt;prefix(&quot;modules&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="134232:134398" placeholder="SELECT * FRO... ${$xoopsDB-&gt;prefix(&quot;formulize_notification_conditions&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="158810:158989" placeholder="SELECT not_u... ${$xoopsDB-&gt;prefix(&quot;xoopsnotifications&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="160407:160488" placeholder="SELECT ele_c... ${$xoopsDB-&gt;prefix(&quot;formulize&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="167337:167537" placeholder="SELECT `entr... ${$xoopsDB-&gt;prefix(&quot;formulize_&quot;.$sourceFormObject-&gt;getVar('form_handle'))}" />
+            <marker date="1458249674261" expanded="true" signature="169447:169477" placeholder="SELECT MAX(`... ${$xoopsDB-&gt;prefix(&quot;formulize_&quot;.$elementFormObject-&gt;getVar('form_handle'))}" />
+            <marker date="1458249674261" expanded="true" signature="170458:170720" placeholder="INSERT INTO ${$xoopsDB-&gt;prefix(&quot;formulize_&quot;.$elementFormObject-&gt;getVar('form_handle'))}... " />
+            <marker date="1458249674261" expanded="true" signature="182953:183078" placeholder="SELECT ff_fo... ${$xoopsDB-&gt;prefix(&quot;formulize_framework_forms&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="186034:186345" placeholder="SELECT eleme... ${$xoopsDB-&gt;prefix(&quot;formulize&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="191825:191906" placeholder="SELECT ele_h... ${$xoopsDB-&gt;prefix(&quot;formulize&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="191972:192190" placeholder="SELECT t2.el... ${$xoopsDB-&gt;prefix(&quot;formulize_framework_elements&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="199055:199152" placeholder="SELECT ele_v... ${$xoopsDB-&gt;prefix(&quot;formulize&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="202094:202282" placeholder="SELECT disti... ${$xoopsDB-&gt;prefix(&quot;formulize_&quot;.$sourceFormObject-&gt;getVar('form_handle'))}" />
+            <marker date="1458249674261" expanded="true" signature="204387:204459" placeholder="SELECT group... ${$xoopsDB-&gt;prefix(&quot;groups&quot;)}" />
+            <marker date="1458249674261" expanded="true" signature="258363:258414" placeholder="..." />
+            <marker date="1458249674261" expanded="true" signature="267318:267370" placeholder="ALTER TABLE `${$table}`... " />
+            <marker date="1458249674261" expanded="true" signature="267386:267479" placeholder="UPDATE `${$t... " />
+            <marker date="1458249674261" expanded="true" signature="267901:268013" placeholder="UPDATE `${$t... " />
+            <marker date="1458249674261" expanded="true" signature="268029:268101" placeholder="ALTER TABLE `${$table}`... " />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modules/formulize/xoops_version.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-5.2567325">
+          <caret line="365" column="33" selection-start-line="365" selection-start-column="33" selection-end-line="365" selection-end-column="33" />
+          <folding>
+            <marker date="1458249674114" expanded="true" signature="12888:12919" placeholder="SELECT id_fo... ${$xoopsDB-&gt;prefix(&quot;formulize_id&quot;)}" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modules/formulize/templates/admin/screen_multipage_pages_settings.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-12.423077">
+          <caret line="19" column="36" selection-start-line="19" selection-start-column="36" selection-end-line="19" selection-end-column="36" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modules/formulize/admin/screen.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.33255813">
+          <caret line="461" column="43" selection-start-line="461" selection-start-column="39" selection-end-line="461" selection-end-column="43" />
+          <folding>
+            <element signature="e#6#85#0#PHP" expanded="true" />
+            <marker date="1458250596044" expanded="true" signature="7787:7909" placeholder="SELECT page_... ${$xoopsDB-&gt;prefix(&quot;pageworks_pages&quot;)}" />
+            <marker date="1458250596044" expanded="true" signature="21297:21370" placeholder="SELECT name,... ${$xoopsDB-&gt;prefix(&quot;groups&quot;)}" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modules/formulize/admin/screen_multipage_pages_settings.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.4814815">
+          <caret line="13" column="48" selection-start-line="13" selection-start-column="48" selection-end-line="13" selection-end-column="48" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modules/formulize/class/forms.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.4466231">
+          <caret line="621" column="41" selection-start-line="621" selection-start-column="37" selection-end-line="621" selection-end-column="41" />
+          <folding>
+            <element signature="e#6#85#0#PHP" expanded="true" />
+            <marker date="1458250005730" expanded="true" signature="3158:3433" placeholder="SELECT main.... ${$xoopsDB-&gt;prefix(&quot;formulize_&quot;.$form_handle)}" />
+            <marker date="1458250005730" expanded="true" signature="3295:3431" placeholder="SELECT 1 FRO... ${$xoopsDB-&gt;prefix(&quot;formulize_entry_owner_groups&quot;)}" />
+            <marker date="1458250005730" expanded="true" signature="4585:4654" placeholder="SELECT * FRO... ${$xoopsDB-&gt;prefix(&quot;formulize_id&quot;)}" />
+            <marker date="1458250005730" expanded="true" signature="5379:5557" placeholder="SELECT ele_i... ${$xoopsDB-&gt;prefix(&quot;formulize&quot;)}" />
+            <marker date="1458250005730" expanded="true" signature="7233:7379" placeholder="SELECT * FRO... ${$xoopsDB-&gt;prefix(&quot;formulize_saved_views&quot;)}" />
+            <marker date="1458250005730" expanded="true" signature="7886:7986" placeholder="SELECT group... ${$xoopsDB-&gt;prefix(&quot;formulize_group_filters&quot;)}" />
+            <marker date="1458250005730" expanded="true" signature="18684:18718" placeholder="select count... ${$xoopsDB-&gt;prefix(&quot;formulize_&quot;.$this-&gt;form_handle)}" />
+            <marker date="1458250005730" expanded="true" signature="20632:20749" placeholder="SELECT id_fo... ${$xoopsDB-&gt;prefix(&quot;formulize_id&quot;)}" />
+            <marker date="1458250005730" expanded="true" signature="20970:21049" placeholder="SELECT id_fo... ${$xoopsDB-&gt;prefix(&quot;formulize_id&quot;)}" />
+            <marker date="1458250005730" expanded="true" signature="22769:23008" placeholder="SELECT id_fo... ${$this-&gt;db-&gt;prefix(&quot;formulize_id&quot;)}" />
+            <marker date="1458250005730" expanded="true" signature="22857:22978" placeholder="SELECT 1 FRO... ${$this-&gt;db-&gt;prefix(&quot;formulize_application_form_link&quot;)}" />
+            <marker date="1458250005730" expanded="true" signature="23963:24865" placeholder="INSERT INTO ${$this-&gt;db-&gt;prefix(&quot;formulize_id&quot;)}... " />
+            <marker date="1458250005730" expanded="true" signature="29217:29343" placeholder="SELECT count... ${$xoopsDB-&gt;prefix(&quot;formulize&quot;)}" />
+            <marker date="1458250005730" expanded="true" signature="29917:29982" placeholder="DELETE FROM " />
+            <marker date="1458250005730" expanded="true" signature="30100:30162" placeholder="DELETE FROM " />
+            <marker date="1458250005730" expanded="true" signature="30293:30398" placeholder="DELETE FROM " />
+            <marker date="1458250005730" expanded="true" signature="30539:30612" placeholder="SELECT sid, ${$xoopsDB-&gt;prefix(&quot;formulize_screen&quot;)}" />
+            <marker date="1458250005730" expanded="true" signature="30716:30807" placeholder="DELETE FROM " />
+            <marker date="1458250005730" expanded="true" signature="31886:31949" placeholder="DELETE FROM " />
+            <marker date="1458250005730" expanded="true" signature="32238:32316" placeholder="DELETE FROM " />
+            <marker date="1458250005730" expanded="true" signature="34871:34982" placeholder="CREATE TABLE... ${$xoopsDB-&gt;prefix(&quot;formulize_&quot; . $formObject-&gt;getVar('form_handle') . $revisionTableName)}" />
+            <marker date="1458250005730" expanded="true" signature="38881:38892" placeholder="DROP TABLE $... " />
+            <marker date="1458250005730" expanded="true" signature="39143:39154" placeholder="DROP TABLE $... " />
+            <marker date="1458250005730" expanded="true" signature="39420:39499" placeholder="DELETE FROM " />
+            <marker date="1458250005730" expanded="true" signature="40039:40172" placeholder="ALTER TABLE ${$xoopsDB-&gt;prefix(&quot;formulize_&quot; . $formObject-&gt;getVar('form_handle'))}... " />
+            <marker date="1458250005730" expanded="true" signature="40344:40490" placeholder="ALTER TABLE ${$xoopsDB-&gt;prefix(&quot;formulize_&quot; . $formObject-&gt;getVar('form_handle').&quot;_revisions&quot;)}... " />
+            <marker date="1458250005730" expanded="true" signature="41270:41403" placeholder="ALTER TABLE ${$xoopsDB-&gt;prefix(&quot;formulize_&quot; . $formObject-&gt;getVar('form_handle'))}... " />
+            <marker date="1458250005730" expanded="true" signature="41593:41766" placeholder="ALTER TABLE ${$xoopsDB-&gt;prefix(&quot;formulize_&quot; . $formObject-&gt;getVar('form_handle').&quot;_revisions&quot;)}... " />
+            <marker date="1458250005730" expanded="true" signature="43172:43289" placeholder="ALTER TABLE ${$xoopsDB-&gt;prefix(&quot;formulize_&quot; . $formObject-&gt;getVar('form_handle'))}... " />
+            <marker date="1458250005730" expanded="true" signature="43474:43604" placeholder="ALTER TABLE ${$xoopsDB-&gt;prefix(&quot;formulize_&quot; . $formObject-&gt;getVar('form_handle').&quot;_revisions&quot;)}... " />
+            <marker date="1458250005730" expanded="true" signature="44424:44503" placeholder="SELECT group... ${$xoopsDB-&gt;prefix(&quot;formulize_group_filters&quot;)}" />
+            <marker date="1458250005730" expanded="true" signature="44704:44799" placeholder="INSERT INTO ${$xoopsDB-&gt;prefix(&quot;formulize_group_filters&quot;)}... " />
+            <marker date="1458250005730" expanded="true" signature="45959:46078" placeholder="DELETE FROM " />
+            <marker date="1458250005730" expanded="true" signature="47128:47250" placeholder="SELECT filte... ${$xoopsDB-&gt;prefix(&quot;formulize_group_filters&quot;)}" />
+            <marker date="1458250005730" expanded="true" signature="50424:50496" placeholder="SELECT * FRO... ${$this-&gt;db-&gt;prefix(&quot;formulize_id&quot;)}" />
+            <marker date="1458250005730" expanded="true" signature="50521:50576" placeholder="INSERT INTO ${$this-&gt;db-&gt;prefix(&quot;formulize_id&quot;)}... " />
+            <marker date="1458250005730" expanded="true" signature="51926:51995" placeholder="SELECT * FRO... ${$this-&gt;db-&gt;prefix(&quot;formulize&quot;)}" />
+            <marker date="1458250005730" expanded="true" signature="52120:52172" placeholder="INSERT INTO ${$this-&gt;db-&gt;prefix(&quot;formulize&quot;)}... " />
+            <marker date="1458250005730" expanded="true" signature="58094:58212" placeholder="SELECT desc_... ${$this-&gt;db-&gt;prefix(&quot;formulize_id&quot;)}" />
+            <marker date="1458250005730" expanded="true" signature="58704:58822" placeholder="INSERT INTO ${$this-&gt;db-&gt;prefix(&quot;formulize_application_form_link&quot;)}... " />
+            <marker date="1458250005730" expanded="true" signature="60606:60857" placeholder="INSERT INTO ${$this-&gt;db-&gt;prefix(&quot;group_permission&quot;)}... " />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modules/formulize/admin/frameCommonElements_dialog.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="3.0370371">
+          <caret line="85" column="0" selection-start-line="85" selection-start-column="0" selection-end-line="85" selection-end-column="0" />
+          <folding>
+            <element signature="e#6#85#0#PHP" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+  </component>
+</project>

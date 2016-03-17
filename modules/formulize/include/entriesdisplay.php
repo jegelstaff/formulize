@@ -1143,7 +1143,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	if($useDefaultInterface) {
 
 		// if search is not used, generate the search boxes 
-		if(!$useSearch OR ($calc_cols AND !$hcalc)) {
+		if(!$useSearch AND $hcalc) {
 			print "<div style=\"display: none;\"><table>"; // enclose in a table, since drawSearches puts in <tr><td> tags
 			drawSearches($searches, $settings['columns'], $useCheckboxes, $useViewEntryLinks, 0, false, $hiddenQuickSearches);
 			print "</table></div>";
@@ -1375,12 +1375,11 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$returnArray = array();
 	$returnArray[0] = $buttonCodeArray; // send this back so it's available in the bottom template if necessary.  MUST USE NUMERICAL KEYS FOR list TO WORK ON RECEIVING END.
 	return $returnArray;
-
 }
+
 
 // THIS FUNCTION DRAWS IN THE RESULTS OF THE QUERY
 function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone="", $currentURL, $gperm_handler, $uid, $mid, $groups, $settings, $member_handler, $screen, $data, $wq, $regeneratePageNumbers, $hiddenQuickSearches, $cResults) { // , $loadview="") { // -- loadview removed from this function sept 24 2005
-
 	// determine if the query reached a limit in the number of entries to return
 	$LOE_limit = 0;
 	if(!is_array($data)) {
@@ -1389,7 +1388,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 	}
 
 	global $xoopsDB;
-	
+
 	$useScrollBox = true;
 	$useHeadings = true;
 	$repeatHeaders = 5;
@@ -1413,7 +1412,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 		if($textWidth == 0) { $textWidth = 10000; }
 		$useCheckboxes = $screen->getVar('usecheckboxes');
 		$useViewEntryLinks = $screen->getVar('useviewentrylinks');
-		$useSearch = $screen->getVar('usesearch');
+		$useSearch = ($screen->getVar('usesearch') AND !$screen->getTemplate('listtemplate')) ? 1 : 0;
 		$hiddenColumns = $screen->getVar('hiddencolumns');
 		$deColumns = $screen->getVar('decolumns');
 		$deDisplay = $screen->getVar('dedisplay');
@@ -1484,10 +1483,29 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 		$calc_blanks = $settings['calc_blanks'];
 		$calc_grouping = $settings['calc_grouping'];
 
- 		print "<table class=outer><tr><th colspan=2>" . _formulize_DE_CALCHEAD . "</th></tr>\n";
- 		if(!$settings['lockcontrols'] AND ($useSearchCalcMsgs == 1 OR $useSearchCalcMsgs == 3)) { // AND !$loadview) { // -- loadview removed from this function sept 24 2005
- 			print "<tr><td class=head colspan=2><input type=button style=\"width: 140px;\" name=mod_calculations value='" . _formulize_DE_MODCALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL ."/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=".urlencode($calc_cols)."&calc_calcs=".urlencode($calc_calcs)."&calc_blanks=".urlencode($calc_blanks)."&calc_grouping=".urlencode($calc_grouping)."');\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=cancelcalcs value='" . _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input>&nbsp;&nbsp<input type=button style=\"width: 140px;\" name=showlist value='" . _formulize_DE_SHOWLIST . "' onclick=\"javascript:showList();\"></input></td></tr>";
- 		}
+        print "<table class=outer>";
+        if($useHeadings) {
+            $headers = getHeaders($cols, true); // second param indicates we're using element headers and not ids
+            drawHeaders($headers, $cols, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), $settings['lockedColumns']); 
+        }
+		if($useSearch) {
+			drawSearches($searches, $cols, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), false, $hiddenQuickSearches);
+		}
+        print "</table>";
+        
+        print "<table class=outer><tr><th colspan=2>" . _formulize_DE_CALCHEAD . "</th></tr>\n";
+        if(!$settings['lockcontrols'] AND ($useSearchCalcMsgs == 1 OR $useSearchCalcMsgs == 3)) { // AND !$loadview) { // -- loadview removed from this function sept 24 2005
+            print "<tr><td class=head colspan=2><input type=button style=\"width: 140px;\" name=mod_calculations value='" .
+                _formulize_DE_MODCALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL .
+                "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=".
+                urlencode($calc_cols)."&calc_calcs=".urlencode($calc_calcs)."&calc_blanks=".
+                urlencode($calc_blanks)."&calc_grouping=".urlencode($calc_grouping)."&cols=".
+                urlencode(implode(",",$cols))."');\"></input>&nbsp;&nbsp;".
+                "<input type=button style=\"width: 140px;\" name=cancelcalcs value='" .
+                _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input>&nbsp;&nbsp".
+                "<input type=button style=\"width: 140px;\" name=showlist value='" . _formulize_DE_SHOWLIST .
+                "' onclick=\"javascript:showList();\"></input></td></tr>";
+        }
 
         $exportFilename = $settings['xport'] == "calcs" ? $filename : "";
         //formulize_benchmark("before printing results");
@@ -1510,15 +1528,21 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 		$count_colspan_calcs = $count_colspan_calcs + count($inlineButtons); // add to the column count for each inline custom button
 		$count_colspan_calcs++; // add one more for the hidden floating column
 		if(!$screen) { print "<tr><th colspan=$count_colspan_calcs>" . _formulize_DE_DATAHEADING . "</th></tr>\n"; }
-	
+
 		if($settings['calc_cols'] AND !$settings['lockcontrols'] AND ($useSearchCalcMsgs == 1 OR $useSearchCalcMsgs == 3)) { // AND !$loadview) { // -- loadview removed from this function sept 24 2005
 			$calc_cols = $settings['calc_cols'];
 			$calc_calcs = $settings['calc_calcs'];
 			$calc_blanks = $settings['calc_blanks'];
 			$calc_grouping = $settings['calc_grouping'];
-			print "<tr><td class=head colspan=$count_colspan_calcs><input type=button style=\"width: 140px;\" name=mod_calculations value='" . _formulize_DE_MODCALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=$calc_cols&calc_calcs=$calc_calcs&calc_blanks=$calc_blanks&calc_grouping=$calc_grouping');\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=cancelcalcs value='" . _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=hidelist value='" . _formulize_DE_HIDELIST . "' onclick=\"javascript:hideList();\"></input></td></tr>";
-		}
-	
+            print "<tr><td class=head colspan=$count_colspan_calcs><input type=button style=\"width: 140px;\" name=mod_calculations value='".
+                _formulize_DE_MODCALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL.
+                "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=$calc_cols&calc_calcs=$calc_calcs&calc_blanks=$calc_blanks&calc_grouping=".
+                urlencode($calc_grouping)."&cols=".urlencode(implode(",",$cols)).
+                "');\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=cancelcalcs value='".
+                _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=hidelist value='".
+                _formulize_DE_HIDELIST . "' onclick=\"javascript:hideList();\"></input></td></tr>";
+        }
+
 		// draw advanced search notification
 		if($settings['as_0'] AND ($useSearchCalcMsgs == 1 OR $useSearchCalcMsgs == 2)) {
 			$writable_q = writableQuery($wq);
@@ -1874,6 +1898,7 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
         }
     }
 
+    
 	for($i=0;$i<count($cols);$i++) {
 		$classToUse = "head column column".$i;
 		if(!$returnOnly) {
@@ -1881,18 +1906,13 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
 				print "<td class='head floating-column' id='floatingcelladdress_1'>\n";
 			}
 			print "<td class='$classToUse' id='celladdress_1_$i'><div class='main-cell-div' id='cellcontents_1_".$i."'>\n";
-		}
-
-        if (0 == $i) {
-            // if search_help was displayed earlier, this will be blank
-            print $search_help;
+            print $search_help; // if search help was not included in the margin, then it will be included beside each search box now
         }
 
         //formulize_benchmark("drawing one search");
 		$search_text = isset($searches[$cols[$i]]) ? strip_tags(htmlspecialchars($searches[$cols[$i]]), ENT_QUOTES) : "";
 		$search_text = get_magic_quotes_gpc() ? stripslashes($search_text) : $search_text;
 		$boxid = "";
-		$helpText = "";
 		$clear_help_javascript = "";
 		if(count($searches) == 0 AND !$returnOnly) {
 			if($i==0) { 
@@ -1917,7 +1937,7 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
       if(isset($quickSearchBoxes[$cols[$i]]['filter'])) {
         print $quickSearchBoxes[$cols[$i]]['filter'];
       } else {
-        print "<nobr>".$quickSearchBoxes[$cols[$i]]['search']."$helpText</nobr>";
+        print "<nobr>".$quickSearchBoxes[$cols[$i]]['search']."</nobr>";
       }
 		}
     
@@ -2079,43 +2099,6 @@ function clickableSortLink($handle, $contents) {
 	return $output;
 }
 
-
-// this function returns the ele_ids of form elements to show, or the handles of the form elements to show for a framework
-function getDefaultCols($fid, $frid="") {
-	global $xoopsDB, $xoopsUser;
-
-	if($frid) { // expand the headerlist to include the other forms
-		$fids[0] = $fid;
-		$check_results = checkForLinks($frid, $fids, $fid, "", "", "", "", "", "", "0");
-		$fids = $check_results['fids'];
-		$sub_fids = $check_results['sub_fids'];
-		$gperm_handler = &xoops_gethandler('groupperm');
-		$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
-		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
-		$mid = getFormulizeModId();
-		$ele_handles = array();
-		$processedFids = array();
-		foreach($fids as $this_fid) {
-			if(security_check($this_fid, "", $uid, "", $groups, $mid, $gperm_handler) AND !isset($processedFids[$this_fid])) {
-				$ele_handles = array_merge($ele_handles, getHeaderList($this_fid, true, true));
-				$processedFids[$this_fid] = true;
-			}
-		}
-		foreach($sub_fids as $this_fid) {
-			if(security_check($this_fid, "", $uid, "", $groups, $mid, $gperm_handler) AND !isset($processedFids[$this_fid])) {
-				$ele_handles = array_merge($ele_handles, getHeaderList($this_fid, true, true));
-				$processedFids[$this_fid] = true;
-			}
-		}
-
-		return $ele_handles;
-		
-	} else {
-		$ele_handles = getHeaderList($fid, true, true); // third param causes element handles to be returned instead of IDs
-		return $ele_handles;
-	}
-
-} 
 
 // THIS FUNCTION RETURNS THE ELEMENT HANDLE AND FORM ALIAS IN THE CURRENT GETDATA QUERY, WHEN GIVEN THE ELEMENT ID NUMBER
 function getCalcHandleAndFidAlias($id, $fid) {
@@ -4270,7 +4253,7 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=changecols value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/changecols.php?fid=$fid&frid=$frid&cols=$colhandles');\"></input>";
 				break;
 			case "calcButton":
-				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=calculations value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=".urlencode($calc_cols)."&calc_calcs=".urlencode($calc_calcs)."&calc_blanks=".urlencode($calc_blanks)."&calc_grouping=".urlencode($calc_grouping)."');\"></input>";
+				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=calculations value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=".urlencode($calc_cols)."&calc_calcs=".urlencode($calc_calcs)."&calc_blanks=".urlencode($calc_blanks)."&calc_grouping=".urlencode($calc_grouping)."&cols=".urlencode($colhandles)."&cols=".urlencode($colhandles)."');\"></input>";
 				break;
       case "advCalcButton":
 				// only if any procedures (advanced calculations) are defined for this form

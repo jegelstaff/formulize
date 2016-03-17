@@ -104,12 +104,12 @@ foreach($_POST as $k=>$v) {
 	} elseif(substr($k, 0, 9) == "desubform") { // handle blank subform elements
 		$elementMetaData = explode("_", $k);
 		$elementObject = $element_handler->get($elementMetaData[3]);
-		$v = prepDataForWrite($elementObject, $v);
-		if(($v === "" OR $v === "{WRITEASNULL}") AND $elementMetaData[2] == "new") { continue; } // don't store blank values for new entries, we don't want to write those (if desubform is used only for blank defaults, then it will always be "new" but we'll keep this as is for now, can't hurt)
 		$subformElementKeyParts = explode("_", $k);
 		$subformMetaDataParts = explode("x",substr($subformElementKeyParts[0], 9)); // the blank counter, and the subform element id number will be separated by an x, at the end of the first part of the key in POST, ie: desubform9x231
 		$blankSubformCounter = $subformMetaDataParts[0];
 		$blankSubformElementId = $subformMetaDataParts[1];
+        $v = prepDataForWrite($elementObject, $v, "new", $blankSubformCounter);
+		if(($v === "" OR $v === "{WRITEASNULL}") AND $elementMetaData[2] == "new") { continue; } // don't store blank values for new entries, we don't want to write those (if desubform is used only for blank defaults, then it will always be "new" but we'll keep this as is for now, can't hurt)
 		$formulize_elementData[$elementMetaData[1]][$elementMetaData[2].$blankSubformCounter."x".$blankSubformElementId][$elementMetaData[3]] = $v;
 		if(!isset($formulize_subformBlankCues[$elementMetaData[1]])) {
 			$formulize_subformBlankCues[$elementMetaData[1]] = $elementMetaData[1]; // we will watch for entries being written to this form, and store the resulting entries in global space so we can synch them later
@@ -125,7 +125,7 @@ foreach($_POST as $k=>$v) {
 		$elementMetaData = explode("_", $k);
 		if(isset($_POST["de_".$elementMetaData[1]."_".$elementMetaData[2]."_".$elementMetaData[3]])) {
 			$elementObject = $element_handler->get($elementMetaData[3]);
-			$v = prepDataForWrite($elementObject, $_POST["de_".$elementMetaData[1]."_".$elementMetaData[2]."_".$elementMetaData[3]]);
+            $v = prepDataForWrite($elementObject, $_POST["de_".$elementMetaData[1]."_".$elementMetaData[2]."_".$elementMetaData[3]], $elementMetaData[2]);
 			$formulize_elementData[$elementMetaData[1]][$elementMetaData[2]][$elementMetaData[3]] = $v;
 		} elseif(is_numeric($elementMetaData[1])) {
 			$formulize_elementData[$elementMetaData[1]][$elementMetaData[2]][$elementMetaData[3]] = "{WRITEASNULL}"; // no value returned for this element that was included (cue was found) so we write it as blank to the db
@@ -195,7 +195,10 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
 			if(strstr($currentEntry, "x")) {
 				$subformMetaDataParts = explode("x",$currentEntry);
 				$subformElementId = $subformMetaDataParts[1];
-			}
+                $subformBlankCounter = str_replace("new", "", $subformMetaDataParts[0]);
+			} else {
+                $subformBlankCounter = null;
+            }
             if (strlen($currentEntry) > 3) {
                 // remove the number from the end of any new entry flags that have numbers, which will be subform blanks (and not anything else?)
                 $currentEntry = "new";
@@ -214,7 +217,7 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
 						$formulize_allWrittenFids[$elementFid] = $elementFid;
 					}
 					$notEntriesList['new_entry'][$elementFid][] = $writtenEntryId; // log the notification info
-					writeOtherValues($writtenEntryId, $elementFid); // write the other values for this entry
+                    writeOtherValues($writtenEntryId, $elementFid, $subformBlankCounter); // write the other values for this entry
 					if($creation_user == 0) { // handle cookies for anonymous users
 						setcookie('entryid_'.$elementFid, $writtenEntryId, time()+60*60*24*7, '/');	// the slash indicates the cookie is available anywhere in the domain (not just the current folder)				
 						$_COOKIE['entryid_'.$elementFid] = $writtenEntryId;
@@ -478,5 +481,3 @@ function writeUserProfile($data, $uid) {
     }
 
 }
-
-?>

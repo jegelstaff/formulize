@@ -149,19 +149,45 @@ class formulizeScreenHandler {
 	}
 
     // returns an array of screen objects
-    function &getObjects($criteria = null, $fid) {
-        $sql = "SELECT * FROM " . $this->db->prefix("formulize_screen");
+    function &getObjects($criteria = null, $fid, $appid = -1, $sort = null, $order = null, $paged = false, $offset = -1, $limit = 20) {
+        $sql = "SELECT * FROM " . $this->db->prefix("formulize_screen") . " AS screentable";
         if(is_object($criteria)) {
             $sql .= " WHERE " . $criteria->render();
             if (intval($fid) > 0) {
                 $sql .= " AND fid=" . intval($fid);
             }
+            if ($appid > 0) {
+            	$sql .= " AND EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.appid=" . $appid . " AND linktable.fid=screentable.fid)";
+            } else if ($appid === 0) {
+            	$sql .= " AND NOT EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.appid>" . $appid . " AND linktable.fid=screentable.fid)";
+            }
         } else {
             if (intval($fid) > 0) {
                 $sql .= " WHERE fid=" . intval($fid);
+                
+                if ($appid > 0) {
+                	$sql .= " AND EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.appid=" . $appid . " AND linktable.fid=screentable.fid)";
+                } else if ($appid === 0) {
+            		$sql .= " AND NOT EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.appid>" . $appid . " AND linktable.fid=screentable.fid)";
+            	}
+            } else if ($appid > 0) {
+            	$sql .= " WHERE EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.appid=" . $appid . " AND linktable.fid=screentable.fid)";
+            } else if ($appid === 0) {
+            	$sql .= " WHERE NOT EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.appid>" . $appid . " AND linktable.fid=screentable.fid)";
             }
         }
-        $sql .= " order by fid, title";
+        if($sort == null) {
+        	$sort = "fid, title";
+        }
+        if($order == null) {
+        	$order = "ASC";
+        }
+        $sql .= " order by " . $sort . " " . $order;
+        if($paged) {
+        	$sql .= " LIMIT " . $limit;
+        	$begin = $offset < 2 ? 0 : ($offset - 1) * $limit;
+        	$sql .= " OFFSET " . $begin;
+        }
         $screens = array();
         if($result = $this->db->query($sql)) {
         while($array = $this->db->fetchArray($result)) {
@@ -269,4 +295,93 @@ class formulizeScreenHandler {
     function writeTemplateToFile($text, $filename, $screen) {
         return $screen->writeTemplateFile($text, $filename);
     }
+
+    // FINDS AND RETURNS A NEW TITLE FOR A CLONED SCREEN
+    // Pattern for naming is "[Original Screen Name] - Cloned", "[Original Screen Name] - Cloned 2", etc.
+    function titleForClonedScreen($sid) {
+        $foundTitle = 1;
+        $titleCounter = 0;
+        $screenObject = $this->get($sid);
+        $title = $screenObject->getVar('title');
+        while ($foundTitle) {
+            $titleCounter++;
+            if ($titleCounter > 1) {
+                // add a number to the new form name to ensure it is unique
+                $newtitle = sprintf(_FORM_MODCLONED, $title)." $titleCounter";
+            } else {
+                $newtitle = sprintf(_FORM_MODCLONED, $title);
+            }
+            $titleCheckSQL = "SELECT title FROM " . $this->db->prefix("formulize_screen") . " WHERE title = '".formulize_db_escape($newtitle)."'";
+            $titleCheckResult = $this->db->query($titleCheckSQL);
+            $foundTitle = $this->db->getRowsNum($titleCheckResult);
+        }
+        return $newtitle; // use the last searched title (because it was not found)
+    }
+
+    // CLONE AND INSERT CLONED FORM INTO FORMULIZE_SCREEN TABLE
+    // Takes the screen id of the screen being cloned
+    // Returns the id of the newly cloned screen inserted into table
+    function insertCloneIntoScreenTable($sid, $newtitle) {
+        $getrow = q("SELECT * FROM " . $this->db->prefix("formulize_screen") . " WHERE sid = $sid");
+        $insert_sql = "INSERT INTO " . $this->db->prefix("formulize_screen") . " (";
+        $start = 1;
+        foreach($getrow[0] as $field=>$value) {
+            if($field == "sid") { continue; }
+            if(!$start) { $insert_sql .= ", "; }
+            $start = 0;
+            $insert_sql .= $field;
+        }
+        $insert_sql .= ") VALUES (";
+        $start = 1;
+
+        foreach($getrow[0] as $field=>$value) {
+            if($field == "sid") { continue; }
+            if($field == "title") { $value = $newtitle; }
+            if(!$start) { $insert_sql .= ", "; }
+            $start = 0;
+            $insert_sql .= '"'.formulize_db_escape($value).'"';
+        }
+        $insert_sql .= ")";
+        if(!$result = $this->db->query($insert_sql)) {
+            print "error cloning screen: '$title'<br>SQL: $insert_sql<br>".$xoopsDB->error();
+            return false;
+        }
+        $newsid = $this->db->getInsertId();
+        return $newsid;
+    }
+
+    // INSERT CLONED SCREEN INTO SCREEN-TYPE SPECIFIC TABLE
+    // Takes the screen id of the screen being cloned, the screen id of the newly cloned screen,
+    // and the title of the newly cloned screen.
+    // Inserts the newly cloned screen into the specific table for that type of screen
+    // (i.e. form, listOfEntries, or multiPage).
+    function insertCloneIntoScreenTypeTable($sid, $newsid, $newtitle, $tablename) {
+        $getrow = q("SELECT * FROM " . $this->db->prefix($tablename) . " WHERE sid = $sid");
+        $insert_sql = "INSERT INTO " . $this->db->prefix($tablename) . " (";
+        $start = 1;
+        foreach($getrow[0] as $field=>$value) {
+            if($field == "formid" OR $field == "listofentriesid" OR $field == "multipageid" OR $field == "templateid") { continue; }
+            if(!$start) { $insert_sql .= ", "; }
+            $start = 0;
+            $insert_sql .= $field;
+        }
+        $insert_sql .= ") VALUES (";
+        $start = 1;
+
+        foreach($getrow[0] as $field=>$value) {
+            if($field == "formid" OR $field == "listofentriesid" OR $field == "multipageid" OR $field == "templateid") { continue; }
+            if($field == "sid") { $value = $newsid; }
+            if($field == "title") { $value = $newtitle; }
+            if(!$start) { $insert_sql .= ", "; }
+            $start = 0;
+            $insert_sql .= '"'.formulize_db_escape($value).'"';
+        }
+        $insert_sql .= ")";
+        if(!$result = $this->db->query($insert_sql)) {
+            print "error cloning screen: '$title'<br>SQL: $insert_sql<br>".$xoopsDB->error();
+            return false;
+        }
+        return $result;
+    }
+
 }

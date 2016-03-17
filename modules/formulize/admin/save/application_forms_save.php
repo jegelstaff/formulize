@@ -40,12 +40,32 @@ if(isset($_POST['deleteform']) AND $_POST['deleteform'] > 0 AND $gperm_handler->
 	$formObject = $form_handler->get($_POST['deleteform']);
 	if(!$formObject->getVar('lockedform')) {
 		$form_handler->delete(intval($_POST['deleteform']));
+		$application_handler = xoops_getmodulehandler('applications', 'formulize');
+		$application_handler->deleteMenuLinkByScreen("fid=".intval($_POST['deleteform']));
 		print "/* evalnow */ reloadWithScrollPosition()";
 	} else {
 		print "Error: this form is locked!";
 	}
 }
-
+/*
+ *please see modules/formulize/class/applications.php function deleteMenuLinkByScreen($screen);
+//if deleting a form, check for menu entires related to this form and delete them  Added BY JINFU FEB 2015
+function deleteFormMenuLink($fid){
+	$aid = intval($_POST['formulize_admin_key']);
+	error_log("aid: ".print_r($_GET));
+	$application_handler = xoops_getmodulehandler('applications', 'formulize');
+	$all_links=$application_handler->getMenuLinksForApp($aid, all);
+	$menuid=-1;
+	foreach($all_links as $link){
+		if($link->getVar('screen')=="fid=".$fid)
+			$menuid=$link->getVar('menu_id');
+		error_log("screen: ".print_r($link->getVar("screen")));
+		error_log("menuid: ".print_r($menuid));
+	}
+	//if($menuid!=-1)
+	//$application_handler->deleteMenuLink($aid,$menuid);
+}
+*/
 if((isset($_POST['cloneform']) AND $_POST['cloneform'] > 0) OR (isset($_POST['cloneformdata']) AND $_POST['cloneformdata'] > 0)) {
 	$formToClone = (isset($_POST['cloneform']) AND $_POST['cloneform'] > 0) ? intval($_POST['cloneform']) : intval($_POST['cloneformdata']);
 	$cloneData = (isset($_POST['cloneform']) AND $_POST['cloneform'] > 0) ? false : true;

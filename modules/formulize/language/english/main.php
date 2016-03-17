@@ -82,7 +82,7 @@ define("_FORM_PERM","Permissions");
 
 define("_FORM_MODCLONE", "Clone this form");
 define("_FORM_MODCLONEDATA", "Clone this form and data");
-define("_FORM_MODCLONED_FORM", "Cloned Form");
+define("_FORM_MODCLONED", "%s - Cloned");
 
 define("_FORM_MODPERMLINKS","Modify scope of linked selectboxes (Deprecated -- edit on each selectbox's properties now)");
 define("_FORM_PERMLINKS","Linked Selectbox Scopes");
@@ -367,6 +367,7 @@ define("_formulize_DE_MODIFYSCREEN", "Configure this Screen");
 define("_formulize_DE_CHANGECOLS", "Change columns");
 define("_formulize_DE_PICKNEWCOLS", "Pick different columns to view");
 define("_formulize_DE_AVAILCOLS", "Available columns:");
+define("_formulize_DE_SHOWALLCOLS", "Click to show/hide more columns");
 define("_formulize_DE_LASTMOD", "Last modified by");
 define("_formulize_DE_CREATED", "Created by");
 define("_formulize_DE_ON", "on");
@@ -639,7 +640,7 @@ define("_formulize_DMULTI_NEXT", "Save and Continue");
 define("_formulize_DMULTI_PREV", "Save and Go Back");
 define("_formulize_DMULTI_SAVE", "Save and Finish");
 define("_formulize_DMULTI_PAGE", "Page");
-define("_formulize_DMULTI_OF", "Of");
+define("_formulize_DMULTI_OF", "of");
 define("_formulize_DMULTI_SKIP", "One or more pages was skipped because they don't apply");
 define("_formulize_DMULTI_ALLDONE", "Leave this form and continue browsing the site");
 define("_formulize_DMULTI_JUMPTO", "Jump to page:");

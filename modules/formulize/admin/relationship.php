@@ -31,7 +31,7 @@
 
 include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 
-if(0 == $aid = intval($_GET['aid'])) {
+if (0 == $aid = intval($_GET['aid'])) {
     $appName = "Forms with no app";
 } else {
     $application_handler = xoops_getmodulehandler('applications', 'formulize');
@@ -41,7 +41,7 @@ if(0 == $aid = intval($_GET['aid'])) {
 
 $fid = 0;
 $sid = 0;
-if(0 != $sid = intval($_GET['sid'])) {
+if (0 != $sid = intval($_GET['sid'])) {
     // we came from a screen page
     $screen_handler = xoops_getmodulehandler('screen', 'formulize');
     $screenObject = $screen_handler->get($sid);
@@ -69,31 +69,31 @@ while($array = $xoopsDB->fetchArray($res)) {
     $i++;
 }
 
-$breadcrumbtrail[1] = [
+$breadcrumbtrail[1] = array(
     'url' => "page=home",
     'text' => "Home"
-];
+);
 
-$breadcrumbtrail[] = [
+$breadcrumbtrail[] = array(
     'url' => "page=application&aid=$aid&tab=relationships",
     'text' => $appName
-];
+);
 
-if($fid != 0) {
-    $breadcrumbtrail[] = [
+if ($fid != 0) {
+    $breadcrumbtrail[] = array(
         'url' => "page=form&aid=$aid&fid=$fid&tab=screens",
         'text' => $common['required_form']['name']
-    ];
+    );
 }
 
 if ($sid != 0) {
-    $breadcrumbtrail[] = [
+    $breadcrumbtrail[] = array(
         'url' => "page=screen&aid=$aid&fid=$fid&sid=$sid&tab=relationships",
         'text' => $common['from_screen']['name']
-    ];
+    );
 }
 
-if($_GET['frid'] != "new") {
+if ($_GET['frid'] != "new") {
     $relationship_id = intval($_GET['frid']);
     $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
     $relationship = $framework_handler->get($relationship_id);

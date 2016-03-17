@@ -218,39 +218,53 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 	public function getSelectedScreensForNewElement() {
 		global $xoopsDB;
 		$selected_screens = array();
-		$allScreensForForm = $this->getScreensForElement($_GET['fid']);
+		$screenElementsSQL =   "SELECT sid, formelements
+								FROM " . $xoopsDB->prefix("formulize_screen_form") .
+							   " WHERE formid = " .$_GET['fid'];
+		$screenElementsResult = $xoopsDB->query($screenElementsSQL);
 
-	    $formScreenSQL = "SELECT formid, sid, formelements FROM " . $xoopsDB->prefix("formulize_screen_form");
-	    $formScreenHandler = $xoopsDB->query($formScreenSQL);
-
-	    $formScreenIndex = array();
-	    $allScreens = array();
-	    $formid_to_elementid = array();
-	    while($formScreenHandlesArray = $xoopsDB->fetchArray($formScreenHandler)) {
-	    	array_push($formScreenIndex, $formScreenHandlesArray);
-	    }
-
-	    $formElementsSQL = "SELECT id_form, ele_id FROM " . $xoopsDB->prefix("formulize");
-	    $formElementsHandler = $xoopsDB->query($formElementsSQL);
-
-	    while($formElementsHandlesArray = $xoopsDB->fetchArray($formElementsHandler)) {
-	    	if (!isset($formid_to_elementid[$formElementsHandlesArray['id_form']])) {
-	    		$formid_to_elementid[$formElementsHandlesArray['id_form']] = array();
-	    	}
-	    	array_push($formid_to_elementid[$formElementsHandlesArray['id_form']], $formElementsHandlesArray['ele_id']);
-	    }
-
-		foreach ($allScreensForForm as $i => $thisScreen) {
-			foreach ($formScreenIndex as $j => $screenData) {
-				if ($screenData['sid'] == $thisScreen['sid']) {
-					$unserializedData = unserialize($screenData['formelements']);
-					if (count($formid_to_elementid[$_GET['fid']]) == count($unserializedData)) {
-						$selected_screens[$screenData['sid']] = " selected";
-					}
-				}
+		while ($screenElements = $xoopsDB->fetchArray($screenElementsResult)){
+			$selected_elements = unserialize($screenElements['formelements']);
+			if (is_array($selected_elements) AND count($selected_elements)>0){
+				$this_screen_id = $screenElements['sid'];
+				//space before 'selected' is needed as this is output directly into html
+				$selected_screens[$this_screen_id] = " selected";
+				break;
 			}
 		}
 		return $selected_screens;
+	}
+
+    // THIS METHOD CLONES A FORM_SCREEN
+    function cloneScreen($sid) {
+
+        $newtitle = parent::titleForClonedScreen($sid);
+
+        $newsid = parent::insertCloneIntoScreenTable($sid, $newtitle);
+
+        if (!$newsid) {
+            return false;
+        }
+
+        $tablename = "formulize_screen_form";
+        $result = parent::insertCloneIntoScreenTypeTable($sid, $newsid, $newtitle, $tablename);
+
+        if (!$result) {
+            return false;
+        }
+    }
+
+	public function setDefaultFormScreenVars($defaultFormScreen, $title, $fid)
+	{
+		$defaultFormScreen->setVar('displayheading', 1);
+		$defaultFormScreen->setVar('reloadblank', 0);
+		$defaultFormScreen->setVar('savebuttontext', _formulize_SAVE);
+		$defaultFormScreen->setVar('alldonebuttontext', _formulize_DONE);
+		$defaultFormScreen->setVar('title', "Regular '$title'");
+		$defaultFormScreen->setVar('fid', $fid);
+		$defaultFormScreen->setVar('frid', 0);
+		$defaultFormScreen->setVar('type', 'form');
+		$defaultFormScreen->setVar('useToken', 1);
 	}
 
 }

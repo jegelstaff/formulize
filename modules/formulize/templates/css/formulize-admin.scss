@@ -177,6 +177,16 @@ label {
     overflow: hidden;
 }
 
+.paging {
+	overflow: auto;
+	padding-top: 10px;
+}
+
+.page-list {
+	text-align: right;
+	width: 100%;
+}
+
 /* override blockquote container */
 .ui-accordion-content blockquote {
     margin: 0.5em 0;
@@ -253,6 +263,10 @@ div.accordion-box .no-bullets {
 }
 
 /* table overrides */
+
+th a {
+    display: block;
+}
 
 .ui-tabs-panel .content table {
     width: 80%;
@@ -460,7 +474,7 @@ form div.form-item > fieldset {
 }
 form label {
     display: inline-block;
-    vertical-align: top;
+//    vertical-align: top;
     padding: 0 4px 0 0;
 }
 

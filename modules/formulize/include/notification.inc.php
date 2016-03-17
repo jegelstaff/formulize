@@ -38,8 +38,3 @@ function form_item_info($category, $item_id)
 		return $item;
 	}
 }
-
-
-
-
-?>

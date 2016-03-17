@@ -104,9 +104,11 @@ class formulizeListOfEntriesScreen extends formulizeScreen {
 
 class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
     var $db;
+
     function formulizeListOfEntriesScreenHandler(&$db) {
         $this->db =& $db;
     }
+
     function &getInstance(&$db) {
         static $instance;
         if (!isset($instance)) {
@@ -114,10 +116,10 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
         }
         return $instance;
     }
+
     function &create() {
         return new formulizeListOfEntriesScreen();
     }
-
 
     // this function handles all the admin side ui for this kind of screen
     function editForm($screen, $fid) {
@@ -630,6 +632,28 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
     }
 
 
+    // THIS METHOD CLONES A LIST_OF_ENTRIES_SCREEN
+    function cloneScreen($sid) {
+
+        $newtitle = parent::titleForClonedScreen($sid);
+
+        $newsid = parent::insertCloneIntoScreenTable($sid, $newtitle);
+
+        if (!$newsid) {
+            return false;
+        }
+
+        $tablename = "formulize_screen_listofentries";
+        $result = parent::insertCloneIntoScreenTypeTable($sid, $newsid, $newtitle, $tablename);
+
+        if (!$result) {
+            return false;
+        }
+    }
+
+
+
+
     // THIS METHOD HANDLES ALL THE LOGIC ABOUT HOW TO ACTUALLY DISPLAY THIS TYPE OF SCREEN
     // $screen is a screen object
     // since the number of params for the render method can vary from screen type to screen type, this should take a single array that we unpack in the method, so the number of params is common to all types, ie: one array
@@ -638,6 +662,53 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
         $mainform = $screen->getVar('frid') ? $screen->getVar('fid') : "";
         include_once XOOPS_ROOT_PATH . "/modules/formulize/include/entriesdisplay.php";
         displayEntries($formframe, $mainform, $loadThisView, 0, 0, $screen);
+    }
+
+
+    public function setDefaultListScreenVars($defaultListScreen, $defaultFormScreenId, $title, $fid)
+    {
+        // View
+        $defaultListScreen->setVar('defaultview', 'all');
+        $defaultListScreen->setVar('usecurrentviewlist', _formulize_DE_CURRENT_VIEW);
+        $defaultListScreen->setVar('limitviews', serialize(array(0 => 'allviews')));
+        $defaultListScreen->setVar('useworkingmsg', 1);
+        $defaultListScreen->setVar('usescrollbox', 1);
+        $defaultListScreen->setVar('entriesperpage', 10);
+        $defaultListScreen->setVar('viewentryscreen', $defaultFormScreenId);
+        // Headings
+        $defaultListScreen->setVar('useheadings', 1);
+        $defaultListScreen->setVar('repeatheaders', 5);
+        $defaultListScreen->setVar('usesearchcalcmsgs', 1);
+        $defaultListScreen->setVar('usesearch', 1);
+        $defaultListScreen->setVar('columnwidth', 0);
+        $defaultListScreen->setVar('textwidth', 35);
+        $defaultListScreen->setVar('usecheckboxes', 0);
+        $defaultListScreen->setVar('useviewentrylinks', 1);
+        $defaultListScreen->setVar('desavetext', _formulize_SAVE);
+        // Buttons
+        $defaultListScreen->setVar('useaddupdate', _formulize_DE_ADDENTRY);
+        $defaultListScreen->setVar('useaddmultiple', _formulize_DE_ADD_MULTIPLE_ENTRY);
+        $defaultListScreen->setVar('useaddproxy', _formulize_DE_PROXYENTRY);
+        $defaultListScreen->setVar('useexport', _formulize_DE_EXPORT);
+        $defaultListScreen->setVar('useimport', _formulize_DE_IMPORT);
+        $defaultListScreen->setVar('usenotifications', _formulize_DE_NOTBUTTON);
+        $defaultListScreen->setVar('usechangecols', _formulize_DE_CHANGECOLS);
+        $defaultListScreen->setVar('usecalcs', _formulize_DE_CALCS);
+        $defaultListScreen->setVar('useadvcalcs', _formulize_DE_ADVCALCS);
+        $defaultListScreen->setVar('useexportcalcs', _formulize_DE_EXPORT_CALCS);
+        $defaultListScreen->setVar('useadvsearch', '');
+        $defaultListScreen->setVar('useclone', _formulize_DE_CLONESEL);
+        $defaultListScreen->setVar('usedelete', _formulize_DE_DELETESEL);
+        $defaultListScreen->setVar('useselectall', _formulize_DE_SELALL);
+        $defaultListScreen->setVar('useclearall', _formulize_DE_CLEARALL);
+        $defaultListScreen->setVar('usereset', _formulize_DE_RESETVIEW);
+        $defaultListScreen->setVar('usesave', _formulize_DE_SAVE);
+        $defaultListScreen->setVar('usedeleteview', _formulize_DE_DELETE);
+        $defaultListScreen->setVar('title', "Entries in '$title'");
+        $defaultListScreen->setVar('fid', $fid);
+        $defaultListScreen->setVar('frid', 0);
+        $defaultListScreen->setVar('type', 'listOfEntries');
+        $defaultListScreen->setVar('useToken', 1);
     }
 }
 

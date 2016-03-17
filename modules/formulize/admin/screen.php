@@ -130,6 +130,7 @@ if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $defaultViewOptions['group'] = _AM_FORMULIZE_SCREEN_LOE_DVGROUP;
   $defaultViewOptions['all'] = _AM_FORMULIZE_SCREEN_LOE_DVALL;
   for($i=0;$i<count($views);$i++) {
+
       if(!$viewPublished[$i]) { continue; }
       $defaultViewOptions[$views[$i]] = $viewNames[$i];
       if($viewFrids[$i]) {
@@ -160,6 +161,7 @@ if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
 					$viewentryscreenOptions["p".$pageworksArray['page_id']] = _AM_FORMULIZE_SCREEN_LOE_VIEWENTRYPAGEWORKS . " -- " . printSmart(trans($pageworksName), 85);
 			}
 	}
+
   // create the template information
   $entries = array();
   $entries['defaultviewoptions'] = $defaultViewOptions;
@@ -187,7 +189,7 @@ if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $elementOptionsFid = array();
   $listTemplateHelp = array();
   $class = "odd";
-  
+
   foreach($allFids as $thisFid) {
       unset($thisFidObj);
       if($form_id == $thisFid) {
@@ -200,7 +202,7 @@ if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
       $thisFidCaptions = $thisFidObj->getVar('elementCaptions');
       $thisFidColheads = $thisFidObj->getVar('elementColheads');
       $thisFidHandles = $thisFidObj->getVar('elementHandles');
-      
+
       foreach($thisFidElements as $i => $thisFidElement) {
         $elementHeading = $thisFidColheads[$i] ? $thisFidColheads[$i] : $thisFidCaptions[$i];
         $elementOptions[$thisFidHandles[$i]] = printSmart(trans(strip_tags($elementHeading)), 75);
