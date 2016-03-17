@@ -92,6 +92,7 @@ class SyncCompareCatalog {
 
         foreach ($this->changes as $tableName => $tableInfo) {
             $descrs[$tableName] = array("inserts"=>array(), "updates"=>array(), "deletes"=>array());
+            $descrs[$tableName]["createTable"] = $tableInfo["createTable"];
 
             foreach ($tableInfo["inserts"] as $rec) {
                 $metadata = $this->getRecMetadata($tableName, "insert", $rec);

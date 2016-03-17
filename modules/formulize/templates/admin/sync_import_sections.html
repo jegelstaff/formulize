@@ -1,5 +1,9 @@
 <div>
 
+    <{if $sectionContent.createTable}>
+    <span style="color:green;">New table!</span>
+    <{/if}>
+
     <{if count($sectionContent.inserts) > 0}>
     <fieldset>
         <legend>Inserts (<{$sectionContent.inserts|@count}>)</legend>
