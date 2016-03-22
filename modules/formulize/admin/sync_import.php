@@ -9,12 +9,18 @@ $syncimport['content'] = array();
 $syncimport['content']['elements'] = array();
 
 if (isset($_POST['syncimport'])) {
+    error_log("sync import -ing");
     // if this post was sent then load the cached comparison data and commit it to the database
     $catalog = new SyncCompareCatalog();
     if ($catalog->loadCachedChanges()) {
         // commit database changes
         $syncimport['content']['result'] = $catalog->commitChanges();
-        $syncimport['content']['result']['success'] = true; // TODO catch and display errors from commitChanges()
+
+        // export archive files
+        $csvFilepath = getCachedExportFilepath();
+        extractTemplateFiles($csvFilepath);
+
+        $syncimport['content']['result']['success'] = true; // TODO catch and display errors from above
     }
     else {
         // failed to load cached catalog comparison data

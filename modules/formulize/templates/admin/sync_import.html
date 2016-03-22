@@ -13,9 +13,9 @@
             <{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/sync_import_sections.html" sections=$adminPage.syncimport.content.elements}>
 
             <p align="center">
-            <form name="syncimport" action="POST">
-                <label for="syncimportbtn">Import the above changes to the system: </label>
-                <input type="button" id="syncimportbtn" name="syncimport" value="Synchronize Import"/>
+            <form name="syncimport" method="POST">
+                <label>Import the above changes to the system: </label>
+                <input type="submit" name="syncimport" value="Synchronize Import"/>
             </form>
             </p>
             <{/if}>
@@ -28,6 +28,8 @@
 
                 <{if $content.result.success}>
                 <span style="color:green;">Successfully completed</span>
+                <br><br>
+                <a href="ui.php?page=home">Return to Admin</a>
                 <{/if}>
             </div>
             <{/if}>

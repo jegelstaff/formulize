@@ -69,10 +69,19 @@ else if(isset($_POST['import'])) {
             $uploadOK = false;
         }
         if ($uploadOK) {
-            $tempFolder = doImport($filepath);
+            $cachedArchiveFilepath = cacheExportFile($filepath); // move the tmp uploaded export zip to formulize cache
+            $extractResult = extractCSVs($cachedArchiveFilepath);
 
-            if ($tempFolder["success"] == true) {
-                header("Location: ui.php?page=sync-import");
+            if ($extractResult["success"] == true) {
+                $csvPath = $extractResult["csvPath"];
+                $dbResult = csvToDB($csvPath);
+
+                if ($dbResult["success"] == true) {
+                    header("Location: ui.php?page=sync-import"); // redirect to sync import review changes
+                }
+                else {
+                    $sync[1]['content']['error'] = "import_err";
+                }
             }
             // return an error as there were issues importing the file
             else {

@@ -200,13 +200,13 @@ class SyncCompareCatalog {
     }
 
     private function tableExists($tableName) {
-        $result = $this->db->query('SHOW TABLES LIKE "'.prefixTable($tableName).'"');
+        $result = $this->db->query('SHOW TABLES LIKE "'.prefixTable($tableName).'";');
         $tableExists = $result->rowCount() > 0;
         return $tableExists;
     }
 
     private function getRecord($tableName, $primaryField, $primaryValue) {
-        $result = $this->db->query('SELECT * FROM '.prefixTable($tableName).' WHERE '.$primaryField.' = "'.$primaryValue.'"');
+        $result = $this->db->query('SELECT * FROM '.prefixTable($tableName).' WHERE '.$primaryField.' = "'.$primaryValue.'";');
         return $result;
     }
 
@@ -369,7 +369,8 @@ class SyncCompareCatalog {
 
         // add comma separated list of values
         foreach ($record as $field => $value) {
-            $sql .= '"'.$value.'", ';
+            $sanitizedValue = $this->db->quote($value);
+            $sql .= '"'.$sanitizedValue.'", ';
         }
         $sql = substr($sql, 0, -2); // remove the unnecessary trailing ', '
         $sql .= ');'; //close values brackets

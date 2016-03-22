@@ -398,7 +398,28 @@
         deleteDir($csvFolderPath); // clean up temp folder and CSV files
         return array( "success" => $successfulImport);
     }
-    
+
+    /*
+     * cacheExportFile function moves the zip being imported to the cache directory
+     * and renames the zip by the current session id. This function is the last step of
+     * the first import page on the front end
+     * 
+     * param  archivePath       String path to archive file
+     */
+    function cacheExportFile($archivePath){
+        // copies the archive file to the cache folder and renames the copied file to the session id
+        $filepath = getCachedExportFilepath();
+        rename($archivePath, $filepath);
+        return $filepath;
+    }
+
+    /*
+     * getCachedExportFilepath function just returns the filepath to the cached export zip
+     *  with the current session id in the filename
+     */
+    function getCachedExportFilepath() {
+        return XOOPS_ROOT_PATH . "\\modules\\formulize\\cache\\sync-export-".session_id().".zip";
+    }
     
     /*
      * printArr utility function prints each element of given 1-D String array with comma separator
