@@ -1129,7 +1129,7 @@ class formulizeFormsHandler {
 		return $perGroupFilter;
 	}
 	
-	function cloneForm($fid, $clonedata=false) {
+	function cloneForm($fid, $clonedata=false, $cloneFormName) {
 		if(is_object($fid)) {
 			if(!get_class($fid) == "formulizeForm") {
 				return false;
@@ -1143,7 +1143,9 @@ class formulizeFormsHandler {
 		// duplicate rows in form table for that fid, but use new fid and increment ele_ids of course
 		// redraw page
 
-		$newtitle = $this->titleForClonedForm($fid);
+		error_log(print_r("clone form name: ".$cloneFormName, true));
+		$newtitle = $this->titleForClonedForm($fid, $cloneFormName);
+		error_log(print_r("this->titleForClonedForm: ".$newtitle, true));
 
 		$getrow = q("SELECT * FROM " . $this->db->prefix("formulize_id") . " WHERE id_form = $fid");
 		$insert_sql = "INSERT INTO " . $this->db->prefix("formulize_id") . " (";
@@ -1279,6 +1281,7 @@ class formulizeFormsHandler {
 			print "Error: could not update form object with default screen ids: ".$xoopsDB->error();
     }
 
+		error_log(print_r("this->setClonedFormAppId: ".$newfid, true));
 		$this->setClonedFormAppId($newfid, $xoopsDB);
 	}
 
@@ -1327,19 +1330,18 @@ class formulizeFormsHandler {
 		return $defaultListScreenId;
 		}
 
-    public function titleForClonedForm($fid) {
+    public function titleForClonedForm($fid, $clonedFormName) {
         $foundTitle = 1;
         $titleCounter = 0;
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
         $formObject = $form_handler->get($fid);
-        $title = $formObject->getVar('title');
         while ($foundTitle) {
             $titleCounter++;
             if ($titleCounter > 1) {
                 // add a number to the new form name to ensure it is unique
-                $newtitle = sprintf(_FORM_MODCLONED, $title)." $titleCounter";
+                $newtitle = sprintf($clonedFormName)." $titleCounter";
             } else {
-                $newtitle = sprintf(_FORM_MODCLONED, $title);
+                $newtitle = sprintf($clonedFormName);
             }
             $titleCheckSQL = "SELECT desc_form FROM " . $this->db->prefix("formulize_id") . " WHERE desc_form = '".formulize_db_escape($newtitle)."'";
             $titleCheckResult = $this->db->query($titleCheckSQL);
