@@ -42,8 +42,13 @@ $(".cloneform").click(function () {
 });
 
 $(".cloneformdata").click(function () {
-	$("[name=cloneformdata]").val($(this).attr('target'));
-	runSaveEvent();
+	var formName = prompt("Enter a name for the cloned form:", "");
+	// if no form name is entered do nothing
+	if (formName) {
+		$("[name=cloneformname]").val(formName);
+		$("[name=cloneformdata]").val($(this).attr('target'));
+		runSaveEvent();
+	}
 	return false;
 });
 
