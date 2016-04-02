@@ -34,7 +34,7 @@ $(".cloneform").click(function () {
 	var formName = prompt("Enter a name for the cloned form:", "");
 	// if no form name is entered do nothing
 	if (formName) {
-		document.getElementById('cloneformname').value = formName;
+		$("[name=cloneformname]").val(formName);
 		$("[name=cloneform]").val($(this).attr('target'));
 		runSaveEvent();
 	}
