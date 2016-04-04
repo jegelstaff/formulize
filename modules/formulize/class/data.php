@@ -82,7 +82,7 @@ class formulizeDataHandler  {
 			foreach($sourceDataArray as $field=>$value) {
 				if($field == "entry_id") {
 					$originalEntryId = $value;
-					$value = ""; // use new ID numbers in the new table, in case there's ever a case where we're copying data into a table that already has data in it
+					continue; // use new ID numbers in the new table, don't include entry id in the SQL statement. 
 				}
 				if(isset($map[$field])) { $field = $map[$field]; } // if this field is in the map, then use the value from the map as the field name (this will match the field name in the cloned form)
 				if(!$start) { $insertSQL .= ", "; }
