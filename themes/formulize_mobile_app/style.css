@@ -733,6 +733,7 @@ div.jGrowl-notification {
   border-top: solid 1px #1d65a5;
   border-left: solid 1px #1d65a5;
   border-right: solid 1px #1d65a5;
+  border-bottom: solid 1px #1D65A5;
   border-radius: 5px 5px 0 0; }
 
 .floating-column {
@@ -846,7 +847,7 @@ button:focus, input[type='submit']:focus, input[type='button']:focus, input[type
   background-color: #59a7d4; }
 
 #formulize_saveButton {
-  background-color: #b3b3b3;
+  background-color: #61A6EE;
   text-indent: 0px; }
 
 /* from style.php */
