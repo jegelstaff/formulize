@@ -135,7 +135,7 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
       if (!$viewPublished[$i]) { continue; }
       $defaultViewOptions[$views[$i]] = $viewNames[$i];
       if ($viewFrids[$i]) {
-          $defaultViewOptions[$views[$i]] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_IN_FRAME . $frameworks[$viewFrids[$i]]->getVar('name') . ")";
+          $defaultViewOptions[$views[$i]] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_IN_FRAME . (is_object($frameworks[$viewFrids[$i]]) ? $frameworks[$viewFrids[$i]]->getVar('name') : "Deleted??") . ")";
       } else {
           $defaultViewOptions[$views[$i]] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_NO_FRAME . ")";
       }
