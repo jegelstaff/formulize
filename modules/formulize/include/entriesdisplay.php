@@ -1699,7 +1699,9 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 													print getHTMLForList($values, $colhandle, $internalID, $deDisplay, $textWidth, $currentColumnLocalId, $fid, $cellRowAddress, $i);
 													print "</div>";
 												} else {
+                                                    if(isset($elementsDisplayed)) { print "\n<br />\n"; }
 													displayElement("", $colhandle, $internalID);
+                                                    $elementsDisplayed = true;
 												}
 												$deThisIntId = true;
 											}
