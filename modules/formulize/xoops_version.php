@@ -498,7 +498,14 @@ $modversion['config'][] = array(
 	'default' => '',
 );
 
-
+$modversion['config'][] = array(
+	'name' => 'debugDerivedValues',
+	'title' => '_MI_formulize_DEBUGDERIVEDVALUES',
+	'description' => '_MI_formulize_DEBUGDERIVEDVALUESDESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => '0',
+);
 
 
 //bloc

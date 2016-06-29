@@ -80,6 +80,8 @@ define("_MI_formulize_LOGPROCEDUREDESC", "By default, logging is off.");
 define("_MI_formulize_PRINTVIEWSTYLESHEETS", "What custom stylesheets, if any, should be used in the printable view?");
 define("_MI_formulize_PRINTVIEWSTYLESHEETSDESC", "Type the URL for each stylesheet, separated by a comma. If the URL starts with http, it will be used as is. If the URL does not start with http, it will be appended to the end of the base URL for the site.");
 
+define("_MI_formulize_DEBUGDERIVEDVALUES", "Turn on debugging mode for working with derived values?");
+define("_MI_formulize_DEBUGDERIVEDVALUESDESC", "When this is on, derived values will be re-computed every time they are displayed. When this is off, derived values are computed on first display only, or when data is saved.");
 
 
 // The name of this module
