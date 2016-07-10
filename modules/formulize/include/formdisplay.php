@@ -1350,6 +1350,19 @@ function writeEntryDefaults($target_fid,$target_entry) {
     }
 }
 
+// This function reads the filter conditions on a subform element, and returns the appropriate filter values that should be used to enforce values in newly created subform elements
+function setSubformFilterValues($subformConditions) {
+    $element_handler = xoops_getmodulehandler('elements', 'formulize');
+    $filterValues = array();
+    foreach($subformConditions[1] as $i=>$thisOp) {
+        if($thisOp == "=" AND $subformConditions[3][$i] != "oom") {
+            $conditionElementObject = $element_handler->get($subformConditions[0][$i]);
+            $filterValues[$subformConditions[0][$i]] = prepareLiteralTextForDB($conditionElementObject, $subformConditions[2][$i]); 
+        }
+    }
+    return $filterValues;
+}
+
 // this function draws in the UI for sub links
 function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry,
 	$customCaption = "", $customElements = "", $defaultblanks = 0, $showViewButtons = 1, $captionsForHeadings = 0,
@@ -1460,13 +1473,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	
 		// need to also enforce any equals conditions that are on the subform element, if any, and assign those values to the entries that were just added
 		if(is_array($subformConditions)) {
-			$filterValues = array();
-			foreach($subformConditions[1] as $i=>$thisOp) {
-				if($thisOp == "=" AND $subformConditions[3][$i] != "oom" AND $subformConditions[2][$i] != "{BLANK}") {
-					$conditionElementObject = $element_handler->get($subformConditions[0][$i]);
-					$filterValues[$subformConditions[0][$i]] = prepareLiteralTextForDB($conditionElementObject, $subformConditions[2][$i]); 
-				}
-			}
+            $filterValues = setSubformFilterValues($subformConditions);
 			if(count($filterValues)>0) {
 				foreach($sub_entry_written as $thisSubEntry) {
 					formulize_writeEntry($filterValues,$thisSubEntry);	
@@ -1513,15 +1520,13 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	// preopulate entries, if there are no sub_entries yet, and prepop options is selected.
     // prepop will be based on the options in an element in the subform, and should also take into account the non OOM conditional filter choices where = is the operator.
     if(count($sub_entries[$sfid]) == 0 AND $subform_element_object->ele_value['subform_prepop_element']) {
+        
+         $optionElementObject = $element_handler->get($subform_element_object->ele_value['subform_prepop_element']);
+        
         // gather filter choices first...
         if(!isset($filterValues)) {
             if(is_array($subformConditions)) {
-    			foreach($subformConditions[1] as $i=>$thisOp) {
-    				if($thisOp == "=" AND $subformConditions[3][$i] != "oom") {
-    					$conditionElementObject = $element_handler->get($subformConditions[0][$i]);
-    					$filterValues[$subformConditions[0][$i]] = prepareLiteralTextForDB($conditionElementObject, $subformConditions[2][$i]); 
-    				}
-    			}
+    			$filterValues = setSubformFilterValues($subformConditions);
             } else {
                 $filterValues = array();
             }
@@ -1537,10 +1542,36 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
             $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat']['new'][$elementHandle] = $value;
             $valuesToWrite[$elementHandle] = $value;
         }
+        
+        // if the prepop element has a conditional filter, we need to ensure that when it is rendered, we are taking the filter into account!!
+        // SINCE THIS IS A PHANTOM NEW ENTRY THAT DOESN'T REALLY EXIST, WE CAN ABUSE THAT SITUATION TO INJECT WHATEVER VALUES WE WANT FOR WHATEVER FIELDS THAT NEED TO BE MATCHED, EVEN THOUGH THEY WON'T ACTUALLY EXIST IN THE FORM WE'RE MAKING AN ENTRY IN.
+        // THIS IS RELEVANT WHEN YOU ARE SETTING THE CURLY BRACKET CONDITIONS FOR FILTERING WHAT OPTIONS WE SHOULD PAY ATTENTION TO.
+        if($optionElementObject->isLinked) {
+            $optionElementEleValue = $optionElementObject->getVar('ele_value');
+            $optionElementFilterConditions = $optionElementEleValue[5]; // fifth key in selectboxes will be conditions for what options to include when linked. Ack!
+            if(is_array($optionElementFilterConditions) AND count($optionElementFilterConditions)>1) {
+                // if it's not a curly bracket value, then element name is the id, and value is the term
+                // if it is a curly bracket value, then element name is the curly bracket value, and value is the value that field has in the parent entry to this one we're about to create!
+                $optionElementEleValue2 = explode("#*=:*", $optionElementEleValue[2]);
+                $optionSourceFid = $optionElementEleValue2[0];
+                $filterElementHandles = convertElementIdsToElementHandles($optionElementFilterConditions[0], $optionSourceFid);
+                $filterElementIds = $optionElementFilterConditions[0];
+                $filterTerms = $optionElementFilterConditions[2];
+                foreach($filterElementIds as $i=>$thisFilterElement) {
+                    if(substr($filterTerms[$i],0,1) == "{" AND substr($filterTerms[$i],-1)=="}") {
+                        // lookup value of this field in the parent entry
+                        $prepop_source_data_handler = new formulizeDataHandler($fid);
+                        $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat']['new'][substr($filterTerms[$i],1,-1)] = $prepop_source_data_handler->getElementValueInEntry($entry, substr($filterTerms[$i],1,-1));
+                    } else {
+                        $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat']['new'][$filterElementHandles[$i]] = $filterTerms[$i];                
+                    }
+                }
+            }
+        }
+        
         list($prepopElement, $prepopDisabled) = displayElement("", $subform_element_object->ele_value['subform_prepop_element'], "new", false, null, null, false);
         unset($GLOBALS['formulize_synchronousFormDataInDatabaseReadyFormat']); // clear the special flag, just in case
         $prepopOptions = $GLOBALS['formulize_lastRenderedElementOptions'];
-        $optionElementObject = $element_handler->get($subform_element_object->ele_value['subform_prepop_element']);
         // if there are known linking values to the main form, then write those in.
         // Otherwise...we need to add logic to make this work like the blanks do and write links after saving!!
         // Therefore, this feature will not yet work when the mainform entry is new!!
