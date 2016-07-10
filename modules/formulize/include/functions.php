@@ -3881,6 +3881,10 @@ function convertAllHandlesAndIds($handles, $frid, $reverse=false, $ids=false, $f
     if (count($to_return)==0 OR count($to_return) != count($handles)) {
         $to_return = array();
         foreach ($handles as $handle) {
+            if(!is_numeric($handle)) { // if we have a mix of ids and handles in the source, then let's just use the original source for non numerics!!
+                $to_return[] = $handle;
+                continue;
+            }
             if ($fid) {
                 $to_return[] = $cachedElementHandlesFromElementIds[$fid][$handle];
             } elseif ($ids) {
