@@ -1318,6 +1318,38 @@ function drawGoBackForm($go_back, $currentURL, $settings, $entry) {
 	} 
 }
 
+// this function figures out certain default values for elements in a given entry in a form, and writes them to that entry
+// used for setting values that are supposed to exist by default in newly created subform entries
+function writeEntryDefaults($target_fid,$target_entry) {
+
+    $element_handler = xoops_getmodulehandler('elements', 'formulize');
+	$criteria = new CriteriaCompo();
+    $criteria->add(new Criteria('ele_type', 'text'), 'OR');
+    $criteria->add(new Criteria('ele_type', 'textarea'), 'OR');
+    $criteria->add(new Criteria('ele_type', 'radio'), 'OR');
+    $elementsForDefaults = $element_handler->getObjects2($criteria,$target_fid); // get all the text or textarea elements in the form 
+
+    foreach($elementsForDefaults as $thisDefaultEle) {
+        // need to write in any default values for any text boxes or text areas that are in the subform.  Perhaps other elements could be included too, but that would take too much work right now. (March 9 2009)
+        $defaultTextToWrite = "";
+        $ele_value_for_default = $thisDefaultEle->getVar('ele_value');
+        switch($thisDefaultEle->getVar('ele_type')) {
+            case "text":
+                $defaultTextToWrite = getTextboxDefault($ele_value_for_default[2], $target_fid, $target_entry); // position 2 is default value for text boxes
+                break;
+            case "textarea":
+                $defaultTextToWrite = getTextboxDefault($ele_value_for_default[0], $target_fid, $target_entry); // position 0 is default value for text boxes
+                break;
+            case "radio":
+                $thisDefaultEleValue = $thisDefaultEle->getVar('ele_value');
+                $defaultTextToWrite = array_search(1, $thisDefaultEleValue);
+        }
+        if($defaultTextToWrite) {
+            writeElementValue($target_fid, $thisDefaultEle->getVar('ele_id'), $target_entry, $defaultTextToWrite);
+        }
+    }
+}
+
 // this function draws in the UI for sub links
 function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry,
 	$customCaption = "", $customElements = "", $defaultblanks = 0, $showViewButtons = 1, $captionsForHeadings = 0,
@@ -1418,43 +1450,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
                   $creation_user_touse = "";
                 }
                 $subEntWritten = writeElementValue($_POST['target_sub'], $element_to_write, "new", $value_to_write, $creation_user_touse, "", true); // Last param is override that allows direct writing to linked selectboxes if we have prepped the value first!
-				if(!isset($elementsForDefaults)) {
-					$criteria = new CriteriaCompo();
-					$criteria->add(new Criteria('ele_type', 'text'), 'OR');
-					$criteria->add(new Criteria('ele_type', 'textarea'), 'OR');
-                    $criteria->add(new Criteria('ele_type', 'date'), 'OR');
-					$criteria->add(new Criteria('ele_type', 'radio'), 'OR');
-					$elementsForDefaults = $element_handler->getObjects($criteria,$_POST['target_sub']); // get all the text or textarea elements in the form 
-				}
-				foreach($elementsForDefaults as $thisDefaultEle) {
-					// need to write in any default values for any text boxes or text areas that are in the subform.  Perhaps other elements could be included too, but that would take too much work right now. (March 9 2009)
-					$defaultTextToWrite = "";
-					$ele_value_for_default = $thisDefaultEle->getVar('ele_value');
-					switch($thisDefaultEle->getVar('ele_type')) {
-						case "text":
-							$defaultTextToWrite = getTextboxDefault($ele_value_for_default[2], $_POST['target_sub'], $subEntWritten); // position 2 is default value for text boxes
-							break;
-						case "textarea":
-							$defaultTextToWrite = getTextboxDefault($ele_value_for_default[0], $_POST['target_sub'], $subEntWritten); // position 0 is default value for text boxes
-							break;
-
-                        case "date":
-                            $defaultTextToWrite = getDateElementDefault($ele_value_for_default[0]);
-                            if (false === $defaultTextToWrite) {
-                                $defaultTextToWrite = "";
-                            } else {
-                                $defaultTextToWrite = date("c", $defaultTextToWrite);
-                            }
-                            break;
-
-						case "radio":
-						    $thisDefaultEleValue = $thisDefaultEle->getVar('ele_value');
-							$defaultTextToWrite = array_search(1, $thisDefaultEleValue);
-					}
-					if($defaultTextToWrite) {
-						writeElementValue($_POST['target_sub'], $thisDefaultEle->getVar('ele_id'), $subEntWritten, $defaultTextToWrite);
-					}
-				}
+				writeEntryDefaults($_POST['target_sub'],$subEntWritten);
 				$sub_entry_written[] = $subEntWritten;
 			}
 		} else {
@@ -1559,7 +1555,9 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
             // add that entry to the list of sub entries
             $valuesToWrite[$optionElementObject->getVar('ele_handle')] = prepDataForWrite($optionElementObject, $optionKey); // keys are what the form sends back for processing
             if($valuesToWrite[$optionElementObject->getVar('ele_handle')] !== "" AND $valuesToWrite[$optionElementObject->getVar('ele_handle')] !== "{WRITEASNULL}") {
-                $sub_entries[$sfid][] = formulize_writeEntry($valuesToWrite);
+                $writtenEntryId = formulize_writeEntry($valuesToWrite);
+                writeEntryDefaults($sfid,$writtenEntryId);
+                $sub_entries[$sfid][] = $writtenEntryId;
             }
         }
         // IF no main form entry is actually saved in the end, then we want to delete all these subs that we have made??!!
