@@ -1253,6 +1253,48 @@ class formulizeElementRenderer{
 
 	/* ALTERED - 20100318 - freeform - jeff/julian - start */
 	function formulize_renderQuickSelect($form_ele_id, $cachedLinkedOptionsFilename, $default_value='', $default_value_user='none', $maxLength=30) {
+        
+        static $autocompleteIncluded = false;
+        if(!$autocompleteIncluded) {
+            // setup separate instance of jquery for use for this purpose only
+            // jq3 should be what we want to work with and original jquery features will be unaffected?? -- needs some testing, especially with accordioned subforms, but really we should upgrade everything to latest jqueries!!!
+            // this hack intended for short term compatibility for CFCC evaluations system only!
+            $output .= "<script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jquery/3.0.0/jquery.min.js'></script>\n";
+            $output .= "<script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.0/jquery-ui.min.js'></script>\n";
+            $output .= "<link rel='stylesheet' href='https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.0/themes/smoothness/jquery-ui.css'>\n";
+            $output .= "<script type='text/javascript'>var jq3 = jQuery.noConflict(true);</script>\n";
+        }
+        $autocompleteIncluded = true;
+        
+        // put markup for autocomplete boxes here
+        $output .= "<div class=\"formulize_autocomplete\" style=\"padding-right: 10px;\"><input type='text' class='formulize_autocomplete' name='${form_ele_id}_user' id = '${form_ele_id}_user' autocomplete='off' value='".str_replace("'", "&#039;", $default_value_user)."' size='$maxLength' /></div>\n";
+        $output .= "<input type='hidden' name='${form_ele_id}' id = '${form_ele_id}' value='$default_value' />\n";
+        
+        // jQuery code for make it work as autocomplete
+        // need to wrap it in window.load because Chrome does unusual things with the DOM and makes it ready before it's populated with content!!  (so document.ready doesn't do the trick)
+        // item 16 determines whether the list box allows new values to be entered
+        $ele_value = $this->_ele->getVar('ele_value');
+        $allow_new_values = isset($ele_value[16]) ? $ele_value[16] : 0;
+        // setup the autocomplete, and make it pass the value of the selected item into 
+        $output .= "<script type='text/javascript'>
+        
+        jq3(window).load(function() {
+            jq3('#".$form_ele_id.'_user'.").autocomplete({
+                source: '".XOOPS_URL."/modules/formulize/include/formulize_quickselect.php?cache=".$cachedLinkedOptionsFilename."&allow_new_values=".$allow_new_values."',
+                minLength: 3
+                select: function(event, ui) {
+                    jq3('#".$form_ele_id."_user').val(ui.label);   
+                    jq3('#".$form_ele_id."').val(ui.value);   
+                }
+            });
+        });
+        \n</script>";
+
+		return $output;
+        
+        
+        
+        /* -- THIS IS THE OLD QUICKSELECT RENDERING, SUPERSEDED BY JQUERYUI RENDERING JULY 12 2016
 		$maxLength = $maxLength > 50 ? 50 : $maxLength; // don't create giant boxes, too disruptive to the layout...though we should probably give the users a way to override this!  They can use the class attribute assigned to the 'user' box below, and CSS.
 		static $autocompleteIncluded = false;
 		if(!$autocompleteIncluded) {
@@ -1286,7 +1328,7 @@ class formulizeElementRenderer{
 		$output .= '});';
 		$output .= "\n</script>";
 
-		return $output;
+		return $output;*/
 	}
 	/* ALTERED - 20100318 - freeform - jeff/julian - stop */
 
