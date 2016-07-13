@@ -1306,7 +1306,18 @@ class formulizeElementRenderer{
                 },
                 search: function(event, ui) {
                     ".$form_ele_id."_clearbox = true;
+                }";
+                if($allow_new_values) {
+                    // if we allow new values and the first (and therefore only) response is a new value item, then mark that for saving right away without selection by user
+                    $output .= ",
+                    response: function(event, ui) {
+                        if(ui.content.length == 1 && ui.content[0].value.indexOf('newvalue:')>-1) {
+                            jq3('#".$form_ele_id."').val(ui.content[0].value);
+                            ".$form_ele_id."_clearbox = false;
+                        }
+                    }";
                 }
+                $output .= "
             }).blur(function() {
                 if(".$form_ele_id."_clearbox == true || jq3('#".$form_ele_id."_user').val() == '') {
                     jq3('#".$form_ele_id."_user').val('');   
