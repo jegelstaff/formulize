@@ -651,6 +651,15 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
     $allDoneOverride = (!$formulizeConfig['all_done_singles'] AND !$profileForm AND (($single OR $overrideMulti OR $original_entry) AND !$_POST['target_sub'] AND !$_POST['goto_sfid'] AND !$_POST['deletesubsflag'] AND !$_POST['parent_form'])) ? true : false;
     if(($allDoneOverride OR (isset($_POST['save_and_leave']) AND $_POST['save_and_leave'])) AND $_POST['form_submitted']) {
 		drawGoBackForm($go_back, $currentURL, $settings, $entry);
+        foreach($fids as $this_fid) {
+            if(!$scheck = security_check($this_fid, $entries[$this_fid][0], $uid, $owner, $groups, $mid, $gperm_handler) AND !$viewallforms) {
+				continue;
+			}			
+			// if there is more than one form, try to make the 1-1 links
+            if(count($fids) > 1) {
+                formulize_makeOneToOneLinks($frid, $this_fid);
+            }
+        }
 		print "<script type=\"text/javascript\">window.document.go_parent.submit();</script>\n";
 		return;
 	} else {
@@ -684,6 +693,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
             // if there is more than one form, try to make the 1-1 links
             // and if we made any, then include the newly linked up entries
             // in the index of entries that we're keeping track of
+            // makeOneToOneLinks will return the relevant ids, based on the links that were made when it was called earlier in readelements.php
             if(count($fids) > 1) {
                 list($form1s, $form2s, $form1EntryIds, $form2EntryIds) = formulize_makeOneToOneLinks($frid, $this_fid);
                 foreach($form1EntryIds as $i=>$form1EntryId) {
@@ -1010,24 +1020,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			$includedXoopsJs = true;
 		}
 	}// end of if we're not going back to the prev page because of an all done button override
-}
-
-// THIS FUNCTION FIGURES OUT THE COMMON VALUE THAT WE SHOULD WRITE WHEN A FORM IN A ONE-TO-ONE RELATIONSHIP IS BEING DISPLAYED AFTER A NEW ENTRY HAS BEEN WRITTEN
-function formulize_findCommonValue($form1, $form2, $key1, $key2) {
-	$commonValueToWrite = "";
-	if(isset($_POST["de_".$form2."_new_".$key2]) AND $_POST["de_".$form2."_new_".$key2] == "{ID}") { // common value is pointing at a textbox that copies the entry ID, so grab the entry ID of the entry just written in the other form
-		$commonValueToWrite = $GLOBALS['formulize_newEntryIds'][$form2][0];
-	} elseif(isset($_POST["de_".$form2."_new_".$key2])) { // grab the value just written in the field of the other form
-		$commonValueToWrite = $_POST["de_".$form2."_new_".$key2];
-	} elseif(isset($_POST["de_".$form2."_".$GLOBALS['formulize_allWrittenEntryIds'][$form2][0]."_".$key2])) { // grab the value just written in the first entry we saved in the paired form
-		$commonValueToWrite = $_POST["de_".$form2."_".$GLOBALS['formulize_allWrittenEntryIds'][$form2][0]."_".$key2];
-	} elseif(isset($GLOBALS['formulize_allWrittenEntryIds'][$form2][0])) { // try to get the value saved in the DB for the target element in the first entry we just saved in the paired form
-		$common_value_data_handler = new formulizeDataHandler($form2);
-		if($candidateValue = $common_value_data_handler->getElementValueInEntry($GLOBALS['formulize_allWrittenEntryIds'][$form2][0], $key2)) {
-			$commonValueToWrite = $candidateValue;
-		}
-	}
-	return $commonValueToWrite;
 }
 
 // THIS FUNCTION ADDS THE SPECIAL PROFILE FIELDS TO THE TOP OF A PROFILE FORM
