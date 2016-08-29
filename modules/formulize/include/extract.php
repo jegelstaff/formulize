@@ -1272,8 +1272,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
 							 // FINAL NOTE ABOUT SLASHES...Oct 19 2006...patch 22 corrects this slash/magic quote mess.  However, to ensure compatibility with existing Pageworks applications, we are continuing to strip out all slashes in the filterparts[1], the filter strings that are passed in, and then we apply HTML special chars to the filter so that it can match up with the contents of the DB.  Only challenge is that extract.php is meant to be standalone, but we have to refer to the text sanitizer class in XOOPS in order to do the HTML special chars thing correctly.
 
                $ifParts[1] = str_replace("\\", "", $ifParts[1]);
-               $ifParts[1] = $myts->htmlSpecialChars($ifParts[1]);
-               
+                              
                // convert legacy metadata terms to new terms
                $ifParts[0] = $ifParts[0] == "uid" ? "creation_uid" : $ifParts[0];
                $ifParts[0] = $ifParts[0] == "proxyid" ? "mod_uid" : $ifParts[0];
