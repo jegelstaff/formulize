@@ -4595,14 +4595,14 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 					$one_search = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
 				} elseif($searchgetkey == "USER") {
 					if($xoopsUser) {
-						$one_search = $xoopsUser->getVar('name');
-						if(!$one_search) { $one_search = $xoopsUser->getVar('uname'); }
+                        $one_search = htmlspecialchars_decode($xoopsUser->getVar('name'), ENT_QUOTES);
+						if(!$one_search) { $one_search = htmlspecialchars_decode($xoopsUser->getVar('uname'), ENT_QUOTES); }
 					} else {
 						$one_search = 0;
 					}
 				} elseif($searchgetkey == "USERNAME") {
 					if($xoopsUser) {
-						$one_search = $xoopsUser->getVar('uname');
+                        $one_search = htmlspecialchars_decode($xoopsUser->getVar('name'), ENT_QUOTES);
 					} else {
 						$one_search = "";
 					}
@@ -4645,8 +4645,8 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 
 			// do additional search for {USERNAME} or {USER} in case they are embedded in another string
 			if($xoopsUser) {
-				$one_search = str_replace("{USER}", $xoopsUser->getVar('name'), $one_search);
-				$one_search = str_replace("{USERNAME}", $xoopsUser->getVar('uname'), $one_search);
+                $one_search = str_replace("{USER}", htmlspecialchars_decode($xoopsUser->getVar('name'), ENT_QUOTES), $one_search);
+				$one_search = str_replace("{USERNAME}", htmlspecialchars_decode($xoopsUser->getVar('uname'), ENT_QUOTES), $one_search);
 			}
 
 			

@@ -5420,8 +5420,8 @@ function parseUserAndToday($term) {
   if ($term === "{USER}") {
 		global $xoopsUser;
 		if($xoopsUser) {
-			$term = $xoopsUser->getVar('name');
-			if(!$term) { $term = $xoopsUser->getVar('uname'); }
+            $term = htmlspecialchars_decode($xoopsUser->getVar('name'), ENT_QUOTES);
+			if(!$term) { $term = htmlspecialchars_decode($xoopsUser->getVar('uname'), ENT_QUOTES); }
 		} else {
 			$term = 0;
 		}
