@@ -606,7 +606,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 					} elseif(isset($_GET[$requestKeyToUse])) {
 						$_POST[$k] = htmlspecialchars(strip_tags(trim($_GET[$requestKeyToUse])));
 					} elseif($v == "{USER}" AND $xoopsUser) {
-						$_POST[$k] = $xoopsUser->getVar('name') ? $xoopsUser->getVar('name') : $xoopsUser->getVar('uname');
+                        $_POST[$k] = $xoopsUser->getVar('name') ? htmlspecialchars_decode($xoopsUser->getVar('name'), ENT_QUOTES) : htmlspecialchars_decode($xoopsUser->getVar('uname'), ENT_QUOTES);
 					} elseif(!strstr($v, "{BLANK}") AND !strstr($v, "{TODAY") AND !strstr($v, "{PERGROUPFILTER}") AND !strstr($v, "{USER")) { 
 						unset($_POST[$k]); // clear terms where no match was found, because this term is not active on the current page, so don't confuse users by showing it
 					}
