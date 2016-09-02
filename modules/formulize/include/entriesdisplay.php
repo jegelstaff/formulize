@@ -602,9 +602,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				$ownerOfLastLoadedView = $ownerOfLastLoadedViewData[0]['sv_owner_uid'];
 				if(!$update_other_reports AND $uid != $ownerOfLastLoadedView) {
 					if(isset($_POST[$requestKeyToUse])) {
-						$_POST[$k] = htmlspecialchars(strip_tags(trim($_POST[$requestKeyToUse])));
+						$_POST[$k] = htmlspecialchars(strip_tags(trim($_POST[$requestKeyToUse])), ENT_QUOTES);
 					} elseif(isset($_GET[$requestKeyToUse])) {
-						$_POST[$k] = htmlspecialchars(strip_tags(trim($_GET[$requestKeyToUse])));
+						$_POST[$k] = htmlspecialchars(strip_tags(trim($_GET[$requestKeyToUse])), ENT_QUOTES);
 					} elseif($v == "{USER}" AND $xoopsUser) {
                         $_POST[$k] = $xoopsUser->getVar('name') ? htmlspecialchars_decode($xoopsUser->getVar('name'), ENT_QUOTES) : htmlspecialchars_decode($xoopsUser->getVar('uname'), ENT_QUOTES);
 					} elseif(!strstr($v, "{BLANK}") AND !strstr($v, "{TODAY") AND !strstr($v, "{PERGROUPFILTER}") AND !strstr($v, "{USER")) { 
@@ -4621,8 +4621,8 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 					$one_search = $searchgetkey;
 					$operator = "";
 				} elseif(isset($_POST[$searchgetkey]) OR isset($_GET[$searchgetkey])) {
-					$one_search = $_POST[$searchgetkey] ? htmlspecialchars(strip_tags(trim($_POST[$searchgetkey]))) : "";
-					$one_search = (!$one_search AND $_GET[$searchgetkey]) ? htmlspecialchars(strip_tags(trim($_GET[$searchgetkey]))) : $one_search;
+					$one_search = $_POST[$searchgetkey] ? htmlspecialchars(strip_tags(trim($_POST[$searchgetkey])), ENT_QUOTES) : "";
+					$one_search = (!$one_search AND $_GET[$searchgetkey]) ? htmlspecialchars(strip_tags(trim($_GET[$searchgetkey])), ENT_QUOTES) : $one_search;
 					if(!$one_search) {
 						continue;
 					}
