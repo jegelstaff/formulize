@@ -1322,7 +1322,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                     // if this is a user id field, then treat it specially 
                     if(($ifParts[0] == "creation_uid" OR $ifParts[0] == "mod_uid") AND !is_numeric($ifParts[1])) {
                          // subquery the user table for the username or full name
-                         $ifParts[1] = "(SELECT uid FROM " . DBPRE . "users WHERE uname " . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes . " OR name " . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes . ")";
+                         $ifParts[1] = "(SELECT uid FROM " . DBPRE . "users WHERE uname " . $operator . $quotes . $likebits . formulize_db_escape(htmlspecialchars_decode($ifParts[1], ENT_QUOTES)) . $likebits . $quotes . " OR name " . $operator . $quotes . $likebits . formulize_db_escape(htmlspecialchars_decode($ifParts[1], ENT_QUOTES)) . $likebits . $quotes . ")";
                          $quotes = "";
                          $operator = " = ANY ";
                          $likebits = "";
