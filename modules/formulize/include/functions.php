@@ -2903,7 +2903,7 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
         $extra_tags['SITEURL'] = XOOPS_URL;
 
         if (count($uids_real) > 0) {
-            formulize_processNotification($event, $extra_tags, $fid, $event, $uids_real, $mid, $omit_user);
+            formulize_processNotification($event, $extra_tags, $fid, $uids_real, $mid, $omit_user);
         }
         // reset for the potential processing of saved conditions
         if (isset($GLOBALS['formulize_notification_email'])) {
@@ -2945,7 +2945,7 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
             }
             $uids_cust_real = compileNotUsers2($uids_cust_con, $uids_complete, $fid, $event, $mid);
             if (count($uids_cust_real) > 0) {
-                formulize_processNotification($event, $extra_tags, $fid, $event, $uids_cust_real, $mid, $omit_user, $thiscon['not_cons_subject'], $thiscon['not_cons_template']);
+                formulize_processNotification($event, $extra_tags, $fid, $uids_cust_real, $mid, $omit_user, $thiscon['not_cons_subject'], $thiscon['not_cons_template']);
             }
             // reset for the next runthrough of the loop
             if (isset($GLOBALS['formulize_notification_email'])) {
@@ -3155,19 +3155,30 @@ function compileNotUsers2($uids_conditions, $uids_complete, $fid, $event, $mid) 
 
 // send notifications, or cache notifications so they can be triggered by a cron job later
 // turn on the preference in the module to use the cron feature
-function formulize_processNotification($event, $extra_tags, $fid, $event, $uids_to_notify, $mid, $omit_user, $subject="", $template="") {
+function formulize_processNotification($event, $extra_tags, $fid, $uids_to_notify, $mid, $omit_user, $subject="", $template="") {
     
 	$config_handler = xoops_gethandler('config');
     $formulizeConfig = $config_handler->getConfigsByCat(0, $mid);
     $notifyByCron = $formulizeConfig['notifyByCron'];
 
-    if(!$notifyByCron) {
-        include_once XOOPS_ROOT_PATH."/modules/formulize/notify.php";
-        formulize_notify($event, $extra_tags, $fid, $event, $uids_to_notify, $mid, $omit_user, $subject, $template);
+    if($notifyByCron) {
+        $notFile = fopen(XOOPS_ROOT_PATH."/cache/formulizeNotifications","a");
+        fwrite($notFile,
+            serialize($event)."19690509".
+            serialize($extra_tags)."19690509".
+            serialize($fid)."19690509".
+            serialize($uids_to_notify)."19690509".
+            serialize($mid)."19690509".
+            serialize($omit_user)."19690509".
+            serialize($subject)."19690509".
+            serialize($template)."19690509".
+            serialize($GLOBALS['formulize_notification_email'])."19690509"
+        );
+        fclose($notFile);
     } else {
-        // need to record all passed in variables, plus $GLOBALS['formulize_notification_email'] !!!!
+        include_once XOOPS_ROOT_PATH."/modules/formulize/notify.php";
+        formulize_notify($event, $extra_tags, $fid, $uids_to_notify, $mid, $omit_user, $subject, $template);
     }
-            
 }
 
 
