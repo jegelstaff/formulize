@@ -3162,7 +3162,8 @@ function formulize_processNotification($event, $extra_tags, $fid, $uids_to_notif
     $notifyByCron = $formulizeConfig['notifyByCron'];
 
     if($notifyByCron) {
-        $notFile = fopen(XOOPS_ROOT_PATH."/cache/formulizeNotifications","a");
+        $notFile = fopen(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotifications.txt","a");
+        formulize_getLock($notFile);
         fwrite($notFile,
             serialize($event)."19690509".
             serialize($extra_tags)."19690509".
@@ -3172,7 +3173,7 @@ function formulize_processNotification($event, $extra_tags, $fid, $uids_to_notif
             serialize($omit_user)."19690509".
             serialize($subject)."19690509".
             serialize($template)."19690509".
-            serialize($GLOBALS['formulize_notification_email'])."19690509"
+            serialize($GLOBALS['formulize_notification_email'])."\r\n"
         );
         fclose($notFile);
     } else {
@@ -3181,7 +3182,23 @@ function formulize_processNotification($event, $extra_tags, $fid, $uids_to_notif
     }
 }
 
-
+// this function attempts to get a lock on the given file resource
+function formulize_getLock($fileResource) {
+    $ourTurn = false;
+    $lockTries = 0;
+    while(!$ourTurn) {
+        $ourTurn = flock($fileResource, LOCK_EX);
+        if(!$ourTurn) {
+            if($lockTries == 30) {
+                exit("Formulize fatal error: Could not get a lock on the notifications cache file after one minute.");
+            } else {
+                $lockTries++;
+                sleep(2);
+            }
+        }
+    }
+    return true;
+}
 
 
 // this function takes a series of columns and gets the headers for them
