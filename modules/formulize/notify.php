@@ -129,7 +129,9 @@ function formulize_notify($event, $extra_tags, $fid, $uids_to_notify, $mid, $omi
         sendNotificationToEmail($GLOBALS['formulize_notification_email'], $event, $extra_tags, $mailSubject, $mailTemplate);
         unset( $uids_to_notify[array_search(-1, $uids_to_notify)]); // now remove the special flag before triggering the event
     }
-    $notification_handler->triggerEvent("form", $fid, $event, $extra_tags, $uids_to_notify, $mid, $omit_user);
+    if(count($uids_to_notify)>0) {
+        $notification_handler->triggerEvent("form", $fid, $event, $extra_tags, $uids_to_notify, $mid, $omit_user);
+    }
     
     if($subject OR $template) {
         $not_config['event'][$evid]['mail_subject'] = $oldsubject;
