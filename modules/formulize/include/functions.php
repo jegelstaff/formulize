@@ -3164,22 +3164,34 @@ function formulize_processNotification($event, $extra_tags, $fid, $uids_to_notif
     if($notifyByCron) {
         $notFile = fopen(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotifications.txt","a");
         formulize_getLock($notFile);
-        fwrite($notFile,
-            serialize($event)."19690509".
-            serialize($extra_tags)."19690509".
-            serialize($fid)."19690509".
-            serialize($uids_to_notify)."19690509".
-            serialize($mid)."19690509".
-            serialize($omit_user)."19690509".
-            serialize($subject)."19690509".
-            serialize($template)."19690509".
-            serialize($GLOBALS['formulize_notification_email'])."\r\n"
-        );
+        foreach($uids_to_notify as $uid_to_notify) {
+            if($uid_to_notify>1) { 
+                formulize_processNotificationWriteLine($notFile, $event, $extra_tags, $fid, array($uid_to_notify), $mid, $omit_user, $subject, $template);
+            } else {
+                foreach(explode(",", $GLOBALS['formulize_notification_email']) as $email) {
+                    formulize_processNotificationWriteLine($notFile, $event, $extra_tags, $fid, array(-1), $mid, $omit_user, $subject, $template, $email);
+                }
+            }
+        }
         fclose($notFile);
     } else {
         include_once XOOPS_ROOT_PATH."/modules/formulize/notify.php";
         formulize_notify($event, $extra_tags, $fid, $uids_to_notify, $mid, $omit_user, $subject, $template);
     }
+}
+
+function formulize_processNotificationWriteLine($notFile, $event, $extra_tags, $fid, $uid_to_notify, $mid, $omit_user, $subject, $template, $email="") {
+    fwrite($notFile,
+        serialize($event)."19690509".
+        serialize($extra_tags)."19690509".
+        serialize($fid)."19690509".
+        serialize($uid_to_notify)."19690509".
+        serialize($mid)."19690509".
+        serialize($omit_user)."19690509".
+        serialize($subject)."19690509".
+        serialize($template)."19690509".
+        serialize($email)."\r\n"
+    );  
 }
 
 // this function attempts to get a lock on the given file resource
