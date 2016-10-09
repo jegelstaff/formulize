@@ -31,10 +31,10 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// read data out of the notification cache if this is called by a direct URL request, that includes the GET param 'readFormulizeNotificationCache'
+// read data out of the notification cache if this is called by a direct request rather than included within Formulize
 // record which row we're reading and if we get to the end, unlink the file
 // if for some reason we haven't unlinked the file, then pick up reading the file from where we left off last time.
-if(isset($_GET['readFormulizeNotificationCache'])) {
+if(!defined("XOOPS_MAINFILE_INCLUDED")) {
     ini_set("max_execution_time",2000);
     include '../../mainfile.php';
     include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
