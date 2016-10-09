@@ -50,6 +50,7 @@ if(!defined("XOOPS_MAINFILE_INCLUDED")) {
             $i++;
         }
         file_put_contents(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotificationsIndex.txt", "0"); // reset the counter since we've removed the lines that were already sent
+        $start=0;
         fclose($notFile);
     }
     $notData = file(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotifications.txt");
