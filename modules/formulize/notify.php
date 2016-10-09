@@ -55,7 +55,7 @@ if(!defined("XOOPS_MAINFILE_INCLUDED")) {
     }
     $notData = file(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotifications.txt");
     $i = $start;
-    while(isset($notData[$i])) {
+    while(isset($notData[$i]) AND $i<=$start+7) { // process 8 messages at a time, to try and stay under the timeout limits
         if(trim($notData[$i])) {
             $thisNot = explode("19690509",$notData[$i]);
             $event = unserialize($thisNot[0]);
