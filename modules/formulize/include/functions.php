@@ -1724,6 +1724,10 @@ function getMaxIdReq() {
 // subformblankcounter is passed when we are preparing subform blank values
 function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=null) {
 
+    if(!$element = _getElementObject($element)) {
+		return false;
+    }
+
     global $myts;
     if (!$myts) {
         $myts =& MyTextSanitizer::getInstance();
