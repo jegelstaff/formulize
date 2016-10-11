@@ -2350,23 +2350,35 @@ function loadValue($prevEntry, $element, $ele_value, $owner_groups, $groups, $en
 						$numberOfSelectedValues = strstr($value, "*=+*:") ? count($selvalarray)-1 : 1; // if this is a multiple selection value, then count the array values, minus 1 since there will be one leading separator on the string.  Otherwise, it's a single value element so the number of selections is 1.
 						
 						$assignedSelectedValues = array();
-						foreach($temparraykeys as $k)
-						{
-							if((string)$k === (string)$value OR trans((string)$k) === (string)$value) // if there's a straight match (not a multiple selection)
-							{
+						foreach($temparraykeys as $k) {
+                            
+                            // if there's a straight match (not a multiple selection)
+							if((string)$k === (string)$value) {
 								$temparray[$k] = 1;
 								$assignedSelectedValues[$k] = true;
-							}
-							elseif( is_array($selvalarray) AND (in_array((string)$k, $selvalarray, TRUE) OR in_array(trans((string)$k), $selvalarray, TRUE)) ) // or if there's a match within a multiple selection array) -- TRUE is like ===, matches type and value
-							{
+                                
+                            // or if there's a match within a multiple selection array) -- TRUE is like ===, matches type and value
+							} elseif( is_array($selvalarray) AND in_array((string)$k, $selvalarray, TRUE) ) {
 								$temparray[$k] = 1;
 								$assignedSelectedValues[$k] = true;
-							}
-							else // otherwise set to zero.
-							{
-								$temparray[$k] = 0;
-							}
-						}
+                                
+                            // check for a match within an English translated value and assign that, otherwise set to zero
+                            // assumption is that development was done first in English and then translated
+                            // this safety net will not work if a system is developed first and gets saved data prior to translation in language other than English!!
+							} else {
+                                foreach($selvalarray as $selvalue) {
+                                    if(trim(trans((string)$k, "en")) == trim(trans($selvalue,"en"))) {
+                                        $temparray[$k] = 1;
+                                        $assignedSelectedValues[$k] = true;
+                                        continue 2; // move on to next iteration of outer loop
+                                    } 
+                                }
+                                if($temparray[$k] != 1) {
+                                    $temparray[$k] = 0;
+                                }
+                            }
+                            
+                        }
 						if((!empty($value) OR $value === 0 OR $value === "0") AND count($assignedSelectedValues) < $numberOfSelectedValues) { // if we have not assigned the selected value from the db to one of the options for this element, then lets add it to the array of options, and flag it as out of range.  This is to preserve out of range values in the db that are there from earlier times when the options were different, and also to preserve values that were imported without validation on purpose
 							foreach($selvalarray as $selvalue) {
 								if(!isset($assignedSelectedValues[$selvalue]) AND (!empty($selvalue) OR $selvalue === 0 OR $selvalue === "0")) {
