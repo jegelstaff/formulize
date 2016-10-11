@@ -37,50 +37,52 @@
 if(!defined("XOOPS_MAINFILE_INCLUDED")) {
     ini_set("max_execution_time",2000);
     include '../../mainfile.php';
-    include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
-    if($start = intval(file_get_contents(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotificationsIndex.txt"))) {
-        // since the queue is not fully sent, we'll truncate to the appropriate point, and start from there...
-        $notFile = fopen(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotifications.txt","a");
-        formulize_getLock($notFile);
+    if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotifications.txt")) {
+        include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
+        if($start = intval(file_get_contents(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotificationsIndex.txt"))) {
+            // since the queue is not fully sent, we'll truncate to the appropriate point, and start from there...
+            $notFile = fopen(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotifications.txt","a");
+            formulize_getLock($notFile);
+            $notData = file_get_contents(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotifications.txt");
+            $notData = explode("19731205",$notData);
+            ftruncate($notFile, 0); // erase the file contents, we're going to rewrite them now starting with the next record to send...
+            $i = $start;
+            while(isset($notData[$i])) {
+                fwrite($notFile, trim($notData[$i])."19731205\r\n");
+                $i++;
+            }
+            file_put_contents(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotificationsIndex.txt", "0"); // reset the counter since we've removed the lines that were already sent
+            $start=0;
+            fclose($notFile);
+        }
         $notData = file_get_contents(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotifications.txt");
         $notData = explode("19731205",$notData);
-        ftruncate($notFile, 0); // erase the file contents, we're going to rewrite them now starting with the next record to send...
         $i = $start;
-        while(isset($notData[$i])) {
-            fwrite($notFile, $notData[$i]."19731205");
+        while(isset($notData[$i]) AND $i<=$start+7) { // process 7 messages at a time, to try and stay under the timeout limits
+            if(trim($notData[$i])) {
+                $thisNot = explode("19690509",trim($notData[$i]));
+                $event = unserialize($thisNot[0]);
+                $extra_tags = unserialize($thisNot[1]);
+                $fid = unserialize($thisNot[2]);
+                $uids_to_notify = unserialize($thisNot[3]);
+                $mid = unserialize($thisNot[4]);
+                $omit_user = unserialize($thisNot[5]);
+                $subject = unserialize($thisNot[6]);
+                $template = unserialize($thisNot[7]);
+                $GLOBALS['formulize_notification_email'] = unserialize($thisNot[8]);
+                formulize_notify($event, $extra_tags, $fid, $uids_to_notify, $mid, $omit_user, $subject, $template);
+            }
             $i++;
+            file_put_contents(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotificationsIndex.txt", "$i"); // save the next row number so we know where to pickup next time if we timeout or whatever.
         }
-        file_put_contents(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotificationsIndex.txt", "0"); // reset the counter since we've removed the lines that were already sent
-        $start=0;
-        fclose($notFile);
+        if(!isset($notData[$i])) {
+            // check if in fact we've sent everything that is now in the cache file, and if so, unlink the file...
+            if(count(explode("19731205",file_get_contents(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotifications.txt"))) <= $i) {
+                unlink(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotifications.txt");
+                file_put_contents(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotificationsIndex.txt", "0");
+            }
+        }
     }
-    $notData = file_get_contents(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotifications.txt");
-    $notData = explode("19731205",$notData);
-    $i = $start;
-    while(isset($notData[$i]) AND $i<=$start+7) { // process 7 messages at a time, to try and stay under the timeout limits
-        if(trim($notData[$i])) {
-            $thisNot = explode("19690509",trim($notData[$i]));
-            $event = unserialize($thisNot[0]);
-            $extra_tags = unserialize($thisNot[1]);
-            $fid = unserialize($thisNot[2]);
-            $uids_to_notify = unserialize($thisNot[3]);
-            $mid = unserialize($thisNot[4]);
-            $omit_user = unserialize($thisNot[5]);
-            $subject = unserialize($thisNot[6]);
-            $template = unserialize($thisNot[7]);
-            $GLOBALS['formulize_notification_email'] = unserialize($thisNot[8]);
-            formulize_notify($event, $extra_tags, $fid, $uids_to_notify, $mid, $omit_user, $subject, $template);
-        }
-        $i++;
-        file_put_contents(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotificationsIndex.txt", "$i"); // save the next row number so we know where to pickup next time if we timeout or whatever.
-    }
-    if(!isset($notData[$i])) {
-        // check if in fact we've sent everything that is now in the cache file, and if so, unlink the file...
-        if(count(explode("19731205",file_get_contents(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotifications.txt"))) <= $i) {
-            unlink(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotifications.txt");
-            file_put_contents(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotificationsIndex.txt", "0");
-        }
-    } 
 }
 
 // send the notifications
