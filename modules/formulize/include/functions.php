@@ -3194,7 +3194,7 @@ function formulize_processNotificationWriteLine($notFile, $event, $extra_tags, $
         serialize($omit_user)."19690509".
         serialize($subject)."19690509".
         serialize($template)."19690509".
-        serialize($email)."\r\n"
+        serialize($email)."19731205\r\n"
     );  
 }
 
