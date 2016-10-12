@@ -3186,15 +3186,19 @@ function formulize_processNotification($event, $extra_tags, $fid, $uids_to_notif
 
 function formulize_processNotificationWriteLine($notFile, $event, $extra_tags, $fid, $uid_to_notify, $mid, $omit_user, $subject, $template, $email="") {
     fwrite($notFile,
-        serialize($event)."19690509".
-        serialize($extra_tags)."19690509".
-        serialize($fid)."19690509".
-        serialize($uid_to_notify)."19690509".
-        serialize($mid)."19690509".
-        serialize($omit_user)."19690509".
-        serialize($subject)."19690509".
-        serialize($template)."19690509".
-        serialize($email)."19731205\r\n"
+        serialize(
+            array(
+                $event,
+                $extra_tags,
+                $fid,
+                $uid_to_notify,
+                $mid,
+                $omit_user,
+                $subject,
+                $template,
+                $email
+            )
+        )."19690509\r\n"
     );  
 }
 
