@@ -822,7 +822,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	  // need to include the query first, so the SELECT or INSERT is the first thing in the string, so we catch it properly when coming back through the export process
 	  $GLOBALS['formulize_queryForExport'] = $masterQuerySQLForExport." -- SEPARATOR FOR EXPORT QUERIES -- ".$sortIsOnMainFlag; // "$selectClauseToUse FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause $limitClause";
 	  
-     
+        $useFidForCurFormId = false;
   } else { // end of if the filter has a SELECT in it
 	  if(strstr($filter," -- SEPARATOR FOR EXPORT QUERIES -- ")) {
 	       $exportOverrideQueries = explode(" -- SEPARATOR FOR EXPORT QUERIES -- ",$filter);
@@ -831,6 +831,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	  } else {
 	       $masterQuerySQL = $filter; // need to split this based on some separator, because export ends up passing in a series of statements     
 	  }
+      $useFidForCurFormId = true;
   }
   
   // after the export query has been generated, then let's put the limit on:
@@ -849,7 +850,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
      //global $xoopsUser;
      //if($xoopsUser->getVar('uid') == 1) {
      //     print "<br>Count query: $countMasterResults<br><br>";
-     //     print "Master query: $masterQuerySQL<br>";
+    //    print "Master query: $masterQuerySQL<br>";
      //}
      
 		 formulize_benchmark("Before query");
@@ -972,6 +973,11 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	       $prevFormAlias = "";
 	       $prevMainId = "";
 
+        if($useFidForCurFormId) {
+            $curFormId = $fid;
+        }
+           
+           
 	       while($masterQueryArray = $xoopsDB->fetchArray($thisRes)) {
 		    
 		    foreach($masterQueryArray as $field=>$value) {
@@ -997,7 +1003,8 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
         					}
     					   $prevMainId = $masterQueryArray['main_entry_id']; // if the current form is a main, then store it's ID for use later when we're on a new form
     				   }
-			      }  
+			      }
+                  
 			      $prevFieldNotMeta = false;
 			      // setup handles to use for metadata fields
 			      if($curFormAlias == "main") {
@@ -1084,6 +1091,11 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	  $prevFormAlias = "";
 	  $prevMainId = "";
 		      //formulize_benchmark("About to prepare results.");
+              
+    if($useFidForCurFormId) {
+        $curFormId = $fid;
+    }
+              
 	  while($masterQueryArray = $xoopsDB->fetchArray($masterQueryRes)) {
             set_time_limit(120);
 	     //formulize_benchmark("Starting to process one entry.");
@@ -1097,8 +1109,9 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 			 // We account for a mainform entry appearing multiple times in the list, because when there are multiple entries in a subform, and SQL returns one row per subform,  we need to not change the main form and internal record until we pass to a new mainform entry
 					     
 			 if($prevFieldNotMeta) { // only do once for each form
+                
 			      $curFormId = $fieldNameParts[0] == "main" ? $fid : $linkformids[substr($fieldNameParts[0], 1)]; // the table aliases are based on the keys of the linked forms in the linkformids array, so if we get the number out of the table alias, that key will give us the form id of the linked form as stored in the linkformids array
-			      $prevFormAlias = $curFormAlias;
+                  $prevFormAlias = $curFormAlias;
 			      $curFormAlias = $fieldNameParts[0];
 			      if($prevFormAlias == "main") { // if we just finished up a main form entry, then log that
 				   $writtenMains[$prevMainId] = true;
@@ -1118,7 +1131,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 				   $prevMainId = $masterQueryArray['main_entry_id']; // if the current form is a main, then store it's ID for use later when we're on a new form
 			      }
 			 }
-		      
+             
 			 $prevFieldNotMeta = false;
 			 // setup handles to use for metadata fields
 			 if($curFormAlias == "main") {
@@ -1259,8 +1272,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
 							 // FINAL NOTE ABOUT SLASHES...Oct 19 2006...patch 22 corrects this slash/magic quote mess.  However, to ensure compatibility with existing Pageworks applications, we are continuing to strip out all slashes in the filterparts[1], the filter strings that are passed in, and then we apply HTML special chars to the filter so that it can match up with the contents of the DB.  Only challenge is that extract.php is meant to be standalone, but we have to refer to the text sanitizer class in XOOPS in order to do the HTML special chars thing correctly.
 
                $ifParts[1] = str_replace("\\", "", $ifParts[1]);
-               $ifParts[1] = $myts->htmlSpecialChars($ifParts[1]);
-               
+                              
                // convert legacy metadata terms to new terms
                $ifParts[0] = $ifParts[0] == "uid" ? "creation_uid" : $ifParts[0];
                $ifParts[0] = $ifParts[0] == "proxyid" ? "mod_uid" : $ifParts[0];
@@ -1310,7 +1322,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                     // if this is a user id field, then treat it specially 
                     if(($ifParts[0] == "creation_uid" OR $ifParts[0] == "mod_uid") AND !is_numeric($ifParts[1])) {
                          // subquery the user table for the username or full name
-                         $ifParts[1] = "(SELECT uid FROM " . DBPRE . "users WHERE uname " . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes . " OR name " . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes . ")";
+                         $ifParts[1] = "(SELECT uid FROM " . DBPRE . "users WHERE uname " . $operator . $quotes . $likebits . formulize_db_escape(htmlspecialchars_decode($ifParts[1], ENT_QUOTES)) . $likebits . $quotes . " OR name " . $operator . $quotes . $likebits . formulize_db_escape(htmlspecialchars_decode($ifParts[1], ENT_QUOTES)) . $likebits . $quotes . ")";
                          $quotes = "";
                          $operator = " = ANY ";
                          $likebits = "";
@@ -1414,7 +1426,8 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                     // usernames/fullnames boxes
                     } elseif($listtype = $formFieldFilterMap[$mappedForm][$element_id]['isnamelist'] AND $ifParts[1] !== "") {
                          if(!is_numeric($ifParts[1])) {
-                              $preSearch = "SELECT uid FROM " . DBPRE . "users WHERE uname " . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes . " OR name " . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;  // search name and uname, since often name might be empty these days
+                              // some values might have special chars in them, because that's how we handle some kinds of search terms, ie: values pulled from the URL by a { } term
+                              $preSearch = "SELECT uid FROM " . DBPRE . "users WHERE uname " . $operator . $quotes . $likebits . formulize_db_escape(htmlspecialchars_decode($ifParts[1], ENT_QUOTES)) . $likebits . $quotes . " OR name " . $operator . $quotes . $likebits . formulize_db_escape(htmlspecialchars_decode($ifParts[1], ENT_QUOTES)) . $likebits . $quotes;  // search name and uname, since often name might be empty these days
                          } else {
                               $preSearch = "SELECT uid FROM " . DBPRE . "users WHERE uid ".$operator.$quotes.$likebits.$ifParts[1].$likebits.$quotes;
                          }
@@ -1686,6 +1699,18 @@ function formulize_getElementMetaData($elementOrHandle, $isHandle=false, $fid=0)
 function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form_id) {
     global $xoopsDB;
     static $parsedFormulas = array();
+    
+    static $debugMode;
+    if($debugMode !== true AND $debugMode !== false) {
+        $debugMode = false;
+        $module_handler = xoops_gethandler('module');
+        $config_handler = xoops_gethandler('config');
+        $formulizeModule =& $module_handler->getByDirname("formulize");
+        $formulizeConfig =& $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
+        $debugMode = $modulePrefUseToken = $formulizeConfig['debugDerivedValues'];
+        $debugMode = $debugMode ? true : false; // will be a 1 or 0, we want to covert to boolean because of IF check up above
+    }
+    
     include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
     foreach ($entry as $formHandle => $record) {
         $data_handler = new formulizeDataHandler(formulize_getFormIdFromName($formHandle));
@@ -1700,7 +1725,7 @@ function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form
                 $dataToWrite = array();
                 foreach ($metadata[$formHandle] as $formulaNumber => $thisMetaData) {
                     // if there's nothing already in the DB, then derive it, unless we're being asked specifically to update the derived values, which happens during a save operation.  In that case, always do a derivation regardless of what's in the DB.
-                    if ((isset($GLOBALS['formulize_forceDerivedValueUpdate'])) AND !isset($GLOBALS['formulize_doingExport'])) {
+                    if ($debugMode OR ((isset($GLOBALS['formulize_forceDerivedValueUpdate'])) AND !isset($GLOBALS['formulize_doingExport']))) {
                         $functionName = "derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", $formHandle)."_".$formulaNumber;
                         // want to turn off the derived value update flag for the actual processing of a value, since the function might have a getData call in it!!
                         $resetDerivedValueFlag = false;
@@ -1910,6 +1935,8 @@ function dataExtractionDB($table, $filter, $andor, $scope, $uidField) {
 // THIS FUNCTION DOES A SIMPLE QUERY AGAINST A TABLE IN THE DATABASE AND RETURNS THE RESULT IN STANDARD "GETDATA" FORMAT
 function dataExtractionTableForm($tablename, $formname, $fid, $filter, $andor, $limitStart, $limitSize, $sortField, $sortOrder) {
 
+    $GLOBALS['formulize_queryForExport'] = "USETABLEFORM -- $tablename -- $formname -- $fid -- $filter -- $andor -- $limitStart -- $limitSize -- $sortField -- $sortOrder";
+
      global $xoopsDB;
 
      // 2. parse the filter
@@ -1995,7 +2022,7 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter, $andor, $
 					$GLOBALS['formulize_countMasterResultsForPageNumbers'] = $countRow[0]; 
 		      unset($GLOBALS['formulize_getCountForPageNumbers']);
 		 } 
-		 
+         
      return $result;
      
      

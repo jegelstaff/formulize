@@ -7,7 +7,6 @@
   src: url("./formulize-icons/formulize-icons.eot?#iefix") format("embedded-opentype"), url("./formulize-icons/formulize-icons.woff") format("woff"), url("./formulize-icons/formulize-icons.ttf") format("truetype"), url("./formulize-icons/formulize-icons.svg#formulize-icons") format("svg");
   font-weight: normal;
   font-style: normal; }
-
 [data-icon]:before {
   content: attr(data-icon); }
 
@@ -151,8 +150,8 @@
   content: "\f11f"; }
 
 html, body {
-  background: white;
-  color: black;
+  background: #ffffff;
+  color: #000;
   margin: 0;
   padding: 0;
   font-family: Verdana, Arial, Helvetica, sans-serif;
@@ -172,7 +171,7 @@ img {
   border: 0; }
 
 a {
-  color: #8fbe58;
+  color: #8fBe58;
   text-decoration: none;
   font-weight: bold; }
 
@@ -201,7 +200,7 @@ h6 {
   color: #F3AC03;
   font-weight: bold;
   padding-bottom: 3px;
-  border-bottom: 1px dashed #8dbde1; }
+  border-bottom: 1px dashed #8DBDE1; }
 
 /* ---------- Column left/right rules ---------- */
 /* ------ Main content ------ */
@@ -222,6 +221,33 @@ h6 {
   line-height: 1.4em;
   list-style: circle; }
 
+.formulize_button {
+  text-indent: 30px;
+  border-color: #0076a3;
+  color: #fff !important;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+  font-size: 15px;
+  font-weight: bold;
+  height: 36px;
+  width: 185px !important; }
+
+#prev {
+  background: #008CC4 url("../../images/prev.png") no-repeat 10px;
+  text-indent: 40px;
+  height: 36px;
+  color: #fff !important;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+  font-size: 15px; }
+
+#next {
+  background: #008CC4 url("../../images/next.png") no-repeat 140px;
+  text-align: left;
+  width: 185px;
+  height: 36px;
+  color: #fff !important;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+  font-size: 15px; }
+
 /* ---------- Footer rules ---------- */
 #footer-padding {
   clear: both;
@@ -237,7 +263,7 @@ h6 {
   border-top: 5px solid #82bcde; }
 
 #xo-footer a {
-  color: white; }
+  color: #fff; }
 
 #xo-footer a:hover {
   color: #cccccc; }
@@ -245,8 +271,8 @@ h6 {
 /* ---------- Module display rules ---------- */
 #xo-content {
   padding: 5px;
-  background-color: white;
-  color: black;
+  background-color: #ffffff;
+  color: #000;
   border-radius: 3px;
   -moz-border-radius: 3px;
   -webkit-border-radius: 3px; }
@@ -263,7 +289,7 @@ h6 {
   font-weight: bold;
   padding: 10px;
   text-align: center;
-  border: 2px solid #ddddff; }
+  border: 2px solid #DDDDFF; }
 
 /* ---------- Site close ------------ */
 #xo-siteclose-login {
@@ -278,12 +304,12 @@ h6 {
   padding: 2px;
   margin: 0px;
   text-align: center;
-  border: 1px solid #ddddff; }
+  border: 1px solid #DDDDFF; }
 
 #xo-siteclose-login form {
   padding: 5px 0;
   margin: 0;
-  border: 1px solid #ddddff;
+  border: 1px solid #DDDDFF;
   text-align: center; }
 
 #xo-siteclose-login input {
@@ -306,15 +332,15 @@ h6 {
   clear: both;
   height: 90px;
   position: relative;
-  background-color: white;
+  background-color: #ffffff;
   margin-left: 0px;
   margin-right: 0px;
   border-bottom: 10px solid #e6e6e6;
-  background: -webkit-linear-gradient(top, white, #fafafa);
-  background: -moz-linear-gradient(top, white, #fafafa);
-  background: -ms-linear-gradient(top, white, #fafafa);
-  background: -o-linear-gradient(top, white, #fafafa);
-  background: linear-gradient(to bottom, white, #fafafa); }
+  background: -webkit-linear-gradient(top, #ffffff, #fafafa);
+  background: -moz-linear-gradient(top, #ffffff, #fafafa);
+  background: -ms-linear-gradient(top, #ffffff, #fafafa);
+  background: -o-linear-gradient(top, #ffffff, #fafafa);
+  background: linear-gradient(to bottom, #ffffff, #fafafa); }
 
 #xo-headerlogo {
   float: left;
@@ -341,7 +367,7 @@ h6 {
   background: -ms-linear-gradient(top, #59a7d4, #3391c7);
   background: -o-linear-gradient(top, #59a7d4, #3391c7);
   background: linear-gradient(to bottom, #59a7d4, #3391c7);
-  color: white;
+  color: #fff;
   font-weight: normal;
   padding: 0.5em 0.75em;
   margin: 0 0.25em;
@@ -440,7 +466,7 @@ h6 {
   text-align: left; }
 
 #xo-canvas-leftcolumn .xo-blocktitle h3 {
-  color: #8fbe58;
+  color: #8fBe58;
   font-weight: bold;
   font-size: larger;
   margin: 0;
@@ -451,7 +477,7 @@ h6 {
   text-align: right; }
 
 #xo-canvas-rightcolumn .xo-blocktitle h3 {
-  color: #8fbe58;
+  color: #8fBe58;
   font-weight: bold;
   font-size: larger;
   margin: 0;
@@ -466,18 +492,18 @@ h6 {
 
 /* ------ Center column content ------ */
 #xo-page th {
-  color: black; }
+  color: #000; }
 
 #xo-page .xo-block {
   margin-bottom: 5px; }
 
 #xo-page .xo-blocktitle {
   padding: .2em;
-  margin: 0 0.5em;
+  margin: 0 .5em;
   text-align: center; }
 
 #xo-page .xo-blocktitle h3 {
-  color: black;
+  color: #000;
   font-weight: bold;
   padding: 0;
   margin: 0; }
@@ -485,7 +511,7 @@ h6 {
 #xo-page .xo-blockcontent {
   padding: .5em;
   background-color: #F2F2F2;
-  border-top: 4px solid #f3ac03; }
+  border-top: 4px solid #F3AC03; }
 
 /* Start Main Menu */
 #mainmenu {
@@ -495,7 +521,7 @@ h6 {
   display: block;
   margin: 0;
   padding: 4px;
-  color: #8fbe58; }
+  color: #8fBe58; }
 
 #mainmenu a:hover {
   color: #689138; }
@@ -508,10 +534,10 @@ h6 {
 
 #mainmenu a.menuSub {
   padding-left: 17px;
-  color: #8fbe58; }
+  color: #8fBe58; }
 
 #mainmenu a.menuSub:hover {
-  color: #8fbe58; }
+  color: #8fBe58; }
 
 /* End Main Menu */
 /* Start User Menu */
@@ -519,19 +545,19 @@ h6 {
   font-size: .8em; }
 
 #usermenu a {
-  color: #8fbe58;
+  color: #8fBe58;
   display: block;
   margin: 0;
   padding: 4px;
-  border-right: 1px solid #666666;
-  border-bottom: 1px solid #666666;
-  border-left: 1px solid #cccccc; }
+  border-right: 1px solid #666;
+  border-bottom: 1px solid #666;
+  border-left: 1px solid #ccc; }
 
 #usermenu a:hover {
   color: #689138; }
 
 #usermenu a.menuTop {
-  border-top: 1px solid #cccccc; }
+  border-top: 1px solid #ccc; }
 
 #usermenu a.highlight {
   background-color: #fcc;
@@ -548,8 +574,8 @@ table td {
   vertical-align: top; }
 
 th {
-  background-color: white;
-  color: black;
+  background-color: #ffffff;
+  color: #000;
   padding: 2px;
   vertical-align: middle; }
 
@@ -561,28 +587,28 @@ th {
 
 td.head {
   background-color: #59a7d4;
-  color: white;
+  color: #fff;
   font-weight: bold;
   padding: 0.5em 1em 0.5em 0.4em; }
 
 .even, tr.even td {
-  background-color: white;
-  color: black;
+  background-color: #ffffff;
+  color: #000;
   padding: 5px; }
 
 .odd, tr.odd td {
   background-color: #e6e6e6;
-  color: black;
+  color: #000;
   padding: 5px; }
 
 .foot {
-  background-color: white;
+  background-color: #ffffff;
   color: inherit;
   padding: 5px;
   font-weight: bold; }
 
 th {
-  background-color: white !important;
+  background-color: #ffffff !important;
   /* TODO: why important?? */ }
 
 /* core messages */
@@ -590,10 +616,10 @@ th {
   background-color: #FFCCCC;
   color: inherit;
   text-align: center;
-  border-top: 1px solid #ddddff;
-  border-left: 1px solid #ddddff;
-  border-right: 1px solid #aaaaaa;
-  border-bottom: 1px solid #aaaaaa;
+  border-top: 1px solid #DDDDFF;
+  border-left: 1px solid #DDDDFF;
+  border-right: 1px solid #aaa;
+  border-bottom: 1px solid #aaa;
   font-weight: bold;
   padding: 10px; }
 
@@ -601,10 +627,10 @@ th {
   background-color: #DDFFDF;
   color: #136C99;
   text-align: center;
-  border-top: 1px solid #ddddff;
-  border-left: 1px solid #ddddff;
-  border-right: 1px solid #aaaaaa;
-  border-bottom: 1px solid #aaaaaa;
+  border-top: 1px solid #DDDDFF;
+  border-left: 1px solid #DDDDFF;
+  border-right: 1px solid #aaa;
+  border-bottom: 1px solid #aaa;
   font-weight: bold;
   padding: 10px; }
 
@@ -612,18 +638,18 @@ th {
   background-color: #bbb;
   color: #333;
   text-align: center;
-  border-top: 1px solid #cccccc;
-  border-left: 1px solid #cccccc;
+  border-top: 1px solid #ccc;
+  border-left: 1px solid #ccc;
   font-weight: bold;
-  border-right: 1px solid #666666;
-  border-bottom: 1px solid #666666;
+  border-right: 1px solid #666;
+  border-bottom: 1px solid #666;
   padding: 10px; }
 
 /* codes and quotes */
 .xoopsCode {
   background-color: #fff;
   color: inherit;
-  border: 1px inset navy;
+  border: 1px inset #000080;
   font-family: "Courier New",Courier,monospace;
   padding: 0 6px 6px 6px;
   max-height: 200px;
@@ -632,7 +658,7 @@ th {
 .xoopsQuote {
   background-color: #fff;
   color: inherit;
-  border: 1px inset navy;
+  border: 1px inset #000080;
   font-family: "Courier New",Courier,monospace;
   font-style: italic;
   padding: 0 6px 6px 6px; }
@@ -640,7 +666,7 @@ th {
 .icmsCode {
   background-color: #fff;
   color: inherit;
-  border: 1px inset navy;
+  border: 1px inset #000080;
   font-family: "Courier New",Courier,monospace;
   padding: 0 6px 6px 6px;
   max-height: 200px;
@@ -649,7 +675,7 @@ th {
 .icmsQuote {
   background-color: #fff;
   color: inherit;
-  border: 1px inset navy;
+  border: 1px inset #000080;
   font-family: "Courier New",Courier,monospace;
   font-style: italic;
   padding: 0 6px 6px 6px; }
@@ -666,19 +692,19 @@ th {
 
 /* articles */
 .item {
-  border: 1px solid #cccccc; }
+  border: 1px solid #ccc; }
 
 .itemHead {
   padding-left: 3px;
   color: #639ACE;
-  border-bottom: 1px solid #bbbbbb;
+  border-bottom: 1px solid #bbb;
   font-size: .8em; }
 
 .itemInfo {
   text-align: right;
   padding: 3px;
   background-color: #e6e6e6;
-  color: black; }
+  color: #000; }
 
 .itemTitle a {
   font-size: 1.1em;
@@ -803,9 +829,9 @@ th {
 
 .forum_controls {
   background-color: #EEE;
-  border-left: 1px solid #999999;
-  border-right: 1px solid #999999;
-  border-top: 1px solid #999999;
+  border-left: 1px solid #999;
+  border-right: 1px solid #999;
+  border-top: 1px solid #999;
   width: 100%; }
 
 .userrow {
@@ -934,9 +960,9 @@ a.formulize-open-close-link {
   z-index: 100;
   margin-top: 0;
   margin-bottom: 0;
-  border-top: solid 1px #1d65a5;
-  border-left: solid 1px #1d65a5;
-  border-right: solid 1px #1d65a5;
+  border-top: solid 1px #1D65A5;
+  border-left: solid 1px #1D65A5;
+  border-right: solid 1px #1D65A5;
   border-radius: 5px 5px 0 0; }
 
 .floating-column {
@@ -978,89 +1004,62 @@ button, input[type='submit'], input[type='button'], input[type='reset'] {
 
 button:hover, .xo-formbuttons:hover, .formButton:hover {
   transform: scale(1.2);
-  box-shadow: 0 0 65px #f4f9fe inset, 0 0 20px #f4f9fe inset, 0 0 15px #333333; }
+  box-shadow: 0 0 65px #F4F9FE inset, 0 0 20px #F4F9FE inset, 0 0 15px #333; }
 
 button:focus, input[type='submit']:focus, input[type='button']:focus, input[type='reset']:focus, .xo-formbuttons:focus, .formButton:focus {
   background-color: #f4f4f4;
   border-color: #333; }
 
-.formulize_button {
-  text-indent: 30px;
-  border-color: #0076a3;
-  color: white !important;
-  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
-  font-size: 15px;
-  font-weight: bold;
-  height: 36px;
-  width: 185px !important; }
-
-#prev {
-  background: #008cc4 url("../../images/prev.png") no-repeat 10px;
-  text-indent: 40px;
-  height: 36px;
-  color: white !important;
-  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
-  font-size: 15px; }
-
-#next {
-  background: #008cc4 url("../../images/next.png") no-repeat 140px;
-  text-align: left;
-  width: 185px;
-  height: 36px;
-  color: white !important;
-  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
-  font-size: 15px; }
-
 /*=== Formulize Boutons by Francois T ===*/
 #formulize_addButton, #formulize_addProxyButton {
   text-indent: 45px;
-  background: #2f85dc url("../../images/contact-new.png") no-repeat 10px;
+  background: #2F85DC url("../../images/contact-new.png") no-repeat 10px;
   width: 210px !important; }
 
 #formulize_addMultiButton {
   text-indent: 45px;
-  background: #2f85dc url("../../images/multi.png") no-repeat 10px;
+  background: #2F85DC url("../../images/multi.png") no-repeat 10px;
   width: 210px !important; }
 
 #formulize_changeColsButton {
-  background: #61a6ee url("../../images/table.png") no-repeat 10px; }
+  background: #61A6EE url("../../images/table.png") no-repeat 10px; }
 
 #formulize_exportButton {
-  background: #2f85dc url("../../images/math.png") no-repeat 10px; }
+  background: #2F85DC url("../../images/math.png") no-repeat 10px; }
 
 #formulize_exportCalcsButton {
-  background: #2f85dc url("../../images/math.png") no-repeat 10px; }
+  background: #2F85DC url("../../images/math.png") no-repeat 10px; }
 
 #formulize_importButton {
-  background: #2f85dc url("../../images/import.png") no-repeat 10px; }
+  background: #2F85DC url("../../images/import.png") no-repeat 10px; }
 
 #formulize_calcButton, #formulize_advCalcButton, #formulize_advSearchButton {
   border-color: #8E8E8E;
-  background: #a3a3a3 url("../../images/calculator.png") no-repeat 10px; }
+  background: #A3A3A3 url("../../images/calculator.png") no-repeat 10px; }
 
 #formulize_selectAllButton {
-  background: #3ca683 url("../../images/select.png") no-repeat 10px; }
+  background: #3CA683 url("../../images/select.png") no-repeat 10px; }
 
 #formulize_clearSelectButton {
-  background: #3ca683 url("../../images/unselect.png") no-repeat 10px; }
+  background: #3CA683 url("../../images/unselect.png") no-repeat 10px; }
 
 #formulize_deleteButton {
-  background: #3ca683 url("../../images/delete.png") no-repeat 10px; }
+  background: #3CA683 url("../../images/delete.png") no-repeat 10px; }
 
 #formulize_cloneButton {
-  background: #3ca683 url("../../images/clone.png") no-repeat 10px; }
+  background: #3CA683 url("../../images/clone.png") no-repeat 10px; }
 
 #formulize_notifButton {
-  background: #5450a5 url("../../images/notif.png") no-repeat 10px; }
+  background: #5450A5 url("../../images/notif.png") no-repeat 10px; }
 
 #formulize_resetViewButton {
-  background: #61a6ee url("../../images/find.png") no-repeat 10px; }
+  background: #61A6EE url("../../images/find.png") no-repeat 10px; }
 
 #formulize_saveViewButton {
-  background: #61a6ee url("../../images/findsave.png") no-repeat 10px; }
+  background: #61A6EE url("../../images/findsave.png") no-repeat 10px; }
 
 #formulize_deleteViewButton {
-  background: #61a6ee url("../../images/finddel.png") no-repeat 10px; }
+  background: #61A6EE url("../../images/finddel.png") no-repeat 10px; }
 
 #formulize_saveButton {
   background-color: #61A6EE;

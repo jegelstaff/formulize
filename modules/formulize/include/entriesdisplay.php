@@ -602,11 +602,11 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				$ownerOfLastLoadedView = $ownerOfLastLoadedViewData[0]['sv_owner_uid'];
 				if(!$update_other_reports AND $uid != $ownerOfLastLoadedView) {
 					if(isset($_POST[$requestKeyToUse])) {
-						$_POST[$k] = htmlspecialchars(strip_tags(trim($_POST[$requestKeyToUse])));
+						$_POST[$k] = htmlspecialchars(strip_tags(trim($_POST[$requestKeyToUse])), ENT_QUOTES);
 					} elseif(isset($_GET[$requestKeyToUse])) {
-						$_POST[$k] = htmlspecialchars(strip_tags(trim($_GET[$requestKeyToUse])));
+						$_POST[$k] = htmlspecialchars(strip_tags(trim($_GET[$requestKeyToUse])), ENT_QUOTES);
 					} elseif($v == "{USER}" AND $xoopsUser) {
-						$_POST[$k] = $xoopsUser->getVar('name') ? $xoopsUser->getVar('name') : $xoopsUser->getVar('uname');
+                        $_POST[$k] = $xoopsUser->getVar('name') ? htmlspecialchars_decode($xoopsUser->getVar('name'), ENT_QUOTES) : htmlspecialchars_decode($xoopsUser->getVar('uname'), ENT_QUOTES);
 					} elseif(!strstr($v, "{BLANK}") AND !strstr($v, "{TODAY") AND !strstr($v, "{PERGROUPFILTER}") AND !strstr($v, "{USER")) { 
 						unset($_POST[$k]); // clear terms where no match was found, because this term is not active on the current page, so don't confuse users by showing it
 					}
@@ -1412,7 +1412,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 		if($textWidth == 0) { $textWidth = 10000; }
 		$useCheckboxes = $screen->getVar('usecheckboxes');
 		$useViewEntryLinks = $screen->getVar('useviewentrylinks');
-		$useSearch = $screen->getVar('usesearch');
+		$useSearch = ($screen->getVar('usesearch') AND !$screen->getTemplate('listtemplate')) ? 1 : 0;
 		$hiddenColumns = $screen->getVar('hiddencolumns');
 		$deColumns = $screen->getVar('decolumns');
 		$deDisplay = $screen->getVar('dedisplay');
@@ -1699,7 +1699,9 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 													print getHTMLForList($values, $colhandle, $internalID, $deDisplay, $textWidth, $currentColumnLocalId, $fid, $cellRowAddress, $i);
 													print "</div>";
 												} else {
+                                                    if(isset($elementsDisplayed)) { print "\n<br />\n"; }
 													displayElement("", $colhandle, $internalID);
+                                                    $elementsDisplayed = true;
 												}
 												$deThisIntId = true;
 											}
@@ -1898,6 +1900,7 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
         }
     }
 
+    
 	for($i=0;$i<count($cols);$i++) {
 		$classToUse = "head column column".$i;
 		if(!$returnOnly) {
@@ -1905,18 +1908,13 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
 				print "<td class='head floating-column' id='floatingcelladdress_1'>\n";
 			}
 			print "<td class='$classToUse' id='celladdress_1_$i'><div class='main-cell-div' id='cellcontents_1_".$i."'>\n";
-		}
-
-        if (0 == $i) {
-            // if search_help was displayed earlier, this will be blank
-            print $search_help;
+            print $search_help; // if search help was not included in the margin, then it will be included beside each search box now
         }
 
         //formulize_benchmark("drawing one search");
 		$search_text = isset($searches[$cols[$i]]) ? strip_tags(htmlspecialchars($searches[$cols[$i]]), ENT_QUOTES) : "";
 		$search_text = get_magic_quotes_gpc() ? stripslashes($search_text) : $search_text;
 		$boxid = "";
-		$helpText = "";
 		$clear_help_javascript = "";
 		if(count($searches) == 0 AND !$returnOnly) {
 			if($i==0) { 
@@ -1941,7 +1939,7 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
       if(isset($quickSearchBoxes[$cols[$i]]['filter'])) {
         print $quickSearchBoxes[$cols[$i]]['filter'];
       } else {
-        print "<nobr>".$quickSearchBoxes[$cols[$i]]['search']."$helpText</nobr>";
+        print "<nobr>".$quickSearchBoxes[$cols[$i]]['search']."</nobr>";
       }
 		}
     
@@ -4597,14 +4595,14 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 					$one_search = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
 				} elseif($searchgetkey == "USER") {
 					if($xoopsUser) {
-						$one_search = $xoopsUser->getVar('name');
-						if(!$one_search) { $one_search = $xoopsUser->getVar('uname'); }
+                        $one_search = htmlspecialchars_decode($xoopsUser->getVar('name'), ENT_QUOTES);
+						if(!$one_search) { $one_search = htmlspecialchars_decode($xoopsUser->getVar('uname'), ENT_QUOTES); }
 					} else {
 						$one_search = 0;
 					}
 				} elseif($searchgetkey == "USERNAME") {
 					if($xoopsUser) {
-						$one_search = $xoopsUser->getVar('uname');
+                        $one_search = htmlspecialchars_decode($xoopsUser->getVar('name'), ENT_QUOTES);
 					} else {
 						$one_search = "";
 					}
@@ -4623,8 +4621,8 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 					$one_search = $searchgetkey;
 					$operator = "";
 				} elseif(isset($_POST[$searchgetkey]) OR isset($_GET[$searchgetkey])) {
-					$one_search = $_POST[$searchgetkey] ? htmlspecialchars(strip_tags(trim($_POST[$searchgetkey]))) : "";
-					$one_search = (!$one_search AND $_GET[$searchgetkey]) ? htmlspecialchars(strip_tags(trim($_GET[$searchgetkey]))) : $one_search;
+					$one_search = $_POST[$searchgetkey] ? htmlspecialchars(strip_tags(trim($_POST[$searchgetkey])), ENT_QUOTES) : "";
+					$one_search = (!$one_search AND $_GET[$searchgetkey]) ? htmlspecialchars(strip_tags(trim($_GET[$searchgetkey])), ENT_QUOTES) : $one_search;
 					if(!$one_search) {
 						continue;
 					}
@@ -4647,8 +4645,8 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 
 			// do additional search for {USERNAME} or {USER} in case they are embedded in another string
 			if($xoopsUser) {
-				$one_search = str_replace("{USER}", $xoopsUser->getVar('name'), $one_search);
-				$one_search = str_replace("{USERNAME}", $xoopsUser->getVar('uname'), $one_search);
+                $one_search = str_replace("{USER}", htmlspecialchars_decode($xoopsUser->getVar('name'), ENT_QUOTES), $one_search);
+				$one_search = str_replace("{USERNAME}", htmlspecialchars_decode($xoopsUser->getVar('uname'), ENT_QUOTES), $one_search);
 			}
 
 			

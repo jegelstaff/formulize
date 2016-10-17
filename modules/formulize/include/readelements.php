@@ -355,6 +355,14 @@ $GLOBALS['formulize_allWrittenEntryIds'] = $formulize_allWrittenEntryIds;
 $GLOBALS['formulize_newSubformBlankElementIds'] = $formulize_newSubformBlankElementIds;
 $GLOBALS['formulize_readElementsWasRun'] = $formulize_readElementsWasRun;
 
+// if there is more than one form, try to make the 1-1 links
+if(count($formulize_elementData) > 1) {
+    $oneToOneFridToUse = $overrideFrid ? $overrideFrid : $frid;
+    foreach($formulize_elementData as $this_fid => $entryData) {
+        formulize_makeOneToOneLinks($oneToOneFridToUse, $this_fid);
+    }
+}
+
 return $formulize_allWrittenEntryIds;
 
 // this function handles triggering the after Saving Logic of custom elements after each entry is written to the database

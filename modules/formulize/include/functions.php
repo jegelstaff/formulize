@@ -1724,6 +1724,10 @@ function getMaxIdReq() {
 // subformblankcounter is passed when we are preparing subform blank values
 function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=null) {
 
+    if(!$element = _getElementObject($element)) {
+		return false;
+    }
+
     global $myts;
     if (!$myts) {
         $myts =& MyTextSanitizer::getInstance();
@@ -2759,8 +2763,6 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
     // get groups with view_form,
     $groups_view = $gperm_handler->getGroupIds("view_form", $fid, $mid);
 
-    $notification_handler =& xoops_gethandler('notification');
-
     // start main loop
     $notificationTemplateData = array();
     foreach ($entries as $entry) {
@@ -2873,7 +2875,7 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
         }
 
         // intersect all possible uids with the ones valid for this condition, and handle subscribing necessary users
-        $uids_real = compileNotUsers2($uids_conditions, $uids_complete, $notification_handler, $fid, $event, $mid);
+        $uids_real = compileNotUsers2($uids_conditions, $uids_complete, $fid, $event, $mid);
         // cannot bug out (return) if $uids_real is empty, since there are still the custom conditions to evaluate below
 
         // get form object so the title can be used in notification messages
@@ -2905,13 +2907,12 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
         $extra_tags['SITEURL'] = XOOPS_URL;
 
         if (count($uids_real) > 0) {
-            if (in_array(-1, $uids_real)) {
-                sendNotificationToEmail($GLOBALS['formulize_notification_email'], $event, $extra_tags);
-                unset($uids_real[array_search(-1, $uids_real)]); // now remove the special flag before triggering the event
-                unset($uids_complete[array_search(-1, $uids_complete)]); // now remove the special flag before triggering the event
-                unset($GLOBALS['formulize_notification_email']);
-            }
-            $notification_handler->triggerEvent("form", $fid, $event, $extra_tags, $uids_real, $mid, $omit_user);
+            formulize_processNotification($event, $extra_tags, $fid, $uids_real, $mid, $omit_user);
+        }
+        // reset for the potential processing of saved conditions
+        if (isset($GLOBALS['formulize_notification_email'])) {
+            unset($GLOBALS['formulize_notification_email']);
+            unset($uids_complete[array_search(-1, $uids_complete)]);
         }
         unset($uids_real);
 
@@ -2946,50 +2947,15 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
             if (isset($GLOBALS['formulize_notification_email'])) {
                 $uids_complete[] = -1; // if we are notifying an arbitrary e-mail address, then this uid will have been added to the uids_conditions array, so let's add it to the complete array, so that our notification doesn't get ignored as being "out of scope" based on uids
             }
-            $uids_cust_real = compileNotUsers2($uids_cust_con, $uids_complete, $notification_handler, $fid, $event, $mid);
-            // set the custom template and subject
-            $module_handler =& xoops_gethandler('module');
-            $module =& $module_handler->get($mid);
-            $not_config =& $module->getInfo('notification');
-            switch ($event) {
-                case "new_entry":
-                    $evid = 1;
-                    break;
-                case "update_entry":
-                    $evid = 2;
-                    break;
-                case "delete_entry":
-                    $evid = 3;
-                    break;
-            }
-            $oldsubject = $not_config['event'][$evid]['mail_subject'];
-            $oldtemp = $not_config['event'][$evid]['mail_template'];
-            // rewrite the notification with the subject and template we want, then reset
-            $GLOBALS['formulize_notificationTemplateOverride'] = $thiscon['not_cons_template'] == "" ? $not_config['event'][$evid]['mail_template'] : $thiscon['not_cons_template'];
-            $GLOBALS['formulize_notificationSubjectOverride'] = $thiscon['not_cons_subject'] == "" ? $not_config['event'][$evid]['mail_subject'] : trans($thiscon['not_cons_subject']);
-            $not_config['event'][$evid]['mail_template'] = $thiscon['not_cons_template'] == "" ? $not_config['event'][$evid]['mail_template'] : $thiscon['not_cons_template'];
-            $not_config['event'][$evid]['mail_subject'] = $thiscon['not_cons_subject'] == "" ? $not_config['event'][$evid]['mail_subject'] : trans($thiscon['not_cons_subject']);
-            // loop through the variables and do replacements in the subject, if any
-            if (strstr($not_config['event'][$evid]['mail_subject'], "{ELEMENT")) {
-                foreach ($extra_tags as $tag=>$value) {
-                    str_replace("{".$tag."}",$value, $not_config['event'][$evid]['mail_subject']);
-                    str_replace("{".$tag."}",$value, $GLOBALS['formulize_notificationSubjectOverride']);
-                }
-            }
-            // trigger the event
+            $uids_cust_real = compileNotUsers2($uids_cust_con, $uids_complete, $fid, $event, $mid);
             if (count($uids_cust_real) > 0) {
-                if (in_array(-1, $uids_cust_real)) {
-                    sendNotificationToEmail($GLOBALS['formulize_notification_email'], "cust", $extra_tags, $not_config['event'][$evid]['mail_subject'], $not_config['event'][$evid]['mail_template']);
-                    unset($uids_cust_real[array_search(-1, $uids_cust_real)]); // now remove the special flag before triggering the event
-                    unset($uids_complete[array_search(-1, $uids_complete)]); // now remove the special flag before triggering the event
-                    unset($GLOBALS['formulize_notification_email']);
-                }
-                $notification_handler->triggerEvent("form", $fid, $event, $extra_tags, $uids_cust_real, $mid, $omit_user);
+                formulize_processNotification($event, $extra_tags, $fid, $uids_cust_real, $mid, $omit_user, $thiscon['not_cons_subject'], $thiscon['not_cons_template']);
             }
-            $not_config['event'][$evid]['mail_subject'] = $oldsubject;
-            $not_config['event'][$evid]['mail_template'] = $oldtemp;
-            unset($GLOBALS['formulize_notificationTemplateOverride']);
-            unset($GLOBALS['formulize_notificationSubjectOverride']);
+            // reset for the next runthrough of the loop
+            if (isset($GLOBALS['formulize_notification_email'])) {
+                unset($GLOBALS['formulize_notification_email']);
+                unset($uids_complete[array_search(-1, $uids_complete)]);
+            }
             unset($uids_cust_real);
             unset($uids_cust_con);
         }
@@ -3001,7 +2967,7 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
 
 
 // $template should include .tpl on the end
-function sendNotificationToEmail($email, $event, $tags, $subject, $template) {
+function sendNotificationToEmail($email, $event, $tags, $overrideSubject="", $overrideTemplate="") {
     $module_handler = xoops_gethandler('module');
     $module = $module_handler->get(getFormulizeModId());
 
@@ -3024,18 +2990,18 @@ function sendNotificationToEmail($email, $event, $tags, $subject, $template) {
 
     switch ($event) {
         case("new_entry"):
-            $template = 'form_newentry.tpl';
-            $subject = _MI_formulize_NOTIFY_NEWENTRY_MAILSUB;
+            $template = $overrideTemplate ? $overrideTemplate : 'form_newentry.tpl';
+            $subject = $overrideSubject ? $overrideSubject : _MI_formulize_NOTIFY_NEWENTRY_MAILSUB;
             break;
 
         case("update_entry"):
-            $template = 'form_upentry.tpl';
-            $subject = _MI_formulize_NOTIFY_UPENTRY_MAILSUB;
+            $template = $overrideTemplate ? $overrideTemplate : 'form_upentry.tpl';
+            $subject = $overrideSubject ? $overrideSubject : _MI_formulize_NOTIFY_UPENTRY_MAILSUB;
             break;
 
         case("delete_entry"):
-            $template = 'form_delentry.tpl';
-            $subject = _MI_formulize_NOTIFY_DELENTRY_MAILSUB;
+            $template = $overrideTemplate ? $overrideTemplate : 'form_delentry.tpl';
+            $subject = $overrideSubject ? $overrideSubject : _MI_formulize_NOTIFY_DELENTRY_MAILSUB;
             break;
     }
 
@@ -3170,8 +3136,9 @@ function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $rei
 }
 
 
-function compileNotUsers2($uids_conditions, $uids_complete, $notification_handler, $fid, $event, $mid) {
+function compileNotUsers2($uids_conditions, $uids_complete, $fid, $event, $mid) {
     global $xoopsDB;
+    $notification_handler = xoops_gethandler('notification');
     $uids_conditions = array_unique($uids_conditions);
     $uids_real = array_intersect($uids_conditions, $uids_complete);
     // figure out who is not subscribed to the event, and subscribe them once
@@ -3188,6 +3155,69 @@ function compileNotUsers2($uids_conditions, $uids_complete, $notification_handle
         $notification_handler->subscribe("form", $fid, $event, XOOPS_NOTIFICATION_MODE_SENDONCETHENDELETE, $mid, $thisuid);
     }
     return $uids_real;
+}
+
+// send notifications, or cache notifications so they can be triggered by a cron job later
+// turn on the preference in the module to use the cron feature
+function formulize_processNotification($event, $extra_tags, $fid, $uids_to_notify, $mid, $omit_user, $subject="", $template="") {
+    
+	$config_handler = xoops_gethandler('config');
+    $formulizeConfig = $config_handler->getConfigsByCat(0, $mid);
+    $notifyByCron = $formulizeConfig['notifyByCron'];
+
+    if($notifyByCron) {
+        $notFile = fopen(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotifications.txt","a");
+        formulize_getLock($notFile);
+        foreach($uids_to_notify as $uid_to_notify) {
+            if($uid_to_notify>1) { 
+                formulize_processNotificationWriteLine($notFile, $event, $extra_tags, $fid, array($uid_to_notify), $mid, $omit_user, $subject, $template);
+            } else {
+                foreach(explode(",", $GLOBALS['formulize_notification_email']) as $email) {
+                    formulize_processNotificationWriteLine($notFile, $event, $extra_tags, $fid, array(-1), $mid, $omit_user, $subject, $template, $email);
+                }
+            }
+        }
+        fclose($notFile);
+    } else {
+        include_once XOOPS_ROOT_PATH."/modules/formulize/notify.php";
+        formulize_notify($event, $extra_tags, $fid, $uids_to_notify, $mid, $omit_user, $subject, $template);
+    }
+}
+
+function formulize_processNotificationWriteLine($notFile, $event, $extra_tags, $fid, $uid_to_notify, $mid, $omit_user, $subject, $template, $email="") {
+    fwrite($notFile,
+        serialize(
+            array(
+                $event,
+                $extra_tags,
+                $fid,
+                $uid_to_notify,
+                $mid,
+                $omit_user,
+                $subject,
+                $template,
+                $email
+            )
+        )."19690509\r\n"
+    );  
+}
+
+// this function attempts to get a lock on the given file resource
+function formulize_getLock($fileResource) {
+    $ourTurn = false;
+    $lockTries = 0;
+    while(!$ourTurn) {
+        $ourTurn = flock($fileResource, LOCK_EX);
+        if(!$ourTurn) {
+            if($lockTries == 30) {
+                exit("Formulize fatal error: Could not get a lock on the notifications cache file after one minute.");
+            } else {
+                $lockTries++;
+                sleep(2);
+            }
+        }
+    }
+    return true;
 }
 
 
@@ -5420,8 +5450,8 @@ function parseUserAndToday($term) {
   if ($term === "{USER}") {
 		global $xoopsUser;
 		if($xoopsUser) {
-			$term = $xoopsUser->getVar('name');
-			if(!$term) { $term = $xoopsUser->getVar('uname'); }
+            $term = htmlspecialchars_decode($xoopsUser->getVar('name'), ENT_QUOTES);
+			if(!$term) { $term = htmlspecialchars_decode($xoopsUser->getVar('uname'), ENT_QUOTES); }
 		} else {
 			$term = 0;
 		}
@@ -5445,17 +5475,22 @@ function formulize_makeOneToOneLinks($frid, $fid) {
     $form2EntryIds = array();
     $form1s = array();
     $form2s = array();
-    if(!isset($oneToOneLinksMade[$frid]) AND isset($GLOBALS['formulize_newEntryIds'][$fid])) {
+    if(!isset($oneToOneLinksMade[$frid][$fid]) AND isset($GLOBALS['formulize_newEntryIds'][$fid])) {
         $frameworkHandler = xoops_getmodulehandler('frameworks', 'formulize');
         $frameworkObject = $frameworkHandler->get($frid);
         foreach($frameworkObject->getVar('links') as $thisLink) {
-            if($thisLink->getVar('relationship') == 1) { // 1 signifies one to one relationships
+            if($thisLink->getVar('relationship') == 1 AND $thisLink->getVar('unifiedDisplay')) { // 1 signifies one to one relationships
                 $form1 = $thisLink->getVar('form1');
                 $form2 = $thisLink->getVar('form2');
                 $key1 = $thisLink->getVar('key1');
                 $key2 = $thisLink->getVar('key2');
                 $form1EntryId = "";
                 $form2EntryId = "";
+                // check that the fid in question is form1 or form2, just in case
+                if($fid != $form1 AND $fid != $form2) {
+                    $oneToOneLinksMade[$frid][$fid] = array(array(), array(), array(), array()); // set result to an empty set of arrays
+                    continue;
+                }
                 $entryToWriteToForm1 = $GLOBALS['formulize_newEntryIds'][$form1][0] ? $GLOBALS['formulize_newEntryIds'][$form1][0] : $GLOBALS['formulize_allWrittenEntryIds'][$form1][0];
                 if(!$entryToWriteToForm1) { exit("Error: we could not determine which entry in form $form1 we should use for writing the key value for the relationship."); }
                 $entryToWriteToForm2 = $GLOBALS['formulize_newEntryIds'][$form2][0] ? $GLOBALS['formulize_newEntryIds'][$form2][0] : $GLOBALS['formulize_allWrittenEntryIds'][$form2][0];
@@ -5473,7 +5508,7 @@ function formulize_makeOneToOneLinks($frid, $fid) {
                             $form2EntryId = formulize_writeEntry(array($key2=>$commonValueToWrite), $entryToWriteToForm2);
                         }
                     }
-                } elseif($thisLink->getVar('unifiedDisplay')) {
+                } else {
                     // figure out which one is on which side of the linked selectbox
                     $element_handler = xoops_getmodulehandler('elements', 'formulize');
                     $linkedElement1 = $element_handler->get($key1);
@@ -5496,9 +5531,27 @@ function formulize_makeOneToOneLinks($frid, $fid) {
                 $form2s[] = $form2;
             } 
         }
-        $oneToOneLinksMade[$frid] = true;
+        $oneToOneLinksMade[$frid][$fid] = array($form1s, $form2s, $form1EntryIds, $form2EntryIds);
     }
-    return array($form1s, $form2s, $form1EntryIds, $form2EntryIds);
+    return $oneToOneLinksMake[$frid][$fid];
+}
+
+// THIS FUNCTION FIGURES OUT THE COMMON VALUE THAT WE SHOULD WRITE WHEN A FORM IN A ONE-TO-ONE RELATIONSHIP IS BEING DISPLAYED AFTER A NEW ENTRY HAS BEEN WRITTEN
+function formulize_findCommonValue($form1, $form2, $key1, $key2) {
+	$commonValueToWrite = "";
+	if(isset($_POST["de_".$form2."_new_".$key2]) AND $_POST["de_".$form2."_new_".$key2] == "{ID}") { // common value is pointing at a textbox that copies the entry ID, so grab the entry ID of the entry just written in the other form
+		$commonValueToWrite = $GLOBALS['formulize_newEntryIds'][$form2][0];
+	} elseif(isset($_POST["de_".$form2."_new_".$key2])) { // grab the value just written in the field of the other form
+		$commonValueToWrite = $_POST["de_".$form2."_new_".$key2];
+	} elseif(isset($_POST["de_".$form2."_".$GLOBALS['formulize_allWrittenEntryIds'][$form2][0]."_".$key2])) { // grab the value just written in the first entry we saved in the paired form
+		$commonValueToWrite = $_POST["de_".$form2."_".$GLOBALS['formulize_allWrittenEntryIds'][$form2][0]."_".$key2];
+	} elseif(isset($GLOBALS['formulize_allWrittenEntryIds'][$form2][0])) { // try to get the value saved in the DB for the target element in the first entry we just saved in the paired form
+		$common_value_data_handler = new formulizeDataHandler($form2);
+		if($candidateValue = $common_value_data_handler->getElementValueInEntry($GLOBALS['formulize_allWrittenEntryIds'][$form2][0], $key2)) {
+			$commonValueToWrite = $candidateValue;
+		}
+	}
+	return $commonValueToWrite;
 }
 
 //Function used to check if the given field is within the list of metadata fields.
