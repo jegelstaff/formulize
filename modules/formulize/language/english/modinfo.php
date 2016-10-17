@@ -83,11 +83,11 @@ define("_MI_formulize_PRINTVIEWSTYLESHEETSDESC", "Type the URL for each styleshe
 define("_MI_formulize_DEBUGDERIVEDVALUES", "Turn on debugging mode for working with derived values?");
 define("_MI_formulize_DEBUGDERIVEDVALUESDESC", "When this is on, derived values will be re-computed every time they are displayed. When this is off, derived values are computed on first display only, or when data is saved.");
 
-+define("_MI_formulize_ISSAVELOCKED", "Lock saving?");
-+define("_MI_formulize_ISSAVELOCKEDDESC", "Changing this setting to Yes will restrict users from saving any changes in Formulize.");
- 
 define("_MI_formulize_NOTIFYBYCRON", "Send notifications via a cron job?");
 define("_MI_formulize_NOTIFYBYCRONDESC", "When this is on, create a cron job that triggers '/modules/formulize/notify.php' and notifications will be sent behind the scenes. When this is off, notifications are sent as part of the pageload that generated them.");
+
+define("_MI_formulize_ISSAVELOCKED", "Lock saving?");
+define("_MI_formulize_ISSAVELOCKEDDESC", "Changing this setting to Yes will restrict users from saving any changes in Formulize.");
 
 // The name of this module
 define("_MI_formulizeMENU_NAME","MyMenu");
