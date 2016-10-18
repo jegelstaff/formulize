@@ -5,6 +5,10 @@
  * Date: 2016-01-16
  */
 
+// exporting the entire DB can take a lot of memory and time!!
+ini_set('memory_limit', '1024M'); 
+ini_set('max_execution_time', '600');
+ 
 include_once '../include/synchronization.php';
 
 $sync = array();
