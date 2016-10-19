@@ -63,7 +63,8 @@ class SyncCompareCatalog {
             if (!$recordExists) {
                 $this->addRecChange("insert", $tableName, $fields, $record);
             } else {  // if the record exists, compare the data values, add any update statement to $compareResults
-                $dbRecord = $result->fetchAll()[0];
+                $dbRecord = $result->fetchAll();
+                $dbRecord = $dbRecord[0];
 
                 // compare each record field for changes
                 $isChanged = FALSE;
@@ -360,7 +361,8 @@ class SyncCompareCatalog {
         // combine the pieces of the sql statement, execute the query, and return the data
         $sql = $sqlSelect.' '.$sqlFrom.' '.implode(" ", $sqlJoins).' '.$sqlWhere;
         $result = $this->db->query($sql);
-        return $result->fetchAll()[0];
+        $returnResult = $result->fetchAll();
+        return $returnResult[0];
     }
 
     // insert a new record into the database

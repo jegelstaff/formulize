@@ -387,7 +387,8 @@
             foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($csvFolderPath)) as $filePath){
                 if ($filePath->isDir()) continue; // skip "." and ".."
                 for ($line = 1; $line <= getNumDataRowsCSV($filePath); $line ++){
-                    $comparator->addRecord(getTableNameCSV($filePath)[0], getDataRowCSV($filePath, $line), getTableColsCSV($filePath));
+                    $tableName = getTableNameCSV($filePath);
+                    $comparator->addRecord($tableName[0], getDataRowCSV($filePath, $line), getTableColsCSV($filePath));
                 }
             }
             $comparator->cacheChanges();
