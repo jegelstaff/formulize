@@ -23,7 +23,7 @@ class icms_AutologinEventHandler {
 		setcookie('autologin_pass', '', time() - 3600, $icms_cookie_path, '', 0, 0);
 	}
 
-	static public function sessionAutologin($autologinName, $autologinPass) { // , $post) { // as per Steve's comment in the forums
+	static public function sessionAutologin($autologinName, $autologinPass, $post) { // as per Steve's comment in the forums
 		// autologin V2 GIJ
 		if (!empty($post)) {
 			$_SESSION['AUTOLOGIN_POST'] = $post;
