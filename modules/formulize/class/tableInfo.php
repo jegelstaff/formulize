@@ -18,7 +18,7 @@ class tableInfo {
     private function getTableTypes($tableName) {
         $conn = $this->openConn(DB_INFO_NAME);
 
-        $query = "SELECT DATA_TYPE FROM COLUMNS WHERE TABLE_NAME = '".$tableName."';";
+        $query = "SELECT DATA_TYPE FROM COLUMNS WHERE TABLE_SCHEMA = '".XOOPS_DB_NAME."' AND TABLE_NAME = '".$tableName."';";
         $types = $conn->query($query)->fetchAll();
 
         return $types;
@@ -27,7 +27,7 @@ class tableInfo {
     private function getTableCols($tableName) {
         $conn = $this->openConn(DB_INFO_NAME);
 
-        $query = "SELECT COLUMN_NAME FROM COLUMNS WHERE TABLE_NAME = '".$tableName."';";
+        $query = "SELECT COLUMN_NAME FROM COLUMNS WHERE TABLE_SCHEMA = '".XOOPS_DB_NAME."' AND TABLE_NAME = '".$tableName."';";
         $cols = $conn->query($query)->fetchAll();
 
         return $cols;
@@ -36,9 +36,17 @@ class tableInfo {
     private function getTableRecords($tableName) {
         $conn = $this->openConn(XOOPS_DB_NAME);
 
-        $query = "SELECT * FROM ".$tableName.";";
-        $records = $conn->query($query)->fetchAll();
+        $eogfilter = "";
+        if(strstr($tableName, "_formulize_entry_owner_groups")) {
+            $eogfilter = array();
+            foreach($_POST['forms'] as $fid) {
+                $eogfilter[] = " fid = ".intval($fid)." ";
+            }
+            $eogfilter = " WHERE ".implode(" OR ",$eogfilter);
+        }
 
+        $query = "SELECT * FROM ".$tableName."$eogfilter;";
+        $records = $conn->query($query)->fetchAll();
         return $records;
     }
 

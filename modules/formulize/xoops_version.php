@@ -79,6 +79,34 @@ $modversion['tables'] = array(
 	"formulize_deletion_logs",
 );
 
+$modversion['formulize_exportable_tables'] = array(
+	"formulize",
+	"formulize_id",
+	"formulize_menu",
+	"formulize_menu_links",
+	"formulize_menu_permissions",
+	"formulize_reports",
+	"formulize_frameworks",
+	"formulize_framework_forms",
+	"formulize_framework_elements",
+	"formulize_framework_links",
+	"formulize_menu_cats",
+	"formulize_saved_views",
+	"formulize_notification_conditions",
+	"formulize_screen",
+	"formulize_screen_multipage",
+	"formulize_screen_listofentries",
+	"formulize_screen_template",
+    "formulize_entry_owner_groups",
+	"formulize_application_form_link",
+	"formulize_applications",
+	"formulize_screen_form",
+	"formulize_advanced_calculations",
+	"formulize_group_filters",
+	"formulize_groupscope_settings",
+);
+
+
 /*
  * Table metadata general structure
  *

@@ -103,6 +103,7 @@
         
         $cols = array();
         $types = array();
+        
         for($i = 0; $i < count($dataArray["columns"]); $i ++){
             array_push($cols, $dataArray["columns"][$i][0]); // add each column name
             array_push($types, $dataArray["types"][$i][0]); // add each column type
@@ -113,12 +114,11 @@
         // push each row of data into formattedData as arrays
         for($i = 0; $i < count($dataArray["records"]); $i ++){ // row index
             $row = array();
-            for($j = 0; $j < count($dataArray["columns"]); $j ++){ // column index
-                array_push($row, $dataArray["records"][$i][$j]); // add column name
+            foreach($dataArray["columns"] as $columnData) {
+                array_push($row, $dataArray["records"][$i][$columnData[0]]); 
             }
             array_push($formattedData, $row); // add data row array
         }
-        
         return $formattedData;
     }
     
@@ -318,7 +318,7 @@
         $module_handler = xoops_gethandler('module');
         $formulizeModule = $module_handler->getByDirname("formulize");
         $metadata = $formulizeModule->getInfo();
-        $tablesList = array_merge($tablesList, $metadata['tables']);
+        $tablesList = array_merge($tablesList, $metadata['formulize_exportable_tables']);
         // add prefix to all table names
         foreach ($tablesList as &$value) {
             $value = XOOPS_DB_PREFIX . '_' . $value;
@@ -383,21 +383,34 @@
         global $successfulImport;
         if (file_exists($csvFolderPath)){
             $comparator = new SyncCompareCatalog();
+            $comparator->loadCachedChanges();
             // iterate $csvFolderPath directory and import each file
+            // only do three at a time for now
+            $counter = 0;
             foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($csvFolderPath)) as $filePath){
                 if ($filePath->isDir()) continue; // skip "." and ".."
-                for ($line = 1; $line <= getNumDataRowsCSV($filePath); $line ++){
-                    $tableName = getTableNameCSV($filePath);
-                    $comparator->addRecord($tableName[0], getDataRowCSV($filePath, $line), getTableColsCSV($filePath));
-                }
+                if (in_array($filePath->getPathName(), $comparator->doneFilePaths)) continue;
+                $counter++;
+                $partialImport = 1;
+                if($counter > 3) break; // only do three at a time
+                $fileHandle = fopen($filePath, 'r');
+                $tableName = fgetcsv($fileHandle);
+                $tableName = $tableName[0];
+                $cols = fgetcsv($fileHandle);
+                fgetcsv($fileHandle); // skip column types
+                while($data = fgetcsv($fileHandle)) {
+                    $comparator->addRecord($tableName, $data, $cols);
             }
+                fclose($fileHandle);
             $comparator->cacheChanges();
+                $comparator->cacheFilePath($filePath->getPathName());
+                $partialImport = 0;
+            }
         }else{
             $successfulImport = 0;
             error_log("Path to extracted CSV files does not exist.");
         }
-        deleteDir($csvFolderPath); // clean up temp folder and CSV files
-        return array( "success" => $successfulImport);
+        return array( "success" => $successfulImport, "partial" => $partialImport);
     }
 
     /*
@@ -408,6 +421,7 @@
      * param  archivePath       String path to archive file
      */
     function cacheExportFile($archivePath){
+        formulize_scandirAndClean(XOOPS_ROOT_PATH . "/modules/formulize/cache/", ".zip");
         // copies the archive file to the cache folder and renames the copied file to the session id
         $filepath = getCachedExportFilepath();
         rename($archivePath, $filepath);
@@ -419,7 +433,7 @@
      *  with the current session id in the filename
      */
     function getCachedExportFilepath() {
-        return XOOPS_ROOT_PATH . "\\modules\\formulize\\cache\\sync-export-".session_id().".zip";
+        return XOOPS_ROOT_PATH . "/modules/formulize/cache/sync-export-".session_id().".zip";
     }
     
     /*
@@ -520,103 +534,3 @@
         $zip->extractTo($extractToPath, $files); // extract all files/dirs in $files array to the $extractToPath
     }
     
-    
-    /*
-     * getDataRowCSV function parses the given CSV file and returns the desired row of data (1 is the first line, not 0)
-     *
-     * param filePath       String path to CSV file to parse
-     * param line           int line number to return
-     * return dataRow       String array containing row of data
-     */
-    function getDataRowCSV($filePath, $line){
-        $dataRow = array();
-        $fileHandle = fopen($filePath, 'r');
-        
-        fgetcsv($fileHandle); // skip table name
-        fgetcsv($fileHandle); // skip column names
-        fgetcsv($fileHandle); // skip column types
-        
-        for ($i = 0; $i < $line; $i ++){
-            $dataRow = fgetcsv($fileHandle);
-            if ($i == $line - 1 && !$dataRow){
-                $successfulImport = 0;
-                error_log("Invalid row requested from CSV file: ".$filePath);
-            }
-        }
-        
-        fclose($fileHandle);
-        return $dataRow;
-    }
-    
-    /*
-     * getTableNameCSV function parses the given CSV file and returns the name of the table
-     *
-     * param filePath       String path to CSV file to parse
-     * return tableName     String name of table
-     */
-    function getTableNameCSV($filePath){
-        $fileHandle = fopen($filePath, 'r');
-        
-        $tableName = fgetcsv($fileHandle); // get table name
-        
-        fclose($fileHandle);
-        return $tableName;
-    }
-    
-    /*
-     * getTableColsCSV function parses the given CSV file and returns an array of column names
-     *
-     * param filePath       String path to CSV file to parse
-     * return cols          String array of column names
-     */
-    function getTableColsCSV($filePath){
-        $fileHandle = fopen($filePath, 'r');
-        
-        fgetcsv($fileHandle); // skip table name
-        $cols = fgetcsv($fileHandle); // get column names
-        
-        fclose($fileHandle);
-        return $cols;
-    }
-    
-    /*
-     * getTableColTypesCSV function parses the given CSV file and returns an array of column types
-     *
-     * param filePath       String path to CSV file to parse
-     * return colTypes      String array of column types
-     */
-    function getTableColTypesCSV($filePath){
-        $fileHandle = fopen($filePath, 'r');
-        
-        fgetcsv($fileHandle); // skip table name
-        fgetcsv($fileHandle); // skip column names
-        $colTypes = fgetcsv($fileHandle); // get column types
-        
-        fclose($fileHandle);
-        return $colTypes;
-    }
-    
-    /*
-     * getNumDataRowsCSV function parses the given CSV file and returns number of data rows
-     *
-     * param filePath       String path to CSV file to parse
-     * return numRows       int number of data rows in file
-     */
-    function getNumDataRowsCSV($filePath){
-        $numRows = 0;
-        $fileHandle = fopen($filePath, 'r');
-        
-        fgetcsv($fileHandle); // skip table name
-        fgetcsv($fileHandle); // skip column names
-        fgetcsv($fileHandle); // skip column types
-        while(!feof($fileHandle)){ // iterate through file until eof
-            $content = fgets($fileHandle);
-            if($content){ // line is non empty, must be data so increment number of rows
-                $numRows++;
-            }
-      }
-        
-        fclose($fileHandle);
-        return $numRows;
-    }
-?>
