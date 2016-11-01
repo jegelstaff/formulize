@@ -270,46 +270,24 @@ class SyncCompareCatalog {
         return $result;
     }
 
-    private function getRecDescFields($tableName) {
-        $tableMetadata = $this->metadata["table_metadata"];
-        if (!array_key_exists($tableName, $tableMetadata)) {
-            return array();
-        }
-
-        $descFields = $tableMetadata["fields"]; // description fields on this table directly
-
-        if ($tableMetadata["joins"]) {
-            foreach ($tableMetadata["joins"] as $joinTableInfo) {
-                array_push($descFields, $joinTableInfo["field"]);
-            }
-        }
-
-        return $descFields;
-    }
-
     private function getRecMetadata($tableName, $type, $record) {
         // table has no metadata if not in the table_metadata list
         $tableMetadata = $this->metadata["table_metadata"];
         if (!array_key_exists($tableName, $tableMetadata)) {
-            return array();
+            if(isset($record['entry_id'])) { // try the entry id if it exists
+                return array('entry_id'=> $record['entry_id']);
+            }
         }
 
         $tableMetaInfo = $tableMetadata[$tableName];
 
-        // if delete use data from this database
-        if ($type == "delete") {
-            $metadata = $this->getRecMetadataFromDB($tableName, $tableMetaInfo, $record);
-        }
-        else { // if update or insert use data in changes, then fall back to database
             $metadata = $this->getRecMetadataFromChanges($tableName, $tableMetaInfo, $record);
-        }
 
         return $metadata;
     }
 
     // this function will search the changes list first then fallback to the DB
     private function getRecMetadataFromChanges($tableName, $tableMetaInfo, $record) {
-        return array(); // TODO!!!!!!
         $metadata = array();
 
         // first add the fields from this very table record that might be indicated as metadata
@@ -320,35 +298,36 @@ class SyncCompareCatalog {
         }
 
         // for joined table fields check the changes list, then fallback to DB
-        if ($tableMetaInfo["joins"]) {
+        if (isset($tableMetaInfo["joins"]) AND count($tableMetaInfo["joins"]) > 0) {
             foreach ($tableMetaInfo["joins"] as $joinTableInfo) {
+                
                 $joinTableName = $joinTableInfo["join_table"];
                 $joinTableKey = $joinTableInfo["join_field"][1];
                 $joinTableField = $joinTableInfo["field"];
                 $recTableKey = $joinTableInfo["join_field"][0];
                 $recTableKeyVal = $record[$recTableKey];
 
-                $changesTable = &$this->changes[$joinTableName];
+                $changesTable = $this->changes["_".$joinTableName];
                 $fieldValue = false;
                 if ($changesTable) {
                     foreach ($changesTable["inserts"] as $rec) {
                         if ($rec[$joinTableKey] == $recTableKeyVal) {
                             $fieldValue = $rec[$joinTableField];
+                            break;
                         }
                     }
+                    if(!$fieldValue) {
                     foreach ($changesTable["updates"] as $rec) {
                         if ($rec[$joinTableKey] == $recTableKeyVal) {
                             $fieldValue = $rec[$joinTableField];
+                                break;
                         }
                     }
-                    if (!$fieldValue) { // fall back to DB
-                        $sql = "SELECT ".$joinTableField." FROM ".prefixTable($joinTableName)." WHERE ".$joinTableKey."=".$recTableKeyVal.";";
-                        $result = $this->db->query($sql)->fetchAll();
-                        $fieldValue = $result[0][$joinTableField];
                     }
                 }
-                else { // if table not in changes list, fallback to DB
-                    $sql = "SELECT ".$joinTableField." FROM ".prefixTable($joinTableName)." WHERE ".$joinTableKey."=".$recTableKeyVal.";";
+                if(!$fieldValue) { // fall back to DB
+                    $targetVal = is_numeric($recTableKeyVal) ? $recTableKeyVal : "'".formulize_db_escape($recTableKeyVal)."'";
+                    $sql = "SELECT `".$joinTableField."` FROM ".prefixTable($joinTableName)." WHERE `".$joinTableKey."`=".$targetVal.";";
                     $result = $this->db->query($sql)->fetchAll();
                     $fieldValue = $result[0][$joinTableField];
                 }
@@ -357,54 +336,6 @@ class SyncCompareCatalog {
         }
 
         return $metadata;
-    }
-
-    private function getRecMetadataFromDB($tableName, $tableMetaInfo, $record) {
-        $sqlSelect = 'SELECT ';
-        $sqlFrom = 'FROM '.prefixTable($tableName);
-        $sqlJoins = array();
-        $sqlWhere = 'WHERE ';
-
-        // if the table has fields of its own for metadata, add them
-        $tableFieldsCount = count($tableMetaInfo["fields"]);
-        if ($tableFieldsCount > 0) {
-            for ($i = 0; $i < $tableFieldsCount; $i++) {
-                $fieldName = $tableMetaInfo["fields"][$i];
-                $sqlSelect .= prefixTable($tableName).".".$fieldName.", ";
-            }
-        }
-
-        // now add the information from the join tables
-        if (count($tableMetaInfo["joins"]) > 0) {
-            foreach ($tableMetaInfo["joins"] as $joinTableInfo) {
-                $joinTableName = $joinTableInfo["join_table"];
-                $mainTableJoinField = $joinTableInfo["join_field"][0];
-                $joinTableJoinField = $joinTableInfo["join_field"][1];
-                $joinField = $joinTableInfo["field"];
-
-                // add field for this table join
-                $sqlSelect .= prefixTable($joinTableName).'.'.$joinField.', ';
-
-                // add the left join information for this table
-                $tableJoinSql = 'LEFT JOIN '.prefixTable($joinTableName).' on ';
-                $tableJoinSql .= prefixTable($tableName).'.'.$mainTableJoinField.' = '.prefixTable($joinTableName).'.'.$joinTableJoinField;
-                array_push($sqlJoins, $tableJoinSql);
-            }
-        }
-
-        // remove the unnecessary trailing ', ' on the end of the SQL select fragment
-        $sqlSelect = substr($sqlSelect, 0, -2);
-
-        // generate where clause using table primary key and record values
-        $primaryField = $this->getPrimaryField($tableName);
-        $primaryFieldVal = $record[$primaryField];
-        $sqlWhere .= prefixTable($tableName).'.'.$primaryField.' = '.$primaryFieldVal;
-
-        // combine the pieces of the sql statement, execute the query, and return the data
-        $sql = $sqlSelect.' '.$sqlFrom.' '.implode(" ", $sqlJoins).' '.$sqlWhere;
-        $result = $this->db->query($sql);
-        $returnResult = $result->fetchAll();
-        return $returnResult[0];
     }
 
     // insert a new record into the database

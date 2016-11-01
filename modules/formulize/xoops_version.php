@@ -123,7 +123,13 @@ $modversion['formulize_exportable_tables'] = array(
 $modversion['table_metadata'] = array(
     "formulize" => array(
         "fields" => array("ele_caption", "ele_type"),
-        "joins" => array()
+        "joins" => array(
+            array(
+                "join_table" => "formulize_id",
+                "join_field" => array("id_form", "id_form"),
+                "field" => "desc_form"
+            )
+        )
     ),
     "formulize_id" => array(
         "fields" => array("desc_form"),
@@ -243,10 +249,9 @@ $modversion['table_metadata'] = array(
         "fields" => array(),
         "joins" => array(
             array(
-                array(
                     "join_table" => "formulize_applications",
                     "join_field" => array("appid", "appid"),
-                    "field" => "description"
+                "field" => "name"
                 ),
                 array(
                     "join_table" => "formulize_id",
@@ -254,7 +259,6 @@ $modversion['table_metadata'] = array(
                     "field" => "desc_form"
                 )
             )
-        )
     ),
     "formulize_applications" => array(
         "fields" => array("name"),
@@ -325,6 +329,21 @@ $modversion['table_metadata'] = array(
 				"field" => "desc_form"
 			)
 		)
+	),
+    "formulize_entry_owner_groups" => array(
+        "fields" => array("entry_id"),
+        "joins" => array(
+            array(
+                "join_table" => "formulize_id",
+                "join_field" => array("fid", "id_form"),
+                "field" => "desc_form"
+            ),
+            array(
+                "join_table" => "groups",
+                "join_field" => array("groupid", "groupid"),
+                "field" => "name"
+            )
+        )
 	)
 );
 
