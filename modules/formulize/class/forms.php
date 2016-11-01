@@ -913,6 +913,7 @@ class formulizeFormsHandler {
 		if(!$element = _getElementObject($element)) {
 			return false;
 		}
+        if($element->hasData) {
 		global $xoopsDB;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($element->getVar('id_form'));
@@ -930,6 +931,9 @@ class formulizeFormsHandler {
 			}
 		}
 		return true;
+        } else {
+            return false;
+        }
 	}
 	
 	// update the field name in the datatable.  $element can be an id or an object.
@@ -1362,7 +1366,7 @@ class formulizeFormsHandler {
 		}
 	}
 
-	function renameDataTable($oldName, $newName, $formObject) {
+	function renameDataTable($oldName, $newName) {
 		global $xoopsDB;
 
 		$renameSQL = "RENAME TABLE " . $xoopsDB->prefix("formulize_" . $oldName) . " TO " . $xoopsDB->prefix("formulize_" . $newName) . ";";
@@ -1370,10 +1374,10 @@ class formulizeFormsHandler {
 		if(!$renameRes = $xoopsDB->queryF($renameSQL)) {
 		  return false;
 		}
-		if($this->revisionsTableExists($oldName)) { // check with the fid, which will force the method to get a cached version of the object, that will have the old name, so we can check against that name (form_settings_save.php sends the updated object with the new name)
+		if($this->revisionsTableExists($oldName)) { 
 			$renameSQL = "RENAME TABLE " . $xoopsDB->prefix("formulize_" . $oldName."_revisions") . " TO " . $xoopsDB->prefix("formulize_" . $newName."_revisions") . ";";
 			if(!$renameRes = $xoopsDB->queryF($renameSQL)) {
-			  print "Error: could not rename the revisions table for form ".$formObject->getVar('form_handle');
+			  print "Error: could not rename the revisions table for form $oldName";
 			  return false;
 			}
 		}
