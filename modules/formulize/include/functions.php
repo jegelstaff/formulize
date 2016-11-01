@@ -5568,3 +5568,18 @@ function isMetaDataField($field){
     }
     return false;
 }
+
+/*
+ * sendSaveLockPrefToTemplate function returns the isSaveLocked preference value. Used to send value to template
+ *
+ * return isSaveLocked       preference defining whether the functionality of saving is locked or not
+ */
+function sendSaveLockPrefToTemplate(){ //$xoopsTpl
+    // get preference value
+    $module_handler = xoops_gethandler('module');
+    $config_handler = xoops_gethandler('config');
+    $formulizeModule = $module_handler->getByDirname("formulize");
+    $formulizeConfig = $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
+    
+    return $formulizeConfig['isSaveLocked'];
+}

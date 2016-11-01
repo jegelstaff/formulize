@@ -42,7 +42,6 @@ $xoopsThemeFactory = new xos_opal_ThemeFactory();
 $xoTheme =& $xoopsThemeFactory->createInstance();
 $xoopsTpl =& $xoTheme->template;
 
-
 global $xoopsConfig, $xoopsDB;
 // load the formulize language constants if they haven't been loaded already
 if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
@@ -76,9 +75,12 @@ $content['form2']['elements'] = generateElementList($formObj2);
 $content['form1']['default'] = getDefault($lid, 1);
 $content['form2']['default'] = getDefault($lid, 2);
 
+// make isSaveLocked preference available to template
+$content['isSaveLocked'] = sendSaveLockPrefToTemplate();
 
 $xoopsTpl->assign("content",$content);
 $xoopsTpl->display("db:admin/relationship_common_values.html");
+
 
 
 // THIS FUNCTION CREATES THE ARRAY OF ELEMENTS FOR USE IN THE LISTBOXES

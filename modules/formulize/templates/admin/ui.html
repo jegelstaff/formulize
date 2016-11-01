@@ -59,7 +59,7 @@ $(document).ready(function() {
 		  $('#admin_toolbar').removeClass('ui-corner-all');
 		};
 	  });
-		
+	  
 	});
 </script>
 <!-- end jquery -->
@@ -115,7 +115,13 @@ $(document).ready(function() {
 <!-- modified by Freeform Solutions, S.Gray, April 11, 2011 -->
 <{if $adminPage.needsave}>
 <div id="admin_toolbar">
-<div id=savebutton><input type="button" class="savebutton" value="<{$smarty.const._AM_HOME_SAVECHANGES}>"/></div>
+<div id=savebutton>
+<{if $adminPage.isSaveLocked}>
+	READ ONLY
+<{else}>
+    <input type="button" class="savebutton" id="save" value="<{$smarty.const._AM_HOME_SAVECHANGES}>"/>    
+<{/if}>
+</div>
 <div id="savewarning" class="ui-corner-all"><{$smarty.const._AM_HOME_WARNING_UNSAVED}></div>
 <div id="derivedfinished" class="ui-corner-all" style="display:none"><{$smarty.const._AM_ELE_DERIVED_DONE}></div>
 </div><!-- /admin_toolbar -->
@@ -129,7 +135,7 @@ $(document).ready(function() {
 <{include file="db:admin/ui-tabs.html" tabs=$adminPage.tabs}>
 <{/if}>
   
-<p class="versionnumber">Version 5.0 RC1</p>
+<p class="versionnumber">Version <{$version}></p>
 
 </div><!-- End admin-ui -->
 
@@ -140,7 +146,7 @@ $(document).ready(function() {
   var redirect = "";
   var newhandle = "";
   var formdata = new Array();
-
+  
   $("input").change(function() {
     setDisplay('savewarning','block');
     });
