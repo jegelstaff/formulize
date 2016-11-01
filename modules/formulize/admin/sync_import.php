@@ -14,11 +14,14 @@ if (isset($_POST['syncimport'])) {
     $catalog = new SyncCompareCatalog();
     if ($catalog->loadCachedChanges()) {
         // commit database changes
-        $syncimport['content']['result'] = $catalog->commitChanges();
+        
+        $syncimport['content']['result'] = $catalog->commitChanges("_formulize_id"); // make tables first
+        $syncimport['content']['result'] = $catalog->commitChanges("_formulize"); // then make elements
+        $syncimport['content']['result'] = $catalog->commitChanges(); // do the rest of the tables
 
         // export archive files
         $csvFilepath = getCachedExportFilepath();
-        extractTemplateFiles($csvFilepath);
+        //extractTemplateFiles($csvFilepath); // UNCOMMENT WHEN WE'RE READY TO INCLUDE FILES WITH THE SYNCHRONIZATION!!!
 
         $syncimport['content']['result']['success'] = true; // TODO catch and display errors from above
     }

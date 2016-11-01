@@ -58,7 +58,10 @@ if (isset($_POST['export'])) {
     }
 }
 // retrieve the post information from the import submit
-else if(isset($_POST['import'])) {
+else if(isset($_POST['import']) OR isset($_GET['partial'])) {
+    
+    if(!isset($_GET['partial'])) {
+    
     $uploadOK = true;                       // todo: should possibly be an associative array with true/false and message ??
     $filepath = $_FILES['fileToUpload']['tmp_name'];
 
@@ -75,28 +78,33 @@ else if(isset($_POST['import'])) {
             if ($extractResult["success"] == true) {
                 $csvPath = $extractResult["csvPath"];
                 $dbResult = csvToDB($csvPath);
-
-                if ($dbResult["success"] == true) {
-                    header("Location: ui.php?page=sync-import"); // redirect to sync import review changes
-                }
-                else {
-                    $sync[1]['content']['error'] = "import_err";
-                }
-            }
-            // return an error as there were issues importing the file
+                } // return an error as there were issues importing the file
             else {
                 $sync[1]['content']['error'] = "import_err";
             }
-        }
-        // return error as there were issues with the file selected
+            } // return error as there were issues with the file selected
         else {
             $sync[1]['content']['error'] = "upload_err";
         }
-    }
-    // return an error as no filename was chosen (or set in $filepath)
+        }// return an error as no filename was chosen (or set in $filepath)
     else {
         $sync[1]['content']['error'] = "file_err";
     }
+
+    } else {
+        $csvPath = $_GET['partial'];
+        $dbResult = csvToDB($_GET['partial']);
+    }
+        
+    if ($dbResult["success"] == true AND $dbResult["partial"] == false) {
+        deleteDir($csvPath); // clean up temp folder and CSV files
+        header("Location: ui.php?page=sync-import"); // redirect to sync import review changes
+    } elseif($dbResult["success"] == true) {
+        header("Location: ui.php?page=synchronize&partial=".urlencode($csvPath)); // redirect to continue import
+    } else {
+        $sync[1]['content']['error'] = "import_err";
+    }
+    
 }
 else {
     $filepath = "";

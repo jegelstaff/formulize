@@ -1,6 +1,7 @@
 <?php
 
 include_once '../class/forms.php';
+include_once 'functions.php';
 
 class SyncCompareCatalog {
 
@@ -23,6 +24,7 @@ class SyncCompareCatalog {
      * }
      */
     private $changes = array();
+    public $doneFilePaths = array();
 
     function __construct() {
         // open a connection to the database
@@ -44,6 +46,7 @@ class SyncCompareCatalog {
     // === PUBLIC FUNCTIONS ===
 
     public function addRecord($tableName, $record, $fields) {
+        
         // there should be one record value for each field string
         if (count($record) != count($fields)) {
             throw new Exception("compare(...) requires record and fields to have the same number of values");
@@ -54,30 +57,61 @@ class SyncCompareCatalog {
             $this->addTableChange($tableName, $fields, $record);
         }
         else {
-            $primaryField = $this->getPrimaryField($tableName);
-            $recPrimaryValue = $record[array_search($primaryField, $fields)];
-
-            $result = $this->getRecord($tableName, $primaryField, $recPrimaryValue);
+            $result = $this->getRecord($tableName, $record, $fields);
             $recordExists = $result->rowCount() > 0;
 
+            /*static $counter = 0;
+            //if($tableName == "_formulize_milestones" AND $record[8] == "Standard") {
+                $counter++;
+                static $debugOn;
+                $debugOn = true;
+                print "<pre>";
+                
+                print "Fields: \n\r";
+                print_r($fields);
+                
+                print "source record number $counter:\n\r";
+                print_r($record);
+                if($recordExists) {
+                    $dbRecorddebug = $result->fetchAll();
+                    $dbRecorddebug = $dbRecorddebug[0];
+                    $dbRecord = $dbRecorddebug;
+                    print "target record:\n\r";
+                    print_r($dbRecorddebug);
+                } else {
+                    print "No matching record found!\n\r";
+                }
+                print "</pre>";
+            } else {
+                $debugOn = false;
+            }*/
+            
             if (!$recordExists) {
                 $this->addRecChange("insert", $tableName, $fields, $record);
-            } else {  // if the record exists, compare the data values, add any update statement to $compareResults
+                /*if($debugOn) {
+                    print "INSERTING RECORD<BR>";
+                }*/
+            
+            // if the record exists, compare the data values, add any update statement to $compareResults
+            // Except for entry_owner_groups, we don't update records there, since if we found an entry, then it already exists, no need to update. Only inserts need to be made (or deletions???)
+            } elseif($tableName != "_formulize_entry_owner_groups") {  
+                //if(!$debugOn) {
                 $dbRecord = $result->fetchAll();
                 $dbRecord = $dbRecord[0];
+                //}
 
                 // compare each record field for changes
-                $isChanged = FALSE;
                 for ($i = 0; $i < count($record); $i++) {
                     $field = $fields[$i];
                     $value = $record[$i];
-                    $dbValue = (string)$dbRecord[$field];
+                    $dbValue = $dbRecord[$field];
                     if ($dbValue != $value) {
-                        $isChanged = TRUE;
-                    }
-                }
-                if ($isChanged) {
+                        /*if($debugOn) {
+                            print "NO MATCH ON FIELD: $field [$dbValue : $value]-- UPDATING RECORD<BR>";
+                        }*/
                     $this->addRecChange("update", $tableName, $fields, $record);
+                        break;
+                    }
                 }
             }
         }
@@ -92,6 +126,9 @@ class SyncCompareCatalog {
         $descrs = array();
 
         foreach ($this->changes as $tableName => $tableInfo) {
+
+            $tableName = trim($tableName, "_");
+
             $descrs[$tableName] = array("inserts"=>array(), "updates"=>array(), "deletes"=>array());
             $descrs[$tableName]["createTable"] = $tableInfo["createTable"];
 
@@ -118,47 +155,41 @@ class SyncCompareCatalog {
         cacheVar($this->changes, $sessVarName);
     }
 
+    public function cacheFilePath($filePath) {
+        $sessVarName = "sync-filepaths-" .  session_id() . ".cache";
+        $this->doneFilePaths[] = $filePath;
+        cacheVar($this->doneFilePaths, $sessVarName);
+    }
+    
     public function loadCachedChanges() {
         // TODO - if loaded changes was successful but an empty array then this returns false
         //           and a "no import data" error is displayed on UI...
         $sessVarName = "sync-changes-" .  session_id() . ".cache";
+        $sessVarNameFilePaths = "sync-filepaths-" .  session_id() . ".cache";
         $this->changes = loadCachedVar($sessVarName);
-        return boolval($this->changes);
+        $this->doneFilePaths = loadCachedVar($sessVarNameFilePaths);
+        return $this->changes ? true : false;
+    
     }
 
-    public function commitChanges() {
-        $numSuccess = 0;
-        $numFail = 0;
+    public function commitChanges($onlyThisTableName = false) {
+        static $numSuccess = 0;
+        static $numFail = 0;
 
-        // iterate through, commit all inserts that are not on new tables
+        static $processedTables = array();
+
         foreach ($this->changes as $tableName => $tableData) {
+            if(!isset($processedTables[$tableName]) AND (!$onlyThisTableName OR $tableName == $onlyThisTableName)) {
             $fields = $tableData["fields"];
-            if ($tableData["createTable"] == FALSE) {
                 foreach ($tableData["inserts"] as $rec) {
                     ($this->commitInsert($tableName, $rec, $fields)) ? $numSuccess++ : $numFail++;
                 }
-            }
-        }
-
-        // now commit all updates not on new tables
-        foreach ($this->changes as $tableName => $tableData) {
-            $fields = $tableData["fields"];
-            if ($tableData["createTable"] == FALSE) {
                 foreach ($tableData["updates"] as $rec) {
                     ($this->commitUpdate($tableName, $rec)) ? $numSuccess++ : $numFail++;
                 }
-            }
-        }
-
-        // now create all the data tables and insert the new records into them
-        foreach ($this->changes as $tableName => $tableData) {
-            $fields = $tableData["fields"];
-            if ($tableData["createTable"] == TRUE) {
-                ($this->commitCreateTable($tableName)) ? $numSuccess++ : $numFail++;
-
-                // now insert all records that go into this table
-                foreach ($tableData["inserts"] as $rec) {
-                    ($this->commitInsert($tableName, $rec, $fields)) ? $numSuccess++ : $numFail++;
+                    $processedTables[$tableName] = true;
+                    if($tableName == $onlyThisTableName) {
+                        break;
                 }
             }
         }
@@ -201,13 +232,23 @@ class SyncCompareCatalog {
     }
 
     private function tableExists($tableName) {
+        static $checkedTables = array();
+        if(!isset($checkedTables[$tableName])) {
         $result = $this->db->query('SHOW TABLES LIKE "'.prefixTable($tableName).'";');
-        $tableExists = $result->rowCount() > 0;
-        return $tableExists;
+            $checkedTables[$tableName] = $result->rowCount() > 0;
+        }
+        return $checkedTables[$tableName];
     }
 
-    private function getRecord($tableName, $primaryField, $primaryValue) {
-        $result = $this->db->query('SELECT * FROM '.prefixTable($tableName).' WHERE '.$primaryField.' = "'.$primaryValue.'";');
+    private function getRecord($tableName, $record, $fields) {
+        if($tableName == "_formulize_entry_owner_groups") {
+            $result = $this->db->query('SELECT * FROM '.prefixTable($tableName).' WHERE fid='.intval($record[array_search("fid", $fields)]).' AND entry_id = '.intval($record[array_search("entry_id", $fields)]).' AND groupid = '.intval($record[array_search("groupid", $fields)]).';');
+        } else {
+            $primaryField = $this->getPrimaryField($tableName);
+            $recPrimaryValue = $record[array_search($primaryField, $fields)];
+            $recPrimaryValue = is_numeric($recPrimaryValue) ? $recPrimaryValue : '"'.formulize_db_escape($recPrimaryValue).'"';
+            $result = $this->db->query('SELECT * FROM '.prefixTable($tableName).' WHERE '.$primaryField.' = '.$recPrimaryValue.';');    
+        }
         return $result;
     }
 
@@ -268,6 +309,7 @@ class SyncCompareCatalog {
 
     // this function will search the changes list first then fallback to the DB
     private function getRecMetadataFromChanges($tableName, $tableMetaInfo, $record) {
+        return array(); // TODO!!!!!!
         $metadata = array();
 
         // first add the fields from this very table record that might be indicated as metadata
@@ -367,63 +409,138 @@ class SyncCompareCatalog {
 
     // insert a new record into the database
     private function commitInsert($tableName, $record, $fields) {
-        $sql = 'INSERT INTO '.prefixTable($tableName).' ('.join(", ", $fields).') VALUES (';
+        if(strstr($tableName, "formulize_entry_owner_groups")) {
+            unset($fields[array_search("owner_id", $fields)]);
+            unset($record['owner_id']);
+        }
+        
+        $sql = 'INSERT INTO '.prefixTable($tableName).' (`'.join("`, `", $fields).'`) VALUES (';
 
         // add comma separated list of values
         foreach ($record as $field => $value) {
-            $sanitizedValue = $this->db->quote($value);
-            $sql .= '"'.$sanitizedValue.'", ';
+            //$sanitizedValue = $this->db->quote($value);
+            //$sql .= '"'.$sanitizedValue.'", ';
+            if(is_numeric($value)) {
+                $sql .= $value.", ";
+            } else {
+                $sql .= '"'.formulize_db_escape($value).'", ';    
+            }
+            
         }
         $sql = substr($sql, 0, -2); // remove the unnecessary trailing ', '
         $sql .= ');'; //close values brackets
 
+        //file_put_contents(XOOPS_ROOT_PATH."/modules/formulize/temp/importSQL.sql", $sql."\n\r", FILE_APPEND);
         $result = $this->db->query($sql);
+        
+        // creation operations depend on the metadata being inserted into the db already!
+        if($tableName == "_formulize_id") {
+            $this->commitCreateTable($record['id_form']);
+        }
+        if($tableName == "_formulize") {
+            $this->commitCreateField($record['ele_id']);
+        }
+        
         // returns success/failure of query based on number of affected rows
         return $result->rowCount() == 1;
     }
 
     // update an existing record in the database
     private function commitUpdate($tableName, $record) {
-        $primaryField = $this->getPrimaryField($tableName);
-        $recPrimaryValue = $record[$primaryField];
+        if(strstr($tableName, "formulize_entry_owner_groups")) {
+            unset($record['owner_id']);
+        }
+
+        if($tableName == "_formulize") {
+            // get the current name, then update the field
+            $element_handler = xoops_getmodulehandler('elements', 'formulize');
+            $curElement = $element_handler->get($record['ele_id']);
+            if($record['ele_handle'] != $curElement->getVar('ele_handle')) {
+                $this->commitUpdateField($record['ele_id'], $curElement->getVar('ele_handle'), false, $record['ele_handle']); // false means no datatype, changes to data type have to be made manually
+            }
+        }
+        if($tableName == "_formulize_id") {
+            // get the current name, then update the table
+            $form_handler = xoops_getmodulehandler('forms','formulize');
+            $curForm = $form_handler->get($record['id_form']);
+            if($record['form_handle'] != $curForm->getVar('form_handle')) {
+                $this->commitUpdateTable($curForm->getVar('form_handle'), $record['form_handle']);
+            }
+        }
 
         $sql = 'UPDATE '.prefixTable($tableName).' SET ';
 
         foreach ($record as $field => $value) {
-            $sql .= $field.'="'.$value.'", ';
+            $value = is_numeric($value) ? $value : '"'.formulize_db_escape($value).'"';
+            $sql .= "`$field` = $value, ";
         }
 
         // remove the unnecessary trailing ', '
         $sql = substr($sql, 0, -2);
 
         // add the where clause to specify which record to update
-        $sql .= ' WHERE '.$primaryField.'="'.$recPrimaryValue.'"';
+        if(strstr($tableName, "formulize_entry_owner_groups")) {
+            $sql .= ' WHERE fid='.intval($record['fid']).' AND entry_id='.intval($record['entry_id']).';';
+        } else {
+            $primaryField = $this->getPrimaryField($tableName);
+            $recPrimaryValue = $record[$primaryField];
+            $recPrimaryValue = is_numeric($recPrimaryValue) ? $recPrimaryValue : '"'.formulize_db_escape($recPrimaryValue).'"';
+            $sql .= ' WHERE '.$primaryField.' = '.$recPrimaryValue.';';
+        }
 
+        //file_put_contents(XOOPS_ROOT_PATH."/modules/formulize/temp/importSQL.sql", $sql."\n\r", FILE_APPEND);
         $result = $this->db->query($sql);
         // returns success/failure of query based on number of affected rows
         return $result->rowCount() == 1;
     }
 
     // use the forms class to create a new form data table in the database
-    private function commitCreateTable($tableName) {
+    private function commitCreateTable($fid) {
+        static $createdTables = array();
+        if(!isset($createdTables[$fid])) {
         // get the fid for the data table based on the table name
-        $formHandle = substr($tableName, strlen(XOOPS_DB_PREFIX."_formulize_"));
-        $formHandler =& xoops_getmodulehandler('forms', 'formulize');
-        $fid = $formHandler->getByHandle($formHandle);
-
+            $formHandler = xoops_getmodulehandler('forms', 'formulize');
         // create the data table and return the boolean success result
-        $success = $formHandler->createDataTable($fid);
-        return $success;
+            //file_put_contents(XOOPS_ROOT_PATH."/modules/formulize/temp/importSQL.sql", "Create table $fid\n\r", FILE_APPEND);
+            $createdTables[$fid] = $formHandler->createDataTable($fid);
+        }
+        return $createdTables[$fid];
     }
+    
+    // add fields to existing datatables
+    private function commitCreateField($element) {
+        $formHandler = xoops_getmodulehandler('forms', 'formulize');
+        return $formHandler->insertElementField($element, false); // we'll specify no datatype and end up with a 'text' field
+    }
+    
+    // remove fields on existing datatables
+    private function commitDeleteField($element) {
+        $formHandler = xoops_getmodulehandler('forms', 'formulize');
+        return $formHandler->deleteElementField($element);
+    }
+
+    // rename a table
+    private function commitUpdateTable($oldName, $newName) {
+        $formHandler = xoops_getmodulehandler('forms', 'formulize');
+        return $formHandler->renameDataTable($oldName, $newName);
+    }
+    
+    // rename/update a field
+    private function commitUpdateField($element, $oldName, $dataType=false, $newName="") {
+        $formHandler = xoops_getmodulehandler('forms', 'formulize');
+        return updateField($element, $oldName, $dataType, $newName);    
+    }
+    
+    
 }
 
 function prefixTable($tableName) {
-    return XOOPS_DB_PREFIX."_".$tableName;
+    return XOOPS_DB_PREFIX."_".trim($tableName, "_"); // sometimes it has a preceeding _ and sometimes not!! Ugh
 }
 
 function cacheVar($var, $varname) {
     // cleanup any old files from this cached variable
-    formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/cache/", $varname);
+    formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/cache/", ".cache");
 
     // serialize variable and write to file in cache
     $filepath = XOOPS_ROOT_PATH . "/modules/formulize/cache/" . $varname;
@@ -432,7 +549,7 @@ function cacheVar($var, $varname) {
 
 function loadCachedVar($varname) {
     // cleanup any old files from this cached variable
-    formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/cache/", $varname);
+    formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/cache/", ".cache");
 
     // get cached variable and unserialize
     try {
