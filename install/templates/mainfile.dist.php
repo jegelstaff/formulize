@@ -67,9 +67,9 @@ if (!defined("XOOPS_MAINFILE_INCLUDED")) {
             $slashType = strstr(XOOPS_ROOT_PATH,"/") ? "/" : "\\";
             $slashPos = 0;
             $base_url = "";
-            while($nextSlashPos = strpos(XOOPS_ROOT_PATH,$slashType,$slashPos+1)) {
-                $rpPart = substr(XOOPS_ROOT_PATH,$slashPos,$nextSlashPos-$slashPos);
-                $drPart = substr($_SERVER["DOCUMENT_ROOT"],$slashPos,$nextSlashPos-$slashPos);
+            while($nextSlashPos = strpos(XOOPS_ROOT_PATH.$slashType,$slashType,$slashPos+1)) {
+                $rpPart = substr(XOOPS_ROOT_PATH,$slashPos+1,$nextSlashPos-$slashPos-1);
+                $drPart = substr($_SERVER["DOCUMENT_ROOT"],$slashPos+1,$nextSlashPos-$slashPos-1);
                 if($rpPart == $drPart) {
                     $slashPos = $nextSlashPos; // look for the next part of the path
                 } else {
