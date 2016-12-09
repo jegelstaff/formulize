@@ -1374,6 +1374,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 
 	$returnArray = array();
 	$returnArray[0] = $buttonCodeArray; // send this back so it's available in the bottom template if necessary.  MUST USE NUMERICAL KEYS FOR list TO WORK ON RECEIVING END.
+    $GLOBALS['formulize_buttonCodeArray'] = $buttonCodeArray;
 	return $returnArray;
 }
 
