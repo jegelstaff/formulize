@@ -152,20 +152,20 @@ print "<tr><td class=head>" . _formulize_DE_AVAILCOLS . "</td><td class=even>";
 $counter = 1;
 // add in the default columns first and they'll be visible
 foreach($options as $value=>$option) {
-    if(in_array($value, $defaultCols)) {
+    if(in_array($value, $defaultCols) OR in_array($value, $selectedCols)) {
         $selected = in_array($value, $selectedCols) ? "checked='checked'" : "";
         print "<label><input type='checkbox' name='popnewcols[]' id='popnewcols".$counter."' class='colbox' value=\"$value\" $selected />&nbsp;&nbsp;&nbsp;$option</label><br />\n";
         $counter++;
         unset($options[$value]);
     }
 }
+
 // add in the rest of the columns second, they'll be invisible
 if(count($options) > 0) {
     print "<p><a onclick='javascript:toggleAllCols();return false;'>"._formulize_DE_SHOWALLCOLS."</a></p>";
     print "<div id='allcols' style='display:none;'>";
     foreach($options as $value=>$option) {
-        $selected = in_array($value, $selectedCols) ? "checked='checked'" : "";
-        print "<label><input type='checkbox' name='popnewcols[]' id='popnewcols".$counter."' class='colbox' value=\"$value\" $selected />&nbsp;&nbsp;&nbsp;$option</label><br />\n";
+        print "<label><input type='checkbox' name='popnewcols[]' id='popnewcols".$counter."' class='colbox' value=\"$value\" />&nbsp;&nbsp;&nbsp;$option</label><br />\n";
         $counter++;
     }
     print "</div>";
