@@ -3418,11 +3418,11 @@ function clearAll(formObj)
    }
 }
 */
-function delete_view(formObj, pubstart, endstandard) {
+function delete_view(pubstart, endstandard) {
 
-	for (var i=0; i < formObj.currentview.options.length; i++) {
-		if (formObj.currentview.options[i].selected) {
-			if( i > endstandard && i < pubstart && formObj.currentview.options[i].value != "") {
+	for (var i=0; i < window.document.controls.currentview.options.length; i++) {
+		if (window.document.controls.currentview.options[i].selected) {
+			if( i > endstandard && i < pubstart && window.document.controls.currentview.options[i].value != "") {
 				var answer = confirm ('<?php print _formulize_DE_CONF_DELVIEW; ?>');
 				if (answer) {
 					window.document.controls.delview.value = 1;
@@ -3432,7 +3432,7 @@ function delete_view(formObj, pubstart, endstandard) {
 					return false;
 				}
 			} else {
-				if(formObj.currentview.options[i].value != "") {
+				if(window.document.controls.currentview.options[i].value != "") {
 					alert('<?php print _formulize_DE_DELETE_ALERT; ?>');
 				}
 				return false;
@@ -4339,7 +4339,7 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=save value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/save.php?fid=$fid&frid=$frid&lastloaded=$lastloaded&cols=$flatcols&currentview=$currentview&loadonlyview=$loadOnlyView');\"></input>";
 				break;
 			case "deleteViewButton":
-				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=delete value='" . $buttonText . "' onclick=\"javascript:delete_view(this.form, '$pubstart', '$endstandard');\"></input>";
+				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=delete value='" . $buttonText . "' onclick=\"javascript:delete_view('$pubstart', '$endstandard');\"></input>";
 				break;
 			case "currentViewList":
 				$currentViewList = "<b>" . $buttonText . "</b><br><SELECT style=\"width: 350px;\" name=currentview id=currentview size=1 onchange=\"javascript:change_view(this.form, '$pickgroups', '$endstandard');\">\n";
