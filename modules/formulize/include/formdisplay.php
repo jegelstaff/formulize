@@ -1376,9 +1376,9 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
     }
 
 	// check for adding of a sub entry, and handle accordingly -- added September 4 2006
-	static $subformInstance;
-	$subformInstance = !isset($subformInstance) ? 100 : $subformInstance;
-	$subformInstance++;
+	global $formulize_subformInstance;
+	$subformInstance = $formulize_subformInstance+1;
+    $formulize_subformInstance = $subformInstance;
 	
 	if($_POST['target_sub'] AND $_POST['target_sub'] == $subform_id AND $_POST['target_sub_instance'] == $subformElementId.$subformInstance) { // important we only do this on the run through for that particular sub form (hence target_sub == sfid), and also only for the specific instance of this subform on the page too, since not all entries may apply to all subform instances any longer with conditions in effect now
 		// need to handle things differently depending on whether it's a common value or a linked selectbox type of link
