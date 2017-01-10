@@ -606,7 +606,7 @@ function formulize_mergeUIText($values, $uitext) {
         // don't alter linked selectbox properties
         return $values;
     }
-    if (is_array($value)) {
+    if (is_array($values)) {
         $newvalues = array();
         foreach($values as $key=>$value) {
             if (isset($uitext[$key])) {
