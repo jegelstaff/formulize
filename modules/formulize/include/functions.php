@@ -4852,7 +4852,14 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
         $origlikebits = "";
         $quotes = is_numeric($filterTerms[$filterId]) ? "" : "'";
     }
-    if ($targetFormElementTypes[$filterElementIds[$filterId]] == "select") {
+    if(!isset($filterElementIds[$filterId])) {
+        print "Critical Error: You have a condition set that is relying on an deleted or renamed element.<br>";
+        print "The terms of the condition are: ";
+        print_r($filterTerms);
+        print "The elements on the target form are:  ";
+        print_r($filterElementIds);
+        exit();
+    } elseif ($targetFormElementTypes[$filterElementIds[$filterId]] == "select") {
         // check for whether the source element is a linked selectbox, and if so, figure out the entry id of the record in the source of that linked selectbox which matches the filter term instead
         $targetElementObject = $element_handler->get($filterElementIds[$filterId]);
         if ($targetElementObject->isLinked) {
