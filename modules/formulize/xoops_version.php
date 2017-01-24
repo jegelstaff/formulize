@@ -812,6 +812,15 @@ $modversion['config'][] = array(
 	'default' => '0',
 );
 
+$modversion['config'][] = array(
+	'name' => 'customScope',
+	'title' => '_MI_formulize_CUSTOMSCOPE',
+	'description' => '_MI_formulize_CUSTOMSCOPEDESC ',
+	'formtype' => 'textarea',
+	'valuetype' => 'text',
+	'default' => '',
+);
+
 
 //bloc
 $modversion['blocks'][1] = array(

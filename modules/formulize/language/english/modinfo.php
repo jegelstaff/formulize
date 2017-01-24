@@ -89,6 +89,9 @@ define("_MI_formulize_NOTIFYBYCRONDESC", "When this is on, create a cron job tha
 define("_MI_formulize_ISSAVELOCKED", "Lock system for synchronization");
 define("_MI_formulize_ISSAVELOCKEDDESC", "When locked, you can only change the configuration of Formulize by synchronizing with another system. This is intended for use in a live production system that is being updated by periodic synchronization with a staging system.");
 
+define("_MI_formulize_CUSTOMSCOPE", "Use custom code for determining the scope of queries");
+define("_MI_formulize_CUSTOMSCOPEDESC", "Leave this blank, unless you specifically want to override the \$scope variable used in the data extraction layer. The contents of this box will be run as PHP code, and will receive the \$scope variable, which is typically an array of group ids. You can return a set of different ids, or a string in the format 'uid = X' or 'uid = X OR uid = Y...' This is useful if you can isolate certain groups using only one or a few user ids, since then the subquery to the Entry Owner Groups table is bypassed, dramatically improving query speed in large databases.");
+
 // The name of this module
 define("_MI_formulizeMENU_NAME","MyMenu");
 
