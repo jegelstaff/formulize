@@ -495,6 +495,15 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 
 	  if(is_array($filter) OR (substr($filter, 0, 6) != "SELECT" AND substr($filter, 0, 6) != "INSERT")) { // if the filter is not itself a fully formed SQL statement...
     
+            $config_handler = xoops_gethandler('config');
+            $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+            if(trim($formulizeConfig['customScope'])!='' AND strstr($formulizeConfig['customScope'], "return \$scope;")) {
+                $customScope = eval($formulizeConfig['customScope']);
+                if($customScope !== false) {
+                    $scope = $customScope;
+                }
+            }
+    
 	       $scopeFilter = "";
 	       if(is_array($scope)) { // assume any arrays are groupid arrays, and so make a valid scope string based on this.  Use the new entry owner table.
 		    if(count($scope) > 0 ) {
