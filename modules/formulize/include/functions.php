@@ -3640,7 +3640,7 @@ function synchSubformBlankDefaults($fid, $entry) {
                     $value_to_write = $data_handler->getElementValueInEntry($_POST['formulize_subformValueSourceEntry_'.$sfid], $_POST['formulize_subformValueSource_'.$sfid]);
                 }
             } else {
-                $value_to_write = "$entry";
+                $value_to_write = "$sourceEntryId";
             }
 
             // actually write the linked/common values
