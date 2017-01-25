@@ -42,6 +42,7 @@ if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['la
 }
 
 include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
+include_once XOOPS_ROOT_PATH ."/modules/formulize/class/data.php";
 
 include_once XOOPS_ROOT_PATH."/class/xoopsformloader.php";
 include_once XOOPS_ROOT_PATH . "/include/functions.php";
@@ -1471,7 +1472,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	
 	
 	
-
+    $data_handler = new formulizeDataHandler($subform_id);
 	
 
 	// need to do a number of checks here, including looking for single status on subform, and not drawing in add another if there is an entry for a single
@@ -1556,8 +1557,6 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 			$col_two .= "<div id=\"subform-$subformElementId\" class=\"subform-accordion-container\" subelementid=\"$subformElementId\" style=\"display: none;\">";
 		}
 		$col_two .= "<input type='hidden' name='subform_entry_".$subformElementId."_active' id='subform_entry_".$subformElementId."_active' value='' />";
-		include_once XOOPS_ROOT_PATH ."/modules/formulize/class/data.php";
-		$data_handler = new formulizeDataHandler($subform_id);
 	}
 
 	$deFrid = $frid ? $frid : ""; // need to set this up so we can pass it as part of the displayElement function, necessary to establish the framework in case this is a framework and no subform element is being used, just the default draw-in-the-one-to-many behaviour
@@ -1646,6 +1645,13 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 		$currentSubformInstance = $subformInstance;
 
 		foreach($sub_entries[$subform_id] as $sub_ent) {
+            
+            // validate that the sub entry has a value for the key field that it needs to (in cases where there is a sub linked to a main and a another sub (ie: it's a sub sub of a sub, and a sub of the main, at the same time, we don't want to draw in entries in the wrong place -- they will be part of the sub_entries array, because they are part of the dataset, but they should not be part of the UI for this subform instance!)
+            // $element_to_write is the element in the subform that needs to have a value
+            if(!$subFormKeyElementValue = $data_handler->getElementValueInEntry($sub_ent, $element_to_write)) {
+                continue;
+            }   
+            
 			if($sub_ent != "") {
 				
 				if($rowsOrForms=='row' OR $rowsOrForms =='') {
