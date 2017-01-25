@@ -4852,8 +4852,8 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
         $origlikebits = "";
         $quotes = is_numeric($filterTerms[$filterId]) ? "" : "'";
     }
-    if(!isset($filterElementIds[$filterId])) {
-        print "Critical Error: You have a condition set that is relying on an deleted or renamed element.<br>";
+    if(!isset($filterElementIds[$filterId]) OR !isset($targetFormElementTypes[$filterElementIds[$filterId]])) {
+        print "Critical Error: You have a condition set that is relying on an deleted or renamed element: ".$filterElementIds[$filterId]." OR ".$filterId."<br>";
         print "The terms of the condition are: ";
         print_r($filterTerms);
         print "The elements on the target form are:  ";
