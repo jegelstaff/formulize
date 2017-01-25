@@ -1564,7 +1564,17 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	
 	// if there's been no form submission, and there's no sub_entries, and there are default blanks to show, then do everything differently -- sept 8 2007
 	
-	if(!$_POST['form_submitted'] AND count($sub_entries[$subform_id]) == 0 AND $defaultblanks > 0 AND ($rowsOrForms == "row"  OR $rowsOrForms =='')) {
+    // check if there is a ! flag on the $defaultblanks value
+    // if so, we always show blanks as long as there are no subform entries already
+    $ignoreFormSubmitted = false;
+    if(substr($defaultblanks, -1) == '!') {
+        $defaultblanks = intval(substr($defaultblanks, 0, -1));
+        $ignoreFormSubmitted = true;
+    } else {
+        $defaultblanks = intval($defaultblanks);
+    }
+    
+	if((!$_POST['form_submitted'] OR $ignoreFormSubmitted) AND count($sub_entries[$subform_id]) == 0 AND $defaultblanks > 0 AND ($rowsOrForms == "row"  OR $rowsOrForms =='')) {
 	
 		for($i=0;$i<$defaultblanks;$i++) {
 	
@@ -2088,7 +2098,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 					$sub_entries = $newLinkResults['sub_entries'];
 				}
                 // 2 is the number of default blanks, 3 is whether to show the view button or not, 4 is whether to use captions as headings or not, 5 is override owner of entry, $owner is mainform entry owner, 6 is hide the add button, 7 is the conditions settings for the subform element, 8 is the setting for showing just a row or the full form, 9 is text for the add entries button
-                $subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry, $customCaption, $customElements, intval($ele_value[2]), $ele_value[3], $ele_value[4], $ele_value[5], $owner, $ele_value[6], $ele_value[7], $this_ele_id, $ele_value[8], $ele_value[9], $thisElement);
+                $subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry, $customCaption, $customElements, $ele_value[2], $ele_value[3], $ele_value[4], $ele_value[5], $owner, $ele_value[6], $ele_value[7], $this_ele_id, $ele_value[8], $ele_value[9], $thisElement);
 				if(isset($subUICols['single'])) {
 					$form->insertBreak($subUICols['single'], "even");
 				} else {

@@ -358,7 +358,7 @@ define("_AM_ELE_SUBFORM_HEADINGSORCAPTIONS", "Should each element be labeled wit
 define("_AM_ELE_SUBFORM_HEADINGSORCAPTIONS_HEADINGS", "Column heading (captions will be used for elements with no column heading)");
 define("_AM_ELE_SUBFORM_HEADINGSORCAPTIONS_CAPTIONS", "Caption");
 define("_AM_ELE_SUBFORM_BLANKS", "How many blank spaces should be shown for this subform when the page first loads?");
-define("_AM_ELE_SUBFORM_BLANKS_HELP", "Note: if you have more than one blank space, do not use file upload elements in your subform.  File upload elements only work effectively with one blank subform row at a time.");
+define("_AM_ELE_SUBFORM_BLANKS_HELP", "If you put an exclamation mark after the number (ie: 1!), then blank entries will show up whenever the form loads, as long as no subform entries have been saved yet.<br>Note: if you have more than one blank space, do not use file upload elements in your subform.  File upload elements only work effectively with one blank subform row at a time.");
 define("_AM_ELE_SUBFORM_UITYPE_ROW", "Display each subform entry as a row with only the elements selected below showing");
 define("_AM_ELE_SUBFORM_UITYPE_FORM", "Display each subform entry using the full form, inside a collapsable area that the user can open and close");
 define("_AM_ELE_SUBFORM_ADD_NONE", "No");
