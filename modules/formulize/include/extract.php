@@ -1748,12 +1748,12 @@ function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form
                         }
                         // if the new value is the same as the previous one, then skip updating and saving
                         if ($derivedValue != $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0]) {
-                            $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0] = $derivedValue;
                             if ($xoopsDB) {
                                 // save value for writing to database if XOOPS is active
                                 $elementID = formulize_getIdFromElementHandle($thisMetaData['handle']);
                                 $dataToWrite[$elementID] = $derivedValue;
                             }
+                            $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0] = $derivedValue == '{WRITEASNULL}' ? NULL : $derivedValue;
                         }
                     }
                 }
