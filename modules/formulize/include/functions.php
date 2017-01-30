@@ -917,6 +917,7 @@ function deleteIdReq($id_req, $fid) {
 // owner and owner_groups to be passed in when available (if called from a function where they have already been determined
 // $fid is required
 // $excludeFids is an array of forms that we do not want to delete from in this case regardless (optional)
+function deleteEntry($id_req, $frid="", $fid, $excludeFids=array()) {
     global $xoopsDB;
     $deletedEntries = array();
 
