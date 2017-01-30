@@ -47,6 +47,18 @@ global $xoopsDB;
             $this->initVar("default_screen", XOBJ_DTYPE_TXTBOX, NULL, false, 255); //added oct 2013
 	    $this->initVar("note",XOBJ_DTYPE_TXTBOX,null,false,255);
         }
+        
+        // override the parent's getVar, since we want to allow for abbreviated URLs in the UI, to avoid users having to type the current site URL into the system
+        function getVar($var, $raw=false) {
+            $value = parent::getVar($var);
+            if($var == 'url') {
+                if(!strstr($value,'://') AND (strstr($value, 'sid=') OR strstr($value, 'fid=')) AND !$raw) {
+                    $value = XOOPS_URL."/modules/formulize/index.php?".htmlspecialchars(strip_tags($value));
+                }
+            }
+            return $value;
+        }
+        
     }
     
     class formulizeApplicationMenuLinksHandler  {
