@@ -115,7 +115,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 			$entries[$fid][0] = $entry;
 	
 			if($frid) { 
-				$linkResults = checkForLinks($frid, array(0=>$fid), $fid, $entries, $gperm_handler, $owner_groups, $mid, $member_handler, $owner); 
+				$linkResults = checkForLinks($frid, array(0=>$fid), $fid, $entries); 
 				unset($entries);
 				$entries = $linkResults['entries'];
 			}

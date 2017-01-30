@@ -130,9 +130,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
                 // confirm user has permission to delete this entry
                 if (formulizePermHandler::user_can_delete_entry($fid, $uid, $delete_entry_id)) {
 					$GLOBALS['formulize_deletionRequested'] = true;
-					// new syntax for deleteEntry, Sept 18 2005 -- used to handle deleting all unified display entries that are linked to this entry.  
 					if($frid) {
-						deleteEntry($delete_entry_id, $frid, $fid, $gperm_handler, $member_handler, $mid);
+						deleteEntry($delete_entry_id, $frid, $fid);
 					} else {
 						deleteEntry($delete_entry_id, "", $fid);
 					}

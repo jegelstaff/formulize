@@ -434,9 +434,10 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			}
 		}
 		if(count($subs_to_del) > 0) {
-			
-			deleteFormEntries($subs_to_del, intval($_POST['deletesubsflag'])); // deletesubsflag will be the sub form id
- 			sendNotifications($_POST['deletesubsflag'], "delete_entry", $subs_to_del, $mid, $groups);
+			$excludeFids = array($fid);
+			foreach($subs_to_del as $id_req) {
+                deleteEntry($id_req, $frid, intval($_POST['deletesubsflag']), $excludeFids);
+            }
 		}
 	}
 
@@ -525,7 +526,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 
 
 	if($frid) { 
-		$linkResults = checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_groups, $mid, $member_handler, $owner, true); // final true means only include entries from unified display linkages
+		$linkResults = checkForLinks($frid, $fids, $fid, $entries, true); // final true means only include entries from unified display linkages
 		unset($entries);
 		unset($fids);
 
@@ -2100,7 +2101,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 				$customCaption = $i->getVar('ele_caption');
 				$customElements = $ele_value[1] ? explode(",", $ele_value[1]) : "";
 				if(isset($GLOBALS['formulize_inlineSubformFrid'])) {
-					$newLinkResults = checkForLinks($GLOBALS['formulize_inlineSubformFrid'][0], array($fid), $fid, array($fid=>array($entry)), null, $owner_groups, $mid, null, $owner, true); // final true means only include entries from unified display linkages
+					$newLinkResults = checkForLinks($GLOBALS['formulize_inlineSubformFrid'][0], array($fid), $fid, array($fid=>array($entry)), true); // final true means only include entries from unified display linkages
 					$sub_entries = $newLinkResults['sub_entries'];
 				}
                 // 2 is the number of default blanks, 3 is whether to show the view button or not, 4 is whether to use captions as headings or not, 5 is override owner of entry, $owner is mainform entry owner, 6 is hide the add button, 7 is the conditions settings for the subform element, 8 is the setting for showing just a row or the full form, 9 is text for the add entries button

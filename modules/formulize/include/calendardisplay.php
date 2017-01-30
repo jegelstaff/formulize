@@ -155,7 +155,7 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
 
     // handle deletion if requested, added sept 18 2005
     if($_POST['delentry']) {
-        deleteEntry($_POST['delentry'], $_POST['delfrid'], $_POST['delfid'], $gperm_handler, $member_handler, $mid);
+        deleteEntry($_POST['delentry'], $_POST['delfrid'], $_POST['delfid']);
     }
 
     // get the data for all the fids

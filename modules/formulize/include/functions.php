@@ -916,7 +916,7 @@ function deleteIdReq($id_req, $fid) {
 // HANDLES FRAMEWORKS TOO -- HANDLERS AND MID TO BE PASSED IN WHEN FRAMEWORKS ARE USED
 // owner and owner_groups to be passed in when available (if called from a function where they have already been determined
 // $fid is required
-function deleteEntry($id_req, $frid="", $fid, $gperm_handler="", $member_handler="", $mid="", $owner="", $owner_groups="") {
+// $excludeFids is an array of forms that we do not want to delete from in this case regardless (optional)
     global $xoopsDB;
     $deletedEntries = array();
 
@@ -935,11 +935,10 @@ function deleteEntry($id_req, $frid="", $fid, $gperm_handler="", $member_handler
         // check for entries in forms with a relationship to this one, where the unified_delete setting is enabled
         $unified_display = false;
         $unified_delete = true;
-        $linkresults = checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_groups, $mid, $member_handler, $owner,
-            $unified_display, $unified_delete);
+        $linkresults = checkForLinks($frid, $fids, $fid, $entries, $unified_display, $unified_delete);
         foreach ($linkresults['entries'] as $thisfid=>$ents) {
             foreach ($ents as $ent) {
-                if ($ent) {
+                if ($ent AND !in_array($thisfid, $excludeFids)) {
                     deleteIdReq($ent, $thisfid);
                     $deletedEntries[$thisfid][] = $ent;
                 }
@@ -947,7 +946,7 @@ function deleteEntry($id_req, $frid="", $fid, $gperm_handler="", $member_handler
         }
         foreach ($linkresults['sub_entries'] as $thisfid=>$ents) {
             foreach ($ents as $ent) {
-                if ($ent) {
+                if ($ent AND !in_array($thisfid, $excludeFids)) {
                     deleteIdReq($ent, $thisfid);
                     $deletedEntries[$thisfid][] = $ent;
                 }
@@ -997,9 +996,9 @@ function makeUidFilter($users) {
 
 // FUNCTION HANDLES CHECKING FOR ALL LINKING RELATIONSHIPS FOR THE FORM
 // returns the fids and entries passed to it, plus any others in a framework relationship
+// $entries is optional, and if left out this will only return the linked forms
 // final param is a flag to control whether only unified display relationships are returned or all relationships
-function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_groups, $mid, $member_handler, $owner,
-    $unified_display=false, $unified_delete=false)
+function checkForLinks($frid, $fids, $fid, $entries, $unified_display=false, $unified_delete=false)
 {
     // by default (ie: when called from formDisplay) only look for unified display relationships
     // when $unified_display is specifically set to zero, ie: when called from displayEntries, look for any relationships in the framework
@@ -1517,7 +1516,7 @@ function getAllColList($fid, $frid="", $groups="", $includeBreaks=false) {
     // generate the $allcols list
     if ($frid) {
         $fids[0] = $fid;
-        $check_results = checkForLinks($frid, $fids, $fid, "", "", "", "", "", "", "0");
+        $check_results = checkForLinks($frid, $fids, $fid, "");
         $fids = $check_results['fids'];
         $sub_fids = $check_results['sub_fids'];
         $uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
@@ -2537,20 +2536,13 @@ function getDateElementDefault($default_hint) {
 // targetForm is a special array containing the keys as specified in the framework, and the target form
 // keys:  fid, keyself, keyother
 // keyself and other are the ele_id from the form table for the elements that need to be matched.
-// $owner_groups appears to be deprecated and not used in this function any longer
-// $owner is deprecated. the logic clearly assumes that the user we're searching for entries for, is the current $xoopsUser
 // SHOULD BE REFACTORED TO BE AWARE OF A FRID SO IT CAN DETERMINE THE CORRECT DIRECTION OF LINKING, AND THEN HANDLE DOUBLE LINKED SELECTBOXES
-function findLinkedEntries($startForm, $targetForm, $startEntry, $gperm_handler, $owner_groups, $mid, $member_handler, $owner) {
-    if (!$mid) {
-        $mid = getFormulizeModId();
-    }
-    if (!$gperm_handler) {
-        $gperm_handler = xoops_gethandler('groupperm');
-    }
-    if (!$member_handler) {
-        $member_handler = xoops_gethandler('member');
-    }
+function findLinkedEntries($startForm, $targetForm, $startEntry) {
 
+    $mid = getFormulizeModId();
+    $gperm_handler = xoops_gethandler('groupperm');
+    $member_handler = xoops_gethandler('member');
+    
     // set scope filter -- may need to pass in some exceptions here in the case of viewing entries that are covered by reports?
     global $xoopsUser;
     $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
@@ -3261,7 +3253,7 @@ function getDefaultCols($fid, $frid="") {
 
 	if($frid) { // expand the headerlist to include the other forms
 		$fids[0] = $fid;
-		$check_results = checkForLinks($frid, $fids, $fid, "", "", "", "", "", "", "0");
+		$check_results = checkForLinks($frid, $fids, $fid, "");
 		$fids = $check_results['fids'];
 		$sub_fids = $check_results['sub_fids'];
 		$gperm_handler = &xoops_gethandler('groupperm');
