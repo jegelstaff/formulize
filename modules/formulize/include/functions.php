@@ -867,25 +867,6 @@ function drawMenu($thisid, $thiscat, $allowedForms, $id_form, $topwritten, $forc
     return $block;
 }
 
-
-//THIS FUNCTION TAKES AN ARRAY AND DELETES ENTRIES IN A FORM
-//based on assumption that id_req is unique.
-//only called from the displayForm function, when handling deletion of entries in a subform.  This is a much more efficient function for that task that the normal deleteEntry function below.
-function deleteFormEntries($array, $fid) {
-    $data_handler = new formulizeDataHandler($fid);
-    if (!$deleteResult = $data_handler->deleteEntries($array)) {
-        exit("Error deleting entries from the database for form $fid");
-    }
-
-    // only do the maintenance if the main deletion was successful (otherwise we potentially mangle data for entries that are still around)
-    foreach ($array as $id_req) {
-        deleteMaintenance($id_req, $fid);
-    }
-
-    // notifications in this case are handled in the formdisplay.php file where this function is called
-}
-
-
 // THIS FUNCTION REMOVES ENTRIES FROM THE OTHER TABLE BASED ON AN IDREQ
 function deleteMaintenance($id_req, $fid) {
     global $xoopsDB;
