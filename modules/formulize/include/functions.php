@@ -1152,7 +1152,7 @@ function checkForLinks($frid, $fids, $fid, $entries, $unified_display=false, $un
         if (isset($entries[$fid][0])) {
             // for some reason PHP 5 won't let us evaluate this directly
             if ($thisent = $entries[$fid][0]) {
-                $entries_found = findLinkedEntries($fid, $many_fid, $entries[$fid][0], $gperm_handler, $owner_groups, $mid, $member_handler, $owner);
+                $entries_found = findLinkedEntries($fid, $many_fid, $entries[$fid][0]);
                 if (is_array($entries_found)) {
                     foreach ($entries_found as $many_entry) {
                         $sub_entries[$many_fid['fid']][] = $many_entry;
@@ -1169,7 +1169,7 @@ function checkForLinks($frid, $fids, $fid, $entries, $unified_display=false, $un
         if (isset($entries[$fid][0])) {
             // for some reason PHP 5 won't let us evaluate this directly
             if ($thisent = $entries[$fid][0]) {
-                $entries_found = findLinkedEntries($fid, $manyToOneFid, $entries[$fid][0], $gperm_handler, $owner_groups, $mid, $member_handler, $owner);
+                $entries_found = findLinkedEntries($fid, $manyToOneFid, $entries[$fid][0]);
                 foreach ($entries_found as $many_entry) {
                     $entries[$manyToOneFid['fid']][] = $many_entry;
                 }
