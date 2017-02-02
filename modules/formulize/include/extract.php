@@ -1424,7 +1424,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                                    $search_column = "source.`" . $sourceMeta[1] . "`";
                                }
                        $queryElementMetaData = formulize_getElementMetaData($ifParts[0], true);
-                               $ele_value = $queryElementMetaData['ele_value'];
+                               $ele_value = unserialize($queryElementMetaData['ele_value']);
                                if ($ele_value[0] > 1 AND $ele_value[1]) { // if the number of rows is greater than 1, and the element supports multiple selections
                                     $newWhereClause = " EXISTS (SELECT 1 FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " AS source WHERE $queryElement LIKE CONCAT('%,',source.entry_id,',%') AND " . $search_column . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes . ")";
                                } else {
