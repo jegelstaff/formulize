@@ -186,6 +186,8 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
             $value = ($timeParts[0]-12).":".$timeParts[1]."PM";
         } elseif($timeParts[0]=="00") {
             $value = "12:".$timeParts[1]."AM";
+        } elseif($timeParts[0]=="12") {
+            $value = "12:".$timeParts[1]."PM";
         } elseif($value) {
             $value = $timeParts[0].":".$timeParts[1]."AM";
         }
@@ -198,10 +200,10 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
             return $value;
         }
         $timeParts = explode(":", $value);
-        if(strstr($value, "PM")) {
-            if($timeParts[0]<12) {
-                $value = ($timeParts[0]+12).":".$timeParts[1];    
-            }
+        if(strstr($value, "PM") AND $timeParts[0]<12) {
+            $value = ($timeParts[0]+12).":".$timeParts[1];    
+        } elseif(strstr($value, "PM") AND $timeParts[0]==12) {
+            $value = "12:".$timeParts[1];
         } elseif($timeParts[0]==12) {
             $value = "00:".$timeParts[1];
         } else {
