@@ -1863,6 +1863,11 @@ function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid,
 			}
 		
 			$unique_users = array_unique($all_add_users);
+            if(in_array(0,$unique_users)) { // if there is a user 0 that has been found, that's an error, cleanup DB and remove errant user id from the array
+                $cleanupSQL = "DELETE FROM ".$xoopsDB->prefix('groups_users_link')." WHERE uid=0";
+                $xoopsDB->queryF($cleanupSQL);
+                $unique_users = array_diff($unique_users, array(0));
+            }
 
 			$punames = array();
 			foreach($unique_users as $uid) {
