@@ -3599,26 +3599,37 @@ function synchSubformBlankDefaults($fid, $entry) {
     static $ids_to_return = array();
     if (isset($GLOBALS['formulize_subformCreateEntry'])) {
         foreach ($GLOBALS['formulize_subformCreateEntry'] as $sfid=>$sfid_id_reqs) {
-            $sourceEntryId = $_POST['formulize_subformValueSourceEntry_'.$sfid] ? $_POST['formulize_subformValueSourceEntry_'.$sfid] : "new";
-            global $xoopsDB;
-            // first, figure out the value we need to write in the subform entry
-            if ($_POST['formulize_subformSourceType_'.$sfid]) {
-                // true if the source is a common value
-                $elementPostHandle = "de_".$_POST['formulize_subformValueSourceForm_'.$sfid]."_".$sourceEntryId."_".$_POST['formulize_subformValueSource_'.$sfid];
-                // grab the value from the parent element -- assume that it is a textbox of some kind!
-                if (isset($_POST[$elementPostHandle])) {
-                    $value_to_write = $_POST[$elementPostHandle] === "{ID}" ? $GLOBALS['formulize_newEntryIds'][$_POST['formulize_subformValueSourceForm_'.$sfid]][0] : $_POST[$elementPostHandle]; // get the value right out of the posted submission if it's present, unless it's {ID} and then we need to get the new value that was written for that form -- assume the first written new entry is the one we want!!
-                } else {
-                    // get this entry and see what the source value is
-                    $data_handler = new formulizeDataHandler($_POST['formulize_subformValueSourceForm_'.$sfid]);
-                    $value_to_write = $data_handler->getElementValueInEntry($_POST['formulize_subformValueSourceEntry_'.$sfid], $_POST['formulize_subformValueSource_'.$sfid]);
-                }
-            } else {
-                $value_to_write = "$sourceEntryId";
-            }
 
             // actually write the linked/common values
-            foreach ($sfid_id_reqs as $id_req_to_write) {
+            foreach ($sfid_id_reqs as $sfid_key=>$id_req_to_write) {
+                
+                // there may be multiple source entries, if the blanks were in the sub sub for example.
+                // so in that case, assume that we have one blank per source entry, and deduce the value to write based on the different sources
+                // if there is not a corresponding source for the blank, then we will default to key 0, which will give us the first (only?) source entry that was written
+                if(isset($_POST['formulize_subformValueSourceEntry_'.$sfid][$sfid_key])) {
+                    $subformValuesSourceEntryKey = $sfid_key;
+                } else {
+                    $subformValuesSourceEntryKey = 0;
+                }
+                
+                $sourceEntryId = $_POST['formulize_subformValueSourceEntry_'.$sfid][$subformValuesSourceEntryKey] ? $_POST['formulize_subformValueSourceEntry_'.$sfid][$subformValuesSourceEntryKey] : "new";
+                global $xoopsDB;
+                // first, figure out the value we need to write in the subform entry
+                if ($_POST['formulize_subformSourceType_'.$sfid]) {
+                    // true if the source is a common value
+                    $elementPostHandle = "de_".$_POST['formulize_subformValueSourceForm_'.$sfid]."_".$sourceEntryId."_".$_POST['formulize_subformValueSource_'.$sfid];
+                    // grab the value from the parent element -- assume that it is a textbox of some kind!
+                    if (isset($_POST[$elementPostHandle])) {
+                        $value_to_write = $_POST[$elementPostHandle] === "{ID}" ? $GLOBALS['formulize_newEntryIds'][$_POST['formulize_subformValueSourceForm_'.$sfid]][0] : $_POST[$elementPostHandle]; // get the value right out of the posted submission if it's present, unless it's {ID} and then we need to get the new value that was written for that form -- assume the first written new entry is the one we want!!
+                    } else {
+                        // get this entry and see what the source value is
+                        $data_handler = new formulizeDataHandler($_POST['formulize_subformValueSourceForm_'.$sfid]);
+                        $value_to_write = $data_handler->getElementValueInEntry($_POST['formulize_subformValueSourceEntry_'.$sfid][$subformValuesSourceEntryKey], $_POST['formulize_subformValueSource_'.$sfid]);
+                    }
+                } else {
+                    $value_to_write = "$sourceEntryId";
+                }
+                
                 writeElementValue($sfid, $_POST['formulize_subformElementToWrite_'.$sfid], $id_req_to_write, $value_to_write, "replace", "", true); // Last param is override that allows direct writing to linked selectboxes if we have prepped the value first!
 
                 // need to also enforce any equals conditions that are on the subform element, if any, and assign those values to the entries that were just added

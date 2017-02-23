@@ -1576,14 +1576,19 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
     
 	if((!$_POST['form_submitted'] OR $ignoreFormSubmitted) AND count($sub_entries[$subform_id]) == 0 AND $defaultblanks > 0 AND ($rowsOrForms == "row"  OR $rowsOrForms =='')) {
 	
+        if(!isset($GLOBALS['formulize_globalDefaultBlankCounter'])) {
+            $GLOBALS['formulize_globalDefaultBlankCounter'] = -1;
+        }
 		for($i=0;$i<$defaultblanks;$i++) {
+            
+            $GLOBALS['formulize_globalDefaultBlankCounter'] = $GLOBALS['formulize_globalDefaultBlankCounter'] + 1;
 	
 				// nearly same header drawing code as in the 'else' for drawing regular entries
 				if(!$drawnHeadersOnce) {
 					$col_two .= "<tr><td>\n";
 					$col_two .= "<input type=\"hidden\" name=\"formulize_subformValueSource_$subform_id\" value=\"$value_source\">\n";
 					$col_two .= "<input type=\"hidden\" name=\"formulize_subformValueSourceForm_$subform_id\" value=\"$value_source_form\">\n";
-					$col_two .= "<input type=\"hidden\" name=\"formulize_subformValueSourceEntry_$subform_id\" value=\"$entry\">\n";
+					$col_two .= "<input type=\"hidden\" name=\"formulize_subformValueSourceEntry_$subform_id"."[]\" value=\"$entry\">\n";
 					$col_two .= "<input type=\"hidden\" name=\"formulize_subformElementToWrite_$subform_id\" value=\"$element_to_write\">\n";
 					$col_two .= "<input type=\"hidden\" name=\"formulize_subformSourceType_$subform_id\" value=\"".$elementq[0]['fl_common_value']."\">\n";
 					$col_two .= "<input type=\"hidden\" name=\"formulize_subformId_$subform_id\" value=\"$subform_id\">\n"; // this is probably redundant now that we're tracking sfid in the names of the other elements
@@ -1605,7 +1610,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 					if($thisele) { 
 						ob_start();
 						// critical that we *don't* ask for displayElement to return the element object, since this way the validation logic is passed back through the global space also (ugh).  Otherwise, no validation logic possible for subforms.
-						$renderResult = displayElement($deFrid, $thisele, "subformCreateEntry_".$i."_".$subformElementId); 
+						$renderResult = displayElement($deFrid, $thisele, "subformCreateEntry_".$GLOBALS['formulize_globalDefaultBlankCounter']."_".$subformElementId); 
 						$col_two_temp = ob_get_contents();
 						ob_end_clean();
 						if($col_two_temp OR $renderResult == "rendered") { // only draw in a cell if there actually is an element rendered (some elements might be rendered as nothing (such as derived values)
