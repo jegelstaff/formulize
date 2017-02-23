@@ -5579,3 +5579,20 @@ function sendSaveLockPrefToTemplate(){ //$xoopsTpl
     
     return $formulizeConfig['isSaveLocked'];
 }
+
+// convert variable search terms to their literal values
+// ie: {program} gets changed to the value of $_GET['program'] if that is set
+// returns updated value, or false to kill value, or true to do nothing
+function convertVariableSearchToLiteral($v, $requestKeyToUse) {
+    global $xoopsUser;
+    if(isset($_POST[$requestKeyToUse])) {
+        return htmlspecialchars(strip_tags(trim($_POST[$requestKeyToUse])));
+    } elseif(isset($_GET[$requestKeyToUse])) {
+        return htmlspecialchars(strip_tags(trim($_GET[$requestKeyToUse])));
+    } elseif($v == "{USER}" AND $xoopsUser) {
+        return $xoopsUser->getVar('name') ? $xoopsUser->getVar('name') : $xoopsUser->getVar('uname');
+    } elseif(!strstr($v, "{BLANK}") AND !strstr($v, "{TODAY") AND !strstr($v, "{PERGROUPFILTER}") AND !strstr($v, "{USER")) { 
+        return false; // clear terms where no match was found, because this term is not active on the current page, so don't confuse users by showing it
+    }
+    return true; // do nothing
+}

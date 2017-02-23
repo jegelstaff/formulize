@@ -600,15 +600,12 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				$ownerOfLastLoadedViewData = q("SELECT sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id=".intval($activeViewId));
 				$ownerOfLastLoadedView = $ownerOfLastLoadedViewData[0]['sv_owner_uid'];
 				if(!$update_other_reports AND $uid != $ownerOfLastLoadedView) {
-					if(isset($_POST[$requestKeyToUse])) {
-						$_POST[$k] = htmlspecialchars(strip_tags(trim($_POST[$requestKeyToUse])), ENT_QUOTES);
-					} elseif(isset($_GET[$requestKeyToUse])) {
-						$_POST[$k] = htmlspecialchars(strip_tags(trim($_GET[$requestKeyToUse])), ENT_QUOTES);
-					} elseif($v == "{USER}" AND $xoopsUser) {
-                        $_POST[$k] = $xoopsUser->getVar('name') ? htmlspecialchars_decode($xoopsUser->getVar('name'), ENT_QUOTES) : htmlspecialchars_decode($xoopsUser->getVar('uname'), ENT_QUOTES);
-					} elseif(!strstr($v, "{BLANK}") AND !strstr($v, "{TODAY") AND !strstr($v, "{PERGROUPFILTER}") AND !strstr($v, "{USER")) { 
-						unset($_POST[$k]); // clear terms where no match was found, because this term is not active on the current page, so don't confuse users by showing it
-					}
+					$filterValue = convertVariableSearchToLiteral($v, $requestKeyToUse); // returns updated value, or false to kill value, or true to do nothing
+                    if(!is_bool($filterValue)) {
+                        $_POST[$k] = $filterValue;
+                    } elseif($filterValue === false) {
+                        unset($_POST[$k]); // clear terms where no match was found, because this term is not active on the current page, so don't confuse users by showing it
+                    }
 				}
 			}
 		}
@@ -1978,16 +1975,27 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
 
 // THIS FUNCTION CREATES THE QUICKFILTER BOXES
 function formulize_buildQSFilter($handle, $search_text) {
-  formulize_benchmark("start of building filter");
-  $elementMetaData = formulize_getElementMetaData($handle, true); // true means this is a handle
-  $id = $elementMetaData['ele_id'];
-  if($elementMetaData['ele_type']=="select" OR $elementMetaData['ele_type']=="radio" OR $elementMetaData['ele_type']=="checkbox") {
-    $qsfparts = explode("_", $search_text);
-    $search_term = strstr($search_text, "_") ? $qsfparts[1] : $search_text;
-    $filterHTML = buildFilter("search_".$handle, $id, _formulize_QSF_DefaultText, $name="{listofentries}", $search_term);
-    return $filterHTML;
-  }
-  return "";
+    
+    if(substr($search_text, 0, 1) == "{" AND substr($search_text, -1) == "}") { 
+        $requestKeyToUse = substr($search_text,1,-1);
+        $filterValue = convertVariableSearchToLiteral($search_text, $requestKeyToUse); // returns updated value, or false to kill value, or true to do nothing
+        if(!is_bool($filterValue)) {
+            $search_text = $filterValue;
+        } elseif($filterValue === false) {
+            $search_text = ''; 
+        }
+    }
+        
+    formulize_benchmark("start of building filter");
+    $elementMetaData = formulize_getElementMetaData($handle, true); // true means this is a handle
+    $id = $elementMetaData['ele_id'];
+    if($elementMetaData['ele_type']=="select" OR $elementMetaData['ele_type']=="radio" OR $elementMetaData['ele_type']=="checkbox") {
+      $qsfparts = explode("_", $search_text);
+      $search_term = strstr($search_text, "_") ? $qsfparts[1] : $search_text;
+      $filterHTML = buildFilter("search_".$handle, $id, _formulize_QSF_DefaultText, $name="{listofentries}", $search_term);
+      return $filterHTML;
+    }
+    return "";
 }
 
 // THIS FUNCTION CREATES THE HTML FOR A DATE RANGE FILTER
