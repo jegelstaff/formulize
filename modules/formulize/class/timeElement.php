@@ -196,7 +196,8 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
     }
     
     function convert12To24HourTime($value) {
-        if(!strstr($value, ":")) {
+        $value = strtoupper($value);
+        if(!strstr($value, ":") AND (!strstr($value, "AM") OR !strstr($value, "PM"))) {
             return $value;
         }
         $timeParts = explode(":", $value);
