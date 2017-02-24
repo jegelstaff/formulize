@@ -475,7 +475,7 @@ class formulizeElementRenderer{
 										}
 									}
 								}
-								$linkedElementOptions[$rowlinkedvaluesq[0]] = implode(" - ", $linked_column_values);
+								$linkedElementOptions[$rowlinkedvaluesq[0]] = implode(" | ", $linked_column_values);
 							}
 						}
 						$cachedSourceValuesQ[$sourceValuesQ] = $linkedElementOptions;
