@@ -282,7 +282,21 @@ foreach($formulize_allWrittenEntryIds as $allWrittenFid=>$entries) {
 			}
 		}
 	}
-	if($frid AND ($mainFormHasDerived OR $derivedValueFound)) { // if there is a framework in effect, then update derived values across the entire framework...strong assumption would be that when a framework is in effect, all the forms being saved are related...if there are outliers they will not get their derived values updated!  We handle them below.
+    if($frid) {
+        if(!$mainFormHasDerived) {
+            // check if any form in the relationship has derived values
+            include_once XOOPS_ROOT_PATH ."/modules/formulize/class/frameworks.php";
+            $relationshipObject = new formulizeFramework($frid);
+            foreach($relationshipObject->getVar('fids') as $relationshipFid) {
+                if($relationshipFid == $fid) { continue; } // we know the main form has no derived values already
+                $formObject = $form_handler->get($relationshipFid, true); // true causes all elements to be gathered, including ones that are not displayed to the users
+                if(array_search("derived", $formObject->getVar('elementTypes'))) {
+                    $derivedValueFound = true;
+                    break;
+                }
+            }
+        }
+        if($mainFormHasDerived OR $derivedValueFound) { // if there is a framework in effect, then update derived values across the entire framework...strong assumption would be that when a framework is in effect, all the forms being saved are related...if there are outliers they will not get their derived values updated!  We handle them below.
 		foreach($entries as $thisEntry) {
 			if($allWrittenFid == $fid) {
 				$foundEntries['entries'][$fid] = $entries;
@@ -304,6 +318,8 @@ foreach($formulize_allWrittenEntryIds as $allWrittenFid=>$entries) {
 			}
 		}
 	}
+    }
+	
 	
 	// check for things that we should be updating based on the framework in effect for any override screen that has been declared
 	if($_POST['overridescreen'] AND $derivedValueFound) {
