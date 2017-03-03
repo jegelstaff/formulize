@@ -269,9 +269,10 @@ if(isset($_POST['changeuservalues']) AND $_POST['changeuservalues']==1) {
 *Added by Jinfu MAR 2015
 */
 if($processedValues['elements']['ele_value'][8] == 1 &&
-   ($processedValues['elements']['ele_value'][2]['{USERNAMES}'] == 1 || $processedValues['elements']['ele_value'][2]['{FULLNAMES}'] == 1 )){
+   (isset($processedValues['elements']['ele_value'][2]['{USERNAMES}']) || isset($processedValues['elements']['ele_value'][2]['{FULLNAMES}']))) {
   $processedValues['elements']['ele_value'][16]=0;
 }
+
 
 foreach($processedValues['elements'] as $property=>$value) {
   // if we're setting something other than ele_value, or
