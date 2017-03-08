@@ -929,6 +929,12 @@ function deleteEntry($id_req, $frid="", $fid, $excludeFids=array()) {
         foreach ($linkresults['sub_entries'] as $thisfid=>$ents) {
             foreach ($ents as $ent) {
                 if ($ent AND !in_array($thisfid, $excludeFids)) {
+                    // look for any subsub links...they have to be defined as part of the relationship in effect
+                    $sublinkresults = checkForLinks($frid, array($thisfid), $thisfid, array($thisfid=>array($ent)), $unified_display, $unified_delete);
+                    foreach($sublinkresults['sub_entries'] as $subfid=>$subent) {
+                        deleteIdReq($subent, $subfid);
+                        $deletedEntries[$subfid][] = $subent;
+                    }
                     deleteIdReq($ent, $thisfid);
                     $deletedEntries[$thisfid][] = $ent;
                 }
@@ -941,8 +947,7 @@ function deleteEntry($id_req, $frid="", $fid, $excludeFids=array()) {
 
     // do notifications
     foreach ($deletedEntries as $thisfid=>$entries) {
-        // last param, groups, is missing, notification function will put it in itself
-        sendNotifications($thisfid, "delete_entry", $entries, $mid);
+        sendNotifications($thisfid, "delete_entry", $entries);
     }
 }
 
