@@ -4805,7 +4805,7 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
                 } else {
                     $conditionsfilter .= " AND ";
                 }
-                $conditionsfilter .= "$targetAlias`".$filterElementHandles[$filterId]."` ".$filterOps[$filterId]." ".$conditionsFilterComparisonValue;
+                $conditionsfilter .= "($targetAlias`".$filterElementHandles[$filterId]."` ".$filterOps[$filterId]." ".$conditionsFilterComparisonValue.")";
             } else {
                 if ($start_oom) {
                     $conditionsfilter_oom = " AND (";
