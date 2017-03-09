@@ -921,9 +921,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			print "</div>\n";
 
 			drawJavascript($nosave);
-			if(count($GLOBALS['formulize_renderedElementHasConditions'])>0) {
-				drawJavascriptForConditionalElements($GLOBALS['formulize_renderedElementHasConditions'], $entries, $sub_entries);
-			}
             print $form->addElement(new xoopsFormHidden('save_and_leave', 0));
 
 		// lastly, put in a hidden element, that will tell us what the first, primary form was that we were working with on this form submission
@@ -2960,7 +2957,7 @@ jQuery(window).load(function() {
 		for(key in governedElements[jQuery(this).attr('name')]) {
 			var handle = governedElements[jQuery(this).attr('name')][key];
 			elementValuesForURL = getRelevantElementValues(relevantElements[handle]);
-			if(oneToOneElements[handle]) {
+			if(oneToOneElements[handle]['onetoonefrid']) {
 				elementValuesForURL = elementValuesForURL + '&onetoonekey=1&onetoonefrid='+oneToOneElements[handle]['onetoonefrid']+'&onetoonefid='+oneToOneElements[handle]['onetoonefid']+'&onetooneentries='+oneToOneElements[handle]['onetooneentries']+'&onetoonefids='+oneToOneElements[handle]['onetoonefids'];			
 			}
 			checkCondition(handle, conditionalHTML[handle], elementValuesForURL);	
