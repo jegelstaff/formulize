@@ -4813,7 +4813,7 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
                 } else {
                     $conditionsfilter_oom .= " OR ";
                 }
-                $conditionsfilter_oom .= "$targetAlias`".$filterElementHandles[$filterId]."` ".$filterOps[$filterId]." ".$conditionsFilterComparisonValue;
+                $conditionsfilter_oom .= "($targetAlias`".$filterElementHandles[$filterId]."` ".$filterOps[$filterId]." ".$conditionsFilterComparisonValue.")";
             }
             $curlyBracketFormFrom = $thisCurlyBracketFormFrom ? $thisCurlyBracketFormFrom : $curlyBracketFormFrom; // if something was returned, use it, otherwise, stick with what we've got
         }
@@ -4830,6 +4830,7 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
 // $filterTerms may be modified by this function
 function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filterElementIds, $targetFormElementTypes, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler) {
     global $xoopsUser, $xoopsDB;
+    $curlyBracketEntryQuoted = $curlyBracketEntry == 'new' ? "'new'" : $curlyBracketEntry; // can't put text into the query without quotes!
     $conditionsFilterComparisonValue = "";
     $curlyBracketFormFrom = "";
     if ($filterOps[$filterId] == "NOT") { $filterOps[$filterId] = "!="; }
@@ -4905,7 +4906,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                 }
             }
             if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][substr($filterTerms[$filterId],1,-1)])) {
-                $conditionsFilterComparisonValue .= "  AND curlybracketform.`entry_id`=$curlyBracketEntry ";
+                $conditionsFilterComparisonValue .= "  AND curlybracketform.`entry_id`=$curlyBracketEntryQuoted ";
             }
         }
     } else {
@@ -4957,9 +4958,9 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
             // set as a single value, we're assuming all { } terms refer to the same form
             $curlyBracketFormFrom = ", ".$xoopsDB->prefix("formulize_".$curlyBracketForm->getVar('form_handle'))." AS curlybracketform ";
             if ($likebits == "%") {
-                $conditionsFilterComparisonValue = " CONCAT('%',curlybracketform.`".substr($filterTerms[$filterId],1,-1)."`,'%') AND curlybracketform.`entry_id`=$curlyBracketEntry ";
+                $conditionsFilterComparisonValue = " CONCAT('%',curlybracketform.`".substr($filterTerms[$filterId],1,-1)."`,'%') AND curlybracketform.`entry_id`=$curlyBracketEntryQuoted ";
             } else {
-                $conditionsFilterComparisonValue = " curlybracketform.`".substr($filterTerms[$filterId],1,-1)."` AND curlybracketform.`entry_id`=$curlyBracketEntry ";
+                $conditionsFilterComparisonValue = " curlybracketform.`".substr($filterTerms[$filterId],1,-1)."` AND curlybracketform.`entry_id`=$curlyBracketEntryQuoted ";
             }
         }
     }
