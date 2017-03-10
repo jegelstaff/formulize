@@ -170,13 +170,37 @@ switch($op) {
     }
     $elementObject = $element_handler->get($elementId);
     $html = "";
-    if($onetoonekey) {
+    if($onetoonekey AND $entryId != 'new') {
       // the onetoonekey is what changed, not a regular conditional element, so in that case, we need to re-determine the entryId that we should be displaying
       // rebuild entries and fids so it only has the main form entry in it, since we want to get the correct other one-to-one entries back
       $onetooneentries = array($onetoonefid => array($onetooneentries[$onetoonefid][0]));
       $onetoonefids = array($onetoonefid);
       $checkForLinksResults = checkForLinks($onetoonefrid, $onetoonefids, $onetoonefid, $onetooneentries);
       $entryId = $checkForLinksResults['entries'][$elementObject->getVar('id_form')][0];
+    } elseif($onetoonekey) {
+      // we're supposed to pull in an entry based solely on the value in the conditional element...
+      // what we need is the element in the dependent one to one form that is linked to the main form
+      include_once XOOPS_ROOT_PATH . "/modules/formulize/class/frameworks.php";
+      include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+      $relationship = new formulizeFramework($onetoonefrid);
+      $targetElement = false;
+      foreach($relationship->getVar('links') as $link) {
+        if($link->getVar('form1')==$onetoonefid AND $link->getVar('form2')==$fid AND $link->getVar('relationship')==1) {
+          $sourceElement = $link->getVar('key1');
+          $targetElement = $link->getVar('key2');
+        } elseif($link->getVar('form2')==$onetoonefid AND $link->getVar('form1')==$fid AND $link->getVar('relationship')==1) {
+          $sourceElement = $link->getVar('key2');
+          $targetElement = $link->getVar('key1');
+        }
+        if($targetElement) {
+          $data_handler = new formulizeDataHandler($onetoonefid);
+          if($link->getVar('common')) {
+            $entryId = $data_handler->findFirstEntryWithValue($targetElement, $databaseReadyValue);  
+          } elseif($sourceElement==$passedElementId) {
+            $entryId = $databaseReadyValue;
+          }
+        }
+      }
     }
     if(security_check($fid, $entryId)) {
       // "" is framework, ie: not applicable
