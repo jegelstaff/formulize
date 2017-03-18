@@ -57,7 +57,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		$subformElementId = $subformMetaData[2];
 	} 
 
-    if($entry == "" OR $subformCreateEntry) {
+    if(($entry == "" AND $entry !== 0) OR $subformCreateEntry) {
         $entry = "new";
     }
 

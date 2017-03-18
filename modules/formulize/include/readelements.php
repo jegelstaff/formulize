@@ -225,7 +225,7 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
 					afterSavingLogic($values, $writtenEntryId);
 				}
 			}
-		} else {
+		} elseif($currentEntry > 0) {
             // save changes to existing elements
             // TODO: should this use $uid or a proxy user setting?
             if (formulizePermHandler::user_can_edit_entry($elementFid, $uid, $currentEntry)) {

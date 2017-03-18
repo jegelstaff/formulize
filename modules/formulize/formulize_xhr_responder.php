@@ -177,6 +177,7 @@ switch($op) {
       $onetoonefids = array($onetoonefid);
       $checkForLinksResults = checkForLinks($onetoonefrid, $onetoonefids, $onetoonefid, $onetooneentries);
       $entryId = $checkForLinksResults['entries'][$elementObject->getVar('id_form')][0];
+      $entryId = $entryId ? $entryId : 0;
     } elseif($onetoonekey) {
       // we're supposed to pull in an entry based solely on the value in the conditional element...
       // what we need is the element in the dependent one to one form that is linked to the main form
