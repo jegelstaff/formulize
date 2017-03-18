@@ -305,7 +305,7 @@ foreach($formulize_allWrittenEntryIds as $allWrittenFid=>$entries) {
 				$foundEntries = checkForLinks($frid, array($allWrittenFid), $allWrittenFid, array($allWrittenFid=>array($thisEntry)));
 			}
 			foreach($foundEntries['entries'][$fid] as $mainFormEntry) {
-				if(!in_array($mainFormEntry, $mainFormEntriesUpdatedForDerived) AND $mainFormEntry) {
+				if(!in_array($mainFormEntry, $mainFormEntriesUpdatedForDerived) AND $mainFormEntry AND in_array($mainFormEntry, $formulize_allWrittenEntryIds[$fid])) { // regarding final in_array... // if we have deduced the mainform entry, then depending on the structure of the relationship, it is possible that if checkforlinks was used above, it would return entries that were not written, in which case we must ignore them!!
 					formulize_updateDerivedValues($mainFormEntry, $fid, $frid);
 					$mainFormEntriesUpdatedForDerived[] = $mainFormEntry;
 					if(!isset($formsUpdatedInFramework[$allWrittenFid])) { // if the form we're on has derived values, then flag it as one of the updated forms
