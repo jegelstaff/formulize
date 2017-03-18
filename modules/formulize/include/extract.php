@@ -176,7 +176,7 @@ function prepvalues($value, $field, $entry_id) {
                     $value .= "*=+*:" . implode(" - ", $row);
                 }
             }
-        } elseif($value) {
+        } else {
             $value = ""; // if there was no sourceMeta[1], which is the handle for the field in the source form, then the value should be empty, ie: we cannot make a link...this probably only happens in cases where there's a really old element that had its caption changed, and that happened before Formulize automatically updated all the linked selectboxes that rely on that element's caption, back when captions mattered in the pre F3 days
         }
     }
