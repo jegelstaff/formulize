@@ -1693,3 +1693,7 @@ form .groupselectionbox {
   height: 13em;
   overflow: auto;
   border: 1px solid blue; }
+
+p.useroptions input[type="text"] {
+    width: 50em;
+}
