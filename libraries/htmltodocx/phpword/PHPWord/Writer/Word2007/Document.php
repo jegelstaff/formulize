@@ -129,9 +129,17 @@ class PHPWord_Writer_Word2007_Document extends PHPWord_Writer_Word2007_Base {
 		$marginBottom = $_settings->getMarginBottom();
 		
 		$borders = $_settings->getBorderSize();
+        
+        $restartPageNumbering = $_settings->getRestartPageNumbering();
 		
 		$objWriter->startElement('w:sectPr');
 			
+            if(!is_null($restartPageNumbering)) {
+                $objWriter->startElement('w:pgNumType');
+                    $objWriter->writeAttribute('w:start', $restartPageNumbering);
+                $objWriter->endElement();
+            }
+            
 			if(!is_null($_header)) {
 				$rId = $_header->getRelationId();
 				$objWriter->startElement('w:headerReference');

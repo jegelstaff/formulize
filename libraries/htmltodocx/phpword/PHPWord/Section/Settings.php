@@ -154,13 +154,20 @@ class PHPWord_Section_Settings {
 	 */
 	private $_borderBottomColor;
   
-  /**
-  * Reduce Table Widths to Fit
-  * 
-  * @var bool
-  */
-  private $_reduceTableWidthsToFit;
+    /**
+    * Reduce Table Widths to Fit
+    * 
+    * @var bool
+    */
+    private $_reduceTableWidthsToFit;
 	
+    /**
+	 * Section restartPageNumbering
+	 * 
+	 * @var int
+	 */
+	private $_restartPageNumbering;
+    
 	/**
 	 * Create new Section Settings
 	 */
@@ -180,7 +187,8 @@ class PHPWord_Section_Settings {
 		$this->_borderRightColor = null;
 		$this->_borderBottomSize = null;
 		$this->_borderBottomColor = null;
-    $this->_reduceTableWidthsToFit = true;
+        $this->_reduceTableWidthsToFit = true;
+        $this->_restartPageNumbering = null;
 	}
 	
 	/**
@@ -545,5 +553,15 @@ class PHPWord_Section_Settings {
   public function getReduceTableWidthsToFit() {
     return $this->_reduceTableWidthsToFit;
   }
+  
+  /**
+   * Get reset page numbering value
+   * 
+   * @return bool
+   */
+  public function getRestartPageNumbering() {
+    return $this->_restartPageNumbering;
+  }
+  
 }
 ?>
