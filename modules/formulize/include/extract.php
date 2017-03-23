@@ -793,9 +793,13 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
     $oneSideSQL = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText WHERE main.entry_id>0 $scopeFilter "; // does the mainFormWhereClause need to be used here too?  Needs to be tested. -- further note: Oct 17 2011 -- appears oneSideFilters[fid] is the same as the mainformwhereclause
     $oneSideSQL .= $existsJoinText ? " AND ($existsJoinText) " : "";
     if(count($oneSideFilters[$fid])>0) {
-       foreach($oneSideFilters[$fid] as $thisOneSideFilter) {
-          $oneSideSQL .= " $andor ( $thisOneSideFilter ) ";  // properly introduce these filters...need to move $andor to a higher level and put this inside ( ) ?? or maybe this just all gets redone if/when the OR bug is fixed (see big note up where oneSideFilters are first received from parseFilter function)
-       }
+        $oneSideSQL .= " AND (";
+        $start = true;
+        foreach($oneSideFilters[$fid] as $thisOneSideFilter) {
+           $oneSideSQL .= $start ? " ( $thisOneSideFilter ) " : " $andor ( $thisOneSideFilter ) "; 
+           $start = false;
+        }
+        $oneSideSQL .= ") ";
     }
     $oneSideSQL .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
 
