@@ -438,6 +438,18 @@ function htmltodocx_insert_html_recursive(&$phpword_element, $html_dom_array, &$
           else {
             $cell_width = 800;
           }
+
+          // massive hack for ads in Dara!!
+          // first cell is narrow, second is wider. "700" to play with
+          if(isset($_GET['sid']) AND $_GET['sid'] == 56) {
+            if(!isset($GLOBALS['dara_hackedWidth']) OR $GLOBALS['dara_hackedWidth'] == (450*15)) {
+              $cell_width = 150 * 15;
+            } else {
+              $cell_width = 450 * 15;
+            }
+            $GLOBALS['dara_hackedWidth'] = $cell_width;
+          }
+          
           $state['table_cell'] = $state['table']->addCell($cell_width, $state['current_style']);
           array_unshift($state['parents'], $element->tag);
           htmltodocx_insert_html_recursive($state['table_cell'], $element->nodes, $state);

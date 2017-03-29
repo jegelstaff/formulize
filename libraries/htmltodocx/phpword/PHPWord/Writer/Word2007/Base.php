@@ -375,7 +375,11 @@ class PHPWord_Writer_Word2007_Base extends PHPWord_Writer_Word2007_WriterPart {
     if($_cRows > 0) {
       $objWriter->startElement('w:tbl');
         $tblStyle = $table->getStyle();
-        if($tblStyle instanceof PHPWord_Style_Table) {
+        
+        // hacked in to force set margins on all tables!
+        $this->_writeTableStyle($objWriter);
+        
+        /*if($tblStyle instanceof PHPWord_Style_Table) {
           $this->_writeTableStyle($objWriter, $tblStyle);
         } else {
           if(!empty($tblStyle)) {
@@ -385,7 +389,7 @@ class PHPWord_Writer_Word2007_Base extends PHPWord_Writer_Word2007_WriterPart {
               $objWriter->endElement();
             $objWriter->endElement();
           }
-        }
+        }*/
         
         // Insert a tblGrid element so that Open/Libre office can size the
         // table width properly. Word can work out how to size the table
@@ -497,11 +501,19 @@ class PHPWord_Writer_Word2007_Base extends PHPWord_Writer_Word2007_WriterPart {
   }
   
   protected function _writeTableStyle(PHPWord_Shared_XMLWriter $objWriter = null, PHPWord_Style_Table $style = null) {
-    $margins = $style->getCellMargin();
+    /*$margins = $style->getCellMargin();
     $mTop = (!is_null($margins[0])) ? true : false;
     $mLeft = (!is_null($margins[1])) ? true : false;
     $mRight = (!is_null($margins[2])) ? true : false;
-    $mBottom = (!is_null($margins[3])) ? true : false;
+    $mBottom = (!is_null($margins[3])) ? true : false;*/
+    
+    // hacking in margins for tables!!! -- this should be figured out so we can pass in desired margins, but it's very unclear how the htmltodocx filter can read relevant values to trigger this
+    $mTop = true;
+    $mLeft = true;
+    $mRight = true;
+    $mBottom = true;
+    $margins = array(200,200,200,200);
+    
     
     if($mTop || $mLeft || $mRight || $mBottom) {
       $objWriter->startElement('w:tblPr');
