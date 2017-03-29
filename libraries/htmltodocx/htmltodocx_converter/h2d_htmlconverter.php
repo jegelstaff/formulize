@@ -645,7 +645,7 @@ function htmltodocx_insert_html_recursive(&$phpword_element, $html_dom_array, &$
       // NB, Simple HTML Dom might not be picking up <br> tags.
       case 'br':
         // Simply create a new text run: 
-        //$state['textrun'] = $phpword_element->createTextRun();
+        $state['textrun'] = $phpword_element->createTextRun();
       break;
       
       case 'img':
