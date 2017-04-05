@@ -98,6 +98,8 @@ if (!isset($_POST['metachoice'])) {
     if (!isset($_GET['type'])) {
         print "<p><input type=\"radio\" name=\"metachoice\" value=\"1\">"._formulize_DB_EXPORT_METAYES."</input>\n<br>\n";
         print "<input type=\"radio\" name=\"metachoice\" value=\"0\" checked>"._formulize_DB_EXPORT_METANO."</input>\n</p>\n";
+    } else {
+        print "<input type=\"hidden\" name=\"metachoice\" value=\"0\">\n";
     }
 
     $module_handler = xoops_gethandler('module');
@@ -112,12 +114,6 @@ if (!isset($_POST['metachoice'])) {
     print "</center></body>";
     print "</HTML>";
 } else {
-    if (!isset($_POST['metachoice'])) {
-        // just set this to zero in case it's not set, which should never matter, since if 'type' is set,
-        //  and metachoice is therefore skipped above, and you're making a template for updating, the metachoice
-        //  is ignored in the actual export file creation process when updating
-        $_POST['metachoice'] = 0;
-    }
 
     // 1. need to pickup the full query that was used for the dataset on the page where the button was clicked
     // 2. need to run that query and make a complete dataset
