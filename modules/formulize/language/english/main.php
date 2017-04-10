@@ -541,6 +541,8 @@ define("_formulize_DE_SAVE_SCOPE3_SELF", "Everyone in all groups (no limit)");
 define("_formulize_DE_SAVE_SCOPE4_SELF", "Everyone in: ");
 define("_formulize_DE_SAVE_NOSPECIFICS", "[no specific groups picked]");
 define("_formulize_DE_SAVE_PUBGROUPS", "Publish this view to these groups");
+define("_formulize_DE_SAVE_PUBFILTERS", "Use these elements as filters");
+define("_formulize_DE_SAVE_PUBFILTERS_DESC", "Normally, the visible columns are available as filters/search boxes. If you are making a screen where you want alternative columns to be used, select them here.");
 define("_formulize_DE_SAVE_NOPUB", "[Do not publish this view]");
 define("_formulize_DE_SAVE_LOCKCONTROLS", "Lock the controls?");
 define("_formulize_DE_SAVE_LOCKCONTROLS_HELP1", "<span style=\"font-weight: bold;\">About locking the controls:</span>");

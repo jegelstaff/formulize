@@ -239,6 +239,7 @@ CREATE TABLE formulize_saved_views (
   sv_calc_grouping text,
   sv_quicksearches text,
   sv_global_search text,
+  sv_pubfilters text,
   PRIMARY KEY (sv_id)
 ) ENGINE=MyISAM;
 

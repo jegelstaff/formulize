@@ -297,7 +297,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 					"sv_calc_blanks, " .
 					"sv_calc_grouping, " .
 					"sv_quicksearches, " .
-					"sv_global_search" .
+					"sv_global_search, " .
+                    "sv_pubfilters" .
 				") VALUES (" .
 					"\"".formulize_db_escape($savename)					."\", ".
 					"\"".formulize_db_escape($savegroups)				."\", ".
@@ -318,7 +319,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 					"\"".formulize_db_escape($_POST['calc_blanks'])		."\", ".
 					"\"".formulize_db_escape($_POST['calc_grouping'])	."\", ".
 					"\"".formulize_db_escape($qsearches)				."\", ".
-					"\"".formulize_db_escape($_POST['global_search'])	."\"  ".
+					"\"".formulize_db_escape($_POST['global_search'])	."\", ".
+                    "\"".formulize_db_escape($_POST['pubfilters'])      ."\"  ".
 				")";
 		} else {
 			// print "UPDATE " . $xoopsDB->prefix("formulize_saved_views") . " SET sv_pubgroups=\"$savegroups\", sv_mod_uid=\"$uid\", sv_lockcontrols=\"{$_POST['savelock']}\", sv_hidelist=\"{$_POST['hlist']}\", sv_hidecalc=\"{$_POST['hcalc']}\", sv_asearch=\"$savesearches\", sv_sort=\"{$_POST['sort']}\", sv_order=\"{$_POST['order']}\", sv_oldcols=\"{$_POST['oldcols']}\", sv_currentview=\"{$_POST['savescope']}\", sv_calc_cols=\"{$_POST['calc_cols']}\", sv_calc_calcs=\"{$_POST['calc_calcs']}\", sv_calc_blanks=\"{$_POST['calc_blanks']}\", sv_calc_grouping=\"{$_POST['calc_grouping']}\", sv_quicksearches=\"$qsearches\" WHERE sv_id = \"" . substr($saveid_formulize, 1) . "\"";
@@ -341,7 +343,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 					"sv_calc_blanks 	= \"".formulize_db_escape($_POST['calc_blanks']) 	."\", ".
 					"sv_calc_grouping 	= \"".formulize_db_escape($_POST['calc_grouping']) 	."\", ".
 					"sv_quicksearches 	= \"".formulize_db_escape($qsearches) 				."\", ".
-					"sv_global_search   = \"".formulize_db_escape($_POST['global_search'])	."\"  ".
+					"sv_global_search   = \"".formulize_db_escape($_POST['global_search'])	."\", ".
+                    "sv_pubfilters      = \"".formulize_db_escape($_POST['pubfilters'])	    ."\" ".
 				" WHERE " .
 					"sv_id = \"" . substr($saveid_formulize, 1) . "\"";
 		}
@@ -472,7 +475,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				$savedViewHCalc, 
 				$_POST['lockcontrols'], 
 				$quicksearches,
-				$_POST['global_search']) = loadReport(substr($_POST['currentview'], 1), $fid, $frid);
+				$_POST['global_search'], $_POST['pubfilters']) = loadReport(substr($_POST['currentview'], 1), $fid, $frid);
 			if(!isset($_POST['formulize_preserveListCalcPage']) AND !isset($_GET['formulize_preserveListCalcPage'])) {
 				$_POST['hlist'] = $savedViewHList;
 				$_POST['hcalc'] = $savedViewHCalc;
@@ -530,6 +533,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		$currentView = $loadview;
 	}
 
+    $pubfilters = strlen($_POST['pubfilters']) > 0 ? explode(",", $_POST['pubfilters']) : "";
+        
 	// get columns for this form/framework or use columns sent from interface
 	// ele_handles for a form, handles for a framework, includes handles of all unified display forms 
 	if($_POST['oldcols']) {
@@ -580,7 +585,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	// also, convert any { } terms to literal values for users who can't update other reports, if the last loaded report doesn't belong to them (they're presumably just report consumers, so they don't need to preserve the abstract terms)
 	$hiddenQuickSearches = array(); // array used to indicate quick searches that should be present even if the column is not displayed to the user
 	foreach($_POST as $k=>$v) {
-		if(substr($k, 0, 7) == "search_" AND !in_array(substr($k, 7), $showcols)) {
+		if(substr($k, 0, 7) == "search_" AND !in_array(substr($k, 7), $showcols) AND !in_array(substr($k, 7), $pubfilters)) {
 			if(substr($v, 0, 1) == "!" AND substr($v, -1) == "!") {// don't strip searches that have ! at front and back
 				$hiddenQuickSearches[] = substr($k, 7);
 				continue; // since the { } replacement is meant for the ease of use of non-admin users, and hiddenQuickSearches never show up to users on screen, we can skip the potentially expensive operations below in this loop
@@ -592,7 +597,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		// remove any { } terms that don't have a passed in value (so they appear as "" to users)
 		// only deal with terms that start and end with { } and not ones where the { } terms is not the entire term
 		if(is_string($v) AND substr($v, 0, 1) == "{" AND substr($v, -1) == "}"
-			AND substr($k, 0, 7) == "search_" AND in_array(substr($k, 7), $showcols))
+			AND substr($k, 0, 7) == "search_" AND (in_array(substr($k, 7), $showcols) OR in_array(substr($k, 7), $pubfilters)))
 		{
 			$requestKeyToUse = substr($v,1,-1);
 			if(!strstr($requestKeyToUse,"}") AND !strstr($requestKeyToUse, "{")) { // double check that there's no other { } in the term!
@@ -611,6 +616,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		}
 	}
 
+    $settings['pubfilters'] = $pubfilters;
 	$settings['currentview'] = $currentView;
 
 	$settings['currentURL'] = $currentURL; 
@@ -1141,7 +1147,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		// if search is not used, generate the search boxes 
 		if(!$useSearch AND $hcalc) {
 			print "<div style=\"display: none;\"><table>"; // enclose in a table, since drawSearches puts in <tr><td> tags
-			drawSearches($searches, $settings['columns'], $useCheckboxes, $useViewEntryLinks, 0, false, $hiddenQuickSearches);
+			drawSearches($searches, $settings, $useCheckboxes, $useViewEntryLinks, 0, false, $hiddenQuickSearches);
 			print "</table></div>";
 		}	
 	
@@ -1257,21 +1263,21 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		// (essentially, whenever the search boxes would not be drawn in for whatever reason)
 		if(!$useSearch OR ($calc_cols AND !$hcalc) OR $screen->getTemplate('listtemplate')) {
       formulize_benchmark("before calling draw searches");
-			$quickSearchBoxes = drawSearches($searches, $settings['columns'], $useCheckboxes, $useViewEntryLinks, 0, true, $hiddenQuickSearches, true); // first true means we will receive back the code instead of having it output to the screen, second (last) true means that all allowed filters should be generated
+			$quickSearchBoxes = drawSearches($searches, $settings, $useCheckboxes, $useViewEntryLinks, 0, true, $hiddenQuickSearches, true); // first true means we will receive back the code instead of having it output to the screen, second (last) true means that all allowed filters should be generated
       formulize_benchmark("after calling draw searches");
 			$quickSearchesNotInTemplate = array();
 			foreach($quickSearchBoxes as $handle=>$qscode) {
 				$handle = str_replace("-","_",$handle);
 				$foundQS = false;
-				if(strstr($screen->getTemplate('toptemplate'), 'quickSearch' . $handle) OR strstr($screen->getTemplate('bottomtemplate'), 'quickSearch' . $handle)) {
+				if(strstr($screen->getTemplate('toptemplate'), 'quickSearch' . $handle) OR strstr($screen->getTemplate('bottomtemplate'), 'quickSearch' . $handle) OR in_array($handle, $settings['pubfilters'])) {
 					$buttonCodeArray['quickSearch' . $handle] = $qscode['search']; // set variables for use in the template
           $foundQS = true;
         }
-				if(strstr($screen->getTemplate('toptemplate'), 'quickFilter' . $handle) OR strstr($screen->getTemplate('bottomtemplate'), 'quickFilter' . $handle)) {
+				if(strstr($screen->getTemplate('toptemplate'), 'quickFilter' . $handle) OR strstr($screen->getTemplate('bottomtemplate'), 'quickFilter' . $handle) OR in_array($handle, $settings['pubfilters'])) {
           $buttonCodeArray['quickFilter' . $handle] = $qscode['filter']; // set variables for use in the template
           $foundQS = true;
         }
-				if(strstr($screen->getTemplate('toptemplate'), 'quickDateRange' . $handle) OR strstr($screen->getTemplate('bottomtemplate'), 'quickDateRange' . $handle)) {
+				if(strstr($screen->getTemplate('toptemplate'), 'quickDateRange' . $handle) OR strstr($screen->getTemplate('bottomtemplate'), 'quickDateRange' . $handle) OR in_array($handle, $settings['pubfilters'])) {
           $buttonCodeArray['quickDateRange' . $handle] = $qscode['dateRange']; // set variables for use in the template
           $foundQS = true;
         }
@@ -1297,6 +1303,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	
 
 	print "<input type=hidden name=newcols id=newcols value=\"\"></input>\n";
+    print "<input type=hidden name=pubfilters id=pubfilters value=\"".implode(",",$settings['pubfilters'])."\"></input>\n";
 	print "<input type=hidden name=oldcols id=oldcols value='$flatcols'></input>\n";
 	print "<input type=hidden name=ventry id=ventry value=\"\"></input>\n";
 	print "<input type=\"hidden\" name=\"overridescreen\" id=\"overridescreen\" value=\"\"></input>\n";
@@ -1486,7 +1493,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
             drawHeaders($headers, $cols, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), $settings['lockedColumns']); 
         }
 		if($useSearch) {
-			drawSearches($searches, $cols, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), false, $hiddenQuickSearches);
+			drawSearches($searches, $settings, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), false, $hiddenQuickSearches);
 		}
         print "</table>";
         
@@ -1577,7 +1584,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
         }
 
 		if($useSearch) {
-			drawSearches($searches, $cols, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), false, $hiddenQuickSearches);
+			drawSearches($searches, $settings, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), false, $hiddenQuickSearches);
 		}
 
         if (count($data) == 0) {
@@ -1875,7 +1882,7 @@ function viewEntryButton($linkContents, $overrideId="", $overrideScreen="") {
 // this function draws in the search box row
 // returnOnly is used to return the HTML code for the boxes, and that only happens when we are gathering the boxes because a custom list template is in use
 // $filtersRequired can be 'true' which means include all valid filters, or it can be a list of fields (matching values in the cols array) which require filters
-function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, $returnOnly=false, $hiddenQuickSearches, $filtersRequired=array()) {
+function drawSearches($searches, $settings, $useBoxes, $useLinks, $numberOfButtons, $returnOnly=false, $hiddenQuickSearches, $filtersRequired=array()) {
     $quickSearchBoxes = array();
 
     if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/docs/search_help_"._LANGCODE.".html")) {
@@ -1897,6 +1904,7 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
         }
     }
 
+    $cols = $settings['columns'];
     
 	for($i=0;$i<count($cols);$i++) {
 		$classToUse = "head column column".$i;
@@ -1942,6 +1950,7 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
     
     // handle all the hidden quick searches if we are on the last run through...must be done here, last thing in the loop, after the last box has been drawn in!!  Order of columns and searches must be in synch...adding hidden ones in between columns can cause hard-to-find problems
 		if($i == count($cols)-1) {
+            $hiddenQuickSearches = array_merge($hiddenQuickSearches, $settings['pubfilters']); // include the published filters/searches that the user may have assigned to this screen
 			foreach($hiddenQuickSearches as $thisHQS) {
 				$search_text = isset($searches[$thisHQS]) ? htmlspecialchars(strip_tags($searches[$thisHQS]), ENT_QUOTES) : "";
 				$search_text = get_magic_quotes_gpc() ? stripslashes($search_text) : $search_text;
@@ -3969,6 +3978,7 @@ function loadReport($id, $fid, $frid) {
 	$to_return[11] = $thisview[0]['sv_lockcontrols'];
 	$to_return[12] = $thisview[0]['sv_quicksearches'];
 	$to_return[13] = $thisview[0]['sv_global_search'];
+    $to_return[14] = $thisview[0]['sv_pubfilters'];
 	return $to_return;
 }
 
@@ -4064,6 +4074,8 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 		print "<div id=\"floating-list-of-entries-save-button\" class=\"\"><p>$saveButton</p></div>\n";
 	}
 	
+    $publishedFilters = is_array($settings['pubfilters']) ? $settings['pubfilters'] : array();
+    
 	$thisTemplate = $screen->getTemplate($type.'template');
 	if($thisTemplate != "") {
     
