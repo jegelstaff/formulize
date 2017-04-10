@@ -5610,3 +5610,54 @@ function convertVariableSearchToLiteral($v, $requestKeyToUse) {
     }
     return true; // do nothing
 }
+
+// This function generates HTML for a smart list of columns to use in the change columns list and elsewhere
+// The idea is to show columns based on their forms, in a way that mimics the links in the active relationships
+function generateTidyElementList($cols, $selectedCols=array()) {
+    
+    $html = "";
+    $form_handler = xoops_getmodulehandler('forms', 'formulize');
+    $counter = 0;
+    foreach($cols as $thisFid=>$columns) {
+        $formObject = $form_handler->get($thisFid);
+        $boxeshtml = "";
+        $hideform = "style='display:none;'"; // start forms closed unless they have selected columns
+        if($counter == 0) { // add in metadata columns first time through
+            array_unshift($columns,
+                array('ele_handle'=>'entry_id', 'ele_caption' => _formulize_ENTRY_ID),                          
+                array('ele_handle'=>'creation_uid', 'ele_caption' => _formulize_DE_CALC_CREATOR),
+                array('ele_handle'=>'mod_uid', 'ele_caption' => _formulize_DE_CALC_MODIFIER),
+                array('ele_handle'=>'creation_datetime', 'ele_caption' => _formulize_DE_CALC_CREATEDATE),
+                array('ele_handle'=>'mod_datetime', 'ele_caption' => _formulize_DE_CALC_MODDATE),
+                array('ele_handle'=>'creator_email', 'ele_caption' => _formulize_DE_CALC_CREATOR_EMAIL));
+        }
+        foreach($columns as $column) {
+            $counter++;
+            $selected = in_array($column['ele_handle'], $selectedCols) ? "checked='checked'" : "";
+            if($selected) { $hideform = ""; }
+            $text = (isset($column['ele_colhead']) AND $column['ele_colhead'] != "") ? printSmart(trans($column['ele_colhead']), 75) : printSmart(trans(strip_tags($column['ele_caption'])), 75);
+            $boxeshtml .= "<input type='checkbox' name='popnewcols[]' id='popnewcols".$counter."' class='colbox' value=\"{$column['ele_handle']}\" $selected />&nbsp;&nbsp;&nbsp;<label for='popnewcols".$counter."'>$text</label><br />\n";
+        }
+        $html .= "<p><a onclick='javascript:toggleCols($thisFid);return false;' style='cursor: pointer;'>".$formObject->getVar('title')."</a></p>\n";
+        $html .= "<div id='cols_$thisFid' $hideform>\n";
+        $html .= $boxeshtml;
+        $html .= "</div>";
+    }
+    $html .="
+    
+    <script type='text/javascript'>    
+    function toggleCols(fid) {
+        currentStyle = document.getElementById('cols_'+fid).style.display;
+        if (currentStyle == 'none') { 
+            document.getElementById('cols_'+fid).style.display = 'block';
+        } else {
+            document.getElementById('cols_'+fid).style.display = 'none';
+        }
+    }
+    </script>
+    
+    ";
+    
+    return $html;
+    
+}

@@ -60,15 +60,6 @@ function updateCols(formObj) {
     }
 }
 
-function toggleAllCols() {
-    currentStyle = document.getElementById('allcols').style.display;
-    if (currentStyle == 'none') { 
-        document.getElementById('allcols').style.display = 'block';
-    } else {
-        document.getElementById('allcols').style.display = 'none';
-    }
-}
-
 -->
 </script>
 <?php
@@ -113,23 +104,6 @@ $cols = getAllColList($fid, $frid, $groups); // $groups indicates that we only w
 // handle metadata columns
 
 
-$options['entry_id'] = _formulize_ENTRY_ID;
-$options['creation_uid'] = _formulize_DE_CALC_CREATOR;
-$options['mod_uid'] = _formulize_DE_CALC_MODIFIER;
-$options['creation_datetime'] = _formulize_DE_CALC_CREATEDATE;
-$options['mod_datetime'] = _formulize_DE_CALC_MODDATE;
-$options['creator_email'] = _formulize_DE_CALC_CREATOR_EMAIL;
-
-$usedvals = array();
-foreach($cols as $f=>$vs) {
-    foreach($vs as $row=>$values) {
-        if (!in_array($values['ele_id'], $usedvals)) {
-            $usedvals[] = $values['ele_handle'];
-            $options[$values['ele_handle']] = $values['ele_coldhead'] != "" ? printSmart(trans($values['ele_colhead']), 75) : printSmart(trans(strip_tags($values['ele_caption'])), 75);
-        }
-    }
-}
-
 print "<HTML>";
 print "<head>";
 print "<meta http-equiv=\"Content-Type\" content=\"text/html; charset="._CHARSET."\" />";
@@ -149,27 +123,7 @@ print "<form name=newcolform action=\"" . XOOPS_URL . "\" method=post>\n";
 print "<table class=outer><tr><th colspan=2>" . _formulize_DE_PICKNEWCOLS . "</th></tr>";
 print "<tr><td class=head>" . _formulize_DE_AVAILCOLS . "</td><td class=even>";
 
-$counter = 1;
-// add in the default columns first and they'll be visible
-foreach($options as $value=>$option) {
-    if(in_array($value, $defaultCols) OR in_array($value, $selectedCols)) {
-        $selected = in_array($value, $selectedCols) ? "checked='checked'" : "";
-        print "<label><input type='checkbox' name='popnewcols[]' id='popnewcols".$counter."' class='colbox' value=\"$value\" $selected />&nbsp;&nbsp;&nbsp;$option</label><br />\n";
-        $counter++;
-        unset($options[$value]);
-    }
-}
-
-// add in the rest of the columns second, they'll be invisible
-if(count($options) > 0) {
-    print "<p><a onclick='javascript:toggleAllCols();return false;'>"._formulize_DE_SHOWALLCOLS."</a></p>";
-    print "<div id='allcols' style='display:none;'>";
-    foreach($options as $value=>$option) {
-        print "<label><input type='checkbox' name='popnewcols[]' id='popnewcols".$counter."' class='colbox' value=\"$value\" />&nbsp;&nbsp;&nbsp;$option</label><br />\n";
-        $counter++;
-    }
-    print "</div>";
-}
+print generateTidyElementList($cols, $selectedCols);
 
 print "</td></tr>\n";
 
