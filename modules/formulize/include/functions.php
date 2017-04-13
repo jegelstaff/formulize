@@ -378,10 +378,6 @@ function security_check($fid, $entry="", $uid="", $owner="", $groups="", $mid=""
         $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
     }
 
-    if (!$owner) {
-        $owner = getEntryOwner($entry, $fid);
-    }
-
     // do security check on entry in form -- note: based on the initial entry passed, does not consider entries in one-to-one linked forms which are assumed to be allowed for the user if the main entry is.
     // allow user to see own entry
     // any entry if they have view_globalscope
@@ -390,6 +386,11 @@ function security_check($fid, $entry="", $uid="", $owner="", $groups="", $mid=""
     if ($entry) {
         $view_globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid);
         if (!$view_globalscope) {
+            
+            if (!$owner) {
+               $owner = getEntryOwner($entry, $fid);
+            }
+            
             if ($owner != $uid) {
                 $view_groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid);
                 // if no view_groupscope, then check to see if the settings for the form are "one entry per group" in which case override the groupscope setting
