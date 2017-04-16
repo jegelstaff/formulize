@@ -147,6 +147,10 @@
       }
     },
     {
+      "type": "waitForTextPresent",
+      "text": "Convert to check boxes"
+    },
+    {
       "type": "clickElement",
       "locator": {
         "type": "xpath",
@@ -218,6 +222,10 @@
         "type": "xpath",
         "value": "//span[starts-with(text(), 'SelectBoxTest - Dropdown box')]"
       }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Convert to check boxes"
     },
     {
       "type": "clickElement",
