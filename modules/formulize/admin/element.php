@@ -334,11 +334,14 @@ if ($ele_type=='text') {
     if ($caughtfirst) {
         $formtouse = $ele_value[0] ? $ele_value[0] : $firstform; // use the user's selection, unless there isn't one, then use the first form found
         $elementsq = q("SELECT ele_caption, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=" . intval($formtouse) . " AND ele_type != \"areamodif\" AND ele_type != \"grid\" AND ele_type != \"ib\" AND ele_type != \"subform\" ORDER BY ele_order");
+        $options['subformUserFilterElements'][0] = _formulize_NONE;
         foreach($elementsq as $oneele) {
             $options['subformelements'][$oneele['ele_id']] = printSmart($oneele['ele_caption']);
+            $options['subformUserFilterElements'][$oneele['ele_id']] = printSmart($oneele['ele_caption']);
         }
     } else {
         $options['subformelements'][0] = "";
+        $options['subformUserFilterElements'][0] = "";
     }
 
     // compile a list of data-entry screens for this form
@@ -606,6 +609,7 @@ function formulize_mergeUIText($values, $uitext) {
         // don't alter linked selectbox properties
         return $values;
     }
+    
     if (is_array($values)) {
         $newvalues = array();
         foreach($values as $key=>$value) {

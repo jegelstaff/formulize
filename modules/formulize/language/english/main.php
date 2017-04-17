@@ -319,6 +319,8 @@ define("_formulize_ADD_HELP2", "See an entire entry by clicking the <i>View</i> 
 define("_formulize_ADD_HELP3", "Update an entry by changing the values on the right.");
 define("_formulize_ADD_HELP4", "Delete an entry by checking the boxes and clicking the button below.");
 define("_formulize_SUBFORM_VIEW", "View");
+define("_formulize_SUBFORM_FILTER_GO","Go");
+define("_formulize_SUBFORM_FILTER_SEARCH","Search for: ");
 define("_AM_ELE_SUBFORM_NEWENTRY_LABEL", "New entry");
 define("_formulize_SAVE", "Save");
 define("_formulize_SAVE_AND_LEAVE", "Save and Leave");
