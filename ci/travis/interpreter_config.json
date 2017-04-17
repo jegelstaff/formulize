@@ -19,7 +19,8 @@
         }
       ],
       "scripts": [
-          "ci/selenium2-tests/*"
+          "ci/selenium2-tests/001-install-formulize.json",
+          "ci/selenium2-tests/002-make-forms.json"
       ]
     }
   ]
