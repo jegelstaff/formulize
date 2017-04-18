@@ -68,18 +68,9 @@ class PHPWord_Writer_Word2007_Base extends PHPWord_Writer_Word2007_WriterPart {
       $objWriter->startElement('w:t');
         $objWriter->writeAttribute('xml:space', 'preserve'); // needed because of drawing spaces before and after text
         
-        // hack to convert br here to line breaks, so they don't get treated as whole elements that terminate the paragraphs they're in
-        $strTextParts = explode("*050969*", $strText);
-        $counter = 0;
-        foreach($strTextParts as $strText) {
-            if($counter>0) {
-                $this->_writeTextBreak($objWriter);        
-            }
-            $objWriter->writeRaw($strText);
-            $counter++;
-        }
-        
+        $objWriter->writeRaw(str_replace("*050969*", "<w:br/>", $strText));
         //$objWriter->writeRaw($strText);
+
       $objWriter->endElement();
       
     $objWriter->endElement(); // w:r
