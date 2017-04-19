@@ -289,11 +289,6 @@ function htmltodocx_insert_html_recursive(&$phpword_element, $html_dom_array, &$
     switch ($element->tag) {
       
       case 'p':
-        if(strstr($element->innertext,"<br>")) {
-            $state['textrun'] = $phpword_element->createTextRun($state['current_style']);
-            $state['textrun']->addText(str_replace(array("<br>", "<BR>", "<br/>", "<BR/>"), "*050969*", $element->innertext),  $state['current_style']);
-            break;
-        }
       case 'div': // Treat a div as a paragraph
       case 'h1':
       case 'h2':

@@ -525,6 +525,8 @@ class simple_html_dom {
     // load html from string
     function load($str, $lowercase=true) {
         // prepare
+        // HACK IN REPLACEMENT FOR LINE BREAKS, SINCE WE CANNOT HAVE THEM TREATED AS INDEPENDENT DOM ELEMENTS THAT TURN INTO INDEPENDENT XML ELEMENTS
+        $str = str_replace(array("<br>", "<BR>", "<br/>", "<BR/>"), "*050969*", $str);
         $this->prepare($str, $lowercase);
         // strip out comments
         $this->remove_noise("'<!--(.*?)-->'is");
