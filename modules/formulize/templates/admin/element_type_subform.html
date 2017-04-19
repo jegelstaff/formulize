@@ -103,7 +103,17 @@
         </fieldset>
     </div>
 
-
+<div class="form-item">
+<fieldset>
+<legend>Sorting order for the subform entries</legend>
+<p>Sort the subform entries by this element ('None' means use creation order):<br />
+    <select name="elements-ele_value[SortingElement]" size="1">
+		<{html_options options=$content.subformUserFilterElements selected=$content.ele_value.SortingElement}>
+	</select>
+    &nbsp;&nbsp;&nbsp;
+    <input type='radio' name='elements-ele_value[SortingDirection]' value='ASC'>A...Z</input> &nbsp;&nbsp;&nbsp; <input type='radio' name='elements-ele_value[SortingDirection]' value='DESC'>Z...A</input></p>
+</fieldset>
+</div>
     
 
 <div class="form-item">

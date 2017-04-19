@@ -1630,18 +1630,13 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	
 	} elseif(count($sub_entries[$subform_id]) > 0) {
 		
-		// need to figure out the proper order for the sub entries based on the properties set for this form
-		// for now, hard code to the word number field to suit the map site only
-		// if it's the word subform, then sort the entries differently
-		/*if($subform_id == 281) {
-			$sortClause = " fas_281, block_281, word_number ";
-		} 
-		elseif ($subform_id == 283) {
-			$sortClause = " fas_283 ";
-		}
-		else {*/
+        if(isset($subform_element_object->ele_value["SortingElement"]) AND $subform_element_object->ele_value["SortingElement"]) {
+            $sortElementObject = $element_handler->get($subform_element_object->ele_value["SortingElement"]);
+            $sortDirection = $subform_element_object->ele_value["SortingDirection"] == "DESC" ? "DESC" : "ASC";
+            $sortClause = " ".$sortElementObject->getVar('ele_handle')." ".$sortDirection;
+        } else {
 			$sortClause = " entry_id ";
-		//}
+		}
 		
         if(isset($subform_element_object->ele_value["UserFilterByElement"]) AND $subform_element_object->ele_value["UserFilterByElement"]) {
             $matchingEntryIds = array();
