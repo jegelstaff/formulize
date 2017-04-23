@@ -1960,7 +1960,7 @@ function drawSearches($searches, $settings, $useBoxes, $useLinks, $numberOfButto
 	    $quickSearchBoxes[$thisHQS]['dateRange'] = formulize_buildDateRangeFilter($thisHQS, $search_text);
           }
         }
-				if(!$returnOnly AND !in_array($thisHQS, $settings['pubfilters'])) {
+				if(!$returnOnly AND (!in_array($thisHQS, $settings['pubfilters']) OR strstr(getCurrentURL(), '/modules/formulize/master.php'))) {
 					print "<input type=hidden name='search_$thisHQS' value=\"$search_text\"></input>\n"; // note: this will cause a conflict if this particular column is included in the top or bottom templates and no custom list template is in effect...since this is only ! ! search terms, not sure why you'd ever include this as a box in the top/bottom templates...it's not type-in-able because of the ! !
 				}
 			}
@@ -2000,6 +2000,9 @@ function formulize_buildQSFilter($handle, $search_text) {
     if($elementMetaData['ele_type']=="select" OR $elementMetaData['ele_type']=="radio" OR $elementMetaData['ele_type']=="checkbox") {
       $qsfparts = explode("_", $search_text);
       $search_term = strstr($search_text, "_") ? $qsfparts[1] : $search_text;
+      if(substr($search_term, 0, 1)=="!" AND substr($search_term, -1) == "!") {
+        $search_term = substr($search_term, 1, -1); // cut off any hidden filter values that might be present
+      }
       $filterHTML = buildFilter("search_".$handle, $id, _formulize_QSF_DefaultText, $name="{listofentries}", $search_term);
       return $filterHTML;
     }
