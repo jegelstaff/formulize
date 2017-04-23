@@ -1258,10 +1258,6 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	
 		if(!strstr($screen->getTemplate('toptemplate'), 'currentViewList') AND !strstr($screen->getTemplate('bottomtemplate'), 'currentViewList')) { print "<input type=hidden name=currentview id=currentview value=\"$currentview\"></input>\n"; } // print it even if the text is blank, it will be a hidden value in this case
 				
-		// if search is not used, generate the search boxes and make them available in the template
-		// also setup searches when calculations are in effect, or there's a custom list template
-		// (essentially, whenever the search boxes would not be drawn in for whatever reason)
-		if(!$useSearch OR ($calc_cols AND !$hcalc) OR $screen->getTemplate('listtemplate')) {
       formulize_benchmark("before calling draw searches");
 			$quickSearchBoxes = drawSearches($searches, $settings, $useCheckboxes, $useViewEntryLinks, 0, true, $hiddenQuickSearches, true); // first true means we will receive back the code instead of having it output to the screen, second (last) true means that all allowed filters should be generated
       formulize_benchmark("after calling draw searches");
@@ -1285,6 +1281,10 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 				$quickSearchesNotInTemplate[] = $qscode['search']; // if it's not used in the template, then save the box version for hidden output to screen below, so searches still work
 			}
       
+   		// if search is not used, generate the search boxes and make them available in the template
+		// also setup searches when calculations are in effect, or there's a custom list template
+		// (essentially, whenever the search boxes would not be drawn in for whatever reason)
+		if(!$useSearch OR ($calc_cols AND !$hcalc) OR $screen->getTemplate('listtemplate')) {
 			if(count($quickSearchesNotInTemplate) > 0) {			
 				print "<div style=\"display: none;\">"; 
 				foreach($quickSearchesNotInTemplate as $qscode) {
@@ -1881,7 +1881,7 @@ function viewEntryButton($linkContents, $overrideId="", $overrideScreen="") {
 // this function draws in the search box row
 // returnOnly is used to return the HTML code for the boxes, and that only happens when we are gathering the boxes because a custom list template is in use
 // $filtersRequired can be 'true' which means include all valid filters, or it can be a list of fields (matching values in the cols array) which require filters
-function drawSearches($searches, $settings, $useBoxes, $useLinks, $numberOfButtons, $returnOnly=false, $hiddenQuickSearches, $filtersRequired=array()) {
+function drawSearches($searches, $settings, $useBoxes, $useLinks, $numberOfButtons, $returnOnly=false, $hiddenQuickSearches=array(), $filtersRequired=array()) {
     $quickSearchBoxes = array();
 
     if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/docs/search_help_"._LANGCODE.".html")) {
@@ -1903,7 +1903,9 @@ function drawSearches($searches, $settings, $useBoxes, $useLinks, $numberOfButto
         }
     }
 
+    $pubfilters = is_array($settings['pubfilters']) ? $settings['pubfilters'] : array();
     $cols = $settings['columns'];
+    $searchesDrawnAlready = array();
     
 	for($i=0;$i<count($cols);$i++) {
 		$classToUse = "head column column".$i;
@@ -1945,12 +1947,13 @@ function drawSearches($searches, $settings, $useBoxes, $useLinks, $numberOfButto
       } else {
         print "<nobr>".$quickSearchBoxes[$cols[$i]]['search']."</nobr>";
       }
+      $searchesDrawnAlready[] = $cols[$i];
 		}
     
     // handle all the hidden quick searches if we are on the last run through...must be done here, last thing in the loop, after the last box has been drawn in!!  Order of columns and searches must be in synch...adding hidden ones in between columns can cause hard-to-find problems
 		if($i == count($cols)-1) {
-            $hiddenQuickSearches = array_merge($hiddenQuickSearches, $settings['pubfilters']); // include the published filters/searches that the user may have assigned to this screen
-			foreach($hiddenQuickSearches as $thisHQS) {
+            $hiddenQuickSearchesToMake = array_merge($hiddenQuickSearches, $pubfilters); // include the published filters/searches that the user may have assigned to this screen
+			foreach($hiddenQuickSearchesToMake as $thisHQS) {
 				$search_text = isset($searches[$thisHQS]) ? htmlspecialchars(strip_tags($searches[$thisHQS]), ENT_QUOTES) : "";
 				$search_text = get_magic_quotes_gpc() ? stripslashes($search_text) : $search_text;
 				$quickSearchBoxes[$thisHQS]['search'] = "<input type=text name='search_$thisHQS' value=\"$search_text\" $clear_help_javascript onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>\n";
@@ -1960,8 +1963,9 @@ function drawSearches($searches, $settings, $useBoxes, $useLinks, $numberOfButto
 	    $quickSearchBoxes[$thisHQS]['dateRange'] = formulize_buildDateRangeFilter($thisHQS, $search_text);
           }
         }
-				if(!$returnOnly AND (!in_array($thisHQS, $settings['pubfilters']) OR strstr(getCurrentURL(), '/modules/formulize/master.php'))) {
-					print "<input type=hidden name='search_$thisHQS' value=\"$search_text\"></input>\n"; // note: this will cause a conflict if this particular column is included in the top or bottom templates and no custom list template is in effect...since this is only ! ! search terms, not sure why you'd ever include this as a box in the top/bottom templates...it's not type-in-able because of the ! !
+                // if we're drawing boxes, only draw hidden ones if they have not been drawn already and are (not published filters, or we're on the master page) 
+				if(!$returnOnly AND !in_array($thisHQS, $searchesDrawnAlready) AND (!in_array($thisHQS, $pubfilters) OR (strstr(getCurrentURL(), '/modules/formulize/master.php')))) {
+					print "<input type=hidden name='search_$thisHQS' value=\"$search_text\"></input>\n"; 
 				}
 			}
 		}

@@ -109,7 +109,7 @@ if($pubflag) {
 		}
 	}
 
-    var cols;
+    var cols='';
     var start=1;
     var colboxes = document.getElementsByClassName('colbox');
     for(var i=0; colboxes[i]; ++i) {
