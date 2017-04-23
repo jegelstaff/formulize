@@ -200,6 +200,7 @@ switch($op) {
           } elseif($sourceElement==$passedElementId) {
             $entryId = $databaseReadyValue;
           }
+          break;
         }
       }
     }
