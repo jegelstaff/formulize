@@ -1960,7 +1960,7 @@ function drawSearches($searches, $settings, $useBoxes, $useLinks, $numberOfButto
 	    $quickSearchBoxes[$thisHQS]['dateRange'] = formulize_buildDateRangeFilter($thisHQS, $search_text);
           }
         }
-				if(!$returnOnly) {
+				if(!$returnOnly AND !in_array($thisHQS, $settings['pubfilters'])) {
 					print "<input type=hidden name='search_$thisHQS' value=\"$search_text\"></input>\n"; // note: this will cause a conflict if this particular column is included in the top or bottom templates and no custom list template is in effect...since this is only ! ! search terms, not sure why you'd ever include this as a box in the top/bottom templates...it's not type-in-able because of the ! !
 				}
 			}
