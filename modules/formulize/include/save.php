@@ -123,10 +123,8 @@ if($pubflag) {
         }
     }
         
-	if(cols) {
-        window.opener.document.controls.pubfilters.value = cols;
-    }
-    
+    window.opener.document.controls.pubfilters.value = cols;
+   
 
 	window.opener.document.controls.savegroups.value = pubgroups;
 	window.opener.document.controls.savelock.value = locksetting;
