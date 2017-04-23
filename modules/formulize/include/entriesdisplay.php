@@ -1703,9 +1703,8 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 													print getHTMLForList($values, $colhandle, $internalID, $deDisplay, $textWidth, $currentColumnLocalId, $fid, $cellRowAddress, $i);
 													print "</div>";
 												} else {
-                                                    if(isset($elementsDisplayed)) { print "\n<br />\n"; }
+                                                    if($deThisIntId) { print "\n<br />\n"; } // extra break to separate multiple form elements in the same cell, for readability/usability
 													displayElement("", $colhandle, $internalID);
-                                                    $elementsDisplayed = true;
 												}
 												$deThisIntId = true;
 											}
