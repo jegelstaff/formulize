@@ -3519,7 +3519,13 @@ function cancelCalcs() {
 	showLoading();
 }
 
-function customButtonProcess(caid, entries) {
+function customButtonProcess(caid, entries, popup) {
+    if (popup) {
+        var answer = confirm(popup);
+        if (!answer) {
+            return false;
+        }        
+    }
 	window.document.controls.caid.value = caid;
 	window.document.controls.caentries.value = entries;
 	showLoading();
@@ -4146,7 +4152,7 @@ function processCustomButton($caid, $thisCustomAction, $entries="", $entry="") {
 		$caCode = $allHTML;
 	} else {
 		$nameIdAddOn = $thisCustomAction['appearinline'] ? $nameIdAddOn+1 : "";
-		$caCode = "<input type=button style=\"width: 140px;\" name=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" id=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" value=\"" . trans($thisCustomAction['buttontext']) . "\" onclick=\"javascript:customButtonProcess('$caid', '$entries');\">\n";
+		$caCode = "<input type=button style=\"width: 140px;\" name=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" id=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" value=\"" . trans($thisCustomAction['buttontext']) . "\" onclick=\"javascript:customButtonProcess('$caid', '$entries', '".str_replace("'","\'",$thisCustomAction['popuptext'])."');\">\n";
 	}
 	
 	return array(0=>$caCode, 1=>$caElements, 2=>$caActions, 3=>$caValues, 4=>$thisCustomAction['messagetext'], 5=>$thisCustomAction['applyto'], 6=>$caPHP, 7=>$thisCustomAction['appearinline']);

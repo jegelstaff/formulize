@@ -82,6 +82,7 @@ foreach($_POST as $k=>$v) {
     $buttonData[$buttonId]['handle'] = $v;
     $buttonData[$buttonId]['buttontext'] = $_POST['buttontext_'.$buttonId];
     $buttonData[$buttonId]['messagetext'] = $_POST['messagetext_'.$buttonId];
+    $buttonData[$buttonId]['popuptext'] = $_POST['popuptext_'.$buttonId];
     $buttonData[$buttonId]['appearinline'] = $_POST['appearinline_'.$buttonId];
     $buttonData[$buttonId]['applyto'] = $_POST['applyto_'.$buttonId];
     $buttonData[$buttonId]['groups'] = $_POST['groups_'.$buttonId];
