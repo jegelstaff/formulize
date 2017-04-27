@@ -1730,16 +1730,16 @@ function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form
         $formHandle = htmlspecialchars_decode($formHandle, ENT_QUOTES);
         if (isset($metadata[$formHandle])) {
             // if there are derived value formulas for this form
-            if (!isset($parsedFormulas[$formHandle])) {
+            if (!isset($parsedFormulas[$formHandle][$relationship_id][$form_id])) {
                 formulize_includeDerivedValueFormulas($metadata[$formHandle], $formHandle, $relationship_id, $form_id);
-                $parsedFormulas[$formHandle] = true;
+                $parsedFormulas[$formHandle][$relationship_id][$form_id] = true;
             }
             foreach ($record as $primary_entry_id => $elements) {
                 $dataToWrite = array();
                 foreach ($metadata[$formHandle] as $formulaNumber => $thisMetaData) {
                     // if there's nothing already in the DB, then derive it, unless we're being asked specifically to update the derived values, which happens during a save operation.  In that case, always do a derivation regardless of what's in the DB.
                     if ($debugMode OR ((isset($GLOBALS['formulize_forceDerivedValueUpdate'])) AND !isset($GLOBALS['formulize_doingExport']))) {
-                        $functionName = "derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", $formHandle)."_".$formulaNumber;
+                        $functionName = "derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", $formHandle)."_".$relationship_id."_".$form_id."_".$formulaNumber;
                         // want to turn off the derived value update flag for the actual processing of a value, since the function might have a getData call in it!!
                         $resetDerivedValueFlag = false;
                         if (isset($GLOBALS['formulize_forceDerivedValueUpdate'])) {
@@ -1811,7 +1811,8 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
         }
         $functionsToWrite .= "function derivedValueFormula_".
             str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", $formHandle).
-            "_".$formulaNumber."(\$entry, \$form_id, \$entry_id, \$relationship_id) {\n$formula\nreturn \$value;\n}\n\n";
+            "_".$frid."_".$fid."_".$formulaNumber."(\$entry, \$form_id, \$entry_id, \$relationship_id) {\n$formula\nreturn \$value;\n}\n\n";
+            
     }
     eval($functionsToWrite);
 }
