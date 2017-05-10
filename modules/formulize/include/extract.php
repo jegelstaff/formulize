@@ -1386,7 +1386,8 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                     } elseif($sourceMeta = $formFieldFilterMap[$mappedForm][$element_id]['islinked']) {
 			 
                         // check if user is searching for blank values, and if so, then query this element directly, rather than looking in the source
-                        if($ifParts[1]==='' OR $operator == ' IS NULL ' OR $operator == ' IS NOT NULL ') {
+                        // ALSO do this if the user is searching for a numeric value with an = operator
+                        if($ifParts[1]==='' OR $operator == ' IS NULL ' OR $operator == ' IS NOT NULL ' OR (is_numeric($ifParts[1]) AND $operator == '=')) {
                              $newWhereClause = "$queryElement " . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;
                         } else {
                              
