@@ -402,7 +402,7 @@ EOF;
 		
 		//We buffer our output of HTML injection. This prevents the buffer from being printed before we have printed and loaded our
 		//JS scripts to the page.
-		ob_start;
+		ob_start();
 		include XOOPS_ROOT_PATH . '/modules/formulize/index.php';
 		//Content now contains our buffered contents.
 		$content = ob_get_clean();
@@ -452,7 +452,7 @@ EOF;
 	
 	/**
 	 * Insert a mapping from the external resource to a Formulize resource
-	 * @param external_id     int     The external resource ID
+	 * @param external_id     int/string    The external resource ID
 	 * @param id          int     The Formulize resource ID
 	 * @return            boolean   Whether mapping was successful
 	 * @throws  An exception is thrown if a supplied ID is not of integer form.
@@ -460,22 +460,28 @@ EOF;
 	public static function createResourceMapping($resource_type, $external_id, $id) {
 		self::init();
 		$mapping_table = self::$db->prefix(self::$mapping_table);
-		//+0 will allow string input to be implicitly cast to a numeric type and then checked for integer form
-		if(!is_int($external_id + 0) || !is_int($id + 0))
-			throw new Exception('Formulize::createResourceMapping() - Expecting two integer IDs.');
+        if($resource_type == self::GROUP_RESOURCE AND !is_numeric($external_id)) {
+            $external_id_FIELD = "external_id_string";
+            $external_id_VALUE = "'".formulize_db_escape($external_id)."'";
+        } else {
+            $external_id_FIELD = "external_id";
+            $external_id_VALUE = intval($external_id);
+        }
+        $external_id_SQL = "$external_id_FIELD = $external_id_VALUE";
+        
 		//Determine whether any mappings exist with the specified IDs
 		$num_mappings = mysql_num_rows(self::$db->queryF('
 			SELECT * FROM ' . $mapping_table . ' 
 			WHERE (internal_id = ' . intval($id) . ' 
 				AND resource_type = ' . intval($resource_type) . ') 
-			OR (external_id = ' . intval($external_id) . '
+			OR ('.$external_id_SQL.'
 				AND resource_type = ' . intval($resource_type) . ')'
 		));
 		if($num_mappings == 0) {
 			return self::$db->queryF('
 				INSERT INTO ' . $mapping_table . '
-				(external_id, internal_id, resource_type, mapping_active)
-				VALUES ( ' . intval($external_id) . ', ' . intval($id) . ', ' . intval($resource_type) . ', ' . self::$default_mapping_active . ')'
+				('.$external_id_FIELD.', internal_id, resource_type, mapping_active)
+				VALUES ( ' . $external_id_VALUE . ', ' . intval($id) . ', ' . intval($resource_type) . ', ' . self::$default_mapping_active . ')'
 			);
 		} else {
 			//A group mapping containing at least one of the IDs already exists. Can't create it.
@@ -485,26 +491,39 @@ EOF;
 
 	public static function deactivateResourceMapping($resource_type, $external_id) {
 		self::init();
+        if(!$external_id) { return null; }
+        if($resource_type == self::GROUP_RESOURCE AND !is_numeric($external_id)) {
+            $external_id_SQL = "external_id_string = '" . formulize_db_escape($external_id) . "'";
+        } else {
+            $external_id_SQL = "external_id = " . intval($external_id);
+        }
+        
 		$mapping_table = self::$db->prefix(self::$mapping_table);
 		return self::$db->queryF('
 			UPDATE ' . $mapping_table . '
 			SET mapping_active = 0' . '
 			WHERE resource_type = ' . intval($resource_type) . '
-			AND external_id = ' . intval($external_id)
+			AND '.$external_id_SQL
 		);
 	}
 
 	/**
 	 * Converts an external resource ID into a XOOPS resource ID using the associated mapping table
-	 * @param external_id  int   The external resource ID to convert
+	 * @param external_id  int/string   The external resource ID to convert
 	 * @return            int   The associated XOOPS resource ID
 	 */
 	static function getXoopsResourceID($resource_type, $external_id) {
+        if(!$external_id) { return null; }
 		self::init();
+        if($resource_type == self::GROUP_RESOURCE AND !is_numeric($external_id)) {
+            $external_id_SQL = "external_id_string = $db'" . formulize_db_escape($external_id) . "'";
+        } else {
+            $external_id_SQL = "external_id = " . intval($external_id);
+        }
 		$mapping_table = self::$db->prefix(self::$mapping_table);
 		$mapping_result = mysql_fetch_row(self::$db->queryF('
 			SELECT internal_id FROM ' . $mapping_table . '
-			WHERE external_id = ' . intval($external_id) . '
+			WHERE '.$external_id_SQL.'
 			AND resource_type = ' . intval($resource_type) . '
 			AND mapping_active = 1'
 		));

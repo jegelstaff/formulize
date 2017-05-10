@@ -262,10 +262,12 @@ function patch40() {
     external_id int(11) NOT NULL,
     resource_type int(4) NOT NULL,
     mapping_active tinyint(1) NOT NULL,
+    external_id_string text NULL default NULL,
     PRIMARY KEY (mapping_id),
     INDEX i_internal_id (internal_id),
     INDEX i_external_id (external_id),
-    INDEX i_resource_type (resource_type)
+    INDEX i_resource_type (resource_type),
+    INDEX i_external_id_string (external_id_string(10))
 ) ENGINE=MyISAM;";
         }
 
@@ -339,7 +341,9 @@ function patch40() {
         $sql['add_application_code'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_applications") . " ADD `custom_code` mediumtext";
         $sql['add_note_to_menu_links']="ALTER TABLE ".$xoopsDB->prefix("formulize_menu_links")." ADD `note` text";
         $sql['add_pubfilters'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_saved_views") . " ADD `sv_pubfilters` text";
-
+        $sql['add_backdrop_group'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_resource_mapping") . " ADD external_id_string text NULL default NULL";
+        $sql['add_backdrop_group_index'] = "ALTER TABLE ". $xoopsDB->prefix("formulize_resource_mapping") ." ADD INDEX i_external_id_string (external_id_string(10))";
+        
         foreach($sql as $key=>$thissql) {
             if (!$result = $xoopsDB->query($thissql)) {
                 if ($key === "add_encrypt") {
@@ -394,6 +398,10 @@ function patch40() {
                     continue;
                 } elseif(strstr($key, 'add_pubfilters')) {
                     print "Pubfilters field already added.  result: OK<br>";
+                } elseif(strstr($key, 'add_backdrop_group')) {
+                    print "External_id_string already added for resource mapping.  result: OK<br>";
+                } elseif(strstr($key, 'add_backdrop_group_index')) {
+                    print "External_id_string INDEX already added for resource mapping.  result: OK<br>";
                 } else {
                     exit("Error patching DB for Formulize 4.0. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
                 }
