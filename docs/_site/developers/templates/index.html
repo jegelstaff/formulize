@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="/formulize/stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="/formulize/stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="/formulize/stylesheets/print.css" media="print" />
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <title>Formulize by jegelstaff</title>
+  </head>
+
+  <body>
+    <div id="container">
+      <div class="inner">
+
+        <header>
+          <h1><a href='/formulize/' class='header-home'>Formulize</a></h1>
+          <h2>Data management and reporting on the web, in your CMS, and on your mobile device.</h2>
+        </header>
+
+        <section id="downloads" class="clearfix">
+          <a href="https://github.com/jegelstaff/formulize/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
+          <a href="https://github.com/jegelstaff/formulize/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
+          <a href="https://github.com/jegelstaff/formulize" id="view-on-github" class="button"><span>View on GitHub</span></a>
+        </section>
+
+        <hr>
+
+        <script type='text/javascript'>
+            
+            // Thanks to Donald Sutherland for this function
+            // http://mynameisdonald.com/javascript-functions-how-to-capitalize-words/
+            function eachWord(str){
+               return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
+            }
+            
+            var path = new String(window.document.location);
+            var pathParts = new Array();
+            var crumbPath = '';
+            var homePath = '';
+            var crumbSep = ' >> ';
+            var startCrumbsNextTime = false;
+            var crumbsStarted;
+            pathParts = path.split('/');
+            for(i in pathParts) {
+                crumbPath = crumbPath + pathParts[i] + '/';
+                if(!startCrumbsNextTime || pathParts[i] == '') {
+                    if(pathParts[i] == 'formulize') {
+                        startCrumbsNextTime = true;
+                        homePath = crumbPath;
+                    }
+                    continue;
+                } else if(!crumbsStarted) {
+                    crumbsStarted = true;
+                    window.document.write('<a href="'+homePath+'">Home</a>\n');
+                }
+                pathParts[i] = pathParts[i].replace('_', ' ');
+                pathParts[i] = eachWord(pathParts[i]);
+                window.document.write(crumbSep+'<a href="'+crumbPath+'">'+pathParts[i]+'</a>\n');
+            }
+            if(crumbsStarted) {
+                window.document.write('<hr>');
+            }
+            
+        </script>
+        
+        <section id="main_content">
+          
+          <h1 id="working-with-templates">Working With Templates</h1>
+
+<p><a href="index.html">Goto the index page</a></p>
+
+<p>Templates use the <a href="http://www.smarty.net/">Smarty</a> templating system.</p>
+
+<h2 id="changes-not-showing">Changes Not Showing?</h2>
+
+<p>If you’ve made changes to a template, but the changes do not appear in the page, it’s probably because the template was already compiled, and it has not been recompiled to reflect your changes. The .html template files are compiled into .php files in the /templates_c folder. By default, templates are only compiled the first time the template is encountered. There are two ways to force a template to recompile. Either delete the compiled version in the templates_c folder, or change the setting which causes the templating system to check templates and recompile them automatically. This option requires a Webmaster account, and it can be found in the administrative control panel. Look in the top menu under System » Site Configuration » Preferences » General Settings. The relevant option is labelled “Check templates for modifications?”.</p>
+
+<h2 id="inspecting-template-variables">Inspecting Template Variables</h2>
+
+<p>Any variables can be made available in a template. Sometimes, determining exactly which variables are available and how they are named is very helpful. To do this, add the following tag into the template file you are working on:</p>
+
+<pre><code>&lt;{ debug }&gt;
+</code></pre>
+
+<p>The next time the page is refreshed, a popup window will appear listing all of the available variables and showing what they contain.</p>
+
+<h2 id="urls">Urls</h2>
+
+<p>The site can be installed in the root of a website, or in a subfolder. For example, the site might be located at http://formulize.com/ or that might be a blog and the Formulize portion of the website might be located at http://formulize.com/demo/. For this reason, when adding links in templates, use the base url variable like this:</p>
+
+<pre><code>&lt;a href="&lt;{$icms_url}&gt;/my/page.html"&gt;My Page&lt;/a&gt;
+</code></pre>
+
+<h2 id="css-rules">CSS Rules</h2>
+
+<p>You may need to style new elements you add to a template. Most likely the element you add will be specific to Formulize, so the CSS rules should go into the Formulize CSS files. Formulize uses <a href="http://sass-lang.com/">SASS/SCSS</a>, which has a very similar syntax to CSS. The rules are broken into several files. One for front-end pages, one for admin pages, one for colours and function definitions, and one for CSS rules that are shared by both the front-end and admin sections.</p>
+
+          
+        </section>
+
+        <footer>
+          Formulize is maintained by <a href="https://github.com/jegelstaff">jegelstaff</a><br>
+          This page was generated by <a href="http://pages.github.com">GitHub Pages</a>. Tactile theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.
+        </footer>
+
+        
+      </div>
+    </div>
+  </body>
+</html>

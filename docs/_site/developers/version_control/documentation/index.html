@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="/formulize/stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="/formulize/stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="/formulize/stylesheets/print.css" media="print" />
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <title>Formulize by jegelstaff</title>
+  </head>
+
+  <body>
+    <div id="container">
+      <div class="inner">
+
+        <header>
+          <h1><a href='/formulize/' class='header-home'>Formulize</a></h1>
+          <h2>Data management and reporting on the web, in your CMS, and on your mobile device.</h2>
+        </header>
+
+        <section id="downloads" class="clearfix">
+          <a href="https://github.com/jegelstaff/formulize/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
+          <a href="https://github.com/jegelstaff/formulize/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
+          <a href="https://github.com/jegelstaff/formulize" id="view-on-github" class="button"><span>View on GitHub</span></a>
+        </section>
+
+        <hr>
+
+        <script type='text/javascript'>
+            
+            // Thanks to Donald Sutherland for this function
+            // http://mynameisdonald.com/javascript-functions-how-to-capitalize-words/
+            function eachWord(str){
+               return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
+            }
+            
+            var path = new String(window.document.location);
+            var pathParts = new Array();
+            var crumbPath = '';
+            var homePath = '';
+            var crumbSep = ' >> ';
+            var startCrumbsNextTime = false;
+            var crumbsStarted;
+            pathParts = path.split('/');
+            for(i in pathParts) {
+                crumbPath = crumbPath + pathParts[i] + '/';
+                if(!startCrumbsNextTime || pathParts[i] == '') {
+                    if(pathParts[i] == 'formulize') {
+                        startCrumbsNextTime = true;
+                        homePath = crumbPath;
+                    }
+                    continue;
+                } else if(!crumbsStarted) {
+                    crumbsStarted = true;
+                    window.document.write('<a href="'+homePath+'">Home</a>\n');
+                }
+                pathParts[i] = pathParts[i].replace('_', ' ');
+                pathParts[i] = eachWord(pathParts[i]);
+                window.document.write(crumbSep+'<a href="'+crumbPath+'">'+pathParts[i]+'</a>\n');
+            }
+            if(crumbsStarted) {
+                window.document.write('<hr>');
+            }
+            
+        </script>
+        
+        <section id="main_content">
+          
+          <h1 id="documentation">Documentation</h1>
+
+<p>All documentation for Formulize is kept in the /formulize-docs/ folder.  This folder contains a Jekyll based website.  The website is publically accessible here:  <a href="http://jegelstaff.github.io/formulize/">http://jegelstaff.github.io/formulize/</a></p>
+
+<p><a href="../../github_pages">Learn more about the configuration of the Jekyll site and deploying to GitHub Pages</a>. </p>
+
+<p>Our intention is that documentation will be committed as part of each branch, so that the code changes come with relevant explanations and updated documentation.  The easiest way to write the documentation, is to install Jekyll on your local development machine.  This makes it easy to then review the documentation, and make changes to it, without having to deploy the entire set of docs to GitHub.</p>
+
+<p>Jekyll is written in Ruby, so you will need Ruby installed in order to use it.  <a href="http://jekyllrb.com/docs/installation/">Learn more about installing Jekyll here</a></p>
+
+<p>Once you have Jekyll installed, you can open up a command line and go to the /formulize-docs/ folder.  Type this command to start up a localhost server that will show you the documentation, the same as it would appear on GitHub Pages:</p>
+
+<pre><code>jekyll serve --watch
+</code></pre>
+
+<p>The <strong>–watch</strong> switch ensures that as you make changes, they will be reflected in what you see in your web browser.  To see the documentation, go to this URL:</p>
+
+<pre><code>http://localhost:4000/formulize/
+</code></pre>
+
+<p>Pages can be written in Markdown syntax.  All pages must start with the following snippet:</p>
+
+<pre><code>---
+layout: default
+permalink: version_control/developers/documentation/
+---
+</code></pre>
+
+<p>The <strong>permalink</strong> is the URL for this page, relative to the root of the documentation.  The <strong>layout</strong> is simply a reference to the page template that is being used for the contents of the page outside the main body section.</p>
+
+<p>You can link to other pages in the documentation using standard Markdown syntax:</p>
+
+<pre><code>[This text will be clickable and will go to the permalink in parens](/formulize/developers/github_pages)
+[This link will resolve to a permalink that is relative to the current page's permalink](../documentation)
+</code></pre>
+
+<p>Note that when using a fully qualified permalink as the destination, there is a preceding slash and no ending slash, which is the opposite format from how you must specify the permalink in the snippet at the top of each page!  Nothing is ever simple.</p>
+
+<p>All other syntax that you can use is based on the kramdown flavour of Markdown.</p>
+
+
+          
+        </section>
+
+        <footer>
+          Formulize is maintained by <a href="https://github.com/jegelstaff">jegelstaff</a><br>
+          This page was generated by <a href="http://pages.github.com">GitHub Pages</a>. Tactile theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.
+        </footer>
+
+        
+      </div>
+    </div>
+  </body>
+</html>

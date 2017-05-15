@@ -31,12 +31,12 @@ When there is a commit, Travis spins up a Debian Linux server in the cloud, and 
       - secure: Xjc2qZs42LLIk4lRMc/JdFxeN5pmXUTLFd/stohOTX3g1rmRInXXqYpnXW/S15FjShqgtQAvvmnU/SV9QNpfaMhQVgS1ORVTS10gvy3aLPodW5hB9AGCDiQHXD0r9p+73LfNzenvdtmDme9Pp8PdLwb+spSroRbXgJ3tqHpXntM=
       - secure: H5basCAhwXO3SicUX3VClC9KgLzoeJ1unMeYgP6+HHFxSv+81W5AJG8i8xmbziWC+dsO1c2POFbvS2BRkjhPqh9Me94g0FInBoUlVHiP0TlbSBsRv7K5Ke5fm8LHz5Obkeq2BrE6O76m6m2M301MTwZj43LVw8cPtPbXybQ0MoI=
       phpenv:
-      - version-name: "5.5.10"
+      - version-name: "5.6"
     
     language: php
     
     php:
-      - 5.5
+      - 5.6
     
     install:
       - sudo apt-get update

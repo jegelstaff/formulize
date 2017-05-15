@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="/formulize/stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="/formulize/stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="/formulize/stylesheets/print.css" media="print" />
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <title>Formulize by jegelstaff</title>
+  </head>
+
+  <body>
+    <div id="container">
+      <div class="inner">
+
+        <header>
+          <h1><a href='/formulize/' class='header-home'>Formulize</a></h1>
+          <h2>Data management and reporting on the web, in your CMS, and on your mobile device.</h2>
+        </header>
+
+        <section id="downloads" class="clearfix">
+          <a href="https://github.com/jegelstaff/formulize/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
+          <a href="https://github.com/jegelstaff/formulize/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
+          <a href="https://github.com/jegelstaff/formulize" id="view-on-github" class="button"><span>View on GitHub</span></a>
+        </section>
+
+        <hr>
+
+        <script type='text/javascript'>
+            
+            // Thanks to Donald Sutherland for this function
+            // http://mynameisdonald.com/javascript-functions-how-to-capitalize-words/
+            function eachWord(str){
+               return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
+            }
+            
+            var path = new String(window.document.location);
+            var pathParts = new Array();
+            var crumbPath = '';
+            var homePath = '';
+            var crumbSep = ' >> ';
+            var startCrumbsNextTime = false;
+            var crumbsStarted;
+            pathParts = path.split('/');
+            for(i in pathParts) {
+                crumbPath = crumbPath + pathParts[i] + '/';
+                if(!startCrumbsNextTime || pathParts[i] == '') {
+                    if(pathParts[i] == 'formulize') {
+                        startCrumbsNextTime = true;
+                        homePath = crumbPath;
+                    }
+                    continue;
+                } else if(!crumbsStarted) {
+                    crumbsStarted = true;
+                    window.document.write('<a href="'+homePath+'">Home</a>\n');
+                }
+                pathParts[i] = pathParts[i].replace('_', ' ');
+                pathParts[i] = eachWord(pathParts[i]);
+                window.document.write(crumbSep+'<a href="'+crumbPath+'">'+pathParts[i]+'</a>\n');
+            }
+            if(crumbsStarted) {
+                window.document.write('<hr>');
+            }
+            
+        </script>
+        
+        <section id="main_content">
+          
+          <h1 id="github-pages-and-jekyll-configuration">GitHub Pages and Jekyll Configuration</h1>
+
+<p>GitHub Pages is a conveninent system for hosting publically available web pages. You can generate a GitHub Pages site for your project by starting at <a href="https://pages.github.com/">https://pages.github.com/</a>.</p>
+
+<p>Once you have created the site, it will add a branch to your GitHub repo called <strong>gh-pages</strong>.  That branch will contain a series of files that are used by the Jekyll installation at GitHub, to create the website for your project.  The address of the site is based on the user who has the repository and the repository name.  In Formulize’s case, the website is accessible here: <a href="http://jegelstaff.github.io/formulize/">http://jegelstaff.github.io/formulize/</a></p>
+
+<h2 id="deploying-documentation">Deploying documentation</h2>
+
+<p>Any pushes to the gh-pages branch will update the documentation available at your GitHub Pages site.</p>
+
+<p>We maintain a working copy of the gh-pages branch, inside the <strong>/formulize-docs/</strong> folder of the master branch.  This allows us to make changes to the docs as part of regular commits.  Later, someone can easily deploy the contents of the /formulize-docs/ folder to the gh-pages branch, by using the following script <strong>from the root of their local git repository</strong>:</p>
+
+<pre><code>git checkout gh-pages
+git read-tree master:formulize-docs
+git commit -m "Publish docs from master branch"
+git push origin gh-pages
+git checkout -- .
+git checkout master
+</code></pre>
+
+<p>Bad things will happen if you run that from a folder other than the root of your local git repository.</p>
+
+<p>The script switches to the gh-pages branch, updates it with the contents of the /formulize-docs/ folder from the master branch, and then commits the changes and pushes them to GitHub.  Then it switches back to the master branch.</p>
+
+<p>The Jekyll site relies on one main configuration file called <strong>_config.yml</strong>.  That file looks like this:</p>
+
+<pre><code>markdown: kramdown
+baseurl: /formulize
+url: http://jegelstaff.github.io/formulize/
+permalink: formulize/:title/
+</code></pre>
+
+<p>That file is critical for making sure the navigation and everything else works as expected.  Most pages of the site are written in Markdown, but regular HTML can be used as well.  For more details about writing documentation and the structure of the pages, <a href="../version_control/documentation">see the Documentation page</a></p>
+
+          
+        </section>
+
+        <footer>
+          Formulize is maintained by <a href="https://github.com/jegelstaff">jegelstaff</a><br>
+          This page was generated by <a href="http://pages.github.com">GitHub Pages</a>. Tactile theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.
+        </footer>
+
+        
+      </div>
+    </div>
+  </body>
+</html>
