@@ -51,7 +51,7 @@ $(document).ready(function() {
 	
 	  $(window).scroll(function () {
 		var scrollTop = $(window).scrollTop();
-		if (offset && offset.top<scrollTop) {
+		if (offset && offset.top<scrollTop <{$allowFloatingSave}>) {
 		  $('#admin_toolbar').addClass('toolbar_fixed');
 		  $('#admin_toolbar').addClass('ui-corner-all');
 		} else {
