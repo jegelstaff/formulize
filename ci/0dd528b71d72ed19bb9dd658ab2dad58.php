@@ -25,7 +25,7 @@ define( 'SDATA_DB_USER', 'root' );
 
 // Database Password
 // Password for your database user account
-define( 'SDATA_DB_PASS', 'vertrigo' );
+define( 'SDATA_DB_PASS', 'password' );
 
 // Database Name
 // The name of database on the host. The installer will attempt to create the database if not exist
