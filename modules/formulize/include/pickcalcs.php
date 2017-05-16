@@ -315,7 +315,7 @@ foreach($cols as $f=>$vs) {
             $reqdcol = 'reqdcalc_column_' . $values['ele_id'];
             if(!in_array($values['ele_id'], $usedvals)) { // exclude duplicates...the array is not uniqued above because we don't want to merge it an unique it since that throws things out of order.  
                 $usedvals[] = $values['ele_id'];
-                if(!$_POST[$reqdcol] AND !in_array($values['ele_id'], $_POST['column'])) { // Also exclude columns that have been used already.
+                if(!$_POST[$reqdcol] AND (!is_array($_POST['column']) OR !in_array($values['ele_id'], $_POST['column']))) { // Also exclude columns that have been used already.
                     if($values['ele_colhead'] != "") {
                         $options[$values['ele_id']] = printSmart(trans($values['ele_colhead']), 60);
                     } else {
