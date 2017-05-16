@@ -586,6 +586,13 @@
       "text": "{TODAY}"
     },
     {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Options"
+      }
+    },
+    {
       "type": "setElementSelected",
       "locator": {
         "type": "id",
