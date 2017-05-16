@@ -50,11 +50,14 @@ addons:
 before_script:
   - npm install -g se-interpreter
   - mysql -e 'create database formulize;'
-  # Uncomment the next line to initialize the database as if all existing tests have run.
+  # Uncomment the next three lines to initialize the database as if all existing tests have run.
+  # The next two setup the environment as if the installer has completed.
   # This is useful for quickly running just one new test, to see if it is working.
   # Alter the ci/travis/interpreter_config.json file to refer to your one test by name
   # instead of referring to * for all tests.
   - mysql formulize < ci/formulize_test_db.sql
+  - sudo cp -f ci/mainfile.php mainfile.php
+  - sudo cp -f ci/selenium-848d24bb54d726d . 
   - echo "USE mysql;\nUPDATE user SET password=PASSWORD('password') WHERE user='root';\nFLUSH PRIVILEGES;\n" | mysql -u root
 
 script:
