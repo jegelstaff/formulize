@@ -131,8 +131,8 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "2543"
+      "type": "waitForTextPresent",
+      "text": "Elements"
     },
     {
       "type": "clickElement",
