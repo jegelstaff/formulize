@@ -135,6 +135,10 @@
       "text": "Elements"
     },
     {
+      "type": "pause",
+      "waitTime": "4000"
+    },
+    {
       "type": "clickElement",
       "locator": {
         "type": "link text",
