@@ -135,12 +135,8 @@
       "text": "Elements"
     },
     {
-      "type": "get",
-      "url": "localhost/modules/formulize/admin/ui.php?page=form&aid=1&fid=1"
-    },
-    {
       "type": "pause",
-      "waitTime": "4000"
+      "waitTime": "543"
     },
     {
       "type": "clickElement",
