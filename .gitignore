@@ -2,6 +2,7 @@ cache/
 modules/protector/
 modules/formulize/temp/
 modules/formulize/templates/screens/default/
+modules/formulize/templates/css/.sass-cache/
 modules/iMenu/
 templates_c/
 trust_*/
