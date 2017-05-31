@@ -2290,9 +2290,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 	    } else {
 	      $value = parseUserAndToday($value); // translate {USER} and {TODAY} into literals
 	      if(is_numeric($value) AND isset($numericDataTypes[$dataTypeInfo['dataType']])) {
-            $allowedWhere .= " $allowedWhereConjunction $calcElement=".formulize_db_escape($value);
           } else {
-            $allowedWhere .= " $allowedWhereConjunction $calcElement='".formulize_db_escape($value)."'";
           }
 	    }
 	  }
@@ -2323,9 +2321,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 	    } else {
 	      $value = parseUserAndToday($value); // translate {USER} and {TODAY} into literals
 	      if(is_numeric($value) AND isset($numericDataTypes[$dataTypeInfo['dataType']])) {
-            $excludedWhere .= " $excludedWhereConjunction $calcElement!=".formulize_db_escape($value);
           } else {
-            $excludedWhere .= " $excludedWhereConjunction $calcElement!='".formulize_db_escape($value)."'";
           }
 	    }
 	  }
