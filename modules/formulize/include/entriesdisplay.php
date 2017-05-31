@@ -2173,7 +2173,6 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
   }
   
   $form_handler = xoops_getmodulehandler('forms', 'formulize');
-  $element_handler = xoops_getmodulehandler('elements', 'formulize');
   
   for($i=0;$i<count($cols);$i++) {
     // convert to element handle from element id
@@ -2202,7 +2201,6 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
       }
       
 	// figure out if the field is encrypted, and setup the calcElement accordingly
-    $calcElementObject = $element_handler->get($handle);
 	$calcElementMetaData = formulize_getElementMetaData($handle, true);
 	if($calcElementMetaData['ele_encrypt']) {
 		$calcElement = "AES_DECRYPT($fidAlias.`$handle`, '".getAESPassword()."')";
@@ -2271,27 +2269,23 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 	      
 	// figure out the special where clause conditions that need to be added for this calculation
 	list($allowedValues, $excludedValues) = calcParseBlanksSetting($excludes[$cid]);
-    
-    $numericDataTypes = array('decimal'=>0, 'float'=>0, 'numeric'=>0, 'double'=>0, 'int'=>0, 'mediumint'=>0, 'tinyint'=>0, 'bigint'=>0, 'smallint'=>0, 'integer'=>0);
-    $dataTypeInfo = $calcElementObject->getDataTypeInformation();
 	  
 	$allowedWhere = "";  
 	if(count($allowedValues)>0) {
 	  $start = true;
 	  foreach($allowedValues as $value) {
 	    if($start) {
-	      $allowedWhereConjunction = " AND (";
+	      $allowedWhere = " AND (";
 	      $start = false;
 	    } else {
-	      $allowedWhereConjunction = " OR ";
+	      $allowedWhere .= " OR ";
 	    }
 	    if($value === "{BLANK}") {
-	      $allowedWhere .= " $allowedWhereConjunction ($calcElement='' OR $calcElement IS NULL)";
+	      $allowedWhere .= "($calcElement='' OR $calcElement IS NULL)";
 	    } else {
 	      $value = parseUserAndToday($value); // translate {USER} and {TODAY} into literals
-	      if(is_numeric($value) AND isset($numericDataTypes[$dataTypeInfo['dataType']])) {
-          } else {
-          }
+	      $allowedWhere .= "$calcElement=";
+	      $allowedWhere .= (is_numeric($value) AND $value !=0) ? $value : "'$value'";
 	    }
 	  }
 	  if($allowedWhere) {
@@ -2311,18 +2305,17 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 	  $start = true;
 	  foreach($excludedValues as $value) {
 	    if($start) {
-	      $excludedWhereConjunction = " AND (";
+	      $excludedWhere = " AND (";
 	      $start = false;
 	    } else {
-	      $excludedWhereConjunction = " AND ";
+	      $excludedWhere .= " AND ";
 	    }
 	    if($value === "{BLANK}") {
-	      $excludedWhere .= " $excludedWhereConjunction ($calcElement!='' AND $calcElement IS NOT NULL)";
+	      $excludedWhere .= "($calcElement!='' AND $calcElement IS NOT NULL)";
 	    } else {
 	      $value = parseUserAndToday($value); // translate {USER} and {TODAY} into literals
-	      if(is_numeric($value) AND isset($numericDataTypes[$dataTypeInfo['dataType']])) {
-          } else {
-          }
+	      $excludedWhere .= "$calcElement!=";
+	      $excludedWhere .= (is_numeric($value) AND $value !=0) ? $value : "'$value'";
 	    }
 	  }
 	  if($excludedWhere) {
@@ -2758,15 +2751,15 @@ function calcParseBlanksSetting($setting) {
 	$excluded = array();
 	switch($setting) {
 		case "onlyblanks";
-			$allowed[] = "{BLANK}";
+			$allowed[] = "";
 			$allowed[] = 0;
 			break;
 		case "noblanks";
-			$excluded[] = "{BLANK}";
+			$excluded[] = "";
 			$excluded[] = 0;
 			break;
 		case "justnoblanks";
-			$excluded[] = "{BLANK}";
+			$excluded[] = "";
 			break;
 		case "justnozeros";
 			$excluded[] = 0;
