@@ -2449,7 +2449,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		if(!isset($groupCounts[$groupingWhere])) { // need to figure out the total count for this grouping setting
 		  $perindexer++;
 		  $groupingValues[$cols[$i]][$calc][$perindexer] = convertRawValuesToRealValues($groupingValuesFound, $ghandle, true);
-		  $countSQL = "SELECT count($fidAlias.`$handle`) as count$fidAlias$handle $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere";
+          $countSQL = "SELECT count(tempElement) as count$fidAlias$handle FROM (SELECT distinct($fidAlias.`entry_id`), $fidAlias.`$handle` as tempElement $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere) as tempQuery";
 		  //print "$countSQL<br>";
 		  $countRes = $xoopsDB->query($countSQL);
 		  $countArray = $xoopsDB->fetchArray($countRes);
@@ -2526,7 +2526,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 	      // need to convert grouping values into the where clause for the percentile calculations
 	      $groupingWhere .= $modeHandle === 'none' ? "" : " AND ($modeHandle = '$modeGrouping')";
 	    }
-	    $countSQL = "SELECT count($fidAlias.`$handle`) as count$fidAlias$handle $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere";
+        $countSQL = "SELECT count(tempElement) as count$fidAlias$handle FROM (SELECT distinct($fidAlias.`entry_id`), $fidAlias.`$handle` as tempElement $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere) as tempQuery";
 	    //print "<br>$countSQL<br>";
 	    $countRes = $xoopsDB->query($countSQL);
 	    $countArray = $xoopsDB->fetchArray($countRes);
@@ -2543,11 +2543,11 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 	    $per50Fraction = (($countValue+1)/2)-$per50Limit;
 	    $per50Limit = $per50Limit-1; // since Limit statements interpret rank orders as starting from 0, must subtract 1
 	    $per50Size = ($countValue+1) % 2 == 0 ? 1 : 2;
-	    $per25SQL = "SELECT $fidAlias.`$handle` as $fidAlias$handle $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere ORDER BY $fidAlias$handle LIMIT $per25Limit,$per25Size";
+	    $per25SQL = "SELECT distinct($fidAlias.`entry_id`), $fidAlias.`$handle` as $fidAlias$handle $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere ORDER BY $fidAlias$handle LIMIT $per25Limit,$per25Size";
 	    //print "$per25SQL<Br><Br>";
-	    $per75SQL = "SELECT $fidAlias.`$handle` as $fidAlias$handle $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere ORDER BY $fidAlias$handle LIMIT $per75Limit,$per75Size";
+	    $per75SQL = "SELECT distinct($fidAlias.`entry_id`), $fidAlias.`$handle` as $fidAlias$handle $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere ORDER BY $fidAlias$handle LIMIT $per75Limit,$per75Size";
 	    //print "$per75SQL<Br><Br>";
-	    $per50SQL = "SELECT $fidAlias.`$handle` as $fidAlias$handle $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere ORDER BY $fidAlias$handle LIMIT $per50Limit,$per50Size";
+	    $per50SQL = "SELECT distinct($fidAlias.`entry_id`), $fidAlias.`$handle` as $fidAlias$handle $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere ORDER BY $fidAlias$handle LIMIT $per50Limit,$per50Size";
 	    //print "$per50SQL<Br><Br>";
 	    $per25Res = $xoopsDB->query($per25SQL);
 	    $per75Res = $xoopsDB->query($per75SQL);
