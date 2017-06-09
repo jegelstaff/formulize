@@ -94,12 +94,13 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 	static $cachedViewPrivate = array();
 	static $cachedUpdateOwnEntry = array();
 	$gperm_handler = xoops_gethandler('groupperm');
-	if(!isset($cachedViewPrivate[$form_id])) {
-		$cachedViewPrivate[$form_id] = $gperm_handler->checkRight("view_private_elements", $form_id, $groups, $mid);
-		$cachedUpdateOwnEntry[$form_id] = $gperm_handler->checkRight("update_own_entry", $form_id, $groups, $mid);
+    $groupsKey = serialize($groups);
+	if(!isset($cachedViewPrivate[$form_id][$groupsKey]) AND !$noSave) {
+		$cachedViewPrivate[$form_id][$groupsKey] = $gperm_handler->checkRight("view_private_elements", $form_id, $groups, $mid);
+		$cachedUpdateOwnEntry[$form_id][$groupsKey] = $gperm_handler->checkRight("update_own_entry", $form_id, $groups, $mid);
 	}
-	$view_private_elements = $cachedViewPrivate[$form_id];
-	$update_own_entry = $cachedUpdateOwnEntry[$form_id];
+	$view_private_elements = $noSave ? 1 : $cachedViewPrivate[$form_id][$groupsKey];
+	$update_own_entry = $noSave ? 1 : $cachedUpdateOwnEntry[$form_id][$groupsKey];
 	
 	// check if the user is normally able to view this element or not, by checking their groups against the display groups -- added Nov 7 2005
 	// messed up.  Private should not override the display settings.  And the $entry should be checked against the security check first to determine whether the user should even see this entry in the first place.
@@ -214,10 +215,10 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		}
 
 		// Another check to see if this element is disabled, for the case where the user can view the form, but not edit it.
-		if (!$isDisabled) {
+		if (!$isDisabled AND !$noSave) {
             // note that we're using the OPPOSITE of the permission because we want to know if the element should be disabled
             $isDisabled = !formulizePermHandler::user_can_edit_entry($form_id, $user_id, $entry);
-				}
+		}
 
 		// check whether the entry is locked, and if so, then the element is not allowed.  Set a message to say that elements were disabled due to entries being edited elsewhere (first time only).
 		// groups with ignore lock permission bypass this, and therefore can save entries even when locked, and saving an entry removes the lock, so that gets you out of a jam if the lock is in place when it shouldn't be.
@@ -272,7 +273,7 @@ EOF;
 		formulize_benchmark("Done rendering element.");
 		
 		// put a lock on this entry in this form, so we know that the element is being edited.  Lock will be removed next time the entry is saved.
-		if ($entry > 0 AND !isset($lockedEntries[$form_id][$entry])
+		if (!$noSave AND $entry > 0 AND !isset($lockedEntries[$form_id][$entry])
             and !isset($entriesThatHaveBeenLockedThisPageLoad[$form_id][$entry]))
         {
             if (is_writable(XOOPS_ROOT_PATH."/modules/formulize/temp/")) {
