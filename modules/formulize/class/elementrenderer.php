@@ -1432,4 +1432,3 @@ class formulizeElementRenderer{
 	}
 
 }
-?>
