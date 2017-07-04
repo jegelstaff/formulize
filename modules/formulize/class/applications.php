@@ -50,10 +50,12 @@ global $xoopsDB;
         
         // override the parent's getVar, since we want to allow for abbreviated URLs in the UI, to avoid users having to type the current site URL into the system
         function getVar($var, $raw=false) {
-            $value = parent::getVar($var);
+            $value = parent::getVar($var, $raw);
             if($var == 'url') {
                 if(!strstr($value,'://') AND (strstr($value, 'sid=') OR strstr($value, 'fid=')) AND !$raw) {
                     $value = XOOPS_URL."/modules/formulize/index.php?".htmlspecialchars(strip_tags($value));
+                } elseif(!strstr($value, '://') AND !$raw) {
+                    $value = XOOPS_URL."/".htmlspecialchars(strip_tags($value));
                 }
             }
             return $value;
