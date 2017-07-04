@@ -84,10 +84,21 @@ function extract_makeUidFilter($users) {
 // id_req and ffcaption only used for converting 'other' values
 function prepvalues($value, $field, $entry_id) { 
 
+  $original_value = $value;
+  static $cachedPrepedValues = array();
+  if(isset($cachedPrepedValues[$original_value][$field][$entry_id])) {
+    /*global $xoopsUser;
+    if($xoopsUser->getVar('uid')==110) {
+        print "RETURNING FROM CACHE<br>";
+    }*/
+    return $cachedPrepedValues[$original_value][$field][$entry_id];
+  }
+
   global $xoopsDB;
 
   // return metadata values without putting them in an array
   if(isMetaDataField($field)) {
+    $cachedPrepedValues[$original_value][$field][$entry_id] = $value;
      return $value;
   }
 
@@ -103,6 +114,8 @@ function prepvalues($value, $field, $entry_id) {
 		} else {
 			$value = "";
 		}
+        $cachedPrepedValues[$original_value][$field][$entry_id] = $value;
+		return $value;
 	}
 
   // decrypt encrypted values...pretty inefficient to do this here, one query in the DB per value to decrypt them....but we'd need proper select statements with field names specified in them, instead of *, in order to be able to swap in the AES DECRYPT at the time the data is retrieved in the master query
@@ -110,8 +123,10 @@ function prepvalues($value, $field, $entry_id) {
 		 $decryptSQL = "SELECT AES_DECRYPT('".formulize_db_escape($value)."', '".getAESPassword()."')";
 		 if($decryptResult = $xoopsDB->query($decryptSQL)) {
 					$decryptRow = $xoopsDB->fetchRow($decryptResult);
+                    $cachedPrepedValues[$original_value][$field][$entry_id] = $decryptRow[0];
 					return $decryptRow[0];
 		 } else {
+                    $cachedPrepedValues[$original_value][$field][$entry_id] = "";
 					return "";
 		 }
 	}
@@ -231,18 +246,25 @@ function prepvalues($value, $field, $entry_id) {
         $value = formulize_swapUIText($value, unserialize($elementArray['ele_uitext']));
     }
 
+      $valueToReturn = "";
 	  if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$type."Element.php")) {
 	       $elementTypeHandler = xoops_getmodulehandler($type."Element", "formulize");
 	       $preppedValue = $elementTypeHandler->prepareDataForDataset($value, $field, $entry_id);
 	       if(!is_array($preppedValue)) {
-		    return array($preppedValue);
+		    $valueToReturn = array($preppedValue);
 	       } else {
-		    return $preppedValue;
+		    $valueToReturn = $preppedValue;
 	       }
-	  }
+      }
 
 
-	return explode("*=+*:",$value);
+	if(!$valueToReturn) {
+        $valueToReturn = explode("*=+*:",$value);
+      }
+
+      
+    $cachedPrepedValues[$original_value][$field][$entry_id] = $valueToReturn;
+	return $valueToReturn;
 }
 
 function microtime_float()
@@ -2111,6 +2133,7 @@ function display($entry, $handle, $id="NULL", $localid="NULL") {
 					$GLOBALS['formulize_mostRecentLocalId'][] = $lid;
 				}
 			} else { // the handle is for metadata, all other fields will be arrays in the dataset
+		    $GLOBALS['formulize_mostRecentLocalId'] = $lid;
         return $elements[$handle];  
 			}
 		}
