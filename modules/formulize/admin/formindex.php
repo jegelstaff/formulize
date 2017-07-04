@@ -541,7 +541,7 @@ function patch40() {
         // need to update multiple select boxes for new data structure
         // $xoopsDB->prefix("formulize")
         // 1. get a list of all elements that are linked selectboxes that support only single values
-        $selectBoxesSQL = "SELECT id_form, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_type = 'select'";
+        $selectBoxesSQL = "SELECT e.id_form as id_form, e.ele_id as ele_id, e.ele_handle as ele_handle, f.form_handle as form_handle FROM " . $xoopsDB->prefix("formulize") . " AS e LEFT JOIN ". $xoopsDB->prefix("formulize_id") . " AS f ON e.id_form = f.id_form WHERE ele_type = 'select'";
         $selectBoxRes = $xoopsDB->query($selectBoxesSQL);
         if ($xoopsDB->getRowsNum($selectBoxRes) > 0) {
             while ($handleArray = $xoopsDB->fetchArray($selectBoxRes)) {
@@ -550,9 +550,9 @@ function patch40() {
 
                 // select only single option, linked select boxes
                 if (!$ele_value[1] AND strstr($ele_value[2], "#*=:*")) {
-                    $successSelectBox = convertSelectBoxToSingle($xoopsDB->prefix('formulize_' . $handleArray['id_form']), $handleArray['ele_id']);
+                    $successSelectBox = convertSelectBoxToSingle($xoopsDB->prefix('formulize_' . $handleArray['form_handle']), $handleArray['ele_handle']);
                     if (!$successSelectBox) {
-                        print "could not convert column " . $handleArray['ele_id'] . " in table " . $xoopsDB->prefix('formulize_' . $handleArray['id_form']) . "<br>";
+                        print "could not convert column " . $handleArray['ele_handle'] . " in table " . $xoopsDB->prefix('formulize_' . $handleArray['form_handle']) . "<br>";
                     }
                 }
             }
