@@ -537,13 +537,23 @@ function printSmart($value, $chars="35") {
 
 // this function handles cutting up a string and is multibyte aware -- thanks to Fram!
 function cutString($string, $maxlen) {
-    $len = (mb_strlen($string) > $maxlen)
-        ? mb_strripos(mb_substr($string, 0, $maxlen), ' ')
-        : $maxlen;
-    $cutStr = mb_substr($string, 0, $len);
-    return (mb_strlen($string) > $maxlen)
-        ? $cutStr . '...'
-        : $cutStr;
+    if(function_exists('mb_strlen')) {
+        $len = (mb_strlen($string) > $maxlen)
+            ? mb_strripos(mb_substr($string, 0, $maxlen), ' ')
+            : $maxlen;
+        $cutStr = mb_substr($string, 0, $len);
+        return (mb_strlen($string) > $maxlen)
+            ? $cutStr . '...'
+            : $cutStr;
+    } else {
+        $len = (strlen($string) > $maxlen)
+            ? strripos(substr($string, 0, $maxlen), ' ')
+            : $maxlen;
+        $cutStr = substr($string, 0, $len);
+        return (strlen($string) > $maxlen)
+            ? $cutStr . '...'
+            : $cutStr;
+    }
 }
 
 
