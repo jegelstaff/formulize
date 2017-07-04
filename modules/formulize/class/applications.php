@@ -54,9 +54,7 @@ global $xoopsDB;
             if($var == 'url') {
                 if(!strstr($value,'://') AND (strstr($value, 'sid=') OR strstr($value, 'fid=')) AND !$raw) {
                     $value = XOOPS_URL."/modules/formulize/index.php?".htmlspecialchars(strip_tags($value));
-                } elseif(!strstr($value, '://') AND !$raw) {
-                    $value = XOOPS_URL."/".htmlspecialchars(strip_tags($value));
-                }
+                } 
             }
             return $value;
         }

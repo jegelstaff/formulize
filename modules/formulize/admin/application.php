@@ -86,7 +86,7 @@ foreach($allFormObjects as $thisFormObject) {
         $forms['sid='.$screen->getVar('sid')] = "&nbsp;&nbsp;   ". $screen->getVar('title');
     }
 }
-$forms['url'] = "A URL";
+$forms['url'] = "An external URL";
 
 
 // get list of group ids that have no default screen set
