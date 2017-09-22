@@ -79,7 +79,7 @@ function successImg($success_val) {
 }
 
 $php_version_success = phpVersionCheck();
-$mysql_success = function_exists('mysql_connect') ? 1 : -1;
+$mysql_success = function_exists('mysqli_connect') ? 1 : -1;
 $extension_success = extension_loaded('session') ? 1 : -1;
 $pcre_success = extension_loaded('pcre') ? 1 : -1;
 
