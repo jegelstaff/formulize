@@ -36,6 +36,18 @@ require_once XOOPS_ROOT_PATH.'/kernel/object.php';
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 class formulizeForm extends XoopsObject {
+
+function reorderElements($ele_id,$ele_order){
+	global $xoopsDB;
+	//given an element id and element order, reset the element's order in the formulize table
+
+  $sql = "UPDATE ".$xoopsDB->prefix('formulize');
+  $sql .= " SET ele_order=".$ele_order;
+  $sql .= " WHERE ele_id=".$ele_id;
+    if ( ! $xoopsDB->queryF($sql) ){
+            echo( $xoopsDB->error." : error number:".$xoopsDB->errno );
+    }
+}
 function checkFormOwnership($id_form,$form_handle){
 
 		global $xoopsDB;

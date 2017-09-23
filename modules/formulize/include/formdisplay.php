@@ -33,6 +33,10 @@
 
 //THIS FILE HANDLES THE DISPLAY OF FORMS.  FUNCTIONS CAN BE CALLED FROM ANYWHERE (INTENDED FOR PAGEWORKS MODULE)
 
+global $xoopsDB, $xoopsUser;
+
+
+
 global $xoopsConfig;
 // load the formulize language constants if they haven't been loaded already
 if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
@@ -46,6 +50,7 @@ include_once XOOPS_ROOT_PATH ."/modules/formulize/class/data.php";
 
 include_once XOOPS_ROOT_PATH."/class/xoopsformloader.php";
 include_once XOOPS_ROOT_PATH . "/include/functions.php";
+
 
 // NEED TO USE OUR OWN VERSION OF THE CLASS, TO GET ELEMENT NAMES IN THE TR TAGS FOR EACH ROW
 class formulize_themeForm extends XoopsThemeForm {
@@ -74,6 +79,15 @@ class formulize_themeForm extends XoopsThemeForm {
 	 * @return	string
 	 */
 	public function render() {
+
+        global $xoopsUser, $gperm_handler;
+        //Check if user is an admin
+        $groups = $xoopsUser->getGroups();
+        $mid = getFormulizeModId();
+        $permissionToCheck = "module_admin";
+        $itemToCheck = $mid;
+        $moduleToCheck = 1; // system module
+        $isAdmin=$gperm_handler->checkRight($permissionToCheck, $itemToCheck, $groups, $moduleToCheck);
 		$ele_name = $this->getName();
 		$ret = "<form id='" . $ele_name
 				. "' name='" . $ele_name
@@ -87,6 +101,60 @@ class formulize_themeForm extends XoopsThemeForm {
 		$hidden = '';
 		list($ret, $hidden) = $this->_drawElements($this->getElements(), $ret, $hidden);
 		$ret .= "</table>\n$hidden\n</div>\n</form>\n";
+        #some javascript for updating the elements in the table
+        #only allow the user to reorganize if user is an admin
+        if($isAdmin){
+            $ret .= '<html lang="en">
+
+                    <script type=\'text/javascript\'>
+
+                    var fixHelperModified = function(e, tr) {
+
+                        var $originals = tr.children();
+                        var $helper = tr.clone();
+                        $helper.children().each(function(index) {
+                            $(this).width($originals.eq(index).width());
+                        });
+                        return $helper;
+                    },
+                        updateIndex = function(e, ui) {
+                            $(\'td.index\', ui.item.parent()).each(function (i) {
+                                $(this).html(i + 1);
+                            });
+                        };
+                        updateTable = function(){
+                            var table = document.getElementById(\'entryTable\');
+                            var rowLength = table.rows.length;
+                              for(var i=2; i<rowLength-2; i+=1){
+                                  var row = table.rows[i];
+                                  row.setAttribute("rowIndex",i-1);
+                                $.ajax(
+                                {
+                                    type:"POST",
+                                    url:"admin/reorder_entry_elements.php",                
+                                    data:{"ele_id":row.getAttribute("rowId"),"ele_order":row.getAttribute("rowIndex")},
+                                    success:function(response){
+                                   }
+                                });              
+
+
+                                }
+                        };
+
+                    $("#entryTable tbody").sortable({
+
+                      items: \'tr:gt(2):lt(-2)\',
+                        helper: fixHelperModified,
+                        stop: updateIndex,
+                        update: updateTable
+                    }).disableSelection();
+
+                    </script>
+                     
+                    </body>
+                    </html>
+                    ';
+        }
 		$ret .= $this->renderValidationJS(true);
 		return $ret;
 	}
@@ -105,7 +173,6 @@ class formulize_themeForm extends XoopsThemeForm {
 		}
 		return $js;
 	}
-
 	function _drawElements($elements, $ret, $hidden) {
 		$class ='even';
 
@@ -167,6 +234,8 @@ class formulize_themeForm extends XoopsThemeForm {
 		}
 		return array($ret, $hidden);
 	}
+
+
 
 	// need to check whether the element is a standard element, if if so, add the check for whether its row exists or not	
 	function _drawValidationJS($skipConditionalCheck) {
@@ -2933,8 +3002,13 @@ $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 
 print "
 <script type='text/javascript'>
-
+<src>//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css</scr>
+<src>//code.jquery.com/jquery-2.0.2.js</src>
+<src>//code.jquery.com/ui/1.10.4/jquery-ui.js</src>
 var conditionalHTML = new Array(); // needs to be global!
+
+$(\"#entryTable tbody\").sortable().disableSelection(); 
+$(\"#sort3\").sortable().disableSelection(); 
 
 jQuery(window).load(function() {
 
@@ -3094,6 +3168,7 @@ function ShowHideTableRow(rowSelector, show, speed, callback)
         }
     });
 }
+
 
 
 
