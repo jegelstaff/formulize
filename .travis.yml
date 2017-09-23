@@ -55,6 +55,7 @@ before_install:
   - sudo chmod 777 /var/www/install
   - sudo chmod 777 /var/www/mainfile.php
   - sudo chmod 777 /var/www/cache
+  - sudo chmod 777 /var/www/modules
   - sudo chmod 777 /var/www/modules/formulize/cache
   - sudo chmod 777 /var/www/modules/formulize/temp
   - sudo chmod 777 /var/www/modules/formulize/upload
