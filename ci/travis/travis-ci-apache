@@ -2,9 +2,9 @@
   # [...]
 
   ServerName localhost
-  DocumentRoot %TRAVIS_BUILD_DIR%
+  DocumentRoot /var/www/html
 
-  <Directory "%TRAVIS_BUILD_DIR%">
+  <Directory "/var/www/html">
     Options FollowSymLinks MultiViews ExecCGI
     AllowOverride All
     Order deny,allow
