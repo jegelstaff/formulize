@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty( $vars['DB_HOST'] ) && !empty( $vars['DB_USER'] )) {
     $hostname = empty( $vars['DB_PCONNECT'] ) ? $vars['DB_HOST'] : "p:".$vars['DB_HOST'];
-    if (! ( $link = @mysqli_connect( $hostname, $vars['DB_USER'], $vars['DB_PASS'], true ) )) {
+    if (! ( $link = @mysqli_connect( $hostname, $vars['DB_USER'], $vars['DB_PASS']) )) {
 		$error = ERR_NO_DBCONNECTION;
 	}
 	if (empty( $error )) {

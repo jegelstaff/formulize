@@ -28,8 +28,8 @@ $pageHasHelp = true;
 
 $vars = & $_SESSION ['settings'];
 
-$func_connect = empty ( $vars ['DB_PCONNECT'] ) ? "mysqli_connect" : "mysqli_pconnect";
-if (! ($link = @$func_connect ( $vars ['DB_HOST'], $vars ['DB_USER'], $vars ['DB_PASS'], true ))) {
+$hostname = empty ( $vars ['DB_PCONNECT'] ) ? $vars ['DB_HOST'] : "p:".$vars ['DB_HOST'];
+if (! ($link = @mysqli_connect( $hostname, $vars ['DB_USER'], $vars ['DB_PASS'], $vars ['DB_NAME'] ))) {
 	$error = ERR_NO_DBCONNECTION;
 	$wizard->redirectToPage ( '-1', $error );
 	exit ();
@@ -69,7 +69,7 @@ function getDbCollations($link, $charset) {
 	static $collations = array ( );
 
 	// ALTERED BY FREEFORM SOLUTIONS TO CORRECT A BUG IN THE DETECTION OF THE DEFAULT COLLATION FOR THE CHARSET
-	if ($result = mysqli_query ( $link, "SHOW COLLATION LIKE '" . mysqli_real_escape_string ( $link, $charset ) . "_%'", $link )) {
+	if ($result = mysqli_query ( $link, "SHOW COLLATION LIKE '" . mysqli_real_escape_string ( $link, $charset ) . "_%'")) {
 		while ($row = mysqli_fetch_assoc ( $result )) {
 			if(substr($row["Collation"], 0, strlen($charset)+1) == $charset."_") {
 				$collations [$charset] [$row ["Collation"]] = $row ["Default"] ? 1 : 0;
@@ -167,10 +167,10 @@ if ($_SERVER ['REQUEST_METHOD'] == 'POST' && ! empty ( $vars ['DB_NAME'] )) {
 	$error = validateDbCharset ( $link, $vars ['DB_CHARSET'], $vars ['DB_COLLATION'] );
 	$db_exist = false;
 	if (empty ( $error )) {
-		if (! @mysqli_select_db ( $vars ['DB_NAME'], $link )) {
+		if (! @mysqli_select_db ($link, $vars ['DB_NAME'] )) { // TODO update
 			// Database not here: try to create it
 //			$result = mysql_query ( "CREATE DATABASE `" . $vars ['DB_NAME'] . '`' );
-			$result = mysqli_query ( $link, "CREATE DATABASE `" . $vars ['DB_NAME'] . '`' );
+			$result = mysqli_query($link, "CREATE DATABASE `" . $vars ['DB_NAME'] . '`' );
 			if (! $result) {
 				$error = ERR_NO_DATABASE;
 			} else {

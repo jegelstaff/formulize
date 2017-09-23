@@ -21,8 +21,6 @@
  * @access public
  **/
 
-include_once '..\libraries\icms\db\legacy\PdoDatabase.php';
-
 class db_manager {
 
 	var $s_tables = array();
