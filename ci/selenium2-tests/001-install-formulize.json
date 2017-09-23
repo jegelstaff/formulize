@@ -45,6 +45,10 @@
     },
     {
       "type": "get",
+      "url": "http://${test_domain}/test.html"
+    },
+    {
+      "type": "get",
       "url": "http://${test_domain}/test.php"
     },
     {
