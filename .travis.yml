@@ -26,6 +26,9 @@ install:
   
   - head /etc/apache2/sites-available/default
   
+  - sudo cp -f ci/travis/test.php /var/www/html/test.php
+  - sudo cp -f ci/travis/test.html /var/www/html/test.html
+  
   # copy selenium_debug.js which modifies some javascript behaviour to behave better with selenium
   - sudo cp -f ci/travis/selenium_debug.js modules/formulize/selenium_debug.js
   # set 777 on necessary directories
@@ -69,6 +72,7 @@ script:
   - cat "error.log"
   - curl http://localhost/index.php
   - curl http://localhost/test.php
+  - curl http://localhost/test.html
   - curl http://localhost/
 
 after_script:
