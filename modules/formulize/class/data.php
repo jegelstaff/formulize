@@ -39,6 +39,7 @@ class formulizeDataHandler  {
 	
 	var $fid; // the form this Data Handler object is attached to
 	var $metadataFields; //
+    var $metadataFieldType;
 
 	// $fid must be an id
 	function formulizeDataHandler($fid){
@@ -58,8 +59,13 @@ class formulizeDataHandler  {
 		   						"mod_uid",
 		   						"user_viewemail");
 
-		//Test comment
-
+        $this->metadataFieldTypes = array("entry_id" => "text",
+                                    "mod_uid" => "text",
+                                    "creation_uid" => "text",
+                                    "creator_email" => "text",
+                                    "user_viewemail" => "text",
+                                    "mod_datetime" => "date",
+                                    "creation_datetime" => "date");
 	}
 	
 	// this function copies data from one form to another

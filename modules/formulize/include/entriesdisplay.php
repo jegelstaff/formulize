@@ -4575,11 +4575,13 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
             // used for trapping the {BLANK} keywords into their own space so they don't interfere with each other, or other filters
             $addToItsOwnORFilter = false;
 
-            if ("creation_uid" == $key OR "entry_id" == $key) {
-                $ele_type = "text";
-            } else {
-                $elementObject = $element_handler->get($key);
-                $ele_type = $elementObject->getVar('ele_type');
+            $dataHandler = new formulizeDataHandler(false);
+            $metadataFieldTypes = $dataHandler->metaDataFieldTypes;
+
+            foreach (array_keys($metadataFieldTypes) as $field) {
+                print $field;
+                print $metadataFieldTypes[$field];
+                $ele_type = $metadataFieldTypes[$field];
             }
 
 		    // remove the qsf_ parts to make the quickfilter searches work
