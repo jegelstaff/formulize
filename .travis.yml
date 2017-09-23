@@ -4,12 +4,12 @@ env:
   - secure: Xjc2qZs42LLIk4lRMc/JdFxeN5pmXUTLFd/stohOTX3g1rmRInXXqYpnXW/S15FjShqgtQAvvmnU/SV9QNpfaMhQVgS1ORVTS10gvy3aLPodW5hB9AGCDiQHXD0r9p+73LfNzenvdtmDme9Pp8PdLwb+spSroRbXgJ3tqHpXntM=
   - secure: n7FDSdDI6AlTIe91ZFfaWA89PloZGjR36M2U1XZwKK9FMFDHRJMORmW30veV1OuC6e7/F/56MpQ+PHMKeeBPdTEIQRJeCTwyLTkIQ8eh18oVE6M9pdXNrUlhLf5dejXk2kAl3vWe8LBC+x1pWsql0mb8AAkdLwQfRddPlCbkRHY=
   phpenv:
-  - version-name: "7.1"
+  - version-name: "7.0"
 
 language: php
 
 php:
-  - 7.1
+  - 7.0
 
 install:
   - sudo apt-get update
@@ -64,6 +64,7 @@ script:
   - se-interpreter ci/travis/interpreter_config.json
   - cat "error.log"
   - curl http://localhost/index.php
+  - curl http://localhost/test.php
 
 after_script:
   # Include '[update test db]' in a commit message from the master branch, if you want

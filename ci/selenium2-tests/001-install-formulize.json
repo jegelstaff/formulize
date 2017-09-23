@@ -45,6 +45,10 @@
     },
     {
       "type": "get",
+      "url": "http://${test_domain}/test.php"
+    },
+    {
+      "type": "get",
       "url": "http://${test_domain}/install/index.php"
     },
     {
