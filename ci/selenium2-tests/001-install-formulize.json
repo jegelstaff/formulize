@@ -5,7 +5,7 @@
   "steps": [
     {
       "type": "store",
-      "text": "/home/travis/build/jegelstaff/formulize",
+      "text": "/var/www",
       "variable": "web_root"
     },
     {
@@ -42,14 +42,6 @@
       "type": "store",
       "text": "short_wait",
       "variable": "543"
-    },
-    {
-      "type": "get",
-      "url": "http://${test_domain}/test.html"
-    },
-    {
-      "type": "get",
-      "url": "http://${test_domain}/test.php"
     },
     {
       "type": "get",
