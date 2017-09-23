@@ -1,0 +1,586 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="9c3079e3-7d93-49cf-b58c-681c983860e7" name="Default" comment="">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/modules/formulize/include/entriesdisplay.php" afterPath="$PROJECT_DIR$/modules/formulize/include/entriesdisplay.php" />
+    </list>
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="TRACKING_ENABLED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileEditorManager">
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="375">
+      <file leaf-file-name="entriesdisplay.php" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/modules/formulize/include/entriesdisplay.php">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="704">
+              <caret line="4584" column="52" lean-forward="true" selection-start-line="4584" selection-start-column="52" selection-end-line="4584" selection-end-column="52" />
+              <folding>
+                <marker date="1506200295684" expanded="true" signature="9158:9262" ph="DELETE FROM " />
+                <marker date="1506200295684" expanded="true" signature="9289:9393" ph="DELETE FROM " />
+                <marker date="1506200295684" expanded="true" signature="12563:12701" ph="SELECT sv_na... ${$xoopsDB-&gt;prefix(&quot;formulize_saved_views&quot;)}" />
+                <marker date="1506200295684" expanded="true" signature="14325:14450" ph="SELECT repor... ${$xoopsDB-&gt;prefix(&quot;formulize_reports&quot;)}" />
+                <marker date="1506200295684" expanded="true" signature="14541:16395" ph="INSERT INTO ${$xoopsDB-&gt;prefix(&quot;formulize_saved_views&quot;)}... " />
+                <marker date="1506200295684" expanded="true" signature="19150:19264" ph="DELETE FROM " />
+                <marker date="1506200295684" expanded="true" signature="20892:21000" ph="SELECT sv_id... ${$xoopsDB-&gt;prefix(&quot;formulize_saved_views&quot;)}" />
+                <marker date="1506200295684" expanded="true" signature="32318:32405" ph="SELECT sv_ow... ${$xoopsDB-&gt;prefix(&quot;formulize_saved_views&quot;)}" />
+                <marker date="1506200295684" expanded="true" signature="46694:46700" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="46700:46706" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="46916:46922" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="46922:46928" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="47119:47125" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="47125:47131" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="47351:47357" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="47357:47363" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="47577:47583" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="47583:47589" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="47804:47810" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="47810:47816" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="48025:48031" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="48031:48037" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="48313:48319" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="48319:48325" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="48565:48571" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="48571:48577" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="49353:49359" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="49359:49365" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="50057:50063" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="50063:50069" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="51091:51097" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="51097:51103" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="51979:51985" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="51985:51991" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="53352:53433" ph="SELECT singl... ${$xoopsDB-&gt;prefix(&quot;formulize_id&quot;)}" />
+                <marker date="1506200295684" expanded="true" signature="54320:54355" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="60587:60601" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="60882:60902" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="61484:61507" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="61598:61621" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="62833:62856" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="62870:62889" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="63643:63666" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="63680:63699" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="64604:64627" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="64933:64953" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="65148:65171" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="66462:66485" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="69595:69609" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="77339:77353" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="81144:81157" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="81622:81628" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="81628:81634" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="81681:81694" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="81818:81824" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="81876:81889" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="83701:83714" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="84115:84121" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="84121:84127" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="84154:84167" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="84290:84296" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="84296:84302" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="84329:84342" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="85164:85184" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="85393:85406" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="85794:85800" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="85800:85806" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="85833:85846" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="89726:89732" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="107974:107980" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="110729:111463" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="110767:111059" ph="{...}" />
+                <marker date="1506200295684" expanded="true" signature="111083:111128" ph="{...}" />
+                <marker date="1506200295684" expanded="true" signature="111177:111450" ph="{...}" />
+                <marker date="1506200295684" expanded="true" signature="112664:112670" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="113612:113618" ph=" " />
+                <marker date="1506200295684" expanded="true" signature="120008:120146" ph="SELECT sum(t... entry_id" />
+                <marker date="1506200295684" expanded="true" signature="120079:120146" ph="SELECT disti... " />
+                <marker date="1506200295684" expanded="true" signature="120212:120350" ph="SELECT min(t... entry_id" />
+                <marker date="1506200295684" expanded="true" signature="120283:120350" ph="SELECT disti... " />
+                <marker date="1506200295684" expanded="true" signature="120416:120554" ph="SELECT max(t... entry_id" />
+                <marker date="1506200295684" expanded="true" signature="120487:120554" ph="SELECT disti... " />
+                <marker date="1506200295684" expanded="true" signature="120622:120825" ph="SELECT count... entry_id" />
+                <marker date="1506200295684" expanded="true" signature="120758:120825" ph="SELECT disti... " />
+                <marker date="1506200295684" expanded="true" signature="120891:121073" ph="SELECT avg(t... entry_id" />
+                <marker date="1506200295684" expanded="true" signature="121006:121073" ph="SELECT disti... " />
+                <marker date="1506200295684" expanded="true" signature="121120:121309" ph="SELECT tempE... entry_id" />
+                <marker date="1506200295684" expanded="true" signature="121242:121309" ph="SELECT disti... " />
+                <marker date="1506200295684" expanded="true" signature="121383:121564" ph="SELECT tempE... entry_id" />
+                <marker date="1506200295684" expanded="true" signature="121497:121564" ph="SELECT disti... " />
+                <marker date="1506200295684" expanded="true" signature="130811:131014" ph="SELECT count... entry_id" />
+                <marker date="1506200295684" expanded="true" signature="130868:130986" ph="SELECT disti... " />
+                <marker date="1506200295684" expanded="true" signature="135098:135301" ph="SELECT count... entry_id" />
+                <marker date="1506200295684" expanded="true" signature="135155:135273" ph="SELECT disti... " />
+                <marker date="1506200295684" expanded="true" signature="140427:140467" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="140524:140564" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="140622:140682" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="140812:140852" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="140909:140949" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="141007:141067" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="141136:141176" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="141927:142030" ph="SELECT ${$na... ${$xoopsDB-&gt;prefix(&quot;users&quot;)}" />
+                <marker date="1506200295684" expanded="true" signature="142832:142852" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="142882:142902" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="142933:142953" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="143079:143099" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="143129:143149" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="143180:143200" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="143289:143309" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="143533:143553" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="143608:143628" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="143685:143705" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="143794:143814" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="143869:143889" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="144067:144087" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="144115:144135" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="154094:154106" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="154174:154192" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="154287:154305" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="154946:154964" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="155026:155044" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="155239:155267" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="155325:155372" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="155428:155475" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="156632:156644" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="156710:156728" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="157486:157504" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="157760:157788" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="157846:157893" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="161579:162334" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="161586:162217" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="161772:162209" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="162224:162326" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="162301:162318" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="163009:163085" ph="SELECT name,... ${$xoopsDB-&gt;prefix(&quot;users&quot;)}" />
+                <marker date="1506200295684" expanded="true" signature="184211:184512" ph="SELECT repor... ${$xoopsDB-&gt;prefix(&quot;formulize_reports&quot;)}" />
+                <marker date="1506200295684" expanded="true" signature="190602:190683" ph="SELECT * FRO... ${$xoopsDB-&gt;prefix(&quot;formulize_saved_views&quot;)}" />
+                <marker date="1506200295684" expanded="true" signature="190875:191032" ph="SELECT * FRO... ${$xoopsDB-&gt;prefix(&quot;formulize_saved_views&quot;)}" />
+                <marker date="1506200295684" expanded="true" signature="213072:213085" ph="..." />
+                <marker date="1506200295684" expanded="true" signature="232001:232099" ph="..." />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>metadataFields</find>
+    </findStrings>
+    <dirStrings>
+      <dir>C:\Users\YiJi Zhao\Desktop\Formulize</dir>
+    </dirStrings>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/modules/formulize/include/entriesdisplay.php" />
+      </list>
+    </option>
+  </component>
+  <component name="JsBuildToolGruntFileManager" detection-done="true" sorting="DEFINITION_ORDER" />
+  <component name="JsBuildToolPackageJson" detection-done="true" sorting="DEFINITION_ORDER" />
+  <component name="JsGulpfileManager">
+    <detection-done>true</detection-done>
+    <sorting>DEFINITION_ORDER</sorting>
+  </component>
+  <component name="PhpWorkspaceProjectConfiguration" backward_compatibility_performed="true" />
+  <component name="ProjectFrameBounds" extendedState="6">
+    <option name="x" value="952" />
+    <option name="width" value="976" />
+    <option name="height" value="1038" />
+  </component>
+  <component name="ProjectView">
+    <navigator currentView="ProjectPane" proportions="" version="1">
+      <flattenPackages />
+      <showMembers />
+      <showModules />
+      <showLibraryContents />
+      <hideEmptyPackages />
+      <abbreviatePackageNames />
+      <autoscrollToSource />
+      <autoscrollFromSource />
+      <sortByType />
+      <manualOrder />
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="Scope" />
+      <pane id="Scratches" />
+      <pane id="ProjectPane" />
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="settings.editor.selected.configurable" value="preferences.lookFeel" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="ShelveChangesManager" show_recycled="false">
+    <option name="remove_strategy" value="false" />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="9c3079e3-7d93-49cf-b58c-681c983860e7" name="Default" comment="" />
+      <created>1506197823406</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1506197823406</updated>
+      <workItem from="1506197824550" duration="88000" />
+      <workItem from="1506200056305" duration="251000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TimeTrackingManager">
+    <option name="totallyTimeSpent" value="339000" />
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="-9" y="-9" width="1938" height="1048" extended-state="6" />
+    <layout>
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.12447917" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+    </layout>
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="VcsContentAnnotationSettings">
+    <option name="myLimit" value="2678400000" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager />
+    <watches-manager />
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/modules/formulize/include/entriesdisplay.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <marker date="1506200295684" expanded="true" signature="9158:9262" ph="DELETE FROM " />
+            <marker date="1506200295684" expanded="true" signature="9289:9393" ph="DELETE FROM " />
+            <marker date="1506200295684" expanded="true" signature="12563:12701" ph="SELECT sv_na... ${$xoopsDB-&gt;prefix(&quot;formulize_saved_views&quot;)}" />
+            <marker date="1506200295684" expanded="true" signature="14325:14450" ph="SELECT repor... ${$xoopsDB-&gt;prefix(&quot;formulize_reports&quot;)}" />
+            <marker date="1506200295684" expanded="true" signature="14541:16395" ph="INSERT INTO ${$xoopsDB-&gt;prefix(&quot;formulize_saved_views&quot;)}... " />
+            <marker date="1506200295684" expanded="true" signature="19150:19264" ph="DELETE FROM " />
+            <marker date="1506200295684" expanded="true" signature="20892:21000" ph="SELECT sv_id... ${$xoopsDB-&gt;prefix(&quot;formulize_saved_views&quot;)}" />
+            <marker date="1506200295684" expanded="true" signature="32318:32405" ph="SELECT sv_ow... ${$xoopsDB-&gt;prefix(&quot;formulize_saved_views&quot;)}" />
+            <marker date="1506200295684" expanded="true" signature="46694:46700" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="46700:46706" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="46916:46922" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="46922:46928" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="47119:47125" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="47125:47131" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="47351:47357" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="47357:47363" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="47577:47583" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="47583:47589" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="47804:47810" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="47810:47816" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="48025:48031" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="48031:48037" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="48313:48319" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="48319:48325" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="48565:48571" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="48571:48577" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="49353:49359" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="49359:49365" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="50057:50063" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="50063:50069" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="51091:51097" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="51097:51103" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="51979:51985" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="51985:51991" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="53352:53433" ph="SELECT singl... ${$xoopsDB-&gt;prefix(&quot;formulize_id&quot;)}" />
+            <marker date="1506200295684" expanded="true" signature="54320:54355" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="60587:60601" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="60882:60902" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="61484:61507" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="61598:61621" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="62833:62856" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="62870:62889" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="63643:63666" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="63680:63699" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="64604:64627" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="64933:64953" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="65148:65171" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="66462:66485" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="69595:69609" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="77339:77353" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="81144:81157" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="81622:81628" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="81628:81634" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="81681:81694" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="81818:81824" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="81876:81889" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="83701:83714" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="84115:84121" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="84121:84127" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="84154:84167" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="84290:84296" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="84296:84302" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="84329:84342" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="85164:85184" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="85393:85406" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="85794:85800" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="85800:85806" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="85833:85846" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="89726:89732" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="107974:107980" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="110729:111463" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="110767:111059" ph="{...}" />
+            <marker date="1506200295684" expanded="true" signature="111083:111128" ph="{...}" />
+            <marker date="1506200295684" expanded="true" signature="111177:111450" ph="{...}" />
+            <marker date="1506200295684" expanded="true" signature="112664:112670" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="113612:113618" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="120008:120146" ph="SELECT sum(t... entry_id" />
+            <marker date="1506200295684" expanded="true" signature="120079:120146" ph="SELECT disti... " />
+            <marker date="1506200295684" expanded="true" signature="120212:120350" ph="SELECT min(t... entry_id" />
+            <marker date="1506200295684" expanded="true" signature="120283:120350" ph="SELECT disti... " />
+            <marker date="1506200295684" expanded="true" signature="120416:120554" ph="SELECT max(t... entry_id" />
+            <marker date="1506200295684" expanded="true" signature="120487:120554" ph="SELECT disti... " />
+            <marker date="1506200295684" expanded="true" signature="120622:120825" ph="SELECT count... entry_id" />
+            <marker date="1506200295684" expanded="true" signature="120758:120825" ph="SELECT disti... " />
+            <marker date="1506200295684" expanded="true" signature="120891:121073" ph="SELECT avg(t... entry_id" />
+            <marker date="1506200295684" expanded="true" signature="121006:121073" ph="SELECT disti... " />
+            <marker date="1506200295684" expanded="true" signature="121120:121309" ph="SELECT tempE... entry_id" />
+            <marker date="1506200295684" expanded="true" signature="121242:121309" ph="SELECT disti... " />
+            <marker date="1506200295684" expanded="true" signature="121383:121564" ph="SELECT tempE... entry_id" />
+            <marker date="1506200295684" expanded="true" signature="121497:121564" ph="SELECT disti... " />
+            <marker date="1506200295684" expanded="true" signature="130811:131014" ph="SELECT count... entry_id" />
+            <marker date="1506200295684" expanded="true" signature="130868:130986" ph="SELECT disti... " />
+            <marker date="1506200295684" expanded="true" signature="135098:135301" ph="SELECT count... entry_id" />
+            <marker date="1506200295684" expanded="true" signature="135155:135273" ph="SELECT disti... " />
+            <marker date="1506200295684" expanded="true" signature="140427:140467" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="140524:140564" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="140622:140682" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="140812:140852" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="140909:140949" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="141007:141067" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="141136:141176" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="141927:142030" ph="SELECT ${$na... ${$xoopsDB-&gt;prefix(&quot;users&quot;)}" />
+            <marker date="1506200295684" expanded="true" signature="142832:142852" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="142882:142902" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="142933:142953" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="143079:143099" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="143129:143149" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="143180:143200" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="143289:143309" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="143533:143553" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="143608:143628" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="143685:143705" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="143794:143814" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="143869:143889" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="144067:144087" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="144115:144135" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="154094:154106" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="154174:154192" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="154287:154305" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="154946:154964" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="155026:155044" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="155239:155267" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="155325:155372" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="155428:155475" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="156632:156644" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="156710:156728" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="157486:157504" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="157760:157788" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="157846:157893" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="161579:162334" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="161586:162217" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="161772:162209" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="162224:162326" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="162301:162318" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="163009:163085" ph="SELECT name,... ${$xoopsDB-&gt;prefix(&quot;users&quot;)}" />
+            <marker date="1506200295684" expanded="true" signature="184211:184512" ph="SELECT repor... ${$xoopsDB-&gt;prefix(&quot;formulize_reports&quot;)}" />
+            <marker date="1506200295684" expanded="true" signature="190602:190683" ph="SELECT * FRO... ${$xoopsDB-&gt;prefix(&quot;formulize_saved_views&quot;)}" />
+            <marker date="1506200295684" expanded="true" signature="190875:191032" ph="SELECT * FRO... ${$xoopsDB-&gt;prefix(&quot;formulize_saved_views&quot;)}" />
+            <marker date="1506200295684" expanded="true" signature="213072:213085" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="232001:232099" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modules/formulize/include/entriesdisplay.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="704">
+          <caret line="4584" column="52" lean-forward="true" selection-start-line="4584" selection-start-column="52" selection-end-line="4584" selection-end-column="52" />
+          <folding>
+            <marker date="1506200295684" expanded="true" signature="9158:9262" ph="DELETE FROM " />
+            <marker date="1506200295684" expanded="true" signature="9289:9393" ph="DELETE FROM " />
+            <marker date="1506200295684" expanded="true" signature="12563:12701" ph="SELECT sv_na... ${$xoopsDB-&gt;prefix(&quot;formulize_saved_views&quot;)}" />
+            <marker date="1506200295684" expanded="true" signature="14325:14450" ph="SELECT repor... ${$xoopsDB-&gt;prefix(&quot;formulize_reports&quot;)}" />
+            <marker date="1506200295684" expanded="true" signature="14541:16395" ph="INSERT INTO ${$xoopsDB-&gt;prefix(&quot;formulize_saved_views&quot;)}... " />
+            <marker date="1506200295684" expanded="true" signature="19150:19264" ph="DELETE FROM " />
+            <marker date="1506200295684" expanded="true" signature="20892:21000" ph="SELECT sv_id... ${$xoopsDB-&gt;prefix(&quot;formulize_saved_views&quot;)}" />
+            <marker date="1506200295684" expanded="true" signature="32318:32405" ph="SELECT sv_ow... ${$xoopsDB-&gt;prefix(&quot;formulize_saved_views&quot;)}" />
+            <marker date="1506200295684" expanded="true" signature="46694:46700" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="46700:46706" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="46916:46922" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="46922:46928" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="47119:47125" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="47125:47131" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="47351:47357" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="47357:47363" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="47577:47583" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="47583:47589" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="47804:47810" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="47810:47816" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="48025:48031" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="48031:48037" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="48313:48319" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="48319:48325" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="48565:48571" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="48571:48577" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="49353:49359" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="49359:49365" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="50057:50063" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="50063:50069" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="51091:51097" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="51097:51103" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="51979:51985" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="51985:51991" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="53352:53433" ph="SELECT singl... ${$xoopsDB-&gt;prefix(&quot;formulize_id&quot;)}" />
+            <marker date="1506200295684" expanded="true" signature="54320:54355" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="60587:60601" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="60882:60902" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="61484:61507" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="61598:61621" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="62833:62856" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="62870:62889" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="63643:63666" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="63680:63699" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="64604:64627" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="64933:64953" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="65148:65171" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="66462:66485" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="69595:69609" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="77339:77353" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="81144:81157" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="81622:81628" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="81628:81634" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="81681:81694" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="81818:81824" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="81876:81889" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="83701:83714" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="84115:84121" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="84121:84127" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="84154:84167" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="84290:84296" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="84296:84302" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="84329:84342" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="85164:85184" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="85393:85406" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="85794:85800" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="85800:85806" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="85833:85846" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="89726:89732" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="107974:107980" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="110729:111463" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="110767:111059" ph="{...}" />
+            <marker date="1506200295684" expanded="true" signature="111083:111128" ph="{...}" />
+            <marker date="1506200295684" expanded="true" signature="111177:111450" ph="{...}" />
+            <marker date="1506200295684" expanded="true" signature="112664:112670" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="113612:113618" ph=" " />
+            <marker date="1506200295684" expanded="true" signature="120008:120146" ph="SELECT sum(t... entry_id" />
+            <marker date="1506200295684" expanded="true" signature="120079:120146" ph="SELECT disti... " />
+            <marker date="1506200295684" expanded="true" signature="120212:120350" ph="SELECT min(t... entry_id" />
+            <marker date="1506200295684" expanded="true" signature="120283:120350" ph="SELECT disti... " />
+            <marker date="1506200295684" expanded="true" signature="120416:120554" ph="SELECT max(t... entry_id" />
+            <marker date="1506200295684" expanded="true" signature="120487:120554" ph="SELECT disti... " />
+            <marker date="1506200295684" expanded="true" signature="120622:120825" ph="SELECT count... entry_id" />
+            <marker date="1506200295684" expanded="true" signature="120758:120825" ph="SELECT disti... " />
+            <marker date="1506200295684" expanded="true" signature="120891:121073" ph="SELECT avg(t... entry_id" />
+            <marker date="1506200295684" expanded="true" signature="121006:121073" ph="SELECT disti... " />
+            <marker date="1506200295684" expanded="true" signature="121120:121309" ph="SELECT tempE... entry_id" />
+            <marker date="1506200295684" expanded="true" signature="121242:121309" ph="SELECT disti... " />
+            <marker date="1506200295684" expanded="true" signature="121383:121564" ph="SELECT tempE... entry_id" />
+            <marker date="1506200295684" expanded="true" signature="121497:121564" ph="SELECT disti... " />
+            <marker date="1506200295684" expanded="true" signature="130811:131014" ph="SELECT count... entry_id" />
+            <marker date="1506200295684" expanded="true" signature="130868:130986" ph="SELECT disti... " />
+            <marker date="1506200295684" expanded="true" signature="135098:135301" ph="SELECT count... entry_id" />
+            <marker date="1506200295684" expanded="true" signature="135155:135273" ph="SELECT disti... " />
+            <marker date="1506200295684" expanded="true" signature="140427:140467" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="140524:140564" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="140622:140682" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="140812:140852" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="140909:140949" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="141007:141067" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="141136:141176" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="141927:142030" ph="SELECT ${$na... ${$xoopsDB-&gt;prefix(&quot;users&quot;)}" />
+            <marker date="1506200295684" expanded="true" signature="142832:142852" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="142882:142902" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="142933:142953" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="143079:143099" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="143129:143149" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="143180:143200" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="143289:143309" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="143533:143553" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="143608:143628" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="143685:143705" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="143794:143814" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="143869:143889" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="144067:144087" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="144115:144135" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="154094:154106" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="154174:154192" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="154287:154305" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="154946:154964" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="155026:155044" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="155239:155267" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="155325:155372" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="155428:155475" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="156632:156644" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="156710:156728" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="157486:157504" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="157760:157788" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="157846:157893" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="161579:162334" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="161586:162217" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="161772:162209" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="162224:162326" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="162301:162318" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="163009:163085" ph="SELECT name,... ${$xoopsDB-&gt;prefix(&quot;users&quot;)}" />
+            <marker date="1506200295684" expanded="true" signature="184211:184512" ph="SELECT repor... ${$xoopsDB-&gt;prefix(&quot;formulize_reports&quot;)}" />
+            <marker date="1506200295684" expanded="true" signature="190602:190683" ph="SELECT * FRO... ${$xoopsDB-&gt;prefix(&quot;formulize_saved_views&quot;)}" />
+            <marker date="1506200295684" expanded="true" signature="190875:191032" ph="SELECT * FRO... ${$xoopsDB-&gt;prefix(&quot;formulize_saved_views&quot;)}" />
+            <marker date="1506200295684" expanded="true" signature="213072:213085" ph="..." />
+            <marker date="1506200295684" expanded="true" signature="232001:232099" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+  </component>
+</project>

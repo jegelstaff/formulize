@@ -4578,9 +4578,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
             $metadataFieldTypes = $dataHandler->metaDataFieldTypes;
 
             if (isset($metadataFieldTypes[$key])){
-                foreach (array_keys($metadataFieldTypes) as $field) {
-                    $ele_type = $metadataFieldTypes[$field];
-                }
+                $ele_type = $metadataFieldTypes[$key];
             }
             else{
                 $elementObject = $element_handler->get($key);
