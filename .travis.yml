@@ -45,7 +45,7 @@ before_install:
   - sudo service php7.0-fpm restart
   # copy Formulize to the web root
   - cd ..
-  - sudo cp formulize/* /var/www 
+  - sudo cp -R formulize/* /var/www 
   # copy selenium_debug.js which modifies some javascript behaviour to behave better with selenium
   - sudo cp -f /var/www/ci/travis/selenium_debug.js /var/www/modules/formulize/selenium_debug.js
   # set 777 on necessary directories
