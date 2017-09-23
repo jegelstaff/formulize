@@ -4034,8 +4034,7 @@ function removeNotAllowedCols($fid, $frid, $cols, $groups) {
 
     foreach ($metadataFields as $field) 
     {
-    	$lcField = strtolower($field);
-    	$all_allowed_cols[] = $lcField;
+    	$all_allowed_cols[] = $field;
     }
 
 	$all_allowed_cols_raw = getAllColList($fid, $frid, $groups);
@@ -4578,10 +4577,14 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
             $dataHandler = new formulizeDataHandler(false);
             $metadataFieldTypes = $dataHandler->metaDataFieldTypes;
 
-            foreach (array_keys($metadataFieldTypes) as $field) {
-                print $field;
-                print $metadataFieldTypes[$field];
-                $ele_type = $metadataFieldTypes[$field];
+            if (isset($metadataFieldTypes[$key])){
+                foreach (array_keys($metadataFieldTypes) as $field) {
+                    $ele_type = $metadataFieldTypes[$field];
+                }
+            }
+            else{
+                $elementObject = $element_handler->get($key);
+                $ele_type = $elementObject->getVar('ele_type');
             }
 
 		    // remove the qsf_ parts to make the quickfilter searches work

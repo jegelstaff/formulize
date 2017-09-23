@@ -39,7 +39,7 @@ class formulizeDataHandler  {
 	
 	var $fid; // the form this Data Handler object is attached to
 	var $metadataFields; //
-    var $metadataFieldType;
+    var $metadataFieldTypes;
 
 	// $fid must be an id
 	function formulizeDataHandler($fid){
@@ -63,7 +63,6 @@ class formulizeDataHandler  {
                                     "mod_uid" => "text",
                                     "creation_uid" => "text",
                                     "creator_email" => "text",
-                                    "user_viewemail" => "text",
                                     "mod_datetime" => "date",
                                     "creation_datetime" => "date");
 	}
