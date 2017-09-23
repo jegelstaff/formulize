@@ -33,9 +33,6 @@ before_install:
   - sudo apt-get install -y --force-yes php7.0 libapache2-mod-php7.0 php7.0-fpm
   # Copy our virtual host template to sites-enabled overwriting the default site conf
   - sudo cp ci/travis/defaultsite.tpl /etc/apache2/sites-available/000-default.conf
-  # Copy basic testing files into /var/www
-  - sudo cp www/info.php /var/www/info.php
-  - sudo cp www/apache.php /var/www/apache.php
   # Enable mod rewrite module
   - sudo a2enmod rewrite
   # Set ServerName Globally
