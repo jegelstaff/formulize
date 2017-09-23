@@ -21,7 +21,8 @@ addons:
 cache:
   - apt
 
-install:
+before_install:
+
   # Install Apache2
   - sudo apt-get update
   - sudo apt-get install -y --force-yes apache2
@@ -45,6 +46,8 @@ install:
   - sudo service php7.0-fpm restart
 
 
+  - sudo cp -f ci/travis/test.php /var/www/test.php
+  - sudo cp -f ci/travis/test.html /var/www/test.html
   
 before_script:
   - npm install -g se-interpreter
