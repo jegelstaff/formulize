@@ -29,7 +29,7 @@ $pageHasHelp = true;
 $vars = & $_SESSION ['settings'];
 
 $hostname = empty ( $vars ['DB_PCONNECT'] ) ? $vars ['DB_HOST'] : "p:".$vars ['DB_HOST'];
-if (! ($link = @mysqli_connect( $hostname, $vars ['DB_USER'], $vars ['DB_PASS'], $vars ['DB_NAME'] ))) {
+if (! ($link = @mysqli_connect( $hostname, $vars ['DB_USER'], $vars ['DB_PASS'] ))) {
 	$error = ERR_NO_DBCONNECTION;
 	$wizard->redirectToPage ( '-1', $error );
 	exit ();
@@ -167,7 +167,7 @@ if ($_SERVER ['REQUEST_METHOD'] == 'POST' && ! empty ( $vars ['DB_NAME'] )) {
 	$error = validateDbCharset ( $link, $vars ['DB_CHARSET'], $vars ['DB_COLLATION'] );
 	$db_exist = false;
 	if (empty ( $error )) {
-		if (! @mysqli_select_db ($link, $vars ['DB_NAME'] )) { // TODO update
+		if (! @mysqli_select_db ($link, $vars ['DB_NAME'] )) {
 			// Database not here: try to create it
 //			$result = mysql_query ( "CREATE DATABASE `" . $vars ['DB_NAME'] . '`' );
 			$result = mysqli_query($link, "CREATE DATABASE `" . $vars ['DB_NAME'] . '`' );
