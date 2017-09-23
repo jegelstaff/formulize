@@ -5611,12 +5611,11 @@ function formulize_findCommonValue($form1, $form2, $key1, $key2) {
 
 //Function used to check if the given field is within the list of metadata fields.
 function isMetaDataField($field){
-    $ucField = strtoupper($field);
     $dataHandler = new formulizeDataHandler(false);
     $metadataFields = $dataHandler->metadataFields;
     foreach ($metadataFields as $value) 
     {
-        if($value == $ucField)
+        if($value == $field)
         {
             return true;
         }
