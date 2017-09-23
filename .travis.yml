@@ -37,15 +37,33 @@ before_install:
   - sudo a2enmod rewrite
   # Set ServerName Globally
   - sudo cp ci/travis/servername.tpl /etc/apache2/conf-available/servername.conf
+  # add to .ini
+  - phpenv config-add ci/travis/php.ini
   # Restart apache
   - sudo service apache2 restart
   # Restart PHP
   - sudo service php7.0-fpm restart
-
-
-  - sudo cp -f ci/travis/test.php /var/www/test.php
-  - sudo cp -f ci/travis/test.html /var/www/test.html
-  
+  # copy Formulize to the web root
+  - sudo cp -R ../* /var/www 
+  # copy selenium_debug.js which modifies some javascript behaviour to behave better with selenium
+  - sudo cp -f /var/www/ci/travis/selenium_debug.js /var/www/modules/formulize/selenium_debug.js
+  # set 777 on necessary directories
+  - sudo chmod 777 /var/www/cache
+  - sudo chmod 777 /var/www/templates_c
+  - sudo chmod 777 /var/www/uploads
+  - sudo chmod 777 /var/www/install
+  - sudo chmod 777 /var/www/mainfile.php
+  - sudo chmod 777 /var/www/cache
+  - sudo chmod 777 /var/www/modules/formulize/cache
+  - sudo chmod 777 /var/www/modules/formulize/temp
+  - sudo chmod 777 /var/www/modules/formulize/upload
+  - sudo chmod 777 /var/www/modules/formulize/templates/screens/default
+  - sudo chmod 777 /var/www/modules/formulize/export
+  - sudo chmod 777 /var/www/modules/formulize/custom_code
+  # make the trust path because the fcgi process cannot
+  - sudo mkdir /var/www/selenium-848d24bb54d726d
+  - sudo chmod 777 /var/www/selenium-848d24bb54d726d
+    
 before_script:
   - npm install -g se-interpreter
   - mysql -e 'create database formulize;'
@@ -60,11 +78,9 @@ before_script:
   - echo "USE mysql;\nUPDATE user SET password=PASSWORD('password') WHERE user='root';\nFLUSH PRIVILEGES;\n" | mysql -u root
 
 script:
-  - se-interpreter ci/travis/interpreter_config.json
-  - cat "error.log"
-  - curl http://localhost/index.php
-  - curl http://localhost/test.php
-  - curl http://localhost/test.html
+  - se-interpreter /var/www/ci/travis/interpreter_config.json
+  - cat "/tmp/error.log"
+  - cat "/home/travis/build/jegelstaff/formulize/modules/formulize/temp/php_error_log"
   - curl http://localhost/
 
 after_script:
