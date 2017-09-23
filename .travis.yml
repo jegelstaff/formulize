@@ -1,9 +1,9 @@
 env:
-  - WEB_PORT_80_TCP_ADDR=localhost
   global:
   - secure: f1Dkf/AObhtZJf/OtM/NREIZRzVeuw/QXQkV82WrbszKdpLrm1RwfwTAgcUa+JDiE931LJ41W86JWUia3PbS3pLVSL9gSwfBPk+PU6VM7AeYIVuje1V1tXpZoGlf+0RcfGHZA3JzeNSo65QjKl5iUxrT31wnpQpQ9rdG/bXQrUg=
   - secure: Xjc2qZs42LLIk4lRMc/JdFxeN5pmXUTLFd/stohOTX3g1rmRInXXqYpnXW/S15FjShqgtQAvvmnU/SV9QNpfaMhQVgS1ORVTS10gvy3aLPodW5hB9AGCDiQHXD0r9p+73LfNzenvdtmDme9Pp8PdLwb+spSroRbXgJ3tqHpXntM=
   - secure: n7FDSdDI6AlTIe91ZFfaWA89PloZGjR36M2U1XZwKK9FMFDHRJMORmW30veV1OuC6e7/F/56MpQ+PHMKeeBPdTEIQRJeCTwyLTkIQ8eh18oVE6M9pdXNrUlhLf5dejXk2kAl3vWe8LBC+x1pWsql0mb8AAkdLwQfRddPlCbkRHY=
+  - WEB_PORT_80_TCP_ADDR=localhost
 
 language: php
 
