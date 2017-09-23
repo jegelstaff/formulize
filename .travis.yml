@@ -1,59 +1,51 @@
 env:
+  - WEB_PORT_80_TCP_ADDR=localhost
   global:
   - secure: f1Dkf/AObhtZJf/OtM/NREIZRzVeuw/QXQkV82WrbszKdpLrm1RwfwTAgcUa+JDiE931LJ41W86JWUia3PbS3pLVSL9gSwfBPk+PU6VM7AeYIVuje1V1tXpZoGlf+0RcfGHZA3JzeNSo65QjKl5iUxrT31wnpQpQ9rdG/bXQrUg=
   - secure: Xjc2qZs42LLIk4lRMc/JdFxeN5pmXUTLFd/stohOTX3g1rmRInXXqYpnXW/S15FjShqgtQAvvmnU/SV9QNpfaMhQVgS1ORVTS10gvy3aLPodW5hB9AGCDiQHXD0r9p+73LfNzenvdtmDme9Pp8PdLwb+spSroRbXgJ3tqHpXntM=
   - secure: n7FDSdDI6AlTIe91ZFfaWA89PloZGjR36M2U1XZwKK9FMFDHRJMORmW30veV1OuC6e7/F/56MpQ+PHMKeeBPdTEIQRJeCTwyLTkIQ8eh18oVE6M9pdXNrUlhLf5dejXk2kAl3vWe8LBC+x1pWsql0mb8AAkdLwQfRddPlCbkRHY=
-  phpenv:
-  - version-name: "7.0"
 
 language: php
 
-php:
-  - 7.0
+sudo: required
+dist: trusty
 
-install:
-  - sudo apt-get update
-  - sudo apt-get install apache2 libapache2-mod-fastcgi
-  # enable php-fpm
-  - sudo cp -f ci/travis/www.conf ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.d/
-  - sudo cp ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.conf.default ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.conf
-  - sudo a2enmod rewrite actions fastcgi alias
-  - echo "cgi.fix_pathinfo = 1" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
-  - ~/.phpenv/versions/$(phpenv version-name)/sbin/php-fpm
-  # configure apache virtual hosts
-  - sudo cp -f ci/travis/travis-ci-apache /etc/apache2/sites-available/default
-  - sudo sed -e "s?%TRAVIS_BUILD_DIR%?$(pwd)?g" --in-place /etc/apache2/sites-available/default
-  
-  - head /etc/apache2/sites-available/default
-  
-  - sudo cp -f ci/travis/test.php /var/www/html/test.php
-  - sudo cp -f ci/travis/test.html /var/www/html/test.html
-  
-  # copy selenium_debug.js which modifies some javascript behaviour to behave better with selenium
-  - sudo cp -f ci/travis/selenium_debug.js modules/formulize/selenium_debug.js
-  # set 777 on necessary directories
-  - sudo chmod 777 cache
-  - sudo chmod 777 templates_c
-  - sudo chmod 777 uploads
-  - sudo chmod 777 install
-  - sudo chmod 777 mainfile.php
-  - sudo chmod 777 cache
-  - sudo chmod 777 modules/formulize/cache
-  - sudo chmod 777 modules/formulize/temp
-  - sudo chmod 777 modules/formulize/upload
-  - sudo chmod 777 modules/formulize/templates/screens/default
-  - sudo chmod 777 modules/formulize/export
-  - sudo chmod 777 modules/formulize/custom_code
-  # make the trust path because the fcgi process cannot
-  - sudo mkdir selenium-848d24bb54d726d
-  - sudo chmod 777 selenium-848d24bb54d726d
-  # add to .ini and restart
-  - phpenv config-add ci/travis/php.ini
-  - sudo service apache2 restart
+php:
+    - 7.0
 
 addons:
   sauce_connect: true
+  hosts:
+    - local.dev
+    
+cache:
+  - apt
 
+install:
+  # Install Apache2
+  - sudo apt-get update
+  - sudo apt-get install -y --force-yes apache2
+  # Add PHP 7.0 Repository
+  - sudo add-apt-repository -y ppa:ondrej/php
+  # Install PHP 7.0
+  - sudo apt-get update
+  - sudo apt-get install -y --force-yes php7.0 libapache2-mod-php7.0 php7.0-fpm
+  # Copy our virtual host template to sites-enabled overwriting the default site conf
+  - sudo cp ci/travis/defaultsite.tpl /etc/apache2/sites-available/000-default.conf
+  # Copy basic testing files into /var/www
+  - sudo cp www/info.php /var/www/info.php
+  - sudo cp www/apache.php /var/www/apache.php
+  # Enable mod rewrite module
+  - sudo a2enmod rewrite
+  # Set ServerName Globally
+  - sudo cp ci/travis/servername.tpl /etc/apache2/conf-available/servername.conf
+  # Restart apache
+  - sudo service apache2 restart
+  # Restart PHP
+  - sudo service php7.0-fpm restart
+
+
+  
 before_script:
   - npm install -g se-interpreter
   - mysql -e 'create database formulize;'
