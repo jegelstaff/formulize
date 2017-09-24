@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty( $vars['DB_HOST'] ) && !empty
 if (@empty( $vars['DB_HOST'] )) {
 	// Fill with default values
 	$vars = array_merge( $vars, array(
-        'DB_TYPE'        => 'mysql',
+        'DB_TYPE'        => 'pdo.mysql',
         'DB_HOST'        => 'localhost',
         'DB_USER'        => '',
         'DB_PASS'        => '',
@@ -91,7 +91,7 @@ ob_start();
 <div class="blokSQL">
 <div class="dbconn_line"><label> <?php echo LEGEND_DATABASE; ?><br />
 <select size="2" name="DB_TYPE" class="db_select">
-	<option value="mysql" selected="selected">mysql</option>
+	<option value="pdo.mysql" selected="selected">mysql</option>
 </select> </label>
 <div class='clear'>&nbsp;</div>
 </div>

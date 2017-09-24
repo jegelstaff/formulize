@@ -13,6 +13,7 @@ class icms_db_legacy_PdoDatabase extends icms_db_legacy_Database {
 	protected $rowCount = 0;
 
 	public function __construct( $connection, $allowWebChanges = false ) {
+	    var_dump($connection);
 		parent::__construct($connection, $allowWebChanges);
 		$this->pdo = $connection;
 	}
