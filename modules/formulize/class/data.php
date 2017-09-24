@@ -56,8 +56,7 @@ class formulizeDataHandler  {
 		   						"creation_uid",
 		   						"creator_email",
 		  						"mod_datetime",
-		   						"mod_uid",
-		   						"user_viewemail");
+		   						"mod_uid");
 
         $this->metadataFieldTypes = array("entry_id" => "text",
                                     "mod_uid" => "text",

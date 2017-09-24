@@ -4575,7 +4575,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
             $addToItsOwnORFilter = false;
 
             $dataHandler = new formulizeDataHandler(false);
-            $metadataFieldTypes = $dataHandler->metaDataFieldTypes;
+            $metadataFieldTypes = $dataHandler->metadataFieldTypes;
 
             if (isset($metadataFieldTypes[$key])){
                 $ele_type = $metadataFieldTypes[$key];
