@@ -632,8 +632,8 @@ function patch40() {
 function saveTemplate($template, $sid, $name) {
     $filename = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/{$sid}/{$name}.php";
 
-    $text = html_entity_decode($template);
-    if (false === strpos($text, "<?php")) {
+    $text = trim(html_entity_decode($template));
+    if ($text AND substr($text, 0, 5) != "<?php") {
         // if there's no php open-tag in the text already, add one
         $text = "<?php\n" . $text;
     }
