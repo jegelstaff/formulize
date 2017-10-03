@@ -48,6 +48,14 @@ Choose the Selenium 2 version of the test file format. The scripts are text file
 
 A drawback to the json format is that comments cannot be included in the file, as this breaks json-parsing.
 
+### Playback
+
+A test can be played back locally, if you have an active [Selenium Server](http://www.seleniumhq.org/download/). To run Selenium Server, download the .jar file and then type the following command on your command line:
+
+    java -jar selenium-server-jar-filename.jar
+
+You can then play back your tests in Selenium Builder in Firefox. The command line will show each step of the test, and you can also watch the operations playback in the browser.
+
 ## General Tips
 
 All tests should start with logging in to the website.  When Selenium starts a test, it clears all session information so the new test starts from scratch.
