@@ -242,8 +242,6 @@ function prepvalues($value, $field, $entry_id) {
         // removing the "Other: " part...we just want to show what people actually typed...doesn't have to be flagged specifically as an "other" value
         $value_other = $newValueq[0]['other_text'];
 		$value = preg_replace('/\{OTHER\|+[0-9]+\}/', $value_other, $value); 
-	} else {
-        $value = formulize_swapUIText($value, unserialize($elementArray['ele_uitext']));
     }
 
       $valueToReturn = "";
