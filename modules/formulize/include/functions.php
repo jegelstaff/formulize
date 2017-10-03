@@ -347,9 +347,6 @@ function availReports($uid, $groups, $fid, $frid="0") {
 
 // security check to see if a form is allowed for the user:
 function security_check($fid, $entry="", $uid="", $owner="", $groups="", $mid="", $gperm_handler="") {
-    if ($entry == "proxy" OR $entry =="new") { 
-        $entry=""; // if this is a new entry, then we don't do the check below to look for permissions on a specific entry, since there isn't one yet!
-    }
 
     if (!$groups) { // if no groups specified, use current user
         global $xoopsUser;
@@ -367,8 +364,17 @@ function security_check($fid, $entry="", $uid="", $owner="", $groups="", $mid=""
     if (!$gperm_handler->checkRight("view_form", $fid, $groups, $mid)) {
         return false;
     }
-    if ($entry == "new" AND !$gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid) AND !$gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid)) {
+    
+    if ($entry == "proxy" AND !$gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid)) {
         return false;
+    } 
+    
+    if ($entry == "new" AND !$gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid)) {
+        return false;
+    }
+    
+    if($entry == "new" OR $entry == "proxy") {
+        $entry = ""; // if this is a new entry, then we don't do the check below to look for permissions on a specific entry, since there isn't one yet!
     }
     
     if (!$uid) {
