@@ -131,7 +131,7 @@ function getFormFramework($formframe, $mainform="") {
 function getFormTitle($fid) {
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($fid);
-    return $formObject->getVar('title');
+	return html_entity_decode($formObject->getVar('title'),ENT_QUOTES);
 }
 
 
