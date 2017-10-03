@@ -367,7 +367,7 @@ $GLOBALS['formulize_newSubformBlankElementIds'] = $formulize_newSubformBlankElem
 $GLOBALS['formulize_readElementsWasRun'] = $formulize_readElementsWasRun;
 
 // if there is more than one form, try to make the 1-1 links
-if(count($formulize_elementData) > 1) {
+if(count($formulize_elementData) > 1 AND ($frid OR $overrideFrid)) {
     $oneToOneFridToUse = $overrideFrid ? $overrideFrid : $frid;
     foreach($formulize_elementData as $this_fid => $entryData) {
         formulize_makeOneToOneLinks($oneToOneFridToUse, $this_fid);
