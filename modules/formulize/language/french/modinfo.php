@@ -55,4 +55,4 @@ define("_MI_formulize_USETOKEN", "Utiliser la sécurité identifiant système po
 define("_MI_formulize_USETOKENDESC", "Par défaut, lors d'une soumission, aucune donnée n'est sauvegardée sauf si Formulize peut valider un identifiant unique soumis avec le formulaire.  C'est une défense partielle contre les attaques de scripts croisés, permettant de s'assurer que les personnes visitant actuellement votre site peuvent soumettre un formulaire.  Dans certaines circonstances, dépendantes de Firewall ou d'autres facteurs, l'identifiant ne peut être validé même si cela devrait se produire.  Si cela vous arrive avec répétition, vous pouvez désactiver cette sécurité ici.  <b>NOTE: vous pouvez passer au dessus de cette préférence globale sur une base Screen par Screen.</b>");
 define("_MI_formulizeMENU_BNAME","Menu des Formulaires");
 define("_MI_formulizeMENU_DESC","Montre un menu individuel configurable dans un bloc");
-define("_MI_formulizeMENU_NAME","MonMenu");
+define("_MI_formulizeMENU_NAME","Mon Menu");
