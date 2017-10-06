@@ -385,6 +385,9 @@ EOF;
 		//Set the screen ID
 		$formulize_screen_id = $screenID;
 
+		//Declare a formulize div to contain our injected content, with ID formulize_form
+		echo '<div id=formulize_form>';
+		
 		//Include our header file in order to set up xoTheme
 		include XOOPS_ROOT_PATH . '/header.php';
 		
@@ -402,7 +405,7 @@ EOF;
 		ob_start();
 		include XOOPS_ROOT_PATH . '/modules/formulize/index.php';
 		//Content now contains our buffered contents.
-		$formulizeContent = ob_get_clean();
+		$content = ob_get_clean();
 		
 		//Checks icmsTheme is initialized. If this is so, it will drop into further conditionals to check those
 		//dependencies relying on library JS files from Formulize stand-alone directory.
@@ -414,16 +417,17 @@ EOF;
 			{	
 				// Include scripts for linking
 				foreach($GLOBALS['formulize_calendarFileRequired']['scripts-for-linking'] as $thisScript) {
-                                       $restOfContent .= "\n<script type='text/javascript' src='" . $thisScript . "'></script>\n";
+                                       echo "<script type='text/javascript' src='" . $thisScript . "'></script>";
                 }
 				// Include scripts for embedding
 				foreach($GLOBALS['formulize_calendarFileRequired']['scripts-for-embedding'] as $thisScript) {
-                                       $restOfContent .= "\n<script type='text/javascript'>". $thisScript ."</script>\n";
+                                       echo "<script type='text/javascript'>". $thisScript ."</script>";
                 }
+				
 				
 				//In order to append our stylesheet, and ensure that no matter the load and buffer order of our page, we shall be including
 				//the style sheet via a JS call that appends the link tag to the head section on load.
-				$restOfContent .=
+				echo
 				"
 					<script type='text/javascript'>
 					function fetchCalendarCSS(fileURL)
@@ -435,13 +439,15 @@ EOF;
 						document.getElementsByTagName('head')[0].appendChild(newNode);
 					}";
 					foreach($GLOBALS['formulize_calendarFileRequired']['stylesheets'] as $thisSheet) {
-						$restOfContent .= " fetchCalendarCSS('" . $thisSheet ."'); ";
+						print " fetchCalendarCSS('" . $thisSheet ."'); ";
 					}
-					$restOfContent .= "</script>";
+					print "</script>";
 			}
 		}
-		
-        //Declare a formulize div to contain our injected content, with ID formulize_form
+		//Inject formulize content
+		echo $content;
+		//Close our div tag
+		echo '</div>';
 	}
 	
 	/**
