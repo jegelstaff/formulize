@@ -55,7 +55,7 @@
         $paths = Array();
         $date = date_create();
         // create directory in the "export" directory that is unique to the time created. will store export CSVs
-        $exportDir = XOOPS_ROOT_PATH . "/modules/formulize/export/" . date_format($date, 'Y-m-d (U)') . "\\";
+        $exportDir = XOOPS_ROOT_PATH . "/modules/formulize/export/" . date_format($date, 'Y-m-d (U)') . "/";
         if (!file_exists($exportDir) and !mkdir($exportDir)){
             $successfulExport = 0;
             error_log("Export folder could not be created.");
@@ -501,8 +501,8 @@
      */
     function extractTemplateFiles($archivePath){
         global $successfulImport;
-        extractFolder($archivePath, "screens", XOOPS_ROOT_PATH . "\\modules\\formulize\\templates\\");
-        extractFolder($archivePath, "custom_code", XOOPS_ROOT_PATH . "\\modules\\formulize\\");
+        extractFolder($archivePath, "screens", XOOPS_ROOT_PATH . "/modules/formulize/templates/");
+        extractFolder($archivePath, "custom_code", XOOPS_ROOT_PATH . "/modules/formulize/");
         
         return array( "success" => $successfulImport);
     }
@@ -526,7 +526,7 @@
         for($i = 0; $i < $zip->numFiles; $i++) {
             $entry = $zip->getNameIndex($i);
              // strpos() to check if the entry name contains the directory we want to extract
-            if (strpos($entry, $folderToExtract."\\") !== false) {
+            if (strpos($entry, $folderToExtract."/") !== false) {
               $files[] = $entry;
             }
         }
