@@ -487,6 +487,7 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
   margin: 1em 0; }
 
 @media print {
+    
   body {
     font-size: 10pt; }
 
@@ -559,4 +560,6 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
     display: none; }
 
   .formulize-element-edit-link {
-    display: none; } }
+    display: none; }
+    
+}
