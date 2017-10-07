@@ -423,24 +423,50 @@ EOF;
 				
 				//In order to append our stylesheet, and ensure that no matter the load and buffer order of our page, we shall be including
 				//the style sheet via a JS call that appends the link tag to the head section on load.
+                // Do the same for jQuery and jQuery UI if they are not already loaded, since the calendar element requires them
 				$restOfContent .=
 				"
 					<script type='text/javascript'>
-					function fetchCalendarCSS(fileURL)
+function fetchCSS(href)
 					{
 						var newNode=document.createElement('link');
-						newNode.setAttribute('rel', 'stylesheet');
-						newNode.setAttribute('type', 'text/css');
-						newNode.setAttribute('href', fileURL);
-						document.getElementsByTagName('head')[0].appendChild(newNode);
-					}";
+    newNode.rel = 'stylesheet';
+    newNode.type = 'text/css';
+    newNode.href = href;
+    document.head.appendChild(newNode);
+}
+
+function fetchJS(src) {
+    var newNode = document.createElement('script');
+    newNode.type = 'text/javascript';
+    newNode.src = src;
+    document.head.appendChild(newNode);
+}
+
+document.addEventListener('DOMContentLoaded', function(event) {
+    if(jQuery === undefined) {
+        fetchJS('".XOOPS_URL."/libraries/jquery/jquery.js');
+        fetchJS('".XOOPS_URL."/libraries/jquery/jquery-migrate-1.2.1.min.js');
+        fetchJS('".XOOPS_URL."/libraries/jquery/ui/ui.min.js');
+        fetchCSS('".XOOPS_URL."/libraries/jquery/ui/css/ui-smoothness/ui.css');
+    } else if(jQuery.datepicker === undefined) {
+        fetchJS('".XOOPS_URL."/libraries/jquery/jquery-migrate-1.2.1.min.js');
+        fetchJS('".XOOPS_URL."/libraries/jquery/ui/ui.min.js');
+        fetchCSS('".XOOPS_URL."/libraries/jquery/ui/css/ui-smoothness/ui.css');
+    }
+});
+                    ";
 					foreach($GLOBALS['formulize_calendarFileRequired']['stylesheets'] as $thisSheet) {
-						$restOfContent .= " fetchCalendarCSS('" . $thisSheet ."'); ";
+						$restOfContent .= " fetchCSS('" . $thisSheet ."'); ";
 					}
 					$restOfContent .= "</script>";
 			}
 		}
 		
+        // include the formulize.js file
+        $restOfContent .= "\n<script type='text/javascript' src='" . XOOPS_URL. "/modules/formulize/libraries/formulize.js'></script>\n";
+
+        
         //Declare a formulize div to contain our injected content, with ID formulize_form
 		echo "<div id=formulize_form>\n".$restOfContent.$formulizeContent."\n</div>\n";
 	}
