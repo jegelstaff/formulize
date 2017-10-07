@@ -486,6 +486,10 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
 #pageNavTable {
   margin: 1em 0; }
 
+.scrollbox {
+    overflow: auto;
+}
+
 @media print {
     
   body {
