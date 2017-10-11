@@ -45,7 +45,8 @@ class db_manager {
 		}
 		$sql_query = trim(fread(fopen($sql_file_path, 'r'), filesize($sql_file_path)));
 		icms_db_legacy_mysql_Utility::splitSqlFile($pieces, $sql_query);
-		$this->db->connect();
+		$this->db->connect(); // TODO might already exist? can probably remove
+        // TODO return pieces into list variables
 		foreach ($pieces as $piece) {
 			$piece = trim($piece);
 			// [0] contains the prefixed query
@@ -54,6 +55,7 @@ class db_manager {
 			if ($prefixed_query != false) {
 				$table = $this->db->prefix($prefixed_query[4]);
 				if ($prefixed_query[1] == 'CREATE TABLE') {
+				    // TODO problem area, check this out
 					if ($this->db->query($prefixed_query[0]) != false) {
 						if (! isset($this->s_tables['create'][$table])) {
 							$this->s_tables['create'][$table] = 1;

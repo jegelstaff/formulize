@@ -17,6 +17,9 @@
 /**
  *
  */
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 	defined( 'XOOPS_INSTALL' ) or die();
 	if (isset($_COOKIE['xo_install_lang'])) {
 		$icmsConfig['language'] = $icmsConfig['language'] = $_COOKIE['xo_install_lang'];
@@ -25,6 +28,7 @@
 ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
+
 <title><?php echo sprintf(XOOPS_INSTALL_WIZARD, XOOPS_VERSION); ?>(<?php echo ($wizard->currentPage+1) . '/' . count($wizard->pages); ?>)</title>
 <meta http-equiv="Content-Type" content="text/html; charset=<?php echo _INSTALL_CHARSET ?>" />
 <?php

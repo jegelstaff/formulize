@@ -23,6 +23,10 @@ sleep(1);
 require_once 'common.inc.php';
 if (!defined( 'XOOPS_INSTALL' ) )	exit();
 
+
+error_reporting(E_ALL);
+ini_set('display_errors', 'on');
+
 icms_core_Filesystem::chmod("../mainfile.php", 0444);
 if (defined('XOOPS_TRUST_PATH') && XOOPS_TRUST_PATH != '') {
 	icms_core_Filesystem::chmod(XOOPS_TRUST_PATH, 0777);
@@ -56,8 +60,8 @@ if (!defined("XOOPS_ROOT_PATH")) {
 
 include_once './class/dbmanager.php';
 $dbm = new db_manager();
-
 if (!$dbm->isConnectable()) {
+    print "db_manager is not connectable";
 	$wizard->redirectToPage( '-3' );
 	exit();
 }
@@ -73,8 +77,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 		exit();
 	}
 	$tables = array();
-	$result = $dbm->queryFromFile( './sql/' . XOOPS_DB_TYPE . '.structure.sql' );
-	$content = $dbm->report();
+    $result = $dbm->queryFromFile( './sql/' . XOOPS_DB_TYPE . '.structure.sql' );
+    $content = $dbm->report();
+    if (!$result) {
+        $content = "Unable to open sql setup files.";
+    }
 	include 'install_tpl.php';
 	exit();
 }
@@ -82,13 +89,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 ob_start();
 
 if ($process == 'create') {
-	?>
-<p class="x2-note"><?php echo READY_CREATE_TABLES; ?></p>
+	?><p class="x2-note"><?php echo READY_CREATE_TABLES; ?></p>
 	<?php
 } else {
 	$pageHasForm = false;
-	?>
-<p class="x2-note"><?php echo XOOPS_TABLES_FOUND; ?></p>
+	print "else block</br>";
+	?><p class="x2-note"><?php echo XOOPS_TABLES_FOUND; ?></p>
 	<?php
 }
 
