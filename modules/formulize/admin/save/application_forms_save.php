@@ -69,8 +69,11 @@ function deleteFormMenuLink($fid){
 if((isset($_POST['cloneform']) AND $_POST['cloneform'] > 0) OR (isset($_POST['cloneformdata']) AND $_POST['cloneformdata'] > 0)) {
 	$formToClone = (isset($_POST['cloneform']) AND $_POST['cloneform'] > 0) ? intval($_POST['cloneform']) : intval($_POST['cloneformdata']);
 	$cloneData = (isset($_POST['cloneform']) AND $_POST['cloneform'] > 0) ? false : true;
+	if (isset($_POST['cloneformname']))
+		$cloneformname = $_POST['cloneformname'];
+	error_log(print_r("posted form name: ".$cloneformname, true));
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
-	$form_handler->cloneForm($formToClone, $cloneData);
+	$form_handler->cloneForm($formToClone, $cloneData, $cloneformname);
 	print "/* evalnow */ reloadWithScrollPosition()";
 }
 
