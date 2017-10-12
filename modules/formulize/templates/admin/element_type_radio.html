@@ -3,7 +3,17 @@
     <fieldset>
 		<legend><{$smarty.const._AM_ELE_OPT}></legend>
 		<{include file="db:admin/element_optionlist.html}>
-    </div>	
+    </div>
+    
+    <div class="form-item">
+    <fieldset>
+	<legend>Apply this default value to all existing blank values?</legend>
+	<p><label for="element-replaceblankswithdefault">
+	<input type="checkbox" id="element-replaceblankswithdefault" name="replaceblankswithdefault" value="1"/>
+	<{$smarty.const._AM_ELE_OPT_REPLACEBLANKSWITHDEFAULT}></label></p>
+    </fieldset>
+    </div>
+    
     <div class="form-item">
       <fieldset>
         <legend><{$smarty.const._AM_ELE_DELIM_CHOICE}></legend>

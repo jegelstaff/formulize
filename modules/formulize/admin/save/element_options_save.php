@@ -231,7 +231,7 @@ if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.ph
   if($changed) {
     $_POST['reload_option_page'] = true; // force a reload, since the developer probably changed something the user did in the form, so we should reload to show the effect of this change
   }
-}
+}	
 
 // check to see if we should be reassigning user submitted values, and if so, trap the old ele_value settings, and the new ones, and then pass off the job to the handling function that does that change
 if(isset($_POST['changeuservalues']) AND $_POST['changeuservalues']==1) {
@@ -248,6 +248,14 @@ if(isset($_POST['changeuservalues']) AND $_POST['changeuservalues']==1) {
   }
   if(!$changeResult = $data_handler->changeUserSubmittedValues($ele_id, $newValues)) {
     print "Error updating user submitted values for the options in element $ele_id";
+  }
+}
+
+// replace all existing blank radio button selections to the currently selected default
+if(isset($_POST['replaceblankswithdefault']) AND $_POST['replaceblankswithdefault']==1 AND $ele_type == "radio") {
+  if($default_entry = array_search(1, $processedValues['elements']['ele_value'])) {
+    $sql = "UPDATE `".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')."` SET `".$element->getVar('ele_handle')."`='".formulize_db_escape($default_entry)."' WHERE `".$element->getVar('ele_handle')."` IS NULL OR `".$element->getVar('ele_handle')."`=''");
+    $xoopsDB->query($sql);  
   }
 }
 
