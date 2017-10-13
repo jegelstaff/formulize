@@ -40,6 +40,7 @@ class formulizeNewAreamodifElement extends formulizeformulize {
     var $name;
     var $adminCanMakeRequired;
     var $alwaysValidateInputs;
+
     function __construct() {
         $this->name = "Custom Text for display (left and right cells)";
         $this->hasData = false; // set to false if this is a non-data element, like the subform or the grid

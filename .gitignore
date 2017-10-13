@@ -12,3 +12,4 @@ themes/formulize_mobile_app/.sass-cache/
 *.bak
 *.db
 formulize-docs/_site
+.idea/*

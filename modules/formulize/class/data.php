@@ -41,7 +41,7 @@ class formulizeDataHandler  {
 	var $metadataFields; //
 
 	// $fid must be an id
-	function formulizeDataHandler($fid){
+	function __construct($fid){
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		if(is_object($formObject = $form_handler->get($fid))) {
 			$this->fid = intval($fid);
