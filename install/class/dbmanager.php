@@ -26,31 +26,15 @@ class db_manager {
 	var $s_tables = array();
 	var $f_tables = array();
 	var $db;
-    var $prefix;
-    var $logger;
 
 	function __construct() {
-        $this->db = icms_db_Factory::pdoInstance();
-        $this->setPrefix(XOOPS_DB_PREFIX);
-		$this->setLogger(icms_core_Logger::instance());
-	}
-
-    public function setLogger($logger) {
-		$this->logger = $logger;
-	}
-	public function setPrefix($value) {
-		$this->prefix = $value;
-	}
-	public function prefix($tablename='') {
-		if ( $tablename != '' ) {
-			return $this->prefix .'_'. $tablename;
-		} else {
-			return $this->prefix;
-		}
+        $this->db = icms_db_Factory::instance();
+        $this->db->setPrefix(XOOPS_DB_PREFIX);
+		$this->db->setLogger(icms_core_Logger::instance());
 	}
 
 	function isConnectable() {
-		return true; // ($this->db->connect(false) != false) ? true : false; // Ack! Ugly hacking going on.
+		return ($this->db->connect(false) != false) ? true : false;
 	}
 
 	function queryFromFile($sql_file_path) {
@@ -61,14 +45,15 @@ class db_manager {
 		}
 		$sql_query = trim(fread(fopen($sql_file_path, 'r'), filesize($sql_file_path)));
 		icms_db_legacy_mysql_Utility::splitSqlFile($pieces, $sql_query);
+		$this->db->connect(); // TODO might already exist? can probably remove
         // TODO return pieces into list variables
 		foreach ($pieces as $piece) {
 			$piece = trim($piece);
 			// [0] contains the prefixed query
 			// [4] contains unprefixed table name
-			$prefixed_query = icms_db_legacy_mysql_Utility::prefixQuery($piece, $this->prefix());
+			$prefixed_query = icms_db_legacy_mysql_Utility::prefixQuery($piece, $this->db->prefix());
 			if ($prefixed_query != false) {
-				$table = $this->prefix($prefixed_query[4]);
+				$table = $this->db->prefix($prefixed_query[4]);
 				if ($prefixed_query[1] == 'CREATE TABLE') {
 				    // TODO problem area, check this out
 					if ($this->db->query($prefixed_query[0]) != false) {
@@ -161,15 +146,23 @@ class db_manager {
 	}
 
 	function query($sql) {
+		$this->db->connect();
 		return $this->db->query($sql);
 	}
 
+	function prefix($table) {
+		$this->db->connect();
+		return $this->db->prefix($table);
+	}
+
 	function fetchArray($ret) {
+		$this->db->connect();
 		return $this->db->fetchArray($ret);
 	}
 
 	function insert($table, $query) {
-		$table = $this->prefix($table);
+		$this->db->connect();
+		$table = $this->db->prefix($table);
 		$query = 'INSERT INTO '.$table.' '.$query;
 		if (!$this->db->queryF($query)) {
 			//var_export($query);
@@ -197,7 +190,8 @@ class db_manager {
 		$table = trim($table);
 		$ret = false;
 		if ($table != '') {
-			$sql = 'SELECT COUNT(*) FROM '.$this->prefix($table);
+			$this->db->connect();
+			$sql = 'SELECT COUNT(*) FROM '.$this->db->prefix($table);
 			$ret = (false != $this->db->query($sql)) ? true : false;
 		}
 		return $ret;
