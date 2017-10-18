@@ -70,7 +70,7 @@ $formulizeStandaloneQueries = str_replace("REPLACE_WITH_FORMULIZE_MODULE_ID", $f
 
 
 $vars = & $_SESSION ['settings'];
-$link = @$func_connect ( $vars ['DB_HOST'], $vars ['DB_USER'], $vars ['DB_PASS'], true );
+$link = @mysqli_connect ( $vars ['DB_HOST'], $vars ['DB_USER'], $vars ['DB_PASS'], true );
 
 foreach(explode(";\r",str_replace(array("\n","\n\r","\r\n"), "\r", $formulizeStandaloneQueries)) as $sql) { // convert all kinds of line breaks to \r and then split on semicolon-linebreak to get individual queries
 	if($sql) {
