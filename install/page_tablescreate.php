@@ -23,10 +23,6 @@ sleep(1);
 require_once 'common.inc.php';
 if (!defined( 'XOOPS_INSTALL' ) )	exit();
 
-
-error_reporting(E_ALL);
-ini_set('display_errors', 'on');
-
 icms_core_Filesystem::chmod("../mainfile.php", 0444);
 if (defined('XOOPS_TRUST_PATH') && XOOPS_TRUST_PATH != '') {
 	icms_core_Filesystem::chmod(XOOPS_TRUST_PATH, 0777);
