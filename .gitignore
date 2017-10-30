@@ -12,3 +12,6 @@ themes/formulize_mobile_app/.sass-cache/
 *.bak
 *.db
 formulize-docs/_site
+.idea/
+info.php
+phpunit-5.7.21.phar

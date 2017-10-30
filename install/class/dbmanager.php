@@ -31,7 +31,7 @@ class db_manager {
 
 	function __construct() {
 	    icms_db_Factory::pdoInstance();
-        $this->db = icms_db_Factory::pdoInstance();
+        $this->db = icms_db_Factory::instance();
         $this->setPrefix(XOOPS_DB_PREFIX);
 		$this->setLogger(icms_core_Logger::instance());
 	}

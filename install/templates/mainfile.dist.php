@@ -122,7 +122,7 @@ if (!defined("XOOPS_MAINFILE_INCLUDED")) {
 	define('XOOPS_DB_PREFIX', 'icms');
 
 	// Database Hostname
-	// Hostname of the database server. If you are unsure, 'localhost' works in most cases.
+	// Hostname of the database server. If you are unsure, 'localhost' works in most cases.m
 	define('XOOPS_DB_HOST', 'localhost');
 
 	// Database Username
