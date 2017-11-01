@@ -63,7 +63,6 @@ class db_manager {
 		}
 		$sql_query = trim(fread(fopen($sql_file_path, 'r'), filesize($sql_file_path)));
 		icms_db_legacy_mysql_Utility::splitSqlFile($pieces, $sql_query);
-        // TODO return pieces into list variables
 		foreach ($pieces as $piece) {
 			$piece = trim($piece);
 			// [0] contains the prefixed query
@@ -174,7 +173,6 @@ class db_manager {
 		$table = $this->prefix($table);
 		$query = 'INSERT INTO '.$table.' '.$query;
 		if (!$this->db->queryF($query)) {
-			//var_export($query);
 			if (!isset($this->f_tables['insert'][$table])) {
 				$this->f_tables['insert'][$table] = 1;
 			} else {

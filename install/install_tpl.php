@@ -17,8 +17,6 @@
 /**
  *
  */
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
 
 	defined( 'XOOPS_INSTALL' ) or die();
 	if (isset($_COOKIE['xo_install_lang'])) {

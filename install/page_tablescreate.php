@@ -89,7 +89,6 @@ if ($process == 'create') {
 	<?php
 } else {
 	$pageHasForm = false;
-	print "else block</br>";
 	?><p class="x2-note"><?php echo XOOPS_TABLES_FOUND; ?></p>
 	<?php
 }
