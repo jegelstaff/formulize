@@ -49,8 +49,8 @@ include_once './class/dbmanager.php';
 $dbm = new db_manager();
 $dbm->db->connect();
 $formulizeStandaloneQueries = "";
-if (file_exists(ICMS_ROOT_PATH."/install/sql/mysql.formulize_standalone.sql")) {
-    $formulizeStandaloneQueries = str_replace("REPLACE_WITH_PREFIX", SDATA_DB_PREFIX, file_get_contents(ICMS_ROOT_PATH."/install/sql/mysql.formulize_standalone.sql"));
+if (file_exists(ICMS_ROOT_PATH."/install/sql/pdo.mysql.formulize_standalone.sql")) {
+    $formulizeStandaloneQueries = str_replace("REPLACE_WITH_PREFIX", SDATA_DB_PREFIX, file_get_contents(ICMS_ROOT_PATH."/install/sql/pdo.mysql.formulize_standalone.sql"));
 }
 
 // Check what the module ids are, and replace in the file
