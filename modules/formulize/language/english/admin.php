@@ -1,5 +1,5 @@
 <?php
-/*mod Language for admin side, by Fran�ois T*/
+/*mod Language for admin side, by François T*/
 
 /*mod Language for applications*/
 define("_AM_APP_APPLICATION","Application: ");

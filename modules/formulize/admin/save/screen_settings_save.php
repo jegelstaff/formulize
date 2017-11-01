@@ -128,7 +128,7 @@ if($isNew) {
 
 $screen->setVar('title',$screens['title']);
 $screen->setVar('fid',$fid);
-$originalFrid = $screen->getVar('frid');
+$originalFrid = intval($screen->getVar('frid'));
 $screen->setVar('frid',$screens['frid']);
 $screen->setVar('type',$screens['type']);
 $screen->setVar('useToken',$screens['useToken']);

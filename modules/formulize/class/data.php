@@ -782,7 +782,7 @@ class formulizeDataHandler  {
             unset($element_values[$key]);   // since field name is not escaped, remove from array
             $key = "`".formulize_db_escape($key)."`";                // escape field name
 
-            if ("{WRITEASNULL}" == $value or null === $value) {
+            if ("{WRITEASNULL}" === $value or null === $value) {
                 $element_values[$key] = "NULL";
             } else {
                 $element_values[$key] = "'".formulize_db_escape($value)."'";

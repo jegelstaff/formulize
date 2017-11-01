@@ -242,8 +242,6 @@ function prepvalues($value, $field, $entry_id) {
         // removing the "Other: " part...we just want to show what people actually typed...doesn't have to be flagged specifically as an "other" value
         $value_other = $newValueq[0]['other_text'];
 		$value = preg_replace('/\{OTHER\|+[0-9]+\}/', $value_other, $value); 
-	} else {
-        $value = formulize_swapUIText($value, unserialize($elementArray['ele_uitext']));
     }
 
       $valueToReturn = "";
@@ -1414,7 +1412,12 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                         } else {
                              
                              // need to check if an alternative value field has been defined for use in lists or data sets and search on that field instead 
-                             if(isset($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10]) AND $formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10][0] != "none") {
+                             if(isset($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10])
+                                AND (
+                                    (is_array($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10]) AND $formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10][0] != 'none')
+                                OR
+                                    $formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10] != "none" 
+                                )) {
                               list($sourceMeta[1]) = convertElementIdsToElementHandles(array($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10]), $sourceMeta[0]); // ele_value 10 is the alternate field to use for datasets and in lists
                              }
            

@@ -131,7 +131,7 @@ function getFormFramework($formframe, $mainform="") {
 function getFormTitle($fid) {
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($fid);
-    return $formObject->getVar('title');
+	return html_entity_decode($formObject->getVar('title'),ENT_QUOTES);
 }
 
 
@@ -347,9 +347,6 @@ function availReports($uid, $groups, $fid, $frid="0") {
 
 // security check to see if a form is allowed for the user:
 function security_check($fid, $entry="", $uid="", $owner="", $groups="", $mid="", $gperm_handler="") {
-    if ($entry == "proxy") {
-        $entry="";
-    }
 
     if (!$groups) { // if no groups specified, use current user
         global $xoopsUser;
@@ -367,12 +364,19 @@ function security_check($fid, $entry="", $uid="", $owner="", $groups="", $mid=""
     if (!$gperm_handler->checkRight("view_form", $fid, $groups, $mid)) {
         return false;
     }
-    if ($entry == "new" AND !$gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid) AND !$gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid)) {
+    
+    if ($entry == "proxy" AND !$gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid)) {
         return false;
-    } else {
-        $entry = ""; // if they have rights to make a new entry, then we don't do the check below to look for permissions on a specific entry, since there isn't one yet!
+    } 
+    
+    if ($entry == "new" AND !$gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid)) {
+        return false;
     }
-
+    
+    if($entry == "new" OR $entry == "proxy") {
+        $entry = ""; // if this is a new entry, then we don't do the check below to look for permissions on a specific entry, since there isn't one yet!
+    }
+    
     if (!$uid) {
         global $xoopsUser;
         $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
@@ -1573,8 +1577,8 @@ function writableQuery($items, $mod="") {
             $items['as_' . $i] = $term;
         } elseif ($items['as_' . $i] == "{BLANK}" AND $mod != 1) {
             $items['as_' . $i] = "\" \"";
-        } elseif (preg_replace("[^A-Z{}]","", $items['as_' . $i]) == "{TODAY}" AND $mod != 1) {
-            $number = preg_replace("[^0-9+-]","", $items['as_' . $i]);
+        } elseif (preg_replace("/[^A-Z{}]/","", $items['as_' . $i]) == "{TODAY}" AND $mod != 1) {
+            $number = preg_replace("/[^0-9+-]/","", $items['as_' . $i]);
             $items['as_' . $i] = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
         }
 
@@ -1737,7 +1741,7 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
         case 'text':
         // if $ele_value[3] is 1 (default is 0) then treat this as a numerical field
         if ($ele_value[3] AND $ele != "{ID}" AND $ele != "{SEQUENCE}") {
-            $value = preg_replace ('[^0-9.-]+', '', $ele);
+            $value = preg_replace ('/[^0-9.-]+/', '', $ele);
         } else {
             $value = $ele;
         }
@@ -2520,8 +2524,8 @@ function getTextboxDefault($ele_value, $form_id, $entry_id) {
 
 
 function getDateElementDefault($default_hint) {
-    if (preg_replace("[^A-Z{}]", "", $default_hint) === "{TODAY}") {
-        $number = preg_replace("[^0-9+-]", "", $default_hint);
+    if (preg_replace("/[^A-Z{}]/", "", $default_hint) === "{TODAY}") {
+        $number = preg_replace("/[^0-9+-]/", "", $default_hint);
         return mktime(0, 0, 0, date("m"), date("d") + $number, date("Y"));
     }
     return strtotime($default_hint);
@@ -5291,8 +5295,8 @@ function generateHiddenElements($elements, $entry) {
                     $ele_value = $thisElement->getVar('ele_value');
                     if ($ele_value[0] == "" OR $ele_value[0] == "YYYY-mm-dd") {
                         $valueToUse = "";
-                    } elseif (preg_replace("[^A-Z{}]","", $ele_value[0]) === "{TODAY}") {
-                        $number = preg_replace("[^0-9+-]","", $ele_value[0]);
+                    } elseif (preg_replace("/[^A-Z{}]/","", $ele_value[0]) === "{TODAY}") {
+                        $number = preg_replace("/[^0-9+-]/","", $ele_value[0]);
                         $valueToUse = date("Y-m-d", mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
                     } else {
                         $valueToUse = $ele_value[0];
@@ -5507,8 +5511,8 @@ function parseUserAndToday($term) {
 			$term = 0;
 		}
 	}
- 	if (preg_replace("[^A-Z{}]","", $term) === "{TODAY}") {
-		$number = preg_replace("[^0-9+-]","", $term);
+ 	if (preg_replace("/[^A-Z{}]/","", $term) === "{TODAY}") {
+		$number = preg_replace("/[^0-9+-]/","", $term);
 		$term = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
 	}
   return $term;

@@ -114,11 +114,17 @@ var datepicker_defaults = {
     buttonText: "Calendar"
 };
 
-jQuery(document).ready(function() {
+function loadFormulizeDatepicker(){
     jQuery.datepicker.setDefaults(datepicker_defaults);
-    jQuery(function() {
         jQuery(".icms-date-box").datepicker();
-    });
+}
+
+jQuery(document).ready(function() {
+    if(jQuery.datepicker === undefined) {
+        setTimeout(loadFormulizeDatepicker, 1000); // hail mary, wait for a second if jQuery UI isn't finished loading??
+    } else {
+        loadFormulizeDatepicker();
+    }
 });
 </script>
 EOF;
