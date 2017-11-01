@@ -82,7 +82,7 @@ if( ! empty( $_POST['copy'] ) && ! empty( $_POST['old_prefix'] ) ) {
 		if( substr( $table , 0 , strlen( $prefix ) + 1 ) !== $prefix . '_' ) continue ;
 		$drs = $db->queryF( "SHOW CREATE TABLE `$table`" ) ;
 		$export_string .= "\nDROP TABLE IF EXISTS `$table`;\n".mysql_result($drs,0,1).";\n\n" ;
-		$result = mysqli_query( $this->conn,"SELECT * FROM `$table`" ) ;
+		$result = mysqli_query( $db->pdo, "SELECT * FROM `$table`" ) ;
 		$fields_cnt = mysqli_num_fields( $result ) ;
 		$field_flags = array();
 		for ($j = 0; $j < $fields_cnt; $j++) {
