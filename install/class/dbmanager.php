@@ -28,9 +28,10 @@ class db_manager {
 	var $db;
     var $prefix;
     var $logger;
+    var $connected = false;
 
 	function __construct() {
-	    icms_db_Factory::pdoInstance();
+	    $this->connected = icms_db_Factory::pdoInstance();
         $this->db = icms_db_Factory::instance();
         $this->setPrefix(XOOPS_DB_PREFIX);
 		$this->setLogger(icms_core_Logger::instance());
@@ -51,7 +52,7 @@ class db_manager {
 	}
 
 	function isConnectable() {
-		return true; // ($this->db->connect(false) != false) ? true : false; // Ack! Ugly hacking going on.
+		return $this->connected; 
 	}
 
 	function queryFromFile($sql_file_path) {
