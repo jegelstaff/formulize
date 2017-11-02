@@ -218,16 +218,16 @@ class Auth_OpenID_Parse {
     
     function match($regexp, $text, &$match)
     {
-        if (!is_callable('mb_ereg_search_init')) {
+        if (!is_callable('mb_preg_search_init')) {
             return preg_match($regexp, $text, $match);
         }
 
         $regexp = substr($regexp, 1, strlen($regexp) - 2 - strlen($this->_re_flags));
-        mb_ereg_search_init($text);
-        if (!mb_ereg_search($regexp)) {
+        mb_preg_search_init($text);
+        if (!mb_preg_search($regexp)) {
             return false;
         }
-        list($match) = mb_ereg_search_getregs();
+        list($match) = mb_preg_search_getregs();
         return true;
     }
 

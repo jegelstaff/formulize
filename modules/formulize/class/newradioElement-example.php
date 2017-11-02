@@ -196,7 +196,7 @@ class formulizeNewRadioElementHandler extends formulizeElementsHandler {
     function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id) {
         global $myts;
 		$myts =& MyTextSanitizer::getInstance();
-		$renderer =& new formulizeElementRenderer();
+		$renderer = new formulizeElementRenderer();
 		$ele_desc = $element->getVar('ele_desc', "f");
 		
 		if(strstr($markupName, "de_")) { // display element uses a slightly different element name so it can be distinguished on subsequent page load from regular elements...THIS IS NOT TRUE/NECESSARY ANYMORE SINCE FORMULIZE 3, WHERE ALL ELEMENTS ARE DISPLAY ELEMENTS
