@@ -76,7 +76,7 @@ class formulizeNewDateElementHandler extends formulizeElementsHandler {
     function adminSave($element, $ele_value) {
 		$changed = false;
 		if($ele_value[0] != "YYYY-mm-dd" AND $ele_value[0] != "") {
-			if(ereg_replace("[^A-Z{}]","", $ele_value[0]) === "{TODAY}") {
+			if(preg_replace("[^A-Z{}]","", $ele_value[0]) === "{TODAY}") {
 				$ele_value[0] = $ele_value[0];
 			} else {
 			  $ele_value[0] = date("Y-m-d", strtotime($ele_value[0]));
@@ -113,8 +113,8 @@ class formulizeNewDateElementHandler extends formulizeElementsHandler {
 	   if($ele_value[0] == "" OR $ele_value[0] == "YYYY-mm-dd") { // if there's no value (ie: it's blank) ... OR it's the default value because someone submitted a date field without actually specifying a date, that last part added by jwe 10/23/04
 			$form_ele = new XoopsFormTextDateSelect ($caption, $markupName, 15, "");
 		} else {
-			if (ereg_replace("[^A-Z{}]","", $ele_value[0]) === "{TODAY}") {
-				$number = ereg_replace("[^0-9+-]","", $ele_value[0]);
+			if (preg_replace("[^A-Z{}]","", $ele_value[0]) === "{TODAY}") {
+				$number = preg_replace("[^0-9+-]","", $ele_value[0]);
 				$timestampToUse = mktime(0, 0, 0, date("m") , date("d")+$number, date("Y"));
 			} else {
 				$timestampToUse = strtotime($ele_value[0]);

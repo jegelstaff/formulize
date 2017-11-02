@@ -17,7 +17,8 @@
  * @param object $ts textsanitizer instance
  * @param string $text the search terms
  */
-function textsanitizer_syntaxhighlightphp(&$ts, $text) {
+//function textsanitizer_syntaxhighlightphp(&$ts, $text) {
+function textsanitizer_syntaxhighlightphp($text) {
 	$patterns[] = "/\[code_php](.*)\[\/code_php\]/esU";
 	$replacements[] = "textsanitizer_geshi_php_highlight( '\\1' )";
 	return preg_replace($patterns, $replacements, $text);

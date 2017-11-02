@@ -193,7 +193,7 @@ class formulizeNewTextElementHandler extends formulizeElementsHandler {
 		$ele_id = $element->getVar('ele_id');
 		
 		if($ele_value[3]) { // if $ele_value[3] is 1 (default is 0) then treat this as a numerical field
-			$value = ereg_replace ('[^0-9.-]+', '', $value);
+			$value = preg_replace('[^0-9.-]+', '', $value);
 		}
         
 		if(get_magic_quotes_gpc()){ 

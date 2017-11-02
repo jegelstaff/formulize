@@ -3111,8 +3111,8 @@ function evalAdvSearch($entry, $handle, $op, $term) {
 			$term = 0;
 		}
 	}
- 	if (ereg_replace("[^A-Z{}]","", $term) == "{TODAY}") {
-		$number = ereg_replace("[^0-9+-]","", $term);
+ 	if (preg_replace("[^A-Z{}]","", $term) == "{TODAY}") {
+		$number = preg_replace("[^0-9+-]","", $term);
 		$term = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
 	}
 //	code below replaced with the above check by dpicella which accounts for +/- number after {TODAY, ie: {TODAY+10}
@@ -4633,8 +4633,8 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 			if(substr($one_search, 0, 1) == "{" AND substr($one_search, -1) == "}") {
 				$searchgetkey = substr($one_search, 1, -1);
 
-				if (ereg_replace("[^A-Z]","", $searchgetkey) == "TODAY") {
-					$number = ereg_replace("[^0-9+-]","", $searchgetkey);
+				if (preg_replace("[^A-Z]","", $searchgetkey) == "TODAY") {
+					$number = preg_replace("[^0-9+-]","", $searchgetkey);
 					$one_search = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
 				} elseif($searchgetkey == "USER") {
 					if($xoopsUser) {

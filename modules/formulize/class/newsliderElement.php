@@ -150,7 +150,7 @@ class formulizeNewSliderElementHandler extends formulizeElementsHandler {
         $ele_value = $element->getVar('ele_value');
         $ele_id = $element->getVar('ele_id');
 
-        $value = ereg_replace ('[^0-9.-]+', '', $value);
+        $value = preg_replace('[^0-9.-]+', '', $value);
         $value = $myts->htmlSpecialChars($value);
 
         return formulize_db_escape($value); 

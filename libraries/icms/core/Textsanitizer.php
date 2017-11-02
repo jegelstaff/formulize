@@ -629,7 +629,7 @@ class icms_core_Textsanitizer {
 	 */
 	public function icmsExecuteExtension($name, $text) {
 		icms_core_Debug::setDeprecated('icms_core_DataFilter::executeExtension', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
-		return icms_core_DataFilter::executeExtension($name, $text);
+        return icms_core_DataFilter::executeExtension($name, $text);
 	}
 
 	/**

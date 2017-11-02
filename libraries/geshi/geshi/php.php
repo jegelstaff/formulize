@@ -237,7 +237,7 @@ $language_data = array(
             'domxml_root','domxml_set_attribute','domxml_setattr',
             'domxml_substitute_entities_default','domxml_unlink_node',
             'domxml_version','domxml_xmltree','doubleval','each','easter_date',
-            'easter_days','empty','end','ereg','ereg_replace','eregi',
+            'easter_days','empty','end','ereg','preg_replace','eregi',
             'eregi_replace','error_get_last','error_log','error_reporting',
             'escapeshellarg','escapeshellcmd','eval','event_deschedule',
             'event_dispatch','event_free','event_handle_signal',

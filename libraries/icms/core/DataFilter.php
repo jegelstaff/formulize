@@ -720,7 +720,7 @@ class icms_core_DataFilter {
 		global $icmsConfigPlugins;
 		if (!empty($icmsConfigPlugins['sanitizer_plugins'])) {
 			foreach ($icmsConfigPlugins['sanitizer_plugins'] as $item) {
-				$text = self::executeExtension($item, $text);
+                $text = self::executeExtension($item, $text);
 			}
 		}
 		return $text;
@@ -752,7 +752,7 @@ class icms_core_DataFilter {
 			return $text;
 		}
 		$args = array_slice(func_get_args(), 1);
-		return call_user_func_array($func, array_merge(array(&$this), $args));
+		return call_user_func_array($func, $args);
 	}
 
 	/**
