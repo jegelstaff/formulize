@@ -301,7 +301,10 @@ abstract class icms {
 				: "https://";
 			$phpself = $_SERVER['PHP_SELF'];
 			$httphost = $_SERVER['HTTP_HOST'];
-			$querystring = $_SERVER['QUERY_STRING'];
+            $querystring = '';
+            if (isset($_SERVER['QUERY_STRING'])) {
+                $querystring = $_SERVER['QUERY_STRING'];
+            }
 			if ($querystring != '' ) {
 				$querystring = '?' . $querystring;
 			}
