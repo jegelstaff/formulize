@@ -43,6 +43,7 @@ $modversion = array(
 );
 
 $modversion['sqlfile']['mysql'] = "sql/mysql.sql";
+$modversion['sqlfile']['pdo.mysql'] = "sql/mysql.sql";
 
 // Tables created by sql file (without prefix!)
 $modversion['tables'] = array(
