@@ -21,11 +21,11 @@
 function textsanitizer_syntaxhighlightphp($text) {
 	$patterns[] = "/\[code_php](.*)\[\/code_php\]/sU";
 	return preg_replace_callback(
-	        $patterns,
-            function($m){
-	            return "textsanitizer_geshi_php_highlight($m[1])";
-            },
-            $text);
+        $patterns,
+        function($m){
+            return "textsanitizer_geshi_php_highlight($m[1])";
+        },
+        $text);
 }
 
 /**
