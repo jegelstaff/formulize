@@ -36,14 +36,19 @@ class ProtectorFilterHandler {
 	var $filters_base = '' ;
 	var $filters_byconfig = '' ;
 
-	function ProtectorFilterHandler()
+	public function __construct()
+    {
+        $this->protector =& Protector::getInstance() ;
+        $this->filters_base = dirname(dirname(__FILE__)).'/filters_enabled' ;
+        $this->filters_byconfig = dirname(dirname(__FILE__)).'/filters_byconfig' ;
+    }
+
+    function ProtectorFilterHandler()
 	{
-		$this->protector =& Protector::getInstance() ;
-		$this->filters_base = dirname(dirname(__FILE__)).'/filters_enabled' ;
-		$this->filters_byconfig = dirname(dirname(__FILE__)).'/filters_byconfig' ;
+	    self::__construct();
 	}
 
-	function &getInstance()
+	static function &getInstance()
 	{
 		static $instance ;
 		if( ! isset( $instance ) ) {
