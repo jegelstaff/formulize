@@ -37,7 +37,7 @@
 class formulizeRankOrderListHandler {
   var $db;
   var $needsDataType;
-  function formulizeRankOrderListHandler(&$db) {
+  function __construct(&$db) {
     $this->db =& $db;
     $this->needsDataType = true;
     $this->needsjQuery = true;

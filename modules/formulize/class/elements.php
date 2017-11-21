@@ -48,7 +48,7 @@ class formulizeformulize extends XoopsObject {
     var $adminCanMakeRequired;
     var $alwaysValidateInputs;
 	
-	function formulizeformulize(){
+	function __construct(){
 		$this->XoopsObject();
 	//	key, data_type, value, req, max, opt
 		$this->initVar("id_form", XOBJ_DTYPE_INT, NULL, false);
@@ -167,7 +167,7 @@ class formulizeformulize extends XoopsObject {
 
 class formulizeElementsHandler {
 	var $db;
-	function formulizeElementsHandler(&$db) {
+	function __construct(&$db) {
 		$this->db =& $db;
 	}
 	function &getInstance(&$db) {

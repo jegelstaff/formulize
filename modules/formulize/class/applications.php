@@ -33,7 +33,7 @@ global $xoopsDB;
 
     class formulizeApplicationMenuLink extends XoopsObject {
         
-        function formulizeApplicationMenuLink() {
+        function __construct() {
             $this->XoopsObject();
             $this->initVar("menu_id", XOBJ_DTYPE_INT, NULL, false);
             $this->initVar("appid", XOBJ_DTYPE_INT, NULL, false);
@@ -64,7 +64,7 @@ global $xoopsDB;
     class formulizeApplicationMenuLinksHandler  {
         
         var $db;
-        function formulizeApplicationMenuLinksHandler(&$db) {
+        function __construct(&$db) {
             $this->db =& $db;
         }
         
@@ -148,7 +148,7 @@ class formulizeApplication extends XoopsObject {
   
   private $_forms = null;
 
-  function formulizeApplication() {
+  function __construct() {
     $this->XoopsObject();
     $this->initVar("appid", XOBJ_DTYPE_INT, NULL, false);
     $this->initVar("name", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
@@ -170,7 +170,7 @@ class formulizeApplication extends XoopsObject {
 
 class formulizeApplicationsHandler {
   var $db;
-	function formulizeApplicationsHandler(&$db) {
+	function __construct(&$db) {
 		$this->db =& $db;
 	}
   

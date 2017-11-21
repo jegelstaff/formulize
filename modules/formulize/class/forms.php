@@ -54,7 +54,7 @@ function checkFormOwnership($id_form,$form_handle){
                 }
 	return count($missingEntries);
         }
-	function formulizeForm($id_form="", $includeAllElements=false){
+	function __construct($id_form="", $includeAllElements=false){
 
 		// validate $id_form
 		global $xoopsDB;
@@ -411,7 +411,7 @@ EOF;
 
 class formulizeFormsHandler {
 	var $db;
-	function formulizeFormsHandler(&$db) {
+	function __construct(&$db) {
 		$this->db =& $db;
 	}
 	function &getInstance(&$db) {
