@@ -385,9 +385,6 @@ EOF;
 		//Set the screen ID
 		$formulize_screen_id = $screenID;
 
-		//Declare a formulize div to contain our injected content, with ID formulize_form
-		echo '<div id=formulize_form>';
-		
 		//Include our header file in order to set up xoTheme
 		include XOOPS_ROOT_PATH . '/header.php';
 		
@@ -405,7 +402,7 @@ EOF;
 		ob_start();
 		include XOOPS_ROOT_PATH . '/modules/formulize/index.php';
 		//Content now contains our buffered contents.
-		$content = ob_get_clean();
+		$formulizeContent = ob_get_clean();
 		
 		//Checks icmsTheme is initialized. If this is so, it will drop into further conditionals to check those
 		//dependencies relying on library JS files from Formulize stand-alone directory.
@@ -417,37 +414,61 @@ EOF;
 			{	
 				// Include scripts for linking
 				foreach($GLOBALS['formulize_calendarFileRequired']['scripts-for-linking'] as $thisScript) {
-                                       echo "<script type='text/javascript' src='" . $thisScript . "'></script>";
+                                       $restOfContent .= "\n<script type='text/javascript' src='" . $thisScript . "'></script>\n";
                 }
 				// Include scripts for embedding
 				foreach($GLOBALS['formulize_calendarFileRequired']['scripts-for-embedding'] as $thisScript) {
-                                       echo "<script type='text/javascript'>". $thisScript ."</script>";
+                                       $restOfContent .= "\n<script type='text/javascript'>". $thisScript ."</script>\n";
                 }
-				
 				
 				//In order to append our stylesheet, and ensure that no matter the load and buffer order of our page, we shall be including
 				//the style sheet via a JS call that appends the link tag to the head section on load.
-				echo
+                // Do the same for jQuery and jQuery UI if they are not already loaded, since the calendar element requires them
+				$restOfContent .=
 				"
 					<script type='text/javascript'>
-					function fetchCalendarCSS(fileURL)
+function fetchCSS(href)
 					{
 						var newNode=document.createElement('link');
-						newNode.setAttribute('rel', 'stylesheet');
-						newNode.setAttribute('type', 'text/css');
-						newNode.setAttribute('href', fileURL);
-						document.getElementsByTagName('head')[0].appendChild(newNode);
-					}";
+    newNode.rel = 'stylesheet';
+    newNode.type = 'text/css';
+    newNode.href = href;
+    document.head.appendChild(newNode);
+}
+
+function fetchJS(src) {
+    var newNode = document.createElement('script');
+    newNode.type = 'text/javascript';
+    newNode.src = src;
+    document.head.appendChild(newNode);
+}
+
+document.addEventListener('DOMContentLoaded', function(event) {
+    if(jQuery === undefined) {
+        fetchJS('".XOOPS_URL."/libraries/jquery/jquery.js');
+        fetchJS('".XOOPS_URL."/libraries/jquery/jquery-migrate-1.2.1.min.js');
+        fetchJS('".XOOPS_URL."/libraries/jquery/ui/ui.min.js');
+        fetchCSS('".XOOPS_URL."/libraries/jquery/ui/css/ui-smoothness/ui.css');
+    } else if(jQuery.datepicker === undefined) {
+        fetchJS('".XOOPS_URL."/libraries/jquery/jquery-migrate-1.2.1.min.js');
+        fetchJS('".XOOPS_URL."/libraries/jquery/ui/ui.min.js');
+        fetchCSS('".XOOPS_URL."/libraries/jquery/ui/css/ui-smoothness/ui.css');
+    }
+});
+                    ";
 					foreach($GLOBALS['formulize_calendarFileRequired']['stylesheets'] as $thisSheet) {
-						print " fetchCalendarCSS('" . $thisSheet ."'); ";
+						$restOfContent .= " fetchCSS('" . $thisSheet ."'); ";
 					}
-					print "</script>";
+					$restOfContent .= "</script>";
 			}
 		}
-		//Inject formulize content
-		echo $content;
-		//Close our div tag
-		echo '</div>';
+		
+        // include the formulize.js file
+        $restOfContent .= "\n<script type='text/javascript' src='" . XOOPS_URL. "/modules/formulize/libraries/formulize.js'></script>\n";
+
+        
+        //Declare a formulize div to contain our injected content, with ID formulize_form
+		echo "<div id=formulize_form>\n".$restOfContent.$formulizeContent."\n</div>\n";
 	}
 	
 	/**

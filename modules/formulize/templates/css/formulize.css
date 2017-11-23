@@ -486,7 +486,12 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
 #pageNavTable {
   margin: 1em 0; }
 
+.scrollbox {
+    overflow: auto;
+}
+
 @media print {
+    
   body {
     font-size: 10pt; }
 
@@ -559,4 +564,6 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
     display: none; }
 
   .formulize-element-edit-link {
-    display: none; } }
+    display: none; }
+    
+}

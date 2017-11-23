@@ -5,7 +5,7 @@
   "steps": [
     {
       "type": "store",
-      "text": "/home/travis/build/jegelstaff/formulize",
+      "text": "/var/www",
       "variable": "web_root"
     },
     {

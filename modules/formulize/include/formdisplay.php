@@ -49,6 +49,7 @@ include_once XOOPS_ROOT_PATH . "/include/functions.php";
 
 // NEED TO USE OUR OWN VERSION OF THE CLASS, TO GET ELEMENT NAMES IN THE TR TAGS FOR EACH ROW
 class formulize_themeForm extends XoopsThemeForm {
+    
     /**
      * Insert an empty row in the table to serve as a seperator.
      *
@@ -726,9 +727,12 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			if(!$form) {
 
                 $firstform = 1;
-                $title = isset($passedInTitle) ? $passedInTitle : trans(getFormTitle($this_fid));
-                if ($screen) {
+                if(isset($passedInTitle)) {
+                    $title = trans($passedInTitle);
+                } elseif($screen) {
                     $title = trans($screen->getVar('title'));
+                } else {
+                    $title = trans(getFormTitle($this_fid));
                 }
                 unset($form);
                 if($formElementsOnly) {

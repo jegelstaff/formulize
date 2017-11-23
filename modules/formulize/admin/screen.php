@@ -109,9 +109,9 @@ if ($screen_id != 'new') {
 if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   // display data
   $templates = array();
-  $templates['toptemplate'] = $screen->getTemplate('toptemplate');
-  $templates['bottomtemplate'] = $screen->getTemplate('bottomtemplate');
-  $templates['listtemplate'] = $screen->getTemplate('listtemplate');
+  $templates['toptemplate'] = str_replace("&", "&amp;", $screen->getTemplate('toptemplate'));
+  $templates['bottomtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('bottomtemplate'));
+  $templates['listtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('listtemplate'));
 
   // view data
   // gather all the available views
@@ -354,9 +354,9 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
 
     // template data
     $multipageTemplates = array();   // Added by Gordon Woodmansey, 29-08-2012
-    $multipageTemplates['toptemplate'] = $screen->getTemplate('toptemplate');
-    $multipageTemplates['elementtemplate'] = $screen->getTemplate('elementtemplate');
-    $multipageTemplates['bottomtemplate'] = $screen->getTemplate('bottomtemplate');
+    $multipageTemplates['toptemplate'] = str_replace("&", "&amp;", $screen->getTemplate('toptemplate'));
+    $multipageTemplates['elementtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('elementtemplate'));
+    $multipageTemplates['bottomtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('bottomtemplate'));
 
     // pages data
     $multipagePages = array();

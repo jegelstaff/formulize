@@ -32,7 +32,7 @@ if (!$dbm->isConnectable()) {
 	$wizard->redirectToPage( 'dbsettings' );
 	exit();
 }
-$res = $dbm->query( "SELECT COUNT(*) FROM " . $dbm->db->prefix( "users" ) );
+$res = $dbm->query( "SELECT COUNT(*) FROM " . $dbm->prefix( "users" ) );
 if (!$res) {
 	$wizard->redirectToPage( 'dbsettings' );
 	exit();

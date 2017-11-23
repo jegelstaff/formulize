@@ -126,6 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 					//$this->report .= _NGIMG.sprintf( ERR_WRITING_CONSTANT, "<b>$val</b>")."<br />\n";
 				}
 			}
+
 			// ADDED BY FREEFORM SOLUTIONS
 			$content = str_replace("'REPLACE-ROOT-IN-TRUST-PATH", str_replace("'".addslashes($vars['ROOT_PATH']), "XOOPS_ROOT_PATH.'", "'".addslashes($vars['TRUST_PATH'])), $content);
 			if (!$file = fopen( $vars['ROOT_PATH'] . '/mainfile.php', "w" )) {
