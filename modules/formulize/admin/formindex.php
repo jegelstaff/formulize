@@ -36,9 +36,9 @@
 include("admin_header.php");
 
 if ( file_exists("../language/".$xoopsConfig['language']."/main.php") ) {
-    include "../language/".$xoopsConfig['language']."/main.php";
+    include_once "../language/".$xoopsConfig['language']."/main.php";
 } else {
-    include "../language/english/main.php";
+    include_once "../language/english/main.php";
 }
 
 if (!isset($_GET['op']) AND !defined('_FORMULIZE_UI_PHP_INCLUDED')){
