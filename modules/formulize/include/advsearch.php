@@ -33,8 +33,6 @@
 // This file contains the logic for the advanced search options popup
 
 //stuff that needs to be recorded for sending back to the main controls interface...
-//1.
-//2.
 
 function searchJavascript($items) {
 ?>
