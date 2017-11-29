@@ -40,7 +40,7 @@ class formulizeNewSliderElement extends formulizeformulize {
         $this->overrideDataType = 'integer';
         $this->adminCanMakeRequired = true;
         $this->alwaysValideInputs = false; //no validation required
-        parent::formulizeformulize();
+        parent::__construct();
     }
 }
 
