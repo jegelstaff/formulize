@@ -623,10 +623,36 @@ function patch40() {
             }
         }
 
+        // Goes through all templates in screenpathname
+        emptyTemplateFixer($screenpathname);
+
         print "DB updates completed.  result: OK";
     }
 }
 
+// Fixes the format if the template is empty
+function emptyTemplateFixer($dir) {
+    if(is_dir($dir)) {
+        if($dhome = opendir($dir)){ // Ensures its a valid directory (just in case)
+            while($file = readdir($dhome)){
+                if($file != '.' && $file != '..'){
+                    if(is_dir($dir . $file)){
+                        // Recurse the directory
+                        emptyTemplateFixer($dir . $file . '/');
+                    }else{
+                        $fcontents = file_get_contents($file);
+
+                        // Overwrites files with only a header with empty contents
+                        if(trim($fcontents) == "<?php"){
+                            file_put_contents($file, "");
+                        }
+                    }
+                }
+            }
+        }
+        closedir($dhome);
+    }
+}
 
 // Saves the given template to a template file on the disk
 function saveTemplate($template, $sid, $name) {
