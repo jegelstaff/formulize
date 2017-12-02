@@ -40,7 +40,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 class formulizeListOfEntriesScreen extends formulizeScreen {
     function __construct() {
-        $this->formulizeScreen();
+        $this->__construct();
         $this->initVar("dobr", XOBJ_DTYPE_INT, 1, false);
         $this->initVar("dohtml", XOBJ_DTYPE_INT, 1, false);
         $this->assignVar("dobr", false); // don't convert line breaks to <br> when using the getVar method
