@@ -42,7 +42,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 class formulizeFormScreen extends formulizeScreen {
 
 	function __construct() {
-		$this->formulizeScreen();
+		parent::__construct();
 		$this->initVar("donedest", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
 		$this->initVar("savebuttontext", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
 		$this->initVar("alldonebuttontext", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
