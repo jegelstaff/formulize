@@ -166,7 +166,7 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
     for($i=0;$i<count($fids);$i++) {
         $scope="";
         if($scopes[$i]) {
-            list($scope, $throwAwayCurrentView) = buildScope($scopes[$i], $member_handler, $gperm_handler, $uid, $groups, $fids[$i], $mid);
+            list($scope, $throwAwayCurrentView) = buildScope($scopes[$i], $uid, $fids[$i]);
         }
         if(is_array($dateHandles[$i])) {
             $dateField = $dateHandles[$i][0];

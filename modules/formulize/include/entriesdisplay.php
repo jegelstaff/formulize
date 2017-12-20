@@ -565,7 +565,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}
 
 
-	list($scope, $currentView) = buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups, $fid, $mid, $currentViewCanExpand);  
+	list($scope, $currentView) = buildScope($currentView, $uid, $fid, $currentViewCanExpand);  
 	// generate the available views
 
 	// pubstart used to indicate to the delete button where the list of published views begins in the current view drop down (since you cannot delete published views)

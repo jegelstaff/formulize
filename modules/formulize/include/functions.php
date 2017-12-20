@@ -1626,7 +1626,17 @@ function getCalcHandleText($handle, $forceColhead=true) {
 // this function builds the scope used for passing to the getData function
 // based on values of either mine, group, all, or a groupid string formatted with start, end and inbetween commas: ,1,3,
 // will return the scope, plus the value of currentView, which may have been modified depending on the user's permissions
-function buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups, $fid, $mid, $currentViewCanExpand = false) {
+function buildScope($currentView, $uid, $fid, $currentViewCanExpand = false) {
+    
+    $gperm_handler = xoops_gethandler('groupperm');
+    $member_handler = xoops_gethandler('member');
+    if($uidObject = $member_handler->getUser($uid)) {
+        $groups = $uidObject->getGroups();
+        $mid = getFormulizeModId();
+    } else {
+        $scope = "uid=\"blankscope\"";
+    }
+    
     $scope = "";
     if ($currentView == "blank") { // send an invalid scope
         $scope = "uid=\"blankscope\"";
@@ -4270,7 +4280,7 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
         $member_handler =& xoops_gethandler('member');
         $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
         $uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
-        list($scope, $throwAwayCurrentView) = buildScope($_POST['currentview'], $member_handler, $gperm_handler, $uid, $groups, $fid, $mid, $currentViewCanExpand);
+        list($scope, $throwAwayCurrentView) = buildScope($_POST['currentview'], $uid, $fid, $currentViewCanExpand);
 
         // by calling this, we will set the base query that needs to be used in order to generate the calculations
         // special flag is used to force return once base query is set
