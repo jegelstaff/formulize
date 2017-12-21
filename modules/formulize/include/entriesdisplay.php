@@ -4328,22 +4328,7 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 			case "exportButton":
 			case "importButton":
 				// need to write the query to the cache folder so it can be picked up when needed
-				$exportTime = time();
-				
-				$queryForExportFile = fopen(XOOPS_ROOT_PATH . "/cache/exportQuery_".$exportTime.".formulize_cached_query_for_export", "w");
-				fwrite($queryForExportFile, $fid."\n");
-				global $xoopsUser;
-				$exportUid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
-				fwrite($queryForExportFile, $exportUid."\n");
-				fwrite($queryForExportFile, $GLOBALS['formulize_queryForExport']);
-				fclose($queryForExportFile);
-				// cleanup old export files
-        if(!$importExportCleanupDone) {
-          formulize_benchmark("before scandir during export/import button creation");
-          formulize_scandirAndClean(XOOPS_ROOT_PATH."/cache/", "exportQuery"); 
-          formulize_benchmark("after scandir during export/import button creation. ".count($formulize_export_cache_files)." files found");
-          $importExportCleanupDone = true;
-        }
+				$exportTime = formulize_catchAndWriteExportQuery($fid);
 				if($button == "exportButton") {
 					return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=export value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/export.php?fid=$fid&frid=$frid&cols=$colhandles&eq=$exportTime');\"></input>";
 				} else {
