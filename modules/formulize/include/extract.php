@@ -375,6 +375,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
      $limitStart = intval($limitStart);
      $limitSize = intval($limitSize);
      $sortField = formulize_db_escape($sortField);
+     $sortOrder = formulize_db_escape($sortOrder);
 
      if(isset($_GET['debug'])) { $time_start = microtime_float(); }
      
