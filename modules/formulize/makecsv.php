@@ -108,6 +108,7 @@ sortHandle,optional,an element handle to sort the data by - default is entry id 
 sortDir,optional,a direction for the sorting of data - default is ASC - valid values are ASC and DESC
 limitStart,optional,a number indicating where to start displaying rows from the overall query result - used as part of a standard LIMIT statement in the database query - results are numbered from 0
 limitSize,optional,a number indicating how many rows to include from the overall query result - used as part of a standard LIMIT statement in the database query
+includeMetadata,optional,if present then the metadata columns will be included in the result - value doesn't matter
 
 Each authentication key is associated with a unique user and will only return data which that user has access to.
 
