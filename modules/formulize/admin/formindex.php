@@ -112,8 +112,8 @@ function patch40() {
      *
      * ====================================== */
 
-    $checkThisTable = 'formulize_saved_views';
-    $checkThisField = 'sv_pubfilters'; 
+    $checkThisTable = 'formulize_apikeys';
+    $checkThisField = false; 
     $checkThisProperty = false;
     $checkPropertyForValue = false;
 
@@ -294,6 +294,19 @@ function patch40() {
             INDEX i_sid (`sid`)
         ) ENGINE=MyISAM;";
         }
+        
+        if (!in_array($xoopsDB->prefix("formulize_apikeys"), $existingTables)) {
+            $sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_apikeys") . " (
+                `key_id` int(11) unsigned NOT NULL auto_increment,
+                `uid` int(11) NOT NULL default '0',
+                `apikey` varchar(255) NOT NULL default '',
+                `expiry` datetime default NULL,
+                PRIMARY KEY (`key_id`),
+                INDEX i_uid (uid),
+                INDEX i_apikey (apikey),
+                INDEX i_expiry (expiry)
+            ) ENGINE=MyISAM;";
+        }      
 
         // if this is a standalone installation, then we want to make sure the session id field in the DB is large enough to store whatever session id we might be working with
         if (file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {

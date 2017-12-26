@@ -100,6 +100,9 @@ switch($active_page) {
     case "sync-import":
         include "sync_import.php";
         break;
+    case "managekeys":
+        include "managekeys.php";
+        break;
     default:
     case "home":
         include "home.php";
