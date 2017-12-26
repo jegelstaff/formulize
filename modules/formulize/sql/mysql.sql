@@ -1,3 +1,14 @@
+CREATE TABLE `formulize_apikeys` (
+    `key_id` int(11) unsigned NOT NULL auto_increment,
+    `uid` int(11) NOT NULL default '0',
+    `apikey` varchar(255) NOT NULL default '',
+    `expiry` datetime default NULL,
+    PRIMARY KEY (`key_id`),
+    INDEX i_uid (uid),
+    INDEX i_apikey (apikey),
+    INDEX i_expiry (expiry)
+) ENGINE=MyISAM;
+
 CREATE TABLE `formulize_menu_links` (
     `menu_id` int(11) unsigned NOT NULL auto_increment,
     `appid` int(11) unsigned NOT NULL,

@@ -78,6 +78,7 @@ $modversion['tables'] = array(
 	"formulize_procedure_logs",
 	"formulize_procedure_logs_params",
 	"formulize_deletion_logs",
+    "formulize_apikeys",
 );
 
 $modversion['formulize_exportable_tables'] = array(
@@ -105,6 +106,7 @@ $modversion['formulize_exportable_tables'] = array(
 	"formulize_advanced_calculations",
 	"formulize_group_filters",
 	"formulize_groupscope_settings",
+    "formulize_apikeys",
 );
 
 
@@ -345,7 +347,11 @@ $modversion['table_metadata'] = array(
                 "field" => "name"
             )
         )
-	)
+	),
+    "formulize_apikeys" => array(
+        "fields" => array("uid","apikey"),
+        "joins" => array()
+    )
 );
 
 
@@ -591,7 +597,11 @@ $modversion['templates'][] = array(
 $modversion['templates'][] = array(
 	'file' => 'admin/sync_import_sections.html',
 	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/managekeys.html',
+	'description' => '');
 
+    
 //	Module Configs
 // $xoopsModuleConfig['t_width']
 $modversion['config'][1] = array(

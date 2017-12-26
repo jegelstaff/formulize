@@ -1,9 +1,10 @@
 <div class="panel-content content">
 <div style="float: right;">
-	<p><a href="../../system/admin.php?fct=preferences&op=showmod&mod=<{$adminPage.formulizeModId}>"><img src="../images/kedit.png"> <{$smarty.const._AM_HOME_PREF}></a></p>
+	<p style="text-align: right;"><a href="../../system/admin.php?fct=preferences&op=showmod&mod=<{$adminPage.formulizeModId}>"><img src="../images/kedit.png"> <{$smarty.const._AM_HOME_PREF}></a></p>
 	<p style="text-align: right;"><a  href="ui.php?page=synchronize">Synchronize With Another System</a></p>
+    <p style="text-align: right;"><a href="ui.php?page=managekeys">Manage API keys</a></p>
 </div>
-<p><a href="ui.php?page=form&tab=settings&fid=new"><img src="../images/filenew2.png"> <{$smarty.const._AM_HOME_NEWFORM}></a>&nbsp&nbsp&nbsp;&nbsp;&nbsp&nbsp&nbsp;&nbsp;<a href="ui.php?page=form&tab=settings&fid=new&tableform=true"><img src="../images/filenew3.gif"> Create a new reference to a datatable</a></p>
+<p>&nbsp;</p><p><a href="ui.php?page=form&tab=settings&fid=new"><img src="../images/filenew2.png"> <{$smarty.const._AM_HOME_NEWFORM}></a>&nbsp&nbsp&nbsp;&nbsp;&nbsp&nbsp&nbsp;&nbsp;<a href="ui.php?page=form&tab=settings&fid=new&tableform=true"><img src="../images/filenew3.gif"> Create a new reference to a datatable</a></p>
 <h2><{$smarty.const._AM_HOME_MANAGEAPP}></h2>
 <form class="formulize-admin-form">
 <{php}>print $GLOBALS['xoopsSecurity']->getTokenHTML()<{/php}>
