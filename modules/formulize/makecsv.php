@@ -47,8 +47,9 @@ $key = preg_replace("/[^A-Za-z0-9]/", "", str_replace(" ","",$_GET['key'])); // 
 $member_handler = xoops_gethandler('member');
 
 // authentication block
-if($key == "markbeta") {
-    $uid = 5;
+$apiKeyHandler = xoops_getmodulehandler('apikey', 'formulize');
+if($key = $apiKeyHandler->get($key)) {
+    $uid = $key->getVar('uid');
     if($uidObject = $member_handler->getUser($uid)) {
         $groups = $uidObject->getGroups();
     } else {
@@ -67,9 +68,9 @@ $currentView = "all";
 // extra stuff we need while still using the old interface in the buildScope function
 $gperm_handler = xoops_gethandler('groupperm');
 $mid = getFormulizeModId();
-$scope = buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups, $fid, $mid);
+$scope = buildScope($currentView, $uid, $fid); 
 $scope = $scope[0]; // buildScope returns array of scope and possibly altered currentView
-// $scope = buildScope($currentView, $uid, $fid); // this is the new interface and all we need with the refactored code in place
+
 
 if($fid) {
     $data = getData($frid, $fid, $filter, $andor, $scope, $limitStart, $limitSize, $sortHandle, $sortDir);
