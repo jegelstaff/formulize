@@ -84,10 +84,15 @@ class formulizeAPIKeyHandler {
                 $cachedKeys[$row[1]] = $this->create($row[0], $row[1], $row[2]);
             }
         }
-        if($key) {
+        if($key AND isset($cachedKeys[$key])) {
             return $cachedKeys[$key];
+        } elseif($key) {
+            return false;
         }
+        if(count($cachedKeys)>0) {
         return $cachedKeys;
+        }
+        return false;
 	}
 	
 	function insert($uid, $expiry=0) {

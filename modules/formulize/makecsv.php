@@ -48,8 +48,9 @@ $member_handler = xoops_gethandler('member');
 
 // authentication block
 $apiKeyHandler = xoops_getmodulehandler('apikey', 'formulize');
-if($key = $apiKeyHandler->get($key)) {
-    $uid = $key->getVar('uid');
+$apiKeyHandler->delete(); // clear out expired keys
+if($key AND $apikey = $apiKeyHandler->get($key)) {
+    $uid = $apikey->getVar('uid');
     if($uidObject = $member_handler->getUser($uid)) {
         $groups = $uidObject->getGroups();
     } else {

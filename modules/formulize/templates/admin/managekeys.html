@@ -2,6 +2,12 @@
 
     <h2>Manage Keys</h2>
 
+    <p>You can create API keys that will allow Google Sheets to pull in read-only data from Formulize using the IMPORTDATA function. To get started, try putting this formula into a sheet:</p>
+    <p></p>=IMPORTDATA("<{$xoops_url}>/makecsv.php?key=abc123")</p>
+    <p>Replace abc123 with a key you generate below, and data will be gathered based on the group memberships and permissions of the user associated with the key.</p>
+    <br>
+    <hr>
+    <br>
     <form id='managekeys' name='managekeys' method='post'>
     <p>Generate key for user
     <select name='uid'>
@@ -36,6 +42,9 @@
         <tr><td><a href='' onclick="setDelete('<{$key.key}>');return false;"><img src='../images/x.gif'/></a>&nbsp;<{$key.user}>&nbsp;&nbsp;&nbsp;<br/>&nbsp;</td><td><{$key.key}></td><td>&nbsp;&nbsp;&nbsp;<{$key.expiry}></td></tr>
     <{/foreach}>
     </table>
+    
+    
+    <p><b>WARNING!</b> These keys are visible in the formulas in the sheeets where you use them. Any person who has access to the spreadsheet can see the key too, and could use it to access data in Formulize. Be very careful where and with whom you share these spreadsheets!</p>
     
 </div>
 
