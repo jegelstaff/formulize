@@ -1,0 +1,902 @@
+@import '_style_colors';
+
+html, body {
+    background: $colorPageBackground;
+    color: $colorPageText;
+    margin: 0;
+    padding: 0;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    font-size: 10pt;
+    height: 100%;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table td {
+    padding: 0;
+    border-width: 0;
+    vertical-align: top;
+}
+
+img {
+    border: 0;
+}
+
+a {
+    color: $colorLink;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+a:hover {
+    color: $colorLinkHover;
+}
+
+h1 {
+    font-size: 1.4em;
+}
+
+h2 {
+    font-size: 1.2em;
+}
+
+h3 {
+    font-size: 1em;
+}
+
+h4 {
+    font-size: 1em;
+}
+
+h5 {
+    font-size: .9em;
+}
+
+h6 {
+    font-size: .8em;
+}
+
+#controlbar {
+    color: #F3AC03;      // TODO: CHANGE TO A VARIABLE COLOR
+    font-weight: bold;
+    padding-bottom: 3px;
+    border-bottom: 1px dashed #8DBDE1;       // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+/* ---------- Column left/right rules ---------- */
+#xo-canvas-rightcolumn {
+}
+
+#xo-canvas-rightcolumn a {
+}
+
+#xo-canvas-rightcolumn a:hover {
+}
+
+#xo-canvas-leftcolumn {
+}
+
+#xo-canvas-leftcolumn a {
+}
+
+#xo-canvas-leftcolumn a:hover {
+}
+
+/* ------ Main content ------ */
+#xo-canvas-content {
+    line-height: 1.3em;
+}
+
+/* lists */
+#xo-canvas-content ul {
+    margin: 5px;
+    padding: 2px;
+    list-style: decimal inside;
+    text-align: left;
+}
+
+#xo-canvas-content li {
+    margin-left: 5px;
+    color: #000;     // TODO: CHANGE TO A VARIABLE COLOR
+    background-color: inherit;
+    line-height: 1.4em;
+    list-style: circle;
+}
+
+#xo-page {
+}
+
+/* ---------- Footer rules ---------- */
+#footer-padding{
+    clear: both;
+    height: 19px;
+}
+#xo-footer {
+    clear: both;
+    padding-bottom: 3px;
+    text-align: center;
+    font-size: 70%;
+    color: #bbb;     // TODO: CHANGE TO A VARIABLE COLOR
+    background-color: $colorFooterBackground;
+    border-top: 5px solid lighten($colorFooterBackground, 10%);
+}
+
+#xo-footer a {
+    color: $colorFooterLink;
+}
+
+#xo-footer a:hover {
+    color: lighten-or-darken($colorFooterLink, 20%);
+}
+
+/* ---------- Module display rules ---------- */
+#xo-content {
+    padding: $sizeContentPadding;
+    background-color: $colorFormBackground;
+    color: $colorFormText;
+    @include border-radius(3px);
+}
+
+/* ---------- Redirect ------------ */
+#xo-redirect {
+    margin: 40px 0;
+    margin-left: auto;
+    margin-right: auto;
+    width: 85%;
+    background-color: #F2F2F2;       // TODO: CHANGE TO A VARIABLE COLOR
+    color: #222;                     // TODO: CHANGE TO A VARIABLE COLOR
+    text-align: center;
+    font-weight: bold;
+    padding: 10px;
+    text-align: center;
+    border: 2px solid #DDDDFF;       // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+/* ---------- Site close ------------ */
+#xo-siteclose-login {
+    width: 270px;
+    margin: 0 auto;
+}
+
+#xo-siteclose-login h2 {
+    background-color: #f2f2f2;       // TODO: CHANGE TO A VARIABLE COLOR
+    font-weight: bold;
+    font-size: 1em;
+    color: #999;     // TODO: CHANGE TO A VARIABLE COLOR
+    padding: 2px;
+    margin: 0px;
+    text-align: center;
+    border: 1px solid #DDDDFF;       // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+#xo-siteclose-login form {
+    padding: 5px 0;
+    margin: 0;
+    border: 1px solid #DDDDFF;       // TODO: CHANGE TO A VARIABLE COLOR
+    text-align: center;
+}
+
+#xo-siteclose-login input {
+    width: 90%;
+}
+
+#xo-siteclose-login div.button {
+    clear: both;
+    margin-top: 10px;
+    text-align: center;
+}
+
+#xo-siteclose-login div.button input {
+    width: 95%;
+}
+
+/* ----------  mode debug  ---------- */
+#xo-logger-output {
+    font-size: 80%;
+}
+
+/* ------ Header rules ------ */
+#xo-header {
+    clear: both;
+    height: 90px;
+    position: relative;
+    background-color: $colorHeaderBackground;
+    margin-left: 0px;
+    margin-right: 0px;
+    border-bottom: 10px solid $colorHeaderAccent;
+    @include background-linear-gradient($colorHeaderBackground, lighten-or-darken($colorHeaderBackground, 2%));
+}
+
+#xo-headerlogo {
+    float: left;
+    margin-left: 40px;
+    margin-top: 5px;
+}
+
+#xo-headerbanner {
+    position: relative;
+    top: 10px;
+    right: 20px;
+    float: right;
+}
+
+/* ------ Header top menu navigation rules ------ */
+#xo-globalnav {
+    clear: both;
+    padding-left: 11px;
+    margin-top: 40px;
+    padding-bottom: 7px;
+}
+
+#xo-globalnav a {
+    background-color: $colorHeaderMenuBG;
+    @include background-linear-gradient($colorHeaderMenuBG, lighten-or-darken($colorHeaderMenuBG, 10%));
+    color: $colorHeaderLink;
+    font-weight: normal;
+    padding: 0.5em 0.75em;
+    margin: 0 0.25em;
+    @include border-radius(3px);
+}
+
+//--layout.css
+/* ---------- Canvas rules ---------- */
+#xo-canvas {
+    float: right;
+    width: 100%;
+    min-height: 100%;
+    margin-bottom: -19px;   // for the sticky page footer
+}
+
+#xo-canvas-content {
+    margin-left: 30px;
+    margin-right: 30px;
+}
+
+#xo-canvas-columns {
+    //margin:         0px 10px;
+    //padding-right:  4px;
+    //margin-top:     12px;
+}
+
+#xo-canvas-leftcolumn {
+    float:          left;
+    width:          170px;
+    margin-left:    -170px;
+}
+
+* html #xo-canvas-leftcolumn {
+    margin-left:    -85px;
+}
+
+#xo-canvas-rightcolumn {
+    float:          right;
+    width:          170px;
+    margin-right:   -170px;
+}
+
+* html #xo-canvas-rightcolumn {
+    margin-left:    -90px;
+    margin-right:   -100px;
+}
+
+@media all and (min-width: 0px) {
+head~body #xo-canvas-rightcolumn {
+    margin-right:   -170px;
+}
+
+}
+
+/* ----------Canvas rules (when columns are visible) ---------- */
+
+#xo-canvas.leftcolumn-layout #xo-canvas-columns, #xo-canvas.threecolumns-layout #xo-canvas-columns {
+    padding-left: 170px;
+}
+
+#xo-canvas.rightcolumn-layout #xo-canvas-columns, #xo-canvas.threecolumns-layout #xo-canvas-columns {
+    padding-right: 170px;
+}
+
+/* ----------Page [center column] rules ---------- */
+
+#xo-page {
+    float:          left;
+    width:          100%;
+}
+
+/* ------- Top and bottom zones (2 columns) ------- */
+
+#xo-page-topleftblocks, #xo-page-bottomleftblocks, #xo-page-topleft_adminblocks, #xo-page-bottomleft_adminblocks {
+    float:          left;
+    width:          48%;
+    margin-left:    1%;
+    margin-right:   1%;
+    padding:        0px;
+}
+
+#xo-page-toprightblocks, #xo-page-bottomrightblocks, #xo-page-topright_adminblocks, #xo-page-bottomright_adminblocks {
+    float:          right;
+    width:          48%;
+    margin-left:    1%;
+    margin-right:   1%;
+}
+
+* html #xo-page-topleftblocks, * html #xo-page-bottomleftblocks,
+* html #xo-page-toprightblocks, * html #xo-page-bottomrightblocks,
+* html #xo-page-topleft_adminblocks, * html #xo-page-bottomleft_adminblocks,
+* html #xo-page-topright_adminblocks, * html #xo-page-bottomright_adminblocks
+{
+    width:          47%;
+}
+
+#xo-page-topcenterblocks, #xo-page-bottomcenterblocks, #xo-page-topcenter_adminblocks, #xo-page-bottomcenter_adminblocks {
+    clear:          both;
+    margin-left:    1%;
+    margin-right:   1%;
+}
+
+/* ------- Top and bottom zones (3 columns) ------- */
+
+#xo-page-topblocks.xo-lcrpageblocks .xo-blockszone, #xo-page-bottomblocks.xo-lcrpageblocks .xo-blockszone {
+    float:          left;
+    clear:          none;
+    width:          31.2%;
+}
+
+* html #xo-page-topblocks.xo-lcrpageblocks .xo-blockszone,
+* html #xo-page-bottomblocks.xo-lcrpageblocks .xo-blockszone {
+    width:          30.6%;
+}
+
+#xo-page-topblocks.xo-lcrpageblocks #xo-page-topleftblocks {
+}
+
+#xo-content {
+    position:       relative;
+    clear: both;
+}
+
+//--layout.css
+
+//--blocks.css
+/* ------ Left column / Right column content------ */
+#xo-canvas-leftcolumn .xo-block, #xo-canvas-rightcolumn .xo-block {
+    margin-bottom:  10px;
+}
+
+#xo-canvas-leftcolumn .xo-blocktitle {
+    padding: 3px;
+    text-align: left;
+}
+
+#xo-canvas-leftcolumn .xo-blocktitle h3 {
+    color: $colorPageHeaders;
+    font-weight: bold;
+    font-size: larger;
+    margin: 0;
+    padding: 0;
+}
+
+#xo-canvas-rightcolumn .xo-blocktitle {
+    padding: 3px;
+    text-align: right;
+}
+
+#xo-canvas-rightcolumn .xo-blocktitle h3 {
+    color: $colorPageHeaders;
+    font-weight: bold;
+    font-size: larger;
+    margin: 0;
+    padding: 0;
+}
+
+#xo-canvas-leftcolumn .xo-blockcontent, #xo-canvas-rightcolumn .xo-blockcontent {
+    padding: 3px;
+}
+
+#xo-canvas-leftcolumn th, #xo-canvas-rightcolumn th {
+    // color: #F3AC03; TODO: CHANGE TO A VARIABLE
+    color: magenta;
+    font-size: 90%;
+}
+
+/* ------ Center column content ------ */
+#xo-page th {
+    color: $colorHeaderText;
+}
+
+#xo-page .xo-block {
+    margin-bottom: 5px;
+}
+
+#xo-page .xo-blocktitle {
+    padding: .2em;
+    margin: 0 .5em;
+    text-align: center;
+}
+
+#xo-page .xo-blocktitle h3 {
+    color: $colorHeaderText;
+    font-weight: bold;
+    padding: 0;
+    margin: 0;
+}
+
+#xo-page .xo-blockcontent {
+    padding: .5em;
+    background-color: #F2F2F2;  // TODO: CHANGE TO A VARIABLE COLOR
+    border-top: 4px solid #F3AC03;  // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+//--blocks.css
+
+
+//--content.css
+
+/* Start Main Menu */
+#mainmenu {
+    font-size: .8em;
+}
+
+#mainmenu a {
+    display: block;
+    margin: 0;
+    padding: 4px;
+    color: $colorLink;
+}
+
+#mainmenu a:hover {
+    color: $colorLinkHover;
+}
+
+#mainmenu a.menuTop {
+    padding-left: 3px;
+    //border-top: 1px solid #ccc; // TODO: CHANGE TO A VARIABLE COLOR
+    //border-right: 1px solid #666;   // TODO: CHANGE TO A VARIABLE COLOR
+    //border-bottom: 1px solid #666;  // TODO: CHANGE TO A VARIABLE COLOR
+    //border-left: 1px solid #ccc;    // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+#mainmenu a.menuMain {
+    padding-left: 3px;
+    //border-right: 1px solid #666;   // TODO: CHANGE TO A VARIABLE COLOR
+    //border-bottom: 1px solid #666;  // TODO: CHANGE TO A VARIABLE COLOR
+    //border-left: 1px solid #ccc;    // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+#mainmenu a.menuSub {
+    padding-left: 17px;
+    //background-image: url(../icons/arr.gif);
+    //background-repeat: no-repeat;
+    //background-position: left;
+    //background-color: #fff; // TODO: CHANGE TO A VARIABLE COLOR
+    color: $colorLink;
+    //font-size: 0.9em;
+    //font-style: italic;
+    //border-right: 1px solid #666;   // TODO: CHANGE TO A VARIABLE COLOR
+    //border-bottom: 1px solid #666;  // TODO: CHANGE TO A VARIABLE COLOR
+    //border-left: 1px solid #ccc;    // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+#mainmenu a.menuSub:hover {
+    color: $colorPageHeaders;
+}
+
+/* End Main Menu */
+
+/* Start User Menu */
+#usermenu {
+    font-size: .8em;
+}
+
+#usermenu a {
+    color: $colorLink;
+    display: block;
+    margin: 0;
+    padding: 4px;
+    border-right: 1px solid #666;   // TODO: CHANGE TO A VARIABLE COLOR
+    border-bottom: 1px solid #666;  // TODO: CHANGE TO A VARIABLE COLOR
+    border-left: 1px solid #ccc;    // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+#usermenu a:hover {
+    color: $colorLinkHover;
+}
+
+#usermenu a.menuTop {
+    border-top: 1px solid #ccc; // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+#usermenu a.highlight {
+    background-color: #fcc; // TODO: CHANGE TO A VARIABLE COLOR
+    color: #ff0000; // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+/* End User Menu */
+
+/* tables and cells */
+table {
+    width: 100%;
+}
+
+table td {
+    padding: 0;
+    border-width: 0;
+    vertical-align: top;
+}
+
+th {
+    background-color: $colorHeaderBackground;
+    color: $colorHeaderText;
+    padding : 2px;
+    vertical-align : middle;
+}
+
+.main-cell-div > a {
+    color: #fff;    // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+.outer {
+    /*border: 1px solid #ccc;*/
+}
+
+td.head {
+    background-color: $colorTableHeaderBackground;
+    color: $colorTableHeaderText;
+    font-weight: bold;
+    padding: 0.5em 1em 0.5em 0.4em;
+}
+
+.even, tr.even td {
+    background-color: $colorEvenBackground;
+    color: $colorTableText;
+    padding: 5px;
+}
+
+.odd, tr.odd td {
+    background-color: $colorOddBackground;
+    color: $colorTableText;
+    padding: 5px;
+}
+
+.foot {
+    background-color: $colorHeaderBackground;
+    color: inherit;
+    padding: 5px;
+    font-weight: bold;
+}
+
+th {
+    background-color: $colorHeaderBackground !important; /* TODO: why important?? */
+}
+
+/* core messages */
+.errorMsg {
+    background-color: #FFCCCC;  // TODO: CHANGE TO A VARIABLE COLOR
+    color: inherit;
+    text-align: center;
+    border-top: 1px solid #DDDDFF;  // TODO: CHANGE TO A VARIABLE COLOR
+    border-left: 1px solid #DDDDFF; // TODO: CHANGE TO A VARIABLE COLOR
+    border-right: 1px solid #aaa;   // TODO: CHANGE TO A VARIABLE COLOR
+    border-bottom: 1px solid #aaa;  // TODO: CHANGE TO A VARIABLE COLOR
+    font-weight: bold;
+    padding: 10px;
+}
+
+.confirmMsg {
+    background-color: #DDFFDF;  // TODO: CHANGE TO A VARIABLE COLOR
+    color: #136C99;
+    text-align: center;
+    border-top: 1px solid #DDDDFF;  // TODO: CHANGE TO A VARIABLE COLOR
+    border-left: 1px solid #DDDDFF; // TODO: CHANGE TO A VARIABLE COLOR
+    border-right: 1px solid #aaa;   // TODO: CHANGE TO A VARIABLE COLOR
+    border-bottom: 1px solid #aaa;  // TODO: CHANGE TO A VARIABLE COLOR
+    font-weight: bold;
+    padding: 10px;
+}
+
+.resultMsg {
+    background-color : #bbb;        // TODO: CHANGE TO A VARIABLE COLOR
+    color: #333;                // TODO: CHANGE TO A VARIABLE COLOR
+    text-align: center;
+    border-top: 1px solid #ccc; // TODO: CHANGE TO A VARIABLE COLOR
+    border-left: 1px solid #ccc;    // TODO: CHANGE TO A VARIABLE COLOR
+    font-weight: bold;
+    border-right: 1px solid #666;   // TODO: CHANGE TO A VARIABLE COLOR
+    border-bottom: 1px solid #666;  // TODO: CHANGE TO A VARIABLE COLOR
+    padding: 10px;
+}
+
+/* codes and quotes */
+.xoopsCode {
+    background-color: #fff; // TODO: CHANGE TO A VARIABLE COLOR
+    color: inherit;
+    border: 1px inset #000080;  // TODO: CHANGE TO A VARIABLE COLOR
+    font-family: "Courier New",Courier,monospace;
+    padding: 0 6px 6px 6px;
+    max-height: 200px;
+    overflow: auto;
+}
+
+.xoopsQuote {
+    background-color: #fff; // TODO: CHANGE TO A VARIABLE COLOR
+    color: inherit;
+    border: 1px inset #000080;      // TODO: CHANGE TO A VARIABLE COLOR
+    font-family: "Courier New",Courier,monospace;
+    font-style: italic;
+    padding: 0 6px 6px 6px;
+}
+
+.icmsCode {
+    background-color: #fff; // TODO: CHANGE TO A VARIABLE COLOR
+    color: inherit;
+    border: 1px inset #000080;  // TODO: CHANGE TO A VARIABLE COLOR
+    font-family: "Courier New",Courier,monospace;
+    padding: 0 6px 6px 6px;
+    max-height: 200px;
+    overflow: auto;
+}
+
+.icmsQuote {
+    background-color: #fff; // TODO: CHANGE TO A VARIABLE COLOR
+    color: inherit;
+    border: 1px inset #000080;  // TODO: CHANGE TO A VARIABLE COLOR
+    font-family: "Courier New",Courier,monospace;
+    font-style: italic;
+    padding: 0 6px 6px 6px;
+}
+
+/* Admin Help Nav */
+#helpbar a {
+    float: left;
+    width: 14px;
+    height: 14px;
+    padding: 2px 0 4px 5px;
+    background: #F3AC03;    // TODO: CHANGE TO A VARIABLE COLOR
+    color: #333333;     // TODO: CHANGE TO A VARIABLE COLOR
+    border: 1px dotted #dddddd;     // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+/* articles */
+.item {
+    border: 1px solid #ccc; // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+.itemHead {
+    padding-left: 3px;
+    color: #639ACE;     // TODO: CHANGE TO A VARIABLE COLOR
+    border-bottom: 1px solid #bbb;      // TODO: CHANGE TO A VARIABLE COLOR
+    font-size: .8em;
+}
+
+.itemInfo {
+    text-align: right;
+    padding: 3px;
+    background-color: $colorHeaderAccent;
+    color: $colorHeaderText;
+}
+
+.itemTitle a {
+    font-size: 1.1em;
+    font-weight: bold;
+    font-variant: small-caps;
+    color: #fff;        // TODO: CHANGE TO A VARIABLE COLOR
+    background-color: transparent;
+}
+
+.itemPoster {
+    font-size: .9em;
+    font-style: italic;
+}
+
+.itemPostDate {
+    font-size: .9em;
+    font-style: italic;
+}
+
+.itemStats {
+    font-size: .9em;
+    font-style: italic;
+}
+
+.itemBody {
+    padding-left: 5px;
+}
+
+.itemText {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    line-height: 1.5em;
+}
+
+.itemText:first-letter {
+    font-size: 1.3em;
+    font-weight: bold;
+}
+
+.itemFoot {
+    text-align: right;
+    padding: 3px;
+    background-color: $colorHeaderAccent;
+    color: $colorHeaderText;
+}
+
+.itemAdminLink {
+    font-size: .9em;
+}
+
+.itemPermaLink {
+    font-size: .9em;
+}
+
+/* forums */
+.row1 {
+    background-color: #FFF;     // TODO: CHANGE TO A VARIABLE COLOR
+    color: inherit;
+    padding: 5px;
+}
+
+.row2 {
+    background-color: #E9E9E9;      // TODO: CHANGE TO A VARIABLE COLOR
+    color: inherit;
+    padding: 5px;
+}
+
+.comTitle {
+    font-weight: bold;
+    margin-bottom: 2px;
+}
+
+.comText {
+    padding: 2px;
+}
+
+.comUserStat {
+    font-size: .7em;
+    color: #639ACE; // TODO: CHANGE TO A VARIABLE COLOR
+    font-weight: bold;
+    border: 1px solid #ccc; // TODO: CHANGE TO A VARIABLE COLOR
+    background-color: #fff; // TODO: CHANGE TO A VARIABLE COLOR
+    margin: 2px;
+    padding: 2px;
+    border-right: 2px solid #999;   // TODO: CHANGE TO A VARIABLE COLOR
+    border-bottom: 2px solid #999;  // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+.comUserStatCaption {
+    font-weight: normal;
+}
+
+.comUserRank {
+    margin: 2px;
+}
+
+.comUserRankText {
+    font-size: .8em;
+}
+
+.comUserRankImg {
+    border: 0;
+    vertical-align: middle;
+}
+
+.comUserStatus {
+    float: left;
+}
+
+.comUserName {
+    font-size: 18px;
+}
+
+.comUserName img {
+    padding: 0;
+}
+
+.comUserImg {
+    margin: 2px;
+}
+
+.comDate {
+    font-weight: normal;
+    font-style: italic;
+    font-size: .8em;
+}
+
+.comDateCaption {
+    font-weight: bold;
+    font-style: normal;
+    font-size: .8em;
+}
+
+.signature {
+    font-size: .8em;
+    font-style: italic;
+}
+
+#online {
+    color: green;
+    font-weight: 700;
+    font-size: 1em;
+}
+
+#offline {
+    color: red;
+    font-weight: 700;
+    font-size: 1em;
+}
+
+.forum_controls {
+    background-color: #EEE;  // TODO: CHANGE TO A VARIABLE COLOR
+    border-left: 1px solid #999;    // TODO: CHANGE TO A VARIABLE COLOR
+    border-right: 1px solid #999;   // TODO: CHANGE TO A VARIABLE COLOR
+    border-top: 1px solid #999; // TODO: CHANGE TO A VARIABLE COLOR
+    width: 100%;
+}
+
+.userrow {
+    padding: 0;
+}
+
+.Userrow_left {
+}
+
+.Userrow_center {
+}
+
+.Userrow_right {
+}
+
+.transfer a {
+    padding-left: 5px;
+}
+
+#groupform .icms_checkboxoption {
+    width: 48.9%;
+    padding: 2px;
+}
+
+.icms_checkboxoption {
+    float: left;
+}
+
+.icms_checkboxoption:hover {
+//    background: #f1f2f3;    // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+.icms_checkboxoption input[type=checkbox] {
+    float: left;
+    outline: none;
+    background: transparent;
+    border: 0;
+    margin-top: 0.5em;
+}
+
+.icms_checkboxoption label {
+    float: left;
+    overflow: hidden;
+    vertical-align: middle;
+    margin-top: 0.3em;
+}
+
+.icms_checkboxoption label a {
+    float: left;
+    overflow: hidden;
+}
+
+#groupform .even b {
+    clear: both;
+    margin: 5px 0px;
+    float: left;
+    width: 99%;
+    background: #dcdee0;        // TODO: CHANGE TO A VARIABLE COLOR
+    padding: 3px;
+    border-bottom: 1px solid #ccc;  // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+//--content.css
+
+table.outer {
+    border: 1px solid $colourPrimary;
+}

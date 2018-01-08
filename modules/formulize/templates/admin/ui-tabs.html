@@ -1,0 +1,24 @@
+<script type="text/javascript">
+	
+	$(function() {
+		$("#tabs").tabs({
+			<{if $adminPage.tabselected > 0}>
+			selected: <{$adminPage.tabselected}>
+			<{/if}>
+		});
+	});
+	
+</script>
+
+<div id="tabs">
+	<ul>
+		<{foreach from=$tabs key=number item=tab}>
+		<li><a href="#tabs-<{$number}>"><{$tab.name}></a></li>
+		<{/foreach}>
+	</ul>
+	<{foreach from=$tabs key=number item=tab}>
+	<div id="tabs-<{$number}>" class="tab-content">
+		<{include file=$tab.template content=$tab.content}>
+	</div>
+	<{/foreach}>
+</div><!-- end tabs -->

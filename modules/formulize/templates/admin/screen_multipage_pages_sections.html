@@ -1,0 +1,10 @@
+
+    <p><a name="delpage" href="" target="<{$sectionContent.index}>"><img src="../images/editdelete.gif"> Delete this page</a></p>
+		<p><a name="editpage" href="" target="<{$sectionContent.index}>"><img src="../images/kedit.png"> Edit this page</a></p>
+		<p>Form Elements on this page:</p>
+		<ul>
+			<{foreach from=$sectionContent.elements item=thiselement}>
+			<li><{$thiselement}></li>	
+			<{/foreach}>
+		</ul>
+

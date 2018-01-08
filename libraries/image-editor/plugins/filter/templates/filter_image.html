@@ -1,0 +1,136 @@
+<{php}>
+global $icmsTpl;
+
+$filters = array();
+$i = 0;
+$filters[$i]['title'] = _FILTER_NEGATE;
+$filters[$i]['value'] = 'IMG_FILTER_NEGATE';
+$filters[$i]['descr'] = _FILTER_NEGATE_DESC;
+
+$i++;
+$filters[$i]['title'] = _FILTER_GRAYSCALE;
+$filters[$i]['value'] = 'IMG_FILTER_GRAYSCALE';
+$filters[$i]['descr'] = _FILTER_GRAYSCALE_DESC;
+
+$i++; $j = 0;
+$filters[$i]['title'] = _FILTER_BRIGHTNESS;
+$filters[$i]['value'] = 'IMG_FILTER_BRIGHTNESS';
+$filters[$i]['descr'] = _FILTER_BRIGHTNESS_DESC;
+$filters[$i]['args'][$j]['title'] = _FILTER_BRIGHTNESS_ARG_TITLE;
+$filters[$i]['args'][$j]['value'] = '0';
+$filters[$i]['args'][$j]['descr'] = _FILTER_BRIGHTNESS_ARG_DESC;
+
+$i++; $j = 0;
+$filters[$i]['title'] = _FILTER_CONTRAST;
+$filters[$i]['value'] = 'IMG_FILTER_CONTRAST';
+$filters[$i]['descr'] = _FILTER_CONTRAST_DESC;
+$filters[$i]['args'][$j]['title'] = _FILTER_CONTRAST_ARG_TITLE;
+$filters[$i]['args'][$j]['value'] = '0';
+$filters[$i]['args'][$j]['descr'] = _FILTER_CONTRAST_ARG_DESC;
+
+$i++; $j = 0;
+$filters[$i]['title'] = _FILTER_COLORIZE;
+$filters[$i]['value'] = 'IMG_FILTER_COLORIZE';
+$filters[$i]['descr'] = _FILTER_COLORIZE_DESC;
+$filters[$i]['args'][$j]['title'] = _FILTER_COLORIZE_ARG_TITLE;
+$filters[$i]['args'][$j]['value'] = '0';
+$filters[$i]['args'][$j]['descr'] = _FILTER_COLORIZE_ARG_DESC;
+$j++;
+$filters[$i]['args'][$j]['title'] = _FILTER_COLORIZE_ARG1_TITLE;
+$filters[$i]['args'][$j]['value'] = '0';
+$filters[$i]['args'][$j]['descr'] = _FILTER_COLORIZE_ARG1_DESC;
+$j++;
+$filters[$i]['args'][$j]['title'] = _FILTER_COLORIZE_ARG2_TITLE;
+$filters[$i]['args'][$j]['value'] = '0';
+$filters[$i]['args'][$j]['descr'] = _FILTER_COLORIZE_ARG2_DESC;
+
+$i++;
+$filters[$i]['title'] = _FILTER_EDGEDETECT;
+$filters[$i]['value'] = 'IMG_FILTER_EDGEDETECT';
+$filters[$i]['descr'] = _FILTER_EDGEDETECT_DESC;
+
+$i++;
+$filters[$i]['title'] = _FILTER_EMBOSS;
+$filters[$i]['value'] = 'IMG_FILTER_EMBOSS';
+$filters[$i]['descr'] = _FILTER_EMBOSS_DESC;
+
+$i++;
+$filters[$i]['title'] = _FILTER_GAUSSIAN;
+$filters[$i]['value'] = 'IMG_FILTER_GAUSSIAN_BLUR';
+$filters[$i]['descr'] = _FILTER_GAUSSIAN_DESC;
+
+$i++;
+$filters[$i]['title'] = _FILTER_SELECTIVE;
+$filters[$i]['value'] = 'IMG_FILTER_SELECTIVE_BLUR';
+$filters[$i]['descr'] = _FILTER_SELECTIVE_DESC;
+
+$i++;
+$filters[$i]['title'] = _FILTER_REMOVAL;
+$filters[$i]['value'] = 'IMG_FILTER_MEAN_REMOVAL';
+$filters[$i]['descr'] = _FILTER_REMOVAL_DESC;
+
+$i++; $j = 0;
+$filters[$i]['title'] = _FILTER_SMOOTH;
+$filters[$i]['value'] = 'IMG_FILTER_SMOOTH';
+$filters[$i]['descr'] = _FILTER_SMOOTH_DESC;
+$filters[$i]['args'][$j]['title'] = _FILTER_SMOOTH_ARG_TITLE;
+$filters[$i]['args'][$j]['value'] = '2048';
+$filters[$i]['args'][$j]['descr'] = _FILTER_SMOOTH_ARG_DESC;
+
+$i++;
+$filters[$i]['title'] = _FILTER_SEPIA;
+$filters[$i]['value'] = 'IMG_FILTER_SEPIA';
+$filters[$i]['descr'] = _FILTER_SEPIA_DESC;
+$icmsTpl->assign('filters',$filters);
+
+$select  = '';
+$select .= '<option value="">'._FILTER_SELECT.'</option>';
+foreach ($filters as $k=>$v){
+	$select .= '<option value="'.$v['value'].'">'.$v['title'].'</option>';
+}
+$icmsTpl->assign('filter_select',$select);
+<{/php}>
+<script type="text/javascript">
+  var Filters=new Array();
+  <{foreach from=$filters item=filter key=key}>
+    var filter = new Array();
+    filter['title'] = '<{$filter.title}>';
+    filter['value'] = '<{$filter.value}>';
+    filter['descr'] = '<{$filter.descr}>';
+    var args = new Array();
+    <{foreach from=$filter.args item=arg key=key1}>
+      var arg = new Array();
+      arg['title'] = '<{$arg.title}>';
+      arg['value'] = '<{$arg.value}>';
+      arg['descr'] = '<{$arg.descr}>';
+      args[<{$key1}>] = arg;
+    <{/foreach}>
+    filter['args'] = args;
+    Filters[<{$key}>] = filter;
+  <{/foreach}>
+  
+  var filter_script_server_file = '<{$icms_lib_url}>/image-editor/plugins/filter/filter_image.php';
+</script>
+<script type="text/javascript" src="<{$icms_lib_url}>/image-editor/plugins/filter/filter_image.js"></script>
+<form id="filter_form" name="filter_form">
+  <table width="100%" cellspacing="1" class="outer">
+    <tr>
+      <td>
+        <b><{$smarty.const._FILTER_SELECT}>:</b><br />
+        <div style="float:left;"><select name="filter" id="filter" style="width:90%;" onchange="selFilter(this.value,<{$panelID}>);"><{$filter_select}></select></div>
+        <span id="filterdesc" style="display:none; line-height:20px; float:left;">1</span><br style="clear:left;" />
+        <div id="darg1" style="display:none; line-height:20px;"><b><span id="targ1">1</span>:</b> <input type="text" name="arg1" id="arg1" style="max-width:90px;"> <span id="larg1">1</span></div>
+        <div id="darg2" style="display:none; line-height:20px;"><b><span id="targ2">2</span>:</b> <input type="text" name="arg2" id="arg2" style="max-width:90px;"> <span id="larg2">1</span></div>
+        <div id="darg3" style="display:none; line-height:20px;"><b><span id="targ3">3</span>:</b> <input type="text" name="arg3" id="arg3" style="max-width:90px;"> <span id="larg3">1</span></div>
+      </td>
+    </tr>
+    <tr>
+      <td class="head" align="center" id="cropButtonCell">
+        <input type="button" onclick="filter_preview(this);" value="<{$smarty.const._FILTER_PREVIEW}>" /> 
+        <input type="button" onclick="filter_save(this);" value="<{$smarty.const._FILTER_EXECUTE}>" />
+        <input type="hidden" id="fimage_path" value="<{$image.path}>">
+        <input type="hidden" id="fimage_url" value="<{$image.url}>">
+      </td>
+    </tr>
+  </table>
+</form>

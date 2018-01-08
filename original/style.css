@@ -1,0 +1,31 @@
+html { overflow-y: scroll; font-size: 100%; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+html, body { height: 100%; min-height: 100%; }
+body { margin: 0; width: 100%; min-width: 980px; background: #fff; color: #333; text-align: center; font: 14px/1.231 arial, helvetica, sans-serif; }
+img { border: 0; vertical-align: middle; -ms-interpolation-mode: bicubic; }
+h1 { margin: 0; padding: 0; }
+ul { margin: 0; padding: 0; list-style: none; }
+#header-container { border-bottom: 1px solid #a0b0e9; background: url(./images/top.png) 0 100% repeat-x; }
+#header { position: relative; margin: auto; width: 890px; height: 59px; }
+.product-logo { position: absolute; top: 6px; left: 41px; }
+.company-logo { position: absolute; top: 9px; right: 0; }
+.top-info { padding: 11px 110px 0 148px; }
+#content-container { background: #529ee6 url(./images/content.png) repeat-x; }
+#content { min-height: 200px; background: url(./images/pattern.png) repeat; }
+#main-container { position: relative; margin: 0 auto -38px; top: -22px; width: 890px; }
+#main { position: relative; margin: 0 -45px 0 -5px; width: 940px; height: 778px; text-align: left; background: url(./images/main.png) no-repeat; }
+h1, .item, h1 span, .item span { position: absolute; }
+li.item a { display: block; height: 100%; }
+h1 span, .item span { top: -9999px; left: -9999px; }
+h1 { top: 30px; left: 46px; height: 76px; width: 354px; }
+.description1 { top: 119px; left: 46px; height: 38px; width: 410px; }
+.description2 { top: 250px; left: 46px; height: 126px; width: 250px; }
+.poa { top: 66px; left: 502px; height: 230px; width: 150px; }
+.ppp { top: 226px; left: 322px; height: 200px; width: 150px; }
+.pcbm { top: 442px; left: 120px; height: 200px; width: 220px; }
+.pwpb { top: 526px; left: 396px; height: 200px; width: 170px; }
+.paci { top: 486px; left: 626px; height: 200px; width: 244px; }
+.feedback { top: 681px; left: 94px; width: 255px; color: #fff; }
+.feedback a, .feedback a:visited { color: #d2e8ff; }
+.feedback a:hover, .feedback a:active { outline: 0; color: #fff; }
+#footer-container { border-top: 1px solid #a0b0e9; background: url(./images/bottom.png) repeat-x; }
+#footer { margin: auto; padding: 40px 40px 20px; width: 810px; text-align: left; }

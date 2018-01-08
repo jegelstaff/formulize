@@ -1,0 +1,16 @@
+<div class="CPbigTitle" style="background-image: url(<{$xoops_url}>/modules/system/admin/mimetype/images/mimetype_big.png)"><{$smarty.const._CO_ICMS_MIMETYPES}></div><br />
+
+<{if $icms_mimetype_explain}>
+	<h1><{$smarty.const._CO_ICMS_MIMETYPES_EXPLAIN_TITLE}></h1>
+	<p><{$smarty.const._CO_ICMS_MIMETYPES_EXPLAIN}></p>
+<{/if}>
+
+<p><{$icms_mimetype_title}></p>
+
+<{if $icms_mimetype_table}>
+	<{$icms_mimetype_table}>
+<{/if}>
+
+<{if $addmimetype}>
+	<{includeq file='db:system_common_form.html' form=$addmimetype}>
+<{/if}>

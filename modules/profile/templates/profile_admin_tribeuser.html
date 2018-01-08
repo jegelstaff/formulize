@@ -1,0 +1,14 @@
+<{if $profile_tribeuser_title}>
+	<h1><{$profile_tribeuser_title}></h1>
+<{/if}>
+<{if $profile_tribeuser_info}>
+	<p><{$profile_tribeuser_info}></p>
+<{/if}>
+
+<{if $profile_tribeuser_table}>
+	<{$profile_tribeuser_table}>
+<{/if}>
+
+<{if $addtribeuser}>
+	<{includeq file='db:system_common_form.html' form=$addtribeuser}>
+<{/if}>

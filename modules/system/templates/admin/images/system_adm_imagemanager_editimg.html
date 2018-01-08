@@ -1,0 +1,39 @@
+<div id="edit_image<{$i}>" class="opt_divs" style="display:none; padding:5px; margin:5px;">
+  <form action="admin.php" method="post">
+    <table width="100%" cellspacing="1" class="outer">
+      <tr><th colspan="2"><{$lang_imanager_cat_edit}></th></tr>
+	  <tr>
+	    <td class="head"><{$lang_image_name}></td>
+	    <td class="even"><input type="text" name="image_nicename[]" id="name<{$i}>" value="<{$image.nicename}>" size="20" maxlength="255" /></td>
+	  </tr>
+	  <tr>
+	    <td class="head"><{$lang_image_mimetype}></td>
+	    <td class="odd"><{$image.mimetype}></td>
+	  </tr>
+	  <tr>
+	    <td class="head"><{$lang_image_cat}></td>
+	    <td class="even"><select name="imgcat_id[]" size="1"><{$image.ed_selcat_options}></select></td>
+	  </tr>
+	  <tr>
+	    <td class="head"><{$lang_image_weight}></td>
+	    <td class="odd"><input type="text" name="image_weight[]" value="<{$image.weight}>" size="3" maxlength="4" /></td>
+	  </tr>
+	  <tr>
+	    <td class="head"><{$lang_image_disp}></td>
+	    <td class="even"><input type="checkbox" name="image_display[]" value="1"<{if $image.display == 1}> checked="checked"<{/if}> /></td>
+	  </tr>
+	  <tr>
+	    <td class="head" colspan="2" align="center">
+	     <input type="submit" name="submit" value="<{$lang_submit}>" /> 
+	     <input type="button" name="btn" value="<{$lang_cancel}>" onclick="document.getElementById('edit_image<{$i}>').style.display='none'; return false;" />
+	    </td>
+	  </tr>
+    </table>
+	<input type="hidden" name="image_id[]" value="<{$i}>" />
+	<input type="hidden" name="op" value="save" />
+	<input type="hidden" name="redir" value="<{$cat_id}>" />
+	<input type="hidden" name="fct" value="images" />
+	<{$image.ed_token}>
+  </form>
+</div>
+<a name="edit_image<{$i}>"></a>

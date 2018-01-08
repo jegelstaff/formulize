@@ -1,0 +1,96 @@
+/* ---------- Canvas rules ---------- */
+
+#icms-canvas {
+	min-width: 850px;
+	width: 100%;
+	margin: 10px auto 0px;
+}
+
+#icms-canvas-content {}
+
+#icms-canvas-columns {
+	margin:		35px 0px 0px 24px;
+}
+
+#icms-canvas-leftcolumn {
+	float:			left;
+	width:			180px;
+	margin-left:	-180px;
+}
+
+* html #icms-canvas-leftcolumn {
+	margin-left:	-85px;
+}
+
+#icms-canvas-rightcolumn {
+	float:			left;
+	width:			180px;
+	margin-right:	-180px;
+}
+
+* html #icms-canvas-rightcolumn {
+	margin-left:	-90px;
+	margin-right:	-90px;
+}
+
+/* ----------Canvas rules (when columns are visible) ---------- */
+
+#icms-canvas.leftcolumn-layout #icms-canvas-columns, #icms-canvas.threecolumns-layout #icms-canvas-columns { padding-left: 170px; }
+#icms-canvas.rightcolumn-layout #icms-canvas-columns, #icms-canvas.threecolumns-layout #icms-canvas-columns {	padding-right: 200px; }
+ #icms-footer { clear: both;}
+
+/* ----------Page [center column] rules ---------- */
+
+#icms-page {
+	float:			left; 
+	width:			100%;
+}
+
+/* ------- Top and bottom zones (2 columns) ------- */
+
+#icms-page-topleftblocks, #icms-page-bottomleftblocks, #icms-page-topleft_adminblocks, #icms-page-bottomleft_adminblocks {
+	float:			left;
+	width:			55%;
+	margin-left:	1%;
+	margin-right:	1%;
+	padding:			0px;
+}
+#icms-page-toprightblocks, #icms-page-bottomrightblocks, #icms-page-topright_adminblocks, #icms-page-bottomright_adminblocks {
+	float:			right;
+	width:			41%;
+	margin-left:	1%;
+	margin-right:	1%;
+}
+* html #icms-page-topleftblocks, * html #icms-page-bottomleftblocks,
+* html #icms-page-toprightblocks, * html #icms-page-bottomrightblocks, 
+* html #icms-page-topleft_adminblocks, * html #icms-page-bottomleft_adminblocks,
+* html #icms-page-topright_adminblocks, * html #icms-page-bottomright_adminblocks
+{
+	width:			47%;
+}
+
+#icms-page-topcenterblocks, #icms-page-bottomcenterblocks, #icms-page-topcenter_adminblocks, #icms-page-bottomcenter_adminblocks {
+	clear:			both;
+	margin-left:	1%;
+	margin-right:	1%;
+}
+/* ------- Top and bottom zones (3 columns) ------- */
+
+#icms-page-topblocks.icms-lcrpageblocks .icms-blockszone, #icms-page-bottomblocks.icms-lcrpageblocks .icms-blockszone {
+	float:			left;
+	clear:			none;
+	width:			31.2%;
+}
+
+* html #icms-page-topblocks.icms-lcrpageblocks .icms-blockszone,
+* html #icms-page-bottomblocks.icms-lcrpageblocks .icms-blockszone {
+	width:			30.6%;
+}
+
+#icms-page-topblocks.icms-lcrpageblocks #icms-page-topleftblocks {}
+
+
+#icms-content {	
+	position:		relative; 
+	clear: 			none;
+}

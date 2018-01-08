@@ -1,0 +1,51 @@
+<script type='text/javascript'>
+var lid=<{$content.lid}>;
+
+$("[name=submitx]").click(function () {
+  var form1choice = $("#form1choice").find(':selected');
+  var form2choice = $("#form2choice").find(':selected');
+
+  var sourceLink = $("#linkages"+lid).find(':selected');
+  
+  sourceLink.val( form1choice.val() + '+' + form2choice.val() + '+common' );
+  sourceLink.text( '<{$smarty.const._AM_FRAME_COMMON_VALUES}>' + form1choice.text() + ' & ' + form2choice.text() );
+
+  $("#dialog-common-values").dialog('close');
+
+  return false;
+});
+</script>
+<div class="panel-content content">
+  <table align="center" width="80%">
+    <tr>
+      <th>
+        <{$content.form1.name}>
+      </th>
+      <th>
+        <{$content.form2.name}>
+      </th>
+      <th>
+        Action
+      </th>
+    </tr>
+    <tr>
+      <td class=even>
+        <select id=form1choice name=form1choice size=1>
+          <{foreach from=$content.form1.elements key=elementNumber item=element}>
+            <option value="<{$elementNumber}>"><{$element}></option>
+          <{/foreach}>
+        </select>
+      </td>
+      <td class=even>
+        <select id=form2choice name=form2choice size=1>
+          <{foreach from=$content.form2.elements key=elementNumber item=element}>
+            <option value="<{$elementNumber}>"><{$element}></option>
+          <{/foreach}>
+        </select>
+      </td>
+      <td class=head>
+        <input type=submit class=formbutton name=submitx value='<{$smarty.const._SUBMIT}>'>
+      </td>
+    </tr>
+  </table>
+</div>

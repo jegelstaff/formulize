@@ -1,0 +1,33 @@
+<div class="panel-content content">
+  <fieldset>
+    <legend><{$smarty.const._AM_ELE_SEP}></legend>
+
+    <div class="form-item required">
+	    <label for="element-rows"><{$smarty.const._AM_ELE_ROWS}><em>*</em></label>
+	    <input type="text" id="element-rows" name="element-rows" value="" size="3" maxlength="3"/>
+    </div>
+    <div class="form-item required">
+	    <label for="element-cols"><{$smarty.const._AM_ELE_COLS}><em>*</em></label>
+	    <input type="text" id="element-cols" name="element-cols" value="" size="3" maxlength="3"/>
+    </div>
+	  <div class="form-item">
+      <fieldset>
+        <legend><{$smarty.const._AM_ELE_TYPE}></legend>
+        <{html_checkboxes name='screens-option' options=$content.options selected=$content.option separator='<br />'}>
+      </fieldset>
+	  </div>
+    <div class="form-item">
+	    <label for="element-default"><{$smarty.const._AM_ELE_DEFAULT}></label>
+	    <textarea id="element-default" name="element-default" rows="5" cols="35"></textarea>
+	    <div class="description">
+        <p><{$smarty.const._AM_ELE_TEXT_DESC}><{$smarty.const._AM_ELE_TEXT_DESC2}></p>
+      </div>
+    </div>
+    <div class="form-item">
+	    <label for="element-default"><{$smarty.const._AM_ELE_CLR}></label>
+	    <select id="element-couleur" name="element-couleur" size="5">
+        <{html_options options=$content.colors selected=$content.couleur}>
+	    </select>
+    </div>
+  </fieldset>
+</div>

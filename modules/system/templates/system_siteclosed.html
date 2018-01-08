@@ -1,0 +1,51 @@
+<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Transitional//EN' 'http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd'>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<{$xoops_langcode}>" lang="<{$xoops_langcode}>">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=<{$xoops_charset}>" />
+<meta http-equiv="content-language" content="<{$xoops_langcode}>" />
+<title><{$xoops_sitename}></title>
+<link rel="stylesheet" type="text/css" media="all" href="<{$icms_style}>" />
+<link rel="stylesheet" type="text/css" media="all" href="<{$icms_themecss}>" />
+
+</head>
+<body>
+<div id="xo-canvas"<{if $columns_layout}> class="<{$columns_layout}>"<{/if}>>
+  <!-- Start header -->
+    <div id="xo-header">
+	    <div id="xo-headerlogo"></div>
+    </div>  
+  <!-- End header -->
+  
+<!-- Start Main Content Area -->
+<div id="xo-canvas-content">
+<center>
+<br />
+<div style="width: 85%;background-color: #f7e6bd; color: #222222; text-align: center; border-top: 1px solid #DDDDFF; border-left: 1px solid #DDDDFF; border-right: 1px solid #DDDDFF; border-bottom: 1px solid #DDDDFF; font-weight: bold; padding: 10px;"><{$lang_siteclosemsg}>
+</div>
+<br />
+  <br />
+  <br />
+    <div style="width: 270px;border:1px solid #DDDDFF">
+ <div style="background-color: #f3ac03;font-weight: bold;font-size: 1.2em; color: white;height: 24px"><{$lang_login}></div>
+    <br />
+   <form action="<{$xoops_url}>/user.php" method="post">
+   <{$lang_username}><input type="text" name="uname" size="21" maxlength="25" value="" /><br />
+    <div>
+    <{$lang_password}><input type="password" name="pass" size="21" maxlength="32" /><br />
+        	<input type="hidden" name="xoops_redirect" value="<{$xoops_requesturi}>" />
+        	<input type="hidden" name="xoops_login" value="1" />
+        <br />
+        	<input type="submit" value="<{$lang_login}>" />
+</div> 
+ </form>
+<br />
+</div>
+</center>
+</div><!-- Start footer -->
+<br class="clear" />
+<div id="xo-footer-close">
+</div>
+<!-- end Footer -->
+</div>
+  </body>
+</html>

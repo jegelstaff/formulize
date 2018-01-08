@@ -1,0 +1,228 @@
+<script language="javascript" src="<{$xoops_url}>/include/linkexternal.js"></script>
+<img src='<{$module_url}><{$module_image}>' alt='<{$module_name}>' style='float: <{$smarty.const._GLOBAL_LEFT}>; margin-right: 10px;'/></a>
+<div style='margin-top: 1px; color: #33538e; margin-bottom: 4px; font-size: 18px; line-height: 18px; font-weight: bold;'>
+	<{$module_name}> version <{$module_version}><{if $module_status_version}> (<{$module_status_version}>)<{/if}>
+</div>
+
+<div style='line-height: 16px; font-weight: bold;'>
+	<{$smarty.const._MODABOUT_BY}> <{$module_author_name}>
+</div>
+
+<div style = 'line-height: 16px; '>
+	 <{$module_license}>
+</div>
+
+<{if $module_credits}>
+	<table width='100%' cellspacing="1" cellpadding="3" border="0" class="outer" style="margin-top: 15px;">
+		<tr>
+			<td class='bg3'><b><{$smarty.const._MODABOUT_DEVELOPER_CREDITS}></b></td>
+		</tr>
+
+		<tr>
+			<td class='even'><{$module_credits}></td>
+		</tr>
+	</table>
+<{/if}>
+
+<table width='100%' cellspacing="1" cellpadding="3" border="0" class="outer" style="margin-top: 15px;">
+	<tr>
+		<td colspan='2' class='bg3'>
+			<b><{$smarty.const._MODABOUT_AUTHOR_INFO}></b>
+		</td>
+	</tr>
+
+	<{if $module_developer_lead}>
+		<tr>
+			<td class='head' width = '150px'><{$smarty.const._MODABOUT_DEVELOPER_LEAD}></td>
+			<td class='even'><{$module_developer_lead}></td>
+		</tr>
+	<{/if}>
+
+	<{if $module_developer_contributor}>
+		<tr>
+			<td class='head' width = '150px'><{$smarty.const._MODABOUT_DEVELOPER_CONTRIBUTOR}></td>
+			<td class='even'><{$module_developer_contributor}></td>
+		</tr>
+	<{/if}>
+
+	<{if $module_people_developers}>
+		<tr>
+			<td class='head' style="vertical-align: top;" width = '150px'><{$smarty.const._MODABOUT_PEOPLE_DEVELOPERS}></td>
+			<td class='even'>
+			    <{foreach item=person from=$module_people_developers}>
+			    	<div><{$person}></div>
+			    <{/foreach}>
+			</td>
+		</tr>
+	<{/if}>
+
+	<{if $module_people_testers}>
+		<tr>
+			<td class='head' style="vertical-align: top;" width = '150px'><{$smarty.const._MODABOUT_PEOPLE_TESTERS}></td>
+			<td class='even'>
+			    <{foreach item=person from=$module_people_testers}>
+			    	<div><{$person}></div>
+			    <{/foreach}>
+			</td>
+		</tr>
+	<{/if}>
+
+	<{if $module_people_translators}>
+		<tr>
+			<td class='head' style="vertical-align: top;" width = '150px'><{$smarty.const._MODABOUT_PEOPLE_TRANSLATERS}></td>
+			<td class='even'>
+			    <{foreach item=person from=$module_people_translators}>
+			    	<div><{$person}></div>
+			    <{/foreach}>
+			</td>
+		</tr>
+	<{/if}>
+
+	<{if $module_people_documenters}>
+		<tr>
+			<td class='head' style="vertical-align: top;" width = '150px'><{$smarty.const._MODABOUT_PEOPLE_DOCUMENTERS}></td>
+			<td class='even'>
+			    <{foreach item=person from=$module_people_documenters}>
+			    	<div><{$person}></div>
+			    <{/foreach}>
+			</td>
+		</tr>
+	<{/if}>
+
+	<{if $module_people_other}>
+		<tr>
+			<td class='head' style="vertical-align: top;" width = '150px'><{$smarty.const._MODABOUT_PEOPLE_OTHER}></td>
+			<td class='even'>
+			    <{foreach item=person from=$module_people_other}>
+			    	<div><{$person}></div>
+			    <{/foreach}>
+			</td>
+		</tr>
+	<{/if}>
+
+	<{if $module_developer_website_url}>
+		<tr>
+			<td class='head' width = '150px'><{$smarty.const._MODABOUT_DEVELOPER_WEBSITE}></td>
+			<td class='even'><a href="<{$module_developer_website_url}>" rel="external"><{$module_developer_website_name}></a></td>
+		</tr>
+	<{/if}>
+
+	<{if $module_developer_email}>
+		<tr>
+			<td class='head' width = '150px'><{$smarty.const._MODABOUT_DEVELOPER_EMAIL}></td>
+			<td class='even'><a href="mailto:<{$module_developer_email}>" rel="external"><{$module_developer_email}></a></td>
+		</tr>
+	<{/if}>
+</table>
+
+<table width='100%' cellspacing="1" cellpadding="3" border="0" class="outer" style="margin-top: 15px;">
+	<tr>
+		<td colspan='2' class='bg3'><b><{$smarty.const._MODABOUT_MODULE_INFO}></b></td>
+	</tr>
+
+	<tr>
+		<td class='head' width = '200px'><{$smarty.const._MODABOUT_MODULE_RELEASE_DATE}></td>
+		<td class='even'><{$module_date}></td>
+	</tr>
+
+	<tr>
+		<td class='head' width = '200px'><{$smarty.const._MODABOUT_MODULE_STATUS}></td>
+		<td class='even'><{$module_status}></td>
+	</tr>
+
+	<{if $module_demo_site_name}>
+		<tr>
+			<td class='head' width = '200px'><{$smarty.const._MODABOUT_MODULE_DEMO}></td>
+			<td class='even'><a href="<{$module_developer_demo_site_url}>" rel="external"><{$module_demo_site_name}></a></td>
+		</tr>
+	<{/if}>
+
+	<{if $module_support_site_name}>
+		<tr>
+			<td class='head' width = '200px'><{$smarty.const._MODABOUT_MODULE_SUPPORT}></td>
+			<td class='even'><a href="<{$module_support_site_url}>" rel="external"><{$module_support_site_name}></a></td>
+		</tr>
+	<{/if}>
+
+	<{if $module_submit_bug}>
+		<tr>
+			<td class='head' width = '200px'><{$smarty.const._MODABOUT_MODULE_BUG}></td>
+			<td class='even'><a href="<{$module_submit_bug}>" rel="external"><{$smarty.const._MODABOUT_MODULE_SUBMIT_BUG}></a></td>
+		</tr>
+	<{/if}>
+
+	<{if $module_submit_feature}>
+		<tr>
+			<td class='head' width = '200px'><{$smarty.const._MODABOUT_MODULE_FEATURE}></td>
+			<td class='even'><a href="<{$module_submit_feature}>" rel="external"><{$smarty.const._MODABOUT_MODULE_SUBMIT_FEATURE}></a></td>
+		</tr>
+	<{/if}>
+</table>
+
+<{if $module_manual}>
+<table width='100%' cellspacing="1" cellpadding="3" border="0" class="outer" style="margin-top: 15px;">
+	<tr>
+		<td colspan='2' class='bg3'><b><{$smarty.const._MODABOUT_MANUAL}></b></td>
+	</tr>
+		<tr>
+			<td class='head' style="vertical-align: top;" width = '150px'><{$smarty.const._MODABOUT_MANUAL_WIKI}></td>
+			<td class='even'>
+				<{foreach item=manual from=$module_manual}>
+					<div><{$manual}></div>
+				<{/foreach}>
+			</td>
+		</tr>	
+</table>
+<{/if}>
+
+<{if $module_warning}>
+	<table width='100%' cellspacing="1" cellpadding="3" border="0" class="outer" style="margin-top: 15px;">
+		<tr>
+			<td class='bg3'><b><{$smarty.const._MODABOUT_MODULE_DISCLAIMER}></b></td>
+		</tr>
+
+		<tr>
+			<td class='even'><{$module_warning}></td>
+		</tr>
+	</table>
+<{/if}>
+
+<{if $module_author_word}>
+	<table width='100%' cellspacing="1" cellpadding="3" border="0" class="outer" style="margin-top: 15px;">
+		<tr>
+			<td class='bg3'><b><{$smarty.const._MODABOUT_AUTHOR_WORD}></b></td>
+		</tr>
+
+		<tr>
+			<td class='even'><{$module_author_word}></td>
+		</tr>
+	</table>
+<{/if}>
+
+<{if $module_version_history}>
+	<table width='100%' cellspacing="1" cellpadding="3" border="0" class="outer" style="margin-top: 15px;">
+		<tr>
+			<td class='bg3'><b><{$smarty.const._MODABOUT_VERSION_HISTORY}></b></td>
+		</tr>
+
+		<tr>
+			<td class='even'>
+				<div style='overflow-y: auto; height: 500px; line-height: 18px;'><{$module_version_history}></div>
+			</td>
+		</tr>
+	</table>
+<{/if}>
+
+<{if $module_license_txt}>
+<table width='100%' cellspacing="1" cellpadding="3" border="0" class="outer" style="margin-top: 15px;">
+	<tr>
+		<td class='bg3'><b><{$smarty.const._MODABOUT_MODULE_LICENSE}></b></td>
+	</tr>
+
+	<tr>
+		<td class='even'>
+			<div style='overflow-y: auto; height: 500px; line-height: 18px;'><{$module_license_txt}></div>
+		</td>
+	</tr>
+</table>
+<{/if}>

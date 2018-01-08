@@ -1,0 +1,226 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<{$xoops_langcode}>">
+<head>
+
+<!-- Theme name -->
+	<{assign var=theme_name value=$xoTheme->folderName}>
+<!-- Custom Smarty -->
+	<{includeq file="$theme_name/theme_functions.php"}>
+<!-- Title and Meta -->
+	<title><{if $page_title !=''}><{$page_title}> : <{/if}><{$site_name}></title>
+	<meta http-equiv="content-type" content="text/html; charset=<{$charset}>" />
+	<meta name="robots" content="<{$meta_robots}>" />
+	<meta name="keywords" content="<{$meta_keywords}>" />
+	<meta name="description" content="<{$meta_description}>" />
+	<meta name="rating" content="<{$meta_rating}>" />
+	<meta name="author" content="<{$meta_author}>" />
+	<meta name="copyright" content="<{$meta_copyright}>" />
+	<meta name="generator" content="<{$site_name}>" />
+
+<!-- Favicon -->
+	<link rel="shortcut icon" type="image/ico" href="<{$url}>/favicon.ico" />
+
+<!-- Core Scripts -->
+<{$core_scripts}>
+
+<!-- CSS -->
+	<link rel="stylesheet" type="text/css" media="all" title="Style sheet" href="<{$image_url}>style.css" />
+	<link rel="stylesheet" type="text/css" media="screen" href="<{$image_url}>js/superfish.css" />
+
+<!--[if lt IE 8]>
+<script src="http://ie7-js.googlecode.com/svn/version/2.0(beta3)/IE8.js" type="text/javascript"></script>
+<![endif]-->
+
+<script type="text/javascript" src="<{$image_url}>js/cookie.js"></script>
+<script type="text/javascript" src="<{$image_url}>js/hoverIntent.min.js"></script>
+<script type="text/javascript" src="<{$image_url}>js/superfish.js"></script>
+<script type="text/javascript" src="<{$image_url}>js/supersubs.js"></script>
+<script type="text/javascript" src="<{$image_url}>js/quicksearch.js"></script>
+
+<script type="text/javascript">
+var suggestpath = "<{$icms_url}>/suggest.php";
+var helpfile = "<{$icms_url}>/help.html";
+ jQuery(document).ready(function(){
+  jQuery("ul.sf-menu").supersubs({
+   minWidth:    12,
+   maxWidth:    27,
+   extraWidth:  1
+  }).superfish({
+   animation: {opacity:'show',height:'show'},
+   delay:     900,
+   speed:       'fast'
+  });
+ jQuery('#suggestions').hide();
+ jQuery('#inputString').attr("value","Quick Search...");
+ jQuery('#inputString').focus(function() {
+  jQuery('#inputString').attr("value","");
+ }).blur(function() {
+  jQuery('#inputString').attr("value","Quick Search...");
+  jQuery('#suggestions').fadeOut();
+ });
+ jQuery('#needhelp').colorbox({href:""+helpfile+""});
+
+ });
+</script>
+
+</head>
+<body>
+<div id="outer_header">
+	<div id="header">
+		<div id="logo">
+		<{if $adm_left_logo == ''}>&nbsp;<{else}>
+		    <{if  $adm_left_logo_url != ''}>
+			    <a href="<{$adm_left_logo_url}>" title="<{if $adm_left_logo_alt != ''}><{$adm_left_logo_alt}><{else}>ImpressCMS<{/if}>">
+			<{/if}>
+			<img src="<{$icms_url}><{$adm_left_logo}>" alt="<{if $adm_left_logo_alt != ''}><{$adm_left_logo_alt}><{else}>ImpressCMS<{/if}>"/>
+		    <{if  $adm_left_logo_url != ''}>
+			    </a>
+			<{/if}>
+		<{/if}>
+		</div>
+		<div id="quicksearch">
+		 <form id="searchform">
+		  <div><input type="text" size="30" value="Quick Search..." id="inputString" onkeyup="lookup(this.value);" /></div>
+		  <div id="suggestions"></div>
+        	 </form>
+		 <div id="needhelp"><a href="javascript: void(0);">Need Help?</a></div>
+                </div>
+	</div>
+</div>
+
+<div id="pagenav">
+	<div class="width"><{includeq file="$theme_name/adminnav.html"}></div>
+</div>
+<!-- Wrapper -->
+<div id="page">
+<div class="width">
+<div id="controller">
+
+ <div id="breadcrumbs">
+  <a href="<{$icms_url}>/admin.php">ACP Home</a> <span style="margin: 0px 4px;">&gt;</span> <{if $icms_dirname != 'system'}><a href="../"><{$icms_dirname}></a> <{if $breadcrumb != ''}><span style="margin: 0px 4px;">&gt;</span> <strong><{$breadcrumb}></strong><{/if}><{else}><strong><{$icms_pagetitle}><{/if}>
+ </div>
+
+ <div id="heyuser">Welcome <{$u_name}> - <a href="<{$url}>/user.php?op=logout">Logout</a></div>
+</div>
+<div id="pagearea">
+<!-- Leftside -->
+<{if $xoBlocks.canvas_left_admin || $xoBlocks.canvas_right_admin}><div id="leftside"><{else}><div id="leftside_full"><{/if}>
+	<{if $xoBlocks.page_topleft_admin or $xoBlocks.page_topcenter_admin or $xoBlocks.page_topright_admin}>
+	<div id="topblocks">
+		<{if $xoBlocks.page_topcenter_admin}>
+		<div class="topcenter">
+			<{foreach item=block from=$xoBlocks.page_topcenter_admin}>
+			<div class="tcwrap">
+			<div class="block_title"><{$block.title}><{$block.edit}></div>
+			<div class="block_content"><{$block.content}></div>
+			</div>
+			<{/foreach}>
+		</div>
+		<{/if}>
+		<{if $xoBlocks.page_topleft_admin}>
+		<div class="topleft">
+			<{foreach item=block from=$xoBlocks.page_topleft_admin}>
+			<div class="tbwrap">
+			<div class="block_title"><{$block.title}><{$block.edit}></div>
+			<div class="block_content"><{$block.content}></div>
+			</div>
+			<{/foreach}>
+		</div>
+		<{/if}>
+		<{if $xoBlocks.page_topright_admin}>
+		<div class="topright">
+			<{foreach item=block from=$xoBlocks.page_topright_admin}>
+			<div class="tbwrap">
+			<div class="block_title"><{$block.title}><{$block.edit}></div>
+			<div class="block_content"><{$block.content}></div>
+			</div>
+			<{/foreach}>
+		</div>
+		<{/if}>
+	</div>
+	<{/if}>
+
+	<!-- Page Content -->
+	<{if $main_content && $main_content != ''}><div id="content"><{$main_content}><div class="clear"></div></div><{/if}>
+
+	<!-- Bottom Blocks -->
+	<{if $xoBlocks.page_bottomleft_admin or $xoBlocks.page_bottomcenter_admin or $xoBlocks.page_bottomright_admin}>
+	<div id="bblocks">
+		<{if $xoBlocks.page_bottomleft_admin}>
+		<div class="bottomleft">
+			<{foreach item=block from=$xoBlocks.page_bottomleft_admin}>
+			<div class="bbwrap">
+			<div class="block_title"><{$block.title}><{$block.edit}></div>
+			<div class="block_content"><{$block.content}></div>
+			</div>
+			<{/foreach}>
+		</div>
+		<{/if}>
+		<{if $xoBlocks.page_bottomcenter_admin}>
+		<div class="bottomcenter">
+			<{foreach item=block from=$xoBlocks.page_bottomcenter_admin}>
+			<div class="bbwrap">
+			<div class="block_title"><{$block.title}><{$block.edit}></div>
+			<div class="block_content"><{$block.content}></div>
+			</div>
+			<{/foreach}>
+		</div>
+		<{/if}>
+		<{if $xoBlocks.page_bottomright_admin}>
+		<div class="bottomright">
+			<{foreach item=block from=$xoBlocks.page_bottomright_admin}>
+			<div class="bbwrap">
+			<div class="block_title"><{$block.title}><{$block.edit}></div>
+			<div class="block_content"><{$block.content}></div>
+			</div>
+			<{/foreach}>
+		</div>
+		<{/if}>
+	</div>
+	<{/if}>
+</div>
+<!-- End Leftside -->
+
+<!-- Rightside -->
+<div id="rightside">
+	<{if $xoBlocks.canvas_left_admin}>
+	<div id="lblocks">
+		<div class="left">
+		<{foreach item=block from=$xoBlocks.canvas_left_admin}>
+			<div class="lbwrap">
+			<div class="block_title"><{$block.title}><{$block.edit}></div>
+			<div class="block_content"><{$block.content}></div>
+			</div><br />
+		<{/foreach}>
+		</div>
+	</div>
+	<{/if}>
+	<{if $xoBlocks.canvas_right_admin}>
+	<div id="rblocks">
+		<div class="right">
+		<{foreach item=block from=$xoBlocks.canvas_right_admin}>
+			<div class="rbwrap">
+			<div class="block_title"><{$block.title}><{$block.edit}></div>
+			<div class="block_content"><{$block.content}></div>
+			</div><br />
+		<{/foreach}>
+		</div>
+	</div>
+	<{/if}>
+
+</div><!-- End Rightside -->
+
+<div class="clear">&nbsp;</div>
+</div><!-- End PageArea -->
+</div><!-- End Width -->
+<div class="clear"></div>
+</div><!-- End Page -->
+
+<div id="outer_footer">
+<div id="footer">
+	<div id="footer_text"><{$icms_footadm}></div>
+	<div id="credits">Reflex ACP Theme by: <a href="http://www.mrtheme.com">Mr. Theme Design</a></div>
+</div>
+</div>
+</body>
+</html>

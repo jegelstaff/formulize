@@ -1,0 +1,104 @@
+/* tables and cells */
+table {	width: 100%;}
+table td {padding: 0; border-width: 0;	vertical-align: top;}
+th {padding: 2px; vertical-align : middle;}
+.outer {width: 100%; border: 1px solid #ccc;}
+.outer th {background: #ecf4fa; color: #444;}
+.even {background: #f1f2f3; color: #444; vertical-align: middle; padding: 2px;}
+.even:hover {background: #f6f7f7;}
+.odd, .head {background: #dcdee0; color: #444; vertical-align: middle; padding: 2px;}
+.odd:hover, .head:hover {background: #e0e2e4;}
+#form_SystemBlocksadmin .outer td img {width: 16px; height: 16px; text-align: left; vertical-align: middle;}
+td.visible img {height: 14px; width: 14px;}
+#moduleadmin .outer td a img, .outer td a img {width: 20px; height: 20px; text-align: left; vertical-align: middle; padding: 2px;}
+#moduleadmin .outer td div#modlogo a img, div#modlogo img{width: 37px; height: 35px;}
+#pick div {color: #444;}
+#memberslist a img {width: auto;height: auto;}
+.foot {}
+tr.even td {;}
+tr.odd td {}
+/* Tooltip box */
+.caption-text img {float: right; padding-top: 2px; z-index: 9999;}
+span.helptext {position: absolute; left: 50%; margin-left: 260px; margin-top: -20px; z-index: 9000; background-color:#000; outline:1px solid #669; border:2px solid #fff; padding:10px 15px; width:200px; display:none; color:#fff; text-align:left; font-size:12px; font-weight:normal;
+/* outline radius for mozilla/firefox only */ 
+outline-radius:4px; 
+-moz-outline-radius:4px; 
+-webkit-outline-radius:4px;
+/* opacity for tooltip box */ 
+filter:alpha(opacity=70);
+-moz-opacity:0.75;
+-khtml-opacity: 0.75;
+opacity: 0.75;
+}
+span.helptext a {color: #fff; font-weight: bold;}
+span.helptext a:hover {text-decoration: underline;}
+ul.menusummary {margin-left: 20px;}
+/* core messages */
+.errorMsg { background-color: #FFCCCC;  color:inherit; text-align: center; border-top: 1px solid #DDDDFF; border-left: 1px solid #DDDDFF; border-right: 1px solid #aaa; border-bottom: 1px solid #aaa;font-weight: bold; padding: 10px;}
+.confirmMsg { background-color: #DDFFDF; color: #136C99; text-align: center; border-top: 1px solid #DDDDFF; border-left: 1px solid #DDDDFF; border-right: 1px solid #aaa; border-bottom: 1px solid #aaa;font-weight: bold; padding: 10px;}
+.resultMsg { background-color : #bbb; color: #333; text-align: center; border-top: 1px solid #ccc; border-left: 1px solid #ccc; font-weight: bold; border-right: 1px solid #666; border-bottom: 1px solid #666; padding: 10px;}
+
+/* codes and quotes */
+.xoopsCode { background-color: #ccc; color:inherit; border: 1px inset #000080; font-family: "Courier New",Courier,monospace; padding: 0 6px 6px 6px; max-height: 200px; overflow: auto;}
+.xoopsQuote { background-color: #ccc; color:inherit; border: 1px inset #000080; font-family: "Courier New",Courier,monospace; font-style:italic; padding: 0 6px 6px 6px;}
+.icmsCode { background-color: #ccc; color:inherit; border: 1px inset #000080; font-family: "Courier New",Courier,monospace; padding: 0 6px 6px 6px; max-height: 200px; overflow: auto;}
+.icmsQuote { background-color: #ccc; color:inherit; border: 1px inset #000080; font-family: "Courier New",Courier,monospace; font-style:italic; padding: 0 6px 6px 6px;}
+code {font-family: "Courier New",Courier,monospace; padding: 6px; font-size: .9em;}
+div.modupdpoutput {max-height: 350px; overflow: auto;}
+div.successMsg {background: #cffbce; border: 1px solid #92f58f; padding: 3px; text-align: center;}
+
+/* ===== Redirect messages ===== */
+.errorMsg,.confirmMsg, .resultMsg , .warningMsg, .successMsg { padding: 3px; text-align:center; border: 1px solid;}
+.errorMsg {background: #fbced0; border: #fe8e8e; }
+.confirmMsg {background: #ced3fb; border-color: #8e8efe; }
+.warningMsg {background: #fbcefa; border: #fe8efd; }
+.resultMsg {background: #fafbce; border: #fef28e; }
+.errorMsg a {background: transparent;}
+.confirmMsg a {background: transparent;}
+.successMsg {background: #cffbce; border: #8efe91; }
+
+div .errorMsg a {text-decoration: underline;}
+div .errorMsg a:hover {color: #000;}
+
+#buttontop {float: left; width: 99.5%; background: #e7e7e7; line-height:normal; margin: 0; padding: 1px; border: 1px solid #fff; outline: 1px solid #ccc; margin-bottom: 10px;}
+#buttonbar {float:left;	width: 99.5%; background: #e7e7e7; line-height:normal; padding: 1px; border: 1px solid #fff; outline: 1px solid #ccc; margin-bottom: 10px;}
+#buttonbar ul { margin:0; margin: 15px 2px 0px 0px; list-style: none; border-left: 1px solid #ccc;}
+#buttonbar li {float: left; margin:0; padding:0;}
+#buttonbar li:first-child {border-left: 1px solid #ccc;}
+
+#buttonbar a {float:left; margin:0; padding:4px 8px; text-decoration:none; background: #f1f2f3; border-right: 1px solid #ccc; border-top: 1px solid #ccc;}
+#buttonbar a span {float:left; display:block; color:#444; vertical-align: middle;}
+/* Commented Backslash Hack hides rule from IE5-Mac \*/
+#buttonbar a span {float:none;}
+/* End IE5-Mac hack */
+
+#buttonbar a:hover span {color:#444;}
+#buttonbar #current a {background: #ecf4fa;}
+#buttonbar #current a span {color:#000;}
+#buttonbar a:hover {color: #000; background: #dcdee0;}
+#buttonbar a:hover span {}
+
+#groupform .icms_checkboxoption {width: 48.9%; padding: 2px;}
+.icms_checkboxoption {float: left;}
+.icms_checkboxoption:hover {background: #f1f2f3;}
+.icms_checkboxoption input[type=checkbox] {float: left; outline: none; background: transparent; border: 0;}
+.icms_checkboxoption label {float: left; overflow: hidden; vertical-align: middle;}
+.icms_checkboxoption label a {float: left; overflow: hidden;}
+#groupform .even b {clear: both; margin: 5px 0px; float: left; width: 99%; background: #dcdee0; padding: 3px; border-bottom: 1px solid #ccc;}
+
+/*image manager*/
+.imanager_image_box {float:left; text-align:center; width:165px; background: #e7e7e7; overflow: hidden; display: inline-block; padding: 1px; border: 1px solid #fff; outline: 1px solid #ccc; margin-bottom: 10px;}
+.imanager_image_box:hover {background-color: #f6f7f7;}
+.imanager_image_img {display:block; overflow:hidden;}
+.imanager_image_img img{max-width:159px;}
+.imanager_image_label{display:block; font-size: 1.1em; color: #E24949; font-weight:bold; line-height:180%;}
+.imanager_image_info{display:block; font-size: .9em; font-weight:normal; color: #333333; line-height:120%; text-align:left;}
+.imanager_image_btns{display:block; margin-top:3px;}
+.img_list_info_panel{padding: 5px; margin:5px;}
+
+/*autotask editor fix*/
+#addautotasks #sat_code_row .odd {width: 70%;}
+
+div#system_info table {float: left; width: 99.5%; background: #e7e7e7; line-height:normal; margin: 0; padding: 1px; border: 1px solid #fff; outline: 1px solid #ccc; margin-top: 10px;}
+div#system_info tr {padding: 3px;}
+div#system_info tr:hover {background: #f6f7f7;}

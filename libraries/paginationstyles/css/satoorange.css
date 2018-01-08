@@ -1,0 +1,44 @@
+/*
+Plugin Name: sato-orange
+Plugin URI: http://www.impresscms.de/
+Author: René Sato
+Author URI: http://www.impresscms.de/
+*/
+/*CSS sato style pagination*/
+div.pagination.satoorange {
+	padding: 3px;
+	margin: 3px;
+	margin-bottom: 10px;
+	text-align:center;
+}
+
+div.pagination.satoorange a {
+	padding: 2px 5px 2px 5px;
+	margin: 2px;
+	border: 1px solid #EEE;
+	text-decoration: none; /* no underline */
+	color: #636363;
+}
+
+div.pagination.satoorange a:hover {
+	background: #F3AC03 none repeat scroll 0 0;
+	border: 1px solid #E6E6E6;
+	color: #FFF;
+}
+
+div.pagination.satoorange a:active {
+	border: 1px solid #E6E6E6;
+	color: #666;
+}
+div.pagination.satoorange .current {
+	padding: 2px 5px 2px 5px;
+	margin: 2px;
+	border: 1px solid #E6E6E6;
+	color: #DDD;
+}
+div.pagination.satoorange .disabled {
+	padding: 2px 5px 2px 5px;
+	margin: 2px;
+	border: 1px solid #E6E6E6;
+	color: #DDD;
+}

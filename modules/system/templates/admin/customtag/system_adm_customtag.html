@@ -1,0 +1,16 @@
+<div class="CPbigTitle" style="background-image: url(<{$xoops_url}>/modules/system/admin/customtag/images/customtag_big.png)"><{$smarty.const._CO_ICMS_CUSTOMTAGS}></div><br />
+
+<{if $icms_custom_tag_explain}>
+	<h1><{$smarty.const._CO_ICMS_CUSTOMTAGS_EXPLAIN_TITLE}></h1>
+	<p><{$smarty.const._CO_ICMS_CUSTOMTAGS_EXPLAIN}></p>
+<{/if}>
+
+<p><{$icms_custom_tag_title}></p>
+
+<{if $icms_customtag_table}>
+	<{$icms_customtag_table}>
+<{/if}>
+
+<{if $addcustomtag}>
+	<{includeq file='db:system_common_form.html' form=$addcustomtag}>
+<{/if}>

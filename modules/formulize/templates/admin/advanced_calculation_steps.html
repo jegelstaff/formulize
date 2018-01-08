@@ -1,0 +1,96 @@
+<{* form elements must be named with their object name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a property of an object to update *}>
+<{* securitytoken should be part of the form *}>
+<{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
+
+<form id="form-<{$number}>" class="formulize-admin-form">
+<{$securitytoken}>
+<input type="hidden" name="formulize_admin_handler" value="advanced_calculation_steps">
+<input type="hidden" name="formulize_admin_key" value="<{$content.acid}>">
+<input type="hidden" name="formulize_admin_op" value="">
+<input type="hidden" name="formulize_admin_index" value="">
+<input type="hidden" name="reload_advanced_calculation_steps" value="">
+<input type="hidden" name="steporder" value="">
+<input type="hidden" name="conditionsdelete" value="">
+
+
+
+    <p><a name="addstep" href=""><img src="../images/filenew2.png"> Create a new step</a></p>
+    <h2>Manage the steps in this Procedure:</h2>
+    <p>Click and drag the steps to re-order them</p>
+    <!--<p><a href="ui.php?page=screen&tab=steps&aid=<{$content.aid}>&fid=<{$content.fid}>&acid=<{$content.acid}>&op=new">Create a new step</a></p>-->
+  
+<div id="sortable-list">
+<{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/advanced_calculation_steps_sections.html" sections=$content.steps}>
+</div>
+
+
+</form>
+
+
+<script type='text/javascript'>
+
+$(".savebutton").click(function() {
+  $(".required_formulize_element").each(function() {
+    if($(this).val() == "" && $(this).hasClass('steptitle')) {
+      alert("Steps must have names!");
+      $(this).focus();
+    }
+	});
+});
+
+$("[name=addcon]").click(function () {
+	$("[name=reload_advanced_calculation_steps]").val(1);
+  $(".savebutton").click();
+	return false;
+});
+
+$(".conditionsdelete").click(function () {
+	$("[name=conditionsdelete]").val($(this).attr('target'));
+	$("[name=reload_advanced_calculation_steps]").val(1);
+  $(".savebutton").click();
+	return false;
+});
+
+
+  $(".steptitle").keydown(function () {
+    $("[name=reload_advanced_calculation_steps]").val(1);
+  });
+  $(".condition_term").keydown(function () {
+    $("[name=reload_advanced_calculation_steps]").val(1);
+  });
+  
+
+  $("[name=addstep]").click(function () {
+    $("[name=formulize_admin_op]").val('addstep');
+    $(".savebutton").click();
+    return false;
+  });
+  
+  
+	$("[name=delstep]").click(function () {
+			var answer = confirm('Are you sure you want to delete this step?');
+			if (answer)	{
+		    $("[name=formulize_admin_op]").val('delstep');
+		    $("[name=formulize_admin_index]").val($(this).attr('target'));
+		    $(".savebutton").click();
+			}
+		  return false;
+	});
+  
+	$("[name=clonestep]").click(function () {
+    $("[name=formulize_admin_op]").val('clonestep');
+    $("[name=formulize_admin_index]").val($(this).attr('target'));
+    $(".savebutton").click();
+    return false;
+	});
+
+  $(".savebutton").click(function () {
+  	$("[name=steporder]").val($("#accordion-3").sortable('serialize')); 
+  });
+
+  $("#accordion-3").bind( "sortupdate", function(event, ui) {
+    setDisplay('savewarning','block');
+  });
+
+</script>

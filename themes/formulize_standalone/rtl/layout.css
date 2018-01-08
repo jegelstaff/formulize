@@ -1,0 +1,103 @@
+/* ---------- Canvas rules ---------- */
+
+#xo-canvas {
+	margin: 0;
+	width: 100%;
+}
+
+#xo-canvas-content {
+	margin-left: 30px;
+	margin-right: 30px;
+}
+
+#xo-canvas-columns {
+	margin:			0px 10px;
+	padding-right:	4px;
+	margin-top:		12px;
+}
+
+#xo-canvas-leftcolumn {
+	float:			right;
+	width:			170px;
+	margin-right:	-170px;
+}
+
+* html #xo-canvas-leftcolumn {
+	margin-left:	-85px;
+}
+
+#xo-canvas-rightcolumn {
+	float:			left;
+	width:			170px;
+	margin-left:	-170px;
+}
+* html #xo-canvas-rightcolumn {
+	margin-left:	-90px;
+	margin-right:	-100px;
+}
+
+@media all and (min-width: 0px) {
+head~body #xo-canvas-rightcolumn {
+	margin-right:	-170px;
+}
+}
+
+/* ----------Canvas rules (when columns are visible) ---------- */
+
+#xo-canvas.leftcolumn-layout #xo-canvas-columns, #xo-canvas.threecolumns-layout #xo-canvas-columns { padding-right: 170px; }
+#xo-canvas.rightcolumn-layout #xo-canvas-columns, #xo-canvas.threecolumns-layout #xo-canvas-columns {	padding-left: 170px; }
+ #xo-footer { clear: both;}
+
+/* ----------Page [center column] rules ---------- */
+
+#xo-page {
+	float:			left;
+	width:			96%;
+}
+
+/* ------- Top and bottom zones (2 columns) ------- */
+
+#xo-page-topleftblocks, #xo-page-bottomleftblocks {
+	float:			left;
+	width:			48%;
+	margin-left:	1%;
+	margin-right:	1%;
+	padding:		0px;
+}
+#xo-page-toprightblocks, #xo-page-bottomrightblocks {
+	float:			right;
+	width:			48%;
+	margin-left:	1%;
+	margin-right:	1%;
+}
+* html #xo-page-topleftblocks, * html #xo-page-bottomleftblocks,
+* html #xo-page-toprightblocks, * html #xo-page-bottomrightblocks
+{
+	width:			47%;
+}
+
+#xo-page-topcenterblocks, #xo-page-bottomcenterblocks {
+	clear:			both;
+	margin-left:	1%;
+	margin-right:	1%;
+}
+/* ------- Top and bottom zones (3 columns) ------- */
+
+#xo-page-topblocks.xo-lcrpageblocks .xo-blockszone, #xo-page-bottomblocks.xo-lcrpageblocks .xo-blockszone {
+	float:			right;
+	clear:			none;
+	width:			31.2%;
+}
+
+* html #xo-page-topblocks.xo-lcrpageblocks .xo-blockszone,
+* html #xo-page-bottomblocks.xo-lcrpageblocks .xo-blockszone {
+	width:			30.6%;
+}
+
+#xo-page-topblocks.xo-lcrpageblocks #xo-page-topleftblocks {}
+
+#xo-content {	
+	position:		relative;
+	clear: both;
+}
+.outer { direction : rtl;}

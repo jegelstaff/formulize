@@ -1,0 +1,44 @@
+/*
+Plugin Name: WP-Digg Style Paginator
+Plugin URI: http://www.mis-algoritmos.com/2007/09/09/wp-digg-style-pagination-plugin-v-10/
+Author: Victor De la Rocha
+Author URI: http://www.mis-algoritmos.com
+*/
+/*Green-Black Style*/
+div.pagination.greenblack {
+	padding:3px;
+	margin:3px;
+	margin-bottom:10px;
+	text-align:center;
+}
+
+div.pagination.greenblack a {
+	padding: 2px 5px 2px 5px;
+	margin-right: 2px;
+	border: 1px solid #2C2C2C;
+	text-decoration: none; 
+	color: #fff;
+	background: #2C2C2C url(../images/greenblack_bg.gif);
+}
+
+div.pagination.greenblack a:hover, div.pagination a:active {
+	border:1px solid #AAD83E;
+	color: #FFF;
+	background: #AAD83E url(../images/greenblack_bg_hover.gif);
+}
+
+div.pagination.greenblack span.current {
+	padding: 2px 5px 2px 5px;
+	margin-right: 2px;
+	border: 1px solid #AAD83E;
+    font-weight: bold;
+	background: #AAD83E url(../images/greenblack_bg_hover.gif);
+	color: #FFF;
+}
+
+div.pagination.greenblack span.disabled {
+	padding: 2px 5px 2px 5px;
+	margin-right: 2px;
+	border: 1px solid #f3f3f3;
+	color: #ccc;
+}

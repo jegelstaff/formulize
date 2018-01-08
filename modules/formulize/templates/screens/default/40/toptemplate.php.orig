@@ -1,0 +1,193 @@
+<?php
+
+include_once XOOPS_ROOT_PATH."/modules/formulize/include/elementdisplay.php";
+
+print "<h1>".$screen->getVar('title')."</h1>";
+
+print "Show courses for these semesters:<br>";
+$element_handler = xoops_getmodulehandler('elements', 'formulize');
+$semesterElement = $element_handler->get('ro_module_semester');
+$semesters = array_keys($semesterElement->getVar('ele_value'));
+foreach($semesters as $sem) {
+    $checked = strstr($_POST['search_ro_module_semester'], $sem) ? 'checked' : "";
+    print "<input type='checkbox' id='$sem' class='sem' name='sem' value='$sem' $checked> <label for='$sem'>$sem</label><br>\n";     
+}
+
+?>
+<script>
+    jQuery('.sem').click(function() {
+        var currentSearch = jQuery("[name='search_ro_module_semester']").val();
+        var clickedTerm = "OR="+jQuery(this).val()+"//";
+        if(jQuery(this).attr('checked')) {
+            jQuery("[name='search_ro_module_semester']").val(currentSearch+clickedTerm);
+        } else {
+            jQuery("[name='search_ro_module_semester']").val(currentSearch.replace(clickedTerm,''));
+        }
+    });
+</script>
+<?php
+
+print "Filter by course code or title: ".$quickSearchro_module_full_course_title."<br>";
+
+print $saveButton;
+
+print "<p>New Course Title: <input type='text' name='course_title' /><br>\n";
+print "Number: <input type='text' name='course_number' /><br>\n";
+print "Type: <br>";
+displayElement("", 'ro_module_lecture_studio', 'new', 'course_type');
+print "<br>\nWeight: <br>";
+displayElement("", 'ro_module_course_weight', 'new', 'course_weight');
+print "<br>\nSemester: <br>";
+displayElement("", 'ro_module_semester', 'new', 'course_semester');
+print "<br>\nSection Number: <input type='text' name='section_number' /><br>\n";
+print "<input type='radio' id='new' name='course_proposed_or_new' value='New' /><label for='new'>New course to be developed</label><br>\n";
+print "<input type='radio' id='proposed' name='course_proposed_or_new' value='Proposed' /><label for='proposed'>Existing course to be proposed</label><br>\n";
+
+print $newCourseButton;
+
+print "<hr>\n";
+
+// delete and then rewrite tutoral-taught-by-instructor assignments
+global $xoopsDB;
+foreach($_POST['tutorial-lecture-pairs'] as $section_id=>$tutorial_id) {
+    $deleteSQL = "DELETE FROM ".$xoopsDB->prefix('formulize_instr_assignments')." WHERE instr_assignments_section_number = ".intval($tutorial_id);
+    $xoopsDB->queryF($deleteSQL);
+    $numberOfInstructors = 0;
+    foreach(explode(",",$_POST['instructor-assignments-for-lectures'][$section_id]) as $instr_assign_id) {
+        if(isset($_POST['decue_15_'.$instr_assign_id.'_134'])) {
+            $numberOfInstructors++;
+            formulize_writeEntry(array(134=>prepDataForWrite(134, $_POST['de_15_'.$instr_assign_id.'_134']), 133=>$tutorial_id), 'new');
+        }
+    }
+    // set the correct number of instructors for the tutorial, and update weighting
+    $GLOBALS['formulize_forceDerivedValueUpdate'] = true;
+    getData(4,4,$tutorial_id); // relationship 4, form 4 (course components plus the RO module entry, and other related data)
+    unset($GLOBALS['formulize_forceDerivedValueUpdate']);
+}
+
+// erase any empty instructor assignment entries (form 15)
+$emptyEntriesSQL = "SELECT entry_id as entry_id FROM ".$xoopsDB->prefix('formulize_instr_assignments')." WHERE instr_assignments_instructor IS NULL OR instr_assignments_instructor = ''";
+$emptyEntriesRes = $xoopsDB->query($emptyEntriesSQL);
+$GLOBALS['formulize_emptyEntries'] = array();
+while($record = $xoopsDB->fetchArray($emptyEntriesRes)) {
+    $GLOBALS['formulize_emptyEntries'][] = $record['entry_id']; // flag them for later
+}
+$deleteSQL = "DELETE FROM ".$xoopsDB->prefix('formulize_instr_assignments')." WHERE instr_assignments_instructor IS NULL OR instr_assignments_instructor = ''";
+$xoopsDB->queryF($deleteSQL);
+
+// update derived values for all instructors in the current program (1 is HR module)
+$GLOBALS['formulize_forceDerivedValueUpdate'] = true;
+getData('',1,'hr_module_program/**/'.$_GET['program'].'/**/LIKE');
+unset($GLOBALS['formulize_forceDerivedValueUpdate']);
+
+$GLOBALS['dara_course']['title'] = "";
+$GLOBALS['dara_course']['sections'] = array();
+
+function printSections() {
+    $sectionData = $GLOBALS['dara_course']['sections'];
+    
+    if(count($sectionData)==0) { return; }
+    print "<h3>Sections:</h3>\n";
+    $instructorKeys = array();
+    $lecturesWithTutorials = array();
+    foreach($sectionData as $section) {
+        $entry_id = $section['entry_id'];
+        if($section['type'] != 'Tutorial') {
+            print "<div class='section'>\n";
+            $section['weighting'] += isset($section['has_tutorial']) ? $section['has_tutorial'] : 0; // add any tutorial weighting
+            print "<p>".$section['type']." ".$section['number']." (".number_format($section['weighting'],3)."):<br>\n";
+            if(isset($section['has_tutorial'])) {
+                print "(Includes teaching a tutorial)<br>\n";
+            }
+            print "Estimated enrollment: ".$section['enrollment']."<br>\n";
+            print "Times:</p>\n";
+            print "<ul>\n";
+            if(is_array($section['days'])) {
+                foreach($section['days'] as $i=>$day) {
+                    print "<li>$day ".$section['starts'][$i]." - ".$section['ends'][$i]."</li>\n";
+                }
+            } else {
+                print "<li>".$section['days']." ".$section['starts']." - ".$section['ends']."</li>\n";
+            }
+            print "</ul>\n";
+            print "<p>Instructor(s):<br>\n";
+            foreach($section['instr_assign_ids'] as $inst_assign_id) {
+                if($inst_assign_id AND !in_array($inst_assign_id,$GLOBALS['formulize_emptyEntries'])) {
+                    $instructorKeys[$entry_id][] = drawInstructorBox('instr_assignments_instructor',$inst_assign_id,$entry_id);
+                }
+            }
+            // draw one empty box for a new instructor assignment
+            $instructorKeys[$entry_id][] = drawInstructorBox('instr_assignments_instructor',"new",$entry_id);
+            print "</p></div>\n";
+        } else {
+            print "<input type='hidden' name='tutorial-lecture-pairs[".$sectionData[$section['related_section']]['entry_id']."]' value='$entry_id' />\n";
+            $lecturesWithTutorials[] = $sectionData[$section['related_section']]['entry_id'];
+        }
+    }
+    foreach($lecturesWithTutorials as $entry_id) {
+        print "<input type='hidden' name='instructor-assignments-for-lectures[$entry_id]' value='".implode(',',$instructorKeys[$entry_id])."' />\n";
+    }
+}
+
+function drawInstructorBox($element, $id, $parentId) {
+    static $newInstructors = 0;
+    print "&nbsp;";
+    if($id>0) { // draw the existing instructor assignment box
+        displayElement('',$element,$id);
+        $instructorKey = $id;
+    } else { // draw a box for a new assignment, plus a corresponding hidden element to tie this assignment back to the right section
+        $newInstructors++;
+        displayElement('',$element,"new".$newInstructors);
+        print "<input type='hidden' id='decue_15_new".$newInstructors."_133' name='decue_15_new".$newInstructors."_133' value=1 />\n";
+        print "<input type='hidden' id='de_15_new".$newInstructors."_133' name='de_15_new".$newInstructors."_133' value=".$parentId." />\n";
+        $instructorKey = 'new'.$newInstructors;
+    }
+    print "<br>\n";
+    return $instructorKey;
+}
+
+function readSection($entry, $entry_id, $type) {
+    $GLOBALS['dara_course']['sections'][display($entry, 'sections_section_number')]['entry_id'] = $entry_id;
+    $GLOBALS['dara_course']['sections'][display($entry, 'sections_section_number')]['type'] = $type;
+    $GLOBALS['dara_course']['sections'][display($entry, 'sections_section_number')]['number'] = display($entry, 'sections_section_number');
+    $GLOBALS['dara_course']['sections'][display($entry, 'sections_section_number')]['weighting'] = display($entry, 'teaching_weighting');
+    $GLOBALS['dara_course']['sections'][display($entry, 'sections_section_number')]['enrollment'] = display($entry, 'sections_estimated_enrollment');
+    $GLOBALS['dara_course']['sections'][display($entry, 'sections_section_number')]['days'] = display($entry, 'section_times_day');
+    $GLOBALS['dara_course']['sections'][display($entry, 'sections_section_number')]['starts'] = display($entry, 'section_times_start_time');
+    $GLOBALS['dara_course']['sections'][display($entry, 'sections_section_number')]['ends'] = display($entry, 'section_times_end_time');
+    $GLOBALS['dara_course']['sections'][display($entry, 'sections_section_number')]['instr_assign_ids'] = internalRecordIds($entry, 15); // 15 is instructor assignments form
+    $GLOBALS['dara_course']['sections'][display($entry, 'sections_section_number')]['related_section'] = display($entry, 'course_components_related_lecture');
+}
+
+?>
+
+<style>
+    #controls li {
+        float: none !important;
+        list-style: inside disc;
+    }
+    #controls .section {
+        float: left;
+        padding-right: 2em;
+    }
+    #controls h2 {
+        padding-top: 2em;
+        clear: both;
+    }
+</style>
+
+<script>
+    // neuter all new entry elements, and then selectively reenable when a selectbox is changed
+    jQuery(window).load(function() {
+        jQuery("input[name^='decue_15_new']").each(function() {
+            jQuery(this).attr('name','0509'+jQuery(this).attr('name'));
+        });
+        jQuery("select[name^='de_15_new']").change(function() {
+            var idstem = jQuery(this).attr('id').replace('de_','');
+            var cuestem = idstem.replace('134','133');
+            jQuery('#decue_'+idstem).attr('name','decue_'+idstem);
+            jQuery('#decue_'+cuestem).attr('name','decue_'+cuestem)
+        });
+    });
+    
+</script>

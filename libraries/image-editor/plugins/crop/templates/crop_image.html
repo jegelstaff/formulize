@@ -1,0 +1,70 @@
+    <link rel="stylesheet" href="<{$icms_lib_url}>/image-editor/plugins/crop/image-crop<{if $icms_rtl}>_rtl<{/if}>.css">
+	<script type="text/javascript">
+	/************************************************************************************************************
+	(C) www.dhtmlgoodies.com, April 2006
+	
+	This is a script from www.dhtmlgoodies.com. You will find this and a lot of other scripts at our website.	
+	
+	Terms of use:
+	You are free to use this script as long as the copyright message is kept intact. However, you may not
+	redistribute, sell or repost it without our permission.
+	
+	Thank you!
+	
+	www.dhtmlgoodies.com
+	Alf Magne Kalleland
+	
+	************************************************************************************************************/	
+	/* Variables you could modify */
+	
+	var crop_script_server_file = '<{$icms_lib_url}>/image-editor/plugins/crop/crop_image.php';
+	
+	var cropToolBorderWidth = 1;	// Width of dotted border around crop rectangle
+	var smallSquareWidth = 7;	// Size of small squares used to resize crop rectangle
+	
+	// Size of image shown in crop tool
+	var crop_imageWidth = <{$image.width}>;
+	var crop_imageHeight = <{$image.height}>;
+	
+	// Size of original image
+	var crop_originalImageWidth = <{$image.width}>;
+	var crop_originalImageHeight = <{$image.height}>;
+	
+	var crop_minimumPercent = 10;	// Minimum percent - resize
+	var crop_maximumPercent = 200;	// Maximum percent -resize
+	
+	
+	var crop_minimumWidthHeight = 15;	// Minimum width and height of crop area
+	
+	var updateFormValuesAsYouDrag = true;	// This variable indicates if form values should be updated as we drag. This process could make the script work a little bit slow. That's why this option is set as a variable.
+	if(!document.all)updateFormValuesAsYouDrag = true;	// Enable this feature only in IE
+	
+	/* End of variables you could modify */
+    </script>
+    <script type="text/javascript" src="<{$icms_lib_url}>/image-editor/plugins/crop/image-crop.js"></script>
+
+<form id="cropimgform" name="cropimgform">
+  <table width="100%">
+    <tr>
+      <td align="right">X:</td><td><input type="text" name="crop_x" id="input_crop_x" size="10"></td>
+    </tr>
+    <tr>
+      <td align="right">Y:</td><td><input type="text" name="crop_y" id="input_crop_y" size="10"></td>
+    </tr>
+    <tr>
+      <td align="right"><{$smarty.const._WIDTH}>:</td><td><input type="text" name="crop_width" id="input_crop_width" size="10"></td>
+    </tr>
+    <tr>
+      <td align="right"><{$smarty.const._HEIGHT}>:</td><td><input type="text" name="crop_height" id="input_crop_height" size="10"></td>
+    </tr>
+    <tr>
+      <td id="cropButtonCell" colspan="2" align="center">
+        <input type="button" onclick="cropScript_executeCrop(this)" value="<{$smarty.const._CROP_PREVIEW}>">
+        <input type="button" onclick="cropScript_saveCrop(this)" value="<{$smarty.const._CROP_EXECUTE}>" />
+      </td>
+    </tr>
+  </table>
+  <input type="hidden" name="crop_percent_size" id="crop_percent_size" value="100">
+  <input type="hidden" id="image_path" value="<{$image.path}>">
+  <input type="hidden" id="image_url" value="<{$image.url}>">
+</form>

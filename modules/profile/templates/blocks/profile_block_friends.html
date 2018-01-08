@@ -1,0 +1,4 @@
+<{section name=i loop=$block.friends}>
+<a href="<{$icms_url}>/pmlite.php?send2=1&amp;to_userid=<{$block.friends[i].friend_uid}>" class="block-profile-pm"><img src="<{$icms_url}>/images/icons/pm.gif" alt="" /></a>&nbsp;<{$block.friends[i].uname}>
+<{/section}>
+<{if $block.jQuery}><script type="text/javascript"><{$block.jQuery}></script><{/if}>

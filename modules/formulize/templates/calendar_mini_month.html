@@ -1,0 +1,139 @@
+<style>
+a.info
+{
+    position: relative;
+    z-index: 24; 
+    text-decoration: none
+}
+
+a.info:hover
+{
+	z-index:25; 
+    background-color: #ffffe1;
+    font-weight: bold;
+}
+
+a.info div {
+    font-weight: normal;
+}
+
+a.info div
+{
+	display: none
+}
+
+a.info:hover div
+{
+    display:block;
+    position:absolute;
+    top:2em; left:2em; width:15em;
+    background-color: #ffffe1 
+}
+</style>
+
+
+
+<form name=formulizecalcontrols id=formulizecalcontrols action=<{$currentURL}> method=post>
+
+<{foreach key=hidename item=hidevalue from=$hidden}>
+	<input type=hidden name=<{$hidename}> value=<{$hidevalue}>>
+<{/foreach}>
+
+<input type=hidden name=calview id=calview value="<{$calview}>">
+
+
+<!-- calendar start -->
+<table class=outer><tr>
+	<!-- Display calendar header - month and year. -->
+    <th colspan="7">
+	    <a href="" onclick="javascript: changeMonth('<{ $previousMonth }>'); return false;">&lt;</a>&nbsp;&nbsp;&nbsp;&nbsp;    
+	    <{ $MonthNames[$dateMonthZeroIndex] }> <{ $dateYear }>
+		&nbsp;&nbsp;&nbsp;&nbsp;<a href="" onclick="javascript: changeMonth('<{ $nextMonth }>'); return false;">&gt;</a>
+    </th>
+</tr>
+            
+           
+<!-- Display calendar week day names. -->
+<tr>
+	<{foreach item=weekName from=$WeekNames}>
+	    <td class=head><{$weekName}></td>
+	<{/foreach}>
+</tr>
+
+
+<!-- Display calendar body (days and weeks). -->
+<{foreach item=week from=$calendarData}>
+	<tr>
+	    <{foreach item=day from=$week}>
+	        <td class="<{ if $rowStyleEven == true }>even<{elseif $rowStyleEven == false }>odd<{/if}>">
+		        <{ if count($day[1]) > 0 }>
+	                <a class=info href="" onclick="return false;"><{ $day[0][0] }><div class="event-day-listing"><ul><{foreach item=dayItem from=$day[1]}><li><{ $dayItem[3] }></li><{/foreach}></ul></div></a>
+				<{else}>
+	                <{ $day[0][0] }>
+				<{/if}>
+            </td>
+	    <{/foreach}>
+        <{ if $rowStyleEven == true }><{ assign var="rowStyleEven" value=false }><{elseif $rowStyleEven == false }><{ assign var="rowStyleEven" value=true }><{/if}>
+    </tr>
+<{/foreach}>
+
+
+
+<!-- Display calendar footer. -->
+</table>
+
+
+
+<input type=hidden name=ventry id=ventry value="">
+<input type=hidden name=calfid id=calfid value="">
+<input type=hidden name=calfrid id=calfrid value="">
+<input type=hidden name=adddate id=adddate value="">
+
+<input type=submit style="width: 140px; visibility: hidden;" name=submitx value=''></input> 
+
+</form>
+
+
+	
+<script type='text/javascript'>
+
+window.document.formulizecalcontrols.ventry.value = '';
+window.document.formulizecalcontrols.calfid.value = '';
+window.document.formulizecalcontrols.calfrid.value = '';
+
+function changeSelector()
+{
+	newDate = window.document.formulizecalcontrols.yearSelector.options[
+    	window.document.formulizecalcontrols.yearSelector.selectedIndex].value 
+        + '-' + window.document.formulizecalcontrols.monthSelector.options[
+        window.document.formulizecalcontrols.monthSelector.selectedIndex].value;
+
+	changeMonth(newDate);
+}
+
+function changeMonth(newDate)
+{
+	window.document.formulizecalcontrols.calview.value = newDate;
+	window.document.formulizecalcontrols.submit();
+}
+
+function addNew(proxy,frid,fid,date) {
+	if(proxy) {
+		window.document.formulizecalcontrols.ventry.value = 'proxy';
+	} else {
+		window.document.formulizecalcontrols.ventry.value = 'addnew';
+	}
+	window.document.formulizecalcontrols.adddate.value = date;
+	window.document.formulizecalcontrols.calfrid.value = frid;
+	window.document.formulizecalcontrols.calfid.value = fid;
+	window.document.formulizecalcontrols.submit();
+}
+
+function goDetails(viewentry,frid,fid) {
+	window.document.formulizecalcontrols.ventry.value = viewentry;
+	window.document.formulizecalcontrols.calfrid.value = frid;
+	window.document.formulizecalcontrols.calfid.value = fid;
+	window.document.formulizecalcontrols.submit();
+}
+
+</script>

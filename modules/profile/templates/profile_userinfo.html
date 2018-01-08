@@ -1,0 +1,44 @@
+<div id="profile_header"><{$profile_module_home}></div><br />
+<{if $deleted}><div class="errorMsg"><{$deleted}></div><br /><{/if}>
+<{counter assign=catcount print=false}>
+<div class="profile-profile-group1">
+  <{foreach item=category from=$categories}>
+  <{if isset($category.fields)}>
+  <{if $catcount gt $break}>
+</div>
+<div class="profile-profile-group2">
+  <{/if}>
+  <div style="padding-bottom:10px;">
+  <table class="outer" cellpadding="4" cellspacing="1">
+    <tr>
+      <th colspan="2" align="center"><{$category.title}></th>
+    </tr>
+    <{foreach item=field from=$category.fields}>
+    <tr>
+      <td class="head"><{$field.title}></td>
+      <td class="even"><{$field.value}></td>
+    </tr>
+    <{/foreach}>
+  </table>
+  </div>
+  <{/if}>
+  <{counter}>
+  <{/foreach}>
+</div>
+
+<{if $modules}>
+<{counter assign=modcount print=false}>
+<{foreach item=module from=$modules}>
+<{counter}>
+<div style="width: 48%; float: <{$smarty.const._GLOBAL_LEFT}>; padding: 0px 5px 10px 0px;<{if $modcount % 2 == 0}> clear: <{$smarty.const._GLOBAL_LEFT}>;<{/if}>">
+  <h4><img src="<{$module.results.0.image}>" alt="<{$module.name}>" />&nbsp;<{$module.name}></h4>
+  <{foreach item=result from=$module.results}>
+  <strong><a href="<{$result.link}>"><{$result.title}></strong></b><br />
+  <small>(<{$result.time}>)</small><br />
+  <{/foreach}>
+  <{$module.showall_link}>
+</div>
+<{/foreach}>
+<{/if}>
+
+<{include file="db:profile_footer.html"}>

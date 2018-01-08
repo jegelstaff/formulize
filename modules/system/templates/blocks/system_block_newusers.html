@@ -1,0 +1,19 @@
+<table cellspacing="1px" class="outer">
+  <{foreach item=user from=$block.users}>
+  <tr class="<{cycle values="even,odd"}>" valign="middle">
+    <td align="center">
+      <{if $user.avatar != ""}>
+      <img src="<{$user.avatar}>" alt="<{$user.name}>'s avatar" width="32px" /><br />
+      <{/if}>
+      <a href="<{$xoops_url}>/userinfo.php?uid=<{$user.id}>" title="<{$user.name}>"><{$user.name}></a>
+      <{if $xoops_isadmin}><br />(<{$user.login_name}>)<{/if}>
+      <br /><{$user.joindate}>
+    </td>
+  </tr>
+  <{/foreach}>
+</table>
+<{if $block.index_enabled == true}>
+<{$block.lang_activeusers}>: <{$block.active}><br />
+<{$block.lang_inactiveusers}>: <{$block.inactive}><br />
+<{$block.lang_totalusers}>: <{$block.registered}><br />
+<{/if}>
