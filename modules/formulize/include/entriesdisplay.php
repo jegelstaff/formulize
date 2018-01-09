@@ -1264,6 +1264,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		if(!strstr($screen->getTemplate('toptemplate'), 'currentViewList') AND !strstr($screen->getTemplate('bottomtemplate'), 'currentViewList')) { print "<input type=hidden name=currentview id=currentview value=\"$currentview\"></input>\n"; } // print it even if the text is blank, it will be a hidden value in this case
 
         formulize_benchmark("before calling draw searches");
+        // if the last true is replaced with an array of only the handles that we need to generate, we'll save some processing time, could be a lot on a screen with lots of columns maybe. In general it just seems sloppy to brute force this.
 		$quickSearchBoxes = drawSearches($searches, $settings, $useCheckboxes, $useViewEntryLinks, 0, true, $hiddenQuickSearches, true); // first true means we will receive back the code instead of having it output to the screen, second (last) true means that all allowed filters should be generated
         formulize_benchmark("after calling draw searches");
 
@@ -1277,6 +1278,10 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
             }
             if(strstr($screen->getTemplate('toptemplate'), 'quickFilter' . $handle) OR strstr($screen->getTemplate('bottomtemplate'), 'quickFilter' . $handle) OR in_array($handle, $settings['pubfilters'])) {
                 $buttonCodeArray['quickFilter' . $handle] = $qscode['filter']; // set variables for use in the template
+                $foundQS = true;
+            }
+            if(strstr($screen->getTemplate('toptemplate'), 'quickMultiFilter' . $handle) OR strstr($screen->getTemplate('bottomtemplate'), 'quickMultiFilter' . $handle) OR in_array($handle, $settings['pubfilters'])) {
+                $buttonCodeArray['quickMultiFilter' . $handle] = $qscode['multiFilter']; // set variables for use in the template
                 $foundQS = true;
             }
             if(strstr($screen->getTemplate('toptemplate'), 'quickDateRange' . $handle) OR strstr($screen->getTemplate('bottomtemplate'), 'quickDateRange' . $handle) OR in_array($handle, $settings['pubfilters'])) {
@@ -1950,6 +1955,7 @@ function drawSearches($searches, $settings, $useBoxes, $useLinks, $numberOfButto
             if($filtersRequired === true OR in_array($cols[$i], $filtersRequired)) {
                 $quickSearchBoxes[$cols[$i]]['filter'] = formulize_buildQSFilter($cols[$i], $search_text);
                 $quickSearchBoxes[$cols[$i]]['dateRange'] = formulize_buildDateRangeFilter($cols[$i], $search_text);
+                $quickSearchBoxes[$cols[$i]]['multiFilter'] = formulize_buildQSFilterMulti($cols[$i], $search_text);
             }
         }
         //formulize_benchmark("done filter");
@@ -1974,7 +1980,8 @@ function drawSearches($searches, $settings, $useBoxes, $useLinks, $numberOfButto
         if(is_array($filtersRequired) OR $filtersRequired === true) {
           if($filtersRequired === true OR in_array($thisHQS, $filtersRequired)) {
             $quickSearchBoxes[$thisHQS]['filter'] = formulize_buildQSFilter($thisHQS, $search_text);
-	    $quickSearchBoxes[$thisHQS]['dateRange'] = formulize_buildDateRangeFilter($thisHQS, $search_text);
+            $quickSearchBoxes[$thisHQS]['dateRange'] = formulize_buildDateRangeFilter($thisHQS, $search_text);
+            $quickSearchBoxes[$thisHQS]['multiFilter'] = formulize_buildQSFilterMulti($thisHQS, $search_text);
           }
         }
                 // if we're drawing boxes, only draw hidden ones if they have not been drawn already and are (not published filters, or we're on the master page) 
@@ -1999,8 +2006,14 @@ function drawSearches($searches, $settings, $useBoxes, $useLinks, $numberOfButto
 	return $quickSearchBoxes;
 }
 
+// create a multi filter
+function formulize_buildQSFilterMulti($handle, $search_text) {
+    return formulize_buildQSFilter($handle, $search_text, true);
+}
+
 // THIS FUNCTION CREATES THE QUICKFILTER BOXES
-function formulize_buildQSFilter($handle, $search_text) {
+// multi returns a checkbox set, not dropdown
+function formulize_buildQSFilter($handle, $search_text, $multi=false) {
   
     if(substr($search_text, 0, 1) == "{" AND substr($search_text, -1) == "}") { 
         $requestKeyToUse = substr($search_text,1,-1);
@@ -2021,7 +2034,7 @@ function formulize_buildQSFilter($handle, $search_text) {
       if(substr($search_term, 0, 1)=="!" AND substr($search_term, -1) == "!") {
         $search_term = substr($search_term, 1, -1); // cut off any hidden filter values that might be present
       }
-      $filterHTML = buildFilter("search_".$handle, $id, _formulize_QSF_DefaultText, $name="{listofentries}", $search_term);
+      $filterHTML = buildFilter("search_".$handle, $id, _formulize_QSF_DefaultText, $name="{listofentries}", $search_term, false, 0, 0, false, $multi);
       return $filterHTML;
     }
     return "";
