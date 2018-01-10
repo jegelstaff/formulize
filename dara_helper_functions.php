@@ -547,6 +547,7 @@ function drawCourseBox($section, $sectionKey, $lecturesWithTutorials) {
     return $lecturesWithTutorials;
 }
 
+
 // prepare all the UI for the details box, for calendar pages
 function prepDetails($section, $sectionKey, $details, $instructorKeys) {
 
@@ -838,7 +839,7 @@ function getNamesPlusAvailLoads($instructors, $year) {
 	return $returnArray ? $namesPlusLoads : $namesPlusLoads[0];
 }
 
-function readSection($entry, $entry_id) {
+function readSection($entry, $entry_id, $sort='course') { // sort sets how the dara_sort array is built, different pages need to organize this info differently
     $title = display($entry, 'ro_module_full_course_title');
     $code = display($entry, 'ro_module_course_code');
     $sectionNumber = display($entry, 'sections_section_number');
@@ -944,8 +945,15 @@ function readSection($entry, $entry_id) {
         }
     }
     $semesterOrder = array("Fall - F"=>1, "Fall-Winter - Y"=>2,"Winter/Spring - S"=>3,"Summer (May, June) - F"=>4,"Summer - Y"=>5,"Summer (July, August) - S"=>6);
-    $sortKey = $year." ".$semesterOrder[$semester]." ".$code." ".$sectionNumber;
-    $GLOBALS['dara_sort'][$sortKey] = array($title, $sectionNumber, $totalConflictText, $code, $year);
+    if($sort=='course') {
+        $sortKey = $year." ".$semesterOrder[$semester]." ".$code." ".$sectionNumber;
+        $GLOBALS['dara_sort'][$sortKey] = array($title, $sectionNumber, $totalConflictText, $code, $year);
+    } else {
+        foreach($instructors as $instructor) {
+            $GLOBALS['dara_sort'][$instructor][] = array($title, $sectionNumber, $totalConflictText, $code, $year);
+        }
+    }
+    
 }
 
 // checks that the program matches what the user is supposed to be able to update
