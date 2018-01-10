@@ -902,7 +902,7 @@ function readSection($entry, $entry_id) {
             $targetEnd = date("H:i:s",$endTime + 3600);
             $targetStart = date("H:i:s", $startTime - 3600);
             $dayCodes = array("Monday"=>"M","Tuesday"=>"T","Wednesday"=>"W","Thursday"=>"R","Friday"=>"F","Saturday"=>"Sat","Sunday"=>"Sun");
-			$baseFilter = "instr_assignments_instructor/**/$instructor/**/=][section_times_start_time/**/$targetEnd/**/<][section_times_end_time/**/$targetStart/**/>][section_times_day/**/".$dayCodes[$day]."/**/=][entry_id/**/$entry_id/**/!=][ro_module_year/**/$year/**/="; // sections_section_number/**/$sectionNumber/**/!=][
+			$baseFilter = "instr_assignments_instructor/**/$instructor/**/=][section_times_start_time/**/$targetEnd/**/<][section_times_end_time/**/$targetStart/**/>][section_times_day/**/".$dayCodes[$day]."/**/=][entry_id/**/$entry_id/**/!=][ro_module_year/**/$year/**/=][ro_module_course_active/**/1/**/="; // sections_section_number/**/$sectionNumber/**/!=][
             if($semester == "Fall-Winter - Y") {
                 $semFilter = "ro_module_semester/**/Fall - F/**/=][ro_module_semester/**/Winter/Spring - S/**/=][ro_module_semester/**/Fall-Winter - Y/**/=";
             } elseif($semester == "Fall - F") {
