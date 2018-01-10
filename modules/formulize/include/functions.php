@@ -3946,7 +3946,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
     $multiIdCounter = 1;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     if($multi) { // create the hidden field that will get the value assigned for submission
-        $defaultHiddenValue = (substr($overrides,0,3)=="OR=" AND substr($overrides, -2) == "//") ? $overrides : "OR=".$overrides."//";
+        $defaultHiddenValue = (!$overrides OR (substr($overrides,0,3)=="OR=" AND substr($overrides, -2) == "//")) ? $overrides : "OR=".$overrides."//";
         $filter = "<input type='hidden' name='$id' id='".$id."_hiddenMulti' value='".strip_tags(htmlspecialchars($defaultHiddenValue))."'>\n";
     } else { // start the actual dropdown selectbox
         $filter = "<SELECT name=\"$id\" id=\"$id\"";
