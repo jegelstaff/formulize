@@ -1132,9 +1132,18 @@ class formulizeElementRenderer{
 				$elementCue = "";
 			}
 			
+            // put in special validation logic, if the element has special validation logic
+            // hard coded for dara to start with
+            if($true_ele_id == 88) {
+                $GLOBALS['formulize_specialValidationLogicHook'][$form_ele_id] = $true_ele_id;
+                $specialValidationLogicDisplay = "&nbsp;&nbsp;<span id='va_".trim($form_ele_id,"de_")."'></span>";
+            } else {
+                $specialValidationLogicDisplay = "";
+            }
+            
 			$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\"");
 			// reuse caption, put two spaces between element and previous entry UI
-			$form_ele_new = new xoopsFormLabel($form_ele->getCaption(), $form_ele->render().$previousEntryUIRendered.$elementCue);
+			$form_ele_new = new xoopsFormLabel($form_ele->getCaption(), $form_ele->render().$previousEntryUIRendered.$specialValidationLogicDisplay.$elementCue);
 			$form_ele_new->formulize_element = $this->_ele;
 			if($ele_desc != "") {
 				$ele_desc = html_entity_decode($ele_desc,ENT_QUOTES);
