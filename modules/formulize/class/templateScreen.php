@@ -42,7 +42,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 class formulizeTemplateScreen extends formulizeScreen {
 
     function __construct() {
-        $this->formulizeScreen();
+        parent::__construct();
         $this->initVar("custom_code", XOBJ_DTYPE_TXTAREA);
         $this->initVar("template", XOBJ_DTYPE_TXTAREA);
     }
