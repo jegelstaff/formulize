@@ -640,11 +640,11 @@ function emptyTemplateFixer($dir) {
                         // Recurse the directory
                         emptyTemplateFixer($dir . $file . '/');
                     }else{
-                        $fcontents = file_get_contents($file);
+                        $fcontents = file_get_contents($dir . $file);
 
                         // Overwrites files with only a header with empty contents
                         if(trim($fcontents) == "<?php"){
-                            file_put_contents($file, "");
+                            file_put_contents($dir . $file, "");
                         }
                     }
                 }
