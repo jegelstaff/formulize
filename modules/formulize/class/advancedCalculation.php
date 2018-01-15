@@ -39,7 +39,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 class formulizeAdvancedCalculation extends xoopsObject {
 
-	function formulizeAdvancedCalculation() {
+	function __construct() {
 		$this->initVar('acid', XOBJ_DTYPE_INT, '', true);
 		$this->initVar('fid', XOBJ_DTYPE_INT, '', true);
 		$this->initVar('name', XOBJ_DTYPE_TXTBOX, NULL, false, 255);
@@ -134,7 +134,7 @@ EOD;
 
 class formulizeAdvancedCalculationHandler {
   var $db;
-  	function formulizeAdvancedCalculationHandler(&$db) {
+  	function __construct(&$db) {
 		$this->db =& $db;
 	}
   

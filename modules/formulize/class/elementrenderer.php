@@ -38,7 +38,7 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 class formulizeElementRenderer{
 	var $_ele;
 
-	function formulizeElementRenderer(&$element){
+	function __construct(&$element){
 		$this->_ele =& $element;
 	}
 

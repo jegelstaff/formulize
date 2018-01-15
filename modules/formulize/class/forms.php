@@ -54,7 +54,7 @@ function checkFormOwnership($id_form,$form_handle){
                 }
 	return count($missingEntries);
         }
-	function formulizeForm($id_form="", $includeAllElements=false){
+	function __construct($id_form="", $includeAllElements=false){
 
 		// validate $id_form
 		global $xoopsDB;
@@ -411,7 +411,7 @@ EOF;
 
 class formulizeFormsHandler {
 	var $db;
-	function formulizeFormsHandler(&$db) {
+	function __construct(&$db) {
 		$this->db =& $db;
 	}
 	function &getInstance(&$db) {
@@ -1122,8 +1122,8 @@ class formulizeFormsHandler {
 
 			$likeBits = (strstr(strtoupper($filterSettings[1][$i]), "LIKE") AND substr($filterSettings[2][$i], 0, 1) != "%" AND substr($filterSettings[2][$i], -1) != "%") ? "%" : "";
 			$termToUse = str_replace("{USER}", $uid, $filterSettings[2][$i]); 
-			if (ereg_replace("[^A-Z{}]","", $termToUse) === "{TODAY}") {
-				$number = ereg_replace("[^0-9+-]","", $termToUse);
+			if (preg_replace("[^A-Z{}]","", $termToUse) === "{TODAY}") {
+				$number = preg_replace("[^0-9+-]","", $termToUse);
 				$termToUse = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
 			}
 			$termToUse = (is_numeric($termToUse) AND !strstr(strtoupper($filterSettings[1][$i]), "LIKE")) ? $termToUse : "\"$likeBits".formulize_db_escape($termToUse)."$likeBits\"";

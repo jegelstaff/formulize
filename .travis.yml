@@ -30,7 +30,7 @@ before_install:
   - sudo add-apt-repository -y ppa:ondrej/php
   # Install PHP 7.0
   - sudo apt-get update
-  - sudo apt-get install -y --force-yes php7.0-mysql php7.0 libapache2-mod-php7.0 php7.0-fpm
+  - sudo apt-get install -y --force-yes php7.0-mysql php7.0 libapache2-mod-php7.0 php7.0-fpm php7.0-gd php7.0-xml
   # Copy our virtual host template to sites-enabled overwriting the default site conf
   - sudo cp ci/travis/defaultsite.tpl /etc/apache2/sites-available/000-default.conf
   # Enable mod rewrite module
@@ -82,7 +82,6 @@ before_script:
 script:
   - se-interpreter /var/www/ci/travis/interpreter_config.json
   - cat "/tmp/error.log"
-  - cat "/var/www/modules/formulize/temp/php_error_log"
   - curl http://localhost/
 
 after_script:

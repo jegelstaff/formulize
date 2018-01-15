@@ -39,8 +39,8 @@ require_once XOOPS_ROOT_PATH.'/modules/formulize/class/screen.php';
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 class formulizeListOfEntriesScreen extends formulizeScreen {
-    function formulizeListOfEntriesScreen() {
-        $this->formulizeScreen();
+    function __construct() {
+        parent::__construct();
         $this->initVar("dobr", XOBJ_DTYPE_INT, 1, false);
         $this->initVar("dohtml", XOBJ_DTYPE_INT, 1, false);
         $this->assignVar("dobr", false); // don't convert line breaks to <br> when using the getVar method
@@ -105,7 +105,7 @@ class formulizeListOfEntriesScreen extends formulizeScreen {
 class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
     var $db;
 
-    function formulizeListOfEntriesScreenHandler(&$db) {
+    function __construct(&$db) {
         $this->db =& $db;
     }
 

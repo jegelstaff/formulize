@@ -36,7 +36,7 @@ require_once XOOPS_ROOT_PATH.'/kernel/object.php';
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 class formulizeFramework extends XoopsObject {
-	function formulizeFramework($frid=""){
+	function __construct($frid=""){
 
 		// validate $id_form
 		global $xoopsDB;
@@ -177,7 +177,7 @@ class formulizeFramework extends XoopsObject {
 
 
 class formulizeFrameworkLink extends XoopsObject {
-	function formulizeFrameworkLink($lid=""){
+	function __construct($lid=""){
 		// validate $lid
 		global $xoopsDB;
 		if(!is_numeric($lid)) {
@@ -391,7 +391,7 @@ class formulizeFrameworkLink extends XoopsObject {
 
 class formulizeFrameworksHandler {
 	var $db;
-	function formulizeFrameworksHandler(&$db) {
+	function __construct(&$db) {
 		$this->db =& $db;
 	}
 	function &getInstance(&$db) {
