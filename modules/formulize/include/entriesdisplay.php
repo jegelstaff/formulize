@@ -4560,8 +4560,10 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
             // used for trapping the {BLANK} keywords into their own space so they don't interfere with each other, or other filters
             $addToItsOwnORFilter = false;
 
-            if ("creation_uid" == $key OR "entry_id" == $key) {
+            if ("creation_uid" == $key OR "entry_id" == $key OR "mod_uid" == $key OR "creator_email" == $key) {
                 $ele_type = "text";
+            } elseif ("creation_datetime" == $key OR "mod_datetime" == $key){
+                $ele_type = "date";
             } else {
                 $elementObject = $element_handler->get($key);
                 $ele_type = $elementObject->getVar('ele_type');
