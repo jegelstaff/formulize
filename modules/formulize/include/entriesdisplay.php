@@ -4034,8 +4034,7 @@ function removeNotAllowedCols($fid, $frid, $cols, $groups) {
 
     foreach ($metadataFields as $field) 
     {
-    	$lcField = strtolower($field);
-    	$all_allowed_cols[] = $lcField;
+    	$all_allowed_cols[] = $field;
     }
 
 	$all_allowed_cols_raw = getAllColList($fid, $frid, $groups);
@@ -4560,9 +4559,13 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
             // used for trapping the {BLANK} keywords into their own space so they don't interfere with each other, or other filters
             $addToItsOwnORFilter = false;
 
-            if ("creation_uid" == $key OR "entry_id" == $key) {
-                $ele_type = "text";
-            } else {
+            $dataHandler = new formulizeDataHandler(false);
+            $metadataFieldTypes = $dataHandler->metadataFieldTypes;
+
+            if (isset($metadataFieldTypes[$key])){
+                $ele_type = $metadataFieldTypes[$key];
+            }
+            else{
                 $elementObject = $element_handler->get($key);
                 $ele_type = $elementObject->getVar('ele_type');
             }
