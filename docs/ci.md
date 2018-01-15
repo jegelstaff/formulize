@@ -57,7 +57,7 @@ When there is a commit, Travis spins up a Debian Linux server in the cloud, and 
       - sudo add-apt-repository -y ppa:ondrej/php
       # Install PHP 7.0
       - sudo apt-get update
-      - sudo apt-get install -y --force-yes php7.0-mysql php7.0 libapache2-mod-php7.0 php7.0-fpm php7.0-gd
+      - sudo apt-get install -y --force-yes php7.0-mysql php7.0 libapache2-mod-php7.0 php7.0-fpm php7.0-gd php7.0-xml
       # Copy our virtual host template to sites-enabled overwriting the default site conf
       - sudo cp ci/travis/defaultsite.tpl /etc/apache2/sites-available/000-default.conf
       # Enable mod rewrite module
