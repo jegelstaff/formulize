@@ -19,7 +19,7 @@
         }
       ],
       "scripts": [
-          "/var/www/ci/selenium2-tests/001-install-formulize.json"
+          "/var/www/ci/selenium2-tests/*"
       ]
     }
   ]
