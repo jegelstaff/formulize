@@ -5,7 +5,7 @@
   "steps": [
     {
       "type": "get",
-      "url": "http://127.0.0.1/Formulize/index.php"
+      "url": "http://127.0.0.1/index.php"
     },
     {
       "type": "setElementText",
