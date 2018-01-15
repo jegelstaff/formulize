@@ -34,6 +34,14 @@ $sections = getData(7, 4, 'instr_assignments_instructor/**/'.$name.'/**/=][ro_mo
 $courses = array();
 $programs = array();
 foreach($sections as $section) {
+    
+    // ignore cancelled sections
+    $times = display($section, 'section_times_day');
+    $times = is_array($times) ? $times : array($times);
+    if(in_array('Cancelled', $times)) {
+        continue;
+    }
+    
     $sectionData['title'] = htmlspecialchars_decode(display($section, 'ro_module_course_title'), ENT_QUOTES);
     $sectionData['code'] = display($section, 'ro_module_course_code');
     $sectionData['section'] = display($section, 'sections_section_number');
