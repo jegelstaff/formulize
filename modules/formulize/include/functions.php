@@ -3215,6 +3215,7 @@ function formulize_processNotification($event, $extra_tags, $fid, $uids_to_notif
                 }
             }
         }
+        flock($notFile, LOCK_UN);
         fclose($notFile);
     } else {
         include_once XOOPS_ROOT_PATH."/modules/formulize/notify.php";
