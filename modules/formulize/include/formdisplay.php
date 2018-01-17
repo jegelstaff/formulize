@@ -2956,8 +2956,9 @@ function removeTags(html) {
     jQuery.ajax({
         url: '".XOOPS_URL."/modules/formulize/formulize_specialValidation.php?markupId=".$markupId."&value='+value,
         success: function(data) {
-            data = removeTags(data);
-            jQuery('#va_".trim($markupId,"de_")."').text(data);
+            data = JSON.parse(removeTags(data));
+            jQuery('#va_".trim($markupId,"de_")."').text(data.text);
+            jQuery('#va_".trim($markupId,"de_")."').css('color',data.color);
         }
     });
 }

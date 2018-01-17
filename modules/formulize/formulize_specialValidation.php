@@ -55,6 +55,7 @@ $value = strip_tags(htmlspecialchars($_GET['value']));
 
 // hard coded to validate rooms for dara for now
 if($element_id==88) {
+    $specialValidationColor = 'red'; // will be specifiable by the user as part of the UI
     $specialValidationCode = '
     
     // get the whole set of data for this section, based on relationship 1, which is the one the section records typically use in the standard forms
@@ -127,9 +128,11 @@ if($element_id==88) {
     return $totalConflictText;
     ';
 } else {
+    $specialValidationColor = "";
     $specialValidationCode = "";
 }
 
 if($specialValidationCode) {
-    print eval($specialValidationCode);
+    $value = eval($specialValidationCode);
+    print json_encode(array('text'=>$value, 'color'=>$specialValidationColor));
 }
