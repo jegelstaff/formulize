@@ -630,6 +630,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		    if(count($oneSideFilters[$linkedFid])>0) { // only setup the existsJoinText when there is a where clause that applies to this form...otherwise, we don't care, this form is not relevant to the query that the calculations will do (except maybe when the mainform is not the one-side form...but that's another story)
 		      $existsJoinText .= $newexistsJoinText . $newJoinText;
 		      foreach($oneSideFilters[$linkedFid] as $thisOneSideFilter) {
+                //print "<br>thisone: $thisOneSideFilter<br>";
 										       $thisLinkedFidPerGroupFilter = isset($perGroupFiltersPerForms[$linkedFid]) ? $perGroupFiltersPerForms[$linkedFid] : "";
 			   $existsJoinText .= " AND ( $thisOneSideFilter $thisLinkedFidPerGroupFilter) ";
 		      }
@@ -784,10 +785,12 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
     // NOTE: Oct 17 2011 - the $oneSideSQL is also used when there are multiple linked subforms, since the exists structure is efficient compared to multiple joins
     $oneSideSQL = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText WHERE main.entry_id>0 $scopeFilter "; // does the mainFormWhereClause need to be used here too?  Needs to be tested. -- further note: Oct 17 2011 -- appears oneSideFilters[fid] is the same as the mainformwhereclause
     $oneSideSQL .= $existsJoinText ? " AND ($existsJoinText) " : "";
+    //print "ejt: $existsJoinText<br>";
     if(count($oneSideFilters[$fid])>0) {
        $oneSideSQL .= " AND (";
        $start = true;
        foreach($oneSideFilters[$fid] as $thisOneSideFilter) {
+            //print "$thisOneSideFilter<br>";
           $oneSideSQL .= $start ? " ( $thisOneSideFilter ) " : " $andor ( $thisOneSideFilter ) "; 
           $start = false;
        }
@@ -795,6 +798,9 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
     }
     $oneSideSQL .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
 
+    //print "$whereClause<br>";
+    //print "$oneSideSQL<br>";
+    
      $restOfTheSQL = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause ";
      $restOfTheSQLForExport = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $orderByClause ";  // don't use limitByEntryId since exports include all entries
      if(count($linkformids)>1) { // AND $dummy == "never") { // when there is more than 1 joined form, we can get an exponential explosion of records returned, because SQL will give you all combinations of the joins
@@ -853,7 +859,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
      // Debug Code
      
      global $xoopsUser;
-     if($xoopsUser->getVar('uid') == 635) {
+     if($xoopsUser->getVar('uid') == 1) {
      //     print "<br>Count query: $countMasterResults<br><br>";
      //if(isset($GLOBALS['formulize_debug'])) {
      //   print "Master query: $masterQuerySQL<br>";
@@ -912,7 +918,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 			 $linkQuery .= " ORDER BY sort_and_limit_table.mastersort";
              
 			  $linkQueryRes[] = $xoopsDB->query(str_replace("REPLACEWITHTIMESTAMP",$timestamp,$linkQuery));
-              if(isset($GLOBALS['formulize_debug'])) {
+              if(isset($GLOBALS['formulize_debug']) ) { //OR $xoopsUser->getVar('uid')==1) {
                 print "<br>";
                 print str_replace("REPLACEWITHTIMESTAMP",$timestamp,$linkQuery);
                 print "<Br>";
@@ -1259,7 +1265,8 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
      $otherPerGroupFilterJoins = "";
      $otherPerGroupFilterWhereClause = "";
      
-     $oneSideFilters = array(); // we need to capture each filter individually, just in case we need to apply them individually to each part of the query for calculations.  Filters for calculations will not work right if the combination of filter terms is excessively complex, ie: includes OR'd terms across different forms in a framework, certain other complicated types of bracketing
+     $oneSideFiltersTemp = array(); // we need to capture each filter individually, just in case we need to apply them individually to each part of the query for calculations.  Filters for calculations will not work right if the combination of filter terms is excessively complex, ie: includes OR'd terms across different forms in a framework, certain other complicated types of bracketing
+    $oneSideCloseBracketWaiting = array();
           
      if(!is_array($filtertemp)) {
           $filter = array(0=>array(0=>$andor, 1=>$filtertemp));
@@ -1519,15 +1526,15 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                }
 
                $whereClause .= $newWhereClause;
-               if(count($oneSideFilters[$mappedForm][strtolower(trim($filterParts[0]))]) == 0) {
-                    $oneSideFilters[$mappedForm][strtolower(trim($filterParts[0]))] = " $newWhereClause ";   // don't add the local andor on the first term for a form  
+              
+               if(!isset($oneSideFiltersTemp[$mappedForm][strtolower(trim($filterParts[0]))][$numSeachExps])) {
+                    $oneSideFiltersTemp[$mappedForm][strtolower(trim($filterParts[0]))][$numSeachExps] = " $newWhereClause ";   // don't add the local andor on the first term for a form
                } else {
-                    $oneSideFilters[$mappedForm][strtolower(trim($filterParts[0]))] .= " ". $filterParts[0] . " $newWhereClause ";
+                    $oneSideFiltersTemp[$mappedForm][strtolower(trim($filterParts[0]))][$numSeachExps] .= " ". $filterParts[0] . " $newWhereClause ";
                }
                
                $whereClause .= ")";
                $numIndivFilters++;
-               
                
           }
           
@@ -1538,6 +1545,17 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
           $numSeachExps++;
      }
 
+    // sort out the one side filters that have been generated and cached per form, put the global and/or between the expressions produced by the distinct filter sets that were passed in
+    // this allows two different filter sets that have local "or" booleans, to get concatenated correctly. OR filters in a single set: red or blue or apples or oranges. OR filters in two sets: (red or blue) AND (apples or oranges)
+    $oneSideFilters = array();
+    foreach($oneSideFiltersTemp as $mappedForm=>$oneSideParts) {
+        foreach($oneSideParts as $type=>$expressions) {
+            foreach($expressions as $expression) {
+                $oneSideFilters[$mappedForm][$type] .= isset($oneSideFilters[$mappedForm][$type]) ? " $andor ( $expression ) " : " ( $expression ) ";
+            }
+        }
+    }
+    
     $otherPerGroupFilterJoins = is_array($otherPerGroupFilterJoins) ? implode(" ", $otherPerGroupFilterJoins) : "";
     $otherPerGroupFilterWhereClause = is_array($otherPerGroupFilterWhereClause) ? implode(" ", $otherPerGroupFilterWhereClause) : "";
     return array(0=>$formFieldFilterMap, 1=>$whereClause, 2=>$orderByClause, 3=>$oneSideFilters, 4=>$otherPerGroupFilterJoins, 5=>$otherPerGroupFilterWhereClause);

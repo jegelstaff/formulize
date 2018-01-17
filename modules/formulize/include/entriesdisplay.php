@@ -4565,7 +4565,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 		}
 
 		// split search based on new split string
-		$intermediateArray = explode("//", $master_one_search);
+		$intermediateArray = explode("//", trim($master_one_search, "//")); // ignore trailing // because that will just cause an unnecessary blank search
 
 		$searchArray = array();
 
@@ -4595,6 +4595,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 		foreach($searchArray as $one_search) {
             // used for trapping the {BLANK} keywords into their own space so they don't interfere with each other, or other filters
             $addToItsOwnORFilter = false;
+            $ownORFilterKey = "";
 
             if ("creation_uid" == $key OR "entry_id" == $key) {
                 $ele_type = "text";
@@ -4634,8 +4635,14 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 			// look for OR indicators...if all caps OR is at the front, then that means that this search is to put put into a separate set of OR filters that gets appended as a set to the main set of AND filters
 		    $addToORFilter = false; // flag to indicate if we need to apply the current search term to a set of "OR'd" terms			
 			if(substr($one_search, 0, 2) == "OR" AND strlen($one_search) > 2) {
-				$addToORFilter = true;
-				$one_search = substr($one_search, 2);
+                if(substr($one_search, 2, 3)== "SET") {
+                    $addToItsOwnORFilter = true;
+                    $ownORFilterKey = substr($one_search, 2, 4);
+                    $one_search = substr($one_search, 6);
+                } else {
+                    $addToORFilter = true;
+                    $one_search = substr($one_search, 2);
+                }
 			}
 			
 			// look for operators
@@ -4722,7 +4729,15 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 				$one_search = $one_search . "/**/" . $operator;
 			}
 			if($addToItsOwnORFilter) {
-				$individualORSearches[] = $key ."/**/$one_search";
+                if($ownORFilterKey) {
+                    if(!isset($individualORSearches[$ownORFilterKey])) {
+                        $individualORSearches[$ownORFilterKey] = $key ."/**/$one_search";    
+                    } else {
+                        $individualORSearches[$ownORFilterKey] .= "][".$key ."/**/$one_search";    
+                    }
+                } else {
+                    $individualORSearches[] = $key ."/**/$one_search";
+                }
 			} elseif($addToORFilter) {
 				if(!$ORstart) { $ORfilter .= "]["; }
 				$ORfilter .= $key . "/**/$one_search"; // . formulize_db_escape($one_search); // mysql_real_escape_string no longer necessary here since the extraction layer does the necessary dirty work for us
@@ -4759,7 +4774,9 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 	} else {
 		$filterToCompare = $filter;
 	}
-	
+	print "<pre>";
+    //print_r($filter);
+    print "</pre>";
 	$regeneratePageNumbers = false;
 	// handle magic quotes if necessary
 	if(get_magic_quotes_gpc()) {
@@ -4772,7 +4789,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 	if($frid) { // if there's a framework, figure out all the forms in the framework and check if any of them had data saved on this pageload
 		$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
 		$frameworkObject = $framework_handler->get($frid);
-		$readElementsWasRunOnAForm = false;
+		$readElementsWasRunOnAForm = false; 
 		foreach($frameworkObject->getVar('fids') as $thisFid) {
 			if(isset($GLOBALS['formulize_allWrittenEntryIds'][$thisFid])) {
 				$readElementsWasRunOnAForm = true;
