@@ -1549,6 +1549,10 @@
         "type": "css selector",
         "value": ".breadcrumb-1"
       }
+    },
+    {
+      "type": "verifyTextPresent",
+      "text": "Create a new form"
     }
   ],
   "data": {

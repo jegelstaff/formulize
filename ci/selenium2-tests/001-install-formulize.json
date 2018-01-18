@@ -336,6 +336,10 @@
         "type": "css selector",
         "value": "input[type=\"submit\"]"
       }
+    },
+    {
+      "type": "verifyTextPresent",
+      "text": "There are no forms currently available"
     }
   ],
   "data": {
