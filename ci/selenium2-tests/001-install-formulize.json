@@ -1,5 +1,6 @@
 {
   "type": "script",
+  "name" : "Install Formulize", 
   "seleniumVersion": "2",
   "formatVersion": 2,
   "steps": [
