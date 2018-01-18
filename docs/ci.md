@@ -108,7 +108,7 @@ When there is a commit, Travis spins up a Debian Linux server in the cloud, and 
       
     script:
       - se-interpreter /var/www/ci/travis/interpreter_config.json
-      - cat "/tmp/error.log"
+      - tail -100 /tmp/error.log
       - curl http://localhost/
     
     after_script:
