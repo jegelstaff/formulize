@@ -81,7 +81,7 @@ before_script:
 
 script:
   - se-interpreter /var/www/ci/travis/interpreter_config.json
-  - cat "/tmp/error.log"
+  - tail -100 /tmp/error.log
   - curl http://localhost/
 
 after_script:
