@@ -30,7 +30,7 @@ class mod_profile_RegstepHandler extends icms_ipf_Handler {
 	 * @param bool $force
 	 * @return bool
 	 */
-	public function insert(&$obj, $force = false) {
+	public function insert(&$obj, $force = false, $checkObject = true, $debug = false) {
 		if (parent::insert($obj, $force)) {
 			if ($obj->getVar('step_save') == 1) return $this->updateAll('step_save', 0, new icms_db_criteria_Item('step_id', $obj->getVar('step_id'), "!="));
 			return true;
