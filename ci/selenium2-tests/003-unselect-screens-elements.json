@@ -60,7 +60,7 @@
     },
     {
       "type": "waitForTextPresent",
-      "text": "Application: Tracker"
+      "text": "Regular 'Client'"
     },
     {
       "type": "clickElement",
