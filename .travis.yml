@@ -89,5 +89,4 @@ after_script:
   # to reset the ci/formulize_test_db.sql to be based on all the current tests.
   # ONLY DO THIS WITH COMMITS FROM THE MASTER BRANCH!!
   # DO NOT DO THIS IN A BRANCH THAT HAS AN ACTIVE PULL REQUEST!!
-  - COMMIT_MESSAGE=$(git show -s --format=%B $TRAVIS_COMMIT | tr -d '\n')
-  - if test "${COMMIT_MESSAGE#*'[update test db]'}" != "$COMMIT_MESSAGE"; then bash ci/travis/update-test-db.sh; fi;
+  - if [[ $TRAVIS_COMMIT == *"[update test db]"* ]] then bash ci/travis/update-test-db.sh; fi;
