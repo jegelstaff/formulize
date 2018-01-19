@@ -59,6 +59,10 @@
       }
     },
     {
+      "type": "waitForTextPresent",
+      "text": "Regular 'Client'"
+    },
+    {
       "type": "pause",
       "waitTime": "543"
     },
