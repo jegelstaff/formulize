@@ -210,7 +210,9 @@ if ($_GET['ele_id'] != "new") {
             break;
     }
 
-    $common['ele_req_on'] = removeNotApplicableRequireds($ele_type);
+ $ele_req = removeNotApplicableRequireds($ele_type); // function returns false when the element cannot be required.
+    $common['ele_req_on'] = $ele_req === false ? false : true;
+
     $names['ele_req_no_on'] = " checked";
     $display['ele_display']['all'] = " selected";
     $display['ele_disabled']['none'] = " selected";
