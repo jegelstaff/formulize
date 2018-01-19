@@ -90,4 +90,4 @@ after_script:
   # ONLY DO THIS WITH COMMITS FROM THE MASTER BRANCH!!
   # DO NOT DO THIS IN A BRANCH THAT HAS AN ACTIVE PULL REQUEST!!
   #- if test $TRAVIS_COMMIT == *"[update test db]"* then bash ci/travis/update-test-db.sh fi;
-  bash ci/travis/update-test-db.sh
+  bash /var/www/ci/travis/update-test-db.sh
