@@ -6,6 +6,7 @@ if [ "master" == "${TRAVIS_BRANCH}" -a "false" == "${TRAVIS_PULL_REQUEST}" ]; th
     sudo chmod 777 /var/www/master/
     cd /var/www/master/
     sudo git clone https://github.com/jegelstaff/formulize.git
+    sudo chmod 777 -R /var/www/master/formulize/.git/
     cd /var/www/master/formulize/
     sudo chmod 777 /var/www/master/formulize/ci/formulize_test_db.sql
     mysqldump -u travis formulize > /var/www/master/formulize/ci/formulize_test_db.sql
