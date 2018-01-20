@@ -13,7 +13,7 @@ if [ "master" == "${TRAVIS_BRANCH}" -a "false" == "${TRAVIS_PULL_REQUEST}" ]; th
     git config user.email "travis-ci@yourturn.ca"
     git config user.name "Travis CI"
     git config push.default simple
-    git add /var/www/master/ci/formulize_test_db.sql
+    git add /var/www/master/formulize/ci/formulize_test_db.sql
     git commit -m "Travis updating test DB [skip ci]"
     git push https://${GITHUB_TOKEN}@github.com/jegelstaff/formulize.git HEAD:master --quiet
 else
