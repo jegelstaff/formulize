@@ -516,7 +516,7 @@ CREATE TABLE `selenium_formulize_application_form_link` (
   PRIMARY KEY (`linkid`),
   KEY `i_fid` (`fid`),
   KEY `i_appid` (`appid`)
-) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -525,7 +525,7 @@ CREATE TABLE `selenium_formulize_application_form_link` (
 
 LOCK TABLES `selenium_formulize_application_form_link` WRITE;
 /*!40000 ALTER TABLE `selenium_formulize_application_form_link` DISABLE KEYS */;
-INSERT INTO `selenium_formulize_application_form_link` VALUES (1,1,1),(2,1,2),(3,1,3),(4,1,4);
+INSERT INTO `selenium_formulize_application_form_link` VALUES (1,1,1),(2,1,2),(3,1,3),(4,1,4),(5,2,5),(6,1,5);
 /*!40000 ALTER TABLE `selenium_formulize_application_form_link` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -542,7 +542,7 @@ CREATE TABLE `selenium_formulize_applications` (
   `description` text NOT NULL,
   `custom_code` mediumtext,
   PRIMARY KEY (`appid`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -551,7 +551,7 @@ CREATE TABLE `selenium_formulize_applications` (
 
 LOCK TABLES `selenium_formulize_applications` WRITE;
 /*!40000 ALTER TABLE `selenium_formulize_applications` DISABLE KEYS */;
-INSERT INTO `selenium_formulize_applications` VALUES (1,'Tracker','','');
+INSERT INTO `selenium_formulize_applications` VALUES (1,'Tracker','',''),(2,'Tracker','','');
 /*!40000 ALTER TABLE `selenium_formulize_applications` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -773,7 +773,7 @@ CREATE TABLE `selenium_formulize_id` (
   `custom_edit_check` text,
   `note` text,
   PRIMARY KEY (`id_form`)
-) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -782,7 +782,7 @@ CREATE TABLE `selenium_formulize_id` (
 
 LOCK TABLES `selenium_formulize_id` WRITE;
 /*!40000 ALTER TABLE `selenium_formulize_id` DISABLE KEYS */;
-INSERT INTO `selenium_formulize_id` VALUES (1,'Client','','','',NULL,1,2,'','client',0,'','','',''),(2,'Project','','','',NULL,3,4,'','project',0,'','','','this is the note text'),(3,'People','','','',NULL,5,6,'','people',0,'','','',''),(4,'Stories','','','',NULL,7,8,'','stories',0,'','','','');
+INSERT INTO `selenium_formulize_id` VALUES (1,'Client','','','',NULL,1,2,'','client',0,'','','',''),(2,'Project','','','',NULL,3,4,'','project',0,'','','','this is the note text'),(3,'People','','','',NULL,5,6,'','people',0,'','','',''),(4,'Stories','','','',NULL,7,8,'','stories',0,'','','',''),(5,'Client','','','',NULL,9,10,'','client',0,'','','','');
 /*!40000 ALTER TABLE `selenium_formulize_id` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -803,7 +803,7 @@ CREATE TABLE `selenium_formulize_menu_links` (
   `note` text,
   PRIMARY KEY (`menu_id`),
   KEY `i_menus_appid` (`appid`)
-) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -812,7 +812,7 @@ CREATE TABLE `selenium_formulize_menu_links` (
 
 LOCK TABLES `selenium_formulize_menu_links` WRITE;
 /*!40000 ALTER TABLE `selenium_formulize_menu_links` DISABLE KEYS */;
-INSERT INTO `selenium_formulize_menu_links` VALUES (1,1,'fid=1',1,'','Client',''),(2,1,'fid=2',2,'','Project',''),(3,1,'fid=3',3,'','People',''),(4,1,'fid=4',4,'','Stories','');
+INSERT INTO `selenium_formulize_menu_links` VALUES (1,1,'fid=1',1,'','Client',''),(2,1,'fid=2',2,'','Project',''),(3,1,'fid=3',3,'','People',''),(4,1,'fid=4',4,'','Stories',''),(5,2,'fid=5',1,'','Client',''),(6,1,'fid=5',5,'','Client','');
 /*!40000 ALTER TABLE `selenium_formulize_menu_links` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -830,7 +830,7 @@ CREATE TABLE `selenium_formulize_menu_permissions` (
   `default_screen` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`permission_id`),
   KEY `i_menu_permissions` (`menu_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=9 DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=13 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -839,7 +839,7 @@ CREATE TABLE `selenium_formulize_menu_permissions` (
 
 LOCK TABLES `selenium_formulize_menu_permissions` WRITE;
 /*!40000 ALTER TABLE `selenium_formulize_menu_permissions` DISABLE KEYS */;
-INSERT INTO `selenium_formulize_menu_permissions` VALUES (1,1,1,0),(2,1,2,0),(3,2,1,0),(4,2,2,0),(5,3,1,0),(6,3,2,0),(7,4,1,0),(8,4,2,0);
+INSERT INTO `selenium_formulize_menu_permissions` VALUES (1,1,1,0),(2,1,2,0),(3,2,1,0),(4,2,2,0),(5,3,1,0),(6,3,2,0),(7,4,1,0),(8,4,2,0),(9,5,1,0),(10,5,2,0),(11,6,1,0),(12,6,2,0);
 /*!40000 ALTER TABLE `selenium_formulize_menu_permissions` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1111,7 +1111,7 @@ CREATE TABLE `selenium_formulize_screen` (
   `type` varchar(100) NOT NULL DEFAULT '',
   `useToken` tinyint(1) NOT NULL,
   PRIMARY KEY (`sid`)
-) ENGINE=MyISAM AUTO_INCREMENT=9 DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=11 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1120,7 +1120,7 @@ CREATE TABLE `selenium_formulize_screen` (
 
 LOCK TABLES `selenium_formulize_screen` WRITE;
 /*!40000 ALTER TABLE `selenium_formulize_screen` DISABLE KEYS */;
-INSERT INTO `selenium_formulize_screen` VALUES (1,'Regular \'Client\'',1,0,'form',1),(2,'Entries in \'Client\'',1,0,'listOfEntries',1),(3,'Regular \'Project\'',2,0,'form',1),(4,'Entries in \'Project\'',2,0,'listOfEntries',1),(5,'Regular \'People\'',3,0,'form',1),(6,'Entries in \'People\'',3,0,'listOfEntries',1),(7,'Regular \'Stories\'',4,0,'form',1),(8,'Entries in \'Stories\'',4,0,'listOfEntries',1);
+INSERT INTO `selenium_formulize_screen` VALUES (1,'Regular \'Client\'',1,0,'form',1),(2,'Entries in \'Client\'',1,0,'listOfEntries',1),(3,'Regular \'Project\'',2,0,'form',1),(4,'Entries in \'Project\'',2,0,'listOfEntries',1),(5,'Regular \'People\'',3,0,'form',1),(6,'Entries in \'People\'',3,0,'listOfEntries',1),(7,'Regular \'Stories\'',4,0,'form',1),(8,'Entries in \'Stories\'',4,0,'listOfEntries',1),(9,'Regular \'Client\'',5,0,'form',1),(10,'Entries in \'Client\'',5,0,'listOfEntries',1);
 /*!40000 ALTER TABLE `selenium_formulize_screen` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1142,7 +1142,7 @@ CREATE TABLE `selenium_formulize_screen_form` (
   `formelements` text,
   PRIMARY KEY (`formid`),
   KEY `i_sid` (`sid`)
-) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1151,7 +1151,7 @@ CREATE TABLE `selenium_formulize_screen_form` (
 
 LOCK TABLES `selenium_formulize_screen_form` WRITE;
 /*!40000 ALTER TABLE `selenium_formulize_screen_form` DISABLE KEYS */;
-INSERT INTO `selenium_formulize_screen_form` VALUES (1,1,'','Save','Leave Page',1,0,'b:0;'),(2,3,'','Save','Leave Page',1,0,'b:0;'),(3,5,'','Save','Leave Page',1,0,'b:0;'),(4,7,'','Save','Leave Page',1,0,'b:0;');
+INSERT INTO `selenium_formulize_screen_form` VALUES (1,1,'','Save','Leave Page',1,0,'b:0;'),(2,3,'','Save','Leave Page',1,0,'b:0;'),(3,5,'','Save','Leave Page',1,0,'b:0;'),(4,7,'','Save','Leave Page',1,0,'b:0;'),(5,9,'','Save','Leave Page',1,0,'b:0;');
 /*!40000 ALTER TABLE `selenium_formulize_screen_form` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1208,7 +1208,7 @@ CREATE TABLE `selenium_formulize_screen_listofentries` (
   `viewentryscreen` varchar(10) NOT NULL DEFAULT '',
   PRIMARY KEY (`listofentriesid`),
   KEY `i_sid` (`sid`)
-) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1217,7 +1217,7 @@ CREATE TABLE `selenium_formulize_screen_listofentries` (
 
 LOCK TABLES `selenium_formulize_screen_listofentries` WRITE;
 /*!40000 ALTER TABLE `selenium_formulize_screen_listofentries` DISABLE KEYS */;
-INSERT INTO `selenium_formulize_screen_listofentries` VALUES (1,2,1,5,'Add one entry','Add multiple entries','Make a proxy entry','Current View: ','a:1:{i:0;s:8:\"allviews\";}','all','Change columns','Calculations','Procedures','','Export Entries','Export Calcs','Import Data','Clone selected','Delete selected','Select all','Clear selection','Notifications','Reset view','Save view','Delete view',1,1,0,1,1,1,'b:0;','b:0;',0,'Save',0,35,'b:0;','','','',10,'1'),(2,4,1,5,'Add one entry','Add multiple entries','Make a proxy entry','Current View: ','a:1:{i:0;s:8:\"allviews\";}','all','Change columns','Calculations','Procedures','','Export Entries','Export Calcs','Import Data','Clone selected','Delete selected','Select all','Clear selection','Notifications','Reset view','Save view','Delete view',1,1,0,1,1,1,'b:0;','b:0;',0,'Save',0,35,'b:0;','','','',10,'3'),(3,6,1,5,'Add one entry','Add multiple entries','Make a proxy entry','Current View: ','a:1:{i:0;s:8:\"allviews\";}','all','Change columns','Calculations','Procedures','','Export Entries','Export Calcs','Import Data','Clone selected','Delete selected','Select all','Clear selection','Notifications','Reset view','Save view','Delete view',1,1,0,1,1,1,'b:0;','b:0;',0,'Save',0,35,'b:0;','','','',10,'5'),(4,8,1,5,'Add one entry','Add multiple entries','Make a proxy entry','Current View: ','a:1:{i:0;s:8:\"allviews\";}','all','Change columns','Calculations','Procedures','','Export Entries','Export Calcs','Import Data','Clone selected','Delete selected','Select all','Clear selection','Notifications','Reset view','Save view','Delete view',1,1,0,1,1,1,'b:0;','b:0;',0,'Save',0,35,'b:0;','','','',10,'7');
+INSERT INTO `selenium_formulize_screen_listofentries` VALUES (1,2,1,5,'Add one entry','Add multiple entries','Make a proxy entry','Current View: ','a:1:{i:0;s:8:\"allviews\";}','all','Change columns','Calculations','Procedures','','Export Entries','Export Calcs','Import Data','Clone selected','Delete selected','Select all','Clear selection','Notifications','Reset view','Save view','Delete view',1,1,0,1,1,1,'b:0;','b:0;',0,'Save',0,35,'b:0;','','','',10,'1'),(2,4,1,5,'Add one entry','Add multiple entries','Make a proxy entry','Current View: ','a:1:{i:0;s:8:\"allviews\";}','all','Change columns','Calculations','Procedures','','Export Entries','Export Calcs','Import Data','Clone selected','Delete selected','Select all','Clear selection','Notifications','Reset view','Save view','Delete view',1,1,0,1,1,1,'b:0;','b:0;',0,'Save',0,35,'b:0;','','','',10,'3'),(3,6,1,5,'Add one entry','Add multiple entries','Make a proxy entry','Current View: ','a:1:{i:0;s:8:\"allviews\";}','all','Change columns','Calculations','Procedures','','Export Entries','Export Calcs','Import Data','Clone selected','Delete selected','Select all','Clear selection','Notifications','Reset view','Save view','Delete view',1,1,0,1,1,1,'b:0;','b:0;',0,'Save',0,35,'b:0;','','','',10,'5'),(4,8,1,5,'Add one entry','Add multiple entries','Make a proxy entry','Current View: ','a:1:{i:0;s:8:\"allviews\";}','all','Change columns','Calculations','Procedures','','Export Entries','Export Calcs','Import Data','Clone selected','Delete selected','Select all','Clear selection','Notifications','Reset view','Save view','Delete view',1,1,0,1,1,1,'b:0;','b:0;',0,'Save',0,35,'b:0;','','','',10,'7'),(5,10,1,5,'Add one entry','Add multiple entries','Make a proxy entry','Current View: ','a:1:{i:0;s:8:\"allviews\";}','all','Change columns','Calculations','Procedures','','Export Entries','Export Calcs','Import Data','Clone selected','Delete selected','Select all','Clear selection','Notifications','Reset view','Save view','Delete view',1,1,0,1,1,1,'b:0;','b:0;',0,'Save',0,35,'b:0;','','','',10,'9');
 /*!40000 ALTER TABLE `selenium_formulize_screen_listofentries` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1382,7 +1382,7 @@ CREATE TABLE `selenium_group_permission` (
   `gperm_name` varchar(50) NOT NULL DEFAULT '',
   PRIMARY KEY (`gperm_id`),
   KEY `name_mod_group` (`gperm_name`(10),`gperm_modid`,`gperm_groupid`)
-) ENGINE=InnoDB AUTO_INCREMENT=189 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=191 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1391,7 +1391,7 @@ CREATE TABLE `selenium_group_permission` (
 
 LOCK TABLES `selenium_group_permission` WRITE;
 /*!40000 ALTER TABLE `selenium_group_permission` DISABLE KEYS */;
-INSERT INTO `selenium_group_permission` VALUES (1,2,20,1,'use_extension'),(2,1,20,1,'use_extension'),(3,2,19,1,'use_extension'),(4,1,19,1,'use_extension'),(5,2,76,1,'use_extension'),(6,1,76,1,'use_extension'),(7,2,77,1,'use_extension'),(8,1,77,1,'use_extension'),(9,2,82,1,'use_extension'),(10,1,82,1,'use_extension'),(11,2,79,1,'use_extension'),(12,1,79,1,'use_extension'),(13,2,80,1,'use_extension'),(14,1,80,1,'use_extension'),(15,2,81,1,'use_extension'),(16,1,81,1,'use_extension'),(17,2,83,1,'use_extension'),(18,1,83,1,'use_extension'),(19,2,84,1,'use_extension'),(20,1,84,1,'use_extension'),(21,2,100,1,'use_extension'),(22,1,100,1,'use_extension'),(23,2,101,1,'use_extension'),(24,1,101,1,'use_extension'),(25,1,1,1,'module_admin'),(26,1,1,1,'module_read'),(28,3,1,1,'module_read'),(29,1,1,1,'system_admin'),(30,1,2,1,'system_admin'),(31,1,3,1,'system_admin'),(32,1,4,1,'system_admin'),(33,1,5,1,'system_admin'),(34,1,6,1,'system_admin'),(35,1,7,1,'system_admin'),(36,1,8,1,'system_admin'),(37,1,9,1,'system_admin'),(38,1,10,1,'system_admin'),(39,1,11,1,'system_admin'),(40,1,12,1,'system_admin'),(41,1,13,1,'system_admin'),(42,1,14,1,'system_admin'),(43,1,15,1,'system_admin'),(44,1,16,1,'system_admin'),(45,1,17,1,'system_admin'),(46,1,18,1,'system_admin'),(47,1,19,1,'system_admin'),(48,1,20,1,'system_admin'),(49,1,1,1,'group_manager'),(50,1,2,1,'group_manager'),(51,1,3,1,'group_manager'),(52,1,1,1,'content_read'),(53,2,1,1,'content_read'),(54,3,1,1,'content_read'),(55,1,1,1,'content_admin'),(56,1,1,1,'use_wysiwygeditor'),(57,1,1,1,'imgcat_write'),(58,1,1,1,'imgcat_read'),(59,1,1,1,'block_read'),(61,3,1,1,'block_read'),(62,1,2,1,'block_read'),(64,3,2,1,'block_read'),(65,1,3,1,'block_read'),(67,3,3,1,'block_read'),(68,1,4,1,'block_read'),(70,3,4,1,'block_read'),(71,1,5,1,'block_read'),(73,3,5,1,'block_read'),(74,1,6,1,'block_read'),(76,3,6,1,'block_read'),(77,1,7,1,'block_read'),(79,3,7,1,'block_read'),(80,1,8,1,'block_read'),(82,3,8,1,'block_read'),(83,1,9,1,'block_read'),(85,3,9,1,'block_read'),(86,1,10,1,'block_read'),(88,3,10,1,'block_read'),(89,1,11,1,'block_read'),(91,3,11,1,'block_read'),(92,1,12,1,'block_read'),(94,3,12,1,'block_read'),(95,1,13,1,'block_read'),(97,3,13,1,'block_read'),(98,1,14,1,'block_read'),(100,3,14,1,'block_read'),(101,1,15,1,'block_read'),(103,3,15,1,'block_read'),(104,1,16,1,'block_read'),(106,3,16,1,'block_read'),(107,1,17,1,'block_read'),(109,3,17,1,'block_read'),(110,1,18,1,'block_read'),(112,3,18,1,'block_read'),(113,1,19,1,'block_read'),(115,3,19,1,'block_read'),(118,1,2,1,'module_admin'),(119,1,2,1,'module_read'),(120,1,1,1,'block_read'),(121,1,1,1,'block_read'),(125,3,2,1,'module_read'),(126,3,1,1,'block_read'),(127,3,1,1,'block_read'),(128,1,3,1,'module_admin'),(129,1,3,1,'module_read'),(130,1,1,1,'block_read'),(133,3,3,1,'module_read'),(134,3,1,1,'block_read'),(135,1,4,1,'module_admin'),(136,1,4,1,'module_read'),(137,1,1,1,'block_read'),(138,1,1,1,'block_read'),(142,3,4,1,'module_read'),(143,3,1,1,'block_read'),(144,3,1,1,'block_read'),(145,1,5,1,'module_admin'),(146,1,5,1,'module_read'),(147,3,21,1,'block_read'),(148,1,20,1,'block_read'),(149,2,2,1,'module_read'),(150,2,3,1,'module_read'),(151,2,4,1,'module_read'),(152,2,1,1,'module_read'),(153,2,1,1,'block_read'),(154,2,2,1,'block_read'),(155,2,5,1,'block_read'),(156,2,6,1,'block_read'),(157,2,10,1,'block_read'),(158,2,11,1,'block_read'),(159,2,12,1,'block_read'),(160,2,13,1,'block_read'),(161,2,18,1,'block_read'),(162,2,19,1,'block_read'),(164,2,3,1,'block_read'),(165,2,14,1,'block_read'),(166,2,4,1,'block_read'),(167,2,7,1,'block_read'),(168,2,8,1,'block_read'),(169,2,9,1,'block_read'),(170,2,16,1,'block_read'),(171,2,15,1,'block_read'),(172,2,17,1,'block_read'),(173,2,24,1,'block_read'),(179,2,18,4,'profile_edit'),(180,2,19,4,'profile_edit'),(181,1,1,3,'edit_form'),(182,2,1,3,'edit_form'),(183,1,2,3,'edit_form'),(184,2,2,3,'edit_form'),(185,1,3,3,'edit_form'),(186,2,3,3,'edit_form'),(187,1,4,3,'edit_form'),(188,2,4,3,'edit_form');
+INSERT INTO `selenium_group_permission` VALUES (1,2,20,1,'use_extension'),(2,1,20,1,'use_extension'),(3,2,19,1,'use_extension'),(4,1,19,1,'use_extension'),(5,2,76,1,'use_extension'),(6,1,76,1,'use_extension'),(7,2,77,1,'use_extension'),(8,1,77,1,'use_extension'),(9,2,82,1,'use_extension'),(10,1,82,1,'use_extension'),(11,2,79,1,'use_extension'),(12,1,79,1,'use_extension'),(13,2,80,1,'use_extension'),(14,1,80,1,'use_extension'),(15,2,81,1,'use_extension'),(16,1,81,1,'use_extension'),(17,2,83,1,'use_extension'),(18,1,83,1,'use_extension'),(19,2,84,1,'use_extension'),(20,1,84,1,'use_extension'),(21,2,100,1,'use_extension'),(22,1,100,1,'use_extension'),(23,2,101,1,'use_extension'),(24,1,101,1,'use_extension'),(25,1,1,1,'module_admin'),(26,1,1,1,'module_read'),(28,3,1,1,'module_read'),(29,1,1,1,'system_admin'),(30,1,2,1,'system_admin'),(31,1,3,1,'system_admin'),(32,1,4,1,'system_admin'),(33,1,5,1,'system_admin'),(34,1,6,1,'system_admin'),(35,1,7,1,'system_admin'),(36,1,8,1,'system_admin'),(37,1,9,1,'system_admin'),(38,1,10,1,'system_admin'),(39,1,11,1,'system_admin'),(40,1,12,1,'system_admin'),(41,1,13,1,'system_admin'),(42,1,14,1,'system_admin'),(43,1,15,1,'system_admin'),(44,1,16,1,'system_admin'),(45,1,17,1,'system_admin'),(46,1,18,1,'system_admin'),(47,1,19,1,'system_admin'),(48,1,20,1,'system_admin'),(49,1,1,1,'group_manager'),(50,1,2,1,'group_manager'),(51,1,3,1,'group_manager'),(52,1,1,1,'content_read'),(53,2,1,1,'content_read'),(54,3,1,1,'content_read'),(55,1,1,1,'content_admin'),(56,1,1,1,'use_wysiwygeditor'),(57,1,1,1,'imgcat_write'),(58,1,1,1,'imgcat_read'),(59,1,1,1,'block_read'),(61,3,1,1,'block_read'),(62,1,2,1,'block_read'),(64,3,2,1,'block_read'),(65,1,3,1,'block_read'),(67,3,3,1,'block_read'),(68,1,4,1,'block_read'),(70,3,4,1,'block_read'),(71,1,5,1,'block_read'),(73,3,5,1,'block_read'),(74,1,6,1,'block_read'),(76,3,6,1,'block_read'),(77,1,7,1,'block_read'),(79,3,7,1,'block_read'),(80,1,8,1,'block_read'),(82,3,8,1,'block_read'),(83,1,9,1,'block_read'),(85,3,9,1,'block_read'),(86,1,10,1,'block_read'),(88,3,10,1,'block_read'),(89,1,11,1,'block_read'),(91,3,11,1,'block_read'),(92,1,12,1,'block_read'),(94,3,12,1,'block_read'),(95,1,13,1,'block_read'),(97,3,13,1,'block_read'),(98,1,14,1,'block_read'),(100,3,14,1,'block_read'),(101,1,15,1,'block_read'),(103,3,15,1,'block_read'),(104,1,16,1,'block_read'),(106,3,16,1,'block_read'),(107,1,17,1,'block_read'),(109,3,17,1,'block_read'),(110,1,18,1,'block_read'),(112,3,18,1,'block_read'),(113,1,19,1,'block_read'),(115,3,19,1,'block_read'),(118,1,2,1,'module_admin'),(119,1,2,1,'module_read'),(120,1,1,1,'block_read'),(121,1,1,1,'block_read'),(125,3,2,1,'module_read'),(126,3,1,1,'block_read'),(127,3,1,1,'block_read'),(128,1,3,1,'module_admin'),(129,1,3,1,'module_read'),(130,1,1,1,'block_read'),(133,3,3,1,'module_read'),(134,3,1,1,'block_read'),(135,1,4,1,'module_admin'),(136,1,4,1,'module_read'),(137,1,1,1,'block_read'),(138,1,1,1,'block_read'),(142,3,4,1,'module_read'),(143,3,1,1,'block_read'),(144,3,1,1,'block_read'),(145,1,5,1,'module_admin'),(146,1,5,1,'module_read'),(147,3,21,1,'block_read'),(148,1,20,1,'block_read'),(149,2,2,1,'module_read'),(150,2,3,1,'module_read'),(151,2,4,1,'module_read'),(152,2,1,1,'module_read'),(153,2,1,1,'block_read'),(154,2,2,1,'block_read'),(155,2,5,1,'block_read'),(156,2,6,1,'block_read'),(157,2,10,1,'block_read'),(158,2,11,1,'block_read'),(159,2,12,1,'block_read'),(160,2,13,1,'block_read'),(161,2,18,1,'block_read'),(162,2,19,1,'block_read'),(164,2,3,1,'block_read'),(165,2,14,1,'block_read'),(166,2,4,1,'block_read'),(167,2,7,1,'block_read'),(168,2,8,1,'block_read'),(169,2,9,1,'block_read'),(170,2,16,1,'block_read'),(171,2,15,1,'block_read'),(172,2,17,1,'block_read'),(173,2,24,1,'block_read'),(179,2,18,4,'profile_edit'),(180,2,19,4,'profile_edit'),(181,1,1,3,'edit_form'),(182,2,1,3,'edit_form'),(183,1,2,3,'edit_form'),(184,2,2,3,'edit_form'),(185,1,3,3,'edit_form'),(186,2,3,3,'edit_form'),(187,1,4,3,'edit_form'),(188,2,4,3,'edit_form'),(189,1,5,3,'edit_form'),(190,2,5,3,'edit_form');
 /*!40000 ALTER TABLE `selenium_group_permission` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2435,7 +2435,7 @@ CREATE TABLE `selenium_session` (
 
 LOCK TABLES `selenium_session` WRITE;
 /*!40000 ALTER TABLE `selenium_session` DISABLE KEYS */;
-INSERT INTO `selenium_session` VALUES ('c3veaas9e2tdhnfdka6okmnqp3',1516473305,'127.0.0.1','xoopsUserId|s:1:\"1\";xoopsUserGroups|a:2:{i:0;s:1:\"1\";i:1;s:1:\"2\";}xoopsUserLastLogin|i:1516473146;xoopsUserTheme|s:20:\"formulize_standalone\";UserLanguage|s:7:\"english\";ad_sess_regen|b:0;icms_fprint|s:64:\"b0b298a2e6984f0250c61d6ed211030c08008356d676e480a01d79c3ab7894e7\";XOOPS_TOKEN_SESSION|a:51:{i:0;a:2:{s:2:\"id\";s:32:\"f2fea2abd462e1cfb79405da43458077\";s:6:\"expire\";i:1516474047;}i:1;a:2:{s:2:\"id\";s:32:\"47d9a0f236b7896cedb39f740700b96e\";s:6:\"expire\";i:1516474050;}i:2;a:2:{s:2:\"id\";s:32:\"f7067f3bab3fe2214de6aef123274f6d\";s:6:\"expire\";i:1516474053;}i:3;a:2:{s:2:\"id\";s:32:\"75ef258383622711dfae8919ec4e3fc5\";s:6:\"expire\";i:1516474053;}i:4;a:2:{s:2:\"id\";s:32:\"e8b825431b774871f8993a86d32b1951\";s:6:\"expire\";i:1516474061;}i:5;a:2:{s:2:\"id\";s:32:\"cf97032c89e192fd976438051adb1c15\";s:6:\"expire\";i:1516474061;}i:6;a:2:{s:2:\"id\";s:32:\"9ca31bee859000523c31ebfa4462ff2e\";s:6:\"expire\";i:1516474067;}i:7;a:2:{s:2:\"id\";s:32:\"98f63eeb5b75d41c6d695a6c36a169ef\";s:6:\"expire\";i:1516474067;}i:8;a:2:{s:2:\"id\";s:32:\"eba2083570121ab0e89d773f31cbd27e\";s:6:\"expire\";i:1516474067;}i:9;a:2:{s:2:\"id\";s:32:\"0ed6fc4b5226ac56e200b1a8d6497601\";s:6:\"expire\";i:1516474070;}i:10;a:2:{s:2:\"id\";s:32:\"c9a3b62c33dd6652430fd1107c044174\";s:6:\"expire\";i:1516474072;}i:11;a:2:{s:2:\"id\";s:32:\"fd6a1c28e9e46b88c77c8a436541df2f\";s:6:\"expire\";i:1516474072;}i:12;a:2:{s:2:\"id\";s:32:\"e79f497dd59f9a48af81b64277deabe1\";s:6:\"expire\";i:1516474079;}i:13;a:2:{s:2:\"id\";s:32:\"027d2688ca2c93cc39ce7614ad2656fd\";s:6:\"expire\";i:1516474079;}i:14;a:2:{s:2:\"id\";s:32:\"775858e4c4b87918a567953edd124567\";s:6:\"expire\";i:1516474089;}i:15;a:2:{s:2:\"id\";s:32:\"0e22daa295a7805dbcd3e3d9007fe521\";s:6:\"expire\";i:1516474089;}i:16;a:2:{s:2:\"id\";s:32:\"7628d9f0044b31eb680a1d712542daf6\";s:6:\"expire\";i:1516474100;}i:17;a:2:{s:2:\"id\";s:32:\"7338d29ee9b650d7967e680cd6cb6383\";s:6:\"expire\";i:1516474100;}i:18;a:2:{s:2:\"id\";s:32:\"09a0195444f324f861d06fe0d36e154e\";s:6:\"expire\";i:1516474108;}i:19;a:2:{s:2:\"id\";s:32:\"a8b42cb010b4e3f8ce34377640e4d6a5\";s:6:\"expire\";i:1516474108;}i:20;a:2:{s:2:\"id\";s:32:\"6d8b50244c5f744a0838987ca9489d39\";s:6:\"expire\";i:1516474115;}i:21;a:2:{s:2:\"id\";s:32:\"da1173bf3cdfe7a3237d4f0141751e03\";s:6:\"expire\";i:1516474115;}i:22;a:2:{s:2:\"id\";s:32:\"7780a303d3434fd623c0457633fa0161\";s:6:\"expire\";i:1516474115;}i:23;a:2:{s:2:\"id\";s:32:\"650b3fdc5f64b44cce0f3cfed04ec541\";s:6:\"expire\";i:1516474119;}i:24;a:2:{s:2:\"id\";s:32:\"dc31ff5c610af691c591c75c222700fe\";s:6:\"expire\";i:1516474121;}i:25;a:2:{s:2:\"id\";s:32:\"0a16ca825ae24e7ef8c7eb9703bbe90b\";s:6:\"expire\";i:1516474121;}i:26;a:2:{s:2:\"id\";s:32:\"88b942429ca8c8015b2285379aab4984\";s:6:\"expire\";i:1516474130;}i:27;a:2:{s:2:\"id\";s:32:\"bfaaef5ebc3a5fca78568d918e64f4c7\";s:6:\"expire\";i:1516474130;}i:28;a:2:{s:2:\"id\";s:32:\"bb400b623daf83bdeee4eb9928561b9d\";s:6:\"expire\";i:1516474136;}i:29;a:2:{s:2:\"id\";s:32:\"4d75f93da4fa6901b5b194aa37038ca8\";s:6:\"expire\";i:1516474136;}i:30;a:2:{s:2:\"id\";s:32:\"dfde387593e05ef9039a959886d1ef3a\";s:6:\"expire\";i:1516474136;}i:31;a:2:{s:2:\"id\";s:32:\"cd2fe68dbe3dab607d82f62f70ecfc40\";s:6:\"expire\";i:1516474138;}i:32;a:2:{s:2:\"id\";s:32:\"1d5d8b809447717a9d0152ca99a83fa8\";s:6:\"expire\";i:1516474140;}i:33;a:2:{s:2:\"id\";s:32:\"39f33bdf8d9c6da0ef733571e9838719\";s:6:\"expire\";i:1516474140;}i:34;a:2:{s:2:\"id\";s:32:\"d64e76155343e0fdf83776a88389ad90\";s:6:\"expire\";i:1516474147;}i:35;a:2:{s:2:\"id\";s:32:\"f02caab4525511c111aa8de54d837389\";s:6:\"expire\";i:1516474147;}i:36;a:2:{s:2:\"id\";s:32:\"497d0a383e53f76256f5a674d1fe232d\";s:6:\"expire\";i:1516474166;}i:37;a:2:{s:2:\"id\";s:32:\"972185cac22af292d2f6943cbe65701e\";s:6:\"expire\";i:1516474166;}i:38;a:2:{s:2:\"id\";s:32:\"ee5fc7c3e039c3a27dfd70dbac38980f\";s:6:\"expire\";i:1516474185;}i:39;a:2:{s:2:\"id\";s:32:\"93e83558381e4ba2c4d0000c2875fce5\";s:6:\"expire\";i:1516474185;}i:40;a:2:{s:2:\"id\";s:32:\"9bf3ff336cb2235203417d6bfbecac7b\";s:6:\"expire\";i:1516474185;}i:41;a:2:{s:2:\"id\";s:32:\"ac7c7bf488030ac176c5be17097f477e\";s:6:\"expire\";i:1516474187;}i:42;a:2:{s:2:\"id\";s:32:\"74315d1412e63ff4aeea7b3a60acdff6\";s:6:\"expire\";i:1516474187;}i:43;a:2:{s:2:\"id\";s:32:\"fbb2820a4382f452f1166aa31d236ee7\";s:6:\"expire\";i:1516474195;}i:44;a:2:{s:2:\"id\";s:32:\"3df7c88da44368cbd665029596051a1a\";s:6:\"expire\";i:1516474195;}i:45;a:2:{s:2:\"id\";s:32:\"b622f73a01fe1ebe8a8f6315a31f4980\";s:6:\"expire\";i:1516474195;}i:46;a:2:{s:2:\"id\";s:32:\"216534c21c5b4edfec1ae591d86d4b2c\";s:6:\"expire\";i:1516474197;}i:47;a:2:{s:2:\"id\";s:32:\"dbfe5a3f77447ba650b43882acabd2e9\";s:6:\"expire\";i:1516474197;}i:48;a:2:{s:2:\"id\";s:32:\"ae7ba3a81364f1ff8dbd42e601f4c104\";s:6:\"expire\";i:1516474205;}i:49;a:2:{s:2:\"id\";s:32:\"5ef75318d93bf89859c19109a83b9f39\";s:6:\"expire\";i:1516474205;}i:50;a:2:{s:2:\"id\";s:32:\"5417b8b7122b5d1091a2c19e2e6cc7a8\";s:6:\"expire\";i:1516474205;}}'),('i0aqp4u5hfg0qr07h2obko6ba2',1516473319,'127.0.0.1','xoopsUserId|s:1:\"1\";xoopsUserGroups|a:2:{i:0;s:1:\"1\";i:1;s:1:\"2\";}xoopsUserLastLogin|i:1516473316;xoopsUserTheme|s:20:\"formulize_standalone\";UserLanguage|s:7:\"english\";ad_sess_regen|b:0;icms_fprint|s:64:\"b0b298a2e6984f0250c61d6ed211030c08008356d676e480a01d79c3ab7894e7\";XOOPS_TOKEN_SESSION|a:4:{i:0;a:2:{s:2:\"id\";s:32:\"0f0cf862502e4f418355bbd70e395a05\";s:6:\"expire\";i:1516474217;}i:1;a:2:{s:2:\"id\";s:32:\"87106228e8194fd27a3f04c766c9c5aa\";s:6:\"expire\";i:1516474219;}i:2;a:2:{s:2:\"id\";s:32:\"4dd4f6bf0bf8525bb0cbcb7f48b74212\";s:6:\"expire\";i:1516474219;}i:3;a:2:{s:2:\"id\";s:32:\"09e2a79d4d485495632af7ce85042621\";s:6:\"expire\";i:1516474219;}}'),('kh3b00nv5eb91ku1h3ma1r0rp4',1516473322,'127.0.0.1','xoopsUserGroups|a:1:{i:0;s:1:\"3\";}ad_sess_regen|b:0;icms_fprint|s:64:\"09066471d89d21f9693716958f708f8b9dce5aaaf8021e229cef4be7a9c7059a\";'),('u4lkdlht0i4dii74uu9hmip0s1',1516473136,'127.0.0.1','xoopsUserId|s:1:\"1\";xoopsUserGroups|a:2:{i:0;s:1:\"1\";i:1;s:1:\"2\";}xoopsUserLastLogin|i:1516473135;xoopsUserTheme|s:20:\"formulize_standalone\";UserLanguage|s:7:\"english\";ad_sess_regen|b:0;icms_fprint|s:64:\"b0b298a2e6984f0250c61d6ed211030c08008356d676e480a01d79c3ab7894e7\";');
+INSERT INTO `selenium_session` VALUES ('1nkje6td83vfb9cnu9ng98e7s0',1516554089,'127.0.0.1','xoopsUserId|s:1:\"1\";xoopsUserGroups|a:2:{i:0;s:1:\"1\";i:1;s:1:\"2\";}xoopsUserLastLogin|i:1516554069;xoopsUserTheme|s:20:\"formulize_standalone\";UserLanguage|s:7:\"english\";ad_sess_regen|b:0;icms_fprint|s:64:\"b0b298a2e6984f0250c61d6ed211030c08008356d676e480a01d79c3ab7894e7\";XOOPS_TOKEN_SESSION|a:13:{i:0;a:2:{s:2:\"id\";s:32:\"4e04626b5a030e77a8679c24cea26adb\";s:6:\"expire\";i:1516554970;}i:1;a:2:{s:2:\"id\";s:32:\"e9dae461241b03afb233b158fcbc757f\";s:6:\"expire\";i:1516554972;}i:2;a:2:{s:2:\"id\";s:32:\"2b17bbf33ce2ff84892b647ac22c97f9\";s:6:\"expire\";i:1516554972;}i:3;a:2:{s:2:\"id\";s:32:\"dc2c690b47077802c8e5ae8c40792019\";s:6:\"expire\";i:1516554972;}i:4;a:2:{s:2:\"id\";s:32:\"5b6893ed4aa6f6a330479c5010b8e227\";s:6:\"expire\";i:1516554979;}i:5;a:2:{s:2:\"id\";s:32:\"860858099154a3227780995cbfe25bdd\";s:6:\"expire\";i:1516554979;}i:6;a:2:{s:2:\"id\";s:32:\"050ed0adbdf8fbf8a9ca086a2042a5c4\";s:6:\"expire\";i:1516554979;}i:7;a:2:{s:2:\"id\";s:32:\"510333135ec1ba42996f4f5d2b6d9f9a\";s:6:\"expire\";i:1516554983;}i:8;a:2:{s:2:\"id\";s:32:\"f95393b812c914eb41e1a439a3ebc11c\";s:6:\"expire\";i:1516554983;}i:9;a:2:{s:2:\"id\";s:32:\"3a91703e23fc9633d6baab1a51907977\";s:6:\"expire\";i:1516554983;}i:10;a:2:{s:2:\"id\";s:32:\"2aa6fe8a9b45ee189e8f6d8a9b39d98b\";s:6:\"expire\";i:1516554986;}i:11;a:2:{s:2:\"id\";s:32:\"97f5f40818effd667927b78d68769811\";s:6:\"expire\";i:1516554986;}i:12;a:2:{s:2:\"id\";s:32:\"dfb44b432a5b2388bac372fb9bca8b20\";s:6:\"expire\";i:1516554986;}}'),('qnmf28hok93otod1ns6suspte6',1516553999,'127.0.0.1','xoopsUserId|s:1:\"1\";xoopsUserGroups|a:2:{i:0;s:1:\"1\";i:1;s:1:\"2\";}xoopsUserLastLogin|i:1516553993;xoopsUserTheme|s:20:\"formulize_standalone\";UserLanguage|s:7:\"english\";ad_sess_regen|b:0;icms_fprint|s:64:\"b0b298a2e6984f0250c61d6ed211030c08008356d676e480a01d79c3ab7894e7\";XOOPS_TOKEN_SESSION|a:2:{i:0;a:2:{s:2:\"id\";s:32:\"77773665f56e2ae34f6325feceed5228\";s:6:\"expire\";i:1516554895;}i:1;a:2:{s:2:\"id\";s:32:\"aa5e6635021843216aec5cf51a2f7908\";s:6:\"expire\";i:1516554896;}}'),('uaslkvscvsfp3240e7c5d9i531',1516554090,'127.0.0.1','xoopsUserGroups|a:1:{i:0;s:1:\"3\";}ad_sess_regen|b:0;icms_fprint|s:64:\"09066471d89d21f9693716958f708f8b9dce5aaaf8021e229cef4be7a9c7059a\";');
 /*!40000 ALTER TABLE `selenium_session` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2530,7 +2530,7 @@ CREATE TABLE `selenium_system_autotasks` (
 
 LOCK TABLES `selenium_system_autotasks` WRITE;
 /*!40000 ALTER TABLE `selenium_system_autotasks` DISABLE KEYS */;
-INSERT INTO `selenium_system_autotasks` VALUES (1,'Inactivating users','autotask.php',0,1440,0,1,1516473127,'addon/system',00),(2,'Reactivate suspended users','include/autotasks/reactivate_suspended.php',0,360,0,1,1516473132,'addon/profile',00);
+INSERT INTO `selenium_system_autotasks` VALUES (1,'Inactivating users','autotask.php',0,1440,0,1,1516473127,'addon/system',00),(2,'Reactivate suspended users','include/autotasks/reactivate_suspended.php',0,360,0,1,1516553989,'addon/profile',00);
 /*!40000 ALTER TABLE `selenium_system_autotasks` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2758,7 +2758,7 @@ CREATE TABLE `selenium_users` (
 
 LOCK TABLES `selenium_users` WRITE;
 /*!40000 ALTER TABLE `selenium_users` DISABLE KEYS */;
-INSERT INTO `selenium_users` VALUES (1,'','admin','formulize@example.com','http://localhost/','blank.gif',1516473127,'','','',0,'','','','','2097c0ad32341b277c2afdafe3f33612937e6737339548079e54773c155e12e4',0,0,7,'5','formulize_standalone',0.0,1516473316,'thread',0,1,0,'','','',0,'english','','FU4aQavbKNvU50OG6V1g2cilzionVm2yh4G7ebiWYLR3KDHQzG4zTmUqFgLyDN4UP',0,0,1,'admin');
+INSERT INTO `selenium_users` VALUES (1,'','admin','formulize@example.com','http://localhost/','blank.gif',1516473127,'','','',0,'','','','','2097c0ad32341b277c2afdafe3f33612937e6737339548079e54773c155e12e4',0,0,7,'5','formulize_standalone',0.0,1516554069,'thread',0,1,0,'','','',0,'english','','FU4aQavbKNvU50OG6V1g2cilzionVm2yh4G7ebiWYLR3KDHQzG4zTmUqFgLyDN4UP',0,0,1,'admin');
 /*!40000 ALTER TABLE `selenium_users` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2849,4 +2849,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2018-01-20 18:35:27
+-- Dump completed on 2018-01-21 17:01:35
