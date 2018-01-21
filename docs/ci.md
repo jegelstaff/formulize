@@ -44,7 +44,7 @@ When there is a commit, Travis spins up a Debian Linux server in the cloud, and 
       sauce_connect: true
       hosts:
         - local.dev
-       
+        
     cache:
       - apt
     
@@ -101,11 +101,11 @@ When there is a commit, Travis spins up a Debian Linux server in the cloud, and 
       # This is useful for quickly running just one new test, to see if it is working.
       # Alter the ci/travis/interpreter_config.json file to refer to your one test by name
       # instead of referring to * for all tests.
-      #- mysql formulize < ci/formulize_test_db.sql
-      #- sudo cp -f ci/mainfile.php mainfile.php
-      #- sudo cp -f ci/0dd528b71d72ed19bb9dd658ab2dad58.php selenium-848d24bb54d726d/0dd528b71d72ed19bb9dd658ab2dad58.php
+      # - mysql formulize < /var/www/ci/formulize_test_db.sql
+      # - sudo cp -f /var/www/ci/mainfile.php /var/www/mainfile.php
+      # - sudo cp -f /var/www/ci/0dd528b71d72ed19bb9dd658ab2dad58.php /var/www/selenium-848d24bb54d726d/0dd528b71d72ed19bb9dd658ab2dad58.php
       - echo "USE mysql;\nUPDATE user SET password=PASSWORD('password') WHERE user='root';\nFLUSH PRIVILEGES;\n" | mysql -u root
-      
+    
     script:
       - se-interpreter /var/www/ci/travis/interpreter_config.json
       - tail -100 /tmp/error.log
@@ -116,9 +116,8 @@ When there is a commit, Travis spins up a Debian Linux server in the cloud, and 
       # to reset the ci/formulize_test_db.sql to be based on all the current tests.
       # ONLY DO THIS WITH COMMITS FROM THE MASTER BRANCH!!
       # DO NOT DO THIS IN A BRANCH THAT HAS AN ACTIVE PULL REQUEST!!
-      - COMMIT_MESSAGE=$(git show -s --format=%B $TRAVIS_COMMIT | tr -d '\n')
-      - if test "${COMMIT_MESSAGE#*'[update test db]'}" != "$COMMIT_MESSAGE"; then bash ci/travis/update-test-db.sh; fi;
-  
+      - if [[ $TRAVIS_COMMIT_MESSAGE == *"[update test db]"* ]] ; then bash /var/www/ci/travis/update-test-db.sh; fi
+   
 ### What the sections do
 
 The current version of the .travis.yml file owes a lot to [the work of Mitchell Krog](https://github.com/mitchellkrogza/Travis-CI-for-Apache-For-Testing-Apache-and-PHP-Configurations). Here is an explanation of the main sections of the file:
@@ -157,11 +156,9 @@ This runs the se-interpreter, and points it at a configuration file.  It also du
 
 This listens to the commit message, and if **[update test db]** is present in the message, then Travis will push a copy of the database to the master branch on GitHub.  See the **before_script** section above for how to start a build using that copy of the database.
 
-It is critical that **[update test db]** is only used from the master branch! It must never be used in a commit to a branch that has an active pull request!
+**[update test db]** can only be used from the master branch.
 
 These commands depend on a shell script that will do the actual dump and push to GitHub, using the secure access token encrypted in the **env** section:  [ci/travis/update-test-db.sh](https://github.com/jegelstaff/formulize/blob/master/ci/travis/update-test-db.sh)
-
-Huge thanks Project-OSRM for the [example of how to listen to the commit message and react accordingly](https://github.com/Project-OSRM/node-osrm/blob/master/.travis.yml). 
 
 ### se-interpreter configuration
 
