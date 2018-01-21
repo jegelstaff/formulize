@@ -24,12 +24,12 @@
 
         <header>
           <h1><a href='/' class='header-home'>Formulize</a></h1>
-          <h2>Data management and reporting on the web, in your CMS, and on your mobile device.</h2>
+          <h2>Your data, your workflows, and very flexible reporting</h2>
         </header>
 
         <section id="downloads" class="clearfix">
           <a href="https://github.com/jegelstaff/formulize/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
-          <a href="https://github.com/jegelstaff/formulize/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
+          <!-- <a href="https://github.com/jegelstaff/formulize/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a> -->
           <a href="https://github.com/jegelstaff/formulize" id="view-on-github" class="button"><span>View on GitHub</span></a>
         </section>
 
@@ -49,12 +49,12 @@
             var homePath = '';
             var crumbSep = ' >> ';
             var startCrumbsNextTime = false;
-            var crumbsStarted;
+            var crumbsStarted = false;
             pathParts = path.split('/');
             for(i in pathParts) {
                 crumbPath = crumbPath + pathParts[i] + '/';
-                if(!startCrumbsNextTime || pathParts[i] == '') {
-                    if(pathParts[i] == 'formulize') {
+                if(!startCrumbsNextTime) {
+                    if(pathParts[i] == 'localhost:4000' || pathParts[i] == 'www.formulize.org') {
                         startCrumbsNextTime = true;
                         homePath = crumbPath;
                     }
@@ -63,13 +63,12 @@
                     crumbsStarted = true;
                     window.document.write('<a href="'+homePath+'">Home</a>\n');
                 }
+                if(pathParts[i] == '') { continue; }
                 pathParts[i] = pathParts[i].replace('_', ' ');
                 pathParts[i] = eachWord(pathParts[i]);
                 window.document.write(crumbSep+'<a href="'+crumbPath+'">'+pathParts[i]+'</a>\n');
             }
-            if(crumbsStarted) {
-                window.document.write('<hr>');
-            }
+            window.document.write('<hr>');
             
         </script>
         
