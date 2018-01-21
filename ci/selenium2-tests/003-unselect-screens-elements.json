@@ -69,8 +69,8 @@
     {
       "type": "clickElement",
       "locator": {
-        "type": "link text",
-        "value": "Regular 'Client'"
+        "type": "xpath",
+        "value": "//div[@id='tabs-3']/div[1]/table/tbody/tr[3]/td[2]/a"
       }
     },
     {
