@@ -19,7 +19,7 @@
         }
       ],
       "scripts": [
-          "/var/www/ci/selenium2-tests/003-unselect-screens-elements.json"
+          "/var/www/ci/selenium2-tests/*"
       ]
     }
   ]
