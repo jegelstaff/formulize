@@ -14,6 +14,7 @@
  *
  * @return mixed $block or FALSE if no users were online
  */
+
 function b_system_online_show() {
 	global $icmsModule;
 	$online_handler = icms::handler('icms_core_Online');
@@ -103,10 +104,43 @@ function b_system_login_show() {
 
 		if ($icmsConfigAuth['auth_openid']) {
 			$block['auth_openid'] = TRUE;
+			$block['auth_url'] = setupAuthentication();
 		}
 		return $block;
 	}
 	return FALSE;
+}
+
+function setupAuthentication() {
+//Google API PHP Library includes
+require_once $_SERVER['DOCUMENT_ROOT'].'/formulize/libraries/googleapiclient/autoload.php';
+// Fill REDIRECT URI 
+$redirect_uri = 'http://' . $_SERVER['HTTP_HOST'] . '/formulize/modules/formulize/application.php';//$_SERVER['PHP_SELF'];
+ 
+//Create Client Request to access Google API
+$client = new Google_Client();
+$auth_creds = $_SERVER['DOCUMENT_ROOT'].'/client_secrets.json';
+if (file_exists($auth_creds)) {
+  //set credentials for Auth
+  $client->setAuthConfig($auth_creds);
+  
+  }else{
+  //TODO fix so that if ther is no client secrets file then probably redirect to instructions on how to get that
+  print "Something went wrong";
+  }
+
+$client->setRedirectUri($redirect_uri);
+print "test $redirect_uri";
+
+//want to request email info for username
+$client->setScopes('email');
+
+//Send Client Request
+$objOAuthService = new Google_Service_Oauth2($client);
+
+$authUrl = $client->createAuthUrl();
+print "test $authUrl";
+return $authUrl;
 }
 
 /**
