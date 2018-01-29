@@ -267,7 +267,8 @@ function daraCreateNewYear($sourceYear) {
         ro_module_job_ad_description,
         ro_module_job_ad_qualifications,
         ro_module_job_ad_duties,
-        ro_module_year_status)
+        ro_module_year_status,
+        ro_module_course_active)
         SELECT creation_datetime,
         NOW(),
         creation_uid,
@@ -296,7 +297,8 @@ function daraCreateNewYear($sourceYear) {
         ro_module_job_ad_description,
         ro_module_job_ad_qualifications,
         ro_module_job_ad_duties,
-        'Active'
+        'Active',
+        3
         FROM ".$xoopsDB->prefix('formulize_ro_module')."
         WHERE entry_id = ".intval($row[0]);
         $insertRes = $xoopsDB->queryF($sql);
