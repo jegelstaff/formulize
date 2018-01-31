@@ -62,6 +62,8 @@ if($screens['type'] == 'multiPage') {
   $screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
 } else if($screens['type'] == 'template') {
     $screen_handler = xoops_getmodulehandler('templateScreen', 'formulize');
+} else if($screens['type'] == 'graph') {
+  $screen_handler = xoops_getmodulehandler('graphScreen', 'formulize');
 }
 
 
@@ -111,7 +113,7 @@ if($isNew) {
       $screen->setVar('usereset',_formulize_DE_RESETVIEW);
       $screen->setVar('usesave',_formulize_DE_SAVE);
       $screen->setVar('usedeleteview',_formulize_DE_DELETE);
-    
+
   } else if($screens['type'] == 'form') {
       $screen->setVar('displayheading', 1);
       $screen->setVar('reloadblank', 0);
@@ -120,6 +122,11 @@ if($isNew) {
   } else if ($screens['type'] == 'template') {
       $screen->setVar('custom_code', "");
       $screen->setVar('template', "");
+  } else if($screens['type'] == 'graph'){
+  	  $screen->setVar('displayheading', 1);
+      $screen->setVar('reloadblank', 0);
+      $screen->setVar('savebuttontext', _formulize_SAVE);
+      $screen->setVar('alldonebuttontext', _formulize_DONE);
   }
 
 } else {
@@ -138,7 +145,7 @@ if(!$sid = $screen_handler->insert($screen)) {
 }
 
 if($isNew) {
-  
+
   // write out the necessary templates...
   // templates - initialize with the necessary php opening tags
   if($screens['type'] == "multiPage") {
