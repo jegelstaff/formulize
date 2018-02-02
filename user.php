@@ -11,6 +11,7 @@
 
 $xoopsOption['pagetype'] = 'user';
 include 'mainfile.php';
+include ICMS_ROOT_PATH . '/modules/formulize/include/functions.php';
 
 $op = (isset($_GET['op']))
 	? trim(filter_input(INPUT_GET, 'op', FILTER_SANITIZE_STRING))
@@ -19,6 +20,11 @@ $op = (isset($_GET['op']))
 switch ($op) {
 	default:
 	case 'main':
+	
+	//if google user logged in and redirected to this page
+	if (isset($_GET['code'])) {
+		getEmailAuthenication();
+	}
 		if (!icms::$user) {
 			$xoopsOption['template_main'] = 'system_userform.html';
 			include 'header.php';
@@ -54,6 +60,7 @@ switch ($op) {
 	            'allow_registration' => $icmsConfigUser['allow_register'],
 	            'rememberme' => $icmsConfigUser['remember_me'],
 	            'auth_openid' => $icmsConfigAuth['auth_openid'],
+				'auth_url' => authenticationURL(),
 	            'icms_pagetitle' => _LOGIN
 			));
 			include 'footer.php';
