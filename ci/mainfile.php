@@ -109,7 +109,9 @@ if (!defined("XOOPS_MAINFILE_INCLUDED")) {
 
 	// Database
 	// Choose the database to be used
-	define( 'XOOPS_DB_TYPE', 'mysql' );
+	define('XOOPS_DB_TYPE', 'pdo.mysql');
+
+	define('XOOPS_DB_DSN', 'host='. SDATA_DB_HOST.';dbname='.SDATA_DB_NAME);
  
     // Set the database charset if applicable
     if (defined('XOOPS_DB_CHARSET')) die();

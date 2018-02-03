@@ -74,9 +74,9 @@ before_script:
   # This is useful for quickly running just one new test, to see if it is working.
   # Alter the ci/travis/interpreter_config.json file to refer to your one test by name
   # instead of referring to * for all tests.
-  #- mysql formulize < ci/formulize_test_db.sql
-  #- sudo cp -f ci/mainfile.php mainfile.php
-  #- sudo cp -f ci/0dd528b71d72ed19bb9dd658ab2dad58.php selenium-848d24bb54d726d/0dd528b71d72ed19bb9dd658ab2dad58.php
+  - mysql formulize < /var/www/ci/formulize_test_db.sql
+  - sudo cp -f /var/www/ci/mainfile.php /var/www/mainfile.php
+  - sudo cp -f /var/www/ci/0dd528b71d72ed19bb9dd658ab2dad58.php /var/www/selenium-848d24bb54d726d/0dd528b71d72ed19bb9dd658ab2dad58.php
   - echo "USE mysql;\nUPDATE user SET password=PASSWORD('password') WHERE user='root';\nFLUSH PRIVILEGES;\n" | mysql -u root
 
 script:
@@ -89,5 +89,5 @@ after_script:
   # to reset the ci/formulize_test_db.sql to be based on all the current tests.
   # ONLY DO THIS WITH COMMITS FROM THE MASTER BRANCH!!
   # DO NOT DO THIS IN A BRANCH THAT HAS AN ACTIVE PULL REQUEST!!
-  - COMMIT_MESSAGE=$(git show -s --format=%B $TRAVIS_COMMIT | tr -d '\n')
-  - if test "${COMMIT_MESSAGE#*'[update test db]'}" != "$COMMIT_MESSAGE"; then bash ci/travis/update-test-db.sh; fi;
+  - if [[ $TRAVIS_COMMIT_MESSAGE == *"[update test db]"* ]] ; then bash /var/www/ci/travis/update-test-db.sh; fi
+  

@@ -1,5 +1,5 @@
 markdown: kramdown
-baseurl: /formulize
-url: http://jegelstaff.github.io/formulize/
-permalink: formulize/:title/
+baseurl: /
+url: http://www.formulize.org/
+permalink: /:title/
 theme: jekyll-theme-tactile

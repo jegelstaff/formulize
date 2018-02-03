@@ -59,7 +59,7 @@ class mod_profile_ProfileHandler extends icms_ipf_Handler {
 	 * @param bool $checkObject check if the object is dirty and clean the attributes
 	 * @return bool FALSE if failed, TRUE if already present and unchanged or successful
 	 */
-	public function insert(&$obj, $force = false, $checkObject = true) {
+	public function insert(&$obj, $force = false, $checkObject = true, $debug=false) {
 		$uservars = $this->getUserVars();
 		foreach ($uservars as $var) unset($obj->vars[$var]);
 		if (count($obj->vars) == 1) return true;
