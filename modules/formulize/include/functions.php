@@ -148,21 +148,20 @@ function authenticationURL() {
 
 function setupAuthentication() {
 //Google API PHP Library includes
-require_once $_SERVER['DOCUMENT_ROOT'].'/formulize/libraries/googleapiclient/autoload.php';
+require_once XOOPS_ROOT_PATH.'/libraries/googleapiclient/autoload.php';
 //redirect uri for when google authentication is done and it comes back to formulize
-$redirect_uri = 'http://' . $_SERVER['HTTP_HOST'] . '/formulize/user.php';
+$redirect_uri = XOOPS_URL;
  
 //Create Client Request to access Google API
 $client = new Google_Client();
-$auth_creds = $_SERVER['DOCUMENT_ROOT'].'/client_secrets.json';
+$auth_creds = XOOPS_TRUST_PATH.'/client_secrets.json';
 if (file_exists($auth_creds)) {
   //set credentials for Auth
   $client->setAuthConfig($auth_creds);
-  
-  }else{
+}else{
   //TODO fix so that if ther is no client secrets file then probably redirect to instructions on how to get that
   print "Something went wrong";
-  }
+}
 
 $client->setRedirectUri($redirect_uri);
 
@@ -173,53 +172,6 @@ $client->setScopes('email');
 $objOAuthService = new Google_Service_Oauth2($client);
 
 return $client;
-}
-
-/**
- * Authentication setup with google, makes google client
- *
- * @author Kristen Newbury Feb 2018
- * @return email of this google user
- */
-
-function getEmailAuthenication(){
-   ini_set('display_errors', 1);
-error_reporting(E_ALL|E_STRICT);
-    $user_handler = icms::handler("icms_member");
-
-    $client = setupAuthentication();
-    //Send Client Request
-    $objOAuthService = new Google_Service_Oauth2($client);
-
-    //Authenticate code from Google OAuth Flow
-    //Add Access Token to Session
-    if (isset($_GET['code'])) {
-    $client->authenticate($_GET['code']);
-    $token = $client->getAccessToken();
-    $_SESSION['access_token'] = $token;
-    
-    }   
-    if (isset($_SESSION['access_token']) && $_SESSION['access_token']) {
-    $client->setAccessToken($token);
-
-    }
-
-    $userData = $objOAuthService->userinfo->get();
-
-    print "HELLO ".$userData["email"]. "\n";
-    print "user".$userData."\n";
-    $testExists = $user_handler->createUser($userData);
-    print "RESULT". $testExists;
-    if ($testExists == true){
-         $getuser =& $user_handler->getUsers(new icms_db_criteria_Item('email', icms_core_DataFilter::addSlashes($userData['email'])));
-        print $getuser[0]->getVar('uid')."truth\n";
-        return $getuser[0];
-        
-    }else if ($testExists == false){
-        print "false\n";
-    }else{
-        print "other";
-    }
 }
 
 

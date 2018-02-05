@@ -40,6 +40,59 @@ class icms_core_Session {
 		// ADDED CODE BY FREEFORM SOLUTIONS, SUPPORTING INTEGRATION WITH OTHER SYSTEMS
 		// If this is a page load by another system, and we're being included, then we establish the user session based on the user id of the user in effect in the other system
 		// This approach assumes correspondence between the user ids.
+        
+        // Also listens for a code from Google in the URL
+        //if google user logged in and redirected to this page
+
+        if (isset($_GET['code'])) {
+            ini_set('display_errors', 1);
+            error_reporting(E_ALL|E_STRICT);
+            $user_handler = icms::handler("icms_member");
+        
+            // this call might fail, maybe the file with the function isn't included yet?
+            $client = setupAuthentication();
+            
+            //Send Client Request
+            $objOAuthService = new Google_Service_Oauth2($client);
+        
+            //Authenticate code from Google OAuth Flow
+            //Add Access Token to Session
+            if (isset($_GET['code'])) {
+            $client->authenticate($_GET['code']);
+            $token = $client->getAccessToken();
+            }
+            
+            // probably don't need to do this part?
+            /*$_SESSION['access_token'] = $token;
+            
+            }   
+            if (isset($_SESSION['access_token']) && $_SESSION['access_token']) {
+            $client->setAccessToken($token);
+        
+            }*/
+        
+            $userData = $objOAuthService->userinfo->get();
+        
+            $externalUid = $userData["email"];
+        
+            /*print "HELLO ".$userData["email"]. "\n";
+            print "user".$userData."\n";
+            $testExists = $user_handler->createUser($userData);
+            print "RESULT". $testExists;
+            if ($testExists == true){
+                 $getuser =& $user_handler->getUsers(new icms_db_criteria_Item('email', icms_core_DataFilter::addSlashes($userData['email'])));
+                print $getuser[0]->getVar('uid')."truth\n";
+                return $getuser[0];
+                
+            }else if ($testExists == false){
+                print "false\n";
+            }else{
+                print "other";
+            }
+            print "testwith ". $testuser;
+            $GLOBALS['formulizeHostSystemUserId'] = $testuser->getVar('uid');*/
+        }
+        
 		global $user;
 
 		if (isset($GLOBALS['formulizeHostSystemUserId'])) {
