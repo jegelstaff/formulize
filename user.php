@@ -21,14 +21,6 @@ switch ($op) {
 	default:
 	case 'main':
 	
-	//if google user logged in and redirected to this page
-	if (isset($_GET['code'])) {
-		$testuser = getEmailAuthenication();
-		print "testwith ". $testuser;
-		$GLOBALS['formulizeHostSystemUserId'] = $testuser->getVar('uid');
-		$sessHandler = icms::$session;
-		$sessHandler->service();
-	}
 		if (!icms::$user) {
 			$xoopsOption['template_main'] = 'system_userform.html';
 			include 'header.php';
