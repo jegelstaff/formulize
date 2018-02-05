@@ -524,7 +524,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
 	public static function deactivateResourceMapping($resource_type, $external_id) {
 		self::init();
         if(!$external_id) { return null; }
-        if($resource_type == self::GROUP_RESOURCE AND !is_numeric($external_id)) {
+        if(!is_numeric($external_id)) {
             $external_id_SQL = "external_id_string = '" . formulize_db_escape($external_id) . "'";
         } else {
             $external_id_SQL = "external_id = " . intval($external_id);
@@ -547,8 +547,8 @@ document.addEventListener('DOMContentLoaded', function(event) {
 	static function getXoopsResourceID($resource_type, $external_id) {
         if(!$external_id) { return null; }
 		self::init();
-        if($resource_type == self::GROUP_RESOURCE AND !is_numeric($external_id)) {
-            $external_id_SQL = "external_id_string = $db'" . formulize_db_escape($external_id) . "'";
+        if(!is_numeric($external_id)) {
+            $external_id_SQL = "external_id_string = '" . formulize_db_escape($external_id) . "'";
         } else {
             $external_id_SQL = "external_id = " . intval($external_id);
         }
@@ -574,14 +574,14 @@ document.addEventListener('DOMContentLoaded', function(event) {
 		self::init();
 		$mapping_table = self::$db->prefix(self::$mapping_table);
 		$mapping_result = self::$db->fetchRow(self::$db->queryF('
-			SELECT external_id FROM ' . $mapping_table . '
+			SELECT external_id, external_id_string FROM ' . $mapping_table . '
 			WHERE internal_id = ' . intval($xoops_id) . '
 			AND resource_type = ' . intval($resource_type)
 		));
 		if ($mapping_result == NULL) {
 			return NULL;
 		}
-		return $mapping_result[0];
+        return $mapping_result[0] ? $mapping_result[0] : $mapping_result[1];
 	}
 }
 
