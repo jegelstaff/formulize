@@ -90,23 +90,22 @@ EOF;
 				// if there is no user id and the new user was inserted successfully; create a mapping record for internal id and email
 				return self::createResourceMapping(self::USER_RESOURCE, $user_data->get('email'), $newUser->getVar('uid'));
 		} else if ($user_data->get('uid') == true) {
-        // new user account was created; create a mapping record for the new account id and the external id
-        return self::createResourceMapping(self::USER_RESOURCE, $user_data->get('uid'), $newUser->getVar('uid'));
-    } else {
-				//if ($accDoesExist == false) return;
-        // user record could not be created, perhaps because it already exists, so try to load it from the database by email address
-        $getuser =& $member_handler->getUsers(new icms_db_criteria_Item('email', icms_core_DataFilter::addSlashes($user_data->get('email'))));
-				if (!empty($getuser) && $user_data->get('uid') == false) {
-						// we found an existing user with the same email address and the user id does not exist
-						// so create a resource mapping using email
-						return self::createResourceMapping(self::USER_RESOURCE, $user_data->get('email'), $getuser[0]->getVar('uid'));
-				} else if (!empty($getuser)) {
-            // we found an existing user with the same email address, so create a resource mapping
-            return self::createResourceMapping(self::USER_RESOURCE, $user_data->get('uid'), $getuser[0]->getVar('uid'));
+            // new user account was created; create a mapping record for the new account id and the external id
+            return self::createResourceMapping(self::USER_RESOURCE, $user_data->get('uid'), $newUser->getVar('uid'));
+        } else {
+            // user record could not be created, perhaps because it already exists, so try to load it from the database by email address
+            $getuser =& $member_handler->getUsers(new icms_db_criteria_Item('email', icms_core_DataFilter::addSlashes($user_data->get('email'))));
+            if (!empty($getuser) && $user_data->get('uid') == false) {
+                    // we found an existing user with the same email address and the user id does not exist
+                    // so create a resource mapping using email
+                    return self::createResourceMapping(self::USER_RESOURCE, $user_data->get('email'), $getuser[0]->getVar('uid'));
+            } else if (!empty($getuser)) {
+                // we found an existing user with the same email address, so create a resource mapping
+                return self::createResourceMapping(self::USER_RESOURCE, $user_data->get('uid'), $getuser[0]->getVar('uid'));
+            }
         }
+        return false;   // could not create a new account and an account with the email addres does not exist
     }
-    return false;   // could not create a new account and an account with the email addres does not exist
-}
 
 	/**
 	 * Retrieves the specified User's data
@@ -489,10 +488,10 @@ document.addEventListener('DOMContentLoaded', function(event) {
 	public static function createResourceMapping($resource_type, $external_id, $id) {
 		self::init();
 		$mapping_table = self::$db->prefix(self::$mapping_table);
-				if($resource_type == self::USER_RESOURCE AND !is_numeric($external_id)) {
-					$external_id_FIELD = "external_id_string";
-					$external_id_VALUE = "'".formulize_db_escape($external_id)."'";
-				} else if ($resource_type == self::GROUP_RESOURCE AND !is_numeric($external_id)) {
+        if($resource_type == self::USER_RESOURCE AND !is_numeric($external_id)) {
+            $external_id_FIELD = "external_id_string";
+            $external_id_VALUE = "'".formulize_db_escape($external_id)."'";
+        } else if ($resource_type == self::GROUP_RESOURCE AND !is_numeric($external_id)) {
             $external_id_FIELD = "external_id_string";
             $external_id_VALUE = "'".formulize_db_escape($external_id)."'";
         } else {
@@ -500,12 +499,6 @@ document.addEventListener('DOMContentLoaded', function(event) {
             $external_id_VALUE = intval($external_id);
         }
         $external_id_SQL = "$external_id_FIELD = $external_id_VALUE";
-
-				print 'SELECT * FROM ' . $mapping_table . '
-				WHERE (internal_id = ' . intval($id) . '
-					AND resource_type = ' . intval($resource_type) . ')
-				OR ('.$external_id_SQL.'
-					AND resource_type = ' . intval($resource_type) . ')';
 
 		//Determine whether any mappings exist with the specified IDs
 		$num_mappings = self::$db->getRowsNum(self::$db->queryF('
