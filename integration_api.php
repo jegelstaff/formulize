@@ -553,7 +553,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
             $external_id_SQL = "external_id = " . intval($external_id);
         }
 		$mapping_table = self::$db->prefix(self::$mapping_table);
-		$mapping_result = mysql_fetch_row(self::$db->queryF('
+		$mapping_result = self::$db->fetchRow(self::$db->queryF('
 			SELECT internal_id FROM ' . $mapping_table . '
 			WHERE '.$external_id_SQL.'
 			AND resource_type = ' . intval($resource_type) . '
@@ -573,7 +573,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
 	static function getExternalResourceID($resource_type, $xoops_id) {
 		self::init();
 		$mapping_table = self::$db->prefix(self::$mapping_table);
-		$mapping_result = mysql_fetch_row(self::$db->queryF('
+		$mapping_result = self::$db->fetchRow(self::$db->queryF('
 			SELECT external_id FROM ' . $mapping_table . '
 			WHERE internal_id = ' . intval($xoops_id) . '
 			AND resource_type = ' . intval($resource_type)
