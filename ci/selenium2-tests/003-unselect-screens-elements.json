@@ -127,8 +127,8 @@
     {
       "type": "clickElement",
       "locator": {
-        "type": "link text",
-        "value": "Regular 'Project'"
+        "type": "xpath",
+        "value": "//div[@id='tabs-3']/div[1]/table/tbody/tr[5]/td[2]/a"
       }
     },
     {
@@ -174,8 +174,8 @@
     {
       "type": "clickElement",
       "locator": {
-        "type": "link text",
-        "value": "Regular 'People'"
+        "type": "xpath",
+        "value": "//div[@id='tabs-3']/div[1]/table/tbody/tr[7]/td[2]/a"
       }
     },
     {
@@ -221,8 +221,8 @@
     {
       "type": "clickElement",
       "locator": {
-        "type": "link text",
-        "value": "Regular 'Stories'"
+        "type": "xpath",
+        "value": "//div[@id='tabs-3']/div[1]/table/tbody/tr[9]/td[2]/a"
       }
     },
     {

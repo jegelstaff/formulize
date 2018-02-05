@@ -2375,10 +2375,11 @@ function loadValue($prevEntry, $element, $ele_value, $owner_groups, $groups, $en
 
 						if (is_array($temparray)) {
 							$temparraykeys = array_keys($temparray);
+                            $temparray = array_fill_keys($temparraykeys, 0); // actually remove the defaults!
 						} else {
 							$temparraykeys = array();
 						}
-
+                        
 						if($temparraykeys[0] === "{FULLNAMES}" OR $temparraykeys[0] === "{USERNAMES}") { // ADDED June 18 2005 to handle pulling in usernames for the user's group(s)
 							$ele_value[2]['{SELECTEDNAMES}'] = explode("*=+*:", $value);
 							if(count($ele_value[2]['{SELECTEDNAMES}']) > 1) { array_shift($ele_value[2]['{SELECTEDNAMES}']); }

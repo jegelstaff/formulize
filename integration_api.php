@@ -1,18 +1,14 @@
 <?php
-
 /**
  * Formulize Object for API calls
  */
 class Formulize {
-
 	private static $db = null;
-
 	//Resource types and tables for the mapping methods
 	const GROUP_RESOURCE = 0;
 	const USER_RESOURCE = 1;
 	private static $mapping_table = 'formulize_resource_mapping';
 	private static $default_mapping_active = 1;
-
 	/**
 	 * Intialize the Formulize environment
 	 */
@@ -20,7 +16,6 @@ class Formulize {
 		static $init_done = false;
 		if ($init_done)
 			return; // only need to do it once
-
 		if (self::$db == null) {
 			include_once('mainfile.php');
 			self::$db = $GLOBALS['xoopsDB'];
@@ -34,9 +29,7 @@ class Formulize {
 			require_once('modules/formulize/include/functions.php');
 		}
 		$init_done = true;
-
 	}
-
 	/**
 	 * Create the resource mapping table if it does not exist
 	 */
@@ -57,13 +50,11 @@ CREATE TABLE IF NOT EXISTS $mapping_table (
 ) ENGINE=MyISAM;
 EOF;
 		self::$db->queryF($sql);
-
 		// alter the length of the session id
 		$sql = "ALTER TABLE ".self::$db->prefix("session")." CHANGE `sess_id` `sess_id` varchar(60) NOT NULL";
 		$mapping_table = self::$db->prefix(self::$mapping_table);
 		self::$db->queryF($sql);
 	}
-
 	/**
 	 * Create a new XOOPS user from the provided FormulizeUser data
 	 * @param   user_data   FormulizeUser       The user data
@@ -73,41 +64,36 @@ EOF;
 		self::init();
 		if($user_data->get('uid') == -1 && $user_data->get('email') == '')
 			throw new Exception('Formulize::createUser() - The supplied user doesn\'t have an ID.');
-
 		//Create a XOOPS user from the provided FormulizeUser data
 		$member_handler = xoops_gethandler('member');
 		$newUser = $member_handler->createUser();
 		$newUser->setVar('uname', $user_data->get('uname'));
 		$newUser->setVar('login_name', $user_data->get('login_name'));
 		$newUser->setVar('email', $user_data->get('email'));
-
 		//Use the default timezone offset from ImpressCMS
 		$newUser->setVar('timezone_offset', $user_data->get('timezone_offset'));
 		$newUser->setVar('notify_method', $user_data->get('notify_method')); //email
 		$newUser->setVar('level', $user_data->get('level')); //active, can login
-
 		if ($user_data->get('uid') == false && $member_handler->insertUser($newUser, true)) {
 				// if there is no user id and the new user was inserted successfully; create a mapping record for internal id and email
 				return self::createResourceMapping(self::USER_RESOURCE, $user_data->get('email'), $newUser->getVar('uid'));
 		} else if ($user_data->get('uid') == true) {
-        // new user account was created; create a mapping record for the new account id and the external id
-        return self::createResourceMapping(self::USER_RESOURCE, $user_data->get('uid'), $newUser->getVar('uid'));
-    } else {
-				//if ($accDoesExist == false) return;
-        // user record could not be created, perhaps because it already exists, so try to load it from the database by email address
-        $getuser =& $member_handler->getUsers(new icms_db_criteria_Item('email', icms_core_DataFilter::addSlashes($user_data->get('email'))));
-				if (!empty($getuser) && $user_data->get('uid') == false) {
-						// we found an existing user with the same email address and the user id does not exist
-						// so create a resource mapping using email
-						return self::createResourceMapping(self::USER_RESOURCE, $user_data->get('email'), $getuser[0]->getVar('uid'));
-				} else if (!empty($getuser)) {
-            // we found an existing user with the same email address, so create a resource mapping
-            return self::createResourceMapping(self::USER_RESOURCE, $user_data->get('uid'), $getuser[0]->getVar('uid'));
+            // new user account was created; create a mapping record for the new account id and the external id
+            return self::createResourceMapping(self::USER_RESOURCE, $user_data->get('uid'), $newUser->getVar('uid'));
+        } else {
+            // user record could not be created, perhaps because it already exists, so try to load it from the database by email address
+            $getuser =& $member_handler->getUsers(new icms_db_criteria_Item('email', icms_core_DataFilter::addSlashes($user_data->get('email'))));
+            if (!empty($getuser) && $user_data->get('uid') == false) {
+                    // we found an existing user with the same email address and the user id does not exist
+                    // so create a resource mapping using email
+                    return self::createResourceMapping(self::USER_RESOURCE, $user_data->get('email'), $getuser[0]->getVar('uid'));
+            } else if (!empty($getuser)) {
+                // we found an existing user with the same email address, so create a resource mapping
+                return self::createResourceMapping(self::USER_RESOURCE, $user_data->get('uid'), $getuser[0]->getVar('uid'));
+            }
         }
+        return false;   // could not create a new account and an account with the email addres does not exist
     }
-    return false;   // could not create a new account and an account with the email addres does not exist
-}
-
 	/**
 	 * Retrieves the specified User's data
 	 * @param user_id   int       The ID of the user to retrieve
@@ -118,7 +104,6 @@ EOF;
 		$user_id = self::getXoopsResourceID(self::USER_RESOURCE, $user_id);
 		$member_handler = xoops_gethandler('member');
 		$user = $member_handler->getUser($user_id);
-
 		if($user) {
 			return new FormulizeUser(array(
 				'uid' => $user->getVar('uid'),
@@ -133,7 +118,6 @@ EOF;
 			return null;
 		}
 	}
-
 	/**
 	 * Retrieves highest user ID
 	 * @return        Integer The highest user ID
@@ -143,14 +127,12 @@ EOF;
 		$member_handler = xoops_gethandler('member');
 		$list = $member_handler->getUserList();
 		$max = 0;
-
 		foreach ($list as $key => $value) {
 			if ($max < $key)
 				$max = $key;
 		}
 		return $max;
 	}
-
 	/**
 	 * Removes the specified user, and obfuscates their identification fields
 	 * (uname, login_name, email) to allow those pieces of data to be used for
@@ -184,7 +166,6 @@ EOF;
 			return false;
 		}
 	}
-
 	/**
 	 * Updates user data in XOOPS
 	 * @param   user_id   int     The ID of the user to update
@@ -212,7 +193,6 @@ EOF;
 			return false;
 		}
 	}
-
     /**
      * Creates a new user group in XOOPS
      * @return        boolean           Whether the group was successfully created
@@ -222,7 +202,6 @@ EOF;
         // confirm the group has a name and ID
         if ($group_name == null || $group_id == null)
             throw new Exception("Formulize::createGroup() - The supplied group needs a name and groupid.");
-
         // only create this group if it doesn't already exist in XOOPS
         if (null == self::getXoopsResourceID(self::GROUP_RESOURCE, $group_id)) {
             // TODO: Figure out how to use XOOPS CriteriaElement to prevent duplicate group creation .. or maybe do that in the group handler?
@@ -238,7 +217,6 @@ EOF;
         }
         return false;
     }
-
 	/**
 	 * Rename an existing XOOPS group
 	 * @param   groupid     int         The ID of the group being renamed
@@ -260,7 +238,6 @@ EOF;
 		}
 		return false;
 	}
-
 	/**
 	 * Deletes an existing XOOPS group
 	 * TODO: Need to also remove the mapping when the group is deleted
@@ -283,7 +260,6 @@ EOF;
 		}
 		return false;
 	}
-
 	/**
 	 * Adds an existing user to a group
 	 * @param   user_id   int         The ID of the user being added
@@ -300,7 +276,6 @@ EOF;
 		}
 		return false;
 	}
-
 	/**
 	 * Removes an existing user from a group
 	 * @param   user_id   int         The ID of the user being removed
@@ -317,7 +292,6 @@ EOF;
 		}
 		return false;
 	}
-
 	/**
 	 * Obtain a list of the available screen names
 	 * @param limitUser boolean   Whether to limit the list of screens to those
@@ -328,10 +302,8 @@ EOF;
 		global $xoopsUser;
 		self::init();
 		$options = array();
-
 		$form_table = self::$db->prefix('formulize_id');
 		$screen_table = self::$db->prefix('formulize_screen');
-
 		//Getting all screens is straightforward
 		if(!$limitUser) {
 			$sql =
@@ -350,7 +322,6 @@ EOF;
 			$members = xoops_gethandler('member');
 			$group_perms = xoops_gethandler('icms_member_groupperm');
 			$accessible_forms = array();
-
 			//Get the groups this member belongs to
 			$groups = $members->getGroupsByUser($xoopsUser->getVar('uid'));
 			//Get the forms visible to each of those groups, and unite them
@@ -358,11 +329,9 @@ EOF;
 				$group_forms = $group_perms->getItemIds('view_form', $group, getFormulizeModId());
 				$accessible_forms = array_merge($accessible_forms, $group_forms);
 			}
-
 			//Get the unique IDs of the accessible forms as integers
 			$form_IDs = array_map(intval, array_unique($accessible_forms));
 			$in_clause = implode(',', $form_IDs);
-
 			$sql =
 			'
 				SELECT fi.desc_form, fs.title, fs.sid
@@ -371,31 +340,24 @@ EOF;
 					AND fi.id_form IN (' . $in_clause . ')
 				ORDER BY fi.desc_form, fs.title
 			';
-
 		}
-
 		//Run the query and assemble/return the results
 		if ($result = self::$db->query($sql)) {
 			while($row = self::$db->fetchArray($result)) {
 				$options[$row['sid']] = $row['desc_form'] . ' - ' . $row['title'];
 			}
 		}
-
 		if (count($options) == 0 || !$xoopsUser) {
 			$options[0] = 'No Formulize Screens Found';
 		}
-
 		return $options;
 	}
-
 	static function renderScreen ($screenID) {
 		self::init();
 		//Set the screen ID
 		$formulize_screen_id = $screenID;
-
 		//Include our header file in order to set up xoTheme
 		include XOOPS_ROOT_PATH . '/header.php';
-
 		//If we have a xoTheme, then we will be able to dupe the Formulize system into thinking we are in icms, in order
 		//to set up an icmsTheme object. The icmsTheme object is required by a number of elements that should work in 3rd
 		//party sites (i.e. datebox). We thus mimic what occurs in icms and set up our theme object accordingly.
@@ -404,14 +366,12 @@ EOF;
 			global $icmsTheme;
 			$icmsTheme = $xoTheme;
 		}
-
 		//We buffer our output of HTML injection. This prevents the buffer from being printed before we have printed and loaded our
 		//JS scripts to the page.
 		ob_start();
 		include XOOPS_ROOT_PATH . '/modules/formulize/index.php';
 		//Content now contains our buffered contents.
 		$formulizeContent = ob_get_clean();
-
 		//Checks icmsTheme is initialized. If this is so, it will drop into further conditionals to check those
 		//dependencies relying on library JS files from Formulize stand-alone directory.
 		if($icmsTheme)
@@ -428,7 +388,6 @@ EOF;
 				foreach($GLOBALS['formulize_calendarFileRequired']['scripts-for-embedding'] as $thisScript) {
                                        $restOfContent .= "\n<script type='text/javascript'>". $thisScript ."</script>\n";
                 }
-
 				//In order to append our stylesheet, and ensure that no matter the load and buffer order of our page, we shall be including
 				//the style sheet via a JS call that appends the link tag to the head section on load.
                 // Do the same for jQuery and jQuery UI if they are not already loaded, since the calendar element requires them
@@ -443,14 +402,12 @@ function fetchCSS(href)
     newNode.href = href;
     document.head.appendChild(newNode);
 }
-
 function fetchJS(src) {
     var newNode = document.createElement('script');
     newNode.type = 'text/javascript';
     newNode.src = src;
     document.head.appendChild(newNode);
 }
-
 document.addEventListener('DOMContentLoaded', function(event) {
     if(jQuery === undefined) {
         fetchJS('".XOOPS_URL."/libraries/jquery/jquery.js');
@@ -470,15 +427,11 @@ document.addEventListener('DOMContentLoaded', function(event) {
 					$restOfContent .= "</script>";
 			}
 		}
-
         // include the formulize.js file
         $restOfContent .= "\n<script type='text/javascript' src='" . XOOPS_URL. "/modules/formulize/libraries/formulize.js'></script>\n";
-
-
         //Declare a formulize div to contain our injected content, with ID formulize_form
 		echo "<div id=formulize_form>\n".$restOfContent.$formulizeContent."\n</div>\n";
 	}
-
 	/**
 	 * Insert a mapping from the external resource to a Formulize resource
 	 * @param external_id     int/string    The external resource ID
@@ -489,10 +442,10 @@ document.addEventListener('DOMContentLoaded', function(event) {
 	public static function createResourceMapping($resource_type, $external_id, $id) {
 		self::init();
 		$mapping_table = self::$db->prefix(self::$mapping_table);
-				if($resource_type == self::USER_RESOURCE AND !is_numeric($external_id)) {
-					$external_id_FIELD = "external_id_string";
-					$external_id_VALUE = "'".formulize_db_escape($external_id)."'";
-				} else if ($resource_type == self::GROUP_RESOURCE AND !is_numeric($external_id)) {
+        if($resource_type == self::USER_RESOURCE AND !is_numeric($external_id)) {
+            $external_id_FIELD = "external_id_string";
+            $external_id_VALUE = "'".formulize_db_escape($external_id)."'";
+        } else if ($resource_type == self::GROUP_RESOURCE AND !is_numeric($external_id)) {
             $external_id_FIELD = "external_id_string";
             $external_id_VALUE = "'".formulize_db_escape($external_id)."'";
         } else {
@@ -500,13 +453,6 @@ document.addEventListener('DOMContentLoaded', function(event) {
             $external_id_VALUE = intval($external_id);
         }
         $external_id_SQL = "$external_id_FIELD = $external_id_VALUE";
-
-				print 'SELECT * FROM ' . $mapping_table . '
-				WHERE (internal_id = ' . intval($id) . '
-					AND resource_type = ' . intval($resource_type) . ')
-				OR ('.$external_id_SQL.'
-					AND resource_type = ' . intval($resource_type) . ')';
-
 		//Determine whether any mappings exist with the specified IDs
 		$num_mappings = self::$db->getRowsNum(self::$db->queryF('
 			SELECT * FROM ' . $mapping_table . '
@@ -515,7 +461,6 @@ document.addEventListener('DOMContentLoaded', function(event) {
 			OR ('.$external_id_SQL.'
 				AND resource_type = ' . intval($resource_type) . ')'
 		));
-
 		if($num_mappings == 0) {
 			return self::$db->queryF('
 				INSERT INTO ' . $mapping_table . '
@@ -527,16 +472,14 @@ document.addEventListener('DOMContentLoaded', function(event) {
 			return false;
 		}
 	}
-
 	public static function deactivateResourceMapping($resource_type, $external_id) {
 		self::init();
         if(!$external_id) { return null; }
-        if($resource_type == self::GROUP_RESOURCE AND !is_numeric($external_id)) {
+        if(!is_numeric($external_id)) {
             $external_id_SQL = "external_id_string = '" . formulize_db_escape($external_id) . "'";
         } else {
             $external_id_SQL = "external_id = " . intval($external_id);
         }
-
 		$mapping_table = self::$db->prefix(self::$mapping_table);
 		return self::$db->queryF('
 			UPDATE ' . $mapping_table . '
@@ -545,7 +488,6 @@ document.addEventListener('DOMContentLoaded', function(event) {
 			AND '.$external_id_SQL
 		);
 	}
-
 	/**
 	 * Converts an external resource ID into a XOOPS resource ID using the associated mapping table
 	 * @param external_id  int/string   The external resource ID to convert
@@ -554,13 +496,13 @@ document.addEventListener('DOMContentLoaded', function(event) {
 	static function getXoopsResourceID($resource_type, $external_id) {
         if(!$external_id) { return null; }
 		self::init();
-        if($resource_type == self::GROUP_RESOURCE AND !is_numeric($external_id)) {
-            $external_id_SQL = "external_id_string = $db'" . formulize_db_escape($external_id) . "'";
+        if(!is_numeric($external_id)) {
+            $external_id_SQL = "external_id_string = '" . formulize_db_escape($external_id) . "'";
         } else {
             $external_id_SQL = "external_id = " . intval($external_id);
         }
 		$mapping_table = self::$db->prefix(self::$mapping_table);
-		$mapping_result = mysql_fetch_row(self::$db->queryF('
+		$mapping_result = self::$db->fetchRow(self::$db->queryF('
 			SELECT internal_id FROM ' . $mapping_table . '
 			WHERE '.$external_id_SQL.'
 			AND resource_type = ' . intval($resource_type) . '
@@ -571,7 +513,6 @@ document.addEventListener('DOMContentLoaded', function(event) {
 		}
 		return intval($mapping_result[0]);
 	}
-
 	/**
 	 * Converts an XOOPS resource ID into a external resource ID using the associated mapping table
 	 * @param xoops_id  int   The external resource ID to convert
@@ -580,24 +521,22 @@ document.addEventListener('DOMContentLoaded', function(event) {
 	static function getExternalResourceID($resource_type, $xoops_id) {
 		self::init();
 		$mapping_table = self::$db->prefix(self::$mapping_table);
-		$mapping_result = mysql_fetch_row(self::$db->queryF('
-			SELECT external_id FROM ' . $mapping_table . '
+		$mapping_result = self::$db->fetchRow(self::$db->queryF('
+			SELECT external_id, external_id_string FROM ' . $mapping_table . '
 			WHERE internal_id = ' . intval($xoops_id) . '
 			AND resource_type = ' . intval($resource_type)
 		));
 		if ($mapping_result == NULL) {
 			return NULL;
 		}
-		return $mapping_result[0];
+        return $mapping_result[0] ? $mapping_result[0] : $mapping_result[1];
 	}
 }
-
 /**
  * Formulize objects extend this class so that their
  * instance fields can be manipulated.
  */
 class FormulizeObject {
-
 	/**
 	 * Get the value of a field in this FormulizeUser
 	 * @param   key     String      The name of the field to be retrieved
@@ -607,7 +546,6 @@ class FormulizeObject {
 		if(!isset($this->{$key}) && $this->{$key} != null) throw new Exception('FormulizeObject - Attempted to get an invalid object field: ' . $key);
 		return $this->{$key};
 	}
-
 	/**
 	 * Set the value of a field in this FormulizeUser
 	 * @param   key     String      The name of the field to be retrieved
@@ -618,12 +556,10 @@ class FormulizeObject {
 		$this->{$key} = $value;
 	}
 }
-
 /**
  * Formulize User Object
  */
 class FormulizeUser extends FormulizeObject {
-
 	protected $uid = -1;
 	protected $uname = '';
 	protected $login_name = '';
@@ -631,7 +567,6 @@ class FormulizeUser extends FormulizeObject {
 	protected $timezone_offset = null;
 	protected $notify_method = 2;
 	protected $level = 1;
-
 	/**
 	 * Construct a Fomulize User object from CMS data
 	 * @param   user_data    array   The user data acquired from the user object
@@ -639,7 +574,6 @@ class FormulizeUser extends FormulizeObject {
 	 */
 	function __construct($user_data) {
 		Formulize::init();
-
 		if(isset($user_data['uid']))
 			$this->uid = $user_data['uid'];
 		if(isset($user_data['uname']))
@@ -650,7 +584,6 @@ class FormulizeUser extends FormulizeObject {
 			$this->email = $user_data['email'];
 		if(isset($user_data['timezone_offset']))
 			$this->timezone_offset = $user_data['timezone_offset'];
-
 		//Set defaults if necessary
 		if ($this->timezone_offset == null) {
 			$this->timezone_offset = $GLOBALS['xoopsConfig']['default_TZ'];
