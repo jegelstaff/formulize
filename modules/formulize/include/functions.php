@@ -183,26 +183,43 @@ return $client;
  */
 
 function getEmailAuthenication(){
-$client = setupAuthentication();
-//Send Client Request
-$objOAuthService = new Google_Service_Oauth2($client);
+   ini_set('display_errors', 1);
+error_reporting(E_ALL|E_STRICT);
+    $user_handler = icms::handler("icms_member");
 
-//Authenticate code from Google OAuth Flow
-//Add Access Token to Session
-if (isset($_GET['code'])) {
-  $client->authenticate($_GET['code']);
-  $token = $client->getAccessToken();
-  $_SESSION['access_token'] = $token;
- 
-}   
-if (isset($_SESSION['access_token']) && $_SESSION['access_token']) {
-  $client->setAccessToken($token);
+    $client = setupAuthentication();
+    //Send Client Request
+    $objOAuthService = new Google_Service_Oauth2($client);
 
-}
+    //Authenticate code from Google OAuth Flow
+    //Add Access Token to Session
+    if (isset($_GET['code'])) {
+    $client->authenticate($_GET['code']);
+    $token = $client->getAccessToken();
+    $_SESSION['access_token'] = $token;
+    
+    }   
+    if (isset($_SESSION['access_token']) && $_SESSION['access_token']) {
+    $client->setAccessToken($token);
 
-$userData = $objOAuthService->userinfo->get();
+    }
 
-print "HELLO ".$userData["email"];
+    $userData = $objOAuthService->userinfo->get();
+
+    print "HELLO ".$userData["email"]. "\n";
+    print "user".$userData."\n";
+    $testExists = $user_handler->createUser($userData);
+    print "RESULT". $testExists;
+    if ($testExists == true){
+         $getuser =& $user_handler->getUsers(new icms_db_criteria_Item('email', icms_core_DataFilter::addSlashes($userData['email'])));
+        print $getuser[0]->getVar('uid')."truth\n";
+        return $getuser[0];
+        
+    }else if ($testExists == false){
+        print "false\n";
+    }else{
+        print "other";
+    }
 }
 
 
