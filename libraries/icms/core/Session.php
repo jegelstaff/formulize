@@ -73,6 +73,43 @@ class icms_core_Session {
         
             $userData = $objOAuthService->userinfo->get();
         
+            // start up the integration API
+            include_once XOOPS_ROOT_PATH."/integration_api.php";
+            Formulize::init();
+            
+            // we need to now try and get an the resource mapping of the user if it exists
+            if($internalUid = Formulize::getXoopsResourceID(Formulize::USER_RESOURCE, $userData["email"])) {
+                $externalUid = $userData["email"];
+            } else { // if the mapping did not exist, then we need to create the user
+                // you need to create the $user_data object, it looks like this:
+                /*
+                 *$user_data = array(
+                    'uid'				=> $account->uid,
+                    'uname'				=> $account->name,
+                    'login_name'		=> $account->name,
+                    'name'				=> $account->name,
+                    'pass'				=> $account->pass,
+                    'email'				=> $account->mail,
+                    'timezone_offset'	=> $account->timezone/60/60,
+                    'language'			=> _formulize_convert_language($account->language),
+                    'user_avatar'		=> 'blank.gif',
+                    'theme'				=> 'impresstheme',
+                    'level'				=> 1
+                );
+                */
+                if(Formulize::createUser($user_data)) {
+                    $externalUid = $userData["email"];
+                } else {
+                    // something went wrong creating the user!
+                }
+                
+            }
+            
+            
+            
+            
+            
+        
             $externalUid = $userData["email"];
         
             /*print "HELLO ".$userData["email"]. "\n";
