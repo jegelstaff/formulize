@@ -27,6 +27,7 @@ class icms_core_Session {
 	 */
 	static public function service() {
 		global $icmsConfig;
+		include_once ICMS_ROOT_PATH . '/include/functions.php';
 		if (file_exists(XOOPS_ROOT_PATH."/integration_api.php"))
 			include_once(XOOPS_ROOT_PATH.'/integration_api.php'); // ADDED CODE BY FREEFORM SOLUTIONS
 		$instance = new icms_core_Session(icms::$xoopsDB);
@@ -43,16 +44,13 @@ class icms_core_Session {
         
         // Also listens for a code from Google in the URL
         //if google user logged in and redirected to this page
-
         if (isset($_GET['code'])) {
             ini_set('display_errors', 1);
             error_reporting(E_ALL|E_STRICT);
             $user_handler = icms::handler("icms_member");
-        
-            // this call might fail, maybe the file with the function isn't included yet?
-            $client = setupAuthentication();
-            
-            //Send Client Request
+               
+            //Get a google client object and send Client Request for email
+			$client = setupAuthentication();
             $objOAuthService = new Google_Service_Oauth2($client);
         
             //Authenticate code from Google OAuth Flow
@@ -61,76 +59,43 @@ class icms_core_Session {
             $client->authenticate($_GET['code']);
             $token = $client->getAccessToken();
             }
-            
-            // probably don't need to do this part?
-            /*$_SESSION['access_token'] = $token;
-            
-            }   
-            if (isset($_SESSION['access_token']) && $_SESSION['access_token']) {
-            $client->setAccessToken($token);
-        
-            }*/
         
             $userData = $objOAuthService->userinfo->get();
         
             // start up the integration API
             include_once XOOPS_ROOT_PATH."/integration_api.php";
+			include_once ICMS_ROOT_PATH . '/modules/formulize/include/functions.php';
             Formulize::init();
             
+	
             // we need to now try and get an the resource mapping of the user if it exists
             if($internalUid = Formulize::getXoopsResourceID(Formulize::USER_RESOURCE, $userData["email"])) {
                 $externalUid = $userData["email"];
             } else { // if the mapping did not exist, then we need to create the user
                 // you need to create the $user_data object, it looks like this:
-                /*
-                 *$user_data = array(
-                    'uid'				=> $account->uid,
+                $user_data = array(
+                    'uid'				=> 0,
                     'uname'				=> $account->name,
                     'login_name'		=> $account->name,
                     'name'				=> $account->name,
                     'pass'				=> $account->pass,
-                    'email'				=> $account->mail,
-                    'timezone_offset'	=> $account->timezone/60/60,
-                    'language'			=> _formulize_convert_language($account->language),
+                    'email'				=> $userData["email"],
+                    'timezone_offset'	=> $account->timezone/60/60, //formulize_convert_language
+                    'language'			=> $account->language,
                     'user_avatar'		=> 'blank.gif',
                     'theme'				=> 'impresstheme',
                     'level'				=> 1
                 );
-                
-                // need to make a user object out of the array of data first...createUser expects the object, not the array
+                //need to make a user object out of the array of data first...createUser expects the object, not the array
                 $user_data = new FormulizeUser($user_data);
-                */
-                if(Formulize::createUser($user_data)) {
+                if( Formulize::createUser($user_data)) {
                     $externalUid = $userData["email"];
                 } else {
                     // something went wrong creating the user!
                 }
                 
             }
-            
-            
-            
-            
-            
-        
-            $externalUid = $userData["email"];
-        
-            /*print "HELLO ".$userData["email"]. "\n";
-            print "user".$userData."\n";
-            $testExists = $user_handler->createUser($userData);
-            print "RESULT". $testExists;
-            if ($testExists == true){
-                 $getuser =& $user_handler->getUsers(new icms_db_criteria_Item('email', icms_core_DataFilter::addSlashes($userData['email'])));
-                print $getuser[0]->getVar('uid')."truth\n";
-                return $getuser[0];
-                
-            }else if ($testExists == false){
-                print "false\n";
-            }else{
-                print "other";
-            }
-            print "testwith ". $testuser;
-            $GLOBALS['formulizeHostSystemUserId'] = $testuser->getVar('uid');*/
+    
         }
         
 		global $user;

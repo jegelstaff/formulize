@@ -126,54 +126,6 @@ function getFormFramework($formframe, $mainform="") {
     return $to_return;
 }
 
-/**
- * Authentication returns the authentication url
- *
- * @author Kristen Newbury Jan 2018
- * @return url that google will redirect to after authentication
- */
-
-function authenticationURL() {
-    $client = setupAuthentication();
-    $authUrl = $client->createAuthUrl();
-    return $authUrl;
-}
-
-/**
- * Authentication setup with google, makes google client
- *
- * @author Kristen Newbury Jan 2018
- * @return google client
- */
-
-function setupAuthentication() {
-//Google API PHP Library includes
-require_once XOOPS_ROOT_PATH.'/libraries/googleapiclient/autoload.php';
-//redirect uri for when google authentication is done and it comes back to formulize
-$redirect_uri = XOOPS_URL;
- 
-//Create Client Request to access Google API
-$client = new Google_Client();
-$auth_creds = XOOPS_TRUST_PATH.'/client_secrets.json';
-if (file_exists($auth_creds)) {
-  //set credentials for Auth
-  $client->setAuthConfig($auth_creds);
-}else{
-  //TODO fix so that if ther is no client secrets file then probably redirect to instructions on how to get that
-  print "Something went wrong";
-}
-
-$client->setRedirectUri($redirect_uri);
-
-//want to request email info for username later on
-$client->setScopes('email');
-
-//Send Client Request
-$objOAuthService = new Google_Service_Oauth2($client);
-
-return $client;
-}
-
 
 // get the title of a form
 function getFormTitle($fid) {

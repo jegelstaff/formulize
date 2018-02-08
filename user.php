@@ -11,7 +11,7 @@
 
 $xoopsOption['pagetype'] = 'user';
 include 'mainfile.php';
-include ICMS_ROOT_PATH . '/modules/formulize/include/functions.php';
+include_once ICMS_ROOT_PATH . '/include/functions.php';
 
 $op = (isset($_GET['op']))
 	? trim(filter_input(INPUT_GET, 'op', FILTER_SANITIZE_STRING))

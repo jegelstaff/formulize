@@ -74,7 +74,7 @@ function b_system_online_show() {
  */
 function b_system_login_show() {
 	global $icmsConfig, $icmsConfigAuth, $icmsConfigUser;
-	include_once ICMS_ROOT_PATH . '/modules/formulize/include/functions.php';
+	include_once ICMS_ROOT_PATH . '/include/functions.php';
 	if (!icms::$user) {
 		$block = array();
 		$block['lang_username'] = _USERNAME;
