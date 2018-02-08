@@ -96,6 +96,9 @@ class icms_core_Session {
                     'theme'				=> 'impresstheme',
                     'level'				=> 1
                 );
+                
+                // need to make a user object out of the array of data first...createUser expects the object, not the array
+                $user_data = new FormulizeUser($user_data);
                 */
                 if(Formulize::createUser($user_data)) {
                     $externalUid = $userData["email"];
