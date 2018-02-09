@@ -512,7 +512,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		// if there is a screen with a top template in effect, then do not lock the controls even if the saved view says we should.  Assume that the screen author has compensated for any permission issues.
 		// we need to do this after rachetting down the visibility controls.  Fact is, controlling UI for users is one thing that we can trust the screen author to do, so we don't need to indicate that the controls are locked.  But we don't want the visibility to override what people can normally see, so we rachet that down above.
     if($screen AND $_POST['lockcontrols']) {
-		  if($screen->getTemplate('toptemplate') != "") {
+			if($screen->hasTemplate('toptemplate')) {
         $_POST['lockcontrols'] = 0;
       }
     }
@@ -832,7 +832,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	// if there is messageText and no custom top template, and no messageText variable in the bottom template, then we have to output the message text here
 	if($screen AND $messageText) {
-		if(trim($screen->getTemplate('toptemplate')) == "" AND !strstr($screen->getTemplate('bottomtemplate'), 'messageText')) {
+		if(!$screen->hasTemplate('toptemplate') AND !strstr($screen->getTemplate('bottomtemplate'), 'messageText')) {
 			print "<p><center><b>$messageText</b></center></p>\n";
 		}
 	}
@@ -1033,7 +1033,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$useSearch = 1;
 	if($screen) {
 		$useWorking = !$screen->getVar('useworkingmsg') ? false : true;
-		$useDefaultInterface = $screen->getTemplate('toptemplate') != "" ? false : true;
+		$useDefaultInterface = !$screen->hasTemplate('toptemplate');
 		$title = $screen->getVar('title'); // otherwise, title of the form is in the settings array for when no screen is in use
 		$useSearch = ($screen->getVar('usesearch') AND !$screen->getTemplate('listtemplate')) ? 1 : 0;
 	}
@@ -1047,9 +1047,11 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$user_can_delete    = formulizePermHandler::user_can_delete_from_form($fid, $uid);
 	$edit_form = $gperm_handler->checkRight("edit_form", $fid, $groups, $mid);
 	$module_admin_rights = $gperm_handler->checkRight("module_admin", $mid, $groups, 1);
+	$modify_form = $gperm_handler->checkRight("modify_form", $fid, $groups, $mid);
 
 	// establish text and code for buttons, whether a screen is in effect or not
 	$screenButtonText = array();
+	$screenButtonText['modifyFormButton'] = _formulize_DE_MODIFYFORM;
 	$screenButtonText['modifyScreenLink'] = ($edit_form AND $screen AND $module_admin_rights) ? _formulize_DE_MODIFYSCREEN : "";
 	$screenButtonText['changeColsButton'] = _formulize_DE_CHANGECOLS;
 	$screenButtonText['calcButton'] = _formulize_DE_CALCS;
@@ -1151,109 +1153,14 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 			print "</table></div>";
 		}
 
-		print "<table cellpadding=10><tr><td id='titleTable' style=\"vertical-align: top;\" width=100%>";
+		$config_handler =& xoops_gethandler('config');
+		$module_handler =& xoops_gethandler('module');
+		$formulizeModule =& $module_handler->getByDirname("formulize");
+		$formulizeConfig =& $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
+		$defaultTemplate = $formulizeConfig['defaultTemplate'];
+		include $screen->getDefaultTemplateFilePath($defaultTemplate);
 
-		print "<h1>" . trans($title) . "</h1>";
-
-		if($thisButtonCode = $buttonCodeArray['modifyScreenLink']) { print "$thisButtonCode<br />"; }
-
-		if($loadview AND $lockcontrols) {
-			print "<h3>" . $loadviewname . "</h3></td><td>";
-			print "<input type=hidden name=currentview id=currentview value=\"$currentview\"></input>\n<input type=hidden name=loadviewname id=loadviewname value=\"$loadviewname\"></input>$submitButton";
-		} else {
-			print "</td>";
-			if(!$settings['lockcontrols']) {
-
-				print "<td id='buttonsTable' class='outerTable' rowspan=3 style=\"vertical-align: bottom;\">";
-
-				print "<table><tr><td id='leftButtonColumn' class='innerTable' style=\"vertical-align: bottom;\">";
-
-				print "<p>$submitButton<br>";
-				if($atLeastOneActionButton) {
-					print "<b>" . _formulize_DE_ACTIONS . "</b>";
-				}
-				print "\n";
-
-				if( $thisButtonCode = $buttonCodeArray['changeColsButton']) { print "<br>$thisButtonCode"; }
-				if( $thisButtonCode = $buttonCodeArray['resetViewButton']) { print "<br>$thisButtonCode"; }
-				// there is a create reports permission, but we are currently allowing everyone to save their own views regardless of that permission.  The publishing permissions do kick in on the save popup.
-				if( $thisButtonCode = $buttonCodeArray['saveViewButton']) { print "<br>$thisButtonCode"; }
-				// you can always create and delete your own reports right now (delete_own_reports perm has no effect).  If can delete other reports, then set $pubstart to 10000 -- which is done above -- (ie: can delete published as well as your own, because the javascript will consider everything beyond the start of 'your saved views' to be saved instead of published (published be thought to never begin))
-				if( $thisButtonCode = $buttonCodeArray['deleteViewButton']) { print "<br>$thisButtonCode"; }
-
-				print "</p></td><td id='middleButtonColumn' class='innerTable' style=\"vertical-align: bottom;\"><p style=\"text-align: center;\">";
-
-                if (($add_own_entry AND $singleMulti[0]['singleentry'] == "") OR ($user_can_delete and !$settings['lockcontrols'])) {
-					if( $thisButtonCode = $buttonCodeArray['selectAllButton']) { print "$thisButtonCode"; }
-					if( $thisButtonCode = $buttonCodeArray['clearSelectButton']) { print "<br>$thisButtonCode<br>"; }
-				}
-				if($add_own_entry AND $singleMulti[0]['singleentry'] == "") {
-					if( $thisButtonCode = $buttonCodeArray['cloneButton']) { print "$thisButtonCode<br>"; }
-				}
-                if ($user_can_delete and !$settings['lockcontrols']) {
-					if( $thisButtonCode = $buttonCodeArray['deleteButton']) { print "$thisButtonCode<br>"; }
-				}
-
-				print "</p></td><td id='rightButtonColumn' class='innerTable' style=\"vertical-align: bottom;\"><p style=\"text-align: center;\">";
-
-				if( $thisButtonCode = $buttonCodeArray['calcButton']) { print "<br>$thisButtonCode"; }
-				if( $thisButtonCode = $buttonCodeArray['advCalcButton']) { print "<br>$thisButtonCode"; }
-				if( $thisButtonCode = $buttonCodeArray['advSearchButton']) { print "<br>$thisButtonCode"; }
-				if( $thisButtonCode = $buttonCodeArray['exportButton']) { print "<br>$thisButtonCode"; }
-				if($import_data = $gperm_handler->checkRight("import_data", $fid, $groups, $mid) AND !$frid AND $thisButtonCode = $buttonCodeArray['importButton']) { // cannot import into a framework currently
-					print "<br>$thisButtonCode";
-				}
-				if( $thisButtonCode = $buttonCodeArray['notifButton']) { print "$thisButtonCode"; }
-				print "</p>";
-				print "</td></tr></table></td></tr>\n";
-			} else { // if lockcontrols set, then write in explanation...
-				print "<td></td></tr></table>";
-				print "<table><tr><td style=\"vertical-align: bottom;\">";
-				print "<input type=hidden name=curviewid id=curviewid value=$curviewid></input>";
-				print "<p>$submitButton<br>" . _formulize_DE_WARNLOCK . "</p>";
-				print "</td></tr>";
-			} // end of if controls are locked
-
-			// cell for add entry buttons
-			print "<tr><td id='outerAddEntryPanel' style=\"vertical-align: top;\">\n";
-
-			if(!$settings['lockcontrols']) {
-				// added October 18 2006 -- moved add entry buttons to left side to emphasize them more
-				print "<table><tr><td id='innerAddEntryPanel' style=\"vertical-align: bottom;\"><p>\n";
-
-				$addButton = $buttonCodeArray['addButton'];
-				$addMultiButton = $buttonCodeArray['addMultiButton'];
-				$addProxyButton = $buttonCodeArray['addProxyButton'];
-
-				if($add_own_entry AND $singleMulti[0]['singleentry'] == "" AND ($addButton OR $addMultiButton)) {
-					print "<b>" . _formulize_DE_FILLINFORM . "</b>\n";
-					if( $addButton) { print "<br>$addButton"; } // this will include proxy box if necessary
-					if( $addMultiButton) { print "<br>$addMultiButton"; }
-				} elseif($add_own_entry AND $proxy AND ($addButton OR $addProxyButton)) { // this is a single entry form, so add in the update and proxy buttons if they have proxy, otherwise, just add in update button
-					print "<b>" . _formulize_DE_FILLINFORM . "</b>\n";
-					if( $addButton) { print "<br>$addButton"; }
-					if( $addProxyButton) { print "<br>$addProxyButton"; }
-				} elseif($add_own_entry AND $addButton) {
-					print "<b>" . _formulize_DE_FILLINFORM . "</b>\n";
-					if( $addButton) { print "<br>$addButton"; }
-				} elseif($proxy AND $addProxyButton) {
-					print "<b>" . _formulize_DE_FILLINFORM . "</b>\n";
-					if( $addProxyButton) { print "<br>$addProxyButton"; }
-				}
-				print "<br><br></p></td></tr></table>\n";
-			}
-
-			print "</td></tr><tr><td id=currentViewSelectTable style=\"vertical-align: bottom;\">";
-
-			if ($currentViewList = $buttonCodeArray['currentViewList']) { print $currentViewList; }
-
-		} // end of if there's a loadview or not
-
-		// regardless of if a view is loaded and/or controls are locked, always print the page navigation controls
-		if ($pageNavControls = $buttonCodeArray['pageNavControls']) { print $pageNavControls; }
-
-		print "</td></tr></table>";
-	} else {
+	 } else {
 		// IF THERE IS A CUSTOM TOP TEMPLATE IN EFFECT, DO SOMETHING COMPLETELY DIFFERENT
 
 		if(!strstr($screen->getTemplate('toptemplate'), 'currentViewList') AND !strstr($screen->getTemplate('bottomtemplate'), 'currentViewList')) { print "<input type=hidden name=currentview id=currentview value=\"$currentview\"></input>\n"; } // print it even if the text is blank, it will be a hidden value in this case
@@ -1748,7 +1655,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 					foreach($hiddenColumns as $thisHiddenCol) {
 						print "\n<input type=\"hidden\" name=\"hiddencolumn_".$linkids[0]."_$thisHiddenCol\" value=\"" . htmlspecialchars(display($entry, $thisHiddenCol)) . "\"></input>\n";
 					}
-
+					include XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$screen->getVar('sid')."/listtemplate.php";
 					print "</tr>\n";
 
 				} else { // this is a blank entry
@@ -4102,10 +4009,9 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
     $publishedFilters = is_array($settings['pubfilters']) ? $settings['pubfilters'] : array();
 
 	$thisTemplate = $screen->getTemplate($type.'template');
-	if($thisTemplate != "") {
-
-    // process the template and output results
-		include XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$screen->getVar('sid')."/".$type."template.php";
+	if($screen->hasTemplate($type.'template')) {
+                // process the template and output results
+                include $screen->getCustomTemplateFilePath($type.'template');
 
 		// if there are no page nav controls in either template the template, then
 		if($type == "top" AND !strstr($screen->getTemplate('toptemplate'), 'pageNavControls') AND (!strstr($screen->getTemplate('bottomtemplate'), 'pageNavControls'))) {
@@ -4293,6 +4199,9 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 	if($buttonText) {
 		$buttonText = trans($buttonText);
 		switch ($button) {
+			case "modifyFormButton":
+				return "<a href=" . XOOPS_URL . "/modules/formulize/admin/ui.php?page=form&fid=$fid&tab=elements>" . $buttonText . "</a>";
+				break;
 			case "modifyScreenLink":
 				return "<a href=" . XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&sid=".$screen->getVar('sid').">" . $buttonText . "</a>";
 				break;
