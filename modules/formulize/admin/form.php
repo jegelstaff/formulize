@@ -491,6 +491,15 @@ foreach($listOfEntriesScreens as $screen) {
     $screens['listOfEntries'][$i]['title'] = $screen->getVar('title');
     $i++;
 }
+
+$graphScreens = $screen_handler->getObjects(new Criteria('type','graph'),$fid);
+$i = 1;
+foreach($graphScreens as $screen) {
+  $screens['graph'][$i]['sid'] = $screen->getVar('sid');
+  $screens['graph'][$i]['title'] = $screen->getVar('title');
+  $i++;
+}
+
 $templateScreens = $screen_handler->getObjects(new Criteria('type','template'),$fid);
 $i = 1;
 foreach($templateScreens as $screen) {
