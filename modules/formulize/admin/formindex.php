@@ -113,7 +113,7 @@ function patch40() {
      * ====================================== */
 
     $checkThisTable = 'formulize_apikeys';
-    $checkThisField = false; 
+    $checkThisField = false;
     $checkThisProperty = false;
     $checkPropertyForValue = false;
 
@@ -214,6 +214,19 @@ function patch40() {
 ) ENGINE=MyISAM;";
         }
 
+        if(!in_array($xoopsDB->prefix("formulize_screen_graph"), $existingTables)) {
+$sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_screen_graph") . " (
+`formid` int(11) NOT NULL auto_increment,
+`sid` int(11) NOT NULL default 0,
+`donedest` varchar(255) NOT NULL default '',
+`savebuttontext` varchar(255) NOT NULL default '',
+`alldonebuttontext` varchar(255) NOT NULL default '',
+`displayheading` tinyint(1) NOT NULL default 0,
+`reloadblank` tinyint(1) NOT NULL default 0,
+PRIMARY KEY (`formid`),
+INDEX i_sid (`sid`)
+) ENGINE=MyISAM;"; }
+
         if (!in_array($xoopsDB->prefix("formulize_advanced_calculations"), $existingTables)) {
             $sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_advanced_calculations")."` (
   `acid` int(11) NOT NULL auto_increment,
@@ -294,7 +307,7 @@ function patch40() {
             INDEX i_sid (`sid`)
         ) ENGINE=MyISAM;";
         }
-        
+
         if (!in_array($xoopsDB->prefix("formulize_apikeys"), $existingTables)) {
             $sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_apikeys") . " (
                 `key_id` int(11) unsigned NOT NULL auto_increment,
@@ -306,7 +319,7 @@ function patch40() {
                 INDEX i_apikey (apikey),
                 INDEX i_expiry (expiry)
             ) ENGINE=MyISAM;";
-        }      
+        }
 
         // if this is a standalone installation, then we want to make sure the session id field in the DB is large enough to store whatever session id we might be working with
         if (file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
@@ -356,7 +369,7 @@ function patch40() {
         $sql['add_pubfilters'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_saved_views") . " ADD `sv_pubfilters` text";
         $sql['add_backdrop_group'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_resource_mapping") . " ADD external_id_string text NULL default NULL";
         $sql['add_backdrop_group_index'] = "ALTER TABLE ". $xoopsDB->prefix("formulize_resource_mapping") ." ADD INDEX i_external_id_string (external_id_string(10))";
-        
+
         foreach($sql as $key=>$thissql) {
             if (!$result = $xoopsDB->query($thissql)) {
                 if ($key === "add_encrypt") {
@@ -492,6 +505,78 @@ function patch40() {
             print "<p> --- </p>";
             print "<p><b>You can re-run this patch after making changes.  If you do not get this warning, then your site should be OK.</b></p>";
             print "<p>If you have any questions about this upgrade issue, please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.</p>";
+        }
+
+        $screenpathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/";
+
+        $templateSQL = "SELECT sid, toptemplate, listtemplate, bottomtemplate FROM ".$xoopsDB->prefix("formulize")."_screen_listofentries";
+
+        $templateRes = $xoopsDB->query($templateSQL);
+        if($xoopsDB->getRowsNum($templateRes) > 0) {
+
+            while($handleArray = $xoopsDB->fetchArray($templateRes)) {
+                if (!file_exists($screenpathname.$handleArray['sid'])) {
+                    $pathname = $screenpathname.$handleArray['sid']."/";
+                    mkdir($pathname, 0777, true);
+
+                    if (!is_writable($pathname)) {
+                        chmod($pathname, 0777);
+                    }
+
+                    saveTemplate($handleArray['toptemplate'], $handleArray['sid'], "toptemplate");
+                    saveTemplate($handleArray['bottomtemplate'], $handleArray['sid'], "bottomtemplate");
+                    saveTemplate($handleArray['listtemplate'], $handleArray['sid'], "listtemplate");
+
+                } else {
+                    print "screen templates for screen ".$handleArray['sid']." already exist. result: OK<br>";
+                }
+
+            }
+        }
+
+        $multitemplateSQL = "SELECT sid, toptemplate, elementtemplate, bottomtemplate FROM ".$xoopsDB->prefix("formulize")."_screen_multipage";
+
+        $multitemplateRes = $xoopsDB->query($multitemplateSQL);
+        if($xoopsDB->getRowsNum($multitemplateRes) > 0) {
+
+            while($handleArray = $xoopsDB->fetchArray($multitemplateRes)) {
+                if (!file_exists($screenpathname.$handleArray['sid'])) {
+                    $pathname = $screenpathname.$handleArray['sid']."/";
+                    mkdir($pathname, 0777, true);
+
+                    if (!is_writable($pathname)) {
+                        chmod($pathname, 0777);
+                    }
+
+                    saveTemplate($handleArray['toptemplate'], $handleArray['sid'], "toptemplate");
+                    saveTemplate($handleArray['bottomtemplate'], $handleArray['sid'], "bottomtemplate");
+                    saveTemplate($handleArray['elementtemplate'], $handleArray['sid'], "elementtemplate");
+
+                } else {
+                    print "screen templates for screen ".$handleArray['sid']." already exist. result: OK<br>";
+                }
+
+            }
+        }
+
+        // need to update multiple select boxes.
+        // $xoopsDB->prefix("formulize")
+        // 1. get a list of all elements that are linked selectboxes that support only single values
+        $selectBoxesSQL = "SELECT id_form, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_type = 'select'";
+        $selectBoxRes = $xoopsDB->query($selectBoxesSQL);
+        if ($xoopsDB->getRowsNum($selectBoxRes) > 0) {
+            while ($handleArray = $xoopsDB->fetchArray($selectBoxRes)) {
+                $metaData = formulize_getElementMetaData($handleArray['ele_id']);
+                $ele_value = unserialize($metaData['ele_value']);
+
+                // select only single option, linked select boxes
+                if (!$ele_value[1] AND strstr($ele_value[2], "#*=:*")) {
+                    $successSelectBox = convertSelectBoxToSingle($xoopsDB->prefix('formulize_' . $handleArray['id_form']), $handleArray['ele_id']);
+                    if (!$successSelectBox) {
+                        print "could not convert column " . $handleArray['ele_id'] . " in table " . $xoopsDB->prefix('formulize_' . $handleArray['id_form']) . "<br>";
+                    }
+                }
+            }
         }
 
         //create new menus table
@@ -641,6 +726,49 @@ function patch40() {
 
         print "DB updates completed.  result: OK";
     }
+}
+
+function saveMenuEntryAndPermissionsSQL($formid,$appid,$i){
+	global $xoopsDB;
+	$gperm_handler = xoops_gethandler('groupperm');
+	$permissionsql = "";
+	$groupsThatCanView = $gperm_handler->getGroupIds("view_form", $formid, getFormulizeModId());
+
+	$menuText = html_entity_decode($menuText, ENT_QUOTES) == "Use the form's title" ? '' : $menuText;
+	$thissql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_links")."` VALUES (null,". $appid.",'fid=".$formid."',".$i.",null,'".$menuText."');";//.$permissionsql.";";
+	if(!$result = $xoopsDB->query($thissql)) {
+		exit("Error inserting Menus. SQL dump:<br>" . $thissql . "<br>".mysql_error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+	}else{
+		foreach($groupsThatCanView as $groupid) {
+			if($permissionsql != ""){
+				$permissionsql += ",(null,". mysql_insert_id().",". $groupid.")";
+			}else{
+				$permissionsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_permissions")."` VALUES (null,". mysql_insert_id().",". $groupid.")";
+			}
+		}
+		if(!$result = $xoopsDB->query($permissionsql)) {
+			exit("Error inserting Menu permissions. SQL dump:<br>" . $permissionsql . "<br>".mysql_error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+		}
+	}
+}
+
+// Saves the given template to a template file on the disk
+function saveTemplate($template, $sid, $name) {
+    $pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/". $sid . "/";
+
+    $text = html_entity_decode($template);
+    if (!empty($text)) {
+        $fileHandle = fopen($pathname . $name. ".php", "w+");
+        $success = fwrite($fileHandle, "<?php\n" . $text);
+        fclose($fileHandle);
+
+        if ($success) {
+            print "created templates/screens/default/" . $sid . "/". $name . ".php. result: OK<br>";
+        } else {
+            print "Warning: could not save " . $name . ".php for screen " . $sid . ".<br>";
+        }
+    }
+
 }
 
 // Fixes the format if the template is empty
