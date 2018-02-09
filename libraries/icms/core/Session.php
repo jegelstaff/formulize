@@ -41,12 +41,11 @@ class icms_core_Session {
 		// ADDED CODE BY FREEFORM SOLUTIONS, SUPPORTING INTEGRATION WITH OTHER SYSTEMS
 		// If this is a page load by another system, and we're being included, then we establish the user session based on the user id of the user in effect in the other system
 		// This approach assumes correspondence between the user ids.
-        
+
         // Also listens for a code from Google in the URL
         //if google user logged in and redirected to this page
         if (isset($_GET['code'])) {
-            ini_set('display_errors', 1);
-            error_reporting(E_ALL|E_STRICT);
+            
             $user_handler = icms::handler("icms_member");
                
             //Get a google client object and send Client Request for email
@@ -56,8 +55,7 @@ class icms_core_Session {
             //Authenticate code from Google OAuth Flow
             //Add Access Token to Session
             if (isset($_GET['code'])) {
-            $client->authenticate($_GET['code']);
-            $token = $client->getAccessToken();
+				$client->authenticate($_GET['code']);
             }
         
             $userData = $objOAuthService->userinfo->get();
@@ -91,12 +89,15 @@ class icms_core_Session {
                 if( Formulize::createUser($user_data)) {
                     $externalUid = $userData["email"];
                 } else {
-                    // something went wrong creating the user!
+                    // something went wrong creating the user, give them a useful message about this.
+					$_SESSION['redirect_message'] = 'Error: we could not create a session for you based on your Google account. <br> Please contact a webmaster and include this message.' ;
                 }
                 
             }
     
-        }
+        }else{
+			
+}
         
 		global $user;
 
