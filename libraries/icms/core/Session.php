@@ -95,9 +95,7 @@ class icms_core_Session {
                 
             }
     
-        }else{
-			
-}
+        }
         
 		global $user;
 
