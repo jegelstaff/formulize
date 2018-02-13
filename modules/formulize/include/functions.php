@@ -5007,8 +5007,13 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
     }
 
     if (!$conditionsFilterComparisonValue) {
-        $conditionsFilterComparisonValue = $quotes.$likebits.formulize_db_escape($filterTerms[$filterId]).$likebits.$quotes;
-    }
+        if ($targetElementEleValue[1]) {
+            $conditionsFilterComparisonValue = " CONCAT('$origlikebits,',(SELECT ss.entry_id FROM " . $xoopsDB->prefix("formulize_" . $targetSourceFormObject->getVar('form_handle')) . " AS ss WHERE `$targetSourceHandle` " . $filterOps[$filterId] . $quotes . $likebits . $filterTermToUse . $likebits . $quotes . "),',$origlikebits') ";
+        } else {
+            $conditionsFilterComparisonValue = " (SELECT ss.entry_id FROM " . $xoopsDB->prefix("formulize_" . $targetSourceFormObject->getVar('form_handle')) . " AS ss WHERE `$targetSourceHandle` " . $filterOps[$filterId] . $quotes . $likebits . $filterTermToUse . $likebits . $quotes . ") ";
+            $newFilterOps = array($filterId=>'=');
+        }
+      }
 
     // if it's a { } term, then assume it's a data handle for a field in the form where the element is being included
     if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND !$targetElementObject->isLinked) {

@@ -100,7 +100,7 @@ foreach($_POST as $k=>$v) {
 		$GLOBALS['formulizeEleSub_' . $noSaveHandle] = $v;
 		$GLOBALS['formulizeEleSub_' . $element_metadata[3]] = $v;
 		unset($element);
-		
+
 	} elseif(substr($k, 0, 9) == "desubform") { // handle blank subform elements
 		$elementMetaData = explode("_", $k);
 		$elementObject = $element_handler->get($elementMetaData[3]);
@@ -118,9 +118,9 @@ foreach($_POST as $k=>$v) {
 		// also...the entry id that the new entries received was stored after writing in this array:
 		// this is the subform id, and the subform placeholder, which must receive the last insert id when it's values are saved
 		//$GLOBALS['formulize_subformCreateEntry'][$element->getVar('id_form')][$desubformEntryIndex]
-		
+
 	} elseif(substr($k, 0, 6) == "decue_") {
-		// store values according to form, entry and element ID 
+		// store values according to form, entry and element ID
 		// prep them all for writing
 		$elementMetaData = explode("_", $k);
 		if(isset($_POST["de_".$elementMetaData[1]."_".$elementMetaData[2]."_".$elementMetaData[3]])) {
@@ -129,8 +129,8 @@ foreach($_POST as $k=>$v) {
 			$formulize_elementData[$elementMetaData[1]][$elementMetaData[2]][$elementMetaData[3]] = $v;
 		} elseif(is_numeric($elementMetaData[1])) {
 			$formulize_elementData[$elementMetaData[1]][$elementMetaData[2]][$elementMetaData[3]] = "{WRITEASNULL}"; // no value returned for this element that was included (cue was found) so we write it as blank to the db
-		}		
-	
+		}
+
 	} elseif(substr($k, 0, 12) == "userprofile_") {
 		$formulize_up[substr($k, 12)] = $v;
 	}
@@ -170,7 +170,7 @@ if(count($formulize_elementData) > 0 ) { // do security check if it looks like w
   $formulizeModule =& $module_handler->getByDirname("formulize");
   $formulizeConfig =& $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
   $modulePrefUseToken = $formulizeConfig['useToken'];
-	$useToken = $screen ? $screen->getVar('useToken') : $modulePrefUseToken; 
+	$useToken = $screen ? $screen->getVar('useToken') : $modulePrefUseToken;
 	if(isset($GLOBALS['xoopsSecurity']) AND $useToken) { // avoid security check for versions of XOOPS that don't have that feature, or for when it's turned off
 		$GLOBALS['formulize_securityCheckPassed'] = true;
 		if (!$GLOBALS['xoopsSecurity']->check() AND (!strstr($cururl, "modules/wfdownloads") AND !strstr($cururl, "modules/smartdownload"))) { // skip the security check if we're in wfdownloads/smartdownloads since that module should already be handling the security checking
@@ -219,7 +219,7 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
 					$notEntriesList['new_entry'][$elementFid][] = $writtenEntryId; // log the notification info
                     writeOtherValues($writtenEntryId, $elementFid, $subformBlankCounter); // write the other values for this entry
 					if($creation_user == 0) { // handle cookies for anonymous users
-						setcookie('entryid_'.$elementFid, $writtenEntryId, time()+60*60*24*7, '/');	// the slash indicates the cookie is available anywhere in the domain (not just the current folder)				
+						setcookie('entryid_'.$elementFid, $writtenEntryId, time()+60*60*24*7, '/');	// the slash indicates the cookie is available anywhere in the domain (not just the current folder)
 						$_COOKIE['entryid_'.$elementFid] = $writtenEntryId;
 					}
 					afterSavingLogic($values, $writtenEntryId);
@@ -255,7 +255,7 @@ foreach($formulize_newEntryIds as $newEntryFid=>$entries){
 if(isset($updateOwnerFid) AND $gperm_handler->checkRight("update_entry_ownership", $updateOwnerFid, $groups, $mid)) {
 	$data_handler_for_owner_updating = new formulizeDataHandler($updateOwnerFid);
 	if(!$data_handler_for_owner_updating->setEntryOwnerGroups($updateOwnerNewOwnerId, $updateOwnerEntryId, true)) { // final true causes an update, instead of a normal setting of the groups from scratch.  Entry's creation user is updated too.
-		print "<b>Error: could not update the entry ownership information.  Please report this to the webmaster right away, including which entry you were trying to update.</b>";		
+		print "<b>Error: could not update the entry ownership information.  Please report this to the webmaster right away, including which entry you were trying to update.</b>";
 	}
 	$data_handler_for_owner_updating->updateCaches($updateOwnerEntryId);
 }
@@ -314,8 +314,8 @@ foreach($formulize_allWrittenEntryIds as $allWrittenFid=>$entries) {
 		}
 	}
     }
-	
-	
+
+
 	// check for things that we should be updating based on the framework in effect for any override screen that has been declared
 	if($_POST['overridescreen'] AND $derivedValueFound) {
 		$override_screen_handler = xoops_getmodulehandler('screen', 'formulize');
@@ -333,7 +333,7 @@ foreach($formulize_allWrittenEntryIds as $allWrittenFid=>$entries) {
 			}
 		}
 	}
-	
+
 }
 
 // check for any forms that were written, that did not have derived values updated as part of the framework
@@ -352,7 +352,7 @@ if($frid) {
 // send notifications
 foreach($notEntriesList as $notEvent=>$notDetails) {
 	foreach($notDetails as $notFid=>$notEntries) {
-		$notEntries = array_unique($notEntries); 
+		$notEntries = array_unique($notEntries);
 		sendNotifications($notFid, $notEvent, $notEntries);
 	}
 }
@@ -373,6 +373,67 @@ if(count($formulize_elementData) > 1 AND ($frid OR $overrideFrid)) {
         formulize_makeOneToOneLinks($oneToOneFridToUse, $this_fid);
     }
 }
+
+// Update for Ajax Save
+// Check if the request is an Ajax request (Since we have passed security check above, this is secured!)
+if(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+	// take special care for ajax request here
+
+  	// create new security token
+  	$token = $GLOBALS['xoopsSecurity']->createToken();
+  	// print_r($formulize_newEntryIds);
+  	// check if user has just made a new entry and get entryId and fid
+  	if(count($formulize_newEntryIds) >= 1){
+  		if(count($formulize_newEntryIds) >= 2){
+  			// Should be here!
+  			echo "ERROR: Unsupported Case: Two forms are modified when we add a single entry!? Check out line 362 of readelements";
+			return;
+		} else {
+  			reset($formulize_newEntryIds);
+  			$response_fid = key($formulize_newEntryIds);
+			$entries = $formulize_newEntryIds[$response_fid];
+			if(count($entries) >= 2 || count($entries) < 1){
+				$num = count($entries);
+				echo "num" . "$num";
+				echo "ERROR: Unsupported Case: Two entries are modified when we modify a single form?! Check out line 368 of readelements";
+				return;
+			}
+			$response_entryId = $entries[0];
+  		}
+  	}
+  	// set fid and entryIds
+  	if($response_fid){
+  		// if new entry
+  		$fid = $response_fid;
+  		$entryId = $response_entryId;
+  	} else {
+  		// if an existing entry
+  		$fid = $elementMetaData[1];
+		$entryId = $elementMetaData[2];
+  	}
+  	$newMetaData = genFormMetaData($entryId, $fid, $member_handler);
+	$formInstructionUpdate = genFormInstruction(1, $fid, $entryId, true, $owner, $uid, $groups, $mid);
+	$formInstructionMakeNew = genFormInstruction(2, $fid, $entryId, true, $owner, $uid, $groups, $mid);
+
+  	$proxylist = genOwnershipList($fid, $mid, $groups, $entryId);
+	$ownershipListHtml = $proxylist->render();
+  	$ownershipCaption = $proxylist->getCaption();
+  	$response = array(
+  					'new_xoops_token_request' => $token,
+  					'fid' => $response_fid,
+  					'entryId' => $response_entryId,
+  					'metaData' => $newMetaData,
+  					'formInstructionUpdate' => $formInstructionUpdate,
+  					'formInstructionMakeNew' => $formInstructionMakeNew,
+  					'ownershipListHtml' => $ownershipListHtml,
+  					'ownershipCaption'=> $ownershipCaption,
+			 	);
+  	// send json back to ajax save!
+  	echo json_encode($response);
+}
+
+
+// End of Update for Ajax Save
 
 return $formulize_allWrittenEntryIds;
 
@@ -429,14 +490,14 @@ function writeUserProfile($data, $uid) {
     if (!empty($data['uid'])) {
         $uid = intval($data['uid']);
     }
-		
+
     if (empty($uid)) {
 	redirect_header(XOOPS_URL,3,_US_NOEDITRIGHT);
         exit();
     } elseif(is_object($xoopsUser)) {
 			if($xoopsUser->getVar('uid') != $uid) {
 				redirect_header(XOOPS_URL,3,_US_NOEDITRIGHT);
-				exit();	
+				exit();
 			}
     }
 
@@ -459,7 +520,7 @@ function writeUserProfile($data, $uid) {
      	  if (strlen($password) < $xoopsConfigUser['minpass']) {
            	$errors[] = sprintf(_US_PWDTOOSHORT,$xoopsConfigUser['minpass']);
         }
-        if (!empty($data['vpass'])) { 
+        if (!empty($data['vpass'])) {
      	      $vpass = $myts->stripSlashesGPC(trim($data['vpass']));
         }
      	  if ($password != $vpass) {

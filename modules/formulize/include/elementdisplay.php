@@ -44,18 +44,18 @@ $GLOBALS['formulize_renderedElementHasConditions'] = array();
 function displayElement($formframe="", $ele, $entry="new", $noSave = false, $screen=null, $prevEntry=null, $renderElement=true, $profileForm = null, $groups="") {
 
 	static $cachedPrevEntries = array();
-	static $lockedEntries = array(); // keep track of the entries we have determined are locked 
+	static $lockedEntries = array(); // keep track of the entries we have determined are locked
 	global $entriesThatHaveBeenLockedThisPageLoad;
 	if(!is_array($entriesThatHaveBeenLockedThisPageLoad)) { // which entries we have locked as part of this page load, so we don't waste time setting locks again on entries we've already locked, and so we can ignore locks that were set by ourselves!
 		$entriesThatHaveBeenLockedThisPageLoad = array();
 	}
-	
+
 	$subformCreateEntry = strstr($entry, "subformCreateEntry") ? true : false; // check for this special flag, which is mostly like a "new" situation, except for the deh hidden flag that gets passed back, since we don't want the standard readelements logic to pickup these elements!
 	if($subformCreateEntry) {
 		$subformMetaData = explode("_", $entry);
 		$subformEntryIndex = $subformMetaData[1];
 		$subformElementId = $subformMetaData[2];
-	} 
+	}
 
     if(($entry == "" AND $entry !== 0) OR $subformCreateEntry) {
         $entry = "new";
@@ -76,7 +76,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 	} else {
 		$renderedElementName = $deprefix.$form_id.'_'.$entry.'_'.$element->getVar('ele_id');
 	}
-	
+
 	global $xoopsUser;
     if(!$groups) {
         // groups might be passed in, which covers the case of the registration form and getting the groups from the registration code
@@ -101,7 +101,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 	}
 	$view_private_elements = $noSave ? 1 : $cachedViewPrivate[$form_id][$groupsKey];
 	$update_own_entry = $noSave ? 1 : $cachedUpdateOwnEntry[$form_id][$groupsKey];
-	
+
 	// check if the user is normally able to view this element or not, by checking their groups against the display groups -- added Nov 7 2005
 	// messed up.  Private should not override the display settings.  And the $entry should be checked against the security check first to determine whether the user should even see this entry in the first place.
 	$display = $element->getVar('ele_display');
@@ -117,7 +117,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		$display_groups = explode(",", $display);
 		$allowed = array_intersect($groups, $display_groups) ? 1 : 0;
 	} elseif($display == 1) {
-		$allowed = 1;	
+		$allowed = 1;
 	} else {
 		$allowed = 0;
 	}
@@ -130,21 +130,21 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 	if($allowed) {
 		$GLOBALS['formulize_renderedElementsForForm'][$form_id][$entry][$renderedElementName] = $element->getVar('ele_handle');
 	}
-	
+
 	$elementFilterSettings = $element->getVar('ele_filtersettings');
 	if($allowed AND count($elementFilterSettings[0]) > 0) {
 		// cache the filterElements for this element, so we can build the right stuff with them later in javascript, to make dynamically appearing elements
 		$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName] = $elementFilterSettings[0];
-		
+
 		// need to check if there's a condition on this element that is met or not
 		static $cachedEntries = array();
 		if($entry != "new") {
 			if(!isset($cachedEntries[$form_id][$entry])) {
 				$cachedEntries[$form_id][$entry] = getData("", $form_id, $entry);
-			}	
+			}
 			$entryData = $cachedEntries[$form_id][$entry];
 		}
-		
+
 		$filterElements = $elementFilterSettings[0];
 		$filterOps = $elementFilterSettings[1];
 		$filterTerms = $elementFilterSettings[2];
@@ -193,7 +193,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 			$allowed = 0;
 		}
 	}
-	
+
 	if($allowed) {
 		if($element->getVar('ele_type') == "subform") {
 			return array("", $isDisabled);
@@ -220,11 +220,36 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
             $isDisabled = !formulizePermHandler::user_can_edit_entry($form_id, $user_id, $entry);
 		}
 
+		/*
+		// Another check to see if this element is disabled, for the case where the user can view the form, but not edit it.
+if (!$is_Disabled){
+
+	$update_other_entries = $gperm_handler->checkRight("update_other_entries", $element->getVar('id_form'), $groups, $mid);
+	$add_proxy_entries = $gperm_handler->checkRight("add_proxy_entries", $element->getVar('id_form'), $groups, $mid);
+
+	if ($entry == "new") {
+		if (!$update_own_entry AND !$add_proxy_entries) {
+			$isDisabled = true;
+		}
+	} else {
+		if ($uid == $owner) {
+			if (!$update_own_entry){
+				$isDisabled = true;
+			}
+		} else {
+			if (!$update_other_entries){
+				$isDisabled = true;
+			}
+		}
+	}
+}
+*/
+
 		// check whether the entry is locked, and if so, then the element is not allowed.  Set a message to say that elements were disabled due to entries being edited elsewhere (first time only).
 		// groups with ignore lock permission bypass this, and therefore can save entries even when locked, and saving an entry removes the lock, so that gets you out of a jam if the lock is in place when it shouldn't be.
 		// locks are only valid for the session time, so if a lock is older than that, it is ignored and cleared
 		// Do this last, since locking overrides other permissions!
-		
+
 		$lockFileName = "entry_".$entry."_in_form_".$form_id."_is_locked_for_editing";
 		// if we haven't found a lock for this entry, check if there is one...(as long as it's not an entry that we locked ourselves on this page load)
 		if($entry != "new" AND !isset($lockedEntries[$form_id][$entry]) AND !isset($entriesThatHaveBeenLockedThisPageLoad[$form_id][$entry]) AND file_exists(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName") AND !$gperm_handler->checkRight("ignore_editing_lock", $form_id, $groups, $mid)) {
@@ -248,14 +273,14 @@ EOF;
 				}
 			} else {
 				// clean up expired locks
-				formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/temp/", "_".$entry."_in_form_".$form_id."_", $maxSessionLifeTime); 
+				formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/temp/", "_".$entry."_in_form_".$form_id."_", $maxSessionLifeTime);
 			}
 		}
 		// if we've ever found a lock for this entry as part of this pageload...
 		if(isset($lockedEntries[$form_id][$entry])) {
 			$isDisabled = true;
 		}
-		
+
 		$renderer = new formulizeElementRenderer($element);
 		$ele_value = $element->getVar('ele_value');
 		$ele_type = $element->getVar('ele_type');
@@ -263,15 +288,15 @@ EOF;
 			$data_handler = new formulizeDataHandler($form_id);
 			$ele_value = loadValue($prevEntry, $element, $ele_value, $data_handler->getEntryOwnerGroups($entry), $groups, $entry, $profileForm); // get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
 		}
-		
+
 		formulize_benchmark("About to render element ".$element->getVar('ele_caption').".");
-		
+
 		$form_ele =& $renderer->constructElement($renderedElementName, $ele_value, $entry, $isDisabled, $screen);
 		if(strstr($_SERVER['PHP_SELF'], "formulize/printview.php") AND is_object($form_ele)) {
 			$form_ele->setDescription('');
 		}
 		formulize_benchmark("Done rendering element.");
-		
+
 		// put a lock on this entry in this form, so we know that the element is being edited.  Lock will be removed next time the entry is saved.
 		if (!$noSave AND $entry > 0 AND !isset($lockedEntries[$form_id][$entry])
             and !isset($entriesThatHaveBeenLockedThisPageLoad[$form_id][$entry]))
@@ -295,9 +320,9 @@ EOF;
                 }
             }
         }
-		
+
 		if(!$renderElement) {
-			return array(0=>$form_ele, 1=>$isDisabled);			
+			return array(0=>$form_ele, 1=>$isDisabled);
 		} else {
 			if($element->getVar('ele_type') == "ib") {
 				print $form_ele[0];
@@ -316,11 +341,11 @@ EOF;
 					if($isDisabled) {
 						return "rendered-disabled";
 					} else {
-						return "rendered";	
+						return "rendered";
 					}
 			}
 		}
-  		
+
 
 	// or, even if the user is not supposed to see the element, put in a hidden element with its default value (only on new entries for elements with the forcehidden flag on)
 	// NOTE: YOU CANNOT HAVE DEFAULT VALUES ON A LINKED FIELD CURRENTLY
@@ -343,7 +368,7 @@ EOF;
 			} elseif(is_object($thisHiddenElement)) {
 				print $thisHiddenElement->render()."\n";
 			}
-			return "hidden";	
+			return "hidden";
 		}
 	} else {
 		return "not_allowed";
@@ -414,7 +439,7 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 			$compValue = addslashes($compValue);
 		}
 		if($thisOp == "LIKE") {
-			$evaluationCondition .= "strstr('".$compValue."', '".addslashes($filterTerms[$i])."')"; 
+			$evaluationCondition .= "strstr('".$compValue."', '".addslashes($filterTerms[$i])."')";
 		} elseif($thisOp == "NOT LIKE") {
 			$evaluationCondition .= "!strstr('".$compValue."', '".addslashes($filterTerms[$i])."')";
 		} else {
@@ -426,7 +451,7 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 }
 /* ALTERED - 20100316 - freeform - jeff/julian - stop */
 
-// THIS FUNCTION RETURNS THE CAPTION FOR AN ELEMENT 
+// THIS FUNCTION RETURNS THE CAPTION FOR AN ELEMENT
 // added June 25 2006 -- jwe
 function displayCaption($formframe="", $ele) {
 	$element = _formulize_returnElement($ele, $formframe);
@@ -436,7 +461,7 @@ function displayCaption($formframe="", $ele) {
 	return $element->getVar('ele_caption');
 }
 
-// THIS FUNCTION RETURNS THE description FOR AN ELEMENT 
+// THIS FUNCTION RETURNS THE description FOR AN ELEMENT
 function displayDescription($formframe="", $ele) {
 	$element = _formulize_returnElement($ele, $formframe);
   if(!is_object($element)) {
@@ -448,7 +473,7 @@ function displayDescription($formframe="", $ele) {
 // this function takes an element object, or an element id number or handle (or framework handle with framework id, but that's deprecated)
 function _formulize_returnElement($ele, $formframe="") {
   $element = "";
-	if(is_object($ele)) {	
+	if(is_object($ele)) {
 		if(get_class($ele) == "formulizeformulize" OR is_subclass_of($ele, 'formulizeformulize')) {
 			$element = $ele;
 		} else {
@@ -504,7 +529,7 @@ function displayButton($text, $ele, $value, $entry="new", $append="replace", $bu
   if(!is_object($element)) {
     print "invalid_element";
   }
-	
+
 	if($prevValueThisElement = getElementValue($entry, $element->getVar('ele_id'), $element->getVar('id_form'))) {
 		$prevValue = 1;
 	} else {

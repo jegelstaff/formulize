@@ -743,6 +743,17 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 					$prevEntry = getEntryValues($entries[$this_fid][0], $formulize_mgr, $groups, $this_fid, $elements_allowed, $mid, $uid, $owner, $groupEntryWithUpdateRights);
 				}
 
+        // The following variable declarations are all the variables that are
+        // specified as being accessible to users in the custom form templates.
+        $title = "";
+        $formMetaData = "";
+        $formInstructions = "";
+        $saveInstructions = "";
+        $doneInstructions = "";
+        $printBtn = "";
+        $saveBtn = "";
+        $allDoneBtn = "";
+
 				// display the form
 
 				//get the form title: (do only once)
@@ -797,6 +808,12 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                         }
                         $breakHTML .= "</b></p>";
                         $breakHTML .= "</center>";
+                    } else {
+                        // Update for Ajax Save
+                        $breakHTML = "<p id='formInstruction' style='text-align: center; font-weight: bold;'>";
+                        $formInstructions = genFormInstruction($info_continue, $fid, $entryId, $info_received_msg, $owner, $uid, $groups, $mid);
+                        $breakHTML .= $formInstructions;
+                        $breakHTML .= "</p>";
                     }
 
                     $breakHTML .= "<table cellpadding=5 width=100%><tr><td width=50% style=\"vertical-align: bottom;\">";
@@ -809,8 +826,11 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                         $breakHTML .= _formulize_FD_NEWENTRY . "</p>";
                     }
 
+                    $breakHTML .= "</p>";
+
 					$breakHTML .= "</td><td width=50% style=\"vertical-align: bottom;\">";
-					if (strstr($currentURL, "printview.php") or !formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
+          // End of Update for Ajax Save
+          if (strstr($currentURL, "printview.php") or !formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
 						$breakHTML .= "<p>";
 					} else {
 						// get save and button button options
@@ -842,9 +862,11 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 							$save_button_text = _formulize_INFO_NOSAVE;
 							$nosave = true;
 						}
-						$breakHTML .= "<p class='no-print'>" . $save_button_text;
+            $saveInstructions = $save_button_text;
+            $breakHTML .= "<p class='no-print'>" . $save_button_text;
 						if($done_button_text) {
-							$breakHTML .= "<br>" . $done_button_text;
+              $doneInstructions = $done_button_text;
+              $breakHTML .= "<br>" . $done_button_text;
 						}
 					}
 					$breakHTML .= "</p></td></tr></table>";
@@ -997,7 +1019,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			}
 			print "</div>\n";
 
-			drawJavascript($nosave);
+			drawJavascript($nosave, $single, $overrideMulti);
             print $form->addElement(new xoopsFormHidden('save_and_leave', 0));
 
 		// lastly, put in a hidden element, that will tell us what the first, primary form was that we were working with on this form submission
@@ -2198,11 +2220,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 	// set the array to be used as the structure of the loop, either the passed in elements in order, or the elements as gathered from the DB
 	// ignore passed in element order if there's a screen in effect, since we assume that official element order is authoritative when screens are involved
 	// API should still allow arbitrary ordering, so $element_allowed can still be set manually as part of a displayForm call, and the order will be respected then
-	if(!is_array($elements_allowed) OR $screen) {
-		$element_order_array = $elements;
-	} else {
-		$element_order_array = $elements_allowed;
-	}
+$element_order_array = (is_array($elements_allowed)) ? $elements_allowed : $elements;
 
 	// if this is a printview page,
 
@@ -2260,9 +2278,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 			}
 		} elseif($overrideValue){ // used to force a default setting in a form element, other than the normal default
 			if(!is_array($overrideValue)) { //convert a string to an array so that strings don't screw up logic below (which is designed for arrays)
-				$temp = $overrideValue;
-				unset($overrideValue);
-				$overrideValue[0] = $temp;
+				$overrideValue = array($overrideValue);
 			}
 			// currently only operative for select boxes
 			switch($ele_type) {
@@ -2847,7 +2863,7 @@ function writeHiddenSettings($settings, $form = null) {
 
 // draw in javascript for this form that is relevant to subforms
 // $nosave indicates that the user cannot save this entry, so we shouldn't check for formulizechanged
-function drawJavascript($nosave) {
+function drawJavascript($nosave, $single, $overrideMulti) {
 static $drawnJavascript = false;
 if($drawnJavascript) {
 	return;
@@ -2884,6 +2900,41 @@ if(isset($GLOBALS['formulize_fckEditors'])) {
 	print "  formulizechanged=1; \n";
 	print "}\n";
 }
+
+jQuery(document).ready(function(){
+
+  var testtoptmp = jQuery('#floattest').offset();
+var relativetoptmp = testtoptmp.top;
+
+  if((jQuery(window).scrollTop() + jQuery(window).height()) >= relativetoptmp) {
+    var save = jQuery('#floatingsave');
+    save.css('position','relative');
+  save.css('border','1px solid white');
+  save.css('padding','15px 15px 15px 0px');
+  save.css('width','200px');
+  save.css('left','30%');
+  }
+
+  jQuery(window).bind('scroll', function () {
+    var save = jQuery('#floatingsave');
+    var testtop = jQuery('#floattest').offset();
+    var relativetop = testtop.top;
+
+    if ((jQuery(this).scrollTop() + jQuery(window).height()) >= relativetop) {
+      save.css('position','relative');
+      save.css('border','1px solid white');
+      save.css('padding','15px 15px 15px 0px');
+      save.css('width','200px');
+      save.css('left','30%');
+    } else {
+      save.css('position','fixed');
+      save.css('border','1px solid #1D65A5');
+      save.css('left','42%');
+      save.css('padding','15px 15px 15px 0px');
+      save.css('width','auto');
+    }
+  });
+});
 
 ?>
 

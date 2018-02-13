@@ -79,6 +79,25 @@
     </table>
   </div>
 
+  <h2>Graph Screens</h2>
+  <div class="form-item">
+    <table>
+	    <tr>
+		    <th>Name</th>
+				<th>id</th>
+		    <th>Default</th>
+		    <th>Action</th>
+	    </tr>
+      <{foreach from=$content.graph item=screen}>
+	      <tr>
+		      <td><label for="screens-defaultlist-<{$screen.sid}>"><a class="configscreen" target="<{$screen.sid}>" href=""><img src="../images/kedit.png"> <{$screen.title}></a></label></td>
+					<td><{$screen.sid}></td>
+		      <td><div class="form-radios"><input type="radio" id="screens-defaultlist-<{$screen.sid}>" name="screens-defaultlist" value="<{$screen.sid}>"<{if $screen.sid eq $content.defaultlist}> checked="checked"<{/if}>/></div></td>
+  		    <td><a href="<{$xoops_url}>/modules/formulize/index.php?sid=<{$screen.sid}>" target="_blank"><img src="../images/kfind.png"> View</a>&nbsp;&nbsp;&nbsp;&nbsp;<a class="deletescreen" target="<{$screen.sid}>" href=""><img src="../images/editdelete.gif"> Remove</a></td>
+	      </tr>
+      <{/foreach}>
+    </table>
+  </div>
 
     <{if $content.template|@count != 0}>
     <h2><{$smarty.const._AM_SCREEN_TEMPLATESCREENS}></h2>

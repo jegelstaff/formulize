@@ -49,19 +49,19 @@ class formulizeMultiPageScreen extends formulizeScreen {
 		$this->initVar("thankstext", XOBJ_DTYPE_TXTAREA);
 		$this->initVar("donedest", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
 		$this->initVar("buttontext", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
-		$this->initVar("finishisdone", XOBJ_DTYPE_INT);	
+		$this->initVar("finishisdone", XOBJ_DTYPE_INT);
 		$this->initVar("pages", XOBJ_DTYPE_ARRAY);
 		$this->initVar("pagetitles", XOBJ_DTYPE_ARRAY);
 		$this->initVar("conditions", XOBJ_DTYPE_ARRAY);
 		$this->initVar("printall", XOBJ_DTYPE_INT); //nmc - 2007.03.24
-    $this->initVar("paraentryform", XOBJ_DTYPE_INT); 
+    $this->initVar("paraentryform", XOBJ_DTYPE_INT);
     $this->initVar("paraentryrelationship", XOBJ_DTYPE_INT);
     $this->initVar("dobr", XOBJ_DTYPE_INT, 1, false);
     $this->initVar("dohtml", XOBJ_DTYPE_INT, 1, false);
     $this->assignVar("dobr", false); // don't convert line breaks to <br> when using the getVar method
-    
+
 	}
-	
+
 	// setup the conditions array...format has changed over time...
 	// old format: $conditions[1] = array(pagecons=>yes, details=>array(elements=>$elementsArray, ops=>$opsArray, terms=>$termsArray));
 	// the key must be the numerical page number (start at 1)
@@ -79,7 +79,7 @@ class formulizeMultiPageScreen extends formulizeScreen {
 	    ksort($processedConditions);
 	    return $processedConditions;
 	}
-	
+
 }
 
 class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
@@ -105,8 +105,8 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 		}
 		$screen->assignVar('sid', $sid);
 		// standard flags used by xoopsobject class
-    
-		// note: conditions is not written to the DB yet, since we're not gathering that info from the UI	
+
+		// note: conditions is not written to the DB yet, since we're not gathering that info from the UI
 		if (!$update) {
                  $sql = sprintf("INSERT INTO %s (sid, introtext, thankstext, toptemplate, elementtemplate, bottomtemplate, donedest, buttontext, finishisdone, pages, pagetitles, conditions, printall, paraentryform, paraentryrelationship) VALUES (%u, %s, %s, %s, %s, %s, %s, %s, %u, %s, %s, %s, %u, %u, %u)", $this->db->prefix('formulize_screen_multipage'), $screen->getVar('sid'), $this->db->quoteString($screen->getVar('introtext', "e")), $this->db->quoteString($screen->getVar('thankstext', "e")), $this->db->quoteString($screen->getVar('toptemplate')), $this->db->quoteString($screen->getVar('elementtemplate')), $this->db->quoteString($screen->getVar('bottomtemplate')), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('buttontext')), $screen->getVar('finishisdone'), $this->db->quoteString(serialize($screen->getVar('pages'))), $this->db->quoteString(serialize($screen->getVar('pagetitles'))), $this->db->quoteString(serialize($screen->getVar('conditions'))), $screen->getVar('printall'), $screen->getVar('paraentryform'), $screen->getVar('paraentryrelationship')); //nmc 2007.03.24 added 'printall' & fixed pagetitles
              } else {
@@ -115,22 +115,22 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 		 $result = $this->db->query($sql);
 		
 		$success1 = true;
-		if(isset($_POST['screens-toptemplate'])) { 
+		if(isset($_POST['screens-toptemplate'])) {
 		    $success1 = $this->writeTemplateToFile(stripslashes(trim($_POST['screens-toptemplate'])), 'toptemplate', $screen);
 		}
 		$success2 = true;
-		if(isset($_POST['screens-bottomtemplate'])) { 
+		if(isset($_POST['screens-bottomtemplate'])) {
 		    $success2 = $this->writeTemplateToFile(stripslashes(trim($_POST['screens-bottomtemplate'])), 'bottomtemplate', $screen);
 		}
 		$success3 = true;
-		if(isset($_POST['screens-elementtemplate'])) { 
+		if(isset($_POST['screens-elementtemplate'])) {
 		    $success3 = $this->writeTemplateToFile(stripslashes(trim($_POST['screens-elementtemplate'])), 'elementtemplate', $screen);
 		}
 
 		if (!$success1 || !$success2 || !$success3) {
 		    return false;
 		}
- 
+
              if (!$result) {
                  return false;
              }
@@ -159,11 +159,11 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 	// THIS METHOD HANDLES ALL THE LOGIC ABOUT HOW TO ACTUALLY DISPLAY THIS TYPE OF SCREEN
 	// $screen is a screen object
 	function render($screen, $entry, $settings = "") { // $settings is used internally to pass list of entries settings back and forth to editing screens
-    
+
 		if(!is_array($settings)) {
 				$settings = "";
 		}
-		
+
 		$formframe = $screen->getVar('frid') ? $screen->getVar('frid') : $screen->getVar('fid');
 		$mainform = $screen->getVar('frid') ? $screen->getVar('fid') : "";
 		$pages = $screen->getVar('pages');
@@ -171,7 +171,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 		ksort($pages); // make sure the arrays are sorted by key, ie: page number
 		ksort($pagetitles);
 		array_unshift($pages, ""); // displayFormPages looks for the page array to start with [1] and not [0], for readability when manually using the API, so we bump up all the numbers by one by adding something to the front of the array
-		array_unshift($pagetitles, ""); 
+		array_unshift($pagetitles, "");
 		$pages['titles'] = $pagetitles;
 		unset($pages[0]); // get rid of the part we just unshifted, so the page count is correct
 		unset($pagetitles[0]);
@@ -229,11 +229,11 @@ function drawPageUI($pageNumber, $pageTitle, $elements, $conditions, $form, $opt
     // pageNumbers start at 0, since that's how the arrays are indexed, they start from zero
     // but whatever we show users must start at 1 (there is no page 0 as far as they are concerned), so we add one to make the visiblePageNumber
     $visiblePageNumber = $pageNumber+1;
-    
+
     // page title
     $pageTitleBox = new xoopsFormText(_AM_FORMULIZE_SCREEN_PAGETITLE.' '.$visiblePageNumber, 'pagetitle_'.$pageNumber, 50, 255, $pageTitle);
     $form->addElement($pageTitleBox, true);
-    
+
     // elements
     $elementSelection = new xoopsFormSelect(_AM_FORMULIZE_SCREEN_A_PAGE.' '.$visiblePageNumber.'<br><br><input type=submit name=delete'.$pageNumber.' value="'._AM_FORMULIZE_DELETE_THIS_PAGE.'" onclick="javascript:return confirmDeletePage(\''.$pageNumber.'\');">', 'page'.$pageNumber, $elements, 10, true);
     $elementSelection->addOptionArray($options);
@@ -256,7 +256,7 @@ function drawPageUI($pageNumber, $pageTitle, $elements, $conditions, $form, $opt
         $form->addElement(new xoopsFormHidden('pageops'.$pageNumber.'[]', $conditions['details']['ops'][$conIndex]));
         $form->addElement(new xoopsFormHidden('pageterms'.$pageNumber.'[]', $conditions['details']['terms'][$conIndex]));
         $conditionlist .= $options[$conditions['details']['elements'][$conIndex]] . " " . $conditions['details']['ops'][$conIndex] . " " . $conditions['details']['terms'][$conIndex] . "<br />";
-    } 
+    }
     // setup the operator boxes...
     $opterm = new xoopsFormElementTray('', "&nbsp;&nbsp;");
     $element = new xoopsFormSelect('', 'pageelements'.$pageNumber.'[]');
@@ -272,15 +272,15 @@ function drawPageUI($pageNumber, $pageTitle, $elements, $conditions, $form, $opt
     $opterm->addElement($term);
     $addcon = new xoopsFormButton('', 'addcon', _AM_FORMULIZE_SCREEN_CONS_ADDCON, 'submit');
     $addcon->setExtra("onfocus=\"javascript:window.document.editscreenform.pagecons".$pageNumber."[1].checked=true\"");
-    
+
     $conditionui = "<br />$conditionlist<nobr>" . $opterm->render() . "</nobr><br />" . $addcon->render();
-    
+
     $yescons = new xoopsFormRadio('', 'pagecons'.$pageNumber, $conditionsYesNo);
     $yescons->addOption('yes', _AM_FORMULIZE_SCREEN_CONS_YES.$conditionui);
     $conditionsTray->addElement($nocons);
     $conditionsTray->addElement($yescons);
     $form->addElement($conditionsTray);
-		
+
     return $form;
 }
 
