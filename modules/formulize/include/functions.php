@@ -4874,10 +4874,6 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
                     $conditionsfilter .= " AND ";
                 }
 
-                if(is_array($newFilterOps) AND isset($newFilterOps[$filterId])) {
-                    $filterOps[$filterId] = $newFilterOps[$filterId];
-                }
-
                 $conditionsfilter .= "($targetAlias`".$filterElementHandles[$filterId]."` ".$filterOps[$filterId]." ".$conditionsFilterComparisonValue.")";
             } else {
                 if ($start_oom) {
@@ -4887,9 +4883,6 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
                     $conditionsfilter_oom .= " OR ";
                 }
 
-                if(is_array($newFilterOps) AND isset($newFilterOps[$filterId])) {
-                    $filterOps[$filterId] = $newFilterOps[$filterId];
-                }
                 $conditionsfilter_oom .= "($targetAlias`".$filterElementHandles[$filterId]."` ".$filterOps[$filterId]." ".$conditionsFilterComparisonValue.")";
             }
             $curlyBracketFormFrom = $thisCurlyBracketFormFrom ? $thisCurlyBracketFormFrom : $curlyBracketFormFrom; // if something was returned, use it, otherwise, stick with what we've got
@@ -5007,12 +5000,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
     }
 
     if (!$conditionsFilterComparisonValue) {
-        if ($targetElementEleValue[1]) {
-            $conditionsFilterComparisonValue = " CONCAT('$origlikebits,',(SELECT ss.entry_id FROM " . $xoopsDB->prefix("formulize_" . $targetSourceFormObject->getVar('form_handle')) . " AS ss WHERE `$targetSourceHandle` " . $filterOps[$filterId] . $quotes . $likebits . $filterTermToUse . $likebits . $quotes . "),',$origlikebits') ";
-        } else {
-            $conditionsFilterComparisonValue = " (SELECT ss.entry_id FROM " . $xoopsDB->prefix("formulize_" . $targetSourceFormObject->getVar('form_handle')) . " AS ss WHERE `$targetSourceHandle` " . $filterOps[$filterId] . $quotes . $likebits . $filterTermToUse . $likebits . $quotes . ") ";
-            $newFilterOps = array($filterId=>'=');
-        }
+        $conditionsFilterComparisonValue = $quotes.$likebits.formulize_db_escape($filterTerms[$filterId]).$likebits.$quotes;
       }
 
     // if it's a { } term, then assume it's a data handle for a field in the form where the element is being included
@@ -5377,9 +5365,7 @@ function genFormMetaData($entryId, $fid, $member_handler) {
     return $breakHTML;
 }
 
-// THIS FUNCTION FORMATS THE DATETIME INFO FOR DISPLAY CLEANLY AT THE TOP OF THE FORM
-// Old function is kept in formdisplay.php for historical reasons so nothing will break
-function formulize_formatDateTime_duplicate_from_formdisplay_php($dt) {
+function formulize_formatDateTime($dt) {
     // assumption is that the server timezone has been set correctly!
     // needs to figure out daylight savings time correctly...ie: is the user's timezone one that has daylight savings, and if so, if they are currently in a different dst condition than they were when the entry was created, add or subtract an hour from the seconds offset, so that the time information is displayed correctly.
     global $xoopsConfig, $xoopsUser;

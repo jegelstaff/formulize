@@ -57,15 +57,6 @@ class formulizeScreen extends xoopsObject {
       return (trim($this->getTemplate($templateName)) != "");
   }
 
-  function getTemplate($templateName) {
-      static $templates = array();
-      if (!isset($templates[$templateName])) {
-          // there is no template saved in memory, read it from the file
-          $templates[$templateName] = file_get_contents($this->getCustomTemplateFilePath($templateName));
-      }
-      return $templates[$templateName];
-  }
-
   function getCustomTemplateFilePath($templateName) {
       return $this->getTemplateFilePath($this->getCustomTemplatesDir(). $this->getVar('sid') . "/", $templateName);
   }

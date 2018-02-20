@@ -2220,7 +2220,12 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 	// set the array to be used as the structure of the loop, either the passed in elements in order, or the elements as gathered from the DB
 	// ignore passed in element order if there's a screen in effect, since we assume that official element order is authoritative when screens are involved
 	// API should still allow arbitrary ordering, so $element_allowed can still be set manually as part of a displayForm call, and the order will be respected then
-$element_order_array = (is_array($elements_allowed)) ? $elements_allowed : $elements;
+
+  if(!is_array($elements_allowed) OR $screen) {
+	     $element_order_array = $elements;
+   } else {
+       $element_order_array = $elements_allowed;
+   }
 
 	// if this is a printview page,
 
@@ -2715,25 +2720,6 @@ function loadValue($prevEntry, $element, $ele_value, $owner_groups, $groups, $en
 
 			return $ele_value;
 }
-
-
-
-// THIS FUNCTION FORMATS THE DATETIME INFO FOR DISPLAY CLEANLY AT THE TOP OF THE FORM
-function formulize_formatDateTime($dt) {
-	// assumption is that the server timezone has been set correctly!
-	// needs to figure out daylight savings time correctly...ie: is the user's timezone one that has daylight savings, and if so, if they are currently in a different dst condition than they were when the entry was created, add or subtract an hour from the seconds offset, so that the time information is displayed correctly.
-	global $xoopsConfig, $xoopsUser;
-	$serverTimeZone = $xoopsConfig['server_TZ'];
-	$userTimeZone = $xoopsUser ? $xoopsUser->getVar('timezone_offset') : $serverTimeZone;
-	$tzDiff = $userTimeZone - $serverTimeZone;
-	$tzDiffSeconds = $tzDiff*3600;
-
-	if($xoopsConfig['language'] == "french") {
-		$return = setlocale("LC_TIME", "fr_FR.UTF8");
-	}
-	return _formulize_TEMP_AT . " " . strftime(dateFormatToStrftime(_MEDIUMDATESTRING), strtotime($dt)+$tzDiffSeconds);
-}
-
 
 // write the settings passed to this page from the view entries page, so the view can be restored when they go back
 function writeHiddenSettings($settings, $form = null) {

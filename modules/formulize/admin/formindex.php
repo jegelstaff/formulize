@@ -507,58 +507,6 @@ INDEX i_sid (`sid`)
             print "<p>If you have any questions about this upgrade issue, please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.</p>";
         }
 
-        $screenpathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/";
-
-        $templateSQL = "SELECT sid, toptemplate, listtemplate, bottomtemplate FROM ".$xoopsDB->prefix("formulize")."_screen_listofentries";
-
-        $templateRes = $xoopsDB->query($templateSQL);
-        if($xoopsDB->getRowsNum($templateRes) > 0) {
-
-            while($handleArray = $xoopsDB->fetchArray($templateRes)) {
-                if (!file_exists($screenpathname.$handleArray['sid'])) {
-                    $pathname = $screenpathname.$handleArray['sid']."/";
-                    mkdir($pathname, 0777, true);
-
-                    if (!is_writable($pathname)) {
-                        chmod($pathname, 0777);
-                    }
-
-                    saveTemplate($handleArray['toptemplate'], $handleArray['sid'], "toptemplate");
-                    saveTemplate($handleArray['bottomtemplate'], $handleArray['sid'], "bottomtemplate");
-                    saveTemplate($handleArray['listtemplate'], $handleArray['sid'], "listtemplate");
-
-                } else {
-                    print "screen templates for screen ".$handleArray['sid']." already exist. result: OK<br>";
-                }
-
-            }
-        }
-
-        $multitemplateSQL = "SELECT sid, toptemplate, elementtemplate, bottomtemplate FROM ".$xoopsDB->prefix("formulize")."_screen_multipage";
-
-        $multitemplateRes = $xoopsDB->query($multitemplateSQL);
-        if($xoopsDB->getRowsNum($multitemplateRes) > 0) {
-
-            while($handleArray = $xoopsDB->fetchArray($multitemplateRes)) {
-                if (!file_exists($screenpathname.$handleArray['sid'])) {
-                    $pathname = $screenpathname.$handleArray['sid']."/";
-                    mkdir($pathname, 0777, true);
-
-                    if (!is_writable($pathname)) {
-                        chmod($pathname, 0777);
-                    }
-
-                    saveTemplate($handleArray['toptemplate'], $handleArray['sid'], "toptemplate");
-                    saveTemplate($handleArray['bottomtemplate'], $handleArray['sid'], "bottomtemplate");
-                    saveTemplate($handleArray['elementtemplate'], $handleArray['sid'], "elementtemplate");
-
-                } else {
-                    print "screen templates for screen ".$handleArray['sid']." already exist. result: OK<br>";
-                }
-
-            }
-        }
-
         // need to update multiple select boxes.
         // $xoopsDB->prefix("formulize")
         // 1. get a list of all elements that are linked selectboxes that support only single values
@@ -726,30 +674,6 @@ INDEX i_sid (`sid`)
 
         print "DB updates completed.  result: OK";
     }
-}
-
-function saveMenuEntryAndPermissionsSQL($formid,$appid,$i){
-	global $xoopsDB;
-	$gperm_handler = xoops_gethandler('groupperm');
-	$permissionsql = "";
-	$groupsThatCanView = $gperm_handler->getGroupIds("view_form", $formid, getFormulizeModId());
-
-	$menuText = html_entity_decode($menuText, ENT_QUOTES) == "Use the form's title" ? '' : $menuText;
-	$thissql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_links")."` VALUES (null,". $appid.",'fid=".$formid."',".$i.",null,'".$menuText."');";//.$permissionsql.";";
-	if(!$result = $xoopsDB->query($thissql)) {
-		exit("Error inserting Menus. SQL dump:<br>" . $thissql . "<br>".mysql_error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
-	}else{
-		foreach($groupsThatCanView as $groupid) {
-			if($permissionsql != ""){
-				$permissionsql += ",(null,". mysql_insert_id().",". $groupid.")";
-			}else{
-				$permissionsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_permissions")."` VALUES (null,". mysql_insert_id().",". $groupid.")";
-			}
-		}
-		if(!$result = $xoopsDB->query($permissionsql)) {
-			exit("Error inserting Menu permissions. SQL dump:<br>" . $permissionsql . "<br>".mysql_error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
-		}
-	}
 }
 
 // Saves the given template to a template file on the disk
