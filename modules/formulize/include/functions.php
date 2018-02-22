@@ -1233,7 +1233,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
     if ($fdchoice == "update") { // reset headers and cols to include all data -- when creating a blank template, this reset has already happened before prepexport is called
         $fdchoice = "comma";
         $template = "update";
-        $cols1 = getAllColList($fid, "", $groups); // $cols1 will be a multidimensional array, one "entry" per column, and for each column the entry is an assoc array with ele_id, ele_colhead, ele_caption and ele_handle.
+        /*$cols1 = getAllColList($fid, "", $groups); // $cols1 will be a multidimensional array, one "entry" per column, and for each column the entry is an assoc array with ele_id, ele_colhead, ele_caption and ele_handle.
         unset($cols);
         $cols = array();
         foreach ($cols1[$fid] as $col) {
@@ -1241,6 +1241,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
         }
         unset($headers);
         $headers = getHeaders($cols, true); // array of element handles, boolean for if the cols are handles (or ids, which is the default assumption)
+        */
     }
     if ($fdchoice == "comma") {
         $fd = ",";
