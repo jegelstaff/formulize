@@ -42,6 +42,10 @@ foreach($sections as $section) {
         continue;
     }
     
+    // ignore sections on courses not offered
+    if(display($section, 'ro_module_course_active') == 'No') {continue;}
+    
+    
     $sectionData['title'] = htmlspecialchars_decode(display($section, 'ro_module_course_title'), ENT_QUOTES);
     $sectionData['code'] = display($section, 'ro_module_course_code');
     $sectionData['section'] = display($section, 'sections_section_number');
@@ -163,7 +167,7 @@ if($_POST['memos']) {
     $template = 'memo';
     
     // get coordinatorships
-    $coords = getData('',3,'ro_module_course_coordinator/**/'.$name.'/**/=][ro_module_year/**/'.$year.'/**/=');
+    $coords = getData('',3,'ro_module_course_coordinator/**/'.$name.'/**/=][ro_module_year/**/'.$year.'/**/=][ro_module_course_active/**/2/**/!=');
     $coordCourses = array();
     foreach($coords as $course) {
         $code = display($course, 'ro_module_course_code');
