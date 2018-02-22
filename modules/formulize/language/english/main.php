@@ -367,6 +367,8 @@ define("_formulize_DE_ALL", "Entries by all users in all groups");
 define("_formulize_DE_GO", "Apply search terms");
 define("_formulize_DE_MODIFYSCREEN", "Configure this Screen");
 define("_formulize_DE_CHANGECOLS", "Change columns");
+define("_formulize_DE_CLEAR_ALL", "Clear all selected columns");
+define("_formulize_DE_RESET_COLS", "Reset to the initially selected columns");
 define("_formulize_DE_PICKNEWCOLS", "Pick different columns to view");
 define("_formulize_DE_AVAILCOLS", "Available columns:");
 define("_formulize_DE_SHOWALLCOLS", "Click to show/hide more columns");
