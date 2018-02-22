@@ -13,6 +13,7 @@ if(!in_array($courseTitle, $sessional_mgmt_adsProcessed)) {
     $courseName = display($entry, 'ro_module_course_title');
     $description = display($entry, 'ro_module_job_ad_description');
     $qualifications = display($entry, 'ro_module_job_ad_qualifications');
+    $pref_qualifications = display($entry, 'ro_module_job_ad_preferred_qualifications');
     $duties = display($entry, 'ro_module_job_ad_duties');
     $session = str_replace(array(' - Y', ' - S'), '', display($entry, 'ro_module_semester'));
     
@@ -91,7 +92,9 @@ if(!in_array($courseTitle, $sessional_mgmt_adsProcessed)) {
     
     <tr><td style=\"border: 1px solid black;\"><b>Session</b></td><td style=\"border: 1px solid black;\">$session</td></tr>
     
-    <tr><td style=\"border: 1px solid black;\"><b>Qualifications</b></td><td style=\"border: 1px solid black;\">$qualifications</td></tr>
+    <tr><td style=\"border: 1px solid black;\"><b>Minimum Qualifications</b></td><td style=\"border: 1px solid black;\">$qualifications</td></tr>
+    
+    <tr><td style=\"border: 1px solid black;\"><b>Preferred Qualifications</b></td><td style=\"border: 1px solid black;\">$pref_qualifications</td></tr>
     
     <tr><td style=\"border: 1px solid black;\"><b>Duties</b></td><td style=\"border: 1px solid black;\">$duties</td></tr>
     
