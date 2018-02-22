@@ -31,7 +31,8 @@
 ###############################################################################
 
 // this file generates the export popup
-require_once "../../../mainfile.php";
+
+include_once "../../../mainfile.php";
 global $xoopsConfig;
 // load the formulize language constants if they haven't been loaded already
 if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
@@ -152,15 +153,8 @@ function do_update_export($queryData, $frid, $fid, $groups) {
     $data = getData($frid, $fid, $queryData);
 
     $cols = explode(",", $_GET['cols']);
-    $headers = array();
-    foreach($cols as $thiscol) {
-        if ($thiscol == "creator_email") {
-            $headers[] = _formulize_DE_CALC_CREATOR_EMAIL;
-        } else {
-            $colMeta = formulize_getElementMetaData($thiscol, true);
-            $headers[] = $colMeta['ele_colhead'] ? trans($colMeta['ele_colhead']) : trans($colMeta['ele_caption']);
-        }
-    }
+    
+    list($cols, $headers) = export_prepColumns($cols);
 
     $filename = prepExport($headers, $cols, $data, $fdchoice, "", "", false, $fid, $groups);
 
@@ -226,41 +220,7 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
     header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
     header('Pragma: public');
 
-    // get a list of columns for export
-    $headers = array();
-    if ($include_metadata) {
-        // include metadata columns if the user requested them
-        $headers = array(_formulize_ENTRY_ID, _formulize_DE_CALC_CREATOR, _formulize_DE_CALC_MODIFIER,
-            _formulize_DE_CALC_CREATEDATE, _formulize_DE_CALC_MODDATE);
-    } else {
-        if (in_array("entry_id", $columns)) {
-            $headers[] = _formulize_ENTRY_ID;
-        }
-        if (in_array("uid", $columns) OR in_array("creation_uid", $columns)) {
-            $headers[] = _formulize_DE_CALC_CREATOR;
-        }
-        if (in_array("proxyid", $columns) OR in_array("mod_uid", $columns)) {
-            $headers[] = _formulize_DE_CALC_MODIFIER;
-        }
-        if (in_array("creation_date", $columns) OR in_array("creation_datetime", $columns)) {
-            $headers[] = _formulize_DE_CALC_CREATEDATE;
-        }
-        if (in_array("mod_date", $columns) OR in_array("mod_datetime", $columns)) {
-            $headers[] = _formulize_DE_CALC_MODDATE;
-        }
-    }
-    foreach ($columns as $thiscol) {
-        if ("creator_email" == $thiscol) {
-            $headers[] = _formulize_DE_CALC_CREATOR_EMAIL;
-        } else {
-            $colMeta = formulize_getElementMetaData($thiscol, true);
-            $headers[] = $colMeta['ele_colhead'] ? trans($colMeta['ele_colhead']) : trans($colMeta['ele_caption']);
-        }
-    }
-    if ($include_metadata) {
-        // include metadata columns if the user requested them
-        $columns = array_merge(array("entry_id", "uid", "proxyid", "creation_date", "mod_date"), $columns);
-    }
+    list($columns, $headers) = export_prepColumns($columns,$include_metadata);
 
     if (strstr(strtolower(_CHARSET),'utf') AND $_POST['excel'] == 1) {
         echo "\xef\xbb\xbf"; // necessary to trigger certain versions of Excel to recognize the file as unicode
@@ -348,4 +308,48 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
     }
         
     fclose($output_handle);
+}
+
+function export_prepColumns($columns,$include_metadata=0) {
+    
+    // get a list of columns for export
+    $headers = array();
+    $metaDataHeaders = array(_formulize_ENTRY_ID, _formulize_DE_CALC_CREATOR, _formulize_DE_CALC_MODIFIER, _formulize_DE_CALC_CREATEDATE, _formulize_DE_CALC_MODDATE, _formulize_DE_CALC_CREATOR_EMAIL);
+    $metaDataColsToAdd = array("entry_id","creation_uid","mod_uid","creation_datetime","mod_datetime","creator_email");
+    foreach ($columns as $thiscol) {
+        if ("creator_email" == $thiscol) {
+            $headers[] = _formulize_DE_CALC_CREATOR_EMAIL;
+            unset($metaDataColsToAdd[5]);
+            unset($metaDataHeaders[5]);
+        } elseif ("entry_id" == $thiscol) {
+            $headers[] = _formulize_ENTRY_ID;
+            unset($metaDataColsToAdd[0]);
+            unset($metaDataHeaders[0]);
+        } elseif ("creation_uid" == $thiscol OR "uid" == $thiscol) {
+            $headers[] = _formulize_DE_CALC_CREATOR;
+            unset($metaDataColsToAdd[1]);
+            unset($metaDataHeaders[1]);
+        } elseif ("proxyid" == $thiscol OR "mod_uid" == $thiscol) {
+            $headers[] = _formulize_DE_CALC_MODIFIER;
+            unset($metaDataColsToAdd[2]);
+            unset($metaDataHeaders[2]);
+        } elseif ("creation_date" == $thiscol OR "creation_datetime" == $thiscol) {
+            $headers[] = _formulize_DE_CALC_CREATEDATE;
+            unset($metaDataColsToAdd[3]);
+            unset($metaDataHeaders[3]);
+        } elseif ("mod_date"  == $thiscol OR "mod_datetime" == $thiscol) {
+            $headers[] = _formulize_DE_CALC_MODDATE;
+            unset($metaDataColsToAdd[4]);
+            unset($metaDataHeaders[4]);
+        } else {
+            $colMeta = formulize_getElementMetaData($thiscol, true);
+            $headers[] = $colMeta['ele_colhead'] ? trans($colMeta['ele_colhead']) : trans($colMeta['ele_caption']);
+        }
+    }
+    if ($include_metadata AND count($metaDataColsToAdd)>0) {
+        // include metadata columns if the user requested them
+        $columns = array_merge($metaDataColsToAdd, $columns);
+        $headers = array_merge($metaDataHeaders,$headers);
+    }
+    return array($columns,$headers);
 }
