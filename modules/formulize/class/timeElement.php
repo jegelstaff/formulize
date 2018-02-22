@@ -116,7 +116,7 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
                 global $xoTheme;
                 $xoTheme->addStylesheet(XOOPS_URL.'/modules/formulize/libraries/jquery/timeentry/jquery.timeentry.css', array('media'=>'screen'));
                 $xoTheme->addScript(XOOPS_URL . '/modules/formulize/libraries/jquery/timeentry/jquery.plugin.min.js', array('type' => 'text/javascript'));
-                $xoTheme->addScript(XOOPS_URL . '/modules/formulize/libraries/jquery/timeentry/jquery.timeentry.min.js', array('type' => 'text/javascript'));
+                $xoTheme->addScript(XOOPS_URL . '/modules/formulize/libraries/jquery/timeentry/jquery.timeentry.js', array('type' => 'text/javascript'));
                 $xoTheme->addScript(XOOPS_URL . '/modules/formulize/libraries/jquery/timeentry/jquery.mousewheel.js', array('type' => 'text/javascript'));
                 $scriptIncluded = true;
             }
