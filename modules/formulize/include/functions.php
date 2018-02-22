@@ -4879,7 +4879,8 @@ function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias,
     } else {
         $condition .= " $andor ";
     }
-    $condition .= "($targetAlias`".$filterElementHandle."` ".$filterOp." ".$conditionsFilterComparisonValue.")";
+    $dbSource = isset($GLOBALS['formulize_DBSourceJoin'][$filterElementHandle]) ? "(".$GLOBALS['formulize_DBSourceJoin'][$filterElementHandle].")" : "$targetAlias`".$filterElementHandle."`";
+    $condition .= "($dbSource ".$filterOp." ".$conditionsFilterComparisonValue.")";
     return $condition;
 }
 
