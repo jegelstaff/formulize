@@ -22,8 +22,6 @@ $op = isset($_REQUEST['op']) ? $_REQUEST['op'] : 'editprofile';
 
 switch ($op) {
 	case 'save':
-	error_reporting(-1);
-ini_set('display_errors', 'On');
 		if (!icms::$security->check()) redirect_header(ICMS_URL."/modules/".basename(dirname(__FILE__)), 3, _NOPERM."<br />".implode('<br />', icms::$security->getErrors()));
 
 		$uid = 0;
