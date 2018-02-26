@@ -4368,7 +4368,7 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 				if($button == "exportButton") {
 					return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=export value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/export.php?fid=$fid&frid=$frid&cols=$colhandles&eq=$exportTime');\"></input>";
 				} else {
-					return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=impdata value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/import.php?fid=$fid&eq=$exportTime');\"></input>";
+					return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=impdata value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/import.php?fid=$fid&cols=$colhandles&eq=$exportTime');\"></input>";
 				}
 				break;
 			case "addButton":
