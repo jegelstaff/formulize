@@ -214,7 +214,7 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
     if ($validateOverride) {
         return true;
     }
-
+    $elementHandler = xoops_getmodulehandler('elements', 'formulize');
     global $errors, $xoopsDB;
 
     $output = "** <b>Validating</b><br><b>Csv</b>: " . $importSet[0][0] . "<br>" .
@@ -267,6 +267,9 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
 
                 if (isset($importSet[5][0][$importSet[6][$link]])) { // if this is an element, then extract that element from the array
                     $element = $importSet[5][0][$importSet[6][$link]];
+                    if($elementHandler->isElementDisabledForUser($element["ele_id"], $xoopsUser)) {
+                        continue; // do not bother validating disabled elements since they won't be imported
+                    }
                 } else {
                     $element = array();
                 }
@@ -623,6 +626,7 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
 
 function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
     global $xoopsDB, $xoopsUser, $xoopsConfig, $myts; // $xoopsDB is required by q
+    $elementHandler = xoops_getmodulehandler('elements', 'formulize');
     if (!$myts) {
         $myts =& MyTextSanitizer::getInstance();
     }
@@ -666,6 +670,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
     $other_values = array();
     $usersMap = array();
     $entriesMap = array();
+    $notEntriesList = array();
     while (!feof($importSet[1])) {
         $row = fgetcsv($importSet[1], 99999);
 
@@ -727,6 +732,12 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
                 if ($importSet[6][$link] != -1) {
                     $element = $importSet[5][0][$importSet[6][$link]];
                     $id_form = $importSet[4];
+                    
+                    // disabled elements cannot be imported
+                    if($elementHandler->isElementDisabledForUser($element["ele_id"], $xoopsUser)) {
+                        continue;
+                    }
+                    
                     if ($link == ($links-1)) {
                         // remove some really odd line endings if present, only happens when dealing with legacy outputs of really old/odd systems
                         $row_value = str_replace(chr(19).chr(16), "", $row[$link]);
@@ -736,6 +747,10 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
 
                     if ($row_value != "") {
                         switch($element["ele_type"]) {
+                            
+                            case "derived":
+                                continue; // ignore derived values for importing
+                            
                             case "select":
                             if ($importSet[5][1][$link] AND !strstr($row_value, ",")
                                 AND (!is_numeric($row_value) OR $row_value < 10000000))
@@ -985,6 +1000,8 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
                     if (!$result = $xoopsDB->queryF($updateSQL)) {
                         print "<br><b>FAILED</b> to update data, SQL: $updateSQL<br>".$xoopsDB->error()."<br>";
                     }
+                    $entriesMap[] = $this_id_req;
+                    $notEntriesList['update_entry'][$importSet[4]][] = $this_id_req; // log the notification info
                 }
             } else {
                 // inserting a new entry
@@ -1022,7 +1039,9 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
                     } else {
                         // need to record new group ownership info too
                         $usersMap[] = $form_uid;
-                        $entriesMap[] = $xoopsDB->getInsertId();
+                        $insertedId = $xoopsDB->getInsertId();
+                        $entriesMap[] = $insertedId;
+                        $notEntriesList['new_entry'][$importSet[4]][] = $insertedId; // log the notification info
                     }
                 } else {
                     echo "<br>" . $insertElement . "<br>";
@@ -1052,6 +1071,21 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
             print "ERROR: could not insert 'other' value: $other<br>";
         }
     }
+    
+    // send notifications
+    foreach($notEntriesList as $notEvent=>$notDetails) {
+        foreach($notDetails as $notFid=>$notEntries) {
+            $notEntries = array_unique($notEntries); 
+            sendNotifications($notFid, $notEvent, $notEntries);
+        }
+    }
+    
+    // update derived values based on the form only
+    foreach($entriesMap as $entry) {
+        formulize_updateDerivedValues($entry, $importSet[4]); // 4 is the form id
+    }
+    
+    
 }
 
 
@@ -1060,7 +1094,9 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
 //function getElementOptions($id_form, $ele_caption)
 function getElementOptions($ele_handle, $fid) {
     static $cachedElementOptions = array();
+    
     if (!isset($cachedElementOptions[$fid][$ele_handle])) {
+        
         global $xoopsDB, $myts;
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
         $formObject = $form_handler->get(intval($fid));
@@ -1068,7 +1104,6 @@ function getElementOptions($ele_handle, $fid) {
         if (!$myts) {
             $myts =& MyTextSanitizer::getInstance();
         }
-
         $sql = "SELECT entry_id, `".$ele_handle."` FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'));
         $res = $xoopsDB->query($sql);
         $result = array();

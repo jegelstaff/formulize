@@ -50,6 +50,8 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		$entriesThatHaveBeenLockedThisPageLoad = array();
 	}
 	
+    $element_handler = xoops_getmodulehandler('elements', 'formulize');
+    
 	$subformCreateEntry = strstr($entry, "subformCreateEntry") ? true : false; // check for this special flag, which is mostly like a "new" situation, except for the deh hidden flag that gets passed back, since we don't want the standard readelements logic to pickup these elements!
 	if($subformCreateEntry) {
 		$subformMetaData = explode("_", $entry);
@@ -201,16 +203,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		if(isset($GLOBALS['formulize_forceElementsDisabled']) AND $GLOBALS['formulize_forceElementsDisabled'] == true) {
 			$isDisabled = true;
 		} else {
-			$ele_disabled = $element->getVar('ele_disabled');
-			$isDisabled = false;
-			if($ele_disabled == 1) {
-				$isDisabled = true;
-			} elseif(!is_numeric($ele_disabled)) {
-				$disabled_groups = explode(",", $ele_disabled);
-				if(array_intersect($groups, $disabled_groups) AND !array_diff($groups, $disabled_groups)) {
-					$isDisabled = true;
-				}
-			}
+            $isDisabled = $element_handler->isElementDisabledForUser($element, $xoopsUser) ? true : false;
 		}
 
 		// Another check to see if this element is disabled, for the case where the user can view the form, but not edit it.

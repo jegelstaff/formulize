@@ -5683,3 +5683,11 @@ function generateTidyElementList($cols, $selectedCols=array()) {
     return $html;
     
 }
+
+// update derived values in the passed in entry
+function formulize_updateDerivedValues($entry, $fid, $frid="") {
+	$GLOBALS['formulize_forceDerivedValueUpdate'] = true;
+	getData($frid, $fid, $entry);
+	unset($GLOBALS['formulize_forceDerivedValueUpdate']);
+}
+

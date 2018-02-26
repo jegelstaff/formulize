@@ -286,6 +286,13 @@ if(!$mainFormHasDerived AND $frid) {
         }
     }
 }
+
+// NOTE:
+// Parsing and processing derived values could be done a whole lot smarter, if we make a good way of figuring out if there's derived value elements in the form, and also if there are any formulas in the form/framework that use any of the elements that we have just saved values for
+// but that's a whole lot of inspection we're not going to do right now.
+// Basically, the entire saving routine would be nicer if it were smart about not saving data that hasn't changed!
+
+
 $mainFormEntriesUpdatedForDerived = array();
 $formsUpdatedInFramework = array();
 // check all the entries that were written...
@@ -386,14 +393,6 @@ function afterSavingLogic($values,$entry_id) {
 			}
 		}
 	}
-}
-
-// this could be done a whole lot smarter, if we make a good way of figuring out if there's derived value elements in the form, and also if there are any formulas in the form/framework that use any of the elements that we have just saved values for
-// but that's a whole lot of inspection we're not going to do right now.
-function formulize_updateDerivedValues($entry, $fid, $frid="") {
-	$GLOBALS['formulize_forceDerivedValueUpdate'] = true;
-	getData($frid, $fid, $entry);
-	unset($GLOBALS['formulize_forceDerivedValueUpdate']);
 }
 
 
