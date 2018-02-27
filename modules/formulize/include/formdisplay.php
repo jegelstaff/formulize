@@ -57,20 +57,16 @@ class formulize_themeForm extends XoopsThemeForm {
    * @param	string	$class	CSS class name for <td> tag
    * @name	string	$name	name of the element being inserted, which we keep so we can then put the right id tag into its row
    */
-  public function insertBreakFormulize($extra = '', $class = '', $name) {
-      $class = ($class != '') ? " class='$class'" : '';
+    public function insertBreakFormulize($extra = '', $class= '', $name, $element_handle) {
+        $class = ($class != "") ? "$class " : "";
       //Fix for $extra tag not showing
       if ($extra) {
-          $extra = "<td colspan='2' $class>$extra</td>"; // removed tr from here and added it below when we know the right id name to give it
+            $extra = "<td colspan='2' class=\"{$class}formulize-label-$element_handle\">$extra</td>"; // removed tr from here and added it below when we know the right id name to give it
       } else {
-          $extra = "<td colspan='2' $class>&nbsp;</td>"; // removed tr from here and added it below when we know the right id name to give it
+            $extra = "<td colspan='2' class=\"{$class}formulize-label-$element_handle\">&nbsp;</td>"; // removed tr from here and added it below when we know the right id name to give it
       }
       $ibContents = $extra . "<<||>>" . $name; // can only assign strings or real element objects with addElement, not arrays
       $this->addElement($ibContents);
-  }
-
-  public function render() {
-      $this->renderFromTemplate();
   }
 
   /**
@@ -78,51 +74,74 @@ class formulize_themeForm extends XoopsThemeForm {
    *
    * @return	string
    */
+  public function render() {
+      return $this->renderFromTemplate();
+  }
   public function renderFromTemplate($elementsTemplateFile = null) {
       $ele_name = $this->getName();
-      print "<div id=formulizeform>";
-      print "<form id='" . $ele_name
+      $ret = "<div id=formulizeform>"
+              . "<form id='" . $ele_name
               . "' name='" . $ele_name
               . "' action='" . $this->getAction()
               . "' method='" . $this->getMethod()
               . "' onsubmit='return xoopsFormValidate_" . $ele_name . "();'" . $this->getExtra() . ">";
 
       if ($elementsTemplateFile != null) {
-          $this->_drawElements($this->getElements(), $elementsTemplateFile);
+          $hidden = '';
+          list($ret, $hidden) = $this->_drawElements($this->getElements(), $ret, $hidden, $elementsTemplateFile);
+          $ret .= \n$hidden\n;
       } else {
-          $this->renderDefault();
+          $ret .= $this->renderDefault();
       }
 
-      print $this->getRenderedHiddenElements($this->getElements());
-      print "\n</form>\n";
-      print $this->renderValidationJS(true);
-      print "</div>";
+      $ret .= "\n</form>\n";
+      $ret .= $this->renderValidationJS(true);
+      $ret .= "</div>";
+      return $ret;
   }
 
   // When the default layout is extracted into default template files
   // this method should be removed and the drawing of elements should
   // work the same for default or custom templates.
   private function renderDefault() {
-      print "<div class='xo-theme-form'>
+      $ret = "<div class='xo-theme-form'>
                   <table width='100%' class='outer' cellspacing='1'>
-                  <tr><th colspan='2'>" . $this->getTitle() . "</th></tr>
+                  <tr><th colspan='2'><h1 class=\"formulize-form-title\">" . $this->getTitle() . "</h1></th></tr>
               ";
-
-      $this->_drawElements($this->getElements());
-
-      print "</table>\n</div>";
+		$hidden = '';
+		list($ret, $hidden) = $this->_drawElements($this->getElements(), $ret, $hidden);
+		$ret .= "</table>\n$hidden\n</div>\n";
+		return $ret;
   }
+
+	public function renderValidationJS( $withtags = true, $skipConditionalCheck = false ) {
+      $js = "";
+      if ($withtags) {
+          $js .= "\n<!-- Start Form Validation JavaScript //-->\n<script type='text/javascript'>\n<!--//\n";
+      }
+      $formname = $this->getName();
+      $js .= "function xoopsFormValidate_{$formname}() { myform = window.document.{$formname};\n";
+		$js .= $this->_drawValidationJS($skipConditionalCheck);
+      $js .= "\nreturn true;\n}\n";
+      if ($withtags) {
+          $js .= "//--></script>\n<!-- End Form Vaidation JavaScript //-->\n";
+      }
+      return $js;
+    }
 
   function _drawElements($elements, $elementsTemplateFile = null) {
-      foreach ($elements as $ele) {
-          if ($elementsTemplateFile != null) {
-              $this->drawElementCustomTemplate($ele, $elementsTemplateFile);
-          } else {
-              $this->drawElementDefault($ele);
-          }
-      }
+
+    if ($elementsTemplateFile != null) {      
+        foreach ($elements as $ele) {
+            list($ret, $hidden) = $this->drawElementCustomTemplate($ele, $elementsTemplateFile);
+        }
+    } else {
+        list($ret, $hidden) = $this->drawElementDefault($elements);
+    }
+    return array($ret, $hidden);
   }
 
+  // HANDLING OF HIDDEN ELEMENTS IS UP IN THE AIR???
   private function drawElementCustomTemplate($ele, $elementsTemplateFile) {
       if (is_object($ele) && !$ele->isHidden() && $ele->getCaption() != '') {
 
@@ -133,81 +152,89 @@ class formulize_themeForm extends XoopsThemeForm {
           $elementIsRequired = $ele->isRequired();
           $elementDescription = $ele->getDescription();
           $elementField = $ele->render();
-
+          ob_start();
           include $elementsTemplateFile;
+          return ob_get_clean();
       }
   }
 
-  private function drawElementDefault($ele) {
-      $class = 'even';
-      // just plain add stuff if it's a literal string...
-      if (!is_object($ele)) {
-          if (strstr($ele, "<<||>>")) {
-              $ele = explode("<<||>>", $ele);
-              print "<tr id='formulize-" . $ele[1] . "'>" . $ele[0] . "</tr>";
-          } elseif (substr($ele, 0, 3) != "<tr") {
-              print "<tr>" . $ele . "</tr>";
-          } else {
-              print $ele;
-          }
-      } elseif (!$ele->isHidden()) {
-          print "<tr id='formulize-" . $ele->getName() . "' valign='top' align='" . _GLOBAL_LEFT . "'><td class='head'>";
-          if (($caption = $ele->getCaption()) != '') {
-              print   "<div class='xoops-form-element-caption" . ($ele->isRequired() ? "-required" : "" ) . "'>"
-                      . "<span class='caption-text'>{$caption}</span>"
-                      . "<span class='caption-marker'>*</span>"
-                      . "</div>";
-          }
-          if (($desc = $ele->getDescription()) != '') {
-              print "<div class='xoops-form-element-help'>{$desc}</div>";
-          }
-          print "</td><td class='$class'>" . $ele->render() . "</td></tr>\n";
-      }
-  }
+  private function drawElementDefault($elements, $ret, $hidden) {
+		$class ='even';
 
-  function getRenderedHiddenElements($elements) {
-      $hidden = "";
-      foreach ($elements as $ele) {
-          if (is_object($ele) && $ele->isHidden()) {
-              $hidden .= $ele->render();
-          }
-      }
-      return $hidden;
-  }
+        global $xoopsUser;
+        $show_element_edit_link = (is_object($xoopsUser) and in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups()));
 
-  public function renderValidationJS($withtags = true) {
-      $js = "";
-      if ($withtags) {
-          $js .= "\n<!-- Start Form Validation JavaScript //-->\n<script type='text/javascript'>\n<!--//\n";
-      }
-      $formname = $this->getName();
-      $js .= "function xoopsFormValidate_{$formname}() { myform = window.document.{$formname};\n";
-      $js .= $this->_drawValidationJS();
-      $js .= "\nreturn true;\n}\n";
-      if ($withtags) {
-          $js .= "//--></script>\n<!-- End Form Vaidation JavaScript //-->\n";
-      }
-      return $js;
-  }
+		foreach ( $elements as $ele ) {
+			$label_class = null;
+			$input_class = null;
+			if (isset($ele->formulize_element)) {
+				$label_class = " formulize-label-".$ele->formulize_element->getVar("ele_handle");
+				$input_class = " formulize-input-".$ele->formulize_element->getVar("ele_handle");
+			}
+			if (!is_object($ele)) {// just plain add stuff if it's a literal string...
+				if(strstr($ele, "<<||>>")) {
+					$ele = explode("<<||>>", $ele);
+					$ret .= "<tr id='formulize-".$ele[1]."'>".$ele[0]."</tr>";
+				} elseif(substr($ele, 0, 3) != "<tr") {
+					$ret .= "<tr>$ele</tr>";
+				} else {
+					$ret .= $ele;
+				}
+			} elseif ( !$ele->isHidden() ) {
+				$ret .= "<tr id='formulize-".$ele->getName()."' class='".$ele->getClass()."' valign='top' align='" . _GLOBAL_LEFT . "'><td class='head$label_class'>";
+				if (($caption = $ele->getCaption()) != '') {
+					$ret .=
+					"<div class='xoops-form-element-caption" . ($ele->isRequired() ? "-required" : "" ) . "'>"
+						. "<span class='caption-text'>{$caption}</span>"
+						. "<span class='caption-marker'>" . ($ele->isRequired() ? "*" : "" ) . "</span>"
+						. "</div>";
+				}
+				if (($desc = $ele->getDescription()) != '') {
+					$ret .= "<div class='xoops-form-element-help'>{$desc}</div>";
+				}
+
+                $ret .= "</td><td class='$class$input_class'>";
+                if ($show_element_edit_link) {
+                    $element_name = trim($ele->getName());
+                    switch ($element_name) {
+                        case 'control_buttons':
+                        case 'proxyuser':
+                            // Do nothing
+                            break;
+
+                        default:
+                            if (is_object($ele) and isset($ele->formulize_element)) {
+                                $ret .= "<a class=\"formulize-element-edit-link\" tabindex=\"-1\" href=\"" . XOOPS_URL .
+                                    "/modules/formulize/admin/ui.php?page=element&aid=0&ele_id=" .
+                                    $ele->formulize_element->getVar("ele_id") . "\" target=\"_blank\">edit element</a>";
+                            }
+                            break;
+                    }
+                }
+                $ret .=  $ele->render()."</td></tr>\n";
+
+			} else {
+				$hidden .= $ele->render();
+			}
+		}
+		return array($ret, $hidden);
+	}
 
   // need to check whether the element is a standard element, if if so, add the check for whether its row exists or not
-  function _drawValidationJS() {
+	function _drawValidationJS($skipConditionalCheck) {
       $fullJs = "";
 
       $elements = $this->getElements(true);
       foreach ($elements as $elt) {
           if (method_exists($elt, 'renderValidationJS')) {
-              if (substr($elt->getName(), 0, 3) == "de_") {
+				if(substr($elt->getName(),0,3)=="de_" AND !$skipConditionalCheck) {
                   $checkConditionalRow = true;
               } else {
                   $checkConditionalRow = false;
               }
               $js = $elt->renderValidationJS();
-              $eltLocator = "window.document.getElementById('formulize-" . $elt->getName() . "')";
               if ($js AND $checkConditionalRow) {
-                  $fullJs .= "    if(!" . $eltLocator . " || " . $eltLocator . ".style.display != 'none') {\n";
-                  $fullJs .= "        " . $js . "\n";
-                  $fullJs .= "    }\n\n";
+					$fullJs .= "if(window.document.getElementById('formulize-".$elt->getName()."').style.display != 'none') {\n".$js."\n}\n\n";
               } elseif ($js) {
                   $fullJs .= "\n" . $js . "\n";
               }
