@@ -675,25 +675,24 @@ INDEX i_sid (`sid`)
         print "DB updates completed.  result: OK";
     }
 }
-
+// TODO!!! NEED TO HANDLING MOVING EXISTING TEMPLATES AS PART OF AN UPGRADE
 // Saves the given template to a template file on the disk
 function saveTemplate($template, $sid, $name) {
-    $pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/". $sid . "/";
+    $filename = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/custom/{$sid}/{$name}.php";
 
-    $text = html_entity_decode($template);
-    if (!empty($text)) {
-        $fileHandle = fopen($pathname . $name. ".php", "w+");
-        $success = fwrite($fileHandle, "<?php\n" . $text);
-        fclose($fileHandle);
+    $text = trim(html_entity_decode($template));
+    if ($text AND substr($text, 0, 5) != "<?php") {
+        // if there's no php open-tag in the text already, add one
+        $text = "<?php\n" . $text;
+    }
 
-        if ($success) {
-            print "created templates/screens/default/" . $sid . "/". $name . ".php. result: OK<br>";
-        } else {
-            print "Warning: could not save " . $name . ".php for screen " . $sid . ".<br>";
+    if (false === file_put_contents($filename, $text)) {
+        print "Warning: could not save " . $name . ".php for screen " . $sid . ".<br>";
+    } else {
+            print "created templates/screens/custom/" . $sid . "/". $name . ".php. result: OK<br>";
         }
     }
 
-}
 
 // Fixes the format if the template is empty
 function emptyTemplateFixer($dir) {
@@ -719,22 +718,7 @@ function emptyTemplateFixer($dir) {
     }
 }
 
-// Saves the given template to a template file on the disk
-function saveTemplate($template, $sid, $name) {
-    $filename = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/{$sid}/{$name}.php";
 
-    $text = trim(html_entity_decode($template));
-    if ($text AND substr($text, 0, 5) != "<?php") {
-        // if there's no php open-tag in the text already, add one
-        $text = "<?php\n" . $text;
-    }
-
-    if (false === file_put_contents($filename, $text)) {
-        print "Warning: could not save " . $name . ".php for screen " . $sid . ".<br>";
-    } else {
-        print "created templates/screens/default/" . $sid . "/". $name . ".php. result: OK<br>";
-    }
-}
 
 
 function saveMenuEntryAndPermissionsSQL($formid, $appid, $i, $menuText) {
