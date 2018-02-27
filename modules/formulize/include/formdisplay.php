@@ -1342,7 +1342,7 @@ function addProfileFields($form, $profileForm) {
 
 }
 
-function addPrintContent($profileForm, $fids, $formframe, $mainform, $cur_entry, $profileForm, $elements_allowed = "", $screen = null) {
+function addPrintContent($profileForm, $fids, $formframe, $mainform, $cur_entry, $elements_allowed = "", $screen = null) {
     if (!$profileForm) { // do not use printable button for profile forms
         $newcurrentURL = XOOPS_URL . "/modules/formulize/printview.php";
         print "<form name='printview' action='" . $newcurrentURL . "' method=post target=_blank>\n";
@@ -1394,7 +1394,7 @@ function getPrintableViewButton($save_text_temp, $currentURL, $settings, $entry,
     }
 
     drawGoBackForm($go_back, $currentURL, $settings, $entry);
-    addPrintContent($profileForm, $fids, $formframe, $mainform, $cur_entry, $profileForm, $elements_allowed, $screen);
+    addPrintContent($profileForm, $fids, $formframe, $mainform, $cur_entry, $elements_allowed, $screen);
 
     // need to grab the $nosubforms variable created by the multiple page function, so we know
     // to put the printable view button (and nothing else) on the screen for multipage forms
@@ -2914,6 +2914,8 @@ if(isset($GLOBALS['formulize_fckEditors'])) {
 	print "}\n";
 }
 
+?>
+
 jQuery(document).ready(function(){
 
   var testtoptmp = jQuery('#floattest').offset();
@@ -2948,8 +2950,6 @@ var relativetoptmp = testtoptmp.top;
     }
   });
 });
-
-?>
 
 window.onbeforeunload = function (e) {
 
