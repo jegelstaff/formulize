@@ -89,7 +89,7 @@ class formulize_themeForm extends XoopsThemeForm {
       if ($elementsTemplateFile != null) {
           $hidden = '';
           list($ret, $hidden) = $this->_drawElements($this->getElements(), $ret, $hidden, $elementsTemplateFile);
-          $ret .= \n$hidden\n;
+          $ret .= "\n$hidden\n";
       } else {
           $ret .= $this->renderDefault();
       }
@@ -131,7 +131,7 @@ class formulize_themeForm extends XoopsThemeForm {
 
   function _drawElements($elements, $elementsTemplateFile = null) {
 
-    if ($elementsTemplateFile != null) {      
+    if ($elementsTemplateFile != null) {
         foreach ($elements as $ele) {
             list($ret, $hidden) = $this->drawElementCustomTemplate($ele, $elementsTemplateFile);
         }
