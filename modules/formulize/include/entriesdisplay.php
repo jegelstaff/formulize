@@ -1153,7 +1153,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 			print "</table></div>";
 		}
 
-		include $screen->getDefaultTemplateFilePath('toptemplate.php');
+		include $screen->getDefaultTemplateFilePath('default/toptemplate.php');
 
 	 } else {
 		// IF THERE IS A CUSTOM TOP TEMPLATE IN EFFECT, DO SOMETHING COMPLETELY DIFFERENT
@@ -1277,7 +1277,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 			$useXhr = true;
 		}
 	}
-
+ 
 	interfaceJavascript($fid, $frid, $currentview, $useWorking, $useXhr, $settings['lockedColumns']); // must be called after form is drawn, so that the javascript which clears ventry can operate correctly (clearing is necessary to avoid displaying the form after clicking the Back button on the form and then clicking a button or doing an operation that causes a posting of the controls form).
 
 	$returnArray = array();

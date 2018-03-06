@@ -38,10 +38,10 @@ $config_handler = xoops_gethandler('config');
 $module_handler = xoops_gethandler('module');
 $formulizeModule = $module_handler->getByDirname("formulize");
 $formulizeConfig = $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
-$defaultTemplate = $formulizeConfig['defaultTemplate']; 
+$defaultTemplate = $formulizeConfig['defaultTemplate'];
 
 define('CUSTOM_TEMPLATES_DIR', "/modules/formulize/templates/screens/custom/");
-define('DEFAULT_TEMPLATES_DIR', "/modules/formulize/templates/screens/".$defaultTemplate."/");
+define('DEFAULT_TEMPLATES_DIR', "\modules\\formulize\\templates\screens".$defaultTemplate."\\");
 
 require_once XOOPS_ROOT_PATH.'/kernel/object.php';
 class formulizeScreen extends xoopsObject {
