@@ -101,7 +101,8 @@ define("_MI_formulizeMENU_DESC","Displays an individually configurable menu in a
 // Names of blocks for this module (Not all module has blocks)
 define("_MI_formulizeMENU_BNAME","Form Menu");
 
-define("_MI_formulize_DEFAULTTEMPLATE", "Choose default template for display");
+define("_MI_formulize_DEFAULTTEMPLATE", "Choose default template set for display");
+define("_MI_formulize_DEFAULTTEMPLATEHELP", "The set of default templates in the selected folder will be used to display all screens that do not have custom templates of their own.");
 
 // for Floating save button
 define("_MI_formulize_FlOATINGSAVE", "Enable floating save button at the bottom for forms");

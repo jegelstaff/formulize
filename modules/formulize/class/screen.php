@@ -38,10 +38,10 @@ $config_handler = xoops_gethandler('config');
 $module_handler = xoops_gethandler('module');
 $formulizeModule = $module_handler->getByDirname("formulize");
 $formulizeConfig = $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
-$defaultTemplate = $formulizeConfig['defaultTemplate'];
+$defaultTemplateSet = $formulizeConfig['defaultTemplate'];
 
 define('CUSTOM_TEMPLATES_DIR', "/modules/formulize/templates/screens/custom/");
-define('DEFAULT_TEMPLATES_DIR', "\modules\\formulize\\templates\screens".$defaultTemplate."\\");
+define('DEFAULT_TEMPLATES_DIR', "/modules/formulize/templates/screens/".$defaultTemplateSet."/");
 
 require_once XOOPS_ROOT_PATH.'/kernel/object.php';
 class formulizeScreen extends xoopsObject {
@@ -64,7 +64,7 @@ class formulizeScreen extends xoopsObject {
       return (trim($this->getTemplate($templateName)) != "");
   }
 
-  function getCustomTemplateFilePath($templateName) {
+  function getCustomTemplateFilePath($templateName="") {
       return $this->getTemplateFilePath($this->getCustomTemplatesDir(). $this->getVar('sid') . "/", $templateName);
   }
 
@@ -85,7 +85,9 @@ class formulizeScreen extends xoopsObject {
   }
 
   private function getTemplateFilePath($dir, $templateName) {
+        if($templateName) {
       $templateName = substr($templateName,-4)=='.php' ? $templateName : $templateName.'.php';
+        }
       return $dir . $templateName;
   }
 
@@ -134,7 +136,7 @@ class formulizeScreen extends xoopsObject {
         static $templates = array();
         if (!isset($templates[$templatename])) {
             // there is no template saved in memory, read it from the file
-            $pathname = $this->getCustomTemplateFilePath($templatename.".php");
+            $pathname = $this->getCustomTemplateFilePath($templatename);
             if (file_exists($pathname)) {
                 $templates[$templatename] = file_get_contents($pathname);
             } else {

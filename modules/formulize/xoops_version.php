@@ -659,19 +659,14 @@ $modversion['config'][] = array(
 
 
 // Include default templates
-// do not include the 'custom' folder because that is special for any templates people have made that are unique to specific screens
-$templateFiles = scandir(XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default");
-print $templateFiles;
-$finalTemplates = array();
-foreach($templateFiles as $thisFile) {
-	if(substr($thisFile, -4) == ".php"){
-		$templateName = substr($thisFile, 0, strpos($thisFile, ".php"));
-		$finalTemplates[$templateName] = $templateName;
+$templateFolders = scandir(XOOPS_ROOT_PATH."/modules/formulize/templates/screens/");
+$finalTemplateSets = array();
+foreach($templateFolders as $thisFolder) {
+	if(!strstr($thisFolder, ".") AND $thisFolder != 'custom') { // if it's not a file nor the 'custom' folder...
+		$finalTemplateSets[$thisFolder] = $thisFolder;
 	}
 }
 
-// WE NEED TO ADD SOME HELP FOR THE USER WITH THE DEFAULTTEMPLATEHELP TEXT, TO EXPLAIN THEY MUST UPDATE THE MODULE TO SEE THEIR NEW FOLDERS, IF THEY ADD ANY
-// LANGAUGE CONSTANTS FOR THIS FILE ARE KEPT IN THE MODULES/FORMULIZE/LANGUAGE/ENGLISH/MODINFO.PHP
 $modversion['config'][] = array(
 	'name' => 'defaultTemplate',
 	'title' => '_MI_formulize_DEFAULTTEMPLATE',
@@ -679,7 +674,7 @@ $modversion['config'][] = array(
 	'formtype' => 'select',
 	'valuetype' => 'text',
 	'default' => 'default',
-	'options' => $finalTemplates,
+	'options' => $finalTemplateSets,
 );
 
 // get all the available forms and populate the options array
