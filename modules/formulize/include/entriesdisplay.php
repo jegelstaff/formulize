@@ -1153,7 +1153,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 			print "</table></div>";
 		}
 
-		include $screen->getDefaultTemplateFilePath('default/toptemplate.php');
+		include $screen->getDefaultTemplateFilePath('toptemplate.php');
 
 	 } else {
 		// IF THERE IS A CUSTOM TOP TEMPLATE IN EFFECT, DO SOMETHING COMPLETELY DIFFERENT
@@ -1650,7 +1650,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 					foreach($hiddenColumns as $thisHiddenCol) {
 						print "\n<input type=\"hidden\" name=\"hiddencolumn_".$linkids[0]."_$thisHiddenCol\" value=\"" . htmlspecialchars(display($entry, $thisHiddenCol)) . "\"></input>\n";
 					}
-					include XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$screen->getVar('sid')."/listtemplate.php";
+					
 					print "</tr>\n";
 
 				} else { // this is a blank entry
@@ -1688,6 +1688,8 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 				$viewNumber++;
 			}
 
+            include $screen->getCustomTemplateFilePath('listheadertemplate.php');
+            
       foreach($data as $id=>$entry) {
 				//$entry = $data[$entryCounter];
 				//$id=$entryCounter;
@@ -1736,7 +1738,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 						print "\n<input type=\"hidden\" name=\"hiddencolumn_".$linkids[0]."_$thisHiddenCol\" value=\"" . htmlspecialchars(display($entry, $thisHiddenCol)) . "\"></input>\n";
 					}
 
-					include XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$screen->getVar('sid')."/listtemplate.php";
+                    include $screen->getCustomTemplateFilePath('listtemplate.php');
 				}
 			}
 		}
@@ -4003,7 +4005,6 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 
     $publishedFilters = is_array($settings['pubfilters']) ? $settings['pubfilters'] : array();
 
-	$thisTemplate = $screen->getTemplate($type.'template');
 	if($screen->hasTemplate($type.'template')) {
                 // process the template and output results
                 include $screen->getCustomTemplateFilePath($type.'template');
