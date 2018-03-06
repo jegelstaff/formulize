@@ -111,6 +111,7 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
             print "Error: could not save the screen properly: ".$xoopsDB->error()." for query: $sql";
             return false;
         }
+        
         return $sid;
 	}
 

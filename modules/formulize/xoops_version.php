@@ -660,7 +660,8 @@ $modversion['config'][] = array(
 
 // Include default templates
 // do not include the 'custom' folder because that is special for any templates people have made that are unique to specific screens
-$templateFiles = scandir(XOOPS_ROOT_PATH."/modules/formulize/templates/screens/");
+$templateFiles = scandir(XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default");
+print $templateFiles;
 $finalTemplates = array();
 foreach($templateFiles as $thisFile) {
 	if(substr($thisFile, -4) == ".php"){
