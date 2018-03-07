@@ -11,7 +11,7 @@ if(!function_exists("getInstructorName")) {
 }
 
 $courseActive = display($entry, 'ro_module_course_active');
-if($courseActive == 'No') {
+if(!strstr($courseActive, 'Yes')) {
     return '';
 }
 
@@ -57,6 +57,9 @@ $titles = array();
 $revTitles = array();
 foreach($sectionIds as $i=>$sectionId) {
     $section = getData(18, 4, $sectionId, 'AND', '', '', '', 'sections_section_number');
+    if(display($section[0], "course_components_reserved_section")=="Yes") {
+        continue; // skip sections that are reserved
+    }
     $sections[$i] = display($section[0], 'sections_section_number');
     $revSections[$i] = display($indexedLockData[$sectionId], 'sections_section_number');
     $times[$i] = makeSectionTimes($section[0]);
@@ -109,7 +112,9 @@ foreach($sections as $i=>$section) {
         $timeStart = false;
     }
     $html .= "</td>";
-    $html .= "<td style=\"border-top: 1px solid black;\">".compData($rooms[$i], $revRooms[$i])."</td>";
+    if(isset($_POST['showRooms']) AND $_POST['showRooms']=="Yes") {
+        $html .= "<td style=\"border-top: 1px solid black;\">".compData($rooms[$i], $revRooms[$i])."</td>";
+    }
     $html .= "<td style=\"border-top: 1px solid black;\">";
     $instStart = true;
     foreach($inst[$i] as $x=>$instructor) {
@@ -119,6 +124,9 @@ foreach($sections as $i=>$section) {
         $instText = compData($instructor, $revInst[$i][$x]);
         $html .= $instText ? $instText : 'TBA';
         $instStart = false;
+    }
+    if($instStart) { // no instructors so TBA
+        $html .= 'TBA';
     }
     $html .= "</td>";
     if(isset($_POST['showTentInst']) AND $_POST['showTentInst']=="Yes") {
@@ -134,6 +142,9 @@ foreach($sections as $i=>$section) {
         }
         $html .= "</td>";
     }
+    if($tentInstStart) {
+        $html .= 'TBA';
+    }
     
     if($displayEnrollment) {
         $html .= "<td style=\"border-top: 1px solid black;\">$enrollment_controls</td>";
@@ -147,9 +158,11 @@ if(isset($_POST['showCoords']) AND $_POST['showCoords'] AND $coordName = display
     $html .= "<tr nobr=\"true\"><td></td>
     <td></td>
     <td style=\"border-top: 1px solid black;\"><b>Coordinator</b></td>
-    <td style=\"border-top: 1px solid black;\"></td>
-    <td style=\"border-top: 1px solid black;\"></td>
-    <td style=\"border-top: 1px solid black;\">".$coordName."</td>";
+    <td style=\"border-top: 1px solid black;\"></td>";
+    if(isset($_POST['showRooms']) AND $_POST['showRooms']=="Yes") {
+        $html .= "<td style=\"border-top: 1px solid black;\"></td>";
+    }
+    $html .= "<td style=\"border-top: 1px solid black;\">".$coordName."</td>";
     if($displayEnrollment) {
         $html .= "<td style=\"border-top: 1px solid black;\">$enrollment_controls</td>";
     }
