@@ -520,10 +520,12 @@ function drawCourseBox($section, $sectionKey, $lecturesWithTutorials) {
 	if($sectionData['notes']) {
 		$overLibText .= "<br><br>".str_replace("\r\n","<br>",$sectionData['notes']);
 	}
-	$linkStart = ($sectionData['type'] != "Tutorial" AND userCanAssignToProgram($courseData['program'])) ? "<a href='' target='".str_replace("/","",$sectionKey)."' class='details-link' onclick='return false;'>" : "";
+	$linkStart = ($sectionData['type'] != "Tutorial" AND userCanAssignToProgram($courseData['program']) AND $courseData['offered']!="No" AND $sectionData['reserved'] != "Yes") ? "<a href='' target='".str_replace("/","",$sectionKey)."' class='details-link' onclick='return false;'>" : "";
     $linkEnd = $linkStart ? "</a>" : "";
+    $offeredNote = $courseData['offered'] == "No" ? " (awaiting confirmation)" : "";
+    $reservedNote = $sectionData['reserved'] == "Yes" ? " (Reserved for planning purposes)" : "";
     $courseCode = $sectionData['isRequired'] == "Yes" ? "<span class='required-section'>".$courseData['code']."</span>" : $courseData['code'];
-    print "<h2 onmouseover='return overlib(\"$overLibText\");' onmouseout='nd();'>$linkStart$courseCode$linkEnd</a></h2>\n";
+    print "<h2 onmouseover='return overlib(\"$overLibText\");' onmouseout='nd();'>$linkStart$courseCode$offeredNote$reservedNote$linkEnd</a></h2>\n";
     
     $type = "<div class='title-for-print' style='display: none;'><b>".$courseData['desc']."</b></div><b>".$sectionData['type'] . " ". $sectionData['number'];
     if($sectionData['type']=='Tutorial') {
@@ -877,6 +879,7 @@ function readSection($entry, $entry_id, $sort='course') { // sort sets how the d
     $GLOBALS['dara_course'][$year][$code]['sections'][$sectionNumber]['related_section'] = display($entry, 'course_components_related_lecture');
 	$GLOBALS['dara_course'][$year][$code]['sections'][$sectionNumber]['notes'] = display($entry, 'course_components_program_director_notes');
     $GLOBALS['dara_course'][$year][$code]['sections'][$sectionNumber]['isRequired'] = display($entry, 'course_components_section_required');
+    $GLOBALS['dara_course'][$year][$code]['sections'][$sectionNumber]['reserved'] = display($entry, 'course_components_reserved_section');
     if(!isset($GLOBALS['dara_course'][$year][$code]['title'])) {
         $GLOBALS['dara_course'][$year][$code]['title'] = $title;
         $GLOBALS['dara_course'][$year][$code]['desc'] = display($entry, 'ro_module_course_title');
@@ -909,7 +912,7 @@ function readSection($entry, $entry_id, $sort='course') { // sort sets how the d
             $targetEnd = date("H:i:s",$endTime + 3600);
             $targetStart = date("H:i:s", $startTime - 3600);
             $dayCodes = array("Monday"=>"M","Tuesday"=>"T","Wednesday"=>"W","Thursday"=>"R","Friday"=>"F","Saturday"=>"Sat","Sunday"=>"Sun");
-			$baseFilter = "instr_assignments_instructor/**/$instructor/**/=][section_times_start_time/**/$targetEnd/**/<][section_times_end_time/**/$targetStart/**/>][section_times_day/**/".$dayCodes[$day]."/**/=][entry_id/**/$entry_id/**/!=][ro_module_year/**/$year/**/=][ro_module_course_active/**/1/**/="; // sections_section_number/**/$sectionNumber/**/!=][
+			$baseFilter = "instr_assignments_instructor/**/$instructor/**/=][section_times_start_time/**/$targetEnd/**/<][section_times_end_time/**/$targetStart/**/>][section_times_day/**/".$dayCodes[$day]."/**/=][entry_id/**/$entry_id/**/!=][ro_module_year/**/$year/**/=][ro_module_course_active/**/2/**/!="; // sections_section_number/**/$sectionNumber/**/!=][
             if($semester == "Fall-Winter - Y") {
                 $semFilter = "ro_module_semester/**/Fall - F/**/=][ro_module_semester/**/Winter/Spring - S/**/=][ro_module_semester/**/Fall-Winter - Y/**/=";
             } elseif($semester == "Fall - F") {
