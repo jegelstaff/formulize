@@ -168,7 +168,7 @@ if($csv_name != "")
 }
 else
 {
-
+/*
 print "<tr><td class=head><p>" . _formulize_DE_IMPORT_STEP1 . "</p></td><td class=even>";
 
 // provide a blank template, and a blank update template
@@ -189,7 +189,7 @@ print "<p><b>" . _formulize_DE_IMPORT_EITHEROR . "</b><p>";
 
 print "<ul><li>" . _formulize_DE_IMPORT_BLANK . "<br><a href=$blank_template target=_blank>" . _formulize_DE_IMPORT_BLANK2 . "</a></li></ul>\n";
 print "<Center><p><b>" . _formulize_DE_IMPORT_OR . "</b></p></center>";
-print "<ul><li>" . _formulize_DE_IMPORT_DATATEMP . "<br><a href=\"\" onclick=\"javascript:window.opener.showPop('" . XOOPS_URL . "/modules/formulize/include/export.php?fid=$fid&frid=&colids=&eq=".intval($_GET['eq'])."&type=update');return false;\">" . _formulize_DE_IMPORT_DATATEMP2 . "</a>";
+print "<ul><li>" . _formulize_DE_IMPORT_DATATEMP . "<br><a href=\"\" onclick=\"javascript:window.opener.showPop('" . XOOPS_URL . "/modules/formulize/include/export.php?fid=$fid&frid=&cols=".strip_tags(htmlspecialchars($_GET['cols']))."&eq=".intval($_GET['eq'])."&type=update');return false;\">" . _formulize_DE_IMPORT_DATATEMP2 . "</a>";
 print "</li></ul></td></tr>\n";
 print "<tr><td class=head><p>" . _formulize_DE_IMPORT_STEP2 . "</p></td><td class=even>" . _formulize_DE_IMPORT_INSTRUCTIONS;
 
@@ -199,9 +199,10 @@ if($regfid == $fid) {
 	print _formulize_DE_IMPORT_INSTNEW;
 }
 
-print _formulize_DE_IMPORT_INSTUPDATE . "</td></tr>\n";
-print "<tr><td class=head><p>" . _formulize_DE_IMPORT_STEP3 . "</p></td><td class=even><p>" . _formulize_DE_IMPORT_FILE . ": <form method=\"post\" ENCTYPE=\"multipart/form-data\"><input type=\"file\" name=\"csv_name\" size=\"40\" /><br><input type=\"checkbox\" name=\"validatedata\" value=\"1\" checked>&nbsp;"._formulize_DE_IMPORT_VALIDATEDATA."</p><p><input type=\"submit\" value=\"" . _formulize_DE_IMPORT_GO . "\"></form></p></td></tr>\n";
-
+print _formulize_DE_IMPORT_INSTUPDATE . "</td></tr>\n";*/
+//print "<tr><td class=head><p>" . _formulize_DE_IMPORT_STEP3 . "</p></td><td class=even><p>" . _formulize_DE_IMPORT_FILE . ": <form method=\"post\" ENCTYPE=\"multipart/form-data\"><input type=\"file\" name=\"csv_name\" size=\"40\" /><br><input type=\"checkbox\" name=\"validatedata\" value=\"1\" checked>&nbsp;"._formulize_DE_IMPORT_VALIDATEDATA."</p><p><input type=\"submit\" value=\"" . _formulize_DE_IMPORT_GO . "\"></form></p></td></tr>\n";
+print "<tr><td class=even><p>" . _formulize_DE_IMPORT_FILE . ": <form method=\"post\" ENCTYPE=\"multipart/form-data\"><input type=\"file\" name=\"csv_name\" size=\"40\" /><br><input type=\"hidden\" name=\"validatedata\" value=\"1\">&nbsp;</p><p><input type=\"submit\" value=\"" . _formulize_DE_IMPORT_GO . "\"></form></p></td></tr>\n";
+//<input type=\"checkbox\" name=\"validatedata\" value=\"1\" checked>&nbsp;"._formulize_DE_IMPORT_VALIDATEDATA."</p><p><input type=\"submit\" value=\"" . _formulize_DE_IMPORT_GO . "\"></form></p></td></tr>\n";
 }
 
 print "</table>";
