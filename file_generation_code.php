@@ -96,8 +96,14 @@ Year 1 - 12 noon</p>
         } else {
             $tentInstHeader = "";
         }
+        if(isset($_POST['showRooms']) AND $_POST['showRooms']=="Yes") {
+            $roomsHeader = "<th style=\"border: 1px solid black; color: white; background-color: black;\">Location/Room</th>";
+            $colspan++;
+        } else {
+            $roomsHeader = "";
+        }
         $semesterOrder = array('Fall - F', 'Winter/Spring - S', 'Fall-Winter - Y', 'Summer (May, June) - F', 'Summer (July, August) - S', 'Summer - Y');
-        $fullHtml .= "<table style=\"border: 1px solid black;\" cellpadding=\"10\"><thead><tr><th style=\"border: 1px solid black; color: white; background-color: black;\">Course Code</th><th style=\"border: 1px solid black; color: white; background-color: black;\">Course Title</th><th style=\"border: 1px solid black; color: white; background-color: black;\">Section</th><th style=\"border: 1px solid black; color: white; background-color: black;\">Day/Time</th><th style=\"border: 1px solid black; color: white; background-color: black;\">Location/Room</th><th style=\"border: 1px solid black; color: white; background-color: black;\">Instructor</th>$tentInstHeader$enrollmentControls</tr></thead><tbody>";
+        $fullHtml .= "<table style=\"border: 1px solid black;\" cellpadding=\"10\"><thead><tr><th style=\"border: 1px solid black; color: white; background-color: black;\">Course Code</th><th style=\"border: 1px solid black; color: white; background-color: black;\">Course Title</th><th style=\"border: 1px solid black; color: white; background-color: black;\">Section</th><th style=\"border: 1px solid black; color: white; background-color: black;\">Day/Time</th>$roomsHeader<th style=\"border: 1px solid black; color: white; background-color: black;\">Instructor</th>$tentInstHeader$enrollmentControls</tr></thead><tbody>";
         foreach($semesterOrder as $sem) {
             if(count($ROcourses[$sem])>0) {
                 $fullHtml .= "<tr><td style=\"border: 1px solid black; color: white; background-color: black;\">$sem</td>";
