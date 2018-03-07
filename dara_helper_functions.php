@@ -268,7 +268,8 @@ function daraCreateNewYear($sourceYear) {
         ro_module_job_ad_qualifications,
         ro_module_job_ad_duties,
         ro_module_year_status,
-        ro_module_course_active)
+        ro_module_course_active,
+        ro_module_official_course_weight)
         SELECT creation_datetime,
         NOW(),
         creation_uid,
@@ -298,7 +299,8 @@ function daraCreateNewYear($sourceYear) {
         ro_module_job_ad_qualifications,
         ro_module_job_ad_duties,
         'Active',
-        3
+        3,
+        ro_module_official_course_weight
         FROM ".$xoopsDB->prefix('formulize_ro_module')."
         WHERE entry_id = ".intval($row[0]);
         $insertRes = $xoopsDB->queryF($sql);
@@ -446,14 +448,16 @@ function daraCreateNewYear($sourceYear) {
         mod_uid,
         hr_teaching_loads_year,
         hr_teaching_loads_instructor,
-        hr_teaching_loads_appointment_percent)
+        hr_teaching_loads_appointment_percent,
+        hr_teaching_loads_active_terms)
         SELECT creation_datetime,
         NOW(),
         creation_uid,
         ".intval($xoopsUser->getVar('uid')).",
         '$newYear',
         hr_teaching_loads_instructor,
-        hr_teaching_loads_appointment_percent
+        hr_teaching_loads_appointment_percent,
+        hr_teaching_loads_active_terms
         FROM ".$xoopsDB->prefix('formulize_hr_teaching_loads')."
         WHERE entry_id = ".intval($row[0]);
         $insertRes = $xoopsDB->queryF($sql);
