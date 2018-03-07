@@ -146,7 +146,7 @@ return $locked;
 
 function daraChangeYearFilters($year, $direction='forward') {
     global $xoopsDB;
-    $savedViewsToUpdate = array(18, 19, 22, 24); // ro, directors, ta, course sessional mgmt
+    $savedViewsToUpdate = array(18, 19, 22, 24, 40); // ro, directors, ta, course sessional mgmt, ta reports
     $yearParts = explode('/',$year);
     $nextYear = ($yearParts[0]+1).'/'.($yearParts[1]+1);
     if($direction == 'forward') {
