@@ -890,6 +890,7 @@ function readSection($entry, $entry_id, $sort='course') { // sort sets how the d
         $GLOBALS['dara_course'][$year][$code]['semester'] = $semester;
         $GLOBALS['dara_course'][$year][$code]['program'] = display($entry, 'ro_module_program');
         $GLOBALS['dara_course'][$year][$code]['weighting'] = display($entry, 'ro_module_coordinatorship_weighting');
+        $GLOBALS['dara_course'][$year][$code]['offered'] = display($entry, 'ro_module_course_active');
         $courseIds = internalRecordIds($entry, 3); // 3 is RO form
         $courseId = $courseIds[0];
         $GLOBALS['dara_course'][$year][$code]['course_id'] = $courseId;
