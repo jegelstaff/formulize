@@ -820,9 +820,11 @@ function getPriorInstructors($year, $code, $sectionNumber) {
 	$prior_instructors = is_array($prior_instructors) ? $prior_instructors : array($prior_instructors);
 	if($text = implode("</li><li>",$prior_instructors)) {
 		return "<li>$text</li>";
+	} elseif($priorYear != '2016/2017') {
+		return getPriorInstructors($priorYear, $code, $sectionNumber); // recurse back until we find someone
 	} else {
-		return "";
-	}
+        return "";
+    }
 }
 
 
