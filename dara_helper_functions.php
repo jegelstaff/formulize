@@ -592,13 +592,13 @@ function prepDetails($section, $sectionKey, $details, $instructorKeys) {
         foreach($sectionData['instr_assign_ids'] as $inst_assign_id) {
             if($inst_assign_id) {
                 ob_start();
-                $instructorKeys[$entry_id][] = drawInstructorBox('instr_assignments_instructor',$inst_assign_id,$entry_id,$semester);
+                $instructorKeys[$entry_id][] = drawInstructorBox('instr_assignments_instructor',$inst_assign_id,$entry_id,$semester,$year);
                 $details[$sectionKey]['contents'] .= ob_get_clean();
             }
         }
         // draw one empty box for a new instructor assignment
         ob_start();
-        $instructorKeys[$entry_id][] = drawInstructorBox('instr_assignments_instructor',"new",$entry_id,$semester);
+        $instructorKeys[$entry_id][] = drawInstructorBox('instr_assignments_instructor',"new",$entry_id,$semester,$year);
         $details[$sectionKey]['contents'] .= ob_get_clean();
         
 		ob_start();
@@ -622,13 +622,17 @@ function countNumberOfSections($courseData) {
     return $numberOfSections;
 }
 
-function drawInstructorBox($element, $id, $parentId,$semester) {
+function drawInstructorBox($element, $id, $parentId, $semester, $year) {
     static $masterInstructorCount = 0;
     static $newInstructors = array();
+    static $allInstructorsTermsSet = false;
     print "&"."nbsp;";
     
     $_GET['ro_module_semester'] = $semester; // so the active term filter in the instructor assignment box will pick up the semester of the course when we determine which instructors to show in the box
+    global $xoopsDB;
+    $GLOBALS['formulize_DBSourceJoin']['hr_module_active_terms'] = "SELECT hr_teaching_loads_active_terms FROM ".$xoopsDB->prefix("formulize_hr_teaching_loads")." as loads WHERE t1.entry_id = loads.hr_teaching_loads_instructor AND loads.hr_teaching_loads_year = '$year'";
     
+        
     if($id>0) { // draw the existing instructor assignment box
         displayElement('',$element,$id);
         $instructorKey = $id;
