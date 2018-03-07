@@ -1770,9 +1770,9 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
         case 'radio':
         $value = '';
         $opt_count = 1;
-        while ($v = each($ele_value)) {
+        foreach($ele_value as $ele_value_key=>$ele_value_value) {
             if ($opt_count == $ele ) {
-                $otherValue = checkOther($v['key'], $ele_id, $entry_id, $subformBlankCounter);
+                $otherValue = checkOther($ele_value_key, $ele_id, $entry_id, $subformBlankCounter);
                 if($otherValue !== false) {
                     if($subformBlankCounter !== null) {
                         $GLOBALS['formulize_other'][$ele_id]['blanks'][$subformBlankCounter] = $otherValue;
@@ -1780,12 +1780,9 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
                         $GLOBALS['formulize_other'][$ele_id][$entry_id] = $otherValue;
                     }
                 }
-                $msg.= $myts->stripSlashesGPC($v['key']).'<br>';
-                if (get_magic_quotes_gpc()) {
-                    $v['key'] = stripslashes($v['key']);
-                }
-                $v['key'] = $myts->htmlSpecialChars($v['key']);
-                $value = $v['key'];
+                $msg.= $myts->stripSlashesGPC($ele_value_key).'<br>';
+                $ele_value_key = $myts->htmlSpecialChars($ele_value_key);
+                $value = $ele_value_key;
             }
             $opt_count++;
         }
