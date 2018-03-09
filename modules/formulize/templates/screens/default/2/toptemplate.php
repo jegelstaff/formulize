@@ -1,4 +1,6 @@
 <?php
+include_once XOOPS_ROOT_PATH . "/modules/formulize/class/usersGroupsPerms.php";
+$gperm_handler =& xoops_gethandler('groupperm');
 		// if search is not used, generate the search boxes
 		if(!$useSearch AND $hcalc) {
 			print "<div style=\"display: none;\"><table>"; // enclose in a table, since drawSearches puts in <tr><td> tags
