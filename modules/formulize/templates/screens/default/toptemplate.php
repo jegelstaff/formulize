@@ -1,27 +1,36 @@
 <?php
-print "<table cellpadding=10><tr><td id='titleTable' style=\"vertical-align: top;\" width=100%>";
-		
+include_once XOOPS_ROOT_PATH . "/modules/formulize/class/usersGroupsPerms.php";
+$gperm_handler =& xoops_gethandler('groupperm');
+		// if search is not used, generate the search boxes
+		if(!$useSearch AND $hcalc) {
+			print "<div style=\"display: none;\"><table>"; // enclose in a table, since drawSearches puts in <tr><td> tags
+			drawSearches($searches, $settings, $useCheckboxes, $useViewEntryLinks, 0, false, $hiddenQuickSearches);
+			print "</table></div>";
+		}
+
+		print "<table cellpadding=10><tr><td id='titleTable' style=\"vertical-align: top;\" width=100%>";
+
 		print "<h1>" . trans($title) . "</h1>";
-	
+
 		if($thisButtonCode = $buttonCodeArray['modifyScreenLink']) { print "$thisButtonCode<br />"; }
-	
+
 		if($loadview AND $lockcontrols) {
 			print "<h3>" . $loadviewname . "</h3></td><td>";
 			print "<input type=hidden name=currentview id=currentview value=\"$currentview\"></input>\n<input type=hidden name=loadviewname id=loadviewname value=\"$loadviewname\"></input>$submitButton";
 		} else {
 			print "</td>";
 			if(!$settings['lockcontrols']) {
-	
-				print "<td id='buttonsTable' class='outerTable' rowspan=3 style=\"vertical-align: bottom;\">";	      
-		
+
+				print "<td id='buttonsTable' class='outerTable' rowspan=3 style=\"vertical-align: bottom;\">";
+
 				print "<table><tr><td id='leftButtonColumn' class='innerTable' style=\"vertical-align: bottom;\">";
-		
+
 				print "<p>$submitButton<br>";
 				if($atLeastOneActionButton) {
 					print "<b>" . _formulize_DE_ACTIONS . "</b>";
 				}
 				print "\n";
-					
+
 				if( $thisButtonCode = $buttonCodeArray['changeColsButton']) { print "<br>$thisButtonCode"; }
 				if( $thisButtonCode = $buttonCodeArray['resetViewButton']) { print "<br>$thisButtonCode"; }
 				// there is a create reports permission, but we are currently allowing everyone to save their own views regardless of that permission.  The publishing permissions do kick in on the save popup.
@@ -51,7 +60,7 @@ print "<table cellpadding=10><tr><td id='titleTable' style=\"vertical-align: top
 				if($import_data = $gperm_handler->checkRight("import_data", $fid, $groups, $mid) AND !$frid AND $thisButtonCode = $buttonCodeArray['importButton']) { // cannot import into a framework currently
 					print "<br>$thisButtonCode";
 				}
-				if( $thisButtonCode = $buttonCodeArray['notifButton']) { print "$thisButtonCode"; } 
+				if( $thisButtonCode = $buttonCodeArray['notifButton']) { print "$thisButtonCode"; }
 				print "</p>";
 				print "</td></tr></table></td></tr>\n";
 			} else { // if lockcontrols set, then write in explanation...
@@ -68,11 +77,11 @@ print "<table cellpadding=10><tr><td id='titleTable' style=\"vertical-align: top
 			if(!$settings['lockcontrols']) {
 				// added October 18 2006 -- moved add entry buttons to left side to emphasize them more
 				print "<table><tr><td id='innerAddEntryPanel' style=\"vertical-align: bottom;\"><p>\n";
-	
+
 				$addButton = $buttonCodeArray['addButton'];
 				$addMultiButton = $buttonCodeArray['addMultiButton'];
 				$addProxyButton = $buttonCodeArray['addProxyButton'];
-			
+
 				if($add_own_entry AND $singleMulti[0]['singleentry'] == "" AND ($addButton OR $addMultiButton)) {
 					print "<b>" . _formulize_DE_FILLINFORM . "</b>\n";
 					if( $addButton) { print "<br>$addButton"; } // this will include proxy box if necessary
@@ -90,14 +99,15 @@ print "<table cellpadding=10><tr><td id='titleTable' style=\"vertical-align: top
 				}
 				print "<br><br></p></td></tr></table>\n";
 			}
-	
+
 			print "</td></tr><tr><td id=currentViewSelectTable style=\"vertical-align: bottom;\">";
-	
+
 			if ($currentViewList = $buttonCodeArray['currentViewList']) { print $currentViewList; }
-	
+
 		} // end of if there's a loadview or not
-		
+
 		// regardless of if a view is loaded and/or controls are locked, always print the page navigation controls
 		if ($pageNavControls = $buttonCodeArray['pageNavControls']) { print $pageNavControls; }
-		
+
 		print "</td></tr></table>";
+?>
