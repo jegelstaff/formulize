@@ -88,8 +88,8 @@ class formulize_themeForm extends XoopsThemeForm {
 
       if ($elementsTemplateFile != null) {
           $hidden = '';
-          list($ret, $hidden) = $this->_drawElements($this->getElements(), $ret, $hidden, $elementsTemplateFile);
-          $ret .= "\n$hidden\n";
+          list($elements, $hidden) = $this->_drawElements($this->getElements(), $elementsTemplateFile);
+          $ret .= "\n$elements\n$hidden\n";
       } else {
           $ret .= $this->renderDefault();
       }
@@ -109,8 +109,8 @@ class formulize_themeForm extends XoopsThemeForm {
                   <tr><th colspan='2'><h1 class=\"formulize-form-title\">" . $this->getTitle() . "</h1></th></tr>
               ";
 		$hidden = '';
-		list($ret, $hidden) = $this->_drawElements($this->getElements(), $ret, $hidden);
-		$ret .= "</table>\n$hidden\n</div>\n";
+		list($elements, $hidden) = $this->_drawElements($this->getElements());
+		$ret .= "$elements\n</table>\n$hidden\n</div>\n";
 		return $ret;
   }
 
@@ -132,13 +132,17 @@ class formulize_themeForm extends XoopsThemeForm {
   function _drawElements($elements, $elementsTemplateFile = null) {
 
     if ($elementsTemplateFile != null) {
+        $renderedElements = array();
+        $hidden = array();
         foreach ($elements as $ele) {
-            list($ret, $hidden) = $this->drawElementCustomTemplate($ele, $elementsTemplateFile);
+            list($renderedElements[], $hidden[]) = $this->drawElementCustomTemplate($ele, $elementsTemplateFile);
         }
+        $renderedElements = implode("\n", $renderedElements);
+        $hidden = implode("\n", $hidden);
     } else {
-        list($ret, $hidden) = $this->drawElementDefault($elements);
+        list($renderedElements, $hidden) = $this->drawElementDefault($elements);
     }
-    return array($ret, $hidden);
+    return array($renderedElements, $hidden);
   }
 
   // HANDLING OF HIDDEN ELEMENTS IS UP IN THE AIR???
@@ -1056,6 +1060,8 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
     $saveBtn = getSaveButton($printall, $formulizeConfig, $currentURL, $save_text, $subButtonText);
     $allDoneBtn = getAllDoneButton($printall, $formulizeConfig, $currentURL, $done_text, $button_text, $allDoneOverride);
 
+    // TODO: default should be individually assessed, if there's a toptemplate, we should have the other two as regular
+    // as opposed to all having custom templates
     $hasCustomTemplate = ($screen AND ($screen->hasTemplate("formTopTemplate") OR $screen->hasTemplate("formElementsTemplate") OR $screen->hasTemplate("formBottomTemplate")));
 
     if ($hasCustomTemplate) {
