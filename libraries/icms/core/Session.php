@@ -53,7 +53,6 @@ class icms_core_Session {
             $objOAuthService = new Google_Service_Oauth2($client);
         
             //Authenticate code from Google OAuth Flow
-            //Add Access Token to Session
             if (isset($_GET['code'])) {
 				$client->authenticate($_GET['code']);
             }
@@ -68,8 +67,9 @@ class icms_core_Session {
 	
             // we need to now try and get an the resource mapping of the user if it exists
             if($internalUid = Formulize::getXoopsResourceID(Formulize::USER_RESOURCE, $userData["email"])) {
-                $externalUid = $userData["email"];
-            } else { // if the mapping did not exist, then we need to create the user
+            	 $externalUid = $userData["email"];
+            } else { 
+				// if the mapping did not exist, then we need to create the user
                 // you need to create the $user_data object, it looks like this:
                 $user_data = array(
                     'uid'				=> 0,
@@ -89,14 +89,16 @@ class icms_core_Session {
                 if( Formulize::createUser($user_data)) {
                     $externalUid = $userData["email"];
                 } else {
-                    // something went wrong creating the user, give them a useful message about this.
-					$_SESSION['redirect_message'] = 'Error: we could not create a session for you based on your Google account. <br> Please contact a webmaster and include this message.' ;
-                }
+					// something went wrong creating the user, going to redirect to the create new user page
+					$_SESSION['email'] = $userData["email"];
+					$_SESSION['name'] = $userData["name"];
+					header("Location: ".XOOPS_URL."/new_user.php");
+                    exit;
+				}
                 
             }
     
         }
-        
 		global $user;
 
 		if (isset($GLOBALS['formulizeHostSystemUserId'])) {

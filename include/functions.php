@@ -1993,6 +1993,7 @@ function &icms_getModuleHandler($name = null, $module_dir = null, $module_basena
 			} else {
 				$hnd_file = ICMS_ROOT_PATH . "/modules/{$module_dir}/admin/{$name}/class/{$name}.php";
 			}
+
 			if (file_exists($hnd_file)) {include_once $hnd_file;}
 			$class = ucfirst(strtolower($module_basename)) . ucfirst($name) . 'Handler';
 			if (class_exists($class)) {
@@ -2747,6 +2748,7 @@ function setupAuthentication() {
 
 	//want to request email info for username later on
 	$client->setScopes('email');
+	$client->addScope('profile');
 
 	//Send Client Request
 	$objOAuthService = new Google_Service_Oauth2($client);
