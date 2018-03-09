@@ -110,6 +110,7 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   // display data
   $templates = array();
   $templates['toptemplate'] = str_replace("&", "&amp;", $screen->getTemplate('toptemplate'));
+  $templates['toptemplate'] = str_replace("&", "&amp;", $screen->getTemplate('listheadertemplate'));
   $templates['bottomtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('bottomtemplate'));
   $templates['listtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('listtemplate'));
 
