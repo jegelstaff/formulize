@@ -1450,10 +1450,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 				// If this condition is ever met, it may very well screw up the paging of results!
 				// NOTE: this condition is met on the last page of a paged set of results, unless the last page as exactly the same number of entries on it as the limit of entries per page
 				if($entry != "") {
-					print "here";
-					print sizeof($data);
-					print array_values($data);
-					//include $screen->getDefaultTemplateFilePath('listtemplate.php');
+					include $screen->getDefaultTemplateFilePath('listtemplate.php');
 				} else { // this is a blank entry
 					$blankentries++;
 				} // end of not "" check
