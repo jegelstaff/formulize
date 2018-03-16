@@ -1,98 +1,7 @@
 <?php
 
 
-		print "<div class=\"list-of-entries-container\"><table class=\"outer\">";
-
-		$count_colspan = count($cols)+1;
-		if($useViewEntryLinks OR $useCheckboxes != 2) {
-			$count_colspan_calcs = $count_colspan;
-		} else {
-			$count_colspan_calcs = $count_colspan - 1;
-		}
-		$count_colspan_calcs = $count_colspan_calcs + count($inlineButtons); // add to the column count for each inline custom button
-		$count_colspan_calcs++; // add one more for the hidden floating column
-		if(!$screen) { print "<tr><th colspan=$count_colspan_calcs>" . _formulize_DE_DATAHEADING . "</th></tr>\n"; }
-
-		if($settings['calc_cols'] AND !$settings['lockcontrols'] AND ($useSearchCalcMsgs == 1 OR $useSearchCalcMsgs == 3)) { // AND !$loadview) { // -- loadview removed from this function sept 24 2005
-			$calc_cols = $settings['calc_cols'];
-			$calc_calcs = $settings['calc_calcs'];
-			$calc_blanks = $settings['calc_blanks'];
-			$calc_grouping = $settings['calc_grouping'];
-            print "<tr><td class=head colspan=$count_colspan_calcs><input type=button style=\"width: 140px;\" name=mod_calculations value='".
-                _formulize_DE_MODCALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL.
-                "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=$calc_cols&calc_calcs=$calc_calcs&calc_blanks=$calc_blanks&calc_grouping=".
-                urlencode($calc_grouping)."&cols=".urlencode(implode(",",$cols)).
-                "');\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=cancelcalcs value='".
-                _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=hidelist value='".
-                _formulize_DE_HIDELIST . "' onclick=\"javascript:hideList();\"></input></td></tr>";
-        }
-
-		// draw advanced search notification
-		if($settings['as_0'] AND ($useSearchCalcMsgs == 1 OR $useSearchCalcMsgs == 2)) {
-			$writable_q = writableQuery($wq);
-			$minus1colspan = $count_colspan-1+count($inlineButtons);
-			if(!$asearch_parse_error) {
-				print "<tr>";
-				if($useViewEntryLinks OR $useCheckboxes != 2) { // only include this column if necessary
-					print "<td class=head></td>";
-				}
-				print "<td colspan=$minus1colspan class=head>" . _formulize_DE_ADVSEARCH . ": $writable_q";
-			} else {
-				print "<tr>";
-				if($useViewEntryLinks OR $useCheckboxes != 2) {
-					print "<td class=head></td>";
-				}
-				print "<td colspan=$minus1colspan class=head><span style=\"font-weight: normal;\">" . _formulize_DE_ADVSEARCH_ERROR . "</span>";
-			}
-			if(!$settings['lockcontrols']) { // AND !$loadview) { // -- loadview removed from this function sept 24 2005
-				print "<br><input type=button style=\"width: 140px;\" name=advsearch value='" . _formulize_DE_MOD_ADVSEARCH . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/advsearch.php?fid=$fid&frid=$frid";
-				foreach($settings as $k=>$v) {
-					if(substr($k, 0, 3) == "as_") {
-						$v = str_replace("'", "&#39;", $v);
-						$v = stripslashes($v);
-						print "&$k=" . urlencode($v);
-					}
-				}
-			print "');\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=cancelasearch value='" . _formulize_DE_CANCELASEARCH . "' onclick=\"javascript:killSearch();\"></input>";
-			}
-			print "</td></tr>\n";
-		}
-
-        if($useHeadings) {
-            $headers = getHeaders($cols, true); // second param indicates we're using element headers and not ids
-            drawHeaders($headers, $cols, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), $settings['lockedColumns']);
-        }
-
-		if($useSearch) {
-			drawSearches($searches, $settings, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), false, $hiddenQuickSearches);
-		}
-
-        if (count($data) == 0) {
-            // kill an empty dataset so there's no rows drawn
-            unset($data);
-        } else {
-            // get form handles in use
-            $mainFormHandle = key($data[key($data)]);
-        }
-
-		$headcounter = 0;
-		$blankentries = 0;
-		$GLOBALS['formulize_displayElement_LOE_Used'] = false;
-		$formulize_LOEPageStart = (isset($_POST['formulize_LOEPageStart']) AND !$regeneratePageNumbers) ? intval($_POST['formulize_LOEPageStart']) : 0;
-		// adjust formulize_LOEPageSize if the actual count of entries is less than the page size
-		$formulize_LOEPageSize = $GLOBALS['formulize_countMasterResultsForPageNumbers'] < $formulize_LOEPageSize ? $GLOBALS['formulize_countMasterResultsForPageNumbers'] : $formulize_LOEPageSize;
-		$actualPageSize = $formulize_LOEPageSize ? $formulize_LOEPageStart + $formulize_LOEPageSize : $GLOBALS['formulize_countMasterResultsForPageNumbers'];
-		if(isset($data)) {
-            foreach($data as $id=>$entry) {
-                formulize_benchmark("starting to draw one row of results");
-
-				// check to make sure this isn't an unset entry (ie: one that was blanked by the extraction layer just prior to sending back results
-				// Since the extraction layer is unsetting entries to blank them, this condition should never be met?
-				// If this condition is ever met, it may very well screw up the paging of results!
-				// NOTE: this condition is met on the last page of a paged set of results, unless the last page as exactly the same number of entries on it as the limit of entries per page
-				if($entry != "") {
-
-					if($headcounter == $repeatHeaders AND $repeatHeaders > 0) {
+if($headcounter == $repeatHeaders AND $repeatHeaders > 0) {
 						if($useHeadings) { drawHeaders($headers, $cols, $useCheckboxes, $useViewEntryLinks, count($inlineButtons)); }
 						$headcounter = 0;
 					}
@@ -225,16 +134,7 @@
 					foreach($hiddenColumns as $thisHiddenCol) {
 						print "\n<input type=\"hidden\" name=\"hiddencolumn_".$linkids[0]."_$thisHiddenCol\" value=\"" . htmlspecialchars(display($entry, $thisHiddenCol)) . "\"></input>\n";
 					}
-					
+
 					print "</tr>\n";
-
-				} else { // this is a blank entry
-					$blankentries++;
-				} // end of not "" check
-
-			} // end of foreach data as entry
-		} // end of if there is any data to draw
-
-		print "</table></div>";
 		
 ?>
