@@ -94,6 +94,12 @@ function &getRegisterForm(&$user, $profile, $next_step = 0, $step) {
 	if ($next_step == 0 && $icmsConfigUser['use_captcha'] == 1) {
 		$reg_form->addElement(new icms_form_elements_Captcha(_SECURITYIMAGE_GETCODE, "scode"));
 	}
+
+    
+    if($icmsConfigUser['use_token'] == 1){
+        $reg_form->addElement(new icms_form_elements_Text("Token Authentication", "token", $uname_size, 75), true);
+    }
+
     $reg_form->addElement(new icms_form_elements_Hidden("op", "step"));
     $reg_form->addElement(new icms_form_elements_Hidden("step", $next_step));
     $reg_form->addElement(new icms_form_elements_Button("", "submit", _MD_PROFILE_SUBMIT, "submit"));

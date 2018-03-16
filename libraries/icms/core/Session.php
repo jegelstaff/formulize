@@ -44,8 +44,8 @@ class icms_core_Session {
 
         // Also listens for a code from Google in the URL
         //if google user logged in and redirected to this page
-        if (isset($_GET['code'])) {
-            
+		if (isset($_GET['code'])) {
+            print"REENTRANT";
             $user_handler = icms::handler("icms_member");
                
             //Get a google client object and send Client Request for email
@@ -92,13 +92,23 @@ class icms_core_Session {
 					// something went wrong creating the user, going to redirect to the create new user page
 					$_SESSION['email'] = $userData["email"];
 					$_SESSION['name'] = $userData["name"];
-					header("Location: ".XOOPS_URL."/new_user.php");
+					$code = $_GET['code'];
+					$_SESSION['newuser'] = $code;
+					unset($_GET['code']);
+					//value doesnt matter, we are going to use this to prevent code exec from new_user.php page
+					//$_SESSION["load_sess"] = False;
+					$url = XOOPS_URL."/new_user.php?newuser=".$code;
+					//add the google code to session and url and check this on the other end to make sure that they are equal
+					header("Location: ".$url);
+					//redirect_header($url);
                     exit;
 				}
                 
             }
     
-        }
+        }else{
+			print"DEBUG SESS";
+		}
 		global $user;
 
 		if (isset($GLOBALS['formulizeHostSystemUserId'])) {
