@@ -87,32 +87,33 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
         } else {
             $sql = sprintf("UPDATE %s SET donedest = %s, savebuttontext = %s, alldonebuttontext = %s, displayheading = %u, reloadblank = %u, formelements = %s WHERE sid = %u", $this->db->prefix('formulize_screen_form'), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('savebuttontext')), $this->db->quoteString($screen->getVar('alldonebuttontext')), $screen->getVar('displayheading'), $screen->getVar('reloadblank'), $this->db->quoteString(serialize($screen->getVar('formelements'))), $screen->getVar('sid'));
         }
-        $result = $this->db->query($sql);
-        if (!$result) {
-            return false;
-        }
 
-        $success1 = true;
-        if(isset($_POST['screens-toptemplate'])) {
-            $success1 = $this->writeTemplateToFile(stripslashes($_POST['screens-formTopTemplate']), 'formTopTemplate', $screen);
-        }
+    $result = $this->db->query($sql);
+    if (!$result) {
+        return false;
+    }
 
-        $success2 = true;
-        if(isset($_POST['screens-bottomtemplate'])) {
-            $success2 = $this->writeTemplateToFile(stripslashes($_POST['screens-formElementsTemplate']), 'formElementsTemplate', $screen);
-        }
+    $success1 = true;
+    if(isset($_POST['screens-formTopTemplate'])) {
+        $success1 = $this->writeTemplateToFile(stripslashes($_POST['screens-formTopTemplate']), 'formTopTemplate', $screen);
+    }
 
-        $success3 = true;
-        if(isset($_POST['screens-listtemplate'])) {
-          $success3 = $this->writeTemplateToFile(stripslashes($_POST['screens-formBottomTemplate']), 'formBottomTemplate', $screen);
-        }
+    $success2 = true;
+    if(isset($_POST['screens-formElementsTemplate'])) {
+        $success2 = $this->writeTemplateToFile(stripslashes($_POST['screens-formElementsTemplate']), 'formElementsTemplate', $screen);
+    }
 
-        if (!$success1 || !$success2 || !$success3) {
-            print "Error: could not save the screen properly: ".$xoopsDB->error()." for query: $sql";
-            return false;
-        }
-        
-        return $sid;
+    $success3 = true;
+    if(isset($_POST['screens-formBottomTemplate'])) {
+      $success3 = $this->writeTemplateToFile(stripslashes($_POST['screens-formBottomTemplate']), 'formBottomTemplate', $screen);
+    }
+
+    if (!$success1 || !$success2 || !$success3) {
+        print "Error: could not save the screen properly: ".$xoopsDB->error()." for query: $sql";
+        return false;
+    }
+
+    return $sid;
 	}
 
 	// 	THIS METHOD MIGHT BE MOVED UP A LEVEL TO THE PARENT CLASS
