@@ -146,20 +146,12 @@ if(!$sid = $screen_handler->insert($screen)) {
 
 if($isNew) {
 
-  // write out the necessary templates...
-  // templates - initialize with the necessary php opening tags
-  if($screens['type'] == "multiPage") {
-    $screen_handler->writeTemplateToFile("", 'toptemplate', $screen);
-    $screen_handler->writeTemplateToFile("", 'elementtemplate', $screen);
-    $screen_handler->writeTemplateToFile("", 'bottomtemplate', $screen);
-  } elseif($screens['type'] == "listOfEntries") {
-    $screen_handler->writeTemplateToFile("", 'toptemplate', $screen);
-    $screen_handler->writeTemplateToFile("", 'listtemplate', $screen);
-    $screen_handler->writeTemplateToFile("", 'bottomtemplate', $screen);
-  } elseif($screens['type'] == "template") {
-      $screen_handler->write_custom_code_to_file("", $screen);
-      $screen_handler->write_template_to_file("", $screen);
-  }
+// write out the necessary templates...
+// templates - initialize with the necessary php opening tags
+if($screens['type'] == "template") {
+    $screen_handler->write_custom_code_to_file("", $screen);
+    $screen_handler->write_template_to_file("", $screen);
+}
 
     // send code to client that will to be evaluated
   $url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&tab=settings&aid=".$aid.'&fid='.$fid.'&sid='.$sid;
