@@ -8,6 +8,7 @@ include "mainfile.php";
 include "header.php";
 include ICMS_ROOT_PATH .'/include/registerform.php';
 include_once ICMS_ROOT_PATH .'/include/functions.php';
+include_once ICMS_ROOT_PATH . '/modules/formulize/include/functions.php';
 include_once ICMS_ROOT_PATH .'/modules/profile/include/forms.php';
 include_once ICMS_ROOT_PATH . '/modules/profile/language/english/main.php';
 
@@ -15,9 +16,7 @@ include_once ICMS_ROOT_PATH . '/modules/profile/language/english/main.php';
 //protect against an attempt to directly enter the url into the browser for this page. Don't want it to be too public.
 if (isset($_GET['newuser']) && ($_GET['newuser'] == $_SESSION['newuser'])) {
     //on first transition to the page we want to render the form, after submission deal with validation of values and attempt to create new user
-    if (!isset($_SESSION["load"])){
-
-        var_dump($_SESSION["load"]);
+    if (!isset($_POST["token"])){
 
         $member_handler = icms::handler('icms_member');
         $newuser = isset($_SESSION['profile']['uid']) ? $member_handler->getUser($_SESSION['profile']['uid']) : $member_handler->createUser();
@@ -38,10 +37,6 @@ if (isset($_GET['newuser']) && ($_GET['newuser'] == $_SESSION['newuser'])) {
         $newuser->setVar('uname', $_SESSION['name']);
         $newuser->setVar('email', $_SESSION['email']);
 
-        //unset these values after we are done with them for safety reasons
-        unset($_SESSION['name']);
-        unset($_SESSION['email']);
-
         //set config to not use captcha but manual auth token from admin instead
         $icmsConfigUser['use_captcha'] = 0;
         $icmsConfigUser['use_token'] = 1;
@@ -49,14 +44,8 @@ if (isset($_GET['newuser']) && ($_GET['newuser'] == $_SESSION['newuser'])) {
         $reg_form = getRegisterForm($newuser, $profile, 0, $steps[0]);
 
         $reg_form->assign($icmsTpl);
-        $_SESSION["load"] = TRUE;
-    }else if(isset($_GET['fincode'])){
-        header("Location: ".XOOPS_URL."/new_user.php?code=".$code);
     }else{
         //the condition where we know that we have submitted the form on this page and redirected
-        var_dump($_SESSION["load"]);
-        $_SESSION["load"] = NULL;
-
         //need to validate the token 
         $token = '123';
         if($_POST["token"] == $token){
@@ -79,14 +68,9 @@ if (isset($_GET['newuser']) && ($_GET['newuser'] == $_SESSION['newuser'])) {
                 //will need to do some logic here to make sure pass and vpass are same?
                 $user_data = new FormulizeUser($user_data);
                 if( Formulize::createUser($user_data)){
-                    print"HERE";
-                    unset($_SESSION["load_sess"]);
-                    header("Location: ".XOOPS_URL."/new_user.php?fincode=".$code);
-                }else{
-                    print"NOTHERE";
+                    header("Location: ".XOOPS_URL."/?code=".$_GET['newuser']."&newcode=".$_GET['newuser']);
+                    exit();
                 }
-        }else{
-              print"NOTHERE";
         }
     }
 

@@ -28,6 +28,7 @@ class icms_core_Session {
 	static public function service() {
 		global $icmsConfig;
 		include_once ICMS_ROOT_PATH . '/include/functions.php';
+		include_once ICMS_ROOT_PATH . '/modules/formulize/include/functions.php';
 		if (file_exists(XOOPS_ROOT_PATH."/integration_api.php"))
 			include_once(XOOPS_ROOT_PATH.'/integration_api.php'); // ADDED CODE BY FREEFORM SOLUTIONS
 		$instance = new icms_core_Session(icms::$xoopsDB);
@@ -41,11 +42,11 @@ class icms_core_Session {
 		// ADDED CODE BY FREEFORM SOLUTIONS, SUPPORTING INTEGRATION WITH OTHER SYSTEMS
 		// If this is a page load by another system, and we're being included, then we establish the user session based on the user id of the user in effect in the other system
 		// This approach assumes correspondence between the user ids.
-
+error_reporting(-1);
+ini_set('display_errors', 'On');
         // Also listens for a code from Google in the URL
         //if google user logged in and redirected to this page
 		if (isset($_GET['code'])) {
-            print"REENTRANT";
             $user_handler = icms::handler("icms_member");
                
             //Get a google client object and send Client Request for email
@@ -53,18 +54,21 @@ class icms_core_Session {
             $objOAuthService = new Google_Service_Oauth2($client);
         
             //Authenticate code from Google OAuth Flow
-            if (isset($_GET['code'])) {
+			if(isset($_GET['code']) && isset($_GET['newcode'])){
+				//for the create new user pathway to this session init call
+				$userData["email"] = $_SESSION['email'];
+				//finally guaranteed to be done with these
+				unset($_SESSION['email']);
+				unset($_SESSION['name']);
+			}else if (isset($_GET['code'])){
 				$client->authenticate($_GET['code']);
-            }
-        
-            $userData = $objOAuthService->userinfo->get();
-        
+				$userData = $objOAuthService->userinfo->get();
+			}
+
             // start up the integration API
             include_once XOOPS_ROOT_PATH."/integration_api.php";
-			include_once ICMS_ROOT_PATH . '/modules/formulize/include/functions.php';
             Formulize::init();
             
-	
             // we need to now try and get an the resource mapping of the user if it exists
             if($internalUid = Formulize::getXoopsResourceID(Formulize::USER_RESOURCE, $userData["email"])) {
             	 $externalUid = $userData["email"];
@@ -93,22 +97,18 @@ class icms_core_Session {
 					$_SESSION['email'] = $userData["email"];
 					$_SESSION['name'] = $userData["name"];
 					$code = $_GET['code'];
+					//add the google code to session and url and check this on the other end to make sure that they are equal
 					$_SESSION['newuser'] = $code;
 					unset($_GET['code']);
-					//value doesnt matter, we are going to use this to prevent code exec from new_user.php page
-					//$_SESSION["load_sess"] = False;
 					$url = XOOPS_URL."/new_user.php?newuser=".$code;
-					//add the google code to session and url and check this on the other end to make sure that they are equal
 					header("Location: ".$url);
-					//redirect_header($url);
                     exit;
 				}
                 
             }
     
-        }else{
-			print"DEBUG SESS";
-		}
+        }
+
 		global $user;
 
 		if (isset($GLOBALS['formulizeHostSystemUserId'])) {
