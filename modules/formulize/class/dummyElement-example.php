@@ -147,7 +147,8 @@ class formulizeDummyElementHandler extends formulizeElementsHandler {
     // You can return {WRITEASNULL} to cause a null value to be saved in the database
     // $value is what the user submitted
     // $element is the element object
-    function prepareDataForSaving($value, $element) {
+	// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
+    function prepareDataForSaving($value, $element, $entry_id=null) {
         return formulize_db_escape($value); // strictly speaking, formulize will already escape all values it writes to the database, but it's always a good habit to never trust what the user is sending you!
     }
     
