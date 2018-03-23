@@ -495,86 +495,6 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
         return $form;
     }
 
-
-    function saveForm(&$screen, $fid) {
-        // get rid of magic quotes if necessary
-        if(get_magic_quotes_gpc()) {
-            $valueIsArray = false;
-            foreach($_POST as $k=>$v) {
-                if(is_array($v)) {
-                    foreach($v as $subK=>$subV) {
-                        $_POST[$k][$subK] = stripslashes($subV);
-                    }
-                } else {
-                    $_POST[$k] = stripslashes($v);
-                }
-            }
-        }
-        $vars['type'] = 'listOfEntries';
-        $vars['title'] = $_POST['title'];
-        $vars['fid'] = $_POST['fid'];
-        $vars['frid'] = $_POST['frid'];
-        $vars['useworkingmsg'] = $_POST['useworkingmsg'];
-        $vars['repeatheaders'] = $_POST['repeatheaders'];
-        $vars['useaddupdate'] = $_POST['useaddupdate'];
-        $vars['useaddmultiple'] = $_POST['useaddmultiple'];
-        $vars['useaddproxy'] = $_POST['useaddproxy'];
-        $vars['usecurrentviewlist'] = $_POST['usecurrentviewlist'];
-        $vars['limitviews'] = serialize($_POST['limitviews']);
-        $vars['defaultview'] = $_POST['defaultview'];
-        $vars['usechangecols'] = $_POST['usechangecols'];
-        $vars['usecalcs'] = $_POST['usecalcs'];
-        $vars['useadvcalcs'] = $_POST['useadvcalcs'];
-        $vars['useadvsearch'] = $_POST['useadvsearch'];
-        $vars['useexport'] = $_POST['useexport'];
-        $vars['useexportcalcs'] = $_POST['useexportcalcs'];
-        $vars['useimport'] = $_POST['useimport'];
-        $vars['useclone'] = $_POST['useclone'];
-        $vars['usedelete'] = $_POST['usedelete'];
-        $vars['useselectall'] = $_POST['useselectall'];
-        $vars['useclearall'] = $_POST['useclearall'];
-        $vars['usenotifications'] = $_POST['usenotifications'];
-        $vars['usereset'] = $_POST['usereset'];
-        $vars['usesave'] = $_POST['usesave'];
-        $vars['usedeleteview'] = $_POST['usedeleteview'];
-        $vars['useheadings'] = $_POST['useheadings'];
-        $vars['usesearch'] = $_POST['usesearch'];
-        $vars['usecheckboxes'] = $_POST['usecheckboxes'];
-        $vars['useviewentrylinks'] = $_POST['useviewentrylinks'];
-        $vars['usescrollbox'] = $_POST['usescrollbox'];
-        $vars['usesearchcalcmsgs'] = $_POST['usesearchcalcmsgs'];
-        $vars['hiddencolumns'] = serialize($_POST['hiddencolumns']);
-        $vars['decolumns'] = serialize($_POST['decolumns']);
-        $vars['desavetext'] = $_POST['desavetext'];
-        $vars['columnwidth'] = $_POST['columnwidth'];
-        $vars['textwidth'] = $_POST['textwidth'];
-        $customactions = array();
-        foreach($_POST as $k=>$v) {
-            if(strstr($k, "_")) {
-                $cadata = explode("_", $k); // 0 is key name, 1 is the action id, 2 is the effect id if any
-                if(isset($cadata[2])) {
-                    $customactions[$cadata[1]][$cadata[2]][$cadata[0]] = $v;
-                }else{
-                    $customactions[$cadata[1]][$cadata[0]] = $v;
-                }
-            }
-        }
-
-        $vars['customactions'] = serialize($customactions);
-        $vars['toptemplate'] = htmlspecialchars(trim($_POST['toptemplate']));
-        $vars['listtemplate'] = htmlspecialchars(trim($_POST['listtemplate']));
-        $vars['bottomtemplate'] = htmlspecialchars(trim($_POST['bottomtemplate']));
-        $vars['entriesperpage'] = $_POST['entriesperpage'];
-        $vars['viewentryscreen'] = $_POST['viewentryscreen'];
-        $screen->assignVars($vars);
-        $sid = $this->insert($screen);
-        if(!$sid) {
-            print "Error: the information could not be saved in the database.";
-        }
-        $screen->assignVar('sid', $sid);
-    }
-
-
     function insert($screen) {
         $update = ($screen->getVar('sid') == 0) ? false : true;
         if (!$sid = parent::insert($screen)) { // write the basic info to the db, handle cleaning vars and all that jazz.  Object passed by reference, so updates will have affected it in the other method.
@@ -593,18 +513,23 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
 
         $success1 = true;
         if(isset($_POST['screens-toptemplate'])) {
-            $success1 = $this->writeTemplateToFile(trim($_POST['screens-toptemplate']), 'toptemplate', $screen);
+            $success1 = $this->writeTemplateToFile(trim($_POST['screens-toptemplate']), 'entriestoptemplate', $screen);
         }
         $success2 = true;
         if(isset($_POST['screens-bottomtemplate'])) {
-            $success2 = $this->writeTemplateToFile(trim($_POST['screens-bottomtemplate']), 'bottomtemplate', $screen);
+            $success2 = $this->writeTemplateToFile(trim($_POST['screens-bottomtemplate']), 'entriesbottomtemplate', $screen);
         }
         $success3 = true;
         if(isset($_POST['screens-listtemplate'])) {
-            $success3 = $this->writeTemplateToFile(trim($_POST['screens-listtemplate']), 'listtemplate', $screen);
+            $success3 = $this->writeTemplateToFile(trim($_POST['screens-listtemplate']), 'entrieslisttemplate', $screen);
         }
 
-        if (!$success1 || !$success2 || !$success3) {
+        $success4 = true;
+        if(isset($_POST['screens-listheadertemplate'])) {
+            $success4 = $this->writeTemplateToFile(trim($_POST['screens-listheadertemplate']), 'entrieslistheadertemplate', $screen);
+        }
+
+        if (!$success1 || !$success2 || !$success3 || !$success4) {
             return false;
         }
 
