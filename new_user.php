@@ -47,31 +47,51 @@ if (isset($_GET['newuser']) && ($_GET['newuser'] == $_SESSION['newuser'])) {
     }else{
         //the condition where we know that we have submitted the form on this page and redirected
         //need to validate the token 
+        //TODO fix this to be real...
         $token = '123';
         if($_POST["token"] == $token){
+                $login_name = $_POST["login_name"];
+                //parse the space out of the name
+                $login_name = str_replace(' ', '', $login_name);
+                $uname = $_POST["uname"];
+                $email = $_POST["email"];
+                $pass = $_POST["pass"];
+                $vpass =  $_POST["vpass"];
+                $timezone_offset =  $_POST["timezone_offset"];
+                $member_handler = icms::handler('icms_member');
+                $user_handler = icms::handler('icms_member_user');
+                //perform a chek for if the password and verified one seem ok
+                $stop = $user_handler->userCheck($login_name, $uname, $email, $pass, $vpass);
+                if (empty($stop)) {
 
-                //attempt to create the user
-                $user_data = array(
-                    'uid'				=> 0,
-                    'uname'				=> $_POST["uname"],
-                    'login_name'		=> $_POST["login_name"],
-                    'name'				=> $_POST["login_name"],
-                    'pass'				=> $_POST["pass"],
-                    'email'				=> $_POST["email"],
-                    //@TODO fill in the timezone from the form
-                    'timezone_offset'	=> $account->timezone/60/60, //formulize_convert_language
-                    'language'			=> $account->language,
-                    'user_avatar'		=> 'blank.gif',
-                    'theme'				=> 'impresstheme',
-                    'level'				=> 1
-                );
-                //will need to do some logic here to make sure pass and vpass are same?
-                $user_data = new FormulizeUser($user_data);
-                if( Formulize::createUser($user_data)){
-                    header("Location: ".XOOPS_URL."/?code=".$_GET['newuser']."&newcode=".$_GET['newuser']);
-                    exit();
-                }
-        }
+                    //setup password info
+                    $icmspass = new icms_core_Password();
+                    $salt = $icmspass->createSalt();
+                    $pass1 = $icmspass->encryptPass($pass, $salt, $enc_type);
+                    
+			        $newuser =& $member_handler->createUser();
+                    //attempt to create the user
+                    $newuser->setVar('login_name', $login_name, TRUE);
+                    $newuser->setVar('uname', $uname, TRUE);
+			        $newuser->setVar('email', $email, TRUE);
+                    $newuser->setVar('name', $login_name, TRUE);
+                    $newuser->setVar('timezone_offset', $timezone_offset, TRUE);
+                    $newuser->setVar('user_avatar', 'blank.gif', TRUE);
+                    $newuser->setVar( 'theme', 'impresstheme', TRUE);
+                    $newuser->setVar('level', 1, TRUE);
+                    $newuser->setVar('pass', $pass, TRUE);
+                    $newuser->setVar('salt', $salt, TRUE);
+                    if ($member_handler->insertUser($newuser)) {
+                        header("Location: ".XOOPS_URL."/?code=".$_GET['newuser']."&newcode=".$_GET['newuser']);
+                        exit();
+                    }
+                    }
+        else {
+            //echo "<span class="top_testresult top_shortPass"><span>$stop</span></span>";
+            //TODO not the best way currently to display messages since it will stop displaying the form to just render a span element...
+			echo "<span style='color:#ff0000; font-weight:bold;'>$stop</span>";
+		}
+    }
     }
 
 }else{
