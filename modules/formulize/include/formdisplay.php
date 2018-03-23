@@ -1066,9 +1066,11 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 
     if ($hasCustomTemplate) {
         include $screen->getCustomTemplateFilePath("formTopTemplate");
-        $form->renderFromTemplate($screen->getCustomTemplateFilePath("formElementsTemplate"));
+        include $screen->getCustomTemplateFilePath("formElementsTemplate");
         include $screen->getCustomTemplateFilePath("formBottomTemplate");
 
+        // if there is a custom template, set the $form to null so the default template is not generated later
+        $form = null;
     } else {
         $form = addPrintableviewButton($printBtn, $form, $save_text, $currentURL, $profileForm, $printall);
         // TODO : Refactor all the code into default templates and simply include them
@@ -1135,8 +1137,11 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 
 
 		$idForForm = $formElementsOnly ? "" : "id=\"formulizeform\""; // when rendering disembodied forms, don't use the master id!
-		print "<div $idForForm>".$form->render()."</div><!-- end of formulizeform -->"; // note, security token is included in the form by the xoops themeform render method, that's why there's no explicity references to the token in the compiling/generation of the main form object
 
+    // only render the default template if there is no custom template
+    if ($form != null) {
+        print "<div $idForForm>".$form->render()."</div><!-- end of formulizeform -->"; // note, security token is included in the form by the xoops themeform render method, that's why there's no explicity references to the token in the compiling/generation of the main form object
+    }
         // floating save button
         if($printall != 2 AND $formulizeConfig['floatSave'] AND !strstr($currentURL, "printview.php") AND !$formElementsOnly){
             print "<div id=floattest></div>";
