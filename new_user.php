@@ -67,6 +67,7 @@ if (isset($_GET['newuser']) && ($_GET['newuser'] == $_SESSION['newuser'])) {
                     //setup password info
                     $icmspass = new icms_core_Password();
                     $salt = $icmspass->createSalt();
+                    $enc_type = $icmsConfigUser['enc_type'];
                     $pass1 = $icmspass->encryptPass($pass, $salt, $enc_type);
                     
 			        $newuser =& $member_handler->createUser();
@@ -79,8 +80,9 @@ if (isset($_GET['newuser']) && ($_GET['newuser'] == $_SESSION['newuser'])) {
                     $newuser->setVar('user_avatar', 'blank.gif', TRUE);
                     $newuser->setVar( 'theme', 'impresstheme', TRUE);
                     $newuser->setVar('level', 1, TRUE);
-                    $newuser->setVar('pass', $pass, TRUE);
+                    $newuser->setVar('pass', $pass1, TRUE);
                     $newuser->setVar('salt', $salt, TRUE);
+                    $newuser->setVar('enc_type', $enc_type, TRUE);
                     if ($member_handler->insertUser($newuser)) {
                         header("Location: ".XOOPS_URL."/?code=".$_GET['newuser']."&newcode=".$_GET['newuser']);
                         exit();
