@@ -83,7 +83,18 @@ if (isset($_GET['newuser']) && ($_GET['newuser'] == $_SESSION['newuser'])) {
                     $newuser->setVar('pass', $pass1, TRUE);
                     $newuser->setVar('salt', $salt, TRUE);
                     $newuser->setVar('enc_type', $enc_type, TRUE);
+                    
                     if ($member_handler->insertUser($newuser)) {
+
+                        //assign the user basic group 
+                        $newid = (int) $newuser->getVar('uid');
+                        if (!$member_handler->addUserToGroup(XOOPS_GROUP_USERS, $newid)) {
+                            echo _US_REGISTERNG;
+                            include 'footer.php';
+                            exit();
+		            	}
+
+
                         header("Location: ".XOOPS_URL."/?code=".$_GET['newuser']."&newcode=".$_GET['newuser']);
                         exit();
                     }
