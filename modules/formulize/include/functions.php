@@ -3374,7 +3374,7 @@ function writeElementValue($formframe = "", $ele, $entry, $value, $append, $prev
     }
 
     if (!is_object($element)) {
-        print "<b>Error: could not save the value for element: ".$ele.". Please notify your webmaster, or <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a> about this error.</b>";
+        print "<b>Error: could not save the value for element: ".$ele.". Please notify your webmaster, or <a href=\"mailto:info@formulize.org\">info@formulize.org</a> about this error.</b>";
         return;
     }
 

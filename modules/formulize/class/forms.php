@@ -1246,7 +1246,7 @@ class formulizeFormsHandler {
 
 	  // Need to create the new data table now -- July 1 2007
     if(!$tableCreationResult = $this->createDataTable($newfid, $fid, $oldNewEleIdMap)) { 
-      print "Error: could not make the necessary new datatable for form " . $newfid . ".  Please delete the cloned form and report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.<br>".$xoopsDB->error();
+      print "Error: could not make the necessary new datatable for form " . $newfid . ".  Please delete the cloned form and report this error to <a href=\"mailto:info@formulize.org\">info@formulize.org</a>.<br>".$xoopsDB->error();
       return false;
     }
 
@@ -1255,7 +1255,7 @@ class formulizeFormsHandler {
         include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php"; // formulize data handler
         $dataHandler = new formulizeDataHandler($newfid);
         if(!$cloneResult = $dataHandler->cloneData($fid, $oldNewEleIdMap)) {
-        print "Error:  could not clone the data from the old form to the new form.  Please delete the cloned form and report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.<br>".$xoopsDB->error();
+        print "Error:  could not clone the data from the old form to the new form.  Please delete the cloned form and report this error to <a href=\"mailto:info@formulize.org\">info@formulize.org</a>.<br>".$xoopsDB->error();
             return false;
         }
     }
@@ -1267,7 +1267,7 @@ class formulizeFormsHandler {
 		if (!$tableCreationResult = $this->createDataTable($newfid, 0, false, true)) {
 			print "Error: could not create revisions table for form $newfid. ".
 				"Please delete the cloned form and report this error to ".
-				"<a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.<br>".$xoopsDB->error();
+				"<a href=\"mailto:info@formulize.org\">info@formulize.org</a>.<br>".$xoopsDB->error();
 			return false;
 		}
 	}
