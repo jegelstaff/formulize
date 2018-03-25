@@ -1630,11 +1630,11 @@ function buildScope($currentView, $uid, $fid, $currentViewCanExpand = false) {
     
     $gperm_handler = xoops_gethandler('groupperm');
     $member_handler = xoops_gethandler('member');
+    $mid = getFormulizeModId();
     if($uidObject = $member_handler->getUser($uid)) {
         $groups = $uidObject->getGroups();
-        $mid = getFormulizeModId();
     } else {
-        $scope = "uid=\"blankscope\"";
+        $groups = array(XOOPS_GROUP_ANONYMOUS);
     }
     
     $scope = "";
