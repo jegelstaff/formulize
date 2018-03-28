@@ -1963,7 +1963,7 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
         default:
         if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
             $customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
-            $value = $customTypeHandler->prepareDataForSaving($ele, $element, $entry_id);
+            $value = $customTypeHandler->prepareDataForSaving($ele, $element, $entry_id, $subformBlankCounter);
         }
     }
 
