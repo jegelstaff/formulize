@@ -42,8 +42,7 @@ class icms_core_Session {
 		// ADDED CODE BY FREEFORM SOLUTIONS, SUPPORTING INTEGRATION WITH OTHER SYSTEMS
 		// If this is a page load by another system, and we're being included, then we establish the user session based on the user id of the user in effect in the other system
 		// This approach assumes correspondence between the user ids.
-error_reporting(-1);
-ini_set('display_errors', 'On');
+		
         // Also listens for a code from Google in the URL
         //if google user logged in and redirected to this page
 		if (isset($_GET['code'])) {

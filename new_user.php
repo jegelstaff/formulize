@@ -1,49 +1,21 @@
 <?php
 
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-$xoopsOption['template_main'] = 'profile_register.html';
-include "mainfile.php";
 
+include "mainfile.php";
 include "header.php";
-include ICMS_ROOT_PATH .'/include/registerform.php';
 include_once ICMS_ROOT_PATH .'/include/functions.php';
-include_once ICMS_ROOT_PATH . '/modules/formulize/include/functions.php';
 include_once ICMS_ROOT_PATH .'/modules/profile/include/forms.php';
+include_once ICMS_ROOT_PATH . '/modules/formulize/include/functions.php';
+include ICMS_ROOT_PATH .'/include/registerform.php';
 include_once ICMS_ROOT_PATH . '/modules/profile/language/english/main.php';
+include_once ICMS_ROOT_PATH .'/language/english/user.php';
 
 
 //protect against an attempt to directly enter the url into the browser for this page. Don't want it to be too public.
 if (isset($_GET['newuser']) && ($_GET['newuser'] == $_SESSION['newuser'])) {
     //on first transition to the page we want to render the form, after submission deal with validation of values and attempt to create new user
-    if (!isset($_POST["token"])){
-
-        $member_handler = icms::handler('icms_member');
-        $newuser = isset($_SESSION['profile']['uid']) ? $member_handler->getUser($_SESSION['profile']['uid']) : $member_handler->createUser();
-
-        $profile_handler = icms_getmodulehandler('profile', 'profile', 'profile');
-        $profile = $profile_handler->get($newuser->getVar('uid'));
-
-
-        $criteria = new icms_db_criteria_Compo();
-        $criteria->setSort('step_order');
-
-        $regstep_handler = icms_getmodulehandler('regstep', 'profile', 'profile');
-        $steps = $regstep_handler->getObjects($criteria);
-        if (count($steps) == 0) redirect_header(ICMS_URL.'/', 6, _MD_PROFILE_NOSTEPSAVAILABLE);
-
-        //set some of the inputs with the info we get from google
-        $newuser->setVar('login_name', $_SESSION['name']);
-        $newuser->setVar('uname', $_SESSION['name']);
-        $newuser->setVar('email', $_SESSION['email']);
-
-        //set config to not use captcha but manual auth token from admin instead
-        $icmsConfigUser['use_captcha'] = 0;
-        $icmsConfigUser['use_token'] = 1;
-
-        $reg_form = getRegisterForm($newuser, $profile, 0, $steps[0]);
-
-        $reg_form->assign($icmsTpl);
+   if (!isset($_POST["token"])){  
+        renderRegForm();
     }else{
         //the condition where we know that we have submitted the form on this page and redirected
         //need to validate the token 
@@ -100,10 +72,14 @@ if (isset($_GET['newuser']) && ($_GET['newuser'] == $_SESSION['newuser'])) {
                     }
                     }
         else {
-            //echo "<span class="top_testresult top_shortPass"><span>$stop</span></span>";
-            //TODO not the best way currently to display messages since it will stop displaying the form to just render a span element...
-			echo "<span style='color:#ff0000; font-weight:bold;'>$stop</span>";
+            $regform = renderRegForm();
+            echo "<span style='color:#ff0000; font-weight:bold;' class='top_testresult top_shortPass'><span>$stop</span></span>";
+           
 		}
+    }else{
+        //token was not same in this case
+         $regform = renderRegForm();
+         echo "<span style='color:#ff0000; font-weight:bold;' class='top_testresult top_shortPass'><span>Invalid token entered.</span></span>";
     }
     }
 
@@ -112,3 +88,35 @@ if (isset($_GET['newuser']) && ($_GET['newuser'] == $_SESSION['newuser'])) {
 }
 
 include "footer.php";
+
+function renderRegForm(){
+        global $icmsTpl, $icmsConfigUser;
+        $xoopsOption['template_main'] = 'profile_register.html';
+        $member_handler = icms::handler('icms_member');
+        $newuser = isset($_SESSION['profile']['uid']) ? $member_handler->getUser($_SESSION['profile']['uid']) : $member_handler->createUser();
+
+        $profile_handler = icms_getmodulehandler('profile', 'profile', 'profile');
+        $profile = $profile_handler->get($newuser->getVar('uid'));
+
+
+        $criteria = new icms_db_criteria_Compo();
+        $criteria->setSort('step_order');
+
+        $regstep_handler = icms_getmodulehandler('regstep', 'profile', 'profile');
+        $steps = $regstep_handler->getObjects($criteria);
+        if (count($steps) == 0) redirect_header(ICMS_URL.'/', 6, _MD_PROFILE_NOSTEPSAVAILABLE);
+
+        //set some of the inputs with the info we get from google
+        $newuser->setVar('login_name', $_SESSION['name']);
+        $newuser->setVar('uname', $_SESSION['name']);
+        $newuser->setVar('email', $_SESSION['email']);
+
+        //set config to not use captcha but manual auth token from admin instead
+        $icmsConfigUser['use_captcha'] = 0;
+        $icmsConfigUser['use_token'] = 1;
+
+        $reg_form = getRegisterForm($newuser, $profile, 0, $steps[0]);
+
+        $reg_form->assign($icmsTpl);
+        $reg_form->display();
+}
