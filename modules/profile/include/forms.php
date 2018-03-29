@@ -68,6 +68,10 @@ function &getRegisterForm(&$user, $profile, $next_step = 0, $step) {
     // Get categories
     $cat_handler = icms_getmodulehandler('category', basename(dirname(dirname(__FILE__))), 'profile');
     $categories = $cat_handler->getObjects(null, true, false);
+    
+    //need to init some variables to keep track of the error spans that we might inline into the register form
+    $errorArray = array();
+    $index = 0;
 
     foreach (array_keys($elements) as $k) {
         array_multisort($weights[$k], SORT_ASC, array_keys($elements[$k]), SORT_ASC, $elements[$k]);
@@ -76,6 +80,32 @@ function &getRegisterForm(&$user, $profile, $next_step = 0, $step) {
 
         $reg_form->addElement(new icms_form_elements_Label($title, $desc), false);
         foreach (array_keys($elements[$k]) as $i) {
+
+        //check the flag that google login form might set to determine if there were userCheck return errors
+        if(isset($icmsConfigUser['stop_error'])){
+            foreach (array_keys($icmsConfigUser['stop_error']) as $error){
+                //check what element we are currently adding to see if the error message should be displayed here
+                $elementCaption = $elements[$k][$i]["element"]->getCaption();
+                //check to see if the existing label word can be found in this error message
+                if(preg_match("/(".strtolower( $elementCaption) .")/", strtolower($icmsConfigUser['stop_error'][$error]))){
+                    $errorMsg = $icmsConfigUser['stop_error'][$error];
+                    $errorSpan = new icms_form_elements_Label("", "<span style='font-weight:bold;' class='top_testresult top_shortPass'><span>$errorMsg</span></span>");
+                    array_push($errorArray, $errorSpan);
+                    $reg_form->addElement($errorArray[$index]);
+                    $index = $index + 1;
+                    unset($icmsConfigUser['stop_error'][$error]);
+                //check if this corresponds to a loginname or dislay name, where most errors actually call it a username...
+                }else if(($elementCaption == _US_LOGIN_NAME || $elementCaption == _US_NICKNAME) && (preg_match("/(username)/", strtolower($icmsConfigUser['stop_error'][$error]))) && !(preg_match("/(password)/", strtolower($icmsConfigUser['stop_error'][$error])))){
+                    $errorMsg = $icmsConfigUser['stop_error'][$error];
+                    $errorSpan = new icms_form_elements_Label("", "<span style='font-weight:bold;' class='top_testresult top_shortPass'><span>$errorMsg</span></span>");
+                    array_push($errorArray, $errorSpan);
+                    $reg_form->addElement($errorArray[$index]);
+                    $index = $index + 1;
+                    unset($icmsConfigUser['stop_error'][$error]);
+
+                } 
+            }
+        }
             $reg_form->addElement($elements[$k][$i]['element'], $elements[$k][$i]['required']);
         }
     }
@@ -95,7 +125,11 @@ function &getRegisterForm(&$user, $profile, $next_step = 0, $step) {
 		$reg_form->addElement(new icms_form_elements_Captcha(_SECURITYIMAGE_GETCODE, "scode"));
 	}
 
-    
+    //check for specific flag set if there is an input token error from the register form for google auth users
+    if($icmsConfigUser['token_error'] == 1){
+        $errorSpan = new icms_form_elements_Label("", "<span style='font-weight:bold;' class='top_testresult top_shortPass'><span>Invalid token entered.</span></span>");
+        $reg_form->addElement($errorSpan);
+    }
     if($icmsConfigUser['use_token'] == 1){
         $reg_form->addElement(new icms_form_elements_Text("Token Authentication", "token", $uname_size, 75), true);
     }

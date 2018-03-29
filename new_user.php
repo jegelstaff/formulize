@@ -72,14 +72,15 @@ if (isset($_GET['newuser']) && ($_GET['newuser'] == $_SESSION['newuser'])) {
                     }
                     }
         else {
-            $regform = renderRegForm();
-            echo "<span style='color:#ff0000; font-weight:bold;' class='top_testresult top_shortPass'><span>$stop</span></span>";
+            //parse this back into an array so that we can display multiple errors
+            $icmsConfigUser["stop_error"] = explode("<br />", $stop);
+            renderRegForm();
            
 		}
     }else{
         //token was not same in this case
-         $regform = renderRegForm();
-         echo "<span style='color:#ff0000; font-weight:bold;' class='top_testresult top_shortPass'><span>Invalid token entered.</span></span>";
+        $icmsConfigUser['token_error'] = 1;
+        renderRegForm();
     }
     }
 
