@@ -1426,7 +1426,6 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 	// MASTER HIDELIST CONDITIONAL...
 	if(!$settings['hlist'] AND !$listTemplate) {
 			include $screen->getDefaultTemplateFilePath('listheadertemplate.php');
-			print sizeof($data);
         if (count($data) == 0) {
             // kill an empty dataset so there's no rows drawn
             unset($data);

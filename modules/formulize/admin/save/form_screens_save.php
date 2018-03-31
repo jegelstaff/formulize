@@ -57,7 +57,8 @@ $form->setVar('defaultlist',intval($screens['defaultlist']));
 
 if(!$fid = $form_handler->insert($form)) {
   print "Error: could not save the form properly: ".$xoopsDB->error();
-}Screen
+}
+
 // do cloning of form screens here
 if(isset($_POST['cloneformscreen']) AND ($_POST['cloneformscreen'])) {
     $screenToClone = intval($_POST['cloneformscreen']);
@@ -101,7 +102,7 @@ if($_POST['deletescreen']) {
     $application_handler->deleteMenuLinkByScreen("sid=".intval($_POST['deletescreen']));
     print "/* eval */ reloadWithScrollPosition()";
   }
-
+  
 }
 /*
 //if deleting a screen, check for menu entires related to this screen and delete them  Added BY JINFU FEB 2015

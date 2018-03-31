@@ -80,3 +80,4 @@ $popupSave = isset($_GET['popupsave']) ? "_popup" : "";
 if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/admin/save/".str_replace(array("\\","/"),"", $_POST['formulize_admin_handler'])."_save".$popupSave.".php")) {
     include XOOPS_ROOT_PATH."/modules/formulize/admin/save/".str_replace(array("\\","/"),"", $_POST['formulize_admin_handler'])."_save".$popupSave.".php";
 }
+
