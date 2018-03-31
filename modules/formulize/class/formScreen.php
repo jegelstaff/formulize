@@ -81,18 +81,39 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 	    $screen->setVar('dosmiley', 0);
 	    $screen->setVar('doimage', 0);
 	    $screen->setVar('dobr', 0);
-		// note: conditions is not written to the DB yet, since we're not gathering that info from the UI	
+		// note: conditions is not written to the DB yet, since we're not gathering that info from the UI
 		if (!$update) {
             $sql = sprintf("INSERT INTO %s (sid, donedest, savebuttontext, alldonebuttontext, displayheading, reloadblank, formelements) VALUES (%u, %s, %s, %s, %u, %u, %s)", $this->db->prefix('formulize_screen_form'), $screen->getVar('sid'), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('savebuttontext')), $this->db->quoteString($screen->getVar('alldonebuttontext')), $screen->getVar('displayheading'), $screen->getVar('reloadblank'), $this->db->quoteString(serialize($screen->getVar('formelements'))));
         } else {
             $sql = sprintf("UPDATE %s SET donedest = %s, savebuttontext = %s, alldonebuttontext = %s, displayheading = %u, reloadblank = %u, formelements = %s WHERE sid = %u", $this->db->prefix('formulize_screen_form'), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('savebuttontext')), $this->db->quoteString($screen->getVar('alldonebuttontext')), $screen->getVar('displayheading'), $screen->getVar('reloadblank'), $this->db->quoteString(serialize($screen->getVar('formelements'))), $screen->getVar('sid'));
         }
-        $result = $this->db->query($sql);
-        if (!$result) {
-            print "Error: could not save the screen properly: ".$xoopsDB->error()." for query: $sql";
-            return false;
-        }
-        return $sid;
+
+    $result = $this->db->query($sql);
+    if (!$result) {
+        return false;
+    }
+
+    $success1 = true;
+    if(isset($_POST['screens-formTopTemplate'])) {
+        $success1 = $this->writeTemplateToFile(stripslashes($_POST['screens-formTopTemplate']), 'formTopTemplate', $screen);
+    }
+
+    $success2 = true;
+    if(isset($_POST['screens-formElementsTemplate'])) {
+        $success2 = $this->writeTemplateToFile(stripslashes($_POST['screens-formElementsTemplate']), 'formElementsTemplate', $screen);
+    }
+
+    $success3 = true;
+    if(isset($_POST['screens-formBottomTemplate'])) {
+      $success3 = $this->writeTemplateToFile(stripslashes($_POST['screens-formBottomTemplate']), 'formBottomTemplate', $screen);
+    }
+
+    if (!$success1 || !$success2 || !$success3) {
+        print "Error: could not save the screen properly: ".$xoopsDB->error()." for query: $sql";
+        return false;
+    }
+
+    return $sid;
 	}
 
 	// 	THIS METHOD MIGHT BE MOVED UP A LEVEL TO THE PARENT CLASS
@@ -137,7 +158,7 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 		// if it's one entry per user, and we have requested reload blank, then override multi is 1, otherwise 0
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($screen->getVar('fid'));
-		if($formObject->getVar('single')=="off" AND $reloadblank) { 
+		if($formObject->getVar('single')=="off" AND $reloadblank) {
 			$overrideMulti = 0;
 		} elseif($formObject->getVar('single')=="off" AND !$reloadblank) {
 			$overrideMulti = 1;
@@ -197,7 +218,7 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 		$formScreens = $screen_handler->getObjects($criteria_object,$fid);
 		foreach($formScreens as $screen) {
 			$sid = $screen->getVar('sid');
-			$screenData = $screen_handler->get($sid);	
+			$screenData = $screen_handler->get($sid);
 		  	$screens[$sid]['sid'] = $screenData->getVar('sid');
 		  	$screens[$sid]['title'] = $screenData->getVar('title');
 		  	$screens[$sid]['type'] = $screenData->getVar('type');
@@ -205,7 +226,7 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 		  	$screens[$sid]['pagetitles'] = $screenData->getVar('pagetitles');
 		}
 		return $screens;
-	}	
+	}
 
 	public function getSelectedScreens($fid) {
 		$selected_screens = array();

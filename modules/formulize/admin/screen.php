@@ -67,7 +67,10 @@ if ($screen_id == "new") {
         $screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
     } else if ($settings['type'] == 'template') {
         $screen_handler = xoops_getmodulehandler('templateScreen', 'formulize');
+    } else if($settings['type'] == 'graph') {
+  	$screen_handler = xoops_getmodulehandler('graphScreen', 'formulize');
     }
+
     $screen = $screen_handler->get($screen_id);
 
     $screenName = $screen->getVar('title');
@@ -396,8 +399,21 @@ if ($screen_id != "new" && $settings['type'] == 'form') {
     $options['reloadblank'] = $screen->getVar('reloadblank') ? "blank" : "entry";
     $options['formelements'] = $screen->getVar('formelements');
     $options['element_list'] = $element_list;
+
+    $formTemplates = array();
+    $formTemplates['formTopTemplate'] = $screen->getTemplate('formTopTemplate');
+    $formTemplates['formElementsTemplate'] = $screen->getTemplate('formElementsTemplate');
+    $formTemplates['formBottomTemplate'] = $screen->getTemplate('formBottomTemplate');
 }
 
+if($_GET['sid'] != "new" && $settings['type'] == 'graph') {
+    $options = array();
+    $options['donedest'] = $screen->getVar('donedest');
+    $options['savebuttontext'] = $screen->getVar('savebuttontext');
+    $options['alldonebuttontext'] = $screen->getVar('alldonebuttontext');
+    $options['displayheading'] = $screen->getVar('displayheading');
+    $options['reloadblank'] = $screen->getVar('reloadblank') ? "blank" : "entry";
+}
 
 if ($screen_id != "new" && $settings['type'] == 'template') {
     $screen = $screen_handler->get($screen_id);
@@ -444,6 +460,10 @@ if ($screen_id != "new" && $settings['type'] == 'form') {
         'template'  => "db:admin/screen_form_options.html",
         'content'   => $options + $common
     );
+
+    $adminPage['tabs'][3]['name'] = _AM_FORM_SCREEN_TEMPLATES;
+    $adminPage['tabs'][3]['template'] = "db:admin/screen_form_templates.html";
+    $adminPage['tabs'][3]['content'] = $formTemplates + $common;
 }
 
 if ($screen_id != "new" && $settings['type'] == 'multiPage') {
@@ -504,6 +524,11 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
     );
 }
 
+if($_GET['sid'] != "new" && $settings['type'] == 'graph') {
+  $adminPage['tabs'][2]['name'] = _AM_ELE_OPT;
+  $adminPage['tabs'][2]['template'] = "db:admin/screen_graph_options.html";
+  $adminPage['tabs'][2]['content'] = $options + $common;
+}
 
 if ($screen_id != "new" && $settings['type'] == 'template') {
     $adminPage['tabs'][] = array(

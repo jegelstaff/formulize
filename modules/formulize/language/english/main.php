@@ -99,8 +99,8 @@ define("_AM_FORMUL","Forms");
 
 //added by jwe - 7/28/04
 define("_AM_FORM_TITLE", "Form Access Permissions"); // not used
-define("_AM_FORM_CURPERM", "Current Permission:"); 
-define("_AM_FORM_CURPERMLINKS", "Current Linked Selectbox:"); 
+define("_AM_FORM_CURPERM", "Current Permission:");
+define("_AM_FORM_CURPERMLINKS", "Current Linked Selectbox:");
 define("_AM_FORM_PERMVIEW", "View");
 define("_AM_FORM_PERMADD", "Add/Update");
 define("_AM_FORM_PERMADMIN", "Admin");
@@ -129,7 +129,7 @@ define("_AM_FRAME_AVAILFORMS1", "Form One:");
 define("_AM_FRAME_AVAILFORMS2", "Form Two:");
 define("_AM_FRAME_DELETE", "Delete an Existing Framework:");
 define("_AM_FRAME_SUBFORM_OF", "Make it a subform of:");
-define("_AM_FRAME_NOPARENTS", "No Forms in Framework"); 
+define("_AM_FRAME_NOPARENTS", "No Forms in Framework");
 define("_AM_FRAME_TYPENEWFORMNAME", "Type a short name here");
 define("_AM_FRAME_NEWFORMBUTTON", "Add Forms!");
 define("_AM_FRAME_NOKEY", "none specified!");
@@ -365,6 +365,7 @@ define("_formulize_DE_MINE", "Entries by me");
 define("_formulize_DE_GROUP", "Entries by all users in my group(s)");
 define("_formulize_DE_ALL", "Entries by all users in all groups");
 define("_formulize_DE_GO", "Apply search terms");
+define("_formulize_DE_MODIFYFORM", "Configure this screen");
 define("_formulize_DE_MODIFYSCREEN", "Configure this Screen");
 define("_formulize_DE_CHANGECOLS", "Change columns");
 define("_formulize_DE_PICKNEWCOLS", "Pick different columns to view");
@@ -390,7 +391,7 @@ define("_formulize_DE_EXPORT_HIDE_ADVANCED", "Hide advanced options");
 define("_formulize_DB_EXPORT_TO_EXCEL", "Use compatibility mode for some versions of Microsoft Excel (helps with accented characters in some cases)");
 define("_formulize_EXPORT_FILENAME_TEXT", "Exported_data_from");
 
-       
+
 define("_formulize_DE_EXPORT_CALCS", "Export Calcs");
 define("_formulize_DE_SAVE", "Save view");
 define("_formulize_DE_DELETE", "Delete view");
@@ -437,7 +438,7 @@ define("_formulize_DE_CALCSUB", "Add Calculation(s) to list");
 define("_formulize_DE_CALC_CALCS", "Calculations to perform on the column(s):");
 define("_formulize_DE_CALCGO", "Perform Requested Calculations");
 define("_formulize_DE_REQDCALCS", "Requested Calculations:");
-define("_formulize_DE_CALCALL", "Include blanks/zeros"); 
+define("_formulize_DE_CALCALL", "Include blanks/zeros");
 define("_formulize_DE_CALCNOBLANKS", "Exclude blanks/zeros");
 define("_formulize_DE_CALCONLYBLANKS", "Include only blanks/zeros");
 define("_formulize_DE_CALCJUSTNOBLANKS", "Exclude blanks");
@@ -705,7 +706,7 @@ define("_AM_FORMULIZE_LOE_TOTAL", "Total Entries: %d");
 define("_formulize_DE_LOE_LIMIT_REACHED1", "There are");
 define("_formulize_DE_LOE_LIMIT_REACHED2", "entries in the list.  It would take a long time to retrieve them.  You can use search terms to limit the number of entries, or");
 define("_formulize_DE_LOE_LIMIT_REACHED3", "you can click here to have the system retrieve all the entries.");
-       
+
 define("_formulize_OUTOFRANGE_DATA","Keep this other value found in the database: ");
 
 define("_AM_FORMULIZE_PREVIOUS_OPTION", "Use a previous answer:");
@@ -752,4 +753,3 @@ define("_AM_UPLOAD_ERR_EXTENSION", "The web server rejected your file (a PHP ext
 define("_formulize_CLOSE_FORM_ELEMENT", "You need to close the form element that is open first before you edit this one");
 
 define("_formulize_ENTRY_ID", "Entry ID");
-

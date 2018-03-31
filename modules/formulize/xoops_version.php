@@ -529,6 +529,9 @@ $modversion['templates'][] = array(
 	'file' => 'admin/screen_form_options.html',
 	'description' => '');
 $modversion['templates'][] = array(
+	'file' => 'admin/screen_form_templates.html',
+	'description' => '');
+$modversion['templates'][] = array(
 	'file' => 'admin/screen_list_buttons.html',
 	'description' => '');
 $modversion['templates'][] = array(
@@ -601,7 +604,7 @@ $modversion['templates'][] = array(
 	'file' => 'admin/managekeys.html',
 	'description' => '');
 
-    
+
 //	Module Configs
 // $xoopsModuleConfig['t_width']
 $modversion['config'][1] = array(
@@ -652,6 +655,26 @@ $modversion['config'][] = array(
 	'valuetype' => 'text',
 	'default' => 'br',
 	'options' => array(_MI_formulize_DELIMETER_BR=>'br', _MI_formulize_DELIMETER_SPACE=>'space'),
+);
+
+
+// Include default templates
+$templateFolders = scandir(XOOPS_ROOT_PATH."/modules/formulize/templates/screens/");
+$finalTemplateSets = array();
+foreach($templateFolders as $thisFolder) {
+	if(!strstr($thisFolder, ".") AND $thisFolder != 'custom') { // if it's not a file nor the 'custom' folder...
+		$finalTemplateSets[$thisFolder] = $thisFolder;
+	}
+}
+
+$modversion['config'][] = array(
+	'name' => 'defaultTemplate',
+	'title' => '_MI_formulize_DEFAULTTEMPLATE',
+	'description' => '_MI_formulize_DEFAULTTEMPLATEHELP',
+	'formtype' => 'select',
+	'valuetype' => 'text',
+	'default' => 'default',
+	'options' => $finalTemplateSets,
 );
 
 // get all the available forms and populate the options array
@@ -794,6 +817,16 @@ $modversion['config'][] = array(
 	'formtype' => 'yesno',
 	'valuetype' => 'int',
 	'default' => 0,
+);
+
+// user floating save button option
+$modversion['config'][] = array(
+    'name' => 'floatSave',
+    'title' => '_MI_formulize_FlOATINGSAVE',
+    'description' => '_MI_formulize_FLOATINGSAVEDESC',
+    'formtype' => 'yesno',
+    'valuetype' => 'int',
+    'default' => 1,
 );
 
 $modversion['config'][] = array(

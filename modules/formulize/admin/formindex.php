@@ -113,7 +113,7 @@ function patch40() {
      * ====================================== */
 
     $checkThisTable = 'formulize_apikeys';
-    $checkThisField = false; 
+    $checkThisField = false;
     $checkThisProperty = false;
     $checkPropertyForValue = false;
 
@@ -214,6 +214,19 @@ function patch40() {
 ) ENGINE=MyISAM;";
         }
 
+        if(!in_array($xoopsDB->prefix("formulize_screen_graph"), $existingTables)) {
+$sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_screen_graph") . " (
+`formid` int(11) NOT NULL auto_increment,
+`sid` int(11) NOT NULL default 0,
+`donedest` varchar(255) NOT NULL default '',
+`savebuttontext` varchar(255) NOT NULL default '',
+`alldonebuttontext` varchar(255) NOT NULL default '',
+`displayheading` tinyint(1) NOT NULL default 0,
+`reloadblank` tinyint(1) NOT NULL default 0,
+PRIMARY KEY (`formid`),
+INDEX i_sid (`sid`)
+) ENGINE=MyISAM;"; }
+
         if (!in_array($xoopsDB->prefix("formulize_advanced_calculations"), $existingTables)) {
             $sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_advanced_calculations")."` (
   `acid` int(11) NOT NULL auto_increment,
@@ -294,7 +307,7 @@ function patch40() {
             INDEX i_sid (`sid`)
         ) ENGINE=MyISAM;";
         }
-        
+
         if (!in_array($xoopsDB->prefix("formulize_apikeys"), $existingTables)) {
             $sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_apikeys") . " (
                 `key_id` int(11) unsigned NOT NULL auto_increment,
@@ -306,7 +319,7 @@ function patch40() {
                 INDEX i_apikey (apikey),
                 INDEX i_expiry (expiry)
             ) ENGINE=MyISAM;";
-        }      
+        }
 
         // if this is a standalone installation, then we want to make sure the session id field in the DB is large enough to store whatever session id we might be working with
         if (file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
@@ -356,7 +369,7 @@ function patch40() {
         $sql['add_pubfilters'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_saved_views") . " ADD `sv_pubfilters` text";
         $sql['add_backdrop_group'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_resource_mapping") . " ADD external_id_string text NULL default NULL";
         $sql['add_backdrop_group_index'] = "ALTER TABLE ". $xoopsDB->prefix("formulize_resource_mapping") ." ADD INDEX i_external_id_string (external_id_string(10))";
-        
+
         foreach($sql as $key=>$thissql) {
             if (!$result = $xoopsDB->query($thissql)) {
                 if ($key === "add_encrypt") {
@@ -492,6 +505,26 @@ function patch40() {
             print "<p> --- </p>";
             print "<p><b>You can re-run this patch after making changes.  If you do not get this warning, then your site should be OK.</b></p>";
             print "<p>If you have any questions about this upgrade issue, please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.</p>";
+        }
+
+        // need to update multiple select boxes.
+        // $xoopsDB->prefix("formulize")
+        // 1. get a list of all elements that are linked selectboxes that support only single values
+        $selectBoxesSQL = "SELECT id_form, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_type = 'select'";
+        $selectBoxRes = $xoopsDB->query($selectBoxesSQL);
+        if ($xoopsDB->getRowsNum($selectBoxRes) > 0) {
+            while ($handleArray = $xoopsDB->fetchArray($selectBoxRes)) {
+                $metaData = formulize_getElementMetaData($handleArray['ele_id']);
+                $ele_value = unserialize($metaData['ele_value']);
+
+                // select only single option, linked select boxes
+                if (!$ele_value[1] AND strstr($ele_value[2], "#*=:*")) {
+                    $successSelectBox = convertSelectBoxToSingle($xoopsDB->prefix('formulize_' . $handleArray['id_form']), $handleArray['ele_id']);
+                    if (!$successSelectBox) {
+                        print "could not convert column " . $handleArray['ele_id'] . " in table " . $xoopsDB->prefix('formulize_' . $handleArray['id_form']) . "<br>";
+                    }
+                }
+            }
         }
 
         //create new menus table
@@ -642,6 +675,24 @@ function patch40() {
         print "DB updates completed.  result: OK";
     }
 }
+// TODO!!! NEED TO HANDLING MOVING EXISTING TEMPLATES AS PART OF AN UPGRADE
+// Saves the given template to a template file on the disk
+function saveTemplate($template, $sid, $name) {
+    $filename = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/custom/{$sid}/{$name}.php";
+
+    $text = trim(html_entity_decode($template));
+    if ($text AND substr($text, 0, 5) != "<?php") {
+        // if there's no php open-tag in the text already, add one
+        $text = "<?php\n" . $text;
+    }
+
+    if (false === file_put_contents($filename, $text)) {
+        print "Warning: could not save " . $name . ".php for screen " . $sid . ".<br>";
+    } else {
+            print "created templates/screens/custom/" . $sid . "/". $name . ".php. result: OK<br>";
+        }
+    }
+
 
 // Fixes the format if the template is empty
 function emptyTemplateFixer($dir) {
@@ -667,22 +718,7 @@ function emptyTemplateFixer($dir) {
     }
 }
 
-// Saves the given template to a template file on the disk
-function saveTemplate($template, $sid, $name) {
-    $filename = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/{$sid}/{$name}.php";
 
-    $text = trim(html_entity_decode($template));
-    if ($text AND substr($text, 0, 5) != "<?php") {
-        // if there's no php open-tag in the text already, add one
-        $text = "<?php\n" . $text;
-    }
-
-    if (false === file_put_contents($filename, $text)) {
-        print "Warning: could not save " . $name . ".php for screen " . $sid . ".<br>";
-    } else {
-        print "created templates/screens/default/" . $sid . "/". $name . ".php. result: OK<br>";
-    }
-}
 
 
 function saveMenuEntryAndPermissionsSQL($formid, $appid, $i, $menuText) {

@@ -512,7 +512,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		// if there is a screen with a top template in effect, then do not lock the controls even if the saved view says we should.  Assume that the screen author has compensated for any permission issues.
 		// we need to do this after rachetting down the visibility controls.  Fact is, controlling UI for users is one thing that we can trust the screen author to do, so we don't need to indicate that the controls are locked.  But we don't want the visibility to override what people can normally see, so we rachet that down above.
     if($screen AND $_POST['lockcontrols']) {
-		  if($screen->getTemplate('toptemplate') != "") {
+			if($screen->hasTemplate('toptemplate')) {
         $_POST['lockcontrols'] = 0;
       }
     }
@@ -832,7 +832,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	// if there is messageText and no custom top template, and no messageText variable in the bottom template, then we have to output the message text here
 	if($screen AND $messageText) {
-		if(trim($screen->getTemplate('toptemplate')) == "" AND !strstr($screen->getTemplate('bottomtemplate'), 'messageText')) {
+		if(!$screen->hasTemplate('toptemplate') AND !strstr($screen->getTemplate('bottomtemplate'), 'messageText')) {
 			print "<p><center><b>$messageText</b></center></p>\n";
 		}
 	}
@@ -1033,7 +1033,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$useSearch = 1;
 	if($screen) {
 		$useWorking = !$screen->getVar('useworkingmsg') ? false : true;
-		$useDefaultInterface = $screen->getTemplate('toptemplate') != "" ? false : true;
+		$useDefaultInterface = !$screen->hasTemplate('toptemplate');
 		$title = $screen->getVar('title'); // otherwise, title of the form is in the settings array for when no screen is in use
 		$useSearch = ($screen->getVar('usesearch') AND !$screen->getTemplate('listtemplate')) ? 1 : 0;
 	}
@@ -1047,9 +1047,11 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$user_can_delete    = formulizePermHandler::user_can_delete_from_form($fid, $uid);
 	$edit_form = $gperm_handler->checkRight("edit_form", $fid, $groups, $mid);
 	$module_admin_rights = $gperm_handler->checkRight("module_admin", $mid, $groups, 1);
+	$modify_form = $gperm_handler->checkRight("modify_form", $fid, $groups, $mid);
 
 	// establish text and code for buttons, whether a screen is in effect or not
 	$screenButtonText = array();
+	$screenButtonText['modifyFormButton'] = _formulize_DE_MODIFYFORM;
 	$screenButtonText['modifyScreenLink'] = ($edit_form AND $screen AND $module_admin_rights) ? _formulize_DE_MODIFYSCREEN : "";
 	$screenButtonText['changeColsButton'] = _formulize_DE_CHANGECOLS;
 	$screenButtonText['calcButton'] = _formulize_DE_CALCS;
@@ -1150,110 +1152,9 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 			drawSearches($searches, $settings, $useCheckboxes, $useViewEntryLinks, 0, false, $hiddenQuickSearches);
 			print "</table></div>";
 		}
+		include $screen->getDefaultTemplateFilePath('toptemplate.php');
 
-		print "<table cellpadding=10><tr><td id='titleTable' style=\"vertical-align: top;\" width=100%>";
-
-		print "<h1>" . trans($title) . "</h1>";
-
-		if($thisButtonCode = $buttonCodeArray['modifyScreenLink']) { print "$thisButtonCode<br />"; }
-
-		if($loadview AND $lockcontrols) {
-			print "<h3>" . $loadviewname . "</h3></td><td>";
-			print "<input type=hidden name=currentview id=currentview value=\"$currentview\"></input>\n<input type=hidden name=loadviewname id=loadviewname value=\"$loadviewname\"></input>$submitButton";
-		} else {
-			print "</td>";
-			if(!$settings['lockcontrols']) {
-
-				print "<td id='buttonsTable' class='outerTable' rowspan=3 style=\"vertical-align: bottom;\">";
-
-				print "<table><tr><td id='leftButtonColumn' class='innerTable' style=\"vertical-align: bottom;\">";
-
-				print "<p>$submitButton<br>";
-				if($atLeastOneActionButton) {
-					print "<b>" . _formulize_DE_ACTIONS . "</b>";
-				}
-				print "\n";
-
-				if( $thisButtonCode = $buttonCodeArray['changeColsButton']) { print "<br>$thisButtonCode"; }
-				if( $thisButtonCode = $buttonCodeArray['resetViewButton']) { print "<br>$thisButtonCode"; }
-				// there is a create reports permission, but we are currently allowing everyone to save their own views regardless of that permission.  The publishing permissions do kick in on the save popup.
-				if( $thisButtonCode = $buttonCodeArray['saveViewButton']) { print "<br>$thisButtonCode"; }
-				// you can always create and delete your own reports right now (delete_own_reports perm has no effect).  If can delete other reports, then set $pubstart to 10000 -- which is done above -- (ie: can delete published as well as your own, because the javascript will consider everything beyond the start of 'your saved views' to be saved instead of published (published be thought to never begin))
-				if( $thisButtonCode = $buttonCodeArray['deleteViewButton']) { print "<br>$thisButtonCode"; }
-
-				print "</p></td><td id='middleButtonColumn' class='innerTable' style=\"vertical-align: bottom;\"><p style=\"text-align: center;\">";
-
-                if (($add_own_entry AND $singleMulti[0]['singleentry'] == "") OR ($user_can_delete and !$settings['lockcontrols'])) {
-					if( $thisButtonCode = $buttonCodeArray['selectAllButton']) { print "$thisButtonCode"; }
-					if( $thisButtonCode = $buttonCodeArray['clearSelectButton']) { print "<br>$thisButtonCode<br>"; }
-				}
-				if($add_own_entry AND $singleMulti[0]['singleentry'] == "") {
-					if( $thisButtonCode = $buttonCodeArray['cloneButton']) { print "$thisButtonCode<br>"; }
-				}
-                if ($user_can_delete and !$settings['lockcontrols']) {
-					if( $thisButtonCode = $buttonCodeArray['deleteButton']) { print "$thisButtonCode<br>"; }
-				}
-
-				print "</p></td><td id='rightButtonColumn' class='innerTable' style=\"vertical-align: bottom;\"><p style=\"text-align: center;\">";
-
-				if( $thisButtonCode = $buttonCodeArray['calcButton']) { print "<br>$thisButtonCode"; }
-				if( $thisButtonCode = $buttonCodeArray['advCalcButton']) { print "<br>$thisButtonCode"; }
-				if( $thisButtonCode = $buttonCodeArray['advSearchButton']) { print "<br>$thisButtonCode"; }
-				if( $thisButtonCode = $buttonCodeArray['exportButton']) { print "<br>$thisButtonCode"; }
-				if($import_data = $gperm_handler->checkRight("import_data", $fid, $groups, $mid) AND !$frid AND $thisButtonCode = $buttonCodeArray['importButton']) { // cannot import into a framework currently
-					print "<br>$thisButtonCode";
-				}
-				if( $thisButtonCode = $buttonCodeArray['notifButton']) { print "$thisButtonCode"; }
-				print "</p>";
-				print "</td></tr></table></td></tr>\n";
-			} else { // if lockcontrols set, then write in explanation...
-				print "<td></td></tr></table>";
-				print "<table><tr><td style=\"vertical-align: bottom;\">";
-				print "<input type=hidden name=curviewid id=curviewid value=$curviewid></input>";
-				print "<p>$submitButton<br>" . _formulize_DE_WARNLOCK . "</p>";
-				print "</td></tr>";
-			} // end of if controls are locked
-
-			// cell for add entry buttons
-			print "<tr><td id='outerAddEntryPanel' style=\"vertical-align: top;\">\n";
-
-			if(!$settings['lockcontrols']) {
-				// added October 18 2006 -- moved add entry buttons to left side to emphasize them more
-				print "<table><tr><td id='innerAddEntryPanel' style=\"vertical-align: bottom;\"><p>\n";
-
-				$addButton = $buttonCodeArray['addButton'];
-				$addMultiButton = $buttonCodeArray['addMultiButton'];
-				$addProxyButton = $buttonCodeArray['addProxyButton'];
-
-				if($add_own_entry AND $singleMulti[0]['singleentry'] == "" AND ($addButton OR $addMultiButton)) {
-					print "<b>" . _formulize_DE_FILLINFORM . "</b>\n";
-					if( $addButton) { print "<br>$addButton"; } // this will include proxy box if necessary
-					if( $addMultiButton) { print "<br>$addMultiButton"; }
-				} elseif($add_own_entry AND $proxy AND ($addButton OR $addProxyButton)) { // this is a single entry form, so add in the update and proxy buttons if they have proxy, otherwise, just add in update button
-					print "<b>" . _formulize_DE_FILLINFORM . "</b>\n";
-					if( $addButton) { print "<br>$addButton"; }
-					if( $addProxyButton) { print "<br>$addProxyButton"; }
-				} elseif($add_own_entry AND $addButton) {
-					print "<b>" . _formulize_DE_FILLINFORM . "</b>\n";
-					if( $addButton) { print "<br>$addButton"; }
-				} elseif($proxy AND $addProxyButton) {
-					print "<b>" . _formulize_DE_FILLINFORM . "</b>\n";
-					if( $addProxyButton) { print "<br>$addProxyButton"; }
-				}
-				print "<br><br></p></td></tr></table>\n";
-			}
-
-			print "</td></tr><tr><td id=currentViewSelectTable style=\"vertical-align: bottom;\">";
-
-			if ($currentViewList = $buttonCodeArray['currentViewList']) { print $currentViewList; }
-
-		} // end of if there's a loadview or not
-
-		// regardless of if a view is loaded and/or controls are locked, always print the page navigation controls
-		if ($pageNavControls = $buttonCodeArray['pageNavControls']) { print $pageNavControls; }
-
-		print "</td></tr></table>";
-	} else {
+	 } else {
 		// IF THERE IS A CUSTOM TOP TEMPLATE IN EFFECT, DO SOMETHING COMPLETELY DIFFERENT
 
 		if(!strstr($screen->getTemplate('toptemplate'), 'currentViewList') AND !strstr($screen->getTemplate('bottomtemplate'), 'currentViewList')) { print "<input type=hidden name=currentview id=currentview value=\"$currentview\"></input>\n"; } // print it even if the text is blank, it will be a hidden value in this case
@@ -1524,72 +1425,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 
 	// MASTER HIDELIST CONDITIONAL...
 	if(!$settings['hlist'] AND !$listTemplate) {
-		print "<div class=\"list-of-entries-container\"><table class=\"outer\">";
-
-		$count_colspan = count($cols)+1;
-		if($useViewEntryLinks OR $useCheckboxes != 2) {
-			$count_colspan_calcs = $count_colspan;
-		} else {
-			$count_colspan_calcs = $count_colspan - 1;
-		}
-		$count_colspan_calcs = $count_colspan_calcs + count($inlineButtons); // add to the column count for each inline custom button
-		$count_colspan_calcs++; // add one more for the hidden floating column
-		if(!$screen) { print "<tr><th colspan=$count_colspan_calcs>" . _formulize_DE_DATAHEADING . "</th></tr>\n"; }
-
-		if($settings['calc_cols'] AND !$settings['lockcontrols'] AND ($useSearchCalcMsgs == 1 OR $useSearchCalcMsgs == 3)) { // AND !$loadview) { // -- loadview removed from this function sept 24 2005
-			$calc_cols = $settings['calc_cols'];
-			$calc_calcs = $settings['calc_calcs'];
-			$calc_blanks = $settings['calc_blanks'];
-			$calc_grouping = $settings['calc_grouping'];
-            print "<tr><td class=head colspan=$count_colspan_calcs><input type=button style=\"width: 140px;\" name=mod_calculations value='".
-                _formulize_DE_MODCALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL.
-                "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=$calc_cols&calc_calcs=$calc_calcs&calc_blanks=$calc_blanks&calc_grouping=".
-                urlencode($calc_grouping)."&cols=".urlencode(implode(",",$cols)).
-                "');\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=cancelcalcs value='".
-                _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=hidelist value='".
-                _formulize_DE_HIDELIST . "' onclick=\"javascript:hideList();\"></input></td></tr>";
-        }
-
-		// draw advanced search notification
-		if($settings['as_0'] AND ($useSearchCalcMsgs == 1 OR $useSearchCalcMsgs == 2)) {
-			$writable_q = writableQuery($wq);
-			$minus1colspan = $count_colspan-1+count($inlineButtons);
-			if(!$asearch_parse_error) {
-				print "<tr>";
-				if($useViewEntryLinks OR $useCheckboxes != 2) { // only include this column if necessary
-					print "<td class=head></td>";
-				}
-				print "<td colspan=$minus1colspan class=head>" . _formulize_DE_ADVSEARCH . ": $writable_q";
-			} else {
-				print "<tr>";
-				if($useViewEntryLinks OR $useCheckboxes != 2) {
-					print "<td class=head></td>";
-				}
-				print "<td colspan=$minus1colspan class=head><span style=\"font-weight: normal;\">" . _formulize_DE_ADVSEARCH_ERROR . "</span>";
-			}
-			if(!$settings['lockcontrols']) { // AND !$loadview) { // -- loadview removed from this function sept 24 2005
-				print "<br><input type=button style=\"width: 140px;\" name=advsearch value='" . _formulize_DE_MOD_ADVSEARCH . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/advsearch.php?fid=$fid&frid=$frid";
-				foreach($settings as $k=>$v) {
-					if(substr($k, 0, 3) == "as_") {
-						$v = str_replace("'", "&#39;", $v);
-						$v = stripslashes($v);
-						print "&$k=" . urlencode($v);
-					}
-				}
-			print "');\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=cancelasearch value='" . _formulize_DE_CANCELASEARCH . "' onclick=\"javascript:killSearch();\"></input>";
-			}
-			print "</td></tr>\n";
-		}
-
-        if($useHeadings) {
-            $headers = getHeaders($cols, true); // second param indicates we're using element headers and not ids
-            drawHeaders($headers, $cols, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), $settings['lockedColumns']);
-        }
-
-		if($useSearch) {
-			drawSearches($searches, $settings, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), false, $hiddenQuickSearches);
-		}
-
+			include $screen->getDefaultTemplateFilePath('listheadertemplate.php');
         if (count($data) == 0) {
             // kill an empty dataset so there's no rows drawn
             unset($data);
@@ -1606,151 +1442,15 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 		$formulize_LOEPageSize = $GLOBALS['formulize_countMasterResultsForPageNumbers'] < $formulize_LOEPageSize ? $GLOBALS['formulize_countMasterResultsForPageNumbers'] : $formulize_LOEPageSize;
 		$actualPageSize = $formulize_LOEPageSize ? $formulize_LOEPageStart + $formulize_LOEPageSize : $GLOBALS['formulize_countMasterResultsForPageNumbers'];
 		if(isset($data)) {
-            foreach($data as $id=>$entry) {
-                formulize_benchmark("starting to draw one row of results");
+        foreach($data as $id=>$entry) {
+        formulize_benchmark("starting to draw one row of results");
 
 				// check to make sure this isn't an unset entry (ie: one that was blanked by the extraction layer just prior to sending back results
 				// Since the extraction layer is unsetting entries to blank them, this condition should never be met?
 				// If this condition is ever met, it may very well screw up the paging of results!
 				// NOTE: this condition is met on the last page of a paged set of results, unless the last page as exactly the same number of entries on it as the limit of entries per page
 				if($entry != "") {
-
-					if($headcounter == $repeatHeaders AND $repeatHeaders > 0) {
-						if($useHeadings) { drawHeaders($headers, $cols, $useCheckboxes, $useViewEntryLinks, count($inlineButtons)); }
-						$headcounter = 0;
-					}
-					$headcounter++;
-
-					print "<tr>\n";
-					if($class=="even") {
-						$class="odd";
-					} else {
-						$class="even";
-					}
-					unset($linkids);
-
-					$linkids = internalRecordIds($entry, $mainFormHandle);
-
-					// draw in the margin column where the links and metadata goes
-					if($useViewEntryLinks OR $useCheckboxes != 2) {
-						print "<td class=\"head formulize-controls\">\n";
-					}
-
-					if(!$settings['lockcontrols']) { //  AND !$loadview) { // -- loadview removed from this function sept 24 2005
-                        // check to see if we should draw in the delete checkbox
-			// 2 is none, 1 is all
-                        if ($useCheckboxes != 2 and ($useCheckboxes == 1 or formulizePermHandler::user_can_delete_entry($fid, $uid, $linkids[0]))) {
-
-							print "<input type=checkbox title='" . _formulize_DE_DELBOXDESC . "' class='formulize_selection_checkbox' name='delete_" . $linkids[0] . "' id='delete_" . $linkids[0] . "' value='delete_" . $linkids[0] . "'>";
-						}
-						if($useViewEntryLinks) {
-							print "<a href='" . $currentURL;
-							if(strstr($currentURL, "?")) { // if params are already part of the URL...
-								print "&";
-							} else {
-								print "?";
-							}
-							print "ve=" . $linkids[0] . "' onclick=\"javascript:goDetails('" . $linkids[0] . "');return false;\" ".
-								" class=\"loe-edit-entry\" alt=\"" . _formulize_DE_VIEWDETAILS . "\" title=\"" . _formulize_DE_VIEWDETAILS . "\" >";
-							print "&nbsp;</a>";
-						}
-					} // end of IF NO LOCKCONTROLS
-					if($useViewEntryLinks OR $useCheckboxes != 2) {
-						print "</td>\n";
-					}
-
-					$column_counter = 0;
-
-					if($columnWidth) {
-						$columnWidthParam = "style=\"width: $columnWidth" . "px\"";
-					} else {
-						$columnWidthParam = "";
-					}
-
-          for($i=0;$i<count($cols);$i++) {
-            //formulize_benchmark("drawing one column");
-						$col = $cols[$i];
-						$colhandle = $settings['columnhandles'][$i];
-						$classToUse = $class . " column column".$i;
-						$cellRowAddress = $id+2;
-						if($i==0) {
-							print "<td $columnWidthParam class=\"$class floating-column\" id='floatingcelladdress_$cellRowAddress'>\n";
-						}
-						print "<td $columnWidthParam class=\"$classToUse\" id=\"celladdress_".$cellRowAddress."_".$i."\">\n";
-						if($col == "creation_uid" OR $col == "mod_uid") {
-							$userObject = $member_handler->getUser(display($entry, $col));
-							if($userObject) {
-								$nameToDisplay = $userObject->getVar('name') ? $userObject->getVar('name') : $userObject->getVar('uname');
-							} else {
-								$nameToDisplay = _FORM_ANON_USER;
-							}
-							$value = "<a href=\"" . XOOPS_URL . "/userinfo.php?uid=" . display($entry, $col) . "\" target=_blank>" . $nameToDisplay . "</a>";
-						} else {
-							$value = display($entry, $col);
-						}
-
-                        // set in the display function, corresponds to the entry id of the record in the form where the current value was retrieved from.  If there is more than one local entry id, because of a one to many framework, then this will be an array that corresponds to the order of the values returned by display.
-                        $currentColumnLocalId = $GLOBALS['formulize_mostRecentLocalId'];
-                        // if we're supposed to display this column as an element... (only show it if they have permission to update this entry)
-                        if (in_array($colhandle, $deColumns) and formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
-							include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
-							if($frid) { // need to work out which form this column belongs to, and use that form's entry ID.  Need to loop through the entry to find all possible internal IDs, since a subform situation would lead to multiple values appearing in a single cell, so multiple displayElement calls would be made each with their own internal ID.
-								foreach($entry as $entryFormHandle=>$entryFormData) {
-									foreach($entryFormData as $internalID=>$entryElements) {
-										$deThisIntId = false;
-										foreach($entryElements as $entryHandle=>$values) {
-											if($entryHandle == $col) { // we found the element that we're trying to display
-												if($deThisIntId) { print "\n<br />\n"; } // could be a subform so we'd display multiple values
-												if($deDisplay) {
-													print '<div id="deDiv_'.$colhandle.'_'.$internalID.'">';
-													print getHTMLForList($values, $colhandle, $internalID, $deDisplay, $textWidth, $currentColumnLocalId, $fid, $cellRowAddress, $i);
-													print "</div>";
-												} else {
-                                                    if($deThisIntId) { print "\n<br />\n"; } // extra break to separate multiple form elements in the same cell, for readability/usability
-													displayElement("", $colhandle, $internalID);
-												}
-												$deThisIntId = true;
-											}
-										}
-									}
-								}
-							} else { // display based on the mainform entry id
-								if($deDisplay) {
-									print '<div id="deDiv_'.$colhandle.'_'.$linkids[0].'">';
-									print getHTMLForList($value,$colhandle,$linkids[0], $deDisplay, $textWidth, $currentColumnLocalId, $fid, $cellRowAddress, $i);
-									print "</div>";
-								} else {
-									displayElement("", $colhandle, $linkids[0]); // works for mainform only!  To work on elements from a framework, we need to figure out the form the element is from, and the entry ID in that form, which is done above
-								}
-							}
-							$GLOBALS['formulize_displayElement_LOE_Used'] = true;
-						} elseif($col != "creation_uid" AND $col!= "mod_uid" AND $col != "entry_id") {
-							print getHTMLForList($value, $col, $linkids[0], 0, $textWidth, $currentColumnLocalId, $fid, $cellRowAddress, $i);
-						} else { // no special formatting on the uid columns:
-							print $value;
-						}
-
-						print "</td>\n";
-						$column_counter++;
-					}
-
-					// handle inline custom buttons
-					foreach($inlineButtons as $caid=>$thisCustomAction) {
-						list($caCode) = processCustomButton($caid, $thisCustomAction, $linkids[0], $entry); // only bother with the code, since we already processed any clicked button above
-						if($caCode) {
-							print "<td $columnWidthParam class=$class>\n";
-							print "<center>$caCode</center>\n";
-							print "</td>\n";
-						}
-					}
-
-					// handle hidden elements for passing back to custom buttons
-					foreach($hiddenColumns as $thisHiddenCol) {
-						print "\n<input type=\"hidden\" name=\"hiddencolumn_".$linkids[0]."_$thisHiddenCol\" value=\"" . htmlspecialchars(display($entry, $thisHiddenCol)) . "\"></input>\n";
-					}
-
-					print "</tr>\n";
-
+					include $screen->getDefaultTemplateFilePath('listtemplate.php');
 				} else { // this is a blank entry
 					$blankentries++;
 				} // end of not "" check
@@ -1758,7 +1458,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 			} // end of foreach data as entry
 		} // end of if there is any data to draw
 
-		print "</table></div>";
+		include $screen->getDefaultTemplateFilePath('bottomtemplate.php');
 	} elseif($listTemplate AND !$settings['hlist']) {
 
 		// USING A CUSTOM LIST TEMPLATE SO DO EVERYTHING DIFFERENTLY
@@ -1785,6 +1485,8 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 				}
 				$viewNumber++;
 			}
+
+      include $screen->getCustomTemplateFilePath('listheadertemplate.php');
 
       foreach($data as $id=>$entry) {
 				//$entry = $data[$entryCounter];
@@ -1834,7 +1536,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 						print "\n<input type=\"hidden\" name=\"hiddencolumn_".$linkids[0]."_$thisHiddenCol\" value=\"" . htmlspecialchars(display($entry, $thisHiddenCol)) . "\"></input>\n";
 					}
 
-					include XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$screen->getVar('sid')."/listtemplate.php";
+                    include $screen->getCustomTemplateFilePath('listtemplate.php');
 				}
 			}
 		}
@@ -4101,11 +3803,9 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 
     $publishedFilters = is_array($settings['pubfilters']) ? $settings['pubfilters'] : array();
 
-	$thisTemplate = $screen->getTemplate($type.'template');
-	if($thisTemplate != "") {
-
-    // process the template and output results
-		include XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$screen->getVar('sid')."/".$type."template.php";
+	if($screen->hasTemplate($type.'template')) {
+                // process the template and output results
+                include $screen->getCustomTemplateFilePath($type.'template');
 
 		// if there are no page nav controls in either template the template, then
 		if($type == "top" AND !strstr($screen->getTemplate('toptemplate'), 'pageNavControls') AND (!strstr($screen->getTemplate('bottomtemplate'), 'pageNavControls'))) {
@@ -4293,6 +3993,9 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 	if($buttonText) {
 		$buttonText = trans($buttonText);
 		switch ($button) {
+			case "modifyFormButton":
+				return "<a href=" . XOOPS_URL . "/modules/formulize/admin/ui.php?page=form&fid=$fid&tab=elements>" . $buttonText . "</a>";
+				break;
 			case "modifyScreenLink":
 				return "<a href=" . XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&sid=".$screen->getVar('sid').">" . $buttonText . "</a>";
 				break;

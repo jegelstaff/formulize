@@ -34,10 +34,19 @@ if (!defined("XOOPS_ROOT_PATH")) {
     die("XOOPS root path not defined");
 }
 
+$config_handler = xoops_gethandler('config');
+$module_handler = xoops_gethandler('module');
+$formulizeModule = $module_handler->getByDirname("formulize");
+$formulizeConfig = $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
+$defaultTemplateSet = $formulizeConfig['defaultTemplate'];
+
+define('CUSTOM_TEMPLATES_DIR', "/modules/formulize/templates/screens/custom/");
+define('DEFAULT_TEMPLATES_DIR', "/modules/formulize/templates/screens/".$defaultTemplateSet."/");
+
 require_once XOOPS_ROOT_PATH.'/kernel/object.php';
 class formulizeScreen extends xoopsObject {
 
-	function __construct() {
+  function __construct() {
 		$this->XoopsObject();
 		$this->initVar('sid', XOBJ_DTYPE_INT, '', true);
 		$this->initVar('title', XOBJ_DTYPE_TXTBOX, '', true, 255);
@@ -46,6 +55,41 @@ class formulizeScreen extends xoopsObject {
 		$this->initVar('type', XOBJ_DTYPE_TXTBOX, '', true, 100);
 		$this->initVar('useToken', XOBJ_DTYPE_INT);
 	}
+
+  /**
+   * Checks if a given template name exists for the current screen.
+   * @return true if the given template name exists for the screen, false otherwise.
+   */
+  function hasTemplate($templateName) {
+      return (trim($this->getTemplate($templateName)) != "");
+  }
+
+  function getCustomTemplateFilePath($templateName="") {
+      return $this->getTemplateFilePath($this->getCustomTemplatesDir(). $this->getVar('sid') . "/", $templateName);
+  }
+
+  function getDefaultTemplateFilePath($templateName) {
+      return $this->getTemplateFilePath($this->getDefaultTemplatesDir(), $templateName);
+  }
+
+  function getCustomTemplatesDir() {
+      return $this->getTemplatesDirectory(CUSTOM_TEMPLATES_DIR);
+  }
+
+  function getDefaultTemplatesDir() {
+      return $this->getTemplatesDirectory(DEFAULT_TEMPLATES_DIR);
+  }
+
+  private function getTemplatesDirectory($directory) {
+      return XOOPS_ROOT_PATH . $directory;
+  }
+
+  private function getTemplateFilePath($dir, $templateName) {
+        if($templateName) {
+      $templateName = substr($templateName,-4)=='.php' ? $templateName : $templateName.'.php';
+        }
+      return $dir . $templateName;
+  }
 
     static function normalize_values($key, $value) {
         switch ($key) {
@@ -92,7 +136,7 @@ class formulizeScreen extends xoopsObject {
         static $templates = array();
         if (!isset($templates[$templatename])) {
             // there is no template saved in memory, read it from the file
-            $pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$this->getVar('sid')."/".$templatename.".php";
+            $pathname = $this->getCustomTemplateFilePath($templatename);
             if (file_exists($pathname)) {
                 $templates[$templatename] = file_get_contents($pathname);
             } else {
@@ -109,7 +153,7 @@ class formulizeScreen extends xoopsObject {
 
 
     function writeTemplateFile($template_content, $template_name) {
-        $pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$this->getVar('sid')."/";
+        $pathname = $this->getCustomTemplateFilePath();
         // check if folder exists, if not, make it.
         if (!is_dir($pathname)) {
             mkdir($pathname, 0777, true);
@@ -119,7 +163,8 @@ class formulizeScreen extends xoopsObject {
             chmod($pathname, 0777);
         }
 
-        $filename = $pathname."/".$template_name.".php";
+        $template_name = substr($template_name,-4)=='.php' ? $template_name : $template_name.".php";
+        $filename = $pathname."/".$template_name;
 
         $success = file_put_contents($filename, $template_content);
         if (false === $success) {
@@ -164,7 +209,7 @@ class formulizeScreenHandler {
         } else {
             if (intval($fid) > 0) {
                 $sql .= " WHERE fid=" . intval($fid);
-                
+
                 if ($appid > 0) {
                 	$sql .= " AND EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.appid=" . $appid . " AND linktable.fid=screentable.fid)";
                 } else if ($appid === 0) {
@@ -256,7 +301,7 @@ class formulizeScreenHandler {
 		$frameworkChoice->setExtra("onchange='javascript:frameworkChange(window.document.editscreenform.frid)'"); // set a javascript event for this element in case parts of some screen forms change depending on the framework selected
 		$frameworkChoice->addOptionArray($options);
 		$form->addElement($frameworkChoice);
-    
+
     // show the security token question -- added Jan 25 2008 -- jwe
     $useTokenDefault = $screen->getVar('sid') ? $screen->getVar('useToken') : 1;
     $securityQuestion = new xoopsFormRadioYN(_AM_FORMULIZE_SCREEN_SECURITY, 'useToken', $useTokenDefault);
