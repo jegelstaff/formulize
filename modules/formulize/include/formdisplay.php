@@ -85,7 +85,6 @@ class formulize_themeForm extends XoopsThemeForm {
               . "' action='" . $this->getAction()
               . "' method='" . $this->getMethod()
               . "' onsubmit='return xoopsFormValidate_" . $ele_name . "();'" . $this->getExtra() . ">";
-
       if ($elementsTemplateFile != null) {
           $hidden = '';
           list($elements, $hidden) = $this->_drawElements($this->getElements(), $elementsTemplateFile);
@@ -976,38 +975,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
           // End of Update for Ajax Save
       }
 
-      // draw in the submitbutton if necessary
-      $subButtonText = '';
-      $allDoneOverride_temp = $allDoneOverride;
-      if ($entry AND !$formElementsOnly) { // existing entry, if it's their own and they can update their own, or someone else's and they can update someone else's
-          if (($owner == $uid AND $update_own_entry) OR ($owner != $uid AND $update_other_entries)) {
-              if (!$formulizeConfig['floatSave']) {
-                  $form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, $allDoneOverride, $printall, $screen); //nmc 2007.03.24 - added $printall
-              } else {
-                  $subButtonText = _formulize_SAVE;
-              }
-          } else {
-              if (!$formulizeConfig['floatSave']) {
-                  $form = addSubmitButton($form, '', $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, false, $printall, $screen); //nmc 2007.03.24 - added $printall
-              } else {
-                  $allDoneOverride_temp = false;
-              }
-          }
-      } elseif (!$formElementsOnly) { // new entry
-          if ($gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid) OR $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid)) {
-              if (!$formulizeConfig['floatSave']) {
-                  $form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, $allDoneOverride, $printall, $screen); //nmc 2007.03.24 - added $printall
-              } else {
-                  $subButtonText = _formulize_SAVE;
-              }
-          } else {
-              if (!$formulizeConfig['floatSave']) {
-                  $form = addSubmitButton($form, '', $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, false, $printall, $screen); //nmc 2007.03.24 - added $printall
-              } else {
-                  $allDoneOverride_temp = false;
-              }
-          }
-      }
       if ($formulizeConfig['floatSave']) {
           if (!$button_text OR ($button_text == "{NOBUTTON}" AND $go_back['form'] > 0)) { // presence of a goback form (ie: parent form) overrides {NOBUTTON} -- assumption is the save button will not also be overridden at the same time
               $button_text = _formulize_DONE;
@@ -1062,22 +1029,68 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 
     // TODO: default should be individually assessed, if there's a toptemplate, we should have the other two as regular
     // as opposed to all having custom templates
-    $hasCustomTemplate = ($screen AND ($screen->hasTemplate("formTopTemplate") OR $screen->hasTemplate("formElementsTemplate") OR $screen->hasTemplate("formBottomTemplate")));
+    $hasCustomTopTemplate = ($screen AND ($screen->hasTemplate("formTopTemplate")));
+    $hasCustomElementsTemplate = ($screen AND ($screen->hasTemplate("formElementsTemplate")));
+    $hasCustomBottomTemplate = ($screen AND ($screen->hasTemplate("formBottomTemplate")));
 
-    if ($hasCustomTemplate) {
+    $formDefaultTopTemplate = false;
+    $formCustomElementsTemplate = false;
+    $formCustomBottomTemplate = false;
+
+    if ($hasCustomTopTemplate) {
         include $screen->getCustomTemplateFilePath("formTopTemplate");
-        include $screen->getCustomTemplateFilePath("formElementsTemplate");
-        include $screen->getCustomTemplateFilePath("formBottomTemplate");
-
-        // if there is a custom template, set the $form to null so the default template is not generated later
-        $form = null;
     } else {
-        $form = addPrintableviewButton($printBtn, $form, $save_text, $currentURL, $profileForm, $printall);
-        // TODO : Refactor all the code into default templates and simply include them
-        // note, security token is included in the form by the xoops themeform render method, that's why
-        // there's no explicity references to the token in the compiling/generation of the main form object
-        $form->render();
-        printFloatingSave($saveBtn, $allDoneBtn, $printall, $formulizeConfig, $currentURL, $done_text, $save_text);
+        $formDefaultTopTemplate = true;
+    }
+
+    if ($hasCustomElementsTemplate) {
+        $formCustomElementsTemplate = true;
+        print $form->renderFromTemplate($screen->getCustomTemplateFilePath("formElementsTemplate"));
+    }
+
+    if ($hasCustomBottomTemplate) {
+        $formCustomBottomTemplate = true;
+    } else {
+      // draw in the submitbutton if necessary
+      $subButtonText = '';
+      $allDoneOverride_temp = $allDoneOverride;
+      if ($entry AND !$formElementsOnly) { // existing entry, if it's their own and they can update their own, or someone else's and they can update someone else's
+          if (($owner == $uid AND $update_own_entry) OR ($owner != $uid AND $update_other_entries)) {
+              if (!$formulizeConfig['floatSave']) {
+                  $form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, $allDoneOverride, $printall, $screen); //nmc 2007.03.24 - added $printall
+              } else {
+                  $subButtonText = _formulize_SAVE;
+              }
+          } else {
+              if (!$formulizeConfig['floatSave']) {
+                  $form = addSubmitButton($form, '', $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, false, $printall, $screen); //nmc 2007.03.24 - added $printall
+              } else {
+                  $allDoneOverride_temp = false;
+              }
+          }
+      } elseif (!$formElementsOnly) { // new entry
+          if ($gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid) OR $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid)) {
+              if (!$formulizeConfig['floatSave']) {
+                  $form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, $allDoneOverride, $printall, $screen); //nmc 2007.03.24 - added $printall
+              } else {
+                  $subButtonText = _formulize_SAVE;
+              }
+          } else {
+              if (!$formulizeConfig['floatSave']) {
+                  $form = addSubmitButton($form, '', $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, false, $printall, $screen); //nmc 2007.03.24 - added $printall
+              } else {
+                  $allDoneOverride_temp = false;
+              }
+          }
+      }
+    }
+
+    if ($formDefaultTopTemplate && !$formCustomElementsTemplate) {
+      print "<div $idForForm>".$form->render()."</div><!-- end of formulizeform -->"; // note, security token is included in the form by the xoops themeform render method, that's why there's no explicity references to the token in the compiling/generation of the main form object
+    }
+
+    if ($formCustomBottomTemplate) {
+      include $screen->getCustomTemplateFilePath("formBottomTemplate");
     }
 
 		global $formulize_governingElements;
@@ -1138,10 +1151,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 
 		$idForForm = $formElementsOnly ? "" : "id=\"formulizeform\""; // when rendering disembodied forms, don't use the master id!
 
-    // only render the default template if there is no custom template
-    if ($form != null) {
-        print "<div $idForForm>".$form->render()."</div><!-- end of formulizeform -->"; // note, security token is included in the form by the xoops themeform render method, that's why there's no explicity references to the token in the compiling/generation of the main form object
-    }
         // floating save button
         if($printall != 2 AND $formulizeConfig['floatSave'] AND !strstr($currentURL, "printview.php") AND !$formElementsOnly){
             print "<div id=floattest></div>";
