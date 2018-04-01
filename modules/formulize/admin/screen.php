@@ -115,6 +115,7 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $templates['toptemplate'] = str_replace("&", "&amp;", $screen->getTemplate('toptemplate'));
   $templates['bottomtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('bottomtemplate'));
   $templates['listtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('listtemplate'));
+  $templates['listheadertemplate'] = str_replace("&", "&amp;", $screen->getTemplate('listheadertemplate'));
 
   // view data
   // gather all the available views
