@@ -6,6 +6,9 @@ $html .= "<P>$date</P><P>From: $dean, Associate Dean, Academic</P><P>To: $name</
 
 <HR>";
 
+list($firstYear,$secondYear) = explode("/",$year);
+$activeYear = $firstYear;
+
 // Altenrate opening paragraph for part time, removed July 25 2017
 /*if($percent < 75) {
     $html .= "<P>Shown below are your teaching assignments for the academic year 2017/2018. These duties are based on your percent of appointment at the rank of Lecturer, and the corresponding teaching load of Full Course Equivalencies (FCEs).  The specifics of your percent of appointment and salary will be addressed in a forthcoming contract letter.</P>";
@@ -22,18 +25,28 @@ if(count($courses)>0 OR count($coordCourses)>0) {
 
     $totalTeaching = 0;
     
-    foreach(array('Fall - F',
-    'Winter/Spring - S',
+    foreach(array('Summer (July, August) - S',
+    'Fall - F',
     'Fall-Winter - Y',
+    'Winter/Spring - S',
     'Summer (May, June) - F',
-    'Summer (July, August) - S',
     'Summer - Y') as $thisSem) {
+
+        if($thisSem=="Winter/Spring - S") {
+            $activeYear = $secondYear;
+        }
     
         $semStart = true;
+        
+        if(!strstr($activeTerms, $thisSem) AND $activeTerms != "All" AND $activeTerms != "None" AND !strstr($thisSem, " - Y")) {
+            $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><i>$thisSem - $activeYear</i></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">&nbsp;</TD></TR>";
+            $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><ul><li>On Leave</li></ul></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">&nbsp;</TD></TR>";
+        }
+        
         foreach($courses as $course) {
             if($course['sem']==$thisSem) {
                 if($semStart) {
-                    $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><i>$thisSem</i></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">&nbsp;</TD></TR>";
+                    $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><i>$thisSem - $activeYear</i></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">&nbsp;</TD></TR>";
                     $semStart = false;
                 }
                 $teachingLabel = "";
@@ -43,7 +56,9 @@ if(count($courses)>0 OR count($coordCourses)>0) {
                     $totalTeaching = $totalTeaching + $coordCourses[$thisSem][$course['code']]['weighting'];
                     unset($coordCourses[$thisSem][$course['code']]);
                 }
-                $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">{$course['code']}, {$course['section']}: {$course['title']}$teachingLabel<BR>{$course['times']}, {$course['room']}</TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">".number_format($course['weighting'],3)."</TD></TR>";
+                $courseLabel = "{$course['code']}, {$course['section']}: {$course['title']}";
+                $timeAndRoom = "<BR>{$course['times']}, {$course['room']}";
+                $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><ul><li>$courseLabel$teachingLabel$timeAndRoom</li></ul></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">".number_format($course['weighting'],3)."</TD></TR>";
                 $totalTeaching = $totalTeaching + $course['weighting'];
             }
         }
