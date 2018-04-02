@@ -72,7 +72,7 @@ if(!is_array($indexedLockData) AND isset($_POST['compareDate']) AND $_POST['comp
 }
 
 $inst = display($entry, 'hr_module_name');
-$instSectionData = getData(4, 4, 'instr_assignments_instructor/**/'.$inst.'/**/=][ro_module_year/**/'.$_POST['showYear'].'/**/=][ro_module_course_active/**/3/**/!=][ro_module_course_active/**/2/**/!=][course_components_reserved_section/**/Yes/**/!="', 'AND', '', '', '', 'ro_module_course_code');
+$instSectionData = getData(4, 4, 'instr_assignments_instructor/**/'.$inst.'/**/=][ro_module_year/**/'.$_POST['showYear'].'/**/=][ro_module_course_active/**/3/**/!=][ro_module_course_active/**/2/**/!=][course_components_reserved_section/**/Yes/**/!=', 'AND', '', '', '', 'ro_module_course_code');
 
 // also, figure out where they're the coordinator, and show that
 $coordData = getData('', 3, 'ro_module_course_coordinator/**/'.$inst.'/**/=][ro_module_year/**/'.$_POST['showYear'].'/**/=][ro_module_course_active/**/3/**/!=][ro_module_course_active/**/2/**/!=', 'AND', '', '', '', 'ro_module_course_code');
