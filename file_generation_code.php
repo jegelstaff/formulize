@@ -33,7 +33,7 @@ function daraShowContractLinks($fid, $frid, $type) {
         }
         $data = getData($frid, $fid, implode('][',$filter), "OR");
     }
-    
+
     $ROcourses = array();
     $INSTcourses = array();
     foreach($data as $entry) {
@@ -117,7 +117,8 @@ Year 1 - 12 noon</p>
             }
         }
         $fullHtml .= "</tbody></table>";
-        
+        //print $fullHtml;
+        //exit;
         $pdf = daraWriteContract('pdf', $fullHtml, "", true, $type);
         //$doc = daraWriteContract('doc', $fullHtml, "", true, $type);
     }
@@ -272,15 +273,20 @@ class SchedulePDF extends TCPDF {
         $yearParts = explode("/",$yearParts[2]);
         $year = intval($yearParts[0])."/".intval($yearParts[1]); // all in the name of sanitization!
         $type = str_replace("=", "", $_POST['search_ro_module_grad_undergrad']);
-        if($type == "Graduate") {
-            $spacer = "     ";
-        } elseif($type == "") {
-            $spacer = "                  ";
-        } else {
+        $internalUseOnly = (isset($_POST['showTentInst']) AND $_POST['showTentInst'] == 'Yes') ? "FOR INTERNAL USE ONLY - " : "";
+        if($internalUseOnly) {
             $spacer = "";
+        } else {
+            $spacer = "                                                 ";
+        }
+        if($type == "Graduate") {
+            $spacer .= "         ";
+        } else {
+            $spacer .= "";
         }
         $type = $type ? " $type" : "";
-        $this->MultiCell(0, 8, "John H. Daniels Faculty of Architecture, Landscape, and Design\n".$year.$type." Academic Timetable".$spacer."                                                                                                                                                                M=Monday|T=Tuesday|W=Wednesday|R=Thursday|F=Friday", 0, 'L');
+        $internalUseOnly = (isset($_POST['showTentInst']) AND $_POST['showTentInst'] == 'Yes') ? "FOR INTERNAL USE ONLY - " : "";
+        $this->MultiCell(0, 8, "John H. Daniels Faculty of Architecture, Landscape, and Design\n".$internalUseOnly.$year.$type." Academic Timetable".$spacer."                                                                                                                     M=Monday|T=Tuesday|W=Wednesday|R=Thursday|F=Friday", 0, 'L');
         //$this->Cell(20,8,'M=Monday|T=Tuesday|W=Wednesday|R=Thursday|F=Friday', 0, false, 'R');
 
     }

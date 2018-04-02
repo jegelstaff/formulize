@@ -528,7 +528,7 @@ function drawCourseBox($section, $sectionKey, $lecturesWithTutorials) {
     print "<h2 onmouseover='return overlib(\"$overLibText\");' onmouseout='nd();'>$linkStart$courseCode$offeredNote$reservedNote$linkEnd</a></h2>\n";
     
     $type = "<div class='title-for-print' style='display: none;'><b>".$courseData['desc']."</b></div><b>".$sectionData['type'] . " ". $sectionData['number'];
-    if($sectionData['type']=='Tutorial') {
+    if($sectionData['type']=='Tutorial' AND $sectionData['related']) {
         $type .= " for ".$sectionData['related'];
     }
     $type .= "</b>".$section['conflicts'];

@@ -40,6 +40,13 @@ if(!is_array($indexedLockData) AND isset($_POST['compareDate']) AND $_POST['comp
     $compareOn = false;
 }
 
+$primaryTeachingMethod = display($entry, "ro_module_lecture_studio");
+if(strstr($primaryTeachingMethod,"Prac")) {
+    $sortPrepend = "AAA"; // put this on practica if that's the primary teaching method, so they will sort first below
+} else {
+    $sortPrepend = "";
+}
+
 $activeYearParts = explode("_", $_POST['search_ro_module_year']);
 $activeYear = $activeYearParts[2]; // qsf filter on the RO page will have _ in it that means the third item is the actual year value
 $sectionIds = internalRecordIds($entry, 4);
@@ -60,7 +67,12 @@ foreach($sectionIds as $i=>$sectionId) {
     if(display($section[0], "course_components_reserved_section")=="Yes") {
         continue; // skip sections that are reserved
     }
-    $sections[$i] = display($section[0], 'sections_section_number');
+    $sectionNumber = display($section[0], 'sections_section_number');
+    if($sortPrepend AND strstr($sectionNumber, "P")) { // put the AAA on practica so they sort right
+        $sections[$i] = $sortPrepend.$sectionNumber;
+    } else {
+        $sections[$i] = $sectionNumber;
+    }
     $revSections[$i] = display($indexedLockData[$sectionId], 'sections_section_number');
     $times[$i] = makeSectionTimes($section[0]);
     $revTimes[$i] = makeSectionTimes($indexedLockData[$sectionId]);
@@ -85,13 +97,34 @@ foreach($sectionIds as $i=>$sectionId) {
     }
 
 }
-
+if(count($sections)==0) {
+    return '';
+}
 asort($sections);
 
 $html = "<tr nobr=\"true\"><td style=\"border-top: 1px solid black;\" ><b>$code</b></td>";
 $html .= "<td style=\"border-top: 1px solid black;\" >$title";
 $start = true;
+if(isset($_POST['showCoords']) AND $_POST['showCoords'] AND $coordName = display($entry,'ro_module_course_coordinator')) {
+    $html .= "</td>
+    <td style=\"border-top: 1px solid black;\"><b>Coordinator</b></td>
+    <td style=\"border-top: 1px solid black;\"></td>";
+    if(isset($_POST['showRooms']) AND $_POST['showRooms']=="Yes") {
+        $html .= "<td style=\"border-top: 1px solid black;\"></td>";
+    }
+    $html .= "<td style=\"border-top: 1px solid black;\">".$coordName."</td>";
+    if(isset($_POST['showTentInst']) AND $_POST['showTentInst']=="Yes") {
+        $html .= "<td style=\"border-top: 1px solid black;\"></td>";
+    }
+    if($displayEnrollment) {
+        $html .= "<td style=\"border-top: 1px solid black;\">$enrollment_controls</td>";
+    }
+    $html .= "</tr>";
+    $start = false;
+}
+
 foreach($sections as $i=>$section) {
+    $section = str_replace($sortPrepend,"",$section); // remove any AAA we prepended
     if(!$start) {
         $html .= "<tr nobr=\"true\"><td></td><td>";
     }
@@ -154,20 +187,7 @@ foreach($sections as $i=>$section) {
     $start = false;
 }
 
-if(isset($_POST['showCoords']) AND $_POST['showCoords'] AND $coordName = display($entry,'ro_module_course_coordinator')) {
-    $html .= "<tr nobr=\"true\"><td></td>
-    <td></td>
-    <td style=\"border-top: 1px solid black;\"><b>Coordinator</b></td>
-    <td style=\"border-top: 1px solid black;\"></td>";
-    if(isset($_POST['showRooms']) AND $_POST['showRooms']=="Yes") {
-        $html .= "<td style=\"border-top: 1px solid black;\"></td>";
-    }
-    $html .= "<td style=\"border-top: 1px solid black;\">".$coordName."</td>";
-    if($displayEnrollment) {
-        $html .= "<td style=\"border-top: 1px solid black;\">$enrollment_controls</td>";
-    }
-    $html .= "</tr>";
-}
+
 
 
 return $html;
