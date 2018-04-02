@@ -197,12 +197,15 @@ if($_POST['memos']) {
     $otherWeights = is_array($otherWeights) ? $otherWeights : array($otherWeights);
     $loadYears = display($entry, 'hr_teaching_loads_year');
     $loadYears = is_array($loadYears) ? $loadYears : array($loadYears);
+    $activeTerms = display($entry, 'hr_teaching_loads_active_terms');
+    $activeTerms = is_array($activeTerms) ? $activeTerms : array($activeTerms);
     $key = array_search($year, $loadYears);
     $targetLoad = $targetLoads[$key];
     $availLoad = $availLoads[$key];
     $usedLoad = number_format($targetLoad-$availLoad,3);
     $otherService = $otherServices[$key];
     $otherWeight = $otherWeights[$key];
+    $activeTerms = $activeTerms[$key];
     
     if(count($courses)==0 AND count($coordCourses)==0 AND count($services)==0 AND !$otherService) {
         return array();
