@@ -1039,6 +1039,22 @@ class formulizeDataHandler  {
 		}
 		return true;
 	}
+    
+    // this function returns the most recent entry in the revision table for a given entry
+    // id is the entry id
+    function getMostRecentRevisionForEntry($id) {
+        $form_handler = xoops_getmodulehandler('forms','formulize');
+        $formObject = $form_handler->get($this->fid);
+        if($formObject->getVar('store_revisions') AND $form_handler->revisionsTableExists($this->fid)) {
+            $GLOBALS['formulize_getDataFromRevisionsTable'] = true;
+            $data = getData("", $this->fid, $id, "AND", "", 0, 1, "revision_id", "DESC");
+            $GLOBALS['formulize_getDataFromRevisionsTable'] = false;
+            return $data;
+        } else {
+            return false;
+        }
+    }
+    
 	
 }
 	

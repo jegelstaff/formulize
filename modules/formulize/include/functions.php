@@ -2758,9 +2758,11 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
 
     // start main loop
     $notificationTemplateData = array();
+    $notificationTemplateRevisionData = array();
     foreach ($entries as $entry) {
       
 	$notificationTemplateData[$entry] = "";
+    $notificationTemplateRevisionData[$entry] = "";
       
         // user list is potentially different for each entry. ignore anything that was passed in for $groups
         if (count($groups) == 0) { // if no groups specified as the owner of the current entry, then let's get that from the table
@@ -2923,14 +2925,24 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
                         if ($notificationTemplateData[$entry][0] == "" OR $notificationTemplateData[$entry] == "") {
                             include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
                             $notificationTemplateData[$entry] = getData("", $fid, $entry);
+                            // if the revision table is on for the form, then gather the data from the most revent revision for the entry
+                            if(!isset($data_handler)) {
+                                $data_handler = new formulizeDataHandler($fid);
+                            }
+                            if($revisionEntry = $data_handler->getMostRecentRevisionForEntry($entry)) {
+                                $notificationTemplateRevisionData[$entry] = $revisionEntry;
+                            }
                         }
                         // get all the element IDs for the current form
                         $form_handler = xoops_getmodulehandler('forms', 'formulize');
                         $formObject = $form_handler->get($fid);
                         foreach ($formObject->getVar('elementHandles') as $elementHandle) {
                             $extra_tags['ELEMENT'.strtoupper($elementHandle)] = trans(html_entity_decode(displayTogether($notificationTemplateData[$entry][0], $elementHandle, ", "), ENT_QUOTES));
+                            if($notificationTemplateRevisionData[$entry]) {
+                                $extra_tags['REVISION_ELEMENT_'.strtoupper($elementHandle)] = trans(html_entity_decode(displayTogether($notificationTemplateRevisionData[$entry][0], $elementHandle, ", "), ENT_QUOTES));
+                            }
                             // for legacy compatibility, we provide both with and without _ keys in the extra tags array.
-                            $extra_tags['ELEMENT_'.strtoupper($elementHandle)] = trans($extra_tags['ELEMENT'.strtoupper($elementHandle)]);
+                            $extra_tags['ELEMENT_'.strtoupper($elementHandle)] = $extra_tags['ELEMENT'.strtoupper($elementHandle)];
                         }
                     }
                 }
