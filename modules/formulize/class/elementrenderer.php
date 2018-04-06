@@ -963,7 +963,7 @@ class formulizeElementRenderer{
 			default:
 				if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
 					$elementTypeHandler = xoops_getmodulehandler($ele_type."Element", "formulize");
-					$form_ele = $elementTypeHandler->render($ele_value, $ele_caption, $form_ele_id, $isDisabled, $this->_ele, $entry, $screen); // $ele_value as passed in here, $caption, name that we use for the element in the markup, flag for whether it's disabled or not, element object, entry id number that this element belongs to, $screen is the screen object that was passed in, if any
+					$form_ele = $elementTypeHandler->render($ele_value, $ele_caption, $form_ele_id, $isDisabled, $this->_ele, $entry, $screen, $owner); // $ele_value as passed in here, $caption, name that we use for the element in the markup, flag for whether it's disabled or not, element object, entry id number that this element belongs to, $screen is the screen object that was passed in, if any
 					// if form_ele is an array, then we want to treat it the same as an "insertbreak" element, ie: it's not a real form element object
 					if(is_object($form_ele)) {
     					if(!$isDisabled AND ($this->_ele->getVar('ele_req') OR $this->_ele->alwaysValidateInputs) AND $this->_ele->hasData) { // if it's not disabled, and either a declared required element according to the webmaster, or the element type itself always forces validation...

@@ -119,7 +119,7 @@ class formulizeDummyElementHandler extends formulizeElementsHandler {
     // $element is the element object
     // $entry_id is the ID number of the entry where this particular element comes from
     // $screen is the screen object that is in effect, if any (may be null)
-    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen) {
+    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
         // dummy element is rendered as a textboxes, with the values set by the user in the admin side smushed together as the default value for the textbox
         if($isDisabled) {
             $formElement = new xoopsFormLabel($caption, $ele_value[0] . $ele_value[1]);
