@@ -74,10 +74,7 @@ class formulize_themeForm extends XoopsThemeForm {
    *
    * @return	string
    */
-  public function render() {
-      return $this->renderFromTemplate();
-  }
-  public function renderFromTemplate($elementsTemplateFile = null) {
+  public function render($elementsTemplateFile = null) {
       $ele_name = $this->getName();
       $ret = "<div id=formulizeform>"
               . "<form id='" . $ele_name
@@ -168,6 +165,13 @@ class formulize_themeForm extends XoopsThemeForm {
         $show_element_edit_link = (is_object($xoopsUser) and in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups()));
 
 		foreach ( $elements as $ele ) {
+
+          	/*
+          	 * 	HERE WE HAVE THE CODE THAT SHOULD BECOME THE DEFAULT ELEMENT TEMPLATE
+          	 *  So in place of this code, which should get transplanted into the default element template file
+          	 *  we need to include the default element template file instead at this point inside the foreach
+
+
 			$label_class = null;
 			$input_class = null;
 			if (isset($ele->formulize_element)) {
@@ -219,6 +223,7 @@ class formulize_themeForm extends XoopsThemeForm {
 			} else {
 				$hidden .= $ele->render();
 			}
+            */
 		}
 		return array($ret, $hidden);
 	}
@@ -815,13 +820,50 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                     $form = writeHiddenSettings($settings, $form);
                 }
 
-                // include who the entry belongs to and the date
-                // include acknowledgement that information has been updated if we have just done a submit
-                // form_meta includes: last_update, created, last_update_by, created_by
+              	// determine if there is an element template in effect and record it if so
+               	$elementTemplateIfAny = ($screen AND ($screen->hasTemplate("formElementsTemplate"))) ? $screen->getCustomTemplateFilePath("formElementsTemplate") : "";
 
-                $breakHTML = "";
+              	// we're rendering a regular form...
+              	if(!$profileForm AND $titleOverride != "all") {
+                    ob_start();
+                    // has screen tests if there's a custom template??
+                    if($screen AND $screen->hasTemplate("formTopTemplate")) {
+                      include $screen->getCustomTemplateFilePath("formTopTemplate");
+                    } else { // side note: what about handling when there's no screen...??
+                      include $screen->getDefaultTemplateFilePath("formTopTemplate");
+                    }
+                    $topTemplate = ob_get_clean();
+                    if(!$elementTemplateIfAny) {
+                        $form->insertBreak($topTemplate, "even");
+                        $topTemplate = "";
+                    }
+                // if we're rendering a profile form (probably never, and will not have templates in effect if it does happen)...
+                } elseif($profileForm) { // VERY OLD DIFFERENT FLOW OF RENDERING A FORM THAT WE SHOULD PROBABLY REMOVE FROM THE FORMDISPLAY.PHP FILE ENTIRELY
+					// if we have a profile form, put the profile fields at the top of the form, populated based on the DB values from the _users table
+					$form = addProfileFields($form, $profileForm);
+				}
+              	// if we're rendering a non-regular form, that has some kind of title override in effect...
+                if($titleOverride=="1" AND !$firstform) { // set onetooneTitle flag to 1 when function invoked to force drawing of the form title over again
+                    $title = trans(getFormTitle($this_fid));
+                    if(!$elementTemplateIfAny) {
+                        $form->insertBreak("<table><th>$title</th></table>","");
+                        $topTemplate = "";
+                    } else {
+                        $topTemplate = "<table><th>$title</th></table>";
+                    }
+                }
 
-                if(!$profileForm AND $titleOverride != "all") {
+
+              	/*
+              	 * all the code commented here goes into the default top template for forms
+              	 *
+
+	                // include who the entry belongs to and the date
+    	            // include acknowledgement that information has been updated if we have just done a submit
+        	        // form_meta includes: last_update, created, last_update_by, created_by
+
+					$breakHTML = "";
+
                     // build the break HTML and then add the break to the form
                     if(!strstr($currentURL, "printview.php")) {
                         $breakHTML .= "<center class=\"no-print\">";
@@ -859,8 +901,8 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                     $breakHTML .= "</p>";
 
 					$breakHTML .= "</td><td width=50% style=\"vertical-align: bottom;\">";
-          // End of Update for Ajax Save
-          if (strstr($currentURL, "printview.php") or !formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
+			        // End of Update for Ajax Save
+          			if (strstr($currentURL, "printview.php") or !formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
 						$breakHTML .= "<p>";
 					} else {
 						// get save and button button options
@@ -898,18 +940,11 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
               $doneInstructions = $done_button_text;
               $breakHTML .= "<br>" . $done_button_text;
 						}
-					}
+                    }
 					$breakHTML .= "</p></td></tr></table>";
-					$form->insertBreak($breakHTML, "even");
-				} elseif($profileForm) {
-					// if we have a profile form, put the profile fields at the top of the form, populated based on the DB values from the _users table
-					$form = addProfileFields($form, $profileForm);
-				}
-			}
+                    print $breakHTML;
+                    */
 
-			if($titleOverride=="1" AND !$firstform) { // set onetooneTitle flag to 1 when function invoked to force drawing of the form title over again
-				$title = trans(getFormTitle($this_fid));
-				$form->insertBreak("<table><th>$title</th></table>","");
 			}
 
 			// if this form has a parent, then determine the $parentLinks
@@ -1027,71 +1062,51 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
     $saveBtn = getSaveButton($printall, $formulizeConfig, $currentURL, $save_text, $subButtonText);
     $allDoneBtn = getAllDoneButton($printall, $formulizeConfig, $currentURL, $done_text, $button_text, $allDoneOverride);
 
-    // TODO: default should be individually assessed, if there's a toptemplate, we should have the other two as regular
-    // as opposed to all having custom templates
-    $hasCustomTopTemplate = ($screen AND ($screen->hasTemplate("formTopTemplate")));
-    $hasCustomElementsTemplate = ($screen AND ($screen->hasTemplate("formElementsTemplate")));
-    $hasCustomBottomTemplate = ($screen AND ($screen->hasTemplate("formBottomTemplate")));
-
-    $formDefaultTopTemplate = false;
-    $formCustomElementsTemplate = false;
-    $formCustomBottomTemplate = false;
-
-    if ($hasCustomTopTemplate) {
-        include $screen->getCustomTemplateFilePath("formTopTemplate");
-    } else {
-        $formDefaultTopTemplate = true;
-    }
-
-    if ($hasCustomElementsTemplate) {
-        $formCustomElementsTemplate = true;
-        print $form->renderFromTemplate($screen->getCustomTemplateFilePath("formElementsTemplate"));
-    }
-
-    if ($hasCustomBottomTemplate) {
-        $formCustomBottomTemplate = true;
-    } else {
       // draw in the submitbutton if necessary
       $subButtonText = '';
       $allDoneOverride_temp = $allDoneOverride;
       if ($entry AND !$formElementsOnly) { // existing entry, if it's their own and they can update their own, or someone else's and they can update someone else's
           if (($owner == $uid AND $update_own_entry) OR ($owner != $uid AND $update_other_entries)) {
-              if (!$formulizeConfig['floatSave']) {
-                  $form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, $allDoneOverride, $printall, $screen); //nmc 2007.03.24 - added $printall
-              } else {
-                  $subButtonText = _formulize_SAVE;
-              }
+              $buttons = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, $allDoneOverride, $printall, $screen); //nmc 2007.03.24 - added $printall
           } else {
-              if (!$formulizeConfig['floatSave']) {
-                  $form = addSubmitButton($form, '', $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, false, $printall, $screen); //nmc 2007.03.24 - added $printall
-              } else {
-                  $allDoneOverride_temp = false;
-              }
+              $buttons = addSubmitButton($form, '', $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, false, $printall, $screen); //nmc 2007.03.24 - added $printall
           }
       } elseif (!$formElementsOnly) { // new entry
           if ($gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid) OR $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid)) {
-              if (!$formulizeConfig['floatSave']) {
-                  $form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, $allDoneOverride, $printall, $screen); //nmc 2007.03.24 - added $printall
-              } else {
-                  $subButtonText = _formulize_SAVE;
-              }
+              $buttons = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, $allDoneOverride, $printall, $screen); //nmc 2007.03.24 - added $printall
           } else {
-              if (!$formulizeConfig['floatSave']) {
-                  $form = addSubmitButton($form, '', $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, false, $printall, $screen); //nmc 2007.03.24 - added $printall
-              } else {
-                  $allDoneOverride_temp = false;
-              }
+              $buttons = addSubmitButton($form, '', $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, false, $printall, $screen); //nmc 2007.03.24 - added $printall
           }
       }
+
+
+    foreach($buttons as $side=>$theseButtons) {
+    	foreach($theseButtons as $buttonHandle=>$buttonHTML) {
+      		${buttonHandle} = $buttonHTML;
+      	}
     }
 
-    if ($formDefaultTopTemplate && !$formCustomElementsTemplate) {
-      print "<div $idForForm>".$form->render()."</div><!-- end of formulizeform -->"; // note, security token is included in the form by the xoops themeform render method, that's why there's no explicity references to the token in the compiling/generation of the main form object
+    if($screen AND $screen->hasTemplate("formBottomTemplate")) { //
+		$bottomTemplatePath = $screen->getCustomTemplateFilePath("formBottomTemplate");
+    } else {
+      	$bottomTemplatePath = $screen->getDefaultTemplateFilePath("formBottomTemplate");
+    }
+    ob_start();
+    include $bottomTemplatePath;
+    $bottomTemplate = ob_get_clean();
+    if(!$elementTemplateIfAny) { // show the bottom template neatly inside the form if it's going to be a normal rendered form, no custom element template
+      $form->insertBreak($bottomTemplate, "even");
+      $bottomTemplate = "";
     }
 
-    if ($formCustomBottomTemplate) {
-      include $screen->getCustomTemplateFilePath("formBottomTemplate");
-    }
+    // DEFAULT BOTTOM TEMPLATE CONTENTS FOR THE FILE:
+
+    print "<p>".$printButton."&nbsp;".$printAllButton."&nbsp;"."&nbsp;"."&nbsp;"."&nbsp;"."&nbsp;"."&nbsp;"."&nbsp;".$saveButton."&nbsp;".$saveAndLeaveButton."&nbsp;".$doneButton."</p>";
+
+    // END OF THE DEFAULT BOTTOM TEMPLATE
+
+    print "<div $idForForm>".$topTemplate.$form->render($elementTemplateIfAny).$bottomTemplate."</div><!-- end of formulizeform -->"; // note, security token is included in the form by the xoops themeform render method, that's why there's no explicity references to the token in the compiling/generation of the main form object
+
 
 		global $formulize_governingElements;
 		global $formulize_oneToOneElements;
@@ -1152,7 +1167,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		$idForForm = $formElementsOnly ? "" : "id=\"formulizeform\""; // when rendering disembodied forms, don't use the master id!
 
         // floating save button
-        if($printall != 2 AND $formulizeConfig['floatSave'] AND !strstr($currentURL, "printview.php") AND !$formElementsOnly){
+        /*if($printall != 2 AND $formulizeConfig['floatSave'] AND !strstr($currentURL, "printview.php") AND !$formElementsOnly){
             print "<div id=floattest></div>";
             if( $done_text !="{NOBUTTON}" OR $save_text !="{NOBUTTON}") {
                 print "<div id=floatingsave>";
@@ -1169,7 +1184,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                 }
                 print "</div>";
             }
-        }
+        }*/
         // end floating save button
 
 		// if we're in Drupal, include the main XOOPS js file, so the calendar will work if present...
@@ -1207,6 +1222,7 @@ function getAllDoneButton($printall, $formulizeConfig, $currentURL, $done_text, 
     return $allDoneBtn;
 }
 
+/*
 function printFloatingSave($saveBtn, $allDoneBtn, $printall, $formulizeConfig, $currentURL, $done_text, $save_text) {
     if ($printall != 2 AND $formulizeConfig['floatSave'] AND !strstr($currentURL, "printview.php")) {
         if ($done_text != "{NOBUTTON}" OR $save_text != "{NOBUTTON}") {
@@ -1214,7 +1230,7 @@ function printFloatingSave($saveBtn, $allDoneBtn, $printall, $formulizeConfig, $
             print "<div id='floatingsave'>" . $saveBtn . $allDoneBtn . "</div>";
         }
     }
-}
+}*/
 
 // THIS FUNCTION ADDS THE SPECIAL PROFILE FIELDS TO THE TOP OF A PROFILE FORM
 function addProfileFields($form, $profileForm) {
@@ -1464,6 +1480,13 @@ function addPrintableviewButton($printBtn, $form, $save_text_temp, $currentURL, 
 }
 
 // add the submit button to a form
+
+  // REFACTORING OF THIS FUNCTION....
+  // EACH OF THE CONSTITUENT BUTTONS THAT IS CURRENTLY ADDED TO THE BUTTON TRAY, NEEDS TO INSTEAD GO INTO AN ARRAY, AND GET PASSED BACK AS THE RETURN VALUE OF THE FUNCTION
+  // THE ARRAY SHOULD HAVE TWO KEYS, LEFT AND RIGHT, TO INDICATE WHERE THE BUTTON WOULD NORMALLY APPEAR
+  // IE: array('left'=>array($printButton), 'right'=>array($saveButton, $doneButton));
+
+
 function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $button_text, $settings, $entry, $fids, $formframe, $mainform, $cur_entry, $profileForm, $elements_allowed="", $allDoneOverride=false, $printall=0, $screen=null) { //nmc 2007.03.24 - added $printall
 
 	if($printall == 2) { // 2 is special setting in multipage screens that means do not include any printable buttons of any kind
@@ -1501,36 +1524,41 @@ function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $butto
 			$ele_allowed = implode(",",$elements_allowed);
 		}
 		$printbutton->setExtra("onclick='javascript:PrintPop(\"$ele_allowed\");'");
-		$rendered_buttons = $printbutton->render(); // nmc 2007.03.24 - added
+		// $rendered_buttons = $printbutton->render(); // nmc 2007.03.24 - added
 		if ($printall) {																					// nmc 2007.03.24 - added
 			$printallbutton = new XoopsFormButton('', 'printallbutton', _formulize_PRINTALLVIEW, 'button');	// nmc 2007.03.24 - added
 			$printallbutton->setExtra("onclick='javascript:PrintAllPop();'");								// nmc 2007.03.24 - added
-			$rendered_buttons .= "&nbsp;&nbsp;&nbsp;" . $printallbutton->render();							// nmc 2007.03.24 - added
+			// $rendered_buttons .= "&nbsp;&nbsp;&nbsp;" . $printallbutton->render();							// nmc 2007.03.24 - added
 			}
-		$buttontray = new XoopsFormElementTray($rendered_buttons, "&nbsp;"); // nmc 2007.03.24 - amended [nb: FormElementTray 'caption' is actually either 1 or 2 buttons]
-	} else {
-		$buttontray = new XoopsFormElementTray("", "&nbsp;");
+
+      // $rendered_buttons is the only thing that should come back as a "left" item
+      // ie:
+      if (!is_null($printallbutton))$leftButtons = array('printButton'=>$printbutton->render(), 'printAllButton'=>$printallbutton->render());
+
+  	} else {
+
+      	$leftButtons = array();
 	}
-	$buttontray->setClass("no-print");
 
     if($subButtonText == _formulize_SAVE) { // _formulize_SAVE is passed only when the save button is allowed to be drawn
         if($save_text_temp) { $subButtonText = $save_text_temp; }
         if($subButtonText != "{NOBUTTON}") {
             $saveButton = new XoopsFormButton('', 'submitx', trans($subButtonText), 'button'); // doesn't use name submit since that conflicts with the submit javascript function
             $saveButton->setExtra("onclick=javascript:validateAndSubmit();");
-            $buttontray->addElement($saveButton);
             // also add in the save and leave button
             $saveAndLeaveButton = new XoopsFormButton('', 'submit_save_and_leave', trans(_formulize_SAVE_AND_LEAVE), 'button');
             $saveAndLeaveButton->setExtra("onclick=javascript:validateAndSubmit('leave');");
-            $buttontray->addElement($saveAndLeaveButton);
+          // THIS IS A BUTTON TO CATCH
+          $rightButtons = array('saveButton'=>$saveButton->render(), 'saveAndLeaveButton'=>$saveAndLeaveButton->render());
         }
     }
 
 	if((($button_text != "{NOBUTTON}" AND !$done_text_temp) OR (isset($done_text_temp) AND $done_text_temp != "{NOBUTTON}")) AND !$allDoneOverride) {
 		if($done_text_temp) { $button_text = $done_text_temp; }
-		$donebutton = new XoopsFormButton('', 'donebutton', trans($button_text), 'button');
-		$donebutton->setExtra("onclick=javascript:verifyDone();");
-		$buttontray->addElement($donebutton);
+		$doneButton = new XoopsFormButton('', 'doneButton', trans($button_text), 'button');
+		$doneButton->setExtra("onclick=javascript:verifyDone();");
+      // THIS IS A BUTTON TO CATCH
+      	$rightButtons = array('doneButton'=>$doneButton->render());
 	}
 
 	if(!$profileForm) { // do not use printable button for profile forms
@@ -1572,11 +1600,11 @@ function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $butto
 		//added by Cory Aug 27, 2005 to make forms printable
 	}
 
-	$trayElements = $buttontray->getElements();
-	if(count($trayElements) > 0 OR $nosubforms) {
-		$form->addElement($buttontray);
-	}
-	return $form;
+    if(count($leftButtons)>0 OR count($rightButtons)>0) {
+      return array('left'=>$leftButtons, 'right'=>$rightButtons);
+    }
+
+	return false;
 	}
 }
 
