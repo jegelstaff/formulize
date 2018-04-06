@@ -1,0 +1,71 @@
+<div class="form-item">
+	<fieldset>
+		<legend>What are the options the user can choose from?</legend>
+		<div class="form-radios">
+			<input type="radio" id="yes" name="linked_yesno" value="1"<{if $content.islinked eq 1}> checked="checked"<{/if}>/>Use the values that people have entered in this form element: <{$content.linkedoptions}>
+		</div>
+		<div class="form-radios">
+			<input type="radio" id="no" name="linked_yesno" value="0"<{if $content.islinked eq 0}> checked="checked"<{/if}>/>Use the options specified below:
+		</div>
+		<{include file="db:admin/element_optionlist.html"}>	
+		
+	</div>
+
+	<div class="form-item">
+	<fieldset>
+		<legend>If the options are linked -- or are {FULLNAMES} or {USERNAMES}</legend>
+		<div class="form-item">
+		<fieldset>
+			<legend>Limit them to values from the groups selected here</legend>
+			<select id="element-formlink_scope" name="element_formlink_scope[]" size="10" multiple>
+			<{html_options options=$content.formlink_scope_options selected=$content.formlink_scope}>
+			</select>
+			<br/><br/>
+		<fieldset>
+			<div class="form-radios">
+				<label for="elements-ele_value[4]-0"><input type="radio" id="elements-ele_value[4]-0" name="elements-ele_value[4]" value="0"<{if $content.ele_value[4] eq 0}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_FORMLINK_SCOPELIMIT_NO}></label>
+			</div>
+			<div class="form-radios"><label for="elements-ele_value[4]-1"><input type="radio" id="elements-ele_value[4]-1" name="elements-ele_value[4]" value="1"<{if $content.ele_value[4] eq 1}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_FORMLINK_SCOPELIMIT_YES}></label></div>
+		</fieldset>
+		<fieldset>
+			<div class="form-radios">
+				<label for="elements-ele_value[6]-0"><input type="radio" id="elements-ele_value[6]-0" name="elements-ele_value[6]" value="0"<{if $content.ele_value[6] eq 0}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_FORMLINK_ANYALL_ANY}></label>
+			</div>
+			<div class="form-radios">
+				<label for="elements-ele_value[6]-1"><input type="radio" id="elements-ele_value[6]-1" name="elements-ele_value[6]" value="1"<{if $content.ele_value[6] eq 1}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_FORMLINK_ANYALL_ALL}></label>
+			</div>
+		</fieldset>
+		<div class="description">
+			<{$smarty.const._AM_ELE_FORMLINK_SCOPE_DESC}>
+		</div>
+		</fieldset>
+	</div>
+
+		  <div class="form-item">
+			  <fieldset>
+				  <legend>Filter them based on these properties of their entry in the source form</legend>
+				  <div id="filterdiv">
+				  <{$content.formlinkfilter}>
+				  </div>
+				  <div class="description">
+					  <{$smarty.const._AM_ELE_FORMLINK_SCOPEFILTER_DESC}>
+				  </div>
+			  </fieldset>
+		  </div>
+
+		  <div class="form-item">
+		    <fieldset>
+			    <legend>Show as links in lists of entries?</legend>
+	          <div class="form-radios">
+		          <label for="elements-ele_value[7]-1"><input type="radio" id="elements-ele_value[7]-1" name="elements-ele_value[7]" value="1" <{if $content.ele_value[7] eq 1}>checked<{/if}>/>Yes, make these values clickable in lists of entries so people can go to the source form easily</label>
+	          </div>
+	          <div class="form-radios">
+              <label for="elements-ele_value[7]-0"><input type="radio" id="elements-ele_value[7]-0" name="elements-ele_value[7]" value="0" <{if $content.ele_value[7] eq 0}>checked<{/if}>/>No, just show the selected value as text</label>
+	          </div>
+			    <div class="description">
+			    </div>
+		    </fieldset>
+	    </div>
+
+    </fieldset>
+    </div>
