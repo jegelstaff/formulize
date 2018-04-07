@@ -988,7 +988,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
     }
 
     if($screen AND $screen->hasTemplate("formBottomTemplate")) { //
-		$bottomTemplatePath = $screen->getCustomTemplateFilePath("formBottomTemplate");
+		    $bottomTemplatePath = $screen->getCustomTemplateFilePath("formBottomTemplate");
     } else {
       	$bottomTemplatePath = $screen->getDefaultTemplateFilePath("formBottomTemplate");
     }
@@ -999,10 +999,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
       $form->insertBreak($bottomTemplate, "even");
       $bottomTemplate = "";
     }
-
-    // DEFAULT BOTTOM TEMPLATE CONTENTS FOR THE FILE:
-
-    print "<p>".$printButton."&nbsp;".$printAllButton."&nbsp;"."&nbsp;"."&nbsp;"."&nbsp;"."&nbsp;"."&nbsp;"."&nbsp;".$saveButton."&nbsp;".$saveAndLeaveButton."&nbsp;".$doneButton."</p>";
 
     // END OF THE DEFAULT BOTTOM TEMPLATE
 
