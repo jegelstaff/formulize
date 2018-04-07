@@ -50,6 +50,13 @@ include_once XOOPS_ROOT_PATH . "/include/functions.php";
 // NEED TO USE OUR OWN VERSION OF THE CLASS, TO GET ELEMENT NAMES IN THE TR TAGS FOR EACH ROW
 class formulize_themeForm extends XoopsThemeForm {
 
+  // to come later...
+  public $topTemplate;
+  public $bottomTemplate;
+  // used now...
+  public $elementTemplatePath;
+  public $customTemplateInEffect;
+
   /**
    * Insert an empty row in the table to serve as a seperator.
    *
@@ -74,7 +81,7 @@ class formulize_themeForm extends XoopsThemeForm {
    *
    * @return	string
    */
-  public function render($elementsTemplateFile = null) {
+  public function render() {
       $ele_name = $this->getName();
       $ret = "<div id=formulizeform>"
               . "<form id='" . $ele_name
@@ -82,12 +89,12 @@ class formulize_themeForm extends XoopsThemeForm {
               . "' action='" . $this->getAction()
               . "' method='" . $this->getMethod()
               . "' onsubmit='return xoopsFormValidate_" . $ele_name . "();'" . $this->getExtra() . ">";
-      if ($elementsTemplateFile != null) {
+      if ($this->customTemplateInEffect) {
           $hidden = '';
-          list($elements, $hidden) = $this->_drawElements($this->getElements(), $elementsTemplateFile);
+          list($elements, $hidden) = $this->_drawElements();
           $ret .= "\n$elements\n$hidden\n";
       } else {
-          $ret .= $this->renderDefault($defaultElementsTemplateFile);
+          $ret .= $this->renderDefault();
       }
 
       $ret .= "\n</form>\n";
@@ -105,7 +112,7 @@ class formulize_themeForm extends XoopsThemeForm {
                   <tr><th colspan='2'><h1 class=\"formulize-form-title\">" . $this->getTitle() . "</h1></th></tr>
               ";
 		$hidden = '';
-		list($elements, $hidden) = $this->_drawElements($this->getElements(), $defaultElementsTemplateFile);
+		list($elements, $hidden) = $this->_drawElements();
 		$ret .= "$elements\n</table>\n$hidden\n</div>\n";
 		return $ret;
   }
@@ -125,14 +132,16 @@ class formulize_themeForm extends XoopsThemeForm {
       return $js;
     }
 
-  function _drawElements($elements, $elementsTemplateFile = null) {
+  function _drawElements() {
 
-    if ($elementsTemplateFile != null) {
+    $elements = $this->getElements();
+    if ($this->customTemplateInEffect) {
         $renderedElements = array();
         $hidden = array();
         foreach ($elements as $ele) {
-            list($renderedElements[], $hidden[]) = $this->drawElementCustomTemplate($ele, $elementsTemplateFile);
+            list($renderedElements[], $hidden[]) = $this->drawElementCustomTemplate($ele);
         }
+
         $renderedElements = implode("\n", $renderedElements);
         $hidden = implode("\n", $hidden);
     } else {
@@ -141,81 +150,38 @@ class formulize_themeForm extends XoopsThemeForm {
     return array($renderedElements, $hidden);
   }
 
-  // HANDLING OF HIDDEN ELEMENTS IS UP IN THE AIR???
-  private function drawElementCustomTemplate($ele, $elementsTemplateFile) {
-      if (is_object($ele) && !$ele->isHidden() && $ele->getCaption() != '') {
+  private function drawElementCustomTemplate($ele) {
 
-          // These variable's are specified as usable variables for the custom
-          // templates. Changing these variable names could cause a client's
-          // custom template to break since their template would rely on them.
-          $elementCaption = $ele->getCaption();
-          $elementIsRequired = $ele->isRequired();
-          $elementDescription = $ele->getDescription();
-          $elementField = $ele->render();
+    // These variable's are specified as usable variables for the custom
+    // templates. Changing these variable names could cause a client's
+    // custom template to break since their template would rely on them.
+    $elementCaption = $ele->getCaption();
+    $elementIsRequired = $ele->isRequired();
+    $elementDescription = $ele->getDescription();
+    $elementField = $ele->render();
+
+      if (is_object($ele) && !$ele->isHidden()) {
           ob_start();
-          include $elementsTemplateFile;
-          return ob_get_clean();
+          include $this->elementTemplatePath;
+          $renderedElement = ob_get_clean();
+        	return array($renderedElement, "");
+      } elseif(is_object($ele)) {
+  			// HANDLING OF HIDDEN ELEMENTS IS UP IN THE AIR!!!!!!!
+        // ARE HIDDEN ELEMENTS ALREADY PREPARED AS SUCH IN THE ELEMENTS ARRAY? SO THEY WOULD RENDER NORMALLY AT THIS POINT??
+      } else {
+        return false;
       }
+
   }
 
-  private function drawElementDefault($elements, $ret, $hidden) {
+  private function drawElementDefault($elements) {
 		$class ='even';
 
         global $xoopsUser;
         $show_element_edit_link = (is_object($xoopsUser) and in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups()));
 
 		foreach ( $elements as $ele ) {
-      $label_class = null;
-			$input_class = null;
-			if (isset($ele->formulize_element)) {
-				$label_class = " formulize-label-".$ele->formulize_element->getVar("ele_handle");
-				$input_class = " formulize-input-".$ele->formulize_element->getVar("ele_handle");
-			}
-			if (!is_object($ele)) {// just plain add stuff if it's a literal string...
-				if(strstr($ele, "<<||>>")) {
-					$ele = explode("<<||>>", $ele);
-					$ret .= "<tr id='formulize-".$ele[1]."'>".$ele[0]."</tr>";
-				} elseif(substr($ele, 0, 3) != "<tr") {
-					$ret .= "<tr>$ele</tr>";
-				} else {
-					$ret .= $ele;
-				}
-			} elseif ( !$ele->isHidden() ) {
-				$ret .= "<tr id='formulize-".$ele->getName()."' class='".$ele->getClass()."' valign='top' align='" . _GLOBAL_LEFT . "'><td class='head$label_class'>";
-				if (($caption = $ele->getCaption()) != '') {
-					$ret .=
-					"<div class='xoops-form-element-caption" . ($ele->isRequired() ? "-required" : "" ) . "'>"
-						. "<span class='caption-text'>{$caption}</span>"
-						. "<span class='caption-marker'>" . ($ele->isRequired() ? "*" : "" ) . "</span>"
-						. "</div>";
-				}
-				if (($desc = $ele->getDescription()) != '') {
-					$ret .= "<div class='xoops-form-element-help'>{$desc}</div>";
-				}
-
-                $ret .= "</td><td class='$class$input_class'>";
-                if ($show_element_edit_link) {
-                    $element_name = trim($ele->getName());
-                    switch ($element_name) {
-                        case 'control_buttons':
-                        case 'proxyuser':
-                            // Do nothing
-                            break;
-
-                        default:
-                            if (is_object($ele) and isset($ele->formulize_element)) {
-                                $ret .= "<a class=\"formulize-element-edit-link\" tabindex=\"-1\" href=\"" . XOOPS_URL .
-                                    "/modules/formulize/admin/ui.php?page=element&aid=0&ele_id=" .
-                                    $ele->formulize_element->getVar("ele_id") . "\" target=\"_blank\">edit element</a>";
-                            }
-                            break;
-                    }
-                }
-                $ret .=  $ele->render()."</td></tr>\n";
-
-			} else {
-				$hidden .= $ele->render();
-			}
+      include $this->elementTemplatePath;
 		}
 		return array($ret, $hidden);
 	}
@@ -813,7 +779,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                 }
 
               	// determine if there is an element template in effect and record it if so
-               	$elementTemplateIfAny = ($screen AND ($screen->hasTemplate("formElementsTemplate"))) ? $screen->getCustomTemplateFilePath("formElementsTemplate") : "";
+        				$customTemplateInEffect = ($screen AND ($screen->hasTemplate("formElementsTemplate"))) ? true : false;
 
               	// we're rendering a regular form...
               	if(!$profileForm AND $titleOverride != "all") {
@@ -825,8 +791,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                       include $screen->getDefaultTemplateFilePath("formTopTemplate");
                     }
                     $topTemplate = ob_get_clean();
-
-                    if(!$elementTemplateIfAny) {
+                    if(!$customTemplateInEffect) {
                         $form->insertBreak($topTemplate, "even");
                         $topTemplate = "";
                     }
@@ -838,7 +803,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
               	// if we're rendering a non-regular form, that has some kind of title override in effect...
                 if($titleOverride=="1" AND !$firstform) { // set onetooneTitle flag to 1 when function invoked to force drawing of the form title over again
                     $title = trans(getFormTitle($this_fid));
-                    if(!$elementTemplateIfAny) {
+                    if(!$customTemplateInEffect) {
                         $form->insertBreak("<table><th>$title</th></table>","");
                         $topTemplate = "";
                     } else {
@@ -980,10 +945,9 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
           }
       }
 
-
     foreach($buttons as $side=>$theseButtons) {
     	foreach($theseButtons as $buttonHandle=>$buttonHTML) {
-      		${buttonHandle} = $buttonHTML;
+      		${$buttonHandle} = $buttonHTML;
       	}
     }
 
@@ -995,14 +959,20 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
     ob_start();
     include $bottomTemplatePath;
     $bottomTemplate = ob_get_clean();
-    if(!$elementTemplateIfAny) { // show the bottom template neatly inside the form if it's going to be a normal rendered form, no custom element template
+    if(!$customTemplateInEffect) { // show the bottom template neatly inside the form if it's going to be a normal rendered form, no custom element template
       $form->insertBreak($bottomTemplate, "even");
       $bottomTemplate = "";
     }
 
-    // END OF THE DEFAULT BOTTOM TEMPLATE
+    /*$defaultElementTemplate = $screen->getDefaultTemplateFilePath("formElementTemplate");
+    $form->setDefaultElementTemplate($defaultElementTemplate);
+    $form->getDefaultElementTemplate();
 
-    print "<div $idForForm>".$topTemplate.$form->render($elementTemplateIfAny).$bottomTemplate."</div><!-- end of formulizeform -->"; // note, security token is included in the form by the xoops themeform render method, that's why there's no explicity references to the token in the compiling/generation of the main form object
+    $defaultElementTemplate = $screen->getDefaultTemplateFilePath("formElementTemplate");*/
+		$elementTemplatePath = $customTemplateInEffect ? $screen->getCustomTemplateFilePath("formElementsTemplate") : $screen->getDefaultTemplateFilePath("formElementsTemplate");
+		$form->elementTemplatePath = $elementTemplatePath;
+    $form->customTemplateInEffect = $customTemplateInEffect;
+    print "<div $idForForm>".$topTemplate.$form->render().$bottomTemplate."</div><!-- end of formulizeform -->"; // note, security token is included in the form by the xoops themeform render method, that's why there's no explicity references to the token in the compiling/generation of the main form object
 
 
 		global $formulize_governingElements;
@@ -1386,6 +1356,9 @@ function addPrintableviewButton($printBtn, $form, $save_text_temp, $currentURL, 
 
 function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $button_text, $settings, $entry, $fids, $formframe, $mainform, $cur_entry, $profileForm, $elements_allowed="", $allDoneOverride=false, $printall=0, $screen=null) { //nmc 2007.03.24 - added $printall
 
+  $leftButtons = array();
+  $rightButtons = array();
+
 	if($printall == 2) { // 2 is special setting in multipage screens that means do not include any printable buttons of any kind
 		return $form;
 	}
@@ -1421,20 +1394,14 @@ function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $butto
 			$ele_allowed = implode(",",$elements_allowed);
 		}
 		$printbutton->setExtra("onclick='javascript:PrintPop(\"$ele_allowed\");'");
+    $leftButtons['printButton'] = $printbutton->render();
 		// $rendered_buttons = $printbutton->render(); // nmc 2007.03.24 - added
 		if ($printall) {																					// nmc 2007.03.24 - added
 			$printallbutton = new XoopsFormButton('', 'printallbutton', _formulize_PRINTALLVIEW, 'button');	// nmc 2007.03.24 - added
 			$printallbutton->setExtra("onclick='javascript:PrintAllPop();'");								// nmc 2007.03.24 - added
 			// $rendered_buttons .= "&nbsp;&nbsp;&nbsp;" . $printallbutton->render();							// nmc 2007.03.24 - added
-			}
-
-      // $rendered_buttons is the only thing that should come back as a "left" item
-      // ie:
-      if (!is_null($printallbutton))$leftButtons = array('printButton'=>$printbutton->render(), 'printAllButton'=>$printallbutton->render());
-
-  	} else {
-
-      	$leftButtons = array();
+    	$leftButtons['printAllButton'] = $printallbutton->render();
+		}
 	}
 
     if($subButtonText == _formulize_SAVE) { // _formulize_SAVE is passed only when the save button is allowed to be drawn
@@ -1455,7 +1422,7 @@ function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $butto
 		$doneButton = new XoopsFormButton('', 'doneButton', trans($button_text), 'button');
 		$doneButton->setExtra("onclick=javascript:verifyDone();");
       // THIS IS A BUTTON TO CATCH
-      	$rightButtons = array('doneButton'=>$doneButton->render());
+      	$rightButtons['doneButton'] = $doneButton->render();
 	}
 
 	if(!$profileForm) { // do not use printable button for profile forms
