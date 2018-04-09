@@ -234,7 +234,7 @@ function daraCreateNewYear($sourceYear) {
         $semDates_handler->setEntryOwnerGroups($xoopsUser->getVar('uid'),$xoopsDB->getInsertId());
     }
     //make new courses, 
-    $idssql = "SELECT entry_id FROM ".$xoopsDB->prefix('formulize_ro_module')." WHERE ro_module_year = '".formulize_db_escape($sourceYear)."' AND ro_module_existing_or_new_course = 'Existing'";
+    $idssql = "SELECT entry_id FROM ".$xoopsDB->prefix('formulize_ro_module')." WHERE ro_module_year = '".formulize_db_escape($sourceYear)."'";
     $res = $xoopsDB->query($idssql);
     $courseMap = array();
     while($row = $xoopsDB->fetchRow($res)) {
