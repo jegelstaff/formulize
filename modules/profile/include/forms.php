@@ -36,10 +36,12 @@ function &getRegisterForm(&$user, $profile, $next_step = 0, $step) {
         $weights[0][] = 0;
         $elements[0][] = array('element' => new icms_form_elements_Text(_US_NICKNAME, "uname", $uname_size, 75, $user->getVar('uname', 'e')), 'required' => true);
         $weights[0][] = 0;
-        $elements[0][] = array('element' => new icms_form_elements_Password(_MD_PROFILE_PASSWORD, "pass", 10, 32, "", false, ($icmsConfigUser['pass_level']?'password_adv':'')), 'required' => true);
-        $weights[0][] = 0;
-        $elements[0][] = array('element' => new icms_form_elements_Password(_MD_PROFILE_VERIFYPASS, "vpass", 10, 32, ""), 'required' => true);
-        $weights[0][] = 0;
+        if ($icmsConfigUser['exclude_pass'] != 1) {
+            $elements[0][] = array('element' => new icms_form_elements_Password(_MD_PROFILE_PASSWORD, "pass", 10, 32, "", false, ($icmsConfigUser['pass_level']?'password_adv':'')), 'required' => true);
+            $weights[0][] = 0;
+            $elements[0][] = array('element' => new icms_form_elements_Password(_MD_PROFILE_VERIFYPASS, "vpass", 10, 32, ""), 'required' => true);
+            $weights[0][] = 0;
+        }
     }
 
     // Dynamic fields

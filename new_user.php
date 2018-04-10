@@ -9,6 +9,11 @@ include_once ICMS_ROOT_PATH . '/modules/formulize/include/functions.php';
 include ICMS_ROOT_PATH .'/include/registerform.php';
 include_once ICMS_ROOT_PATH . '/modules/profile/language/english/main.php';
 include_once ICMS_ROOT_PATH .'/language/english/user.php';
+include_once(XOOPS_ROOT_PATH.'/integration_api.php');
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
 
 //protect against an attempt to directly enter the url into the browser for this page. Don't want it to be too public.
@@ -27,8 +32,9 @@ if (isset($_GET['newuser']) && ($_GET['newuser'] == $_SESSION['newuser'])) {
                 $login_name = str_replace(' ', '', $login_name);
                 $uname = $_POST["uname"];
                 $email = $_POST["email"];
-                $pass = $_POST["pass"];
-                $vpass =  $_POST["vpass"];
+                //make a random but fake password here since we anticipate the user to only need google login, unless they change it later
+                $pass = bin2hex(openssl_random_pseudo_bytes(32));
+                $vpass =  $pass;
                 $timezone_offset =  $_POST["timezone_offset"];
                 $member_handler = icms::handler('icms_member');
                 $user_handler = icms::handler('icms_member_user');
@@ -65,10 +71,12 @@ if (isset($_GET['newuser']) && ($_GET['newuser'] == $_SESSION['newuser'])) {
                             include 'footer.php';
                             exit();
 		            	}
+                        Formulize::init();
+                        if(Formulize::createResourceMapping(Formulize::USER_RESOURCE, $_SESSION['email'], $newid)){
+                            header("Location: ".XOOPS_URL."/?code=".$_GET['newuser']."&newcode=".$_GET['newuser']);
+                            exit();
+                        }
 
-
-                        header("Location: ".XOOPS_URL."/?code=".$_GET['newuser']."&newcode=".$_GET['newuser']);
-                        exit();
                     }
                     }
         else {
@@ -115,6 +123,7 @@ function renderRegForm(){
         //set config to not use captcha but manual auth token from admin instead
         $icmsConfigUser['use_captcha'] = 0;
         $icmsConfigUser['use_token'] = 1;
+        $icmsConfigUser['exclude_pass'] = 1;
 
         $reg_form = getRegisterForm($newuser, $profile, 0, $steps[0]);
 
