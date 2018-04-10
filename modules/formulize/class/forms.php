@@ -192,7 +192,7 @@ function checkFormOwnership($id_form,$form_handle){
 
     static function sanitize_handle_name($handle_name) {
         // strip non-alphanumeric characters from form and element handles
-        return preg_replace("/[^a-zA-Z0-9_]+/", "", $handle_name);
+        return preg_replace("/[^a-zA-Z0-9_-]+/", "", $handle_name);
     }
 
     public function assignVar($key, $value) {
