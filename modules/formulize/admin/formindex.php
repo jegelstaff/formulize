@@ -65,7 +65,7 @@ $eh = new ErrorHandler;
 // returns the result object of the query if it was successful
 function formulize_DBPatchCheckSQL($sql, &$needsPatch) {
     global $xoopsDB;
-    //print $sql."<br>";
+   // print $sql."<br>";
     if (!$needsPatchRes = $xoopsDB->queryF($sql)) {
         print "Error: ".$xoopsDB->error()."<br>We could not determine if your Formulize database structure is up to date.  Please contact <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a> for assistance.<br>\n";
         return false;
@@ -113,6 +113,7 @@ function patch40() {
      * ====================================== */
 
     $checkThisTable = 'formulize_apikeys';
+    $checkThisTableToken = 'formulize_tokens';
     $checkThisField = false; 
     $checkThisProperty = false;
     $checkPropertyForValue = false;
@@ -120,13 +121,27 @@ function patch40() {
     $needsPatch = false;
 
     $tableCheckSql = "SELECT 1 FROM information_schema.tables WHERE table_name = '".$xoopsDB->prefix(formulize_db_escape($checkThisTable)) ."'";
+    $tableCheckSqlToken = "SELECT 1 FROM information_schema.tables WHERE table_name = '".$xoopsDB->prefix(formulize_db_escape($checkThisTableToken)) ."'";
     $tableCheckRes = formulize_DBPatchCheckSQL($tableCheckSql, $needsPatch); // may modify needsPatch!
-    if ($tableCheckRes AND !$needsPatch AND $checkThisField) { // table was found, and we're looking for a field in it
+    $tableCheckResToken = formulize_DBPatchCheckSQL($tableCheckSqlToken, $needsPatch);
+    if ( $tableCheckRes AND !$needsPatch AND $checkThisField) { // table was found, and we're looking for a field in it
         $fieldCheckSql = "SHOW COLUMNS FROM " . $xoopsDB->prefix(formulize_db_escape($checkThisTable)) ." LIKE '".formulize_db_escape($checkThisField)."'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
         $fieldCheckRes = formulize_DBPatchCheckSQL($fieldCheckSql, $needsPatch); // may modify needsPatch!
     }
+    if($tableCheckResToken AND !$needsPatch AND $checkThisField){
+        //check for patch for token table
+        $fieldCheckSqlToken = "SHOW COLUMNS FROM " . $xoopsDB->prefix(formulize_db_escape($checkThisTableToken)) ." LIKE '".formulize_db_escape($checkThisField)."'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
+        $fieldCheckResToken = formulize_DBPatchCheckSQL($fieldCheckSqlToken, $needsPatch); // may modify needsPatch!
+
+    }
     if ($fieldCheckRes AND !$needsPatch AND $checkPropertyForValue) {
         $fieldCheckArray = $xoopsDB->fetchArray($fieldCheckRes);
+        if ($fieldCheckArray[$checkThisProperty] != $checkPropertyForValue) {
+            $needsPatch = true;
+        }
+    }
+    if($fieldCheckResToken AND !$needsPatch AND $checkPropertyForValue) {
+        $fieldCheckArray = $xoopsDB->fetchArray($fieldCheckResToken);
         if ($fieldCheckArray[$checkThisProperty] != $checkPropertyForValue) {
             $needsPatch = true;
         }
@@ -307,6 +322,24 @@ function patch40() {
                 INDEX i_expiry (expiry)
             ) ENGINE=MyISAM;";
         }      
+
+ if (!in_array($xoopsDB->prefix("formulize_tokens"), $existingTables)) {
+            $sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_tokens") . " (
+                `key_id` int(11) unsigned NOT NULL auto_increment,
+                `groups` varchar(255) NOT NULL default '',
+                `tokenkey` varchar(255) NOT NULL default '',
+                `expiry` datetime default NULL,
+                `maxuses` int(11) NOT NULL default '0',
+                `currentuses` int(11) NOT NULL default '0',
+                PRIMARY KEY (`key_id`),
+                INDEX i_groups (groups),
+                INDEX i_tokenkey (tokenkey),
+                INDEX i_expiry (expiry),
+                INDEX i_maxuses (maxuses),
+                INDEX i_currentuses (currentuses)
+            ) ENGINE=MyISAM;";
+        } 
+
 
         // if this is a standalone installation, then we want to make sure the session id field in the DB is large enough to store whatever session id we might be working with
         if (file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
