@@ -672,9 +672,35 @@ INDEX i_sid (`sid`)
         // Goes through all templates in screenpathname
         emptyTemplateFixer($screenpathname);
 
+        // add a processing here where it moves all the folders in default to the custom folders
+        // also rename listscreens to match what we have now (listentriesheadertemplate)
+        $customscreenpathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/custom/";
+        recurse_copy($screenpathname, $customscreenpathname);
+
+        print "admin";
+
         print "DB updates completed.  result: OK";
+
+        print $screenpathname;
     }
 }
+
+function recurse_copy($src,$dst) {
+    $dir = opendir($src);
+    @mkdir($dst);
+    while(false !== ( $file = readdir($dir)) ) {
+        if (( $file != '.' ) && ( $file != '..' )) {
+            if ( is_dir($src . '/' . $file) ) {
+                recurse_copy($src . '/' . $file,$dst . '/' . $file);
+            }
+            else {
+                copy($src . '/' . $file,$dst . '/entries' . $file);
+            }
+        }
+    }
+    closedir($dir);
+}
+
 // TODO!!! NEED TO HANDLING MOVING EXISTING TEMPLATES AS PART OF AN UPGRADE
 // Saves the given template to a template file on the disk
 function saveTemplate($template, $sid, $name) {
