@@ -675,26 +675,24 @@ INDEX i_sid (`sid`)
         // add a processing here where it moves all the folders in default to the custom folders
         // also rename listscreens to match what we have now (listentriesheadertemplate)
         $customscreenpathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/custom/";
-        recurse_copy($screenpathname, $customscreenpathname);
+        recurse_copy($screenpathname, $customscreenpathname, $originalDirectory);
 
         print "admin";
 
         print "DB updates completed.  result: OK";
-
-        print $screenpathname;
     }
 }
 
-function recurse_copy($src,$dst) {
+function recurse_copy($src,$dst,$origDir) {
     $dir = opendir($src);
     @mkdir($dst);
     while(false !== ( $file = readdir($dir)) ) {
         if (( $file != '.' ) && ( $file != '..' )) {
-            if ( is_dir($src . '/' . $file) ) {
+            if (is_dir($src . '/' . $file)) {
                 recurse_copy($src . '/' . $file,$dst . '/' . $file);
             }
             else {
-                copy($src . '/' . $file,$dst . '/entries' . $file);
+                if (strcmp($src, $origDir) == 0) copy($src . '/' . $file,$dst . '/entries' . $file);
             }
         }
     }
