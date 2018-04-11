@@ -507,6 +507,15 @@ $modversion['config'][] = array(
 	'default' => '0',
 );
 
+$modversion['config'][] = array(
+	'name' => 'notifyByCron',
+	'title' => '_MI_formulize_NOTIFYBYCRON',
+	'description' => '_MI_formulize_NOTIFYBYCRONDESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => '0',
+);
+
 
 //bloc
 $modversion['blocks'][1] = array(
