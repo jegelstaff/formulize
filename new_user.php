@@ -11,11 +11,6 @@ include_once ICMS_ROOT_PATH . '/modules/profile/language/english/main.php';
 include_once ICMS_ROOT_PATH .'/language/english/user.php';
 include_once(XOOPS_ROOT_PATH.'/integration_api.php');
 
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
-
 //protect against an attempt to directly enter the url into the browser for this page. Don't want it to be too public.
 if (isset($_GET['newuser']) && ($_GET['newuser'] == $_SESSION['newuser'])) {
     //on first transition to the page we want to render the form, after submission deal with validation of values and attempt to create new user

@@ -9,6 +9,21 @@ CREATE TABLE `formulize_apikeys` (
     INDEX i_expiry (expiry)
 ) ENGINE=MyISAM;
 
+CREATE TABLE `formulize_tokens` (
+    `key_id` int(11) unsigned NOT NULL auto_increment,
+    `group` varchar(255) NOT NULL default '',
+    `key` varchar(255) NOT NULL default '',
+    `expiry` datetime default NULL,
+    `maxuses` int(11) NOT NULL default '0',
+    `currentuses` int(11) NOT NULL default '0',
+    PRIMARY KEY (`key_id`),
+    INDEX i_group (group),
+    INDEX i_key (key),
+    INDEX i_expiry (expiry),
+    INDEX i_maxuses (maxuses),
+    INDEX i_currentuses (currentuses)
+) ENGINE=MyISAM;
+
 CREATE TABLE `formulize_menu_links` (
     `menu_id` int(11) unsigned NOT NULL auto_increment,
     `appid` int(11) unsigned NOT NULL,
