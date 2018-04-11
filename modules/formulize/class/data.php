@@ -825,32 +825,8 @@ class formulizeDataHandler  {
             $entry_to_return = intval($entry);
         }
 
-		if($formObject->getVar('store_revisions') AND $entry_to_return AND $form_handler->revisionsTableExists($formObject->getVar('id_form'))) {
-			static $cachedColumns = array();
-			if(!isset($cachedColumns[$formObject->getVar('id_form')])) {
-				$originalColumnsSQL = "SHOW COLUMNS FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'));
-				if($originalColumnsRes = $xoopsDB->queryF($originalColumnsSQL)) {
-					$columnList = array();
-					while($array = $xoopsDB->fetchArray($originalColumnsRes)) {
-						$columnList[] = $array['Field'];
-					}
-				} else {
-					exit("Error: could not retrieve the list of columns from the original datatable when preparing revision history.");
-				}
-				$cachedColumns[$formObject->getVar('id_form')] = $columnList;
-			} else {
-				$columnList = $cachedColumns[$formObject->getVar('id_form')];
-			}
-			$revisionSQL = "INSERT INTO ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')."_revisions")." (`".implode("`, `", $columnList)."`) SELECT original.* FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." as original WHERE original.entry_id=$entry_to_return";
-			if($forceUpdate) {
-				$revisionRes = $xoopsDB->queryF($revisionSQL);
-			} else {
-				$revisionRes = $xoopsDB->query($revisionSQL);
-			}
-			if(!$revisionRes) {
-				exit("Error: could not update revision information for entry $entry_to_return in form ".$formObject->getVar('form_handle').".  This is the query that failed:<br>$revisionSQL<br>Reported MySQL error (if any - if nothing, then query might have been attempted on a non POST submission, since no MySQL error is reported): ".$xoopsDB->error());
-			}
-		}
+        formulize_updateRevisionData($formObject, $entry_to_return);
+        
 		if($forceUpdate) {
 			if(!$res = $xoopsDB->queryF($sql)) {
 				exit("Error: your data could not be saved in the database.  This was the query that failed:<br>$sql<br>Query was forced and still failed so the SQL is probably bad.<br>".$xoopsDB->error());
@@ -1042,13 +1018,17 @@ class formulizeDataHandler  {
     
     // this function returns the most recent entry in the revision table for a given entry
     // id is the entry id
-    function getMostRecentRevisionForEntry($id) {
+    function getRevisionForEntry($id, $revisionId=null) {
         $form_handler = xoops_getmodulehandler('forms','formulize');
         $formObject = $form_handler->get($this->fid);
         if($formObject->getVar('store_revisions') AND $form_handler->revisionsTableExists($this->fid)) {
             $GLOBALS['formulize_getDataFromRevisionsTable'] = true;
-            $data = getData("", $this->fid, $id, "AND", "", 0, 1, "revision_id", "DESC");
-            $GLOBALS['formulize_getDataFromRevisionsTable'] = false;
+            if($revisionId) {
+                $data = getData("", $this->fid, 'revision_id/**/'.$revisionId.'/**/=');
+            } else {
+                $data = getData("", $this->fid, $id, "AND", "", 0, 1, "revision_id", "DESC");
+            }
+            unset($GLOBALS['formulize_getDataFromRevisionsTable']);
             return $data;
         } else {
             return false;

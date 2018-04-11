@@ -264,6 +264,9 @@ if(isset($updateOwnerFid) AND $gperm_handler->checkRight("update_entry_ownership
 	$data_handler_for_owner_updating->updateCaches($updateOwnerEntryId);
 }
 
+foreach($notEntriesList['update_entry'] as $updateFid=>$updateEntries) {
+    $GLOBALS['formulize_snapshotRevisions'][$updateFid] = formulize_getCurrentRevisions($updateFid, $updateEntries);
+}
 
 // update the derived values for all forms that we saved data for, now that we've saved all the data from all the forms
 $form_handler = xoops_getmodulehandler('forms', 'formulize');

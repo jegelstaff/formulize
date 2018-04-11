@@ -1374,7 +1374,11 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
 	       } elseif($ifParts[0] == "entry_id") {
 		    $formFieldFilterMap['entry_id'] = true;
 		    $newWhereClause = "main.entry_id" . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;
-		    $mappedForm = $fid;		    
+		    $mappedForm = $fid;
+           } elseif($ifParts[0] == "revision_id" AND is_numeric($ifParts[1])) {
+            $formFieldFilterMap['revision_id'] = true;
+		    $newWhereClause = "main.revision_id" . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;
+		    $mappedForm = $fid;
                } else {
                     
                     // do non-metadata queries

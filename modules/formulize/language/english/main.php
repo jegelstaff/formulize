@@ -639,6 +639,7 @@ define("_formulize_DE_NOT_CONTEXTIF", " only if ");
 define("_formluize_DE_NOT_CONTEXTAND", ", and ");
 define("_formulize_DE_NOT_TEMPTEXT", "Use this custom template file: ");
 define("_formulize_DE_NOT_SUBJTEXT", "Use this custom subject line: ");
+define("_formulize_DE_NOT_DIGEST_SUBJECT", "Notification Digest");
 
 // multi-page forms
 define("_formulize_DMULTI_THANKS", "<h1>You're done!</h1><p>Thanks for taking the time to fill in that form.  We really appreciate it.</p>");

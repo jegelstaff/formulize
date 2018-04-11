@@ -496,7 +496,6 @@ class formulizeElementsHandler {
 	}
     
     // determine if the element is disabled for the specified user
-    // if not user given, use the current user
     function isElementDisabledForUser($elementIdOrObject, $userIdOrObject=0) {
         if(is_object($elementIdOrObject)) {
             $elementObject = $elementIdOrObject;
@@ -522,4 +521,31 @@ class formulizeElementsHandler {
 		}
         return false;
     }
+    
+    // determine if the element is displayed for the specified user
+    function isElementVisibleForUser($elementIdOrObject, $userIdOrObject=0) {
+        if(is_object($elementIdOrObject)) {
+            $elementObject = $elementIdOrObject;
+        } else {
+            $elementObject = $this->get($elementIdOrObject);    
+        }
+        $ele_display = $elementObject->getVar('ele_display');
+        if($ele_display == 1) {
+			return true;
+		} elseif(!is_numeric($ele_display)) {
+            if(is_object($userIdOrObject)) {
+                $userObject = $userIdOrObject;
+            } elseif($userIdOrObject) {
+                $memberHandler = xoops_gethandler('member');
+                $userObject = $memberHandler->getUser($userIdOrObject);
+            }
+            $groups = $userObject ? $userObject->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+            $display_groups = explode(",", $ele_display);
+            if(array_intersect($groups, $display_groups)) {
+                return true;
+			}
+		}
+        return false;
+    }
+    
 }

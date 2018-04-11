@@ -2929,7 +2929,8 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
                             if(!isset($data_handler)) {
                                 $data_handler = new formulizeDataHandler($fid);
                             }
-                            if($revisionEntry = $data_handler->getMostRecentRevisionForEntry($entry)) {
+                            // get the last revision we flagged (after saving, before updating derived values!)
+                            if($event == 'update_entry' AND $revisionEntry = $data_handler->getRevisionForEntry($entry, $GLOBALS['formulize_snapshotRevisions'][$fid][$entry])) {
                                 $notificationTemplateRevisionData[$entry] = $revisionEntry;
                             }
                         }
@@ -3008,8 +3009,13 @@ function sendNotificationToEmail($email, $event, $tags, $overrideSubject="", $ov
             $template = $overrideTemplate ? $overrideTemplate : 'form_delentry.tpl';
             $subject = $overrideSubject ? $overrideSubject : _MI_formulize_NOTIFY_DELENTRY_MAILSUB;
             break;
+        
+        default:
+            $template = $overrideTemplate;
+            $subject = $overrideSubject;
     }
 
+    $template = substr($template, -4) == ".tpl" ? $template : $template . ".tpl";
     include_once XOOPS_ROOT_PATH . '/include/notification_constants.php';
 
   if(strstr($email, ',')) {
@@ -3066,6 +3072,7 @@ function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $rei
         // need to do this when handling saved conditions, since each time we call this function it's a new "event" that we're dealing with
         $omit_user = null;
     }
+    
     if ($thiscon['not_cons_uid'] > 0) {
         $uids_conditions[] = $thiscon['not_cons_uid'];
     } elseif ($thiscon['not_cons_curuser'] > 0) {
@@ -3174,7 +3181,7 @@ function formulize_processNotification($event, $extra_tags, $fid, $uids_to_notif
         $notFile = fopen(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotifications.txt","a");
         formulize_getLock($notFile);
         foreach($uids_to_notify as $uid_to_notify) {
-            if($uid_to_notify>1) {
+            if($uid_to_notify>0) {
                 formulize_processNotificationWriteLine($notFile, $event, $extra_tags, $fid, array($uid_to_notify), $mid, $omit_user, $subject, $template);
             } else {
                 foreach(explode(",", $GLOBALS['formulize_notification_email']) as $email) {
@@ -5727,3 +5734,74 @@ function formulize_updateDerivedValues($entry, $fid, $frid="") {
 	unset($GLOBALS['formulize_forceDerivedValueUpdate']);
 }
 
+// update the revision data for an entry
+// fidOrObject is a form id or a form object for the form we're updating
+// entry_to_return is the entry id of the entry we're currently storing in the revision table
+function formulize_updateRevisionData($fidOrObject, $entry_to_return) {
+    $form_handler = xoops_getmodulehandler('forms','formulize');
+    if(!is_object($fidOrObject) AND is_numeric($fidOrObject)) {
+        $formObject = $form_handler->get($fidOrObject);
+    } else {
+        $formObject = $fidOrObject;
+    }
+    if(is_object($formObject) AND $formObject->getVar('store_revisions') AND $entry_to_return AND $form_handler->revisionsTableExists($formObject->getVar('id_form'))) {
+        global $xoopsDB;
+        static $cachedColumns = array();
+        if(!isset($cachedColumns[$formObject->getVar('id_form')])) {
+            $originalColumnsSQL = "SHOW COLUMNS FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'));
+            if($originalColumnsRes = $xoopsDB->queryF($originalColumnsSQL)) {
+                $columnList = array();
+                while($array = $xoopsDB->fetchArray($originalColumnsRes)) {
+                    $columnList[] = $array['Field'];
+                }
+            } else {
+                exit("Error: could not retrieve the list of columns from the original datatable when preparing revision history.");
+            }
+            $cachedColumns[$formObject->getVar('id_form')] = $columnList;
+        } else {
+            $columnList = $cachedColumns[$formObject->getVar('id_form')];
+        }
+        $revisionSQL = "INSERT INTO ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')."_revisions")." (`".implode("`, `", $columnList)."`) SELECT original.* FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." as original WHERE original.entry_id=$entry_to_return";
+        if($forceUpdate) {
+            $revisionRes = $xoopsDB->queryF($revisionSQL);
+        } else {
+            $revisionRes = $xoopsDB->query($revisionSQL);
+        }
+        if(!$revisionRes) {
+            exit("Error: could not update revision information for entry $entry_to_return in form ".$formObject->getVar('form_handle').".  This is the query that failed:<br>$revisionSQL<br>Reported MySQL error (if any - if nothing, then query might have been attempted on a non POST submission, since no MySQL error is reported): ".$xoopsDB->error());
+        }
+    }
+}
+
+// get a list of the most recent revision ids for the entries in question
+// fidOrObject is a form id or a form object for the form we're updating
+// $entryIds is an array of entry ids or a single id
+function formulize_getCurrentRevisions($fidOrObject, $entryIds) {
+    $form_handler = xoops_getmodulehandler('forms','formulize');
+    if(!is_object($fidOrObject) AND is_numeric($fidOrObject)) {
+        $formObject = $form_handler->get($fidOrObject);
+    } else {
+        $formObject = $fidOrObject;
+    }
+    if(!is_array($entryIds)) {
+        $entry = array(intval($entryIds));
+    } else { // sanitize them
+        $newEntryIds = array();
+        foreach($entryIds as $id) {
+            $newEntryIds[] = intval($id);
+        }
+        $entryIds = $newEntryIds;
+    }
+    if(is_object($formObject) AND $formObject->getVar('store_revisions') AND is_numeric($entryIds[0]) AND $form_handler->revisionsTableExists($formObject->getVar('id_form'))) {
+        global $xoopsDB;
+        $sql = "SELECT max(revision_id) as rev_id, entry_id FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')."_revisions")." WHERE entry_id IN (".implode(",",$entryIds).")";
+        if($res = $xoopsDB->query($sql)) {
+            $results = array();
+            while($array = $xoopsDB->fetchArray($res)) {
+                $results[$array['entry_id']] = $array['rev_id'];
+            }
+            return $results;
+        }
+    }
+    return false;
+}
