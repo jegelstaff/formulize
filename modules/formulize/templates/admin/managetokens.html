@@ -7,9 +7,14 @@
     <br>
     <form id='managetokens' name='managetokens' method='post'>
     <p>Allow the user to join which groups?
-    <select name='groups'>
-        <{html_options options=$adminPage.groups}>
-    </select>
+    <br>
+    <br>
+    <{foreach from=$adminPage.groups item=key}>
+   <input id=<{$key.groupid}> name=<{$key.groupid}> type="checkbox" value=<{$key.name}>>
+   <label for=<{$key.groupid}>><{$key.name}></label>
+   <br>
+    <{/foreach}>
+    <br>
     What is the maximum number of uses that this token should have?
  <select name='maxuses'>
         <option value='1'>1</option>
@@ -17,12 +22,16 @@
         <option value='5'>5</option>
         <option value='8'>8</option>
     </select>
+    <br>
+    <br>
     Select token length:
      <select name='tokenlength'>
         <option value='32'>32 bytes</option>
         <option value='16'>16 bytes</option>
         <option value='64'>63 bytes</option>
     </select>
+    <br>
+    <br>
     When should the token expire?
     <select name='expiry'>
         <option value=''>Never</option>

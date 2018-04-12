@@ -24,16 +24,32 @@ $tokenHandler = xoops_getmodulehandler('token', 'formulize');
 $deleteKey = (isset($_POST['deletekey']) AND $_POST['deletekey']) ? $_POST['deletekey'] : "";
 $tokenHandler->delete($deleteKey);
 
-// create any new keys requested
-if(isset($_POST['groups']) AND isset($_POST['save'])) {
-    $tokenHandler->insert(intval($_POST['groups']),intval($_POST['expiry']), intval($_POST['$tokenlength']), intval($_POST['$maxuses']));
-}
-
 $member_handler = xoops_gethandler('member');
 $allGroups = $member_handler->getGroups();
 $groupList = array();
 foreach($allGroups as $group) {
-    $groupList[$group->getVar('groupid')] = $group->getVar('name');
+    $groupid = $group->getVar('groupid');
+    //dont display registered users group since we will always add the user to that group
+    if($groupid != XOOPS_GROUP_USERS){
+        $groupList[$groupid] =  array('name'=>$group->getVar('name'), 'groupid'=>$groupid);
+    }
+}
+
+
+// create any new keys requested
+if(isset($_POST['save'])) {
+
+    $groups = "";
+
+    foreach($groupList as $group) {
+        $id = $group['groupid'];
+        if(isset($_POST[$id ])){
+            
+            $groups = $groups ." " .$group['name'];
+
+        }
+    }
+    $tokenHandler->insert($groups,intval($_POST['expiry']), intval($_POST['tokenlength']), intval($_POST['maxuses']));
 }
 
 // gather all keys and send to screen

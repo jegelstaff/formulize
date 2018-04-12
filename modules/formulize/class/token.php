@@ -102,7 +102,7 @@ class formulizeTokenHandler {
         $currentuses = 0;
         $expiry = $expiry ? "'".date("Y-m-d H:i:s",time()+($expiry*3600))."'" : "NULL";
         global $xoopsDB;
-        $sql = "INSERT INTO ".$xoopsDB->prefix("formulize_tokens")." (groups, tokenkey, expiry, maxuses, currentuses) VALUES (".$groups.",'".$candidateID."',".$expiry.",'".intval($maxuses).",'".intval($currentuses).")";
+        $sql = "INSERT INTO ".$xoopsDB->prefix("formulize_tokens")." (groups, tokenkey, expiry, maxuses, currentuses) VALUES ('".$groups."','".$candidateID."',".$expiry.",".intval($maxuses).",".intval($currentuses).")";
         if(!$res = $xoopsDB->queryF($sql)) {
             print "Error: could not insert tokenkey with this SQL: $sql<br>".$xoopsDB->error();
             return false;
