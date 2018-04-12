@@ -1,15 +1,14 @@
 <div class="panel-content content">
 
     <h2>Manage Tokens</h2>
-TEST
     <p>You can create tokens that can be used to allow new users to create a Formulize account on the first time that they login to the site with Google.</p>
     <br>
     <hr>
     <br>
-    <form id='managekeys' name='managekeys' method='post'>
+    <form id='managetokens' name='managetokens' method='post'>
     <p>Allow the user to join which groups?
-    <select name='group'>
-        <{html_options options=$adminPage.uids}>
+    <select name='groups'>
+        <{html_options options=$adminPage.groups}>
     </select>
     What is the maximum number of uses that this token should have?
  <select name='maxuses'>
@@ -58,7 +57,7 @@ TEST
 
 <script>
 function setDelete(key) {
-    window.managekeys.deletekey.value = key;
-    window.managekeys.submit();
+    window.managetokens.deletekey.value = key;
+    window.managetokens.submit();
 }
 </script>

@@ -36,11 +36,11 @@ include_once XOOPS_ROOT_PATH.'/kernel/object.php';
 
 class formulizeToken extends XoopsObject {
 
-	function __construct($uid=0, $key='',$expiry='') {
+	function __construct($groups='', $tokenkey='',$expiry='', $maxuses=1, $currentuses=0) {
 		$this->XoopsObject();
 		//initVar params: key, data_type, value, req, max, opt
-		$this->initVar("group", XOBJ_DTYPE_TXTBOX, $group, true);
-		$this->initVar("key", XOBJ_DTYPE_TXTBOX, $key, true, 255);
+		$this->initVar("groups", XOBJ_DTYPE_TXTBOX, $groups, true);
+		$this->initVar("key", XOBJ_DTYPE_TXTBOX, $tokenkey, true, 255);
         $this->initVar("expiry", XOBJ_DTYPE_TXTBOX, $expiry, true, 255);
         $this->initVar("maxuses", XOBJ_DTYPE_INT, $maxuses, true);
         $this->initVar("currentuses", XOBJ_DTYPE_INT, $currentuses, true);
@@ -61,8 +61,8 @@ class formulizeTokenHandler {
 		}
 		return $instance;
 	}
-	function &create($uid=0,$key='',$expiry='') {
-		return new formulizeToken($uid, $key, $expiry);
+	function &create($groups='', $tokenkey='',$expiry='', $maxuses=1, $currentuses=0) {
+		return new formulizeToken($groups, $tokenkey, $expiry, $maxuses, $currentuses);
 	}
 
 	function get($key) {
@@ -71,9 +71,9 @@ class formulizeTokenHandler {
 		if(isset($cachedKeys[$key])) { return $cachedKeys[$key]; }
         global $xoopsDB;
 		if($key) {
-            $sql = "SELECT uid, apikey, expiry FROM ".$xoopsDB->prefix("formulize_tokens")." WHERE apikey = '".formulize_db_escape($key)."' AND (expiry IS NULL OR expiry > NOW())";
+            $sql = "SELECT groups, tokenkey, expiry, maxuses, currentuses FROM ".$xoopsDB->prefix("formulize_tokens")." WHERE tokenkey = '".formulize_db_escape($key)."' AND (expiry IS NULL OR expiry > NOW())";
         } else {
-            $sql = "SELECT uid, apikey, expiry FROM ".$xoopsDB->prefix("formulize_tokens")." WHERE expiry IS NULL OR expiry > NOW()";
+            $sql = "SELECT groups, tokenkey, expiry, maxuses, currentuses FROM ".$xoopsDB->prefix("formulize_tokens")." WHERE expiry IS NULL OR expiry > NOW()";
         }
         $res = $xoopsDB->query($sql);
         if(!$res) {
@@ -97,13 +97,14 @@ class formulizeTokenHandler {
         return false;
 	}
 	
-	function insert($uid, $expiry=0, $tokenlength =32) {
+	function insert($groups, $expiry=0, $tokenlength =32, $maxuses) {
         $candidateID = $this->_generateKey($tokenlength);
+        $currentuses = 0;
         $expiry = $expiry ? "'".date("Y-m-d H:i:s",time()+($expiry*3600))."'" : "NULL";
         global $xoopsDB;
-        $sql = "INSERT INTO ".$xoopsDB->prefix("formulize_tokens")." (uid,apikey,expiry) VALUES (".intval($uid).",'".$candidateID."',".$expiry.")";
+        $sql = "INSERT INTO ".$xoopsDB->prefix("formulize_tokens")." (groups, tokenkey, expiry, maxuses, currentuses) VALUES (".$groups.",'".$candidateID."',".$expiry.",'".intval($maxuses).",'".intval($currentuses).")";
         if(!$res = $xoopsDB->queryF($sql)) {
-            print "Error: could not insert apikey with this SQL: $sql<br>".$xoopsDB->error();
+            print "Error: could not insert tokenkey with this SQL: $sql<br>".$xoopsDB->error();
             return false;
         }
     	return $xoopsDB->getInsertId();
@@ -113,7 +114,7 @@ class formulizeTokenHandler {
         global $xoopsDB;
         $key = preg_replace("/[^A-Za-z0-9]/", "", str_replace(" ","",$key)); // keys must be only alphanumeric characters
         if($key) {		
-            $sql = "DELETE FROM ".$xoopsDB->prefix("formulize_tokens")." WHERE apikey = '".formulize_db_escape($key)."' OR (expiry IS NOT NULL AND expiry < NOW())";
+            $sql = "DELETE FROM ".$xoopsDB->prefix("formulize_tokens")." WHERE tokenkey = '".formulize_db_escape($key)."' OR (expiry IS NOT NULL AND expiry < NOW())";
         } else {
             $sql = "DELETE FROM ".$xoopsDB->prefix("formulize_tokens")." WHERE expiry IS NOT NULL AND expiry < NOW()";
         }

@@ -16,31 +16,33 @@ if(!$xoopsUser OR !in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
     return;
 }
 
-$apiKeyHandler = xoops_getmodulehandler('token', 'formulize');
+
+
+$tokenHandler = xoops_getmodulehandler('token', 'formulize');
 
 // delete any expired keys, and/or requested keys
 $deleteKey = (isset($_POST['deletekey']) AND $_POST['deletekey']) ? $_POST['deletekey'] : "";
-$apiKeyHandler->delete($deleteKey);
+$tokenHandler->delete($deleteKey);
 
 // create any new keys requested
-if(isset($_POST['uid']) AND isset($_POST['save'])) {
-    $apiKeyHandler->insert(intval($_POST['uid']),intval($_POST['expiry']), intval($_POST['$tokenlength']));
+if(isset($_POST['groups']) AND isset($_POST['save'])) {
+    $tokenHandler->insert(intval($_POST['groups']),intval($_POST['expiry']), intval($_POST['$tokenlength']), intval($_POST['$maxuses']));
 }
 
 $member_handler = xoops_gethandler('member');
-$users = $member_handler->getUsers();
-$userList = array();
-foreach($users as $user) {
-    $userList[$user->getVar('uid')] = $user->getVar('name');
+$allGroups = $member_handler->getGroups();
+$groupList = array();
+foreach($allGroups as $group) {
+    $groupList[$group->getVar('groupid')] = $group->getVar('name');
 }
 
 // gather all keys and send to screen
 $allKeys = array();
-foreach($apiKeyHandler->get() as $key) {
-    $allKeys[] = array('user'=>$userList[$key->getVar('uid')],'key'=>$key->getVar('key'),'expiry'=>$key->getVar('expiry'));
+foreach($tokenHandler->get() as $key) {
+    $allKeys[] = array('group'=>$groupList[$key->getVar('groups')],'key'=>$key->getVar('key'),'expiry'=>$key->getVar('expiry'));
 }
 
-$adminPage['uids'] = $userList;
+$adminPage['groups'] = $groupList;
 $adminPage['keys'] = $allKeys;
 $adminPage['template'] = "db:admin/managetokens.html";
 
