@@ -45,7 +45,7 @@ if(isset($_POST['save'])) {
         $id = $group['groupid'];
         if(isset($_POST[$id ])){
             
-            $groups = $groups ." " .$group['name'];
+            $groups = $groups ." " .$id;
 
         }
     }
@@ -55,7 +55,13 @@ if(isset($_POST['save'])) {
 // gather all keys and send to screen
 $allKeys = array();
 foreach($tokenHandler->get() as $key) {
-    $allKeys[] = array('group'=>$groupList[$key->getVar('groups')],'key'=>$key->getVar('key'),'expiry'=>$key->getVar('expiry'));
+    //map the ids stored back to the group names for the user's view
+    $tokenGroups = explode(" ", $key->getVar('groups'));
+    $allKeyGroups = "";
+    foreach($tokenGroups as $groupid) {
+          $allKeyGroups  =  $allKeyGroups  ." " . $groupList[$groupid]['name'];
+    }
+    $allKeys[] = array('group'=>$allKeyGroups,'key'=>$key->getVar('key'),'expiry'=>$key->getVar('expiry'), 'usesleft'=>($key->getVar('maxuses')-$key->getVar('currentuses')));
 }
 
 $adminPage['groups'] = $groupList;

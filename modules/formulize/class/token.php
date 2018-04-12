@@ -80,10 +80,10 @@ class formulizeTokenHandler {
             print "Error: could not retrieve key(s) with this SQL: $sql<br>".$xoopsDB->error();
             return false;
         }
-        while($row = $xoopsDB->fetchRow($res)) {
+        while($row = $xoopsDB->fetchRow($res)) {      
             if(!isset($cachedKeys[$row[1]])) {
                 $expiry = $row[2] ? 'Expires: '.$row[2] : "";
-                $cachedKeys[$row[1]] = $this->create($row[0], $row[1], $row[2]);
+                $cachedKeys[$row[1]] = $this->create($row[0], $row[1], $row[2], $row[3], $row[4]);
             }
         }
         if($key AND isset($cachedKeys[$key])) {

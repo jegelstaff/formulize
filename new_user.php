@@ -19,9 +19,12 @@ if (isset($_GET['newuser']) && ($_GET['newuser'] == $_SESSION['newuser'])) {
     }else{
         //the condition where we know that we have submitted the form on this page and redirected
         //need to validate the token 
-        //TODO fix this to be real...
+        $submittedToken =$_POST["token"];
+        $tokenHandler = xoops_getmodulehandler('token', 'formulize');
+        $token = $tokenHandler->get($submittedToken);
+
         $token = '123';
-        if($_POST["token"] == $token){
+        if( $submittedToken == $token){
                 $login_name = $_POST["login_name"];
                 //parse the space out of the name
                 $login_name = str_replace(' ', '', $login_name);
@@ -59,13 +62,24 @@ if (isset($_GET['newuser']) && ($_GET['newuser'] == $_SESSION['newuser'])) {
                     
                     if ($member_handler->insertUser($newuser)) {
 
-                        //assign the user basic group 
+                        //assign the user basic registered users group at the very least, and maybe other groups if those were selected
                         $newid = (int) $newuser->getVar('uid');
                         if (!$member_handler->addUserToGroup(XOOPS_GROUP_USERS, $newid)) {
                             echo _US_REGISTERNG;
                             include 'footer.php';
                             exit();
 		            	}
+                        //see if there are other groups to add the user to
+                        $tokenGroupsString = $token->getVar('groups');
+                        $tokenGroups = explode(" ", $tokenGroupsString);
+                        foreach($tokenGroups as $groupid) {
+                            //check in case there were no groups at all stored
+                            if($groupid != ""){
+                                $member_handler->addUserToGroup(intval($groupid), $newid);
+                            }
+                        }
+
+
                         Formulize::init();
                         if(Formulize::createResourceMapping(Formulize::USER_RESOURCE, $_SESSION['email'], $newid)){
                             header("Location: ".XOOPS_URL."/?code=".$_GET['newuser']."&newcode=".$_GET['newuser']);
