@@ -117,19 +117,26 @@ function patch40() {
     $checkThisProperty = false;
     $checkPropertyForValue = false;
 
-    $needsPatch = false;
-
-    $tableCheckSql = "SELECT 1 FROM information_schema.tables WHERE table_name = '".$xoopsDB->prefix(formulize_db_escape($checkThisTable)) ."'";
-    $tableCheckRes = formulize_DBPatchCheckSQL($tableCheckSql, $needsPatch); // may modify needsPatch!
-    if ($tableCheckRes AND !$needsPatch AND $checkThisField) { // table was found, and we're looking for a field in it
-        $fieldCheckSql = "SHOW COLUMNS FROM " . $xoopsDB->prefix(formulize_db_escape($checkThisTable)) ." LIKE '".formulize_db_escape($checkThisField)."'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
-        $fieldCheckRes = formulize_DBPatchCheckSQL($fieldCheckSql, $needsPatch); // may modify needsPatch!
+    $customscreenpathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/custom/";
+		if(!is_dir($customscreenpathname)) {
+      $needsPatch = true;
+    } else {
+    	$needsPatch = false;
     }
-    if ($fieldCheckRes AND !$needsPatch AND $checkPropertyForValue) {
-        $fieldCheckArray = $xoopsDB->fetchArray($fieldCheckRes);
-        if ($fieldCheckArray[$checkThisProperty] != $checkPropertyForValue) {
-            $needsPatch = true;
-        }
+
+  	if(!$needsPatch) {
+      $tableCheckSql = "SELECT 1 FROM information_schema.tables WHERE table_name = '".$xoopsDB->prefix(formulize_db_escape($checkThisTable)) ."'";
+      $tableCheckRes = formulize_DBPatchCheckSQL($tableCheckSql, $needsPatch); // may modify needsPatch!
+      if ($tableCheckRes AND !$needsPatch AND $checkThisField) { // table was found, and we're looking for a field in it
+          $fieldCheckSql = "SHOW COLUMNS FROM " . $xoopsDB->prefix(formulize_db_escape($checkThisTable)) ." LIKE '".formulize_db_escape($checkThisField)."'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
+          $fieldCheckRes = formulize_DBPatchCheckSQL($fieldCheckSql, $needsPatch); // may modify needsPatch!
+      }
+      if ($fieldCheckRes AND !$needsPatch AND $checkPropertyForValue) {
+          $fieldCheckArray = $xoopsDB->fetchArray($fieldCheckRes);
+          if ($fieldCheckArray[$checkThisProperty] != $checkPropertyForValue) {
+              $needsPatch = true;
+          }
+      }
     }
 
     if (!$needsPatch AND (!isset($_GET['op']) OR ($_GET['op'] != 'patch40' AND $_GET['op'] != 'patchDB'))) {
@@ -674,25 +681,52 @@ INDEX i_sid (`sid`)
 
         // add a processing here where it moves all the folders in default to the custom folders
         // also rename listscreens to match what we have now (listentriesheadertemplate)
-        $customscreenpathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/custom/";
-        recurse_copy($screenpathname, $customscreenpathname, $originalDirectory);
-
-        print "admin";
+        $notUpdatedArray = [];
+        recurse_copy($screenpathname, $customscreenpathname, $screenpathname, $notUpdatedArray);
+        if (sizeof($notUpdatedArray) == 0) {
+          print "All custom templates copied successfully.";
+        } else {
+          print "The following templates were not copied: \n";
+          foreach($notUpdatedArray as $notUpdatedFile) {
+            	print $notUpdatedFile."<br>";
+          }
+					print "You can <a href='".XOOPS_URL."/modules/formulize/admin/ui.php?op=patchDB'>try rerunning this patch process</a> to try copying them again, or manually copy them to the /modules/formulize/templates/screens/custom/ folder. IMPORTANT: if you manually copy the files, the list-of-entries templates need 'entries' prepended to their filenames! If you would like assistance with this issue, please contact <a href=mailto:info@formulize.org>info@formulize.org</a>.";
+        }
 
         print "DB updates completed.  result: OK";
     }
 }
 
-function recurse_copy($src,$dst,$origDir) {
+// notUpdatedArray passed by preference, and throughout the recursion, so will contain the final set of
+function recurse_copy($src,$dst,$origDir,&$notUpdatedArray) {
     $dir = opendir($src);
     @mkdir($dst);
+    $screen_handler = xoops_getmodulehandler('screen', 'formulize');
     while(false !== ( $file = readdir($dir)) ) {
         if (( $file != '.' ) && ( $file != '..' )) {
             if (is_dir($src . '/' . $file)) {
-                recurse_copy($src . '/' . $file,$dst . '/' . $file);
+                recurse_copy($src . '/' . $file,$dst . '/' . $file,$origDir,$notUpdatedArray);
             }
             else {
-                if (strcmp($src, $origDir) == 0) copy($src . '/' . $file,$dst . '/entries' . $file);
+                if (!strcmp($src, $origDir) == 0) {
+                  $pathParts = explode("/",$src);
+                  $folderNumber = $pathParts[count($pathParts)-1];
+									$screenObject = $screen_handler->get($folderNumber);
+									$screenType = $screenObject->getVar('type');
+                	if ($screenType == 'listOfEntries' AND !file_exists($dst . '/entries' . $file)) {
+                  	try {
+                      copy($src . '/' . $file,$dst . '/entries' . $file);
+                    } catch(Exception $e) {
+                      array_push($notUpdatedArray, $e->getMessage()."<br>File: ".$src.'/'.$file."<br>---");
+                    }
+                  } elseif ($screenType == 'multiPage' AND !file_exists($dst . '/' . $file)){
+                    try {
+                      copy($src . '/' . $file,$dst . '/' . $file);
+                    } catch(Exception $e) {
+                      array_push($notUpdatedArray, $e->getMessage()."<br>File: ".$src.'/'.$file."<br>---");
+                    }
+                  }
+                }
             }
         }
     }
