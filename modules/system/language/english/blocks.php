@@ -38,7 +38,7 @@ define("_MB_SYSTEM_PRIVPOLICY", "Privacy Policy");
  */
 
 // openid
-define("_MB_SYSTEM_OPENID_LOGIN", "Login with your OpenID");
+define("_MB_SYSTEM_OPENID_LOGIN", "Login with Google");
 define("_MB_SYSTEM_OPENID_URL", "Your OpenID URL:");
 define("_MB_SYSTEM_OPENID_NORMAL_LOGIN", "Go back to normal login");
 define("_MB_SYSTEM_TOTAL_USERS", "Total Users");

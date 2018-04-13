@@ -118,6 +118,8 @@ switch($op) {
 		}
 		$user->setVar('uname', $uname);
 		$user->setVar('login_name', $login_name);
+		//need this for mapping table update
+		$oldemail = $user->getVar('email');
 		$user->setVar('email', $email);
 		if ($icmsConfigAuth['auth_openid'] == 1) {
 			$user->setVar('openid', trim($_POST['openid']));
@@ -154,6 +156,14 @@ switch($op) {
 
 		if (count($errors) == 0) {
 			if ($member_handler->insertUser($user)) {
+
+				//update the user mapping table in case the email was used as an external id (needed for google login)
+				include_once XOOPS_ROOT_PATH."/integration_api.php";
+				Formulize::init();
+				if(!Formulize::updateResourceMapping($oldemail, $email)){
+					$_SESSION['redirect_message'] = 'Could not fully update email. <br>Consult webmaster if this seems to compromise Login with Google functionality.';
+				}
+
 				$profile->setVar('profileid', $user->getVar('uid'));
 				$profile_handler->insert($profile);
 

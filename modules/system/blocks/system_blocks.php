@@ -14,6 +14,7 @@
  *
  * @return mixed $block or FALSE if no users were online
  */
+
 function b_system_online_show() {
 	global $icmsModule;
 	$online_handler = icms::handler('icms_core_Online');
@@ -73,6 +74,7 @@ function b_system_online_show() {
  */
 function b_system_login_show() {
 	global $icmsConfig, $icmsConfigAuth, $icmsConfigUser;
+	include_once ICMS_ROOT_PATH . '/include/functions.php';
 	if (!icms::$user) {
 		$block = array();
 		$block['lang_username'] = _USERNAME;
@@ -103,6 +105,7 @@ function b_system_login_show() {
 
 		if ($icmsConfigAuth['auth_openid']) {
 			$block['auth_openid'] = TRUE;
+			$block['auth_url'] = authenticationURL();
 		}
 		return $block;
 	}

@@ -408,8 +408,8 @@ define("_MD_AM_LASTCHARS_DESC","How many characters should be displayed at the e
 define("_MD_AM_SIGMAXLENGTH","Maximum amount of characters in users signatures?");
 define("_MD_AM_SIGMAXLENGTHDSC","Here you can choose the length of your users signatures.<br /> any character longer than this amount will be ignored.<br /><i>Be careful, long signatures can often break the design...</i>");
 
-define("_MD_AM_AUTHOPENID","Enable OpenID authentication");
-define("_MD_AM_AUTHOPENIDDSC","Select Yes to enable OpenID authentication. This will allow users to login on the site using their OpenID account. For complete information about the OpenID Integration in ImpressCMS, please visit <a href='http://wiki.impresscms.org/index.php?title=ImpressCMS_OpenID'>our wiki</a>.");
+define("_MD_AM_AUTHOPENID","Enable Google authentication");
+define("_MD_AM_AUTHOPENIDDSC","Select Yes to enable Google authentication. This will allow users to login on the site using their gmail account information.");
 define("_MD_AM_USE_GOOGLE_ANA"," Enable Google Analytics?");
 define("_MD_AM_USE_GOOGLE_ANA_DESC","");
 

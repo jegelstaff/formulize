@@ -19,22 +19,9 @@
 			</form>
   <{if $auth_openid}>
 <br />
-	  <div style="text-align: <{$smarty.const._GLOBAL_LEFT}>;"><a href="#" onclick="xoopsGetElementById('icms_openid-verify-form2').style.display = 'block'; xoopsGetElementById('icms_block_login_form').style.display = 'none'; return false;"><{$lang_login_oid}></a></div>
+	  <div style="text-align: <{$smarty.const._GLOBAL_LEFT}>;"><a href="<{$auth_url}>"><{$lang_login_oid}></a></div>
   <{/if}>
 </div>
-<{if $auth_openid}>
-	<div id="icms_openid-verify-form2" style="display: none;">
-	  <form method="get" action="<{$xoops_url}>/try_auth.php">
-	    <{$lang_youoid}>
-	    <input type="hidden" name="action" value="verify" />
-	    <input type="text" class="openid_url" name="openid_identifier" size="12" value="" />
-	    <input type="submit" value="<{$lang_login}>" />
-	  </form>
-<br />
-	  <div style="text-align: <{$smarty.const._GLOBAL_LEFT}>;"><a href="#" onclick="xoopsGetElementById('icms_block_login_form').style.display = 'block'; xoopsGetElementById('icms_openid-verify-form2').style.display = 'none'; return false;"><{$lang_back2normoid}></a></div>
-	</div>
-<br />
-<{/if}>
 			<a name="lost"></a>
 			<{if $allow_registration }>
 				<div style="text-align: <{$smarty.const._GLOBAL_RIGHT}>;"><{$lang_notregister}><br /></div>
