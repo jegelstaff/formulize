@@ -32,6 +32,7 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
+
 include_once XOOPS_ROOT_PATH.'/kernel/object.php';
 
 class formulizeToken extends XoopsObject {
@@ -80,12 +81,13 @@ class formulizeTokenHandler {
             print "Error: could not retrieve key(s) with this SQL: $sql<br>".$xoopsDB->error();
             return false;
         }
-        while($row = $xoopsDB->fetchRow($res)) {      
+        while($row = $xoopsDB->fetchRow($res)) {   
             if(!isset($cachedKeys[$row[1]])) {
                 $expiry = $row[2] ? 'Expires: '.$row[2] : "";
                 $cachedKeys[$row[1]] = $this->create($row[0], $row[1], $row[2], $row[3], $row[4]);
             }
         }
+
         if($key AND isset($cachedKeys[$key])) {
             return $cachedKeys[$key];
         } elseif($key) {
@@ -132,4 +134,31 @@ class formulizeTokenHandler {
         }
         return $candidateID;
     }
+
+function incrementUses($token){
+     $key = $token->getVar('key');
+     $uses = $token->getVar('currentuses');
+     $newuses = $uses +1;
+     global $xoopsDB;
+     $key = preg_replace("/[^A-Za-z0-9]/", "", str_replace(" ","",$key)); // keys must be only alphanumeric characters
+    if($key &&  $uses < $token->getVar('maxuses')) {		
+        
+        $sql = "UPDATE ".$xoopsDB->prefix("formulize_tokens")." SET currentuses = ".$newuses. " WHERE tokenkey = '".formulize_db_escape($key)."'";
+       
+        if(!$xoopsDB->queryF($sql)) {
+			print "Error: could not update token uses with this SQL: $sql<br>".$xoopsDB->error();
+            return false;
+	    }
+
+       if($newuses == $token->getVar('maxuses')){
+            //if we have now reached the max: cleanup
+            if(!$this->delete($key)){
+                return false;
+            }
+        } 
+        return true;
+     }
+		
+}
+
 }

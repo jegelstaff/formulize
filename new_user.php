@@ -1,6 +1,7 @@
 <?php
 
 
+
 include "mainfile.php";
 include "header.php";
 include_once ICMS_ROOT_PATH .'/include/functions.php';
@@ -18,13 +19,14 @@ if (isset($_GET['newuser']) && ($_GET['newuser'] == $_SESSION['newuser'])) {
         renderRegForm();
     }else{
         //the condition where we know that we have submitted the form on this page and redirected
-        //need to validate the token 
+        //need to validate the token aka fetch others and see if it matches any 
         $submittedToken =$_POST["token"];
         $tokenHandler = xoops_getmodulehandler('token', 'formulize');
         $token = $tokenHandler->get($submittedToken);
-
-        $token = '123';
-        if( $submittedToken == $token){
+        //attempt to get this token may have returned false
+        if($token){
+            //if we have uses left and can increment the number of uses that this token has seen
+            if($tokenHandler->incrementUses($token)){ 
                 $login_name = $_POST["login_name"];
                 //parse the space out of the name
                 $login_name = str_replace(' ', '', $login_name);
@@ -94,6 +96,11 @@ if (isset($_GET['newuser']) && ($_GET['newuser'] == $_SESSION['newuser'])) {
             renderRegForm();
            
 		}
+        }else{
+        //token was used too many times
+        $icmsConfigUser['token_error'] = 1;
+        renderRegForm();
+        }
     }else{
         //token was not same in this case
         $icmsConfigUser['token_error'] = 1;

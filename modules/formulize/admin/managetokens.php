@@ -5,11 +5,6 @@
  * Date: 2016-01-16
  */
 
-
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 // only webmasters can interact with this page!
 global $xoopsUser;
 if(!$xoopsUser OR !in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
