@@ -23,7 +23,7 @@
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
 ##  Author of this file: Freeform Solutions                                  ##
-##  URL: http://www.freeformsolutions.ca/formulize                           ##
+##  URL: http://www.formulize.org                           ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
@@ -60,7 +60,6 @@ if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mi
 $screen->setVar('toptemplate',htmlspecialchars(trim($screens['toptemplate'])));
 $screen->setVar('bottomtemplate',htmlspecialchars(trim($screens['bottomtemplate'])));
 $screen->setVar('listtemplate',htmlspecialchars(trim($screens['listtemplate'])));
-
 
 if(!$screen_handler->insert($screen)) {
   print "Error: could not save the screen properly: ".$xoopsDB->error();

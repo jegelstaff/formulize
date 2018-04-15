@@ -106,7 +106,7 @@ class formulizeDataHandler  {
 			// make one SQL statement per entry id that grabs all the groupids for that old entry id and inserts them as records for the new form with the new entry id
 			$sql = "INSERT INTO ".$xoopsDB->prefix("formulize_entry_owner_groups")." (`fid`, `entry_id`, `groupid`) SELECT ".$this->fid.", ".intval($newEntryId).", groupid FROM ".$xoopsDB->prefix("formulize_entry_owner_groups")." WHERE fid=".intval($sourceFid)." AND entry_id=".intval($oldEntryId);
 			if(!$res = $xoopsDB->queryF($sql)) {
-				print "<p>Error: could not insert entry-owner-group information with this SQL:<br>$sql<br><a href=\"mailto:formulize@freeformsolutions.ca\">Please contact Freeform Solutions</a> for assistance resolving this issue.</p>\n";
+				print "<p>Error: could not insert entry-owner-group information with this SQL:<br>$sql<br><a href=\"mailto:info@formulize.org\">Please contact info@formulize.org</a> for assistance resolving this issue.</p>\n";
 			}
 		}
 		// cache the maps of old/new fields and entry ids, so we can refer to them later if other forms are cloned with data and linked selectboxes need to have references updated

@@ -260,8 +260,8 @@ define("_AM_ELE_CONVERTED_TO_TEXTBOX", "This multi-line textbox has been convert
 define("_AM_ELE_CONVERTED_TO_TEXTAREA", "This single-line textbox has been converted to a multi-line textbox.");
 define("_AM_ELE_CONVERTED_TO_RADIO", "These check boxes have been coverted to radio buttons.");
 define("_AM_ELE_CONVERTED_TO_CHECKBOX", "These radio buttons have been converted to check boxes.");
-define("_AM_ELE_CHECKBOX_DATA_NOT_READY", "These radio buttons were converted, but the data people have submitted was not updated for use in the check boxes.  Contact <a href=\"mailto:support@freeformsolutions.ca\">support@freeformsolutions.ca</a> for assistance.");
-define("_AM_ELE_RADIO_DATA_NOT_READY", "These check boxes were converted, but the data people have submitted was not updated for use in the radio buttons.  Contact <a href=\"mailto:support@freeformsolutions.ca\">support@freeformsolutions.ca</a> for assistance.");
+define("_AM_ELE_CHECKBOX_DATA_NOT_READY", "These radio buttons were converted, but the data people have submitted was not updated for use in the check boxes.  Contact <a href=\"mailto:info@formulize.org\">info@formulize.org</a> for assistance.");
+define("_AM_ELE_RADIO_DATA_NOT_READY", "These check boxes were converted, but the data people have submitted was not updated for use in the radio buttons.  Contact <a href=\"mailto:info@formulize.org\">info@formulize.org</a> for assistance.");
 
 
 // added - start - August 25 2005 - jpc

@@ -281,7 +281,13 @@ class formulizeAdvancedCalculationHandler {
 	}
     }
     //print "<pre>"; var_export( $_POST ); var_export( $newPost ); var_export( $xoopsUser->getGroups() ); print "</pre>";
+    //$userGroups = $xoopsUser->getGroups();
+    if ($xoopsUser) {
     $userGroups = $xoopsUser->getGroups();
+    } else {
+        $userGroups = array(XOOPS_GROUP_ANONYMOUS);
+    }
+
     $key = md5( serialize( $newPost ) . serialize( $userGroups ) );
     $fileName = XOOPS_ROOT_PATH."/modules/formulize/cache/formulize_advancedCalculation_procid_".intval($acid)."_groupids_".implode("_",$userGroups)."_".$key.".php";
     return $fileName;
@@ -298,7 +304,12 @@ class formulizeAdvancedCalculationHandler {
     }
     // for now...override...webmasters always skip cache
     global $xoopsUser;
+    //$groups = $xoopsUser->getGroups();
+    if ($xoopsUser) {
     $groups = $xoopsUser->getGroups();
+    } else {
+        $groups = array(XOOPS_GROUP_ANONYMOUS);
+    }
     if(in_array(XOOPS_GROUP_ADMIN, $groups)) {
 	return false;
     }    
@@ -406,7 +417,7 @@ class formulizeAdvancedCalculationHandler {
     // check to see if logging is enabled
     //print "<pre>POST<br>"; print_r( $_POST ); print "<br>Filters and Groupings<br>"; print_r( $filtersAndGroupings ); print "</pre>";
     if( $modulePrefLogProcedure ) {
-      $logid = $this->createLog( $acid, $xoopsUser->uid() );
+      $logid = $this->createLog($acid, $xoopsUser->getVar('uid'));
 
       $prefix = $acid . "_";
       $prefixLen = strlen( $prefix );
@@ -620,10 +631,18 @@ class formulizeAdvancedCalculationHandler {
     
 	    foreach( $steps as $stepKey => $step ) {
 	      if( strpos( $step['sql'], '{foreach' ) > 0 ) {
+#error_log("genForeach");
 		$code = $advCalcObject->genForeach( $step );
 	      } else {
+#error_log("genBasic");
 		$code = $advCalcObject->genBasic( $step );
 	      }
+#error_log("Processing step ".print_r($stepKey, true));
+#$lines = explode("\n", $code);
+#for ($linecounter = 186; $linecounter < 206; $linecounter++) {
+#    if (isset($lines[$linecounter]))
+#        error_log("line ".$linecounter.": ".$lines[$linecounter]);
+#}
 	      eval($code);
 	      reportProceduresTime("Finished processing step '".$steptitles[$stepKey]."'", $totalNumberOfRecords);  
 	    }
@@ -1200,9 +1219,9 @@ class formulizeAdvancedCalculationHandler {
 jQuery(document).ready(function() {
     jQuery('.".$acid . "_" . $fltr_grp["handle"]."').click(function() {
 	if(jQuery('.".$acid . "_" . $fltr_grp["handle"].":checked').length > 1) {
-	    jQuery('.".$elementName."_".$fltr_grp_index."').attr('checked','checked');
+	    jQuery('.".$elementName."_".$fltr_grp_index."').prop('checked', true);
 	} else {
-	    jQuery('.".$elementName."_".$fltr_grp_index."').removeAttr('checked');
+	    jQuery('.".$elementName."_".$fltr_grp_index."').prop('checked', false);
 	}
     });
 });

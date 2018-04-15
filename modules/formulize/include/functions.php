@@ -1630,11 +1630,11 @@ function buildScope($currentView, $uid, $fid, $currentViewCanExpand = false) {
     
     $gperm_handler = xoops_gethandler('groupperm');
     $member_handler = xoops_gethandler('member');
+    $mid = getFormulizeModId();
     if($uidObject = $member_handler->getUser($uid)) {
         $groups = $uidObject->getGroups();
-        $mid = getFormulizeModId();
     } else {
-        $scope = "uid=\"blankscope\"";
+        $groups = array(XOOPS_GROUP_ANONYMOUS);
     }
     
     $scope = "";
@@ -3374,7 +3374,7 @@ function writeElementValue($formframe = "", $ele, $entry, $value, $append, $prev
     }
 
     if (!is_object($element)) {
-        print "<b>Error: could not save the value for element: ".$ele.". Please notify your webmaster, or <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a> about this error.</b>";
+        print "<b>Error: could not save the value for element: ".$ele.". Please notify your webmaster, or <a href=\"mailto:info@formulize.org\">info@formulize.org</a> about this error.</b>";
         return;
     }
 

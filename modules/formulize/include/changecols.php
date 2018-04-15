@@ -33,6 +33,7 @@
 // this file generates the change columns popup
 
 // this function writes in the Javascript for changing columns
+// thanks to https://stackoverflow.com/users/54838/bc for the shift click checkbox code snippet: https://stackoverflow.com/questions/659508/how-can-i-shift-select-multiple-checkboxes-like-gmail
 function changeColJavascript() {
 ?>
 <script type='text/javascript'>
@@ -59,6 +60,29 @@ function updateCols(formObj) {
         window.self.close();
     }
 }
+
+$(document).ready(function() {
+    var $chkboxes = $('.colbox');
+    var lastChecked = null;
+    $chkboxes.click(function(e) {
+        if(!lastChecked) {
+            lastChecked = this;
+            return;
+        }
+    
+        if(e.shiftKey) {
+            var start = $chkboxes.index(this);
+            var end = $chkboxes.index(lastChecked);
+    
+            $chkboxes.slice(Math.min(start,end), Math.max(start,end)+ 1).prop('checked', lastChecked.checked);
+    
+        }
+    
+        lastChecked = this;
+    });
+});
+
+
 
 -->
 </script>
@@ -112,7 +136,7 @@ print "<title>" . _formulize_DE_PICKNEWCOLS . "</title>";
 print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"" . XOOPS_URL . "/xoops.css\" />\n";
 $themecss = xoops_getcss();
 print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$themecss\" />\n";
-
+print '<script type="text/javascript" src="'.XOOPS_URL.'/libraries/jquery/jquery.js"></script>\n';
 changeColJavascript();
 
 print "</head>";
