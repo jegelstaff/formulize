@@ -45,7 +45,7 @@ if(!defined("XOOPS_MAINFILE_INCLUDED")) {
     
     global $xoopsDB, $xoopsConfig;
     while(formulize_notifyStillTime($startTime, $maxExec)) {
-        $sql = "SELECT * FROM ".$xoopsDB->prefix("formulize_digest_data")." WHERE email = (SELECT email FROM ".$xoopsDB->prefix("formulize_digest_data")." ORDER BY email LIMIT 0,1) ORDER BY event, fid, digest_id ASC";
+        $sql = "SELECT * FROM ".$xoopsDB->prefix("formulize_digest_data")." WHERE email = (SELECT email FROM ".$xoopsDB->prefix("formulize_digest_data")." ORDER BY email LIMIT 0,1) ORDER BY fid, digest_id ASC";
         $res = $xoopsDB->query($sql);
         $ids = array();
         $digestedEntries = array();
@@ -78,6 +78,15 @@ if(!defined("XOOPS_MAINFILE_INCLUDED")) {
             } else {
                 $thisMailTemplate = substr($array['mailTemplate'], -4) == ".tpl" ? $array['mailTemplate'] : $array['mailTemplate'] . ".tpl";
             }
+            $revisionDescriptor = ":";
+            switch($event) {
+                case("new_entry"):
+                    $revisionDescriptor = "added:";
+                    break;  
+                case("update_entry"):
+                    $revisionDescriptor = "changed:";
+                    break;
+            }
             $thisMailTemplate = file_get_contents(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/mail_template/".$thisMailTemplate);
             $revisionsNeeded = false;
             $groupTitle = "";
@@ -86,7 +95,7 @@ if(!defined("XOOPS_MAINFILE_INCLUDED")) {
                 $groupTitle = "";
                 if(strstr($thisMailTemplate, "{GROUP_TITLE}")) {
                     $startPos = strpos($thisMailTemplate,"{GROUP_TITLE}")+13;
-                    $endPos = strpos($thisMailTemplate,"{/GROUP_TITLE}")-14;
+                    $endPos = strpos($thisMailTemplate,"{/GROUP_TITLE}")-13;
                     $groupTitle = substr($thisMailTemplate,$startPos,$endPos);
                     foreach ($extra_tags as $tag=>$value) {
                         $groupTitle = str_replace("{".$tag."}",$value, $groupTitle); // Sub in extra tags
@@ -97,25 +106,34 @@ if(!defined("XOOPS_MAINFILE_INCLUDED")) {
                 if($revisionsNeeded) {
                     $revisionHistory = array();
                 }
+                $priorRevisionLog = array();
                 foreach ($extra_tags as $tag=>$value) {
                     $thisMailTemplate = str_replace("{".$tag."}",$value, $thisMailTemplate); // Sub in extra tags
                     $elementHandle = "";
                     if(substr($tag, 0, 8)=="ELEMENT_") {
                         $elementHandle = strtolower(str_replace("ELEMENT_", "", $tag));
-                        print "$elementHandle : $value : ";
-                        print $extra_tags['REVISION_'.$tag]."<br>";
                     }
-                    if($revisionsNeeded AND $elementHandle AND $elementHandler->isElementVisibleForUser($elementHandle, $targetUser) AND isset($extra_tags['REVISION_'.$tag]) AND $extra_tags['REVISION_'.$tag] != $value) {
+                    if($revisionsNeeded AND $elementHandle AND $elementHandler->isElementVisibleForUser($elementHandle, $targetUser) AND (($event == "update_entry" AND isset($extra_tags['REVISION_'.$tag]) AND $extra_tags['REVISION_'.$tag] != $value) OR ($event == "new_entry" AND ($value != "" OR is_numeric($value))))) {
                         $elementHandle = strtolower(str_replace("ELEMENT_", "", $tag));
-                        print $elementHandle."<br>";
                         $elementObject = $elementHandler->get($elementHandle);
                         $capOrColHead = $elementObject->getVar('ele_colhead') ? $elementObject->getVar('ele_colhead') : $elementObject->getVar('ele_caption');
-                        $revision = "\t".$capOrColHead." changed: ".$extra_tags['REVISION_'.$tag]." -> ".$value;
-                        if($groupTitle) { // stored revisions for grouped messages for later
-                            $groupedMessages[$groupTitle]['revisionHistory'][] = $revision;
-                        } else {
-                            $revisionHistory[] = $revision;
+                        switch($event) {
+                            case "update_entry":
+                                $value = (!is_numeric($value) AND $value == "") ? "[blank]" : $value;
+                                $revision = "\t".$capOrColHead." $revisionDescriptor ".strip_tags(htmlspecialchars_decode($extra_tags['REVISION_'.$tag], ENT_QUOTES))." -> ".strip_tags(htmlspecialchars_decode($value, ENT_QUOTES));
+                                break;
+                            case "new_entry":
+                                $revision = "\t".$capOrColHead." $revisionDescriptor ".strip_tags(htmlspecialchars_decode($value, ENT_QUOTES));
+                                break;
                         }
+                        if($priorRevisionLog[$capOrColHead] != $revision) {
+                            if($groupTitle) { // stored revisions for grouped messages for later
+                                $groupedMessages[$groupTitle]['revisionHistory'][] = $revision;
+                            } else {
+                                $revisionHistory[] = $revision;
+                            }
+                        }
+                        $priorRevisionLog[$capOrColHead] = $revision;
                     }
                 }
                 $appendMessage = true;
@@ -129,16 +147,12 @@ if(!defined("XOOPS_MAINFILE_INCLUDED")) {
             if($thisMailTemplate) { // add non-grouped messages to the mail template
                 $mailTemplate .= $thisMailTemplate."\n\n---\n\n";
             }
-            //$ids[] = $array['digest_id'];
+            $ids[] = $array['digest_id'];
         }
-        print_r($groupedMessages);
         // process grouped messages and add to the mail template
         foreach($groupedMessages as $groupTitle=>$messageTexts) {
             $groupedMailTemplate = "";
             $revisionHistory = $messageTexts['revisionHistory'];
-            print "<pre>";
-            print_r($rervisionHistory);
-            print "</pre>";
             $groupTitleReplaced = false;
             $revisionsReplaced = false;
             foreach($messageTexts['theseMailTemplates'] as $thisMailTemplate) {
