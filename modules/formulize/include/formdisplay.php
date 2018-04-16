@@ -2340,7 +2340,7 @@ function loadValue($prevEntry, $element, $ele_value, $owner_groups, $groups, $en
 
                 case "text":
                     $ele_value[2] = $value;
-                    $ele_value[2] = eregi_replace("'", "&#039;", $ele_value[2]);
+                    $ele_value[2] = str_replace("'", "&#039;", $ele_value[2]);
                     break;
 
 

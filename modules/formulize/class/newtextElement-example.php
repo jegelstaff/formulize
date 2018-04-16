@@ -97,7 +97,7 @@ class formulizeNewTextElementHandler extends formulizeElementsHandler {
     // $element is the element object
     function loadValue($value, $ele_value, $element) {
 		$ele_value[2] = $value;				
-		$ele_value[2] = eregi_replace("'", "&#039;", $ele_value[2]);
+		$ele_value[2] = str_replace("'", "&#039;", $ele_value[2]);
         return $ele_value;
     }
     
