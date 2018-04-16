@@ -86,10 +86,12 @@ EOF;
 		$newUser->setVar('notify_method', $user_data->get('notify_method')); //email
 		$newUser->setVar('level', $user_data->get('level')); //active, can login
 
-		if ($user_data->get('uid') == false && $member_handler->insertUser($newUser, true)) {
-				// if there is no user id and the new user was inserted successfully; create a mapping record for internal id and email
-				return self::createResourceMapping(self::USER_RESOURCE, $user_data->get('email'), $newUser->getVar('uid'));
-		} else if ($user_data->get('uid') == true) {
+        $newUserCreated = $member_handler->insertUser($newUser, true);
+        
+		if ($user_data->get('uid') == false AND $newUserCreated) {
+			// if there is no user id and the new user was inserted successfully; create a mapping record for internal id and email
+			return self::createResourceMapping(self::USER_RESOURCE, $user_data->get('email'), $newUser->getVar('uid'));
+		} else if ($user_data->get('uid') == true AND $newUserCreated) {
             // new user account was created; create a mapping record for the new account id and the external id
             return self::createResourceMapping(self::USER_RESOURCE, $user_data->get('uid'), $newUser->getVar('uid'));
         } else {
