@@ -381,7 +381,7 @@ EOF;
         global $xoopsDB;
         $result = $xoopsDB->query("select count(*) as row_count from ".$xoopsDB->prefix("formulize_".$this->form_handle));
         if (false == $result) {
-            error_log(mysql_error());
+            error_log($xoopsDB->error());
         }
         list($count) = $xoopsDB->fetchRow($result);
         return $count;
