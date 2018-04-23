@@ -920,63 +920,66 @@ function readSection($entry, $entry_id, $sort='course') { // sort sets how the d
         $courseId = $courseIds[0];
         $GLOBALS['dara_course'][$year][$code]['course_id'] = $courseId;
     }
-    global $clockIncrement;
-    global $xoopsDB;
-    $totalConflictText = "";
-    foreach($days as $i=>$day) {
-        $start = $starts[$i];
-        $end = $ends[$i];
-        $startTimeParts = explode(":",$start);
-        $startTime = mktime($startTimeParts[0],$startTimeParts[1],$startTimeParts[2]);
-        $endTimeParts = explode(":",$end);
-        $endTime = mktime($endTimeParts[0],$endTimeParts[1],$endTimeParts[2]);
-        
-        // check for conflicts for every instructor for this time
-        $conflictSections = array();
-        foreach($instructors as $instructor) {
-            if(!$instructor OR $instructor == "CUPE Sessional" OR $instructor == "Other") { continue; }
-            $targetEnd = date("H:i:s",$endTime + 3600);
-            $targetStart = date("H:i:s", $startTime - 3600);
-            $dayCodes = array("Monday"=>"M","Tuesday"=>"T","Wednesday"=>"W","Thursday"=>"R","Friday"=>"F","Saturday"=>"Sat","Sunday"=>"Sun");
-			$baseFilter = "instr_assignments_instructor/**/$instructor/**/=][section_times_start_time/**/$targetEnd/**/<][section_times_end_time/**/$targetStart/**/>][section_times_day/**/".$dayCodes[$day]."/**/=][entry_id/**/$entry_id/**/!=][ro_module_year/**/$year/**/=][ro_module_course_active/**/2/**/!="; // sections_section_number/**/$sectionNumber/**/!=][
-            if($semester == "Fall-Winter - Y") {
-                $semFilter = "ro_module_semester/**/Fall - F/**/=][ro_module_semester/**/Winter/Spring - S/**/=][ro_module_semester/**/Fall-Winter - Y/**/=";
-            } elseif($semester == "Fall - F") {
-                $semFilter = "ro_module_semester/**/Fall - F/**/=][ro_module_semester/**/Fall-Winter - Y/**/=";
-            } elseif($semester == "Winter/Spring - S") {
-                $semFilter = "ro_module_semester/**/Winter/Spring - S/**/=][ro_module_semester/**/Fall-Winter - Y/**/=";
-            } elseif($semester == "Summer - Y") {
-                $semFilter = "ro_module_semester/**/Summer (May, June) - F/**/=][ro_module_semester/**/Summer (July, August) - S/**/=][ro_module_semester/**/Summer - Y/**/=";
-            } elseif($semester == "Summer (May, June) - F") {
-                $semFilter = "ro_module_semester/**/Summer (May, June) - F/**/=][ro_module_semester/**/Summer - Y/**/=";
-            } elseif($semester == "Summer (July, August) - S") {
-                $semFilter = "ro_module_semester/**/Summer (July, August) - S/**/=][ro_module_semester/**/Summer - Y/**/=";
+    
+    if((isset($_POST['computeConflicts']) AND $_POST['computeConflicts'] == 1) OR !isset($_POST['computeConflicts'])) {
+        global $clockIncrement;
+        global $xoopsDB;
+        $totalConflictText = "";
+        foreach($days as $i=>$day) {
+            $start = $starts[$i];
+            $end = $ends[$i];
+            $startTimeParts = explode(":",$start);
+            $startTime = mktime($startTimeParts[0],$startTimeParts[1],$startTimeParts[2]);
+            $endTimeParts = explode(":",$end);
+            $endTime = mktime($endTimeParts[0],$endTimeParts[1],$endTimeParts[2]);
+            
+            // check for conflicts for every instructor for this time
+            $conflictSections = array();
+            foreach($instructors as $instructor) {
+                if(!$instructor OR $instructor == "CUPE Sessional" OR $instructor == "Other") { continue; }
+                $targetEnd = date("H:i:s",$endTime + 3600);
+                $targetStart = date("H:i:s", $startTime - 3600);
+                $dayCodes = array("Monday"=>"M","Tuesday"=>"T","Wednesday"=>"W","Thursday"=>"R","Friday"=>"F","Saturday"=>"Sat","Sunday"=>"Sun");
+                $baseFilter = "instr_assignments_instructor/**/$instructor/**/=][section_times_start_time/**/$targetEnd/**/<][section_times_end_time/**/$targetStart/**/>][section_times_day/**/".$dayCodes[$day]."/**/=][entry_id/**/$entry_id/**/!=][ro_module_year/**/$year/**/=][ro_module_course_active/**/2/**/!="; // sections_section_number/**/$sectionNumber/**/!=][
+                if($semester == "Fall-Winter - Y") {
+                    $semFilter = "ro_module_semester/**/Fall - F/**/=][ro_module_semester/**/Winter/Spring - S/**/=][ro_module_semester/**/Fall-Winter - Y/**/=";
+                } elseif($semester == "Fall - F") {
+                    $semFilter = "ro_module_semester/**/Fall - F/**/=][ro_module_semester/**/Fall-Winter - Y/**/=";
+                } elseif($semester == "Winter/Spring - S") {
+                    $semFilter = "ro_module_semester/**/Winter/Spring - S/**/=][ro_module_semester/**/Fall-Winter - Y/**/=";
+                } elseif($semester == "Summer - Y") {
+                    $semFilter = "ro_module_semester/**/Summer (May, June) - F/**/=][ro_module_semester/**/Summer (July, August) - S/**/=][ro_module_semester/**/Summer - Y/**/=";
+                } elseif($semester == "Summer (May, June) - F") {
+                    $semFilter = "ro_module_semester/**/Summer (May, June) - F/**/=][ro_module_semester/**/Summer - Y/**/=";
+                } elseif($semester == "Summer (July, August) - S") {
+                    $semFilter = "ro_module_semester/**/Summer (July, August) - S/**/=][ro_module_semester/**/Summer - Y/**/=";
+                }
+                $filter[0][0] = "AND";
+                $filter[0][1] = $baseFilter;
+                $filter[1][0] = "OR";
+                $filter[1][1] = $semFilter;
+                $conflicts = getData(7,4, $filter);
+                foreach($conflicts as $conflict) {
+                    $conflictCode = display($conflict, 'sections_practica_course_code');
+                    $conflictCode = substr($conflictCode,12,strpos($conflictCode," ",12)-12);
+                    $conflictSections[] = $conflictCode.", ".display($conflict,"sections_section_number");
+                }
             }
-            $filter[0][0] = "AND";
-            $filter[0][1] = $baseFilter;
-            $filter[1][0] = "OR";
-            $filter[1][1] = $semFilter;
-            $conflicts = getData(7,4, $filter);
-            foreach($conflicts as $conflict) {
-                $conflictCode = display($conflict, 'sections_practica_course_code');
-                $conflictCode = substr($conflictCode,12,strpos($conflictCode," ",12)-12);
-                $conflictSections[] = $conflictCode.", ".display($conflict,"sections_section_number");
+            if(count($conflictSections)>0) {
+                $conflictText = "<br><span class='conflict'>Conflicts with ".implode("</span><br><span class='conflict'>Conflicts with ",$conflictSections)."</span>";
+            } else {
+                $conflictText = "";
             }
-        }
-        if(count($conflictSections)>0) {
-            $conflictText = "<br><span class='conflict'>Conflicts with ".implode("</span><br><span class='conflict'>Conflicts with ",$conflictSections)."</span>";
-        } else {
-            $conflictText = "";
-        }
-        $totalConflictText .= $conflictText;
-        
-        $rowspan = ($endTime - $startTime) / $clockIncrement;
-        $courseTimeSlots = array();
-        for($time=$startTime;$time<$endTime;$time=$time+$clockIncrement) {
-            $courseTimeSlots[] = date("H:i:s",$time);
-        }
-        for($time=$startTime;$time<$endTime;$time=$time+$clockIncrement) {
-            $GLOBALS['dara_times'][$day][date("H:i:s",$time)][$year.$code.$sectionNumber] = array('title'=>$title, 'code'=>$code, 'section'=>$sectionNumber, 'rowspan'=>$rowspan, 'timeslots'=>$courseTimeSlots, 'start'=>$startTime, 'end'=>$endTime, 'conflicts'=>$totalConflictText, 'year'=>$year);
+            $totalConflictText .= $conflictText;
+            
+            $rowspan = ($endTime - $startTime) / $clockIncrement;
+            $courseTimeSlots = array();
+            for($time=$startTime;$time<$endTime;$time=$time+$clockIncrement) {
+                $courseTimeSlots[] = date("H:i:s",$time);
+            }
+            for($time=$startTime;$time<$endTime;$time=$time+$clockIncrement) {
+                $GLOBALS['dara_times'][$day][date("H:i:s",$time)][$year.$code.$sectionNumber] = array('title'=>$title, 'code'=>$code, 'section'=>$sectionNumber, 'rowspan'=>$rowspan, 'timeslots'=>$courseTimeSlots, 'start'=>$startTime, 'end'=>$endTime, 'conflicts'=>$totalConflictText, 'year'=>$year);
+            }
         }
     }
     $semesterOrder = array("Fall - F"=>1, "Fall-Winter - Y"=>2,"Winter/Spring - S"=>3,"Summer (May, June) - F"=>4,"Summer - Y"=>5,"Summer (July, August) - S"=>6);
