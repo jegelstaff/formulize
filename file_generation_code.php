@@ -273,7 +273,7 @@ class SchedulePDF extends TCPDF {
         }
         $type = $type ? " $type" : "";
         $internalUseOnly = (isset($_POST['showTentInst']) AND $_POST['showTentInst'] == 'Yes') ? "FOR INTERNAL USE ONLY - " : "";
-        $this->MultiCell(0, 8, "John H. Daniels Faculty of Architecture, Landscape, and Design\n".$internalUseOnly.$year.$type." Academic Timetable".$spacer."                                                                                                                     M=Monday|T=Tuesday|W=Wednesday|R=Thursday|F=Friday", 0, 'L');
+        $this->MultiCell(0, 8, "John H. Daniels Faculty of Architecture, Landscape, and Design\n".$internalUseOnly.$year.$type." Academic Timetable".$spacer."                                                                                              M=Monday|T=Tuesday|W=Wednesday|R=Thursday|F=Friday", 0, 'L');
         //$this->Cell(20,8,'M=Monday|T=Tuesday|W=Wednesday|R=Thursday|F=Friday', 0, false, 'R');
 
     }
