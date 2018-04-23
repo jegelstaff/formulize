@@ -57,38 +57,18 @@ function daraShowContractLinks($fid, $frid, $type) {
     }
 
     if($type == "RO" AND count($ROcourses)>0) {
+        
+        $frontPageCodes = getData('', 27); // first entry is undergraduate, second is graduate
+        
         if(isset($_POST['search_ro_module_grad_undergrad']) AND $_POST['search_ro_module_grad_undergrad'] == '=Undergraduate' ) {            
             $enrollmentControls = "<th style=\"border: 1px solid black; color: white; background-color: black;\">Enrollment Controls</th>";
-            $colspan = 7;
-            
-            // add in Undergrad info page
-            $fullHtml = "<hr><p><b>Codes Used in the Timetable Listings</b></p>
-<p>The primary meeting section of Daniels undergraduate courses may either be an L (LEC; Lecture) or P (PRA; Practical) meeting section. Waitlists are only available for a course's primary meeting section.</p>
-<p>The Lecture is the primary meeting section for all courses with a Lecture only or a Lecture and a Tutorial (T; TUT). If there is more than one Lecture section listed, select the one that is offered at the time most convenient for your schedule. If the course has both Lecture and Tutorial sections, you must enrol in one of each.</p>
-<p>The Practical is the primary meeting section for all courses with a Practical only or a Practical and a Lecture, with the exception of ARC302H1.* If there is more than one Practical section listed, select the one that is offered at the time most convenient for your schedule. If the course has both Practical and Lecture sections, you must enrol in one of each.</p>
-<p>*The primary meeting section for ARC302H1 is the Lecture. You must enrol in both the Lecture and the Practical.</p> 
-<p>Note: Classes begin at 10 minutes after the hour and finish on the hour unless otherwise stated.</p>
-<p><b>Section Code</b></p>
-<p>F = fall session (September to December)<br>
-S = spring session (January to April)<br>
-Y = fall and spring sessions (September to April)</p>
-<p><b>Enrolment Indicator</b></p> 
-<p>Enrolment indicators identify how enrolment controls are being used and/or alert you to different enrolment processes.</p>
-<p><b>P</b> - If you meet the Enrolment Control listed in the timetable, then you have priority to enrol on ACORN from your enrolment start date and time to August 3. Starting August 5, spaces will be made available to all Daniels and Faculty of Arts & Science students, according to year of study:<br>
-Year 4 - 9am<br>
-Year 3 - 10am<br>
-Year 2 - 11am<br>
-Year 1 - 12 noon</p>	
-<p><b>R</b> - This course is restricted to students who meet the Enrolment Control listed in the timetable.</p>
-<p><b>E</b> - This course is restricted to students who meet the Enrolment Control listed in the timetable. Enrolment is done at the Department (not on ACORN). Refer to the departmental enrolment instructions on the timetable listings. To cancel an E course, go to the Department or your Registrar's office prior to the stated drop deadline.</p>
-<br pagebreak=\"true\"/>
-";
-            
+            $colspan = 6;
+            $fullHtml = htmlspecialchars_decode(display($frontPageCodes[0], 'timetable_front_page_front_page_code'), ENT_QUOTES);        
             
         } else {
             $enrollmentControls = "";
-            $colspan = 6;
-            $fullHtml = "";
+            $colspan = 5;
+            $fullHtml = htmlspecialchars_decode(display($frontPageCodes[1], 'timetable_front_page_front_page_code'), ENT_QUOTES);        
         }
         if(isset($_POST['showTentInst']) AND $_POST['showTentInst']=="Yes") {
             $tentInstHeader = "<th style=\"border: 1px solid black; color: white; background-color: black;\">Tentative Instr.</th>";
