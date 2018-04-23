@@ -101,16 +101,22 @@ if( !$fid AND !$sid) {
     }
     $groupSQL .= ")";
 
-    $sql = 'SELECT links.screen FROM '.$xoopsDB->prefix("formulize_menu_links").' AS links ';
+    $sql = 'SELECT links.screen, links.url FROM '.$xoopsDB->prefix("formulize_menu_links").' AS links ';
     $sql .= ' LEFT JOIN '.$xoopsDB->prefix("formulize_menu_permissions").' AS perm ON links.menu_id = perm.menu_id ';
-    $sql .= ' WHERE  default_screen = 1'. $groupSQL . 'ORDER BY perm.group_id';
+    $sql .= ' WHERE  default_screen = 1'. $groupSQL . 'ORDER BY links.rank LIMIT 0,1';
 
+    
     $res = $xoopsDB->query ( $sql ) or die('SQL Error !<br />'.$sql.'<br />'.$xoopsDB->error());
 
     if ( $res ) {
         $row = $xoopsDB->fetchArray ( $res );
         $screenID = $row['screen'];
 
+        if ($screenID == 'url') {
+            print "<script>window.location = '".XOOPS_URL."/modules/formulize/index.php?".$row['url']."';</script>";
+            exit();
+        }
+        
         if ( strpos($screenID,"fid=") !== false){
             $fid = substr($screenID, strpos($screenID,"=")+1 );
         }
