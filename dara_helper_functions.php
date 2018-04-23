@@ -853,18 +853,21 @@ function getNamesPlusAvailLoads($instructors, $year) {
     }
 	$namesPlusLoads = array();
 	static $foundLoads = array();
-	foreach($instructors as $i=>$instructor) {
-        if(!isset($foundLoads[$instructor][$year])) {		
-            $loads = getData('', 20, 'hr_teaching_loads_instructor/**/'.$instructor.'/**/=][hr_teaching_loads_year/**/'.$year.'/**/=');
-            if(count($loads)>0) {
-                $load = floatval(display($loads[0], 'hr_teaching_loads_available_teaching_loa'));
-                $load = " (".number_format($load, 3).")";
-            } else {
-                $load = "";
+    if(!isset($foundLoads[$year])) {
+        global $xoopsDB;
+        $sql = "SELECT h.hr_module_name, l.hr_teaching_loads_available_teaching_loa FROM ".$xoopsDB->prefix("formulize_hr_teaching_loads")." as l LEFT JOIN ".$xoopsDB->prefix("formulize_hr_module")." as h ON h.entry_id = l.hr_teaching_loads_instructor WHERE l.hr_teaching_loads_year = '".$year."'";
+        if($res = $xoopsDB->query($sql)) {
+            while($array = $xoopsDB->fetchArray($res)) {
+                if($array['hr_teaching_loads_available_teaching_loa'] != "" AND is_numeric($array['hr_teaching_loads_available_teaching_loa'])) {
+                    $foundLoads[$year][$array['hr_module_name']] = $array['hr_module_name'] . " (".number_format(floatval($array['hr_teaching_loads_available_teaching_loa']), 3).")";
+                } else {
+                    $foundLoads[$year][$array['hr_module_name']] = $array['hr_module_name'];
+                }
             }
-            $foundLoads[$instructor][$year] = $instructor . $load;
         }
-        $namesPlusLoads[$i] = $foundLoads[$instructor][$year];
+    }
+	foreach($instructors as $i=>$instructor) {
+        $namesPlusLoads[$i] = isset($foundLoads[$year][$instructor]) ? $foundLoads[$year][$instructor] : $instructor;
 	}
 	return $returnArray ? $namesPlusLoads : $namesPlusLoads[0];
 }
