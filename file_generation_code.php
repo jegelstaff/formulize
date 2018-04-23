@@ -83,7 +83,7 @@ function daraShowContractLinks($fid, $frid, $type) {
             $roomsHeader = "";
         }
         $semesterOrder = array('Fall - F', 'Winter/Spring - S', 'Fall-Winter - Y', 'Summer (May, June) - F', 'Summer (July, August) - S', 'Summer - Y');
-        $fullHtml .= "<table style=\"border: 1px solid black;\" cellpadding=\"10\"><thead><tr><th style=\"border: 1px solid black; color: white; background-color: black;\">Course Code</th><th style=\"border: 1px solid black; color: white; background-color: black;\">Course Title</th><th style=\"border: 1px solid black; color: white; background-color: black;\">Section</th><th style=\"border: 1px solid black; color: white; background-color: black;\">Day/Time</th>$roomsHeader<th style=\"border: 1px solid black; color: white; background-color: black;\">Instructor</th>$tentInstHeader$enrollmentControls</tr></thead><tbody>";
+        $fullHtml .= "<table style=\"border: 1px solid black; width: 100%;\" cellpadding=\"10\"><thead><tr><th style=\"border: 1px solid black; color: white; background-color: black;\">Course Code</th><th style=\"border: 1px solid black; color: white; background-color: black;\">Course Title</th><th style=\"border: 1px solid black; color: white; background-color: black;\">Section</th><th style=\"border: 1px solid black; color: white; background-color: black;\">Day/Time</th>$roomsHeader<th style=\"border: 1px solid black; color: white; background-color: black;\">Instructor</th>$tentInstHeader$enrollmentControls</tr></thead><tbody>";
         foreach($semesterOrder as $sem) {
             if(count($ROcourses[$sem])>0) {
                 $fullHtml .= "<tr><td style=\"border: 1px solid black; color: white; background-color: black;\">$sem</td>";
@@ -97,10 +97,11 @@ function daraShowContractLinks($fid, $frid, $type) {
             }
         }
         $fullHtml .= "</tbody></table>";
-        //print $fullHtml;
+        //print "</div><div style='clear: both;'></div><br><br><br><br><br><br><br><br><br><br>".$fullHtml;
         //exit;
         $pdf = daraWriteContract('pdf', $fullHtml, "", true, $type);
         //$doc = daraWriteContract('doc', $fullHtml, "", true, $type);
+        $htmlSchedule = $fullHtml;
     }
 
     if($type == "INST" AND count($INSTcourses)>0) {
@@ -130,7 +131,13 @@ function daraShowContractLinks($fid, $frid, $type) {
     if($pdf) {
         daraFinishPDF($pdf, $pdfPath);
         formulize_scandirAndClean(XOOPS_ROOT_PATH."/cache/", "pdfFile");
-        $pdfLink = "<a href='".XOOPS_URL."$pdfPath'>Download PDF</a>";
+        if(isset($htmlSchedule)) {
+            file_put_contents(XOOPS_ROOT_PATH."/cache/htmlTimetable.html", "<!DOCTYPE html><html>$htmlSchedule</html>");
+            $pdfLink = "<a href='".XOOPS_URL."$pdfPath'>Download PDF</a> -- <a href='".XOOPS_URL."/cache/htmlTimetable.html' target='_blank'>Download HTML</a>";
+        } else {
+            $pdfLink = "<a href='".XOOPS_URL."$pdfPath'>Download PDF</a>";    
+        }
+        
     }
     if($doc) {
         daraFinishWord($doc, $docPath);
