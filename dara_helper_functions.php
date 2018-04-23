@@ -520,7 +520,7 @@ function drawCourseBox($section, $sectionKey, $lecturesWithTutorials) {
 	if($sectionData['notes']) {
 		$overLibText .= "<br><br>".str_replace("\r\n","<br>",$sectionData['notes']);
 	}
-	$linkStart = ($sectionData['type'] != "Tutorial" AND userCanAssignToProgram($courseData['program']) AND $courseData['offered']!="No" AND $sectionData['reserved'] != "Yes") ? "<a href='' target='".str_replace("/","",$sectionKey)."' class='details-link' onclick='return false;'>" : "";
+	$linkStart = ($sectionData['type'] != "Tutorial" AND userCanAssignToProgram($courseData['program']) AND $courseData['offered']!="No") ? "<a href='' target='".str_replace("/","",$sectionKey)."' class='details-link' onclick='return false;'>" : "";
     $linkEnd = $linkStart ? "</a>" : "";
     $offeredNote = $courseData['offered'] == "No" ? " (awaiting confirmation)" : "";
     $reservedNote = $sectionData['reserved'] == "Yes" ? " (Reserved for planning purposes)" : "";
