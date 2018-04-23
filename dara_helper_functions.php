@@ -815,9 +815,25 @@ function drawCalendar($days, $lecturesWithTutorials=array(), $details=array(), $
 function getPriorInstructors($year, $code, $sectionNumber) {
 	$yearParts = explode("/",$year);
 	$priorYear = ($yearParts[0]-1)."/".($yearParts[1]-1);
-	$prior_instructors = getData(15, 4, 'ro_module_year/**/'.$priorYear.'/**/=][ro_module_course_code/**/'.$code.'/**/=][sections_section_number/**/'.$sectionNumber.'/**/=');
-	$prior_instructors = display($prior_instructors[0], 'instr_assignments_instructor');
-	$prior_instructors = is_array($prior_instructors) ? $prior_instructors : array($prior_instructors);
+    static $cachedPriorInstructorData = array();
+    if(!isset($cachedPriorInstructorData[$priorYear])) {
+        global $xoopsDB;
+        $sql = "SELECT r.ro_module_course_code, s.sections_section_number, h.hr_module_name FROM ".$xoopsDB->prefix("formulize_ro_module")." as r
+            LEFT JOIN ".$xoopsDB->prefix("formulize_course_components")." as s
+                ON s.sections_practica_course_code = r.entry_id
+            LEFT JOIN ".$xoopsDB->prefix("formulize_instr_assignments")." as a
+                ON a.instr_assignments_section_number = s.entry_id
+            LEFT JOIN ".$xoopsDB->prefix("formulize_hr_module")." as h
+                ON a.instr_assignments_instructor = h.entry_id
+            WHERE
+                r.ro_module_year = '".$priorYear."'";
+        if($res = $xoopsDB->query($sql)) {
+            while($array = $xoopsDB->fetchArray($res)) {
+                $cachedPriorInstructorData[$priorYear][$array['ro_module_course_code']][$array['sections_section_number']][] = $array['hr_module_name'];
+            }
+        }
+    }
+    $prior_instructors = $cachedPriorInstructorData[$priorYear][$code][$sectionNumber];
 	if($text = implode("</li><li>",$prior_instructors)) {
 		return "<li>$text</li>";
 	} elseif($priorYear != '2016/2017') {
