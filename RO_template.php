@@ -18,11 +18,6 @@ if(!strstr($courseActive, 'Yes')) {
 $code = display($entry, 'ro_module_course_code');
 $title = display($entry, 'ro_module_course_title');
 $displayEnrollment = (isset($_POST['search_ro_module_grad_undergrad']) AND $_POST['search_ro_module_grad_undergrad'] == '=Undergraduate' ) ? true : false;
-if($displayEnrollment) {
-    $enrollment_controls = display($entry, 'ro_module_enrolment_controls');
-    $enrollment_controls = strstr($enrollment_controls, ' - ') ? substr($enrollment_controls,0,1) : $enrollment_controls;
-    $enrollment_controls = $enrollment_controls . " " . display($entry, 'ro_module_enrolment_control_desc');
-}
 
 // load the revision data...
 global $indexedLockData, $compareOn;
@@ -62,6 +57,8 @@ $tentInst = array();
 $revTentInst = array();
 $titles = array();
 $revTitles = array();
+$ec = array();
+$revEc = array();
 foreach($sectionIds as $i=>$sectionId) {
     $section = getData(18, 4, $sectionId, 'AND', '', '', '', 'sections_section_number');
     if(display($section[0], "course_components_reserved_section")=="Yes") {
@@ -73,27 +70,39 @@ foreach($sectionIds as $i=>$sectionId) {
     } else {
         $sections[$i] = $sectionNumber;
     }
-    $revSections[$i] = display($indexedLockData[$sectionId], 'sections_section_number');
+    $revSections[$i] = $compareOn ? display($indexedLockData[$sectionId], 'sections_section_number') : "";
     $times[$i] = makeSectionTimes($section[0]);
-    $revTimes[$i] = makeSectionTimes($indexedLockData[$sectionId]);
+    $revTimes[$i] = $compareOn ? makeSectionTimes($indexedLockData[$sectionId]) : "";
     $rooms[$i] = display($section[0], 'sections_practica_room');
-    $revRooms[$i] = display($indexedLockData[$sectionId], 'sections_practica_room');
+    $revRooms[$i] = $compareOn ? display($indexedLockData[$sectionId], 'sections_practica_room') : "";
     $titles[$i] = display($section[0], 'course_components_section_title_optional');
-    $revTitles[$i] = display($indexedLockData[$sectionId], 'course_components_section_title_optional');
+    $revTitles[$i] = $compareOn ? display($indexedLockData[$sectionId], 'course_components_section_title_optional') : "";
     $instructorData = getData('', 15, 'instr_assignments_section_number/**/'.$sectionId.'/**/=');
     foreach($instructorData as $instructor) {
         $inst[$i][] = getInstructorName($instructor, $activeYear);
         $tentInst[$i][] = display($instructor, 'instr_assignments_instructor');
     }
-    $revInstructors = display($indexedLockData[$sectionId], 'instr_assignments_instructor');
-    if(is_array($revInstructors)) {
-        foreach($revInstructors as $thisRevInstructor) {
-            $revInst[$i][] = getInstructorName($thisRevInstructor, $activeYear);
-            $revTentInst[$i][] = display($thisRevInstructor, 'instr_assignments_instructor');
+    if($compareOn) {
+        $revInstructors = display($indexedLockData[$sectionId], 'instr_assignments_instructor');
+        if(is_array($revInstructors)) {
+            foreach($revInstructors as $thisRevInstructor) {
+                $revInst[$i][] = getInstructorName($thisRevInstructor, $activeYear);
+                $revTentInst[$i][] = display($thisRevInstructor, 'instr_assignments_instructor');
+            }
+        } else {
+            $revInst[$i][] = getInstructorName($revInstructors, $activeYear);
+            $revTentInst[$i][] = display($revInstructors, 'instr_assignments_instructor');
         }
-    } else {
-        $revInst[$i][] = getInstructorName($revInstructors, $activeYear);
-        $revTentInst[$i][] = display($revInstructors, 'instr_assignments_instructor');
+    }
+    if($displayEnrollment) {
+        $ec[$i] = display($section[0], 'course_components_enrolment_controls');
+        $ec[$i] = strstr($ec[$i], ' - ') ? substr($ec[$i],0,1) : $ec[$i];
+        $ec[$i] = $ec[$i] . " " . display($section[0], 'course_components_enrolment_control_desc');
+        if($compareOn) {
+            $revEc[$i] = display($indexedLockData[$sectionId], 'course_components_enrolment_controls');
+            $revEc[$i] = strstr($revEc[$i], ' - ') ? substr($revEc[$i],0,1) : $revEc[$i];
+            $revEc[$i] = $revEc[$i] . " " . display($indexedLockData[$sectionId], 'course_components_enrolment_control_desc');
+        }
     }
 
 }
@@ -117,7 +126,7 @@ if(isset($_POST['showCoords']) AND $_POST['showCoords'] AND $coordName = display
         $html .= "<td style=\"border-top: 1px solid black;\"></td>";
     }
     if($displayEnrollment) {
-        $html .= "<td style=\"border-top: 1px solid black;\">$enrollment_controls</td>";
+        $html .= "<td style=\"border-top: 1px solid black;\"></td>";
     }
     $html .= "</tr>";
     $start = false;
@@ -180,7 +189,7 @@ foreach($sections as $i=>$section) {
     }
     
     if($displayEnrollment) {
-        $html .= "<td style=\"border-top: 1px solid black;\">$enrollment_controls</td>";
+        $html .= "<td style=\"border-top: 1px solid black;\">".compData($ec[$i], $revEc[$i])."</td>";
     }
     
     $html .= "</tr>";
