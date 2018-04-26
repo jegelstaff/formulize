@@ -268,8 +268,10 @@ class SchedulePDF extends TCPDF {
         }
         if($type == "Graduate") {
             $spacer .= "         ";
-        } else {
+        } elseif($type == "Undergraduate") {
             $spacer .= "";
+        } else { // instructor-based timetable
+            $spacer .= "                        ";
         }
         $type = $type ? " $type" : "";
         $internalUseOnly = (isset($_POST['showTentInst']) AND $_POST['showTentInst'] == 'Yes') ? "FOR INTERNAL USE ONLY - " : "";
