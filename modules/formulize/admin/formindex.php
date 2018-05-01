@@ -503,6 +503,7 @@ function patch40() {
             `rank` int(11),
             `url` varchar(255),
             `link_text` varchar(255),
+            `note` text,
             PRIMARY KEY (`menu_id`),
             INDEX i_menus_appid (appid)
             );";
