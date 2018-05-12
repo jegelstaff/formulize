@@ -120,7 +120,9 @@ if(!defined("XOOPS_MAINFILE_INCLUDED")) {
                         switch($event) {
                             case "update_entry":
                                 $value = (!is_numeric($value) AND $value == "") ? "[blank]" : $value;
-                                $revision = "\t".$capOrColHead." $revisionDescriptor ".strip_tags(htmlspecialchars_decode($extra_tags['REVISION_'.$tag], ENT_QUOTES))." -> ".strip_tags(htmlspecialchars_decode($value, ENT_QUOTES));
+                                $revValue = strip_tags(htmlspecialchars_decode($extra_tags['REVISION_'.$tag], ENT_QUOTES));
+                                $revValue = (!is_numeric($revValue) AND $revValue == "") ? "[blank]" : $value;
+                                $revision = "\t".$capOrColHead." $revisionDescriptor ".$revValue." -> ".strip_tags(htmlspecialchars_decode($value, ENT_QUOTES));
                                 break;
                             case "new_entry":
                                 $revision = "\t".$capOrColHead." $revisionDescriptor ".strip_tags(htmlspecialchars_decode($value, ENT_QUOTES));
