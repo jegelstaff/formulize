@@ -355,6 +355,15 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
      
      $limitStart = intval($limitStart);
      $limitSize = intval($limitSize);
+     
+     // DARA HACK!!
+     // if it's a full name field, sort by last name instead
+     // needs to be turned into a proper feature on elements, that you can specify an alternate sort field
+     if($sortField=='hr_module_name') {
+        $sortField = 'hr_module_last_name';
+     }
+     
+     
      $sortField = formulize_db_escape($sortField);
 
      if(isset($_GET['debug'])) { $time_start = microtime_float(); }
