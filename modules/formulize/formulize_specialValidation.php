@@ -71,6 +71,7 @@ if($element_id==88) {
     $starts = is_array($starts) ? $starts : array($starts);
     $ends = display($entry, "section_times_end_time");
     $ends = is_array($ends) ? $ends : array($ends);
+    $semester = display($entry, "ro_module_semester");
     $totalConflictText = "";
     foreach($days as $i=>$day) {
         $start = $starts[$i];
