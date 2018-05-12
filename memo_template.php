@@ -51,7 +51,7 @@ if(count($courses)>0 OR count($coordCourses)>0) {
                 }
                 $teachingLabel = "";
                 if(isset($coordCourses[$thisSem][$course['code']])) {
-                    $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">{$course['code']}: {$course['title']} (Coordinating)</TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">".number_format($coordCourses[$thisSem][$course['code']]['weighting'],3)."</TD></TR>";
+                    $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><ul><li>{$course['code']}: {$course['title']} (Coordinating)</ul></li></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">".number_format($coordCourses[$thisSem][$course['code']]['weighting'],3)."</TD></TR>";
                     $teachingLabel = " (Teaching)";
                     $totalTeaching = $totalTeaching + $coordCourses[$thisSem][$course['code']]['weighting'];
                     unset($coordCourses[$thisSem][$course['code']]);
@@ -64,7 +64,7 @@ if(count($courses)>0 OR count($coordCourses)>0) {
         }
     
         foreach($coordCourses[$thisSem] as $code=>$course) {
-            $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">$code: {$course['title']} (Coordinating)</TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">".number_format($course['weighting'],3)."</TD></TR>";
+            $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><ul><li>$code: {$course['title']} (Coordinating)</ul></li></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">".number_format($course['weighting'],3)."</TD></TR>";
             $totalTeaching = $totalTeaching + $course['weighting'];
         }
         
@@ -79,7 +79,7 @@ if(count($services)>0) {
     $totalService = 0;
     $html .= "<TR><TD style=\"border: 1px solid black;\"><B>Administrative Assignments</B></TD><TD style=\"border: 1px solid black;\">&nbsp;</TD></TR>";
     foreach($services as $label=>$fce) {
-        $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">$label</TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">".number_format($fce,3)."</TD></TR>";
+        $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><ul><li>$label</ul></li></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">".number_format($fce,3)."</TD></TR>";
         $totalService = $totalService + $fce;
     }
     if(count($services)>1) {
@@ -89,7 +89,7 @@ if(count($services)>0) {
 
 if($otherService) {
     $html .= "<TR><TD style=\"border: 1px solid black;\"><B>Other Assignments</B></TD><TD style=\"border: 1px solid black;\">&nbsp;</TD></TR>";
-    $html .= "<TR><TD style=\"border: 1px solid black;\">$otherService</TD><TD style=\"border: 1px solid black;\">".number_format($otherWeight,3)."</TD></TR>";
+    $html .= "<TR><TD style=\"border: 1px solid black;\"><ul><li>$otherService</ul></li></TD><TD style=\"border: 1px solid black;\">".number_format($otherWeight,3)."</TD></TR>";
 }
 
 $html .= "<TR><TD style=\"border: 1px solid black;\"><B>Total Assignments:</B></TD><TD style=\"border: 1px solid black;\"><B>".number_format($usedLoad,3)."</B></TD></TR>";
