@@ -341,10 +341,11 @@ function getDataCached($framework, $form, $filter="", $andor="AND", $scope="", $
     $sortField="", $sortOrder="", $forceQuery=false, $mainFormOnly=0, $includeArchived=false, $dbTableUidField="",
     $id_reqsOnly=false, $resultOnly=false, $filterElements=null)
 {
-    if (isset($GLOBALS['formulize_cachedGetDataResults'][serialize(func_get_args())])) {
-        return $GLOBALS['formulize_cachedGetDataResults'][serialize(func_get_args())];
+
+    $cacheKey = serialize(func_get_args());    
+    if (isset($GLOBALS['formulize_cachedGetDataResults'][$cacheKey])) {
+        return $GLOBALS['formulize_cachedGetDataResults'][$cacheKey];
     } else {
-        $cacheKey = serialize(func_get_args());
         return getData($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $dbTableUidField, $id_reqsOnly, $resultOnly, $filterElements, $cacheKey);
     }
 }
