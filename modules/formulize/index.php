@@ -38,6 +38,7 @@
 // A SCREEN IN A BLOCK WITHOUT THE ENTIRE XOOPS TEMPLATE COMING IN
 
 // uncomment these two lines to enable benchmarking of performance...depends also on the user id specified in formulize_benchmark in include/extract.php
+require_once "../../mainfile.php";
 //include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 //$GLOBALS['startPageTime'] = microtime_float();
 
