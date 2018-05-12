@@ -2025,7 +2025,7 @@ function formulize_buildQSFilter($handle, $search_text, $multi=false) {
         }
     }
     
-    formulize_benchmark("start of building filter");
+    //formulize_benchmark("start of building filter");
     $elementMetaData = formulize_getElementMetaData($handle, true); // true means this is a handle
     $id = $elementMetaData['ele_id'];
     if($elementMetaData['ele_type']=="select" OR $elementMetaData['ele_type']=="radio" OR $elementMetaData['ele_type']=="checkbox") {
