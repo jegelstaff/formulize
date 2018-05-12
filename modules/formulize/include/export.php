@@ -46,7 +46,7 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 $fid = intval($_GET['fid']);
 $frid = intval($_GET['frid']);
 
-if (!isset($_POST['metachoice'])) {
+if (!isset($_POST['metachoice']) AND !isset($formulize_doingManualExport)) {
     print "<HTML>";
     print "<head>";
     print "<meta http-equiv='Content-Type' content='text/html;charset=utf-8' />\n";
@@ -114,7 +114,7 @@ if (!isset($_POST['metachoice'])) {
     print "</td><td width=5%></td></tr></table>";
     print "</center></body>";
     print "</HTML>";
-} else {
+} elseif(!isset($formulize_doingManualExport)) {
 
     // 1. need to pickup the full query that was used for the dataset on the page where the button was clicked
     // 2. need to run that query and make a complete dataset
