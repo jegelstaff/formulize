@@ -1,14 +1,18 @@
 <?php
 
 if(!function_exists("drawSem")) {
-    function drawSem($sem, $year) {
+    function drawSem($sem, $year, $reset=false) {
         static $drawn = array();
+        if($reset) {
+            $drawn = array();
+        }
         if(!isset($drawn[$sem])) {
             $drawn[$sem] = true;
-            return "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><i>$sem - $year</i></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">&nbsp;</TD></TR>";
+            $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><i>$sem - $year</i></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">&nbsp;</TD></TR>";
         } else {
-            return "";
+            $html .= "";
         }
+        return $html;
     }
 }
 
@@ -57,7 +61,8 @@ if(count($courses)>0 OR count($coordCourses)>0) {
         
         foreach($courses as $course) {
             if($course['sem']==$thisSem) {
-                $html .= drawSem($thisSem, $activeYear);
+                $html .= drawSem($thisSem, $activeYear, $semStart);
+                $semStart = false;
                 $teachingLabel = "";
                 if(isset($coordCourses[$thisSem][$course['code']])) {
                     $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><ul><li>{$course['code']}: {$course['title']} (Coordinating)</li></ul></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">".number_format($coordCourses[$thisSem][$course['code']]['weighting'],3)."</TD></TR>";
@@ -73,7 +78,8 @@ if(count($courses)>0 OR count($coordCourses)>0) {
         }
     
         foreach($coordCourses[$thisSem] as $code=>$course) {
-            $html .= drawSem($thisSem, $activeYear);
+            $html .= drawSem($thisSem, $activeYear, $semStart);
+            $semStart = false;
             $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><ul><li>$code: {$course['title']} (Coordinating)</li></ul></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">".number_format($course['weighting'],3)."</TD></TR>";
             $totalTeaching = $totalTeaching + $course['weighting'];
         }
