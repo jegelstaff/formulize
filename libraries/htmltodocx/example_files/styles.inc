@@ -83,6 +83,9 @@ function htmltodocx_styles_example() {
         'borderColor' => '000000',
         'borderSize' => 10,
         ),
+      'p' => array (
+        'align' => 'both',
+       ),
       );
       
   // Classes:

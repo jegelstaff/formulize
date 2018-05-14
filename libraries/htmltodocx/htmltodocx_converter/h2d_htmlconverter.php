@@ -226,7 +226,7 @@ function htmltodocx_insert_html(&$phpword_element, $html_dom_array, &$state = ar
   $state['style_sheet']['default'] = isset($state['style_sheet']['default']) ? $state['style_sheet']['default'] : array();
   
   // Current style:
-  $state['current_style'] = isset($state['current_style']) ? $state['current_style'] : array('size' => '11');
+  $state['current_style'] = isset($state['current_style']) ? $state['current_style'] : array('size' => '10');
   
   // Parents:
   $state['parents'] = isset($state['parents']) ? $state['parents'] : array(0 => 'body');

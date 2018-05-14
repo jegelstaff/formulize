@@ -1,5 +1,17 @@
 <?php
 
+if(!function_exists("drawSem")) {
+    function drawSem($sem, $year) {
+        static $drawn = array();
+        if(!isset($drawn[$sem])) {
+            $drawn[$sem] = true;
+            return "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><i>$sem - $year</i></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">&nbsp;</TD></TR>";
+        } else {
+            return "";
+        }
+    }
+}
+
 $andAdministrative = count($services) > 0 ? "and Administrative " : "";
 
 $html .= "<P>$date</P><P>From: $dean, Associate Dean, Academic</P><P>To: $name</P></P>Re: $year Teaching ".$andAdministrative."Assignments</P>
@@ -13,7 +25,7 @@ $activeYear = $firstYear;
 /*if($percent < 75) {
     $html .= "<P>Shown below are your teaching assignments for the academic year 2017/2018. These duties are based on your percent of appointment at the rank of Lecturer, and the corresponding teaching load of Full Course Equivalencies (FCEs).  The specifics of your percent of appointment and salary will be addressed in a forthcoming contract letter.</P>";
 } else {*/
-    $html .= "<P>Shown below are your teaching assignments for the academic year $year.  These duties are based on your $percent% appointment at the rank of $rank, and a teaching load of $targetLoad Full Course Equivalencies (FCEs).";    
+    $html .= "<P style=\"text-align:justify;\">Shown below are your teaching assignments for the academic year $year.  These duties are based on your $percent% appointment at the rank of $rank, and a teaching load of $targetLoad Full Course Equivalencies (FCEs).";    
 //}
 
 $html .= "</P><BR>
@@ -45,13 +57,10 @@ if(count($courses)>0 OR count($coordCourses)>0) {
         
         foreach($courses as $course) {
             if($course['sem']==$thisSem) {
-                if($semStart) {
-                    $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><i>$thisSem - $activeYear</i></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">&nbsp;</TD></TR>";
-                    $semStart = false;
-                }
+                $html .= drawSem($thisSem, $activeYear);
                 $teachingLabel = "";
                 if(isset($coordCourses[$thisSem][$course['code']])) {
-                    $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><ul><li>{$course['code']}: {$course['title']} (Coordinating)</ul></li></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">".number_format($coordCourses[$thisSem][$course['code']]['weighting'],3)."</TD></TR>";
+                    $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><ul><li>{$course['code']}: {$course['title']} (Coordinating)</li></ul></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">".number_format($coordCourses[$thisSem][$course['code']]['weighting'],3)."</TD></TR>";
                     $teachingLabel = " (Teaching)";
                     $totalTeaching = $totalTeaching + $coordCourses[$thisSem][$course['code']]['weighting'];
                     unset($coordCourses[$thisSem][$course['code']]);
@@ -64,7 +73,8 @@ if(count($courses)>0 OR count($coordCourses)>0) {
         }
     
         foreach($coordCourses[$thisSem] as $code=>$course) {
-            $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><ul><li>$code: {$course['title']} (Coordinating)</ul></li></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">".number_format($course['weighting'],3)."</TD></TR>";
+            $html .= drawSem($thisSem, $activeYear);
+            $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><ul><li>$code: {$course['title']} (Coordinating)</li></ul></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">".number_format($course['weighting'],3)."</TD></TR>";
             $totalTeaching = $totalTeaching + $course['weighting'];
         }
         
@@ -79,7 +89,7 @@ if(count($services)>0) {
     $totalService = 0;
     $html .= "<TR><TD style=\"border: 1px solid black;\"><B>Administrative Assignments</B></TD><TD style=\"border: 1px solid black;\">&nbsp;</TD></TR>";
     foreach($services as $label=>$fce) {
-        $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><ul><li>$label</ul></li></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">".number_format($fce,3)."</TD></TR>";
+        $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><ul><li>$label</li></ul></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">".number_format($fce,3)."</TD></TR>";
         $totalService = $totalService + $fce;
     }
     if(count($services)>1) {
@@ -98,12 +108,13 @@ $html .= "<TR><TD style=\"border: 1px solid black;\">Unassigned load (may be ass
 
 $html .= "</TABLE><BR>";
 
-$html .= "<P>In addition to the above assignments, the remainder of your appointment is available for research, creative professional activity and service to the University. Faculty are expected to be in residence in Toronto during all teaching sessions, and during the weeks of preparation prior to the sessions, and the weeks of marking and evaluation processes that follow. Faculty must adhere to all university guidelines and policies regarding changes to, or absences from scheduled courses.</P>  
+$html .= "<P style=\"text-align:justify;\">In addition to the above assignments, the remainder of your appointment is available for research, creative professional activity and service to the University. Faculty are expected to be in residence in Toronto during all teaching sessions, and during the weeks of preparation prior to the sessions, and the weeks of marking and evaluation processes that follow. Faculty must adhere to all university guidelines and policies regarding changes to, or absences from scheduled courses.</P>  
 
-<P>Core faculty with appointments at or above 50% are also expected to attend all scheduled core and program meetings, as well as faculty council meetings that do not coincide with teaching obligations. All Core design and visual studies faculty should be available to serve on undergraduate and graduate mid-term and final reviews. In addition, all core faculty are expected to attend DFALD Convocation/Awards Ceremonies typically held mid-June.</P>
+<P style=\"text-align:justify;\">Core faculty with appointments at or above 50% are also expected to attend all scheduled core and program meetings, as well as faculty council meetings that do not coincide with teaching obligations. All Core design and visual studies faculty should be available to serve on undergraduate and graduate mid-term and final reviews. In addition, all core faculty are expected to attend DFALD Convocation/Awards Ceremonies typically held mid-June.</P>
 
-<P>If for any reason you will not be available during the critical times and dates outlined above, please give the Dean's office advanced notice.</P>
+<P style=\"text-align:justify;\">If for any reason you will not be available during the critical times and dates outlined above, please give the Dean's office advanced notice.</P>
 
-<P>*Starting in 2017-2018 we are expressing teaching assignments in full course equivalent (FCE) rather than half course equivalent (HCE).  1 HCE = 0.5 FCE.  This to harmonize our nomenclature with the University's standards.";
+<P style=\"text-align:justify;\">*Starting in 2017-2018 we are expressing teaching assignments in full course equivalent (FCE) rather than half course equivalent (HCE).  1 HCE = 0.5 FCE.  This to harmonize our nomenclature with the University's standards.";
 
 return array($html);
+

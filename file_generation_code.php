@@ -289,8 +289,8 @@ class DocumentPDF extends TCPDF {
         //$this->Image($image_file, 50, 600, 150, '', 'PNG', '', 'T', false, 300, '', false, false, 0, false, false, false);
         // Page number
         $this->Cell(0, 8, 'Page '.$this->getPageNumGroupAlias().'/'.$this->getPageGroupAlias(), 0, false, 'C', 0, '', 0, false, 'T', 'M');
-        $this->Image(XOOPS_ROOT_PATH.'/libraries/tcpdf/examples/images/Address.png', 165, 273, 29);
-        $this->Image(XOOPS_ROOT_PATH.'/libraries/tcpdf/examples/images/Logo.png', 15, 276, 59);
+        $this->Image(XOOPS_ROOT_PATH.'/libraries/tcpdf/examples/images/Address.png', 165, 258, 29);
+        $this->Image(XOOPS_ROOT_PATH.'/libraries/tcpdf/examples/images/Logo.png', 15, 261, 59);
     }
     public function Header() {
         $this->Image(XOOPS_ROOT_PATH.'/libraries/tcpdf/examples/images/Daniels.png', 170, 5, 22);
@@ -322,6 +322,7 @@ function daraStartPDF($doc_title, $doc_keywords, $templateType) {
 	$pdf->SetAutoPageBreak(TRUE, 27); // number is bottom margin, default is 25
 	$pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
     $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
+    $pdf->SetFontSize(10);
     if($templateType == "RO" OR $templateType == "INST") {
         $pdf->setFooterFont(array('Helvetica', '', 8));
         $pdf->setHeaderFont(array('Helvetica', '', 8));
@@ -410,7 +411,7 @@ function daraAppendWord(&$doc, &$section, $content) {
       'base_root' => $paths['base_root'],
       'base_path' => $paths['base_path'],
       // Optional parameters - showing the defaults if you don't set anything:
-      'current_style' => array('size' => '11'), // The PHPWord style on the top element - may be inherited by descendent elements.
+      'current_style' => array('size' => '10'), // The PHPWord style on the top element - may be inherited by descendent elements.
       'parents' => array(0 => 'body'), // Our parent is body.
       'list_depth' => 0, // This is the current depth of any current list.
       'context' => 'section', // Possible values - section, footer or header.
