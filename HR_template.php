@@ -57,7 +57,28 @@ foreach($sections as $section) {
 	$res = $xoopsDB->query($sql);
 	$row = $xoopsDB->fetchRow($res);
 	$numberOfInstructors = $row[0];
-    $sectionData['weighting'] = number_format(display($section, 'teaching_weighting')/$numberOfInstructors,3);
+    if($numberOfInstructors>1) {
+        $sectionData['coinst'] = array();
+        $splitOverride = 0;
+        $sql = 'SELECT h.hr_module_name as name, i.instr_assignments_split_weight_override as split FROM '.$xoopsDB->prefix('formulize_instr_assignments').' AS i LEFT JOIN '.$xoopsDB->prefix('formulize_hr_module').' AS h ON i.instr_assignments_instructor = h.entry_id WHERE i.instr_assignments_section_number = '.$sectionIds[0].' AND i.instr_assignments_instructor IS NOT NULL ';
+        if($res = $xoopsDB->query($sql)) {
+            while($coinst = $xoopsDB->fetchArray($res)) {
+                if($coinst['name'] == $name) {
+                    $splitOverride = floatval($coinst['split'])>0 ? floatval($coinst['split']) : 0;
+                } else {
+                    $sectionData['coinst'][] = $coinst['name'];
+                }
+            }
+        }
+        if($splitOverride) {
+            $sectionData['weighting'] = number_format((display($section, 'teaching_weighting')*$splitOverride),3);
+        } else {
+            $sectionData['weighting'] = number_format(((display($section, 'teaching_weighting')/$numberOfInstructors)*1.3),3);
+        }
+    } else {
+        $sectionData['coinst'] = false;
+        $sectionData['weighting'] = number_format((display($section, 'teaching_weighting')/$numberOfInstructors),3);
+    }
     $thisSem = display($section, 'ro_module_semester');
     $sectionData['sem'] = $thisSem;
     if(strtotime($startdates[$thisSem]) < strtotime($startdate)) {
