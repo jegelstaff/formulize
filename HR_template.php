@@ -73,7 +73,23 @@ foreach($sections as $section) {
         if($splitOverride) {
             $sectionData['weighting'] = number_format((display($section, 'teaching_weighting')*$splitOverride),3);
         } else {
-            $sectionData['weighting'] = number_format(((display($section, 'teaching_weighting')/$numberOfInstructors)*1.3),3);
+            static $cachedCoTeachingSupplements = array();
+            $programName = display($section, 'ro_module_program');
+            if(!isset($cachedCoTeachingSupplements[$programName])) {
+                $sql = 'SELECT w.activity_weightings_value '.
+                'FROM '.$xoopsDB->prefix('formulize_activity_weightings'). ' AS w '.
+                'LEFT JOIN '.$xoopsDB->prefix('formulize_master_program_list').' AS p '.
+                'ON p.entry_id = w.activity_weightings_program '.
+                'WHERE p.master_program_list_program = "'.formulize_db_escape($programName).'" '.
+                'AND w.activity_weightings_lecture_or_studio = "Co-teaching supplement"';
+                if($res = $xoopsDB->query($sql)) {
+                    while($row = $xoopsDB->fetchRow($res)) {
+                        $cachedCoTeachingSupplements[$programName] = $row[0];
+                    }
+                }
+            } 
+            $coTeachingSupplement = isset($cachedCoTeachingSupplements[$programName]) ? $cachedCoTeachingSupplements[$programName] : 0;
+            $sectionData['weighting'] = number_format(((display($section, 'teaching_weighting')/$numberOfInstructors)+$coTeachingSupplement),3);
         }
     } else {
         $sectionData['coinst'] = false;
@@ -220,6 +236,8 @@ if($_POST['memos']) {
     $loadYears = is_array($loadYears) ? $loadYears : array($loadYears);
     $activeTerms = display($entry, 'hr_teaching_loads_active_terms');
     $activeTerms = is_array($activeTerms) ? $activeTerms : array($activeTerms);
+    $priorYearAdj = display($entry, 'hr_teaching_loads_prior_year_adjustment');
+    $priorYearAdj = is_array($priorYearAdj) ? $priorYearAdj : array($priorYearAdj);
     $key = array_search($year, $loadYears);
     $targetLoad = $targetLoads[$key];
     $availLoad = $availLoads[$key];
@@ -227,6 +245,7 @@ if($_POST['memos']) {
     $otherService = $otherServices[$key];
     $otherWeight = $otherWeights[$key];
     $activeTerms = $activeTerms[$key];
+    $priorYearAdj = $priorYearAdj[$key];
     
     if(count($courses)==0 AND count($coordCourses)==0 AND count($services)==0 AND !$otherService) {
         return array();

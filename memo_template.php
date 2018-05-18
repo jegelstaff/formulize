@@ -109,19 +109,25 @@ if($otherService) {
     $html .= "<TR><TD style=\"border: 1px solid black;\"><ul><li>$otherService</ul></li></TD><TD style=\"border: 1px solid black;\">".number_format($otherWeight,3)."</TD></TR>";
 }
 
-$html .= "<TR><TD style=\"border: 1px solid black;\"><B>Total Assignments:</B></TD><TD style=\"border: 1px solid black;\"><B>".number_format($usedLoad,3)."</B></TD></TR>";
+if(floatval($priorYearAdj)!=0) {
+    $html .= "<TR><TD style=\"border: 1px solid black;\"><B>Total Assignments:</B></TD><TD style=\"border: 1px solid black;\"><B>".number_format($usedLoad+$priorYearAdj,3)."</B></TD></TR>";
+    $html .= "<TR><TD style=\"border: 1px solid black;\">Prior Year credit (+) or balance owing (-)</TD><TD style=\"border: 1px solid black;\">".number_format($priorYearAdj*-1,3)."</TD></TR>";
+    $html .= "<TR><TD style=\"border: 1px solid black;\"><B>Grand Total:</B></TD><TD style=\"border: 1px solid black;\"><B>".number_format($usedLoad,3)."</B></TD></TR>";
+} else {
+    $html .= "<TR><TD style=\"border: 1px solid black;\"><B>Total Assignments:</B></TD><TD style=\"border: 1px solid black;\"><B>".number_format($usedLoad,3)."</B></TD></TR>";    
+}
 
-$html .= "<TR><TD style=\"border: 1px solid black;\">Unassigned load (may be assigned at a future date if FCE is at or above 0.500, and will be applied as a credit next year if it is below zero)</TD><TD style=\"border: 1px solid black;\">".number_format($availLoad,3)."</TD></TR>";
+
+
+$html .= "<TR><TD style=\"border: 1px solid black;\">Unassigned load (may be assigned at a future date if FCE is above 0.500, and will be applied as a credit next year if it is below zero)</TD><TD style=\"border: 1px solid black;\">".number_format($availLoad,3)."</TD></TR>";
 
 $html .= "</TABLE><BR>";
 
 $html .= "<P style=\"text-align:justify;\">In addition to the above assignments, the remainder of your appointment is available for research, creative professional activity and service to the University. Faculty are expected to be in residence in Toronto during all teaching sessions, and during the weeks of preparation prior to the sessions, and the weeks of marking and evaluation processes that follow. Faculty must adhere to all university guidelines and policies regarding changes to, or absences from scheduled courses.</P>  
 
-<P style=\"text-align:justify;\">Core faculty with appointments at or above 50% are also expected to attend all scheduled core and program meetings, as well as faculty council meetings that do not coincide with teaching obligations. All Core design and visual studies faculty should be available to serve on undergraduate and graduate mid-term and final reviews. In addition, all core faculty are expected to attend DFALD Convocation/Awards Ceremonies typically held mid-June.</P>
+<P style=\"text-align:justify;\">Core faculty with appointments at or above 50% are also expected to attend all scheduled core and program meetings, as well as faculty council meetings that do not coincide with teaching obligations. Normal service for Core faculty with appointments at or above 50% includes committee work, such as participating on Faculty Council committees and ad hoc project-based working groups. All Core design and visual studies faculty should be available to serve on undergraduate and graduate mid-term and final reviews. In addition, all core faculty are expected to attend DFALD Convocation/Awards Ceremonies typically held mid-June.</P>
 
-<P style=\"text-align:justify;\">If for any reason you will not be available during the critical times and dates outlined above, please give the Dean's office advanced notice.</P>
-
-<P style=\"text-align:justify;\">*Starting in 2017-2018 we are expressing teaching assignments in full course equivalent (FCE) rather than half course equivalent (HCE).  1 HCE = 0.5 FCE.  This to harmonize our nomenclature with the University's standards.";
+<P style=\"text-align:justify;\">If for any reason you will not be available during the critical times and dates outlined above, please give the Dean's office advanced notice.</P>";
 
 return array($html);
 
