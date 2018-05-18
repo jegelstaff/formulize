@@ -168,7 +168,7 @@ function daraRemoveTeachingLoads($year, $carryover=true) {
             " LEFT JOIN ".$xoopsDB->prefix('formulize_hr_teaching_loads')." as s ".
             " ON s.hr_teaching_loads_instructor = l.hr_teaching_loads_instructor ".
             " AND s.hr_teaching_loads_year = '".formulize_db_escape($year)."' ".
-            " AND (s.hr_teaching_loads_available_teaching_loa >= 0.5 OR s.hr_teaching_loads_available_teaching_loa < 0) ".
+            " AND (s.hr_teaching_loads_available_teaching_loa > 0.5 OR s.hr_teaching_loads_available_teaching_loa < 0) ".
             " SET l.hr_teaching_loads_prior_year_adjustment = s.hr_teaching_loads_available_teaching_loa ".
             " WHERE l.hr_teaching_loads_year = '".formulize_db_escape($nextYear)."'";
         $res = $xoopsDB->queryF($sql);
