@@ -122,7 +122,11 @@ if(!defined("XOOPS_MAINFILE_INCLUDED")) {
                                 $value = (!is_numeric($value) AND $value == "") ? "[blank]" : $value;
                                 $revValue = strip_tags(htmlspecialchars_decode($extra_tags['REVISION_'.$tag], ENT_QUOTES));
                                 $revValue = (!is_numeric($revValue) AND $revValue == "") ? "[blank]" : $value;
-                                $revision = "\t".$capOrColHead." $revisionDescriptor ".$revValue." -> ".strip_tags(htmlspecialchars_decode($value, ENT_QUOTES));
+                                if($revValue != strip_tags(htmlspecialchars_decode($value, ENT_QUOTES))) {
+                                    $revision = "\t".$capOrColHead." $revisionDescriptor ".$revValue." -> ".strip_tags(htmlspecialchars_decode($value, ENT_QUOTES));
+                                } else {
+                                    continue;
+                                }
                                 break;
                             case "new_entry":
                                 $revision = "\t".$capOrColHead." $revisionDescriptor ".strip_tags(htmlspecialchars_decode($value, ENT_QUOTES));
@@ -153,6 +157,9 @@ if(!defined("XOOPS_MAINFILE_INCLUDED")) {
         }
         // process grouped messages and add to the mail template
         foreach($groupedMessages as $groupTitle=>$messageTexts) {
+            if(!$groupTitle) {
+                continue;
+            }
             $groupedMailTemplate = "";
             $revisionHistory = $messageTexts['revisionHistory'];
             $groupTitleReplaced = false;
