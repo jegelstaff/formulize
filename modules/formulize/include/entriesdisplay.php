@@ -4299,7 +4299,7 @@ function processClickedCustomButton($clickedElements, $clickedValues, $clickedAc
 // This function is only meant to work with situations where someone has actually selected an entry (or clicked inline)
 function gatherHiddenValue($handle) {
 	global $formulize_thisEntryId;
-	if($formulize_thisEntryId) {
+	if(isset($_POST["hiddencolumn_" . $formulize_thisEntryId . "_" . $handle])) {
 		return htmlspecialchars(strip_tags($_POST["hiddencolumn_" . $formulize_thisEntryId . "_" . $handle]));
 	} else {
 		return false;
