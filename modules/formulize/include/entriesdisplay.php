@@ -307,8 +307,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 					"\"".formulize_db_escape($saveformframe)			."\", ".
 					"\"".formulize_db_escape($savemainform)				."\", ".
 					"\"".formulize_db_escape($_POST['savelock'])		."\", ".
-					"\"".formulize_db_escape($_POST['hlist'])			."\", ".
-					"\"".formulize_db_escape($_POST['hcalc'])			."\", ".
+					intval($_POST['hlist'])                             .", ".
+					intval($_POST['hcalc'])			                    .", ".
 					"\"".formulize_db_escape($savesearches)				."\", ".
 					"\"".formulize_db_escape($_POST['sort'])			."\", ".
 					"\"".formulize_db_escape($_POST['order'])			."\", ".
@@ -331,8 +331,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 					"sv_pubgroups 		= \"".formulize_db_escape($savegroups) 				."\", ".
 					"sv_mod_uid 		= \"".formulize_db_escape($uid) 					."\", ".
 					"sv_lockcontrols 	= \"".formulize_db_escape($_POST['savelock'])		."\", ".
-					"sv_hidelist 		= \"".formulize_db_escape($_POST['hlist']) 			."\", ".
-					"sv_hidecalc 		= \"".formulize_db_escape($_POST['hcalc']) 			."\", ".
+					"sv_hidelist 		= ".intval($_POST['hlist'])                         .", ".
+					"sv_hidecalc 		= ".intval($_POST['hcalc']) 			            .", ".
 					"sv_asearch 		= \"".formulize_db_escape($savesearches) 			."\", ".
 					"sv_sort 			= \"".formulize_db_escape($_POST['sort']) 			."\", ".
 					"sv_order 			= \"".formulize_db_escape($_POST['order']) 			."\", ".
