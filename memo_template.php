@@ -34,7 +34,7 @@ $activeYear = $firstYear;
 
 $html .= "</P><BR>
 
-<TABLE style=\"border: 1px solid black;\" cellpadding=\"10\">";
+<TABLE cellpadding=\"10\">";
 
 if(count($courses)>0 OR count($coordCourses)>0) {
     $html .= "<TR><TD style=\"border: 1px solid black;\" width=\"400\"><B>Teaching Assignments</B></TD><TD style=\"border: 1px solid black;\" width=\"100\"><B>FCE</B></TD></TR>";
@@ -125,7 +125,7 @@ $html .= "</TABLE><BR>";
 
 $html .= "<P style=\"text-align:justify;\">In addition to the above assignments, the remainder of your appointment is available for research, creative professional activity and service to the University. Faculty are expected to be in residence in Toronto during all teaching sessions, and during the weeks of preparation prior to the sessions, and the weeks of marking and evaluation processes that follow. Faculty must adhere to all university guidelines and policies regarding changes to, or absences from scheduled courses.</P>  
 
-<P style=\"text-align:justify;\">Core faculty with appointments at or above 50% are also expected to attend all scheduled core and program meetings, as well as faculty council meetings that do not coincide with teaching obligations. Normal service for Core faculty with appointments at or above 50% includes committee work, such as participating on Faculty Council committees and ad hoc project-based working groups. All Core design and visual studies faculty should be available to serve on undergraduate and graduate mid-term and final reviews. In addition, all core faculty are expected to attend DFALD Convocation/Awards Ceremonies typically held mid-June.</P>
+<P style=\"text-align:justify;\">Core faculty with appointments at or above 50% are also expected to attend all scheduled core and program meetings, as well as faculty council meetings that do not coincide with teaching obligations. Normal service for Core faculty with appointments at or above 50% includes committee work, such as participating on Faculty Council committees and ad hoc project-based working groups. All Core design and visual studies faculty should be available to serve on undergraduate and graduate mid-term and final reviews. In addition, all core faculty are expected to attend DFALD Convocation/Awards Ceremonies typically held mid-June and mid-November.</P>
 
 <P style=\"text-align:justify;\">If for any reason you will not be available during the critical times and dates outlined above, please give the Dean's office advanced notice.</P>";
 
