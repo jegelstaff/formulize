@@ -164,19 +164,34 @@ switch($rank) {
         $percentText = 'five';
         $percentNumber = '5';
         $positionBlurb = 'Sessional Lecturer Appointment position at the rank of '.$rank;
+        $totalSalary = "$".number_format(intval(count($courses)*display($rankData[0],'ranks_default_pay')),2,".",",");
         break;
     case 'Sessional Lecturer III':
         $template = 'sessional';
         $percentText = 'six';
         $percentNumber = '6';
         $positionBlurb = 'Sessional Lecturer Appointment position at the rank of '.$rank;
+        $totalSalary = "$".number_format(intval(count($courses)*display($rankData[0],'ranks_default_pay')),2,".",",");
         break;
     case 'Writing Instructor I':
     case 'Writing Instructor II':
     case 'Writing Instructor III':
+        $numberOfHours = display($entry, 'hr_module_hours_in_current_year');
+        $numberOfHours = str_replace(".00", "", $numberOfHours);
         $template = 'sessional';
         $positionBlurb = 'position in the Daniels Writing Center at the rank of '.$rank;
-        $totalSalary = "$".number_format((intval(display($entry, 'hr_module_pay'))*1.04),0,".",",");
+        $hourlyPay = display($rankData[0],'ranks_default_pay'); // gathered above for salary
+        $totalSalary = "$".number_format(($numberOfHours*$hourlyPay*1.04),2,".",",");
+        $writingCenterCoord = getData('', 16, 'service_module_service_assignment/**/Writing Center Coordinator/**/=][service_module_year/**/'.$year.'/**/=');
+        $writingCenterCoord = htmlspecialchars_decode(display($writingCenterCoord[0], 'service_module_faculty_member'), ENT_QUOTES);
+        $wccHR = getData('',1,'hr_module_name/**/$writingCenterCoord/**/=');
+        $wccEmail = display($wccHR[0], 'hr_module_e_mail');
+        if(!$wccEmail) {
+            $wccEmail = display($wccHR[0], 'hr_module_alt_email');
+        }
+        $yearParts = explode("/",$year);
+        $startdate = "September 1, ".$yearParts[0];
+        $enddate = "April 30, ".$yearParts[1];
         break;
 }
 
