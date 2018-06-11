@@ -19,6 +19,8 @@ $province = display($entry, 'hr_module_province_state');
 $pc = display($entry, 'hr_module_postal_code');
 $country = display($entry, 'hr_module_country');
 $email = display($entry, 'hr_module_e_mail');
+$email = $email ? $email : display($entry, 'hr_module_utoronto_email');
+$email = $email ? $email : display($entry, 'hr_module_alt_email');
 $year = $_POST['contractYear']; // selected by user when they generate the contracts
 
 $startdates = array();
