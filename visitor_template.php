@@ -4,7 +4,37 @@ $html = "
 
 <P>$date</P>
 
-<P>$name<BR>$address<BR>$city, $province<BR>$pc, $country</P>
+<P>$name";
+
+if($address) {
+    $html .= "<BR>$address";
+}
+if($city OR $province) {
+    $html .= "<BR>";
+}
+if($city) {
+    $html .= "$city";
+}
+if($city AND $province) {
+    $html .= ", ";
+}
+if($province) {
+    $html .= "$province";
+}
+if($pc OR $country) {
+    $html .= "<BR>";
+}
+if($pc) {
+    $html .= "$pc";
+}
+if($pc AND $country) {
+    $html .= ", ";
+}
+if($country) {
+    $html .= "$country";
+}
+
+$html .= "</P>
 
 <P>$email</P>
 
@@ -21,7 +51,7 @@ foreach($courses as $course) {
 
 $html .= "</UL>It is expected that you will establish office hours to meet with your students and that you be available during midterm and final review weeks to serve on Daniels studio and thesis reviews as well as after end of the term in case there are questions/issues regarding grades.</P>
 
-<P>We will offer an honorarium of CAD $salary for this teaching assingment.";  
+<P>We will offer an honorarium of CAD $salary for this teaching assignment.";  
 
 
 if($travelAllowance) {
