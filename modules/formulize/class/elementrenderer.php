@@ -776,7 +776,7 @@ class formulizeElementRenderer{
 						$counter = 0; // counter used for javascript that works with 'Other' box
 						while( $o = each($options) ){
 							$o = formulize_swapUIText($o, $this->_ele->getVar('ele_uitext'));
-							$other = $this->optOther($o['value'], $form_ele_id, $entry, $counter, true);
+							$other = $this->optOther($o['value'], $form_ele_id, $entry, $counter, true, $isDisabled);
 							if( $other != false ){
 								$form_ele1->addOption($o['key'], _formulize_OPT_OTHER.$other);
 								if(in_array($o['key'], $selected)) {
@@ -800,7 +800,7 @@ class formulizeElementRenderer{
 						$counter = 0; // counter used for javascript that works with 'Other' box
 						while( $o = each($options) ){
 							$o = formulize_swapUIText($o, $this->_ele->getVar('ele_uitext'));
-							$other = $this->optOther($o['value'], $form_ele_id, $entry, $counter, true);
+							$other = $this->optOther($o['value'], $form_ele_id, $entry, $counter, true, $isDisabled);
 							$t = new XoopsFormCheckBox(
 								'',
 								$form_ele_id.'[]',
@@ -905,7 +905,7 @@ class formulizeElementRenderer{
 						$counter = 0;
 						while( $o = each($options) ){
 							$o = formulize_swapUIText($o, $this->_ele->getVar('ele_uitext'));
-							$other = $this->optOther($o['value'], $form_ele_id, $entry, $counter);
+							$other = $this->optOther($o['value'], $form_ele_id, $entry, $counter, false, $isDisabled);
 							if( $other != false ){
 								$form_ele1->addOption($o['key'], _formulize_OPT_OTHER.$other);
 								if($o['key'] == $selected) {
@@ -937,7 +937,7 @@ class formulizeElementRenderer{
 								$form_ele_id,
 								$selected
 							);
-							$other = $this->optOther($o['value'], $form_ele_id, $entry, $counter);
+							$other = $this->optOther($o['value'], $form_ele_id, $entry, $counter, false, $isDisabled);
 							if( $other != false ){
 								$t->addOption($o['key'], _formulize_OPT_OTHER."</label><label>$other"); // epic hack to terminate radio button's label so it doesn't include the clickable 'other' box!!
 								if($o['key'] == $selected) {
@@ -1192,7 +1192,7 @@ class formulizeElementRenderer{
 
 	// THIS FUNCTION COPIED FROM LIASE 1.26, onchange control added
 	// JWE -- JUNE 1 2006
-	function optOther($s='', $id, $entry, $counter, $checkbox=false){
+	function optOther($s='', $id, $entry, $counter, $checkbox=false, $isDisabled=false){
         static $blankSubformCounters = array();
 		global $xoopsModuleConfig, $xoopsDB;
 		if( !preg_match('/\{OTHER\|+[0-9]+\}/', $s) ){
@@ -1216,7 +1216,7 @@ class formulizeElementRenderer{
 			$otherq = q("SELECT other_text FROM " . $xoopsDB->prefix("formulize_other") . " WHERE id_req='$entry' AND ele_id='$ele_id' LIMIT 0,1");
 			$other_text = $otherq[0]['other_text'];
 		}
-		if(strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
+		if(strstr($_SERVER['PHP_SELF'], "formulize/printview.php") OR $isDisabled) {
 			return $other_text;			
 		}
 		$s = explode('|', preg_replace('/[\{\}]/', '', $s));
