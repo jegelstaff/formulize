@@ -177,7 +177,7 @@ switch($rank) {
         break;
     case 'Writing Instructor I':
     case 'Writing Instructor II':
-    case 'Writing Instructor III':
+    case 'Writing Instructor II (Priority)':
         $numberOfHours = display($entry, 'hr_module_hours_in_current_year');
         $numberOfHours = str_replace(".00", "", $numberOfHours);
         $template = 'sessional';
