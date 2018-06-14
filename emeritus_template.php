@@ -62,7 +62,16 @@ $html .="<P>Your payroll documentation will be available online through the Univ
 
 <P>Sincerely,</P><BR><BR><P>$cao<BR>Chief Administrative Officer</P>
 
-<P>cc: $programDirector, Program Director, $pdProgram</P>";
+<P>";
+$startDirs = true;
+foreach($programDirs as $dir) {
+    if(!$startDirs) {
+        $html .= "<BR>";
+    }
+    $startDirs = false;
+    $html .= "cc: ".$dir['programDirector'].", Program Director, ".$dir['pdProgram'];
+}
+$html .= "</P>";
 
 $html2 = "<P><B><I>I have read this letter, the attachments, and the items referred to in the attachments, and accept employment on the basis of all these provisions.</I></B></P>
 

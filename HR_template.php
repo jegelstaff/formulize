@@ -273,11 +273,17 @@ if($_POST['memos']) {
 }
 
 
-$signbackDate = date('F j, Y', strtotime('+7 days')); 
-$programDirector = getData('', 16, 'service_module_service_assignment/**/Academic Program Director/**/=][service_module_program/**/'.$programs[0].'/**/=][service_module_year/**/'.$year.'/**/=');
-$programDirector = htmlspecialchars_decode(display($programDirector[0], 'service_module_faculty_member'), ENT_QUOTES);
-$programDirectorEmail = makeEmailFromName($programDirector);
-$pdProgram = $programs[0]; 
+$signbackDate = date('F j, Y', strtotime('+7 days'));
+
+foreach($programs as $i=>$thisProgram) {
+    $programDirector = getData('', 16, 'service_module_service_assignment/**/Academic Program Director/**/=][service_module_program/**/'.$thisProgram.'/**/=][service_module_year/**/'.$year.'/**/=');
+    $programDirector = htmlspecialchars_decode(display($programDirector[0], 'service_module_faculty_member'), ENT_QUOTES);
+    $programDirectorEmail = makeEmailFromName($programDirector);
+    $pdProgram = $thisProgram;
+    $programDirs[$i]['programDirector'] = $programDirector;
+    $programDirs[$i]['programDirectorEmail'] = $programDirectorEmail;
+    $programDirs[$i]['pdProgram'] = $pdProgram;
+}
 
 if($template AND file_exists(XOOPS_ROOT_PATH."/".$template."_template.php")) {
     return include XOOPS_ROOT_PATH."/".$template."_template.php";

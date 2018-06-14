@@ -106,7 +106,16 @@ $html .= "<P>Yours sincerely,</P><BR><BR><P>$cao<BR>Chief Administrative Officer
 if($writingCenterCoord) {
     $html .= "<P>cc: $writingCenterCoord, Writing Center Coordinator</P>";
 } else {
-    $html .= "<P>cc: $programDirector, Program Director, $pdProgram</P>"; 
+    $html .= "<P>";
+    $startDirs = true;
+    foreach($programDirs as $dir) {
+        if(!$startDirs) {
+            $html .= "<BR>";
+        }
+        $startDirs = false;
+        $html .= "cc: ".$dir['programDirector'].", Program Director, ".$dir['pdProgram'];
+    }
+    $html .= "</P>"; 
 }
 
 
