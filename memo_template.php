@@ -127,6 +127,8 @@ $html .= "<P style=\"text-align:justify;\">In addition to the above assignments,
 
 <P style=\"text-align:justify;\">Core faculty with appointments at or above 50% are also expected to attend all scheduled core and program meetings, as well as faculty council meetings that do not coincide with teaching obligations. Normal service for Core faculty with appointments at or above 50% includes committee work, such as participating on Faculty Council committees and ad hoc project-based working groups. All Core design and visual studies faculty should be available to serve on undergraduate and graduate mid-term and final reviews. In addition, all core faculty are expected to attend DFALD Convocation/Awards Ceremonies typically held mid-June and mid-November.</P>
 
+<p style=\"text-align:justify;\">Please note that your course outlines are due July 1 for Fall and Fall/Winter courses and November 1 for Spring courses.</P>
+
 <P style=\"text-align:justify;\">If for any reason you will not be available during the critical times and dates outlined above, please give the Dean's office advanced notice.</P>";
 
 return array($html);
