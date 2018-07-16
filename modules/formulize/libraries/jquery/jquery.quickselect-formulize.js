@@ -55,9 +55,8 @@ var QuickSelect;
         self.getLabel = function(item){
             return item.label || (typeof(item) === 'string' ? item : item[0]) || ''; // hash:item.label; string:item; array:item[0]
         };
-        var getValues = function(item){
-            // hash:item.values || item.value; string:item; array:item[1..end]
-            return item.values || (item.value ? [item.value] : (typeof(item) === 'string' ? [item] : item)) || [];
+        self.getValue = function(item){
+            return item.label || (typeof(item) === 'string' ? item : item[1]) || ''; // hash:item.label; string:item; array:item[1]
         };
         var moveSelect = function(step_or_li){
             var lis = $('li', $results_list);
@@ -115,15 +114,15 @@ var QuickSelect;
                 li = document.createElement("li");
                 li.item = '';
             }
-            var label = self.getLabel(li.item),
-                values = getValues(li.item);
+            var label = self.getLabel(li.item);
+            var value = self.getValue(li.item);
             $input_element.lastSelected = label;
             $input_element.val(label); // Set the visible value
             previous_value = label;
             $results_list.empty(); // clear the results list
             $(options.additionalFields).each(function(i,input){
                 // set the additional fields' values
-                $(input).val(values[i+1]);
+                $(input).val(value);
                 $(this).change();
             });
             if (!from_hide_now_function)hideResultsNow(); // hide the results when something is selected
