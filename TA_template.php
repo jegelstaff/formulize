@@ -3,6 +3,17 @@
 $courseData = getData('', 3, 'ro_module_full_course_title/**/'.display($entry, 'taships_full_course_title').'/**/=');
 $datesData = getData('', 19, 'semester_dates_module_semester/**/'.display($courseData[0],'ro_module_semester').'/**/=][semester_dates_module_year/**/'.display($courseData[0], 'ro_module_year').'/**/=');
 $sectionNumber = display($entry, 'taships_section_number');
+$instructor = "";
+if($sectionNumber) {
+    // get the instructor of that section
+    $sectionCourseData = getData(15, 4, 'ro_module_full_course_title/**/'.display($entry, 'taships_full_course_title').'/**/=][sections_section_number/**/'.$sectionNumber.'/**/=');
+    $instructors = display($sectionCourseData[0], 'instr_assignments_instructor');
+    if(is_array($instructors)) {
+        $instructor = implode(" and ",$instructors);
+    } else {
+        $instructor = $instructors;
+    }
+}
 $fallCourse = strstr(display($courseData[0],'ro_module_semester'), 'Fall') ? true : false;
 $rankData = getData('', 2, 'ranks_type_of_appointment_contract_type/**/TA/**/=][ranks_rank/**/'.display($entry, 'teaching_assistants_rank').'/**/=');
 $date = date('F j, Y');
@@ -19,7 +30,10 @@ $hours = display($entry, 'taships_hours');
 $hours = $hours == "" ? "NO HOURS RECORDED" : $hours;
 $hours = strstr($hours, ".00") ? intval($hours) : $hours;
 $course = display($courseData[0], 'ro_module_course_code');
-$supervisor = htmlspecialchars_decode(display($entry, 'taships_course_coordinator_instructor'), ENT_QUOTES);
+if(!$instructor) {
+    // use deduced lead instructor or course coordinator instead if no section instructor exists
+    $instructor = htmlspecialchars_decode(display($entry, 'taships_course_coordinator_instructor'), ENT_QUOTES);
+}
 $rate = display($rankData[0], 'ranks_default_pay');
 $rank = display($entry, 'teaching_assistants_rank');
 $installments = display($datesData[0], 'semester_dates_module_installments');
@@ -64,7 +78,7 @@ $html .= " for $course";
 if($sectionNumber) {
     $html .= " ($sectionNumber)";    
 }
-$html .= ", and your supervisor(s) will be Professor $supervisor.  You will be paid $$rate/hour, the $rank rate for this position.  You will be paid in $installments instalments, once per month for the period of your appointment. Your salary will be paid by direct deposit.</P> 
+$html .= ", and your supervisor(s) will be Professor(s) $instructor.  You will be paid $$rate/hour, the $rank rate for this position.  You will be paid in $installments instalments, once per month for the period of your appointment. Your salary will be paid by direct deposit.</P> 
 
 <P>Your payroll documentation will be available online through the University's Employee Self-Service (ESS) at <A HREF='http://www.hrandequity.utoronto.ca/'>http://www.hrandequity.utoronto.ca/</A>. This includes electronic delivery of your pay statement, tax documentation, and other payroll documentation as made available from time to time. You are able to print copies of these documents directly from ESS. 
 By signing this Employment Agreement, you authorize the University to provide your T4 slips electronically and not in a paper format. If you wish to discuss an alternative format, please contact Central Payroll Services at <A HREF='mailto:payroll.hr@utoronto.ca'>payroll.hr@utoronto.ca</A>.</P>
@@ -107,7 +121,7 @@ By signing this Employment Agreement, you authorize the University to provide yo
 
 <P>Yours sincerely,</P>
 
-<P></P>
+<IMG SRC=\"/libraries/tcpdf/examples/images/dean.sig.jpg\" HEIGHT=\"30\">
 
 <P>$dean<BR>Associate Dean, Academic</P> 
 

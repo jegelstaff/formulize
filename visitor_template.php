@@ -46,7 +46,11 @@ $html .= "</P>
 
 <P style=\"text-align:justify;\">The purpose of your visit will be to teach in the $program:<UL>";
 foreach($courses as $course) {
-	$html .= "<LI>{$course['code']} - {$course['title']}, Section {$course['section']}<BR>{$course['times']}<BR>{$course['room']}</LI>";
+	$html .= "<LI>{$course['code']} - {$course['title']}, Section {$course['section']}<BR>{$course['times']}<BR>{$course['room']}";
+    if($course['coinst'] AND count($course['coinst'])>0) {
+        $html .= "<BR>Co-taught with ".implode(", ", $course['coinst']);
+    }
+    $html .= "</LI>";
 }
 
 $html .= "</UL>It is expected that you will establish office hours to meet with your students and that you be available during midterm and final review weeks to serve on Daniels studio and thesis reviews as well as after end of the term in case there are questions/issues regarding grades.</P>

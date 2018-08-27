@@ -15,7 +15,7 @@ if(strstr($rank, 'Writing')){
     $html .= "Sessional Lecturer";
 }
 
-$html .= "Appointment</P><P>Dear $name:</P>
+$html .= " Appointment</P><P>Dear $name:</P>
 
 <P style=\"text-align:justify;\">On behalf of the John H. Daniels Faculty of Architecture, Landscape, and Design, I am pleased to offer you a $positionBlurb for the period beginning $startdate and ending $enddate.";
 
@@ -30,7 +30,7 @@ if($immigration) {
 $html .= "</P>";
 
 if(strstr($rank, 'Writing')) {
-    $html .= "<P style=\"text-align:justify;\">You will be paid $salary per hour plus 4 % vacation pay for a total of $totalSalary. Your salary will be paid by direct deposit.</P>";
+    $html .= "<P style=\"text-align:justify;\">You will be paid $salary per hour plus 4% vacation pay for a total of $totalSalary. Your salary will be paid by direct deposit.</P>";
 } else {
     $html .= "<P style=\"text-align:justify;\">You will be paid $totalSalary, inclusive of vacation pay. Your salary will be paid by direct deposit.</P>";
 }
@@ -42,7 +42,11 @@ if(strstr($rank, 'Writing')) {
 } else {
     $html .= "<P style=\"text-align:justify;\">You will be responsible for teaching the following course(s):<UL>";
 foreach($courses as $course) {
-	$html .= "<LI>{$course['code']} - {$course['title']}, Section {$course['section']}<BR>{$course['times']}<BR>{$course['room']}</LI>";
+	$html .= "<LI>{$course['code']} - {$course['title']}, Section {$course['section']}, {$course['times']}, {$course['room']}";
+    if($course['coinst'] AND count($course['coinst'])>0) {
+        $html .= " (co-taught with ".implode(", ", $course['coinst']).")";
+    }
+    $html .= "</LI>";
 }
 $html .= "</UL>Any additional work required that arises out of this appointment (e.g. deferred exams) and which is required to take place following the normal ending date of this appointment will be compensated in accordance with Article 29: Remuneration for Teaching-Related Service.</P>";
 }
@@ -53,10 +57,7 @@ if($travelAllowance) {
     $html .= "<P style=\"text-align:justify;\">Upon production of original receipts, you will be eligible for reimbursement for your travel and accommodation expenses, up to a maximum of CAD $travelAllowance.</P>";
 }
 
-$html .= "<P style=\"text-align:justify;\"><B>Mandatory Training</B><BR>You are required to take the following mandatory training. You must complete this training within 60 days of hire.<OL>  
-<LI>Basic Occupational Health & Safety Awareness Training Program provided by the Office of Environmental Health & Safety available at <A HREF='http://main.its.utoronto.ca/hsa/'>main.its.utoronto.ca/hsa</A>.</LI>  
-<LI>U of T AODA Online Training, provided by the Accessibility for Ontarians with Disabilities Act (AODA) Office, available at <A HREF='http://aoda.hrandequity.utoronto.ca/'>aoda.hrandequity.utoronto.ca</A>.</LI>
-</OL>
+$html .= "<P style=\"text-align:justify;\"><B>Mandatory Training</B><BR>You are required to take the following mandatory training. You must complete this training within 60 days of hire.<OL><LI>Basic Occupational Health & Safety Awareness Training Program provided by the Office of Environmental Health & Safety available at <A HREF='http://main.its.utoronto.ca/hsa/'>main.its.utoronto.ca/hsa</A>.</LI><LI>U of T AODA Online Training, provided by the Accessibility for Ontarians with Disabilities Act (AODA) Office, available at <A HREF='http://aoda.hrandequity.utoronto.ca/'>aoda.hrandequity.utoronto.ca</A>.</LI></OL>
 <P style=\"text-align:justify;\">Please note that you only need to take the above training programs once with the University (although you may need to retake one or both training programs if they are updated or amended). If you have already taken one or both of these training programs please confirm with your supervisor.</P>";
 
 $html .= "<P style=\"text-align:justify;\">You will also be subject to and bound by University policies of general application and their related guidelines. The policies are listed on the Governing Council website at <A HREF='http://www.governingcouncil.utoronto.ca/Governing_Council/Policies.htm'>www.governingcouncil.utoronto.ca/Governing_Council/Policies.htm</A>. For convenience, a partial list of policies, those applicable to all employees, and related guidelines can be found on the Human Resources and Equity website at <A HREF='http://policies.hrandequity.utoronto.ca/'>policies.hrandequity.utoronto.ca</A>. Printed versions will be provided, upon request, through Human Resources.</P>

@@ -32,8 +32,9 @@ foreach($semesterDates as $thisSem) {
     $startdates[display($thisSem, 'semester_dates_module_semester')] = display($thisSem, 'semester_dates_module_start_date');
     $enddates[display($thisSem, 'semester_dates_module_semester')] = display($thisSem, 'semester_dates_module_end_date');
 }
-$sections = getData(7, 4, 'instr_assignments_instructor/**/'.$name.'/**/=][ro_module_year/**/'.$year.'/**/=');
+$sections = getData(7, 4, 'instr_assignments_instructor/**/'.$name.'/**/=][ro_module_year/**/'.$year.'/**/=', "AND", "", "", "", "ro_module_semester");
 $courses = array();
+$totalTeachingWeight = 0;
 $programs = array();
 $coursesTaught = array();
 foreach($sections as $section) {
@@ -115,6 +116,9 @@ foreach($sections as $section) {
     if(!in_array($thisProgram, $programs)) {
         $programs[] = $thisProgram;
     }
+    
+    $totalTeachingWeight = $totalTeachingWeight + (display($section, 'ro_module_course_weight')/$numberOfInstructors);
+    
     $courses[] = $sectionData;
 }
 if(count($programs)>1) {
@@ -150,6 +154,8 @@ if($apptType == "Sessional") {
 } else {
     $salary = "$".number_format(intval(display($entry, 'hr_module_pay')),0,".",",");
 }
+$salary = str_replace(".00", "", $salary);
+
 $travelAllowance = display($entry, 'hr_module_travel_allowance');
 $travelAllowance = floatval($travelAllowance) > 0 ? "$".number_format(floatval($travelAllowance),2,".",",") : "";
 $immigration = display($entry, 'hr_module_canadian') == 'Yes' ? false : true;
@@ -172,14 +178,14 @@ switch($rank) {
         $percentText = 'five';
         $percentNumber = '5';
         $positionBlurb = 'Sessional Lecturer Appointment position at the rank of '.$rank;
-        $totalSalary = "$".number_format(intval(count($courses)*display($rankData[0],'ranks_default_pay')),2,".",",");
+        $totalSalary = "$".number_format(intval(($totalTeachingWeight/0.5)*display($rankData[0],'ranks_default_pay')),2,".",",");
         break;
     case 'Sessional Lecturer III':
         $template = 'sessional';
         $percentText = 'six';
         $percentNumber = '6';
         $positionBlurb = 'Sessional Lecturer Appointment position at the rank of '.$rank;
-        $totalSalary = "$".number_format(intval(count($courses)*display($rankData[0],'ranks_default_pay')),2,".",",");
+        $totalSalary = "$".number_format(intval(($totalTeachingWeight/0.5)*display($rankData[0],'ranks_default_pay')),2,".",",");
         break;
     case 'Writing Instructor I':
     case 'Writing Instructor II':
@@ -202,6 +208,8 @@ switch($rank) {
         $enddate = "April 30, ".$yearParts[1];
         break;
 }
+
+$totalSalary = str_replace(".00", "", $totalSalary);
 
 switch($apptType) {
     case 'Core (Teaching Stream)':

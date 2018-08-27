@@ -18,7 +18,11 @@ $html = "
 
 <P style=\"text-align:justify;\">Your duties will consist teaching in the $program:<UL>";
 foreach($courses as $course) {
-	$html .= "<LI>{$course['code']} - {$course['title']}, Section {$course['section']}<BR>{$course['times']}<BR>{$course['room']}</LI>";
+	$html .= "<LI>{$course['code']} - {$course['title']}, Section {$course['section']}<BR>{$course['times']}<BR>{$course['room']}";
+    if($course['coinst'] AND count($course['coinst'])>0) {
+        $html .= "<BR>Co-taught with ".implode(", ", $course['coinst']);
+    }
+    $html .= "</LI>";
 }
 
 $html .= "</UL>You will be paid $salary, plus 4% vacation pay, subject to deductions required by law. You will be paid in four instalments, once per month for the period of your appointment.</P>";
