@@ -59,17 +59,15 @@ function daraShowContractLinks($fid, $frid, $type) {
     if($type == "RO" AND count($ROcourses)>0) {
         
         $frontPageCodes = getData('', 27); // first entry is undergraduate, second is graduate
-        
-        if(isset($_POST['search_ro_module_grad_undergrad']) AND $_POST['search_ro_module_grad_undergrad'] == '=Undergraduate' ) {            
-            $enrollmentControls = "<th style=\"border: 1px solid black; color: white; background-color: black;\">Enrollment Controls</th>";
-            $colspan = 6;
-            $fullHtml = htmlspecialchars_decode(display($frontPageCodes[0], 'timetable_front_page_front_page_code'), ENT_QUOTES);        
-            
+        if(isset($_POST['search_ro_module_grad_undergrad']) AND $_POST['search_ro_module_grad_undergrad'] == '=Undergraduate' ) {
+            $frontPageCodes = htmlspecialchars_decode(display($frontPageCodes[0], 'timetable_front_page_front_page_code'), ENT_QUOTES);        
         } else {
-            $enrollmentControls = "";
-            $colspan = 5;
-            $fullHtml = htmlspecialchars_decode(display($frontPageCodes[1], 'timetable_front_page_front_page_code'), ENT_QUOTES);        
+            $frontPageCodes = htmlspecialchars_decode(display($frontPageCodes[1], 'timetable_front_page_front_page_code'), ENT_QUOTES);        
         }
+        $enrollmentControls = "<th style=\"border: 1px solid black; color: white; background-color: black;\">Enrollment Controls</th>";
+        $colspan = 6;
+        $fullHtml = $frontPageCodes;
+            
         if(isset($_POST['showTentInst']) AND $_POST['showTentInst']=="Yes") {
             $tentInstHeader = "<th style=\"border: 1px solid black; color: white; background-color: black;\">Tentative Instr.</th>";
             $colspan++;

@@ -17,7 +17,7 @@ if(!strstr($courseActive, 'Yes')) {
 
 $code = display($entry, 'ro_module_course_code');
 $title = display($entry, 'ro_module_course_title');
-$displayEnrollment = (isset($_POST['search_ro_module_grad_undergrad']) AND $_POST['search_ro_module_grad_undergrad'] == '=Undergraduate' ) ? true : false;
+$displayEnrollment = true; //(isset($_POST['search_ro_module_grad_undergrad']) AND $_POST['search_ro_module_grad_undergrad'] == '=Undergraduate' ) ? true : false;
 
 // load the revision data...
 global $indexedLockData, $compareOn;
