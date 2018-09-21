@@ -75,7 +75,12 @@ while($currentRow <= $numberOfRows) {
 }
 $screens['advanceview'] = serialize($advanceview);
 
-$screen->setVar('defaultview',$screens['defaultview']);
+$defaultview = array();
+foreach($_POST['defaultview_group'] as $key=>$groupid) {
+  $defaultview[$groupid] = $_POST['defaultview_view'][$key];
+}
+
+$screen->setVar('defaultview',serialize($defaultview));
 $screen->setVar('usecurrentviewlist',$screens['usecurrentviewlist']);
 $screen->setVar('limitviews',$screens['limitviews']);
 $screen->setVar('advanceview', $screens['advanceview']);
