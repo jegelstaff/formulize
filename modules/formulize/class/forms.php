@@ -1294,7 +1294,12 @@ class formulizeFormsHandler {
     }
 
 		$this->setClonedFormAppId($newfid, $xoopsDB);
-	}
+                
+                $application_handler = xoops_getmodulehandler('applications','formulize');
+		$menuitems = "null::" . formulize_db_escape($newtitle) . "::fid=" . formulize_db_escape($newfid) . "::::1,2::null";
+	        $cloneAppid = $_POST['aid'];
+		$application_handler->insertMenuLink(formulize_db_escape($cloneAppid), $menuitems);	
+        }
 
 	/**
 	 * @param $field
