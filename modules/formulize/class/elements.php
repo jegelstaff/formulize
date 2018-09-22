@@ -49,7 +49,7 @@ class formulizeformulize extends XoopsObject {
     var $alwaysValidateInputs;
 	
 	function __construct(){
-		$this->XoopsObject();
+        parent::__construct();
 	//	key, data_type, value, req, max, opt
 		$this->initVar("id_form", XOBJ_DTYPE_INT, NULL, false);
 		$this->initVar("ele_id", XOBJ_DTYPE_INT, NULL, false);
