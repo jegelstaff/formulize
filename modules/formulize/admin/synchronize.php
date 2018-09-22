@@ -108,6 +108,9 @@ else if(isset($_POST['import']) OR isset($_GET['partial'])) {
 }
 else {
     $filepath = "";
+    // flush any data from previous pageloads if any. we need to start fresh every time we go through the import process.
+    include_once XOOPS_ROOT_PATH."/modules/formulize/include/synccompare.php";
+    SyncCompareCatalog::clearCachedChanges();
 }
 
 $adminPage['sync'] = $sync;

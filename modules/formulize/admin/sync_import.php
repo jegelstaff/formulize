@@ -18,8 +18,8 @@ if (isset($_POST['syncimport'])) {
     if ($catalog->loadCachedChanges()) {
         // commit database changes
         
-        $syncimport['content']['result'] = $catalog->commitChanges("_formulize_id"); // make tables first
-        $syncimport['content']['result'] = $catalog->commitChanges("_formulize"); // then make elements
+        $syncimport['content']['result'] = $catalog->commitChanges("formulize_id"); // make tables first
+        $syncimport['content']['result'] = $catalog->commitChanges("formulize"); // then make elements
         $syncimport['content']['result'] = $catalog->commitChanges(); // do the rest of the tables
 
         // export archive files
