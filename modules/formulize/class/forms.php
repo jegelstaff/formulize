@@ -160,7 +160,7 @@ function checkFormOwnership($id_form,$form_handle){
 			}
 		}
 
-		$this->XoopsObject();
+		parent::__construct();
 		//initVar params: key, data_type, value, req, max, opt
 		$this->initVar("id_form", XOBJ_DTYPE_INT, $id_form, true);
 		$this->initVar("lockedform", XOBJ_DTYPE_INT, $formq[0]['lockedform'], true);

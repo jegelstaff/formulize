@@ -32,7 +32,7 @@
 class XoopsObject extends icms_core_Object
 {
 	private $_deprecated;
-	public function XoopsObject() {
+	public function __construct() {
 		parent::__construct();
 		$this->_deprecated = icms_core_Debug::setDeprecated('icms_core_Object', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
@@ -54,7 +54,7 @@ class XoopsObject extends icms_core_Object
 abstract class XoopsObjectHandler extends icms_core_ObjectHandler
 {
 	private $_deprecated;
-	public function XoopsObjectHandler(&$db) {
+	public function __construct(&$db) {
 		parent::__construct($db);
 		$this->_deprecated = icms_core_Debug::setDeprecated('icms_core_ObjectHandler', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}

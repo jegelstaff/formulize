@@ -34,7 +34,7 @@ global $xoopsDB;
     class formulizeApplicationMenuLink extends XoopsObject {
         
         function __construct() {
-            $this->XoopsObject();
+            parent::__construct();
             $this->initVar("menu_id", XOBJ_DTYPE_INT, NULL, false);
             $this->initVar("appid", XOBJ_DTYPE_INT, NULL, false);
             $this->initVar("screen", XOBJ_DTYPE_TXTBOX, NULL, false,11);
@@ -149,7 +149,7 @@ class formulizeApplication extends XoopsObject {
   private $_forms = null;
 
   function __construct() {
-    $this->XoopsObject();
+    parent::__construct();
     $this->initVar("appid", XOBJ_DTYPE_INT, NULL, false);
     $this->initVar("name", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
     $this->initVar("description", XOBJ_DTYPE_TXTAREA);

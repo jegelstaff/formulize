@@ -80,7 +80,7 @@ class formulizeFramework extends XoopsObject {
 		}
 		if($notAFramework) { list($frid, $fids, $name, $handles, $element_ids, $links, $formHandles) = $this->initializeNull(); }
 
-		$this->XoopsObject();
+        parent::__construct();
 		//initVar params: key, data_type, value, req, max, opt
 		$this->initVar("frid", XOBJ_DTYPE_INT, $frid, false);
 		$this->initVar("fids", XOBJ_DTYPE_ARRAY, serialize($fids));
@@ -204,7 +204,7 @@ class formulizeFrameworkLink extends XoopsObject {
 			}
 		}
 
-		$this->XoopsObject();
+        parent::__construct();
 		//initVar params: key, data_type, value, req, max, opt
 		$this->initVar("lid", XOBJ_DTYPE_INT, $lid, true);
 		$this->initVar("frid", XOBJ_DTYPE_INT, $frid, true);
