@@ -486,7 +486,7 @@ class formulizeFormsHandler {
 		}
 		$fids = array();
 		if(is_object($application_object_or_id)) {
-			if(get_class($application_object_or_id) == 'formulizeApplication') {
+		    if(get_class($application_object_or_id) == 'formulizeApplication') {
 				$applicationObject = $application_object_or_id;
 				foreach($applicationObject->getVar('forms') as $thisFid) {
 					if($returnIds) {
@@ -501,6 +501,7 @@ class formulizeFormsHandler {
 		} else {
 			// no application specified, so get forms that do not belong to an application
 			$sql = "SELECT id_form FROM ".$this->db->prefix("formulize_id")." as formtable WHERE NOT EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.fid=formtable.id_form) ORDER BY formtable.desc_form";
+			$sql2 = "SELECT fid FROM ".$this->db->prefix("formulize_application_form_link")." as linktable2 WHERE linktable2.appid=0";
 			if($res = $this->db->query($sql)) {
 				while($array = $this->db->fetchArray($res)) {
 					if($returnIds) {
@@ -510,6 +511,15 @@ class formulizeFormsHandler {
 					}
 				}
 			}
+			if($res = $this->db->query($sql2)) {
+			    while($array=$this->db->fetchArray($res)) {
+			        if($returnIds) {
+			            $fids[] = $array['fid'];
+                    } else {
+			            $fids[] = $this->get($array['fid']);
+                    }
+                }
+            }
 		}
 		return $fids;
 	}
