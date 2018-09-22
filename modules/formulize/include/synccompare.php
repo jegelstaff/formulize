@@ -61,7 +61,7 @@ class SyncCompareCatalog {
             $recordExists = $result->rowCount() > 0;
 
             /*static $counter = 0;
-            //if($tableName == "_formulize_milestones" AND $record[8] == "Standard") {
+            //if($tableName == "formulize_milestones" AND $record[8] == "Standard") {
                 $counter++;
                 static $debugOn;
                 $debugOn = true;
@@ -94,7 +94,7 @@ class SyncCompareCatalog {
             
             // if the record exists, compare the data values, add any update statement to $compareResults
             // Except for entry_owner_groups, we don't update records there, since if we found an entry, then it already exists, no need to update. Only inserts need to be made (or deletions???)
-            } elseif($tableName != "_formulize_entry_owner_groups") {  
+            } elseif($tableName != "formulize_entry_owner_groups") {
                 //if(!$debugOn) {
                 $dbRecord = $result->fetchAll();
                 $dbRecord = $dbRecord[0];
@@ -172,6 +172,11 @@ class SyncCompareCatalog {
     
     }
 
+    public function clearCachedChanges() {
+        unlink(XOOPS_ROOT_PATH.'/modules/formulize/cache/'."sync-changes-" .  session_id() . ".cache");
+        unlink(XOOPS_ROOT_PATH.'/modules/formulize/cache/'."sync-filepaths-" .  session_id() . ".cache");
+    }
+
     public function commitChanges($onlyThisTableName = false) {
         static $numSuccess = 0;
         static $numFail = 0;
@@ -241,7 +246,7 @@ class SyncCompareCatalog {
     }
 
     private function getRecord($tableName, $record, $fields) {
-        if($tableName == "_formulize_entry_owner_groups") {
+        if($tableName == "formulize_entry_owner_groups") {
             $result = $this->db->query('SELECT * FROM '.prefixTable($tableName).' WHERE fid='.intval($record[array_search("fid", $fields)]).' AND entry_id = '.intval($record[array_search("entry_id", $fields)]).' AND groupid = '.intval($record[array_search("groupid", $fields)]).';');
         } else {
             $primaryField = $this->getPrimaryField($tableName);
@@ -344,7 +349,7 @@ class SyncCompareCatalog {
             unset($fields[array_search("owner_id", $fields)]);
             unset($record['owner_id']);
         }
-        
+
         $sql = 'INSERT INTO '.prefixTable($tableName).' (`'.join("`, `", $fields).'`) VALUES (';
 
         // add comma separated list of values
@@ -365,10 +370,10 @@ class SyncCompareCatalog {
         $result = $this->db->query($sql);
         
         // creation operations depend on the metadata being inserted into the db already!
-        if($tableName == "_formulize_id") {
+        if($tableName == "formulize_id") {
             $this->commitCreateTable($record['id_form']);
         }
-        if($tableName == "_formulize") {
+        if($tableName == "formulize") {
             $this->commitCreateField($record['ele_id']);
         }
         
@@ -382,7 +387,7 @@ class SyncCompareCatalog {
             unset($record['owner_id']);
         }
 
-        if($tableName == "_formulize") {
+        if($tableName == "formulize") {
             // get the current name, then update the field
             $element_handler = xoops_getmodulehandler('elements', 'formulize');
             $curElement = $element_handler->get($record['ele_id']);
@@ -390,7 +395,7 @@ class SyncCompareCatalog {
                 $this->commitUpdateField($record['ele_id'], $curElement->getVar('ele_handle'), false, $record['ele_handle']); // false means no datatype, changes to data type have to be made manually
             }
         }
-        if($tableName == "_formulize_id") {
+        if($tableName == "formulize_id") {
             // get the current name, then update the table
             $form_handler = xoops_getmodulehandler('forms','formulize');
             $curForm = $form_handler->get($record['id_form']);
