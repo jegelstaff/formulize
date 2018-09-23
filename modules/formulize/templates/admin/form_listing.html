@@ -1,11 +1,11 @@
 <{foreach from=$sectionContent.forms item=form}>
-  
+
 <{if $form.istableform}>
 <{assign var="defaulttab" value="settings"}>
 <{else}>
-<{assign var="defaulttab" value="elements"}>    
+<{assign var="defaulttab" value="elements"}>
 <{/if}>
-  
+
 <div class="accordion-box">
   <p class="form-name ui-corner-top"><{if $form.lockedform != 1}><a href="ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=<{$defaulttab}>" class="form-name-icon"><{/if}>Form: <{$form.name}> (id: <{$form.fid}>)<{if $form.lockedform != 1}></a><{/if}></p>
   <div class="form-screen-list ui-corner-bottom">
@@ -18,7 +18,7 @@
 		<{if $form.lockedform != 1}>
 		<a rel="tooltip" title="View the form with all controls available.<br>This will show the form with all the default options in place, the same way it would appear if there were no modifications to the default screens (or if it had no screens at all).<br>This is useful for interacting with the form when your default screen has been stripped down to remove features that regular users don't need, but administrators do need." href="../master.php?fid=<{$form.fid}>" target="_blank"><div class="imageicon"><img src="../images/kfind.png"></div><div class="formaction"><{$smarty.const._AM_APP_VIEW_OPTIONS_SCREEN}></div></a><br />
 		<{/if}>
-		<a rel="tooltip" title="Copy the structure of an existing form into a new form with a different name.<br>None of the information collected is copied." class="cloneform" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/clone.gif"></div><div class="formaction"><{$smarty.const._AM_APP_CLONE_SIMPLY}></div></a><br />
+		<a rel="tooltip" title="Copy the structure of an existing form into a new form with a different name.<br>None of the information collected is copied." class="cloneform" target="<{$form.fid}>" formname="<{$form.name}><{$smarty.const._AM_APP_CLONED}>" href=""><div class="imageicon"><img src="../images/clone.gif"></div><div class="formaction"><{$smarty.const._AM_APP_CLONE_SIMPLY}></div></a><br />
 		<a rel="tooltip" title="Copy the structure of an existing form into a new form with a different name.<br>The new form will have a copy of all the entries collected in the original form." class="cloneformdata" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/clonedata.gif"></div><div class="formaction"><{$smarty.const._AM_APP_CLONE_WITHDATA}></div></a><br />
 		<{if $form.lockedform != 1 && $form.hasdelete}>
 		<a rel="tooltip" title="Use this to prevent any changes to the form or its settings, even by the webmaster.<br>This action cannot be undone!" class="lockdown" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/perm.png"></div><div class="formaction"><{$smarty.const._AM_APP_LOCKDOWN}></div></a><br />
@@ -35,11 +35,11 @@
 		<{if $form.defaultlistscreenid}>
 		<a href="ui.php?page=screen&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&sid=<{$form.defaultlistscreenid}>"><div class="imageicon"><img src="../images/kedit.png"></div><div class="formaction"><{$form.defaultlistscreenname}></div></a><br />
 		<{/if}>
-		<{if $form.defaultformscreenid}>  
+		<{if $form.defaultformscreenid}>
 		<a href="ui.php?page=screen&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&sid=<{$form.defaultformscreenid}>"><div class="imageicon"><img src="../images/kedit.png"></div><div class="formaction"><{$form.defaultformscreenname}></div></a><br />
 		<{/if}>
 		<a href="ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=screens"><div class="formaction"><i><{$smarty.const._AM_APP_MORESCREENS}></i></div></a>
-		</div>	
+		</div>
     <{/if}>
 	</div>
 </div>
