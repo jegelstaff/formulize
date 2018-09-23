@@ -576,3 +576,5 @@ INSERT INTO `REPLACE_WITH_PREFIX_profile_visibility` (`fieldid`, `user_group`, `
 (28, 2, 0);
 
 UPDATE `REPLACE_WITH_PREFIX_users` SET theme='formulize_standalone';
+
+UPDATE `REPLACE_WITH_PREFIX_block_module_link` SET page_id=1 WHERE block_id = 2 AND module_id = 0;
