@@ -165,12 +165,14 @@
 <script type="text/javascript">
   
   setInterval(function () {
+    alert('sending');
     $.ajax({
       type:"POST",
       url:"<{$xoops_url}>/modules/formulize/formulize_xhr_responder.php?op=get_views_for_form&uid=<{$content.uid}>",
       data:{"form_id":"<{$content.fid}>"},
       dataType: "json",
       success:function(response){
+        alert('response' + response);
 	$.each(response, function( index, value ) {
 	  if (!existsOnDropDown(value[0])) {
 	    addToDropDown(value[0], value[1]);
@@ -181,15 +183,14 @@
   }, 5000);
   
   function existsOnDropDown(id) {
-    var options = $("#screens-defaultview option");
-    var result = false;
-    $.each(options, function() {
+    $("#screens-defaultview option").each(function() {
+        alert(this.value);
+        alert(id);
       if (this.value == id) {
-	result = true;
+        return true;
       }
     });
-      
-    return result;
+    return false;
   }
   
   function addToDropDown(id, text) {

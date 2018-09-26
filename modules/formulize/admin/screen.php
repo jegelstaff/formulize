@@ -94,10 +94,10 @@ $elements = array();
 $frameworks = $framework_handler->getFrameworksByForm($form_id);
 $relationships = $framework_handler->formatFrameworksAsRelationships($frameworks);
 
-$relationshipSettings = [
+$relationshipSettings = array(
   'relationships' => $relationships, 
   'type' => $settings['type']
-];
+);
 
 if($screen_id != 'new') {
   $relationshipSettings['frid'] = $screen->getVar('frid');
@@ -459,82 +459,82 @@ if($res = $xoopsDB->query($sql)) {
 }
 
 // define tabs for screen sub-page
-$adminPage['tabs'][1] = [
+$adminPage['tabs'][1] = array(
 	'name'		=> _AM_APP_SETTINGS,
 	'template'	=> "db:admin/screen_settings.html",
 	'content'	=> $settings + $common
-];
+);
 
-$adminPage['tabs'][] = [
+$adminPage['tabs'][] = array(
 	'name'		=> _AM_APP_RELATIONSHIPS,
 	'template'	=> "db:admin/screen_relationships.html",
 	'content'	=> $common + $relationshipSettings
-]; 
+); 
 
 if($screen_id != "new" && $settings['type'] == 'form') {
-	$adminPage['tabs'][] = [
+	$adminPage['tabs'][] = array(
 		'name' 		=> _AM_ELE_OPT,
 		'template' 	=> "db:admin/screen_form_options.html",
 		'content' 	=> $options + $common
-	];
+	);
 }
 
 if($screen_id != "new" && $settings['type'] == 'multiPage') {
-	$adminPage['tabs'][] = [
+	$adminPage['tabs'][] = array(
 		'name' 		=> _AM_ELE_OPT,
 		'template' 	=> "db:admin/screen_multipage_options.html",
 		'content' 	=> $multipageOptions + $common
-	];
+	);
 
-	$adminPage['tabs'][] = [
+	$adminPage['tabs'][] = array(
 		'name' 		=> _AM_FORM_SCREEN_TEXT,
 		'template' 	=> "db:admin/screen_multipage_text.html",
 		'content' 	=> $multipageText + $common
-	];
+	);
 
-	$adminPage['tabs'][] = [
+	$adminPage['tabs'][] = array(
 		'name' 		=> _AM_FORM_SCREEN_PAGES,
 		'template' 	=> "db:admin/screen_multipage_pages.html",
 		'content' 	=> $multipagePages + $common
-	];
+	);
 
-	$adminPage['tabs'][] = [
+	$adminPage['tabs'][] = array(
 		'name' 		=> _AM_FORM_SCREEN_TEMPLATES,
 		'template' 	=> "db:admin/screen_multipage_templates.html",
 		'content' 	=> $multipageTemplates + $common
-	];
+	);
 }
 
 if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
-	$adminPage['tabs'][] = [
+	$adminPage['tabs'][] = array(
 		'name' 		=> _AM_FORM_SCREEN_ENTRIES_DISPLAY,
 		'template' 	=> "db:admin/screen_list_entries.html",
 		'content' 	=> $entries + $common
-	];
+	);
 
-	$adminPage['tabs'][] = [
+	$adminPage['tabs'][] = array(
 		'name'		=> _AM_FORM_SCREEN_HEADINGS_INTERFACE,
 		'template'	=> "db:admin/screen_list_headings.html",
 		'content'	=> $headings + $common
-	];
+	);
 
-	$adminPage['tabs'][] = [
+	$adminPage['tabs'][] = array(
 		'name'		=> _AM_FORM_SCREEN_ACTION_BUTTONS,
 		'template'	=> "db:admin/screen_list_buttons.html",
 		'content'	=> $buttons + $common
-	];
+	);
 
-	$adminPage['tabs'][] = [
+	$adminPage['tabs'][] = array(
 		'name'		=> _AM_FORM_SCREEN_CUSTOM_BUTTONS,
 		'template'	=> "db:admin/screen_list_custom.html",
 		'content'	=> $custom + $common
-	];
+	);
 
-	$adminPage['tabs'][] = [
+	$adminPage['tabs'][] = array(
 		'name'		=> _AM_FORM_SCREEN_TEMPLATES,
 		'template'	=> "db:admin/screen_list_templates.html",
 		'content'	=> $templates + $common
-	];
+	);
 }
 
 $adminPage['pagetitle'] = _AM_FORM_SCREEN.$screenName;
