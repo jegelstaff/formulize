@@ -9,11 +9,17 @@
 <input type="hidden" name="deleteelement" value="">
 <input type="hidden" name="convertelement" value="">
 <input type="hidden" name="reload_elements" value="">
-<input type="hidden" name="aid" value="<{$content.aid}>">	
-<input type="hidden" name="elementorder" value="">	
-	
+<input type="hidden" name="aid" value="<{$content.aid}>">
+<input type="hidden" name="elementorder" value="">
+
 <div class="accordion-box">
 	<h2><{$smarty.const._AM_ELE_ADDINGTOFORM}></h2>
+	<p>Link an element from another form:</p>
+	<select name="elements">
+	<{foreach item=linkElement from=$content.allElements}>
+	<option value="ok"><{$linkElement.ele_handle}></option>
+	<{/foreach}>
+	</select>
 	<p><{$smarty.const._AM_ELE_CLICKTOADD}></p>
 			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=text"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_TEXT}></a></p>
 			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=textarea"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_MLTEXT}></a></p>
@@ -29,7 +35,7 @@
 			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=derived"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_DERIVED}></a></p>
 			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=colorpick"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_COLORPICK}></a></p>
 			<{foreach item=customElement from=$content.customElements}>
-			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=<{$customElement.type}>"><img src="../images/filenew2.png"> <{$customElement.name}></a></p>	
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=<{$customElement.type}>"><img src="../images/filenew2.png"> <{$customElement.name}></a></p>
 			<{/foreach}>
 </div>
 
@@ -110,7 +116,7 @@ $(".converttoradio").click(function () {
 });
 
 $(".savebutton").click(function () {
-	$("[name=elementorder]").val($("#accordion-2").sortable('serialize')); 
+	$("[name=elementorder]").val($("#accordion-2").sortable('serialize'));
 });
 
 $("#accordion-2").bind( "sortupdate", function(event, ui) {

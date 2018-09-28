@@ -445,6 +445,15 @@ foreach($classFiles as $thisFile) {
     }
 }
 
+$sqlElements = "SELECT ele_handle FROM " . $xoopsDB->prefix("formulize");
+$i = 0;
+$allElements = array();
+if ($result = $xoopsDB->query($sqlElements)) {
+    while($array = $xoopsDB->fetchArray($result)) {
+        $allElements[$i] = $array;
+        $i++;
+    }
+}
 
 $i = 1;
 $applications = array();
@@ -537,6 +546,9 @@ if ($fid != "new") {
         }
         if (count($customElements)>0) {
             $adminPage['tabs'][$i]['content']['customElements'] = $customElements;
+        }
+        if (count($allElements) > 0) {
+            $adminPage['tabs'][$i]['content']['allElements'] = $allElements;
         }
         $i++;
     }
