@@ -284,24 +284,4 @@ switch($op) {
     break;
 
 
-    case "get_form_columns":
-    $temp_selectedCols = $_GET['cols'];
-    $selectedCols = explode(",", $temp_selectedCols);
-    $gperm_handler = &xoops_gethandler('groupperm');
-    $member_handler =& xoops_gethandler('member');
-    $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
-
-    $cols = getAllColList($_POST['form_id'], "", $groups);
-
-    $columns = array();
-    $columns[0] = "Select a column";
-
-    foreach($cols as $id=>$arr) {
-        foreach($arr as $innerId=>$value) {
-            $columns[$value["ele_id"]] = $value["ele_caption"];
-        }
-    }
-
-    echo json_encode($columns);
-    break;
 }

@@ -41,7 +41,7 @@
 		<{/if}>
 	      </td>
 	      <td class='removeImage'>
-		<img class="removeCol" id="<{$index}>" onclick="removeColumn()" src="../images/editdelete.gif"></img>
+		<img class="removeCol" style="cursor: pointer;" onclick="removeColumn(<{$index}>)" src="../images/editdelete.gif"></img>
 	      </td>
 	    </tr>
 	  <{/foreach}>
@@ -76,32 +76,16 @@
 	  <p><input type="button" name="add_view" class="formButton" value="<{$smarty.const._AM_ELE_ADD_OPT_SUBMIT}> Default View"</p><br /><br />
 
 	  <div class="view-list">
-		<{foreach from=$content.defaultview key=groupid item=viewid}>
-		  <select id="view_group" name="defaultview_group[]">
+		<{foreach from=$content.defaultview key=groupid item=viewid name=viewlist}>
+          <{if $smarty.foreach.viewlist.first}><{else}><br><br><{/if}>
+		  <select id="view_group_<{$smarty.foreach.viewlist.iteration}>" class='default_view_group' name="defaultview_group[]">
 			<{html_options options=$content.grouplist selected=$groupid}>
 		  </select>
-		  <select id="view_view" name="defaultview_view[]">
+		  <select id="view_view_<{$smarty.foreach.viewlist.iteration}>" class='default_view_list' name="defaultview_view[]">
 			<{html_options options=$content.viewoptions selected=$viewid}>
 		  </select>
 		<{/foreach}>
 	  </div>
-
-	  <script>
-		$("[name=add_view]").click(function(){
-		  group = $("#view_group:last");
-		  view = $("#view_view:last");
-
-		  appendContentsGroup ='<select id="view_group" name="defaultview_group[]">' + group.html() + '</select>';
-		  appendContentsView = '<select id="view_view" name="defaultview_view[]">' + view.html() +'</select>';
-
-		  $('div.view-list').append('<br /><br />');
-		  $('div.view-list').append(appendContentsGroup);
-		  $('div.view-list').append('&nbsp;');
-		  $('div.view-list').append(appendContentsView);
-		  $("[name=add_view]").blur();
-		  setDisplay('savewarning','block');
-		});
-	  </script>
 
 	  <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_DEFAULTVIEW}></div>
 	</div>     
@@ -165,54 +149,46 @@
 <script type="text/javascript">
   
   setInterval(function () {
-    alert('sending');
     $.ajax({
       type:"POST",
       url:"<{$xoops_url}>/modules/formulize/formulize_xhr_responder.php?op=get_views_for_form&uid=<{$content.uid}>",
       data:{"form_id":"<{$content.fid}>"},
       dataType: "json",
       success:function(response){
-        alert('response' + response);
 	$.each(response, function( index, value ) {
-	  if (!existsOnDropDown(value[0])) {
-	    addToDropDown(value[0], value[1]);
+            $(".default_view_list").each(function() {
+                if ($(this).find("option[value='"+value[0]+"']").length == 0) {
+                    $(this).append($('<option>', { label : value[1], value : value[0] }).text(value[1]));
 	  }
 	});
+        });
       }
     });
-  }, 5000);
+  }, 8000);
   
-  function existsOnDropDown(id) {
-    $("#screens-defaultview option").each(function() {
-        alert(this.value);
-        alert(id);
-      if (this.value == id) {
-        return true;
-      }
+  $("[name=add_view]").click(function(){
+    oldNumber = $(".default_view_group").length;
+    newNumber = parseInt(oldNumber)+1;
+    group = $("#view_group_"+oldNumber);
+    view = $("#view_view_"+oldNumber);
+    appendContentsGroup ='<select id="view_group_'+newNumber+'" class="default_view_group" name="defaultview_group[]">' + group.html().replace('selected="selected"', '') + '</select>';
+    appendContentsView = '<select id="view_view_'+newNumber+'" class="default_view_list" name="defaultview_view[]">' + view.html().replace('selected="selected"', '') +'</select>';
+
+    $('div.view-list').append('<br /><br />');
+    $('div.view-list').append(appendContentsGroup);
+    $('div.view-list').append('&nbsp;');
+    $('div.view-list').append(appendContentsView);
+    $("[name=add_view]").blur();
+    setDisplay('savewarning','block');
     });
-    return false;
-  }
   
-  function addToDropDown(id, text) {
-    $('#screens-defaultview')
-      .append($('<option>', { value : id })
-      .text(text));
-  }
+  
   
   function getFormColumns(number) {
-    $.ajax({
-      type:"POST",
-      url:"<{$xoops_url}>/modules/formulize/formulize_xhr_responder.php?op=get_form_columns&uid=<{$content.uid}>",
-      data:{"form_id":"<{$content.fid}>"},
-      dataType: "json",
-      success:function(response){
-	$.each(response, function( index, value ) {
+    <{foreach from=$content.advanceviewoptions key=index item=value}>
 	  $("#cols-"+number).append($('<option>', { 
-	    value: index })
-	    .text(value));
-	});
-      }
-    });
+	    value: <{$index}> }).text("<{$value}>"));
+    <{/foreach}>
   }
   
   function addAdvanceViewRow(number) {
@@ -232,7 +208,7 @@
     addAdvanceViewRow(number);
     
     //Append the remove column
-    appendContents4 = '<img class="removeCol" id="'+number+'" onclick="removeColumn()" src="../images/editdelete.gif"></img>';
+    appendContents4 = '<img class="removeCol" style="cursor: pointer;" onclick="removeColumn('+number+')" src="../images/editdelete.gif"></img>';
     $(".removeImage:last").append(appendContents4);
     
     //Populate the columns
@@ -248,11 +224,9 @@
     setDisplay('savewarning','block');
   });
   
-  function removeColumn(){
-    id = event.target.id;
+  function removeColumn(id){
     firstNumber = $(".advanceviewcol:first").attr('name');
     lastNumber = $(".advanceviewcol:last").attr('name');
-    
     if(firstNumber == lastNumber) {
       //Remove the row with past values but add another row with the default values
       $("tr").remove("[name="+id+"]");

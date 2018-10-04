@@ -187,42 +187,11 @@ if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
     $member_handler =& xoops_gethandler('member');
     $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 
-    $cols = getAllColList($form_id, $frid, $groups);
-    
-    $columns = array();
-    $columns[0] = "Select a column";
-    
-    foreach($cols as $id=>$arr) {
-	foreach($arr as $innerId=>$value) {
-	    $columns[$value["ele_id"]] = $value["ele_caption"];
-        }
-    }
-    
-        
-    $cols = array();
   // create the template information
-  $entries = array();
-  $entries['advanceviewoptions'] = $columns;
-  $entries['advanceview'] = $advanceViewSelected;
-  $entries['defaultview'] = $screen->getVar('defaultview');
-  // Convert to arrays if a legacy value
-  if(!is_array($entries['defaultview'])) {
-    $entries['defaultview'] = array(XOOPS_GROUP_USERS => $entries['defaultview']);
-  }
-  $entries['viewoptions'] = $viewOptions;
-  $entries['usecurrentviewlist'] = $screen->getVar('usecurrentviewlist');
-  $entries['limitviewoptions'] = $limitViewOptions;
-  $entries['limitviews'] = $screen->getVar('limitviews');
-  $entries['useworkingmsg'] = $screen->getVar('useworkingmsg');
-  $entries['usescrollbox'] = $screen->getVar('usescrollbox');
-  $entries['entriesperpage'] = $screen->getVar('entriesperpage');
-  $entries['viewentryscreenoptions'] = $viewentryscreenOptions;
-  $entries['viewentryscreen'] = $screen->getVar('viewentryscreen');
-  $entries['frid'] = $settings['frid'];
 
-  // headings data
   //set options for all elements in entire framework
   //also, collect the handles from a framework if any, and prep the list of possible handles/ids for the list template
+  // element list used in entries page, and headings page
   if($selectedFramework and isset($frameworks[$selectedFramework])) {
       $allFids = $frameworks[$selectedFramework]->getVar('fids');
   } else {
@@ -256,6 +225,27 @@ if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   }
   $templates['listtemplatehelp'] = $listTemplateHelp;
 
+  $entries = array();
+  $entries['advanceviewoptions'] = array(0=>_AM_ELE_SELECT_NONE)+$elementOptions; // add a 0 value default to the element list
+  $entries['advanceview'] = $advanceViewSelected;
+  $entries['defaultview'] = $screen->getVar('defaultview');
+  // Convert to arrays if a legacy value
+  if(!is_array($entries['defaultview'])) {
+    $entries['defaultview'] = array(XOOPS_GROUP_USERS => $entries['defaultview']);
+  }
+  $entries['viewoptions'] = $viewOptions;
+  $entries['usecurrentviewlist'] = $screen->getVar('usecurrentviewlist');
+  $entries['limitviewoptions'] = $limitViewOptions;
+  $entries['limitviews'] = $screen->getVar('limitviews');
+  $entries['useworkingmsg'] = $screen->getVar('useworkingmsg');
+  $entries['usescrollbox'] = $screen->getVar('usescrollbox');
+  $entries['entriesperpage'] = $screen->getVar('entriesperpage');
+  $entries['viewentryscreenoptions'] = $viewentryscreenOptions;
+  $entries['viewentryscreen'] = $screen->getVar('viewentryscreen');
+  $entries['frid'] = $settings['frid'];
+  
+
+  // headings data... 
   $headings = array();
   $headings['useheadings'] = $screen->getVar('useheadings');
   $headings['repeatheaders'] = $screen->getVar('repeatheaders');

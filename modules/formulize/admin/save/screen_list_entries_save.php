@@ -73,17 +73,21 @@ while($currentRow <= $numberOfRows) {
   }
   $index++;
 }
-$screens['advanceview'] = serialize($advanceview);
+$screens['advanceview'] = $advanceview;
 
 $defaultview = array();
 foreach($_POST['defaultview_group'] as $key=>$groupid) {
   $defaultview[$groupid] = $_POST['defaultview_view'][$key];
 }
 
-$screen->setVar('defaultview',serialize($defaultview));
+if(!isset($screens['limitviews'])) {
+    $screens['limitviews'] = serialize(array(0=>'allviews'));
+}
+
+$screen->setVar('defaultview',serialize($defaultview)); // need to serialize things that have the array datatype, when they are manually generated here by us!
 $screen->setVar('usecurrentviewlist',$screens['usecurrentviewlist']);
-$screen->setVar('limitviews',$screens['limitviews']);
-$screen->setVar('advanceview', $screens['advanceview']);
+$screen->setVar('limitviews',$screens['limitviews']); // do not need to serialize things that come directly from the page as an array already, admin/save.php does this for us
+$screen->setVar('advanceview', serialize($screens['advanceview'])); // need to serialize things that have the array datatype, when they are manually generated here by us!
 $screen->setVar('useworkingmsg',(array_key_exists('useworkingmsg',$screens))?$screens['useworkingmsg']:0);
 $screen->setVar('usescrollbox',(array_key_exists('usescrollbox',$screens))?$screens['usescrollbox']:0);
 $screen->setVar('entriesperpage',$screens['entriesperpage']);
