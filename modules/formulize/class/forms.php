@@ -134,6 +134,8 @@ function checkFormOwnership($id_form,$form_handle){
 			}
 			
 			// gather the view information
+            list($views, $viewNames, $viewFrids, $viewPublished) = self::getFormViews($id_form);
+            
 			$viewq = q("SELECT * FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_mainform = '$id_form' OR (sv_mainform = '' AND sv_formframe = '$id_form')");
 			if(!isset($viewq[0])) {
 				$views = array();
@@ -190,6 +192,31 @@ function checkFormOwnership($id_form,$form_handle){
         $this->initVar("note", XOBJ_DTYPE_TXTAREA, $formq[0]['note']);
     }
 
+    /* Get the views for the supplied form id
+	*  This function also gets invoked by an ajax call from screen_list_entries.html to reload all available views on the dropdown menu.
+	*/
+	function getFormViews($id_form) {
+		
+		global $xoopsDB;        
+		
+		$viewq = q("SELECT * FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_mainform = '$id_form' OR (sv_mainform = '' AND sv_formframe = '$id_form')");
+		if(!isset($viewq[0])) {
+			$views = array();
+			$viewNames = array();
+			$viewFrids = array();
+			$viewPublished = array();
+		} else {
+			for($i=0;$i<count($viewq);$i++) {
+				
+				$views[$i] = $viewq[$i]['sv_id'];
+				$viewNames[$i] = stripslashes($viewq[$i]['sv_name']);
+				$viewFrids[$i] = $viewq[$i]['sv_mainform'] ? $viewq[$i]['sv_formframe'] : "";
+				$viewPublished[$i] = $viewq[$i]['sv_pubgroups'] ? true : false;
+			}
+		}
+		return array($views, $viewNames, $viewFrids, $viewPublished);
+	}
+    
     static function sanitize_handle_name($handle_name) {
         // strip non-alphanumeric characters from form and element handles
         return preg_replace("/[^a-zA-Z0-9_-]+/", "", $handle_name);
@@ -1390,7 +1417,7 @@ class formulizeFormsHandler {
 	 */
 	public function setPermissionsForClonedForm($fid, $newfid)
 	{
-// replicate permissions of the original form on the new cloned form
+        // replicate permissions of the original form on the new cloned form
 		$criteria = new CriteriaCompo();
 		$criteria->add(new Criteria('gperm_itemid', $fid), 'AND');
 		$criteria->add(new Criteria('gperm_modid', getFormulizeModId()), 'AND');
@@ -1400,6 +1427,6 @@ class formulizeFormsHandler {
 			// do manual inserts, since addRight uses the xoopsDB query method, which won't do updates/inserts on GET requests
 			$sql = "INSERT INTO " . $this->db->prefix("group_permission") . " (gperm_name, gperm_itemid, gperm_groupid, gperm_modid) VALUES ('" . $thisOldPerm->getVar('gperm_name') . "', $newfid, " . $thisOldPerm->getVar('gperm_groupid') . ", " . getFormulizeModId() . ")";
 			$res = $this->db->queryF($sql);
-}
+        }
 	}
 }

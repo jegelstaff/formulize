@@ -395,7 +395,7 @@ define("_AM_ELE_DERIVED_UPDATE", "Update Derived Values");
 define("_AM_ELE_DERIVED_UPDATE_CAP", "Calculate values for this element");
 define("_AM_ELE_DERIVED_UPDATE_DESC", "This may take a while depending on how many records are contained within your form.");
 
-define("_AM_ELE_SELECT_NONE","No element selected.");
+define("_AM_ELE_SELECT_NONE","No element selected");
 define("_AM_ELE_CONFIRM_DELETE","Are you sure you want to delete this form element?<br>All data anyone has ever entered into this form element will be deleted as well.");
 
 define("_AM_TITLE","Menu administration");
@@ -617,7 +617,7 @@ define("_AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEW", "Which published view should be u
 define("_AM_FORMULIZE_SCREEN_LOE_EDIT_VIEW", "Configure the available views for this screen");
 define("_AM_FORMULIZE_SCREEN_LOE_EDIT_VIEW_DETAILS", "This link will open a new page that shows the master version of the list of entries, where you can manage the views.  If a relationship is in effect for this screen, then it will be active on the page that opens.");
 define("_AM_FORMULIZE_SCREEN_LOE_BLANK_DEFAULTVIEW", "Use a blank default view (ie: display no entries)");
-define("_AM_FORMULIZE_SCREEN_LOE_DESC_DEFAULTVIEW", "If you are customizing the list template, the default view will still be used to control which entries are initially included in the list.");
+define("_AM_FORMULIZE_SCREEN_LOE_DESC_DEFAULTVIEW", "If you are customizing the list template, the default view will still be used to control which entries are initially included in the list. NOTE: In the case of a user belonging to multiple groups with different default views, the view displayed to the user will be in order of priority.");
 define("_AM_FORMULIZE_SCREEN_LOE_LIMITVIEWS", "If the 'Current View' list is in use, include these views:");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_LIMITVIEWS", "If you include the basic views (\"Entries by...\"), then the selected view will switch to a basic view when the user makes a change, such as a sort or Quicksearch.");
 define("_AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEWLIMIT", "Include all views");
@@ -731,6 +731,16 @@ define("_AM_FORMULIZE_SCREEN_LOE_LISTTEMPLATE", "Template for each entry in the 
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_LISTTEMPLATE", "If you specify a List Template, certain buttons and configuration options mentioned above may be unavailable.");
 define("_AM_FORMULIZE_SCREEN_LOE_LISTTEMPLATE_HELPINTRO_FRAMEWORK", "Below is a list of handles for all the form elements in this Framework.  Use them with the <i>display</i> function.<br><br>Use \"<i>\$entry_id</i>\" to refer to the main form's entry id number.<br><br>Use \"<i>\$form_id</i>\" to refer to the id number of the main form.");
 define("_AM_FORMULIZE_SCREEN_LOE_LISTTEMPLATE_HELPINTRO_FORM", "Below is a list of element data handles for all the elements in this form. Use them with the <i>display</i> function.<br><br>Use \"<i>\$entry_id</i>\" to refer to the entry id number.<br><br>Use \"<i>\$form_id</i>\" to refer to the form id number.");
+
+define("_AM_FORMULIZE_SCREEN_LOE_DISPLAY_ONLY_COLUMNS", "Display only these columns");
+define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_COLUMNS", "Column");
+define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_SEARCH_BY", "Search by this");
+define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_SORT_BY", "Sort by this");
+define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_DELETE_COLUMN", "Remove column");
+define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_DESCRIPTION", "If you add columns here this will become the default view. The 'search by this' and 'sort by this' are optional fields");
+define("_AM_FORMULIZE_SCREEN_LOE_VIEW_DATA_TO_DISPLAY_HEADER", "How entries should be displayed?");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_ADVANCE_VIEW_ADD_COLUMN", "Add Column");
+
 // CUSTOM BUTTONS
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTONINTRO", "Specify any custom buttons for this screen:");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTONINTRO2", "Custom buttons can be added above, below, or inside a list, using the templates (see below).  You must specify what effects each custom button should have.  For instance, a custom button labelled 'Cancel Subscription' might update a form element called 'Subscription end date', and use today's date as the value to put there.");

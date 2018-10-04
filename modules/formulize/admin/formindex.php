@@ -112,10 +112,10 @@ function patch40() {
      *
      * ====================================== */
 
-    $checkThisTable = 'formulize_apikeys';
-    $checkThisField = false; 
-    $checkThisProperty = false;
-    $checkPropertyForValue = false;
+    $checkThisTable = 'formulize_screen_listofentries';
+	$checkThisField = 'defaultview';
+	$checkThisProperty = 'Type';
+	$checkPropertyForValue = 'text';
 
     $needsPatch = false;
 
@@ -356,6 +356,9 @@ function patch40() {
         $sql['add_pubfilters'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_saved_views") . " ADD `sv_pubfilters` text";
         $sql['add_backdrop_group'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_resource_mapping") . " ADD external_id_string text NULL default NULL";
         $sql['add_backdrop_group_index'] = "ALTER TABLE ". $xoopsDB->prefix("formulize_resource_mapping") ." ADD INDEX i_external_id_string (external_id_string(10))";
+        $sql['add_advance_view_field'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " ADD `advanceview` text NOT NULL"; 
+		$sql['defaultview_ele_type_text'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " CHANGE `defaultview` `defaultview` TEXT NOT NULL ";
+
         
         foreach($sql as $key=>$thissql) {
             if (!$result = $xoopsDB->query($thissql)) {
@@ -415,6 +418,10 @@ function patch40() {
                     print "External_id_string already added for resource mapping.  result: OK<br>";
                 } elseif(strstr($key, 'add_backdrop_group_index')) {
                     print "External_id_string INDEX already added for resource mapping.  result: OK<br>";
+                } elseif($key === "defaultview_ele_type_text") {
+					print "default view field change to text type already. result: OK<br>";
+				} elseif($key === "add_advance_view_field") {
+					print "advance view field already added.  result: OK<br>";
                 } else {
                     exit("Error patching DB for Formulize 4.0. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
@@ -924,7 +931,8 @@ function patch31() {
   useaddproxy varchar(255) NOT NULL default '',
   usecurrentviewlist varchar(255) NOT NULL default '',
   limitviews text NOT NULL,
-  defaultview varchar(20) NOT NULL default '',
+  defaultview text NOT NULL,
+  advanceview text NOT NULL, 
   usechangecols varchar(255) NOT NULL default '',
   usecalcs varchar(255) NOT NULL default '',
   useadvcalcs varchar(255) NOT NULL default '',

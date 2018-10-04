@@ -37,7 +37,7 @@ if (!$xoopsUser) {
     return;
 }
 $gperm_handler = xoops_gethandler('groupperm');
-include_once XOOPS_ROOT_PATH . "/modules/formulizSe/include/functions.php";
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 include_once XOOPS_ROOT_PATH ."/modules/formulize/class/forms.php";
 
 $groups = $xoopsUser->getGroups();

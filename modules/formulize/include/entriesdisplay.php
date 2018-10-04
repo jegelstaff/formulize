@@ -377,18 +377,19 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	$forceLoadView = false;
 	if($screen) {
 		$loadview = is_numeric($loadview) ? $loadview : $screen->getVar('defaultview'); // flag the screen default for loading if no specific view has been requested
+        if (is_array($loadview)) {
+			$loadview = getDefaultViewForActiveUser($screen->getVar('defaultview'), $groups);
+		}	
 		if($loadview == "mine" OR $loadview == "group" OR $loadview == "all" OR ($loadview == "blank" AND (!isset($_POST['hlist']) AND !isset($_POST['hcalc'])))) { // only pay attention to the "blank" default list if we are on an initial page load, ie: no hcalc or hlist is set yet, and one of those is set on each page load hereafter
 			$currentView = $loadview; // if the default is a standard view, then use that instead and don't load anything
 			unset($loadview);
-		} elseif($_POST['userClickedReset']) { // only set if the user actually clicked that button, and in that case, we want to be sure we load the default as specified for the screen
-			$forceLoadView = true;
-		}
+		} 
 	}
 
 	// set currentView to group if they have groupscope permission (overridden below by value sent from form)
 	// override with loadview if that is specified
 
-	if($loadview AND ((!$_POST['currentview'] AND $_POST['advscope'] == "") OR $forceLoadView)) {
+	if($loadview AND ((!$_POST['currentview'] AND $_POST['advscope'] == "") OR $_POST['userClickedReset'])) {
 		if(substr($loadview, 0, 4) == "old_") { // this is a legacy view
 			$loadview = "p" . $loadview;
 		} elseif(is_numeric($loadview)) { // new view id
@@ -407,6 +408,14 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		$currentView = "mine";
 	}
 
+    // no report/saved view to be loaded, and we're not on a subsequent page load that is sending back a declared currentview, or the user clicked the reset button
+    // therefore, an advanceview if any could be loaded after all the other setup has been done
+    if(!$_POST['loadreport'] AND (!$_POST['currentview'] OR $_POST['userClickedReset'])) {
+        $couldLoadAdvanceView = true;
+    } else {
+        $couldLoadAdvanceView = false;
+    }
+    
 	// debug block to show key settings being passed back to the page
 /*
 	if($uid == 1) {
@@ -535,6 +544,32 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
     $pubfilters = strlen($_POST['pubfilters']) > 0 ? explode(",", $_POST['pubfilters']) : "";
 
+    // if we did not load a full report/saved view, then load an advanceview if any is specified and the current page load is appropriate for it (see above for couldLoadAdvanceView))
+    if($screen AND count($screen->getVar('advanceview')) > 0 AND $couldLoadAdvanceView) {
+		// kill the quicksearches, unless we've found a special flag that will cause them to be preserved
+		if(!isset($_POST['formulize_preserveQuickSearches']) AND !isset($_GET['formulize_preserveQuickSearches'])) {
+            foreach($_POST as $k=>$v) {
+                if(substr($k, 0, 7) == "search_" AND $v != "") {
+                    unset($_POST[$k]);
+                }
+            }
+		}
+		list($_POST['oldcols'],
+             $_POST['sort'],
+             $_POST['order'],
+             $quicksearches) = loadAdvanceView($fid, $screen->getVar('advanceview'));
+			
+		// explode quicksearches into the search_ values
+		$allqsearches = explode(",", $quicksearches);
+		$colsforsearches = explode(",", $_POST['oldcols']);
+		for($i=0;$i<count($allqsearches);$i++) {
+			if($allqsearches[$i] != "") {
+				$_POST["search_" . $colsforsearches[$i]] = $allqsearches[$i]; 
+			}
+		}
+		$_POST['oldcols'] = implode(",",$colsforsearches);
+	}    
+    
 	// get columns for this form/framework or use columns sent from interface
 	// ele_handles for a form, handles for a framework, includes handles of all unified display forms
 	if($_POST['oldcols']) {
@@ -4008,6 +4043,58 @@ function loadReport($id, $fid, $frid) {
 	return $to_return;
 }
 
+//This function loads the Advance view that was set up at the "Data to be displayed" tab
+function loadAdvanceView($fid, $advance_view) {
+	$sort = null;
+	$sortby = null;
+	if($advance_view){
+	    $advanceViewSelected = array();
+            foreach($advance_view as $id=>$arr) {
+	       $advanceViewSelected["column"][$id] = $arr[0];
+	       if($arr[2] == "1"){
+		$sort = $arr[0];
+	       }
+               $advanceViewSelected["search"][$arr[0]] = $arr[1];
+            }
+	    $cols = getAllColList($fid, "", "");
+      
+	    $columns = "";
+	    $search = "";
+            foreach($cols as $id=>$arr) {
+		foreach($arr as $innerId=>$value) {
+		   if(in_array($value["ele_id"], $advanceViewSelected["column"])){
+		        $columns = $columns . $value["ele_handle"] . ",";
+		   }
+		   if($advanceViewSelected["search"][$value["ele_id"]]){
+		        $search = $search . $advanceViewSelected["search"][$value["ele_id"]] . ",";
+		   }
+		   else{
+			$search = $search . ",";
+		   }
+		   if($sort && $sort == $value["ele_id"]){
+			$sort = $value["ele_handle"];
+			$sortby = "SORT_ASC";
+		   }
+		}
+	    }
+	    
+	    //Remove the trailing ','
+	    $columns = rtrim($columns, ",");
+	    $search = rtrim($search, ",");
+	    $advanceViewSelected["sort"] = rtrim($advanceViewSelected["sort"], ",");
+	    
+	    $to_return[0] = $columns;
+	    $to_return[1] = $sort;
+	    $to_return[2] = $sortby;
+	    $to_return[3] = $search;
+	
+	    return $to_return;
+	}
+	else{
+	    return null;
+	}
+}
+
 // remove columns that the user does not have permission to view -- added June 29, 2006 -- jwe
 // this function takes a column list (handles or ids) and returns it with all columns removed that the user cannot view according to the display options on the elements
 // this function also removes columns that are private if the user does not have view_private_elements permission
@@ -4801,7 +4888,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 	if($drawResetForm) {
 		$currentviewResetForm = $settings['currentview'];
 		print "<form name=resetviewform id=resetviewform action=$currentURL method=post onsubmit=\"javascript:showLoading();\">\n";
-		if($screen) { $currentviewResetForm = $screen->getVar('defaultview'); } // override the default set by $settings...must do this here and not above, since this should only apply to the resetview form
+        if($screen) { $currentviewResetForm = getDefaultViewForActiveUser($screen->getVar('defaultview')); } // override the default set by $settings...must do this here and not above, since this should only apply to the resetview form
 		print "<input type=hidden name=currentview value='$currentviewResetForm'>\n";
 		print "<input type=hidden name=userClickedReset value=1>\n";
 		print "</form>\n";
@@ -4926,3 +5013,27 @@ function extractHandlers($filterTypes, $templateString) {
 
 	return $handles;
 }
+
+// this function unpacks the defaultview property of the screen object, and determines which one applies to the current user, if any
+// first param is the defaultview property from the screen object
+function getDefaultViewForActiveUser($loadview) {
+    global $xoopsUser;
+    $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+    $foundAView = false;
+    // Search for group user belongs to in list of default views
+    foreach(array_keys($loadview) as $checkGroup) {
+        // First group/default view found that user belongs to will be set
+        if(in_array($checkGroup, $groups)) {
+          $loadview = $loadview[$checkGroup];
+          $foundAView = true;
+          break;
+        }
+      }
+    if(!$foundAView) {
+      $loadview = null;
+    }
+    
+    return $loadview;
+    
+} 
+

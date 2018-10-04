@@ -49,10 +49,45 @@ if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mi
   return;
 }
 
+$advanceview = array();
+$currentRow = 0;
+$index = 0;
+$numberOfRows = intval($_POST['rows']);
 
-$screen->setVar('defaultview',$screens['defaultview']);
+while($currentRow <= $numberOfRows) {
+  if($_POST['sort-by'] == $index) {
+    $sort = 1;
+  }
+  else {
+    $sort = 0;
+  }
+  
+  if($_POST['col-value'][$index] != NULL && $_POST['col-value'][$index] != 0) {
+    $advanceview[$currentRow] = array($_POST['col-value'][$index], $_POST['search-value'][$index], $sort);
+    $currentRow++;
+  }
+  
+  //If the value is of the columns is the default, do not save it as part of the view
+  if($_POST['col-value'][$index] == 0) {
+    $currentRow++;
+  }
+  $index++;
+}
+$screens['advanceview'] = $advanceview;
+
+$defaultview = array();
+foreach($_POST['defaultview_group'] as $key=>$groupid) {
+  $defaultview[$groupid] = $_POST['defaultview_view'][$key];
+}
+
+if(!isset($screens['limitviews'])) {
+    $screens['limitviews'] = serialize(array(0=>'allviews'));
+}
+
+$screen->setVar('defaultview',serialize($defaultview)); // need to serialize things that have the array datatype, when they are manually generated here by us!
 $screen->setVar('usecurrentviewlist',$screens['usecurrentviewlist']);
-$screen->setVar('limitviews',$screens['limitviews']);
+$screen->setVar('limitviews',$screens['limitviews']); // do not need to serialize things that come directly from the page as an array already, admin/save.php does this for us
+$screen->setVar('advanceview', serialize($screens['advanceview'])); // need to serialize things that have the array datatype, when they are manually generated here by us!
 $screen->setVar('useworkingmsg',(array_key_exists('useworkingmsg',$screens))?$screens['useworkingmsg']:0);
 $screen->setVar('usescrollbox',(array_key_exists('usescrollbox',$screens))?$screens['usescrollbox']:0);
 $screen->setVar('entriesperpage',$screens['entriesperpage']);
