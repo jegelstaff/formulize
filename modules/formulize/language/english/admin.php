@@ -1,4 +1,5 @@
 <?php
+/*mod Language for admin side, by François T*/
 
 /*mod Language for applications*/
 define("_AM_APP_APPLICATION","Application: ");
@@ -98,7 +99,7 @@ define("_AM_SETTINGS_FORM_ENTRIES_ALLOWED","How many entries are allowed in this
 define("_AM_SETTINGS_FORM_ENTRIES_ONEPERGROUP","One entry per <b>group</b>");
 define("_AM_SETTINGS_FORM_ENTRIES_ONEPERUSER","One entry per <b>user</b>");
 define("_AM_SETTINGS_FORM_ENTRIES_MORETHANONE","<b>More than one entry</b> per user");
-define("_AM_SETTINGS_FORM_SHOWING_LIST","When showing a list of entries in this form, which elements should be displayed by default?");
+define("_AM_SETTINGS_FORM_SHOWING_LIST","When showing a list of entries in this form, which elements should be available by default?");
 define("_AM_SETTINGS_FORM_APP_PART","Which applications is this form part of?");
 define("_AM_SETTINGS_FORM_APPNEW","Create a new application for this form to be part of?");
 define("_AM_SETTINGS_FORM_DEFAULT_GROUP_PERM","Which groups of users should have permission to alter this form's settings?");
@@ -106,6 +107,7 @@ define("_AM_SETTINGS_FORM_DEFAULT_GROUP_PERM","Which groups of users should have
 
 /*mod Language for permissions*/
 define("_AM_PERMISSIONS_CHOOSE_GROUPS","Which groups do you want to set permissions for?");
+define("_AM_PERMISSIONS_SHOW_PERMS_FOR_GROUPS", "Show permissions for these groups");
 define("_AM_PERMISSIONS_LIST_GROUPS","List groups alphabetically or in creation order?");
 define("_AM_PERMISSIONS_LIST_ALPHA","Alphabetical");
 define("_AM_PERMISSIONS_LIST_CREATION","Creation order");
@@ -168,32 +170,11 @@ define("_AM_SCREEN_EXPLAIN","<p><i>Screens</i> let you show users different vers
 define("_AM_SCREEN_CREATE"," Create a new Screen");
 define("_AM_SCREEN_FORMSCREENS","Form Screens");
 define("_AM_SCREEN_LISTSCREENS","List Screens");
+define("_AM_SCREEN_TEMPLATESCREENS","Template Screens");
 define("_AM_SCREEN_DELETESCREENS","Are you sure you want to delete this screen? All configuration settings for this screen will be lost!");
+define("_AM_SCREEN_RELATIONWARNING", "Note: This screen uses a different relationship setting than one or more list screens.");
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*End mod Language for admin side, by Fran�ois T*/
+/*End mod Language for admin side, by François T*/
 
 // Admin
 define("_FORM_RENAME_TEXT", "Rename this form");
@@ -207,7 +188,7 @@ define("_FORM_LOCK", "Prevent anyone from editing this form again");
 define("_AM_CONFIRM_LOCK", "If you lockdown this form, then no one, not even you, will be able to make any changes to the form or its elements.  Are you sure you want to lockdown this form?");
 define("_formulize_FORMLOCK", "This form has now been locked.  No further changes to this form will be possible.");
 define("_formulize_FORMLOCK_FAILED", "There was an error and Formulize could not lock this form.");
-define("_FORM_NUM_ENTRIES_ANON_HELP", "<b>About Anonymous Users:</b> Formulize determines entry ownership based on a user's id number, and all Anonymous Users are viewed as \"User Number 0\".  Therefore, \"One entry per user\" does not really work for anonymous users in most cases, since everyone who is not logged in will share the same entry, because they all share the same id number, 0.<br><br>Also, \"More than one entry per user\" will behave differently for Anonymous Users, since all the entries created by anyone who isn't logged in, will all belong to \"user 0\", so everyone who is not logged in, will be treated as the same person.<br><br>Formulize is designed primarily for use in a website with a strict set of usernames and groups of users, but there are ways around these issues, in some cases using the API.  Post to the <a href=\"http://www.freeformsolutions.ca/en/forums\">support forums</a> for more information.");  
+define("_FORM_NUM_ENTRIES_ANON_HELP", "<b>About Anonymous Users:</b> Formulize determines entry ownership based on a user's id number, and all Anonymous Users are viewed as \"User Number 0\".  Therefore, \"One entry per user\" does not really work for anonymous users in most cases, since everyone who is not logged in will share the same entry, because they all share the same id number, 0.<br><br>Also, \"More than one entry per user\" will behave differently for Anonymous Users, since all the entries created by anyone who isn't logged in, will all belong to \"user 0\", so everyone who is not logged in, will be treated as the same person.<br><br>Formulize is designed primarily for use in a website with a strict set of usernames and groups of users, but there are ways around these issues, in some cases using the API.  Contact <a href=\"mailto:info@formulize.org\">info@formulize.org</a> for more information.");  
 
 define("_AM_FORCE_GROUPSCOPE_HELP", "If view_groupscope is selected, you can pick specific groups it should apply to.  If none are selected, then when a list of entries is shown to a user, groupscope will apply to the groups they are a member of, which also have view_form permission.");
 define("_AM_FORCE_GROUPSCOPE_INTRO", "Use specific groups for groupscope?");
@@ -297,6 +278,9 @@ define("_AM_ELE_TYPE_NUMBER","Numbers Only");
 
 define("_AM_ELE_SIZE","Size");
 define("_AM_ELE_MAX_LENGTH","Maximum length");
+define("_AM_ELE_MAX_VALUE","Maximum value");
+define("_AM_ELE_MIN_VALUE","Minimum value");
+define("_AM_ELE_STEPSIZE","Slider step size");
 define("_AM_ELE_ROWS","Rows");
 define("_AM_ELE_COLS","Columns");
 define("_AM_ELE_USERICHTEXT","Display this element using a Rich Text Editor");
@@ -374,7 +358,7 @@ define("_AM_ELE_SUBFORM_HEADINGSORCAPTIONS", "Should each element be labeled wit
 define("_AM_ELE_SUBFORM_HEADINGSORCAPTIONS_HEADINGS", "Column heading (captions will be used for elements with no column heading)");
 define("_AM_ELE_SUBFORM_HEADINGSORCAPTIONS_CAPTIONS", "Caption");
 define("_AM_ELE_SUBFORM_BLANKS", "How many blank spaces should be shown for this subform when the page first loads?");
-define("_AM_ELE_SUBFORM_BLANKS_HELP", "Note: if you have more than one blank space, do not use file upload elements in your subform.  File upload elements only work effectively with one blank subform row at a time.");
+define("_AM_ELE_SUBFORM_BLANKS_HELP", "If you put an exclamation mark after the number (ie: 1!), then blank entries will show up whenever the form loads, as long as no subform entries have been saved yet.<br>Note: if you have more than one blank space, do not use file upload elements in your subform.  File upload elements only work effectively with one blank subform row at a time.");
 define("_AM_ELE_SUBFORM_UITYPE_ROW", "Display each subform entry as a row with only the elements selected below showing");
 define("_AM_ELE_SUBFORM_UITYPE_FORM", "Display each subform entry using the full form, inside a collapsable area that the user can open and close");
 define("_AM_ELE_SUBFORM_ADD_NONE", "No");
@@ -505,8 +489,8 @@ define("_AM_ELE_CONVERTED_TO_TEXTBOX", "This multi-line textbox has been convert
 define("_AM_ELE_CONVERTED_TO_TEXTAREA", "This single-line textbox has been converted to a multi-line textbox.");
 define("_AM_ELE_CONVERTED_TO_RADIO", "These check boxes have been coverted to radio buttons.");
 define("_AM_ELE_CONVERTED_TO_CHECKBOX", "These radio buttons have been converted to check boxes.");
-define("_AM_ELE_CHECKBOX_DATA_NOT_READY", "These radio buttons were converted, but the data people have submitted was not updated for use in the check boxes.  Contact <a href=\"mailto:support@freeformsolutions.ca\">support@freeformsolutions.ca</a> for assistance.");
-define("_AM_ELE_RADIO_DATA_NOT_READY", "These check boxes were converted, but the data people have submitted was not updated for use in the radio buttons.  Contact <a href=\"mailto:support@freeformsolutions.ca\">support@freeformsolutions.ca</a> for assistance.");
+define("_AM_ELE_CHECKBOX_DATA_NOT_READY", "These radio buttons were converted, but the data people have submitted was not updated for use in the check boxes.  Contact <a href=\"mailto:info@formulize.org\">info@formulize.org</a> for assistance.");
+define("_AM_ELE_RADIO_DATA_NOT_READY", "These check boxes were converted, but the data people have submitted was not updated for use in the radio buttons.  Contact <a href=\"mailto:info@formulize.org\">info@formulize.org</a> for assistance.");
 
 
 // added - start - August 25 2005 - jpc
@@ -747,6 +731,7 @@ define("_AM_FORMULIZE_SCREEN_LOE_LISTTEMPLATE", "Template for each entry in the 
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_LISTTEMPLATE", "If you specify a List Template, certain buttons and configuration options mentioned above may be unavailable.");
 define("_AM_FORMULIZE_SCREEN_LOE_LISTTEMPLATE_HELPINTRO_FRAMEWORK", "Below is a list of handles for all the form elements in this Framework.  Use them with the <i>display</i> function.<br><br>Use \"<i>\$entry_id</i>\" to refer to the main form's entry id number.<br><br>Use \"<i>\$form_id</i>\" to refer to the id number of the main form.");
 define("_AM_FORMULIZE_SCREEN_LOE_LISTTEMPLATE_HELPINTRO_FORM", "Below is a list of element data handles for all the elements in this form. Use them with the <i>display</i> function.<br><br>Use \"<i>\$entry_id</i>\" to refer to the entry id number.<br><br>Use \"<i>\$form_id</i>\" to refer to the form id number.");
+
 define("_AM_FORMULIZE_SCREEN_LOE_DISPLAY_ONLY_COLUMNS", "Display only these columns");
 define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_COLUMNS", "Column");
 define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_SEARCH_BY", "Search by this");
@@ -754,6 +739,7 @@ define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_SORT_BY", "Sort by this");
 define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_DELETE_COLUMN", "Remove column");
 define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_DESCRIPTION", "If you add columns here this will become the default view. The 'search by this' and 'sort by this' are optional fields");
 define("_AM_FORMULIZE_SCREEN_LOE_VIEW_DATA_TO_DISPLAY_HEADER", "How entries should be displayed?");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_ADVANCE_VIEW_ADD_COLUMN", "Add Column");
 
 // CUSTOM BUTTONS
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTONINTRO", "Specify any custom buttons for this screen:");
@@ -763,7 +749,8 @@ define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON", "Custom button");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_HANDLE", "What handle is used to refer to this button?");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_NEW", "New Custom Button");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_BUTTONTEXT", "What text should appear on this button?");
-define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_MESSAGETEXT", "What text should appear at the top of the screen after this button is clicked?");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_MESSAGETEXT", "What text should appear at the top of the screen after this button is clicked? (Leave blank for no message)");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_POPUPTEXT", "What text should appear in a popup to confirm that the user wants to activate this button? (Leave blank for no popup)");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_GROUPS", "For which groups should this custom button appear?");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_INLINE", "Should this button appear once on every line of the list of entries?");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_INLINE_DESC", "If no, then the button will be available in the Top and Bottom Templates.  If yes, the button will appear in the list, or will be available in the List Template if you use one.");
@@ -790,7 +777,10 @@ define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_VALUE", "Use what value?");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REPLACE", "Replace the current value with the specified value");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REMOVE", "Remove the specified value from the current value");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_APPEND", "Append the specified value to the end of the current value");
-define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_ADVANCE_VIEW_ADD_COLUMN", "Add Column");
+
+define("_AM_FORMULIZE_SCREEN_TEMPLATE_DESC_TEMPLATE", "Enter Smarty html template code here.");
+define("_AM_FORMULIZE_SCREEN_TEMPLATE_DESC_CUSTOM_CODE", "Enter PHP code here. Any variables defined in this code will be available in the Smarty template.");
+
 
 define("_AM_FORMULIZE_CLONING_TITLE", "Cloning options");
 define("_AM_FORMULIZE_CLONING_FOUND_ELEMENTS", "After cloning, the following linked selectboxes in this form can be relinked to source elements in these other recently cloned forms:");
