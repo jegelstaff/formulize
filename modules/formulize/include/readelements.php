@@ -117,7 +117,7 @@ foreach($_POST as $k=>$v) {
 
 		// also...the entry id that the new entries received was stored after writing in this array:
 		// this is the subform id, and the subform placeholder, which must receive the last insert id when it's values are saved
-		//$GLOBALS['formulize_subformCreateEntry'][$element->getVar('id_form')][$desubformEntryIndex]
+		//$GLOBALS['formulize_subformCreateEntry'][$element->getVar('id_form')][$desubformEntryIndex];
 		
 	} elseif(substr($k, 0, 6) == "decue_") {
 		// store values according to form, entry and element ID 

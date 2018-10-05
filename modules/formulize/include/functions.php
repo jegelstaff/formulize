@@ -3692,7 +3692,11 @@ function synchSubformBlankDefaults($fid, $entry) {
                         $value_to_write = $data_handler->getElementValueInEntry($_POST['formulize_subformValueSourceEntry_'.$sfid][$subformValuesSourceEntryKey], $_POST['formulize_subformValueSource_'.$sfid]);
                     }
                 } else {
-                    $value_to_write = "$sourceEntryId";
+                    if($sourceEntryId == "new") {
+                        $value_to_write = $GLOBALS['formulize_newEntryIds'][$_POST['formulize_subformValueSourceForm_'.$sfid]][0];
+                    } else {
+                        $value_to_write = "$sourceEntryId";
+                    }
                 }
                 
                 writeElementValue($sfid, $_POST['formulize_subformElementToWrite_'.$sfid], $id_req_to_write, $value_to_write, "replace", "", true); // Last param is override that allows direct writing to linked selectboxes if we have prepped the value first!

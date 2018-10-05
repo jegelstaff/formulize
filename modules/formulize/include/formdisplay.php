@@ -175,21 +175,50 @@ class formulize_themeForm extends XoopsThemeForm {
 		
 		$elements = $this->getElements( true );
 		foreach ( $elements as $elt ) {
-			if ( method_exists( $elt, 'renderValidationJS' ) ) {
-				if(substr($elt->getName(),0,3)=="de_" AND !$skipConditionalCheck) {
-					$checkConditionalRow = true;
-				} else {
-					$checkConditionalRow = false;
-				}
-				$js = $elt->renderValidationJS();
-				if($js AND $checkConditionalRow) {
-					$fullJs .= "if(window.document.getElementById('formulize-".$elt->getName()."').style.display != 'none') {\n".$js."\n}\n\n";
-				} elseif($js) {
-					$fullJs .= "\n".$js."\n";
-				}
-			}
-		}
-		
+            if (method_exists($elt, 'renderValidationJS')) {
+                if (substr($elt->getName(), 0, 3) == "de_" AND !$skipConditionalCheck) {
+                    $checkConditionalRow = true;
+                } else {
+                    $checkConditionalRow = false;
+                }
+                $js = $elt->renderValidationJS();
+                if ($js AND $checkConditionalRow) {
+                    $fullJs .= "if(window.document.getElementById('formulize-" . $elt->getName() . "').style.display != 'none') {\n" . $js . "\n}\n\n";
+                } elseif ($js) {
+
+                    $newStr = "";
+
+                    $elementNameParts = explode("if", $js);
+                    //echo '<pre>'; print_r($elementNameParts); echo '</pre>';
+                    for ($x = 1; $x < sizeof($elementNameParts); $x++) {
+                        //subfield elements
+                        $current = $elementNameParts[$x];
+                        $elp = explode("_", $current);
+                        $entry_id = $elp[2];
+
+                        if($entry_id != "new") { //is this correct?
+                            $newStr .= " if(!window.document.getElementsByName('delbox" . $entry_id . "')[0].checked) {\n if" . $current . " \n}";
+                        } else {
+                            $newStr .= "if" . $current . " \n";
+                        }
+                    }
+                    $fullJs .= "\n" . $newStr . "\n";
+                    echo $fullJs;
+                }
+
+
+                //start
+                //XB need to check for deleted ids here and wrap the $js from fullJS
+                /*if (substr($elt->getName(), 0, 3) == "myf") {
+                    echo("<br> $elt->getName():" . ($elt->getName()));
+                }*/
+                //something about $elt->getName()
+                //split de and get second number after underscore
+                //
+                //if delete is selected
+                //do not validate
+            }
+        }
 		return $fullJs;
 	}
 	
@@ -426,6 +455,8 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		$formframe = $formframetemp;
 	}
 
+    $uid = $xoopsUser ? $xoopsUser->getVar('uid') : '0';
+
 	list($fid, $frid) = getFormFramework($formframe, $mainform);
 
 	if($_POST['deletesubsflag']) { // if deletion of sub entries requested
@@ -437,7 +468,10 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		if(count($subs_to_del) > 0) {
 			$excludeFids = array($fid);
 			foreach($subs_to_del as $id_req) {
-                deleteEntry($id_req, $frid, intval($_POST['deletesubsflag']), $excludeFids);
+			    //check permissions for deletion
+			    if(formulizePermHandler::user_can_delete_entry($id_req, $uid, $frid)){
+                    deleteEntry($id_req, $frid, intval($_POST['deletesubsflag']), $excludeFids);
+                }
             }
 		}
 	}
@@ -475,8 +509,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		if($groups[0] === "") { unset($groups); } // if a code has no groups associated with it, then kill the null value that will be in position 0 in the groups array.
 		$groups[] = XOOPS_GROUP_USERS;
 		$groups[] = XOOPS_GROUP_ANONYMOUS;
-	}	
-	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : '0';
+	}
 
 	$single_result = getSingle($fid, $uid, $groups, $member_handler, $gperm_handler, $mid);
 	$single = $single_result['flag'];
@@ -2693,7 +2726,7 @@ function showPop(url) {
 	window.formulize_popup.focus();
 }
 
-function validateAndSubmit(leave) {
+function validateAndSubmit(flag) {
     var formulize_numbersonly_found= false;
     jQuery(".numbers-only-textbox").each(function() {
         if(jQuery(this).val().match(/[a-z]/i) !== null) {
@@ -2739,7 +2772,7 @@ if(!$nosave) { // need to check for add or update permissions on the current use
             window.scrollTo(0,0);
             formulizechanged = 0; // don't want to trigger the beforeunload warning
         }
-        if (leave) {
+        if (flag == 'leave') {
             jQuery('#save_and_leave').val(1);
         }
         window.document.formulize.submit();
@@ -2815,7 +2848,7 @@ print "	function sub_del(sfid) {\n";
 print "		var answer = confirm ('" . _formulize_DEL_ENTRIES . "')\n";
 print "		if (answer) {\n";
 print "			document.formulize.deletesubsflag.value=sfid;\n";
-print "			validateAndSubmit();\n";
+print "			validateAndSubmit('sub_del');\n";
 print "		} else {\n";
 print "			return false;\n";
 print "		}\n";
