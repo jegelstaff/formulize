@@ -202,7 +202,6 @@ class formulize_themeForm extends XoopsThemeForm {
                         }
                     }
                     $fullJs .= "\n" . $newStr . "\n";
-                    echo $fullJs;
                 }
             }
         }
