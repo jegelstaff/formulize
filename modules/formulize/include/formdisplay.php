@@ -189,9 +189,8 @@ class formulize_themeForm extends XoopsThemeForm {
                     $newStr = "";
 
                     $elementNameParts = explode("if", $js);
-                    //echo '<pre>'; print_r($elementNameParts); echo '</pre>';
+					//skip validation for subelements that are marked for deletion
                     for ($x = 1; $x < sizeof($elementNameParts); $x++) {
-                        //subfield elements
                         $current = $elementNameParts[$x];
                         $elp = explode("_", $current);
                         $entry_id = $elp[2];
@@ -205,18 +204,6 @@ class formulize_themeForm extends XoopsThemeForm {
                     $fullJs .= "\n" . $newStr . "\n";
                     echo $fullJs;
                 }
-
-
-                //start
-                //XB need to check for deleted ids here and wrap the $js from fullJS
-                /*if (substr($elt->getName(), 0, 3) == "myf") {
-                    echo("<br> $elt->getName():" . ($elt->getName()));
-                }*/
-                //something about $elt->getName()
-                //split de and get second number after underscore
-                //
-                //if delete is selected
-                //do not validate
             }
         }
 		return $fullJs;
@@ -2726,7 +2713,7 @@ function showPop(url) {
 	window.formulize_popup.focus();
 }
 
-function validateAndSubmit(flag) {
+function validateAndSubmit(leave) {
     var formulize_numbersonly_found= false;
     jQuery(".numbers-only-textbox").each(function() {
         if(jQuery(this).val().match(/[a-z]/i) !== null) {
@@ -2772,7 +2759,7 @@ if(!$nosave) { // need to check for add or update permissions on the current use
             window.scrollTo(0,0);
             formulizechanged = 0; // don't want to trigger the beforeunload warning
         }
-        if (flag == 'leave') {
+        if (leave) {
             jQuery('#save_and_leave').val(1);
         }
         window.document.formulize.submit();
@@ -2848,7 +2835,7 @@ print "	function sub_del(sfid) {\n";
 print "		var answer = confirm ('" . _formulize_DEL_ENTRIES . "')\n";
 print "		if (answer) {\n";
 print "			document.formulize.deletesubsflag.value=sfid;\n";
-print "			validateAndSubmit('sub_del');\n";
+print "			validateAndSubmit();\n";
 print "		} else {\n";
 print "			return false;\n";
 print "		}\n";
