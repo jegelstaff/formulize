@@ -182,7 +182,7 @@ class formulizeForm extends XoopsObject {
 		
 		global $xoopsDB;        
 		
-		$viewq = q("SELECT * FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_mainform = '$id_form' OR (sv_mainform = '' AND sv_formframe = '$id_form')");
+		$viewq = q("SELECT * FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_mainform = '".intval($id_form)."' OR (sv_mainform = '' AND sv_formframe = '".intval($id_form)."')");
 		if(!isset($viewq[0])) {
 			$views = array();
 			$viewNames = array();
