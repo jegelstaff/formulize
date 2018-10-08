@@ -61,7 +61,6 @@ if($op != "check_for_unique_value"
    AND $op != 'update_derived_value'
    AND $op != 'validate_php_code'
    AND $op != 'get_views_for_form'
-   AND $op != 'get_form_columns'
   ) {
   exit();
 }
