@@ -123,13 +123,10 @@ $html .= "<TR><TD style=\"border: 1px solid black;\">Unassigned load (may be ass
 
 $html .= "</TABLE><BR>";
 
-$html .= "<P style=\"text-align:justify;\">In addition to the above assignments, the remainder of your appointment is available for research, creative professional activity and service to the University. Faculty are expected to be in residence in Toronto during all teaching sessions, and during the weeks of preparation prior to the sessions, and the weeks of marking and evaluation processes that follow. Faculty must adhere to all university guidelines and policies regarding changes to, or absences from scheduled courses.</P>  
-
-<P style=\"text-align:justify;\">Core faculty with appointments at or above 50% are also expected to attend all scheduled core and program meetings, as well as faculty council meetings that do not coincide with teaching obligations. Normal service for Core faculty with appointments at or above 50% includes committee work, such as participating on Faculty Council committees and ad hoc project-based working groups. All Core design and visual studies faculty should be available to serve on undergraduate and graduate mid-term and final reviews. In addition, all core faculty are expected to attend DFALD Convocation/Awards Ceremonies typically held mid-June and mid-November.</P>
-
-<p style=\"text-align:justify;\">Please note that your course outlines are due July 1 for Fall and Fall/Winter courses and November 1 for Spring courses.</P>
-
-<P style=\"text-align:justify;\">If for any reason you will not be available during the critical times and dates outlined above, please give the Dean's office advanced notice.</P>";
+// get final text from the form where it is stored
+$finalText = getData('', 29);
+$finalText = htmlspecialchars_decode(display($finalText[0], 'final_text_for_memos'), ENT_QUOTES);
+$html .= "<P style='text-align:justify;'>".str_replace("\n\r\n", "</P><P style='text-align:justify;'>", $finalText)."</P>";
 
 return array($html);
 
