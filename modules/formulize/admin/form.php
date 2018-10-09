@@ -445,7 +445,7 @@ foreach($classFiles as $thisFile) {
     }
 }
 
-$sqlElements = "SELECT ele_handle FROM " . $xoopsDB->prefix("formulize");
+/*"SELECT ele_handle FROM " . $xoopsDB->prefix("formulize");
 $i = 0;
 $allElements = array();
 if ($result = $xoopsDB->query($sqlElements)) {
@@ -453,7 +453,7 @@ if ($result = $xoopsDB->query($sqlElements)) {
         $allElements[$i] = $array;
         $i++;
     }
-}
+}*/
 
 $i = 1;
 $applications = array();
@@ -532,6 +532,7 @@ if (isset($formApplications)) {
 }
 $i++;
 
+$listAllElements = array();
 if ($fid != "new") {
     $advanced_calculations = array();
     $advanced_calculation_handler = xoops_getmodulehandler('advancedCalculation', 'formulize');
@@ -547,15 +548,14 @@ if ($fid != "new") {
         if (count($customElements)>0) {
             $adminPage['tabs'][$i]['content']['customElements'] = $customElements;
         }
-        if (count($allElements) > 0) {
-            $adminPage['tabs'][$i]['content']['allElements'] = $allElements;
-        }
+        $allElements = createFieldList("");
+        $listAllElements['allElements'] = $allElements->render();
         $i++;
     }
 
     $adminPage['tabs'][$i]['name'] = "Permissions";
     $adminPage['tabs'][$i]['template'] = "db:admin/form_permissions.html";
-    $adminPage['tabs'][$i]['content'] = $common;
+    $adminPage['tabs'][$i]['content'] = $listAllElements + $common;
     $adminPage['tabs'][$i]['content']['groups'] = $groups;
     $adminPage['tabs'][$i]['content']['grouplists'] = $grouplists;
     $adminPage['tabs'][$i]['content']['order'] = $orderGroups;

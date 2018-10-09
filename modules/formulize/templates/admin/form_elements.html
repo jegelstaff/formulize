@@ -15,11 +15,6 @@
 <div class="accordion-box">
 	<h2><{$smarty.const._AM_ELE_ADDINGTOFORM}></h2>
 	<p>Link an element from another form:</p>
-	<select name="elements">
-	<{foreach item=linkElement from=$content.allElements}>
-	<option value="ok"><{$linkElement.ele_handle}></option>
-	<{/foreach}>
-	</select>
 	<p><{$smarty.const._AM_ELE_CLICKTOADD}></p>
 			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=text"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_TEXT}></a></p>
 			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=textarea"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_MLTEXT}></a></p>
