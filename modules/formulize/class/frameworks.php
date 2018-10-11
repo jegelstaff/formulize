@@ -328,6 +328,11 @@ class formulizeFrameworkLink extends XoopsObject {
             $link_options[$loi]['name'] = _AM_FRAME_COMMON_VALUES . printSmart($name1,20) . " & " . printSmart($name2,20);
             $loi++;
         }
+        if ($this->getVar('key1')=='id') {
+            $link_options[$loi]['value'] = 'id+'.$this->getVar('key2');
+            $link_options[$loi]['name'] = _AM_RELATIONSHIP_PK_FK;
+            $loi++;            
+        }
         $this->_buildlinkoptions($hits12, 0, $this->getVar('key1'), $this->getVar('key2'), $target_ele_ids, $source_ele_ids, $target_captions, $source_captions, $link_options, $loi);
         $this->_buildlinkoptions($hits21, 1, $this->getVar('key1'), $this->getVar('key2'), $target_ele_ids, $source_ele_ids, $target_captions, $source_captions, $link_options, $loi);
 

@@ -753,3 +753,6 @@ define("_formulize_CLOSE_FORM_ELEMENT", "You need to close the form element that
 
 define("_formulize_ENTRY_ID", "Entry ID");
 
+
+// John's constants
+define("_AM_RELATIONSHIP_PK_FK", "Connection between Primary Key and Foreign Key");

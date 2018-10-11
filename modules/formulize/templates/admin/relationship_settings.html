@@ -96,6 +96,9 @@ function checkForCommon(Obj, form1, form2, lid) {
                             <{if $link->common neq 1}>
                                 <option value='common'><{$smarty.const._AM_FRAME_COMMONLINK}></option>
                             <{/if}>
+                            <{if $link->key1 neq 'id'}>
+                                <option value='id+?'><{$smarty.const._AM_RELATIONSHIP_PK_FK}></option>    
+                            <{/if}>
                             <{foreach from=$link->link_options key=linkoptionNumber item=linkoption}>
                                 <option value="<{$linkoption.value}>"<{if $linkoption.value == $link->link_selected}> selected="selected"<{/if}>><{$linkoption.name}></option>
                             <{/foreach}>
@@ -108,6 +111,7 @@ function checkForCommon(Obj, form1, form2, lid) {
                         <input type="checkbox"<{if $link->unifiedDisplay}> checked="checked"<{/if}> value="1" name="relationships-display<{$link->lid}>" id="relationships-display<{$link->lid}>"><label for="relationships-display<{$link->lid}>">Display as a single form</label>
                         <input type="checkbox"<{if $link->unified_delete}> checked="checked"<{/if}> value="1" name="relationships-delete<{$link->lid}>" id="relationships-delete<{$link->lid}>"><label for="relationships-delete<{$link->lid}>">Delete linked entries</label>
                     </td>
+                       
                 </tr>
             <{/foreach}>
         </table>

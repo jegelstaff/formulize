@@ -37,6 +37,12 @@ if(!isset($processedValues)) {
 $op = $_POST['formulize_admin_op'];
 $relationship_id = $_POST['formulize_admin_key'];
 
+//echo $_POST["relationships-linkages"];
+//echo $_POST['formulize_admin_key']."\n";
+
+
+
+
 if($relationship_id == "new") {
     // create the framework first
     $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
@@ -93,7 +99,7 @@ function addlink($form1_id, $form2_id, $relationship_id) {
     $forms = array();
     $forms[] = $form1_id;
     $forms[] = $form2_id;
-
+    
     // write the link to the links table
     $writelink = "INSERT INTO " . $xoopsDB->prefix("formulize_framework_links") .
         " (fl_frame_id, fl_form1_id, fl_form2_id, fl_key1, fl_key2, fl_relationship, fl_unified_display, fl_unified_delete, fl_common_value)".
@@ -204,16 +210,22 @@ function updatelinks($fl_id, $value) {
     $keys = explode("+", $value);
     if(isset($keys[2]) AND $keys[2] == "common") {
         $common = 1;
-    } else {
+    }
+    else {
         $common = $processedValues['relationships']['preservecommon'.$fl_id] == $value ? 1 : 0;
     }
-    if($keys[0] > 0){
+//    if(!is_numeric($keys[0]) && $keys[0] == "id"){
+//        
+//    }
+    
+    if(intval($keys[0]) > 0){
         updateIndex($keys[0]);
     }
 
-    if($keys[1] > 0){
+    if(intval($keys[1]) > 0){
         updateIndex($keys[1]);
     }
+
 
     $sql = "UPDATE " . $xoopsDB->prefix("formulize_framework_links") . " SET fl_key1='" . $keys[0] . "', fl_key2='" . $keys[1] . "', fl_common_value='$common' WHERE fl_id='$fl_id'";
     if(!$res = $xoopsDB->query($sql)) {

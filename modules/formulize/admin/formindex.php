@@ -65,7 +65,6 @@ $eh = new ErrorHandler;
 // returns the result object of the query if it was successful
 function formulize_DBPatchCheckSQL($sql, &$needsPatch) {
     global $xoopsDB;
-    //print $sql."<br>";
     if (!$needsPatchRes = $xoopsDB->queryF($sql)) {
         print "Error: ".$xoopsDB->error()."<br>We could not determine if your Formulize database structure is up to date.  Please contact <a href=\"mailto:info@formulize.org\">info@formulize.org</a> for assistance.<br>\n";
         return false;
@@ -111,11 +110,24 @@ function patch40() {
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY
      *
      * ====================================== */
-
-    $checkThisTable = 'formulize_apikeys';
-    $checkThisField = false; 
-    $checkThisProperty = false;
-    $checkPropertyForValue = false;
+    
+    
+    /*
+     These 4 variables describe what table to update during the patch.
+     $checkThisTable - Specifies which table to update.
+     $checkThisField - Specifies which field in the table to update.
+     $checkThisProperty - Basically specifies how to update table.
+     $checkPropertyForValue - The datatype the property should have.
+    */
+    $checkThisTable = 'formulize_framework_links';
+    $checkThisField = "fl_key1"; 
+    $checkThisProperty = "text"; // Should be "text".
+    $checkPropertyForValue = "Varchar(10)"; // Should be Varchar(10) for my instance (Ignore this comment if I haven't deleted this comment).
+    
+//    $checkThisTable = 'formulize_framework_links';
+//    $checkThisField = false; 
+//    $checkThisProperty = false; 
+//    $checkPropertyForValue = false;
 
     $needsPatch = false;
 
@@ -356,6 +368,7 @@ function patch40() {
         $sql['add_pubfilters'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_saved_views") . " ADD `sv_pubfilters` text";
         $sql['add_backdrop_group'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_resource_mapping") . " ADD external_id_string text NULL default NULL";
         $sql['add_backdrop_group_index'] = "ALTER TABLE ". $xoopsDB->prefix("formulize_resource_mapping") ." ADD INDEX i_external_id_string (external_id_string(10))";
+        $sql['change_fl_key1_to_varchar'] = "ALTER TABLE ". $xoopsDB->prefix("formulize_framework_links") ." MODIFY fl_key1 VARCHAR(10)";
         
         foreach($sql as $key=>$thissql) {
             if (!$result = $xoopsDB->query($thissql)) {
