@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        .sideBarIcons {
+            height: 100%;
+            width: 0;
+            position: fixed;
+            z-index: 1;
+            top: 0;
+            left: 0;
+            background-color:lightgray;
+            overflow-x: hidden;
+            transition: 0.5s;
+            padding-top: 60px;
+            font-family: Arial;
+        }
+
+        .sideBarIcons a {
+            padding: 10px 10px 10px 20px;
+            font-size: 24px;
+            color: lightskyblue;
+            display: block;
+            transition: 0.3s;
+        }
+
+        .sideBarIcons a:hover {
+            color: lightgreen;
+        }
+
+        .sideBarIcons .close {
+            position: absolute;
+            top: 0;
+            right: 30px;
+            margin-left: 20px;
+        }
+
+        .sideBarIcons .title {
+            top: 0;
+            left: 30px;
+            font-size: large;
+            font-style: italic;
+            border-bottom-style: solid;
+
+        }
+
+        .sideBarInfo{
+            height: 100%;
+            width: 0;
+            position: fixed;
+            z-index: 1;
+            top: 0;
+            right: 0;
+            background-color: lightgray;
+            overflow-x: hidden;
+            transition: 0.5s;
+            padding-top: 60px;
+            font-family: Arial;
+        }
+
+        .sideBarInfo a {
+            padding: 10px 10px 10px 20px;
+            font-size: 24px;
+            color: lightskyblue;
+            display: block;
+            transition: 0.3s;
+        }
+
+        .sideBarInfo a:hover {
+            color: lightgreen;
+        }
+
+        .sideBarInfo .close {
+            position: absolute;
+            top: 0;
+            left: 30px;
+            margin-right: 20px;
+        }
+    </style>
+
+</head>
+
+<body>
+<div id = "sideWithIcons" class = "sideBarIcons" >
+    <div class = sideBarIcons>
+        <a href = "javascript:void(0)" class = "close" onclick = "closeBars()" >&times</a>
+        <p class = "title"> Forms </p>
+    </div>
+
+    <span style ="cursor:pointer" onclick="openInfoBar()"><a href ="#"> Formz </a></span>
+</div>
+
+<div id = "sideWithInfo" class = "sideBarInfo" >
+    <a href = "javascript:void(0)" class = "close" onclick = "closeBars()" >&times</a>
+    <a href ="#"> such info~~ </a>
+</div>
+
+<span style ="cursor:pointer" onclick="openBar()"> Open </span>
+
+<script>
+    function openBar() {
+        document.getElementById("sideWithIcons").style.width = "250px";
+        document.body.style.backgroundColor = "rgba(0,0,0,0.4)";
+    }
+
+    function closeBars() {
+        document.getElementById("sideWithIcons").style.width = "0";
+        document.getElementById("sideWithInfo").style.width = "0";
+        document.body.style.backgroundColor = "white";
+    }
+
+    function openInfoBar() {
+        document.getElementById("sideWithInfo").style.width = "250px";
+
+    }
+
+</script>
+
+</body>
+
+</html>
