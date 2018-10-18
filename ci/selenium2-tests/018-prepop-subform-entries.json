@@ -78,89 +78,17 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "3000"
-    },
-    {
       "type": "clickElement",
       "locator": {
         "type": "link text",
-        "value": "Stories"
-      }
-    },
-    {
-      "type": "pause",
-      "waitTime": "3000"
-    },
-    {
-      "type": "clickElement",
-      "locator": {
-        "type": "xpath",
-        "value": "//div[@id='drawer-2-7']/h3/span"
-      }
-    },
-    {
-      "type": "clickElement",
-      "locator": {
-        "type": "xpath",
-        "value": "//div[@id='drawer-2-7']//a[.=' Configure']"
+        "value": "StoryPeople"
       }
     },
     {
       "type": "clickElement",
       "locator": {
         "type": "link text",
-        "value": "Options"
-      }
-    },
-    {
-      "type": "setElementSelected",
-      "locator": {
-        "type": "id",
-        "value": "elements-ele_value[8]-row"
-      }
-    },
-    {
-      "type": "setElementText",
-      "locator": {
-        "type": "id",
-        "value": "number_of_subform_blanks"
-      },
-      "text": "2"
-    },
-    {
-      "type": "clickElement",
-      "locator": {
-        "type": "css selector",
-        "value": "input.savebutton"
-      }
-    },
-    {
-      "type": "clickElement",
-      "locator": {
-        "type": "id",
-        "value": "xo-canvas"
-      }
-    },
-    {
-      "type": "clickElement",
-      "locator": {
-        "type": "link text",
-        "value": "Tracker"
-      }
-    },
-    {
-      "type": "clickElement",
-      "locator": {
-        "type": "xpath",
-        "value": "//div[@id='formlisting']/blockquote/div[5]/div/div[1]/a[1]/div[2]"
-      }
-    },
-    {
-      "type": "clickElement",
-      "locator": {
-        "type": "link text",
-        "value": "Check boxes"
+        "value": "Select box (dropdowns and list boxes)"
       }
     },
     {
@@ -169,13 +97,13 @@
         "type": "name",
         "value": "elements-ele_caption"
       },
-      "text": "Role"
+      "text": "Department"
     },
     {
-      "type": "clickElement",
+      "type": "setElementSelected",
       "locator": {
-        "type": "css selector",
-        "value": "fieldset"
+        "type": "xpath",
+        "value": "//form[@id='form-1']/div[5]/div/fieldset/select//option[3]"
       }
     },
     {
@@ -212,7 +140,7 @@
         "type": "name",
         "value": "ele_value[0]"
       },
-      "text": "Tester"
+      "text": "Marketing"
     },
     {
       "type": "setElementText",
@@ -220,7 +148,7 @@
         "type": "name",
         "value": "ele_value[1]"
       },
-      "text": "Designer"
+      "text": "Engineering"
     },
     {
       "type": "setElementText",
@@ -228,7 +156,7 @@
         "type": "name",
         "value": "ele_value[2]"
       },
-      "text": "Developer"
+      "text": "Human Resources"
     },
     {
       "type": "setElementText",
@@ -236,14 +164,11 @@
         "type": "name",
         "value": "ele_value[3]"
       },
-      "text": "{OTHER|30}"
+      "text": "Finance"
     },
     {
-      "type": "clickElement",
-      "locator": {
-        "type": "css selector",
-        "value": "p[name=\"3\"]"
-      }
+      "type": "pause",
+      "waitTime": "2000"
     },
     {
       "type": "clickElement",
@@ -254,7 +179,7 @@
     },
     {
       "type": "pause",
-      "waitTime": "1000"
+      "waitTime": "2000"
     },
     {
       "type": "clickElement",
@@ -264,10 +189,14 @@
       }
     },
     {
+      "type": "pause",
+      "waitTime": "2000"
+    },
+    {
       "type": "clickElement",
       "locator": {
         "type": "link text",
-        "value": "Regular 'Stories'"
+        "value": "Entries in 'Stories'"
       }
     },
     {
@@ -278,85 +207,25 @@
       }
     },
     {
-      "type": "setElementText",
-      "locator": {
-        "type": "id",
-        "value": "de_4_new_10_tarea"
-      },
-      "text": "Fix subform blanks"
-    },
-    {
-      "type": "pause",
-      "step_name": "44.",
-      "waitTime": "1000"
-    },
-    {
-      "type": "setElementText",
-      "locator": {
-        "type": "id",
-        "value": "desubform0x18_5_new_17_user"
-      },
-      "text": "PersonA"
-    },
-    {
-      "type": "pause",
-      "waitTime": "1000"
-    },
-    {
       "type": "clickElement",
       "locator": {
-        "type": "id",
-        "value": "xo-canvas"
-      }
-    },
-    {
-      "type": "setElementText",
-      "locator": {
-        "type": "id",
-        "value": "desubform1x18_5_new_17_user"
-      },
-      "text": "PersonB"
-    },
-    {
-      "type": "pause",
-      "waitTime": "1000"
-    },
-    {
-      "type": "clickElement",
-      "locator": {
-        "type": "id",
-        "value": "xo-canvas"
+        "type": "xpath",
+        "value": "//table[@class='outer']/tbody/tr[4]/td[1]/a"
       }
     },
     {
       "type": "setElementSelected",
       "locator": {
-        "type": "id",
-        "value": "item_4_desubform0x18_5_new_20[]"
+        "type": "xpath",
+        "value": "//select[@id='de_5_2_21']//option[2]"
       }
-    },
-    {
-      "type": "setElementText",
-      "locator": {
-        "type": "id",
-        "value": "other[ele_20_new_0]"
-      },
-      "text": "PersonARuleA"
     },
     {
       "type": "setElementSelected",
       "locator": {
-        "type": "id",
-        "value": "item_4_desubform1x18_5_new_20[]"
+        "type": "xpath",
+        "value": "//select[@id='de_5_3_21']//option[3]"
       }
-    },
-    {
-      "type": "setElementText",
-      "locator": {
-        "type": "id",
-        "value": "other[ele_20_new_1]"
-      },
-      "text": "PersonBRuleB"
     },
     {
       "type": "clickElement",
@@ -373,24 +242,20 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1000"
+      "type": "verifyElementValue",
+      "locator": {
+        "type": "id",
+        "value": "de_5_3_21"
+      },
+      "value": "2"
     },
     {
       "type": "verifyElementValue",
       "locator": {
-        "type": "name",
-        "value": "other[ele_20_2]"
+        "type": "id",
+        "value": "de_5_2_21"
       },
-      "value": "PersonARuleA"
-    },
-    {
-      "type": "verifyElementValue",
-      "locator": {
-        "type": "name",
-        "value": "other[ele_20_3]"
-      },
-      "value": "PersonBRuleB"
+      "value": "1"
     },
     {
       "type": "clickElement",

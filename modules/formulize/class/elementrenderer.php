@@ -529,7 +529,9 @@ class formulizeElementRenderer{
 							}
 						}
 					}
-
+                    
+                    $GLOBALS['formulize_lastRenderedElementOptions'] = $cachedSourceValuesQ[$sourceValuesQ];
+                    
 					if($isDisabled) {
 						$form_ele = new XoopsFormLabel($ele_caption, implode(", ", $disabledOutputText) . implode("\n", $disabledHiddenValue));
 						$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
@@ -642,7 +644,8 @@ class formulizeElementRenderer{
 						$options[$okey] = formulize_swapUIText($ovalue, $this->_ele->getVar('ele_uitext'));
 					}
 					$form_ele1->addOptionArray($options);
-
+                    $GLOBALS['formulize_lastRenderedElementOptions'] = $options;
+                    
 					if($selected) {
 						if(is_array($selected)) {
 							$hiddenElementName = $ele_value[1] ? $form_ele1->getName()."[]" : $form_ele1->getName();
@@ -779,6 +782,7 @@ class formulizeElementRenderer{
 							$counter++;
 						}
 						$form_ele1->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
+                        $GLOBALS['formulize_lastRenderedElementOptions'] = $form_ele1->getOptions();
 					break;
 					default:
 						$form_ele1 = new XoopsFormElementTray($ele_caption, $delimSetting);
@@ -797,6 +801,7 @@ class formulizeElementRenderer{
 								if(in_array($o['key'], $selected)) {
 									$disabledOutputText[] = _formulize_OPT_OTHER.$other;
 								}
+                                $GLOBALS['formulize_lastRenderedElementOptions'][$o['key']] = _formulize_OPT_OTHER;
 							}else{
 								$t->addOption($o['key'], $o['value']);
 								if(in_array($o['key'], $selected)) {
@@ -805,6 +810,7 @@ class formulizeElementRenderer{
 								if(strstr($o['value'], _formulize_OUTOFRANGE_DATA)) {
 									$hiddenOutOfRangeValuesToWrite[$o['key']] = str_replace(_formulize_OUTOFRANGE_DATA, "", $o['value']); // if this is an out of range value, grab the actual value so we can stick it in a hidden element later
 								}
+                                $GLOBALS['formulize_lastRenderedElementOptions'][$o['key']] = $o['value'];
 							}
 							$t->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
 							$form_ele1->addElement($t);
@@ -909,6 +915,7 @@ class formulizeElementRenderer{
 							$counter++;
 						}
 						$form_ele1->setExtra("onchange=\"javascript:formulizechanged=1;\"");
+                        $GLOBALS['formulize_lastRenderedElementOptions'] = $form_ele1->getOptions();
 					break;
 
 
@@ -928,6 +935,7 @@ class formulizeElementRenderer{
 								if($o['key'] == $selected) {
 									$disabledOutputText = _formulize_OPT_OTHER.$other;
 								}
+                                $GLOBALS['formulize_lastRenderedElementOptions'][$o['key']] = _formulize_OPT_OTHER;
 							}else{
 								$o['value'] = get_magic_quotes_gpc() ? stripslashes($o['value']) : $o['value'];
 								$t->addOption($o['key'], $o['value']);
@@ -937,6 +945,7 @@ class formulizeElementRenderer{
 								if(strstr($o['value'], _formulize_OUTOFRANGE_DATA)) {
 									$hiddenOutOfRangeValuesToWrite[$o['key']] = str_replace(_formulize_OUTOFRANGE_DATA, "", $o['value']); // if this is an out of range value, grab the actual value so we can stick it in a hidden element later
 								}
+                                $GLOBALS['formulize_lastRenderedElementOptions'][$o['key']] = $o['value'];
 							}
 							$t->setExtra("onchange=\"javascript:formulizechanged=1;\"");
 							$form_ele1->addElement($t);
