@@ -62,6 +62,8 @@ before_install:
   - sudo chmod 777 /var/www/modules/formulize/templates/screens/default
   - sudo chmod 777 /var/www/modules/formulize/export
   - sudo chmod 777 /var/www/modules/formulize/custom_code
+  # Turn off the Code Mirror library. This is essential for test 017, to access textarea on php insertion
+  - sudo mv /var/www/modules/formulize/libraries/codemirror/ /var/www/modules/formulize/libraries/notcodemirror/
   # make the trust path because the fcgi process cannot
   - sudo mkdir /var/www/selenium-848d24bb54d726d
   - sudo chmod 777 /var/www/selenium-848d24bb54d726d
