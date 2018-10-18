@@ -665,9 +665,13 @@ class icms_core_DataFilter {
 	 */
 	static public function codePreConv($text, $imcode = 1) {
 		if ($imcode != 0) {
-			$patterns = "/\[code](.*)\[\/code\]/esU";
-			$replacements = "'[code]' . base64_encode('$1') . '[/code]'";
-			$text = preg_replace($patterns, $replacements, $text);
+            $patterns = "/\[code](.*)\[\/code\]/sU";
+			$text = preg_replace_callback(
+			        $patterns,
+                    function($m){
+			            return "'[code]' . base64_encode('$m[1]') . '[/code]'";
+                    },
+                    $text);
 		}
 		return $text;
 	}
@@ -682,18 +686,28 @@ class icms_core_DataFilter {
 	 */
 	static public function codeConv($text, $imcode = 1, $image = 1) {
 		if ($imcode != 0) {
-			$patterns = "/\[code](.*)\[\/code\]/esU";
+			$patterns = "/\[code](.*)\[\/code\]/sU";
 			if ($image != 0) {
-				$replacements = "'<div class=\"icmsCode\">' .
-					icms_core_DataFilter::textsanitizer_syntaxhighlight(icms_core_DataFilter::codeSanitizer('$1')) .
-					'</div>'";
+                $text = preg_replace_callback(
+                    $patterns,
+                    function($m) {
+                        return "'<div class=\"icmsCode\">' .
+                        icms_core_DataFilter::textsanitizer_syntaxhighlight(icms_core_DataFilter::codeSanitizer('$m[1]')) .
+                        '</div>'";
+                    },
+                    $text);
+
 			} else {
-				$replacements = "'<div class=\"icmsCode\">' .
-					icms_core_DataFilter::textsanitizer_syntaxhighlight(icms_core_DataFilter::codeSanitizer('$1',0)) .
-					'</div>'";
-			}
-			$text = preg_replace($patterns, $replacements, $text);
-		}
+                $text = preg_replace_callback(
+                    $patterns,
+                    function($m) {
+                        "'<div class=\"icmsCode\">' .
+                        icms_core_DataFilter::textsanitizer_syntaxhighlight(icms_core_DataFilter::codeSanitizer('$m[1]',0)) .
+                        '</div>'";
+                    },
+                    $text);
+            }
+        }
 		return $text;
 	}
 
@@ -720,7 +734,7 @@ class icms_core_DataFilter {
 		global $icmsConfigPlugins;
 		if (!empty($icmsConfigPlugins['sanitizer_plugins'])) {
 			foreach ($icmsConfigPlugins['sanitizer_plugins'] as $item) {
-				$text = self::executeExtension($item, $text);
+                $text = self::executeExtension($item, $text);
 			}
 		}
 		return $text;
@@ -752,7 +766,7 @@ class icms_core_DataFilter {
 			return $text;
 		}
 		$args = array_slice(func_get_args(), 1);
-		return call_user_func_array($func, array_merge(array(&$this), $args));
+		return call_user_func_array($func, $args);
 	}
 
 	/**

@@ -111,13 +111,9 @@ if (false != $user) {
 		$_POST['xoops_redirect'] = trim($_POST['xoops_redirect']);
 		$parsed = parse_url(ICMS_URL);
 		$url = isset($parsed['scheme']) ? $parsed['scheme'] . '://' : 'http://';
-		if (isset($parsed['host'])) {
-			$url .= $parsed['host'];
-			if (isset($parsed['port'])) {
-				$url .= ':' . $parsed['port'];
-			}
-		} else {
-			$url .= $_SERVER['HTTP_HOST'];
+		$url .= $_SERVER['HTTP_HOST'];
+		if (isset($parsed['port'])) {
+			$url .= ':' . $parsed['port'];
 		}
 		if (@$parsed['path']) {
 			if (strncmp($parsed['path'], $_POST['xoops_redirect'], strlen($parsed['path']))) {

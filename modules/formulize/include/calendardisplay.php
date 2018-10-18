@@ -155,7 +155,7 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
 
     // handle deletion if requested, added sept 18 2005
     if($_POST['delentry']) {
-        deleteEntry($_POST['delentry'], $_POST['delfrid'], $_POST['delfid'], $gperm_handler, $member_handler, $mid);
+        deleteEntry($_POST['delentry'], $_POST['delfrid'], $_POST['delfid']);
     }
 
     // get the data for all the fids
@@ -166,7 +166,7 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
     for($i=0;$i<count($fids);$i++) {
         $scope="";
         if($scopes[$i]) {
-            list($scope, $throwAwayCurrentView) = buildScope($scopes[$i], $member_handler, $gperm_handler, $uid, $groups, $fids[$i], $mid);
+            list($scope, $throwAwayCurrentView) = buildScope($scopes[$i], $uid, $fids[$i]);
         }
         if(is_array($dateHandles[$i])) {
             $dateField = $dateHandles[$i][0];

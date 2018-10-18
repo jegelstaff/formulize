@@ -38,13 +38,13 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 class formulizeElementRenderer{
 	var $_ele;
 
-	function formulizeElementRenderer(&$element){
+	function __construct(&$element){
 		$this->_ele =& $element;
 	}
 
 	// function params modified to accept passing of $ele_value from index.php
 	// $entry added June 1 2006 as part of 'Other' option for radio buttons and checkboxes
-	function constructElement($form_ele_id, $ele_value, $entry, $isDisabled=false, $screen=null){
+	function constructElement($form_ele_id, $ele_value, $entry, $isDisabled=false, $screen=null, $validationOnly=false){
 		if (strstr(getCurrentURL(),"printview.php")) {
 			$isDisabled = true; // disabled all elements if we're on the printable view
 		} 
@@ -475,7 +475,7 @@ class formulizeElementRenderer{
 										}
 									}
 								}
-								$linkedElementOptions[$rowlinkedvaluesq[0]] = implode(" - ", $linked_column_values);
+								$linkedElementOptions[$rowlinkedvaluesq[0]] = implode(" | ", $linked_column_values);
 							}
 						}
 						$cachedSourceValuesQ[$sourceValuesQ] = $linkedElementOptions;
@@ -505,10 +505,10 @@ class formulizeElementRenderer{
 					}
 					// if we're rendering an autocomplete box
 					if(!$isDisabled AND $ele_value[8] == 1) {
-						$renderedComboBox = $this->formulize_renderQuickSelect($form_ele_id, $cachedSourceValuesAutocompleteFile[$sourceValuesQ], $default_value, $default_value_user, $cachedSourceValuesAutocompleteLength[$sourceValuesQ]);
+						$renderedComboBox = $this->formulize_renderQuickSelect($form_ele_id, $cachedSourceValuesAutocompleteFile[$sourceValuesQ], $default_value, $default_value_user, $cachedSourceValuesAutocompleteLength[$sourceValuesQ], $validationOnly);
 						$form_ele = new xoopsFormLabel($ele_caption, $renderedComboBox);
 						$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
-					} elseif($isDisabled) {
+					} elseif($isDisabled AND $ele_value[8] == 1) {
 						$disabledOutputText[] = $default_value_user;
 					}
 
@@ -529,7 +529,9 @@ class formulizeElementRenderer{
 							}
 						}
 					}
-
+                    
+                    $GLOBALS['formulize_lastRenderedElementOptions'] = $cachedSourceValuesQ[$sourceValuesQ];
+                    
 					if($isDisabled) {
 						$form_ele = new XoopsFormLabel($ele_caption, implode(", ", $disabledOutputText) . implode("\n", $disabledHiddenValue));
 						$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
@@ -642,7 +644,8 @@ class formulizeElementRenderer{
 						$options[$okey] = formulize_swapUIText($ovalue, $this->_ele->getVar('ele_uitext'));
 					}
 					$form_ele1->addOptionArray($options);
-
+                    $GLOBALS['formulize_lastRenderedElementOptions'] = $options;
+                    
 					if($selected) {
 						if(is_array($selected)) {
 							$hiddenElementName = $ele_value[1] ? $form_ele1->getName()."[]" : $form_ele1->getName();
@@ -688,7 +691,7 @@ class formulizeElementRenderer{
 						file_put_contents(XOOPS_ROOT_PATH."/cache/$cachedLinkedOptionsFileName",
 							"<?php\n\$$cachedLinkedOptionsFileName = ".var_export($the_values, true).";\n");
 						$defaultSelected = is_array($selected) ? $selected[0] : $selected;
-						$renderedComboBox = $this->formulize_renderQuickSelect($form_ele_id, $cachedLinkedOptionsFileName, $defaultSelected, $options[$defaultSelected], $maxLength);
+						$renderedComboBox = $this->formulize_renderQuickSelect($form_ele_id, $cachedLinkedOptionsFileName, $defaultSelected, $options[$defaultSelected], $maxLength, $validationOnly);
 						$form_ele2 = new xoopsFormLabel($ele_caption, $renderedComboBox);
 						$renderedElement = $form_ele2->render();
 					} else { // normal element
@@ -779,6 +782,7 @@ class formulizeElementRenderer{
 							$counter++;
 						}
 						$form_ele1->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
+                        $GLOBALS['formulize_lastRenderedElementOptions'] = $form_ele1->getOptions();
 					break;
 					default:
 						$form_ele1 = new XoopsFormElementTray($ele_caption, $delimSetting);
@@ -797,6 +801,7 @@ class formulizeElementRenderer{
 								if(in_array($o['key'], $selected)) {
 									$disabledOutputText[] = _formulize_OPT_OTHER.$other;
 								}
+                                $GLOBALS['formulize_lastRenderedElementOptions'][$o['key']] = _formulize_OPT_OTHER;
 							}else{
 								$t->addOption($o['key'], $o['value']);
 								if(in_array($o['key'], $selected)) {
@@ -805,6 +810,7 @@ class formulizeElementRenderer{
 								if(strstr($o['value'], _formulize_OUTOFRANGE_DATA)) {
 									$hiddenOutOfRangeValuesToWrite[$o['key']] = str_replace(_formulize_OUTOFRANGE_DATA, "", $o['value']); // if this is an out of range value, grab the actual value so we can stick it in a hidden element later
 								}
+                                $GLOBALS['formulize_lastRenderedElementOptions'][$o['key']] = $o['value'];
 							}
 							$t->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
 							$form_ele1->addElement($t);
@@ -909,6 +915,7 @@ class formulizeElementRenderer{
 							$counter++;
 						}
 						$form_ele1->setExtra("onchange=\"javascript:formulizechanged=1;\"");
+                        $GLOBALS['formulize_lastRenderedElementOptions'] = $form_ele1->getOptions();
 					break;
 
 
@@ -928,6 +935,7 @@ class formulizeElementRenderer{
 								if($o['key'] == $selected) {
 									$disabledOutputText = _formulize_OPT_OTHER.$other;
 								}
+                                $GLOBALS['formulize_lastRenderedElementOptions'][$o['key']] = _formulize_OPT_OTHER;
 							}else{
 								$o['value'] = get_magic_quotes_gpc() ? stripslashes($o['value']) : $o['value'];
 								$t->addOption($o['key'], $o['value']);
@@ -937,6 +945,7 @@ class formulizeElementRenderer{
 								if(strstr($o['value'], _formulize_OUTOFRANGE_DATA)) {
 									$hiddenOutOfRangeValuesToWrite[$o['key']] = str_replace(_formulize_OUTOFRANGE_DATA, "", $o['value']); // if this is an out of range value, grab the actual value so we can stick it in a hidden element later
 								}
+                                $GLOBALS['formulize_lastRenderedElementOptions'][$o['key']] = $o['value'];
 							}
 							$t->setExtra("onchange=\"javascript:formulizechanged=1;\"");
 							$form_ele1->addElement($t);
@@ -1251,14 +1260,12 @@ class formulizeElementRenderer{
 		return $cachedEntryData[$id_form][$entry][0];
 	}
 
-	/* ALTERED - 20100318 - freeform - jeff/julian - start */
-	function formulize_renderQuickSelect($form_ele_id, $cachedLinkedOptionsFilename, $default_value='', $default_value_user='none', $maxLength=30) {
+	function formulize_renderQuickSelect($form_ele_id, $cachedLinkedOptionsFilename, $default_value='', $default_value_user='none', $maxLength=30, $validationOnly=false) {
         
         static $autocompleteIncluded = false;
-        if(!$autocompleteIncluded) {
+        if(!$autocompleteIncluded AND !$validationOnly) {
             // setup separate instance of jquery for use for this purpose only
-            // jq3 should be what we want to work with and original jquery features will be unaffected?? -- needs some testing, especially with accordioned subforms, but really we should upgrade everything to latest jqueries!!!
-            // this hack intended for short term compatibility for CFCC evaluations system only!
+            // jq3 should be what we want to work with and original jquery features will be unaffected?? -- really we should upgrade everything to latest jqueries!!!
             $output .= "<script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js'></script>\n";
             $output .= "<script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js'></script>\n";
             $output .= "<link rel='stylesheet' href='https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css'>\n";
@@ -1273,6 +1280,7 @@ class formulizeElementRenderer{
         // jQuery code for make it work as autocomplete
         // need to wrap it in window.load because Chrome does unusual things with the DOM and makes it ready before it's populated with content!!  (so document.ready doesn't do the trick)
         // item 16 determines whether the list box allows new values to be entered
+
         $ele_value = $this->_ele->getVar('ele_value');
         $allow_new_values = isset($ele_value[16]) ? $ele_value[16] : 0;
         // setup the autocomplete, and make it pass the value of the selected item into the hidden element
@@ -1329,9 +1337,8 @@ class formulizeElementRenderer{
 
 		return $output;
 	}
-	/* ALTERED - 20100318 - freeform - jeff/julian - stop */
 
-	// creates a hidden version of the element so that it can pass its value back, but not be available to the user
+  // creates a hidden version of the element so that it can pass its value back, but not be available to the user
 	function formulize_disableElement($element, $type, $ele_desc) {
 		if($type == "text" OR $type == "textarea" OR $type == "date" OR $type == "colorpick") {
 			$newElement = new xoopsFormElementTray($element->getCaption(), "\n");
@@ -1472,4 +1479,3 @@ class formulizeElementRenderer{
 	}
 
 }
-?>

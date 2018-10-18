@@ -258,7 +258,7 @@ class Auth_OpenID_Consumer {
 * when creating the internal consumer object. This is used for
 * testing.
 */
-    function Auth_OpenID_Consumer($store, $session = null,
+    function __construct($store, $session = null,
                                   $consumer_cls = null)
     {
         if ($session === null) {
@@ -456,7 +456,7 @@ class Auth_OpenID_DiffieHellmanSHA1ConsumerSession {
     var $secret_size = 20;
     var $allowed_assoc_types = array('HMAC-SHA1');
 
-    function Auth_OpenID_DiffieHellmanSHA1ConsumerSession($dh = null)
+    function __construct($dh = null)
     {
         if ($dh === null) {
             $dh = new Auth_OpenID_DiffieHellman();
@@ -611,7 +611,7 @@ class Auth_OpenID_GenericConsumer {
 * in the module description. The default value is False, which
 * disables immediate mode.
 */
-    function Auth_OpenID_GenericConsumer($store)
+    function __construct($store)
     {
         $this->store = $store;
         $this->negotiator = Auth_OpenID_getDefaultNegotiator();

@@ -78,17 +78,21 @@
 				    <label for="elements-ele_value[4]-1"><input type="radio" id="elements-ele_value[4]-1" name="elements-ele_value[4]" value="1"<{if $content.ele_value[4] eq 1}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_HEADINGSORCAPTIONS_CAPTIONS}></label>
 			    </div>
 <br />
-		<div class="form-item">
-	    <{$smarty.const._AM_ELE_SUBFORM_BLANKS}><br /><input type="text" id="element-subformblanks" name="elements-ele_value[2]" value="<{$content.ele_value[2]}>" size="2" maxlength="2"/>
-	    <div class="description"><{$smarty.const._AM_ELE_SUBFORM_BLANKS_HELP}></div>
-		</div>
-
-			    
-	
-			<div class="form-item"><input type="checkbox" id="element-subformviewbutton" name="elements-ele_value[3]" <{if $content.ele_value[3]}>checked="checked"<{/if}> value="1"/> <{$smarty.const._AM_ELE_SUBFORM_VIEW}>
-				<div class="description"><{$smarty.const._AM_ELE_SUBFORM_VIEW_DESC}></div>
-			</div>
-			
+                <p><{$smarty.const._AM_ELE_SUBFORM_START}></p>
+                <div class="form-radios">
+				    <label for="elements-ele_value[2]-0"><input type="radio" id="elements-ele_value[2]-0" name="subform_start" value="empty"<{if $content.ele_value.subform_prepop_element == 0 AND $content.ele_value[2] == 0 }> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_START_EMPTY}></label>
+			    </div>
+			    <div class="form-radios">
+				    <input type="radio" id="subform_start_blanks" name="subform_start" value="blanks"<{if $content.ele_value.subform_prepop_element == 0 AND $content.ele_value[2] > 0}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_START_BLANKS1}> <input type="text" id="number_of_subform_blanks" name="number_of_subform_blanks" value="<{ $content.ele_value[2] }>" size="2" maxlength="2"/> <{$smarty.const._AM_ELE_SUBFORM_START_BLANKS2}> 
+			    </div>
+                <div class="form-radios">
+				    <input type="radio" id="subform_start_prepop" name="subform_start" value="prepop"<{if $content.ele_value.subform_prepop_element > 0 AND $content.ele_value[2] == 0 }> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_START_PREPOPULATE}> <select id="subform_start_prepop_element" name="subform_start_prepop_element" size=1><{html_options options=$content.subformelements selected=$content.ele_value.subform_prepop_element}></select>
+			    </div>
+                    <div class="description"><{$smarty.const._AM_ELE_SUBFORM_START_HELP}></div>
+<br />
+                <div class="form-item"><input type="checkbox" id="element-subformviewbutton" name="elements-ele_value[3]" <{if $content.ele_value[3]}>checked="checked"<{/if}> value="1"/> <{$smarty.const._AM_ELE_SUBFORM_VIEW}>
+                    <div class="description"><{$smarty.const._AM_ELE_SUBFORM_VIEW_DESC}></div>
+                </div>
 			    
 			    </fieldset>
 			    </div>
@@ -103,7 +107,17 @@
         </fieldset>
     </div>
 
-
+<div class="form-item">
+<fieldset>
+<legend>Sorting order for the subform entries</legend>
+<p>Sort the subform entries by this element ('None' means use creation order):<br />
+    <select name="elements-ele_value[SortingElement]" size="1">
+		<{html_options options=$content.subformUserFilterElements selected=$content.ele_value.SortingElement}>
+	</select>
+    &nbsp;&nbsp;&nbsp;
+    <input type='radio' name='elements-ele_value[SortingDirection]' value='ASC'>A...Z</input> &nbsp;&nbsp;&nbsp; <input type='radio' name='elements-ele_value[SortingDirection]' value='DESC'>Z...A</input></p>
+</fieldset>
+</div>
     
 
 <div class="form-item">
@@ -112,6 +126,10 @@
 <div id="filterdiv">
 	<{if $content.subformfilter}>
 				<{$content.subformfilter}>
+        <p>Allow the user to filter entries manually, based on this element:</p>
+        <select name="elements-ele_value[UserFilterByElement]" size="1">
+			<{html_options options=$content.subformUserFilterElements selected=$content.ele_value.UserFilterByElement}>
+		</select>
 				</div>
 				<div class="description">
 By default, all entries in a subform that are tied to the main form will be accessible.  You can set conditions here that will limit which entries will be accessible.  This is useful if you have multiple types of entries in a subform, and want the user to interact with each type in a separate place.  For example, a Housing subform might have entries for "apartments," "townhouses," and "houses".  You could set this subform element to just show apartments, and another subform element to just show houses.
@@ -119,8 +137,12 @@ By default, all entries in a subform that are tied to the main form will be acce
 				<div class="description">
 				If you have any "match all" conditions that use the = operator, then any new entries you add through the subform interface, will have those values assigned automatically.  For example, if you limit this subform interface to only entries where "type" = "apartment" then all new entries you create would have the value of "type" set to "apartment".
 				</div>
+        <div class="description">
+        If you allow the user to filter based on a selected element, then no subform entries will appear until the user has typed something in the filter box. Then, only the matching entries will be shown. Filters you specify above will be applied in addition to the filter the user types.
+        </div>
 				<{else}>
 					<p>You need to select a subform and save this element before you can choose conditions.</p>
+        </div>
 <{/if}>					
 </fieldset>
 </div>
@@ -157,13 +179,20 @@ By default, all entries in a subform that are tied to the main form will be acce
 		});
 	});
 	
+    $("#subform_start_prepop_element").change(function() {
+       $("#subform_start_prepop").attr("checked", "checked");
+    });
+    
+    $("#number_of_subform_blanks").focus(function() {
+       $("#subform_start_blanks").attr("checked", "checked");
+    });
+    
 	$("div#filterdiv > a.conditionsdelete").click(function () {
 		$(".optionsconditionsdelete").val($(this).attr('target'));
 		$("[name=reload_option_page]").val(1);
 	  $(".savebutton").click();
 		return false;
 	});
-
 
 	$("div#filterdiv > input#addcon").click(function () {
 		$("[name=reload_option_page]").val(1);

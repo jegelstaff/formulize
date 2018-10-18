@@ -23,7 +23,7 @@
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
 ##  Author of this file: Freeform Solutions                                  ##
-##  URL: http://www.freeformsolutions.ca/formulize                           ##
+##  URL: http://www.formulize.org                           ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
@@ -59,7 +59,7 @@ if ($aid == 0) {
 $index = 0;
 foreach ($appLinks as $menulink) {
     $menulinks[$index]['menu_id'] = $menulink->getVar('menu_id'); //Oct 2013 W. R.
-    $menulinks[$index]['url'] = $menulink->getVar('url') ? $menulink->getVar('url') : "http://";
+    $menulinks[$index]['url'] = $menulink->getVar('url', 'raw') ? $menulink->getVar('url', 'raw') : "http://";
     $menulinks[$index]['link_text'] = $menulink->getVar('link_text');
     $menulinks[$index]['screen'] = $menulink->getVar('screen');
     $menulinks[$index]['rank'] = $menulink->getVar('rank');

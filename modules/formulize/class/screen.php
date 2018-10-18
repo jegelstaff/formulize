@@ -37,8 +37,8 @@ if (!defined("XOOPS_ROOT_PATH")) {
 require_once XOOPS_ROOT_PATH.'/kernel/object.php';
 class formulizeScreen extends xoopsObject {
 
-	function formulizeScreen() {
-		$this->XoopsObject();
+	function __construct() {
+        parent::__construct();
 		$this->initVar('sid', XOBJ_DTYPE_INT, '', true);
 		$this->initVar('title', XOBJ_DTYPE_TXTBOX, '', true, 255);
 		$this->initVar('fid', XOBJ_DTYPE_INT, '', true);
@@ -134,7 +134,7 @@ class formulizeScreen extends xoopsObject {
 
 class formulizeScreenHandler {
 	var $db;
-	function formulizeScreenHandler(&$db) {
+	function __construct(&$db) {
 		$this->db =& $db;
 	}
 	function &getInstance(&$db) {

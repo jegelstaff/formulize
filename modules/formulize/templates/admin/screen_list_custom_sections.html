@@ -9,6 +9,12 @@
 		<label for="text_<{$sectionContent.id}>"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_BUTTONTEXT}></label>
 		<input type="text" id="text_<{$sectionContent.id}>" class="required_formulize_element" name="buttontext_<{$sectionContent.id}>" value="<{$sectionContent.buttontext}>"/>
 	</div>
+    
+    <div class="form-item">
+		<label for="popup_<{$sectionContent.id}>"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_POPUPTEXT}></label>
+		<input type="text" id="popup_<{$sectionContent.id}>" name="popuptext_<{$sectionContent.id}>" value="<{$sectionContent.popuptext}>"/>
+	</div>
+    
 	<div class="form-item">
 		<label for="message_<{$sectionContent.id}>"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_MESSAGETEXT}></label>
 		<input type="text" id="message_<{$sectionContent.id}>" name="messagetext_<{$sectionContent.id}>" value="<{$sectionContent.messagetext}>"/>

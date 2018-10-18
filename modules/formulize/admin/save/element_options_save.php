@@ -23,7 +23,7 @@
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
 ##  Author of this file: Freeform Solutions                                  ##
-##  URL: http://www.freeformsolutions.ca/formulize                           ##
+##  URL: http://www.formulize.org                           ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
@@ -70,7 +70,7 @@ if($_POST['element_delimit']) {
   }
 }
 if($ele_type == "date" AND $processedValues['elements']['ele_value'][0] != "YYYY-mm-dd" AND $processedValues['elements']['ele_value'][0] != "") { // still checking for old YYYY-mm-dd string, just in case.  It should never be sent back as a value now, but if we've missed something and it is sent back, leaving this check here ensures it will properly be turned into "", ie: no date.
-	if(ereg_replace("[^A-Z{}]","", $processedValues['elements']['ele_value'][0]) === "{TODAY}") {
+	if(preg_replace("[^A-Z{}]","", $processedValues['elements']['ele_value'][0]) === "{TODAY}") {
 	  $processedValues['elements']['ele_value'][0] = $processedValues['elements']['ele_value'][0];
 	} else {
 	  $processedValues['elements']['ele_value'][0] = date("Y-m-d", strtotime($processedValues['elements']['ele_value'][0]));
@@ -93,6 +93,26 @@ if($ele_type == "yn") {
 if($ele_type == "subform") {
   if(!$_POST['elements-ele_value'][3]) {
     $processedValues['elements']['ele_value'][3] = 0;
+  }
+  // handle the "start" value, formerlly the blanks value (ele_value[2])
+  // $_POST['subform_start'] will be 'empty', 'blanks', or 'prepop'
+  // We need to set ele_value[2] to be the appropriate number of blanks
+  // We need to set ele_value[subform_prepop_element] to be the element id of the element prepops are based on
+  switch($_POST['subform_start']) {
+    case "blanks":
+        $processedValues['elements']['ele_value'][2] = intval($_POST['number_of_subform_blanks']);
+        $processedValues['elements']['ele_value']['subform_prepop_element'] = 0;
+        break;
+    case "prepop":
+        $processedValues['elements']['ele_value'][2] = 0;
+        $processedValues['elements']['ele_value']['subform_prepop_element'] = intval($_POST['subform_start_prepop_element']);
+        break;
+    default:
+        // implicitly case 'empty'
+        $processedValues['elements']['ele_value'][2] = 0;
+        $processedValues['elements']['ele_value']['subform_prepop_element'] = 0;
+        break;
+
   }
   $processedValues['elements']['ele_value'][1] = implode(",",$_POST['elements_ele_value_1']);
   $processedValues = parseSubmittedConditions('subformfilter', 'optionsconditionsdelete', $processedValues, 7); // post key, delete key, processedValues, ele_value key for conditions
@@ -269,9 +289,10 @@ if(isset($_POST['changeuservalues']) AND $_POST['changeuservalues']==1) {
 *Added by Jinfu MAR 2015
 */
 if($processedValues['elements']['ele_value'][8] == 1 &&
-   ($processedValues['elements']['ele_value'][2]['{USERNAMES}'] == 1 || $processedValues['elements']['ele_value'][2]['{FULLNAMES}'] == 1 )){
+   (isset($processedValues['elements']['ele_value'][2]['{USERNAMES}']) || isset($processedValues['elements']['ele_value'][2]['{FULLNAMES}']))) {
   $processedValues['elements']['ele_value'][16]=0;
 }
+
 
 foreach($processedValues['elements'] as $property=>$value) {
   // if we're setting something other than ele_value, or

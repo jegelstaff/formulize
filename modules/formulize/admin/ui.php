@@ -23,7 +23,7 @@
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
 ##  Author of this file: Freeform Solutions                                  ##
-##  URL: http://www.freeformsolutions.ca/formulize                           ##
+##  URL: http://www.formulize.org                           ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
@@ -36,6 +36,11 @@ define('_FORMULIZE_UI_PHP_INCLUDED', 1);
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
 global $xoopsTpl;
+
+// If saveLock is turned on, exit
+/*if(saveLock) {
+		exit();
+}*/
 
 if (!isset($xoopsTpl)) {
     global $xoopsOption, $xoopsConfig, $xoopsModule;
@@ -89,15 +94,14 @@ switch($active_page) {
     case "advanced-calculation":
         include "advanced_calculation.php";
         break;
-    case "export":
-        // do export stuff
-        $_GET['aid'] = 1;
-        include "export.php";
+    case "synchronize":
+        include "synchronize.php";
         break;
-    case "import":
-        // do import stuff
-        $_GET['aid'] = 1;
-        include "import.php";
+    case "sync-import":
+        include "sync_import.php";
+        break;
+    case "managekeys":
+        include "managekeys.php";
         break;
     default:
     case "home":
@@ -119,14 +123,32 @@ if (isset($_GET['tab']) AND (!isset($_POST['tabs_selected']) OR $_POST['tabs_sel
     $adminPage['tabselected']  = intval($_POST['tabs_selected']);
 }
 
+// make isSaveLocked preference available to template
+$adminPage['isSaveLocked'] = sendSaveLockPrefToTemplate();
+
+// retrieve the xoops_version info
+$module_handler = xoops_gethandler('module');
+$formulizeModule = $module_handler->getByDirname("formulize");
+$metadata = $formulizeModule->getInfo();
+
 // assign the contents to the template and display
 $adminPage['formulizeModId'] = getFormulizeModId();
+$xoopsTpl->assign('version', $metadata['version']);
 $xoopsTpl->assign('adminPage', $adminPage);
 if (isset($breadcrumbtrail))
     $xoopsTpl->assign('breadcrumbtrail', $breadcrumbtrail);
 $xoopsTpl->assign('scrollx', (isset($_POST['scrollx']) ? intval($_POST['scrollx']) : 0));
 $accordion_active = (isset($_POST['accordion_active']) AND $_POST['accordion_active'] !== "" AND $_POST['accordion_active'] !== "false") ? intval($_POST['accordion_active']) : "false";
 $xoopsTpl->assign('accordion_active', $accordion_active);
+
+// if we detect we're in the test environment, disable floating save button because it Selenium on Sauce cannot handle it obscuring clickable elements
+// send snippet that will cause javascript evaluation to always fail
+if(SDATA_DB_PREFIX == 'selenium') {
+    $xoopsTpl->assign('allowFloatingSave', ' && 1==2');
+} else {
+    $xoopsTpl->assign('allowFloatingSave', '');
+}
+
 $xoopsTpl->display("db:admin/ui.html");
 
 xoops_cp_footer();

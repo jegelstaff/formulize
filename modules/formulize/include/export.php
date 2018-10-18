@@ -31,7 +31,8 @@
 ###############################################################################
 
 // this file generates the export popup
-require_once "../../../mainfile.php";
+
+include_once "../../../mainfile.php";
 global $xoopsConfig;
 // load the formulize language constants if they haven't been loaded already
 if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
@@ -98,6 +99,8 @@ if (!isset($_POST['metachoice'])) {
     if (!isset($_GET['type'])) {
         print "<p><input type=\"radio\" name=\"metachoice\" value=\"1\">"._formulize_DB_EXPORT_METAYES."</input>\n<br>\n";
         print "<input type=\"radio\" name=\"metachoice\" value=\"0\" checked>"._formulize_DB_EXPORT_METANO."</input>\n</p>\n";
+    } else {
+        print "<input type=\"hidden\" name=\"metachoice\" value=\"0\">\n";
     }
 
     $module_handler = xoops_gethandler('module');
@@ -112,12 +115,6 @@ if (!isset($_POST['metachoice'])) {
     print "</center></body>";
     print "</HTML>";
 } else {
-    if (!isset($_POST['metachoice'])) {
-        // just set this to zero in case it's not set, which should never matter, since if 'type' is set,
-        //  and metachoice is therefore skipped above, and you're making a template for updating, the metachoice
-        //  is ignored in the actual export file creation process when updating
-        $_POST['metachoice'] = 0;
-    }
 
     // 1. need to pickup the full query that was used for the dataset on the page where the button was clicked
     // 2. need to run that query and make a complete dataset
@@ -232,38 +229,42 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
 
     // get a list of columns for export
     $headers = array();
-    if ($include_metadata) {
-        // include metadata columns if the user requested them
-        $headers = array(_formulize_ENTRY_ID, _formulize_DE_CALC_CREATOR, _formulize_DE_CALC_MODIFIER,
-            _formulize_DE_CALC_CREATEDATE, _formulize_DE_CALC_MODDATE);
-    } else {
-        if (in_array("entry_id", $columns)) {
-            $headers[] = _formulize_ENTRY_ID;
-        }
-        if (in_array("uid", $columns) OR in_array("creation_uid", $columns)) {
-            $headers[] = _formulize_DE_CALC_CREATOR;
-        }
-        if (in_array("proxyid", $columns) OR in_array("mod_uid", $columns)) {
-            $headers[] = _formulize_DE_CALC_MODIFIER;
-        }
-        if (in_array("creation_date", $columns) OR in_array("creation_datetime", $columns)) {
-            $headers[] = _formulize_DE_CALC_CREATEDATE;
-        }
-        if (in_array("mod_date", $columns) OR in_array("mod_datetime", $columns)) {
-            $headers[] = _formulize_DE_CALC_MODDATE;
-        }
-    }
+    $metaDataHeaders = array(_formulize_ENTRY_ID, _formulize_DE_CALC_CREATOR, _formulize_DE_CALC_MODIFIER, _formulize_DE_CALC_CREATEDATE, _formulize_DE_CALC_MODDATE, _formulize_DE_CALC_CREATOR_EMAIL);
+    $metaDataColsToAdd = array("entry_id","creation_uid","mod_uid","creation_datetime","mod_datetime","creator_email");
     foreach ($columns as $thiscol) {
         if ("creator_email" == $thiscol) {
             $headers[] = _formulize_DE_CALC_CREATOR_EMAIL;
+            unset($metaDataColsToAdd[5]);
+            unset($metaDataHeaders[5]);
+        } elseif ("entry_id" == $thiscol) {
+            $headers[] = _formulize_ENTRY_ID;
+            unset($metaDataColsToAdd[0]);
+            unset($metaDataHeaders[0]);
+        } elseif ("creation_uid" == $thiscol OR "uid" == $thiscol) {
+            $headers[] = _formulize_DE_CALC_CREATOR;
+            unset($metaDataColsToAdd[1]);
+            unset($metaDataHeaders[1]);
+        } elseif ("proxyid" == $thiscol OR "mod_uid" == $thiscol) {
+            $headers[] = _formulize_DE_CALC_MODIFIER;
+            unset($metaDataColsToAdd[2]);
+            unset($metaDataHeaders[2]);
+        } elseif ("creation_date" == $thiscol OR "creation_datetime" == $thiscol) {
+            $headers[] = _formulize_DE_CALC_CREATEDATE;
+            unset($metaDataColsToAdd[3]);
+            unset($metaDataHeaders[3]);
+        } elseif ("mod_date"  == $thiscol OR "mod_datetime" == $thiscol) {
+            $headers[] = _formulize_DE_CALC_MODDATE;
+            unset($metaDataColsToAdd[4]);
+            unset($metaDataHeaders[4]);
         } else {
             $colMeta = formulize_getElementMetaData($thiscol, true);
             $headers[] = $colMeta['ele_colhead'] ? trans($colMeta['ele_colhead']) : trans($colMeta['ele_caption']);
         }
     }
-    if ($include_metadata) {
+    if ($include_metadata AND count($metaDataColsToAdd)>0) {
         // include metadata columns if the user requested them
-        $columns = array_merge(array("entry_id", "uid", "proxyid", "creation_date", "mod_date"), $columns);
+        $columns = array_merge($metaDataColsToAdd, $columns);
+        $headers = array_merge($metaDataHeaders,$headers);
     }
 
     if (strstr(strtolower(_CHARSET),'utf') AND $_POST['excel'] == 1) {

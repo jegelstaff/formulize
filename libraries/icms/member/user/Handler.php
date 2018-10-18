@@ -355,7 +355,7 @@ class icms_member_user_Handler extends icms_core_ObjectHandler {
 		}
 
 		// check uname
-		if ((is_object($thisUser) && $thisUser->getVar('uname', 'e') != $uname && $uname !== false) || !is_object($thisUser)) {
+		if ((is_object($thisUser) && htmlspecialchars_decode($thisUser->getVar('uname', 'e'), ENT_QUOTES) != $uname && $uname !== false) || !is_object($thisUser)) {
 			// if ($icmsStopSpammers->badUsername($uname)) $stop .= _US_INVALIDNICKNAME.'<br />'; // line commented out by Freeform Solutions - mirroring fix in later version of ImpressCMS, to avoid disallowing common user names
 			$count = $this->getCount(icms_buildCriteria(array('uname' => addslashes($uname))));
 			if ($count > 0) $stop .= _US_NICKNAMETAKEN.'<br />';

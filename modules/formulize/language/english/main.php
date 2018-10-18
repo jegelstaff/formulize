@@ -319,6 +319,8 @@ define("_formulize_ADD_HELP2", "See an entire entry by clicking the <i>View</i> 
 define("_formulize_ADD_HELP3", "Update an entry by changing the values on the right.");
 define("_formulize_ADD_HELP4", "Delete an entry by checking the boxes and clicking the button below.");
 define("_formulize_SUBFORM_VIEW", "View");
+define("_formulize_SUBFORM_FILTER_GO","Go");
+define("_formulize_SUBFORM_FILTER_SEARCH","Search for: ");
 define("_AM_ELE_SUBFORM_NEWENTRY_LABEL", "New entry");
 define("_formulize_SAVE", "Save");
 define("_formulize_SAVE_AND_LEAVE", "Save and Leave");
@@ -541,6 +543,8 @@ define("_formulize_DE_SAVE_SCOPE3_SELF", "Everyone in all groups (no limit)");
 define("_formulize_DE_SAVE_SCOPE4_SELF", "Everyone in: ");
 define("_formulize_DE_SAVE_NOSPECIFICS", "[no specific groups picked]");
 define("_formulize_DE_SAVE_PUBGROUPS", "Publish this view to these groups");
+define("_formulize_DE_SAVE_PUBFILTERS", "Use these elements as filters");
+define("_formulize_DE_SAVE_PUBFILTERS_DESC", "Normally, the visible columns are available as filters/search boxes. If you are making a screen where you want alternative columns to be used, select them here.");
 define("_formulize_DE_SAVE_NOPUB", "[Do not publish this view]");
 define("_formulize_DE_SAVE_LOCKCONTROLS", "Lock the controls?");
 define("_formulize_DE_SAVE_LOCKCONTROLS_HELP1", "<span style=\"font-weight: bold;\">About locking the controls:</span>");

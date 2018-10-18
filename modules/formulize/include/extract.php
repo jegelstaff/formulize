@@ -84,10 +84,21 @@ function extract_makeUidFilter($users) {
 // id_req and ffcaption only used for converting 'other' values
 function prepvalues($value, $field, $entry_id) { 
 
+  $original_value = $value;
+  static $cachedPrepedValues = array();
+  if(isset($cachedPrepedValues[$original_value][$field][$entry_id])) {
+    /*global $xoopsUser;
+    if($xoopsUser->getVar('uid')==110) {
+        print "RETURNING FROM CACHE<br>";
+    }*/
+    return $cachedPrepedValues[$original_value][$field][$entry_id];
+  }
+
   global $xoopsDB;
 
   // return metadata values without putting them in an array
   if(isMetaDataField($field)) {
+    $cachedPrepedValues[$original_value][$field][$entry_id] = $value;
      return $value;
   }
 
@@ -103,6 +114,8 @@ function prepvalues($value, $field, $entry_id) {
 		} else {
 			$value = "";
 		}
+        $cachedPrepedValues[$original_value][$field][$entry_id] = $value;
+		return $value;
 	}
 
   // decrypt encrypted values...pretty inefficient to do this here, one query in the DB per value to decrypt them....but we'd need proper select statements with field names specified in them, instead of *, in order to be able to swap in the AES DECRYPT at the time the data is retrieved in the master query
@@ -110,8 +123,10 @@ function prepvalues($value, $field, $entry_id) {
 		 $decryptSQL = "SELECT AES_DECRYPT('".formulize_db_escape($value)."', '".getAESPassword()."')";
 		 if($decryptResult = $xoopsDB->query($decryptSQL)) {
 					$decryptRow = $xoopsDB->fetchRow($decryptResult);
+                    $cachedPrepedValues[$original_value][$field][$entry_id] = $decryptRow[0];
 					return $decryptRow[0];
 		 } else {
+                    $cachedPrepedValues[$original_value][$field][$entry_id] = "";
 					return "";
 		 }
 	}
@@ -176,7 +191,7 @@ function prepvalues($value, $field, $entry_id) {
                     $value .= "*=+*:" . implode(" - ", $row);
                 }
             }
-        } elseif($value) {
+        } else {
             $value = ""; // if there was no sourceMeta[1], which is the handle for the field in the source form, then the value should be empty, ie: we cannot make a link...this probably only happens in cases where there's a really old element that had its caption changed, and that happened before Formulize automatically updated all the linked selectboxes that rely on that element's caption, back when captions mattered in the pre F3 days
         }
     }
@@ -227,22 +242,27 @@ function prepvalues($value, $field, $entry_id) {
         // removing the "Other: " part...we just want to show what people actually typed...doesn't have to be flagged specifically as an "other" value
         $value_other = $newValueq[0]['other_text'];
 		$value = preg_replace('/\{OTHER\|+[0-9]+\}/', $value_other, $value); 
-	} else {
-        $value = formulize_swapUIText($value, unserialize($elementArray['ele_uitext']));
     }
 
+      $valueToReturn = "";
 	  if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$type."Element.php")) {
 	       $elementTypeHandler = xoops_getmodulehandler($type."Element", "formulize");
 	       $preppedValue = $elementTypeHandler->prepareDataForDataset($value, $field, $entry_id);
 	       if(!is_array($preppedValue)) {
-		    return array($preppedValue);
+		    $valueToReturn = array($preppedValue);
 	       } else {
-		    return $preppedValue;
+		    $valueToReturn = $preppedValue;
 	       }
-	  }
+      }
 
 
-	return explode("*=+*:",$value);
+	if(!$valueToReturn) {
+        $valueToReturn = explode("*=+*:",$value);
+      }
+
+      
+    $cachedPrepedValues[$original_value][$field][$entry_id] = $valueToReturn;
+	return $valueToReturn;
 }
 
 function microtime_float()
@@ -355,6 +375,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
      $limitStart = intval($limitStart);
      $limitSize = intval($limitSize);
      $sortField = formulize_db_escape($sortField);
+     $sortOrder = formulize_db_escape($sortOrder);
 
      if(isset($_GET['debug'])) { $time_start = microtime_float(); }
      
@@ -494,6 +515,15 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
     }
 
 	  if(is_array($filter) OR (substr($filter, 0, 6) != "SELECT" AND substr($filter, 0, 6) != "INSERT")) { // if the filter is not itself a fully formed SQL statement...
+    
+            $config_handler = xoops_gethandler('config');
+            $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+            if(trim($formulizeConfig['customScope'])!='' AND strstr($formulizeConfig['customScope'], "return \$scope;")) {
+                $customScope = eval($formulizeConfig['customScope']);
+                if($customScope !== false) {
+                    $scope = $customScope;
+                }
+            }
     
 	       $scopeFilter = "";
 	       if(is_array($scope)) { // assume any arrays are groupid arrays, and so make a valid scope string based on this.  Use the new entry owner table.
@@ -784,9 +814,13 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
     $oneSideSQL = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText WHERE main.entry_id>0 $scopeFilter "; // does the mainFormWhereClause need to be used here too?  Needs to be tested. -- further note: Oct 17 2011 -- appears oneSideFilters[fid] is the same as the mainformwhereclause
     $oneSideSQL .= $existsJoinText ? " AND ($existsJoinText) " : "";
     if(count($oneSideFilters[$fid])>0) {
-       foreach($oneSideFilters[$fid] as $thisOneSideFilter) {
-          $oneSideSQL .= " $andor ( $thisOneSideFilter ) ";  // properly introduce these filters...need to move $andor to a higher level and put this inside ( ) ?? or maybe this just all gets redone if/when the OR bug is fixed (see big note up where oneSideFilters are first received from parseFilter function)
-       }
+        $oneSideSQL .= " AND (";
+        $start = true;
+        foreach($oneSideFilters[$fid] as $thisOneSideFilter) {
+           $oneSideSQL .= $start ? " ( $thisOneSideFilter ) " : " $andor ( $thisOneSideFilter ) "; 
+           $start = false;
+        }
+        $oneSideSQL .= ") ";
     }
     $oneSideSQL .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
 
@@ -1272,8 +1306,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
 							 // FINAL NOTE ABOUT SLASHES...Oct 19 2006...patch 22 corrects this slash/magic quote mess.  However, to ensure compatibility with existing Pageworks applications, we are continuing to strip out all slashes in the filterparts[1], the filter strings that are passed in, and then we apply HTML special chars to the filter so that it can match up with the contents of the DB.  Only challenge is that extract.php is meant to be standalone, but we have to refer to the text sanitizer class in XOOPS in order to do the HTML special chars thing correctly.
 
                $ifParts[1] = str_replace("\\", "", $ifParts[1]);
-               $ifParts[1] = $myts->htmlSpecialChars($ifParts[1]);
-               
+                              
                // convert legacy metadata terms to new terms
                $ifParts[0] = $ifParts[0] == "uid" ? "creation_uid" : $ifParts[0];
                $ifParts[0] = $ifParts[0] == "proxyid" ? "mod_uid" : $ifParts[0];
@@ -1323,7 +1356,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                     // if this is a user id field, then treat it specially 
                     if(($ifParts[0] == "creation_uid" OR $ifParts[0] == "mod_uid") AND !is_numeric($ifParts[1])) {
                          // subquery the user table for the username or full name
-                         $ifParts[1] = "(SELECT uid FROM " . DBPRE . "users WHERE uname " . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes . " OR name " . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes . ")";
+                         $ifParts[1] = "(SELECT uid FROM " . DBPRE . "users WHERE uname " . $operator . $quotes . $likebits . formulize_db_escape(htmlspecialchars_decode($ifParts[1], ENT_QUOTES)) . $likebits . $quotes . " OR name " . $operator . $quotes . $likebits . formulize_db_escape(htmlspecialchars_decode($ifParts[1], ENT_QUOTES)) . $likebits . $quotes . ")";
                          $quotes = "";
                          $operator = " = ANY ";
                          $likebits = "";
@@ -1374,12 +1407,18 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                     } elseif($sourceMeta = $formFieldFilterMap[$mappedForm][$element_id]['islinked']) {
 			 
                         // check if user is searching for blank values, and if so, then query this element directly, rather than looking in the source
-                        if($ifParts[1]==='' OR $operator == ' IS NULL ' OR $operator == ' IS NOT NULL ') {
+                        // ALSO do this if the user is searching for a numeric value with an = operator
+                        if($ifParts[1]==='' OR $operator == ' IS NULL ' OR $operator == ' IS NOT NULL ' OR (is_numeric($ifParts[1]) AND $operator == '=')) {
                              $newWhereClause = "$queryElement " . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;
                         } else {
                              
                              // need to check if an alternative value field has been defined for use in lists or data sets and search on that field instead 
-                             if(isset($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10]) AND $formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10][0] != "none") {
+                             if(isset($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10])
+                                AND (
+                                    (is_array($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10]) AND $formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10][0] != 'none')
+                                OR
+                                    $formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10] != "none" 
+                                )) {
                               list($sourceMeta[1]) = convertElementIdsToElementHandles(array($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10]), $sourceMeta[0]); // ele_value 10 is the alternate field to use for datasets and in lists
                              }
            
@@ -1416,7 +1455,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                                    $search_column = "source.`" . $sourceMeta[1] . "`";
                                }
                        $queryElementMetaData = formulize_getElementMetaData($ifParts[0], true);
-                               $ele_value = $queryElementMetaData['ele_value'];
+                               $ele_value = unserialize($queryElementMetaData['ele_value']);
                                if ($ele_value[0] > 1 AND $ele_value[1]) { // if the number of rows is greater than 1, and the element supports multiple selections
                                     $newWhereClause = " EXISTS (SELECT 1 FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " AS source WHERE $queryElement LIKE CONCAT('%,',source.entry_id,',%') AND " . $search_column . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes . ")";
                                } else {
@@ -1427,7 +1466,8 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                     // usernames/fullnames boxes
                     } elseif($listtype = $formFieldFilterMap[$mappedForm][$element_id]['isnamelist'] AND $ifParts[1] !== "") {
                          if(!is_numeric($ifParts[1])) {
-                              $preSearch = "SELECT uid FROM " . DBPRE . "users WHERE uname " . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes . " OR name " . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;  // search name and uname, since often name might be empty these days
+                              // some values might have special chars in them, because that's how we handle some kinds of search terms, ie: values pulled from the URL by a { } term
+                              $preSearch = "SELECT uid FROM " . DBPRE . "users WHERE uname " . $operator . $quotes . $likebits . formulize_db_escape(htmlspecialchars_decode($ifParts[1], ENT_QUOTES)) . $likebits . $quotes . " OR name " . $operator . $quotes . $likebits . formulize_db_escape(htmlspecialchars_decode($ifParts[1], ENT_QUOTES)) . $likebits . $quotes;  // search name and uname, since often name might be empty these days
                          } else {
                               $preSearch = "SELECT uid FROM " . DBPRE . "users WHERE uid ".$operator.$quotes.$likebits.$ifParts[1].$likebits.$quotes;
                          }
@@ -1717,16 +1757,16 @@ function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form
         $formHandle = htmlspecialchars_decode($formHandle, ENT_QUOTES);
         if (isset($metadata[$formHandle])) {
             // if there are derived value formulas for this form
-            if (!isset($parsedFormulas[$formHandle])) {
+            if (!isset($parsedFormulas[$formHandle][$relationship_id][$form_id])) {
                 formulize_includeDerivedValueFormulas($metadata[$formHandle], $formHandle, $relationship_id, $form_id);
-                $parsedFormulas[$formHandle] = true;
+                $parsedFormulas[$formHandle][$relationship_id][$form_id] = true;
             }
             foreach ($record as $primary_entry_id => $elements) {
                 $dataToWrite = array();
                 foreach ($metadata[$formHandle] as $formulaNumber => $thisMetaData) {
                     // if there's nothing already in the DB, then derive it, unless we're being asked specifically to update the derived values, which happens during a save operation.  In that case, always do a derivation regardless of what's in the DB.
                     if ($debugMode OR ((isset($GLOBALS['formulize_forceDerivedValueUpdate'])) AND !isset($GLOBALS['formulize_doingExport']))) {
-                        $functionName = "derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", $formHandle)."_".$formulaNumber;
+                        $functionName = "derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", $formHandle)."_".$relationship_id."_".$form_id."_".$formulaNumber;
                         // want to turn off the derived value update flag for the actual processing of a value, since the function might have a getData call in it!!
                         $resetDerivedValueFlag = false;
                         if (isset($GLOBALS['formulize_forceDerivedValueUpdate'])) {
@@ -1739,12 +1779,12 @@ function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form
                         }
                         // if the new value is the same as the previous one, then skip updating and saving
                         if ($derivedValue != $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0]) {
-                            $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0] = $derivedValue;
                             if ($xoopsDB) {
                                 // save value for writing to database if XOOPS is active
                                 $elementID = formulize_getIdFromElementHandle($thisMetaData['handle']);
                                 $dataToWrite[$elementID] = $derivedValue;
                             }
+                            $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0] = $derivedValue == '{WRITEASNULL}' ? NULL : $derivedValue;
                         }
                     }
                 }
@@ -1798,7 +1838,8 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
         }
         $functionsToWrite .= "function derivedValueFormula_".
             str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", $formHandle).
-            "_".$formulaNumber."(\$entry, \$form_id, \$entry_id, \$relationship_id) {\n$formula\nreturn \$value;\n}\n\n";
+            "_".$frid."_".$fid."_".$formulaNumber."(\$entry, \$form_id, \$entry_id, \$relationship_id) {\n$formula\nreturn \$value;\n}\n\n";
+            
     }
     eval($functionsToWrite);
 }
@@ -2096,6 +2137,7 @@ function display($entry, $handle, $id="NULL", $localid="NULL") {
 					$GLOBALS['formulize_mostRecentLocalId'][] = $lid;
 				}
 			} else { // the handle is for metadata, all other fields will be arrays in the dataset
+		    $GLOBALS['formulize_mostRecentLocalId'] = $lid;
         return $elements[$handle];  
 			}
 		}

@@ -56,7 +56,7 @@ function Generate_PDF ($content, $doc_title, $doc_keywords) {
 	$pdf -> SetFont($TextFont);
 
 	//initialize document
-	$pdf->AliasNbPages();
+	// $pdf->AliasNbPages(); // method does not exist in new TCPDF library...headers might function differently too
 	$pdf->AddPage();
 	$pdf->writeHTML($content, true, 0);
 	return $pdf->Output();

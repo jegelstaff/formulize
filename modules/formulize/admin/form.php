@@ -23,7 +23,7 @@
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
 ##  Author of this file: Freeform Solutions                                  ##
-##  URL: http://www.freeformsolutions.ca/formulize                           ##
+##  URL: http://www.formulize.org                           ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
@@ -430,7 +430,7 @@ if ($_GET['fid'] != "new") {
 }
 
 // get a list of all the custom element types that are present
-// cusotm element classes must contain "Element.php" as the final part of the filename
+// custom element classes must contain "Element.php" as the final part of the filename
 $classFiles = scandir(XOOPS_ROOT_PATH."/modules/formulize/class/");
 $customElements = array();
 $i = 0;
@@ -563,7 +563,6 @@ if ($fid != "new") {
     $adminPage['tabs'][$i]['content'] = $advanced_calculations + $common;
     $i++;
 }
-
 $adminPage['pagetitle'] = _AM_APP_FORM.$formName;
 $adminPage['needsave'] = true;
 
