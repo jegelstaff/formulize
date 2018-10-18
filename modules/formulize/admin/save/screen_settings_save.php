@@ -157,6 +157,6 @@ if($isNew) {
     // send code to client that will to be evaluated
   $url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&tab=settings&aid=".$aid.'&fid='.$fid.'&sid='.$sid;
   print '/* eval */ window.location = "'.$url.'";';
-} elseif($originalFrid != $screens['frid']) {
+} elseif(intval($originalFrid) != intval($screens['frid'])) {
   print '/* eval */ reloadWithScrollPosition();';
 }

@@ -600,7 +600,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		}
 	}
 
-	$sub_entries_synched = synchSubformBlankDefaults($fid, $entry);
+	$sub_entries_synched = synchSubformBlankDefaults(); // they will already have been synched in readelements, but we will return the entries created when this function is called later, so that we can use them here
 	foreach($sub_entries_synched as $synched_sfid=>$synched_ids) {
 		foreach($synched_ids as $synched_id) {
 			$sub_entries[$synched_sfid][] = $synched_id;

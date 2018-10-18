@@ -31,13 +31,13 @@
 
 include_once "../../../mainfile.php";
 ob_end_clean(); // in some cases ther appear to be two buffers active?!  So we must try to end twice.
-global $xoopsUser;
+global $xoopsUser, $xoopsDB;
 if (!$xoopsUser) {
     print "Error: you are not logged in";
     return;
 }
 $gperm_handler = xoops_gethandler('groupperm');
-include_once XOOPS_ROOT_PATH . "/modules/formulizSe/include/functions.php";
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 include_once XOOPS_ROOT_PATH ."/modules/formulize/class/forms.php";
 
 $groups = $xoopsUser->getGroups();
@@ -50,8 +50,18 @@ if (!$gperm_handler->checkRight($permissionToCheck, $itemToCheck, $groups, $modu
     return;
 }
 
-$formulizeForm = new formulizeForm();
-error_log(method_exists($formulizeForm, "checkFormOwnership"));
+//check to see if there are entries in the form which 
+//do not appear in the entry_owner_groups table. If so, it finds the 
+// owner/creator of the entry and calls setEntryOwnerGroups() which inserts the
+//first, get the form ids and handles.  
+$missingEntries=q("SELECT main.entry_id,main.creation_uid From " . $xoopsDB->prefix("formulize_".formulize_db_escape($_POST['form_handle'])) . " as main WHERE NOT EXISTS(
+SELECT 1 FROM " . $xoopsDB->prefix("formulize_entry_owner_groups") . " as eog WHERE eog.fid=".intval($_POST['form_id'])." and eog.entry_id=main.entry_id )");
+//now we got the missing entries in the form and the users who created them.    
+$data_handler = new formulizeDataHandler(intval($_POST['form_id']));
+foreach ($missingEntries as $entry){
+    if (!$groupResult = $data_handler->setEntryOwnerGroups($entry['creation_uid'],$entry['entry_id'])) {
+            print "ERROR: failed to write the entry ownership information to the database.<br>";
+    }
+}
 
-$n = $formulizeForm->checkFormOwnership($_POST['form_id'], $_POST['form_handle']);
-echo "found and fixed ". $n . " ownership problems in your form";
+echo "found and fixed ". count($missingEntries) . " ownership problems in your form";
