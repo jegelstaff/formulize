@@ -39,9 +39,10 @@ class formulizeDataHandler  {
 	
 	var $fid; // the form this Data Handler object is attached to
 	var $metadataFields; //
+    var $metadataFieldTypes;
 
 	// $fid must be an id
-	function formulizeDataHandler($fid){
+	function __construct($fid){
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		if(is_object($formObject = $form_handler->get($fid))) {
 			$this->fid = intval($fid);
@@ -49,14 +50,20 @@ class formulizeDataHandler  {
 			$this->fid = false;
 		}
 		
-		//set the avaiable metadata fields to a global
-		$this->metadataFields = array("ENTRY_ID", 
-		  						"CREATION_DATETIME",
-		   						"CREATION_UID",
-		   						"CREATOR_EMAIL",
-		  						"MOD_DATETIME",
-		   						"MOD_UID",
-		   						"USER_VIEWEMAIL");  
+		//set the available metadata fields to a global
+		$this->metadataFields = array("entry_id",
+		  						"creation_datetime",
+		   						"creation_uid",
+		   						"creator_email",
+		  						"mod_datetime",
+		   						"mod_uid");
+
+        $this->metadataFieldTypes = array("entry_id" => "text",
+                                    "mod_uid" => "text",
+                                    "creation_uid" => "text",
+                                    "creator_email" => "text",
+                                    "mod_datetime" => "date",
+                                    "creation_datetime" => "date");
 	}
 	
 	// this function copies data from one form to another
@@ -82,7 +89,7 @@ class formulizeDataHandler  {
 			foreach($sourceDataArray as $field=>$value) {
 				if($field == "entry_id") {
 					$originalEntryId = $value;
-					$value = ""; // use new ID numbers in the new table, in case there's ever a case where we're copying data into a table that already has data in it
+					continue; // use new ID numbers in the new table, don't include entry id in the SQL statement. 
 				}
 				if(isset($map[$field])) { $field = $map[$field]; } // if this field is in the map, then use the value from the map as the field name (this will match the field name in the cloned form)
 				if(!$start) { $insertSQL .= ", "; }
@@ -99,7 +106,7 @@ class formulizeDataHandler  {
 			// make one SQL statement per entry id that grabs all the groupids for that old entry id and inserts them as records for the new form with the new entry id
 			$sql = "INSERT INTO ".$xoopsDB->prefix("formulize_entry_owner_groups")." (`fid`, `entry_id`, `groupid`) SELECT ".$this->fid.", ".intval($newEntryId).", groupid FROM ".$xoopsDB->prefix("formulize_entry_owner_groups")." WHERE fid=".intval($sourceFid)." AND entry_id=".intval($oldEntryId);
 			if(!$res = $xoopsDB->queryF($sql)) {
-				print "<p>Error: could not insert entry-owner-group information with this SQL:<br>$sql<br><a href=\"mailto:formulize@freeformsolutions.ca\">Please contact Freeform Solutions</a> for assistance resolving this issue.</p>\n";
+				print "<p>Error: could not insert entry-owner-group information with this SQL:<br>$sql<br><a href=\"mailto:info@formulize.org\">Please contact info@formulize.org</a> for assistance resolving this issue.</p>\n";
 			}
 		}
 		// cache the maps of old/new fields and entry ids, so we can refer to them later if other forms are cloned with data and linked selectboxes need to have references updated
@@ -782,7 +789,7 @@ class formulizeDataHandler  {
             unset($element_values[$key]);   // since field name is not escaped, remove from array
             $key = "`".formulize_db_escape($key)."`";                // escape field name
 
-            if ("{WRITEASNULL}" == $value or null === $value) {
+            if ("{WRITEASNULL}" === $value or null === $value) {
                 $element_values[$key] = "NULL";
             } else {
                 $element_values[$key] = "'".formulize_db_escape($value)."'";

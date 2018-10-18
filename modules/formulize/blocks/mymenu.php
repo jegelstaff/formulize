@@ -143,7 +143,7 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
 			$url = $menulink->getVar("url");
 			$target = "";
 			if(strlen($url) > 0){
-				$target = " target='_blank' ";
+				$target = strstr($url, XOOPS_URL) ? "" : " target='_blank' ";
 				$pos = strpos($url,"://");
 				if($pos === false){
 					$url = "http://".$url;

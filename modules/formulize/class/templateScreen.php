@@ -41,8 +41,8 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 class formulizeTemplateScreen extends formulizeScreen {
 
-    function formulizeTemplateScreen() {
-        $this->formulizeScreen();
+    function __construct() {
+        parent::__construct();
         $this->initVar("custom_code", XOBJ_DTYPE_TXTAREA);
         $this->initVar("template", XOBJ_DTYPE_TXTAREA);
     }
@@ -55,7 +55,7 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
     const FORMULIZE_CSS_FILE = "/modules/formulize/templates/css/formulize.css";
     const FORMULIZE_JS_FILE = "/modules/formulize/libraries/formulize.js";
 
-    function formulizeTemplateScreenHandler(&$db) {
+    function __construct(&$db) {
         $this->db =& $db;
     }
 
@@ -82,7 +82,7 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
 
         if (!$update) {
             $sql = sprintf("INSERT INTO %s (sid, custom_code, template) VALUES (%u, %s, %s)", $this->db->prefix('formulize_screen_template'),
-                $screen->getVar('sid'), formulize_db_escape($screen->getVar('custom_code')), formulize_db_escape($screen->getVar('template')));
+                $screen->getVar('sid'), $this->db->quoteString(formulize_db_escape($screen->getVar('custom_code'))), $this->db->quoteString(formulize_db_escape($screen->getVar('template'))));
         } else {
             $sql = sprintf("UPDATE %s SET custom_code = %s, template = %s WHERE sid = %u", $this->db->prefix('formulize_screen_template'),
                 formulize_db_escape($screen->getVar('custom_code')), formulize_db_escape($screen->getVar('template')), $sid);

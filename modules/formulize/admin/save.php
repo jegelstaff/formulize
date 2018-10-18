@@ -23,13 +23,22 @@
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
 ##  Author of this file: Freeform Solutions                                  ##
-##  URL: http://www.freeformsolutions.ca/formulize                           ##
+##  URL: http://www.formulize.org                           ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
 // This file receives ajax form submissions from the new admin UI
 
 include_once "../../../mainfile.php";
+
+$module_handler = xoops_gethandler('module');
+$config_handler = xoops_gethandler('config');
+$formulizeModule = $module_handler->getByDirname("formulize");
+$formulizeConfig = $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
+if ($formulizeConfig['isSaveLocked']){
+  exit();
+}
+
 ob_end_clean();
 ob_end_clean(); // in some cases ther appear to be two buffers active?!  So we must try to end twice.
 global $xoopsUser;
@@ -71,3 +80,4 @@ $popupSave = isset($_GET['popupsave']) ? "_popup" : "";
 if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/admin/save/".str_replace(array("\\","/"),"", $_POST['formulize_admin_handler'])."_save".$popupSave.".php")) {
     include XOOPS_ROOT_PATH."/modules/formulize/admin/save/".str_replace(array("\\","/"),"", $_POST['formulize_admin_handler'])."_save".$popupSave.".php";
 }
+

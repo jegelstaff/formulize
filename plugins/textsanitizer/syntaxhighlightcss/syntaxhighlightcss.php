@@ -18,9 +18,13 @@
  * @param string $text the search terms
  */
 function textsanitizer_syntaxhighlightcss(&$ts, $text) {
-	$patterns[] = "/\[code_css](.*)\[\/code_css\]/esU";
-	$replacements[] = "textsanitizer_geshi_css_highlight( '\\1' )";
-	return preg_replace($patterns, $replacements, $text);
+	$patterns[] = "/\[code_css](.*)\[\/code_css\]/sU";
+	return preg_replace_callback(
+        $patterns,
+        function($m){
+            return "textsanitizer_geshi_css_highlight($m[1])";
+        },
+        $text);
 }
 
 /**

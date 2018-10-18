@@ -81,7 +81,10 @@ final class icms_core_Password {
 		}
 
 		$table = new icms_db_legacy_updater_Table('users');
-		$uname = @htmlspecialchars($uname, ENT_QUOTES, _CHARSET);
+        // August 29 2016
+        // to properly handle apostrophes in username, turned off htmlspecialchars conversion, and stripped slashes from the passed in username. Quotestring method below handles the necessary magic to escaping and security.
+		//$uname = @htmlspecialchars($uname, ENT_QUOTES, _CHARSET);
+        $uname = stripslashes($uname);
 
 		if ($table->fieldExists('loginname')) {
 			$sql = icms::$xoopsDB->query(sprintf("SELECT salt FROM %s WHERE loginname = %s",

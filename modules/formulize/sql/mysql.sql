@@ -1,3 +1,14 @@
+CREATE TABLE `formulize_apikeys` (
+    `key_id` int(11) unsigned NOT NULL auto_increment,
+    `uid` int(11) NOT NULL default '0',
+    `apikey` varchar(255) NOT NULL default '',
+    `expiry` datetime default NULL,
+    PRIMARY KEY (`key_id`),
+    INDEX i_uid (uid),
+    INDEX i_apikey (apikey),
+    INDEX i_expiry (expiry)
+) ENGINE=MyISAM;
+
 CREATE TABLE `formulize_menu_links` (
     `menu_id` int(11) unsigned NOT NULL auto_increment,
     `appid` int(11) unsigned NOT NULL,
@@ -25,10 +36,12 @@ CREATE TABLE `formulize_resource_mapping` (
     external_id int(11) NOT NULL,
     resource_type int(4) NOT NULL,
     mapping_active tinyint(1) NOT NULL,
+    external_id_string text NULL default NULL,
     PRIMARY KEY (mapping_id),
     INDEX i_internal_id (internal_id),
     INDEX i_external_id (external_id),
-    INDEX i_resource_type (resource_type)
+    INDEX i_resource_type (resource_type),
+    INDEX i_external_id_string (external_id_string(10))
 ) ENGINE=MyISAM;
 
 CREATE TABLE `formulize_advanced_calculations` (
@@ -96,7 +109,8 @@ CREATE TABLE `formulize_screen_listofentries` (
   `useaddproxy` varchar(255) NOT NULL default '',
   `usecurrentviewlist` varchar(255) NOT NULL default '',
   `limitviews` text NOT NULL, 
-  `defaultview` varchar(20) NOT NULL default '',
+  `defaultview` text NOT NULL,
+  `advanceview` text NOT NULL, 
   `usechangecols` varchar(255) NOT NULL default '',
   `usecalcs` varchar(255) NOT NULL default '',
   `useadvcalcs` varchar(255) NOT NULL default '',
@@ -239,6 +253,7 @@ CREATE TABLE formulize_saved_views (
   sv_calc_grouping text,
   sv_quicksearches text,
   sv_global_search text,
+  sv_pubfilters text,
   PRIMARY KEY (sv_id)
 ) ENGINE=MyISAM;
 
@@ -248,13 +263,6 @@ CREATE TABLE group_lists (
   gl_groups text NOT NULL,
   PRIMARY KEY (gl_id),
   UNIQUE gl_name_id (gl_name)
-) ENGINE=MyISAM;
-
-CREATE TABLE formulize_menu_cats (
-  cat_id smallint(5) NOT NULL auto_increment,
-  cat_name varchar(255) default NULL,
-  id_form_array varchar(255) default NULL,
-  PRIMARY KEY (`cat_id`)
 ) ENGINE=MyISAM;
 
 CREATE TABLE formulize_frameworks (
@@ -319,22 +327,6 @@ CREATE TABLE formulize (
   PRIMARY KEY  (`ele_id`),
   KEY `ele_display` (`ele_display` ( 255 ) ),
   KEY `ele_order` (`ele_order`)
-) ENGINE=MyISAM;
-
-CREATE TABLE formulize_menu (
-  menuid int(4) unsigned NOT NULL auto_increment,
-  position int(4) unsigned NOT NULL,
-  indent int(2) unsigned NOT NULL default '0',
-  itemname varchar(255) NOT NULL default '',
-  margintop varchar(12) NOT NULL default '0px',
-  marginbottom varchar(12) NOT NULL default '0px',
-  itemurl varchar(255) NOT NULL default '',
-  bold tinyint(1) NOT NULL default '0',
-  mainmenu tinyint(1) NOT NULL default '0',
-  membersonly tinyint(1) NOT NULL default '1',
-  status tinyint(1) NOT NULL default '1',
-  PRIMARY KEY  (menuid),
-  KEY idxmymenustatus (status)
 ) ENGINE=MyISAM;
 
 CREATE TABLE formulize_entry_owner_groups (

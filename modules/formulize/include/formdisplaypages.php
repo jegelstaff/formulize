@@ -85,8 +85,10 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	}
 	
 	// formulize_newEntryIds is set when saving data
-	if(!$entry AND isset($GLOBALS['formulize_newEntryIds'][$fid])) {
+	if((!$entry OR $entry == 'new') AND isset($GLOBALS['formulize_newEntryIds'][$fid])) {
 		$entry = $GLOBALS['formulize_newEntryIds'][$fid][0];
+	} elseif(!$entry) {
+        $entry = 'new';
 	}
 	
 	$owner = getEntryOwner($entry, $fid);
@@ -115,7 +117,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 			$entries[$fid][0] = $entry;
 	
 			if($frid) { 
-				$linkResults = checkForLinks($frid, array(0=>$fid), $fid, $entries, $gperm_handler, $owner_groups, $mid, $member_handler, $owner); 
+				$linkResults = checkForLinks($frid, array(0=>$fid), $fid, $entries); 
 				unset($entries);
 				$entries = $linkResults['entries'];
 			}
@@ -129,7 +131,6 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 				$entry = $entries[$fid][0];
 			}
 			
-			synchSubformBlankDefaults($fid, $entry);
 		}
 	}
 
@@ -142,7 +143,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	// if the conditions are not met, move on to the next page and repeat the condition check
 	// conditions only checked once there is an entry!
 	$pagesSkipped = false;
-	if(is_array($conditions) AND $entry) {
+	if(is_array($conditions) AND $entry != 'new') {
 		$conditionsMet = false;
 		while(!$conditionsMet) {
 			if(isset($conditions[$currentPage]) AND count($conditions[$currentPage][0])>0) { // conditions on the current page
@@ -256,7 +257,6 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 			}
 		}
 	}
-	
 	
 	if($currentPage > 1) {
 	  $previousPage = $currentPage-1; // previous page numerically
@@ -574,7 +574,6 @@ function drawPageNav($usersCanSave="", $currentPage="", $totalPages, $aboveBelow
     $xoopsTpl->assign("_formulize_DMULTI_JUMPTO", _formulize_DMULTI_JUMPTO);
     $xoopsTpl->display("file:".XOOPS_ROOT_PATH."/modules/formulize/templates/multipage-navigation.html");
 }
-
 
 // THIS FUNCTION GENERATES THE MARKUP FOR THE PREVIOUS AND NEXT BUTTONS
 function generatePrevNextButtonMarkup($buttonType, $buttonText, $usersCanSave, $nextPage, $previousPage, $thanksPage) {

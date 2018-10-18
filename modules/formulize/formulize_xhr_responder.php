@@ -37,6 +37,7 @@
 require_once "../../mainfile.php"; // initialize the xoops stack so we have access to the user object, etc if necessary
 ob_end_clean(); // stop all buffering of output (ie: related to the error logging, and/or xLangauge?)
 include_once "../../header.php";
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
 
 // check that the user who sent this request is the same user we have a session for now, if not, bail
 $sentUid = $_GET['uid'];
@@ -59,6 +60,7 @@ if($op != "check_for_unique_value"
    AND $op != 'get_element_row_html'
    AND $op != 'update_derived_value'
    AND $op != 'validate_php_code'
+   AND $op != 'get_views_for_form'
   ) {
   exit();
 }
@@ -170,13 +172,39 @@ switch($op) {
     }
     $elementObject = $element_handler->get($elementId);
     $html = "";
-    if($onetoonekey) {
+    if($onetoonekey AND $entryId != 'new') {
       // the onetoonekey is what changed, not a regular conditional element, so in that case, we need to re-determine the entryId that we should be displaying
       // rebuild entries and fids so it only has the main form entry in it, since we want to get the correct other one-to-one entries back
       $onetooneentries = array($onetoonefid => array($onetooneentries[$onetoonefid][0]));
       $onetoonefids = array($onetoonefid);
       $checkForLinksResults = checkForLinks($onetoonefrid, $onetoonefids, $onetoonefid, $onetooneentries);
       $entryId = $checkForLinksResults['entries'][$elementObject->getVar('id_form')][0];
+      $entryId = $entryId ? $entryId : 0;
+    } elseif($onetoonekey) {
+      // we're supposed to pull in an entry based solely on the value in the conditional element...
+      // what we need is the element in the dependent one to one form that is linked to the main form
+      include_once XOOPS_ROOT_PATH . "/modules/formulize/class/frameworks.php";
+      include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+      $relationship = new formulizeFramework($onetoonefrid);
+      $targetElement = false;
+      foreach($relationship->getVar('links') as $link) {
+        if($link->getVar('form1')==$onetoonefid AND $link->getVar('form2')==$fid AND $link->getVar('relationship')==1) {
+          $sourceElement = $link->getVar('key1');
+          $targetElement = $link->getVar('key2');
+        } elseif($link->getVar('form2')==$onetoonefid AND $link->getVar('form1')==$fid AND $link->getVar('relationship')==1) {
+          $sourceElement = $link->getVar('key2');
+          $targetElement = $link->getVar('key1');
+        }
+        if($targetElement) {
+          $data_handler = new formulizeDataHandler($onetoonefid);
+          if($link->getVar('common')) {
+            $entryId = $data_handler->findFirstEntryWithValue($targetElement, $databaseReadyValue);  
+          } elseif($sourceElement==$passedElementId) {
+            $entryId = $databaseReadyValue;
+          }
+          break;
+        }
+      }
     }
     if(security_check($fid, $entryId)) {
       // "" is framework, ie: not applicable
@@ -229,6 +257,7 @@ switch($op) {
     }
     break;
 
+
     case "update_derived_value":
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
     $formID = $_GET['fid'];
@@ -241,6 +270,7 @@ switch($op) {
     $GLOBALS['formulize_forceDerivedValueUpdate'] = false;
     print count($data); // return the number of entries found. when this reaches 0, the client will know to stop calling
     break;
+
 
     case "validate_php_code":
     if (function_exists("shell_exec")) {
@@ -255,4 +285,33 @@ switch($op) {
         }
     }
     break;
+
+
+    case "get_views_for_form":
+    //This is to respond to an Ajax request from the file screen_list_entries.html
+    $framework_handler =& xoops_getmodulehandler('frameworks', 'formulize');
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+    include_once XOOPS_ROOT_PATH ."/modules/formulize/class/forms.php";
+
+    $formulizeForm = new formulizeForm();
+
+    list($views, $viewNames, $viewFrids, $viewPublished) = $formulizeForm->getFormViews($_POST['form_id']);
+    $frameworks = $framework_handler->getFrameworksByForm($_POST['form_id']);
+    for ($i = 0; $i <= count($viewNames); $i++) {
+        if(!$viewPublished[$i]) {
+            continue;
+        }
+        if($viewFrids[$i]) {
+            $viewNames[$i] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_IN_FRAME . $frameworks[$viewFrids[$i]]->getVar('name') . ")";
+        } else {
+            $viewNames[$i] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_NO_FRAME . ")";
+        }
+    }
+
+    $array = array_map(null, $views, $viewNames);
+
+    echo json_encode($array);
+    break;
+
+
 }

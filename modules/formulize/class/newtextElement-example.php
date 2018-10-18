@@ -41,7 +41,7 @@ class formulizeNewTextElement extends formulizeformulize {
         $this->overrideDataType = ""; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
         $this->adminCanMakeRequired = true; // set to true if the webmaster should be able to toggle this element as required/not required
         $this->alwaysValidateInputs = true; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
-        parent::formulizeformulize();
+        parent::__construct();
     }
     
 }
@@ -97,7 +97,7 @@ class formulizeNewTextElementHandler extends formulizeElementsHandler {
     // $element is the element object
     function loadValue($value, $ele_value, $element) {
 		$ele_value[2] = $value;				
-		$ele_value[2] = eregi_replace("'", "&#039;", $ele_value[2]);
+		$ele_value[2] = str_replace("'", "&#039;", $ele_value[2]);
         return $ele_value;
     }
     
@@ -193,7 +193,7 @@ class formulizeNewTextElementHandler extends formulizeElementsHandler {
 		$ele_id = $element->getVar('ele_id');
 		
 		if($ele_value[3]) { // if $ele_value[3] is 1 (default is 0) then treat this as a numerical field
-			$value = ereg_replace ('[^0-9.-]+', '', $value);
+			$value = preg_replace('[^0-9.-]+', '', $value);
 		}
         
 		if(get_magic_quotes_gpc()){ 

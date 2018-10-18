@@ -1,7 +1,9 @@
 cache/
+docs/_site/
 modules/protector/
 modules/formulize/temp/
 modules/formulize/templates/screens/default/
+modules/formulize/templates/css/.sass-cache/
 modules/iMenu/
 templates_c/
 trust_*/
@@ -11,3 +13,4 @@ themes/formulize_mobile_app/.sass-cache/
 *.bak
 *.db
 formulize-docs/_site
+.DS_Store

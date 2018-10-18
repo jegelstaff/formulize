@@ -82,8 +82,8 @@ if( ! empty( $_POST['copy'] ) && ! empty( $_POST['old_prefix'] ) ) {
 		if( substr( $table , 0 , strlen( $prefix ) + 1 ) !== $prefix . '_' ) continue ;
 		$drs = $db->queryF( "SHOW CREATE TABLE `$table`" ) ;
 		$export_string .= "\nDROP TABLE IF EXISTS `$table`;\n".mysql_result($drs,0,1).";\n\n" ;
-		$result = mysql_query( "SELECT * FROM `$table`" ) ;
-		$fields_cnt = mysql_num_fields( $result ) ;
+		$result = mysqli_query( $db->pdo, "SELECT * FROM `$table`" ) ;
+		$fields_cnt = mysqli_num_fields( $result ) ;
 		$field_flags = array();
 		for ($j = 0; $j < $fields_cnt; $j++) {
 			$field_flags[$j] = mysql_field_flags( $result , $j ) ;
@@ -91,7 +91,7 @@ if( ! empty( $_POST['copy'] ) && ! empty( $_POST['old_prefix'] ) ) {
 		$search = array("\x00", "\x0a", "\x0d", "\x1a");
 		$replace = array('\0', '\n', '\r', '\Z');
 		$current_row = 0;
-		while( $row = mysql_fetch_row($result) ) {
+		while( $row = mysqli_fetch_row($result) ) {
 			$current_row ++ ;
 			for( $j = 0 ; $j < $fields_cnt ; $j ++ ) {
 				$fields_meta = mysql_fetch_field( $result , $j ) ;
@@ -127,7 +127,7 @@ if( ! empty( $_POST['copy'] ) && ! empty( $_POST['old_prefix'] ) ) {
 			unset($values);
 
 		} // end while
-		mysql_free_result( $result ) ;
+		mysqli_free_result( $result ) ;
 
 	}
 

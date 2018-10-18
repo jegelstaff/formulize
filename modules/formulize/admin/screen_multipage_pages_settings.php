@@ -23,7 +23,7 @@
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
 ##  Author of this file: Freeform Solutions                                  ##
-##  URL: http://www.freeformsolutions.ca/formulize                           ##
+##  URL: http://www.formulize.org                           ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
@@ -89,6 +89,10 @@ if (isset($filterSettingsToSend['details'])) { // if this is in the old format (
 }
 $pageConditions = formulize_createFilterUI($filterSettingsToSend, "pagefilter_".$pageIndex, $screen->getVar('fid'), "popupform");
 
+// make isSaveLocked preference available to template
+$content['isSaveLocked'] = sendSaveLockPrefToTemplate();
+
+$xoopsTpl->assign("content",$content);
 $xoopsTpl->assign("pageTitle",$pageTitle);
 $xoopsTpl->assign("pageNumber",$pageNumber);
 $xoopsTpl->assign("pageIndex",$pageIndex);
@@ -97,3 +101,4 @@ $xoopsTpl->assign("pageConditions",$pageConditions);
 $xoopsTpl->assign("options",$options);
 $xoopsTpl->assign("sid",$sid);
 $xoopsTpl->display("db:admin/screen_multipage_pages_settings.html");
+

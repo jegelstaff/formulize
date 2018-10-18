@@ -18,6 +18,7 @@ class icms_DebugEventHandler {
 			if (!isset($xoopsOption['nodebug']) || !$xoopsOption['nodebug']) {
 				if ($icmsConfig['debug_mode'] == 1 || $icmsConfig['debug_mode'] == 2) {
 					error_reporting(E_ALL);
+                    ini_set('display_errors', 1);
 					icms::$logger->enableRendering();
 					icms::$logger->usePopup = ( $icmsConfig['debug_mode'] == 2 );
 					if (icms::$db) {

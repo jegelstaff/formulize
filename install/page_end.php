@@ -49,8 +49,8 @@ include_once './class/dbmanager.php';
 $dbm = new db_manager();
 $dbm->db->connect();
 $formulizeStandaloneQueries = "";
-if (file_exists(ICMS_ROOT_PATH."/install/sql/mysql.formulize_standalone.sql")) {
-    $formulizeStandaloneQueries = str_replace("REPLACE_WITH_PREFIX", SDATA_DB_PREFIX, file_get_contents(ICMS_ROOT_PATH."/install/sql/mysql.formulize_standalone.sql"));
+if (file_exists(ICMS_ROOT_PATH."/install/sql/pdo.mysql.formulize_standalone.sql")) {
+    $formulizeStandaloneQueries = str_replace("REPLACE_WITH_PREFIX", SDATA_DB_PREFIX, file_get_contents(ICMS_ROOT_PATH."/install/sql/pdo.mysql.formulize_standalone.sql"));
 }
 
 // Check what the module ids are, and replace in the file
@@ -68,11 +68,15 @@ $formulizeStandaloneQueries = str_replace("REPLACE_WITH_PROFILE_MODULE_ID", $pro
 $formulizeStandaloneQueries = str_replace("REPLACE_WITH_CONTENT_MODULE_ID", $contentModuleId, $formulizeStandaloneQueries);
 $formulizeStandaloneQueries = str_replace("REPLACE_WITH_FORMULIZE_MODULE_ID", $formulizeModuleId, $formulizeStandaloneQueries);
 
+
+$vars = & $_SESSION ['settings'];
+$link = @mysqli_connect ( $vars ['DB_HOST'], $vars ['DB_USER'], $vars ['DB_PASS'], true );
+
 foreach(explode(";\r",str_replace(array("\n","\n\r","\r\n"), "\r", $formulizeStandaloneQueries)) as $sql) { // convert all kinds of line breaks to \r and then split on semicolon-linebreak to get individual queries
 	if($sql) {
-		if(!$formulizeResult = mysql_query($sql)) {
+		if(!$formulizeResult = $dbm->query($sql)) {
 			$content = "<h3>Error:</h3><p>Some of the configuration settings were not saved properly in the database.  The website will still work, but it will behave more like a generic ImpressCMS+Formulize website, and not like a dedicated Formulize system.   Please send the following information to <a href=\"mailto:formulize@freeformsolutions.ca?subject=Formulize%20Standalone%20Install%20Error\">formulize@freeformsolutions.ca</a>:</p>
-			<p><pre>".mysql_error()."</pre></p>".$content;
+			<p><pre>".mysqli_error($link)."</pre></p>".$content;
 		} 
 	}
 }

@@ -221,6 +221,33 @@ h6 {
   line-height: 1.4em;
   list-style: circle; }
 
+.formulize_button {
+  text-indent: 30px;
+  border-color: #0076a3;
+  color: #fff !important;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+  font-size: 15px;
+  font-weight: bold;
+  height: 36px;
+  width: 185px !important; }
+
+#prev {
+  background: #008CC4 url("../../images/prev.png") no-repeat 10px;
+  text-indent: 40px;
+  height: 36px;
+  color: #fff !important;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+  font-size: 15px; }
+
+#next {
+  background: #008CC4 url("../../images/next.png") no-repeat 140px;
+  text-align: left;
+  width: 185px;
+  height: 36px;
+  color: #fff !important;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+  font-size: 15px; }
+
 /* ---------- Footer rules ---------- */
 #footer-padding {
   clear: both;
@@ -356,7 +383,6 @@ h6 {
   margin-bottom: -19px; }
 
 #xo-canvas-content {
-  min-width: 782px;
   margin-left: 30px;
   margin-right: 30px; }
 
@@ -1285,6 +1311,14 @@ label {
 #formlisting {
   overflow: hidden; }
 
+.paging {
+  overflow: auto;
+  padding-top: 10px; }
+
+.page-list {
+  text-align: right;
+  width: 100%; }
+
 /* override blockquote container */
 .ui-accordion-content blockquote {
   margin: 0.5em 0;
@@ -1348,6 +1382,9 @@ div.accordion-box .no-bullets {
   list-style-type: none; }
 
 /* table overrides */
+th a {
+  display: block; }
+
 .ui-tabs-panel .content table {
   width: 80%;
   border: 1px solid #0085b6;
@@ -1553,7 +1590,7 @@ div.description {
 
 .homepage-description {
   margin-bottom: 1em;
-  margin-top: 5px; }
+  margin-top: -20px; }
 
 form textarea {
   width: 80%; }
@@ -1657,4 +1694,6 @@ form .groupselectionbox {
   overflow: auto;
   border: 1px solid blue; }
 
-/*# sourceMappingURL=formulize-admin.css.map */
+p.useroptions input[type="text"] {
+    width: 50em;
+}

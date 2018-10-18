@@ -36,7 +36,7 @@ class formulizePermHandler {
     static $formulize_module_id = null;
 
 
-    function formulizePermHandler($fid) {
+    function __construct($fid) {
         $this->fid = intval($fid);
     }
 

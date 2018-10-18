@@ -5,7 +5,7 @@
   "steps": [
     {
       "type": "store",
-      "text": "/home/travis/build/jegelstaff/formulize",
+      "text": "/var/www",
       "variable": "web_root"
     },
     {
@@ -336,6 +336,10 @@
         "type": "css selector",
         "value": "input[type=\"submit\"]"
       }
+    },
+    {
+      "type": "verifyTextPresent",
+      "text": "There are no forms currently available"
     }
   ],
   "data": {

@@ -2,69 +2,94 @@ env:
   global:
   - secure: f1Dkf/AObhtZJf/OtM/NREIZRzVeuw/QXQkV82WrbszKdpLrm1RwfwTAgcUa+JDiE931LJ41W86JWUia3PbS3pLVSL9gSwfBPk+PU6VM7AeYIVuje1V1tXpZoGlf+0RcfGHZA3JzeNSo65QjKl5iUxrT31wnpQpQ9rdG/bXQrUg=
   - secure: Xjc2qZs42LLIk4lRMc/JdFxeN5pmXUTLFd/stohOTX3g1rmRInXXqYpnXW/S15FjShqgtQAvvmnU/SV9QNpfaMhQVgS1ORVTS10gvy3aLPodW5hB9AGCDiQHXD0r9p+73LfNzenvdtmDme9Pp8PdLwb+spSroRbXgJ3tqHpXntM=
-  - secure: H5basCAhwXO3SicUX3VClC9KgLzoeJ1unMeYgP6+HHFxSv+81W5AJG8i8xmbziWC+dsO1c2POFbvS2BRkjhPqh9Me94g0FInBoUlVHiP0TlbSBsRv7K5Ke5fm8LHz5Obkeq2BrE6O76m6m2M301MTwZj43LVw8cPtPbXybQ0MoI=
-  phpenv:
-  - version-name: "5.5.10"
+  - secure: n7FDSdDI6AlTIe91ZFfaWA89PloZGjR36M2U1XZwKK9FMFDHRJMORmW30veV1OuC6e7/F/56MpQ+PHMKeeBPdTEIQRJeCTwyLTkIQ8eh18oVE6M9pdXNrUlhLf5dejXk2kAl3vWe8LBC+x1pWsql0mb8AAkdLwQfRddPlCbkRHY=
+  - WEB_PORT_80_TCP_ADDR=localhost
 
 language: php
 
-php:
-  - 5.5
+sudo: required
+dist: trusty
 
-install:
-  - sudo apt-get update
-  - sudo apt-get install apache2 libapache2-mod-fastcgi
-  # enable php-fpm
-  - sudo cp ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.conf.default ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.conf
-  - sudo a2enmod rewrite actions fastcgi alias
-  - echo "cgi.fix_pathinfo = 1" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
-  - ~/.phpenv/versions/$(phpenv version-name)/sbin/php-fpm
-  # configure apache virtual hosts
-  - sudo cp -f ci/travis/travis-ci-apache /etc/apache2/sites-available/default
-  - sudo sed -e "s?%TRAVIS_BUILD_DIR%?$(pwd)?g" --in-place /etc/apache2/sites-available/default
-  # copy selenium_debug.js which modifies some javascript behaviour to behave better with selenium
-  - sudo cp -f ci/travis/selenium_debug.js modules/formulize/selenium_debug.js
-  # set 777 on necessary directories
-  - sudo chmod 777 cache
-  - sudo chmod 777 templates_c
-  - sudo chmod 777 uploads
-  - sudo chmod 777 install
-  - sudo chmod 777 mainfile.php
-  - sudo chmod 777 cache
-  - sudo chmod 777 modules/formulize/cache
-  - sudo chmod 777 modules/formulize/temp
-  - sudo chmod 777 modules/formulize/upload
-  - sudo chmod 777 modules/formulize/templates/screens/default
-  - sudo chmod 777 modules/formulize/export
-  # make the trust path because the fcgi process cannot
-  - sudo mkdir selenium-848d24bb54d726d
-  - sudo chmod 777 selenium-848d24bb54d726d
-  # add to .ini and restart
-  - phpenv config-add ci/travis/php.ini
-  - sudo service apache2 restart
+php:
+    - 7.0
 
 addons:
   sauce_connect: true
+  hosts:
+    - local.dev
+    
+cache:
+  - apt
 
+before_install:
+
+  # Install Apache2
+  - sudo apt-get update
+  - sudo apt-get install -y --force-yes apache2
+  # Add PHP 7.0 Repository
+  - sudo add-apt-repository -y ppa:ondrej/php
+  # Install PHP 7.0
+  - sudo apt-get update
+  - sudo apt-get install -y --force-yes php7.0-mysql php7.0 libapache2-mod-php7.0 php7.0-fpm php7.0-gd php7.0-xml
+  # Copy our virtual host template to sites-enabled overwriting the default site conf
+  - sudo cp ci/travis/defaultsite.tpl /etc/apache2/sites-available/000-default.conf
+  # Enable mod rewrite module
+  - sudo a2enmod rewrite
+  # Set ServerName Globally
+  - sudo cp ci/travis/servername.tpl /etc/apache2/conf-available/servername.conf
+  # add to .ini
+  - phpenv config-add ci/travis/php.ini
+  # Restart apache
+  - sudo service apache2 restart
+  # Restart PHP
+  - sudo service php7.0-fpm restart
+  # copy Formulize to the web root
+  - cd ..
+  - sudo cp -R formulize/* /var/www 
+  # copy selenium_debug.js which modifies some javascript behaviour to behave better with selenium
+  - sudo cp -f /var/www/ci/travis/selenium_debug.js /var/www/modules/formulize/selenium_debug.js
+  # set 777 on necessary directories
+  - sudo chmod 777 /var/www/cache
+  - sudo chmod 777 /var/www/templates_c
+  - sudo chmod 777 /var/www/uploads
+  - sudo chmod 777 /var/www/install
+  - sudo chmod 777 /var/www/mainfile.php
+  - sudo chmod 777 /var/www/cache
+  - sudo chmod 777 /var/www/modules
+  - sudo chmod 777 /var/www/modules/formulize/cache
+  - sudo chmod 777 /var/www/modules/formulize/temp
+  - sudo chmod 777 /var/www/modules/formulize/upload
+  - sudo chmod 777 /var/www/modules/formulize/templates/screens/default
+  - sudo chmod 777 /var/www/modules/formulize/export
+  - sudo chmod 777 /var/www/modules/formulize/custom_code
+  # Turn off the Code Mirror library. This is essential for test 017, to access textarea on php insertion
+  - sudo mv /var/www/modules/formulize/libraries/codemirror/ /var/www/modules/formulize/libraries/notcodemirror/
+  # make the trust path because the fcgi process cannot
+  - sudo mkdir /var/www/selenium-848d24bb54d726d
+  - sudo chmod 777 /var/www/selenium-848d24bb54d726d
+    
 before_script:
   - npm install -g se-interpreter
   - mysql -e 'create database formulize;'
-  # Uncomment the next line to initialize the database as if all existing tests have run.
+  # Uncomment the next three lines to initialize the database as if all existing tests have run.
+  # The next two setup the environment as if the installer has completed.
   # This is useful for quickly running just one new test, to see if it is working.
   # Alter the ci/travis/interpreter_config.json file to refer to your one test by name
   # instead of referring to * for all tests.
-  # - mysql formulize < ci/formulize_test_db.sql
+  # - mysql formulize < /var/www/ci/formulize_test_db.sql
+  # - sudo cp -f /var/www/ci/mainfile.php /var/www/mainfile.php
+  # - sudo cp -f /var/www/ci/0dd528b71d72ed19bb9dd658ab2dad58.php /var/www/selenium-848d24bb54d726d/0dd528b71d72ed19bb9dd658ab2dad58.php
   - echo "USE mysql;\nUPDATE user SET password=PASSWORD('password') WHERE user='root';\nFLUSH PRIVILEGES;\n" | mysql -u root
 
 script:
-  - se-interpreter ci/travis/interpreter_config.json
-  - cat "error.log"
-  - curl http://localhost/index.php
+  - se-interpreter /var/www/ci/travis/interpreter_config.json
+  - tail -100 /tmp/error.log
+  - curl http://localhost/
 
 after_script:
   # Include '[update test db]' in a commit message from the master branch, if you want
   # to reset the ci/formulize_test_db.sql to be based on all the current tests.
   # ONLY DO THIS WITH COMMITS FROM THE MASTER BRANCH!!
   # DO NOT DO THIS IN A BRANCH THAT HAS AN ACTIVE PULL REQUEST!!
-  - COMMIT_MESSAGE=$(git show -s --format=%B $TRAVIS_COMMIT | tr -d '\n')
-  - if test "${COMMIT_MESSAGE#*'[update test db]'}" != "$COMMIT_MESSAGE"; then bash ci/travis/update-test-db.sh; fi;
+  - if [[ $TRAVIS_COMMIT_MESSAGE == *"[update test db]"* ]] ; then bash /var/www/ci/travis/update-test-db.sh; fi
+  

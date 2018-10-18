@@ -52,14 +52,14 @@ class icms_db_legacy_PdoDatabase extends icms_db_legacy_Database {
 		return $this->queryF($sql, $limit, $start);
 	}
 	public function queryF($sql, $limit = 0, $start = 0) {
+        $result = false;
 		if (!empty ($limit)) {
 			$start = !empty($start) ? (int)$start . ',' : '';
 			$sql .= ' LIMIT ' . $start . (int)$limit;
 		}
-		$result = false;
 		try {
 			$result = $this->pdo->query($sql);
-			$this->rowCount = $result->rowCount();
+            $this->rowCount = $result ? $result->rowCount() : false;
 		} catch (Exception $e) {
 		}
 		return $result;
@@ -71,31 +71,43 @@ class icms_db_legacy_PdoDatabase extends icms_db_legacy_Database {
 		return $this->rowCount;
 	}
 	public function getFieldName($result, $offset) {
-		$column = $result->getColumnMeta($offset);
-		return $column['name'];
+		if ($result) {
+            $column = $result->getColumnMeta($offset);
+            return $column['name'];
+		} else {
+			return false;
+        }
 	}
 	public function getFieldType($result, $offset) {
-		$column = $result->getColumnMeta($offset);
-		return $column['mysql:decl_type'];
+		if ($result) {
+            $column = $result->getColumnMeta($offset);
+            return $column['mysql:decl_type'];
+		} else {
+			return false;
+        }
 	}
 	public function getFieldsNum($result) {
-		return $result->columnCount();
+		return $result ? $result->columnCount() : false;
 	}
 	public function fetchRow($result) {
-		return $result->fetch( PDO::FETCH_NUM );
+		return $result ? $result->fetch( PDO::FETCH_NUM ) : false;
 	}
 	public function fetchArray($result) {
-		return $result->fetch( PDO::FETCH_ASSOC );
+		return $result ? $result->fetch( PDO::FETCH_ASSOC ) : false;
 	}
 	public function fetchBoth($result) {
-		return $result->fetch( PDO::FETCH_BOTH );
+		return $result ? $result->fetch( PDO::FETCH_BOTH ) : false;
 	}
 	public function getRowsNum($result) {
-		return $result->rowCount();
+		return $result ? $result->rowCount() : false;
 	}
 	public function freeRecordSet($result) {
-		$result->closeCursor();
-		return true;
+		if ($result) {
+            $result->closeCursor();
+			return false;
+		} else {
+			return true;
+		}
 	}
 
 }

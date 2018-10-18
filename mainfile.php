@@ -1,3 +1,4 @@
+
 <?php
 /**
 * All information in order to connect to database are going through here.
@@ -9,7 +10,6 @@
 * @package		Core
 * @version		$Id: mainfile.php 20902 2011-02-27 02:34:57Z skenow $
 */
-
 // ImpressCMS is not installed yet.
 if(! defined('XOOPS_INSTALL')){
     header('Location: install/index.php');

@@ -23,7 +23,7 @@
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
 ##  Author of this file: Freeform Solutions                                  ##
-##  URL: http://www.freeformsolutions.ca/formulize                           ##
+##  URL: http://www.formulize.org                           ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
@@ -70,7 +70,7 @@ if($_POST['element_delimit']) {
   }
 }
 if($ele_type == "date" AND $processedValues['elements']['ele_value'][0] != "YYYY-mm-dd" AND $processedValues['elements']['ele_value'][0] != "") { // still checking for old YYYY-mm-dd string, just in case.  It should never be sent back as a value now, but if we've missed something and it is sent back, leaving this check here ensures it will properly be turned into "", ie: no date.
-	if(ereg_replace("[^A-Z{}]","", $processedValues['elements']['ele_value'][0]) === "{TODAY}") {
+	if(preg_replace("[^A-Z{}]","", $processedValues['elements']['ele_value'][0]) === "{TODAY}") {
 	  $processedValues['elements']['ele_value'][0] = $processedValues['elements']['ele_value'][0];
 	} else {
 	  $processedValues['elements']['ele_value'][0] = date("Y-m-d", strtotime($processedValues['elements']['ele_value'][0]));
@@ -289,9 +289,10 @@ if(isset($_POST['changeuservalues']) AND $_POST['changeuservalues']==1) {
 *Added by Jinfu MAR 2015
 */
 if($processedValues['elements']['ele_value'][8] == 1 &&
-   ($processedValues['elements']['ele_value'][2]['{USERNAMES}'] == 1 || $processedValues['elements']['ele_value'][2]['{FULLNAMES}'] == 1 )){
+   (isset($processedValues['elements']['ele_value'][2]['{USERNAMES}']) || isset($processedValues['elements']['ele_value'][2]['{FULLNAMES}']))) {
   $processedValues['elements']['ele_value'][16]=0;
 }
+
 
 foreach($processedValues['elements'] as $property=>$value) {
   // if we're setting something other than ele_value, or

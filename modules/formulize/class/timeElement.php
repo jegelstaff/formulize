@@ -41,7 +41,7 @@ class formulizeTimeElement extends formulizeformulize {
         $this->overrideDataType = "time"; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
         $this->adminCanMakeRequired = true; // set to true if the webmaster should be able to toggle this element as required/not required
         $this->alwaysValidateInputs = false; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
-        parent::formulizeformulize();
+        parent::__construct();
     }
     
 }
@@ -186,6 +186,8 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
             $value = ($timeParts[0]-12).":".$timeParts[1]."PM";
         } elseif($timeParts[0]=="00") {
             $value = "12:".$timeParts[1]."AM";
+        } elseif($timeParts[0]=="12") {
+            $value = "12:".$timeParts[1]."PM";
         } elseif($value) {
             $value = $timeParts[0].":".$timeParts[1]."AM";
         }
@@ -194,14 +196,15 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
     }
     
     function convert12To24HourTime($value) {
-        if(!strstr($value, ":")) {
+        $value = strtoupper($value);
+        if(!strstr($value, ":") OR (!strstr($value, "AM") AND !strstr($value, "PM"))) {
             return $value;
         }
         $timeParts = explode(":", $value);
-        if(strstr($value, "PM")) {
-            if($timeParts[0]<12) {
-                $value = ($timeParts[0]+12).":".$timeParts[1];    
-            }
+        if(strstr($value, "PM") AND $timeParts[0]<12) {
+            $value = ($timeParts[0]+12).":".$timeParts[1];    
+        } elseif(strstr($value, "PM") AND $timeParts[0]==12) {
+            $value = "12:".$timeParts[1];
         } elseif($timeParts[0]==12) {
             $value = "00:".$timeParts[1];
         } else {

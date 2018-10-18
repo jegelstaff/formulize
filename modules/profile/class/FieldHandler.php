@@ -97,7 +97,7 @@ class mod_profile_FieldHandler extends icms_ipf_Handler {
 	 *
 	 * @return bool FALSE if failed, TRUE if already present and unchanged or successful
 	 */
-	public function insert(&$obj, $force = false) {
+	public function insert(&$obj, $force = false, $checkObject = true, $debug=false) {
 		$profile_handler = icms_getmodulehandler('profile', basename(dirname(dirname(__FILE__))), 'profile');
 
 		$obj->cleanVars();

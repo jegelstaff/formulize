@@ -31,7 +31,7 @@
 
 $modversion = array(
 	'name' => _MI_formulize_NAME,
-	'version' => "5.0",
+	'version' => "5.1",
 	'description' => _MI_formulize_DESC,
 	'author' => "Freeform Solutions",
 	'credits' => "",
@@ -43,12 +43,16 @@ $modversion = array(
 );
 
 $modversion['sqlfile']['mysql'] = "sql/mysql.sql";
+$modversion['sqlfile']['pdo.mysql'] = "sql/mysql.sql";
 
 // Tables created by sql file (without prefix!)
 $modversion['tables'] = array(
 	"formulize",
 	"formulize_id",
 	"formulize_menu",
+	"formulize_menu_links",
+	"formulize_menu_permissions",
+	"formulize_resource_mapping",
 	"formulize_reports",
 	"formulize_frameworks",
 	"formulize_framework_forms",
@@ -63,6 +67,7 @@ $modversion['tables'] = array(
 	"formulize_screen",
 	"formulize_screen_multipage",
 	"formulize_screen_listofentries",
+	"formulize_screen_template",
 	"formulize_entry_owner_groups",
 	"formulize_application_form_link",
 	"formulize_applications",
@@ -72,7 +77,283 @@ $modversion['tables'] = array(
 	"formulize_groupscope_settings",
 	"formulize_procedure_logs",
 	"formulize_procedure_logs_params",
+	"formulize_deletion_logs",
+    "formulize_apikeys",
 );
+
+$modversion['formulize_exportable_tables'] = array(
+	"formulize",
+	"formulize_id",
+	"formulize_menu",
+	"formulize_menu_links",
+	"formulize_menu_permissions",
+	"formulize_reports",
+	"formulize_frameworks",
+	"formulize_framework_forms",
+	"formulize_framework_elements",
+	"formulize_framework_links",
+	"formulize_menu_cats",
+	"formulize_saved_views",
+	"formulize_notification_conditions",
+	"formulize_screen",
+	"formulize_screen_multipage",
+	"formulize_screen_listofentries",
+	"formulize_screen_template",
+    "formulize_entry_owner_groups",
+	"formulize_application_form_link",
+	"formulize_applications",
+	"formulize_screen_form",
+	"formulize_advanced_calculations",
+	"formulize_group_filters",
+	"formulize_groupscope_settings",
+    "formulize_apikeys",
+);
+
+
+/*
+ * Table metadata general structure
+ *
+ * table_name: {
+ *      table_fields: {}
+ *      table_joins: {
+ *          { table_to_join,
+ *          fields_table_is_joined_on: {table1field, table2field}
+ *          fields_to_return }
+ *      }
+ * }
+ *
+ */
+$modversion['table_metadata'] = array(
+    "formulize" => array(
+        "fields" => array("ele_caption", "ele_type"),
+        "joins" => array(
+            array(
+                "join_table" => "formulize_id",
+                "join_field" => array("id_form", "id_form"),
+                "field" => "desc_form"
+            )
+        )
+    ),
+    "formulize_id" => array(
+        "fields" => array("desc_form"),
+        "joins" => array()
+    ),
+    "formulize_menu" => array(),
+    "formulize_menu_links" => array(
+        "fields" => array("link_text"),
+        "joins" => array()
+    ),
+    "formulize_menu_permissions" => array (
+        "fields" => array(),
+        "joins" => array(
+            array(
+                "join_table" => "formulize_menu_links",
+                "join_field" => array("menu_id", "menu_id"),
+                "field" => "link_text"
+            ),
+			array(
+				"join_table" => "groups",
+				"join_field" => array("group_id", "groupid"),
+				"field" => "name"
+			)
+        ),
+    ),
+    "formulize_resource_mapping" => array(),
+    "formulize_reports" => array(),
+    "formulize_frameworks" => array(
+        "fields" => array("frame_name"),
+        "joins" => array()
+    ),
+    "formulize_framework_forms" => array(),
+    "formulize_framework_elements" => array(),
+    "formulize_framework_links" => array(
+        "fields" => array(),
+        "joins" => array(
+            array(
+                "join_table" => "formulize_frameworks",
+                "join_field" => array("fl_frame_id", "frame_id"),
+                "field" => "frame_name"
+            ),
+            array(
+                "join_table" => "formulize_id",
+                "join_field" => array("fl_form1_id", "id_form"),
+                "field" => "desc_form"
+            ),
+            array(
+                "join_table" => "formulize_id",
+                "join_field" => array("fl_form2_id", "id_form"),
+                "field" => "desc_form"
+            )
+        )
+    ),
+    "formulize_menu_cats" => array(),
+    "formulize_saved_views" => array(
+        "fields" => array("sv_name"),
+        "joins" => array()
+    ),
+    "group_lists" => array(
+        "fields" => array("gl_name"),
+        "joins" => array()
+    ),
+    "formulize_other" => array(),
+    "formulize_notification_conditions" => array(
+        "fields" => array(),
+        "joins" => array(
+            array(
+                "join_table" => "formulize_id",
+                "join_field" => array("not_cons_fid", "id_form"),
+                "field" => "desc_form"
+            )
+        )
+    ),
+    "formulize_valid_imports" => array(),
+    "formulize_screen" => array(
+        "fields" => array("title", "type"),
+        "joins" => array(
+            array(
+                "join_table" => "formulize_id",
+                "join_field" => array("fid", "id_form"),
+                "field" => "desc_form"
+            )
+        )
+    ),
+    "formulize_screen_multipage" => array(
+        "fields" => array(),
+        "joins" => array(
+            array(
+                "join_table" => "formulize_screen",
+                "join_field" => array("sid", "sid"),
+                "field" => "title"
+            )
+        )
+    ),
+    "formulize_screen_listofentries" => array(
+        "fields" => array(),
+        "joins" => array(
+            array(
+                "join_table" => "formulize_screen",
+                "join_field" => array("sid", "sid"),
+                "field" => "title"
+            )
+        )
+    ),
+    "formulize_screen_template" => array(
+        "fields" => array(),
+        "joins" => array(
+            array(
+                "join_table" => "formulize_screen",
+                "join_field" => array("sid", "sid"),
+                "field" => "title"
+            )
+        )
+    ),
+    "formulize_entry_owner_groups" => array(),
+    "formulize_application_form_link" => array(
+        "fields" => array(),
+        "joins" => array(
+            array(
+                    "join_table" => "formulize_applications",
+                    "join_field" => array("appid", "appid"),
+                "field" => "name"
+                ),
+                array(
+                    "join_table" => "formulize_id",
+                    "join_field" => array("fid", "id_form"),
+                    "field" => "desc_form"
+                )
+            )
+    ),
+    "formulize_applications" => array(
+        "fields" => array("name"),
+        "joins" => array()
+    ),
+    "formulize_screen_form" => array(
+        "fields" => array(),
+        "joins" => array(
+            array(
+                "join_table" => "formulize_screen",
+                "join_field" => array("sid", "sid"),
+                "field" => "title"
+            )
+        )
+    ),
+    "formulize_advanced_calculations" => array(
+        "fields" => array("name"),
+        "joins" => array()
+    ),
+    "formulize_group_filters" => array(
+        "fields" => array(),
+        "joins" => array(
+            array(
+                "join_table" => "formulize_id",
+                "join_field" => array("fid", "id_form"),
+                "field" => "desc_form"
+            ),
+            array(
+                "join_table" => "groups",
+                "join_field" => array("groupid", "groupid"),
+                "field" => "name"
+            )
+        )
+    ),
+    "formulize_groupscope_settings" => array(
+        "fields" => array(),
+        "joins" => array(
+            array(
+                "join_table" => "formulize_id",
+                "join_field" => array("fid", "id_form"),
+                "field" => "desc_form"
+            ),
+            array(
+                "join_table" => "groups",
+                "join_field" => array("groupid", "groupid"),
+                "field" => "name"
+            )
+        )
+    ),
+    "formulize_procedure_logs" => array(),
+    "formulize_procedure_logs_params" => array(),
+    "formulize_deletion_logs" => array(),
+    "groups" => array(
+        "fields" => array("name", "group_type"),
+        "joins" => array()
+    ),
+	"group_permission" => array(
+		"fields" => array("gperm_name"),
+		"joins" => array(
+			array(
+				"join_table" => "groups",
+				"join_field" => array("gperm_groupid", "groupid"),
+				"field" => "name"
+			),
+			array(
+				"join_table" => "formulize_id",
+				"join_field" => array("gperm_itemid", "id_form"),
+				"field" => "desc_form"
+			)
+		)
+	),
+    "formulize_entry_owner_groups" => array(
+        "fields" => array("entry_id"),
+        "joins" => array(
+            array(
+                "join_table" => "formulize_id",
+                "join_field" => array("fid", "id_form"),
+                "field" => "desc_form"
+            ),
+            array(
+                "join_table" => "groups",
+                "join_field" => array("groupid", "groupid"),
+                "field" => "name"
+            )
+        )
+	),
+    "formulize_apikeys" => array(
+        "fields" => array("uid","apikey"),
+        "joins" => array()
+    )
+);
+
 
 // Admin things
 $modversion['hasAdmin'] = 1;
@@ -304,7 +585,23 @@ $modversion['templates'][] = array(
 $modversion['templates'][] = array(
 	'file' => 'admin/export_template.html',
 	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/synchronize.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/synchronize_sections.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/sync_import.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/sync_import_sections.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/managekeys.html',
+	'description' => '');
 
+    
 //	Module Configs
 // $xoopsModuleConfig['t_width']
 $modversion['config'][1] = array(
@@ -406,6 +703,16 @@ $modversion['config'][] = array(
 	'default' => 1,
 );
 
+// this preference is checked when save button is pressed on front end by user | 0 - False | 1 - True
+$modversion['config'][] = array(
+	'name' => 'isSaveLocked',
+	'title' => '_MI_formulize_ISSAVELOCKED',
+	'description' => '_MI_formulize_ISSAVELOCKEDDESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 0, // no is the default
+);
+
 // number formatting options
 $modversion['config'][] = array(
 	'name' =>'number_decimals',
@@ -498,7 +805,32 @@ $modversion['config'][] = array(
 	'default' => '',
 );
 
+$modversion['config'][] = array(
+	'name' => 'debugDerivedValues',
+	'title' => '_MI_formulize_DEBUGDERIVEDVALUES',
+	'description' => '_MI_formulize_DEBUGDERIVEDVALUESDESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => '0',
+);
 
+$modversion['config'][] = array(
+	'name' => 'notifyByCron',
+	'title' => '_MI_formulize_NOTIFYBYCRON',
+	'description' => '_MI_formulize_NOTIFYBYCRONDESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => '0',
+);
+
+$modversion['config'][] = array(
+	'name' => 'customScope',
+	'title' => '_MI_formulize_CUSTOMSCOPE',
+	'description' => '_MI_formulize_CUSTOMSCOPEDESC ',
+	'formtype' => 'textarea',
+	'valuetype' => 'text',
+	'default' => '',
+);
 
 
 //bloc
