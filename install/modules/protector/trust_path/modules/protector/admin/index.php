@@ -18,7 +18,7 @@ $log_table = $db->prefix( $mydirname."_log" ) ;
 // Protector object
 require_once dirname(dirname(__FILE__)).'/class/protector.php' ;
 $db =& icms_db_Factory::instance() ;
-$protector =& Protector::getInstance( $db->conn ) ;
+$protector =& Protector::getInstance() ;
 $conf = $protector->getConf() ;
 
 

@@ -1,0 +1,42 @@
+<{if $sectionContent.type == "import"}>
+    <h3>Select Archive to Synchronize with Current System</h3>
+    <form name="import" method="POST" enctype="multipart/form-data">
+        <p>The following action will allow a previously exported system to be imported
+        to the current system. A validation step will appear allowing you to select which elements of
+        of the current system you would like to override.<br/>
+        Please select the zip folder to be imported:</p>
+        <input type="file" name="fileToUpload" id="fileToUpload">
+        <input type="submit" name="import" value="Synchronize!">
+    </form>
+    <div style="padding:5px;">
+        <{if $sectionContent.error == "import_err"}>
+        <span style="color: red;"> an error occurred while importing </span>
+        <{/if}>
+        <{if $sectionContent.error == "upload_err"}>
+        <span style="color: red;"> an error occurred while uploading </span>
+        <{/if}>
+        <{if $sectionContent.error == "file_err"}>
+        <span style="color: red;"> an error occurred while getting the file name </span>
+        <{/if}>
+    </div>
+<{/if}>
+
+<{if $sectionContent.type == "export"}>
+    <h3>Export Current System</h3>
+    <form name="export" method="POST">
+        <p>The following actions will allow the current system's information to be saved
+            to a zip folder for importing to another system.</p>
+        <p>Select the user data you would like to include in the export<br/>
+            <{html_checkboxes name='forms' options=$sectionContent.checkboxes separator='<br />'}>
+        </p>
+
+        <p>Enter a name for the zip folder: <br/>
+        <input type ="text" name ="filename" value ="">
+        <input type ="Submit" name ="export" value ="Export!">
+        </p>
+    </form>
+    <{if $sectionContent.error == 1}>
+        <span style="color: red; ">an error occurred while exporting</span>
+    <{/if}>
+    <br/>
+<{/if}>

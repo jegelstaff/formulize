@@ -36,7 +36,7 @@ require_once XOOPS_ROOT_PATH.'/kernel/object.php';
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 class formulizeFramework extends XoopsObject {
-	function formulizeFramework($frid=""){
+	function __construct($frid=""){
 
 		// validate $id_form
 		global $xoopsDB;
@@ -76,26 +76,11 @@ class formulizeFramework extends XoopsObject {
 			if(!isset($frame_name_q[0])) {
 				$notAFramework = true;
 			}
-			$formHandles = array();
-			// $existingTables is not defined in this file, so this code cannot run as written
-			if(false and in_array($xoopsDB->prefix("formulize_framework_forms"), $existingTables)) {
-				$frame_form_handles_q = q("SELECT * FROM " . $xoopsDB->prefix("formulize_framework_forms") . " WHERE ff_frame_id=$frid");
-				if(!isset($frame_form_handles_q[0])) {
-					$notAFramework = true;
-				} else {
-					$formHandles = array();
-					foreach($frame_form_handles_q as $row=>$value) {
-						if($fidKey = array_search($value['ff_form_id'], $fids)) { // find this form in the fids array, and use that fid as the key to access this form's handle.  Remember, not all forms in this table are actually in the Framework, so we have to check.
-							$formHandles[$fids[$fidKey]] = $value['ff_handle'];
-						}
-					}
-				}
-			}
 					
 		}
 		if($notAFramework) { list($frid, $fids, $name, $handles, $element_ids, $links, $formHandles) = $this->initializeNull(); }
 
-		$this->XoopsObject();
+        parent::__construct();
 		//initVar params: key, data_type, value, req, max, opt
 		$this->initVar("frid", XOBJ_DTYPE_INT, $frid, false);
 		$this->initVar("fids", XOBJ_DTYPE_ARRAY, serialize($fids));
@@ -177,7 +162,7 @@ class formulizeFramework extends XoopsObject {
 
 
 class formulizeFrameworkLink extends XoopsObject {
-	function formulizeFrameworkLink($lid=""){
+	function __construct($lid=""){
 		// validate $lid
 		global $xoopsDB;
 		if(!is_numeric($lid)) {
@@ -219,7 +204,7 @@ class formulizeFrameworkLink extends XoopsObject {
 			}
 		}
 
-		$this->XoopsObject();
+        parent::__construct();
 		//initVar params: key, data_type, value, req, max, opt
 		$this->initVar("lid", XOBJ_DTYPE_INT, $lid, true);
 		$this->initVar("frid", XOBJ_DTYPE_INT, $frid, true);
@@ -391,7 +376,7 @@ class formulizeFrameworkLink extends XoopsObject {
 
 class formulizeFrameworksHandler {
 	var $db;
-	function formulizeFrameworksHandler(&$db) {
+	function __construct(&$db) {
 		$this->db =& $db;
 	}
 	function &getInstance(&$db) {

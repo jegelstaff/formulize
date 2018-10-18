@@ -109,6 +109,22 @@ if($pubflag) {
 		}
 	}
 
+    var cols='';
+    var start=1;
+    var colboxes = document.getElementsByClassName('colbox');
+    for(var i=0; colboxes[i]; ++i) {
+        if (colboxes[i].checked) {
+            if (start) {
+                cols = colboxes[i].value;
+                start = 0;
+            } else {
+                cols = cols +','+colboxes[i].value;
+            }
+        }
+    }
+        
+    window.opener.document.controls.pubfilters.value = cols;
+   
 
 	window.opener.document.controls.savegroups.value = pubgroups;
 	window.opener.document.controls.savelock.value = locksetting;
@@ -175,7 +191,6 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 	$getcols = $_GET['cols'];
 	$loadOnlyView = $_GET['loadonlyview'];
-	$cols = explode(",", $_GET['cols']); // what is this for?
 	$currentview = $_GET['currentview'];
 	$view_groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid);
 	$view_globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid);
@@ -205,6 +220,10 @@ $themecss = xoops_getcss();
 //$themecss = substr($themecss, 0, -6);
 //$themecss .= ".css";
 print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$themecss\" />\n";
+
+print "<style>\n";
+print ".caption-marker { display: none; }\n";
+print "</style>\n";
 
 print "</head>";
 print "<body style=\"background: white; margin-top:20px;\"><center>"; 
@@ -360,6 +379,14 @@ if($pubflag) {
 	$lockcontrols->addElement($no);
 
 	$saveform->addElement($pubgrouplist);
+    
+    // get the pubfilters for the viewselection
+    $pubfilters = q("SELECT sv_pubfilters FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id = '" . substr($viewselection, 1) . "'");
+    $pubfilters = $pubfilters[0]['sv_pubfilters'] ? explode(",",$pubfilters[0]['sv_pubfilters']) : array();
+    $filterChoices = new xoopsFormLabel(_formulize_DE_SAVE_PUBFILTERS, generateTidyElementList(getAllColList($fid, $frid, $groups), $pubfilters, $fid));
+    $filterChoices->setDescription(_formulize_DE_SAVE_PUBFILTERS_DESC);
+    $saveform->addElement($filterChoices);
+    
 	$saveform->addElement($lockcontrols);
 
 }

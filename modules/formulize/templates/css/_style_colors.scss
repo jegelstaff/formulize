@@ -38,6 +38,7 @@ $colorTableHeaderText:  contrasting-color($colorTableHeaderBackground, #000, #ff
 $colorEvenBackground:   $colorPageBackground;
 $colorOddBackground:    lighten-or-darken($colorPageBackground, 10);
 $colorTableText:        contrasting-color($colorPageBackground, #000, #fff);
+$colorTableHelpText:    #edfcff;
 $colorTableLink:        contrasting-color($colorTableHeaderBackground, #000, #fff);
 
 

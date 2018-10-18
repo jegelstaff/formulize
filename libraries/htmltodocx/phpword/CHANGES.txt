@@ -1,0 +1,19 @@
+Changes
+=======
+
+This is a list of modifications that have been made to be phpword.
+
+NOTE, the version of phpword here is different from the original source of the PHPWord files at http://phpword.codeplex.com/. Note, so far, this remains a direct plug in replacement for PHPWord.
+
+21/01/2013
+==========
+Adapted PHPWord so that tables are displayed within the margins of a document in LibreOffice Writer.
+
+17/03/2012
+==========
+Replaced utf8_encode() function with utf8_encode_dummy() - so utf8 characters can now be handled. See:
+http://htmltodocx.codeplex.com/SourceControl/changeset/view/f676be705744#htmltodocx%2fpatches%2fphpword%2futf8_encode_090512.patch
+
+28/10/2011
+==========
+Changed changed private function _writeListItem to public function in class PHPWord_Writer_Word2007_Document so that it can be used in a table cell. (Needs work).

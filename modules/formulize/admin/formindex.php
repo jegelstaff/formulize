@@ -36,9 +36,9 @@
 include("admin_header.php");
 
 if ( file_exists("../language/".$xoopsConfig['language']."/main.php") ) {
-    include "../language/".$xoopsConfig['language']."/main.php";
+    include_once "../language/".$xoopsConfig['language']."/main.php";
 } else {
-    include "../language/english/main.php";
+    include_once "../language/english/main.php";
 }
 
 if (!isset($_GET['op']) AND !defined('_FORMULIZE_UI_PHP_INCLUDED')){
@@ -67,7 +67,7 @@ function formulize_DBPatchCheckSQL($sql, &$needsPatch) {
     global $xoopsDB;
     //print $sql."<br>";
     if (!$needsPatchRes = $xoopsDB->queryF($sql)) {
-        print "Error: ".$xoopsDB->error()."<br>We could not determine if your Formulize database structure is up to date.  Please contact <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a> for assistance.<br>\n";
+        print "Error: ".$xoopsDB->error()."<br>We could not determine if your Formulize database structure is up to date.  Please contact <a href=\"mailto:info@formulize.org\">info@formulize.org</a> for assistance.<br>\n";
         return false;
     }
     $needsPatchRows = $xoopsDB->getRowsNum($needsPatchRes);
@@ -85,7 +85,7 @@ function patch40() {
     // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
     $fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize") ." LIKE 'ele_handle'";
     if (!$fieldStateRes = $xoopsDB->queryF($fieldStateSQL)) {
-        print "Error: could not determine if your Formulize database structure is up to date.  Please contact <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a> for assistance.<br>\n";
+        print "Error: could not determine if your Formulize database structure is up to date.  Please contact <a href=\"mailto:info@formulize.org\">info@formulize.org</a> for assistance.<br>\n";
         return false;
     }
     $fieldStateData = $xoopsDB->fetchArray($fieldStateRes);
@@ -112,10 +112,10 @@ function patch40() {
      *
      * ====================================== */
 
-    $checkThisTable = 'formulize_screen_template';
-    $checkThisField = false; // no particular field to check.
-    $checkThisProperty = false;
-    $checkPropertyForValue = false;
+    $checkThisTable = 'formulize_screen_listofentries';
+	$checkThisField = 'defaultview';
+	$checkThisProperty = 'Type';
+	$checkPropertyForValue = 'text';
 
     $needsPatch = false;
 
@@ -262,10 +262,12 @@ function patch40() {
     external_id int(11) NOT NULL,
     resource_type int(4) NOT NULL,
     mapping_active tinyint(1) NOT NULL,
+    external_id_string text NULL default NULL,
     PRIMARY KEY (mapping_id),
     INDEX i_internal_id (internal_id),
     INDEX i_external_id (external_id),
-    INDEX i_resource_type (resource_type)
+    INDEX i_resource_type (resource_type),
+    INDEX i_external_id_string (external_id_string(10))
 ) ENGINE=MyISAM;";
         }
 
@@ -292,6 +294,19 @@ function patch40() {
             INDEX i_sid (`sid`)
         ) ENGINE=MyISAM;";
         }
+        
+        if (!in_array($xoopsDB->prefix("formulize_apikeys"), $existingTables)) {
+            $sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_apikeys") . " (
+                `key_id` int(11) unsigned NOT NULL auto_increment,
+                `uid` int(11) NOT NULL default '0',
+                `apikey` varchar(255) NOT NULL default '',
+                `expiry` datetime default NULL,
+                PRIMARY KEY (`key_id`),
+                INDEX i_uid (uid),
+                INDEX i_apikey (apikey),
+                INDEX i_expiry (expiry)
+            ) ENGINE=MyISAM;";
+        }      
 
         // if this is a standalone installation, then we want to make sure the session id field in the DB is large enough to store whatever session id we might be working with
         if (file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
@@ -338,7 +353,13 @@ function patch40() {
         $sql['add_global_search_to_saved_view'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_saved_views") . " ADD `sv_global_search` text";
         $sql['add_application_code'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_applications") . " ADD `custom_code` mediumtext";
         $sql['add_note_to_menu_links']="ALTER TABLE ".$xoopsDB->prefix("formulize_menu_links")." ADD `note` text";
+        $sql['add_pubfilters'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_saved_views") . " ADD `sv_pubfilters` text";
+        $sql['add_backdrop_group'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_resource_mapping") . " ADD external_id_string text NULL default NULL";
+        $sql['add_backdrop_group_index'] = "ALTER TABLE ". $xoopsDB->prefix("formulize_resource_mapping") ." ADD INDEX i_external_id_string (external_id_string(10))";
+        $sql['add_advance_view_field'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " ADD `advanceview` text NOT NULL"; 
+		$sql['defaultview_ele_type_text'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " CHANGE `defaultview` `defaultview` TEXT NOT NULL ";
 
+        
         foreach($sql as $key=>$thissql) {
             if (!$result = $xoopsDB->query($thissql)) {
                 if ($key === "add_encrypt") {
@@ -384,15 +405,25 @@ function patch40() {
                 } elseif ($key === "add_use_default_when_blank") {
                     print "use default when blank already added.  result: OK<br>";
                 } elseif ($key === "add_global_search_to_saved_view") {
-                        print "global search saved view already added.  result: OK<br>";
+                    print "global search saved view already added.  result: OK<br>";
                 } elseif ($key === "add_application_code") {
-                        print "application custom_code field added.  result: OK<br>";
+                    print "application custom_code field added.  result: OK<br>";
                 } elseif ($key === "add_note_to_menu_links") {
                     print "note already added for menu links.  result: OK<br>";
                 } elseif (strstr($key, 'drop_from_formulize_id_')) {
                     continue;
+                } elseif(strstr($key, 'add_pubfilters')) {
+                    print "Pubfilters field already added.  result: OK<br>";
+                } elseif(strstr($key, 'add_backdrop_group')) {
+                    print "External_id_string already added for resource mapping.  result: OK<br>";
+                } elseif(strstr($key, 'add_backdrop_group_index')) {
+                    print "External_id_string INDEX already added for resource mapping.  result: OK<br>";
+                } elseif($key === "defaultview_ele_type_text") {
+					print "default view field change to text type already. result: OK<br>";
+				} elseif($key === "add_advance_view_field") {
+					print "advance view field already added.  result: OK<br>";
                 } else {
-                    exit("Error patching DB for Formulize 4.0. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                    exit("Error patching DB for Formulize 4.0. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
             }
         }
@@ -467,7 +498,7 @@ function patch40() {
             print "<p><b>You probably don't need to make all of the changes suggested above!</b>  You only need to make changes in places where there are saved views and/or programming code that uses the elements mentioned above.  For some websites, that will mean you don't have to make any changes (ie: if there are no saved views based on a framework, and you have no programming code referring to frameworks).</p>";
             print "<p> --- </p>";
             print "<p><b>You can re-run this patch after making changes.  If you do not get this warning, then your site should be OK.</b></p>";
-            print "<p>If you have any questions about this upgrade issue, please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.</p>";
+            print "<p>If you have any questions about this upgrade issue, please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.</p>";
         }
 
         //create new menus table
@@ -479,6 +510,7 @@ function patch40() {
             `rank` int(11),
             `url` varchar(255),
             `link_text` varchar(255),
+            `note` text,
             PRIMARY KEY (`menu_id`),
             INDEX i_menus_appid (appid)
             );";
@@ -495,7 +527,7 @@ function patch40() {
             foreach($menusql as $key=>$thissql) {
 
                 if (!$result = $xoopsDB->query($thissql)) {
-                    exit("Error patching DB for Formulize 4.0. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                    exit("Error patching DB for Formulize 4.0. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
             }
             // populate new menus tables with existing menu entries
@@ -530,7 +562,7 @@ function patch40() {
         // need to update multiple select boxes for new data structure
         // $xoopsDB->prefix("formulize")
         // 1. get a list of all elements that are linked selectboxes that support only single values
-        $selectBoxesSQL = "SELECT id_form, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_type = 'select'";
+        $selectBoxesSQL = "SELECT e.id_form as id_form, e.ele_id as ele_id, e.ele_handle as ele_handle, f.form_handle as form_handle FROM " . $xoopsDB->prefix("formulize") . " AS e LEFT JOIN ". $xoopsDB->prefix("formulize_id") . " AS f ON e.id_form = f.id_form WHERE ele_type = 'select'";
         $selectBoxRes = $xoopsDB->query($selectBoxesSQL);
         if ($xoopsDB->getRowsNum($selectBoxRes) > 0) {
             while ($handleArray = $xoopsDB->fetchArray($selectBoxRes)) {
@@ -539,9 +571,9 @@ function patch40() {
 
                 // select only single option, linked select boxes
                 if (!$ele_value[1] AND strstr($ele_value[2], "#*=:*")) {
-                    $successSelectBox = convertSelectBoxToSingle($xoopsDB->prefix('formulize_' . $handleArray['id_form']), $handleArray['ele_id']);
+                    $successSelectBox = convertSelectBoxToSingle($xoopsDB->prefix('formulize_' . $handleArray['form_handle']), $handleArray['ele_handle']);
                     if (!$successSelectBox) {
-                        print "could not convert column " . $handleArray['ele_id'] . " in table " . $xoopsDB->prefix('formulize_' . $handleArray['id_form']) . "<br>";
+                        print "could not convert column " . $handleArray['ele_handle'] . " in table " . $xoopsDB->prefix('formulize_' . $handleArray['form_handle']) . "<br>";
                     }
                 }
             }
@@ -556,7 +588,7 @@ function patch40() {
             $udres2 = $xoopsDB->query($sql);
             }
             if (!$udres1 OR !$udres2) {
-            print "Error updating relationships with unified delete option.  SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.";
+            print "Error updating relationships with unified delete option.  SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
             } else {
             print "Updating relationships with unified delete option.  result: OK<br>";
             }
@@ -612,17 +644,43 @@ function patch40() {
             }
         }
 
+        // Goes through all templates in screenpathname
+        emptyTemplateFixer($screenpathname);
+
         print "DB updates completed.  result: OK";
     }
 }
 
+// Fixes the format if the template is empty
+function emptyTemplateFixer($dir) {
+    if(is_dir($dir)) {
+        if($dhome = opendir($dir)){ // Ensures its a valid directory (just in case)
+            while($file = readdir($dhome)){
+                if($file != '.' && $file != '..'){
+                    if(is_dir($dir . $file)){
+                        // Recurse the directory
+                        emptyTemplateFixer($dir . $file . '/');
+                    }else{
+                        $fcontents = file_get_contents($dir . $file);
+
+                        // Overwrites files with only a header with empty contents
+                        if(trim($fcontents) == "<?php"){
+                            file_put_contents($dir . $file, "");
+                        }
+                    }
+                }
+            }
+        }
+        closedir($dhome);
+    }
+}
 
 // Saves the given template to a template file on the disk
 function saveTemplate($template, $sid, $name) {
     $filename = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/{$sid}/{$name}.php";
 
-    $text = html_entity_decode($template);
-    if (false === strpos($text, "<?php")) {
+    $text = trim(html_entity_decode($template));
+    if ($text AND substr($text, 0, 5) != "<?php") {
         // if there's no php open-tag in the text already, add one
         $text = "<?php\n" . $text;
     }
@@ -644,7 +702,7 @@ function saveMenuEntryAndPermissionsSQL($formid, $appid, $i, $menuText) {
     $menuText = html_entity_decode($menuText, ENT_QUOTES) == "Use the form's title" ? '' : $menuText;
     $thissql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_links")."` VALUES (null,". $appid.",'fid=".$formid."',".$i.",null,'".$menuText."');";//.$permissionsql.";";
     if (!$result = $xoopsDB->query($thissql)) {
-        exit("Error inserting Menus. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+        exit("Error inserting Menus. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
     } else {
         foreach($groupsThatCanView as $groupid) {
             if ($permissionsql != ""){
@@ -655,7 +713,7 @@ function saveMenuEntryAndPermissionsSQL($formid, $appid, $i, $menuText) {
         }
         if ($permissionsql){
             if (!$result = $xoopsDB->query($permissionsql)) {
-                exit("Error inserting Menu permissions. SQL dump:<br>" . $permissionsql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                exit("Error inserting Menu permissions. SQL dump:<br>" . $permissionsql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
             }
         }
     }
@@ -703,9 +761,9 @@ function patch31() {
                 } elseif ($key === "handlelength") {
                   print "Length of element handles already extended.  result OK<br>";
                 } elseif ($key === "cleanEntryOwnerGroups" OR $key === "lockForClean" OR $key === "copyTableForClean" OR $key === "copyDataForClean" OR $key === "dropTempTable" OR $key === "unlockForClean") {
-                  print "Warning: could not delete duplicate entries from the entry_owner_groups table.  Please contact <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a> for assistance.<br>\n";
+                  print "Warning: could not delete duplicate entries from the entry_owner_groups table.  Please contact <a href=\"mailto:info@formulize.org\">info@formulize.org</a> for assistance.<br>\n";
                 } else {
-                  exit("Error patching DB for Formulize 3.1. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                  exit("Error patching DB for Formulize 3.1. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
               }
             }
@@ -750,24 +808,24 @@ function patch31() {
                     }
                     if ($alterTableSQL) {
                         if (!$alterTableResult = $xoopsDB->query($alterTableSQL)) {
-                            exit("Error patching DB for Formulize 3.1. SQL dump:<br>" . $dataTableInfoSQL . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                            exit("Error patching DB for Formulize 3.1. SQL dump:<br>" . $dataTableInfoSQL . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                         }
                     }
                     foreach($foundDateFields as $thisDateField) {
                         $dateCorrectionSQL = "UPDATE ".$xoopsDB->prefix("formulize_".$thisFid->getVar('id_form'))." SET `".$thisDateField."` = NULL WHERE `".$thisDateField."` = '0000-00-00'";
                         if (!$dateCorrectionResult = $xoopsDB->query($dateCorrectionSQL)) {
-                            exit("Error patching DB for Formulize 3.1. SQL dump:<br>" . $dataTableInfoSQL . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                            exit("Error patching DB for Formulize 3.1. SQL dump:<br>" . $dataTableInfoSQL . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                         }
                     }
                 } else {
-                    exit("Error patching DB for Formulize 3.1. SQL dump:<br>" . $dataTableInfoSQL . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                    exit("Error patching DB for Formulize 3.1. SQL dump:<br>" . $dataTableInfoSQL . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
             }
 
-            print "<br><br><b>NOTE:</b> Although the 3.x data structure is highly optimized compared to previous versions of Formulize, there are some situations which we cannot account for automatically in the upgrade process:  if you have elements in a form and users only enter numerical data there, you should edit those elements now and give them a truly numeric data type (use the new option on the element editing page to do this).  In Formulize 3 and higher, elements that have only numbers, but which are not stored as numbers in the database, will not sort properly and some calculations will not work correctly on them either.  Unfortunately, we cannot reliably determine which numeric data type should be used for all elements, therefore you will need to make this adjustment manually.  We apologize for any inconvenience.  Please contact <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a> if you have any questions about this process.<br><br>\n";
+            print "<br><br><b>NOTE:</b> Although the 3.x data structure is highly optimized compared to previous versions of Formulize, there are some situations which we cannot account for automatically in the upgrade process:  if you have elements in a form and users only enter numerical data there, you should edit those elements now and give them a truly numeric data type (use the new option on the element editing page to do this).  In Formulize 3 and higher, elements that have only numbers, but which are not stored as numbers in the database, will not sort properly and some calculations will not work correctly on them either.  Unfortunately, we cannot reliably determine which numeric data type should be used for all elements, therefore you will need to make this adjustment manually.  We apologize for any inconvenience.  Please contact <a href=\"mailto:info@formulize.org\">info@formulize.org</a> if you have any questions about this process.<br><br>\n";
             print "DB updates completed.  result: OK";
         } else {
-            print "Unable to create derived value fields in database.  result: failed.  contact <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a> for assistance.<br>\n";
+            print "Unable to create derived value fields in database.  result: failed.  contact <a href=\"mailto:info@formulize.org\">info@formulize.org</a> for assistance.<br>\n";
         }
         return;
     }
@@ -783,14 +841,14 @@ function patch31() {
         $sql = "SELECT * FROM " . $xoopsDB->prefix("form") . " LIMIT 0,1";
         $result = $xoopsDB->query($sql);
         if (!$result) {
-            exit("Error patching DB for Formulize 3.1. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+            exit("Error patching DB for Formulize 3.1. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
         }
         $array = $xoopsDB->fetchArray($result);
         unset($result);
         if (!isset($array['ele_forcehidden'])) {
             $sql = "ALTER TABLE " . $xoopsDB->prefix("form") . " ADD `ele_forcehidden` tinyint(1) NOT NULL default '0'";
             if (!$result = $xoopsDB->query($sql)) {
-                exit("Error patching DB for Formulize 3.1. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                exit("Error patching DB for Formulize 3.1. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
             }
         }
         unset($sql);
@@ -807,7 +865,7 @@ function patch31() {
         $sql[] = "DROP TABLE " . $xoopsDB->prefix("form_chains_entries");
         foreach($sql as $thissql) {
             if (!$result = $xoopsDB->query($thissql)) {
-                exit("Error patching DB for Formulize 3.1. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                exit("Error patching DB for Formulize 3.1. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
             }
         }
 
@@ -873,7 +931,8 @@ function patch31() {
   useaddproxy varchar(255) NOT NULL default '',
   usecurrentviewlist varchar(255) NOT NULL default '',
   limitviews text NOT NULL,
-  defaultview varchar(20) NOT NULL default '',
+  defaultview text NOT NULL,
+  advanceview text NOT NULL, 
   usechangecols varchar(255) NOT NULL default '',
   usecalcs varchar(255) NOT NULL default '',
   useadvcalcs varchar(255) NOT NULL default '',
@@ -954,7 +1013,7 @@ if (!in_array($xoopsDB->prefix("formulize_entry_owner_groups"), $existingTables)
         $testsql = "SELECT * FROM " .  $xoopsDB->prefix("formulize") . " LIMIT 0,1";
         $result1 = $xoopsDB->query($testsql);
                 if ($xoopsDB->getRowsNum($result1) == 0) {
-                        exit("Error patching DB for Formulize 3.1.<br>No forms exist in the database.<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                        exit("Error patching DB for Formulize 3.1.<br>No forms exist in the database.<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
         $array1 = $xoopsDB->fetchArray($result1); // for 2.1 we were checking explicitly whether we needed to add these fields.  But for 2.2 we just ran the SQL and caught the error appropriately in the condition below (ie: looked for failure for 'commonvalue' and ignored it) -- although ele_disabled was added this way...clearly we're not consistent about the patch approach!
 
@@ -1051,24 +1110,24 @@ if (!in_array($xoopsDB->prefix("formulize_entry_owner_groups"), $existingTables)
                     if ($secondaryResult = $xoopsDB->query("ALTER TABLE " . $xoopsDB->prefix("formulize") . " CHANGE `ele_handle` `ele_handle` varchar(255) NOT NULL default ''")) {
                         print "Element handle field already added.  result: OK<br>";
                     } else {
-                        exit("Error patching DB for Formulize 3.1. SQL dump:<br>ALTER TABLE " . $xoopsDB->prefix("formulize") . " CHANGE `ele_handle` `ele_handle` varchar(255) NOT NULL default ''<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                        exit("Error patching DB for Formulize 3.1. SQL dump:<br>ALTER TABLE " . $xoopsDB->prefix("formulize") . " CHANGE `ele_handle` `ele_handle` varchar(255) NOT NULL default ''<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                     }
                 } elseif ($key === "viewentryscreen") {
                     // assume it has already been added
                     if ($secondaryResult = $xoopsDB->query("ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " CHANGE `viewentryscreen` `viewentryscreen` varchar(10) NOT NULL DEFAULT ''")) {
                         print "viewentryscreen field already added.  result: OK<br>";
                     } else {
-                        exit("Error patching DB for Formulize 3.1. SQL dump:<br>ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " CHANGE `viewentryscreen` `viewentryscreen` varchar(10) NOT NULL DEFAULT ''<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                        exit("Error patching DB for Formulize 3.1. SQL dump:<br>ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " CHANGE `viewentryscreen` `viewentryscreen` varchar(10) NOT NULL DEFAULT ''<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                     }
                 }else {
-                    exit("Error patching DB for Formulize 3.1. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                    exit("Error patching DB for Formulize 3.1. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
             } elseif ($key === "ele_handle") { // we just added the ele_handle field
 
                 // use element id number for the initial element handles
                 $eh_eleid_sql = "UPDATE " . $xoopsDB->prefix("formulize") . " SET ele_handle = ele_id WHERE ele_handle = ''";
                 if (!$eh_eleid_res = $xoopsDB->query($eh_eleid_sql)) {
-                    exit("Error patching DB for Formulize 3.1.  SQL dump:<br>" . $eh_check_sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                    exit("Error patching DB for Formulize 3.1.  SQL dump:<br>" . $eh_check_sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
             }
         }
@@ -1101,7 +1160,7 @@ if (!in_array($xoopsDB->prefix("formulize_entry_owner_groups"), $existingTables)
                     }
                     $fixSql = "UPDATE " . $xoopsDB->prefix("formulize_form") . " SET id_req='$maxIdReq' WHERE id_req='" . $find['id_req'] . "' AND uid='" . $uid['uid'] . "'";
                     if (!$fixRes = $xoopsDB->query($fixSql)) {
-                        exit("Error patching DB for Formulize 3.1. SQL dump:<br>" . $fixsql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                        exit("Error patching DB for Formulize 3.1. SQL dump:<br>" . $fixsql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                     }
                     print "Uid " . $uid['uid'] . " now using id_req $maxIdReq<br>";
                     $maxIdReq++;
@@ -1131,7 +1190,7 @@ if (!in_array($xoopsDB->prefix("formulize_entry_owner_groups"), $existingTables)
                 if (!isset($formCaptions[$dataArray['id_form']][$dataArray['ele_caption']])) {
                     $deleteSql = "DELETE FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_form=".$dataArray['id_form']." AND ele_caption=\"".formulize_db_escape($dataArray['ele_caption'])."\"";
                     if (!$result = $xoopsDB->query($deleteSql)) {
-                        exit("Error patching DB for Formulize 3.1. SQL dump:<br>" . $deletesql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                        exit("Error patching DB for Formulize 3.1. SQL dump:<br>" . $deletesql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                     }
                 }
             }
@@ -1223,7 +1282,7 @@ function correctAmbiguousIdReqsBasedOnFormIds($uidFocus = false) {
             }
             $fixSql = "UPDATE " . $xoopsDB->prefix("formulize_form") . " SET id_req='$maxIdReq' WHERE id_req='" . $find['id_req'] . "' AND id_form='" . $id_form['id_form'] . "'";
             if (!$fixRes = $xoopsDB->query($fixSql)) {
-                exit("Error patching DB for Formulize 3.1. SQL dump:<br>" . $fixsql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                exit("Error patching DB for Formulize 3.1. SQL dump:<br>" . $fixsql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
             }
             print "Form id " . $id_form['id_form'] . " now using id_req $maxIdReq<br>";
             if ($uidFocus) {
@@ -1261,12 +1320,12 @@ function patch22convertdata() {
     }
   if (!$formulizeFormFound AND $entryOwnerGroupFound) {
           print "<h1>It appears you have not upgraded from a previous version of Formulize.  You do not need to apply this patch unless you are upgrading from a version prior to 2.2</h1>\n";
-          print "<p>If you did upgrade from a previous version, please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.</p>\n";
+          print "<p>If you did upgrade from a previous version, please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.</p>\n";
           return;
   }
   if ($newStructureFound) {
       print "<h1>You cannot run this patch after upgrading to the 3.0 data structure.</h1>";
-      print "<p>If you upgraded from Formulize 2.1 or earlier, and you did not run the \"patch22convertdata\" already, please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.</p>";
+      print "<p>If you upgraded from Formulize 2.1 or earlier, and you did not run the \"patch22convertdata\" already, please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.</p>";
       return;
   }
 
@@ -1296,7 +1355,7 @@ function patch22convertdata() {
         if (!$myts) { $myts =& MyTextSanitizer::getInstance(); }
 
         $sansql = "SELECT ele_id, ele_value FROM " . $xoopsDB->prefix("formulize_form") . " WHERE ele_type != \"date\" AND  ele_type != \"yn\" AND ele_type != \"areamodif\"";
-        if (!$sanres = $xoopsDB->query($sansql)) { exit("Error patching DB for Formulize 2.2. SQL dump:<br>" . $sansql . "<br>".$xoopsDB->error()."<br>Could not collect all data for sanitizing.  Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance."); }
+        if (!$sanres = $xoopsDB->query($sansql)) { exit("Error patching DB for Formulize 2.2. SQL dump:<br>" . $sansql . "<br>".$xoopsDB->error()."<br>Could not collect all data for sanitizing.  Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance."); }
         while($sanArray = $xoopsDB->fetchArray($sanres)) {
             $origvalue = $sanArray['ele_value'];
             if (get_magic_quotes_gpc()) { $sanArray['ele_value'] = stripslashes($sanArray['ele_value']); }
@@ -1304,7 +1363,7 @@ function patch22convertdata() {
             if ($newvalue != $origvalue) {
                 $newsql = "UPDATE " . $xoopsDB->prefix("formulize_form") . " SET ele_value = \"" . formulize_db_escape($newvalue) . "\" WHERE ele_id = " . $sanArray['ele_id'];
                 if (!$newres = $xoopsDB->query($newsql)) {
-                    exit("Error patching DB for Formulize 2.2. SQL dump:<br>" . $sansql . "<br>".$xoopsDB->error()."<br>Could not write data for sanitizing.  Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                    exit("Error patching DB for Formulize 2.2. SQL dump:<br>" . $sansql . "<br>".$xoopsDB->error()."<br>Could not write data for sanitizing.  Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
             }
         }
@@ -1340,7 +1399,7 @@ function patch30DataStructure($auto = false) {
         }
         if (!$formulizeFormFound AND $entryOwnerGroupFound) {
           print "<h1>It appears you have not upgraded from a previous version of Formulize.  You do not need to apply this patch unless you are upgrading from a version prior to 3.0</h1>\n";
-          print "<p>If you did upgrade from a previous version, please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.</p>\n";
+          print "<p>If you did upgrade from a previous version, please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.</p>\n";
           return;
         }
         if (!$entryOwnerGroupFound) {
@@ -1382,7 +1441,7 @@ function patch30DataStructure($auto = false) {
                 foreach($allFormObjects as $formObjectId=>$thisFormObject) {
                                                 if ($thisFormObject->getVar('tableform')) { continue; } // only process actual Formulize forms
                         if (!$tableCreationResult = $formHandler->createDataTable($thisFormObject)) {
-                                exit("Error: could not make the necessary new datatable for form " . $thisFormObject->getVar('id_form') . ".<br>".$xoopsDB->error()."<br>Please report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.");
+                                exit("Error: could not make the necessary new datatable for form " . $thisFormObject->getVar('id_form') . ".<br>".$xoopsDB->error()."<br>Please report this error to <a href=\"mailto:info@formulize.org\">info@formulize.org</a>.");
                         }
 
                         print "Created data table formulize_" . $thisFormObject->getVar('id_form') . ".  result: OK<br>\n";
@@ -1408,10 +1467,10 @@ function patch30DataStructure($auto = false) {
                         while($dataArray = $xoopsDB->fetchArray($dataRes)) {
                                 if (!isset($captionHandleIndex[$dataArray['ele_caption']])) {
                                                                     if ($dataArray['ele_caption'] === '') {
-                                                                        print "Warning: you have data saved, with no caption specified, for entry number ". $dataArray['id_req'] . " (id_req) in form ".$thisFormObject->getVar('id_form'). ".  This data will be ignored.  Please contact <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a> if you would like assistance cleaning this up.  This will NOT affect the upgrade to version 3.<br>";
+                                                                        print "Warning: you have data saved, with no caption specified, for entry number ". $dataArray['id_req'] . " (id_req) in form ".$thisFormObject->getVar('id_form'). ".  This data will be ignored.  Please contact <a href=\"mailto:info@formulize.org\">info@formulize.org</a> if you would like assistance cleaning this up.  This will NOT affect the upgrade to version 3.<br>";
                                                                         continue;
                                                                     } else {
-                                                                        print "Warning: the form ". $thisFormObject->getVar('id_form') . " does not have an element with the caption '". $dataArray['ele_caption'] . "', but you have saved data associated with that caption.  This data will be ignored.  Please contact <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a> if you would like assistance cleaning this up.  This will NOT affect the upgrade to version 3.<br>";
+                                                                        print "Warning: the form ". $thisFormObject->getVar('id_form') . " does not have an element with the caption '". $dataArray['ele_caption'] . "', but you have saved data associated with that caption.  This data will be ignored.  Please contact <a href=\"mailto:info@formulize.org\">info@formulize.org</a> if you would like assistance cleaning this up.  This will NOT affect the upgrade to version 3.<br>";
                                     continue;
                                                                     }
                                 }
@@ -1422,7 +1481,7 @@ function patch30DataStructure($auto = false) {
                                         // write whatever we just finished working on
                                         if ($insertSQL) {
                                                 if (!$insertRes = $xoopsDB->query($insertSQL)) {
-                                                        exit("Error: could not write data to the new table structure with this SQL: $insertSQL.<br>".$xoopsDB->error()."<br>Please report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.");
+                                                        exit("Error: could not write data to the new table structure with this SQL: $insertSQL.<br>".$xoopsDB->error()."<br>Please report this error to <a href=\"mailto:info@formulize.org\">info@formulize.org</a>.");
                                                 }
                                                 $insertSQL = "";
                                         }
@@ -1451,14 +1510,14 @@ function patch30DataStructure($auto = false) {
                                                                                 foreach($ownerGroups as $thisGroup) {
                                                                                     $ownerInsertSQL = "INSERT INTO " . $xoopsDB->prefix("formulize_entry_owner_groups") . " (`fid`, `entry_id`, `groupid`) VALUES ('". intval($thisFormObject->getVar('id_form')) . "', '". intval($dataArray['id_req']) . "', '". intval($thisGroup) . "')";
                                                                                     if (!$ownerInsertRes = $xoopsDB->query($ownerInsertSQL)) {
-                                                                                        print "Error: could not write owner information to new data structure, using this SQL:<br>$ownerInsertSQL<br>".$xoopsDB->error()."<br>Please report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.";
+                                                                                        print "Error: could not write owner information to new data structure, using this SQL:<br>$ownerInsertSQL<br>".$xoopsDB->error()."<br>Please report this error to <a href=\"mailto:info@formulize.org\">info@formulize.org</a>.";
                                                                                     }
                                                                                 }
                                 }
 
                                 // record the caption and go through to the next one if this one already exists in this form
                                 if (isset($foundCaptions[$dataArray['ele_caption']])) {
-                                  print "Warning: you have duplicate captions, '".$dataArray['ele_caption']."', in your data, at entry number " .$dataArray['id_req'] . " (id_req) in form ".$thisFormObject->getVar('id_form').".  Only the first value found will be copied to the new data structure.  Please contact <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a> if you would like assistance cleaning this up.  This will NOT affect the upgrade to version 3.<br>";
+                                  print "Warning: you have duplicate captions, '".$dataArray['ele_caption']."', in your data, at entry number " .$dataArray['id_req'] . " (id_req) in form ".$thisFormObject->getVar('id_form').".  Only the first value found will be copied to the new data structure.  Please contact <a href=\"mailto:info@formulize.org\">info@formulize.org</a> if you would like assistance cleaning this up.  This will NOT affect the upgrade to version 3.<br>";
                                   continue;
                                 } else {
                                   $foundCaptions[$dataArray['ele_caption']] = true;
@@ -1488,7 +1547,7 @@ function patch30DataStructure($auto = false) {
                         }
                         if ($insertSQL) {
                                 if (!$insertRes = $xoopsDB->query($insertSQL)) {
-                                        exit("Error: could not write data to the new table structure with this SQL: $insertSQL.<br>".$xoopsDB->error()."<br>Please report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.");
+                                        exit("Error: could not write data to the new table structure with this SQL: $insertSQL.<br>".$xoopsDB->error()."<br>Please report this error to <a href=\"mailto:info@formulize.org\">info@formulize.org</a>.");
                                 }
                         }
                         print "Migrated data to new data structure for form " . $thisFormObject->getVar('id_form') . ".  result: OK<br>\n";
@@ -1498,7 +1557,7 @@ function patch30DataStructure($auto = false) {
       if ($derivedResult = formulize_createDerivedValueFieldsInDB()) {
         print "Created derived value fields in database.  result: OK<br>\n";
       } else {
-        print "Unable to create derived value fields in database.  result: failed.  contact <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a> for assistance.<br>\n";
+        print "Unable to create derived value fields in database.  result: failed.  contact <a href=\"mailto:info@formulize.org\">info@formulize.org</a> for assistance.<br>\n";
       }
 
       // convert the captions in the linked selectbox defintions to the handles for those elements
@@ -1509,7 +1568,7 @@ function patch30DataStructure($auto = false) {
       // 5. reinsert that value into the DB
       $sql = "SELECT ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_value LIKE '%#*=:*%'";
       if (!$res = $xoopsDB->query($sql)) {
-        exit("Error: cound not get the element ids of the linked selectboxes.  SQL: $sql<br>".$xoopsDB->error()."<br>Please report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.");
+        exit("Error: cound not get the element ids of the linked selectboxes.  SQL: $sql<br>".$xoopsDB->error()."<br>Please report this error to <a href=\"mailto:info@formulize.org\">info@formulize.org</a>.");
       }
       $element_handler =& xoops_getmodulehandler('elements', 'formulize');
       while($array = $xoopsDB->fetchArray($res)) {
@@ -1519,21 +1578,21 @@ function patch30DataStructure($auto = false) {
         $sql2 = "SELECT ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_caption = '". formulize_db_escape($parts[1]) . "' AND id_form=". $parts[0];
                 //print "$sql2<br>";
         if (!$res2 = $xoopsDB->query($sql2)) {
-          exit("Error: could not get the handle for a linked selectbox source.  SQL: $sql2<br>".$xoopsDB->error()."<br>Please report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.");
+          exit("Error: could not get the handle for a linked selectbox source.  SQL: $sql2<br>".$xoopsDB->error()."<br>Please report this error to <a href=\"mailto:info@formulize.org\">info@formulize.org</a>.");
         }
         $array2 = $xoopsDB->fetchArray($res2);
         if ($array2['ele_handle'] == "") {
-          print "Warning: a handle could not be identified for this caption: '".$parts[1]."', in form ".$parts[0]."  This breaks linked selectboxes for element number ".$array['ele_id'].".  This is most likely caused by an old caption that was changed for the element, in an old version of Formulize.<br>Please report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.<br>";
+          print "Warning: a handle could not be identified for this caption: '".$parts[1]."', in form ".$parts[0]."  This breaks linked selectboxes for element number ".$array['ele_id'].".  This is most likely caused by an old caption that was changed for the element, in an old version of Formulize.<br>Please report this error to <a href=\"mailto:info@formulize.org\">info@formulize.org</a>.<br>";
         }
         $ele_value[2] = $parts[0]."#*=:*".$array2['ele_handle'];
         $elementObject->setVar('ele_value', $ele_value);
         if (!$res3 = $element_handler->insert($elementObject)) {
-          exit("Error: could not update the linked selectbox metadata. <br>".$xoopsDB->error()."<br>Please report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.");
+          exit("Error: could not update the linked selectbox metadata. <br>".$xoopsDB->error()."<br>Please report this error to <a href=\"mailto:info@formulize.org\">info@formulize.org</a>.");
         }
         unset($parts);
         unset($elementObject);
         }
-        print "Updated the linked selectbox definitions new metadata.  result: OK<br><br><b>NOTE:</b> Although the 3.0 data structure is highly optimized compared to previous versions of Formulize, there are some situations which we cannot account for automatically in the upgrade process:  if you have elements in a form and users only enter numerical data there, you should edit those elements now and give them a truly numeric data type (use the new option on the element editing page to do this).  In Formulize 3 and higher, elements that have only numbers, but which are not stored as numbers in the database, will not sort properly and some calculations will not work correctly on them either.  Unfortunately, we cannot reliably determine which numeric data type should be used for all elements, therefore you will need to make this adjustment manually.  We apologize for any inconvenience.  Please contact <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a> if you have any questions about this process.<br><br>\n";
+        print "Updated the linked selectbox definitions new metadata.  result: OK<br><br><b>NOTE:</b> Although the 3.0 data structure is highly optimized compared to previous versions of Formulize, there are some situations which we cannot account for automatically in the upgrade process:  if you have elements in a form and users only enter numerical data there, you should edit those elements now and give them a truly numeric data type (use the new option on the element editing page to do this).  In Formulize 3 and higher, elements that have only numbers, but which are not stored as numbers in the database, will not sort properly and some calculations will not work correctly on them either.  Unfortunately, we cannot reliably determine which numeric data type should be used for all elements, therefore you will need to make this adjustment manually.  We apologize for any inconvenience.  Please contact <a href=\"mailto:info@formulize.org\">info@formulize.org</a> if you have any questions about this process.<br><br>\n";
 
         print "Data migration complete.  result: OK\n";
     }

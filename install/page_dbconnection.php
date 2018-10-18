@@ -46,9 +46,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty( $vars['DB_HOST'] ) && !empty( $vars['DB_USER'] )) {
-	$func_connect = empty( $vars['DB_PCONNECT'] ) ? "mysql_connect" : "mysql_pconnect";
-	if (! ( $link = @$func_connect( $vars['DB_HOST'], $vars['DB_USER'], $vars['DB_PASS'], true ) )) {
+    $hostname = empty( $vars['DB_PCONNECT'] ) ? $vars['DB_HOST'] : "p:".$vars['DB_HOST'];
+    if (! ( $link = mysqli_connect( $hostname, $vars['DB_USER'], $vars['DB_PASS']) )) {
 		$error = ERR_NO_DBCONNECTION;
+		print "Could not connect to database $hostname<br>";
 	}
 	if (empty( $error )) {
 		$wizard->redirectToPage( '+1' );
@@ -59,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty( $vars['DB_HOST'] ) && !empty
 if (@empty( $vars['DB_HOST'] )) {
 	// Fill with default values
 	$vars = array_merge( $vars, array(
-        'DB_TYPE'        => 'mysql',
+        'DB_TYPE'        => 'pdo.mysql',
         'DB_HOST'        => 'localhost',
         'DB_USER'        => '',
         'DB_PASS'        => '',
@@ -90,7 +91,7 @@ ob_start();
 <div class="blokSQL">
 <div class="dbconn_line"><label> <?php echo LEGEND_DATABASE; ?><br />
 <select size="2" name="DB_TYPE" class="db_select">
-	<option value="mysql" selected="selected">mysql</option>
+	<option value="pdo.mysql" selected="selected">mysql</option>
 </select> </label>
 <div class='clear'>&nbsp;</div>
 </div>

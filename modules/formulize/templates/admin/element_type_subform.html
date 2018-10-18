@@ -103,7 +103,17 @@
         </fieldset>
     </div>
 
-
+<div class="form-item">
+<fieldset>
+<legend>Sorting order for the subform entries</legend>
+<p>Sort the subform entries by this element ('None' means use creation order):<br />
+    <select name="elements-ele_value[SortingElement]" size="1">
+		<{html_options options=$content.subformUserFilterElements selected=$content.ele_value.SortingElement}>
+	</select>
+    &nbsp;&nbsp;&nbsp;
+    <input type='radio' name='elements-ele_value[SortingDirection]' value='ASC'>A...Z</input> &nbsp;&nbsp;&nbsp; <input type='radio' name='elements-ele_value[SortingDirection]' value='DESC'>Z...A</input></p>
+</fieldset>
+</div>
     
 
 <div class="form-item">
@@ -112,6 +122,10 @@
 <div id="filterdiv">
 	<{if $content.subformfilter}>
 				<{$content.subformfilter}>
+        <p>Allow the user to filter entries manually, based on this element:</p>
+        <select name="elements-ele_value[UserFilterByElement]" size="1">
+			<{html_options options=$content.subformUserFilterElements selected=$content.ele_value.UserFilterByElement}>
+		</select>
 				</div>
 				<div class="description">
 By default, all entries in a subform that are tied to the main form will be accessible.  You can set conditions here that will limit which entries will be accessible.  This is useful if you have multiple types of entries in a subform, and want the user to interact with each type in a separate place.  For example, a Housing subform might have entries for "apartments," "townhouses," and "houses".  You could set this subform element to just show apartments, and another subform element to just show houses.
@@ -119,8 +133,12 @@ By default, all entries in a subform that are tied to the main form will be acce
 				<div class="description">
 				If you have any "match all" conditions that use the = operator, then any new entries you add through the subform interface, will have those values assigned automatically.  For example, if you limit this subform interface to only entries where "type" = "apartment" then all new entries you create would have the value of "type" set to "apartment".
 				</div>
+        <div class="description">
+        If you allow the user to filter based on a selected element, then no subform entries will appear until the user has typed something in the filter box. Then, only the matching entries will be shown. Filters you specify above will be applied in addition to the filter the user types.
+        </div>
 				<{else}>
 					<p>You need to select a subform and save this element before you can choose conditions.</p>
+        </div>
 <{/if}>					
 </fieldset>
 </div>

@@ -31,7 +31,8 @@
 ###############################################################################
 
 // this file generates the export popup
-require_once "../../../mainfile.php";
+
+include_once "../../../mainfile.php";
 global $xoopsConfig;
 // load the formulize language constants if they haven't been loaded already
 if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
@@ -98,6 +99,8 @@ if (!isset($_POST['metachoice'])) {
     if (!isset($_GET['type'])) {
         print "<p><input type=\"radio\" name=\"metachoice\" value=\"1\">"._formulize_DB_EXPORT_METAYES."</input>\n<br>\n";
         print "<input type=\"radio\" name=\"metachoice\" value=\"0\" checked>"._formulize_DB_EXPORT_METANO."</input>\n</p>\n";
+    } else {
+        print "<input type=\"hidden\" name=\"metachoice\" value=\"0\">\n";
     }
 
     $module_handler = xoops_gethandler('module');
@@ -112,12 +115,6 @@ if (!isset($_POST['metachoice'])) {
     print "</center></body>";
     print "</HTML>";
 } else {
-    if (!isset($_POST['metachoice'])) {
-        // just set this to zero in case it's not set, which should never matter, since if 'type' is set,
-        //  and metachoice is therefore skipped above, and you're making a template for updating, the metachoice
-        //  is ignored in the actual export file creation process when updating
-        $_POST['metachoice'] = 0;
-    }
 
     // 1. need to pickup the full query that was used for the dataset on the page where the button was clicked
     // 2. need to run that query and make a complete dataset
@@ -232,38 +229,42 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
 
     // get a list of columns for export
     $headers = array();
-    if ($include_metadata) {
-        // include metadata columns if the user requested them
-        $headers = array(_formulize_ENTRY_ID, _formulize_DE_CALC_CREATOR, _formulize_DE_CALC_MODIFIER,
-            _formulize_DE_CALC_CREATEDATE, _formulize_DE_CALC_MODDATE);
-    } else {
-        if (in_array("entry_id", $columns)) {
-            $headers[] = _formulize_ENTRY_ID;
-        }
-        if (in_array("uid", $columns) OR in_array("creation_uid", $columns)) {
-            $headers[] = _formulize_DE_CALC_CREATOR;
-        }
-        if (in_array("proxyid", $columns) OR in_array("mod_uid", $columns)) {
-            $headers[] = _formulize_DE_CALC_MODIFIER;
-        }
-        if (in_array("creation_date", $columns) OR in_array("creation_datetime", $columns)) {
-            $headers[] = _formulize_DE_CALC_CREATEDATE;
-        }
-        if (in_array("mod_date", $columns) OR in_array("mod_datetime", $columns)) {
-            $headers[] = _formulize_DE_CALC_MODDATE;
-        }
-    }
+    $metaDataHeaders = array(_formulize_ENTRY_ID, _formulize_DE_CALC_CREATOR, _formulize_DE_CALC_MODIFIER, _formulize_DE_CALC_CREATEDATE, _formulize_DE_CALC_MODDATE, _formulize_DE_CALC_CREATOR_EMAIL);
+    $metaDataColsToAdd = array("entry_id","creation_uid","mod_uid","creation_datetime","mod_datetime","creator_email");
     foreach ($columns as $thiscol) {
         if ("creator_email" == $thiscol) {
             $headers[] = _formulize_DE_CALC_CREATOR_EMAIL;
+            unset($metaDataColsToAdd[5]);
+            unset($metaDataHeaders[5]);
+        } elseif ("entry_id" == $thiscol) {
+            $headers[] = _formulize_ENTRY_ID;
+            unset($metaDataColsToAdd[0]);
+            unset($metaDataHeaders[0]);
+        } elseif ("creation_uid" == $thiscol OR "uid" == $thiscol) {
+            $headers[] = _formulize_DE_CALC_CREATOR;
+            unset($metaDataColsToAdd[1]);
+            unset($metaDataHeaders[1]);
+        } elseif ("proxyid" == $thiscol OR "mod_uid" == $thiscol) {
+            $headers[] = _formulize_DE_CALC_MODIFIER;
+            unset($metaDataColsToAdd[2]);
+            unset($metaDataHeaders[2]);
+        } elseif ("creation_date" == $thiscol OR "creation_datetime" == $thiscol) {
+            $headers[] = _formulize_DE_CALC_CREATEDATE;
+            unset($metaDataColsToAdd[3]);
+            unset($metaDataHeaders[3]);
+        } elseif ("mod_date"  == $thiscol OR "mod_datetime" == $thiscol) {
+            $headers[] = _formulize_DE_CALC_MODDATE;
+            unset($metaDataColsToAdd[4]);
+            unset($metaDataHeaders[4]);
         } else {
             $colMeta = formulize_getElementMetaData($thiscol, true);
             $headers[] = $colMeta['ele_colhead'] ? trans($colMeta['ele_colhead']) : trans($colMeta['ele_caption']);
         }
     }
-    if ($include_metadata) {
+    if ($include_metadata AND count($metaDataColsToAdd)>0) {
         // include metadata columns if the user requested them
-        $columns = array_merge(array("entry_id", "uid", "proxyid", "creation_date", "mod_date"), $columns);
+        $columns = array_merge($metaDataColsToAdd, $columns);
+        $headers = array_merge($metaDataHeaders,$headers);
     }
 
     if (strstr(strtolower(_CHARSET),'utf') AND $_POST['excel'] == 1) {
@@ -278,62 +279,78 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
     $GLOBALS['formulize_doingExport'] = true;
     unset($queryData[0]); // get rid of the fid and userid lines
     unset($queryData[1]);
+       
     $data_sql = implode(" ", $queryData); // merge all remaining lines into one string to send to getData
-
-    $limitStart = 0;
-    $limitSize = 50;    // export in batches of 50 records at a time
-
-    do {
-        // load part of the data, since a very large dataset could exceed the PHP memory limit
-        $data = getData($frid, $fid, $data_sql, "AND", null, $limitStart, $limitSize);
-        if (is_array($data)) {
-            foreach ($data as $entry) {
-                $row = array();
-                foreach ($columns as $column) {
-                    switch ($column) {
-                        case "entry_id":
-                        $formhandle = getFormHandlesFromEntry($entry);
-                        $ids = internalRecordIds($entry, $formhandle[0]);
-                        $row[] = $ids[0];
-                        break;
-
-                        case "uid":
-                        $c_uid = display($entry, 'creation_uid');
-                        $c_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$c_uid'");
-                        $row[] = (isset($c_name_q[0]['name']) ? $c_name_q[0]['name'] : $c_name_q[0]['uname']);
-                        break;
-
-                        case "proxyid":
-                        $m_uid = display($entry, 'mod_uid');
-                        if ($m_uid) {
-                            $m_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$m_uid'");
-                            $row[] = (isset($m_name_q[0]['name']) ? $m_name_q[0]['name'] : $m_name_q[0]['uname']);
-                        } else {
-                            $row[] = "";
-                        }
-                        break;
-
-                        case "creation_date":
-                        $row[] = display($entry, 'creation_datetime');
-                        break;
-
-                        case "mod_date":
-                        $row[] = display($entry, 'mod_datetime');
-                        break;
-
-                        default:
-                        $row[] = trans(html_entity_decode(displayTogether($entry, $column, ", "), ENT_QUOTES));
-                    }
-                }
-                // output this row to the browser
-                fputcsv($output_handle, $row);
+    if(substr($data_sql, 0, 12)=="USETABLEFORM") {
+        $params = explode(" -- ", $data_sql);
+        $data = dataExtractionTableForm($params[1], $params[2], $params[3], $params[4], $params[5], FALSE, FALSE, $params[8], $params[9]);
+        foreach($data as $entry) {
+            $row = array();
+            foreach($columns as $column) {
+                $row[] = trans(html_entity_decode(displayTogether($entry, $column, ", "), ENT_QUOTES));    
             }
-
-            // get the next set of data
-            set_time_limit(90);
-            $limitStart += $limitSize;
+            // output this row to the browser
+            fputcsv($output_handle, $row);
         }
-    } while (is_array($data) and count($data) > 0);
+        
+    } else {
 
+        $limitStart = 0;
+        $limitSize = 50;    // export in batches of 50 records at a time
+    
+        do {
+            // load part of the data, since a very large dataset could exceed the PHP memory limit
+            $data = getData($frid, $fid, $data_sql, "AND", null, $limitStart, $limitSize);
+            if (is_array($data)) {
+                foreach ($data as $entry) {
+                    $row = array();
+                    foreach ($columns as $column) {
+                        switch ($column) {
+                            case "entry_id":
+                            $formhandle = getFormHandlesFromEntry($entry);
+                            $ids = internalRecordIds($entry, $formhandle[0]);
+                            $row[] = $ids[0];
+                            break;
+    
+                            case "uid":
+                            $c_uid = display($entry, 'creation_uid');
+                            $c_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$c_uid'");
+                            $row[] = (isset($c_name_q[0]['name']) ? $c_name_q[0]['name'] : $c_name_q[0]['uname']);
+                            break;
+    
+                            case "proxyid":
+                            $m_uid = display($entry, 'mod_uid');
+                            if ($m_uid) {
+                                $m_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$m_uid'");
+                                $row[] = (isset($m_name_q[0]['name']) ? $m_name_q[0]['name'] : $m_name_q[0]['uname']);
+                            } else {
+                                $row[] = "";
+                            }
+                            break;
+    
+                            case "creation_date":
+                            $row[] = display($entry, 'creation_datetime');
+                            break;
+    
+                            case "mod_date":
+                            $row[] = display($entry, 'mod_datetime');
+                            break;
+    
+                            default:
+                            $row[] = trans(html_entity_decode(displayTogether($entry, $column, ", "), ENT_QUOTES));
+                        }
+                    }
+                    // output this row to the browser
+                    fputcsv($output_handle, $row);
+                }
+    
+                // get the next set of data
+                set_time_limit(90);
+                $limitStart += $limitSize;
+            }
+        } while (is_array($data) and count($data) > 0);
+
+    }
+        
     fclose($output_handle);
 }

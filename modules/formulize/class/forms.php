@@ -32,29 +32,12 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-require_once XOOPS_ROOT_PATH.'/kernel/object.php';
+include_once XOOPS_ROOT_PATH.'/kernel/object.php';
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 class formulizeForm extends XoopsObject {
-function checkFormOwnership($id_form,$form_handle){
 
-		global $xoopsDB;
-                //check to see if there are entries in the form which 
-                //do not appear in the entry_owner_groups table. If so, it finds the 
-                // owner/creator of the entry and calls setEntryOwnerGroups() which inserts the
-                //first, get the form ids and handles.  
-                $missingEntries=q("SELECT main.entry_id,main.creation_uid From " . $xoopsDB->prefix("formulize_".$form_handle) . " as main WHERE NOT EXISTS(
-               SELECT 1 FROM " . $xoopsDB->prefix("formulize_entry_owner_groups") . " as eog WHERE eog.fid=".$id_form ." and eog.entry_id=main.entry_id )");
-                //now we got the missing entries in the form and the users who created them.    
-                $data_handler = new formulizeDataHandler($id_form);
-                foreach ($missingEntries as $entry){
-                        if (!$groupResult = $data_handler->setEntryOwnerGroups($entry['creation_uid'],$entry['entry_id'])) {
-                                print "ERROR: failed to write the entry ownership information to the database.<br>";
-                        }
-                }
-	return count($missingEntries);
-        }
-	function formulizeForm($id_form="", $includeAllElements=false){
+	function __construct($id_form="", $includeAllElements=false){
 
 		// validate $id_form
 		global $xoopsDB;
@@ -134,6 +117,8 @@ function checkFormOwnership($id_form,$form_handle){
 			}
 			
 			// gather the view information
+            list($views, $viewNames, $viewFrids, $viewPublished) = self::getFormViews($id_form);
+            
 			$viewq = q("SELECT * FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_mainform = '$id_form' OR (sv_mainform = '' AND sv_formframe = '$id_form')");
 			if(!isset($viewq[0])) {
 				$views = array();
@@ -160,7 +145,7 @@ function checkFormOwnership($id_form,$form_handle){
 			}
 		}
 
-		$this->XoopsObject();
+		parent::__construct();
 		//initVar params: key, data_type, value, req, max, opt
 		$this->initVar("id_form", XOBJ_DTYPE_INT, $id_form, true);
 		$this->initVar("lockedform", XOBJ_DTYPE_INT, $formq[0]['lockedform'], true);
@@ -190,9 +175,34 @@ function checkFormOwnership($id_form,$form_handle){
         $this->initVar("note", XOBJ_DTYPE_TXTAREA, $formq[0]['note']);
     }
 
+    /* Get the views for the supplied form id
+	*  This function also gets invoked by an ajax call from screen_list_entries.html to reload all available views on the dropdown menu.
+	*/
+	function getFormViews($id_form) {
+		
+		global $xoopsDB;        
+		
+		$viewq = q("SELECT * FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_mainform = '".intval($id_form)."' OR (sv_mainform = '' AND sv_formframe = '".intval($id_form)."')");
+		if(!isset($viewq[0])) {
+			$views = array();
+			$viewNames = array();
+			$viewFrids = array();
+			$viewPublished = array();
+		} else {
+			for($i=0;$i<count($viewq);$i++) {
+				
+				$views[$i] = $viewq[$i]['sv_id'];
+				$viewNames[$i] = stripslashes($viewq[$i]['sv_name']);
+				$viewFrids[$i] = $viewq[$i]['sv_mainform'] ? $viewq[$i]['sv_formframe'] : "";
+				$viewPublished[$i] = $viewq[$i]['sv_pubgroups'] ? true : false;
+			}
+		}
+		return array($views, $viewNames, $viewFrids, $viewPublished);
+	}
+    
     static function sanitize_handle_name($handle_name) {
         // strip non-alphanumeric characters from form and element handles
-        return preg_replace("/[^a-zA-Z0-9_]+/", "", $handle_name);
+        return preg_replace("/[^a-zA-Z0-9_-]+/", "", $handle_name);
     }
 
     public function assignVar($key, $value) {
@@ -381,7 +391,7 @@ EOF;
         global $xoopsDB;
         $result = $xoopsDB->query("select count(*) as row_count from ".$xoopsDB->prefix("formulize_".$this->form_handle));
         if (false == $result) {
-            error_log(mysql_error());
+            error_log($xoopsDB->error());
         }
         list($count) = $xoopsDB->fetchRow($result);
         return $count;
@@ -411,7 +421,7 @@ EOF;
 
 class formulizeFormsHandler {
 	var $db;
-	function formulizeFormsHandler(&$db) {
+	function __construct(&$db) {
 		$this->db =& $db;
 	}
 	function &getInstance(&$db) {
@@ -913,6 +923,7 @@ class formulizeFormsHandler {
 		if(!$element = _getElementObject($element)) {
 			return false;
 		}
+        if($element->hasData) {
 		global $xoopsDB;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($element->getVar('id_form'));
@@ -930,6 +941,9 @@ class formulizeFormsHandler {
 			}
 		}
 		return true;
+        } else {
+            return false;
+        }
 	}
 	
 	// update the field name in the datatable.  $element can be an id or an object.
@@ -1118,8 +1132,8 @@ class formulizeFormsHandler {
 
 			$likeBits = (strstr(strtoupper($filterSettings[1][$i]), "LIKE") AND substr($filterSettings[2][$i], 0, 1) != "%" AND substr($filterSettings[2][$i], -1) != "%") ? "%" : "";
 			$termToUse = str_replace("{USER}", $uid, $filterSettings[2][$i]); 
-			if (ereg_replace("[^A-Z{}]","", $termToUse) === "{TODAY}") {
-				$number = ereg_replace("[^0-9+-]","", $termToUse);
+			if (preg_replace("[^A-Z{}]","", $termToUse) === "{TODAY}") {
+				$number = preg_replace("[^0-9+-]","", $termToUse);
 				$termToUse = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
 			}
 			$termToUse = (is_numeric($termToUse) AND !strstr(strtoupper($filterSettings[1][$i]), "LIKE")) ? $termToUse : "\"$likeBits".formulize_db_escape($termToUse)."$likeBits\"";
@@ -1242,7 +1256,7 @@ class formulizeFormsHandler {
 
 	  // Need to create the new data table now -- July 1 2007
     if(!$tableCreationResult = $this->createDataTable($newfid, $fid, $oldNewEleIdMap)) { 
-      print "Error: could not make the necessary new datatable for form " . $newfid . ".  Please delete the cloned form and report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.<br>".$xoopsDB->error();
+      print "Error: could not make the necessary new datatable for form " . $newfid . ".  Please delete the cloned form and report this error to <a href=\"mailto:info@formulize.org\">info@formulize.org</a>.<br>".$xoopsDB->error();
       return false;
     }
 
@@ -1251,7 +1265,7 @@ class formulizeFormsHandler {
         include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php"; // formulize data handler
         $dataHandler = new formulizeDataHandler($newfid);
         if(!$cloneResult = $dataHandler->cloneData($fid, $oldNewEleIdMap)) {
-        print "Error:  could not clone the data from the old form to the new form.  Please delete the cloned form and report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.<br>".$xoopsDB->error();
+        print "Error:  could not clone the data from the old form to the new form.  Please delete the cloned form and report this error to <a href=\"mailto:info@formulize.org\">info@formulize.org</a>.<br>".$xoopsDB->error();
             return false;
         }
     }
@@ -1263,7 +1277,7 @@ class formulizeFormsHandler {
 		if (!$tableCreationResult = $this->createDataTable($newfid, 0, false, true)) {
 			print "Error: could not create revisions table for form $newfid. ".
 				"Please delete the cloned form and report this error to ".
-				"<a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.<br>".$xoopsDB->error();
+				"<a href=\"mailto:info@formulize.org\">info@formulize.org</a>.<br>".$xoopsDB->error();
 			return false;
 		}
 	}
@@ -1362,7 +1376,7 @@ class formulizeFormsHandler {
 		}
 	}
 
-	function renameDataTable($oldName, $newName, $formObject) {
+	function renameDataTable($oldName, $newName) {
 		global $xoopsDB;
 
 		$renameSQL = "RENAME TABLE " . $xoopsDB->prefix("formulize_" . $oldName) . " TO " . $xoopsDB->prefix("formulize_" . $newName) . ";";
@@ -1370,10 +1384,10 @@ class formulizeFormsHandler {
 		if(!$renameRes = $xoopsDB->queryF($renameSQL)) {
 		  return false;
 		}
-		if($this->revisionsTableExists($oldName)) { // check with the fid, which will force the method to get a cached version of the object, that will have the old name, so we can check against that name (form_settings_save.php sends the updated object with the new name)
+		if($this->revisionsTableExists($oldName)) { 
 			$renameSQL = "RENAME TABLE " . $xoopsDB->prefix("formulize_" . $oldName."_revisions") . " TO " . $xoopsDB->prefix("formulize_" . $newName."_revisions") . ";";
 			if(!$renameRes = $xoopsDB->queryF($renameSQL)) {
-			  print "Error: could not rename the revisions table for form ".$formObject->getVar('form_handle');
+			  print "Error: could not rename the revisions table for form $oldName";
 			  return false;
 			}
 		}
@@ -1386,7 +1400,7 @@ class formulizeFormsHandler {
 	 */
 	public function setPermissionsForClonedForm($fid, $newfid)
 	{
-// replicate permissions of the original form on the new cloned form
+        // replicate permissions of the original form on the new cloned form
 		$criteria = new CriteriaCompo();
 		$criteria->add(new Criteria('gperm_itemid', $fid), 'AND');
 		$criteria->add(new Criteria('gperm_modid', getFormulizeModId()), 'AND');
@@ -1396,6 +1410,6 @@ class formulizeFormsHandler {
 			// do manual inserts, since addRight uses the xoopsDB query method, which won't do updates/inserts on GET requests
 			$sql = "INSERT INTO " . $this->db->prefix("group_permission") . " (gperm_name, gperm_itemid, gperm_groupid, gperm_modid) VALUES ('" . $thisOldPerm->getVar('gperm_name') . "', $newfid, " . $thisOldPerm->getVar('gperm_groupid') . ", " . getFormulizeModId() . ")";
 			$res = $this->db->queryF($sql);
-}
+        }
 	}
 }

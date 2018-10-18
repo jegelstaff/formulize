@@ -28,8 +28,8 @@ $pageHasHelp = true;
 
 $vars = & $_SESSION ['settings'];
 
-$func_connect = empty ( $vars ['DB_PCONNECT'] ) ? "mysql_connect" : "mysql_pconnect";
-if (! ($link = @$func_connect ( $vars ['DB_HOST'], $vars ['DB_USER'], $vars ['DB_PASS'], true ))) {
+$hostname = empty ( $vars ['DB_PCONNECT'] ) ? $vars ['DB_HOST'] : "p:".$vars ['DB_HOST'];
+if (! ($link = @mysqli_connect( $hostname, $vars ['DB_USER'], $vars ['DB_PASS'] ))) {
 	$error = ERR_NO_DBCONNECTION;
 	$wizard->redirectToPage ( '-1', $error );
 	exit ();
@@ -50,8 +50,8 @@ function getDbCharsets($link) {
 
 	$charsets ["utf8"] = "UTF-8 Unicode";
 	$ut8_available = false;
-	if ($result = mysql_query ( "SHOW CHARSET", $link )) {
-		while ($row = mysql_fetch_assoc ( $result )) {
+	if ($result = mysqli_query ( $link, "SHOW CHARSET")) {
+		while ($row = mysqli_fetch_assoc ( $result )) {
 			$charsets [$row ["Charset"]] = $row ["Description"];
 			if ($row ["Charset"] == "utf8") {
 				$ut8_available = true;
@@ -69,8 +69,8 @@ function getDbCollations($link, $charset) {
 	static $collations = array ( );
 
 	// ALTERED BY FREEFORM SOLUTIONS TO CORRECT A BUG IN THE DETECTION OF THE DEFAULT COLLATION FOR THE CHARSET
-	if ($result = mysql_query ( "SHOW COLLATION LIKE '" . mysql_real_escape_string ( $charset ) . "_%'", $link )) {
-		while ($row = mysql_fetch_assoc ( $result )) {
+	if ($result = mysqli_query ( $link, "SHOW COLLATION LIKE '" . mysqli_real_escape_string ( $link, $charset ) . "_%'")) {
+		while ($row = mysqli_fetch_assoc ( $result )) {
 			if(substr($row["Collation"], 0, strlen($charset)+1) == $charset."_") {
 				$collations [$charset] [$row ["Collation"]] = $row ["Default"] ? 1 : 0;
 			}
@@ -86,7 +86,7 @@ function validateDbCharset($link, &$charset, &$collation) {
 	if (empty ( $charset )) {
 		$collation = "";
 	}
-	if (version_compare ( mysql_get_server_info ( $link ), "4.1.0", "lt" )) {
+	if (version_compare ( mysqli_get_server_info ( $link ), "4.1.0", "lt" )) {
 		$charset = $collation = "";
 	}
 	if (empty ( $charset ) && empty ( $collation )) {
@@ -107,7 +107,7 @@ function validateDbCharset($link, &$charset, &$collation) {
 }
 
 function xoFormFieldCollation($name, $value, $label, $help = '', $link, $charset) {
-	if (version_compare ( mysql_get_server_info ( $link ), "4.1.0", "lt" )) {
+	if (version_compare ( mysqli_get_server_info ( $link ), "4.1.0", "lt" )) {
 		return "";
 	}
 	if (empty ( $charset ) || ! $collations = getDbCollations ( $link, $charset )) {
@@ -167,9 +167,10 @@ if ($_SERVER ['REQUEST_METHOD'] == 'POST' && ! empty ( $vars ['DB_NAME'] )) {
 	$error = validateDbCharset ( $link, $vars ['DB_CHARSET'], $vars ['DB_COLLATION'] );
 	$db_exist = false;
 	if (empty ( $error )) {
-		if (! @mysql_select_db ( $vars ['DB_NAME'], $link )) {
+		if (! @mysqli_select_db ($link, $vars ['DB_NAME'] )) {
 			// Database not here: try to create it
-			$result = mysql_query ( "CREATE DATABASE `" . $vars ['DB_NAME'] . '`' );
+//			$result = mysql_query ( "CREATE DATABASE `" . $vars ['DB_NAME'] . '`' );
+			$result = mysqli_query($link, "CREATE DATABASE `" . $vars ['DB_NAME'] . '`' );
 			if (! $result) {
 				$error = ERR_NO_DATABASE;
 			} else {
@@ -180,8 +181,9 @@ if ($_SERVER ['REQUEST_METHOD'] == 'POST' && ! empty ( $vars ['DB_NAME'] )) {
 			$db_exist = true;
 		}
 		if ($db_exist && $vars ['DB_CHARSET']) {
-			$sql = "ALTER DATABASE `" . $vars ['DB_NAME'] . "` DEFAULT CHARACTER SET " . mysql_real_escape_string ( $vars ['DB_CHARSET'] ) . ($vars ['DB_COLLATION'] ? " COLLATE " . mysql_real_escape_string ( $vars ['DB_COLLATION'] ) : "");
-			if (! mysql_query ( $sql )) {
+			$sql = "ALTER DATABASE `" . $vars ['DB_NAME'] . "` DEFAULT CHARACTER SET " . mysqli_real_escape_string ( $link, $vars ['DB_CHARSET'] ) . ($vars ['DB_COLLATION'] ? " COLLATE " . mysqli_real_escape_string ( $link, $vars ['DB_COLLATION'] ) : "");
+//			if (! mysql_query ( $sql )) {
+			if (! mysqli_query ( $link, $sql )) {
 				$error = ERR_CHARSET_NOT_SET .'<br />'. $sql;
 			}
 		}
@@ -213,7 +215,7 @@ function xoFormField($name, $value, $label, $maxlength, $help = '') {
 }
 
 function xoFormFieldCharset($name, $value, $label, $help = '', $link) {
-	if (version_compare ( mysql_get_server_info ( $link ), "4.1.0", "lt" )) {
+	if (version_compare ( mysqli_get_server_info ( $link ), "4.1.0", "lt" )) {
 		return "";
 	}
 	if (! $chars = getDbCharsets ( $link )) {
