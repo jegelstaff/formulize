@@ -5011,7 +5011,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
     // if it's a { } term, then assume it's a data handle for a field in the form where the element is being included
     if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND !$targetElementObject->isLinked) {
         if (isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][substr($filterTerms[$filterId],1,-1)])) {
-            $conditionsFilterComparisonValue = "'".$likebits.formulize_escape($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][substr($filterTerms[$filterId],1,-1)]).$likebits."'";
+            $conditionsFilterComparisonValue = "'".$likebits.formulize_db_escape($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][substr($filterTerms[$filterId],1,-1)]).$likebits."'";
         } elseif ($curlyBracketEntry == "new") {
             // for textboxes, let's try to get their default value
             // for other elements, generate the default is too tricky to get it to work at present, not enough time available
