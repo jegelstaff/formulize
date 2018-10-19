@@ -37,8 +37,6 @@ if(!isset($processedValues)) {
 $op = $_POST['formulize_admin_op'];
 $relationship_id = $_POST['formulize_admin_key'];
 
-//echo $_POST["relationships-linkages"];
-//echo $_POST['formulize_admin_key']."\n";
 
 
 
@@ -142,6 +140,11 @@ function updateframe($relationship_id) {
     // update the frame with the settings specified on the main modframe page
     $links = array();
     $unified_delete = array();  // track the delete checkboxes that are saved on, so we know which ones to to save as off
+    
+//    foreach($processedValues['relationships'] as $key => $value){
+//        echo "key:".$key."       value:".$value."\n";
+//    }
+    
     foreach($processedValues['relationships'] as $key => $value) {
         if(substr($key, 0, 3) == "rel") {
             $fl_id = substr($key, 3);
@@ -208,12 +211,16 @@ function updatelinks($fl_id, $value) {
     global $xoopsDB, $processedValues;
 
     $keys = explode("+", $value);
+//    foreach($keys as $key => $val){
+//        echo "key:".$key."     value:".$val."\n";
+//    }
     if(isset($keys[2]) AND $keys[2] == "common") {
         $common = 1;
     }
     else {
         $common = $processedValues['relationships']['preservecommon'.$fl_id] == $value ? 1 : 0;
     }
+    // 
 //    if(!is_numeric($keys[0]) && $keys[0] == "id"){
 //        
 //    }

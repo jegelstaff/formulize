@@ -275,12 +275,13 @@ CREATE TABLE formulize_framework_links (
   fl_frame_id smallint(5),
   fl_form1_id smallint(5),
   fl_form2_id smallint(5),
-  fl_key1 smallint(5),
+  fl_key1 varchar(10),
   fl_key2 smallint(5),
   fl_relationship smallint(5),
   fl_unified_display smallint(5),
   fl_unified_delete smallint(5),
   fl_common_value tinyint(1) NOT NULL default '0',
+  fl_foreign_key_element_link smallint(5),
   PRIMARY KEY (`fl_id`)
 ) ENGINE=MyISAM;
 
