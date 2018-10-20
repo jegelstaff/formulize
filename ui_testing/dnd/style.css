@@ -1,66 +1,89 @@
-.tilt {
-    transform: rotate(3deg);
-    -moz-transform: rotate(3deg);
-    -webkit-transform: rotate(3deg);
-}
 body {
     min-width: 520px;
 }
+
 .column {
-    width: 170px;
+    border: 0.5px dotted #7a7a7a;
     float: left;
-    padding-bottom: 100px;
+    padding: 10px;
+    margin: 18px;
 }
-}
+
 .form-toggle {
     position: absolute;
     top: 50%;
     right: 0;
     margin-top: -8px;
 }
+
 .form-placeholder {
-    border: 1px dotted black;
-    margin: 0 1em 1em 0;
-    height: 50px;
+    background-color: #eeeeee;
+    display: block;
+    position: relative;
+    margin: 1px;
 }
 
 .form {
     margin: 0 1em 1em 0;
     padding: 0.3em;
-	color:#999999;
-}
-.form-content{
-    color:#999999;
-    display: none;
+    color: #999999;
 }
 
-.form-header {
-    padding: 0.2em 0.3em;
-    position: relative;
-    -webkit-touch-callout: none; /* iOS Safari */
-    -webkit-user-select: none; /* Safari */
-     -khtml-user-select: none; /* Konqueror HTML */
-    -moz-user-select: none; /* Firefox */
-    -ms-user-select: none; /* Internet Explorer/Edge */
+.form-layout,
+.form-draggable {
+    max-width: 250px;
+    border: 1px solid #cacaca;
+    -webkit-touch-callout: none;
+    /* iOS Safari */
+    -webkit-user-select: none;
+    /* Safari */
+    -khtml-user-select: none;
+    /* Konqueror HTML */
+    -moz-user-select: none;
+    /* Firefox */
+    -ms-user-select: none;
+    /* Internet Explorer/Edge */
     user-select: none;
-	background-color:#fafafa;
-	border:1px solid #999999;
-	display:inline-block;
-	font-family:Arial;
-	font-size:13px;
-	font-weight:bold;
-	padding:6px 12px;
-	text-decoration:none;
-}
-.form-header:hover {
-    transform: scale(1.03);
-    box-shadow: 1px 1px 1px #999999;
-    
-	cursor:grab;
+    background-color: #fcfcfc;
+    box-shadow: 0 0 0.5px 0.5px rgba(0, 0, 0, 0.05);
+    display: inline-block;
+    vertical-align: middle;
+    font-family: Arial;
+    font-size: 13px;
+    font-weight: bold;
+    padding: 6px 12px;
+    margin: 4px;
+    text-decoration: none;
 }
 
-.form-header:active {
-	position:relative;
-	top:1px;
-	cursor:grabbing;
+.form-content {
+    padding-top: 0.5em;
+    color: #999999;
+    display: table-cell;
+    align-content: flex-start;
+}
+
+.form-draggable:hover {
+    box-shadow: 0 1px 2px 1px rgba(0, 0, 0, 0.1);
+    cursor: grab;
+}
+
+.form-draggable:active {
+    position: relative;
+    opacity: 0.5;
+}
+
+.ui-widget-header,
+.ui-state-default,
+ui-button {
+    background: #b9cd6d;
+    border: 1px solid #b9cd6d;
+    color: #FFFFFF;
+    font-weight: bold;
+}
+
+.form-draggable > img {
+    width: 18px;
+    height: auto;
+    padding-right: 0.5em; 
 }

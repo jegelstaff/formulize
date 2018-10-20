@@ -1,32 +1,47 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="utf-8"/>
 
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js" ></script>
-        
-        <script src="js/jsfile.js"></script>
-    
-        <link rel="stylesheet" type="text/css" href="style.css">
+<head>
+    <meta charset="utf-8" />
+    <link href="https://code.jquery.com/ui/1.10.4/themes/ui-lightness/jquery-ui.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+    <script src="https://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+
+
+    <script src="js/jsfile.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="style.css">
 </head>
-    
-        <div class="form-header">F0</div>
-
+<p>New Relationship</p>
 <div class="column">
+    <p>Current Form:</p>
     <div class="form">
-        <div class="form-header">F0</div>
+        <div class="form-layout">{form}
+            <div class="form-content" id="droppable">
+
+                <div class="form-draggable">
+                    <img class="relationship-image" src="../base_icon.png" />Onetoone</div>
+
+
+                <div class="form-draggable">Form3</div>
+                <div class="form-draggable">Form55</div>
+                <div class="form-draggable">
+                    <img class="relationship-image" src="../one%20to%20one%20icon%20v2.png" />Onetoone</div>
+            </div>
+        </div>
+
+
     </div>
 </div>
-    
+
 <div class="column">
+    <p>All Forms:</p>
     <div class="form">
-        <div class="form-header">F1</div>
-        <div class="form-placeholder"></div>
-    </div>
-    <div class="form">
-        <div class="form-header">F2</div>
-        <div class="form-content">create a relationship with F2</div>
+
+        <div class="form-draggable">Drag</div>
+
+        <div class="form-draggable">Drop</div>
+
     </div>
 </div>
 
