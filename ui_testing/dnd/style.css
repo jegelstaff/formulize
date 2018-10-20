@@ -16,13 +16,6 @@ body {
     margin-top: -8px;
 }
 
-.form-placeholder {
-    background-color: #eeeeee;
-    display: block;
-    position: relative;
-    margin: 1px;
-}
-
 .form {
     margin: 0 1em 1em 0;
     padding: 0.3em;
@@ -51,16 +44,17 @@ body {
     font-family: Arial;
     font-size: 13px;
     font-weight: bold;
-    padding: 6px 12px;
+    padding: 6px 6px;
     margin: 4px;
     text-decoration: none;
 }
 
 .form-content {
-    padding-top: 0.5em;
+    padding-top: em;
     color: #999999;
     display: table-cell;
     align-content: flex-start;
+    border: 1px solid #cacaca;
 }
 
 .form-draggable:hover {
@@ -73,17 +67,29 @@ body {
     opacity: 0.5;
 }
 
-.ui-widget-header,
-.ui-state-default,
-ui-button {
-    background: #b9cd6d;
-    border: 1px solid #b9cd6d;
-    color: #FFFFFF;
-    font-weight: bold;
+.form-focus {
+    border: 1px dotted blue;	
+    background-color: rgba(0, 0, 0, 0.01);
 }
 
 .form-draggable > img {
     width: 18px;
     height: auto;
     padding-right: 0.5em; 
+}
+
+.highlight {
+    display: inline-block;
+    vertical-align: middle;
+    position: relative;
+    border: 1px dotted #cacaca;
+	min-height: 28px;
+	min-width: 48px;
+    background-color: #cacaca;
+}
+
+.tilt {
+    transform: rotate(3deg);
+    -moz-transform: rotate(3deg);
+    -webkit-transform: rotate(3deg);
 }
