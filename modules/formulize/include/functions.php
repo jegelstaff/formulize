@@ -1318,7 +1318,14 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
 
     $colcounter = 0;
     $i=0;
+    
+    $secondaryData = array();
     foreach ($data as $entry) {
+
+        // if we have secondary row data to draw in, do that before we get to the next entry...
+        $csvfile = prepExportSecondaryData($csvfile, $cols, $fd, $secondaryData);
+        $secondaryData = array(); // reset the secondary data
+        
         $formhandle = getFormHandlesFromEntry($entry);
         $ids = internalRecordIds($entry, $formhandle[0]);
         $id = $ids[0];
@@ -1366,6 +1373,16 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
                 if (!$data_to_write) { $data_to_write = $name_q[0]['uname']; }
             } else {
                 $data_to_write = displayTogether($entry, $col, ", ");
+                // experimental, replace displayTogether with a technique for splitting contents onto other lines below...
+                /*
+                $raw_data = display($entry, $col);
+                if(is_array($raw_data)) {
+                    $data_to_write = $raw_data[0];
+                    unset($raw_data[0]);
+                    $secondaryData[$col] = $raw_data;
+                } else {
+                    $data_to_write = $raw_data;
+                }*/
                 $data_to_write = str_replace("&quot;", "\"\"", $data_to_write);
                 $data_to_write = "\"" . trans($data_to_write) . "\"";
                 $data_to_write = str_replace("\r\n", "\n", $data_to_write);
@@ -1378,6 +1395,10 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
         }
         $csvfile .= "\r\n"; // end of a line
     }
+    
+    // grab and output any secondary data for the last entry, if there was any
+    $csvfile = prepExportSecondaryData($csvfile, $cols, $fd, $secondaryData);
+    
     $tempfold = microtime(true);
     $exfilename = _formulize_DE_XF . $tempfold . $fxt;
 
@@ -1403,6 +1424,36 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
     return XOOPS_URL . SPREADSHEET_EXPORT_FOLDER . "$exfilename";
 }
 
+// draw in secondary data rows (unique to AOHC)
+function prepExportSecondaryData($csvfile, $cols, $fd, $secondaryData) {
+    $secondaryDataKey = 1;
+    while(count($secondaryData)>0) {
+        $lineStarted = false;
+        if($_POST['metachoice'] == 1) { // not sure about this...interaction of selected/visible metadata columns plus request to include metadata columns might mess things up here.
+            $csvfile .= $fd . $fd . $fd . $fd;
+            $lineStarted = true;
+        }
+        foreach($cols as $col) {
+            if($lineStarted) {
+                $csvfile .= $fd;
+            }
+            if(isset($secondaryData[$col])) {
+                $data_to_write = $secondaryData[$col][$secondaryDataKey];
+                $data_to_write = str_replace("&quot;", "\"\"", $data_to_write);
+                $data_to_write = "\"" . trans($data_to_write) . "\"";
+                $data_to_write = str_replace("\r\n", "\n", $data_to_write);
+                $csvfile .= $data_to_write;
+                if(!isset($secondaryData[$col][$secondaryDataKey+1])) {
+                    unset($secondaryData[$col]);
+                }
+            }
+            $lineStarted = true;
+        }
+        $csvfile .= "\r\n"; // end of a line
+        $secondaryDataKey++;
+    }
+    return $csvfile;
+}
 
 // this function returns the data to summarize the details about the entry you are looking at
 // useOldCode is used to trigger the pre-3.0 logic only when the patching process is taking place.  After that, new process should kick in since new data structure is available.
