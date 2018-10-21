@@ -835,6 +835,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 		} // end of "if there's a viewentryscreen, then show that"
 
+    }
+        
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 	// create $data and $wq (writable query)
   formulize_benchmark("before gathering dataset");
