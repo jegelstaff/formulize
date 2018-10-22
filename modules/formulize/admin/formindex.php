@@ -427,6 +427,16 @@ function patch40() {
                 }
             }
         }
+        
+        // change any non-serialized array defaultview settings for list of entries screens, into serialized arrays indicating the view for Registered Users (group 2)
+        $sql1 = "UPDATE ".$xoopsDB->prefix("formulize_screen_listofentries")." SET defaultview = CONCAT('a:1:{i:2;i:',defaultview,';}') WHERE defaultview NOT LIKE '%{%' AND concat('',defaultview * 1) = defaultview"; //concat in where isolates numbers
+        if(!$res = $xoopsDB->query($sql1)) {
+            exit("Error patching DB for Formulize 4.0. SQL dump:<br>" . $sql1 . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+        }
+        $sql2 = "UPDATE ".$xoopsDB->prefix("formulize_screen_listofentries")." SET defaultview = CONCAT('a:1:{i:2;s:',CHAR_LENGTH(defaultview),':\"',defaultview,'\";}') WHERE defaultview NOT LIKE '%{%'"; // all remaining values will not be numbers
+        if(!$res = $xoopsDB->query($sql2)) {
+            exit("Error patching DB for Formulize 4.0. SQL dump:<br>" . $sql2 . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+        }
 
         // if there is a framework handles table present, then we need to check for a few things to ensure the integrity of code and our ability to disambiguate inputs to the API
         if (in_array($xoopsDB->prefix("formulize_framework_elements"), $existingTables)) {
