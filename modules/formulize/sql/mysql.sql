@@ -281,7 +281,6 @@ CREATE TABLE formulize_framework_links (
   fl_unified_display smallint(5),
   fl_unified_delete smallint(5),
   fl_common_value tinyint(1) NOT NULL default '0',
-  fl_foreign_key_element_link smallint(5),
   PRIMARY KEY (`fl_id`)
 ) ENGINE=MyISAM;
 
@@ -324,6 +323,7 @@ CREATE TABLE formulize (
   ele_forcehidden tinyint(1) NOT NULL default '0',
   ele_private tinyint(1) NOT NULL default '0',
   ele_use_default_when_blank tinyint(1) NOT NULL default '0',
+  ele_foreign_key_element_link TINYINT(1) DEFAULT 0,
   PRIMARY KEY  (`ele_id`),
   KEY `ele_display` (`ele_display` ( 255 ) ),
   KEY `ele_order` (`ele_order`)

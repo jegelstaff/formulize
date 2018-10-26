@@ -122,7 +122,7 @@ function patch40() {
     $checkThisTable = 'formulize_framework_links';
     $checkThisField = "fl_key1"; 
     $checkThisProperty = "type"; // Should be "type".
-    $checkPropertyForValue = "Varchar(10)"; // Should be Varchar(10) for my instance (Ignore this comment if I haven't deleted this comment).
+    $checkPropertyForValue = "Varchar(10)"; 
     
 //    $checkThisTable = 'formulize_framework_links';
 //    $checkThisField = false; 
@@ -369,7 +369,7 @@ function patch40() {
         $sql['add_backdrop_group'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_resource_mapping") . " ADD external_id_string text NULL default NULL";
         $sql['add_backdrop_group_index'] = "ALTER TABLE ". $xoopsDB->prefix("formulize_resource_mapping") ." ADD INDEX i_external_id_string (external_id_string(10))";
         $sql['change_fl_key1_to_varchar'] = "ALTER TABLE ". $xoopsDB->prefix("formulize_framework_links") ." MODIFY fl_key1 VARCHAR(10)";
-        $sql['add_foreign_key_element_link'] = "ALTER TABLE ". $xoopsDB->prefix("formulize_framework_links") ." ADD fl_forign_key_link smallint(5)";
+        $sql['add_foreign_key_element_link'] = "ALTER TABLE ". $xoopsDB->prefix("formulize") ." ADD ele_foreign_key_element_link TINYINT(1) DEFAULT 0";
         
         foreach($sql as $key=>$thissql) {
             if (!$result = $xoopsDB->query($thissql)) {
@@ -430,7 +430,7 @@ function patch40() {
                 } elseif(strstr($key, 'add_backdrop_group_index')) {
                     print "External_id_string INDEX already added for resource mapping.  result: OK<br>";
                 } elseif ($key === "add_foreign_key_element_link") {
-                    print "Framework links foreign key element link added.  result: OK<br>";
+                    print "Foreign key element link added to elements.  result: OK<br>";
                 } else {
                     exit("Error patching DB for Formulize 4.0. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
