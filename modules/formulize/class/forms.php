@@ -1402,4 +1402,22 @@ class formulizeFormsHandler {
 			$res = $this->db->queryF($sql);
 }
 	}
+        function hasForeignKeyLinkElement($fid){
+            global $xoopsDB;
+            $sql = "SELECT ele_foreign_key_element_link FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=" . $fid . ";";
+            $res = $xoopsDB->query($sql);
+            $records = array();
+            while($row = $xoopsDB->fetchArray($res)) {
+                    $records[] = $row['ele_foreign_key_element_link'];
+            }
+            
+            foreach($records as $x){
+                if($x == 1){
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        
 }
