@@ -600,6 +600,12 @@ $modversion['templates'][] = array(
 $modversion['templates'][] = array(
 	'file' => 'admin/managekeys.html',
 	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/home2.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/home_sections2.html',
+	'description' => '');
 
     
 //	Module Configs
