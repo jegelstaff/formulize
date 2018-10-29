@@ -198,9 +198,11 @@
 <div id="popScreens" class="popup">
     <div class="popBox">
         <a href = "javascript:void(0)" class = "close" onclick = "closePops()" >&times</a>
-        <p>Are you sure you want to delete form "Form Name Here"?</p>
-        <a href="#"> Yes</a>
-        <a href="#"> No</a>
+        <p>What screen would you like to view?</p>
+        <a href="#"> Regular</a>
+        <a href="#"> Entries in "Form Name"</a>
+        <a href="#"> More screens...</a>
+
     </div>
 </div>
 
@@ -238,23 +240,34 @@
     }
 
     function openDeletePopUp(){
-        document.getElementById('deleteView').style.display = "block";
+        document.getElementById('popDelete').style.display = "block";
+        document.getElementById("sideWithInfo").style.zIndex = "-1";
+        document.getElementById("sideWithIcons").style.zIndex = "-1";
+        document.getElementById("sideBarInfo").style.backgroundColor = "rgba(0,0,0,0.4)";
+        document.getElementById("sideBarIcons").style.backgroundColor = "rgba(0,0,0,0.4)";
     }
 
     function openClonePopUp(){
-        document.getElementById('cloneView').style.display = "block";
+        document.getElementById('popClone').style.display = "block";
+        document.getElementById("sideWithInfo").style.zIndex = "-1";
+        document.getElementById("sideWithIcons").style.zIndex = "-1";
+        document.getElementById("sideBarInfo").style.backgroundColor = "rgba(0,0,0,0.4)";
+        document.getElementById("sideBarIcons").style.backgroundColor = "rgba(0,0,0,0.4)";
     }
 
     function openScreensPopUp(){
-        document.getElementById('screensView').style.display = "block";
+        document.getElementById('popScreens').style.display = "block";
+        document.getElementById("sideWithInfo").style.zIndex = "-1";
+        document.getElementById("sideWithIcons").style.zIndex = "-1";
+        document.getElementById("sideBarInfo").style.backgroundColor = "rgba(0,0,0,0.4)";
+        document.getElementById("sideBarIcons").style.backgroundColor = "rgba(0,0,0,0.4)";
     }
 
     function closePops(){
         document.getElementById('popView').style.display = "none";
-        document.getElementById('deleteView').style.display = "none";
-        document.getElementById('cloneView').style.display = "none";
-        document.getElementById('screensView').style.display = "none";
-
+        document.getElementById('popDelete').style.display = "none";
+        document.getElementById('popClone').style.display = "none";
+        document.getElementById('popScreens').style.display = "none";
         document.getElementById("sideWithInfo").style.zIndex = "1";
         document.getElementById("sideWithIcons").style.zIndex = "1";
     }
