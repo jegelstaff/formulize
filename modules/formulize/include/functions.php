@@ -5587,8 +5587,8 @@ function parseUserAndToday($term) {
 			$term = 0;
 		}
 	}
- 	if (preg_replace("/[^A-Z{}]/","", $term) === "{TODAY}") {
-		$number = preg_replace("/[^0-9+-]/","", $term);
+ 	if (substr(trim($term,"{}"), 0, 5) == "TODAY") {
+		$number = substr(trim($term, "{}"), 6);
 		$term = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
 	}
   return $term;

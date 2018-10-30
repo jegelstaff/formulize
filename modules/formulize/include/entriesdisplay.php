@@ -4703,8 +4703,8 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 			if(substr($one_search, 0, 1) == "{" AND substr($one_search, -1) == "}") {
 				$searchgetkey = substr($one_search, 1, -1);
 
-				if (preg_replace("[^A-Z]","", $searchgetkey) == "TODAY") {
-					$number = preg_replace("[^0-9+-]","", $searchgetkey);
+				if (substr($searchgetkey, 0, 5) == "TODAY") {
+					$number = substr($searchgetkey, 6);
 					$one_search = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
 				} elseif($searchgetkey == "USER") {
 					if($xoopsUser) {
