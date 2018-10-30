@@ -4040,49 +4040,23 @@ function loadAdvanceView($fid, $advance_view) {
 	$sort = null;
 	$sortby = null;
 	if($advance_view){
-	    $advanceViewSelected = array();
             foreach($advance_view as $id=>$arr) {
-	       $advanceViewSelected["column"][$id] = $arr[0];
+           $columns .= $arr[0].',';
+           $search .= $arr[1].',';
 	       if($arr[2] == "1"){
 		$sort = $arr[0];
-	       }
-               $advanceViewSelected["search"][$arr[0]] = $arr[1];
-            }
-	    $cols = getAllColList($fid, "", "");
-      
-	    $columns = "";
-	    $search = "";
-            foreach($cols as $id=>$arr) {
-		foreach($arr as $innerId=>$value) {
-		   if(in_array($value["ele_id"], $advanceViewSelected["column"])){
-		        $columns = $columns . $value["ele_handle"] . ",";
-		   }
-		   if($advanceViewSelected["search"][$value["ele_id"]]){
-		        $search = $search . $advanceViewSelected["search"][$value["ele_id"]] . ",";
-		   }
-		   else{
-			$search = $search . ",";
-		   }
-		   if($sort && $sort == $value["ele_id"]){
-			$sort = $value["ele_handle"];
 			$sortby = "SORT_ASC";
 		   }
 		}
-	    }
-	    
 	    //Remove the trailing ','
 	    $columns = rtrim($columns, ",");
 	    $search = rtrim($search, ",");
-	    $advanceViewSelected["sort"] = rtrim($advanceViewSelected["sort"], ",");
-	    
 	    $to_return[0] = $columns;
 	    $to_return[1] = $sort;
 	    $to_return[2] = $sortby;
 	    $to_return[3] = $search;
-	
 	    return $to_return;
-	}
-	else{
+	} else{
 	    return null;
 	}
 }

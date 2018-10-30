@@ -50,29 +50,18 @@ if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mi
 }
 
 $advanceview = array();
-$currentRow = 0;
-$index = 0;
-$numberOfRows = intval($_POST['rows']);
 
-while($currentRow <= $numberOfRows) {
-  if($_POST['sort-by'] == $index) {
+foreach($_POST['col-value'] as $index=>$col) {
+    if(isset($_POST['sort-by']) AND $_POST['sort-by'] == $index) {
     $sort = 1;
-  }
-  else {
+    } else {
     $sort = 0;
   }
-  
-  if($_POST['col-value'][$index] != NULL && $_POST['col-value'][$index] != 0) {
-    $advanceview[$currentRow] = array($_POST['col-value'][$index], $_POST['search-value'][$index], $sort);
-    $currentRow++;
+    if(!is_numeric($col) OR intval($col) != 0) {
+        $advanceview[] = array($col, $_POST['search-value'][$index], $sort);
   }
-  
-  //If the value is of the columns is the default, do not save it as part of the view
-  if($_POST['col-value'][$index] == 0) {
-    $currentRow++;
-  }
-  $index++;
 }
+
 $screens['advanceview'] = $advanceview;
 
 $defaultview = array();
