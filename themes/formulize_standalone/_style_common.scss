@@ -546,6 +546,7 @@ td.head {
     color: $colorTableHeaderText;
     font-weight: bold;
     padding: 0.5em 1em 0.5em 0.4em;
+    border: 1px solid $colourPrimaryBorder;
 }
 
 td.head a {
@@ -901,7 +902,7 @@ th {
 //--content.css
 
 table.outer {
-    border: 1px solid $colourPrimary;
+    border: 1px solid $colourPrimaryBorder;
 }
 
 #session-timeout-warning {

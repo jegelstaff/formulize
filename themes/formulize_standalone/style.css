@@ -409,7 +409,8 @@ td.head {
   background-color: #59a7d4;
   color: #fff;
   font-weight: bold;
-  padding: 0.5em 1em 0.5em 0.4em; }
+  padding: 0.5em 1em 0.5em 0.4em;
+  border: 1px solid darkgreen; }
 
 td.head a {
   color: #fff; }
@@ -697,7 +698,7 @@ th {
   border-bottom: 1px solid #ccc; }
 
 table.outer {
-  border: 1px solid #59a7d4; }
+  border: 1px solid darkgreen; }
 
 #session-timeout-warning {
   display: none;
@@ -743,9 +744,9 @@ table.outer {
   #formulize-masquerade-block input[type=submit]:hover {
     transform: none; }
 
-/* horizontal lines between form questions */
+/* horizontal lines between form questions * /
 div.xo-theme-form > table.outer > tbody > tr > td {
-  border-bottom: 1px solid #59a7d4; }
+  border-bottom: 1px solid #59a7d4; } */
 
 /* compensate for padding in outer table cell when another table is contained -- for table-of-existing-elements */
 table.outer table.outer {

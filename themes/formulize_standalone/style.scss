@@ -5,10 +5,10 @@ div.xo-theme-form > table {
     // table-layout: fixed;
 }
 
-/* horizontal lines between form questions */
+/* horizontal lines between form questions * /
 div.xo-theme-form > table.outer > tbody > tr > td {
     border-bottom: 1px solid $colourPrimary;
-}
+} */
 
 /* compensate for padding in outer table cell when another table is contained -- for table-of-existing-elements */
 table.outer table.outer {
