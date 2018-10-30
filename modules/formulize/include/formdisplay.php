@@ -1525,7 +1525,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
     // prepop will be based on the options in an element in the subform, and should also take into account the non OOM conditional filter choices where = is the operator.
     if(count($sub_entries[$subform_id]) == 0 AND $subform_element_object->ele_value['subform_prepop_element']) {
         
-         $optionElementObject = $element_handler->get($subform_element_object->ele_value['subform_prepop_element']);
+        $optionElementObject = $element_handler->get($subform_element_object->ele_value['subform_prepop_element']);
         
         // gather filter choices first...
         if(!isset($filterValues)) {
@@ -1647,9 +1647,9 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	} else {
 		$col_two .= "";
 		if(!strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
-			$col_two .= "<div id=\"subform-$subformElementId\" class=\"subform-accordion-container\" subelementid=\"$subformElementId\" style=\"display: none;\">";
+			$col_two .= "<div id=\"subform-$subformElementId$subformInstance\" class=\"subform-accordion-container\" subelementid=\"$subformElementId$subformInstance\" style=\"display: none;\">";
 		}
-		$col_two .= "<input type='hidden' name='subform_entry_".$subformElementId."_active' id='subform_entry_".$subformElementId."_active' value='' />";
+		$col_two .= "<input type='hidden' name='subform_entry_".$subformElementId.$subformInstance."_active' id='subform_entry_".$subformElementId.$subformInstance."_active' value='' />";
 	}
 
 	$deFrid = $frid ? $frid : ""; // need to set this up so we can pass it as part of the displayElement function, necessary to establish the framework in case this is a framework and no subform element is being used, just the default draw-in-the-one-to-many behaviour
@@ -1873,21 +1873,21 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 		$col_two .= "\n
 <script type=\"text/javascript\">
 	jQuery(document).ready(function() {
-		jQuery(\"#subform-$subformElementId\").accordion({
+		jQuery(\"#subform-$subformElementId$subformInstance\").accordion({
 			autoHeight: false, // no fixed height for sections
 			collapsible: true, // sections can be collapsed
 			active: ";
 			if($_POST['target_sub_instance'] == $subformElementId.$subformInstance AND $_POST['target_sub'] == $subform_id) {
 				$col_two .= count($sub_entries[$subform_id])-$_POST['numsubents'];
-			} elseif(is_numeric($_POST['subform_entry_'.$subformElementId.'_active'])) {
-				$col_two .= $_POST['subform_entry_'.$subformElementId.'_active'];
+			} elseif(is_numeric($_POST['subform_entry_'.$subformElementId.$subformInstance.'_active'])) {
+				$col_two .= $_POST['subform_entry_'.$subformElementId.$subformInstance.'_active'];
 			} else {
 				$col_two .= 'false';
 			}
 			$col_two .= ",
 			header: \"> div > p.subform-header\"
 		});
-		jQuery(\"#subform-$subformElementId\").fadeIn();
+		jQuery(\"#subform-$subformElementId$subformInstance\").fadeIn();
 	});
 </script>";
 	} // end of if we're closing the subform inferface where entries are supposed to be collapsable forms
