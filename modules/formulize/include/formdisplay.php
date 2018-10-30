@@ -1317,6 +1317,8 @@ function drawGoBackForm($go_back, $currentURL, $settings, $entry) {
 // used for setting values that are supposed to exist by default in newly created subform entries
 function writeEntryDefaults($target_fid,$target_entry) {
 
+  $element_handler = xoops_getmodulehandler('elements', 'formulize');
+
   $criteria = new CriteriaCompo();
   $criteria->add(new Criteria('ele_type', 'text'), 'OR');
   $criteria->add(new Criteria('ele_type', 'textarea'), 'OR');
@@ -1521,7 +1523,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 
 	// preopulate entries, if there are no sub_entries yet, and prepop options is selected.
     // prepop will be based on the options in an element in the subform, and should also take into account the non OOM conditional filter choices where = is the operator.
-    if(count($sub_entries[$sfid]) == 0 AND $subform_element_object->ele_value['subform_prepop_element']) {
+    if(count($sub_entries[$subform_id]) == 0 AND $subform_element_object->ele_value['subform_prepop_element']) {
         
          $optionElementObject = $element_handler->get($subform_element_object->ele_value['subform_prepop_element']);
         
@@ -1589,8 +1591,8 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
             $valuesToWrite[$optionElementObject->getVar('ele_handle')] = prepDataForWrite($optionElementObject, $optionKey); // keys are what the form sends back for processing
             if($valuesToWrite[$optionElementObject->getVar('ele_handle')] !== "" AND $valuesToWrite[$optionElementObject->getVar('ele_handle')] !== "{WRITEASNULL}") {
                 $writtenEntryId = formulize_writeEntry($valuesToWrite);
-                writeEntryDefaults($sfid,$writtenEntryId);
-                $sub_entries[$sfid][] = $writtenEntryId;
+                writeEntryDefaults($subform_id,$writtenEntryId);
+                $sub_entries[$subform_id][] = $writtenEntryId;
             }
         }
         // IF no main form entry is actually saved in the end, then we want to delete all these subs that we have made??!!

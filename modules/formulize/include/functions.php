@@ -4916,8 +4916,9 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
 
             // if the filter is a { } filter, then verify that it is a valid handle in the curlyBraketForm, otherwise ignore this term since it is not valid
             // this can happen if you have an element that is used in different places in an application, and it is filtered by one value in one place, and another value in another place, but not both at the same time
+            // Allow terms if there is an asynchronous match waiting to be made - used for prepop subforms sometimes
             if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") {
-                if(!in_array(substr($filterTerms[$filterId],1,-1),$curlyBracketForm->getVar('elementHandles'))) {
+                if(!in_array(substr($filterTerms[$filterId],1,-1),$curlyBracketForm->getVar('elementHandles')) AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][substr($filterTerms[$filterId],1,-1)])) {
                     continue;
                 }
             }
