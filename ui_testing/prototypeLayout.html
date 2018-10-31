@@ -6,12 +6,12 @@
     <style>
         .sideBarIcons {
             height: 100%;
-            width: 0;
+            width: 200px;
             position: fixed;
             z-index: 1;
             top: 0;
             left: 0;
-            background-color: white;
+            background-color: gainsboro;
             overflow-x: hidden;
             transition: 0.5s;
             padding-top: 60px;
@@ -117,8 +117,7 @@
 
 <div id = "sideWithIcons" class = "sideBarIcons" >
 
-    <a href = "javascript:void(0)" class = "close" onclick = "closeBars()" >&times</a>
-
+   <!-- <a href = "javascript:void(0)" class = "close" onclick = "closeBars()" >&times</a> -->
     <span style ="cursor:pointer" onclick="openInfoBar()"><a href = "#"><div class = "imgToText">
             <img src="base_icon.png" width = "98" height="98">
             <h3 class = "initBase"> AAA </h3>
@@ -157,14 +156,17 @@
 
     <div style="border-bottom: 3px solid" > <!--Relations Menu (if there are any)-->
         <p>One-to-One:<p>
-        <il><a href = "#" >BBB</a></il> <!-- Just showing that there will be a link to the form -->
+        <ul>
+            <il><a href = "#" >BBB</a></il> <!-- Just showing that there will be a link to the form -->
+        </ul>
+
         <p>One-to-Many:</p>
     </div>
 
 
 </div>
 
-<span style ="cursor:pointer" onclick="openBar()"> Open! </span>
+<!--<span style ="cursor:pointer" onclick="openBar()"> Open! </span> -->
 
 <!-- the code for the pop ups-->
 
@@ -209,25 +211,23 @@
 
 <!-- scripts for the sidebars and the pop ups -->
 <script>
-    function openBar() {
+   /* function openBar() {
         document.getElementById("sideWithIcons").style.width = "250px";
-        document.body.style.backgroundColor = "rgba(0,0,0,0.4)";
     }
 
     function closeBars() {
-        document.getElementById("sideWithIcons").style.width = "0";
         document.getElementById("sideWithInfo").style.width = "0";
-        document.body.style.backgroundColor = "white";
-    }
+    }*/
 
     function closeInfoBar() {
         document.getElementById("sideWithInfo").style.width = "0";
+        document.body.style.backgroundColor = "white";
     }
 
 
     function openInfoBar() {
         document.getElementById("sideWithInfo").style.width = "250px";
-
+        document.body.style.backgroundColor = "rgba(0,0,0,0.4)";
     }
 
 
