@@ -1864,17 +1864,12 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 		if(!strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
 			$col_two .= "</div>"; // close of the subform-accordion-container
 		}
-		static $jqueryUILoaded = false;
-		if(!$jqueryUILoaded) {
-			$col_two .= "<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-ui-1.8.2.custom.min.js\"></script>\n";
-			$col_two .= "<link rel=\"stylesheet\" type=\"text/css\" href=\"".XOOPS_URL."/modules/formulize/libraries/jquery/css/start/jquery-ui-1.8.2.custom.css\">\n";
-			$jqueryUILoaded = true;
-		}
 		$col_two .= "\n
 <script type=\"text/javascript\">
 	jQuery(document).ready(function() {
 		jQuery(\"#subform-$subformElementId$subformInstance\").accordion({
-			autoHeight: false, // no fixed height for sections
+			heightStyle: 'content',
+            autoHeight: false, // legacy
 			collapsible: true, // sections can be collapsed
 			active: ";
 			if($_POST['target_sub_instance'] == $subformElementId.$subformInstance AND $_POST['target_sub'] == $subform_id) {

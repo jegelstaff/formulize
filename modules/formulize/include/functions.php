@@ -45,7 +45,16 @@ if (typeof jQuery == 'undefined') {
     script.type = 'text/javascript';
     script.src = '".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-1.4.2.min.js';
     head.appendChild(script);
-}";
+}
+if (typeof jQuery.ui == 'undefined') { 
+    var head = document.getElementsByTagName('head')[0];
+    script = document.createElement('script');
+    script.id = 'jQueryUI';
+    script.type = 'text/javascript';
+    script.src = '".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-ui-1.8.2.custom.min.js';
+    head.appendChild(script);
+}
+";
 
 // setup flag for whether the Freeform Solutions user archiving patch has been applied to the core
 global $xoopsDB, $xoopsConfig;
