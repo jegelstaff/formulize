@@ -152,7 +152,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 
 	// handle deletion of view...reset currentView
-	if($_POST['delview'] AND $formulize_LOESecurityPassed AND ($delete_other_reports OR $delete_own_reports)) {
+	if($_POST['delview'] AND $formulize_LOESecurityPassed) {
 		if(substr($_POST['delviewid_formulize'], 1, 4) == "old_") {
 			$delviewid_formulize = substr($_POST['delviewid_formulize'], 5);
 		} else {
