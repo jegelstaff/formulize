@@ -74,7 +74,7 @@ class formulizeformulize extends XoopsObject {
 		$this->initVar("ele_encrypt", XOBJ_DTYPE_INT); // added July 15 2009 by jwe
 		$this->initVar("ele_filtersettings", XOBJ_DTYPE_ARRAY);
 		$this->initVar("ele_use_default_when_blank", XOBJ_DTYPE_INT);
-                $this->initVar("ele_foreign_key_element_link", XOBJ_DTYPE_INT);
+                $this->initVar("ele_foreign_key_element", XOBJ_DTYPE_INT);
 	}
 	
 	//this method is used to to retreive the elements dataType and size
@@ -244,7 +244,7 @@ class formulizeElementsHandler {
 				}
    		if( $element->isNew() || $ele_id == 0){
 				$sql = sprintf("INSERT INTO %s (
-				id_form, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_req, ele_value, ele_uitext, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private, ele_encrypt, ele_filtersettings, ele_use_default_when_blank, ele_foreign_key_element_link
+				id_form, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_req, ele_value, ele_uitext, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private, ele_encrypt, ele_filtersettings, ele_use_default_when_blank, ele_foreign_key_element
 				) VALUES (
 				%u, %s, %s, %s, %s, %s, %u, %u, %s, %s, %s, %s, %s, %u, %u, %u, %s, %u, %u
 				)",
@@ -290,7 +290,7 @@ class formulizeElementsHandler {
 				ele_encrypt = %u,
 				ele_filtersettings = %s,
 				ele_use_default_when_blank = %u,
-                                ele_foreign_key_element_link = %u
+                                ele_foreign_key_element = %u
 				WHERE ele_id = %u AND id_form = %u",
 				formulize_TABLE,
 				$this->db->quoteString($ele_type),

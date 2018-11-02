@@ -212,8 +212,8 @@ function updatelinks($fl_id, $value) {
     
     $form_handler =& xoops_getmodulehandler('forms','formulize');
     $ele_handler =& xoops_getmodulehandler('elements', 'formulize');
-    $form_1_id = $processedValues['relationships']['fid1'];
-    $form_2_id = $processedValues['relationships']['fid2'];
+    $form1_id = $processedValues['relationships']['fid1'];
+    $form2_id = $processedValues['relationships']['fid2'];
     
     
     $keys = explode("+", $value);
@@ -227,8 +227,19 @@ function updatelinks($fl_id, $value) {
     
     // Check if the relationship is a primary key/foreign key relationship.
     if(!is_numeric($keys[0]) && $keys[0] == "id"){
-        if(!$form_handler->hasForeignKeyLinkElement($form_1_id, $form_2_id)){
-            print "Code to create new hidden link element in target form goes here.\n";
+        if(!$form_handler->hasForeignKeyLinkElement($form1_id, $form2_id)){
+            $new_foreign_key_element = $ele_handler->create();
+            $element_variables = array('id_form' => $form2_id, 
+                                        'ele_foreign_key_element' => $form1_id,
+                                        'ele_handle' => 'foreign_key_from_form_'.$form1_id,
+                                        'ele_forcehidden' => 1);
+            $new_foreign_key_element->assignVars($element_variables);
+            print "return value: ". $ele_handler->insert($new_foreign_key_element)."\n";
+            
+//            print "element form id: ".$new_foreign_key_element->id_form."\n";
+//            print "element foreign_key_element: ".$new_foreign_key_element->ele_foreign_key_element."\n";
+//            print "element handle: ".$new_foreign_key_element->ele_handle."\n";
+//            print "element forcehidden value: ".$new_foreign_key_element->ele_forcehidden."\n";
         }
         print "Code to link the two forms here.\n";
     }
