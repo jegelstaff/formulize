@@ -1,14 +1,27 @@
 body {
     min-width: 520px;
+	background:#efefef;
+	color: dimgrey;
+    font-family: Arial;
+    font-size: 14px;
+    font-weight: bold;
 }
 
 .column {
-    border: 0.5px dotted #7a7a7a;
+    /*border: 0.5px dotted #7a7a7a;*/
+    border: 0.5px solid #ddd;
+	-webkit-box-shadow: 3px 3px 5px -5px #777;
     float: left;
     padding: 10px;
-    margin: 18px;
+    margin-right: 18px;
+	background-color: white;
+	text-align: center;
 }
-
+#droppable{
+	width: 100vw;
+	padding: 5px;
+	margin: 10px;
+}
 .form-toggle {
     position: absolute;
     top: 50%;
@@ -20,6 +33,11 @@ body {
     margin: 0 1em 1em 0;
     padding: 0.3em;
     color: #999999;
+}
+
+.main{
+	min-width: 65vw;
+	display: inline-block;
 }
 
 .form-layout,
@@ -39,15 +57,17 @@ body {
     user-select: none;
     background-color: #fcfcfc;
     box-shadow: 0 0 0.5px 0.5px rgba(0, 0, 0, 0.05);
-    display: inline-block;
     vertical-align: middle;
+    margin: auto;
+	margin-bottom: 4px;
     font-family: Arial;
     font-size: 14px;
     font-weight: bold;
+	text-align: center;
     padding: 3px 3px 3px 3px;
-    margin: 4px;
-    text-decoration: none;
+    text-decoration: none;	
 }
+
 .form-draggable {
     padding: 3px 8px 3px 8px;
 	height: 36px;
@@ -100,3 +120,110 @@ body {
 	min-width: 48px;
     background-color: #cacaca;
 }
+/*SAM*/
+.sideBarIcons {
+            height: 100%;
+            width: 200px;
+            position: fixed;
+            z-index: 1;
+            top: 0;
+            left: 0;
+            background-color: gainsboro;
+            overflow-x: hidden;
+            transition: 0.5s;
+            padding-top: 60px;
+            font-family: Arial;
+            overflow: auto;
+        }
+
+        .sideBarIcons a {
+            padding: 10px 10px 10px 20px;
+            font-size: 24px;
+            color: rgba(242, 251, 248, 0.99);
+            display: block;
+            transition: 0.3s;
+        }
+
+        .sideBarIcons a:hover {
+            color: lightgreen;
+        }
+
+        .sideBarIcons .close {
+            position: absolute;
+            top: 0;
+            right: 30px;
+            margin-left: 20px;
+            color: black;
+        }
+
+        .sideBarInfo{
+            height: 100%;
+            width: 0;
+            position: fixed;
+            z-index: 1;
+            top: 0;
+            right: 0;
+            background-color: white;
+            overflow-x: hidden;
+            transition: 0.5s;
+            padding-top: 60px;
+            font-family: Arial;
+            overflow: auto;
+        }
+
+        .sideBarInfo a {
+            padding: 10px 10px 10px 20px;
+            font-size: 24px;
+            color: lightskyblue;
+            display: block;
+            transition: 0.3s;
+        }
+
+        .sideBarInfo p {
+            padding: 10px 10px 10px 20px;
+            font-size: 24px;
+            color: lightskyblue;
+            display: block;
+            transition: 0.3s;
+        }
+
+        .sideBarInfo a:hover {
+            color: lightgreen;
+        }
+
+        .sideBarInfo .close {
+            position: absolute;
+            top: 0;
+            left: 10px;
+            margin-right: 20px;
+            color: black;
+        }
+
+        .imgToText{
+            position: relative;
+            width: 100%;
+            z-index: -1;
+        }
+        .initBase {
+            position: absolute;
+            top: 0;
+            left: 16px;
+            width: 100%;
+        }
+
+        .popup {
+            display: none;
+            z-index: 2;
+            background-color: white;
+            width: 25%;
+            height: 25%;
+            top: 50%;
+            left: 50%;
+        }
+
+        .popBox {
+            background-color: white;
+            padding: 30px;
+            border: 2px solid black;
+        }
+    

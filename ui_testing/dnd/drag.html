@@ -12,31 +12,18 @@
 
 	<link rel="stylesheet" type="text/css" href="style.css">
 </head>
-<p>New Relationship</p>
-<div class="column">
-	<p>Current Form:</p>
-	<i class="ui-icon ui-icon-trash relationship-image"></i>
-	<div class="form">
-		<div class="form-layout">
-			Relationships
-			<div class="form-content" id="droppable">
+<div id = "sideWithIcons" class = "sideBarIcons" >
 
-				<div class="form-draggable">
-					<img class="relationship-image" src="../base_icon.png" />
-					onetoone</div>
+   <!-- <a href = "javascript:void(0)" class = "close" onclick = "closeBars()" >&times</a> -->
+    <span class ="form-draggable addable ui-draggable" style ="cursor:pointer" onclick="openInfoBar()"><a href = "#"><div class = "imgToText">
+            <img src="../base_icon.png" width = "98" height="98">
+            <h3 class = "initBase"> AAA </h3>
+        </div></a></span>
 
-				<div class="form-draggable">Form3</div>
-				<div class="form-draggable">
-					<img class="relationship-image" src="../one%20to%20one%20icon%20v2.png" />Onetoone</div>
-			</div>
-		</div>
-
-
-	</div>
 </div>
 
-<div class="column">
-	<p>All Forms:</p>
+<div class="column" style="margin-left: 200px;">
+	<p>All Forms</p>
 	<div class="form">
 
 		<div class="form-draggable addable">Drag</div>
@@ -49,12 +36,34 @@
 
 	</div>
 </div>
+	
+<div class="column"style="margin-left: 200px;">
+	<p>Current Form</p>
+	<i class="ui-icon ui-icon-trash relationship-image"></i>
+	<div class="form main">
+		<div class="form-layout">
+			Relationships
+			<div class="form-content" id="droppable">
+							
+				<!--
+				<div class="form-draggable">
+					<img class="relationship-image" src="../base_icon.png" />
+					onetoone</div>
+
+				<div class="form-draggable">Form3</div>
+				<div class="form-draggable">
+					<img class="relationship-image" src="../one%20to%20one%20icon%20v2.png" />Onetoone</div>-->
+			</div>
+		</div>
 
 
+	</div>
+</div>
+
+<!--
 <div id="dialog" title="Create a new relationship?"><p>Type of relationship:</p>
 
 </div>
-
 <script>
 	$(function() {
 		$("#dialog").dialog({
