@@ -209,13 +209,15 @@ function updaterels($fl_id, $value) {
 
 function updatelinks($fl_id, $value) {
     global $xoopsDB, $processedValues;
-    $form_handler = xoops_getmodulehandler('forms','formulize');
+    
+    $form_handler =& xoops_getmodulehandler('forms','formulize');
+    $ele_handler =& xoops_getmodulehandler('elements', 'formulize');
+    $form_1_id = $processedValues['relationships']['fid1'];
     $form_2_id = $processedValues['relationships']['fid2'];
     
+    
     $keys = explode("+", $value);
-//    foreach($keys as $key => $val){
-//        echo "key:".$key."     value:".$val."\n";
-//    }
+    
     if(isset($keys[2]) AND $keys[2] == "common") {
         $common = 1;
     }
@@ -223,10 +225,10 @@ function updatelinks($fl_id, $value) {
         $common = $processedValues['relationships']['preservecommon'.$fl_id] == $value ? 1 : 0;
     }
     
-
+    // Check if the relationship is a primary key/foreign key relationship.
     if(!is_numeric($keys[0]) && $keys[0] == "id"){
-        if(!$form_handler->hasForeignKeyLinkElement($form_2_id)){
-            print "Code to create new invisible link element in target form goes here.\n";
+        if(!$form_handler->hasForeignKeyLinkElement($form_1_id, $form_2_id)){
+            print "Code to create new hidden link element in target form goes here.\n";
         }
         print "Code to link the two forms here.\n";
     }

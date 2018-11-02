@@ -369,7 +369,7 @@ function patch40() {
         $sql['add_backdrop_group'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_resource_mapping") . " ADD external_id_string text NULL default NULL";
         $sql['add_backdrop_group_index'] = "ALTER TABLE ". $xoopsDB->prefix("formulize_resource_mapping") ." ADD INDEX i_external_id_string (external_id_string(10))";
         $sql['change_fl_key1_to_varchar'] = "ALTER TABLE ". $xoopsDB->prefix("formulize_framework_links") ." MODIFY fl_key1 VARCHAR(10)";
-        $sql['add_foreign_key_element_link'] = "ALTER TABLE ". $xoopsDB->prefix("formulize") ." ADD ele_foreign_key_element_link TINYINT(1) DEFAULT 0";
+        $sql['add_foreign_key_element_link'] = "ALTER TABLE ". $xoopsDB->prefix("formulize") ." ADD ele_foreign_key_element SMALLINT(5) DEFAULT 0";
         
         foreach($sql as $key=>$thissql) {
             if (!$result = $xoopsDB->query($thissql)) {

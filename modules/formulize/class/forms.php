@@ -1402,21 +1402,37 @@ class formulizeFormsHandler {
 			$res = $this->db->queryF($sql);
 }
 	}
-        function hasForeignKeyLinkElement($fid){
+        
+        /**
+         * This function goes through the "formulize" table (which is really the
+         * elements table), and retrieves all elements in the form with form id 
+         * $fid. Once all the elements are found, it checks each element's value
+         * of "ele_foreign_key_element_link" and returns true if it finds a 1,
+         * otherwise false if a 1 sn't found (only 0's). It's basically checking
+         * if there's an invisible element to link to in the specific form with
+         * form id of $fid.
+         * @param
+         * $fid - The form id of the form we want to check.
+         * @return
+         * Boolean - True if the element exists, otherwise false.
+         */
+        function hasForeignKeyLinkElement($form1_id, $form2_id){
             global $xoopsDB;
-            $sql = "SELECT ele_foreign_key_element_link FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=" . $fid . ";";
+            $sql = "SELECT * FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=" . $form2_id. " AND ele_foreign_key_element=". $form1_id . ";";
             $res = $xoopsDB->query($sql);
             $records = array();
+            
+            // This loop should only run a maximum of once.
             while($row = $xoopsDB->fetchArray($res)) {
-                    $records[] = $row['ele_foreign_key_element_link'];
+                    $records[] = Array($row['ele_handle'], $row['ele_foreign_key_element']);
             }
             
-            foreach($records as $x){
-                if($x == 1){
-                    return true;
-                }
+            if(sizeof($records) == 0){
+                return false;
+            }else{
+                return true;
             }
-            return false;
+            
         }
         
         
