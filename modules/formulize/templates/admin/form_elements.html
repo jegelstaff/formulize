@@ -11,10 +11,12 @@
 <input type="hidden" name="reload_elements" value="">
 <input type="hidden" name="aid" value="<{$content.aid}>">
 <input type="hidden" name="elementorder" value="">
+<input type="hidden" name="linkedelement" value=0>
 
 <div class="accordion-box">
 	<h2><{$smarty.const._AM_ELE_ADDINGTOFORM}></h2>
 	<p>Link an element from another form:</p>
+	<{$content.allElements}><input type='button' value='Click Me!' id='linkelement' />
 	<p><{$smarty.const._AM_ELE_CLICKTOADD}></p>
 			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=text"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_TEXT}></a></p>
 			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=textarea"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_MLTEXT}></a></p>
@@ -44,6 +46,12 @@
 </form>
 <div style="clear: both;"></div>
 <script type="text/javascript">
+
+$("#linkelement").click(function () {
+	$("[name=linkedelement]").val($("[name=formlink]").val());
+	$(".savebutton").click();
+	return false;
+});
 
 $(".clonelink").click(function () {
 	$("[name=cloneelement]").val($(this).attr('target'));
