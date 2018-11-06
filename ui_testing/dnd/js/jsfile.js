@@ -3,24 +3,40 @@ $(document).ready(function () {
 	$(".form-draggable").draggable({
 		stack: '.form-draggable',
 		helper: 'clone',
-		revert: function (event, ui) {
-			/*Animate form release*/
-			$(this).data("uiDraggable").originalPosition = {
-				top: $(this).position().top,
-				left: $(this).position().left
-			};
-			return !event;
-		},
-		/*tilt effect on drag*/
+		appendTo: 'body',
+		revert: 'invalid',
 		start: function (event, ui) {
+			/*tilt effect on drag*/
 			$(ui.helper).addClass("form-draggable-helper");
+			$(ui.helper).css("width", $(this).width());
 		},
 	});
+	/*
+		$(".form-draggable").sortable({
+			//Todo: fix duplicate code
+			stack: '.form-draggable',
+			helper: 'clone',
+			revert: 'invalid',
+			start: function (event, ui) {
+				$(ui.helper).addClass("form-draggable-helper");
+				$(ui.helper).css("width", $(this).width());
+			},
+		});*/
 
 	/*Create a new relationship with a form*/
 	$(".form-content").droppable({
 		accept: ".addable",
 		hoverClass: "form-focus",
+		over: function (event, ui) {
+			$(this).animate({
+				height: $(this).height() + ui.helper.height()
+			}, 250);
+		},
+		out: function (event) {
+			$(this).animate({
+				height: "0"
+			}, 200);
+		},
 		drop: function (ev, ui) {
 			//ui.draggable.remove();
 			var item = ui.draggable.clone();
@@ -28,24 +44,31 @@ $(document).ready(function () {
 			item.removeClass("addable");
 			item.removeClass("tilt");
 			item.attr("style", "");
-			item.draggable({
+			item.sortable({
 				//Todo: fix duplicate code
 				stack: '.form-draggable',
 				helper: 'clone',
-				revert: function (event, ui) { /*Animate form release*/
-					$(this).data("uiDraggable").originalPosition = {
-						top: $(this).position().top,
-						left: $(this).position().left
-					};
-					return !event;
-				},
+				revert: 'invalid',
+				axis: 'y',
+				containment: 'parent',
+				animation: 200,
 				start: function (event, ui) {
 					$(ui.helper).addClass("form-draggable-helper");
+
+					$(ui.helper).css("width", $(this).width());
 				},
 			});
 			$("#dialog").dialog("open");
+			$(this).animate({
+				height: "0"
+			}, 200);
 		}
 	});
+	$(".form-content").sortable({
+		placeholder: 'sortable-placeholder',
+		revert: 'invalid',
+	});
 
-	$(".form-content").sortable();
+
+
 });
