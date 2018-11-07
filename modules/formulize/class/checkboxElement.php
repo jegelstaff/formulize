@@ -37,8 +37,8 @@ class formulizeCheckboxElement extends formulizeformulize {
     function __construct() {
         $this->name = "Checkboxes";
         $this->hasData = true; // set to false if this is a non-data element, like the subform or the grid
-        $this->needsDataType = true; // set to false if you're going force a specific datatype for this element using the overrideDataType
-        $this->overrideDataType = ""; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
+        $this->needsDataType = false; // set to false if you're going force a specific datatype for this element using the overrideDataType
+        $this->overrideDataType = "text"; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
         $this->adminCanMakeRequired = true; // set to true if the webmaster should be able to toggle this element as required/not required
         $this->alwaysValidateInputs = false; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
         parent::__construct();
@@ -67,10 +67,42 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
     function adminPrepare($element) {
         $dataToSendToTemplate = array();
         if(is_object($element) AND is_subclass_of($element, 'formulizeformulize')) {
-            $ele_value = $element->getVar('ele_value');
-			$ele_value = formulize_mergeUIText($ele_value, $ele_uitext);
-			$dataToSendToTemplate['useroptions'] = $ele_value;
+			$ele_value = $this->backwardsCompatibility($element->getVar('ele_value'));
+            if(is_array($ele_value[2])) { // an array will be a set of hard coded options
+                $ele_value[2] = formulize_mergeUIText($ele_value[2], $ele_uitext);
+                $dataToSendToTemplate['islinked'] = 0;
+                $dataToSendToTemplate['useroptions'] = $ele_value[2];
+            } else { // options are linked from another source
+                $dataToSendToTemplate['islinked'] = 1;
         }
+        } else {
+            $dataToSendToTemplate['islinked'] = 0;
+        }
+        
+        // $selectedLinkElementId can be used later to initialize a set of filters, if we add that to checkboxes.
+        list($formlink, $selectedLinkElementId) = createFieldList($ele_value[2]);
+        $dataToSendToTemplate['linkedoptions'] = $formlink->render();
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+        $selectedElementObject = $selectedLinkElementId ? $element_handler->get($selectedLinkElementId) : null;
+        
+        if ($selectedLinkElementId AND $selectedElementObject) {
+                $dataToSendToTemplate['formlinkfilter'] = formulize_createFilterUI($ele_value[5], "formlinkfilter", $selectedElementObject->getVar('id_form'), "form-2");
+        } elseif ($selectedLinkFormId) { // if usernames or fullnames is in effect, we'll have the profile form fid instead
+            $dataToSendToTemplate['formlinkfilter'] = formulize_createFilterUI($ele_value[5], "formlinkfilter", $selectedLinkFormId, "form-2");
+        }
+        if (!$dataToSendToTemplate['formlinkfilter']) {
+            $dataToSendToTemplate['formlinkfilter'] = "<p>The options are not linked.</p>";
+        }
+        
+		// sort order
+		if($selectedElementObject) {
+			list($optionSortOrder, $selectedOptionsSortOrder) = createFieldList($ele_value[12], false, $selectedElementObject->getVar('id_form'), "elements-ele_value[12]", _AM_ELE_LINKFIELD_ITSELF);
+			$dataToSendToTemplate['optionSortOrder'] = $optionSortOrder->render();
+		} else {
+			$dataToSendToTemplate['optionSortOrder'] = "";
+		}
+		
+        
         return $dataToSendToTemplate;
     }
     
@@ -82,15 +114,80 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
     function adminSave($element, $ele_value) {
         $changed = false;
         if(is_object($element) AND is_subclass_of($element, 'formulizeformulize')) {
+            
+			$ele_value = array(12=>$ele_value[12], 15=>$ele_value[15]); // initialize with the values that we don't need to parse/adjust
+            
+            if(isset($_POST['formlink']) AND $_POST['formlink'] != "none") {
+                global $xoopsDB;
+                $sql_link = "SELECT ele_caption, id_form, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = " . intval($_POST['formlink']);
+                $res_link = $xoopsDB->query($sql_link);
+                $array_link = $xoopsDB->fetchArray($res_link);
+                $ele_value[2] = $array_link['id_form'] . "#*=:*" . $array_link['ele_handle'];
+            } else {
 			list($_POST['ele_value'], $ele_uitext) = formulize_extractUIText($_POST['ele_value']);
-			$ele_value = array();
 			foreach($_POST['ele_value'] as $id=>$text) {
 				if($text !== "") {
-					$ele_value[$text] = isset($_POST['defaultoption'][$id]) ? 1 : 0;
+					$ele_value[2][$text] = isset($_POST['defaultoption'][$id]) ? 1 : 0;
             }
         }
+            }
+             
+            // handle conditions
+            // grab any conditions for this page too
+            // add new ones to what was passed from before
+            // need to send "changed" so the screen will redraw since the filter options have changed and need to be regenerated/updated
+            $filter_key = 'formlinkfilter';
+            if($_POST["new_".$filter_key."_term"] != "") {
+                $_POST[$filter_key."_elements"][] = $_POST["new_".$filter_key."_element"];
+                $_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_op"];
+                $_POST[$filter_key."_terms"][] = $_POST["new_".$filter_key."_term"];
+                $_POST[$filter_key."_types"][] = "all";
+                $changed = true;
+            }
+            if($_POST["new_".$filter_key."_oom_term"] != "") {
+                $_POST[$filter_key."_elements"][] = $_POST["new_".$filter_key."_oom_element"];
+                $_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_oom_op"];
+                $_POST[$filter_key."_terms"][] = $_POST["new_".$filter_key."_oom_term"];
+                $_POST[$filter_key."_types"][] = "oom";
+                $changed = true;
+            }
+            // then remove any that we need to
+            
+            $conditionsDeleteParts = explode("_", $_POST['optionsconditionsdelete']);
+            $deleteTarget = $conditionsDeleteParts[1];
+            if($_POST['optionsconditionsdelete']) {
+                // go through the passed filter settings starting from the one we need to remove, and shunt the rest down one space
+                // need to do this in a loop, because unsetting and key-sorting will maintain the key associations of the remaining high values above the one that was deleted
+                $originalCount = count($_POST[$filter_key."_elements"]);
+                for($i=$deleteTarget;$i<$originalCount;$i++) { // 2 is the X that was clicked for this page
+                    if($i>$deleteTarget) {
+                        $_POST[$filter_key."_elements"][$i-1] = $_POST[$filter_key."_elements"][$i];
+                        $_POST[$filter_key."_ops"][$i-1] = $_POST[$filter_key."_ops"][$i];
+                        $_POST[$filter_key."_terms"][$i-1] = $_POST[$filter_key."_terms"][$i];
+                        $_POST[$filter_key."_types"][$i-1] = $_POST[$filter_key."_types"][$i];
+                    }
+                    if($i==$deleteTarget OR $i+1 == $originalCount) {
+                        // first time through or last time through, unset things
+                        unset($_POST[$filter_key."_elements"][$i]);
+                        unset($_POST[$filter_key."_ops"][$i]);
+                        unset($_POST[$filter_key."_terms"][$i]);
+                        unset($_POST[$filter_key."_types"][$i]);
+                    }
+                }
+                $changed = true;
+            }
+            if(count($_POST[$filter_key."_elements"]) > 0){
+                $ele_value[5][0] = $_POST[$filter_key."_elements"];
+                $ele_value[5][1] = $_POST[$filter_key."_ops"];
+                $ele_value[5][2] = $_POST[$filter_key."_terms"];
+                $ele_value[5][3] = $_POST[$filter_key."_types"];
+            } else {
+                $ele_value[5] = "";
+            }
+            
 			$element->setVar('ele_value', $ele_value);
 			$element->setVar('ele_uitext', $ele_uitext);
+			
         }
         return $changed;
     }
@@ -105,7 +202,9 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 		// put the array into another array (clearing all default values)
 		// then we modify our place holder array and then reassign
 
-		$temparray = $ele_value;
+		$ele_value = $this->backwardsCompatibility($ele_value);
+		
+		$temparray = $ele_value[2];
 
 		if (is_array($temparray)) {
 			$temparraykeys = array_keys($temparray);
@@ -114,16 +213,18 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 			$temparraykeys = array();
 		}
 		
-		if($temparraykeys[0] === "{FULLNAMES}" OR $temparraykeys[0] === "{USERNAMES}") { // ADDED June 18 2005 to handle pulling in usernames for the user's group(s)
-			$ele_value[2]['{SELECTEDNAMES}'] = explode("*=+*:", $value);
-			if(count($ele_value[2]['{SELECTEDNAMES}']) > 1) { array_shift($ele_value[2]['{SELECTEDNAMES}']); }
-			$ele_value[2]['{OWNERGROUPS}'] = $owner_groups;
-        return $ele_value;
-    }
-    
 		// need to turn the prevEntry got from the DB into something the same as what is in the form specification so defaults show up right
 		// important: this is safe because $value itself is not being sent to the browser!
 		// we're comparing the output of these two lines against what is stored in the form specification, which does not have HTML escaped characters, and has extra slashes.  Assumption is that lack of HTML filtering is okay since only admins and trusted users have access to form creation.  Not good, but acceptable for now.
+        
+        if($value AND !strstr($value, "*=+*:")) { // not a standard checkbox value, so it should be a set of comma separated element ids, represented linked options
+            $boxproperties = $boxproperties = explode("#*=:*", $ele_value[2]);
+            $sourceFid = $boxproperties[0];
+            $sourceHandle = $boxproperties[1];
+            $ele_value[2] = $boxproperties[0] . "#*=:*" . $boxproperties[1] . "#*=:*" . implode(",",explode("*=+*:",trim($value, "*=+*:"))); // append the selected ids onto the end of the metadata for the linked options
+            return $ele_value;
+        }
+        
 		global $myts;
 		$value = $myts->undoHtmlSpecialChars($value);
 
@@ -167,7 +268,8 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 				}
 			}
 		}							
-		return $temparray;
+        $ele_value[2] = $temparray;
+		return $ele_value;
     }
     
     // this method renders the element for display in a form
@@ -180,7 +282,51 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
     // $element is the element object
     // $entry_id is the ID number of the entry where this particular element comes from
     // $screen is the screen object that is in effect, if any (may be null)
-    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen) {
+    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen=false, $owner) {
+	
+		$ele_value = $this->backwardsCompatibility($ele_value);
+	
+        // if options are linked...
+        $element_ele_value = $element->getVar('ele_value');
+		$isLinked = false;
+        if(!is_array($element_ele_value[2]) AND strstr($element_ele_value[2], "#*=:*")) {
+			$isLinked = true;
+            $boxproperties = explode("#*=:*", $ele_value[2]);
+            $sourceFid = $boxproperties[0];
+            $sourceHandle = $boxproperties[1];
+            $sourceEntryIds = explode(",", trim($boxproperties[2],","));
+            
+            $form_handler = xoops_getmodulehandler('forms', 'formulize');
+            $formObject = $form_handler->get($element->getVar('id_form'));
+            $sourceFormObject = $form_handler->get($sourceFid);
+
+            list($conditionsfilter, $conditionsfilter_oom, $parentFormFrom) = buildConditionsFilterSQL($element_ele_value[5], $sourceFid, $entry_id, $owner, $formObject, "t1");
+        
+			// setup the sort order based on ele_value[12], which is an element id number
+			$sortOrder = $ele_value[15] == 2 ? " DESC" : "ASC";
+			if($ele_value[12]=="none" OR !$ele_value[12]) {
+				$sortOrderClause = " ORDER BY t1.`$sourceHandle` $sortOrder";
+			} else {
+				list($sortHandle) = convertElementIdsToElementHandles(array($ele_value[12]), $sourceFormObject->getVar('id_form'));
+				$sortOrderClause = " ORDER BY t1.`$sortHandle` $sortOrder";
+			}
+		
+            global $xoopsDB;
+            $sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." AS t1 $parentFormFrom WHERE t1.entry_id>0 $conditionsfilter $conditionsfilter_oom GROUP BY t1.entry_id $sortOrderClause";
+            if($sourceValuesRes = $xoopsDB->query($sourceValuesQ)) {
+                // rewrite the values and ui text based on the data coming out of the database
+                $ele_value = array();
+                $ele_uitext = array();
+                while($resultArray = $xoopsDB->fetchArray($sourceValuesRes)) {
+                    $ele_value[2][$resultArray['entry_id']] = in_array($resultArray['entry_id'],$sourceEntryIds) ? 1 : 0;
+                    $ele_uitext[$resultArray['entry_id']] = $resultArray[$sourceHandle];
+                }
+            } else {
+                $ele_uitext = $element->getVar('ele_uitext');    
+            }
+        } else {
+            $ele_uitext = $element->getVar('ele_uitext');
+        }
 	
 		global $myts;
 		$selected = array();
@@ -189,10 +335,14 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 		$disabledHiddenValues = "";
 		$disabledOutputText = array();
 		$opt_count = 1;
-		while( $i = each($ele_value) ){
-			$options[$opt_count] = $myts->stripSlashesGPC($i['key']);
-			if( $i['value'] > 0 ){
-				$selected[] = $opt_count;
+        
+        foreach($ele_value[2] as $key=>$value) {
+			// linked checkboxes will send back the entry id to save
+			// non linked boxes send back an ordinal number that shows which options were picked
+			$valueToUse = $isLinked ? $key : $opt_count;
+			$options[$valueToUse] = $myts->stripSlashesGPC($key);
+			if( $value > 0 ){
+				$selected[] = $valueToUse;
 				$disabledHiddenValue[] = "<input type=hidden name=\"".$markupName."[]\" value=\"$opt_count\">";
 			}
 			$opt_count++;
@@ -212,7 +362,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 				);
 				$counter = 0; // counter used for javascript that works with 'Other' box
 				while( $o = each($options) ){
-					$o = formulize_swapUIText($o, $element->getVar('ele_uitext'));
+					$o = formulize_swapUIText($o, $ele_uitext);
 					$other = formulizeElementRenderer::optOther($o['value'], $markupName, $entry_id, $counter, true);
 					if( $other != false ){
 						$form_ele1->addOption($o['key'], _formulize_OPT_OTHER.$other);
@@ -236,7 +386,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 				$form_ele1 = new XoopsFormElementTray($caption, $delimSetting);
 				$counter = 0; // counter used for javascript that works with 'Other' box
 				while( $o = each($options) ){
-					$o = formulize_swapUIText($o, $element->getVar('ele_uitext'));
+					$o = formulize_swapUIText($o, $ele_uitext);
 					$other = formulizeElementRenderer::optOther($o['value'], $markupName, $entry_id, $counter, true);
 					$t = new XoopsFormCheckBox(
 						'',
@@ -295,7 +445,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
     // this method returns any custom validation code (javascript) that should figure out how to validate this element
     // 'myform' is a name enforced by convention that refers to the form where this element resides
     // use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
-    function generateValidationCode($caption, $markupName, $element, $entry_id) {
+    function generateValidationCode($caption, $markupName, $element, $entry_id=false) {
 		$eltname = $markupName;
 		$eltcaption = $caption;
 		$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
@@ -312,16 +462,25 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
     // $value is what the user submitted
     // $element is the element object
 	// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
-    // $subformBlankCounter is the instance of a blank subform entry we are saving. Multiple blank subform values can be saved on a given pageload and the counter differentiates the set of data belonging to each one prior to them being saved and getting an entry id of their own.
-    function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
+    function prepareDataForSaving($value, $element, $entry_id=null) {
+	
+        $ele_value = $this->backwardsCompatibility($element->getVar('ele_value'));
+		
+        if(!is_array($ele_value[2]) AND strstr($ele_value[2], "#*=:*")) {
+            $filteredValues = array();
+            foreach($value as $whatwasselected) {
+				if(!is_numeric($whatwasselected)) { continue; }
+                $filteredValues[] = $whatwasselected;
+            }
+            return formulize_db_escape(implode(",",$filteredValues));
+        }
 	
 		global $myts;
 		$selected_value = '';
         $opt_count = 1;
         $numberOfSelectionsFound = 0;
 		$ele_id = $element->getVar('ele_id');
-		$ele_value = $element->getVar('ele_value');
-        while ($v = each($ele_value) ) {
+        while ($v = each($ele_value[2]) ) {
             // it's always an array, right?!
             if (is_array($value)) {
                 if (in_array($opt_count, $value) ) {
@@ -398,4 +557,11 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
         return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
     }
     
+	function backwardsCompatibility($ele_value) {
+		if(!isset($ele_value[2]) AND (!isset($ele_value[5]) OR (!is_array($ele_value[5]) AND !is_numeric($ele_value[5])))) {
+			$ele_value = array(2=>$ele_value,5=>array());
+		}
+		return $ele_value;
+	}
+	
 }

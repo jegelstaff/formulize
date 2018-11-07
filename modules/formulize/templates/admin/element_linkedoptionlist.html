@@ -41,17 +41,7 @@
 		</fieldset>
 	</div>
 
-		  <div class="form-item">
-			  <fieldset>
-				  <legend>Filter them based on these properties of their entry in the source form</legend>
-				  <div id="filterdiv">
-				  <{$content.formlinkfilter}>
-				  </div>
-				  <div class="description">
-					  <{$smarty.const._AM_ELE_FORMLINK_SCOPEFILTER_DESC}>
-				  </div>
-			  </fieldset>
-		  </div>
+    <{include file="db:admin/element_linkedfilter.html"}>
 
 		  <div class="form-item">
 		    <fieldset>

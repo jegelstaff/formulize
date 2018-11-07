@@ -57,7 +57,7 @@ class icms_auth_Provisionning {
 	 */
 	public function geticms_member_user_Object($uname) {
 		$member_handler = icms::handler('icms_member');
-		$criteria = new icms_db_criteria_Item('uname', $uname);
+		$criteria = new icms_db_criteria_Item('login_name', $uname);
 		$getuser = $member_handler->getUsers($criteria);
 		if (count($getuser) == 1) {
 			return $getuser[0];
