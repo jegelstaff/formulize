@@ -732,133 +732,7 @@ class formulizeElementRenderer{
 				}
 			break;
 
-
-			case 'checkbox':
-				$selected = array();
-				$options = array();
-				$disabledHiddenValue = array();
-				$disabledHiddenValues = "";
-				$disabledOutputText = array();
-				$opt_count = 1;
-				while( $i = each($ele_value) ){
-					$options[$opt_count] = $myts->stripSlashesGPC($i['key']);
-					if( $i['value'] > 0 ){
-						$selected[] = $opt_count;
-						$disabledHiddenValue[] = "<input type=hidden name=\"".$form_ele_id."[]\" value=\"$opt_count\">";
-					}
-					$opt_count++;
-				}
-				if($this->_ele->getVar('ele_delim') != "") {
-					$delimSetting = $this->_ele->getVar('ele_delim');
-				} 
-				$delimSetting =& $myts->undoHtmlSpecialChars($delimSetting);
-				if($delimSetting == "br") { $delimSetting = "<br />"; }
-				$hiddenOutOfRangeValuesToWrite = array();
-				switch($delimSetting){
-					case 'space':
-						$form_ele1 = new XoopsFormCheckBox(
-							$ele_caption,
-							$form_ele_id,
-							$selected
-						);
-						$counter = 0; // counter used for javascript that works with 'Other' box
-						while( $o = each($options) ){
-							$o = formulize_swapUIText($o, $this->_ele->getVar('ele_uitext'));
-							$other = $this->optOther($o['value'], $form_ele_id, $entry, $counter, true);
-							if( $other != false ){
-								$form_ele1->addOption($o['key'], _formulize_OPT_OTHER.$other);
-								if(in_array($o['key'], $selected)) {
-									$disabledOutputText[] = _formulize_OPT_OTHER.$other;
-								}
-							}else{
-								$form_ele1->addOption($o['key'], $o['value']);
-								if(in_array($o['key'], $selected)) {
-									$disabledOutputText[] = $o['value'];
-								}
-								if(strstr($o['value'], _formulize_OUTOFRANGE_DATA)) {
-									$hiddenOutOfRangeValuesToWrite[$o['key']] = str_replace(_formulize_OUTOFRANGE_DATA, "", $o['value']); // if this is an out of range value, grab the actual value so we can stick it in a hidden element later
-								}
-							}
-							$counter++;
-						}
-						$form_ele1->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
-                        $GLOBALS['formulize_lastRenderedElementOptions'] = $form_ele1->getOptions();
-					break;
-					default:
-						$form_ele1 = new XoopsFormElementTray($ele_caption, $delimSetting);
-						$counter = 0; // counter used for javascript that works with 'Other' box
-						while( $o = each($options) ){
-							$o = formulize_swapUIText($o, $this->_ele->getVar('ele_uitext'));
-							$other = $this->optOther($o['value'], $form_ele_id, $entry, $counter, true);
-							$t = new XoopsFormCheckBox(
-								'',
-								$form_ele_id.'[]',
-								$selected,
-								$delimSetting
-							);
-							if($other != false){
-								$t->addOption($o['key'], _formulize_OPT_OTHER.$other);
-								if(in_array($o['key'], $selected)) {
-									$disabledOutputText[] = _formulize_OPT_OTHER.$other;
-								}
-                                $GLOBALS['formulize_lastRenderedElementOptions'][$o['key']] = _formulize_OPT_OTHER;
-							}else{
-								$t->addOption($o['key'], $o['value']);
-								if(in_array($o['key'], $selected)) {
-									$disabledOutputText[] = $o['value'];
-								}
-								if(strstr($o['value'], _formulize_OUTOFRANGE_DATA)) {
-									$hiddenOutOfRangeValuesToWrite[$o['key']] = str_replace(_formulize_OUTOFRANGE_DATA, "", $o['value']); // if this is an out of range value, grab the actual value so we can stick it in a hidden element later
-								}
-                                $GLOBALS['formulize_lastRenderedElementOptions'][$o['key']] = $o['value'];
-							}
-							$t->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
-							$form_ele1->addElement($t);
-							unset($t);
-							$counter++;
-						}
-					break;
-				}
-				$renderedHoorvs = "";
-
-				if(count($hiddenOutOfRangeValuesToWrite) > 0) {
-					foreach($hiddenOutOfRangeValuesToWrite as $hoorKey=>$hoorValue) {
-						$thisHoorv = new xoopsFormHidden('formulize_hoorv_'.$true_ele_id.'_'.$hoorKey, $hoorValue);
-						$renderedHoorvs .= $thisHoorv->render() . "\n";
-						unset($thisHoorv);
-					}
-				}
-				
-				if($isDisabled) {
-					$disabledHiddenValues = implode("\n", $disabledHiddenValue); // glue the individual value elements together into a set of values
-					$renderedElement = implode(", ", $disabledOutputText);
-				} else {
-					$renderedElement = $form_ele1->render();
-				}
-
-				$form_ele = new XoopsFormLabel(
-					$ele_caption,
-					"$renderedElement\n$renderedHoorvs\n$disabledHiddenValues\n"
-				);
-				$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
-
-				if($this->_ele->getVar('ele_req') AND !$isDisabled) {
-					$eltname = $form_ele_id;
-					$eltcaption = $ele_caption;
-					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
-					$eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
-					$form_ele->customValidationCode[] = "selection = true;\n";
-					$form_ele->customValidationCode[] = "checkboxes = $('[jquerytag={$eltname}]:checked');\n"; // need to use this made up attribute here, because there is no good way to select the checkboxes using the name or anything else that XOOPS/Impress is giving us!!
-					$form_ele->customValidationCode[] = "if(checkboxes.length == 0) { window.alert(\"{$eltmsg}\");\n $('[jquerytag={$eltname}]').focus();\n return false;\n }\n";
-				}
-			
-				if($isDisabled) {
-					$isDisabled = false; // disabled stuff handled here in element, so don't invoke generic disabled handling below (which is only for textboxes and their variations)
-				}
-            break;
-
-
-			case 'radio':
+      case 'radio':
 			case 'yn':
 				$selected = '';
 				$disabledHiddenValue = "";
@@ -1095,7 +969,7 @@ class formulizeElementRenderer{
 			default:
 				if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
 					$elementTypeHandler = xoops_getmodulehandler($ele_type."Element", "formulize");
-					$form_ele = $elementTypeHandler->render($ele_value, $ele_caption, $form_ele_id, $isDisabled, $this->_ele, $entry, $screen); // $ele_value as passed in here, $caption, name that we use for the element in the markup, flag for whether it's disabled or not, element object, entry id number that this element belongs to, $screen is the screen object that was passed in, if any
+					$form_ele = $elementTypeHandler->render($ele_value, $ele_caption, $form_ele_id, $isDisabled, $this->_ele, $entry, $screen, $owner); // $ele_value as passed in here, $caption, name that we use for the element in the markup, flag for whether it's disabled or not, element object, entry id number that this element belongs to, $screen is the screen object that was passed in, if any
 					// if form_ele is an array, then we want to treat it the same as an "insertbreak" element, ie: it's not a real form element object
 					if(is_object($form_ele)) {
     					if(!$isDisabled AND ($this->_ele->getVar('ele_req') OR $this->_ele->alwaysValidateInputs) AND $this->_ele->hasData) { // if it's not disabled, and either a declared required element according to the webmaster, or the element type itself always forces validation...

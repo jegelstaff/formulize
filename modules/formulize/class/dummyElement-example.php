@@ -119,7 +119,7 @@ class formulizeDummyElementHandler extends formulizeElementsHandler {
     // $element is the element object
     // $entry_id is the ID number of the entry where this particular element comes from
     // $screen is the screen object that is in effect, if any (may be null)
-    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen) {
+    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
         // dummy element is rendered as a textboxes, with the values set by the user in the admin side smushed together as the default value for the textbox
         if($isDisabled) {
             $formElement = new xoopsFormLabel($caption, $ele_value[0] . $ele_value[1]);
@@ -147,7 +147,9 @@ class formulizeDummyElementHandler extends formulizeElementsHandler {
     // You can return {WRITEASNULL} to cause a null value to be saved in the database
     // $value is what the user submitted
     // $element is the element object
-    function prepareDataForSaving($value, $element) {
+	// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
+    // $subformBlankCounter is the instance of a blank subform entry we are saving. Multiple blank subform values can be saved on a given pageload and the counter differentiates the set of data belonging to each one prior to them being saved and getting an entry id of their own.
+    function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
         return formulize_db_escape($value); // strictly speaking, formulize will already escape all values it writes to the database, but it's always a good habit to never trust what the user is sending you!
     }
     

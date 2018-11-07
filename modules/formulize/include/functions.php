@@ -1871,45 +1871,6 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
         break;
 
 
-        case 'checkbox':
-        $value = '';
-        $opt_count = 1;
-        $numberOfSelectionsFound = 0;
-        while ($v = each($ele_value) ) {
-            // it's always an array, right?!
-            if (is_array($ele)) {
-                if (in_array($opt_count, $ele) ) {
-                    $numberOfSelectionsFound++;
-                    $otherValue = checkOther($v['key'], $ele_id, $entry_id, $subformBlankCounter);
-                    if($otherValue !== false) {
-                        if($subformBlankCounter !== null) {
-                            $GLOBALS['formulize_other'][$ele_id]['blanks'][$subformBlankCounter] = $otherValue;
-                        } else {
-                            $GLOBALS['formulize_other'][$ele_id][$entry_id] = $otherValue;
-                        }
-                    }
-                    if (get_magic_quotes_gpc()) {
-                        $v['key'] = stripslashes($v['key']);
-                    }
-                    $v['key'] = $myts->htmlSpecialChars($v['key']);
-                    $value = $value.'*=+*:'.$v['key'];
-                }
-                $opt_count++;
-            }
-        }
-
-        // if a value was received that was out of range. in this case we are assuming that if there are more values passed back than selections found in the valid options for the element, then there are out-of-range values we want to preserve
-        while ($numberOfSelectionsFound < count($ele) AND $opt_count < 1000) {
-            // keep looking for more values. get them out of the hiddenOutOfRange info
-            if (in_array($opt_count, $ele)) {
-                $value = $value.'*=+*:'.$myts->htmlSpecialChars($_POST['formulize_hoorv_'.$ele_id.'_'.$opt_count]);
-                $numberOfSelectionsFound++;
-            }
-            $opt_count++;
-        }
-        break;
-
-
         case 'select':
         // handle the new possible default value -- sept 7 2007
         if ($ele_value[0] == 1 AND $ele == "none") { // none is the flag for the "Choose an option" default value
@@ -2062,7 +2023,7 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
         default:
         if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
             $customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
-            $value = $customTypeHandler->prepareDataForSaving($ele, $element);
+            $value = $customTypeHandler->prepareDataForSaving($ele, $element, $entry_id, $subformBlankCounter);
         }
     }
 

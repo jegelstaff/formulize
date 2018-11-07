@@ -2431,7 +2431,6 @@ function loadValue($prevEntry, $element, $ele_value, $owner_groups, $groups, $en
 
 				case "select":
 				case "radio":
-				case "checkbox":
 					// NOTE:  unique delimiter used to identify LINKED select boxes, so they can be handled differently.
 					if(is_string($ele_value[2]) and strstr($ele_value[2], "#*=:*"))
                     {

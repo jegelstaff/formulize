@@ -373,10 +373,6 @@ if ($ele_type=='text') {
     $ele_value = formulize_mergeUIText($ele_value, $ele_uitext);
     $options['useroptions'] = $ele_value;
 
-} elseif ($ele_type=="checkbox") {
-    $ele_value = formulize_mergeUIText($ele_value, $ele_uitext);
-    $options['useroptions'] = $ele_value;
-
 } elseif ($ele_type=="select") {
     if ($ele_id == "new") {
         $options['listordd'] = 0;
