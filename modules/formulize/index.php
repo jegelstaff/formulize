@@ -48,6 +48,7 @@ if(!isset($formulize_masterUIOverride)) {
 
 if(isset($formulize_screen_id)) {
     if(is_numeric($formulize_screen_id)) {
+        include XOOPS_ROOT_PATH.'/header.php';
         global $xoTheme;
         if($xoTheme) {
             $xoTheme->addStylesheet("/modules/formulize/templates/css/formulize.css");

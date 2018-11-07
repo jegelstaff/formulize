@@ -1,7 +1,7 @@
 <?php
 
 $cache = strstr($_GET['cache'], ".") ? "" : $_GET['cache']; // don't allow inclusion of badly formed cache filenames, could be hacking attempt
-$term = $_GET['q'];
+$term = $_GET['term'];
 $found = array();
 
 if(file_exists("../../../cache/".$cache)) {
@@ -19,7 +19,7 @@ if (isset($$cache)) {
                 // found a value that matches an existing value
                 $match_existing_value = true;
             }
-            $found[] = array($text, $id);
+            $found[] = array('label'=>$text, 'value'=>$id);
         }
     }
 
@@ -27,7 +27,7 @@ if (isset($$cache)) {
         // allow adding new values, so allow this as a new value, except if it matches an existing value
         if (!$match_existing_value) {
             // write the $term and newterm:$term as the key/value
-            $found[] = array($term, "newvalue:".addslashes($term));
+            $found[] = array('label'=>$term, 'value'=>"newvalue:".addslashes($term));
         }
     }
 }
@@ -40,7 +40,7 @@ if (0 == count($found)) {
     } else {
         include_once "../language/english/main.php";
     }
-    $found[] = array(_formulize_NO_MATCH_FOUND, "none");
+    $found[] = array('label'=>_formulize_NO_MATCH_FOUND, 'value'=>"none");
 }
 
 print json_encode($found);

@@ -49,7 +49,7 @@ class formulizeformulize extends XoopsObject {
     var $alwaysValidateInputs;
 	
 	function __construct(){
-		$this->XoopsObject();
+        parent::__construct();
 	//	key, data_type, value, req, max, opt
 		$this->initVar("id_form", XOBJ_DTYPE_INT, NULL, false);
 		$this->initVar("ele_id", XOBJ_DTYPE_INT, NULL, false);
@@ -147,7 +147,7 @@ class formulizeformulize extends XoopsObject {
 
     static function sanitize_handle_name($handle_name) {
         // strip non-alphanumeric characters from form and element handles
-        return preg_replace("/[^a-zA-Z0-9_]+/", "", $handle_name);
+        return preg_replace("/[^a-zA-Z0-9_-]+/", "", $handle_name);
     }
 
     public function assignVar($key, $value) {

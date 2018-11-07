@@ -23,7 +23,7 @@
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
 ##  Author of this file: Freeform Solutions                                  ##
-##  URL: http://www.freeformsolutions.ca/formulize                           ##
+##  URL: http://www.formulize.org                           ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
@@ -102,6 +102,9 @@ switch($active_page) {
         break;
     case "managekeys":
         include "managekeys.php";
+        break;
+    case "managetokens":
+        include "managetokens.php";
         break;
     default:
     case "home":

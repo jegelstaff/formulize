@@ -50,6 +50,8 @@ switch ($op) {
 		if (icms::$user->isAdmin()) {
 			$edituser->setVar('login_name', $login_name);
 			$edituser->setVar('uname', $uname);
+			//need this for mapping table update
+			$oldemail = $edituser->getVar('email');
 			$edituser->setVar('email', $email);
 
 			if ($edituser->getVar('uid') != icms::$user->getVar('uid')) {
@@ -116,10 +118,21 @@ switch ($op) {
 			echo $edituser->getHtmlErrors();
 			$form->display();
 		} else {
+
+			//update the user mapping table in case the email was used as an external id (needed for google login)
+			include_once XOOPS_ROOT_PATH."/integration_api.php";
+			include_once ICMS_ROOT_PATH . '/modules/formulize/include/functions.php';
+			Formulize::init();
+			if(!Formulize::updateResourceMapping($oldemail, $email)){
+				$update_message = 'Could not fully update email. <br>Consult webmaster if this seems to compromise Login with Google functionality.';
+			}else{
+				$update_message = _MD_PROFILE_PROFUPDATED;
+			}
+
 			$profile->setVar('profileid', $edituser->getVar('uid'));
 			$profile_handler->insert($profile);
 			unset($_SESSION['xoopsUserTheme']);
-			redirect_header(ICMS_URL.'/modules/'.basename( dirname( __FILE__ ) ).'/userinfo.php?uid='.$uid, 2, _MD_PROFILE_PROFUPDATED);
+			redirect_header(ICMS_URL.'/modules/'.basename( dirname( __FILE__ ) ).'/userinfo.php?uid='.$uid, 2,$update_message);
 		}		
 		break;
 	case 'delete':

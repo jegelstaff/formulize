@@ -100,7 +100,7 @@ class formulizePermHandler {
 
             $gperm_handler =& xoops_gethandler('groupperm');
             $member_handler =& xoops_gethandler('member');
-            $groups = $member_handler->getGroupsByUser($user_id);
+            $groups = $user_id == 0 ? array(XOOPS_GROUP_ANONYMOUS) : $member_handler->getGroupsByUser($user_id);
 
             if ("new" == $entry_id or "" == $entry_id) {
                 if ("update" == $action) {

@@ -23,7 +23,7 @@
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
 ##  Author of this file: Freeform Solutions                                  ##
-##  URL: http://www.freeformsolutions.ca/formulize                           ##
+##  URL: http://www.formulize.org                           ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
@@ -34,7 +34,7 @@ global $xoopsDB;
     class formulizeApplicationMenuLink extends XoopsObject {
         
         function __construct() {
-            $this->XoopsObject();
+            parent::__construct();
             $this->initVar("menu_id", XOBJ_DTYPE_INT, NULL, false);
             $this->initVar("appid", XOBJ_DTYPE_INT, NULL, false);
             $this->initVar("screen", XOBJ_DTYPE_TXTBOX, NULL, false,11);
@@ -149,7 +149,7 @@ class formulizeApplication extends XoopsObject {
   private $_forms = null;
 
   function __construct() {
-    $this->XoopsObject();
+    parent::__construct();
     $this->initVar("appid", XOBJ_DTYPE_INT, NULL, false);
     $this->initVar("name", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
     $this->initVar("description", XOBJ_DTYPE_TXTAREA);
@@ -431,7 +431,7 @@ class formulizeApplicationsHandler {
 //	error_log("link values ".print_r($linkValues));
         $insertsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_links")."` VALUES (null,". $appid.",'". formulize_db_escape($linkValues[2])."',".$rank.",'".formulize_db_escape($linkValues[3])."','".formulize_db_escape($linkValues[1])."','". formulize_db_escape($linkValues[6])."');";
 		if(!$result = $xoopsDB->query($insertsql)) {
-			exit("Error inserting Menu Item. SQL dump:\n" . $insertsql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+			exit("Error inserting Menu Item. SQL dump:\n" . $insertsql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
 		}else{
 			
 			$menuid = $xoopsDB->getInsertId();
@@ -448,7 +448,7 @@ class formulizeApplicationsHandler {
 					}
 					$permissionsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_permissions")."` VALUES (null,".$menuid.",". $groupid.", ".$defaultScreen.")";                     
 					if(!$result = $xoopsDB->query($permissionsql)) {
-						exit("Error inserting Menu Item permissions.".$linkValues[4]." SQL dump:\n" . $permissionsql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+						exit("Error inserting Menu Item permissions.".$linkValues[4]." SQL dump:\n" . $permissionsql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
 					}
                     $defaultScreen = 0;
 				}
@@ -491,7 +491,7 @@ class formulizeApplicationsHandler {
         $updatesql = "UPDATE `".$xoopsDB->prefix("formulize_menu_links").
 	"` SET screen= '".formulize_db_escape($linkValues[2])."', url= '".formulize_db_escape($linkValues[3])."', link_text='".formulize_db_escape($linkValues[1])."',note='".formulize_db_escape($linkValues[6])."' where menu_id=".formulize_db_escape($linkValues[0])." AND appid=".$appid.";";
         if(!$result = $xoopsDB->query($updatesql)) {
-            exit("Error updating Menu Item. SQL dump:\n" . $updatesql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+            exit("Error updating Menu Item. SQL dump:\n" . $updatesql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
         }else{
         	//delete existing permissions for this menu item
         	$deletepermissions = "DELETE FROM `".$xoopsDB->prefix("formulize_menu_permissions")."` WHERE menu_id=".formulize_db_escape($linkValues[0]).";";
@@ -510,7 +510,7 @@ class formulizeApplicationsHandler {
                     }
                     $permissionsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_permissions")."` VALUES (null,".formulize_db_escape($linkValues[0]).",". $groupid.",".$defaultScreen.")";                     
            	     if(!$result = $xoopsDB->query($permissionsql)) {
-           	     	exit("Error updating Menu Item permissions.".$linkValues[4]." SQL dump:\n" . $permissionsql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+           	     	exit("Error updating Menu Item permissions.".$linkValues[4]." SQL dump:\n" . $permissionsql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
            	 		}
                     $defaultScreen = 0;
            		  }
@@ -526,7 +526,7 @@ class formulizeApplicationsHandler {
   			$rank = $link->getVar('rank');           
         	$updatesql = "UPDATE `".$xoopsDB->prefix("formulize_menu_links")."` SET rank= ".$rank." where menu_id=".$menu_id.";";
         	if(!$result = $xoopsDB->query($updatesql)) {
-            	exit("Error sorting Menu List. SQL dump:\n" . $updatesql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+            	exit("Error sorting Menu List. SQL dump:\n" . $updatesql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
         	}
         }
 	}
@@ -543,7 +543,7 @@ class formulizeApplicationsHandler {
             return $resultArray['default_screen'];	 	                	 	
         }	 
         else {
-            exit("Error checking default screen. SQL dump:\n" . $checksql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+            exit("Error checking default screen. SQL dump:\n" . $checksql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
         }
     }
 }

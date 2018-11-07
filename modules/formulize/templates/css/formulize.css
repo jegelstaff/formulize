@@ -483,7 +483,7 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
 #listofentries div.main-cell-div input {
   width: 7em; }
 
-#pageNavTable {
+#pageNavTable, #pageNavTableBottom {
   margin: 1em 0; }
 
 .scrollbox {
@@ -548,7 +548,7 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
   tr, td {
     page-break-inside: avoid; }
 
-  #pageNavTable, #bottomPageNumber, #bottom-save-block {
+  #pageNavTable, #pageNavTableBottom #bottomPageNumber, #bottom-save-block {
     display: none; }
 
   .ui-accordion .ui-accordion-content {

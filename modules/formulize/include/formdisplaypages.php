@@ -131,7 +131,6 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 				$entry = $entries[$fid][0];
 			}
 			
-			synchSubformBlankDefaults($fid, $entry);
 		}
 	}
 
@@ -566,6 +565,11 @@ function drawPageNav($usersCanSave="", $currentPage="", $totalPages, $aboveBelow
     $xoopsTpl->assign("currentPage", $currentPage);
     $xoopsTpl->assign("totalPages", $totalPages);
     $xoopsTpl->assign("aboveBelow", $aboveBelow);
+    if($aboveBelow == 'below') {
+        $xoopsTpl->assign("bottom", 'Bottom');
+    } else {
+        $xoopsTpl->assign("bottom", '');
+    }
     $xoopsTpl->assign("nextPageButton", $nextPageButton);
     $xoopsTpl->assign("previousPageButton", $previousPageButton);
     $xoopsTpl->assign("skippedPageMessage", $skippedPageMessage);
@@ -608,13 +612,13 @@ function generatePrevNextButtonMarkup($buttonType, $buttonText, $usersCanSave, $
 
 function pageSelectionList($currentPage, $countPages, $pageTitles, $aboveBelow) {
 
-	static $pageSelectionList = "";
+	static $pageSelectionList = array();
 	
-	if($pageSelectionList) {
-		return $pageSelectionList;
+	if(isset($pageSelectionList[$aboveBelow])) {
+		return $pageSelectionList[$aboveBelow];
 	}
 
-	$pageSelectionList .= "<select name=\"pageselectionlist_$aboveBelow\" id=\"pageselectionlist_$aboveBelow\" size=\"1\" onchange=\"javascript:pageJump(this.form.pageselectionlist_$aboveBelow.options, $currentPage);\">\n";
+	$pageSelectionList[$aboveBelow] .= "<select name=\"pageselectionlist_$aboveBelow\" id=\"pageselectionlist_$aboveBelow\" size=\"1\" onchange=\"javascript:pageJump(this.form.pageselectionlist_$aboveBelow.options, $currentPage);\">\n";
 	for($page=1;$page<=$countPages;$page++) {
 		if(isset($pageTitle[$page]) AND strstr($pageTitles[$page], "[")) {
 			$title = " &mdash; " . trans($pageTitles[$page]); // translation can be expensive, so only do it if we have to (regular expression matching is not pretty)
@@ -623,10 +627,10 @@ function pageSelectionList($currentPage, $countPages, $pageTitles, $aboveBelow) 
 		} else {
 			$title = "";
 		}
-		$pageSelectionList .= "<option value=$page";
-		$pageSelectionList .= $page == $currentPage ? " selected=true>" : ">";
-		$pageSelectionList .= $page . $title . "</option>\n";
+		$pageSelectionList[$aboveBelow] .= "<option value=$page";
+		$pageSelectionList[$aboveBelow] .= $page == $currentPage ? " selected=true>" : ">";
+		$pageSelectionList[$aboveBelow] .= $page . $title . "</option>\n";
 	}
-	$pageSelectionList .= "</select>";
-	return $pageSelectionList;
+	$pageSelectionList[$aboveBelow] .= "</select>";
+	return $pageSelectionList[$aboveBelow];
 }

@@ -274,6 +274,9 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
     // output export header
     $output_handle = fopen('php://output', 'w');    // open a file handle to stdout because fputcsv() needs it
     fputcsv($output_handle, $headers);
+    if(isset($_GET['showHandles'])) {
+        fputcsv($output_handle, $columns);
+    }
 
     // output export data
     $GLOBALS['formulize_doingExport'] = true;
@@ -295,8 +298,13 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
         
     } else {
 
+        if(isset($_GET['limitSize'])) { // if user set a specific limit, use that instead of gathering everything in 1000 record chunks...happens with makecsv.php and maybe other times
+            $limitStart = isset($_GET['limitStart']) ? intval($_GET['limitStart']) : 0;
+            $limitSize = (isset($_GET['limitSize']) AND $limitStart !== "") ? intval($_GET['limitSize']) : "";
+        } else {
         $limitStart = 0;
-        $limitSize = 50;    // export in batches of 50 records at a time
+            $limitSize = 1000;    // export in batches of 1000 records at a time
+        }
     
         do {
             // load part of the data, since a very large dataset could exceed the PHP memory limit
@@ -346,9 +354,11 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
     
                 // get the next set of data
                 set_time_limit(90);
+                if(!isset($_GET['limitSize'])) { // if we don't have a set size from makecsv.php or other user-set value
                 $limitStart += $limitSize;
             }
-        } while (is_array($data) and count($data) > 0);
+            }
+        } while (!isset($_GET['limitSize']) AND is_array($data) and count($data) > 0 );
 
     }
         
