@@ -335,7 +335,7 @@ li {
 
 /* Start Main Menu */
 #mainmenu {
-  font-size: .8em; }
+  font-size: 1.1em; }
 
 #mainmenu a {
   display: block;
@@ -362,7 +362,7 @@ li {
 /* End Main Menu */
 /* Start User Menu */
 #usermenu {
-  font-size: .8em; }
+  font-size: 1.1em; }
 
 #usermenu a {
   color: #8fBe58;
@@ -409,7 +409,7 @@ td.head {
   background-color: #59a7d4;
   color: #fff;
   font-weight: bold;
-  padding: 0.5em 1em 0.5em 0.4em;
+  padding: 1em;
   border: 1px solid darkgreen; }
 
 td.head a {
@@ -418,12 +418,14 @@ td.head a {
 .even, tr.even td {
   background-color: #ffffff;
   color: #000;
-  padding: 5px; }
+  padding: 1em;
+  border: 1px solid darkgreen; }
 
 .odd, tr.odd td {
   background-color: #e6e6e6;
   color: #000;
-  padding: 5px; }
+  padding: 1em;
+  border: 1px solid darkgreen; }
 
 .foot {
   background-color: #ffffff;
