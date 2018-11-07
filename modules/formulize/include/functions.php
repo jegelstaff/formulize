@@ -1548,16 +1548,16 @@ function getAllColList($fid, $frid="", $groups="", $includeBreaks=false) {
     // if $groups then build the necessary filter
     // build query for display groups
     $gq = "";
-    if ($groups) {
+    if (is_array($groups)) {
         $gq = "AND (ele_display='1'";
         foreach ($groups as $thisgroup) {
             $gq .= " OR ele_display LIKE '%,$thisgroup,%'";
         }
         $gq .= ")";
-    }
-
+    } else {
     // reset groups to be based off user object (and this instantiates it if it weren't present before)
     $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+    }
 
     // if current user does NOT have view_private_elements permission, then set a query to exclude those elements
     $pq = "";
@@ -3552,21 +3552,21 @@ function writeElementValue($formframe = "", $ele, $entry, $value, $append, $prev
         // not new entry, so update the existing entry
         if ($append=="remove") {
             $prevValue = q("SELECT `".$element->getVar('ele_handle')."` FROM ".$xoopsDB->prefix("formulize_".$elementFormObject->getVar('form_handle'))." WHERE entry_id=".intval($entry));
-            if (strstr($prevValue[0]['ele_value'], "*=+*:")) {
-                $valueToWrite = str_replace("*=+*:" . $value, "", $prevValue[0]['ele_value']);
+            if (strstr($prevValue[0][$element->getVar('ele_handle')], "*=+*:")) {
+                $valueToWrite = str_replace("*=+*:" . $value, "", $prevValue[0][$element->getVar('ele_handle')]);
             } else {
-                $valueToWrite = str_replace($value, "", $prevValue[0]['ele_value']);
+                $valueToWrite = str_replace($value, "", $prevValue[0][$element->getVar('ele_handle')]);
             }
         } elseif ($append=="append") {
             $prevValue = q("SELECT `".$element->getVar('ele_handle')."` FROM ".$xoopsDB->prefix("formulize_".$elementFormObject->getVar('form_handle'))." WHERE entry_id=".intval($entry));
             switch ($element->getVar('ele_type')) {
                 case "checkbox":
-                    $valueToWrite = $prevValue[0]['ele_value'] . "*=+*:" . $value;
+                    $valueToWrite = $prevValue[0][$element->getVar('ele_handle')] . "*=+*:" . $value;
                     break;
 
                 case "select":
                     if ($ele_value[1]) { // multiple selections possible
-                            $valueToWrite = $prevValue[0]['ele_value'] . "*=+*:" . $value;
+                            $valueToWrite = $prevValue[0][$element->getVar('ele_handle')] . "*=+*:" . $value;
                     } else { // cannot append to dropdowns
                             $valueToWrite = $value;
                     }
@@ -3580,7 +3580,7 @@ function writeElementValue($formframe = "", $ele, $entry, $value, $append, $prev
 
                 case "text":
                 case "textarea":
-                    $valueToWrite = $prevValue[0]['ele_value'] . $value;
+                    $valueToWrite = $prevValue[0][$element->getVar('ele_handle')] . $value;
                     break;
 
                 default:

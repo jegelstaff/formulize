@@ -167,6 +167,25 @@ function patch40() {
 ) ENGINE=MyISAM;";
         }
 
+        if (!in_array($xoopsDB->prefix("formulize_tokens"), $existingTables)) {
+            $sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_tokens") . " (
+                `key_id` int(11) unsigned NOT NULL auto_increment,
+                `groups` varchar(255) NOT NULL default '',
+                `tokenkey` varchar(255) NOT NULL default '',
+                `expiry` datetime default NULL,
+                `maxuses` int(11) NOT NULL default '0',
+                `currentuses` int(11) NOT NULL default '0',
+                PRIMARY KEY (`key_id`),
+                INDEX i_groups (groups),
+                INDEX i_tokenkey (tokenkey),
+                INDEX i_expiry (expiry),
+                INDEX i_maxuses (maxuses),
+                INDEX i_currentuses (currentuses)
+            ) ENGINE=MyISAM;";
+        } 
+        
+        
+        
         if (!in_array($xoopsDB->prefix("formulize_group_filters"), $existingTables)) {
             $sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_group_filters")."` (
   `filterid` int(11) NOT NULL auto_increment,
