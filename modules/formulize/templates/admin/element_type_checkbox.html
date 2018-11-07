@@ -1,9 +1,7 @@
 <div class="panel-content content">
-    <div class="form-item">
-    <fieldset>
-		<legend><{$smarty.const._AM_ELE_OPT}></legend>
-		<{include file="db:admin/element_linkedoptionlist.html}>
-    </div>	
+
+	<{include file="db:admin/element_linkedoptionlist.html}>
+
     <div class="form-item">
       <fieldset>
         <legend><{$smarty.const._AM_ELE_DELIM_CHOICE}></legend>
@@ -20,6 +18,10 @@
 	      </div>
       </fieldset>
     </div>
+  
+  <{include file="db:admin/element_linkedfilter.html"}>
+  
+  <{include file="db:admin/element_linkedsortoptions.html"}>
   
 </div>
 
