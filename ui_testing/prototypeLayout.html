@@ -153,19 +153,29 @@
 
     </div>
 
-    <div style="border-bottom: 3px solid" > <!--Relations Menu (if there are any)-->
-        <p>One-to-One:<p>
-        <ul>
-            <il><a href = "#" >BBB</a></il> <!-- Just showing that there will be a link to the form -->
-        </ul>
+</div>
 
-        <p>One-to-Many:</p>
+<div id = "sideWithRelations" class = "sideBarInfo" >
+    <a href = "javascript:void(0)" class = "close" onclick = "closeInfoBar()" >&times</a>
+    <div style="border-bottom: 5px solid" >
+        <b><p>Relation's Name.</p></b> <!-- Name Block-->
     </div>
 
+    <div style="border-bottom: 3px solid" > <!--Members, in order added-->
+        <span style ="cursor:pointer" onclick="openInfoBar()"><a>AAA</a></span>
+        <span style ="cursor:pointer" onclick="openInfoBar()"><a>CCC</a></span>
+        <span style ="cursor:pointer" onclick="openInfoBar()"> <a>BBB</a></span>
+
+    </div>
+
+    <div style="border-bottom: 3px solid" > <!--Action Menu (it links to stuff)-->
+        <a href ="#">Edit links between forms...</a>
+        <a href ="#">Edit relation type between forms...</a>
+    </div>
 
 </div>
 
-<!--<span style ="cursor:pointer" onclick="openBar()"> Open! </span> -->
+<center><span onclick="openRelBar()"><a href = "#">Real Relation... (click here)</a></span></center>
 
 <!-- the code for the pop ups-->
 
@@ -230,8 +240,14 @@
         document.getElementById("sideWithInfo").style.width = "250px";
         document.body.style.backgroundColor = "rgba(0,0,0,0.4)";
         document.getElementById("sideBarIcons").style.backgroundColor = "rgba(0,0,0,0.4)";
+        document.getElementById("sideWithRelations").style.width = "0px";
     }
 
+   function openRelBar() {
+       document.getElementById("sideWithRelations").style.width = "250px";
+       document.body.style.backgroundColor = "rgba(0,0,0,0.4)";
+       document.getElementById("sideWithInfo").style.width = "0px";
+   }
 
     function openViewPopUp(){
         closePops();
