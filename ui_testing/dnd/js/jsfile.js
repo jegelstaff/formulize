@@ -9,34 +9,24 @@ $(document).ready(function () {
 			/*tilt effect on drag*/
 			$(ui.helper).addClass("form-draggable-helper");
 			$(ui.helper).css("width", $(this).width());
+			var dropContainer = $(".form-content");
+			dropContainer.animate({
+				height: dropContainer.height() + ui.helper.height()
+			}, 250);
+			dropContainer.addClass("form-focus");
+						
 		},
+		stop: function (event, ui) {
+			$(".form-content").animate({
+				height: "0"
+			}, 200);			
+			$(".form-content").removeClass("form-focus");
+		}
 	});
-	/*
-		$(".form-draggable").sortable({
-			//Todo: fix duplicate code
-			stack: '.form-draggable',
-			helper: 'clone',
-			revert: 'invalid',
-			start: function (event, ui) {
-				$(ui.helper).addClass("form-draggable-helper");
-				$(ui.helper).css("width", $(this).width());
-			},
-		});*/
-
+	
 	/*Create a new relationship with a form*/
 	$(".form-content").droppable({
-		accept: ".addable",
-		hoverClass: "form-focus",
-		over: function (event, ui) {
-			$(this).animate({
-				height: $(this).height() + ui.helper.height()
-			}, 250);
-		},
-		out: function (event) {
-			$(this).animate({
-				height: "0"
-			}, 200);
-		},
+		accept: ".addable",		
 		drop: function (ev, ui) {
 			//ui.draggable.remove();
 			var item = ui.draggable.clone();
