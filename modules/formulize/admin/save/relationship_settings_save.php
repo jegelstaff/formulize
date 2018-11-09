@@ -231,16 +231,15 @@ function updatelinks($fl_id, $value) {
             $new_foreign_key_element = $ele_handler->create();
             $element_variables = array('id_form' => $form2_id, 
                                         'ele_foreign_key_element' => $form1_id,
-                                        'ele_handle' => 'foreign_key_from_form_'.$form1_id,
-                                        'ele_forcehidden' => 1);
+                                        'ele_handle' => 'foreign_key_from_form_'.$form1_id);
+            $new_foreign_key_element->setDirty();
             $new_foreign_key_element->assignVars($element_variables);
             print "return value: ". $ele_handler->insert($new_foreign_key_element)."\n";
             
-//            print "element form id: ".$new_foreign_key_element->id_form."\n";
-//            print "element foreign_key_element: ".$new_foreign_key_element->ele_foreign_key_element."\n";
-//            print "element handle: ".$new_foreign_key_element->ele_handle."\n";
-//            print "element forcehidden value: ".$new_foreign_key_element->ele_forcehidden."\n";
         }
+//        This code is used to remove the newly added record to the formulize elements table. (Used for testing)
+//        $sql = "DELETE FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_handle='foreign_key_from_form_8'";
+//        $xoopsDB->query($sql);
         print "Code to link the two forms here.\n";
     }
     

@@ -323,7 +323,7 @@ CREATE TABLE formulize (
   ele_forcehidden tinyint(1) NOT NULL default '0',
   ele_private tinyint(1) NOT NULL default '0',
   ele_use_default_when_blank tinyint(1) NOT NULL default '0',
-  ele_foreign_key_element SMALLINT(5) DEFAULT 0,
+  ele_foreign_key_element BIGINT(19) DEFAULT 0,
   PRIMARY KEY  (`ele_id`),
   KEY `ele_display` (`ele_display` ( 255 ) ),
   KEY `ele_order` (`ele_order`)
