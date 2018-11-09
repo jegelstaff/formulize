@@ -112,8 +112,8 @@ function patch40() {
      *
      * ====================================== */
 
-    $checkThisTable = 'formulize_apikeys';
-    $checkThisField = false; 
+    $checkThisTable = 'formulize';
+    $checkThisField = 'ele_parent_id';
     $checkThisProperty = false;
     $checkPropertyForValue = false;
 
@@ -294,7 +294,7 @@ function patch40() {
             INDEX i_sid (`sid`)
         ) ENGINE=MyISAM;";
         }
-        
+
         if (!in_array($xoopsDB->prefix("formulize_apikeys"), $existingTables)) {
             $sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_apikeys") . " (
                 `key_id` int(11) unsigned NOT NULL auto_increment,
@@ -306,7 +306,7 @@ function patch40() {
                 INDEX i_apikey (apikey),
                 INDEX i_expiry (expiry)
             ) ENGINE=MyISAM;";
-        }      
+        }
 
         // if this is a standalone installation, then we want to make sure the session id field in the DB is large enough to store whatever session id we might be working with
         if (file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
@@ -356,7 +356,8 @@ function patch40() {
         $sql['add_pubfilters'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_saved_views") . " ADD `sv_pubfilters` text";
         $sql['add_backdrop_group'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_resource_mapping") . " ADD external_id_string text NULL default NULL";
         $sql['add_backdrop_group_index'] = "ALTER TABLE ". $xoopsDB->prefix("formulize_resource_mapping") ." ADD INDEX i_external_id_string (external_id_string(10))";
-        
+        $sql['add_ele_parent_id'] = "ALTER TABLE ". $xoopsDB->prefix("formulize") ." ADD ele_parent_id smallint(5) unsigned NOT NULL default '0'";
+
         foreach($sql as $key=>$thissql) {
             if (!$result = $xoopsDB->query($thissql)) {
                 if ($key === "add_encrypt") {
@@ -415,6 +416,8 @@ function patch40() {
                     print "External_id_string already added for resource mapping.  result: OK<br>";
                 } elseif(strstr($key, 'add_backdrop_group_index')) {
                     print "External_id_string INDEX already added for resource mapping.  result: OK<br>";
+                } elseif($key == "add_ele_parent_id") {
+                    print "Parent ID for element already added for linking elements.  result: OK<br>";
                 } else {
                     exit("Error patching DB for Formulize 4.0. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }

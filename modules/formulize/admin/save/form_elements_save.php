@@ -175,6 +175,7 @@ if($_POST['convertelement']) {
       print "Error: could not complete conversion of the element";
     }
 	}
+    // TODO: ANISHA - if element has children/parents, convert them too
 }
 
 if($_POST['deleteelement']) {
@@ -184,6 +185,7 @@ if($_POST['deleteelement']) {
   if($ele_type != "areamodif" AND $ele_type != "ib" AND $ele_type != "sep" AND $ele_type != "subform" AND $ele_type != "grid") {
     $element_handler->deleteData($element); //added aug 14 2005 by jwe
   }
+  // TODO: ANISHA - if element has children, unlink children?
 }
 
 if($_POST['cloneelement']) {
@@ -224,6 +226,12 @@ if($_POST['linkedelement']) {
     $thisElementObject->setVar('ele_id', 0);
     $thisElementObject->setVar('id_form', $fid);
 
+    $parent_id = $thisElementObject->getVar('ele_parent_id');
+    if ($parent_id == 0) {
+        $thisElementObject->setVar('ele_parent_id', $old_ele_id);
+        $parent_id = $thisElementObject->getVar('ele_parent_id');
+    }
+
     $sql = "SELECT max(ele_order) as new_order FROM ".$xoopsDB->prefix("formulize")." WHERE id_form = $fid";
     $res = $xoopsDB->query($sql);
     $array = $xoopsDB->fetchArray($res);
@@ -240,7 +248,7 @@ if($_POST['linkedelement']) {
   	}
     $form_handler->insertElementField($thisElementObject, $dataType);
 
-    print "/* eval */ window.location = '".XOOPS_URL."/modules/formulize/admin/ui.php?page=element&ele_id=$ele_id&aid=".intval($_POST['aid'])."';";
+    print "/* eval */ window.location = '".XOOPS_URL."/modules/formulize/admin/ui.php?page=element&parent_id=$parent_id&ele_id=$ele_id&aid=".intval($_POST['aid'])."';";
 }
 
 if($_POST['reload_elements']) {
