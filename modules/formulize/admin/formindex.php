@@ -729,7 +729,7 @@ function saveMenuEntryAndPermissionsSQL($formid, $appid, $i, $menuText) {
     $groupsThatCanView = $gperm_handler->getGroupIds("view_form", $formid, getFormulizeModId());
 
     $menuText = html_entity_decode($menuText, ENT_QUOTES) == "Use the form's title" ? '' : $menuText;
-    $thissql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_links")."` VALUES (null,". $appid.",'fid=".$formid."',".$i.",null,'".$menuText."');";//.$permissionsql.";";
+    $thissql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_links")."` VALUES (null,". $appid.",'fid=".$formid."',".$i.",null,'".$menuText."','');";//.$permissionsql.";";
     if (!$result = $xoopsDB->query($thissql)) {
         exit("Error inserting Menus. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
     } else {
