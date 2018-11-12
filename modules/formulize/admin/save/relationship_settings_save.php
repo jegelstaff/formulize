@@ -231,6 +231,7 @@ function updatelinks($fl_id, $value) {
             $new_foreign_key_element = $ele_handler->create();
             $element_variables = array('id_form' => $form2_id, 
                                         'ele_foreign_key_element' => $form1_id,
+                                        'ele_type' => "text",
                                         'ele_handle' => 'foreign_key_from_form_'.$form1_id);
             $new_foreign_key_element->setDirty();
             $new_foreign_key_element->assignVars($element_variables);
@@ -238,7 +239,7 @@ function updatelinks($fl_id, $value) {
             
         }
 //        This code is used to remove the newly added record to the formulize elements table. (Used for testing)
-//        $sql = "DELETE FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_handle='foreign_key_from_form_8'";
+//        $sql = "DELETE FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_handle='foreign_key_from_form_6'";
 //        $xoopsDB->query($sql);
         print "Code to link the two forms here.\n";
     }

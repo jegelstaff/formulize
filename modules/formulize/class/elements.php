@@ -188,13 +188,13 @@ class formulizeElementsHandler {
 			return $cachedElements[$id];
 		}
 		if ($id > 0 AND is_numeric($id)) {
-			$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE ele_id='.$id;
+			$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE ele_id='.$id.' AND ele_foreign_key_element=0';
 			if (!$result = $this->db->query($sql)) {
 				$cachedElements[$id] = false;
 				return false;
 			}
 		} else {
-			$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE ele_handle="'.formulize_db_escape($id).'"';
+			$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE ele_handle="'.formulize_db_escape($id).'" AND ele_foreign_key_element=0';
 			if (!$result = $this->db->query($sql)) {
 				$cachedElements[$id] = false;
 				return false;
@@ -267,7 +267,7 @@ class formulizeElementsHandler {
 				$ele_encrypt,
 				$this->db->quoteString($ele_filtersettings),
 				$ele_use_default_when_blank,
-                                $ele_foreign_key_element_link
+                                $ele_foreign_key_element
 			);            
             // changed - end - August 19 2005 - jpc
 			}else{
@@ -310,7 +310,7 @@ class formulizeElementsHandler {
 				$ele_encrypt,
 				$this->db->quoteString($ele_filtersettings),
 				$ele_use_default_when_blank,
-                                $ele_foreign_key_element_link,
+                                $ele_foreign_key_element,
 				$ele_id,
 				$id_form
 			);
@@ -391,7 +391,7 @@ class formulizeElementsHandler {
 		$limit = $start = 0;
 //		awareness of $criteria added, Sept 1 2005, jwe
 //		removal of ele_display=1 from next line and addition of the renderWhere line in the conditional below
-		$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE id_form='.$id_form;
+		$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE id_form='.$id_form.' AND ele_foreign_key_element=0';
 
 
 		if( isset($criteria)) { 
