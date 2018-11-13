@@ -12,22 +12,51 @@
 
 	<link rel="stylesheet" type="text/css" href="style.css">
 </head>
-<p>New Relationship</p>
-<div class="column">
-	<p>Current Form:</p>
-	<i class="ui-icon ui-icon-trash relationship-image"></i>
-	<div class="form">
+
+
+<div id="xo-header">
+	<div id="xo-headerlogo"><a href="http://localhost/uc/formulize/" title=""><img src="http://localhost/uc/formulize/themes/formulize_standalone/img/logo.png" alt="Formulize Standalone"></a></div>
+	<div id="xo-headerbanner">
+		<!-- Header menu (optional) -->
+		<div id="xo-globalnav">
+			<a href="http://localhost/uc/formulize" title="Formulize Standalone">Home</a>
+			<a href="http://localhost/uc/formulize/modules/formulize/admin/ui.php" title="admin">Admin</a>
+			<a href="http://localhost/uc/formulize/edituser.php" title="Edit Account">Edit Account</a>
+			<a href="http://localhost/uc/formulize/viewpmsg.php" title="Inbox">Inbox</a>
+			<a href="http://localhost/uc/formulize/user.php?op=logout" title="Logout">Logout</a>
+		</div>
+	</div>
+</div>
+<!-- The sidebar -->
+<div class="sidebar" style="top:100px">
+	<p>Forms</p>
+	<div class="form-draggable addable" >
+		<img src="../base_icon.png" width="98" height="98">
+		Form1
+		<img src="../base_icon.png" onclick="openInfoBar()" width="98" height="98">
+	</div>
+	<div class="form-draggable addable" onclick="openInfoBar()">
+		<img src="../base_icon.png" width="98" height="98">Form2</div>
+	<div class="form-draggable addable">
+		<img src="../base_icon.png" width="98" height="98">Form-nomenu</div>
+
+</div>
+
+
+<div class="column" style="margin-left: 240px; margin-top: 10px">
+	<p> Forms &emsp; Screens &emsp; Relationships &emsp; Menu Entries &emsp; Export (beta!) &emsp; Add a Form</p> <!--temp-->
+	<p>Current Form</p>
+	<div class="form main">
 		<div class="form-layout">
-			Relationships
+			<p style="text-align: center">Relationships</p>
 			<div class="form-content" id="droppable">
 
-				<div class="form-draggable">
-					<img class="relationship-image" src="../base_icon.png" />
-					onetoone</div>
+				<div class="form-sortable ui-draggable ui-sortable" style="">
+					<img src="../base_icon.png">Form-nomenu</div>
 
-				<div class="form-draggable">Form3</div>
-				<div class="form-draggable">
-					<img class="relationship-image" src="../one%20to%20one%20icon%20v2.png" />Onetoone</div>
+			</div>
+			<div id="addbutton">
+				+ Add new relationship
 			</div>
 		</div>
 
@@ -35,45 +64,68 @@
 	</div>
 </div>
 
-<div class="column">
-	<p>All Forms:</p>
-	<div class="form">
+<div id="sideWithInfo" class="sideBarInfo">
+	<a href="javascript:void(0)" class="close" onclick="closeInfoBar()">&times</a>
+	<div style="border-bottom: 5px solid">
+		<b>
+			<p>Form's Name.</p>
+		</b> <!-- Name Block-->
+	</div>
 
-		<div class="form-draggable addable">Drag</div>
+	<div style="border-bottom: 3px solid">
+		<!--Data Stats-->
+		<p>ID: ###</p>
+		<p>Elements: ###</p>
+		<p>Entries: ###</p>
+		<p>Last Updated: ###</p>
+		<p>Owner: ###</p>
+	</div>
 
-		<div class="form-draggable addable">Drop</div>
-		
-		<div class="form-draggable addable">Form1</div>
+	<div style="border-bottom: 3px solid">
+		<!--Action Menu (it links to stuff)-->
+		<a href="#">Configure</a>
+		<span style="cursor:pointer" onclick="openViewPopUp()"><a href="#">View</a></span>
 
-		<div class="form-draggable addable">Form2</div>
+		<span style="cursor:pointer" onclick="openClonePopUp()"><a href="#">Clone</a></span>
+
+		<a href="#">Lock Down</a>
+
+		<span style="cursor:pointer" onclick="openDeletePopUp()"><a href="#">Delete</a></span>
+
+
+		<span style="cursor:pointer" onclick="openScreensPopUp()"><a href="#">Screens</a></span>
 
 	</div>
+
+	<div style="border-bottom: 3px solid">
+		<!--Relations Menu (if there are any)-->
+		<p>One-to-One:<p>
+				<ul>
+					<il><a href="#">BBB</a></il> <!-- Just showing that there will be a link to the form -->
+				</ul>
+
+				<p>One-to-Many:</p>
+	</div>
+
+	<script>
+		function closeInfoBar() {
+
+
+			document.getElementById("page-overlay").style.visibility = "hidden";
+			document.getElementById("sideWithInfo").style.width = "0";
+			//			closePops();
+		}
+
+
+		function openInfoBar() {
+			document.getElementById("page-overlay").style.visibility = "visible";
+			document.getElementById("sideWithInfo").style.width = "250px";
+		}
+	</script>
+
 </div>
 
 
-<div id="dialog" title="Create a new relationship?"><p>Type of relationship:</p>
-
-</div>
-
-<script>
-	$(function() {
-		$("#dialog").dialog({
-			resizable: false,
-			height: "auto",
-			width: 400,
-			modal: true,
-			buttons: {
-				"Create relationship": function() {
-					$(this).dialog("close");
-				},
-				Cancel: function() {
-					$(this).dialog("close");
-				}
-			},
-			show: "fade",
-			hide: "fade"
-		});
-	});
-</script>
+<div id="page-overlay" onclick="closeInfoBar()"></div>
 
 </html>

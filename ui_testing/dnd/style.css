@@ -1,102 +1,352 @@
 body {
-    min-width: 520px;
+	min-width: 520px;
+	color: dimgrey;
+	font-family: Arial;
+	font-size: 14px;
+	font-weight: bold;
+}
+
+#page-overlay {
+	background: rgba(0, 0, 0, 0.35);
+	position: fixed;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	visibility: hidden;
 }
 
 .column {
-    border: 0.5px dotted #7a7a7a;
-    float: left;
-    padding: 10px;
-    margin: 18px;
+	/*border: 0.5px dotted #7a7a7a;*/
+	border: 0.5px solid #ddd;
+	-webkit-box-shadow: 2px 2px 4px -4px #777;
+	float: left;
+	padding: 10px;
+	margin-right: 18px;
+	background-color: white;
+	text-align: center;
+	margin: 4px;
+	border-radius: 5px;
+}
+
+#droppable {
+	width: 100vw;
+	padding: 5px;
+	margin: 10px;
 }
 
 .form-toggle {
-    position: absolute;
-    top: 50%;
-    right: 0;
-    margin-top: -8px;
+	position: absolute;
+	top: 50%;
+	right: 0;
+	margin-top: -8px;
 }
 
 .form {
-    margin: 0 1em 1em 0;
-    padding: 0.3em;
-    color: #999999;
+	margin: 0 1em 1em 0;
+	padding: 0.3em;
+	color: #999999;
+}
+
+.main {
+	min-width: 65vw;
+	display: inline-block;
 }
 
 .form-layout,
+.form-sortable,
 .form-draggable {
-    max-width: 250px;
-    border: 1px solid #cacaca;
-    -webkit-touch-callout: none;
-    /* iOS Safari */
-    -webkit-user-select: none;
-    /* Safari */
-    -khtml-user-select: none;
-    /* Konqueror HTML */
-    -moz-user-select: none;
-    /* Firefox */
-    -ms-user-select: none;
-    /* Internet Explorer/Edge */
-    user-select: none;
-    background-color: #fcfcfc;
-    box-shadow: 0 0 0.5px 0.5px rgba(0, 0, 0, 0.05);
-    display: inline-block;
-    vertical-align: middle;
-    font-family: Arial;
-    font-size: 14px;
-    font-weight: bold;
-    padding: 3px 3px 3px 3px;
-    margin: 4px;
-    text-decoration: none;
+	max-width: 250px;
+	border: 1px solid #cacaca;
+	-webkit-touch-callout: none;
+	/* iOS Safari */
+	-webkit-user-select: none;
+	/* Safari */
+	-khtml-user-select: none;
+	/* Konqueror HTML */
+	-moz-user-select: none;
+	/* Firefox */
+	-ms-user-select: none;
+	/* Internet Explorer */
+	user-select: none;
+	background-color: #fcfcfc;
+	box-shadow: 0px 0.5px 0.5px 0.5px rgba(0, 0, 0, 0.25);
+	vertical-align: middle;
+	margin: auto;
+	margin-bottom: 4px;
+	font-family: Arial;
+	font-size: 14px;
+	font-weight: bold;
+	text-align: left;
+	text-decoration: none;
 }
+
+.form-sortable,
 .form-draggable {
-    padding: 3px 8px 3px 8px;
+	padding: 3px 8px 3px 8px;
 	height: 36px;
 	line-height: 38px;
+
 }
 
 .form-content {
-    padding-top: em;
-    color: #999999;
-    display: table-cell;
-    align-content: flex-start;
-    border: 1px solid rgba(0, 0, 0, 0);
+	padding-top: em;
+	color: #999999;
+	display: table-cell;
+	align-content: flex-start;
+	border: 1px solid rgba(0, 0, 0, 0);
 }
 
+.form-sortable:hover,
 .form-draggable:hover {
-    box-shadow: 0 1px 2px 1px rgba(0, 0, 0, 0.1);
-    background-color: #f4f4f4;
-	cursor:grab;
+	box-shadow: 0 1px 2px 1px rgba(0, 0, 0, 0.1);
+	background-color: #f4f4f4;
+	cursor: grab;
 }
 
-
-.form-draggable-helper {
-    box-shadow: 0 1px 2px 1px rgba(0, 0, 0, 0);
-    background-color: #fcfcfc;	
-    transform: rotate(3deg);
-    -moz-transform: rotate(3deg);
-    -webkit-transform: rotate(3deg);
+.form-draggable:active,
+.form-draggable-helper:hover,
+.form-sortable:active {
 	cursor: grabbing;
 }
 
-.form-focus {
-    border: 1px dotted blue;	
-    background-color: rgba(0, 0, 0, 0.01);
+.form-draggable-helper {
+	box-shadow: 0 1px 2px 1px rgba(0, 0, 0, 0);
+	background-color: #fcfcfc;
+	transform: rotate(4deg);
+	-moz-transform: rotate(4deg);
+	-webkit-transform: rotate(4deg);
+
 }
 
-.form-draggable > img {
-    width: 28px;
-    height: auto; 
+.form-focus {
+	border: 1px dashed rgba(0, 0, 0, 0.3);
+	background-color: rgba(0, 0, 0, 0.01);
+}
+
+.form-draggable > img,
+.form-sortable > img {
+	width: 28px;
+	height: auto;
 	padding-right: 8px;
 	padding-bottom: 4px;
 	vertical-align: middle
 }
 
 .highlight {
-    display: inline-block;
-    vertical-align: middle;
-    position: relative;
-    border: 1px dotted #cacaca;
+	display: inline-block;
+	vertical-align: middle;
+	position: relative;
+	border: 1px dotted #cacaca;
 	min-height: 28px;
 	min-width: 48px;
-    background-color: #cacaca;
+	background-color: #cacaca;
+}
+
+/* The side navigation menu */
+.sidebar {
+	margin: 0;
+	padding: 0;
+	width: 200px;
+	background-color: #fdfdfd;
+	border: 1px solid #ddd;
+	border-radius: 6px;
+	padding: 12px;
+	position: fixed;
+	height: 100%;
+	overflow: auto;
+}
+
+/* Sidebar links */
+.sidebar a {
+	display: block;
+	color: black;
+	padding: 16px;
+	text-decoration: none;
+}
+
+/* Active/current link */
+.sidebar a.active {
+	background-color: #4CAF50;
+	color: white;
+}
+
+/* Links on mouse-over */
+.sidebar a:hover:not(.active) {
+	background-color: #555;
+	color: white;
+}
+
+/* Page content. The value of the margin-left property should match the value of the sidebar's width property */
+div.content {
+	margin-left: 200px;
+	padding: 1px 16px;
+	height: 1000px;
+}
+
+
+body {
+	font-family: Arial;
+}
+
+/* Style the tab */
+.tab {
+	overflow: hidden;
+	border: 1px solid #ccc;
+	background-color: #f1f1f1;
+}
+
+/* Style the buttons inside the tab */
+.tab button {
+	background-color: inherit;
+	float: left;
+	border: none;
+	outline: none;
+	cursor: pointer;
+	padding: 14px 16px;
+	transition: 0.3s;
+	font-size: 17px;
+}
+
+/* Change background color of buttons on hover */
+.tab button:hover {
+	background-color: #ddd;
+}
+
+/* Create an active/current tablink class */
+.tab button.active {
+	background-color: #ccc;
+}
+
+/* Style the tab content */
+.tabcontent {
+	display: none;
+	padding: 6px 12px;
+	border: 1px solid #ccc;
+	border-top: none;
+}
+
+#addbutton {
+	padding: 8px;
+	text-align: left;
+	cursor: pointer;
+}
+
+#addbutton:hover {
+	color: #999;
+	background-color: #eee;
+	text-decoration: underline;
+}
+
+.sortable-placeholder {
+	background-color: #f2f2f2;
+	height: 44px;
+	margin-bottom: 4px;
+}
+
+/*SAM*/
+.sideBarIcons {
+	height: 100%;
+	width: 200px;
+	position: fixed;
+	z-index: 1;
+	top: 0;
+	left: 0;
+	background-color: gainsboro;
+	overflow-x: hidden;
+	transition: 0.5s;
+	padding-top: 60px;
+	font-family: Arial;
+	overflow: auto;
+}
+
+.sideBarIcons a {
+	padding: 10px 10px 10px 20px;
+	font-size: 24px;
+	color: rgba(242, 251, 248, 0.99);
+	display: block;
+	transition: 0.3s;
+}
+
+.sideBarIcons a:hover {
+	color: lightgreen;
+}
+
+.sideBarIcons .close {
+	position: absolute;
+	top: 0;
+	right: 30px;
+	margin-left: 20px;
+	color: black;
+}
+
+.sideBarInfo {
+	height: 100%;
+	width: 0;
+	position: fixed;
+	z-index: 1;
+	top: 0;
+	right: 0;
+	background-color: white;
+	overflow-x: hidden;
+	transition: 0.5s;
+	padding-top: 60px;
+	font-family: Arial;
+	overflow: auto;
+	white-space: nowrap;
+}
+
+.sideBarInfo a {
+	padding: 10px 10px 10px 20px;
+	color: darkslategray;
+	display: block;
+	transition: 0.3s;
+}
+
+.sideBarInfo p {
+	padding: 10px 10px 10px 20px;
+	color: darkslategray;
+	display: block;
+	transition: 0.3s;
+}
+
+.sideBarInfo a:hover {
+	color: lightgreen;
+}
+
+.sideBarInfo .close {
+	position: absolute;
+	top: 0;
+	left: 10px;
+	margin-right: 20px;
+	color: black;
+}
+
+.imgToText {
+	position: relative;
+	width: 100%;
+	z-index: -1;
+}
+
+.initBase {
+	position: absolute;
+	top: 0;
+	left: 16px;
+	width: 100%;
+}
+
+.popup {
+	display: none;
+	z-index: 2;
+	background-color: white;
+	width: 25%;
+	height: 25%;
+	top: 50%;
+	left: 50%;
+}
+
+.popBox {
+	background-color: white;
+	padding: 30px;
+	border: 2px solid black;
 }
