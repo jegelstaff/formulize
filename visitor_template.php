@@ -44,7 +44,11 @@ $html .= "</P>
 
 <P style=\"text-align:justify;\">I would like to invite you to the University of Toronto as a Visiting Professor Position at the rank of $rank with the John H. Daniels Faculty of Architecture, Landscape, and Design, for the period $startdate to $enddate.</P> 
 
-<P style=\"text-align:justify;\">The purpose of your visit will be to teach in the $program:<UL>";
+<P style=\"text-align:justify;\">The purpose of your visit will be to teach the following course";
+if(count($courses)>1) {
+    $html .= "s";   
+}
+$html .= ":<UL>";
 foreach($courses as $course) {
 	$html .= "<LI>{$course['code']} - {$course['title']}, Section {$course['section']}<BR>{$course['times']}<BR>{$course['room']}";
     if($course['coinst'] AND count($course['coinst'])>0) {
@@ -93,7 +97,7 @@ $html .= "<P style=\"text-align:justify;\">If you accept this offer, I would app
 if($immigration) {
     $html .= " together with a copy of your valid passport";
 }
-$html .= ".</P><P style=\"text-align:justify;\">Should you have any questions regarding this offer, please do not hesitate to contact $programDirector, Program Director, $program $programDirectorEmail</P>
+$html .= ".</P><P style=\"text-align:justify;\">Should you have any questions regarding this offer, please do not hesitate to contact your program director (cc'd below).</P>
 
 <P style=\"text-align:justify;\">We expect that you will govern yourself in accordance with all applicable faculty and University policies.</P>
 
@@ -106,7 +110,7 @@ foreach($programDirs as $dir) {
         $html .= "<BR>";
     }
     $startDirs = false;
-    $html .= "cc: ".$dir['programDirector'].", Program Director, ".$dir['pdProgram'];
+    $html .= "cc: ".$dir['programDirector'].", Program Director, ".$dir['pdProgram'].", <A HREF='mailto:".$dir['programDirectorEmail']."'>".$dir['programDirectorEmail']."</A>";
 }
 $html .= "</P>";
 

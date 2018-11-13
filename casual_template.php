@@ -16,7 +16,11 @@ $html = "
 
 <P style=\"text-align:justify;\">As a casual employee, your terms and conditions of employment will continue to be governed by the collective agreement between the University of Toronto and United Steelworkers, Local 1998, applicable to casual employees, a copy of which is available on the web at: <A HREF='http://www.hrandequity.utoronto.ca/about-hr-equity/policies-guidelines-agreements.htm#USW_Local_1998_(Casual)'>http://www.hrandequity.utoronto.ca/about-hr-equity/policies-guidelines-agreements.htm#USW_Local_1998_(Casual)</A>  As a casual employee of the University you will not be eligible to enroll in the University’s benefit plans.</P>
 
-<P style=\"text-align:justify;\">Your duties will consist teaching in the $program:<UL>";
+<P style=\"text-align:justify;\">Your duties will consist teaching the following course";
+if(count($courses)>1) {
+    $html .= "s";   
+}
+$html .= ":<UL>";
 foreach($courses as $course) {
 	$html .= "<LI>{$course['code']} - {$course['title']}, Section {$course['section']}<BR>{$course['times']}<BR>{$course['room']}";
     if($course['coinst'] AND count($course['coinst'])>0) {
@@ -68,7 +72,7 @@ $html .= "<P style=\"text-align:justify;\">While you are here, the Daniels Facul
 
 <P style=\"text-align:justify;\">The law requires the Employment Standards Act Poster to be provided to all employees; it is available on <A HREF='http://www.labour.gov.on.ca/english/es/pubs/poster.php'>http://www.labour.gov.on.ca/english/es/pubs/poster.php</A>. This poster describes the minimum rights and obligations contained in the <I>Employment Standards Act</I>. Please note that in many respects this offer of employment exceeds the minimum requirements set out in the Act.</P>
 
-<P style=\"text-align:justify;\">If you accept this offer, I would appreciate you signing a copy of this letter together with the attached tax forms and a void cheque (unless your banking information remains unchanged) and returning it to $bo, Business Officer (via email $boemail) no later than $signbackDate.  Should you have any questions regarding this offer, please do not hesitate to contact $programDirector, Program Director, $program $programDirectorEmail</P> 
+<P style=\"text-align:justify;\">If you accept this offer, I would appreciate you signing a copy of this letter together with the attached tax forms and a void cheque (unless your banking information remains unchanged) and returning it to $bo, Business Officer (via email $boemail) no later than $signbackDate.  Should you have any questions regarding this offer, please do not hesitate to contact your program director (cc'd below).</P> 
 
 <P>Sincerely,</P><BR><BR><P>$cao<BR>Chief Administrative Officer</P>
 
@@ -79,7 +83,7 @@ foreach($programDirs as $dir) {
         $html .= "<BR>";
     }
     $startDirs = false;
-    $html .= "cc: ".$dir['programDirector'].", Program Director, ".$dir['pdProgram'];
+    $html .= "cc: ".$dir['programDirector'].", Program Director, ".$dir['pdProgram'].", <A HREF='mailto:".$dir['programDirectorEmail']."'>".$dir['programDirectorEmail']."</A>";
 }
 $html .= "</P>";
 

@@ -40,7 +40,11 @@ $html .= "<P style=\"text-align:justify;\">Your payroll documentation will be av
 if(strstr($rank, 'Writing')) {
     $html .= "<P style=\"text-align:justify;\">As a Writing Instructor, you will be a member of the Canadian Union of Public Employees (CUPE) Local 3902, Unit 3 Bargaining unit.</P>";
 } else {
-    $html .= "<P style=\"text-align:justify;\">You will be responsible for teaching the following course(s):<UL>";
+    $html .= "<P style=\"text-align:justify;\">You will be responsible for teaching the following course";
+if(count($courses)>1) {
+    $html .= "s";   
+}
+$html .= ":<UL>";
 foreach($courses as $course) {
 	$html .= "<LI>{$course['code']} - {$course['title']}, Section {$course['section']}, {$course['times']}, {$course['room']}";
     if($course['coinst'] AND count($course['coinst'])>0) {
@@ -100,7 +104,7 @@ $html .= "
 if($writingCenterCoord) {
     $html .= "$writingCenterCoord, Writing Center Coordinator, <A HREF='mailto:$wccEmail'>$wccEmail</A></P>";
 } else {
-    $html .= "$programDirector, Program Director, $pdProgram <A HREF='mailto:$programDirectorEmail'>$programDirectorEmail</A></P>";
+    $html .= "your program director (cc'd below).</P>";
 }
 
 $html .= "<P>Yours sincerely,</P><BR><BR><P>$cao<BR>Chief Administrative Officer</P>";
@@ -115,7 +119,7 @@ if($writingCenterCoord) {
             $html .= "<BR>";
         }
         $startDirs = false;
-        $html .= "cc: ".$dir['programDirector'].", Program Director, ".$dir['pdProgram'];
+        $html .= "cc: ".$dir['programDirector'].", Program Director, ".$dir['pdProgram'].", <A HREF='mailto:".$dir['programDirectorEmail']."'>".$dir['programDirectorEmail']."</A>";
     }
     $html .= "</P>"; 
 }
