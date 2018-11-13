@@ -217,7 +217,7 @@ function daraCreateNewYear($sourceYear) {
         'master_year_list_year'=>$newYear,
         'master_year_list_status'=>1));
     // add new year to the options for various elements that contain years
-    $elementsToUpdate = array(14, 176, 192, 200, 234);
+    $elementsToUpdate = getYearDropdownElements();
     foreach($elementsToUpdate as $element) {
         addNewYearToSelectBox($newYear, $element);
     }
@@ -500,6 +500,11 @@ function addNewYearToSelectBox($year, $elementId) {
     $ele_value[2][$year] = 0;
     $elementObject->setVar('ele_value', $ele_value);
     $element_handler->insert($elementObject);
+}
+
+// canonical list of all the elements that have a year dropdown in them
+function getYearDropdownElements() {
+    return array(14, 176, 192, 200, 234);
 }
 
 
