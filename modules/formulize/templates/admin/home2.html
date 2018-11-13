@@ -11,7 +11,7 @@
 	<!-- Seperate file -->
 	<div class="sidebar">
 		<p>Options</p>
-		<a class = "sidebar-item" href="http://localhost/uc/formulize/modules/formulize/admin/ui.php?page=application&amp;aid=0&amp;tab=forms"><i class="icon-form"></i>Forms</a>
+		<a class = "sidebar-item" href="http://localhost/uc/formulize/modules/formulize/admin/ui.php?page=application&amp;aid=0&amp;tab=forms" style="background-color: #eeeeee"><i class="icon-form"></i>Forms</a>
 
 		<a class = "sidebar-item" href="http://localhost/uc/formulize/modules/formulize/admin/ui.php?page=application&amp;aid=0&amp;tab=screens"><i class="icon-screen"></i>Screens</a>
 
@@ -33,7 +33,7 @@
       <button type="submit"><i class="icon-view" style="background: transparent"></i></button>
     </form>
 	<{foreach from=$adminPage.apps[1].content.forms item=form}>
-		<div class="form-tab">
+		<div class="sidebar-item">
 			<a href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=elements"><i class="icon-form"></i><{$form.form->title}></a><i class="icon-help actionIcon" onclick="openInfoBar()"></i>
 			</div>
   <{/foreach}>
@@ -143,7 +143,6 @@ function showForm(formname){
     return false;
 }
 </script>
-
 <style>
 	.sidebar {
 		left: 0;
@@ -164,17 +163,8 @@ function showForm(formname){
 		font-size: 12px;
 		font-weight: bold;
 	}
-	.sidebar-item{
-		display: block;
-		padding: 8px;
-		margin-left: 4px;
-		text-decoration: none;
-		color: dimgrey;
-		font-family: Arial;
-		font-size: 14px;
-		font-weight: bold;
-	}	
-	.sidebar-item: hover{
+
+	.sidebar-item {
 		display: block;
 		padding: 8px;
 		margin-left: 4px;
@@ -184,153 +174,173 @@ function showForm(formname){
 		font-size: 14px;
 		font-weight: bold;
 	}
-	
+
+	.sidebar-item: hover {
+		display: block;
+		padding: 8px;
+		margin-left: 4px;
+		text-decoration: none;
+	}
+
+	.sidebar a,
+	.sidebar-item a {
+		font-family: Arial;
+		font-size: 14px;
+		font-weight: bold;
+		color: dimgrey;
+	}
+
 	.sidebar-item i {
 		padding-right: 8px;
 	}
 
-	
 	.sidebar p {
 		padding: 10px;
 		padding-left: 2px;
 	}
-	
-	a.sidebar-item:hover, sidebar div:hover{	
+
+	a.sidebar-item:hover,
+	div.sidebar-item:hover {
 		border-radius: 5px;
 		background-color: #efefef;
-		color: #3391c7; /*default highlight*/
+		color: #3391c7;
+		/*default highlight*/
 	}
-	
-	.form-tab .actionIcon {
+
+	.actionIcon {
 		color: dimgrey;
-  		position: relative;
-		display: inline-block;
-   		vertical-align: middle;
-		float:right;
+		position: relative;
+		display: none;
+		vertical-align: middle;
+		float: right;
 		list-style: none;
-    	float: right;
-    	display: inline-block;
 	}
-	
+
+	div.sidebar-item:hover .actionIcon{
+		display:inline-block;
+		cursor:pointer;
+	}
 	
 	.actionIcon:hover {
-		color: #3391c7; /*default highlight*/
+		color: #3391c7;
+		/*default highlight*/
 	}
 
 	.panel-content {
 		margin-left: 230px;
 	}
-	
+
 	/*SAMS*/
 	.sideBarIcons {
-            height: 100%;
-            width: 200px;
-            position: fixed;
-            top: 0;
-            left: 0;
-            background-color: white;
-            overflow-x: hidden;
-            padding-top: 60px;
-            font-family: Arial;
-            overflow: auto;
-            border-right:2px solid black;
-        }
+		height: 100%;
+		width: 200px;
+		position: fixed;
+		top: 0;
+		left: 0;
+		background-color: white;
+		overflow-x: hidden;
+		padding-top: 60px;
+		font-family: Arial;
+		overflow: auto;
+		border-right: 2px solid black;
+	}
 
-        .sideBarIcons a {
-            padding: 10px 10px 10px 20px;
-            font-size: 24px;
-            color: rgba(242, 251, 248, 0.99);
-            display: block;
-            transition: 0.3s;
-        }
+	.sideBarIcons a {
+		padding: 10px 10px 10px 20px;
+		font-size: 24px;
+		color: rgba(242, 251, 248, 0.99);
+		display: block;
+		transition: 0.3s;
+	}
 
-        .sideBarIcons a:hover {
-            color: lightgreen;
-        }
+	.sideBarIcons a:hover {
+		color: lightgreen;
+	}
 
-        .sideBarInfo{
-            height: 100%;
-            width: 0;
-            position: fixed;
-            z-index: 1;
-            top: 0;
-            right: 0;
-            background-color: white;
-            overflow-x: hidden;
-            transition: 0.5s;
-            padding-top: 60px;
-            font-family: Arial;
-            overflow: auto;
-            border-left:2px solid black;
-        }
+	.sideBarInfo {
+		height: 100%;
+		width: 0;
+		position: fixed;
+		z-index: 1;
+		top: 0;
+		right: 0;
+		background-color: white;
+		overflow-x: hidden;
+		transition: 0.5s;
+		padding-top: 60px;
+		font-family: Arial;
+		overflow: auto;
+		border-left: 2px solid black;
+	}
 
-        .sideBarInfo a {
-            padding: 10px 10px 10px 20px;
-            font-size: 24px;
-            color: lightskyblue;
-            display: block;
-            transition: 0.3s;
-        }
+	.sideBarInfo a {
+		padding: 10px 10px 10px 20px;
+		font-size: 24px;
+		color: lightskyblue;
+		display: block;
+		transition: 0.3s;
+	}
 
-        .sideBarInfo p {
-            padding: 10px 10px 10px 20px;
-            font-size: 24px;
-            color: lightskyblue;
-            display: block;
-            transition: 0.3s;
-        }
+	.sideBarInfo p {
+		padding: 10px 10px 10px 20px;
+		font-size: 24px;
+		color: lightskyblue;
+		display: block;
+		transition: 0.3s;
+	}
 
-        .sideBarInfo a:hover {
-            color: lightgreen;
-        }
+	.sideBarInfo a:hover {
+		color: lightgreen;
+	}
 
-        .sideBarInfo .close {
-            position: absolute;
-            top: 0;
-            left: 10px;
-            margin-right: 20px;
-            color: black;
-        }
+	.sideBarInfo .close {
+		position: absolute;
+		top: 0;
+		left: 10px;
+		margin-right: 20px;
+		color: black;
+	}
 
-        .imgToText{
-            position: relative;
-            width: 100%;
-            z-index: -1;
-        }
-        .initBase {
-            position: absolute;
-            top: 0;
-            left: 16px;
-            width: 100%;
-        }
+	.imgToText {
+		position: relative;
+		width: 100%;
+		z-index: -1;
+	}
 
-        .popup {
-            display: none;
-            z-index: 10000;
-            background-color: white;
-            width: 25%;
-            height: 25%;
-            margin: 15% auto;
-        }
+	.initBase {
+		position: absolute;
+		top: 0;
+		left: 16px;
+		width: 100%;
+	}
 
-        .popBox {
-            background-color: white;
-            padding: 15px;
-            border: 2px solid black;
-        }
+	.popup {
+		display: none;
+		z-index: 10000;
+		background-color: white;
+		width: 25%;
+		height: 25%;
+		margin: 15% auto;
+	}
 
-        .popBox .close {
-            float: right;
-            font-weight: bold;
-        }
-	
-#page-overlay {
-	background: rgba(0, 0, 0, 0.35);
-	position: fixed;
-	top: 0;
-	right: 0;
-	bottom: 0;
-	left: 0;
-	visibility: hidden;
-}
+	.popBox {
+		background-color: white;
+		padding: 15px;
+		border: 2px solid black;
+	}
+
+	.popBox .close {
+		float: right;
+		font-weight: bold;
+	}
+
+	#page-overlay {
+		background: rgba(0, 0, 0, 0.35);
+		position: fixed;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		left: 0;
+		visibility: hidden;
+	}
 </style>
