@@ -478,7 +478,7 @@ function daraCreateNewYear($sourceYear) {
         NOW(),
         creation_uid,
         ".intval($xoopsUser->getVar('uid')).",
-        hr_annual_accept_status_year,
+        '$newYear',
         hr_annual_accept_status_instructor
         FROM ".$xoopsDB->prefix('formulize_hr_annual_accept_status')."
         WHERE entry_id = ".intval($row[0]);
