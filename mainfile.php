@@ -35,27 +35,27 @@ if (!defined("XOOPS_MAINFILE_INCLUDED")) {
 		
 	// XOOPS Physical Path
 	// Physical path to your main XOOPS directory WITHOUT trailing slash
-	// Example: define( 'XOOPS_ROOT_PATH', '/var/www/html/u2/formulize' );
+	// Example: define( 'XOOPS_ROOT_PATH', '/var/www/html/uc/formulize' );
 	// ALTERED BY FREEFORM SOLUTIONS...
 	// AS DEFINED IN INSTALLER BY USER:
-	// define( 'XOOPS_ROOT_PATH', '/var/www/html/u2/formulize' );
+	// define( 'XOOPS_ROOT_PATH', '/var/www/html/uc/formulize' );
 	// AS DETERMINED FROM FIRST PRINCIPLES:
 	define('XOOPS_ROOT_PATH', realpath(dirname(__FILE__)));
 
 	// XOOPS Security Physical Path
 	// Physical path to your security XOOPS directory WITHOUT trailing slash.
 	// Ideally off your server WEB folder
-	// Example: define( 'XOOPS_TRUST_PATH', '/var/www/html/u2/trust' );
-	define( 'XOOPS_TRUST_PATH', '/var/www/html/u2/trust' );
+	// Example: define( 'XOOPS_TRUST_PATH', '/var/www/html/formtrust' );
+	define( 'XOOPS_TRUST_PATH', '/var/www/html/formtrust' );
 
-	include_once XOOPS_TRUST_PATH . '/b63646eb0f5a5624d3d13b87652935a3.php' ;
+	include_once XOOPS_TRUST_PATH . '/4e08c0cfdc48fee1cdf16f55c4f12605.php' ;
 
 	// XOOPS Virtual Path (URL)
 	// Virtual path to your main XOOPS directory WITHOUT trailing slash
-	// Example: define( 'XOOPS_URL', 'http://localhost/u2/formulize' );
+	// Example: define( 'XOOPS_URL', 'http://localhost/uc/formulize' );
 	// ALTERED BY FREEFORM SOLUTIONS...
 	// AS DEFINED IN INSTALLER BY USER:
-	// define( 'XOOPS_URL', 'http://localhost/u2/formulize' );
+	// define( 'XOOPS_URL', 'http://localhost/uc/formulize' );
 	// AS DETERMINED FROM FIRST PRINCIPLES:
 	if (!defined("SITE_BASE_URL")) {
         # if this code is in a subfolder of the website, figure out what the subfolder url is
