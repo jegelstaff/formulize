@@ -56,37 +56,32 @@ body {
 .form-layout,
 .form-sortable,
 .form-draggable {
-	max-width: 250px;
-	border: 1px solid #cacaca;
 	-webkit-touch-callout: none;
-	/* iOS Safari */
 	-webkit-user-select: none;
-	/* Safari */
 	-khtml-user-select: none;
-	/* Konqueror HTML */
 	-moz-user-select: none;
-	/* Firefox */
 	-ms-user-select: none;
-	/* Internet Explorer */
 	user-select: none;
 	background-color: #fcfcfc;
-	box-shadow: 0px 0.5px 0.5px 0.5px rgba(0, 0, 0, 0.25);
 	vertical-align: middle;
 	margin: auto;
 	margin-bottom: 4px;
 	font-family: Arial;
 	font-size: 14px;
-	font-weight: bold;
 	text-align: left;
 	text-decoration: none;
 }
 
+.form-layout {	
+	border: 1px solid #cacaca;
+	width: 65%;
+	padding: 3px;
+	min-width: 250px;
+}
 .form-sortable,
 .form-draggable {
 	padding: 3px 8px 3px 8px;
-	height: 36px;
-	line-height: 38px;
-
+	line-height: 28px;
 }
 
 .form-content {
@@ -99,7 +94,7 @@ body {
 
 .form-sortable:hover,
 .form-draggable:hover {
-	box-shadow: 0 1px 2px 1px rgba(0, 0, 0, 0.1);
+	box-shadow: 0 1px 2px 1px rgba(0, 0, 0, 0.2);
 	background-color: #f4f4f4;
 	cursor: grab;
 }
@@ -126,7 +121,7 @@ body {
 
 .form-draggable > img,
 .form-sortable > img {
-	width: 28px;
+	width: 18px;
 	height: auto;
 	padding-right: 8px;
 	padding-bottom: 4px;
@@ -138,7 +133,7 @@ body {
 	vertical-align: middle;
 	position: relative;
 	border: 1px dotted #cacaca;
-	min-height: 28px;
+	min-height: 20px;
 	min-width: 48px;
 	background-color: #cacaca;
 }
@@ -157,78 +152,9 @@ body {
 	overflow: auto;
 }
 
-/* Sidebar links */
-.sidebar a {
-	display: block;
-	color: black;
-	padding: 16px;
-	text-decoration: none;
-}
-
-/* Active/current link */
-.sidebar a.active {
-	background-color: #4CAF50;
-	color: white;
-}
-
-/* Links on mouse-over */
-.sidebar a:hover:not(.active) {
-	background-color: #555;
-	color: white;
-}
-
-/* Page content. The value of the margin-left property should match the value of the sidebar's width property */
-div.content {
-	margin-left: 200px;
-	padding: 1px 16px;
-	height: 1000px;
-}
-
-
-body {
-	font-family: Arial;
-}
-
-/* Style the tab */
-.tab {
-	overflow: hidden;
-	border: 1px solid #ccc;
-	background-color: #f1f1f1;
-}
-
-/* Style the buttons inside the tab */
-.tab button {
-	background-color: inherit;
-	float: left;
-	border: none;
-	outline: none;
-	cursor: pointer;
-	padding: 14px 16px;
-	transition: 0.3s;
-	font-size: 17px;
-}
-
-/* Change background color of buttons on hover */
-.tab button:hover {
-	background-color: #ddd;
-}
-
-/* Create an active/current tablink class */
-.tab button.active {
-	background-color: #ccc;
-}
-
-/* Style the tab content */
-.tabcontent {
-	display: none;
-	padding: 6px 12px;
-	border: 1px solid #ccc;
-	border-top: none;
-}
-
 #addbutton {
 	padding: 8px;
-	text-align: left;
+	text-align: center;
 	cursor: pointer;
 }
 
@@ -349,4 +275,44 @@ body {
 	background-color: white;
 	padding: 30px;
 	border: 2px solid black;
+}
+
+/*popup*/
+/* The Modal (background) */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+/* popup */
+.popup-content {
+    background-color: #fefefe;
+	border-radius: 5px;
+    margin: 35% auto; 
+    padding: 20px;
+    border: 1px solid #888;
+    width: 75%; 
+}
+
+/* The Close Button */
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
 }

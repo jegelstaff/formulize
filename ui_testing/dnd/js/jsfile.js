@@ -14,19 +14,21 @@ $(document).ready(function () {
 				height: dropContainer.height() + ui.helper.height()
 			}, 250);
 			dropContainer.addClass("form-focus");
-						
+
 		},
 		stop: function (event, ui) {
 			$(".form-content").animate({
 				height: "0"
-			}, 200);			
+			}, 200);
 			$(".form-content").removeClass("form-focus");
+
+			$("#popup").css("display", "block");
 		}
 	});
-	
+
 	/*Create a new relationship with a form*/
 	$(".form-content").droppable({
-		accept: ".addable",		
+		accept: ".addable",
 		drop: function (ev, ui) {
 			//ui.draggable.remove();
 			var item = ui.draggable.clone();
@@ -47,8 +49,18 @@ $(document).ready(function () {
 
 					$(ui.helper).css("width", $(this).width());
 				},
-			});
-			$("#dialog").dialog("open");
+			});		
+			var type = "none";
+			if ($(this).hasClass('manymany')){
+				type = "Many to many"
+            }
+            else if ($(this).hasClass('onemany')) {
+				type = "One to many"
+            }
+            else if ($(this).hasClass('oneone')) {
+				type = "One to one"
+            }
+			$("#relationshiptype").text(type);
 			$(this).animate({
 				height: "0"
 			}, 200);
@@ -59,6 +71,16 @@ $(document).ready(function () {
 		revert: 'invalid',
 	});
 
-
+	//basic popup functionality
+	var popup = document.getElementById('popup');
+	var span = document.getElementsByClassName("close")[0];
+	span.onclick = function () {
+		popup.style.display = "none";
+	}
+	window.onclick = function (event) {
+		if (event.target == popup) {
+			popup.style.display = "none";
+		}
+	}
 
 });
