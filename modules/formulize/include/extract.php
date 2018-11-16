@@ -136,7 +136,7 @@ function prepvalues($value, $field, $entry_id) {
         // value is an entry id in another form
         // need to get the form id by checking the ele_value[2] property of the element definition, to get the form id from the first part of that
         $sourceMeta = explode("#*=:*", $source_ele_value[2]); // [0] will be the fid of the form we're after, [1] is the handle of that element
-        if($value AND $sourceMeta[1]) {
+        if(trim($value, ",") AND $sourceMeta[1]) {
             // need to check if an alternative value field has been defined, or if we're in an export and an alterative field for exports has been defined
             // save the value before convertElementIdsToElementHandles()
             $before_conversion = $sourceMeta[1];
