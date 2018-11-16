@@ -1322,10 +1322,13 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
 			 
                         // check if user is searching for blank values, and if so, then query this element directly, rather than looking in the source
                         // ALSO do this if the user is searching for a numeric value with an = operator
-                        if($ifParts[1]==='' OR $operator == ' IS NULL ' OR $operator == ' IS NOT NULL ' OR (is_numeric($ifParts[1]) AND $operator == '=')) {
+						// Note that $ifParts[0] gets surrounded by `` when going through prepareElementMetaData (?!)
+                        if(($ifParts[1]==='' OR $operator == ' IS NULL ' OR $operator == ' IS NOT NULL ' OR (is_numeric($ifParts[1]) AND $operator == '=')) AND !isset($GLOBALS['formulize_linkedNumericValueIsLiteral'][trim($ifParts[0],'`')]) ) {
                              $newWhereClause = "$queryElement " . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;
                         } else {
-                             
+                            if(isset($GLOBALS['formulize_linkedNumericValueIsLiteral'][trim($ifParts[0],'`')])) {
+								unset($GLOBALS['formulize_linkedNumericValueIsLiteral'][trim($ifParts[0],'`')]);
+							}							
                              // need to check if an alternative value field has been defined for use in lists or data sets and search on that field instead 
                              if(isset($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10])
                                 AND (
