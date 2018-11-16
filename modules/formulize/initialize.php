@@ -91,33 +91,8 @@ $formulizeConfig =& $config_handler->getConfigsByCat(0, $mid);
 // get the default menu link for the current user, and set the fid or sid based on it
 
 if( !$fid AND !$sid) {
-    $groupSQL = "";
-    foreach($groups as $group) {
-        if(strlen($groupSQL) == 0){
-            $groupSQL .= " AND ( perm.group_id=". $group . " ";
-        }else{
-            $groupSQL .= " OR perm.group_id=". $group . " ";
-        }
-    }
-    $groupSQL .= ")";
-
-    $sql = 'SELECT links.screen FROM '.$xoopsDB->prefix("formulize_menu_links").' AS links ';
-    $sql .= ' LEFT JOIN '.$xoopsDB->prefix("formulize_menu_permissions").' AS perm ON links.menu_id = perm.menu_id ';
-    $sql .= ' WHERE  default_screen = 1'. $groupSQL . 'ORDER BY perm.group_id';
-
-    $res = $xoopsDB->query ( $sql ) or die('SQL Error !<br />'.$sql.'<br />'.$xoopsDB->error());
-
-    if ( $res ) {
-        $row = $xoopsDB->fetchArray ( $res );
-        $screenID = $row['screen'];
-
-        if ( strpos($screenID,"fid=") !== false){
-            $fid = substr($screenID, strpos($screenID,"=")+1 );
-        }
-        else{
-            $sid = substr($screenID, strpos($screenID,"=")+1 );
-        }
-    }
+    include_once XOOPS_ROOT_PATH."/modules/formulize/class/applications.php";
+	list($fid,$sid) = formulizeApplicationMenuLinksHandler::getDefaultScreenForUser();
 }
 
 $screen_handler =& xoops_getmodulehandler('screen', 'formulize');
