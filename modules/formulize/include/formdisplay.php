@@ -47,6 +47,19 @@ include_once XOOPS_ROOT_PATH ."/modules/formulize/class/data.php";
 include_once XOOPS_ROOT_PATH."/class/xoopsformloader.php";
 include_once XOOPS_ROOT_PATH . "/include/functions.php";
 
+function memory_usage() {
+	$mem_usage = memory_get_usage(true);
+	if ($mem_usage < 1024) {
+		$mem_usage .= ' bytes';
+	} elseif ($mem_usage < 1048576) {
+		$mem_usage = round($mem_usage/1024,2) . ' kilobytes';
+	} else {
+		$mem_usage = round($mem_usage/1048576,2) . ' megabytes';
+	}
+	return $mem_usage;
+}
+
+
 // NEED TO USE OUR OWN VERSION OF THE CLASS, TO GET ELEMENT NAMES IN THE TR TAGS FOR EACH ROW
 class formulize_themeForm extends XoopsThemeForm {
     
