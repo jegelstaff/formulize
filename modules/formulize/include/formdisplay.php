@@ -108,18 +108,8 @@ class formulize_themeForm extends XoopsThemeForm {
 	}
 
 	function _drawElements($elements, $ret, $hidden) {
-		$class ='even';
-
-        global $xoopsUser;
-        $show_element_edit_link = (is_object($xoopsUser) and in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups()));
 
 		foreach ( $elements as $ele ) {
-			$label_class = null;
-			$input_class = null;
-			if (isset($ele->formulize_element)) {
-				$label_class = " formulize-label-".$ele->formulize_element->getVar("ele_handle");
-				$input_class = " formulize-input-".$ele->formulize_element->getVar("ele_handle");
-			}
 			if (!is_object($ele)) {// just plain add stuff if it's a literal string...
 				if(strstr($ele, "<<||>>")) {
 					$ele = explode("<<||>>", $ele);
@@ -130,38 +120,9 @@ class formulize_themeForm extends XoopsThemeForm {
 					$ret .= $ele;
 				}
 			} elseif ( !$ele->isHidden() ) {
-				$ret .= "<tr id='formulize-".$ele->getName()."' class='".$ele->getClass()."' valign='top' align='" . _GLOBAL_LEFT . "'><td class='head$label_class'>";
-				if (($caption = $ele->getCaption()) != '') {
-					$ret .=
-					"<div class='xoops-form-element-caption" . ($ele->isRequired() ? "-required" : "" ) . "'>"
-						. "<span class='caption-text'>{$caption}</span>"
-						. "<span class='caption-marker'>" . ($ele->isRequired() ? "*" : "" ) . "</span>"
-						. "</div>";
-				}
-				if (($desc = $ele->getDescription()) != '') {
-					$ret .= "<div class='xoops-form-element-help'>{$desc}</div>";
-				}
-
-                $ret .= "</td><td class='$class$input_class'>";
-                if ($show_element_edit_link) {
-                    $element_name = trim($ele->getName());
-                    switch ($element_name) {
-                        case 'control_buttons':
-                        case 'proxyuser':
-                            // Do nothing
-                            break;
-
-                        default:
-                            if (is_object($ele) and isset($ele->formulize_element)) {
-                                $ret .= "<a class=\"formulize-element-edit-link\" tabindex=\"-1\" href=\"" . XOOPS_URL .
-                                    "/modules/formulize/admin/ui.php?page=element&aid=0&ele_id=" .
-                                    $ele->formulize_element->getVar("ele_id") . "\" target=\"_blank\">edit element</a>";
-                            }
-                            break;
-                    }
-                }
-                $ret .=  $ele->render()."</td></tr>\n";
-
+				$ret .= "<tr id='formulize-".$ele->getName()."' class='".$ele->getClass()."' valign='top' align='" . _GLOBAL_LEFT . "'>";
+				$ret .= $this->_drawElementElementHTML($ele);
+				$ret .= "</tr>\n";
 			} else {
 				$hidden .= $ele->render();
 			}
@@ -169,6 +130,67 @@ class formulize_themeForm extends XoopsThemeForm {
 		return array($ret, $hidden);
 	}
 
+	// draw the HTML for the element, a table row normally
+	// $ele is the renderable element object
+	function _drawElementElementHTML($ele) {
+	
+		static $show_element_edit_link = null;
+		static $class = 'even';
+		static $label_class = null;
+		static $input_class = null;
+		global $formulize_drawnElements;
+		// initialize things first time through...
+		if($show_element_edit_link === null) {
+			$formulize_drawnElements = array();
+			global $xoopsUser;
+			$show_element_edit_link = (is_object($xoopsUser) and in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups()));
+			if (isset($ele->formulize_element)) {
+				$label_class = " formulize-label-".$ele->formulize_element->getVar("ele_handle");
+				$input_class = " formulize-input-".$ele->formulize_element->getVar("ele_handle");
+			}
+		}
+		
+		if(isset($ele->formulize_element) AND isset($formulize_drawnElements[trim($ele->getName())])) {
+			return $formulize_drawnElements[trim($ele->getName())];
+		}
+
+		$html = "<td class='head$label_class'>";
+		if (($caption = $ele->getCaption()) != '') {
+			$html .=
+			"<div class='xoops-form-element-caption" . ($ele->isRequired() ? "-required" : "" ) . "'>"
+				. "<span class='caption-text'>{$caption}</span>"
+				. "<span class='caption-marker'>" . ($ele->isRequired() ? "*" : "" ) . "</span>"
+				. "</div>";
+		}
+		if (($desc = $ele->getDescription()) != '') {
+			$html .= "<div class='xoops-form-element-help'>{$desc}</div>";
+		}
+
+		$html .= "</td><td class='$class$input_class'>";
+		if ($show_element_edit_link) {
+			$element_name = trim($ele->getName());
+			switch ($element_name) {
+				case 'control_buttons':
+				case 'proxyuser':
+					// Do nothing
+					break;
+
+				default:
+					if (is_object($ele) and isset($ele->formulize_element)) {
+						$html .= "<a class=\"formulize-element-edit-link\" tabindex=\"-1\" href=\"" . XOOPS_URL .
+							"/modules/formulize/admin/ui.php?page=element&aid=0&ele_id=" .
+							$ele->formulize_element->getVar("ele_id") . "\" target=\"_blank\">edit element</a>";
+					}
+					break;
+			}
+		}
+		$html .=  $ele->render()."</td>";
+		if(isset($ele->formulize_element)) { // cache the element's html
+			$formulize_drawnElements[trim($ele->getName())] = $html;
+		}
+		return $html;
+	}
+	
 	// need to check whether the element is a standard element, if if so, add the check for whether its row exists or not	
 	function _drawValidationJS($skipConditionalCheck) {
 		$fullJs = "";
@@ -3051,11 +3073,11 @@ jQuery(window).load(function() {
 		}
 		$topKey++;
 	}
+
+    foreach(array_keys($conditionalElements) as $ce) {
+        print "assignConditionalHTML('".$ce."', \"".$GLOBALS['formulize_drawnElements'][$ce]."\");\n";
+    }
 	print "
-	for(key in conditionalElements) {
-		var handle = conditionalElements[key];
-		getConditionalHTML(handle); // isolate ajax call in a function to control the scope of handle so it's the same no matter the time difference when the return value gets here
-	}
 
 	jQuery(\"[name='".implode("'], [name='", array_keys($governingElements))."']\").live('change', function() { // live is necessary because it will bind events to the right DOM elements even after they've been replaced by ajax events
 		for(key in governedElements[jQuery(this).attr('name')]) {
