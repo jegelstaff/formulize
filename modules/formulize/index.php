@@ -39,8 +39,9 @@
 
 // uncomment these two lines to enable benchmarking of performance...depends also on the user id specified in formulize_benchmark in include/extract.php
 
-//include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-//$GLOBALS['startPageTime'] = microtime_float();
+/*require_once "../../mainfile.php";
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
+$GLOBALS['startPageTime'] = microtime_float();*/
 
 if(!isset($formulize_masterUIOverride)) {
     $formulize_masterUIOverride = false;
