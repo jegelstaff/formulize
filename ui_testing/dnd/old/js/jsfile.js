@@ -7,7 +7,6 @@ $(document).ready(function () {
 		revert: 'invalid',
 		start: function (event, ui) {
 			/*tilt effect on drag*/
-			
 			$(ui.helper).addClass("form-draggable-helper");
 			$(ui.helper).css("width", $(this).width());
 			var dropContainer = $(".form-content");
