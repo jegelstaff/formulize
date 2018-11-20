@@ -157,14 +157,13 @@ class formulize_themeForm extends XoopsThemeForm {
 			$formulize_drawnElements = array();
 			global $xoopsUser;
 			$show_element_edit_link = (is_object($xoopsUser) and in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups()));
-			if (isset($ele->formulize_element)) {
-				$label_class = " formulize-label-".$ele->formulize_element->getVar("ele_handle");
-				$input_class = " formulize-input-".$ele->formulize_element->getVar("ele_handle");
-			}
 		}
 		
 		if(isset($ele->formulize_element) AND isset($formulize_drawnElements[trim($ele->getName())])) {
 			return $formulize_drawnElements[trim($ele->getName())];
+		} elseif(isset($ele->formulize_element)) {
+			$label_class = " formulize-label-".$ele->formulize_element->getVar("ele_handle");
+			$input_class = " formulize-input-".$ele->formulize_element->getVar("ele_handle");
 		}
 
 		$html = "<td class='head$label_class'>";
@@ -190,9 +189,9 @@ class formulize_themeForm extends XoopsThemeForm {
 
 				default:
 					if (is_object($ele) and isset($ele->formulize_element)) {
-						$html .= "<a class=\"formulize-element-edit-link\" tabindex=\"-1\" href=\"" . XOOPS_URL .
+						$html .= "<a class='formulize-element-edit-link' tabindex='-1' href='" . XOOPS_URL .
 							"/modules/formulize/admin/ui.php?page=element&aid=0&ele_id=" .
-							$ele->formulize_element->getVar("ele_id") . "\" target=\"_blank\">edit element</a>";
+							$ele->formulize_element->getVar("ele_id") . "' target='_blank'>edit element</a>";
 					}
 					break;
 			}
@@ -3088,7 +3087,7 @@ jQuery(window).load(function() {
 	}
 
     foreach(array_keys($conditionalElements) as $ce) {
-        print "assignConditionalHTML('".$ce."', \"".$GLOBALS['formulize_drawnElements'][$ce]."\");\n";
+        print "assignConditionalHTML('".$ce."', jQuery('#formulize-".$ce."').html());\n";
     }
 	print "
 
@@ -3103,13 +3102,6 @@ jQuery(window).load(function() {
 		}
 	});
 });
-
-function getConditionalHTML(handle) {
-	partsArray = handle.split('_');
-	jQuery.get(\"".XOOPS_URL."/modules/formulize/formulize_xhr_responder.php?uid=".$uid."&op=get_element_row_html&elementId=\"+partsArray[3]+\"&entryId=\"+partsArray[2]+\"&fid=\"+partsArray[1], function(data) {
-		assignConditionalHTML(handle, data);
-	});
-}
 
 function assignConditionalHTML(handle, html) {
 	conditionalHTML[handle] = html; 
@@ -3238,7 +3230,7 @@ function compileGoverningElementsForConditionalElements($conditionalElements, $e
 					}
 					$governingElements1 = _compileGoverningElements($entries, $elementObject, $handle);
 					$governingElements2 = _compileGoverningElements($sub_entries, $elementObject, $handle);
-					$governingElements3 = _compileGoverningLinkedSelectBoxSourceConditionElements($governingElements, $handle);
+					$governingElements3 = _compileGoverningLinkedSelectBoxSourceConditionElements($handle);
 					$governingElements = mergeGoverningElements($governingElements, $governingElements1);
 					$governingElements = mergeGoverningElements($governingElements, $governingElements2);
 					$governingElements = mergeGoverningElements($governingElements, $governingElements3);
