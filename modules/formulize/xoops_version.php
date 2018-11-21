@@ -79,6 +79,7 @@ $modversion['tables'] = array(
 	"formulize_procedure_logs_params",
 	"formulize_deletion_logs",
     "formulize_apikeys",
+	"formulize_tokens",
 );
 
 $modversion['formulize_exportable_tables'] = array(
@@ -107,6 +108,7 @@ $modversion['formulize_exportable_tables'] = array(
 	"formulize_group_filters",
 	"formulize_groupscope_settings",
     "formulize_apikeys",
+	 "formulize_tokens",
 );
 
 
@@ -351,6 +353,10 @@ $modversion['table_metadata'] = array(
     "formulize_apikeys" => array(
         "fields" => array("uid","apikey"),
         "joins" => array()
+    ),
+    "formulize_tokens" => array(
+        "fields" => array("groups","tokenkey"),
+        "joins" => array()
     )
 );
 
@@ -562,6 +568,15 @@ $modversion['templates'][] = array(
 	'file' => 'admin/element_optionlist.html',
 	'description' => '');
 $modversion['templates'][] = array(
+	'file' => 'admin/element_linkedoptionlist.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/element_linkedfilter.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/element_linkedsortoptions.html',
+	'description' => '');
+$modversion['templates'][] = array(
 	'file' => 'admin/advanced_calculation_settings.html',
 	'description' => '');
 $modversion['templates'][] = array(
@@ -601,10 +616,7 @@ $modversion['templates'][] = array(
 	'file' => 'admin/managekeys.html',
 	'description' => '');
 $modversion['templates'][] = array(
-	'file' => 'admin/home2.html',
-	'description' => '');
-$modversion['templates'][] = array(
-	'file' => 'admin/home_sections2.html',
+	'file' => 'admin/managetokens.html',
 	'description' => '');
 
     

@@ -103,8 +103,8 @@ switch($active_page) {
     case "managekeys":
         include "managekeys.php";
         break;
-    case "home2":
-        include "home2.php";
+    case "managetokens":
+        include "managetokens.php";
         break;
     default:
     case "home":

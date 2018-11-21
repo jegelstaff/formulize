@@ -22,7 +22,11 @@ $(document).ready(function () {
 			}, 200);
 			$(".form-content").removeClass("form-focus");
 
+<<<<<<< HEAD
 			//$("#popup").css("display", "block");
+=======
+			$("#popup").css("display", "block");
+>>>>>>> c3e2d19f2a044d094544f288a7976c7fb6b0c1e7
 		}
 	});
 
@@ -51,12 +55,23 @@ $(document).ready(function () {
 				},
 			});		
 			var type = "none";
+<<<<<<< HEAD
 			if ($(this).hasClass('onemany')) {
 				type = "One to many"
 				item.append(relationshipDropDiv);
             }
             else if ($(this).hasClass('oneone')) {
 				type = "One to one";			item.append(relationshipDropDiv);
+=======
+			if ($(this).hasClass('manymany')){
+				type = "Many to many"
+            }
+            else if ($(this).hasClass('onemany')) {
+				type = "One to many"
+            }
+            else if ($(this).hasClass('oneone')) {
+				type = "One to one"
+>>>>>>> c3e2d19f2a044d094544f288a7976c7fb6b0c1e7
             }
 			$("#relationshiptype").text(type);
 			$(this).animate({
@@ -81,5 +96,8 @@ $(document).ready(function () {
 		}
 	}
 
+<<<<<<< HEAD
 	var relationshipDropDiv = ("<div class='form-content' id='droppable'></div>");
+=======
+>>>>>>> c3e2d19f2a044d094544f288a7976c7fb6b0c1e7
 });
