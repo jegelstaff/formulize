@@ -3,7 +3,6 @@ body {
 	color: dimgrey;
 	font-family: Arial;
 	font-size: 14px;
-	font-weight: bold;
 }
 
 #page-overlay {
@@ -20,19 +19,13 @@ body {
 	/*border: 0.5px dotted #7a7a7a;*/
 	border: 0.5px solid #ddd;
 	-webkit-box-shadow: 2px 2px 4px -4px #777;
-	float: left;
 	padding: 10px;
 	margin-right: 18px;
 	background-color: white;
 	text-align: center;
-	margin: 4px;
+	margin: 4px auto;
 	border-radius: 5px;
-}
-
-#droppable {
-	width: 100vw;
-	padding: 5px;
-	margin: 10px;
+	display:inline-block;
 }
 
 .form-toggle {
@@ -48,14 +41,14 @@ body {
 	color: #999999;
 }
 
-.main {
-	min-width: 65vw;
+.main, #addbutton, form-layout {
+	min-width: 20vw;
 	display: inline-block;
 }
 
 .form-layout,
 .form-sortable,
-.form-draggable {
+.form-draggable {	
 	-webkit-touch-callout: none;
 	-webkit-user-select: none;
 	-khtml-user-select: none;
@@ -71,38 +64,9 @@ body {
 	text-align: left;
 	text-decoration: none;
 }
-
-.form-layout {	
-	border: 1px solid #cacaca;
-	width: 65%;
-	padding: 3px;
-	min-width: 250px;
-}
 .form-sortable,
 .form-draggable {
-	padding: 3px 8px 3px 8px;
-	line-height: 28px;
-}
-
-.form-content {
-	padding-top: em;
-	color: #999999;
-	display: table-cell;
-	align-content: flex-start;
-	border: 1px solid rgba(0, 0, 0, 0);
-}
-
-.form-sortable:hover,
-.form-draggable:hover {
-	box-shadow: 0 1px 2px 1px rgba(0, 0, 0, 0.2);
-	background-color: #f4f4f4;
-	cursor: grab;
-}
-
-.form-draggable:active,
-.form-draggable-helper:hover,
-.form-sortable:active {
-	cursor: grabbing;
+	border:1px solid lightgray;
 }
 
 .form-draggable-helper {
@@ -147,7 +111,7 @@ body {
 	border: 1px solid #ddd;
 	border-radius: 6px;
 	padding: 12px;
-	position: fixed;
+	display:inline-block;
 	height: 100%;
 	overflow: auto;
 }
@@ -170,106 +134,6 @@ body {
 	margin-bottom: 4px;
 }
 
-/*SAM*/
-.sideBarIcons {
-	height: 100%;
-	width: 200px;
-	position: fixed;
-	z-index: 1;
-	top: 0;
-	left: 0;
-	background-color: gainsboro;
-	overflow-x: hidden;
-	transition: 0.5s;
-	padding-top: 60px;
-	font-family: Arial;
-	overflow: auto;
-}
-
-.sideBarIcons a {
-	padding: 10px 10px 10px 20px;
-	font-size: 24px;
-	color: rgba(242, 251, 248, 0.99);
-	display: block;
-	transition: 0.3s;
-}
-
-.sideBarIcons a:hover {
-	color: lightgreen;
-}
-
-.sideBarIcons .close {
-	position: absolute;
-	top: 0;
-	right: 30px;
-	margin-left: 20px;
-	color: black;
-}
-
-.sideBarInfo {
-	height: 100%;
-	width: 0;
-	position: fixed;
-	z-index: 1;
-	top: 0;
-	right: 0;
-	background-color: white;
-	overflow-x: hidden;
-	transition: 0.5s;
-	padding-top: 60px;
-	font-family: Arial;
-	overflow: auto;
-	white-space: nowrap;
-}
-
-.sideBarInfo a {
-	padding: 10px 10px 10px 20px;
-	color: darkslategray;
-	display: block;
-	transition: 0.3s;
-}
-
-.sideBarInfo p {
-	padding: 10px 10px 10px 20px;
-	color: darkslategray;
-	display: block;
-	transition: 0.3s;
-}
-
-.sideBarInfo a:hover {
-	color: lightgreen;
-}
-
-.sideBarInfo .close {
-	position: absolute;
-	top: 0;
-	left: 10px;
-	margin-right: 20px;
-	color: black;
-}
-
-.imgToText {
-	position: relative;
-	width: 100%;
-	z-index: -1;
-}
-
-.initBase {
-	position: absolute;
-	top: 0;
-	left: 16px;
-	width: 100%;
-}
-
-.popup {
-	display: none;
-	z-index: 2;
-	background-color: white;
-	width: 25%;
-	height: 25%;
-	top: 50%;
-	left: 50%;
-}
 
 .popBox {
 	background-color: white;
@@ -316,3 +180,5 @@ body {
     text-decoration: none;
     cursor: pointer;
 }
+
+/*NEW*/
