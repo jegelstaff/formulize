@@ -3,33 +3,70 @@
 <{else}>
 <div class="description homepage-description"><p><{$sectionContent.description}></p></div>
 <{/if}>
+<!--Start of form sidebar... -->
+<div class="sidebar">
+<p>Options</p>
+<a class = "sidebar-item" href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=application&amp;aid=0&amp;tab=forms" style="background-color: #eeeeee"><i class="icon-menu"></i>App Settings</a>
+<a class = "sidebar-item"  href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=form&amp;aid=0&amp;tab=settings&amp;fid=new"><i class="icon-add"></i>Add a Form</a><i class="icon-settings"></i>
 
 
 <{if count($sectionContent.forms) == 0}>
 <p>No forms.</p>
 <{else}>
-<h2>Forms- sam was here, still...</h2>
-<table>
-  <tr>
-      <th>ID</th>
-      <th>Name</th>
-      <th>Elements</th>
-      <th>Entries</th>
-      <th>Data-entry Screen</th>
-      <th>List Screen</th>
-  </tr>
-  <{foreach from=$sectionContent.forms item=form}>
-  <tr>
-      <td style="text-align:right;padding-right:1em;"><{$form.fid}></td>
-      <td><a href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=elements"><i class="icon-form"></i> <{$form.form->title}></a></td>
-      <td style="text-align:right;padding-right:1em;"><{$form.form->elementHandles|@count}></td>
-      <td style="text-align:right;padding-right:1em;"><{$form.form->entry_count}></td>
-      <td><{if $form.form->defaultform > 0}><a href="<{$xoops_url}>/modules/formulize/index.php?sid=<{$form.form->default_form_screen->sid}>" target="_blank"><i class="icon-screen"></i> <{$form.form->default_form_screen->title}></a><{/if}></td>
-      <td><{if $form.form->defaultlist > 0}><a href="<{$xoops_url}>/modules/formulize/index.php?sid=<{$form.form->default_list_screen->sid}>" target="_blank"><i class="icon-screen"></i> <{$form.form->default_list_screen->title}></a><{/if}></td>
-  </tr>
+<!-- fill the sidebar with all the forms -->
+    <p>Forms</p>
+    <!--
+    <form action="">
+        <input type="text" placeholder="Search forms.." name="search">
+        <button type="submit"><i class="icon-view" style="background: transparent"></i></button>
+    </form>
+    -->
+    <{foreach from=$adminPage.apps[1].content.forms item=form}>
+    <div class="sidebar-item">
+        <span onclick="openInfoBar()"><a><i class="icon-form"></i><{$form.form->title}></a></span>
+    </div>
+
   <{/foreach}>
-</table>
+    <!-- make one for each from -->
+    <div id="sideWithInfo" class="sideBarInfo">
+        <a href="javascript:void(0)" class="close" onclick="closeInfoBar()">&times</a>
+        <div style="border-bottom: 5px solid">
+            <b>
+                <h1><{$form.form->title}></h1>
+            </b> <!-- Name Block-->
+        </div>
+
+        <div style="border-bottom: 3px solid">
+            <!--Data Stats>-->
+            <p>ID: <{$form.fid}></p>
+            <p>Elements: <{$form.form->elementHandles|@count}></p>
+            <p>Entries: <{$form.form->entry_count}></p>
+
+            <p>Last Updated: ###</p>
+            <p>Owner: ###</p>
+        </div>
+
+        <div style="border-bottom: 3px solid">
+            <!--Action Menu (it links to stuff)-->
+            <a href="#">Configure</a>
+            <span style="cursor:pointer" onclick="openViewPopUp()"><a href="#">View</a></span>
+
+            <span style="cursor:pointer" onclick="openClonePopUp()"><a href="#">Clone</a></span>
+
+            <a href="#">Lock Down</a>
+
+            <span style="cursor:pointer" onclick="openDeletePopUp()"><a href="#">Delete</a></span>
+
+
+            <span style="cursor:pointer" onclick="openScreensPopUp()"><a href="#">Screens</a></span>
+
+        </div>
+    </div>
 <{/if}>
+
+
+</div>
+<!--hopefully the end of the sidebar... -->
 
 
 <script type="text/javascript">
@@ -71,18 +108,19 @@
         }
         return false;
     });
+
     function closeInfoBar() {
-        document.getElementById("page-overlay").style.visibility = "hidden";
         document.getElementById("sideWithInfo").style.width = "0";
         //			closePops();
     }
 
 
     function openInfoBar() {
-        document.getElementById("page-overlay").style.visibility = "visible";
+
         document.getElementById("sideWithInfo").style.width = "250px";
 
     }
+
     function showForm(formname){
         window.history.pushState('page2', 'Title', '/page2.php');
         return false;
