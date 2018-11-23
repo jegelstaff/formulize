@@ -530,7 +530,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		$linkResults = checkForLinks($frid, $fids, $fid, $entries, true); // final true means only include entries from unified display linkages
 		unset($entries);
 		unset($fids);
-
+//                var_dump($linkResults);
 		$fids = $linkResults['fids'];
 		$entries = $linkResults['entries'];
 		$sub_fids = $linkResults['sub_fids'];

@@ -425,7 +425,7 @@ class formulizeFormsHandler {
 		return new formulizeForm();
 	}
 
-	function &get($fid,$includeAllElements=false) {
+	function get($fid,$includeAllElements=false) {
 		$fid = intval($fid);
 		// this is cheap...we're caching form objects potentially twice because of a possible difference in whether we want all objects included or not.  This could be handled much better.  Maybe iterators could go over the object to return all elements, or all visible elements, or all kinds of other much more elegant stuff.
 		static $cachedForms = array();
