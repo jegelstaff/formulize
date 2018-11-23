@@ -72,6 +72,7 @@
 	ul,
 	#form-listings {
 		list-style-type: none;
+		white-space:nowrap;
 	}
 
 	#form-listings {
@@ -81,7 +82,7 @@
 	}
 
 	/* Style the form */
-	.list {
+	.list, .drop {
 		cursor: pointer;
 		user-select: none;
 		display: inline-block;
@@ -117,11 +118,12 @@
 	.parent:hover > .drop,
 	.parent:hover > ul .drop,
 	#form-container:hover > .drop{
-		color:blueviolet;
 		visibility: visible;
 	}
+	.drop:hover {
+		color:darkmagenta;!important
+	}
 	
-
 	/*Show the nested list (with JavaScript)*/
 	.active {
 		display: block;
