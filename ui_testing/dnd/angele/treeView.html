@@ -106,16 +106,19 @@
 	}
 	
 	.drop{
-		display: none;		
+		display: block;
+		visibility: hidden;
 	}
 	
 	.parent{
 		display: flex;
 	}
-	
-	.parent:hover > .drop{
-		
-		display: block;	
+	/**[@id="#form-listings"]/ul/li[3]*/
+	.parent:hover > .drop,
+	.parent:hover > ul .drop,
+	#form-container:hover > .drop{
+		color:blueviolet;
+		visibility: visible;
 	}
 	
 

@@ -1,6 +1,6 @@
 $(document).ready(function () {
 	
-	var $container = "<div class='drop'>xxx</div>";
+	var $drop = "<li class='drop'>xxx</li>";
 	
 	//Create forms
 	for (i = 0; i < 2; i++) { //for each individual relationship
@@ -13,18 +13,22 @@ $(document).ready(function () {
 				$html = $('<ul id="#form-listings">').append($append);
 			} else {
 				$append = '<i class="fas">&nbspForm2</i>';
-				$html = $('<ul id="#form-listings"><li><span class="list">').append($append).append('<ul class="hidelist"><li>├ Form2</li><li>└ Form3</li></ul></li></ul>');
+				$html = $('<ul id="#form-listings"><li><span class="list">').append($append);
+				
+				var $subforms ='<ul class="hidelist"><li>├ Form2</li><li>└ Form3</li>				'+$drop+'</ul></li></ul>';
+				($html).append($subforms);
+				
 			}
-			//todo: add drop container (after form3)
 			$formrel[j] = $html;
 		}
-		$formrel[3 + 1]= $container;
+		$formrel[3 + 1]= $drop;
 
-		$('<div class="parent">').append($formrel).append($container).appendTo($('#form-container'));
-					//todo: add drop container (after last formrel)
-		
+		$('<div class="parent">').append($formrel).append($drop).appendTo($('#form-container'));
 
 	}
+	$('#form-container').append($drop);
+	
+	/*end*/
 
 	var toggler = document.getElementsByClassName("list");
 	var i;
