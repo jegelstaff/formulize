@@ -229,56 +229,6 @@ class formulizeElementsHandler {
 		}
 		return false;
 	}
-        
-        // This almost duplicate function of "get" is necessary in order to get 
-        // the hidden foreign key elements in a form.
-        function getForeignKeyElement($id){
-		static $cachedElements = array();
-		if(isset($cachedElements[$id])) {
-			return $cachedElements[$id];
-		}
-		if ($id > 0 AND is_numeric($id)) {
-			$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE ele_id='.$id.'"';
-			if (!$result = $this->db->query($sql)) {
-				$cachedElements[$id] = false;
-				return false;
-			}
-		} else {
-                    print "id return value:".$id."\n";
-			$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE ele_handle="'.formulize_db_escape($id).'"';
-			if (!$result = $this->db->query($sql)) {
-				$cachedElements[$id] = false;
-				return false;
-			}
-		}
-		$numrows = $this->db->getRowsNum($result);
-		if ($numrows == 1) {
-			// instantiate the right kind of element, depending on the type
-			$array = $this->db->fetchArray($result);
-			$ele_type = $array['ele_type'];
-			if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
-				$customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
-				$element = $customTypeHandler->create();
-			} else {
-				$element = new formulizeformulize();
-			}
-			$element->assignVars($array);
-			$element->isLinked = false;
-			$ele_type = $element->getVar('ele_type');
-			if($ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "select" OR $ele_type=="radio" OR $ele_type=="checkbox" OR $ele_type=="date" OR $ele_type=="colorpick" OR $ele_type=="yn" OR $ele_type=="derived") {
-			    $element->hasData = true;
-			} 
-			if($ele_type=="select") {
-				$ele_value = $element->getVar('ele_value');
-				if(!is_array($ele_value[2])) {
-					$element->isLinked = strstr($ele_value[2], "#*=:*") ? true : false;
-				}
-			} 
-			$cachedElements[$id] = $element;
-			return $element;
-		}
-		return false;
-	}
 
 	function insert(&$element, $force = false){
         if( get_class($element) != 'formulizeformulize' AND is_subclass_of($element, 'formulizeformulize') == false){

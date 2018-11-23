@@ -235,12 +235,12 @@ function updatelinks($fl_id, $value) {
                                         'ele_handle' => 'foreign_key_from_form_'.$form1_id.'_in_form_'.$form2_id);
             $new_foreign_key_element->setDirty();
             $new_foreign_key_element->assignVars($element_variables);
+            $new_foreign_key_element->hasData = true;
             print "return value: ". $ele_handler->insert($new_foreign_key_element)."\n";
+            // Add new field to data table
+            $form_handler->insertElementField($new_foreign_key_element, 'BIGINT(19)');
             
         }
-        // Add new field to data table
-        $element = $ele_handler->getForeignKeyElement('foreign_key_from_form_'.$form1_id.'_in_form_'.$form2_id);
-        $form_handler->insertElementField($element, 'BIGINT(19)');
     }
     
     if(intval($keys[0]) > 0){
