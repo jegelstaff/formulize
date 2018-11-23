@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<link href="https://code.jquery.com/ui/1.10.4/themes/ui-lightness/jquery-ui.css" rel="stylesheet">
+	<script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+	<script src="https://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+
+	<!--temporary: for icons-->
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+
+	<script src="js/jsfile.js"></script>
+</head>
+
+<div id="xo-header">
+	<div id="xo-headerlogo"><a href="http://localhost/uc/formulize/" title=""><img src="http://localhost/uc/formulize/themes/formulize_standalone/img/logo.png" alt="Formulize Standalone"></a>
+	</div>
+</div>
+
+<!-- The sidebar -->
+<div class="sidebar">
+	<h3>Current Application</h3>
+	<p onclick="openInfoBar()" style="cursor:pointer">Application settings (todo)</p>
+	<h3>Forms</h3>
+</div>
+
+<div class="column">
+	<div class="form form-main">
+		<p style="font-weight: bold;">Relationships</p>
+		<div id="form-container" class="form-layout">
+
+
+		</div>
+	</div>
+</div>
+
+</html>
+<style>
+	/*-9 color presets: color:var(--primary-form)*/
+	:root {
+		--primary-form: #fefefe;
+		--form-highlight: #f7f7f7;
+		--form-active: #efefef;
+		--form-text: #7c8289;
+		--form-text-highlight: #595d65;
+	}
+
+	body {
+		color: var(--primaryform);
+	}
+
+	.sidebar {
+		height: 100%;
+		width: 160px;
+		padding: 12px;
+		padding-top: 16px;
+		position: fixed;
+		z-index: 1;
+		top: 1;
+		left: 0;
+		background-color: var(--primary-form);
+		overflow-x: hidden;
+	}
+
+	.column {
+		margin-left: 240px;
+		margin-top: 10px;
+	}
+
+	/* Remove default bullets */
+	ul,
+	#form-listings {
+		list-style-type: none;
+	}
+
+	#form-listings {
+		margin: 0;
+		padding: 10px;
+		vertical-align: top;
+	}
+
+	/* Style the form */
+	.list {
+		cursor: pointer;
+		user-select: none;
+		display: inline-block;
+		/* Prevent text selection */
+	}
+
+	/* Create the triangle */
+	.list::before {
+		content: "\25B7";
+		color: black;
+		margin-right: 6px;
+	}
+
+	/* Rotate the triangle icon when clicked*/
+	.list-down::before {
+		transform: rotate(90deg);
+	}
+
+	
+	.hidelist {
+		display: none;
+	}
+	
+	.drop{
+		display: none;		
+	}
+	
+	.parent{
+		display: flex;
+	}
+	
+	.parent:hover > .drop{
+		
+		display: block;	
+	}
+	
+
+	/*Show the nested list (with JavaScript)*/
+	.active {
+		display: block;
+	}
+
+	.fas {
+		font-weight: 500;
+		padding: 4px;
+	}
+</style>

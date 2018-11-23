@@ -180,5 +180,7 @@ body {
     text-decoration: none;
     cursor: pointer;
 }
-
+i {
+	padding:4px;
+}
 /*NEW*/
