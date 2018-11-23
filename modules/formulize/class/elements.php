@@ -181,21 +181,22 @@ class formulizeElementsHandler {
 	function &create() {
 		return new formulizeformulize();
 	}
-
-	function get($id){
+    
+	function get($id, $allowForeignKeyElements = false){
 		static $cachedElements = array();
 		if(isset($cachedElements[$id])) {
 			return $cachedElements[$id];
 		}
+        $allowForeignKeyElements = $allowForeignKeyElements ? '' : ' AND ele_foreign_key_element=0';
 		if ($id > 0 AND is_numeric($id)) {
-			$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE ele_id='.$id.' AND ele_foreign_key_element=0';
+			$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE ele_id='.$id.$allowForeignKeyElements;
 			if (!$result = $this->db->query($sql)) {
 				$cachedElements[$id] = false;
 				return false;
 			}
 		} else {
                     print "id return value:".$id."\n";
-			$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE ele_handle="'.formulize_db_escape($id).'" AND ele_foreign_key_element=0';
+			$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE ele_handle="'.formulize_db_escape($id).'"'.$allowForeignKeyElements;
 			if (!$result = $this->db->query($sql)) {
 				$cachedElements[$id] = false;
 				return false;
@@ -387,12 +388,13 @@ class formulizeElementsHandler {
 	}
 
 	// id_as_key can be true, false or "handle" or "element_id" in which case handles or the element ids will be used
-	function &getObjects($criteria = null, $id_form , $id_as_key = false){
+	function &getObjects($criteria = null, $id_form , $id_as_key = false, $allowForeignKeyElements = false){
 		$ret = array();
 		$limit = $start = 0;
+        $allowForeignKeyElements = $allowForeignKeyElements ? '' : ' AND ele_foreign_key_element=0';
 //		awareness of $criteria added, Sept 1 2005, jwe
 //		removal of ele_display=1 from next line and addition of the renderWhere line in the conditional below
-		$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE id_form='.$id_form.' AND ele_foreign_key_element=0';
+		$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE id_form='.$id_form.$allowForeignKeyElements;
 
 
 		if( isset($criteria)) { 

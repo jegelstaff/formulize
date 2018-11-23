@@ -1123,6 +1123,47 @@ function checkForLinks($frid, $fids, $fid, $entries, $unified_display=false, $un
             } else {
                 $entries[$one_fid['fid']][] = "";
             }
+        
+        } elseif($one_fid['keyother'] === "id") {
+            $element_handler = xoops_getmodulehandler('elements', 'formulize');
+            $selfElement = $element_handler->get($one_fid['keyself'], true); // true allows retrieval of a foreign key element
+            if (is_object($selfElement)) {
+                if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($entries[$fid][0])][$selfElement->getVar('ele_handle')])) {
+                    // if an asynch request has set an override value, use that!
+                    $foundEntry = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($entries[$fid][0])][$selfElement->getVar('ele_handle')];
+                } else {
+                    // get the entry in the $one_fid['fid'] form (form with the self element), that has the intval($entries[$fid][0]) entry (the entry we are calling up already) as it's a foreign key value
+                $data_handler = new formulizeDataHandler($one_fid['fid']);
+                $foundEntry = $data_handler->findFirstEntryWithValue($selfElement, intval($entries[$fid][0]));
+                }
+                if ($foundEntry !== false) {
+                    $entries[$one_fid['fid']][] = $foundEntry;
+                } else {
+                    $entries[$one_fid['fid']][] = "";
+                }
+            } else {
+                $entries[$one_fid['fid']][] = "";
+            }
+        } elseif($one_fid['keyself'] === "id") {
+            $element_handler = xoops_getmodulehandler('elements', 'formulize');
+            $otherElement = $element_handler->get($one_fid['keyother'], true); // true allows retrieval of a foreign key element
+            if (is_object($selfElement)) {
+                if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($entries[$fid][0])][$otherElement->getVar('ele_handle')])) {
+                    // if an asynch request has set an override value, use that!
+                    $foundEntry = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($entries[$fid][0])][$otherElement->getVar('ele_handle')];
+                } else {
+                    // return the value of the $one_fid['keyother'] element in the $fid, in intval($entries[$fid][0]) entry
+                $data_handler = new formulizeDataHandler($fid);
+                $foundEntry = $data_handler->getElementValueInEntry(intval($entries[$fid][0]), $one_fid['keyother']);
+                }
+                if ($foundEntry !== false) {
+                    $entries[$one_fid['fid']][] = trim($foundEntry, ","); // remove commas, though there shouldn't be any anymore since we're not storing ,id, in the DB as of F5
+                } else {
+                    $entries[$one_fid['fid']][] = "";
+                }
+            } else {
+                $entries[$one_fid['fid']][] = "";
+            }
         } else {
             // figure out which of the two elements is the source of the linked values
             $element_handler = xoops_getmodulehandler('elements', 'formulize');
