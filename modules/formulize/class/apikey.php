@@ -63,7 +63,7 @@ class formulizeAPIKeyHandler {
 		return new formulizeAPIKey($uid, $key, $expiry);
 	}
 
-	function get($key) {
+	function get($key="") {
 		$key = preg_replace("/[^A-Za-z0-9]/", "", str_replace(" ","",$key)); // keys must be only alphanumeric characters
 		static $cachedKeys = array();
 		if(isset($cachedKeys[$key])) { return $cachedKeys[$key]; }
