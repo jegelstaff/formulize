@@ -2693,6 +2693,7 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
             return false;
         }
     } elseif($targetForm['keyother'] === "id") {
+        // so look for all the entry ids in the target form, where the foreign key field has the startEntry in it
         $data_handler_target = new formulizeDataHandler($targetForm['fid']);
         $entries_to_return = $data_handler_target->findAllEntriesWithValue($targetForm['keyself'], $startEntry, $all_users, $all_groups);
         if ($entries_to_return !== false) {
