@@ -2683,6 +2683,23 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
             $entries_to_return = "";
         }
         return $entries_to_return;
+    } elseif($targetForm['keyself'] === "id") {
+        // so look in the startEntry for the values in its linked field and return them. They will be a comma separated list of entry ids in the target form.
+        $data_handler_start = new formulizeDataHandler($startForm);
+        $foundValue = $data_handler_start->getElementValueInEntry($startEntry, $targetForm['keyother'], $all_users, $all_groups);
+        if ($foundValue) {
+            return explode(",",trim($foundValue, ","));
+        } else {
+            return false;
+        }
+    } elseif($targetForm['keyother'] === "id") {
+        $data_handler_target = new formulizeDataHandler($targetForm['fid']);
+        $entries_to_return = $data_handler_target->findAllEntriesWithValue($targetForm['keyself'], $startEntry, $all_users, $all_groups);
+        if ($entries_to_return !== false) {
+            return $entries_to_return;
+        } else {
+            return false;
+        }
     } else {
         // linking based on a shared value.  in the case of one to one forms assumption is that the shared value does not appear more than once in either form's field (otherwise this will be a defacto one to many link)
         // else we're looking at a classic "shared value" which is really a linked selectbox
