@@ -2684,7 +2684,7 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
         }
         return $entries_to_return;
     } elseif($targetForm['keyself'] === "id") {
-        // so look in the startEntry for the values in its foreign key field and return them. They will be a comma separated list of entry ids in the target form.
+        // so look in the startEntry for the values in its linked field and return them. They will be a comma separated list of entry ids in the target form.
         $data_handler_start = new formulizeDataHandler($startForm);
         $foundValue = $data_handler_start->getElementValueInEntry($startEntry, $targetForm['keyother'], $all_users, $all_groups);
         if ($foundValue) {
