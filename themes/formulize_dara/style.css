@@ -803,8 +803,14 @@ div.jGrowl-notification {
 .formulize-subform-table > tbody > tr > th {
   background-color: transparent !important;
   color: black !important;
-  text-align: center;
-  border-bottom: 1px solid #d1d1df; }
+  text-align: left;
+  border-bottom: 1px solid #d1d1df;
+  }
+  
+.formulize-subform-table > tbody > tr > th > p {
+    padding-right: 1em;
+}
+  
 
 .formulize-subform-table > tbody > tr > td {
   padding: 0.5em;
@@ -921,3 +927,7 @@ body > #content {
   height: 2em;
   padding: 0em;
   margin-top: -2.3em; }
+
+.formulize-input-ro_module_full_course_title {
+    font-weight: bold;
+}
