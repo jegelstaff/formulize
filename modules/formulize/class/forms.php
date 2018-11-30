@@ -1424,13 +1424,13 @@ class formulizeFormsHandler {
             
             // This loop should only run a maximum of once.
             while($row = $xoopsDB->fetchArray($res)) {
-                    $records[] = Array($row['ele_handle'], $row['ele_foreign_key_element']);
+                    $records[] = Array("ele_handle" => $row['ele_handle'], "ele_id" => $row['ele_id']);
             }
             
             if(sizeof($records) == 0){
                 return false;
             }else{
-                return true;
+                return $records[0];
             }
             
         }

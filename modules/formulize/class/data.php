@@ -453,7 +453,7 @@ class formulizeDataHandler  {
 		
 	// this function returns the entry ID of all entries found in the form with the specified value in the specified element
 	// use of $scope_uids should only be for when entries by the current user are searched for.  All other group based scopes should be done based on the scope_groups.
-	function findAllEntriesWithValue($element_id, $value, $scope_uids=array(), $scope_groups=array(), $operator="=") {
+	function findAllEntriesWithValue($element_id, $value, $scope_uids=array(), $scope_groups=array(), $operator="=") {              
 		if(!$element = _getElementObject($element_id)) {
 			return false;
 		}
@@ -470,6 +470,7 @@ class formulizeDataHandler  {
 		} else {
 			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $element->getVar('ele_handle') . "` $operator $queryValue GROUP BY entry_id ORDER BY entry_id";			
 		}
+                print $sql;
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
 		}

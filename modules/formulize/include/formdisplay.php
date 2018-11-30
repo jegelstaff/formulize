@@ -530,11 +530,11 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		$linkResults = checkForLinks($frid, $fids, $fid, $entries, true); // final true means only include entries from unified display linkages
 		unset($entries);
 		unset($fids);
-//                var_dump($linkResults);
 		$fids = $linkResults['fids'];
 		$entries = $linkResults['entries'];
 		$sub_fids = $linkResults['sub_fids'];
 		$sub_entries = $linkResults['sub_entries'];
+//                var_dump($linkResults);
 	}
  
 	// need to handle submission of entries 
@@ -953,8 +953,9 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		}
 		// add in any onetoone elements that we need to deal with at the same time (in case their joining key value changes on the fly)
 		if(count($fids)>1) {
-			$i = 1;
+			$i = 0;
 			while($i<=count($fids)) {
+                                        $i++;
 					$relationship_handler = xoops_getmodulehandler('frameworks', 'formulize');
 					$relationship = $relationship_handler->get($frid);
 					foreach($relationship->getVar('links') as $thisLink) {
@@ -966,6 +967,9 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 									break;
 							}
 					}
+                                        if($keyElement == "id"){
+                                            continue;
+                                        }
 					// prepare to loop through elements for the rendered entry, or 'new', if there is no rendered entry
 					$entryToLoop = isset($entries[$fids[$i]][0]) ? $entries[$fids[$i]][0] : null;
 					if(!$entryToLoop AND isset($GLOBALS['formulize_renderedElementsForForm'][$fids[$i]]['new'])) {
@@ -980,7 +984,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 							}
 							$formulize_governingElements = mergeGoverningElements($formulize_governingElements, $governingElements2);
 					}
-					$i++;
 			}
 		}
 		if(count($formulize_governingElements)> 0 AND !$formElementsOnly) { // render this once at the end of rendering the main form!

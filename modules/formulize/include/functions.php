@@ -2591,6 +2591,12 @@ function getDateElementDefault($default_hint) {
 // keyself and other are the ele_id from the form table for the elements that need to be matched.
 // SHOULD BE REFACTORED TO BE AWARE OF A FRID SO IT CAN DETERMINE THE CORRECT DIRECTION OF LINKING, AND THEN HANDLE DOUBLE LINKED SELECTBOXES
 function findLinkedEntries($startForm, $targetForm, $startEntry) {
+    
+//    print "Start Form:".$startForm."<br>";
+//    print "Target Form:";
+//    print_r($targetForm);
+//    print "<br>";
+//    print "Start Entry:".$startEntry."<br>";
 
     $mid = getFormulizeModId();
     $gperm_handler = xoops_gethandler('groupperm');
@@ -2623,7 +2629,7 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
     //keyself and other are the ele_id from the form table for the elements that need to be matched.  Must get captions and convert to formulize_form format in order to find the matching values
 
     // linking based on uid, in the case of one to one forms, assumption is that these forms are both single_entry forms (otherwise linking one_to_one based on uid doesn't make any sense)
-    if ($targetForm['keyself'] == 0) {
+    if ($targetForm['keyself'] == '0') {
         // get uid of first entry
         // look for that uid in the target form
         $data_handler_start = new formulizeDataHandler($startForm);
@@ -2684,7 +2690,7 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
         }
         return $entries_to_return;
     } elseif($targetForm['keyself'] === "id") {
-        // so look in the startEntry for the values in its linked field and return them. They will be a comma separated list of entry ids in the target form.
+        // so look in the startEntry for the values in its Foreign Key field and return them. They will be a comma separated list of entry ids in the target form.
         $data_handler_start = new formulizeDataHandler($startForm);
         $foundValue = $data_handler_start->getElementValueInEntry($startEntry, $targetForm['keyother'], $all_users, $all_groups);
         if ($foundValue) {
@@ -2695,7 +2701,13 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
     } elseif($targetForm['keyother'] === "id") {
         // so look for all the entry ids in the target form, where the foreign key field has the startEntry in it
         $data_handler_target = new formulizeDataHandler($targetForm['fid']);
+        
+        print $targetForm['keyself']."<br>".$startEntry."<br>";
+        
         $entries_to_return = $data_handler_target->findAllEntriesWithValue($targetForm['keyself'], $startEntry, $all_users, $all_groups);
+        
+        print_r($entries_to_return);
+        
         if ($entries_to_return !== false) {
             return $entries_to_return;
         } else {
@@ -3791,7 +3803,7 @@ function _getElementObject($element) {
         }
     } else {
         $element_handler =& xoops_getmodulehandler('elements', 'formulize');
-        $element = $element_handler->get($element);
+        $element = $element_handler->get($element, true); // true value allows the foreign key elements to be returned.
         if (!is_object($element)) {
             return false;
         }   else {

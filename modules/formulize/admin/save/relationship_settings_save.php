@@ -227,7 +227,7 @@ function updatelinks($fl_id, $value) {
     
     // Check if the relationship is a primary key/foreign key relationship.
     if(!is_numeric($keys[0]) && $keys[0] == "id"){
-        if(!$form_handler->hasForeignKeyLinkElement($form1_id, $form2_id)){
+        if(!$record = $form_handler->hasForeignKeyLinkElement($form1_id, $form2_id)){
             $new_foreign_key_element = $ele_handler->create();
             $element_variables = array('id_form' => $form2_id, 
                                         'ele_foreign_key_element' => $form1_id,
@@ -239,7 +239,9 @@ function updatelinks($fl_id, $value) {
             print "return value: ". $ele_handler->insert($new_foreign_key_element)."\n";
             // Add new field to data table
             $form_handler->insertElementField($new_foreign_key_element, 'BIGINT(19)');
-            
+            $keys[1] = $new_foreign_key_element->getVar("ele_id");
+        } else{
+            $keys[1] = $record["ele_id"];
         }
     }
     
