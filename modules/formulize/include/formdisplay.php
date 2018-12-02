@@ -1624,7 +1624,8 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
             // add that entry to the list of sub entries
             $valuesToWrite[$optionElementObject->getVar('ele_handle')] = prepDataForWrite($optionElementObject, $optionKey); // keys are what the form sends back for processing
             if($valuesToWrite[$optionElementObject->getVar('ele_handle')] !== "" AND $valuesToWrite[$optionElementObject->getVar('ele_handle')] !== "{WRITEASNULL}") {
-                $writtenEntryId = formulize_writeEntry($valuesToWrite);
+                $proxyUser = $overrideOwnerOfNewEntries ? $mainFormOwner : false;
+                $writtenEntryId = formulize_writeEntry($valuesToWrite, 'new', 'replace', $proxyUser);
                 writeEntryDefaults($subform_id,$writtenEntryId);
                 $sub_entries[$subform_id][] = $writtenEntryId;
             }
