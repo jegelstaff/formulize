@@ -2629,7 +2629,7 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
     //keyself and other are the ele_id from the form table for the elements that need to be matched.  Must get captions and convert to formulize_form format in order to find the matching values
 
     // linking based on uid, in the case of one to one forms, assumption is that these forms are both single_entry forms (otherwise linking one_to_one based on uid doesn't make any sense)
-    if ($targetForm['keyself'] == '0') {
+    if ($targetForm['keyself'] === 0) {
         // get uid of first entry
         // look for that uid in the target form
         $data_handler_start = new formulizeDataHandler($startForm);
