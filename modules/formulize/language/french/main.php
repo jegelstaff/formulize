@@ -605,3 +605,6 @@ define("_MD_ERRORMAIL","Erreur ! Vous n'avez pas saisie de destinataire pour le 
 define("_MD_ERRORTITLE","Erreur ! Vous n'avez pas saisie le titre du formulaire !!!!");
 define("_MD_FILEERROR","Erreur chargement de fichier");
 define("_SAVE_AND_GO_BACK", "Soumettre et retourner au formulaire principal");
+define("_AM_ELE_SUBFORM_NEWENTRY_LABEL", "Nouveau");
+define("_formulize_DE_EXPORT_SHOW_ADVANCED", "Montrer les options avancées");
+define("_formulize_DE_EXPORT_HIDE_ADVANCED", "Masquer les options avancées");
