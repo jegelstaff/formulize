@@ -5339,7 +5339,7 @@ function generateHiddenElements($elements, $entry) {
             case "date":
                 if ($entry == "new") {
                     $ele_value = $thisElement->getVar('ele_value');
-                    if ($ele_value[0] == "" OR $ele_value[0] == "YYYY-mm-dd") {
+                    if ($ele_value[0] == "" OR $ele_value[0] == _DATE_DEFAULT) {
                         $valueToUse = "";
                     } elseif (preg_replace("/[^A-Z{}]/","", $ele_value[0]) === "{TODAY}") {
                         $number = preg_replace("/[^0-9+-]/","", $ele_value[0]);
