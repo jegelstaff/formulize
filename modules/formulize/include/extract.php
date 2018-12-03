@@ -440,9 +440,19 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		     if(count($linklist1) > 0) {
 		     foreach($linklist1 as $theselinks) {
 			     $linkformids1[] = $theselinks['fl_form2_id'];
+                 // JOHN - THIS CHECK AGAINST 0 NEEDS TO CHANGE, SINCE 'id' IS A VALID VALUE FOR THE KEY1 AND KEY2 FIELDS NOW
+                 // SIMILAR TO THE FIX YOU DID BEFORE, WE NEED TO PROBABLY REWRITE THIS SO IT'S === 0 AND THEN THE PART THAT IS THE 'ELSE' NOW BECOMES THE FIRST PART OF THE CONDITIONAL
 			     if($theselinks['fl_key1'] != 0) {
+                    // JOHN - THIS FUNCTION PROBABLY SHOULD NOT BE RUN IF FL_KEY1 IS 'id' because there is no corresponding handle for the 'id' (there is no element id either, because it's not an element)
+                    // it's possible that logic is better put inside the function
+                    // WHEN 'id' is passed in, we should return 'entry_id' because that is the valid field name in the database for the value we would be looking for
 				     $handleforlink = formulize_getElementHandleFromID($theselinks['fl_key1']);
 				     $linkkeys1[] = $handleforlink;
+                     // JOHN - SAME THING HERE...WE PROBABLY WANT TO CONVERT 'id' to 'entry_id' so that the code below actually focuses on the field in the datatable that we're looking for
+                     // HOWEVER... $linktargetids1 and $linkselfids1 (and the 'number 2' corresponding arrays initialized below)
+                     // MIGHT ACTUALLY DO SOME OF THAT HANDLE-ID SWAPPING LATER ON IN THIS CODE,
+                     // AND IN THAT CASE, MAYBE WE NEED TO COMPENSATE DIFFERENTLY FOR THIS BEING THE ENTRY_ID FIELD,
+                     // BECAUSE SAME PROBLEM AS MENTIONED ABOVE, THERE IS NO HANDLE OR ELEMENT ID COUNTERPART TO 'entry_id' or 'id'
 				     $linktargetids1[] = $theselinks['fl_key2'];
 				     $linkselfids1[] = $theselinks['fl_key1'];
 			     } else {
@@ -461,6 +471,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		     if(count($linklist2) > 0) {
 		     foreach($linklist2 as $theselinks) {
 			     $linkformids2[] = $theselinks['fl_form1_id'];
+                 // JOHN - SAME AS ABOVE...THE 0 CHECK NEEDS TO BE CHANGED
 			     if($theselinks['fl_key2'] != 0) {
 				     $handleforlink = formulize_getElementHandleFromID($theselinks['fl_key2']);
 				     $linkkeys2[] = $handleforlink;
@@ -599,6 +610,8 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 				 
 	       
 	       if($frid) {
+            // JOHN - HERE IS WHERE THE ELEMENT IDS ARE CONVERTED TO HANDLES (for the $linkselfids and $linktargetids).
+            // SO INSIDE THE formulize_getJoinHandles function is probably where we need to put some logic to return 'entry_id' if 'entry_id' is passed in (or if 'id' is passed in too)
            $joinHandles = formulize_getJoinHandles(array(0=>$linkselfids, 1=>$linktargetids)); // get the element handles for these elements, since we need those to properly construct the join clauses
            $newJoinText = ""; // "new" variables initilized in each loop
            $joinTextIndex = array();
@@ -619,42 +632,40 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		    $joinTextTableRef[$linkedFid] = DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$id ON ";
 		    $joinText .= " $joinType JOIN " . DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$id ON"; // NOTE: we are aliasing the linked form tables to f$id where $id is the key of the position in the linked form metadata arrays where that form's info is stored
 		    $newexistsJoinText = $existsJoinText ? " $andor " : "";
-		    $newexistsJoinText .= " EXISTS(SELECT 1 FROM ". DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$id WHERE "; // set this up also so we have it available for one to many/many to one calculations that require it 
+		    $newexistsJoinText .= " EXISTS(SELECT 1 FROM ". DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$id WHERE "; // set this up also so we have it available for one to many/many to one calculations that require it
+            // JOHN - IF EITHER $joinHandles[$linkselfids[$id]] is 'entry_id' OR the $joinHandles[$linktargetids[$id]] is 'entry_id' THEN...
+            // WE WANT TO DO EXACTLY WHAT IS HAPPENING HERE WITH COMMON VALUE RELATIONSHIPS
+            // SO BASICALLY, JUST EXPAND THE IF CONDITION
 		    if($linkcommonvalue[$id]) { // common value
-		      $newJoinText = " main.`" . $joinHandles[$linkselfids[$id]] . "`=f$id.`" . $joinHandles[$linktargetids[$id]]."`";
+                $newJoinText = " main.`" . $joinHandles[$linkselfids[$id]] . "`=f$id.`" . $joinHandles[$linktargetids[$id]]."`";
 		    } elseif($linktargetids[$id]) { // linked selectbox
-		      
-		      
-		      if($target_ele_value = formulize_isLinkedSelectBox($linktargetids[$id])) {
-                            if ($target_ele_value[1]) {
-                                // multiple values allowed
-                                $newJoinText = " f$id.`" . $joinHandles[$linktargetids[$id]] . "` LIKE CONCAT('%,',main.entry_id,',%')";
-                            } else {
-                                // single value only
-                                $newJoinText = " f$id.`" . $joinHandles[$linktargetids[$id]] . "` = main.entry_id";
-                            }
-                        } else {
-                            $main_ele_value = formulize_isLinkedSelectBox($linkselfids[$id]); 
-                            //  we know it's linked because this is a linked selectbox join, we just need the ele_value properties
-                            if ($main_ele_value[1]) {
-                                // multiple values allowed
-                                $newJoinText = " main.`" . $joinHandles[$linkselfids[$id]] . "` LIKE CONCAT('%,',f$id.entry_id,',%')";
-                            } else {
-                                // single value only
-                                $newJoinText = " main.`" . $joinHandles[$linkselfids[$id]] . "` = f$id.entry_id";
-                            }
-                        }
-		      
-		      
-		      
-		    } else { // join by uid
+                if($target_ele_value = formulize_isLinkedSelectBox($linktargetids[$id])) {
+                    if ($target_ele_value[1]) {
+                        // multiple values allowed
+                        $newJoinText = " f$id.`" . $joinHandles[$linktargetids[$id]] . "` LIKE CONCAT('%,',main.entry_id,',%')";
+                    } else {
+                        // single value only
+                        $newJoinText = " f$id.`" . $joinHandles[$linktargetids[$id]] . "` = main.entry_id";
+                    }
+                } else {
+                    $main_ele_value = formulize_isLinkedSelectBox($linkselfids[$id]); 
+                    //  we know it's linked because this is a linked selectbox join, we just need the ele_value properties
+                    if ($main_ele_value[1]) {
+                        // multiple values allowed
+                        $newJoinText = " main.`" . $joinHandles[$linkselfids[$id]] . "` LIKE CONCAT('%,',f$id.entry_id,',%')";
+                    } else {
+                        // single value only
+                        $newJoinText = " main.`" . $joinHandles[$linkselfids[$id]] . "` = f$id.entry_id";
+                    }
+                }
+            } else { // join by uid
 		      $newJoinText = " main.creation_uid=f$id.creation_uid";
 		    }
-							if(isset($perGroupFiltersPerForms[$linkedFid])) {
-								$newJoinText .= $perGroupFiltersPerForms[$linkedFid];
-							}
-		    $joinTextIndex[$linkedFid] = $newJoinText;
-		    
+            
+            if(isset($perGroupFiltersPerForms[$linkedFid])) {
+                $newJoinText .= $perGroupFiltersPerForms[$linkedFid];
+            }
+            $joinTextIndex[$linkedFid] = $newJoinText;
 		    $joinText .= $newJoinText;
 		    if(count($oneSideFilters[$linkedFid])>0) { // only setup the existsJoinText when there is a where clause that applies to this form...otherwise, we don't care, this form is not relevant to the query that the calculations will do (except maybe when the mainform is not the one-side form...but that's another story)
 		      $existsJoinText .= $newexistsJoinText . $newJoinText;

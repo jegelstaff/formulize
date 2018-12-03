@@ -1317,7 +1317,7 @@ function drawGoBackForm($go_back, $currentURL, $settings, $entry) {
 }
 
 // this function draws in the UI for sub links
-function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry,
+function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry_id,
 	$customCaption = "", $customElements = "", $defaultblanks = 0, $showViewButtons = 1, $captionsForHeadings = 0,
 	$overrideOwnerOfNewEntries = "", $mainFormOwner = 0, $hideaddentries = "", $subformConditions = null, $subformElementId = 0,
 	$rowsOrForms = 'row', $addEntriesText = _formulize_ADD_ENTRIES, $subform_element_object = null)
@@ -1339,7 +1339,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 
 	// limit the sub_entries array to just the entries that match the conditions, if any
 	if(is_array($subformConditions) and is_array($sub_entries[$subform_id])) {
-		list($conditionsFilter, $conditionsFilterOOM, $curlyBracketFormFrom) = buildConditionsFilterSQL($subformConditions, $subform_id, $entry, $mainFormOwner, $fid); // pass in mainFormOwner as the comparison ID for evaluating {USER} so that the included entries are consistent when an admin looks at a set of entries made by someone else.
+		list($conditionsFilter, $conditionsFilterOOM, $curlyBracketFormFrom) = buildConditionsFilterSQL($subformConditions, $subform_id, $entry_id, $mainFormOwner, $fid); // pass in mainFormOwner as the comparison ID for evaluating {USER} so that the included entries are consistent when an admin looks at a set of entries made by someone else.
 		$subformObject = $form_handler->get($subform_id);
 		$sql = "SELECT entry_id FROM ".$xoopsDB->prefix("formulize_".$subformObject->getVar('form_handle'))."$curlyBracketFormFrom WHERE entry_id IN (".implode(", ", $sub_entries[$subform_id]).") $conditionsFilter $conditionsFilterOOM";
 		$sub_entries[$subform_id] = array();
@@ -1387,32 +1387,41 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
     $formulize_subformInstance = $subformInstance;
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
 	
+    // JOHN - THIS IF STATEMENT SHOULD BE PASSING, AND WE GO INTO THE CONTENTS OF IT, TO WRITE THE ENTRY...
 	if($_POST['target_sub'] AND $_POST['target_sub'] == $subform_id AND $_POST['target_sub_instance'] == $subformElementId.$subformInstance) { // important we only do this on the run through for that particular sub form (hence target_sub == sfid), and also only for the specific instance of this subform on the page too, since not all entries may apply to all subform instances any longer with conditions in effect now
 		// need to handle things differently depending on whether it's a common value or a linked selectbox type of link
 		// uid links need to result in a "new" value in the displayElement boxes -- odd things will happen if people start adding linked values to entries that aren't theirs!
+        // JOHN - $element_to_write should be the ID number of the FK field in the subform (ie: cities in the example we've been using)
 		if($element_to_write != 0) {
 			if($elementq[0]['fl_common_value']) {
 				// grab the value from the parent element -- assume that it is a textbox of some kind!
-				if (isset($_POST['de_'.$value_source_form.'_'.$entry.'_'.$value_source])) {
-					$value_to_write = $_POST['de_'.$value_source_form.'_'.$entry.'_'.$value_source];
+				if (isset($_POST['de_'.$value_source_form.'_'.$entry_id.'_'.$value_source])) {
+					$value_to_write = $_POST['de_'.$value_source_form.'_'.$entry_id.'_'.$value_source];
 				} else {
 					// get this entry and see what the source value is
 					$data_handler = new formulizeDataHandler($value_source_form);
-					$value_to_write = $data_handler->getElementValueInEntry($entry, $value_source);
+					$value_to_write = $data_handler->getElementValueInEntry($entry_id, $value_source);
 				}
 			} else {
-				$value_to_write = $entry; 
+                // JOHN - SINCE IT IS NOT A COMMON VALUE RELATIONSHIP, THE ENTRY ID SHOULD BECOME THE VALUE TO WRITE 
+				$value_to_write = $entry_id; 
 			}
 			$sub_entry_new = "";
 		
+            // JOHN - THE NUMSUBENTS IS THE NUMBER IN THE "ADD x ENTRIES" BOX
 			for($i=0;$i<$_POST['numsubents'];$i++) { // actually goahead and create the requested number of new sub entries...start with the key field, and then do all textboxes with defaults too...
 				//$subEntWritten = writeElementValue($_POST['target_sub'], $element_to_write, "new", $value_to_write, "", "", true); // Last param is override that allows direct writing to linked selectboxes if we have prepped the value first!
-        if($overrideOwnerOfNewEntries) {
-          $creation_user_touse = $mainFormOwner;
-        } else {
-          $creation_user_touse = "";
-        }
-        $subEntWritten = writeElementValue($_POST['target_sub'], $element_to_write, "new", $value_to_write, $creation_user_touse, "", true); // Last param is override that allows direct writing to linked selectboxes if we have prepped the value first!
+                if($overrideOwnerOfNewEntries) {
+                  $creation_user_touse = $mainFormOwner;
+                } else {
+                  $creation_user_touse = "";
+                }
+                // JOHN - THIS IS THE CRITICAL FUNCTION CALL THAT ACTUALLY CREATES THE ENTRY/ENTRIES THE USER REQUESTED
+                // first param is the form we're writing to, ie: the subform, ie: cities
+                // second is the field in the form, ie: the FK field
+                // third is the entry id we're writing to, ie: "new" because we're making new entries in the subform
+                // fourth is the value we're writing to the field, which should be the entry id of the main form record, which has been passed in to the function.
+                $subEntWritten = writeElementValue($_POST['target_sub'], $element_to_write, "new", $value_to_write, $creation_user_touse, "", true); // Last param is override that allows direct writing to linked selectboxes if we have prepped the value first!
 				if(!isset($elementsForDefaults)) {
 					$criteria = new CriteriaCompo();
 					$criteria->add(new Criteria('ele_type', 'text'), 'OR');
@@ -1599,7 +1608,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 					$col_two .= "<tr><td>\n";
 					$col_two .= "<input type=\"hidden\" name=\"formulize_subformValueSource_$subform_id\" value=\"$value_source\">\n";
 					$col_two .= "<input type=\"hidden\" name=\"formulize_subformValueSourceForm_$subform_id\" value=\"$value_source_form\">\n";
-					$col_two .= "<input type=\"hidden\" name=\"formulize_subformValueSourceEntry_$subform_id"."[]\" value=\"$entry\">\n";
+					$col_two .= "<input type=\"hidden\" name=\"formulize_subformValueSourceEntry_$subform_id"."[]\" value=\"$entry_id\">\n";
 					$col_two .= "<input type=\"hidden\" name=\"formulize_subformElementToWrite_$subform_id\" value=\"$element_to_write\">\n";
 					$col_two .= "<input type=\"hidden\" name=\"formulize_subformSourceType_$subform_id\" value=\"".$elementq[0]['fl_common_value']."\">\n";
 					$col_two .= "<input type=\"hidden\" name=\"formulize_subformId_$subform_id\" value=\"$subform_id\">\n"; // this is probably redundant now that we're tracking sfid in the names of the other elements
@@ -1832,7 +1841,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
             // user can add entries if they have permission on the main form
             // the user should only be able to add subform entries if they can *edit* the main form entry, since adding a subform entry
             //  is like editing the main form entry. otherwise they could add subform entries on main form entries owned by other users
-            $allowed_to_add_entries = formulizePermHandler::user_can_edit_entry($fid, $uid, $entry);
+            $allowed_to_add_entries = formulizePermHandler::user_can_edit_entry($fid, $uid, $entry_id);
         }
         if ($allowed_to_add_entries AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
             if (count($sub_entries[$subform_id]) == 1 AND $sub_entries[$subform_id][0] === "" AND $sub_single) {

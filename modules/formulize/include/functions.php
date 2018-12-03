@@ -5645,6 +5645,19 @@ function formulize_makeOneToOneLinks($frid, $fid) {
                             $form2EntryId = formulize_writeEntry(array($key2=>$commonValueToWrite), $entryToWriteToForm2);
                         }
                     }
+                /*
+                } elseif $key1 is id... then write the entry id that was written in form 1, into the key2 field in form2
+                
+                // formulize_writeEntry - first param is an array of elements and values to write, and the second param is the entry id we're writing into
+                // the entry id that you're writing to, is already determined above as $entryToWriteToForm1, $entryToWriteToForm2
+                // the value you're going to write is the entry id for the other form, so if you're writing to form1, then use the form2 entry as the value of $key1
+                // and vice versa
+                $form1EntryId = formulize_writeEntry(array($key1=>$linkedValueToWrite), $entryToWriteToForm1);
+                
+                
+                } elseif $key2 is id... then write the entry id that was written in form 2, into the key1 field in form1
+                  
+                */  
                 } else {
                     // figure out which one is on which side of the linked selectbox
                     $element_handler = xoops_getmodulehandler('elements', 'formulize');
