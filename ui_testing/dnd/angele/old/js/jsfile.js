@@ -1,30 +1,6 @@
 $(document).ready(function () {
 	/*enable removal for current relationships (incomplete)*/
-	$(".form-draggable").draggable({
-		stack: '.form-draggable',
-		helper: 'clone',
-		appendTo: 'body',
-		revert: 'invalid',
-		start: function (event, ui) {
-			/*tilt effect on drag*/
-			$(ui.helper).addClass("form-draggable-helper");
-			$(ui.helper).css("width", $(this).width());
-			var dropContainer = $(".form-content");
-			dropContainer.animate({
-				height: dropContainer.height() + ui.helper.height()
-			}, 250);
-			dropContainer.addClass("form-focus");
-
-		},
-		stop: function (event, ui) {
-			$(".form-content").animate({
-				height: "0"
-			}, 200);
-			$(".form-content").removeClass("form-focus");
-
-			//$("#popup").css("display", "block");
-		}
-	});
+	$(".form-sidebar").sortable();
 
 	/*Create a new relationship with a form*/
 	$(".form-content").droppable({
