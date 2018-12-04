@@ -1,16 +1,16 @@
-$(document).ready(function () {
+
 	/*funtions*/
-	function addForm(label) {
+	function addRel(relName, forms) {
 		var subformCount = 2;
 		var $formrel = [];
-		for (j = 0; j < subformCount; j++) {
-			$formrel[j] = addSubform("form" + j, true);
-		}
+		forms.forEach(function(form) {
+            addSubform(form, true);
+        });
 
-		$leader = $('<div class="form-content"><p><i class="fas fa-file-alt"></i>Form ' + label + '</p></div>');
+		$leader = $('<div class="form-content"><p><i class="fas fa-file-alt"></i>' + relName + '</p></div>');
 
 		$container = $('<div class="container">').append($formrel);
-		$leader.append($container).append($drop);
+		$leader.append($container).append("<div class='drop-container'>Add new form</div>");
 		$('<div class="parent">').append($leader).appendTo($('#form-container'));
 	}
 
@@ -23,7 +23,7 @@ $(document).ready(function () {
 		} else {
 			$html = $('<ul class="form-listings"><li><span class="list">' + label + '</ul>');
 		}
-		$html.append($drop);
+		$html.append("<div class='drop-container'>Add new form</div>");
 
 		var toggler = document.getElementsByClassName("list");
 		var i;
@@ -43,6 +43,7 @@ $(document).ready(function () {
 		var submit = document.getElementsByClassName("popup-submit")[0];
 		submit.onclick = function () {
 			popup.style.display = "none";
+            
 
 			var $newForm = addSubform("NEWFORM", false);
 
@@ -56,23 +57,6 @@ $(document).ready(function () {
 
 	}
 
-	/*Create forms*/
-	var $drop = "<div class='drop-container'>Add new relationship</div>";
-	var $drop2 = "<div class='drop-container2'>Add new form</div>";
-	var formCount = 2;
-	for (i = 0; i < formCount; i++) {
-		addForm(i);
-	}
-	$('#form-container').append($drop2);
-
-	var toggler = document.getElementsByClassName("list");
-	var i;
-	for (i = 0; i < toggler.length; i++) {
-		(toggler[i]).addEventListener("click", function () {
-			addTogglers(this)
-		});
-	}
-
 	function addTogglers(root) {
 
 		parent = root.parentElement.parentElement;
@@ -81,6 +65,8 @@ $(document).ready(function () {
 		parent.querySelector(".arrow").classList.toggle("arrow-down");
 		$(root).find('i').toggleClass('fa-minus').toggleClass('fa-plus');
 	}
+    
+$(document).ready(function () {
 	/*Create a new relationship with a form*/
 	$(".sidebar-form").draggable({
 		helper: 'clone',
@@ -110,9 +96,8 @@ $(document).ready(function () {
 		accept: ".sidebar-form",
 		hoverClass: "drop-highlight",
 		drop: function (e, ui) {
-			addForm("New");
+			addRel("New");
 		}
-	})
-
-
+	});
 });
+
