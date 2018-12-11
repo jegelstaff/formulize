@@ -136,7 +136,7 @@ print "<title>" . _formulize_DE_PICKNEWCOLS . "</title>";
 print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"" . XOOPS_URL . "/xoops.css\" />\n";
 $themecss = xoops_getcss();
 print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$themecss\" />\n";
-print '<script type="text/javascript" src="'.XOOPS_URL.'/libraries/jquery/jquery.js"></script>\n';
+print "<script type='text/javascript' src='".XOOPS_URL."/libraries/jquery/jquery.js'></script>\n";
 changeColJavascript();
 
 print "</head>";
