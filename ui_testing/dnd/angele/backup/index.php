@@ -4,12 +4,13 @@ include "../../../mainfile.php";
 include "../../../modules/formulize/admin/application.php";
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
-
-?><!DOCTYPE html>
+?>
+<!DOCTYPE html>
 <html>
 
 <head>
 	<meta charset="utf-8" />
+
 	<link href="https://code.jquery.com/ui/1.10.4/themes/ui-lightness/jquery-ui.css" rel="stylesheet">
 	<script src="https://code.jquery.com/jquery-1.10.2.js"></script>
 	<script src="https://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
@@ -19,12 +20,12 @@ ini_set('display_errors', 1);
 
 	<link rel="stylesheet" type="text/css" href="style.css">
 	<script src="js/jsfile.js"></script>
-</head>
+
+	</head>
 
 <body>
     
     <script type='text/javascript'>
-    
     $(document).ready(function () {
         /*Create forms*/
 	var $drop2 = "<div class='drop-container2'>Add new relationship</div>";
@@ -82,7 +83,7 @@ ini_set('display_errors', 1);
 			</div>
 		</div>
 	</div>
-	<div id="RelationshipPopup" class="popup">
+	<div id="RelationshipPopup" class="popup">`
 
 		<!-- Modal content -->
 		<div class="popup-content">
