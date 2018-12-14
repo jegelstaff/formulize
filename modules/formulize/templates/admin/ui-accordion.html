@@ -38,15 +38,15 @@
 			<{if $section.header}>
 			<div style="position: absolute; top: 10px; right: 10px;">
 				<{$section.header}>
-				<!-- call to create the sidebars... hopefully -->
-				<p> testing... </p>
-				<{if $sidebars == true}>
-					<{include file="db:admin/home_sections2_sidebars.html"}>
-				<{/if}>
-
+				<!-- call to create the sidebars... -->
 			</div>
 			<{/if}>
 			<{include file=$sectionTemplate sectionContent=$section.content}>
+
+			<{if $sidebars == true}>
+			<{include file="db:admin/home_sections2_sidebars.html"}>
+			<{/if}>
+
 		</div>
 	</div>
 	<{/foreach}>
