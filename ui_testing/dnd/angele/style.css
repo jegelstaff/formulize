@@ -33,6 +33,7 @@ body {
 }
 
 .tree {
+	overflow: visible;
 	list-style: none;
 	padding-left: 20px;
 	position: relative;
@@ -66,9 +67,6 @@ body {
 	box-shadow: 0px 2px 4px 0px rgba(138, 138, 138, 0.5);
 }
 
-
-li:hover > span > .fa-info-circle,
-li:focus > span > .fa-info-circle,
 li:hover > span > .fa-grip-vertical,
 li:focus > span > .fa-grip-vertical{
 	visibility: visible !important;
@@ -76,19 +74,11 @@ li:focus > span > .fa-grip-vertical{
   	transition: visibility 0s linear 0s, opacity 100ms;
 }
 
-.fa-info-circle {
-	float: right;
-	color: var(--text-light) !important;
-	visibility: hidden;
-  opacity: 0;
-  transition: visibility 0s linear 100ms, opacity 100ms;
-	cursor: pointer;
-}
 .fa-grip-vertical {	
 	color: #c7c7c7;
 }
 
-.fa-info-circle:hover, .fa-chevron-up:hover {
+.fa-chevron-up:hover {
 	color: var(--text-hover) !important;
 }
 
@@ -111,11 +101,13 @@ li:focus > span > .fa-grip-vertical{
 }
 
 .addNewRel{
-	display: block;
+	display: none;
+	opacity: 0.7;
 	text-align: center;
 	color: white;
 	color: var(--blue) !important;
 	border: 3px dashed var(--blue) !important;
+	background-color:transparent!important;
 }
 
 .addNewRel:hover {
@@ -148,7 +140,7 @@ li:focus > span > .fa-grip-vertical{
 .counter, .relType{
 	padding-left: 6px;
 	padding-right: 6px;
-	margin-left: 8px;
+	margin-right: 8px;
 	margin-top:1px;
 	font-size:13px;
 	border-radius: 10px;
@@ -156,10 +148,10 @@ li:focus > span > .fa-grip-vertical{
 	border: 0.5px solid var(--blue);
 }
 .relType{
-	border-radius: 0px;
-	font-size:14px;
-	padding-top: 3px;
-	padding-bottom: 3px;
+	float:right;
+	font-weight: normal;
+	color: var(--gray);
+	border: 0px solid var(--blue);
 }
 
 .caret {
@@ -221,9 +213,7 @@ i.fa-grip-vertical:active{
 .formDragged > span:nth-child(1) {
 	cursor: grabbing!important;
 }
-.formDragged > span > i.fa-info-circle{
-	visibility: hidden !important;
-}
+
 /*sortable*/
 .shadow{
 	background-color: rgba(138, 138, 138, 0.2) !important;
@@ -246,7 +236,7 @@ i.fa-grip-vertical:active{
 }
 
 .popup-content {
-	margin: 25% auto;
+	margin: 15% auto;
 	padding: 20px;
 	width: 80%;
 	border: 0px solid rgba(123, 123, 123, 0.5);

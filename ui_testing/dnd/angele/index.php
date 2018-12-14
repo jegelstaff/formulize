@@ -21,7 +21,6 @@ include "../../../modules/formulize/admin/application.php";
 
 	<link rel="stylesheet" type="text/css" href="style.css">
 	<script src="js/jsfile.js"></script>
-
 </head>
 
 <body>
@@ -29,41 +28,44 @@ include "../../../modules/formulize/admin/application.php";
 	<div class="Formlist">
 		<h2 style="margin-left: 4px;">Forms</h2>
 		<ul id="form-container">
+			<!--Add forms to side menu-->
 			<?php
             foreach($allForms as $form) {
-				print '<li class="form" id='.$form['id'].'><span><i class="fas fa-grip-vertical"></i>'.$form['name'].'<i class="fas fa-info-circle"></i></span></li>';
+				print '<li class="form" id='.$form['id'].'><span><i class="fas fa-grip-vertical"></i>'.$form['name'].'</li>';
             }
             ?>
 		</ul>
 	</div>
-
 	<div class="container">
-		<button onclick="" style="float:right;">Save Changes</button>
+		<input type="hidden" name="formulize_admin_handler" value="newUI">
+		<input type="hidden" name="formulize_admin_key" value="4">
+		
+		<button class="savebutton" style="float:right;">Save Changes</button>
 		<h2>Relationships</h2>
 		<button onclick="openAll()">Expand all</button>
 		<button onclick="closeAll()">Collapse all</button>
 		<ul class="tree" id="root">
-			
+
+			<li class="addNewRel"><span><i class="fa fa-plus"></i> Add new relationship</span></li>
 			<!--populate relationships-->
 			<script type='text/javascript'>
 				$(document).ready(function() {
 					/*Create forms*/
-					
-					<?php
-    foreach($relationships as $rel) {
-        print "addRel('".$rel['name']."',[";
-        $start = true;
-        foreach($rel['content']['links'] as $link) {
-            if(!$start) { print ", "; }
-            print "'".$link['form1']."', '".$link['form2']."'";
-            $start = false;
-        }
-        print "]);";
-		
-    }
-					
-    ?>
 
+					<?php 
+					foreach($relationships as $rel) {
+						print "addRel('".$rel['content']['frid']."','".$rel['name']."',[";
+						
+						$start = true;
+						foreach($rel['content']['links'] as $link) {
+							if(!$start) { print ", "; }
+							print "['".$link['form1']."','".$link['form2']."','".$link['relationship']."']";
+							$start = false;
+						}
+						print "]);";
+					}?>
+					refreshCounters();
+					
 					// <input type="hidden" name="formulize_admin_handler" value="application_settings"> // handler name indicates the file that will read the data and save it
 					// you can write your own handler file and put it in modules/formulize/admin/save/newUI_save.php <input type="hidden" name="formulize_admin_handler" value="newUI">
 					// <input type="hidden" name="formulize_admin_key" value="4"> // admin key indicates the primary key of the thing you're saving...probably not applicable in this case
@@ -73,40 +75,10 @@ include "../../../modules/formulize/admin/application.php";
 
 				});
 			</script>
-			<li id="rel1"><span class="branch"><i class="fas fa-grip-vertical"></i> Project-1 <span class="counter">1</span><span><i class="fas fa-chevron-up caret"></i></span></span>
-				<ul class="tree">
-					<li id="rel11">
-						<span class="branch"><i class="fas fa-grip-vertical"></i> Project-1 <span class="counter">1</span><span><i class="fas fa-chevron-up caret"></i></span></span>
-						<ul class="tree">
-							<li class="leaf"><span><i class="fas fa-grip-vertical"></i> File-1 <span class="relType">1</span><i class="fas fa-info-circle"></i></span></li>
-							<li class="leaf"><span><i class="fas fa-grip-vertical"></i> File-1 <i class="fas fa-info-circle"></i></span></li>
-							<li class="leaf"><span><i class="fas fa-grip-vertical"></i> File-1 <i class="fas fa-info-circle"></i></span></li>
-							<li class="leaf"><span><i class="fas fa-grip-vertical"></i> File-1 <i class="fas fa-info-circle"></i></span></li>
-							<li class="addNewRel"><span><i class="fa fa-plus"></i> Add new relationship</span></li>
-						</ul>
-					</li>
-					<li id="rel11">
-						<span class="branch"><i class="fas fa-grip-vertical"></i> Project-1 <span class="counter">1</span><span><i class="fas fa-chevron-up caret"></i></span></span>
-						<ul class="tree">
-							<li class="leaf"><span><i class="fas fa-grip-vertical"></i> File-1 <span class="relType">1</span><i class="fas fa-info-circle"></i></span></li>
-							<li class="leaf"><span><i class="fas fa-grip-vertical"></i> File-1 <i class="fas fa-info-circle"></i></span></li>
-							<li class="leaf"><span><i class="fas fa-grip-vertical"></i> File-1 <i class="fas fa-info-circle"></i></span></li>
-							<li class="leaf"><span><i class="fas fa-grip-vertical"></i> File-1 <i class="fas fa-info-circle"></i></span></li>
-							<li class="addNewRel"><span><i class="fa fa-plus"></i> Add new relationship</span></li>
-						</ul>
-					</li>
-					<li class="leaf"><span><i class="fas fa-grip-vertical"></i> File-1 <i class="fas fa-info-circle"></i></span></li>
-					<li class="leaf"><span><i class="fas fa-grip-vertical"></i> File-1 <i class="fas fa-info-circle"></i></span></li>
-					<li class="leaf"><span><i class="fas fa-grip-vertical"></i> File-1 <i class="fas fa-info-circle"></i></span></li>
-					<li class="addNewRel"><span><i class="fa fa-plus"></i> Add new relationship</span></li>
-				</ul>
-
-			</li>
-			
-			<li class="addNewRel"><span><i class="fa fa-plus"></i> Add new relationship</span></li>
 		</ul>
 
-		<span class="removeRel"><i class="fas fa-trash"></i> Remove</span>
+		<span class="removeRel"><i class="fas fa-trash"></i> Remove </span>
+		
 	</div>
 
 	<div id="RelationshipPopup" class="popup">
@@ -118,8 +90,16 @@ include "../../../modules/formulize/admin/application.php";
 						<option value="volvo">one to one</option>
 						<option value="saab">one to many</option>
 					</select></span> relationship. How would you like them to be linked?</p>
-			<input type="checkbox" name="c1" value="Bike">Use ID of person who filled them in<br>
-			<input type="checkbox" name="c2" value="Bike">Use common value in 2 elements<br>
+			<div style="margin-bottom: 24px;">
+				<p>Link between these forms:</p>
+				<select name="linkbetweenforms" class="popup-selector">
+					<option>User ID of the person who filled them in</option>
+					<option>Common value in two elements [pick elements]</option>
+				</select>
+			</div>
+			
+			<input type="checkbox" name="c1" value="Bike">Display as a single form<br>
+			<input type="checkbox" name="c2" value="Bike">Delete linked entries<br>
 			<br>
 			<div style="display:inline-block; margin-right: 40px;">
 				<p>Relationship 1</p>
