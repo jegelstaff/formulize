@@ -542,6 +542,25 @@ document.addEventListener('DOMContentLoaded', function(event) {
 	}
 
 	/**
+	 * updates an external resource ID in the associated mapping table
+	 * @param external_id  string   The external resource ID to update (expects string format)
+	 * @return            boolean the query success value
+	 *  @author Kristen Newbury Feb 21 2018
+	 */
+public static function updateResourceMapping($external_id_old, $external_id_new) {
+		self::init();
+        if(!$external_id_old||!$external_id_new) { return null; }
+		$mapping_table = self::$db->prefix(self::$mapping_table);
+		$external_id_oldSQL = "external_id_string = '" . formulize_db_escape($external_id_old) . "'";
+		$external_id_newSQL = "external_id_string = '" . formulize_db_escape($external_id_new) . "'";
+		return self::$db->queryF('
+			UPDATE ' . $mapping_table . '
+			SET  ' . $external_id_newSQL .'
+			WHERE '.  $external_id_oldSQL 
+		);
+	}
+
+	/**
 	 * Converts an external resource ID into a XOOPS resource ID using the associated mapping table
 	 * @param external_id  int/string   The external resource ID to convert
 	 * @return            int   The associated XOOPS resource ID

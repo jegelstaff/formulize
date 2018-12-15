@@ -38,7 +38,7 @@ require_once XOOPS_ROOT_PATH.'/kernel/object.php';
 class formulizeScreen extends xoopsObject {
 
 	function __construct() {
-		$this->XoopsObject();
+        parent::__construct();
 		$this->initVar('sid', XOBJ_DTYPE_INT, '', true);
 		$this->initVar('title', XOBJ_DTYPE_TXTBOX, '', true, 255);
 		$this->initVar('fid', XOBJ_DTYPE_INT, '', true);

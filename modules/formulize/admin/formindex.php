@@ -112,10 +112,10 @@ function patch40() {
      *
      * ====================================== */
 
-    $checkThisTable = 'formulize_apikeys';
-    $checkThisField = false; 
-    $checkThisProperty = false;
-    $checkPropertyForValue = false;
+    $checkThisTable = 'formulize_screen_listofentries';
+	$checkThisField = 'defaultview';
+	$checkThisProperty = 'Type';
+	$checkPropertyForValue = 'text';
 
     $needsPatch = false;
 
@@ -167,6 +167,25 @@ function patch40() {
 ) ENGINE=MyISAM;";
         }
 
+        if (!in_array($xoopsDB->prefix("formulize_tokens"), $existingTables)) {
+            $sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_tokens") . " (
+                `key_id` int(11) unsigned NOT NULL auto_increment,
+                `groups` varchar(255) NOT NULL default '',
+                `tokenkey` varchar(255) NOT NULL default '',
+                `expiry` datetime default NULL,
+                `maxuses` int(11) NOT NULL default '0',
+                `currentuses` int(11) NOT NULL default '0',
+                PRIMARY KEY (`key_id`),
+                INDEX i_groups (groups),
+                INDEX i_tokenkey (tokenkey),
+                INDEX i_expiry (expiry),
+                INDEX i_maxuses (maxuses),
+                INDEX i_currentuses (currentuses)
+            ) ENGINE=MyISAM;";
+        } 
+        
+        
+        
         if (!in_array($xoopsDB->prefix("formulize_group_filters"), $existingTables)) {
             $sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_group_filters")."` (
   `filterid` int(11) NOT NULL auto_increment,
@@ -356,6 +375,9 @@ function patch40() {
         $sql['add_pubfilters'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_saved_views") . " ADD `sv_pubfilters` text";
         $sql['add_backdrop_group'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_resource_mapping") . " ADD external_id_string text NULL default NULL";
         $sql['add_backdrop_group_index'] = "ALTER TABLE ". $xoopsDB->prefix("formulize_resource_mapping") ." ADD INDEX i_external_id_string (external_id_string(10))";
+        $sql['add_advance_view_field'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " ADD `advanceview` text NOT NULL"; 
+		$sql['defaultview_ele_type_text'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " CHANGE `defaultview` `defaultview` TEXT NOT NULL ";
+
         
         foreach($sql as $key=>$thissql) {
             if (!$result = $xoopsDB->query($thissql)) {
@@ -415,10 +437,24 @@ function patch40() {
                     print "External_id_string already added for resource mapping.  result: OK<br>";
                 } elseif(strstr($key, 'add_backdrop_group_index')) {
                     print "External_id_string INDEX already added for resource mapping.  result: OK<br>";
+                } elseif($key === "defaultview_ele_type_text") {
+					print "default view field change to text type already. result: OK<br>";
+				} elseif($key === "add_advance_view_field") {
+					print "advance view field already added.  result: OK<br>";
                 } else {
                     exit("Error patching DB for Formulize 4.0. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
             }
+        }
+        
+        // change any non-serialized array defaultview settings for list of entries screens, into serialized arrays indicating the view for Registered Users (group 2)
+        $sql1 = "UPDATE ".$xoopsDB->prefix("formulize_screen_listofentries")." SET defaultview = CONCAT('a:1:{i:2;i:',defaultview,';}') WHERE defaultview NOT LIKE '%{%' AND concat('',defaultview * 1) = defaultview"; //concat in where isolates numbers
+        if(!$res = $xoopsDB->query($sql1)) {
+            exit("Error patching DB for Formulize 4.0. SQL dump:<br>" . $sql1 . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+        }
+        $sql2 = "UPDATE ".$xoopsDB->prefix("formulize_screen_listofentries")." SET defaultview = CONCAT('a:1:{i:2;s:',CHAR_LENGTH(defaultview),':\"',defaultview,'\";}') WHERE defaultview NOT LIKE '%{%'"; // all remaining values will not be numbers
+        if(!$res = $xoopsDB->query($sql2)) {
+            exit("Error patching DB for Formulize 4.0. SQL dump:<br>" . $sql2 . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
         }
 
         // if there is a framework handles table present, then we need to check for a few things to ensure the integrity of code and our ability to disambiguate inputs to the API
@@ -693,7 +729,7 @@ function saveMenuEntryAndPermissionsSQL($formid, $appid, $i, $menuText) {
     $groupsThatCanView = $gperm_handler->getGroupIds("view_form", $formid, getFormulizeModId());
 
     $menuText = html_entity_decode($menuText, ENT_QUOTES) == "Use the form's title" ? '' : $menuText;
-    $thissql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_links")."` VALUES (null,". $appid.",'fid=".$formid."',".$i.",null,'".$menuText."');";//.$permissionsql.";";
+    $thissql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_links")."` VALUES (null,". $appid.",'fid=".$formid."',".$i.",null,'".$menuText."','');";//.$permissionsql.";";
     if (!$result = $xoopsDB->query($thissql)) {
         exit("Error inserting Menus. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
     } else {
@@ -924,7 +960,8 @@ function patch31() {
   useaddproxy varchar(255) NOT NULL default '',
   usecurrentviewlist varchar(255) NOT NULL default '',
   limitviews text NOT NULL,
-  defaultview varchar(20) NOT NULL default '',
+  defaultview text NOT NULL,
+  advanceview text NOT NULL, 
   usechangecols varchar(255) NOT NULL default '',
   usecalcs varchar(255) NOT NULL default '',
   useadvcalcs varchar(255) NOT NULL default '',

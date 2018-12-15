@@ -1,17 +1,17 @@
-<div id="pageNavTable">
+<div id="pageNavTable<{$bottom}>">
     <table>
         <tr>
             <td style="vertical-align: middle; padding-right: 5px;">
-                <nobr><{$_formulize_DMULTI_PAGE}> <{$currentPage}> <{$_formulize_DMULTI_OF}> <{$totalPages}></nobr>
+                <span id="pageNumber<{$bottom}>"><nobr><{$_formulize_DMULTI_PAGE}> <{$currentPage}> <{$_formulize_DMULTI_OF}> <{$totalPages}></nobr></span>
             </td>
             <td style="vertical-align: middle; padding-right: 5px;">
-                <{$previousPageButton}>
+                <span id="navPrevButton<{$bottom}>"><{$previousPageButton}></span>
             </td>
             <td style="vertical-align: middle; padding-right: 5px;">
-                <{$nextPageButton}>
+                <span id="navNextButton<{$bottom}>"><{$nextPageButton}></span>
             </td>
             <td style="vertical-align: middle;">
-                <{$_formulize_DMULTI_JUMPTO}>&nbsp;&nbsp;<{$pageSelectionList}>
+                <span id="jumpList<{$bottom}>"><{$_formulize_DMULTI_JUMPTO}>&nbsp;&nbsp;<{$pageSelectionList}></span>
             </td>
         </tr>
     </table>

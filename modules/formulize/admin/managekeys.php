@@ -26,7 +26,7 @@ $member_handler = xoops_gethandler('member');
 $users = $member_handler->getUsers();
 $userList = array();
 foreach($users as $user) {
-    $userList[$user->getVar('uid')] = $user->getVar('name');
+    $userList[$user->getVar('uid')] = $user->getVar('name') ? $user->getVar('name') : $user->getVar('uname');
 }
 
 // gather all keys and send to screen

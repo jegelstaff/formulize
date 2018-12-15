@@ -9,6 +9,21 @@ CREATE TABLE `formulize_apikeys` (
     INDEX i_expiry (expiry)
 ) ENGINE=MyISAM;
 
+CREATE TABLE `formulize_tokens` (
+    `key_id` int(11) unsigned NOT NULL auto_increment,
+    `groups` varchar(255) NOT NULL default '',
+    `tokenkey` varchar(255) NOT NULL default '',
+    `expiry` datetime default NULL,
+    `maxuses` int(11) NOT NULL default '0',
+    `currentuses` int(11) NOT NULL default '0',
+    PRIMARY KEY (`key_id`),
+    INDEX i_groups (groups),
+    INDEX i_tokenkey (tokenkey),
+    INDEX i_expiry (expiry),
+    INDEX i_maxuses (maxuses),
+    INDEX i_currentuses (currentuses)
+) ENGINE=MyISAM;
+
 CREATE TABLE `formulize_menu_links` (
     `menu_id` int(11) unsigned NOT NULL auto_increment,
     `appid` int(11) unsigned NOT NULL,
@@ -109,7 +124,8 @@ CREATE TABLE `formulize_screen_listofentries` (
   `useaddproxy` varchar(255) NOT NULL default '',
   `usecurrentviewlist` varchar(255) NOT NULL default '',
   `limitviews` text NOT NULL, 
-  `defaultview` varchar(20) NOT NULL default '',
+  `defaultview` text NOT NULL,
+  `advanceview` text NOT NULL, 
   `usechangecols` varchar(255) NOT NULL default '',
   `usecalcs` varchar(255) NOT NULL default '',
   `useadvcalcs` varchar(255) NOT NULL default '',

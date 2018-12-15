@@ -96,6 +96,7 @@ class icms_auth_Ldap extends icms_auth_Object {
 		$this->_ds = ldap_connect($this->ldap_server, $this->ldap_port);
 		if ($this->_ds) {
 			ldap_set_option($this->_ds, LDAP_OPT_PROTOCOL_VERSION, $this->ldap_version);
+            ldap_set_option($this->_ds, LDAP_OPT_REFERRALS, 0); // HELPS MAKE LDAP AUTH WORK WITH AD IN SOME CASES
 			if ($this->ldap_use_TLS) {
 				// We use TLS secure connection
 				if (!ldap_start_tls($this->_ds)) {
@@ -107,13 +108,13 @@ class icms_auth_Ldap extends icms_auth_Object {
 			$userDN = $this->getUserDN($uname);
 			if (!$userDN) return false;
 			// We bind as user to test the credentials
-			$authenticated = ldap_bind($this->_ds, $userDN, stripslashes($pwd));
+			$authenticated = ldap_bind($this->_ds, $userDN, $this->cp1252_to_utf8(stripslashes($pwd)));
 			if ($authenticated) {
-				icms::$session->securityLevel = 3;
+				/*icms::$session->securityLevel = 3;
 				icms::$session->check_ip_blocks = 2;
 				icms::$session->salt_key = XOOPS_DB_SALT;
 				icms::$sesseion->enableRegenerateId = true;
-				icms::$session->icms_sessionOpen();
+				icms::$session->icms_sessionOpen();*/
 				// We load the User database
 				return $this->loadicms_member_user_Object($userDN, $uname, $pwd);
 			} else {

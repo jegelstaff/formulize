@@ -37,7 +37,7 @@ include_once XOOPS_ROOT_PATH.'/kernel/object.php';
 class formulizeAPIKey extends XoopsObject {
 
 	function __construct($uid=0, $key='',$expiry='') {
-		$this->XoopsObject();
+        parent::__construct();
 		//initVar params: key, data_type, value, req, max, opt
 		$this->initVar("uid", XOBJ_DTYPE_INT, $uid, true);
 		$this->initVar("key", XOBJ_DTYPE_TXTBOX, $key, true, 255);
@@ -63,7 +63,7 @@ class formulizeAPIKeyHandler {
 		return new formulizeAPIKey($uid, $key, $expiry);
 	}
 
-	function get($key) {
+	function get($key="") {
 		$key = preg_replace("/[^A-Za-z0-9]/", "", str_replace(" ","",$key)); // keys must be only alphanumeric characters
 		static $cachedKeys = array();
 		if(isset($cachedKeys[$key])) { return $cachedKeys[$key]; }

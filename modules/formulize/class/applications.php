@@ -34,7 +34,7 @@ global $xoopsDB;
     class formulizeApplicationMenuLink extends XoopsObject {
         
         function __construct() {
-            $this->XoopsObject();
+            parent::__construct();
             $this->initVar("menu_id", XOBJ_DTYPE_INT, NULL, false);
             $this->initVar("appid", XOBJ_DTYPE_INT, NULL, false);
             $this->initVar("screen", XOBJ_DTYPE_TXTBOX, NULL, false,11);
@@ -141,6 +141,48 @@ global $xoopsDB;
             
             return $linksArray;
         }
+		
+		// returns an array of the fid,sid applicable to the current user, based on menu settings and permissions
+		function getDefaultScreenForUser() {
+		
+			static $cachedFidSid = null;
+			if(is_null($cachedFidSid)) {
+				global $xoopsUser, $xoopsDB;
+				$fid = null;
+				$sid = null;
+				$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+				$groupSQL = "";
+				foreach($groups as $group) {
+					if(strlen($groupSQL) == 0){
+						$groupSQL .= " AND ( perm.group_id=". $group . " ";
+					}else{
+						$groupSQL .= " OR perm.group_id=". $group . " ";
+					}
+				}
+				$groupSQL .= ")";
+
+				$sql = 'SELECT links.screen FROM '.$xoopsDB->prefix("formulize_menu_links").' AS links ';
+				$sql .= ' LEFT JOIN '.$xoopsDB->prefix("formulize_menu_permissions").' AS perm ON links.menu_id = perm.menu_id ';
+				$sql .= ' WHERE  default_screen = 1'. $groupSQL . 'ORDER BY perm.group_id';
+
+				$res = $xoopsDB->query ( $sql ) or die('SQL Error !<br />'.$sql.'<br />'.$xoopsDB->error());
+
+				if ( $res ) {
+					$row = $xoopsDB->fetchArray ( $res );
+					$screenID = $row['screen'];
+
+					if ( strpos($screenID,"fid=") !== false){
+						$fid = substr($screenID, strpos($screenID,"=")+1 );
+					}
+					else{
+						$sid = substr($screenID, strpos($screenID,"=")+1 );
+					}
+				}
+				$cachedFidSid = array($fid,$sid);
+			} 
+			return $cachedFidSid;
+		}
+		
     }
         
     
@@ -149,7 +191,7 @@ class formulizeApplication extends XoopsObject {
   private $_forms = null;
 
   function __construct() {
-    $this->XoopsObject();
+    parent::__construct();
     $this->initVar("appid", XOBJ_DTYPE_INT, NULL, false);
     $this->initVar("name", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
     $this->initVar("description", XOBJ_DTYPE_TXTAREA);
