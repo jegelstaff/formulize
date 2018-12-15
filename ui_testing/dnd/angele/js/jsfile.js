@@ -1,5 +1,59 @@
 $(document).ready(function () {
+	var saveCounter = 0;
+	var saveTarget = 0;
+	var redirect = "";
+	var newhandle = "";
+	var formdata = new Array();
+	/*Save changes*/
+	$(".savebutton").click(function () {
+		console.log("Save");
+		if (validateRequired()) {
+			runSaveEvent();
+		}
+	});
 
+	function runSaveEvent() {
+		//$(".admin-ui").fadeTo(1, 0.5);
+		var formulize_formlist = $(".formulize-admin-form");
+		saveCounter = 0;
+		saveTarget = 1;//tenp
+		redirect = "";
+		formdata = new Array();
+		for (i = 0; i < formulize_formlist.length; i++) {
+			if (typeof (formulize_formlist[i]) == 'object') { 
+				formdata[saveTarget] = formulize_formlist[i];
+				saveTarget = saveTarget + 1;
+			}
+		}
+		if (saveTarget > 0) {
+			sendFormData(formdata[0]); // send the first form's data 
+		}
+	}
+	
+	
+	function sendFormData(thisformdata) {
+		$.post("../../../modules/formulize/admin/save.php", $(thisformdata).serialize(), function (data) {
+		console.log($(thisformdata).serialize() + ", data:"+data);
+
+			
+		});
+	}
+
+	function validateRequired() {
+		/*var requiredok = true;
+		$(".required_formulize_element").each(function () {
+			if (($(this).val().length) == 0) {
+				requiredok = false;
+			}
+		});
+		return requiredok;*/
+		return true;
+	}
+	
+	function debug(data){
+		return '<pre>'+$data+'</pre>';
+	}
+	
 	/*Create a new relationship with a form*/
 	$(".form").draggable({
 		helper: 'clone',
@@ -27,19 +81,19 @@ $(document).ready(function () {
 		accept: ".ui-sortable-helper",
 
 		over: function (event, ui) {
-			console.log('You are over item with id ' + $(this).attr('class'));
+			console.log($(this).attr('class'));
+			//test
 		},
 		drop: function (event, ui) {
-			console.log(ui.sender);
-			
-			
+			console.log(ui.sender);		
+			//remove relationships 
 		},
 	});
 	
 	refreshCounters();
 	setRelationships(); //temp
 	addSort($('#root')); 
-	toDrop($('.addNewRel'));
+	toDrop($('.addNewRel')); 
 	
 });
 $(document).on('click', '.branch', function () {
@@ -191,7 +245,7 @@ function addSubform(subform) {
 
 //Server calls
 //TEMP
-
+/*
   var saveCounter = 0;
   var saveTarget = 0;
   var redirect = "";
@@ -212,6 +266,7 @@ function addSubform(subform) {
     });
 
   $(".savebutton").click(function() {
+		console.log("Save");
     if(validateRequired()) {
       runSaveEvent();
 		console.log("HA");
@@ -241,9 +296,9 @@ function addSubform(subform) {
     $.post("save.php?ele_id="+ele_id, $(thisformdata).serialize(), function(data) {
       saveCounter = saveCounter + 1;
       if(data) {
-        if(data.substr(0,10)=="/* eval */") {
+        if(data.substr(0,10)=="") {
           redirect = data;
-        } else if(data.substr(0,13)=="/* evalnow */") {
+        } else if(data.substr(0,13)=="") {
           eval(data);
         } else {
           alert(data);
@@ -329,4 +384,4 @@ function addSubform(subform) {
             }
         });
     })
-  );
+  );*/

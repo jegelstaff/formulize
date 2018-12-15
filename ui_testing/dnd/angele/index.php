@@ -4,6 +4,7 @@ ini_set('display_errors', 1);
 include "../../../mainfile.php";
 include "../../../modules/formulize/admin/application.php";
 
+print_r($_POST); 
 ?>
 <!DOCTYPE html>
 <html>
@@ -40,10 +41,14 @@ include "../../../modules/formulize/admin/application.php";
 		<input type="hidden" name="formulize_admin_handler" value="newUI">
 		<input type="hidden" name="formulize_admin_key" value="4">
 		
-		<button class="savebutton" style="float:right;">Save Changes</button>
+		<div >
+		
 		<h2>Relationships</h2>
-		<button onclick="openAll()">Expand all</button>
-		<button onclick="closeAll()">Collapse all</button>
+    		<input type="button" value="Collapse all" onclick="closeAll()"  style="float:right;"/>  
+    		<input type="button" value="Expand all" onclick="openAll()"  style="float:right;"/>    
+    		<input type="button" class="savebutton" id="save" value="Save Changes"/>   
+									
+		</div>  
 		<ul class="tree" id="root">
 
 			<li class="addNewRel"><span><i class="fa fa-plus"></i> Add new relationship</span></li>
@@ -51,7 +56,6 @@ include "../../../modules/formulize/admin/application.php";
 			<script type='text/javascript'>
 				$(document).ready(function() {
 					/*Create forms*/
-
 					<?php 
 					foreach($relationships as $rel) {
 						print "addRel('".$rel['content']['frid']."','".$rel['name']."',[";
@@ -78,17 +82,40 @@ include "../../../modules/formulize/admin/application.php";
 		</ul>
 
 		<span class="removeRel"><i class="fas fa-trash"></i> Remove </span>
-		
+		<a href='index.php?debug=true'>debug</a>
+		<?php 
+				function debug(){
+					//print form data
+							$forms_handler = xoops_getmodulehandler('forms', 'formulize');
+							$forms = $forms_handler->getAllForms();
+
+
+							$formdata = array();
+							foreach($forms as $form) {
+								$form_title = $form->getVar('title');
+								$form_handle = $form->getVar('form_handle');
+								$fid = $form->getVar('id_form');
+
+								array_push($formdata, array("fid" => $fid, "title" => $form_title, "form_handle" => $form_handle));
+							}
+							print_r('<pre>');
+							print_r($formdata);
+							print_r('</pre>');
+				}
+				if (isset($_GET['debug'])) {
+			debug();
+		  }	?>
 	</div>
 
+	<!--Relationship settings popular for newly created relationships-->
 	<div id="RelationshipPopup" class="popup">
 		<!-- Modal content -->
 		<div class="popup-content">
 			<span class="close">&times;</span>
 			<h3>New Relationship</h3>
 			<p>Creating a <span><select name="Relationship1" class="popup-selector">
-						<option value="volvo">one to one</option>
-						<option value="saab">one to many</option>
+						<option>one to one</option>
+						<option>one to many</option>
 					</select></span> relationship. How would you like them to be linked?</p>
 			<div style="margin-bottom: 24px;">
 				<p>Link between these forms:</p>
@@ -98,8 +125,8 @@ include "../../../modules/formulize/admin/application.php";
 				</select>
 			</div>
 			
-			<input type="checkbox" name="c1" value="Bike">Display as a single form<br>
-			<input type="checkbox" name="c2" value="Bike">Delete linked entries<br>
+			<input type="checkbox" name="c1">Display as a single form<br>
+			<input type="checkbox" name="c2">Delete linked entries<br>
 			<br>
 			<div style="display:inline-block; margin-right: 40px;">
 				<p>Relationship 1</p>
