@@ -38,7 +38,7 @@ include_once XOOPS_ROOT_PATH.'/kernel/object.php';
 class formulizeToken extends XoopsObject {
 
 	function __construct($groups='', $tokenkey='',$expiry='', $maxuses=1, $currentuses=0) {
-		$this->XoopsObject();
+		parent::__construct();
 		//initVar params: key, data_type, value, req, max, opt
 		$this->initVar("groups", XOBJ_DTYPE_TXTBOX, $groups, true);
 		$this->initVar("key", XOBJ_DTYPE_TXTBOX, $tokenkey, true, 255);
