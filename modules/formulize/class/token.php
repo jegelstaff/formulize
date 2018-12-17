@@ -66,12 +66,12 @@ class formulizeTokenHandler {
 		return new formulizeToken($groups, $tokenkey, $expiry, $maxuses, $currentuses);
 	}
 
-	function get($key) {
+	function get($key="all") {
 		$key = preg_replace("/[^A-Za-z0-9]/", "", str_replace(" ","",$key)); // keys must be only alphanumeric characters
 		static $cachedKeys = array();
 		if(isset($cachedKeys[$key])) { return $cachedKeys[$key]; }
         global $xoopsDB;
-		if($key) {
+		if($key!="all") {
             $sql = "SELECT groups, tokenkey, expiry, maxuses, currentuses FROM ".$xoopsDB->prefix("formulize_tokens")." WHERE tokenkey = '".formulize_db_escape($key)."' AND (expiry IS NULL OR expiry > NOW())";
         } else {
             $sql = "SELECT groups, tokenkey, expiry, maxuses, currentuses FROM ".$xoopsDB->prefix("formulize_tokens")." WHERE expiry IS NULL OR expiry > NOW()";

@@ -63,12 +63,12 @@ class formulizeAPIKeyHandler {
 		return new formulizeAPIKey($uid, $key, $expiry);
 	}
 
-	function get($key="") {
+	function get($key="all") {
 		$key = preg_replace("/[^A-Za-z0-9]/", "", str_replace(" ","",$key)); // keys must be only alphanumeric characters
 		static $cachedKeys = array();
 		if(isset($cachedKeys[$key])) { return $cachedKeys[$key]; }
         global $xoopsDB;
-		if($key) {
+		if($key!="all") {
             $sql = "SELECT uid, apikey, expiry FROM ".$xoopsDB->prefix("formulize_apikeys")." WHERE apikey = '".formulize_db_escape($key)."' AND (expiry IS NULL OR expiry > NOW())";
         } else {
             $sql = "SELECT uid, apikey, expiry FROM ".$xoopsDB->prefix("formulize_apikeys")." WHERE expiry IS NULL OR expiry > NOW()";
@@ -107,10 +107,10 @@ class formulizeAPIKeyHandler {
     	return $xoopsDB->getInsertId();
 	}
 
-	function delete($key) {
+	function delete($key="all") {
         global $xoopsDB;
         $key = preg_replace("/[^A-Za-z0-9]/", "", str_replace(" ","",$key)); // keys must be only alphanumeric characters
-        if($key) {		
+        if($key!="all") {		
             $sql = "DELETE FROM ".$xoopsDB->prefix("formulize_apikeys")." WHERE apikey = '".formulize_db_escape($key)."' OR (expiry IS NOT NULL AND expiry < NOW())";
         } else {
             $sql = "DELETE FROM ".$xoopsDB->prefix("formulize_apikeys")." WHERE expiry IS NOT NULL AND expiry < NOW()";
