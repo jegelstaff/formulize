@@ -436,14 +436,15 @@ class formulizeDataHandler  {
 	}
 	
 	// this function returns the entry ID of the first entry found in the form with the specified value in the specified element
-	function findFirstEntryWithValue($element_id, $value) {
+	function findFirstEntryWithValue($element_id, $value, $op="=") {
 		if(!$element = _getElementObject($element_id)) {
 			return false;
 		}
+        $likeBits = $op == "LIKE" ? "%" : "";
 		global $xoopsDB;
-    $form_handler = xoops_getmodulehandler('forms', 'formulize');
-    $formObject = $form_handler->get($this->fid);
-		$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $element->getVar('ele_handle') . "` = \"" . formulize_db_escape($value) . "\" ORDER BY entry_id LIMIT 0,1";
+        $form_handler = xoops_getmodulehandler('forms', 'formulize');
+        $formObject = $form_handler->get($this->fid);
+        $sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $element->getVar('ele_handle') . "` ".formulize_db_escape($op)." \"$likeBits" . formulize_db_escape($value) . "$likeBits\" ORDER BY entry_id LIMIT 0,1";
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
 		}

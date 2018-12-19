@@ -501,6 +501,13 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				}
 			}
 			$_POST['oldcols'] = implode(",",$colsforsearches); // need to reconstruct this in case any columns were removed because of persistent searches on a hidden column
+            
+            // BIG HACK FOR DARA THAT NEEDS TO BE BASED ON NEW UI IN CHANGE COLUMNS
+            if(strstr(getCurrentURL(),'dara.daniels') AND isset($_GET['sid']) AND $_GET['sid']==66) {
+                $_POST['oldcols'] = "ro_module_ug_grad_shortform,ro_module_semester,ro_module_program,ro_module_full_course_title,sections_section_number,ro_module_lecture_studio,ro_module_course_weight_ui,instr_assignments_instructor,instr_assignments_split_weight_override,course_components_teaching_weighting_display,course_components_teaching_weighting_ove,ro_module_course_coordinator,ro_module_coordinatorship_weighting_display,ro_module_coord_weighting_override";
+            }
+            
+            
 		}
 
 		$currentView = $_POST['currentview'];
@@ -1625,6 +1632,8 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
             $mainFormHandle = key($data[key($data)]);
         }
 
+        // setup counter for cells, because we need to id each deDiv uniquely
+        $deInstanceCounter = 1;
 		$headcounter = 0;
 		$blankentries = 0;
 		$GLOBALS['formulize_displayElement_LOE_Used'] = false;
@@ -1723,29 +1732,34 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 							include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
 							if($frid) { // need to work out which form this column belongs to, and use that form's entry ID.  Need to loop through the entry to find all possible internal IDs, since a subform situation would lead to multiple values appearing in a single cell, so multiple displayElement calls would be made each with their own internal ID.
 								foreach($entry as $entryFormHandle=>$entryFormData) {
+                                    $multiValueBRNeeded = false;
 									foreach($entryFormData as $internalID=>$entryElements) {
 										$deThisIntId = false;
 										foreach($entryElements as $entryHandle=>$values) {
 											if($entryHandle == $col) { // we found the element that we're trying to display
 												if($deThisIntId) { print "\n<br />\n"; } // could be a subform so we'd display multiple values
 												if($deDisplay) {
-													print '<div id="deDiv_'.$colhandle.'_'.$internalID.'">';
-													print getHTMLForList($values, $colhandle, $internalID, $deDisplay, $textWidth, $currentColumnLocalId, $fid, $cellRowAddress, $i);
+                                                    if($multiValueBRNeeded) { print "\n<br />\n"; } // in the case of multiple values, split them based on this
+													print '<div id="deDiv_'.$colhandle.'_'.$internalID.'_'.$deInstanceCounter.'">';
+													print getHTMLForList($values, $colhandle, $internalID, $deDisplay, $textWidth, $internalID, $fid, $cellRowAddress, $i, $deInstanceCounter); // $internalID passed in in place of $currentColumnLocalId because we are manually looping through the data to get to the lowest level, so we can be sure of the local id that is in use, and it won't be an array, etc (unless we're showing a checkbox element??? or something else with multiple values??? - probably doesn't matter because the entry id is the same for all values of a single element that allows multiple selection)
 													print "</div>";
+                                                    $deInstanceCounter++;
 												} else {
                                                     if($deThisIntId) { print "\n<br />\n"; } // extra break to separate multiple form elements in the same cell, for readability/usability
 													displayElement("", $colhandle, $internalID);
 												}
 												$deThisIntId = true;
+                                                $multiValueBRNeeded = true;
 											}
 										}
 									}
 								}
 							} else { // display based on the mainform entry id
 								if($deDisplay) {
-									print '<div id="deDiv_'.$colhandle.'_'.$linkids[0].'">';
-									print getHTMLForList($value,$colhandle,$linkids[0], $deDisplay, $textWidth, $currentColumnLocalId, $fid, $cellRowAddress, $i);
+                                    print '<div id="deDiv_'.$colhandle.'_'.$linkids[0].'_'.$deInstanceCounter.'">';
+									print getHTMLForList($value,$colhandle,$linkids[0], $deDisplay, $textWidth, $currentColumnLocalId, $fid, $cellRowAddress, $i, $deInstanceCounter);
 									print "</div>";
+                                    $deInstanceCounter++;
 								} else {
 									displayElement("", $colhandle, $linkids[0]); // works for mainform only!  To work on elements from a framework, we need to figure out the form the element is from, and the entry ID in that form, which is done above
 								}
@@ -3280,28 +3294,28 @@ if($useXhr) {
 	print "var savingNow = \"\";";
 	print "var elementActive = \"\";";
 ?>
-function renderElement(handle,element_id,entryId,fid,check) {
+function renderElement(handle,element_id,entryId,fid,check,deInstanceCounter) {
 	if(elementStates[handle] == undefined) {
 		elementStates[handle] = new Array();
 	}
 	if(elementStates[handle][entryId] == undefined) {
 		if(elementActive) {
-			// this is a bit cheap...we should be able to track multiple elements open at once.  But there seem to be race condition issues in the asynchronous requests that we have to track down.  This UI restriction isn't too bad though.
-			alert("<?php print _formulize_CLOSE_FORM_ELEMENT; ?>");
+			alert("<?php print _formulize_CLOSE_FORM_ELEMENT; // this is a bit cheap...we should be able to track multiple elements open at once.  But there seem to be race condition issues in the asynchronous requests that we have to track down.  This UI restriction isn't too bad though. ?>");
 			return false;
 		}
 		elementActive = true;
-		elementStates[handle][entryId] = jQuery("#deDiv_"+handle+"_"+entryId).html();
+        elementStates[handle][entryId] = jQuery("#deDiv_"+handle+"_"+entryId+"_"+deInstanceCounter).html();
 		var formulize_xhr_params = [];
 		formulize_xhr_params[0] = handle;
 		formulize_xhr_params[1] = element_id;
 		formulize_xhr_params[2] = entryId;
 		formulize_xhr_params[3] = fid;
+        formulize_xhr_params[5] = deInstanceCounter;
 		formulize_xhr_send('get_element_html',formulize_xhr_params);
 	} else {
 		if(check && savingNow == "") {
 			savingNow = true;
-			jQuery("#deDiv_"+handle+"_"+entryId).fadeTo("fast",0.33);
+            jQuery("#deDiv_"+handle+"_"+entryId+"_"+deInstanceCounter).fadeTo("fast",0.33);
 			if(jQuery("[name='de_"+fid+"_"+entryId+"_"+element_id+"[]']").length > 0) {
 			  nameToUse = "[name='de_"+fid+"_"+entryId+"_"+element_id+"[]']";
 			} else {
@@ -3317,17 +3331,19 @@ function renderElement(handle,element_id,entryId,fid,check) {
 					formulize_xhr_params[1] = element_id;
 					formulize_xhr_params[2] = entryId;
 					formulize_xhr_params[3] = fid;
+                    formulize_xhr_params[5] = deInstanceCounter;
 					formulize_xhr_send('get_element_value',formulize_xhr_params);
 				}
 			});
 		} else if(check) {
 			// do nothing...only allow one saving operation at a time
 		} else {
-			jQuery("#deDiv_"+handle+"_"+entryId).html(elementStates[handle][entryId]);
+            jQuery("#deDiv_"+handle+"_"+entryId+"_"+deInstanceCounter).html(elementStates[handle][entryId]);
 			elementStates[handle].splice(entryId, 1);
 			elementActive = "";
 		}
 	}
+    return false;
 }
 
 function renderElementHtml(elementHtml,params) {
@@ -3335,7 +3351,8 @@ function renderElementHtml(elementHtml,params) {
 	element_id = params[1];
 	entryId = params[2];
 	fid = params[3];
-	jQuery("#deDiv_"+handle+"_"+entryId).html(elementHtml+"<br /><a href=\"\" onclick=\"javascript:renderElement('"+handle+"', "+element_id+", "+entryId+", "+fid+",1);return false;\"><img src=\"<?php print XOOPS_URL; ?>/modules/formulize/images/check.gif\" /></a>&nbsp;&nbsp;&nbsp;<a href=\"\" onclick=\"javascript:renderElement('"+handle+"', "+element_id+", "+entryId+", "+fid+");return false;\"><img src=\"<?php print XOOPS_URL; ?>/modules/formulize/images/x-wide.gif\" /></a>");
+    deInstanceCounter = params[5];
+	jQuery("#deDiv_"+handle+"_"+entryId+"_"+deInstanceCounter).html(elementHtml+"<br /><a href=\"\" onclick=\"renderElement('"+handle+"', "+element_id+", "+entryId+", "+fid+",1,"+deInstanceCounter+");return false;\"><img src=\"<?php print XOOPS_URL; ?>/modules/formulize/images/check.gif\" /></a>&nbsp;&nbsp;&nbsp;<a href=\"\" onclick=\"javascript:renderElement('"+handle+"', "+element_id+", "+entryId+", "+fid+",0,"+deInstanceCounter+");return false;\"><img src=\"<?php print XOOPS_URL; ?>/modules/formulize/images/x-wide.gif\" /></a>");
 }
 
 function renderElementNewValue(elementValue,params) {
@@ -3343,8 +3360,9 @@ function renderElementNewValue(elementValue,params) {
 	element_id = params[1];
 	entryId = params[2];
 	fid = params[3];
-	jQuery("#deDiv_"+handle+"_"+entryId).fadeTo("fast",1);
-	jQuery("#deDiv_"+handle+"_"+entryId).html(elementValue);
+    deInstanceCounter = params[5];
+	jQuery("#deDiv_"+handle+"_"+entryId+"_"+deInstanceCounter).fadeTo("fast",1);
+	jQuery("#deDiv_"+handle+"_"+entryId+"_"+deInstanceCounter).html(elementValue);
 	elementStates[handle].splice(entryId, 1);
 	savingNow = "";
 	elementActive = "";

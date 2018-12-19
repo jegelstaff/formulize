@@ -346,17 +346,17 @@ class formulizeElementRenderer{
 					// NEW WAY: if a specific group(s) was specified, and no match with the current user was found, then we return an empty list
 					array_unique($pgroups); // remove duplicate groups from the list
 					
-					if($ele_value[6] AND count($pgroups) > 0) {  
+					if($ele_value[6] AND count($pgroups) > 0) {  // ele_value 6 - means we must match all the current user's groups with the entry's groups, so we setup a series of exists clauses
 						$pgroupsfilter = " (";
 						$start = true;
 						foreach($pgroups as $thisPgroup) {
 							if(!$start) { $pgroupsfilter .= " AND "; }
-							$pgroupsfilter .= "EXISTS(SELECT 1 FROM ".$xoopsDB->prefix("formulize_entry_owner_groups")." AS t2 WHERE t2.groupid=$thisPgroup AND t2.fid=$sourceFid AND t2.entry_id=t1.entry_id)";
+                            $pgroupsfilter .= "EXISTS(SELECT 1 FROM ".$xoopsDB->prefix("formulize_entry_owner_groups")." AS t3 WHERE t3.groupid=$thisPgroup AND t3.fid=$sourceFid AND t3.entry_id=t1.entry_id)";
 							$start = false;
 						}
 						$pgroupsfilter .= ")";
 					} elseif(count($pgroups) > 0) {
-						$pgroupsfilter = " t2.groupid IN (".formulize_db_escape(implode(",",$pgroups)).") AND t2.entry_id=t1.entry_id AND t2.fid=$sourceFid";
+                        $pgroupsfilter = " t2.groupid IN (".formulize_db_escape(implode(",",$pgroups)).") AND t2.fid=$sourceFid";
 					} else {
 						$pgroupsfilter = "";
 					}
@@ -420,15 +420,30 @@ class formulizeElementRenderer{
 					}
 
 					// if there is a groups filter, then join to the group ownership table
+                    
+                    // include any source entry ids that are selected currently, so current selections are not lost!!
+                    // setup an OR condition as an alternative to the filter we've determined, just in case the selected value is outside what the filter returns
+                    if(count($sourceEntryIds)>0 AND $sourceEntryIds[0]) {
+                        $sourceEntrySafetyNetStart = "( ";
+                        $sourceEntrySafetyNetEnd = " ) OR t1.entry_id IN (".implode(",",$sourceEntryIds).") ";
+                    } else {
+                        $sourceEntrySafetyNetStart = "";
+                        $sourceEntrySafetyNetEnd = "";
+                    }
+                    
 					$extra_clause = "";
 					if ($pgroupsfilter) {
-						$extra_clause = ", ".$xoopsDB->prefix("formulize_entry_owner_groups")." AS t2 $parentFormFrom WHERE $pgroupsfilter";
+                        if(strstr($pgroupsfilter,"t2")) {
+                            $extra_clause = " INNER JOIN ".$xoopsDB->prefix("formulize_entry_owner_groups")." AS t2 ON t1.entry_id = t2.entry_id ";    
+                        }
+                        $extra_clause .= " $parentFormFrom WHERE $sourceEntrySafetyNetStart $pgroupsfilter ";
 					} else {
-						$extra_clause = " $parentFormFrom WHERE t1.entry_id>0";
+                        $extra_clause = " $parentFormFrom WHERE $sourceEntrySafetyNetStart t1.entry_id>0 ";
 					}
+                    
 					$sourceValuesQ = "SELECT t1.entry_id, ".$select_column." FROM ".$xoopsDB->prefix("formulize_".
 						$sourceFormObject->getVar('form_handle'))." AS t1".$extra_clause.
-						"$conditionsfilter $conditionsfilter_oom $restrictSQL"."GROUP BY t1.entry_id $sortOrderClause";
+                        " $conditionsfilter $conditionsfilter_oom $restrictSQL $sourceEntrySafetyNetEnd GROUP BY t1.entry_id $sortOrderClause";
 					if(!$isDisabled) {
 						// set the default selections, based on the entry_ids that have been selected as the defaults, if applicable
 						$hasNoValues = trim($boxproperties[2]) == "" ? true : false;
@@ -1144,8 +1159,8 @@ class formulizeElementRenderer{
             $output .= "<script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js'></script>\n";
             $output .= "<link rel='stylesheet' href='https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css'>\n";
             $output .= "<script type='text/javascript'>var jq3 = jQuery.noConflict(true);</script>\n";
+            $autocompleteIncluded = true;
         }
-        $autocompleteIncluded = true;
         
         // put markup for autocomplete boxes here
         $output .= "<div class=\"formulize_autocomplete\" style=\"padding-right: 10px;\"><input type='text' class='formulize_autocomplete' name='${form_ele_id}_user' id = '${form_ele_id}_user' autocomplete='off' value='".str_replace("'", "&#039;", $default_value_user)."' size='$maxLength' /></div>\n";

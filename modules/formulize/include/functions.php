@@ -140,6 +140,9 @@ function getFormFramework($formframe, $mainform="") {
 function getFormTitle($fid) {
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($fid);
+    if(!$formObject) {
+        debug_print_backtrace();
+    }
 	return html_entity_decode($formObject->getVar('title'),ENT_QUOTES);
 }
 
@@ -539,12 +542,14 @@ function getMenuCat($fid) {
 
 // this function truncates a string to a certain number of characters
 function printSmart($value, $chars="35") {
-    if (!is_numeric($value) AND $value == "") {
-        $ret = "&nbsp;";
-    } else {
-        $ret = cutString(trans($value), $chars);
+    if($chars) {
+        if (!is_numeric($value) AND $value == "") {
+            $value = "&nbsp;";
+        } else {
+            $value = cutString(trans($value), $chars);
+        }
     }
-    return $ret;
+    return $value;
 }
 
 
@@ -1140,34 +1145,43 @@ function checkForLinks($frid, $fids, $fid, $entries, $unified_display=false, $un
             if (is_object($selfElement)) {
                 $selfEleValue = $selfElement->getVar('ele_value');
                 if (strstr($selfEleValue[2], "#*=:*")) {
-                // self is the linked selectbox, other is the source of the values
-                    if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($entries[$fid][0])][$selfElement->getVar('ele_handle')])) {
-                        // if an asynch request has set an override value, use that!
-                        $foundEntry = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($entries[$fid][0])][$selfElement->getVar('ele_handle')];
-                    } else {
-                        // get the entry in the $one_fid['fid'] form (form with the self element), that has the intval($entries[$fid][0]) entry (the entry we are calling up already) as it's linked value
-                    $data_handler = new formulizeDataHandler($one_fid['fid']);
-                    $foundEntry = $data_handler->findFirstEntryWithValue($selfElement, intval($entries[$fid][0]));
-                    }
-                    if ($foundEntry !== false) {
-                        $entries[$one_fid['fid']][] = $foundEntry;
-                    } else {
-                        $entries[$one_fid['fid']][] = "";
+                    foreach($entries[$fid] as $thisTargetEntry) {
+                        // self is the linked selectbox, other is the source of the values
+                        if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($thisTargetEntry)][$selfElement->getVar('ele_handle')])) {
+                            // if an asynch request has set an override value, use that!
+                            $foundEntry = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($thisTargetEntry)][$selfElement->getVar('ele_handle')];
+                        } else {
+                            // get the entry in the $one_fid['fid'] form (form with the self element), that has the intval($entries[$fid][0]) entry (the entry we are calling up already) as it's linked value
+                            $data_handler = new formulizeDataHandler($one_fid['fid']);
+                            if($selfEleValue[1] == 1) {
+                                // if we support multiple selections, then prepend and append a comma
+                                $foundEntry = $data_handler->findFirstEntryWithValue($selfElement, ','.$thisTargetEntry.',', "LIKE");    
+                            } else {
+                                $foundEntry = $data_handler->findFirstEntryWithValue($selfElement, intval($thisTargetEntry));
+                            }
+                        }
+                        if ($foundEntry !== false) {
+                            $entries[$one_fid['fid']][] = $foundEntry;
+                        } else {
+                            $entries[$one_fid['fid']][] = "";
+                        }
                     }
                 } else {
                     // other is the linked selectbox, self is the source of the values
-                    if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($entries[$fid][0])][$otherElement->getVar('ele_handle')])) {
-                        // if an asynch request has set an override value, use that!
-                        $foundEntry = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($entries[$fid][0])][$otherElement->getVar('ele_handle')];
-                    } else {
-                        // return the value of the $one_fid['keyother'] element in the $fid, in intval($entries[$fid][0]) entry
-                    $data_handler = new formulizeDataHandler($fid);
-                    $foundEntry = $data_handler->getElementValueInEntry(intval($entries[$fid][0]), $one_fid['keyother']);
-                    }
-                    if ($foundEntry !== false) {
-                        $entries[$one_fid['fid']][] = trim($foundEntry, ","); // remove commas, though there shouldn't be any anymore since we're not storing ,id, in the DB as of F5
-                    } else {
-                        $entries[$one_fid['fid']][] = "";
+                    foreach($entries[$fid] as $thisTargetEntry) {
+                        if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($thisTargetEntry)][$otherElement->getVar('ele_handle')])) {
+                            // if an asynch request has set an override value, use that!
+                            $foundEntry = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($thisTargetEntry)][$otherElement->getVar('ele_handle')];
+                        } else {
+                            // return the value of the $one_fid['keyother'] element in the $fid, in intval($entries[$fid][0]) entry
+                            $data_handler = new formulizeDataHandler($fid);
+                            $foundEntry = $data_handler->getElementValueInEntry(intval($thisTargetEntry), $one_fid['keyother']);
+                        }
+                        if ($foundEntry !== false) {
+                            $entries[$one_fid['fid']] = explode(',',trim($foundEntry,',')); // remove commas, though there probably aren't any anymore since we're not storing ,id, in the DB as of F5, except for multiple selection boxes
+                        } else {
+                            $entries[$one_fid['fid']][] = "";
+                        }
                     }
                 }
             } else {
@@ -4850,6 +4864,8 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
     $conditionsfilter = "";
     $conditionsfilter_oom = "";
     $curlyBracketFormFrom = "";
+    $curlyBracketFormconditionsfilter = "";
+    $curlyBracketFormconditionsfilter_oom = "";
     if (is_array($conditions)) {
         $filterElementHandles = convertElementIdsToElementHandles($conditions[0], $targetFormId);
         $filterElementIds = $conditions[0];
@@ -4895,30 +4911,52 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
             
             list($conditionsFilterComparisonValue, $thisCurlyBracketFormFrom) =  _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterElementIds, $targetFormElementTypes, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler);
 
-            if ($filterTypes[$filterId] != "oom") {
-                if ($start) {
-                    $conditionsfilter = " AND (";
-                    $start = false;
-                } else {
-                    $conditionsfilter .= " AND ";
-                }
-                $conditionsfilter .= "($targetAlias`".$filterElementHandles[$filterId]."` ".$filterOps[$filterId]." ".$conditionsFilterComparisonValue.")";
+            // regular conditions            
+            if ($filterTypes[$filterId] != "oom" AND !strstr($conditionsFilterComparisonValue, "curlybracketform")) {
+                $needIntroBoolean = true;
+                $conditionsfilter = _appendToCondition($conditionsfilter, "AND", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
+            // regular oom conditions
+            } elseif(!strstr($conditionsFilterComparisonValue, "curlybracketform")) {
+                $needIntroBoolean = true;
+                $conditionsfilter_oom = _appendToCondition($conditionsfilter_oom, "OR", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
+            // curlybracketform conditions    
+            } elseif($filterTypes[$filterId] != "oom") {
+                $needIntroBoolean = false;
+                $curlyBracketFormconditionsfilter = _appendToCondition($curlyBracketFormconditionsfilter, "AND", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
+            // curlybracketform oom conditions
             } else {
-                if ($start_oom) {
-                    $conditionsfilter_oom = " AND (";
-                    $start_oom = false;
-                } else {
-                    $conditionsfilter_oom .= " OR ";
-                }
-                $conditionsfilter_oom .= "($targetAlias`".$filterElementHandles[$filterId]."` ".$filterOps[$filterId]." ".$conditionsFilterComparisonValue.")";
+                $needIntroBoolean = false;
+                $curlyBracketFormconditionsfilter_oom = _appendToCondition($curlyBracketFormconditionsfilter_oom, "OR", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
             }
-            $curlyBracketFormFrom = $thisCurlyBracketFormFrom ? $thisCurlyBracketFormFrom : $curlyBracketFormFrom; // if something was returned, use it, otherwise, stick with what we've got
+            $curlyBracketFormFrom = $thisCurlyBracketFormFrom ? $thisCurlyBracketFormFrom : $curlyBracketFormFrom; // if something was returned, use it, otherwise, stick with what we've got -- NOTE THIS MEANS YOU CAN'T HAVE DIVERGENT CURLY BRACKET REFERENCES??!!
         }
+        // close any brackets created by the need for an intro boolean
         $conditionsfilter .= $conditionsfilter ? ")" : "";
         $conditionsfilter_oom .= $conditionsfilter_oom ? ")" : "";
     }
+    
+    if($curlyBracketFormFrom) {
+        if($curlyBracketFormconditionsfilter OR $curlyBracketFormconditionsfilter_oom) {
+            $curlyBracketFormFrom = " INNER JOIN $curlyBracketFormFrom ON ($curlyBracketFormconditionsfilter $curlyBracketFormconditionsfilter_oom) ";
+        } else {
+            $curlyBracketFormFrom = ", $curlyBracketFormFrom ";
+        }
+    }
 
     return array($conditionsfilter, $conditionsfilter_oom, $curlyBracketFormFrom);
+}
+
+// append a given value onto a given condition
+function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias, $filterElementHandle, $filterOp, $conditionsFilterComparisonValue) {
+    if(!$condition AND $needIntroBoolean) {
+        $condition = " AND (";
+    } elseif(!$condition AND !$needIntroBoolean) {
+        $condition = "";
+    } else {
+        $condition .= " $andor ";
+    }
+    $condition .= "($targetAlias`".$filterElementHandle."` ".$filterOp." ".$conditionsFilterComparisonValue.")";
+    return $condition;
 }
 
 
@@ -4962,7 +5000,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                     $filterTermToUse = "'".$GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][substr($filterTerms[$filterId],1,-1)]."'";
                 } else {
                     $filterTermToUse = " curlybracketform.`".formulize_db_escape(substr($filterTerms[$filterId],1,-1))."` ";
-                    $curlyBracketFormFrom = ", ".$xoopsDB->prefix("formulize_".$curlyBracketForm->getVar('form_handle'))." AS curlybracketform "; // set as a single value, we're assuming all { } terms refer to the same form
+                    $curlyBracketFormFrom = $xoopsDB->prefix("formulize_".$curlyBracketForm->getVar('form_handle'))." AS curlybracketform "; // set as a single value, we're assuming all { } terms refer to the same form
                 }
                 // figure out if the curlybracketform field is linked and pointing to the same source as the target element is pointing to
                 // because if it is, then we don't need to do a subquery later, we just compare directly to the $filterTermToUse
@@ -4986,9 +5024,9 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                 $filterTermToUse = formulize_db_escape($filterTerms[$filterId]);
             }
             if (!$conditionsFilterComparisonValue) {
-                if ($targetElementEleValue[1]) {
+                if ($targetElementEleValue[1]) { // if the target allows multiple selections...
                     $conditionsFilterComparisonValue = " CONCAT('$origlikebits,',(SELECT ss.entry_id FROM ".$xoopsDB->prefix("formulize_".$targetSourceFormObject->getVar('form_handle'))." AS ss WHERE `$targetSourceHandle` ".$filterOps[$filterId].$quotes.$likebits.$filterTermToUse.$likebits.$quotes."),',$origlikebits') ";
-                } else {
+                } elseif($curlyBracketEntry != 'new') {
 							    $overrideReturnedOp = "";
 							    if($filterOps[$filterId] == "!=") {
 							      $filterOps[$filterId] = "=";
@@ -5000,6 +5038,10 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 							      $overrideReturnedOp = "IN";
 							    }
                   $filterOps[$filterId] = $overrideReturnedOp ? $overrideReturnedOp : '=';
+                } else { // can't do a subquery for a 'new' value...return impossible condition
+                    $filterOps[$filterId] = '<'; // don't want to trigger other operations below when op is =
+                    $filterTerms[$filterId] = "99999999999 AND TRUE AND FALSE"; // need to remove the { } from the term to avoid other processing of the bracketed term
+                    $conditionsFilterComparisonValue = $filterTerms[$filterId];
                 }
             }
             if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][substr($filterTerms[$filterId],1,-1)])) {
@@ -5055,7 +5097,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
             // set as a single value, use the declared curly bracket form, unless the term is from another form
             // if the term is from another form, then something a little odd is going on...we don't have relationship data to go on at this point, so we will ignore the curly bracket filter at this point
             if(in_array(substr($filterTerms[$filterId],1,-1), $curlyBracketForm->getVar('elementHandles'))) {
-                $curlyBracketFormFrom = ", ".$xoopsDB->prefix("formulize_".$curlyBracketForm->getVar('form_handle'))." AS curlybracketform ";
+                $curlyBracketFormFrom = $xoopsDB->prefix("formulize_".$curlyBracketForm->getVar('form_handle'))." AS curlybracketform ";
                 if ($likebits == "%") {
                     $conditionsFilterComparisonValue = " CONCAT('%',curlybracketform.`".substr($filterTerms[$filterId],1,-1)."`,'%') AND curlybracketform.`entry_id`=$curlyBracketEntryQuoted ";
                 } else {
@@ -5161,7 +5203,8 @@ function formulize_javascriptForRemovingEntryLocks() {
 // deDisplay is a flag to control whether the icon for switching an element to editable mode should be present or not
 // localIds is an array of ids that will match the order of the values in the array...used to get the id for a subform entry that is being displayed in the list
 // $fid is used only in the event of a mod_datetime or creation_datetime or creator_email field being drawn
-function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200, $localIds=array(), $fid, $row, $column) {
+// $deInstanceCounter is used for addressing editable elements in the list
+function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200, $localIds=array(), $fid, $row, $column, $deInstanceCounter=false) {
     $output = "";
     if (!is_array($value)) {
         $value = array($value);
@@ -5197,8 +5240,8 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
             $elstyle = 'style="text-align: right;"';
         }
         $thisEntryId = isset($localIds[$valueId]) ? $localIds[$valueId] : $entryId;
-        if ($counter == 1 AND $deDisplay) {
-            $output .= '<div style="float: left; margin-right: 5px; margin-bottom: 5px;"><a href="" onclick="javascript:renderElement(\''.$handle.'\', '.$cachedElementIds[$handle].', '.$thisEntryId.', '.$fid.');return false;"><img src="'.XOOPS_URL.'/modules/formulize/images/kedit.gif" /></a></div>';
+        if ($counter == 1 AND $deDisplay AND $element_type != 'derived') {
+            $output .= '<div style="float: left; margin-right: 5px; margin-bottom: 5px;"><a href="" onclick="renderElement(\''.$handle.'\', '.$cachedElementIds[$handle].', '.$thisEntryId.', '.$fid.',0,'.$deInstanceCounter.');return false;"><img src="'.XOOPS_URL.'/modules/formulize/images/kedit.gif" /></a></div>';
         }
         if ("date" == $element_type) {
             $time_value = strtotime($v);
