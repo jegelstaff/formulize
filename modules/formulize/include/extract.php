@@ -242,7 +242,11 @@ function prepvalues($value, $field, $entry_id) {
         // removing the "Other: " part...we just want to show what people actually typed...doesn't have to be flagged specifically as an "other" value
         $value_other = $newValueq[0]['other_text'];
 		$value = preg_replace('/\{OTHER\|+[0-9]+\}/', $value_other, $value); 
+    } elseif($elementArray['ele_uitextshow']) {
+        $value = formulize_swapUIText($value, unserialize($elementArray['ele_uitext']));
     }
+    
+    
 
       $valueToReturn = "";
 	  if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$type."Element.php")) {
@@ -1667,7 +1671,7 @@ function formulize_getElementMetaData($elementOrHandle, $isHandle=false, $fid=0)
           } else {
                $whereClause = $isHandle ? "ele_handle = '".formulize_db_escape($elementOrHandle)."'" : "ele_id = ".intval($elementOrHandle);
           }
-          $elementValueQ = "SELECT ele_value, ele_type, ele_id, ele_handle, id_form, ele_uitext, ele_caption, ele_colhead, ele_encrypt FROM " . DBPRE . "formulize WHERE $whereClause";
+          $elementValueQ = "SELECT ele_value, ele_type, ele_id, ele_handle, id_form, ele_uitext, ele_uitextshow, ele_caption, ele_colhead, ele_encrypt FROM " . DBPRE . "formulize WHERE $whereClause";
           $evqRes = $xoopsDB->query($elementValueQ);
           while($evqRow = $xoopsDB->fetchArray($evqRes)) {
                $cachedElements['handles'][$evqRow['ele_handle']] = $evqRow; // cached the element according to handle and id, so we don't repeat the same query later just because we're asking for info about the same element in a different way

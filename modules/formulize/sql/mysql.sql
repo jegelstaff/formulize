@@ -332,6 +332,7 @@ CREATE TABLE formulize (
   ele_encrypt tinyint(1) NOT NULL default '0',
   ele_value text NOT NULL,
   ele_uitext text NOT NULL,
+  ele_uitextshow tinyint(1) NOT NULL default 0,
   ele_delim varchar(255) NOT NULL default '',
   ele_display text NOT NULL,
   ele_disabled text NOT NULL,

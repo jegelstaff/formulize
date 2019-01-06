@@ -112,10 +112,10 @@ function patch40() {
      *
      * ====================================== */
 
-    $checkThisTable = 'formulize_screen_listofentries';
-	$checkThisField = 'defaultview';
-	$checkThisProperty = 'Type';
-	$checkPropertyForValue = 'text';
+    $checkThisTable = 'formulize';
+	$checkThisField = 'ele_uitextshow';
+	$checkThisProperty = '';
+	$checkPropertyForValue = '';
 
     $needsPatch = false;
 
@@ -377,6 +377,7 @@ function patch40() {
         $sql['add_backdrop_group_index'] = "ALTER TABLE ". $xoopsDB->prefix("formulize_resource_mapping") ." ADD INDEX i_external_id_string (external_id_string(10))";
         $sql['add_advance_view_field'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " ADD `advanceview` text NOT NULL"; 
 		$sql['defaultview_ele_type_text'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " CHANGE `defaultview` `defaultview` TEXT NOT NULL ";
+        $sql['add_ele_uitextshow'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_uitextshow` tinyint(1) NOT NULL default 0";
 
         
         foreach($sql as $key=>$thissql) {
@@ -441,6 +442,8 @@ function patch40() {
 					print "default view field change to text type already. result: OK<br>";
 				} elseif($key === "add_advance_view_field") {
 					print "advance view field already added.  result: OK<br>";
+                } elseif($key === "add_ele_uitextshow") {
+                    print "Option for showing UI Text already added. result: OK<br>";
                 } else {
                     exit("Error patching DB for Formulize 4.0. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }

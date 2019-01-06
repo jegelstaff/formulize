@@ -63,6 +63,7 @@ class formulizeformulize extends XoopsObject {
 		$this->initVar("ele_req", XOBJ_DTYPE_INT);
 		$this->initVar("ele_value", XOBJ_DTYPE_ARRAY);
 		$this->initVar("ele_uitext", XOBJ_DTYPE_ARRAY); // used for having an alternative text to display on screen, versus the actual value recorded in the database, for radio buttons, checkboxes and selectboxes
+        $this->initVar("ele_uitextshow", XOBJ_DTYPE_INT);
 		$this->initVar("ele_delim", XOBJ_DTYPE_TXTBOX, NULL, true, 255);
 		$this->initVar("ele_forcehidden", XOBJ_DTYPE_INT);
 		$this->initVar("ele_private", XOBJ_DTYPE_INT);
@@ -243,9 +244,9 @@ class formulizeElementsHandler {
 				}
    		if( $element->isNew() || $ele_id == 0){
 				$sql = sprintf("INSERT INTO %s (
-				id_form, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_req, ele_value, ele_uitext, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private, ele_encrypt, ele_filtersettings, ele_use_default_when_blank
+				id_form, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_req, ele_value, ele_uitext, ele_uitextshow, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private, ele_encrypt, ele_filtersettings, ele_use_default_when_blank
 				) VALUES (
-				%u, %s, %s, %s, %s, %s, %u, %u, %s, %s, %s, %s, %s, %u, %u, %u, %s, %u
+				%u, %s, %s, %s, %s, %s, %u, %u, %s, %s, %u, %s, %s, %s, %u, %u, %u, %s, %u
 				)",
 				formulize_TABLE,
 				$id_form,
@@ -258,6 +259,7 @@ class formulizeElementsHandler {
 				$ele_req,
 				$this->db->quoteString($ele_value),
 				$this->db->quoteString($ele_uitext),
+                $ele_uitextshow,
 				$this->db->quoteString($ele_delim),
 				$this->db->quoteString($ele_display),
 				$this->db->quoteString($ele_disabled),
@@ -280,6 +282,7 @@ class formulizeElementsHandler {
 				ele_req = %u,
 				ele_value = %s,
 				ele_uitext = %s,
+                ele_uitextshow = %u,
 				ele_delim = %s,
 				ele_display = %s,
 				ele_disabled = %s,
@@ -299,6 +302,7 @@ class formulizeElementsHandler {
 				$ele_req,
 				$this->db->quoteString($ele_value),
 				$this->db->quoteString($ele_uitext),
+                $ele_uitextshow,
 				$this->db->quoteString($ele_delim),
 				$this->db->quoteString($ele_display),
 				$this->db->quoteString($ele_disabled),

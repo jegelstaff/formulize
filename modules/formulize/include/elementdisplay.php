@@ -107,6 +107,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 	$display = $element->getVar('ele_display');
 	$private = $element->getVar('ele_private');
 	$member_handler = xoops_gethandler('member');
+    $element_handler = xoops_getmodulehandler('elements', 'formulize');
 	$single_result = getSingle($form_id, $user_id, $groups, $member_handler, $gperm_handler, $mid);
 	$groupEntryWithUpdateRights = ($single_result['flag'] == "group" AND $update_own_entry AND $entry == $single_result['entry']) ? true : false;
 
@@ -344,6 +345,16 @@ EOF;
 /* ALTERED - 20100316 - freeform - jeff/julian - start */
 function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$filterTerms,$entry,$entryData) {
     $evaluationCondition = "";
+    
+    // convert the internal database representation to the displayed value, if this element has uitext that we're supposed to use
+    $element_metadata = formulize_getElementMetaData($element, true);
+    if($element_metadata['ele_uitextshow']) {
+        foreach ($filterElements as $key => $element) {
+            if (isset($element_metadata['ele_uitext'])) {
+                $filterTerms[$key] = formulize_swapUIText($filterTerms[$key], unserialize($element_metadata['ele_uitext']));
+            }
+        }
+    }
 
 	for($io=0;$io<count($indexes);$io++) {
 		$i = $indexes[$io];
@@ -368,7 +379,6 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 		} elseif($entry == "new") {
 			// for textboxes, let's try to get their default value
 			// for other elements, generate the default is too tricky to get it to work at present, not enough time available
-			$element_handler = xoops_getmodulehandler('elements', 'formulize');
 			$elementObject = $element_handler->get($filterElements[$i]);
 			if(is_object($elementObject)) {
 				$ele_type = $elementObject->getVar('ele_type');

@@ -166,6 +166,7 @@ if ($_GET['ele_id'] != "new") {
     }
 
     $ele_uitext = $elementObject->getVar('ele_uitext');
+    $ele_uitextshow = $elementObject->getVar('ele_uitextshow');
 } else {
     $fid = intval($_GET['fid']);
     $elementName = "New element";
@@ -176,6 +177,7 @@ if ($_GET['ele_id'] != "new") {
     $ele_value = array();
     $ele_delim = "br";
     $ele_uitext = "";
+    $ele_uitextshow = 0;
     $ele_use_default_when_blank = 0;
     global $xoopsModuleConfig;
     switch($ele_type) {
@@ -265,6 +267,7 @@ $options = array();
 $options['ele_delim'] = $ele_delim;
 $options['ele_delim_custom_value'] = $ele_delim_custom_value;
 $options['ele_uitext'] = $ele_uitext;
+$options['ele_uitextshow'] = $ele_uitextshow;
 $options['typetemplate'] = "db:admin/element_type_".$ele_type.".html";
 
 // setup various special things per element, including ele_value
