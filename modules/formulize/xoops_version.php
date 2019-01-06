@@ -618,7 +618,9 @@ $modversion['templates'][] = array(
 $modversion['templates'][] = array(
 	'file' => 'admin/managetokens.html',
 	'description' => '');
-
+$modversion['templates'][] = array(
+	'file' => 'admin/element_options_delimiter_choice.html',
+    'description' => '');
     
 //	Module Configs
 // $xoopsModuleConfig['t_width']
