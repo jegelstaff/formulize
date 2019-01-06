@@ -307,8 +307,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 					"\"".formulize_db_escape($saveformframe)			."\", ".
 					"\"".formulize_db_escape($savemainform)				."\", ".
 					"\"".formulize_db_escape($_POST['savelock'])		."\", ".
-					"\"".formulize_db_escape($_POST['hlist'])			."\", ".
-					"\"".formulize_db_escape($_POST['hcalc'])			."\", ".
+					intval($_POST['hlist'])                             .", ".
+					intval($_POST['hcalc'])			                    .", ".
 					"\"".formulize_db_escape($savesearches)				."\", ".
 					"\"".formulize_db_escape($_POST['sort'])			."\", ".
 					"\"".formulize_db_escape($_POST['order'])			."\", ".
@@ -331,8 +331,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 					"sv_pubgroups 		= \"".formulize_db_escape($savegroups) 				."\", ".
 					"sv_mod_uid 		= \"".formulize_db_escape($uid) 					."\", ".
 					"sv_lockcontrols 	= \"".formulize_db_escape($_POST['savelock'])		."\", ".
-					"sv_hidelist 		= \"".formulize_db_escape($_POST['hlist']) 			."\", ".
-					"sv_hidecalc 		= \"".formulize_db_escape($_POST['hcalc']) 			."\", ".
+					"sv_hidelist 		= ".intval($_POST['hlist'])                         .", ".
+					"sv_hidecalc 		= ".intval($_POST['hcalc']) 			            .", ".
 					"sv_asearch 		= \"".formulize_db_escape($savesearches) 			."\", ".
 					"sv_sort 			= \"".formulize_db_escape($_POST['sort']) 			."\", ".
 					"sv_order 			= \"".formulize_db_escape($_POST['order']) 			."\", ".
@@ -1310,6 +1310,10 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
           $buttonCodeArray['quickFilter' . $handle] = $qscode['filter']; // set variables for use in the template
           $foundQS = true;
         }
+            if(strstr($screen->getTemplate('toptemplate'), 'quickMultiFilter' . $handle) OR strstr($screen->getTemplate('bottomtemplate'), 'quickMultiFilter' . $handle) OR in_array($handle, $settings['pubfilters'])) {
+                $buttonCodeArray['quickMultiFilter' . $handle] = $qscode['multiFilter']; // set variables for use in the template
+                $foundQS = true;
+            }
 				if(strstr($screen->getTemplate('toptemplate'), 'quickDateRange' . $handle) OR strstr($screen->getTemplate('bottomtemplate'), 'quickDateRange' . $handle) OR in_array($handle, $settings['pubfilters'])) {
           $buttonCodeArray['quickDateRange' . $handle] = $qscode['dateRange']; // set variables for use in the template
           $foundQS = true;
@@ -1980,6 +1984,7 @@ function drawSearches($searches, $settings, $useBoxes, $useLinks, $numberOfButto
             if($filtersRequired === true OR in_array($cols[$i], $filtersRequired)) {
                 $quickSearchBoxes[$cols[$i]]['filter'] = formulize_buildQSFilter($cols[$i], $search_text);
                 $quickSearchBoxes[$cols[$i]]['dateRange'] = formulize_buildDateRangeFilter($cols[$i], $search_text);
+                $quickSearchBoxes[$cols[$i]]['multiFilter'] = formulize_buildQSFilterMulti($cols[$i], $search_text);
             }
         }
         //formulize_benchmark("done filter");
@@ -2005,6 +2010,7 @@ function drawSearches($searches, $settings, $useBoxes, $useLinks, $numberOfButto
           if($filtersRequired === true OR in_array($thisHQS, $filtersRequired)) {
             $quickSearchBoxes[$thisHQS]['filter'] = formulize_buildQSFilter($thisHQS, $search_text);
 	    $quickSearchBoxes[$thisHQS]['dateRange'] = formulize_buildDateRangeFilter($thisHQS, $search_text);
+            $quickSearchBoxes[$thisHQS]['multiFilter'] = formulize_buildQSFilterMulti($thisHQS, $search_text);
           }
         }
                 // if we're drawing boxes, only draw hidden ones if they have not been drawn already and are (not published filters, or we're on the master page)
@@ -2029,8 +2035,14 @@ function drawSearches($searches, $settings, $useBoxes, $useLinks, $numberOfButto
 	return $quickSearchBoxes;
 }
 
+// create a multi filter
+function formulize_buildQSFilterMulti($handle, $search_text) {
+    return formulize_buildQSFilter($handle, $search_text, true);
+}
+
 // THIS FUNCTION CREATES THE QUICKFILTER BOXES
-function formulize_buildQSFilter($handle, $search_text) {
+// multi returns a checkbox set, not dropdown
+function formulize_buildQSFilter($handle, $search_text, $multi=false) {
 
     if(substr($search_text, 0, 1) == "{" AND substr($search_text, -1) == "}") {
         $requestKeyToUse = substr($search_text,1,-1);
@@ -2051,7 +2063,7 @@ function formulize_buildQSFilter($handle, $search_text) {
       if(substr($search_term, 0, 1)=="!" AND substr($search_term, -1) == "!") {
         $search_term = substr($search_term, 1, -1); // cut off any hidden filter values that might be present
       }
-      $filterHTML = buildFilter("search_".$handle, $id, _formulize_QSF_DefaultText, $name="{listofentries}", $search_term);
+      $filterHTML = buildFilter("search_".$handle, $id, _formulize_QSF_DefaultText, $name="{listofentries}", $search_term, false, 0, 0, false, $multi);
       return $filterHTML;
     }
     return "";
@@ -4119,7 +4131,7 @@ function removeNotAllowedCols($fid, $frid, $cols, $groups) {
 	}
 	$all_cols_from_view = $cols;
 
-	$allowed_cols_in_view = array_intersect($all_allowed_cols, $all_cols_from_view);
+    $allowed_cols_in_view = array_intersect($all_cols_from_view, $all_allowed_cols);
 	$allowed_cols_in_view = array_values($allowed_cols_in_view);
 
 	return $allowed_cols_in_view;
@@ -4236,7 +4248,7 @@ function processCustomButton($caid, $thisCustomAction, $entries="", $entry="") {
 		$caCode = $allHTML;
 	} else {
 		$nameIdAddOn = $thisCustomAction['appearinline'] ? $nameIdAddOn+1 : "";
-		$caCode = "<input type=button style=\"width: 140px;\" name=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" id=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" value=\"" . trans($thisCustomAction['buttontext']) . "\" onclick=\"javascript:customButtonProcess('$caid', '$entries', '".str_replace("'","\'",$thisCustomAction['popuptext'])."');\">\n";
+		$caCode = "<input type=button style=\"width: 140px; cursor: pointer;\" name=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" id=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" value=\"" . trans($thisCustomAction['buttontext']) . "\" onclick=\"javascript:customButtonProcess('$caid', '$entries', '".str_replace("'","\'",$thisCustomAction['popuptext'])."');\">\n";
 	}
 
 	return array(0=>$caCode, 1=>$caElements, 2=>$caActions, 3=>$caValues, 4=>$thisCustomAction['messagetext'], 5=>$thisCustomAction['applyto'], 6=>$caPHP, 7=>$thisCustomAction['appearinline']);
@@ -4351,7 +4363,7 @@ function processClickedCustomButton($clickedElements, $clickedValues, $clickedAc
 // This function is only meant to work with situations where someone has actually selected an entry (or clicked inline)
 function gatherHiddenValue($handle) {
 	global $formulize_thisEntryId;
-	if($formulize_thisEntryId) {
+	if(isset($_POST["hiddencolumn_" . $formulize_thisEntryId . "_" . $handle])) {
 		return htmlspecialchars(strip_tags($_POST["hiddencolumn_" . $formulize_thisEntryId . "_" . $handle]));
 	} else {
 		return false;
@@ -4602,7 +4614,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 		}
 
 		// split search based on new split string
-		$intermediateArray = explode("//", $master_one_search);
+		$intermediateArray = explode("//", trim($master_one_search, "//")); // ignore trailing // because that will just cause an unnecessary blank search
 
 		$searchArray = array();
 
@@ -4632,6 +4644,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 		foreach($searchArray as $one_search) {
             // used for trapping the {BLANK} keywords into their own space so they don't interfere with each other, or other filters
             $addToItsOwnORFilter = false;
+            $ownORFilterKey = "";
 
             $dataHandler = new formulizeDataHandler(false);
             $metadataFieldTypes = $dataHandler->metadataFieldTypes;
@@ -4671,8 +4684,14 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 			// look for OR indicators...if all caps OR is at the front, then that means that this search is to put put into a separate set of OR filters that gets appended as a set to the main set of AND filters
 		    $addToORFilter = false; // flag to indicate if we need to apply the current search term to a set of "OR'd" terms
 			if(substr($one_search, 0, 2) == "OR" AND strlen($one_search) > 2) {
+                if(substr($one_search, 2, 3)== "SET") {
+                    $addToItsOwnORFilter = true;
+                    $ownORFilterKey = substr($one_search, 2, 4);
+                    $one_search = substr($one_search, 6);
+                } else {
 				$addToORFilter = true;
 				$one_search = substr($one_search, 2);
+			}
 			}
 
 			// look for operators
@@ -4759,7 +4778,15 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 				$one_search = $one_search . "/**/" . $operator;
 			}
 			if($addToItsOwnORFilter) {
+                if($ownORFilterKey) {
+                    if(!isset($individualORSearches[$ownORFilterKey])) {
+                        $individualORSearches[$ownORFilterKey] = $key ."/**/$one_search";    
+                    } else {
+                        $individualORSearches[$ownORFilterKey] .= "][".$key ."/**/$one_search";    
+                    }
+                } else {
 				$individualORSearches[] = $key ."/**/$one_search";
+                }
 			} elseif($addToORFilter) {
 				if(!$ORstart) { $ORfilter .= "]["; }
 				$ORfilter .= $key . "/**/$one_search"; // . formulize_db_escape($one_search); // mysql_real_escape_string no longer necessary here since the extraction layer does the necessary dirty work for us

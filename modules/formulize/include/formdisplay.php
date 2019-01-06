@@ -591,14 +591,12 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		$temp_entries = $GLOBALS['formulize_allWrittenEntryIds']; // set in readelements.php
 		
 		if(!$formElementsOnly AND ($single OR $_POST['target_sub'] OR ($entries[$fid][0] AND ($original_entry OR ($_POST[$entrykey] AND !$_POST['back_from_sub']))) OR $overrideMulti OR ($_POST['go_back_form'] AND $overrideSubMulti))) { // if we just did a submission on a single form, or we just edited a multi, then assume the identity of the new entry.  Can be overridden by values passed to this function, to force multi forms to redisplay the just-saved entry.  Back_from_sub is used to override the override, when we're saving after returning from a multi-which is like editing an entry since entries are saved prior to going to a sub. -- Sept 4 2006: adding an entry in a subform forces us to stay on the same page too! -- Dec 21 2011: added check for !$formElementsOnly so that when we're getting just the elements in the form, we ignore any possible overriding, since that is an API driven situation where the called entry is the only one we want to display, period.
-			$entry = $temp_entries[$fid][0];
+			$entry = ($entry == 'new' OR $entry == '') ? $temp_entries[$fid][0] : $entry; // adopt written entry if there is one, and we started out as 'new'
 			unset($entries);
+            $entries[$fid][0] = $entry;
 			foreach($fids as $thisWrittenFid) {
-				$entries[$thisWrittenFid] = $temp_entries[$thisWrittenFid];
+				$entries[$thisWrittenFid] = isset($temp_entries[$thisWrittenFid]) ? $temp_entries[$thisWrittenFid] : isset($entries[$thisWrittenFid]) ? $entries[$thisWrittenFid] : "";
 			}
-			// also remove any fids that aren't part of the $temp_entries...added Oct 26 2011...checkforlinks now can return the mainform when we're on a sub!  It's smarter, but displayForm (and possibly other places) were not built to assume it was that smart.
-			$writtenFids = array_keys($temp_entries);
-			$fids = array_intersect($fids, $writtenFids);
 			$owner = getEntryOwner($entry, $fid);
 			unset($owner_groups);
 			$owner_groups = $data_handler->getEntryOwnerGroups($entry);

@@ -119,20 +119,6 @@ class formulizeForm extends XoopsObject {
 			// gather the view information
             list($views, $viewNames, $viewFrids, $viewPublished) = self::getFormViews($id_form);
             
-			$viewq = q("SELECT * FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_mainform = '$id_form' OR (sv_mainform = '' AND sv_formframe = '$id_form')");
-			if(!isset($viewq[0])) {
-				$views = array();
-				$viewNames = array();
-				$viewFrids = array();
-				$viewPublished = array();
-			} else {
-				for($i=0;$i<count($viewq);$i++) {
-					$views[$i] = $viewq[$i]['sv_id'];
-					$viewNames[$i] = stripslashes($viewq[$i]['sv_name']);
-					$viewFrids[$i] = $viewq[$i]['sv_mainform'] ? $viewq[$i]['sv_formframe'] : "";
-					$viewPublished[$i] = $viewq[$i]['sv_pubgroups'] ? true : false;
-				}
-			}
 			
 			// setup the filter settings
 			$filterSettingsq = q("SELECT groupid, filter FROM " . $xoopsDB->prefix("formulize_group_filters") . " WHERE fid='$id_form'");
@@ -1376,7 +1362,7 @@ class formulizeFormsHandler {
 		}
 	}
 
-	function renameDataTable($oldName, $newName) {
+	function renameDataTable($oldName, $newName, $formObject) {
 		global $xoopsDB;
 
 		$renameSQL = "RENAME TABLE " . $xoopsDB->prefix("formulize_" . $oldName) . " TO " . $xoopsDB->prefix("formulize_" . $newName) . ";";
@@ -1384,10 +1370,10 @@ class formulizeFormsHandler {
 		if(!$renameRes = $xoopsDB->queryF($renameSQL)) {
 		  return false;
 		}
-		if($this->revisionsTableExists($oldName)) { 
+		if($this->revisionsTableExists($oldName)) { // check with the fid, which will force the method to get a cached version of the object, that will have the old name, so we can check against that name (form_settings_save.php sends the updated object with the new name)
 			$renameSQL = "RENAME TABLE " . $xoopsDB->prefix("formulize_" . $oldName."_revisions") . " TO " . $xoopsDB->prefix("formulize_" . $newName."_revisions") . ";";
 			if(!$renameRes = $xoopsDB->queryF($renameSQL)) {
-			  print "Error: could not rename the revisions table for form $oldName";
+			  print "Error: could not rename the revisions table for form ".$formObject->getVar('form_handle');
 			  return false;
 			}
 		}

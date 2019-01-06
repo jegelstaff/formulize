@@ -202,16 +202,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		if(isset($GLOBALS['formulize_forceElementsDisabled']) AND $GLOBALS['formulize_forceElementsDisabled'] == true) {
 			$isDisabled = true;
 		} else {
-			$ele_disabled = $element->getVar('ele_disabled');
-			$isDisabled = false;
-			if($ele_disabled == 1) {
-				$isDisabled = true;
-			} elseif(!is_numeric($ele_disabled)) {
-				$disabled_groups = explode(",", $ele_disabled);
-				if(array_intersect($groups, $disabled_groups) AND !array_diff($groups, $disabled_groups)) {
-					$isDisabled = true;
-				}
-			}
+            $isDisabled = $element_handler->isElementDisabledForUser($element, $xoopsUser) ? true : false;
 		}
 
 		// Another check to see if this element is disabled, for the case where the user can view the form, but not edit it.

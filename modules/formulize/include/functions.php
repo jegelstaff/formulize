@@ -1256,7 +1256,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
     if ($fdchoice == "update") { // reset headers and cols to include all data -- when creating a blank template, this reset has already happened before prepexport is called
         $fdchoice = "comma";
         $template = "update";
-        $cols1 = getAllColList($fid, "", $groups); // $cols1 will be a multidimensional array, one "entry" per column, and for each column the entry is an assoc array with ele_id, ele_colhead, ele_caption and ele_handle.
+        /*$cols1 = getAllColList($fid, "", $groups); // $cols1 will be a multidimensional array, one "entry" per column, and for each column the entry is an assoc array with ele_id, ele_colhead, ele_caption and ele_handle.
         unset($cols);
         $cols = array();
         foreach ($cols1[$fid] as $col) {
@@ -1264,6 +1264,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
         }
         unset($headers);
         $headers = getHeaders($cols, true); // array of element handles, boolean for if the cols are handles (or ids, which is the default assumption)
+        */
     }
     if ($fdchoice == "comma") {
         $fd = ",";
@@ -1853,9 +1854,9 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
         case 'radio':
         $value = '';
         $opt_count = 1;
-        while ($v = each($ele_value)) {
+        foreach($ele_value as $ele_value_key=>$ele_value_value) {
             if ($opt_count == $ele ) {
-                $otherValue = checkOther($v['key'], $ele_id, $entry_id, $subformBlankCounter);
+                $otherValue = checkOther($ele_value_key, $ele_id, $entry_id, $subformBlankCounter);
                 if($otherValue !== false) {
                     if($subformBlankCounter !== null) {
                         $GLOBALS['formulize_other'][$ele_id]['blanks'][$subformBlankCounter] = $otherValue;
@@ -1863,12 +1864,9 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
                         $GLOBALS['formulize_other'][$ele_id][$entry_id] = $otherValue;
                     }
                 }
-                $msg.= $myts->stripSlashesGPC($v['key']).'<br>';
-                if (get_magic_quotes_gpc()) {
-                    $v['key'] = stripslashes($v['key']);
-                }
-                $v['key'] = $myts->htmlSpecialChars($v['key']);
-                $value = $v['key'];
+                $msg.= $myts->stripSlashesGPC($ele_value_key).'<br>';
+                $ele_value_key = $myts->htmlSpecialChars($ele_value_key);
+                $value = $ele_value_key;
             }
             $opt_count++;
         }
@@ -2838,9 +2836,11 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
 
     // start main loop
     $notificationTemplateData = array();
+    $notificationTemplateRevisionData = array();
     foreach ($entries as $entry) {
       
 	$notificationTemplateData[$entry] = "";
+    $notificationTemplateRevisionData[$entry] = "";
       
         // user list is potentially different for each entry. ignore anything that was passed in for $groups
         if (count($groups) == 0) { // if no groups specified as the owner of the current entry, then let's get that from the table
@@ -3003,12 +3003,23 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
                         if ($notificationTemplateData[$entry][0] == "" OR $notificationTemplateData[$entry] == "") {
                             include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
                             $notificationTemplateData[$entry] = getData("", $fid, $entry);
+                            // if the revision table is on for the form, then gather the data from the most revent revision for the entry
+                            if(!isset($data_handler)) {
+                                $data_handler = new formulizeDataHandler($fid);
+                            }
+                            // get the last revision we flagged (after saving, before updating derived values!)
+                            if($event == 'update_entry' AND $revisionEntry = $data_handler->getRevisionForEntry($entry, $GLOBALS['formulize_snapshotRevisions'][$fid][$entry])) {
+                                $notificationTemplateRevisionData[$entry] = $revisionEntry;
+                            }
                         }
                         // get all the element IDs for the current form
                         $form_handler = xoops_getmodulehandler('forms', 'formulize');
                         $formObject = $form_handler->get($fid);
                         foreach ($formObject->getVar('elementHandles') as $elementHandle) {
                             $extra_tags['ELEMENT'.strtoupper($elementHandle)] = trans(html_entity_decode(displayTogether($notificationTemplateData[$entry][0], $elementHandle, ", "), ENT_QUOTES));
+                            if($notificationTemplateRevisionData[$entry]) {
+                                $extra_tags['REVISION_ELEMENT_'.strtoupper($elementHandle)] = trans(html_entity_decode(displayTogether($notificationTemplateRevisionData[$entry][0], $elementHandle, ", "), ENT_QUOTES));
+                            }
                             // for legacy compatibility, we provide both with and without _ keys in the extra tags array.
                             $extra_tags['ELEMENT_'.strtoupper($elementHandle)] = trans($extra_tags['ELEMENT'.strtoupper($elementHandle)]);
                         }
@@ -3076,8 +3087,13 @@ function sendNotificationToEmail($email, $event, $tags, $overrideSubject="", $ov
             $template = $overrideTemplate ? $overrideTemplate : 'form_delentry.tpl';
             $subject = $overrideSubject ? $overrideSubject : _MI_formulize_NOTIFY_DELENTRY_MAILSUB;
             break;
+        
+        default:
+            $template = $overrideTemplate;
+            $subject = $overrideSubject;
     }
 
+    $template = substr($template, -4) == ".tpl" ? $template : $template . ".tpl";
     include_once XOOPS_ROOT_PATH . '/include/notification_constants.php';
 
   if(strstr($email, ',')) {
@@ -3242,7 +3258,7 @@ function formulize_processNotification($event, $extra_tags, $fid, $uids_to_notif
         $notFile = fopen(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotifications.txt","a");
         formulize_getLock($notFile);
         foreach($uids_to_notify as $uid_to_notify) {
-            if($uid_to_notify>1) { 
+            if($uid_to_notify>0) {
                 formulize_processNotificationWriteLine($notFile, $event, $extra_tags, $fid, array($uid_to_notify), $mid, $omit_user, $subject, $template);
             } else {
                 foreach(explode(",", $GLOBALS['formulize_notification_email']) as $email) {
@@ -4027,7 +4043,14 @@ function convertAllHandlesAndIds($handles, $frid, $reverse=false, $ids=false, $f
 // The dropdown list is made up of the options for the specified ele_id
 // If the dropdown list is a linked selectbox, the values can be optionally limited by the "limit" params, based on values in another field in each entry that underlies the link
 // ie: build a filter with the names of all activity entries, but limit it to activity entries where the date of the activity is 2007
-function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0=>""), $subfilter=false, $linked_ele_id = 0, $linked_data_id=0, $limit=false) {
+// multi is used to determine if the options should be returned as a checkbox series supporting multiple values
+function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0=>""), $subfilter=false, $linked_ele_id = 0, $linked_data_id=0, $limit=false, $multi=false) {
+    
+    static $multiCounter = -1;
+    if($multi) {
+        $multiCounter++;
+    }
+    
     // Changes made to allow the linking of one filter to another. This is acheieved as follows:
     // 1. Create a formulize form for managing the Main Filter List (form M)
     // 2. Create a formulize form for managing the Sub Filter list (form S), which includes a linked element to the data in form M,
@@ -4052,26 +4075,34 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
     // subfilters are kind of like dynamic limits, where the limit condition is not specified until the parent filter is chosen.
 
     global $xoopsDB; // required by q
+    $multiIdCounter = 1;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
-    $filter = "<SELECT name=\"$id\" id=\"$id\"";
-    if ($name == "{listofentries}") {
-        $filter .= " onchange='javascript:showLoading();'"; // list of entries has a special javascript thing
-    } elseif ($name) {
-        $filter .= " onchange='javascript:document.$name.submit();'";
+    if($multi) { // create the hidden field that will get the value assigned for submission
+        $defaultHiddenValue = (!$overrides OR (substr($overrides,0,5)=="ORSET" AND substr($overrides, -2) == "//")) ? $overrides : "ORSET$multiCounter=".$overrides."//";
+        $filter = "<input type='hidden' name='$id' id='".$id."_hiddenMulti' value='".strip_tags(htmlspecialchars($defaultHiddenValue))."'>\n";
+    } else { // start the actual dropdown selectbox
+        $filter = "<SELECT name=\"$id\" id=\"$id\"";
+        if ($name == "{listofentries}") {
+            $filter .= " onchange='javascript:showLoading();'"; // list of entries has a special javascript thing
+        } elseif ($name) {
+            $filter .= " onchange='javascript:document.$name.submit();'";
+        }
+        $filter .= ">\n";
     }
-    $filter .= ">\n";
 
     if ($subfilter AND !(isset($_POST[$linked_data_id])) AND !(isset($_GET[$linked_data_id]))) {
         // If its a subfilter and the main filter is unselected, then put in 'Please select from above options first
-        $filter .= "<option value=\"none\">Please select a primary filter first</option>\n";
+        $filter .= $multi ? "<input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' value='none' onclick=\"jQuery('#".$id."_hiddenMulti').val('none');jQuery('.$id').each(function() { jQuery(this).removeAttr('checked') });\"> <label for='".$multiIdCounter."_".$id."'>Please select a primary filter first</label><br/>\n" : "<option value=\"none\">Please select a primary filter first</option>\n";
     } else {
         // Either it is not a subfilter, or it is a subfilter with the linked values set
         $defaulttext = $defaulttext ? $defaulttext: _AM_FORMLINK_PICK;
         if ($name == "{listofentries}") {
             // must not pass back a value when we're putting a filter on the list of entries page
-            $filter .= "<option value=\"\">".$defaulttext."</option>\n";
+            $checked = ((!isset($_POST[$id]) OR $_POST[$id] == '') AND (!isset($_GET[$id]) OR $_GET[$id] == '')) ? "checked" : "";
+            $filter .= $multi ? "<input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' value='' $checked onclick=\"jQuery('#".$id."_hiddenMulti').val('');jQuery('.$id').each(function() { jQuery(this).removeAttr('checked') });\"> <label for='".$multiIdCounter."_".$id."'>$defaulttext</label><br/>\n" : "<option value=\"\">".$defaulttext."</option>\n";
         } else {
-            $filter .= "<option value=\"none\">".$defaulttext."</option>\n";
+            $checked = ((!isset($_POST[$id]) OR $_POST[$id] == 'none') AND (!isset($_GET[$id]) OR $_GET[$id] == 'none')) ? "checked" : "";
+            $filter .= $multi ? "<input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' value='none' $checked onclick=\"jQuery('#".$id."_hiddenMulti').val('none');jQuery('.$id').each(function() { jQuery(this).removeAttr('checked') });\"> <label for='".$multiIdCounter."_".$id."'>$defaulttext</label><br/>\n" :"<option value=\"none\">".$defaulttext."</option>\n";
         }
 
         $form_element = q("SELECT ele_value, ele_type, ele_uitext FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = " . $ele_id);
@@ -4180,29 +4211,49 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
 
         $counter = 0;
         foreach ($options as $option=>$option_value) {
+            $multiIdCounter++;
+            $selected = "";
             if (is_array($overrides) AND isset($overrides[$option])) {
-                $selected = ($_POST[$id] == $option OR $_GET[$id] == $option) ? "selected" : "";
-                $filter .= "<option value=\"" . $overrides[$option][1] . "\" $selected>" . $overrides[$option][0] . "</option>\n";
+                if($multi) {
+                    $checked = (strstr($_POST[$id], "ORSET$multiCounter=".$option."//") OR strstr($_GET[$id], "ORSET$multiCounter=".$option."//")) ? "checked" : "";
+                    $filter .= "<input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$overrides[$option][1]."' $checked onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'ORSET$multiCounter=".$overrides[$option][1]."//'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('ORSET$multiCounter=".$overrides[$option][1]."//', '')); } jQuery('#1_".$id."').removeAttr('checked');\"> <label for='".$multiIdCounter."_".$id."'>".$overrides[$option][0]."</label><br/>\n";
+                } else {
+                    $selected = ($_POST[$id] == $option OR $_GET[$id] == $option) ? "selected" : "";
+                    $filter .= "<option value=\"" . $overrides[$option][1] . "\" $selected>" . $overrides[$option][0] . "</option>\n";
+                }
             } else {
                 if (preg_match('/\{OTHER\|+[0-9]+\}/', $option)) {
                     $option = str_replace(":", "", _formulize_OPT_OTHER);
                 }
                 // if a nametype is in effect, then use the value, otherwise, use the key -- also, no longer swapping out spaces for underscores
                 $passoption = $nametype ? $option_value : $option;
+                if($multi) {
+                    $passoption = "ORSET$multiCounter=".$passoption."//";
+                }
                 if ((isset($_POST[$id]) OR isset($_GET[$id])) AND $overrides !== false) {
                     if ($name == "{listofentries}") {
-                        $selected = ( (is_numeric($overrides) AND $overrides == $counter) OR (!is_numeric($overrides) AND $overrides === $option) ) ? "selected" : "";
-                    } else {
-                        $selected = ($_POST[$id] == $passoption OR $_GET[$id] == $passoption) ? "selected" : "";
+                        if($multi AND strstr("ORSET$multiCounter=".$overrides."//", $passoption)) { // the whole overrides as counter idea... so old, multi filters are not going to work with that...
+                            $selected = "checked";
+                        } elseif ( (is_numeric($overrides) AND $overrides == $counter) OR (!is_numeric($overrides) AND $overrides === $option) ) {
+                            $selected = "selected";
                     }
                 } else {
-                    $selected = "";
+                        if($multi AND (strstr($_POST[$id], $passoption) OR strstr($_GET[$id],$passoption))) {
+                            $selected = "checked";
+                        } elseif($_POST[$id] == $passoption OR $_GET[$id] == $passoption) {
+                           $selected = "selected";
                 }
-                if ($name == "{listofentries}") {
+                    }
+                } 
+                if ($name == "{listofentries}" AND !$multi) {
                     // need to pass this stupid thing back because we can't compare the option and the contents of $_POST...a typing problem in PHP??!!
                     $passoption = "qsf_".$counter."_$passoption";
                 }
+                if($multi) {
+                    $filter .= "<input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$passoption."' $selected onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'".$passoption."'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('".$passoption."', '')); } jQuery('#1_".$id."').removeAttr('checked');\"> <label for='".$multiIdCounter."_".$id."'>".formulize_swapUIText($option, $ele_uitext)."</label><br/>\n";
+                } else {
                 $filter .= "<option value=\"$passoption\" $selected>".formulize_swapUIText($option, $ele_uitext)."</option>\n";
+            }
             }
             $counter++;
         }
@@ -4955,7 +5006,8 @@ function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias,
     } else {
         $condition .= " $andor ";
     }
-    $condition .= "($targetAlias`".$filterElementHandle."` ".$filterOp." ".$conditionsFilterComparisonValue.")";
+    $dbSource = isset($GLOBALS['formulize_DBSourceJoin'][$filterElementHandle]) ? "(".$GLOBALS['formulize_DBSourceJoin'][$filterElementHandle].")" : "$targetAlias`".$filterElementHandle."`";
+    $condition .= "($dbSource ".$filterOp." ".$conditionsFilterComparisonValue.")";
     return $condition;
 }
 
@@ -5799,6 +5851,14 @@ function generateTidyElementList($cols, $selectedCols=array()) {
     
 }
 
+
+// update derived values in the passed in entry
+function formulize_updateDerivedValues($entry, $fid, $frid="") {
+	$GLOBALS['formulize_forceDerivedValueUpdate'] = true;
+	getData($frid, $fid, $entry);
+	unset($GLOBALS['formulize_forceDerivedValueUpdate']);
+}
+
 // this function writes the export query generated by getData, to a file for picking up later so we don't have to figure out all the bits and pieces again
 function formulize_catchAndWriteExportQuery($fid) {
     $exportTime = time();
@@ -5818,4 +5878,76 @@ function formulize_catchAndWriteExportQuery($fid) {
         $importExportCleanupDone = true;
     }
     return $exportTime;
+}
+
+// update the revision data for an entry
+// fidOrObject is a form id or a form object for the form we're updating
+// entry_to_return is the entry id of the entry we're currently storing in the revision table
+function formulize_updateRevisionData($fidOrObject, $entry_to_return) {
+    $form_handler = xoops_getmodulehandler('forms','formulize');
+    if(!is_object($fidOrObject) AND is_numeric($fidOrObject)) {
+        $formObject = $form_handler->get($fidOrObject);
+    } else {
+        $formObject = $fidOrObject;
+    }
+    if(is_object($formObject) AND $formObject->getVar('store_revisions') AND $entry_to_return AND $form_handler->revisionsTableExists($formObject->getVar('id_form'))) {
+        global $xoopsDB;
+        static $cachedColumns = array();
+        if(!isset($cachedColumns[$formObject->getVar('id_form')])) {
+            $originalColumnsSQL = "SHOW COLUMNS FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'));
+            if($originalColumnsRes = $xoopsDB->queryF($originalColumnsSQL)) {
+                $columnList = array();
+                while($array = $xoopsDB->fetchArray($originalColumnsRes)) {
+                    $columnList[] = $array['Field'];
+                }
+            } else {
+                exit("Error: could not retrieve the list of columns from the original datatable when preparing revision history.");
+            }
+            $cachedColumns[$formObject->getVar('id_form')] = $columnList;
+        } else {
+            $columnList = $cachedColumns[$formObject->getVar('id_form')];
+        }
+        $revisionSQL = "INSERT INTO ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')."_revisions")." (`".implode("`, `", $columnList)."`) SELECT original.* FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." as original WHERE original.entry_id=$entry_to_return";
+        if($forceUpdate) {
+            $revisionRes = $xoopsDB->queryF($revisionSQL);
+        } else {
+            $revisionRes = $xoopsDB->query($revisionSQL);
+        }
+        if(!$revisionRes) {
+            exit("Error: could not update revision information for entry $entry_to_return in form ".$formObject->getVar('form_handle').".  This is the query that failed:<br>$revisionSQL<br>Reported MySQL error (if any - if nothing, then query might have been attempted on a non POST submission, since no MySQL error is reported): ".$xoopsDB->error());
+        }
+    }
+}
+
+// get a list of the most recent revision ids for the entries in question
+// fidOrObject is a form id or a form object for the form we're updating
+// $entryIds is an array of entry ids or a single id
+function formulize_getCurrentRevisions($fidOrObject, $entryIds) {
+    $form_handler = xoops_getmodulehandler('forms','formulize');
+    if(!is_object($fidOrObject) AND is_numeric($fidOrObject)) {
+        $formObject = $form_handler->get($fidOrObject);
+    } else {
+        $formObject = $fidOrObject;
+    }
+    if(!is_array($entryIds)) {
+        $entry = array(intval($entryIds));
+    } else { // sanitize them
+        $newEntryIds = array();
+        foreach($entryIds as $id) {
+            $newEntryIds[] = intval($id);
+        }
+        $entryIds = $newEntryIds;
+    }
+    if(is_object($formObject) AND $formObject->getVar('store_revisions') AND is_numeric($entryIds[0]) AND $form_handler->revisionsTableExists($formObject->getVar('id_form'))) {
+        global $xoopsDB;
+        $sql = "SELECT max(revision_id) as rev_id, entry_id FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')."_revisions")." WHERE entry_id IN (".implode(",",$entryIds).")";
+        if($res = $xoopsDB->query($sql)) {
+            $results = array();
+            while($array = $xoopsDB->fetchArray($res)) {
+                $results[$array['entry_id']] = $array['rev_id'];
+            }
+            return $results;
+        }
+    }
+    return false;
 }

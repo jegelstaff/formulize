@@ -360,10 +360,10 @@ function getDataCached($framework, $form, $filter="", $andor="AND", $scope="", $
     $sortField="", $sortOrder="", $forceQuery=false, $mainFormOnly=0, $includeArchived=false, $dbTableUidField="",
     $id_reqsOnly=false, $resultOnly=false, $filterElements=null)
 {
-    if (isset($GLOBALS['formulize_cachedGetDataResults'][serialize(func_get_args())])) {
-        return $GLOBALS['formulize_cachedGetDataResults'][serialize(func_get_args())];
+    $cacheKey = serialize(func_get_args());
+    if (isset($GLOBALS['formulize_cachedGetDataResults'][$cacheKey])) {
+        return $GLOBALS['formulize_cachedGetDataResults'][$cacheKey];
     } else {
-        $cacheKey = serialize(func_get_args());
         return getData($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $dbTableUidField, $id_reqsOnly, $resultOnly, $filterElements, $cacheKey);
     }
 }
@@ -374,6 +374,14 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
      
      $limitStart = intval($limitStart);
      $limitSize = intval($limitSize);
+     
+     // DARA HACK!!
+     // if it's a full name field, sort by last name instead
+     // needs to be turned into a proper feature on elements, that you can specify an alternate sort field
+     if(strstr(getCurrentURL(), 'dara.daniels') AND $sortField=='hr_module_name') {
+        $sortField = 'hr_module_last_name';
+     }
+     
      $sortField = formulize_db_escape($sortField);
      $sortOrder = formulize_db_escape($sortOrder);
 
@@ -676,7 +684,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
           $sortIsOnMain = true;
           if(!$orderByClause AND $sortField) {
                
-               if($sortField == "creation_uid" OR $sortField == "mod_uid" OR $sortField == "creation_datetime" OR $sortField == "mod_datetime") {
+               if($sortField == "creation_uid" OR $sortField == "mod_uid" OR $sortField == "creation_datetime" OR $sortField == "mod_datetime" OR $sortField == "revision_id") {
                     $elementMetaData['id_form'] = $fid;
                } elseif($sortField == "uid") {
                     $sortField = "creation_uid";
@@ -727,8 +735,9 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	       debug_memory("Before retrieving mainresults");
 					
 	       //$beforeQueryTime = microtime_float();
-	       
-		$countMasterResults = "SELECT COUNT(main.entry_id) FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main ";
+
+        $revisionTableYesNo = (!$frid AND isset($GLOBALS['formulize_getDataFromRevisionsTable'])) ? "_revisions" : "";
+		$countMasterResults = "SELECT COUNT(main.entry_id) FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo." AS main ";
 	    $countMasterResults .= "$userJoinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $mainFormWhereClause $scopeFilter $otherPerGroupFilterWhereClause "; 
 	    $countMasterResults .= $existsJoinText ? " AND ($existsJoinText) " : "";
 	    $countMasterResults .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
@@ -845,8 +854,8 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
     }
     $oneSideSQL .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
 
-     $restOfTheSQL = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause ";
-     $restOfTheSQLForExport = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $orderByClause ";  // don't use limitByEntryId since exports include all entries
+     $restOfTheSQL = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo." AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause ";
+     $restOfTheSQLForExport = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo." AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $orderByClause ";  // don't use limitByEntryId since exports include all entries
      if(count($linkformids)>1) { // AND $dummy == "never") { // when there is more than 1 joined form, we can get an exponential explosion of records returned, because SQL will give you all combinations of the joins
        if(!$sortIsOnMain) {
 	    $orderByToUse = " ORDER BY usethissort $sortOrder ";
@@ -867,7 +876,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
      }
      
 
-     $GLOBALS['formulize_queryForCalcs'] = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText WHERE main.entry_id>0  $whereClause $scopeFilter ";
+     $GLOBALS['formulize_queryForCalcs'] = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo." AS main $userJoinText $joinText WHERE main.entry_id>0  $whereClause $scopeFilter ";
      $GLOBALS['formulize_queryForCalcs'] .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
      $GLOBALS['formulize_queryForOneSideCalcs'] = $oneSideSQL;
      if($GLOBALS['formulize_returnAfterSettingBaseQuery']) { return true; } // if we are only setting up calculations, then return now that the base query is built
@@ -907,7 +916,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
      if(count($linkformids)>1) { // AND $dummy=="never") { // when there is more than 1 joined form, we can get an exponential explosion of records returned, because SQL will give you all combinations of the joins, so we create a series of queries that will each handle the main form plus one of the linked forms, then we put all the data together into a single result set below
 	         $timestamp = str_replace(".","",microtime(true));
 		 if(!$sortIsOnMain) {
-		    $createTableSQL = "CREATE TABLE ".DBPRE."formulize_temp_extract_$timestamp ( `mastersort` BIGINT(11), `throwaway_sort_values` BIGINT(11), `entry_id` BIGINT(11), PRIMARY KEY (`mastersort`), INDEX i_entry_id (`entry_id`) ) ENGINE=MyISAM;"; // when the sort is not on the main form, then we are including a special field in the select statement that we sort it by, so that the order is correct, and so it has to have a place to get inserted here
+		    $createTableSQL = "CREATE TABLE ".DBPRE."formulize_temp_extract_$timestamp ( `mastersort` BIGINT(11), `throwaway_sort_values` text, `entry_id` BIGINT(11), PRIMARY KEY (`mastersort`), INDEX i_entry_id (`entry_id`) ) ENGINE=MyISAM;"; // when the sort is not on the main form, then we are including a special field in the select statement that we sort it by, so that the order is correct, and so it has to have a place to get inserted here
 		 } else {
 		    $createTableSQL = "CREATE TABLE ".DBPRE."formulize_temp_extract_$timestamp ( `mastersort` BIGINT(11), `entry_id` BIGINT(11), PRIMARY KEY (`mastersort`), INDEX i_entry_id (`entry_id`) ) ENGINE=MyISAM;";
 		 }
@@ -1025,7 +1034,8 @@ function processGetDataResults($resultData) {
                    $field == "creation_datetime" OR
                    $field == "mod_datetime" OR
                    $field == "main_email" OR
-                   $field == "main_user_viewemail" 
+                   $field == "main_user_viewemail" OR
+                   $field == "revision_id"
                   ) {
                     continue;
         }
@@ -1190,7 +1200,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
      $otherPerGroupFilterJoins = "";
      $otherPerGroupFilterWhereClause = "";
      
-     $oneSideFilters = array(); // we need to capture each filter individually, just in case we need to apply them individually to each part of the query for calculations.  Filters for calculations will not work right if the combination of filter terms is excessively complex, ie: includes OR'd terms across different forms in a framework, certain other complicated types of bracketing
+     $oneSideFiltersTemp = array(); // we need to capture each filter individually, just in case we need to apply them individually to each part of the query for calculations.  Filters for calculations will not work right if the combination of filter terms is excessively complex, ie: includes OR'd terms across different forms in a framework, certain other complicated types of bracketing
           
      if(!is_array($filtertemp)) {
           $filter = array(0=>array(0=>$andor, 1=>$filtertemp));
@@ -1296,7 +1306,11 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
 	       } elseif($ifParts[0] == "entry_id") {
 		    $formFieldFilterMap['entry_id'] = true;
 		    $newWhereClause = "main.entry_id" . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;
-		    $mappedForm = $fid;		    
+		    $mappedForm = $fid;
+           } elseif($ifParts[0] == "revision_id" AND is_numeric($ifParts[1])) {
+            $formFieldFilterMap['revision_id'] = true;
+		    $newWhereClause = "main.revision_id" . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;
+		    $mappedForm = $fid;
                } else {
                     
                     // do non-metadata queries
@@ -1458,10 +1472,11 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                }
 
                $whereClause .= $newWhereClause;
-               if(count($oneSideFilters[$mappedForm][strtolower(trim($filterParts[0]))]) == 0) {
-                    $oneSideFilters[$mappedForm][strtolower(trim($filterParts[0]))] = " $newWhereClause ";   // don't add the local andor on the first term for a form  
+               
+               if(!isset($oneSideFiltersTemp[$mappedForm][strtolower(trim($filterParts[0]))][$numSeachExps])) {
+                    $oneSideFiltersTemp[$mappedForm][strtolower(trim($filterParts[0]))][$numSeachExps] = " $newWhereClause ";   // don't add the local andor on the first term for a form
                } else {
-                    $oneSideFilters[$mappedForm][strtolower(trim($filterParts[0]))] .= " ". $filterParts[0] . " $newWhereClause ";
+                    $oneSideFiltersTemp[$mappedForm][strtolower(trim($filterParts[0]))][$numSeachExps] .= " ". $filterParts[0] . " $newWhereClause ";
                }
                
                $whereClause .= ")";
@@ -1475,6 +1490,17 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
           $numSeachExps++;
      }
 
+    // sort out the one side filters that have been generated and cached per form, put the global and/or between the expressions produced by the distinct filter sets that were passed in
+    // this allows two different filter sets that have local "or" booleans, to get concatenated correctly. OR filters in a single set: red or blue or apples or oranges. OR filters in two sets: (red or blue) AND (apples or oranges)
+    $oneSideFilters = array();
+    foreach($oneSideFiltersTemp as $mappedForm=>$oneSideParts) {
+        foreach($oneSideParts as $type=>$expressions) {
+            foreach($expressions as $expression) {
+                $oneSideFilters[$mappedForm][$type] .= isset($oneSideFilters[$mappedForm][$type]) ? " $andor ( $expression ) " : " ( $expression ) ";
+            }
+        }
+    }
+     
     $otherPerGroupFilterJoins = is_array($otherPerGroupFilterJoins) ? implode(" ", $otherPerGroupFilterJoins) : "";
     $otherPerGroupFilterWhereClause = is_array($otherPerGroupFilterWhereClause) ? implode(" ", $otherPerGroupFilterWhereClause) : "";
     return array(0=>$formFieldFilterMap, 1=>$whereClause, 2=>$orderByClause, 3=>$oneSideFilters, 4=>$otherPerGroupFilterJoins, 5=>$otherPerGroupFilterWhereClause);

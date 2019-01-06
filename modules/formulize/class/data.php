@@ -40,6 +40,7 @@ class formulizeDataHandler  {
 	var $fid; // the form this Data Handler object is attached to
 	var $metadataFields; //
     var $metadataFieldTypes;
+    var $dataTypeMap; // an array of field, data type pairs, generated when data is written to the DB
 
 	// $fid must be an id
 	function __construct($fid){
@@ -49,6 +50,7 @@ class formulizeDataHandler  {
 		} else {
 			$this->fid = false;
 		}
+        $this->dataTypeMap = array();
 		
 		//set the available metadata fields to a global
 		$this->metadataFields = array("entry_id",
@@ -676,6 +678,7 @@ class formulizeDataHandler  {
 		$formObject = $form_handler->get($this->fid);
 		$creation_uid = $proxyUser ? intval($proxyUser) : intval($uid);
 		static $cachedMaps = array();
+        static $cachedDataTypeMaps = array();
 		$mapIDs = true; // assume we're mapping elements based on their IDs, because the values array is based on ids as keys
 		foreach(array_keys($values) as $thisKey) { // check the values array keys
 			if(!is_numeric($thisKey)) { // if we find a non numeric key, then we must map based on handles instead
@@ -694,16 +697,13 @@ class formulizeDataHandler  {
 				return false;
 			}
 			$handleElementMap = array();
-			$encryptElementMap = array();
 			while($handleElementMapArray = $xoopsDB->fetchArray($handleElementMapRes)) {
 				switch($mapIDs) {
 					case true:
 						$handleElementMap[$handleElementMapArray['ele_id']] = $handleElementMapArray['ele_handle'];
-						$encryptElementMap[$handleElementMapArray['ele_id']] = $handleElementMapArray['ele_encrypt'];
 						break;
 					case false:
 						$handleElementMap[$handleElementMapArray['ele_handle']] = $handleElementMapArray['ele_handle'];
-						$encryptElementMap[$handleElementMapArray['ele_handle']] = $handleElementMapArray['ele_encrypt'];
 						break;
 				}
                 if ($handleElementMapArray['ele_encrypt']) {
@@ -711,10 +711,26 @@ class formulizeDataHandler  {
                     $encrypt_element_handles[] = $handleElementMapArray['ele_handle'];
                 }
 			}
-			$cachedMap[$this->fid][$mapIDs] = $handleElementMap;
+			$cachedMaps[$this->fid][$mapIDs] = $handleElementMap;
+            
+            // also, gather once all the data types for the fid in question
+            $dataTypeMap = array();
+            $dataTypeSQL = "SELECT information_schema.columns.data_type, information_schema.columns.column_name FROM information_schema.columns WHERE information_schema.columns.table_name = '".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."'";
+            if($dataTypeRes = $xoopsDB->query($dataTypeSQL)) {
+                while($dataTypeRow = $xoopsDB->fetchRow($dataTypeRes)) {
+                    $dataTypeMap[$dataTypeRow[1]] = $dataTypeRow[0];
+                }
+            } else {
+                print "Error: could not retrieve datatypes for form ".$this->fid." with this SQL: $dataTypeSQL<br>".$xoopsDB->error();
+                exit();
+            }
+            $cachedDataTypeMaps[$this->fid] = $dataTypeMap; // cannot write this directly to the object property, do that below, because statics live in this method and ARE SHARED ACROSS ALL OBJECTS. Properties are unique to the object, so we must instantiate this as a static, same as the element maps, then assign to the property below.
 		}
 		if(!isset($handleElementMap)) {
-			$handleElementMap = $cachedMap[$this->fid][$mapIDs];
+			$handleElementMap = $cachedMaps[$this->fid][$mapIDs];
+		}
+        if(count($this->dataTypeMap)==0) {
+            $this->dataTypeMap = $cachedDataTypeMaps[$this->fid]; // now assign the value of the property, based on the cached static array
 		}
 		
 		// check for presence of ID or SEQUENCE and look up the values we'll need to write
@@ -790,10 +806,19 @@ class formulizeDataHandler  {
             unset($element_values[$key]);   // since field name is not escaped, remove from array
             $key = "`".formulize_db_escape($key)."`";                // escape field name
 
-            if ("{WRITEASNULL}" === $value or null === $value) {
+            if ("{WRITEASNULL}" == $value or null === $value) {
                 $element_values[$key] = "NULL";
             } else {
+                // if this element has a numeric type in the DB, no quotes
+                if($this->dataTypeIsNumeric($key)) {
+                    if(is_numeric($value)) {
+                        $element_values[$key] = formulize_db_escape($value);
+                    } else { // non numeric values cannot be written to a numeric field, so NULL them
+                $element_values[$key] = "NULL";
+                    }
+            } else {
                 $element_values[$key] = "'".formulize_db_escape($value)."'";
+            }
             }
             if ($encrypt_this) {
                 // this element should be encrypted. note that the actual value is quoted and escapted already
@@ -831,32 +856,8 @@ class formulizeDataHandler  {
             $entry_to_return = intval($entry);
         }
 
-		if($formObject->getVar('store_revisions') AND $entry_to_return AND $form_handler->revisionsTableExists($formObject->getVar('id_form'))) {
-			static $cachedColumns = array();
-			if(!isset($cachedColumns[$formObject->getVar('id_form')])) {
-				$originalColumnsSQL = "SHOW COLUMNS FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'));
-				if($originalColumnsRes = $xoopsDB->queryF($originalColumnsSQL)) {
-					$columnList = array();
-					while($array = $xoopsDB->fetchArray($originalColumnsRes)) {
-						$columnList[] = $array['Field'];
-					}
-				} else {
-					exit("Error: could not retrieve the list of columns from the original datatable when preparing revision history.");
-				}
-				$cachedColumns[$formObject->getVar('id_form')] = $columnList;
-			} else {
-				$columnList = $cachedColumns[$formObject->getVar('id_form')];
-			}
-			$revisionSQL = "INSERT INTO ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')."_revisions")." (`".implode("`, `", $columnList)."`) SELECT original.* FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." as original WHERE original.entry_id=$entry_to_return";
-			if($forceUpdate) {
-				$revisionRes = $xoopsDB->queryF($revisionSQL);
-			} else {
-				$revisionRes = $xoopsDB->query($revisionSQL);
-			}
-			if(!$revisionRes) {
-				exit("Error: could not update revision information for entry $entry_to_return in form ".$formObject->getVar('form_handle').".  This is the query that failed:<br>$revisionSQL<br>Reported MySQL error (if any - if nothing, then query might have been attempted on a non POST submission, since no MySQL error is reported): ".$xoopsDB->error());
-			}
-		}
+        formulize_updateRevisionData($formObject, $entry_to_return);
+        
 		if($forceUpdate) {
 			if(!$res = $xoopsDB->queryF($sql)) {
 				exit("Error: your data could not be saved in the database.  This was the query that failed:<br>$sql<br>Query was forced and still failed so the SQL is probably bad.<br>".$xoopsDB->error());
@@ -884,6 +885,22 @@ class formulizeDataHandler  {
 		return $entry_to_return ? $entry_to_return : $lastWrittenId;
 	}
 
+    // check a given field against the dataTypeMap, return true if it's a numeric type
+    function dataTypeIsNumeric($key) {
+        if(count($this->dataTypeMap)==0) {
+            return false; // no map set yet, so we can't tell
+        }
+        $key = trim($key, "`");
+        if(stripos($this->dataTypeMap[$key], "int") !== false
+           OR stripos($this->dataTypeMap[$key], "decimal") !== false
+           OR stripos($this->dataTypeMap[$key], "numeric") !== false
+           OR stripos($this->dataTypeMap[$key], "float") !== false
+           OR stripos($this->dataTypeMap[$key], "double") !== false) {
+            return true; // yes it is
+        }
+        return false; // no it's not
+    }
+    
 
 	// this function updates relevant caches after data has been updated in the database
 	function updateCaches($id) {
@@ -1044,6 +1061,26 @@ class formulizeDataHandler  {
 		}
 		return true;
 	}
+    
+    // this function returns the most recent entry in the revision table for a given entry
+    // id is the entry id
+    function getRevisionForEntry($id, $revisionId=null) {
+        $form_handler = xoops_getmodulehandler('forms','formulize');
+        $formObject = $form_handler->get($this->fid);
+        if($formObject->getVar('store_revisions') AND $form_handler->revisionsTableExists($this->fid)) {
+            $GLOBALS['formulize_getDataFromRevisionsTable'] = true;
+            if($revisionId) {
+                $data = getData("", $this->fid, 'revision_id/**/'.$revisionId.'/**/=');
+            } else {
+                $data = getData("", $this->fid, $id, "AND", "", 0, 1, "revision_id", "DESC");
+            }
+            unset($GLOBALS['formulize_getDataFromRevisionsTable']);
+            return $data;
+        } else {
+            return false;
+        }
+    }
+    
 	
 }
 	

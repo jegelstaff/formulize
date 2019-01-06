@@ -785,7 +785,7 @@ class formulizeElementRenderer{
 						$counter = 0;
 						while( $o = each($options) ){
 							$o = formulize_swapUIText($o, $this->_ele->getVar('ele_uitext'));
-							$other = $this->optOther($o['value'], $form_ele_id, $entry, $counter);
+							$other = $this->optOther($o['value'], $form_ele_id, $entry, $counter, false, $isDisabled);
 							if( $other != false ){
 								$form_ele1->addOption($o['key'], _formulize_OPT_OTHER.$other);
 								if($o['key'] == $selected) {
@@ -818,7 +818,7 @@ class formulizeElementRenderer{
 								$form_ele_id,
 								$selected
 							);
-							$other = $this->optOther($o['value'], $form_ele_id, $entry, $counter);
+							$other = $this->optOther($o['value'], $form_ele_id, $entry, $counter, false, $isDisabled);
 							if( $other != false ){
 								$t->addOption($o['key'], _formulize_OPT_OTHER."</label><label>$other"); // epic hack to terminate radio button's label so it doesn't include the clickable 'other' box!!
 								if($o['key'] == $selected) {
@@ -1015,9 +1015,18 @@ class formulizeElementRenderer{
 				$elementCue = "";
 			}
 			
+            // put in special validation logic, if the element has special validation logic
+            // hard coded for dara to start with
+            if(strstr(getCurrentURL(), 'dara.daniels') AND $true_ele_id == 88) {
+                $GLOBALS['formulize_specialValidationLogicHook'][$form_ele_id] = $true_ele_id;
+                $specialValidationLogicDisplay = "&nbsp;&nbsp;<span id='va_".trim($form_ele_id,"de_")."'></span>";
+            } else {
+                $specialValidationLogicDisplay = "";
+            }
+            
 			$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\"");
 			// reuse caption, put two spaces between element and previous entry UI
-			$form_ele_new = new xoopsFormLabel($form_ele->getCaption(), $form_ele->render().$previousEntryUIRendered.$elementCue);
+			$form_ele_new = new xoopsFormLabel($form_ele->getCaption(), $form_ele->render().$previousEntryUIRendered.$specialValidationLogicDisplay.$elementCue);
 			$form_ele_new->formulize_element = $this->_ele;
 			if($ele_desc != "") {
 				$ele_desc = html_entity_decode($ele_desc,ENT_QUOTES);
@@ -1066,7 +1075,7 @@ class formulizeElementRenderer{
 
 	// THIS FUNCTION COPIED FROM LIASE 1.26, onchange control added
 	// JWE -- JUNE 1 2006
-	function optOther($s='', $id, $entry, $counter, $checkbox=false){
+	function optOther($s='', $id, $entry, $counter, $checkbox=false, $isDisabled=false){
         static $blankSubformCounters = array();
 		global $xoopsModuleConfig, $xoopsDB;
 		if( !preg_match('/\{OTHER\|+[0-9]+\}/', $s) ){
@@ -1090,7 +1099,7 @@ class formulizeElementRenderer{
 			$otherq = q("SELECT other_text FROM " . $xoopsDB->prefix("formulize_other") . " WHERE id_req='$entry' AND ele_id='$ele_id' LIMIT 0,1");
 			$other_text = $otherq[0]['other_text'];
 		}
-		if(strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
+		if(strstr($_SERVER['PHP_SELF'], "formulize/printview.php") OR $isDisabled) {
 			return $other_text;			
 		}
 		$s = explode('|', preg_replace('/[\{\}]/', '', $s));

@@ -367,6 +367,8 @@ define("_formulize_DE_ALL", "Entries by all users in all groups");
 define("_formulize_DE_GO", "Apply search terms");
 define("_formulize_DE_MODIFYSCREEN", "Configure this Screen");
 define("_formulize_DE_CHANGECOLS", "Change columns");
+define("_formulize_DE_CLEAR_ALL", "Clear all selected columns");
+define("_formulize_DE_RESET_COLS", "Reset to the initially selected columns");
 define("_formulize_DE_PICKNEWCOLS", "Pick different columns to view");
 define("_formulize_DE_AVAILCOLS", "Available columns:");
 define("_formulize_DE_SHOWALLCOLS", "Click to show/hide more columns");
@@ -637,6 +639,7 @@ define("_formulize_DE_NOT_CONTEXTIF", " only if ");
 define("_formluize_DE_NOT_CONTEXTAND", ", and ");
 define("_formulize_DE_NOT_TEMPTEXT", "Use this custom template file: ");
 define("_formulize_DE_NOT_SUBJTEXT", "Use this custom subject line: ");
+define("_formulize_DE_NOT_DIGEST_SUBJECT", "Notification Digest");
 
 // multi-page forms
 define("_formulize_DMULTI_THANKS", "<h1>You're done!</h1><p>Thanks for taking the time to fill in that form.  We really appreciate it.</p>");

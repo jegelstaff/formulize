@@ -494,4 +494,58 @@ class formulizeElementsHandler {
 		}
 		return $value;
 	}
+    
+    // determine if the element is disabled for the specified user
+    function isElementDisabledForUser($elementIdOrObject, $userIdOrObject=0) {
+        if(is_object($elementIdOrObject)) {
+            $elementObject = $elementIdOrObject;
+        } else {
+            $elementObject = $this->get($elementIdOrObject);    
+        }
+        $ele_disabled = $elementObject->getVar('ele_disabled');
+        if($ele_disabled == 1) {
+			return true;
+		} elseif(!is_numeric($ele_disabled)) {
+            if(is_object($userIdOrObject)) {
+                $userObject = $userIdOrObject;
+            } elseif($userIdOrObject) {
+                $memberHandler = xoops_gethandler('member');
+                $userObject = $memberHandler->getUser($userIdOrObject);
+            }
+            $groups = $userObject ? $userObject->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+            $disabled_groups = explode(",", $ele_disabled);
+            // user must not be a member of any group that the element is NOT disabled for. If they are in one group that can interact, the element will be enabled.
+            if(array_intersect($groups, $disabled_groups) AND !array_diff($groups, $disabled_groups)) {
+                return true;
+			}
+		}
+        return false;
+    }
+    
+    // determine if the element is displayed for the specified user
+    function isElementVisibleForUser($elementIdOrObject, $userIdOrObject=0) {
+        if(is_object($elementIdOrObject)) {
+            $elementObject = $elementIdOrObject;
+        } else {
+            $elementObject = $this->get($elementIdOrObject);    
+        }
+        $ele_display = $elementObject->getVar('ele_display');
+        if($ele_display == 1) {
+			return true;
+		} elseif(!is_numeric($ele_display)) {
+            if(is_object($userIdOrObject)) {
+                $userObject = $userIdOrObject;
+            } elseif($userIdOrObject) {
+                $memberHandler = xoops_gethandler('member');
+                $userObject = $memberHandler->getUser($userIdOrObject);
+            }
+            $groups = $userObject ? $userObject->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+            $display_groups = explode(",", $ele_display);
+            if(array_intersect($groups, $display_groups)) {
+                return true;
+			}
+		}
+        return false;
+    }
+    
 }
