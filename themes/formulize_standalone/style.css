@@ -917,3 +917,7 @@ body > #content {
   height: 2em;
   padding: 0em;
   margin-top: -2.3em; }
+  
+.appcatspacer {
+    width: 25%;
+}
