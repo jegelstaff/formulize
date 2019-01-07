@@ -1240,7 +1240,7 @@ function checkForLinks($frid, $fids, $fid, $entries, $unified_display=false, $un
 // $template is a flag indicating whether we are making a template for use updating/uploading data -- blank for a blank template, update for a template with data, blankprofile for the userprofile form
 // $fid is the form id
 // $groups is the user's groups
-function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $template=false, $fid, $groups) {
+function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $template=false, $fid, $groups="") {
     // export of calculations added August 22 2006
     // come up with a filename and then return it
     // rest of logic in entriesdisplay.php will take the filename and create a file with the calculations in it once they are performed
@@ -1250,21 +1250,23 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
         return XOOPS_URL . SPREADSHEET_EXPORT_FOLDER . "$exfilename";
     }
 
-    global $xoopsDB;
+    global $xoopsDB, $xoopsUser;
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 
     if ($fdchoice == "update") { // reset headers and cols to include all data -- when creating a blank template, this reset has already happened before prepexport is called
         $fdchoice = "comma";
         $template = "update";
-        /*$cols1 = getAllColList($fid, "", $groups); // $cols1 will be a multidimensional array, one "entry" per column, and for each column the entry is an assoc array with ele_id, ele_colhead, ele_caption and ele_handle.
-        unset($cols);
-        $cols = array();
-        foreach ($cols1[$fid] as $col) {
-            $cols[] = $col['ele_handle'];
+        if(!is_array($cols) OR count($cols)==0 OR (count($cols)==1 AND $cols[0] == "")) {
+            unset($cols);
+            $cols = array();
+            $groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+            $allColList = getAllColList($fid, "", $groups);
+            foreach ($allColList[$fid] as $col) {
+                $cols[] = $col['ele_handle'];
+            }
+            unset($headers);
+            $headers = getHeaders($cols, true); // array of element handles, boolean for if the cols are handles (or ids, which is the default assumption)
         }
-        unset($headers);
-        $headers = getHeaders($cols, true); // array of element handles, boolean for if the cols are handles (or ids, which is the default assumption)
-        */
     }
     if ($fdchoice == "comma") {
         $fd = ",";
