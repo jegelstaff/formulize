@@ -118,6 +118,7 @@ function formulize_readNotifications() {
 
 // check how much time has elapsed since we started the script, and since the last message was sent
 // figure out if we have enough time left to send another message.
+// SAME IN DIGEST.PHP
 function formulize_notifyStillTime($startTime, $maxExec) {
     
     static $prevTimes = array();
@@ -152,6 +153,9 @@ function formulize_notify($event, $extra_tags, $fid, $uids_to_notify, $mid, $omi
     $module_handler = xoops_gethandler('module');
     $formulizeModule = $module_handler->getByDirname("formulize");
     $not_config = $formulizeModule->getInfo('notification');
+    $form_handler = xoops_getmodulehandler('forms', 'formulize');
+    $formObject = $form_handler->get($fid);
+    $sendDigests = $formObject->getVar('send_digests');
     
     if($subject OR $template) {
     
@@ -161,6 +165,25 @@ function formulize_notify($event, $extra_tags, $fid, $uids_to_notify, $mid, $omi
                 break;
             case "update_entry":
                 $evid = 2;
+                // validate any revision data we might have, and only proceed if there's a difference
+                $differenceFound = false;
+                foreach($extra_tags as $key=>$value) {
+                    if(substr($key, 0, 8)=="ELEMENT_") {
+                        if(isset($extra_tags['REVISION_'.$key])) {
+                            $revisionsOn = true;
+                            if($extra_tags['REVISION_'.$key] != $value) {
+                                $differenceFound = true;
+                                break;
+                            }
+                        } else {
+                            $revisionsOn = false;
+                            break;
+                        }
+                    }
+                }
+                if($revisionsOn AND !$differenceFound) {
+                    return;
+                }
                 break;
             case "delete_entry":
                 $evid = 3;
@@ -176,8 +199,8 @@ function formulize_notify($event, $extra_tags, $fid, $uids_to_notify, $mid, $omi
         // loop through the variables and do replacements in the subject, if any
         if (strstr($not_config['event'][$evid]['mail_subject'], "{ELEMENT")) {
             foreach ($extra_tags as $tag=>$value) {
-                str_replace("{".$tag."}",$value, $not_config['event'][$evid]['mail_subject']);
-                str_replace("{".$tag."}",$value, $GLOBALS['formulize_notificationSubjectOverride']);
+                $not_config['event'][$evid]['mail_subject'] = str_replace("{".$tag."}",$value, $not_config['event'][$evid]['mail_subject']);
+                $GLOBALS['formulize_notificationSubjectOverride'] = str_replace("{".$tag."}",$value, $GLOBALS['formulize_notificationSubjectOverride']);
             }
         }
         $mailSubject = $not_config['event'][$evid]['mail_subject'];
@@ -188,15 +211,33 @@ function formulize_notify($event, $extra_tags, $fid, $uids_to_notify, $mid, $omi
         $mailTemplate = "";
     }
     
-    // trigger the event
-    if (in_array(-1, $uids_to_notify)) {
-        sendNotificationToEmail($GLOBALS['formulize_notification_email'], $event, $extra_tags, $mailSubject, $mailTemplate);
-        unset( $uids_to_notify[array_search(-1, $uids_to_notify)]); // now remove the special flag before triggering the event
+    // IF WE'RE SENDING DIGESTS, THE STORE THE MESSAGE DATA ORGANIZED BY USER/EMAIL IN A NEW QUEUE, ELSE SEND THE NOTIFICATION
+    if($sendDigests) {
+        if (in_array(-1, $uids_to_notify)) {
+            foreach(explode(",",$GLOBALS['formulize_notification_email']) as $email) {
+                formulize_saveDigestData($email, $fid, $event, $extra_tags, $mailSubject, $mailTemplate);
+            }
+            unset( $uids_to_notify[array_search(-1, $uids_to_notify)]); // now remove the special flag that indicates we're sending to direct e-mails
+        }
+        if(count($uids_to_notify)>0) {
+            $member_handler = xoops_gethandler('member');
+            foreach($uids_to_notify as $uid) {
+                if($userObject = $member_handler->getUser($uid)) {
+                    formulize_saveDigestData($userObject->getVar('email'), $fid, $event, $extra_tags, $mailSubject, $mailTemplate);
+                }
+            }
+        }
+    } else {
+        // trigger the event
+        if (in_array(-1, $uids_to_notify)) {
+            sendNotificationToEmail($GLOBALS['formulize_notification_email'], $event, $extra_tags, $mailSubject, $mailTemplate);
+            unset( $uids_to_notify[array_search(-1, $uids_to_notify)]); // now remove the special flag before triggering the event
+        }
+        if(count($uids_to_notify)>0) {
+            $notification_handler->triggerEvent("form", $fid, $event, $extra_tags, $uids_to_notify, $mid, $omit_user);
+        }
     }
-    if(count($uids_to_notify)>0) {
-        $notification_handler->triggerEvent("form", $fid, $event, $extra_tags, $uids_to_notify, $mid, $omit_user);
-    }
-    
+        
     if($subject OR $template) {
         $not_config['event'][$evid]['mail_subject'] = $oldsubject;
         $not_config['event'][$evid]['mail_template'] = $oldtemp;
@@ -204,4 +245,11 @@ function formulize_notify($event, $extra_tags, $fid, $uids_to_notify, $mid, $omi
         unset($GLOBALS['formulize_notificationSubjectOverride']);
     }
     
+}
+
+// save digestData to the database, so we can call it up later when everything is finished
+function formulize_saveDigestData($email, $fid, $event, $extra_tags, $mailSubject, $mailTemplate) {
+    global $xoopsDB;
+    $sql = "INSERT INTO ".$xoopsDB->prefix("formulize_digest_data")." (email, fid, event, extra_tags, mailSubject, mailTemplate) VALUES ('".formulize_db_escape($email)."', ".intval($fid).", '".formulize_db_escape($event)."', '".formulize_db_escape(serialize($extra_tags))."', '".formulize_db_escape($mailSubject)."', '".formulize_db_escape($mailTemplate)."')";
+    $res = $xoopsDB->queryF($sql);
 }

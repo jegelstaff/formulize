@@ -112,8 +112,8 @@ function patch40() {
      *
      * ====================================== */
 
-    $checkThisTable = 'formulize';
-	$checkThisField = 'ele_uitextshow';
+    $checkThisTable = 'formulize_digest_data';
+	$checkThisField = '';
 	$checkThisProperty = '';
 	$checkPropertyForValue = '';
 
@@ -154,17 +154,32 @@ function patch40() {
 
         $sql = array();
 
+        if (!in_array($xoopsDB->prefix("formulize_digest_data"), $existingTables)) {
+            $sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_digest_data")."` (
+                `digest_id` int(11) unsigned NOT NULL auto_increment,
+                `email` varchar(255) DEFAULT NULL,
+                `fid` int(11) DEFAULT NULL,
+                `event` varchar(50) DEFAULT NULL,
+                `extra_tags` text DEFAULT NULL,
+                `mailSubject` text DEFAULT NULL,
+                `mailTemplate` text DEFAULT NULL,
+                PRIMARY KEY (`digest_id`),
+                INDEX i_email (`email`),
+                INDEX i_fid (`fid`)
+              ) ENGINE=InnoDB;";
+        }
+        
         if (!in_array($xoopsDB->prefix("formulize_groupscope_settings"), $existingTables)) {
             $sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_groupscope_settings")."` (
-  `groupscope_id` int(11) NOT NULL auto_increment,
-  `groupid` int(11) NOT NULL default 0,
-    `fid` int(11) NOT NULL default 0,
-  `view_groupid` int(11) NOT NULL default 0,
-  PRIMARY KEY (`groupscope_id`),
-  INDEX i_groupid (`groupid`),
-    INDEX i_fid (`fid`),
-  INDEX i_view_groupid (`view_groupid`)
-) ENGINE=MyISAM;";
+                `groupscope_id` int(11) NOT NULL auto_increment,
+                `groupid` int(11) NOT NULL default 0,
+                `fid` int(11) NOT NULL default 0,
+                `view_groupid` int(11) NOT NULL default 0,
+                PRIMARY KEY (`groupscope_id`),
+                INDEX i_groupid (`groupid`),
+                INDEX i_fid (`fid`),
+                INDEX i_view_groupid (`view_groupid`)
+              ) ENGINE=MyISAM;";
         }
 
         if (!in_array($xoopsDB->prefix("formulize_tokens"), $existingTables)) {
@@ -378,6 +393,7 @@ function patch40() {
         $sql['add_advance_view_field'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " ADD `advanceview` text NOT NULL"; 
 		$sql['defaultview_ele_type_text'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " CHANGE `defaultview` `defaultview` TEXT NOT NULL ";
         $sql['add_ele_uitextshow'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_uitextshow` tinyint(1) NOT NULL default 0";
+        $sql['add_send_digests'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD send_digests tinyint(1) NOT NULL default 0";
 
         
         foreach($sql as $key=>$thissql) {
@@ -444,6 +460,8 @@ function patch40() {
 					print "advance view field already added.  result: OK<br>";
                 } elseif($key === "add_ele_uitextshow") {
                     print "Option for showing UI Text already added. result: OK<br>";
+                } elseif($key === "add_send_digests") {
+                    print "Option for sending digest notifications already added. result: OK<br>";
                 } else {
                     exit("Error patching DB for Formulize 4.0. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }

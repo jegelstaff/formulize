@@ -1,3 +1,16 @@
+CREATE TABLE `formulize_digest_data` (
+  `digest_id` int(11) unsigned NOT NULL auto_increment,
+  `email` varchar(255) DEFAULT NULL,
+  `fid` int(11) DEFAULT NULL,
+  `event` varchar(50) DEFAULT NULL,
+  `extra_tags` text DEFAULT NULL,
+  `mailSubject` text DEFAULT NULL,
+  `mailTemplate` text DEFAULT NULL,
+  PRIMARY KEY (`digest_id`),
+  INDEX i_email (`email`),
+  INDEX i_fid (`fid`)
+) ENGINE=InnoDB;
+
 CREATE TABLE `formulize_apikeys` (
     `key_id` int(11) unsigned NOT NULL auto_increment,
     `uid` int(11) NOT NULL default '0',
@@ -316,6 +329,7 @@ CREATE TABLE formulize_id (
   on_after_save text,
   custom_edit_check text,
   note text,
+  send_digests tinyint(1) NOT NULL default 0
   PRIMARY KEY  (`id_form`)
 ) ENGINE=MyISAM;
 

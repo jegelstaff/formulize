@@ -79,6 +79,7 @@ class formulizeForm extends XoopsObject {
 			  $defaultlist = "";
 				$formq[0]['menutext'] = "";
 				$formq[0]['form_handle'] = "";
+                $formq[0]['send_digests'] = 0;
 			} else {
 				// gather element ids for this form
 				$displayFilter = $includeAllElements ? "" : "AND ele_display != \"0\"";
@@ -159,6 +160,7 @@ class formulizeForm extends XoopsObject {
         $this->initVar("on_after_save", XOBJ_DTYPE_TXTAREA, $formq[0]['on_after_save']);
         $this->initVar("custom_edit_check", XOBJ_DTYPE_TXTAREA, $formq[0]['custom_edit_check']);//
         $this->initVar("note", XOBJ_DTYPE_TXTAREA, $formq[0]['note']);
+        $this->initVar("send_digests", XOBJ_DTYPE_INT, $formq[0]['send_digests'], true);
     }
 
     /* Get the views for the supplied form id
@@ -541,13 +543,13 @@ class formulizeFormsHandler {
                 if($formObject->isNew() || empty($id_form)) {
                     $sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`desc_form`, `singleentry`, `tableform`, ".
                         "`defaultform`, `defaultlist`, `menutext`, `form_handle`, `store_revisions`, `on_before_save`, ".
-                        "`on_after_save`, `custom_edit_check`, `note`) VALUES (".
+                        "`on_after_save`, `custom_edit_check`, `note`, `send_digests`) VALUES (".
                         $this->db->quoteString($title).", ".$this->db->quoteString($singleToWrite).", ".
                         $this->db->quoteString($tableform).", ".intval($defaultform).", ".intval($defaultlist).
                         ", ".$this->db->quoteString($menutext).", ".$this->db->quoteString($form_handle).", ".
                         intval($store_revisions).", ".$this->db->quoteString($on_before_save).", ".
                         $this->db->quoteString($on_after_save).", ".$this->db->quoteString($custom_edit_check).
-                        ", ".$this->db->quoteString($note).")";
+                        ", ".$this->db->quoteString($note).", ".intval($send_digests).")";
                 } else {
                     $sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET".
                         " `desc_form` = ".$this->db->quoteString($title).
@@ -561,7 +563,8 @@ class formulizeFormsHandler {
                         ", `on_before_save` = ".$this->db->quoteString($on_before_save).
                         ", `on_after_save` = ".$this->db->quoteString($on_after_save).
                         ", `custom_edit_check` = ".$this->db->quoteString($custom_edit_check).
-                        " , "."`note` = ".$this->db->quoteString($note).
+                        ", `note` = ".$this->db->quoteString($note).
+                        ", `send_digests` = ".intval($send_digests).
                         " WHERE id_form = ".intval($id_form);
                 }
 

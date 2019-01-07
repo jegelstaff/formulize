@@ -61,6 +61,7 @@ if ($_GET['fid'] != "new") {
     $form_handle = $formObject->getVar('form_handle');
     $store_revisions = $formObject->getVar('store_revisions');
     $note = $formObject->getVar('note');
+    $send_digests = $formObject->getVar('send_digests');
 
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
     $elementObjects = $element_handler->getObjects(null, $fid);
@@ -503,6 +504,7 @@ $settings = array();
 $settings['singleentry'] = $singleentry;
 $settings['menutext'] = $menutext;
 $settings['form_handle'] = $form_handle;
+$settings['send_digests'] = $send_digests;
 $settings['store_revisions'] = $store_revisions;
 $settings['istableform'] = ($tableform OR $newtableform) ? true : false;
 if (isset($groupsCanEditOptions)) {

@@ -80,6 +80,7 @@ $modversion['tables'] = array(
 	"formulize_deletion_logs",
     "formulize_apikeys",
 	"formulize_tokens",
+    "formulize_digest_data"
 );
 
 $modversion['formulize_exportable_tables'] = array(
@@ -108,7 +109,7 @@ $modversion['formulize_exportable_tables'] = array(
 	"formulize_group_filters",
 	"formulize_groupscope_settings",
     "formulize_apikeys",
-	 "formulize_tokens",
+    "formulize_tokens"
 );
 
 
