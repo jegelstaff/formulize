@@ -356,6 +356,7 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
         }
     }
 
+    $element_handler = xoops_getmodulehandler('elements', 'formulize');
 	for($io=0;$io<count($indexes);$io++) {
 		$i = $indexes[$io];
 		if(!($evaluationCondition == "")) {
