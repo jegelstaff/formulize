@@ -3050,16 +3050,17 @@ $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 print "
 <script type='text/javascript'>
 
-var conditionalHTML = new Array(); // needs to be global!
+// need to be global!
+var conditionalHTML = new Array(); 
+var governedElements = new Array();
+var relevantElements = new Array();
+var oneToOneElements = new Array();
 
-jQuery(window).load(function() {
+jQuery(document).ready(function() {
 
 	// preload the current state of the HTML for any conditional elements that are currently displayed, so we can compare against what we get back when their conditions change
 	var conditionalElements = new Array('".implode("', '",array_keys($conditionalElements))."');
-	var governedElements = new Array();
-	var relevantElements = new Array();
-	var oneToOneElements = new Array();
-	";
+";
 	$topKey = 0;
 	$relevantElementArray = array();
 	foreach($governingElements as $thisGoverningElement=>$theseGovernedElements) {
@@ -3088,20 +3089,28 @@ jQuery(window).load(function() {
     foreach(array_keys($conditionalElements) as $ce) {
         print "assignConditionalHTML('".$ce."', jQuery('#formulize-".$ce."').html());\n";
     }
-	print "
 
-	jQuery(\"[name='".implode("'], [name='", array_keys($governingElements))."']\").live('change', function() { // live is necessary because it will bind events to the right DOM elements even after they've been replaced by ajax events
-		for(key in governedElements[jQuery(this).attr('name')]) {
-			var handle = governedElements[jQuery(this).attr('name')][key];
-			elementValuesForURL = getRelevantElementValues(relevantElements[handle]);
-			if(oneToOneElements[handle]['onetoonefrid']) {
-				elementValuesForURL = elementValuesForURL + '&onetoonekey=1&onetoonefrid='+oneToOneElements[handle]['onetoonefrid']+'&onetoonefid='+oneToOneElements[handle]['onetoonefid']+'&onetooneentries='+oneToOneElements[handle]['onetooneentries']+'&onetoonefids='+oneToOneElements[handle]['onetoonefids'];			
-			}
-			checkCondition(handle, conditionalHTML[handle], elementValuesForURL);	
-		}
-	});
-});
+    foreach(array_keys($governingElements) as $ge) {
+        //print "jQuery('#formulize-".$ge."').on('change', '#".$ge."', function() {
+        print "jQuery(document).on('change', '#".$ge."', function() {
+    callCheckCondition(jQuery(this).attr('name'));
+});\n";
+    }
 
+// end the document ready and continue with functions    
+print "});
+
+function callCheckCondition(name) {
+    for(key in governedElements[name]) {
+        var handle = governedElements[name][key];
+        elementValuesForURL = getRelevantElementValues(relevantElements[handle]);
+        if(oneToOneElements[handle]['onetoonefrid']) {
+            elementValuesForURL = elementValuesForURL + '&onetoonekey=1&onetoonefrid='+oneToOneElements[handle]['onetoonefrid']+'&onetoonefid='+oneToOneElements[handle]['onetoonefid']+'&onetooneentries='+oneToOneElements[handle]['onetooneentries']+'&onetoonefids='+oneToOneElements[handle]['onetoonefids'];			
+        }
+        checkCondition(handle, conditionalHTML[handle], elementValuesForURL);	
+    }
+}     
+ 
 function assignConditionalHTML(handle, html) {
 	conditionalHTML[handle] = html; 
 }

@@ -1164,6 +1164,7 @@ class formulizeElementRenderer{
         if(!$autocompleteIncluded AND !$validationOnly) {
             // setup separate instance of jquery for use for this purpose only
             // jq3 should be what we want to work with and original jquery features will be unaffected?? -- really we should upgrade everything to latest jqueries!!!
+            // this approach ensures that we get the jquery ui features we want, without interfering with whatever else might be going on in the site
             $output .= "<script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js'></script>\n";
             $output .= "<script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js'></script>\n";
             $output .= "<link rel='stylesheet' href='https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css'>\n";
@@ -1182,6 +1183,7 @@ class formulizeElementRenderer{
         $ele_value = $this->_ele->getVar('ele_value');
         $allow_new_values = isset($ele_value[16]) ? $ele_value[16] : 0;
         // setup the autocomplete, and make it pass the value of the selected item into the hidden element
+        // note reference to master jQuery not jq3 in order to cause the change event to affect the normal scope of javascript in the page. Very funky!
         $output .= "<script type='text/javascript'>
         
         jq3(window).load(function() {
@@ -1193,11 +1195,11 @@ class formulizeElementRenderer{
                     event.preventDefault();
                     if(ui.item.value != 'none') {
                         jq3('#".$form_ele_id."_user').val(ui.item.label);   
-                        jq3('#".$form_ele_id."').val(ui.item.value);
+                        jQuery('#".$form_ele_id."').val(ui.item.value).trigger('change');
                         ".$form_ele_id."_clearbox = false;
                     } else {
                         jq3('#".$form_ele_id."_user').val('');
-                        jq3('#".$form_ele_id."').val(ui.item.value);
+                        jQuery('#".$form_ele_id."').val(ui.item.value).trigger('change');
                     }
                 },
                 focus: function( event, ui ) {
