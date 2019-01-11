@@ -1074,8 +1074,9 @@ function checkForLinks($frid, $fids, $fid, $entries, $unified_display=false, $un
     }
 
     // get MANY-TO-ONE links
-    $many_q3 = q("SELECT fl_form1_id, fl_key1, fl_key2, fl_common_value FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_form2_id = $fid AND fl_relationship = 2 AND fl_frame_id = $frid $unified_display $unified_delete");
-    $many_q4 = q("SELECT fl_form2_id, fl_key1, fl_key2, fl_common_value FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_form1_id = $fid AND fl_relationship = 3 AND fl_frame_id = $frid $unified_display $unified_delete");
+    // put in exclusion for links from a form to itself, since those will have been found above, and we want to assume such connections are normal one-to-many style...if picked up here, they will result in a one-to-one style and in that case it would make no sense?!
+    $many_q3 = q("SELECT fl_form1_id, fl_key1, fl_key2, fl_common_value FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_form2_id = $fid AND fl_relationship = 2 AND fl_frame_id = $frid AND fl_form2_id != fl_form1_id $unified_display $unified_delete");
+    $many_q4 = q("SELECT fl_form2_id, fl_key1, fl_key2, fl_common_value FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_form1_id = $fid AND fl_relationship = 3 AND fl_frame_id = $frid AND fl_form2_id != fl_form1_id $unified_display $unified_delete");
 
     foreach ($many_q3 as $res1) {
         $many_to_one[$indexer]['fid'] = $res1['fl_form1_id'];
@@ -4931,7 +4932,7 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
         if (is_numeric($curlyBracketForm)) {
             $curlyBracketForm = $form_handler->get($curlyBracketForm);
         }
-        $targetFormObject = $form_handler->get($targetFormId);
+        $targetFormObject = $form_handler->get($targetFormId, true); // true forces inclusion of all element types
         $element_handler = xoops_getmodulehandler('elements', 'formulize');
         $targetFormElementTypes = $targetFormObject->getVar('elementTypes');
         $targetAlias .= $targetAlias ? "." : ""; // add a period to the end of the alias, if there is one, so it will work in the sql statement

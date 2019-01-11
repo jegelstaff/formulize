@@ -621,6 +621,16 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
            $joinText = ""; // not "new" variables persist (with .= operator)
            $existsJoinText = "";
            foreach($linkformids as $id=>$linkedFid) {
+            
+            // ignore recursive connections if...
+            // 1. they are not 'parent' connections
+            // or 2. we are looking for a single entry in the main form, and it is not the same as an entry we just submitted
+            // THIS MEANS WE CANNOT HAVE RECURSIVE ONE-TO-ONE CONNECTIONS!
+            // Probably for the best? would there be some kind of silly looping going on there?
+            if($linkedFid == $fid AND (!$linkisparent[$id] OR (isset($_POST['ventry']) AND is_numeric($filter) AND $_POST['ventry'] != $filter))) {
+                continue;
+            }
+            
 	       // validate that the join conditions are valid...either both must have a value, or neither must have a value (match on user id)...otherwise the join is not possible
 	       if(($joinHandles[$linkselfids[$id]] AND $joinHandles[$linktargetids[$id]]) OR ($linkselfids[$id] == '' AND $linktargetids[$id] == '')) { 
 		   
