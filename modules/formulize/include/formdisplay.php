@@ -111,7 +111,7 @@ class formulize_themeForm extends XoopsThemeForm {
 			$js .= "\n<!-- Start Form Validation JavaScript //-->\n<script type='text/javascript'>\n<!--//\n";
 		}
 		$formname = $this->getName();
-		$js .= "function xoopsFormValidate_{$formname}() { myform = window.document.{$formname};\n";
+		$js .= "function xoopsFormValidate_{$formname}(leave) { myform = window.document.{$formname};\n";
 		$js .= $this->_drawValidationJS($skipConditionalCheck);
 		$js .= "\nreturn true;\n}\n";
 		if ( $withtags ) {
@@ -947,7 +947,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			}
 			
 			// saving message
-			print "<div id=savingmessage style=\"display: none; position: absolute; width: 100%; right: 0px; text-align: center; padding-top: 50px;\">\n";
+			print "<div id=savingmessage style=\"display: none; position: absolute; width: 100%; right: 0px; text-align: center; padding-top: 50px; z-index: 100;\">\n";
 			global $xoopsConfig;
 			if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/images/saving-".$xoopsConfig['language'].".gif") ) {
 				print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/saving-" . $xoopsConfig['language'] . ".gif\">\n";
@@ -2750,7 +2750,7 @@ print "\n<script type='text/javascript'>\n";
 
 print " initialize_formulize_xhr();\n";
 print " var formulizechanged=0;\n";
-print " var formulize_xhr_returned_check_for_unique_value = 'notreturned';\n";
+print " var formulize_xhr_returned_check_for_unique_value = new Array();\n";
 
 if(isset($GLOBALS['formulize_fckEditors'])) {
 	print "function FCKeditor_OnComplete( editorInstance ) { \n";
@@ -2823,7 +2823,7 @@ function validateAndSubmit(leave) {
 <?php
 if(!$nosave) { // need to check for add or update permissions on the current user and this entry before we include this javascript, otherwise they should not be able to save the form
 ?>
-	var validate = xoopsFormValidate_formulize();
+	var validate = xoopsFormValidate_formulize(leave);
 	// this is an optional form validation function which can be provided by a screen template or form text element
 	if (window.formulizeExtraFormValidation && typeof(window.formulizeExtraFormValidation) === 'function') {
 		validate = window.formulizeExtraFormValidation();
@@ -2845,12 +2845,9 @@ if(!$nosave) { // need to check for add or update permissions on the current use
         }
         jQuery('#yposition').val(jQuery(window).scrollTop());
         if (formulizechanged) {
-            window.document.getElementById('formulizeform').style.opacity = 0.5;
-            window.document.getElementById('savingmessage').style.display = 'block';
-            window.scrollTo(0,0);
-            formulizechanged = 0; // don't want to trigger the beforeunload warning
+            showSavingGraphic();
         }
-        if (leave) {
+        if (leave=='leave') {
             jQuery('#save_and_leave').val(1);
         }
         window.document.formulize.submit();
@@ -2858,6 +2855,19 @@ if(!$nosave) { // need to check for add or update permissions on the current use
 <?php
 } // end of if not $nosave
 ?>
+}
+
+function showSavingGraphic() {
+    window.document.getElementById('formulizeform').style.opacity = 0.5;
+    window.document.getElementById('savingmessage').style.opacity = 1;
+    window.document.getElementById('savingmessage').style.display = 'block';
+    window.scrollTo(0,0);
+    formulizechanged = 0; // don't want to trigger the beforeunload warning
+}
+
+function hideSavingGraphic() {
+    window.document.getElementById('formulizeform').style.opacity = 1;
+    window.document.getElementById('savingmessage').style.display = 'none';
 }
 
 <?php

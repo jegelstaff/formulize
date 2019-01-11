@@ -5190,8 +5190,9 @@ function initialize_formulize_xhr() {
 function formulize_xhr_return(op,params,response) {
     // check that this is a valid operation we know how to handle
     if (op == 'check_for_unique_value') {
-        formulize_xhr_returned_check_for_unique_value = response;
-        validateAndSubmit();
+        response = JSON.parse(response);
+        window.formulize_xhr_returned_check_for_unique_value[response.key] = response.val;
+        validateAndSubmit(response.leave);
     } else if (op == 'get_element_html') {
         return renderElementHtml(response,params);
     } else if (op == 'get_element_value') {

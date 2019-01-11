@@ -194,10 +194,11 @@ class formulizeElementRenderer{
 						$form_ele->customValidationCode[] = "window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n";
 						$form_ele->customValidationCode[] = "}\n";
 					}
-					$form_ele->customValidationCode[] = "if(formulize_xhr_returned_check_for_unique_value != 'notreturned') {\n"; // a value has already been returned from xhr, so let's check that out...
-					$form_ele->customValidationCode[] = "if(formulize_xhr_returned_check_for_unique_value != 'valuenotfound') {\n"; // request has come back, form has been resubmitted, but the check turned up postive, ie: value is not unique, so we have to halt submission , and reset the check for unique flag so we can check again when the user has typed again and is ready to submit
+                    $form_ele->customValidationCode[] = "if(\"{$eltname}\" in formulize_xhr_returned_check_for_unique_value && formulize_xhr_returned_check_for_unique_value[\"{$eltname}\"] != 'notreturned') {\n"; // a value has already been returned from xhr, so let's check that out...
+					$form_ele->customValidationCode[] = "if(\"{$eltname}\" in formulize_xhr_returned_check_for_unique_value && formulize_xhr_returned_check_for_unique_value[\"{$eltname}\"] != 'valuenotfound') {\n"; // request has come back, form has been resubmitted, but the check turned up postive, ie: value is not unique, so we have to halt submission , and reset the check for unique flag so we can check again when the user has typed again and is ready to submit
 					$form_ele->customValidationCode[] = "window.alert(\"{$eltmsgUnique}\");\n";
-					$form_ele->customValidationCode[] = "formulize_xhr_returned_check_for_unique_value = 'notreturned'\n";
+                    $form_ele->customValidationCode[] = "hideSavingGraphic();\n";
+					$form_ele->customValidationCode[] = "delete formulize_xhr_returned_check_for_unique_value.{$eltname};\n"; // unset this key
 					$form_ele->customValidationCode[] = "myform.{$eltname}.focus();\n return false;\n";
 					$form_ele->customValidationCode[] = "}\n";
 					$form_ele->customValidationCode[] = "} else {\n";	 // do not submit the form, just send off the request, which will trigger a resubmission after setting the returned flag above to true so that we won't send again on resubmission
@@ -206,7 +207,9 @@ class formulizeElementRenderer{
 					$form_ele->customValidationCode[] = "formulize_xhr_params[1] = ".$this->_ele->getVar('ele_id').";\n";
 					$xhr_entry_to_send = is_numeric($entry) ? $entry : 0;
 					$form_ele->customValidationCode[] = "formulize_xhr_params[2] = ".$xhr_entry_to_send.";\n";
+                    $form_ele->customValidationCode[] = "formulize_xhr_params[4] = leave;\n"; // will have been passed in to the main function and we need to preserve it after xhr is done
 					$form_ele->customValidationCode[] = "formulize_xhr_send('check_for_unique_value', formulize_xhr_params);\n";
+                    $form_ele->customValidationCode[] = "showSavingGraphic();\n";
 					$form_ele->customValidationCode[] = "return false;\n"; 
 					$form_ele->customValidationCode[] = "}\n";
 				} elseif($this->_ele->getVar('ele_req') AND !$isDisabled) {

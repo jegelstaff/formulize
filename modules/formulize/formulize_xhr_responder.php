@@ -71,6 +71,7 @@ switch($op) {
     $value = $_GET['param1'];
     $element = $_GET['param2'];
     $entry = $_GET['param3'];
+    $leave = $_GET['param4'];
 
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
     $elementObject = $element_handler->get($element);
@@ -79,12 +80,12 @@ switch($op) {
       $data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
       $entry_id = $data_handler->findFirstEntryWithValue($element, $value);
       if(is_numeric($entry_id) AND $entry_id != $entry) {
-        print 'valuefound';
+        print json_encode(array('val'=>'valuefound', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
       } else {
-        print 'valuenotfound';
+        print json_encode(array('val'=>'valuenotfound', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
       }
     } else {
-      print 'invalidelement';
+      print json_encode(array('val'=>'invalidelement', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
     }
     break;
 
