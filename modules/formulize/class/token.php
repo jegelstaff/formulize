@@ -90,7 +90,9 @@ class formulizeTokenHandler {
 
         if($key AND isset($cachedKeys[$key])) {
             return $cachedKeys[$key];
-        } elseif($key) {
+        } elseif($key=="all") {
+            return $cachedKeys;
+        } else {
             return false;
         }
         if(count($cachedKeys)>0) {
