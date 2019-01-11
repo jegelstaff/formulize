@@ -4749,9 +4749,9 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 					$one_search = $searchgetkey;
 					$operator = "";
 				} elseif(isset($_POST[$searchgetkey]) OR isset($_GET[$searchgetkey])) {
-					$one_search = $_POST[$searchgetkey] ? htmlspecialchars(strip_tags(trim($_POST[$searchgetkey])), ENT_QUOTES) : "";
-					$one_search = (!$one_search AND $_GET[$searchgetkey]) ? htmlspecialchars(strip_tags(trim($_GET[$searchgetkey])), ENT_QUOTES) : $one_search;
-					if(!$one_search) {
+                    $one_search = isset($_POST[$searchgetkey]) ? htmlspecialchars(strip_tags(trim($_POST[$searchgetkey])), ENT_QUOTES) : "";
+					$one_search = ($one_search==="" AND isset($_GET[$searchgetkey])) ? htmlspecialchars(strip_tags(trim($_GET[$searchgetkey])), ENT_QUOTES) : $one_search;
+					if($one_search==="") {
 						continue;
 					}
 				} elseif($searchgetkey) { // we were supposed to find something above, but did not, so there is a user defined search term, which has no value, ergo disregard this search term
