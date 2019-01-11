@@ -167,24 +167,24 @@ function prepvalues($value, $field, $entry_id) {
                 if ($second_source_ele_value = formulize_isLinkedSelectBox($handle, true)) {
                     $secondSourceMeta = explode("#*=:*", $second_source_ele_value[2]);
                     $secondFormObject = $form_handler->get($secondSourceMeta[0]);
-                    $sql = "SELECT t1.`".$secondSourceMeta[1]."` FROM ".DBPRE."formulize_".$secondFormObject->getVar('form_handle').
+                    $sql = "SELECT t1.`".$secondSourceMeta[1]."`, t1.entry_id FROM ".DBPRE."formulize_".$secondFormObject->getVar('form_handle').
                         " as t1, ".DBPRE."formulize_".$sourceFormObject->getVar('form_handle'). " as t2 WHERE t2.`entry_id` IN (".trim($value, ",").
                         ") AND t1.`entry_id` IN (TRIM(',' FROM t2.`".$handle."`)) ORDER BY t2.`entry_id`";
                     if(!$res = $xoopsDB->query($sql)) {
-                        print "Error: could not retrieve the source values for a linked linked selectbox ($field) during data extraction for entry number $entry_id.  SQL:<br>$sql<br>";
+                        print "Error: could not retrieve the source values for a LINKED LINKED selectbox ($field) during data extraction for entry number $entry_id.  SQL:<br>$sql<br>";
                     } else {
                         $row = $xoopsDB->fetchRow($res);
-                        $linkedvalue = prepvalues($row[0], $handle, $entry_id);
-                        $query_columns[] = "'".formulize_db_escape($linkedvalue[0])."'";
+                        $linkedvalue = prepvalues($row[0], $secondSourceMeta[1], $row[1]); // prep the source value we found, based on its own handle, and the entry id it belongs to
+                        $query_columns[] = "'".formulize_db_escape($linkedvalue[0])."'"; // use the literal value of the ultimate source (after prep) as a value we're selecting. This will be added to the SELECT below, in case there is more than one field being gathered (because of alternative values). This way, a mix of links to links, and actual fields can work within the same query when alternative values are in effect.
                     }
                 } else {
-                    $query_columns[] = "`$handle`";
+                    $query_columns[] = "`$handle`"; // not a link to a link, so we can include the field normally and select whatever its value is
                 }
             }
             $sql = "SELECT ".implode(", ", $query_columns)." FROM ".DBPRE."formulize_".$sourceFormObject->getVar('form_handle').
                 " WHERE entry_id IN (".trim($value, ",").") ORDER BY entry_id";
             if(!$res = $xoopsDB->query($sql)) {
-                print "Error: could not retrieve the source values for a linked selectbox during data extraction for entry number $entry_id.  SQL:<br>$sql<br>";
+                print "Error: could not retrieve the source values for a linked selectbox (for $field) during data extraction for entry number $entry_id.  SQL:<br>$sql<br>";
             } else {
                 $value = "";
                 while($row = $xoopsDB->fetchRow($res)) {
