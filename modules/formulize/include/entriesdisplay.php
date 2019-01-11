@@ -4205,7 +4205,7 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 
 // THIS FUNCTION PROCESSES THE REQUESTED BUTTONS AND GENERATES HTML PLUS SENDS BACK INFO ABOUT THAT BUTTON
 // $caid is the id of this button, $thisCustomAction is all the settings for this button, $entries is optional and is a comma separated list of entries that should be modified by this button (only takes effect on inline buttons, and possible future types)
-// $entries is the entry ID that should be altered when this button is clicked.  Only sent for inline buttons.
+// $entries is the entry ID that should be altered when this button is clicked.  Only sent for inline buttons.  Looks like it is only ever a single ID of the main entry of the line where the button was clicked?
 // $entry is only sent from inline buttons, so that any PHP/HTML to be rendered inline has access to all the values of the current entry
 function processCustomButton($caid, $thisCustomAction, $entries="", $entry="") {
 
@@ -4235,15 +4235,19 @@ function processCustomButton($caid, $thisCustomAction, $entries="", $entry="") {
 		$caActions[] = $effectProperties['action'];
 		$caValues[] = $effectProperties['value'];
 		$caPHP[] = isset($effectProperties['code']) ? $effectProperties['code'] : "";
-		$caHTML[] = isset($effectProperties['html']) ? $effectProperties['html'] : "";
+		$caHTML[$caid.'...'.$effectid.'...'.$entries] = isset($effectProperties['html']) ? $effectProperties['html'] : "";
 		$isHTML = isset($effectProperties['html']) ? true : $isHTML;
 	}
-	if($isHTML) { // code to be rendered in place
+	if($isHTML AND $entry) { // code to be rendered in place
+        static $cachedCAHTML = array(); // this function is called a few times...we want to generate the HTML only once
 		$allHTML = "";
-		foreach($caHTML as $thisHTML) {
+		foreach($caHTML as $key=>$thisHTML) {
+            if(!isset($cachedCAHTML[$key])) {
 			ob_start();
 			eval($thisHTML);
-			$allHTML .= ob_get_clean();
+                $cachedCAHTML[$key] = ob_get_clean();
+            }
+            $allHTML .= $cachedCAHTML[$key];
 		}
 		$caCode = $allHTML;
 	} else {
