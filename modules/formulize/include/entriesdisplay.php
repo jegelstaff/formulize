@@ -4773,7 +4773,9 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 				$one_search = str_replace("{USERNAME}", htmlspecialchars_decode($xoopsUser->getVar('uname'), ENT_QUOTES), $one_search);
 			}
 
-
+            if(isset($GLOBALS['formulize_searchOperatorOverride'][$key])) {
+                $operator = $GLOBALS['formulize_searchOperatorOverride'][$key];
+            }
 			if($operator) {
 				$one_search = $one_search . "/**/" . $operator;
 			}
