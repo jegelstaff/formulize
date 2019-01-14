@@ -65,7 +65,7 @@ class icms_view_Tpl extends Smarty {
 				$this->debugging = true;
 			}
 		}
-		$this->Smarty();
+		parent::__construct();
 		if (defined('_ADM_USE_RTL') && _ADM_USE_RTL) {
 			$this->assign('icms_rtl', true);
 		}

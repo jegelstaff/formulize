@@ -109,6 +109,25 @@ class icms_db_legacy_PdoDatabase extends icms_db_legacy_Database {
 			return true;
 		}
 	}
+    
+    public function queryFromFile($file) {
+        if (false !== ($fp = fopen($file, 'r'))) {
+			$sql_queries = trim(fread($fp, filesize($file)));
+            $sqlutil = new icms_db_legacy_mysql_Utility();
+			$sqlutil->splitMySqlFile($pieces, $sql_queries);
+			foreach ($pieces as $query) {
+				// [0] contains the prefixed query
+				// [4] contains unprefixed table name
+				$prefixed_query = $sqlutil->prefixQuery(trim($query), $this->prefix());
+				if ($prefixed_query != false) {
+					$this->query($prefixed_query[0]);
+				}
+			}
+			return true;
+		}
+		return false;
+    }
+    
 
 }
 

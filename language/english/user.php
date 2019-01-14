@@ -206,7 +206,7 @@ define('_US_MULTLOGIN', 'It was not possible to login on the site!! <br />
          - You left the site or close the browser window without clicking the logout button.<br />
         </p>
         Wait a few minutes and try again later. If the problems still persists contact the site administrator.');
-define("_US_OPENID_LOGIN", "Login with your OpenID");
+define("_US_OPENID_LOGIN", "Login with Google");
 define("_US_OPENID_URL", "Your OpenID URL:");
 define("_US_OPENID_NORMAL_LOGIN", "Go back to normal login");
 ?>

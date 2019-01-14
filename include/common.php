@@ -29,6 +29,7 @@ if (!isset($xoopsOption)) $xoopsOption = array();
 require_once ICMS_LIBRARIES_PATH . "/icms.php";
 icms::setup();
 icms::boot();
+
 // -- Easiest ML by Gijoe (no longer needed here)
 
 // Disable gzip compression if PHP is run under CLI mode
@@ -95,4 +96,3 @@ if ($icmsConfigPersona['multi_login']) {
 
 // -- finalize boot process
 icms::$preload->triggerEvent('finishCoreBoot');
-

@@ -51,7 +51,6 @@ class icms_config_Handler {
 		$GLOBALS['icmsConfigPlugins']    = $configs[ICMS_CONF_PLUGINS];
 		$GLOBALS['icmsConfigCaptcha']    = $configs[ICMS_CONF_CAPTCHA];
 		$GLOBALS['icmsConfigSearch']     = $configs[ICMS_CONF_SEARCH];
-        
 		return self::$instance = $instance;
 	}
 
@@ -206,7 +205,7 @@ class icms_config_Handler {
 		if (is_array($category)) {
 			$criteria = new icms_db_criteria_Compo(new icms_db_criteria_Item('conf_modid', (int) $module));
 			$criteria->add(new icms_db_criteria_Item('conf_catid', '(' . implode(',', $category) . ')', 'IN'));
-			$configs = $this->getConfigs($criteria, true);
+            $configs = $this->getConfigs($criteria, true);
 			if (is_array($configs)) {
 				foreach ( array_keys($configs) as $i) {
 					$ret[$configs[$i]->getVar('conf_catid')][$configs[$i]->getVar('conf_name')] = $configs[$i]->getConfValueForOutput();

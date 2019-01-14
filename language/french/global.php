@@ -163,9 +163,9 @@ define('_DAYS', '%s jours');
 define('_WEEK', '1 semaine');
 define('_MONTH', '1 mois');
 
-define("_DATESTRING","j F Y");
+define("_DATESTRING","Y-m-d");
 define("_MEDIUMDATESTRING","G:i, j F Y");
-define("_SHORTDATESTRING","j F Y");
+define("_SHORTDATESTRING","Y-m-d");
 /*
 The following characters are recognized in the format string:
 a - "am" or "pm"
@@ -267,5 +267,8 @@ define('_MODABOUT_ABOUT', '&Agrave; propos de');
 define('_PDF_LOCAL_FONT', '');
 define('_CALENDAR_TYPE','gregorian'); //cette valeur est pour le calendrier local Java utilis� dans ce syst�me, si vous n'�tes pas s�r , laissez cette valeur comme elle est !
 
-define('_RETRYPOST','D&eacute;sol&eacute;, un temps mort a eu lieu. Voulez-vous post&eacute; de nouveau ?'); 
-?>
+define('_RETRYPOST','D&eacute;sol&eacute;, un temps mort a eu lieu. Voulez-vous post&eacute; de nouveau ?');
+
+// ADDED BY FREEFORM SOLUTIONS FOR THE DATE DEFAULT CHANGES IN FORMULIZE STANDALONE
+define("_DATE_DEFAULT", "AAAA-mm-jj");
+define("_CAL_MONDAYFIRST", "false");

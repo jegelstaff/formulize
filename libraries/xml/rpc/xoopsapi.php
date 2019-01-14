@@ -250,9 +250,9 @@ class XoopsApi extends XoopsXmlRpcApi
 		} else {
 			include_once ICMS_ROOT_PATH.'/modules/news/class/class.newsstory.php';
 			if (isset($this->params[4]) && (int) ($this->params[4]) > 0) {
-				$stories =& NewsStory::getAllPublished( (int) ($this->params[3]), 0, $this->params[4]);
+				$stories = NewsStory::getAllPublished( (int) ($this->params[3]), 0, $this->params[4]);
 			} else {
-				$stories =& NewsStory::getAllPublished( (int) ($this->params[3]));
+				$stories = NewsStory::getAllPublished( (int) ($this->params[3]));
 			}
 			$scount = count($stories);
 			$ret = array();

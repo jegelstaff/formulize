@@ -36,8 +36,8 @@ class icms_form_elements_Date extends icms_form_elements_Text {
 		// ALTERED BY FREEFORM SOLUTIONS FOR THE DATE DEFAULT CHANGES IN FORMULIZE STANDALONE
 		if($value === "") {
 			$value = _DATE_DEFAULT;
-		} elseif(ereg_replace("[^A-Z{}]","", $value) === "{TODAY}") { // check for {TODAY}, {TODAY-14} etc
-			$number = ereg_replace("[^0-9+-]","", $value);
+		} elseif(preg_replace("[^A-Z{}]","", $value) === "{TODAY}") { // check for {TODAY}, {TODAY-14} etc
+			$number = preg_replace("[^0-9+-]","", $value);
 			$value = mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")); 
 		} elseif(!is_numeric($value)) {
 			$value = time();
@@ -114,11 +114,17 @@ var datepicker_defaults = {
     buttonText: "Calendar"
 };
 
-jQuery(document).ready(function() {
+function loadFormulizeDatepicker(){
     jQuery.datepicker.setDefaults(datepicker_defaults);
-    jQuery(function() {
         jQuery(".icms-date-box").datepicker();
-    });
+}
+
+jQuery(document).ready(function() {
+    if(jQuery.datepicker === undefined) {
+        setTimeout(loadFormulizeDatepicker, 1000); // hail mary, wait for a second if jQuery UI isn't finished loading??
+    } else {
+        loadFormulizeDatepicker();
+    }
 });
 </script>
 EOF;

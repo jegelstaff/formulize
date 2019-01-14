@@ -20,17 +20,17 @@
  *
  * For questions, help, comments, discussion, etc., please join the
  * Smarty mailing list. Send a blank e-mail to
- * smarty-discussion-subscribe@googlegroups.com 
+ * smarty-discussion-subscribe@googlegroups.com
  *
  * @link http://www.smarty.net/
  * @copyright 2001-2005 New Digital Group, Inc.
  * @author Monte Ohrt <monte at ohrt dot com>
  * @author Andrei Zmievski <andrei@php.net>
  * @package Smarty
- * @version 2.6.26
+ * @version 2.6.30
  */
 
-/* $Id: Smarty.class.php 3163 2009-06-17 14:39:24Z monte.ohrt $ */
+/* $Id$ */
 
 /**
  * DIR_SEP isn't used anymore, but third party apps might
@@ -465,7 +465,7 @@ class Smarty
      *
      * @var string
      */
-    var $_version              = '2.6.26';
+    var $_version              = '2.6.30';
 
     /**
      * current template inclusion depth
@@ -562,11 +562,17 @@ class Smarty
      */
     var $_cache_including = false;
 
+    /**
+     * plugin filepath cache
+     *
+     * @var array
+     */
+    var $_filepaths_cache = array();
     /**#@-*/
     /**
      * The class constructor.
      */
-    function Smarty()
+    public function __construct()
     {
       $this->assign('SCRIPT_NAME', isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME']
                     : @$GLOBALS['HTTP_SERVER_VARS']['SCRIPT_NAME']);
@@ -1058,7 +1064,7 @@ class Smarty
         } else {
             // var non-existant, return valid reference
             $_tmp = null;
-            return $_tmp;   
+            return $_tmp;
         }
     }
 
@@ -1090,7 +1096,8 @@ class Smarty
      */
     function trigger_error($error_msg, $error_type = E_USER_WARNING)
     {
-        trigger_error("Smarty error: $error_msg", $error_type);
+        $msg = htmlentities($error_msg);
+        trigger_error("Smarty error: $msg", $error_type);
     }
 
 
@@ -1116,9 +1123,8 @@ class Smarty
      */
     function fetch($resource_name, $cache_id = null, $compile_id = null, $display = false)
     {
-        
         static $_cache_info = array();
-        
+
         $_smarty_old_error_level = $this->debugging ? error_reporting() : error_reporting(isset($this->error_reporting)
                ? $this->error_reporting : error_reporting() & ~E_NOTICE);
 
@@ -1161,8 +1167,6 @@ class Smarty
         $this->_inclusion_depth = 0;
 
         if ($this->caching) {
-            
-
             // save old cache_info, initialize cache_info
             array_push($_cache_info, $this->_cache_info);
             $this->_cache_info = array();
@@ -1246,7 +1250,6 @@ class Smarty
             }
         }
 
-        
         $_smarty_compile_path = $this->_get_compile_path($resource_name);
 
         // if we just need to display the results, don't perform output
@@ -1254,13 +1257,11 @@ class Smarty
         $_cache_including = $this->_cache_including;
         $this->_cache_including = false;
         if ($display && !$this->caching && count($this->_plugins['outputfilter']) == 0) {
-
             if ($this->_is_compiled($resource_name, $_smarty_compile_path)
                     || $this->_compile_resource($resource_name, $_smarty_compile_path))
             {
                 include($_smarty_compile_path);
             }
-
         } else {
             ob_start();
             if ($this->_is_compiled($resource_name, $_smarty_compile_path)
@@ -1298,39 +1299,7 @@ class Smarty
         $this->_cache_including = $_cache_including;
 
         if ($display) {
-            if (isset($_smarty_results)) {
-				##############################################################################################
-				# Code to protect email against spam. All email in the content of the site will be changed		
-				# by TheRplima
-				##############################################################################################
-				global $icmsConfigPersona;
-				if ( $icmsConfigPersona ['email_protect'] != 0 ) {
-					if (preg_match_all ( "/([a-z0-9\-_\.]+?)@([^, \r\n\"\(\)'<>\[\]]+)/i", $_smarty_results, $texto )) {
-						$patterns = array ( );
-						$replacements = array ( );
-						foreach ( $texto [0] as $email ) {
-							if (preg_match_all ( "/mailto(.*?)$email/i", $_smarty_results, $texto1 ) || preg_match_all ( "/value=['\"]$email/i", $_smarty_results, $texto1 ) || preg_match_all ( "/$email(.*?)<\/textarea>/i", $_smarty_results, $texto1 )) { //Dont allow to change the email inside input or textarea form fields
-								continue;
-							}
-							$protection_type = intval($icmsConfigPersona['email_protect']);
-							if($protection_type == 1 && (function_exists ( 'gd_info' ))) {
-							$patterns [] = '/' . $email . '/';
-							$replacements [] = "<img src='" . ICMS_URL . "/include/protection.php?p=" . base64_encode ( urlencode ( $email ) ) . "'>";
-							} // uses gd protection methode.
-							elseif($protection_type == 2 && function_exists ('mcrypt_encrypt') && isset($icmsConfigPersona['recprvkey']) && $icmsConfigPersona['recprvkey'] != '' && isset($icmsConfigPersona['recpubkey']) && $icmsConfigPersona['recpubkey'] != ''){
-							require_once ICMS_LIBRARIES_PATH.'/recaptcha/recaptchalib.php';
-							$patterns [] = '/' . $email . '/';
-							$replacements [] = recaptcha_mailhide_html ($icmsConfigPersona['recpubkey'], $icmsConfigPersona['recprvkey'], $email);;
-							}// using reCaptcha methode
-						}
-						$_smarty_results = preg_replace ( $patterns, $replacements, $_smarty_results );
-					}
-				}
-				##############################################################################################
-				# Fim
-				##############################################################################################	
-            echo $_smarty_results;
-            }
+            if (isset($_smarty_results)) { echo $_smarty_results; }
             if ($this->debugging) {
                 // capture time for debugging info
                 $_params = array();
@@ -1343,39 +1312,7 @@ class Smarty
             return;
         } else {
             error_reporting($_smarty_old_error_level);
-            if (isset($_smarty_results)) {
-				##############################################################################################
-				# Code to protect email against spam. All email in the content of the site will be changed		
-				# by TheRplima
-				##############################################################################################
-				global $icmsConfigPersona;
-				if ( $icmsConfigPersona ['email_protect'] != 0 ) {
-					if (preg_match_all ( "/([a-z0-9\-_\.]+?)@([^, \r\n\"\(\)'<>\[\]]+)/i", $_smarty_results, $texto )) {
-						$patterns = array ( );
-						$replacements = array ( );
-						foreach ( $texto [0] as $email ) {
-							if (preg_match_all ( "/mailto(.*?)$email/i", $_smarty_results, $texto1 ) || preg_match_all ( "/value=['\"]$email/i", $_smarty_results, $texto1 ) || preg_match_all ( "/$email(.*?)<\/textarea>/i", $_smarty_results, $texto1 )) { //Dont allow to change the email inside input or textarea form fields
-								continue;
-							}
-							$protection_type = intval($icmsConfigPersona['email_protect']);
-							if($protection_type == 1 && (function_exists ( 'gd_info' ))) {
-							$patterns [] = '/' . $email . '/';
-							$replacements [] = "<img src='" . ICMS_URL . "/include/protection.php?p=" . base64_encode ( urlencode ( $email ) ) . "'>";
-							} // uses gd protection methode.
-							elseif($protection_type == 2 && function_exists ('mcrypt_encrypt') && isset($icmsConfigPersona['recprvkey']) && $icmsConfigPersona['recprvkey'] != '' && isset($icmsConfigPersona['recpubkey']) && $icmsConfigPersona['recpubkey'] != ''){
-							require_once ICMS_LIBRARIES_PATH.'/recaptcha/recaptchalib.php';
-							$patterns [] = '/' . $email . '/';
-							$replacements [] = recaptcha_mailhide_html ($icmsConfigPersona['recpubkey'], $icmsConfigPersona['recprvkey'], $email);;
-							}// using reCaptcha methode
-						}
-						$_smarty_results = preg_replace ( $patterns, $replacements, $_smarty_results );
-					}
-				}
-				##############################################################################################
-				# Fim
-				##############################################################################################	
-				return $_smarty_results;
-			}
+            if (isset($_smarty_results)) { return $_smarty_results; }
         }
     }
 
@@ -1843,10 +1780,7 @@ class Smarty
                 return @unlink($resource);
             }
         } else {
-            if (file_exists($resource)) {
-                return @unlink($resource);
-            }
-            return true;
+            return @unlink($resource);
         }
     }
 
@@ -2006,10 +1940,10 @@ class Smarty
     {
         return eval($code);
     }
-    
+
     /**
      * Extracts the filter name from the given callback
-     * 
+     *
      * @param callback $function
      * @return string
      */
@@ -2024,7 +1958,7 @@ class Smarty
 			return $function;
 		}
 	}
-  
+
     /**#@-*/
 
 }

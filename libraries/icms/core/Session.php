@@ -40,6 +40,75 @@ class icms_core_Session {
 		// ADDED CODE BY FREEFORM SOLUTIONS, SUPPORTING INTEGRATION WITH OTHER SYSTEMS
 		// If this is a page load by another system, and we're being included, then we establish the user session based on the user id of the user in effect in the other system
 		// This approach assumes correspondence between the user ids.
+		
+        include_once ICMS_ROOT_PATH . '/include/functions.php';
+		include_once ICMS_ROOT_PATH . '/modules/formulize/include/functions.php';
+        
+        // Also listens for a code from Google in the URL
+        //if google user logged in and redirected to this page
+		if (isset($_GET['code'])) {
+            $user_handler = icms::handler("icms_member");
+               
+            //Get a google client object and send Client Request for email
+			$client = setupAuthentication();
+            $objOAuthService = new Google_Service_Oauth2($client);
+        
+            //Authenticate code from Google OAuth Flow
+			if(isset($_GET['code']) && isset($_GET['newcode'])){
+				//for the create new user pathway to this session init call
+				$userData["email"] = $_SESSION['email'];
+				//finally guaranteed to be done with these
+				unset($_SESSION['email']);
+				unset($_SESSION['name']);
+			}else if (isset($_GET['code'])){
+				$client->authenticate($_GET['code']);
+				$userData = $objOAuthService->userinfo->get();
+			}
+
+            // start up the integration API
+            include_once XOOPS_ROOT_PATH."/integration_api.php";
+            Formulize::init();
+            
+            // we need to now try and get an the resource mapping of the user if it exists
+            if($internalUid = Formulize::getXoopsResourceID(Formulize::USER_RESOURCE, $userData["email"])) {
+            	 $externalUid = $userData["email"];
+            } else { 
+				// if the mapping did not exist, then we need to create the user
+                // you need to create the $user_data object, it looks like this:
+                $user_data = array(
+                    'uid'				=> 0,
+                    'uname'				=> $account->name,
+                    'login_name'		=> $account->name,
+                    'name'				=> $account->name,
+                    'pass'				=> $account->pass,
+                    'email'				=> $userData["email"],
+                    'timezone_offset'	=> $account->timezone/60/60, //formulize_convert_language
+                    'language'			=> $account->language,
+                    'user_avatar'		=> 'blank.gif',
+                    'theme'				=> 'impresstheme',
+                    'level'				=> 1
+                );
+                //need to make a user object out of the array of data first...createUser expects the object, not the array
+                $user_data = new FormulizeUser($user_data);
+                if( Formulize::createUser($user_data)) {
+                    $externalUid = $userData["email"];
+                } else {
+					// something went wrong creating the user, going to redirect to the create new user page
+					$_SESSION['email'] = $userData["email"];
+					$_SESSION['name'] = $userData["name"];
+					$code = $_GET['code'];
+					//add the google code to session and url and check this on the other end to make sure that they are equal
+					$_SESSION['newuser'] = $code;
+					unset($_GET['code']);
+					$url = XOOPS_URL."/new_user.php?newuser=".$code;
+					header("Location: ".$url);
+                    exit;
+				}
+                
+            }
+    
+        }
+
 		global $user;
 
 		if (isset($GLOBALS['formulizeHostSystemUserId'])) {
