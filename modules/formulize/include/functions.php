@@ -5081,7 +5081,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
             if (!$conditionsFilterComparisonValue) {
                 if ($targetElementEleValue[1]) { // if the target allows multiple selections...
                     $conditionsFilterComparisonValue = " CONCAT('$origlikebits,',(SELECT ss.entry_id FROM ".$xoopsDB->prefix("formulize_".$targetSourceFormObject->getVar('form_handle'))." AS ss WHERE `$targetSourceHandle` ".$filterOps[$filterId].$quotes.$likebits.$filterTermToUse.$likebits.$quotes."),',$origlikebits') ";
-                } elseif($curlyBracketEntry != 'new') {
+                } elseif(substr($filterTerms[$filterId],0,1) != "{" OR substr($filterTerms[$filterId],-1)!="}" OR $curlyBracketEntry != 'new') {
 							    $overrideReturnedOp = "";
 							    if($filterOps[$filterId] == "!=") {
 							      $filterOps[$filterId] = "=";
@@ -5093,7 +5093,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 							      $overrideReturnedOp = "IN";
 							    }
                   $filterOps[$filterId] = $overrideReturnedOp ? $overrideReturnedOp : '=';
-                } else { // can't do a subquery for a 'new' value...return impossible condition
+                } else { // can't do a subquery into a curly bracket form for a 'new' value...return impossible condition
                     $filterOps[$filterId] = '<'; // don't want to trigger other operations below when op is =
                     $filterTerms[$filterId] = "99999999999 AND TRUE AND FALSE"; // need to remove the { } from the term to avoid other processing of the bracketed term
                     $conditionsFilterComparisonValue = $filterTerms[$filterId];
