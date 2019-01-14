@@ -10,7 +10,7 @@
  * @version		SVN: $Id: groupform.php 21374 2011-03-30 13:23:21Z m0nty_ $
  */
 
-$name_text = new icms_form_elements_Text(_AM_NAME, "name", 30, 50, $name_value);
+$name_text = new icms_form_elements_Text(_AM_NAME, "name", 30, 150, $name_value);
 $desc_text = new icms_form_elements_Textarea(_AM_DESCRIPTION, "desc", $desc_value);
 
 $s_cat_checkbox = new icms_form_elements_Checkbox(_AM_SYSTEMRIGHTS, "system_catids[]", $s_cat_value);
