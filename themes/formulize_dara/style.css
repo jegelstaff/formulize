@@ -931,3 +931,7 @@ body > #content {
 .formulize-input-ro_module_full_course_title {
     font-weight: bold;
 }
+
+.appcatspacer {
+    width: 25%;
+}
