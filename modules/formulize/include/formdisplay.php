@@ -1356,6 +1356,7 @@ function writeEntryDefaults($target_fid,$target_entry) {
   $criteria->add(new Criteria('ele_type', 'textarea'), 'OR');
   $criteria->add(new Criteria('ele_type', 'date'), 'OR');
   $criteria->add(new Criteria('ele_type', 'radio'), 'OR');
+  $criteria->add(new Criteria('ele_type', 'yn'), 'OR');
   $elementsForDefaults = $element_handler->getObjects($criteria,$target_fid); // get all the text or textarea elements in the form 
 
   foreach($elementsForDefaults as $thisDefaultEle) {
@@ -1380,6 +1381,14 @@ function writeEntryDefaults($target_fid,$target_entry) {
       case "radio":
         $thisDefaultEleValue = $thisDefaultEle->getVar('ele_value');
         $defaultTextToWrite = array_search(1, $thisDefaultEleValue);
+      case "yn":
+        $thisDefaultEleValue = $thisDefaultEle->getVar('ele_value');
+        if($thisDefaultEleValue["_YES"] == 1) {
+            $defaultTextToWrite = 1;
+        } elseif($thisDefaultEleValue["_NO"] == 1) {
+            $defaultTextToWrite = 2;
+        }
+        
     }
     if($defaultTextToWrite) {
       writeElementValue($target_fid, $thisDefaultEle->getVar('ele_id'), $target_entry, $defaultTextToWrite);
