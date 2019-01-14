@@ -71,6 +71,7 @@ foreach($applicationsToDraw as $aid) {
     if(count($formsToSend)>0) {
         $allAppData[] = array('app_name'=>$app_name, 'noforms'=>0, 'formData'=>$formsToSend);
     }
+    
 }
 
 $xoopsTpl->assign("allAppData", $allAppData);

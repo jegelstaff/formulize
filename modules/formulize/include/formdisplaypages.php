@@ -85,8 +85,10 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	}
 	
 	// formulize_newEntryIds is set when saving data
-	if(!$entry AND isset($GLOBALS['formulize_newEntryIds'][$fid])) {
+	if((!$entry OR $entry == 'new') AND isset($GLOBALS['formulize_newEntryIds'][$fid])) {
 		$entry = $GLOBALS['formulize_newEntryIds'][$fid][0];
+	} elseif(!$entry) {
+        $entry = 'new';
 	}
 	
 	$owner = getEntryOwner($entry, $fid);
@@ -129,7 +131,6 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 				$entry = $entries[$fid][0];
 			}
 			
-			synchSubformBlankDefaults($fid, $entry);
 		}
 	}
 
@@ -142,7 +143,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	// if the conditions are not met, move on to the next page and repeat the condition check
 	// conditions only checked once there is an entry!
 	$pagesSkipped = false;
-	if(is_array($conditions) AND $entry) {
+	if(is_array($conditions) AND $entry != 'new') {
 		$conditionsMet = false;
 		while(!$conditionsMet) {
 			if(isset($conditions[$currentPage]) AND count($conditions[$currentPage][0])>0) { // conditions on the current page
@@ -256,7 +257,6 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 			}
 		}
 	}
-	
 	
 	if($currentPage > 1) {
 	  $previousPage = $currentPage-1; // previous page numerically
@@ -565,6 +565,11 @@ function drawPageNav($usersCanSave="", $currentPage="", $totalPages, $aboveBelow
     $xoopsTpl->assign("currentPage", $currentPage);
     $xoopsTpl->assign("totalPages", $totalPages);
     $xoopsTpl->assign("aboveBelow", $aboveBelow);
+    if($aboveBelow == 'below') {
+        $xoopsTpl->assign("bottom", 'Bottom');
+    } else {
+        $xoopsTpl->assign("bottom", '');
+    }
     $xoopsTpl->assign("nextPageButton", $nextPageButton);
     $xoopsTpl->assign("previousPageButton", $previousPageButton);
     $xoopsTpl->assign("skippedPageMessage", $skippedPageMessage);
@@ -574,7 +579,6 @@ function drawPageNav($usersCanSave="", $currentPage="", $totalPages, $aboveBelow
     $xoopsTpl->assign("_formulize_DMULTI_JUMPTO", _formulize_DMULTI_JUMPTO);
     $xoopsTpl->display("file:".XOOPS_ROOT_PATH."/modules/formulize/templates/multipage-navigation.html");
 }
-
 
 // THIS FUNCTION GENERATES THE MARKUP FOR THE PREVIOUS AND NEXT BUTTONS
 function generatePrevNextButtonMarkup($buttonType, $buttonText, $usersCanSave, $nextPage, $previousPage, $thanksPage) {
@@ -608,13 +612,13 @@ function generatePrevNextButtonMarkup($buttonType, $buttonText, $usersCanSave, $
 
 function pageSelectionList($currentPage, $countPages, $pageTitles, $aboveBelow) {
 
-	static $pageSelectionList = "";
+	static $pageSelectionList = array();
 	
-	if($pageSelectionList) {
-		return $pageSelectionList;
+	if(isset($pageSelectionList[$aboveBelow])) {
+		return $pageSelectionList[$aboveBelow];
 	}
 
-	$pageSelectionList .= "<select name=\"pageselectionlist_$aboveBelow\" id=\"pageselectionlist_$aboveBelow\" size=\"1\" onchange=\"javascript:pageJump(this.form.pageselectionlist_$aboveBelow.options, $currentPage);\">\n";
+	$pageSelectionList[$aboveBelow] .= "<select name=\"pageselectionlist_$aboveBelow\" id=\"pageselectionlist_$aboveBelow\" size=\"1\" onchange=\"javascript:pageJump(this.form.pageselectionlist_$aboveBelow.options, $currentPage);\">\n";
 	for($page=1;$page<=$countPages;$page++) {
 		if(isset($pageTitle[$page]) AND strstr($pageTitles[$page], "[")) {
 			$title = " &mdash; " . trans($pageTitles[$page]); // translation can be expensive, so only do it if we have to (regular expression matching is not pretty)
@@ -623,10 +627,10 @@ function pageSelectionList($currentPage, $countPages, $pageTitles, $aboveBelow) 
 		} else {
 			$title = "";
 		}
-		$pageSelectionList .= "<option value=$page";
-		$pageSelectionList .= $page == $currentPage ? " selected=true>" : ">";
-		$pageSelectionList .= $page . $title . "</option>\n";
+		$pageSelectionList[$aboveBelow] .= "<option value=$page";
+		$pageSelectionList[$aboveBelow] .= $page == $currentPage ? " selected=true>" : ">";
+		$pageSelectionList[$aboveBelow] .= $page . $title . "</option>\n";
 	}
-	$pageSelectionList .= "</select>";
-	return $pageSelectionList;
+	$pageSelectionList[$aboveBelow] .= "</select>";
+	return $pageSelectionList[$aboveBelow];
 }

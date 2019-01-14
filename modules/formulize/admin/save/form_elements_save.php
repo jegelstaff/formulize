@@ -23,7 +23,7 @@
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
 ##  Author of this file: Freeform Solutions                                  ##
-##  URL: http://www.freeformsolutions.ca/formulize                           ##
+##  URL: http://www.formulize.org                           ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
@@ -208,14 +208,14 @@ if($_POST['cloneelement']) {
   $ele_type = $thisElementObject->getVar('ele_type');
   $databaseElement = ($ele_type == "areamodif" OR $ele_type == "ib" OR $ele_type == "sep" OR $ele_type == "subform" OR $ele_type == "grid" OR (property_exists($thisElementObject,'hasData') AND $thisElementObject->hasData == false) ) ? false : true;
   if($databaseElement) {
-    $fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_" . $thisElementObject->getVar('form_handle')) ." LIKE '$oldHandle'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
-      if(!$fieldStateRes = $xoopsDB->query($fieldStateSQL)) {
-          $dataType = "text";
-      } else {
-          $fieldStateData = $xoopsDB->fetchArray($fieldStateRes);
-          $dataType = $fieldStateData['Type'];
-      }
-    $form_handler->insertElementField($thisElementObject, $dataType);
+  $fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_" . $thisElementObject->getVar('form_handle')) ." LIKE '$oldHandle'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
+  	if(!$fieldStateRes = $xoopsDB->query($fieldStateSQL)) {
+		$dataType = "text";
+	} else {
+		$fieldStateData = $xoopsDB->fetchArray($fieldStateRes);
+		$dataType = $fieldStateData['Type'];
+	}
+  $form_handler->insertElementField($thisElementObject, $dataType); 
   }
   print "/* eval */ window.location = '".XOOPS_URL."/modules/formulize/admin/ui.php?page=element&ele_id=$ele_id&aid=".intval($_POST['aid'])."';";
 }

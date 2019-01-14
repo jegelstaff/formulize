@@ -50,7 +50,6 @@
 
 // Should always be included from the global scope!!  So all declared variables in here are in the global namespace.
 
-
 if(isset($formulize_readElementsWasRun)) { return false; } // intended to make sure this file is only executed once.
 
 if(!defined("XOOPS_ROOT_PATH")) {
@@ -85,8 +84,6 @@ $formulize_up = array(); // container for user profile info
 $formulize_elementData = array(); // this array has multiple dimensions, in this order:  form id, entry id, element id.  "new" means a nea entry.  Multiple new entries will be recorded as new1, new2, etc
 $formulize_subformBlankCues = array();
 // loop through POST and catalogue everything that we need to do something with
-
-
 foreach($_POST as $k=>$v) {
 
 	if(substr($k, 0, 12) == "updateowner_" AND $v != "nochange") {
@@ -185,7 +182,6 @@ if(count($formulize_elementData) > 0 ) { // do security check if it looks like w
 }
 
 foreach($formulize_elementData as $elementFid=>$entryData) { // for every form we found data for...
-    
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
 	$formulize_formObject = $form_handler->get($elementFid);
     // TODO: should the one-entry-per-group permission be checked in the permissions handler instead?
@@ -264,6 +260,15 @@ if(isset($updateOwnerFid) AND $gperm_handler->checkRight("update_entry_ownership
 	$data_handler_for_owner_updating->updateCaches($updateOwnerEntryId);
 }
 
+// set the variables that need to be in global space, just in case this file was included from inside a function, which can happen in some cases
+$GLOBALS['formulize_newEntryIds'] = $formulize_newEntryIds;
+$GLOBALS['formulize_newEntryUsers'] = $formulize_newEntryUsers;
+$GLOBALS['formulize_allWrittenEntryIds'] = $formulize_allWrittenEntryIds;
+$GLOBALS['formulize_newSubformBlankElementIds'] = $formulize_newSubformBlankElementIds;
+
+synchSubformBlankDefaults();
+
+
 foreach($notEntriesList['update_entry'] as $updateFid=>$updateEntries) {
     $GLOBALS['formulize_snapshotRevisions'][$updateFid] = formulize_getCurrentRevisions($updateFid, $updateEntries);
 }
@@ -275,20 +280,20 @@ if($fid) {
 	$mainFormObject = $form_handler->get($fid, true); // true causes all elements to be gathered, including ones that are not displayed to the users
 	$mainFormHasDerived = array_search("derived", $mainFormObject->getVar('elementTypes'));
 }
-$derivedValueFound = false;
+	$derivedValueFound = false;
 if(!$mainFormHasDerived AND $frid) {
-    // check if any form in the relationship has derived values
-    include_once XOOPS_ROOT_PATH ."/modules/formulize/class/frameworks.php";
-    $relationshipObject = new formulizeFramework($frid);
-    foreach($relationshipObject->getVar('fids') as $relationshipFid) {
-        if($relationshipFid == $fid) { continue; } // we know the main form has no derived values already
-        $formObject = $form_handler->get($relationshipFid, true); // true causes all elements to be gathered, including ones that are not displayed to the users
-        if(array_search("derived", $formObject->getVar('elementTypes'))) {
-            $derivedValueFound = true;
-            break;
+            // check if any form in the relationship has derived values
+            include_once XOOPS_ROOT_PATH ."/modules/formulize/class/frameworks.php";
+            $relationshipObject = new formulizeFramework($frid);
+            foreach($relationshipObject->getVar('fids') as $relationshipFid) {
+                if($relationshipFid == $fid) { continue; } // we know the main form has no derived values already
+                $formObject = $form_handler->get($relationshipFid, true); // true causes all elements to be gathered, including ones that are not displayed to the users
+                if(array_search("derived", $formObject->getVar('elementTypes'))) {
+                    $derivedValueFound = true;
+                    break;
+                }
+            }
         }
-    }
-}
 
 // NOTE:
 // Parsing and processing derived values could be done a whole lot smarter, if we make a good way of figuring out if there's derived value elements in the form, and also if there are any formulas in the form/framework that use any of the elements that we have just saved values for
@@ -309,24 +314,24 @@ foreach($formulize_allWrittenEntryIds as $allWrittenFid=>$entries) {
 		}
 	} else {
         if($mainFormHasDerived OR $derivedValueFound) { // if there is a framework in effect, then update derived values across the entire framework...strong assumption would be that when a framework is in effect, all the forms being saved are related...if there are outliers they will not get their derived values updated!  We handle them below.
-            foreach($entries as $thisEntry) {
-                if($allWrittenFid == $fid) {
-                    $foundEntries['entries'][$fid] = $entries;
-                } else {
-                    // Since this isn't the main form, then we need to check for which mainform entries match to the entries we're updating right now
-                    $foundEntries = checkForLinks($frid, array($allWrittenFid), $allWrittenFid, array($allWrittenFid=>array($thisEntry)));
-                }
-                foreach($foundEntries['entries'][$fid] as $mainFormEntry) {
-                    if(!in_array($mainFormEntry, $mainFormEntriesUpdatedForDerived) AND $mainFormEntry AND in_array($mainFormEntry, $formulize_allWrittenEntryIds[$fid])) { // regarding final in_array... // if we have deduced the mainform entry, then depending on the structure of the relationship, it is possible that if checkforlinks was used above, it would return entries that were not written, in which case we must ignore them!!
-                        formulize_updateDerivedValues($mainFormEntry, $fid, $frid);
-                        $mainFormEntriesUpdatedForDerived[] = $mainFormEntry;
-                    }
+		foreach($entries as $thisEntry) {
+			if($allWrittenFid == $fid) {
+				$foundEntries['entries'][$fid] = $entries;
+			} else {
+				// Since this isn't the main form, then we need to check for which mainform entries match to the entries we're updating right now
+				$foundEntries = checkForLinks($frid, array($allWrittenFid), $allWrittenFid, array($allWrittenFid=>array($thisEntry)));
+			}
+			foreach($foundEntries['entries'][$fid] as $mainFormEntry) {
+				if(!in_array($mainFormEntry, $mainFormEntriesUpdatedForDerived) AND $mainFormEntry AND in_array($mainFormEntry, $formulize_allWrittenEntryIds[$fid])) { // regarding final in_array... // if we have deduced the mainform entry, then depending on the structure of the relationship, it is possible that if checkforlinks was used above, it would return entries that were not written, in which case we must ignore them!!
+					formulize_updateDerivedValues($mainFormEntry, $fid, $frid);
+					$mainFormEntriesUpdatedForDerived[] = $mainFormEntry;
+					}
                     if(!isset($formsUpdatedInFramework[$allWrittenFid]) AND in_array($mainFormEntry, $formulize_allWrittenEntryIds[$fid])) { // if the form we're on has derived values, then flag it as one of the updated forms, since at least one matching mainform entry was found and will have been updated including the framework
                         $formsUpdatedInFramework[$allWrittenFid] = $allWrittenFid;
-                    }
-                }
-            }
-        }
+				}
+			}
+		}
+	}
     }
 	
 	
@@ -372,13 +377,15 @@ foreach($notEntriesList as $notEvent=>$notDetails) {
 }
 
 $formulize_readElementsWasRun = true; // flag that will prevent this from running again
+$GLOBALS['formulize_readElementsWasRun'] = $formulize_readElementsWasRun; // just in case we're not in globals scope at the moment
 
-// set the variables that need to be in global space, just in case this file was included from inside a function, which can happen in some cases
-$GLOBALS['formulize_newEntryIds'] = $formulize_newEntryIds;
-$GLOBALS['formulize_newEntryUsers'] = $formulize_newEntryUsers;
-$GLOBALS['formulize_allWrittenEntryIds'] = $formulize_allWrittenEntryIds;
-$GLOBALS['formulize_newSubformBlankElementIds'] = $formulize_newSubformBlankElementIds;
-$GLOBALS['formulize_readElementsWasRun'] = $formulize_readElementsWasRun;
+// if there is more than one form, try to make the 1-1 links
+if(count($formulize_elementData) > 1 AND ($frid OR $overrideFrid)) {
+    $oneToOneFridToUse = $overrideFrid ? $overrideFrid : $frid;
+    foreach($formulize_elementData as $this_fid => $entryData) {
+        formulize_makeOneToOneLinks($oneToOneFridToUse, $this_fid);
+    }
+}
 
 return $formulize_allWrittenEntryIds;
 

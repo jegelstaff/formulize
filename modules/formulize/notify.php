@@ -150,14 +150,12 @@ function formulize_notifyStillTime($startTime, $maxExec) {
 function formulize_notify($event, $extra_tags, $fid, $uids_to_notify, $mid, $omit_user, $subject="", $template="") {
     
     $notification_handler = xoops_gethandler('notification');
-    $config_handler = xoops_gethandler('config');
     $module_handler = xoops_gethandler('module');
     $formulizeModule = $module_handler->getByDirname("formulize");
     $not_config = $formulizeModule->getInfo('notification');
-    $formulizeConfig = $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
-    // new config option needs to be added!!
-    //$sendDigests = $formulizeConfig['sendDigests'];
-    $sendDigests = true;
+    $form_handler = xoops_getmodulehandler('forms', 'formulize');
+    $formObject = $form_handler->get($fid);
+    $sendDigests = $formObject->getVar('send_digests');
     
     if($subject OR $template) {
     

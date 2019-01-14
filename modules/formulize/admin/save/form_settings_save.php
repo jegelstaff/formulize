@@ -23,7 +23,7 @@
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
 ##  Author of this file: Freeform Solutions                                  ##
-##  URL: http://www.freeformsolutions.ca/formulize                           ##
+##  URL: http://www.formulize.org                           ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
@@ -89,16 +89,18 @@ foreach($processedValues['forms'] as $property=>$value) {
 if(!$form_handler->insert($formObject)) {
   print "Error: could not save the form properly: ".$xoopsDB->error();
 }
+
 $fid = $formObject->getVar('id_form');
 if($_POST['formulize_admin_key'] == "new") {
+
   if(!$tableCreateRes = $form_handler->createDataTable($fid)) {
     print "Error: could not create data table for new form";
   }
   global $xoopsDB;
+
   // create the default screens for this form
   $formScreenHandler = xoops_getmodulehandler('formScreen', 'formulize');
   $defaultFormScreen = $formScreenHandler->create();
-
   $formScreenHandler->setDefaultFormScreenVars($defaultFormScreen, $formObject->getVar('title'), $fid);
 
 
@@ -106,12 +108,13 @@ if($_POST['formulize_admin_key'] == "new") {
     print "Error: could not create default form screen";
   }
   $listScreenHandler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
-  $screen = $listScreenHandler->create();
-  $listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $formObject->getVar('title'), $fid);
+    $screen = $listScreenHandler->create();
+    $listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $formObject->getVar('title'), $fid);
 
   if(!$defaultListScreenId = $listScreenHandler->insert($screen)) {
     print "Error: could not create default list screen";
   }
+
   $formObject->setVar('defaultform', $defaultFormScreenId);
   $formObject->setVar('defaultlist', $defaultListScreenId);
   if(!$form_handler->insert($formObject)) {
@@ -122,7 +125,6 @@ if($_POST['formulize_admin_key'] == "new") {
   foreach($_POST['groups_can_edit'] as $thisGroupId) {
     $gperm_handler->addRight('edit_form', $fid, intval($thisGroupId), getFormulizeModId());
   }
-  
   
 } else if( $old_form_handle && $formObject->getVar( "form_handle" ) != $old_form_handle ) {
   //print "rename from $old_form_handle to " . $formObject->getVar( "form_handle" );

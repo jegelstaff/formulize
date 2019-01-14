@@ -28,6 +28,17 @@
   <{if $content.type == "select"}><p><{$smarty.const._AM_ELE_OPT_DESC}><{$smarty.const._AM_ELE_OPT_DESC1}></p><{/if}>
   <p><{$smarty.const._AM_ELE_OPT_UITEXT}></p>
 </div>
+<hr style='margin-top: 1em; border: 0px; border-top: 1px dashed black; height: 1px;'>
+<div>
+    <p>If you are using the pipe character to store alternative values in the database:<br />
+    <label for="showalt"><input type="radio" id="showalt" name="elements-ele_uitextshow" value=0>Show the alternative values in lists of entries (and use them in the API)</label><br />
+    <label for="showuitext"><input type="radio" id="showuitext" name="elements-ele_uitextshow" value=1>Show the same values the user sees in the form, in the list of entries (and use them in the API)</label>
+    </p>
+</div>
+
+<div class="description">
+  <p>The second option is for use only in cases where you need an alternative value in the database for some third party integration, but a different value shown throughout Formulize. Regardless of your choice, if you use alternative values in the database then searches will only work when you search for those alternative values (because they are what is actually stored in the database).</p>
+</div>
 
 </fieldset>
 </div>
@@ -53,6 +64,7 @@
     $(".useroptions:last").append(appendContents2);
     $("[name=addoption]").blur();
     setDisplay('savewarning','block');
+    $("#no").attr('checked',1);
   });
 
   <{if $content.type == "radio"}>
@@ -85,4 +97,12 @@
   }
   <{/if}>
 
+  $(document).ready(function() {
+    if (<{$content.ele_uitextshow}> == 1) {
+      $("#showuitext").attr('checked',1);
+    } else {
+      $("#showalt").attr('checked',1);
+    }
+  });
+  
 </script>

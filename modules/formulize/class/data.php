@@ -39,10 +39,11 @@ class formulizeDataHandler  {
 	
 	var $fid; // the form this Data Handler object is attached to
 	var $metadataFields; //
+    var $metadataFieldTypes;
     var $dataTypeMap; // an array of field, data type pairs, generated when data is written to the DB
 
 	// $fid must be an id
-	function formulizeDataHandler($fid){
+	function __construct($fid){
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		if(is_object($formObject = $form_handler->get($fid))) {
 			$this->fid = intval($fid);
@@ -51,14 +52,20 @@ class formulizeDataHandler  {
 		}
         $this->dataTypeMap = array();
 		
-		//set the avaiable metadata fields to a global
-		$this->metadataFields = array("ENTRY_ID", 
-		  						"CREATION_DATETIME",
-		   						"CREATION_UID",
-		   						"CREATOR_EMAIL",
-		  						"MOD_DATETIME",
-		   						"MOD_UID",
-		   						"USER_VIEWEMAIL");  
+		//set the available metadata fields to a global
+		$this->metadataFields = array("entry_id",
+		  						"creation_datetime",
+		   						"creation_uid",
+		   						"creator_email",
+		  						"mod_datetime",
+		   						"mod_uid");
+
+        $this->metadataFieldTypes = array("entry_id" => "text",
+                                    "mod_uid" => "text",
+                                    "creation_uid" => "text",
+                                    "creator_email" => "text",
+                                    "mod_datetime" => "date",
+                                    "creation_datetime" => "date");
 	}
 	
 	// this function copies data from one form to another
@@ -101,7 +108,7 @@ class formulizeDataHandler  {
 			// make one SQL statement per entry id that grabs all the groupids for that old entry id and inserts them as records for the new form with the new entry id
 			$sql = "INSERT INTO ".$xoopsDB->prefix("formulize_entry_owner_groups")." (`fid`, `entry_id`, `groupid`) SELECT ".$this->fid.", ".intval($newEntryId).", groupid FROM ".$xoopsDB->prefix("formulize_entry_owner_groups")." WHERE fid=".intval($sourceFid)." AND entry_id=".intval($oldEntryId);
 			if(!$res = $xoopsDB->queryF($sql)) {
-				print "<p>Error: could not insert entry-owner-group information with this SQL:<br>$sql<br><a href=\"mailto:formulize@freeformsolutions.ca\">Please contact Freeform Solutions</a> for assistance resolving this issue.</p>\n";
+				print "<p>Error: could not insert entry-owner-group information with this SQL:<br>$sql<br><a href=\"mailto:info@formulize.org\">Please contact info@formulize.org</a> for assistance resolving this issue.</p>\n";
 			}
 		}
 		// cache the maps of old/new fields and entry ids, so we can refer to them later if other forms are cloned with data and linked selectboxes need to have references updated
@@ -437,9 +444,9 @@ class formulizeDataHandler  {
 		}
         $likeBits = $op == "LIKE" ? "%" : "";
 		global $xoopsDB;
-    $form_handler = xoops_getmodulehandler('forms', 'formulize');
-    $formObject = $form_handler->get($this->fid);
-		$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $element->getVar('ele_handle') . "` ".formulize_db_escape($op)." \"$likeBits" . formulize_db_escape($value) . "$likeBits\" ORDER BY entry_id LIMIT 0,1";
+        $form_handler = xoops_getmodulehandler('forms', 'formulize');
+        $formObject = $form_handler->get($this->fid);
+        $sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $element->getVar('ele_handle') . "` ".formulize_db_escape($op)." \"$likeBits" . formulize_db_escape($value) . "$likeBits\" ORDER BY entry_id LIMIT 0,1";
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
 		}
@@ -724,8 +731,8 @@ class formulizeDataHandler  {
 		}
         if(count($this->dataTypeMap)==0) {
             $this->dataTypeMap = $cachedDataTypeMaps[$this->fid]; // now assign the value of the property, based on the cached static array
-        }
-
+		}
+		
 		// check for presence of ID or SEQUENCE and look up the values we'll need to write
 		$lockIsOn = false;
 		$idElements = array_keys($values, "{ID}");
@@ -795,7 +802,6 @@ class formulizeDataHandler  {
         // escape field names and values before writing to database
         $aes_password = getAESPassword();
         foreach ($element_values as $key => $value) {
-            
             $encrypt_this = in_array($key, $encrypt_element_handles);
             unset($element_values[$key]);   // since field name is not escaped, remove from array
             $key = "`".formulize_db_escape($key)."`";                // escape field name
@@ -808,11 +814,11 @@ class formulizeDataHandler  {
                     if(is_numeric($value)) {
                         $element_values[$key] = formulize_db_escape($value);
                     } else { // non numeric values cannot be written to a numeric field, so NULL them
-                        $element_values[$key] = "NULL";
+                $element_values[$key] = "NULL";
                     }
-                } else {
-                    $element_values[$key] = "'".formulize_db_escape($value)."'";
-                }
+            } else {
+                $element_values[$key] = "'".formulize_db_escape($value)."'";
+            }
             }
             if ($encrypt_this) {
                 // this element should be encrypted. note that the actual value is quoted and escapted already
@@ -859,7 +865,6 @@ class formulizeDataHandler  {
 		} elseif(!$res = $xoopsDB->query($sql)) {
 			exit("Error: your data could not be saved in the database.  This was the query that failed:<br>$sql<br>".$xoopsDB->error());
 		}
-        
 		$lastWrittenId = $xoopsDB->getInsertId();
 		if($lockIsOn) {
             $xoopsDB->query("UNLOCK TABLES");
@@ -896,7 +901,7 @@ class formulizeDataHandler  {
         return false; // no it's not
     }
     
-    
+
 	// this function updates relevant caches after data has been updated in the database
 	function updateCaches($id) {
 		//so far, only metadata cache is affected

@@ -231,8 +231,7 @@ td.formulize-controls {
 }
 
 .xoops-form-element-help {
-    // modify the background color instead of the text color so that this text always contrasts with the background
-    color: lighten($colorTableHeaderBackground, 50%);
+    color: $colorTableHelpText;
 }
 
 form#formulize td.even, form#formulize td.odd {
@@ -249,7 +248,7 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
     width: 7em;
 }
 
-#pageNavTable {
+#pageNavTable, #pageNavTableBottom {
     margin: 1em 0;
 }
 
@@ -310,7 +309,7 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
     tr, td {
         page-break-inside: avoid;
     }
-    #pageNavTable, #bottomPageNumber, #bottom-save-block {
+    #pageNavTable, #pageNavTableBottom, #bottomPageNumber, #bottom-save-block {
         display: none;
     }
     .ui-accordion .ui-accordion-content {
@@ -330,4 +329,8 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
         // do not print the edit element link
         display: none;
     }
+}
+
+.appcatspacer {
+    width: 25%;
 }

@@ -14,7 +14,18 @@ $("[name=submitx]").click(function () {
 
   return false;
 });
+
+// If saveLock is turned on, do not display save button to user, instead display "READ ONLY"
+$( document ).ready(function() {
+    <{if $content.isSaveLocked}>
+        document.getElementById('submit').style.visibility = 'hidden';
+        document.getElementById('submittd').innerHTML = "READ ONLY";
+    <{/if}>
+    
+});
+
 </script>
+
 <div class="panel-content content">
   <table align="center" width="80%">
     <tr>
@@ -43,8 +54,8 @@ $("[name=submitx]").click(function () {
           <{/foreach}>
         </select>
       </td>
-      <td class=head>
-        <input type=submit class=formbutton name=submitx value='<{$smarty.const._SUBMIT}>'>
+      <td class=head id=submittd>
+        <input type=submit class=formbutton id=submit name=submitx value='<{$smarty.const._SUBMIT}>'>
       </td>
     </tr>
   </table>

@@ -640,14 +640,14 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
     } else {
         $form_proxyid = $xoopsUser->getVar('uid');
     }
-    
+
     $form_handler = xoops_getmodulehandler('forms','formulize');
     $formObject = $form_handler->get($importSet[4]);
 
     // lock formulize_form -- note that every table we use needs to be locked, so linked selectbox lookups may fail
     if ($regfid == $importSet[4]) {
         // only lockup reg codes table if we're dealing with a profile form, in which case we assume reg codes is installed and the table exists
-        $xoopsDB->query("LOCK TABLES " . $xoopsDB->prefix("formulize_".$importSet[8]) . " WRITE, ".
+            $lockSQL = "LOCK TABLES " . $xoopsDB->prefix("formulize_".$importSet[8]) . " WRITE, ".
             $xoopsDB->prefix("users") . " WRITE, ".
             $xoopsDB->prefix("formulize_entry_owner_groups")." WRITE, ".
             $xoopsDB->prefix("reg_codes") . " WRITE, ".
@@ -657,25 +657,28 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
             $xoopsDB->prefix("formulize") . " READ, ".
             $xoopsDB->prefix("formulize_id")." READ, ".
             $xoopsDB->prefix("formulize_saved_views")." READ, ".
-            $xoopsDB->prefix("formulize_group_filters")." READ");
+            $xoopsDB->prefix("formulize_group_filters")." READ, ".
+            $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." WRITE";
             // include the revisions table if necessary
             if($formObject->getVar('store_revisions') AND $form_handler->revisionsTableExists($formObject->getVar('id_form'))) {
-                $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')."_revisions WRITE");    
+                $lockSQL .= ", ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."_revisions WRITE";    
             }
     } else {
-            $xoopsDB->query("LOCK TABLES " . $xoopsDB->prefix("formulize_".$importSet[8]) . " WRITE, ".
+            $lockSQL = "LOCK TABLES " . $xoopsDB->prefix("formulize_".$importSet[8]) . " WRITE, ".
             $xoopsDB->prefix("users") . " READ, ".
             $xoopsDB->prefix("formulize_entry_owner_groups") . " WRITE, ".
             $xoopsDB->prefix("groups_users_link") . " READ, ".
             $xoopsDB->prefix("formulize") . " READ, ".
             $xoopsDB->prefix("formulize_id")." READ, ".
             $xoopsDB->prefix("formulize_saved_views")." READ, ".
-            $xoopsDB->prefix("formulize_group_filters")." READ");
+            $xoopsDB->prefix("formulize_group_filters")." READ, ".
+            $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." WRITE";
             // include the revisions table if necessary
             if($formObject->getVar('store_revisions') AND $form_handler->revisionsTableExists($formObject->getVar('id_form'))) {
-                $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')."_revisions WRITE");    
+                $lockSQL .= ", ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."_revisions WRITE";    
             }
     }
+    $xoopsDB->query($lockSQL);
 
     $rowCount = 1;
     $other_values = array();
@@ -992,7 +995,6 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
             } // end of looping through $links (columns?)
 
             // now that we've recorded all the values, do the actual updating/inserting of this record
-            
             if ($this_id_req) {
                 
                 // first, record a revisions if necessary
@@ -1112,9 +1114,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
 //function getElementOptions($id_form, $ele_caption)
 function getElementOptions($ele_handle, $fid) {
     static $cachedElementOptions = array();
-    
     if (!isset($cachedElementOptions[$fid][$ele_handle])) {
-        
         global $xoopsDB, $myts;
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
         $formObject = $form_handler->get(intval($fid));
@@ -1122,6 +1122,7 @@ function getElementOptions($ele_handle, $fid) {
         if (!$myts) {
             $myts =& MyTextSanitizer::getInstance();
         }
+
         $sql = "SELECT entry_id, `".$ele_handle."` FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'));
         $res = $xoopsDB->query($sql);
         $result = array();

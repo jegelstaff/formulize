@@ -166,9 +166,9 @@ if($csv_name != "")
 	importCsv(array($_FILES['csv_name']['name'], $csv_name), $id_reqs, $regfid, $validateOverride);
 	print "</td></tr>\n";
 }
-else
+elseif(!strstr(getCurrentURL(), 'dara.daniels')) 
 {
-/*
+
 print "<tr><td class=head><p>" . _formulize_DE_IMPORT_STEP1 . "</p></td><td class=even>";
 
 // provide a blank template, and a blank update template
@@ -183,7 +183,7 @@ foreach($cols1[$fid] as $col) {
 }
 $headers = getHeaders($cols);
 $template = $regfid == $fid ? "blankprofile" : "blank";
-$blank_template = prepExport($headers, $cols, "", "comma", "", "", $template);
+$blank_template = prepExport($headers, $cols, "", "comma", "", "", $template, $fid);
 
 print "<p><b>" . _formulize_DE_IMPORT_EITHEROR . "</b><p>";
 
@@ -199,10 +199,13 @@ if($regfid == $fid) {
 	print _formulize_DE_IMPORT_INSTNEW;
 }
 
-print _formulize_DE_IMPORT_INSTUPDATE . "</td></tr>\n";*/
-//print "<tr><td class=head><p>" . _formulize_DE_IMPORT_STEP3 . "</p></td><td class=even><p>" . _formulize_DE_IMPORT_FILE . ": <form method=\"post\" ENCTYPE=\"multipart/form-data\"><input type=\"file\" name=\"csv_name\" size=\"40\" /><br><input type=\"checkbox\" name=\"validatedata\" value=\"1\" checked>&nbsp;"._formulize_DE_IMPORT_VALIDATEDATA."</p><p><input type=\"submit\" value=\"" . _formulize_DE_IMPORT_GO . "\"></form></p></td></tr>\n";
-print "<tr><td class=even><p>" . _formulize_DE_IMPORT_FILE . ": <form method=\"post\" ENCTYPE=\"multipart/form-data\"><input type=\"file\" name=\"csv_name\" size=\"40\" /><br><input type=\"hidden\" name=\"validatedata\" value=\"1\">&nbsp;</p><p><input type=\"submit\" value=\"" . _formulize_DE_IMPORT_GO . "\"></form></p></td></tr>\n";
-//<input type=\"checkbox\" name=\"validatedata\" value=\"1\" checked>&nbsp;"._formulize_DE_IMPORT_VALIDATEDATA."</p><p><input type=\"submit\" value=\"" . _formulize_DE_IMPORT_GO . "\"></form></p></td></tr>\n";
+print _formulize_DE_IMPORT_INSTUPDATE . "</td></tr>\n";
+print "<tr><td class=head><p>" . _formulize_DE_IMPORT_STEP3 . "</p></td>".
+"<td class=even><p>" . _formulize_DE_IMPORT_FILE . ": <form method=\"post\" ENCTYPE=\"multipart/form-data\"><input type=\"file\" name=\"csv_name\" size=\"40\" /><br>".
+"<input type=\"checkbox\" name=\"validatedata\" value=\"1\" checked>&nbsp;"._formulize_DE_IMPORT_VALIDATEDATA."</p><p><input type=\"submit\" value=\"" . _formulize_DE_IMPORT_GO . "\"></form></p></td></tr>\n";
+
+} else {
+    print "<tr><td class=even><p>" . _formulize_DE_IMPORT_FILE . ": <form method=\"post\" ENCTYPE=\"multipart/form-data\"><input type=\"file\" name=\"csv_name\" size=\"40\" /><br><input type=\"hidden\" name=\"validatedata\" value=\"1\">&nbsp;</p><p><input type=\"submit\" value=\"" . _formulize_DE_IMPORT_GO . "\"></form></p></td></tr>\n";
 }
 
 print "</table>";

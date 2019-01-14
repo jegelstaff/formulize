@@ -23,7 +23,7 @@
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
 ##  Author of this file: Freeform Solutions                                  ##
-##  URL: http://www.freeformsolutions.ca/formulize                           ##
+##  URL: http://www.formulize.org                           ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
@@ -61,6 +61,7 @@ if ($_GET['fid'] != "new") {
     $form_handle = $formObject->getVar('form_handle');
     $store_revisions = $formObject->getVar('store_revisions');
     $note = $formObject->getVar('note');
+    $send_digests = $formObject->getVar('send_digests');
 
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
     $elementObjects = $element_handler->getObjects(null, $fid);
@@ -430,7 +431,7 @@ if ($_GET['fid'] != "new") {
 }
 
 // get a list of all the custom element types that are present
-// cusotm element classes must contain "Element.php" as the final part of the filename
+// custom element classes must contain "Element.php" as the final part of the filename
 $classFiles = scandir(XOOPS_ROOT_PATH."/modules/formulize/class/");
 $customElements = array();
 $i = 0;
@@ -503,6 +504,7 @@ $settings = array();
 $settings['singleentry'] = $singleentry;
 $settings['menutext'] = $menutext;
 $settings['form_handle'] = $form_handle;
+$settings['send_digests'] = $send_digests;
 $settings['store_revisions'] = $store_revisions;
 $settings['istableform'] = ($tableform OR $newtableform) ? true : false;
 if (isset($groupsCanEditOptions)) {
@@ -563,7 +565,6 @@ if ($fid != "new") {
     $adminPage['tabs'][$i]['content'] = $advanced_calculations + $common;
     $i++;
 }
-
 $adminPage['pagetitle'] = _AM_APP_FORM.$formName;
 $adminPage['needsave'] = true;
 

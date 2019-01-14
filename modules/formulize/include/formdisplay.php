@@ -47,8 +47,22 @@ include_once XOOPS_ROOT_PATH ."/modules/formulize/class/data.php";
 include_once XOOPS_ROOT_PATH."/class/xoopsformloader.php";
 include_once XOOPS_ROOT_PATH . "/include/functions.php";
 
+function memory_usage() {
+	$mem_usage = memory_get_usage(true);
+	if ($mem_usage < 1024) {
+		$mem_usage .= ' bytes';
+	} elseif ($mem_usage < 1048576) {
+		$mem_usage = round($mem_usage/1024,2) . ' kilobytes';
+	} else {
+		$mem_usage = round($mem_usage/1048576,2) . ' megabytes';
+	}
+	return $mem_usage;
+}
+
+
 // NEED TO USE OUR OWN VERSION OF THE CLASS, TO GET ELEMENT NAMES IN THE TR TAGS FOR EACH ROW
 class formulize_themeForm extends XoopsThemeForm {
+    
     /**
      * Insert an empty row in the table to serve as a seperator.
      *
@@ -97,7 +111,7 @@ class formulize_themeForm extends XoopsThemeForm {
 			$js .= "\n<!-- Start Form Validation JavaScript //-->\n<script type='text/javascript'>\n<!--//\n";
 		}
 		$formname = $this->getName();
-		$js .= "function xoopsFormValidate_{$formname}() { myform = window.document.{$formname};\n";
+		$js .= "function xoopsFormValidate_{$formname}(leave) { myform = window.document.{$formname};\n";
 		$js .= $this->_drawValidationJS($skipConditionalCheck);
 		$js .= "\nreturn true;\n}\n";
 		if ( $withtags ) {
@@ -107,18 +121,8 @@ class formulize_themeForm extends XoopsThemeForm {
 	}
 
 	function _drawElements($elements, $ret, $hidden) {
-		$class ='even';
-
-        global $xoopsUser;
-        $show_element_edit_link = (is_object($xoopsUser) and in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups()));
 
 		foreach ( $elements as $ele ) {
-			$label_class = null;
-			$input_class = null;
-			if (isset($ele->formulize_element)) {
-				$label_class = " formulize-label-".$ele->formulize_element->getVar("ele_handle");
-				$input_class = " formulize-input-".$ele->formulize_element->getVar("ele_handle");
-			}
 			if (!is_object($ele)) {// just plain add stuff if it's a literal string...
 				if(strstr($ele, "<<||>>")) {
 					$ele = explode("<<||>>", $ele);
@@ -129,38 +133,9 @@ class formulize_themeForm extends XoopsThemeForm {
 					$ret .= $ele;
 				}
 			} elseif ( !$ele->isHidden() ) {
-				$ret .= "<tr id='formulize-".$ele->getName()."' class='".$ele->getClass()."' valign='top' align='" . _GLOBAL_LEFT . "'><td class='head$label_class'>";
-				if (($caption = $ele->getCaption()) != '') {
-					$ret .=
-					"<div class='xoops-form-element-caption" . ($ele->isRequired() ? "-required" : "" ) . "'>"
-						. "<span class='caption-text'>{$caption}</span>"
-						. "<span class='caption-marker'>" . ($ele->isRequired() ? "*" : "" ) . "</span>"
-						. "</div>";
-				}
-				if (($desc = $ele->getDescription()) != '') {
-					$ret .= "<div class='xoops-form-element-help'>{$desc}</div>";
-				}
-
-                $ret .= "</td><td class='$class$input_class'>";
-                if ($show_element_edit_link) {
-                    $element_name = trim($ele->getName());
-                    switch ($element_name) {
-                        case 'control_buttons':
-                        case 'proxyuser':
-                            // Do nothing
-                            break;
-
-                        default:
-                            if (is_object($ele) and isset($ele->formulize_element)) {
-                                $ret .= "<a class=\"formulize-element-edit-link\" tabindex=\"-1\" href=\"" . XOOPS_URL .
-                                    "/modules/formulize/admin/ui.php?page=element&aid=0&ele_id=" .
-                                    $ele->formulize_element->getVar("ele_id") . "\" target=\"_blank\">edit element</a>";
-                            }
-                            break;
-                    }
-                }
-                $ret .=  $ele->render()."</td></tr>\n";
-
+				$ret .= "<tr id='formulize-".$ele->getName()."' class='".$ele->getClass()."' valign='top' align='" . _GLOBAL_LEFT . "'>";
+				$ret .= $this->_drawElementElementHTML($ele);
+				$ret .= "</tr>\n";
 			} else {
 				$hidden .= $ele->render();
 			}
@@ -168,6 +143,66 @@ class formulize_themeForm extends XoopsThemeForm {
 		return array($ret, $hidden);
 	}
 
+	// draw the HTML for the element, a table row normally
+	// $ele is the renderable element object
+	function _drawElementElementHTML($ele) {
+	
+		static $show_element_edit_link = null;
+		static $class = 'even';
+		static $label_class = null;
+		static $input_class = null;
+		global $formulize_drawnElements;
+		// initialize things first time through...
+		if($show_element_edit_link === null) {
+			$formulize_drawnElements = array();
+			global $xoopsUser;
+			$show_element_edit_link = (is_object($xoopsUser) and in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups()));
+		}
+		
+		if(isset($ele->formulize_element) AND isset($formulize_drawnElements[trim($ele->getName())])) {
+			return $formulize_drawnElements[trim($ele->getName())];
+		} elseif(isset($ele->formulize_element)) {
+			$label_class = " formulize-label-".$ele->formulize_element->getVar("ele_handle");
+			$input_class = " formulize-input-".$ele->formulize_element->getVar("ele_handle");
+		}
+
+		$html = "<td class='head$label_class'>";
+		if (($caption = $ele->getCaption()) != '') {
+			$html .=
+			"<div class='xoops-form-element-caption" . ($ele->isRequired() ? "-required" : "" ) . "'>"
+				. "<span class='caption-text'>{$caption}</span>"
+				. "<span class='caption-marker'>" . ($ele->isRequired() ? "*" : "" ) . "</span>"
+				. "</div>";
+		}
+		if (($desc = $ele->getDescription()) != '') {
+			$html .= "<div class='xoops-form-element-help'>{$desc}</div>";
+		}
+
+		$html .= "</td><td class='$class$input_class'>";
+		if ($show_element_edit_link) {
+			$element_name = trim($ele->getName());
+			switch ($element_name) {
+				case 'control_buttons':
+				case 'proxyuser':
+					// Do nothing
+					break;
+
+				default:
+					if (is_object($ele) and isset($ele->formulize_element)) {
+						$html .= "<a class='formulize-element-edit-link' tabindex='-1' href='" . XOOPS_URL .
+							"/modules/formulize/admin/ui.php?page=element&aid=0&ele_id=" .
+							$ele->formulize_element->getVar("ele_id") . "' target='_blank'>edit element</a>";
+					}
+					break;
+			}
+		}
+		$html .=  $ele->render()."</td>";
+		if(isset($ele->formulize_element)) { // cache the element's html
+			$formulize_drawnElements[trim($ele->getName())] = $html;
+		}
+		return $html;
+	}
+	
 	// need to check whether the element is a standard element, if if so, add the check for whether its row exists or not	
 	function _drawValidationJS($skipConditionalCheck) {
 		$fullJs = "";
@@ -246,7 +281,6 @@ function getParentLinks($fid, $frid) {
 // $elements is used to specify a shortlist of elements to display.  Used in conjunction with the array option for $formform
 // $formulize_mgr is not required any longer!
 function getEntryValues($entry, $formulize_mgr, $groups, $fid, $elements="", $mid, $uid, $owner, $groupEntryWithUpdateRights) {
-
 
 	if(!$fid) { // fid is required
 		return "";
@@ -356,7 +390,6 @@ function getEntryValues($entry, $formulize_mgr, $groups, $fid, $elements="", $mi
 function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button_text="", $settings="", $titleOverride="", $overrideValue="",
     $overrideMulti="", $overrideSubMulti="", $viewallforms=0, $profileForm=0, $printall=0, $screen=null) 
 {
-    
     include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
     include_once XOOPS_ROOT_PATH.'/modules/formulize/include/extract.php';
     formulize_benchmark("Start of formDisplay.");
@@ -436,7 +469,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			}
 		}
 		if(count($subs_to_del) > 0) {
-            $excludeFids = array($fid);
+			$excludeFids = array($fid);
 			foreach($subs_to_del as $id_req) {
                 deleteEntry($id_req, $frid, intval($_POST['deletesubsflag']), $excludeFids);
             }
@@ -457,11 +490,11 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 
 	// set $entry in the case of a form_submission where we were editing an entry (just in case that entry is not what is used to call this function in the first place -- ie: we're on a subform and the mainform has no entry specified, or we're clicking submit over again on a single-entry form where we started with no entry)
 	$entrykey = "entry" . $fid;
-	if((!$entry OR $entry=="proxy") AND $_POST[$entrykey]) { // $entrykey will only be set when *editing* an entry, not on new saves
+	if((!$entry OR $entry=="proxy") AND $_POST[$entrykey]) { // $entrykey will only be set when *editing* an entry, not on new saves <-- NOT TRUE?! it is on all saves, and would perpetuate the 'new' flag??
 		$entry = $_POST[$entrykey];
 	}
 	
-	// this is probably not necessary any more, due to architecture changes in Formulize 3
+	// this is probably not necessary any more, due to architecture changes in Formulize 3 <-- NOT TRUE?! This in fact is the only way to pick up the saved entry after making a new entry
 	// formulize_newEntryIds is set when saving data
 	if(!$entry AND isset($GLOBALS['formulize_newEntryIds'][$fid])) {
 		$entry = $GLOBALS['formulize_newEntryIds'][$fid][0];
@@ -559,7 +592,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		
 		if(!$formElementsOnly AND ($single OR $_POST['target_sub'] OR ($entries[$fid][0] AND ($original_entry OR ($_POST[$entrykey] AND !$_POST['back_from_sub']))) OR $overrideMulti OR ($_POST['go_back_form'] AND $overrideSubMulti))) { // if we just did a submission on a single form, or we just edited a multi, then assume the identity of the new entry.  Can be overridden by values passed to this function, to force multi forms to redisplay the just-saved entry.  Back_from_sub is used to override the override, when we're saving after returning from a multi-which is like editing an entry since entries are saved prior to going to a sub. -- Sept 4 2006: adding an entry in a subform forces us to stay on the same page too! -- Dec 21 2011: added check for !$formElementsOnly so that when we're getting just the elements in the form, we ignore any possible overriding, since that is an API driven situation where the called entry is the only one we want to display, period.
 			$entry = ($entry == 'new' OR $entry == '') ? $temp_entries[$fid][0] : $entry; // adopt written entry if there is one, and we started out as 'new'
-            unset($entries);
+			unset($entries);
             $entries[$fid][0] = $entry;
 			foreach($fids as $thisWrittenFid) {
 				$entries[$thisWrittenFid] = isset($temp_entries[$thisWrittenFid]) ? $temp_entries[$thisWrittenFid] : isset($entries[$thisWrittenFid]) ? $entries[$thisWrittenFid] : "";
@@ -580,7 +613,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		}
 	}
 
-	$sub_entries_synched = synchSubformBlankDefaults($fid, $entry);
+	$sub_entries_synched = synchSubformBlankDefaults(); // they will already have been synched in readelements, but we will return the entries created when this function is called later, so that we can use them here
 	foreach($sub_entries_synched as $synched_sfid=>$synched_ids) {
 		foreach($synched_ids as $synched_id) {
 			$sub_entries[$synched_sfid][] = $synched_id;
@@ -653,6 +686,15 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
     $allDoneOverride = (!$formulizeConfig['all_done_singles'] AND !$profileForm AND (($single OR $overrideMulti OR $original_entry) AND !$_POST['target_sub'] AND !$_POST['goto_sfid'] AND !$_POST['deletesubsflag'] AND !$_POST['parent_form'])) ? true : false;
     if(($allDoneOverride OR (isset($_POST['save_and_leave']) AND $_POST['save_and_leave'])) AND $_POST['form_submitted']) {
 		drawGoBackForm($go_back, $currentURL, $settings, $entry);
+        foreach($fids as $this_fid) {
+            if(!$scheck = security_check($this_fid, $entries[$this_fid][0], $uid, $owner, $groups, $mid, $gperm_handler) AND !$viewallforms) {
+				continue;
+			}			
+			// if there is more than one form, try to make the 1-1 links
+            if(count($fids) > 1) {
+                formulize_makeOneToOneLinks($frid, $this_fid);
+            }
+        }
 		print "<script type=\"text/javascript\">window.document.go_parent.submit();</script>\n";
 		return;
 	} else {
@@ -686,6 +728,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
             // if there is more than one form, try to make the 1-1 links
             // and if we made any, then include the newly linked up entries
             // in the index of entries that we're keeping track of
+            // makeOneToOneLinks will return the relevant ids, based on the links that were made when it was called earlier in readelements.php
             if(count($fids) > 1) {
                 list($form1s, $form2s, $form1EntryIds, $form2EntryIds) = formulize_makeOneToOneLinks($frid, $this_fid);
                 foreach($form1EntryIds as $i=>$form1EntryId) {
@@ -716,9 +759,12 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			if(!$form) {
 
                 $firstform = 1;
-                $title = isset($passedInTitle) ? $passedInTitle : trans(getFormTitle($this_fid));
-                if ($screen) {
+                if(isset($passedInTitle)) {
+                    $title = trans($passedInTitle);
+                } elseif($screen) {
                     $title = trans($screen->getVar('title'));
+                } else {
+                    $title = trans(getFormTitle($this_fid));
                 }
                 unset($form);
                 if($formElementsOnly) {
@@ -901,7 +947,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			}
 			
 			// saving message
-			print "<div id=savingmessage style=\"display: none; position: absolute; width: 100%; right: 0px; text-align: center; padding-top: 50px;\">\n";
+			print "<div id=savingmessage style=\"display: none; position: absolute; width: 100%; right: 0px; text-align: center; padding-top: 50px; z-index: 100;\">\n";
 			global $xoopsConfig;
 			if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/images/saving-".$xoopsConfig['language'].".gif") ) {
 				print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/saving-" . $xoopsConfig['language'] . ".gif\">\n";
@@ -911,9 +957,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			print "</div>\n";
 
 			drawJavascript($nosave);
-			/*if(count($GLOBALS['formulize_renderedElementHasConditions'])>0) {
-				drawJavascriptForConditionalElements($GLOBALS['formulize_renderedElementHasConditions'], $entries, $sub_entries);
-			}*/
             print $form->addElement(new xoopsFormHidden('save_and_leave', 0));
 
 		// lastly, put in a hidden element, that will tell us what the first, primary form was that we were working with on this form submission
@@ -1012,24 +1055,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			$includedXoopsJs = true;
 		}
 	}// end of if we're not going back to the prev page because of an all done button override
-}
-
-// THIS FUNCTION FIGURES OUT THE COMMON VALUE THAT WE SHOULD WRITE WHEN A FORM IN A ONE-TO-ONE RELATIONSHIP IS BEING DISPLAYED AFTER A NEW ENTRY HAS BEEN WRITTEN
-function formulize_findCommonValue($form1, $form2, $key1, $key2) {
-	$commonValueToWrite = "";
-	if(isset($_POST["de_".$form2."_new_".$key2]) AND $_POST["de_".$form2."_new_".$key2] == "{ID}") { // common value is pointing at a textbox that copies the entry ID, so grab the entry ID of the entry just written in the other form
-		$commonValueToWrite = $GLOBALS['formulize_newEntryIds'][$form2][0];
-	} elseif(isset($_POST["de_".$form2."_new_".$key2])) { // grab the value just written in the field of the other form
-		$commonValueToWrite = $_POST["de_".$form2."_new_".$key2];
-	} elseif(isset($_POST["de_".$form2."_".$GLOBALS['formulize_allWrittenEntryIds'][$form2][0]."_".$key2])) { // grab the value just written in the first entry we saved in the paired form
-		$commonValueToWrite = $_POST["de_".$form2."_".$GLOBALS['formulize_allWrittenEntryIds'][$form2][0]."_".$key2];
-	} elseif(isset($GLOBALS['formulize_allWrittenEntryIds'][$form2][0])) { // try to get the value saved in the DB for the target element in the first entry we just saved in the paired form
-		$common_value_data_handler = new formulizeDataHandler($form2);
-		if($candidateValue = $common_value_data_handler->getElementValueInEntry($GLOBALS['formulize_allWrittenEntryIds'][$form2][0], $key2)) {
-			$commonValueToWrite = $candidateValue;
-		}
-	}
-	return $commonValueToWrite;
 }
 
 // THIS FUNCTION ADDS THE SPECIAL PROFILE FIELDS TO THE TOP OF A PROFILE FORM
@@ -1235,7 +1260,7 @@ function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $butto
             $saveButton = new XoopsFormButton('', 'submitx', trans($subButtonText), 'button'); // doesn't use name submit since that conflicts with the submit javascript function
             $saveButton->setExtra("onclick=javascript:validateAndSubmit();");
             $buttontray->addElement($saveButton);
-            // also add in the save and leave button if there is somewhere to go back to!
+            // also add in the save and leave button
             $saveAndLeaveButton = new XoopsFormButton('', 'submit_save_and_leave', trans(_formulize_SAVE_AND_LEAVE), 'button');
             $saveAndLeaveButton->setExtra("onclick=javascript:validateAndSubmit('leave');");
             $buttontray->addElement($saveAndLeaveButton);
@@ -1320,13 +1345,67 @@ function drawGoBackForm($go_back, $currentURL, $settings, $entry) {
 	} 
 }
 
+// this function figures out certain default values for elements in a given entry in a form, and writes them to that entry
+// used for setting values that are supposed to exist by default in newly created subform entries
+function writeEntryDefaults($target_fid,$target_entry) {
+
+  $element_handler = xoops_getmodulehandler('elements', 'formulize');
+
+  $criteria = new CriteriaCompo();
+  $criteria->add(new Criteria('ele_type', 'text'), 'OR');
+  $criteria->add(new Criteria('ele_type', 'textarea'), 'OR');
+  $criteria->add(new Criteria('ele_type', 'date'), 'OR');
+  $criteria->add(new Criteria('ele_type', 'radio'), 'OR');
+  $elementsForDefaults = $element_handler->getObjects($criteria,$target_fid); // get all the text or textarea elements in the form 
+
+  foreach($elementsForDefaults as $thisDefaultEle) {
+    // need to write in any default values for any text boxes or text areas that are in the subform.  Perhaps other elements could be included too, but that would take too much work right now. (March 9 2009)
+    $defaultTextToWrite = "";
+    $ele_value_for_default = $thisDefaultEle->getVar('ele_value');
+    switch($thisDefaultEle->getVar('ele_type')) {
+      case "text":
+        $defaultTextToWrite = getTextboxDefault($ele_value_for_default[2], $target_fid, $target_entry); // position 2 is default value for text boxes
+        break;
+      case "textarea":
+        $defaultTextToWrite = getTextboxDefault($ele_value_for_default[0], $target_fid, $target_entry); // position 0 is default value for text boxes
+        break;
+      case "date":
+        $defaultTextToWrite = getDateElementDefault($ele_value_for_default[0]);
+        if (false === $defaultTextToWrite) {
+            $defaultTextToWrite = "";
+        } else {
+            $defaultTextToWrite = date("c", $defaultTextToWrite);
+        }
+        break;
+      case "radio":
+        $thisDefaultEleValue = $thisDefaultEle->getVar('ele_value');
+        $defaultTextToWrite = array_search(1, $thisDefaultEleValue);
+    }
+    if($defaultTextToWrite) {
+      writeElementValue($target_fid, $thisDefaultEle->getVar('ele_id'), $target_entry, $defaultTextToWrite);
+    }
+  }
+}
+
+// This function reads the filter conditions on a subform element, and returns the appropriate filter values that should be used to enforce values in newly created subform elements
+function setSubformFilterValues($subformConditions) {
+    $element_handler = xoops_getmodulehandler('elements', 'formulize');
+    $filterValues = array();
+    foreach($subformConditions[1] as $i=>$thisOp) {
+        if($thisOp == "=" AND $subformConditions[3][$i] != "oom") {
+            $conditionElementObject = $element_handler->get($subformConditions[0][$i]);
+            $filterValues[$subformConditions[0][$i]] = prepareLiteralTextForDB($conditionElementObject, $subformConditions[2][$i]); 
+        }
+    }
+    return $filterValues;
+}
+
 // this function draws in the UI for sub links
 function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry,
 	$customCaption = "", $customElements = "", $defaultblanks = 0, $showViewButtons = 1, $captionsForHeadings = 0,
 	$overrideOwnerOfNewEntries = "", $mainFormOwner = 0, $hideaddentries = "", $subformConditions = null, $subformElementId = 0,
 	$rowsOrForms = 'row', $addEntriesText = _formulize_ADD_ENTRIES, $subform_element_object = null)
 {
-    
 	$nestedSubform = false;
 	if(isset($GLOBALS['formulize_inlineSubformFrid'])) {
 		$frid = $GLOBALS['formulize_inlineSubformFrid'];
@@ -1356,21 +1435,34 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	}
 	
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-	
-    $target_sub_to_use = ($_POST['target_sub'] AND $_POST['target_sub'] == $subform_id AND $_POST['target_sub_instance'] == $subformElementId.$subformInstance) ? $_POST['target_sub'] : $subform_id;
-	$elementq = q("SELECT fl_key1, fl_key2, fl_common_value, fl_form2_id FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_frame_id=" . intval($frid) . " AND fl_form2_id=" . intval($fid) . " AND fl_form1_id=" . intval($target_sub_to_use));
+	$target_sub_to_use = ($_POST['target_sub'] AND $_POST['target_sub'] == $subform_id AND $_POST['target_sub_instance'] == $subformElementId.$subformInstance) ? $_POST['target_sub'] : $subform_id; 
+	$elementq = q("SELECT fl_key1, fl_key2, fl_common_value, fl_form2_id FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_frame_id=" . intval($frid) . " AND fl_form2_id=" . intval($fid) . " AND fl_form1_id=" . intval($target_sub_to_use). " AND fl_relationship=3");
 	// element_to_write is used below in writing results of "add x entries" clicks, plus it is used for defaultblanks on first drawing blank entries, so we need to get this outside of the saving routine
 	if(count($elementq) > 0) {
 		$element_to_write = $elementq[0]['fl_key1'];
 		$value_source = $elementq[0]['fl_key2'];
 		$value_source_form = $elementq[0]['fl_form2_id'];
 	} else {
-		$elementq = q("SELECT fl_key2, fl_key1, fl_common_value, fl_form1_id FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_frame_id=" . intval($frid) . " AND fl_form1_id=" . intval($fid) . " AND fl_form2_id=" . intval($target_sub_to_use));
+		$elementq = q("SELECT fl_key2, fl_key1, fl_common_value, fl_form1_id FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_frame_id=" . intval($frid) . " AND fl_form1_id=" . intval($fid) . " AND fl_form2_id=" . intval($target_sub_to_use) . " AND fl_relationship=2");
 		$element_to_write = $elementq[0]['fl_key2'];
 		$value_source = $elementq[0]['fl_key1'];
 		$value_source_form = $elementq[0]['fl_form1_id'];		
 	}
 
+    // in case we need it for writing later...figure out the matching value in the main form, if any...
+    if($elementq[0]['fl_common_value']) {
+        // grab the value from the parent element -- assume that it is a textbox of some kind!
+        if (isset($_POST['de_'.$value_source_form.'_'.$entry.'_'.$value_source])) {
+            $value_to_write = $_POST['de_'.$value_source_form.'_'.$entry.'_'.$value_source];
+        } else {
+            // get this entry and see what the source value is
+            $data_handler = new formulizeDataHandler($value_source_form);
+            $value_to_write = $data_handler->getElementValueInEntry($entry, $value_source);
+        }
+    } else {
+        $value_to_write = $entry; 
+    }
+    
     if (0 == strlen($element_to_write)) {
         error_log("Relationship $frid for subform $subform_id on form $fid is invalid.");
         $to_return = array("c1"=>"", "c2"=>"", "sigle"=>"");
@@ -1387,76 +1479,26 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
     }
 
 	// check for adding of a sub entry, and handle accordingly -- added September 4 2006
-    global $formulize_subformInstance;
+	global $formulize_subformInstance;
 	$subformInstance = $formulize_subformInstance+1;
     $formulize_subformInstance = $subformInstance;
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
-    
-	if($_POST['target_sub'] AND $_POST['target_sub'] == $subform_id AND $_POST['target_sub_instance'] == $subformElementId.$subformInstance) {
-        
-        // important we only do this on the run through for that particular sub form (hence target_sub == sfid), and also only for the specific instance of this subform on the page too, since not all entries may apply to all subform instances any longer with conditions in effect now
+	
+	if($_POST['target_sub'] AND $_POST['target_sub'] == $subform_id AND $_POST['target_sub_instance'] == $subformElementId.$subformInstance) { // important we only do this on the run through for that particular sub form (hence target_sub == sfid), and also only for the specific instance of this subform on the page too, since not all entries may apply to all subform instances any longer with conditions in effect now
 		// need to handle things differently depending on whether it's a common value or a linked selectbox type of link
 		// uid links need to result in a "new" value in the displayElement boxes -- odd things will happen if people start adding linked values to entries that aren't theirs!
 		if($element_to_write != 0) {
-			if($elementq[0]['fl_common_value']) {
-				// grab the value from the parent element -- assume that it is a textbox of some kind!
-				if (isset($_POST['de_'.$value_source_form.'_'.$entry.'_'.$value_source])) {
-					$value_to_write = $_POST['de_'.$value_source_form.'_'.$entry.'_'.$value_source];
-				} else {
-					// get this entry and see what the source value is
-					$data_handler = new formulizeDataHandler($value_source_form);
-					$value_to_write = $data_handler->getElementValueInEntry($entry, $value_source);
-				}
-			} else {
-				$value_to_write = $entry;
-			}
+			
 			$sub_entry_new = "";
 		
 			for($i=0;$i<$_POST['numsubents'];$i++) { // actually goahead and create the requested number of new sub entries...start with the key field, and then do all textboxes with defaults too...
-				//$subEntWritten = writeElementValue($_POST['target_sub'], $element_to_write, "new", $value_to_write, "", "", true); // Last param is override that allows direct writing to linked selectboxes if we have prepped the value first!
-                if($overrideOwnerOfNewEntries) {
-                  $creation_user_touse = $mainFormOwner;
-                } else {
-                  $creation_user_touse = "";
-                }
-                $subEntWritten = writeElementValue($_POST['target_sub'], $element_to_write, "new", $value_to_write, $creation_user_touse, "", true); // Last param is override that allows direct writing to linked selectboxes if we have prepped the value first!
-				if(!isset($elementsForDefaults)) {
-					$criteria = new CriteriaCompo();
-					$criteria->add(new Criteria('ele_type', 'text'), 'OR');
-					$criteria->add(new Criteria('ele_type', 'textarea'), 'OR');
-                    $criteria->add(new Criteria('ele_type', 'date'), 'OR');
-					$criteria->add(new Criteria('ele_type', 'radio'), 'OR');
-					$elementsForDefaults = $element_handler->getObjects($criteria,$_POST['target_sub']); // get all the text or textarea elements in the form 
-				}
-				foreach($elementsForDefaults as $thisDefaultEle) {
-					// need to write in any default values for any text boxes or text areas that are in the subform.  Perhaps other elements could be included too, but that would take too much work right now. (March 9 2009)
-					$defaultTextToWrite = "";
-					$ele_value_for_default = $thisDefaultEle->getVar('ele_value');
-					switch($thisDefaultEle->getVar('ele_type')) {
-						case "text":
-							$defaultTextToWrite = getTextboxDefault($ele_value_for_default[2], $_POST['target_sub'], $subEntWritten); // position 2 is default value for text boxes
-							break;
-						case "textarea":
-							$defaultTextToWrite = getTextboxDefault($ele_value_for_default[0], $_POST['target_sub'], $subEntWritten); // position 0 is default value for text boxes
-							break;
-
-                        case "date":
-                            $defaultTextToWrite = getDateElementDefault($ele_value_for_default[0]);
-                            if (false === $defaultTextToWrite) {
-                                $defaultTextToWrite = "";
-                            } else {
-                                $defaultTextToWrite = date("c", $defaultTextToWrite);
-                            }
-                            break;
-
-						case "radio":
-						    $thisDefaultEleValue = $thisDefaultEle->getVar('ele_value');
-							$defaultTextToWrite = array_search(1, $thisDefaultEleValue);
-					}
-					if($defaultTextToWrite) {
-						writeElementValue($_POST['target_sub'], $thisDefaultEle->getVar('ele_id'), $subEntWritten, $defaultTextToWrite);
-					}
-				}
+        if($overrideOwnerOfNewEntries) {
+          $creation_user_touse = $mainFormOwner;
+        } else {
+          $creation_user_touse = "";
+        }
+        $subEntWritten = writeElementValue($_POST['target_sub'], $element_to_write, "new", $value_to_write, $creation_user_touse, "", true); // Last param is override that allows direct writing to linked selectboxes if we have prepped the value first!
+        writeEntryDefaults($_POST['target_sub'],$subEntWritten);
 				$sub_entry_written[] = $subEntWritten;
 			}
 		} else {
@@ -1466,13 +1508,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	
 		// need to also enforce any equals conditions that are on the subform element, if any, and assign those values to the entries that were just added
 		if(is_array($subformConditions)) {
-			$filterValues = array();
-			foreach($subformConditions[1] as $i=>$thisOp) {
-				if($thisOp == "=" AND $subformConditions[3][$i] != "oom" AND $subformConditions[2][$i] != "{BLANK}") {
-					$conditionElementObject = $element_handler->get($subformConditions[0][$i]);
-					$filterValues[$subformConditions[0][$i]] = prepareLiteralTextForDB($conditionElementObject, $subformConditions[2][$i]); 
-				}
-			}
+            $filterValues = setSubformFilterValues($subformConditions);
 			if(count($filterValues)>0) {
 				foreach($sub_entry_written as $thisSubEntry) {
 					formulize_writeEntry($filterValues,$thisSubEntry);	
@@ -1480,7 +1516,8 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 			}
 		}
 	}
-	
+
+  $data_handler = new formulizeDataHandler($subform_id);
 	
 	// need to do a number of checks here, including looking for single status on subform, and not drawing in add another if there is an entry for a single
 
@@ -1516,10 +1553,84 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 		$col_one = "<p id=\"subform-caption-f$fid-sf$subform_id\" class=\"subform-caption\"><b>" . trans($customCaption) . "</b></p>"; // <p style=\"font-weight: normal;\">" . _formulize_ADD_HELP;
 	}
 
-	/*if(intval($sub_entries[$subform_id][0]) != 0 OR $sub_entry_new OR is_array($sub_entry_written)) {
-		if(!$nosubforms) { $col_one .= "<br>" . _formulize_ADD_HELP2; }
-		$col_one .= "<br>" . _formulize_ADD_HELP3;
-	} */
+	// preopulate entries, if there are no sub_entries yet, and prepop options is selected.
+    // prepop will be based on the options in an element in the subform, and should also take into account the non OOM conditional filter choices where = is the operator.
+    if(count($sub_entries[$subform_id]) == 0 AND $subform_element_object->ele_value['subform_prepop_element']) {
+        
+        $optionElementObject = $element_handler->get($subform_element_object->ele_value['subform_prepop_element']);
+        
+        // gather filter choices first...
+        if(!isset($filterValues)) {
+            if(is_array($subformConditions)) {
+    			$filterValues = setSubformFilterValues($subformConditions);
+            } else {
+                $filterValues = array();
+            }
+        }
+        // gather all the choices for the prepop element, taking into account if the filter choice for this subform instance alters the options for the prepop element
+        // render the element, then read the options from the rendered element
+        // this will NOT work for autocomplete boxes!
+        // call displayElement, this should set the GLOBALS value that we can then check to see what options have been created for this element
+        $valuesToWrite = array();
+        foreach($filterValues as $elementHandle=>$value) {
+            // need to set this special flag, which will cause rendered linked selectboxes to have the subform entry inclusion filters taken into account
+            // ie: if this instance of the subform should only render entries where field X = 'Basic Needs', then we want to get the options that would meet that requirement
+            $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat']['new'][$elementHandle] = $value;
+            $valuesToWrite[$elementHandle] = $value;
+        }
+        
+        // if the prepop element is a linked field that has conditions on it, we need to ensure that when it is rendered, we are taking the filter into account!!
+        // SINCE THIS IS A PHANTOM NEW ENTRY THAT DOESN'T REALLY EXIST, WE CAN ABUSE THAT SITUATION TO INJECT WHATEVER VALUES WE WANT FOR WHATEVER FIELDS THAT NEED TO BE MATCHED, EVEN THOUGH THEY WON'T ACTUALLY EXIST IN THE FORM WE'RE MAKING AN ENTRY IN.
+        // THIS IS RELEVANT WHEN YOU ARE SETTING THE CURLY BRACKET CONDITIONS FOR FILTERING WHAT OPTIONS WE SHOULD PAY ATTENTION TO.
+        if($optionElementObject->isLinked) {
+            $optionElementEleValue = $optionElementObject->getVar('ele_value');
+            $optionElementFilterConditions = $optionElementEleValue[5]; // fifth key in selectboxes will be conditions for what options to include when linked. Ack!
+            if(is_array($optionElementFilterConditions) AND count($optionElementFilterConditions)>1) {
+                // if it's not a curly bracket value, then element name is the id, and value is the term
+                // if it is a curly bracket value, then element name is the curly bracket value, and value is the value that field has in the parent entry to this one we're about to create!
+                $optionElementEleValue2 = explode("#*=:*", $optionElementEleValue[2]);
+                $optionSourceFid = $optionElementEleValue2[0];
+                $filterElementHandles = convertElementIdsToElementHandles($optionElementFilterConditions[0], $optionSourceFid);
+                $filterElementIds = $optionElementFilterConditions[0];
+                $filterTerms = $optionElementFilterConditions[2];
+                foreach($filterElementIds as $i=>$thisFilterElement) {
+                    if(substr($filterTerms[$i],0,1) == "{" AND substr($filterTerms[$i],-1)=="}" AND !isset($filterValues[substr($filterTerms[$i],1,-1)])) {
+                        // lookup value of this field in the parent entry
+                        $prepop_source_data_handler = new formulizeDataHandler($fid);
+                        $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat']['new'][substr($filterTerms[$i],1,-1)] = $prepop_source_data_handler->getElementValueInEntry($entry, substr($filterTerms[$i],1,-1));
+                    } elseif(!isset($filterValues[$filterElementHandles[$i]])) {
+                        $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat']['new'][$filterElementHandles[$i]] = $filterTerms[$i];                
+                    }
+                }
+            }
+        }
+        
+        list($prepopElement, $prepopDisabled) = displayElement("", $subform_element_object->ele_value['subform_prepop_element'], "new", false, null, null, false);
+        unset($GLOBALS['formulize_synchronousFormDataInDatabaseReadyFormat']); // clear the special flag, just in case
+        $prepopOptions = $GLOBALS['formulize_lastRenderedElementOptions'];
+        // if there are known linking values to the main form, then write those in.
+        // Otherwise...we need to add logic to make this work like the blanks do and write links after saving!!
+        // Therefore, this feature will not yet work when the mainform entry is new!!
+        if($element_to_write) {
+            $linkingElementObject = $element_handler->get($element_to_write);
+            $valuesToWrite[$linkingElementObject->getVar('ele_handle')] = $value_to_write;
+        }
+        foreach($prepopOptions as $optionKey=>$optionValue) {
+            // get the database ready value for this option
+            // write an entry with that value, and all applicable filterValues
+            // need to also write the joining value to the main form!!
+            // add that entry to the list of sub entries
+            $valuesToWrite[$optionElementObject->getVar('ele_handle')] = prepDataForWrite($optionElementObject, $optionKey); // keys are what the form sends back for processing
+            if($valuesToWrite[$optionElementObject->getVar('ele_handle')] !== "" AND $valuesToWrite[$optionElementObject->getVar('ele_handle')] !== "{WRITEASNULL}") {
+                $proxyUser = $overrideOwnerOfNewEntries ? $mainFormOwner : false;
+                $writtenEntryId = formulize_writeEntry($valuesToWrite, 'new', 'replace', $proxyUser);
+                writeEntryDefaults($subform_id,$writtenEntryId);
+                $sub_entries[$subform_id][] = $writtenEntryId;
+            }
+        }
+        // IF no main form entry is actually saved in the end, then we want to delete all these subs that we have made??!!
+        // We don't have to, however, they will polute the database, it's not necessary to have them around
+    }
 
 	// list the entries, including links to them and delete checkboxes
 	
@@ -1557,11 +1668,11 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	$drawnHeadersOnce = false;
 
     
-    //print_r($subform_element_object);
+    // hacking in a filter for existing entries
     if(isset($subform_element_object->ele_value["UserFilterByElement"]) AND $subform_element_object->ele_value["UserFilterByElement"]) {
-        $col_two = "<br>Search for: <input type='text' name='subformFilterBox_$subformInstance' value='".htmlspecialchars(strip_tags(str_replace("'","&#039;",$_POST['subformFilterBox_'.$subformInstance])))."' /> <input type='button' value='"._formulize_SUBFORM_FILTER_GO."' onclick='validateAndSubmit();' /><br>";
-    } else {
-        $col_two = "";
+        $col_two = "<br>"._formulize_SUBFORM_FILTER_SEARCH."<input type='text' name='subformFilterBox_$subformInstance' value='".htmlspecialchars(strip_tags(str_replace("'","&#039;",$_POST['subformFilterBox_'.$subformInstance])))."' /> <input type='button' value='"._formulize_SUBFORM_FILTER_GO."' onclick='validateAndSubmit();' /><br>";
+	} else {
+		$col_two = "";
     }
     
 	if($rowsOrForms=="row" OR $rowsOrForms =='') {
@@ -1569,9 +1680,9 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	} else {
 		$col_two .= "";
 		if(!strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
-			$col_two .= "<div id=\"subform-$subformElementId\" class=\"subform-accordion-container\" subelementid=\"$subformElementId\" style=\"display: none;\">";
+			$col_two .= "<div id=\"subform-$subformElementId$subformInstance\" class=\"subform-accordion-container\" subelementid=\"$subformElementId$subformInstance\" style=\"display: none;\">";
 		}
-		$col_two .= "<input type='hidden' name='subform_entry_".$subformElementId."_active' id='subform_entry_".$subformElementId."_active' value='' />";
+		$col_two .= "<input type='hidden' name='subform_entry_".$subformElementId.$subformInstance."_active' id='subform_entry_".$subformElementId.$subformInstance."_active' value='' />";
 	}
 
 	$deFrid = $frid ? $frid : ""; // need to set this up so we can pass it as part of the displayElement function, necessary to establish the framework in case this is a framework and no subform element is being used, just the default draw-in-the-one-to-many behaviour
@@ -1582,19 +1693,20 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
     // if so, we always show blanks as long as there are no subform entries already
     $ignoreFormSubmitted = false;
     if(substr($defaultblanks, -1) == '!') {
-        $defaultblanks = substr($defaultblanks, 0, -1);
+        $defaultblanks = intval(substr($defaultblanks, 0, -1));
         $ignoreFormSubmitted = true;
+    } else {
+        $defaultblanks = intval($defaultblanks);
     }
     
 	if((!$_POST['form_submitted'] OR $ignoreFormSubmitted) AND count($sub_entries[$subform_id]) == 0 AND $defaultblanks > 0 AND ($rowsOrForms == "row"  OR $rowsOrForms =='')) {
-        
+	
         if(!isset($GLOBALS['formulize_globalDefaultBlankCounter'])) {
             $GLOBALS['formulize_globalDefaultBlankCounter'] = -1;
         }
 		for($i=0;$i<$defaultblanks;$i++) {
             
             $GLOBALS['formulize_globalDefaultBlankCounter'] = $GLOBALS['formulize_globalDefaultBlankCounter'] + 1;
-
 	
 				// nearly same header drawing code as in the 'else' for drawing regular entries
 				if(!$drawnHeadersOnce) {
@@ -1627,7 +1739,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 						$col_two_temp = ob_get_contents();
 						ob_end_clean();
 						if($col_two_temp OR $renderResult == "rendered") { // only draw in a cell if there actually is an element rendered (some elements might be rendered as nothing (such as derived values)
-							$col_two .= "<td>$col_two_temp</td>\n";
+							$col_two .= "<td class='formulize_subform_".$thisele."'>$col_two_temp</td>\n";
 						} else {
 							$col_two .= "<td>******</td>";
 						}
@@ -1638,7 +1750,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 		}
 	
 	} elseif(count($sub_entries[$subform_id]) > 0) {
-        
+		
         if(isset($subform_element_object->ele_value["SortingElement"]) AND $subform_element_object->ele_value["SortingElement"]) {
             $sortElementObject = $element_handler->get($subform_element_object->ele_value["SortingElement"]);
             $sortDirection = $subform_element_object->ele_value["SortingDirection"] == "DESC" ? "DESC" : "ASC";
@@ -1646,7 +1758,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
         } else {
 			$sortClause = " entry_id ";
 		}
-        
+		
         if(isset($subform_element_object->ele_value["UserFilterByElement"]) AND $subform_element_object->ele_value["UserFilterByElement"]) {
             $matchingEntryIds = array();
             if(isset($_POST['subformFilterBox_'.$subformInstance]) AND $_POST['subformFilterBox_'.$subformInstance]) {
@@ -1672,18 +1784,15 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 			}
 		}
 
-        //print $subEntriesOrderSQL;
-        
 		$currentSubformInstance = $subformInstance;
-        $data_handler = new formulizeDataHandler($subform_id);
-        
+
 		foreach($sub_entries[$subform_id] as $sub_ent) {
             
             // validate that the sub entry has a value for the key field that it needs to (in cases where there is a sub linked to a main and a another sub (ie: it's a sub sub of a sub, and a sub of the main, at the same time, we don't want to draw in entries in the wrong place -- they will be part of the sub_entries array, because they are part of the dataset, but they should not be part of the UI for this subform instance!)
             // $element_to_write is the element in the subform that needs to have a value
             if(!$subFormKeyElementValue = $data_handler->getElementValueInEntry($sub_ent, $element_to_write)) {
                 continue;
-            }            
+            }   
             
 			if($sub_ent != "") {
 				
@@ -1788,30 +1897,25 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 		if(!strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
 			$col_two .= "</div>"; // close of the subform-accordion-container
 		}
-		static $jqueryUILoaded = false;
-		if(!$jqueryUILoaded) {
-			$col_two .= "<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-ui-1.8.2.custom.min.js\"></script>\n";
-			$col_two .= "<link rel=\"stylesheet\" type=\"text/css\" href=\"".XOOPS_URL."/modules/formulize/libraries/jquery/css/start/jquery-ui-1.8.2.custom.css\">\n";
-			$jqueryUILoaded = true;
-		}
 		$col_two .= "\n
 <script type=\"text/javascript\">
 	jQuery(document).ready(function() {
-		jQuery(\"#subform-$subformElementId\").accordion({
-			autoHeight: false, // no fixed height for sections
+		jQuery(\"#subform-$subformElementId$subformInstance\").accordion({
+			heightStyle: 'content',
+            autoHeight: false, // legacy
 			collapsible: true, // sections can be collapsed
 			active: ";
 			if($_POST['target_sub_instance'] == $subformElementId.$subformInstance AND $_POST['target_sub'] == $subform_id) {
 				$col_two .= count($sub_entries[$subform_id])-$_POST['numsubents'];
-			} elseif(is_numeric($_POST['subform_entry_'.$subformElementId.'_active'])) {
-				$col_two .= $_POST['subform_entry_'.$subformElementId.'_active'];
+			} elseif(is_numeric($_POST['subform_entry_'.$subformElementId.$subformInstance.'_active'])) {
+				$col_two .= $_POST['subform_entry_'.$subformElementId.$subformInstance.'_active'];
 			} else {
 				$col_two .= 'false';
 			}
 			$col_two .= ",
 			header: \"> div > p.subform-header\"
 		});
-		jQuery(\"#subform-$subformElementId\").fadeIn();
+		jQuery(\"#subform-$subformElementId$subformInstance\").fadeIn();
 	});
 </script>";
 	} // end of if we're closing the subform inferface where entries are supposed to be collapsable forms
@@ -1895,6 +1999,11 @@ function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid,
 			}
 		
 			$unique_users = array_unique($all_add_users);
+            if(in_array(0,$unique_users)) { // if there is a user 0 that has been found, that's an error, cleanup DB and remove errant user id from the array
+                $cleanupSQL = "DELETE FROM ".$xoopsDB->prefix('groups_users_link')." WHERE uid=0";
+                $xoopsDB->queryF($cleanupSQL);
+                $unique_users = array_diff($unique_users, array(0));
+            }
 
 			$punames = array();
 			foreach($unique_users as $uid) {
@@ -2089,7 +2198,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 					// need to add a tr container for elements that are not allowed, since if it was a condition that caused them to not show up, they might appear later on asynchronously, and we'll need the row to attach them to
 					if($ele_type == "ib" AND $form_ele == "not_allowed") {
 						$rowHTML = "<tr style='display: none' id='formulize-de_".$fid."_".$entryForDEElements."_".$this_ele_id."'></tr>";
-					} elseif($form_ele == "not_allowed") { 
+					} else { 
 						$rowHTML = "<tr style='display: none' id='formulize-de_".$fid."_".$entryForDEElements."_".$this_ele_id."' valign='top' align='" . _GLOBAL_LEFT . "'></tr>";
 					}
 					// need to also get the validation code for this element, wrap it in a check for the table row being visible, and assign that to the global array that contains all the validation javascript that we need to add to the form
@@ -2100,7 +2209,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 							$data_handler = new formulizeDataHandler($i->getVar('id_form'));
 							$ele_value = loadValue($prevEntry, $i, $ele_value, $data_handler->getEntryOwnerGroups($entry), $groups, $entry, $profileForm); // get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
 						}
-						$conditionalElementForValidiationCode = $conditionalValidationRenderer->constructElement("de_".$fid."_".$entryForDEElements."_".$this_ele_id, $ele_value, $entry, $isDisabled, $screen, true);
+						$conditionalElementForValidiationCode = $conditionalValidationRenderer->constructElement("de_".$fid."_".$entryForDEElements."_".$this_ele_id, $ele_value, $entry, $isDisabled, $screen, true); // last flag is "validation only" so the rendered knows things won't actually be output
 						if($js = $conditionalElementForValidiationCode->renderValidationJS()) {
 							$GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$conditionalElementForValidiationCode->getName()] = "if(window.document.getElementById('formulize-".$conditionalElementForValidiationCode->getName()."').style.display != 'none') {\n".$js."\n}\n";
 						}
@@ -2329,7 +2438,6 @@ function loadValue($prevEntry, $element, $ele_value, $owner_groups, $groups, $en
 						
 			}
 
-            
 			/*print_r($ele_value);
 			print "<br>After: "; //debug block
 			*/
@@ -2344,7 +2452,7 @@ function loadValue($prevEntry, $element, $ele_value, $owner_groups, $groups, $en
 
                 case "text":
                     $ele_value[2] = $value;
-                    $ele_value[2] = eregi_replace("'", "&#039;", $ele_value[2]);
+                    $ele_value[2] = str_replace("'", "&#039;", $ele_value[2]);
                     break;
 
 
@@ -2356,7 +2464,6 @@ function loadValue($prevEntry, $element, $ele_value, $owner_groups, $groups, $en
 
 				case "select":
 				case "radio":
-				case "checkbox":
 					// NOTE:  unique delimiter used to identify LINKED select boxes, so they can be handled differently.
 					if(is_string($ele_value[2]) and strstr($ele_value[2], "#*=:*"))
                     {
@@ -2379,10 +2486,11 @@ function loadValue($prevEntry, $element, $ele_value, $owner_groups, $groups, $en
 
 						if (is_array($temparray)) {
 							$temparraykeys = array_keys($temparray);
+                            $temparray = array_fill_keys($temparraykeys, 0); // actually remove the defaults!
 						} else {
 							$temparraykeys = array();
 						}
-
+                        
 						if($temparraykeys[0] === "{FULLNAMES}" OR $temparraykeys[0] === "{USERNAMES}") { // ADDED June 18 2005 to handle pulling in usernames for the user's group(s)
 							$ele_value[2]['{SELECTEDNAMES}'] = explode("*=+*:", $value);
 							if(count($ele_value[2]['{SELECTEDNAMES}']) > 1) { array_shift($ele_value[2]['{SELECTEDNAMES}']); }
@@ -2400,27 +2508,38 @@ function loadValue($prevEntry, $element, $ele_value, $owner_groups, $groups, $en
 						$numberOfSelectedValues = strstr($value, "*=+*:") ? count($selvalarray)-1 : 1; // if this is a multiple selection value, then count the array values, minus 1 since there will be one leading separator on the string.  Otherwise, it's a single value element so the number of selections is 1.
 						
 						$assignedSelectedValues = array();
-						foreach($temparraykeys as $k)
-						{
-							if((string)$k === (string)$value OR trans((string)$k) === (string)$value) // if there's a straight match (not a multiple selection)
-							{
+						foreach($temparraykeys as $k) {
+                            
+                            // if there's a straight match (not a multiple selection)
+							if((string)$k === (string)$value) {
 								$temparray[$k] = 1;
 								$assignedSelectedValues[$k] = true;
-							}
-							elseif( is_array($selvalarray) AND (in_array((string)$k, $selvalarray, TRUE) OR in_array(trans((string)$k), $selvalarray, TRUE)) ) // or if there's a match within a multiple selection array) -- TRUE is like ===, matches type and value
-							{
+                                
+                            // or if there's a match within a multiple selection array) -- TRUE is like ===, matches type and value
+							} elseif( is_array($selvalarray) AND in_array((string)$k, $selvalarray, TRUE) ) {
 								$temparray[$k] = 1;
 								$assignedSelectedValues[$k] = true;
-							}
-							else // otherwise set to zero.
-							{
-								$temparray[$k] = 0;
-							}
-						}
-                        
+                                
+                            // check for a match within an English translated value and assign that, otherwise set to zero
+                            // assumption is that development was done first in English and then translated
+                            // this safety net will not work if a system is developed first and gets saved data prior to translation in language other than English!!
+							} else {
+                                foreach($selvalarray as $selvalue) {
+                                    if(trim(trans((string)$k, "en")) == trim(trans($selvalue,"en"))) {
+                                        $temparray[$k] = 1;
+                                        $assignedSelectedValues[$k] = true;
+                                        continue 2; // move on to next iteration of outer loop
+                                    } 
+                                }
+                                if($temparray[$k] != 1) {
+                                    $temparray[$k] = 0;
+                                }
+                            }
+                            
+                        }
 						if((!empty($value) OR $value === 0 OR $value === "0") AND count($assignedSelectedValues) < $numberOfSelectedValues) { // if we have not assigned the selected value from the db to one of the options for this element, then lets add it to the array of options, and flag it as out of range.  This is to preserve out of range values in the db that are there from earlier times when the options were different, and also to preserve values that were imported without validation on purpose
 							foreach($selvalarray as $selvalue) {
-								if(!isset($assignedSelectedValues[$selvalue]) AND (!empty($selvalue) OR ($selvalue === 0 OR $selvalue === "0")AND is_numeric($selvalue))) {
+								if(!isset($assignedSelectedValues[$selvalue]) AND (!empty($selvalue) OR $selvalue === 0 OR $selvalue === "0")) {
 									$temparray[_formulize_OUTOFRANGE_DATA.$selvalue] = 1;
 								}
 							}
@@ -2491,7 +2610,6 @@ function formulize_formatDateTime($dt) {
 
 // write the settings passed to this page from the view entries page, so the view can be restored when they go back
 function writeHiddenSettings($settings, $form = null) {
-    
 	//unpack settings
 	$sort = $settings['sort'];
 	$order = $settings['order'];
@@ -2632,7 +2750,7 @@ print "\n<script type='text/javascript'>\n";
 
 print " initialize_formulize_xhr();\n";
 print " var formulizechanged=0;\n";
-print " var formulize_xhr_returned_check_for_unique_value = 'notreturned';\n";
+print " var formulize_xhr_returned_check_for_unique_value = new Array();\n";
 
 if(isset($GLOBALS['formulize_fckEditors'])) {
 	print "function FCKeditor_OnComplete( editorInstance ) { \n";
@@ -2705,7 +2823,7 @@ function validateAndSubmit(leave) {
 <?php
 if(!$nosave) { // need to check for add or update permissions on the current user and this entry before we include this javascript, otherwise they should not be able to save the form
 ?>
-	var validate = xoopsFormValidate_formulize();
+	var validate = xoopsFormValidate_formulize(leave);
 	// this is an optional form validation function which can be provided by a screen template or form text element
 	if (window.formulizeExtraFormValidation && typeof(window.formulizeExtraFormValidation) === 'function') {
 		validate = window.formulizeExtraFormValidation();
@@ -2727,12 +2845,9 @@ if(!$nosave) { // need to check for add or update permissions on the current use
         }
         jQuery('#yposition').val(jQuery(window).scrollTop());
         if (formulizechanged) {
-            window.document.getElementById('formulizeform').style.opacity = 0.5;
-            window.document.getElementById('savingmessage').style.display = 'block';
-            window.scrollTo(0,0);
-            formulizechanged = 0; // don't want to trigger the beforeunload warning
+            showSavingGraphic();
         }
-        if (leave) {
+        if (leave=='leave') {
             jQuery('#save_and_leave').val(1);
         }
         window.document.formulize.submit();
@@ -2740,6 +2855,19 @@ if(!$nosave) { // need to check for add or update permissions on the current use
 <?php
 } // end of if not $nosave
 ?>
+}
+
+function showSavingGraphic() {
+    window.document.getElementById('formulizeform').style.opacity = 0.5;
+    window.document.getElementById('savingmessage').style.opacity = 1;
+    window.document.getElementById('savingmessage').style.display = 'block';
+    window.scrollTo(0,0);
+    formulizechanged = 0; // don't want to trigger the beforeunload warning
+}
+
+function hideSavingGraphic() {
+    window.document.getElementById('formulizeform').style.opacity = 1;
+    window.document.getElementById('savingmessage').style.display = 'none';
 }
 
 <?php
@@ -2916,59 +3044,7 @@ function check_date_limits(element_id) {
         date_input.val('');
     }
 }
-
 <?php
-
-    if(isset($GLOBALS['formulize_specialValidationLogicHook'])) {
-        ?>
-var tagBody = '(?:[^"\'>]|"[^"]*"|\'[^\']*\')*';
-var tagOrComment = new RegExp(
-    '<(?:'
-    // Comment body.
-    + '!--(?:(?:-*[^->])*--+|-?)'
-    // Special "raw text" elements whose content should be elided.
-    + '|script\\b' + tagBody + '>[\\s\\S]*?</script\\s*'
-    + '|style\\b' + tagBody + '>[\\s\\S]*?</style\\s*'
-    // Regular name
-    + '|/?[a-z]'
-    + tagBody
-    + ')>',
-    'gi');
-function removeTags(html) {
-  var oldHtml;
-  do {
-    oldHtml = html;
-    html = html.replace(tagOrComment, '');
-  } while (html !== oldHtml);
-  return html.replace(/</g, '&lt;');
-}
-<?php
-        $output = "jQuery(document).ready(function() {\n";
-        
-        foreach($GLOBALS['formulize_specialValidationLogicHook'] as $markupId=>$elementId) {
-            $output .= "jQuery('#".$markupId."').change(function() {
-                specialValidation".$markupId."(jQuery(this).val());
-            });\n";
-            // need to generate each ajax call for each element, since the target markupId cannot be passed into the success closure, has to be hard coded
-            $output .= "function specialValidation".$markupId."(value) {
-    jQuery.ajax({
-        url: '".XOOPS_URL."/modules/formulize/formulize_specialValidation.php?markupId=".$markupId."&value='+value,
-        success: function(data) {
-            data = JSON.parse(removeTags(data));
-            jQuery('#va_".trim($markupId,"de_")."').text(data.text);
-            jQuery('#va_".trim($markupId,"de_")."').css('color',data.color);
-        }
-    });
-}
-";
-           $output .= "specialValidation".$markupId."(jQuery('#".$markupId."').val())\n";
-        }
-        $output .= "});\n";
-        print $output;
-    }
-
-
-
     print "</script>\n";
     $drawnJavascript = true;
 }
@@ -2984,16 +3060,17 @@ $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 print "
 <script type='text/javascript'>
 
-var conditionalHTML = new Array(); // needs to be global!
+// need to be global!
+var conditionalHTML = new Array(); 
+var governedElements = new Array();
+var relevantElements = new Array();
+var oneToOneElements = new Array();
 
-jQuery(window).load(function() {
+jQuery(document).ready(function() {
 
 	// preload the current state of the HTML for any conditional elements that are currently displayed, so we can compare against what we get back when their conditions change
 	var conditionalElements = new Array('".implode("', '",array_keys($conditionalElements))."');
-	var governedElements = new Array();
-	var relevantElements = new Array();
-	var oneToOneElements = new Array();
-	";
+";
 	$topKey = 0;
 	$relevantElementArray = array();
 	foreach($governingElements as $thisGoverningElement=>$theseGovernedElements) {
@@ -3018,31 +3095,32 @@ jQuery(window).load(function() {
 		}
 		$topKey++;
 	}
-	print "
-	for(key in conditionalElements) {
-		var handle = conditionalElements[key];
-		getConditionalHTML(handle); // isolate ajax call in a function to control the scope of handle so it's the same no matter the time difference when the return value gets here
-	}
 
-	jQuery(\"[name='".implode("'], [name='", array_keys($governingElements))."']\").live('change', function() { // live is necessary because it will bind events to the right DOM elements even after they've been replaced by ajax events
-		for(key in governedElements[jQuery(this).attr('name')]) {
-			var handle = governedElements[jQuery(this).attr('name')][key];
-			elementValuesForURL = getRelevantElementValues(relevantElements[handle]);
-			if(oneToOneElements[handle]['onetoonefrid']) {
-				elementValuesForURL = elementValuesForURL + '&onetoonekey=1&onetoonefrid='+oneToOneElements[handle]['onetoonefrid']+'&onetoonefid='+oneToOneElements[handle]['onetoonefid']+'&onetooneentries='+oneToOneElements[handle]['onetooneentries']+'&onetoonefids='+oneToOneElements[handle]['onetoonefids'];			
-			}
-			checkCondition(handle, conditionalHTML[handle], elementValuesForURL);	
-		}
-	});
-});
+    foreach(array_keys($conditionalElements) as $ce) {
+        print "assignConditionalHTML('".$ce."', jQuery('#formulize-".$ce."').html());\n";
+    }
 
-function getConditionalHTML(handle) {
-	partsArray = handle.split('_');
-	jQuery.get(\"".XOOPS_URL."/modules/formulize/formulize_xhr_responder.php?uid=".$uid."&op=get_element_row_html&elementId=\"+partsArray[3]+\"&entryId=\"+partsArray[2]+\"&fid=\"+partsArray[1], function(data) {
-		assignConditionalHTML(handle, data);
-	});
-}
+    foreach(array_keys($governingElements) as $ge) {
+        //print "jQuery('#formulize-".$ge."').on('change', '#".$ge."', function() {
+        print "jQuery(document).on('change', '#".$ge."', function() {
+    callCheckCondition(jQuery(this).attr('name'));
+});\n";
+    }
 
+// end the document ready and continue with functions    
+print "});
+
+function callCheckCondition(name) {
+    for(key in governedElements[name]) {
+        var handle = governedElements[name][key];
+        elementValuesForURL = getRelevantElementValues(relevantElements[handle]);
+        if(oneToOneElements[handle]['onetoonefrid']) {
+            elementValuesForURL = elementValuesForURL + '&onetoonekey=1&onetoonefrid='+oneToOneElements[handle]['onetoonefrid']+'&onetoonefid='+oneToOneElements[handle]['onetoonefid']+'&onetooneentries='+oneToOneElements[handle]['onetooneentries']+'&onetoonefids='+oneToOneElements[handle]['onetoonefids'];			
+        }
+        checkCondition(handle, conditionalHTML[handle], elementValuesForURL);	
+    }
+}     
+ 
 function assignConditionalHTML(handle, html) {
 	conditionalHTML[handle] = html; 
 }
@@ -3170,7 +3248,7 @@ function compileGoverningElementsForConditionalElements($conditionalElements, $e
 					}
 					$governingElements1 = _compileGoverningElements($entries, $elementObject, $handle);
 					$governingElements2 = _compileGoverningElements($sub_entries, $elementObject, $handle);
-					$governingElements3 = _compileGoverningLinkedSelectBoxSourceConditionElements($governingElements, $handle);
+					$governingElements3 = _compileGoverningLinkedSelectBoxSourceConditionElements($handle);
 					$governingElements = mergeGoverningElements($governingElements, $governingElements1);
 					$governingElements = mergeGoverningElements($governingElements, $governingElements2);
 					$governingElements = mergeGoverningElements($governingElements, $governingElements3);

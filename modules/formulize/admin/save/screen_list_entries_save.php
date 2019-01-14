@@ -23,7 +23,7 @@
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
 ##  Author of this file: Freeform Solutions                                  ##
-##  URL: http://www.freeformsolutions.ca/formulize                           ##
+##  URL: http://www.formulize.org                           ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
@@ -49,10 +49,34 @@ if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mi
   return;
 }
 
+$advanceview = array();
 
-$screen->setVar('defaultview',$screens['defaultview']);
+foreach($_POST['col-value'] as $index=>$col) {
+    if(isset($_POST['sort-by']) AND $_POST['sort-by'] == $index) {
+    $sort = 1;
+    } else {
+    $sort = 0;
+  }
+    if(!is_numeric($col) OR intval($col) != 0) {
+        $advanceview[] = array($col, $_POST['search-value'][$index], $sort);
+  }
+}
+
+$screens['advanceview'] = $advanceview;
+
+$defaultview = array();
+foreach($_POST['defaultview_group'] as $key=>$groupid) {
+  $defaultview[$groupid] = $_POST['defaultview_view'][$key];
+}
+
+if(!isset($screens['limitviews'])) {
+    $screens['limitviews'] = serialize(array(0=>'allviews'));
+}
+
+$screen->setVar('defaultview',serialize($defaultview)); // need to serialize things that have the array datatype, when they are manually generated here by us!
 $screen->setVar('usecurrentviewlist',$screens['usecurrentviewlist']);
-$screen->setVar('limitviews',$screens['limitviews']);
+$screen->setVar('limitviews',$screens['limitviews']); // do not need to serialize things that come directly from the page as an array already, admin/save.php does this for us
+$screen->setVar('advanceview', serialize($screens['advanceview'])); // need to serialize things that have the array datatype, when they are manually generated here by us!
 $screen->setVar('useworkingmsg',(array_key_exists('useworkingmsg',$screens))?$screens['useworkingmsg']:0);
 $screen->setVar('usescrollbox',(array_key_exists('usescrollbox',$screens))?$screens['usescrollbox']:0);
 $screen->setVar('entriesperpage',$screens['entriesperpage']);

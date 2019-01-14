@@ -50,8 +50,6 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		$entriesThatHaveBeenLockedThisPageLoad = array();
 	}
 	
-    $element_handler = xoops_getmodulehandler('elements', 'formulize');
-    
 	$subformCreateEntry = strstr($entry, "subformCreateEntry") ? true : false; // check for this special flag, which is mostly like a "new" situation, except for the deh hidden flag that gets passed back, since we don't want the standard readelements logic to pickup these elements!
 	if($subformCreateEntry) {
 		$subformMetaData = explode("_", $entry);
@@ -96,18 +94,20 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 	static $cachedViewPrivate = array();
 	static $cachedUpdateOwnEntry = array();
 	$gperm_handler = xoops_gethandler('groupperm');
-	if(!isset($cachedViewPrivate[$form_id]) AND !$noSave) {
-		$cachedViewPrivate[$form_id] = $gperm_handler->checkRight("view_private_elements", $form_id, $groups, $mid);
-		$cachedUpdateOwnEntry[$form_id] = $gperm_handler->checkRight("update_own_entry", $form_id, $groups, $mid);
+    $groupsKey = serialize($groups);
+	if(!isset($cachedViewPrivate[$form_id][$groupsKey]) AND !$noSave) {
+		$cachedViewPrivate[$form_id][$groupsKey] = $gperm_handler->checkRight("view_private_elements", $form_id, $groups, $mid);
+		$cachedUpdateOwnEntry[$form_id][$groupsKey] = $gperm_handler->checkRight("update_own_entry", $form_id, $groups, $mid);
 	}
-	$view_private_elements = $noSave ? 1 : $cachedViewPrivate[$form_id];
-	$update_own_entry = $noSave ? 1 : $cachedUpdateOwnEntry[$form_id];
+	$view_private_elements = $noSave ? 1 : $cachedViewPrivate[$form_id][$groupsKey];
+	$update_own_entry = $noSave ? 1 : $cachedUpdateOwnEntry[$form_id][$groupsKey];
 	
 	// check if the user is normally able to view this element or not, by checking their groups against the display groups -- added Nov 7 2005
 	// messed up.  Private should not override the display settings.  And the $entry should be checked against the security check first to determine whether the user should even see this entry in the first place.
 	$display = $element->getVar('ele_display');
 	$private = $element->getVar('ele_private');
 	$member_handler = xoops_gethandler('member');
+    $element_handler = xoops_getmodulehandler('elements', 'formulize');
 	$single_result = getSingle($form_id, $user_id, $groups, $member_handler, $gperm_handler, $mid);
 	$groupEntryWithUpdateRights = ($single_result['flag'] == "group" AND $update_own_entry AND $entry == $single_result['entry']) ? true : false;
 
@@ -210,7 +210,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		if (!$isDisabled AND !$noSave) {
             // note that we're using the OPPOSITE of the permission because we want to know if the element should be disabled
             $isDisabled = !formulizePermHandler::user_can_edit_entry($form_id, $user_id, $entry);
-				}
+		}
 
 		// check whether the entry is locked, and if so, then the element is not allowed.  Set a message to say that elements were disabled due to entries being edited elsewhere (first time only).
 		// groups with ignore lock permission bypass this, and therefore can save entries even when locked, and saving an entry removes the lock, so that gets you out of a jam if the lock is in place when it shouldn't be.
@@ -257,6 +257,7 @@ EOF;
 		}
 		
 		formulize_benchmark("About to render element ".$element->getVar('ele_caption').".");
+		
 		$form_ele =& $renderer->constructElement($renderedElementName, $ele_value, $entry, $isDisabled, $screen);
 		if(strstr($_SERVER['PHP_SELF'], "formulize/printview.php") AND is_object($form_ele)) {
 			$form_ele->setDescription('');
@@ -264,7 +265,7 @@ EOF;
 		formulize_benchmark("Done rendering element.");
 		
 		// put a lock on this entry in this form, so we know that the element is being edited.  Lock will be removed next time the entry is saved.
-		if ($entry > 0 AND !isset($lockedEntries[$form_id][$entry])
+		if (!$noSave AND $entry > 0 AND !isset($lockedEntries[$form_id][$entry])
             and !isset($entriesThatHaveBeenLockedThisPageLoad[$form_id][$entry]))
         {
             if (is_writable(XOOPS_ROOT_PATH."/modules/formulize/temp/")) {
@@ -344,15 +345,18 @@ EOF;
 /* ALTERED - 20100316 - freeform - jeff/julian - start */
 function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$filterTerms,$entry,$entryData) {
     $evaluationCondition = "";
-
-    // convert the internal database representation to the displayed value, if this element has uitext
-    foreach ($filterElements as $key => $element) {
-        $element_metadata = formulize_getElementMetaData($element, true);
-        if (isset($element_metadata['ele_uitext'])) {
-            $filterTerms[$key] = formulize_swapUIText($filterTerms[$key], unserialize($element_metadata['ele_uitext']));
+    
+    // convert the internal database representation to the displayed value, if this element has uitext that we're supposed to use
+    $element_metadata = formulize_getElementMetaData($element, true);
+    if($element_metadata['ele_uitextshow']) {
+        foreach ($filterElements as $key => $element) {
+            if (isset($element_metadata['ele_uitext'])) {
+                $filterTerms[$key] = formulize_swapUIText($filterTerms[$key], unserialize($element_metadata['ele_uitext']));
+            }
         }
     }
 
+    $element_handler = xoops_getmodulehandler('elements', 'formulize');
 	for($io=0;$io<count($indexes);$io++) {
 		$i = $indexes[$io];
 		if(!($evaluationCondition == "")) {
@@ -376,7 +380,6 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 		} elseif($entry == "new") {
 			// for textboxes, let's try to get their default value
 			// for other elements, generate the default is too tricky to get it to work at present, not enough time available
-			$element_handler = xoops_getmodulehandler('elements', 'formulize');
 			$elementObject = $element_handler->get($filterElements[$i]);
 			if(is_object($elementObject)) {
 				$ele_type = $elementObject->getVar('ele_type');

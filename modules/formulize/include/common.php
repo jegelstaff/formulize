@@ -40,7 +40,7 @@ if( !defined("formulize_ROOT_PATH") ){
 	define("formulize_ROOT_PATH", XOOPS_ROOT_PATH."/modules/formulize/");
 }
 include_once XOOPS_ROOT_PATH."/class/xoopsformloader.php";
-$formulize_mgr =& xoops_getmodulehandler('elements');
+$formulize_mgr =& xoops_getmodulehandler('elements', 'formulize');
 include_once formulize_ROOT_PATH.'class/elementrenderer.php';
 
 include_once formulize_ROOT_PATH.'include/functions.php';
@@ -51,3 +51,12 @@ include_once formulize_ROOT_PATH.'include/calendardisplay.php';
 include_once formulize_ROOT_PATH.'include/elementdisplay.php';
 include_once formulize_ROOT_PATH.'include/extract.php';
 include_once formulize_ROOT_PATH.'class/data.php';
+
+//Add the language constants
+if (file_exists(XOOPS_ROOT_PATH . "/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/language/".$xoopsConfig['language']."/main.php";
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/language/".$xoopsConfig['language']."/admin.php";
+} else {
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/language/english/main.php";
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/language/english/admin.php";
+}

@@ -33,6 +33,7 @@
 // this file generates the change columns popup
 
 // this function writes in the Javascript for changing columns
+// thanks to https://stackoverflow.com/users/54838/bc for the shift click checkbox code snippet: https://stackoverflow.com/questions/659508/how-can-i-shift-select-multiple-checkboxes-like-gmail
 function changeColJavascript() {
 ?>
 <script type='text/javascript'>
@@ -59,6 +60,29 @@ function updateCols(formObj) {
         window.self.close();
     }
 }
+
+$(document).ready(function() {
+    var $chkboxes = $('.colbox');
+    var lastChecked = null;
+    $chkboxes.click(function(e) {
+        if(!lastChecked) {
+            lastChecked = this;
+            return;
+        }
+    
+        if(e.shiftKey) {
+            var start = $chkboxes.index(this);
+            var end = $chkboxes.index(lastChecked);
+    
+            $chkboxes.slice(Math.min(start,end), Math.max(start,end)+ 1).prop('checked', lastChecked.checked);
+    
+        }
+    
+        lastChecked = this;
+    });
+});
+
+
 
 -->
 </script>
@@ -98,26 +122,11 @@ if (!$scheck = security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler)
     exit;
 }
 
+$defaultCols = getDefaultCols($fid, $frid); // returns ele_handles
 $cols = getAllColList($fid, $frid, $groups); // $groups indicates that we only want columns which are visible to the current user
 
 // handle metadata columns
 
-
-$options['entry_id'] = _formulize_ENTRY_ID;
-$options['creation_uid'] = _formulize_DE_CALC_CREATOR;
-$options['mod_uid'] = _formulize_DE_CALC_MODIFIER;
-$options['creation_datetime'] = _formulize_DE_CALC_CREATEDATE;
-$options['creator_email'] = _formulize_DE_CALC_CREATOR_EMAIL;
-
-$usedvals = array();
-foreach($cols as $f=>$vs) {
-    foreach($vs as $row=>$values) {
-        if (!in_array($values['ele_id'], $usedvals)) {
-            $usedvals[] = $values['ele_handle'];
-            $options[$values['ele_handle']] = $values['ele_coldhead'] != "" ? printSmart(trans($values['ele_colhead']), 75) : printSmart(trans(strip_tags($values['ele_caption'])), 75);
-        }
-    }
-}
 
 print "<HTML>";
 print "<head>";
@@ -127,7 +136,7 @@ print "<title>" . _formulize_DE_PICKNEWCOLS . "</title>";
 print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"" . XOOPS_URL . "/xoops.css\" />\n";
 $themecss = xoops_getcss();
 print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$themecss\" />\n";
-
+print "<script type='text/javascript' src='".XOOPS_URL."/libraries/jquery/jquery.js'></script>\n";
 changeColJavascript();
 
 print "</head>";
@@ -138,12 +147,7 @@ print "<form name=newcolform action=\"" . XOOPS_URL . "\" method=post>\n";
 print "<table class=outer><tr><th colspan=2>" . _formulize_DE_PICKNEWCOLS . "</th></tr>";
 print "<tr><td class=head>" . _formulize_DE_AVAILCOLS . "</td><td class=even>";
 
-$counter = 1;
-foreach($options as $value=>$option) {
-    $selected = isset($selectedCols[$value]) ? "checked='checked'" : "";
-    print "<label><input type='checkbox' name='popnewcols[]' id='popnewcols".$counter."' class='colbox' value=\"$value\" $selected />&nbsp;&nbsp;&nbsp;$option</label>\n";
-    $counter++;
-}
+print generateTidyElementList($cols, $selectedCols);
 
 print "</td></tr>\n";
 

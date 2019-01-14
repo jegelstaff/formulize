@@ -38,9 +38,10 @@
 // A SCREEN IN A BLOCK WITHOUT THE ENTIRE XOOPS TEMPLATE COMING IN
 
 // uncomment these two lines to enable benchmarking of performance...depends also on the user id specified in formulize_benchmark in include/extract.php
-require_once "../../mainfile.php";
-//include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-//$GLOBALS['startPageTime'] = microtime_float();
+
+/*require_once "../../mainfile.php";
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
+$GLOBALS['startPageTime'] = microtime_float();*/
 
 if(!isset($formulize_masterUIOverride)) {
     $formulize_masterUIOverride = false;
@@ -48,6 +49,7 @@ if(!isset($formulize_masterUIOverride)) {
 
 if(isset($formulize_screen_id)) {
     if(is_numeric($formulize_screen_id)) {
+        include XOOPS_ROOT_PATH.'/header.php';
         global $xoTheme;
         if($xoTheme) {
             $xoTheme->addStylesheet("/modules/formulize/templates/css/formulize.css");

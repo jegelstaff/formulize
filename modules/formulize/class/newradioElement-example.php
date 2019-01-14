@@ -41,7 +41,7 @@ class formulizeNewRadioElement extends formulizeformulize {
         $this->overrideDataType = ""; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
         $this->adminCanMakeRequired = true; // set to true if the webmaster should be able to toggle this element as required/not required
         $this->alwaysValidateInputs = false; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
-        parent::formulizeformulize();
+        parent::__construct();
     }
     
 }
@@ -196,7 +196,7 @@ class formulizeNewRadioElementHandler extends formulizeElementsHandler {
     function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id) {
         global $myts;
 		$myts =& MyTextSanitizer::getInstance();
-		$renderer =& new formulizeElementRenderer();
+		$renderer = new formulizeElementRenderer();
 		$ele_desc = $element->getVar('ele_desc', "f");
 		
 		if(strstr($markupName, "de_")) { // display element uses a slightly different element name so it can be distinguished on subsequent page load from regular elements...THIS IS NOT TRUE/NECESSARY ANYMORE SINCE FORMULIZE 3, WHERE ALL ELEMENTS ARE DISPLAY ELEMENTS
