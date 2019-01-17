@@ -47,6 +47,9 @@ include_once XOOPS_ROOT_PATH ."/modules/formulize/class/data.php";
 include_once XOOPS_ROOT_PATH."/class/xoopsformloader.php";
 include_once XOOPS_ROOT_PATH . "/include/functions.php";
 
+global $fullJsCatalogue;
+if(!is_array($fullJsCatalogue)) { $fullJsCatalogue = array(); }
+
 function memory_usage() {
 	$mem_usage = memory_get_usage(true);
 	if ($mem_usage < 1024) {
@@ -205,25 +208,39 @@ class formulize_themeForm extends XoopsThemeForm {
 	
 	// need to check whether the element is a standard element, if if so, add the check for whether its row exists or not	
 	function _drawValidationJS($skipConditionalCheck) {
+        global $fullJsCatalogue;
 		$fullJs = "";
 		
 		$elements = $this->getElements( true );
 		foreach ( $elements as $elt ) {
+            
 			if ( method_exists( $elt, 'renderValidationJS' ) ) {
-				if(substr($elt->getName(),0,3)=="de_" AND !$skipConditionalCheck) {
-					$checkConditionalRow = true;
+                $js = $elt->renderValidationJS();
+                $catalogueKey = md5(trim($js));
+
+                if(!$js OR isset($fullJsCatalogue[$catalogueKey])) {
+                    continue;
 				} else {
+                    $fullJsCatalogue[$catalogueKey] = true;
+                }
 					$checkConditionalRow = false;
+				if(substr($elt->getName(),0,3)=="de_") {
+                    $elementNameParts = explode("_", $elt->getName());
+                    $entry_id = $elementNameParts[2];
+                    if($entry_id != "new") { // do not do validation checks on sub entries that are going to be deleted
+                        $js = "if(jQuery(\"input[name='delbox" . $entry_id . "']\").length == 0 || jQuery(\"input[name='delbox" . $entry_id . "']\").prop('checked') == false) {\n".$js."\n}";
 				}
-				$js = $elt->renderValidationJS();
-				if($js AND $checkConditionalRow) {
+                    if(!$skipConditionalCheck) {
+                        $checkConditionalRow = true;
+                    }
+				} 
+				if($checkConditionalRow) {
 					$fullJs .= "if(window.document.getElementById('formulize-".$elt->getName()."').style.display != 'none') {\n".$js."\n}\n\n";
-				} elseif($js) {
+				} else {
 					$fullJs .= "\n".$js."\n";
 				}
 			}
 		}
-		
 		return $fullJs;
 	}
 	
@@ -2337,13 +2354,18 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
     
 	// add a hidden element to carry all the validation javascript that might be associated with elements rendered with elementdisplay.php...only relevant for elements rendered inside subforms or grids...the validation code comes straight from the element, doesn't have a check around it for the conditional table row id, like the custom form classes at the top of the file use, since those elements won't render as hidden and show/hide in the same way
 	if(isset($GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']])) {
-		$formulizeHiddenValidation = new XoopsFormHidden('validation', '');
+		$formulizeHiddenValidation = new XoopsFormHidden('validation', 1);
+        global $fullJsCatalogue;
 		foreach($GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']] as $thisValidation) { // grab all the validation code we stored in the elementdisplay.php file and attach it to this element
+            $catalogueKey = md5(trim($thisValidation));
+            if(!isset($fullJsCatalogue[$catalogueKey])) {
+                $fullJsCatalogue[$catalogueKey] = true;
 			foreach(explode("\n", $thisValidation) as $thisValidationLine) {
 				$formulizeHiddenValidation->customValidationCode[] = $thisValidationLine;
 			}
 		}
-		$form->addElement($formulizeHiddenValidation, 1);
+		}
+		$form->addElement($formulizeHiddenValidation);
 	}
 
 	if(get_class($form) == "formulize_elementsOnlyForm") { // forms of this class are ones that we're rendering just the HTML for the elements, and we need to preserve any validation javascript to stick in the final, parent form when it's finished
@@ -2352,9 +2374,9 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 			$GLOBALS['formulize_elementsOnlyForm_validationCode'][] = $validationJS."\n\n";
 		}
 	} elseif(count($GLOBALS['formulize_elementsOnlyForm_validationCode']) > 0) {
-		$elementsonlyvalidation = new XoopsFormHidden('elementsonlyforms', '');
+		$elementsonlyvalidation = new XoopsFormHidden('elementsonlyforms', 1);
 		$elementsonlyvalidation->customValidationCode = $GLOBALS['formulize_elementsOnlyForm_validationCode'];
-		$form->addElement($elementsonlyvalidation, 1);
+		$form->addElement($elementsonlyvalidation);
 	}
 	
 	return $form;
