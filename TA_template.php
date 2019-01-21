@@ -18,6 +18,7 @@ $fallCourse = strstr(display($courseData[0],'ro_module_semester'), 'Fall') ? tru
 $rankData = getData('', 2, 'ranks_type_of_appointment_contract_type/**/TA/**/=][ranks_rank/**/'.display($entry, 'teaching_assistants_rank').'/**/=');
 $date = date('F j, Y');
 $name = htmlspecialchars_decode(display($entry, 'taships_name'), ENT_QUOTES);
+$taType = htmlspecialchars_decode(display($entry, 'taships_type'), ENT_QUOTES);
 $address = htmlspecialchars_decode(displayBR($entry, 'teaching_assistants_address'), ENT_QUOTES);
 $city = htmlspecialchars_decode(display($entry, 'teaching_assistants_city'), ENT_QUOTES);
 $province = display($entry, 'teaching_assistants_province');
@@ -68,7 +69,7 @@ $html .= "
 <P>Dear $name:
 </P>
 
-<P>I am pleased to offer you an appointment as Teaching Assistant at the John H. Daniels Faculty of Architecture, Landscape, and Design, University of Toronto. The start date of your appointment will be $startdate and this appointment will end on $enddate with no further notice to you.</P>
+<P>I am pleased to offer you an appointment as Teaching Assistant ($taType) at the John H. Daniels Faculty of Architecture, Landscape, and Design, University of Toronto. The start date of your appointment will be $startdate and this appointment will end on $enddate with no further notice to you.</P>
 
 <P>Your appointment will be for $hours hours";
 if($fallCourse) {
