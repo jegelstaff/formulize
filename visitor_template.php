@@ -1,6 +1,6 @@
 <?php
 
-$html = "
+$html = "$reservedFlag
 
 <P>$date</P>
 
@@ -50,7 +50,7 @@ if(count($courses)>1) {
 }
 $html .= ":<UL>";
 foreach($courses as $course) {
-	$html .= "<LI>{$course['code']} - {$course['title']}, Section {$course['section']}<BR>{$course['times']}<BR>{$course['room']}";
+	$html .= "<LI>{$course['code']} - {$course['title']}, Section {$course['section']}{$course['reserved']}<BR>{$course['times']}<BR>{$course['room']}";
     if($course['coinst'] AND count($course['coinst'])>0) {
         $html .= "<BR>Co-taught with ".implode(", ", $course['coinst']);
     }

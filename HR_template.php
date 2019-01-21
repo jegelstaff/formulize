@@ -37,6 +37,7 @@ $courses = array();
 $totalTeachingWeight = 0;
 $programs = array();
 $coursesTaught = array();
+$reservedSections = false;
 foreach($sections as $section) {
     
     // ignore cancelled sections
@@ -52,6 +53,12 @@ foreach($sections as $section) {
     
     $sectionData['title'] = htmlspecialchars_decode(display($section, 'ro_module_course_title'), ENT_QUOTES);
     $sectionData['code'] = display($section, 'ro_module_course_code');
+    if(display($section, 'course_components_reserved_section') == 'Yes') {
+        $sectionData['reserved'] = ' (Reserved)';
+        $reservedSections = true;
+    } else {
+        $sectionData['reserved'] = '';
+    }
     $sectionData['type'] = display($section, 'component_type');
     $sectionData['section'] = display($section, 'sections_section_number');
     $sectionData['times'] = implode(", ", makeSectionTimes($section, 'fullDayNames'));
@@ -135,6 +142,12 @@ if(display($entry, 'hr_module_appointment_term')=="Annual") {
     $enddate = "June 30, ".$yearParts[1];
 }
 
+if($reservedSections) {
+    $reservedFlag = "<P STYLE='color: red;'>RESERVED SECTIONS!</P>";
+} else {
+    $reservedFlag = "";
+}
+
 
 $rank = display($entry, 'hr_module_rank');
 $percents = display($entry, 'hr_teaching_loads_appointment_percent'); // varies by year!!
@@ -198,7 +211,7 @@ switch($rank) {
         $totalSalary = "$".number_format(($numberOfHours*$hourlyPay*1.04),2,".",",");
         $writingCenterCoord = getData('', 16, 'service_module_service_assignment/**/Writing Center Coordinator/**/=][service_module_year/**/'.$year.'/**/=');
         $writingCenterCoord = htmlspecialchars_decode(display($writingCenterCoord[0], 'service_module_faculty_member'), ENT_QUOTES);
-        $wccHR = getData('',1,'hr_module_name/**/$writingCenterCoord/**/=');
+        $wccHR = getData('',1,'hr_module_name/**/'.$writingCenterCoord.'/**/=');
         $wccEmail = display($wccHR[0], 'hr_module_e_mail');
         if(!$wccEmail) {
             $wccEmail = display($wccHR[0], 'hr_module_alt_email');
