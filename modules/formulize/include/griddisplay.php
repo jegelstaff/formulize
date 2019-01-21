@@ -67,7 +67,7 @@ function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientatio
 	include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 	include_once XOOPS_ROOT_PATH.'/modules/formulize/include/elementdisplay.php';
 	include_once XOOPS_ROOT_PATH.'/modules/formulize/class/data.php';
-	global $xoopsUser, $xoopsDB;
+	global $xoopsUser, $xoopsDB, $gridCounter;
 	$numcols = count($colcaps);
 	if(is_array($finalCell)) {
 		$numcols = $numcols+2;
@@ -75,7 +75,7 @@ function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientatio
 		$numcols = $numcols+1;
 	}
 	$numrows = count($rowcaps);
-	$actual_numrows = count(array_filter($rowcaps));	# count non-null row captions
+	$actual_numrows = count(array_filter($rowcaps), 'nonNullGridRowCaps');	# count non-null row captions
 	if($title == "{FORMTITLE}") {
 		$title = trans(getFormTitle($fid));
 	} else {
@@ -128,7 +128,7 @@ function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientatio
 	if($headingAtSide) {
 		$gridContents[0] = $title;
 		$class = "even";
-		print "<table class='outer'>\n<tr>";
+		print "<table class=''>\n<tr>";
 		if ($actual_numrows > 0)
 			echo "<td class=head></td>";
 	} else {
@@ -185,8 +185,11 @@ function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientatio
 			// display the element starting with the initial one.  Keep trying to display something until we're successful (displaying the element might fail if the user does not have permission to view (based on which groups are allowed to view this element)
 			$rendered = "start";
 			while(($rendered != "rendered" AND $rendered != "rendered-disabled") AND isset($element_ids_query[$ele_index])) {
-				$rendered = displayElement("", $element_ids_query[$ele_index]['ele_id'], $entry, false, $screen); 
-				$ele_index++;
+				$rendered = displayElement("", $element_ids_query[$ele_index]['ele_id'], $entry, false, $screen);
+                if($rendered == "rendered" OR $rendered == "rendered-disabled") {
+                    $gridCounter[$element_ids_query[$ele_index]['ele_id']] = true; // render was successful so log it
+                }
+                $ele_index++;
 			}
 			if($rendered != "rendered" AND $rendered != "rendered-disabled") { print "&nbsp;"; }					
 			print "</td>\n";	
@@ -267,4 +270,12 @@ function compileGrid($ele_value, $title, $element) {
 	$toreturn[] = count($toreturn[1]) * count($toreturn[2]);
 
 	return $toreturn;
+}
+
+function nonNullGridRowCaps($var) {
+    if(trim($var) != "") {
+        return true;
+    } else {
+        return false;
+    }
 }
