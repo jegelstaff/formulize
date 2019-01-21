@@ -3392,10 +3392,7 @@ function getDefaultCols($fid, $frid="") {
 // prevValue is now completely not required.  lvoverride is only used if you want to pass in a pre-formatted ,1,3,15,17, style string for inserting into a linked selectbox field.
 // linkedTargetHint is used if we are writing to a linked selectbox element, and we have some indication from the UI what the entry is that we're supposed to link to.  This allows for disambiguation of target values that we might be trying to link to, that might occur in more than one entry.
 function writeElementValue($formframe = "", $ele, $entry, $value, $append, $prevValue=null, $lvoverride=false, $linkedTargetHint = "") {
-    if (get_magic_quotes_gpc()) {
-        $value = stripslashes($value);
-    }
-
+    
     global $xoopsUser, $formulize_mgr, $xoopsDB, $myts;
     if (!is_object($myts)) {
         $myts =& MyTextSanitizer::getInstance();
