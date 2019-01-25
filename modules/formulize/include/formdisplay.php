@@ -491,6 +491,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                 deleteEntry($id_req, $frid, intval($_POST['deletesubsflag']), $excludeFids);
             }
 		}
+        unset($_POST['deletesubsflag']);
 	}
 
 	if($_POST['parent_form']) { // if we're coming back from a subform
