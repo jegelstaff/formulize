@@ -205,7 +205,7 @@ class formulizeElementRenderer{
 					$form_ele->customValidationCode[] = "\nvar formulize_xhr_params = []\n";
 					$form_ele->customValidationCode[] = "formulize_xhr_params[0] = myform.{$eltname}.value;\n";
 					$form_ele->customValidationCode[] = "formulize_xhr_params[1] = ".$this->_ele->getVar('ele_id').";\n";
-					$xhr_entry_to_send = is_numeric($entry) ? $entry : 0;
+					$xhr_entry_to_send = is_numeric($entry) ? $entry : "'".$entry."'";
 					$form_ele->customValidationCode[] = "formulize_xhr_params[2] = ".$xhr_entry_to_send.";\n";
                     $form_ele->customValidationCode[] = "formulize_xhr_params[4] = leave;\n"; // will have been passed in to the main function and we need to preserve it after xhr is done
 					$form_ele->customValidationCode[] = "formulize_xhr_send('check_for_unique_value', formulize_xhr_params);\n";

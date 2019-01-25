@@ -217,10 +217,8 @@ class formulize_themeForm extends XoopsThemeForm {
 	function _drawValidationJS($skipConditionalCheck) {
         global $fullJsCatalogue;
 		$fullJs = "";
-		
 		$elements = $this->getElements( true );
 		foreach ( $elements as $elt ) {
-            
 			if ( method_exists( $elt, 'renderValidationJS' ) ) {
                 $validationJs = $elt->renderValidationJS();
                 $catalogueKey = md5(trim($validationJs));
@@ -229,34 +227,32 @@ class formulize_themeForm extends XoopsThemeForm {
 				} else {
                     $fullJsCatalogue[$catalogueKey] = true;
                 }
-					$checkConditionalRow = false;
+				$checkConditionalRow = false;
 				if(substr($elt->getName(),0,3)=="de_") {
                     $elementNameParts = explode("_", $elt->getName());
                     $our_fid = $elementNameParts[1];
                     $our_entry_id = $elementNameParts[2];
                     $linkedEntries = checkForLinks($this->frid,array($our_fid),$our_fid,array($our_fid=>array($our_entry_id)),true);
-                    if($our_entry_id != "new") {
-                        // do not do validation checks on sub entries that are going to be deleted
-                        // check for any possible deletion button/checkbox combos being in effect
-                        // possible combos are determined by the relationships in effect based on this element's entry id, fid and active frid
-                        // active frid is set when the theme form object is constructed
-                        // THIS DEPENDS ON RELATIONSHIPS BEING NARROWLY DEFINED
-                        // If different entries might match up under different circumstances, ie: a one-to-one connection between form a and b, except there are multiple entries in form b that connect to form a, but because we might be going from the form a side in this case, we would be stuck with the first entry found, which might not be the one used in this case!!
-                        // Relationships should be used in limited circumstances, in limited ways. No big relationships that capture the entire ERD when you don't need it.
-                        $js = "";
-                        foreach($linkedEntries['entries'] as $fid=>$theseEntries) {
-                            foreach($theseEntries as $entry_id) {
-                                if(!$entry_id) { continue; }
-                                $condition = "(parseInt(document.formulize.deletesubsflag.value) == ".$fid." && jQuery(\"input[name='delbox" . $entry_id . "']\").length && jQuery(\"input[name='delbox" . $entry_id . "']\").prop('checked'))";
-                                if($js) {
-                                    $js .= " || $condition";
-                                } else {
-                                    $js = "if(($condition";
-                                }
+                    // do not do validation checks on sub entries that are going to be deleted
+                    // check for any possible deletion button/checkbox combos being in effect
+                    // possible combos are determined by the relationships in effect based on this element's entry id, fid and active frid
+                    // active frid is set when the theme form object is constructed
+                    // THIS DEPENDS ON RELATIONSHIPS BEING NARROWLY DEFINED
+                    // If different entries might match up under different circumstances, ie: a one-to-one connection between form a and b, except there are multiple entries in form b that connect to form a, but because we might be going from the form a side in this case, we would be stuck with the first entry found, which might not be the one used in this case!!
+                    // Relationships should be used in limited circumstances, in limited ways. No big relationships that capture the entire ERD when you don't need it.
+                    $js = "";
+                    foreach($linkedEntries['entries'] as $fid=>$theseEntries) {
+                        foreach($theseEntries as $entry_id) {
+                            if(!$entry_id) { continue; }
+                            $condition = "(parseInt(document.formulize.deletesubsflag.value) == ".$fid." && jQuery(\"input[name='delbox" . $entry_id . "']\").length && jQuery(\"input[name='delbox" . $entry_id . "']\").prop('checked'))";
+                            if($js) {
+                                $js .= " || $condition";
+                            } else {
+                                $js = "if(($condition";
                             }
                         }
-                        $js .= ")==false) {\n".$validationJs."\n}";
-				}
+                    }
+                    $js .= ")==false) {\n".$validationJs."\n}";
                     if(!$skipConditionalCheck) {
                         $checkConditionalRow = true;
                     }
