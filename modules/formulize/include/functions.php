@@ -1146,7 +1146,6 @@ function checkForLinks($frid, $fids, $fid, $entries, $unified_display=false, $un
             $mainHandle = q("SELECT ele_handle FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id=".$one_to_one[0]['keyother']);
             $candidateHandle = q("SELECT ele_handle FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id=".$one_fid['keyself']);
             $valueToCheckAgainst = isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($entries[$fid][0])][$mainHandle[0]['ele_handle']]) ? $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($entries[$fid][0])][$mainHandle[0]['ele_handle']] : "main.`".$mainHandle[0]['ele_handle']."` AND main.entry_id = ".intval($entries[$fid][0]);
-            $valueToCheckAgainst = is_numeric($valueToCheckAgainst) ? $valueToCheckAgainst : "'".formulize_db_escape($valueToCheckAgainst)."'";
             $candidateEntry = q("SELECT candidate.entry_id FROM " . $xoopsDB->prefix("formulize_".$oneFormObject->getVar('form_handle')) . " AS candidate, ". $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " AS main WHERE candidate.`".$candidateHandle[0]['ele_handle']."` = ".$valueToCheckAgainst." LIMIT 0,1");
 
             if ($candidateEntry[0]['entry_id']) {
