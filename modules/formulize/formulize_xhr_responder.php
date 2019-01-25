@@ -214,11 +214,10 @@ switch($op) {
       $deReturnValue = displayElement("", $elementObject, $entryId, false, null, null, false); // false, null, null, false means it's not a noSave element, no screen, no prevEntry data passed in, and do not render the element on screen
       if(is_array($deReturnValue)) {
         $form_ele = $deReturnValue[0];
+        if($elementObject->getVar('ele_req')) {
+            $form_ele->setRequired();
+        }
         $isDisabled = $deReturnValue[1];
-
-        $label_class = " formulize-label-".$elementObject->getVar("ele_handle");
-        $input_class = " formulize-input-".$elementObject->getVar("ele_handle");
-
         // rendered HTML code below is taken from the formulize classes at the top of include/formdisplay.php
         if($elementObject->getVar('ele_type') == "ib") {// if it's a break, handle it differently...
           $class = ($form_ele[1] != '') ? " class='".$form_ele[1]."'" : '';
