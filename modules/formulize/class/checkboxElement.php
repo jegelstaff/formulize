@@ -363,7 +363,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 				$counter = 0; // counter used for javascript that works with 'Other' box
 				while( $o = each($options) ){
 					$o = formulize_swapUIText($o, $ele_uitext);
-					$other = formulizeElementRenderer::optOther($o['value'], $markupName, $entry_id, $counter, true);
+					$other = formulizeElementRenderer::optOther($o['value'], $markupName, $entry_id, $counter, true, $isDisabled);
 					if( $other != false ){
 						$form_ele1->addOption($o['key'], _formulize_OPT_OTHER.$other);
 						if(in_array($o['key'], $selected)) {
@@ -387,7 +387,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 				$counter = 0; // counter used for javascript that works with 'Other' box
 				while( $o = each($options) ){
 					$o = formulize_swapUIText($o, $ele_uitext);
-					$other = formulizeElementRenderer::optOther($o['value'], $markupName, $entry_id, $counter, true);
+					$other = formulizeElementRenderer::optOther($o['value'], $markupName, $entry_id, $counter, true, $isDisabled);
 					$t = new XoopsFormCheckBox(
 						'',
 						$markupName.'[]',
