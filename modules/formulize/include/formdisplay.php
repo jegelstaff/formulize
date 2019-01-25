@@ -2840,6 +2840,10 @@ window.onbeforeunload = function (e) {
     }
 };
 
+jQuery(window).unload(function() {
+    <?php print formulize_javascriptForRemovingEntryLocks(); ?>
+});
+
 <?php
 print $codeToIncludejQueryWhenNecessary;
 if(intval($_POST['yposition'])>0) {
