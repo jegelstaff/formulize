@@ -928,6 +928,7 @@ function deleteIdReq($id_req, $fid) {
 // $fid is required
 // $excludeFids is an array of forms that we do not want to delete from in this case regardless (optional)
 function deleteEntry($id_req, $frid="", $fid, $excludeFids=array()) {
+    
     global $xoopsDB;
     $deletedEntries = array();
 
@@ -1016,6 +1017,21 @@ function makeUidFilter($users) {
 // final param is a flag to control whether only unified display relationships are returned or all relationships
 function checkForLinks($frid, $fids, $fid, $entries, $unified_display=false, $unified_delete=false)
 {
+    
+    if(!$frid) {
+        if(is_array($entries)) {
+            return array('fids'=>$fids, 'entries'=>$entries);
+        } else {
+            return array('fids'=>$fids);
+        }
+    }
+    
+    static $cachedCheckForLinks = array();
+    $cacheKey = md5(serialize(func_get_args()));
+    if(isset($cachedCheckForLinks[$cacheKey])) {
+       return $cachedCheckForLinks[$cacheKey]; 
+    }
+    
     // by default (ie: when called from formDisplay) only look for unified display relationships
     // when $unified_display is specifically set to zero, ie: when called from displayEntries, look for any relationships in the framework
     if ($unified_display) {
@@ -1228,6 +1244,8 @@ function checkForLinks($frid, $fids, $fid, $entries, $unified_display=false, $un
     $to_return['sub_fids'] = $sub_fids;
     $to_return['sub_entries'] = $sub_entries;
 
+    $cachedCheckForLinks[$cacheKey] = $to_return;
+    
     return $to_return;
 }
 

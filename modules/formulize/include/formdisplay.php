@@ -66,6 +66,13 @@ function memory_usage() {
 // NEED TO USE OUR OWN VERSION OF THE CLASS, TO GET ELEMENT NAMES IN THE TR TAGS FOR EACH ROW
 class formulize_themeForm extends XoopsThemeForm {
     
+    private $frid = 0;
+    
+    function __construct($title, $name, $action, $method = "post", $addtoken = false, $frid = 0) {
+        $this->frid = $frid;
+        parent::__construct($title, $name, $action, $method, $addtoken);
+    }
+    
     /**
      * Insert an empty row in the table to serve as a seperator.
      *
@@ -215,10 +222,9 @@ class formulize_themeForm extends XoopsThemeForm {
 		foreach ( $elements as $elt ) {
             
 			if ( method_exists( $elt, 'renderValidationJS' ) ) {
-                $js = $elt->renderValidationJS();
-                $catalogueKey = md5(trim($js));
-
-                if(!$js OR isset($fullJsCatalogue[$catalogueKey])) {
+                $validationJs = $elt->renderValidationJS();
+                $catalogueKey = md5(trim($validationJs));
+                if(!$validationJs OR isset($fullJsCatalogue[$catalogueKey])) {
                     continue;
 				} else {
                     $fullJsCatalogue[$catalogueKey] = true;
@@ -226,13 +232,36 @@ class formulize_themeForm extends XoopsThemeForm {
 					$checkConditionalRow = false;
 				if(substr($elt->getName(),0,3)=="de_") {
                     $elementNameParts = explode("_", $elt->getName());
-                    $entry_id = $elementNameParts[2];
-                    if($entry_id != "new") { // do not do validation checks on sub entries that are going to be deleted
-                        $js = "if(jQuery(\"input[name='delbox" . $entry_id . "']\").length == 0 || jQuery(\"input[name='delbox" . $entry_id . "']\").prop('checked') == false) {\n".$js."\n}";
+                    $our_fid = $elementNameParts[1];
+                    $our_entry_id = $elementNameParts[2];
+                    $linkedEntries = checkForLinks($this->frid,array($our_fid),$our_fid,array($our_fid=>array($our_entry_id)),true);
+                    if($our_entry_id != "new") {
+                        // do not do validation checks on sub entries that are going to be deleted
+                        // check for any possible deletion button/checkbox combos being in effect
+                        // possible combos are determined by the relationships in effect based on this element's entry id, fid and active frid
+                        // active frid is set when the theme form object is constructed
+                        // THIS DEPENDS ON RELATIONSHIPS BEING NARROWLY DEFINED
+                        // If different entries might match up under different circumstances, ie: a one-to-one connection between form a and b, except there are multiple entries in form b that connect to form a, but because we might be going from the form a side in this case, we would be stuck with the first entry found, which might not be the one used in this case!!
+                        // Relationships should be used in limited circumstances, in limited ways. No big relationships that capture the entire ERD when you don't need it.
+                        $js = "";
+                        foreach($linkedEntries['entries'] as $fid=>$theseEntries) {
+                            foreach($theseEntries as $entry_id) {
+                                if(!$entry_id) { continue; }
+                                $condition = "(parseInt(document.formulize.deletesubsflag.value) == ".$fid." && jQuery(\"input[name='delbox" . $entry_id . "']\").length && jQuery(\"input[name='delbox" . $entry_id . "']\").prop('checked'))";
+                                if($js) {
+                                    $js .= " || $condition";
+                                } else {
+                                    $js = "if(($condition";
+                                }
+                            }
+                        }
+                        $js .= ")==false) {\n".$validationJs."\n}";
 				}
                     if(!$skipConditionalCheck) {
                         $checkConditionalRow = true;
                     }
+				} else {
+                    $js = $validationJs;
 				} 
 				if($checkConditionalRow) {
 					$fullJs .= "if(window.document.getElementById('formulize-".$elt->getName()."').style.display != 'none') {\n".$js."\n}\n\n";
@@ -790,10 +819,10 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                 }
                 unset($form);
                 if($formElementsOnly) {
-                    $form = new formulize_elementsOnlyForm($title, 'formulize', "$currentURL", "post", true);
+                    $form = new formulize_elementsOnlyForm($title, 'formulize', "$currentURL", "post", false, $frid);
                 } else {
                     // extended class that puts formulize element names into the tr tags for the table, so we can show/hide them as required
-                    $form = new formulize_themeForm($title, 'formulize', "$currentURL", "post", true);
+                    $form = new formulize_themeForm($title, 'formulize', "$currentURL", "post", true, $frid);
                     // necessary to trigger the proper reloading of the form page, until Done is called and that form does not have this flag.
                     if (!isset($settings['ventry']))
                         $settings['ventry'] = 'new';
@@ -966,6 +995,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			} else {
 				// drawing a main form...put in the scroll position flag
 				$form->addElement (new XoopsFormHidden ('yposition', 0));
+                $form->addElement (new XoopsFormHidden ('deletesubsflag', 0));
 			}
 			
 			// saving message
@@ -1953,12 +1983,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 
     $deleteButton = "";
 	if(((count($sub_entries[$subform_id])>0 AND $sub_entries[$subform_id][0] != "") OR $sub_entry_new OR is_array($sub_entry_written)) AND $need_delete) {
-        $deleteButton = "&nbsp;&nbsp;&nbsp;<input type=button name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del('$subform_id');\">";
-		static $deletesubsflagIncluded = false;
-		if(!$deletesubsflagIncluded) {
-			$col_one .= "\n<input type=hidden name=deletesubsflag value=''>\n";
-			$deletesubsflagIncluded = true;
-		}
+        $deleteButton = "&nbsp;&nbsp;&nbsp;<input type=button name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del($subform_id);\">";
 	}
 
     // if the 'add x entries button' should be hidden or visible
@@ -2886,6 +2911,8 @@ if(!$nosave) { // need to check for add or update permissions on the current use
             jQuery('#save_and_leave').val(1);
         }
         window.document.formulize.submit();
+    } else {
+        hideSavingGraphic();
     }
 <?php
 } // end of if not $nosave
