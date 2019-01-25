@@ -2111,7 +2111,6 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 	$count = 0;
 	global $gridCounter;
 	$gridCounter = array();
-	$inGrid = 0;
 	
 	formulize_benchmark("Ready to loop elements.");
 
@@ -2154,12 +2153,8 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 		}
 	
 		// check if this element is included in a grid, and if so, skip it
-		// $inGrid will be a number indicating how many times we have to skip things
-		if($inGrid OR isset($gridCounter[$this_ele_id])) {
-			if(!$inGrid) {
-				$inGrid = $gridCounter[$this_ele_id];
-			}
-			$inGrid--;
+		if(isset($gridCounter[$this_ele_id])) {
+            unset($gridCounter[$this_ele_id]);
 			continue;
 		}
 
@@ -2293,10 +2288,14 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/griddisplay.php";
 			list($grid_title, $grid_row_caps, $grid_col_caps, $grid_background, $grid_start, $grid_count) = compileGrid($ele_value, $title, $i);
 			$headingAtSide = ($ele_value[5] AND $grid_title) ? true : false; // if there is a value for ele_value[5], then the heading should be at the side, otherwise, grid spans form width as it's own chunk of HTML
-			$gridCounter[$grid_start] = $grid_count;
 			$gridContents = displayGrid($fid, $entry, $grid_row_caps, $grid_col_caps, $grid_title, $grid_background, $grid_start, "", "", true, $screen, $headingAtSide);
 			if($headingAtSide) { // grid contents is the two bits for the xoopsformlabel when heading is at side, otherwise, it's just the contents for the break
-				$form->addElement(new XoopsFormLabel($gridContents[0], $gridContents[1]));
+				$gridElement = new XoopsFormLabel($gridContents[0], $gridContents[1]);
+                $helpText = $i->getVar('ele_desc');
+                if(trim($helpText)) {
+                    $gridElement->setDescription($helpText);
+                }
+                $form->addElement($gridElement);
 			} else {
 				$form->insertBreak($gridContents, "head"); // head is the css class of the cell
 			}
