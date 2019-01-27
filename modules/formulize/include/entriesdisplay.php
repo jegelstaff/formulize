@@ -4658,6 +4658,9 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
             }
             else{
                 $elementObject = $element_handler->get($key);
+                if(!is_object($elementObject)) {
+                    continue; // ignore references to non-elements (probably deleted columns in a saved view)
+                }
                 $ele_type = $elementObject->getVar('ele_type');
             }
 
