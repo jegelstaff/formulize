@@ -542,7 +542,7 @@ function getMenuCat($fid) {
 
 // this function truncates a string to a certain number of characters
 function printSmart($value, $chars="35") {
-    if($chars) {
+    if($chars AND !strstr(getCurrentURL(), 'master.php?')) {
         if (!is_numeric($value) AND $value == "") {
             $value = "&nbsp;";
         } else {
