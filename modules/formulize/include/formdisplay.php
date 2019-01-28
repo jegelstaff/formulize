@@ -2907,9 +2907,7 @@ if(!$nosave) { // need to check for add or update permissions on the current use
             jQuery('#save_and_leave_button').attr('disabled', 'disabled');
         }
         jQuery('#yposition').val(jQuery(window).scrollTop());
-        if (formulizechanged) {
             showSavingGraphic();
-        }
         if (leave=='leave') {
             jQuery('#save_and_leave').val(1);
         }
