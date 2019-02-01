@@ -35,7 +35,7 @@ class XoopsFormTextDateSelect extends icms_form_elements_Date
 	/**
 	 * Constructor
 	 */
-	function XoopsFormTextDateSelect($caption, $name, $size = 15, $value= 0)
+	function __construct($caption, $name, $size = 15, $value= 0)
 	{
 		//$value = !is_numeric($value) ? time() : (int) ($value); // ALTERED BY FREEFORM SOLUTIONS SO THAT THE LITERAL VALUE PASSED IN IS SENT TO THE PARENT CLASS
 		parent::__construct($caption, $name, $size, $value);

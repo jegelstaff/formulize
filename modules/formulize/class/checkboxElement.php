@@ -392,8 +392,8 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 						'',
 						$markupName.'[]',
 						$selected,
-						$delimSetting
-					);
+						""
+					); // "" means absolutely nothing as delimiter, which gets chucked onto the end of this individual box at render time. :(
 					if($other != false){
 						$t->addOption($o['key'], _formulize_OPT_OTHER.$other);
 						if(in_array($o['key'], $selected)) {

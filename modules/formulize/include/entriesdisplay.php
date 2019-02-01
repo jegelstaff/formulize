@@ -1740,7 +1740,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 									foreach($entryFormData as $internalID=>$entryElements) {
 										$deThisIntId = false;
 										foreach($entryElements as $entryHandle=>$values) {
-											if($entryHandle == $col) { // we found the element that we're trying to display
+											if($entryHandle == $col AND $internalID) { // we found the element that we're trying to display
 												if($deThisIntId) { print "\n<br />\n"; } // could be a subform so we'd display multiple values
 												if($deDisplay) {
                                                     if($multiValueBRNeeded) { print "\n<br />\n"; } // in the case of multiple values, split them based on this
@@ -4658,6 +4658,9 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
             }
             else{
                 $elementObject = $element_handler->get($key);
+                if(!is_object($elementObject)) {
+                    continue; // ignore references to non-elements (probably deleted columns in a saved view)
+                }
                 $ele_type = $elementObject->getVar('ele_type');
             }
 

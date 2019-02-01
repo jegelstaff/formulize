@@ -290,8 +290,10 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
         jQuery("input[name^='decue_']").remove();
         // 'rewritePage' will trigger the page to change after the locks have been removed
         removeEntryLocks('rewritePage');
+                document.formulize.deletesubsflag.value=0;
       }
     } else {
+            hideSavingGraphic();
 			savedPage = page;
 			savedPrevPage = prevpage;
 		}

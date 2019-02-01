@@ -47,6 +47,9 @@ include_once XOOPS_ROOT_PATH ."/modules/formulize/class/data.php";
 include_once XOOPS_ROOT_PATH."/class/xoopsformloader.php";
 include_once XOOPS_ROOT_PATH . "/include/functions.php";
 
+global $fullJsCatalogue;
+if(!is_array($fullJsCatalogue)) { $fullJsCatalogue = array(); }
+
 function memory_usage() {
 	$mem_usage = memory_get_usage(true);
 	if ($mem_usage < 1024) {
@@ -62,6 +65,13 @@ function memory_usage() {
 
 // NEED TO USE OUR OWN VERSION OF THE CLASS, TO GET ELEMENT NAMES IN THE TR TAGS FOR EACH ROW
 class formulize_themeForm extends XoopsThemeForm {
+    
+    private $frid = 0;
+    
+    function __construct($title, $name, $action, $method = "post", $addtoken = false, $frid = 0) {
+        $this->frid = $frid;
+        parent::__construct($title, $name, $action, $method, $addtoken);
+    }
     
     /**
      * Insert an empty row in the table to serve as a seperator.
@@ -205,25 +215,57 @@ class formulize_themeForm extends XoopsThemeForm {
 	
 	// need to check whether the element is a standard element, if if so, add the check for whether its row exists or not	
 	function _drawValidationJS($skipConditionalCheck) {
+        global $fullJsCatalogue;
 		$fullJs = "";
-		
 		$elements = $this->getElements( true );
 		foreach ( $elements as $elt ) {
 			if ( method_exists( $elt, 'renderValidationJS' ) ) {
-				if(substr($elt->getName(),0,3)=="de_" AND !$skipConditionalCheck) {
-					$checkConditionalRow = true;
+                $validationJs = $elt->renderValidationJS();
+                $catalogueKey = md5(trim($validationJs));
+                if(!$validationJs OR isset($fullJsCatalogue[$catalogueKey])) {
+                    continue;
 				} else {
-					$checkConditionalRow = false;
-				}
-				$js = $elt->renderValidationJS();
-				if($js AND $checkConditionalRow) {
+                    $fullJsCatalogue[$catalogueKey] = true;
+                }
+				$checkConditionalRow = false;
+				if(substr($elt->getName(),0,3)=="de_") {
+                    $elementNameParts = explode("_", $elt->getName());
+                    $our_fid = $elementNameParts[1];
+                    $our_entry_id = $elementNameParts[2];
+                    $linkedEntries = checkForLinks($this->frid,array($our_fid),$our_fid,array($our_fid=>array($our_entry_id)),true);
+                    // do not do validation checks on sub entries that are going to be deleted
+                    // check for any possible deletion button/checkbox combos being in effect
+                    // possible combos are determined by the relationships in effect based on this element's entry id, fid and active frid
+                    // active frid is set when the theme form object is constructed
+                    // THIS DEPENDS ON RELATIONSHIPS BEING NARROWLY DEFINED
+                    // If different entries might match up under different circumstances, ie: a one-to-one connection between form a and b, except there are multiple entries in form b that connect to form a, but because we might be going from the form a side in this case, we would be stuck with the first entry found, which might not be the one used in this case!!
+                    // Relationships should be used in limited circumstances, in limited ways. No big relationships that capture the entire ERD when you don't need it.
+                    $js = "";
+                    foreach($linkedEntries['entries'] as $fid=>$theseEntries) {
+                        foreach($theseEntries as $entry_id) {
+                            if(!$entry_id) { continue; }
+                            $condition = "(parseInt(document.formulize.deletesubsflag.value) == ".$fid." && jQuery(\"input[name='delbox" . $entry_id . "']\").length && jQuery(\"input[name='delbox" . $entry_id . "']\").prop('checked'))";
+                            if($js) {
+                                $js .= " || $condition";
+                            } else {
+                                $js = "if(($condition";
+                            }
+                        }
+                    }
+                    $js .= ")==false) {\n".$validationJs."\n}";
+                    if(!$skipConditionalCheck) {
+                        $checkConditionalRow = true;
+                    }
+				} else {
+                    $js = $validationJs;
+				} 
+				if($checkConditionalRow) {
 					$fullJs .= "if(window.document.getElementById('formulize-".$elt->getName()."').style.display != 'none') {\n".$js."\n}\n\n";
-				} elseif($js) {
+				} else {
 					$fullJs .= "\n".$js."\n";
 				}
 			}
 		}
-		
 		return $fullJs;
 	}
 	
@@ -461,20 +503,24 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 	}
 
 	list($fid, $frid) = getFormFramework($formframe, $mainform);
+    $uid = $xoopsUser ? $xoopsUser->getVar('uid') : '0';
 
 	if($_POST['deletesubsflag']) { // if deletion of sub entries requested
+        $subs_to_del = array();
 		foreach($_POST as $k=>$v) {
-			if(strstr($k, "delbox")) {
+			if(strstr($k, "delbox") AND intval($v) > 0) {
 				$subs_to_del[] = $v;
 			}
 		}
 		if(count($subs_to_del) > 0) {
 			$excludeFids = array($fid);
 			foreach($subs_to_del as $id_req) {
+                if(formulizePermHandler::user_can_delete_entry($id_req, $uid, $frid)){
                 deleteEntry($id_req, $frid, intval($_POST['deletesubsflag']), $excludeFids);
             }
 		}
-        unset($_POST['deletesubsflag']);
+		}
+        unset($_POST['deletesubsflag']); // only do this once per page load!!! Due to nested calls of displayForm with subforms, calling multiple times will lead to very nasty results, since deleteEntry calls checkForLinks and the mainform entries will be returned alongside the subform entries, but the excludefids will not include the mainform when this is called during a nested elementsonlyform call...so nasty
 	}
 
 	if($_POST['parent_form']) { // if we're coming back from a subform
@@ -511,7 +557,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		$groups[] = XOOPS_GROUP_USERS;
 		$groups[] = XOOPS_GROUP_ANONYMOUS;
 	}	
-	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : '0';
 
 	$single_result = getSingle($fid, $uid, $groups, $member_handler, $gperm_handler, $mid);
 	$single = $single_result['flag'];
@@ -560,10 +605,12 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		$entries[$fid][0] = "";
 	}
 
+
 	if($frid) { 
 		$linkResults = checkForLinks($frid, $fids, $fid, $entries, true); // final true means only include entries from unified display linkages
 		unset($entries);
 		unset($fids);
+
 		$fids = $linkResults['fids'];
 		$entries = $linkResults['entries'];
 		$sub_fids = $linkResults['sub_fids'];
@@ -588,9 +635,9 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
 		}
 		$temp_entries = $GLOBALS['formulize_allWrittenEntryIds']; // set in readelements.php
-        
+		
 		if(!$formElementsOnly AND ($single OR $_POST['target_sub'] OR ($entries[$fid][0] AND ($original_entry OR ($_POST[$entrykey] AND !$_POST['back_from_sub']))) OR $overrideMulti OR ($_POST['go_back_form'] AND $overrideSubMulti))) { // if we just did a submission on a single form, or we just edited a multi, then assume the identity of the new entry.  Can be overridden by values passed to this function, to force multi forms to redisplay the just-saved entry.  Back_from_sub is used to override the override, when we're saving after returning from a multi-which is like editing an entry since entries are saved prior to going to a sub. -- Sept 4 2006: adding an entry in a subform forces us to stay on the same page too! -- Dec 21 2011: added check for !$formElementsOnly so that when we're getting just the elements in the form, we ignore any possible overriding, since that is an API driven situation where the called entry is the only one we want to display, period.
-            if($entry == 'new' OR $entry == '') {
+			if($entry == 'new' OR $entry == '') {
     			$entry = $temp_entries[$fid][0]; // adopt written entry if there is one, and we started out as 'new'
                 // $fids may now contain more than the mainform fid, since checkforlinks can fill in fids not just subfids...but we use checkforlinks above, so this should be OK?
                 $linkResults = checkForLinks($frid, $fids, $fid, $entries, true); // final true means only include entries from unified display linkages
@@ -604,7 +651,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
     			unset($owner_groups);
     			$owner_groups = $data_handler->getEntryOwnerGroups($entry);
             }
-    		$info_continue = 1;
+			$info_continue = 1;
 		} elseif(!$_POST['target_sub']) { // as long as the form was submitted and we're not going to a sub form, then display the info received message and carry on with a blank form
 			if(!$original_entry) { // if we're on a multi-form where the display form function was called without an entry, then clear the entries and behave as if we're doing a new add
 				unset($entries);
@@ -771,10 +818,10 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                 }
                 unset($form);
                 if($formElementsOnly) {
-                    $form = new formulize_elementsOnlyForm($title, 'formulize', "$currentURL", "post", true);
+                    $form = new formulize_elementsOnlyForm($title, 'formulize', "$currentURL", "post", false, $frid);
                 } else {
                     // extended class that puts formulize element names into the tr tags for the table, so we can show/hide them as required
-                    $form = new formulize_themeForm($title, 'formulize', "$currentURL", "post", true);
+                    $form = new formulize_themeForm($title, 'formulize', "$currentURL", "post", true, $frid);
                     // necessary to trigger the proper reloading of the form page, until Done is called and that form does not have this flag.
                     if (!isset($settings['ventry']))
                         $settings['ventry'] = 'new';
@@ -947,6 +994,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			} else {
 				// drawing a main form...put in the scroll position flag
 				$form->addElement (new XoopsFormHidden ('yposition', 0));
+                $form->addElement (new XoopsFormHidden ('deletesubsflag', 0));
 			}
 			
 			// saving message
@@ -1934,12 +1982,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 
     $deleteButton = "";
 	if(((count($sub_entries[$subform_id])>0 AND $sub_entries[$subform_id][0] != "") OR $sub_entry_new OR is_array($sub_entry_written)) AND $need_delete) {
-        $deleteButton = "&nbsp;&nbsp;&nbsp;<input type=button name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del('$subform_id');\">";
-		static $deletesubsflagIncluded = false;
-		if(!$deletesubsflagIncluded) {
-			$col_one .= "\n<input type=hidden name=deletesubsflag value=''>\n";
-			$deletesubsflagIncluded = true;
-		}
+        $deleteButton = "&nbsp;&nbsp;&nbsp;<input type=button name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del($subform_id);\">";
 	}
 
     // if the 'add x entries button' should be hidden or visible
@@ -2339,13 +2382,18 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
     
 	// add a hidden element to carry all the validation javascript that might be associated with elements rendered with elementdisplay.php...only relevant for elements rendered inside subforms or grids...the validation code comes straight from the element, doesn't have a check around it for the conditional table row id, like the custom form classes at the top of the file use, since those elements won't render as hidden and show/hide in the same way
 	if(isset($GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']])) {
-		$formulizeHiddenValidation = new XoopsFormHidden('validation', '');
+		$formulizeHiddenValidation = new XoopsFormHidden('validation', 1);
+        global $fullJsCatalogue;
 		foreach($GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']] as $thisValidation) { // grab all the validation code we stored in the elementdisplay.php file and attach it to this element
+            $catalogueKey = md5(trim($thisValidation));
+            if(!isset($fullJsCatalogue[$catalogueKey])) {
+                $fullJsCatalogue[$catalogueKey] = true;
 			foreach(explode("\n", $thisValidation) as $thisValidationLine) {
 				$formulizeHiddenValidation->customValidationCode[] = $thisValidationLine;
 			}
 		}
-		$form->addElement($formulizeHiddenValidation, 1);
+		}
+		$form->addElement($formulizeHiddenValidation);
 	}
 
 	if(get_class($form) == "formulize_elementsOnlyForm") { // forms of this class are ones that we're rendering just the HTML for the elements, and we need to preserve any validation javascript to stick in the final, parent form when it's finished
@@ -2354,9 +2402,9 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 			$GLOBALS['formulize_elementsOnlyForm_validationCode'][] = $validationJS."\n\n";
 		}
 	} elseif(count($GLOBALS['formulize_elementsOnlyForm_validationCode']) > 0) {
-		$elementsonlyvalidation = new XoopsFormHidden('elementsonlyforms', '');
+		$elementsonlyvalidation = new XoopsFormHidden('elementsonlyforms', 1);
 		$elementsonlyvalidation->customValidationCode = $GLOBALS['formulize_elementsOnlyForm_validationCode'];
-		$form->addElement($elementsonlyvalidation, 1);
+		$form->addElement($elementsonlyvalidation);
 	}
 	
 	return $form;
@@ -2792,6 +2840,10 @@ window.onbeforeunload = function (e) {
     }
 };
 
+jQuery(window).unload(function() {
+    <?php print formulize_javascriptForRemovingEntryLocks(); ?>
+});
+
 <?php
 print $codeToIncludejQueryWhenNecessary;
 if(intval($_POST['yposition'])>0) {
@@ -2855,13 +2907,13 @@ if(!$nosave) { // need to check for add or update permissions on the current use
             jQuery('#save_and_leave_button').attr('disabled', 'disabled');
         }
         jQuery('#yposition').val(jQuery(window).scrollTop());
-        if (formulizechanged) {
             showSavingGraphic();
-        }
         if (leave=='leave') {
             jQuery('#save_and_leave').val(1);
         }
         window.document.formulize.submit();
+    } else {
+        hideSavingGraphic();
     }
 <?php
 } // end of if not $nosave

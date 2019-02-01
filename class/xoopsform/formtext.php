@@ -46,7 +46,7 @@ class XoopsFormText extends icms_form_elements_Text
 	 * @param	int		$maxlength	Maximum length of text
 	 * @param	string  $value      Initial text
 	 */
-	function XoopsFormText($caption, $name, $size, $maxlength, $value = '', $autocomplete = false)
+	function __construct($caption, $name, $size, $maxlength, $value = '', $autocomplete = false)
 	{
 		parent::__construct($caption, $name, $size, $maxlength, $value, $autocomplete);
 		$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_Text', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));

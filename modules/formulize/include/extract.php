@@ -885,8 +885,8 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	    $masterQuerySQL = "INSERT INTO ".DBPRE."formulize_temp_extract_REPLACEWITHTIMESTAMP $masterQuerySQL ";
 	    $masterQuerySQLForExport = "INSERT INTO ".DBPRE."formulize_temp_extract_REPLACEWITHTIMESTAMP $masterQuerySQLForExport ";
      } else { 
-	  $masterQuerySQL = "SELECT $selectClause, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail $restOfTheSQL ";
-	  $masterQuerySQLForExport = "SELECT $selectClause, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail $restOfTheSQLForExport ";
+	  $masterQuerySQL = "SELECT $selectClause, usertable.user_viewemail AS main_user_viewemail, usertable.email AS main_email $restOfTheSQL ";
+	  $masterQuerySQLForExport = "SELECT $selectClause, usertable.user_viewemail AS main_user_viewemail, usertable.email AS main_email $restOfTheSQLForExport ";
      }
      
 
@@ -934,7 +934,9 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		 } else {
 		    $createTableSQL = "CREATE TABLE ".DBPRE."formulize_temp_extract_$timestamp ( `mastersort` BIGINT(11), `entry_id` BIGINT(11), PRIMARY KEY (`mastersort`), INDEX i_entry_id (`entry_id`) ) ENGINE=MyISAM;";
 		 }
+         //print $createTableSQL.'<br>';
 		 if($createTableRes = $xoopsDB->queryF($createTableSQL)) {
+            //print str_replace("REPLACEWITHTIMESTAMP", $timestamp, $masterQuerySQL).'<br>';
             $gatherIdsRes = $xoopsDB->queryF(str_replace("REPLACEWITHTIMESTAMP", $timestamp, $masterQuerySQL));
          } else {
             print "Failed to create temp table, with this SQL: $createTableSQL<br>Error: ".$xoopsDB->error();
@@ -951,7 +953,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		    foreach($linkformids as $linkId=>$thisLinkFid) {
                 $linkQuery = "SELECT $mainSelectClause , "
    .$linkSelectIndex[$thisLinkFid].
-   ", usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM "
+   ", usertable.user_viewemail AS main_user_viewemail, usertable.email AS main_email FROM "
    .DBPRE."formulize_" . $formObject->getVar('form_handle') . " AS main
    LEFT JOIN " . DBPRE . "users AS usertable ON main.creation_uid=usertable.uid
    LEFT JOIN ".$joinTextTableRef[$thisLinkFid] . $joinTextIndex[$thisLinkFid]."
@@ -969,6 +971,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
             }
 			 $linkQuery .= " ORDER BY sort_and_limit_table.mastersort";
                 if($resultOnly !== 'bypass') {
+                    //print str_replace("REPLACEWITHTIMESTAMP",$timestamp,$linkQuery).'<br>';
 			  $linkQueryRes[] = $xoopsDB->query(str_replace("REPLACEWITHTIMESTAMP",$timestamp,$linkQuery));
                 }
 			  $GLOBALS['formulize_queryForExport'] .= " -- SEPARATOR FOR EXPORT QUERIES -- ".$linkQuery;
@@ -1023,23 +1026,34 @@ function processGetDataResults($resultData) {
     $frid = $resultData['frid'];
     $linkformids = $resultData['linkFids'];
 
-    global $xoopsDB;
+    global $xoopsDB, $xoopsUser;
 	  $masterResults = array();
 	  $masterIndexer = -1;
 	  $writtenMains = array();
 	  $masterQueryArrayIndex = array();
-    $is_webmaster = null;
     $prevMainId = "";
 
-	foreach($queryRes as $thisRes) {     
+    // set flags for whether the current user can view emails of users...
+	if(is_object($xoopsUser)) { 
+		$is_webmaster = in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups()) ? true : false;
+        $gperm_handler = xoops_gethandler('groupperm');
+		$view_private_fields = $gperm_handler->checkRight("view_private_elements", $fid, $xoopsUser->getGroups(), getFormulizeModId());
+		$this_userid = $xoopsUser->getVar('uid');
+	} else {
+        $view_private_fields = false;
+		$is_webmaster = false;
+		$this_userid = 0;
+	}
 	  
+	foreach($queryRes as $thisRes) {     
 	       // loop through the found data and create the dataset array in "getData" format
 	       $prevFieldNotMeta = true;
-
-	    while($masterQueryArray = $xoopsDB->fetchArray($thisRes)) {
+	    while($masterQueryArray = $xoopsDB->fetchRow($thisRes)) {
             formulize_benchmark("starting record");
-		    foreach($masterQueryArray as $field=>$value) {
-
+            $creatorAllowsEmailViewing = null;
+            $creatorUid = null;
+		    foreach($masterQueryArray as $resultColIndex=>$value) {
+                $field = $xoopsDB->getFieldName($thisRes, $resultColIndex); // must use fetchRow above and then get the field name this way, just in case a form joins to itself and the same field names get used in multiple points in the result set. fetchArray will return an associative array, in which the last items with the duplicate name will take precedence and overwrite the earlier items!
                 // ignore those plain fields, and metafields on non-main forms, since we can only work with the ones that are properly aliased to their respective tables.  More details....Must refer to metadata fields by aliases only!  since * is included in SQL syntax, fetch_assoc will return plain column names from all forms with the values from those columns.....Also want to ignore the email fields, since the fact they're prefixed with "main" can throwoff the calculation of which entry we're currently writing                
                 if(
                    $field == "entry_id" OR
@@ -1051,29 +1065,46 @@ function processGetDataResults($resultData) {
                    $field == "main_user_viewemail" OR
                    $field == "revision_id"
                   ) {
+                    // last two fields in the query will always be viewemail and email
+                    // catalogue the user's view email preference for later...
+                    if($field == 'main_user_viewemail') {
+                        $creatorAllowsEmailViewing = $value;
+                    }
+                    // handle the setting of the user's e-mail if applicable...
+                    if($field == 'main_email') {
+                        if($is_webmaster OR $view_private_fields OR $creatorAllowsEmailViewing OR $creatorUid == $this_userid) {
+                            $masterResults[$masterIndexer][getFormTitle($curFormId)][$entryIdIndex[$curFormAlias]]['creator_email'] = $value;
+                        } else {
+        					$masterResults[$masterIndexer][getFormTitle($curFormId)][$entryIdIndex[$curFormAlias]]['creator_email'] = "";
+        				}
+                    }
                     continue;
         }
-           
-                $fieldNameParts = explode("_", $field);
+                // if it is one of the properly aliased metadata fields...
 			 if(strstr($field, "creation_uid") OR strstr($field, "creation_datetime") OR strstr($field, "mod_uid") OR strstr($field, "mod_datetime") OR strstr($field, "entry_id")) {
-                    $curFormId = $fieldNameParts[0] == 'main' ? $fid : $linkformids[substr($fieldNameParts[0], 1)]; // the table aliases are based on the keys of the linked forms in the linkformids array, so if we get the number out of the table alias, that key will give us the form id of the linked form as stored in the linkformids array
+                    $fieldNameParts = explode("_", $field);
                     $curFormAlias = $fieldNameParts[0];
-                    if($fieldNameParts[0] == 'main') {
+                    $curFormId = $curFormAlias == 'main' ? $fid : $linkformids[substr($curFormAlias, 1)]; // the table aliases are based on the keys of the linked forms in the linkformids array, so if we get the number out of the table alias, that key will give us the form id of the linked form as stored in the linkformids array
+                    if(strstr($field, 'entry_id')) {
+                        $entryIdIndex[$curFormAlias] = $value;
+                    }
+                    if($curFormAlias == 'main') {
+                        if(strstr($field, "creation_uid")) {
+                            $creatorUid = $value;
+                        }
 			      // dealing with a new metadata field
 			      // We account for a mainform entry appearing multiple times in the list, because when there are multiple entries in a subform, and SQL returns one row per subform,  we need to not change the main form and internal record until we pass to a new mainform entry
                         if($prevFieldNotMeta) { // only do once for each form, metadata fields are processed first before all regular fields (and fyi mainforms before other forms)
-                            $curFormAlias = 'main';
-                            $curFormId = $fid;
                             // if this is a different main form entry than the last one we did...
-                            if($prevMainId != $masterQueryArray['main_entry_id']) {
+                            if($prevMainId != $entryIdIndex['main']) {
       					$writtenMains[$prevMainId] = true;
-                                if(isset($writtenMains[$masterQueryArray['main_entry_id']])) {
-        					     $masterIndexer = $masterQueryArrayIndex[$masterQueryArray['main_entry_id']]; // use the master index value for this main entry id if we've already logged it
+                                if(isset($writtenMains[$entryIdIndex['main']])) {
+                                    $masterIndexer = $masterQueryArrayIndex[$entryIdIndex['main']]; // use the master index value for this main entry id if we've already logged it
         					} else {
         					     $masterIndexer = count($masterResults); // use the next available number for the master indexer
-        					     $masterQueryArrayIndex[$masterQueryArray['main_entry_id']] = $masterIndexer; // log it so we can reuse it for this entry when it comes up in another query
+                                    $masterQueryArrayIndex[$entryIdIndex['main']] = $masterIndexer; // log it so we can reuse it for this entry when it comes up in another query
         					}
-                                $prevMainId = $masterQueryArray['main_entry_id']; // if the current form is a main, then store it's ID for use later when we're on a new record
+                                $prevMainId = $entryIdIndex['main']; // if the current form is a main, then store it's ID for use later when we're on a new record
     				   }
 			      }
 			      $prevFieldNotMeta = false;
@@ -1091,38 +1122,15 @@ function processGetDataResults($resultData) {
 			      continue;
 			 }               
 			 // Check to see if this is a main entry that has already been catalogued, and if so, then skip it
-			 if($curFormAlias == "main" AND isset($writtenMains[$masterQueryArray['main_entry_id']])) {
+                if($curFormAlias == "main" AND isset($writtenMains[$entryIdIndex['main']])) {
 			      continue;
 			 } 
-                
                 formulize_benchmark("processing ".$field.": $value");
-			 //print "<br>$curFormAlias - $field: $value<br>"; // debug line
                 //formulize_benchmark("preping value...");
-			 $valueArray = prepvalues($value, $elementHandle, $masterQueryArray[$curFormAlias . "_entry_id"]); // note...metadata fields must not be in an array for compatibility with the 'display' function...not all values returned will actually be arrays, but if there are multiple values in a cell, then those will be arrays
+                $valueArray = prepvalues($value, $elementHandle, $entryIdIndex[$curFormAlias]); // note...metadata fields must not be in an array for compatibility with the 'display' function...not all values returned will actually be arrays, but if there are multiple values in a cell, then those will be arrays
                 //formulize_benchmark("done preping value");
-			 $masterResults[$masterIndexer][getFormTitle($curFormId)][$masterQueryArray[$curFormAlias . "_entry_id"]][$elementHandle] = $valueArray;
-			 if($elementHandle == "creation_uid" OR $elementHandle == "mod_uid" OR $elementHandle == "creation_datetime" OR $elementHandle == "mod_datetime" OR $elementHandle == "entry_id") {
-			      // add in the creator_email when we have done the creation_uid
-			      if($elementHandle == "creation_uid") {
-                        if($is_webmaster === null) {
-					global $xoopsUser;
-					if(is_object($xoopsUser)) { // determine if the user is a webmaster, in order to control whether the e-mail addresses should be shown or not
-					     $is_webmaster = in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups()) ? true : false;
-                                $gperm_handler = xoops_gethandler('groupperm');
-					     $view_private_fields = $gperm_handler->checkRight("view_private_elements", $fid, $xoopsUser->getGroups(), getFormulizeModId());
-					     $this_userid = $xoopsUser->getVar('uid');
-					} else {
-					     $view_private_fields = false;
-					     $is_webmaster = false;
-					     $this_userid = 0;
-					}
-				   }
-				   if($is_webmaster OR $view_private_fields OR $masterQueryArray['main_user_viewemail'] OR $masterQueryArray['main_creation_uid'] == $this_userid) {
-					$masterResults[$masterIndexer][getFormTitle($curFormId)][$masterQueryArray[$curFormAlias . "_entry_id"]]['creator_email'] = $masterQueryArray['main_email'];
-				   } else {
-					$masterResults[$masterIndexer][getFormTitle($curFormId)][$masterQueryArray[$curFormAlias . "_entry_id"]]['creator_email'] = "";
-				   }
-			      }
+                $masterResults[$masterIndexer][getFormTitle($curFormId)][$entryIdIndex[$curFormAlias]][$elementHandle] = $valueArray;
+                if($elementHandle == "creation_uid" OR $elementHandle == "mod_uid" OR $elementHandle == "creation_datetime" OR $elementHandle == "mod_datetime") {
 			      // for backwards compatibility, replicate the old metadata fields
 			      switch($elementHandle) {
 				   case "creation_uid":
@@ -1138,11 +1146,10 @@ function processGetDataResults($resultData) {
 					$old_meta = "mod_date";
 					break;
 			      }
-			      $masterResults[$masterIndexer][getFormTitle($curFormId)][$masterQueryArray[$curFormAlias . "_entry_id"]][$old_meta] = $valueArray;
+                    $masterResults[$masterIndexer][getFormTitle($curFormId)][$entryIdIndex[$curFormAlias]][$old_meta] = $valueArray;
 			 }
 		    } // end of foreach field loop within a record
 	       } // end of main while loop for all records
-	  
 	} // end of foreach query result
 	  
     // potentially run through the derived value fields as long as we're not doing an export of data
@@ -2079,7 +2086,7 @@ function getFormHandlesFromEntry($entry) {
 // if $id is specified, then $entry is assumed to be the entire result set, in which case the $id is used to isolate the specific entry in the set you want
 // $localid is the id of a specific entry to get, ie: if there is more than one instance of handle and we only want one in particular
 
-function display($entry, $handle, $id="NULL", $localid="NULL") {
+function display($entry, $handle, $id=null, $localid="NULL") {
 
   if(is_numeric($id)) {
 		$entry = $entry[$id];
