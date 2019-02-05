@@ -515,10 +515,10 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		if(count($subs_to_del) > 0) {
 			$excludeFids = array($fid);
 			foreach($subs_to_del as $id_req) {
-                if(formulizePermHandler::user_can_delete_entry($id_req, $uid, $frid)){
-                deleteEntry($id_req, $frid, intval($_POST['deletesubsflag']), $excludeFids);
+                if(formulizePermHandler::user_can_delete_entry(intval($_POST['deletesubsflag']), $uid, $id_req)){
+                    deleteEntry($id_req, $frid, intval($_POST['deletesubsflag']), $excludeFids);
+                }
             }
-		}
 		}
         unset($_POST['deletesubsflag']); // only do this once per page load!!! Due to nested calls of displayForm with subforms, calling multiple times will lead to very nasty results, since deleteEntry calls checkForLinks and the mainform entries will be returned alongside the subform entries, but the excludefids will not include the mainform when this is called during a nested elementsonlyform call...so nasty
 	}
