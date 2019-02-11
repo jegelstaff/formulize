@@ -1293,7 +1293,9 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		if(!strstr($screen->getTemplate('toptemplate'), 'currentViewList') AND !strstr($screen->getTemplate('bottomtemplate'), 'currentViewList')) { print "<input type=hidden name=currentview id=currentview value=\"$currentview\"></input>\n"; } // print it even if the text is blank, it will be a hidden value in this case
 
 			$filterTypes = array('\$quickDateRange', '\$quickFilter', '\$quickMultiFilter');
-			$filterHandles = extractHandlers($filterTypes, $screen->getTemplate('toptemplate'));
+			$filterHandles = extractHandles($filterTypes, $screen->getTemplate('toptemplate'));
+            $filterHandles = array_merge($filterHandles, extractHandles($filterTypes, $screen->getTemplate('listtemplate')));
+            $filterHandles = array_merge($filterHandles, extractHandles($filterTypes, $screen->getTemplate('bottomtemplate')));
 
       formulize_benchmark("before calling draw searches");
 			$quickSearchBoxes = drawSearches($searches, $settings, $useCheckboxes, $useViewEntryLinks, 0, true, $hiddenQuickSearches, $filterHandles); // first true means we will receive back the code instead of having it output to the screen, second (last) true means that all allowed filters should be generated
@@ -5019,7 +5021,7 @@ function formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers) {
 
 
 // this function extracts the handles from a string (template)
-function extractHandlers($filterTypes, $templateString) {
+function extractHandles($filterTypes, $templateString) {
 	// generate a string containing search boxes to match for
 	$searchString = implode("|", $filterTypes);
 
@@ -5029,9 +5031,13 @@ function extractHandlers($filterTypes, $templateString) {
 
 	// remove all the searchbox prefix
 	$handles = $result[0];
-	$handles = preg_replace('/('.$searchString.')/', '', $handles);
+    if(is_array($handles)) {
+        $handles = preg_replace('/('.$searchString.')/', '', $handles);
+        return $handles;
+    } else {
+        return array();
+    }
 
-	return $handles;
 }
 
 // this function unpacks the defaultview property of the screen object, and determines which one applies to the current user, if any
