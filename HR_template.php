@@ -69,7 +69,6 @@ foreach($sections as $section) {
 	$res = $xoopsDB->query($sql);
 	$row = $xoopsDB->fetchRow($res);
 	$numberOfInstructors = $row[0];
-    $subsequentSectionSameCourseWeight = isset($coursesTaught[$sectionData['code'].$sectionData['type']]) ? 0.66 : 1;
     if($numberOfInstructors>1) {
         $sectionData['coinst'] = array();
         $splitOverride = 0;
@@ -88,20 +87,19 @@ foreach($sections as $section) {
         }
         
         static $cachedCoTeachingSupplements = array();
+        static $cachedSSSCW = array();
         $programName = display($section, 'ro_module_program');
         if(!isset($cachedCoTeachingSupplements[$programName])) {
-            $sql = 'SELECT w.activity_weightings_value '.
-            'FROM '.$xoopsDB->prefix('formulize_activity_weightings'). ' AS w '.
-            'LEFT JOIN '.$xoopsDB->prefix('formulize_master_program_list').' AS p '.
-            'ON p.entry_id = w.activity_weightings_program '.
-            'WHERE p.master_program_list_program = "'.formulize_db_escape($programName).'" '.
-            'AND w.activity_weightings_lecture_or_studio = "Co-teaching supplement"';
+            $sql = 'SELECT p.master_program_list_coteach_supp, p.master_program_list_multiple_section_weight FROM '.$xoopsDB->prefix('formulize_master_program_list').' as p '.
+				'WHERE p.master_program_list_program = "'.formulize_db_escape($programName).'"';
             if($res = $xoopsDB->query($sql)) {
                 while($row = $xoopsDB->fetchRow($res)) {
                     $cachedCoTeachingSupplements[$programName] = $row[0];
+                    $cachedSSSCW[$programName] = $row[1];
                 }
             }
-        } 
+        }
+        $subsequentSectionSameCourseWeight = isset($coursesTaught[$sectionData['code'].$sectionData['type']]) ? $cachedSSSCW[$programName] : 1;
         $coTeachingSupplement = isset($cachedCoTeachingSupplements[$programName]) ? $cachedCoTeachingSupplements[$programName] : 0;
         $sectionData['weighting'] = number_format(((((display($section, 'teaching_weighting')+ display($section, 'ro_module_tutorial_supplement'))/$numberOfInstructors)+$coTeachingSupplement)*$subsequentSectionSameCourseWeight),3);
 
