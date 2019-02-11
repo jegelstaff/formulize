@@ -38,6 +38,22 @@ $totalTeachingWeight = 0;
 $programs = array();
 $coursesTaught = array();
 $reservedSections = false;
+
+global $xoopsDB;
+static $cachedCoTeachingSupplements = array();
+static $cachedSSSCW = array();
+$programName = display($section, 'ro_module_program');
+if(!isset($cachedCoTeachingSupplements[$programName])) {
+    $sql = 'SELECT p.master_program_list_coteach_supp, p.master_program_list_multiple_section_weight FROM '.$xoopsDB->prefix('formulize_master_program_list').' as p '.
+        'WHERE p.master_program_list_program = "'.formulize_db_escape($programName).'"';
+    if($res = $xoopsDB->query($sql)) {
+        while($row = $xoopsDB->fetchRow($res)) {
+            $cachedCoTeachingSupplements[$programName] = $row[0];
+            $cachedSSSCW[$programName] = $row[1];
+        }
+    }
+}
+
 foreach($sections as $section) {
     
     // ignore cancelled sections
@@ -63,11 +79,11 @@ foreach($sections as $section) {
     $sectionData['section'] = display($section, 'sections_section_number');
     $sectionData['times'] = implode(", ", makeSectionTimes($section, 'fullDayNames'));
     $sectionData['room'] = "Room: ".display($section, 'sections_practica_room');
-    global $xoopsDB;
     $sectionIds = internalRecordIds($section, 4);
 	$sql = 'SELECT COUNT(entry_id) FROM '.$xoopsDB->prefix('formulize_instr_assignments').' WHERE instr_assignments_section_number = '.$sectionIds[0].' AND instr_assignments_instructor IS NOT NULL';
 	$res = $xoopsDB->query($sql);
 	$row = $xoopsDB->fetchRow($res);
+    $subsequentSectionSameCourseWeight = isset($coursesTaught[$sectionData['code'].$sectionData['type']]) ? $cachedSSSCW[$programName] : 1;
 	$numberOfInstructors = $row[0];
     if($numberOfInstructors>1) {
         $sectionData['coinst'] = array();
@@ -85,21 +101,6 @@ foreach($sections as $section) {
         if($splitOverride) {
             $numberOfInstructors = 1/$splitOverride; // this way the division by instructors below works out properly based on the overridden weights
         }
-        
-        static $cachedCoTeachingSupplements = array();
-        static $cachedSSSCW = array();
-        $programName = display($section, 'ro_module_program');
-        if(!isset($cachedCoTeachingSupplements[$programName])) {
-            $sql = 'SELECT p.master_program_list_coteach_supp, p.master_program_list_multiple_section_weight FROM '.$xoopsDB->prefix('formulize_master_program_list').' as p '.
-				'WHERE p.master_program_list_program = "'.formulize_db_escape($programName).'"';
-            if($res = $xoopsDB->query($sql)) {
-                while($row = $xoopsDB->fetchRow($res)) {
-                    $cachedCoTeachingSupplements[$programName] = $row[0];
-                    $cachedSSSCW[$programName] = $row[1];
-                }
-            }
-        }
-        $subsequentSectionSameCourseWeight = isset($coursesTaught[$sectionData['code'].$sectionData['type']]) ? $cachedSSSCW[$programName] : 1;
         $coTeachingSupplement = isset($cachedCoTeachingSupplements[$programName]) ? $cachedCoTeachingSupplements[$programName] : 0;
         $sectionData['weighting'] = number_format(((((display($section, 'teaching_weighting')+ display($section, 'ro_module_tutorial_supplement'))/$numberOfInstructors)+$coTeachingSupplement)*$subsequentSectionSameCourseWeight),3);
 
