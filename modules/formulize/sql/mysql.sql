@@ -329,7 +329,7 @@ CREATE TABLE formulize_id (
   on_after_save text,
   custom_edit_check text,
   note text,
-  send_digests tinyint(1) NOT NULL default 0
+  send_digests tinyint(1) NOT NULL default 0,
   PRIMARY KEY  (`id_form`)
 ) ENGINE=MyISAM;
 
