@@ -603,9 +603,10 @@ function prepDetails($section, $sectionKey, $details, $instructorKeys) {
         }
         // draw one empty box for a new instructor assignment
         ob_start();
-        $instructorKeys[$entry_id][] = drawInstructorBox('instr_assignments_instructor',"new",$entry_id,$semester,$year);
+        $returnedInstructorKey = drawInstructorBox('instr_assignments_instructor',"new",$entry_id,$semester,$year);
+        $instructorKeys[$entry_id][] = $returnedInstructorKey;
         $details[$sectionKey]['contents'] .= ob_get_clean();
-        
+
 		ob_start();
         print "</div><br><p>Notes:<br>";
         displayElement('', 'course_components_program_director_notes', $entry_id);
@@ -649,6 +650,8 @@ function drawInstructorBox($element, $id, $parentId, $semester, $year) {
         displayElement('',$element,"new".$newInstructors[$parentId]);
         print "<input type='hidden' id='decue_15_new".$newInstructors[$parentId]."_133' name='decue_15_new".$newInstructors[$parentId]."_133' value=1 />\n";
         print "<input type='hidden' id='de_15_new".$newInstructors[$parentId]."_133' name='de_15_new".$newInstructors[$parentId]."_133' value=".$parentId." />\n";
+        print "<input type='hidden' class='newCount' value=".$newInstructors[$parentId]." disabled />\n";
+        print "<input type='hidden' class='parentSection' value=".$parentId." disabled />\n";
         $instructorKey = 'new'.$newInstructors[$parentId];
     }
     print "<br>\n";
