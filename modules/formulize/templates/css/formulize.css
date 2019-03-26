@@ -462,6 +462,7 @@ a.loe-edit-entry {
   padding: 0.1em; }
 
 .loe-edit-entry:before {
+  color: #fff;
   content: "\f10d"; }
 
 a.loe-edit-entry:hover {

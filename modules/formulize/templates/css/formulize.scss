@@ -217,6 +217,7 @@ a.loe-edit-entry {
 }
 
 .loe-edit-entry:before{
+    color: $colorTableLink;
     content: "\f10d";   // icon-edit
 }
 
