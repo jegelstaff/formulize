@@ -40,7 +40,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 class formulizeMultiPageScreen extends formulizeScreen {
 
-	function formulizeMultiPageScreen() {
+	function __construct() {
 		parent::__construct();
 		$this->initVar("introtext", XOBJ_DTYPE_TXTAREA);
 		$this->initVar("toptemplate", XOBJ_DTYPE_TXTAREA);  	// added by Gordon Woodmansey (bgw) 2012-08-29
@@ -84,7 +84,7 @@ class formulizeMultiPageScreen extends formulizeScreen {
 
 class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 	var $db;
-	function formulizeMultiPageScreenHandler(&$db) {
+	function __construct(&$db) {
 		$this->db =& $db;
 	}
 	function &getInstance(&$db) {
