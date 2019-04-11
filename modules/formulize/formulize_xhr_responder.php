@@ -265,10 +265,10 @@ switch($op) {
 
 
     case "validate_php_code":
-    if (function_exists("shell_exec")) {
+    if (function_exists("shell_exec") AND trim($_POST["the_code"]) != "") {
         $tmpfname = tempnam(sys_get_temp_dir(), 'FZ');
         file_put_contents($tmpfname, trim($_POST["the_code"]));
-        $output = shell_exec('php -l "'.$tmpfname.'" 2>&1');
+        $output = shell_exec('php -l "'.$tmpfname.'" 2>&1'); // -l is syntax check only - SUPER IMPORTANT!!!
         unlink($tmpfname);
         if (false !== strpos($output, "PHP Parse error")) {
             // remove the second line because detail about the error is on the first line

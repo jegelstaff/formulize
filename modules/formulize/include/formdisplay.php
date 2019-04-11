@@ -2669,7 +2669,13 @@ function formulize_formatDateTime($dt) {
 
 // write the settings passed to this page from the view entries page, so the view can be restored when they go back
 function writeHiddenSettings($settings, $form = null) {
-	//unpack settings
+	// only write the settings one time (might have multiple forms being rendered)
+    static $formulize_settingsWritten = 0;
+    if($formulize_settingsWritten) {
+        return $form;
+    }
+    $formulize_settingsWritten = 1;
+    //unpack settings
 	$sort = $settings['sort'];
 	$order = $settings['order'];
 	$oldcols = $settings['oldcols'];
@@ -2845,6 +2851,7 @@ jQuery(window).unload(function() {
 });
 
 <?php
+global $codeToIncludejQueryWhenNecessary;
 print $codeToIncludejQueryWhenNecessary;
 if(intval($_POST['yposition'])>0) {
 		print "\njQuery(window).load(function () {\n";

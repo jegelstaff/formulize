@@ -53,6 +53,11 @@ if (typeof jQuery.ui == 'undefined') {
     script.type = 'text/javascript';
     script.src = '".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-ui-1.8.2.custom.min.js';
     head.appendChild(script);
+    stylesheet = document.createElement('link');
+    stylesheet.rel = 'stylesheet';
+    stylesheet.type = 'text/css';
+    stylesheet.href = '".XOOPS_URL."/modules/formulize/libraries/jquery/css/start/jquery-ui-1.8.2.custom.css';
+    head.appendChild(stylesheet);
 }
 ";
 

@@ -325,7 +325,7 @@ class formulizeElementsHandler {
         }
 
 		if( !$result ){
-			print "Error: this element could not be saved in the database.  SQL: $sql<br>".$xoopsDB->error();
+			print "Error: this element could not be saved in the database.  SQL: $sql<br>".$this->db->error();
 			return false;
 		}
 		if( $ele_id == 0 ){ // only occurs for new elements
