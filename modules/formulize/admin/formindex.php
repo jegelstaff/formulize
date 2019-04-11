@@ -112,10 +112,10 @@ function patch40() {
      *
      * ====================================== */
 
-    $checkThisTable = 'formulize_digest_data';
-	$checkThisField = '';
-	$checkThisProperty = '';
-	$checkPropertyForValue = '';
+    $checkThisTable = 'formulize_screen_template';
+    $checkThisField = 'donedest'; 
+    $checkThisProperty = false;
+    $checkPropertyForValue = false;
 
     $needsPatch = false;
 
@@ -323,6 +323,9 @@ function patch40() {
             templateid int(11) NOT NULL auto_increment,
             sid int(11) NOT NULL default 0,
             custom_code text NOT NULL,
+            donedest varchar(255) NOT NULL default '',
+            savebuttontext varchar(255) NOT NULL default '',
+            donebuttontext varchar(255) NOT NULL default '',
             template text NOT NULL,
             PRIMARY KEY (`templateid`),
             INDEX i_sid (`sid`)
@@ -394,6 +397,10 @@ function patch40() {
 		$sql['defaultview_ele_type_text'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " CHANGE `defaultview` `defaultview` TEXT NOT NULL ";
         $sql['add_ele_uitextshow'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_uitextshow` tinyint(1) NOT NULL default 0";
         $sql['add_send_digests'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD send_digests tinyint(1) NOT NULL default 0";
+        $sql['add_template_donedest'] = "ALTER TABLE ". $xoopsDB->prefix("formulize_screen_template") . " ADD `donedest` varchar(255) NOT NULL default ''";
+        $sql['add_template_savebuttontext'] = "ALTER TABLE ". $xoopsDB->prefix("formulize_screen_template") . " ADD `savebuttontext` varchar(255) NOT NULL default ''";
+        $sql['add_template_donebuttontext'] = "ALTER TABLE ". $xoopsDB->prefix("formulize_screen_template") . " ADD `donebuttontext` varchar(255) NOT NULL default ''";
+
 
         
         foreach($sql as $key=>$thissql) {
@@ -462,6 +469,8 @@ function patch40() {
                     print "Option for showing UI Text already added. result: OK<br>";
                 } elseif($key === "add_send_digests") {
                     print "Option for sending digest notifications already added. result: OK<br>";
+                } elseif(strstr($key, 'add_template_')) {
+					print "Button options already added to Template screens.  result: OK<br>";
                 } else {
                     exit("Error patching DB for Formulize 4.0. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }

@@ -91,8 +91,9 @@ class icms_form_elements_Date extends icms_form_elements_Text {
             $result = "<input type='text' name='".$ele_name."' id='".$ele_name.
                 "' class=\"icms-date-box\" size='".$this->getSize()."' maxlength='".$this->getMaxlength().
                 "' value='".$ele_value."'".$this->getExtra()." />";
-            static $output_datepicker_defaults = true;
-            if ($output_datepicker_defaults) {
+            global $output_datepicker_defaults;
+            if (!$output_datepicker_defaults) {
+                $output_datepicker_defaults = $ele_name;
                 $ICMS_URL = ICMS_URL;
                 // the jQuery datepicker wants a date format such as yy-mm-dd, or yy-m-d.
                 // yyyy-mm-dd gives a date like '20142014-10-11', so only yy, not yyyy.
@@ -128,7 +129,6 @@ jQuery(document).ready(function() {
 });
 </script>
 EOF;
-                $output_datepicker_defaults = false;
             }
         }
         return $result;

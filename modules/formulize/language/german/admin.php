@@ -167,7 +167,7 @@ define("_AM_ELE_DERIVED_DESC", "Select an element above to add it to your formul
 define("_AM_ELE_DERIVED_ADD", "Add to Formula");
 
 define("_AM_ELE_SELECT_NONE","No element selected.");
-define("_AM_ELE_CONFIRM_DELETE","Are you sure you want to delete this form element?<br>All data associated with this form element will be deleted as well.");
+define("_AM_ELE_CONFIRM_DELETE","Are you sure you want to delete this form element? All data associated with this form element will be deleted as well.");
 
 define("_AM_TITLE","Menu administration");
 define("_AM_ID","ID");

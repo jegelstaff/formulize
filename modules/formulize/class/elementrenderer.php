@@ -484,21 +484,25 @@ class formulizeElementRenderer{
 							$linked_column_count = count($linked_columns);
 							while($rowlinkedvaluesq = $xoopsDB->fetchRow($reslinkedvaluesq)) {
 								$linked_column_values = array();
+                                $foundSomething = false;
 								foreach (range(1, $linked_column_count) as $linked_column_index) {
 									if ($rowlinkedvaluesq[$linked_column_index] === "") {
 										$linked_column_values[] = "";
 									} else {
+                                        $foundSomething = true;
 										if ($sourceElementObject->isLinked) {
-											$linked_value = prepvalues($rowlinkedvaluesq[$linked_column_index], $boxproperties[1], $rowlinkedvaluesq[0]);
+											$linked_value = prepvalues($rowlinkedvaluesq[$linked_column_index], $linked_columns[$linked_column_index - 1], $rowlinkedvaluesq[0]);
 											$linked_column_values[] = $linked_value[0];
 										} else {
 											$linked_column_values[] = strip_tags(trim($rowlinkedvaluesq[$linked_column_index]));
 										}
 									}
 								}
+                                if(!$foundSomething) { continue; }// ignore empty values 
 								$linkedElementOptions[$rowlinkedvaluesq[0]] = implode(" | ", $linked_column_values);
 							}
 						}
+                        $linkedElementOptions = array_unique($linkedElementOptions); // remove duplicates 
 						$cachedSourceValuesQ[$sourceValuesQ] = $linkedElementOptions;
 						/* ALTERED - 20100318 - freeform - jeff/julian - start */
 						if(!$isDisabled AND $ele_value[8] == 1) {
@@ -1169,10 +1173,10 @@ class formulizeElementRenderer{
             // setup separate instance of jquery for use for this purpose only
             // jq3 should be what we want to work with and original jquery features will be unaffected?? -- really we should upgrade everything to latest jqueries!!!
             // this approach ensures that we get the jquery ui features we want, without interfering with whatever else might be going on in the site
-            $output .= "<script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js'></script>\n";
-            $output .= "<script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js'></script>\n";
-            $output .= "<link rel='stylesheet' href='https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css'>\n";
-            $output .= "<script type='text/javascript'>var jq3 = jQuery.noConflict(true);</script>\n";
+            //$output .= "<script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js'></script>\n";
+            //$output .= "<script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js'></script>\n";
+            //$output .= "<link rel='stylesheet' href='https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css'>\n";
+            //$output .= "<script type='text/javascript'>var jq3 = jQuery.noConflict(true);</script>\n";
             $autocompleteIncluded = true;
         }
         
@@ -1190,30 +1194,37 @@ class formulizeElementRenderer{
         // note reference to master jQuery not jq3 in order to cause the change event to affect the normal scope of javascript in the page. Very funky!
         $output .= "<script type='text/javascript'>
         
-        jq3(window).load(function() {
+        function formulize_initializeAutocomplete".$form_ele_id."() {
             ".$form_ele_id."_clearbox = true;
-            jq3('#".$form_ele_id."_user').autocomplete({
+            //jq3('#".$form_ele_id."_user').autocomplete({
+            jQuery('#".$form_ele_id."_user').autocomplete({
                 source: '".XOOPS_URL."/modules/formulize/include/formulize_quickselect.php?cache=".$cachedLinkedOptionsFilename."&allow_new_values=".$allow_new_values."',
-                minLength: 3,
+                minLength: 0,
+                delay: 0,
                 select: function(event, ui) {
                     event.preventDefault();
                     if(ui.item.value != 'none') {
-                        jq3('#".$form_ele_id."_user').val(ui.item.label);   
+                        //jq3('#".$form_ele_id."_user').val(ui.item.label);
+                        jQuery('#".$form_ele_id."_user').val(ui.item.label);
                         jQuery('#".$form_ele_id."').val(ui.item.value).trigger('change');
                         ".$form_ele_id."_clearbox = false;
                     } else {
-                        jq3('#".$form_ele_id."_user').val('');
+                        //jq3('#".$form_ele_id."_user').val('');
+                        jQuery('#".$form_ele_id."_user').val('');
                         jQuery('#".$form_ele_id."').val(ui.item.value).trigger('change');
                     }
                 },
                 focus: function( event, ui ) {
                     event.preventDefault();
                     if(ui.item.value != 'none') {
-                        jq3('#".$form_ele_id."_user').val(ui.item.label);
-                        jq3('#".$form_ele_id."').val(ui.item.value);
+                        //jq3('#".$form_ele_id."_user').val(ui.item.label);
+                        jQuery('#".$form_ele_id."_user').val(ui.item.label);
+                        //jq3('#".$form_ele_id."').val(ui.item.value);
+                        jQuery('#".$form_ele_id."').val(ui.item.value);
                         ".$form_ele_id."_clearbox = false;
                     } else {
-                        jq3('#".$form_ele_id."').val(ui.item.value);
+                        //jq3('#".$form_ele_id."').val(ui.item.value);
+                        jQuery('#".$form_ele_id."').val(ui.item.value);
                     }
                 },
                 search: function(event, ui) {
@@ -1224,19 +1235,27 @@ class formulizeElementRenderer{
                     $output .= ",
                     response: function(event, ui) {
                         if(ui.content.length == 1 && ui.content[0].value.indexOf('newvalue:')>-1) {
-                            jq3('#".$form_ele_id."').val(ui.content[0].value);
+                            //jq3('#".$form_ele_id."').val(ui.content[0].value);
+                            jQuery('#".$form_ele_id."').val(ui.content[0].value);
                             ".$form_ele_id."_clearbox = false;
                         }
                     }";
                 }
                 $output .= "
             }).blur(function() {
-                if(".$form_ele_id."_clearbox == true || jq3('#".$form_ele_id."_user').val() == '') {
-                    jq3('#".$form_ele_id."_user').val('');   
-                    jq3('#".$form_ele_id."').val('none');
+                //if(".$form_ele_id."_clearbox == true || jq3('#".$form_ele_id."_user').val() == '') {
+                //    jq3('#".$form_ele_id."_user').val('');   
+                //    jq3('#".$form_ele_id."').val('none');
+                if(".$form_ele_id."_clearbox == true || jQuery('#".$form_ele_id."_user').val() == '') {
+                    jQuery('#".$form_ele_id."_user').val('');   
+                    jQuery('#".$form_ele_id."').val('none');
                 }
             });
-        });
+        }
+        
+        //jq3(window).load(formulize_initializeAutocomplete".$form_ele_id."());
+        jQuery(window).load(formulize_initializeAutocomplete".$form_ele_id."());
+        checkForChrome();
         \n</script>";
 
 		return $output;

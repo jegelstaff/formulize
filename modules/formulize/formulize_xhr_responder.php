@@ -162,7 +162,7 @@ switch($op) {
         $passedElementId = $keyParts[3];
         $passedElementObject = $element_handler->get($passedElementId);
         $handle = $passedElementObject->getVar('ele_handle');
-        $databaseReadyValue = prepDataForWrite($passedElementObject, $v);
+        $databaseReadyValue = prepDataForWrite($passedElementObject, $v, $_GET['entryId']);
         $databaseReadyValue = $databaseReadyValue === "{WRITEASNULL}" ? NULL : $databaseReadyValue;
             if(substr($v, 0, 9)=="newvalue:") { $sendBackValue[$k] = $databaseReadyValue; }
         $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$passedEntryId][$handle] = $databaseReadyValue;
@@ -213,6 +213,11 @@ switch($op) {
       // "" is framework, ie: not applicable
       $deReturnValue = displayElement("", $elementObject, $entryId, false, null, null, false); // false, null, null, false means it's not a noSave element, no screen, no prevEntry data passed in, and do not render the element on screen
       if(is_array($deReturnValue)) {
+        if($deReturnValue[0] == 'hidden') {
+            if(is_object($deReturnValue[2])) {
+                print $deReturnValue[2]->render();
+            }
+        } else {
         $form_ele = $deReturnValue[0];
         if($elementObject->getVar('ele_req')) {
             $form_ele->setRequired();
@@ -246,6 +251,7 @@ switch($op) {
             print $html;
         }
       }
+    }
     }
     break;
 

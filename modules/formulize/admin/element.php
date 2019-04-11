@@ -438,6 +438,14 @@ if ($ele_type=='text') {
             }
             $options['optionDefaultSelectionDefaults'] = $ele_value[13];
             $options['optionDefaultSelection'] = $allLinkedValues; // array with keys as entry ids and values as text
+            
+            // handle additional linked source mapping options...
+            list($thisFormFieldList, $thisFormFieldListSelected) = createFieldList('throwawayvalue', false, $fid, 'throwawayname', 'This Form');
+            $options['mappingthisformoptions'] = $thisFormFieldList->getOptions();
+            list($sourceFormFieldList, $sourceFormFieldListSelected) = createFieldList('throwawayvalue', false, $linkedSourceFid, 'throwawayname', 'Source Form');
+            $options['mappingsourceformoptions'] = $sourceFormFieldList->getOptions();
+            $options['linkedSourceMappings'] = $ele_value['linkedSourceMappings'];
+
         }
     }
     if (!$options['islinked'] OR !$linkedSourceFid) {

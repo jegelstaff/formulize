@@ -342,8 +342,9 @@ define("_AM_ELE_FORMLINK_SCOPEFILTER_REFRESHHINT", "(If the first list here is e
 
 // subforms
 define("_AM_ELE_SUBFORM_FORM", "Which form do you want to include as a subform?");
-define("_AM_ELE_SUBFORM_IFFORM", "If the subform entries are shown in a full form:");
+define("_AM_ELE_SUBFORM_IFFORM", "Screen for displaying each entry:");
 define("_AM_ELE_SUBFORM_SCREEN", "Which screen should be used to display each entry?");
+define("_AM_ELE_SUBFORM_SCREEN_HELP", "The screen will be used for subform entries displayed as a form, or for displaying the entry in a row when its view button is clicked.");
 define("_AM_ELE_SUBFORM", "Subform (from a form framework)");
 define("_AM_ELE_SUBFORM_DESC", "When you display the current form as part of a framework, the subform interface can be included in the form.  The subform interface allows users to create and modify entries in a related subform without leaving the main form.  The list here shows all the possible subforms from all frameworks that this form is part of.");
 define("_AM_ELE_SUBFORM_NONE", "No subforms available - define a framework first");
@@ -402,7 +403,7 @@ define("_AM_ELE_DERIVED_UPDATE_CAP", "Calculate values for this element");
 define("_AM_ELE_DERIVED_UPDATE_DESC", "This may take a while depending on how many records are contained within your form.");
 
 define("_AM_ELE_SELECT_NONE","No element selected");
-define("_AM_ELE_CONFIRM_DELETE","Are you sure you want to delete this form element?<br>All data anyone has ever entered into this form element will be deleted as well.");
+define("_AM_ELE_CONFIRM_DELETE","Are you sure you want to delete this form element? All data anyone has ever entered into this form element will be deleted as well.");
 
 define("_AM_TITLE","Menu administration");
 define("_AM_ID","ID");
@@ -797,3 +798,10 @@ define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK", "Show the default value for this 
 define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_DESC", "For example, showing defaults when the saved value is blank can be useful on multipage forms, if later pages have elements which should still use the default value, even though the user has saved the entry after the first page.<br><b>Note</b> that required elements are always treated as if this option is turned on regardless, since required elements should never have empty/blank values.");
 define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ONLY_NEW", "Only for new entries");
 define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ALL_WHEN_BLANK", "For any entry, when the saved value is blank");
+
+//template screen
+define("_AM_FORM_SCREEN_TEMPLATES_OPTIONS","Options");
+define("_AM_FORMULIZE_SCREEN_TEMPLATE_SAVEBUTTONTEXT", "Text for the 'Save' button: ");
+define("_AM_FORMULIZE_SCREEN_TEMPLATE_DONEBUTTONTEXT", "Text for the 'Done' button: ");
+define("_AM_FORMULIZE_SCREEN_TEMPLATE_DONEDEST", "The URL that users should be directed to when leaving the page (Optional, Formulize will set this automatically when the page is displayed, based on where the user came from, and will return them to that page after. Form submissions are saved when leaving the page.)");
+define("_AM_FORMULIZE_SCREEN_TEMPLATE_HELP", "All variables defined in the custom code below will be available in the template by using <{\$variableName}>, and you can also use <{\$saveButton}> to position the a button that triggers saving of any form elements, and <{\$doneButton}> to position a button that triggers saving and will redirect the user to the done destination. Button text and the done destination can be set in the 'Options' tab.");

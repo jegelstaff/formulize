@@ -155,6 +155,20 @@ if($ele_type == "select") {
       }
     }
   }
+  
+  // gather any additional mappings specified by the user
+  $mappingCounter = 0;
+  $processedValues['elements']['ele_value']['linkedSourceMappings'] = array();
+  foreach($_POST['mappingthisform'] as $key=>$thisFormValue) {
+    if($thisFormValue != 'none' AND $_POST['mappingsourceform'][$key] != 'none') {
+        $processedValues['elements']['ele_value']['linkedSourceMappings'][$mappingCounter] = array('thisForm'=>intval($thisFormValue), 'sourceForm'=>intval($_POST['mappingsourceform'][$key]));
+        $mappingCounter++;
+    }
+  }
+  if($mappingCounter == 0) { // nothing written
+    $processedValues['elements']['ele_value']['linkedSourceMappings'] = null;
+  }
+  
   $processedValues['elements']['ele_value'][8] = 0;
   if($_POST['elements_listordd'] == 2) {
     $processedValues['elements']['ele_value'][0] = 1; // rows is 1
@@ -191,22 +205,23 @@ if($ele_type == "select") {
     $_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_op"];
     $_POST[$filter_key."_terms"][] = $_POST["new_".$filter_key."_term"];
     $_POST[$filter_key."_types"][] = "all";
+    $_POST['reload_option_page'] = true;
   }
   if($_POST["new_".$filter_key."_oom_term"] != "") {
     $_POST[$filter_key."_elements"][] = $_POST["new_".$filter_key."_oom_element"];
     $_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_oom_op"];
     $_POST[$filter_key."_terms"][] = $_POST["new_".$filter_key."_oom_term"];
     $_POST[$filter_key."_types"][] = "oom";
+    $_POST['reload_option_page'] = true;
   }
   // then remove any that we need to
-
+  if(isset($_POST['optionsconditionsdelete']) AND $_POST['optionsconditionsdelete']) {
   $conditionsDeleteParts = explode("_", $_POST['optionsconditionsdelete']);
-  $deleteTarget = $conditionsDeleteParts[1];
-  if($_POST['optionsconditionsdelete']) {
+    $deleteTarget = intval($conditionsDeleteParts[1]);
     // go through the passed filter settings starting from the one we need to remove, and shunt the rest down one space
     // need to do this in a loop, because unsetting and key-sorting will maintain the key associations of the remaining high values above the one that was deleted
     $originalCount = count($_POST[$filter_key."_elements"]);
-    for($i=$deleteTarget;$i<$originalCount;$i++) { // 2 is the X that was clicked for this page
+    for($i=$deleteTarget;$i<$originalCount;$i++) { 
       if($i>$deleteTarget) {
         $_POST[$filter_key."_elements"][$i-1] = $_POST[$filter_key."_elements"][$i];
         $_POST[$filter_key."_ops"][$i-1] = $_POST[$filter_key."_ops"][$i];
@@ -221,6 +236,7 @@ if($ele_type == "select") {
         unset($_POST[$filter_key."_types"][$i]);
       }
     }
+    $_POST['reload_option_page'] = true;
   }
   if(count($_POST[$filter_key."_elements"]) > 0){
     $processedValues['elements']['ele_value'][5][0] = $_POST[$filter_key."_elements"];

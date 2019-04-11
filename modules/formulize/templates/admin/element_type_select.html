@@ -26,6 +26,41 @@
 
 	<{include file="db:admin/element_linkedoptionlist.html"}>
         
+    <div class="form-item" id='linkedsourcemapping' style='display: none;'>
+        <fieldset>
+            <legend>When creating a new entry in the linked source form, map other elements to the source form too:</legend>
+            <input type='button' name='new-mapping' value='Add 1' /><br /><br />
+            <div id='mappingcontainer'>
+              <{if $content.linkedSourceMappings|@count > 0}>
+                <{foreach from=$content.linkedSourceMappings key=index item=value name=mappings}>
+                  <div class="elementmappings" name="<{$index}>">
+                  <select id="mappingthisform-<{$index}>" name="mappingthisform[<{$index}>]" size="1">
+                    <{html_options options=$content.mappingthisformoptions selected=$value.thisForm}>
+                  </select>
+                    >>
+                  <select id="mappingsourceform-<{$index}>" name="mappingsourceform[<{$index}>]" size="1">
+                    <{html_options options=$content.mappingsourceformoptions selected=$value.sourceForm}>
+                  </select>
+                  <{if $smarty.foreach.mappings.index > 0}>
+                  <img class="removeMapping" style="cursor: pointer;" onclick="removeMapping(<{$index}>)" src="../images/editdelete.gif"></img>
+                  <{/if}>
+                  </div>
+                <{/foreach}>
+              <{else}>
+                  <div class="elementmappings" name="0">
+                  <select id="mappingthisform-0" name="mappingthisform[0]" size="1">
+                    <{html_options options=$content.mappingthisformoptions}>
+                  </select>
+                    >>
+                  <select id="mappingsourceform-0" name="mappingsourceform[0]" size="1">
+                    <{html_options options=$content.mappingsourceformoptions}>
+                  </select>
+                  </div>
+              <{/if}>
+            </div>
+        </fieldset>
+    </div>
+
     <div class="form-item">
     <fieldset>
 		<legend>If the options are linked -- or are {FULLNAMES} or {USERNAMES}</legend>
@@ -150,6 +185,26 @@
 </div>
 
 <script type="text/javascript">
+    
+  $("[name='new-mapping']").click(function (){
+    number = $(".elementmappings:last").attr('name');
+    number = parseInt(number) + 1;
+    $('#mappingcontainer').append('<div class="elementmappings" name="'+number+'"><select id="mappingthisform-'+number+'" name="mappingthisform['+number+']" size="1"></select> >> <select id="mappingsourceform-'+number+'" name="mappingsourceform['+number+']" size="1"></select> <img class="removeMapping" style="cursor: pointer;" onclick="removeMapping('+number+')" src="../images/editdelete.gif"></img></div>');
+    var thisformoptions = $('#mappingthisform-0 > option').clone();
+    $('#mappingthisform-'+number).append(thisformoptions);
+    $('#mappingthisform-'+number+' option:selected').removeAttr('selected');
+    var sourceformoptions = $('#mappingsourceform-0 > option').clone();
+    $('#mappingsourceform-'+number).append(sourceformoptions);
+    $('#mappingsourceform-'+number+' option:selected').removeAttr('selected');
+    $("[name='new-mapping']").blur();
+    setDisplay('savewarning','block');
+  });
+    
+    function removeMapping(number) {
+        $('.elementmappings').remove('[name="'+number+'"]');
+        setDisplay('savewarning','block');
+    }
+    
  $("#elements-ele_value_0").focus(function() {
 	  $("#list").attr('checked',1);
  });
@@ -187,18 +242,36 @@
 
  });
 
-	$("div#filterdiv > a.conditionsdelete").click(function () {
-		$(".optionsconditionsdelete").val($(this).attr('target'));
-		$("[name=reload_option_page]").val(1);
-	  $(".savebutton").click();
+    function showHideLinkedSourceMapping() {
+        if ($('[name="elements_listordd"]:checked').val()==2 && $('[name="elements-ele_value\\[16\\]"]:checked').val() == 1 && $('#formlink').val() != 'none') {
+            if($('#linkedsourcemapping').css('display') == 'none') {
+                $('#linkedsourcemapping').css('display', 'block');
+            }
+            return false;
+        } else {
+            if($('#linkedsourcemapping').css('display') == 'none') {
 		return false;
+            }
+            $('#linkedsourcemapping').css('display', 'none');
+        }
+    }
+    
+    $(document).ready(function() {
+        showHideLinkedSourceMapping();
+        
+        $('[name="elements_listordd"]').change(function() {
+            showHideLinkedSourceMapping();
+        });
+        
+        $('[name="elements-ele_value\\[16\\]"]').change(function() {
+            showHideLinkedSourceMapping();
+        });
+        
+        $('#formlink').change(function() {
+            showHideLinkedSourceMapping();
 	});
 
 
-	$("div#filterdiv > input#addcon").click(function () {
-		$("[name=reload_option_page]").val(1);
-	  $(".savebutton").click();
-		return false;
 	});
 
 </script>

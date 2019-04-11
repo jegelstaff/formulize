@@ -279,7 +279,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	var savedPage;
 	var savedPrevPage;
 	function submitForm(page, prevpage) {
-		var validate = xoopsFormValidate_formulize();
+		var validate = xoopsFormValidate_formulize_mainform();
 		if(validate) {
 			savedPage = 0;
 			savedPrevPage = 0;
@@ -291,7 +291,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
         jQuery("input[name^='decue_']").remove();
         // 'rewritePage' will trigger the page to change after the locks have been removed
         removeEntryLocks('rewritePage');
-                document.formulize.deletesubsflag.value=0;
+                document.formulize_mainform.deletesubsflag.value=0;
       }
     } else {
             hideSavingGraphic();
@@ -308,14 +308,14 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 			//  apparently may be related to setting actions on forms with certain versions of jQuery?
 			print "
 			if(page == $thanksPage) {
-				window.document.formulize.ventry.value = '';
+				window.document.formulize_mainform.ventry.value = '';
 				jQuery('form[name=formulize]').attr('action', '$done_dest');
       }
 ";?>
-      window.document.formulize.formulize_currentPage.value = page;
-      window.document.formulize.formulize_prevPage.value = prevpage;
-      window.document.formulize.formulize_doneDest.value = '<?php print $done_dest; ?>';
-      window.document.formulize.formulize_buttonText.value = '<?php print $button_text; ?>';
+      window.document.formulize_mainform.formulize_currentPage.value = page;
+      window.document.formulize_mainform.formulize_prevPage.value = prevpage;
+      window.document.formulize_mainform.formulize_doneDest.value = '<?php print $done_dest; ?>';
+      window.document.formulize_mainform.formulize_buttonText.value = '<?php print $button_text; ?>';
 	}
 
 	function pageJump(options, prevpage) {
@@ -405,7 +405,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	
 		<script type="text/javascript">
 			function validateAndSubmit() {
-				window.document.formulize.submit();
+				window.document.formulize_mainform.submit();
 			}
 		</script>
 	
@@ -468,7 +468,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 		    // start the form manually...
 		    $formObjectForRequiredJS = new formulize_themeForm('form object for required js', 'formulize', getCurrentURL(), "post", true);
 		    $element_handler = xoops_getmodulehandler('elements', 'formulize');
-		    print "<div id='formulizeform'><form id='formulize' name='formulize' action='".getCurrentURL()."' method='post' onsubmit='return xoopsFormValidate_formulize();' enctype='multipart/form-data'>";
+		    print "<div id='formulizeform'><form id='formulize' name='formulize' action='".getCurrentURL()."' method='post' onsubmit='return xoopsFormValidate_formulize_mainform();' enctype='multipart/form-data'>";
 		    foreach ($elements_allowed as $thisElement) {   // entry is a recordid, $thisElement is the element id
 			    // to get the conditional logic to be captured, we should buffer the drawing of the displayElement, and then output that later, because when displayElement does NOT return an object, then we get conditional logic -- subform rendering does it this way
 			    unset($form_ele); // previously set elements may linger when added to the form object, due to assignment of objects by reference or something odd like that...legacy of old code in the form class I think
@@ -536,7 +536,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 		    drawJavascript();
 		    // need to create the form object, and add all the rendered elements to it, and then we'll have working required elements if we render the validation logic for the form
 		    print $formObjectForRequiredJS->renderValidationJS(true, true); // with tags, true, skip the extra js that checks for the formulize theme form divs around the elements so that conditional animation works, true
-		    // print "<script type=\"text/javascript\">function xoopsFormValidate_formulize(){return true;}</script>"; // shim for the validation javascript that is created by the xoopsThemeForms, and which our saving logic currently references...saving won't work without this...we should actually render the proper validation logic at some point, but not today.
+		    // print "<script type=\"text/javascript\">function xoopsFormValidate_formulize_mainform(){return true;}</script>"; // shim for the validation javascript that is created by the xoopsThemeForms, and which our saving logic currently references...saving won't work without this...we should actually render the proper validation logic at some point, but not today.
 	    } else {
             displayForm($forminfo, $entry, $mainform, "", $buttonArray, $settings, $titleOverride, $overrideValue, "", "", 0, 0, $printall, $screen); // nmc 2007.03.24 - added empty params & '$printall'
 	    }

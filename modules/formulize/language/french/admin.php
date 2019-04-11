@@ -308,8 +308,9 @@ define("_AM_ELE_SUBFORM_FORM", "Quel formulaire voulez vous inclure en tant que 
 define("_AM_ELE_SUBFORM_HEADINGSORCAPTIONS", "Chaque élément doit-il être nommé par son en-tête de colonne ou sa légende?");
 define("_AM_ELE_SUBFORM_HEADINGSORCAPTIONS_CAPTIONS", "Légendes");
 define("_AM_ELE_SUBFORM_HEADINGSORCAPTIONS_HEADINGS", "En-têtes de colonnes (les légendes seront utilisées pour les éléments n'ayant pas d'en-têtes");
-define("_AM_ELE_SUBFORM_IFFORM", "If the subform entries are shown in a full form:");
+define("_AM_ELE_SUBFORM_IFFORM", "Screen for displaying each entry:");
 define("_AM_ELE_SUBFORM_SCREEN", "Which screen should be used to display each entry?");
+define("_AM_ELE_SUBFORM_SCREEN_HELP", "The screen will be used for subform entries displayed as a form, or for displaying the entry in a row when its view button is clicked.");
 define("_AM_ELE_SUBFORM_NONE", "Pas de sous formulaires valides - définissez d'abord un Framework");
 define("_AM_ELE_SUBFORM_REFRESH", "Refresh elements list to match selected form");
 define("_AM_ELE_SUBFORM_VIEW", "Montrer les boutons<i>Voir</i> a coté de chaque entrée du sous formulaire?");

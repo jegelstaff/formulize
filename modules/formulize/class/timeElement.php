@@ -112,16 +112,33 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
             $formElement = new xoopsFormLabel($caption, $this->formatDataForList($ele_value, $element->getVar('ele_handle'), $entry_id));
         } else {
             static $scriptIncluded = false;
+            $timeScript = "";
             if(!$scriptIncluded) {
-                global $xoTheme;
-                $xoTheme->addStylesheet(XOOPS_URL.'/modules/formulize/libraries/jquery/timeentry/jquery.timeentry.css', array('media'=>'screen'));
-                $xoTheme->addScript(XOOPS_URL . '/modules/formulize/libraries/jquery/timeentry/jquery.plugin.min.js', array('type' => 'text/javascript'));
-                $xoTheme->addScript(XOOPS_URL . '/modules/formulize/libraries/jquery/timeentry/jquery.timeentry.js', array('type' => 'text/javascript'));
-                $xoTheme->addScript(XOOPS_URL . '/modules/formulize/libraries/jquery/timeentry/jquery.mousewheel.js', array('type' => 'text/javascript'));
+                // depends on includeResource function which is part of formDisplay.php and will exist when any regular form has been rendered onto the screen.
+                // it will not be available when only an element by element rendering is in effect
+                // wait up to 8 seconds for the scripts to finish loading, but bail after that and don't initialize the elements (otherwise endless loop)
+                $timeScript .= "<script type='text/javascript'>
+jQuery(document).ready(function(){
+    includeResource('".XOOPS_URL."/modules/formulize/libraries/jquery/timeentry/jquery.timeentry.css', 'link');
+    includeResource('".XOOPS_URL."/modules/formulize/libraries/jquery/timeentry/jquery.plugin.min.js', 'script');
+    includeResource('".XOOPS_URL."/modules/formulize/libraries/jquery/timeentry/jquery.timeentry.js', 'script');
+    includeResource('".XOOPS_URL."/modules/formulize/libraries/jquery/timeentry/jquery.mousewheel.js', 'script');
+    initializeTimeElements();
+});
+var timeElementWaiting = 0;
+function initializeTimeElements() {
+    if(jQuery.timeEntry === undefined && timeElementWaiting <= 8) {
+        timeElementWaiting = timeElementWaiting + 1;
+        setTimeout(initializeTimeElements,500);
+    } else if(jQuery.timeEntry !== undefined) {
+        jQuery('.formulize-time-element').timeEntry({spinnerImage: '".XOOPS_URL."/modules/formulize/libraries/jquery/timeentry/spinnerDefault.png'});
+    }
+}
+</script>";
                 $scriptIncluded = true;
             }
             $timeElement = new xoopsFormText($caption, $markupName, 10, 10, $ele_value); // caption, markup name, size, maxlength, default value, according to the xoops form class
-            $timeScript = "<script type='text/javascript'>jQuery(document).ready(function(){jQuery('#$markupName').timeEntry({spinnerImage: '".XOOPS_URL."/modules/formulize/libraries/jquery/timeentry/spinnerDefault.png'});});</script>\n";
+            $timeElement->setExtra("class='formulize-time-element'");
             $formElement = new xoopsFormLabel($caption, $timeElement->render().$timeScript);
         }
         return $formElement;

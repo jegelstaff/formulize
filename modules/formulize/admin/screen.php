@@ -147,6 +147,7 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $screen_handler = xoops_getmodulehandler('screen', 'formulize');
   $criteria_object = new CriteriaCompo(new Criteria('type','multiPage'));
   $criteria_object->add(new Criteria('type','form'), 'OR');
+  $criteria_object->add(new Criteria('type','template'), 'OR');
   $viewentryscreenOptionsDB = $screen_handler->getObjects($criteria_object, $form_id);
   $viewentryscreenOptions["none"] = _AM_FORMULIZE_SCREEN_LOE_VIEWENTRYSCREEN_DEFAULT;
   foreach($viewentryscreenOptionsDB as $thisViewEntryScreenOption) {
@@ -424,6 +425,9 @@ if ($screen_id != "new" && $settings['type'] == 'template') {
     $templates = array();
     $templates['custom_code'] = $screen_handler->getCustomCode($screen);
     $templates['template'] = $screen_handler->getTemplateHtml($screen);
+    $templates['donedest'] = $screen->getVar('donedest');
+    $templates['savebuttontext'] = $screen->getVar('savebuttontext');
+    $templates['donebuttontext'] = $screen->getVar('donebuttontext');
 }
 
 
@@ -527,6 +531,11 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
 
 
 if ($screen_id != "new" && $settings['type'] == 'template') {
+    $adminPage['tabs'][] = array(
+        'name'      => _AM_FORM_SCREEN_TEMPLATES_OPTIONS,
+        'template'  => "db:admin/screen_template_options.html",
+        'content'   => $templates + $common
+    );
     $adminPage['tabs'][] = array(
         'name'      => _AM_FORM_SCREEN_TEMPLATES,
         'template'  => "db:admin/screen_template_templates.html",

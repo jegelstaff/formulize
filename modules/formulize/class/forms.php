@@ -366,12 +366,12 @@ EOF;
     }
 
     public function default_form_screen() {
-        $screen_handler = xoops_getmodulehandler('screen', 'formulize');
+        $screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
         return $screen_handler->get($this->defaultform);
     }
 
     public function default_list_screen() {
-        $screen_handler = xoops_getmodulehandler('screen', 'formulize');
+        $screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
         return $screen_handler->get($this->defaultlist);
     }
 
