@@ -998,7 +998,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
             if ($this_id_req) {
                 
                 // first, record a revisions if necessary
-                formulize_updateRevisionData($formObject, $this_id_req);
+                formulize_updateRevisionData($formObject, $this_id_req, true);
                 
                 // updating an entry
                 $form_uid = $this_uid;

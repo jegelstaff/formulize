@@ -5950,7 +5950,7 @@ function formulize_catchAndWriteExportQuery($fid) {
 // update the revision data for an entry
 // fidOrObject is a form id or a form object for the form we're updating
 // entry_to_return is the entry id of the entry we're currently storing in the revision table
-function formulize_updateRevisionData($fidOrObject, $entry_to_return) {
+function formulize_updateRevisionData($fidOrObject, $entry_to_return, $forceUpdate = false) {
     $form_handler = xoops_getmodulehandler('forms','formulize');
     if(!is_object($fidOrObject) AND is_numeric($fidOrObject)) {
         $formObject = $form_handler->get($fidOrObject);

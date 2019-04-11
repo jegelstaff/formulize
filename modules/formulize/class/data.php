@@ -856,7 +856,7 @@ class formulizeDataHandler  {
             $entry_to_return = intval($entry);
         }
 
-        formulize_updateRevisionData($formObject, $entry_to_return);
+        formulize_updateRevisionData($formObject, $entry_to_return, $forceUpdate);
         
 		if($forceUpdate) {
 			if(!$res = $xoopsDB->queryF($sql)) {
