@@ -45,6 +45,7 @@ class formulizeElementRenderer{
 	// function params modified to accept passing of $ele_value from index.php
 	// $entry added June 1 2006 as part of 'Other' option for radio buttons and checkboxes
 	function constructElement($form_ele_id, $ele_value, $entry, $isDisabled=false, $screen=null, $validationOnly=false){
+        $wasDisabled = false; // yuck, see comment below when this is reassigned
 		if (strstr(getCurrentURL(),"printview.php")) {
 			$isDisabled = true; // disabled all elements if we're on the printable view
 		} 
@@ -528,23 +529,20 @@ class formulizeElementRenderer{
 						$renderedComboBox = $this->formulize_renderQuickSelect($form_ele_id, $cachedSourceValuesAutocompleteFile[$sourceValuesQ], $default_value, $default_value_user, $cachedSourceValuesAutocompleteLength[$sourceValuesQ], $validationOnly);
 						$form_ele = new xoopsFormLabel($ele_caption, $renderedComboBox);
 						$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
+                    // if we're rendering a disabled autocomplete box
 					} elseif($isDisabled AND $ele_value[8] == 1) {
 						$disabledOutputText[] = $default_value_user;
 					}
 
-					// only do this if we're rendering a normal element, that is not disabled
-					if(!$isDisabled AND $ele_value[8] == 0) {
-						$form_ele->addOptionArray($cachedSourceValuesQ[$sourceValuesQ]);
-					}
-
-					// only do this if we're rendering a normal element (may be disabled)
+					// rendering a non-autocomplete box 
 					if($ele_value[8] == 0) {
+                        if(!$isDisabled) {
+    						$form_ele->addOptionArray($cachedSourceValuesQ[$sourceValuesQ]);
+    					}
 						foreach($sourceEntryIds as $thisEntryId) {
 							if(!$isDisabled) {
 								$form_ele->setValue($thisEntryId);
 							} else {
-								$disabledName = $ele_value[1] ? $form_ele_id."[]" : $form_ele_id;
-								$disabledHiddenValue[] = "<input type=hidden name=\"$disabledName\" value=\"$thisEntryId\">";
 								$disabledOutputText[] = $cachedSourceValuesQ[$sourceValuesQ][$thisEntryId]; // the text value of the option(s) that are currently selected
 							}
 						}
@@ -553,7 +551,7 @@ class formulizeElementRenderer{
                     $GLOBALS['formulize_lastRenderedElementOptions'] = $cachedSourceValuesQ[$sourceValuesQ];
                     
 					if($isDisabled) {
-						$form_ele = new XoopsFormLabel($ele_caption, implode(", ", $disabledOutputText) . implode("\n", $disabledHiddenValue));
+						$form_ele = new XoopsFormLabel($ele_caption, implode(", ", $disabledOutputText));
 						$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
 					} elseif($ele_value[8] == 0) {
 						// this is a hack because the size attribute is private and only has a getSize and not a setSize, setting the size can only be done through the constructor
@@ -748,6 +746,7 @@ class formulizeElementRenderer{
 				}
 
 				if($isDisabled) {
+                    $wasDisabled = true; // the worst kind of spaghetti code!!! We need to rationalize the handling of cue elements, so that disabled elements never get cues!
 					$isDisabled = false; // disabled stuff handled here in element, so don't invoke generic disabled handling below (which is only for textboxes and their variations)
 				}
 			break;
@@ -1014,7 +1013,7 @@ class formulizeElementRenderer{
 				$previousEntryUIRendered = "";
 			}
 			// $ele_type is the type value...only put in a cue for certain kinds of elements, and definitely not for blank subforms
-			if(substr($form_ele_id, 0, 9) != "desubform" AND ($ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "select" OR $ele_type=="radio" OR $ele_type=="checkbox" OR $ele_type=="date" OR $ele_type=="colorpick" OR $ele_type=="yn" OR $customElementHasData)) {
+			if(substr($form_ele_id, 0, 9) != "desubform" AND !$isDisabled AND !$wasDisabled AND ($ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "select" OR $ele_type=="radio" OR $ele_type=="checkbox" OR $ele_type=="date" OR $ele_type=="colorpick" OR $ele_type=="yn" OR $customElementHasData)) {
 				$elementCue = "\n<input type=\"hidden\" id=\"decue_".trim($form_ele_id,"de_")."\" name=\"decue_".trim($form_ele_id,"de_")."\" value=1>\n";
 			} else {
 				$elementCue = "";
