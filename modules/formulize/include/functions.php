@@ -1148,7 +1148,7 @@ function checkForLinks($frid, $fids, $fid, $entries, $unified_display=false, $un
         if ($one_fid['common']) {
             $oneFormObject = $form_handler->get($one_fid['fid']);
             $formObject = $form_handler->get($fid);
-            $mainHandle = q("SELECT ele_handle FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id=".$one_to_one[0]['keyother']);
+            $mainHandle = q("SELECT ele_handle FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id=".$one_fid['keyother']);
             $candidateHandle = q("SELECT ele_handle FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id=".$one_fid['keyself']);
             $valueToCheckAgainst = isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($entries[$fid][0])][$mainHandle[0]['ele_handle']]) ? $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($entries[$fid][0])][$mainHandle[0]['ele_handle']] : "main.`".$mainHandle[0]['ele_handle']."` AND main.entry_id = ".intval($entries[$fid][0]);
             $candidateEntry = q("SELECT candidate.entry_id FROM " . $xoopsDB->prefix("formulize_".$oneFormObject->getVar('form_handle')) . " AS candidate, ". $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " AS main WHERE candidate.`".$candidateHandle[0]['ele_handle']."` = ".$valueToCheckAgainst." LIMIT 0,1");
@@ -4290,10 +4290,25 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
 function formulize_swapUIText($value, $uitexts=array()) {
     $originalValue = $value;
     // if value is an array, it has a key called 'value', which needs to be swapped
-    if (is_array($value)) {
+    if (is_array($value) AND is_array($uitexts)) {
         $value['value'] = isset($uitexts[$value['value']]) ? $uitexts[$value['value']] : $value['value'];
-    } else {
+    } elseif(is_array($uitexts)) {
         $value = isset($uitexts[$value]) ? $uitexts[$value] : $value;
+    }
+    if ($value === "") {
+        $value = $originalValue; // don't return "";
+    }
+    return $value;
+}
+// THIS FUNCTION TAKES A VALUE AND THE UITEXT FOR THE ELEMENT, AND RETURNS THE CORRESPONDING DB VALUE IF THE PASSED VALUE MATCHES A UITEXT
+function formulize_swapDBText($value, $uitexts=array()) {
+    $dbtexts = array_flip($uitexts);
+    $originalValue = $value;
+    // if value is an array, it has a key called 'value', which needs to be swapped
+    if (is_array($value) AND is_array($dbtexts)) {
+        $value['value'] = isset($dbtexts[$value['value']]) ? $dbtexts[$value['value']] : $value['value'];
+    } elseif(is_array($dbtexts)) {
+        $value = isset($dbtexts[$value]) ? $dbtexts[$value] : $value;
     }
     if ($value === "") {
         $value = $originalValue; // don't return "";
@@ -5257,8 +5272,17 @@ function formulize_xhr_send(op,params) {
 }
 
 // this function creates the javascript snippet that will send the kill locks request
-function formulize_javascriptForRemovingEntryLocks() {
+// unload causes it to return the script necessary for in an unload event, which uses a different call
+function formulize_javascriptForRemovingEntryLocks($unload=false) {
     global $entriesThatHaveBeenLockedThisPageLoad;
+    if($unload) {
+        $js = "var fd = new FormData();\n";
+        foreach($entriesThatHaveBeenLockedThisPageLoad as $thisForm=>$theseEntries) {
+            $js .= "fd.append('entry_ids_".$thisForm."[]', [".implode(", ", array_keys($theseEntries))."]);\n";
+        }
+        $js .= "fd.append('form_ids[]', [".implode(", ", array_keys($entriesThatHaveBeenLockedThisPageLoad))."]);\n";
+        $js .= "navigator.sendBeacon('".XOOPS_URL."/modules/formulize/formulize_deleteEntryLock.php', fd);\n";
+    } else {
     $js = "
     jQuery.post('".XOOPS_URL."/modules/formulize/formulize_deleteEntryLock.php', {\n";
     foreach($entriesThatHaveBeenLockedThisPageLoad as $thisForm=>$theseEntries) {
@@ -5268,6 +5292,7 @@ function formulize_javascriptForRemovingEntryLocks() {
     async: false
     });
     ";
+    }
     return $js;
 }
 
@@ -5711,9 +5736,23 @@ function formulize_makeOneToOneLinks($frid, $fid) {
                     continue;
                 }
                 $entryToWriteToForm1 = $GLOBALS['formulize_newEntryIds'][$form1][0] ? $GLOBALS['formulize_newEntryIds'][$form1][0] : $GLOBALS['formulize_allWrittenEntryIds'][$form1][0];
-                if(!$entryToWriteToForm1) { exit("Error: we could not determine which entry in form $form1 we should use for writing the key value for the relationship."); }
+                if(!$entryToWriteToForm1) {
+                    if(isset($_POST['entry'.$form1]) AND is_numeric($_POST['entry'.$form1])) {
+                        // last ditch... try to see if an entry in the main form was declared in the form submission itself (no element is present on screen it seems)
+                        $entryToWriteToForm1 = $_POST['entry'.$form1];
+                    } else {
+                        exit("Error: we could not determine which entry in form $form1 we should use for writing the key value for the relationship. Is there an element of the main form present on the page?");
+                    }
+                }
                 $entryToWriteToForm2 = $GLOBALS['formulize_newEntryIds'][$form2][0] ? $GLOBALS['formulize_newEntryIds'][$form2][0] : $GLOBALS['formulize_allWrittenEntryIds'][$form2][0];
-                if(!$entryToWriteToForm2) { exit("Error: we could not determine which entry in form $form2 we should use for writing the key value for the relationship."); }
+                if(!$entryToWriteToForm2) {
+                    if(isset($_POST['entry'.$form2]) AND is_numeric($_POST['entry'.$form2])) {
+                        // last ditch... try to see if an entry in the main form was declared in the form submission itself (no element is present on screen it seems)
+                        $entryToWriteToForm2 = $_POST['entry'.$form2];
+                    } else {
+                        exit("Error: we could not determine which entry in form $form2 we should use for writing the key value for the relationship. Is there an element of the main form present on the page?");
+                    }
+                }
                 if($thisLink->getVar('common')) {
                     if((!isset($_POST["de_".$form1."_new_".$key1]) OR $_POST["de_".$form1."_new_".$key1] === "") AND (!isset($_POST["de_".$form1."_".$GLOBALS['formulize_allWrittenEntryIds'][$form1][0]."_".$key1]) OR $_POST["de_".$form1."_".$GLOBALS['formulize_allWrittenEntryIds'][$form1][0]."_".$key1] === "")) {
                         // if we don't have a value for this element, then populate it with the value from the other element
@@ -5771,6 +5810,11 @@ function formulize_findCommonValue($form1, $form2, $key1, $key2) {
 	} elseif(isset($GLOBALS['formulize_allWrittenEntryIds'][$form2][0])) { // try to get the value saved in the DB for the target element in the first entry we just saved in the paired form
 		$common_value_data_handler = new formulizeDataHandler($form2);
 		if($candidateValue = $common_value_data_handler->getElementValueInEntry($GLOBALS['formulize_allWrittenEntryIds'][$form2][0], $key2)) {
+			$commonValueToWrite = $candidateValue;
+		}
+	} elseif(isset($_POST['entry'.$form2])) { // if nothing has been saved in this pageload, then go to the DB and see if there is an existing value for an entry that has been declared in the form submission itself to be part of the set of data we're working with
+        $common_value_data_handler = new formulizeDataHandler($form2);
+		if($candidateValue = $common_value_data_handler->getElementValueInEntry(intval($_POST['entry'.$form2]), $key2)) {
 			$commonValueToWrite = $candidateValue;
 		}
 	}

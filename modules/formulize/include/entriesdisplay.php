@@ -1894,6 +1894,20 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 	if($scrollBoxWasSet) {
 		print "</div>";
 	}
+
+    global $entriesThatHaveBeenLockedThisPageLoad;
+    if(is_array($entriesThatHaveBeenLockedThisPageLoad) AND count($entriesThatHaveBeenLockedThisPageLoad) > 0) {
+        ?>
+<script type='text/javascript'>
+    jQuery(window).on('unload', function() {
+        <?php print formulize_javascriptForRemovingEntryLocks('unload'); ?>
+    });
+</script>
+        <?php
+    }
+    
+
+    
   formulize_benchmark("We're done");
 }
 
@@ -3300,7 +3314,6 @@ if($useXhr) {
 	print " initialize_formulize_xhr();\n";
 	drawXhrJavascript();
 	print "</script>";
-	print "<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-1.4.2.min.js\"></script>\n";
 	print "<script type='text/javascript'>";
 	print "var elementStates = new Array();";
 	print "var savingNow = \"\";";
@@ -3709,6 +3722,7 @@ jQuery(window).load(function() {
 		var column = lockData[1];
 		if(floatingContents[column] == true) {
             jQuery(this).removeClass("heading-locked").addClass("heading-unlocked");
+            jQuery('td#celladdress_h1_'+column+' #lockcolumn_'+column).removeClass("heading-locked").addClass("heading-unlocked");
 			var curColumnsArray = jQuery('#formulize_lockedColumns').val().split(',');
 			var curColumnsHTML = '';
 			for (var i=0; i < curColumnsArray.length; i++) {

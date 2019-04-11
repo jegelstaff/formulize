@@ -2846,8 +2846,8 @@ window.onbeforeunload = function (e) {
     }
 };
 
-jQuery(window).unload(function() {
-    <?php print formulize_javascriptForRemovingEntryLocks(); ?>
+jQuery(window).on('unload', function() {
+    <?php print formulize_javascriptForRemovingEntryLocks('unload'); ?>
 });
 
 <?php
@@ -2976,7 +2976,7 @@ print " }\n";
 function formulize_javascriptForAfterRemovingLocks(action) {
 	if(action == 'submitGoParent') {
 			window.document.go_parent.submit();
-	} else {
+	} else if(action == 'rewritePage') {
 		var formAction = jQuery('form[name=formulize]').attr('action');
 		var formData = jQuery('form[name=formulize]').serialize();
 		jQuery.ajax({

@@ -69,7 +69,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
         if(is_object($element) AND is_subclass_of($element, 'formulizeformulize')) {
 			$ele_value = $this->backwardsCompatibility($element->getVar('ele_value'));
             if(is_array($ele_value[2])) { // an array will be a set of hard coded options
-                $ele_value[2] = formulize_mergeUIText($ele_value[2], $ele_uitext);
+                $ele_value[2] = formulize_mergeUIText($ele_value[2], $element->getVar('ele_uitext'));
                 $dataToSendToTemplate['islinked'] = 0;
                 $dataToSendToTemplate['useroptions'] = $ele_value[2];
             } else { // options are linked from another source

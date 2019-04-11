@@ -120,10 +120,9 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 				$linkResults = checkForLinks($frid, array(0=>$fid), $fid, $entries); 
 				unset($entries);
 				$entries = $linkResults['entries'];
+			} else {
+                $entries = $GLOBALS['formulize_allWrittenEntryIds']; // set in readelements.php    
 			}
-	
-			$entries = $GLOBALS['formulize_allWrittenEntryIds']; // set in readelements.php
-	
 	
 			// if there has been no specific entry specified yet, then assume the identity of the entry that was just saved -- assumption is it will be a new save
 			// from this point forward in time, this is the only entry that should be involved, since the 'entry'.$fid condition above will put this value into $entry even if this function was called with a blank entry value
@@ -145,6 +144,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	$pagesSkipped = false;
 	if(is_array($conditions) AND $entry != 'new') {
 		$conditionsMet = false;
+        $element_handler = xoops_getmodulehandler('elements','formulize');
 		while(!$conditionsMet) {
 			if(isset($conditions[$currentPage]) AND count($conditions[$currentPage][0])>0) { // conditions on the current page
 				$thesecons = $conditions[$currentPage];
@@ -156,6 +156,8 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 				$oomfilter = "";
 				$blankORSearch = "";
 				foreach($elements as $i=>$thisElement) {
+                    $elementObject = $element_handler->get($thisElement);
+                    $searchTerm = formulize_swapDBText(trans($terms[$i]),$elementObject->getVar('ele_uitext'));
 					if($ops[$i] == "NOT") { $ops[$i] = "!="; }
 					if($terms[$i] == "{BLANK}") { // NOTE...USE OF BLANKS WON'T WORK CLEANLY IN ALL CASES DEPENDING WHAT OTHER TERMS HAVE BEEN SPECIFIED!!
 						if($ops[$i] == "!=" OR $ops[$i] == "NOT LIKE") {
@@ -194,20 +196,20 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 						}
 					} elseif($types[$i] == "oom") {
 						if(!$oomfilter) {
-							$oomfilter = $elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
+							$oomfilter = $elements[$i]."/**/".$searchTerm."/**/".$ops[$i];
 						} else {
-							$oomfilter .= "][".$elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
+							$oomfilter .= "][".$elements[$i]."/**/".$searchTerm."/**/".$ops[$i];
 						}
 					} else {
 						if(!$filter) {
-							$filter = $entry."][".$elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
+							$filter = $entry."][".$elements[$i]."/**/".$searchTerm."/**/".$ops[$i];
 						} else {
-							$filter .= "][".$elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
+							$filter .= "][".$elements[$i]."/**/".$searchTerm."/**/".$ops[$i];
 						}
 					}
 				}
+                $finalFilter = array();
 				if($oomfilter AND $filter) {
-					$finalFilter = array();
 					$finalFilter[0][0] = "AND";
 					$finalFilter[0][1] = $filter;
 					$finalFilter[1][0] = "OR";
@@ -218,7 +220,6 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 					}
 				} elseif($oomfilter) {
 					// need to add the $entry as a separate filter from the oom, so the entry and oom get an AND in between them
-					$finalFilter = array();
 					$finalFilter[0][0] = "AND";
 					$finalFilter[0][1] = $entry;
 					$finalFilter[1][0] = "OR";
