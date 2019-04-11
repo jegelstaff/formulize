@@ -2072,7 +2072,7 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
 // it is similiar to prepdataforwrite except pdfw takes values submitted through a form and converts them for storage, and this takes literal values that people might have typed into a box somewhere, like in the conditions boxes
 // curly brackey entry is the id number for the entry that we're supposed to check { } terms against. although currently only USER is supported, and all we really care about is whether this is "new" or not
 // userComparisonId is the ID of the user that should be used for {USER} when the entry is new - optional, will default to the current user's id
-function prepareLiteralTextForDB($elementObject, $value, $curlyBracketEntry, $userComparisonId = "") {
+function prepareLiteralTextForDB($elementObject, $value, $curlyBracketEntry = null, $userComparisonId = "") {
     global $xoopsUser;
     if ($userComparisonId === "") {
         $userComparisonId = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
@@ -3413,7 +3413,7 @@ function getDefaultCols($fid, $frid="") {
 // DEPRECATED. VERY INEFFICIENT, SINCE IT ONLY UPDATES ONE FIELD AT A TIME.  BETTER TO USE formulize_writeEntry, except in cases where you actually need to only update one field.  In most cases you want to update multiple fields in an entry, so don't use this inside a loop. it will generate more queries than you need
 // prevValue is now completely not required.  lvoverride is only used if you want to pass in a pre-formatted ,1,3,15,17, style string for inserting into a linked selectbox field.
 // linkedTargetHint is used if we are writing to a linked selectbox element, and we have some indication from the UI what the entry is that we're supposed to link to.  This allows for disambiguation of target values that we might be trying to link to, that might occur in more than one entry.
-function writeElementValue($formframe = "", $ele, $entry, $value, $append, $prevValue=null, $lvoverride=false, $linkedTargetHint = "") {
+function writeElementValue($formframe = "", $ele, $entry, $value, $append="replace", $prevValue=null, $lvoverride=false, $linkedTargetHint = "") {
 
     global $xoopsUser, $formulize_mgr, $xoopsDB, $myts;
     if (!is_object($myts)) {
