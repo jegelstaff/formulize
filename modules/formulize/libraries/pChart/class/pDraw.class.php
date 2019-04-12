@@ -772,7 +772,7 @@
 
        if ( $Ticks == NULL )
         {
-         $Points   = ""; 
+         $Points   = array(); 
          $Points[] = cos(deg2rad($Angle-90)) * $Weight + $X1; $Points[] = sin(deg2rad($Angle-90)) * $Weight + $Y1;
          $Points[] = cos(deg2rad($Angle+90)) * $Weight + $X1; $Points[] = sin(deg2rad($Angle+90)) * $Weight + $Y1;
          $Points[] = cos(deg2rad($Angle+90)) * $Weight + $X2; $Points[] = sin(deg2rad($Angle+90)) * $Weight + $Y2;
@@ -921,7 +921,7 @@
        $this->drawFilledCircle($X+$this->ShadowX,$Y+$this->ShadowY,$Radius,array("R"=>$this->ShadowR,"G"=>$this->ShadowG,"B"=>$this->ShadowB,"Alpha"=>$this->Shadowa,"Ticks"=>$Ticks));
       }
 
-     $this->Mask  = "";
+     $this->Mask  = array();
      $Color = $this->allocateColor($this->Picture,$R,$G,$B,$Alpha);
      for ($i=0; $i<=$Radius*2; $i++)
       {
@@ -3094,7 +3094,7 @@
      if ( $SerieName != NULL ) { $AxisID = $Data["Series"][$SerieName]["Axis"]; }
      if ( !is_array($Values) ) { $tmp = $Values; $Values = ""; $Values[0] = $tmp; }
 
-     $Result = "";
+     $Result = array();
      if ( $Data["Orientation"] == SCALE_POS_LEFTRIGHT )
       {
        $Height      = ($this->GraphAreaY2 - $this->GraphAreaY1) - $Data["Axis"][$AxisID]["Margin"]*2;

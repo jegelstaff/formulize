@@ -296,7 +296,7 @@
        $EdgeX = cos(deg2rad($i+$AxisRotation)) * ($EdgeHeight+$TicksLength) + $CenterX;
        $EdgeY = sin(deg2rad($i+$AxisRotation)) * ($EdgeHeight+$TicksLength) + $CenterY;
 
-       if ($ID % $SkipLabels == 0)
+       if ($SkipLabels AND $ID % $SkipLabels == 0)
         { $Object->drawLine($CenterX,$CenterY,$EdgeX,$EdgeY,$Color); }
        else
         { $Object->drawLine($CenterX,$CenterY,$EdgeX,$EdgeY,$ColorDotted); }
@@ -311,7 +311,7 @@
          else
           $Label = $ID;
 
-         if ($ID % $SkipLabels == 0)
+         if ($SkipLabels AND $ID % $SkipLabels == 0)
           {
            if ( $LabelPos == RADAR_LABELS_ROTATED )
             $Object->drawText($LabelX,$LabelY,$Label,array("Angle"=>(360-($i+$AxisRotation+$Axisoffset))-90,"Align"=>TEXT_ALIGN_BOTTOMMIDDLE));

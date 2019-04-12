@@ -121,7 +121,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 				unset($entries);
 				$entries = $linkResults['entries'];
 			} else {
-                $entries = $GLOBALS['formulize_allWrittenEntryIds']; // set in readelements.php    
+			$entries = $GLOBALS['formulize_allWrittenEntryIds']; // set in readelements.php
 			}
 	
 			// if there has been no specific entry specified yet, then assume the identity of the entry that was just saved -- assumption is it will be a new save
@@ -208,7 +208,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 						}
 					}
 				}
-                $finalFilter = array();
+					$finalFilter = array();
 				if($oomfilter AND $filter) {
 					$finalFilter[0][0] = "AND";
 					$finalFilter[0][1] = $filter;
@@ -533,7 +533,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 			    print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/saving-english.gif\">\n";
 		    }
 		    print "</div>\n";
-		    drawJavascript();
+		    drawJavascript(!$usersCanSave); // inverse of whether the user can save, will be the correct 'nosave' flag (we need to pass true if the user cannot save)
 		    // need to create the form object, and add all the rendered elements to it, and then we'll have working required elements if we render the validation logic for the form
 		    print $formObjectForRequiredJS->renderValidationJS(true, true); // with tags, true, skip the extra js that checks for the formulize theme form divs around the elements so that conditional animation works, true
 		    // print "<script type=\"text/javascript\">function xoopsFormValidate_formulize_mainform(){return true;}</script>"; // shim for the validation javascript that is created by the xoopsThemeForms, and which our saving logic currently references...saving won't work without this...we should actually render the proper validation logic at some point, but not today.
