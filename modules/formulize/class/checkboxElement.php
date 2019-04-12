@@ -381,6 +381,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 					$counter++;
 				}
 				$form_ele1->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$markupName\" ");
+                $GLOBALS['formulize_lastRenderedElementOptions'] = $form_ele1->getOptions();
 			break;
 			default:
 				$form_ele1 = new XoopsFormElementTray($caption, $delimSetting);
@@ -399,6 +400,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 						if(in_array($o['key'], $selected)) {
 							$disabledOutputText[] = _formulize_OPT_OTHER.$other;
 						}
+                        $GLOBALS['formulize_lastRenderedElementOptions'][$o['key']] = _formulize_OPT_OTHER;
 					}else{
 						$t->addOption($o['key'], $o['value']);
 						if(in_array($o['key'], $selected)) {
@@ -407,6 +409,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 						if(strstr($o['value'], _formulize_OUTOFRANGE_DATA)) {
 							$hiddenOutOfRangeValuesToWrite[$o['key']] = str_replace(_formulize_OUTOFRANGE_DATA, "", $o['value']); // if this is an out of range value, grab the actual value so we can stick it in a hidden element later
 						}
+                        $GLOBALS['formulize_lastRenderedElementOptions'][$o['key']] = $o['value'];
 					}
 					$t->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$markupName\" ");
 					$form_ele1->addElement($t);
