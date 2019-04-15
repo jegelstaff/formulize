@@ -519,8 +519,8 @@ class icms_data_notification_Handler extends icms_core_ObjectHandler {
 		$tags['X_NOTIFY_EVENT'] = $event;
 
 		$template_dir = $event_info['mail_template_dir'];
-		$template = $event_info['mail_template'] . '.tpl';
-		$subject = $event_info['mail_subject'];
+		$template = isset($GLOBALS['formulize_notificationTemplateOverride']) ? $GLOBALS['formulize_notificationTemplateOverride'] . '.tpl' : $event_info['mail_template'] . '.tpl';
+		$subject = isset($GLOBALS['formulize_notificationSubjectOverride']) ? $GLOBALS['formulize_notificationSubjectOverride'] : $event_info['mail_subject'];
 
 		foreach ($notifications as $notification) {
 			if (empty($omit_user_id) || $notification->getVar('not_uid') != $omit_user_id) {
