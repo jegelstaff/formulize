@@ -4888,7 +4888,7 @@ function undoAllHTMLChars($text,$quotes=ENT_QUOTES) {
     while (strstr($text,"&amp;")) {
         $text = html_entity_decode($text,$quotes);
     }
-    return $text;
+    return html_entity_decode($text);
 }
 
 
