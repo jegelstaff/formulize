@@ -3222,7 +3222,7 @@ function goSubModal(ent, fid, subformElementId, modalScroll) {
 
 function saveSub(reload) {
     if(!savingSubEntry) {
-        if(xoopsFormValidate_formulize_modal(document.getElementById('formulize_modal'))) {
+        if(xoopsFormValidate_formulize_modal('', document.getElementById('formulize_modal'))) {
             savingSubEntry = true;
             subEntryDialog.children('div').css('opacity', '0.5');
             subEntryDialog.append('<div id=savingmessage style="padding-top: 10px;"><?php print $savingMessageGif; ?></div>');

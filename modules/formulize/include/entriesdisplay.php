@@ -1806,6 +1806,13 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 		} // end of if there is any data to draw
 
 		print "</table></div>";
+        
+       	if((!isset($data) OR count($data) == $blankentries) AND !$LOE_limit) { // if no data was returned, or the dataset was empty...
+            print "<p><b>" . _formulize_DE_NODATAFOUND . "</b></p>\n";
+        } elseif($LOE_limit) {
+            print "<p>" . _formulize_DE_LOE_LIMIT_REACHED1 . " <b>" . $LOE_limit . "</b> " . _formulize_DE_LOE_LIMIT_REACHED2 . " <a href=\"\" onclick=\"javascript:forceQ();return false;\">" . _formulize_DE_LOE_LIMIT_REACHED3 . "</a></p>\n";
+        }
+        
 	} elseif($listTemplate AND !$settings['hlist']) {
 
 		// USING A CUSTOM LIST TEMPLATE SO DO EVERYTHING DIFFERENTLY
@@ -1887,11 +1894,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 		}
 
 	}// END OF MASTER HIDELIST CONDITIONAL
-	if((!isset($data) OR count($data) == $blankentries) AND !$LOE_limit) { // if no data was returned, or the dataset was empty...
-		print "<p><b>" . _formulize_DE_NODATAFOUND . "</b></p>\n";
-	} elseif($LOE_limit) {
-		print "<p>" . _formulize_DE_LOE_LIMIT_REACHED1 . " <b>" . $LOE_limit . "</b> " . _formulize_DE_LOE_LIMIT_REACHED2 . " <a href=\"\" onclick=\"javascript:forceQ();return false;\">" . _formulize_DE_LOE_LIMIT_REACHED3 . "</a></p>\n";
-	}
+
 
 	if($scrollBoxWasSet) {
 		print "</div>";

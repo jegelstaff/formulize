@@ -279,7 +279,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	var savedPage;
 	var savedPrevPage;
 	function submitForm(page, prevpage) {
-		var validate = xoopsFormValidate_formulize_mainform();
+		var validate = xoopsFormValidate_formulize_mainform('', window.document.formulize_mainform);
 		if(validate) {
 			savedPage = 0;
 			savedPrevPage = 0;
@@ -466,9 +466,9 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 			exit();
 		    }
 		    // start the form manually...
-		    $formObjectForRequiredJS = new formulize_themeForm('form object for required js', 'formulize', getCurrentURL(), "post", true);
+		    $formObjectForRequiredJS = new formulize_themeForm('form object for required js', 'formulize_mainform', getCurrentURL(), "post", true);
 		    $element_handler = xoops_getmodulehandler('elements', 'formulize');
-		    print "<div id='formulizeform'><form id='formulize' name='formulize' action='".getCurrentURL()."' method='post' onsubmit='return xoopsFormValidate_formulize_mainform();' enctype='multipart/form-data'>";
+		    print "<div id='formulizeform'><form id='formulize_mainform' name='formulize_mainform' action='".getCurrentURL()."' method='post' onsubmit='return xoopsFormValidate_formulize_mainform('', window.document.formulize_mainform);' enctype='multipart/form-data'>";
 		    foreach ($elements_allowed as $thisElement) {   // entry is a recordid, $thisElement is the element id
 			    // to get the conditional logic to be captured, we should buffer the drawing of the displayElement, and then output that later, because when displayElement does NOT return an object, then we get conditional logic -- subform rendering does it this way
 			    unset($form_ele); // previously set elements may linger when added to the form object, due to assignment of objects by reference or something odd like that...legacy of old code in the form class I think
@@ -520,6 +520,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 		    print "<input type=hidden name=formulize_prevPage value='".$settings['formulize_prevPage']."'>";
 		    print "<input type=hidden name=formulize_doneDest value='".$settings['formulize_doneDest']."'>";
 		    print "<input type=hidden name=formulize_buttonText value='".$settings['formulize_buttonText']."'>";
+            print "<input type=hidden name=deletesubsflag value=0>";
 		    print "<input type=hidden name=ventry value='".$settings['ventry']."'>";
 		    print $GLOBALS['xoopsSecurity']->getTokenHTML();
 		    if($entry) {

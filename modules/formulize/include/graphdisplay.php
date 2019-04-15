@@ -507,7 +507,7 @@ function setDefaultRadarGraphOptions($graphOptions) {
 	if (!isset($graphOptions["WriteLabels"]))
 		$graphOptions["WriteLabels"] = True;
 	if (!isset($graphOptions["SkipLabels"]))
-		$graphOptions["SkipLabels"] = 0;
+		$graphOptions["SkipLabels"] = 1;
 	if (!isset($graphOptions["DrawAxisValues"]))
 		$graphOptions["DrawAxisValues"] = True;
 	if (!isset($graphOptions["ValueFontSize"]))

@@ -392,7 +392,7 @@
      $Step = 360 / (2 * PI * $Radius);
      $Color  = $this->allocateColor($this->Picture,$R,$G,$B,$Alpha);
      $Color2 = $this->allocateColor($this->Picture,255,0,0,$Alpha);
-     $Drawn = "";
+     $Drawn = array();
 
      if ( $Alpha < 100 )  { $Drawn[$YTop] = FALSE; }
      if ( $Alpha < 100 )  { $Drawn[$YBottom] = TRUE; }
@@ -586,7 +586,7 @@
      $PathOnly	= isset($Format["PathOnly"]) ? $Format["PathOnly"] : FALSE;
      $Weight	= isset($Format["Weight"]) ? $Format["Weight"] : NULL;
 
-     $Cpt = NULL; $Mode = NULL; $Result = "";
+     $Cpt = NULL; $Mode = NULL; $Result = array();
      for($i=1;$i<=count($Coordinates)-1;$i++)
       {
        $X1 = $Coordinates[$i-1][0]; $Y1 = $Coordinates[$i-1][1];
@@ -663,12 +663,12 @@
      $P[3]["X"] = $X2;  $P[3]["Y"] = $Y2;
 
      /* Compute the bezier points */
-     $Q = ""; $ID = 0; $Path = "";
+     $Q = array(); $ID = 0; $Path = "";
      for($i=0;$i<=$Precision;$i=$i+1)
       {
        $u = $i / $Precision;
 
-       $C    = "";
+       $C    = array();
        $C[0] = (1 - $u) * (1 - $u) * (1 - $u);
        $C[1] = ($u * 3) * (1 - $u) * (1 - $u);
        $C[2] = 3 * $u * $u * (1 - $u);
@@ -787,7 +787,7 @@
            $Xa = (($X2-$X1)/$Distance) * $i + $X1; $Ya = (($Y2-$Y1)/$Distance) * $i + $Y1;
            $Xb = (($X2-$X1)/$Distance) * ($i+$Ticks) + $X1; $Yb = (($Y2-$Y1)/$Distance) * ($i+$Ticks) + $Y1;
 
-           $Points   = ""; 
+           $Points   = array(); 
            $Points[] = cos(deg2rad($Angle-90)) * $Weight + $Xa; $Points[] = sin(deg2rad($Angle-90)) * $Weight + $Ya;
            $Points[] = cos(deg2rad($Angle+90)) * $Weight + $Xa; $Points[] = sin(deg2rad($Angle+90)) * $Weight + $Ya;
            $Points[] = cos(deg2rad($Angle+90)) * $Weight + $Xb; $Points[] = sin(deg2rad($Angle+90)) * $Weight + $Yb;
@@ -1308,7 +1308,7 @@
      $TailX = cos(($Angle-180)*PI/180)*$Size+$X2;
      $TailY = sin(($Angle-180)*PI/180)*$Size+$Y2;
 
-     $Points	= "";
+     $Points	= array();
      $Points[]  = $X2; $Points[]  = $Y2;
      $Points[]	= cos(($Angle-90)*PI/180)*$Size*$Ratio+$TailX; $Points[] = sin(($Angle-90)*PI/180)*$Size*$Ratio+$TailY;
      $Points[]	= cos(($Angle-270)*PI/180)*$Size*$Ratio+$TailX; $Points[] = sin(($Angle-270)*PI/180)*$Size*$Ratio+$TailY;
@@ -1333,7 +1333,7 @@
        $TailX2 = cos(($Angle-180)*PI/180)*$Size+$X1;
        $TailY2 = sin(($Angle-180)*PI/180)*$Size+$Y1;
 
-       $Points   = "";
+       $Points   = array();
        $Points[] = $X1; $Points[]  = $Y1;
        $Points[] = cos(($Angle-90)*PI/180)*$Size*$Ratio+$TailX2; $Points[] = sin(($Angle-90)*PI/180)*$Size*$Ratio+$TailY2;
        $Points[] = cos(($Angle-270)*PI/180)*$Size*$Ratio+$TailX2; $Points[] = sin(($Angle-270)*PI/180)*$Size*$Ratio+$TailY2;
@@ -1539,7 +1539,7 @@
 
      $X=100; $Y=100;
 
-     $Boundaries = ""; $Boundaries["L"] = $X; $Boundaries["T"] = $Y; $Boundaries["R"] = 0; $Boundaries["B"] = 0; $vY = $Y; $vX = $X;
+     $Boundaries = array(); $Boundaries["L"] = $X; $Boundaries["T"] = $Y; $Boundaries["R"] = 0; $Boundaries["B"] = 0; $vY = $Y; $vX = $X;
      foreach($Data["Series"] as $SerieName => $Serie)
       {
        if ( $Serie["isDrawable"] == TRUE && $SerieName != $Data["Abscissa"] )
@@ -2497,12 +2497,12 @@
    function computeScale($XMin,$XMax,$MaxDivs,$Factors,$AxisID=0)
     {
      /* Compute each factors */
-     $Results = "";
+     $Results = array();
      foreach ($Factors as $Key => $Factor)
       $Results[$Factor] = $this->processScale($XMin,$XMax,$MaxDivs,array($Factor),$AxisID);
 
      /* Remove scales that are creating to much decimals */
-     $GoodScaleFactors = "";
+     $GoodScaleFactors = array();
      foreach ($Results as $Key => $Result)
       {
        $Decimals = preg_split("/\./",$Result["RowHeight"]);
@@ -2536,7 +2536,7 @@
      else
       $Mode = AXIS_FORMAT_DEFAULT;
 
-     $Scale = "";
+     $Scale = array();
      if ( $XMin != $XMax )
       {
        $Found = FALSE; $Rescaled = FALSE; $Scaled10Factor = .0001; $Result = 0;

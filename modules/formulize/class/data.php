@@ -805,8 +805,7 @@ class formulizeDataHandler  {
             $encrypt_this = in_array($key, $encrypt_element_handles);
             unset($element_values[$key]);   // since field name is not escaped, remove from array
             $key = "`".formulize_db_escape($key)."`";                // escape field name
-
-            if ("{WRITEASNULL}" == $value or null === $value) {
+            if ("{WRITEASNULL}" === $value or null === $value) {
                 $element_values[$key] = "NULL";
             } else {
                 // if this element has a numeric type in the DB, no quotes

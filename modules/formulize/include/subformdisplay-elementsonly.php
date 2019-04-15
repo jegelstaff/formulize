@@ -33,7 +33,7 @@ if(isset($GLOBALS['xoopsSecurity'])) {
 // MODAL VALIDATION DOES NOT CURRENTLY SUPPORT UNIQUE VALUE CHECKS!
 print "</form><hr><br /><input type='button' id='submitSub' name='submitSub' value='"._formulize_SAVE."' onclick='saveSub()'><br /><br />
 <script type='text/javascript'>
-function xoopsFormValidate_formulize_modal(myform) {
+function xoopsFormValidate_formulize_modal('', myform) {
     ";
 print trim(implode('\n\r',$GLOBALS['formulize_elementsOnlyForm_validationCode']));
 print "\n\r return true;
