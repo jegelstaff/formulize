@@ -343,10 +343,10 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 			if($thankstext[0] === "PHP") {
 				eval($thankstext[1]);
 			} else {
-				print $thankstext[1];
+				print html_entity_decode(undoAllHTMLChars($thankstext[1]));
 			}
 		} else { // HTML
-			print html_entity_decode($thankstext);
+			print html_entity_decode(undoAllHTMLChars($thankstext));
 		}
 		print "<br><hr><br><div id=\"thankYouNavigation\"><p><center>\n";
 		if($pagesSkipped) {
@@ -372,7 +372,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	} 
 	
 	if($currentPage == 1 AND $pages[1][0] !== "HTML" AND $pages[1][0] !== "PHP" AND !$_POST['goto_sfid']) { // only show intro text on first page if there's actually a form there
-	  print html_entity_decode(html_entity_decode($introtext));
+	  print html_entity_decode(undoAllHTMLChars($introtext));
 	}
 	
 	unset($_POST['form_submitted']);
@@ -388,7 +388,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 			eval($pages[$currentPage][1]);
 		// HTML
 		} else {
-			print $pages[$currentPage][1];
+			print html_entity_decode(undoAllHTMLChars($pages[$currentPage][1]));
 		}
 	
 		// put in the form that passes the entry, page we're going to and page we were on
