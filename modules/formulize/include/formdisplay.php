@@ -3443,8 +3443,7 @@ jQuery(document).ready(function() {
 	}
 
     foreach(array_keys($governingElements) as $ge) {
-        //print "jQuery('#formulize-".$ge."').on('change', '#".$ge."', function() {
-        $initCode .= "jQuery(document).on('change', '#".$ge."', function() {
+        $initCode .= "jQuery(document).on('change', '[name=".$ge."]', function() {
     callCheckCondition(jQuery(this).attr('name'));
 });\n";
     }
