@@ -205,6 +205,7 @@ function daraCreateNewYear($sourceYear) {
     $taships_handler = new formulizeDataHandler(13);
     $service_handler = new formulizeDataHandler(16);
     $teachingLoads_handler = new formulizeDataHandler(20);
+    $course_weights_handler = new formulizeDataHandler(30);
     
     $sql = "SELECT master_year_list_year FROM ".$xoopsDB->prefix('formulize_master_year_list')." ORDER BY master_year_list_year DESC LIMIT 0,1";
     $res = $xoopsDB->query($sql);
@@ -269,7 +270,14 @@ function daraCreateNewYear($sourceYear) {
         ro_module_job_ad_duties,
         ro_module_year_status,
         ro_module_course_active,
-        ro_module_official_course_weight)
+        ro_module_official_course_weight,
+        ro_module_job_ad_preferred_qualifications,
+        ro_module_tutorial_supplement,
+        ro_module_coord_flat_weight,
+        ro_module_coord_per_enrollment_weight,
+        ro_module_coord_per_section_weight,
+        ro_module_ptm_course_weight_copy,
+        ro_module_maximum_cap)
         SELECT creation_datetime,
         NOW(),
         creation_uid,
@@ -300,12 +308,53 @@ function daraCreateNewYear($sourceYear) {
         ro_module_job_ad_duties,
         'Active',
         3,
-        ro_module_official_course_weight
+        ro_module_official_course_weight,
+        ro_module_job_ad_preferred_qualifications,
+        ro_module_tutorial_supplement,
+        ro_module_coord_flat_weight,
+        ro_module_coord_per_enrollment_weight,
+        ro_module_coord_per_section_weight,
+        ro_module_ptm_course_weight_copy,
+        ro_module_maximum_cap
         FROM ".$xoopsDB->prefix('formulize_ro_module')."
         WHERE entry_id = ".intval($row[0]);
         $insertRes = $xoopsDB->queryF($sql);
         $courseMap[$row[0]] = $xoopsDB->getInsertId();
         $roModule_handler->setEntryOwnerGroups($xoopsUser->getVar('uid'),$courseMap[$row[0]]);
+    }
+    // course weightings
+    $idssql = "SELECT entry_id, course_weights_course FROM ".$xoopsDB->prefix('formulize_course_weights')." WHERE course_weights_course = IN (".implode(",",array_keys($courseMap)).")";
+    $res = $xoopsDB->query($idssql);
+    while($row = $xoopsDB->fetchRow($res)) {
+        $sql = "INSERT INTO ".$xoopsDB->prefix('formulize_course_weights')." (
+        creation_datetime,
+        mod_datetime,
+        creation_uid,
+        mod_uid,
+        course_weights_course,
+        course_weights_section_type	text,
+        course_weights_default_weight,
+        course_weights_threshold_1_weight,
+        course_weights_threshold_2_weight,
+        course_weights_threshold_1,
+        course_weights_threshold_2,
+        course_weights_weight_br_student)
+        SELECT creation_datetime,
+        NOW(),
+        creation_uid,
+        ".intval($xoopsUser->getVar('uid')).",
+        ".$courseMap[$row[1]].",
+        course_weights_section_type	text,
+        course_weights_default_weight,
+        course_weights_threshold_1_weight,
+        course_weights_threshold_2_weight,
+        course_weights_threshold_1,
+        course_weights_threshold_2,
+        course_weights_weight_br_student
+        FROM ".$xoopsDB->prefix('formulize_course_weights')."
+        WHERE entry_id = ".intval($row[0]);
+        $insertRes = $xoopsDB->queryF($sql);
+        $course_weights_handler->setEntryOwnerGroups($xoopsUser->getVar('uid'),$xoopsDB->getInsertId());
     }
     // make sections
     $idssql = "SELECT entry_id, sections_practica_course_code, course_components_related_lecture FROM ".$xoopsDB->prefix('formulize_course_components')." WHERE sections_practica_course_code IN (".implode(",",array_keys($courseMap)).")";
@@ -326,7 +375,16 @@ function daraCreateNewYear($sourceYear) {
         sections_practica_room,
         course_components_related_lecture,
         teaching_weighting,
-        course_components_teaching_weighting_ove)
+        course_components_teaching_weighting_ove,
+        course_components_program,
+        course_components_section_title_optional,
+        course_components_section_required,
+        course_components_teaching_weighting_display,
+        max_enrollment,
+        course_components_code_plus_section_numb,
+        course_components_reserved_section,
+        course_components_enrolment_controls,
+        course_components_enrolment_control_desc)
         SELECT creation_datetime,
         NOW(),
         creation_uid,
@@ -338,7 +396,16 @@ function daraCreateNewYear($sourceYear) {
         sections_practica_room,
         ".$relatedLecture.",
         teaching_weighting,
-        course_components_teaching_weighting_ove
+        course_components_teaching_weighting_ove,
+        course_components_program,
+        course_components_section_title_optional,
+        course_components_section_required,
+        course_components_teaching_weighting_display,
+        max_enrollment,
+        course_components_code_plus_section_numb,
+        course_components_reserved_section,
+        course_components_enrolment_controls,
+        course_components_enrolment_control_desc
         FROM ".$xoopsDB->prefix('formulize_course_components')."
         WHERE entry_id = ".intval($row[0]);
         $insertRes = $xoopsDB->queryF($sql);
