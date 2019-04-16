@@ -3349,6 +3349,55 @@ function check_date_limits(element_id) {
     }
 }
 <?php
+
+    if(isset($GLOBALS['formulize_specialValidationLogicHook'])) {
+        ?>
+var tagBody = '(?:[^"\'>]|"[^"]*"|\'[^\']*\')*';
+var tagOrComment = new RegExp(
+    '<(?:'
+    // Comment body.
+    + '!--(?:(?:-*[^->])*--+|-?)'
+    // Special "raw text" elements whose content should be elided.
+    + '|script\\b' + tagBody + '>[\\s\\S]*?</script\\s*'
+    + '|style\\b' + tagBody + '>[\\s\\S]*?</style\\s*'
+    // Regular name
+    + '|/?[a-z]'
+    + tagBody
+    + ')>',
+    'gi');
+function removeTags(html) {
+  var oldHtml;
+  do {
+    oldHtml = html;
+    html = html.replace(tagOrComment, '');
+  } while (html !== oldHtml);
+  return html.replace(/</g, '&lt;');
+}
+<?php
+        $output = "jQuery(document).ready(function() {\n";
+        
+        foreach($GLOBALS['formulize_specialValidationLogicHook'] as $markupId=>$elementId) {
+            $output .= "jQuery('#".$markupId."').change(function() {
+                specialValidation".$markupId."(jQuery(this).val());
+            });\n";
+            // need to generate each ajax call for each element, since the target markupId cannot be passed into the success closure, has to be hard coded
+            $output .= "function specialValidation".$markupId."(value) {
+    jQuery.ajax({
+        url: '".XOOPS_URL."/modules/formulize/formulize_specialValidation.php?markupId=".$markupId."&value='+value,
+        success: function(data) {
+            data = JSON.parse(removeTags(data));
+            jQuery('#va_".trim($markupId,"de_")."').text(data.text);
+            jQuery('#va_".trim($markupId,"de_")."').css('color',data.color);
+        }
+    });
+}
+";
+           $output .= "specialValidation".$markupId."(jQuery('#".$markupId."').val())\n";
+        }
+        $output .= "});\n";
+        print $output;
+    }
+
     print "</script>\n";
     $drawnJavascript = true;
 }
