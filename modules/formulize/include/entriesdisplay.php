@@ -3117,8 +3117,9 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
     formulize_benchmark("before creating file");
 		$outputfile = "<HTML>
 <head>
-<meta name=\"generator\" content=\"Formulize -- form creation and data management for XOOPS\" />
-<title>" . _formulize_DE_EXPORTCALC_TITLE . " '$title'</title>
+<meta charset='UTF-8'>
+<meta name=\"generator\" content=\"Formulize -- form creation and data management\" />
+<title>" . _formulize_DE_EXPORTCALC_TITLE . " '".trans($title)."'</title>
 <style type=\"text/css\">
 .outer {border: 1px solid silver;}
 .head { background-color: $head; padding: 5px; font-weight: bold; }
@@ -3129,7 +3130,7 @@ td { vertical-align: top; }
 </style>
 </head>
 <body>
-<h1>" . _formulize_DE_EXPORTCALC_TITLE . " '$title'</h1>
+<h1>" . _formulize_DE_EXPORTCALC_TITLE . " '".trans($title)."'</h1>
 <table class=outer>
 $output
 </table>
