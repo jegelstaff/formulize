@@ -1679,26 +1679,33 @@ function formulize_getJoinHandles($elementArrays) {
 // first param is the id or handle being asked for, second param is a flag showing whether the first param should be interpretted as an id or a handle
 // fid param is only used when this function is called near the start of the extraction layer, when we initialize the cachedElement map for each form that is in use
 function formulize_getElementMetaData($elementOrHandle, $isHandle=false, $fid=0) {
-     global $xoopsDB;
-     static $cachedElements = array();
-     $cacheType = $isHandle ? 'handles' : 'ids';
-     $elementOrHandle = str_replace("`","",$elementOrHandle);
-     if(!isset($cachedElements[$cacheType][$elementOrHandle])) {
-          if($fid) {
-               $whereClause = "id_form=".intval($fid);
-          } else {
-               $whereClause = $isHandle ? "ele_handle = '".formulize_db_escape($elementOrHandle)."'" : "ele_id = ".intval($elementOrHandle);
-          }
-          $elementValueQ = "SELECT ele_value, ele_type, ele_id, ele_handle, id_form, ele_uitext, ele_uitextshow, ele_caption, ele_colhead, ele_encrypt FROM " . DBPRE . "formulize WHERE $whereClause";
-          $evqRes = $xoopsDB->query($elementValueQ);
-          while($evqRow = $xoopsDB->fetchArray($evqRes)) {
-               $cachedElements['handles'][$evqRow['ele_handle']] = $evqRow; // cached the element according to handle and id, so we don't repeat the same query later just because we're asking for info about the same element in a different way
-               $cachedElements['ids'][$evqRow['ele_id']] = $evqRow;
-          }
-     }
-     if(!$fid) {
-          return $cachedElements[$cacheType][$elementOrHandle];
-     }
+    global $xoopsDB;
+    static $cachedElements = array();
+    $cacheType = $isHandle ? 'handles' : 'ids';
+    $elementOrHandle = str_replace("`","",$elementOrHandle);
+    if(!isset($cachedElements[$cacheType][$elementOrHandle])) {
+        if($fid) {
+            $whereClause = "id_form=".intval($fid);
+        } else {
+            $whereClause = $isHandle ? "ele_handle = '".formulize_db_escape($elementOrHandle)."'" : "ele_id = ".intval($elementOrHandle);
+        }
+        $elementValueQ = "SELECT ele_value, ele_type, ele_id, ele_handle, id_form, ele_uitext, ele_uitextshow, ele_caption, ele_colhead, ele_encrypt FROM " . DBPRE . "formulize WHERE $whereClause";
+        if($xoopsDB->getRowsNum($evqRes)>0) {
+            while($evqRow = $xoopsDB->fetchArray($evqRes)) {
+                $cachedElements['handles'][$evqRow['ele_handle']] = $evqRow; // cached the element according to handle and id, so we don't repeat the same query later just because we're asking for info about the same element in a different way
+                $cachedElements['ids'][$evqRow['ele_id']] = $evqRow;
+            }
+        } elseif(!$fid) { // if nothing returned
+            if($isHandle) {
+                $cachedElements['handles'][$elementOrHandle] = array();
+            } else {
+                $cachedElements['ids'][$elementOrHandle] = array();
+            }
+        }
+    }
+    if(!$fid) {
+        return $cachedElements[$cacheType][$elementOrHandle];
+    }
 }
 
 
