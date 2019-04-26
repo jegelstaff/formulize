@@ -3092,8 +3092,8 @@ function formulize_javascriptForAfterRemovingLocks(action) {
 	if(action == 'submitGoParent') {
 			window.document.go_parent.submit();
 	} else if(action == 'rewritePage') {
-		var formAction = jQuery('form[name=formulize]').attr('action');
-		var formData = jQuery('form[name=formulize]').serialize();
+		var formAction = jQuery('form[name=formulize_mainform]').attr('action');
+		var formData = jQuery('form[name=formulize_mainform]').serialize();
 		jQuery.ajax({
 			type: "POST",
 			url: formAction,
