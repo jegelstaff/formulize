@@ -1690,12 +1690,13 @@ function formulize_getElementMetaData($elementOrHandle, $isHandle=false, $fid=0)
             $whereClause = $isHandle ? "ele_handle = '".formulize_db_escape($elementOrHandle)."'" : "ele_id = ".intval($elementOrHandle);
         }
         $elementValueQ = "SELECT ele_value, ele_type, ele_id, ele_handle, id_form, ele_uitext, ele_uitextshow, ele_caption, ele_colhead, ele_encrypt FROM " . DBPRE . "formulize WHERE $whereClause";
+        $evqRes = $xoopsDB->query($elementValueQ);
         if($xoopsDB->getRowsNum($evqRes)>0) {
             while($evqRow = $xoopsDB->fetchArray($evqRes)) {
                 $cachedElements['handles'][$evqRow['ele_handle']] = $evqRow; // cached the element according to handle and id, so we don't repeat the same query later just because we're asking for info about the same element in a different way
                 $cachedElements['ids'][$evqRow['ele_id']] = $evqRow;
             }
-        } elseif(!$fid) { // if nothing returned
+        } elseif(!$fid) { // if nothing returned and we're not getting all data for a form...
             if($isHandle) {
                 $cachedElements['handles'][$elementOrHandle] = array();
             } else {
