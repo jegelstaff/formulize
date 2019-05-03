@@ -347,12 +347,10 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
     $evaluationCondition = "";
     
     // convert the internal database representation to the displayed value, if this element has uitext that we're supposed to use
-    $element_metadata = formulize_getElementMetaData($element, true);
-    if($element_metadata['ele_uitextshow']) {
-        foreach ($filterElements as $key => $element) {
-            if (isset($element_metadata['ele_uitext'])) {
-                $filterTerms[$key] = formulize_swapUIText($filterTerms[$key], unserialize($element_metadata['ele_uitext']));
-            }
+    foreach ($filterElements as $key => $element) {
+        $element_metadata = formulize_getElementMetaData($element, true);
+        if($element_metadata['ele_uitextshow'] AND isset($element_metadata['ele_uitext'])) {
+            $filterTerms[$key] = formulize_swapUIText($filterTerms[$key], unserialize($element_metadata['ele_uitext']));
         }
     }
 
