@@ -39,22 +39,23 @@ $programs = array();
 $coursesTaught = array();
 $reservedSections = false;
 
-global $xoopsDB;
+global $xoopsDB, $xoopsUser;
 static $cachedCoTeachingSupplements = array();
 static $cachedSSSCW = array();
-$programName = display($section, 'ro_module_program');
-if(!isset($cachedCoTeachingSupplements[$programName])) {
-    $sql = 'SELECT p.master_program_list_coteach_supp, p.master_program_list_multiple_section_weight FROM '.$xoopsDB->prefix('formulize_master_program_list').' as p '.
-        'WHERE p.master_program_list_program = "'.formulize_db_escape($programName).'"';
-    if($res = $xoopsDB->query($sql)) {
-        while($row = $xoopsDB->fetchRow($res)) {
-            $cachedCoTeachingSupplements[$programName] = $row[0];
-            $cachedSSSCW[$programName] = $row[1];
-        }
-    }
-}
 
 foreach($sections as $section) {
+
+    $programName = display($section, 'ro_module_program');
+    if(!isset($cachedCoTeachingSupplements[$programName])) {
+        $sql = 'SELECT p.master_program_list_coteach_supp, p.master_program_list_multiple_section_weight FROM '.$xoopsDB->prefix('formulize_master_program_list').' as p '.
+            'WHERE p.master_program_list_program = "'.formulize_db_escape($programName).'"';
+        if($res = $xoopsDB->query($sql)) {
+            while($row = $xoopsDB->fetchRow($res)) {
+                $cachedCoTeachingSupplements[$programName] = $row[0];
+                $cachedSSSCW[$programName] = $row[1];
+            }
+        }
+    }
     
     // ignore cancelled sections
     $times = display($section, 'section_times_day');
