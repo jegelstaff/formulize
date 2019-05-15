@@ -65,24 +65,24 @@ if(count($courses)>0 OR count($coordCourses)>0) {
                 $semStart = false;
                 $teachingLabel = "";
                 if(isset($coordCourses[$thisSem][$course['code']])) {
-                    $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><ul><li>{$course['code']}: {$course['title']} (Coordinating)</li></ul></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">".number_format($coordCourses[$thisSem][$course['code']]['weighting'],3)."</TD></TR>";
+                    $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><ul><li>{$course['code']}: {$course['title']} (Coordinating)</li></ul></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">".number_format(floatval($coordCourses[$thisSem][$course['code']]['weighting']),3)."</TD></TR>";
                     $teachingLabel = " (Teaching)";
-                    $totalTeaching = $totalTeaching + $coordCourses[$thisSem][$course['code']]['weighting'];
+                    $totalTeaching = $totalTeaching + floatval($coordCourses[$thisSem][$course['code']]['weighting']);
                     unset($coordCourses[$thisSem][$course['code']]);
                 }
                 $courseLabel = "{$course['code']}, {$course['section']}{$course['reserved']}: {$course['title']}";
                 $timeAndRoom = "<BR>{$course['times']}, {$course['room']}";
                 $coTeaching = is_array($course['coinst']) > 0 ? '<BR>Co-taught with: '.implode(', ',$course['coinst']) : '';
-                $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><ul><li>$courseLabel$teachingLabel$timeAndRoom$coTeaching</li></ul></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">".number_format($course['weighting'],3)."</TD></TR>";
-                $totalTeaching = $totalTeaching + $course['weighting'];
+                $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><ul><li>$courseLabel$teachingLabel$timeAndRoom$coTeaching</li></ul></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">".number_format(floatval($course['weighting']),3)."</TD></TR>";
+                $totalTeaching = $totalTeaching + floatval($course['weighting']);
             }
         }
     
         foreach($coordCourses[$thisSem] as $code=>$course) {
             $html .= drawSem($thisSem, $activeYear, $semStart);
             $semStart = false;
-            $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><ul><li>$code: {$course['title']} (Coordinating)</li></ul></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">".number_format($course['weighting'],3)."</TD></TR>";
-            $totalTeaching = $totalTeaching + $course['weighting'];
+            $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><ul><li>$code: {$course['title']} (Coordinating)</li></ul></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">".number_format(floatval($course['weighting']),3)."</TD></TR>";
+            $totalTeaching = $totalTeaching + floatval($course['weighting']);
         }
         
     }
