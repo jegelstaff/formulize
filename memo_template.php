@@ -18,6 +18,10 @@ if(!function_exists("drawSem")) {
 
 $andAdministrative = count($services) > 0 ? "and Administrative " : "";
 
+if($_POST['memos']!='final') {
+    $html .= "<H1 style=\"color: red;\">DRAFT</H1>";
+}
+
 $html .= "<P>$date</P><P>From: $dean, Associate Dean, Academic</P><P>To: $name</P></P>Re: $year Teaching ".$andAdministrative."Assignments</P>
 
 <HR>";
