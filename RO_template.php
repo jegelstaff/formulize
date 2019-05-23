@@ -3,10 +3,17 @@
 include_once XOOPS_ROOT_PATH."/dara_helper_functions.php";
 
 if(!function_exists("getInstructorName")) {
-    function getInstructorName($instructor, $activeYear) {
+    function getInstructorName($instructor, $activeYear, $courseCodeAcceptedString) {
         $instructorName = display($instructor, 'instr_assignments_instructor');
         $acceptanceStatus = getData('', 23, "hr_annual_accept_status_instructor/**/$instructorName/**/=][hr_annual_accept_status_year/**/$activeYear/**/=");
-        return strstr(display($acceptanceStatus[0], "hr_annual_accept_status_accepted"), "Accepted") ? $instructorName : "TBA";
+        $acceptanceStatus = display($acceptanceStatus[0], "hr_annual_accept_status_status");
+        $acceptanceStatus = is_array($acceptanceStatus) ? $acceptanceStatus : array($acceptanceStatus);
+        foreach($acceptanceStatus as $thisAcceptanceStatus) {
+            if($thisAcceptanceStatus == $courseCodeAcceptedString) {
+                return $instructorName;
+            }
+        }
+        return "TBA";
     }
 }
 
@@ -79,18 +86,18 @@ foreach($sectionIds as $i=>$sectionId) {
     $revTitles[$i] = $compareOn ? display($indexedLockData[$sectionId], 'course_components_section_title_optional') : "";
     $instructorData = getData('', 15, 'instr_assignments_section_number/**/'.$sectionId.'/**/=');
     foreach($instructorData as $instructor) {
-        $inst[$i][] = getInstructorName($instructor, $activeYear);
+        $inst[$i][] = getInstructorName($instructor, $activeYear, display($section[0], 'ro_module_course_code')."-".$sectionNumber.": Accepted");
         $tentInst[$i][] = display($instructor, 'instr_assignments_instructor');
     }
     if($compareOn) {
         $revInstructors = display($indexedLockData[$sectionId], 'instr_assignments_instructor');
         if(is_array($revInstructors)) {
             foreach($revInstructors as $thisRevInstructor) {
-                $revInst[$i][] = getInstructorName($thisRevInstructor, $activeYear);
+                $revInst[$i][] = getInstructorName($thisRevInstructor, $activeYear, display($section[0], 'ro_module_course_code')."-".$sectionNumber.": Accepted");
                 $revTentInst[$i][] = display($thisRevInstructor, 'instr_assignments_instructor');
             }
         } else {
-            $revInst[$i][] = getInstructorName($revInstructors, $activeYear);
+            $revInst[$i][] = getInstructorName($revInstructors, $activeYear, display($section[0], 'ro_module_course_code')."-".$sectionNumber.": Accepted");
             $revTentInst[$i][] = display($revInstructors, 'instr_assignments_instructor');
         }
     }
