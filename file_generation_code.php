@@ -24,8 +24,8 @@ function daraShowContractLinks($fid, $frid, $type) {
     formulize_scandirAndClean(XOOPS_ROOT_PATH."/cache/", "contractEntryIdsQuery_"); 
 	setcookie('contractEntryIds',$exportTime);
     
-    
     list($entries, $data) = daraGatherContractData();
+    
     if($data == "" AND count($entries)>0) {
         $filter = array();
         foreach($entries as $entryId) {
@@ -121,6 +121,12 @@ function daraShowContractLinks($fid, $frid, $type) {
         $pdf = daraWriteContract('pdf', $fullHtml, "", true, $type);
         //$doc = daraWriteContract('doc', $fullHtml, "", true, $type);
     }
+
+/*global $xoopsUser;
+if($xoopsUser->getVar('uid')==1 AND $fullHtml) {
+    print $fullHtml;
+    exit();
+}*/
     
     $pdfPath = "/cache/pdfFile.pdf";
     $docPath = "/cache/docFile.docx";
@@ -156,13 +162,15 @@ function daraProcessTemplate($type, $entry) {
     
 }
 
+// called one or more times before daraShowContractLinks is called, and then when it is called one last time inside daraShowContractLinks all the proper entries have been seeded
 function daraGatherContractData($entryId, $fid, $frid="") {
     
     static $entries = array();
     static $data = "";
     
+    
+    
     if($entryId === 'all') {
-        
         // read the cached query to deduce the ids of everything we're supposed to generate
         $queryData = file(XOOPS_ROOT_PATH."/cache/contractEntryIdsQuery_".intval($_COOKIE['contractEntryIds']));
         
