@@ -115,9 +115,13 @@ class formulizeAcceptanceStatusElementHandler extends formulizeElementsHandler {
             $sectionId = $sectionIds[0];
             $element = new xoopsFormSelect('', $markupName.'['.$sectionId.']', $assignmentData->$sectionId, 1);
             $element->addOptionArray($this->labels);
-            $output .= "<div style='float: left; padding-right: 1em; text-align: center;'>".display($section, 'ro_module_course_code').' - '.display($section, 'sections_section_number').'<br />'.$element->render().'</div>';
+            if(!$isDisabled) {
+                $output .= "<div style='float: left; padding-right: 1em; text-align: center;'>".display($section, 'ro_module_course_code').' - '.display($section, 'sections_section_number').'<br />'.$element->render().'</div>';
+            } else {
+                $output .= "<div style='float: left; padding-right: 1em; text-align: center;'>".display($section, 'ro_module_course_code').' - '.display($section, 'sections_section_number').'<br />'.$this->labels[$assignmentData->$sectionId].'</div>';
+            }
         }
-        return new xoopsFormLabel('caption',$output);
+        return new xoopsFormLabel('caption',$output); 
     }
     
     // this method returns any custom validation code (javascript) that should figure out how to validate this element
@@ -157,7 +161,23 @@ class formulizeAcceptanceStatusElementHandler extends formulizeElementsHandler {
         if(count($assignmentData)==0) {
             return "";
         }
-        global $xoopsDB;
+        global $xoopsDB, $xoopsUser;
+        // lookup which sections an instructor is actually currently assigned to, so we don't show acceptances for things which they have been unassigned from
+        $sql = 'SELECT hr_annual_accept_status_instructor, hr_annual_accept_status_year FROM '.$xoopsDB->prefix('formulize_hr_annual_accept_status').' WHERE entry_id = '.intval($entry_id);
+        $res = $xoopsDB->query($sql);
+        $row = $xoopsDB->fetchRow($res);
+        $instructorEntryId = $row[0];
+        $year = $row[1];
+        $sql = 'SELECT cc.entry_id FROM '.$xoopsDB->prefix('formulize_course_components').' AS cc '.
+            'LEFT JOIN '.$xoopsDB->prefix('formulize_instr_assignments').' AS a ON cc.entry_id = a.instr_assignments_section_number '.
+            'LEFT JOIN '.$xoopsDB->prefix('formulize_ro_module').' AS ro ON ro.entry_id = cc.sections_practica_course_code '.
+            'WHERE ro.ro_module_year = "'.$row[1].'" '.
+            'AND a.instr_assignments_instructor = '.$row[0];
+        $res = $xoopsDB->query($sql);
+        $actualAssignedSections = array();
+        while($row = $xoopsDB->fetchRow($res)) {
+            $actualAssignedSections[] = $row[0];
+        }
         // lookup the course codes and section numbers
         $sql = 'SELECT s.entry_id as id, CONCAT(ro_module_course_code, "-", sections_section_number) as label FROM '.$xoopsDB->prefix('formulize_course_components').' as s
             LEFT JOIN '.$xoopsDB->prefix('formulize_ro_module').' as r ON r.entry_id = s.sections_practica_course_code
@@ -167,13 +187,17 @@ class formulizeAcceptanceStatusElementHandler extends formulizeElementsHandler {
         while($row = $xoopsDB->fetchArray($res)) {
             $labels[$row['id']] = $row['label'];
         }
-        $data = "";
+        $data = array();
         foreach($assignmentData as $sectionId=>$status) {
-            if($status) {
+            if(in_array($sectionId, $actualAssignedSections) AND $status) {
                 $data[] = $labels[$sectionId] . ': ' .$this->labels[$status];
             }
+            if(!in_array($sectionId, $actualAssignedSections)) {
+                $sql = 'UPDATE '.$xoopsDB->prefix('formulize_hr_annual_accept_status').'  SET `hr_annual_accept_status_status` = JSON_REMOVE(`hr_annual_accept_status_status`, "$.'.$sectionId.'") WHERE  entry_id = '.intval($entry_id);
+                $xoopsDB->queryF($sql);
+            }
         }
-        return $data; // we're not making any modifications for this element type
+        return count($data) > 0 ? $data : ""; 
     }
     
     // this method will take a text value that the user has specified at some point, and convert it to a value that will work for comparing with values in the database.  This is used primarily for preparing user submitted text values for saving in the database, or for comparing to values in the database, such as when users search for things.  The typical user submitted values would be coming from a condition form (ie: fieldX = [term the user typed in]) or other situation where the user types in a value that needs to interact with the database.
@@ -183,7 +207,32 @@ class formulizeAcceptanceStatusElementHandler extends formulizeElementsHandler {
     // if $partialMatch is true, then an array may be returned, since there may be more than one matching value, otherwise a single value should be returned.
     // if literal text that users type can be used as is to interact with the database, simply return the $value 
     function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
-        return $value;
+        // need to compare with course codes and with the acceptance labels
+        // nice try below with partialMatch, but actually when the user has forced an = operator on the search, we must return a single value, or else the entire query will fail, so sucks to be us. Semantics of this element doesn't really work with that.
+        if(!$value) {
+            return $value;
+        }
+        $searchValues = array();
+        foreach($this->labels as $key=>$label) {
+            if(($partialMatch AND strstr($label, $value)) OR $label == $value) {
+                $searchValues[] = '"'.$key.'"';
+            }
+        }
+        $operator = $partialMatch ? 'LIKE' : '=';
+        $likeBits = $partialMatch ? '%' : '';
+        global $xoopsDB;
+        $sql = "SELECT cc.entry_id FROM ".$xoopsDB->prefix('formulize_course_components')." as cc LEFT JOIN ".$xoopsDB->prefix('formulize_ro_module')." as ro ON ro.entry_id = cc.sections_practica_course_code WHERE ro.ro_module_year = '2019/2020' AND ro.ro_module_course_code ". $operator." '".$likeBits.formulize_db_escape($value).$likeBits."'";
+        if($res = $xoopsDB->query($sql)) {
+            while($row = $xoopsDB->fetchRow($res)) {
+                $searchValues[] = '"'.$row[0].'"';
+            }
+        } else {
+            print "Error: could not determine sections to search for acceptance statuses.<br>SQL that failed: $sql<br>Error details: ".$xoopsDB->error();
+        }
+        if($value AND count($searchValues)==0) {
+            return "aldsfigoyoiasdlkh";
+        }
+        return $searchValues;
     }
     
     // this method will format a dataset value for display on screen when a list of entries is prepared
