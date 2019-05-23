@@ -291,9 +291,9 @@ if($_POST['memos']) {
     $activeTerms = $activeTerms[$key];
     $priorYearAdj = $priorYearAdj[$key];
     
-    if(count($courses)==0 AND count($coordCourses)==0 AND count($services)==0 AND !$otherService) {
+    /*if(count($courses)==0 AND count($coordCourses)==0 AND count($services)==0 AND !$otherService) {
         return array();
-    }
+    }*/
     
 } elseif($apptType == 'Core (Tenure Stream)' OR (count($courses)==0 AND !strstr($rank, "Writing"))) {
     return array();
