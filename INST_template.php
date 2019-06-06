@@ -96,7 +96,10 @@ if(count($instSectionData)>0 OR count($coordCourses)>0) {
     
         // draw coordinator if applicable...
         if(isset($coordCourses[$code])) {
+            $saveCompareOn = $compareOn; // we do not currently support comparison with lock dates for coordinator assignments...but we could
+            $compareOn = false;
             $html .= drawRow($instStart,$prevCode,0,array($code),array($title),array('Coordinator'),'','','',array(display($coordCourses[$code],'ro_module_coordinatorship_weighting')));
+            $compareOn = $saveCompareOn;
             $instStart = false;
             unset($coordCourses[$code]);
         }

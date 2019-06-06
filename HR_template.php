@@ -125,8 +125,8 @@ foreach($sections as $section) {
     }
     
     $totalTeachingWeight = $totalTeachingWeight + (display($section, 'ro_module_course_weight')/$numberOfInstructors);
-    
-    $courses[] = $sectionData;
+    $sectionIds = internalRecordIds($section, 4);
+    $courses[$sectionIds[0]] = $sectionData;
 }
 if(count($programs)>1) {
     $program = implode(", ",$programs)." programs";    

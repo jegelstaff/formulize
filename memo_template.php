@@ -16,6 +16,28 @@ if(!function_exists("drawSem")) {
     }
 }
 
+// load the revision data...
+global $indexedLockData, $lockSectionsByInst, $compareOn;
+
+if(!is_array($indexedLockData) AND isset($_POST['compareContractDate']) AND $_POST['compareContractDate'] !== '') {
+    
+    $lockDataSource = getData('',22,$_POST['compareContractDate']);
+    $lockData = unserialize(display($lockDataSource[0], 'lock_dates_data'));
+    foreach($lockData as $thisLockedEntry) {
+        $sectionIds = internalRecordIds($thisLockedEntry, 4);
+        $indexedLockData[$sectionIds[0]] = $thisLockedEntry;
+        $instructors = display($thisLockedEntry, 'instr_assignments_instructor');
+        $instructors = is_array($instructors) ? $instructors : array($instructors);
+        foreach($instructors as $instructor) {
+            $lockSectionsByInst[$instructor][$sectionIds[0]] = $sectionIds[0];
+        }
+    }
+    $compareOn = true;
+} elseif(!is_array($indexedLockData)) {
+    $compareOn = false;
+}
+
+
 $andAdministrative = count($services) > 0 ? "and Administrative " : "";
 
 if($_POST['memos']!='final') {
@@ -63,7 +85,7 @@ if(count($courses)>0 OR count($coordCourses)>0) {
             $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><ul><li>On Leave</li></ul></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">&nbsp;</TD></TR>";
         }
         
-        foreach($courses as $course) {
+        foreach($courses as $sectionId=>$course) {
             if($course['sem']==$thisSem) {
                 $html .= drawSem($thisSem, $activeYear, $semStart);
                 $semStart = false;
@@ -74,10 +96,12 @@ if(count($courses)>0 OR count($coordCourses)>0) {
                     $totalTeaching = $totalTeaching + floatval($coordCourses[$thisSem][$course['code']]['weighting']);
                     unset($coordCourses[$thisSem][$course['code']]);
                 }
+                $compLabelStart = ($compareOn AND !isset($lockSectionsByInst[$name][$sectionId])) ? "<span style=\"color: red;\">NEW: " : "";
+                $compLabelEnd = $compLabelStart ? "</span>" : "";
                 $courseLabel = "{$course['code']}, {$course['section']}{$course['reserved']}: {$course['title']}";
                 $timeAndRoom = "<BR>{$course['times']}, {$course['room']}";
                 $coTeaching = is_array($course['coinst']) > 0 ? '<BR>Co-taught with: '.implode(', ',$course['coinst']) : '';
-                $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><ul><li>$courseLabel$teachingLabel$timeAndRoom$coTeaching</li></ul></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">".number_format(floatval($course['weighting']),3)."</TD></TR>";
+                $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><ul><li>$compLabelStart$courseLabel$compLabelEnd$teachingLabel$timeAndRoom$coTeaching</li></ul></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">".number_format(floatval($course['weighting']),3)."</TD></TR>";
                 $totalTeaching = $totalTeaching + floatval($course['weighting']);
             }
         }
@@ -87,6 +111,15 @@ if(count($courses)>0 OR count($coordCourses)>0) {
             $semStart = false;
             $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><ul><li>$code: {$course['title']} (Coordinating)</li></ul></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">".number_format(floatval($course['weighting']),3)."</TD></TR>";
             $totalTeaching = $totalTeaching + floatval($course['weighting']);
+        }
+        
+        if($compareOn) {
+            // show any courses that were in the lock data but not currently assigned
+            foreach($lockSectionsByInst[$name] as $thisSectionId=>$thisSectionData) {
+                if(!isset($courses[$thisSectionId]) AND display($indexedLockData[$thisSectionId], 'ro_module_semester') == $thisSem) {
+                    $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><ul><li><span style=\"color: red;\"><strike>".display($indexedLockData[$thisSectionId], 'ro_module_course_code').", ".display($indexedLockData[$thisSectionId], 'sections_section_number')."</strike></span></li></ul></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"></TD></TR>";
+                }
+            }
         }
         
     }
