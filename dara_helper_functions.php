@@ -144,6 +144,63 @@ jQuery("#search_ro_module_year option").each(function() {
 return $locked;
 }
 
+// this function returns a block of HTML/javascript that runs the compare with lockdate UI
+// all lockdates are gathered, and then the right year is subbed in depending on the selected year in another element
+function showLockDates($nameForPost, $yearIdInDOM) {
+
+    global $xoopsDB;
+    $sql = 'SELECT lock_dates_year, lock_dates_date, entry_id FROM '.$xoopsDB->prefix('formulize_lock_dates').' ORDER BY lock_dates_year, entry_id';
+    $availableLocks = array();
+    if($res = $xoopsDB->query($sql)) {
+        while($row = $xoopsDB->fetchRow($res)) {
+            $availableLocks[$row[0]][$row[2]] = $row[1];
+        }
+    }
+    
+    if(strstr($yearIdInDOM, 'search_')) {
+        if(strstr($_POST[$yearIdInDOM], 'qsf_')) {
+            $yearParts = explode('_', $_POST[$yearIdInDOM]); // split off annoying qsf parts, argh!
+        }elseif(substr($_POST[$yearIdInDOM],0,1)=="!") {
+            $yearParts = array(2=>substr($_POST[$yearIdInDOM], 1, -1)); // remove ! !
+        }else{
+            $yearParts = array(2=>$_POST[$yearIdInDOM]); // normal, like coming back from a form submission or something
+        }
+        $yearToCompare = $yearParts[2];
+    } else {
+        $yearToCompare = $_POST[$yearIdInDOM];
+    }
+    
+    $html = "<br>Compare with lock date: <select name='".$nameForPost."'><option value=''>None</option>\n";
+    foreach($availableLocks as $year=>$lockData) {
+        foreach($lockData as $entry_id=>$date) {
+            $hide = $year == $yearToCompare ? "" : "disabled style='display:none'";
+            $html .= "<option $hide id='".$nameForPost.$entry_id."' value=".$entry_id.">".$date."</option>\n";
+        }
+    }
+    $html .= "</select>\n";
+    $html .= "<script type='text/javascript'>
+    jQuery('#".$yearIdInDOM."').change(function() {\n";
+    
+    foreach($availableLocks as $year=>$lockData) {
+        $html .= "if(jQuery(this).val() == '$year') {\n";
+        foreach($lockData as $entry_id=>$date) {
+            $html .= "  jQuery('#".$nameForPost.$entry_id."').prop('disabled', false)\n";
+            $html .= "  jQuery('#".$nameForPost.$entry_id."').css('display', 'block')\n";
+        }
+        $html .= "} else {\n";
+        foreach($lockData as $entry_id=>$date) {
+            $html .= "  jQuery('#".$nameForPost.$entry_id."').prop('disabled', true)\n";
+            $html .= "  jQuery('#".$nameForPost.$entry_id."').css('display', 'none')\n";
+        }
+        $html .= "}\n";
+    }
+    
+    $html .= "});\n";
+$html .= "</script>\n";
+return $html;
+    
+}
+
 function daraChangeYearFilters($year, $direction='forward') {
     global $xoopsDB;
     $savedViewsToUpdate = array(18, 19, 22, 24, 40, 32, 47); // ro, directors, ta, course sessional mgmt, ta reports, overrides control panel, base view for course weights
