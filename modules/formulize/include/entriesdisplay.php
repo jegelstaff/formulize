@@ -724,7 +724,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	$settings['oldcols'] = implode(",", $showcols);
 
-	$settings['ventry'] = $_POST['ventry'];
+	$settings['ventry'] = isset($_POST['formulize_originalVentry']) ? $_POST['formulize_originalVentry'] : $_POST['ventry'];
 
 	// get sort and order options
 
@@ -786,7 +786,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		} elseif($_POST['ventry'] == "proxy") {
 			$this_ent = "proxy";
 		} else {
-			$this_ent = $_POST['ventry'];
+			$this_ent = $settings['ventry'];
 		}
 
 		if(($screen AND $screen->getVar("viewentryscreen") != "none" AND $screen->getVar("viewentryscreen")) OR $_POST['overridescreen']) {
@@ -815,6 +815,12 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 						$displayScreen->setVar('reloadblank', 0); // otherwise, if they did click the single button, make sure the form reloads with their entry
 					}
 				}
+                
+            if($displayScreen->getVar('fid') != $fid) {
+                // display screen is for another form in the active relationship, so figure out what all the entries are, and display the first entry in the set that's for the form this screen is based on
+                $dataSetEntries = checkForLinks($frid, array($fid), $fid, array($fid=>array($this_ent))); // returns array of the forms and entries in the dataset
+                $this_ent = $dataSetEntries['entries'][$displayScreen->getVar('fid')][0]; // first entry for the screen's form, in this dataset - see formdisplay.php for more detailed example of usage of checkforlinks
+            }
   			$viewEntryScreen_handler->render($displayScreen, $this_ent, $settings);
 			global $renderedFormulizeScreen; // picked up at the end of initialize.php so we set the right info in the template when the whole page is rendered
 			$renderedFormulizeScreen = $displayScreen;

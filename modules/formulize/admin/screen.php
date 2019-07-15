@@ -151,8 +151,27 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $viewentryscreenOptionsDB = $screen_handler->getObjects($criteria_object, $form_id);
   $viewentryscreenOptions["none"] = _AM_FORMULIZE_SCREEN_LOE_VIEWENTRYSCREEN_DEFAULT;
   foreach($viewentryscreenOptionsDB as $thisViewEntryScreenOption) {
-      $viewentryscreenOptions[$thisViewEntryScreenOption->getVar('sid')] = printSmart(trans($thisViewEntryScreenOption->getVar('title')), 100);
+      $viewentryscreenOptions[$thisViewEntryScreenOption->getVar('sid')] = trans($formObj->getVar('title'))." &mdash; ".printSmart(trans($thisViewEntryScreenOption->getVar('title')), 100);
   }
+  
+  // if a relationship is in effect, get the screens on the other forms
+  if($selectedFramework) {
+    $parsedFids = array($form_id=>$form_id);
+    $frameworkObject = $frameworks[$selectedFramework];
+    foreach($frameworkObject->getVar('links') as $linkObject) {
+        foreach(array($linkObject->getVar('form1'), $linkObject->getVar('form2')) as $candidateFid) {
+            if(!isset($parsedFids[$candidateFid])) {
+                $candidateFormObj = $form_handler->get($candidateFid);
+                $viewentryscreenOptionsDB = $screen_handler->getObjects($criteria_object, $candidateFid);
+                foreach($viewentryscreenOptionsDB as $thisViewEntryScreenOption) {
+                    $viewentryscreenOptions[$thisViewEntryScreenOption->getVar('sid')] = trans($candidateFormObj->getVar('title'))." &mdash; ".printSmart(trans($thisViewEntryScreenOption->getVar('title')), 100);
+                }
+                $parsedFids[$candidateFid] = $candidateFid;
+            }
+        }
+    }
+  }
+  
     // get all the pageworks page IDs and include them too with a special prefix that will be picked up when this screen is rendered, so we don't confuse "view entry screens" and "view entry pageworks pages" -- added by jwe April 16 2009
     if (file_exists(XOOPS_ROOT_PATH."/modules/pageworks/index.php")) {
         global $xoopsDB;

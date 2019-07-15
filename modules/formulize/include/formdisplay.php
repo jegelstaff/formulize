@@ -747,6 +747,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 	}
 
     // there are several points above where $entry is set, and now that we have a final value, store in ventry
+    $settings['formulize_originalVentry'] = $settings['ventry'];
     if ($entry > 0 and (!isset($settings['ventry']) or ("addnew" != $settings['ventry']))) {
         $settings['ventry'] = $entry;
     }
@@ -1970,7 +1971,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 					
 					// check to see if we draw a delete box or not
 					$deleteBox = "";
-					if ($sub_ent !== "new" and formulizePermHandler::user_can_delete_entry($subform_id, $uid, $sub_ent) AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
+					if ("hideaddentries" != $hideaddentries AND $sub_ent !== "new" and formulizePermHandler::user_can_delete_entry($subform_id, $uid, $sub_ent) AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
 						$need_delete = 1;
 						$deleteBox = "<input type=checkbox class='delbox' name=delbox$sub_ent value=$sub_ent></input>&nbsp;&nbsp;";
 					}
@@ -2809,6 +2810,7 @@ function writeHiddenSettings($settings, $form = null) {
 		if(strlen($_POST['formulize_lockedColumns'])>0) {
 			$form->addElement( new XoopsFormHidden ('formulize_lockedColumns', $_POST['formulize_lockedColumns']));
 		}
+        $form->addElement( new XoopsFormHidden ('formulize_originalVentry', $settings['formulize_originalVentry']));
 		return $form;
 	} else { // write as HTML
 		print "<input type=hidden name=sort value='" . $sort . "'>";
@@ -2851,6 +2853,7 @@ function writeHiddenSettings($settings, $form = null) {
 		if(strlen($_POST['formulize_lockedColumns'])>0) {
 			print "<input type=hidden name=formulize_lockedColumns value='".$_POST['formulize_lockedColumns']."'>";
 		}
+        print "<input type=hidden name=formulize_originalVentry value='".$settings['formulize_originalVentry']."'>";
 	}
 }
 
@@ -2910,7 +2913,7 @@ jQuery(window).on('unload', function() {
 <?php
 global $codeToIncludejQueryWhenNecessary;
 print $codeToIncludejQueryWhenNecessary;
-if(intval($_POST['yposition'])>0) {
+if(intval($_POST['yposition'])>0 AND !isset($_POST['formulize_currentPage'])) {
 		print "\njQuery(window).load(function () {\n";
 		print "\tjQuery(window).scrollTop(".intval($_POST['yposition']).");\n";
 		print "});\n";

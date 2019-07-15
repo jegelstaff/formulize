@@ -27,6 +27,34 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
+// THIS FUNCTION TAKES A SERIES OF VALUES TYPED IN FORM RADIO BUTTONS, CHECKBOXES OR SELECTBOX OPTIONS, AND CHECKS TO SEE IF THEY WERE ENTERED WITH A UITEXT INDICATOR, AND IF SO, SPLITS THEM INTO THEIR ACTUAL VALUE PLUS THE UI TEXT AND RETURNS BOTH
+// $values should be an array of all the options, so $ele_value for radio and checkboxes, $ele_value[2] for selectboxes
+if(!function_exists("formulize_extractUIText")) {
+function formulize_extractUIText($values) {
+	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+	// values are the text that was typed in
+	// keys should remain unchanged
+	$uitext = array();
+	foreach($values as $key=>$value) {
+		//print "<br>original value: $value<br>";
+		//print "key: $key<br>";
+		if(strstr($value, "|") AND substr(trans($value), 0, 7) != "{OTHER|") { // check for the pressence of the uitext deliminter, the "pipe" character
+			$pipepos = strpos($value, "|");
+			//print "pipe found: $pipepos<br>";
+			$uivalue = substr($value, $pipepos+1);
+			//print "uivalue: $uivalue<br>";
+			$value = substr($value, 0, $pipepos);
+			//print "value: $value<br>";
+			$values[$key] = $value;
+			$uitext[$value] = $uivalue;
+		} else {
+			$values[$key] = $value;
+		}
+	}
+	return array(0=>$values, 1=>$uitext);
+}
+}
+
 // this file handles saving of submissions from the element options page of the new admin UI
 
 // if we aren't coming from what appears to be save.php, then return nothing
@@ -329,28 +357,3 @@ if($_POST['reload_option_page'] OR (isset($ele_value['optionsLimitByElement']) A
   print "/* evalnow */ if(redirect=='') { redirect = 'reloadWithScrollPosition();'; }";
 }
 
-// THIS FUNCTION TAKES A SERIES OF VALUES TYPED IN FORM RADIO BUTTONS, CHECKBOXES OR SELECTBOX OPTIONS, AND CHECKS TO SEE IF THEY WERE ENTERED WITH A UITEXT INDICATOR, AND IF SO, SPLITS THEM INTO THEIR ACTUAL VALUE PLUS THE UI TEXT AND RETURNS BOTH
-// $values should be an array of all the options, so $ele_value for radio and checkboxes, $ele_value[2] for selectboxes
-function formulize_extractUIText($values) {
-	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
-	// values are the text that was typed in
-	// keys should remain unchanged
-	$uitext = array();
-	foreach($values as $key=>$value) {
-		//print "<br>original value: $value<br>";
-		//print "key: $key<br>";
-		if(strstr($value, "|") AND substr(trans($value), 0, 7) != "{OTHER|") { // check for the pressence of the uitext deliminter, the "pipe" character
-			$pipepos = strpos($value, "|");
-			//print "pipe found: $pipepos<br>";
-			$uivalue = substr($value, $pipepos+1);
-			//print "uivalue: $uivalue<br>";
-			$value = substr($value, 0, $pipepos);
-			//print "value: $value<br>";
-			$values[$key] = $value;
-			$uitext[$value] = $uivalue;
-		} else {
-			$values[$key] = $value;
-		}
-	}
-	return array(0=>$values, 1=>$uitext);
-}

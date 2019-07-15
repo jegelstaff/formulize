@@ -925,6 +925,27 @@ class formulizeFormsHandler {
 		return true;
 	}
 	
+    // this function checks if an element field exists on the form's datatable
+    // $element can be numeric or an object
+    function elementFieldMissing($element) {
+        if(!$element = _getElementObject($element)) {
+			return false;
+		}
+        if($element->hasData == false) {
+            return false;
+        }
+        global $xoopsDB;
+        $form_handler = xoops_getmodulehandler('forms', 'formulize');
+        $formObject = $form_handler->get($element->getVar('id_form'));
+        $fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) ." LIKE '".$element->getVar('ele_handle')."'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
+        if($fieldStateRes = $xoopsDB->queryF($fieldStateSQL)) {
+            if($xoopsDB->getRowsNum($fieldStateRes)==0) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
 	// this function adds an element field to the data table
 	// $id can be numeric or an object
 	function insertElementField($element, $dataType) {

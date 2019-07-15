@@ -334,8 +334,14 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 		
 	if($currentPage == $thanksPage) {
 	
+    	if(is_array($settings)) {
+			print "<form name=calreturnform action=\"$done_dest\" method=post>\n";
+			writeHiddenSettings($settings);
+			print "</form>";
+		}
+    
         if($screen AND $screen->getVar('finishisdone')) {
-            print "<script type='text/javascript'>location = '$done_dest';</script>";
+            print "<script type='text/javascript'>window.document.calreturnform.submit();</script>";
             return; // if we've ended up on the thanks page via conditions (last page was not shown) then we should just bail if there is not supposed to be a thanks page
         }
     
@@ -361,13 +367,6 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 			print ">" . $button_text . "</a>\n";
 		}
 		print "</center></p></div>";
-	
-		if(is_array($settings)) {
-			print "<form name=calreturnform action=\"$done_dest\" method=post>\n";
-			writeHiddenSettings($settings);
-			print "</form>";
-		}
-	
 	
 	} 
 	
