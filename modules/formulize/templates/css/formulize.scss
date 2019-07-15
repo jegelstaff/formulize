@@ -253,6 +253,10 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
     margin: 1em 0;
 }
 
+.formulize_autocomplete_search_label {
+    font-weight: bold;
+}
+
 @media print {
     body {
         font-size: 10pt;
@@ -335,3 +339,15 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
 .appcatspacer {
     width: 25%;
 }
+
+.auto_multi {
+    margin: 0.2em;
+    display: table-row;
+}
+
+.auto_multi:hover {
+    cursor: pointer;
+    text-decoration: line-through;
+    color: red;
+}
+

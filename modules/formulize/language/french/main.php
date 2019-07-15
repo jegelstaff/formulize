@@ -492,6 +492,8 @@ define("_formulize_INFO_RECEIVED", "Nous avons bien reçu vos informations.");
 define("_formulize_INFO_SAVE1", "Pour enregistrer vos changements, cliquez le bouton <i>");
 define("_formulize_INFO_SAVE2", "</i>.");
 define("_formulize_INFO_SAVEBUTTON", "Pour enregistrer vos changements, cliquez le bouton <i>" . _formulize_SAVE . "</i>.");
+define("_formulize_SAVE_AND_LEAVE", "Enregistrer et Quitter");
+define("_formulize_INFO_SAVEANDLEAVE", "Cliquez le bouton <i>"._formulize_SAVE_AND_LEAVE."<i> si vous voulez enregistrer vos changements et quitter cette page.");
 define("_formulize_INFO_SAVED", "Votre information a été enregistrée.");
 define("_formulize_LIKE", "COMME");
 define("_formulize_LOCKSCOPE", "<b>Sauvegarder le rapport courant avec son périmêtre vérouillé</b> (autrement des navigateurs sont limités à leur périmètre par défaut).");

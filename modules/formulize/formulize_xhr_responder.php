@@ -235,6 +235,9 @@ switch($op) {
           require_once XOOPS_ROOT_PATH."/modules/formulize/include/formdisplay.php"; // need the formulize_themeForm
 		  $html = formulize_themeForm::_drawElementElementHTML($form_ele);
         }
+        if($html) {
+            $html = trans($html);
+        }
         if(count($sendBackValue)>0) {
           // if we wrote any new values in autocomplete boxes, pass them back so we can alter their values in markup so new entries are not created again!
           print '{ "data" : '.json_encode($html).', "newvalues" : [';

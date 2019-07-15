@@ -16,6 +16,9 @@
 			<div class="form-radios">
 				<label for="autocomplete"><input type="radio" id="autocomplete" name="elements_listordd" value="2"<{if $content.listordd eq 2}> checked="checked"<{/if}>/>This is a "autocompletion" text box, which will give users a list of choices based on what they type in the box</label>
 				<blockquote style='margin-top: 3px'>
+                    Multiple selections are:
+					<label for="elements_multiple_allowed_auto"><input type="radio" id="elements_multiple_allowed_auto" name="elements_multiple_auto" value="1" <{if $content.multiple_auto}>checked<{/if}>/>Allowed</label>
+					<label for="elements_multiple_notallowed_auto"><input type="radio" id="elements_multiple_notallowed_auto" name="elements_multiple_auto" value="0" <{if $content.multiple_auto eq 0}>checked<{/if}>/>Not Allowed</label><br />
 					When users type something that doesn't match any of the choices:
 					<label for="elements-ele_value[16]-0"><input type="radio" id="elements-ele_value[16]-0" name="elements-ele_value[16]" value="0"<{if $content.ele_value[16] eq 0}> checked="checked"<{/if}>/>Say "No Match Found"</label>
 					<label for="elements-ele_value[16]-1"><input type="radio" id="elements-ele_value[16]-1" name="elements-ele_value[16]" value="1"<{if $content.ele_value[16] eq 1}> checked="checked"<{/if}>/>Add what they typed to the list of choices</label>
@@ -85,11 +88,24 @@
 				<label for="elements-ele_value[6]-1"><input type="radio" id="elements-ele_value[6]-1" name="elements-ele_value[6]" value="1"<{if $content.ele_value[6] eq 1}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_FORMLINK_ANYALL_ALL}></label>
 			</div>
 		</fieldset>
+            <fieldset>
+                <div class="form-select" id="optionsLimitByElementFilterDiv">
+                    Further limit the options to values that are selected in this other element: <{$content.optionsLimitByElement}><br /><br />
+                    <{if $content.optionsLimitByElementFilter}>
+                    <{$content.optionsLimitByElementFilter}><br />
+                    <div class="description">Use the filter options to isolate a specific entry in the other form. Dynamic { } references are possible for referring to the values of elements in this form.</div>
+                    <{else}>
+                    <div class="description">Select an element and then save, to get filter options for isolating a single entry in the selected form.</div>    
+                    <{/if}>
+                </div>
+            </fieldset>
 		<div class="description">
 			<{$smarty.const._AM_ELE_FORMLINK_SCOPE_DESC}>
 		</div>
 		</fieldset>
 	</div>
+    </fieldset>
+</div>
         
         <{include file="db:admin/element_linkedfilter.html"}>
         
@@ -179,9 +195,6 @@
 		    </fieldset>
 	    </div>
 
-
-    </fieldset>
-  </div>
 </div>
 
 <script type="text/javascript">
@@ -242,6 +255,20 @@
 
  });
 
+    $("div#optionsLimitByElementFilterDiv > a.conditionsdelete").click(function () {
+		$(".optionsLimitByElementFilterDelete").val($(this).attr('target'));
+		$("[name=reload_option_page]").val(1);
+	  $(".savebutton").click();
+		return false;
+	});
+ 
+ 	$("div#optionsLimitByElementFilterDiv > input#addcon").click(function () {
+		$("[name=reload_option_page]").val(1);
+	  $(".savebutton").click();
+		return false;
+	});
+ 
+ 
     function showHideLinkedSourceMapping() {
         if ($('[name="elements_listordd"]:checked').val()==2 && $('[name="elements-ele_value\\[16\\]"]:checked').val() == 1 && $('#formlink').val() != 'none') {
             if($('#linkedsourcemapping').css('display') == 'none') {

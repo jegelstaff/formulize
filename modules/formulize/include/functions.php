@@ -2376,7 +2376,10 @@ function createFieldList($val, $textbox=false, $limitToForm=false, $name="", $fi
                 $totalvaluelist[$captionlistindex] = $rowfieldnames[1];
 
                 // if this is the selected entry
-                if ($val == $totalvaluelist[$captionlistindex] OR $val == $rowformlist[0] . "#*=:*" . $rowfieldnames[2]) {
+                if ($val == $totalvaluelist[$captionlistindex] OR
+                    $val == $rowformlist[0] . "#*=:*" . $rowfieldnames[2] OR
+                    (is_numeric($val) AND $val == $rowfieldnames[1])
+                    ) {
                     $defaultlinkselection = $captionlistindex;
                 }
                 $captionlistindex++;
@@ -4969,6 +4972,11 @@ function removeNotApplicableRequireds($type, $req=0) {
 // $processedValues is the array of data gathered so far in the admin UI
 // $ele_value_position is the number in the ele_value array of the key where the conditions should be saved
 function parseSubmittedConditions($filter_key, $delete_key, $processedValues, $ele_value_position) {
+    
+    if(!isset($_POST[$filter_key."_elements"]) AND !isset($_POST["new_".$filter_key."_term"]) AND !isset($_POST["new_".$filter_key."_oom_term"])) {
+        return $processedValues;
+    }
+    
     if ($_POST["new_".$filter_key."_term"] != "") {
         $_POST[$filter_key."_elements"][] = $_POST["new_".$filter_key."_element"];
         $_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_op"];
@@ -5143,8 +5151,7 @@ function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias,
     }
     $dbSource = isset($GLOBALS['formulize_DBSourceJoin'][$filterElementHandle]) ? "(".$GLOBALS['formulize_DBSourceJoin'][$filterElementHandle].")" : "$targetAlias`".$filterElementHandle."`";
     if(strstr($conditionsFilterComparisonValue,'-->>ADDPLAINLITERAL<<--')) {
-        $compValueParts = explode('-->>ADDPLAINLITERAL<<--',$conditionsFilterComparisonValue);
-        $conditionsFilterComparisonValue = $compValueParts[0]." OR $dbSource $filterOp ".$compValueParts[1]; // two possible values we want to compare against in this case
+        $conditionsFilterComparisonValue = str_replace("-->>ADDPLAINLITERAL<<--", " OR $dbSource $filterOp ", $conditionsFilterComparisonValue);
     }
     $condition .= "($dbSource ".$filterOp." ".$conditionsFilterComparisonValue.")";
     return $condition;
@@ -5210,16 +5217,24 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                 // establish the literal (human readable) value
                 if (isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][substr($filterTerms[$filterId],1,-1)])) {
                     $literalTermToUse = "'".formulize_db_escape($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][substr($filterTerms[$filterId],1,-1)])."'";
-                } else {
+                } elseif($curlyBracketEntry != 'new') {
                     $apiFormatValue = prepvalues($dbValueOfTerm, substr($filterTerms[$filterId],1,-1), $curlyBracketEntry); // will be an array
                     if(is_array($apiFormatValue) AND count($apiFormatValue)==1) {
                         $apiFormatValue = $apiFormatValue[0]; // take the single value if there's only one, same as display function does
                     }
                     $literalTermToUse = $apiFormatValue;
+                } else {
+                    // for new entries maybe we should get the defaults?
+                    $literalTermToUse = '';
                 }
                 // if there is a difference, setup an OR expression so we can catch both variations
                 if($literalTermToUse != $dbValueOfTerm) {
-                    $subQueryWhereClause = "(`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$filterTermToUse.$likebits.$quotes." OR `$targetSourceHandle` ".$filterOps[$filterId].$quotes.$likebits.$literalTermToUse.$likebits.$quotes.")";
+                    $literalTermInSQL = "`$targetSourceHandle` ".$filterOps[$filterId].$quotes.$likebits.$literalTermToUse.$likebits.$quotes;
+                    $specialCharsTerm = htmlspecialchars($literalTermToUse, ENT_QUOTES);
+                    if($specialCharsTerm != $literalTermToUse) {
+                        $literalTermInSQL .= " OR ".str_replace($literalTermToUse, $specialCharsTerm, $literalTermInSQL);
+                    }
+                    $subQueryWhereClause = "(`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$filterTermToUse.$likebits.$quotes." OR $literalTermInSQL )";
                 } else {
                     $subQueryWhereClause = "`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$filterTermToUse.$likebits.$quotes;
                 }
@@ -5285,7 +5300,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
             }
     } else {
         foreach ($filterTerms as $key => $value) {
-            $filterTerms[$key] = parseUserAndToday($value);
+            $filterTerms[$key] = parseUserAndToday($value, $filterElementIds[$filterId]); // pass element so we can check if it is a userlist and compare {USER} based on id instead of name
         }
     }
     }
@@ -5298,11 +5313,16 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
         if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND !$targetElementObject->isLinked) {
             if(!isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][substr($filterTerms[$filterId],1,-1)])) {
                 // if no declared API format value, go look it up
+                if($curlyBracketEntry != 'new') {
                 $apiFormatValue = prepvalues($literalToDBValue, substr($filterTerms[$filterId],1,-1), $curlyBracketEntry); // will be an array
                 if(is_array($apiFormatValue) AND count($apiFormatValue)==1) {
                     $apiFormatValue = $apiFormatValue[0]; // take the single value if there's only one, same as display function does
                 }
                 $plainLiteralValue = $apiFormatValue;
+            } else {
+                    // for new entries maybe we should get the defaults?
+                    $literalTermToUse = '';
+                }
             } else {
                 // use the already declared API format value (determined when conditional elements are generated for example)
                 $plainLiteralValue = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][substr($filterTerms[$filterId],1,-1)];
@@ -5326,6 +5346,10 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
     if (!$conditionsFilterComparisonValue) {
         $conditionsFilterComparisonValue = $quotes.$likebits.formulize_db_escape($filterTerms[$filterId]).$likebits.$quotes;
         if($plainLiteralValue) {
+            $specialCharsTerm = htmlspecialchars($plainLiteralValue, ENT_QUOTES);
+            if($specialCharsTerm != $plainLiteralValue) {
+                $conditionsFilterComparisonValue .= '-->>ADDPLAINLITERAL<<--'.$quotes.$likebits.formulize_db_escape($specialCharsTerm).$likebits.$quotes;
+            }
             $conditionsFilterComparisonValue .= '-->>ADDPLAINLITERAL<<--'.$quotes.$likebits.formulize_db_escape($plainLiteralValue).$likebits.$quotes;
         }
     }
@@ -5475,7 +5499,7 @@ function formulize_javascriptForRemovingEntryLocks($unload=false) {
 // $fid is used only in the event of a mod_datetime or creation_datetime or creator_email field being drawn
 // $deInstanceCounter is used for addressing editable elements in the list
 function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200, $localIds=array(), $fid, $row, $column, $deInstanceCounter=false) {
-    $output = "";
+    $output = "<div class='main-cell-div' id='cellcontents_".$row."_".$column."'>";
     if (!is_array($value)) {
         $value = array($value);
     }
@@ -5517,15 +5541,14 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
             $time_value = strtotime($v);
             $v = (false === $time_value) ? "" : date(_SHORTDATESTRING, $time_value);
         }
-        $output .= '<div class=\'main-cell-div\' id=\'cellcontents_'.$row.'_'.$column.'\'><span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $handle, $textWidth, $thisEntryId)), $handle). '</span>';
+        $output .= '<span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $handle, $textWidth, $thisEntryId)), $handle);
         if ($counter<$countOfValue) {
             $output .= "<br>";
         }
+        $output .= '</span>';
         $counter++;
     }
-    if ($output) {
         $output .= "</div>";
-    }
     return $output;
 }
 
@@ -5901,12 +5924,23 @@ function dateFormatToStrftime($dateFormat) {
 }
 
 // THIS FUNCTION PARSES OUT THE {USER} AND {TODAY} KEYWORDS INTO THEIR LITERAL VALUES
-function parseUserAndToday($term) {
+// if element is passed in, we will check the element to see if it is a username list, and use the uid instead of name if so -- intended for situations when you're parsing user and was the compare to the id, such as when building filters
+function parseUserAndToday($term, $element=null) {
   if ($term === "{USER}") {
 		global $xoopsUser;
 		if($xoopsUser) {
+            if($element) {
+                $element_handler = xoops_getmodulehandler('elements', 'formulize');
+                $element = $element_handler->get($element);
+                $ele_value = $element->getVar('ele_value');
+                if(strstr(key($ele_value[2]), 'NAMES}')) {
+                    $term = $xoopsUser->getVar('uid');
+                }
+            }
+            if(!$term) {
             $term = htmlspecialchars_decode($xoopsUser->getVar('name'), ENT_QUOTES);
 			if(!$term) { $term = htmlspecialchars_decode($xoopsUser->getVar('uname'), ENT_QUOTES); }
+            }
 		} else {
 			$term = 0;
 		}
@@ -6088,7 +6122,7 @@ function generateTidyElementList($cols, $selectedCols=array()) {
     foreach($cols as $thisFid=>$columns) {
         $formObject = $form_handler->get($thisFid);
         $boxeshtml = "";
-        $hideform = "style='display:none;'"; // start forms closed unless they have selected columns
+        $hideform = count($cols) > 1 ? "style='display:none;'" : ""; // start forms closed unless they have selected columns, or unless this is the only form in the set
         if($counter == 0) { // add in metadata columns first time through
             array_unshift($columns,
                 array('ele_handle'=>'entry_id', 'ele_caption' => _formulize_ENTRY_ID),                          
@@ -6228,4 +6262,99 @@ function formulize_getCurrentRevisions($fidOrObject, $entryIds) {
         }
     }
     return false;
+}
+
+// return SQL ready for use in special queries for linked element source values
+// t1 is the table where the values are being gathered from
+// t2 is the entry_owner_groups table
+function prepareLinkedElementGroupFilter($sourceFid, $groupSelections, $useOnlyUsersGroups, $userMustBeInAllGroups) {
+    
+    global $regcode, $xoopsUser, $xoopsDB;
+    // determine the groups that we're dealing with...
+    if($regcode) { // if we're dealing with a registration code, determine group membership based on the code
+        $reggroupsq = q("SELECT reg_codes_groups FROM " . XOOPS_DB_PREFIX . "_reg_codes WHERE reg_codes_code=\"$regcode\"");
+        $groups = explode("&8(%$", $reggroupsq[0]['reg_codes_groups']);
+        if($groups[0] === "") { unset($groups); } // if a code has no groups associated with it, then kill the null value that will be in position 0 in the groups array.
+        $groups[] = XOOPS_GROUP_USERS;
+        $groups[] = XOOPS_GROUP_ANONYMOUS;
+    } else {
+        $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+    }
+    
+    $pgroups = array();
+    if($groupSelections) {
+        $scopegroups = explode(",",$groupSelections);
+        if(!in_array("all", $scopegroups)) {
+            if($useOnlyUsersGroups) { // limit by user's groups
+                foreach($groups as $gid) { // want to loop so we can get rid of reg users group simply
+                    if($gid == XOOPS_GROUP_USERS) { continue; }
+                    if(in_array($gid, $scopegroups)) { 
+                        $pgroups[] = $gid;
+                    }
+                }
+            } else { // just use scopegroups
+                $pgroups = $scopegroups;
+            }
+        } else {
+            if($useOnlyUsersGroups) { // all groups selected, but limiting by user's groups is turned on
+                foreach($groups as $gid) { // want to loop so we can get rid of reg users group simply
+                    if($gid == XOOPS_GROUP_USERS) { continue; }
+                    $pgroups[] = $gid;
+                }
+            } else { // all groups should be used
+                unset($pgroups);
+                $allgroupsq = q("SELECT groupid FROM " . $xoopsDB->prefix("groups")); 
+                foreach($allgroupsq as $thisgid) {
+                    $pgroups[] = $thisgid['groupid'];
+                }
+            }
+        }
+    }
+
+    array_unique($pgroups); // remove duplicate groups from the list
+    
+    if($userMustBeInAllGroups AND count($pgroups) > 0) {  // means we must match all the current user's groups with the entry's groups, so we setup a series of exists clauses
+        $pgroupsfilter = " (";
+        $start = true;
+        foreach($pgroups as $thisPgroup) {
+            if(!$start) { $pgroupsfilter .= " AND "; }
+            $pgroupsfilter .= "EXISTS(SELECT 1 FROM ".$xoopsDB->prefix("formulize_entry_owner_groups")." AS t3 WHERE t3.groupid=$thisPgroup AND t3.fid=$sourceFid AND t3.entry_id=t1.entry_id)";
+            $start = false;
+        }
+        $pgroupsfilter .= ")";
+    } elseif(count($pgroups) > 0) {
+        $pgroupsfilter = " t2.groupid IN (".formulize_db_escape(implode(",",$pgroups)).") AND t2.fid=$sourceFid";
+    } else {
+        $pgroupsfilter = "";
+    }
+    return $pgroupsfilter;
+}
+
+// include any source entry ids that are selected currently, so current selections are not lost!!
+// setup an OR condition as an alternative to the filter we've determined, just in case the selected value is outside what the filter returns
+// t1 is the form we're gathering entries from
+function prepareLinkedElementSafetyNets($sourceEntryIds) {
+    if(count($sourceEntryIds)>0 AND $sourceEntryIds[0]) {
+        $sourceEntrySafetyNetStart = "( ";
+        $sourceEntrySafetyNetEnd = " ) OR t1.entry_id IN (".implode(",",$sourceEntryIds).") ";
+    } else {
+        $sourceEntrySafetyNetStart = "";
+        $sourceEntrySafetyNetEnd = "";
+    }
+    return array($sourceEntrySafetyNetStart, $sourceEntrySafetyNetEnd);
+}
+
+// t1 is the form we're gathering entries from
+function prepareLinkedElementExtraClause($pgroupsfilter, $parentFormFrom, $sourceEntrySafetyNetStart) {
+    $extra_clause = "";
+    if ($pgroupsfilter) {
+        if(strstr($pgroupsfilter,"t2")) {
+            global $xoopsDB;
+            $extra_clause = " INNER JOIN ".$xoopsDB->prefix("formulize_entry_owner_groups")." AS t2 ON t1.entry_id = t2.entry_id ";    
+        }
+        $extra_clause .= " $parentFormFrom WHERE $sourceEntrySafetyNetStart $pgroupsfilter ";
+    } else {
+        $extra_clause = " $parentFormFrom WHERE $sourceEntrySafetyNetStart t1.entry_id>0 ";
+    }
+    return $extra_clause;
 }

@@ -647,6 +647,10 @@ class formulizeDataHandler  {
 	// remember that all groups the creator was a member of at the time of creation will be returned...interpretation of which groups are important must still be performed in logic once this info has been retrieved
 	function getEntryOwnerGroups($entry_id=0) {
 		static $cachedEntryOwnerGroups = array();
+        if($entry_id == 'new') {
+            global $xoopsUser;
+            return $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+        }
 		$entry_id = intval($entry_id);
 		if(!isset($cachedEntryOwnerGroups[$this->fid][$entry_id])) {
 			global $xoopsDB;
@@ -799,6 +803,8 @@ class formulizeDataHandler  {
             return null;
         }
 
+        $clean_element_values = $element_values; // save a clean copy of the original values before the escaping for writing to DB, so we can use these later in "on after save"
+        
         // escape field names and values before writing to database
         $aes_password = getAESPassword();
         foreach ($element_values as $key => $value) {
@@ -879,9 +885,10 @@ class formulizeDataHandler  {
                 unlink($lock_file_name);
 		}
 
-        $formObject->onAfterSave($entry_to_return ? $entry_to_return : $lastWrittenId);
+        $entry_to_return = $entry_to_return ? $entry_to_return : $lastWrittenId;
+        $formObject->onAfterSave($entry_to_return, $clean_element_values);
 
-		return $entry_to_return ? $entry_to_return : $lastWrittenId;
+		return $entry_to_return;
 	}
 
     // check a given field against the dataTypeMap, return true if it's a numeric type

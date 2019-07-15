@@ -173,17 +173,20 @@ if($ele_type == "select") {
   if($_POST['elements_listordd'] == 2) {
     $processedValues['elements']['ele_value'][0] = 1; // rows is 1
     $processedValues['elements']['ele_value'][8] = 1; // is autocomplete
-    $processedValues['elements']['ele_value'][1] = 0; // multiple selections not allowed
+    $processedValues['elements']['ele_value'][1] = $_POST['elements_multiple_auto'];
   } else if($_POST['elements_listordd']) {
     $processedValues['elements']['ele_value'][0] = $processedValues['elements']['ele_value'][0] > 1 ? intval($processedValues['elements']['ele_value'][0]) : 1;
     $processedValues['elements']['ele_value'][1] = $_POST['elements_multiple'];
   } else {
     $processedValues['elements']['ele_value'][0] = 1;
-    $processedValues['elements']['ele_value'][1] = 0; // multiple selections not allowed
+    $processedValues['elements']['ele_value'][1] = 0; // multiple selections not allowed for drop down lists
   }
 
   // if there is a change to the multiple selection status, need to adjust the database!!
-  if (isset($ele_value[1]) AND $ele_value[1] != $_POST['elements_multiple']) {
+  if (
+      ($processedValues['elements']['ele_value'][8] == 0 AND isset($ele_value[1]) AND $ele_value[1] != $_POST['elements_multiple'])
+      OR ($processedValues['elements']['ele_value'][8] == 1 AND isset($ele_value[1]) AND $ele_value[1] != $_POST['elements_multiple_auto'])
+      ) {
     if ($ele_value[1] == 0) {
       $result = convertSelectBoxToMulti($xoopsDB->prefix('formulize_'.$formObject->getVar('form_handle')), $ele_id);
     } else {
@@ -247,6 +250,9 @@ if($ele_type == "select") {
     $processedValues['elements']['ele_value'][5] = "";
   }
 }
+
+$processedValues = parseSubmittedConditions('optionsLimitByElementFilter', 'optionsLimitByElementFilterDelete', $processedValues, 'optionsLimitByElementFilter'); // post key, delete key, processedValues, ele_value key for conditions
+
 
 $ele_value_before_adminSave = "";
 $ele_value_after_adminSave = "";
@@ -319,7 +325,7 @@ if(!$ele_id = $element_handler->insert($element)) {
   print "Error: could not save the options for element: ".$xoopsDB->error();
 }
 
-if($_POST['reload_option_page']) {
+if($_POST['reload_option_page'] OR (isset($ele_value['optionsLimitByElement']) AND $ele_value['optionsLimitByElement'] != $processedValues['elements']['ele_value']['optionsLimitByElement'])) {
   print "/* evalnow */ if(redirect=='') { redirect = 'reloadWithScrollPosition();'; }";
 }
 

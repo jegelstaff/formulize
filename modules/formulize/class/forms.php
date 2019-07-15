@@ -241,8 +241,13 @@ class formulizeForm extends XoopsObject {
             $on_before_save_code = <<<EOF
 <?php
 
-function form_{$this->id_form}_on_before_save(\$entry_id, \$element_values, \$form_id) {
-    extract(\$element_values);  // this converts the array elements into PHP variables
+function form_{$this->id_form}_on_before_save(\$entry_id, \$formulize_element_values, \$form_id) {
+    foreach(\$formulize_element_values as \$formulize_element_key=>\$formulize_element_value) {
+        if(is_numeric(\$formulize_element_key)) {
+            \$formulize_element_key = 'elementId'.\$formulize_element_key;
+        }
+        \${\$formulize_element_key} = \$formulize_element_value;
+    }
 
 {$this->on_before_save}
 
@@ -265,7 +270,15 @@ EOF;
             $on_after_save_code = <<<EOF
 <?php
 
-function form_{$this->id_form}_on_after_save(\$entry_id, \$form_id) {
+function form_{$this->id_form}_on_after_save(\$entry_id, \$form_id, \$formulize_element_values) {
+
+foreach(\$formulize_element_values as \$formulize_element_key=>\$formulize_element_value) {
+    if(is_numeric(\$formulize_element_key)) {
+        \$formulize_element_key = 'elementId'.\$formulize_element_key;
+    }
+    \${\$formulize_element_key} = \$formulize_element_value;
+}
+
 {$this->on_after_save}
 }
 
@@ -338,18 +351,24 @@ EOF;
                     $element_values[$key] = $value;
                 }
             }
+            // if a numeric element handle had a value set, then by convention it needs the prefix elementId before the number so we can handle it here and make it a numeric array key again
+            foreach($element_values as $key=>$value) {
+                if(substr($key, 0, 9)=='elementId') {
+                    unset($element_values[$key]);
+                    $element_values[str_replace('elementId','',$key)] = $value;
+                }
+            }
             // due to extract()ing and then collecting back into an array, the array contains itself, so remove the duplicate
             unset($element_values["element_values"]);
         }
         return $element_values;
     }
 
-    public function onAfterSave($entry_id) {
+    public function onAfterSave($entry_id, $element_values) {
         // if there is any code to run after saving, include it (write if necessary), and run the function
         if (strlen($this->on_after_save) > 0 and (file_exists($this->on_after_save_filename) or $this->cache_on_after_save_code())) {
             include_once $this->on_after_save_filename;
-            // note that the custom code could create new values in the element_values array, so the caller must limit to valid field names
-            call_user_func($this->on_after_save_function_name, $entry_id, $this->getVar('id_form'));
+            call_user_func($this->on_after_save_function_name, $entry_id, $this->getVar('id_form'), $element_values);
         }
     }
 
@@ -920,6 +939,7 @@ class formulizeFormsHandler {
 		$type_with_default = ("text" == $dataType ? "text" : "$dataType NULL default NULL");
 		$insertFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " ADD `" . $element->getVar('ele_handle') . "` $type_with_default";
 		if(!$insertFieldRes = $xoopsDB->queryF($insertFieldSQL)) {
+            print $xoopsDB->error().'<br>';
 			return false;
 		}
 		if($this->revisionsTableExists($element->getVar('id_form'))) {
@@ -1125,8 +1145,19 @@ class formulizeFormsHandler {
 				$number = preg_replace("[^0-9+-]","", $termToUse);
 				$termToUse = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
 			}
+            
+            if($termToUse == "{BLANK}") {
+                $secondOp = $filterSettings[1][$i] == "=" ? " IS " : " IS NOT ";
+                $perGroupFilter .= "($formAlias`".$filterSettings[0][$i]."` ".htmlspecialchars_decode($filterSettings[1][$i]) . " '' OR $formAlias`".$filterSettings[0][$i]."` $secondOp NULL)"; 
+            } else {
+                if(substr($termToUse,0,1)=="{" AND substr($termToUse,-1) == "}") { // convert { } references to field references
+                    $termToUse = "`".formulize_db_escape(substr($termToUse,1,-1))."`";
+                } else {
 			$termToUse = (is_numeric($termToUse) AND !strstr(strtoupper($filterSettings[1][$i]), "LIKE")) ? $termToUse : "\"$likeBits".formulize_db_escape($termToUse)."$likeBits\"";
+                }
+                $filterSettings[1][$i] = ($filterSettings[1][$i] == "NOT") ? "!=" : $filterSettings[1][$i];
 			$perGroupFilter .= "$formAlias`".$filterSettings[0][$i]."` ".htmlspecialchars_decode($filterSettings[1][$i]) . " " . $termToUse; // htmlspecialchars_decode is used because &lt;= might be the operator coming out of the DB instead of <=
+		}
 		}
 
 		return $perGroupFilter;

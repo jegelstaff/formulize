@@ -1438,7 +1438,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                                         $newWhereClause = " (";
 																				$nameSearchStart = false;
 																	 }
-                                   if(formulize_selectboxAllowsMultipleSelections($element_id)) {
+                                   if(formulize_elementAllowsMultipleSelections($element_id)) {
                                         $newWhereClause .= " (($queryElement LIKE '%*=+*:" . $preSearchArray['uid'] . "*=+*:%' OR $queryElement LIKE '%*=+*:" . $preSearchArray['uid'] . "') OR $queryElement = " . $preSearchArray['uid'] . ") "; // could this be further optimized to remove the = condition, and only use the LIKEs?  We need to check if a multiselection-capable box still uses the delimiter string when only one value is selected...I think it does.
                                    } else {
                                         $newWhereClause .= " $queryElement = " . $preSearchArray['uid'] . " ";
@@ -1645,13 +1645,20 @@ function formulize_isLinkedSelectBox($elementOrHandle, $isHandle=false) {
      return $cachedElements[$elementOrHandle];
 }
 
-// This function returns true or false depending on whether a selectbox allows multiple values or not
-function formulize_selectboxAllowsMultipleSelections($elementOrHandle, $isHandle=false) {
+// This function returns true or false depending on whether an element is a multiselect selectbox or checkboxes
+// refactor into a property on elements!!
+function formulize_elementAllowsMultipleSelections($elementOrHandle, $isHandle=false) {
      static $cachedElements = array();
      if(!isset($cachedElements[$elementOrHandle])) {
           $evqRow = formulize_getElementMetaData($elementOrHandle, $isHandle);
+          if($evqRow['ele_type']=='checkbox') {
+            $cachedElements[$elementOrHandle] = true;
+          } elseif($evqRow['ele_type']=='select') { 
           $ele_value = unserialize($evqRow['ele_value']);
-          $cachedElements[$elementOrHandle] = ($ele_value[0] > 1 AND $ele_value[1] == 1) ? true : false;
+              $cachedElements[$elementOrHandle] = ($ele_value[1] == 1) ? true : false;
+          } else {
+              $cachedElements[$elementOrHandle] = false;
+          }
      }
      return $cachedElements[$elementOrHandle];
 }

@@ -333,11 +333,10 @@ define("_formulize_INFO_DONE1", "Click the <i>");
 define("_formulize_INFO_DONE2", "</i> button if you are finished.");
 define("_formulize_INFO_CONTINUE1", "You can update your information below.");
 define("_formulize_INFO_CONTINUE2", "You can make another entry by filling in the form again.");
-define("_formulize_INFO_SAVEBUTTON", "Click the <i>" . _formulize_SAVE . "</i> button to save your changes.<br />Click the "._formulize_SAVE_AND_LEAVE.
-    " button to save your changes and leave the page.");
+define("_formulize_INFO_SAVEBUTTON", "Click the <i>" . _formulize_SAVE . "</i> button to save your changes.");
 define("_formulize_INFO_SAVE1", "Click the <i>");
-define("_formulize_INFO_SAVE2", "</i> button to save your changes.<br />Click the "._formulize_SAVE_AND_LEAVE.
-    " button if you are finished and want to save your changes.");
+define("_formulize_INFO_SAVE2", "</i> button to save your changes.");
+define("_formulize_INFO_SAVEANDLEAVE", "Click the <i>"._formulize_SAVE_AND_LEAVE."</i> button if you want to save your changes and leave this page.");
 define("_formulize_INFO_NOSAVE", "You can review this entry, but you <i>cannot save changes</i>.");
 define("_formulize_INFO_MAKENEW", "You can make a new entry by filling in the form below.");
 

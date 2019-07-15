@@ -491,6 +491,10 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
     overflow: auto;
 }
 
+.formulize_autocomplete_search_label {
+    font-weight: bold;
+}
+
 @media print {
     
   body {
@@ -567,4 +571,19 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
   .formulize-element-edit-link {
     display: none; }
     
+}
+
+.appcatspacer {
+    width: 25%;
+}
+
+.auto_multi {
+    margin: 0.2em;
+    display: table-row;
+}
+
+.auto_multi:hover {
+    cursor: pointer;
+    text-decoration: line-through;
+    color: red;
 }

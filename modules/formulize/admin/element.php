@@ -380,6 +380,7 @@ if ($ele_type=='text') {
     if ($ele_id == "new") {
         $options['listordd'] = 0;
         $options['multiple'] = 0;
+        $options['multiple_auto'] = 0;
         $ele_value[0] = 6;
         $options['islinked'] = 0;
         $options['formlink_scope'] = array(0=>'all');
@@ -387,6 +388,7 @@ if ($ele_type=='text') {
         $options['listordd'] = $ele_value[0] == 1 ? 0 : 1;
         $options['listordd'] = $ele_value[8] == 1 ? 2 : $options['listordd'];
         $options['multiple'] = $ele_value[1];
+        $options['multiple_auto'] = $ele_value[1];
         if (!is_array($ele_value[2])) {
             $options['islinked'] = 1;
         } else {
@@ -402,6 +404,16 @@ if ($ele_type=='text') {
 
     list($formlink, $selectedLinkElementId) = createFieldList($ele_value[2]);
     $options['linkedoptions'] = $formlink->render();
+    
+    list($optionsLimitByElement, $limitByElementElementId) = createFieldList($ele_value['optionsLimitByElement'], false, false, "elements-ele_value[optionsLimitByElement]", _NONE);
+    $options['optionsLimitByElement'] = $optionsLimitByElement->render();
+    if($limitByElementElementId) {
+        $limitByElementElementObject = $element_handler->get($limitByElementElementId);
+        if($limitByElementElementObject) {
+            $options['optionsLimitByElementFilter'] = formulize_createFilterUI($ele_value['optionsLimitByElementFilter'], "optionsLimitByElementFilter", $limitByElementElementObject->getVar('id_form'), "form-2");
+        }
+    }
+    
 
     // setup the list value and export value option lists, and the default sort order list, and the list of possible default values
     if ($options['islinked']) {

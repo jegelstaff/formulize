@@ -65,6 +65,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
     // it receives the element object and returns an array of data that will go to the admin UI template
     // when dealing with new elements, $element might be FALSE
     function adminPrepare($element) {
+        
         $dataToSendToTemplate = array();
         if(is_object($element) AND is_subclass_of($element, 'formulizeformulize')) {
 			$ele_value = $this->backwardsCompatibility($element->getVar('ele_value'));
@@ -75,9 +76,22 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
             } else { // options are linked from another source
                 $dataToSendToTemplate['islinked'] = 1;
         }
+            $dataToSendToTemplate['formlink_scope'] = explode(",",$ele_value['formlink_scope']);
+            $dataToSendToTemplate['ele_value'] = $ele_value;
         } else {
+            $dataToSendToTemplate['formlink_scope'] = array(0=>'all');
             $dataToSendToTemplate['islinked'] = 0;
+            $dataToSendToTemplate['ele_value'] = array();
         }
+        
+        // setup group list:
+        $member_handler = xoops_gethandler('member');
+        $allGroups = $member_handler->getGroups();
+        $formlinkGroups = array();
+        foreach($allGroups as $thisGroup) {
+            $formlinkGroups[$thisGroup->getVar('groupid')] = $thisGroup->getVar('name');
+        }
+        $dataToSendToTemplate['formlink_scope_options'] = array('all'=>_AM_ELE_FORMLINK_SCOPE_ALL) + $formlinkGroups;
         
         // $selectedLinkElementId can be used later to initialize a set of filters, if we add that to checkboxes.
         list($formlink, $selectedLinkElementId) = createFieldList($ele_value[2]);
@@ -113,9 +127,10 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
     // You should return a flag to indicate if any changes were made, so that the page can be reloaded for the user, and they can see the changes you've made here.
     function adminSave($element, $ele_value) {
         $changed = false;
+        
         if(is_object($element) AND is_subclass_of($element, 'formulizeformulize')) {
             
-			$ele_value = array(12=>$ele_value[12], 15=>$ele_value[15]); // initialize with the values that we don't need to parse/adjust
+			$ele_value = array(12=>$ele_value[12], 15=>$ele_value[15], 'checkbox_scopelimit'=>$ele_value['checkbox_scopelimit'], 'checkbox_formlink_anyorall'=>$ele_value['checkbox_formlink_anyorall']); // initialize with the values that we don't need to parse/adjust
             
             if(isset($_POST['formlink']) AND $_POST['formlink'] != "none") {
                 global $xoopsDB;
@@ -131,6 +146,9 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
             }
         }
             }
+             
+            // grab formlink scope options
+            $ele_value['formlink_scope'] = implode(",", $_POST['element_formlink_scope']);
              
             // handle conditions
             // grab any conditions for this page too
@@ -311,8 +329,15 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 				$sortOrderClause = " ORDER BY t1.`$sortHandle` $sortOrder";
 			}
 		
+            $groupLimitClause = prepareLinkedElementGroupFilter($sourceFid, $ele_value['formlink_scope'], $ele_value['checkbox_scopelimit'], $ele_value['checkbox_formlink_anyorall']);
+            list($sourceEntrySafetyNetStart, $sourceEntrySafetyNetEnd) = prepareLinkedElementSafetyNets($sourceEntryIds);
+            $extra_clause = prepareLinkedElementExtraClause($groupLimitClause, $parentFormFrom, $sourceEntrySafetyNetStart);
+            
             global $xoopsDB;
-            $sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." AS t1 $parentFormFrom WHERE t1.entry_id>0 $conditionsfilter $conditionsfilter_oom GROUP BY t1.entry_id $sortOrderClause";
+            // missing $restrictSQL that linked selectboxes use, otherwise same features as linked selectboxes?
+            $sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." AS t1
+                $extra_clause $conditionsfilter $conditionsfilter_oom $sourceEntrySafetyNetEnd GROUP BY t1.entry_id $sortOrderClause";
+                
             if($sourceValuesRes = $xoopsDB->query($sourceValuesQ)) {
                 // rewrite the values and ui text based on the data coming out of the database
                 $ele_value = array();
