@@ -24,6 +24,7 @@ function daraShowContractLinks($fid, $frid, $type) {
     formulize_scandirAndClean(XOOPS_ROOT_PATH."/cache/", "contractEntryIdsQuery_"); 
 	setcookie('contractEntryIds',$exportTime);
     
+    if($type == "HR") { $GLOBALS['formulize_forceDerivedValueUpdate'] = true; }
     list($entries, $data) = daraGatherContractData();
     
     if($data == "" AND count($entries)>0) {
@@ -33,7 +34,8 @@ function daraShowContractLinks($fid, $frid, $type) {
         }
         $data = getData($frid, $fid, implode('][',$filter), "OR");
     }
-
+    if($type == "HR") { unset($GLOBALS['formulize_forceDerivedValueUpdate']); }
+    
     $ROcourses = array();
     $INSTcourses = array();
     foreach($data as $entry) {
