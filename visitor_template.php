@@ -89,11 +89,11 @@ To determine if you require a medical examination (for visits of more than six m
 
 $html .= "<P style=\"text-align:justify;\"><B>Health Insurance</B><BR>Enrolment in the University Health Insurance Plan (UHIP) is compulsory for non-resident Visiting Professors and their dependents whose visit to the University exceeds three weeks. To enrol in UHIP, please contact the Human Resources (HR) office for your division. A complete list of HR contacts can be found at <A HREF='http://contact.hrandequity.utoronto.ca/'>contact.hrandequity.utoronto.ca</A>. For additional information concerning UHIP, please refer to <A HREF='http://www.uhip.ca'>www.uhip.ca</A>.</P> 
 
-</P>This offer is conditional on you being legally entitled to work in Canada, in this position. A copy of your work permit must be provided to $bo, Business Officer, immediately upon arrival. Your visit with the University is conditional upon satisfactory immigration status maintained for the duration of your stay.</P>";
+</P>This offer is conditional on you being legally entitled to work in Canada, in this position. A copy of your work permit must be provided to $bo, $botitle, immediately upon arrival. Your visit with the University is conditional upon satisfactory immigration status maintained for the duration of your stay.</P>";
 
 }
 
-$html .= "<P style=\"text-align:justify;\">If you accept this offer, I would appreciate you signing a copy of this letter and returning it to $bo, Business Officer (via email $boemail) no later than $signbackDate";
+$html .= "<P style=\"text-align:justify;\">If you accept this offer, I would appreciate you signing a copy of this letter and returning it to $bo, $botitle (via email $boemail) no later than $signbackDate";
 if($immigration) {
     $html .= " together with a copy of your valid passport";
 }

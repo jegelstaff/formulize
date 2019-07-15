@@ -64,13 +64,23 @@ $html .= "<P style=\"text-align:justify;\"><B>Policies and Procedures</B><BR>On 
 
 <P style=\"text-align:justify;\"><B>This Offer</B><BR>This letter, and the documents referred to in it, constitute the entire agreement between you and the University.  There are no representations, warranties or other commitments apart from these documents.</P>
 
-<P style=\"text-align:justify;\">If you accept this offer, I would appreciate you signing a copy of this letter together with the attached tax forms and a void cheque (unless your banking information remains unchanged) and returning it to $bo, Business Officer (via email $boemail) no later than $signbackDate.  Should you have any questions regarding this offer, please do not hesitate to contact $programDirector, Program Director, $program $programDirectorEmail</P> 
+<P style=\"text-align:justify;\">If you accept this offer, I would appreciate you signing a copy of this letter together with the attached tax forms and a void cheque (unless your banking information remains unchanged) and returning it to $bo, $botitle (via email $boemail) no later than $signbackDate.  Should you have any questions regarding this offer, please do not hesitate to contact $programDirector, Program Director, $program $programDirectorEmail</P> 
 
 <P>We look forward to the new academic year with you.</P>
 
 <P>Yours sincerely,<BR><BR><BR><BR>$dean<BR>Associate Dean, Academic</P>
 
-<P>cc:<BR>$cao, Chief Administrative Officer<BR>$bo, Business Officer</P>";
+<P style=\"text-align:justify;\">";
+$startDirs = true;
+foreach($programDirs as $dir) {
+    if(!$startDirs) {
+        $html .= "<BR>";
+    }
+    $startDirs = false;
+    $html .= "cc: ".$dir['programDirector'].", Program Director, ".$dir['pdProgram'].", <A HREF='mailto:".$dir['programDirectorEmail']."'>".$dir['programDirectorEmail']."</A>";
+}
+if(!$startDirs) { $html .= "<BR>"; }
+$html .= "cc: $cao, Chief Administrative Officer<BR>cc: $bo, $botitle</P>";
 
 $html2 = "<P><B><I>I have read this letter, the attachments, and the items referred to in the attachments, and accept employment on the basis of all these provisions.</I></B><BR><BR><BR><BR><BR>Name: ________________________________ Date: ______________________________</P>";
 

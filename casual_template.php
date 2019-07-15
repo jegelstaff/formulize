@@ -72,7 +72,7 @@ $html .= "<P style=\"text-align:justify;\">While you are here, the Daniels Facul
 
 <P style=\"text-align:justify;\">The law requires the Employment Standards Act Poster to be provided to all employees; it is available on <A HREF='http://www.labour.gov.on.ca/english/es/pubs/poster.php'>http://www.labour.gov.on.ca/english/es/pubs/poster.php</A>. This poster describes the minimum rights and obligations contained in the <I>Employment Standards Act</I>. Please note that in many respects this offer of employment exceeds the minimum requirements set out in the Act.</P>
 
-<P style=\"text-align:justify;\">If you accept this offer, I would appreciate you signing a copy of this letter together with the attached tax forms and a void cheque (unless your banking information remains unchanged) and returning it to $bo, Business Officer (via email $boemail) no later than $signbackDate.  Should you have any questions regarding this offer, please do not hesitate to contact your program director (cc'd below).</P> 
+<P style=\"text-align:justify;\">If you accept this offer, I would appreciate you signing a copy of this letter together with the attached tax forms and a void cheque (unless your banking information remains unchanged) and returning it to $bo, $botitle (via email $boemail) no later than $signbackDate.  Should you have any questions regarding this offer, please do not hesitate to contact your program director (cc'd below).</P> 
 
 <P>Sincerely,</P><BR><BR><P>$cao<BR>Chief Administrative Officer</P>
 

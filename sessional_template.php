@@ -100,7 +100,7 @@ $html .= "
 
 <P style=\"text-align:justify;\">This offer is conditional on your being legally entitled to work in Canada, in this position.</P> 
 
-<P style=\"text-align:justify;\">If you accept this offer, I would appreciate you signing a copy of this letter together with the attached tax forms and a void cheque (unless your banking information remains unchanged) and returning it to $bo, Business Officer (via email <A HREF='mailto:$boemail'>$boemail</A>) no later than $signbackDate. Should you have any questions regarding this offer, please do not hesitate to contact ";
+<P style=\"text-align:justify;\">If you accept this offer, I would appreciate you signing a copy of this letter together with the attached tax forms and a void cheque (unless your banking information remains unchanged) and returning it to $bo, $botitle (via email <A HREF='mailto:$boemail'>$boemail</A>) no later than $signbackDate. Should you have any questions regarding this offer, please do not hesitate to contact ";
 if($writingCenterCoord) {
     $html .= "$writingCenterCoord, Writing Center Coordinator, <A HREF='mailto:$wccEmail'>$wccEmail</A></P>";
 } else {

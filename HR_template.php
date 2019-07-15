@@ -176,7 +176,11 @@ $immigration = display($entry, 'hr_module_canadian') == 'Yes' ? false : true;
 $dean = getData('', 16, 'service_module_service_assignment/**/Associate Dean, Academic/**/=][service_module_year/**/'.$year.'/**/=');
 $dean = htmlspecialchars_decode(display($dean[0], 'service_module_faculty_member'), ENT_QUOTES);
 
-$bo = getData('', 16, 'service_module_service_assignment/**/Business Officer/**/=][service_module_year/**/'.$year.'/**/=');
+$bo = getData('', 16, 'service_module_service_assignment/**/Interim Business Officer/**/=][service_module_year/**/'.$year.'/**/=');
+if(!is_array($bo) OR count($bo)==0) {
+    $bo = getData('', 16, 'service_module_service_assignment/**/Business Officer/**/=][service_module_year/**/'.$year.'/**/=');
+}
+$botitle = display($bo[0], 'service_module_service_assignment');
 $bo = htmlspecialchars_decode(display($bo[0], 'service_module_staff_names'), ENT_QUOTES);
 $boemail = makeEmailFromName($bo);
 
