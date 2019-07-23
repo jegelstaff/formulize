@@ -1323,10 +1323,12 @@ if($multiple ){
 			switch($type) {
 				case 'date':
 					if($timeval = $element->getValue()) {
-						if (is_string($timeval)) {
+						if($timeval == _DATE_DEFAULT OR !is_string($timeval)) {
+							$hiddenValue = "";
+						} else {
 							$timeval = strtotime($timeval);
-						}
-						$hiddenValue = date(_SHORTDATESTRING, $timeval);
+							$hiddenValue = date(_SHORTDATESTRING, $timeval);
+						} 
 					} else {
 						$hiddenValue = "";
 					}
