@@ -32,7 +32,7 @@ foreach($semesterDates as $thisSem) {
     $startdates[display($thisSem, 'semester_dates_module_semester')] = display($thisSem, 'semester_dates_module_start_date');
     $enddates[display($thisSem, 'semester_dates_module_semester')] = display($thisSem, 'semester_dates_module_end_date');
 }
-$sections = getData(7, 4, 'instr_assignments_instructor/**/'.$name.'/**/=][ro_module_year/**/'.$year.'/**/=', "AND", "", "", "", "ro_module_semester");
+$sections = getData(7, 4, 'instr_assignments_instructor/**/'.htmlspecialchars($name, ENT_QUOTES).'/**/=][ro_module_year/**/'.$year.'/**/=', "AND", "", "", "", "ro_module_semester");
 $courses = array();
 $totalTeachingWeight = 0;
 $programs = array();
@@ -124,7 +124,7 @@ foreach($sections as $section) {
         $programs[] = $thisProgram;
     }
     
-    $totalTeachingWeight = $totalTeachingWeight + (display($section, 'ro_module_course_weight')/$numberOfInstructors);
+    $totalTeachingWeight = $totalTeachingWeight + (display($section, 'ro_module_official_course_weight')/$numberOfInstructors);
     $sectionIds = internalRecordIds($section, 4);
     $courses[$sectionIds[0]] = $sectionData;
 }
