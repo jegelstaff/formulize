@@ -44,7 +44,6 @@ function xoops_module_install($dirname) {
 		$msgs[] = '';
 		$errs[] = '<h4 style="text-align:'._GLOBAL_LEFT.';margin-bottom: 0px;border-bottom: dashed 1px #000000;">Installing '.$module->getInfo('name').'</h4>';
 		if ($sqlfile != false && is_array($sqlfile)) {
-
 			$sql_file_path = ICMS_ROOT_PATH."/modules/".$dirname."/".$sqlfile[XOOPS_DB_TYPE];
 			if (!file_exists($sql_file_path)) {
 				$errs[] = "SQL file not found at <b>$sql_file_path</b>";
@@ -72,7 +71,6 @@ function xoops_module_install($dirname) {
 							$error = true;
 							break;
 						} else {
-
 							if (!in_array($prefixed_query[4], $created_tables)) {
 								$msgs[] = '&nbsp;&nbsp;Table <b>'.$db->prefix($prefixed_query[4]).'</b> created.';
 								$created_tables[] = $prefixed_query[4];

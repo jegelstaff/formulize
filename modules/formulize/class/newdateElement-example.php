@@ -41,7 +41,7 @@ class formulizeNewDateElement extends formulizeformulize {
         $this->overrideDataType = ""; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
         $this->adminCanMakeRequired = true; // set to true if the webmaster should be able to toggle this element as required/not required
         $this->alwaysValidateInputs = false; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
-        parent::formulizeformulize();
+        parent::__construct();
     }
     
 }
@@ -76,7 +76,7 @@ class formulizeNewDateElementHandler extends formulizeElementsHandler {
     function adminSave($element, $ele_value) {
 		$changed = false;
 		if($ele_value[0] != "YYYY-mm-dd" AND $ele_value[0] != "") {
-			if(ereg_replace("[^A-Z{}]","", $ele_value[0]) === "{TODAY}") {
+			if(preg_replace("[^A-Z{}]","", $ele_value[0]) === "{TODAY}") {
 				$ele_value[0] = $ele_value[0];
 			} else {
 			  $ele_value[0] = date("Y-m-d", strtotime($ele_value[0]));
@@ -113,8 +113,8 @@ class formulizeNewDateElementHandler extends formulizeElementsHandler {
 	   if($ele_value[0] == "" OR $ele_value[0] == "YYYY-mm-dd") { // if there's no value (ie: it's blank) ... OR it's the default value because someone submitted a date field without actually specifying a date, that last part added by jwe 10/23/04
 			$form_ele = new XoopsFormTextDateSelect ($caption, $markupName, 15, "");
 		} else {
-			if (ereg_replace("[^A-Z{}]","", $ele_value[0]) === "{TODAY}") {
-				$number = ereg_replace("[^0-9+-]","", $ele_value[0]);
+			if (preg_replace("[^A-Z{}]","", $ele_value[0]) === "{TODAY}") {
+				$number = preg_replace("[^0-9+-]","", $ele_value[0]);
 				$timestampToUse = mktime(0, 0, 0, date("m") , date("d")+$number, date("Y"));
 			} else {
 				$timestampToUse = strtotime($ele_value[0]);

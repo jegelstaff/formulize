@@ -173,7 +173,7 @@ define("_AM_ELE_DERIVED_DESC", "Selecione um elemento acima para adicioná-lo ne
 define("_AM_ELE_DERIVED_ADD", "Adicionar à formula");
 
 define("_AM_ELE_SELECT_NONE","Nenhum elemento selecionado.");
-define("_AM_ELE_CONFIRM_DELETE","Você tem certeza de que quer excluir este elemento do formulário?<br>Todos os dados associados a este elemento serão também excluídos.");
+define("_AM_ELE_CONFIRM_DELETE","Você tem certeza de que quer excluir este elemento do formulário? Todos os dados associados a este elemento serão também excluídos.");
 
 define("_AM_TITLE","Menu da administração");
 define("_AM_ID","ID");

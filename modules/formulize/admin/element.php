@@ -23,7 +23,7 @@
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
 ##  Author of this file: Freeform Solutions                                  ##
-##  URL: http://www.freeformsolutions.ca/formulize                           ##
+##  URL: http://www.formulize.org                           ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
@@ -166,6 +166,7 @@ if ($_GET['ele_id'] != "new") {
     }
 
     $ele_uitext = $elementObject->getVar('ele_uitext');
+    $ele_uitextshow = $elementObject->getVar('ele_uitextshow');
 } else {
     $fid = intval($_GET['fid']);
     $elementName = "New element";
@@ -176,6 +177,7 @@ if ($_GET['ele_id'] != "new") {
     $ele_value = array();
     $ele_delim = "br";
     $ele_uitext = "";
+    $ele_uitextshow = 0;
     $ele_use_default_when_blank = 0;
     global $xoopsModuleConfig;
     switch($ele_type) {
@@ -210,7 +212,9 @@ if ($_GET['ele_id'] != "new") {
             break;
     }
 
-    $common['ele_req_on'] = removeNotApplicableRequireds($ele_type);
+ $ele_req = removeNotApplicableRequireds($ele_type); // function returns false when the element cannot be required.
+    $common['ele_req_on'] = $ele_req === false ? false : true;
+
     $names['ele_req_no_on'] = " checked";
     $display['ele_display']['all'] = " selected";
     $display['ele_disabled']['none'] = " selected";
@@ -263,6 +267,7 @@ $options = array();
 $options['ele_delim'] = $ele_delim;
 $options['ele_delim_custom_value'] = $ele_delim_custom_value;
 $options['ele_uitext'] = $ele_uitext;
+$options['ele_uitextshow'] = $ele_uitextshow;
 $options['typetemplate'] = "db:admin/element_type_".$ele_type.".html";
 
 // setup various special things per element, including ele_value
@@ -334,11 +339,14 @@ if ($ele_type=='text') {
     if ($caughtfirst) {
         $formtouse = $ele_value[0] ? $ele_value[0] : $firstform; // use the user's selection, unless there isn't one, then use the first form found
         $elementsq = q("SELECT ele_caption, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=" . intval($formtouse) . " AND ele_type != \"areamodif\" AND ele_type != \"grid\" AND ele_type != \"ib\" AND ele_type != \"subform\" ORDER BY ele_order");
+        $options['subformUserFilterElements'][0] = _formulize_NONE;
         foreach($elementsq as $oneele) {
             $options['subformelements'][$oneele['ele_id']] = printSmart($oneele['ele_caption']);
+            $options['subformUserFilterElements'][$oneele['ele_id']] = printSmart($oneele['ele_caption']);
         }
     } else {
         $options['subformelements'][0] = "";
+        $options['subformUserFilterElements'][0] = "";
     }
 
     // compile a list of data-entry screens for this form
@@ -368,14 +376,11 @@ if ($ele_type=='text') {
     $ele_value = formulize_mergeUIText($ele_value, $ele_uitext);
     $options['useroptions'] = $ele_value;
 
-} elseif ($ele_type=="checkbox") {
-    $ele_value = formulize_mergeUIText($ele_value, $ele_uitext);
-    $options['useroptions'] = $ele_value;
-
 } elseif ($ele_type=="select") {
     if ($ele_id == "new") {
         $options['listordd'] = 0;
         $options['multiple'] = 0;
+        $options['multiple_auto'] = 0;
         $ele_value[0] = 6;
         $options['islinked'] = 0;
         $options['formlink_scope'] = array(0=>'all');
@@ -383,6 +388,7 @@ if ($ele_type=='text') {
         $options['listordd'] = $ele_value[0] == 1 ? 0 : 1;
         $options['listordd'] = $ele_value[8] == 1 ? 2 : $options['listordd'];
         $options['multiple'] = $ele_value[1];
+        $options['multiple_auto'] = $ele_value[1];
         if (!is_array($ele_value[2])) {
             $options['islinked'] = 1;
         } else {
@@ -398,6 +404,16 @@ if ($ele_type=='text') {
 
     list($formlink, $selectedLinkElementId) = createFieldList($ele_value[2]);
     $options['linkedoptions'] = $formlink->render();
+    
+    list($optionsLimitByElement, $limitByElementElementId) = createFieldList($ele_value['optionsLimitByElement'], false, false, "elements-ele_value[optionsLimitByElement]", _NONE);
+    $options['optionsLimitByElement'] = $optionsLimitByElement->render();
+    if($limitByElementElementId) {
+        $limitByElementElementObject = $element_handler->get($limitByElementElementId);
+        if($limitByElementElementObject) {
+            $options['optionsLimitByElementFilter'] = formulize_createFilterUI($ele_value['optionsLimitByElementFilter'], "optionsLimitByElementFilter", $limitByElementElementObject->getVar('id_form'), "form-2");
+        }
+    }
+    
 
     // setup the list value and export value option lists, and the default sort order list, and the list of possible default values
     if ($options['islinked']) {
@@ -434,6 +450,14 @@ if ($ele_type=='text') {
             }
             $options['optionDefaultSelectionDefaults'] = $ele_value[13];
             $options['optionDefaultSelection'] = $allLinkedValues; // array with keys as entry ids and values as text
+            
+            // handle additional linked source mapping options...
+            list($thisFormFieldList, $thisFormFieldListSelected) = createFieldList('throwawayvalue', false, $fid, 'throwawayname', 'This Form');
+            $options['mappingthisformoptions'] = $thisFormFieldList->getOptions();
+            list($sourceFormFieldList, $sourceFormFieldListSelected) = createFieldList('throwawayvalue', false, $linkedSourceFid, 'throwawayname', 'Source Form');
+            $options['mappingsourceformoptions'] = $sourceFormFieldList->getOptions();
+            $options['linkedSourceMappings'] = $ele_value['linkedSourceMappings'];
+
         }
     }
     if (!$options['islinked'] OR !$linkedSourceFid) {
@@ -606,7 +630,8 @@ function formulize_mergeUIText($values, $uitext) {
         // don't alter linked selectbox properties
         return $values;
     }
-    if (is_array($value)) {
+    
+    if (is_array($values)) {
         $newvalues = array();
         foreach($values as $key=>$value) {
             if (isset($uitext[$key])) {

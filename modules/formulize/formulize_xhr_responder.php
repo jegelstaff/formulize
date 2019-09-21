@@ -37,6 +37,7 @@
 require_once "../../mainfile.php"; // initialize the xoops stack so we have access to the user object, etc if necessary
 ob_end_clean(); // stop all buffering of output (ie: related to the error logging, and/or xLangauge?)
 include_once "../../header.php";
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
 
 // check that the user who sent this request is the same user we have a session for now, if not, bail
 $sentUid = $_GET['uid'];
@@ -59,6 +60,7 @@ if($op != "check_for_unique_value"
    AND $op != 'get_element_row_html'
    AND $op != 'update_derived_value'
    AND $op != 'validate_php_code'
+   AND $op != 'get_views_for_form'
   ) {
   exit();
 }
@@ -69,6 +71,7 @@ switch($op) {
     $value = $_GET['param1'];
     $element = $_GET['param2'];
     $entry = $_GET['param3'];
+    $leave = $_GET['param4'];
 
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
     $elementObject = $element_handler->get($element);
@@ -77,12 +80,12 @@ switch($op) {
       $data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
       $entry_id = $data_handler->findFirstEntryWithValue($element, $value);
       if(is_numeric($entry_id) AND $entry_id != $entry) {
-        print 'valuefound';
+        print json_encode(array('val'=>'valuefound', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
       } else {
-        print 'valuenotfound';
+        print json_encode(array('val'=>'valuenotfound', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
       }
     } else {
-      print 'invalidelement';
+      print json_encode(array('val'=>'invalidelement', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
     }
     break;
 
@@ -127,6 +130,8 @@ switch($op) {
   case 'get_element_value':
     $handle = $_GET['param1'];
     $entryId = intval($_GET['param3']);
+    $fid = intval($_GET['param4']);
+    $deInstanceCounter = intval($_GET['param5']);
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
     include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
@@ -135,7 +140,7 @@ switch($op) {
     $data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
     $dbValue = $data_handler->getElementValueInEntry($entryId,$handle);
     $preppedValue = prepvalues($dbValue,$handle,$entryId);
-    print getHTMLForList($preppedValue,$handle,$entryId,1);// 1 is a flag to include the icon for switching to an editable element
+    print getHTMLForList($preppedValue,$handle,$entryId,1,0,array(),$fid,0,0,$deInstanceCounter);// 1 is a flag to include the icon for switching to an editable element,two zeros are row and column, which ought to be passed in but we would need them to roundtrip through the whole xhr process?!
     break;
 
   case 'get_element_row_html':
@@ -157,7 +162,7 @@ switch($op) {
         $passedElementId = $keyParts[3];
         $passedElementObject = $element_handler->get($passedElementId);
         $handle = $passedElementObject->getVar('ele_handle');
-        $databaseReadyValue = prepDataForWrite($passedElementObject, $v);
+        $databaseReadyValue = prepDataForWrite($passedElementObject, $v, $_GET['entryId']);
         $databaseReadyValue = $databaseReadyValue === "{WRITEASNULL}" ? NULL : $databaseReadyValue;
             if(substr($v, 0, 9)=="newvalue:") { $sendBackValue[$k] = $databaseReadyValue; }
         $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$passedEntryId][$handle] = $databaseReadyValue;
@@ -170,24 +175,54 @@ switch($op) {
     }
     $elementObject = $element_handler->get($elementId);
     $html = "";
-    if($onetoonekey) {
+    if($onetoonekey AND $entryId != 'new') {
       // the onetoonekey is what changed, not a regular conditional element, so in that case, we need to re-determine the entryId that we should be displaying
       // rebuild entries and fids so it only has the main form entry in it, since we want to get the correct other one-to-one entries back
       $onetooneentries = array($onetoonefid => array($onetooneentries[$onetoonefid][0]));
       $onetoonefids = array($onetoonefid);
       $checkForLinksResults = checkForLinks($onetoonefrid, $onetoonefids, $onetoonefid, $onetooneentries);
       $entryId = $checkForLinksResults['entries'][$elementObject->getVar('id_form')][0];
+      $entryId = $entryId ? $entryId : 0;
+    } elseif($onetoonekey) {
+      // we're supposed to pull in an entry based solely on the value in the conditional element...
+      // what we need is the element in the dependent one to one form that is linked to the main form
+      include_once XOOPS_ROOT_PATH . "/modules/formulize/class/frameworks.php";
+      include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+      $relationship = new formulizeFramework($onetoonefrid);
+      $targetElement = false;
+      foreach($relationship->getVar('links') as $link) {
+        if($link->getVar('form1')==$onetoonefid AND $link->getVar('form2')==$fid AND $link->getVar('relationship')==1) {
+          $sourceElement = $link->getVar('key1');
+          $targetElement = $link->getVar('key2');
+        } elseif($link->getVar('form2')==$onetoonefid AND $link->getVar('form1')==$fid AND $link->getVar('relationship')==1) {
+          $sourceElement = $link->getVar('key2');
+          $targetElement = $link->getVar('key1');
+        }
+        if($targetElement) {
+          $data_handler = new formulizeDataHandler($onetoonefid);
+          if($link->getVar('common')) {
+            $entryId = $data_handler->findFirstEntryWithValue($targetElement, $databaseReadyValue);  
+          } elseif($sourceElement==$passedElementId) {
+            $entryId = $databaseReadyValue;
+          }
+          break;
+        }
+      }
     }
     if(security_check($fid, $entryId)) {
       // "" is framework, ie: not applicable
       $deReturnValue = displayElement("", $elementObject, $entryId, false, null, null, false); // false, null, null, false means it's not a noSave element, no screen, no prevEntry data passed in, and do not render the element on screen
       if(is_array($deReturnValue)) {
+        if($deReturnValue[0] == 'hidden') {
+            if(is_object($deReturnValue[2])) {
+                print $deReturnValue[2]->render();
+            }
+        } else {
         $form_ele = $deReturnValue[0];
+        if($elementObject->getVar('ele_req')) {
+            $form_ele->setRequired();
+        }
         $isDisabled = $deReturnValue[1];
-
-        $label_class = " formulize-label-".$elementObject->getVar("ele_handle");
-        $input_class = " formulize-input-".$elementObject->getVar("ele_handle");
-
         // rendered HTML code below is taken from the formulize classes at the top of include/formdisplay.php
         if($elementObject->getVar('ele_type') == "ib") {// if it's a break, handle it differently...
           $class = ($form_ele[1] != '') ? " class='".$form_ele[1]."'" : '';
@@ -197,18 +232,11 @@ switch($op) {
             $html = "<td colspan='2' $class>&nbsp;</td>";
           }
         } else {
-          $req = !$isDisabled ? intval($elementObject->getVar('ele_req')) : 0;
-          $html = "<td class='head$label_class'>";
-          if (($caption = $form_ele->getCaption()) != '') {
-            $html .= "<div class='xoops-form-element-caption" . ($req ? "-required" : "" ) . "'>"
-                . "<span class='caption-text'>{$caption}</span>"
-                . "<span class='caption-marker'>*</span>"
-                . "</div>";
-          }
-          if (($desc = $form_ele->getDescription()) != '') {
-              $html .= "<div class='xoops-form-element-help'>{$desc}</div>";
-          }
-          $html .= "</td><td class='even$input_class'>" . $form_ele->render() . "</td>";
+          require_once XOOPS_ROOT_PATH."/modules/formulize/include/formdisplay.php"; // need the formulize_themeForm
+		  $html = formulize_themeForm::_drawElementElementHTML($form_ele);
+        }
+        if($html) {
+            $html = trans($html);
         }
         if(count($sendBackValue)>0) {
           // if we wrote any new values in autocomplete boxes, pass them back so we can alter their values in markup so new entries are not created again!
@@ -227,7 +255,9 @@ switch($op) {
         }
       }
     }
+    }
     break;
+
 
     case "update_derived_value":
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
@@ -242,11 +272,12 @@ switch($op) {
     print count($data); // return the number of entries found. when this reaches 0, the client will know to stop calling
     break;
 
+
     case "validate_php_code":
-    if (function_exists("shell_exec")) {
+    if (function_exists("shell_exec") AND trim($_POST["the_code"]) != "") {
         $tmpfname = tempnam(sys_get_temp_dir(), 'FZ');
         file_put_contents($tmpfname, trim($_POST["the_code"]));
-        $output = shell_exec('php -l "'.$tmpfname.'" 2>&1');
+        $output = shell_exec('php -l "'.$tmpfname.'" 2>&1'); // -l is syntax check only - SUPER IMPORTANT!!!
         unlink($tmpfname);
         if (false !== strpos($output, "PHP Parse error")) {
             // remove the second line because detail about the error is on the first line
@@ -255,4 +286,33 @@ switch($op) {
         }
     }
     break;
+
+
+    case "get_views_for_form":
+    //This is to respond to an Ajax request from the file screen_list_entries.html
+    $framework_handler =& xoops_getmodulehandler('frameworks', 'formulize');
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+    include_once XOOPS_ROOT_PATH ."/modules/formulize/class/forms.php";
+
+    $formulizeForm = new formulizeForm();
+
+    list($views, $viewNames, $viewFrids, $viewPublished) = $formulizeForm->getFormViews($_POST['form_id']);
+    $frameworks = $framework_handler->getFrameworksByForm($_POST['form_id']);
+    for ($i = 0; $i <= count($viewNames); $i++) {
+        if(!$viewPublished[$i]) {
+            continue;
+        }
+        if($viewFrids[$i]) {
+            $viewNames[$i] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_IN_FRAME . $frameworks[$viewFrids[$i]]->getVar('name') . ")";
+        } else {
+            $viewNames[$i] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_NO_FRAME . ")";
+        }
+    }
+
+    $array = array_map(null, $views, $viewNames);
+
+    echo json_encode($array);
+    break;
+
+
 }

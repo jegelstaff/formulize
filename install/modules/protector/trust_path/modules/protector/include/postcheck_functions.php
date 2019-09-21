@@ -22,7 +22,7 @@ function protector_postcommon()
 	require_once dirname(dirname(__FILE__)).'/class/protector.php' ;
 	$db =& icms_db_Factory::instance() ;
 	$protector =& Protector::getInstance() ;
-	$protector->setConn( $db->conn ) ;
+	$protector->setConn( $db->pdo ) ;
 	$protector->updateConfFromDb() ;
 	$conf = $protector->getConf() ;
 	if( empty( $conf ) ) return true ; // not installed yet

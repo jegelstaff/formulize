@@ -23,7 +23,7 @@
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
 ##  Author of this file: Freeform Solutions                                  ##
-##  URL: http://www.freeformsolutions.ca/formulize                           ##
+##  URL: http://www.formulize.org                           ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
@@ -53,8 +53,8 @@ if($formObject->getVar('lockedform')) {
 if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mid)) {
   return;
 }
-$screen->setVar('introtext',get_magic_quotes_gpc() ? stripslashes($screens['introtext']) : $screens['introtext']);
-$screen->setVar('thankstext',get_magic_quotes_gpc() ? stripslashes($screens['thankstext']) : $screens['thankstext']);
+$screen->setVar('introtext', $screens['introtext']);
+$screen->setVar('thankstext', $screens['thankstext']);
 
 
 if(!$screen_handler->insert($screen)) {

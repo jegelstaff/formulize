@@ -9,14 +9,23 @@
  * @author	    Sina Asghari(aka stranger) <pesian_stranger@users.sourceforge.net>
  * @version		AVN: $Id: index.php 21047 2011-03-14 15:52:14Z m0nty_ $
  **/
- //removed useless comment. Test commit
 
 /** Need the mainfile */
 include "mainfile.php";
 
 $member_handler = icms::handler('icms_member');
 $group = $member_handler->getUserBestGroup((@is_object(icms::$user) ? icms::$user->getVar('uid') : 0));
-$icmsConfig['startpage'] = $icmsConfig['startpage'][$group];
+
+// added failover to default startpage for the registered users group -- JULIAN EGELSTAFF Apr 3 2017
+$groups = @is_object(icms::$user) ? icms::$user->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+if(($icmsConfig['startpage'][$group] == "" OR $icmsConfig['startpage'][$group] == "--") 
+AND in_array(XOOPS_GROUP_USERS, $groups) 
+AND $icmsConfig['startpage'][XOOPS_GROUP_USERS] != "" 
+AND $icmsConfig['startpage'][XOOPS_GROUP_USERS] != "--") {
+    $icmsConfig['startpage'] = $icmsConfig['startpage'][XOOPS_GROUP_USERS];
+} else {
+    $icmsConfig['startpage'] = $icmsConfig['startpage'][$group];
+}
 
 if (isset($icmsConfig['startpage']) && $icmsConfig['startpage'] != "" && $icmsConfig['startpage'] != "--") {
 	$arr = explode('-', $icmsConfig['startpage']);

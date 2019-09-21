@@ -319,6 +319,8 @@ define("_formulize_ADD_HELP2", "See an entire entry by clicking the <i>View</i> 
 define("_formulize_ADD_HELP3", "Update an entry by changing the values on the right.");
 define("_formulize_ADD_HELP4", "Delete an entry by checking the boxes and clicking the button below.");
 define("_formulize_SUBFORM_VIEW", "View");
+define("_formulize_SUBFORM_FILTER_GO","Go");
+define("_formulize_SUBFORM_FILTER_SEARCH","Search for: ");
 define("_AM_ELE_SUBFORM_NEWENTRY_LABEL", "New entry");
 define("_formulize_SAVE", "Save");
 define("_formulize_SAVE_AND_LEAVE", "Save and Leave");
@@ -331,11 +333,10 @@ define("_formulize_INFO_DONE1", "Click the <i>");
 define("_formulize_INFO_DONE2", "</i> button if you are finished.");
 define("_formulize_INFO_CONTINUE1", "You can update your information below.");
 define("_formulize_INFO_CONTINUE2", "You can make another entry by filling in the form again.");
-define("_formulize_INFO_SAVEBUTTON", "Click the <i>" . _formulize_SAVE . "</i> button to save your changes.<br />Click the "._formulize_SAVE_AND_LEAVE.
-    " button to save your changes and leave the page.");
+define("_formulize_INFO_SAVEBUTTON", "Click the <i>" . _formulize_SAVE . "</i> button to save your changes.");
 define("_formulize_INFO_SAVE1", "Click the <i>");
-define("_formulize_INFO_SAVE2", "</i> button to save your changes.<br />Click the "._formulize_SAVE_AND_LEAVE.
-    " button if you are finished and want to save your changes.");
+define("_formulize_INFO_SAVE2", "</i> button to save your changes.");
+define("_formulize_INFO_SAVEANDLEAVE", "Click the <i>"._formulize_SAVE_AND_LEAVE."</i> button if you want to save your changes and leave this page.");
 define("_formulize_INFO_NOSAVE", "You can review this entry, but you <i>cannot save changes</i>.");
 define("_formulize_INFO_MAKENEW", "You can make a new entry by filling in the form below.");
 
@@ -365,6 +366,8 @@ define("_formulize_DE_ALL", "Entries by all users in all groups");
 define("_formulize_DE_GO", "Apply search terms");
 define("_formulize_DE_MODIFYSCREEN", "Configure this Screen");
 define("_formulize_DE_CHANGECOLS", "Change columns");
+define("_formulize_DE_CLEAR_ALL", "Clear all selected columns");
+define("_formulize_DE_RESET_COLS", "Reset to the initially selected columns");
 define("_formulize_DE_PICKNEWCOLS", "Pick different columns to view");
 define("_formulize_DE_AVAILCOLS", "Available columns:");
 define("_formulize_DE_SHOWALLCOLS", "Click to show/hide more columns");
@@ -541,6 +544,8 @@ define("_formulize_DE_SAVE_SCOPE3_SELF", "Everyone in all groups (no limit)");
 define("_formulize_DE_SAVE_SCOPE4_SELF", "Everyone in: ");
 define("_formulize_DE_SAVE_NOSPECIFICS", "[no specific groups picked]");
 define("_formulize_DE_SAVE_PUBGROUPS", "Publish this view to these groups");
+define("_formulize_DE_SAVE_PUBFILTERS", "Use these elements as filters");
+define("_formulize_DE_SAVE_PUBFILTERS_DESC", "Normally, the visible columns are available as filters/search boxes. If you are making a screen where you want alternative columns to be used, select them here.");
 define("_formulize_DE_SAVE_NOPUB", "[Do not publish this view]");
 define("_formulize_DE_SAVE_LOCKCONTROLS", "Lock the controls?");
 define("_formulize_DE_SAVE_LOCKCONTROLS_HELP1", "<span style=\"font-weight: bold;\">About locking the controls:</span>");
@@ -633,6 +638,7 @@ define("_formulize_DE_NOT_CONTEXTIF", " only if ");
 define("_formluize_DE_NOT_CONTEXTAND", ", and ");
 define("_formulize_DE_NOT_TEMPTEXT", "Use this custom template file: ");
 define("_formulize_DE_NOT_SUBJTEXT", "Use this custom subject line: ");
+define("_formulize_DE_NOT_DIGEST_SUBJECT", "Notification Digest");
 
 // multi-page forms
 define("_formulize_DMULTI_THANKS", "<h1>You're done!</h1><p>Thanks for taking the time to fill in that form.  We really appreciate it.</p>");

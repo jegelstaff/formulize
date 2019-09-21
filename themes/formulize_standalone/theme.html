@@ -31,6 +31,23 @@
 
     <!-- Sheet Css -->
     <link rel="stylesheet" type="text/css" media="all" href="<{$icms_imageurl}><{if isset($icms_rtl) and $icms_rtl}>rtl/<{/if}>style.css" />
+    
+    <script type="text/javascript">
+        jQuery(document).ready(function() {
+            jQuery('#formulizeform input, #formulizeform select, #formulizeform textarea').first().focus();
+            jQuery('#formulizeform input[type="radio"]').keypress(function(e) {
+                var key = String.fromCharCode(e.keyCode).toLowerCase();
+                jQuery('input[name="'+jQuery(this).attr('name')+'"]').each(function() {
+                    if(key == jQuery('label[for='+jQuery(this).attr('id')+']').text()) {
+                        jQuery(this).prop('checked', true).focus().trigger('change');
+                    } 
+                })
+            });
+        });
+    </script>
+    
+    
+    
 </head>
 
 <body id="<{$icms_dirname}>" class="<{$icms_langcode}><{if isset($formulize_screen_id) and $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}>">
@@ -45,7 +62,7 @@
     <div id="xo-canvas"<{if $columns_layout}> class="<{$columns_layout}>"<{/if}>>
         <!-- Header -->
         <div id="xo-header">
-            <div id="xo-headerlogo"><a href="<{xoAppUrl /}>" title=""><img src="<{$icms_imageurl}>img/logo.png" alt="<{$icms_sitename}>" /></a></div>
+            <div id="xo-headerlogo"><a href="<{$xoops_url}>/" title=""><img src="<{$icms_imageurl}>img/logo.png" alt="<{$icms_sitename}>" /></a></div>
             <div id="xo-headerbanner">
                 <!-- Header menu (optional) -->
                 <div id="xo-globalnav">

@@ -104,7 +104,8 @@ switch($op) {
 		icms_loadLanguageFile('core', 'user');
 		$stop .= icms::handler('icms_member_user')->userCheck($login_name, $uname, $email, (!$user->isNew() && $pass == '') ? false : $pass, $vpass, $user->isNew() ? 0 : $user->getVar('uid'));
 
-		if ($user->getVar('uid') != icms::$user->getVar('uid')) {
+        // CHANGE BY JULIAN OCT 21 2018 - USERS CAN UPDATE THEIR OWN PASSWORDS THROUGH ADMIN UI
+		//if ($user->getVar('uid') != icms::$user->getVar('uid')) {
 			if ($pass != '') {
 				$icmspass = new icms_core_Password();
 				$salt = icms_core_Password::createSalt();
@@ -115,9 +116,11 @@ switch($op) {
 				$user->setVar('salt', $salt);
 			}
 			$user->setVar('level', (int)$_POST['level']);
-		}
+		//}
 		$user->setVar('uname', $uname);
 		$user->setVar('login_name', $login_name);
+		//need this for mapping table update
+		$oldemail = $user->getVar('email');
 		$user->setVar('email', $email);
 		if ($icmsConfigAuth['auth_openid'] == 1) {
 			$user->setVar('openid', trim($_POST['openid']));
@@ -154,6 +157,14 @@ switch($op) {
 
 		if (count($errors) == 0) {
 			if ($member_handler->insertUser($user)) {
+
+				//update the user mapping table in case the email was used as an external id (needed for google login)
+				include_once XOOPS_ROOT_PATH."/integration_api.php";
+				Formulize::init();
+				if(!Formulize::updateResourceMapping($oldemail, $email)){
+					$_SESSION['redirect_message'] = 'Could not fully update email. <br>Consult webmaster if this seems to compromise Login with Google functionality.';
+				}
+
 				$profile->setVar('profileid', $user->getVar('uid'));
 				$profile_handler->insert($profile);
 

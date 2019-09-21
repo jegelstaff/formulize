@@ -11,6 +11,7 @@
 
 $xoopsOption['pagetype'] = 'user';
 include 'mainfile.php';
+include_once ICMS_ROOT_PATH . '/include/functions.php';
 
 $op = (isset($_GET['op']))
 	? trim(filter_input(INPUT_GET, 'op', FILTER_SANITIZE_STRING))
@@ -19,6 +20,7 @@ $op = (isset($_GET['op']))
 switch ($op) {
 	default:
 	case 'main':
+	
 		if (!icms::$user) {
 			$xoopsOption['template_main'] = 'system_userform.html';
 			include 'header.php';
@@ -54,6 +56,7 @@ switch ($op) {
 	            'allow_registration' => $icmsConfigUser['allow_register'],
 	            'rememberme' => $icmsConfigUser['remember_me'],
 	            'auth_openid' => $icmsConfigAuth['auth_openid'],
+				'auth_url' => authenticationURL(),
 	            'icms_pagetitle' => _LOGIN
 			));
 			include 'footer.php';
@@ -137,8 +140,10 @@ switch ($op) {
 		break;
 
 	case 'logout':
-		$sessHandler = icms::$session;
-		$sessHandler->sessionClose(icms::$user->getVar('uid'));
+        if (icms::$user) {
+            $sessHandler = icms::$session;
+            $sessHandler->sessionClose(icms::$user->getVar('uid'));
+        }
 		redirect_header(ICMS_URL . '/index.php', 3, _US_LOGGEDOUT . '<br />' . _US_THANKYOUFORVISIT);
 		break;
 

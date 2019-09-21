@@ -1,39 +1,43 @@
 <div class="panel-content content">
-    <div class="form-item">
+
+	<{include file="db:admin/element_linkedoptionlist.html"}>
+
+    <{include file="db:admin/element_options_delimiter_choice.html"}>
+    
+       <div class="form-item">
     <fieldset>
-		<legend><{$smarty.const._AM_ELE_OPT}></legend>
-		<{include file="db:admin/element_optionlist.html}>
-    </div>	
-    <div class="form-item">
-      <fieldset>
-        <legend><{$smarty.const._AM_ELE_DELIM_CHOICE}></legend>
-        <div class="form-radios">
-	        <label for="element-delimit-br"><input type="radio" id="br" name="element_delimit" value="br"/><{$smarty.const._MI_formulize_DELIMETER_BR}></label>
-        </div>
-        <div class="form-radios">
-	        <label for="element-delimit-space"><input type="radio" id="space" name="element_delimit" value="space"/><{$smarty.const._MI_formulize_DELIMETER_SPACE}></label>
-        </div>
-	      <div class="form-radios">
-		      <label for="element-delimit-custom" style="display:inline">
-            <input type="radio" id="custom" name="element_delimit" value="custom"/><{$smarty.const._MI_formulize_DELIMETER_CUSTOM}></label>
-      	    <input type="text" id="element-delim_custom" name="element_delim_custom" value="<{$content.ele_delim_custom_value}>" size="25" maxlength="255"/>
-	      </div>
-      </fieldset>
-    </div>
+		<legend>If the options are linked -- or are {FULLNAMES} or {USERNAMES}</legend>
+		<div class="form-item">
+		<fieldset>
+			<legend>Limit them to values from the groups selected here</legend>
+			<select id="element-formlink_scope" name="element_formlink_scope[]" size="10" multiple>
+			<{html_options options=$content.formlink_scope_options selected=$content.formlink_scope}>
+			</select>
+            <br/><br/>
+            <fieldset>
+                <div class="form-radios">
+                    <label for="elements-ele_value[checkbox_scopelimit]-0"><input type="radio" id="elements-ele_value[checkbox_scopelimit]-0" name="elements-ele_value[checkbox_scopelimit]" value="0"<{if $content.ele_value.checkbox_scopelimit eq 0}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_FORMLINK_SCOPELIMIT_NO}></label>
+                </div>
+                <div class="form-radios"><label for="elements-ele_value[checkbox_scopelimit]-1"><input type="radio" id="elements-ele_value[checkbox_scopelimit]-1" name="elements-ele_value[checkbox_scopelimit]" value="1"<{if $content.ele_value.checkbox_scopelimit eq 1}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_FORMLINK_SCOPELIMIT_YES}></label></div>
+            </fieldset>
+            <fieldset>
+                <div class="form-radios">
+                    <label for="elements-ele_value[checkbox_formlink_anyorall]-0"><input type="radio" id="elements-ele_value[checkbox_formlink_anyorall]-0" name="elements-ele_value[checkbox_formlink_anyorall]" value="0"<{if $content.ele_value.checkbox_formlink_anyorall eq 0}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_FORMLINK_ANYALL_ANY}></label>
+                </div>
+                <div class="form-radios">
+                    <label for="elements-ele_value[checkbox_formlink_anyorall]-1"><input type="radio" id="elements-ele_value[checkbox_formlink_anyorall]-1" name="elements-ele_value[checkbox_formlink_anyorall]" value="1"<{if $content.ele_value.checkbox_formlink_anyorall eq 1}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_FORMLINK_ANYALL_ALL}></label>
+                </div>
+            </fieldset>
+            <div class="description">
+                <{$smarty.const._AM_ELE_FORMLINK_SCOPE_DESC}>
+            </div>
+        </fieldset>
+	</fieldset>
+</div>  
+    
+  <{include file="db:admin/element_linkedfilter.html"}>
+  
+  <{include file="db:admin/element_linkedsortoptions.html"}>
   
 </div>
 
-
-<script type='text/javascript'>
-
-$("#element-delimit-custom").click(function () {
-  $("#element-delim_custom").focus();
-});
-
-$("#element-delim_custom").click(function () {
-  $("#custom").attr("checked", "checked"); 
-});
-
-$("#<{$content.ele_delim}>").attr('checked',1);
-
-</script>

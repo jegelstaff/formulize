@@ -41,9 +41,12 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 class formulizeTemplateScreen extends formulizeScreen {
 
-    function formulizeTemplateScreen() {
-        $this->formulizeScreen();
+    function __construct() {
+        parent::__construct();
         $this->initVar("custom_code", XOBJ_DTYPE_TXTAREA);
+        $this->initVar("savebuttontext", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
+        $this->initVar("donebuttontext", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
+        $this->initVar("donedest", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
         $this->initVar("template", XOBJ_DTYPE_TXTAREA);
     }
 }
@@ -55,7 +58,7 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
     const FORMULIZE_CSS_FILE = "/modules/formulize/templates/css/formulize.css";
     const FORMULIZE_JS_FILE = "/modules/formulize/libraries/formulize.js";
 
-    function formulizeTemplateScreenHandler(&$db) {
+    function __construct(&$db) {
         $this->db =& $db;
     }
 
@@ -81,11 +84,11 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
         $screen->assignVar('sid', $sid);
 
         if (!$update) {
-            $sql = sprintf("INSERT INTO %s (sid, custom_code, template) VALUES (%u, %s, %s)", $this->db->prefix('formulize_screen_template'),
-                $screen->getVar('sid'), formulize_db_escape($screen->getVar('custom_code')), formulize_db_escape($screen->getVar('template')));
+            $sql = sprintf("INSERT INTO %s (sid, custom_code, template, donedest, savebuttontext, donebuttontext) VALUES (%u, %s, %s, %s, %s, %s)", $this->db->prefix('formulize_screen_template'),
+                $screen->getVar('sid'), $this->db->quoteString(formulize_db_escape($screen->getVar('custom_code'))), $this->db->quoteString(formulize_db_escape($screen->getVar('template'))), $this->db->quoteString(formulize_db_escape($screen->getVar('donedest'))), $this->db->quoteString(formulize_db_escape($screen->getVar('savebuttontext'))), $this->db->quoteString(formulize_db_escape($screen->getVar('donebuttontext'))));
         } else {
-            $sql = sprintf("UPDATE %s SET custom_code = %s, template = %s WHERE sid = %u", $this->db->prefix('formulize_screen_template'),
-                formulize_db_escape($screen->getVar('custom_code')), formulize_db_escape($screen->getVar('template')), $sid);
+            $sql = sprintf("UPDATE %s SET custom_code = %s, template = %s, donedest = %s, savebuttontext = %s, donebuttontext = %s WHERE sid = %u", $this->db->prefix('formulize_screen_template'),
+                $this->db->quoteString(formulize_db_escape($screen->getVar('custom_code'))), $this->db->quoteString(formulize_db_escape($screen->getVar('template'))), $this->db->quoteString(formulize_db_escape($screen->getVar('donedest'))), $this->db->quoteString(formulize_db_escape($screen->getVar('savebuttontext'))), $this->db->quoteString(formulize_db_escape($screen->getVar('donebuttontext'))), $sid);
         }
         $result = $this->db->query($sql);
         if (!$result) {
@@ -127,7 +130,15 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
     }
 
 
-    function render($screen) {
+    function render($screen, $entry_id, $settings = "") {
+        
+        if(!security_check($screen->getVar('fid'), $entry_id)) {
+            print "<p>You do not have permission to view this entry in the form</p>";
+            return;
+        }
+        
+        // SOME STANDARDS FOR HOW TO HANDLE 'SAVE' AND 'SAVE AND LEAVE' BUTTONS AND THE DONE DEST NEED TO BE DEVISED FOR TEMPLATE SCREENS!!
+        
         global $xoTheme;
         if($xoTheme) {
             $xoTheme->addStylesheet(self::FORMULIZE_CSS_FILE);
@@ -138,19 +149,39 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
         $template_filename = $this->template_filename($screen);
 
         if (file_exists($custom_code_filename) and file_exists($template_filename)) {
-            $vars = $this->run_template_php_code($custom_code_filename);
+            $vars = $this->run_template_php_code($screen, $custom_code_filename, $entry_id, $settings);
             global $xoopsTpl;
             foreach ($vars as $key => $value) {
                 $xoopsTpl->assign($key, $value);
             }
             $xoopsTpl->display("file:".$template_filename);
+            // we need to put other code in here to persist $settings if any!!
         } else {
             echo "<p>Error: specified screen template does not exist.</p>";
         }
     }
 
 
-    function run_template_php_code($code_filename) {
+    function run_template_php_code($screen, $code_filename, $entry_id, $settings) {
+        
+        $saveButton = '<input type="button" class="formButton" name="submitx" id="submitx" onclick="javascript:validateAndSubmit();" value="'.htmlspecialchars(strip_tags($screen->getVar('savebuttontext'))).'">';
+        $doneButton = '<input type="button" class="formButton" name="submit_save_and_leave" id="submit_save_and_leave" value="'.htmlspecialchars(strip_tags($screen->getVar('donebuttontext'))).'" onclick="javascript:validateAndSubmit(\'leave\');">';
+        $doneDest = $screen->getVar('donedest');
+        if(!$doneDest) {
+            $doneDest = getCurrentURL();
+        } elseif(!strstr($doneDest, XOOPS_URL)) {
+            $doneDest = XOOPS_URL."$doneDest";
+        }
+        
+        // make this a configuration option on the Templates tab!!!
+        $templateScreenData = getData('', $screen->getVar('fid'), $entry_id);
+        $form_handler = xoops_getmodulehandler('forms', 'formulize');
+        $formObject = $form_handler->get($screen->getVar('fid'));
+        foreach($formObject->getVar('elementHandles') as $thisHandle) {
+            $$thisHandle = display($templateScreenData[0], $thisHandle);    
+        }
+        $entry = $templateScreenData[0];
+        
         include_once($code_filename);
         return get_defined_vars();
     }

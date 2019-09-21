@@ -66,9 +66,9 @@
                         "7"=>array("R"=>224,"G"=>176,"B"=>46,"Alpha"=>100));
 
    /* Class creator */
-   function pData()
+   function __construct()
     {
-     $this->Data = "";
+     $this->Data = array();
      $this->Data["XAxisDisplay"]	= AXIS_FORMAT_DEFAULT;
      $this->Data["XAxisFormat"]		= NULL;
      $this->Data["XAxisName"]		= NULL;
@@ -774,7 +774,7 @@
 
    /* Convert a string to a single elements array */
    function convertToArray($Value)
-    { $Values = ""; $Values[] = $Value; return($Values); }
+    { $Values = array($Value); return($Values); }
 
    /* Class string wrapper */
    function __toString()

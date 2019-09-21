@@ -59,17 +59,32 @@ if (!defined("XOOPS_MAINFILE_INCLUDED")) {
 	// AS DETERMINED FROM FIRST PRINCIPLES:
 	if (!defined("SITE_BASE_URL")) {
         # if this code is in a subfolder of the website, figure out what the subfolder url is
-        $doc_root_len = strlen($_SERVER["DOCUMENT_ROOT"]);
-        if (strlen(XOOPS_ROOT_PATH) > $doc_root_len) {
-		$base_url = str_replace('\\', '/', substr(XOOPS_ROOT_PATH, $doc_root_len));
-		define("SITE_BASE_URL", $base_url);
+        if (XOOPS_ROOT_PATH != $_SERVER["DOCUMENT_ROOT"]) {
+            // construct the SITE_BASE_URL portion from the part of the root path that is different from the shared stem with the document root
+            // ie: root path could be /var/subsite/sitename and document root could be /var/www
+            // or could be /var/www/sitename vs /var/www
+            // we need to extract /subsite/sitename, or /sitename
+            $slashType = strstr(XOOPS_ROOT_PATH,"/") ? "/" : "\\";
+            $slashPos = 0;
+            $base_url = "";
+            while($nextSlashPos = strpos(XOOPS_ROOT_PATH.$slashType,$slashType,$slashPos+1)) {
+                $rpPart = substr(XOOPS_ROOT_PATH,$slashPos+1,$nextSlashPos-$slashPos-1);
+                $drPart = substr($_SERVER["DOCUMENT_ROOT"],$slashPos+1,$nextSlashPos-$slashPos-1);
+                if($rpPart == $drPart) {
+                    $slashPos = $nextSlashPos; // look for the next part of the path
+                } else {
+                    $base_url = str_replace('\\','/',substr(XOOPS_ROOT_PATH,$slashPos));
+                    break;
+                }
+            }
+            define("SITE_BASE_URL", $base_url);
+        } else {
+            define("SITE_BASE_URL", "");
         }
-        else
-		define("SITE_BASE_URL", "");
 	}
 
 	$PortNum = (80 == $_SERVER["SERVER_PORT"]) ? "" : ":" . $_SERVER["SERVER_PORT"];
-	define('XOOPS_URL', (443 == $_SERVER["SERVER_PORT"] ? "https://" : "http://") . $_SERVER['SERVER_NAME'] . $PortNum . SITE_BASE_URL );
+	define('XOOPS_URL', ((443 == $_SERVER["SERVER_PORT"] OR (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) AND $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https')) ? "https://" : "http://") . $_SERVER['SERVER_NAME'] . $PortNum . SITE_BASE_URL );
 
 	define('XOOPS_CHECK_PATH', 0);
 	// Protect against external scripts execution if safe mode is not enabled
@@ -94,7 +109,9 @@ if (!defined("XOOPS_MAINFILE_INCLUDED")) {
 
 	// Database
 	// Choose the database to be used
-	define('XOOPS_DB_TYPE', 'mysql');
+	define('XOOPS_DB_TYPE', 'pdo.mysql');
+
+	define('XOOPS_DB_DSN', 'host='.SDATA_DB_HOST.';dbname='.SDATA_DB_NAME.';charset=utf8'); 
  
     // Set the database charset if applicable
     if (defined('XOOPS_DB_CHARSET')) die();

@@ -23,7 +23,7 @@
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
 ##  Author of this file: Freeform Solutions                                  ##
-##  URL: http://www.freeformsolutions.ca/formulize                           ##
+##  URL: http://www.formulize.org                           ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
@@ -59,7 +59,7 @@ if ($aid == 0) {
 $index = 0;
 foreach ($appLinks as $menulink) {
     $menulinks[$index]['menu_id'] = $menulink->getVar('menu_id'); //Oct 2013 W. R.
-    $menulinks[$index]['url'] = $menulink->getVar('url') ? $menulink->getVar('url') : "http://";
+    $menulinks[$index]['url'] = $menulink->getVar('url', 'raw') ? $menulink->getVar('url', 'raw') : "http://";
     $menulinks[$index]['link_text'] = $menulink->getVar('link_text');
     $menulinks[$index]['screen'] = $menulink->getVar('screen');
     $menulinks[$index]['rank'] = $menulink->getVar('rank');
@@ -86,7 +86,7 @@ foreach($allFormObjects as $thisFormObject) {
         $forms['sid='.$screen->getVar('sid')] = "&nbsp;&nbsp;   ". $screen->getVar('title');
     }
 }
-$forms['url'] = "An external URL";
+$forms['url'] = "A URL";
 
 
 // get list of group ids that have no default screen set
@@ -154,7 +154,11 @@ $relationships = $framework_handler->formatFrameworksAsRelationships($allRelatio
 
 $all_screens = array();
 $screen_types = array("form" => "Single Page", "multiPage" => "Multi-page", "listOfEntries" => "List of Entries");
-foreach ($screen_handler->getObjects(null, null) as $key => $value) {
+$screen_sort = $_GET['sort'];
+$screen_sort_order = $_GET['order'];
+$screen_page = intval($_GET['nav']);
+$screen_limit = 20;
+foreach ($screen_handler->getObjects(null, null, $aid, $screen_sort, $screen_sort_order, true, $screen_page, $screen_limit) as $key => $value) {
     $sid = $value->getVar("sid");
     $all_screens[$sid] = array(
         'sid'       => $sid,
@@ -164,6 +168,60 @@ foreach ($screen_handler->getObjects(null, null) as $key => $value) {
         'type'      => $screen_types[$value->getVar("type")],
     );
 }
+
+$common['screenSort'] = $screen_sort;
+$common['order'] = $screen_sort_order;
+if ($screen_sort_order == "DESC") {
+	$common['nextOrder'] = "ASC";
+} else {
+	$common['nextOrder'] = "DESC";
+}
+
+$screen_page = $screen_page < 1 ? 1 : $screen_page;
+$resultNum = count($screen_handler->getObjects(null, null, $aid, $screen_sort, $screen_sort_order));
+$pageNumbers = ceil($resultNum / $screen_limit);
+
+$pageNav = "";
+
+if($pageNumbers > 1) {
+	if($pageNumbers > 9) {
+		if($screen_page < 6) {
+			$firstDisplayPage = 1;
+			$lastDisplayPage = 9;
+		} elseif($screen_page + 4 > $pageNumbers) { // too close to the end
+			$firstDisplayPage = $screen_page - 4 - ($screen_page+4-$pageNumbers); // the previous four, plus the difference by which we're over the end when we add 4
+			$lastDisplayPage = $pageNumbers;
+		} else { // somewhere in the middle
+			$firstDisplayPage = $screen_page - 4;
+			$lastDisplayPage = $screen_page + 4;
+		}
+	} else {
+		$firstDisplayPage = 1;
+		$lastDisplayPage = $pageNumbers;
+	}
+
+	$pageNav .= "<p><div class=\"formulize-page-navigation\"><span class=\"page-navigation-label\">". _AM_FORMULIZE_LOE_ONPAGE."</span>";
+	if ($screen_page > 1) {
+		$pageNav .= "<a href=\"?page=application&aid=". $aid ."&tab=screens&sort=". $screen_sort ."&order=". $screen_sort_order ."&nav=". ($screen_page - 1) ."\" class=\"page-navigation-prev\" >"._AM_FORMULIZE_LOE_PREVIOUS."</a>";
+	}
+	if($firstDisplayPage > 1) {
+		$pageNav .= "<a href=\"?page=application&aid=". $aid ."&tab=screens&sort=". $screen_sort ."&order=". $screen_sort_order ."&nav=1\">1</a><span class=\"page-navigation-skip\">—</span>";
+	}
+	for($i = $firstDisplayPage; $i <= $lastDisplayPage; $i++) {
+		$pageNav .= "<a href=\"?page=application&aid=". $aid ."&tab=screens&sort=". $screen_sort ."&order=". $screen_sort_order ."&nav=". $i ."\" class=\"page-navigation-active\">$i</a>";
+	}
+	if($lastDisplayPage < $pageNumbers) {
+		$lastPageStart = ($pageNumbers * $numberPerPage) - $numberPerPage;
+		$pageNav .= "<span class=\"page-navigation-skip\">—</span><a href=\"?page=application&aid=". $aid ."&tab=screens&sort=". $screen_sort ."&order=". $screen_sort_order ."&nav=". $pageNumbers ."\">" . $pageNumbers . "</a>";
+	}
+	if ($screen_page < $pageNumbers) {
+		$pageNav .= "<a href=\"?page=application&aid=". $aid ."&tab=screens&sort=". $screen_sort ."&order=". $screen_sort_order ."&nav=". ($screen_page + 1) ."\" class=\"page-navigation-next\">"._AM_FORMULIZE_LOE_NEXT."</a>";
+	}
+	$pageNav .= "</div><span class=\"page-navigation-total\">".
+			sprintf(_AM_FORMULIZE_LOE_TOTAL, $resultNum)."</span></p>\n";
+}
+
+$common['pageNav'] = $pageNav;
 
 $common['aid'] = $aid;
 $common['name'] = $appName;

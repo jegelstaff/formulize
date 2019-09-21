@@ -23,7 +23,7 @@
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
 ##  Author of this file: Freeform Solutions                                  ##
-##  URL: http://www.freeformsolutions.ca/formulize                           ##
+##  URL: http://www.formulize.org                           ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
@@ -109,9 +109,9 @@ if ($screen_id != 'new') {
 if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   // display data
   $templates = array();
-  $templates['toptemplate'] = $screen->getTemplate('toptemplate');
-  $templates['bottomtemplate'] = $screen->getTemplate('bottomtemplate');
-  $templates['listtemplate'] = $screen->getTemplate('listtemplate');
+  $templates['toptemplate'] = str_replace("&", "&amp;", $screen->getTemplate('toptemplate'));
+  $templates['bottomtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('bottomtemplate'));
+  $templates['listtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('listtemplate'));
 
   // view data
   // gather all the available views
@@ -125,33 +125,53 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $viewNames = $formObj->getVar('viewNames');
   $viewFrids = $formObj->getVar('viewFrids');
   $viewPublished = $formObj->getVar('viewPublished');
-  $defaultViewOptions = array();
+  $viewOptions = array();
   $limitViewOptions = array();
-  $defaultViewOptions['blank'] = _AM_FORMULIZE_SCREEN_LOE_BLANK_DEFAULTVIEW;
-  $defaultViewOptions['mine'] = _AM_FORMULIZE_SCREEN_LOE_DVMINE;
-  $defaultViewOptions['group'] = _AM_FORMULIZE_SCREEN_LOE_DVGROUP;
-  $defaultViewOptions['all'] = _AM_FORMULIZE_SCREEN_LOE_DVALL;
+  $viewOptions['blank'] = _AM_FORMULIZE_SCREEN_LOE_BLANK_DEFAULTVIEW;
+  $viewOptions['mine'] = _AM_FORMULIZE_SCREEN_LOE_DVMINE;
+  $viewOptions['group'] = _AM_FORMULIZE_SCREEN_LOE_DVGROUP;
+  $viewOptions['all'] = _AM_FORMULIZE_SCREEN_LOE_DVALL;
   for($i=0;$i<count($views);$i++) {
       if (!$viewPublished[$i]) { continue; }
-      $defaultViewOptions[$views[$i]] = $viewNames[$i];
+      $viewOptions[$views[$i]] = $viewNames[$i];
       if ($viewFrids[$i]) {
-          $defaultViewOptions[$views[$i]] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_IN_FRAME . $frameworks[$viewFrids[$i]]->getVar('name') . ")";
+          $viewOptions[$views[$i]] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_IN_FRAME . (is_object($frameworks[$viewFrids[$i]]) ? $frameworks[$viewFrids[$i]]->getVar('name') : "Deleted??") . ")";
       } else {
-          $defaultViewOptions[$views[$i]] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_NO_FRAME . ")";
+          $viewOptions[$views[$i]] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_NO_FRAME . ")";
       }
   }
   $limitViewOptions['allviews'] = _AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEWLIMIT;
-  $limitViewOptions += $defaultViewOptions;
+  $limitViewOptions += $viewOptions;
   unset($limitViewOptions['blank']);
   // get the available screens
   $screen_handler = xoops_getmodulehandler('screen', 'formulize');
   $criteria_object = new CriteriaCompo(new Criteria('type','multiPage'));
   $criteria_object->add(new Criteria('type','form'), 'OR');
+  $criteria_object->add(new Criteria('type','template'), 'OR');
   $viewentryscreenOptionsDB = $screen_handler->getObjects($criteria_object, $form_id);
   $viewentryscreenOptions["none"] = _AM_FORMULIZE_SCREEN_LOE_VIEWENTRYSCREEN_DEFAULT;
   foreach($viewentryscreenOptionsDB as $thisViewEntryScreenOption) {
-      $viewentryscreenOptions[$thisViewEntryScreenOption->getVar('sid')] = printSmart(trans($thisViewEntryScreenOption->getVar('title')), 100);
+      $viewentryscreenOptions[$thisViewEntryScreenOption->getVar('sid')] = trans($formObj->getVar('title'))." &mdash; ".printSmart(trans($thisViewEntryScreenOption->getVar('title')), 100);
   }
+  
+  // if a relationship is in effect, get the screens on the other forms
+  if($selectedFramework) {
+    $parsedFids = array($form_id=>$form_id);
+    $frameworkObject = $frameworks[$selectedFramework];
+    foreach($frameworkObject->getVar('links') as $linkObject) {
+        foreach(array($linkObject->getVar('form1'), $linkObject->getVar('form2')) as $candidateFid) {
+            if(!isset($parsedFids[$candidateFid])) {
+                $candidateFormObj = $form_handler->get($candidateFid);
+                $viewentryscreenOptionsDB = $screen_handler->getObjects($criteria_object, $candidateFid);
+                foreach($viewentryscreenOptionsDB as $thisViewEntryScreenOption) {
+                    $viewentryscreenOptions[$thisViewEntryScreenOption->getVar('sid')] = trans($candidateFormObj->getVar('title'))." &mdash; ".printSmart(trans($thisViewEntryScreenOption->getVar('title')), 100);
+                }
+                $parsedFids[$candidateFid] = $candidateFid;
+            }
+        }
+    }
+  }
+  
     // get all the pageworks page IDs and include them too with a special prefix that will be picked up when this screen is rendered, so we don't confuse "view entry screens" and "view entry pageworks pages" -- added by jwe April 16 2009
     if (file_exists(XOOPS_ROOT_PATH."/modules/pageworks/index.php")) {
         global $xoopsDB;
@@ -162,21 +182,21 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
             $viewentryscreenOptions["p".$pageworksArray['page_id']] = _AM_FORMULIZE_SCREEN_LOE_VIEWENTRYPAGEWORKS . " -- " . printSmart(trans($pageworksName), 85);
         }
     }
-  // create the template information
-  $entries = array();
-  $entries['defaultviewoptions'] = $defaultViewOptions;
-  $entries['defaultview'] = $screen->getVar('defaultview');
-  $entries['usecurrentviewlist'] = $screen->getVar('usecurrentviewlist');
-  $entries['limitviewoptions'] = $limitViewOptions;
-  $entries['limitviews'] = $screen->getVar('limitviews');
-  $entries['useworkingmsg'] = $screen->getVar('useworkingmsg');
-  $entries['usescrollbox'] = $screen->getVar('usescrollbox');
-  $entries['entriesperpage'] = $screen->getVar('entriesperpage');
-  $entries['viewentryscreenoptions'] = $viewentryscreenOptions;
-  $entries['viewentryscreen'] = $screen->getVar('viewentryscreen');
-  $entries['frid'] = $settings['frid'];
-
-  // headings data
+    
+    
+    $screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
+    $screen = $screen_handler->get($screen_id);
+    $adv = $screen->getVar('advanceview');
+    
+    $advanceViewSelected = array();
+    $index = 0;
+    foreach($adv as $id=>$arr) {
+        $advanceViewSelected[$index]["column"] = $arr[0];
+        $advanceViewSelected[$index]["text"] = $arr[1];
+        $advanceViewSelected[$index]["sort"] = $arr[2];
+        $index++;
+    }
+    
   //set options for all elements in entire framework
   //also, collect the handles from a framework if any, and prep the list of possible handles/ids for the list template
   if ($selectedFramework and isset($frameworks[$selectedFramework])) {
@@ -212,6 +232,26 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   }
   $templates['listtemplatehelp'] = $listTemplateHelp;
 
+  $entries = array();
+  $entries['advanceviewoptions'] = array(0=>_AM_ELE_SELECT_NONE)+$elementOptions; // add a 0 value default to the element list
+  $entries['advanceview'] = $advanceViewSelected;
+  $entries['defaultview'] = $screen->getVar('defaultview');
+  // Convert to arrays if a legacy value
+  if(!is_array($entries['defaultview'])) {
+    $entries['defaultview'] = array(XOOPS_GROUP_USERS => $entries['defaultview']);
+  }
+  $entries['viewoptions'] = $viewOptions;
+  $entries['usecurrentviewlist'] = $screen->getVar('usecurrentviewlist');
+  $entries['limitviewoptions'] = $limitViewOptions;
+  $entries['limitviews'] = $screen->getVar('limitviews');
+  $entries['useworkingmsg'] = $screen->getVar('useworkingmsg');
+  $entries['usescrollbox'] = $screen->getVar('usescrollbox');
+  $entries['entriesperpage'] = $screen->getVar('entriesperpage');
+  $entries['viewentryscreenoptions'] = $viewentryscreenOptions;
+  $entries['viewentryscreen'] = $screen->getVar('viewentryscreen');
+  $entries['frid'] = $settings['frid'];
+  
+  // headings data
   $headings = array();
   $headings['useheadings'] = $screen->getVar('useheadings');
   $headings['repeatheaders'] = $screen->getVar('repeatheaders');
@@ -354,9 +394,9 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
 
     // template data
     $multipageTemplates = array();   // Added by Gordon Woodmansey, 29-08-2012
-    $multipageTemplates['toptemplate'] = $screen->getTemplate('toptemplate');
-    $multipageTemplates['elementtemplate'] = $screen->getTemplate('elementtemplate');
-    $multipageTemplates['bottomtemplate'] = $screen->getTemplate('bottomtemplate');
+    $multipageTemplates['toptemplate'] = str_replace("&", "&amp;", $screen->getTemplate('toptemplate'));
+    $multipageTemplates['elementtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('elementtemplate'));
+    $multipageTemplates['bottomtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('bottomtemplate'));
 
     // pages data
     $multipagePages = array();
@@ -404,6 +444,9 @@ if ($screen_id != "new" && $settings['type'] == 'template') {
     $templates = array();
     $templates['custom_code'] = $screen_handler->getCustomCode($screen);
     $templates['template'] = $screen_handler->getTemplateHtml($screen);
+    $templates['donedest'] = $screen->getVar('donedest');
+    $templates['savebuttontext'] = $screen->getVar('savebuttontext');
+    $templates['donebuttontext'] = $screen->getVar('donebuttontext');
 }
 
 
@@ -413,6 +456,7 @@ $common['title'] = $screenName; // oops, we've got two copies of this data float
 $common['sid'] = $screen_id;
 $common['fid'] = $form_id;
 $common['aid'] = $aid;
+$common['uid'] = $xoopsUser->getVar('uid');
 
 // generate a group list for use with the custom buttons
 $sql = "SELECT name, groupid FROM ".$xoopsDB->prefix("groups")." ORDER BY groupid";
@@ -507,6 +551,11 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
 
 if ($screen_id != "new" && $settings['type'] == 'template') {
     $adminPage['tabs'][] = array(
+        'name'      => _AM_FORM_SCREEN_TEMPLATES_OPTIONS,
+        'template'  => "db:admin/screen_template_options.html",
+        'content'   => $templates + $common
+    );
+    $adminPage['tabs'][] = array(
         'name'      => _AM_FORM_SCREEN_TEMPLATES,
         'template'  => "db:admin/screen_template_templates.html",
         'content'   => $templates + $common
@@ -524,3 +573,4 @@ $breadcrumbtrail[2]['text'] = $appName;
 $breadcrumbtrail[3]['url'] = "page=form&aid=$aid&fid=$form_id&tab=screens";
 $breadcrumbtrail[3]['text'] = $formName;
 $breadcrumbtrail[4]['text'] = $screenName;
+

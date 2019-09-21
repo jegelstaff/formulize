@@ -84,9 +84,16 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/libraries/pChart/class/pImage
  * @param $graphOptions the graph parameters passed in by user!
  */
 function displayGraph($graphType, $fid, $frid, $labelElement, $dataElement, $operation, $graphOptions) {
+	list($dataPoints, $dataElement, $labelElement) = gatherGraphData($fid, $frid, $filter, $labelElement, $dataElement, $operation);
 	switch ($graphType) {
 		case "Bar" :
-			displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $graphOptions);
+			displayBarGraph($dataPoints, $labelElement, $dataElement, $graphOptions);
+			break;
+		case "Radar" :
+			displayRadarGraph($dataPoints, $labelElement, $dataElement, $graphOptions);
+			break;
+		case "Line" :
+			displayLineGraph($dataPoints, $labelElement, $dataElement, $graphOptions);
 			break;
 		default :
 			echo "Sorry, the graph type \"$graphType\" is not supported at the moment!";
@@ -95,28 +102,56 @@ function displayGraph($graphType, $fid, $frid, $labelElement, $dataElement, $ope
 }
 
 /**
- * Helper method to draw bar graph
- * parameters have same meaning as displayGraph's parameters
+ * Helper method to query the database and process data for display in a graph.
+ * @param $fid the id of the form where the data is coming from
+ * @param $frid the id of the relation(relating fid's form to another form) $frid == fid if no relation is specified
+ * @param $labelElement the field in the form to be used as label
+ * @param $dataElement the field in the form to be used as data to graph
+ * @param $operation the operation to be used on raw data
  */
-function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $graphOptions) {
-	// getting data from DB
+function gatherGraphData($fid, $frid, $filter, $labelElement, $dataElement, $operation) {
 	if (is_int($frid) && $frid > 0) {
-		$dbData = getData($frid, $fid);
+		$dbData = getData($frid, $fid, $filter);
 	} else {
-		$dbData = getData("", $fid);
+		$dbData = getData("", $fid, $filter);
 	}
 
+	if (!is_array($dataElement)) {
+		$dataElement = array($dataElement);
+	}
+	if (!is_array($labelElement)) {
+		$labelElement = array($labelElement);
+	}
+
+	$completeDataRawValue = array();
+	$completeLabelRawValue = array();
+	$dataPoints = array();
 	foreach ($dbData as $entry) {
 		// mayor - OR array of mayors if there's more than one in the dataset, depending on the one-to-may in a relationship
-		$dataRawValue = display($entry, $dataElement);
+		foreach($dataElement as $thisDataElement) {
+			$dataRawValue = display($entry, $thisDataElement);
+		}
 		// city_name;
-		$labelRawValue = display($entry, $labelElement);
+		foreach($labelElement as $thisLabelElement) {
+			$labelRawValue = display($entry, $thisLabelElement);
+		}
 		if (!is_array($dataRawValue) && $dataRawValue) {
 			$dataRawValue = array($dataRawValue);
 		}
 		if (!is_array($labelRawValue)) {
 			$labelRawValue = array($labelRawValue);
 		}
+		$completeDataRawValue[] = $dataRawValue;
+		$completeLabelRawValue[] = $labelRawValue;
+		
+		// futureworx data, would end up looking like this:
+		/*
+		$completeLabelRawValue[0] = 'Presentation'; // I think actually, in this case we would end up with a 5 instead of Presentation, because the value of the field is 5, and the value seems to be what they're packing up...but we want the caption...hmmm
+		$completeDataRawValue[0] = 5;
+		$completeLabelRawValue[1] = 'Teamwork';
+		$completeDataRawValue[1] = 3;
+		*/
+		// this needs to be modified so that....see comment at the end...
 		foreach ($labelRawValue as $thisLabelValue) {
 			if ($dataPoints[$thisLabelValue]) {
 				$dataPoints[$thisLabelValue] = array_merge($dataPoints[$thisLabelValue], $dataRawValue);
@@ -124,6 +159,11 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 				$dataPoints[$thisLabelValue] = $dataRawValue;
 			}
 		}
+		// output would be:
+		/*
+		$dataPoints['presentation'] = 5;
+		$dataPoints['teamwork'] = 3;
+		*/
 	}
 
 	// Oct 29 Update for column heading for graphs:
@@ -173,9 +213,18 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 			return;
 	}
 	
-	// print("dataElement: ".$dataElement." ");
-	// print("labelElement: ".$labelElement." ");
+    return array($dataPoints, $dataElement, $labelElement);
+}
 
+
+/**
+ * Helper method to draw bar graph
+ * parameters have same meaning as displayGraph's parameters
+ */
+function displayBarGraph($dataPoints, $labelElement, $dataElement, $graphOptions) {
+
+	$graphFileName = uniqueGraphFileName($dataPoints, $labelElement, $dataElement, $graphOptions);
+	if (!file_exists(XOOPS_ROOT_PATH.$graphFileName)) {
 	
 	// process the graph options
 	// these defaults will be used, unless overwritten by values from the $graphOptions array
@@ -295,9 +344,6 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 		}
 	}
 	
-	
-	
-
 	// Code straightly copied from pChart documentation to draw the graph
 	$myData = new pData();
 	$myData -> addPoints(array_values($dataPoints), $dataElement);
@@ -309,10 +355,10 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 	// $myData -> setAxisDisplay(0, AXIS_FORMAT_CUSTOM, "YAxisFormat");
 
 	/* Create the pChart object */
-	$myPicture = new pImage($IMAGE_WIDTH, $IMAGE_HEIGHT, $myData);
-	$myPicture -> drawGradientArea(0, 0, $IMAGE_WIDTH, $IMAGE_HEIGHT, DIRECTION_VERTICAL, array("StartR" => $BACKGROUND_R, "StartG" => $BACKGROUND_G, "StartB" => $BACKGROUND_B, "EndR" => $BACKGROUND_R, "EndG" => $BACKGROUND_G, "EndB" => $BACKGROUND_B, "Alpha" => 100));
-	$myPicture->drawGradientArea(0,0,500,500,DIRECTION_HORIZONTAL,array("StartR"=>240,"StartG"=>240,"StartB"=>240,"EndR"=>180,"EndG"=>180,"EndB"=>180,"Alpha"=>30)); 
-	$myPicture -> setFontProperties(array("FontName" => "modules/formulize/libraries/pChart/fonts/arial.ttf", "FontSize" => 8));
+		$chartImage = new pImage($IMAGE_WIDTH, $IMAGE_HEIGHT, $myData);
+		$chartImage->drawGradientArea(0, 0, $IMAGE_WIDTH, $IMAGE_HEIGHT, DIRECTION_VERTICAL, array("StartR"=>$BACKGROUND_R, "StartG"=>$BACKGROUND_G, "StartB"=>$BACKGROUND_B, "EndR"=>$BACKGROUND_R, "EndG"=>$BACKGROUND_G, "EndB"=>$BACKGROUND_B, "Alpha"=>100));
+		$chartImage->drawGradientArea(0,0,500,500,DIRECTION_HORIZONTAL,array("StartR"=>240,"StartG"=>240,"StartB"=>240,"EndR"=>180,"EndG"=>180,"EndB"=>180,"Alpha"=>30));
+		$chartImage->setFontProperties(array("FontName"=>"modules/formulize/libraries/pChart/fonts/arial.ttf", "FontSize"=>8));
 	
 	$paddingtoLeft = $IMAGE_WIDTH * 0.15;
 	$paddingtoTop = $IMAGE_HEIGHT * 0.2;
@@ -321,16 +367,16 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 	}
 
 	/* Draw the chart scale */
-	$myPicture -> setGraphArea($paddingtoLeft, $paddingtoTop, $IMAGE_WIDTH * 0.90, $IMAGE_HEIGHT * 0.88);
+		$chartImage->setGraphArea($paddingtoLeft, $paddingtoTop, $IMAGE_WIDTH * 0.90, $IMAGE_HEIGHT * 0.88);
 	
 	if($IMAGE_ORIENTATION == "vertical"){
-		$myPicture -> drawScale(array("CycleBackground" => TRUE, "DrawSubTicks" => TRUE, "GridR" => 0, "GridG" => 0, "GridB" => 0, "GridAlpha" => 10, "Pos" => SCALE_POS_TOPBOTTOM, "Mode" => SCALE_MODE_ADDALL_START0, "Decimal" => 0, "MinDivHeight" => 50));
+			$chartImage->drawScale(array("CycleBackground"=>TRUE, "DrawSubTicks"=>TRUE, "GridR"=>0, "GridG"=>0, "GridB"=>0, "GridAlpha"=>10, "Pos"=>SCALE_POS_TOPBOTTOM, "Mode"=>SCALE_MODE_ADDALL_START0, "Decimal"=>0, "MinDivHeight"=>50));
 	}else{
-		$myPicture -> drawScale(array("CycleBackground" => TRUE, "DrawSubTicks" => TRUE, "GridR" => 0, "GridG" => 0, "GridB" => 0, "GridAlpha" => 10, "Mode" => SCALE_MODE_ADDALL_START0, "Decimal" => 0, "MinDivHeight" => 50));
+			$chartImage->drawScale(array("CycleBackground"=>TRUE, "DrawSubTicks"=>TRUE, "GridR"=>0, "GridG"=>0, "GridB"=>0, "GridAlpha"=>10, "Mode"=>SCALE_MODE_ADDALL_START0, "Decimal"=>0, "MinDivHeight"=>50));
 	}
 		
 	/* Turn on shadow computing */
-	$myPicture -> setShadow(TRUE, array("X" => 1, "Y" => 1, "R" => 0, "G" => 0, "B" => 0, "Alpha" => 10));
+		$chartImage->setShadow(TRUE, array("X"=>1, "Y"=>1, "R"=>0, "G"=>0, "B"=>0, "Alpha"=>10));
 	
 	$Palette = array("0"=>array("R"=>$BARCOLOR_R,"G"=>$BARCOLOR_G,"B"=>$BARCOLOR_B,"Alpha"=>100));
 	
@@ -338,35 +384,278 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 		$Palette[$i] = array("R"=>$BARCOLOR_R,"G"=>$BARCOLOR_G,"B"=>$BARCOLOR_B,"Alpha"=>100);
 	}
 	
-	// print_r($Palette);
-					 
 	$myPicture->drawBarChart(array("OverrideColors"=>$Palette));
 
 	/* Draw the chart */
-	$myPicture -> drawBarChart(array("DisplayPos" => LABEL_POS_INSIDE, "DisplayValues" => TRUE, "Rounded" => TRUE, "Surrounding" => 30, "OverrideColors"=>$Palette));
-	renderGraph($myPicture, $fid, $frid, $labelElement, $dataElement, $operation, $graphOptions);
-	return;
+		$chartImage->drawBarChart(array("DisplayPos"=>LABEL_POS_INSIDE, "DisplayValues"=>TRUE, "Rounded"=>TRUE, "Surrounding"=>30, "OverrideColors"=>$Palette));
+		// save the chart as an image
+		$chartImage->render(XOOPS_ROOT_PATH.$graphFileName);
+	}
+	return outputChartFile($graphFileName, $graphOptions);
 }
 
 function YAxisFormat($Value) {
 	if (round($Value) == $Value) {
 		return round($Value);
-	} else {
+	}
 		return "";
 	}
-	// return $Value;
+
+/**
+ * Helper method to draw radar graph
+ * parameters have same meaning as displayGraph's parameters
+ */
+function displayRadarGraph($dataPoints, $labelElement, $dataElement, $graphOptions) {
+	include_once XOOPS_ROOT_PATH."/modules/formulize/libraries/pChart/class/pRadar.class.php";
+	$graphOptions = setDefaultRadarGraphOptions($graphOptions);
+	$graphFileName = uniqueGraphFileName($dataPoints, $labelElement, $dataElement, $graphOptions);
+	if (!file_exists(XOOPS_ROOT_PATH.$graphFileName)) {
+
+		// create the graph data object and add data
+		$graphData = new pData();
+		// if the first item in the array is not an array, then there is only one array of data points
+		if (!is_array(array_slice($dataPoints, 0, 1))) {
+			$graphData->addPoints($dataPoints, "DataPoints");
+			$graphData->setPalette("DataPoints", $graphOptions["plotcolor"]);
+		} else {
+			// support multiple sets of data
+			foreach ($dataPoints as $key=>$value) {
+				$graphData->addPoints($value, $key);
+				if (isset($graphOptions["plotcolor"][$key]))
+					$graphData->setPalette($key, $graphOptions["plotcolor"][$key]);
+			}
+		}
+
+		// set graph labels
+		$graphData->addPoints($labelElement, "Labels");
+		$graphData->setAbscissa("Labels");
+
+		// create an image to hold the chart
+		$chartImage = new pImage($graphOptions["width"], $graphOptions["height"], $graphData);
+		// subtract 1 from width and height so that border can be drawn...
+		//$chartImage->drawFilledRectangle(0, 0, $graphOptions["width"] - 1, $graphOptions["height"] - 1, $graphOptions["background"]);
+
+		// set the default font
+		$chartImage->setFontProperties(array("FontName"=>XOOPS_ROOT_PATH."/modules/formulize/libraries/pChart/fonts/".$graphOptions["FontName"].".ttf",
+			"FontSize"=>$graphOptions["FontSize"],
+			"R"=>$graphOptions["FontRGB"]["R"], "G"=>$graphOptions["FontRGB"]["G"], "B"=>$graphOptions["FontRGB"]["B"]));
+
+		// create the pRadar object
+		$theChart = new pRadar();
+
+		// draw the chart
+		$chartImage->setGraphArea(0 + $graphOptions["padding"], 0 + $graphOptions["padding"],
+			$graphOptions["width"] - (2 * $graphOptions["padding"]), $graphOptions["height"] - (2 * $graphOptions["padding"]));
+		$theChart->drawRadar($chartImage, $graphData, $graphOptions);
+
+		// legend
+		// For Legend parameter details, see: http://wiki.pchart.net/doc.doc.draw.legend.html
+		if (isset($graphOptions["Legend"]))
+			$chartImage->drawLegend($graphOptions["Legend"]["x"], $graphOptions["Legend"]["y"], $graphOptions["Legend"]);
+
+		// title
+		if (isset($graphOptions['titlefont']))
+			$chartImage->setFontProperties($graphOptions['titlefont']);
+		if (isset($graphOptions['title'])) {
+			if (!isset($graphOptions['titleX']))
+				$graphOptions['titleX'] = 0;
+			if (!isset($graphOptions['titleY']))
+				$graphOptions['titleY'] = 0;
+	 		$chartImage->drawText($graphOptions['titleX'], $graphOptions['titleY'], $graphOptions['title']);
+		}
+
+		// save the chart as an image
+		$chartImage->render(XOOPS_ROOT_PATH.$graphFileName);
+	}
+	return outputChartFile($graphFileName, $graphOptions);
 }
 
 /**
- * Save the graph to the local file system and render the graph
+ * Helper method that ensures default options are set for the radar graph. Not a public API.
  */
-function renderGraph($myPicture, $fid, $frid, $labelElement, $dataElement, $operation, $graphOptions) {
+function setDefaultRadarGraphOptions($graphOptions) {
+	// set default values for graph options (if the options are not set)
+	// width         : (pixels) width of the image
+	// height        : (pixels) height of the image
+	// padding       : (pixels) padding between each side of the chart and the image (default 0)
+	// background    : (array) RGB color array
+	// plotcolor     : (array) RGB color array
+	// For complete Radar graph style options, see: http://wiki.pchart.net/doc.draw.radar.html
+
+	if (!isset($graphOptions["width"]))
+		$graphOptions["width"] = 600;
+	if (!isset($graphOptions["height"]))
+		$graphOptions["height"] = 600;
+	if (!isset($graphOptions["plotcolor"]) and !isset($graphOptions["plotcolor"]["B"]))
+		$graphOptions["plotcolor"] = array("R"=>150, "G"=>150, "B"=>150, "Alpha"=>50);
+	if (!isset($graphOptions["FontSize"]) or $graphOptions["FontSize"] < 4)
+		$graphOptions["FontSize"] = 8;
+	if (!isset($graphOptions["FontName"]))
+		$graphOptions["FontName"] = "arial";
+	if (!isset($graphOptions["FontRGB"]) and !isset($graphOptions["FontRGB"]["B"]))
+		$graphOptions["FontRGB"] = array("R"=>0, "G"=>0, "B"=>0, "Alpha"=>100);
+	// padding (pixels) adds space between the edges of the image and the chart (like css padding)
+	if (!isset($graphOptions["padding"]) or $graphOptions["padding"] < 0)
+		$graphOptions["padding"] = 0;
+	if (!isset($graphOptions["BackgroundGradient"]) and !is_array($graphOptions["BackgroundGradient"]))
+		$graphOptions["BackgroundGradient"] = array("StartR"=>255, "StartG"=>255, "StartB"=>255, "StartAlpha"=>100,
+			"EndR"=>207, "EndG"=>227, "EndB"=>125, "EndAlpha"=>100);
+	if (!isset($graphOptions["DrawPoly"]))
+		$graphOptions["DrawPoly"] = True;
+	if (!isset($graphOptions["WriteValues"]))
+		$graphOptions["WriteValues"] = True;
+	if (!isset($graphOptions["WriteLabels"]))
+		$graphOptions["WriteLabels"] = True;
+	if (!isset($graphOptions["SkipLabels"]))
+		$graphOptions["SkipLabels"] = 1;
+	if (!isset($graphOptions["DrawAxisValues"]))
+		$graphOptions["DrawAxisValues"] = True;
+	if (!isset($graphOptions["ValueFontSize"]))
+		$graphOptions["ValueFontSize"] = 8;
+	if (!isset($graphOptions["Layout"]))
+		$graphOptions["Layout"] = RADAR_LAYOUT_CIRCLE;
+	if (!isset($graphOptions["LabelPos"]))
+		$graphOptions["LabelPos"] = RADAR_LABELS_HORIZONTAL;
+
+	return $graphOptions;
+}
+
+
+/**
+ * Helper method to draw line graph
+ * parameters have same meaning as displayGraph's parameters
+ */
+function displayLineGraph($dataPoints, $labelElement, $dataElement, $graphOptions) {
+	$graphOptions = setDefaultLineGraphOptions($graphOptions);
+
+	$graphFileName = uniqueGraphFileName($dataPoints, $labelElement, $dataElement, $graphOptions);
+	if (!file_exists(XOOPS_ROOT_PATH.$graphFileName)) {
+		// create the graph data object and add data
+		$graphData = new pData();
+		// if the first item in the array is not an array, then there is only one array of data points
+		if (!is_array(array_slice($dataPoints, 0, 1))) {
+			$graphData->addPoints($dataPoints, "DataPoints");
+			if (isset($graphOptions["plotcolor"]))
+				$graphData->setPalette("DataPoints", $graphOptions["plotcolor"]);
+			if (isset($graphOptions["dashed"]))
+				$graphData->setSerieTicks("DataPoints", $graphOptions["dashed"]);
+			if (isset($graphOptions["thickness"]))
+				$graphData->setSerieWeight("DataPoints", $graphOptions["thickness"]);
+		} else {
+			// support multiple sets of data
+			foreach ($dataPoints as $key=>$value) {
+				$graphData->addPoints($value, $key);
+				if (isset($graphOptions["plotcolor"][$key]))
+					$graphData->setPalette($key, $graphOptions["plotcolor"][$key]);
+				if (isset($graphOptions["dashed"][$key]))
+					$graphData->setSerieTicks($key, $graphOptions["dashed"][$key]);
+				if (isset($graphOptions["thickness"][$key]))
+					$graphData->setSerieWeight($key, $graphOptions["thickness"][$key]);
+			}
+		}
+
+		// set graph labels
+		$graphData->addPoints($labelElement, "Labels");
+		$graphData->setAbscissa("Labels");
+
+		// create an image to hold the chart
+		$chartImage = new pImage($graphOptions["width"], $graphOptions["height"], $graphData);
+
+		if (isset($graphOptions["pre_draw_hook"]) and function_exists($graphOptions["pre_draw_hook"])) {
+			// allow drawing on the image before the chart is drawn
+			$graphOptions["pre_draw_hook"]($chartImage, $graphOptions);
+		}
+
+		// subtract 1 from width and height so that border can be drawn...
+		//$chartImage->drawFilledRectangle(0, 0, $graphOptions["width"] - 1, $graphOptions["height"] - 1, $graphOptions["background"]);
+
+		// set the default font
+		$chartImage->setFontProperties(array("FontName"=>XOOPS_ROOT_PATH."/modules/formulize/libraries/pChart/fonts/".$graphOptions["FontName"].".ttf",
+			"FontSize"=>$graphOptions["FontSize"],
+			"R"=>$graphOptions["FontRGB"]["R"], "G"=>$graphOptions["FontRGB"]["G"], "B"=>$graphOptions["FontRGB"]["B"]));
+
+		// draw the chart
+		$chartImage->setGraphArea(0 + $graphOptions["padding"], 0 + $graphOptions["padding"],
+			$graphOptions["width"] - $graphOptions["padding"], $graphOptions["height"] - $graphOptions["padding"]);
+	 	$chartImage->drawScale($graphOptions);
+	 	if (isset($graphOptions["spline"]) and $graphOptions["spline"])
+		 	$chartImage->drawSplineChart($graphOptions);
+		else
+	 		$chartImage->drawLineChart($graphOptions);
+
+		// legend. For parameter details, see: http://wiki.pchart.net/doc.doc.draw.legend.html
+		if (isset($graphOptions["Legend"]))
+			$chartImage->drawLegend($graphOptions["Legend"]["x"], $graphOptions["Legend"]["y"], $graphOptions["Legend"]);
+
+		// title
+		if (isset($graphOptions['titlefont']))
+			$chartImage->setFontProperties($graphOptions['titlefont']);
+		if (isset($graphOptions['title'])) {
+			if (!isset($graphOptions['titleX']))
+				$graphOptions['titleX'] = 0;
+			if (!isset($graphOptions['titleY']))
+				$graphOptions['titleY'] = 0;
+	 		$chartImage->drawText($graphOptions['titleX'], $graphOptions['titleY'], $graphOptions['title']);
+		}
+
+		if (isset($graphOptions["post_draw_hook"]) and function_exists($graphOptions["post_draw_hook"])) {
+			// allow drawing on the image after the chart is drawn
+			$graphOptions["post_draw_hook"]($chartImage, $graphOptions);
+		}
+
+		// save the chart as an image
+		$chartImage->render(XOOPS_ROOT_PATH.$graphFileName);
+	}
+	return outputChartFile($graphFileName, $graphOptions);
+}
+
+/**
+ * Helper method that ensures default options are set for the line graph. Not a public API.
+ */
+function setDefaultLineGraphOptions($graphOptions) {
+	// set default values for graph options (if the options are not set)
+	// width         : (pixels) width of the image
+	// height        : (pixels) height of the image
+	// padding       : (pixels) padding between each side of the chart and the image (default 0)
+	// For complete line graph style options, see: pDraw.class.php or http://wiki.pchart.net/doc.chart.drawlinechart.html
+
+	if (!isset($graphOptions["width"]))
+		$graphOptions["width"] = 600;
+	if (!isset($graphOptions["height"]))
+		$graphOptions["height"] = 600;
+	if (!isset($graphOptions["padding"]))
+		$graphOptions["padding"] = 0;
+
+	if (!isset($graphOptions["FontRGB"]) and !isset($graphOptions["FontRGB"]["B"]))
+		$graphOptions["FontRGB"] = array("R"=>0, "G"=>0, "B"=>0, "Alpha"=>100);
+	if (!isset($graphOptions["DrawSubTicks"]))
+		$graphOptions["DrawSubTicks"] = false;
+	if (!isset($graphOptions["DisplayValues"]))
+		$graphOptions["DisplayValues"] = true;
+	if (!isset($graphOptions["DisplayColor"]))
+		$graphOptions["DisplayColor"] = DISPLAY_AUTO;
+
+	return $graphOptions;
+}
+
+/**
+ * Generate a unique filename for each graph
+ */
+function uniqueGraphFileName($dataPoints, $labelElement, $dataElement, $graphOptions) {
 	// TODO: make some kind of cron job clear up or some kind of caches, update graph only when needed!
-	$grapRelativePathPrefix = "modules/formulize/images/graphs/";
-	$graphRelativePath = $grapRelativePathPrefix . "_" . $fid . "_" . "_" . $frid . "_" . $labelElement . "_" . $dataElement . "_" . "$operation" . "_" . preg_replace('/[^\w\d]/', "", print_r($graphOptions, true)) . ".png";
-	$myPicture -> render(XOOPS_ROOT_PATH . "/" . $graphRelativePath);
-	echo "<img src='" . XOOPS_URL . "/$graphRelativePath' />";
-	return;
+	// many charts will use the same options, so use data points and options to determine a unique filename
+	return "/modules/formulize/images/graphs/".
+		md5(SDATA_DB_SALT.var_export($dataPoints, true).var_export($graphOptions, true)).".png";
+}
+
+function outputChartFile($graphFileName, $graphOptions) {
+	if (isset($graphOptions['return_filename']) and $graphOptions['return_filename']) {
+		// simply return the filename as a string
+		return $graphFileName;
+	} else {
+		// output an image tag
+		echo "<img src='{$graphFileName}' />";
+	}
 }
 
 function initializeZeros($keys) {
@@ -380,3 +669,4 @@ function initializeZeros($keys) {
 function echoBR() {
 	echo "<br \>";
 }
+?>

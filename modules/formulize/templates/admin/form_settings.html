@@ -132,7 +132,24 @@
 			</div>
 		</div>
 					
-	
+        <div class="accordion-box">
+			<div class="form-item">
+				<fieldset>
+					<legend><label class="question">Do you want to send notification e-mails for activity in this form once a day as a digest?</label></legend>
+					<div class="form-radios">
+						<label for="send_digests-0"><input type="radio" id="send_digests-0" name="forms-send_digests" value="0" />No, send notifications right away</label>
+					</div>
+					<div class="form-radios">
+						<label for="send_digests-1"><input type="radio" id="send_digests-1" name="forms-send_digests" value="1" />Yes</label>
+					</div>
+					<div class="description">
+						<p>This feature requires that you turn on the <a href="<{$xoops_url}>/modules/system/admin.php?fct=preferences&op=showmod&mod=<{$adminPage.formulizeModId}>">Formulize module Preference</a> for sending nofitications via cron job. In addition to creating a cron job for triggering 'notify.php' to process notification events, you will need to set a cron job for triggering 'digest.php' which will actually send the digest e-mails.</p>
+					</div>
+				</fieldset>
+			</div>
+		</div>
+    
+    
 	<{/if}>
 	
 	<{if $content.applications|@count > 0}>
@@ -172,6 +189,7 @@
 <script type="text/javascript">
   $("#<{$content.singleentry}>").attr('checked', true);
   $("#store_revisions-<{$content.store_revisions}>").attr('checked', true);
+  $("#send_digests-<{$content.send_digests}>").attr('checked', true);
 	
 	$("#forms-title").keydown(function () {
 		window.document.getElementById('reload_settings').value = 1;

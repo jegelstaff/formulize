@@ -23,9 +23,37 @@
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
 ##  Author of this file: Freeform Solutions                                  ##
-##  URL: http://www.freeformsolutions.ca/formulize                           ##
+##  URL: http://www.formulize.org                           ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
+
+
+if(!function_exists("figureOutOrder")) {
+function figureOutOrder($orderChoice, $oldOrder, $fid) {
+	global $xoopsDB;
+	if($orderChoice === "bottom") {
+		$sql = "SELECT max(ele_order) as new_order FROM ".$xoopsDB->prefix("formulize")." WHERE id_form = $fid";
+	  $res = $xoopsDB->query($sql);
+	  $array = $xoopsDB->fetchArray($res);
+		$orderChoice = $array['new_order'] + 1;
+	} elseif($orderChoice === "top") {
+		$orderChoice = 0;
+	} else {
+		// convert the orderpref from the element ID to the order
+		$sql = "SELECT ele_order FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id = $orderChoice AND id_form = $fid";
+		$res = $xoopsDB->query($sql);
+	  $array = $xoopsDB->fetchArray($res);
+		$orderChoice = $array['ele_order'];
+	}
+	$orderValue = $orderChoice + 1;
+	if($oldOrder != $orderValue) {
+		// and we need to reorder all the elements equal to and higher than the current element
+		$sql = "UPDATE ".$xoopsDB->prefix("formulize")." SET ele_order = ele_order + 1 WHERE ele_order >= $orderValue AND id_form = $fid";
+		$res = $xoopsDB->query($sql);
+	}
+	return $orderValue;
+}
+}
 
 // this file handles saving of submissions from the element_names page of the new admin UI
 
@@ -114,29 +142,4 @@ if($_POST['reload_names_page'] OR $isNew) {
     $ele_id_to_send = $ele_id;
   } 
   print "/* evalnow */ ele_id = $ele_id_to_send; redirect = \"reloadWithScrollPosition('$url');\";";
-}
-
-function figureOutOrder($orderChoice, $oldOrder, $fid) {
-	global $xoopsDB;
-	if($orderChoice === "bottom") {
-		$sql = "SELECT max(ele_order) as new_order FROM ".$xoopsDB->prefix("formulize")." WHERE id_form = $fid";
-	  $res = $xoopsDB->query($sql);
-	  $array = $xoopsDB->fetchArray($res);
-		$orderChoice = $array['new_order'] + 1;
-	} elseif($orderChoice === "top") {
-		$orderChoice = 0;
-	} else {
-		// convert the orderpref from the element ID to the order
-		$sql = "SELECT ele_order FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id = $orderChoice AND id_form = $fid";
-		$res = $xoopsDB->query($sql);
-	  $array = $xoopsDB->fetchArray($res);
-		$orderChoice = $array['ele_order'];
-	}
-	$orderValue = $orderChoice + 1;
-	if($oldOrder != $orderValue) {
-		// and we need to reorder all the elements equal to and higher than the current element
-		$sql = "UPDATE ".$xoopsDB->prefix("formulize")." SET ele_order = ele_order + 1 WHERE ele_order >= $orderValue AND id_form = $fid";
-		$res = $xoopsDB->query($sql);
-	}
-	return $orderValue;
 }

@@ -68,12 +68,10 @@ foreach($applicationsToDraw as $aid) {
         $app_name = _AM_CATGENERAL;
     }
     $formsToSend = getNavDataForForms($links);
-    if(count($formsToSend)==0) {
-        $noforms =  _AM_NOFORMS_AVAIL;
-    } else {
-        $noforms = 0;
+    if(count($formsToSend)>0) {
+        $allAppData[] = array('app_name'=>$app_name, 'noforms'=>0, 'formData'=>$formsToSend);
     }
-    $allAppData[] = array('app_name'=>$app_name, 'noforms'=>$noforms, 'formData'=>$formsToSend);
+    
 }
 
 $xoopsTpl->assign("allAppData", $allAppData);

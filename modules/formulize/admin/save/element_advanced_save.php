@@ -23,9 +23,52 @@
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
 ##  Author of this file: Freeform Solutions                                  ##
-##  URL: http://www.freeformsolutions.ca/formulize                           ##
+##  URL: http://www.formulize.org                           ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
+
+
+if(!function_exists("getRequestedDataType")) {
+// this function returns the datatype requested for this element
+function getRequestedDataType() {
+	switch($_POST['element_datatype']) {
+		case 'decimal':
+			if($datadecimals = intval($_POST['element_datatype_decimalsize'])) {
+				if($datadecimals > 20) {
+					$datadecimals = 20;
+				}
+			} else {
+				$datadecimals = 2;
+			}
+			$datadigits = $datadecimals < 10 ? 11 : $datadecimals + 1; // digits must be larger than the decimal value, but a minimum of 11
+			$dataType = "decimal($datadigits,$datadecimals)";
+			break;
+		case 'int':
+			$dataType = 'int(10)';
+			break;
+		case 'varchar':
+			if(!$varcharsize = intval($_POST['element_datatype_varcharsize'])) {
+				$varcharsize = 255;
+			}
+			$varcharsize = $varcharsize > 255 ? 255 : $varcharsize;
+			$dataType = "varchar($varcharsize)";
+			break;
+		case 'char':
+			if(!$charsize = intval($_POST['element_datatype_charsize'])) {
+				$charsize = 255;
+			}
+			$charsize = $charsize > 255 ? 255 : $charsize;
+			$dataType = "char($charsize)";
+			break;
+		case 'text':
+			$dataType = 'text';
+			break;
+		default:
+			print "ERROR: unrecognized datatype has been specified: ".strip_tags(htmlspecialchars($_POST['element_datatype']));
+	}
+	return $dataType;
+}
+}
 
 // this file handles saving of submissions from the element advanced page of the new admin UI
 
@@ -76,7 +119,7 @@ if($ele_encrypt != $element->getVar('ele_encrypt') AND $databaseElement AND !$_G
   }
 }
 
-if($databaseElement AND $_GET['ele_id']) { // ele_id is only in the URL when we're on the first save for a new element
+if($databaseElement AND ($_GET['ele_id'] OR $form_handler->elementFieldMissing($element))) { // ele_id is only in the URL when we're on the first save for a new element
 	global $xoopsDB;
 	  // figure out what the data type should be.
 	  // the rules:
@@ -182,45 +225,4 @@ if ($reloadneeded) {
   print "/* evalnow */ if(redirect=='') { redirect = 'reloadWithScrollPosition();'; } newhandle = '".$element->getVar('ele_handle')."';"; // pass back the new element handle so we can update the original_handle flag for the next save operation
 } else {
   print "/* evalnow */ newhandle = '".$element->getVar('ele_handle')."';"; // pass back the new element handle so we can update the original_handle flag for the next save operation
-}
-
-
-// this function returns the datatype requested for this element
-function getRequestedDataType() {
-	switch($_POST['element_datatype']) {
-		case 'decimal':
-			if($datadecimals = intval($_POST['element_datatype_decimalsize'])) {
-				if($datadecimals > 20) {
-					$datadecimals = 20;
-				}
-			} else {
-				$datadecimals = 2;
-			}
-			$datadigits = $datadecimals < 10 ? 11 : $datadecimals + 1; // digits must be larger than the decimal value, but a minimum of 11
-			$dataType = "decimal($datadigits,$datadecimals)";
-			break;
-		case 'int':
-			$dataType = 'int(10)';
-			break;
-		case 'varchar':
-			if(!$varcharsize = intval($_POST['element_datatype_varcharsize'])) {
-				$varcharsize = 255;
-			}
-			$varcharsize = $varcharsize > 255 ? 255 : $varcharsize;
-			$dataType = "varchar($varcharsize)";
-			break;
-		case 'char':
-			if(!$charsize = intval($_POST['element_datatype_charsize'])) {
-				$charsize = 255;
-			}
-			$charsize = $charsize > 255 ? 255 : $charsize;
-			$dataType = "char($charsize)";
-			break;
-		case 'text':
-			$dataType = 'text';
-			break;
-		default:
-			print "ERROR: unrecognized datatype has been specified: ".strip_tags(htmlspecialchars($_POST['element_datatype']));
-	}
-	return $dataType;
 }

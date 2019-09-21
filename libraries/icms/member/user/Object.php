@@ -23,7 +23,7 @@ class icms_member_user_Object extends icms_core_Object {
 	 * Array of groups that user belongs to
 	 * @var array
 	 */
-	private $_groups = array();
+	public $_groups = array();
 	/**
 	 * @var bool is the user admin?
 	 */

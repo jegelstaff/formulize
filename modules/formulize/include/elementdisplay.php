@@ -41,6 +41,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 $GLOBALS['formulize_renderedElementHasConditions'] = array();
 
 // $groups is optional and can be passed in to override getting the user's groups.  This is necessary for the registration form to work with custom displayed elements
+// $noSave is used to specify a different name for the element, so we can get back an HTML element that we will use in a different context than a normal form
 function displayElement($formframe="", $ele, $entry="new", $noSave = false, $screen=null, $prevEntry=null, $renderElement=true, $profileForm = null, $groups="") {
 
 	static $cachedPrevEntries = array();
@@ -57,7 +58,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		$subformElementId = $subformMetaData[2];
 	} 
 
-    if($entry == "" OR $subformCreateEntry) {
+    if(($entry == "" AND $entry !== 0) OR $subformCreateEntry) {
         $entry = "new";
     }
 
@@ -94,18 +95,20 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 	static $cachedViewPrivate = array();
 	static $cachedUpdateOwnEntry = array();
 	$gperm_handler = xoops_gethandler('groupperm');
-	if(!isset($cachedViewPrivate[$form_id])) {
-		$cachedViewPrivate[$form_id] = $gperm_handler->checkRight("view_private_elements", $form_id, $groups, $mid);
-		$cachedUpdateOwnEntry[$form_id] = $gperm_handler->checkRight("update_own_entry", $form_id, $groups, $mid);
+    $groupsKey = serialize($groups);
+	if(!isset($cachedViewPrivate[$form_id][$groupsKey]) AND !$noSave) {
+		$cachedViewPrivate[$form_id][$groupsKey] = $gperm_handler->checkRight("view_private_elements", $form_id, $groups, $mid);
+		$cachedUpdateOwnEntry[$form_id][$groupsKey] = $gperm_handler->checkRight("update_own_entry", $form_id, $groups, $mid);
 	}
-	$view_private_elements = $cachedViewPrivate[$form_id];
-	$update_own_entry = $cachedUpdateOwnEntry[$form_id];
+	$view_private_elements = $noSave ? 1 : $cachedViewPrivate[$form_id][$groupsKey];
+	$update_own_entry = $noSave ? 1 : $cachedUpdateOwnEntry[$form_id][$groupsKey];
 	
 	// check if the user is normally able to view this element or not, by checking their groups against the display groups -- added Nov 7 2005
 	// messed up.  Private should not override the display settings.  And the $entry should be checked against the security check first to determine whether the user should even see this entry in the first place.
 	$display = $element->getVar('ele_display');
 	$private = $element->getVar('ele_private');
 	$member_handler = xoops_gethandler('member');
+    $element_handler = xoops_getmodulehandler('elements', 'formulize');
 	$single_result = getSingle($form_id, $user_id, $groups, $member_handler, $gperm_handler, $mid);
 	$groupEntryWithUpdateRights = ($single_result['flag'] == "group" AND $update_own_entry AND $entry == $single_result['entry']) ? true : false;
 
@@ -131,7 +134,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 	}
 	
 	$elementFilterSettings = $element->getVar('ele_filtersettings');
-	if($allowed AND count($elementFilterSettings[0]) > 0) {
+	if($allowed AND count($elementFilterSettings[0]) > 0 AND (!$noSave OR $entry != 'new')) {
 		// cache the filterElements for this element, so we can build the right stuff with them later in javascript, to make dynamically appearing elements
 		$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName] = $elementFilterSettings[0];
 		
@@ -201,23 +204,14 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		if(isset($GLOBALS['formulize_forceElementsDisabled']) AND $GLOBALS['formulize_forceElementsDisabled'] == true) {
 			$isDisabled = true;
 		} else {
-			$ele_disabled = $element->getVar('ele_disabled');
-			$isDisabled = false;
-			if($ele_disabled == 1) {
-				$isDisabled = true;
-			} elseif(!is_numeric($ele_disabled)) {
-				$disabled_groups = explode(",", $ele_disabled);
-				if(array_intersect($groups, $disabled_groups) AND !array_diff($groups, $disabled_groups)) {
-					$isDisabled = true;
-				}
-			}
+            $isDisabled = $element_handler->isElementDisabledForUser($element, $xoopsUser) ? true : false;
 		}
 
 		// Another check to see if this element is disabled, for the case where the user can view the form, but not edit it.
-		if (!$isDisabled) {
+		if (!$isDisabled AND !$noSave) {
             // note that we're using the OPPOSITE of the permission because we want to know if the element should be disabled
             $isDisabled = !formulizePermHandler::user_can_edit_entry($form_id, $user_id, $entry);
-				}
+		}
 
 		// check whether the entry is locked, and if so, then the element is not allowed.  Set a message to say that elements were disabled due to entries being edited elsewhere (first time only).
 		// groups with ignore lock permission bypass this, and therefore can save entries even when locked, and saving an entry removes the lock, so that gets you out of a jam if the lock is in place when it shouldn't be.
@@ -272,7 +266,7 @@ EOF;
 		formulize_benchmark("Done rendering element.");
 		
 		// put a lock on this entry in this form, so we know that the element is being edited.  Lock will be removed next time the entry is saved.
-		if ($entry > 0 AND !isset($lockedEntries[$form_id][$entry])
+		if (!$noSave AND $entry > 0 AND !isset($lockedEntries[$form_id][$entry])
             and !isset($entriesThatHaveBeenLockedThisPageLoad[$form_id][$entry]))
         {
             if (is_writable(XOOPS_ROOT_PATH."/modules/formulize/temp/")) {
@@ -350,17 +344,21 @@ EOF;
 }
 
 /* ALTERED - 20100316 - freeform - jeff/julian - start */
+// THIS SHOULD BE REFACTORED SO THAT ELEMENT DISPLAY CONDITIONS RUN OFF THE SAME SQL FILTER LOGIC AS EVERY OTHER INSTANCE OF A FILTER
 function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$filterTerms,$entry,$entryData) {
     $evaluationCondition = "";
-
-    // convert the internal database representation to the displayed value, if this element has uitext
-    foreach ($filterElements as $key => $element) {
+    
+    // convert the internal database representation to the displayed value, if this element has uitext that we're supposed to use
         $element_metadata = formulize_getElementMetaData($element, true);
+    if($element_metadata['ele_uitextshow']) {
+        foreach ($filterElements as $key => $element) {
         if (isset($element_metadata['ele_uitext'])) {
             $filterTerms[$key] = formulize_swapUIText($filterTerms[$key], unserialize($element_metadata['ele_uitext']));
         }
     }
+    }
 
+    $element_handler = xoops_getmodulehandler('elements', 'formulize');
 	for($io=0;$io<count($indexes);$io++) {
 		$i = $indexes[$io];
 		if(!($evaluationCondition == "")) {
@@ -379,12 +377,33 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 		if($filterTerms[$i] === "{BLANK}") {
 			$filterTerms[$i] = "";
 		}
+        
+        // convert { } element references to their API format version (prepValues function output), unless the filter element is creation_uid or mod_uid
+        if(substr($filterTerms[$i],0,1) == "{" AND substr($filterTerms[$i],-1)=="}") {
+            $handle_reference = substr($filterTerms[$i],1,-1);
+            if($filterElements[$i] != 'creation_uid' AND $filterElements[$i] != 'mod_uid') { // comparing to a regular element, get the db value
+                $filterTerms[$i] = $entry == 'new' ? '' : display($entryData[0], $handle_reference); // get blank, but we could try to get defaults like below
+            } elseif($entry != 'new') { // comparing to user metadata field, entry is not new
+                // take a wild guess that the reference is to something that should be a uid in the db...
+                $element_handler = xoops_getmodulehandler('elements', 'formulize');
+                $form_handler = xoops_getmodulehandler('forms', 'formulize');
+                $elementObject = $element_handler->get($handle_reference);
+                $formObject = $form_handler->get($elementObject->getVar('id_form'));
+                global $xoopsDB;
+                $sql = 'SELECT '.formulize_db_escape($handle_reference).' FROM '.$xoopsDB->prefix('formulize_'.$formObject->getVar('form_handle')).' WHERE entry_id = '.intval($entry);
+                $res = $xoopsDB->query($sql);
+                $row = $xoopsDB->fetchRow($res);
+                $filterTerms[$i] = $row[0];
+            } else { // comparing to user metadata field, entry is new
+                $filterTerms[$i] = 0;
+            }
+        }        
+        
 		if(isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry][$filterElements[$i]])) {
 			$compValue = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry][$filterElements[$i]];
 		} elseif($entry == "new") {
 			// for textboxes, let's try to get their default value
 			// for other elements, generate the default is too tricky to get it to work at present, not enough time available
-			$element_handler = xoops_getmodulehandler('elements', 'formulize');
 			$elementObject = $element_handler->get($filterElements[$i]);
 			if(is_object($elementObject)) {
 				$ele_type = $elementObject->getVar('ele_type');

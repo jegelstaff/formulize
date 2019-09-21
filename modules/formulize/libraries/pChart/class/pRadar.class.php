@@ -21,6 +21,14 @@
  define("RADAR_LABELS_ROTATED"		, 690021);
  define("RADAR_LABELS_HORIZONTAL"	, 690022);
 
+  function _calcSegmentColor($j, $StartR, $OffsetR, $StartG, $OffsetG, $StartB, $OffsetB, $StartAlpha, $OffsetAlpha)
+  {
+    return array("R"=>$StartR + ($OffsetR * $j),
+                 "G"=>$StartG + ($OffsetG * $j),
+                 "B"=>$StartB + ($OffsetB * $j),
+                 "Alpha"=>$StartAlpha + ($OffsetAlpha * $j));
+  }
+
  /* pRadar class definition */
  class pRadar
   {
@@ -93,6 +101,8 @@
      $X2		= $Object->GraphAreaX2;
      $Y2		= $Object->GraphAreaY2;
      $RecordImageMap	= isset($Format["RecordImageMap"]) ? $Format["RecordImageMap"] : FALSE;
+     $calcSegmentColorFunction = (isset($Format["CalcSegmentColorFunction"]) and function_exists($Format["CalcSegmentColorFunction"]))
+      ? $Format["CalcSegmentColorFunction"] : "_calcSegmentColor";
 
      /* Cancel default tick length if ticks not enabled */
      if ( $DrawTicks == FALSE ) { $TicksLength = 0; }
@@ -186,7 +196,10 @@
           {
            for($j=$Segments;$j>=1;$j--)
             {
-             $Color      = array("R"=>$BackgroundGradient["StartR"]+$GradientROffset*$j,"G"=>$BackgroundGradient["StartG"]+$GradientGOffset*$j,"B"=>$BackgroundGradient["StartB"]+$GradientBOffset*$j,"Alpha"=>$BackgroundGradient["StartAlpha"]+$GradientAlphaOffset*$j);
+             $Color = $calcSegmentColorFunction($j, $BackgroundGradient["StartR"], $GradientROffset,
+              $BackgroundGradient["StartG"], $GradientGOffset,
+              $BackgroundGradient["StartB"], $GradientBOffset,
+              $BackgroundGradient["StartAlpha"], $GradientAlphaOffset);
              $PointArray = "";
 
              for($i=0;$i<=360;$i=$i+(360/$Points))
@@ -201,7 +214,10 @@
           {
            for($j=$Segments;$j>=1;$j--)
             {
-             $Color = array("R"=>$BackgroundGradient["StartR"]+$GradientROffset*$j,"G"=>$BackgroundGradient["StartG"]+$GradientGOffset*$j,"B"=>$BackgroundGradient["StartB"]+$GradientBOffset*$j,"Alpha"=>$BackgroundGradient["StartAlpha"]+$GradientAlphaOffset*$j);
+             $Color = $calcSegmentColorFunction($j, $BackgroundGradient["StartR"], $GradientROffset,
+              $BackgroundGradient["StartG"], $GradientGOffset,
+              $BackgroundGradient["StartB"], $GradientBOffset,
+              $BackgroundGradient["StartAlpha"], $GradientAlphaOffset);
              $Object->drawFilledCircle($CenterX,$CenterY,($EdgeHeight/$Segments)*$j,$Color);
             }
           }
@@ -316,7 +332,7 @@
       }
 
      /* Compute the plots position */
-     $ID = 0; $Plot = "";
+     $ID = 0; $Plot = array();
      foreach($Data["Series"] as $SerieName => $DataS)
       {
        if ( $SerieName != $LabelSerie )
@@ -366,6 +382,7 @@
         $OuterColor = array("R"=>$Palette[$ID]["R"]+20,"G"=>$Palette[$ID]["G"]+20,"B"=>$Palette[$ID]["B"]+20,"Alpha"=>$Palette[$ID]["Alpha"]);
 
        /* Loop to the starting points if asked */
+       $Color["Weight"]=0.8; // ADDED BY FREEFORM SOLUTIONS TO FORCE THE RADAR PLOTS TO HAVE A WIDER LINE
        if ( $LineLoopStart && $DrawLines )
         $Object->drawLine($Points[count($Points)-1][0],$Points[count($Points)-1][1],$Points[0][0],$Points[0][1],$Color);
 

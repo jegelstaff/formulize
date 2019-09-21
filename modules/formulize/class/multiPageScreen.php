@@ -40,8 +40,8 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 class formulizeMultiPageScreen extends formulizeScreen {
 
-	function formulizeMultiPageScreen() {
-		$this->formulizeScreen();
+	function __construct() {
+		parent::__construct();
 		$this->initVar("introtext", XOBJ_DTYPE_TXTAREA);
 		$this->initVar("toptemplate", XOBJ_DTYPE_TXTAREA);  	// added by Gordon Woodmansey (bgw) 2012-08-29
 		$this->initVar("elementtemplate", XOBJ_DTYPE_TXTAREA); 	// added by Gordon Woodmansey (bgw) 2012-08-29
@@ -84,7 +84,7 @@ class formulizeMultiPageScreen extends formulizeScreen {
 
 class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 	var $db;
-	function formulizeMultiPageScreenHandler(&$db) {
+	function __construct(&$db) {
 		$this->db =& $db;
 	}
 	function &getInstance(&$db) {
@@ -176,8 +176,12 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 		unset($pages[0]); // get rid of the part we just unshifted, so the page count is correct
 		unset($pagetitles[0]);
 		$conditions = $screen->getConditions();
+		$doneDest = $screen->getVar('donedest');
+		if(substr($doneDest, 0, 1)=='/') {
+		    $doneDest = XOOPS_URL.$doneDest;
+		}
     		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplaypages.php";
-		displayFormPages($formframe, $entry, $mainform, $pages, $conditions, html_entity_decode(html_entity_decode($screen->getVar('introtext', "e")), ENT_QUOTES), html_entity_decode(html_entity_decode($screen->getVar('thankstext', "e")), ENT_QUOTES), $screen->getVar('donedest'), $screen->getVar('buttontext'), $settings,"", $screen->getVar('printall'), $screen); //nmc 2007.03.24 added 'printall' & 2 empty params
+		displayFormPages($formframe, $entry, $mainform, $pages, $conditions, html_entity_decode(html_entity_decode($screen->getVar('introtext', "e")), ENT_QUOTES), html_entity_decode(html_entity_decode($screen->getVar('thankstext', "e")), ENT_QUOTES), $doneDest, $screen->getVar('buttontext'), $settings,"", $screen->getVar('printall'), $screen); //nmc 2007.03.24 added 'printall' & 2 empty params
 	}
 
 
@@ -283,5 +287,3 @@ function drawPageUI($pageNumber, $pageTitle, $elements, $conditions, $form, $opt
 		
     return $form;
 }
-
-?>

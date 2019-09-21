@@ -436,7 +436,7 @@ head~body #xo-canvas-rightcolumn {
 
 /* Start Main Menu */
 #mainmenu {
-    font-size: .8em;
+    font-size: 1.1em;
 }
 
 #mainmenu a {
@@ -487,7 +487,7 @@ head~body #xo-canvas-rightcolumn {
 
 /* Start User Menu */
 #usermenu {
-    font-size: .8em;
+    font-size: 1.1em;
 }
 
 #usermenu a {
@@ -546,6 +546,7 @@ td.head {
     color: $colorTableHeaderText;
     font-weight: bold;
     padding: 0.5em 1em 0.5em 0.4em;
+    border: 1px solid $colourPrimaryBorder;
 }
 
 td.head a {
@@ -556,12 +557,14 @@ td.head a {
     background-color: $colorEvenBackground;
     color: $colorTableText;
     padding: 5px;
+    border: 1px solid $colourPrimaryBorder;
 }
 
 .odd, tr.odd td {
     background-color: $colorOddBackground;
     color: $colorTableText;
     padding: 5px;
+    border: 1px solid $colourPrimaryBorder;
 }
 
 .foot {
@@ -901,7 +904,7 @@ th {
 //--content.css
 
 table.outer {
-    border: 1px solid $colourPrimary;
+    border: 1px solid $colourPrimaryBorder;
 }
 
 #session-timeout-warning {

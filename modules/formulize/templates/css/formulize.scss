@@ -78,36 +78,6 @@ button:focus, input[type='submit']:focus, input[type='button']:focus, input[type
     border-color : #333;
 }
 
-.formulize_button {
-    text-indent:30px;
-    border-color: #0076a3;
-    color: #fff !important;
-    text-shadow: 0 -1px 0 rgba(0,0,0,.4);    
-    font-size: 15px;
-    font-weight: bold;
-    height: 36px;
-    width: 185px !important;
-}
-
-#prev {
-    background:#008CC4 url('../../images/prev.png') no-repeat 10px;
-    text-indent:40px;
-    height: 36px;
-    color: #fff !important;
-    text-shadow: 0 -1px 0 rgba(0,0,0,.4);    
-    font-size: 15px;
-}
-
-#next {
-    background:#008CC4 url('../../images/next.png') no-repeat 140px;
-    text-align: left;
-    width: 185px;
-    height: 36px;
-    color: #fff !important;
-    text-shadow: 0 -1px 0 rgba(0,0,0,.4);    
-    font-size: 15px;
-}
-
 /*=== Formulize Boutons by Francois T ===*/
 #formulize_addButton, #formulize_addProxyButton {
     text-indent:45px;   
@@ -247,6 +217,7 @@ a.loe-edit-entry {
 }
 
 .loe-edit-entry:before{
+    color: $colorTableLink;
     content: "\f10d";   // icon-edit
 }
 
@@ -261,8 +232,7 @@ td.formulize-controls {
 }
 
 .xoops-form-element-help {
-    // modify the background color instead of the text color so that this text always contrasts with the background
-    color: lighten($colorTableHeaderBackground, 18%);
+    color: $colorTableHelpText;
 }
 
 form#formulize td.even, form#formulize td.odd {
@@ -279,8 +249,12 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
     width: 7em;
 }
 
-#pageNavTable {
+#pageNavTable, #pageNavTableBottom {
     margin: 1em 0;
+}
+
+.formulize_autocomplete_search_label {
+    font-weight: bold;
 }
 
 @media print {
@@ -340,7 +314,7 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
     tr, td {
         page-break-inside: avoid;
     }
-    #pageNavTable, #bottomPageNumber, #bottom-save-block {
+    #pageNavTable, #pageNavTableBottom, #bottomPageNumber, #bottom-save-block {
         display: none;
     }
     .ui-accordion .ui-accordion-content {
@@ -361,3 +335,19 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
         display: none;
     }
 }
+
+.appcatspacer {
+    width: 25%;
+}
+
+.auto_multi {
+    margin: 0.2em;
+    display: table-row;
+}
+
+.auto_multi:hover {
+    cursor: pointer;
+    text-decoration: line-through;
+    color: red;
+}
+

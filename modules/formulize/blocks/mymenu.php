@@ -125,25 +125,35 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
         
         $isThisSubMenu = false;
         
+		include_once XOOPS_ROOT_PATH."/modules/formulize/class/applications.php";
+		list($defaultFid,$defaultSid) = formulizeApplicationMenuLinksHandler::getDefaultScreenForUser();
+		
         foreach($menulinks as $menulink) {
-            
-            if($menulink->getVar("menu_id") == $_GET['menuid']){
+		
+            if($menulink->getVar("menu_id") == $_GET['menuid']
+				OR $menulink->getVar("screen") == 'sid='.$_GET['sid']
+				OR $menulink->getVar("screen") == 'fid='.$_GET['fid']
+				OR (
+				getCurrentURL() == XOOPS_URL.'/modules/formulize/' AND (
+				$menulink->getVar("screen") == 'sid='.$defaultSid
+				OR $menulink->getVar("screen") == 'fid='.$defaultFid
+				))
+				){
                 
                 $isThisSubMenu = true;
     
             }
             
         }        
-				
-				
-        if($forceOpen OR (isset($_GET['id']) AND strstr(getCurrentURL(), "/modules/formulize/application.php") AND $aid == $_GET['id']) OR (strstr(getCurrentURL(), "/modules/formulize/index.php?fid=") AND in_array($_GET['fid'], $forms)) OR $isThisSubMenu ) { // if we're viewing this application or a form in this application, or this is the being forced open (only application)...
+		
+    if($forceOpen OR (isset($_GET['id']) AND strstr(getCurrentURL(), "/modules/formulize/application.php") AND $aid == $_GET['id']) OR (strstr(getCurrentURL(), "/modules/formulize/index.php?fid=") AND in_array($_GET['fid'], $forms)) OR $isThisSubMenu ) { // if we're viewing this application or a form in this application, or this is the being forced open (only application)...
         
 		foreach($menulinks as $menulink) {
 			$suburl = XOOPS_URL."/modules/formulize/index.php?".$menulink->getVar("screen");
 			$url = $menulink->getVar("url");
 			$target = "";
 			if(strlen($url) > 0){
-				$target = " target='_blank' ";
+				$target = strstr($url, XOOPS_URL) ? "" : " target='_blank' ";
 				$pos = strpos($url,"://");
 				if($pos === false){
 					$url = "http://".$url;

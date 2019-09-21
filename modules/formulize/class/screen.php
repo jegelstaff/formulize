@@ -37,8 +37,8 @@ if (!defined("XOOPS_ROOT_PATH")) {
 require_once XOOPS_ROOT_PATH.'/kernel/object.php';
 class formulizeScreen extends xoopsObject {
 
-	function formulizeScreen() {
-		$this->XoopsObject();
+	function __construct() {
+        parent::__construct();
 		$this->initVar('sid', XOBJ_DTYPE_INT, '', true);
 		$this->initVar('title', XOBJ_DTYPE_TXTBOX, '', true, 255);
 		$this->initVar('fid', XOBJ_DTYPE_INT, '', true);
@@ -134,7 +134,7 @@ class formulizeScreen extends xoopsObject {
 
 class formulizeScreenHandler {
 	var $db;
-	function formulizeScreenHandler(&$db) {
+	function __construct(&$db) {
 		$this->db =& $db;
 	}
 	function &getInstance(&$db) {
@@ -149,19 +149,45 @@ class formulizeScreenHandler {
 	}
 
     // returns an array of screen objects
-    function &getObjects($criteria = null, $fid) {
-        $sql = "SELECT * FROM " . $this->db->prefix("formulize_screen");
+    function &getObjects($criteria = null, $fid, $appid = -1, $sort = null, $order = null, $paged = false, $offset = -1, $limit = 20) {
+        $sql = "SELECT * FROM " . $this->db->prefix("formulize_screen") . " AS screentable";
         if(is_object($criteria)) {
             $sql .= " WHERE " . $criteria->render();
             if (intval($fid) > 0) {
                 $sql .= " AND fid=" . intval($fid);
             }
+            if ($appid > 0) {
+            	$sql .= " AND EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.appid=" . $appid . " AND linktable.fid=screentable.fid)";
+            } else if ($appid === 0) {
+            	$sql .= " AND NOT EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.appid>" . $appid . " AND linktable.fid=screentable.fid)";
+            }
         } else {
             if (intval($fid) > 0) {
                 $sql .= " WHERE fid=" . intval($fid);
+                
+                if ($appid > 0) {
+                	$sql .= " AND EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.appid=" . $appid . " AND linktable.fid=screentable.fid)";
+                } else if ($appid === 0) {
+            		$sql .= " AND NOT EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.appid>" . $appid . " AND linktable.fid=screentable.fid)";
+            	}
+            } else if ($appid > 0) {
+            	$sql .= " WHERE EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.appid=" . $appid . " AND linktable.fid=screentable.fid)";
+            } else if ($appid === 0) {
+            	$sql .= " WHERE NOT EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.appid>" . $appid . " AND linktable.fid=screentable.fid)";
             }
         }
-        $sql .= " order by fid, title";
+        if($sort == null) {
+        	$sort = "fid, title";
+        }
+        if($order == null) {
+        	$order = "ASC";
+        }
+        $sql .= " order by " . $sort . " " . $order;
+        if($paged) {
+        	$sql .= " LIMIT " . $limit;
+        	$begin = $offset < 2 ? 0 : ($offset - 1) * $limit;
+        	$sql .= " OFFSET " . $begin;
+        }
         $screens = array();
         if($result = $this->db->query($sql)) {
         while($array = $this->db->fetchArray($result)) {

@@ -48,8 +48,8 @@ class formulizeformulize extends XoopsObject {
     var $adminCanMakeRequired;
     var $alwaysValidateInputs;
 	
-	function formulizeformulize(){
-		$this->XoopsObject();
+	function __construct(){
+        parent::__construct();
 	//	key, data_type, value, req, max, opt
 		$this->initVar("id_form", XOBJ_DTYPE_INT, NULL, false);
 		$this->initVar("ele_id", XOBJ_DTYPE_INT, NULL, false);
@@ -63,6 +63,7 @@ class formulizeformulize extends XoopsObject {
 		$this->initVar("ele_req", XOBJ_DTYPE_INT);
 		$this->initVar("ele_value", XOBJ_DTYPE_ARRAY);
 		$this->initVar("ele_uitext", XOBJ_DTYPE_ARRAY); // used for having an alternative text to display on screen, versus the actual value recorded in the database, for radio buttons, checkboxes and selectboxes
+        $this->initVar("ele_uitextshow", XOBJ_DTYPE_INT);
 		$this->initVar("ele_delim", XOBJ_DTYPE_TXTBOX, NULL, true, 255);
 		$this->initVar("ele_forcehidden", XOBJ_DTYPE_INT);
 		$this->initVar("ele_private", XOBJ_DTYPE_INT);
@@ -147,7 +148,7 @@ class formulizeformulize extends XoopsObject {
 
     static function sanitize_handle_name($handle_name) {
         // strip non-alphanumeric characters from form and element handles
-        return preg_replace("/[^a-zA-Z0-9_]+/", "", $handle_name);
+        return preg_replace("/[^a-zA-Z0-9_-]+/", "", $handle_name);
     }
 
     public function assignVar($key, $value) {
@@ -167,7 +168,7 @@ class formulizeformulize extends XoopsObject {
 
 class formulizeElementsHandler {
 	var $db;
-	function formulizeElementsHandler(&$db) {
+	function __construct(&$db) {
 		$this->db =& $db;
 	}
 	function &getInstance(&$db) {
@@ -243,9 +244,9 @@ class formulizeElementsHandler {
 				}
    		if( $element->isNew() || $ele_id == 0){
 				$sql = sprintf("INSERT INTO %s (
-				id_form, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_req, ele_value, ele_uitext, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private, ele_encrypt, ele_filtersettings, ele_use_default_when_blank
+				id_form, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_req, ele_value, ele_uitext, ele_uitextshow, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private, ele_encrypt, ele_filtersettings, ele_use_default_when_blank
 				) VALUES (
-				%u, %s, %s, %s, %s, %s, %u, %u, %s, %s, %s, %s, %s, %u, %u, %u, %s, %u
+				%u, %s, %s, %s, %s, %s, %u, %u, %s, %s, %u, %s, %s, %s, %u, %u, %u, %s, %u
 				)",
 				formulize_TABLE,
 				$id_form,
@@ -258,6 +259,7 @@ class formulizeElementsHandler {
 				$ele_req,
 				$this->db->quoteString($ele_value),
 				$this->db->quoteString($ele_uitext),
+                $ele_uitextshow,
 				$this->db->quoteString($ele_delim),
 				$this->db->quoteString($ele_display),
 				$this->db->quoteString($ele_disabled),
@@ -280,6 +282,7 @@ class formulizeElementsHandler {
 				ele_req = %u,
 				ele_value = %s,
 				ele_uitext = %s,
+                ele_uitextshow = %u,
 				ele_delim = %s,
 				ele_display = %s,
 				ele_disabled = %s,
@@ -299,6 +302,7 @@ class formulizeElementsHandler {
 				$ele_req,
 				$this->db->quoteString($ele_value),
 				$this->db->quoteString($ele_uitext),
+                $ele_uitextshow,
 				$this->db->quoteString($ele_delim),
 				$this->db->quoteString($ele_display),
 				$this->db->quoteString($ele_disabled),
@@ -321,7 +325,7 @@ class formulizeElementsHandler {
         }
 
 		if( !$result ){
-			print "Error: this element could not be saved in the database.  SQL: $sql<br>".$xoopsDB->error();
+			print "Error: this element could not be saved in the database.  SQL: $sql<br>".$this->db->error();
 			return false;
 		}
 		if( $ele_id == 0 ){ // only occurs for new elements
@@ -494,4 +498,58 @@ class formulizeElementsHandler {
 		}
 		return $value;
 	}
+    
+    // determine if the element is disabled for the specified user
+    function isElementDisabledForUser($elementIdOrObject, $userIdOrObject=0) {
+        if(is_object($elementIdOrObject)) {
+            $elementObject = $elementIdOrObject;
+        } else {
+            $elementObject = $this->get($elementIdOrObject);    
+        }
+        $ele_disabled = $elementObject->getVar('ele_disabled');
+        if($ele_disabled == 1) {
+			return true;
+		} elseif(!is_numeric($ele_disabled)) {
+            if(is_object($userIdOrObject)) {
+                $userObject = $userIdOrObject;
+            } elseif($userIdOrObject) {
+                $memberHandler = xoops_gethandler('member');
+                $userObject = $memberHandler->getUser($userIdOrObject);
+            }
+            $groups = $userObject ? $userObject->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+            $disabled_groups = explode(",", $ele_disabled);
+            // user must not be a member of any group that the element is NOT disabled for. If they are in one group that can interact, the element will be enabled.
+            if(array_intersect($groups, $disabled_groups) AND !array_diff($groups, $disabled_groups)) {
+                return true;
+			}
+		}
+        return false;
+    }
+    
+    // determine if the element is displayed for the specified user
+    function isElementVisibleForUser($elementIdOrObject, $userIdOrObject=0) {
+        if(is_object($elementIdOrObject)) {
+            $elementObject = $elementIdOrObject;
+        } else {
+            $elementObject = $this->get($elementIdOrObject);    
+        }
+        $ele_display = $elementObject->getVar('ele_display');
+        if($ele_display == 1) {
+			return true;
+		} elseif(!is_numeric($ele_display)) {
+            if(is_object($userIdOrObject)) {
+                $userObject = $userIdOrObject;
+            } elseif($userIdOrObject) {
+                $memberHandler = xoops_gethandler('member');
+                $userObject = $memberHandler->getUser($userIdOrObject);
+            }
+            $groups = $userObject ? $userObject->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+            $display_groups = explode(",", $ele_display);
+            if(array_intersect($groups, $display_groups)) {
+                return true;
+			}
+		}
+        return false;
+    }
+    
 }

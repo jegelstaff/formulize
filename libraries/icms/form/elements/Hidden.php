@@ -70,10 +70,13 @@ class icms_form_elements_Hidden extends icms_form_Element {
 		if (is_array($this->getValue())) {
 			$ret = '';
 			foreach ($this->getValue() as $value){
-				$ret .= "<input type='hidden' name='" . $this->getName() . "[]' id='" . $this->getName() . "' value='" . htmlentities($value, ENT_QUOTES) . "' />\n";
+                $value = is_numeric($value) ? $value : "'" . htmlentities($value, ENT_QUOTES) . "'";
+				$ret .= "<input type='hidden' name='" . $this->getName() . "[]' id='" . $this->getName() . "' value=$value />\n";
 			}
 		} else {
-			$ret = "<input type='hidden' name='" . $this->getName() . "' id='" . $this->getName() . "' value='" . htmlentities($this->getValue(), ENT_QUOTES) . "' />";
+            $value = $this->getValue();
+            $value = is_numeric($value) ? $value : "'" . htmlentities($value, ENT_QUOTES) . "'";
+			$ret = "<input type='hidden' name='" . $this->getName() . "' id='" . $this->getName() . "' value=$value />";
 		}
 
 		return $ret;

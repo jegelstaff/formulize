@@ -5,10 +5,10 @@ div.xo-theme-form > table {
     // table-layout: fixed;
 }
 
-/* horizontal lines between form questions */
+/* horizontal lines between form questions * /
 div.xo-theme-form > table.outer > tbody > tr > td {
     border-bottom: 1px solid $colourPrimary;
-}
+} */
 
 /* compensate for padding in outer table cell when another table is contained -- for table-of-existing-elements */
 table.outer table.outer {
@@ -42,7 +42,8 @@ div.jGrowl-notification {
     border-top: solid 1px #1D65A5;
     border-left: solid 1px #1D65A5;
     border-right: solid 1px #1D65A5;
-    border-radius: 5px 5px 0 0;
+    border-bottom: solid 1px #1D65A5;
+    border-radius: 5px 5px 5px 5px;
 }
 
 .floating-column {
@@ -192,7 +193,7 @@ button:focus, input[type='submit']:focus, input[type='button']:focus, input[type
 }
 
 #formulize_saveButton {
-    background-color: lighten-or-darken($colorHeaderBackground, 30%);
+    background-color: #61A6EE;
     text-indent: 0px;
 }
 /* from style.php */
