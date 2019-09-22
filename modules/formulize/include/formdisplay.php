@@ -3355,6 +3355,7 @@ function check_date_limits(element_id) {
     }
 }
 <?php
+} // end of if we're not on mobile
 
     if(isset($GLOBALS['formulize_specialValidationLogicHook'])) {
         ?>
