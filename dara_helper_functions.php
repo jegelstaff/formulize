@@ -1005,7 +1005,7 @@ function getNamesPlusAvailLoads($instructors, $year) {
 function readSection($entry, $entry_id, $sort='course') { // sort sets how the dara_sort array is built, different pages need to organize this info differently
     $title = display($entry, 'ro_module_full_course_title');
     $code = display($entry, 'ro_module_course_code');
-    $sectionNumber = display($entry, 'sections_section_number');
+    $sectionNumber = str_replace(" ","_",display($entry, 'sections_section_number'));
     $days = display($entry, 'section_times_day');
     $starts = display($entry, 'section_times_start_time');
     $ends = display($entry, 'section_times_end_time');
