@@ -2727,7 +2727,7 @@ function authenticationURL() {
 
 function setupAuthentication() {
 	//Google API PHP Library includes
-	require_once XOOPS_ROOT_PATH.'/libraries/googleapiclient/autoload.php';
+	require_once XOOPS_ROOT_PATH.'/libraries/googleapiclient/vendor/autoload.php';
 	//redirect uri for when google authentication is done and it comes back to formulize
 	$redirect_uri = XOOPS_URL;
 	
