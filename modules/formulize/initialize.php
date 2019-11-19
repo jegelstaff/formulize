@@ -205,6 +205,8 @@ if ($screen) {
             include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
             displayForm($screen->getVar('fid'), "", "", "", "{NOBUTTON}");
         }
+    } elseif($screen->getVar('type') == 'calendar') {
+        $screen_handler->render($screen);
     } else {
         $screen_handler->render($screen, $entry, $loadThisView);
     }

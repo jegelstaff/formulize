@@ -1,5 +1,7 @@
 <form name=controls id=controls action=<{$currentURL}> method=post>
 
+<{$toptemplate}>
+
 <{foreach key=hidename item=hidevalue from=$hidden}>
 	<input type=hidden name=<{$hidename}> value=<{$hidevalue}>>
 <{/foreach}>
@@ -65,7 +67,7 @@
 <!-- Display calendar footer. -->
 </table>
 
-
+<{$bottomtemplate}>
 
 <input type=hidden name=ventry id=ventry value="">
 <input type=hidden name=calfid id=calfid value="">

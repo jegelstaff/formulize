@@ -91,6 +91,14 @@ if(isset($_POST['clonetemplatescreen']) AND ($_POST['clonetemplatescreen'])) {
     print "/* evalnow */ reloadWithScrollPosition()";
 }
 
+// do cloning of calendar screens here
+if(isset($_POST['clonecalendarscreen']) AND ($_POST['clonecalendarscreen'])) {
+    $screenToClone = intval($_POST['clonecalendarscreen']);
+    $screenHandler = xoops_getmodulehandler('calendarScreen', 'formulize');
+    $screenHandler->cloneScreen($screenToClone);
+    print "/* evalnow */ reloadWithScrollPosition()";
+}
+
 // do deletion here
 if($_POST['deletescreen']) {
   $screen_handler = xoops_getmodulehandler('screen', 'formulize');

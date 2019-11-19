@@ -68,6 +68,7 @@ $modversion['tables'] = array(
 	"formulize_screen_multipage",
 	"formulize_screen_listofentries",
 	"formulize_screen_template",
+    "formulize_screen_calendar",
 	"formulize_entry_owner_groups",
 	"formulize_application_form_link",
 	"formulize_applications",
@@ -101,6 +102,7 @@ $modversion['formulize_exportable_tables'] = array(
 	"formulize_screen_multipage",
 	"formulize_screen_listofentries",
 	"formulize_screen_template",
+    "formulize_screen_calendar",
     "formulize_entry_owner_groups",
 	"formulize_application_form_link",
 	"formulize_applications",
@@ -271,6 +273,16 @@ $modversion['table_metadata'] = array(
         "joins" => array()
     ),
     "formulize_screen_form" => array(
+        "fields" => array(),
+        "joins" => array(
+            array(
+                "join_table" => "formulize_screen",
+                "join_field" => array("sid", "sid"),
+                "field" => "title"
+            )
+        )
+    ),
+    "formulize_screen_calendar" => array(
         "fields" => array(),
         "joins" => array(
             array(
@@ -625,6 +637,16 @@ $modversion['templates'][] = array(
 $modversion['templates'][] = array(
 	'file' => 'admin/element_options_delimiter_choice.html',
     'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/screen_calendar_data_sections.html',
+    'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/screen_calendar_data.html',
+    'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/screen_calendar_templates.html',
+    'description' => '');
+
     
 //	Module Configs
 // $xoopsModuleConfig['t_width']

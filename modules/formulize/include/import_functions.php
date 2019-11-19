@@ -576,7 +576,7 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
                                 $errors[] = "<li>line " . $rowCount .
                                     ", column " . $importSet[3][$link] .
                                     ",<br> <b>found</b>: " . $cell_value .
-                                    ", <b>was expecting</b>: YYYY-mm-dd</li>";
+                                    ", <b>was expecting</b>: "._DATE_DEFAULT."</li>";
                             }
                             break;
 

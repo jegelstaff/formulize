@@ -27,65 +27,72 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// this file handles saving of submissions from the screen_relationships page of the new admin UI
+// this file handles saving of submissions from the screen_multipage_pages page of the new admin UI
 
 // if we aren't coming from what appears to be save.php, then return nothing
 if(!isset($processedValues)) {
   return;
 }
 
-if($_POST['deleteframework']) {
-    $framework_handler = xoops_getmodulehandler('frameworks','formulize');
-    $frameworkObject = $framework_handler->get($_POST['deleteframework']);
-    if(!$framework_handler->delete($frameworkObject)) {
-        print "Error: could not delete the requested relationship.";
-    } else {
-        print "/* eval */ reloadWithScrollPosition();";
-    }
-    return;
-}
+//print_r($_POST);
+//print_r($processedValues);
 
 
 $aid = intval($_POST['aid']);
 $sid = $_POST['formulize_admin_key'];
-$fid = intval($_POST['formulize_admin_fid']);
+$op = $_POST['formulize_admin_op'];
+$index = $_POST['formulize_admin_index'];
 
+$screens = $processedValues['screens'];
+
+$screen_handler = xoops_getmodulehandler('calendarScreen', 'formulize');
+$screen = $screen_handler->get($sid);
+// CHECK IF THE FORM IS LOCKED DOWN AND SCOOT IF SO
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
-$formObject = $form_handler->get($fid);
+$formObject = $form_handler->get($screen->getVar('fid'));
 if($formObject->getVar('lockedform')) {
   return;
 }
 // check if the user has permission to edit the form
-if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
+if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mid)) {
   return;
 }
 
+// get page titles
 
-$screens = $processedValues['screens'];
+$datasets = $screen->getVar('datasets');
 
-if($screens['type'] == 'multiPage') {
-  $screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
-} else if($screens['type'] == 'listOfEntries') {
-  $screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
-} else if($screens['type'] == 'form') {
-  $screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
-} else if($screens['type'] == 'calendar') {
-  $screen_handler = xoops_getmodulehandler('calendarScreen', 'formulize');
+// alter the information based on a user add or delete
+switch ($op) {
+	case "adddata":
+        $datasets[]= new formulizeCalendarScreenDataset();
+		break;
+	case "deldata":
+		ksort($datasets);
+        array_splice($datasets, $index, 1);
+		break;
 }
 
-if ("new" != $sid) {
-    $screen = $screen_handler->get($sid);
-    if (null == $screen) {
-        error_log("coald not load screen with id ".print_r($sid, true));
-    }
-    $originalFrid = $screen->getVar('frid');
-    $screen->setVar('frid',$screens['frid']);
-
-    if (!$sid = $screen_handler->insert($screen)) {
-        print "Error: could not save the screen properly: ".$xoopsDB->error();
-    }
-
-    if ($originalFrid != $screens['frid']) {
-        print '/* eval */ reloadWithScrollPosition();';
-    }
+foreach($datasets as $i=>$dataset) {
+    $datasets[$i]->setVar('fid', $_POST['fids'][$i] ? intval($_POST['fids'][$i]) : null);
+    $datasets[$i]->setVar('frid', $_POST['frids'][$i] ? intval($_POST['frids'][$i]) : null);
+    $datasets[$i]->setVar('scope', in_array($_POST['scopes'][$i], array('mine', 'group', 'all')) ? $_POST['scopes'][$i] : 'mine');
+    $datasets[$i]->setVar('useaddicons', intval($_POST['useaddicons'][$i]));
+    $datasets[$i]->setVar('usedeleteicons', intval($_POST['usedeleteicons'][$i]));
+    $datasets[$i]->setVar('textcolor', $_POST['textcolors'][$i] ? strip_tags(htmlspecialchars($_POST['textcolors'][$i], ENT_QUOTES))  : null);
+    $datasets[$i]->setVar('datehandle', $_POST['datehandles'][$i] ? strip_tags(htmlspecialchars($_POST['datehandles'][$i], ENT_QUOTES))  : null);
+    $datasets[$i]->setVar('viewentryscreen', $_POST['viewentryscreens'][$i] ? intval($_POST['viewentryscreens'][$i]) : null);                                                                   
+    $datasets[$i]->setVar('clicktemplate', $_POST['clicktemplates'][$i] ? $_POST['clicktemplates'][$i] : null);                                                                   
 }
+
+$screen->setVar('datasets',serialize($datasets));
+
+if(!$screen_handler->insert($screen)) {
+  print "Error: could not save the screen properly: ".$xoopsDB->error();
+}
+
+// reload the page if the state has changed
+if($op == "adddata" OR $op=="deldata" OR $_POST['reload_calendar_data']) {
+    print "/* eval */ reloadWithScrollPosition();";
+}
+?>

@@ -301,21 +301,13 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
   }
 
 	function multipageSetHiddenFields(page, prevpage) {
-		<?php
-			// neuter the ventry which is the key thing that keeps us on the form page,
-			//  if in fact we just came from a list screen of some kind.
-			// need to use an unusual selector, because something about selecting by id wasn't working,
-			//  apparently may be related to setting actions on forms with certain versions of jQuery?
-			print "
-			if(page == $thanksPage) {
-				window.document.formulize_mainform.ventry.value = '';
-				jQuery('form[name=formulize]').attr('action', '$done_dest');
-      }
-";?>
-      window.document.formulize_mainform.formulize_currentPage.value = page;
-      window.document.formulize_mainform.formulize_prevPage.value = prevpage;
-      window.document.formulize_mainform.formulize_doneDest.value = '<?php print $done_dest; ?>';
-      window.document.formulize_mainform.formulize_buttonText.value = '<?php print $button_text; ?>';
+        if(page == <?php print $thanksPage; ?>) {
+            jQuery('form[name=formulize]').attr('action', '<?php print $done_dest; ?>');
+        }
+        window.document.formulize.formulize_currentPage.value = page;
+        window.document.formulize.formulize_prevPage.value = prevpage;
+        window.document.formulize.formulize_doneDest.value = '<?php print $done_dest; ?>';
+        window.document.formulize.formulize_buttonText.value = '<?php print $button_text; ?>';
 	}
 
 	function pageJump(options, prevpage) {
@@ -325,6 +317,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 				return false;
 			}
 		}
+        return false;
 	}
 	
 	</script><noscript>

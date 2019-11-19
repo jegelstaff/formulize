@@ -104,6 +104,9 @@ define("_AM_SETTINGS_FORM_APP_PART","Which applications is this form part of?");
 define("_AM_SETTINGS_FORM_APPNEW","Create a new application for this form to be part of?");
 define("_AM_SETTINGS_FORM_DEFAULT_GROUP_PERM","Which groups of users should have permission to alter this form's settings?");
 
+define("_AM_CAL_SCREEN_TEMPLATES","Templates");
+define("_AM_CAL_SCREEN_DATA","Datasets");
+
 
 /*mod Language for permissions*/
 define("_AM_PERMISSIONS_CHOOSE_GROUPS","Which groups do you want to set permissions for?");
@@ -171,6 +174,7 @@ define("_AM_SCREEN_CREATE"," Create a new Screen");
 define("_AM_SCREEN_FORMSCREENS","Form Screens");
 define("_AM_SCREEN_LISTSCREENS","List Screens");
 define("_AM_SCREEN_TEMPLATESCREENS","Template Screens");
+define("_AM_SCREEN_CALENDARSCREENS","Calendar Screens");
 define("_AM_SCREEN_DELETESCREENS","Are you sure you want to delete this screen? All configuration settings for this screen will be lost!");
 define("_AM_SCREEN_RELATIONWARNING", "Note: This screen uses a different relationship setting than one or more list screens.");
 
@@ -799,6 +803,8 @@ define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_DESC", "For example, showing defaul
 define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ONLY_NEW", "Only for new entries");
 define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ALL_WHEN_BLANK", "For any entry, when the saved value is blank");
 
+define("_AM_FORMULIZE_SCREEN_CAL_DESC_TOPTEMPLATE", "You can type PHP code into either or both of the template boxes below.  Code in the <i>top template</i> box will be rendered above the calendar.  Code in the <i>bottom template</i> box will be rendered below the calendar.");
+define("_AM_FORMULIZE_SCREEN_CAL_DESC_TOPTEMPLATE2", "You can use <i>\$quickSearch</i> and <i>\$quickFilter</i> variables in the template to display search boxes and filters, ie: \$quickSearchelement_handle. The list of available element handles is available below the top template.");
 //template screen
 define("_AM_FORM_SCREEN_TEMPLATES_OPTIONS","Options");
 define("_AM_FORMULIZE_SCREEN_TEMPLATE_SAVEBUTTONTEXT", "Text for the 'Save' button: ");

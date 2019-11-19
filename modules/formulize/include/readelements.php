@@ -300,6 +300,14 @@ if(!$mainFormHasDerived AND $frid) {
 // but that's a whole lot of inspection we're not going to do right now.
 // Basically, the entire saving routine would be nicer if it were smart about not saving data that hasn't changed!
 
+$overrideFrid = 0;
+$overrideFid = 0;
+if($_POST['overridescreen']) {
+    $override_screen_handler = xoops_getmodulehandler('screen', 'formulize');
+    $overrideScreenObject = $override_screen_handler->get($_POST['overridescreen']);
+    $overrideFrid = $overrideScreenObject->getVar('frid');
+    $overrideFid = $overrideScreenObject->getVar('fid');
+}
 
 $mainFormEntriesUpdatedForDerived = array();
 $formsUpdatedInFramework = array();
@@ -336,12 +344,7 @@ foreach($formulize_allWrittenEntryIds as $allWrittenFid=>$entries) {
 	
 	
 	// check for things that we should be updating based on the framework in effect for any override screen that has been declared
-	if($_POST['overridescreen'] AND $derivedValueFound) {
-		$override_screen_handler = xoops_getmodulehandler('screen', 'formulize');
-		$overrideScreenObject = $override_screen_handler->get($_POST['overridescreen']);
-		$overrideFrid = $overrideScreenObject->getVar('frid');
-		$overrideFid = $overrideScreenObject->getVar('fid');
-		if($overrideFrid) {
+    if($overrideFrid AND $derivedValueFound) {
 			if($allWrittenFid == $overrideFid) {
 				foreach($entries as $thisEntry) {
 					formulize_updateDerivedValues($thisEntry, $allWrittenFid, $overrideFrid);
@@ -351,7 +354,6 @@ foreach($formulize_allWrittenEntryIds as $allWrittenFid=>$entries) {
 				}
 			}
 		}
-	}
 	
 }
 

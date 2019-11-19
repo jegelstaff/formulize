@@ -98,6 +98,32 @@
                     <a class="deletescreen" target="<{$screen.sid}>" href=""><img src="../images/editdelete.gif"> Remove</a></td>
             </tr>
             <{/foreach}>
+                
+            
+                
+        </table>
+    </div>
+    <{/if}>
+
+    <{if $content.calendar|@count != 0}>
+
+    <h2><{$smarty.const._AM_SCREEN_CALENDARSCREENS}></h2>
+    <div class="form-item">
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>id</th>
+                <th>Action</th>
+            </tr>
+            <{foreach from=$content.calendar item=screen}>
+            <tr>
+                <td><a class="configscreen" target-sid="<{$screen.sid}>" href="?page=screen&aid=<{$content.aid}>&fid=<{$content.fid}>&sid=<{$screen.sid}>"><img src="../images/kedit.png"> <{$screen.title}></a></label></td>
+                <td><{$screen.sid}></td>
+                <td><a href="<{$xoops_url}>/modules/formulize/index.php?sid=<{$screen.sid}>" target="_blank"><img src="../images/kfind.png"> View</a>&nbsp;&nbsp;&nbsp;&nbsp;
+                    <a class="clonecalendarscreen" target="<{$screen.sid}>" href=""><img src="../images/clone.gif">Clone</a>&nbsp;&nbsp;&nbsp;&nbsp;
+                    <a class="deletescreen" target="<{$screen.sid}>" href=""><img src="../images/editdelete.gif"> Remove</a></td>
+            </tr>
+            <{/foreach}>
         </table>
     </div>
     <{/if}>
@@ -133,6 +159,12 @@ $(".clonetemplatescreen").click(function () {
     return false;
 });
 
+$(".clonecalendarscreen").click(function () {
+    $("[name=clonecalendarscreen]").val($(this).attr('target'));
+    $(".savebutton").click();
+    return false;
+});
+
 $(".deletescreen").click(function() {
 	var answer = confirm("<{$smarty.const._AM_SCREEN_DELETESCREENS}>");
 	if(answer) {
@@ -142,3 +174,5 @@ $(".deletescreen").click(function() {
 	return false;
 });
 </script>
+
+    

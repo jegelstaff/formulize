@@ -501,6 +501,14 @@ foreach($templateScreens as $screen) {
     $screens['template'][$i]['title'] = $screen->getVar('title');
     $i++;
 }
+$calendarScreens = $screen_handler->getObjects(new Criteria('type','calendar'),$fid);
+$i=1;
+foreach($calendarScreens as $screen) {
+    $screens['calendar'][$i]['sid'] = $screen->getVar('sid');
+    $screens['calendar'][$i]['title'] = $screen->getVar('title');
+    $i++;
+}
+
 
 $settings = array();
 $settings['singleentry'] = $singleentry;

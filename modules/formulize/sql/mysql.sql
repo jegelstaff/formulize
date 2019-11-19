@@ -1,3 +1,12 @@
+CREATE TABLE `formulize_screen_calendar` (
+  `calendar_id` int(11) unsigned NOT NULL auto_increment,
+  `sid` int(11) DEFAULT NULL,
+  `caltype` varchar(50) DEFAULT NULL,
+  `datasets` text DEFAULT NULL,
+  PRIMARY KEY (`calendar_id`),
+  INDEX i_sid (`sid`)
+) ENGINE=InnoDB;
+
 CREATE TABLE `formulize_digest_data` (
   `digest_id` int(11) unsigned NOT NULL auto_increment,
   `email` varchar(255) DEFAULT NULL,

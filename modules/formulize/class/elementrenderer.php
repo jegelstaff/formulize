@@ -70,6 +70,7 @@ class formulizeElementRenderer{
 		// added July 6 2005.
 		if(!$xoopsModuleConfig['delimeter']) {
 			// assume that we're accessing a form from outside the Formulize module, therefore the Formulize delimiter setting is not available, so we have to query for it directly.
+			global $xoopsDB;
 			$delimq = q("SELECT conf_value FROM " . $xoopsDB->prefix("config") . ", " . $xoopsDB->prefix("modules") . " WHERE " . $xoopsDB->prefix("modules") . ".mid=" . $xoopsDB->prefix("config") . ".conf_modid AND " . $xoopsDB->prefix("modules") . ".dirname=\"formulize\" AND " . $xoopsDB->prefix("config") . ".conf_name=\"delimeter\"");
 			$delimSetting = $delimq[0]['conf_value'];
 		} else {
@@ -587,6 +588,7 @@ class formulizeElementRenderer{
 								} else { // use all 
 									if(!$ele_value[4]) { // really use all (otherwise, we're just going with all user's groups, so existing value of $groups will be okay
 										unset($groups);
+										global $xoopsDB;
 										$allgroupsq = q("SELECT groupid FROM " . $xoopsDB->prefix("groups")); //  . " WHERE groupid != " . XOOPS_GROUP_USERS); // removed exclusion of registered users group March 18 2009, since it doesn't make sense in this situation.  All groups should mean everyone, period.
 										foreach($allgroupsq as $thisgid) {
 											$groups[] = $thisgid['groupid'];
@@ -1051,8 +1053,10 @@ class formulizeElementRenderer{
 			return $form_ele_new;
 		} elseif(is_object($form_ele) AND $isDisabled AND $this->_ele->hasData) { // element is disabled
 			$form_ele = $this->formulize_disableElement($form_ele, $ele_type, $ele_desc);
+            $form_ele->formulize_element = $this->_ele;
 			return $form_ele;
 		} else { // form ele is not an object...and/or has no data.  Happens for IBs and for non-interactive elements, like grids.
+            $form_ele->formulize_element = $this->_ele;
 			return $form_ele;
 		}
 	}
@@ -1121,9 +1125,9 @@ class formulizeElementRenderer{
         }
 		$box = new XoopsFormText('', 'other['.$otherKey.']', $len, 255, $other_text);
 		if($checkbox) {
-			$box->setExtra("onchange=\"javascript:formulizechanged=1;\" onfocus=\"javascript:this.form.elements['" . $id . "[]'][$counter].checked = true;\"");
+			$box->setExtra("onchange=\"javascript:formulizechanged=1;\" onkeydown=\"javascript:if(this.value != ''){this.form.elements['" . $id . "[]'][$counter].checked = true;}\"");
 		} else {
-			$box->setExtra("onchange=\"javascript:formulizechanged=1;\" onfocus=\"javascript:this.form." . $id . "[$counter].checked = true;\"");
+			$box->setExtra("onchange=\"javascript:formulizechanged=1;\" onkeydown=\"javascript:if(this.value != ''){this.form." . $id . "[$counter].checked = true;}\"");
 		}
 		return $box->render();
 	}

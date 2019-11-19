@@ -65,7 +65,6 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
     // it receives the element object and returns an array of data that will go to the admin UI template
     // when dealing with new elements, $element might be FALSE
     function adminPrepare($element) {
-        
         $dataToSendToTemplate = array();
         if(is_object($element) AND is_subclass_of($element, 'formulizeformulize')) {
 			$ele_value = $this->backwardsCompatibility($element->getVar('ele_value'));

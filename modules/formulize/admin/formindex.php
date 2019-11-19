@@ -112,10 +112,10 @@ function patch40() {
      *
      * ====================================== */
 
-    $checkThisTable = 'formulize_screen_template';
-    $checkThisField = 'donedest'; 
-    $checkThisProperty = false;
-    $checkPropertyForValue = false;
+    $checkThisTable = 'formulize_screen_calendar';
+	$checkThisField = '';
+	$checkThisProperty = '';
+	$checkPropertyForValue = '';
 
     $needsPatch = false;
 
@@ -345,6 +345,17 @@ function patch40() {
             ) ENGINE=MyISAM;";
         }      
 
+        if (!in_array($xoopsDB->prefix("formulize_screen_calendar"), $existingTables)) {
+            $sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_screen_calendar"). " (
+                `calendar_id` int(11) unsigned NOT NULL auto_increment,
+                `sid` int(11) DEFAULT NULL,
+                `caltype` varchar(50) DEFAULT NULL,
+                `datasets` text DEFAULT NULL,
+                PRIMARY KEY (`calendar_id`),
+                INDEX i_sid (`sid`)
+              ) ENGINE=InnoDB;";
+        }
+        
         // if this is a standalone installation, then we want to make sure the session id field in the DB is large enough to store whatever session id we might be working with
         if (file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
             $sql['increase_session_id_size'] = "ALTER TABLE ".$xoopsDB->prefix("session")." CHANGE `sess_id` `sess_id` varchar(60) NOT NULL";

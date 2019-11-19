@@ -27,65 +27,40 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// this file handles saving of submissions from the screen_relationships page of the new admin UI
+// this file handles saving of submissions from the screen_list_display page of the new admin UI
 
 // if we aren't coming from what appears to be save.php, then return nothing
 if(!isset($processedValues)) {
   return;
 }
 
-if($_POST['deleteframework']) {
-    $framework_handler = xoops_getmodulehandler('frameworks','formulize');
-    $frameworkObject = $framework_handler->get($_POST['deleteframework']);
-    if(!$framework_handler->delete($frameworkObject)) {
-        print "Error: could not delete the requested relationship.";
-    } else {
-        print "/* eval */ reloadWithScrollPosition();";
-    }
-    return;
-}
+
+//print_r($_POST);
+//print_r($processedValues);
 
 
 $aid = intval($_POST['aid']);
 $sid = $_POST['formulize_admin_key'];
-$fid = intval($_POST['formulize_admin_fid']);
 
+$screens = $processedValues['screens'];
+
+
+$screen_handler = xoops_getmodulehandler('calendarScreen', 'formulize');
+$screen = $screen_handler->get($sid);
+// CHECK IF THE FORM IS LOCKED DOWN AND SCOOT IF SO
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
-$formObject = $form_handler->get($fid);
+$formObject = $form_handler->get($screen->getVar('fid'));
 if($formObject->getVar('lockedform')) {
   return;
 }
 // check if the user has permission to edit the form
-if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
+if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mid)) {
   return;
 }
+$screen->setVar('toptemplate',htmlspecialchars(trim($screens['toptemplate'])));
+$screen->setVar('bottomtemplate',htmlspecialchars(trim($screens['bottomtemplate'])));
 
-
-$screens = $processedValues['screens'];
-
-if($screens['type'] == 'multiPage') {
-  $screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
-} else if($screens['type'] == 'listOfEntries') {
-  $screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
-} else if($screens['type'] == 'form') {
-  $screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
-} else if($screens['type'] == 'calendar') {
-  $screen_handler = xoops_getmodulehandler('calendarScreen', 'formulize');
+if(!$screen_handler->insert($screen)) {
+  print "Error: could not save the screen properly: ".$xoopsDB->error();
 }
-
-if ("new" != $sid) {
-    $screen = $screen_handler->get($sid);
-    if (null == $screen) {
-        error_log("coald not load screen with id ".print_r($sid, true));
-    }
-    $originalFrid = $screen->getVar('frid');
-    $screen->setVar('frid',$screens['frid']);
-
-    if (!$sid = $screen_handler->insert($screen)) {
-        print "Error: could not save the screen properly: ".$xoopsDB->error();
-    }
-
-    if ($originalFrid != $screens['frid']) {
-        print '/* eval */ reloadWithScrollPosition();';
-    }
-}
+?>

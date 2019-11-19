@@ -111,18 +111,33 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
         if($isDisabled) {
             $formElement = new xoopsFormLabel($caption, $this->formatDataForList($ele_value, $element->getVar('ele_handle'), $entry_id));
         } else {
-            static $scriptIncluded = false;
+            global $output_timeelement_js;
             $timeScript = "";
-            if(!$scriptIncluded) {
+            if(!$output_timeelement_js) {
+                $output_timeelement_js = $markupName;
+                
+                global $xoTheme, $timeScriptsAdded;
+                if($xoTheme AND $timeScriptsAdded != 'done') {
+                    $xoTheme->addStylesheet("/modules/formulize/libraries/jquery/timeentry/jquery.timeentry.css");
+                    $xoTheme->addScript("modules/formulize/libraries/jquery/timeentry/jquery.plugin.min.js");
+                    $xoTheme->addScript("modules/formulize/libraries/jquery/timeentry/jquery.timeentry.js");
+                    $xoTheme->addScript("modules/formulize/libraries/jquery/timeentry/jquery.mousewheel.js");
+                    $timeScriptsAdded = 'done';
+                } elseif(!$xoTheme) {
                 // depends on includeResource function which is part of formDisplay.php and will exist when any regular form has been rendered onto the screen.
                 // it will not be available when only an element by element rendering is in effect
-                // wait up to 8 seconds for the scripts to finish loading, but bail after that and don't initialize the elements (otherwise endless loop)
-                $timeScript .= "<script type='text/javascript'>
-jQuery(document).ready(function(){
+                    $loadScriptsIfNecessary = "
     includeResource('".XOOPS_URL."/modules/formulize/libraries/jquery/timeentry/jquery.timeentry.css', 'link');
     includeResource('".XOOPS_URL."/modules/formulize/libraries/jquery/timeentry/jquery.plugin.min.js', 'script');
     includeResource('".XOOPS_URL."/modules/formulize/libraries/jquery/timeentry/jquery.timeentry.js', 'script');
     includeResource('".XOOPS_URL."/modules/formulize/libraries/jquery/timeentry/jquery.mousewheel.js', 'script');
+";
+                }
+                // wait up to 8 seconds for the scripts to finish loading, but bail after that and don't initialize the elements (otherwise endless loop)
+                // complete the document.ready instructions started above...
+                $timeScript .= "<script type='text/javascript'>
+jQuery(document).ready(function(){
+    ".$loadScriptsIfNecessary."
     initializeTimeElements();
 });
 var timeElementWaiting = 0;
@@ -135,7 +150,7 @@ function initializeTimeElements() {
     }
 }
 </script>";
-                $scriptIncluded = true;
+                
             }
             $timeElement = new xoopsFormText($caption, $markupName, 10, 10, $ele_value); // caption, markup name, size, maxlength, default value, according to the xoops form class
             $timeElement->setExtra("class='formulize-time-element'");
@@ -156,7 +171,7 @@ function initializeTimeElements() {
     // $element is the element object
     function prepareDataForSaving($value, $element) {
         // have to convert this to a 24 hour time for saving
-        $value = $this->convert12To24HourTime($value);
+        //$value = $this->convert12To24HourTime($value); // RIGHT NOW THE TIME WIDGET FORCES 24 HOURS ON EVERYONE. THIS IS DONE IN THE JS FILE. SO NO NEED TO CONVERT VALUES.
         if($value == "") { $value = "{WRITEASNULL}"; }
         return $value;
     }

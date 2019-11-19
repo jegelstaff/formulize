@@ -112,7 +112,7 @@ if (false != $user) {
 		$parsed = parse_url(ICMS_URL);
 		$url = isset($parsed['scheme']) ? $parsed['scheme'] . '://' : 'http://';
 		$url .= $_SERVER['HTTP_HOST'];
-		if (isset($parsed['port'])) {
+		if (!strstr(str_replace('://','',$url),':') AND isset($parsed['port'])) {
 			$url .= ':' . $parsed['port'];
 		}
 		if (@$parsed['path']) {

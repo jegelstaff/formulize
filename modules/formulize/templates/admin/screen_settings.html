@@ -27,6 +27,7 @@
 		    <option value="form"<{if $content.type eq 'form'}> selected="selected"<{/if}>>Regular form</option>
 		    <option value="multiPage"<{if $content.type eq 'multiPage'}> selected="selected"<{/if}>>Multi page form</option>
           <option value="template"<{if $content.type eq 'template'}> selected="selected"<{/if}>>Template</option>
+          <option value="calendar"<{if $content.type eq 'calendar'}> selected="selected"<{/if}>>Calendar</option>
 	    </select>
 			<{if $content.sid neq 'new'}>
 				<input type="hidden" name="screens-type" value="<{$content.type}>">
