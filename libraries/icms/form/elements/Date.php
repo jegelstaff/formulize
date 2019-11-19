@@ -105,7 +105,7 @@ class icms_form_elements_Date extends icms_form_elements_Text {
                 // the jQuery datepicker wants a date format such as yy-mm-dd, or yy-m-d.
                 // yyyy-mm-dd gives a date like '20142014-10-11', so only yy, not yyyy.
                 $dateFormat = dateFormatToStrftime(_SHORTDATESTRING);
-                $dateFormat = str_replace(array("%y", "%m", "%d"), array("yy", "m", "d"), strtolower($dateFormat));
+                $dateFormat = str_replace(array("%y", "%m", "%d"), array("yy", "mm", "d"), strtolower($dateFormat));
                 // note: datepicker_defaults is a var so it is available later for date elements with date limits
                 $result .= <<<EOF
 <script>
