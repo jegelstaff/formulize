@@ -3470,7 +3470,7 @@ jQuery(document).ready(function() {
 	}
 
     foreach(array_keys($governingElements) as $ge) {
-        $initCode .= "jQuery(document).on('change', '[name=".$ge."]', function() {
+        $initCode .= "jQuery(document).on('change', '[name=\"".$ge."\"]', function() {
     callCheckCondition(jQuery(this).attr('name'));
 });\n";
     }
