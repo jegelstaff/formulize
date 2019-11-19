@@ -739,7 +739,7 @@ define("_AM_UPLOAD", "Upload a file:");
 define("_AM_UPLOAD_DELETE", "  Delete this file");
 define("_AM_UPLOAD_DELETE_FAIL", "There was an error deleting the file, please reload the form and try again.");
 define("_AM_UPLOAD_DELETE_WARN", "Do you really want to delete this file?");
-define("_AM_UPLOAD_LOST", "Your file was uploaded, but could not be moved to a permanent location on the server.  Please try again.  If this happens again, please inform the webmaster about this error..");
+define("_AM_UPLOAD_LOST", "Your file was uploaded, but could not be moved to a permanent location on the server.  Please try again.  If this happens again, please inform the webmaster about this error.");
 define("_AM_UPLOAD_MOD", "Replace this with a new file:");
 define("_AM_UPLOAD_NOLOCATION", "Your file was uploaded, but the location where we need to save it on the server does not exist.  Please inform the webmaster about this error.");
 define("_AM_UPLOAD_ERROR_MIMETYPES", "The type of file you uploaded is not allowed for '");

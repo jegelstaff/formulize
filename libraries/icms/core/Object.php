@@ -502,7 +502,7 @@ class icms_core_Object {
 					case XOBJ_DTYPE_URL:
 						if ($v['required'] && $cleanv == '') {
 							$this->setErrors(sprintf(_XOBJ_ERR_REQUIRED, $k));
-							continue;
+							break;
 						}
 						if ($cleanv != '' && !preg_match("/^http[s]*:\/\//i", $cleanv)) {
 							$cleanv = 'http://' . $cleanv;

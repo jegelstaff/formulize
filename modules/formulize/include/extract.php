@@ -1235,6 +1235,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
      global $myts;
      $numSeachExps = 0;
      foreach($filter as $filterParts) {
+        
           // evaluate each search expression (collection of terms with a common boolean inbetween
           // Use the global andor setting between expressions
           
@@ -1374,7 +1375,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                                 AND (
                                     (is_array($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10]) AND $formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10][0] != 'none')
                                 OR
-                                    $formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10] != "none" 
+                                    (!is_array($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10]) AND $formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10] != "none") 
                                 )) {
                               list($sourceMeta[1]) = convertElementIdsToElementHandles(array($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10]), $sourceMeta[0]); // ele_value 10 is the alternate field to use for datasets and in lists
                              }

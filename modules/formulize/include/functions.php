@@ -1725,7 +1725,7 @@ function getCalcHandleText($handle, $forceColhead=true) {
 
 // this function builds the scope used for passing to the getData function
 // based on values of either mine, group, all, or a groupid string formatted with start, end and inbetween commas: ,1,3,
-// will return the scope, plus the value of currentView, which may have been modified depending on the user's permissions
+// will return array of the scope, and the value of currentView, which may have been modified depending on the user's permissions
 function buildScope($currentView, $uid, $fid, $currentViewCanExpand = false) {
     
     $gperm_handler = xoops_gethandler('groupperm');
@@ -6357,4 +6357,240 @@ function prepareLinkedElementExtraClause($pgroupsfilter, $parentFormFrom, $sourc
         $extra_clause = " $parentFormFrom WHERE $sourceEntrySafetyNetStart t1.entry_id>0 ";
     }
     return $extra_clause;
+}
+
+// this function takes an array of element handle=>search term pairs, and converts them into a filter string valid for using in a getData call
+function formulize_parseSearchesIntoFilter($searches) {
+    
+    // build the filter out of the searches array
+	$start = 1;
+	$filter = "";
+	$ORstart = 1;
+	$ORfilter = "";
+	$individualORSearches = array();
+    $element_handler = xoops_getmodulehandler('elements','formulize');
+	global $xoopsUser;
+	foreach($searches as $key => $master_one_search) { // $key is the element handle
+		// convert "between 2001-01-01 and 2002-02-02" to a normal date filter with two dates
+		$count = preg_match("/^[bB][eE][tT][wW][eE][eE][nN] ([\d]{1,4}[-][\d]{1,2}[-][\d]{1,4}) [aA][nN][dD] ([\d]{1,4}[-][\d]{1,2}[-][\d]{1,4})\$/", $master_one_search, $matches);
+		if ($count > 0) {
+			$master_one_search = ">={$matches[1]}//<={$matches[2]}";
+		}
+
+		// split search based on new split string
+		$intermediateArray = explode("//", trim($master_one_search, "//")); // ignore trailing // because that will just cause an unnecessary blank search
+
+		$searchArray = array();
+
+		foreach($intermediateArray as $one_search) {
+			// if $one_search contains both OR and AND, just add it as-is; we don't support this kind of nesting
+			if (strpos($one_search, " OR ") !== FALSE AND strpos($one_search, " AND ") !== FALSE) {
+				$searchArray[] = $one_search;
+			}
+			// split on OR and add all split results, prepended with OR
+			else if (strpos($one_search, " OR ") !== FALSE) {
+				foreach(explode(" OR ", $one_search) as $or_term) {
+						$searchArray[] = "OR" . $or_term;
+				}
+			}
+			// split on AND and add all split results
+			else if (strpos($one_search, " AND ") !== FALSE) {
+				foreach(explode(" AND ", $one_search) as $and_term) {
+					$searchArray[] = $and_term;
+				}
+			}
+			// otherwise just add to the array
+			else {
+				$searchArray[] = $one_search;
+			}
+		}
+
+		foreach($searchArray as $one_search) {
+            // used for trapping the {BLANK} keywords into their own space so they don't interfere with each other, or other filters
+            $addToItsOwnORFilter = false;
+            $ownORFilterKey = "";
+
+            $dataHandler = new formulizeDataHandler(false);
+            $metadataFieldTypes = $dataHandler->metadataFieldTypes;
+
+            if (isset($metadataFieldTypes[$key])){
+                $ele_type = $metadataFieldTypes[$key];
+            }
+            else{
+                $elementObject = $element_handler->get($key);
+                if(!is_object($elementObject)) {
+                    continue; // ignore references to non-elements (probably deleted columns in a saved view)
+                }
+                $ele_type = $elementObject->getVar('ele_type');
+            }
+
+		    // remove the qsf_ parts to make the quickfilter searches work
+		    if(substr($one_search, 0, 4)=="qsf_") {
+              $qsfparts = explode("_", $one_search);
+			  $allowsMulti = false;
+			  if($ele_type == "select") {
+				$ele_value = $elementObject->getVar('ele_value');
+				if($ele_value[1]) {
+				  $allowsMulti = true;
+				}
+			  } elseif($ele_type == "checkbox") {
+				$allowsMulti = true;
+		      }
+			  if($allowsMulti) {
+				$one_search = $qsfparts[2]; // will default to using LIKE since there's no operator
+			  } else {
+				$one_search = "=".$qsfparts[2];
+			  }
+		    }
+	
+			// strip out any starting and ending ! that indicate that the column should not be stripped
+			if(substr($one_search, 0, 1) == "!" AND substr($one_search, -1) == "!") {
+				$one_search = substr($one_search, 1, -1);
+			}
+			
+			// look for OR indicators...if all caps OR is at the front, then that means that this search is to put put into a separate set of OR filters that gets appended as a set to the main set of AND filters
+		    $addToORFilter = false; // flag to indicate if we need to apply the current search term to a set of "OR'd" terms			
+			if(substr($one_search, 0, 2) == "OR" AND strlen($one_search) > 2) {
+                if(substr($one_search, 2, 3)== "SET") {
+                    $addToItsOwnORFilter = true;
+                    $ownORFilterKey = substr($one_search, 2, 4);
+                    $one_search = substr($one_search, 6);
+                } else {
+				$addToORFilter = true;
+				$one_search = substr($one_search, 2);
+			}
+			}
+			
+			// look for operators
+			$operators = array(0=>"=", 1=>">", 2=>"<", 3=>"!");
+			$operator = "";
+			if(in_array(substr($one_search, 0, 1), $operators)) {
+				// operator found, check to see if it's <= or >= and set start point for term accordingly
+				$startpoint = (substr($one_search, 0, 2) == ">=" OR substr($one_search, 0, 2) == "<=" OR substr($one_search, 0, 2) == "!=" OR substr($one_search, 0, 2) == "<>") ? 2 : 1;
+				$operator = substr($one_search, 0, $startpoint);
+        if($operator == "!") { $operator = "NOT LIKE"; }
+				$one_search = substr($one_search, $startpoint);
+			}
+
+			// look for blank search terms and convert them to {BLANK} so they are handled properly
+			if($one_search === "") {
+				$one_search = "{BLANK}";
+			}
+
+			// look for { } and transform special terms into what they should be for the filter
+			if(substr($one_search, 0, 1) == "{" AND substr($one_search, -1) == "}") {
+				$searchgetkey = substr($one_search, 1, -1);
+
+				if (substr($searchgetkey, 0, 5) == "TODAY") {
+					$number = substr($searchgetkey, 6);
+					$one_search = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
+				} elseif($searchgetkey == "USER") {
+					if($xoopsUser) {
+                        $one_search = htmlspecialchars_decode($xoopsUser->getVar('name'), ENT_QUOTES);
+						if(!$one_search) { $one_search = htmlspecialchars_decode($xoopsUser->getVar('uname'), ENT_QUOTES); }
+					} else {
+						$one_search = 0;
+					}
+				} elseif($searchgetkey == "USERNAME") {
+					if($xoopsUser) {
+                        $one_search = htmlspecialchars_decode($xoopsUser->getVar('name'), ENT_QUOTES);
+					} else {
+						$one_search = "";
+					}
+				} elseif($searchgetkey == "BLANK") { // special case, we need to construct a special OR here that will look for "" OR IS NULL
+				  if($operator == "!=" OR $operator == "NOT LIKE") {
+				    $blankOp1 = "!=";
+				    $blankOp2 = " IS NOT NULL ";
+				  } else {
+				    $addToItsOwnORFilter = $addToORFilter ? false : true; // if this is not going into an OR filter already because the user asked for it to, then let's
+				    $blankOp1 = "=";
+				    $blankOp2 = " IS NULL ";
+				  }
+				  $one_search = "/**/$blankOp1][$key/**//**/$blankOp2";
+				  $operator = ""; // don't use an operator, we've specially constructed the one_search string to have all the info we need
+				} elseif($searchgetkey == "PERGROUPFILTER") {
+					$one_search = $searchgetkey;
+					$operator = "";
+				} elseif(isset($_POST[$searchgetkey]) OR isset($_GET[$searchgetkey])) {
+                    $one_search = isset($_POST[$searchgetkey]) ? htmlspecialchars(strip_tags(trim($_POST[$searchgetkey])), ENT_QUOTES) : "";
+					$one_search = ($one_search==="" AND isset($_GET[$searchgetkey])) ? htmlspecialchars(strip_tags(trim($_GET[$searchgetkey])), ENT_QUOTES) : $one_search;
+					if($one_search==="") {
+						continue;
+					}
+				} elseif($searchgetkey) { // we were supposed to find something above, but did not, so there is a user defined search term, which has no value, ergo disregard this search term
+					continue;
+				} else {
+					$one_search = "";
+					$operator = "";
+				}
+			} else {
+				// handle alterations to non { } search terms here...
+				if ($ele_type == "date") {
+                    $search_date = strtotime($one_search);
+                    // only search on a valid date string (otherwise it will be converted to the unix epoch)
+                    if (false !== $search_date) {
+                        $one_search = date('Y-m-d', $search_date);
+                    }
+				}
+			}
+
+			// do additional search for {USERNAME} or {USER} in case they are embedded in another string
+			if($xoopsUser) {
+                $one_search = str_replace("{USER}", htmlspecialchars_decode($xoopsUser->getVar('name'), ENT_QUOTES), $one_search);
+				$one_search = str_replace("{USERNAME}", htmlspecialchars_decode($xoopsUser->getVar('uname'), ENT_QUOTES), $one_search);
+			}
+
+            if(isset($GLOBALS['formulize_searchOperatorOverride'][$key])) {
+                $operator = $GLOBALS['formulize_searchOperatorOverride'][$key];
+            }
+			if($operator) {
+				$one_search = $one_search . "/**/" . $operator;
+			}
+			if($addToItsOwnORFilter) {
+                if($ownORFilterKey) {
+                    if(!isset($individualORSearches[$ownORFilterKey])) {
+                        $individualORSearches[$ownORFilterKey] = $key ."/**/$one_search";    
+                    } else {
+                        $individualORSearches[$ownORFilterKey] .= "][".$key ."/**/$one_search";    
+                    }
+                } else {
+				$individualORSearches[] = $key ."/**/$one_search";
+                }
+			} elseif($addToORFilter) {
+				if(!$ORstart) { $ORfilter .= "]["; }
+				$ORfilter .= $key . "/**/$one_search"; // . formulize_db_escape($one_search); // mysql_real_escape_string no longer necessary here since the extraction layer does the necessary dirty work for us
+				$ORstart = 0;
+			} else {
+				if(!$start) { $filter .= "]["; }
+				$filter .= $key . "/**/$one_search"; // . formulize_db_escape($one_search); // mysql_real_escape_string no longer necessary here since the extraction layer does the necessary dirty work for us
+				$start = 0;
+			}
+			
+		}
+	}
+	//print $filter;
+	// if there's a set of options that have been OR'd, then we need to construction a more complex filter
+	
+	if($ORfilter OR count($individualORSearches)>0) {
+		$filterIndex = 0;
+        if($filter) {
+    		$arrayFilter[$filterIndex][0] = "and";
+    		$arrayFilter[$filterIndex][1] = $filter;
+        }
+		if($ORfilter) {
+			$filterIndex++;
+			$arrayFilter[$filterIndex][0] = "or";
+			$arrayFilter[$filterIndex][1] = $ORfilter;
+		}
+		if(count($individualORSearches)>0) {
+			foreach($individualORSearches as $thisORfilter) {
+				$filterIndex++;
+				$arrayFilter[$filterIndex][0] = "or";
+				$arrayFilter[$filterIndex][1] = $thisORfilter;
+			}
+		}
+		$filter = $arrayFilter;
+	} 
+    return $filter;
+    
 }
