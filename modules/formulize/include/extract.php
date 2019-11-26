@@ -98,7 +98,9 @@ function prepvalues($value, $field, $entry_id) {
 
   // return metadata values without putting them in an array
   if(isMetaDataField($field)) {
+    if(!isset($GLOBALS['formulize_doNotCacheDataSet'])) {
     $cachedPrepedValues[$original_value][$field][$entry_id] = $value;
+    }
      return $value;
   }
 
@@ -114,7 +116,9 @@ function prepvalues($value, $field, $entry_id) {
 		} else {
 			$value = "";
 		}
+        if(!isset($GLOBALS['formulize_doNotCacheDataSet'])) {
         $cachedPrepedValues[$original_value][$field][$entry_id] = $value;
+        }
 		return $value;
 	}
 
@@ -123,10 +127,14 @@ function prepvalues($value, $field, $entry_id) {
 		 $decryptSQL = "SELECT AES_DECRYPT('".formulize_db_escape($value)."', '".getAESPassword()."')";
 		 if($decryptResult = $xoopsDB->query($decryptSQL)) {
 					$decryptRow = $xoopsDB->fetchRow($decryptResult);
+                    if(!isset($GLOBALS['formulize_doNotCacheDataSet'])) {
                     $cachedPrepedValues[$original_value][$field][$entry_id] = $decryptRow[0];
+                    }
 					return $decryptRow[0];
 		 } else {
+                    if(!isset($GLOBALS['formulize_doNotCacheDataSet'])) {
                     $cachedPrepedValues[$original_value][$field][$entry_id] = "";
+                    }
 					return "";
 		 }
 	}
@@ -264,8 +272,9 @@ function prepvalues($value, $field, $entry_id) {
         $valueToReturn = explode("*=+*:",$value);
       }
 
-      
+    if(!isset($GLOBALS['formulize_doNotCacheDataSet'])) {  
     $cachedPrepedValues[$original_value][$field][$entry_id] = $valueToReturn;
+    }
 	return $valueToReturn;
 }
 
@@ -348,6 +357,7 @@ function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitS
 
     if ($cacheKey AND !isset($GLOBALS['formulize_doNotCacheDataSet'])) {
         // doNotCacheDataSet can be set, so that this query will be repeated next time instead of pulled from the cache.  This is most useful to declare in derived value formulas that cause a change to the underlyin dataset by writing things to a form that is involved in this dataset.
+        // This is also useful to set when a query will not be done over again and we want to conserve resources esp. memory!
         $GLOBALS['formulize_cachedGetDataResults'][$cacheKey] = $result;
     }
 
@@ -531,7 +541,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
             $config_handler = xoops_gethandler('config');
             $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
             if(trim($formulizeConfig['customScope'])!='' AND strstr($formulizeConfig['customScope'], "return \$scope;")) {
-                $customScope = eval($formulizeConfig['customScope']);
+                $customScope = eval(htmlspecialchars_decode($formulizeConfig['customScope'], ENT_QUOTES));
                 if($customScope !== false) {
                     $scope = $customScope;
                 }
@@ -1235,7 +1245,6 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
      global $myts;
      $numSeachExps = 0;
      foreach($filter as $filterParts) {
-        
           // evaluate each search expression (collection of terms with a common boolean inbetween
           // Use the global andor setting between expressions
           
