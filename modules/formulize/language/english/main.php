@@ -662,6 +662,8 @@ define("_formulize_DE_IMPORT_STEP3", "Step 3: upload the modified file");
 define("_formulize_DE_IMPORT_FILE", "Select the file you modified and upload it.");
 define("_formulize_DE_IMPORT_GO", "Upload");
 define("_formulize_DE_IMPORT_VALIDATEDATA", "Automatically validate the structure and data in the .csv file before actually importing (highly recommended!)");
+define("_formulize_DE_IMPORT_UPDATEDERIVED", "Automatically updated derived values in the form");
+define("_formulize_DE_IMPORT_SENDNOTIFICATIONS", "Automatically send notifications to users based on the imported data");
 define("_formulize_DE_IMPORT_INSTRUCTIONS", "<p><b>Open the file you downloaded in a spreadsheet program, like Excel, and modify it</b> so it contains the data you want to upload.  You don't have to do this right now, you can modify the file and come back later to upload it.</p>
 
 <p>When you save the file, <b>make sure you save it in .csv format.</b>  If you save it in a different format, like .xls, then the import process won't work!</p>");

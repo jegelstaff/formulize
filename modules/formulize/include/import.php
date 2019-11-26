@@ -201,8 +201,11 @@ if($regfid == $fid) {
 
 print _formulize_DE_IMPORT_INSTUPDATE . "</td></tr>\n";
 print "<tr><td class=head><p>" . _formulize_DE_IMPORT_STEP3 . "</p></td>".
-"<td class=even><p>" . _formulize_DE_IMPORT_FILE . ": <form method=\"post\" ENCTYPE=\"multipart/form-data\"><input type=\"file\" name=\"csv_name\" size=\"40\" /><br>".
-"<input type=\"checkbox\" name=\"validatedata\" value=\"1\" checked>&nbsp;"._formulize_DE_IMPORT_VALIDATEDATA."</p><p><input type=\"submit\" value=\"" . _formulize_DE_IMPORT_GO . "\"></form></p></td></tr>\n";
+"<td class=even><p>" . _formulize_DE_IMPORT_FILE . ": <form method=\"post\" ENCTYPE=\"multipart/form-data\"><input type=\"file\" name=\"csv_name\" size=\"40\" /><br>
+<input type=\"checkbox\" name=\"validatedata\" value=\"1\" checked>&nbsp;"._formulize_DE_IMPORT_VALIDATEDATA."<br>
+<input type=\"checkbox\" name=\"updatederived\" value=\"1\" checked>&nbsp;"._formulize_DE_IMPORT_UPDATEDERIVED."<br>
+<input type=\"checkbox\" name=\"sendnotifications\" value=\"1\" checked>&nbsp;"._formulize_DE_IMPORT_SENDNOTIFICATIONS."</p><p><input type=\"submit\" value=\"" . _formulize_DE_IMPORT_GO . "\"></p>
+</form></td></tr>\n";
 
 } else {
     print "<tr><td class=even><p>" . _formulize_DE_IMPORT_FILE . ": <form method=\"post\" ENCTYPE=\"multipart/form-data\"><input type=\"file\" name=\"csv_name\" size=\"40\" /><br><input type=\"hidden\" name=\"validatedata\" value=\"1\">&nbsp;</p><p><input type=\"submit\" value=\"" . _formulize_DE_IMPORT_GO . "\"></form></p></td></tr>\n";

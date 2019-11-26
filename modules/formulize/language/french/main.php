@@ -610,3 +610,5 @@ define("_SAVE_AND_GO_BACK", "Soumettre et retourner au formulaire principal");
 define("_AM_ELE_SUBFORM_NEWENTRY_LABEL", "Nouveau");
 define("_formulize_DE_EXPORT_SHOW_ADVANCED", "Montrer les options avancées");
 define("_formulize_DE_EXPORT_HIDE_ADVANCED", "Masquer les options avancées");
+define("_formulize_DE_IMPORT_UPDATEDERIVED", "Automatically updated derived values in the form");
+define("_formulize_DE_IMPORT_SENDNOTIFICATIONS", "Automatically send notifications to users based on the imported data");

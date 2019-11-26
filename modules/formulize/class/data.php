@@ -718,17 +718,7 @@ class formulizeDataHandler  {
 			$cachedMaps[$this->fid][$mapIDs] = $handleElementMap;
             
             // also, gather once all the data types for the fid in question
-            $dataTypeMap = array();
-            $dataTypeSQL = "SELECT information_schema.columns.data_type, information_schema.columns.column_name FROM information_schema.columns WHERE information_schema.columns.table_name = '".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."'";
-            if($dataTypeRes = $xoopsDB->query($dataTypeSQL)) {
-                while($dataTypeRow = $xoopsDB->fetchRow($dataTypeRes)) {
-                    $dataTypeMap[$dataTypeRow[1]] = $dataTypeRow[0];
-                }
-            } else {
-                print "Error: could not retrieve datatypes for form ".$this->fid." with this SQL: $dataTypeSQL<br>".$xoopsDB->error();
-                exit();
-            }
-            $cachedDataTypeMaps[$this->fid] = $dataTypeMap; // cannot write this directly to the object property, do that below, because statics live in this method and ARE SHARED ACROSS ALL OBJECTS. Properties are unique to the object, so we must instantiate this as a static, same as the element maps, then assign to the property below.
+            $cachedDataTypeMaps[$this->fid] = $this->gatherDataTypes(); // cannot write this directly to the object property, do that below, because statics live in this method and ARE SHARED ACROSS ALL OBJECTS. Properties are unique to the object, so we must instantiate this as a static, same as the element maps, then assign to the property below.
 		}
 		if(!isset($handleElementMap)) {
 			$handleElementMap = $cachedMaps[$this->fid][$mapIDs];
@@ -811,20 +801,8 @@ class formulizeDataHandler  {
             $encrypt_this = in_array($key, $encrypt_element_handles);
             unset($element_values[$key]);   // since field name is not escaped, remove from array
             $key = "`".formulize_db_escape($key)."`";                // escape field name
-            if ("{WRITEASNULL}" === $value or null === $value) {
-                $element_values[$key] = "NULL";
-            } else {
-                // if this element has a numeric type in the DB, no quotes
-                if($this->dataTypeIsNumeric($key)) {
-                    if(is_numeric($value)) {
-                        $element_values[$key] = formulize_db_escape($value);
-                    } else { // non numeric values cannot be written to a numeric field, so NULL them
-                $element_values[$key] = "NULL";
-                    }
-            } else {
-                $element_values[$key] = "'".formulize_db_escape($value)."'";
-            }
-            }
+            $element_values[$key] = $this->formatValueForQuery($key, $value);
+            
             if ($encrypt_this) {
                 // this element should be encrypted. note that the actual value is quoted and escapted already
                 $element_values[$key] = "AES_ENCRYPT({$element_values[$key]}, '$aes_password')";
@@ -894,7 +872,7 @@ class formulizeDataHandler  {
     // check a given field against the dataTypeMap, return true if it's a numeric type
     function dataTypeIsNumeric($key) {
         if(count($this->dataTypeMap)==0) {
-            return false; // no map set yet, so we can't tell
+            $this->dataTypeMap = $this->gatherDataTypes();
         }
         $key = trim($key, "`");
         if(stripos($this->dataTypeMap[$key], "int") !== false
@@ -907,6 +885,43 @@ class formulizeDataHandler  {
         return false; // no it's not
     }
     
+    function gatherDataTypes() {
+        if(count($this->dataTypeMap)!=0) {
+            return $this->dataTypeMap;
+        }
+        global $xoopsDB;
+        $dataTypeMap = array();
+        $form_handler = xoops_getmodulehandler('forms', 'formulize');
+        $formObject = $form_handler->get($this->fid);
+        $dataTypeSQL = "SELECT information_schema.columns.data_type, information_schema.columns.column_name FROM information_schema.columns WHERE information_schema.columns.table_name = '".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."'";
+        if($dataTypeRes = $xoopsDB->query($dataTypeSQL)) {
+            while($dataTypeRow = $xoopsDB->fetchRow($dataTypeRes)) {
+                $dataTypeMap[$dataTypeRow[1]] = $dataTypeRow[0];
+            }
+        } else {
+            print "Error: could not retrieve datatypes for form ".$this->fid." with this SQL: $dataTypeSQL<br>".$xoopsDB->error();
+            exit();
+        }
+        return $dataTypeMap;
+    }
+    
+    // format a given value for inclusion in a DB insert or update query, based on the data type of the element, and the numeric or strig value of the data
+    function formatValueForQuery($field, $value) {
+        if ("{WRITEASNULL}" === $value or null === $value) {
+            return "NULL";
+        } else {
+            // if this element has a numeric type in the DB, no quotes
+            if($this->dataTypeIsNumeric($field)) {
+                if(is_numeric($value)) {
+                    return formulize_db_escape($value);
+                } else { // non numeric values cannot be written to a numeric field, so NULL them
+                    return "NULL";
+                }
+            } else {
+                return "'".formulize_db_escape($value)."'";
+            }
+        }
+    }
 
 	// this function updates relevant caches after data has been updated in the database
 	function updateCaches($id) {
