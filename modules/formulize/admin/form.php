@@ -425,6 +425,10 @@ if ($_GET['fid'] != "new") {
         $formApplications = array(intval($_GET['aid']));
     }
     $groupsCanEditDefaults = $xoopsUser->getGroups();
+    $regUserGroupKey = array_search(2, $groupsCanEditDefaults);
+    if(count($groupsCanEditDefaults)>1 AND $regUserGroupKey !== false) {
+        unset($groupsCanEditDefaults[$regUserGroupKey]); // don't give edit_form perm to registered users group unless it is the only group the user is a member of
+    }
     $member_handler = xoops_gethandler('member');
     $allGroups = $member_handler->getGroups();
     foreach($allGroups as $thisGroup) {
