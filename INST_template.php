@@ -107,6 +107,8 @@ foreach($coordData as $thisCourse) {
 $allSectionIds = array();
 $html = "";
 
+$allCourses = array(); // used to track which coordinator course entries have been drawn into the schedule
+
 if(count($instSectionData)>0 OR count($coordCourses)>0) {
 
     $html .= "<tr nobr=\"true\"><td style=\"border-top: 1px solid black;\">$inst</td>";
@@ -119,11 +121,18 @@ if(count($instSectionData)>0 OR count($coordCourses)>0) {
     
         // draw coordinator if applicable...
         if(isset($coordCourses[$code])) {
-            $saveCompareOn = $compareOn; // we do not currently support comparison with lock dates for coordinator assignments...but we could
-            $compareOn = false;
-            $html .= drawRow($instStart,$prevCode,0,array($code),array($title),array('Coordinator'),'','','',array(display($coordCourses[$code],'ro_module_coordinatorship_weighting')));
-            $compareOn = $saveCompareOn;
+            $revCoordinator = display($indexedLockDataByCode[$code], 'ro_module_course_coordinator');
+            if($revCoordinator == $inst) {
+                $revCoordinator = array('Coordinator');
+            } elseif($revCoordinator) {
+                $revCoordinator = array('Prev. Coordinator: '.$revCoordinator);
+            } else {
+                $revCoordinator = '';
+            }
+            
+            $html .= drawRow($instStart,$prevCode,0,array($code),array($title),array('Coordinator'),$revCoordinator,'','',array(display($coordCourses[$code],'ro_module_coordinatorship_weighting')),array(display($indexedLockDataByCode[$code],'ro_module_coordinatorship_weighting')));
             $instStart = false;
+            $allCourses[] = $code;
             unset($coordCourses[$code]);
         }
     
@@ -193,7 +202,6 @@ if(count($instSectionData)>0 OR count($coordCourses)>0) {
 }
 
 // if we didn't draw a coordinatorship already for a course the instructor has, draw it now
-$allCourses = array();
 foreach($coordCourses as $course) {
     $code = display($course,'ro_module_course_code');
     $title = display($course,'ro_module_course_title');
@@ -202,11 +210,11 @@ foreach($coordCourses as $course) {
     if($revCoordinator == $inst) {
         $revCoordinator = array('Coordinator');
     } elseif($revCoordinator) {
-        $revCoordinator = array('Coordinator: '.$revCoordinator);
+        $revCoordinator = array('Prev. Coordinator: '.$revCoordinator);
     } else {
         $revCoordinator = '';
     }
-    $html .= drawRow($instStart,$prevCode,0,array($code),array($title),array('Coordinator'),$revCoordinator,'','',array(display($course,'ro_module_coordinatorship_weighting')));
+    $html .= drawRow($instStart,$prevCode,0,array($code),array($title),array('Coordinator'),$revCoordinator,'','',array(display($course,'ro_module_coordinatorship_weighting')),array(display($indexedLockDataByCode[$code],'ro_module_coordinatorship_weighting')));
     $instStart = false;
     $prevCode = $code;
 }
