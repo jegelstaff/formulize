@@ -49,7 +49,10 @@ function compData($current, $old) {
     }
 }
 
-function makeSectionTimes($entry, $fullDayNames=false) {
+function makeSectionTimes($entry, $fullDayNames=false, $asynch=false) {
+    if($asynch) {
+        return array("Asynchronous");
+    }
     $times = array();
     $days = display($entry, 'section_times_day');
     $days = is_array($days) ? $days : array($days);

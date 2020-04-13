@@ -66,6 +66,8 @@ $titles = array();
 $revTitles = array();
 $ec = array();
 $revEc = array();
+$online = array();
+$revOnline = array();
 foreach($sectionIds as $i=>$sectionId) {
     $section = getData(18, 4, $sectionId, 'AND', '', '', '', 'sections_section_number');
     if(display($section[0], "course_components_reserved_section")=="Yes") {
@@ -78,8 +80,13 @@ foreach($sectionIds as $i=>$sectionId) {
         $sections[$i] = $sectionNumber;
     }
     $revSections[$i] = $compareOn ? display($indexedLockData[$sectionId], 'sections_section_number') : "";
-    $times[$i] = makeSectionTimes($section[0]);
-    $revTimes[$i] = $compareOn ? makeSectionTimes($indexedLockData[$sectionId]) : "";
+    
+    $online[$i] = display($section[0], 'course_components_online');
+    $revOnline[$i] = $compareOn ? display($indexedLockData[$sectionId], 'course_components_online') : "";
+    $asynch = (stristr($online[$i], 'online') AND stristr(display($section[0], 'course_components_online_asynch'), 'asynch')) ?  true : false;
+    $revAsynch = (stristr($revOnline[$i], 'online') AND stristr(display($indexedLockData[$sectionId], 'course_components_online_asynch'), 'asynch')) ?  true : false;
+    $times[$i] = makeSectionTimes($section[0], false, $asynch);
+    $revTimes[$i] = $compareOn ? makeSectionTimes($indexedLockData[$sectionId], false, $revAsynch) : "";
     $rooms[$i] = display($section[0], 'sections_practica_room');
     $revRooms[$i] = $compareOn ? display($indexedLockData[$sectionId], 'sections_practica_room') : "";
     $titles[$i] = display($section[0], 'course_components_section_title_optional');
@@ -150,7 +157,10 @@ foreach($sections as $i=>$section) {
         }
         $html .= "<i>$sectionTitle</i>";
     }
-    $html .= "</td><td style=\"border-top: 1px solid black;\"><b>".compData($section, $revSections[$i])."</b></td>";
+    $onlineIndicator = compData($online[$i], $revOnline[$i]);
+    $onlineIndicator = strstr($onlineIndicator, '<span') ? $onlineIndicator : "<span style=\"color: green;\">$onlineIndicator</span>"; // colour it green unless it already is red due to comparison
+    $onlineIndicator = $onlineIndicator ? "<br>$onlineIndicator" : "";
+    $html .= "</td><td style=\"border-top: 1px solid black;\"><b>".compData($section, $revSections[$i])."</b>$onlineIndicator</td>";
     $html .= "<td style=\"border-top: 1px solid black;\">";
     $timeStart = true;
     foreach($times[$i] as $x=>$time) {

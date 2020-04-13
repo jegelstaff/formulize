@@ -41,7 +41,10 @@ function drawRow($instStart, $prevCode, $i, $codes, $titles, $sections, $revSect
         }
         $html .= "<i>$sectionTitle</i>";
     }
-    $html .= "</td><td style=\"border-top: 1px solid black;\"><b>".compData($section, $revSections[$i])."</b></td>";
+    $onlineIndicator = compData($online[$i], $revOnline[$i]);
+    $onlineIndicator = strstr($onlineIndicator, '<span') ? $onlineIndicator : "<span style=\"color: green;\">$onlineIndicator</span>"; // colour it green unless it already is red due to comparison
+    $onlineIndicator = $onlineIndicator ? "<br>$onlineIndicator" : "";
+    $html .= "</td><td style=\"border-top: 1px solid black;\"><b>".compData($section, $revSections[$i])."</b>$onlineIndicator</td>";
     $html .= "<td style=\"border-top: 1px solid black;\">".compData($weightings[$i], $revWeightings[$i])."</td>";
     
     $html .= "<td style=\"border-top: 1px solid black;\">";
@@ -137,6 +140,8 @@ if(count($instSectionData)>0 OR count($coordCourses)>0) {
         $revSecTitles = array();
         $weightings = array();
         $revWeightings = array();
+        $online = array();
+        $revOnline = array();
         $codes = array();
         $titles = array();
         
@@ -145,8 +150,12 @@ if(count($instSectionData)>0 OR count($coordCourses)>0) {
         $section = getData(18, 4, $sectionId, 'AND', '', '', '', 'sections_section_number');
         $sections[$i] = display($section[0], 'sections_section_number');
         $revSections[$i] = display($indexedLockData[$sectionId], 'sections_section_number');
-        $times[$i] = makeSectionTimes($section[0]);
-        $revTimes[$i] = makeSectionTimes($indexedLockData[$sectionId]);
+        $online[$i] = display($section[0], 'course_components_online');
+        $revOnline[$i] = display($indexedLockData[$sectionId], 'course_components_online');
+        $asynch = (stristr($online[$i], 'online') AND stristr(display($section[0], 'course_components_online_asynch'), 'asynch')) ?  true : false;
+        $revAsynch = (stristr($revOnline[$i], 'online') AND stristr(display($indexedLockData[$sectionId], 'course_components_online_asynch'), 'asynch')) ?  true : false;
+        $times[$i] = makeSectionTimes($section[0], false, $asynch);
+        $revTimes[$i] = makeSectionTimes($indexedLockData[$sectionId], false, $revAsynch);
         $rooms[$i] = display($section[0], 'sections_practica_room');
         $revRooms[$i] = display($indexedLockData[$sectionId], 'sections_practica_room');
         $secTitles[$i] = display($section[0], 'course_components_section_title_optional');
