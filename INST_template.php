@@ -12,6 +12,15 @@ function drawRow($instStart, $prevCode, $i, $codes, $titles, $sections, $revSect
         $html .= "<tr nobr=\"true\"><td></td>";
     }
     
+    
+/*    print "comp data:<br>";
+    print $codes[$i]."<Br>";
+    print 'current: '.$secTitles[$i]. ' - old: '.$revSecTitles[$i].'<br>';
+    print 'current: '.$section[$i]. ' - old: '.$revSections[$i].'<br>';
+    print 'current: '.$weightings[$i]. ' - old: '.$revWeightings[$i].'<br>';
+    print 'current: '.$rooms[$i]. ' - old: '.$revRooms[$i].'<br>';*/
+    
+    
     if($codes[$i] != $prevCode) {
         $html .= "<td style=\"border-top: 1px solid black;\" ><b>".$codes[$i]."</b></td>";
         $html .= "<td style=\"border-top: 1px solid black;\" >".$titles[$i];
@@ -20,8 +29,13 @@ function drawRow($instStart, $prevCode, $i, $codes, $titles, $sections, $revSect
     }
     
     $section = $sections[$i];
+    /*print $secTitles[$i];
+    print '<br>';
+    print $revSecTitles[$i];
+    print '<br>';*/
     
     if($sectionTitle = compData($secTitles[$i],$revSecTitles[$i])) {
+        //print $sectionTitle.'<br>';
         if($codes[$i] != $prevCode) {
             $html .= "<br>";
         }
@@ -36,6 +50,7 @@ function drawRow($instStart, $prevCode, $i, $codes, $titles, $sections, $revSect
         if(!$timeStart) {
             $html .= "<br>";
         }
+        //print 'current: '.$time. ' - old: '.$revTimes[$i][$x].'<br>';
         $html .= compData($time, $revTimes[$i][$x]);
         $timeStart = false;
     }
@@ -51,7 +66,7 @@ function drawRow($instStart, $prevCode, $i, $codes, $titles, $sections, $revSect
 if(!$_POST['showYear']) { return "";}
 
 // load the revision data...
-global $indexedLockData, $lockSectionsByInst, $compareOn;
+global $indexedLockData, $indexedLockDataByCode, $lockSectionsByInst, $lockCoordsByInst, $compareOn;
 
 if(!is_array($indexedLockData) AND isset($_POST['compareDate']) AND $_POST['compareDate'] !== '') {
     
@@ -64,6 +79,11 @@ if(!is_array($indexedLockData) AND isset($_POST['compareDate']) AND $_POST['comp
         $instructors = is_array($instructors) ? $instructors : array($instructors);
         foreach($instructors as $instructor) {
             $lockSectionsByInst[$instructor][] = $sectionIds[0];
+        }
+        if($coordinator = display($thisLockedEntry, 'ro_module_course_coordinator')) {
+            $code = display($thisLockedEntry, 'ro_module_course_code');
+            $indexedLockDataByCode[$code] = $thisLockedEntry;
+            $lockCoordsByInst[$coordinator][] = $code;
         }
     }
     $compareOn = true;
@@ -164,16 +184,25 @@ if(count($instSectionData)>0 OR count($coordCourses)>0) {
 }
 
 // if we didn't draw a coordinatorship already for a course the instructor has, draw it now
+$allCourses = array();
 foreach($coordCourses as $course) {
     $code = display($course,'ro_module_course_code');
     $title = display($course,'ro_module_course_title');
-    $html .= drawRow($instStart,$prevCode,0,array($code),array($title),array('Coordinator'),'','','',array(display($course,'ro_module_coordinatorship_weighting')));
+    $allCourses[] = $code;
+    $revCoordinator = display($indexedLockDataByCode[$code], 'ro_module_course_coordinator');
+    if($revCoordinator == $inst) {
+        $revCoordinator = array('Coordinator');
+    } elseif($revCoordinator) {
+        $revCoordinator = array('Coordinator: '.$revCoordinator);
+    } else {
+        $revCoordinator = '';
+    }
+    $html .= drawRow($instStart,$prevCode,0,array($code),array($title),array('Coordinator'),$revCoordinator,'','',array(display($course,'ro_module_coordinatorship_weighting')));
     $instStart = false;
     $prevCode = $code;
 }
 
 // additionally, loop through any sections assigned in the lock data, which are not in the current data
-$sectionIndex = $i;
 foreach($lockSectionsByInst[$inst] as $sectionId) {
     if(!in_array($sectionId, $allSectionIds)) {
         
@@ -196,5 +225,14 @@ foreach($lockSectionsByInst[$inst] as $sectionId) {
     }
 }
 
+foreach($lockCoordsByInst[$inst] as $code) {
+    if(!in_array($code, $allCourses)) {
+        $html .= drawRow($instStart,$prevCode,0,array($code),array($title),array(''),array('Coordinator'),'','', array(''), array(display($indexedLockDataByCode[$code],'ro_module_coordinatorship_weighting')));
+        $prevCode = $code;    
+    }
+}
+
+
+//exit();
 return $html;
 
