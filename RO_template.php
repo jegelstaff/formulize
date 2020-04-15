@@ -82,6 +82,7 @@ foreach($sectionIds as $i=>$sectionId) {
     $revSections[$i] = $compareOn ? display($indexedLockData[$sectionId], 'sections_section_number') : "";
     
     $online[$i] = display($section[0], 'course_components_online');
+    $online[$i] = $online[$i] == 'Online' ? 'Online' : '';
     $revOnline[$i] = $compareOn ? display($indexedLockData[$sectionId], 'course_components_online') : "";
     $asynch = (stristr($online[$i], 'online') AND stristr(display($section[0], 'course_components_online_asynch'), 'asynch')) ?  true : false;
     $revAsynch = (stristr($revOnline[$i], 'online') AND stristr(display($indexedLockData[$sectionId], 'course_components_online_asynch'), 'asynch')) ?  true : false;
