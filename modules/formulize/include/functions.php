@@ -4096,7 +4096,8 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     if($multi) { // create the hidden field that will get the value assigned for submission
         $defaultHiddenValue = (!$overrides OR (substr($overrides,0,5)=="ORSET" AND substr($overrides, -2) == "//")) ? $overrides : "ORSET$multiCounter=".$overrides."//";
-        $filter = "<input type='hidden' name='$id' id='".$id."_hiddenMulti' value='".strip_tags(htmlspecialchars($defaultHiddenValue))."'>\n";
+        $filter = "<input type='hidden' name='$id' id='".$id."_hiddenMulti' value='".strip_tags(htmlspecialchars($defaultHiddenValue))."'>\n
+        <div style='float: left; padding-right: 1em;'>\n";
     } else { // start the actual dropdown selectbox
         $filter = "<SELECT name=\"$id\" id=\"$id\"";
         if ($name == "{listofentries}") {
@@ -4228,6 +4229,11 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
 
         $counter = 0;
         foreach ($options as $option=>$option_value) {
+            
+            if($multi AND $counter > 0 AND ($counter+1) % 7 == 0) {
+                $filter .= "\n</div><div style='float: left; padding-right: 1em;'>\n";
+            }
+            
             $multiIdCounter++;
             $selected = "";
             if (is_array($overrides) AND isset($overrides[$option])) {
@@ -4275,7 +4281,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
             $counter++;
         }
     }
-    $filter .= "</SELECT>\n";
+    $filter .= !$multi ? "</SELECT>\n" : "</div><div style='clear: both'></div>\n";
 
     return $filter;
 }
