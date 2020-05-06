@@ -71,9 +71,9 @@
                             <div class="dropdown-content" id="myDropdown" class="dropdown-menu">
                                 <{php}>
                                     // menu reading code borrowed from mymenu.php in Formulize block
-                                    // DARA is application 1
+                                    // Applications 2, 3, 4, 5, 6 are the ones with the applicable menu links
                                     $application_handler = xoops_getmodulehandler('applications', 'formulize');
-                                    foreach($application_handler->getMenuLinksForApp(1) as $menulink) {
+                                    foreach($application_handler->getMenuLinksForApp(array(2, 3, 4, 5, 6)) as $menulink) {
                             			$suburl = XOOPS_URL."/modules/formulize/index.php?".$menulink->getVar("screen");
                                         $url = $menulink->getVar("url");
                                         $target = "";
@@ -118,9 +118,6 @@
                                 <a href="<{$icms_url}>/modules/formulize/index.php?sid=60" title="Year Management">Year Management</a>
                                 <a  href='<{$icms_url}>/modules/formulize/index.php?sid=53'>Semester Dates</a>
                                 <a  href='<{$icms_url}>/modules/formulize/index.php?sid=66'>Weighting Overrides</a>
-                                <a  href='<{$icms_url}>/modules/formulize/index.php?fid=7'>Course Prefixes</a>
-                                <a  href='<{$icms_url}>/modules/formulize/index.php?sid=4'>Ranks/Titles/Stipends</a>
-                                <a  href='<{$icms_url}>/modules/formulize/index.php?sid=92'>Final Memo Text</a>
                                 <{if isset($formulize_screen_id) and $formulize_screen_id}>
                                 <a href="<{$icms_url}>/modules/formulize/admin/ui.php?page=screen&sid=<{$formulize_screen_id}>" title="edit screen">Edit This Screen</a>
                                 <{/if}>
