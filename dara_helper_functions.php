@@ -50,9 +50,6 @@ function compData($current, $old) {
 }
 
 function makeSectionTimes($entry, $fullDayNames=false, $asynch=false) {
-    if($asynch) {
-        return array("Asynchronous");
-    }
     $times = array();
     $days = display($entry, 'section_times_day');
     $days = is_array($days) ? $days : array($days);
@@ -81,6 +78,10 @@ function makeSectionTimes($entry, $fullDayNames=false, $asynch=false) {
                 $times[$keys[0]] .= ", ". str_replace(":00", "", date('g:ia', $startTime)) . " - " . str_replace(":00", "", date('g:ia', $endTime));
             }
         }
+    }
+    // if the course wasn't cancelled, then respect Asynch
+    if($asynch) {
+        return array("Asynchronous");
     }
     ksort($times);
     // if Monday to Friday...
@@ -1038,6 +1039,7 @@ function readSection($entry, $entry_id, $sort='course') { // sort sets how the d
 	$GLOBALS['dara_course'][$year][$code]['sections'][$sectionNumber]['notes'] = display($entry, 'course_components_program_director_notes');
     $GLOBALS['dara_course'][$year][$code]['sections'][$sectionNumber]['isRequired'] = display($entry, 'course_components_section_required');
     $GLOBALS['dara_course'][$year][$code]['sections'][$sectionNumber]['reserved'] = display($entry, 'course_components_reserved_section');
+    $GLOBALS['dara_course'][$year][$code]['sections'][$sectionNumber]['online'] = display($entry, 'course_components_online');
     if(!isset($GLOBALS['dara_course'][$year][$code]['title'])) {
         $GLOBALS['dara_course'][$year][$code]['title'] = $title;
         $GLOBALS['dara_course'][$year][$code]['desc'] = display($entry, 'ro_module_course_title');
