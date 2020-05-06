@@ -151,6 +151,10 @@ if(floatval($priorYearAdj)!=0) {
     $html .= "<TR><TD style=\"border: 1px solid black;\"><B>Total Assignments:</B></TD><TD style=\"border: 1px solid black;\"><B>".number_format($usedLoad+$priorYearAdj,3)."</B></TD></TR>";
     $html .= "<TR><TD style=\"border: 1px solid black;\">Prior Year credit (+) or balance owing (-)</TD><TD style=\"border: 1px solid black;\">".number_format($priorYearAdj*-1,3)."</TD></TR>";
     $html .= "<TR><TD style=\"border: 1px solid black;\"><B>Grand Total:</B></TD><TD style=\"border: 1px solid black;\"><B>".number_format($usedLoad,3)."</B></TD></TR>";
+} elseif($priorYearStatus != 'Archived') {
+    $html .= "<TR><TD style=\"border: 1px solid black;\"><B>Total Assignments:</B></TD><TD style=\"border: 1px solid black;\"><B>".number_format($usedLoad,3)."</B></TD></TR>";
+    $html .= "<TR><TD style=\"border: 1px solid black;\">PENDING: Prior Year credit (+) or balance owing (-)</TD><TD style=\"border: 1px solid black;\">TBD</TD></TR>";
+    $html .= "<TR><TD style=\"border: 1px solid black;\"><B>Grand Total:</B></TD><TD style=\"border: 1px solid black;\"><B>".number_format($usedLoad,3)."</B></TD></TR>";
 } else {
     $html .= "<TR><TD style=\"border: 1px solid black;\"><B>Total Assignments:</B></TD><TD style=\"border: 1px solid black;\"><B>".number_format($usedLoad,3)."</B></TD></TR>";    
 }

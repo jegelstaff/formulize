@@ -295,6 +295,12 @@ if($_POST['memos']) {
     $activeTerms = $activeTerms[$key];
     $priorYearAdj = $priorYearAdj[$key];
     
+    // get prior year status
+    $priorYearParts = explode('/',$year);
+    $priorYearText = ($priorYearParts[0]-1).'/'.($priorYearParts[1]-1);
+    $priorYearStatusData = getData('', 21, 'master_year_list_year/**/'.$priorYearText.'/**/=');
+    $priorYearStatus = display($priorYearStatusData[0], 'master_year_list_status');
+    
     /*if(count($courses)==0 AND count($coordCourses)==0 AND count($services)==0 AND !$otherService) {
         return array();
     }*/
