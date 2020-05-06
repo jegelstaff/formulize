@@ -57,7 +57,7 @@ class formulizeAcceptanceStatusElementHandler extends formulizeElementsHandler {
     
     function __construct($db) {
         $this->db =& $db;
-        $this->labels = array(0=>'Choose...', 1=>'Accepted', 2=>'Declined', 3=>'Revised', 4=>'Cancelled');
+        $this->labels = array(0=>'Pending', 1=>'Accepted', 2=>'Declined', 3=>'Revised', 4=>'Cancelled');
     }
     
     function create() {
@@ -187,9 +187,9 @@ class formulizeAcceptanceStatusElementHandler extends formulizeElementsHandler {
         while($row = $xoopsDB->fetchArray($res)) {
             $labels[$row['id']] = $row['label'];
         }
-        $data = array();
+        $data = array($year.':');
         foreach($assignmentData as $sectionId=>$status) {
-            if(in_array($sectionId, $actualAssignedSections) AND $status) {
+            if(in_array($sectionId, $actualAssignedSections)) {
                 $data[] = $labels[$sectionId] . ': ' .$this->labels[$status];
             }
             if(!in_array($sectionId, $actualAssignedSections)) {
@@ -214,14 +214,14 @@ class formulizeAcceptanceStatusElementHandler extends formulizeElementsHandler {
         }
         $searchValues = array();
         foreach($this->labels as $key=>$label) {
-            if(($partialMatch AND strstr($label, $value)) OR $label == $value) {
+            if(($partialMatch AND stristr($label, $value)) OR $label == $value) {
                 $searchValues[] = '"'.$key.'"';
             }
         }
         $operator = $partialMatch ? 'LIKE' : '=';
         $likeBits = $partialMatch ? '%' : '';
         global $xoopsDB;
-        $sql = "SELECT cc.entry_id FROM ".$xoopsDB->prefix('formulize_course_components')." as cc LEFT JOIN ".$xoopsDB->prefix('formulize_ro_module')." as ro ON ro.entry_id = cc.sections_practica_course_code WHERE ro.ro_module_year = '2019/2020' AND ro.ro_module_course_code ". $operator." '".$likeBits.formulize_db_escape($value).$likeBits."'";
+        $sql = "SELECT cc.entry_id FROM ".$xoopsDB->prefix('formulize_course_components')." as cc LEFT JOIN ".$xoopsDB->prefix('formulize_ro_module')." as ro ON ro.entry_id = cc.sections_practica_course_code WHERE ro.ro_module_course_code ". $operator." '".$likeBits.formulize_db_escape($value).$likeBits."'";
         if($res = $xoopsDB->query($sql)) {
             while($row = $xoopsDB->fetchRow($res)) {
                 $searchValues[] = '"'.$row[0].'"';
@@ -248,4 +248,25 @@ class formulizeAcceptanceStatusElementHandler extends formulizeElementsHandler {
         return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
     }
     
+}
+
+function addPendingStatusForCourse($instrName, $sectionId) {
+    $sectionId = intval($sectionId);
+    $data_handler = new formulizeDataHandler(1); // HR module is 1
+    if($hrId = $data_handler->findFirstEntryWithValue('hr_module_name', $instrName)) {
+        global $xoopsDB;
+        $sql = 'SELECT r.ro_module_year FROM '.$xoopsDB->prefix('formulize_ro_module').' AS r LEFT JOIN '.$xoopsDB->prefix('formulize_course_components').' AS s ON r.entry_id = s.sections_practica_course_code WHERE s.entry_id = '.$sectionId;
+        if($res = $xoopsDB->query($sql)) {
+            $row = $xoopsDB->fetchRow($res);
+            $year = $row[0];
+            $sql = 'UPDATE '.$xoopsDB->prefix('formulize_hr_annual_accept_status').' AS a
+                LEFT JOIN '.$xoopsDB->prefix('formulize_hr_module').' AS h
+                ON h.entry_id = a.hr_annual_accept_status_instructor
+                SET a.`hr_annual_accept_status_status` = JSON_INSERT(a.`hr_annual_accept_status_status`, "$.'.$sectionId.'", "0")
+                WHERE a.hr_annual_accept_status_year = "'.$year.'"
+                AND NOT JSON_CONTAINS_PATH(a.`hr_annual_accept_status_status`, "one", "$.'.$sectionId.'") 
+                AND h.hr_module_name = "'.formulize_db_escape($instrName).'"';
+            $res = $xoopsDB->queryF($sql);
+        }
+    }
 }
