@@ -4613,6 +4613,19 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
     $element_handler = xoops_getmodulehandler('elements','formulize');
 	global $xoopsUser;
 	foreach($searches as $key => $master_one_search) { // $key is the element handle
+        
+        // grab values from GET or POST if they match { } terms
+        if(substr($master_one_search, 0, 1) == "{" AND substr($master_one_search, -1) == "}") {
+            $searchgetkey = substr($master_one_search, 1, -1);
+            if(isset($_POST[$searchgetkey]) OR isset($_GET[$searchgetkey])) {
+                $master_one_search = isset($_POST[$searchgetkey]) ? htmlspecialchars(strip_tags(trim($_POST[$searchgetkey])), ENT_QUOTES) : "";
+                $master_one_search = ($master_one_search==="" AND isset($_GET[$searchgetkey])) ? htmlspecialchars(strip_tags(trim($_GET[$searchgetkey])), ENT_QUOTES) : $master_one_search;
+                if($master_one_search==="") {
+                    continue;
+                }
+            }
+        }
+        
 		// convert "between 2001-01-01 and 2002-02-02" to a normal date filter with two dates
 		$count = preg_match("/^[bB][eE][tT][wW][eE][eE][nN] ([\d]{1,4}[-][\d]{1,2}[-][\d]{1,4}) [aA][nN][dD] ([\d]{1,4}[-][\d]{1,2}[-][\d]{1,4})\$/", $master_one_search, $matches);
 		if ($count > 0) {
@@ -4753,12 +4766,6 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 				} elseif($searchgetkey == "PERGROUPFILTER") {
 					$one_search = $searchgetkey;
 					$operator = "";
-				} elseif(isset($_POST[$searchgetkey]) OR isset($_GET[$searchgetkey])) {
-                    $one_search = isset($_POST[$searchgetkey]) ? htmlspecialchars(strip_tags(trim($_POST[$searchgetkey])), ENT_QUOTES) : "";
-					$one_search = ($one_search==="" AND isset($_GET[$searchgetkey])) ? htmlspecialchars(strip_tags(trim($_GET[$searchgetkey])), ENT_QUOTES) : $one_search;
-					if($one_search==="") {
-						continue;
-					}
 				} elseif($searchgetkey) { // we were supposed to find something above, but did not, so there is a user defined search term, which has no value, ergo disregard this search term
 					continue;
 				} else {
