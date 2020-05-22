@@ -40,8 +40,10 @@ if(!is_array($indexedLockData) AND isset($_POST['compareContractDate']) AND $_PO
 
 $andAdministrative = count($services) > 0 ? "and Administrative " : "";
 
-if($_POST['memos']!='final') {
+if($_POST['memos']=='draft') {
     $html .= "<H1 style=\"color: red;\">DRAFT</H1>";
+} elseif($_POST['memos']=='revised') {
+    $html .= "<H1 style=\"color: red;\">REVISED</H1>";
 }
 
 $html .= "<P>$date</P><P>From: $dean, Associate Dean, Academic</P><P>To: $name</P></P>Re: $year Teaching ".$andAdministrative."Assignments</P>
