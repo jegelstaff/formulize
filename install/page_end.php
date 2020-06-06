@@ -81,6 +81,4 @@ foreach(explode(";\r",str_replace(array("\n","\n\r","\r\n"), "\r", $formulizeSta
 	}
 }
 // END OF MODIFIED CODE
-
 include 'install_tpl.php';
-?>
