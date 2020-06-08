@@ -541,7 +541,7 @@ class formulizeDataHandler  {
 	}
 		
 		
-	function _buildScopeFilter($scope_uids, $scope_groups) {
+	function _buildScopeFilter($scope_uids, $scope_groups="") {
 		if(is_array($scope_uids)) {
 			if(count($scope_uids) > 0) {
 				$scopeFilter = " AND (creation_uid = " . implode(" OR creation_uid = ", $scope_uids) . ")";
