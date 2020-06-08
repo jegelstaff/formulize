@@ -329,7 +329,7 @@ if(isset($_POST['changeuservalues']) AND $_POST['changeuservalues']==1) {
 *
 *Added by Jinfu MAR 2015
 */
-if($processedValues['elements']['ele_value'][8] == 1 &&
+if($processedValues['elements']['ele_value'][8] == 1 && is_array($processedValues['elements']['ele_value'][2]) && 
    (isset($processedValues['elements']['ele_value'][2]['{USERNAMES}']) || isset($processedValues['elements']['ele_value'][2]['{FULLNAMES}']))) {
   $processedValues['elements']['ele_value'][16]=0;
 }
