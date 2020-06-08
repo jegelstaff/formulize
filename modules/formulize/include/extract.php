@@ -1423,8 +1423,10 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                                }
                        $queryElementMetaData = formulize_getElementMetaData($ifParts[0], true);
                                $ele_value = unserialize($queryElementMetaData['ele_value']);
-                               if ($ele_value[0] > 1 AND $ele_value[1]) { // if the number of rows is greater than 1, and the element supports multiple selections
-                                    $newWhereClause = " EXISTS (SELECT 1 FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " AS source WHERE $queryElement LIKE CONCAT('%,',source.entry_id,',%') AND " . $search_column . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes . ")";
+                               if ($formFieldFilterMap[$mappedForm][$element_id]['ele_type'] == 'checkbox' OR ($ele_value[0] > 1 AND $ele_value[1])) { // if checkbox, or a selectbox where the number of rows is greater than 1, and the element supports multiple selections
+                                    $newWhereClause = " EXISTS (SELECT 1 FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " AS source WHERE (
+                                    $queryElement = source.entry_id OR $queryElement LIKE CONCAT('%,',source.entry_id,',%') OR $queryElement LIKE CONCAT(source.entry_id,',%') OR $queryElement LIKE CONCAT('%,',source.entry_id) 
+                                    ) AND " . $search_column . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes . ")";
                                } else {
                                     $newWhereClause = " EXISTS (SELECT 1 FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " AS source WHERE $queryElement = source.entry_id AND " . $search_column . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes . ")";
                                }
@@ -1643,9 +1645,9 @@ function formulize_getElementHandleFromID($element_id) {
      return isset($cachedHandles[$element_id]) ? $cachedHandles[$element_id] : false;
 }
 
-// THIS FUNCTION figureS out if AN ELEMENT in this form is the source of the linked selectbox
 // takes element ID, or handle (second param indicates if it's a handle or not)
-// returns the ele_value array for this element if it is a linked selectbox
+// returns the ele_value array for this element if it is linked
+// does not return the link if the values are snapshotted
 function formulize_isLinkedSelectBox($elementOrHandle, $isHandle=false) {
      static $cachedElements = array();
      if(!isset($cachedElements[$elementOrHandle])) {

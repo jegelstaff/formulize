@@ -31,6 +31,7 @@
 // There is a corresponding admin template for this element type in the templates/admin folder
 
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
+require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
 class formulizeCheckboxElement extends formulizeformulize {
     
@@ -115,6 +116,23 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 			$dataToSendToTemplate['optionSortOrder'] = "";
 		}
 		
+        // list of elements to display when showing this element in a list
+        list($listValue, $selectedListValue) = createFieldList($ele_value[EV_MULTIPLE_LIST_COLUMNS], false, $selectedElementObject->getVar('id_form'),
+            "elements-ele_value[".EV_MULTIPLE_LIST_COLUMNS."]", _AM_ELE_LINKSELECTEDABOVE, true);
+        $listValue->setValue($ele_value[EV_MULTIPLE_LIST_COLUMNS]); // mark the current selections in the form element
+        $dataToSendToTemplate['listValue'] = $listValue->render();
+
+        // list of elements to display when showing this element as an html form element (in form or list screens)
+        list($displayElements, $selectedListValue) = createFieldList($ele_value[EV_MULTIPLE_FORM_COLUMNS], false, $selectedElementObject->getVar('id_form'),
+            "elements-ele_value[".EV_MULTIPLE_FORM_COLUMNS."]", _AM_ELE_LINKSELECTEDABOVE, true);
+        $displayElements->setValue($ele_value[EV_MULTIPLE_FORM_COLUMNS]); // mark the current selections in the form element
+        $dataToSendToTemplate['displayElements'] = $displayElements->render();
+
+        // list of elements to export to spreadsheet
+        list($exportValue, $selectedExportValue) = createFieldList($ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS], false, $selectedElementObject->getVar('id_form'),
+            "elements-ele_value[".EV_MULTIPLE_SPREADSHEET_COLUMNS."]", _AM_ELE_VALUEINLIST, true);
+        $exportValue->setValue($ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS]); // mark the current selections in the form element
+        $dataToSendToTemplate['exportValue'] = $exportValue->render();
         
         return $dataToSendToTemplate;
     }
@@ -129,7 +147,15 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
         
         if(is_object($element) AND is_subclass_of($element, 'formulizeformulize')) {
             
-			$ele_value = array(12=>$ele_value[12], 15=>$ele_value[15], 'checkbox_scopelimit'=>$ele_value['checkbox_scopelimit'], 'checkbox_formlink_anyorall'=>$ele_value['checkbox_formlink_anyorall']); // initialize with the values that we don't need to parse/adjust
+			$ele_value = array(
+                EV_MULTIPLE_LIST_COLUMNS=>$ele_value[EV_MULTIPLE_LIST_COLUMNS],
+                EV_MULTIPLE_FORM_COLUMNS=>$ele_value[EV_MULTIPLE_FORM_COLUMNS],
+                EV_MULTIPLE_SPREADSHEET_COLUMNS=>$ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS],
+                12=>$ele_value[12],
+                15=>$ele_value[15],
+                'checkbox_scopelimit'=>$ele_value['checkbox_scopelimit'],
+                'checkbox_formlink_anyorall'=>$ele_value['checkbox_formlink_anyorall']
+            ); // initialize with the values that we don't need to parse/adjust
             
             if(isset($_POST['formlink']) AND $_POST['formlink'] != "none") {
                 global $xoopsDB;

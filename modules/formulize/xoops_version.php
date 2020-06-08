@@ -646,7 +646,9 @@ $modversion['templates'][] = array(
 $modversion['templates'][] = array(
 	'file' => 'admin/screen_calendar_templates.html',
     'description' => '');
-
+$modversion['templates'][] = array(
+	'file' => 'admin/alternate_fields_for_linked_elements.html',
+    'description' => '');
     
 //	Module Configs
 // $xoopsModuleConfig['t_width']
