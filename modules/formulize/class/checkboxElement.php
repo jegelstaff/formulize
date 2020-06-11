@@ -133,6 +133,9 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
             
 		} else {
 			$dataToSendToTemplate['optionSortOrder'] = "";
+            $dataToSendToTemplate['exportValue'] = "";
+            $dataToSendToTemplate['displayElements'] = "";
+            $dataToSendToTemplate['listValue'] = "";
 		}
 		
         
