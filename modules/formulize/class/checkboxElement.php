@@ -112,27 +112,29 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 		if($selectedElementObject) {
 			list($optionSortOrder, $selectedOptionsSortOrder) = createFieldList($ele_value[12], false, $selectedElementObject->getVar('id_form'), "elements-ele_value[12]", _AM_ELE_LINKFIELD_ITSELF);
 			$dataToSendToTemplate['optionSortOrder'] = $optionSortOrder->render();
+            
+            // list of elements to display when showing this element in a list
+            list($listValue, $selectedListValue) = createFieldList($ele_value[EV_MULTIPLE_LIST_COLUMNS], false, $selectedElementObject->getVar('id_form'),
+                "elements-ele_value[".EV_MULTIPLE_LIST_COLUMNS."]", _AM_ELE_LINKSELECTEDABOVE, true);
+            $listValue->setValue($ele_value[EV_MULTIPLE_LIST_COLUMNS]); // mark the current selections in the form element
+            $dataToSendToTemplate['listValue'] = $listValue->render();
+    
+            // list of elements to display when showing this element as an html form element (in form or list screens)
+            list($displayElements, $selectedListValue) = createFieldList($ele_value[EV_MULTIPLE_FORM_COLUMNS], false, $selectedElementObject->getVar('id_form'),
+                "elements-ele_value[".EV_MULTIPLE_FORM_COLUMNS."]", _AM_ELE_LINKSELECTEDABOVE, true);
+            $displayElements->setValue($ele_value[EV_MULTIPLE_FORM_COLUMNS]); // mark the current selections in the form element
+            $dataToSendToTemplate['displayElements'] = $displayElements->render();
+    
+            // list of elements to export to spreadsheet
+            list($exportValue, $selectedExportValue) = createFieldList($ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS], false, $selectedElementObject->getVar('id_form'),
+                "elements-ele_value[".EV_MULTIPLE_SPREADSHEET_COLUMNS."]", _AM_ELE_VALUEINLIST, true);
+            $exportValue->setValue($ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS]); // mark the current selections in the form element
+            $dataToSendToTemplate['exportValue'] = $exportValue->render();
+            
 		} else {
 			$dataToSendToTemplate['optionSortOrder'] = "";
 		}
 		
-        // list of elements to display when showing this element in a list
-        list($listValue, $selectedListValue) = createFieldList($ele_value[EV_MULTIPLE_LIST_COLUMNS], false, $selectedElementObject->getVar('id_form'),
-            "elements-ele_value[".EV_MULTIPLE_LIST_COLUMNS."]", _AM_ELE_LINKSELECTEDABOVE, true);
-        $listValue->setValue($ele_value[EV_MULTIPLE_LIST_COLUMNS]); // mark the current selections in the form element
-        $dataToSendToTemplate['listValue'] = $listValue->render();
-
-        // list of elements to display when showing this element as an html form element (in form or list screens)
-        list($displayElements, $selectedListValue) = createFieldList($ele_value[EV_MULTIPLE_FORM_COLUMNS], false, $selectedElementObject->getVar('id_form'),
-            "elements-ele_value[".EV_MULTIPLE_FORM_COLUMNS."]", _AM_ELE_LINKSELECTEDABOVE, true);
-        $displayElements->setValue($ele_value[EV_MULTIPLE_FORM_COLUMNS]); // mark the current selections in the form element
-        $dataToSendToTemplate['displayElements'] = $displayElements->render();
-
-        // list of elements to export to spreadsheet
-        list($exportValue, $selectedExportValue) = createFieldList($ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS], false, $selectedElementObject->getVar('id_form'),
-            "elements-ele_value[".EV_MULTIPLE_SPREADSHEET_COLUMNS."]", _AM_ELE_VALUEINLIST, true);
-        $exportValue->setValue($ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS]); // mark the current selections in the form element
-        $dataToSendToTemplate['exportValue'] = $exportValue->render();
         
         return $dataToSendToTemplate;
     }
