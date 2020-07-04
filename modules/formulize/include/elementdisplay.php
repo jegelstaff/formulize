@@ -432,9 +432,9 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 			$compValue = addslashes($compValue);
 		}
 		if($thisOp == "LIKE") {
-			$evaluationCondition .= "strstr('".$compValue."', '".addslashes($filterTerms[$i])."')"; 
+			$evaluationCondition .= "stristr('".$compValue."', '".addslashes($filterTerms[$i])."')"; 
 		} elseif($thisOp == "NOT LIKE") {
-			$evaluationCondition .= "!strstr('".$compValue."', '".addslashes($filterTerms[$i])."')";
+			$evaluationCondition .= "!stristr('".$compValue."', '".addslashes($filterTerms[$i])."')";
 		} else {
 			$evaluationCondition .= "'".$compValue."' $thisOp '".addslashes($filterTerms[$i])."'";
 		}
