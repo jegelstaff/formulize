@@ -6743,6 +6743,7 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
     
         do {
             // load part of the data, since a very large dataset could exceed the PHP memory limit
+            $GLOBALS['formulize_doNotCacheDataSet'] = true;
             $data = getData($frid, $fid, $data_sql, "AND", null, $limitStart, $limitSize);
             if (is_array($data)) {
                 foreach ($data as $entry) {
