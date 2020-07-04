@@ -432,8 +432,8 @@ class formulizeElementsHandler {
 			$elements->assignVars($myrow);
 			$elements->isLinked = false;
 			$ele_type = $elements->getVar('ele_type');
-			if($ele_type=="select" OR $ele_type=="checkbox") { // SEE COMMENT ABOVE IN THE GET METHOD. isLinked shouldn't be handled here in the parent class when element classes exist. It should be part of the definition for what an element class provides.
 				$ele_value = $elements->getVar('ele_value');
+			if($ele_type=="select" OR $ele_type=="checkbox") { // SEE COMMENT ABOVE IN THE GET METHOD. isLinked shouldn't be handled here in the parent class when element classes exist. It should be part of the definition for what an element class provides.
 				if(!is_array($ele_value[2])) {
 					$elements->isLinked = strstr($ele_value[2], "#*=:*") ? true : false;
 				}
