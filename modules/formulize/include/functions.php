@@ -2268,6 +2268,8 @@ function checkOther($key, $target_element_id, $target_entry_id, $subformBlankCou
         if( !empty($_POST['other'])) {
             if($subformBlankCounter !== null) {
                 return $_POST['other']['ele_'.$target_element_id.'_new_'.$subformBlankCounter];
+            } elseif($target_entry_id == "new") {
+                return $_POST['other']['ele_'.$target_element_id.'_'.$target_entry_id.'_0']; // a counter is always added to the end of other values for new entries! This is in case we might make all this smarter to handle multiple new entries in the same elements on the same page later??
             } else {
                 return $_POST['other']['ele_'.$target_element_id.'_'.$target_entry_id];
             }
@@ -2299,7 +2301,13 @@ function writeOtherValues($id_req, $fid, $subformBlankCounter=null) {
             if(isset($values['blanks'][$subformBlankCounter])) {
                 $value = $values['blanks'][$subformBlankCounter];
             } else {
+                if(isset($values[$id_req])) {
                 $value = $values[$id_req];
+                } elseif(isset($values['new']) AND in_array($id_req, $GLOBALS['formulize_newEntryIds'][$fid])) {
+                    $value = $values['new'];
+                } else {
+                    return false; // could not find anything to write that matches the passed entry id
+                }
             }
 
             // determine the current status of that element
@@ -2312,9 +2320,6 @@ function writeOtherValues($id_req, $fid, $subformBlankCounter=null) {
                 $existing_value = false;
             }
 
-            if (get_magic_quotes_gpc()) {
-                $value = stripslashes($value);
-            }
             $value = $myts->htmlSpecialChars($value);
             if ($value != "" AND $existing_value) {
                 // update
@@ -2329,6 +2334,7 @@ function writeOtherValues($id_req, $fid, $subformBlankCounter=null) {
                 // do nothing (only other combination is.  if (!isset($value) AND !$existing_value). ie: nothing passed, and nothing existing in DB
                 $sql = false;
             }
+            
             if ($sql) {
                 if (!$result = $xoopsDB->query($sql)) {
                     exit("Error writing 'Other' value to the database with this SQL:<br>$sql");
