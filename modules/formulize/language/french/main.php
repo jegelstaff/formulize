@@ -209,6 +209,7 @@ define("_formulize_CSORTORDER", "Préférences de classement des commentaires/in
 define("_formulize_DB_EXPORT_METANO", "Ne pas inclure toutes les colonnes de métadonnées");
 define("_formulize_DB_EXPORT_METAYES", "Inclure toutes les colonnes de métadonnées (Utilisateur qui a créé l'entrée, etc)");
 define("_formulize_DB_EXPORT_TO_EXCEL", "Télécharger pour ouvrir avec Microsoft Excel");
+define("_formulize_DB_EXPORT_NULL_OPTION", "Use this value in place of all NULL values: ");
 define("_formulize_DE_ACTIONS", "Actions: ");
 define("_formulize_DE_ADD_MULTIPLE_ENTRY", "Ajouter plusieurs entrées");
 define("_formulize_DE_ADDENTRY", "Ajouter une entrée");

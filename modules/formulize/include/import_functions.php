@@ -495,7 +495,12 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
 
                             case "checkbox":
                             $options = unserialize($element["ele_value"]);
+                            $options = $options[2];
+                            if(strstr($cell_value, "\n")) {
                             $items = explode("\n", $cell_value);
+                            } else {
+                                $items = explode(",", $cell_value);
+                            }
                             foreach ($items as $item) {
                                 $item_value = trim($item);
                                 if (!in_array($item_value, $options, true)) {
@@ -514,8 +519,8 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
                                         }
                                     }
                                     if (!$foundit AND !$hasother) {
-                                        $keys_output = "";
-                                        for (reset($options); $key = key($options); next($options)) {
+                                        $keys_output = implode(', ', array_keys($options));
+                                        /*for (reset($options); $key = key($options); next($options)) {
                                             if (get_magic_quotes_gpc()) {
                                                 $key = stripslashes($key);
                                             }
@@ -523,7 +528,7 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
                                                 $keys_output .= ", ";
                                             }
                                             $keys_output .= $key;
-                                        }
+                                        }*/
 
                                         $errors[] = "<li>line " . $rowCount .
                                             ", column " . $importSet[3][$link] .
@@ -548,9 +553,7 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
                                     if (trim($cell_value) == trim(trans($thisoption))) {
                                         $foundit = true;
                                     }
-                                if (preg_match('/\{OTHER\|+[0-9]+\}/', $thisoption)) {
-                                    $hasother = true;
-                                }
+                                    if (preg_match('/\{OTHER\|+[0-9]+\}/', $thisoption)) { $hasother = true; }
                                 }
 
                                 if (!$foundit AND !$hasother) {
@@ -906,7 +909,12 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
                             case "checkbox":
                             $options = unserialize($element["ele_value"]);
                             $element_value = "";
-                            $items = explode("\n", $row_value);
+                            $options = $options[2];
+                            if(strstr($cell_value, "\n")) {
+                                $items = explode("\n", $cell_value);
+                            } else {
+                                $items = explode(",", $cell_value);
+                            }
                             foreach ($items as $item) {
                                 $item_value = trim($item);
                                 if (!in_array($item_value, $options, true)) {

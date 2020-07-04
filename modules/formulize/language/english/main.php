@@ -389,6 +389,7 @@ define("_formulize_DE_EXPORT_MAKEFILE", "Start data file download");
 define("_formulize_DE_EXPORT_SHOW_ADVANCED", "Show advanced options");
 define("_formulize_DE_EXPORT_HIDE_ADVANCED", "Hide advanced options");
 define("_formulize_DB_EXPORT_TO_EXCEL", "Use compatibility mode for some versions of Microsoft Excel (helps with accented characters in some cases)");
+define("_formulize_DB_EXPORT_NULL_OPTION", "Use this value in place of all NULL values: ");
 define("_formulize_EXPORT_FILENAME_TEXT", "Exported_data_from");
 
        

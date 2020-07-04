@@ -363,7 +363,7 @@ if ($ele_type=='text') {
     $options['background'] = $ele_value[3];
     $options['heading'] = $ele_value[0];
     $options['sideortop'] = $ele_value[5] == 1 ? "side" : "above";
-    $grid_elements_criteria = new Criteria();
+    $grid_elements_criteria = new Criteria('');
     $grid_elements_criteria->setSort('ele_order');
     $grid_elements_criteria->setOrder('ASC');
     $grid_elements = $element_handler->getObjects($grid_elements_criteria, $fid);
@@ -496,6 +496,16 @@ if ($ele_type=='text') {
     $options['ib_style_options']['form-heading'] = "form-heading";
 }
 $options['ele_value'] = $ele_value;
+
+if($elementObject->canHaveMultipleValues AND !$elementObject->isLinked) {
+    $advanced['canHaveMultipleValues'] = true;
+    $exportOptions = $elementObject->getVar('ele_exportoptions');
+    $advanced['exportoptions_onoff'] = (is_array($exportOptions) AND count($exportOptions) > 0) ? 1 : 0;
+    $advanced['exportoptions_hasvalue'] = $exportOptions['indicators']['hasValue'];
+    $advanced['exportoptions_doesnothavevalue'] = $exportOptions['indicators']['doesNotHaveValue'];
+} else {
+    $advanced['exportoptions_onoff'] = 0;
+}
 
 // if this is a custom element, then get any additional values that we need to send to the template
 $customValues = array();

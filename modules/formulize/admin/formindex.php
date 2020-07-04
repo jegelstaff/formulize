@@ -112,8 +112,8 @@ function patch40() {
      *
      * ====================================== */
 
-    $checkThisTable = 'formulize_screen_calendar';
-	$checkThisField = '';
+    $checkThisTable = 'formulize';
+	$checkThisField = 'ele_exportoptions';
 	$checkThisProperty = '';
 	$checkPropertyForValue = '';
 
@@ -411,8 +411,7 @@ function patch40() {
         $sql['add_template_donedest'] = "ALTER TABLE ". $xoopsDB->prefix("formulize_screen_template") . " ADD `donedest` varchar(255) NOT NULL default ''";
         $sql['add_template_savebuttontext'] = "ALTER TABLE ". $xoopsDB->prefix("formulize_screen_template") . " ADD `savebuttontext` varchar(255) NOT NULL default ''";
         $sql['add_template_donebuttontext'] = "ALTER TABLE ". $xoopsDB->prefix("formulize_screen_template") . " ADD `donebuttontext` varchar(255) NOT NULL default ''";
-
-
+        $sql['add_ele_exportoptions'] = "ALTER TABLE ". $xoopsDB->prefix("formulize")." ADD `ele_exportoptions` text NOT NULL";
         
         foreach($sql as $key=>$thissql) {
             if (!$result = $xoopsDB->query($thissql)) {
@@ -482,6 +481,8 @@ function patch40() {
                     print "Option for sending digest notifications already added. result: OK<br>";
                 } elseif(strstr($key, 'add_template_')) {
 					print "Button options already added to Template screens.  result: OK<br>";
+                } elseif($key === 'add_ele_exportoptions') {
+                    print "Element export options already added. result: OK<br>";
                 } else {
                     exit("Error patching DB for Formulize 4.0. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }

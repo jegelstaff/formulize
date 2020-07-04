@@ -108,7 +108,12 @@ if (!isset($_POST['metachoice']) AND !isset($formulize_doingManualExport)) {
     $formulizeModule = $module_handler->getByDirname("formulize");
     $formulizeConfig = $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
     $excelChecked = $formulizeConfig['downloadDefaultToExcel'] == 1 ? "checked" : "";
-    print "<p><label><input type=\"checkbox\" name=\"excel\" value=\"1\" $excelChecked>"._formulize_DB_EXPORT_TO_EXCEL."</input></label></p></div>\n";
+    print "<p><label>"._formulize_DB_EXPORT_TO_EXCEL." <input type=\"checkbox\" name=\"excel\" value=\"1\" $excelChecked></input></label></p>\n";
+    
+    print "<p>"._formulize_DB_EXPORT_NULL_OPTION." <input type=\"text\" name=\"nullOption\" value=\"\"></input></p>\n";
+    
+    
+    print "</div>\n";
     print "</form>";
 
     print "</td><td width=5%></td></tr></table>";
@@ -134,232 +139,11 @@ if (!isset($_POST['metachoice']) AND !isset($formulize_doingManualExport)) {
         } else {
             $columns = explode(",", $_GET['cols']);
             $include_metadata = (1 == $_POST['metachoice']);
-            export_data($queryData, $frid, $fid, $groups, $columns, $include_metadata);
+            $output_filename = isset($GLOBALS['formulize_export_output_filename']) ? $GLOBALS['formulize_export_output_filename'] : "";
+            export_data($queryData, $frid, $fid, $groups, $columns, $include_metadata, $output_filename);
         }
     } else {
         print _formulize_DE_EXPORT_FILE_ERROR;
     }
 } // end of "if the metachoice form has been submitted"
 
-
-function do_update_export($queryData, $frid, $fid, $groups) {
-    // this is the old export code, which is used for 'update' mode
-    $fdchoice = "update";
-
-    $GLOBALS['formulize_doingExport'] = true;
-    unset($queryData[0]); // get rid of the fid and userid lines
-    unset($queryData[1]);
-    $queryData = implode(" ", $queryData); // merge all remaining lines into one string to send to getData
-    $data = getData($frid, $fid, $queryData);
-
-    $cols = explode(",", $_GET['cols']);
-    
-    list($cols, $headers) = export_prepColumns($cols);
-
-    $filename = prepExport($headers, $cols, $data, $fdchoice, "", "", false, $fid, $groups);
-
-    $pathToFile = str_replace(XOOPS_URL,XOOPS_ROOT_PATH, $filename);
-
-    if ($_GET['type'] == "update") {
-        $fileForUser = str_replace(XOOPS_URL. SPREADSHEET_EXPORT_FOLDER, "", $filename);
-    } else {
-        $form_handler = xoops_getmodulehandler('forms','formulize');
-        $formObject = $form_handler->get($fid);
-        if (is_object($formObject)) {
-            $formTitle = "'".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "?", ",", ")", "(", "[", "]"), "_", trans($formObject->getVar('title')))."'";
-        } else {
-            $formTitle = "a_form";
-        }
-        $fileForUser = _formulize_EXPORT_FILENAME_TEXT."_".$formTitle."_".date("M_j_Y_Hi").".csv";
-    }
-
-    header('Content-Description: File Transfer');
-    header('Content-Type: text/csv; charset='._CHARSET);
-    header('Content-Disposition: attachment; filename='.$fileForUser);
-    header('Content-Transfer-Encoding: binary');
-    header('Expires: 0');
-    header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-    header('Pragma: public');
-
-    if (strstr(strtolower(_CHARSET),'utf') AND $_POST['excel'] == 1) {
-        echo "\xef\xbb\xbf"; // necessary to trigger certain versions of Excel to recognize the file as unicode
-    }
-    if (strstr(strtolower(_CHARSET),'utf-8') AND $_POST['excel'] != 1) {
-        ob_start();
-        readfile($pathToFile);
-        $fileContents = ob_get_clean();
-        header('Content-Length: '. filesize($pathToFile) * 2);
-        // open office really wants it in UTF-16LE before it will actually trigger an automatic unicode opening?! -- this seems to cause problems on very large exports?
-        print iconv("UTF-8","UTF-16LE//TRANSLIT", $fileContents);
-    } else {
-        header('Content-Length: '. filesize($pathToFile));
-        readfile($pathToFile);
-    }
-}
-
-
-function export_data($queryData, $frid, $fid, $groups, $columns, $include_metadata) {
-    global $xoopsDB;
-
-    // generate the export filename, which the user will see
-    $form_handler = xoops_getmodulehandler('forms','formulize');
-    $formObject = $form_handler->get($fid);
-    if (is_object($formObject)) {
-        $formTitle = "'".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "?", ",", ")", "(", "[", "]"), "_", trans($formObject->getVar('title')))."'";
-    } else {
-        $formTitle = "a_form";
-    }
-    $export_filename = _formulize_EXPORT_FILENAME_TEXT."_".$formTitle."_".date("M_j_Y_Hi").".csv";
-
-    // output http headers
-    header('Content-Description: File Transfer');
-    header('Content-Type: text/csv; charset='._CHARSET);
-    header('Content-Disposition: attachment; filename='.$export_filename);
-    header('Content-Transfer-Encoding: binary');
-    header('Expires: 0');
-    header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-    header('Pragma: public');
-
-    list($columns, $headers) = export_prepColumns($columns,$include_metadata);
-
-    if (strstr(strtolower(_CHARSET),'utf') AND $_POST['excel'] == 1) {
-        echo "\xef\xbb\xbf"; // necessary to trigger certain versions of Excel to recognize the file as unicode
-    }
-
-    // output export header
-    $output_handle = fopen('php://output', 'w');    // open a file handle to stdout because fputcsv() needs it
-    fputcsv($output_handle, $headers);
-    if(isset($_GET['showHandles'])) {
-        fputcsv($output_handle, $columns);
-    }
-
-    // output export data
-    $GLOBALS['formulize_doingExport'] = true;
-    unset($queryData[0]); // get rid of the fid and userid lines
-    unset($queryData[1]);
-       
-    $data_sql = implode(" ", $queryData); // merge all remaining lines into one string to send to getData
-    if(substr($data_sql, 0, 12)=="USETABLEFORM") {
-        $params = explode(" -- ", $data_sql);
-        $data = dataExtractionTableForm($params[1], $params[2], $params[3], $params[4], $params[5], FALSE, FALSE, $params[8], $params[9]);
-        foreach($data as $entry) {
-            $row = array();
-            foreach($columns as $column) {
-                $row[] = trans(html_entity_decode(displayTogether($entry, $column, ", "), ENT_QUOTES));    
-            }
-            // output this row to the browser
-            fputcsv($output_handle, $row);
-        }
-        
-    } else {
-
-        if(isset($_GET['limitSize'])) { // if user set a specific limit, use that instead of gathering everything in 1000 record chunks...happens with makecsv.php and maybe other times
-            $limitStart = isset($_GET['limitStart']) ? intval($_GET['limitStart']) : 0;
-            $limitSize = (isset($_GET['limitSize']) AND $limitStart !== "") ? intval($_GET['limitSize']) : "";
-        } else {
-        $limitStart = 0;
-            $limitSize = 1000;    // export in batches of 1000 records at a time
-        }
-    
-        do {
-            // load part of the data, since a very large dataset could exceed the PHP memory limit
-            $data = getData($frid, $fid, $data_sql, "AND", null, $limitStart, $limitSize);
-            if (is_array($data)) {
-                foreach ($data as $entry) {
-                    $row = array();
-                    foreach ($columns as $column) {
-                        switch ($column) {
-                            case "entry_id":
-                            $formhandle = getFormHandlesFromEntry($entry);
-                            $ids = internalRecordIds($entry, $formhandle[0]);
-                            $row[] = $ids[0];
-                            break;
-    
-                            case "uid":
-                            $c_uid = display($entry, 'creation_uid');
-                            $c_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$c_uid'");
-                            $row[] = (isset($c_name_q[0]['name']) ? $c_name_q[0]['name'] : $c_name_q[0]['uname']);
-                            break;
-    
-                            case "proxyid":
-                            $m_uid = display($entry, 'mod_uid');
-                            if ($m_uid) {
-                                $m_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$m_uid'");
-                                $row[] = (isset($m_name_q[0]['name']) ? $m_name_q[0]['name'] : $m_name_q[0]['uname']);
-                            } else {
-                                $row[] = "";
-                            }
-                            break;
-    
-                            case "creation_date":
-                            $row[] = display($entry, 'creation_datetime');
-                            break;
-    
-                            case "mod_date":
-                            $row[] = display($entry, 'mod_datetime');
-                            break;
-    
-                            default:
-                            $row[] = trans(html_entity_decode(displayTogether($entry, $column, ", "), ENT_QUOTES));
-                        }
-                    }
-                    // output this row to the browser
-                    fputcsv($output_handle, $row);
-                }
-    
-                // get the next set of data
-                set_time_limit(90);
-                if(!isset($_GET['limitSize'])) { // if we don't have a set size from makecsv.php or other user-set value
-                $limitStart += $limitSize;
-            }
-            }
-        } while (!isset($_GET['limitSize']) AND is_array($data) and count($data) > 0 );
-
-    }
-        
-    fclose($output_handle);
-}
-
-function export_prepColumns($columns,$include_metadata=0) {
-    
-    // get a list of columns for export
-    $headers = array();
-    $metaDataHeaders = array(_formulize_ENTRY_ID, _formulize_DE_CALC_CREATOR, _formulize_DE_CALC_MODIFIER, _formulize_DE_CALC_CREATEDATE, _formulize_DE_CALC_MODDATE, _formulize_DE_CALC_CREATOR_EMAIL);
-    $metaDataColsToAdd = array("entry_id","creation_uid","mod_uid","creation_datetime","mod_datetime","creator_email");
-    foreach ($columns as $thiscol) {
-        if ("creator_email" == $thiscol) {
-            $headers[] = _formulize_DE_CALC_CREATOR_EMAIL;
-            unset($metaDataColsToAdd[5]);
-            unset($metaDataHeaders[5]);
-        } elseif ("entry_id" == $thiscol) {
-            $headers[] = _formulize_ENTRY_ID;
-            unset($metaDataColsToAdd[0]);
-            unset($metaDataHeaders[0]);
-        } elseif ("creation_uid" == $thiscol OR "uid" == $thiscol) {
-            $headers[] = _formulize_DE_CALC_CREATOR;
-            unset($metaDataColsToAdd[1]);
-            unset($metaDataHeaders[1]);
-        } elseif ("proxyid" == $thiscol OR "mod_uid" == $thiscol) {
-            $headers[] = _formulize_DE_CALC_MODIFIER;
-            unset($metaDataColsToAdd[2]);
-            unset($metaDataHeaders[2]);
-        } elseif ("creation_date" == $thiscol OR "creation_datetime" == $thiscol) {
-            $headers[] = _formulize_DE_CALC_CREATEDATE;
-            unset($metaDataColsToAdd[3]);
-            unset($metaDataHeaders[3]);
-        } elseif ("mod_date"  == $thiscol OR "mod_datetime" == $thiscol) {
-            $headers[] = _formulize_DE_CALC_MODDATE;
-            unset($metaDataColsToAdd[4]);
-            unset($metaDataHeaders[4]);
-        } else {
-            $colMeta = formulize_getElementMetaData($thiscol, true);
-            $headers[] = $colMeta['ele_colhead'] ? trans($colMeta['ele_colhead']) : trans($colMeta['ele_caption']);
-        }
-    }
-    if ($include_metadata AND count($metaDataColsToAdd)>0) {
-        // include metadata columns if the user requested them
-        $columns = array_merge($metaDataColsToAdd, $columns);
-        $headers = array_merge($metaDataHeaders,$headers);
-    }
-    return array($columns,$headers);
-}

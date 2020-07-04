@@ -171,7 +171,7 @@ if($fid) {
         print_r($data);
         exit();*/
         
-        include_once XOOPS_ROOT_PATH . "/modules/formulize/include/export.php"; // actually generates the csv and makes it available as a download
+        include XOOPS_ROOT_PATH . "/modules/formulize/include/export.php"; // actually generates the csv and makes it available as a download
     } else {
         print "No data found";
     }

@@ -67,6 +67,21 @@
 </div>
 <{/if}>
  
+<{if $content.canHaveMultipleValues}>
+<div class="accordion-box">
+	<div class="form-item">
+   	<fieldset>
+      <legend><label for="elements-ele_req" class="question"><{$smarty.const._AM_FORMULIZE_EXPLODE_COLUMNS_ON_EXPORT}></label></legend>
+			<p><nobr><input type="radio" id="exportoptions_onoff0" name="exportoptions_onoff" value=0> <{$smarty.const._AM_FORMULIZE_EXPLODE_COLUMNS_ON_EXPORT_OFF}></nobr></p>
+            <hr>
+			<p><input type="radio" id="exportoptions_onoff1" name="exportoptions_onoff" value=1> <{$smarty.const._AM_FORMULIZE_EXPLODE_COLUMNS_ON_EXPORT_ON}></p>
+            <p><{$smarty.const._AM_FORMULIZE_EXPORTOPTIONS_HASVALUE}><input type='text' id='exportoptions_hasvalue' name='exportoptions_hasvalue' value='<{$content.exportoptions_hasvalue}>' size=10><br>
+            <{$smarty.const._AM_FORMULIZE_EXPORTOPTIONS_DOESNOTEHAVEVALUE}><input type='text' id='exportoptions_doesnothavevalue' name='exportoptions_doesnothavevalue' value='<{$content.exportoptions_doesnothavevalue}>' size=10></p>
+		</fieldset>
+	</div>
+</div>    
+<{/if}>
+ 
 </form>
 
 <div style="clear: both;"></div>
@@ -74,4 +89,5 @@
 
 <script type="text/javascript">
 		$("#elements-ele_use_default_when_blank<{$content.ele_use_default_when_blank}>").attr('checked', 'checked');
+        $("#exportoptions_onoff<{$content.exportoptions_onoff}>").attr('checked', 'checked');
 </script>

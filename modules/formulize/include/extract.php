@@ -1708,7 +1708,7 @@ function formulize_getElementMetaData($elementOrHandle, $isHandle=false, $fid=0)
         } else {
             $whereClause = $isHandle ? "ele_handle = '".formulize_db_escape($elementOrHandle)."'" : "ele_id = ".intval($elementOrHandle);
         }
-        $elementValueQ = "SELECT ele_value, ele_type, ele_id, ele_handle, id_form, ele_uitext, ele_uitextshow, ele_caption, ele_colhead, ele_encrypt FROM " . DBPRE . "formulize WHERE $whereClause";
+          $elementValueQ = "SELECT ele_value, ele_type, ele_id, ele_handle, id_form, ele_uitext, ele_uitextshow, ele_caption, ele_colhead, ele_encrypt, ele_exportoptions FROM " . DBPRE . "formulize WHERE $whereClause";
         $evqRes = $xoopsDB->query($elementValueQ);
         if($xoopsDB->getRowsNum($evqRes)>0) {
             while($evqRow = $xoopsDB->fetchArray($evqRes)) {

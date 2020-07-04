@@ -203,8 +203,25 @@ if($databaseElement AND ($_GET['ele_id'] OR $form_handler->elementFieldMissing($
 
 $element->setVar('ele_encrypt', $ele_encrypt);
 
+// figure out exportoptions for element
+// do not need to serialize this when assigning, since the elements class calls cleanvars from the xoopsobject on all properties prior to insertion, and that intelligently serializes properties that have been declared as arrays
+if(isset($_POST['exportoptions_onoff']) AND $_POST['exportoptions_onoff']) {
+    // linked elements cannot have exportoptions_onoff set, so we assume that ele_value[2] is an array, or ele_value is an array in the case of a radio button element
+    $ele_value = $element->getVar('ele_value');
+    if($element->getVar('ele_type')=='radio') {
+        $options = array_keys($ele_value);
+    } else {
+        $options = array_keys($ele_value[2]);
+    }
+    $element->setVar('ele_exportoptions', array(
+       'columns'=>$options, 'indicators'=>array('hasValue'=>$_POST['exportoptions_hasvalue'], 'doesNotHaveValue'=>$_POST['exportoptions_doesnothavevalue']) 
+    ));
+} else {
+    $element->setVar('ele_exportoptions', array());
+}
+
 if(!$element_handler->insert($element)) {
-	print "Error: could not save encryption setting for the element.";
+	print "Error: could not save Advanced settings for the element.";
 }
 
 //New index handling

@@ -47,6 +47,7 @@ class formulizeformulize extends XoopsObject {
     var $name;
     var $adminCanMakeRequired;
     var $alwaysValidateInputs;
+    var $canHaveMultipleValues;
 	
 	function __construct(){
         parent::__construct();
@@ -75,6 +76,7 @@ class formulizeformulize extends XoopsObject {
 		$this->initVar("ele_encrypt", XOBJ_DTYPE_INT); // added July 15 2009 by jwe
 		$this->initVar("ele_filtersettings", XOBJ_DTYPE_ARRAY);
 		$this->initVar("ele_use_default_when_blank", XOBJ_DTYPE_INT);
+        $this->initVar("ele_exportoptions", XOBJ_DTYPE_ARRAY);
 	}
 	
 	//this method is used to to retreive the elements dataType and size
@@ -214,15 +216,18 @@ class formulizeElementsHandler {
 			$element->assignVars($array);
 			$element->isLinked = false;
 			$ele_type = $element->getVar('ele_type');
+            $ele_value = $element->getVar('ele_value');
 			if($ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "select" OR $ele_type=="radio" OR $ele_type=="checkbox" OR $ele_type=="date" OR $ele_type=="colorpick" OR $ele_type=="yn" OR $ele_type=="derived") {
 			    $element->hasData = true;
 			} 
-			if($ele_type=="select") {
-				$ele_value = $element->getVar('ele_value');
+			if($ele_type=="select" OR $ele_type=="checkbox") { // isLinked SHOULD BE BROKEN OUT INTO A METHOD OR SOMETHING ON ELEMENT OBJECTS, SO IT DOESN'T HAVE TO BE HERE IN A METHOD IN THE PARENT CLASS! ELEMENT CLASSES SHOULD BE ABLE TO ANSWER THIS ON THEIR OWN.
 				if(!is_array($ele_value[2])) {
 					$element->isLinked = strstr($ele_value[2], "#*=:*") ? true : false;
 				}
 			} 
+            if($ele_type == "radio" OR ($ele_type=="select" AND $ele_value[1] == 1)) {
+                $element->canHaveMultipleValues = true;
+            }
 			$cachedElements[$id] = $element;
 			return $element;
 		}
@@ -244,9 +249,9 @@ class formulizeElementsHandler {
 				}
    		if( $element->isNew() || $ele_id == 0){
 				$sql = sprintf("INSERT INTO %s (
-				id_form, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_req, ele_value, ele_uitext, ele_uitextshow, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private, ele_encrypt, ele_filtersettings, ele_use_default_when_blank
+				id_form, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_req, ele_value, ele_uitext, ele_uitextshow, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private, ele_encrypt, ele_filtersettings, ele_use_default_when_blank, ele_exportoptions
 				) VALUES (
-				%u, %s, %s, %s, %s, %s, %u, %u, %s, %s, %u, %s, %s, %s, %u, %u, %u, %s, %u
+				%u, %s, %s, %s, %s, %s, %u, %u, %s, %s, %u, %s, %s, %s, %u, %u, %u, %s, %u, %s
 				)",
 				formulize_TABLE,
 				$id_form,
@@ -267,7 +272,8 @@ class formulizeElementsHandler {
 				$ele_private,
 				$ele_encrypt,
 				$this->db->quoteString($ele_filtersettings),
-				$ele_use_default_when_blank
+				$ele_use_default_when_blank,
+                $this->db->quoteString($ele_exportoptions)
 			);            
             // changed - end - August 19 2005 - jpc
 			}else{
@@ -290,7 +296,8 @@ class formulizeElementsHandler {
 				ele_private = %u,
 				ele_encrypt = %u,
 				ele_filtersettings = %s,
-				ele_use_default_when_blank = %u
+				ele_use_default_when_blank = %u,
+                ele_exportoptions = %s
 				WHERE ele_id = %u AND id_form = %u",
 				formulize_TABLE,
 				$this->db->quoteString($ele_type),
@@ -311,6 +318,7 @@ class formulizeElementsHandler {
 				$ele_encrypt,
 				$this->db->quoteString($ele_filtersettings),
 				$ele_use_default_when_blank,
+                $this->db->quoteString($ele_exportoptions),
 				$ele_id,
 				$id_form
 			);
@@ -424,7 +432,7 @@ class formulizeElementsHandler {
 			$elements->assignVars($myrow);
 			$elements->isLinked = false;
 			$ele_type = $elements->getVar('ele_type');
-			if($ele_type=="select") {
+			if($ele_type=="select" OR $ele_type=="checkbox") { // SEE COMMENT ABOVE IN THE GET METHOD. isLinked shouldn't be handled here in the parent class when element classes exist. It should be part of the definition for what an element class provides.
 				$ele_value = $elements->getVar('ele_value');
 				if(!is_array($ele_value[2])) {
 					$elements->isLinked = strstr($ele_value[2], "#*=:*") ? true : false;
@@ -433,6 +441,9 @@ class formulizeElementsHandler {
 			if($ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "select" OR $ele_type=="radio" OR $ele_type=="checkbox" OR $ele_type=="date" OR $ele_type=="colorpick" OR $ele_type=="yn" OR $ele_type == "derived") {
 			    $elements->hasData = true;
 			} 
+            if($ele_type == "radio" OR ($ele_type=="select" AND $ele_value[1] == 1)) {
+                $elements->canHaveMultipleValues = true;
+            }
 			if($id_as_key === true OR $id_as_key == "element_id"){
 				$ret[$myrow['ele_id']] =& $elements;
 			}elseif($id_as_key == "handle") {
