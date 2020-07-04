@@ -1184,15 +1184,37 @@ function readSection($entry, $entry_id, $sort='course') { // sort sets how the d
 // checks that the program matches what the user is supposed to be able to update
 // in the future we could check the active user's group memberships
 function userCanAssignToProgram($program) {
-    global $xoopsUser, $dara_active_year;
-	if(!$dara_active_year) { return false; }
+    global $xoopsUser, $dara_active_year, $canAssignSecondChance, $xoopsDB;
+    $canAssignSecondChance = is_bool($canAssignSecondChance) ? $canAssignSecondChance : true;
+    
+    $canAssign = false;
+    
+	if(!$dara_active_year OR !$program) { return false; }
     $groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
     $member_handler = xoops_gethandler('member');
     foreach($groups as $group) {
         $groupObject = $member_handler->getGroup($group);
         if(strstr($groupObject->getVar('name'),$program)) {
-            return true;
+            $canAssign = true;
+            break;
         }
     }
-    return false;
+    // before giving up...
+    if(!$canAssign AND $canAssignSecondChance AND isset($_REQUEST['program']) AND strstr($_REQUEST['program'], 'ORSET') AND $_REQUEST['title']) {
+        $canAssignSecondChance = false;
+        $canAssign = userCanAssignToProgram($_REQUEST['title']);
+    }
+    if(!$canAssign AND $canAssignSecondChance) {
+        $canAssignSecondChance = false;
+        // lookup menu entries to find which group names are associated with which programs
+        $sql = 'SELECT link_text FROM '.$xoopsDB->prefix('formulize_menu_links').' WHERE url LIKE "%ORSET1='.formulize_db_escape(str_replace(' ','_20',$program)).'%"'; // replace %20 with _20 since the _ is a wildcare in the LIKE query that will match any one character (so it will find the % in %20)
+        if($res = $xoopsDB->query($sql)) {
+            if($xoopsDB->getRowsNum($res)==1) {
+                $row = $xoopsDB->fetchRow($res);
+                $canAssign = userCanAssignToProgram(str_replace(' Module', '', $row[0])); // name of the module that has a menu link that uses this program as part of the filter
+            }
+        }        
+    }
+    $canAssignSecondChance = true;
+    return $canAssign;
 }
