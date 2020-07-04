@@ -43,9 +43,14 @@ $term = display($courseData[0], 'ro_module_semester');
 $dean = getData('', 16, 'service_module_service_assignment/**/Associate Dean, Academic/**/=][service_module_year/**/'.display($courseData[0], 'ro_module_year').'/**/=');
 $dean = htmlspecialchars_decode(display($dean[0], 'service_module_faculty_member'), ENT_QUOTES);
 
-$progCoordStaff = getData('', 16, 'service_module_service_assignment/**/Program Coordinator (staff)/**/=][service_module_year/**/'.display($courseData[0], 'ro_module_year').'/**/=');
-$progCoordStaff = htmlspecialchars_decode(display($progCoordStaff[0], 'service_module_staff_names'), ENT_QUOTES);
-$progCoordStaffEmail = makeEmailFromName($progCoordStaff);
+// new title in 2020
+$progCoordStaff = getData('', 16, 'service_module_service_assignment/**/Business Systems and Payroll Administrator/**/=][service_module_year/**/'.display($courseData[0], 'ro_module_year').'/**/=');
+if(!is_array($progCoordStaff) OR count($progCoordStaff)==0) {
+    $progCoordStaff = getData('', 16, 'service_module_service_assignment/**/Program Coordinator (staff)/**/=][service_module_year/**/'.display($courseData[0], 'ro_module_year').'/**/=');
+}
+$progCoordStaffName = htmlspecialchars_decode(display($progCoordStaff[0], 'service_module_staff_names'), ENT_QUOTES);
+$progCoordTitle = htmlspecialchars_decode(display($progCoordStaff[0], 'service_module_service_assignment'), ENT_QUOTES);
+$progCoordStaffEmail = makeEmailFromName($progCoordStaffName);
 
 if(!$name OR !$email) {
     return array();
@@ -118,7 +123,7 @@ By signing this Employment Agreement, you authorize the University to provide yo
 
 <P>Please sign below to indicate your acceptance of this offer, and return a copy of this entire letter of offer to me as soon as possible but no later than 2 days after you have been provided with the DDAH form. If we have not heard from you by this deadline, this offer may be withdrawn. If you are unable to accept this offer, please advise me immediately.</P>
 
-<P>If you have any questions, please contact $progCoordStaff <A HREF='mailto:$progCoordStaffEmail'>$progCoordStaffEmail</A>.</P> 
+<P>If you have any questions, please contact $progCoordStaffName <A HREF='mailto:$progCoordStaffEmail'>$progCoordStaffEmail</A>.</P> 
 
 <P>Yours sincerely,</P>
 
@@ -158,7 +163,7 @@ $html2 = "
 
 <P>On the start date of this appointment, I will be registered as a University of Toronto:<BR>___ Undergraduate<BR>___ Masters<BR>___ PhD<BR>___ Postdoctoral Fellow</P>
 
-<P>RETURN FORMS TO:<BR>$progCoordStaff<BR>Program Coordinator<BR>1 Spadina Cres, Room 136</P>
+<P>RETURN FORMS TO:<BR>$progCoordStaffName<BR>$progCoordTitle</P>
 
 ";
 

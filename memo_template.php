@@ -57,7 +57,13 @@ $activeYear = $firstYear;
 /*if($percent < 75) {
     $html .= "<P>Shown below are your teaching assignments for the academic year 2017/2018. These duties are based on your percent of appointment at the rank of Lecturer, and the corresponding teaching load of Full Course Equivalencies (FCEs).  The specifics of your percent of appointment and salary will be addressed in a forthcoming contract letter.</P>";
 } else {*/
-    $html .= "<P style=\"text-align:justify;\">Shown below are your teaching assignments for the academic year $year.  These duties are based on your $percent% appointment at the rank of $rank, and a teaching load of $targetLoad Full Course Equivalencies (FCEs).";    
+
+    // only do prorated for HR people that are in UG FOR or GRAD FOR
+    $lowerTargetLoad = number_format(($targetLoad/($percent/100)-0.5)*($percent/100),3);
+    $lowerTargetLoad = $lowerTargetLoad < 0 ? 0 : $lowerTargetLoad;
+    $targetLoad = $targetLoad < 0.002 ? 0 : $targetLoad;
+
+    $html .= "<P style=\"text-align:justify;\">Shown below are your teaching assignments for the academic year $year.  These duties are based on your $percent% appointment at the rank of $rank, and a teaching load of $lowerTargetLoad - $targetLoad Full Course Equivalencies (FCEs).";    
 //}
 
 $html .= "</P><BR>
@@ -132,12 +138,15 @@ if(count($courses)>0 OR count($coordCourses)>0) {
 
 }
 
-if(count($services)>0) {
+if(count($services)>0 OR count($adminServices)>0) {
     $totalService = 0;
-    $html .= "<TR><TD style=\"border: 1px solid black;\"><B>Administrative Assignments</B></TD><TD style=\"border: 1px solid black;\">&nbsp;</TD></TR>";
+    $html .= "<TR><TD style=\"border: 1px solid black;\"><B>Administrative and Service Assignments</B></TD><TD style=\"border: 1px solid black;\">&nbsp;</TD></TR>";
     foreach($services as $label=>$fce) {
         $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><ul><li>$label</li></ul></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">".number_format($fce,3)."</TD></TR>";
         $totalService = $totalService + $fce;
+    }
+    foreach($adminServices as $committee) {
+        $html .= "<TR><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\"><ul><li>$committee</li></ul></TD><TD style=\"border-left: 1px solid black;border-right: 1px solid black;\">&mdash;</TD></TR>";
     }
     if(count($services)>1) {
         $html .= "<TR><TD style=\"border: 1px solid black;\"><B>Total Administrative Assignments:</B></TD><TD style=\"border: 1px solid black;\"><B>".number_format($totalService,3)."</B></TD></TR>";
@@ -162,8 +171,13 @@ if(floatval($priorYearAdj)!=0) {
 }
 
 
-
-$html .= "<TR><TD style=\"border: 1px solid black;\">Unassigned load (may be assigned at a future date if FCE is above 0.500, and will be applied as a credit next year if it is below zero)</TD><TD style=\"border: 1px solid black;\">".number_format($availLoad,3)."</TD></TR>";
+if($availLoad >=0 AND $availLoad <= 0.5) { // ($targetLoad - $lowerTargetLoad)) { // arbitrary 0.5 limit, regardless of the actual variable due to prorating
+    $html .= "<TR><TD style=\"border: 1px solid black;\">Unassigned load</TD><TD style=\"border: 1px solid black;\">none</TD></TR>";    
+} elseif($availLoad < 0) {
+    $html .= "<TR><TD style=\"border: 1px solid black;\">Additional load - will be applied as a credit next year</TD><TD style=\"border: 1px solid black;\">".number_format($availLoad,3)."</TD></TR>";
+} else {
+    $html .= "<TR><TD style=\"border: 1px solid black;\">Unassigned load - may be assigned at a future date</TD><TD style=\"border: 1px solid black;\">".number_format($availLoad,3)."</TD></TR>";
+}
 
 $html .= "</TABLE><BR>";
 

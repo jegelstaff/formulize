@@ -267,6 +267,9 @@ function daraCreateNewYear($sourceYear) {
     $service_handler = new formulizeDataHandler(16);
     $teachingLoads_handler = new formulizeDataHandler(20);
     $course_weights_handler = new formulizeDataHandler(30);
+    $acceptStatus_handler = new formulizeDataHandler(23);
+    $committees_handler = new formulizeDataHandler(31);
+    $committeeMembers_handler = new formulizeDataHandler(32);
     
     $sql = "SELECT master_year_list_year FROM ".$xoopsDB->prefix('formulize_master_year_list')." ORDER BY master_year_list_year DESC LIMIT 0,1";
     $res = $xoopsDB->query($sql);
@@ -365,8 +368,8 @@ function daraCreateNewYear($sourceYear) {
         ro_module_job_ad_description,
         ro_module_job_ad_qualifications,
         ro_module_job_ad_duties,
-        'Active',
-        3,
+        ro_module_year_status,
+        ro_module_course_active,
         ro_module_official_course_weight,
         ro_module_job_ad_preferred_qualifications,
         ro_module_tutorial_supplement,
@@ -607,7 +610,56 @@ function daraCreateNewYear($sourceYear) {
         FROM ".$xoopsDB->prefix('formulize_hr_annual_accept_status')."
         WHERE entry_id = ".intval($row[0]);
         $insertRes = $xoopsDB->queryF($sql);
-        $teachingLoads_handler->setEntryOwnerGroups($xoopsUser->getVar('uid'),$xoopsDB->getInsertId());
+        $acceptStatus_handler->setEntryOwnerGroups($xoopsUser->getVar('uid'),$xoopsDB->getInsertId());
+    }
+    // make new committees
+    $idssql = "SELECT entry_id FROM ".$xoopsDB->prefix('formulize_committees')." WHERE committees_year = '".formulize_db_escape($sourceYear)."'";
+    $committeeMap = array();
+    $res = $xoopsDB->query($idssql);
+    while($row = $xoopsDB->fetchRow($res)) {
+        $sql = "INSERT INTO ".$xoopsDB->prefix('formulize_committees')." (
+        creation_datetime,
+        mod_datetime,
+        creation_uid,
+        mod_uid,
+        committees_committee_name,
+        committees_year)
+        SELECT creation_datetime,
+        NOW(),
+        creation_uid,
+        ".intval($xoopsUser->getVar('uid')).",
+        committees_committee_name,
+        '$newYear'
+        FROM ".$xoopsDB->prefix('formulize_committees')."
+        WHERE entry_id = ".intval($row[0]);
+        $insertRes = $xoopsDB->queryF($sql);
+        $committeeMap[$row[0]] = $xoopsDB->getInsertId();
+        $committees_handler->setEntryOwnerGroups($xoopsUser->getVar('uid'),$xoopsDB->getInsertId());
+    }
+    // make new committee members
+    // only include people who have an expiry year greater than the initial year in the new year string ie: 2015/2016 it's 2015 that counts
+    $idssql = "SELECT entry_id FROM ".$xoopsDB->prefix('formulize_committee_members')." WHERE committee_members_committee = IN (".implode(",",array_keys($committeeMap)).") AND committee_members_membership_expires_in_ > '".($topYearParts[0]+1)."'";
+    $res = $xoopsDB->query($idssql);
+    while($row = $xoopsDB->fetchRow($res)) {
+        $sql = "INSERT INTO ".$xoopsDB->prefix('formulize_committee_members')." (
+        creation_datetime,
+        mod_datetime,
+        creation_uid,
+        mod_uid,
+        committee_members_committee,
+        committee_members_member,
+        committee_members_membership_expires_in_)
+        SELECT creation_datetime,
+        NOW(),
+        creation_uid,
+        ".intval($xoopsUser->getVar('uid')).",
+        ".$committeeMap[$row[0]].",
+        committee_members_member,
+        committee_members_membership_expires_in_
+        FROM ".$xoopsDB->prefix('formulize_committee_members')."
+        WHERE entry_id = ".intval($row[0]);
+        $insertRes = $xoopsDB->queryF($sql);
+        $committeeMembers_handler->setEntryOwnerGroups($xoopsUser->getVar('uid'),$xoopsDB->getInsertId());
     }
     $GLOBALS['formulize_forceDerivedValueUpdate'] = true;
     getData(1, 3, 'ro_module_year/**/'.$newYear.'/**/=');
