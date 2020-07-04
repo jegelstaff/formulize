@@ -70,9 +70,9 @@ class icms_core_Session {
             Formulize::init();
             
             // we need to now try and get an the resource mapping of the user if it exists
-            if($internalUid = Formulize::getXoopsResourceID(Formulize::USER_RESOURCE, $userData["email"])) {
+            if(isset($userData["email"]) AND $userData["email"] AND $internalUid = Formulize::getXoopsResourceID(Formulize::USER_RESOURCE, $userData["email"])) {
             	 $externalUid = $userData["email"];
-            } else { 
+            } elseif(isset($userData["email"]) AND $userData["email"]) { 
 				// if the mapping did not exist, then we need to create the user
                 // you need to create the $user_data object, it looks like this:
                 $user_data = array(
