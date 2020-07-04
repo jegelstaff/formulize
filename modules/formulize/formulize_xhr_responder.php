@@ -35,15 +35,16 @@
 // this file listens for incoming formulize_xhr messages, and responds accordingly
 
 require_once "../../mainfile.php"; // initialize the xoops stack so we have access to the user object, etc if necessary
-ob_end_clean(); // stop all buffering of output (ie: related to the error logging, and/or xLangauge?)
-include_once "../../header.php";
-include_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
-
 // check that the user who sent this request is the same user we have a session for now, if not, bail
 $sentUid = $_GET['uid'];
 if(($xoopsUser AND $sentUid != $xoopsUser->getVar('uid')) OR (!$xoopsUser AND $sentUid !== 0)) {
   exit();
 }
+
+ob_end_clean(); // stop all buffering of output (ie: related to the error logging, and/or xLangauge?)
+include_once "../../header.php";
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
+include XOOPS_ROOT_PATH .'/modules/formulize/include/customCodeForApplications.php';
 
 $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'] = array();
 $GLOBALS['formulize_asynchronousFormDataInAPIFormat'] = array();
