@@ -2701,8 +2701,9 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
         $element_handler = xoops_getmodulehandler('elements', 'formulize');
         $startElement = $element_handler->get($targetForm['keyother']);
         $startEleValue = $startElement->getVar('ele_value');
-        // option 2, start form is the linked selectbox
-        if (strstr($startEleValue[2], "#*=:*")) {
+        $startEleValueParts = strstr($startEleValue[2], "#*=:*") ? explode("#*=:*", $startEleValue[2]) : array();
+        // option 2, start form is the linked selectbox that points to the form in question
+        if (count($startEleValueParts)>0 AND $startEleValueParts[0] == $targetForm['fid']) {
             // so look in the startEntry for the values in its linked field and return them.  They will be a comma separated list of entry ids in the target form.
             $data_handler_start = new formulizeDataHandler($startForm);
             $foundValue = $data_handler_start->getElementValueInEntry($startEntry, $targetForm['keyother'], $all_users, $all_groups);
