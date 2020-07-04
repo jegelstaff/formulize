@@ -44,7 +44,7 @@ global $xoopsConfig;
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
 
-function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditions="", $introtext="", $thankstext="", $done_dest="", $button_text="", $settings="", $overrideValue="", $printall=0, $screen=null, $saveAndContinueButtonText=null) { // nmc 2007.03.24 - added 'printall'
+function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditions="", $introtext="", $thankstext="", $done_dest="", $button_text="", $settings=array(), $overrideValue="", $printall=0, $screen=null, $saveAndContinueButtonText=null) { // nmc 2007.03.24 - added 'printall'
 	
 	formulize_benchmark("Start of displayFormPages.");
 	
@@ -304,10 +304,10 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
         if(page == <?php print $thanksPage; ?>) {
             jQuery('form[name=formulize]').attr('action', '<?php print $done_dest; ?>');
         }
-        window.document.formulize.formulize_currentPage.value = page;
-        window.document.formulize.formulize_prevPage.value = prevpage;
-        window.document.formulize.formulize_doneDest.value = '<?php print $done_dest; ?>';
-        window.document.formulize.formulize_buttonText.value = '<?php print $button_text; ?>';
+        window.document.formulize_mainform.formulize_currentPage.value = page;
+        window.document.formulize_mainform.formulize_prevPage.value = prevpage;
+        window.document.formulize_mainform.formulize_doneDest.value = '<?php print $done_dest; ?>';
+        window.document.formulize_mainform.formulize_buttonText.value = '<?php print $button_text; ?>';
 	}
 
 	function pageJump(options, prevpage) {

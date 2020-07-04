@@ -158,10 +158,10 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 
 	// THIS METHOD HANDLES ALL THE LOGIC ABOUT HOW TO ACTUALLY DISPLAY THIS TYPE OF SCREEN
 	// $screen is a screen object
-	function render($screen, $entry, $settings = "") { // $settings is used internally to pass list of entries settings back and forth to editing screens
+	function render($screen, $entry, $settings = array()) { // $settings is used internally to pass list of entries settings back and forth to editing screens
     
 		if(!is_array($settings)) {
-				$settings = "";
+				$settings = array();
 		}
 		
 		$formframe = $screen->getVar('frid') ? $screen->getVar('frid') : $screen->getVar('fid');

@@ -320,7 +320,7 @@ function getParentLinks($fid, $frid) {
 
 
 // this function returns the captions and values that are in the DB for an existing entry
-// $elements is used to specify a shortlist of elements to display.  Used in conjunction with the array option for $formform
+// $elements is used to specify a shortlist of elements to display, based on their IDs.  Used in conjunction with the array option for $formform
 // $element_handler is not required any longer!
 function getEntryValues($entry, $element_handler, $groups, $fid, $elements="", $mid, $uid, $owner, $groupEntryWithUpdateRights) {
 
@@ -748,7 +748,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 
     // there are several points above where $entry is set, and now that we have a final value, store in ventry
     $settings['formulize_originalVentry'] = $settings['ventry'];
-    if ($entry > 0 and (!isset($settings['ventry']) or ("addnew" != $settings['ventry']))) {
+    if ($entry > 0 and (!isset($settings['ventry']) or ("addnew" != $settings['ventry'] and "single" != $settings['ventry'] and "proxy" != $settings['ventry']) )) {
         $settings['ventry'] = $entry;
     }
 
