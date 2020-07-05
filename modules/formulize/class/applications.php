@@ -451,7 +451,16 @@ class formulizeApplicationsHandler {
     function getMenuLinksForApp($appid,$all=false){
         global $xoopsDB;
         $links_handler = xoops_getmodulehandler('ApplicationMenuLinks', 'formulize');
-        return $links_handler->get($appid,$all); 
+        if(!is_array($appid)) {
+            $appid = array($appid);
+        }
+        $foundLinks = array();
+        foreach($appid as $aid) {
+            if($links = $links_handler->get($aid,$all)) {
+                $foundLinks = array_merge($foundLinks, $links);
+            }
+        }
+        return $foundLinks;
     }
     
     

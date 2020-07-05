@@ -2792,8 +2792,9 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
         $element_handler = xoops_getmodulehandler('elements', 'formulize');
         $startElement = $element_handler->get($targetForm['keyother']);
         $startEleValue = $startElement->getVar('ele_value');
-        // option 2, start form is the linked selectbox
-        if (strstr($startEleValue[2], "#*=:*")) {
+        $startEleValueParts = strstr($startEleValue[2], "#*=:*") ? explode("#*=:*", $startEleValue[2]) : array();
+        // option 2, start form is the linked selectbox that points to the form in question
+        if (count($startEleValueParts)>0 AND $startEleValueParts[0] == $targetForm['fid']) {
             // so look in the startEntry for the values in its linked field and return them.  They will be a comma separated list of entry ids in the target form.
             $data_handler_start = new formulizeDataHandler($startForm);
             $foundValue = $data_handler_start->getElementValueInEntry($startEntry, $targetForm['keyother'], $all_users, $all_groups);
@@ -4188,7 +4189,8 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     if($multi) { // create the hidden field that will get the value assigned for submission
         $defaultHiddenValue = (!$overrides OR (substr($overrides,0,5)=="ORSET" AND substr($overrides, -2) == "//")) ? $overrides : "ORSET$multiCounter=".$overrides."//";
-        $filter = "<input type='hidden' name='$id' id='".$id."_hiddenMulti' value='".strip_tags(htmlspecialchars($defaultHiddenValue))."'>\n";
+        $filter = "<input type='hidden' name='$id' id='".$id."_hiddenMulti' value='".strip_tags(htmlspecialchars($defaultHiddenValue))."'>\n
+        <div style='float: left; padding-right: 1em;'>\n";
     } else { // start the actual dropdown selectbox
         $filter = "<SELECT name=\"$id\" id=\"$id\"";
         if ($name == "{listofentries}") {
@@ -4320,6 +4322,11 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
 
         $counter = 0;
         foreach ($options as $option=>$option_value) {
+            
+            if($multi AND $counter > 0 AND ($counter+1) % 7 == 0) {
+                $filter .= "\n</div><div style='float: left; padding-right: 1em;'>\n";
+            }
+            
             $multiIdCounter++;
             $selected = "";
             if (is_array($overrides) AND isset($overrides[$option])) {
@@ -4367,7 +4374,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
             $counter++;
         }
     }
-    $filter .= "</SELECT>\n";
+    $filter .= !$multi ? "</SELECT>\n" : "</div><div style='clear: both'></div>\n";
 
     return $filter;
 }
@@ -6380,6 +6387,19 @@ function formulize_parseSearchesIntoFilter($searches) {
     $element_handler = xoops_getmodulehandler('elements','formulize');
 	global $xoopsUser;
 	foreach($searches as $key => $master_one_search) { // $key is the element handle
+        
+        // grab values from GET or POST if they match { } terms
+        if(substr($master_one_search, 0, 1) == "{" AND substr($master_one_search, -1) == "}") {
+            $searchgetkey = substr($master_one_search, 1, -1);
+            if(isset($_POST[$searchgetkey]) OR isset($_GET[$searchgetkey])) {
+                $master_one_search = isset($_POST[$searchgetkey]) ? htmlspecialchars(strip_tags(trim($_POST[$searchgetkey])), ENT_QUOTES) : "";
+                $master_one_search = ($master_one_search==="" AND isset($_GET[$searchgetkey])) ? htmlspecialchars(strip_tags(trim($_GET[$searchgetkey])), ENT_QUOTES) : $master_one_search;
+                if($master_one_search==="") {
+                    continue;
+                }
+            }
+        }
+        
 		// convert "between 2001-01-01 and 2002-02-02" to a normal date filter with two dates
 		$count = preg_match("/^[bB][eE][tT][wW][eE][eE][nN] ([\d]{1,4}[-][\d]{1,2}[-][\d]{1,4}) [aA][nN][dD] ([\d]{1,4}[-][\d]{1,2}[-][\d]{1,4})\$/", $master_one_search, $matches);
 		if ($count > 0) {
@@ -6520,12 +6540,6 @@ function formulize_parseSearchesIntoFilter($searches) {
 				} elseif($searchgetkey == "PERGROUPFILTER") {
 					$one_search = $searchgetkey;
 					$operator = "";
-				} elseif(isset($_POST[$searchgetkey]) OR isset($_GET[$searchgetkey])) {
-                    $one_search = isset($_POST[$searchgetkey]) ? htmlspecialchars(strip_tags(trim($_POST[$searchgetkey])), ENT_QUOTES) : "";
-					$one_search = ($one_search==="" AND isset($_GET[$searchgetkey])) ? htmlspecialchars(strip_tags(trim($_GET[$searchgetkey])), ENT_QUOTES) : $one_search;
-					if($one_search==="") {
-						continue;
-					}
 				} elseif($searchgetkey) { // we were supposed to find something above, but did not, so there is a user defined search term, which has no value, ergo disregard this search term
 					continue;
 				} else {
