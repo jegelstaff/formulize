@@ -53,8 +53,8 @@ if($formObject->getVar('lockedform')) {
 if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mid)) {
   return;
 }
-$screen->setVar('introtext',get_magic_quotes_gpc() ? stripslashes($screens['introtext']) : $screens['introtext']);
-$screen->setVar('thankstext',get_magic_quotes_gpc() ? stripslashes($screens['thankstext']) : $screens['thankstext']);
+$screen->setVar('introtext', $screens['introtext']);
+$screen->setVar('thankstext', $screens['thankstext']);
 
 
 if(!$screen_handler->insert($screen)) {

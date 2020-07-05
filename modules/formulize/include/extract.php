@@ -98,7 +98,9 @@ function prepvalues($value, $field, $entry_id) {
 
   // return metadata values without putting them in an array
   if(isMetaDataField($field)) {
+    if(!isset($GLOBALS['formulize_doNotCacheDataSet'])) {
     $cachedPrepedValues[$original_value][$field][$entry_id] = $value;
+    }
      return $value;
   }
 
@@ -114,7 +116,9 @@ function prepvalues($value, $field, $entry_id) {
 		} else {
 			$value = "";
 		}
+        if(!isset($GLOBALS['formulize_doNotCacheDataSet'])) {
         $cachedPrepedValues[$original_value][$field][$entry_id] = $value;
+        }
 		return $value;
 	}
 
@@ -123,10 +127,14 @@ function prepvalues($value, $field, $entry_id) {
 		 $decryptSQL = "SELECT AES_DECRYPT('".formulize_db_escape($value)."', '".getAESPassword()."')";
 		 if($decryptResult = $xoopsDB->query($decryptSQL)) {
 					$decryptRow = $xoopsDB->fetchRow($decryptResult);
+                    if(!isset($GLOBALS['formulize_doNotCacheDataSet'])) {
                     $cachedPrepedValues[$original_value][$field][$entry_id] = $decryptRow[0];
+                    }
 					return $decryptRow[0];
 		 } else {
+                    if(!isset($GLOBALS['formulize_doNotCacheDataSet'])) {
                     $cachedPrepedValues[$original_value][$field][$entry_id] = "";
+                    }
 					return "";
 		 }
 	}
@@ -264,8 +272,9 @@ function prepvalues($value, $field, $entry_id) {
         $valueToReturn = explode("*=+*:",$value);
       }
 
-      
+    if(!isset($GLOBALS['formulize_doNotCacheDataSet'])) {  
     $cachedPrepedValues[$original_value][$field][$entry_id] = $valueToReturn;
+    }
 	return $valueToReturn;
 }
 
@@ -348,6 +357,7 @@ function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitS
 
     if ($cacheKey AND !isset($GLOBALS['formulize_doNotCacheDataSet'])) {
         // doNotCacheDataSet can be set, so that this query will be repeated next time instead of pulled from the cache.  This is most useful to declare in derived value formulas that cause a change to the underlyin dataset by writing things to a form that is involved in this dataset.
+        // This is also useful to set when a query will not be done over again and we want to conserve resources esp. memory!
         $GLOBALS['formulize_cachedGetDataResults'][$cacheKey] = $result;
     }
 
@@ -531,7 +541,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
             $config_handler = xoops_gethandler('config');
             $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
             if(trim($formulizeConfig['customScope'])!='' AND strstr($formulizeConfig['customScope'], "return \$scope;")) {
-                $customScope = eval($formulizeConfig['customScope']);
+                $customScope = eval(htmlspecialchars_decode($formulizeConfig['customScope'], ENT_QUOTES));
                 if($customScope !== false) {
                     $scope = $customScope;
                 }
@@ -1175,7 +1185,8 @@ function gatherDerivedValueFieldMetadata($fid, $linkformids) {
      $linkFormIdsFilter = "";
      $fid = intval($fid);
      $linkFormIdsFilter = (is_array($linkformids) AND count($linkformids)>0) ? formulize_db_escape(" OR t1.id_form IN (".implode(",",$linkformids).") ") : "";
-     $sql = "SELECT t1.ele_value, t2.desc_form, t1.ele_handle, t2.id_form FROM ".DBPRE."formulize as t1, ".DBPRE."formulize_id as t2 WHERE t1.ele_type='derived' AND (t1.id_form='$fid' $linkFormIdsFilter ) AND t1.id_form=t2.id_form ORDER BY t1.ele_order";     
+     $orderByClause = (is_array($linkformids) AND count($linkformids)>0) ? "ORDER BY FIND_IN_SET(t1.id_form, '".implode(",", $linkformids).",$fid'), t1.ele_order" : "ORDER BY t1.ele_order";
+     $sql = "SELECT t1.ele_value, t2.desc_form, t1.ele_handle, t2.id_form FROM ".DBPRE."formulize as t1, ".DBPRE."formulize_id as t2 WHERE t1.ele_type='derived' AND (t1.id_form='$fid' $linkFormIdsFilter ) AND t1.id_form=t2.id_form $orderByClause";
              
      $derivedFieldMetadata = array();
      global $xoopsDB;
@@ -1373,7 +1384,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                                 AND (
                                     (is_array($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10]) AND $formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10][0] != 'none')
                                 OR
-                                    $formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10] != "none" 
+                                    (!is_array($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10]) AND $formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10] != "none") 
                                 )) {
                               list($sourceMeta[1]) = convertElementIdsToElementHandles(array($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10]), $sourceMeta[0]); // ele_value 10 is the alternate field to use for datasets and in lists
                              }
@@ -1412,8 +1423,10 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                                }
                        $queryElementMetaData = formulize_getElementMetaData($ifParts[0], true);
                                $ele_value = unserialize($queryElementMetaData['ele_value']);
-                               if ($ele_value[0] > 1 AND $ele_value[1]) { // if the number of rows is greater than 1, and the element supports multiple selections
-                                    $newWhereClause = " EXISTS (SELECT 1 FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " AS source WHERE $queryElement LIKE CONCAT('%,',source.entry_id,',%') AND " . $search_column . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes . ")";
+                               if ($formFieldFilterMap[$mappedForm][$element_id]['ele_type'] == 'checkbox' OR ($ele_value[0] > 1 AND $ele_value[1])) { // if checkbox, or a selectbox where the number of rows is greater than 1, and the element supports multiple selections
+                                    $newWhereClause = " EXISTS (SELECT 1 FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " AS source WHERE (
+                                    $queryElement = source.entry_id OR $queryElement LIKE CONCAT('%,',source.entry_id,',%') OR $queryElement LIKE CONCAT(source.entry_id,',%') OR $queryElement LIKE CONCAT('%,',source.entry_id) 
+                                    ) AND " . $search_column . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes . ")";
                                } else {
                                     $newWhereClause = " EXISTS (SELECT 1 FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " AS source WHERE $queryElement = source.entry_id AND " . $search_column . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes . ")";
                                }
@@ -1437,7 +1450,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                                         $newWhereClause = " (";
 																				$nameSearchStart = false;
 																	 }
-                                   if(formulize_selectboxAllowsMultipleSelections($element_id)) {
+                                   if(formulize_elementAllowsMultipleSelections($element_id)) {
                                         $newWhereClause .= " (($queryElement LIKE '%*=+*:" . $preSearchArray['uid'] . "*=+*:%' OR $queryElement LIKE '%*=+*:" . $preSearchArray['uid'] . "') OR $queryElement = " . $preSearchArray['uid'] . ") "; // could this be further optimized to remove the = condition, and only use the LIKEs?  We need to check if a multiselection-capable box still uses the delimiter string when only one value is selected...I think it does.
                                    } else {
                                         $newWhereClause .= " $queryElement = " . $preSearchArray['uid'] . " ";
@@ -1632,9 +1645,9 @@ function formulize_getElementHandleFromID($element_id) {
      return isset($cachedHandles[$element_id]) ? $cachedHandles[$element_id] : false;
 }
 
-// THIS FUNCTION figureS out if AN ELEMENT in this form is the source of the linked selectbox
 // takes element ID, or handle (second param indicates if it's a handle or not)
-// returns the ele_value array for this element if it is a linked selectbox
+// returns the ele_value array for this element if it is linked
+// does not return the link if the values are snapshotted
 function formulize_isLinkedSelectBox($elementOrHandle, $isHandle=false) {
      static $cachedElements = array();
      if(!isset($cachedElements[$elementOrHandle])) {
@@ -1644,13 +1657,20 @@ function formulize_isLinkedSelectBox($elementOrHandle, $isHandle=false) {
      return $cachedElements[$elementOrHandle];
 }
 
-// This function returns true or false depending on whether a selectbox allows multiple values or not
-function formulize_selectboxAllowsMultipleSelections($elementOrHandle, $isHandle=false) {
+// This function returns true or false depending on whether an element is a multiselect selectbox or checkboxes
+// refactor into a property on elements!!
+function formulize_elementAllowsMultipleSelections($elementOrHandle, $isHandle=false) {
      static $cachedElements = array();
      if(!isset($cachedElements[$elementOrHandle])) {
           $evqRow = formulize_getElementMetaData($elementOrHandle, $isHandle);
+          if($evqRow['ele_type']=='checkbox') {
+            $cachedElements[$elementOrHandle] = true;
+          } elseif($evqRow['ele_type']=='select') { 
           $ele_value = unserialize($evqRow['ele_value']);
-          $cachedElements[$elementOrHandle] = ($ele_value[0] > 1 AND $ele_value[1] == 1) ? true : false;
+              $cachedElements[$elementOrHandle] = ($ele_value[1] == 1) ? true : false;
+          } else {
+              $cachedElements[$elementOrHandle] = false;
+          }
      }
      return $cachedElements[$elementOrHandle];
 }
@@ -1688,12 +1708,20 @@ function formulize_getElementMetaData($elementOrHandle, $isHandle=false, $fid=0)
           } else {
                $whereClause = $isHandle ? "ele_handle = '".formulize_db_escape($elementOrHandle)."'" : "ele_id = ".intval($elementOrHandle);
           }
-          $elementValueQ = "SELECT ele_value, ele_type, ele_id, ele_handle, id_form, ele_uitext, ele_uitextshow, ele_caption, ele_colhead, ele_encrypt FROM " . DBPRE . "formulize WHERE $whereClause";
+          $elementValueQ = "SELECT ele_value, ele_type, ele_id, ele_handle, id_form, ele_uitext, ele_uitextshow, ele_caption, ele_colhead, ele_encrypt, ele_exportoptions FROM " . DBPRE . "formulize WHERE $whereClause";
           $evqRes = $xoopsDB->query($elementValueQ);
+        if($xoopsDB->getRowsNum($evqRes)>0) {
           while($evqRow = $xoopsDB->fetchArray($evqRes)) {
                $cachedElements['handles'][$evqRow['ele_handle']] = $evqRow; // cached the element according to handle and id, so we don't repeat the same query later just because we're asking for info about the same element in a different way
                $cachedElements['ids'][$evqRow['ele_id']] = $evqRow;
           }
+        } elseif(!$fid) { // if nothing returned and we're not getting all data for a form...
+            if($isHandle) {
+                $cachedElements['handles'][$elementOrHandle] = array();
+            } else {
+                $cachedElements['ids'][$elementOrHandle] = array();
+            }
+        }
      }
      if(!$fid) {
           return $cachedElements[$cacheType][$elementOrHandle];

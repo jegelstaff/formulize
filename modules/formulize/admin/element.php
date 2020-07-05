@@ -363,7 +363,7 @@ if ($ele_type=='text') {
     $options['background'] = $ele_value[3];
     $options['heading'] = $ele_value[0];
     $options['sideortop'] = $ele_value[5] == 1 ? "side" : "above";
-    $grid_elements_criteria = new Criteria();
+    $grid_elements_criteria = new Criteria('');
     $grid_elements_criteria->setSort('ele_order');
     $grid_elements_criteria->setOrder('ASC');
     $grid_elements = $element_handler->getObjects($grid_elements_criteria, $fid);
@@ -380,6 +380,7 @@ if ($ele_type=='text') {
     if ($ele_id == "new") {
         $options['listordd'] = 0;
         $options['multiple'] = 0;
+        $options['multiple_auto'] = 0;
         $ele_value[0] = 6;
         $options['islinked'] = 0;
         $options['formlink_scope'] = array(0=>'all');
@@ -387,6 +388,7 @@ if ($ele_type=='text') {
         $options['listordd'] = $ele_value[0] == 1 ? 0 : 1;
         $options['listordd'] = $ele_value[8] == 1 ? 2 : $options['listordd'];
         $options['multiple'] = $ele_value[1];
+        $options['multiple_auto'] = $ele_value[1];
         if (!is_array($ele_value[2])) {
             $options['islinked'] = 1;
         } else {
@@ -402,6 +404,16 @@ if ($ele_type=='text') {
 
     list($formlink, $selectedLinkElementId) = createFieldList($ele_value[2]);
     $options['linkedoptions'] = $formlink->render();
+
+    list($optionsLimitByElement, $limitByElementElementId) = createFieldList($ele_value['optionsLimitByElement'], false, false, "elements-ele_value[optionsLimitByElement]", _NONE);
+    $options['optionsLimitByElement'] = $optionsLimitByElement->render();
+    if($limitByElementElementId) {
+        $limitByElementElementObject = $element_handler->get($limitByElementElementId);
+        if($limitByElementElementObject) {
+            $options['optionsLimitByElementFilter'] = formulize_createFilterUI($ele_value['optionsLimitByElementFilter'], "optionsLimitByElementFilter", $limitByElementElementObject->getVar('id_form'), "form-2");
+        }
+    }
+    
 
     // setup the list value and export value option lists, and the default sort order list, and the list of possible default values
     if ($options['islinked']) {
@@ -438,6 +450,14 @@ if ($ele_type=='text') {
             }
             $options['optionDefaultSelectionDefaults'] = $ele_value[13];
             $options['optionDefaultSelection'] = $allLinkedValues; // array with keys as entry ids and values as text
+            
+            // handle additional linked source mapping options...
+            list($thisFormFieldList, $thisFormFieldListSelected) = createFieldList('throwawayvalue', false, $fid, 'throwawayname', 'This Form');
+            $options['mappingthisformoptions'] = $thisFormFieldList->getOptions();
+            list($sourceFormFieldList, $sourceFormFieldListSelected) = createFieldList('throwawayvalue', false, $linkedSourceFid, 'throwawayname', 'Source Form');
+            $options['mappingsourceformoptions'] = $sourceFormFieldList->getOptions();
+            $options['linkedSourceMappings'] = $ele_value['linkedSourceMappings'];
+
         }
     }
     if (!$options['islinked'] OR !$linkedSourceFid) {
@@ -476,6 +496,16 @@ if ($ele_type=='text') {
     $options['ib_style_options']['form-heading'] = "form-heading";
 }
 $options['ele_value'] = $ele_value;
+
+if($elementObject->canHaveMultipleValues AND !$elementObject->isLinked) {
+    $advanced['canHaveMultipleValues'] = true;
+    $exportOptions = $elementObject->getVar('ele_exportoptions');
+    $advanced['exportoptions_onoff'] = (is_array($exportOptions) AND count($exportOptions) > 0) ? 1 : 0;
+    $advanced['exportoptions_hasvalue'] = $exportOptions['indicators']['hasValue'];
+    $advanced['exportoptions_doesnothavevalue'] = $exportOptions['indicators']['doesNotHaveValue'];
+} else {
+    $advanced['exportoptions_onoff'] = 0;
+}
 
 // if this is a custom element, then get any additional values that we need to send to the template
 $customValues = array();

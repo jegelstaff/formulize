@@ -67,11 +67,13 @@ if ($screen_id == "new") {
         $screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
     } else if ($settings['type'] == 'template') {
         $screen_handler = xoops_getmodulehandler('templateScreen', 'formulize');
+    } else if ($settings['type'] == 'calendar') {
+        $screen_handler = xoops_getmodulehandler('calendarScreen', 'formulize');
     }
     $screen = $screen_handler->get($screen_id);
 
     $screenName = $screen->getVar('title');
-    $form_id = $screen->form_id;
+    $form_id = $screen->form_id();
 
     $adminPage["template"] = "ABC, mellonfarmers!";
 }
@@ -147,11 +149,31 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $screen_handler = xoops_getmodulehandler('screen', 'formulize');
   $criteria_object = new CriteriaCompo(new Criteria('type','multiPage'));
   $criteria_object->add(new Criteria('type','form'), 'OR');
+  $criteria_object->add(new Criteria('type','template'), 'OR');
   $viewentryscreenOptionsDB = $screen_handler->getObjects($criteria_object, $form_id);
   $viewentryscreenOptions["none"] = _AM_FORMULIZE_SCREEN_LOE_VIEWENTRYSCREEN_DEFAULT;
   foreach($viewentryscreenOptionsDB as $thisViewEntryScreenOption) {
-      $viewentryscreenOptions[$thisViewEntryScreenOption->getVar('sid')] = printSmart(trans($thisViewEntryScreenOption->getVar('title')), 100);
+      $viewentryscreenOptions[$thisViewEntryScreenOption->getVar('sid')] = trans($formObj->getVar('title'))." &mdash; ".printSmart(trans($thisViewEntryScreenOption->getVar('title')), 100);
   }
+  
+  // if a relationship is in effect, get the screens on the other forms
+  if($selectedFramework) {
+    $parsedFids = array($form_id=>$form_id);
+    $frameworkObject = $frameworks[$selectedFramework];
+    foreach($frameworkObject->getVar('links') as $linkObject) {
+        foreach(array($linkObject->getVar('form1'), $linkObject->getVar('form2')) as $candidateFid) {
+            if(!isset($parsedFids[$candidateFid])) {
+                $candidateFormObj = $form_handler->get($candidateFid);
+                $viewentryscreenOptionsDB = $screen_handler->getObjects($criteria_object, $candidateFid);
+                foreach($viewentryscreenOptionsDB as $thisViewEntryScreenOption) {
+                    $viewentryscreenOptions[$thisViewEntryScreenOption->getVar('sid')] = trans($candidateFormObj->getVar('title'))." &mdash; ".printSmart(trans($thisViewEntryScreenOption->getVar('title')), 100);
+                }
+                $parsedFids[$candidateFid] = $candidateFid;
+            }
+        }
+    }
+  }
+  
     // get all the pageworks page IDs and include them too with a special prefix that will be picked up when this screen is rendered, so we don't confuse "view entry screens" and "view entry pageworks pages" -- added by jwe April 16 2009
     if (file_exists(XOOPS_ROOT_PATH."/modules/pageworks/index.php")) {
         global $xoopsDB;
@@ -177,39 +199,7 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
         $index++;
     }
     
-  //set options for all elements in entire framework
-  //also, collect the handles from a framework if any, and prep the list of possible handles/ids for the list template
-  if ($selectedFramework and isset($frameworks[$selectedFramework])) {
-      $allFids = $frameworks[$selectedFramework]->getVar('fids');
-  } else {
-      $allFids = array(0=>$form_id);
-  }
-  $thisFidObj = "";
-  $allFidObjs = array();
-  $elementOptionsFid = array();
-  $listTemplateHelp = array();
-  $class = "odd";
-  foreach($allFids as $thisFid) {
-      unset($thisFidObj);
-      if ($form_id == $thisFid) {
-          $thisFidObj = $formObj;
-      } else {
-          $thisFidObj = $form_handler->get($thisFid, true); // true causes all elements to be included, even if they're not visible
-      }
-      $allFidObjs[$thisFid] = $thisFidObj; // for use later on
-      $thisFidElements = $thisFidObj->getVar('elements');
-      $thisFidCaptions = $thisFidObj->getVar('elementCaptions');
-      $thisFidColheads = $thisFidObj->getVar('elementColheads');
-      $thisFidHandles = $thisFidObj->getVar('elementHandles');
-      foreach($thisFidElements as $i => $thisFidElement) {
-        $elementHeading = $thisFidColheads[$i] ? $thisFidColheads[$i] : $thisFidCaptions[$i];
-        $elementOptions[$thisFidHandles[$i]] = printSmart(trans(strip_tags($elementHeading)), 75);
-        // for passing to custom button logic, so we know all the element options for each form in framework
-        $elementOptionsFid[$thisFid][$thisFidElement] = printSmart(trans(strip_tags($elementHeading)), 75);
-        $class = $class == "even" ? "odd" : "even";
-        $listTemplateHelp[] = "<tr><td class=$class><nobr><b>" . printSmart(trans(strip_tags($elementHeading)), 75) . "</b></nobr></td><td class=$class><nobr>".$thisFidHandles[$i]."</nobr></td></tr>";
-      }
-  }
+  include XOOPS_ROOT_PATH.'/modules/formulize/admin/generateTemplateElementHandleHelp.php';
   $templates['listtemplatehelp'] = $listTemplateHelp;
 
   $entries = array();
@@ -424,6 +414,40 @@ if ($screen_id != "new" && $settings['type'] == 'template') {
     $templates = array();
     $templates['custom_code'] = $screen_handler->getCustomCode($screen);
     $templates['template'] = $screen_handler->getTemplateHtml($screen);
+    $templates['donedest'] = $screen->getVar('donedest');
+    $templates['savebuttontext'] = $screen->getVar('savebuttontext');
+    $templates['donebuttontext'] = $screen->getVar('donebuttontext');
+}
+
+if ($screen_id != "new" && $settings['type'] == 'calendar') {
+    $screen = $screen_handler->get($screen_id);
+    $form_id = $screen->getVar('fid');
+    $templates = array();
+    $templates['toptemplate'] = str_replace("&", "&amp;", $screen->getTemplate('toptemplate'));
+    $templates['bottomtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('bottomtemplate'));
+    $templates['caltype'] = $screen->getVar('caltype');
+    $data = array();
+    foreach($screen->getVar('datasets') as $i=>$dataset) {
+        $data['data'][$i]['content']['index'] = $i;
+        $data['data'][$i]['name'] = 'Dataset '.($i+1);
+        $data['data'][$i]['content']['fid'] = $dataset->getVar('fid');
+        $data['data'][$i]['content']['frid'] = $dataset->getVar('frid');
+        $data['data'][$i]['content']['scope'] = $dataset->getVar('scope');
+        $data['data'][$i]['content']['useaddicons'] = $dataset->getVar('useaddicons');
+        $data['data'][$i]['content']['usedeleteicons'] = $dataset->getVar('usedeleteicons');
+        $data['data'][$i]['content']['textcolor'] = $dataset->getVar('textcolor');
+        $data['data'][$i]['content']['viewentryscreen'] = $dataset->getVar('viewentryscreen');
+        $data['data'][$i]['content']['clicktemplate'] = $dataset->getVar('clicktemplate');
+        $data['data'][$i]['content']['datehandle'] = $dataset->getVar('datehandle');
+    }
+    $frameworks = $framework_handler->getFrameworksByForm($form_id);
+    if($selectedFramework = $screen->getVar('frid')) {
+        $frameworkObject = $frameworks[$selectedFramework];
+    } else {
+        $frameworkObject = false;
+    }
+    include XOOPS_ROOT_PATH.'/modules/formulize/admin/generateTemplateElementHandleHelp.php';
+    $templates['caltemplatehelp'] = $listTemplateHelp;
 }
 
 
@@ -451,7 +475,7 @@ $adminPage['tabs'][1] = array(
 );
 
 
-if ($screen_id != "new" && ($settings['type'] == 'form' OR $settings['type'] == 'multiPage' OR $settings['type'] == 'listOfEntries')) {
+if ($screen_id != "new" AND $settings['type'] != 'template') {
     $adminPage['tabs'][] = array(
         'name' => _AM_APP_RELATIONSHIPS,
         'template' => "db:admin/screen_relationships.html",
@@ -528,11 +552,32 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
 
 if ($screen_id != "new" && $settings['type'] == 'template') {
     $adminPage['tabs'][] = array(
+        'name'      => _AM_FORM_SCREEN_TEMPLATES_OPTIONS,
+        'template'  => "db:admin/screen_template_options.html",
+        'content'   => $templates + $common
+    );
+    $adminPage['tabs'][] = array(
         'name'      => _AM_FORM_SCREEN_TEMPLATES,
         'template'  => "db:admin/screen_template_templates.html",
         'content'   => $templates + $common
     );
 }
+
+if ($screen_id != "new" && $settings['type'] == 'calendar') {
+    $adminPage['tabs'][] = array(
+        'name'      => _AM_CAL_SCREEN_DATA,
+        'template'  => "db:admin/screen_calendar_data.html",
+        'content'   => $data + $common
+    );
+    
+    $adminPage['tabs'][] = array(
+        'name'      => _AM_CAL_SCREEN_TEMPLATES,
+        'template'  => "db:admin/screen_calendar_templates.html",
+        'content'   => $templates + $common
+    );
+}
+
+
 
 $adminPage['pagetitle'] = _AM_FORM_SCREEN.$screenName;
 $adminPage['needsave'] = true;

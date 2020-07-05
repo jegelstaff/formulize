@@ -140,8 +140,10 @@ switch ($op) {
 		break;
 
 	case 'logout':
+        if (icms::$user) {
 		$sessHandler = icms::$session;
 		$sessHandler->sessionClose(icms::$user->getVar('uid'));
+        }
 		redirect_header(ICMS_URL . '/index.php', 3, _US_LOGGEDOUT . '<br />' . _US_THANKYOUFORVISIT);
 		break;
 

@@ -41,6 +41,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 $GLOBALS['formulize_renderedElementHasConditions'] = array();
 
 // $groups is optional and can be passed in to override getting the user's groups.  This is necessary for the registration form to work with custom displayed elements
+// $noSave is used to specify a different name for the element, so we can get back an HTML element that we will use in a different context than a normal form
 function displayElement($formframe="", $ele, $entry="new", $noSave = false, $screen=null, $prevEntry=null, $renderElement=true, $profileForm = null, $groups="") {
 
 	static $cachedPrevEntries = array();
@@ -133,7 +134,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 	}
 	
 	$elementFilterSettings = $element->getVar('ele_filtersettings');
-	if($allowed AND count($elementFilterSettings[0]) > 0) {
+	if($allowed AND count($elementFilterSettings[0]) > 0 AND (!$noSave OR $entry != 'new')) {
 		// cache the filterElements for this element, so we can build the right stuff with them later in javascript, to make dynamically appearing elements
 		$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName] = $elementFilterSettings[0];
 		
@@ -343,6 +344,7 @@ EOF;
 }
 
 /* ALTERED - 20100316 - freeform - jeff/julian - start */
+// THIS SHOULD BE REFACTORED SO THAT ELEMENT DISPLAY CONDITIONS RUN OFF THE SAME SQL FILTER LOGIC AS EVERY OTHER INSTANCE OF A FILTER
 function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$filterTerms,$entry,$entryData) {
     $evaluationCondition = "";
     
@@ -375,6 +377,28 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 		if($filterTerms[$i] === "{BLANK}") {
 			$filterTerms[$i] = "";
 		}
+        
+        // convert { } element references to their API format version (prepValues function output), unless the filter element is creation_uid or mod_uid
+        if(substr($filterTerms[$i],0,1) == "{" AND substr($filterTerms[$i],-1)=="}") {
+            $handle_reference = substr($filterTerms[$i],1,-1);
+            if($filterElements[$i] != 'creation_uid' AND $filterElements[$i] != 'mod_uid') { // comparing to a regular element, get the db value
+                $filterTerms[$i] = $entry == 'new' ? '' : display($entryData[0], $handle_reference); // get blank, but we could try to get defaults like below
+            } elseif($entry != 'new') { // comparing to user metadata field, entry is not new
+                // take a wild guess that the reference is to something that should be a uid in the db...
+                $element_handler = xoops_getmodulehandler('elements', 'formulize');
+                $form_handler = xoops_getmodulehandler('forms', 'formulize');
+                $elementObject = $element_handler->get($handle_reference);
+                $formObject = $form_handler->get($elementObject->getVar('id_form'));
+                global $xoopsDB;
+                $sql = 'SELECT '.formulize_db_escape($handle_reference).' FROM '.$xoopsDB->prefix('formulize_'.$formObject->getVar('form_handle')).' WHERE entry_id = '.intval($entry);
+                $res = $xoopsDB->query($sql);
+                $row = $xoopsDB->fetchRow($res);
+                $filterTerms[$i] = $row[0];
+            } else { // comparing to user metadata field, entry is new
+                $filterTerms[$i] = 0;
+            }
+        }        
+        
 		if(isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry][$filterElements[$i]])) {
 			$compValue = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry][$filterElements[$i]];
 		} elseif($entry == "new") {
@@ -408,9 +432,9 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 			$compValue = addslashes($compValue);
 		}
 		if($thisOp == "LIKE") {
-			$evaluationCondition .= "strstr('".$compValue."', '".addslashes($filterTerms[$i])."')"; 
+			$evaluationCondition .= "stristr('".$compValue."', '".addslashes($filterTerms[$i])."')"; 
 		} elseif($thisOp == "NOT LIKE") {
-			$evaluationCondition .= "!strstr('".$compValue."', '".addslashes($filterTerms[$i])."')";
+			$evaluationCondition .= "!stristr('".$compValue."', '".addslashes($filterTerms[$i])."')";
 		} else {
 			$evaluationCondition .= "'".$compValue."' $thisOp '".addslashes($filterTerms[$i])."'";
 		}

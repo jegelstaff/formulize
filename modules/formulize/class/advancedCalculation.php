@@ -184,7 +184,7 @@ class formulizeAdvancedCalculationHandler {
     }
 
     if( !$result ){
-      print "Error: this advanced calculation could not be saved in the database.  SQL: $sql<br>".$xoopsDB->error();
+      print "Error: this advanced calculation could not be saved in the database.  SQL: $sql<br>".$this->db->error();
       return false;
     }
 
@@ -246,7 +246,7 @@ class formulizeAdvancedCalculationHandler {
     $result = $this->db->queryF($sql);
 
     if( !$result ){
-      print "Error: this advanced calculation log could not be saved in the database.  SQL: $sql<br>".$xoopsDB->error();
+      print "Error: this advanced calculation log could not be saved in the database.  SQL: $sql<br>".$this->db->error();
       return false;
     }
 
@@ -258,7 +258,7 @@ class formulizeAdvancedCalculationHandler {
     $result = $this->db->queryF($sql);
 
     if( !$result ){
-      print "Error: this advanced calculation log item could not be saved in the database.  SQL: $sql<br>".$xoopsDB->error();
+      print "Error: this advanced calculation log item could not be saved in the database.  SQL: $sql<br>".$this->db->error();
       return false;
     }
 

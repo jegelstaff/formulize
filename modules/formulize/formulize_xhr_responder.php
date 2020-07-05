@@ -35,15 +35,16 @@
 // this file listens for incoming formulize_xhr messages, and responds accordingly
 
 require_once "../../mainfile.php"; // initialize the xoops stack so we have access to the user object, etc if necessary
-ob_end_clean(); // stop all buffering of output (ie: related to the error logging, and/or xLangauge?)
-include_once "../../header.php";
-include_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
-
 // check that the user who sent this request is the same user we have a session for now, if not, bail
 $sentUid = $_GET['uid'];
 if(($xoopsUser AND $sentUid != $xoopsUser->getVar('uid')) OR (!$xoopsUser AND $sentUid !== 0)) {
   exit();
 }
+
+ob_end_clean(); // stop all buffering of output (ie: related to the error logging, and/or xLangauge?)
+include_once "../../header.php";
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
+include XOOPS_ROOT_PATH .'/modules/formulize/include/customCodeForApplications.php';
 
 $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'] = array();
 $GLOBALS['formulize_asynchronousFormDataInAPIFormat'] = array();
@@ -162,7 +163,7 @@ switch($op) {
         $passedElementId = $keyParts[3];
         $passedElementObject = $element_handler->get($passedElementId);
         $handle = $passedElementObject->getVar('ele_handle');
-        $databaseReadyValue = prepDataForWrite($passedElementObject, $v);
+        $databaseReadyValue = prepDataForWrite($passedElementObject, $v, $_GET['entryId']);
         $databaseReadyValue = $databaseReadyValue === "{WRITEASNULL}" ? NULL : $databaseReadyValue;
             if(substr($v, 0, 9)=="newvalue:") { $sendBackValue[$k] = $databaseReadyValue; }
         $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$passedEntryId][$handle] = $databaseReadyValue;
@@ -213,6 +214,11 @@ switch($op) {
       // "" is framework, ie: not applicable
       $deReturnValue = displayElement("", $elementObject, $entryId, false, null, null, false); // false, null, null, false means it's not a noSave element, no screen, no prevEntry data passed in, and do not render the element on screen
       if(is_array($deReturnValue)) {
+        if($deReturnValue[0] == 'hidden') {
+            if(is_object($deReturnValue[2])) {
+                print $deReturnValue[2]->render();
+            }
+        } else {
         $form_ele = $deReturnValue[0];
         if($elementObject->getVar('ele_req')) {
             $form_ele->setRequired();
@@ -230,6 +236,9 @@ switch($op) {
           require_once XOOPS_ROOT_PATH."/modules/formulize/include/formdisplay.php"; // need the formulize_themeForm
 		  $html = formulize_themeForm::_drawElementElementHTML($form_ele);
         }
+        if($html) {
+            $html = trans($html);
+        }
         if(count($sendBackValue)>0) {
           // if we wrote any new values in autocomplete boxes, pass them back so we can alter their values in markup so new entries are not created again!
           print '{ "data" : '.json_encode($html).', "newvalues" : [';
@@ -246,6 +255,7 @@ switch($op) {
             print $html;
         }
       }
+    }
     }
     break;
 
@@ -265,10 +275,10 @@ switch($op) {
 
 
     case "validate_php_code":
-    if (function_exists("shell_exec")) {
+    if (function_exists("shell_exec") AND trim($_POST["the_code"]) != "") {
         $tmpfname = tempnam(sys_get_temp_dir(), 'FZ');
         file_put_contents($tmpfname, trim($_POST["the_code"]));
-        $output = shell_exec('php -l "'.$tmpfname.'" 2>&1');
+        $output = shell_exec('php -l "'.$tmpfname.'" 2>&1'); // -l is syntax check only - SUPER IMPORTANT!!!
         unlink($tmpfname);
         if (false !== strpos($output, "PHP Parse error")) {
             // remove the second line because detail about the error is on the first line

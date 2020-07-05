@@ -40,7 +40,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 class formulizeMultiPageScreen extends formulizeScreen {
 
-	function formulizeMultiPageScreen() {
+	function __construct() {
 		parent::__construct();
 		$this->initVar("introtext", XOBJ_DTYPE_TXTAREA);
 		$this->initVar("toptemplate", XOBJ_DTYPE_TXTAREA);  	// added by Gordon Woodmansey (bgw) 2012-08-29
@@ -84,7 +84,7 @@ class formulizeMultiPageScreen extends formulizeScreen {
 
 class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 	var $db;
-	function formulizeMultiPageScreenHandler(&$db) {
+	function __construct(&$db) {
 		$this->db =& $db;
 	}
 	function &getInstance(&$db) {
@@ -158,10 +158,10 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 
 	// THIS METHOD HANDLES ALL THE LOGIC ABOUT HOW TO ACTUALLY DISPLAY THIS TYPE OF SCREEN
 	// $screen is a screen object
-	function render($screen, $entry, $settings = "") { // $settings is used internally to pass list of entries settings back and forth to editing screens
+	function render($screen, $entry, $settings = array()) { // $settings is used internally to pass list of entries settings back and forth to editing screens
     
 		if(!is_array($settings)) {
-				$settings = "";
+				$settings = array();
 		}
 		
 		$formframe = $screen->getVar('frid') ? $screen->getVar('frid') : $screen->getVar('fid');
@@ -172,12 +172,16 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 		ksort($pagetitles);
 		array_unshift($pages, ""); // displayFormPages looks for the page array to start with [1] and not [0], for readability when manually using the API, so we bump up all the numbers by one by adding something to the front of the array
 		array_unshift($pagetitles, ""); 
-		$pages['titles'] = $pagetitles;
 		unset($pages[0]); // get rid of the part we just unshifted, so the page count is correct
 		unset($pagetitles[0]);
+        $pages['titles'] = $pagetitles;
 		$conditions = $screen->getConditions();
+		$doneDest = $screen->getVar('donedest');
+		if(substr($doneDest, 0, 1)=='/') {
+		    $doneDest = XOOPS_URL.$doneDest;
+		}
     		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplaypages.php";
-		displayFormPages($formframe, $entry, $mainform, $pages, $conditions, html_entity_decode(html_entity_decode($screen->getVar('introtext', "e")), ENT_QUOTES), html_entity_decode(html_entity_decode($screen->getVar('thankstext', "e")), ENT_QUOTES), $screen->getVar('donedest'), $screen->getVar('buttontext'), $settings,"", $screen->getVar('printall'), $screen); //nmc 2007.03.24 added 'printall' & 2 empty params
+		displayFormPages($formframe, $entry, $mainform, $pages, $conditions, html_entity_decode(html_entity_decode($screen->getVar('introtext', "e")), ENT_QUOTES), html_entity_decode(html_entity_decode($screen->getVar('thankstext', "e")), ENT_QUOTES), $doneDest, $screen->getVar('buttontext'), $settings,"", $screen->getVar('printall'), $screen); //nmc 2007.03.24 added 'printall' & 2 empty params
 	}
 
 
@@ -283,5 +287,3 @@ function drawPageUI($pageNumber, $pageTitle, $elements, $conditions, $form, $opt
 		
     return $form;
 }
-
-?>

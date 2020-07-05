@@ -71,6 +71,7 @@ switch($op) {
     $value = $_GET['param1'];
     $element = $_GET['param2'];
     $entry = $_GET['param3'];
+    $leave = $_GET['param4'];
 
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
     $elementObject = $element_handler->get($element);
@@ -79,12 +80,12 @@ switch($op) {
       $data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
       $entry_id = $data_handler->findFirstEntryWithValue($element, $value);
       if(is_numeric($entry_id) AND $entry_id != $entry) {
-        print 'valuefound';
+        print json_encode(array('val'=>'valuefound', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
       } else {
-        print 'valuenotfound';
+        print json_encode(array('val'=>'valuenotfound', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
       }
     } else {
-      print 'invalidelement';
+      print json_encode(array('val'=>'invalidelement', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
     }
     break;
 
@@ -213,11 +214,10 @@ switch($op) {
       $deReturnValue = displayElement("", $elementObject, $entryId, false, null, null, false); // false, null, null, false means it's not a noSave element, no screen, no prevEntry data passed in, and do not render the element on screen
       if(is_array($deReturnValue)) {
         $form_ele = $deReturnValue[0];
+        if($elementObject->getVar('ele_req')) {
+            $form_ele->setRequired();
+        }
         $isDisabled = $deReturnValue[1];
-
-        $label_class = " formulize-label-".$elementObject->getVar("ele_handle");
-        $input_class = " formulize-input-".$elementObject->getVar("ele_handle");
-
         // rendered HTML code below is taken from the formulize classes at the top of include/formdisplay.php
         if($elementObject->getVar('ele_type') == "ib") {// if it's a break, handle it differently...
           $class = ($form_ele[1] != '') ? " class='".$form_ele[1]."'" : '';

@@ -27,6 +27,49 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
+
+if(!function_exists("getRequestedDataType")) {
+// this function returns the datatype requested for this element
+function getRequestedDataType() {
+	switch($_POST['element_datatype']) {
+		case 'decimal':
+			if($datadecimals = intval($_POST['element_datatype_decimalsize'])) {
+				if($datadecimals > 20) {
+					$datadecimals = 20;
+				}
+			} else {
+				$datadecimals = 2;
+			}
+			$datadigits = $datadecimals < 10 ? 11 : $datadecimals + 1; // digits must be larger than the decimal value, but a minimum of 11
+			$dataType = "decimal($datadigits,$datadecimals)";
+			break;
+		case 'int':
+			$dataType = 'int(10)';
+			break;
+		case 'varchar':
+			if(!$varcharsize = intval($_POST['element_datatype_varcharsize'])) {
+				$varcharsize = 255;
+			}
+			$varcharsize = $varcharsize > 255 ? 255 : $varcharsize;
+			$dataType = "varchar($varcharsize)";
+			break;
+		case 'char':
+			if(!$charsize = intval($_POST['element_datatype_charsize'])) {
+				$charsize = 255;
+			}
+			$charsize = $charsize > 255 ? 255 : $charsize;
+			$dataType = "char($charsize)";
+			break;
+		case 'text':
+			$dataType = 'text';
+			break;
+		default:
+			print "ERROR: unrecognized datatype has been specified: ".strip_tags(htmlspecialchars($_POST['element_datatype']));
+	}
+	return $dataType;
+}
+}
+
 // this file handles saving of submissions from the element advanced page of the new admin UI
 
 // if we aren't coming from what appears to be save.php, then return nothing
@@ -76,7 +119,7 @@ if($ele_encrypt != $element->getVar('ele_encrypt') AND $databaseElement AND !$_G
   }
 }
 
-if($databaseElement AND $_GET['ele_id']) { // ele_id is only in the URL when we're on the first save for a new element
+if($databaseElement AND ($_GET['ele_id'] OR $form_handler->elementFieldMissing($element))) { // ele_id is only in the URL when we're on the first save for a new element
 	global $xoopsDB;
 	  // figure out what the data type should be.
 	  // the rules:
@@ -160,8 +203,25 @@ if($databaseElement AND $_GET['ele_id']) { // ele_id is only in the URL when we'
 
 $element->setVar('ele_encrypt', $ele_encrypt);
 
+// figure out exportoptions for element
+// do not need to serialize this when assigning, since the elements class calls cleanvars from the xoopsobject on all properties prior to insertion, and that intelligently serializes properties that have been declared as arrays
+if(isset($_POST['exportoptions_onoff']) AND $_POST['exportoptions_onoff']) {
+    // linked elements cannot have exportoptions_onoff set, so we assume that ele_value[2] is an array, or ele_value is an array in the case of a radio button element
+    $ele_value = $element->getVar('ele_value');
+    if($element->getVar('ele_type')=='radio') {
+        $options = array_keys($ele_value);
+    } else {
+        $options = array_keys($ele_value[2]);
+    }
+    $element->setVar('ele_exportoptions', array(
+       'columns'=>$options, 'indicators'=>array('hasValue'=>$_POST['exportoptions_hasvalue'], 'doesNotHaveValue'=>$_POST['exportoptions_doesnothavevalue']) 
+    ));
+} else {
+    $element->setVar('ele_exportoptions', array());
+}
+
 if(!$element_handler->insert($element)) {
-	print "Error: could not save encryption setting for the element.";
+	print "Error: could not save Advanced settings for the element.";
 }
 
 //New index handling
@@ -182,45 +242,4 @@ if ($reloadneeded) {
   print "/* evalnow */ if(redirect=='') { redirect = 'reloadWithScrollPosition();'; } newhandle = '".$element->getVar('ele_handle')."';"; // pass back the new element handle so we can update the original_handle flag for the next save operation
 } else {
   print "/* evalnow */ newhandle = '".$element->getVar('ele_handle')."';"; // pass back the new element handle so we can update the original_handle flag for the next save operation
-}
-
-
-// this function returns the datatype requested for this element
-function getRequestedDataType() {
-	switch($_POST['element_datatype']) {
-		case 'decimal':
-			if($datadecimals = intval($_POST['element_datatype_decimalsize'])) {
-				if($datadecimals > 20) {
-					$datadecimals = 20;
-				}
-			} else {
-				$datadecimals = 2;
-			}
-			$datadigits = $datadecimals < 10 ? 11 : $datadecimals + 1; // digits must be larger than the decimal value, but a minimum of 11
-			$dataType = "decimal($datadigits,$datadecimals)";
-			break;
-		case 'int':
-			$dataType = 'int(10)';
-			break;
-		case 'varchar':
-			if(!$varcharsize = intval($_POST['element_datatype_varcharsize'])) {
-				$varcharsize = 255;
-			}
-			$varcharsize = $varcharsize > 255 ? 255 : $varcharsize;
-			$dataType = "varchar($varcharsize)";
-			break;
-		case 'char':
-			if(!$charsize = intval($_POST['element_datatype_charsize'])) {
-				$charsize = 255;
-			}
-			$charsize = $charsize > 255 ? 255 : $charsize;
-			$dataType = "char($charsize)";
-			break;
-		case 'text':
-			$dataType = 'text';
-			break;
-		default:
-			print "ERROR: unrecognized datatype has been specified: ".strip_tags(htmlspecialchars($_POST['element_datatype']));
-	}
-	return $dataType;
 }

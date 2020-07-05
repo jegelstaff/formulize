@@ -104,6 +104,9 @@ define("_AM_SETTINGS_FORM_APP_PART","Which applications is this form part of?");
 define("_AM_SETTINGS_FORM_APPNEW","Create a new application for this form to be part of?");
 define("_AM_SETTINGS_FORM_DEFAULT_GROUP_PERM","Which groups of users should have permission to alter this form's settings?");
 
+define("_AM_CAL_SCREEN_TEMPLATES","Templates");
+define("_AM_CAL_SCREEN_DATA","Datasets");
+
 
 /*mod Language for permissions*/
 define("_AM_PERMISSIONS_CHOOSE_GROUPS","Which groups do you want to set permissions for?");
@@ -171,6 +174,7 @@ define("_AM_SCREEN_CREATE"," Create a new Screen");
 define("_AM_SCREEN_FORMSCREENS","Form Screens");
 define("_AM_SCREEN_LISTSCREENS","List Screens");
 define("_AM_SCREEN_TEMPLATESCREENS","Template Screens");
+define("_AM_SCREEN_CALENDARSCREENS","Calendar Screens");
 define("_AM_SCREEN_DELETESCREENS","Are you sure you want to delete this screen? All configuration settings for this screen will be lost!");
 define("_AM_SCREEN_RELATIONWARNING", "Note: This screen uses a different relationship setting than one or more list screens.");
 
@@ -342,8 +346,9 @@ define("_AM_ELE_FORMLINK_SCOPEFILTER_REFRESHHINT", "(If the first list here is e
 
 // subforms
 define("_AM_ELE_SUBFORM_FORM", "Which form do you want to include as a subform?");
-define("_AM_ELE_SUBFORM_IFFORM", "If the subform entries are shown in a full form:");
+define("_AM_ELE_SUBFORM_IFFORM", "Screen for displaying each entry:");
 define("_AM_ELE_SUBFORM_SCREEN", "Which screen should be used to display each entry?");
+define("_AM_ELE_SUBFORM_SCREEN_HELP", "The screen will be used for subform entries displayed as a form, or for displaying the entry in a row when its view button is clicked.");
 define("_AM_ELE_SUBFORM", "Subform (from a form framework)");
 define("_AM_ELE_SUBFORM_DESC", "When you display the current form as part of a framework, the subform interface can be included in the form.  The subform interface allows users to create and modify entries in a related subform without leaving the main form.  The list here shows all the possible subforms from all frameworks that this form is part of.");
 define("_AM_ELE_SUBFORM_NONE", "No subforms available - define a framework first");
@@ -402,7 +407,7 @@ define("_AM_ELE_DERIVED_UPDATE_CAP", "Calculate values for this element");
 define("_AM_ELE_DERIVED_UPDATE_DESC", "This may take a while depending on how many records are contained within your form.");
 
 define("_AM_ELE_SELECT_NONE","No element selected");
-define("_AM_ELE_CONFIRM_DELETE","Are you sure you want to delete this form element?<br>All data anyone has ever entered into this form element will be deleted as well.");
+define("_AM_ELE_CONFIRM_DELETE","Are you sure you want to delete this form element? All data anyone has ever entered into this form element will be deleted as well.");
 
 define("_AM_TITLE","Menu administration");
 define("_AM_ID","ID");
@@ -797,3 +802,18 @@ define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK", "Show the default value for this 
 define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_DESC", "For example, showing defaults when the saved value is blank can be useful on multipage forms, if later pages have elements which should still use the default value, even though the user has saved the entry after the first page.<br><b>Note</b> that required elements are always treated as if this option is turned on regardless, since required elements should never have empty/blank values.");
 define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ONLY_NEW", "Only for new entries");
 define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ALL_WHEN_BLANK", "For any entry, when the saved value is blank");
+
+define("_AM_FORMULIZE_SCREEN_CAL_DESC_TOPTEMPLATE", "You can type PHP code into either or both of the template boxes below.  Code in the <i>top template</i> box will be rendered above the calendar.  Code in the <i>bottom template</i> box will be rendered below the calendar.");
+define("_AM_FORMULIZE_SCREEN_CAL_DESC_TOPTEMPLATE2", "You can use <i>\$quickSearch</i> and <i>\$quickFilter</i> variables in the template to display search boxes and filters, ie: \$quickSearchelement_handle. The list of available element handles is available below the top template.");
+//template screen
+define("_AM_FORM_SCREEN_TEMPLATES_OPTIONS","Options");
+define("_AM_FORMULIZE_SCREEN_TEMPLATE_SAVEBUTTONTEXT", "Text for the 'Save' button: ");
+define("_AM_FORMULIZE_SCREEN_TEMPLATE_DONEBUTTONTEXT", "Text for the 'Done' button: ");
+define("_AM_FORMULIZE_SCREEN_TEMPLATE_DONEDEST", "The URL that users should be directed to when leaving the page (Optional, Formulize will set this automatically when the page is displayed, based on where the user came from, and will return them to that page after. Form submissions are saved when leaving the page.)");
+define("_AM_FORMULIZE_SCREEN_TEMPLATE_HELP", "All variables defined in the custom code below will be available in the template by using <{\$variableName}>, and you can also use <{\$saveButton}> to position the a button that triggers saving of any form elements, and <{\$doneButton}> to position a button that triggers saving and will redirect the user to the done destination. Button text and the done destination can be set in the 'Options' tab.");
+
+define("_AM_FORMULIZE_EXPLODE_COLUMNS_ON_EXPORT", "How should values in this element be handled when exporting to spreadsheet?");
+define("_AM_FORMULIZE_EXPLODE_COLUMNS_ON_EXPORT_OFF", "Show as a comma separated list inside one cell");
+define("_AM_FORMULIZE_EXPLODE_COLUMNS_ON_EXPORT_ON", "Show one column per option in this element, and use the following values in the cells:");
+define("_AM_FORMULIZE_EXPORTOPTIONS_HASVALUE", "Value to show if an option is selected:");
+define("_AM_FORMULIZE_EXPORTOPTIONS_DOESNOTEHAVEVALUE", "Value to show if an option is NOT selected:");

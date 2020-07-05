@@ -27,6 +27,34 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
+// THIS FUNCTION TAKES A SERIES OF VALUES TYPED IN FORM RADIO BUTTONS, CHECKBOXES OR SELECTBOX OPTIONS, AND CHECKS TO SEE IF THEY WERE ENTERED WITH A UITEXT INDICATOR, AND IF SO, SPLITS THEM INTO THEIR ACTUAL VALUE PLUS THE UI TEXT AND RETURNS BOTH
+// $values should be an array of all the options, so $ele_value for radio and checkboxes, $ele_value[2] for selectboxes
+if(!function_exists("formulize_extractUIText")) {
+function formulize_extractUIText($values) {
+	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+	// values are the text that was typed in
+	// keys should remain unchanged
+	$uitext = array();
+	foreach($values as $key=>$value) {
+		//print "<br>original value: $value<br>";
+		//print "key: $key<br>";
+		if(strstr($value, "|") AND substr(trans($value), 0, 7) != "{OTHER|") { // check for the pressence of the uitext deliminter, the "pipe" character
+			$pipepos = strpos($value, "|");
+			//print "pipe found: $pipepos<br>";
+			$uivalue = substr($value, $pipepos+1);
+			//print "uivalue: $uivalue<br>";
+			$value = substr($value, 0, $pipepos);
+			//print "value: $value<br>";
+			$values[$key] = $value;
+			$uitext[$value] = $uivalue;
+		} else {
+			$values[$key] = $value;
+		}
+	}
+	return array(0=>$values, 1=>$uitext);
+}
+}
+
 // this file handles saving of submissions from the element options page of the new admin UI
 
 // if we aren't coming from what appears to be save.php, then return nothing
@@ -69,7 +97,7 @@ if($_POST['element_delimit']) {
     $processedValues['elements']['ele_delim'] = $_POST['element_delimit'];
   }
 }
-if($ele_type == "date" AND $processedValues['elements']['ele_value'][0] != "YYYY-mm-dd" AND $processedValues['elements']['ele_value'][0] != "") { // still checking for old YYYY-mm-dd string, just in case.  It should never be sent back as a value now, but if we've missed something and it is sent back, leaving this check here ensures it will properly be turned into "", ie: no date.
+if($ele_type == "date" AND $processedValues['elements']['ele_value'][0] != _DATE_DEFAULT AND $processedValues['elements']['ele_value'][0] != "") { // still checking for old YYYY-mm-dd string, just in case.  It should never be sent back as a value now, but if we've missed something and it is sent back, leaving this check here ensures it will properly be turned into "", ie: no date.
 	if(preg_replace("[^A-Z{}]","", $processedValues['elements']['ele_value'][0]) === "{TODAY}") {
 	  $processedValues['elements']['ele_value'][0] = $processedValues['elements']['ele_value'][0];
 	} else {
@@ -155,21 +183,38 @@ if($ele_type == "select") {
       }
     }
   }
+  
+  // gather any additional mappings specified by the user
+  $mappingCounter = 0;
+  $processedValues['elements']['ele_value']['linkedSourceMappings'] = array();
+  foreach($_POST['mappingthisform'] as $key=>$thisFormValue) {
+    if($thisFormValue != 'none' AND $_POST['mappingsourceform'][$key] != 'none') {
+        $processedValues['elements']['ele_value']['linkedSourceMappings'][$mappingCounter] = array('thisForm'=>intval($thisFormValue), 'sourceForm'=>intval($_POST['mappingsourceform'][$key]));
+        $mappingCounter++;
+    }
+  }
+  if($mappingCounter == 0) { // nothing written
+    $processedValues['elements']['ele_value']['linkedSourceMappings'] = null;
+  }
+  
   $processedValues['elements']['ele_value'][8] = 0;
   if($_POST['elements_listordd'] == 2) {
     $processedValues['elements']['ele_value'][0] = 1; // rows is 1
     $processedValues['elements']['ele_value'][8] = 1; // is autocomplete
-    $processedValues['elements']['ele_value'][1] = 0; // multiple selections not allowed
+    $processedValues['elements']['ele_value'][1] = $_POST['elements_multiple_auto'];
   } else if($_POST['elements_listordd']) {
     $processedValues['elements']['ele_value'][0] = $processedValues['elements']['ele_value'][0] > 1 ? intval($processedValues['elements']['ele_value'][0]) : 1;
     $processedValues['elements']['ele_value'][1] = $_POST['elements_multiple'];
   } else {
     $processedValues['elements']['ele_value'][0] = 1;
-    $processedValues['elements']['ele_value'][1] = 0; // multiple selections not allowed
+    $processedValues['elements']['ele_value'][1] = 0; // multiple selections not allowed for drop down lists
   }
 
   // if there is a change to the multiple selection status, need to adjust the database!!
-  if (isset($ele_value[1]) AND $ele_value[1] != $_POST['elements_multiple']) {
+  if (
+      ($processedValues['elements']['ele_value'][8] == 0 AND isset($ele_value[1]) AND $ele_value[1] != $_POST['elements_multiple'])
+      OR ($processedValues['elements']['ele_value'][8] == 1 AND isset($ele_value[1]) AND $ele_value[1] != $_POST['elements_multiple_auto'])
+      ) {
     if ($ele_value[1] == 0) {
       $result = convertSelectBoxToMulti($xoopsDB->prefix('formulize_'.$formObject->getVar('form_handle')), $ele_id);
     } else {
@@ -191,22 +236,23 @@ if($ele_type == "select") {
     $_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_op"];
     $_POST[$filter_key."_terms"][] = $_POST["new_".$filter_key."_term"];
     $_POST[$filter_key."_types"][] = "all";
+    $_POST['reload_option_page'] = true;
   }
   if($_POST["new_".$filter_key."_oom_term"] != "") {
     $_POST[$filter_key."_elements"][] = $_POST["new_".$filter_key."_oom_element"];
     $_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_oom_op"];
     $_POST[$filter_key."_terms"][] = $_POST["new_".$filter_key."_oom_term"];
     $_POST[$filter_key."_types"][] = "oom";
+    $_POST['reload_option_page'] = true;
   }
   // then remove any that we need to
-
+  if(isset($_POST['optionsconditionsdelete']) AND $_POST['optionsconditionsdelete']) {
   $conditionsDeleteParts = explode("_", $_POST['optionsconditionsdelete']);
-  $deleteTarget = $conditionsDeleteParts[1];
-  if($_POST['optionsconditionsdelete']) {
+    $deleteTarget = intval($conditionsDeleteParts[1]);
     // go through the passed filter settings starting from the one we need to remove, and shunt the rest down one space
     // need to do this in a loop, because unsetting and key-sorting will maintain the key associations of the remaining high values above the one that was deleted
     $originalCount = count($_POST[$filter_key."_elements"]);
-    for($i=$deleteTarget;$i<$originalCount;$i++) { // 2 is the X that was clicked for this page
+    for($i=$deleteTarget;$i<$originalCount;$i++) { 
       if($i>$deleteTarget) {
         $_POST[$filter_key."_elements"][$i-1] = $_POST[$filter_key."_elements"][$i];
         $_POST[$filter_key."_ops"][$i-1] = $_POST[$filter_key."_ops"][$i];
@@ -221,6 +267,7 @@ if($ele_type == "select") {
         unset($_POST[$filter_key."_types"][$i]);
       }
     }
+    $_POST['reload_option_page'] = true;
   }
   if(count($_POST[$filter_key."_elements"]) > 0){
     $processedValues['elements']['ele_value'][5][0] = $_POST[$filter_key."_elements"];
@@ -231,6 +278,9 @@ if($ele_type == "select") {
     $processedValues['elements']['ele_value'][5] = "";
   }
 }
+
+$processedValues = parseSubmittedConditions('optionsLimitByElementFilter', 'optionsLimitByElementFilterDelete', $processedValues, 'optionsLimitByElementFilter'); // post key, delete key, processedValues, ele_value key for conditions
+
 
 $ele_value_before_adminSave = "";
 $ele_value_after_adminSave = "";
@@ -279,7 +329,7 @@ if(isset($_POST['changeuservalues']) AND $_POST['changeuservalues']==1) {
 *
 *Added by Jinfu MAR 2015
 */
-if($processedValues['elements']['ele_value'][8] == 1 &&
+if($processedValues['elements']['ele_value'][8] == 1 && is_array($processedValues['elements']['ele_value'][2]) && 
    (isset($processedValues['elements']['ele_value'][2]['{USERNAMES}']) || isset($processedValues['elements']['ele_value'][2]['{FULLNAMES}']))) {
   $processedValues['elements']['ele_value'][16]=0;
 }
@@ -303,32 +353,7 @@ if(!$ele_id = $element_handler->insert($element)) {
   print "Error: could not save the options for element: ".$xoopsDB->error();
 }
 
-if($_POST['reload_option_page']) {
+if($_POST['reload_option_page'] OR (isset($ele_value['optionsLimitByElement']) AND $ele_value['optionsLimitByElement'] != $processedValues['elements']['ele_value']['optionsLimitByElement'])) {
   print "/* evalnow */ if(redirect=='') { redirect = 'reloadWithScrollPosition();'; }";
 }
 
-// THIS FUNCTION TAKES A SERIES OF VALUES TYPED IN FORM RADIO BUTTONS, CHECKBOXES OR SELECTBOX OPTIONS, AND CHECKS TO SEE IF THEY WERE ENTERED WITH A UITEXT INDICATOR, AND IF SO, SPLITS THEM INTO THEIR ACTUAL VALUE PLUS THE UI TEXT AND RETURNS BOTH
-// $values should be an array of all the options, so $ele_value for radio and checkboxes, $ele_value[2] for selectboxes
-function formulize_extractUIText($values) {
-	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
-	// values are the text that was typed in
-	// keys should remain unchanged
-	$uitext = array();
-	foreach($values as $key=>$value) {
-		//print "<br>original value: $value<br>";
-		//print "key: $key<br>";
-		if(strstr($value, "|") AND substr(trans($value), 0, 7) != "{OTHER|") { // check for the pressence of the uitext deliminter, the "pipe" character
-			$pipepos = strpos($value, "|");
-			//print "pipe found: $pipepos<br>";
-			$uivalue = substr($value, $pipepos+1);
-			//print "uivalue: $uivalue<br>";
-			$value = substr($value, 0, $pipepos);
-			//print "value: $value<br>";
-			$values[$key] = $value;
-			$uitext[$value] = $uivalue;
-		} else {
-			$values[$key] = $value;
-		}
-	}
-	return array(0=>$values, 1=>$uitext);
-}

@@ -15,6 +15,24 @@ class icms_db_legacy_PdoDatabase extends icms_db_legacy_Database {
 	public function __construct( $connection, $allowWebChanges = false ) {
 		parent::__construct($connection, $allowWebChanges);
 		$this->pdo = $connection;
+        $getModes = 'SELECT @@SESSION.sql_mode';
+        $modesSet = false;
+        if($res = $this->query($getModes)) {
+            $modes = $this->fetchRow($res);
+            $modes = $modes[0]; // only one result
+            $modesSet = true;
+            if(strstr($modes, 'STRICT_')) {
+                $modes = explode(',', str_replace(array('STRICT_TRANS_TABLES', 'STRICT_ALL_TABLES'), '', $modes)); // remove strict options
+                $modes = array_filter($modes); // remove blanks, possibly caused by commas after removed modes
+                $setModes = "SET SESSION sql_mode = '".implode(',',$modes)."'";
+                if(!$res = $this->queryF($setModes)) {
+                    $modesSet = false;
+                }
+            }
+        }
+        if(!$modesSet) {
+            exit('Error: the database mode could not be set for proper operation of Formulize. Please notify a webmaster immediately. Thank you.');            
+        }
 	}
 	public function connect($selectdb = true) {
 		return true;

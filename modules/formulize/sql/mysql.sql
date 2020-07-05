@@ -1,3 +1,12 @@
+CREATE TABLE `formulize_screen_calendar` (
+  `calendar_id` int(11) unsigned NOT NULL auto_increment,
+  `sid` int(11) DEFAULT NULL,
+  `caltype` varchar(50) DEFAULT NULL,
+  `datasets` text DEFAULT NULL,
+  PRIMARY KEY (`calendar_id`),
+  INDEX i_sid (`sid`)
+) ENGINE=InnoDB;
+
 CREATE TABLE `formulize_digest_data` (
   `digest_id` int(11) unsigned NOT NULL auto_increment,
   `email` varchar(255) DEFAULT NULL,
@@ -329,7 +338,7 @@ CREATE TABLE formulize_id (
   on_after_save text,
   custom_edit_check text,
   note text,
-  send_digests tinyint(1) NOT NULL default 0
+  send_digests tinyint(1) NOT NULL default 0,
   PRIMARY KEY  (`id_form`)
 ) ENGINE=MyISAM;
 
@@ -354,6 +363,7 @@ CREATE TABLE formulize (
   ele_forcehidden tinyint(1) NOT NULL default '0',
   ele_private tinyint(1) NOT NULL default '0',
   ele_use_default_when_blank tinyint(1) NOT NULL default '0',
+  ele_exportoptions text NOT NULL,
   PRIMARY KEY  (`ele_id`),
   KEY `ele_display` (`ele_display` ( 255 ) ),
   KEY `ele_order` (`ele_order`)
@@ -404,6 +414,9 @@ CREATE TABLE formulize_screen_template (
   templateid int(11) NOT NULL auto_increment,
   sid int(11) NOT NULL default 0,
   custom_code text NOT NULL,
+  donedest varchar(255) NOT NULL default '',
+  savebuttontext varchar(255) NOT NULL default '',
+  donebuttontext varchar(255) NOT NULL default '',
   template text NOT NULL,
   PRIMARY KEY (`templateid`),
   INDEX i_sid (`sid`)

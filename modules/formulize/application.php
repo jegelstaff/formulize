@@ -86,9 +86,13 @@ function getNavDataForForms($links) {
         $suburl = XOOPS_URL."/modules/formulize/index.php?".$link->getVar("screen");
         $url = $link->getVar("url");
         if(strlen($url) > 0){
+            if(substr($url, 0, 1)=="/") {
+                $url = XOOPS_URL.$url;
+            } else {
             $pos = strpos($url,"://");
             if($pos === false){
                 $url = "http://".$url;
+                }
             }
             $suburl = $url;
         }

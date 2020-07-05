@@ -69,6 +69,8 @@ if($screens['type'] == 'multiPage') {
   $screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
 } else if($screens['type'] == 'form') {
   $screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
+} else if($screens['type'] == 'calendar') {
+  $screen_handler = xoops_getmodulehandler('calendarScreen', 'formulize');
 }
 
 if ("new" != $sid) {

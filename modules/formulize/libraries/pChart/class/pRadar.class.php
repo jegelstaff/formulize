@@ -332,7 +332,7 @@
       }
 
      /* Compute the plots position */
-     $ID = 0; $Plot = "";
+     $ID = 0; $Plot = array();
      foreach($Data["Series"] as $SerieName => $DataS)
       {
        if ( $SerieName != $LabelSerie )

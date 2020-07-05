@@ -31,6 +31,7 @@
 // There is a corresponding admin template for this element type in the templates/admin folder
 
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
+require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
 class formulizeCheckboxElement extends formulizeformulize {
     
@@ -41,6 +42,7 @@ class formulizeCheckboxElement extends formulizeformulize {
         $this->overrideDataType = "text"; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
         $this->adminCanMakeRequired = true; // set to true if the webmaster should be able to toggle this element as required/not required
         $this->alwaysValidateInputs = false; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
+        $this->canHaveMultipleValues = true;
         parent::__construct();
     }
     
@@ -69,15 +71,28 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
         if(is_object($element) AND is_subclass_of($element, 'formulizeformulize')) {
 			$ele_value = $this->backwardsCompatibility($element->getVar('ele_value'));
             if(is_array($ele_value[2])) { // an array will be a set of hard coded options
-                $ele_value[2] = formulize_mergeUIText($ele_value[2], $ele_uitext);
+                $ele_value[2] = formulize_mergeUIText($ele_value[2], $element->getVar('ele_uitext'));
                 $dataToSendToTemplate['islinked'] = 0;
                 $dataToSendToTemplate['useroptions'] = $ele_value[2];
             } else { // options are linked from another source
                 $dataToSendToTemplate['islinked'] = 1;
         }
+            $dataToSendToTemplate['formlink_scope'] = explode(",",$ele_value['formlink_scope']);
+            $dataToSendToTemplate['ele_value'] = $ele_value;
         } else {
+            $dataToSendToTemplate['formlink_scope'] = array(0=>'all');
             $dataToSendToTemplate['islinked'] = 0;
+            $dataToSendToTemplate['ele_value'] = array();
         }
+        
+        // setup group list:
+        $member_handler = xoops_gethandler('member');
+        $allGroups = $member_handler->getGroups();
+        $formlinkGroups = array();
+        foreach($allGroups as $thisGroup) {
+            $formlinkGroups[$thisGroup->getVar('groupid')] = $thisGroup->getVar('name');
+        }
+        $dataToSendToTemplate['formlink_scope_options'] = array('all'=>_AM_ELE_FORMLINK_SCOPE_ALL) + $formlinkGroups;
         
         // $selectedLinkElementId can be used later to initialize a set of filters, if we add that to checkboxes.
         list($formlink, $selectedLinkElementId) = createFieldList($ele_value[2]);
@@ -98,8 +113,30 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 		if($selectedElementObject) {
 			list($optionSortOrder, $selectedOptionsSortOrder) = createFieldList($ele_value[12], false, $selectedElementObject->getVar('id_form'), "elements-ele_value[12]", _AM_ELE_LINKFIELD_ITSELF);
 			$dataToSendToTemplate['optionSortOrder'] = $optionSortOrder->render();
+            
+            // list of elements to display when showing this element in a list
+            list($listValue, $selectedListValue) = createFieldList($ele_value[EV_MULTIPLE_LIST_COLUMNS], false, $selectedElementObject->getVar('id_form'),
+                "elements-ele_value[".EV_MULTIPLE_LIST_COLUMNS."]", _AM_ELE_LINKSELECTEDABOVE, true);
+            $listValue->setValue($ele_value[EV_MULTIPLE_LIST_COLUMNS]); // mark the current selections in the form element
+            $dataToSendToTemplate['listValue'] = $listValue->render();
+    
+            // list of elements to display when showing this element as an html form element (in form or list screens)
+            list($displayElements, $selectedListValue) = createFieldList($ele_value[EV_MULTIPLE_FORM_COLUMNS], false, $selectedElementObject->getVar('id_form'),
+                "elements-ele_value[".EV_MULTIPLE_FORM_COLUMNS."]", _AM_ELE_LINKSELECTEDABOVE, true);
+            $displayElements->setValue($ele_value[EV_MULTIPLE_FORM_COLUMNS]); // mark the current selections in the form element
+            $dataToSendToTemplate['displayElements'] = $displayElements->render();
+    
+            // list of elements to export to spreadsheet
+            list($exportValue, $selectedExportValue) = createFieldList($ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS], false, $selectedElementObject->getVar('id_form'),
+                "elements-ele_value[".EV_MULTIPLE_SPREADSHEET_COLUMNS."]", _AM_ELE_VALUEINLIST, true);
+            $exportValue->setValue($ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS]); // mark the current selections in the form element
+            $dataToSendToTemplate['exportValue'] = $exportValue->render();
+            
 		} else {
 			$dataToSendToTemplate['optionSortOrder'] = "";
+            $dataToSendToTemplate['exportValue'] = "";
+            $dataToSendToTemplate['displayElements'] = "";
+            $dataToSendToTemplate['listValue'] = "";
 		}
 		
         
@@ -113,9 +150,18 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
     // You should return a flag to indicate if any changes were made, so that the page can be reloaded for the user, and they can see the changes you've made here.
     function adminSave($element, $ele_value) {
         $changed = false;
+        
         if(is_object($element) AND is_subclass_of($element, 'formulizeformulize')) {
             
-			$ele_value = array(12=>$ele_value[12], 15=>$ele_value[15]); // initialize with the values that we don't need to parse/adjust
+			$ele_value = array(
+                EV_MULTIPLE_LIST_COLUMNS=>$ele_value[EV_MULTIPLE_LIST_COLUMNS],
+                EV_MULTIPLE_FORM_COLUMNS=>$ele_value[EV_MULTIPLE_FORM_COLUMNS],
+                EV_MULTIPLE_SPREADSHEET_COLUMNS=>$ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS],
+                12=>$ele_value[12],
+                15=>$ele_value[15],
+                'checkbox_scopelimit'=>$ele_value['checkbox_scopelimit'],
+                'checkbox_formlink_anyorall'=>$ele_value['checkbox_formlink_anyorall']
+            ); // initialize with the values that we don't need to parse/adjust
             
             if(isset($_POST['formlink']) AND $_POST['formlink'] != "none") {
                 global $xoopsDB;
@@ -131,6 +177,9 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
             }
         }
             }
+             
+            // grab formlink scope options
+            $ele_value['formlink_scope'] = implode(",", $_POST['element_formlink_scope']);
              
             // handle conditions
             // grab any conditions for this page too
@@ -311,8 +360,15 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 				$sortOrderClause = " ORDER BY t1.`$sortHandle` $sortOrder";
 			}
 		
+            $groupLimitClause = prepareLinkedElementGroupFilter($sourceFid, $ele_value['formlink_scope'], $ele_value['checkbox_scopelimit'], $ele_value['checkbox_formlink_anyorall']);
+            list($sourceEntrySafetyNetStart, $sourceEntrySafetyNetEnd) = prepareLinkedElementSafetyNets($sourceEntryIds);
+            $extra_clause = prepareLinkedElementExtraClause($groupLimitClause, $parentFormFrom, $sourceEntrySafetyNetStart);
+            
             global $xoopsDB;
-            $sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." AS t1 $parentFormFrom WHERE t1.entry_id>0 $conditionsfilter $conditionsfilter_oom GROUP BY t1.entry_id $sortOrderClause";
+            // missing $restrictSQL that linked selectboxes use, otherwise same features as linked selectboxes?
+            $sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." AS t1
+                $extra_clause $conditionsfilter $conditionsfilter_oom $sourceEntrySafetyNetEnd GROUP BY t1.entry_id $sortOrderClause";
+                
             if($sourceValuesRes = $xoopsDB->query($sourceValuesQ)) {
                 // rewrite the values and ui text based on the data coming out of the database
                 $ele_value = array();
@@ -381,6 +437,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 					$counter++;
 				}
 				$form_ele1->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$markupName\" ");
+                $GLOBALS['formulize_lastRenderedElementOptions'] = $form_ele1->getOptions();
 			break;
 			default:
 				$form_ele1 = new XoopsFormElementTray($caption, $delimSetting);
@@ -399,6 +456,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 						if(in_array($o['key'], $selected)) {
 							$disabledOutputText[] = _formulize_OPT_OTHER.$other;
 						}
+                        $GLOBALS['formulize_lastRenderedElementOptions'][$o['key']] = _formulize_OPT_OTHER;
 					}else{
 						$t->addOption($o['key'], $o['value']);
 						if(in_array($o['key'], $selected)) {
@@ -407,6 +465,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 						if(strstr($o['value'], _formulize_OUTOFRANGE_DATA)) {
 							$hiddenOutOfRangeValuesToWrite[$o['key']] = str_replace(_formulize_OUTOFRANGE_DATA, "", $o['value']); // if this is an out of range value, grab the actual value so we can stick it in a hidden element later
 						}
+                        $GLOBALS['formulize_lastRenderedElementOptions'][$o['key']] = $o['value'];
 					}
 					$t->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$markupName\" ");
 					$form_ele1->addElement($t);
@@ -543,6 +602,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
     // if $partialMatch is true, then an array may be returned, since there may be more than one matching value, otherwise a single value should be returned.
     // if literal text that users type can be used as is to interact with the database, simply return the $value 
     function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
+        // this needs to be refactored to take into account what is happening in the function of the same name in the modules/formulize/include/functions.php file!
         return $value;
     }
     
@@ -558,7 +618,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
     }
     
 	function backwardsCompatibility($ele_value) {
-		if(!isset($ele_value[2]) AND (!isset($ele_value[5]) OR (!is_array($ele_value[5]) AND !is_numeric($ele_value[5])))) {
+		if(!is_numeric(key($ele_value)) OR (!isset($ele_value[2]) AND (!isset($ele_value[5]) OR (!is_array($ele_value[5]) AND !is_numeric($ele_value[5]))))) {
 			$ele_value = array(2=>$ele_value,5=>array());
 		}
 		return $ele_value;

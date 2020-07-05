@@ -235,7 +235,8 @@ if ($_GET['fid'] != "new") {
         $criteria->add(new Criteria('gperm_itemid', $fid));
         $criteria->add(new Criteria('gperm_modid', getFormulizeModId()));
         $perms = $gperm_handler->getObjects($criteria, true);
-        $groupObject = $member_handler->getGroup($thisGroup);
+        if($groupObject = $member_handler->getGroup($thisGroup)) {
+            
         $groupperms[$i]['name'] = $groupObject->getVar('name');
         $groupperms[$i]['id'] = $groupObject->getVar('groupid');
         foreach($perms as $perm) {
@@ -257,6 +258,7 @@ if ($_GET['fid'] != "new") {
         $groupperms[$i]['existingFilter'] = getExistingFilter($filterSettingsToSend, $fid."_".$thisGroup."_filter", $fid, $htmlFormId, "oom");
         $groupperms[$i]['hasgroupfilter'] = $filterSettingsToSend ? " checked" : "";
         $i++;
+        }
         unset($criteria);
     }
 
@@ -423,6 +425,10 @@ if ($_GET['fid'] != "new") {
         $formApplications = array(intval($_GET['aid']));
     }
     $groupsCanEditDefaults = $xoopsUser->getGroups();
+    $regUserGroupKey = array_search(2, $groupsCanEditDefaults);
+    if(count($groupsCanEditDefaults)>1 AND $regUserGroupKey !== false) {
+        unset($groupsCanEditDefaults[$regUserGroupKey]); // don't give edit_form perm to registered users group unless it is the only group the user is a member of
+    }
     $member_handler = xoops_gethandler('member');
     $allGroups = $member_handler->getGroups();
     foreach($allGroups as $thisGroup) {
@@ -499,6 +505,14 @@ foreach($templateScreens as $screen) {
     $screens['template'][$i]['title'] = $screen->getVar('title');
     $i++;
 }
+$calendarScreens = $screen_handler->getObjects(new Criteria('type','calendar'),$fid);
+$i=1;
+foreach($calendarScreens as $screen) {
+    $screens['calendar'][$i]['sid'] = $screen->getVar('sid');
+    $screens['calendar'][$i]['title'] = $screen->getVar('title');
+    $i++;
+}
+
 
 $settings = array();
 $settings['singleentry'] = $singleentry;

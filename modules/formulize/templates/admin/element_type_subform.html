@@ -90,8 +90,20 @@
 			    </div>
                     <div class="description"><{$smarty.const._AM_ELE_SUBFORM_START_HELP}></div>
 <br />
-                <div class="form-item"><input type="checkbox" id="element-subformviewbutton" name="elements-ele_value[3]" <{if $content.ele_value[3]}>checked="checked"<{/if}> value="1"/> <{$smarty.const._AM_ELE_SUBFORM_VIEW}>
-                    <div class="description"><{$smarty.const._AM_ELE_SUBFORM_VIEW_DESC}></div>
+                <div class="form-item">
+                    <p><{$smarty.const._AM_ELE_SUBFORM_VIEW}></p>
+                     <div class="form-radios">
+				    <label for="elements-ele_value[3]-0"><input type="radio" id="elements-ele_value[3]-0" name="elements-ele_value[3]" value="0"<{if !$content.ele_value[3] }> checked="checked"<{/if}>/>Do not show the <i>View</i> buttons</label>
+			    </div>
+			    <div class="form-radios">
+				    <label for="elements-ele_value[3]-2"><input type="radio" id="elements-ele_value[3]-2" name="elements-ele_value[3]" value="2"<{if $content.ele_value[3] == 2 }> checked="checked"<{/if}>/>Show the <i>View</i> buttons, open entries in a dialog box. New entries show up in the dialog.</label>
+                </div>
+                    <label for="elements-ele_value[3]-3"><input type="radio" id="elements-ele_value[3]-3" name="elements-ele_value[3]" value="3"<{if $content.ele_value[3] == 3 }> checked="checked"<{/if}>/>Show the <i>View</i> buttons, open entries in a dialog box. New entries show up as new rows.</label>
+			    <div class="form-radios">
+			    </div>
+                <div class="form-radios">
+				    <label for="elements-ele_value[3]-1"><input type="radio" id="elements-ele_value[3]-1" name="elements-ele_value[3]" value="1"<{if $content.ele_value[3] == 1 }> checked="checked"<{/if}>/>Show the <i>View</i> buttons, open entries full screen (reloads the page, and <i>Save and Leave</i> then returns to the main form)</label>
+			    </div>
                 </div>
 			    
 			    </fieldset>
@@ -104,6 +116,7 @@
             <select id="element-subform" name="elements-ele_value[display_screen]" size="1">
                 <{html_options options=$content.subform_screens selected=$content.ele_value.display_screen}>
             </select>
+            <div class="description"><{$smarty.const._AM_ELE_SUBFORM_SCREEN_HELP}></div>
         </fieldset>
     </div>
 

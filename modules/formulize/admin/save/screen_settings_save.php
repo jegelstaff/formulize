@@ -62,6 +62,8 @@ if($screens['type'] == 'multiPage') {
   $screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
 } else if($screens['type'] == 'template') {
     $screen_handler = xoops_getmodulehandler('templateScreen', 'formulize');
+} else if($screens['type'] == 'calendar') {
+    $screen_handler = xoops_getmodulehandler('calendarScreen', 'formulize');
 }
 
 
@@ -120,7 +122,15 @@ if($isNew) {
   } else if ($screens['type'] == 'template') {
       $screen->setVar('custom_code', "");
       $screen->setVar('template', "");
+      $screen->setVar('savebuttontext', _formulize_SAVE);
+      $screen->setVar('donebuttontext', _formulize_SAVE_AND_LEAVE);
+      $screen->setVar('donedest', "");
+  } else if($screens['type'] == 'calendar') {
+      $screen->setVar('caltype', 'month');
+      $screen->setVar('datasets', array());
   }
+
+  
 
 } else {
   $screen = $screen_handler->get($sid);
@@ -140,7 +150,6 @@ if(!$sid = $screen_handler->insert($screen)) {
 if($isNew) {
   
   // write out the necessary templates...
-  // templates - initialize with the necessary php opening tags
   if($screens['type'] == "multiPage") {
     $screen_handler->writeTemplateToFile("", 'toptemplate', $screen);
     $screen_handler->writeTemplateToFile("", 'elementtemplate', $screen);
@@ -152,7 +161,11 @@ if($isNew) {
   } elseif($screens['type'] == "template") {
       $screen_handler->write_custom_code_to_file("", $screen);
       $screen_handler->write_template_to_file("", $screen);
+  } elseif($screens['type'] == "calendar") {
+      $screen_handler->writeTemplateToFile("", 'toptemplate', $screen);
+      $screen_handler->writeTemplateToFile("", 'bottomtemplate', $screen);
   }
+  
 
     // send code to client that will to be evaluated
   $url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&tab=settings&aid=".$aid.'&fid='.$fid.'&sid='.$sid;

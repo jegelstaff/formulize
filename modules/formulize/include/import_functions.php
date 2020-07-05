@@ -74,6 +74,8 @@ function importCsv($csv_name, $id_reqs, $regfid, $validateOverride) {
         }
     } // end of if metadata columns not present
 
+    echo "<b>** Finished</b><br><br>";
+
     echo "<br><br>";
     echo "<b><a href=\"\" onclick=\"javascript:history.back(-1);return false;\">" . _formulize_DE_IMPORT_BACK . "</a></b></div>";
 }
@@ -267,9 +269,6 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
 
                 if (isset($importSet[5][0][$importSet[6][$link]])) { // if this is an element, then extract that element from the array
                     $element = $importSet[5][0][$importSet[6][$link]];
-                    if($elementHandler->isElementDisabledForUser($element["ele_id"], $xoopsUser)) {
-                        continue; // do not bother validating disabled elements since they won't be imported
-                    }
                 } else {
                     $element = array();
                 }
@@ -358,10 +357,12 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
                                                     }
                                                 }
                                                 if (!$foundit) {
+                                                    $some_options = array_slice($all_valid_options, 0, 20);
                                                     $errors[] = "<li>line " . $rowCount .
                                                         ", column " . $importSet[3][$link] .
                                                         ",<br> <b>found</b>: " . $item_value .
-                                                        ", <b>was expecting</b>: " . stripslashes(implode(", ", $all_valid_options)) . "</li>";
+                                                        ", <b>was expecting values such as</b>: " .
+                                                        stripslashes(implode(", ", $some_options)) . "</li>";
                                                 }
                                             }
                                         }
@@ -439,7 +440,7 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
                                                 // last option causes strict matching by type
                                                 $foundit = false;
                                                 foreach ($options as $thisoption=>$default_value) {
-                                                if (get_magic_quotes_gpc()) { $thisoption = stripslashes($thisoption); }
+                                                
                                                     if (trim($item_value) == trim(trans($thisoption))) {
                                                         $foundit = true;
                                                         break;
@@ -494,7 +495,12 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
 
                             case "checkbox":
                             $options = unserialize($element["ele_value"]);
+                            $options = $options[2];
+                            if(strstr($cell_value, "\n")) {
                             $items = explode("\n", $cell_value);
+                            } else {
+                                $items = explode(",", $cell_value);
+                            }
                             foreach ($items as $item) {
                                 $item_value = trim($item);
                                 if (!in_array($item_value, $options, true)) {
@@ -513,8 +519,8 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
                                         }
                                     }
                                     if (!$foundit AND !$hasother) {
-                                        $keys_output = "";
-                                        for (reset($options); $key = key($options); next($options)) {
+                                        $keys_output = implode(', ', array_keys($options));
+                                        /*for (reset($options); $key = key($options); next($options)) {
                                             if (get_magic_quotes_gpc()) {
                                                 $key = stripslashes($key);
                                             }
@@ -522,7 +528,7 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
                                                 $keys_output .= ", ";
                                             }
                                             $keys_output .= $key;
-                                        }
+                                        }*/
 
                                         $errors[] = "<li>line " . $rowCount .
                                             ", column " . $importSet[3][$link] .
@@ -576,7 +582,7 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
                                 $errors[] = "<li>line " . $rowCount .
                                     ", column " . $importSet[3][$link] .
                                     ",<br> <b>found</b>: " . $cell_value .
-                                    ", <b>was expecting</b>: YYYY-mm-dd</li>";
+                                    ", <b>was expecting</b>: "._DATE_DEFAULT."</li>";
                             }
                             break;
 
@@ -593,7 +599,7 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
                                 $yn_value = strtoupper($cell_value);
 
                                 if (!($yn_value == strtoupper(_formulize_TEMP_QYES) || $yn_value == strtoupper(_formulize_TEMP_QNO))) {
-                                    // changed to use language constants
+                                    // changed to use language constants, June 29, 2006 {
                                     $errors[] = "<li>line " . $rowCount .
                                         ", column " . $importSet[3][$link] .
                                         ",<br> <b>found</b>: " . $cell_value .
@@ -643,6 +649,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
 
     $form_handler = xoops_getmodulehandler('forms','formulize');
     $formObject = $form_handler->get($importSet[4]);
+    $data_handler = new formulizeDataHandler($importSet[4]);
 
     // lock formulize_form -- note that every table we use needs to be locked, so linked selectbox lookups may fail
     if ($regfid == $importSet[4]) {
@@ -691,7 +698,8 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
         if (is_array($row) AND count($row) > 1) {
             $rowCount++;
             $this_id_req = "";
-            if (is_array($id_reqs)) { // get the id_req if necessary.  will happen regardless of position of idreq column
+            if (is_array($id_reqs)) {
+                // get the id_req if necessary.  will happen regardless of position of idreq column
                 $this_id_req = $row[$importSet[7]['idreqs']];
             }
 
@@ -739,18 +747,16 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
             $links = count($importSet[6]);
             $fieldValues = array();
             $newEntryId = "";
+            
             for ($link = 0; $link < $links; $link++) {
                 // used as a flag to indicate whether we're dealing with a linked selectbox or not, since if we are, that is the only case where we don't want to do HTML special chars on the value // deprecated in 3.0
                 $all_valid_options = false;
 
                 if ($importSet[6][$link] != -1) {
-                    $element = $importSet[5][0][$importSet[6][$link]];
-                    $id_form = $importSet[4];
                     
-                    // disabled elements cannot be imported
-                    if($elementHandler->isElementDisabledForUser($element["ele_id"], $xoopsUser)) {
-                        continue;
-                    }
+                    $element = $importSet[5][0][$importSet[6][$link]];
+                    
+                    $id_form = $importSet[4];
                     
                     if ($link == ($links-1)) {
                         // remove some really odd line endings if present, only happens when dealing with legacy outputs of really old/odd systems
@@ -903,7 +909,12 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
                             case "checkbox":
                             $options = unserialize($element["ele_value"]);
                             $element_value = "";
-                            $items = explode("\n", $row_value);
+                            $options = $options[2];
+                            if(strstr($cell_value, "\n")) {
+                                $items = explode("\n", $cell_value);
+                            } else {
+                                $items = explode(",", $cell_value);
+                            }
                             foreach ($items as $item) {
                                 $item_value = trim($item);
                                 if (!in_array($item_value, $options, true)) {
@@ -1010,7 +1021,8 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
                         $updateSQL .= ", ";
                     }
                     $start = false;
-                    $updateSQL .= "`$elementHandle` = '".formulize_db_escape($fieldValue)."'";
+                    $fieldValue = $data_handler->formatValueForQuery($elementHandle, $fieldValue);
+                    $updateSQL .= "`$elementHandle` = $fieldValue";
                 }
                 $updateSQL .= ", mod_datetime=NOW(), mod_uid=$form_proxyid WHERE entry_id=".intval($this_id_req);
 
@@ -1028,7 +1040,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
                 $element_handler = xoops_getmodulehandler('elements', 'formulize');
                 foreach ($fieldValues as $elementHandle=>$fieldValue) {
                     $fields .= ", `".$elementHandle."`";
-                    $values .= ", '".formulize_db_escape($fieldValue) . "'";
+                    $values .= ", ".$data_handler->formatValueForQuery($elementHandle, $fieldValue);
                     $elementObject = $element_handler->get($elementHandle);
                     if ($elementObject->getVar('ele_desc')=="Primary Key") {
                         $newEntryId = $fieldValue;
@@ -1092,11 +1104,17 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
     // fid is $importSet[4] ?!!
     $GLOBALS['formulize_snapshotRevisions'][$importSet[4]] = formulize_getCurrentRevisions($importSet[4], $entriesMap);
     
+    if(isset($_POST['updatederived']) AND $_POST['updatederived']) {
     // update derived values based on the form only
+        $ele_types = $formObject->getVar('elementTypes');
+        if(in_array('derived',$ele_types)) {
     foreach($entriesMap as $entry) {
         formulize_updateDerivedValues($entry, $importSet[4]); // 4 is the form id
     }
+        }
+    }
     
+    if(isset($_POST['sendnotifications']) AND $_POST['sendnotifications']) {
     // send notifications
     foreach($notEntriesList as $notEvent=>$notDetails) {
         foreach($notDetails as $notFid=>$notEntries) {
@@ -1104,8 +1122,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
             sendNotifications($notFid, $notEvent, $notEntries);
         }
     }
-    
-    
+    }
 }
 
 
@@ -1151,7 +1168,7 @@ function getUserID($stringName) {
             return $item["uid"];
         }
     } else {
-        // or, if no username match found, get the first matching full name
+        // or, if no username match found, get the first matching full name -- added June 29, 2006
         $sql = "SELECT uid FROM " . $xoopsDB->prefix("users") .
         " WHERE name='" . formulize_db_escape($stringName) . "'";
 
@@ -1167,7 +1184,7 @@ function getUserID($stringName) {
         return $stringName;
     }
 
-    // instead of returning 0, return the current user's ID
+    // instead of returning 0, return the current user's ID -- added June 29, 2006
     return $xoopsUser->getVar('uid');
 }
 

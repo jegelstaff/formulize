@@ -112,8 +112,8 @@ function patch40() {
      *
      * ====================================== */
 
-    $checkThisTable = 'formulize_digest_data';
-	$checkThisField = '';
+    $checkThisTable = 'formulize';
+	$checkThisField = 'ele_exportoptions';
 	$checkThisProperty = '';
 	$checkPropertyForValue = '';
 
@@ -323,6 +323,9 @@ function patch40() {
             templateid int(11) NOT NULL auto_increment,
             sid int(11) NOT NULL default 0,
             custom_code text NOT NULL,
+            donedest varchar(255) NOT NULL default '',
+            savebuttontext varchar(255) NOT NULL default '',
+            donebuttontext varchar(255) NOT NULL default '',
             template text NOT NULL,
             PRIMARY KEY (`templateid`),
             INDEX i_sid (`sid`)
@@ -342,6 +345,17 @@ function patch40() {
             ) ENGINE=MyISAM;";
         }      
 
+        if (!in_array($xoopsDB->prefix("formulize_screen_calendar"), $existingTables)) {
+            $sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_screen_calendar"). " (
+                `calendar_id` int(11) unsigned NOT NULL auto_increment,
+                `sid` int(11) DEFAULT NULL,
+                `caltype` varchar(50) DEFAULT NULL,
+                `datasets` text DEFAULT NULL,
+                PRIMARY KEY (`calendar_id`),
+                INDEX i_sid (`sid`)
+              ) ENGINE=InnoDB;";
+        }
+        
         // if this is a standalone installation, then we want to make sure the session id field in the DB is large enough to store whatever session id we might be working with
         if (file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
             $sql['increase_session_id_size'] = "ALTER TABLE ".$xoopsDB->prefix("session")." CHANGE `sess_id` `sess_id` varchar(60) NOT NULL";
@@ -394,7 +408,10 @@ function patch40() {
 		$sql['defaultview_ele_type_text'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " CHANGE `defaultview` `defaultview` TEXT NOT NULL ";
         $sql['add_ele_uitextshow'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_uitextshow` tinyint(1) NOT NULL default 0";
         $sql['add_send_digests'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD send_digests tinyint(1) NOT NULL default 0";
-
+        $sql['add_template_donedest'] = "ALTER TABLE ". $xoopsDB->prefix("formulize_screen_template") . " ADD `donedest` varchar(255) NOT NULL default ''";
+        $sql['add_template_savebuttontext'] = "ALTER TABLE ". $xoopsDB->prefix("formulize_screen_template") . " ADD `savebuttontext` varchar(255) NOT NULL default ''";
+        $sql['add_template_donebuttontext'] = "ALTER TABLE ". $xoopsDB->prefix("formulize_screen_template") . " ADD `donebuttontext` varchar(255) NOT NULL default ''";
+        $sql['add_ele_exportoptions'] = "ALTER TABLE ". $xoopsDB->prefix("formulize")." ADD `ele_exportoptions` text NOT NULL";
         
         foreach($sql as $key=>$thissql) {
             if (!$result = $xoopsDB->query($thissql)) {
@@ -462,6 +479,10 @@ function patch40() {
                     print "Option for showing UI Text already added. result: OK<br>";
                 } elseif($key === "add_send_digests") {
                     print "Option for sending digest notifications already added. result: OK<br>";
+                } elseif(strstr($key, 'add_template_')) {
+					print "Button options already added to Template screens.  result: OK<br>";
+                } elseif($key === 'add_ele_exportoptions') {
+                    print "Element export options already added. result: OK<br>";
                 } else {
                     exit("Error patching DB for Formulize 4.0. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }

@@ -724,7 +724,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	$settings['oldcols'] = implode(",", $showcols);
 
-	$settings['ventry'] = $_POST['ventry'];
+	$settings['ventry'] = isset($_POST['formulize_originalVentry']) ? $_POST['formulize_originalVentry'] : $_POST['ventry'];
 
 	// get sort and order options
 
@@ -786,7 +786,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		} elseif($_POST['ventry'] == "proxy") {
 			$this_ent = "proxy";
 		} else {
-			$this_ent = $_POST['ventry'];
+			$this_ent = $settings['ventry'];
 		}
 
 		if(($screen AND $screen->getVar("viewentryscreen") != "none" AND $screen->getVar("viewentryscreen")) OR $_POST['overridescreen']) {
@@ -815,6 +815,12 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 						$displayScreen->setVar('reloadblank', 0); // otherwise, if they did click the single button, make sure the form reloads with their entry
 					}
 				}
+                
+            if($displayScreen->getVar('fid') != $fid) {
+                // display screen is for another form in the active relationship, so figure out what all the entries are, and display the first entry in the set that's for the form this screen is based on
+                $dataSetEntries = checkForLinks($frid, array($fid), $fid, array($fid=>array($this_ent))); // returns array of the forms and entries in the dataset
+                $this_ent = $dataSetEntries['entries'][$displayScreen->getVar('fid')][0]; // first entry for the screen's form, in this dataset - see formdisplay.php for more detailed example of usage of checkforlinks
+            }
   			$viewEntryScreen_handler->render($displayScreen, $this_ent, $settings);
 			global $renderedFormulizeScreen; // picked up at the end of initialize.php so we set the right info in the template when the whole page is rendered
 			$renderedFormulizeScreen = $displayScreen;
@@ -1806,6 +1812,13 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 		} // end of if there is any data to draw
 
 		print "</table></div>";
+        
+       	if((!isset($data) OR count($data) == $blankentries) AND !$LOE_limit) { // if no data was returned, or the dataset was empty...
+            print "<p><b>" . _formulize_DE_NODATAFOUND . "</b></p>\n";
+        } elseif($LOE_limit) {
+            print "<p>" . _formulize_DE_LOE_LIMIT_REACHED1 . " <b>" . $LOE_limit . "</b> " . _formulize_DE_LOE_LIMIT_REACHED2 . " <a href=\"\" onclick=\"javascript:forceQ();return false;\">" . _formulize_DE_LOE_LIMIT_REACHED3 . "</a></p>\n";
+        }
+        
 	} elseif($listTemplate AND !$settings['hlist']) {
 
 		// USING A CUSTOM LIST TEMPLATE SO DO EVERYTHING DIFFERENTLY
@@ -1887,15 +1900,25 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 		}
 
 	}// END OF MASTER HIDELIST CONDITIONAL
-	if((!isset($data) OR count($data) == $blankentries) AND !$LOE_limit) { // if no data was returned, or the dataset was empty...
-		print "<p><b>" . _formulize_DE_NODATAFOUND . "</b></p>\n";
-	} elseif($LOE_limit) {
-		print "<p>" . _formulize_DE_LOE_LIMIT_REACHED1 . " <b>" . $LOE_limit . "</b> " . _formulize_DE_LOE_LIMIT_REACHED2 . " <a href=\"\" onclick=\"javascript:forceQ();return false;\">" . _formulize_DE_LOE_LIMIT_REACHED3 . "</a></p>\n";
-	}
+
 
 	if($scrollBoxWasSet) {
 		print "</div>";
 	}
+
+    global $entriesThatHaveBeenLockedThisPageLoad;
+    if(is_array($entriesThatHaveBeenLockedThisPageLoad) AND count($entriesThatHaveBeenLockedThisPageLoad) > 0) {
+        ?>
+<script type='text/javascript'>
+    jQuery(window).on('unload', function() {
+        <?php print formulize_javascriptForRemovingEntryLocks('unload'); ?>
+    });
+</script>
+        <?php
+    }
+    
+
+    
   formulize_benchmark("We're done");
 }
 
@@ -1969,7 +1992,6 @@ function drawSearches($searches, $settings, $useBoxes, $useLinks, $numberOfButto
 
         //formulize_benchmark("drawing one search");
 		$search_text = isset($searches[$cols[$i]]) ? strip_tags(htmlspecialchars($searches[$cols[$i]]), ENT_QUOTES) : "";
-		$search_text = get_magic_quotes_gpc() ? stripslashes($search_text) : $search_text;
 		$boxid = "";
 		$clear_help_javascript = "";
 		if(count($searches) == 0 AND !$returnOnly) {
@@ -3100,8 +3122,9 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
     formulize_benchmark("before creating file");
 		$outputfile = "<HTML>
 <head>
-<meta name=\"generator\" content=\"Formulize -- form creation and data management for XOOPS\" />
-<title>" . _formulize_DE_EXPORTCALC_TITLE . " '$title'</title>
+<meta charset='UTF-8'>
+<meta name=\"generator\" content=\"Formulize -- form creation and data management\" />
+<title>" . _formulize_DE_EXPORTCALC_TITLE . " '".trans($title)."'</title>
 <style type=\"text/css\">
 .outer {border: 1px solid silver;}
 .head { background-color: $head; padding: 5px; font-weight: bold; }
@@ -3112,7 +3135,7 @@ td { vertical-align: top; }
 </style>
 </head>
 <body>
-<h1>" . _formulize_DE_EXPORTCALC_TITLE . " '$title'</h1>
+<h1>" . _formulize_DE_EXPORTCALC_TITLE . " '".trans($title)."'</h1>
 <table class=outer>
 $output
 </table>
@@ -3297,12 +3320,31 @@ if (typeof jQuery == 'undefined') {
 	head.appendChild(script);
 }
 
+var formulize_javascriptFileIncluded = new Array();
+
+function includeResource(filename, type) {
+   if(filename in formulize_javascriptFileIncluded == false) {
+     var head = document.getElementsByTagName('head')[0];
+     if(type == 'link') {
+       var resource = document.createElement("link");
+       resource.type = "text/css";
+       resource.rel = "stylesheet";
+       resource.href = filename;
+     } else if(type == 'script') {
+       var resource = document.createElement('script');
+       resource.type = 'text/javascript';
+       resource.src = filename;
+     }
+     head.appendChild(resource);
+     formulize_javascriptFileIncluded[filename] = true;
+   }
+} 
+
 <?php
 if($useXhr) {
 	print " initialize_formulize_xhr();\n";
 	drawXhrJavascript();
 	print "</script>";
-	print "<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-1.4.2.min.js\"></script>\n";
 	print "<script type='text/javascript'>";
 	print "var elementStates = new Array();";
 	print "var savingNow = \"\";";
@@ -3711,6 +3753,7 @@ jQuery(window).load(function() {
 		var column = lockData[1];
 		if(floatingContents[column] == true) {
             jQuery(this).removeClass("heading-locked").addClass("heading-unlocked");
+            jQuery('td#celladdress_h1_'+column+' #lockcolumn_'+column).removeClass("heading-locked").addClass("heading-unlocked");
 			var curColumnsArray = jQuery('#formulize_lockedColumns').val().split(',');
 			var curColumnsHTML = '';
 			for (var i=0; i < curColumnsArray.length; i++) {
@@ -3731,10 +3774,11 @@ jQuery(window).load(function() {
 		return false;
 	});
 
-	jQuery(window).scrollTop(<?php print intval($_POST['formulize_scrollx']); ?>);
-	jQuery(window).scrollLeft(<?php print intval($_POST['formulize_scrolly']); ?>);
-
 <?php
+    if(isset($_POST['formulize_scrollx']) OR isset($_POST['formulize_scrolly'])) {
+        print "jQuery(window).scrollTop(".intval($_POST['formulize_scrollx']).");
+        jQuery(window).scrollLeft(".intval($_POST['formulize_scrolly']).");";
+    }
 
 foreach($lockedColumns as $thisColumn) {
 	if(is_numeric($thisColumn)) {
@@ -4532,7 +4576,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 		}
 	}
 
-
+	// MASSIVELY DEPRECATED...
 	// Order of operations for the requested advanced search options
 	// 1. unpack the settings necessary for the search
 	// 2. loop through the data and store the results, unsetting $data as we go, and then reassigning the found array to $data at the end
@@ -4603,244 +4647,10 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 			$query_string .= ") { \$query_result=1; } else { \$query_result=0; }";
 		}
 	}
+    // END OF MASSIVELY DEPRECATED
 
-	// build the filter out of the searches array
-	$start = 1;
-	$filter = "";
-	$ORstart = 1;
-	$ORfilter = "";
-	$individualORSearches = array();
-    $element_handler = xoops_getmodulehandler('elements','formulize');
-	global $xoopsUser;
-	foreach($searches as $key => $master_one_search) { // $key is the element handle
-        
-        // grab values from GET or POST if they match { } terms
-        if(substr($master_one_search, 0, 1) == "{" AND substr($master_one_search, -1) == "}") {
-            $searchgetkey = substr($master_one_search, 1, -1);
-            if(isset($_POST[$searchgetkey]) OR isset($_GET[$searchgetkey])) {
-                $master_one_search = isset($_POST[$searchgetkey]) ? htmlspecialchars(strip_tags(trim($_POST[$searchgetkey])), ENT_QUOTES) : "";
-                $master_one_search = ($master_one_search==="" AND isset($_GET[$searchgetkey])) ? htmlspecialchars(strip_tags(trim($_GET[$searchgetkey])), ENT_QUOTES) : $master_one_search;
-                if($master_one_search==="") {
-                    continue;
-                }
-            }
-        }
-        
-		// convert "between 2001-01-01 and 2002-02-02" to a normal date filter with two dates
-		$count = preg_match("/^[bB][eE][tT][wW][eE][eE][nN] ([\d]{1,4}[-][\d]{1,2}[-][\d]{1,4}) [aA][nN][dD] ([\d]{1,4}[-][\d]{1,2}[-][\d]{1,4})\$/", $master_one_search, $matches);
-		if ($count > 0) {
-			$master_one_search = ">={$matches[1]}//<={$matches[2]}";
-		}
-
-		// split search based on new split string
-		$intermediateArray = explode("//", trim($master_one_search, "//")); // ignore trailing // because that will just cause an unnecessary blank search
-
-		$searchArray = array();
-
-		foreach($intermediateArray as $one_search) {
-			// if $one_search contains both OR and AND, just add it as-is; we don't support this kind of nesting
-			if (strpos($one_search, " OR ") !== FALSE AND strpos($one_search, " AND ") !== FALSE) {
-				$searchArray[] = $one_search;
-			}
-			// split on OR and add all split results, prepended with OR
-			else if (strpos($one_search, " OR ") !== FALSE) {
-				foreach(explode(" OR ", $one_search) as $or_term) {
-						$searchArray[] = "OR" . $or_term;
-				}
-			}
-			// split on AND and add all split results
-			else if (strpos($one_search, " AND ") !== FALSE) {
-				foreach(explode(" AND ", $one_search) as $and_term) {
-					$searchArray[] = $and_term;
-				}
-			}
-			// otherwise just add to the array
-			else {
-				$searchArray[] = $one_search;
-			}
-		}
-
-		foreach($searchArray as $one_search) {
-            // used for trapping the {BLANK} keywords into their own space so they don't interfere with each other, or other filters
-            $addToItsOwnORFilter = false;
-            $ownORFilterKey = "";
-
-            $dataHandler = new formulizeDataHandler(false);
-            $metadataFieldTypes = $dataHandler->metadataFieldTypes;
-
-            if (isset($metadataFieldTypes[$key])){
-                $ele_type = $metadataFieldTypes[$key];
-            }
-            else{
-                $elementObject = $element_handler->get($key);
-                if(!is_object($elementObject)) {
-                    continue; // ignore references to non-elements (probably deleted columns in a saved view)
-                }
-                $ele_type = $elementObject->getVar('ele_type');
-            }
-
-		    // remove the qsf_ parts to make the quickfilter searches work
-		    if(substr($one_search, 0, 4)=="qsf_") {
-              $qsfparts = explode("_", $one_search);
-			  $allowsMulti = false;
-			  if($ele_type == "select") {
-				$ele_value = $elementObject->getVar('ele_value');
-				if($ele_value[1]) {
-				  $allowsMulti = true;
-				}
-			  } elseif($ele_type == "checkbox") {
-				$allowsMulti = true;
-		      }
-			  if($allowsMulti) {
-				$one_search = $qsfparts[2]; // will default to using LIKE since there's no operator
-			  } else {
-				$one_search = "=".$qsfparts[2];
-			  }
-		    }
-
-			// strip out any starting and ending ! that indicate that the column should not be stripped
-			if(substr($one_search, 0, 1) == "!" AND substr($one_search, -1) == "!") {
-				$one_search = substr($one_search, 1, -1);
-			}
-
-			// look for OR indicators...if all caps OR is at the front, then that means that this search is to put put into a separate set of OR filters that gets appended as a set to the main set of AND filters
-		    $addToORFilter = false; // flag to indicate if we need to apply the current search term to a set of "OR'd" terms
-			if(substr($one_search, 0, 2) == "OR" AND strlen($one_search) > 2) {
-                if(substr($one_search, 2, 3)== "SET") {
-                    $addToItsOwnORFilter = true;
-                    $ownORFilterKey = substr($one_search, 2, 4);
-                    $one_search = substr($one_search, 6);
-                } else {
-				$addToORFilter = true;
-				$one_search = substr($one_search, 2);
-			}
-			}
-
-			// look for operators
-			$operators = array(0=>"=", 1=>">", 2=>"<", 3=>"!");
-			$operator = "";
-			if(in_array(substr($one_search, 0, 1), $operators)) {
-				// operator found, check to see if it's <= or >= and set start point for term accordingly
-				$startpoint = (substr($one_search, 0, 2) == ">=" OR substr($one_search, 0, 2) == "<=" OR substr($one_search, 0, 2) == "!=" OR substr($one_search, 0, 2) == "<>") ? 2 : 1;
-				$operator = substr($one_search, 0, $startpoint);
-        if($operator == "!") { $operator = "NOT LIKE"; }
-				$one_search = substr($one_search, $startpoint);
-			}
-
-			// look for blank search terms and convert them to {BLANK} so they are handled properly
-			if($one_search === "") {
-				$one_search = "{BLANK}";
-			}
-
-			// look for { } and transform special terms into what they should be for the filter
-			if(substr($one_search, 0, 1) == "{" AND substr($one_search, -1) == "}") {
-				$searchgetkey = substr($one_search, 1, -1);
-
-				if (substr($searchgetkey, 0, 5) == "TODAY") {
-					$number = substr($searchgetkey, 6);
-					$one_search = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
-				} elseif($searchgetkey == "USER") {
-					if($xoopsUser) {
-                        $one_search = htmlspecialchars_decode($xoopsUser->getVar('name'), ENT_QUOTES);
-						if(!$one_search) { $one_search = htmlspecialchars_decode($xoopsUser->getVar('uname'), ENT_QUOTES); }
-					} else {
-						$one_search = 0;
-					}
-				} elseif($searchgetkey == "USERNAME") {
-					if($xoopsUser) {
-                        $one_search = htmlspecialchars_decode($xoopsUser->getVar('name'), ENT_QUOTES);
-					} else {
-						$one_search = "";
-					}
-				} elseif($searchgetkey == "BLANK") { // special case, we need to construct a special OR here that will look for "" OR IS NULL
-				  if($operator == "!=" OR $operator == "NOT LIKE") {
-				    $blankOp1 = "!=";
-				    $blankOp2 = " IS NOT NULL ";
-				  } else {
-				    $addToItsOwnORFilter = $addToORFilter ? false : true; // if this is not going into an OR filter already because the user asked for it to, then let's
-				    $blankOp1 = "=";
-				    $blankOp2 = " IS NULL ";
-				  }
-				  $one_search = "/**/$blankOp1][$key/**//**/$blankOp2";
-				  $operator = ""; // don't use an operator, we've specially constructed the one_search string to have all the info we need
-				} elseif($searchgetkey == "PERGROUPFILTER") {
-					$one_search = $searchgetkey;
-					$operator = "";
-				} elseif($searchgetkey) { // we were supposed to find something above, but did not, so there is a user defined search term, which has no value, ergo disregard this search term
-					continue;
-				} else {
-					$one_search = "";
-					$operator = "";
-				}
-			} else {
-				// handle alterations to non { } search terms here...
-				if ($ele_type == "date") {
-                    $search_date = strtotime($one_search);
-                    // only search on a valid date string (otherwise it will be converted to the unix epoch)
-                    if (false !== $search_date) {
-                        $one_search = date('Y-m-d', $search_date);
-                    }
-				}
-			}
-
-			// do additional search for {USERNAME} or {USER} in case they are embedded in another string
-			if($xoopsUser) {
-                $one_search = str_replace("{USER}", htmlspecialchars_decode($xoopsUser->getVar('name'), ENT_QUOTES), $one_search);
-				$one_search = str_replace("{USERNAME}", htmlspecialchars_decode($xoopsUser->getVar('uname'), ENT_QUOTES), $one_search);
-			}
-
-            if(isset($GLOBALS['formulize_searchOperatorOverride'][$key])) {
-                $operator = $GLOBALS['formulize_searchOperatorOverride'][$key];
-            }
-			if($operator) {
-				$one_search = $one_search . "/**/" . $operator;
-			}
-			if($addToItsOwnORFilter) {
-                if($ownORFilterKey) {
-                    if(!isset($individualORSearches[$ownORFilterKey])) {
-                        $individualORSearches[$ownORFilterKey] = $key ."/**/$one_search";    
-                    } else {
-                        $individualORSearches[$ownORFilterKey] .= "][".$key ."/**/$one_search";    
-                    }
-                } else {
-				$individualORSearches[] = $key ."/**/$one_search";
-                }
-			} elseif($addToORFilter) {
-				if(!$ORstart) { $ORfilter .= "]["; }
-				$ORfilter .= $key . "/**/$one_search"; // . formulize_db_escape($one_search); // mysql_real_escape_string no longer necessary here since the extraction layer does the necessary dirty work for us
-				$ORstart = 0;
-			} else {
-				if(!$start) { $filter .= "]["; }
-				$filter .= $key . "/**/$one_search"; // . formulize_db_escape($one_search); // mysql_real_escape_string no longer necessary here since the extraction layer does the necessary dirty work for us
-				$start = 0;
-			}
-
-		}
-	}
-	//print $filter;
-	// if there's a set of options that have been OR'd, then we need to construction a more complex filter
-
-	if($ORfilter OR count($individualORSearches)>0) {
-		$filterIndex = 0;
-		$arrayFilter[$filterIndex][0] = "and";
-		$arrayFilter[$filterIndex][1] = $filter;
-		if($ORfilter) {
-			$filterIndex++;
-			$arrayFilter[$filterIndex][0] = "or";
-			$arrayFilter[$filterIndex][1] = $ORfilter;
-		}
-		if(count($individualORSearches)>0) {
-			foreach($individualORSearches as $thisORfilter) {
-				$filterIndex++;
-				$arrayFilter[$filterIndex][0] = "or";
-				$arrayFilter[$filterIndex][1] = $thisORfilter;
-			}
-		}
-		$filter = $arrayFilter;
-		$filterToCompare = serialize($filter);
-	} else {
-		$filterToCompare = $filter;
-	}
+	$filter = formulize_parseSearchesIntoFilter($searches);
+    $filterToCompare = is_array($filter) ? serialize($filter) : $filter;
 
 	$regeneratePageNumbers = false;
 	// handle magic quotes if necessary
@@ -4903,6 +4713,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 
     if($currentURL=="") { return array(0=>"", 1=>"", 2=>""); } //current URL should only be "" if this is called directly by the special formulize_getCalcs function
 
+        // MASSIVELY DEPRECATED...
 		if($query_string AND is_array($data)) { $data = formulize_runAdvancedSearch($query_string, $data); } // must do advanced search after caching the data, so the advanced search results are not contained in the cached data.  Otherwise, we would have to rerun the base extraction every time we wanted to change just the advanced search query.  This way, advanced search changes can just hit the cache, and not the db.
 
 

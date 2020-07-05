@@ -89,7 +89,7 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
         }
         $result = $this->db->query($sql);
         if (!$result) {
-            print "Error: could not save the screen properly: ".$xoopsDB->error()." for query: $sql";
+            print "Error: could not save the screen properly: ".$this->db->error()." for query: $sql";
             return false;
         }
         return $sid;
