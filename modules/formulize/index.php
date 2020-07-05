@@ -52,7 +52,7 @@ if(isset($formulize_screen_id)) {
         include XOOPS_ROOT_PATH.'/header.php';
         global $xoTheme;
         if($xoTheme) {
-            $xoTheme->addStylesheet("/modules/formulize/templates/css/formulize.css");
+            $xoTheme->addStylesheet("/modules/formulize/templates/css/formulize.css?v=6.0");
             $xoTheme->addScript("/modules/formulize/libraries/formulize.js");
         }
         include 'initialize.php';
@@ -62,7 +62,7 @@ if(isset($formulize_screen_id)) {
     include XOOPS_ROOT_PATH.'/header.php';
     global $xoTheme;
     if($xoTheme) {
-        $xoTheme->addStylesheet("/modules/formulize/templates/css/formulize.css");
+        $xoTheme->addStylesheet("/modules/formulize/templates/css/formulize.css?v=6.0");
         $xoTheme->addScript("/modules/formulize/libraries/formulize.js");
     }
     include 'initialize.php';

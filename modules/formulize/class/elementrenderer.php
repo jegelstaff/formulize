@@ -1210,10 +1210,12 @@ class formulizeElementRenderer{
 		
         // put markup for autocomplete boxes here
         
-        if(is_array($selectedValues)) {
+        if(is_array($selectedValues) OR $multiple) {
             $output .= '<div id="'.$form_ele_id.'_formulize_autocomplete_selections" class="formulize_autocomplete_selections" style="padding-right: 10px;">';
             foreach($selectedValues as $id=>$value) {
-                $output .= "<p class='auto_multi auto_multi_".$form_ele_id."' target='$id'>".$value."</p>\n";
+                if($value AND $value !== 0) {
+                    $output .= "<p class='auto_multi auto_multi_".$form_ele_id."' target='".str_replace("'", "&#039;", $id)."'>".str_replace("'", "&#039;", $value)."</p>\n";
+                }
             }
             $output .= "</div>\n";
         }
@@ -1225,15 +1227,17 @@ class formulizeElementRenderer{
         } else {
             $output .= "<input type='hidden' name='last_selected_${form_ele_id}' id = 'last_selected_${form_ele_id}' value='' />\n";
             foreach($default_value as $i=>$this_default_value) {
-                $output .= "<input type='hidden' name='${form_ele_id}[]' id = '${form_ele_id}_".$i."' target='".$i."' value='$this_default_value' />\n";    
+                if($this_default_value AND $this_default_value !== 0) {
+                    $output .= "<input type='hidden' name='${form_ele_id}[]' id = '${form_ele_id}_".$i."' target='".str_replace("'", "&#039;", $i)."' value='".str_replace("'", "&#039;", $this_default_value)."' />\n";                
+                }
             }
         }
         $output .= '</div>';
         
         // jQuery code for make it work as autocomplete
         // need to wrap it in window.load because Chrome does unusual things with the DOM and makes it ready before it's populated with content!!  (so document.ready doesn't do the trick)
+        // item 16 determines whether the list box allows new values to be entered
 
-		// item 16 determines whether the list box allows new values to be entered
         $ele_value = $this->_ele->getVar('ele_value');
         $allow_new_values = isset($ele_value[16]) ? $ele_value[16] : 0;
         // setup the autocomplete, and make it pass the value of the selected item into the hidden element
@@ -1298,17 +1302,24 @@ if($multiple ){
         jQuery('#add_".$form_ele_id."').click(function() {
             value = jQuery('#last_selected_".$form_ele_id."').val();
             label = jQuery('#".$form_ele_id."_user').val();
-            if(value != 'none') {
+            if(value != 'none' && (value || value === 0)) {
+                if(isNaN(value)) {
+                    value = String(value).replace(/'/g,\"&#039;\");
+                    i = value;
+                } else { 
                 i = parseInt(jQuery('#".$form_ele_id."_defaults').children().last().attr('target')) + 1; 
-                jQuery('#".$form_ele_id."_defaults').append(\"<input type='hidden' name='".$form_ele_id."[]' id = '".$form_ele_id."_\"+i+\"' target=\"+i+\" value='\"+value+\"' />\");
-                jQuery('#".$form_ele_id."_formulize_autocomplete_selections').append(\"<p class='auto_multi auto_multi_".$form_ele_id."' target=\"+value+\">\"+label+\"</p>\");
+                }
+                jQuery('#".$form_ele_id."_defaults').append(\"<input type='hidden' name='".$form_ele_id."[]' id = '".$form_ele_id."_\"+i+\"' target='\"+i+\"' value='\"+value+\"' />\");
+                jQuery('#".$form_ele_id."_formulize_autocomplete_selections').append(\"<p class='auto_multi auto_multi_".$form_ele_id."' target='\"+value+\"'>\"+label+\"</p>\");
                 jQuery('#".$form_ele_id."_user').val('');
                 formulizechanged = 1;
+                jQuery('#last_selected_".$form_ele_id."').val('');
             }
         });
         jQuery('#".$form_ele_id."_formulize_autocomplete_selections').on('click', '.auto_multi_".$form_ele_id."', function() {
             jQuery('#".$form_ele_id."_defaults input[value=\"'+jQuery(this).attr('target')+'\"]').remove();
             jQuery(this).remove();
+            formulizechanged = 1;
         });
         
     ";
