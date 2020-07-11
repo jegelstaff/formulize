@@ -48,6 +48,33 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	
 	formulize_benchmark("Start of displayFormPages.");
 	
+    // instantiate multipage screen handler just because we might need some functions from that file (plain functions, not methods on the class, because they're not necessarily related to handling a screen, and we might not even have a screen in effect)
+    $multiPageScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+    
+    // pickup a declared page that we're going back onto...will/might include screen id after a hyphen
+    if(isset($_POST['parent_page'])) {
+        $parent_page = strstr($_POST['parent_page'], ',') ? explode(',',$_POST['parent_page']) : array($_POST['parent_page']);
+        $lastKey = count($parent_page)-1;
+        $_POST['formulize_currentPage'] = $parent_page[$lastKey];
+    }
+	
+    $currentPageScreen = 0;
+    // reset $_POST['formulize_currentPage'] which is referred to many places to get the official page we're on
+    if(isset($_POST['formulize_currentPage']) AND strstr($_POST['formulize_currentPage'],'-')) {
+        $cpParts = explode('-',$_POST['formulize_currentPage']);
+        $_POST['formulize_currentPage'] = $cpParts[0];
+        $currentPageScreen = $cpParts[1];
+    }
+    // set prevPage, last page that the user was on, not necessarily the previous page numerically
+    if(isset($_POST['formulize_prevPage']) AND strstr($_POST['formulize_prevPage'],'-')) {
+        $cpParts = explode('-',$_POST['formulize_prevPage']);
+        $prevPage = $cpParts[0];
+    } elseif(isset($_POST['formulize_prevPage'])) {
+        $prevPage = intval($_POST['formulize_prevPage']);
+    } else {
+        $prevPage = 1;
+    }
+    
 	// extract the optional page titles from the $pages array for use in the jump to box
 	// NOTE: pageTitles array must start with key 1, not 0.  Page 1 is the first page of the form
 	$pageTitles = array();
@@ -93,8 +120,15 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	
 	$owner = getEntryOwner($entry, $fid);
 	
-	$prevPage = isset($_POST['formulize_prevPage']) ? $_POST['formulize_prevPage'] : 1; // last page that the user was on, not necessarily the previous page numerically
+    if($currentPageScreen) {
+        if($screen AND $currentPageScreen == $screen->getVar('sid')) {
+            $currentPage = $_POST['formulize_currentPage'];
+        } else {
+            $currentPage = 1;    
+        }
+    } else {
 	$currentPage = isset($_POST['formulize_currentPage']) ? $_POST['formulize_currentPage'] : 1;
+    }
 	$thanksPage = count($pages) + 1;
 	
 	// debug control:
@@ -104,15 +138,9 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	
 	if($pages[$prevPage][0] !== "HTML" AND $pages[$prevPage][0] !== "PHP") { // remember prevPage is the last page the user was on, not the previous page numerically
 		
-		if(isset($_POST['form_submitted']) AND $usersCanSave) {
+		if(isset($_POST['form_submitted']) AND $usersCanSave) { // if something was maybe saved, we might need to assume the identify of the entry just saved, so see if we can figure that out
 	
-			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formread.php";
 			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
-			include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
-	
-			//$owner_groups =& $member_handler->getGroupsByUser($owner, FALSE);
-			$data_handler = new formulizeDataHandler($fid);
-			$owner_groups = $data_handler->getEntryOwnerGroups($entry);		
 	
 			$entries[$fid][0] = $entry;
 	
@@ -121,7 +149,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 				unset($entries);
 				$entries = $linkResults['entries'];
 			} else {
-			$entries = $GLOBALS['formulize_allWrittenEntryIds']; // set in readelements.php
+                $entries = $GLOBALS['formulize_allSubmittedEntryIds']; // set in readelements.php
 			}
 	
 			// if there has been no specific entry specified yet, then assume the identity of the entry that was just saved -- assumption is it will be a new save
@@ -130,6 +158,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 				$entry = $entries[$fid][0];
 			}
 			
+            unset($_POST['form_submitted']);
 		}
 	}
 
@@ -141,108 +170,14 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	// check to see if there are conditions on this page, and if so are they met
 	// if the conditions are not met, move on to the next page and repeat the condition check
 	// conditions only checked once there is an entry!
+    
 	$pagesSkipped = false;
-	if(is_array($conditions) AND $entry != 'new') {
+	if(is_array($conditions) AND $entry != 'new' AND (!$currentPageScreen OR ($screen AND $currentPageScreen == $screen->getVar('sid')))) {
 		$conditionsMet = false;
         $element_handler = xoops_getmodulehandler('elements','formulize');
 		while(!$conditionsMet) {
 			if(isset($conditions[$currentPage]) AND count($conditions[$currentPage][0])>0) { // conditions on the current page
-				$thesecons = $conditions[$currentPage];
-				$elements = $thesecons[0];
-				$ops = $thesecons[1];
-				$terms = $thesecons[2];
-				$types = $thesecons[3]; // indicates if the term is part of a must or may set, ie: boolean and or or
-				$filter = "";
-				$oomfilter = "";
-				$blankORSearch = "";
-				foreach($elements as $i=>$thisElement) {
-                    $elementObject = $element_handler->get($thisElement);
-                    $searchTerm = formulize_swapDBText(trans($terms[$i]),$elementObject->getVar('ele_uitext'));
-					if($ops[$i] == "NOT") { $ops[$i] = "!="; }
-					if($terms[$i] == "{BLANK}") { // NOTE...USE OF BLANKS WON'T WORK CLEANLY IN ALL CASES DEPENDING WHAT OTHER TERMS HAVE BEEN SPECIFIED!!
-						if($ops[$i] == "!=" OR $ops[$i] == "NOT LIKE") {
-							if($types[$i] != "oom") {
-								// add to the main filter, ie: entry id = 1 AND x=5 AND y IS NOT "" AND y IS NOT NULL
-								if(!$filter) {
-									$filter = $entry."][".$elements[$i]."/**//**/!=][".$elements[$i]."/**//**/IS NOT NULL";
-								} else {
-									$filter .= "][".$elements[$i]."/**//**/!=][".$elements[$i]."/**//**/IS NOT NULL";
-								}
-							} else {
-								// Add to the OOM filter, ie: entry id = 1 AND (x=5 OR y IS NOT "" OR y IS NOT NULL)
-								if(!$oomfilter) {
-									$oomfilter = $elements[$i]."/**//**/=][".$elements[$i]."/**//**/IS NULL";
-								} else {
-									$oomfilter .= "][".$elements[$i]."/**//**/=][".$elements[$i]."/**//**/IS NULL";
-								}
-							}
-						} else {
-							if($types[$i] != "oom") {
-								// add to its own OR filter, since we MUST match this condition, but we don't care if it's "" OR NULL
-								// ie: entry id = 1 AND (x=5 OR y=10) AND (z = "" OR z IS NULL)
-								if(!$blankORSearch) {
-									$blankORSearch = $elements[$i]."/**//**/=][".$elements[$i]."/**//**/IS NULL";
-								} else {
-									$blankORSearch .= "][".$elements[$i]."/**//**/=][".$elements[$i]."/**//**/IS NULL";
-								}
-							} else {
-								// it's part of the oom filters anyway, so we put it there, because we don't care if it's null or "" or neither
-								if(!$oomfilter) {
-									$oomfilter = $elements[$i]."/**//**/=][".$elements[$i]."/**//**/IS NULL";
-								} else {
-									$oomfilter .= "][".$elements[$i]."/**//**/=][".$elements[$i]."/**//**/IS NULL";
-								}
-							}
-						}
-					} elseif($types[$i] == "oom") {
-						if(!$oomfilter) {
-							$oomfilter = $elements[$i]."/**/".$searchTerm."/**/".$ops[$i];
-						} else {
-							$oomfilter .= "][".$elements[$i]."/**/".$searchTerm."/**/".$ops[$i];
-						}
-					} else {
-						if(!$filter) {
-							$filter = $entry."][".$elements[$i]."/**/".$searchTerm."/**/".$ops[$i];
-						} else {
-							$filter .= "][".$elements[$i]."/**/".$searchTerm."/**/".$ops[$i];
-						}
-					}
-				}
-					$finalFilter = array();
-				if($oomfilter AND $filter) {
-					$finalFilter[0][0] = "AND";
-					$finalFilter[0][1] = $filter;
-					$finalFilter[1][0] = "OR";
-					$finalFilter[1][1] = $oomfilter;
-					if($blankORSearch) {
-						$finalFilter[2][0] = "OR";
-						$finalFilter[2][1] = $blankORSearch;
-					}
-				} elseif($oomfilter) {
-					// need to add the $entry as a separate filter from the oom, so the entry and oom get an AND in between them
-					$finalFilter[0][0] = "AND";
-					$finalFilter[0][1] = $entry;
-					$finalFilter[1][0] = "OR";
-					$finalFilter[1][1] = $oomfilter;
-					if($blankORSearch) {
-						$finalFilter[2][0] = "OR";
-						$finalFilter[2][1] = $blankORSearch;
-					}
-				} else {
-					if($blankORSearch) {
-						$finalFilter[0][0] = "AND";
-						$finalFilter[0][1] = $filter ? $filter : $entry;
-						$finalFilter[1][0] = "OR";
-						$finalFilter[1][1] = $blankORSearch;
-					} else {
-						$finalFilter = $filter;
-					}
-				}
-				$masterBoolean = "AND";
-
-				include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-				$data = getData($frid, $fid, $finalFilter, $masterBoolean, "", "", "", "", "", false, 0, false, "", false, true);
-				if(!$data) { 
+				if(pageMeetsConditions($conditions, $currentPage, $entry, $fid, $frid) == false) { 
 					if($prevPage <= $currentPage) {
 						$currentPage++;
 					} else {
@@ -270,145 +205,12 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	$done_dest = $done_dest ? $done_dest : getCurrentURL();
 	$done_dest = substr($done_dest,0,4) == "http" ? $done_dest : "http://".$done_dest;
 	
-	// Set up the javascript that we need for the form-submit functionality to work
-	// note that validateAndSubmit calls the form validation function again, but obviously it will pass if it passed here.  The validation needs to be called prior to setting the pages, or else you can end up on the wrong page after clicking an ADD button in a subform when you've missed a required field.
-	// savedPage and savedPrevPage are used to pick up the page and prevpage only when a two step validation, such as checking for uniqueness, returns and calls validateAndSubmit again
-	?>
-	
-	<script type='text/javascript'>
-	var savedPage;
-	var savedPrevPage;
-	function submitForm(page, prevpage) {
-		var validate = xoopsFormValidate_formulize_mainform('', window.document.formulize_mainform);
-		if(validate) {
-			savedPage = 0;
-			savedPrevPage = 0;
-			multipageSetHiddenFields(page, prevpage);
-			if (formulizechanged) {
-        validateAndSubmit();
-      } else {
-        jQuery("#formulizeform").animate({opacity:0.4}, 200, "linear");
-        jQuery("input[name^='decue_']").remove();
-        // 'rewritePage' will trigger the page to change after the locks have been removed
-        removeEntryLocks('rewritePage');
-                document.formulize_mainform.deletesubsflag.value=0;
-      }
-    } else {
-            hideSavingGraphic();
-			savedPage = page;
-			savedPrevPage = prevpage;
-		}
-  }
-
-	function multipageSetHiddenFields(page, prevpage) {
-        if(page == <?php print $thanksPage; ?>) {
-            jQuery('form[name=formulize]').attr('action', '<?php print $done_dest; ?>');
-        }
-        window.document.formulize_mainform.formulize_currentPage.value = page;
-        window.document.formulize_mainform.formulize_prevPage.value = prevpage;
-        window.document.formulize_mainform.formulize_doneDest.value = '<?php print $done_dest; ?>';
-        window.document.formulize_mainform.formulize_buttonText.value = '<?php print $button_text; ?>';
-	}
-
-	function pageJump(options, prevpage) {
-		for (var i=0; i < options.length; i++) {
-			if (options[i].selected) {
-				submitForm(options[i].value, prevpage);
-				return false;
-			}
-		}
-        return false;
-	}
-	
-	</script><noscript>
-	<h1>You do not have javascript enabled in your web browser.  This form will not work with your web browser.  Please contact the webmaster for assistance.</h1>
-	</noscript>
-	<?php
-		
-	if($currentPage == $thanksPage) {
-	
-    	if(is_array($settings)) {
-			print "<form name=calreturnform action=\"$done_dest\" method=post>\n";
-			writeHiddenSettings($settings);
-			print "</form>";
-		}
-    
-        if($screen AND $screen->getVar('finishisdone')) {
-            print "<script type='text/javascript'>window.document.calreturnform.submit();</script>";
-            return; // if we've ended up on the thanks page via conditions (last page was not shown) then we should just bail if there is not supposed to be a thanks page
-        }
-    
-		if(is_array($thankstext)) { 
-			if($thankstext[0] === "PHP") {
-				eval($thankstext[1]);
-			} else {
-				print undoAllHTMLChars($thankstext[1]);
-			}
-		} else { // HTML
-			print undoAllHTMLChars($thankstext);
-		}
-		print "<br><hr><br><div id=\"thankYouNavigation\"><p><center>\n";
-		if($pagesSkipped) {
-			print _formulize_DMULTI_SKIP . "</p><p>\n";
-		}
-		$button_text = $button_text ? $button_text : _formulize_DMULTI_ALLDONE;
-		if($button_text != "{NOBUTTON}") {
-			print "<a href='$done_dest'";
-			if(is_array($settings)) {
-				print " onclick=\"javascript:window.document.calreturnform.submit();return false;\"";
-			}
-			print ">" . $button_text . "</a>\n";
-		}
-		print "</center></p></div>";
-	
-	} 
-	
-	if($currentPage == 1 AND $pages[1][0] !== "HTML" AND $pages[1][0] !== "PHP" AND !$_POST['goto_sfid']) { // only show intro text on first page if there's actually a form there
-	  print undoAllHTMLChars($introtext);
-	}
-	
-	unset($_POST['form_submitted']);
-	
-	
-	
-	
-	
-	// display an HTML or PHP page if that's what this page is...
-	if($currentPage != $thanksPage AND ($pages[$currentPage][0] === "HTML" OR $pages[$currentPage][0] === "PHP")) {
-		// PHP
-		if($pages[$currentPage][0] === "PHP") {
-			eval($pages[$currentPage][1]);
-		// HTML
-		} else {
-			print undoAllHTMLChars($pages[$currentPage][1]);
-		}
-	
-		// put in the form that passes the entry, page we're going to and page we were on
-		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
-		?>
-	
-		
-		<form name=formulize id=formulize action=<?php print getCurrentURL(); ?> method=post>
-		<input type=hidden name=entry<?php print $fid; ?> id=entry<?php print $fid; ?> value=<?php print $entry ?>>
-		<input type=hidden name=formulize_currentPage id=formulize_currentPage value="">
-		<input type=hidden name=formulize_prevPage id=formulize_prevPage value="">
-		writeHiddenSettings($settings);
-		</form>
-	
-		<script type="text/javascript">
-			function validateAndSubmit() {
-				window.document.formulize_mainform.submit();
-			}
-		</script>
-	
-		<?php
-	
-	}
+	$GLOBALS['formulize_displayingMultipageScreen'] = $screen ? $screen->getVar('sid') : true;
 	
 	// display a form if that's what this page is...
 	if($currentPage != $thanksPage AND $pages[$currentPage][0] !== "HTML" AND $pages[$currentPage][0] !== "PHP") {
 	
-		$buttonArray = array(0=>"{NOBUTTON}", 1=>"{NOBUTTON}");
+		$buttonArray = array(0=>"{NOBUTTON}", 1=>"{NOBUTTON}", 2=>"{NOBUTTON}");
 		foreach($pages[$currentPage] as $element) {
 		  $elements_allowed[] = $element;
 	  }
@@ -416,10 +218,8 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 		$forminfo['formframe'] = $formframe;
 		$titleOverride = isset($pageTitles[$currentPage]) ? trans($pageTitles[$currentPage]) : "all"; // we can pass in any text value as the titleOverride, and it will have the same effect as "all", but the alternate text will be used as the title for the form
 	
-		$GLOBALS['nosubforms'] = true; // subforms cannot have a view button on multipage forms, since moving to a sub causes total confusion of which entry and fid you are looking at
-	
 		$settings['formulize_currentPage'] = $currentPage;
-		$settings['formulize_prevPage'] = $currentPage; // now that we're done everything else, we can send the current page as the previous page when initializing the form.  Javascript will set the true value prior to submission.
+		$settings['formulize_prevPage'] = $prevPage; 
 	
 		formulize_benchmark("Before drawing nav.");
 	
@@ -434,23 +234,37 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 		$savePageButton = generatePrevNextButtonMarkup("save", _formulize_SAVE, $usersCanSave, $nextPage, $previousPage, $thanksPage);
 		$totalPages = count($pages);
 		$skippedPageMessage = $pagesSkipped ? _formulize_DMULTI_SKIP : "";
-		$pageSelectionList = pageSelectionList($currentPage, $totalPages, $pageTitles, "above");   // calling for the 'above' drawPageNav 
+		$pageSelectionList = pageSelectionList($currentPage, $totalPages, $pageTitles, "above", $conditions, $entry, $fid, $frid);   // calling for the 'above' drawPageNav 
 
         // setting up the basic templateVars for all templates
         $templateVariables = array('previousPageButton' => $previousPageButton, 'nextPageButton' => $nextPageButton, 'savePageButton' => $savePageButton,
             'totalPages' => $totalPages, 'currentPage' => $currentPage, 'skippedPageMessage' => $skippedPageMessage,
             'pageSelectionList'=>$pageSelectionList, 'pageTitles' => $pageTitles, 'entry_id'=>$entry, 'form_id'=>$fid, 'owner'=>$owner);
 
+        // cache the rendered header, in case this is the header we need for the page right now
+        static $multipageHeader = array();
+        static $multipageFooter = array();
+        static $multipageInstances = -1;
+        $multipageInstances++;
+        $thisMultipageInstance = $multipageInstances;
+        ob_start();
 		print "<form name=\"pageNavOptions_above\" id=\"pageNavOptions_above\">\n";
 		if($screen AND $toptemplate = $screen->getTemplate('toptemplate')) {
 		    formulize_renderTemplate('toptemplate', $templateVariables, $screen->getVar('sid'));
 		} else {
-		    drawPageNav($usersCanSave, $currentPage, $totalPages, "above", $nextPageButton, $previousPageButton, $skippedPageMessage, $pageSelectionList);
+            drawPageNav($usersCanSave, "above", $screen, $templateVariables, $conditions, $entry, $fid, $frid);
 		}
-		print "</form>";
+        print "</form>\n";
+        $multipageHeader[$multipageInstances] = ob_get_clean();
 		
 		formulize_benchmark("After drawing nav/before displayForm.");
 		
+        // if this is our first time running through all this, then start buffering
+		if(!isset($GLOBALS['formulize_completedFormRendering'])) {
+            $GLOBALS['formulize_completedFormRendering'] = false;
+            ob_start();
+        }
+        
 	    // need to check for the existence of an elementtemplate property in the screen, like we did with the top and bottom templates
 	    // if there's an eleemnt template, then do this loop, otherwise, do the displayForm call like normal
 	    if ($screen AND $elementtemplate = $screen->getTemplate('elementtemplate')) {  // Code added by Julian 2012-09-04 and Gordon Woodmansey 2012-09-05 to render the elementtemplate
@@ -508,8 +322,10 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 			    }
 		    }
 		    // now we also need to add in some bits that are necessary for the form submission logic to work...borrowed from parts of formdisplay.php mostly...this should be put together into a more distinct rendering system for forms, so we can call the pieces as needed
-		    print "<input type=hidden name=formulize_currentPage value='".$settings['formulize_currentPage']."'>";
-		    print "<input type=hidden name=formulize_prevPage value='".$settings['formulize_prevPage']."'>";
+            $currentPageToSend = $screen ? $settings['formulize_currentPage'].'-'.$screen->getVar('sid') : $settings['formulize_currentPage'];
+            $prevPageToSend = $screen ? $settings['formulize_prevPage'].'-'.$screen->getVar('sid') : $settings['formulize_prevPage'];
+		    print "<input type=hidden name=formulize_currentPage value='".$currentPageToSend."'>";
+		    print "<input type=hidden name=formulize_prevPage value='".$prevPageToSend."'>";
 		    print "<input type=hidden name=formulize_doneDest value='".$settings['formulize_doneDest']."'>";
 		    print "<input type=hidden name=formulize_buttonText value='".$settings['formulize_buttonText']."'>";
             print "<input type=hidden name=deletesubsflag value=0>";
@@ -531,49 +347,94 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 		    print $formObjectForRequiredJS->renderValidationJS(true, true); // with tags, true, skip the extra js that checks for the formulize theme form divs around the elements so that conditional animation works, true
 		    // print "<script type=\"text/javascript\">function xoopsFormValidate_formulize_mainform(){return true;}</script>"; // shim for the validation javascript that is created by the xoopsThemeForms, and which our saving logic currently references...saving won't work without this...we should actually render the proper validation logic at some point, but not today.
 	    } else {
+            if(count($elements_allowed)==0) {
+                print "Error: there are no form elements specified for page number $currentPage. Please contact the webmaster.";
+            } else { 
             displayForm($forminfo, $entry, $mainform, "", $buttonArray, $settings, $titleOverride, $overrideValue, "", "", 0, 0, $printall, $screen); // nmc 2007.03.24 - added empty params & '$printall'
+	    }
 	    }
 	    
 		formulize_benchmark("After displayForm.");
     }
 
-    if($currentPage != $thanksPage AND !$_POST['goto_sfid']) {
+    if($currentPage != $thanksPage) {
 	    // have to get the new value for $pageSelection list if the user requires it on the users view.
-	    $pageSelectionList = pageSelectionList($currentPage, $totalPages, $pageTitles, "below");
+	    $pageSelectionList = pageSelectionList($currentPage, $totalPages, $pageTitles, "below", $conditions, $entry, $fid, $frid);
+        ob_start();
 	    print "<form name=\"pageNavOptions_below\" id=\"pageNavOptions_below\">\n";
+        $templateVariables['pageSelectionList'] = $pageSelectionList; // assign the new pageSelectionList, since it was redone for the bottom section
 	    if ($screen AND $bottomtemplate = $screen->getTemplate('bottomtemplate')) { 
 		    $templateVariables['pageSelectionList'] = $pageSelectionList; // assign the new pageSelectionList, since it was redone for the bottom section
 		    formulize_renderTemplate('bottomtemplate', $templateVariables, $screen->getVar('sid'));
 	    } else {
-		    drawPageNav($usersCanSave, $currentPage, $totalPages, "below", $nextPageButton, $previousPageButton, $skippedPageMessage, $pageSelectionList);
+		    drawPageNav($usersCanSave, "below", $screen, $templateVariables, $conditions, $entry, $fid, $frid);
 	    }
 	    print "</form>";
+        $multipageFooter[$multipageInstances] = ob_get_clean();
     }
+    
+    // if we have actually completed rendering (and not simply going around and around in a recursive loop) then capture what has been rendered, and then output it with the header for the most recent run through (ie: the innermost nested multipage subform call, if that's the circumstance that caused the recursive looping)
+    // since we're checking current page's screen against the declared screen we're rendering, this won't actually cache the top and bottom templates for the parent screen, but we could modify that to still get the top template for screens we're not rendering, so that we can do nested tabs later if we want
+    if(isset($GLOBALS['formulize_completedFormRendering']) AND $GLOBALS['formulize_completedFormRendering']) {
+        $formRendering = ob_get_clean();
+
+        include XOOPS_ROOT_PATH.'/modules/formulize/include/multipage_boilerplate.php';
+        
+        print $multipageHeader[$multipageInstances].$formRendering.$multipageFooter[$multipageInstances];
+        unset($GLOBALS['formulize_completedFormRendering']);
+    }
+
+    
+    
     formulize_benchmark("End of displayFormPages.");
 } // end of the function!
 
 
-function drawPageNav($usersCanSave="", $currentPage="", $totalPages, $aboveBelow, $nextPageButton, $previousPageButton,
-    $skippedPageMessage, $pageSelectionList)
+function drawPageNav($usersCanSave="", $aboveBelow, $screen, $templateVariables, $conditions, $entry_id, $fid, $frid)
 {
     global $xoopsTpl;
     $xoopsTpl->assign("usersCanSave", $usersCanSave);
-    $xoopsTpl->assign("currentPage", $currentPage);
-    $xoopsTpl->assign("totalPages", $totalPages);
+    $xoopsTpl->assign("currentPage", $templateVariables['currentPage']);
+    $xoopsTpl->assign("totalPages", $templateVariables['totalPages']);
+    unset($templateVariables['pageTitles'][0]);
+    $templatePageTitles = array();
+    foreach($templateVariables['pageTitles'] as $i=>$title) {
+        if(pageMeetsConditions($conditions, $i, $entry_id, $fid, $frid)) {
+            $templatePageTitles[$i] = $title;
+        }
+    }
+    $xoopsTpl->assign("pageTitles", $templatePageTitles);
     $xoopsTpl->assign("aboveBelow", $aboveBelow);
     if($aboveBelow == 'below') {
         $xoopsTpl->assign("bottom", 'Bottom');
     } else {
         $xoopsTpl->assign("bottom", '');
     }
-    $xoopsTpl->assign("nextPageButton", $nextPageButton);
-    $xoopsTpl->assign("previousPageButton", $previousPageButton);
-    $xoopsTpl->assign("skippedPageMessage", $skippedPageMessage);
-    $xoopsTpl->assign("pageSelectionList", $pageSelectionList);
+    $xoopsTpl->assign("nextPageButton", $templateVariables['nextPageButton']);
+    $xoopsTpl->assign("previousPageButton", $templateVariables['previousPageButton']);
+    $xoopsTpl->assign("skippedPageMessage", $templateVariables['skippedPageMessage']);
+    $xoopsTpl->assign("pageSelectionList", $templateVariables['pageSelectionList']);
+    $xoopsTpl->assign("savePageButton", $templateVariables['savePageButton']);
+    global $formulize_displayingSubform;
+    if($formulize_displayingSubform) {
+        $xoopsTpl->assign("saveAndLeave", trans(_formulize_SAVE_AND_GOBACK));
+    } else {
+        $xoopsTpl->assign("saveAndLeave", trans(_formulize_SAVE_AND_LEAVE));
+    }
     $xoopsTpl->assign("_formulize_DMULTI_PAGE", _formulize_DMULTI_PAGE);
     $xoopsTpl->assign("_formulize_DMULTI_OF", _formulize_DMULTI_OF);
     $xoopsTpl->assign("_formulize_DMULTI_JUMPTO", _formulize_DMULTI_JUMPTO);
+    if($screen->getVar('navstyle')==1) {
+        if($aboveBelow!='below') {
+            $xoopsTpl->display("file:".XOOPS_ROOT_PATH."/modules/formulize/templates/multipage-navigation2-above.html");
+        } else {
+            $xoopsTpl->display("file:".XOOPS_ROOT_PATH."/modules/formulize/templates/multipage-navigation2-below.html");
+        }
+    } else {
     $xoopsTpl->display("file:".XOOPS_ROOT_PATH."/modules/formulize/templates/multipage-navigation.html");
+}
+
+    
 }
 
 // THIS FUNCTION GENERATES THE MARKUP FOR THE PREVIOUS AND NEXT BUTTONS
@@ -606,7 +467,7 @@ function generatePrevNextButtonMarkup($buttonType, $buttonText, $usersCanSave, $
 }
 
 
-function pageSelectionList($currentPage, $countPages, $pageTitles, $aboveBelow) {
+function pageSelectionList($currentPage, $countPages, $pageTitles, $aboveBelow, $conditions, $entry_id, $fid, $frid) {
 
 	static $pageSelectionList = array();
 	
@@ -616,6 +477,7 @@ function pageSelectionList($currentPage, $countPages, $pageTitles, $aboveBelow) 
 
 	$pageSelectionList[$aboveBelow] .= "<select name=\"pageselectionlist_$aboveBelow\" id=\"pageselectionlist_$aboveBelow\" size=\"1\" onchange=\"javascript:pageJump(this.form.pageselectionlist_$aboveBelow.options, $currentPage);\">\n";
 	for($page=1;$page<=$countPages;$page++) {
+        if(pageMeetsConditions($conditions, $page, $entry_id, $fid, $frid)) {
 		if(isset($pageTitle[$page]) AND strstr($pageTitles[$page], "[")) {
 			$title = " &mdash; " . trans($pageTitles[$page]); // translation can be expensive, so only do it if we have to (regular expression matching is not pretty)
 		} elseif(isset($pageTitles[$page])) {
@@ -626,6 +488,7 @@ function pageSelectionList($currentPage, $countPages, $pageTitles, $aboveBelow) 
 		$pageSelectionList[$aboveBelow] .= "<option value=$page";
 		$pageSelectionList[$aboveBelow] .= $page == $currentPage ? " selected=true>" : ">";
 		$pageSelectionList[$aboveBelow] .= $page . $title . "</option>\n";
+	}
 	}
 	$pageSelectionList[$aboveBelow] .= "</select>";
 	return $pageSelectionList[$aboveBelow];

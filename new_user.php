@@ -33,7 +33,7 @@ if (isset($_GET['newuser']) && ($_GET['newuser'] == $_SESSION['newuser'])) {
                 $uname = $_POST["uname"];
                 $email = $_POST["email"];
                 //make a random but fake password here since we anticipate the user to only need google login, unless they change it later
-                $pass = bin2hex(openssl_random_pseudo_bytes(32));
+                $pass = bin2hex(random_bytes(32));
                 $vpass =  $pass;
                 $timezone_offset =  $_POST["timezone_offset"];
                 $member_handler = icms::handler('icms_member');
@@ -86,6 +86,8 @@ if (isset($_GET['newuser']) && ($_GET['newuser'] == $_SESSION['newuser'])) {
                         if(Formulize::createResourceMapping(Formulize::USER_RESOURCE, $_SESSION['email'], $newid)){
                             header("Location: ".XOOPS_URL."/?code=".$_GET['newuser']."&newcode=".$_GET['newuser']);
                             exit();
+                        } else {
+                            print "Error: could not create resource mapping for new user. Please notify a webmaster about this error. You will not be able to login with this account until this error is resolved.";
                         }
 
                     }

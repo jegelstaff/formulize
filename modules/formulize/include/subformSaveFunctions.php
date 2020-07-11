@@ -82,7 +82,8 @@ function formulize_subformSave_writeNewEntry($element_to_write, $value_to_write,
     // need to also enforce any equals conditions that are on the subform element, if any, and assign those values to the entries that were just added
     // also, enforce any derived values on the subform entry itself
     if(is_array($subformConditions)) {
-        $filterValues = setSubformFilterValues($subformConditions, $entry);
+        $filterValues = getFilterValuesForEntry($subformConditions, $entry);
+        $filterValues = $filterValues[key($filterValues)]; // subform element conditions are always on one form only so we just take the first set of values found (filterValues are grouped by form id)
     } 
     foreach($sub_entry_written as $thisSubEntry) {
         if(isset($filterValues) AND count($filterValues)>0) {

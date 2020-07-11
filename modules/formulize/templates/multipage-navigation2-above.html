@@ -1,0 +1,18 @@
+<div id="pageNavTable">
+    <ul class="multi-page-list">
+        <{assign var=backnumber value=$totalPages+1}>
+        <li this-page="<{$backnumber}>" class="icon-arrow-backward navtab"> <{$saveAndLeave}></li>
+        <{foreach from=$pageTitles item=title key=i}>
+            <li <{if $i == $currentPage}>class="active-page navtab"<{else}>this-page="<{$i}>" class="navtab"<{/if}> ><{$title}></li> 
+        <{/foreach}>
+    </ul>    
+</div>
+
+<script>
+jQuery(".navtab").click(function(){
+    var targetPage = jQuery(this).attr('this-page');
+    if (targetPage > 0) {
+        submitForm(targetPage, <{$currentPage}>);
+    }
+});
+</script>

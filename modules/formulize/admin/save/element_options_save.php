@@ -98,7 +98,7 @@ if($_POST['element_delimit']) {
   }
 }
 if($ele_type == "date" AND $processedValues['elements']['ele_value'][0] != _DATE_DEFAULT AND $processedValues['elements']['ele_value'][0] != "") { // still checking for old YYYY-mm-dd string, just in case.  It should never be sent back as a value now, but if we've missed something and it is sent back, leaving this check here ensures it will properly be turned into "", ie: no date.
-	if(preg_replace("[^A-Z{}]","", $processedValues['elements']['ele_value'][0]) === "{TODAY}") {
+	if(preg_replace("/[^A-Z{}]/","", $processedValues['elements']['ele_value'][0]) === "{TODAY}") {
 	  $processedValues['elements']['ele_value'][0] = $processedValues['elements']['ele_value'][0];
 	} else {
 	  $processedValues['elements']['ele_value'][0] = date("Y-m-d", strtotime($processedValues['elements']['ele_value'][0]));
@@ -143,7 +143,8 @@ if($ele_type == "subform") {
 
   }
   $processedValues['elements']['ele_value'][1] = implode(",",$_POST['elements_ele_value_1']);
-  $processedValues = parseSubmittedConditions('subformfilter', 'optionsconditionsdelete', $processedValues, 7); // post key, delete key, processedValues, ele_value key for conditions
+  $processedValues['elements']['ele_value']['disabledelements'] = (isset($_POST['elements_ele_value_disabledelements']) AND count($_POST['elements_ele_value_disabledelements']) > 0) ? implode(",",$_POST['elements_ele_value_disabledelements']) : array();
+  $processedValues['elements']['ele_value'][7] = parseSubmittedConditions('subformfilter', 'optionsconditionsdelete'); // post key, delete key
 }
 
 if($ele_type == "radio") {
@@ -189,7 +190,8 @@ if($ele_type == "select") {
   $processedValues['elements']['ele_value']['linkedSourceMappings'] = array();
   foreach($_POST['mappingthisform'] as $key=>$thisFormValue) {
     if($thisFormValue != 'none' AND $_POST['mappingsourceform'][$key] != 'none') {
-        $processedValues['elements']['ele_value']['linkedSourceMappings'][$mappingCounter] = array('thisForm'=>intval($thisFormValue), 'sourceForm'=>intval($_POST['mappingsourceform'][$key]));
+        $thisFormValue = is_numeric($thisFormValue) ? intval($thisFormValue) : $thisFormValue;
+        $processedValues['elements']['ele_value']['linkedSourceMappings'][$mappingCounter] = array('thisForm'=>$thisFormValue, 'sourceForm'=>intval($_POST['mappingsourceform'][$key]));
         $mappingCounter++;
     }
   }
@@ -211,10 +213,10 @@ if($ele_type == "select") {
   }
 
   // if there is a change to the multiple selection status, need to adjust the database!!
-  if (
+  if ((
       ($processedValues['elements']['ele_value'][8] == 0 AND isset($ele_value[1]) AND $ele_value[1] != $_POST['elements_multiple'])
       OR ($processedValues['elements']['ele_value'][8] == 1 AND isset($ele_value[1]) AND $ele_value[1] != $_POST['elements_multiple_auto'])
-      ) {
+      ) AND !$ele_value['snapshot']) {
     if ($ele_value[1] == 0) {
       $result = convertSelectBoxToMulti($xoopsDB->prefix('formulize_'.$formObject->getVar('form_handle')), $ele_id);
     } else {
@@ -277,24 +279,36 @@ if($ele_type == "select") {
   } else {
     $processedValues['elements']['ele_value'][5] = "";
   }
-}
 
-$processedValues = parseSubmittedConditions('optionsLimitByElementFilter', 'optionsLimitByElementFilterDelete', $processedValues, 'optionsLimitByElementFilter'); // post key, delete key, processedValues, ele_value key for conditions
+  $processedValues['elements']['ele_value']['optionsLimitByElementFilter'] = parseSubmittedConditions('optionsLimitByElementFilter', 'optionsLimitByElementFilterDelete'); // post key, delete key, processedValues, ele_value key for conditions
 
 
-$ele_value_before_adminSave = "";
-$ele_value_after_adminSave = "";
-if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
-  $customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
-  $ele_value_before_adminSave = serialize($element->getVar('ele_value'));
-  $changed = $customTypeHandler->adminSave($element, $processedValues['elements']['ele_value']); // cannot use getVar to retrieve ele_value from element, due to limitation of the base object class, when dealing with set values that are arrays and not being gathered directly from the database (it wants to unserialize them instead of treating them as literals)
-  $ele_value_after_adminSave = serialize($element->getVar('ele_value'));
-  if($changed) {
-    $_POST['reload_option_page'] = true; // force a reload, since the developer probably changed something the user did in the form, so we should reload to show the effect of this change
+  /**newly added for autocomplete box to make sure when {USERNAMES} and {FULLNAMES} are selected, system will not allow new entries to be added
+    *ele_value[8] ==1 will make sure it's an autocomplete box
+    *ele_value[16]=0 means say no match found,
+    *	       1 means add as new entry.
+    *
+    *when $processedValues['elements']['ele_value'][2]['{USERNAMES}'] = 1, that means this one is checked;
+    *	if it's 0, then it's not checked
+    *							
+    *this also applys in database: "{USERNAMES}";i:1; as selected;
+    *			       "{USERNAMES}";i:0; for not selected.
+    *
+    *you can use those lines to check the value. 
+    *  error_log("usernames: ".print_r($processedValues['elements']['ele_value'][2]['{USERNAMES}']));
+    *  error_log("fullnames: ".print_r($processedValues['elements']['ele_value'][2]['{FULLNAMES}']));
+    *
+    *Added by Jinfu MAR 2015
+    */
+
+    if($processedValues['elements']['ele_value'][8] == 1 && is_array($processedValues['elements']['ele_value'][2]) && 
+       (isset($processedValues['elements']['ele_value'][2]['{USERNAMES}']) || isset($processedValues['elements']['ele_value'][2]['{FULLNAMES}']))) {
+      $processedValues['elements']['ele_value'][16]=0;
   }
 }
 
 // check to see if we should be reassigning user submitted values, and if so, trap the old ele_value settings, and the new ones, and then pass off the job to the handling function that does that change
+// SHOULD BE MOVED INSIDE CUSTOM ELEMENT CLASS FILES?
 if(isset($_POST['changeuservalues']) AND $_POST['changeuservalues']==1) {
   include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
   $data_handler = new formulizeDataHandler($fid);
@@ -312,39 +326,34 @@ if(isset($_POST['changeuservalues']) AND $_POST['changeuservalues']==1) {
   }
 }
 
-/**newly added for autocomplete box to make sure when {USERNAMES} and {FULLNAMES} are selected, system will not allow new entries to be added
-*ele_value[8] ==1 will make sure it's an autocomplete box
-*ele_value[16]=0 means say no match found,
-*	       1 means add as new entry.
-*
-*when $processedValues['elements']['ele_value'][2]['{USERNAMES}'] = 1, that means this one is checked;
-*	if it's 0, then it's not checked
-*							
-*this also applys in database: "{USERNAMES}";i:1; as selected;
-*			       "{USERNAMES}";i:0; for not selected.
-*
-*you can use those lines to check the value. 
-*  error_log("usernames: ".print_r($processedValues['elements']['ele_value'][2]['{USERNAMES}']));
-*  error_log("fullnames: ".print_r($processedValues['elements']['ele_value'][2]['{FULLNAMES}']));
-*
-*Added by Jinfu MAR 2015
-*/
-if($processedValues['elements']['ele_value'][8] == 1 && is_array($processedValues['elements']['ele_value'][2]) && 
-   (isset($processedValues['elements']['ele_value'][2]['{USERNAMES}']) || isset($processedValues['elements']['ele_value'][2]['{FULLNAMES}']))) {
-  $processedValues['elements']['ele_value'][16]=0;
+
+$ele_value_before_adminSave = "";
+$ele_value_after_adminSave = "";
+// call the adminSave method. IT SHOULD SET ele_value ON THE ELEMENT OBJECT, AND MUST SET IT IF IT IS MAKING CHANGES.
+if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+  $customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
+  $ele_value_before_adminSave = serialize($element->getVar('ele_value'));
+  $changed = $customTypeHandler->adminSave($element, $processedValues['elements']['ele_value']); // cannot use getVar to retrieve ele_value from element, due to limitation of the base object class, when dealing with set values that are arrays and not being gathered directly from the database (it wants to unserialize them instead of treating them as literals)
+  $ele_value_after_adminSave = is_array($element->vars['ele_value']['value']) ? serialize($element->vars['ele_value']['value']) : $element->vars['ele_value']['value']; // get raw value because it won't have been serialized yet since it hasn't been written to the DB...if we use getVar, it will try to unserialize it for us, but that won't work because it hasn't been serialized yet -- if this value is not an array, take it as is though, since then it is simply unchanged from when it was originally set as the serialized value we want  
+  if($ele_value_before_adminSave === $ele_value_after_adminSave) {
+    unset($processedValues['elements']['ele_value']); // no change, so nothing to write below
+  }
+  // user indicated we should reload the page due to a change
+  if($changed) {
+    $_POST['reload_option_page'] = true; // force a reload, since the developer probably changed something the user did in the form, so we should reload to show the effect of this change
+  }
 }
 
 
 foreach($processedValues['elements'] as $property=>$value) {
   // if we're setting something other than ele_value, or
-  // there was no change to ele_value property of the element
-  // during the adminSave step, then set the property now.
+  // we're setting ele_value for an element type that
+  // has an adminSave method of its own. 
   // We don't want to set ele_value if it was modified during
   // adminSave, because we might clobber user's changes
+  // so the user has to setVar in adminSave themselves!
 
-
-  if($property != 'ele_value' OR $ele_value_before_adminSave === $ele_value_after_adminSave) {
-
+  if($property != 'ele_value' OR $ele_value_after_adminSave === "") {
   	$element->setVar($property, $value);
   }
 }

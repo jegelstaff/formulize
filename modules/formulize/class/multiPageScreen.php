@@ -56,9 +56,13 @@ class formulizeMultiPageScreen extends formulizeScreen {
 		$this->initVar("printall", XOBJ_DTYPE_INT); //nmc - 2007.03.24
     $this->initVar("paraentryform", XOBJ_DTYPE_INT); 
     $this->initVar("paraentryrelationship", XOBJ_DTYPE_INT);
+    $this->initVar("navstyle", XOBJ_DTYPE_INT);	
     $this->initVar("dobr", XOBJ_DTYPE_INT, 1, false);
     $this->initVar("dohtml", XOBJ_DTYPE_INT, 1, false);
     $this->assignVar("dobr", false); // don't convert line breaks to <br> when using the getVar method
+    $this->initVar('displaycolumns', XOBJ_DTYPE_INT);
+    $this->initVar("column1width", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
+    $this->initVar("column2width", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
     
 	}
 	
@@ -108,9 +112,28 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
     
 		// note: conditions is not written to the DB yet, since we're not gathering that info from the UI	
 		if (!$update) {
-                 $sql = sprintf("INSERT INTO %s (sid, introtext, thankstext, toptemplate, elementtemplate, bottomtemplate, donedest, buttontext, finishisdone, pages, pagetitles, conditions, printall, paraentryform, paraentryrelationship) VALUES (%u, %s, %s, %s, %s, %s, %s, %s, %u, %s, %s, %s, %u, %u, %u)", $this->db->prefix('formulize_screen_multipage'), $screen->getVar('sid'), $this->db->quoteString($screen->getVar('introtext', "e")), $this->db->quoteString($screen->getVar('thankstext', "e")), $this->db->quoteString($screen->getVar('toptemplate')), $this->db->quoteString($screen->getVar('elementtemplate')), $this->db->quoteString($screen->getVar('bottomtemplate')), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('buttontext')), $screen->getVar('finishisdone'), $this->db->quoteString(serialize($screen->getVar('pages'))), $this->db->quoteString(serialize($screen->getVar('pagetitles'))), $this->db->quoteString(serialize($screen->getVar('conditions'))), $screen->getVar('printall'), $screen->getVar('paraentryform'), $screen->getVar('paraentryrelationship')); //nmc 2007.03.24 added 'printall' & fixed pagetitles
+                 $sql = sprintf("INSERT INTO %s (sid, introtext, thankstext, toptemplate, elementtemplate, bottomtemplate, donedest, buttontext, finishisdone, pages, pagetitles, conditions, printall, paraentryform, paraentryrelationship, navstyle, displaycolumns, column1width, column2width) VALUES (%u, %s, %s, %s, %s, %s, %s, %s, %u, %s, %s, %s, %u, %u, %u, %u, %u, %s, %s)",
+                    $this->db->prefix('formulize_screen_multipage'),
+                    $screen->getVar('sid'),
+                    $this->db->quoteString($screen->getVar('introtext', "e")),
+                    $this->db->quoteString($screen->getVar('thankstext', "e")),
+                    $this->db->quoteString($screen->getVar('toptemplate')),
+                    $this->db->quoteString($screen->getVar('elementtemplate')),
+                    $this->db->quoteString($screen->getVar('bottomtemplate')),
+                    $this->db->quoteString($screen->getVar('donedest')),
+                    $this->db->quoteString($screen->getVar('buttontext')),
+                    $screen->getVar('finishisdone'), $this->db->quoteString(serialize($screen->getVar('pages'))),
+                    $this->db->quoteString(serialize($screen->getVar('pagetitles'))),
+                    $this->db->quoteString(serialize($screen->getVar('conditions'))),
+                    $screen->getVar('printall'), $screen->getVar('paraentryform'),
+                    $screen->getVar('paraentryrelationship'),
+                    $screen->getVar('navstyle'),
+                    $screen->getVar('displaycolumns'),
+                    $this->db->quoteString($screen->getVar('column1width')),
+                    $this->db->quoteString($screen->getVar('column2width')));
+                    //nmc 2007.03.24 added 'printall' & fixed pagetitles
              } else {
-                 $sql = sprintf("UPDATE %s SET introtext = %s, thankstext = %s, toptemplate = %s, elementtemplate = %s, bottomtemplate = %s, donedest = %s, buttontext = %s, finishisdone = %u, pages = %s, pagetitles = %s, conditions = %s, printall = %u, paraentryform = %u, paraentryrelationship = %u WHERE sid = %u", $this->db->prefix('formulize_screen_multipage'), $this->db->quoteString($screen->getVar('introtext', "e")), $this->db->quoteString($screen->getVar('thankstext', "e")), $this->db->quoteString($screen->getVar('toptemplate')), $this->db->quoteString($screen->getVar('elementtemplate')), $this->db->quoteString($screen->getVar('bottomtemplate')), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('buttontext')), $screen->getVar('finishisdone'), $this->db->quoteString(serialize($screen->getVar('pages'))), $this->db->quoteString(serialize($screen->getVar('pagetitles'))), $this->db->quoteString(serialize($screen->getVar('conditions'))), $screen->getVar('printall'), $screen->getVar('paraentryform'), $screen->getVar('paraentryrelationship'), $screen->getVar('sid')); //nmc 2007.03.24 added 'printall'
+                 $sql = sprintf("UPDATE %s SET introtext = %s, thankstext = %s, toptemplate = %s, elementtemplate = %s, bottomtemplate = %s, donedest = %s, buttontext = %s, finishisdone = %u, pages = %s, pagetitles = %s, conditions = %s, printall = %u, paraentryform = %u, paraentryrelationship = %u, navstyle = %u, displaycolumns = %u, column1width = %s, column2width = %s WHERE sid = %u", $this->db->prefix('formulize_screen_multipage'), $this->db->quoteString($screen->getVar('introtext', "e")), $this->db->quoteString($screen->getVar('thankstext', "e")), $this->db->quoteString($screen->getVar('toptemplate')), $this->db->quoteString($screen->getVar('elementtemplate')), $this->db->quoteString($screen->getVar('bottomtemplate')), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('buttontext')), $screen->getVar('finishisdone'), $this->db->quoteString(serialize($screen->getVar('pages'))), $this->db->quoteString(serialize($screen->getVar('pagetitles'))), $this->db->quoteString(serialize($screen->getVar('conditions'))), $screen->getVar('printall'), $screen->getVar('paraentryform'), $screen->getVar('paraentryrelationship'), $screen->getVar('navstyle'),  $screen->getVar('displaycolumns'), $this->db->quoteString($screen->getVar('column1width')), $this->db->quoteString($screen->getVar('column2width')), $screen->getVar('sid')); //nmc 2007.03.24 added 'printall'
              }
 		 $result = $this->db->query($sql);
 		
@@ -286,4 +309,111 @@ function drawPageUI($pageNumber, $pageTitle, $elements, $conditions, $form, $opt
     $form->addElement($conditionsTray);
 		
     return $form;
+}
+
+function pageMeetsConditions($conditions, $currentPage, $entry_id, $fid, $frid) {
+            $thesecons = $conditions[$currentPage];
+            $elements = $thesecons[0];
+            $ops = $thesecons[1];
+            $terms = $thesecons[2];
+            $types = $thesecons[3]; // indicates if the term is part of a must or may set, ie: boolean and or or
+            $filter = "";
+            $oomfilter = "";
+    $blankORSearch = "";
+    
+    if(count($elements)>0 AND !intval($entry_id)) { return false; } // new entries cannot meet conditions yet because they are not saved
+    if(count($elements)==0) { return true; } // pages with no conditions are always allowed!
+    
+    $element_handler = xoops_getmodulehandler('elements', 'formulize');
+            foreach($elements as $i=>$thisElement) {
+        if($elementObject = $element_handler->get($thisElement)) {
+        $searchTerm = formulize_swapDBText(trans($terms[$i]),$elementObject->getVar('ele_uitext'));
+        if($ops[$i] == "NOT") { $ops[$i] = "!="; }
+        if($terms[$i] == "{BLANK}") { // NOTE...USE OF BLANKS WON'T WORK CLEANLY IN ALL CASES DEPENDING WHAT OTHER TERMS HAVE BEEN SPECIFIED!!
+            if($ops[$i] == "!=" OR $ops[$i] == "NOT LIKE") {
+                if($types[$i] != "oom") {
+                    // add to the main filter, ie: entry id = 1 AND x=5 AND y IS NOT "" AND y IS NOT NULL
+                    if(!$filter) {
+                        $filter = $entry_id."][".$elements[$i]."/**//**/!=][".$elements[$i]."/**//**/IS NOT NULL";
+                    } else {
+                        $filter .= "][".$elements[$i]."/**//**/!=][".$elements[$i]."/**//**/IS NOT NULL";
+                    }
+                } else {
+                    // Add to the OOM filter, ie: entry id = 1 AND (x=5 OR y IS NOT "" OR y IS NOT NULL)
+                    if(!$oomfilter) {
+                        $oomfilter = $elements[$i]."/**//**/=][".$elements[$i]."/**//**/IS NULL";
+                    } else {
+                        $oomfilter .= "][".$elements[$i]."/**//**/=][".$elements[$i]."/**//**/IS NULL";
+                    }
+                }
+                    } else {
+                if($types[$i] != "oom") {
+                    // add to its own OR filter, since we MUST match this condition, but we don't care if it's "" OR NULL
+                    // ie: entry id = 1 AND (x=5 OR y=10) AND (z = "" OR z IS NULL)
+                    if(!$blankORSearch) {
+                        $blankORSearch = $elements[$i]."/**//**/=][".$elements[$i]."/**//**/IS NULL";
+                    } else {
+                        $blankORSearch .= "][".$elements[$i]."/**//**/=][".$elements[$i]."/**//**/IS NULL";
+                    }
+                } else {
+                    // it's part of the oom filters anyway, so we put it there, because we don't care if it's null or "" or neither
+                    if(!$oomfilter) {
+                        $oomfilter = $elements[$i]."/**//**/=][".$elements[$i]."/**//**/IS NULL";
+                    } else {
+                        $oomfilter .= "][".$elements[$i]."/**//**/=][".$elements[$i]."/**//**/IS NULL";
+                    }
+                }
+            }
+        } elseif($types[$i] == "oom") {
+            if(!$oomfilter) {
+                $oomfilter = $elements[$i]."/**/".$searchTerm."/**/".$ops[$i];
+            } else {
+                $oomfilter .= "][".$elements[$i]."/**/".$searchTerm."/**/".$ops[$i];
+                    }
+                } else {
+            if(!$filter) {
+                $filter = $entry_id."][".$elements[$i]."/**/".$searchTerm."/**/".$ops[$i];
+                    } else {
+                $filter .= "][".$elements[$i]."/**/".$searchTerm."/**/".$ops[$i];
+                    }
+                }
+        } else {
+            print "Error: there is a condition on page $currentPage that is referring to element $thisElement but that element either doesn't exist or has been renamed.";
+        }
+            }
+    $finalFilter = array();
+            if ($oomfilter AND $filter) {
+                $finalFilter[0][0] = "AND";
+                $finalFilter[0][1] = $filter;
+                $finalFilter[1][0] = "OR";
+                $finalFilter[1][1] = $oomfilter;
+        if($blankORSearch) {
+            $finalFilter[2][0] = "OR";
+            $finalFilter[2][1] = $blankORSearch;
+        }
+            } elseif ($oomfilter) {
+        // need to add the $entry_id as a separate filter from the oom, so the entry and oom get an AND in between them
+                $finalFilter[0][0] = "AND";
+        $finalFilter[0][1] = $entry_id;
+                $finalFilter[1][0] = "OR";
+                $finalFilter[1][1] = $oomfilter;
+        if($blankORSearch) {
+            $finalFilter[2][0] = "OR";
+            $finalFilter[2][1] = $blankORSearch;
+            }
+            } else {
+        if($blankORSearch) {
+            $finalFilter[0][0] = "AND";
+            $finalFilter[0][1] = $filter ? $filter : $entry_id;
+            $finalFilter[1][0] = "OR";
+            $finalFilter[1][1] = $blankORSearch;
+            } else {
+            $finalFilter = $filter;
+            }
+        }
+    $masterBoolean = "AND";
+
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
+    $data = getData($frid, $fid, $finalFilter, $masterBoolean, "", "", "", "", "", false, 0, false, "", false, true);
+    return $data;
 }

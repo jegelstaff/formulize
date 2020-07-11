@@ -35,7 +35,15 @@ define('_FORMULIZE_UI_PHP_INCLUDED', 1);
 // include necessary Formulize files/functions
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
-global $xoopsTpl;
+global $xoopsTpl, $xoopsDB;
+
+// check that each screen has a valid relationship setting
+$sql = "SELECT * FROM ".$xoopsDB->prefix('formulize_screen')." as s WHERE NOT EXISTS(SELECT 1 FROM ".$xoopsDB->prefix('formulize_framework_links')." as l WHERE s.frid = l.fl_frame_id AND (s.fid = l.fl_form1_id OR s.fid = l.fl_form2_id)) AND s.frid != 0";
+if($res = $xoopsDB->query($sql)) {
+    while($array = $xoopsDB->fetchArray($res)) {
+        print 'ERROR: screen '.$array['sid'].' on form '.$array['fid'].' has an invalid relationship set (relationship '.$array['frid'].'). That form does not exist in that relationship. You must correct this or else the screen will not work properly. If the screen shows no relationship selected, then just resave the screen to fix this error.';
+    }
+}
 
 // If saveLock is turned on, exit
 /*if(saveLock) {

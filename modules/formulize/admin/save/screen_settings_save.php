@@ -118,6 +118,9 @@ if($isNew) {
       $screen->setVar('displayheading', 1);
       $screen->setVar('reloadblank', 0);
       $screen->setVar('savebuttontext', _formulize_SAVE);
+      $screen->setVar('saveandleavebuttontext', _formulize_SAVE_AND_LEAVE);
+      $screen->setVar('printableviewbuttontext', _formulize_PRINTVIEW);
+      $screen->setVar('savebuttontext', _formulize_SAVE);
       $screen->setVar('alldonebuttontext', _formulize_DONE);
   } else if ($screens['type'] == 'template') {
       $screen->setVar('custom_code', "");
@@ -142,10 +145,33 @@ $originalFrid = intval($screen->getVar('frid'));
 $screen->setVar('frid',$screens['frid']);
 $screen->setVar('type',$screens['type']);
 $screen->setVar('useToken',$screens['useToken']);
+$screen->setVar('anonNeedsPasscode',$screens['anonNeedsPasscode']);
 
 if(!$sid = $screen_handler->insert($screen)) {
   print "Error: could not save the screen properly: ".$xoopsDB->error();
 }
+
+$reloadNow = false;
+$passcode_handler = xoops_getmodulehandler('passcode', 'formulize');
+if($_POST['delete_passcode']) {
+    $passcode_handler->delete($_POST['delete_passcode']);
+    $reloadNow = true;
+}
+foreach($_POST as $key=>$value) {
+    if(substr($key, 0, 16)=="passcode_expiry_") {
+        $id = str_replace("passcode_expiry_", "", $key);
+        $passcode_handler->updateExpiry($id, $value);
+    }
+}
+if($_POST['add_existing_passcode']) {
+    $passcode_handler->copyPasscodeToScreen($_POST['existing_passcode'], $sid);
+    $reloadNow = true;
+}
+if($_POST['make_new_passcode']) {
+    $passcode_handler->insert($_POST['new_passcode'], $_POST['new_notes'], $sid);
+    $reloadNow = true;
+}
+
 
 if($isNew) {
   
@@ -165,11 +191,10 @@ if($isNew) {
       $screen_handler->writeTemplateToFile("", 'toptemplate', $screen);
       $screen_handler->writeTemplateToFile("", 'bottomtemplate', $screen);
   }
-  
 
     // send code to client that will to be evaluated
   $url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&tab=settings&aid=".$aid.'&fid='.$fid.'&sid='.$sid;
   print '/* eval */ window.location = "'.$url.'";';
-} elseif(intval($originalFrid) != intval($screens['frid'])) {
+} elseif(intval($originalFrid) != intval($screens['frid']) OR $reloadNow) {
   print '/* eval */ reloadWithScrollPosition();';
 }

@@ -2714,6 +2714,7 @@ function icms_need_do_br($moduleName=false) {
 
 function authenticationURL() {
     $client = setupAuthentication();
+    $client->setApprovalPrompt('force');
     $authUrl = $client->createAuthUrl();
     return $authUrl;
 }

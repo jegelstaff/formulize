@@ -33,6 +33,11 @@ include_once "../../../mainfile.php";
 
 $module_handler = xoops_gethandler('module');
 $config_handler = xoops_gethandler('config');
+$element_handler = xoops_getmodulehandler('elements', 'formulize');
+$elementObject = $element_handler->get(intval($_POST['formulize_admin_key']));
+if($elementObject->isSystemElement) {
+    exit();
+}
 $formulizeModule = $module_handler->getByDirname("formulize");
 $formulizeConfig = $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
 if ($formulizeConfig['isSaveLocked']){

@@ -1,6 +1,7 @@
 <{foreach item=appData from=$allAppData}>
 
 <table><tr><td class='appcatspacer'></td><td>
+<div class='applinks'>
 <h1><{$appData.app_name}></h1>
 
 <{if $appData.noforms}>
@@ -16,9 +17,7 @@
 <{/foreach}>
 
 <{/if}>
-
+</div>
 </td><td class='appcatspacer'></td></tr></table>
 
 <{/foreach}>
-
-

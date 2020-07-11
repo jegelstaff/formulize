@@ -58,13 +58,19 @@ if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mi
 }
 $screen->setVar('donedest',$screens['donedest']);
 $screen->setVar('savebuttontext',$screens['savebuttontext']);
+$screen->setVar('saveandleavebuttontext',$screens['saveandleavebuttontext']);
+$screen->setVar('printableviewbuttontext',$screens['printableviewbuttontext']);
 $screen->setVar('alldonebuttontext',$screens['alldonebuttontext']);
 $screen->setVar('displayheading',array_key_exists('displayheading',$screens)?1:0);
 $screen->setVar('reloadblank',$screens['reloadblank']);
 // if formelements is not set, force to blank otherwise changes will not be saved
 $screen->setVar('formelements', isset($screens['formelements']) ? $screens['formelements'] : "");
+$screen->setVar('elementdefaults', isset($screens['elementdefaults']) ? $screens['elementdefaults'] : "");
+$screen->setVar('displaycolumns', isset($screens['displaycolumns']) ? $screens['displaycolumns'] : 2);
+$screen->setVar('column1width', isset($screens['column1width']) ? $screens['column1width'] : null);
+$screen->setVar('column2width', isset($screens['column2width']) ? $screens['column2width'] : null);
 
 if(!$screen_handler->insert($screen)) {
   print "Error: could not save the screen properly: ".$xoopsDB->error();
 }
-?>
+

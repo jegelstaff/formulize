@@ -73,6 +73,7 @@ if ($_GET['fid'] != "new") {
     // Name will be the heading of the section, content is data used in the template for each section
     $i = 1;
     foreach($elementObjects as $thisElement) {
+        if($thisElement->isSystemElement) { continue; }
         $elementCaption = strip_tags($thisElement->getVar('ele_caption'));
         $colhead = strip_tags($thisElement->getVar('ele_colhead'));
         $cleanType = convertTypeToText($thisElement->getVar('ele_type'), $thisElement->getVar('ele_value'));
@@ -254,7 +255,7 @@ if ($_GET['fid'] != "new") {
         // per-group-filters
         $filterSettingsToSend = isset($filterSettings[$thisGroup]) ? $filterSettings[$thisGroup] : "";
         $htmlFormId = $tableform ? "form-2" : "form-3"; // the form id will vary depending on the tabs, and tableforms have no elements tab
-        $groupperms[$i]['groupfilter'] = formulize_createFilterUI($filterSettingsToSend, $fid."_".$thisGroup."_filter", $fid, $htmlFormId, "oom");
+        $groupperms[$i]['groupfilter'] = formulize_createFilterUI($filterSettingsToSend, $fid."_".$thisGroup."_filter", $fid, $htmlFormId, 0, "oom");
         $groupperms[$i]['existingFilter'] = getExistingFilter($filterSettingsToSend, $fid."_".$thisGroup."_filter", $fid, $htmlFormId, "oom");
         $groupperms[$i]['hasgroupfilter'] = $filterSettingsToSend ? " checked" : "";
         $i++;
@@ -446,10 +447,12 @@ foreach($classFiles as $thisFile) {
         $customType = substr($thisFile, 0, strpos($thisFile, "Element.php"));
         $customElementHandler = xoops_getmodulehandler($customType."Element", "formulize");
         $customElementObject = $customElementHandler->create();
+        if(!$customElementObject->isSystemElement) {
         $customElements[$i]['type'] = $customType;
         $customElements[$i]['name'] = $customElementObject->name;
         $i++;
     }
+}
 }
 
 

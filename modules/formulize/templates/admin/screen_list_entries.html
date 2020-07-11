@@ -7,6 +7,8 @@
 <{$securitytoken}>
 <input type="hidden" name="formulize_admin_handler" value="screen_list_entries">
 <input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
+<input type="hidden" class="ffdelete" name="ffdelete" value="">
+<input type="hidden" name="reload_list_screen_page" value="">
 
 
 <div class="panel-content content">
@@ -77,13 +79,15 @@
 
 	  <div class="view-list">
 		<{foreach from=$content.defaultview key=groupid item=viewid name=viewlist}>
-          <{if $smarty.foreach.viewlist.first}><{else}><br><br><{/if}>
+          <div id="view_remove_<{$smarty.foreach.viewlist.iteration}>">
+          <{if $smarty.foreach.viewlist.first}><{else}><br><{/if}>
+          <img style="cursor: pointer;" onclick="removeDefView(<{$smarty.foreach.viewlist.iteration}>)" src="../images/editdelete.gif">&nbsp;
 		  <select id="view_group_<{$smarty.foreach.viewlist.iteration}>" class='default_view_group' name="defaultview_group[]">
 			<{html_options options=$content.grouplist selected=$groupid}>
 		  </select>
 		  <select id="view_view_<{$smarty.foreach.viewlist.iteration}>" class='default_view_list' name="defaultview_view[]">
 			<{html_options options=$content.viewoptions selected=$viewid}>
-		  </select>
+		  </select></div>
 		<{/foreach}>
 	  </div>
 
@@ -94,6 +98,15 @@
 	<p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_EDIT_VIEW_DETAILS}></p>
 	</div>
 	
+	<div class="form-item clear-both">
+        Fundamental Filters<br>
+        <div id='fundamentalfilters'>
+            <br>
+            <{$content.fundamentalfilters}>
+        </div>
+        <div class='description'>These filters will be applied in addition to any other filter settings and searches on the page. They cannot be altered by the end user and they are never shown to the end user. You can have the same saved view as the default view for multiple screens, and then modify what the user sees through these filters. New entries created through this list will have their values set based on any 'Match all' filters that use the 'equals' operator. Note: if you create multiple 'one or more' filters, they will only work if they are on elements from the same form. Note also: dynamic references with { } are not supported.</div>
+    </div>
+    
 	<div class="form-item clear-both">
 	  <label for="screens-usecurrentviewlist"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CURRENTVIEWLIST}></label>
 	  <input type="text" id="screens-usecurrentviewlist" name="screens-usecurrentviewlist" value="<{$content.usecurrentviewlist}>" size="20" maxlength="255"/>
@@ -174,15 +187,18 @@
     appendContentsGroup ='<select id="view_group_'+newNumber+'" class="default_view_group" name="defaultview_group[]">' + group.html().replace('selected="selected"', '') + '</select>';
     appendContentsView = '<select id="view_view_'+newNumber+'" class="default_view_list" name="defaultview_view[]">' + view.html().replace('selected="selected"', '') +'</select>';
 
-    $('div.view-list').append('<br /><br />');
+    $('div.view-list').append('<div id="view_remove_'+newNumber+'"><br /><img style="cursor: pointer;" onclick="removeDefView('+newNumber+')" src="../images/editdelete.gif">&nbsp;');
     $('div.view-list').append(appendContentsGroup);
     $('div.view-list').append('&nbsp;');
     $('div.view-list').append(appendContentsView);
+    $('div.view-list').append('</div>');
     $("[name=add_view]").blur();
     setDisplay('savewarning','block');
     });
   
-  
+  function removeDefView(number) {
+    $('#view_remove_'+number).remove();
+  }
   
   function getFormColumns(number) {
     <{foreach from=$content.advanceviewoptions key=index item=value}>
@@ -245,5 +261,16 @@
     
     setDisplay('savewarning','block');
   }
+  $("div#fundamentalfilters > input#addcon").click(function () {
+	$("[name=reload_list_screen_page]").val(1);
+  $(".savebutton").click();
+	return false;
+});
+  $("div#fundamentalfilters > a.conditionsdelete").click(function () {
+	$(".ffdelete").val($(this).attr('target'));
+	$("[name=reload_list_screen_page]").val(1);
+  $(".savebutton").click();
+	return false;
+});
   
 </script>

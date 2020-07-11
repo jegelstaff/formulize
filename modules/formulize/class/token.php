@@ -72,9 +72,9 @@ class formulizeTokenHandler {
 		if(isset($cachedKeys[$key])) { return $cachedKeys[$key]; }
         global $xoopsDB;
 		if($key!="all") {
-            $sql = "SELECT groups, tokenkey, expiry, maxuses, currentuses FROM ".$xoopsDB->prefix("formulize_tokens")." WHERE tokenkey = '".formulize_db_escape($key)."' AND (expiry IS NULL OR expiry > NOW())";
+            $sql = "SELECT `groups`, tokenkey, expiry, maxuses, currentuses FROM ".$xoopsDB->prefix("formulize_tokens")." WHERE tokenkey = '".formulize_db_escape($key)."' AND (expiry IS NULL OR expiry > NOW())";
         } else {
-            $sql = "SELECT groups, tokenkey, expiry, maxuses, currentuses FROM ".$xoopsDB->prefix("formulize_tokens")." WHERE expiry IS NULL OR expiry > NOW()";
+            $sql = "SELECT `groups`, tokenkey, expiry, maxuses, currentuses FROM ".$xoopsDB->prefix("formulize_tokens")." WHERE expiry IS NULL OR expiry > NOW()";
         }
         $res = $xoopsDB->query($sql);
         if(!$res) {
@@ -106,7 +106,7 @@ class formulizeTokenHandler {
         $currentuses = 0;
         $expiry = $expiry ? "'".date("Y-m-d H:i:s",time()+($expiry*3600))."'" : "NULL";
         global $xoopsDB;
-        $sql = "INSERT INTO ".$xoopsDB->prefix("formulize_tokens")." (groups, tokenkey, expiry, maxuses, currentuses) VALUES ('".$groups."','".$candidateID."',".$expiry.",".intval($maxuses).",".intval($currentuses).")";
+        $sql = "INSERT INTO ".$xoopsDB->prefix("formulize_tokens")." (`groups`, tokenkey, expiry, maxuses, currentuses) VALUES ('".$groups."','".$candidateID."',".$expiry.",".intval($maxuses).",".intval($currentuses).")";
         if(!$res = $xoopsDB->queryF($sql)) {
             print "Error: could not insert tokenkey with this SQL: $sql<br>".$xoopsDB->error();
             return false;
@@ -143,7 +143,7 @@ function incrementUses($token){
      $newuses = $uses +1;
      global $xoopsDB;
      $key = preg_replace("/[^A-Za-z0-9]/", "", str_replace(" ","",$key)); // keys must be only alphanumeric characters
-    if($key &&  $uses < $token->getVar('maxuses')) {		
+    if($key && ($token->getVar('maxuses') == 0 OR $uses < $token->getVar('maxuses'))) {		
         
         $sql = "UPDATE ".$xoopsDB->prefix("formulize_tokens")." SET currentuses = ".$newuses. " WHERE tokenkey = '".formulize_db_escape($key)."'";
        
@@ -152,7 +152,7 @@ function incrementUses($token){
             return false;
 	    }
 
-       if($newuses == $token->getVar('maxuses')){
+       if($token->getVar('maxuses') > 0 AND $newuses == $token->getVar('maxuses')){
             //if we have now reached the max: cleanup
             if(!$this->delete($key)){
                 return false;

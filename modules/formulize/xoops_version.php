@@ -31,9 +31,9 @@
 
 $modversion = array(
 	'name' => _MI_formulize_NAME,
-	'version' => "5.1",
+	'version' => "6.0",
 	'description' => _MI_formulize_DESC,
-	'author' => "Freeform Solutions",
+	'author' => "Julian Egelstaff & Freeform Solutions",
 	'credits' => "",
 	'help' => "",
 	'license' => "GPL",
@@ -111,7 +111,8 @@ $modversion['formulize_exportable_tables'] = array(
 	"formulize_group_filters",
 	"formulize_groupscope_settings",
     "formulize_apikeys",
-    "formulize_tokens"
+    "formulize_tokens",
+    "formulize_passcodes"
 );
 
 
@@ -369,6 +370,10 @@ $modversion['table_metadata'] = array(
     ),
     "formulize_tokens" => array(
         "fields" => array("groups","tokenkey"),
+        "joins" => array()
+    ),
+    "formulize_tokens" => array(
+        "fields" => array("passcode", "screen"),
         "joins" => array()
     )
 );
@@ -645,6 +650,15 @@ $modversion['templates'][] = array(
     'description' => '');
 $modversion['templates'][] = array(
 	'file' => 'admin/screen_calendar_templates.html',
+    'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'passcode.html',
+    'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/multipage_navigation2-above.html',
+    'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/multipage_navigation2-below.html',
     'description' => '');
 $modversion['templates'][] = array(
 	'file' => 'admin/alternate_fields_for_linked_elements.html',

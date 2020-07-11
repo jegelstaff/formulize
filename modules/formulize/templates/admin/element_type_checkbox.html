@@ -43,3 +43,14 @@
   
 </div>
 
+<script>
+$("#snapshot-<{$content.ele_value.snapshot}>").attr('checked',1);
+    
+    $('input[name="linked_yesno"]').change(function() {
+        if($('input[name="linked_yesno"]:checked').val() == 1) {
+            $('#snapshot-values').show(200);
+        } else {
+            $('#snapshot-values').hide(200);
+        }
+    });
+</script>

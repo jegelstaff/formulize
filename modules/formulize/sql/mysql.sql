@@ -20,6 +20,17 @@ CREATE TABLE `formulize_digest_data` (
   INDEX i_fid (`fid`)
 ) ENGINE=InnoDB;
 
+CREATE TABLE `formulize_passcodes` (
+    `passcode_id` int(11) unsigned NOT NULL auto_increment,
+    `passcode` text default null,
+    `screen` int(11) NOT NULL default '0',
+    `expiry` date default NULL,
+    `notes` text default NULL,
+    PRIMARY KEY (`passcode_id`),
+    INDEX i_passcode (passcode(50)),
+    INDEX i_screen (screen),
+    INDEX i_expiry (expiry)
+) ENGINE=MyISAM;
 CREATE TABLE `formulize_apikeys` (
     `key_id` int(11) unsigned NOT NULL auto_increment,
     `uid` int(11) NOT NULL default '0',
@@ -39,7 +50,7 @@ CREATE TABLE `formulize_tokens` (
     `maxuses` int(11) NOT NULL default '0',
     `currentuses` int(11) NOT NULL default '0',
     PRIMARY KEY (`key_id`),
-    INDEX i_groups (groups),
+    INDEX i_groups (`groups`),
     INDEX i_tokenkey (tokenkey),
     INDEX i_expiry (expiry),
     INDEX i_maxuses (maxuses),
@@ -70,7 +81,7 @@ CREATE TABLE `formulize_menu_permissions` (
 CREATE TABLE `formulize_resource_mapping` (
     mapping_id int(11) NOT NULL auto_increment,
     internal_id int(11) NOT NULL,
-    external_id int(11) NOT NULL,
+    external_id int(11) NULL default NULL,
     resource_type int(4) NOT NULL,
     mapping_active tinyint(1) NOT NULL,
     external_id_string text NULL default NULL,
@@ -181,6 +192,7 @@ CREATE TABLE `formulize_screen_listofentries` (
   `bottomtemplate` text NOT NULL,
   `entriesperpage` int(1) NOT NULL,
   `viewentryscreen` varchar(10) NOT NULL DEFAULT '',
+  `fundamental_filters` text NOT NULL,
   PRIMARY KEY (`listofentriesid`),
   INDEX i_sid (`sid`)
 ) ENGINE=MyISAM;
@@ -196,12 +208,16 @@ CREATE TABLE `formulize_screen_multipage` (
   `donedest` varchar(255) NOT NULL default '',
   `buttontext` varchar(255) NOT NULL default '',
   `finishisdone` tinyint(1) NOT NULL default 0,
+  `navstyle` tinyint(1) NOT NULL default 0,
   `pages` text NOT NULL,
   `pagetitles` text NOT NULL,
   `conditions` text NOT NULL,
   `printall` tinyint(1) NOT NULL,
   `paraentryform` int(11) NOT NULL default 0,
   `paraentryrelationship` tinyint(1) NOT NULL default 0,
+  `displaycolumns` tinyint(1) NOT NULL default 2,
+  `column1width` varchar(255) NULL default NULL,
+  `column2width` varchar(255) NULL default NULL,
   PRIMARY KEY (`multipageid`),
   INDEX i_sid (`sid`)
 ) ENGINE=MyISAM;
@@ -211,10 +227,16 @@ CREATE TABLE `formulize_screen_form` (
   `sid` int(11) NOT NULL default 0,
   `donedest` varchar(255) NOT NULL default '',
   `savebuttontext` varchar(255) NOT NULL default '',
+  `saveandleavebuttontext` varchar(255) NOT NULL default '',
+  `printableviewbuttontext` varchar(255) NOT NULL default '',
   `alldonebuttontext` varchar(255) NOT NULL default '',
   `displayheading` tinyint(1) NOT NULL default 0,
   `reloadblank` tinyint(1) NOT NULL default 0,
   `formelements` text,
+  `elementdefaults` text NOT NULL,
+  `displaycolumns` tinyint(1) NOT NULL default 2,
+  `column1width` varchar(255) NULL default NULL,
+  `column2width` varchar(255) NULL default NULL,
   PRIMARY KEY (`formid`),
   INDEX i_sid (`sid`)
 ) ENGINE=MyISAM;
@@ -226,6 +248,7 @@ CREATE TABLE `formulize_screen` (
   `frid` int(11) NOT NULL default 0,
   `type` varchar(100) NOT NULL default '',
   `useToken` tinyint(1) NOT NULL,
+  `anonNeedsPasscode` tinyint(1) NOT NULL,
   PRIMARY KEY  (`sid`)
 ) ENGINE=MyISAM;
 

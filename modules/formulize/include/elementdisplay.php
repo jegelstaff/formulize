@@ -320,7 +320,7 @@ EOF;
 	// So, no handling of linked values is included here.
 	} elseif($forcehidden = $element->getVar('ele_forcehidden') AND $entry=="new" AND !$noSave) {
 		// hiddenElements keys will be the element ids
-		$hiddenElements = generateHiddenElements(array($element), $entry);
+		$hiddenElements = generateHiddenElements(array($element), $entry, $screen);
 		$thisHiddenElement = isset($hiddenElements[$element->getVar('ele_id')]) ? $hiddenElements[$element->getVar('ele_id')] : "";
 		if(!$renderElement) {
 			return array("hidden", $isDisabled, $thisHiddenElement); // if the element is hidden, then return an array, but with hidden as the first key, so that logic that was not expecting an element back, will still function as is.  This is a backwards compatibility thing.  For hidden elements, the element is in the third key, if in fact you need it/are looking for it in the user land code...note that in the case of checkboxes, the elements returned will be in an array
@@ -410,7 +410,8 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 				if($ele_type == "text" OR $ele_type == "textarea") {
 					$ele_value = $elementObject->getVar('ele_value');
 					$defaultKey = $ele_type == "text" ? 2 : 0; // default key is in different places for different types of elements
-					$compValue = getTextboxDefault($ele_value[$defaultKey], $elementObject->getVar('id_form'), $entry);
+                    $placeholder = $ele_type == "text" ? $ele_value[11] : "";
+					$compValue = getTextboxDefault($ele_value[$defaultKey], $elementObject->getVar('id_form'), $entry, $placeholder);
 				} else {
 					$compValue = "";
 				}

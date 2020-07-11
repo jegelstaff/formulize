@@ -11,55 +11,136 @@
 
 <div class="panel-content content">
   <fieldset>
-    <legend>Form Heading</legend>
-		<div class="form-item">
-		  <p><nobr><input type="checkbox" id="screens-displayheading" name="screens-displayheading"<{if $content.displayheading}> checked="checked"<{/if}> value="1"/>&nbsp;&nbsp;Show all the headings at the top of the form ("Entry created by so-and-so, on this date, etc")</nobr></p>
-	  </div>
-	</fieldset>
-	<fieldset>
-		<legend>Save button, text and behaviour</legend>
-	  <div class="form-item">
-		  <label for="screens-savebuttontext">What text should be used on the Save button?</label>
-		  <input type="text" id="screens-savebuttontext" name="screens-savebuttontext" value="<{$content.savebuttontext}>"/>
-	  </div>
-		<div class="form-item">
-		  <p><label for="screens-reloadblank">How should the form reload, after the user has saved a new entry?</label></p>
-				<div class="form-radios">
-          <label for="entry"><input type="radio" id="entry" name="screens-reloadblank" value=0 />Reload showing the entry the user has just created</label>
-        </div>
-        <div class="form-radios">
-          <label for="blank"><input type="radio" id="blank" name="screens-reloadblank" value=1 />Reload blank, so another new entry can be created</label>
-        </div>
-	<div class="description">If the All Done button is turned off in the <a href="<{$xoops_url}>/modules/system/admin.php?fct=preferences&op=showmod&mod=<{$adminPage.formulizeModId}>">Formulize module preferences</a>, then the first option (show the entry the user just created) will send the user to the All Done destination instead.</div>
-	  </div>
-		</legend>
-	</fieldset>
-	<fieldset>
-		<legend>All Done button, text and behaviour</legend>
-	  <div class="form-item">
-		  <label for="screens-alldonebuttontext">What text should be used on the All Done button?</label>
-		  <input type="text" id="screens-alldonebuttontext" name="screens-alldonebuttontext" value="<{$content.alldonebuttontext}>"/>
-			<div class="description">You can leave this blank, that will cause the All Done button to be turned off on the form.  In that case, there will only be a Save button.</div> 
-	  </div>
-	  <div class="form-item">
-		  <label for="screens-donedest">When users click the All Done button, what URL should they be sent to?</label>
-		  <input type="text" id="screens-donedest" name="screens-donedest" value="<{$content.donedest}>"/>
-			<div class="description">You can leave this blank, and if you do then the default All Done action will happen.  Depending on the circumstance, the default action is either the form reloading, or the user returning to the previous page.  If you do specify an All Done location, and you are sending users to a location on this site, then you don't have to type the root part of the site's URL.  Just start the destination with a slash, ie: /modules/formulize/index.php?sid=12</div>
-	  </div>
-	</fieldset>
 		<legend>Form Elements</legend>
 		<div class="form-item">
-			<label for="screens-formelements">Which form elements should be displayed?</label>
+			<label for="screens-formelements">Which form elements should be displayed?</label><br>
 			<select id="screens-formelements" name="screens-formelements[]" size="15" multiple>
 			<{html_options options=$content.element_list selected=$content.formelements}>
 			</select>
 			<div class="description">Leave this blank to display all form elements.</div>
 		</div>
 	</fieldset>
+    <fieldset>
+		<legend>Element Defaults</legend>
+		<div class="form-item">
+			<p><label for="elementchoice">Do you want to force certain elements to have certain default values when displayed in this screen?</label>
+            <br>
+			<select id="elementchoice" name="elementchoice" size="1">
+			<{html_options options=$content.element_list}>
+			</select>
+            <input type="text" id="elementdefault" name="elementdefault">
+            <input type="button" id="edadd" value="Add This Default"></p>
+            <p id="addeddefaults"></p>
+			<div class="description">Defaults that you set for elements here, will take effect only on this screen. The elements will behave normally on other screens (if those screens do not have any defaults set of their own).</div>
+		</div>
+	</fieldset>
+  <fieldset>
+    <legend>Form Display</legend>
+		<div class="form-item">
+		  <p><nobr><input type="checkbox" id="screens-displayheading" name="screens-displayheading"<{if $content.displayheading}> checked="checked"<{/if}> value="1"/>&nbsp;&nbsp;Show all the headings at the top of the form ("Entry created by so-and-so, on this date, etc")</nobr></p>
+	  </div>
+        <div class="form-item">
+            <p>Display the form elements as:<br>
+            <label for="onecolumn"><input type='radio' id="onecolumn" name="screens-displaycolumns" value="1"/> a single column</label><br>
+            <label for="twocolumns"><input type='radio' id="twocolumns" name="screens-displaycolumns" value="2"/> two columns</label>
+            </p>
+            <p>Width for column one: <input type='text' name='screens-column1width' value="<{$content.column1width}>"><br>
+            Width for column two: <input type='text' name='screens-column2width' value="<{$content.column2width}>"></p>
+            <div class="description">The widths can be specified using any valid CSS value.</div>
+        </div>
+	</fieldset>
+	<fieldset>
+		<legend>Buttons, text and behaviour</legend>
+	  <div class="form-item">
+		  <label for="screens-savebuttontext">What text should be used on the <b>Save</b> button?</label>
+		  <input type="text" id="screens-savebuttontext" name="screens-savebuttontext" value="<{$content.savebuttontext}>"/>
+          <div class="description">You can leave this blank, that will remove this button from the form.</div>
+	  </div>
+      
+		<div class="form-item">
+		  <label for="screens-saveandleavebuttontext">What text should be used on the <b>Save and Leave</b> button?</label>
+		  <input type="text" id="screens-saveandleavebuttontext" name="screens-saveandleavebuttontext" value="<{$content.saveandleavebuttontext}>"/>
+          <div class="description">You can leave this blank, that will remove this button from the form.</div> 
+	  </div>
+      
+      <div class="form-item">
+		  <label for="screens-alldonebuttontext">What text should be used on the <b>Leave Page</b> button?</label>
+		  <input type="text" id="screens-alldonebuttontext" name="screens-alldonebuttontext" value="<{$content.alldonebuttontext}>"/>
+          <div class="description">You can leave this blank, that will remove this button from the form.</div> 
+	  </div>
+      
+      <div class="form-item">
+		  <p><label for="screens-donedest">When users leave the form, where should they be sent?</label></p>
+				<div class="form-radios">
+          <label for="default"><input type="radio" id="default" name="leavebehaviour0" value=0 />Back to the where they came from</label>
+        </div>
+        <div class="form-radios">
+          <label for="url"><input type="radio" id="url" name="leavebehaviour0" value=1 />To this URL: </label><input type="text" id="screens-donedest" name="screens-donedest" value="<{$content.donedest}>"/>
+          <div class="description">If you are sending users to a location on this site, then you don't have to type the root part of the site's URL.  Just start the destination with a slash, ie: /modules/formulize/index.php?sid=12</div>
+        </div>
+	  </div>
+        
+	  <div class="form-item">
+		  <p><label for="screens-printableviewbuttontext">What text should be used on the <b>Printable View</b> button?</label></p>
+		  <input type="text" id="screens-printableviewbuttontext" name="screens-printableviewbuttontext" value="<{$content.printableviewbuttontext}>"/>
+          <div class="description">You can leave this blank, that will remove this button from the form.</div> 
+	  </div>
+        
+	  <div class="form-item">
+		  <p><label for="screens-reloadblank">How should the form reload, after the user has saved a <b>new</b> entry?</label></p>
+				<div class="form-radios">
+          <label for="entry"><input type="radio" id="entry" name="screens-reloadblank" value=0 />Reload showing the entry the user has just created</label>
+        </div>
+        <div class="form-radios">
+          <label for="blank"><input type="radio" id="blank" name="screens-reloadblank" value=1 />Reload blank, so another new entry can be created</label>
+          <div class="description">When a user lands on a form screen from a list of entries, this setting will be ignored and the button the user clicked will take precedence (either the <b>Add one entry</b> button or the <b>Add multiple entries</b> button).</div>
+	  </div>
+		</div>
+	</fieldset>
+	
 </div>
 
 </form>
 
+<style>
+    .adefault:hover {
+        color: red;
+        text-decoration: line-through;
+    }
+</style>
+
 <script type="text/javascript">
+    
+    $("#edadd").click(function() {
+        appendDefault($('#elementchoice').val(), $('#elementchoice').children('option:selected').text(), $('#elementdefault').val().replace(/"/g, '&quot;'));
+        $('#elementdefault').val('');       
+    });
+    $('.adefault').live('click', function() {
+        $('#'+$(this).attr('id').replace('def','hidden')).remove();
+        $(this).remove();
+        setDisplay('savewarning','block');
+    });
+
+    <{foreach from=$content.elementdefaults key=id item=defaultText}>
+    <{if $id}>
+    appendDefault(<{$id}>, '<{$content.element_list.$id}>', "<{$defaultText|replace:'"':'&quot;'}>");
+    <{/if}>
+    <{/foreach}>
+    
+    
+    function appendDefault(id, elementText, defaultText) {
+        $('#addeddefaults').append('<input type="hidden" name="screens-elementdefaults['+id+']" id="hidden_'+id+'" value="'+defaultText+'"><span class="adefault" id="def_'+id+'">'+elementText+' >> '+defaultText+'<br></span>');
+        
+    }
+    
+    
 	$("#<{$content.reloadblank}>").attr('checked', true);
+    $("#<{$content.leavebehaviour}>").attr('checked', true);
+    $("#<{$content.displaycolumns}>").attr('checked', true);
+    $("#url").click(function() {
+        $("#screens-donedest").focus();
+    });
+    $("#screens-donedest").click(function() {
+       $("#url").attr('checked', true);
+    });
 </script>

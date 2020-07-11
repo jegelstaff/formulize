@@ -48,6 +48,8 @@ class formulizeformulize extends XoopsObject {
     var $adminCanMakeRequired;
     var $alwaysValidateInputs;
     var $canHaveMultipleValues;
+    var $hasMultipleOptions;
+    var $isSystemElement; // only set to true in custom element class, if you want an element to exist in the form but be uneditable, uncreatable, undeletable by anyone. It is maintained in code.
 	
 	function __construct(){
         parent::__construct();
@@ -166,6 +168,34 @@ class formulizeformulize extends XoopsObject {
         }
         parent::setVar($key, $value, $not_gpc);
     }
+    
+    // returns an array of the default values (since there could be more than one in some element types)
+    // entry_id is the entry for which we're getting the default value, if any    
+    public function getDefaultValues($entry_id='new') {
+        $default = array();
+        $ele_value = $this->getVar('ele_value');
+        $ele_type = $this->getVar('ele_type');
+        switch($ele_type) {
+            case 'select':
+                if($this->isLinked === false) { // linked element support needs to be added!!
+                    foreach($ele_value[2] as $option=>$selected) {
+                        if($selected) {
+                            $default[] = $option;
+                        }
+                    }
+                }
+                break;
+            case 'text':
+            case 'textarea':
+                $defaultKey = $ele_type == "text" ? 2 : 0; // default key is in different places for different types of elements
+                $placeholder = $ele_type == "text" ? $ele_value[11] : "";
+                $default[] = getTextboxDefault($ele_value[$defaultKey], $this->getVar('id_form'), $entry_id, $placeholder);
+                break;
+            default: // other element types need to be implemented! And a new method needs to be added to custom classes???
+        }
+        return $default;
+    }
+    
 }
 
 class formulizeElementsHandler {
@@ -214,26 +244,39 @@ class formulizeElementsHandler {
 				$element = new formulizeformulize();
 			}
 			$element->assignVars($array);
-			$element->isLinked = false;
-			$ele_type = $element->getVar('ele_type');
-            $ele_value = $element->getVar('ele_value');
-			if($ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "select" OR $ele_type=="radio" OR $ele_type=="checkbox" OR $ele_type=="date" OR $ele_type=="colorpick" OR $ele_type=="yn" OR $ele_type=="derived") {
-			    $element->hasData = true;
-			} 
-			if($ele_type=="select" OR $ele_type=="checkbox") { // isLinked SHOULD BE BROKEN OUT INTO A METHOD OR SOMETHING ON ELEMENT OBJECTS, SO IT DOESN'T HAVE TO BE HERE IN A METHOD IN THE PARENT CLASS! ELEMENT CLASSES SHOULD BE ABLE TO ANSWER THIS ON THEIR OWN.
-				if(!is_array($ele_value[2])) {
-					$element->isLinked = strstr($ele_value[2], "#*=:*") ? true : false;
-				}
-			} 
-            if($ele_type == "radio" OR ($ele_type=="select" AND $ele_value[1] == 1)) {
-                $element->canHaveMultipleValues = true;
-            }
+            $element = $this->_setElementProperties($element);
 			$cachedElements[$id] = $element;
 			return $element;
 		}
 		return false;
 	}
 
+    function _setElementProperties($element) {
+        $element->isLinked = false;
+        $element->hasMultipleOptions = is_bool($element->hasMultipleOptions) ? $element->hasMultipleOptions : false;
+        $element->canHaveMultipleValues = is_bool($element->canHaveMultipleValues) ? $element->canHaveMultipleValues : false;
+        $ele_type = $element->getVar('ele_type');
+        $ele_value = $element->getVar('ele_value');
+        if($ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "select" OR $ele_type=="radio" OR $ele_type=="date" OR $ele_type=="colorpick" OR $ele_type=="yn" OR $ele_type=="derived") {
+            $element->hasData = true;
+        } 
+        if($ele_type=="select") {
+            $element->hasMultipleOptions = true;
+            if($ele_value[1] == 1) {
+                $element->canHaveMultipleValues = true;
+            }
+        }
+        if($ele_type=="select" OR $ele_type=="checkbox") { // isLinked SHOULD BE BROKEN OUT INTO A METHOD OR SOMETHING ON ELEMENT OBJECTS, SO IT DOESN'T HAVE TO BE HERE IN A METHOD IN THE PARENT CLASS! ELEMENT CLASSES SHOULD BE ABLE TO ANSWER THIS ON THEIR OWN.
+            if(!is_array($ele_value[2])) {
+                $element->isLinked = strstr($ele_value[2], "#*=:*") ? true : false;
+            }
+        } 
+        if($ele_type == "radio") {
+            $element->hasMultipleOptions = true;
+        }
+        return $element;
+    }
+    
 	function insert(&$element, $force = false){
         if( get_class($element) != 'formulizeformulize' AND is_subclass_of($element, 'formulizeformulize') == false){
             return false;
@@ -430,20 +473,7 @@ class formulizeElementsHandler {
 				$elements = new formulizeformulize();
 			}
 			$elements->assignVars($myrow);
-			$elements->isLinked = false;
-			$ele_type = $elements->getVar('ele_type');
-				$ele_value = $elements->getVar('ele_value');
-			if($ele_type=="select" OR $ele_type=="checkbox") { // SEE COMMENT ABOVE IN THE GET METHOD. isLinked shouldn't be handled here in the parent class when element classes exist. It should be part of the definition for what an element class provides.
-				if(!is_array($ele_value[2])) {
-					$elements->isLinked = strstr($ele_value[2], "#*=:*") ? true : false;
-				}
-			}
-			if($ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "select" OR $ele_type=="radio" OR $ele_type=="checkbox" OR $ele_type=="date" OR $ele_type=="colorpick" OR $ele_type=="yn" OR $ele_type == "derived") {
-			    $elements->hasData = true;
-			} 
-            if($ele_type == "radio" OR ($ele_type=="select" AND $ele_value[1] == 1)) {
-                $elements->canHaveMultipleValues = true;
-            }
+            $elements = $this->_setElementProperties($elements);
 			if($id_as_key === true OR $id_as_key == "element_id"){
 				$ret[$myrow['ele_id']] =& $elements;
 			}elseif($id_as_key == "handle") {

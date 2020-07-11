@@ -45,10 +45,16 @@ class formulizeFormScreen extends formulizeScreen {
 		parent::__construct();
 		$this->initVar("donedest", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
 		$this->initVar("savebuttontext", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
+        $this->initVar("saveandleavebuttontext", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
+        $this->initVar("printableviewbuttontext", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
 		$this->initVar("alldonebuttontext", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
     $this->initVar('displayheading', XOBJ_DTYPE_INT);
     $this->initVar('reloadblank', XOBJ_DTYPE_INT);
     $this->initVar('formelements', XOBJ_DTYPE_ARRAY);
+    $this->initVar('elementdefaults', XOBJ_DTYPE_ARRAY);
+    $this->initVar('displaycolumns', XOBJ_DTYPE_INT);
+    $this->initVar("column1width", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
+    $this->initVar("column2width", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
 	}
 }
 
@@ -83,9 +89,39 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 	    $screen->setVar('dobr', 0);
 		// note: conditions is not written to the DB yet, since we're not gathering that info from the UI	
 		if (!$update) {
-            $sql = sprintf("INSERT INTO %s (sid, donedest, savebuttontext, alldonebuttontext, displayheading, reloadblank, formelements) VALUES (%u, %s, %s, %s, %u, %u, %s)", $this->db->prefix('formulize_screen_form'), $screen->getVar('sid'), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('savebuttontext')), $this->db->quoteString($screen->getVar('alldonebuttontext')), $screen->getVar('displayheading'), $screen->getVar('reloadblank'), $this->db->quoteString(serialize($screen->getVar('formelements'))));
+            $sql = sprintf("INSERT INTO %s (sid, donedest, savebuttontext, saveandleavebuttontext, printableviewbuttontext, alldonebuttontext, displayheading, reloadblank, formelements, elementdefaults, displaycolumns, column1width, column2width)
+                VALUES (%u, %s, %s, %s, %s, %s, %u, %u, %s, %s, %u, %s, %s)",
+                $this->db->prefix('formulize_screen_form'),
+                $screen->getVar('sid'),
+                $this->db->quoteString($screen->getVar('donedest')),
+                $this->db->quoteString($screen->getVar('savebuttontext')),
+                $this->db->quoteString($screen->getVar('saveandleavebuttontext')),
+                $this->db->quoteString($screen->getVar('printableviewbuttontext')),
+                $this->db->quoteString($screen->getVar('alldonebuttontext')),
+                $screen->getVar('displayheading'),
+                $screen->getVar('reloadblank'),
+                $this->db->quoteString(serialize($screen->getVar('formelements'))), 
+                $this->db->quoteString(serialize($screen->getVar('elementdefaults'))),
+                $screen->getVar('displaycolumns'),
+                $this->db->quoteString($screen->getVar('column1width')),
+                $this->db->quoteString($screen->getVar('column2width'))                
+                ); // need to use serialize because cleanvars not called on object, and that would transparently serialize arrays in the background. Ugh.
         } else {
-            $sql = sprintf("UPDATE %s SET donedest = %s, savebuttontext = %s, alldonebuttontext = %s, displayheading = %u, reloadblank = %u, formelements = %s WHERE sid = %u", $this->db->prefix('formulize_screen_form'), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('savebuttontext')), $this->db->quoteString($screen->getVar('alldonebuttontext')), $screen->getVar('displayheading'), $screen->getVar('reloadblank'), $this->db->quoteString(serialize($screen->getVar('formelements'))), $screen->getVar('sid'));
+            $sql = sprintf("UPDATE %s SET donedest = %s, savebuttontext = %s, saveandleavebuttontext = %s, printableviewbuttontext = %s, alldonebuttontext = %s, displayheading = %u, reloadblank = %u, formelements = %s, elementdefaults = %s, displaycolumns = %u, column1width = %s, column2width = %s
+                WHERE sid = %u",
+                $this->db->prefix('formulize_screen_form'),
+                $this->db->quoteString($screen->getVar('donedest')),
+                $this->db->quoteString($screen->getVar('savebuttontext')),
+                $this->db->quoteString($screen->getVar('saveandleavebuttontext')),
+                $this->db->quoteString($screen->getVar('printableviewbuttontext')),
+                $this->db->quoteString($screen->getVar('alldonebuttontext')),
+                $screen->getVar('displayheading'), $screen->getVar('reloadblank'),
+                $this->db->quoteString(serialize($screen->getVar('formelements'))),
+                $this->db->quoteString(serialize($screen->getVar('elementdefaults'))),
+                $screen->getVar('displaycolumns'),
+                $this->db->quoteString($screen->getVar('column1width')),
+                $this->db->quoteString($screen->getVar('column2width')),                
+                $screen->getVar('sid'));
         }
         $result = $this->db->query($sql);
         if (!$result) {
@@ -125,9 +161,14 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 		$mainform = $screen->getVar('frid') ? $screen->getVar('fid') : "";
 		$donedest = $screen->getVar("donedest");
 		$savebuttontext = $screen->getVar("savebuttontext");
-		$savebuttontext = $savebuttontext ? $savebuttontext : _formulize_SAVE;
+        $saveandleavebuttontext = $screen->getVar("saveandleavebuttontext");
 		$alldonebuttontext = $screen->getVar("alldonebuttontext");
+        $printableviewbuttontext = $screen->getVar("printableviewbuttontext");
+		$savebuttontext = $savebuttontext ? $savebuttontext : "{NOBUTTON}";
+        $saveandleavebuttontext = $saveandleavebuttontext ? $saveandleavebuttontext : "{NOBUTTON}";
 		$alldonebuttontext = $alldonebuttontext ? $alldonebuttontext : "{NOBUTTON}";
+        $printableviewbuttontext = $printableviewbuttontext ? $printableviewbuttontext : "{NOBUTTON}";
+        
 		$displayheading = $screen->getVar('displayheading');
 		$displayheading = $displayheading ? "" : "all"; // if displayheading is off, then need to pass the "all" keyword to supress all the headers
 		$displayheading = $elements_only ? "formElementsOnly" : $displayheading;
@@ -149,7 +190,7 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 			$overrideMulti = 0;
 		}
 		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
-		displayForm($formframe, $entry, $mainform, $donedest, array(0=>$alldonebuttontext, 1=>$savebuttontext),
+		displayForm($formframe, $entry, $mainform, $donedest, array(0=>$alldonebuttontext, 1=>$savebuttontext, 2=>$saveandleavebuttontext, 3=>$printableviewbuttontext),
             $settings, $displayheading, "", $overrideMulti, "", 0, 0, 0, $screen);
 	}
 

@@ -42,6 +42,7 @@ class formulizeDummyElement extends formulizeformulize {
         $this->adminCanMakeRequired = false; // set to true if the webmaster should be able to toggle this element as required/not required
         $this->alwaysValidateInputs = true; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
         $this->canHaveMultipleValues = false; // set to true if this element can store multiple values at once, such as how a set of checkboxes works
+        $this->hasMultipleOptions = false; // set to true if this element has multiple fixed options, such as a radio button set, or checkboxes, or a dropdown list, etc.
         parent::__construct();
     }
     
@@ -82,8 +83,9 @@ class formulizeDummyElementHandler extends formulizeElementsHandler {
     // this method would read back any data from the user after they click save in the admin UI, and save the data to the database, if it were something beyond what is handled in the basic element class
     // this is called as part of saving the options tab.  It receives a copy of the element object immediately prior to it being saved, so the element object will have all its properties set as they would be based on the user's changes in the names & settings tab, and in the options tab (the tabs are saved in order from left to right).
     // the exception is the special ele_value array, which is passed separately from the object (this will contain the values the user set in the Options tab)
-    // You can modify the element object in this function and since it is an object, and passed by reference by default, then your changes will be saved when the element is saved.
+    // You can modify the element object in this function and since it is an object, and passed by reference by default, then your changes will be saved when the element is saved. Use setVar to set the value of a property. You must do this for the ele_value property if you are changing it!
     // You should return a flag to indicate if any changes were made, so that the page can be reloaded for the user, and they can see the changes you've made here.
+    // $ele_value will be only the values parsed out of the Options tab on the element's admin page, which follow the naming convention elements-ele_value -- other values that should be in ele_value will need to be parsed here from $_POST or elsewhere
     function adminSave($element, $ele_value) {
         $changed = false;
         if(is_object($element) AND is_subclass_of($element, 'formulizeformulize')) {
@@ -120,7 +122,9 @@ class formulizeDummyElementHandler extends formulizeElementsHandler {
     // $element is the element object
     // $entry_id is the ID number of the entry where this particular element comes from
     // $screen is the screen object that is in effect, if any (may be null)
-    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
+    // $owner is the user id of the owner of the entry
+    // $renderAsHiddenDefault is a flag to control what happens when we render as a hidden element for users who can't normally access the element -- typically we would set the default value inside a hidden element, or the current value if for some reason an entry is passed
+    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner, $renderAsHiddenDefault = false) {
         // dummy element is rendered as a textboxes, with the values set by the user in the admin side smushed together as the default value for the textbox
         if($isDisabled) {
             $formElement = new xoopsFormLabel($caption, $ele_value[0] . $ele_value[1]);

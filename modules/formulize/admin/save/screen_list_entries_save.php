@@ -81,9 +81,12 @@ $screen->setVar('useworkingmsg',(array_key_exists('useworkingmsg',$screens))?$sc
 $screen->setVar('usescrollbox',(array_key_exists('usescrollbox',$screens))?$screens['usescrollbox']:0);
 $screen->setVar('entriesperpage',$screens['entriesperpage']);
 $screen->setVar('viewentryscreen',$screens['viewentryscreen']);
-
+$screen->setVar('fundamental_filters',serialize(parseSubmittedConditions('fundamentalfilters', 'ffdelete')));
 
 if(!$screen_handler->insert($screen)) {
   print "Error: could not save the screen properly: ".$xoopsDB->error();
 }
-?>
+
+if(isset($_POST['reload_list_screen_page']) AND $_POST['reload_list_screen_page']) {
+    print "/* evalnow */ if(redirect=='') { redirect = 'reloadWithScrollPosition();'; }";
+}

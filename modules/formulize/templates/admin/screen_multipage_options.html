@@ -11,9 +11,26 @@
 
 <div class="panel-content content">
 	<fieldset>
+        <legend>Appearance</legend>
+        <div class="form-item">
+            <p>What style of page navigation should this form use?<br>
+            <label for="screens-navstyle-0"><input type="radio" id=screens-navstyle-0 name="screens-navstyle" value=0> Continue and Back buttons, and a dropdown list of pages</label><br />
+            <label for="screens-navstyle-1"><input type="radio" id=screens-navstyle-1 name="screens-navstyle" value=1> Tabs for each page</label></p>
+	    </div>
+        <div class="form-item">
+            <p>Display the form elements as:<br>
+            <label for="onecolumn"><input type='radio' id="onecolumn" name="screens-displaycolumns" value="1"/> a single column</label><br>
+            <label for="twocolumns"><input type='radio' id="twocolumns" name="screens-displaycolumns" value="2"/> two columns</label>
+            </p>
+            <p>Width for column one: <input type='text' name='screens-column1width' value="<{$content.column1width}>"><br>
+            Width for column two: <input type='text' name='screens-column2width' value="<{$content.column2width}>"></p>
+            <div class="description">The widths can be specified using any valid CSS value.</div>
+        </div>
+    </fieldset>
+	<fieldset>
 		<legend>Link on the final page of the form</legend>
 	  <div class="form-item">
-		<label for="screens-finishisdone"><{$smarty.const._AM_FORMULIZE_SCREEN_FINISHISDONE}></label>
+		<label for="screens-finishisdone"><{$smarty.const._AM_FORMULIZE_SCREEN_FINISHISDONE}></label><br>
 		<input type="radio" id=screens-finishisdone-0 name="screens-finishisdone" value=0> <{$smarty.const._AM_FORMULIZE_SCREEN_FINISHISDONE_THANKSPAGE}><br />
 		<input type="radio" id=screens-finishisdone-1 name="screens-finishisdone" value=1> <{$smarty.const._AM_FORMULIZE_SCREEN_FINISHISDONE_FINISHBUTTON}>
 	  </div>
@@ -63,4 +80,6 @@
 
 <script type='text/javascript'>
 $("#screens-finishisdone-<{$content.finishisdone}>").attr('checked',1);
+$("#screens-navstyle-<{$content.navstyle}>").attr('checked',1);
+$("#<{$content.displaycolumns}>").attr('checked', true);
 </script>

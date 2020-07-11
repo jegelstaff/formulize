@@ -161,10 +161,6 @@ if($sid) {
     }
 }
 
-// check for $xoopsUser added by skenow.  Forces anons to only see the form itself and never the list of entries view.
-// Really, we should build in better permission/configuration control so that more precise
-// control over anon behaviour is possible
-
 // gather $_GET['ve'] (viewentry), or prefer a global value that has been set
 if(isset($formulize_entry_id) AND is_numeric($formulize_entry_id)) {
   $entry = $formulize_entry_id;
@@ -185,6 +181,32 @@ if ($screen) {
     // this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
     $renderedFormulizeScreen = $screen;
+    
+    // validate any passcode for anon users that has been saved in session, or require one from users first before anything else
+    if($uid == 0 AND $screen->getVar('anonNeedsPasscode')) {
+        $screenAllowedForUser = false;
+        $passCodeHandler = xoops_getmodulehandler('passcode', 'formulize');
+        $passCode = isset($_SESSION['formulize_passCode_'.$screen->getVar('sid')]) ? $_SESSION['formulize_passCode_'.$screen->getVar('sid')] : '';
+        // if no passcode in session and if we have not received a user's submitted passcode...
+        if (!$passCode AND (!isset($_POST['passcode']) OR isset($_SESSION['formulize_passcodeFailed']))) {
+            unset($_SESSION['formulize_passcodeFailed']);
+            $xoopsTpl->display("db:passcode.html");
+            return;
+        // if no passcode but we have received a user's submitted passcode then process it...
+        } elseif(!$passCode) {
+            $passCode = $_POST['passcode'];
+        }
+        // if a passcode has been determined, validate it...
+        if($passCode) {
+            $passCode_handler = xoops_getmodulehandler('passcode', 'formulize');
+            $screenAllowedForUser = $passCode_handler->validatePasscode($passCode, $screen->getVar('sid'));
+        }
+    } else {
+        // group based permission for other non-anon users will go here
+        $screenAllowedForUser = true;
+    }
+    
+    if($screenAllowedForUser) {
     if($screen->getVar('type') == "listOfEntries" AND ((isset($_GET['iform']) AND $_GET['iform'] == "e") OR isset($_GET['showform']))) { // form itself specifically requested, so force it to load here instead of a list
         if($screen->getVar('frid')) {
             include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
@@ -198,10 +220,16 @@ if ($screen) {
     } else {
         $screen_handler->render($screen, $entry, $loadThisView);
     }
+    } else {
+        $_SESSION['formulize_passcodeFailed'] = true;
+        print "<p>"._formulize_NO_PERM."</p>";
+    }
     $rendered = true;
 }
 
 // IF NO SCREEN IS REQUESTED (or none rendered successfully, ie: a bad screen id was passed), THEN USE THE DEFAULT DISPLAY LOGIC TO DETERMINE WHAT TO SHOW THE USER
+
+// Only allowed for logged in users! Too many security holes if we allow anons all the different ways of getting to forms. They must go through a screen.
 
 // new logic to handle invoking new interface (2005)
 // 1. determine if the form is a single or multi
@@ -210,7 +238,7 @@ if ($screen) {
 // 2.5 if yes->displayEntries, if no...
 // 3 displayForm
 
-if (!$rendered) {
+if (!$rendered AND $uid) {
     if (isset($frid) AND is_numeric($frid) AND isset($fid) AND is_numeric($fid)) {
         // this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
         include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";

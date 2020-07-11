@@ -331,13 +331,13 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
                         // check columns from form
                         switch($element["ele_type"]) {
                             case "select":
+                                $ele_value = unserialize($element["ele_value"]);
                                 if (isset($importSet[5][1][$link]) AND !strstr($cell_value, ",") AND (!is_numeric($cell_value) OR $cell_value < 10000000))
                                 {
                                     // Linked element, but allow entries with commas to pass through unvalidated, and also allow through numeric values with no commas, if they are really big (assumption is big numbers are some kind of special entry_id reference, as in the case of UofT)
                                     $linkElement = $importSet[5][1][$link];
-                                    $ele_value = unserialize($element["ele_value"]);
 
-                                    if ($ele_value[1]) {
+                                    if ($ele_value[1] AND !($ele_value['snapshot'] AND $ele_value[16])) {
                                         // Multiple options
                                         //echo "Multiple options<br>";
 
@@ -366,7 +366,7 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
                                                 }
                                             }
                                         }
-                                    } else {
+                                    } elseif(!($ele_value['snapshot'] AND $ele_value[16])) {
                                         // Single option
                                         list($all_valid_options, $all_valid_options_ids) = getElementOptions($linkElement[2]['ele_handle'], $linkElement[2]['id_form']);
                                         if (!in_array($cell_value, $all_valid_options)) {
@@ -698,8 +698,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
         if (is_array($row) AND count($row) > 1) {
             $rowCount++;
             $this_id_req = "";
-            if (is_array($id_reqs)) {
-                // get the id_req if necessary.  will happen regardless of position of idreq column
+            if (is_array($id_reqs)) { // get the id_req if necessary.  will happen regardless of position of idreq column
                 $this_id_req = $row[$importSet[7]['idreqs']];
             }
 
@@ -747,13 +746,11 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
             $links = count($importSet[6]);
             $fieldValues = array();
             $newEntryId = "";
-            
             for ($link = 0; $link < $links; $link++) {
                 // used as a flag to indicate whether we're dealing with a linked selectbox or not, since if we are, that is the only case where we don't want to do HTML special chars on the value // deprecated in 3.0
                 $all_valid_options = false;
 
                 if ($importSet[6][$link] != -1) {
-                    
                     $element = $importSet[5][0][$importSet[6][$link]];
                     
                     $id_form = $importSet[4];
@@ -772,6 +769,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
                                 continue; // ignore derived values for importing
                             
                             case "select":
+                            $ele_value = unserialize($element["ele_value"]);
                             if ($importSet[5][1][$link] AND !strstr($row_value, ",")
                                 AND (!is_numeric($row_value) OR $row_value < 10000000))
                             {
@@ -779,11 +777,18 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
                                 $linkElement = $importSet[5][1][$link];
                                 $ele_value = unserialize($element["ele_value"]);
                                 list($all_valid_options, $all_valid_options_ids) = getElementOptions($linkElement[2]['ele_handle'], $linkElement[2]['id_form']);
-                                if ($ele_value[1]) {
+                                if ($ele_value[1] AND !($ele_value['snapshot'] AND $ele_value[16])) {
                                     // Multiple options
                                     $element_value = $linkElement[0] . "#*=:*" .
                                     $linkElement[1] . "#*=:*";
                                     $items = explode("\n", $row_value);
+                                    if($ele_value['snapshot']) {
+                                        $row_value = '';
+                                        if(count($items)>1) {
+                                            $row_value .= '*=+*:';  
+                                        }
+                                        $row_value .= implode('*=+*:',$items);
+                                    } else {
                                     $row_value = ",";
                                     foreach ($items as $item) {
                                         $item_value = trim($item);
@@ -800,9 +805,13 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
                                         }
                                         $row_value .= $ele_id . ",";
                                     }
-                                } else {
+                                    }
+                                } elseif(!($ele_value['snapshot'] AND $ele_value[16])) {
                                     // Single option
-                                    if ($optionIndex = array_search($row_value, $all_valid_options)) {
+                                    if($ele_value['snapshot']) {
+                                        $row_value = $row_value; // take the validated item the user has put into the box
+                                        break;
+                                    } elseif ($optionIndex = array_search($row_value, $all_valid_options)) {
                                         $ele_id = $all_valid_options_ids[$optionIndex];
                                     } else {
                                         foreach ($all_valid_options as $optionIndex=>$thisoption) {
@@ -1109,6 +1118,9 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
         $ele_types = $formObject->getVar('elementTypes');
         if(in_array('derived',$ele_types)) {
     foreach($entriesMap as $entry) {
+        //if($entry > 200) { break; }
+        //print "Entry $entry Memory usage: ".memory_get_usage()."<br>";
+        $GLOBALS['formulize_doNotCacheDataSet'] = true;
         formulize_updateDerivedValues($entry, $importSet[4]); // 4 is the form id
     }
         }

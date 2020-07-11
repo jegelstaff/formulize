@@ -1697,3 +1697,7 @@ form .groupselectionbox {
 p.useroptions input[type="text"] {
     width: 50em;
 }
+
+.right-align-text {
+    text-align: right;
+}

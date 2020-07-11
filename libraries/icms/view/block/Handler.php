@@ -104,7 +104,7 @@ class icms_view_block_Handler extends icms_ipf_Handler {
 
 		if (isset($side)) {
 			// get both sides in sidebox? (some themes need this)
-			$tp = ($side == -2)?'L':($side == -6)?'C':'';
+			$tp = ($side == -2)?'L':(($side == -6)?'C':'');
 			if ($tp != '') {
 			 	$q_side = "";
 				$icms_blockposition_handler = icms::handler('icms_view_block_position');
@@ -526,7 +526,7 @@ class icms_view_block_Handler extends icms_ipf_Handler {
 			// get both sides in sidebox? (some themes need this)
 			$tp = ($side == -2)
 				? 'L'
-				: ($side == -6) ? 'C' : '';
+				: (($side == -6) ? 'C' : '');
 			if ($tp != '') {
 				$side = "";
 				$s1 = "SELECT id FROM " . $this->db->prefix('block_positions') . " WHERE block_type='" . $tp . "' ORDER BY id ASC";

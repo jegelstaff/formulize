@@ -168,7 +168,9 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
                     var formulizeFile".$markupName."Exists = true;
                     </script>";
                 }
-                $introToUploadBox .= "<div id='formulize_fileStatus_".$element->getVar('ele_id')."_$entry_id' class='no-print formulize-fileupload-element'>".$this->createDownloadLink($element, $entry_id, $ele_value[3], $ele_value[4])." &mdash; <a href='' onclick='warnAboutFileDelete(\"".str_replace("de_","formulize_",$markupName)."\", \"".$element->getVar('ele_id')."\", \"$entry_id\");return false;'><img src='".XOOPS_URL."/modules/formulize/images/x.gif' />" . _AM_UPLOAD_DELETE . "</a><br />" . _AM_UPLOAD_MOD;
+                // have to spoof the raw value from the database, in order to generate the URL for use in the download link, since that's what the URL method is expecting
+                $fakeRawValue = serialize(array('name'=>$ele_value[3], 'isfile'=>$ele_value[5]));
+                $introToUploadBox .= "<div id='formulize_fileStatus_".$element->getVar('ele_id')."_$entry_id' class='no-print formulize-fileupload-element'>".$this->createDownloadLink($element, $this->createFileURL($element, $entry_id, $fakeRawValue), $ele_value[4])." &mdash; <a href='' onclick='warnAboutFileDelete(\"".str_replace("de_","formulize_",$markupName)."\", \"".$element->getVar('ele_id')."\", \"$entry_id\");return false;'><img src='".XOOPS_URL."/modules/formulize/images/x.gif' />" . _AM_UPLOAD_DELETE . "</a><br />" . _AM_UPLOAD_MOD;
             } else {
                 $introToUploadBox = "<div id='formulize_fileStatus_".$element->getVar('ele_id')."_$entry_id' class='no-print formulize-fileupload-element'>" . _AM_UPLOAD;
             }
@@ -310,7 +312,11 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
     // $handle is the element handle for the field that we're retrieving this for
     // $entry_id is the entry id of the entry in the form that we're retrieving this for
     function prepareDataForDataset($value, $handle, $entry_id) {
-        return $value;
+        $url = $this->createFileURL($this->get($handle), $entry_id, $value);
+        // store the displayName in case we need to format this in a list later -- only the URL will be passed to the formatDataForList method, since that's all we're passing back here, so we need another way of getting the displayName into that method
+        $value = unserialize($value);
+        $GLOBALS['formulize_fileUploadElementDisplayName'][$entry_id][$handle] = $this->getFileDisplayName($value['name']);
+        return $url;
     }
     
     // this method will take a text value that the user has specified at some point, and convert it to a value that will work for comparing with values in the database.  This is used primarily for preparing user submitted text values for saving in the database, or for comparing to values in the database.  The typical user submitted values would be coming from a condition form (ie: fieldX = [term the user typed in]) or other situation where the user types in a value that needs to interact with the database.
@@ -323,22 +329,42 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
     // for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
     // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
     function formatDataForList($value, $handle, $entry_id) {
+        // $value will be the url as determined in prepareDataForDataset above...or an error message, etc, if there's no valid file
         $this->clickable = false; // make urls clickable
         $this->striphtml = false; // remove html tags as a security precaution
-        $this->length = 1000; // truncate to a maximum of 1000 characters, and append ... on the end
-        $value = unserialize($value); // file upload elements have a serialized array as their data value, and there's not a lot we can do with that except unserialize it here.  Without putting a hook of some kind in the display function, we have no way of knowing when we should be unserializing the values that we are packaging up when the display function is called.
-        $displayName = $this->getFileDisplayName($value['name']);
-        $value = $value['isfile'] ? $this->createDownloadLink($this->get($handle), $entry_id, $value['name'], $displayName) : $value['name'];
+        $this->length = 2000; // truncate to a maximum of 2000 characters, and append ... on the end
+        $displayName = $GLOBALS['formulize_fileUploadElementDisplayName'][$entry_id][$handle]; // set aside in GLOBALS by the prepareDataForDataset method above
+        $value = strstr($value, 'http') ? $this->createDownloadLink($this->get($handle), $value, $displayName) : $value; // we make the clickable links manually here, since we don't just want the URL part to become a link, we want to wrap the display name in a link to the URL
         return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
     }
     
-    // this method is for the file upload element only.  It will return a href that links to the actual file.
-    function createDownloadLink($element, $entry_id, $fileName, $displayName) {
-        $ele_value = $element->getVar('ele_value');
-        if($ele_value[2]) {
-            return "<a href='".XOOPS_URL."/uploads/formulize_".$element->getVar('id_form')."_".$entry_id."_".$element->getVar('ele_id')."/$fileName' target='_blank'>".htmlspecialchars(strip_tags($displayName),ENT_QUOTES)."</a>";            
+    // this method returns the URL for a file, not a href - or the text value that is in place of a file name, such as an error message
+    // $element is the element object
+    // $entry_id is the ID number of this entry
+    // $value is the serialized raw value from the database for this particular entry
+    function createFileURL($element, $entry_id, $value) {
+        $value = unserialize($value);
+        $fileName = $value['name'];
+        $isFile = $value['isfile'];
+        if($isFile) {
+            $ele_value = $element->getVar('ele_value');
+            if($ele_value[2]) { // users can connect directly to file or not?
+                return XOOPS_URL."/uploads/formulize_".$element->getVar('id_form')."_".$entry_id."_".$element->getVar('ele_id')."/$fileName";            
+            } else {
+                return XOOPS_URL."/modules/formulize/download.php?element=".$element->getVar('ele_id')."&entry_id=$entry_id";
+            }    
         } else {
-            return "<a href='".XOOPS_URL."/modules/formulize/download.php?element=".$element->getVar('ele_id')."&entry_id=$entry_id'>".htmlspecialchars(strip_tags($displayName),ENT_QUOTES)."</a>";
+            return $fileName; // will be an error message or something like that
+        }
+    }
+    
+    // this method is for the file upload element only.  It will return a href that links to the actual file.
+    function createDownloadLink($element, $url, $displayName) {
+        $ele_value = $element->getVar('ele_value');
+        if($ele_value[2]) { // files we link to directly get a '_blank' target
+            return "<a href='".$url."' target='_blank'>".htmlspecialchars(strip_tags($displayName),ENT_QUOTES)."</a>";            
+        } else {
+            return "<a href='".$url."'>".htmlspecialchars(strip_tags($displayName),ENT_QUOTES)."</a>";
         }
     }
 

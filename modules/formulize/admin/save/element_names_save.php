@@ -69,6 +69,9 @@ $ele_type = $_POST['element_type'];
 $element_handler = xoops_getmodulehandler('elements','formulize');
 if($_POST['formulize_admin_key'] == "new") {
   $element = $element_handler->create();
+  if($element->isSystemElement) {
+    return;
+  }
   $fid = intval($_POST['formulize_form_id']);
   $element->setVar('id_form', $fid);
   $element->setVar('ele_type', $ele_type);

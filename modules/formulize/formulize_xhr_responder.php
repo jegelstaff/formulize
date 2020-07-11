@@ -36,7 +36,8 @@
 
 require_once "../../mainfile.php"; // initialize the xoops stack so we have access to the user object, etc if necessary
 // check that the user who sent this request is the same user we have a session for now, if not, bail
-$sentUid = $_GET['uid'];
+$sentUid = intval($_GET['uid']);
+
 if(($xoopsUser AND $sentUid != $xoopsUser->getVar('uid')) OR (!$xoopsUser AND $sentUid !== 0)) {
   exit();
 }
@@ -211,34 +212,7 @@ switch($op) {
       }
     }
     if(security_check($fid, $entryId)) {
-      // "" is framework, ie: not applicable
-      $deReturnValue = displayElement("", $elementObject, $entryId, false, null, null, false); // false, null, null, false means it's not a noSave element, no screen, no prevEntry data passed in, and do not render the element on screen
-      if(is_array($deReturnValue)) {
-        if($deReturnValue[0] == 'hidden') {
-            if(is_object($deReturnValue[2])) {
-                print $deReturnValue[2]->render();
-            }
-        } else {
-        $form_ele = $deReturnValue[0];
-        if($elementObject->getVar('ele_req')) {
-            $form_ele->setRequired();
-        }
-        $isDisabled = $deReturnValue[1];
-        // rendered HTML code below is taken from the formulize classes at the top of include/formdisplay.php
-        if($elementObject->getVar('ele_type') == "ib") {// if it's a break, handle it differently...
-          $class = ($form_ele[1] != '') ? " class='".$form_ele[1]."'" : '';
-          if ($form_ele[0]) {
-            $html = "<td colspan='2' $class><div style=\"font-weight: normal;\">" . trans(stripslashes($form_ele[0])) . "</div></td>";
-          } else {
-            $html = "<td colspan='2' $class>&nbsp;</td>";
-          }
-        } else {
-          require_once XOOPS_ROOT_PATH."/modules/formulize/include/formdisplay.php"; // need the formulize_themeForm
-		  $html = formulize_themeForm::_drawElementElementHTML($form_ele);
-        }
-        if($html) {
-            $html = trans($html);
-        }
+        $html = renderElement($elementObject, $entryId);
         if(count($sendBackValue)>0) {
           // if we wrote any new values in autocomplete boxes, pass them back so we can alter their values in markup so new entries are not created again!
           print '{ "data" : '.json_encode($html).', "newvalues" : [';
@@ -255,8 +229,6 @@ switch($op) {
             print $html;
         }
       }
-    }
-    }
     break;
 
 
@@ -264,28 +236,36 @@ switch($op) {
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
     $formID = $_GET['fid'];
     $formRelationID = $_GET['frid'];
+    $entryID = isset($_GET['entryId']) ? intval($_GET['entryId']) : "";
     $limitStart = $_GET['limitstart'];
     $GLOBALS['formulize_forceDerivedValueUpdate'] = true;
     ob_start();
-    $data = getData($formRelationID, $formID,"","AND","",$limitStart,250);
+    $data = getData($formRelationID, $formID, $entryID, "AND","",$limitStart,50);
     ob_clean(); // this catches any errors or other output because it would stop the update from running
     $GLOBALS['formulize_forceDerivedValueUpdate'] = false;
-    print count($data); // return the number of entries found. when this reaches 0, the client will know to stop calling
+    if(isset($_GET['returnElements'])) {
+        // instead of returning the count of data that we found, generate the derived value elements of the main form and return those
+        $derivedValueMarkup = array();
+        $form_handler = xoops_getModuleHandler('forms', 'formulize');
+        $element_handler = xoops_getModuleHandler('elements', 'formulize');
+        $formObject = $form_handler->get($formID);
+        foreach($formObject->getVar('elementTypes') as $elementId=>$elementType) {
+            if($elementType == 'derived') {
+                $elementObject = $element_handler->get($elementId);
+                if($html = renderElement($elementObject, $entryID)) {
+                    $derivedValueMarkup[$elementId] = $html;
+                }
+            }
+        }
+        print json_encode($derivedValueMarkup);
+    } else {
+        print count($data); // return the number of entries found. when this reaches 0, the client will know to stop calling, in the case where this is called by admin UI to update all entries after derived value formulas are changed
+    }
     break;
 
 
     case "validate_php_code":
-    if (function_exists("shell_exec") AND trim($_POST["the_code"]) != "") {
-        $tmpfname = tempnam(sys_get_temp_dir(), 'FZ');
-        file_put_contents($tmpfname, trim($_POST["the_code"]));
-        $output = shell_exec('php -l "'.$tmpfname.'" 2>&1'); // -l is syntax check only - SUPER IMPORTANT!!!
-        unlink($tmpfname);
-        if (false !== strpos($output, "PHP Parse error")) {
-            // remove the second line because detail about the error is on the first line
-            $output = str_replace("\nErrors parsing {$tmpfname}\n", "", $output);
-            echo str_replace("PHP Parse error:  s", "S", str_replace(" in $tmpfname", "", $output));
-        }
-    }
+        echo formulize_validatePHPCode($_POST["the_code"]);
     break;
 
 
@@ -301,6 +281,8 @@ switch($op) {
     $frameworks = $framework_handler->getFrameworksByForm($_POST['form_id']);
     for ($i = 0; $i <= count($viewNames); $i++) {
         if(!$viewPublished[$i]) {
+            unset($views[$i]);
+            unset($viewNames[$i]);
             continue;
         }
         if($viewFrids[$i]) {
@@ -316,4 +298,43 @@ switch($op) {
     break;
 
 
+}
+
+function renderElement($elementObject, $entryId) {
+    
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
+    // "" is framework, ie: not applicable
+    $GLOBALS['formulize_asynchronousRendering'][$elementObject->getVar('ele_handle')] = true;
+    $deReturnValue = displayElement("", $elementObject, $entryId, false, null, null, false); // false, null, null, false means it's not a noSave element, no screen, no prevEntry data passed in, and do not render the element on screen
+    unset($GLOBALS['formulize_asynchronousRendering']);
+    if(is_array($deReturnValue)) {
+        if($deReturnValue[0] == 'hidden') {
+            if(is_object($deReturnValue[2])) {
+                return $deReturnValue[2]->render();
+            }
+        } else {
+            $form_ele = $deReturnValue[0];
+            if($elementObject->getVar('ele_req')) {
+                $form_ele->setRequired();
+            }
+            $isDisabled = $deReturnValue[1];
+            // rendered HTML code below is taken from the formulize classes at the top of include/formdisplay.php
+            if($elementObject->getVar('ele_type') == "ib") {// if it's a break, handle it differently...
+              $class = ($form_ele[1] != '') ? " class='".$form_ele[1]."'" : '';
+              if ($form_ele[0]) {
+                $html = "<td colspan='2' $class><div style=\"font-weight: normal;\">" . trans(stripslashes($form_ele[0])) . "</div></td>";
+              } else {
+                $html = "<td colspan='2' $class>&nbsp;</td>";
+              }
+            } else {
+              require_once XOOPS_ROOT_PATH."/modules/formulize/include/formdisplay.php"; // need the formulize_themeForm
+              $html = formulize_themeForm::_drawElementElementHTML($form_ele);
+            }
+            if($html) {
+                $html = trans($html);
+                return $html;
+            }
+        }
+    }
+    return false;
 }

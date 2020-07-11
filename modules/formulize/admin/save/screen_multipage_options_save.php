@@ -62,9 +62,13 @@ $screen->setVar('donedest',$screens['donedest']);
 $screen->setVar('buttontext',get_magic_quotes_gpc() ? stripslashes($screens['buttontext']) : $screens['buttontext']);
 $screen->setVar('printall',$screens['printall']);
 $screen->setVar('finishisdone',$screens['finishisdone']);
+$screen->setVar('navstyle',$screens['navstyle']);
+$screen->setVar('displaycolumns', isset($screens['displaycolumns']) ? $screens['displaycolumns'] : 2);
+$screen->setVar('column1width', isset($screens['column1width']) ? $screens['column1width'] : null);
+$screen->setVar('column2width', isset($screens['column2width']) ? $screens['column2width'] : null);
 
 
 if(!$screen_handler->insert($screen)) {
   print "Error: could not save the screen properly: ".$xoopsDB->error();
 }
-?>
+

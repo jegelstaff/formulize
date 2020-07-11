@@ -102,8 +102,18 @@
 			    <div class="form-radios">
 			    </div>
                 <div class="form-radios">
-				    <label for="elements-ele_value[3]-1"><input type="radio" id="elements-ele_value[3]-1" name="elements-ele_value[3]" value="1"<{if $content.ele_value[3] == 1 }> checked="checked"<{/if}>/>Show the <i>View</i> buttons, open entries full screen (reloads the page, and <i>Save and Leave</i> then returns to the main form)</label>
+				    <label for="elements-ele_value[3]-1"><input type="radio" id="elements-ele_value[3]-1" name="elements-ele_value[3]" value="1"<{if $content.ele_value[3] == 1 }> checked="checked"<{/if}>/>Show the <i>View</i> buttons, open entries full screen (reloads the page, clicking <i>Save and Leave</i> returns to the main form)</label>
 			    </div>
+                <div class="form-radios">
+                <br>
+                <p>Disable these elements in each row:</p>
+                <select name="elements_ele_value_disabledelements[]" size="10" multiple>
+				<{html_options options=$content.subformelements selected=$content.ele_value.disabledelements}>
+                </select>
+                <div class="description">Elements selected will be rendered as "read only" values, instead of as form elements.</div>
+                </div>
+                
+                
                 </div>
 			    
 			    </fieldset>
@@ -113,7 +123,7 @@
         <fieldset>
             <legend><{$smarty.const._AM_ELE_SUBFORM_IFFORM}></legend>
 	    <p><{$smarty.const._AM_ELE_SUBFORM_SCREEN}></p>
-            <select id="element-subform" name="elements-ele_value[display_screen]" size="1">
+            <select id="element-subform-screen" name="elements-ele_value[display_screen]" size="1">
                 <{html_options options=$content.subform_screens selected=$content.ele_value.display_screen}>
             </select>
             <div class="description"><{$smarty.const._AM_ELE_SUBFORM_SCREEN_HELP}></div>
@@ -213,4 +223,40 @@ By default, all entries in a subform that are tied to the main form will be acce
 		return false;
 	});
 
+    var prevVal;
+    function removeNonDisplayedElementsFromDisabledList() {
+        // if some elements are selected...
+        if ($("[name^=elements_ele_value_1]").children(":not(option:selected)").length < $("[name^=elements_ele_value_1]").children().length) {
+            $("[name^=elements_ele_value_1]").children(":not(option:selected)").each(function() {
+                $("[name^=elements_ele_value_disabledelements] option[value="+$(this).val()+"]").remove();
+            });
+        // no elements are selected, so replicate the entire list...
+        } else {
+            $("[name^=elements_ele_value_1]").children().each(function() {
+                addElementToDisabledList($(this).val(), prevVal, $(this).index());
+                prevVal = $(this).val();
+            });
+        }
+    }
+    
+    function addElementToDisabledList(optionValue, prevOptionValue, i) {
+        if(optionValue != 'null' && $("[name^=elements_ele_value_disabledelements] option[value="+optionValue+"]").length == 0) {
+            if (i == 0) {
+                $("[name^=elements_ele_value_disabledelements]").prepend('<option value="'+optionValue+'">'+$("[name^=elements_ele_value_1] option[value="+optionValue+"]").text()+'</option>');
+            } else {
+                $('<option value="'+optionValue+'">'+$("[name^=elements_ele_value_1] option[value="+optionValue+"]").text()+'</option>').insertAfter($("[name^=elements_ele_value_disabledelements] option[value="+prevOptionValue+"]"));
+            }
+        }
+    }
+    
+    $("[name^=elements_ele_value_1]").change(function() {
+        var eles = String($(this).val()).split(',');
+        for (i = 0; i < eles.length; i++) {
+            addElementToDisabledList(eles[i], eles[i-1], i);
+        }
+        removeNonDisplayedElementsFromDisabledList();
+    });
+    
+    removeNonDisplayedElementsFromDisabledList()
+    
 </script>

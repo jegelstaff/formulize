@@ -15,12 +15,12 @@
 <div class="panel-content content">
 
     <h2>Before Saving</h2>
-    <p>This special procedure runs before an entry is saved. Values are available as PHP variables using the element handle name. The ID of the current entry (or 'new') is available as $entry_id. On multi-page forms, only the elements which appear on the current page are available, however creating PHP variables for other elements will cause them to be saved.</p><br />
+    <p>This special procedure runs before an entry is saved. Values are available as PHP variables using the element handle name. The ID of the current entry (or 'new') is available as $entry_id. The current value in the database (prior to this save) is available as $currentValues['handle_name'], so you can check if something has actually changed.</p><br />
     <textarea id="forms-on_before_save" name="forms-on_before_save" class="code-textarea"><{$content.form_object->on_before_save}>
 </textarea><{* closing tag on a new line so the textarea has a blank line at the bottom *}>
 
     <h2>After Saving</h2>
-    <p>This special procedure runs after an entry is saved. The ID of the saved entry is available as $entry_id.</p><br />
+    <p>This special procedure runs after an entry is saved. The ID of the saved entry is available as $entry_id. The value that was in the database, prior to this save, is available as $currentValues['handle_name'], so you can check if something has actually changed.</p><br />
     <textarea id="forms-on_after_save" name="forms-on_after_save" class="code-textarea"><{$content.form_object->on_after_save}>
 </textarea><{* closing tag on a new line so the textarea has a blank line at the bottom *}>
 

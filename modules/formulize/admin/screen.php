@@ -39,12 +39,21 @@ $settings = array();
 $aid = isset($_GET['aid']) ? intval($_GET['aid']) : 0;
 $form_id = intval($_GET['fid']);
 
+// get all passcodes for other screens
+// generate a potential new passcode for this screen
+$passcode_handler = xoops_getmodulehandler('passcode', 'formulize');
+$settings['existingPasscodes'] = $passcode_handler->getOtherScreenPasscodes($screen_id);
+$settings['newPasscode'] = $passcode_handler->generatePasscode();
+$settings['passcodes'] = $passcode_handler->getThisScreenPasscodes($screen_id);
+
+
 if ($screen_id == "new") {
     $settings['type'] = 'listOfEntries';
     $settings['frid'] = 0;
     $config_handler = $config_handler =& xoops_gethandler('config');
     $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
     $settings['useToken'] = $formulizeConfig['useToken'];
+    $settings['anonNeedsPasscode'] = 0;
     $screenName = "New screen";
 } else {
     $screen_handler = xoops_getmodulehandler('screen', 'formulize');
@@ -58,6 +67,7 @@ if ($screen_id == "new") {
     $settings['type'] = $screen->getVar('type');
     $settings['frid'] = $screen->getVar('frid');
     $settings['useToken'] = $screen->getVar('useToken');
+    $settings['anonNeedsPasscode'] = $screen->getVar('anonNeedsPasscode');
 
     if ($settings['type'] == 'listOfEntries') {
         $screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
@@ -221,6 +231,9 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $entries['viewentryscreen'] = $screen->getVar('viewentryscreen');
   $entries['frid'] = $settings['frid'];
   
+  // add fundamental filter conditions... cannot have _ in the DOM element name (second param)
+  $entries['fundamentalfilters'] = formulize_createFilterUI($screen->getVar('fundamental_filters'), "fundamentalfilters", $screen->getVar('fid'), "form-3", $screen->getVar('frid'));
+
   // headings data
   $headings = array();
   $headings['useheadings'] = $screen->getVar('useheadings');
@@ -323,7 +336,10 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
         $framework_handler =& xoops_getModuleHandler('frameworks');
         $frameworkObject = $framework_handler->get($frid);
         foreach($frameworkObject->getVar("links") as $thisLinkObject) {
-            if ($thisLinkObject->getVar("unifiedDisplay") AND $thisLinkObject->getVar("relationship") == 1) {
+            if ($thisLinkObject->getVar("unifiedDisplay") AND ( $thisLinkObject->getVar("relationship") == 1 OR
+                    ($thisLinkObject->getVar("relationship") == 2 AND $thisLinkObject->getVar("form1") != $form_id)
+                    OR ($thisLinkObject->getVar("relationship") == 3 AND $thisLinkObject->getVar("form2") != $form_id)
+                     )) {
                 $thisFid = $thisLinkObject->getVar("form1") == $form_id ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
                 $options = multiPageScreen_addToOptionsList($thisFid, $options);
             }
@@ -354,8 +370,13 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
     $multipageOptions['paraentryrelationship'] = $screen->getVar('paraentryrelationship');
     $multipageOptions['donedest'] = $screen->getVar('donedest');
     $multipageOptions['finishisdone'] = $screen->getVar('finishisdone');
+    $multipageOptions['navstyle'] = $screen->getVar('navstyle') == 1 ? 1 : 0;
     $multipageOptions['buttontext'] = $screen->getVar('buttontext');
     $multipageOptions['printall'] = $screen->getVar('printall');
+    $multipageOptions['displaycolumns'] = $screen->getVar('displaycolumns') == 1 ? "onecolumn" : "twocolumns";
+    $multipageOptions['column1width'] = $screen->getVar('column1width') ? $screen->getVar('column1width') : '20%';
+    $multipageOptions['column2width'] = $screen->getVar('column2width') ? $screen->getVar('column2width') : 'auto';
+
 
     // text data
     $multipageText = array();
@@ -401,10 +422,17 @@ if ($screen_id != "new" && $settings['type'] == 'form') {
     $options = array();
     $options['donedest'] = $screen->getVar('donedest');
     $options['savebuttontext'] = $screen->getVar('savebuttontext');
+    $options['saveandleavebuttontext'] = $screen->getVar('saveandleavebuttontext');
     $options['alldonebuttontext'] = $screen->getVar('alldonebuttontext');
+    $options['printableviewbuttontext'] = $screen->getVar('printableviewbuttontext');
     $options['displayheading'] = $screen->getVar('displayheading');
     $options['reloadblank'] = $screen->getVar('reloadblank') ? "blank" : "entry";
+    $options['leavebehaviour'] = $screen->getVar('donedest') ? "url" : "default";
+    $options['displaycolumns'] = $screen->getVar('displaycolumns') == 1 ? "onecolumn" : "twocolumns";
+    $options['column1width'] = $screen->getVar('column1width') ? $screen->getVar('column1width') : '20%';
+    $options['column2width'] = $screen->getVar('column2width') ? $screen->getVar('column2width') : 'auto';
     $options['formelements'] = $screen->getVar('formelements');
+    $options['elementdefaults'] = $screen->getVar('elementdefaults');
     $options['element_list'] = $element_list;
 }
 

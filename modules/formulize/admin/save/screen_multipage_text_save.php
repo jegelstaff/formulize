@@ -60,4 +60,4 @@ $screen->setVar('thankstext', $screens['thankstext']);
 if(!$screen_handler->insert($screen)) {
   print "Error: could not save the screen properly: ".$xoopsDB->error();
 }
-?>
+

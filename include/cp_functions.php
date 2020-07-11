@@ -705,7 +705,7 @@ function impresscms_get_adminmenu() {
 function impresscms_sort_adminmenu_modules($a, $b) {
 	$a = strtolower($a->getVar("name"));
 	$b = strtolower($b->getVar("name"));
-	return ($a == $b) ? 0 : ($a < $b) ? -1 : +1;
+	return ($a == $b) ? 0 : (($a < $b) ? -1 : +1);
 }
 
 /**

@@ -43,6 +43,21 @@
                     } 
                 })
             });
+
+            // make radio buttons uncheckable
+            jQuery("input[type=radio]").each(function() {
+                jQuery(this).data('checkedstatus', jQuery(this).prop("checked"));
+            });
+            jQuery("input[type=radio]").click(function () {
+                if (jQuery(this).data('checkedstatus')) {
+                    jQuery(this).prop("checked", false).change();
+                    jQuery(this).data('checkedstatus', false);
+                } else {
+                    jQuery(this).prop("checked", true).change();
+                    jQuery(this).data('checkedstatus', true);
+                }
+                jQuery(this).siblings('input[type="radio"]').data('checkedstatus', false);
+            });
         });
     </script>
     

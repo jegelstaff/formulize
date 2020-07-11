@@ -60,7 +60,7 @@ class icms_auth_Ads extends icms_auth_Ldap {
 			$authenticated = ldap_bind($this->_ds, $userUPN, $this->cp1252_to_utf8(stripslashes($pwd)));
 			if ($authenticated) {
 				// We load the User database
-				$dn = $this->getUserDN($uname);
+				$dn = $this->getUserDN($uname, true); // true means we have bound already
 				if ($dn) {
 					return $this->loadicms_member_user_Object($dn, $uname, $pwd);
 				} else {

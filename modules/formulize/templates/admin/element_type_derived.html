@@ -146,13 +146,17 @@ $("[name=updateder]").click(function () {
 
 function updateDerivedValues(fid,frid,limitStart){
     $.get("<{$xoops_url}>/modules/formulize/formulize_xhr_responder.php?uid=<{$content.uid}>&op=update_derived_value&fid="+fid+"&frid="+frid+"&limitstart="+limitStart, function(data){
-            if(data > 0){
+            if(!isNaN(data) && data > 0){
                 limitStart += parseInt(data);
                 updateDerivedValues(fid,frid,limitStart);
             }else{
                 $("[name=updateder_Info]").hide();
                 $("[name=updateder_controls]").show();
+                if (isNaN(data)) {
+                    alert(data);   
+                } else {
                 $("#derivedfinished").show();
+                }
             }
         });
     }

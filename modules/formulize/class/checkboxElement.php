@@ -43,6 +43,7 @@ class formulizeCheckboxElement extends formulizeformulize {
         $this->adminCanMakeRequired = true; // set to true if the webmaster should be able to toggle this element as required/not required
         $this->alwaysValidateInputs = false; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
         $this->canHaveMultipleValues = true;
+        $this->hasMultipleOptions = true; 
         parent::__construct();
     }
     
@@ -331,7 +332,8 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
     // $element is the element object
     // $entry_id is the ID number of the entry where this particular element comes from
     // $screen is the screen object that is in effect, if any (may be null)
-    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen=false, $owner) {
+    // $renderAsHiddenDefault is a flag to control what happens when we render as a hidden element for users who can't normally access the element -- typically we would set the default value inside a hidden element, or the current value if for some reason an entry is passed
+    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen=false, $owner, $renderAsHiddenDefault = false) {
 	
 		$ele_value = $this->backwardsCompatibility($ele_value);
 	
@@ -489,11 +491,14 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 			$renderedElement = implode(", ", $disabledOutputText);
         } else {
 			$renderedElement = $form_ele1->render();
+            if($renderAsHiddenDefault) {
+                $renderedElement .= "\n$renderedHoorvs\n$disabledHiddenValues\n";    
+            }
         }
 
 		$form_ele = new XoopsFormLabel(
 			$caption,
-			"$renderedElement\n$renderedHoorvs\n$disabledHiddenValues\n"
+			$renderedElement
 		);
 		$ele_desc = $element->getVar('ele_desc', "f"); // the f causes no stupid reformatting by the ICMS core to take place
 		$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));

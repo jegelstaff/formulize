@@ -72,6 +72,15 @@ $processedValues['forms']['headerlist'] = (isset($_POST['headerlist']) and is_ar
 // form_handle cannot have any period, strip all of the periods out
 $form_handle_from_ui = $processedValues['forms']['form_handle'];
 $corrected_form_handle = formulizeForm::sanitize_handle_name($form_handle_from_ui);
+if (strlen($corrected_form_handle)) {
+    $uniqueCheckCounter = 0;
+    $thisFormId = $fid ? $fid : "";
+    while (!$uniqueCheck = $form_handler->isFormHandleUnique($corrected_form_handle, $thisFormId)) {
+        $corrected_form_handle = str_replace('_'.$uniqueCheckCounter,'',$corrected_form_handle);
+        $uniqueCheckCounter++;
+        $corrected_form_handle = $corrected_form_handle . "_".$uniqueCheckCounter;
+    }
+}
 if($corrected_form_handle != $form_handle_from_ui) {
   $formulize_altered_form_handle = true;
   $processedValues['forms']['form_handle'] = $corrected_form_handle;
@@ -122,7 +131,9 @@ if($_POST['formulize_admin_key'] == "new") {
   }
   // add edit permissions for the selected groups
   $gperm_handler = xoops_gethandler('groupperm');
+  $selectedAdminGroupIdsForMenu = array();
   foreach($_POST['groups_can_edit'] as $thisGroupId) {
+    $selectedAdminGroupIdsForMenu[] = intval($thisGroupId);
     $gperm_handler->addRight('edit_form', $fid, intval($thisGroupId), getFormulizeModId());
   }
   
@@ -200,8 +211,7 @@ if((isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1) OR $for
   }
   print "/* eval */ ";
   if($formulize_altered_form_handle) {
-    print " alert('Some characters, such as punctuation, were removed from the form handle because they ".
-      "are not allowed in the database table names or PHP variables.');\n";
+    print " alert('The Form Handle was changed for uniqueness, or because dome characters, such as punctuation, are not allowed in the database table names or PHP variables.');\n";
   }
   print " reloadWithScrollPosition('".XOOPS_URL ."/modules/formulize/admin/ui.php?page=form&aid=$appidToUse&fid=$fid');";
 }
@@ -214,7 +224,7 @@ if((isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1) OR $for
 // Auto menu link creation
 // The link is shown to to Webmaster and registered users only (1,2 in $menuitems)
 if($_POST['formulize_admin_key'] == "new") {
-  $menuitems = "null::" . formulize_db_escape($formObject->getVar('title')) . "::fid=" . formulize_db_escape($fid) . "::::1,2::null";
+  $menuitems = "null::" . formulize_db_escape($formObject->getVar('title')) . "::fid=" . formulize_db_escape($fid) . "::::".implode(',',$selectedAdminGroupIdsForMenu)."::null";
   if(!empty($selectedAppIds)) {
     foreach($selectedAppIds as $appid) {
       $application_handler->insertMenuLink(formulize_db_escape($appid), $menuitems);

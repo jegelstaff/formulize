@@ -33,13 +33,21 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
+if(isset($_POST['makepdf'])) {
+    include "printviewpdf.php";
+    return;
+} 
+
 require_once "../../mainfile.php";
+include XOOPS_ROOT_PATH.'/header.php';
+
+global $icmsConfig, $icmsTheme, $xoopsUser;
 
 $module_handler =& xoops_gethandler('module');
 $config_handler =& xoops_gethandler('config');
 $formulizeModule =& $module_handler->getByDirname("formulize");
 $formulizeConfig =& $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
-$modulePrefUseToken = $formulizeConfig['useToken'];
+/*$modulePrefUseToken = $formulizeConfig['useToken'];
 // screen type for regular forms doesn't yet exist, but when it does, this check will be relevant
 $useToken = $screen ? $screen->getVar('useToken') : $modulePrefUseToken;
 // avoid security check for versions of XOOPS that don't have that feature, or for when it's turned off
@@ -48,7 +56,9 @@ if (isset($GLOBALS['xoopsSecurity']) AND $useToken) {
       print "<b>Error: it appears you should not be viewing this page.  Please contact the webmaster for assistance.</b>";
         return false;
     }
-}
+}*/
+
+if(!$makingPDF) {
 
 print "<HTML>
 <meta http-equiv=\"Content-Type\" content=\"text/html; charset="._CHARSET."\" />";
@@ -130,12 +140,20 @@ EOF;
 }
 print "</HEAD>";
 
+} // end of if we're making a PDF - leave out the head and stuff
+
 $formframe      = $_POST['formframe'];
 $ventry         = $_POST['lastentry'];
 $mainform       = $_POST['mainform'];
 $ele_allowed    = $_POST['elements_allowed'];
 $screenid       = $_POST['screenid'];
 $currentPage    = $_POST['currentpage'];
+
+$fid = $mainform ? $mainform : $formframe;
+$frid = $mainform ? $formframe : '';
+if(security_check($fid, $ventry) == false){
+    exit("Error: you do not have permission to view this entry or form");
+}
 
 $titleOverride = "";
 
@@ -170,7 +188,7 @@ if (! is_array($formframe) && $screenid && !$ele_allowed) {
         $elements = array();
         $printed_elements = array();
         foreach ($pages as $currentPage=>$page) {
-            if (canViewPage($ventry, $currentPage+1, $conditions, $formframe, $mainform)) {
+            if(pageMeetsConditions($conditions, $currentPage+1, $ventry, $fid, $frid)) {
                 foreach ($page as $element) {
                     // on a multipage form, some elements such a persons name may repeat on each page. print only once
                     if (!isset($printed_elements[$element])) {
@@ -204,6 +222,9 @@ if (! is_array($formframe) && $screenid && !$ele_allowed) {
     }
 }
 
+
+if(!$makingPDF) {
+
 print "<center>";
 print "<table width=100%><tr><td width=5%></td><td width=90%>";
 print "<div id=\"formulize-printpreview\">";
@@ -213,85 +234,35 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php"; // need
 displayForm($formframe, $ventry, $mainform, "", "{NOBUTTON}", "", $titleOverride);
 print "</div>";
 print "</td><td width=5%></td></tr></table>";
-print "</center></body>";
+    print "</center>";
+
+    print "</body>";
 print "</HTML>";
 
-
-function canViewPage($entry, $currentPage, $conditions, $formframe, $mainform) {
-    // start: taken from include/formdisplaypages.php
-    // check to see if there are conditions on this page, and if so are they met
-    // if the conditions are not met, move on to the next page and repeat the condition check
-    // conditions only checked once there is an entry!
-    $pagesSkipped = false;
-    if (is_array($conditions) AND $entry) {
-        $conditionsMet = false;
-        // conditions on the current page
-        if (isset($conditions[$currentPage]) AND count($conditions[$currentPage][0])>0) {
-            $thesecons = $conditions[$currentPage];
-            $elements = $thesecons[0];
-            $ops = $thesecons[1];
-            $terms = $thesecons[2];
-            $types = $thesecons[3]; // indicates if the term is part of a must or may set, ie: boolean and or or
-            $start = 1;
-            $oomstart = 1;
-            $filter = "";
-            $oomfilter = "";
-            foreach($elements as $i=>$thisElement) {
-                if ($ops[$i] == "NOT") {
-                    $ops[$i] = "!=";
-                }
-                if ($types[$i] == "oom") {
-                    if ($oomstart) {
-                        $oomfilter = $elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
-                        $oomstart = 0;
                     } else {
-                        $oomfilter .= "][".$elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
-                    }
-                } else {
-                    if ($start) {
-                        $filter = $entry."][".$elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
-                        $start = 0;
-                    } else {
-                        $filter .= "][".$elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
-                    }
-                }
-            }
 
-            if ($oomfilter AND $filter) {
-                $finalFilter = array();
-                $finalFilter[0][0] = "AND";
-                $finalFilter[0][1] = $filter;
-                $finalFilter[1][0] = "OR";
-                $finalFilter[1][1] = $oomfilter;
-                $masterBoolean = "AND";
-            } elseif ($oomfilter) {
-                // need to add the $entry as a separate filter from the oom, so the entry and oom get an AND in between them
-                $finalFilter = array();
-                $finalFilter[0][0] = "AND";
-                $finalFilter[0][1] = $entry;
-                $finalFilter[1][0] = "OR";
-                $finalFilter[1][1] = $oomfilter;
-                $masterBoolean = "AND";
-            } else {
-                $finalFilter = $filter;
-                $masterBoolean = "AND";
+    include_once XOOPS_ROOT_PATH.'/modules/formulize/include/elementdisplay.php';
+    $element_handler = xoops_getmodulehandler('elements', 'formulize');
+    // simpler layout for PDF
+    if($formframe['elements']) {
+        print "<table cellpadding=\"10\"><tbody>";
+        foreach($elements as $element) {
+            if($elementObject = $element_handler->get($element)) {
+                ob_start();
+                $result = displayElement('', $element, $ventry);
+                $value = ob_get_clean();
+                if($result != 'not_allowed' AND $result != 'hidden') {
+                    $caption = displayCaption('', $element);
+                    if($elementObject->getVar('ele_type') == 'ib') {
+                        $caption = $value;
+                        $value = "";
             }
-            include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-            //$data = getData($frid, $fid, $finalFilter, $masterBoolean);
-            if ($mainform) {
-                $data = getData($formframe, $mainform, $finalFilter, $masterBoolean, "", "", "", "", "", false, 0, false, "", false, true);
-            } else {
-                $data = getData("", $formframe, $finalFilter, $masterBoolean, "", "", "", "", "", false, 0, false, "", false, true);
+                    print "<tr><td style width=\"400\">$caption</td><td>$value</td></tr>";
             }
-            if (!$data) {
-                $pagesSkipped = true;
-            } else {
-                $conditionsMet = true;
             }
-        } else {
-            // no conditions on the current page
-            $conditionsMet = true;
         }
+        print "</tbody></table>";
     }
-    return (! $pagesSkipped);
+    
+    
 }

@@ -9,6 +9,10 @@
 <input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
 <input type="hidden" name="formulize_admin_fid" value="<{$content.fid}>">
 <input type="hidden" name="aid" value="<{$content.aid}>">
+<input type="hidden" id="delete_passcode" name="delete_passcode" value="">
+<input type="hidden" id="make_new_passcode" name="make_new_passcode" value="">
+<input type="hidden" id="add_existing_passcode" name="add_existing_passcode" value="">
+    
 
 
 <div class="panel-content content">
@@ -63,11 +67,42 @@ include "<{$smarty.const.XOOPS_ROOT_PATH}>/modules/formulize/index.php";</blockq
 	  <legend>Should this screen use an anti-CSRF security token</legend>
 
 	  <div class="form-item">
-	    <label for="screens-useToken-yes"><input type="radio" id="screens-useToken" name="screens-useToken" value="1"<{if $content.useToken eq 1}> checked<{/if}>/>Yes</label>
-	    <label for="screens-useToken-no"><input type="radio" id="screens-useToken" name="screens-useToken" value="0"<{if $content.useToken eq 0}> checked<{/if}>/>No</label>
+	    <label for="screens-useToken-yes"><input type="radio" id="screens-useToken-yes" name="screens-useToken" value="1"<{if $content.useToken eq 1}> checked<{/if}>/>Yes</label>
+	    <label for="screens-useToken-no"><input type="radio" id="screens-useToken-no" name="screens-useToken" value="0"<{if $content.useToken eq 0}> checked<{/if}>/>No</label>
 	    <div class="description">The security token is a defense against cross-site request forgery attacks. However, it can cause problems if you are using an advanced Ajax-based UI in a List of Entries screen, and possibly other screen types.</div>
 	  </div>
   </fieldset>
+
+  <fieldset>
+	  <legend>Do Anonymous Users need a passcode to access this screen?</legend>
+
+	  <div class="form-item">
+        <label for="screens-anonNeedsPasscode-0"><input type="radio" id="screens-anonNeedsPasscode-0" name="screens-anonNeedsPasscode" value="0"<{if $content.anonNeedsPasscode eq 0}> checked<{/if}>/>No, only permission to view the form</label><br />
+	    <label for="screens-anonNeedsPasscode-1"><input type="radio" id="screens-anonNeedsPasscode-1" name="screens-anonNeedsPasscode" value="1"<{if $content.anonNeedsPasscode eq 1}> checked<{/if}>/>Yes, plus permission to view the form</label>
+	    <div class="description">Passcodes are saved with any data a user enters into a form, and are used as a filter when viewing data. This allows anonymous users to interact with only certain data, and if passcodes are given out per-user, then having a passcode is like having a 'throwaway' account.</div>
+        <br />
+        <fieldset id='codelist' <{if $content.anonNeedsPasscode eq 0}>style='display: none;'<{/if}>>
+        <legend>Valid Codes</legend>
+        <table id='validcodes'>
+        <{foreach from=$content.passcodes item=passcode}>
+            <tr><td><{$passcode.passcode}></td><td>&mdash;</td>
+                <td><{$passcode.notes}></td><td>&mdash;</td>
+                <td><input type="radio" name="passcode_status_<{$passcode.id}>" value=1>Active<br />
+                <input type="radio" name="passcode_status_<{$passcode.id}>" value=0>Expired</td><td>&mdash;</td>
+                <td>Auto-expire on: <input type="text" value="<{$passcode.expiry}>" name="passcode_expiry_<{$passcode.id}>" size=10 class="passcode_expiry" /></td><td>&mdash;</td>
+                <td><a href='' class='delete_passcode' passcodeId='<{$passcode.id}>'>delete</a></td></tr>    
+        <{/foreach}>
+        </table>
+        <p>Add a passcode from another screen: <select name="existing_passcode" size=1>
+            <{foreach from=$content.existingPasscodes item=pc}>
+                <option value=<{$pc.id}>><{$pc.passcode}> &mdash; <{$pc.notes}></option>
+            <{/foreach}>
+        </select> <input type="button" name="add_existing_passcode_button" id="add_existing_passcode_button" value="Add" /></p>
+        <p>Add a new passcode: <input type="text" name="new_passcode" size=25 value="<{$content.newPasscode}>" /> <input type="text" name="new_notes" size=40 value="" placeholder="Optional Note" /> <input type="button" name="make_new_passcode_button" id="make_new_passcode_button" value="Add" /></p>
+        </fieldset>
+	  </div>
+  </fieldset>
+
 
   <!--<fieldset>
 	  <legend>Sample PHP Code</legend>
@@ -81,3 +116,39 @@ include "<{$smarty.const.XOOPS_ROOT_PATH}>/modules/formulize/index.php";</blockq
 </div>
 
 </form>
+
+<script>
+    $('.delete_passcode').click(function() {
+       $('#delete_passcode').val($(this).attr('passcodeId'));
+       $(".savebutton").click();
+       return false;
+    });
+    $('#add_existing_passcode_button').click(function() {
+        $('#add_existing_passcode').val(1); 
+        $(".savebutton").click();
+    });
+    $('#make_new_passcode_button').click(function() {
+        $('#make_new_passcode').val(1); 
+        $(".savebutton").click();
+    });
+    $('input[name="screens-anonNeedsPasscode"]').click(function() {
+       if($(this).val() == 1 && $('#codelist').css('display') == 'none') {
+            $('#codelist').show();
+       } else if($(this).val() == 0 && $('#codelist').css('display') != 'none') {
+            $('#codelist').hide();
+       }
+    });
+    
+    
+</script>
+
+<style>
+    #validcodes {
+        border: none;
+        width: auto;
+        margin-left: 2em;
+    }
+    #validcodes td {
+        vertical-align: middle;
+    }
+</style>

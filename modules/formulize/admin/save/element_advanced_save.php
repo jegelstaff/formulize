@@ -119,7 +119,16 @@ if($ele_encrypt != $element->getVar('ele_encrypt') AND $databaseElement AND !$_G
   }
 }
 
-if($databaseElement AND ($_GET['ele_id'] OR $form_handler->elementFieldMissing($element))) { // ele_id is only in the URL when we're on the first save for a new element
+// get the current datatype, if this element has been saved once already
+if($_POST['original_handle']) {
+    $dataTypeInfo = $element->getDataTypeInformation();
+    $dataTypeInfo = $dataTypeInfo['dataType'];
+} else {
+    $dataTypeInfo = false;
+}
+
+if($databaseElement AND (!$_POST['original_handle'] OR $form_handler->elementFieldMissing($ele_id, $_POST['original_handle']))) { // ele_id is only in the URL when we're on the first save for a new element
+    
 	global $xoopsDB;
 	  // figure out what the data type should be.
 	  // the rules:
@@ -160,7 +169,11 @@ if($databaseElement AND ($_GET['ele_id'] OR $form_handler->elementFieldMissing($
 				break;
 			case 'select':
 				if ($ele_value[1] == 0 AND $element->isLinked) {
+                    if($ele_value['snapshot']) {
+                        $dataType = 'text';
+                    } else {
 					$dataType = 'bigint';
+                    }
 				} else {
 					if (property_exists($element, 'overrideDataType') AND $element->overrideDataType != "") {
 						$dataType = $element->overrideDataType;
@@ -185,12 +198,18 @@ if($databaseElement AND ($_GET['ele_id'] OR $form_handler->elementFieldMissing($
 			exit("Error: could not add the new element to the data table in the database.");
 		}
 
-} elseif(($_POST['original_handle'] != $element->getVar('ele_handle') OR (isset($_POST['element_default_datatype']) AND $_POST['element_datatype'] != $_POST['element_default_datatype'])) AND $databaseElement) {
+} elseif(
+    ($_POST['original_handle'] != $element->getVar('ele_handle') OR
+    (isset($_POST['element_default_datatype']) AND $_POST['element_datatype'] != $_POST['element_default_datatype']) OR
+    ($ele_value['snapshot'] AND $dataTypeInfo != 'text')
+    ) AND $databaseElement) {
   // figure out if the datatype needs changing...
 	if($ele_encrypt) {
 		$dataType = false;
 	} elseif(isset($_POST['element_default_datatype']) AND $_POST['element_datatype'] != $_POST['element_default_datatype']) {
 		$dataType = getRequestedDataType();
+    } elseif($ele_value['snapshot'] AND $dataTypeInfo != 'text') {
+        $dataType = 'text';
 	} else {
 		$dataType = false;
 	}
@@ -202,6 +221,7 @@ if($databaseElement AND ($_GET['ele_id'] OR $form_handler->elementFieldMissing($
 }
 
 $element->setVar('ele_encrypt', $ele_encrypt);
+$element->setVar('ele_use_default_when_blank', intval($_POST['elements-ele_use_default_when_blank']));
 
 // figure out exportoptions for element
 // do not need to serialize this when assigning, since the elements class calls cleanvars from the xoopsobject on all properties prior to insertion, and that intelligently serializes properties that have been declared as arrays

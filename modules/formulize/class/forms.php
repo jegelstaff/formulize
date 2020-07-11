@@ -241,7 +241,7 @@ class formulizeForm extends XoopsObject {
             $on_before_save_code = <<<EOF
 <?php
 
-function form_{$this->id_form}_on_before_save(\$entry_id, \$formulize_element_values, \$form_id) {
+function form_{$this->id_form}_on_before_save(\$entry_id, \$formulize_element_values, \$form_id, \$currentValues) {    
     foreach(\$formulize_element_values as \$formulize_element_key=>\$formulize_element_value) {
         if(is_numeric(\$formulize_element_key)) {
             \$formulize_element_key = 'elementId'.\$formulize_element_key;
@@ -270,8 +270,7 @@ EOF;
             $on_after_save_code = <<<EOF
 <?php
 
-function form_{$this->id_form}_on_after_save(\$entry_id, \$form_id, \$formulize_element_values) {
-
+function form_{$this->id_form}_on_after_save(\$entry_id, \$form_id, \$formulize_element_values, \$currentValues) {
 foreach(\$formulize_element_values as \$formulize_element_key=>\$formulize_element_value) {
     if(is_numeric(\$formulize_element_key)) {
         \$formulize_element_key = 'elementId'.\$formulize_element_key;
@@ -339,18 +338,28 @@ EOF;
     }
 
     public function onBeforeSave($entry_id, $element_values) {
+        
+        // get all the values of fields from the existing entry
+        $existingValues = array();
+        if(is_numeric($entry_id)) {
+            global $xoopsDB;
+            $sql = "SELECT * FROM ".$xoopsDB->prefix('formulize_'.$this->getVar('form_handle'))." WHERE entry_id = ".intval($entry_id);
+            if($res = $xoopsDB->query($sql)) {
+                foreach($xoopsDB->fetchArray($res) as $handle=>$value) {
+                    $existingValues[$handle] = $value;
+                    if(!isset($element_values[$handle])) { // if this element is not set for writing, then set the current value so we have it available in the function
+                        $element_values[$handle] = $value;
+                    }
+                }
+            }
+        }
+        
         // if there is any code to run before saving, include it (write if necessary), and run the function
         if (strlen($this->on_before_save) > 0 and (file_exists($this->on_before_save_filename) or $this->cache_on_before_save_code())) {
             include_once $this->on_before_save_filename;
-            // note that the custom code could create new values in the element_values array, so the caller must limit to valid field names
-            $element_values = call_user_func($this->on_before_save_function_name, $entry_id, $element_values, $this->getVar('id_form'));
-            foreach ($element_values["element_values"] as $key => $value) {
-                if (0 == preg_match("/^[a-zA-Z_][a-zA-Z0-9_]*$/", $key)) {
-                    // this key is invalid for a PHP variable name, so it was not set in the on-before-save function and
-                    //  the value in the array (which could have been modified) should be returned
-                    $element_values[$key] = $value;
-                }
-            }
+
+            $element_values = call_user_func($this->on_before_save_function_name, $entry_id, $element_values, $this->getVar('id_form'), $existingValues);
+           
             // if a numeric element handle had a value set, then by convention it needs the prefix elementId before the number so we can handle it here and make it a numeric array key again
             foreach($element_values as $key=>$value) {
                 if(substr($key, 0, 9)=='elementId') {
@@ -358,17 +367,15 @@ EOF;
                     $element_values[str_replace('elementId','',$key)] = $value;
                 }
             }
-            // due to extract()ing and then collecting back into an array, the array contains itself, so remove the duplicate
-            unset($element_values["element_values"]);
         }
-        return $element_values;
+        return array($element_values, $existingValues);
     }
 
-    public function onAfterSave($entry_id, $element_values) {
+    public function onAfterSave($entry_id, $element_values, $existing_values) {
         // if there is any code to run after saving, include it (write if necessary), and run the function
         if (strlen($this->on_after_save) > 0 and (file_exists($this->on_after_save_filename) or $this->cache_on_after_save_code())) {
             include_once $this->on_after_save_filename;
-            call_user_func($this->on_after_save_function_name, $entry_id, $this->getVar('id_form'), $element_values);
+            call_user_func($this->on_after_save_function_name, $entry_id, $this->getVar('id_form'), $element_values, $existing_values);
         }
     }
 
@@ -442,7 +449,7 @@ class formulizeFormsHandler {
 		return new formulizeForm();
 	}
 
-	function &get($fid,$includeAllElements=false) {
+	function get($fid,$includeAllElements=false) {
 		$fid = intval($fid);
 		// this is cheap...we're caching form objects potentially twice because of a possible difference in whether we want all objects included or not.  This could be handled much better.  Maybe iterators could go over the object to return all elements, or all visible elements, or all kinds of other much more elegant stuff.
 		static $cachedForms = array();
@@ -667,6 +674,24 @@ class formulizeFormsHandler {
 		$sql = "SELECT count(ele_handle) FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_handle = '" . formulize_db_escape($handle) . "' $element_id_condition";
 		if(!$res = $xoopsDB->query($sql)) {
 			print "Error: could not verify uniqueness of handle '$handle' in form $fid";
+		} else {
+			$row = $xoopsDB->fetchRow($res);
+			if($row[0] == 0) { // zero rows found with that handle in this form
+				return true;
+			} else {
+				return false;
+			}
+		}
+	}
+
+    	// check to see if a handle is unique (but exclude the given form if any from the query)
+	function isFormHandleUnique($handle, $form_id=null) {
+        $handle = formulizeForm::sanitize_handle_name($handle);
+		global $xoopsDB;
+        $form_id_condition = $form_id ? " AND id_form != " . intval($form_id) : "";
+		$sql = "SELECT count(form_handle) FROM " . $xoopsDB->prefix("formulize_id") . " WHERE form_handle = '" . formulize_db_escape($handle)."' $form_id_condition";
+		if(!$res = $xoopsDB->query($sql)) {
+			print "Error: could not verify uniqueness of form handle '$handle'";
 		} else {
 			$row = $xoopsDB->fetchRow($res);
 			if($row[0] == 0) { // zero rows found with that handle in this form
@@ -927,7 +952,8 @@ class formulizeFormsHandler {
 	
     // this function checks if an element field exists on the form's datatable
     // $element can be numeric or an object
-    function elementFieldMissing($element) {
+    // $elementHandle is an alternative handle that we're going to look for...necessary for when elements are cloned since the element object retrieved might have a different handle already from the one we're looking for
+    function elementFieldMissing($element, $elementHandle="") {
         if(!$element = _getElementObject($element)) {
 			return false;
 		}
@@ -937,7 +963,8 @@ class formulizeFormsHandler {
         global $xoopsDB;
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
         $formObject = $form_handler->get($element->getVar('id_form'));
-        $fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) ." LIKE '".$element->getVar('ele_handle')."'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
+        $elementHandle = $elementHandle ? $elementHandle : $element->getVar('ele_handle'); // use the element's current handle, unless we passed in an alternate to validate
+        $fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) ." LIKE '".formulize_db_escape($elementHandle)."'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
         if($fieldStateRes = $xoopsDB->queryF($fieldStateSQL)) {
             if($xoopsDB->getRowsNum($fieldStateRes)==0) {
                 return true;
@@ -947,7 +974,7 @@ class formulizeFormsHandler {
     }
     
 	// this function adds an element field to the data table
-	// $id can be numeric or an object
+	// $element can be numeric or an object
 	function insertElementField($element, $dataType) {
 		if(!$element = _getElementObject($element)) {
 			return false;

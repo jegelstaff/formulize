@@ -314,6 +314,7 @@ define("_formulize_SUBFORM_SIMPLE_LABEL", "What text should appear on the button
 define("_formulize_SUBFORM_MULTIPLE_BUTTON", "Display a button with a text box for choosing the number of entries to add");
 define("_formulize_SUBFORM_MULTIPLE_LABEL", "What text should be used to describe each entry? ie: Add x Entries, Add x Participants, etc.");
 define("_formulize_DELETE_CHECKED", "Delete checked items");
+define("_formulize_CLONE_CHECKED", "Clone checked items");
 define("_formulize_ADD_HELP", "Add an entry in this section by clicking the <i>Add</i> button.");
 define("_formulize_ADD_HELP2", "See an entire entry by clicking the <i>View</i> button.");
 define("_formulize_ADD_HELP3", "Update an entry by changing the values on the right.");
@@ -323,6 +324,7 @@ define("_formulize_SUBFORM_FILTER_GO","Go");
 define("_formulize_SUBFORM_FILTER_SEARCH","Search for: ");
 define("_AM_ELE_SUBFORM_NEWENTRY_LABEL", "New entry");
 define("_formulize_SAVE", "Save");
+define("_formulize_SAVE_AND_GOBACK", "Save and Go Back");
 define("_formulize_SAVE_AND_LEAVE", "Save and Leave");
 define("_formulize_DONE", "Leave Page");
 define("_formulize_CONFIRMNOSAVE", "You have not saved your changes!  Is that OK?  Click 'Cancel' to return to the form and then click 'Save' to save your changes.");
@@ -336,7 +338,8 @@ define("_formulize_INFO_CONTINUE2", "You can make another entry by filling in th
 define("_formulize_INFO_SAVEBUTTON", "Click the <i>" . _formulize_SAVE . "</i> button to save your changes.");
 define("_formulize_INFO_SAVE1", "Click the <i>");
 define("_formulize_INFO_SAVE2", "</i> button to save your changes.");
-define("_formulize_INFO_SAVEANDLEAVE", "Click the <i>"._formulize_SAVE_AND_LEAVE."</i> button if you want to save your changes and leave this page.");
+define("_formulize_INFO_SAVEANDLEAVE1", "Click the <i>");
+define("_formulize_INFO_SAVEANDLEAVE2", "</i> button if you want to save your changes and leave this page.");
 define("_formulize_INFO_NOSAVE", "You can review this entry, but you <i>cannot save changes</i>.");
 define("_formulize_INFO_MAKENEW", "You can make a new entry by filling in the form below.");
 
@@ -642,7 +645,7 @@ define("_formulize_DE_NOT_SUBJTEXT", "Use this custom subject line: ");
 define("_formulize_DE_NOT_DIGEST_SUBJECT", "Notification Digest");
 
 // multi-page forms
-define("_formulize_DMULTI_THANKS", "<h1>You're done!</h1><p>Thanks for taking the time to fill in that form.  We really appreciate it.</p>");
+define("_formulize_DMULTI_THANKS", "<h1>You're done!</h1><p>Thanks for taking the time to fill in that form.  We really appreciate it.</p>{thankYouNav}");
 define("_formulize_DMULTI_NEXT", "Save and Continue");
 define("_formulize_DMULTI_PREV", "Save and Go Back");
 define("_formulize_DMULTI_SAVE", "Save and Finish");

@@ -354,7 +354,7 @@ class icms_core_Object {
 				break;
 
 			case XOBJ_DTYPE_ARRAY:
-				$ret =& unserialize($ret);
+				$ret = unserialize($ret);
 				break;
 
 			case XOBJ_DTYPE_SOURCE:

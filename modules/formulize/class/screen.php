@@ -45,6 +45,7 @@ class formulizeScreen extends xoopsObject {
 		$this->initVar('frid', XOBJ_DTYPE_INT, '', true);
 		$this->initVar('type', XOBJ_DTYPE_TXTBOX, '', true, 100);
 		$this->initVar('useToken', XOBJ_DTYPE_INT);
+        $this->initVar('anonNeedsPasscode', XOBJ_DTYPE_INT);
 	}
 
     static function normalize_values($key, $value) {
@@ -278,9 +279,9 @@ class formulizeScreenHandler {
              }
              if ($sid == 0) {
                  //$sid = $this->db->genId($this->db->prefix('formulize_screen').'_sid_seq'); // mysql compatiblity layer just returns 0 here
-                 $sql = sprintf("INSERT INTO %s (title, fid, frid, type, useToken) VALUES (%s, %u, %u, %s, %u)", $this->db->prefix('formulize_screen'), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken);
+                 $sql = sprintf("INSERT INTO %s (title, fid, frid, type, useToken, anonNeedsPasscode) VALUES (%s, %u, %u, %s, %u, %u)", $this->db->prefix('formulize_screen'), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $anonNeedsPasscode);
              } else {
-                 $sql = sprintf("UPDATE %s SET title = %s, fid = %u, frid = %u, type = %s, useToken = %u WHERE sid = %u", $this->db->prefix('formulize_screen'), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $sid);
+                 $sql = sprintf("UPDATE %s SET title = %s, fid = %u, frid = %u, type = %s, useToken = %u, anonNeedsPasscode = %u WHERE sid = %u", $this->db->prefix('formulize_screen'), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $anonNeedsPasscode, $sid);
              }
 		 $result = $this->db->query($sql);
              if (!$result) {

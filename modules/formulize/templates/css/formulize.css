@@ -381,17 +381,19 @@ button:focus, input[type='submit']:focus, input[type='button']:focus, input[type
   border-radius: 1em;
   -moz-border-radius: 1em;
   -webkit-border-radius: 1em;
-  opacity: 0.0; }
-
-td.even:hover .formulize-element-edit-link, td.odd:hover .formulize-element-edit-link {
+  opacity: 0.0;
+  float: right;
+}
+td.even:hover .formulize-element-edit-link, td.odd:hover .formulize-element-edit-link, td.head:hover .formulize-element-edit-link {
   -webkit-transition: opacity 400ms linear;
   transition: opacity 400ms linear;
-  opacity: 0.3; }
-
-td.even .formulize-element-edit-link:hover, td.odd .formulize-element-edit-link:hover {
+  opacity: 0.3;
+}
+td.even .formulize-element-edit-link:hover, td.odd .formulize-element-edit-link:hover, td.head:hover .formulize-element-edit-link:hover {
   -webkit-transition: opacity 400ms linear;
   transition: opacity 400ms linear;
-  opacity: 1.0; }
+  opacity: 1.0;
+}
 
 #formulize-entry-lock-message {
   font-size: 80%;
@@ -470,7 +472,7 @@ a.loe-edit-entry:hover {
 
 td.formulize-controls {
   white-space: nowrap;
-  width: 40px; }
+  width: 1%; }
 
 .xoops-form-element-help {
   color: #edfcff; }
@@ -482,7 +484,7 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
   width: 99%; }
 
 #listofentries div.main-cell-div input {
-  width: 7em; }
+  width: 80%; }
 
 #pageNavTable, #pageNavTableBottom {
   margin: 1em 0; }
@@ -493,6 +495,14 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
 
 .formulize_autocomplete_search_label {
     font-weight: bold;
+}
+
+td.head div.xoops-form-element-caption, td.head div.xoops-form-element-caption-required {
+    font-weight: bold;
+}
+
+#formulizeform td.head {
+    font-weight: normal;
 }
 
 @media print {
@@ -586,4 +596,12 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
     cursor: pointer;
     text-decoration: line-through;
     color: red;
+}
+          
+.right-align-text {
+    text-align: right;
+}
+
+.formulize-spacer-column {
+    width: auto;
 }

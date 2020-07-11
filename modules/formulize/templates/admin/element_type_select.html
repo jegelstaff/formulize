@@ -21,7 +21,7 @@
 					<label for="elements_multiple_notallowed_auto"><input type="radio" id="elements_multiple_notallowed_auto" name="elements_multiple_auto" value="0" <{if $content.multiple_auto eq 0}>checked<{/if}>/>Not Allowed</label><br />
 					When users type something that doesn't match any of the choices:
 					<label for="elements-ele_value[16]-0"><input type="radio" id="elements-ele_value[16]-0" name="elements-ele_value[16]" value="0"<{if $content.ele_value[16] eq 0}> checked="checked"<{/if}>/>Say "No Match Found"</label>
-					<label for="elements-ele_value[16]-1"><input type="radio" id="elements-ele_value[16]-1" name="elements-ele_value[16]" value="1"<{if $content.ele_value[16] eq 1}> checked="checked"<{/if}>/>Add what they typed to the list of choices</label>
+					<label for="elements-ele_value[16]-1"><input type="radio" id="elements-ele_value[16]-1" name="elements-ele_value[16]" value="1"<{if $content.ele_value[16] eq 1}> checked="checked"<{/if}>/>Allow new values to be saved</label>
 				</blockquote>
 			</div>
 		</fieldset>
@@ -31,15 +31,22 @@
         
     <div class="form-item" id='linkedsourcemapping' style='display: none;'>
         <fieldset>
-            <legend>When creating a new entry in the linked source form, map other elements to the source form too:</legend>
+            <legend>When creating a new entry in the linked source form, map other values to the source form too:</legend>
             <input type='button' name='new-mapping' value='Add 1' /><br /><br />
             <div id='mappingcontainer'>
               <{if $content.linkedSourceMappings|@count > 0}>
                 <{foreach from=$content.linkedSourceMappings key=index item=value name=mappings}>
                   <div class="elementmappings" name="<{$index}>">
+                  <{if is_numeric($value.thisForm)}>
                   <select id="mappingthisform-<{$index}>" name="mappingthisform[<{$index}>]" size="1">
                     <{html_options options=$content.mappingthisformoptions selected=$value.thisForm}>
                   </select>
+                  <{elseif $value.thisForm}>
+                  <select id="mappingthisform-<{$index}>" name="turnedoff" size="1" style='display: none;'>
+                    <{html_options options=$content.mappingthisformoptions}>
+                  </select>
+                  <input name="mappingthisform[<{$index}>]" value="<{$value.thisForm}>">
+                  <{/if}>
                     >>
                   <select id="mappingsourceform-<{$index}>" name="mappingsourceform[<{$index}>]" size="1">
                     <{html_options options=$content.mappingsourceformoptions selected=$value.sourceForm}>
@@ -178,12 +185,21 @@
     var thisformoptions = $('#mappingthisform-0 > option').clone();
     $('#mappingthisform-'+number).append(thisformoptions);
     $('#mappingthisform-'+number+' option:selected').removeAttr('selected');
+    $('#mappingthisform-'+number).append('<option value="mapaliteralvalue">Map a literal value</option>');
     var sourceformoptions = $('#mappingsourceform-0 > option').clone();
     $('#mappingsourceform-'+number).append(sourceformoptions);
     $('#mappingsourceform-'+number+' option:selected').removeAttr('selected');
     $("[name='new-mapping']").blur();
     setDisplay('savewarning','block');
   });
+    
+    $("[name^=mappingthisform]").live('change', function() {
+        if ($(this).val() == 'mapaliteralvalue') {
+            $(this).attr('name', 'turnedoff');
+            $(this).parent().prepend('<input name="mappingthisform['+$(this).parent().attr('name')+']">');
+            $(this).hide();
+        }
+    });
     
     function removeMapping(number) {
         $('.elementmappings').remove('[name="'+number+'"]');
@@ -240,9 +256,29 @@
 		return false;
 	});
  
+    $("#snapshot-<{$content.ele_value.snapshot}>").attr('checked',1);
+    
+    <{if $content.ele_id != 'new'}>
+    var snapshotWarning = true;
+    $('input[name*="snapshot"]').change(function() {
+        if (snapshotWarning) {
+            alert('*** WARNING: If you change the "snapshot" setting of an element that users have saved data in already, then all the existing data will be lost. Change the setting back BEFORE SAVING if you need to preserve the data. ***');
+            snapshotWarning = false;
+        }
+    })
+    <{/if}>
+    
+    $('input[name="linked_yesno"]').change(function() {
+        if($('input[name="linked_yesno"]:checked').val() == 1) {
+            $('#snapshot-values').show(200);
+        } else {
+            $('#snapshot-values').hide(200);
+        }
+    });
+ 
  
     function showHideLinkedSourceMapping() {
-        if ($('[name="elements_listordd"]:checked').val()==2 && $('[name="elements-ele_value\\[16\\]"]:checked').val() == 1 && $('#formlink').val() != 'none') {
+        if ($('[name="elements_listordd"]:checked').val()==2 && $('[name="elements-ele_value\\[snapshot\\]"]:checked').val() != 1 && $('[name="elements-ele_value\\[16\\]"]:checked').val() == 1 && $('#formlink').val() != 'none') {
             if($('#linkedsourcemapping').css('display') == 'none') {
                 $('#linkedsourcemapping').css('display', 'block');
             }
@@ -270,6 +306,10 @@
             showHideLinkedSourceMapping();
 	});
 
+        $('[name="elements-ele_value\\[snapshot\\]"]').change(function() {
+            showHideLinkedSourceMapping();
+        })
+       
 
 	});
 

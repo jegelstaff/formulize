@@ -60,6 +60,16 @@ if(!defined("XOOPS_ROOT_PATH")) {
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
+// when called directly, no fid or frid will be set, because they are set in initialize.php as part of a normal Formulize page load. Therefore, we will take them from GET or POST as initialize.php would.
+if(!isset($frid)) {
+    $frid = ((isset( $_GET['frid'])) AND is_numeric( $_GET['frid'])) ? intval( $_GET['frid']) : "" ;
+    $frid = ((isset($_POST['frid'])) AND is_numeric($_POST['frid'])) ? intval($_POST['frid']) : $frid ;
+}
+if(!isset($fid)) {
+    $fid = ((isset( $_GET['fid'])) AND is_numeric( $_GET['fid'])) ? intval( $_GET['fid']) : "" ;
+    $fid = ((isset($_POST['fid'])) AND is_numeric($_POST['fid'])) ? intval($_POST['fid']) : $fid ;
+}
+
 // if we're being called from pageworks, or elsewhere, then certain values won't be set so we'll need to check for them in other ways...
 if(!$gperm_handler) {
 	$gperm_handler =& xoops_gethandler('groupperm');
@@ -123,11 +133,11 @@ foreach($_POST as $k=>$v) {
 		// store values according to form, entry and element ID 
 		// prep them all for writing
 		$elementMetaData = explode("_", $k);
+        $elementObject = $element_handler->get($elementMetaData[3]);
 		if(isset($_POST["de_".$elementMetaData[1]."_".$elementMetaData[2]."_".$elementMetaData[3]])) {
-			$elementObject = $element_handler->get($elementMetaData[3]);
             $v = prepDataForWrite($elementObject, $_POST["de_".$elementMetaData[1]."_".$elementMetaData[2]."_".$elementMetaData[3]], $elementMetaData[2]);
 			$formulize_elementData[$elementMetaData[1]][$elementMetaData[2]][$elementMetaData[3]] = $v;
-		} elseif(is_numeric($elementMetaData[1])) {
+		} elseif(is_numeric($elementMetaData[1]) AND $elementObject->getVar('ele_type') != 'anonPasscode') {
 			$formulize_elementData[$elementMetaData[1]][$elementMetaData[2]][$elementMetaData[3]] = "{WRITEASNULL}"; // no value returned for this element that was included (cue was found) so we write it as blank to the db
 		}		
 	
@@ -160,6 +170,7 @@ if(count($creation_users) == 0) { // no proxy users specified
 $formulize_newEntryIds = array();
 $formulize_newEntryUsers = array();
 $formulize_allWrittenEntryIds = array();
+$formulize_allSubmittedEntryIds = array();
 $formulize_newSubformBlankElementIds = array();
 $formulize_allWrittenFids = array();
 $notEntriesList = array();
@@ -205,13 +216,14 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
             }
 			foreach($creation_users as $creation_user) {
                 if (formulizePermHandler::user_can_edit_entry($elementFid, $creation_user, $currentEntry)) {
-					$writtenEntryId = formulize_writeEntry($values, $currentEntry, "", $creation_user, "", false); // last false causes setting ownership data to be skipped...it's more efficient for readelements to package up all the ownership info and write it all at once below.
+					if($writtenEntryId = formulize_writeEntry($values, $currentEntry, "", $creation_user, "", false)) { // last false causes setting ownership data to be skipped...it's more efficient for readelements to package up all the ownership info and write it all at once below.
 					if(isset($formulize_subformBlankCues[$elementFid])) {
 						$GLOBALS['formulize_subformCreateEntry'][$elementFid][] = $writtenEntryId;
 					}
 					$formulize_newEntryIds[$elementFid][] = $writtenEntryId; // log new ids (and all ids) and users for recording ownership info later
 					$formulize_newEntryUsers[$elementFid][] = $creation_user;
 					$formulize_allWrittenEntryIds[$elementFid][] = $writtenEntryId;
+                        $formulize_allSubmittedEntryIds[$elementFid][] = $writtenEntryId;
 					$formulize_newSubformBlankElementIds[$elementFid][$writtenEntryId] = $subformElementId;
 					if(!isset($formulize_allWrittenFids[$elementFid])) {
 						$formulize_allWrittenFids[$elementFid] = $elementFid;
@@ -225,11 +237,13 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
 					afterSavingLogic($values, $writtenEntryId);
 				}
 			}
+			}
 		} elseif($currentEntry > 0) {
             // save changes to existing elements
             // TODO: should this use $uid or a proxy user setting?
             if (formulizePermHandler::user_can_edit_entry($elementFid, $uid, $currentEntry)) {
-				$writtenEntryId = formulize_writeEntry($values, $currentEntry);
+                $formulize_allSubmittedEntryIds[$elementFid][] = $currentEntry;
+				if($writtenEntryId = formulize_writeEntry($values, $currentEntry)) {
 				$formulize_allWrittenEntryIds[$elementFid][] = $writtenEntryId; // log the written id
 				if(!isset($formulize_allWrittenFids[$elementFid])) {
 					$formulize_allWrittenFids[$elementFid] = $elementFid;
@@ -241,14 +255,56 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
 		}
 	}
 }
+}
 
 unset($GLOBALS['formulize_afterSavingLogicRequired']); // now that saving is done, we don't need this any longer, so clean up
 
+// check if we should take into account any defaults set for a form screen that we have just saved an entry from
+// and if none, then check for fundamental filters on a list screen and use those
+// CAN WE MOVE INTO DATA HANDLER SO ON BEFORE SAVE IS AWARE OF CONTEXT
+// need to also take these into account when displaying forms, as if they are element defaults!
+$fundamentalDefaults = array();
+$viewEntryScreenObject = false;
+if($screenToLoad = determineViewEntryScreen($screen, $fid)) {
+    if($viewEntryScreenObject = $screen_handler->get($screenToLoad)) {
+        $element_handler = xoops_getmodulehandler('elements', 'formulize');
+        if(!is_a($viewEntryScreenObject, 'formulizeFormScreen') AND !is_a($viewEntryScreenObject, 'formulizeMultiPageFormScreen')) { // only work with form screens or multipage screens now
+            $viewEntryScreenObject = false;
+        }
+    }
+}
+if(!$viewEntryScreenObject AND $screen AND (is_a($screen, 'formulizeFormScreen') OR is_a($screen, 'formulizeMultiPageFormScreen'))) {
+    $viewEntryScreenObject = $screen;
+}
+if($viewEntryScreenObject) {
+    $viewEntryScreenDefaults = $viewEntryScreenObject->getVar('elementdefaults');
+    if(is_array($viewEntryScreenDefaults) AND count($viewEntryScreenDefaults) > 0) {
+        foreach($viewEntryScreenDefaults as $elementId=>$defaultValue) {
+            if($elementObject = $element_handler->get($elementId)) {
+                // refactor getFilterValuesForEntry to work with this structure of inputs too...?
+                $fundamentalDefaults[$elementObject->getVar('id_form')][$elementObject->getVar('ele_handle')] = $defaultValue;
+            }
+        }
+    }
+}
+if(count($fundamentalDefaults) == 0 AND $screen AND is_a($screen, 'formulizeListOfEntriesScreen')) {
+    $fundamental_filters = $screen->getVar('fundamental_filters')    ;
+    if(is_array($fundamental_filters)) {
+        $fundamentalDefaults = getFilterValuesForEntry($fundamental_filters);
+    } 
+}
 // set the ownership info of the new entries created...use a custom named handler, so we don't conflict with any other data handlers that might be using the more conventional 'data_handler' name, which can happen depending on the scope within which this file is included
+// plus set any fundamental filters on new entries
 foreach($formulize_newEntryIds as $newEntryFid=>$entries){
 	$data_handler_for_owner_groups = new formulizeDataHandler($newEntryFid);
 	$data_handler_for_owner_groups->setEntryOwnerGroups($formulize_newEntryUsers[$newEntryFid],$formulize_newEntryIds[$newEntryFid]);
 	unset($data_handler_for_owner_groups);
+    // first, set any fundamental filters if any
+    if(isset($fundamentalDefaults[$newEntryFid])) {
+        foreach($entries as $thisEntry) {
+            formulize_writeEntry($fundamentalDefaults[$newEntryFid],$thisEntry);	
+        }
+    }    
 }
 
 // reassign entry ownership for an entry if the user requested that, and has permission
@@ -264,8 +320,17 @@ if(isset($updateOwnerFid) AND $gperm_handler->checkRight("update_entry_ownership
 $GLOBALS['formulize_newEntryIds'] = $formulize_newEntryIds;
 $GLOBALS['formulize_newEntryUsers'] = $formulize_newEntryUsers;
 $GLOBALS['formulize_allWrittenEntryIds'] = $formulize_allWrittenEntryIds;
+$GLOBALS['formulize_allSubmittedEntryIds'] = $formulize_allSubmittedEntryIds;
 $GLOBALS['formulize_newSubformBlankElementIds'] = $formulize_newSubformBlankElementIds;
 
+if(isset($_POST['overridescreen']) AND $_POST['overridescreen'] AND is_numeric($_POST['overridescreen'])) {
+    $override_screen_handler = xoops_getmodulehandler('screen', 'formulize');
+	$overrideScreenObject = $override_screen_handler->get($_POST['overridescreen']);
+	$subformFridToSynch = $overrideScreenObject->getVar('frid');
+} else {
+    $subformFridToSynch = $frid;
+}
+synchExistingSubformEntries($subformFridToSynch);
 synchSubformBlankDefaults();
 
 
@@ -300,14 +365,6 @@ if(!$mainFormHasDerived AND $frid) {
 // but that's a whole lot of inspection we're not going to do right now.
 // Basically, the entire saving routine would be nicer if it were smart about not saving data that hasn't changed!
 
-$overrideFrid = 0;
-$overrideFid = 0;
-if($_POST['overridescreen']) {
-    $override_screen_handler = xoops_getmodulehandler('screen', 'formulize');
-    $overrideScreenObject = $override_screen_handler->get($_POST['overridescreen']);
-    $overrideFrid = $overrideScreenObject->getVar('frid');
-    $overrideFid = $overrideScreenObject->getVar('fid');
-}
 
 $mainFormEntriesUpdatedForDerived = array();
 $formsUpdatedInFramework = array();
@@ -330,11 +387,11 @@ foreach($formulize_allWrittenEntryIds as $allWrittenFid=>$entries) {
 				$foundEntries = checkForLinks($frid, array($allWrittenFid), $allWrittenFid, array($allWrittenFid=>array($thisEntry)));
 			}
 			foreach($foundEntries['entries'][$fid] as $mainFormEntry) {
-				if(!in_array($mainFormEntry, $mainFormEntriesUpdatedForDerived) AND $mainFormEntry AND in_array($mainFormEntry, $formulize_allWrittenEntryIds[$fid])) { // regarding final in_array... // if we have deduced the mainform entry, then depending on the structure of the relationship, it is possible that if checkforlinks was used above, it would return entries that were not written, in which case we must ignore them!!
+                    if(!in_array($mainFormEntry, $mainFormEntriesUpdatedForDerived) AND $mainFormEntry AND in_array($mainFormEntry, $formulize_allSubmittedEntryIds[$fid])) { // regarding final in_array... // if we have deduced the mainform entry, then depending on the structure of the relationship, it is possible that if checkforlinks was used above, it would return entries that were not part of pageload, in which case we must ignore them!!
 					formulize_updateDerivedValues($mainFormEntry, $fid, $frid);
 					$mainFormEntriesUpdatedForDerived[] = $mainFormEntry;
 					}
-                    if(!isset($formsUpdatedInFramework[$allWrittenFid]) AND in_array($mainFormEntry, $formulize_allWrittenEntryIds[$fid])) { // if the form we're on has derived values, then flag it as one of the updated forms, since at least one matching mainform entry was found and will have been updated including the framework
+                    if(!isset($formsUpdatedInFramework[$allWrittenFid]) AND in_array($mainFormEntry, $formulize_allSubmittedEntryIds[$fid])) { // if the form we're on has derived values, then flag it as one of the updated forms, since at least one matching mainform entry was found and will have been updated including the framework
                         $formsUpdatedInFramework[$allWrittenFid] = $allWrittenFid;
 				}
 			}
@@ -342,9 +399,13 @@ foreach($formulize_allWrittenEntryIds as $allWrittenFid=>$entries) {
 	}
     }
 	
-	
-	// check for things that we should be updating based on the framework in effect for any override screen that has been declared
-    if($overrideFrid AND $derivedValueFound) {
+	// check for things that we should be updating based on the framework in effect for any override screen that has been declared...should we be doing the same lookup of entries in checkForLinks as we do above in normal procedure, so we update only based on mainform(s) in the overrideFrid??
+	if($_POST['overridescreen'] AND $derivedValueFound) {
+		$override_screen_handler = xoops_getmodulehandler('screen', 'formulize');
+		$overrideScreenObject = $override_screen_handler->get($_POST['overridescreen']);
+		$overrideFrid = $overrideScreenObject->getVar('frid');
+		$overrideFid = $overrideScreenObject->getVar('fid');
+		if($overrideFrid) {
 			if($allWrittenFid == $overrideFid) {
 				foreach($entries as $thisEntry) {
 					formulize_updateDerivedValues($thisEntry, $allWrittenFid, $overrideFrid);
@@ -354,6 +415,7 @@ foreach($formulize_allWrittenEntryIds as $allWrittenFid=>$entries) {
 				}
 			}
 		}
+	}
 	
 }
 
@@ -382,7 +444,7 @@ $formulize_readElementsWasRun = true; // flag that will prevent this from runnin
 $GLOBALS['formulize_readElementsWasRun'] = $formulize_readElementsWasRun; // just in case we're not in globals scope at the moment
 
 // if there is more than one form, try to make the 1-1 links
-if(count($formulize_elementData) > 1 AND ($frid OR $overrideFrid)) {
+if($frid OR $overrideFrid) {
     $oneToOneFridToUse = $overrideFrid ? $overrideFrid : $frid;
     foreach($formulize_elementData as $this_fid => $entryData) {
         formulize_makeOneToOneLinks($oneToOneFridToUse, $this_fid);

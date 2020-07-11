@@ -105,6 +105,7 @@ function b_system_login_show() {
 
 		if ($icmsConfigAuth['auth_openid']) {
 			$block['auth_openid'] = TRUE;
+            $block['auth_googleonly'] = $icmsConfigAuth['auth_googleonly'];
 			$block['auth_url'] = authenticationURL();
 		}
 		return $block;

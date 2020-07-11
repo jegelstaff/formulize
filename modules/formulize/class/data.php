@@ -454,6 +454,29 @@ class formulizeDataHandler  {
 		return $row[0];
 	}
 		
+    // this function returns the entry ID of the first entry found in the form with all the specified values in the specified elements
+    // $values is a key value pair of element handles and values
+	function findFirstEntryWithAllValues($values, $op="=") {
+        $likeBits = $op == "LIKE" ? "%" : "";
+		global $xoopsDB;
+        $form_handler = xoops_getmodulehandler('forms', 'formulize');
+        $formObject = $form_handler->get($this->fid);
+        $sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE ";
+        $valuesSQL = array();
+        foreach($values as $elementIdOrHandle=>$value) {
+            if(!$element = _getElementObject($elementIdOrHandle)) {
+                continue;
+            }
+            $valuesSQL[] = "`". $element->getVar('ele_handle') . "` ".formulize_db_escape($op)." \"$likeBits" . formulize_db_escape($value) . "$likeBits\"";
+        }
+        $sql .= implode(' AND ', $valuesSQL)." ORDER BY entry_id LIMIT 0,1";
+		if(!$res = $xoopsDB->query($sql)) {
+			return false;
+		}
+		$row = $xoopsDB->fetchRow($res);
+		return $row[0];
+	}
+    	
 	// this function returns the entry ID of all entries found in the form with the specified value in the specified element
 	// use of $scope_uids should only be for when entries by the current user are searched for.  All other group based scopes should be done based on the scope_groups.
 	function findAllEntriesWithValue($element_id, $value, $scope_uids=array(), $scope_groups=array(), $operator="=") {
@@ -541,7 +564,7 @@ class formulizeDataHandler  {
 	}
 		
 		
-	function _buildScopeFilter($scope_uids, $scope_groups="") {
+	function _buildScopeFilter($scope_uids, $scope_groups=array()) {
 		if(is_array($scope_uids)) {
 			if(count($scope_uids) > 0) {
 				$scopeFilter = " AND (creation_uid = " . implode(" OR creation_uid = ", $scope_uids) . ")";
@@ -566,6 +589,9 @@ class formulizeDataHandler  {
 	// all groups the user is a member of are written to the database, regardless of their current permission on the form
 	// interpretation of permissions is to be done when reading this information, to allow for more flexibility
 	function setEntryOwnerGroups($uids, $entryids, $update=false) {
+        if($entryids === false) {
+            return false;
+        }
 		global $xoopsDB;
 		if(!is_array($uids)) {
 			$tempuids = $uids;
@@ -680,7 +706,7 @@ class formulizeDataHandler  {
 		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($this->fid);
-		$creation_uid = $proxyUser ? intval($proxyUser) : intval($uid);
+		$creation_uid = is_numeric($proxyUser) ? intval($proxyUser) : intval($uid);
 		static $cachedMaps = array();
         static $cachedDataTypeMaps = array();
 		$mapIDs = true; // assume we're mapping elements based on their IDs, because the values array is based on ids as keys
@@ -781,20 +807,43 @@ class formulizeDataHandler  {
             $element_values[$handleElementMap[$key]] = $value;
         }
 
+        // if it is a "new" entry, set default values
+        if(!is_numeric($entry) AND $entry == "new") {
+            $defaultValueMap = getEntryDefaults($this->fid, $entry);
+            foreach($defaultValueMap as $defaultValueElementId=>$defaultValueToWrite) {
+                if($defaultValueElementId) {
+                    $hemKey = $defaultValueElementId;
+                    if(!$mapIDs) {
+                        $handles = convertElementIdsToElementHandles(array($defaultValueElementId));
+                        $hemKey = $handles[0];
+                    } 
+                    if(!isset($element_values[$handleElementMap[$hemKey]])) {
+                        $element_values[$handleElementMap[$hemKey]] = $defaultValueToWrite;
+                    }
+                }
+            }
+        }
+            
         // call a hook which can modify the values before saving
-        $element_values = $formObject->onBeforeSave($entry, $element_values);
+        list($element_values, $existing_values) = $formObject->onBeforeSave($entry, $element_values);
 
         // ensure the hook has not created any invalid element handles because that would cause the sql query to fail
         // note that array_flip means both arrays use element handles as keys. values from the second array are ignored in the intersect
         $element_values = array_intersect_key($element_values, array_flip($handleElementMap));
 
+        $clean_element_values = $element_values; // save a clean copy of the original values before the escaping for writing to DB, so we can use these later in "on after save"
+        
+        foreach($existing_values as $existingHandle=>$existingValue) {
+            if($element_values[$existingHandle] === $existingValue) {
+                unset($element_values[$existingHandle]); // don't write things that are unchanged from their current state in the database
+            }
+        }
+        
         if (0 == count($element_values)) {
             // no values to save, which is probably caused by the onBeforeSave() handler deleting all of the values
             return null;
         }
 
-        $clean_element_values = $element_values; // save a clean copy of the original values before the escaping for writing to DB, so we can use these later in "on after save"
-        
         // escape field names and values before writing to database
         $aes_password = getAESPassword();
         foreach ($element_values as $key => $value) {
@@ -864,7 +913,7 @@ class formulizeDataHandler  {
 		}
 
         $entry_to_return = $entry_to_return ? $entry_to_return : $lastWrittenId;
-        $formObject->onAfterSave($entry_to_return, $clean_element_values);
+        $formObject->onAfterSave($entry_to_return, $clean_element_values, $existing_values);
 
 		return $entry_to_return;
 	}
