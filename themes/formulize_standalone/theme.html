@@ -38,7 +38,8 @@
             jQuery('#formulizeform input[type="radio"]').keypress(function(e) {
                 var key = String.fromCharCode(e.keyCode).toLowerCase();
                 jQuery('input[name="'+jQuery(this).attr('name')+'"]').each(function() {
-                    if(key == jQuery('label[for='+jQuery(this).attr('id')+']').text()) {
+                    checkText = jQuery('label[for='+jQuery(this).attr('id')+']').text();
+                    if(key == checkText || key == checkText.charAt(0).toLowerCase()) {
                         jQuery(this).prop('checked', true).focus().trigger('change');
                     } 
                 })
