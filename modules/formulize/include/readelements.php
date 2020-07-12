@@ -387,24 +387,24 @@ foreach($formulize_allWrittenEntryIds as $allWrittenFid=>$entries) {
 		}
 	} else {
         if($mainFormHasDerived OR $derivedValueFound) { // if there is a framework in effect, then update derived values across the entire framework...strong assumption would be that when a framework is in effect, all the forms being saved are related...if there are outliers they will not get their derived values updated!  We handle them below.
-		foreach($entries as $thisEntry) {
-			if($allWrittenFid == $fid) {
-				$foundEntries['entries'][$fid] = $entries;
-			} else {
-				// Since this isn't the main form, then we need to check for which mainform entries match to the entries we're updating right now
-				$foundEntries = checkForLinks($frid, array($allWrittenFid), $allWrittenFid, array($allWrittenFid=>array($thisEntry)));
-			}
-			foreach($foundEntries['entries'][$fid] as $mainFormEntry) {
-                    if(!in_array($mainFormEntry, $mainFormEntriesUpdatedForDerived) AND $mainFormEntry AND in_array($mainFormEntry, $formulize_allSubmittedEntryIds[$fid])) { // regarding final in_array... // if we have deduced the mainform entry, then depending on the structure of the relationship, it is possible that if checkforlinks was used above, it would return entries that were not part of pageload, in which case we must ignore them!!
-					formulize_updateDerivedValues($mainFormEntry, $fid, $frid);
-					$mainFormEntriesUpdatedForDerived[] = $mainFormEntry;
-					}
-                    if(!isset($formsUpdatedInFramework[$allWrittenFid]) AND in_array($mainFormEntry, $formulize_allSubmittedEntryIds[$fid])) { // if the form we're on has derived values, then flag it as one of the updated forms, since at least one matching mainform entry was found and will have been updated including the framework
-                        $formsUpdatedInFramework[$allWrittenFid] = $allWrittenFid;
-				}
-			}
-		}
-	}
+            foreach($entries as $thisEntry) {
+                if($allWrittenFid == $fid) {
+                    $foundEntries['entries'][$fid] = $entries;
+                } else {
+                    // Since this isn't the main form, then we need to check for which mainform entries match to the entries we're updating right now
+                    $foundEntries = checkForLinks($frid, array($allWrittenFid), $allWrittenFid, array($allWrittenFid=>array($thisEntry)));
+                }
+                foreach($foundEntries['entries'][$fid] as $mainFormEntry) {
+                        if(!in_array($mainFormEntry, $mainFormEntriesUpdatedForDerived) AND $mainFormEntry AND in_array($mainFormEntry, $formulize_allSubmittedEntryIds[$fid])) { // regarding final in_array... // if we have deduced the mainform entry, then depending on the structure of the relationship, it is possible that if checkforlinks was used above, it would return entries that were not part of pageload, in which case we must ignore them!!
+                        formulize_updateDerivedValues($mainFormEntry, $fid, $frid);
+                        $mainFormEntriesUpdatedForDerived[] = $mainFormEntry;
+                        }
+                        if(!isset($formsUpdatedInFramework[$allWrittenFid]) AND in_array($mainFormEntry, $formulize_allSubmittedEntryIds[$fid])) { // if the form we're on has derived values, then flag it as one of the updated forms, since at least one matching mainform entry was found and will have been updated including the framework
+                            $formsUpdatedInFramework[$allWrittenFid] = $allWrittenFid;
+                    }
+                }
+            }
+        }
     }
 	
 	// check for things that we should be updating based on the framework in effect for any override screen that has been declared...should we be doing the same lookup of entries in checkForLinks as we do above in normal procedure, so we update only based on mainform(s) in the overrideFrid??
