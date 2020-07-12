@@ -71,6 +71,11 @@ class formulizePassCodeHandler {
 	}
 
     function generatePasscode() {
+        
+        if(!function_exists('bcadd')) {
+            return '';
+        }
+        
         require XOOPS_ROOT_PATH.'/modules/formulize/libraries/GenPhrase/Loader.php';
         $loader = new GenPhrase\Loader();
         $loader->register();
