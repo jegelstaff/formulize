@@ -919,10 +919,10 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
                             $options = unserialize($element["ele_value"]);
                             $element_value = "";
                             $options = $options[2];
-                            if(strstr($cell_value, "\n")) {
-                                $items = explode("\n", $cell_value);
+                            if(strstr($row_value, "\n")) {
+                                $items = explode("\n", $row_value);
                             } else {
-                                $items = explode(",", $cell_value);
+                                $items = explode(",", $row_value);
                             }
                             foreach ($items as $item) {
                                 $item_value = trim($item);
@@ -934,14 +934,14 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
                                         if (trim($item_value) == trim(trans($thisoption))) {
                                             $item_value = $thisoption;
                                             $foundit = true;
-                                            break;
                                         }
                                         if (preg_match('/\{OTHER\|+[0-9]+\}/', $thisoption)) {
                                             $hasother = $thisoption;
                                         }
+                                        if($foundit AND $hasother) { break; } // no need to keep looking for stuff
                                     }
                                     if ($foundit) {
-                                                    $element_value .= "*=+*:" . $item_value;
+                                        $element_value .= "*=+*:" . $item_value;
                                     } elseif ($hasother) {
                                         $other_values[] = "INSERT INTO " . $xoopsDB->prefix("formulize_other") . " (id_req, ele_id, other_text) VALUES (\"$max_id_req\", \"" . $element["ele_id"] . "\", \"" . $myts->htmlSpecialChars(trim($item_value)) . "\")";
                                         $element_value .= "*=+*:" . $hasother;
