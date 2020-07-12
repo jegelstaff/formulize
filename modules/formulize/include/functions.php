@@ -1559,6 +1559,7 @@ function prepareCellForSpreadsheetExport($column, $entry) {
         strtolower($formDataTypes[$columnFid][$column]) == 'json'
     ) {
         $data_to_write = str_replace("\r\n", "\n", $data_to_write); // convert lines
+        $data_to_write = str_replace('"', '""', $data_to_write); // escape quotes
         $data_to_write = undoAllHTMLChars(str_replace("&quot;", '""', $data_to_write)); // escape quotes
         $introChar = strstr(getCurrentURL(),'makecsv') ? "'" : "\t"; // Google wants a ' and Excel wants a tab...assume makecsv is going to be imported into Google, and otherwise we're downloading for Excel
         $data_to_write = '"'.$introChar. trans($data_to_write).'"'; // encapsulate string with quotes
@@ -7176,7 +7177,7 @@ function do_update_export($queryData, $frid, $fid, $groups) {
         $form_handler = xoops_getmodulehandler('forms','formulize');
         $formObject = $form_handler->get($fid);
         if (is_object($formObject)) {
-            $formTitle = "'".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "?", ",", ")", "(", "[", "]"), "_", trans($formObject->getVar('title')))."'";
+            $formTitle = "'".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "?", ",", ")", "(", "[", "]"), "_", trans(undoAllHTMLChars($formObject->getVar('title'))))."'";
         } else {
             $formTitle = "a_form";
         }
@@ -7216,7 +7217,7 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
     $form_handler = xoops_getmodulehandler('forms','formulize');
     $formObject = $form_handler->get($fid);
     if (is_object($formObject)) {
-        $formTitle = "'".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "?", ",", ")", "(", "[", "]"), "_", trans($formObject->getVar('title')))."'";
+        $formTitle = "'".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "?", ",", ")", "(", "[", "]"), "_", trans(undoAllHTMLChars($formObject->getVar('title'))))."'";
     } else {
         $formTitle = "a_form";
     }
@@ -7354,7 +7355,7 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
                         $i++;
                     }
                     // output this row to the browser
-                    fputcsv($output_handle, $row);
+                    fputcsv($output_handle, $row, ',', chr(0)); // null/empty enclosure, ie: we're handling quoting contents ourselves
                 }
     
                 // get the next set of data
