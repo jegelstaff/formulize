@@ -3027,6 +3027,9 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
                 }
             }
         }
+        if($screen) {
+            $form->addElement(new XoopsFormHidden ('formulize_renderedEntryScreen', $screen->getVar('sid')));
+        }
 		return $form;
 	} else { // write as HTML
 		print "<input type=hidden name=sort value='" . $sort . "'>";
@@ -3078,6 +3081,9 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
                     print "<input type='hidden' name='form_".$fid."_rendered_entry' value='".$entry_id."'>";
                 }
             }
+        }
+        if($screen) {
+            print "<input type=hidden name=formulize_renderedEntryScreen value='".$screen->getVar('sid')."'>";
         }
 	}
 }

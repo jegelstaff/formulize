@@ -263,12 +263,13 @@ unset($GLOBALS['formulize_afterSavingLogicRequired']); // now that saving is don
 // and if none, then check for fundamental filters on a list screen and use those
 // CAN WE MOVE INTO DATA HANDLER SO ON BEFORE SAVE IS AWARE OF CONTEXT
 // need to also take these into account when displaying forms, as if they are element defaults!
+// May want to refactor to use formulize_renderedEntryScreen, rather than deducing from settings and making assumptions?
 $fundamentalDefaults = array();
 $viewEntryScreenObject = false;
-if($screenToLoad = determineViewEntryScreen($screen, $fid)) {
-    if($viewEntryScreenObject = $screen_handler->get($screenToLoad)) {
-        $element_handler = xoops_getmodulehandler('elements', 'formulize');
-        if(!is_a($viewEntryScreenObject, 'formulizeFormScreen') AND !is_a($viewEntryScreenObject, 'formulizeMultiPageFormScreen')) { // only work with form screens or multipage screens now
+if(isset($_POST['formulize_renderedEntryScreen']) AND $screenToLoad = determineViewEntryScreen($screen, $fid)) {
+    $ves_handler = xoops_getmodulehandler('screen', 'formulize');
+    if($viewEntryScreenObject = $ves_handler->get($screenToLoad)) {
+        if($viewEntryScreenObject->getVar('type') != 'form' AND $viewEntryScreenObject->getVar('type') != 'multiPage') { // only work with form screens or multipage screens now
             $viewEntryScreenObject = false;
         }
     }
@@ -279,6 +280,7 @@ if(!$viewEntryScreenObject AND $screen AND (is_a($screen, 'formulizeFormScreen')
 if($viewEntryScreenObject) {
     $viewEntryScreenDefaults = $viewEntryScreenObject->getVar('elementdefaults');
     if(is_array($viewEntryScreenDefaults) AND count($viewEntryScreenDefaults) > 0) {
+        $element_handler = xoops_getmodulehandler('elements', 'formulize');
         foreach($viewEntryScreenDefaults as $elementId=>$defaultValue) {
             if($elementObject = $element_handler->get($elementId)) {
                 // refactor getFilterValuesForEntry to work with this structure of inputs too...?
@@ -326,11 +328,16 @@ $GLOBALS['formulize_newSubformBlankElementIds'] = $formulize_newSubformBlankElem
 if(isset($_POST['overridescreen']) AND $_POST['overridescreen'] AND is_numeric($_POST['overridescreen'])) {
     $override_screen_handler = xoops_getmodulehandler('screen', 'formulize');
 	$overrideScreenObject = $override_screen_handler->get($_POST['overridescreen']);
-	$subformFridToSynch = $overrideScreenObject->getVar('frid');
+    $overrideFrid = $overrideScreenObject->getVar('frid');
+	$overrideFid = $overrideScreenObject->getVar('fid');
+} elseif($viewEntryScreenObject) {
+    $overrideFrid = $viewEntryScreenObject->getVar('frid');
+    $overrideFid = $viewEntryScreenObject->getVar('fid');
 } else {
-    $subformFridToSynch = $frid;
+    $overrideFrid = $frid;
+    $overrideFid = $fid;
 }
-synchExistingSubformEntries($subformFridToSynch);
+synchExistingSubformEntries($overrideFrid);
 synchSubformBlankDefaults();
 
 
@@ -339,6 +346,7 @@ foreach($notEntriesList['update_entry'] as $updateFid=>$updateEntries) {
 }
 
 // update the derived values for all forms that we saved data for, now that we've saved all the data from all the forms
+// SHOULD CHECK OVERRIDE FRID FOR DERIVED VALUES TOO?
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
 $mainFormHasDerived = false;
 if($fid) {
@@ -400,21 +408,15 @@ foreach($formulize_allWrittenEntryIds as $allWrittenFid=>$entries) {
     }
 	
 	// check for things that we should be updating based on the framework in effect for any override screen that has been declared...should we be doing the same lookup of entries in checkForLinks as we do above in normal procedure, so we update only based on mainform(s) in the overrideFrid??
-	if($_POST['overridescreen'] AND $derivedValueFound) {
-		$override_screen_handler = xoops_getmodulehandler('screen', 'formulize');
-		$overrideScreenObject = $override_screen_handler->get($_POST['overridescreen']);
-		$overrideFrid = $overrideScreenObject->getVar('frid');
-		$overrideFid = $overrideScreenObject->getVar('fid');
-		if($overrideFrid) {
-			if($allWrittenFid == $overrideFid) {
-				foreach($entries as $thisEntry) {
-					formulize_updateDerivedValues($thisEntry, $allWrittenFid, $overrideFrid);
-					if(!isset($formsUpdatedInFramework[$allWrittenFid])) { // if the form we're on has derived values, then flag it as one of the updated forms
-						$formsUpdatedInFramework[$allWrittenFid] = $allWrittenFid;
-					}
-				}
-			}
-		}
+	if($overrideFrid AND $overrideFrid != $frid AND $derivedValueFound) {
+        if($allWrittenFid == $overrideFid) {
+            foreach($entries as $thisEntry) {
+                formulize_updateDerivedValues($thisEntry, $allWrittenFid, $overrideFrid);
+                if(!isset($formsUpdatedInFramework[$allWrittenFid])) { // if the form we're on has derived values, then flag it as one of the updated forms
+                    $formsUpdatedInFramework[$allWrittenFid] = $allWrittenFid;
+                }
+            }
+        }
 	}
 	
 }
@@ -444,10 +446,9 @@ $formulize_readElementsWasRun = true; // flag that will prevent this from runnin
 $GLOBALS['formulize_readElementsWasRun'] = $formulize_readElementsWasRun; // just in case we're not in globals scope at the moment
 
 // if there is more than one form, try to make the 1-1 links
-if($frid OR $overrideFrid) {
-    $oneToOneFridToUse = $overrideFrid ? $overrideFrid : $frid;
-    foreach($formulize_elementData as $this_fid => $entryData) {
-        formulize_makeOneToOneLinks($oneToOneFridToUse, $this_fid);
+if($overrideFrid) {
+    foreach($formulize_allSubmittedEntryIds as $this_fid => $entryIds) {
+        formulize_makeOneToOneLinks($overrideFrid, $this_fid);
     }
 }
 

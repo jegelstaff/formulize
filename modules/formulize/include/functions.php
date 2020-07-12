@@ -7567,7 +7567,7 @@ function getEntryDefaults($target_fid,$target_entry) {
 
 // this function figures out if there is a viewentryscreen that we should be showing based on the current state
 function determineViewEntryScreen($screen, $fid) {
-    if($screen AND is_a($screen, 'formulizeListOfEntriesScreen') AND $_POST['ventry']) {
+    if($screen AND is_a($screen, 'formulizeListOfEntriesScreen')) {
         $screen_handler = xoops_getmodulehandler('screen', 'formulize');
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
         if($_POST['overridescreen'] AND is_numeric($_POST['overridescreen'])) {
