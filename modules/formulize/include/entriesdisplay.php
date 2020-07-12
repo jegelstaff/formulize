@@ -228,10 +228,6 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			}
 		}
 		$savename = $_POST['savename'];
-		if(get_magic_quotes_gpc()) {
-			$savename = stripslashes($savename);
-		}
-
 
 		// flatten quicksearches -- one value in the array for every column in the view
 		$allcols = explode(",", $_POST['oldcols']);
@@ -798,6 +794,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}
 
 	if($_POST['ventry']) { // user clicked on a view this entry link
+        
 		include_once XOOPS_ROOT_PATH . '/modules/formulize/include/formdisplay.php';
 
 		if($_POST['ventry'] == "addnew" OR $_POST['ventry'] == "single") {
@@ -809,11 +806,11 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		}
 
 		if(($screen AND $screen->getVar("viewentryscreen")) OR $_POST['overridescreen']) {
-      if(strstr($screen->getVar("viewentryscreen"), "p")) { // if there's a p in the specified viewentryscreen, then it's a pageworks page -- added April 16 2009 by jwe
-        $page = intval(substr($screen->getVar("viewentryscreen"), 1));
-        include XOOPS_ROOT_PATH . "/modules/pageworks/index.php";
-        return;
-      } else {
+            if(strstr($screen->getVar("viewentryscreen"), "p")) { // if there's a p in the specified viewentryscreen, then it's a pageworks page -- added April 16 2009 by jwe
+                $page = intval(substr($screen->getVar("viewentryscreen"), 1));
+                include XOOPS_ROOT_PATH . "/modules/pageworks/index.php";
+                return;
+            } else {
                 $screenToLoad = determineViewEntryScreen($screen, $fid);
 				$screen_handler = xoops_getmodulehandler('screen', 'formulize');
 
@@ -822,7 +819,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 					exit("You're sending the user to a list of entries screen instead of some kind of form screen, when they're editing an entry.  Check what screen is defined as the screen to use for editing an entry, or what screen id you're using in the viewEntryLink or viewEntryButton functions in the template.");
 				}
 				$viewEntryScreen_handler = xoops_getmodulehandler($viewEntryScreenObject->getVar('type').'Screen', 'formulize');
-  			$displayScreen = $viewEntryScreen_handler->get($viewEntryScreenObject->getVar('sid'));
+                $displayScreen = $viewEntryScreen_handler->get($viewEntryScreenObject->getVar('sid'));
 				if($displayScreen->getVar('type')=="form") {
 					if($_POST['ventry'] != "single") {
 						$displayScreen->setVar('reloadblank', 1); // if the user clicked the add multiple button, then specifically override that screen setting so they can make multiple entries
@@ -835,16 +832,16 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
                 if(isset($_SESSION['formulize_passCode_'.$screen->getVar('sid')])) {
                     $_SESSION['formulize_passCode_'.$displayScreen->getVar('sid')] = $_SESSION['formulize_passCode_'.$screen->getVar('sid')];
                 }
-            if(!$_POST['overridescreen'] AND $displayScreen->getVar('fid') != $fid) {
-                // display screen is for another form in the active relationship, so figure out what all the entries are, and display the first entry in the set that's for the form this screen is based on
-                $dataSetEntries = checkForLinks($frid, array($fid), $fid, array($fid=>array($this_ent))); // returns array of the forms and entries in the dataset
-                $this_ent = $dataSetEntries['entries'][$displayScreen->getVar('fid')][0]; // first entry for the screen's form, in this dataset - see formdisplay.php for more detailed example of usage of checkforlinks
+                if(!$_POST['overridescreen'] AND $displayScreen->getVar('fid') != $fid) {
+                    // display screen is for another form in the active relationship, so figure out what all the entries are, and display the first entry in the set that's for the form this screen is based on
+                    $dataSetEntries = checkForLinks($frid, array($fid), $fid, array($fid=>array($this_ent))); // returns array of the forms and entries in the dataset
+                    $this_ent = $dataSetEntries['entries'][$displayScreen->getVar('fid')][0]; // first entry for the screen's form, in this dataset - see formdisplay.php for more detailed example of usage of checkforlinks
+                }
+                $viewEntryScreen_handler->render($displayScreen, $this_ent, $settings);
+                global $renderedFormulizeScreen; // picked up at the end of initialize.php so we set the right info in the template when the whole page is rendered
+                $renderedFormulizeScreen = $displayScreen;
+                return;
             }
-  			$viewEntryScreen_handler->render($displayScreen, $this_ent, $settings);
-			global $renderedFormulizeScreen; // picked up at the end of initialize.php so we set the right info in the template when the whole page is rendered
-			$renderedFormulizeScreen = $displayScreen;
-			return;
-      }
 		} else {
 
 			if($_POST['ventry'] != "single") {
