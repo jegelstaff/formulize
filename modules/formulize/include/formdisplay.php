@@ -1306,37 +1306,35 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		}
 		// add in any onetoone elements that we need to deal with at the same time (in case their joining key value changes on the fly)
 		if(count($fids)>1) {
-			$i = 1;
-			while($i<=count($fids)) {
-					$relationship_handler = xoops_getmodulehandler('frameworks', 'formulize');
-					$relationship = $relationship_handler->get($frid);
-					foreach($relationship->getVar('links') as $thisLink) {
-							if($thisLink->getVar('form1') == $fids[$i]) {
-									$keyElement = $thisLink->getVar('key2');
-									break;
-							} elseif($thisLink->getVar('form2') == $fids[$i]) {
-									$keyElement = $thisLink->getVar('key1');
-									break;
-							}
-					}
-                    if($keyElementObject = _getElementObject($keyElement)) {
-					// prepare to loop through elements for the rendered entry, or 'new', if there is no rendered entry
-					$entryToLoop = isset($entries[$fids[$i]][0]) ? $entries[$fids[$i]][0] : null;
-					if(!$entryToLoop AND isset($GLOBALS['formulize_renderedElementsForForm'][$fids[$i]]['new'])) {
-						$entryToLoop = 'new';
-					}
-					foreach($GLOBALS['formulize_renderedElementsForForm'][$fids[$i]][$entryToLoop] as $renderedMarkupName => $thisElement) {
-							$GLOBALS['formulize_renderedElementHasConditions'][$renderedMarkupName] = $thisElement;
+            foreach($fids as $thisFid) {
+                $relationship_handler = xoops_getmodulehandler('frameworks', 'formulize');
+                $relationship = $relationship_handler->get($frid);
+                foreach($relationship->getVar('links') as $thisLink) {
+                        if($thisLink->getVar('form1') == $thisFid) {
+                                $keyElement = $thisLink->getVar('key2');
+                                break;
+                        } elseif($thisLink->getVar('form2') == $thisFid) {
+                                $keyElement = $thisLink->getVar('key1');
+                                break;
+                        }
+                }
+                if($keyElementObject = _getElementObject($keyElement)) {
+                    // prepare to loop through elements for the rendered entry, or 'new', if there is no rendered entry
+                    $entryToLoop = isset($entries[$thisFid][0]) ? $entries[$thisFid][0] : null;
+                    if(!$entryToLoop AND isset($GLOBALS['formulize_renderedElementsForForm'][$thisFid]['new'])) {
+                        $entryToLoop = 'new';
+                    }
+                    foreach($GLOBALS['formulize_renderedElementsForForm'][$thisFid][$entryToLoop] as $renderedMarkupName => $thisElement) {
+                            $GLOBALS['formulize_renderedElementHasConditions'][$renderedMarkupName] = $thisElement;
                                 $governingElements2 = _compileGoverningElements($entries, $keyElementObject, $renderedMarkupName);
-							foreach($governingElements2 as $key=>$value) {
-									$formulize_oneToOneElements[$key] = true;
-									$formulize_oneToOneMetaData[$key] = array('onetoonefrid' => $frid, 'onetoonefid' => $fid, 'onetooneentries' => urlencode(serialize($entries)), 'onetoonefids'=>urlencode(serialize($fids)));			
-							}
-							$formulize_governingElements = mergeGoverningElements($formulize_governingElements, $governingElements2);
-					}
-					$i++;
-			}
-		}
+                            foreach($governingElements2 as $key=>$value) {
+                                    $formulize_oneToOneElements[$key] = true;
+                                    $formulize_oneToOneMetaData[$key] = array('onetoonefrid' => $frid, 'onetoonefid' => $fid, 'onetooneentries' => urlencode(serialize($entries)), 'onetoonefids'=>urlencode(serialize($fids)));			
+                            }
+                            $formulize_governingElements = mergeGoverningElements($formulize_governingElements, $governingElements2);
+                    }
+                }
+            }
 		}
         // if there are elements we need to pay attention to, draw the necessary javascript code
         // unless we're doing an embedded 'elements only form' -- unless we're doing that for displaying a subform entry specifically as its own thing (as part of a modal for example (and only example right now))
