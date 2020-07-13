@@ -970,11 +970,12 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
         $elements_handler = xoops_getmodulehandler('elements', 'formulize');
         $newFids = array();
         foreach($elements_allowed as $ele_id) {
-            $elementObject = $elements_handler->get($ele_id);
-            $elementFid = $elementObject->getVar('id_form');
-            // if we could refactor so the newFids array is a series of fid/elements_allowed pairs, and we set them as the start of the main foreach(fids) loop, then maybe that would work to respect whatever order of whatever elements in whatever form? As long as elements allowed is constructed in the right order going into this function
-            if(!isset($newFids[$elementFid])) {
-                $newFids[$elementFid] = $elementFid;
+            if($elementObject = $elements_handler->get($ele_id)) {
+                $elementFid = $elementObject->getVar('id_form');
+                // if we could refactor so the newFids array is a series of fid/elements_allowed pairs, and we set them as the start of the main foreach(fids) loop, then maybe that would work to respect whatever order of whatever elements in whatever form? As long as elements allowed is constructed in the right order going into this function
+                if(!isset($newFids[$elementFid])) {
+                    $newFids[$elementFid] = $elementFid;
+                }
             }
         }
         if(count($newFids)>0) {
