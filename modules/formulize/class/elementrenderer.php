@@ -1349,15 +1349,13 @@ if($multiple ){
   // creates a hidden version of the element so that it can pass its value back, but not be available to the user
 	function formulize_disableElement($element, $type, $ele_desc) {
 		if($type == "text" OR $type == "textarea" OR $type == "date" OR $type == "colorpick") {
-			$newElement = new xoopsFormElementTray($element->getCaption(), "\n");
-			$newElement->setName($element->getName());
 			switch($type) {
 				case 'date':
 					if($timeval = $element->getValue()) {
-						if($timeval == _DATE_DEFAULT OR !is_string($timeval)) {
+						if($timeval == _DATE_DEFAULT OR $timeval == '0000-00-00' OR !$timeval) { 
 							$hiddenValue = "";
 						} else {
-							$timeval = strtotime($timeval);
+							$timeval = is_numeric($timeval) ? $timeval : strtotime($timeval);
 							$hiddenValue = date(_SHORTDATESTRING, $timeval);
 						} 
 					} else {
@@ -1369,11 +1367,12 @@ if($multiple ){
                     $hiddenValue = $element->getValue();
 			}
 			if(is_array($hiddenValue)) { // not sure when/if this would ever happen
-				$newElement->addElement(new xoopsFormLabel('', implode(", ", $hiddenValue)));
+				$newElement = new xoopsFormLabel($element->getCaption(), implode(", ", $hiddenValue));
 			} else {
-				$newElement->addElement(new xoopsFormLabel('', $hiddenValue));
+				$newElement = new xoopsFormLabel($element->getCaption(), $hiddenValue);
 			}
-			$newElement->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
+            $newElement->setName($element->getName());
+			$newElement->setDescription(undoAllHTMLChars($ele_desc));
 			return $newElement;
 		} else {
 			return $element;
