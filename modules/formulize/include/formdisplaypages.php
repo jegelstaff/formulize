@@ -375,7 +375,10 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
     
     // if we have actually completed rendering (and not simply going around and around in a recursive loop) then capture what has been rendered, and then output it with the header for the most recent run through (ie: the innermost nested multipage subform call, if that's the circumstance that caused the recursive looping)
     // since we're checking current page's screen against the declared screen we're rendering, this won't actually cache the top and bottom templates for the parent screen, but we could modify that to still get the top template for screens we're not rendering, so that we can do nested tabs later if we want
-    if(isset($GLOBALS['formulize_completedFormRendering']) AND $GLOBALS['formulize_completedFormRendering']) {
+    if($currentPage == $thanksPage
+       OR ($currentPage != $thanksPage AND ($pages[$currentPage][0] === "HTML" OR $pages[$currentPage][0] === "PHP"))
+       OR (isset($GLOBALS['formulize_completedFormRendering']) AND $GLOBALS['formulize_completedFormRendering'])
+       ) {
         $formRendering = ob_get_clean();
 
         include XOOPS_ROOT_PATH.'/modules/formulize/include/multipage_boilerplate.php';
