@@ -650,6 +650,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		$formframe = $formframetemp;
 	}
 
+    list($fid, $frid) = getFormFramework($formframe, $mainform);
 
     // propagate the go_back values from page load to page load, so we can eventually return there when the user is ready
 	if($_POST['go_back_form']) { // we just received a subform submission
@@ -674,8 +675,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		$entry = $GLOBALS['formulize_newEntryIds'][$fid][0];
 	}
 
-	list($fid, $frid) = getFormFramework($formframe, $mainform);
-    
 	if($_POST['deletesubsflag']) { // if deletion of sub entries requested
     $updateMainformDerivedAfterSubEntryDeletion = false;
     $subs_to_del = array();
