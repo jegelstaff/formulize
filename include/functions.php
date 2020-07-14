@@ -2712,7 +2712,8 @@ function icms_need_do_br($moduleName=false) {
  * @return url that google will redirect to after authentication
  */
 
-function authenticationURL() {
+function authenticationURL($needAuth) {
+    if(!$needAuth) { return ''; }
     $client = setupAuthentication();
     $client->setApprovalPrompt('force');
     $authUrl = $client->createAuthUrl();
