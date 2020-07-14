@@ -2346,8 +2346,8 @@ function displayPara($entry, $handle, $id="NULL", $parasToReturn="NULL") {
 }
 
 // this function returns the contents of a text are with a BR between each line
-function displayBR($entry, $handle, $id="NULL") {
-	$values = display($entry, $handle, $id);
+function displayBR($entry, $handle, $id="NULL", $localid="NULL") {
+	$values = display($entry, $handle, $id, $localid);
 	if(is_array($values)) {
 		foreach($values as $value) {
 			$br[] = makeBR($value);
