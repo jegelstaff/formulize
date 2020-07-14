@@ -161,6 +161,20 @@ class formulizePassCodeHandler {
         self::createPasscodeElement($sid);
         return true;
 	}
+    
+    function updatePasscode($oldCode, $newCode, $sid) {
+        global $xoopsDB;
+        $sid = intval($sid);
+        $oldCode = formulize_db_escape($oldCode);
+        $newCode = formulize_db_escape($newCode);
+        $sql = 'UPDATE '.$xoopsDB->prefix('formulize_passcodes').' SET passcode = "'.$newCode.'" WHERE passcode = "'.$oldCode.'" AND screen = '.$sid;
+        if(!$res = $xoopsDB->queryF($sql)) {
+            print "Error: could not update passcode with this SQL: $sql<br>".$xoopsDB->error();
+            return false;
+        }
+        return true;
+    }
+    
 
     // add a system level passcode element to the form visible to registered users, if one does not exist already
     function createPasscodeElement($sid) {
