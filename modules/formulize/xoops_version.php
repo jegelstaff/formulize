@@ -877,6 +877,30 @@ $modversion['config'][] = array(
 );
 
 $modversion['config'][] = array(
+	'name' => 'customScope',
+	'title' => '_MI_formulize_CUSTOMSCOPE',
+	'description' => '_MI_formulize_CUSTOMSCOPEDESC',
+	'formtype' => 'textarea',
+	'valuetype' => 'text',
+	'default' => '',
+);
+
+$modversion['config'][] = array(
+	'name' => 'exportIntroChar',
+	'title' => '_MI_formulize_EXPORTINTROCHAR',
+	'description' => '_MI_formulize_EXPORTINTROCHARDESC',
+	'formtype' => 'select',
+	'valuetype' => 'int',
+	'default' => '1',
+    'options' => array(
+      _MI_formulize_EIC_BASIC=>1,
+      _MI_formulize_EIC_ALWAYSAPOS=>2,
+      _MI_formulize_EIC_ALWAYSTAB=>3,
+      _MI_formulize_EIC_PLAIN=>4
+        )
+);
+
+$modversion['config'][] = array(
 	'name' => 'notifyByCron',
 	'title' => '_MI_formulize_NOTIFYBYCRON',
 	'description' => '_MI_formulize_NOTIFYBYCRONDESC',
@@ -884,16 +908,6 @@ $modversion['config'][] = array(
 	'valuetype' => 'int',
 	'default' => '0',
 );
-
-$modversion['config'][] = array(
-	'name' => 'customScope',
-	'title' => '_MI_formulize_CUSTOMSCOPE',
-	'description' => '_MI_formulize_CUSTOMSCOPEDESC ',
-	'formtype' => 'textarea',
-	'valuetype' => 'text',
-	'default' => '',
-);
-
 
 //bloc
 $modversion['blocks'][1] = array(

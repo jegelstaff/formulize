@@ -1529,6 +1529,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
 
 function prepareCellForSpreadsheetExport($column, $entry) {
     static $formDataTypes = array();
+    static $exportIntroChar = null;
     $data_to_write = '';
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
     $thisColumnElement = $element_handler->get($column);
@@ -1537,6 +1538,25 @@ function prepareCellForSpreadsheetExport($column, $entry) {
     if(!isset($formDataTypes[$columnFid])) {
         $data_handler = new formulizeDataHandler($columnFid);
         $formDataTypes[$columnFid] = $data_handler->gatherDataTypes();
+    }
+    if($exportIntroChar === null) {
+        $config_handler = xoops_gethandler('config');
+        $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+        switch($formulizeConfig['exportIntroChar']) {
+            case 4:
+                $exportIntroChar = "";
+                break;
+            case 3:
+                $exportIntroChar = "\t";
+                break;
+            case 2:
+                $exportIntroChar = "'";
+                break;
+            case 1:
+            default:
+                // Google wants a ' and Excel wants a tab...assume makecsv is going to be imported into Google, and otherwise we're downloading for Excel - default preference for handling strings in csv's, so they import without being mangled. Setting for no intro char may be useful when exporting to other programs that suck in raw data.
+                $exportIntroChar = strstr(getCurrentURL(),'makecsv') ? "'" : "\t";
+        }
     }
     
     // experimental, replace displayTogether with a technique for splitting contents onto other lines below...
@@ -1561,8 +1581,7 @@ function prepareCellForSpreadsheetExport($column, $entry) {
         $data_to_write = str_replace("\r\n", "\n", $data_to_write); // convert lines
         $data_to_write = str_replace('"', '""', $data_to_write); // escape quotes
         $data_to_write = undoAllHTMLChars(str_replace("&quot;", '""', $data_to_write)); // escape quotes
-        $introChar = strstr(getCurrentURL(),'makecsv') ? "'" : "\t"; // Google wants a ' and Excel wants a tab...assume makecsv is going to be imported into Google, and otherwise we're downloading for Excel
-        $data_to_write = '"'.$introChar. trans($data_to_write).'"'; // encapsulate string with quotes
+        $data_to_write = '"'.$exportIntroChar. trans($data_to_write).'"'; // encapsulate string with quotes
     }
     return $data_to_write;
 }
@@ -7355,7 +7374,7 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
                         $i++;
                     }
                     // output this row to the browser
-                    fputcsv($output_handle, $row, ',', chr(0)); // null/empty enclosure, ie: we're handling quoting contents ourselves
+                    fwrite($output_handle, implode(',',$row)."\n");
                 }
     
                 // get the next set of data
