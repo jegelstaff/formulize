@@ -372,7 +372,7 @@ $modversion['table_metadata'] = array(
         "fields" => array("groups","tokenkey"),
         "joins" => array()
     ),
-    "formulize_tokens" => array(
+    "formulize_passcodes" => array(
         "fields" => array("passcode", "screen"),
         "joins" => array()
     )
