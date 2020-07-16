@@ -119,15 +119,18 @@ switch ($op) {
 			$form->display();
 		} else {
 
-			//update the user mapping table in case the email was used as an external id (needed for google login)
-			include_once XOOPS_ROOT_PATH."/integration_api.php";
-			include_once ICMS_ROOT_PATH . '/modules/formulize/include/functions.php';
-			Formulize::init();
-			if(!Formulize::updateResourceMapping($oldemail, $email)){
-				$update_message = 'Could not fully update email. <br>Consult webmaster if this seems to compromise Login with Google functionality.';
-			}else{
-				$update_message = _MD_PROFILE_PROFUPDATED;
-			}
+            global $icmsConfigAuth;
+            if($icmsConfigAuth['auth_openid']) {
+                //update the user mapping table in case the email was used as an external id (needed for google login)
+                include_once XOOPS_ROOT_PATH."/integration_api.php";
+                include_once ICMS_ROOT_PATH . '/modules/formulize/include/functions.php';
+                Formulize::init();
+                if(!Formulize::updateResourceMapping($oldemail, $email)){
+                    $update_message = 'Could not fully update email. <br>Consult webmaster if this seems to compromise Login with Google functionality.';
+                }else{
+                    $update_message = _MD_PROFILE_PROFUPDATED;
+                }
+            }
 
 			$profile->setVar('profileid', $edituser->getVar('uid'));
 			$profile_handler->insert($profile);

@@ -79,6 +79,12 @@ function formulize_DBPatchCheckSQL($sql, &$needsPatch) {
 
 // database patch logic for 4.0 and higher
 function patch40() {
+    
+    $module_handler = xoops_gethandler('module');
+    $formulizeModule = $module_handler->getByDirname("formulize");
+    $metadata = $formulizeModule->getInfo();
+    $versionNumber = $metadata['version'];
+    
     // CHECK THAT THEY ARE AT 3.1 LEVEL, IF NOT, LINK TO PATCH31
     // Check for ele_handle being 255 in formulize table
     global $xoopsDB;
@@ -549,7 +555,50 @@ function patch40() {
                 } elseif($key === "form_screen_multipage_column1width" OR $key === "form_screen_multipage_column2width" OR $key === "form_screen_multipage_displaycolumns") {
                     print "Multipage form screen display columns and column widths already added. result: OK<br>";
                 } else {
-                    exit("Error patching DB for Formulize 4.0. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+                    exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+                }
+            }
+        }
+        
+        $newConfigSQL = array();
+        $sql = "SELECT * FROM ".$xoopsDB->prefix("config")." WHERE conf_name = 'auth_2fa'";
+        if($res = $xoopsDB->query($sql)) {
+            if($xoopsDB->getRowsNum($res)==0) {
+                $newConfigSQL[] = "INSERT INTO ".$xoopsDB->prefix("config")." (`conf_modid`, `conf_catid`, `conf_name`, `conf_title`, `conf_value`, `conf_desc`, `conf_formtype`, `conf_valuetype`, `conf_order`) VALUES (0, 7, 'auth_2fa', '_MD_AM_AUTH2FA', '0', '_MD_AM_AUTH2FADESC', 'yesno', 'int', 1)";
+                $newConfigSQL[] = "INSERT INTO ".$xoopsDB->prefix("config")." (`conf_modid`, `conf_catid`, `conf_name`, `conf_title`, `conf_value`, `conf_desc`, `conf_formtype`, `conf_valuetype`, `conf_order`) VALUES (0, 7, 'auth_2fa_groups', '_MD_AM_AUTH2FAGROUPS', 'a:1:{i:0;s:1:\"2\";}', '_MD_AM_AUTH2FAGROUPSDESC', 'group_multi', 'array', 1)";
+            }
+        }
+        $sql = "SELECT * FROM ".$xoopsDB->prefix("config")." WHERE conf_name = 'auth_okta'";
+        if($res = $xoopsDB->query($sql)) {
+            if($xoopsDB->getRowsNum($res)==0) {
+                $newConfigSQL[] = "INSERT INTO ".$xoopsDB->prefix("config")." (`conf_modid`, `conf_catid`, `conf_name`, `conf_title`, `conf_value`, `conf_desc`, `conf_formtype`, `conf_valuetype`, `conf_order`) VALUES (0, 7, 'auth_okta', '_MD_AM_AUTHOKTA', '', '_MD_AM_AUTHOKTADESC', 'textbox', 'text', 1)";
+            }
+        }
+        foreach($newConfigSQL as $sql) {
+            if(!$xoopsDB->query($sql)) {
+                exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+            }
+        }
+        $sql = "SELECT * FROM ".$xoopsDB->prefix("profile_field")." WHERE field_name = '2famethod'";
+        if($res = $xoopsDB->query($sql)) {
+            if($xoopsDB->getRowsNum($res)==0) {
+                $sql = "INSERT INTO ".$xoopsDB->prefix("profile_field")." (`catid`, `field_type`, `field_valuetype`, `field_name`, `field_title`, `url`, `field_description`, `field_required`, `field_maxlength`, `field_weight`, `field_default`, `field_notnull`, `field_edit`, `field_show`, `field_options`, `exportable`, `step_id`, `system`) VALUES (0, 'select', '3', '2famethod', '2-factor authentication method', '', '', 0, '0', 7, '', 1, 1, 1, 'a:4:{i:0;s:8:\"--None--\";i:1;s:14:\"Text me a code\";i:2;s:15:\"Email me a code\";i:3;s:24:\"Use an authenticator app\";}', 1, 1, 1)";
+                if($res = $xoopsDB->query($sql)) {
+                    $profileId = $xoopsDB->getInsertId();
+                    $sql = "INSERT INTO ".$xoopsDB->prefix("profile_visibility")." (`fieldid`, `user_group`, `profile_group`) VALUES ($profileId, 2, 0)";
+                    if(!$res = $xoopsDB->query($sql)) {
+                        exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+                    }
+                    $sql = "INSERT INTO ".$xoopsDB->prefix("group_permission")." (`gperm_groupid`, `gperm_itemid`, `gperm_modid`, `gperm_name`) VALUES (2, $profileId, 2, 'profile_edit')";
+                    if(!$res = $xoopsDB->query($sql)) {
+                        exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+                    }
+                    $sql = "ALTER TABLE ".$xoopsDB->prefix("profile_profile")." ADD `2famethod` INT NULL DEFAULT NULL";
+                    if(!$res = $xoopsDB->query($sql)) {
+                        exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+                    }
+                } else {
+                    exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
             }
         }
@@ -568,11 +617,11 @@ function patch40() {
         // change any non-serialized array defaultview settings for list of entries screens, into serialized arrays indicating the view for Registered Users (group 2)
         $sql1 = "UPDATE ".$xoopsDB->prefix("formulize_screen_listofentries")." SET defaultview = CONCAT('a:1:{i:2;i:',defaultview,';}') WHERE defaultview NOT LIKE '%{%' AND defaultview != 'b:0;' AND concat('',defaultview * 1) = defaultview"; //concat in where isolates numbers
         if(!$res = $xoopsDB->query($sql1)) {
-            exit("Error patching DB for Formulize 4.0. SQL dump:<br>" . $sql1 . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+            exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql1 . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
         }
         $sql2 = "UPDATE ".$xoopsDB->prefix("formulize_screen_listofentries")." SET defaultview = CONCAT('a:1:{i:2;s:',CHAR_LENGTH(defaultview),':\"',defaultview,'\";}') WHERE defaultview NOT LIKE '%{%'"; // all remaining values will not be numbers
         if(!$res = $xoopsDB->query($sql2)) {
-            exit("Error patching DB for Formulize 4.0. SQL dump:<br>" . $sql2 . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+            exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql2 . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
         }
 
         // if there is a framework handles table present, then we need to check for a few things to ensure the integrity of code and our ability to disambiguate inputs to the API
@@ -674,7 +723,7 @@ function patch40() {
             foreach($menusql as $key=>$thissql) {
 
                 if (!$result = $xoopsDB->query($thissql)) {
-                    exit("Error patching DB for Formulize 4.0. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+                    exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
             }
             // populate new menus tables with existing menu entries

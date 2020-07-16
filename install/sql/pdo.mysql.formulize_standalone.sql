@@ -337,7 +337,10 @@ INSERT INTO `REPLACE_WITH_PREFIX_config` (`conf_id`, `conf_modid`, `conf_catid`,
 (333, 5, 0, 'spamcount_uri4guest', '_MI_PROTECTOR_SPAMURI4G', '5', '_MI_PROTECTOR_SPAMURI4GDSC', 'textbox', 'int', 29),
 (334, 5, 0, 'filters', '_MI_PROTECTOR_FILTERS', '', '_MI_PROTECTOR_FILTERSDSC', 'textarea', 'text', 30),
 (335, 5, 0, 'enable_manip_check', '_MI_PROTECTOR_MANIPUCHECK', '1', '_MI_PROTECTOR_MANIPUCHECKDSC', 'yesno', 'int', 31),
-(336, 5, 0, 'manip_value', '_MI_PROTECTOR_MANIPUVALUE', '', '_MI_PROTECTOR_MANIPUVALUEDSC', 'textbox', 'text', 32);
+(336, 5, 0, 'manip_value', '_MI_PROTECTOR_MANIPUVALUE', '', '_MI_PROTECTOR_MANIPUVALUEDSC', 'textbox', 'text', 32),
+(337, 0, 7, 'auth_2fa', '_MD_AM_AUTH2FA', '0', '_MD_AM_AUTH2FADESC', 'yesno', 'int', 1),
+(338, 0, 7, 'auth_2fa_groups', '_MD_AM_AUTH2FAGROUPS', 'a:1:{i:0;s:1:\"2\";}', '_MD_AM_AUTH2FAGROUPSDESC', 'group_multi', 'array', 1),
+(339, 0, 7, 'auth_okta', '_MD_AM_AUTHOKTA', '', '_MD_AM_AUTHOKTADESC', 'textbox', 'text', 1);
 
 TRUNCATE `REPLACE_WITH_PREFIX_group_permission`;
 
@@ -485,7 +488,9 @@ INSERT INTO `REPLACE_WITH_PREFIX_group_permission` (`gperm_id`, `gperm_groupid`,
 (172, 2, 17, 1, 'block_read'),
 (173, 2, 24, 1, 'block_read'),
 (179, 2, 18, 4, 'profile_edit'),
-(180, 2, 19, 4, 'profile_edit');
+(180, 2, 19, 4, 'profile_edit'),
+(181, 2, 29, 4, 'profile_edit');
+
 
 UPDATE `REPLACE_WITH_PREFIX_block_module_link` SET page_id=0 WHERE block_id=24;
 
@@ -554,7 +559,10 @@ INSERT INTO `REPLACE_WITH_PREFIX_profile_field` (`fieldid`, `catid`, `field_type
 (25, 4, 'datetime', '3', 'last_login', 'Last Login', 'clock.gif', '', 0, '10', 5, '0', 1, 0, 1, 'a:0:{}', 1, 0, 1),
 (26, 4, 'openid', '1', 'openid', 'OpenID', 'openid.gif', '', 0, '255', 6, '', 1, 0, 0, 'a:0:{}', 1, 0, 1),
 (27, 4, 'dhtml', '2', 'user_sig', 'Signature', 'signature.gif', '', 0, '0', 7, '', 1, 1, 0, 'a:0:{}', 1, 0, 1),
-(28, 2, 'email', '1', 'email', 'Email', 'email.gif', '', 1, '255', 5, '', 1, 0, 1, 'a:0:{}', 1, 1, 1);
+(28, 2, 'email', '1', 'email', 'Email', 'email.gif', '', 1, '255', 5, '', 1, 0, 1, 'a:0:{}', 1, 1, 1),
+(29, 0, 'select', '3', '2famethod', '2-factor authentication method', '', '', 0, '0', 7, '', 1, 1, 1, 'a:4:{i:0;s:8:\"--None--\";i:1;s:14:\"Text me a code\";i:2;s:15:\"Email me a code\";i:3;s:24:\"Use an authenticator app\";}', 1, 1, 1);
+
+ALTER TABLE `REPLACE_WITH_PREFIX_profile_profile ADD `2famethod` INT NULL DEFAULT NULL;
 
 TRUNCATE `REPLACE_WITH_PREFIX_profile_profile`;
 
@@ -573,7 +581,8 @@ INSERT INTO `REPLACE_WITH_PREFIX_profile_visibility` (`fieldid`, `user_group`, `
 (25, 2, 0),
 (26, 1, 0),
 (28, 1, 0),
-(28, 2, 0);
+(28, 2, 0),
+(29, 2, 0);
 
 UPDATE `REPLACE_WITH_PREFIX_users` SET theme='formulize_standalone';
 
