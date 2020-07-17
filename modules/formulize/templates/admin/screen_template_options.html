@@ -1,0 +1,30 @@
+<{* form elements must be named with their object name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a property of an object to update *}>
+<{* securitytoken should be part of the form *}>
+<{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
+
+<form id="form-<{$number}>" class="formulize-admin-form">
+<{$securitytoken}>
+<input type="hidden" name="formulize_admin_handler" value="screen_template_options">
+<input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
+
+
+<div class="panel-content content">
+	<fieldset>
+		<legend>Buttons</legend>
+      <div class="form-item">
+		  <label for="screens-savebuttontext"><{$smarty.const._AM_FORMULIZE_SCREEN_TEMPLATE_SAVEBUTTONTEXT}></label>
+      <input type="text" id="screens-savebuttontext" name="screens-savebuttontext" value="<{$content.savebuttontext}>" size="50" maxlength="255"/>
+	  </div>
+      <div class="form-item">
+		  <label for="screens-donebuttontext"><{$smarty.const._AM_FORMULIZE_SCREEN_TEMPLATE_DONEBUTTONTEXT}></label>
+      <input type="text" id="screens-donebuttontext" name="screens-donebuttontext" value="<{$content.donebuttontext}>" size="50" maxlength="255"/>
+	  </div>
+	  <div class="form-item">
+		  <label for="screens-donedest"><{$smarty.const._AM_FORMULIZE_SCREEN_TEMPLATE_DONEDEST}></label>
+      <input type="text" id="screens-donedest" name="screens-donedest" value="<{$content.donedest}>" size="50" maxlength="255"/>
+	  </div>
+	</fieldset>
+</div>
+
+</form>

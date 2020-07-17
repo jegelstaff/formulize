@@ -1,0 +1,46 @@
+<div class="panel-content content">
+    <fieldset>
+        <legend>Default Date</legend>
+        <div class="description">
+            <p>Leave blank for no default date. Use {TODAY} for the current date, or {TODAY+7} for one week in the future, {TODAY-14} for two weeks in the past, etc.</p>
+        </div>
+        <div class="form-item">
+            <input type="text" id="element-date" name="elements-ele_value[0]" value="<{$content.ele_value[0]}>" size="15" maxlength="15"/>
+        </div>
+    </fieldset>
+    <fieldset>
+        <legend>Date Validation</legend>
+        <div class="description">
+            <p>Limit the range of dates accepted. When editing existing entries, the date range is relative to the time the original entry was created, not today's date.</p>
+        </div>
+        <div class="form-item">
+            <p><input type="checkbox" id="validate-past-dates" name="elements-ele_value[date_limit_past]" <{ if isset($content.ele_value.date_limit_past) and $content.ele_value.date_limit_past }>checked <{ /if }>/> <label for="validate-past-dates">Allow dates in the past up to</label> <input type="text" id="date_past_days" name="elements-ele_value[date_past_days]" value="<{$content.ele_value.date_past_days}>" size="5" maxlength="5"/> days before the current date.</p>
+            <p><input type="checkbox" id="validate-future-dates" name="elements-ele_value[date_limit_future]" <{ if isset($content.ele_value.date_limit_future) and $content.ele_value.date_limit_future }>checked <{ /if }>/> <label for="validate-future-dates">Allow dates in the future up to</label> <input type="text" id="date_future_days" name="elements-ele_value[date_future_days]" value="<{$content.ele_value.date_future_days}>" size="5" maxlength="5"/> days after the current date.</p>
+        </div>
+  </fieldset>
+</div>
+
+<script type='text/javascript'>
+jQuery(function() {
+    jQuery('#element-date').datepicker({dateFormat: 'yy-mm-dd', constrainInput: false});
+});
+
+$('#validate-past-dates').click(function() {
+    if (this.checked && $('#date_past_days').val() == '') {
+        //we have checked the box, and the value is empty.
+        $('#date_past_days').val('0'); // focus on the input box.
+        $('#date_past_days').focus();
+        $('#date_past_days').select();
+
+    }
+});
+
+$('#validate-future-dates').click(function() {
+    if (this.checked && $('#date_future_days').val() == '') {
+        //we have checked the box, and the value is empty.
+        $('#date_future_days').val('0'); // focus on the input box.
+        $('#date_future_days').focus();
+        $('#date_future_days').select();
+    }
+});
+</script>

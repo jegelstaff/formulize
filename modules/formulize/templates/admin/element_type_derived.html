@@ -1,0 +1,170 @@
+<div class="panel-content content">
+
+    <div class="form-item">
+	    <fieldset>
+		    <legend><{$smarty.const._AM_ELE_DERIVED_CAP}></legend>
+	      <textarea id="elements-ele_value" name="elements-ele_value[0]" class="code-textarea" rows="5" cols="35"><{$content.ele_value[0]}></textarea>
+	      <div class="description">
+          <p><{$content.listofelementsoptions}> <input type=button name=addele value="<{$smarty.const._AM_ELE_DERIVED_ADD}>"></p>
+          <p><{$smarty.const._AM_ELE_DERIVED_DESC}></p>
+        </div>
+	    </fieldset>
+    </div>
+
+    <div class="form-item">
+        <fieldset>
+            <legend><{$smarty.const._AM_ELE_DERIVED_UPDATE_CAP}></legend>
+            <p>
+                <span name="updateder_controls">
+                    <input type=button name=updateder value="<{$smarty.const._AM_ELE_DERIVED_UPDATE}>"> <{$content.listofrelationshipoptions}>
+                </span>
+                <span name="updateder_Info" style="display:none">
+                    Updating Values... <img src="../../../images/await.gif" width="20" height="20"/>
+                </span>
+            </p>
+            <div class="description">
+                <p><{$smarty.const._AM_ELE_DERIVED_UPDATE_DESC}></p>
+            </div>
+        </fieldset>
+    </div>
+
+    <div class="form-item">
+	    <fieldset>
+		    <legend><{$smarty.const._AM_ELE_DERIVED_NUMBER_OPTS}></legend>
+		    <div class="form-item">
+			    <label for="elements-ele_value[1]"><{$smarty.const._AM_ELE_NUMBER_OPTS_DEC}></label><input type="text" id="elements-ele_value[1]" name="elements-ele_value[1]" value="<{$content.ele_value.1}>" size="2" maxlength="2"/>
+		    </div>
+		    <div class="form-item">
+			    <label for="elements-ele_value[2]"><{$smarty.const._AM_ELE_NUMBER_OPTS_PREFIX}></label><input type="text" id="elements-ele_value[2]" name="elements-ele_value[2]" value="<{$content.ele_value.2}>" size="5" maxlength="255"/>
+		    </div>
+		    <div class="form-item">
+			    <label for="elements-ele_value[5]"><{$smarty.const._AM_ELE_NUMBER_OPTS_SUFFIX}></label><input type="text" id="elements-ele_value[5]" name="elements-ele_value[5]" value="<{$content.ele_value.5}>" size="5" maxlength="255"/>
+		    </div>
+		    <div class="form-item">
+			    <label for="elements-ele_value[3]"><{$smarty.const._AM_ELE_NUMBER_OPTS_DECSEP}></label><input type="text" id="elements-ele_value[3]" name="elements-ele_value[3]" value="<{$content.ele_value.3}>" size="5" maxlength="255"/>
+		    </div>
+		    <div class="form-item">
+			    <label for="elements-ele_value[4]"><{$smarty.const._AM_ELE_NUMBER_OPTS_SEP}></label><input type="text" id="elements-ele_value[4]" name="elements-ele_value[4]" value="<{$content.ele_value.4}>" size="5" maxlength="255"/>
+		    </div>
+		    
+		    <div class="description">
+			    <{$smarty.const._AM_ELE_NUMBER_OPTS_DESC}>
+		    </div>
+	    </fieldset>
+    </div>
+  
+</div>
+
+
+<script type="text/javascript">
+// http://plugins.jquery.com/project/caret-range
+/*
+ * jQuery Caret Range plugin
+ * Copyright (c) 2009 Matt Zabriskie
+ * Released under the MIT and GPL licenses.
+ */
+(function($) {
+	$.extend($.fn, {
+		caret: function (start, end) {
+			var elem = this[0];
+
+			if (elem) {							
+				// get caret range
+				if (typeof start == "undefined") {
+					if (elem.selectionStart) {
+						start = elem.selectionStart;
+						end = elem.selectionEnd;
+					}
+					else if (document.selection) {
+						var val = this.val();
+						var range = document.selection.createRange().duplicate();
+						range.moveEnd("character", val.length)
+						start = (range.text == "" ? val.length : val.lastIndexOf(range.text));
+
+						range = document.selection.createRange().duplicate();
+						range.moveStart("character", -val.length);
+						end = range.text.length;
+					}
+				}
+				// set caret range
+				else {
+					var val = this.val();
+
+					if (typeof start != "number") start = -1;
+					if (typeof end != "number") end = -1;
+					if (start < 0) start = 0;
+					if (end > val.length) end = val.length;
+					if (end < start) end = start;
+					if (start > end) start = end;
+
+					elem.focus();
+
+					if (elem.selectionStart) {
+						elem.selectionStart = start;
+						elem.selectionEnd = end;
+					}
+					else if (document.selection) {
+						var range = elem.createTextRange();
+						range.collapse(true);
+						range.moveStart("character", start);
+						range.moveEnd("character", end - start);
+						range.select();
+					}
+				}
+
+				return {start:start, end:end};
+			}
+		}
+	});
+})(jQuery);
+
+
+$("[name=addele]").click(function () {
+  //$("#elements-ele_value[0]").val( $("#elements-ele_value[0]").val() + '"' + $("#listofelementsoptions").find(':selected').val() + '"' );
+
+  var input = $("#elements-ele_value");
+  var range = input.caret();
+  var value = input.val();
+  var text = '"' + $("#listofelementsoptions").find(':selected').val() + '"';
+  input.val(value.substr(0, range.start) + text + value.substr(range.end, value.length));
+  input.caret(range.start + text.length);
+  return false;
+});
+
+  var formID = "";
+  var formRelationID = "1";
+
+$("[name=updateder]").click(function () {
+    formID = $("[name=formulize_form_id]").val();
+    formRelationID = $("#listofrelationshipoptions").find(':selected').val()
+    var limitStart = 0;
+    $("[name=updateder_controls]").hide();
+    $("[name=updateder_Info]").show();
+    updateDerivedValues(formID,formRelationID,limitStart);
+    return false;
+});
+
+function updateDerivedValues(fid,frid,limitStart){
+    $.get("<{$xoops_url}>/modules/formulize/formulize_xhr_responder.php?uid=<{$content.uid}>&op=update_derived_value&fid="+fid+"&frid="+frid+"&limitstart="+limitStart, function(data){
+            if(!isNaN(data) && data > 0){
+                limitStart += parseInt(data);
+                updateDerivedValues(fid,frid,limitStart);
+            }else{
+                $("[name=updateder_Info]").hide();
+                $("[name=updateder_controls]").show();
+                if (isNaN(data)) {
+                    alert(data);   
+                } else {
+                $("#derivedfinished").show();
+                }
+            }
+        });
+    }
+
+    function removeOnChange(){
+        $("#listofrelationshipoptions").unbind("change");
+        $("#listofelementsoptions").unbind("change");
+    }
+
+    window.setTimeout("removeOnChange();",500);
+</script>

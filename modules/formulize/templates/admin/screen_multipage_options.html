@@ -1,0 +1,85 @@
+<{* form elements must be named with their object name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a property of an object to update *}>
+<{* securitytoken should be part of the form *}>
+<{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
+
+<form id="form-<{$number}>" class="formulize-admin-form">
+<{$securitytoken}>
+<input type="hidden" name="formulize_admin_handler" value="screen_multipage_options">
+<input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
+
+
+<div class="panel-content content">
+	<fieldset>
+        <legend>Appearance</legend>
+        <div class="form-item">
+            <p>What style of page navigation should this form use?<br>
+            <label for="screens-navstyle-0"><input type="radio" id=screens-navstyle-0 name="screens-navstyle" value=0> Continue and Back buttons, and a dropdown list of pages</label><br />
+            <label for="screens-navstyle-1"><input type="radio" id=screens-navstyle-1 name="screens-navstyle" value=1> Tabs for each page</label></p>
+	    </div>
+        <div class="form-item">
+            <p>Display the form elements as:<br>
+            <label for="onecolumn"><input type='radio' id="onecolumn" name="screens-displaycolumns" value="1"/> a single column</label><br>
+            <label for="twocolumns"><input type='radio' id="twocolumns" name="screens-displaycolumns" value="2"/> two columns</label>
+            </p>
+            <p>Width for column one: <input type='text' name='screens-column1width' value="<{$content.column1width}>"><br>
+            Width for column two: <input type='text' name='screens-column2width' value="<{$content.column2width}>"></p>
+            <div class="description">The widths can be specified using any valid CSS value.</div>
+        </div>
+    </fieldset>
+	<fieldset>
+		<legend>Link on the final page of the form</legend>
+	  <div class="form-item">
+		<label for="screens-finishisdone"><{$smarty.const._AM_FORMULIZE_SCREEN_FINISHISDONE}></label><br>
+		<input type="radio" id=screens-finishisdone-0 name="screens-finishisdone" value=0> <{$smarty.const._AM_FORMULIZE_SCREEN_FINISHISDONE_THANKSPAGE}><br />
+		<input type="radio" id=screens-finishisdone-1 name="screens-finishisdone" value=1> <{$smarty.const._AM_FORMULIZE_SCREEN_FINISHISDONE_FINISHBUTTON}>
+	  </div>
+	  <div class="form-item">
+		  <label for="screens-donedest"><{$smarty.const._AM_FORMULIZE_SCREEN_DONEDEST}></label>
+      <input type="text" id="screens-donedest" name="screens-donedest" value="<{$content.donedest}>" size="50" maxlength="255"/>
+	  </div>
+	  <div class="form-item">
+		  <label for="screens-buttontext"><{$smarty.const._AM_FORMULIZE_SCREEN_BUTTONTEXT}></label>
+      <input type="text" id="screens-buttontext" name="screens-buttontext" value="<{$content.buttontext}>" size="50" maxlength="255"/>
+	  </div>
+	</fieldset>
+  <fieldset>
+    <legend>Answers from a previous entry</legend>
+	  <div class="form-item">
+		  <label for="screens-paraentryform"><{$smarty.const._AM_FORMULIZE_SCREEN_PARAENTRYFORM}></label>
+	    <select id="screens-paraentryform" name="screens-paraentryform" size="1">
+				<option value=0>No, don't show previous answers</option>
+        <{html_options options=$content.allformoptions selected=$content.paraentryform}>
+	    </select>
+			<div class="description">Previous answers in another form will be matched to this form, based on equivalence of the element captions; the two forms need to have the same captions for corresponding elements.  It is often useful to clone a form to create a copy with identical captions.</div>
+	  </div>
+	  <div class="form-item">
+		  <label for="screens-paraentryrelationship"><{$smarty.const._AM_FORMULIZE_SCREEN_PARAENTRYRELATIONSHIP}></label>
+	    <select id="screens-paraentryrelationship" name="screens-paraentryrelationship" size="1">
+        <option value="1"<{if $content.paraentryrelationship eq 1}> selected="selected"<{/if}>><{$smarty.const._AM_FORMULIZE_SCREEN_PARAENTRYREL_BYGROUP}></option>
+	    </select>
+	  </div>
+	</fieldset>
+	<fieldset>
+		<legend>Printable View button</legend>
+	  <div class="form-item">
+		  <label for="screens-printall"><{$smarty.const._AM_FORMULIZE_SCREEN_PRINTALL}></label>
+		  <div class="form-radios">
+			  <label for="1"><input type="radio" id="screens-printall" name="screens-printall"<{if $content.printall eq 1}> checked="checked"<{/if}> value="1"/><{$smarty.const._AM_FORMULIZE_SCREEN_PRINTALL_Y}></label>
+		  </div>
+		  <div class="form-radios">
+			  <label for="0"><input type="radio" id="screens-printall" name="screens-printall"<{if $content.printall eq 0}> checked="checked"<{/if}> value="0"/><{$smarty.const._AM_FORMULIZE_SCREEN_PRINTALL_N}></label>
+		  </div>
+		  <div class="form-radios">
+			  <label for="2"><input type="radio" id="screens-printall" name="screens-printall"<{if $content.printall eq 2}> checked="checked"<{/if}> value="2"/><{$smarty.const._AM_FORMULIZE_SCREEN_PRINTALL_NONE}></label>
+		  </div>
+	</fieldset>
+</div>
+
+</form>
+
+<script type='text/javascript'>
+$("#screens-finishisdone-<{$content.finishisdone}>").attr('checked',1);
+$("#screens-navstyle-<{$content.navstyle}>").attr('checked',1);
+$("#<{$content.displaycolumns}>").attr('checked', true);
+</script>

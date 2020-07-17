@@ -1,0 +1,19 @@
+<div id="notfound">
+	<h1><{$lang_error_title}></h1>
+	<{if $lang_error_desc && $lang_error_desc != ''}>
+		<div id="http_error_text"><{$lang_error_desc}></div>
+	<{/if}>
+	<br />
+	<ul>
+		<li><{$lang_search_our_site}><br />
+			<form id="http_error_searchform" style="vertical-align: middle;" action="<{$xoops_url}>/search.php" method="get">
+				<input name="query" size="14" style="vertical-align: middle;" type="text" />
+				<input name="action" value="results" type="hidden" />
+				<input src="<{$xoops_url}>/images/search2.gif" style="vertical-align: middle;" alt="<{$lang_search}>" onclick="this.form.submit()" type="image" />
+				&nbsp;&nbsp;<a href="<{$xoops_url}>/search.php"><{$lang_advanced_search}></a>
+			</form>
+		</li>
+		<li><{$lang_start_again}></li>
+		<li><{$lang_found_contact}></li>
+	</ul>
+</div>

@@ -1,0 +1,45 @@
+<div class="panel-content content">
+  <div class="form-item">
+    <fieldset>
+      <legend><{$smarty.const._AM_ELE_YN}></legend>
+
+  	  <div class="form-item">
+  		<label for="max"><{$smarty.const._AM_ELE_DEFAULT}></label>
+
+	    <label for="elements-ele_value-yes"><input type="radio" id="elements-ele_value-yes" name="elements_ele_value" value="_YES"<{if $content.ele_value_yes}> checked<{/if}>/><{$smarty.const._YES}></label>
+	    <label for="elements-ele_value-no"><input type="radio" id="elements-ele_value-no" name="elements_ele_value" value="_NO"<{if $content.ele_value_no}> checked<{/if}>/><{$smarty.const._NO}></label>
+  		<input type="submit" class="formButton" name="cleardef" value="<{$smarty.const._AM_CLEAR_DEFAULT}>"/>
+	    <div class="description"></div>
+	  </div>
+    </fieldset>
+  </div>
+
+  <div class="form-item">
+    <fieldset>
+      <legend><{$smarty.const._AM_ELE_DELIM_CHOICE}></legend>
+      <div class="form-radios">
+        <label for="element-delimit-br"><input type="radio" id="br" name="element_delimit" value="br"/><{$smarty.const._MI_formulize_DELIMETER_BR}></label>
+      </div>
+      <div class="form-radios">
+        <label for="element-delimit-space"><input type="radio" id="space" name="element_delimit" value="space"/><{$smarty.const._MI_formulize_DELIMETER_SPACE}></label>
+      </div>
+      <div class="form-radios">
+	      <label for="element-delimit-custom" style="display:inline">
+        <input type="radio" id="custom" name="element_delimit" value="custom"/><{$smarty.const._MI_formulize_DELIMETER_CUSTOM}></label>
+  	    <input type="text" id="element-delim_custom" name="element_delim_custom" value="<{$content.ele_delim_custom_value}>" size="25" maxlength="255"/>
+      </div>
+    </fieldset>
+  </div>
+</div>
+
+<script type='text/javascript'>
+$("[name=cleardef]").click(function () {
+  var el_collection = document.getElementsByName("elements_ele_value");
+  for(c=0;c<el_collection.length;c++)
+    el_collection[c].checked=false;
+
+	$("[name=cleardef]").blur();
+  return false;
+});
+$("#<{$content.ele_delim}>").attr('checked',1);
+</script>

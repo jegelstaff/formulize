@@ -1,0 +1,72 @@
+<div class="panel-content content">
+
+    <div class="form-item">
+	    <fieldset>
+	    <legend><{$smarty.const._AM_ELE_GRID_HEADING}></legend>
+		    <div class="form-radios">
+			    <label for="caption"><input type="radio" id="caption" name="elements-ele_value[0]" value="caption"/><{$smarty.const._AM_ELE_GRID_HEADING_USE_CAPTION}></label>
+		    </div>
+		    <div class="form-radios">
+			    <label for="form"><input type="radio" id="form" name="elements-ele_value[0]" value="form"/><{$smarty.const._AM_ELE_GRID_HEADING_USE_FORM}></label>
+		    </div>
+		    <div class="form-radios">
+			    <label for="none"><input type="radio" id="none" name="elements-ele_value[0]" value="none"/><{$smarty.const._AM_ELE_GRID_HEADING_NONE}></label>
+		    </div>
+	    </fieldset>
+    </div>
+    <div class="form-item">
+	    <fieldset>
+	    <legend><{$smarty.const._AM_ELE_GRID_HEADING_SIDEORTOP}></legend>
+		    <div class="form-radios">
+			    <label for="side"><input type="radio" id="side" name="elements-ele_value[5]" value="1"/><{$smarty.const._AM_ELE_GRID_HEADING_SIDE}></label>
+		    </div>
+		    <div class="form-radios">
+			    <label for="above"><input type="radio" id="above" name="elements-ele_value[5]" value=""/><{$smarty.const._AM_ELE_GRID_HEADING_TOP}></label>
+		    </div>
+	    </fieldset>
+    </div>
+    <div class="form-item required">
+	    <label for="element-row"><{$smarty.const._AM_ELE_GRID_ROW_CAPTIONS}><em>*</em></label>
+	    <textarea id="element-row" name="elements-ele_value[1]" rows="5" cols="50"><{$content.ele_value[1]}></textarea>
+	    <div class="description">
+		    <{$smarty.const._AM_ELE_GRID_ROW_CAPTIONS_DESC}>
+	    </div>
+    </div>
+    <div class="form-item required">
+	    <label for="element-col"><{$smarty.const._AM_ELE_GRID_COL_CAPTIONS}><em>*</em></label>
+	    <textarea id="element-col" name="elements-ele_value[2]" rows="5" cols="50"><{$content.ele_value[2]}></textarea>
+	    <div class="description">
+		    <{$smarty.const._AM_ELE_GRID_COL_CAPTIONS_DESC}>
+	    </div>
+    </div>
+    <div class="form-item">
+	    <fieldset>
+	    <legend><{$smarty.const._AM_ELE_GRID_BACKGROUND}></legend>
+		    <div class="form-radios">
+			    <label for="horizontal"><input type="radio" id="horizontal" name="elements-ele_value[3]" value="horizontal"/><{$smarty.const._AM_ELE_GRID_BACKGROUND_HOR}></label>
+		    </div>
+		    <div class="form-radios">
+			    <label for="vertical"><input type="radio" id="vertical" name="elements-ele_value[3]" value="vertical"/><{$smarty.const._AM_ELE_GRID_BACKGROUND_VER}></label>
+		    </div>
+	    </fieldset>
+    </div>
+    <div class="form-item">
+	    <label for="element-grid_start_option"><{$smarty.const._AM_ELE_GRID_START}></label>
+	    <select id="element-grid_start_option" name="elements-ele_value[4]" size="1">
+        <{html_options options=$content.grid_start_options selected=$content.ele_value[4]}>
+	    </select>
+	    <div class="description">
+		    <{$smarty.const._AM_ELE_GRID_START_DESC}>
+	    </div>
+    </div>
+  
+</div>
+
+<script type="text/javascript">
+
+$("#<{$content.background}>").attr('checked',1);
+$("#<{$content.sideortop}>").attr('checked',1);
+$("#<{$content.heading}>").attr('checked',1);
+
+</script>
+

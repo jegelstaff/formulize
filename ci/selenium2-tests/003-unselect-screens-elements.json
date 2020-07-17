@@ -1,0 +1,261 @@
+{
+  "type": "script",
+  "seleniumVersion": "2",
+  "formatVersion": 2,
+  "steps": [
+    {
+      "type": "store",
+      "text": "localhost",
+      "variable": "test_domain"
+    },
+    {
+      "type": "store",
+      "text": "password",
+      "variable": "admin_password"
+    },
+    {
+      "type": "get",
+      "url": "http://${test_domain}/index.php"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "uname"
+      },
+      "text": "admin"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "pass"
+      },
+      "text": "${admin_password}"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input[type=\"submit\"]"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Admin"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Manage your applications"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Screens"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Regular 'Client'"
+    },
+    {
+      "type": "pause",
+      "waitTime": "543"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "xpath",
+        "value": "//div[@id='tabs-3']/div[1]/table/tbody/tr[3]/td[2]/a"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Settings for the Screen: Regular 'Client'"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Options"
+      }
+    },
+    {
+      "type": "setElementNotSelected",
+      "locator": {
+        "type": "xpath",
+        "value": "//form[@id='form-3']/div/div/select/option[@label='Client Name']"
+      }
+    },
+    {
+      "type": "setElementNotSelected",
+      "locator": {
+        "type": "xpath",
+        "value": "//form[@id='form-3']/div/div/select/option[@label='City']"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input.savebutton"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "negated": true,
+      "text": "You have unsaved changes!"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": ".breadcrumb-1"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Screens"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "xpath",
+        "value": "//div[@id='tabs-3']/div[1]/table/tbody/tr[5]/td[2]/a"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Options"
+      }
+    },
+    {
+      "type": "setElementNotSelected",
+      "locator": {
+        "type": "xpath",
+        "value": "//form[@id='form-3']/div/div/select/option[@label='Client']"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input.savebutton"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "negated": true,
+      "text": "You have unsaved changes!"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": ".breadcrumb-1"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Screens"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "xpath",
+        "value": "//div[@id='tabs-3']/div[1]/table/tbody/tr[7]/td[2]/a"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Options"
+      }
+    },
+    {
+      "type": "setElementNotSelected",
+      "locator": {
+        "type": "xpath",
+        "value": "//form[@id='form-3']/div/div/select/option[@label='Email']"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input.savebutton"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "negated": true,
+      "text": "You have unsaved changes!"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": ".breadcrumb-1"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Screens"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "xpath",
+        "value": "//div[@id='tabs-3']/div[1]/table/tbody/tr[9]/td[2]/a"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Options"
+      }
+    },
+    {
+      "type": "setElementNotSelected",
+      "locator": {
+        "type": "xpath",
+        "value": "//form[@id='form-3']/div/div/select/option[@label='Status']"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input.savebutton"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "negated": true,
+      "text": "You have unsaved changes!"
+    }
+  ],
+  "data": {
+    "configs": {},
+    "source": "none"
+  },
+  "inputs": [],
+  "timeoutSeconds": 60
+}

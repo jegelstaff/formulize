@@ -1,0 +1,26 @@
+<div class="panel-content content">
+
+    <div class="form-item required">
+	    <label for="elements-ele_value[1]"><{$smarty.const._AM_ELE_ROWS}><em>*</em></label>
+	    <input type="text" id="elements-ele_value[1]" name="elements-ele_value[1]" value="<{$content.ele_value[1]}>" size="3" maxlength="3"/>
+    </div>
+    <div class="form-item required">
+	    <label for="elements-ele_value[2]"><{$smarty.const._AM_ELE_COLS}><em>*</em></label>
+	    <input type="text" id="elements-ele_value[2]" name="elements-ele_value[2]" value="<{$content.ele_value[2]}>" size="3" maxlength="3"/>
+    </div>
+    <div class="form-item">
+	    <label for="elements-ele_value[0]"><{$smarty.const._AM_ELE_DEFAULT}></label>
+	    <textarea id="elements-ele_value[0]" name="elements-ele_value[0]" rows="5" cols="35"><{$content.ele_value[0]}></textarea>
+	    <div class="description">
+          <p><{$smarty.const._AM_ELE_TEXT_DESC}></p>
+      </div>
+    </div>
+    <div class="form-item">
+	    <label for="formlink"><{$smarty.const._AM_ELE_FORMLINK_TEXTBOX}></label>
+      <{$content.formlink}>
+	    <div class="description">
+		    <{$smarty.const._AM_ELE_FORMLINK_DESC_TEXTBOX}>
+	    </div>
+    </div>
+
+</div>

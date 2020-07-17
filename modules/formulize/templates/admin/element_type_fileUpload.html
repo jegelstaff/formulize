@@ -1,0 +1,31 @@
+<div class="panel-content content">
+  <fieldset>
+    <legend>Options for File Upload</legend>
+
+    <div class="form-item">
+      <label for="elements-ele_value[1]">What file extensions are allowed for uploading?</label>
+      <input id="elements-ele_value[1]" name="elements-ele_value[1]" type=text size=75 maxlength=255 value="<{$content.extensions}>"></input>
+      <div class="description">
+	<p>Separate file extensions with commas, ie: doc,docx,pdf,jpg</p>
+      </div>
+    </div>
+
+    <div class="form-item">
+      <label for="elements-ele_value[2]">Should users be able to link directly to the files that are uploaded?</label>
+      <input id="elements-ele_value[2]" name="elements-ele_value[2]" type=radio value=1 <{$content.directlinkyes}>>Yes</input>
+      <input id="elements-ele_value[2]" name="elements-ele_value[2]" type=radio value=0 <{$content.directlinkno}>>No</input>
+      <div class="description">
+	<p>If users can link directly to files, then someone who knows the name of the file and where it's located, could potentially download it from your website, regardless of whether they are logged in, or have permission to view the form.  If you set this to 'No' then files will only be accessible through special links in Formulize.</p>
+      </div>
+    </div>
+
+    <div class="form-item">
+	    <label for="elements-ele_value[0]">Maximum file size?</label>
+	    <input id="elements-ele_value[0]" name="elements-ele_value[0]" type="text" value="<{$content.maxfilesize}>"></input>
+	    <div class="description">
+            <p>In megabytes.</p>
+            </div>
+    </div>
+	
+  </fieldset>
+</div>

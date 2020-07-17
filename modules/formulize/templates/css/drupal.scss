@@ -1,0 +1,120 @@
+// include the colour scheme
+@import '_style_colors';
+
+// include the font-icons
+@import 'formulize-icons/_formulize-icons';
+
+/* Formulize css */
+
+#formulize_form table td {
+    padding: 0;
+    border-width: 0;
+    vertical-align: top;
+}
+
+#formulize_form th {
+    font-size: large;
+}
+
+#formulize_form .outer{
+    color: #1B75BB;
+}
+#formulize_form .head {
+    color:#74B64A;
+    padding: 5px;
+    font-weight: bold;
+    border-top: 3px solid $colorPageBackgroundAlt;
+}
+#formulize_form .even {
+    color: $colorPageText;
+    padding: 5px;
+    border-top: 3px solid $colorPageBackgroundAlt;
+}
+#formulize_form .odd {
+    color: $colorPageText;
+    padding: 5px;
+    border-top: 3px solid $colorPageBackgroundAlt;
+    background-color: white;
+}
+#formulize_form tr.even td {
+    color: $colorPageText;
+    padding: 5px;
+    border-top: 3px solid $colorPageBackgroundAlt;
+}
+#formulize_form tr.odd td {
+    color: $colorPageText;
+    padding: 5px;
+    border-top: 3px solid $colorPageBackgroundAlt;
+    background-color: white;
+}
+#formulize_form .xoops-form-element-caption .caption-marker {
+    display: none;
+}
+#formulize_form .xoops-form-element-help {
+    font-weight: normal;
+}
+
+#formulize_form tbody {
+  border-top: 0 solid white;
+}
+
+#formulize_form a.loe-edit-entry {
+    display: inline-block;
+    background-image: url('edit.png');
+    margin: 0;
+    width: 16px;
+    height: 16px;
+    margin-left: 0.5em;
+    text-decoration: none;
+}
+
+#formulize_form a.loe-edit-entry:hover {
+    border-radius: 3px;
+}
+
+#formulize_form td.formulize-controls {
+    white-space: nowrap;
+    width: 1%;
+}
+
+.icms_checkboxoption {
+    display: block;
+}
+
+.icms_checkboxoption > label {
+    font-weight: normal;
+    display: inline-block;
+    margin-left: 0.5em;
+    font-size: 90%;
+}
+
+input[type=radio] {
+    margin-right:0.5em;
+}
+
+// accordion subforms >
+p.subform-header {
+    // font-size: 10pt !important;
+}
+
+.ui-accordion-content {
+    //background: #80C3DD;
+    //border-color: white;
+    // font-size: 10pt; !important;
+}
+.ui-accordion-header {
+    //border-color: white;
+}
+
+.subform-deletebox {
+    float: left;        // float the delete checkboxes to the left
+}
+
+.subform-entry-container {
+    margin-left: 25px;  // space for the delete checkboxes
+}
+// accordion subforms <
+
+div.xo-theme-form > table {
+    table-layout: fixed;    // prevent subforms from making the table too wide
+}

@@ -1,0 +1,262 @@
+
+    <div class="form-item">
+    <fieldset>
+        <legend><{$smarty.const._AM_ELE_SUBFORM_FORM}></legend>
+        <select id="element-subform" name="elements-ele_value[0]" size="1">
+        <{html_options options=$content.subforms selected=$content.ele_value[0]}>
+        </select>
+        <div class="description">
+            <{$smarty.const._AM_ELE_SUBFORM_DESC}>
+        </div>
+    </fieldset>
+    </div>
+
+    <div class="form-item">
+	<fieldset>
+		<legend>User interface options</legend>
+
+		<div class="form-item">
+		 <div class="form-radios">
+		     <label for="elements-ele_value[8]-row"><input type="radio" id="elements-ele_value[8]-row" name="elements-ele_value[8]" value="row"<{if $content.ele_value[8] eq 'row' OR $content.ele_value[8] eq ''}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_UITYPE_ROW}></label>
+		 </div>
+		 <div class="form-radios">
+		     <label for="elements-ele_value[8]-form"><input type="radio" id="elements-ele_value[8]-form" name="elements-ele_value[8]" value="form"<{if $content.ele_value[8] eq 'form'}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_UITYPE_FORM}></label>
+		 </div>
+		</div>
+
+        <div class="form-item">
+            <p>Show the button to add entries?</p>
+            <div class="description">The "Add x Entries" button lets users create additional entries in the subform.</div>
+            <div class="form-radios">
+                <label for="elements-ele_value[6]-subform"><input type="radio" id="elements-ele_value[6]-subform" name="elements-ele_value[6]" value="subform"<{if $content.ele_value[6] eq 'subform' OR $content.ele_value[6] eq '1'}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_ADD_SUBFORM}></label>
+            </div>
+            <div class="form-radios">
+                <label for="elements-ele_value[6]-parent"><input type="radio" id="elements-ele_value[6]-parent" name="elements-ele_value[6]" value="parent"<{if $content.ele_value[6] eq 'parent'}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_ADD_PARENT}></label>
+            </div>
+	    <div class="form-radios">
+                <label for="elements-ele_value[6]-no"><input type="radio" id="elements-ele_value[6]-no" name="elements-ele_value[6]" value="hideaddentries"<{if $content.ele_value[6] eq 'hideaddentries' OR $content.ele_value[6] eq ''}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_ADD_NONE}></label>
+            </div>
+        </div>
+
+        <div class="form-item" id="add-button-appearance">
+            <p>If the button for adding entries is shown, how should it look?</p><br />
+            <div class="form-radios">
+                <label for="elements-ele_value[simple_add_one_button]"><input type="radio" id="elements-ele_value[simple_add_one_button]" name="elements-ele_value[simple_add_one_button]" value="1"<{if $content.ele_value.simple_add_one_button eq 1}> checked="checked"<{/if}>/><{$smarty.const._formulize_SUBFORM_SIMPLE_BUTTON}></label>
+                <p style="margin-left:2em;"><{$smarty.const._formulize_SUBFORM_SIMPLE_LABEL}><br />
+                &nbsp;&nbsp;&nbsp;<input type="text" name="elements-ele_value[simple_add_one_button_text]" value="<{if $content.ele_value.simple_add_one_button_text}><{$content.ele_value.simple_add_one_button_text}><{else}>Add One<{/if}>" /></p>
+            </div>
+            <br />
+            <div class="form-radios">
+                <label for="elements-ele_value[simple_add_one_button]-no"><input type="radio" id="elements-ele_value[simple_add_one_button]-no" name="elements-ele_value[simple_add_one_button]" value="0"<{if $content.ele_value.simple_add_one_button eq 0}> checked="checked"<{/if}>/><{$smarty.const._formulize_SUBFORM_MULTIPLE_BUTTON}></label>
+                <p style="margin-left:2em;"><{$smarty.const._formulize_SUBFORM_MULTIPLE_LABEL}><br />
+                &nbsp;&nbsp;&nbsp;Add x <input type="text" name="elements-ele_value[9]" value="<{if $content.ele_value[9]}><{$content.ele_value[9]}><{else}><{$smarty.const._formulize_ADD_ENTRIES}><{/if}>" /></p>
+            </div>
+        </div>
+	</fieldset>
+    </div>
+
+		<div class="form-item">
+			<fieldset>
+				<legend><{$smarty.const._AM_ELE_SUBFORM_ELEMENT_LIST}></legend>
+				
+			<select name="elements_ele_value_1[]" size="10" multiple>
+				<{html_options options=$content.subformelements selected=$content.ele_value[1]}>
+			</select>
+			<div class="description"><{$smarty.const._AM_ELE_SUBFORM_ELEMENTS_DESC}></div>
+			
+			</fieldset>
+		</div>
+
+<div class="form-item">
+			    <fieldset>
+				    <legend><{$smarty.const._AM_ELE_SUBFORM_IFROW}></legend>
+				    <p><{$smarty.const._AM_ELE_SUBFORM_HEADINGSORCAPTIONS}></p>
+			    <div class="form-radios">
+				    <label for="elements-ele_value[4]-0"><input type="radio" id="elements-ele_value[4]-0" name="elements-ele_value[4]" value="0"<{if $content.ele_value[4] eq 0}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_HEADINGSORCAPTIONS_HEADINGS}></label>
+			    </div>
+			    <div class="form-radios">
+				    <label for="elements-ele_value[4]-1"><input type="radio" id="elements-ele_value[4]-1" name="elements-ele_value[4]" value="1"<{if $content.ele_value[4] eq 1}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_HEADINGSORCAPTIONS_CAPTIONS}></label>
+			    </div>
+<br />
+                <p><{$smarty.const._AM_ELE_SUBFORM_START}></p>
+                <div class="form-radios">
+				    <label for="elements-ele_value[2]-0"><input type="radio" id="elements-ele_value[2]-0" name="subform_start" value="empty"<{if $content.ele_value.subform_prepop_element == 0 AND $content.ele_value[2] == 0 }> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_START_EMPTY}></label>
+			    </div>
+			    <div class="form-radios">
+				    <input type="radio" id="subform_start_blanks" name="subform_start" value="blanks"<{if $content.ele_value.subform_prepop_element == 0 AND $content.ele_value[2] > 0}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_START_BLANKS1}> <input type="text" id="number_of_subform_blanks" name="number_of_subform_blanks" value="<{ $content.ele_value[2] }>" size="2" maxlength="2"/> <{$smarty.const._AM_ELE_SUBFORM_START_BLANKS2}> 
+			    </div>
+                <div class="form-radios">
+				    <input type="radio" id="subform_start_prepop" name="subform_start" value="prepop"<{if $content.ele_value.subform_prepop_element > 0 AND $content.ele_value[2] == 0 }> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_START_PREPOPULATE}> <select id="subform_start_prepop_element" name="subform_start_prepop_element" size=1><{html_options options=$content.subformelements selected=$content.ele_value.subform_prepop_element}></select>
+			    </div>
+                    <div class="description"><{$smarty.const._AM_ELE_SUBFORM_START_HELP}></div>
+<br />
+                <div class="form-item">
+                    <p><{$smarty.const._AM_ELE_SUBFORM_VIEW}></p>
+                     <div class="form-radios">
+				    <label for="elements-ele_value[3]-0"><input type="radio" id="elements-ele_value[3]-0" name="elements-ele_value[3]" value="0"<{if !$content.ele_value[3] }> checked="checked"<{/if}>/>Do not show the <i>View</i> buttons</label>
+			    </div>
+			    <div class="form-radios">
+				    <label for="elements-ele_value[3]-2"><input type="radio" id="elements-ele_value[3]-2" name="elements-ele_value[3]" value="2"<{if $content.ele_value[3] == 2 }> checked="checked"<{/if}>/>Show the <i>View</i> buttons, open entries in a dialog box. New entries show up in the dialog.</label>
+                </div>
+                    <label for="elements-ele_value[3]-3"><input type="radio" id="elements-ele_value[3]-3" name="elements-ele_value[3]" value="3"<{if $content.ele_value[3] == 3 }> checked="checked"<{/if}>/>Show the <i>View</i> buttons, open entries in a dialog box. New entries show up as new rows.</label>
+			    <div class="form-radios">
+			    </div>
+                <div class="form-radios">
+				    <label for="elements-ele_value[3]-1"><input type="radio" id="elements-ele_value[3]-1" name="elements-ele_value[3]" value="1"<{if $content.ele_value[3] == 1 }> checked="checked"<{/if}>/>Show the <i>View</i> buttons, open entries full screen (reloads the page, clicking <i>Save and Leave</i> returns to the main form)</label>
+			    </div>
+                <div class="form-radios">
+                <br>
+                <p>Disable these elements in each row:</p>
+                <select name="elements_ele_value_disabledelements[]" size="10" multiple>
+				<{html_options options=$content.subformelements selected=$content.ele_value.disabledelements}>
+                </select>
+                <div class="description">Elements selected will be rendered as "read only" values, instead of as form elements.</div>
+                </div>
+                
+                
+                </div>
+			    
+			    </fieldset>
+			    </div>
+
+    <div class="form-item">
+        <fieldset>
+            <legend><{$smarty.const._AM_ELE_SUBFORM_IFFORM}></legend>
+	    <p><{$smarty.const._AM_ELE_SUBFORM_SCREEN}></p>
+            <select id="element-subform-screen" name="elements-ele_value[display_screen]" size="1">
+                <{html_options options=$content.subform_screens selected=$content.ele_value.display_screen}>
+            </select>
+            <div class="description"><{$smarty.const._AM_ELE_SUBFORM_SCREEN_HELP}></div>
+        </fieldset>
+    </div>
+
+<div class="form-item">
+<fieldset>
+<legend>Sorting order for the subform entries</legend>
+<p>Sort the subform entries by this element ('None' means use creation order):<br />
+    <select name="elements-ele_value[SortingElement]" size="1">
+		<{html_options options=$content.subformUserFilterElements selected=$content.ele_value.SortingElement}>
+	</select>
+    &nbsp;&nbsp;&nbsp;
+    <input type='radio' name='elements-ele_value[SortingDirection]' value='ASC'>A...Z</input> &nbsp;&nbsp;&nbsp; <input type='radio' name='elements-ele_value[SortingDirection]' value='DESC'>Z...A</input></p>
+</fieldset>
+</div>
+    
+
+<div class="form-item">
+<fieldset>
+<legend>Which entries in the subform should be accessible through this subform element?</legend>
+<div id="filterdiv">
+	<{if $content.subformfilter}>
+				<{$content.subformfilter}>
+        <p>Allow the user to filter entries manually, based on this element:</p>
+        <select name="elements-ele_value[UserFilterByElement]" size="1">
+			<{html_options options=$content.subformUserFilterElements selected=$content.ele_value.UserFilterByElement}>
+		</select>
+				</div>
+				<div class="description">
+By default, all entries in a subform that are tied to the main form will be accessible.  You can set conditions here that will limit which entries will be accessible.  This is useful if you have multiple types of entries in a subform, and want the user to interact with each type in a separate place.  For example, a Housing subform might have entries for "apartments," "townhouses," and "houses".  You could set this subform element to just show apartments, and another subform element to just show houses.
+				</div>
+				<div class="description">
+				If you have any "match all" conditions that use the = operator, then any new entries you add through the subform interface, will have those values assigned automatically.  For example, if you limit this subform interface to only entries where "type" = "apartment" then all new entries you create would have the value of "type" set to "apartment".
+				</div>
+        <div class="description">
+        If you allow the user to filter based on a selected element, then no subform entries will appear until the user has typed something in the filter box. Then, only the matching entries will be shown. Filters you specify above will be applied in addition to the filter the user types.
+        </div>
+				<{else}>
+					<p>You need to select a subform and save this element before you can choose conditions.</p>
+        </div>
+<{/if}>					
+</fieldset>
+</div>
+
+
+
+    
+
+	<div class="form-item">
+		<fieldset>
+    <legend>When new entries are created in the subform, who should be the owner of those entries?</legend>
+		<div class="form-radios">
+      <label for="elements-ele_value[5]-0"><input type="radio" id="elements-ele_value[5]-0" name="elements-ele_value[5]" value="0"<{if $content.ele_value[5] eq 0}> checked="checked"<{/if}>/>The currently logged in user should be the owner of subform entries</label>
+      <label for="elements-ele_value[5]-1"><input type="radio" id="elements-ele_value[5]-1" name="elements-ele_value[5]" value="1"<{if $content.ele_value[5] eq 1}> checked="checked"<{/if}>/>The owner of the entry in the main form should be the owner of subform entries</label>
+    </div>
+		<div class="description">This feature lets you override the ownership of new entries created in the subform.  By default, new entries are owned by the user who created them.  But in some situtations you might want to have all subform entries owned by the same person who created the main form entry, even if the subform entries are being created by many different people.</div>
+		</fieldset>
+	</div>
+
+<script type="text/javascript">
+
+	$("#element-subform").change(function() {
+		subfid = $("#element-subform").val();
+		$.get("<{$xoops_url}>/modules/formulize/formulize_xhr_responder.php?uid=<{$content.uid}>&op=get_element_option_list&fid="+subfid, function(data) {
+			results = eval('('+data+')');
+			if(results) {
+				$("[name=elements_ele_value_1[]]").empty();
+				for( var i in results.options) {
+					if(typeof(results.options[i]) == "object") {
+						$("[name=elements_ele_value_1[]]").append("<option value='"+results.options[i].id+"'>"+results.options[i].value+"</value>");
+					}
+				}
+			}
+		});
+	});
+	
+    $("#subform_start_prepop_element").change(function() {
+       $("#subform_start_prepop").attr("checked", "checked");
+    });
+    
+    $("#number_of_subform_blanks").focus(function() {
+       $("#subform_start_blanks").attr("checked", "checked");
+    });
+    
+	$("div#filterdiv > a.conditionsdelete").click(function () {
+		$(".optionsconditionsdelete").val($(this).attr('target'));
+		$("[name=reload_option_page]").val(1);
+	  $(".savebutton").click();
+		return false;
+	});
+
+	$("div#filterdiv > input#addcon").click(function () {
+		$("[name=reload_option_page]").val(1);
+	  $(".savebutton").click();
+		return false;
+	});
+
+    var prevVal;
+    function removeNonDisplayedElementsFromDisabledList() {
+        // if some elements are selected...
+        if ($("[name^=elements_ele_value_1]").children(":not(option:selected)").length < $("[name^=elements_ele_value_1]").children().length) {
+            $("[name^=elements_ele_value_1]").children(":not(option:selected)").each(function() {
+                $("[name^=elements_ele_value_disabledelements] option[value="+$(this).val()+"]").remove();
+            });
+        // no elements are selected, so replicate the entire list...
+        } else {
+            $("[name^=elements_ele_value_1]").children().each(function() {
+                addElementToDisabledList($(this).val(), prevVal, $(this).index());
+                prevVal = $(this).val();
+            });
+        }
+    }
+    
+    function addElementToDisabledList(optionValue, prevOptionValue, i) {
+        if(optionValue != 'null' && $("[name^=elements_ele_value_disabledelements] option[value="+optionValue+"]").length == 0) {
+            if (i == 0) {
+                $("[name^=elements_ele_value_disabledelements]").prepend('<option value="'+optionValue+'">'+$("[name^=elements_ele_value_1] option[value="+optionValue+"]").text()+'</option>');
+            } else {
+                $('<option value="'+optionValue+'">'+$("[name^=elements_ele_value_1] option[value="+optionValue+"]").text()+'</option>').insertAfter($("[name^=elements_ele_value_disabledelements] option[value="+prevOptionValue+"]"));
+            }
+        }
+    }
+    
+    $("[name^=elements_ele_value_1]").change(function() {
+        var eles = String($(this).val()).split(',');
+        for (i = 0; i < eles.length; i++) {
+            addElementToDisabledList(eles[i], eles[i-1], i);
+        }
+        removeNonDisplayedElementsFromDisabledList();
+    });
+    
+    removeNonDisplayedElementsFromDisabledList()
+    
+</script>

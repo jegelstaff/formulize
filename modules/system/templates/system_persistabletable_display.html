@@ -1,0 +1,217 @@
+<style type="text/css">
+	img {vertical-align: middle;}
+</style>
+<!--
+<style type="text/css">
+.bg3 a{color: #fff;}
+</style>
+//-->
+<div id="<{$icms_id}>">
+
+<{if $icms_table_header}>
+	<{$icms_table_header}>
+<{/if}>
+
+<div style="margin-bottom: 12px;">
+	<{if $icms_introButtons}>
+		<div style="float: <{$smarty.const._GLOBAL_LEFT}>;">
+			<form action =''>
+				<{foreach from=$icms_introButtons item=introButton}>
+					<input type="button" name="<{$introButton.name}>" onclick="location='<{$introButton.location}>'" value="<{$introButton.value}>" />
+				<{/foreach}>
+			</form>
+		</div>
+	<{/if}>
+
+<{if $icms_showFilterAndLimit || $icms_quicksearch}>
+<form id="pick" action="<{$icms_optionssel_action}>" method="post" style="margin: 0;">
+	<{if $icms_quicksearch}>
+		<div style="vertical-align: middle; float: <{$smarty.const._GLOBAL_RIGHT}>; border: 2px solid #C2CDD6; padding: 5px; background-color: #E6E6E6;">
+			<strong><{$icms_quicksearch}> :</strong> <input style="min-width: 10px; vertical-align: middle;" type="text" id="quicksearch_<{$icms_id}>" name="quicksearch_<{$icms_id}>" size="15" maxlength="255"/>
+			<input style="vertical-align: middle;" type="submit" name="button_quicksearch_<{$icms_id}>" value="<{$smarty.const._SEARCH}>" />
+		</div>
+	<{/if}>
+</div>
+
+<!-- Why this If Else... ?? Let's comment it for now //-->
+<div style="clear:both; padding-top:10px;"></div>
+<!--
+<{if !$icms_user_side}>
+	<div style="clear:both; padding-top:10px;"></div>
+<{else}>
+	<div style="padding-top:45px;"> </div>
+<{/if}>
+//-->
+<!-- Why this If Else... ?? //-->
+
+
+<{if $icms_showFilterAndLimit}>
+<{if $icms_pagenav}>
+	<div style="text-align:<{$smarty.const._GLOBAL_RIGHT}>; padding-bottom: 3px;"><{$icms_pagenav}></div>
+<{/if}>
+
+	<table width="100%" cellspacing="1" cellpadding="2" border="0" style="border-left: 1px solid silver; border-top: 1px solid silver; border-right: 1px solid silver;">
+		<tr>
+			<td>
+				<{if $icms_optionssel_filtersArray}>
+					<span style="font-weight: bold; font-size: 12px;"><{$smarty.const._CO_ICMS_FILTER}> : </span>
+					<select name='filtersel' onchange='submit()'>
+						<{foreach from=$icms_optionssel_filtersArray key=key item=field}>
+							<option value='<{$key}>' <{$field.selected}> > <{$field.caption}></option>
+						<{/foreach}>
+					</select>
+					<{if $icms_optionssel_filters2Array}>
+						<select name='filtersel2' onchange='submit()'>
+							<{foreach from=$icms_optionssel_filters2Array key=key item=field}>
+								<option value='<{$key}>' <{$field.selected}> > <{$field.caption}></option>
+							<{/foreach}>
+						</select>
+					<{/if}>
+				<{/if}>
+			</td>
+			<td align='<{$smarty.const._GLOBAL_RIGHT}>'>
+<!--				<span style="font-weight: bold; font-size: 12px;"><{$smarty.const._CO_ICMS_SORT_BY}> : </span>
+				<select name='sortsel' onchange='submit()'>
+					<{foreach from=$icms_optionssel_fieldsForSorting key=key item=field}>
+						<option value='<{$key}>' <{$field.selected}> > <{$field.caption}></option>
+					<{/foreach}>
+				</select>
+				<select name='ordersel' onchange='submit()'>
+					<{foreach from=$icms_optionssel_ordersArray key=key item=field}>
+						<option value='<{$key}>' <{$field.selected}> > <{$field.caption}></option>
+					<{/foreach}>
+				</select>
+//-->
+				<{if !$icms_isTree}>
+					<{$smarty.const._CO_ICMS_SHOW_ONLY}> <select name='limitsel' onchange='submit()'>
+						<{foreach from=$icms_optionssel_limitsArray key=key item=field}>
+							<option value= '<{$key}>' <{$field.selected}> > <{$field.caption}></option>
+						<{/foreach}>
+					</select>
+				<{/if}>
+			</td>
+		</tr>
+	</table>
+
+<{/if}>
+</form>
+<{/if}>
+
+<{if $icms_actionButtons || $icms_withSelectedActions}>
+	<form id="form_<{$icms_id}>" method="post">
+<{/if}>
+<table width='100%' cellspacing='1' cellpadding='3' border='0' class='outer'>
+	<tr>
+	 <{foreach from=$icms_columns item=column}>
+	 	<th width="<{$column.width}>" align='<{$column.align}>'><strong><{$column.caption}></strong></th>
+	 <{/foreach}>
+	 <{if $icms_has_actions}>
+	 	<th width='<{$icms_actions_column_width}>' align='center'>
+	 		<{if $icms_show_action_column_title}>
+	 			<strong><{$smarty.const._CO_ICMS_ACTIONS}></strong>
+	 		<{/if}>
+	 	</th>
+	 <{/if}>
+	</tr>
+
+	<{if $icms_persistable_objects}>
+		<{foreach from=$icms_persistable_objects item=icms_object}>
+			<{if $icms_actionButtons}>
+				<input type='hidden' name='<{$icms_id}>_objects[]' id='listed_objects' value='<{$icms_object.id}>' />
+			<{/if}>
+			<tr>
+				<{foreach from=$icms_object.columns item=column}>
+					<td class="<{$column.keyname}> <{$icms_object.class}>" width="<{$column.width}>" align="<{$column.align}>"><{$column.value}></td>
+				<{/foreach}>
+				<{if $icms_object.actions}>
+					<td class="<{$icms_object.class}>" align='center'>
+						<{foreach from=$icms_object.actions item=action}>
+							<{$action}>
+						<{/foreach}>
+					</td>
+				<{/if}>
+			</tr>
+		<{/foreach}>
+	<{else}>
+		<tr>
+			<td class='head' style='text-align: center; font-weight: bold;' colspan="<{$icms_colspan}>"><{$smarty.const._CO_ICMS_NO_OBJECT}></td>
+		</tr>
+	<{/if}>
+</table>
+<{if  $icms_actionButtons || $icms_withSelectedActions}>
+	<input type='hidden' name='op' id='op' value='' />
+	<{if $icms_withSelectedActions}>
+		<div style="padding: 5px;text-align: <{$smarty.const._GLOBAL_LEFT}>; border-left: 1px solid silver; border-bottom: 1px solid silver; border-right: 1px solid silver;">
+		<{$smarty.const._CO_ICMS_WITH_SELECTED}>
+		<select name='selected_action'>
+			<option value = ''>---</option>
+			<{foreach from=$icms_withSelectedActions key=key item=action}>
+				<option value = '<{$key}>'><{$action}></option>
+			<{/foreach}>
+		</select>
+		<input type="submit" name="<{$actionButton.op}>" onclick="this.form.elements.op.value='with_selected_actions'" value="<{$smarty.const._CO_ICMS_SUBMIT}>" />
+		</div>
+	<{/if}>
+	<{if $icms_actionButtons}>
+		<div style="padding: 5px;text-align: <{$smarty.const._GLOBAL_RIGHT}>; border-left: 1px solid silver; border-bottom: 1px solid silver; border-right: 1px solid silver;">
+			<{foreach from=$icms_actionButtons item=actionButton}>
+				<input type="submit" name="<{$actionButton.op}>" onclick="this.form.elements.op.value='<{$actionButton.op}>'" value="<{$actionButton.text}>" />
+			<{/foreach}>
+		</div>
+	<{/if}>
+</form>
+<{/if}>
+<{if $icms_pagenav}>
+	<div style="text-align:<{$smarty.const._GLOBAL_RIGHT}>; padding-top: 3px;"><{$icms_pagenav}></div>
+<{/if}>
+
+<{if $icms_introButtons}>
+	<div style="padding-top:15px; padding-bottom: 5px;">
+		<form action=''>
+			<{foreach from=$icms_introButtons item=introButton}>
+				<input type="button" name="<{$introButton.name}>" onclick="location='<{$introButton.location}>'" value="<{$introButton.value}>" />
+			<{/foreach}>
+		</form>
+	</div>
+<{/if}>
+
+<{if $icms_table_footer}>
+	<{$icms_table_footer}>
+<{/if}>
+
+</div>
+
+<br />
+
+<{if $icms_printer_friendly_page}>
+	<a href="javascript:openWithSelfMain('<{$icms_printer_friendly_page}>', 'smartpopup', 700, 519);"><img  src="<{$xoops_url}>/modules/icms/images/actions/fileprint.png" alt="" /></a>
+<{/if}>
+
+
+
+<!--
+<script language="javascript">
+function Clickheretoprint()
+{
+  var disp_setting="toolbar=yes,location=no,directories=yes,menubar=yes,";
+      disp_setting+="scrollbars=yes,width=650, height=600, <{$smarty.const._GLOBAL_LEFT}>=100, top=25";
+  var content_value = document.getElementById("<{$icms_id}>").innerHTML;
+
+  var docprint=window.open("","",disp_setting);
+   docprint.document.open();
+   docprint.document.write('<html><head><title>Inel Power System</title>');
+   docprint.document.write('<link rel="stylesheet" media="print" href="<{$xoops_url}>/modules/icms/print.css" type="text/css">');
+   docprint.document.write('<link rel="stylesheet" media="all" href="<{$xoops_url}>/modules/system/style.css" type="text/css">');
+   docprint.document.write('</head><body onLoad="self.print()">');
+   docprint.document.write('<h2>Title</h2>');
+   docprint.document.write('<h3>SubTitle</h3>');
+   docprint.document.write(content_value);
+   docprint.document.write('<div style="text-align: center;"><a href="javascript:window.close();">Close this window</a></div>');
+   docprint.document.write('</body></html>');
+   docprint.document.close();
+   docprint.focus();
+}
+</script>
+<br />
+<a href="javascript:Clickheretoprint();"><img  src="<{$xoops_url}>/modules/icms/images/actions/fileprint.png" alt="" /></a>
+//-->

@@ -1,0 +1,78 @@
+<div class="panel-content content">
+
+    <h2>Manage Account Creation Tokens</h2>
+    <p>You can create tokens that can be used to allow new users to create a Formulize account on the first time that they login to the site with Google.</p>
+    <br>
+    <hr>
+    <br>
+    <form id='managetokens' name='managetokens' method='post'>
+    <p>Allow the user to join which groups?
+    <br>
+    <br>
+    <{foreach from=$adminPage.groups item=key}>
+   <input id=<{$key.groupid}> name=<{$key.groupid}> type="checkbox" value=<{$key.name}>>
+   <label for=<{$key.groupid}>><{$key.name}></label>
+   <br>
+    <{/foreach}>
+    <br>
+    What is the maximum number of uses that this token should have?
+ <select name='maxuses'>
+        <option value='1'>1</option>
+        <option value='2'>2</option>
+        <option value='5'>5</option>
+        <option value='10'>10</option>
+        <option value='20'>20</option>
+        <option value='30'>30</option>
+        <option value='50'>50</option>
+        <option value='75'>75</option>
+        <option value='100'>100</option>
+        <option value='0'>Unlimited</option>
+    </select>
+    <br>
+    <br>
+    Select token length:
+     <select name='tokenlength'>
+        <option value='32'>32 bytes</option>
+        <option value='16'>16 bytes</option>
+        <option value='64'>64 bytes</option>
+    </select>
+    <br>
+    <br>
+    When should the token expire?
+    <select name='expiry'>
+        <option value=''>Never</option>
+        <option value='1'>in 1 hour</option>
+        <option value='2'>in 2 hours</option>
+        <option value='5'>in 5 hours</option>
+        <option value='8'>in 8 hours</option>
+        <option value='12'>in 12 hours</option>
+        <option value='24'>in 1 day</option>
+        <option value='48'>in 2 days</option>
+        <option value='72'>in 3 days</option>
+        <option value='96'>in 4 days</option>
+        <option value='168'>in 1 week</option>
+        <option value='336'>in 2 weeks</option>
+        <option value='672'>in 4 weeks</option>
+        <option value='1344'>in 8 weeks</option>
+        <option value='4368'>in 6 months</option>
+        <option value='8760'>in 1 year</option>
+    </select> &nbsp;&nbsp;&nbsp;<input type='submit' name='save' value='Create'>
+    </p>
+    <input type='hidden' value='' id='deletekey' name='deletekey' />
+    </form>
+    <br/><hr><br/>
+    
+    <table style='max-width: 700px;'>
+    <{foreach from=$adminPage.keys item=key}>
+        <tr><td><a href='' onclick="setDelete('<{$key.key}>');return false;"><img src='../images/x.gif'/></a>&nbsp;<{$key.user}>&nbsp;&nbsp;&nbsp;<br/>&nbsp;</td><td><{$key.key}></td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td><{$key.expiry}></td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td><{$key.group}></td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td><{$key.usesleft}></td></tr>
+    <{/foreach}>
+    </table>
+    
+</div>
+
+<script>
+function setDelete(key) {
+    window.managetokens.deletekey.value = key;
+    window.managetokens.submit();
+}
+</script>

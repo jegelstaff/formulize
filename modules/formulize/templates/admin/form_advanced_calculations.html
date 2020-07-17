@@ -1,0 +1,92 @@
+<{* form elements must be named with their object name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a property of an object to update *}>
+<{* securitytoken should be part of the form *}>
+<{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
+
+<form class="formulize-admin-form">
+<{$securitytoken}>
+<input type="hidden" name="formulize_admin_handler" value="form_advanced_calculations">
+<input type="hidden" name="formulize_admin_key" value="<{$content.fid}>">
+<input type="hidden" name="formulize_admin_aid" value="<{$content.aid}>">
+<input type="hidden" name="gotoadvanced_calculations" value="">
+<input type="hidden" name="deleteadvanced_calculations" value="">
+<input type="hidden" name="cloneadvanced_calculations" value="">
+
+<div class="panel-content content">
+
+    <h2>Before Saving</h2>
+    <p>This special procedure runs before an entry is saved. Values are available as PHP variables using the element handle name. The ID of the current entry (or 'new') is available as $entry_id. The current value in the database (prior to this save) is available as $currentValues['handle_name'], so you can check if something has actually changed.</p><br />
+    <textarea id="forms-on_before_save" name="forms-on_before_save" class="code-textarea"><{$content.form_object->on_before_save}>
+</textarea><{* closing tag on a new line so the textarea has a blank line at the bottom *}>
+
+    <h2>After Saving</h2>
+    <p>This special procedure runs after an entry is saved. The ID of the saved entry is available as $entry_id. The value that was in the database, prior to this save, is available as $currentValues['handle_name'], so you can check if something has actually changed.</p><br />
+    <textarea id="forms-on_after_save" name="forms-on_after_save" class="code-textarea"><{$content.form_object->on_after_save}>
+</textarea><{* closing tag on a new line so the textarea has a blank line at the bottom *}>
+
+    <h2>Enable / Disable Entry Editing</h2>
+    <p>This special procedure allows for a custom condition to be set to decide whether a user can edit an entry or not. Variables will be available in the code: $entry_id can be used to identify an entry, $user_id for identifying the logged in user, $form_id to indicate the form, and $allow_editing (true or false) to determine if the user can make changes or not. Do not include a return value after the code: the value of $allow_editing will be returned. </p><br />
+    <textarea id="forms-custom_edit_check" name="forms-custom_edit_check" class="code-textarea"><{$content.form_object->custom_edit_check}>
+</textarea><{* closing tag on a new line so the textarea has a blank line at the bottom *}>
+
+    <p><i>Procedures</i> <{$smarty.const._AM_CALC_EXPLAIN}></p>
+
+    <h2><a name="newprocedure" href="ui.php?page=advanced-calculation&tab=settings&aid=<{$content.aid}>&fid=<{$content.fid}>&acid=new"><img src="../images/filenew2.png"> <{$smarty.const._AM_CALC_CREATE_NEW}></a></h2>
+
+  <{* include form if exist advanced_calculations exist *}>
+
+  <h2>Procedures</h2>
+  <div class="form-item">
+    <table>
+	    <tr>
+		    <th><{$smarty.const._AM_ITEMNAME}></th>
+		    <th>Action</th>
+	    </tr>
+      <{foreach from=$content.advanced_calculations item=advanced_calculation}>
+	      <tr>
+		      <td><label for="advanced-calculation-defaultform-<{$advanced_calculation.acid}>"><a class="configadvanced_calculation" target="<{$advanced_calculation.acid}>" href=""><img src="../images/kedit.png"> <{$advanced_calculation.name}></a></label></td>
+  		    <td><a class="cloneadvanced_calculation" target="<{$advanced_calculation.acid}>" href=""><img src="../images/clone.gif"><{$smarty.const._AM_CALC_CLONE}></a>&nbsp;&nbsp;&nbsp;&nbsp;<a class="deleteadvanced_calculation" target="<{$advanced_calculation.acid}>" href=""><img src="../images/editdelete.gif"><{$smarty.const._AM_CALC_REMOVE}></a></td>
+	      </tr>
+      <{/foreach}>
+    </table>
+  </div>
+</div>
+
+</form>
+
+<script type="text/javascript">
+$(".configadvanced_calculation").click(function() {
+	$("[name=gotoadvanced_calculations]").val($(this).attr('target'));
+	$(".savebutton").click();
+	return false;
+})
+
+$("[name=newprocedure]").click(function() {
+	$("[name=gotoadvanced_calculations]").val('new');
+	$(".savebutton").click();
+	return false;
+})
+
+$(".deleteadvanced_calculation").click(function() {
+	var answer = confirm("<{$smarty.const._AM_CALC_CONFIRM_DELETE}>");
+	if(answer) {
+		$("[name=deleteadvanced_calculations]").val($(this).attr('target'));
+		$(".savebutton").click();
+	}
+	return false;
+})
+
+$(".cloneadvanced_calculation").click(function() {
+	$("[name=cloneadvanced_calculations]").val($(this).attr('target'));
+	$(".savebutton").click();
+	return false;
+})
+
+jQuery(document).ready(function() {
+    jQuery(".savebutton").click(function() {
+        fz_check_php_code(jQuery("#forms-on_before_save").val(), "Before Save", "<{$icms_url}>", <{$icms_userid}>);
+        fz_check_php_code(jQuery("#forms-on_after_save").val(), "After Save", "<{$icms_url}>", <{$icms_userid}>);
+        fz_check_php_code(jQuery("#forms-custom_edit_check").val(), "Disable Entry Editing", "<{$icms_url}>", <{$icms_userid}>);
+    });
+});
+</script>

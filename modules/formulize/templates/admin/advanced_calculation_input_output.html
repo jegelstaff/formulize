@@ -1,0 +1,30 @@
+<{* form elements must be named with their object name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a property of an object to update *}>
+<{* securitytoken should be part of the form *}>
+<{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
+
+<form id="form-admin-form" class="formulize-admin-form">
+<{$securitytoken}>
+<input type="hidden" name="formulize_admin_handler" value="advanced_calculation_input_output">
+<input type="hidden" name="formulize_admin_key" value="<{$content.acid}>">
+<input type="hidden" name="formulize_admin_fid" value="<{$content.fid}>">
+<input type="hidden" name="aid" value="<{$content.aid}>">
+
+
+<div class="panel-content content">
+  <fieldset>
+    <legend>Input/Output for the Procedure: <em><{$content.name}></em></legend>
+
+	  <div class="form-item">
+		  <label for="input">PHP code for defining any initial values (before the steps are evaluated)</label><br />
+	    <textarea id="advcalc-input" name="advcalc-input" class="code-textarea" rows="5" cols="35"><{$content.input}></textarea>
+	  </div>
+
+	  <div class="form-item">
+		  <label for="output">PHP code for outputing results to the screen</label><br />
+	    <textarea id="advcalc-output" name="advcalc-output" class="code-textarea" rows="10" cols="35"><{$content.output}></textarea>
+	  </div>
+  </fieldset>
+</div>
+
+</form>

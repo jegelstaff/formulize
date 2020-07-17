@@ -1,0 +1,236 @@
+/*
+  Icon Font: formulize-icons
+*/
+@font-face {
+  font-family: "formulize-icons";
+  src: url("./formulize-icons/formulize-icons.eot");
+  src: url("./formulize-icons/formulize-icons.eot?#iefix") format("embedded-opentype"), url("./formulize-icons/formulize-icons.woff") format("woff"), url("./formulize-icons/formulize-icons.ttf") format("truetype"), url("./formulize-icons/formulize-icons.svg#formulize-icons") format("svg");
+  font-weight: normal;
+  font-style: normal; }
+[data-icon]:before {
+  content: attr(data-icon); }
+
+[data-icon]:before,
+.icon-add:before,
+.icon-application:before,
+.icon-arrow-backward:before,
+.icon-arrow-forward:before,
+.icon-calculator:before,
+.icon-check-all:before,
+.icon-check-mark:before,
+.icon-check-none:before,
+.icon-config:before,
+.icon-connection:before,
+.icon-copy:before,
+.icon-delete:before,
+.icon-download:before,
+.icon-edit:before,
+.icon-form-mini:before,
+.icon-form:before,
+.icon-help:before,
+.icon-home:before,
+.icon-lock-unlocked:before,
+.icon-lock:before,
+.icon-magnifier:before,
+.icon-menu:before,
+.icon-permission:before,
+.icon-piechart:before,
+.icon-print:before,
+.icon-relationship:before,
+.icon-screen-form:before,
+.icon-screen-list:before,
+.icon-screen:before,
+.icon-table:before,
+.icon-trash:before,
+.icon-view:before {
+  font-family: "formulize-icons";
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  display: inline-block;
+  text-decoration: inherit; }
+
+.icon-add:before {
+  content: "\f100"; }
+
+.icon-application:before {
+  content: "\f101"; }
+
+.icon-arrow-backward:before {
+  content: "\f102"; }
+
+.icon-arrow-forward:before {
+  content: "\f103"; }
+
+.icon-calculator:before {
+  content: "\f104"; }
+
+.icon-check-all:before {
+  content: "\f105"; }
+
+.icon-check-mark:before {
+  content: "\f106"; }
+
+.icon-check-none:before {
+  content: "\f107"; }
+
+.icon-config:before {
+  content: "\f108"; }
+
+.icon-connection:before {
+  content: "\f109"; }
+
+.icon-copy:before {
+  content: "\f10a"; }
+
+.icon-delete:before {
+  content: "\f10b"; }
+
+.icon-download:before {
+  content: "\f10c"; }
+
+.icon-edit:before {
+  content: "\f10d"; }
+
+.icon-form-mini:before {
+  content: "\f10e"; }
+
+.icon-form:before {
+  content: "\f10f"; }
+
+.icon-help:before {
+  content: "\f110"; }
+
+.icon-home:before {
+  content: "\f111"; }
+
+.icon-lock-unlocked:before {
+  content: "\f112"; }
+
+.icon-lock:before {
+  content: "\f113"; }
+
+.icon-magnifier:before {
+  content: "\f114"; }
+
+.icon-menu:before {
+  content: "\f115"; }
+
+.icon-permission:before {
+  content: "\f116"; }
+
+.icon-piechart:before {
+  content: "\f117"; }
+
+.icon-print:before {
+  content: "\f118"; }
+
+.icon-relationship:before {
+  content: "\f119"; }
+
+.icon-screen-form:before {
+  content: "\f11a"; }
+
+.icon-screen-list:before {
+  content: "\f11b"; }
+
+.icon-screen:before {
+  content: "\f11c"; }
+
+.icon-table:before {
+  content: "\f11d"; }
+
+.icon-trash:before {
+  content: "\f11e"; }
+
+.icon-view:before {
+  content: "\f11f"; }
+
+/* Formulize css */
+#formulize_form table td {
+  padding: 0;
+  border-width: 0;
+  vertical-align: top; }
+
+#formulize_form th {
+  font-size: large; }
+
+#formulize_form .outer {
+  color: #1B75BB; }
+
+#formulize_form .head {
+  color: #74B64A;
+  padding: 5px;
+  font-weight: bold;
+  border-top: 3px solid #f3f3f3; }
+
+#formulize_form .even {
+  color: black;
+  padding: 5px;
+  border-top: 3px solid #f3f3f3; }
+
+#formulize_form .odd {
+  color: black;
+  padding: 5px;
+  border-top: 3px solid #f3f3f3;
+  background-color: white; }
+
+#formulize_form tr.even td {
+  color: black;
+  padding: 5px;
+  border-top: 3px solid #f3f3f3; }
+
+#formulize_form tr.odd td {
+  color: black;
+  padding: 5px;
+  border-top: 3px solid #f3f3f3;
+  background-color: white; }
+
+#formulize_form .xoops-form-element-caption .caption-marker {
+  display: none; }
+
+#formulize_form .xoops-form-element-help {
+  font-weight: normal; }
+
+#formulize_form tbody {
+  border-top: 0 solid white; }
+
+#formulize_form a.loe-edit-entry {
+  display: inline-block;
+  background-image: url("edit.png");
+  margin: 0;
+  width: 16px;
+  height: 16px;
+  margin-left: 0.5em;
+  text-decoration: none; }
+
+#formulize_form a.loe-edit-entry:hover {
+  border-radius: 3px; }
+
+#formulize_form td.formulize-controls {
+  white-space: nowrap;
+  width: 1%; }
+
+.icms_checkboxoption {
+  display: block; }
+
+.icms_checkboxoption > label {
+  font-weight: normal;
+  display: inline-block;
+  margin-left: 0.5em;
+  font-size: 90%; }
+
+input[type=radio] {
+  margin-right: 0.5em; }
+
+.subform-deletebox {
+  float: left; }
+
+.subform-entry-container {
+  margin-left: 25px; }
+
+div.xo-theme-form > table {
+  table-layout: fixed; }

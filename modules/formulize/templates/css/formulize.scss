@@ -1,0 +1,368 @@
+
+// include CSS which is shared with the admin section
+@import '_style_common';
+
+// CSS specific to Formulize user pages goes below
+
+.icms_checkboxoption {
+    clear: both;
+}
+
+#floating-list-of-entries-save-button {
+    padding: 0.5em 1.5em;
+    margin: 1em 0;
+    background-color: #FFF;
+}
+
+#floating-list-of-entries-save-button.save_button_fixed {
+    position: fixed;
+    bottom: 0;
+    z-index: 100;
+    margin-top: 0;
+    margin-bottom: 0;
+    border-top: solid 1px #1D65A5;
+    border-left: solid 1px #1D65A5;
+    border-right: solid 1px #1D65A5;
+    border-radius: 5px 5px 0 0;
+}
+
+.floating-column {
+    position: fixed;
+    border: 1px solid white;
+    display: none;
+    padding: 0px !important;
+}
+.floating-column .main-cell-div {
+    float: left;
+    border: 1px solid white;
+    padding: 5px;
+    
+}
+
+#currentview {
+    width: 500px;
+    font-size: 1.2em;
+}
+
+.formulize-subform-table {
+    width: auto;
+    border-collapse: collapse;
+}
+
+.formulize-subform-table > tbody > tr > th {
+    background-color: transparent !important;
+    color: black !important;
+    text-align: center;
+    border-bottom: 1px solid rgb(209, 209, 223);
+}
+
+.formulize-subform-table > tbody > tr > td {
+    padding: 0.5em;
+    border-bottom: 1px dotted rgb(209, 209, 223);
+}
+
+/*=== Formulize Boutons by Francois T ===*/
+button, input[type='submit'], input[type='button'], input[type='reset'] {
+    background-color:           #F4F9FE;
+    -webkit-border-radius: 5px;
+    color:        #2F85DC;
+    border:       1px solid;
+    border-color: #ccc;
+}
+button:hover, .xo-formbuttons:hover, .formButton:hover {
+    transform: scale(1.2);  
+    box-shadow: 0 0 65px #F4F9FE inset, 0 0 20px #F4F9FE inset, 0 0 15px #333;  
+}
+button:focus, input[type='submit']:focus, input[type='button']:focus, input[type='reset']:focus, .xo-formbuttons:focus, .formButton:focus {
+    background-color: #f4f4f4;
+    border-color : #333;
+}
+
+/*=== Formulize Boutons by Francois T ===*/
+#formulize_addButton, #formulize_addProxyButton {
+    text-indent:45px;   
+    background:#2F85DC url('../../images/contact-new.png') no-repeat 10px;
+    width: 210px !important;
+}
+#formulize_addMultiButton {
+    text-indent:45px;
+    background:#2F85DC url('../../images/multi.png') no-repeat 10px;
+    width: 210px !important;
+}
+#formulize_changeColsButton {
+    background:#61A6EE url('../../images/table.png') no-repeat 10px;
+    
+}
+#formulize_exportButton {
+    background:#2F85DC url('../../images/math.png') no-repeat 10px;
+}
+#formulize_exportCalcsButton {
+    background:#2F85DC url('../../images/math.png') no-repeat 10px;
+}
+#formulize_importButton {
+    background:#2F85DC url('../../images/import.png') no-repeat 10px;
+}
+#formulize_calcButton, #formulize_advCalcButton, #formulize_advSearchButton  {
+    border-color: #8E8E8E;
+    background:#A3A3A3 url('../../images/calculator.png') no-repeat 10px;
+}
+#formulize_selectAllButton {
+    background:#3CA683 url('../../images/select.png') no-repeat 10px;
+}
+#formulize_clearSelectButton {
+    background:#3CA683 url('../../images/unselect.png') no-repeat 10px;
+}
+#formulize_deleteButton {
+    background:#3CA683 url('../../images/delete.png') no-repeat 10px;
+}
+#formulize_cloneButton {
+    background:#3CA683 url('../../images/clone.png') no-repeat 10px;
+}
+#formulize_notifButton {
+    background:#5450A5 url('../../images/notif.png') no-repeat 10px;
+}
+#formulize_resetViewButton {
+    background:#61A6EE url('../../images/find.png') no-repeat 10px;
+}
+#formulize_saveViewButton {
+    background:#61A6EE url('../../images/findsave.png') no-repeat 10px;
+}
+#formulize_deleteViewButton {
+    background:#61A6EE url('../../images/finddel.png') no-repeat 10px;
+}
+#formulize_saveButton {
+    background-color: #61A6EE;
+    text-indent: 0px;
+}
+
+/*=== End of Formulize Boutons ===*/
+
+.formulize_autocomplete {
+    display: inline-block;  // if a formulize-element-edit-link is displayed, this element shouldn't use 100% width
+}
+
+.formulize-element-edit-link {
+    float: right;
+    font-weight: normal;
+    border: 1px solid darken($colorPageBackground, 30%);
+    padding: 0.1em 0.5em;
+    @include border-radius(1em);
+    opacity: 0.0;
+}
+td.even:hover .formulize-element-edit-link, td.odd:hover .formulize-element-edit-link, td.head:hover .formulize-element-edit-link {
+    -webkit-transition: opacity 400ms linear;
+    transition: opacity 400ms linear;
+    opacity: 0.3;
+}
+td.even .formulize-element-edit-link:hover, td.odd .formulize-element-edit-link:hover, td.head:hover .formulize-element-edit-link:hover {
+    -webkit-transition: opacity 400ms linear;
+    transition: opacity 400ms linear;
+    opacity: 1.0;
+}
+
+#formulize-entry-lock-message {
+    font-size: 80%;
+    margin-bottom: 1em;
+    padding: 0.7em 0.7em 0.7em 0em; // no padding on left side because lock icon provides padding
+    color: #855;    // a dark red
+    border: 1px solid #855;
+    @include border-radius(6px);
+    #formulize-entry-lock-icon {
+        float: left;
+        font-size: 200%;
+        padding: 0.4em 0.7em;
+    }
+}
+
+td a.heading-locked, td a.heading-unlocked {
+    @include use-icon-font();
+    float: right;
+    margin-left: 0.3em; // some space between this and the info/help icon to the left
+    color: contrasting-color($colorTableHeaderBackground, darken($colorTableHeaderBackground, 20%), lighten($colorTableHeaderBackground, 20%));
+}
+td a.heading-locked {
+    color: contrasting-color($colorTableHeaderBackground, darken($colorTableHeaderBackground, 30%), lighten($colorTableHeaderBackground, 30%));
+}
+
+.heading-locked:before{
+    content: "\f113";   // icon-lock
+}
+
+.heading-unlocked:before{
+    content: "\f112";   // icon-unlock
+}
+
+td a.header-info-link {
+    @include use-icon-font();
+    float: right;
+    color: contrasting-color($colorTableHeaderBackground, darken($colorTableHeaderBackground, 20%), lighten($colorTableHeaderBackground, 20%));
+}
+
+.header-info-link:before{
+    content: "\f110";   // icon-help
+}
+
+.heading-locked:hover, .heading-unlocked:hover, .header-info-link:hover{
+    text-shadow: 0px 0px 2px
+        contrasting-color($colorTableHeaderBackground, lighten($colorTableHeaderBackground, 30%), darken($colorTableHeaderBackground, 30%));
+}
+
+// edit link for each row on list of entries screens
+a.loe-edit-entry {
+    @include use-icon-font();
+    font-size: 12pt;
+    margin: 0;
+    margin-left: 0.5em;
+    padding: 0.1em;
+}
+
+.loe-edit-entry:before{
+    color: $colorTableLink;
+    content: "\f10d";   // icon-edit
+}
+
+a.loe-edit-entry:hover {
+    text-shadow: 0px 0px 2px
+        contrasting-color($colorTableHeaderBackground, lighten($colorTableHeaderBackground, 40%), darken($colorTableHeaderBackground, 40%));
+}
+
+td.formulize-controls {
+    white-space: nowrap;    // keeps checkbox and edit link side-by-side instead of awkwardly stacking
+    width: 1%;
+}
+
+.xoops-form-element-help {
+    color: $colorTableHelpText;
+}
+
+form#formulize td.even, form#formulize td.odd {
+    width: 70%
+}
+
+form#formulize td.even textarea, form#formulize td.odd textarea {
+    // expand textarea elements in Formulize data entry forms to fit the width of their container td
+    width: 99%;
+}
+
+#listofentries div.main-cell-div input {
+    // quick search filters on list screens
+    width: 7em;
+}
+
+#pageNavTable, #pageNavTableBottom {
+    margin: 1em 0;
+}
+
+.formulize_autocomplete_search_label {
+    font-weight: bold;
+}
+
+td.head div.xoops-form-element-caption {
+    font-weight: bold;
+}
+
+#formulizeform td.head {
+    font-weight: normal;
+}
+
+@media print {
+    body {
+        font-size: 10pt;
+    }
+    #xo-header {
+        display: none;
+    }
+    #xo-canvas-leftcolumn {
+        display: none;
+    }
+    #xo-canvas.leftcolumn-layout #xo-canvas-columns, #xo-canvas.threecolumns-layout #xo-canvas-columns {
+        padding-left: 0 !important; // override the padding that leaves space for the left menu in the standalone theme
+    }
+    #xo-content {
+        width: 100%;
+    }
+    #formulizeform {
+        width: 100%;
+    }
+    #xo-footer {
+        display: none;
+    }
+    .no-print {
+        display: none;
+    }
+    input, textarea {
+        border: none;
+    }
+    select {
+        -moz-appearance: none;
+        -webkit-appearance: none;
+        appearance: none;
+        border: none;
+    }
+    h1.formulize-form-title {
+        font-weight: normal;
+    }
+    td.head h2 {
+        color: #222;
+        font-size: 12pt;
+        font-weight: normal;
+    }
+    td.head span.caption-text {
+        color: #333;
+        font-weight: normal;
+    }
+    td.head div.xoops-form-element-help {
+        color: #ddd;
+        font-size: 8pt;
+        font-weight: normal;
+    }
+    td.even {
+        font-size: 10pt;
+    }
+    tr, td {
+        page-break-inside: avoid;
+    }
+    #pageNavTable, #pageNavTableBottom, #bottomPageNumber, #bottom-save-block {
+        display: none;
+    }
+    .ui-accordion .ui-accordion-content {
+        display: block !important;
+    }
+    .ui-accordion .ui-accordion-content table.outer {
+         border: none;
+    }
+    .ui-accordion .ui-accordion-content table.outer td{
+        border-bottom: 1px solid #ddd;
+    }
+    #formulize-entry-lock-message {
+        // do not print the entry-lock message
+        display: none;
+    }
+    .formulize-element-edit-link {
+        // do not print the edit element link
+        display: none;
+    }
+}
+
+.appcatspacer {
+    width: 25%;
+}
+
+.auto_multi {
+    margin: 0.2em;
+    display: table-row;
+}
+
+.auto_multi:hover {
+    cursor: pointer;
+    text-decoration: line-through;
+    color: red;
+}
+
+.right-align-text {
+    text-align: right;
+}
+
+.formulize-spacer-column {
+    width: auto;
+}

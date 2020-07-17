@@ -1,0 +1,21 @@
+
+<table><tr><td class='appcatspacer'></td><td>
+<h1><{$cat_name}></h1>
+
+<{if $noforms}>
+
+	<p><{$noforms}></p>
+
+<{else}>
+
+<{foreach item=thisform from=$formData}>
+
+	<p><a href="<{$xoops_url}>/modules/formulize/index.php?fid=<{$thisform.fid}>"><{$thisform.title}></a></p>
+
+<{/foreach}>
+
+<{/if}>
+
+</td><td class='appcatspacer'></td></tr></table>
+
+

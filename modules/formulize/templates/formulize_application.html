@@ -1,0 +1,23 @@
+<{foreach item=appData from=$allAppData}>
+
+<table><tr><td class='appcatspacer'></td><td>
+<div class='applinks'>
+<h1><{$appData.app_name}></h1>
+
+<{if $appData.noforms}>
+
+	<p><{$appData.noforms}></p>
+
+<{else}>
+
+<{foreach item=thisform from=$appData.formData}>
+
+	<p><a href="<{$thisform.url}>"><{$thisform.title}></a></p>
+
+<{/foreach}>
+
+<{/if}>
+</div>
+</td><td class='appcatspacer'></td></tr></table>
+
+<{/foreach}>

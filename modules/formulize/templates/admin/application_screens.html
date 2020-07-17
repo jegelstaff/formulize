@@ -1,0 +1,25 @@
+<div class="form-item">
+	<table>
+		<tr>
+			<th><a href="?page=application&aid=<{$content.aid}>&tab=screens&sort=sid<{if $content.screenSort == 'sid'}>&order=<{$content.nextOrder}><{/if}>">ID</a></th>
+			<th><a href="?page=application&aid=<{$content.aid}>&tab=screens&sort=title<{if $content.screenSort == 'title'}>&order=<{$content.nextOrder}><{/if}>">Title</a></th>
+			<th></th>
+			<th><a href="?page=application&aid=<{$content.aid}>&tab=screens&sort=fid<{if $content.screenSort == 'fid'}>&order=<{$content.nextOrder}><{/if}>">Form</a></th>
+			<th><a href="?page=application&aid=<{$content.aid}>&tab=screens&sort=type<{if $content.screenSort == 'type'}>&order=<{$content.nextOrder}><{/if}>">Type</a></th>
+		</tr>
+	<{foreach from=$content.screens item=screen}>
+		<tr>
+			<td>Screen <{$screen.sid}></td>
+			<td><a class="configscreen" target-sid="<{$screen.sid}>" href="?page=screen&aid=<{$content.aid}>&fid=<{$screen.fid}>&sid=<{$screen.sid}>"><{$screen.title}></a></td>
+			<td><a href="<{$xoops_url}>/modules/formulize/index.php?sid=<{$screen.sid}>" target="_blank">View</a></td>
+			<td><a href="?page=form&fid=<{$screen.fid}>"><{$screen.formname}> (<{$screen.fid}>)</a></td>
+			<td><{$screen.type}></td>
+		</tr>
+	<{/foreach}>
+	</table>
+</div>
+<div class="form-item paging">
+	<div class="floatright page-list">
+	   <{$content.pageNav}>
+	</div>
+</div>

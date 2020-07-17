@@ -1,0 +1,21 @@
+<div class="form-item">
+	<fieldset>
+		<legend>What are the options the user can choose from?</legend>
+		<div class="form-radios">
+			<input type="radio" id="yes" name="linked_yesno" value="1"<{if $content.islinked eq 1}> checked="checked"<{/if}>/>Use the values that people have entered in this form element: <{$content.linkedoptions}>
+		</div>
+        
+        <div class="form-radios" id="snapshot-values" style="<{if $content.islinked neq 1}>display: none; <{/if}>padding: 1em;">
+            <input type="radio" id="snapshot-0" name="elements-ele_value[snapshot]" value=0 checked> When people select a value, save a reference to the source (so when the source changes, the values people have entered here will change too).<br>
+            <input type="radio" id="snapshot-1" name="elements-ele_value[snapshot]" value=1> When people select a value, save a snapshot of the value (so it will stay as-is regardless of changes to the source).
+        </div>
+        
+		<div class="form-radios">
+			<input type="radio" id="no" name="linked_yesno" value="0"<{if $content.islinked eq 0}> checked="checked"<{/if}>/>Use the options specified below:
+		</div>
+		<{include file="db:admin/element_optionlist.html"}>	
+		
+	</div>
+
+
+	
