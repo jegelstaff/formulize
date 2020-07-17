@@ -1,1 +1,0 @@
-Example documents will appear in this directory when you browse to the example files at phpword/Examples/xxx.php
