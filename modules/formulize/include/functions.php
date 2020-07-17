@@ -5672,16 +5672,16 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                 }
                 // if there is a difference, setup an OR expression so we can catch both variations
                 if($literalTermToUse != $dbValueOfTerm) {
-                    $quotes = is_numeric($literalTermToUse) ? "" : "'";
+                    $quotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
                     $literalTermInSQL = "`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$literalTermToUse.$likebits.$quotes;
                     $specialCharsTerm = htmlspecialchars($literalTermToUse, ENT_QUOTES);
                     if($specialCharsTerm != $literalTermToUse) {
                         $literalTermInSQL .= " OR ".str_replace($literalTermToUse, $specialCharsTerm, $literalTermInSQL);
                     }
-                    $quotes = is_numeric($filterTermToUse) ? "" : "'";
+                    $quotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
                     $subQueryWhereClause = "(ss.`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$filterTermToUse.$likebits.$quotes." OR ss.".$literalTermInSQL." )";
                 } else {
-                    $quotes = is_numeric($filterTermToUse) ? "" : "'";
+                    $quotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
                     $subQueryWhereClause = "ss.`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$filterTermToUse.$likebits.$quotes;
                 }
                 // figure out if the curlybracketform field is linked and pointing to the same source as the target element is pointing to
@@ -5799,15 +5799,15 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
     } 
     
     if (!$conditionsFilterComparisonValue) {
-        $quotes = is_numeric($filterTerms[$filterId]) ? "" : "'";
+        $quotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
         $conditionsFilterComparisonValue = $quotes.$likebits.formulize_db_escape($filterTerms[$filterId]).$likebits.$quotes;
         if($plainLiteralValue) {
             $specialCharsTerm = htmlspecialchars($plainLiteralValue, ENT_QUOTES);
             if($specialCharsTerm != $plainLiteralValue) {
-                $quotes = is_numeric($specialCharsTerm) ? "" : "'";
+                $quotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
                 $conditionsFilterComparisonValue .= '-->>ADDPLAINLITERAL<<--'.$quotes.$likebits.formulize_db_escape($specialCharsTerm).$likebits.$quotes;
             }
-            $quotes = is_numeric($plainLiteralValue) ? "" : "'";
+            $quotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
             $conditionsFilterComparisonValue .= '-->>ADDPLAINLITERAL<<--'.$quotes.$likebits.formulize_db_escape($plainLiteralValue).$likebits.$quotes;
         }
     }
