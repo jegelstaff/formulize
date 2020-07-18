@@ -623,6 +623,30 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	// also, convert any { } terms to literal values for users who can't update other reports, if the last loaded report doesn't belong to them (they're presumably just report consumers, so they don't need to preserve the abstract terms)
 	$hiddenQuickSearches = array(); // array used to indicate quick searches that should be present even if the column is not displayed to the user
 	foreach($_POST as $k=>$v) {
+        
+        $operatorToPutBack = "";
+        if(substr($v, 0, 1) == '=') {
+            $operatorToPutBack = '=';
+        }
+        if(substr($v, 0, 1) == '>') {
+            $operatorToPutBack = '>';
+        }
+        if(substr($v, 0, 1) == '<') {
+            $operatorToPutBack = '<';
+        }
+        if(substr($v, 0, 1) == '!') {
+            $operatorToPutBack = '!';
+        }
+        if(substr($v, 0, 2) == '!=') {
+            $operatorToPutBack = '!=';
+        }
+        if(substr($v, 0, 2) == '<=') {
+            $operatorToPutBack = '<=';
+        }
+        if(substr($v, 0, 2) == '>=') {
+            $operatorToPutBack = '>=';
+        }
+        
 		if(substr($k, 0, 7) == "search_" AND !in_array(substr($k, 7), $showcols) AND !in_array(substr($k, 7), $pubfilters)) {
 			if(substr($v, 0, 1) == "!" AND substr($v, -1) == "!") {// don't strip searches that have ! at front and back
 				$hiddenQuickSearches[] = substr($k, 7);
@@ -634,10 +658,13 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		// if this is not a report/view that was created by the user, and they don't have update permission, then convert any { } terms to literals
 		// remove any { } terms that don't have a passed in value (so they appear as "" to users)
 		// only deal with terms that start and end with { } and not ones where the { } terms is not the entire term
-		if(is_string($v) AND substr($v, 0, 1) == "{" AND substr($v, -1) == "}"
+        
+        $valueToCheck = str_replace($operatorToPutBack, '', $v);
+        
+		if(is_string($v) AND substr($valueToCheck, 0, 1) == "{" AND substr($valueToCheck, -1) == "}"
 			AND substr($k, 0, 7) == "search_" AND (in_array(substr($k, 7), $showcols) OR in_array(substr($k, 7), $pubfilters)))
 		{
-			$requestKeyToUse = substr($v,1,-1);
+			$requestKeyToUse = substr($valueToCheck,1,-1);
 			if(!strstr($requestKeyToUse,"}") AND !strstr($requestKeyToUse, "{")) { // double check that there's no other { } in the term!
 				$activeViewId = substr($settings['lastloaded'], 1); // will have a p in front of the number, to show it's a published view (or an s, but that's unlikely to ever happen in this case)
 				$ownerOfLastLoadedViewData = q("SELECT sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id=".intval($activeViewId));
@@ -645,7 +672,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				if(!$update_other_reports AND $uid != $ownerOfLastLoadedView) {
 					$filterValue = convertVariableSearchToLiteral($v, $requestKeyToUse); // returns updated value, or false to kill value, or true to do nothing
                     if(!is_bool($filterValue)) {
-                        $_POST[$k] = $filterValue;
+                        $_POST[$k] = $operatorToPutBack.$filterValue;
                     } elseif($filterValue === false) {
                         unset($_POST[$k]); // clear terms where no match was found, because this term is not active on the current page, so don't confuse users by showing it
                     }
