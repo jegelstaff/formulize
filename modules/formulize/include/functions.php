@@ -7355,12 +7355,14 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
                             break;
     
                             case "uid":
+                            case "creation_uid":
                             $c_uid = display($entry, 'creation_uid');
                             $c_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$c_uid'");
                             $row[] = (isset($c_name_q[0]['name']) ? $c_name_q[0]['name'] : $c_name_q[0]['uname']);
                             break;
     
                             case "proxyid":
+                            case "mod_uid":
                             $m_uid = display($entry, 'mod_uid');
                             if ($m_uid) {
                                 $m_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$m_uid'");
@@ -7371,10 +7373,12 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
                             break;
     
                             case "creation_date":
+                            case "creation_datetime":
                             $row[] = display($entry, 'creation_datetime');
                             break;
     
                             case "mod_date":
+                            case "mod_datetime":
                             $row[] = display($entry, 'mod_datetime');
                             break;
     
