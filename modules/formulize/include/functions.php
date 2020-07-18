@@ -6811,6 +6811,9 @@ function getFilterValuesForEntry($subformConditions, $curlyBracketEntryid=null) 
 
 // unclear if this successfully parses!
 function formulize_validatePHPCode($theCode) {
+    while(ob_get_level()) {
+        ob_end_clean();
+    }
     if (function_exists("shell_exec")) {
         $tmpfname = tempnam(sys_get_temp_dir(), 'FZ');
         file_put_contents($tmpfname, trim($theCode));
