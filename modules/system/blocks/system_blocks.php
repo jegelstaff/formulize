@@ -108,6 +108,7 @@ function b_system_login_show() {
             $block['auth_googleonly'] = $icmsConfigAuth['auth_googleonly'];
 			$block['auth_url'] = authenticationURL();
 		}
+        $block['auth_okta'] = $icmsConfigAuth['auth_okta'];
 		return $block;
 	}
 	return FALSE;

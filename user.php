@@ -51,12 +51,14 @@ switch ($op) {
 	            'lang_rememberme' => _US_REMEMBERME,
 	            'lang_youoid' => _US_OPENID_URL,
 	            'lang_login_oid' => _US_OPENID_LOGIN,
+                'lang_login_okta' => _US_OKTA_LOGIN,
 	            'lang_back2normoid' => _US_OPENID_NORMAL_LOGIN,
 	            'mailpasswd_token' => icms::$security->createToken(),
 	            'allow_registration' => $icmsConfigUser['allow_register'],
 	            'rememberme' => $icmsConfigUser['remember_me'],
 	            'auth_openid' => $icmsConfigAuth['auth_openid'],
 				'auth_url' => authenticationURL($icmsConfigAuth['auth_openid']),
+                'auth_okta' => $icmsConfigAuth['auth_okta'],
 	            'icms_pagetitle' => _LOGIN
 			));
 			include 'footer.php';

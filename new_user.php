@@ -26,88 +26,29 @@ if (isset($_GET['newuser']) && ($_GET['newuser'] == $_SESSION['newuser'])) {
         //attempt to get this token may have returned false
         if($token){
             //if we have uses left and can increment the number of uses that this token has seen
-            if($tokenHandler->incrementUses($token)){ 
-                $login_name = $_POST["login_name"];
-                //parse the space out of the name
-                $login_name = str_replace(' ', '', $login_name);
-                $uname = $_POST["uname"];
-                $email = $_POST["email"];
-                //make a random but fake password here since we anticipate the user to only need google login, unless they change it later
-                $pass = bin2hex(random_bytes(32));
-                $vpass =  $pass;
-                $timezone_offset =  $_POST["timezone_offset"];
-                $member_handler = icms::handler('icms_member');
-                $user_handler = icms::handler('icms_member_user');
-                //perform a chek for if the password and verified one seem ok
-                $stop = $user_handler->userCheck($login_name, $uname, $email, $pass, $vpass);
-                if (empty($stop)) {
-
-                    //setup password info
-                    $icmspass = new icms_core_Password();
-                    $salt = $icmspass->createSalt();
-                    $enc_type = $icmsConfigUser['enc_type'];
-                    $pass1 = $icmspass->encryptPass($pass, $salt, $enc_type);
-                    
-			        $newuser =& $member_handler->createUser();
-                    //attempt to create the user
-                    $newuser->setVar('login_name', $login_name, TRUE);
-                    $newuser->setVar('uname', $uname, TRUE);
-			        $newuser->setVar('email', $email, TRUE);
-                    $newuser->setVar('name', $login_name, TRUE);
-                    $newuser->setVar('timezone_offset', $timezone_offset, TRUE);
-                    $newuser->setVar('user_avatar', 'blank.gif', TRUE);
-                    $newuser->setVar( 'theme', 'impresstheme', TRUE);
-                    $newuser->setVar('level', 1, TRUE);
-                    $newuser->setVar('pass', $pass1, TRUE);
-                    $newuser->setVar('salt', $salt, TRUE);
-                    $newuser->setVar('enc_type', $enc_type, TRUE);
-                    
-                    if ($member_handler->insertUser($newuser)) {
-
-                        //assign the user basic registered users group at the very least, and maybe other groups if those were selected
-                        $newid = (int) $newuser->getVar('uid');
-                        if (!$member_handler->addUserToGroup(XOOPS_GROUP_USERS, $newid)) {
-                            echo _US_REGISTERNG;
-                            include 'footer.php';
-                            exit();
-		            	}
-                        //see if there are other groups to add the user to
-                        $tokenGroupsString = $token->getVar('groups');
-                        $tokenGroups = explode(" ", $tokenGroupsString);
-                        foreach($tokenGroups as $groupid) {
-                            //check in case there were no groups at all stored
-                            if($groupid != ""){
-                                $member_handler->addUserToGroup(intval($groupid), $newid);
-                            }
-                        }
-
-
-                        Formulize::init();
-                        if(Formulize::createResourceMapping(Formulize::USER_RESOURCE, $_SESSION['email'], $newid)){
-                            header("Location: ".XOOPS_URL."/?code=".$_GET['newuser']."&newcode=".$_GET['newuser']);
-                            exit();
-                        } else {
-                            print "Error: could not create resource mapping for new user. Please notify a webmaster about this error. You will not be able to login with this account until this error is resolved.";
-                        }
-
-                    }
-                    }
-        else {
-            //parse this back into an array so that we can display multiple errors
-            $icmsConfigUser["stop_error"] = explode("<br />", $stop);
+            if($tokenHandler->incrementUses($token)){
+                $tokenGroupsString = $token->getVar('groups');
+                $tokenGroups = explode(" ", $tokenGroupsString);
+                $newFormulizeUser = new FormulizeUser(array(
+                   'login_name'=>$_POST['login_name'],
+                   'uname'=>$_POST['uname'],
+                   'email'=>$_POST['email'],
+                   'timezone_offset'=>$_POST['timezone_offset']
+                ));
+                if($newFormulizeUser->insertAndMapUser($tokenGroups)==false) {
+                    // stop error may be set in the method and assigned to global icmsConfigUser for picking up in form
+                    renderRegForm();
+                }
+            } else {
+                //token was used too many times
+                $icmsConfigUser['token_error'] = 1;
+                renderRegForm();
+            }
+        } else {
+            //token was not same in this case
+            $icmsConfigUser['token_error'] = 1;
             renderRegForm();
-           
-		}
-        }else{
-        //token was used too many times
-        $icmsConfigUser['token_error'] = 1;
-        renderRegForm();
         }
-    }else{
-        //token was not same in this case
-        $icmsConfigUser['token_error'] = 1;
-        renderRegForm();
-    }
     }
 
 }else{

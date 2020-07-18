@@ -547,7 +547,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
 	 * @return            boolean the query success value
 	 *  @author Kristen Newbury Feb 21 2018
 	 */
-public static function updateResourceMapping($external_id_old, $external_id_new) {
+    public static function updateResourceMapping($external_id_old, $external_id_new) {
 		self::init();
         if(!$external_id_old||!$external_id_new) { return null; }
 		$mapping_table = self::$db->prefix(self::$mapping_table);
@@ -670,4 +670,75 @@ class FormulizeUser extends FormulizeObject {
 			$this->timezone_offset = $GLOBALS['xoopsConfig']['default_TZ'];
 		}
 	}
+    
+    function insertAndMapUser($groups) {
+        
+        global $icmsConfigUser;
+        
+        $login_name = $this->login_name;
+        //parse the space out of the name
+        $login_name = str_replace(' ', '', $login_name);
+        $uname = $this->uname;
+        $email = $this->email;
+        //make a random but fake password here since we anticipate the user to only need google login, unless they change it later
+        $pass = bin2hex(random_bytes(32));
+        $vpass =  $pass;
+        $timezone_offset =  $this->timezone_offset;
+        $member_handler = icms::handler('icms_member');
+        $user_handler = icms::handler('icms_member_user');
+        //perform a check for if the password and verified one seem ok
+        $stop = $user_handler->userCheck($login_name, $uname, $email, $pass, $vpass);
+        if (empty($stop)) {
+            //setup password info
+            $icmspass = new icms_core_Password();
+            $salt = $icmspass->createSalt();
+            $enc_type = $icmsConfigUser['enc_type'];
+            $pass1 = $icmspass->encryptPass($pass, $salt, $enc_type);
+                        
+            $newuser = $member_handler->createUser();
+            //attempt to create the user
+            $newuser->setVar('login_name', $login_name, TRUE);
+            $newuser->setVar('uname', $uname, TRUE);
+            $newuser->setVar('email', $email, TRUE);
+            $newuser->setVar('name', $login_name, TRUE);
+            $newuser->setVar('timezone_offset', $timezone_offset, TRUE);
+            $newuser->setVar('user_avatar', 'blank.gif', TRUE);
+            $newuser->setVar( 'theme', 'impresstheme', TRUE);
+            $newuser->setVar('level', 1, TRUE);
+            $newuser->setVar('pass', $pass1, TRUE);
+            $newuser->setVar('salt', $salt, TRUE);
+            $newuser->setVar('enc_type', $enc_type, TRUE);
+            
+            if ($member_handler->insertUser($newuser)) {
+                //assign the user basic registered users group at the very least, and maybe other groups if those were selected
+                $newid = (int) $newuser->getVar('uid');
+                if (!$member_handler->addUserToGroup(XOOPS_GROUP_USERS, $newid)) {
+                    echo _US_REGISTERNG;
+                    include XOOPS_ROOT_PATH.'/footer.php';
+                    exit();
+                }
+                //see if there are other groups to add the user to
+                foreach($groups as $groupid) {
+                    //check in case there were no groups at all stored
+                    if($groupid != ""){
+                        $member_handler->addUserToGroup(intval($groupid), $newid);
+                    }
+                }
+                Formulize::init();
+                if(Formulize::createResourceMapping(Formulize::USER_RESOURCE, $_SESSION['resouceMapKey'], $newid)){
+                    $location = isset($_GET['newuser']) ? XOOPS_URL."/?code=".$_GET['newuser']."&newcode=".$_GET['newuser'] : XOOPS_URL;
+                    header("Location: ".$location);
+                    exit();
+                } else {
+                    $icmsConfigUser["stop_error"] = "Error: could not create resource mapping for new user. Please notify a webmaster about this error. You will not be able to login with this account until this error is resolved.";
+                }
+            } else {
+                $icmsConfigUser["stop_error"] = "Error: could not add new user to the database. Please notify a webmaster about this error. You will not be able to login with this account until this error is resolved.";
+            }
+        } else {
+            $icmsConfigUser["stop_error"] = explode("<br />", $stop);
+        }
+        return false;
+    }
+    
 }

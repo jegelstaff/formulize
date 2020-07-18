@@ -21,6 +21,10 @@
 <br />
 	  <div style="text-align: <{$smarty.const._GLOBAL_LEFT}>;"><a href="<{$auth_url}>"><{$lang_login_oid}></a></div>
   <{/if}>
+<{if $auth_okta}>
+<br />
+	  <div style="text-align: <{$smarty.const._GLOBAL_LEFT}>;"><a href="<{$auth_okta}>"><{$lang_login_okta}></a></div>
+  <{/if}>
 </div>
 			<a name="lost"></a>
 			<{if $allow_registration }>
