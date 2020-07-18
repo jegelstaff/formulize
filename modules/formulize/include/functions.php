@@ -6937,18 +6937,6 @@ function formulize_parseSearchesIntoFilter($searches) {
 	global $xoopsUser;
 	foreach($searches as $key => $master_one_search) { // $key is the element handle
         
-        // grab values from GET or POST if they match { } terms
-        if(substr($master_one_search, 0, 1) == "{" AND substr($master_one_search, -1) == "}") {
-            $searchgetkey = substr($master_one_search, 1, -1);
-            if(isset($_POST[$searchgetkey]) OR isset($_GET[$searchgetkey])) {
-                $master_one_search = isset($_POST[$searchgetkey]) ? htmlspecialchars(strip_tags(trim($_POST[$searchgetkey])), ENT_QUOTES) : "";
-                $master_one_search = ($master_one_search==="" AND isset($_GET[$searchgetkey])) ? htmlspecialchars(strip_tags(trim($_GET[$searchgetkey])), ENT_QUOTES) : $master_one_search;
-                if($master_one_search==="") {
-                    continue;
-                }
-            }
-        }
-        
 		// convert "between 2001-01-01 and 2002-02-02" to a normal date filter with two dates
 		$count = preg_match("/^[bB][eE][tT][wW][eE][eE][nN] ([\d]{1,4}[-][\d]{1,2}[-][\d]{1,4}) [aA][nN][dD] ([\d]{1,4}[-][\d]{1,2}[-][\d]{1,4})\$/", $master_one_search, $matches);
 		if ($count > 0) {
@@ -7026,6 +7014,45 @@ function formulize_parseSearchesIntoFilter($searches) {
 				$one_search = substr($one_search, 1, -1);
 			}
 			
+            // grab values from GET or POST if they match { } terms
+        
+            $operatorToPutBack = "";
+            if(substr($one_search, 0, 1) == '=') {
+                $operatorToPutBack = '=';
+            }
+            if(substr($one_search, 0, 1) == '>') {
+                $operatorToPutBack = '>';
+            }
+            if(substr($one_search, 0, 1) == '<') {
+                $operatorToPutBack = '<';
+            }
+            if(substr($one_search, 0, 1) == '!') {
+                $operatorToPutBack = '!';
+            }
+            if(substr($one_search, 0, 2) == '!=') {
+                $operatorToPutBack = '!=';
+            }
+            if(substr($one_search, 0, 2) == '<=') {
+                $operatorToPutBack = '<=';
+            }
+            if(substr($one_search, 0, 2) == '>=') {
+                $operatorToPutBack = '>=';
+            }        
+            
+            $valueToCheck = str_replace($operatorToPutBack, '', $one_search);
+            
+            if(substr($valueToCheck, 0, 1) == "{" AND substr($valueToCheck, -1) == "}") {
+                $searchgetkey = substr($valueToCheck, 1, -1);
+                if(isset($_POST[$searchgetkey]) OR isset($_GET[$searchgetkey])) {
+                    $one_search = isset($_POST[$searchgetkey]) ? htmlspecialchars(strip_tags(trim($_POST[$searchgetkey])), ENT_QUOTES) : "";
+                    $one_search = ($one_search==="" AND isset($_GET[$searchgetkey])) ? htmlspecialchars(strip_tags(trim($_GET[$searchgetkey])), ENT_QUOTES) : $one_search;
+                    if($one_search==="") {
+                        continue;
+                    }
+                    $one_search = $operatorToPutBack.$one_search;
+                }
+            }
+            
 			// look for OR indicators...if all caps OR is at the front, then that means that this search is to put put into a separate set of OR filters that gets appended as a set to the main set of AND filters
 		    $addToORFilter = false; // flag to indicate if we need to apply the current search term to a set of "OR'd" terms			
 			if(substr($one_search, 0, 2) == "OR" AND strlen($one_search) > 2) {

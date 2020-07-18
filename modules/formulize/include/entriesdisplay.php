@@ -624,6 +624,15 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	$hiddenQuickSearches = array(); // array used to indicate quick searches that should be present even if the column is not displayed to the user
 	foreach($_POST as $k=>$v) {
         
+        if(substr($k, 0, 7) == "search_" AND !in_array(substr($k, 7), $showcols) AND !in_array(substr($k, 7), $pubfilters)) {
+			if(substr($v, 0, 1) == "!" AND substr($v, -1) == "!") {// don't strip searches that have ! at front and back
+				$hiddenQuickSearches[] = substr($k, 7);
+				continue; // since the { } replacement is meant for the ease of use of non-admin users, and hiddenQuickSearches never show up to users on screen, we can skip the potentially expensive operations below in this loop
+			} else {
+				unset($_POST[$k]);
+			}
+		}
+        
         $operatorToPutBack = "";
         if(substr($v, 0, 1) == '=') {
             $operatorToPutBack = '=';
@@ -647,14 +656,6 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
             $operatorToPutBack = '>=';
         }
         
-		if(substr($k, 0, 7) == "search_" AND !in_array(substr($k, 7), $showcols) AND !in_array(substr($k, 7), $pubfilters)) {
-			if(substr($v, 0, 1) == "!" AND substr($v, -1) == "!") {// don't strip searches that have ! at front and back
-				$hiddenQuickSearches[] = substr($k, 7);
-				continue; // since the { } replacement is meant for the ease of use of non-admin users, and hiddenQuickSearches never show up to users on screen, we can skip the potentially expensive operations below in this loop
-			} else {
-				unset($_POST[$k]);
-			}
-		}
 		// if this is not a report/view that was created by the user, and they don't have update permission, then convert any { } terms to literals
 		// remove any { } terms that don't have a passed in value (so they appear as "" to users)
 		// only deal with terms that start and end with { } and not ones where the { } terms is not the entire term
