@@ -244,9 +244,9 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
         // cache the rendered header, in case this is the header we need for the page right now
         static $multipageHeader = array();
         static $multipageFooter = array();
-        static $multipageInstances = -1;
+        global $multipageInstances;
+        $multipageInstances = !is_numeric($multipageInstances) ? -1 : $multipageInstances;
         $multipageInstances++;
-        $thisMultipageInstance = $multipageInstances;
         ob_start();
 		print "<form name=\"pageNavOptions_above\" id=\"pageNavOptions_above\">\n";
 		if($screen AND $toptemplate = $screen->getTemplate('toptemplate')) {
@@ -475,11 +475,13 @@ function pageSelectionList($currentPage, $countPages, $pageTitles, $aboveBelow, 
 
 	static $pageSelectionList = array();
 	
-	if(isset($pageSelectionList[$aboveBelow])) {
-		return $pageSelectionList[$aboveBelow];
+    $cacheKey = md5(serialize(func_get_args()));
+    
+	if(isset($pageSelectionList[$cacheKey])) {
+		return $pageSelectionList[$cacheKey];
 	}
 
-	$pageSelectionList[$aboveBelow] .= "<select name=\"pageselectionlist_$aboveBelow\" id=\"pageselectionlist_$aboveBelow\" size=\"1\" onchange=\"javascript:pageJump(this.form.pageselectionlist_$aboveBelow.options, $currentPage);\">\n";
+	$pageSelectionList[$cacheKey] .= "<select name=\"pageselectionlist_$aboveBelow\" id=\"pageselectionlist_$aboveBelow\" size=\"1\" onchange=\"javascript:pageJump(this.form.pageselectionlist_$aboveBelow.options, $currentPage);\">\n";
 	for($page=1;$page<=$countPages;$page++) {
         if(pageMeetsConditions($conditions, $page, $entry_id, $fid, $frid)) {
 		if(isset($pageTitle[$page]) AND strstr($pageTitles[$page], "[")) {
@@ -489,11 +491,11 @@ function pageSelectionList($currentPage, $countPages, $pageTitles, $aboveBelow, 
 		} else {
 			$title = "";
 		}
-		$pageSelectionList[$aboveBelow] .= "<option value=$page";
-		$pageSelectionList[$aboveBelow] .= $page == $currentPage ? " selected=true>" : ">";
-		$pageSelectionList[$aboveBelow] .= $page . $title . "</option>\n";
+		$pageSelectionList[$cacheKey] .= "<option value=$page";
+		$pageSelectionList[$cacheKey] .= $page == $currentPage ? " selected=true>" : ">";
+		$pageSelectionList[$cacheKey] .= $page . $title . "</option>\n";
 	}
 	}
-	$pageSelectionList[$aboveBelow] .= "</select>";
-	return $pageSelectionList[$aboveBelow];
+	$pageSelectionList[$cacheKey] .= "</select>";
+	return $pageSelectionList[$cacheKey];
 }
