@@ -6924,6 +6924,59 @@ function prepareLinkedElementExtraClause($pgroupsfilter, $parentFormFrom, $sourc
     return $extra_clause;
 }
 
+// this function takes a filter term passed in, and converts it to the actual value from GET or POST
+function convertDynamicFilterTerms($term) {
+    
+    // check for starting and ending ! ! and put them back at the end if necessary
+    $needPreserveHiddenMarkers = false;
+    if(substr($term, 0, 1) == "!" AND substr($term, -1) == "!") {
+        $needPreserveHiddenMarkers = true;
+        $term = substr($term, 1, -1);
+    }
+    
+    $operatorToPutBack = "";
+    if(substr($term, 0, 1) == '=') {
+        $operatorToPutBack = '=';
+    }
+    if(substr($term, 0, 1) == '>') {
+        $operatorToPutBack = '>';
+    }
+    if(substr($term, 0, 1) == '<') {
+        $operatorToPutBack = '<';
+    }
+    if(substr($term, 0, 1) == '!') {
+        $operatorToPutBack = '!';
+    }
+    if(substr($term, 0, 2) == '!=') {
+        $operatorToPutBack = '!=';
+    }
+    if(substr($term, 0, 2) == '<=') {
+        $operatorToPutBack = '<=';
+    }
+    if(substr($term, 0, 2) == '>=') {
+        $operatorToPutBack = '>=';
+    }        
+    
+    $valueToCheck = str_replace($operatorToPutBack, '', $term);
+    
+    if(substr($valueToCheck, 0, 1) == "{" AND substr($valueToCheck, -1) == "}") {
+        $searchgetkey = substr($valueToCheck, 1, -1);
+        if(isset($_POST[$searchgetkey]) OR isset($_GET[$searchgetkey])) {
+            $term = isset($_POST[$searchgetkey]) ? htmlspecialchars(strip_tags(trim($_POST[$searchgetkey])), ENT_QUOTES) : "";
+            $term = ($term==="" AND isset($_GET[$searchgetkey])) ? htmlspecialchars(strip_tags(trim($_GET[$searchgetkey])), ENT_QUOTES) : $term;
+            if($term==="") {
+                continue;
+            }
+            $term = $operatorToPutBack.$term;
+        }
+    }
+    
+    if($needPreserveHiddenMarkers) {
+        $term = '!'.$term.'!';
+    }
+    return $term;
+}
+
 // this function takes an array of element handle=>search term pairs, and converts them into a filter string valid for using in a getData call
 function formulize_parseSearchesIntoFilter($searches) {
     
@@ -6943,6 +6996,8 @@ function formulize_parseSearchesIntoFilter($searches) {
 			$master_one_search = ">={$matches[1]}//<={$matches[2]}";
 		}
 
+        $master_one_search = convertDynamicFilterTerms($master_one_search);
+        
 		// split search based on new split string
 		$intermediateArray = explode("//", trim($master_one_search, "//")); // ignore trailing // because that will just cause an unnecessary blank search
 
@@ -7014,44 +7069,7 @@ function formulize_parseSearchesIntoFilter($searches) {
 				$one_search = substr($one_search, 1, -1);
 			}
 			
-            // grab values from GET or POST if they match { } terms
-        
-            $operatorToPutBack = "";
-            if(substr($one_search, 0, 1) == '=') {
-                $operatorToPutBack = '=';
-            }
-            if(substr($one_search, 0, 1) == '>') {
-                $operatorToPutBack = '>';
-            }
-            if(substr($one_search, 0, 1) == '<') {
-                $operatorToPutBack = '<';
-            }
-            if(substr($one_search, 0, 1) == '!') {
-                $operatorToPutBack = '!';
-            }
-            if(substr($one_search, 0, 2) == '!=') {
-                $operatorToPutBack = '!=';
-            }
-            if(substr($one_search, 0, 2) == '<=') {
-                $operatorToPutBack = '<=';
-            }
-            if(substr($one_search, 0, 2) == '>=') {
-                $operatorToPutBack = '>=';
-            }        
-            
-            $valueToCheck = str_replace($operatorToPutBack, '', $one_search);
-            
-            if(substr($valueToCheck, 0, 1) == "{" AND substr($valueToCheck, -1) == "}") {
-                $searchgetkey = substr($valueToCheck, 1, -1);
-                if(isset($_POST[$searchgetkey]) OR isset($_GET[$searchgetkey])) {
-                    $one_search = isset($_POST[$searchgetkey]) ? htmlspecialchars(strip_tags(trim($_POST[$searchgetkey])), ENT_QUOTES) : "";
-                    $one_search = ($one_search==="" AND isset($_GET[$searchgetkey])) ? htmlspecialchars(strip_tags(trim($_GET[$searchgetkey])), ENT_QUOTES) : $one_search;
-                    if($one_search==="") {
-                        continue;
-                    }
-                    $one_search = $operatorToPutBack.$one_search;
-                }
-            }
+            $one_search = convertDynamicFilterTerms($one_search); // probably don't need to do this again?? Except what we unpacked first time might have nested { } terms in it? If it did, we would need to do this, however rare that might be
             
 			// look for OR indicators...if all caps OR is at the front, then that means that this search is to put put into a separate set of OR filters that gets appended as a set to the main set of AND filters
 		    $addToORFilter = false; // flag to indicate if we need to apply the current search term to a set of "OR'd" terms			
