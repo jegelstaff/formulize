@@ -5672,16 +5672,16 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                 }
                 // if there is a difference, setup an OR expression so we can catch both variations
                 if($literalTermToUse != $dbValueOfTerm) {
-                    $quotes = is_numeric($literalTermToUse) ? "" : "'";
+                    $quotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
                     $literalTermInSQL = "`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$literalTermToUse.$likebits.$quotes;
                     $specialCharsTerm = htmlspecialchars($literalTermToUse, ENT_QUOTES);
                     if($specialCharsTerm != $literalTermToUse) {
                         $literalTermInSQL .= " OR ".str_replace($literalTermToUse, $specialCharsTerm, $literalTermInSQL);
                     }
-                    $quotes = is_numeric($filterTermToUse) ? "" : "'";
+                    $quotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
                     $subQueryWhereClause = "(ss.`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$filterTermToUse.$likebits.$quotes." OR ss.".$literalTermInSQL." )";
                 } else {
-                    $quotes = is_numeric($filterTermToUse) ? "" : "'";
+                    $quotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
                     $subQueryWhereClause = "ss.`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$filterTermToUse.$likebits.$quotes;
                 }
                 // figure out if the curlybracketform field is linked and pointing to the same source as the target element is pointing to
@@ -5799,15 +5799,15 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
     } 
     
     if (!$conditionsFilterComparisonValue) {
-        $quotes = is_numeric($filterTerms[$filterId]) ? "" : "'";
+        $quotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
         $conditionsFilterComparisonValue = $quotes.$likebits.formulize_db_escape($filterTerms[$filterId]).$likebits.$quotes;
         if($plainLiteralValue) {
             $specialCharsTerm = htmlspecialchars($plainLiteralValue, ENT_QUOTES);
             if($specialCharsTerm != $plainLiteralValue) {
-                $quotes = is_numeric($specialCharsTerm) ? "" : "'";
+                $quotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
                 $conditionsFilterComparisonValue .= '-->>ADDPLAINLITERAL<<--'.$quotes.$likebits.formulize_db_escape($specialCharsTerm).$likebits.$quotes;
             }
-            $quotes = is_numeric($plainLiteralValue) ? "" : "'";
+            $quotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
             $conditionsFilterComparisonValue .= '-->>ADDPLAINLITERAL<<--'.$quotes.$likebits.formulize_db_escape($plainLiteralValue).$likebits.$quotes;
         }
     }
@@ -6811,6 +6811,9 @@ function getFilterValuesForEntry($subformConditions, $curlyBracketEntryid=null) 
 
 // unclear if this successfully parses!
 function formulize_validatePHPCode($theCode) {
+    while(ob_get_level()) {
+        ob_end_clean();
+    }
     if (function_exists("shell_exec")) {
         $tmpfname = tempnam(sys_get_temp_dir(), 'FZ');
         file_put_contents($tmpfname, trim($theCode));
@@ -6934,18 +6937,6 @@ function formulize_parseSearchesIntoFilter($searches) {
 	global $xoopsUser;
 	foreach($searches as $key => $master_one_search) { // $key is the element handle
         
-        // grab values from GET or POST if they match { } terms
-        if(substr($master_one_search, 0, 1) == "{" AND substr($master_one_search, -1) == "}") {
-            $searchgetkey = substr($master_one_search, 1, -1);
-            if(isset($_POST[$searchgetkey]) OR isset($_GET[$searchgetkey])) {
-                $master_one_search = isset($_POST[$searchgetkey]) ? htmlspecialchars(strip_tags(trim($_POST[$searchgetkey])), ENT_QUOTES) : "";
-                $master_one_search = ($master_one_search==="" AND isset($_GET[$searchgetkey])) ? htmlspecialchars(strip_tags(trim($_GET[$searchgetkey])), ENT_QUOTES) : $master_one_search;
-                if($master_one_search==="") {
-                    continue;
-                }
-            }
-        }
-        
 		// convert "between 2001-01-01 and 2002-02-02" to a normal date filter with two dates
 		$count = preg_match("/^[bB][eE][tT][wW][eE][eE][nN] ([\d]{1,4}[-][\d]{1,2}[-][\d]{1,4}) [aA][nN][dD] ([\d]{1,4}[-][\d]{1,2}[-][\d]{1,4})\$/", $master_one_search, $matches);
 		if ($count > 0) {
@@ -7023,6 +7014,45 @@ function formulize_parseSearchesIntoFilter($searches) {
 				$one_search = substr($one_search, 1, -1);
 			}
 			
+            // grab values from GET or POST if they match { } terms
+        
+            $operatorToPutBack = "";
+            if(substr($one_search, 0, 1) == '=') {
+                $operatorToPutBack = '=';
+            }
+            if(substr($one_search, 0, 1) == '>') {
+                $operatorToPutBack = '>';
+            }
+            if(substr($one_search, 0, 1) == '<') {
+                $operatorToPutBack = '<';
+            }
+            if(substr($one_search, 0, 1) == '!') {
+                $operatorToPutBack = '!';
+            }
+            if(substr($one_search, 0, 2) == '!=') {
+                $operatorToPutBack = '!=';
+            }
+            if(substr($one_search, 0, 2) == '<=') {
+                $operatorToPutBack = '<=';
+            }
+            if(substr($one_search, 0, 2) == '>=') {
+                $operatorToPutBack = '>=';
+            }        
+            
+            $valueToCheck = str_replace($operatorToPutBack, '', $one_search);
+            
+            if(substr($valueToCheck, 0, 1) == "{" AND substr($valueToCheck, -1) == "}") {
+                $searchgetkey = substr($valueToCheck, 1, -1);
+                if(isset($_POST[$searchgetkey]) OR isset($_GET[$searchgetkey])) {
+                    $one_search = isset($_POST[$searchgetkey]) ? htmlspecialchars(strip_tags(trim($_POST[$searchgetkey])), ENT_QUOTES) : "";
+                    $one_search = ($one_search==="" AND isset($_GET[$searchgetkey])) ? htmlspecialchars(strip_tags(trim($_GET[$searchgetkey])), ENT_QUOTES) : $one_search;
+                    if($one_search==="") {
+                        continue;
+                    }
+                    $one_search = $operatorToPutBack.$one_search;
+                }
+            }
+            
 			// look for OR indicators...if all caps OR is at the front, then that means that this search is to put put into a separate set of OR filters that gets appended as a set to the main set of AND filters
 		    $addToORFilter = false; // flag to indicate if we need to apply the current search term to a set of "OR'd" terms			
 			if(substr($one_search, 0, 2) == "OR" AND strlen($one_search) > 2) {
@@ -7325,12 +7355,14 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
                             break;
     
                             case "uid":
+                            case "creation_uid":
                             $c_uid = display($entry, 'creation_uid');
                             $c_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$c_uid'");
                             $row[] = (isset($c_name_q[0]['name']) ? $c_name_q[0]['name'] : $c_name_q[0]['uname']);
                             break;
     
                             case "proxyid":
+                            case "mod_uid":
                             $m_uid = display($entry, 'mod_uid');
                             if ($m_uid) {
                                 $m_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$m_uid'");
@@ -7341,10 +7373,12 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
                             break;
     
                             case "creation_date":
+                            case "creation_datetime":
                             $row[] = display($entry, 'creation_datetime');
                             break;
     
                             case "mod_date":
+                            case "mod_datetime":
                             $row[] = display($entry, 'mod_datetime');
                             break;
     

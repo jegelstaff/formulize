@@ -73,41 +73,49 @@ class icms_core_Session {
             if(isset($userData["email"]) AND $userData["email"] AND $internalUid = Formulize::getXoopsResourceID(Formulize::USER_RESOURCE, $userData["email"])) {
             	 $externalUid = $userData["email"];
             } elseif(isset($userData["email"]) AND $userData["email"]) { 
-				// if the mapping did not exist, then we need to create the user
-                // you need to create the $user_data object, it looks like this:
-                $user_data = array(
-                    'uid'				=> 0,
-                    'uname'				=> $account->name,
-                    'login_name'		=> $account->name,
-                    'name'				=> $account->name,
-                    'pass'				=> $account->pass,
-                    'email'				=> $userData["email"],
-                    'timezone_offset'	=> $account->timezone/60/60, //formulize_convert_language
-                    'language'			=> $account->language,
-                    'user_avatar'		=> 'blank.gif',
-                    'theme'				=> 'impresstheme',
-                    'level'				=> 1
-                );
-                //need to make a user object out of the array of data first...createUser expects the object, not the array
-                $user_data = new FormulizeUser($user_data);
-                if( Formulize::createUser($user_data)) {
-                    $externalUid = $userData["email"];
-                } else {
-					// something went wrong creating the user, going to redirect to the create new user page
-					$_SESSION['email'] = $userData["email"];
-					$_SESSION['name'] = $userData["name"];
-					$code = $_GET['code'];
-					//add the google code to session and url and check this on the other end to make sure that they are equal
-					$_SESSION['newuser'] = $code;
-					unset($_GET['code']);
-					$url = XOOPS_URL."/new_user.php?newuser=".$code;
-					header("Location: ".$url);
-                    exit;
-				}
-                
+                // No existing user - going to redirect to the create new user page
+                $_SESSION['email'] = $userData["email"];
+                $_SESSION['resouceMapKey'] = $userData["email"];
+                $_SESSION['name'] = $userData["name"];
+                $_SESSION['newuser'] = $_GET['code']; //add the google code to session and url and check this on the other end to make sure that they are equal
+                $url = XOOPS_URL."/new_user.php?newuser=".$code;
+                header("Location: ".$url);
+                exit;
             }
-    
         }
+        
+        if(isset($_POST['SAMLResponse'])) {
+            require_once XOOPS_ROOT_PATH.'/libraries/php-saml/_toolkit_loader.php';
+            $auth = new OneLogin_Saml2_Auth();
+            $auth->processResponse();
+            $errors = $auth->getErrors();
+            if (!empty($errors)) {
+                // might want to uncomment output if you're debugging
+                //echo '<p>', implode(', ', $errors), '</p>';
+                //exit();
+            }
+            if($auth->isAuthenticated()) {
+                // start up the integration API
+                include_once XOOPS_ROOT_PATH."/integration_api.php";
+                Formulize::init();
+                if($internalUid = Formulize::getXoopsResourceID(Formulize::USER_RESOURCE, $auth->getNameId())) {
+                    $externalUid = $auth->getNameId();
+                } else {
+                    // check if there is a group specified in the SAML response
+                    // MUST GET GROUP FROM SAML IF ITS IN THERE YET
+                    
+                    // No existing user, no group, need to send to new user page to gather token...
+                    $_SESSION['resouceMapKey'] = $auth->getNameId();
+                    $samlAttributes = $auth->getAttributes();
+                    $_SESSION['name'] = $samlAttributes['firstName'][0].' '.$samlAttributes['lastName'][0]; //<<<<-MUST CONVERT TO SAML ATTRIBUTE FIRST NAME LAST NAME
+                    $_SESSION['newuser'] = bin2hex(random_bytes(32)); // add a key to the session and URL and check this on the other end to make sure that they are equal
+                    $url = XOOPS_URL."/new_user.php?newuser=".$_SESSION['newuser'];
+                    header("Location: ".$url);
+                    exit;
+                }
+            }
+        }
+        
 
 		global $user;
 
@@ -122,6 +130,12 @@ class icms_core_Session {
 				unset($_SESSION['xoopsUserId']);
 			}
 		}
+        
+        // if we're coming back from new_user.php after having made an account, we need to pick it up here
+        if($_SESSION['resouceMapKey']) {
+            $externalUid = $_SESSION['resouceMapKey'];
+            unset($_SESSION['resouceMapKey']);
+        }
 
 		if ($externalUid) {
 			$xoops_userid = Formulize::getXoopsResourceID(Formulize::USER_RESOURCE, $externalUid);
