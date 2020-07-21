@@ -3007,7 +3007,7 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 		$form->addElement (new XoopsFormHidden ('formulize_LOEPageStart', $_POST['formulize_LOEPageStart']));
 		if(isset($settings['formulize_currentPage'])) { // drawing a multipage form...
             $currentPageToSend = $screen ? $settings['formulize_currentPage'].'-'.$screen->getVar('sid') : $settings['formulize_currentPage'];
-            $prevPageToSend = $screen ? $settings['formulize_prevPage'].'-'.$screen->getVar('sid') : $settings['formulize_prevPage'];
+            $prevPageToSend = $screen ? $settings['formulize_prevPage'].'-'.$settings['formulize_prevScreen'] : $settings['formulize_prevPage'];
 			$form->addElement( new XoopsFormHidden ('formulize_currentPage', $currentPageToSend));
 			$form->addElement( new XoopsFormHidden ('formulize_prevPage', $prevPageToSend));
 			$form->addElement( new XoopsFormHidden ('formulize_doneDest', $settings['formulize_doneDest']));
@@ -3062,7 +3062,7 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 		print "<input type=hidden name=formulize_LOEPageStart value='" . $_POST['formulize_LOEPageStart'] . "'>";
 		if(isset($settings['formulize_currentPage'])) { // drawing a multipage form...
             $currentPageToSend = $screen ? $settings['formulize_currentPage'].'-'.$screen->getVar('sid') : $settings['formulize_currentPage'];
-            $prevPageToSend = $screen ? $settings['formulize_prevPage'].'-'.$screen->getVar('sid') : $settings['formulize_prevPage'];
+            $prevPageToSend = $screen ? $settings['formulize_prevPage'].'-'.$settings['formulize_prevScreen'] : $settings['formulize_prevPage'];
 			print "<input type=hidden name=formulize_currentPage value='".$currentPageToSend."'>";
 			print "<input type=hidden name=formulize_prevPage value='".$prevPageToSend."'>";
 			print "<input type=hidden name=formulize_doneDest value='".$settings['formulize_doneDest']."'>";
@@ -3517,6 +3517,7 @@ print "		document.formulize_mainform.goto_sfid.value = fid;\n";
 print "		document.formulize_mainform.goto_subformElementId.value = subformElementId;\n";
 global $formulize_displayingMultipageScreen;
 if($formulize_displayingMultipageScreen) {
+print "		document.formulize_mainform.formulize_prevPage.value = document.formulize_mainform.formulize_currentPage.value;\n";    
 print "		document.formulize_mainform.formulize_currentPage.value = 1;\n";
 }
 print "		validateAndSubmit();\n";
