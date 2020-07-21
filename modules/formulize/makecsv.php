@@ -29,14 +29,12 @@
 
 // generate a csv file upon a properly authenticated request
 
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
 include_once "../../mainfile.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+while(ob_get_level()) {
+    ob_end_clean();
+}
 
 // params can come in through the URL
 $fid = intval($_GET['fid']);
