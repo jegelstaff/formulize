@@ -6965,7 +6965,7 @@ function convertDynamicFilterTerms($term) {
             $term = isset($_POST[$searchgetkey]) ? htmlspecialchars(strip_tags(trim($_POST[$searchgetkey])), ENT_QUOTES) : "";
             $term = ($term==="" AND isset($_GET[$searchgetkey])) ? htmlspecialchars(strip_tags(trim($_GET[$searchgetkey])), ENT_QUOTES) : $term;
             if($term==="") {
-                continue;
+                $term = "";
             }
             $term = $operatorToPutBack.$term;
         }
@@ -6997,6 +6997,7 @@ function formulize_parseSearchesIntoFilter($searches) {
 		}
 
         $master_one_search = convertDynamicFilterTerms($master_one_search);
+        if($master_one_search === "") { continue; }
         
 		// split search based on new split string
 		$intermediateArray = explode("//", trim($master_one_search, "//")); // ignore trailing // because that will just cause an unnecessary blank search
@@ -7070,6 +7071,7 @@ function formulize_parseSearchesIntoFilter($searches) {
 			}
 			
             $one_search = convertDynamicFilterTerms($one_search); // probably don't need to do this again?? Except what we unpacked first time might have nested { } terms in it? If it did, we would need to do this, however rare that might be
+            if($one_search === "") { continue; }
             
 			// look for OR indicators...if all caps OR is at the front, then that means that this search is to put put into a separate set of OR filters that gets appended as a set to the main set of AND filters
 		    $addToORFilter = false; // flag to indicate if we need to apply the current search term to a set of "OR'd" terms			
