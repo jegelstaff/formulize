@@ -83,7 +83,7 @@ if (!defined("XOOPS_MAINFILE_INCLUDED")) {
         }
 	}
 
-	$PortNum = (80 == $_SERVER["SERVER_PORT"]) ? "" : ":" . $_SERVER["SERVER_PORT"];
+	$PortNum = (80 == $_SERVER["SERVER_PORT"] OR 443 == $_SERVER["SERVER_PORT"]) ? "" : ":" . $_SERVER["SERVER_PORT"];
 	define('XOOPS_URL', ((443 == $_SERVER["SERVER_PORT"] OR (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) AND $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https')) ? "https://" : "http://") . $_SERVER['SERVER_NAME'] . $PortNum . SITE_BASE_URL );
 
 	define('XOOPS_CHECK_PATH', 0);
