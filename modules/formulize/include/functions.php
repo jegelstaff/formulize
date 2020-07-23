@@ -6448,6 +6448,7 @@ function parseUserAndToday($term, $element=null) {
 // $frid is the form relationship id that in which we are trying to establish the links
 // $fid is the form we're checking to see if new entry ids were written or not, and if they were, then we try to write the linked values into the right fields in the corresponding entries
 // returns an array of arrays, that tells all the affected forms and entry ids
+// THIS FUNCTION CAN PICK UP EXISTING ENTRIES AS WELL AS NEW ONES!! BUT IT ONLY WRITES TO THE DB IF THERE IS NO ONE TO ONE CONNECTION ESTABLISHED SO FAR. IT WILL NOT REWRITE EXISTING CONNECTIONS.
 function formulize_makeOneToOneLinks($frid, $fid) {
     static $oneToOneLinksMade = array();
     $form1EntryIds = array();
@@ -6479,7 +6480,6 @@ function formulize_makeOneToOneLinks($frid, $fid) {
                     } else {
                         error_log("Formulize error: we could not determine which entry in form $form1 we should use for writing the key value for the relationship. Is there an element of the main form present on the page?");
                     }
-                    
                 }
                 $entryToWriteToForm2 = $GLOBALS['formulize_allWrittenEntryIds'][$form2][0] ? $GLOBALS['formulize_allWrittenEntryIds'][$form2][0] : '';
                 $entryToWriteToForm2 = (!$entryToWriteToForm2 AND $GLOBALS['formulize_allSubmittedEntryIds'][$form2][0]) ? $GLOBALS['formulize_allSubmittedEntryIds'][$form1][0] : $entryToWriteToForm2;
@@ -6492,16 +6492,26 @@ function formulize_makeOneToOneLinks($frid, $fid) {
                         error_log("Formulize error: we could not determine which entry in form $form2 we should use for writing the key value for the relationship. Is there an element of the main form present on the page?");
                     }
                 }
+                $existingValueForKey1 = false;
+                if($entryToWriteToForm1) {
+                    $dataHandlerForm1 = new formulizeDataHandler($form1);
+                    $existingValueForKey1 = $dataHandlerForm1->elementHasValueInEntry($entryToWriteToForm1, $key1);
+                }
+                $existingValueForKey2 = false;
+                if($entryToWriteToForm2) {
+                    $dataHandlerForm2 = new formulizeDataHandler($form2);
+                    $existingValueForKey2 = $dataHandlerForm2->elementHasValueInEntry($entryToWriteToForm2, $key2);
+                }
                 if($thisLink->getVar('common')) {
                     if($entryToWriteToForm1 AND ((!isset($_POST["de_".$form1."_new_".$key1]) OR $_POST["de_".$form1."_new_".$key1] === "") AND (!isset($_POST["de_".$form1."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form1][0]."_".$key1]) OR $_POST["de_".$form1."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form1][0]."_".$key1] === ""))) {
                         // if we don't have a value for this element, then populate it with the value from the other element
-                        if($commonValueToWrite = formulize_findCommonValue($form1, $form2, $key1, $key2)) {
+                        if(!$existingValueForKey1 AND $commonValueToWrite = formulize_findCommonValue($form1, $form2, $key1, $key2)) {
                             $form1EntryId = formulize_writeEntry(array($key1=>$commonValueToWrite), $entryToWriteToForm1);
                         }
                     }
                     if($entryToWriteToForm2 AND ((!isset($_POST["de_".$form2."_new_".$key2]) OR $_POST["de_".$form2."_new_".$key2] === "") AND (!isset($_POST["de_".$form2."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form2][0]."_".$key2]) OR $_POST["de_".$form2."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form2][0]."_".$key2] === ""))) {
                         // if we don't have a value for this element, then populate it with the value from the other element
-                        if($commonValueToWrite = formulize_findCommonValue($form2, $form1, $key2, $key1)) { // since we're looking for the other form, swap the order of param inputs
+                        if(!$existingValueForKey2 AND $commonValueToWrite = formulize_findCommonValue($form2, $form1, $key2, $key1)) { // since we're looking for the other form, swap the order of param inputs
                             $form2EntryId = formulize_writeEntry(array($key2=>$commonValueToWrite), $entryToWriteToForm2);
                         }
                     }
@@ -6516,20 +6526,20 @@ function formulize_makeOneToOneLinks($frid, $fid) {
                             $linkedValueToWrite = isset($GLOBALS['formulize_newEntryIds'][$form2][0]) ? $GLOBALS['formulize_newEntryIds'][$form2][0] : "";
                             $linkedValueToWrite = (!$linkedValueToWrite AND isset($GLOBALS['formulize_allSubmittedEntryIds'][$form2][0])) ? $GLOBALS['formulize_allSubmittedEntryIds'][$form2][0] : $linkedValueToWrite; // or get the first entry ID that we wrote to the form, if no new entries were written to the form
                             $linkedValueToWrite = (!$linkedValueToWrite AND $entryToWriteToForm2) ? $entryToWriteToForm2 : $linkedValueToWrite;
-                        if($entryToWriteToForm1 AND ((!isset($_POST["de_".$form1."_new_".$key1]) OR $_POST["de_".$form1."_new_".$key1] === "") AND (!isset($_POST["de_".$form1."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form1][0]."_".$key1]) OR $_POST["de_".$form1."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form1][0]."_".$key1] === ""))) {
+                        if($entryToWriteToForm1 AND !$existingValueForKey1 AND ((!isset($_POST["de_".$form1."_new_".$key1]) OR $_POST["de_".$form1."_new_".$key1] === "") AND (!isset($_POST["de_".$form1."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form1][0]."_".$key1]) OR $_POST["de_".$form1."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form1][0]."_".$key1] === ""))) {
                             $form1EntryId = formulize_writeEntry(array($key1=>$linkedValueToWrite), $entryToWriteToForm1);
                         } elseif(!$entryToWriteToForm1) {
-                            $form1EntryId = formulize_writeEntry(array($key1=>$linkedValueToWrite));
+                            $entryToWriteToForm1 = formulize_writeEntry(array($key1=>$linkedValueToWrite));
                         }
                     } else {
                             // element 2 is the linked selectbox, so get the value of entry id for what we just created in form 1 and put it in element 2
                             $linkedValueToWrite = isset($GLOBALS['formulize_newEntryIds'][$form1][0]) ? $GLOBALS['formulize_newEntryIds'][$form1][0] : "";
                             $linkedValueToWrite = (!$linkedValueToWrite AND isset($GLOBALS['formulize_allSubmittedEntryIds'][$form1][0])) ? $GLOBALS['formulize_allSubmittedEntryIds'][$form1][0] : $linkedValueToWrite; // or get the first entry ID that we wrote to the form, if no new entries were written to the form
                             $linkedValueToWrite = (!$linkedValueToWrite AND $entryToWriteToForm1) ? $entryToWriteToForm1 : $linkedValueToWrite;
-                        if($entryToWriteToForm2 AND ((!isset($_POST["de_".$form2."_new_".$key2]) OR $_POST["de_".$form2."_new_".$key2] === "") AND (!isset($_POST["de_".$form2."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form2][0]."_".$key2]) OR $_POST["de_".$form2."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form2][0]."_".$key2] === ""))) {
+                        if($entryToWriteToForm2 AND !$existingValueForKey2 AND ((!isset($_POST["de_".$form2."_new_".$key2]) OR $_POST["de_".$form2."_new_".$key2] === "") AND (!isset($_POST["de_".$form2."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form2][0]."_".$key2]) OR $_POST["de_".$form2."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form2][0]."_".$key2] === ""))) {
                             $form2EntryId = formulize_writeEntry(array($key2=>$linkedValueToWrite), $entryToWriteToForm2);
                         } elseif(!$entryToWriteToForm2) {
-                            $form2EntryId = formulize_writeEntry(array($key2=>$linkedValueToWrite));
+                            $entryToWriteToForm2 = formulize_writeEntry(array($key2=>$linkedValueToWrite));
                         }
                     }
                 }
