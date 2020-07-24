@@ -5632,8 +5632,6 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
         $targetElementObject = $element_handler->get($filterElementIds[$filterId]);
             $targetElementEleValue = $targetElementObject->getVar('ele_value'); // get the properties of the source element
         if ($targetElementObject->isLinked AND !$targetElementEleValue['snapshot']) {
-            
-            
             $targetElementEleValueProperties = explode("#*=:*", $targetElementEleValue[2]); // split them up to get the properties of the linked selectbox that the source element is pointing at
             $targetSourceFid = $targetElementEleValueProperties[0]; // get the Fid that the source element is point at (the source of the source)
             $targetSourceFormObject = $form_handler->get($targetSourceFid); // get the form object based on that fid (we'll need the form handle later)
@@ -5660,28 +5658,27 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                 // establish the literal (human readable) value
                 if (isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm])) {
                     $literalTermToUse = "'".formulize_db_escape($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm])."'";
+                    $literalQuotes = "";
                 } elseif($curlyBracketEntry != 'new') {
                     $apiFormatValue = prepvalues($dbValueOfTerm, $bareFilterTerm, $curlyBracketEntry); // will be an array
                     if(is_array($apiFormatValue) AND count($apiFormatValue)==1) {
                         $apiFormatValue = $apiFormatValue[0]; // take the single value if there's only one, same as display function does
                     }
                     $literalTermToUse = $apiFormatValue;
+                    $literalQuotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
                 } else {
                     // for new entries maybe we should get the defaults?
                     $literalTermToUse = '';
                 }
                 // if there is a difference, setup an OR expression so we can catch both variations
                 if($literalTermToUse != $dbValueOfTerm) {
-                    $quotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
-                    $literalTermInSQL = "`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$literalTermToUse.$likebits.$quotes;
+                    $literalTermInSQL = "`$targetSourceHandle` ".$subQueryOp.$literalQuotes.$likebits.$literalTermToUse.$likebits.$literalQuotes;
                     $specialCharsTerm = htmlspecialchars($literalTermToUse, ENT_QUOTES);
                     if($specialCharsTerm != $literalTermToUse) {
                         $literalTermInSQL .= " OR ".str_replace($literalTermToUse, $specialCharsTerm, $literalTermInSQL);
                     }
-                    $quotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
                     $subQueryWhereClause = "(ss.`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$filterTermToUse.$likebits.$quotes." OR ss.".$literalTermInSQL." )";
                 } else {
-                    $quotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
                     $subQueryWhereClause = "ss.`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$filterTermToUse.$likebits.$quotes;
                 }
                 // figure out if the curlybracketform field is linked and pointing to the same source as the target element is pointing to
@@ -5752,11 +5749,11 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
             if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
                 $conditionsFilterComparisonValue .= "  AND curlybracketform.`entry_id`=$curlyBracketEntryQuoted ";
             }
-    } else {
-        foreach ($filterTerms as $key => $value) {
-            $filterTerms[$key] = parseUserAndToday($value, $filterElementIds[$filterId]); // pass element so we can check if it is a userlist and compare {USER} based on id instead of name
+        } else {
+            foreach ($filterTerms as $key => $value) {
+                $filterTerms[$key] = parseUserAndToday($value, $filterElementIds[$filterId]); // pass element so we can check if it is a userlist and compare {USER} based on id instead of name
+            }
         }
-    }
     }
 
     if ($filterTerms[$filterId]=="{BLANK}") {
@@ -5794,20 +5791,19 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                 $plainLiteralValue = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm];
             }
             $plainLiteralValue = $plainLiteralValue != $literalToDBValue ? $plainLiteralValue : "";
-        $filterTerms[$filterId] = $literalToDBValue;
-    }
+            $filterTerms[$filterId] = $literalToDBValue;
+        }
     } 
     
     if (!$conditionsFilterComparisonValue) {
-        $quotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
         $conditionsFilterComparisonValue = $quotes.$likebits.formulize_db_escape($filterTerms[$filterId]).$likebits.$quotes;
         if($plainLiteralValue) {
             $specialCharsTerm = htmlspecialchars($plainLiteralValue, ENT_QUOTES);
             if($specialCharsTerm != $plainLiteralValue) {
-                $quotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
+                $quotes = (is_numeric($specialCharsTerm) AND !$likebits) ? "" : "'";
                 $conditionsFilterComparisonValue .= '-->>ADDPLAINLITERAL<<--'.$quotes.$likebits.formulize_db_escape($specialCharsTerm).$likebits.$quotes;
             }
-            $quotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
+            $quotes = (is_numeric($plainLiteralValue) AND !$likebits) ? "" : "'";
             $conditionsFilterComparisonValue .= '-->>ADDPLAINLITERAL<<--'.$quotes.$likebits.formulize_db_escape($plainLiteralValue).$likebits.$quotes;
         }
     }

@@ -69,6 +69,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
     if(isset($_POST['formulize_prevPage']) AND strstr($_POST['formulize_prevPage'],'-')) {
         $cpParts = explode('-',$_POST['formulize_prevPage']);
         $prevPage = $cpParts[0];
+        $prevScreen = $cpParts[1];
     } elseif(isset($_POST['formulize_prevPage'])) {
         $prevPage = intval($_POST['formulize_prevPage']);
     } else {
@@ -219,7 +220,8 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 		$titleOverride = isset($pageTitles[$currentPage]) ? trans($pageTitles[$currentPage]) : "all"; // we can pass in any text value as the titleOverride, and it will have the same effect as "all", but the alternate text will be used as the title for the form
 	
 		$settings['formulize_currentPage'] = $currentPage;
-		$settings['formulize_prevPage'] = $prevPage; 
+		$settings['formulize_prevPage'] = $prevPage;
+        $settings['formulize_prevScreen'] = $prevScreen;
 	
 		formulize_benchmark("Before drawing nav.");
 	
