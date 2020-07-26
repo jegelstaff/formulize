@@ -2323,21 +2323,16 @@ function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid,
 			// alphabetize the proxy list added 11/2/04
 			array_multisort($punames, $unique_users);
 
-			if($entry_id) {
-                if($entry_id != 'new') {
-				include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
-				$data_handler = new formulizeDataHandler($fid);
-				$entryMeta = $data_handler->getEntryMeta($entry_id);
-                    $entryOwner = $entryMeta['creation_uid'];
-                    $member_handler = xoops_gethandler('member');
-                    if($ownerUserObject = $member_handler->getUser($entryOwner)) {
-                        $entryOwnerName = $ownerUserObject->getVar('uname');
-                    } else {
-                        $entryOwnerName = _FORM_ANON_USER;
-                    }
+			if($entry_id AND $entry_id != 'new') {
+                include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+                $data_handler = new formulizeDataHandler($fid);
+                list($creation_datetime, $mod_datetime, $creation_uid, $mod_uid) = $data_handler->getEntryMeta($entry_id);
+                $entryOwner = $creation_uid;
+                $member_handler = xoops_gethandler('member');
+                if($ownerUserObject = $member_handler->getUser($entryOwner)) {
+                    $entryOwnerName = $ownerUserObject->getVar('uname');
                 } else {
-                    global $xoopsUser;
-                    $entryOwnerName = $xoopsUser ? $xoopsUser->getVar('uname') : _FORM_ANON_USER;
+                    $entryOwnerName = _FORM_ANON_USER;
                 }
 				$proxylist = new XoopsFormSelect(_AM_SELECT_UPDATE_OWNER, 'updateowner_'.$fid.'_'.$entry_id, 0, 1);
 				$proxylist->addOption('nochange', _AM_SELECT_UPDATE_NOCHANGE.$entryOwnerName);

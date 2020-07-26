@@ -2949,8 +2949,8 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
         // look for that uid in the target form
         $data_handler_start = new formulizeDataHandler($startForm);
         $data_handler_target = new formulizeDataHandler($targetForm['fid']);
-        $metaData = $data_handler_start->getEntryMeta($startEntry);
-        $entry_ids = $data_handler_target->getAllEntriesForUsers($metaData['creation_uid'], $all_users, $all_groups);
+        list($creation_datetime, $mod_datetime, $creation_uid, $mod_uid) = $data_handler_start->getEntryMeta($startEntry);
+        $entry_ids = $data_handler_target->getAllEntriesForUsers($creation_uid, $all_users, $all_groups);
         if (count($entry_ids) > 0) {
             $entries_to_return = $entry_ids;
         } else {

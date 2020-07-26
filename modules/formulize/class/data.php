@@ -287,14 +287,14 @@ class formulizeDataHandler  {
 	// returns an array with keys 0 through 3, corresponding to creation datetime, mod datetime, creation uid, mod uid
 	// intended to be called like this:
 	// $data_handler = new formulizeDataHandler($fid);
-  // list($creation_datetime, $mod_datetime, $creation_uid, $mod_uid) = $data_handler->getEntryMeta($entry);
+    // list($creation_datetime, $mod_datetime, $creation_uid, $mod_uid) = $data_handler->getEntryMeta($entry);
 	// if $updateCache is set, then the data should be queried for fresh, and cache reupdated
 	function getEntryMeta($id, $updateCache = false) {
 		static $cachedEntryMeta = array();
 		if(!isset($cachedEntryMeta[$this->fid][$id]) OR $updateCache) {
 			global $xoopsDB;
-      $form_handler = xoops_getmodulehandler('forms', 'formulize');
-      $formObject = $form_handler->get($this->fid);
+            $form_handler = xoops_getmodulehandler('forms', 'formulize');
+            $formObject = $form_handler->get($this->fid);
 			$sql = "SELECT creation_datetime, mod_datetime, creation_uid, mod_uid FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = " . intval($id);
 			if(!$res = $xoopsDB->query($sql)) {
 				$cachedEntryMeta[$this->fid][$id] = false;
