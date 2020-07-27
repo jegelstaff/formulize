@@ -2889,6 +2889,7 @@ function getTextboxDefault($ele_value, $form_id, $entry_id, $placeholder="") {
                 }
             }
         }
+        if(!$replacementValue) { continue; }
         $ele_value = str_replace("{".$searchTerm."}", $replacementValue, $ele_value);
     }
     return $ele_value;
