@@ -2950,8 +2950,8 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
         // look for that uid in the target form
         $data_handler_start = new formulizeDataHandler($startForm);
         $data_handler_target = new formulizeDataHandler($targetForm['fid']);
-        $metaData = $data_handler_start->getEntryMeta($startEntry);
-        $entry_ids = $data_handler_target->getAllEntriesForUsers($metaData['creation_uid'], $all_users, $all_groups);
+        list($creation_datetime, $mod_datetime, $creation_uid, $mod_uid) = $data_handler_start->getEntryMeta($startEntry);
+        $entry_ids = $data_handler_target->getAllEntriesForUsers($creation_uid, $all_users, $all_groups);
         if (count($entry_ids) > 0) {
             $entries_to_return = $entry_ids;
         } else {
@@ -5633,8 +5633,6 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
         $targetElementObject = $element_handler->get($filterElementIds[$filterId]);
             $targetElementEleValue = $targetElementObject->getVar('ele_value'); // get the properties of the source element
         if ($targetElementObject->isLinked AND !$targetElementEleValue['snapshot']) {
-            
-            
             $targetElementEleValueProperties = explode("#*=:*", $targetElementEleValue[2]); // split them up to get the properties of the linked selectbox that the source element is pointing at
             $targetSourceFid = $targetElementEleValueProperties[0]; // get the Fid that the source element is point at (the source of the source)
             $targetSourceFormObject = $form_handler->get($targetSourceFid); // get the form object based on that fid (we'll need the form handle later)
@@ -5661,28 +5659,27 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                 // establish the literal (human readable) value
                 if (isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm])) {
                     $literalTermToUse = "'".formulize_db_escape($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm])."'";
+                    $literalQuotes = "";
                 } elseif($curlyBracketEntry != 'new') {
                     $apiFormatValue = prepvalues($dbValueOfTerm, $bareFilterTerm, $curlyBracketEntry); // will be an array
                     if(is_array($apiFormatValue) AND count($apiFormatValue)==1) {
                         $apiFormatValue = $apiFormatValue[0]; // take the single value if there's only one, same as display function does
                     }
                     $literalTermToUse = $apiFormatValue;
+                    $literalQuotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
                 } else {
                     // for new entries maybe we should get the defaults?
                     $literalTermToUse = '';
                 }
                 // if there is a difference, setup an OR expression so we can catch both variations
                 if($literalTermToUse != $dbValueOfTerm) {
-                    $quotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
-                    $literalTermInSQL = "`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$literalTermToUse.$likebits.$quotes;
+                    $literalTermInSQL = "`$targetSourceHandle` ".$subQueryOp.$literalQuotes.$likebits.$literalTermToUse.$likebits.$literalQuotes;
                     $specialCharsTerm = htmlspecialchars($literalTermToUse, ENT_QUOTES);
                     if($specialCharsTerm != $literalTermToUse) {
                         $literalTermInSQL .= " OR ".str_replace($literalTermToUse, $specialCharsTerm, $literalTermInSQL);
                     }
-                    $quotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
                     $subQueryWhereClause = "(ss.`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$filterTermToUse.$likebits.$quotes." OR ss.".$literalTermInSQL." )";
                 } else {
-                    $quotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
                     $subQueryWhereClause = "ss.`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$filterTermToUse.$likebits.$quotes;
                 }
                 // figure out if the curlybracketform field is linked and pointing to the same source as the target element is pointing to
@@ -5753,11 +5750,11 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
             if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
                 $conditionsFilterComparisonValue .= "  AND curlybracketform.`entry_id`=$curlyBracketEntryQuoted ";
             }
-    } else {
-        foreach ($filterTerms as $key => $value) {
-            $filterTerms[$key] = parseUserAndToday($value, $filterElementIds[$filterId]); // pass element so we can check if it is a userlist and compare {USER} based on id instead of name
+        } else {
+            foreach ($filterTerms as $key => $value) {
+                $filterTerms[$key] = parseUserAndToday($value, $filterElementIds[$filterId]); // pass element so we can check if it is a userlist and compare {USER} based on id instead of name
+            }
         }
-    }
     }
 
     if ($filterTerms[$filterId]=="{BLANK}") {
@@ -5795,20 +5792,19 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                 $plainLiteralValue = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm];
             }
             $plainLiteralValue = $plainLiteralValue != $literalToDBValue ? $plainLiteralValue : "";
-        $filterTerms[$filterId] = $literalToDBValue;
-    }
+            $filterTerms[$filterId] = $literalToDBValue;
+        }
     } 
     
     if (!$conditionsFilterComparisonValue) {
-        $quotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
         $conditionsFilterComparisonValue = $quotes.$likebits.formulize_db_escape($filterTerms[$filterId]).$likebits.$quotes;
         if($plainLiteralValue) {
             $specialCharsTerm = htmlspecialchars($plainLiteralValue, ENT_QUOTES);
             if($specialCharsTerm != $plainLiteralValue) {
-                $quotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
+                $quotes = (is_numeric($specialCharsTerm) AND !$likebits) ? "" : "'";
                 $conditionsFilterComparisonValue .= '-->>ADDPLAINLITERAL<<--'.$quotes.$likebits.formulize_db_escape($specialCharsTerm).$likebits.$quotes;
             }
-            $quotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
+            $quotes = (is_numeric($plainLiteralValue) AND !$likebits) ? "" : "'";
             $conditionsFilterComparisonValue .= '-->>ADDPLAINLITERAL<<--'.$quotes.$likebits.formulize_db_escape($plainLiteralValue).$likebits.$quotes;
         }
     }
@@ -6449,6 +6445,7 @@ function parseUserAndToday($term, $element=null) {
 // $frid is the form relationship id that in which we are trying to establish the links
 // $fid is the form we're checking to see if new entry ids were written or not, and if they were, then we try to write the linked values into the right fields in the corresponding entries
 // returns an array of arrays, that tells all the affected forms and entry ids
+// THIS FUNCTION CAN PICK UP EXISTING ENTRIES AS WELL AS NEW ONES!! BUT IT ONLY WRITES TO THE DB IF THERE IS NO ONE TO ONE CONNECTION ESTABLISHED SO FAR. IT WILL NOT REWRITE EXISTING CONNECTIONS.
 function formulize_makeOneToOneLinks($frid, $fid) {
     static $oneToOneLinksMade = array();
     $form1EntryIds = array();
@@ -6480,7 +6477,6 @@ function formulize_makeOneToOneLinks($frid, $fid) {
                     } else {
                         error_log("Formulize error: we could not determine which entry in form $form1 we should use for writing the key value for the relationship. Is there an element of the main form present on the page?");
                     }
-                    
                 }
                 $entryToWriteToForm2 = $GLOBALS['formulize_allWrittenEntryIds'][$form2][0] ? $GLOBALS['formulize_allWrittenEntryIds'][$form2][0] : '';
                 $entryToWriteToForm2 = (!$entryToWriteToForm2 AND $GLOBALS['formulize_allSubmittedEntryIds'][$form2][0]) ? $GLOBALS['formulize_allSubmittedEntryIds'][$form1][0] : $entryToWriteToForm2;
@@ -6493,16 +6489,26 @@ function formulize_makeOneToOneLinks($frid, $fid) {
                         error_log("Formulize error: we could not determine which entry in form $form2 we should use for writing the key value for the relationship. Is there an element of the main form present on the page?");
                     }
                 }
+                $existingValueForKey1 = false;
+                if($entryToWriteToForm1) {
+                    $dataHandlerForm1 = new formulizeDataHandler($form1);
+                    $existingValueForKey1 = $dataHandlerForm1->elementHasValueInEntry($entryToWriteToForm1, $key1);
+                }
+                $existingValueForKey2 = false;
+                if($entryToWriteToForm2) {
+                    $dataHandlerForm2 = new formulizeDataHandler($form2);
+                    $existingValueForKey2 = $dataHandlerForm2->elementHasValueInEntry($entryToWriteToForm2, $key2);
+                }
                 if($thisLink->getVar('common')) {
                     if($entryToWriteToForm1 AND ((!isset($_POST["de_".$form1."_new_".$key1]) OR $_POST["de_".$form1."_new_".$key1] === "") AND (!isset($_POST["de_".$form1."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form1][0]."_".$key1]) OR $_POST["de_".$form1."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form1][0]."_".$key1] === ""))) {
                         // if we don't have a value for this element, then populate it with the value from the other element
-                        if($commonValueToWrite = formulize_findCommonValue($form1, $form2, $key1, $key2)) {
+                        if(!$existingValueForKey1 AND $commonValueToWrite = formulize_findCommonValue($form1, $form2, $key1, $key2)) {
                             $form1EntryId = formulize_writeEntry(array($key1=>$commonValueToWrite), $entryToWriteToForm1);
                         }
                     }
                     if($entryToWriteToForm2 AND ((!isset($_POST["de_".$form2."_new_".$key2]) OR $_POST["de_".$form2."_new_".$key2] === "") AND (!isset($_POST["de_".$form2."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form2][0]."_".$key2]) OR $_POST["de_".$form2."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form2][0]."_".$key2] === ""))) {
                         // if we don't have a value for this element, then populate it with the value from the other element
-                        if($commonValueToWrite = formulize_findCommonValue($form2, $form1, $key2, $key1)) { // since we're looking for the other form, swap the order of param inputs
+                        if(!$existingValueForKey2 AND $commonValueToWrite = formulize_findCommonValue($form2, $form1, $key2, $key1)) { // since we're looking for the other form, swap the order of param inputs
                             $form2EntryId = formulize_writeEntry(array($key2=>$commonValueToWrite), $entryToWriteToForm2);
                         }
                     }
@@ -6517,20 +6523,20 @@ function formulize_makeOneToOneLinks($frid, $fid) {
                             $linkedValueToWrite = isset($GLOBALS['formulize_newEntryIds'][$form2][0]) ? $GLOBALS['formulize_newEntryIds'][$form2][0] : "";
                             $linkedValueToWrite = (!$linkedValueToWrite AND isset($GLOBALS['formulize_allSubmittedEntryIds'][$form2][0])) ? $GLOBALS['formulize_allSubmittedEntryIds'][$form2][0] : $linkedValueToWrite; // or get the first entry ID that we wrote to the form, if no new entries were written to the form
                             $linkedValueToWrite = (!$linkedValueToWrite AND $entryToWriteToForm2) ? $entryToWriteToForm2 : $linkedValueToWrite;
-                        if($entryToWriteToForm1 AND ((!isset($_POST["de_".$form1."_new_".$key1]) OR $_POST["de_".$form1."_new_".$key1] === "") AND (!isset($_POST["de_".$form1."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form1][0]."_".$key1]) OR $_POST["de_".$form1."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form1][0]."_".$key1] === ""))) {
+                        if($entryToWriteToForm1 AND !$existingValueForKey1 AND ((!isset($_POST["de_".$form1."_new_".$key1]) OR $_POST["de_".$form1."_new_".$key1] === "") AND (!isset($_POST["de_".$form1."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form1][0]."_".$key1]) OR $_POST["de_".$form1."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form1][0]."_".$key1] === ""))) {
                             $form1EntryId = formulize_writeEntry(array($key1=>$linkedValueToWrite), $entryToWriteToForm1);
                         } elseif(!$entryToWriteToForm1) {
-                            $form1EntryId = formulize_writeEntry(array($key1=>$linkedValueToWrite));
+                            $entryToWriteToForm1 = formulize_writeEntry(array($key1=>$linkedValueToWrite));
                         }
                     } else {
                             // element 2 is the linked selectbox, so get the value of entry id for what we just created in form 1 and put it in element 2
                             $linkedValueToWrite = isset($GLOBALS['formulize_newEntryIds'][$form1][0]) ? $GLOBALS['formulize_newEntryIds'][$form1][0] : "";
                             $linkedValueToWrite = (!$linkedValueToWrite AND isset($GLOBALS['formulize_allSubmittedEntryIds'][$form1][0])) ? $GLOBALS['formulize_allSubmittedEntryIds'][$form1][0] : $linkedValueToWrite; // or get the first entry ID that we wrote to the form, if no new entries were written to the form
                             $linkedValueToWrite = (!$linkedValueToWrite AND $entryToWriteToForm1) ? $entryToWriteToForm1 : $linkedValueToWrite;
-                        if($entryToWriteToForm2 AND ((!isset($_POST["de_".$form2."_new_".$key2]) OR $_POST["de_".$form2."_new_".$key2] === "") AND (!isset($_POST["de_".$form2."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form2][0]."_".$key2]) OR $_POST["de_".$form2."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form2][0]."_".$key2] === ""))) {
+                        if($entryToWriteToForm2 AND !$existingValueForKey2 AND ((!isset($_POST["de_".$form2."_new_".$key2]) OR $_POST["de_".$form2."_new_".$key2] === "") AND (!isset($_POST["de_".$form2."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form2][0]."_".$key2]) OR $_POST["de_".$form2."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form2][0]."_".$key2] === ""))) {
                             $form2EntryId = formulize_writeEntry(array($key2=>$linkedValueToWrite), $entryToWriteToForm2);
                         } elseif(!$entryToWriteToForm2) {
-                            $form2EntryId = formulize_writeEntry(array($key2=>$linkedValueToWrite));
+                            $entryToWriteToForm2 = formulize_writeEntry(array($key2=>$linkedValueToWrite));
                         }
                     }
                 }
@@ -6925,6 +6931,59 @@ function prepareLinkedElementExtraClause($pgroupsfilter, $parentFormFrom, $sourc
     return $extra_clause;
 }
 
+// this function takes a filter term passed in, and converts it to the actual value from GET or POST
+function convertDynamicFilterTerms($term) {
+    
+    // check for starting and ending ! ! and put them back at the end if necessary
+    $needPreserveHiddenMarkers = false;
+    if(substr($term, 0, 1) == "!" AND substr($term, -1) == "!") {
+        $needPreserveHiddenMarkers = true;
+        $term = substr($term, 1, -1);
+    }
+    
+    $operatorToPutBack = "";
+    if(substr($term, 0, 1) == '=') {
+        $operatorToPutBack = '=';
+    }
+    if(substr($term, 0, 1) == '>') {
+        $operatorToPutBack = '>';
+    }
+    if(substr($term, 0, 1) == '<') {
+        $operatorToPutBack = '<';
+    }
+    if(substr($term, 0, 1) == '!') {
+        $operatorToPutBack = '!';
+    }
+    if(substr($term, 0, 2) == '!=') {
+        $operatorToPutBack = '!=';
+    }
+    if(substr($term, 0, 2) == '<=') {
+        $operatorToPutBack = '<=';
+    }
+    if(substr($term, 0, 2) == '>=') {
+        $operatorToPutBack = '>=';
+    }        
+    
+    $valueToCheck = str_replace($operatorToPutBack, '', $term);
+    
+    if(substr($valueToCheck, 0, 1) == "{" AND substr($valueToCheck, -1) == "}") {
+        $searchgetkey = substr($valueToCheck, 1, -1);
+        if(isset($_POST[$searchgetkey]) OR isset($_GET[$searchgetkey])) {
+            $term = isset($_POST[$searchgetkey]) ? htmlspecialchars(strip_tags(trim($_POST[$searchgetkey])), ENT_QUOTES) : "";
+            $term = ($term==="" AND isset($_GET[$searchgetkey])) ? htmlspecialchars(strip_tags(trim($_GET[$searchgetkey])), ENT_QUOTES) : $term;
+            if($term==="") {
+                $term = "";
+            }
+            $term = $operatorToPutBack.$term;
+        }
+    }
+    
+    if($needPreserveHiddenMarkers) {
+        $term = '!'.$term.'!';
+    }
+    return $term;
+}
+
 // this function takes an array of element handle=>search term pairs, and converts them into a filter string valid for using in a getData call
 function formulize_parseSearchesIntoFilter($searches) {
     
@@ -6944,6 +7003,9 @@ function formulize_parseSearchesIntoFilter($searches) {
 			$master_one_search = ">={$matches[1]}//<={$matches[2]}";
 		}
 
+        $master_one_search = convertDynamicFilterTerms($master_one_search);
+        if($master_one_search === "") { continue; }
+        
 		// split search based on new split string
 		$intermediateArray = explode("//", trim($master_one_search, "//")); // ignore trailing // because that will just cause an unnecessary blank search
 
@@ -7015,44 +7077,8 @@ function formulize_parseSearchesIntoFilter($searches) {
 				$one_search = substr($one_search, 1, -1);
 			}
 			
-            // grab values from GET or POST if they match { } terms
-        
-            $operatorToPutBack = "";
-            if(substr($one_search, 0, 1) == '=') {
-                $operatorToPutBack = '=';
-            }
-            if(substr($one_search, 0, 1) == '>') {
-                $operatorToPutBack = '>';
-            }
-            if(substr($one_search, 0, 1) == '<') {
-                $operatorToPutBack = '<';
-            }
-            if(substr($one_search, 0, 1) == '!') {
-                $operatorToPutBack = '!';
-            }
-            if(substr($one_search, 0, 2) == '!=') {
-                $operatorToPutBack = '!=';
-            }
-            if(substr($one_search, 0, 2) == '<=') {
-                $operatorToPutBack = '<=';
-            }
-            if(substr($one_search, 0, 2) == '>=') {
-                $operatorToPutBack = '>=';
-            }        
-            
-            $valueToCheck = str_replace($operatorToPutBack, '', $one_search);
-            
-            if(substr($valueToCheck, 0, 1) == "{" AND substr($valueToCheck, -1) == "}") {
-                $searchgetkey = substr($valueToCheck, 1, -1);
-                if(isset($_POST[$searchgetkey]) OR isset($_GET[$searchgetkey])) {
-                    $one_search = isset($_POST[$searchgetkey]) ? htmlspecialchars(strip_tags(trim($_POST[$searchgetkey])), ENT_QUOTES) : "";
-                    $one_search = ($one_search==="" AND isset($_GET[$searchgetkey])) ? htmlspecialchars(strip_tags(trim($_GET[$searchgetkey])), ENT_QUOTES) : $one_search;
-                    if($one_search==="") {
-                        continue;
-                    }
-                    $one_search = $operatorToPutBack.$one_search;
-                }
-            }
+            $one_search = convertDynamicFilterTerms($one_search); // probably don't need to do this again?? Except what we unpacked first time might have nested { } terms in it? If it did, we would need to do this, however rare that might be
+            if($one_search === "") { continue; }
             
 			// look for OR indicators...if all caps OR is at the front, then that means that this search is to put put into a separate set of OR filters that gets appended as a set to the main set of AND filters
 		    $addToORFilter = false; // flag to indicate if we need to apply the current search term to a set of "OR'd" terms			

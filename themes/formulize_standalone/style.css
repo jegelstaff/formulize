@@ -921,3 +921,8 @@ body > #content {
 .appcatspacer {
     width: 25%;
 }
+
+@media print {
+    .no-print {
+    display: none; }
+}

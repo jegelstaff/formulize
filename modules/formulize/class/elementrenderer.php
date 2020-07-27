@@ -1033,7 +1033,7 @@ class formulizeElementRenderer{
 				$previousEntryUIRendered = "";
 			}
 			// $ele_type is the type value...only put in a cue for certain kinds of elements, and definitely not for blank subforms
-			if(substr($form_ele_id, 0, 9) != "desubform" AND ((!$isDisabled AND !$wasDisabled) OR $entry == 'new') AND ($ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "select" OR $ele_type=="radio" OR $ele_type=="date" OR $ele_type=="colorpick" OR $ele_type=="yn" OR $customElementHasData)) {
+			if(substr($form_ele_id, 0, 9) != "desubform" AND !$isDisabled AND !$wasDisabled AND ($ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "select" OR $ele_type=="radio" OR $ele_type=="date" OR $ele_type=="colorpick" OR $ele_type=="yn" OR $customElementHasData)) {
 				$elementCue = "\n<input type=\"hidden\" id=\"decue_".trim($form_ele_id,"de_")."\" name=\"decue_".trim($form_ele_id,"de_")."\" value=1>\n";
 			} else {
 				$elementCue = "";

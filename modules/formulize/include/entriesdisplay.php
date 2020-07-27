@@ -633,6 +633,13 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			}
 		}
         
+        // check for starting and ending ! ! and put them back at the end if necessary
+        $needPreserveHiddenMarkers = false;
+        if(substr($v, 0, 1) == "!" AND substr($v, -1) == "!") {
+            $needPreserveHiddenMarkers = true;
+            $v = substr($v, 1, -1);
+        }
+        
         $operatorToPutBack = "";
         if(substr($v, 0, 1) == '=') {
             $operatorToPutBack = '=';
@@ -674,6 +681,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 					$filterValue = convertVariableSearchToLiteral($v, $requestKeyToUse); // returns updated value, or false to kill value, or true to do nothing
                     if(!is_bool($filterValue)) {
                         $_POST[$k] = $operatorToPutBack.$filterValue;
+                        if($needPreserveHiddenMarkers) {
+                           $_POST[$k] = '!'.$_POST[$k].'!';
+                        }
                     } elseif($filterValue === false) {
                         unset($_POST[$k]); // clear terms where no match was found, because this term is not active on the current page, so don't confuse users by showing it
                     }
