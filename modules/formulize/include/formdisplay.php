@@ -201,14 +201,23 @@ class formulize_themeForm extends XoopsThemeForm {
             $columns = $this->_getColumns($eleToSetForColumns, 'reset'); // necessary so we set the column value for all elements, regardless of if they're being rendered or not, so we can pick up the value from session if a conditional element is activated later asynchronously
 
 			if (!is_object($ele)) {// just plain add stuff if it's a literal string...
+                $columnData = $this->_getColumns($ele);
 				if(strstr($ele, "<<||>>")) {
 					$ele = explode("<<||>>", $ele);
-					$ret .= "<tr id='formulize-".$ele[1]."'>".$ele[0]."</tr>";
+					$tempRet = "<tr id='formulize-".$ele[1]."'>".$ele[0];
 				} elseif(substr($ele, 0, 3) != "<tr") {
-					$ret .= "<tr>$ele</tr>";
+					$tempRet = "<tr>$ele";
 				} else {
-					$ret .= $ele;
+					$tempRet = str_replace("</tr>","",$ele);
 				}
+                if($columnData[0] == 1) {
+                    $tempRet = str_replace("colspan='2'", "", $tempRet);
+                }
+                if(($columnData[0] != 1 AND $columnData[2] != 'auto' AND $columnData[1] != 'auto')
+                    OR ($columnData[0] == 1 AND $columnData[1] != 'auto')) {
+                        $tempRet .= '<td class="formulize-spacer-column">&nbsp;</td>';
+                }
+                $ret .= $tempRet."</tr>";
 			} elseif ( !$ele->isHidden() ) {
 				$ret .= "<tr id='formulize-".$ele->getName()."' class='".$ele->getClass()."' valign='top' align='" . _GLOBAL_LEFT . "'>";
 				$ret .= $this->_drawElementElementHTML($ele);
