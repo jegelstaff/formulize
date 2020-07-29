@@ -286,7 +286,9 @@ a.formulize-open-close-link {
 
 .formulize-subform-table {
   width: auto;
-  border-collapse: collapse; }
+  border-collapse: collapse;
+  white-space: nowrap;
+}
 
 .formulize-subform-table > tbody > tr > th {
   background-color: transparent !important;
