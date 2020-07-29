@@ -370,7 +370,7 @@ class mod_profile_Field extends icms_ipf_Object {
 	public function getCatid() {
 		$icmsPersistableRegistry = icms_ipf_registry_Handler::getInstance();
 		$category = $icmsPersistableRegistry->getSingleObject('category', $this->getVar('catid'), basename(dirname(dirname(__FILE__))));
-		return $category->getVar('cat_title');
+		return $category ? $category->getVar('cat_title') : false;
 	}
 
 	/**
