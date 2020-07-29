@@ -450,6 +450,9 @@ class formulizeDataHandler  {
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
 		}
+        if($xoopsDB->getRowsNum($res)==0) {
+            return false;
+        }
 		$row = $xoopsDB->fetchRow($res);
 		return $row[0];
 	}
