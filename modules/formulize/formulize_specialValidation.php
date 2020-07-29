@@ -38,6 +38,7 @@
 // echo result
 
 include_once "../../mainfile.php";
+icms::$logger->disableLogger();
 include_once XOOPS_ROOT_PATH."/modules/formulize/include/extract.php";
 include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 

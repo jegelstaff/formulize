@@ -41,6 +41,7 @@ $maxExec = 60; // max seconds the script has to execute in. Based on the lowest 
 if(!defined("XOOPS_MAINFILE_INCLUDED")) {
 
     include '../../mainfile.php';
+    icms::$logger->disableLogger();
     if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotifications.txt")) {
         
         // check if there's a sending operation going on, but ignore if the lock is really old

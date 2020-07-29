@@ -5,6 +5,7 @@
 ignore_user_abort(true);
 header("Access-Control-Allow-Origin: *");
 include "../../mainfile.php";
+icms::$logger->disableLogger();
 
 global $xoopsUser;
 $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
