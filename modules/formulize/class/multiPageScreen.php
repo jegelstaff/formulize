@@ -83,6 +83,18 @@ class formulizeMultiPageScreen extends formulizeScreen {
 	    ksort($processedConditions);
 	    return $processedConditions;
 	}
+    
+    function elementIsPartOfScreen($elementObjectOrId) {
+        if(!$element = _getElementObject($elementObjectOrId)) {
+            return false;
+        }
+        foreach($this->getVar('pages') as $page) {
+            if(in_array($element->getVar('ele_id'), $page)) {
+                return true;
+            }
+        }
+        return false;
+    }
 	
 }
 
