@@ -757,6 +757,11 @@ define("_AM_UPLOAD_ERR_CANT_WRITE", "Your file was uploaded, but could not be sa
 define("_AM_UPLOAD_ERR_EXTENSION", "The web server rejected your file (a PHP extension stopped it from being uploaded).");
 /* End Upload element translation by François */
 
+define("_AM_GOOGLEFILE_SELECT", "Select");
+define("_AM_GOOGLEFILE_DELETE_WARN", "Are you sure you want to remove");
+define("_AM_GOOGLEFILE_REQUIRED", "You must select a file for");
+
+
 define("_formulize_CLOSE_FORM_ELEMENT", "You need to close the form element that is open first before you edit this one");
 
 define("_formulize_ENTRY_ID", "Entry ID");

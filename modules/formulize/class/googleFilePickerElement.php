@@ -82,7 +82,7 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
     // $ele_value will be only the values parsed out of the Options tab on the element's admin page, which follow the naming convention elements-ele_value -- other values that should be in ele_value will need to be parsed here from $_POST or elsewhere
     function adminSave($element, $ele_value) {
         $changed = false;
-        $element->setVar('ele_value', array('apikey'=>$ele_value['apikey'], 'clientid'=>$ele_value['clientid'], 'projectnumber'=>$ele_value['projectnumber']));
+        $element->setVar('ele_value', array('apikey'=>$ele_value['apikey'], 'clientid'=>$ele_value['clientid'], 'projectnumber'=>$ele_value['projectnumber'], 'mimetypes'=>str_replace(" ","",$ele_value['mimetypes'])));
         return $changed;
     }
     
@@ -92,10 +92,8 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
     // $ele_value will contain the options set for this element (based on the admin UI choices set by the user, possibly altered in the adminSave method)
     // $element is the element object
     function loadValue($value, $ele_value, $element) {
-        // dummy element will have a single value stored in the database, but when rendered, it will pickup the values from ele_value[0] and [1] and use those as the default.  See the render method.
-        // So, we'll erase ele_value[1] and set the value from the database as ele_value[0], and then everything will render right
-        $ele_value[0] = $value;
-        $ele_value[1] = "";
+        // add the saved file info to ele_value as the 'files' key
+        $ele_value['files'] = unserialize($value);
         return $ele_value;
     }
     
@@ -113,83 +111,142 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
     // $renderAsHiddenDefault is a flag to control what happens when we render as a hidden element for users who can't normally access the element -- typically we would set the default value inside a hidden element, or the current value if for some reason an entry is passed
     function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner, $renderAsHiddenDefault = false) {
         
+        $eleId = $element->getVar('ele_id');
+        
         $picker = "
         
         <script type='text/javascript'>
 
-            var developerKey = '".$ele_value['apikey']."';
-            var clientId = '".$ele_value['clientid']."'
-            var appId = '".$ele_value['projectnumber']."';
-            var scope = 'https://www.googleapis.com/auth/drive.file';
-            var pickerApiLoaded = false;
-            var oauthToken;
+            var developerKey$eleId = '".$ele_value['apikey']."';
+            var clientId$eleId = '".$ele_value['clientid']."'
+            var appId$eleId = '".$ele_value['projectnumber']."';
+            var scope$eleId = 'https://www.googleapis.com/auth/drive.file';
+            var pickerApiLoaded$eleId = false;
+            var oauthToken$eleId;
         
             // Use the Google API Loader script to load the google.picker script.
-            function loadPicker() {
-              gapi.load('auth2', {'callback': onAuthApiLoad});              
-              gapi.load('picker', {'callback': onPickerApiLoad});
+            function loadPicker$eleId() {
+              gapi.load('auth2', {'callback': onAuthApiLoad$eleId});              
+              gapi.load('picker', {'callback': onPickerApiLoad$eleId});
             }
 
-            function onAuthApiLoad() {
+            function onAuthApiLoad$eleId() {
               window.gapi.auth2.authorize(
                   {
-                    'client_id': clientId,
-                    'scope': scope,
+                    'client_id': clientId$eleId,
+                    'scope': scope$eleId,
                     'prompt': 'none'
                   },
-                  handleAuthResult);
+                  handleAuthResult$eleId);
             }
             
-            function onPickerApiLoad() {
-              pickerApiLoaded = true;
-              createPicker();
+            function onPickerApiLoad$eleId() {
+              pickerApiLoaded$eleId = true;
+              createPicker$eleId();
             }
         
-            function handleAuthResult(authResult) {
+            function handleAuthResult$eleId(authResult) {
               if (authResult && !authResult.error) {
-                oauthToken = authResult.access_token;
-                createPicker();
+                oauthToken$eleId = authResult.access_token;
+                createPicker$eleId();
+              } else if(authResult) {
+                // need to add in here the option for using this feature without Google sign in as the default authentication for the website!
+                // probably need to use window.gapi.auth2.init and then .signin ??
+                // OR WE NEED TO MAKE IT A USER OPTION IN THE ELEMENT, WHETHER TO PROMPT USER OR NOT...OR WE CHECK IF GOOGLE AUTHENTICATION IS ON AND PROMPT USER WHEN IT IS NOT ON.
               }
             }
         
             // Create and render a Picker object for searching images.
-            function createPicker() {
-              if (pickerApiLoaded && oauthToken) {
-                var view = new google.picker.View(google.picker.ViewId.DOCS);
-                view.setMimeTypes(\"image/png,image/jpeg,image/jpg,application/pdf\");
-                var picker = new google.picker.PickerBuilder()
+            function createPicker$eleId() {
+              if (pickerApiLoaded$eleId && oauthToken$eleId) {
+                var view$eleId = new google.picker.View(google.picker.ViewId.DOCS);";
+
+            if($ele_value['mimetypes']) {
+                $picker .= "
+                view$eleId.setMimeTypes(\"".$ele_value['mimetypes']."\");";
+            }
+            
+            $picker .= "
+                var picker$eleId = new google.picker.PickerBuilder()
                     .enableFeature(google.picker.Feature.NAV_HIDDEN)
                     .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
-                    .setAppId(appId)
-                    .setOAuthToken(oauthToken)
-                    .addView(view)
+                    .setAppId(appId$eleId)
+                    .setOAuthToken(oauthToken$eleId)
+                    .addView(view$eleId)
                     .addView(new google.picker.DocsUploadView())
-                    .setDeveloperKey(developerKey)
+                    .setDeveloperKey(developerKey$eleId)
+                    .setCallback(pickerCallback$eleId)
                     .build();
-                 picker.setVisible(true);
+                 picker$eleId.setVisible(true);
               }
             }
             
-            </script>
-        
-            <!-- The Google API Loader script. -->
-        <script type='text/javascript' src='https://apis.google.com/js/api.js?onload=loadPicker'></script>
+            function pickerCallback$eleId(data) {
+                if (data.action == google.picker.Action.PICKED) {
+                    for(i in data.docs) {
+                        addToList$eleId(data.docs[i].name, data.docs[i].url, data.docs[i].id);
+                    }
+                }
+            }
 
-        ";
+            function addToList$eleId(name, url, id) {
+                if(jQuery('#googlefile_".$markupName."_'+id).length == 0) {";
+                    $interactiveMarkup = $isDisabled ? "" : "<a href=\"\" onclick=\"warnAboutGoogleDelete$eleId(\''+id+'\', \''+name.replace(/\\\"/g, '&quot;')+'\');return false;\"><img src=\"".XOOPS_URL."/modules/formulize/images/x.gif\" /></a><input type=\"hidden\" name=\"".$markupName."[]\" value=\"'+name.replace(/\\\"/g, '&quot;')+'<{()}>'+url+'<{()}>'+id+'\">";
+                    $picker .= "
+                    jQuery('#".$markupName."_files').append('<div class=\"googlefile googlefile_$eleId\" id=\"googlefile_".$markupName."_'+id+'\"><a href=\"'+url+'\" target=\"_blank\">'+name+'</a> ".$interactiveMarkup."</div>');
+                }
+            }
+            
+            function warnAboutGoogleDelete$eleId(id, name) {
+                var answer = confirm('" . _AM_GOOGLEFILE_DELETE_WARN . " '+name+'?');
+                if(answer) {
+                    jQuery(\"#googlefile_".$markupName."_\"+id).remove();
+                }
+                return false;
+            }";
+            
+            if(count($ele_value['files'])>0) {
+                $picker .= "
+                jQuery(document).ready(function() {";
+                foreach($ele_value['files'] as $file) {
+                    $picker .= "
+                    addToList$eleId(\"".str_replace('"','\"',htmlspecialchars_decode($file['name'], ENT_QUOTES))."\", \"".$file['url']."\", \"".$file['id']."\");";
+                }
+                $picker .= "
+                });";
+            }
+            $picker .= "
+            
+        </script>";
         
-        return $picker;
+        static $boilerplateDrawn = false;
+        if(!$boilerplateDrawn) {
+            $picker .= "
+        <style>.googlefile { white-space: pre-line; }</style>
+        <script type='text/javascript' src='https://apis.google.com/js/api.js'></script>";
+            $boilerplateDrawn = true;
+        }
+        
+        if(!$isDisabled) {
+            $picker .= "<p><input type='button' onclick='loadPicker$eleId();' value='"._AM_GOOGLEFILE_SELECT."'></p>";
+        }
+        $picker .= "<p id='".$markupName."_files'></p>";
+        
+        $element = new xoopsFormLabel($caption, $picker);
+        
+        return $element;
     }
     
     // this method returns any custom validation code (javascript) that should figure out how to validate this element
     // 'myform' is a name enforced by convention that refers to the form where this element resides
     // use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
     function generateValidationCode($caption, $markupName, $element, $entry_id) {
-        $validationmsg = "Your value for $caption should not match the default value.";
-	$validationmsg = str_replace("'", "\'", stripslashes( $validationmsg ) );
-        $ele_value = $element->getVar('ele_value');
+        $eleId = $element->getVar('ele_id');
+        $validationmsg = _AM_GOOGLEFILE_REQUIRED." '".$caption."'";
+        $validationmsg = str_replace("'", "\'", stripslashes( $validationmsg ) );
         $validationCode = array();
-        $validationCode[] = "if(myform.{$markupName}.value == '".$ele_value[0].$ele_value[1]."') {\n";
-        $validationCode[] = "  window.alert('{$validationmsg}');\n myform.{$markupName}.focus();\n return false;\n ";
+        $validationCode[] = "if(jQuery('.googlefile_$eleId').length == 0) {\n";
+        $validationCode[] = "  window.alert('"._AM_GOOGLEFILE_REQUIRED."');\n return false;\n ";
         $validationCode[] = "}\n";
         return $validationCode;
     }
@@ -201,7 +258,14 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
 	// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
     // $subformBlankCounter is the instance of a blank subform entry we are saving. Multiple blank subform values can be saved on a given pageload and the counter differentiates the set of data belonging to each one prior to them being saved and getting an entry id of their own.
     function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
-        return formulize_db_escape($value); // strictly speaking, formulize will already escape all values it writes to the database, but it's always a good habit to never trust what the user is sending you!
+        // rendered hidden elements pass back a string with the separator below, and the name, url and id in this order
+        // we serialize the data in an array for saving
+        $files = array();
+        foreach($value as $fileData) {
+            $fileData = explode('<{()}>', $fileData);
+            $files[] = array('name'=>htmlspecialchars($fileData[0], ENT_QUOTES), 'url'=>$fileData[1], 'id'=>$fileData[2]);
+        }
+        return serialize($files);
     }
     
     // this method will handle any final actions that have to happen after data has been saved
@@ -239,8 +303,6 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
         $this->clickable = true; // make urls clickable
         $this->striphtml = true; // remove html tags as a security precaution
         $this->length = 100; // truncate to a maximum of 100 characters, and append ... on the end
-        
-        $value = strtoupper($value); // just as an example, we'll uppercase all text when displaying in a list
         
         return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
     }
