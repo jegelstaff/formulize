@@ -70,6 +70,7 @@ class formulize_themeForm extends XoopsThemeForm {
     private $frid = 0;
     private $screen;
     
+    // $screen is the screen being rendered, either a multipage or a single page form screen - multipage screen is passed through when rendering happens
     function __construct($title, $name, $action, $method = "post", $addtoken = false, $frid = 0, $screen = null) {
         $this->frid = $frid;
         $this->screen = $screen;
@@ -198,7 +199,13 @@ class formulize_themeForm extends XoopsThemeForm {
             } else {
                 $eleToSetForColumns = $ele;
             }
-            $columns = $this->_getColumns($eleToSetForColumns, 'reset'); // necessary so we set the column value for all elements, regardless of if they're being rendered or not, so we can pick up the value from session if a conditional element is activated later asynchronously
+
+            // set the column value for all elements, regardless of if they're being rendered or not, so we can pick up the value from session if a conditional element is activated later asynchronously
+            // but only do this when rendering the screen that the element is natively part of! -- conditionally hidden elements could otherwise end up with a different screen's settings as their cached-in-session settings
+            $eleToCheckForReset = is_numeric($eleToSetForColumns) ? $eleToSetForColumns : $ele->formulize_element;
+            if($this->screen AND $this->screen->elementIsPartOfScreen($eleToCheckForReset)) {
+                $columns = $this->_getColumns($eleToSetForColumns, 'reset');
+            }
 
 			if (!is_object($ele)) {// just plain add stuff if it's a literal string...
                 $columnData = $this->_getColumns($ele);

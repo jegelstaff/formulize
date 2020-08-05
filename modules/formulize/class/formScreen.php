@@ -56,6 +56,17 @@ class formulizeFormScreen extends formulizeScreen {
     $this->initVar("column1width", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
     $this->initVar("column2width", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
 	}
+    
+    function elementIsPartOfScreen($elementObjectOrId) {
+        if(!$element = _getElementObject($elementObjectOrId)) {
+            return false;
+        }
+        if(!is_array($this->getVar('formelements')) OR count($this->getVar('formelements')) == 0 OR in_array($element->getVar('ele_id'), $this->getVar('formelements'))) {
+            return true;
+        }
+        return false;
+    }
+    
 }
 
 class formulizeFormScreenHandler extends formulizeScreenHandler {
@@ -153,9 +164,9 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 	// THIS METHOD HANDLES ALL THE LOGIC ABOUT HOW TO ACTUALLY DISPLAY THIS TYPE OF SCREEN
 	// $screen is a screen object
     // $settings is used internally to pass list of entries settings back and forth to editing screens
-    function render($screen, $entry, $settings = "", $elements_only = false) {
+    function render($screen, $entry, $settings = array(), $elements_only = false) {
 		if(!is_array($settings)) {
-				$settings = "";
+				$settings = array();
 		}
 		$formframe = $screen->getVar('frid') ? $screen->getVar('frid') : $screen->getVar('fid');
 		$mainform = $screen->getVar('frid') ? $screen->getVar('fid') : "";
