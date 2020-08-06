@@ -2715,7 +2715,7 @@ function icms_need_do_br($moduleName=false) {
 function authenticationURL($needAuth) {
     if(!$needAuth) { return ''; }
     $client = setupAuthentication();
-    $client->setApprovalPrompt('force');
+    $client->setPrompt('select_account');
     $authUrl = $client->createAuthUrl();
     return $authUrl;
 }
@@ -2736,6 +2736,8 @@ function setupAuthentication() {
 	//Create Client Request to access Google API
 	$client = new Google_Client();
 	
+    $client->setAccessType ("offline");
+    
 	$auth_creds = XOOPS_TRUST_PATH.'/client_secrets.json';
 	if (file_exists($auth_creds)) {
 		//set credentials for Auth
@@ -2749,6 +2751,7 @@ function setupAuthentication() {
 
 	//want to request email info for username later on
 	$client->setScopes('email');
+    $client->addScope('https://www.googleapis.com/auth/drive.file');
 	$client->addScope('profile');
 
 	//Send Client Request

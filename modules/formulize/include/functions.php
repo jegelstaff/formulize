@@ -7559,6 +7559,7 @@ function writeEntryDefaults($target_fid,$target_entry) {
   
 }
 
+// THIS NEEDS TO BE ADDED AS A METHOD IN THE CUSTOM ELEMENTS CLASS!
 // returns an array of element id/default value pairs
 // valid for a specific entry
 function getEntryDefaults($target_fid,$target_entry) {
