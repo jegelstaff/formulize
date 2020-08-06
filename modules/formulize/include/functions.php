@@ -2897,11 +2897,12 @@ function getTextboxDefault($ele_value, $form_id, $entry_id, $placeholder="") {
 
 
 function getDateElementDefault($default_hint) {
+    if($default_hint == "0000-00-00") { return ""; }
     if (preg_replace("/[^A-Z{}]/", "", $default_hint) === "{TODAY}") {
         $number = str_replace('+', '', preg_replace("/[^0-9+-]/", "", $default_hint));
         return mktime(0, 0, 0, date("m"), (date("d") + intval($number)), date("Y"));
     }
-    return strtotime($default_hint);
+    return $default_hint ? strtotime($default_hint) : "";
 }
 
 
