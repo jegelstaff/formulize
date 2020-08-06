@@ -81,7 +81,8 @@ $modversion['tables'] = array(
 	"formulize_deletion_logs",
     "formulize_apikeys",
 	"formulize_tokens",
-    "formulize_digest_data"
+    "formulize_digest_data",
+    "formulize_passcodes"
 );
 
 $modversion['formulize_exportable_tables'] = array(

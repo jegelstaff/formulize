@@ -30,6 +30,26 @@ class SyncCompareCatalog {
         // open a connection to the database
         $this->db = new \PDO('mysql'.':host='.XOOPS_DB_HOST.';dbname='.XOOPS_DB_NAME, XOOPS_DB_USER, XOOPS_DB_PASS);
         $this->db->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        
+        $getModes = 'SELECT @@SESSION.sql_mode';
+        $modesSet = false;
+        if($res = $this->db->query($getModes)) {
+            $modes = $res->fetch( PDO::FETCH_NUM );
+            $modes = $modes[0]; // only one result
+            $modesSet = true;
+            if(strstr($modes, 'STRICT_')) {
+                $modes = explode(',', str_replace(array('STRICT_TRANS_TABLES', 'STRICT_ALL_TABLES'), '', $modes)); // remove strict options
+                $modes = array_filter($modes); // remove blanks, possibly caused by commas after removed modes
+                $setModes = "SET SESSION sql_mode = '".implode(',',$modes)."'";
+                if(!$res = $this->db->query($setModes)) {
+                    $modesSet = false;
+                }
+            }
+        }
+        if(!$modesSet) {
+            exit('Error: the database mode could not be set for proper operation of Formulize. Please notify a webmaster immediately. Thank you.');            
+        }
+        
 
         // pull metadata from xoops_version file
         $module_handler = xoops_gethandler('module');
@@ -312,7 +332,7 @@ class SyncCompareCatalog {
                 $recTableKey = $joinTableInfo["join_field"][0];
                 $recTableKeyVal = $record[$recTableKey];
 
-                $changesTable = $this->changes["_".$joinTableName];
+                $changesTable = $this->changes[$joinTableName];
                 $fieldValue = false;
                 if ($changesTable) {
                     foreach ($changesTable["inserts"] as $rec) {
