@@ -137,6 +137,8 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
             return;
         }
         
+        $previouslyRenderingScreen = $GLOBALS['formulize_screenCurrentlyRendering'];
+        
         // SOME STANDARDS FOR HOW TO HANDLE 'SAVE' AND 'SAVE AND LEAVE' BUTTONS AND THE DONE DEST NEED TO BE DEVISED FOR TEMPLATE SCREENS!!
         
         global $xoTheme;
@@ -148,6 +150,8 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
         $custom_code_filename = $this->custom_code_filename($screen);
         $template_filename = $this->template_filename($screen);
 
+        $GLOBALS['formulize_screenCurrentlyRendering'] = $screen;
+        
         if (file_exists($custom_code_filename) and file_exists($template_filename)) {
             $vars = $this->run_template_php_code($screen, $custom_code_filename, $entry_id, $settings);
             global $xoopsTpl;
@@ -159,6 +163,7 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
         } else {
             echo "<p>Error: specified screen template does not exist.</p>";
         }
+        $GLOBALS['formulize_screenCurrentlyRendering'] = $previouslyRenderingScreen;
     }
 
 
