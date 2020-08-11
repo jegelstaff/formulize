@@ -1198,14 +1198,25 @@ class formulizeFormsHandler {
                 $secondOp = $filterSettings[1][$i] == "=" ? " IS " : " IS NOT ";
                 $perGroupFilter .= "($formAlias`".$filterSettings[0][$i]."` ".htmlspecialchars_decode($filterSettings[1][$i]) . " '' OR $formAlias`".$filterSettings[0][$i]."` $secondOp NULL)"; 
             } else {
+                $element_handler = xoops_getmodulehandler('elements', 'formulize');
+                $elementObject = $element_handler->get($filterSettings[0][$i]);
                 if(substr($termToUse,0,1)=="{" AND substr($termToUse,-1) == "}") { // convert { } references to field references
                     $termToUse = "`".formulize_db_escape(substr($termToUse,1,-1))."`";
+                } elseif($elementObject->canHaveMultipleValues AND !$elementObject->isLinked) { // if we're looking up against a multiselect element that stores data with the *=+*: prefix - ugh
+                    if($filterSettings[1][$i] == "=") {
+                        $filterSettings[1][$i] = "LIKE";
+                    }
+                    if($filterSettings[1][$i] == "NOT") {
+                        $filterSettings[1][$i] = "NOT LIKE";
+                    }
+                    $perGroupFilter .= "($formAlias`".$filterSettings[0][$i]."` ".htmlspecialchars_decode($filterSettings[1][$i]) . " " . "\"$likeBits"."*=+*:".formulize_db_escape($termToUse)."*=+*:"."$likeBits\" OR $formAlias`".$filterSettings[0][$i]."` ".htmlspecialchars_decode($filterSettings[1][$i]) . " " . "\"$likeBits"."*=+*:".formulize_db_escape($termToUse)."\")";
+                    continue; // in this case, skip the rest, we don't want to set the $perGroupFilter in the normal way below
                 } else {
-			$termToUse = (is_numeric($termToUse) AND !strstr(strtoupper($filterSettings[1][$i]), "LIKE")) ? $termToUse : "\"$likeBits".formulize_db_escape($termToUse)."$likeBits\"";
+                    $termToUse = (is_numeric($termToUse) AND !strstr(strtoupper($filterSettings[1][$i]), "LIKE")) ? $termToUse : "\"$likeBits".formulize_db_escape($termToUse)."$likeBits\"";
                 }
                 $filterSettings[1][$i] = ($filterSettings[1][$i] == "NOT") ? "!=" : $filterSettings[1][$i];
-			$perGroupFilter .= "$formAlias`".$filterSettings[0][$i]."` ".htmlspecialchars_decode($filterSettings[1][$i]) . " " . $termToUse; // htmlspecialchars_decode is used because &lt;= might be the operator coming out of the DB instead of <=
-		}
+                $perGroupFilter .= "$formAlias`".$filterSettings[0][$i]."` ".htmlspecialchars_decode($filterSettings[1][$i]) . " " . $termToUse; // htmlspecialchars_decode is used because &lt;= might be the operator coming out of the DB instead of <=
+            }
 		}
 
 		return $perGroupFilter;
