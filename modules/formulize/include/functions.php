@@ -81,6 +81,7 @@ while ($table = $xoopsDB->fetchRow($resultst)) {
     }
 }
 
+global $xoopsConfig;
 if (file_exists(XOOPS_ROOT_PATH . "/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
     include_once XOOPS_ROOT_PATH . "/modules/formulize/language/".$xoopsConfig['language']."/main.php";
 } else {
