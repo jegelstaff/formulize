@@ -340,7 +340,7 @@ class formulize_themeForm extends XoopsThemeForm {
                     foreach($linkedEntries['entries'] as $fid=>$theseEntries) {
                         foreach($theseEntries as $entry_id) {
                             if(!$entry_id) { continue; }
-                            $condition = "(parseInt(document.formulize_mainform.deletesubsflag.value) == ".$fid." && jQuery(\"input[name='delbox" . $entry_id . "']\").length && jQuery(\"input[name='delbox" . $entry_id . "']\").prop('checked'))";
+                            $condition = "(jQuery('#formulize_mainform').length && parseInt(document.formulize_mainform.deletesubsflag.value) == ".$fid." && jQuery(\"input[name='delbox" . $entry_id . "']\").length && jQuery(\"input[name='delbox" . $entry_id . "']\").prop('checked'))";
                             if($js) {
                                 $js .= " || $condition";
                             } else {
