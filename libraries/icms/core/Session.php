@@ -101,17 +101,21 @@ class icms_core_Session {
                 if($internalUid = Formulize::getXoopsResourceID(Formulize::USER_RESOURCE, $auth->getNameId())) {
                     $externalUid = $auth->getNameId();
                 } else {
-                    // check if there is a group specified in the SAML response
-                    // MUST GET GROUP FROM SAML IF ITS IN THERE YET
-                    
-                    // No existing user, no group, need to send to new user page to gather token...
-                    $_SESSION['resouceMapKey'] = $auth->getNameId();
-                    $samlAttributes = $auth->getAttributes();
-                    $_SESSION['name'] = $samlAttributes['firstName'][0].' '.$samlAttributes['lastName'][0]; //<<<<-MUST CONVERT TO SAML ATTRIBUTE FIRST NAME LAST NAME
-                    $_SESSION['newuser'] = bin2hex(random_bytes(32)); // add a key to the session and URL and check this on the other end to make sure that they are equal
-                    $url = XOOPS_URL."/new_user.php?newuser=".$_SESSION['newuser'];
-                    header("Location: ".$url);
-                    exit;
+                    // check if there is a group specified in the SAML response?
+                    $samlGroups = array();
+                    if($uid = $newFormulizeUser->insertAndMapUser(array_keys($samlGroups))) {
+                        header("Location: ".XOOPS_URL);
+                        exit();
+                    } else {
+                        // No existing user, no group, need to send to new user page to gather token...
+                        $_SESSION['resouceMapKey'] = $auth->getNameId();
+                        $samlAttributes = $auth->getAttributes();
+                        $_SESSION['name'] = $samlAttributes['firstName'][0].' '.$samlAttributes['lastName'][0]; //<<<<-MUST CONVERT TO SAML ATTRIBUTE FIRST NAME LAST NAME
+                        $_SESSION['newuser'] = bin2hex(random_bytes(32)); // add a key to the session and URL and check this on the other end to make sure that they are equal
+                        $url = XOOPS_URL."/new_user.php?newuser=".$_SESSION['newuser'];
+                        header("Location: ".$url);
+                        exit;
+                    }
                 }
             }
         }

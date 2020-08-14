@@ -287,14 +287,14 @@ class formulizeDataHandler  {
 	// returns an array with keys 0 through 3, corresponding to creation datetime, mod datetime, creation uid, mod uid
 	// intended to be called like this:
 	// $data_handler = new formulizeDataHandler($fid);
-  // list($creation_datetime, $mod_datetime, $creation_uid, $mod_uid) = $data_handler->getEntryMeta($entry);
+    // list($creation_datetime, $mod_datetime, $creation_uid, $mod_uid) = $data_handler->getEntryMeta($entry);
 	// if $updateCache is set, then the data should be queried for fresh, and cache reupdated
 	function getEntryMeta($id, $updateCache = false) {
 		static $cachedEntryMeta = array();
 		if(!isset($cachedEntryMeta[$this->fid][$id]) OR $updateCache) {
 			global $xoopsDB;
-      $form_handler = xoops_getmodulehandler('forms', 'formulize');
-      $formObject = $form_handler->get($this->fid);
+            $form_handler = xoops_getmodulehandler('forms', 'formulize');
+            $formObject = $form_handler->get($this->fid);
 			$sql = "SELECT creation_datetime, mod_datetime, creation_uid, mod_uid FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = " . intval($id);
 			if(!$res = $xoopsDB->query($sql)) {
 				$cachedEntryMeta[$this->fid][$id] = false;
@@ -450,6 +450,9 @@ class formulizeDataHandler  {
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
 		}
+        if($xoopsDB->getRowsNum($res)==0) {
+            return false;
+        }
 		$row = $xoopsDB->fetchRow($res);
 		return $row[0];
 	}
@@ -942,7 +945,7 @@ class formulizeDataHandler  {
         $dataTypeMap = array();
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
         $formObject = $form_handler->get($this->fid);
-        $dataTypeSQL = "SELECT information_schema.columns.data_type, information_schema.columns.column_name FROM information_schema.columns WHERE information_schema.columns.table_name = '".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."'";
+        $dataTypeSQL = "SELECT information_schema.columns.data_type, information_schema.columns.column_name FROM information_schema.columns WHERE information_schema.columns.table_schema = '".SDATA_DB_NAME."' AND information_schema.columns.table_name = '".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."'";
         if($dataTypeRes = $xoopsDB->query($dataTypeSQL)) {
             while($dataTypeRow = $xoopsDB->fetchRow($dataTypeRes)) {
                 $dataTypeMap[$dataTypeRow[1]] = $dataTypeRow[0];

@@ -70,6 +70,7 @@ class formulize_themeForm extends XoopsThemeForm {
     private $frid = 0;
     private $screen;
     
+    // $screen is the screen being rendered, either a multipage or a single page form screen - multipage screen is passed through when rendering happens
     function __construct($title, $name, $action, $method = "post", $addtoken = false, $frid = 0, $screen = null) {
         $this->frid = $frid;
         $this->screen = $screen;
@@ -198,17 +199,32 @@ class formulize_themeForm extends XoopsThemeForm {
             } else {
                 $eleToSetForColumns = $ele;
             }
-            $columns = $this->_getColumns($eleToSetForColumns, 'reset'); // necessary so we set the column value for all elements, regardless of if they're being rendered or not, so we can pick up the value from session if a conditional element is activated later asynchronously
+
+            // set the column value for all elements, regardless of if they're being rendered or not, so we can pick up the value from session if a conditional element is activated later asynchronously
+            // but only do this when rendering the screen that the element is natively part of! -- conditionally hidden elements could otherwise end up with a different screen's settings as their cached-in-session settings
+            $eleToCheckForReset = is_numeric($eleToSetForColumns) ? $eleToSetForColumns : $ele->formulize_element;
+            if($this->screen AND $this->screen->elementIsPartOfScreen($eleToCheckForReset)) {
+                $columns = $this->_getColumns($eleToSetForColumns, 'reset');
+            }
 
 			if (!is_object($ele)) {// just plain add stuff if it's a literal string...
+                $columnData = $this->_getColumns($ele);
 				if(strstr($ele, "<<||>>")) {
 					$ele = explode("<<||>>", $ele);
-					$ret .= "<tr id='formulize-".$ele[1]."'>".$ele[0]."</tr>";
+					$tempRet = "<tr id='formulize-".$ele[1]."'>".$ele[0];
 				} elseif(substr($ele, 0, 3) != "<tr") {
-					$ret .= "<tr>$ele</tr>";
+					$tempRet = "<tr>$ele";
 				} else {
-					$ret .= $ele;
+					$tempRet = str_replace("</tr>","",$ele);
 				}
+                if($columnData[0] == 1) {
+                    $tempRet = str_replace("colspan='2'", "", $tempRet);
+                }
+                if(($columnData[0] != 1 AND $columnData[2] != 'auto' AND $columnData[1] != 'auto')
+                    OR ($columnData[0] == 1 AND $columnData[1] != 'auto')) {
+                        $tempRet .= '<td class="formulize-spacer-column">&nbsp;</td>';
+                }
+                $ret .= $tempRet."</tr>";
 			} elseif ( !$ele->isHidden() ) {
 				$ret .= "<tr id='formulize-".$ele->getName()."' class='".$ele->getClass()."' valign='top' align='" . _GLOBAL_LEFT . "'>";
 				$ret .= $this->_drawElementElementHTML($ele);
@@ -2329,21 +2345,16 @@ function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid,
 			// alphabetize the proxy list added 11/2/04
 			array_multisort($punames, $unique_users);
 
-			if($entry_id) {
-                if($entry_id != 'new') {
-				include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
-				$data_handler = new formulizeDataHandler($fid);
-				$entryMeta = $data_handler->getEntryMeta($entry_id);
-                    $entryOwner = $entryMeta['creation_uid'];
-                    $member_handler = xoops_gethandler('member');
-                    if($ownerUserObject = $member_handler->getUser($entryOwner)) {
-                        $entryOwnerName = $ownerUserObject->getVar('uname');
-                    } else {
-                        $entryOwnerName = _FORM_ANON_USER;
-                    }
+			if($entry_id AND $entry_id != 'new') {
+                include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+                $data_handler = new formulizeDataHandler($fid);
+                list($creation_datetime, $mod_datetime, $creation_uid, $mod_uid) = $data_handler->getEntryMeta($entry_id);
+                $entryOwner = $creation_uid;
+                $member_handler = xoops_gethandler('member');
+                if($ownerUserObject = $member_handler->getUser($entryOwner)) {
+                    $entryOwnerName = $ownerUserObject->getVar('uname');
                 } else {
-                    global $xoopsUser;
-                    $entryOwnerName = $xoopsUser ? $xoopsUser->getVar('uname') : _FORM_ANON_USER;
+                    $entryOwnerName = _FORM_ANON_USER;
                 }
 				$proxylist = new XoopsFormSelect(_AM_SELECT_UPDATE_OWNER, 'updateowner_'.$fid.'_'.$entry_id, 0, 1);
 				$proxylist->addOption('nochange', _AM_SELECT_UPDATE_NOCHANGE.$entryOwnerName);

@@ -32,6 +32,8 @@
 include_once "../../mainfile.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 
+icms::$logger->disableLogger();
+
 while(ob_get_level()) {
     ob_end_clean();
 }

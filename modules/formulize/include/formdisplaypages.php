@@ -459,9 +459,6 @@ function generatePrevNextButtonMarkup($buttonType, $buttonText, $usersCanSave, $
     }
     
     if($buttonType == "next" OR $buttonType == "save") {
-        if(!$usersCanSave AND $nextPage==$thanksPage) {
-            $buttonJavascriptAndExtraCode = "disabled=true";
-        }
         $buttonMarkup = "<input type=button name='$buttonType' id='$buttonType' class='formulize-form-submit-button' value='" . $buttonText . "' $buttonJavascriptAndExtraCode>\n";
     } elseif($buttonType == "prev") {
         if($previousPage == "none") {

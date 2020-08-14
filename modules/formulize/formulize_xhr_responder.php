@@ -35,6 +35,8 @@
 // this file listens for incoming formulize_xhr messages, and responds accordingly
 
 require_once "../../mainfile.php"; // initialize the xoops stack so we have access to the user object, etc if necessary
+icms::$logger->disableLogger();
+
 // check that the user who sent this request is the same user we have a session for now, if not, bail
 $sentUid = intval($_GET['uid']);
 
@@ -42,7 +44,6 @@ if(($xoopsUser AND $sentUid != $xoopsUser->getVar('uid')) OR (!$xoopsUser AND $s
   exit();
 }
 
-ob_end_clean(); // stop all buffering of output (ie: related to the error logging, and/or xLangauge?)
 include_once "../../header.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
 include XOOPS_ROOT_PATH .'/modules/formulize/include/customCodeForApplications.php';
@@ -320,12 +321,18 @@ function renderElement($elementObject, $entryId) {
             $isDisabled = $deReturnValue[1];
             // rendered HTML code below is taken from the formulize classes at the top of include/formdisplay.php
             if($elementObject->getVar('ele_type') == "ib") {// if it's a break, handle it differently...
-              $class = ($form_ele[1] != '') ? " class='".$form_ele[1]."'" : '';
-              if ($form_ele[0]) {
-                $html = "<td colspan='2' $class><div style=\"font-weight: normal;\">" . trans(stripslashes($form_ele[0])) . "</div></td>";
-              } else {
-                $html = "<td colspan='2' $class>&nbsp;</td>";
-              }
+                $class = ($form_ele[1] != '') ? " class='".$form_ele[1]."'" : '';
+                $columnData = formulize_themeForm::_getColumns($elementObject->getVar('ele_id'));
+                $colspan = $columnData[0] == 1 ? "" : "colspan='2'";
+                if ($form_ele[0]) {
+                    $html = "<td $colspan $class><div style=\"font-weight: normal;\">" . trans(stripslashes($form_ele[0])) . "</div></td>";
+                } else {
+                    $html = "<td $colspan $class>&nbsp;</td>";
+                }
+                if(($columnData[0] != 1 AND $columnData[2] != 'auto' AND $columnData[1] != 'auto')
+                    OR ($columnData[0] == 1 AND $columnData[1] != 'auto')) {
+                        $html .= '<td class="formulize-spacer-column">&nbsp;</td>';
+                }
             } else {
               require_once XOOPS_ROOT_PATH."/modules/formulize/include/formdisplay.php"; // need the formulize_themeForm
               $html = formulize_themeForm::_drawElementElementHTML($form_ele);
