@@ -1152,11 +1152,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
         global $formulize_subformElementsWithNewEntries, $formulize_newSubformEntries;
         global $xoopsUser;
 
-        // need to always include the subformelementid that is being displayed, regardless of whether there are more subs below this or not      
-        $subformElementIdToUse = isset($_POST['goto_subformElementId']) ? intval($_POST['goto_subformElementId']) : 0; 
-        $form->addElement (new XoopsFormHidden ('goto_subformElementId', $subformElementIdToUse)); // switches to new one if we're drilling down
-        $form->addElement (new XoopsFormHidden ('prev_subformElementId', $subformElementIdToUse)); // always remains the current one
-        
         // opens new entries in subform, if subform element is displaying sub entries via a multipage screen
         // should it be any kind of screen??
         // a multipage record is harder to represent as a row. A single page form could just be the more complete version of a row, so we show row and let people dive in.
@@ -1342,8 +1337,15 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			drawJavascriptForConditionalElements($GLOBALS['formulize_renderedElementHasConditions'], $formulize_governingElements, $formulize_oneToOneElements, $formulize_oneToOneMetaData);	
 		}
 		
+        // need to always include, once, the subformelementid that is being displayed, regardless of whether there are more subs below this or not
+        $idForForm = "";
+        if(!$formElementsOnly) {
+            $subformElementIdToUse = isset($_POST['goto_subformElementId']) ? intval($_POST['goto_subformElementId']) : 0; 
+            $form->addElement (new XoopsFormHidden ('goto_subformElementId', $subformElementIdToUse)); // switches to new one if we're drilling down
+            $form->addElement (new XoopsFormHidden ('prev_subformElementId', $subformElementIdToUse)); // always remains the current one
+            $idForForm = "id=\"formulizeform\""; // only use the master id when rendering a "normal" form, the master one on the page, not when rendering disembodied elements only forms!
+        }
 
-		$idForForm = $formElementsOnly ? "" : "id=\"formulizeform\""; // when rendering disembodied forms, don't use the master id!
 		print "<div $idForForm>".$form->render()."</div><!-- end of formulizeform -->"; // note, security token is included in the form by the xoops themeform render method, that's why there's no explicity references to the token in the compiling/generation of the main form object
 
         // floating save button
@@ -1954,6 +1956,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 
 	$need_delete = 0;
 	$drawnHeadersOnce = false;
+    static $drawnSubformBlankHidden = array();
 
     // div for View button dialog
     $col_two = "<div id='subentry-dialog' style='display:none'></div>\n";
@@ -2004,12 +2007,15 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 				// nearly same header drawing code as in the 'else' for drawing regular entries
 				if(!$drawnHeadersOnce) {
 					$col_two .= "<tr><td>\n";
-					$col_two .= "<input type=\"hidden\" name=\"formulize_subformValueSource_$subform_id\" value=\"$value_source\">\n";
-					$col_two .= "<input type=\"hidden\" name=\"formulize_subformValueSourceForm_$subform_id\" value=\"$value_source_form\">\n";
-					$col_two .= "<input type=\"hidden\" name=\"formulize_subformValueSourceEntry_$subform_id"."[]\" value=\"$entry\">\n";
-					$col_two .= "<input type=\"hidden\" name=\"formulize_subformElementToWrite_$subform_id\" value=\"$element_to_write\">\n";
-					$col_two .= "<input type=\"hidden\" name=\"formulize_subformSourceType_$subform_id\" value=\"".$elementq[0]['fl_common_value']."\">\n";
-					$col_two .= "<input type=\"hidden\" name=\"formulize_subformId_$subform_id\" value=\"$subform_id\">\n"; // this is probably redundant now that we're tracking sfid in the names of the other elements
+                    if(!isset($drawnSubformBlankHidden[$subform_id])) {
+                        $col_two .= "<input type=\"hidden\" name=\"formulize_subformValueSource_$subform_id\" value=\"$value_source\">\n";
+                        $col_two .= "<input type=\"hidden\" name=\"formulize_subformValueSourceForm_$subform_id\" value=\"$value_source_form\">\n";
+                        $col_two .= "<input type=\"hidden\" name=\"formulize_subformValueSourceEntry_$subform_id"."[]\" value=\"$entry\">\n";
+                        $col_two .= "<input type=\"hidden\" name=\"formulize_subformElementToWrite_$subform_id\" value=\"$element_to_write\">\n";
+                        $col_two .= "<input type=\"hidden\" name=\"formulize_subformSourceType_$subform_id\" value=\"".$elementq[0]['fl_common_value']."\">\n";
+                        $col_two .= "<input type=\"hidden\" name=\"formulize_subformId_$subform_id\" value=\"$subform_id\">\n"; // this is probably redundant now that we're tracking sfid in the names of the other elements
+                        $drawnSubformBlankHidden[$subform_id] = true;
+                    }
 					$col_two .= "</td>\n";
 					foreach($headersToDraw as $x=>$thishead) {
 						if($thishead) {
@@ -3023,7 +3029,7 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
         foreach($allEntries as $fid=>$fidEntries) {
             foreach($fidEntries as $entry_id) {
                 if($entry_id) {
-                    $form->addElement(new XoopsFormHidden ('form_'.$fid.'_rendered_entry', $entry_id));
+                    $form->addElement(new XoopsFormHidden ('form_'.$fid.'_rendered_entry[]', $entry_id));
                 }
             }
         }
