@@ -125,7 +125,7 @@ function patch40() {
 
     $needsPatch = false;
 
-    $tableCheckSql = "SELECT 1 FROM information_schema.tables WHERE information_schema.columns.table_schema = '".SDATA_DB_NAME."' AND  information_schema.table_name = '".$xoopsDB->prefix(formulize_db_escape($checkThisTable)) ."'";
+    $tableCheckSql = "SELECT 1 FROM information_schema.tables WHERE table_schema = '".SDATA_DB_NAME."' AND table_name = '".$xoopsDB->prefix(formulize_db_escape($checkThisTable)) ."'";
     $tableCheckRes = formulize_DBPatchCheckSQL($tableCheckSql, $needsPatch); // may modify needsPatch!
     if ($tableCheckRes AND !$needsPatch AND $checkThisField) { // table was found, and we're looking for a field in it
         $fieldCheckSql = "SHOW COLUMNS FROM " . $xoopsDB->prefix(formulize_db_escape($checkThisTable)) ." LIKE '".formulize_db_escape($checkThisField)."'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
