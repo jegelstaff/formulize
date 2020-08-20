@@ -945,7 +945,7 @@ class formulizeDataHandler  {
         $dataTypeMap = array();
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
         $formObject = $form_handler->get($this->fid);
-        $dataTypeSQL = "SELECT information_schema.columns.data_type, information_schema.columns.column_name FROM information_schema.columns WHERE information_schema.columns.table_name = '".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."'";
+        $dataTypeSQL = "SELECT information_schema.columns.data_type, information_schema.columns.column_name FROM information_schema.columns WHERE information_schema.columns.table_schema = '".SDATA_DB_NAME."' AND information_schema.columns.table_name = '".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."'";
         if($dataTypeRes = $xoopsDB->query($dataTypeSQL)) {
             while($dataTypeRow = $xoopsDB->fetchRow($dataTypeRes)) {
                 $dataTypeMap[$dataTypeRow[1]] = $dataTypeRow[0];

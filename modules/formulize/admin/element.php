@@ -675,7 +675,7 @@ function has_index($element,$id_form) {
     $formObject = $form_handler->get($id_form);
 
     //Complex check if
-    $elementDataSQL = "SELECT stats.index_name FROM information_schema.statistics AS stats INNER JOIN (SELECT count( 1 ) AS amountCols, index_name FROM information_schema.statistics WHERE table_name = '".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."' GROUP BY index_name) AS amount ON amount.index_name = stats.index_name WHERE stats.table_name = '".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."' AND stats.column_name = '".$element->getVar('ele_handle')."' AND amount.amountCols =1";
+    $elementDataSQL = "SELECT stats.index_name FROM information_schema.statistics AS stats INNER JOIN (SELECT count( 1 ) AS amountCols, index_name FROM information_schema.statistics WHERE table_schema = '".SDATA_DB_NAME."' AND table_name = '".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."' GROUP BY index_name) AS amount ON amount.index_name = stats.index_name WHERE stats.table_name = '".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."' AND stats.column_name = '".$element->getVar('ele_handle')."' AND amount.amountCols =1";
 
     // Simple sql with no check that it is not a multi column index
     //$elementDataSQL = "SHOW  INDEX  FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." WHERE Column_Name = '".$element->getVar('ele_handle')."'";

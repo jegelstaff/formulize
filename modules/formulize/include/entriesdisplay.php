@@ -1401,9 +1401,12 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		}
 
     formulize_benchmark("before rendering top template");
+        $buttonCodeArray['submitButton'] = $submitButton;
 		formulize_screenLOETemplate($screen, "top", $buttonCodeArray, $settings, $messageText);
     formulize_benchmark("after rendering top template");
-		$buttonCodeArray['submitButton'] = $submitButton; // send this back so that we can put it at the bottom of the page if necessary
+        if(strstr($screen->getTemplate('toptemplate'), "\$submitButton")) {
+            unset($buttonCodeArray['submitButton']); // do not send this back if it has been used. Otherwise, send it back and we can put it at the bottom of the page if necessary
+        }
 
 	}
 
@@ -3876,11 +3879,13 @@ foreach($lockedColumns as $thisColumn) {
 	});
 
 	var saveButtonOffset = jQuery('#floating-list-of-entries-save-button').offset();
-	saveButtonOffset.left = 15;
-	floatSaveButton(saveButtonOffset);
-	jQuery(window).scroll(function () {
-		floatSaveButton(saveButtonOffset);
-	});
+    if (saveButtonOffset) {
+        saveButtonOffset.left = 15;
+        floatSaveButton(saveButtonOffset);
+        jQuery(window).scroll(function () {
+            floatSaveButton(saveButtonOffset);
+        });
+    }
 
 });
 

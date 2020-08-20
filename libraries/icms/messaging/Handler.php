@@ -304,6 +304,17 @@ class icms_messaging_Handler {
 		return TRUE;
 	}
 
+    // ADDED BY JULIAN EGELSTAFF AUG 12 2020 TO HANDLE ATTACHMENTS
+    // Exposes the addAttachment method on the private multimailer property (which goes back to the underlying PHPMailer class)
+    public function addAttachment($path,
+        $name = '',
+        $encoding = 'base64',
+        $type = '',
+        $disposition = 'attachment'
+        ) {
+        $this->multimailer->addAttachment($path, $name, $encoding, $type, $disposition);
+    }
+    
 	public function getErrors($ashtml = true) {
 		if (!$ashtml) {
 			return $this->errors;

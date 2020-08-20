@@ -81,6 +81,7 @@ while ($table = $xoopsDB->fetchRow($resultst)) {
     }
 }
 
+global $xoopsConfig;
 if (file_exists(XOOPS_ROOT_PATH . "/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
     include_once XOOPS_ROOT_PATH . "/modules/formulize/language/".$xoopsConfig['language']."/main.php";
 } else {
@@ -6483,9 +6484,13 @@ function formulize_makeOneToOneLinks($frid, $fid) {
                 }
                 $entryToWriteToForm1 = $GLOBALS['formulize_allWrittenEntryIds'][$form1][0] ? $GLOBALS['formulize_allWrittenEntryIds'][$form1][0] : '';
                 $entryToWriteToForm1 = (!$entryToWriteToForm1 AND $GLOBALS['formulize_allSubmittedEntryIds'][$form1][0]) ? $GLOBALS['formulize_allSubmittedEntryIds'][$form1][0] : $entryToWriteToForm1;
-                $entryToWriteToForm1 = (!$entryToWriteToForm1 AND $_POST['form_'.$form1.'_rendered_entry']) ? $_POST['form_'.$form1.'_rendered_entry'] : $entryToWriteToForm1;
-                if(!$entryToWriteToForm1) {
-                    if(isset($_POST['entry'.$form1]) AND is_numeric($_POST['entry'.$form1])) {
+                if(!$entryToWriteToForm1 AND is_array($_POST['form_'.$form1.'_rendered_entry']) AND isset($_POST['form_'.$form1.'_rendered_entry'][0]) AND is_numeric($_POST['form_'.$form1.'_rendered_entry'][0])) {
+                    if(count($_POST['form_'.$form1.'_rendered_entry']) == 1) {
+                        $entryToWriteToForm1 = intval($_POST['form_'.$form1.'_rendered_entry'][0]);
+                    } else {
+                        error_log("Formulize error: there was more than one entry in $form1 included in the dataset for this pageload, so we could not determine a single entry for establishing one-to-one connections.");
+                    }
+                    if(!$entryToWriteToForm1 AND isset($_POST['entry'.$form1]) AND is_numeric($_POST['entry'.$form1])) {
                         // last ditch... try to see if an entry in the main form was declared in the form submission itself (no element is present on screen it seems)
                         $entryToWriteToForm1 = $_POST['entry'.$form1];
                     } else {
@@ -6494,9 +6499,13 @@ function formulize_makeOneToOneLinks($frid, $fid) {
                 }
                 $entryToWriteToForm2 = $GLOBALS['formulize_allWrittenEntryIds'][$form2][0] ? $GLOBALS['formulize_allWrittenEntryIds'][$form2][0] : '';
                 $entryToWriteToForm2 = (!$entryToWriteToForm2 AND $GLOBALS['formulize_allSubmittedEntryIds'][$form2][0]) ? $GLOBALS['formulize_allSubmittedEntryIds'][$form1][0] : $entryToWriteToForm2;
-                $entryToWriteToForm2 = (!$entryToWriteToForm2 AND $_POST['form_'.$form2.'_rendered_entry']) ? $_POST['form_'.$form2.'_rendered_entry'] : $entryToWriteToForm2;
-                if(!$entryToWriteToForm2) {
-                    if(isset($_POST['entry'.$form2]) AND is_numeric($_POST['entry'.$form2])) {
+                if(!$entryToWriteToForm2 AND is_array($_POST['form_'.$form2.'_rendered_entry']) AND isset($_POST['form_'.$form2.'_rendered_entry'][0]) AND is_numeric($_POST['form_'.$form2.'_rendered_entry'][0])) {
+                    if(count($_POST['form_'.$form2.'_rendered_entry']) == 1) {
+                        $entryToWriteToForm2 = intval($_POST['form_'.$form2.'_rendered_entry'][0]);
+                    } else {
+                        error_log("Formulize error: there was more than one entry in $form2 included in the dataset for this pageload, so we could not determine a single entry for establishing one-to-one connections.");
+                    }
+                    if(!$entryToWriteToForm2 AND isset($_POST['entry'.$form2]) AND is_numeric($_POST['entry'.$form2])) {
                         // last ditch... try to see if an entry in the main form was declared in the form submission itself (no element is present on screen it seems)
                         $entryToWriteToForm2 = $_POST['entry'.$form2];
                     } else {
