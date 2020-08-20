@@ -4332,10 +4332,11 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 }
 
 // THIS FUNCTION PROCESSES THE REQUESTED BUTTONS AND GENERATES HTML PLUS SENDS BACK INFO ABOUT THAT BUTTON
-// $caid is the id of this button, $thisCustomAction is all the settings for this button, $entries is optional and is a comma separated list of entries that should be modified by this button (only takes effect on inline buttons, and possible future types)
-// $entries is the entry ID that should be altered when this button is clicked.  Only sent for inline buttons.  Looks like it is only ever a single ID of the main entry of the line where the button was clicked?
-// $entry is only sent from inline buttons, so that any PHP/HTML to be rendered inline has access to all the values of the current entry
-function processCustomButton($caid, $thisCustomAction, $entries="", $entry="") {
+// $caid is the id of this button,
+// $thisCustomAction is all the settings for this button, 
+// $entry_id is the entry ID that should be altered when this button is clicked.  Only sent for inline buttons.  Looks like it is only ever a single ID of the main entry of the line where the button was clicked?
+// $entry is the getData result package for this entry. Only sent from inline buttons, so that any PHP/HTML to be rendered inline has access to all the values of the current entry
+function processCustomButton($caid, $thisCustomAction, $entry_id="", $entry="") {
 
 	global $xoopsUser;
 	$userGroups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
@@ -4363,7 +4364,7 @@ function processCustomButton($caid, $thisCustomAction, $entries="", $entry="") {
 		$caActions[] = $effectProperties['action'];
 		$caValues[] = $effectProperties['value'];
 		$caPHP[] = isset($effectProperties['code']) ? $effectProperties['code'] : "";
-		$caHTML[$caid.'...'.$effectid.'...'.$entries] = isset($effectProperties['html']) ? $effectProperties['html'] : "";
+		$caHTML[$caid.'...'.$effectid.'...'.$entry_id] = isset($effectProperties['html']) ? $effectProperties['html'] : "";
 		$isHTML = isset($effectProperties['html']) ? true : $isHTML;
 	}
 	if($isHTML AND $entry) { // code to be rendered in place
@@ -4379,8 +4380,8 @@ function processCustomButton($caid, $thisCustomAction, $entries="", $entry="") {
 		}
 		$caCode = $allHTML;
 	} else {
-		$nameIdAddOn = $thisCustomAction['appearinline'] ? $nameIdAddOn+1 : "";
-		$caCode = "<input type=button style=\"width: 140px; cursor: pointer;\" name=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" id=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" value=\"" . trans($thisCustomAction['buttontext']) . "\" onclick=\"javascript:customButtonProcess('$caid', '$entries', '".str_replace("'","\'",$thisCustomAction['popuptext'])."');\">\n";
+		$nameIdAddOn = $thisCustomAction['appearinline'] ? $entry_id : "";
+		$caCode = "<input type=button style=\"cursor: pointer;\" name=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" id=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" value=\"" . trans($thisCustomAction['buttontext']) . "\" onclick=\"javascript:customButtonProcess('$caid', '$entry_id', '".str_replace("'","\'",$thisCustomAction['popuptext'])."');\">\n";
 	}
 
 	return array(0=>$caCode, 1=>$caElements, 2=>$caActions, 3=>$caValues, 4=>$thisCustomAction['messagetext'], 5=>$thisCustomAction['applyto'], 6=>$caPHP, 7=>$thisCustomAction['appearinline']);
@@ -4469,7 +4470,9 @@ function processClickedCustomButton($clickedElements, $clickedValues, $clickedAc
 				} else {
 					$valueToWrite = $clickedValues[$ixz];
 				}
+                
 				$maxIdReq = writeElementValue("", $clickedElements[$ixz], $thisEntry, $valueToWrite, $clickedActions[$ixz], "", $formulize_lvoverride, $csEntries[$id]);
+
 			}
 			if($maxIdReq) {
 				$element_handler = xoops_getmodulehandler('elements', 'formulize');
