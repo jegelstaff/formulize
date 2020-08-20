@@ -2066,6 +2066,10 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	
 	} elseif(count($sub_entries[$subform_id]) > 0) {
 		
+        if(intval($subform_element_object->ele_value["addButtonLimit"]) AND count($sub_entries[$subform_id]) >= intval($subform_element_object->ele_value["addButtonLimit"])) {
+            $hideaddentries = 'hideaddentries';
+        }
+        
         if(isset($subform_element_object->ele_value["SortingElement"]) AND $subform_element_object->ele_value["SortingElement"]) {
             $sortElementObject = $element_handler->get($subform_element_object->ele_value["SortingElement"]);
             $sortDirection = $subform_element_object->ele_value["SortingDirection"] == "DESC" ? "DESC" : "ASC";
