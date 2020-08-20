@@ -311,6 +311,9 @@ if ($ele_type=='text') {
     $options['ele_value_yes'] = $ele_value['_YES'];
     $options['ele_value_no'] = $ele_value['_NO'];
 } elseif ($ele_type == "subform") {
+    
+    $ele_value['enforceFilterChanges'] = isset($ele_value['enforceFilterChanges']) ? $ele_value['enforceFilterChanges'] : 1;
+    
     $ele_value[1] = explode(",",$ele_value[1]);
     $ele_value['disabledelements'] = explode(",",$ele_value['disabledelements']);
     global $xoopsDB;
