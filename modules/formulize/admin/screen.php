@@ -169,16 +169,19 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   // if a relationship is in effect, get the screens on the other forms
   if($selectedFramework) {
     $parsedFids = array($form_id=>$form_id);
-    $frameworkObject = $frameworks[$selectedFramework];
-    foreach($frameworkObject->getVar('links') as $linkObject) {
-        foreach(array($linkObject->getVar('form1'), $linkObject->getVar('form2')) as $candidateFid) {
-            if(!isset($parsedFids[$candidateFid])) {
-                $candidateFormObj = $form_handler->get($candidateFid);
-                $viewentryscreenOptionsDB = $screen_handler->getObjects($criteria_object, $candidateFid);
-                foreach($viewentryscreenOptionsDB as $thisViewEntryScreenOption) {
-                    $viewentryscreenOptions[$thisViewEntryScreenOption->getVar('sid')] = trans($candidateFormObj->getVar('title'))." &mdash; ".printSmart(trans($thisViewEntryScreenOption->getVar('title')), 100);
+    if($frameworkObject = $frameworks[$selectedFramework]) {
+        if($links = $frameworkObject->getVar('links')) {
+            foreach($frameworkObject->getVar('links') as $linkObject) {
+                foreach(array($linkObject->getVar('form1'), $linkObject->getVar('form2')) as $candidateFid) {
+                    if(!isset($parsedFids[$candidateFid])) {
+                        $candidateFormObj = $form_handler->get($candidateFid);
+                        $viewentryscreenOptionsDB = $screen_handler->getObjects($criteria_object, $candidateFid);
+                        foreach($viewentryscreenOptionsDB as $thisViewEntryScreenOption) {
+                            $viewentryscreenOptions[$thisViewEntryScreenOption->getVar('sid')] = trans($candidateFormObj->getVar('title'))." &mdash; ".printSmart(trans($thisViewEntryScreenOption->getVar('title')), 100);
+                        }
+                        $parsedFids[$candidateFid] = $candidateFid;
+                    }
                 }
-                $parsedFids[$candidateFid] = $candidateFid;
             }
         }
     }
