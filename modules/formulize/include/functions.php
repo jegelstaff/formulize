@@ -7328,6 +7328,8 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
 
     }
     
+    list($columns, $headers, $explodedColumns, $superHeaders) = export_prepColumns($columns,$include_metadata);
+    
     // output export header
     $destination = $output_filename ? XOOPS_ROOT_PATH.'/modules/formulize/export/'.$output_filename : 'php://output'; // open a file handle to stdout if we're not making an actual file, because fputcsv() needs something to attach to
     $output_handle = fopen($destination, 'w');
