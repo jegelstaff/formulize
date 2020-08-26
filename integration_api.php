@@ -700,7 +700,7 @@ class FormulizeUser extends FormulizeObject {
             $newuser->setVar('login_name', $login_name, TRUE);
             $newuser->setVar('uname', $uname, TRUE);
             $newuser->setVar('email', $email, TRUE);
-            $newuser->setVar('name', $login_name, TRUE);
+            $newuser->setVar('name', '', TRUE);
             $newuser->setVar('timezone_offset', $timezone_offset, TRUE);
             $newuser->setVar('user_avatar', 'blank.gif', TRUE);
             $newuser->setVar( 'theme', 'impresstheme', TRUE);

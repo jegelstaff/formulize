@@ -337,10 +337,13 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
     // $screen is a screen object
     // since the number of params for the render method can vary from screen type to screen type, this should take a single array that we unpack in the method, so the number of params is common to all types, ie: one array
     function render($screen, $entry, $loadThisView) {
+        $previouslyRenderingScreen = $GLOBALS['formulize_screenCurrentlyRendering'];
         $formframe = $screen->getVar('frid') ? $screen->getVar('frid') : $screen->getVar('fid');
         $mainform = $screen->getVar('frid') ? $screen->getVar('fid') : "";
         include_once XOOPS_ROOT_PATH . "/modules/formulize/include/entriesdisplay.php";
+        $GLOBALS['formulize_screenCurrentlyRendering'] = $screen;
         displayEntries($formframe, $mainform, $loadThisView, 0, 0, $screen);
+        $GLOBALS['formulize_screenCurrentlyRendering'] = $previouslyRenderingScreen;
     }
 
     public function setDefaultListScreenVars($defaultListScreen, $defaultFormScreenId, $title, $fid)
