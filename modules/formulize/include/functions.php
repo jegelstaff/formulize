@@ -1570,7 +1570,7 @@ function prepareCellForSpreadsheetExport($column, $entry) {
         $data_to_write = $raw_data;
     }*/
     
-    $data_to_write = strip_tags(str_replace(array('<br>','<br />'), "\n", displayTogether($entry, $column, ", ")));
+    $data_to_write = strip_tags(str_replace(array('<br>','<br />'), "\n", preg_replace('#<script(.*?)>(.*?)</script>#is', '', displayTogether($entry, $column, ", "))));
     // really, we should go to the datatype of the thing that we're linking to, if the element is linked
     if($thisColumnElement->isLinked OR
         stristr($formDataTypes[$columnFid][$column], 'char') OR
