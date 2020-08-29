@@ -4086,7 +4086,7 @@ function formulize_writeEntry($values, $entry="new", $action="replace", $proxyUs
         // safety net in case NULL is passed as $entry
         $entry = "new";
     }
-
+    
     // get the form id from the element id of the first value in the values array
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
     $elementObject = $element_handler->get(key($values));
@@ -4113,6 +4113,9 @@ function formulize_writeEntry($values, $entry="new", $action="replace", $proxyUs
             }
         }
     } else {
+        print "<pre>";
+        debug_print_backtrace();
+        print "</pre>";
         exit("Error: invalid element in the value array: ".key($values).".");
     }
 }
@@ -4234,13 +4237,16 @@ function synchSubformBlankDefaults() {
                 $subformEle_Value = $subformElement->getVar('ele_value');
                 $subformConditions = $subformEle_Value[7];
                 if (is_array($subformConditions)) {
+                    $filterValues = array();
                     foreach ($subformConditions[1] as $i=>$thisOp) {
                         if ($thisOp == "=" AND $subformConditions[3][$i] != "oom") {
                             $conditionElementObject = $element_handler->get($subformConditions[0][$i]);
                             $filterValues[$subformConditions[0][$i]] = prepareLiteralTextForDB($conditionElementObject, $subformConditions[2][$i], $savedMainFormEntryId);
                         }
                     }
-                    formulize_writeEntry($filterValues,$id_req_to_write);
+                    if(count($filterValues)>0) {
+                        formulize_writeEntry($filterValues,$id_req_to_write);
+                    }
                 }
 
                 $ids_to_return[$sfid][] = $id_req_to_write; // add the just synched up entry to the list of entries in the subform
