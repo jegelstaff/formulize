@@ -7450,7 +7450,20 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
                                     }
                                 }
                             } else {
-                                $row[] = prepareCellForSpreadsheetExport($column, $entry);
+                                // if the cell has an "OTHER" option and the value of this entry is not a standard option, then simply put Other, and put the value into the next column
+                                $columnMetadata = formulize_getElementMetaData($column, true);
+                                if(strstr($columnMetadata['ele_value'],"{OTHER|")) {
+                                    $valueToCheck = display($entry, $column);
+                                    if($valueToCheck == "" OR optionIsValidForElement($valueToCheck, $columnMetadata['ele_id'])) { 
+                                        $row[] = prepareCellForSpreadsheetExport($column, $entry);
+                                        $row[] = "";
+                                    } else {
+                                        $row[] = _formulize_OPT_OTHERWORD;
+                                        $row[] = prepareCellForSpreadsheetExport($column, $entry);
+                                    }
+                                } else {
+                                    $row[] = prepareCellForSpreadsheetExport($column, $entry);
+                                }
                             }
                         }
                         if(isset($_POST['nullOption']) AND $row[$i] === "") {
@@ -7550,6 +7563,11 @@ function export_prepColumns($columns,$include_metadata=0) {
             } else {
                 $headers[] = $colMeta['ele_colhead'] ? trans($colMeta['ele_colhead']) : trans($colMeta['ele_caption']);
                 $superHeaders[] = "";
+                // append additional column for "OTHER"
+                if(strstr($colMeta['ele_value'],"{OTHER|")) {
+                    $headers[] = "Other Value";
+                    $superHeaders[] = "";
+                }
             }
         }
     }
