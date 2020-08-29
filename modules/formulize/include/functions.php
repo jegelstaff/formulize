@@ -1571,7 +1571,7 @@ function prepareCellForSpreadsheetExport($column, $entry) {
         $data_to_write = $raw_data;
     }*/
     
-    $data_to_write = strip_tags(str_replace(array('<br>','<br />'), "\n", displayTogether($entry, $column, ", ")));
+    $data_to_write = strip_tags(str_replace(array('<br>','<br />'), "\n", preg_replace('#<script(.*?)>(.*?)</script>#is', '', displayTogether($entry, $column, ", "))));
     // really, we should go to the datatype of the thing that we're linking to, if the element is linked
     if($thisColumnElement->isLinked OR
         stristr($formDataTypes[$columnFid][$column], 'char') OR
@@ -4145,6 +4145,8 @@ function synchExistingSubformEntries($frid) {
                         foreach($subformElementIds as $ele_id) {
                             $subformElementObject = $element_handler->get($ele_id);
                             $ele_value = $subformElementObject->getVar('ele_value');
+                            // do not synchronize when the subform element has specifically turned off this feature!
+                            if(isset($ele_value['enforceFilterChanges']) AND $ele_value['enforceFilterChanges'] == 0) { continue; } 
                             $subformConditions = $ele_value[7];
                             $subformId = $ele_value[0];
                             //print 'subform id is'.$subformId;

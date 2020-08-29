@@ -2551,6 +2551,7 @@ function formulize_benchmark($text, $dumpLog = false) {
 							 }
                print "<br>$text --<br>\nElapsed since last: ".round($currentPageTime - $prevPageTime, 4)."<br>\n";
 							 print "Elapsed since start: ".($currentPageTime-$GLOBALS['startPageTime'])."<br>";
+                             print "MEMORY: ".number_format(memory_get_usage(),0,'.',',')."<br>";
 							 $elapsedLog[] = round($currentPageTime - $prevPageTime, 4);
 							 $prevPageTime = $currentPageTime;
 							 if($dumpLog) {

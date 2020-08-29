@@ -34,6 +34,7 @@
 ###############################################################################
 
 require_once XOOPS_ROOT_PATH.'/kernel/object.php';
+require_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 global $xoopsDB;
 define('formulize_TABLE', $xoopsDB->prefix("formulize"));

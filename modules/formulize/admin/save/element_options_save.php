@@ -119,6 +119,11 @@ if($ele_type == "yn") {
   }
 }
 if($ele_type == "subform") {
+
+    if(!isset($processedValues['elements']['ele_value']['enforceFilterChanges'])) {
+        $processedValues['elements']['ele_value']['enforceFilterChanges'] = 0;
+    }
+    
   if(!$_POST['elements-ele_value'][3]) {
     $processedValues['elements']['ele_value'][3] = 0;
   }
