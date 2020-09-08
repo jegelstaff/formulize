@@ -82,7 +82,18 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
     // $ele_value will be only the values parsed out of the Options tab on the element's admin page, which follow the naming convention elements-ele_value -- other values that should be in ele_value will need to be parsed here from $_POST or elsewhere
     function adminSave($element, $ele_value) {
         $changed = false;
-        $element->setVar('ele_value', array('apikey'=>$ele_value['apikey'], 'clientid'=>$ele_value['clientid'], 'projectnumber'=>$ele_value['projectnumber'], 'mimetypes'=>str_replace(" ","",$ele_value['mimetypes'])));
+        $element->setVar('ele_value', array(
+            'apikey'=>$ele_value['apikey'],
+            'clientid'=>$ele_value['clientid'],
+            'projectnumber'=>$ele_value['projectnumber'],
+            'mimetypes'=>str_replace(" ","",$ele_value['mimetypes']),
+            'multiselect'=>$ele_value['multiselect'],
+            'upload'=>$ele_value['upload'],
+            'includeGoogleDrive'=>$ele_value['includeGoogleDrive'],
+            'includeSharedDrives'=>$ele_value['includeSharedDrives'],
+            'googleDriveDefaultFolder'=>$ele_value['googleDriveDefaultFolder'],
+            'sharedDrivesDefaultFolder'=>$ele_value['sharedDrivesDefaultFolder']
+        ));
         return $changed;
     }
     
@@ -113,14 +124,98 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
         
         $eleId = $element->getVar('ele_id');
         
-        $picker = "
+        global $formulize_pickerBoilerPlateIncluded;
+        if($formulize_pickerBoilerPlateIncluded !== true) {
+            $formulize_pickerBoilerPlateIncluded = true;
+            // Thanks to Tomalak at https://stackoverflow.com/questions/680929/how-to-extract-extension-from-filename-string-in-javascript/680982
+            $picker = "
+            <script type='text/javascript'>
+                var mimeTypeExtensions = new Array();
+                mimeTypeExtensions['text/html'] = 'html';
+                mimeTypeExtensions['text/css'] = 'css';
+                mimeTypeExtensions['text/xml'] = 'xml';
+                mimeTypeExtensions['image/gif'] = 'gif';
+                mimeTypeExtensions['image/jpeg'] = 'jpeg';
+                mimeTypeExtensions['application/x-javascript'] = 'js';
+                mimeTypeExtensions['application/atom+xml'] = 'atom';
+                mimeTypeExtensions['application/rss+xml'] = 'rss';
+                mimeTypeExtensions['text/mathml'] = 'mml';
+                mimeTypeExtensions['text/plain'] = 'txt';
+                mimeTypeExtensions['text/vnd.sun.j2me.app-descriptor'] = 'jad';
+                mimeTypeExtensions['text/vnd.wap.wml'] = 'wml';
+                mimeTypeExtensions['text/x-component'] = 'htc';
+                mimeTypeExtensions['image/png'] = 'png';
+                mimeTypeExtensions['image/tiff'] = 'tif';
+                mimeTypeExtensions['image/vnd.wap.wbmp'] = 'wbmp';
+                mimeTypeExtensions['image/x-icon'] = 'ico';
+                mimeTypeExtensions['image/x-jng'] = 'jng';
+                mimeTypeExtensions['image/x-ms-bmp'] = 'bmp';
+                mimeTypeExtensions['image/svg+xml'] = 'svg';
+                mimeTypeExtensions['image/webp'] = 'webp';
+                mimeTypeExtensions['application/java-archive'] = 'jar';
+                mimeTypeExtensions['application/mac-binhex40'] = 'hqx';
+                mimeTypeExtensions['application/msword'] = 'doc';
+                mimeTypeExtensions['application/pdf'] = 'pdf';
+                mimeTypeExtensions['application/postscript'] = 'ps';
+                mimeTypeExtensions['application/rtf'] = 'rtf';
+                mimeTypeExtensions['application/vnd.ms-excel'] = 'xls';
+                mimeTypeExtensions['application/vnd.ms-powerpoint'] = 'ppt';
+                mimeTypeExtensions['application/vnd.wap.wmlc'] = 'wmlc';
+                mimeTypeExtensions['application/vnd.google-earth.kml+xml'] = 'kml';
+                mimeTypeExtensions['application/vnd.google-earth.kmz'] = 'kmz';
+                mimeTypeExtensions['application/x-7z-compressed'] = '7z';
+                mimeTypeExtensions['application/x-cocoa'] = 'cco';
+                mimeTypeExtensions['application/x-java-archive-diff'] = 'jardiff';
+                mimeTypeExtensions['application/x-java-jnlp-file'] = 'jnlp';
+                mimeTypeExtensions['application/x-makeself'] = 'run';
+                mimeTypeExtensions['application/x-perl'] = 'pl';
+                mimeTypeExtensions['application/x-pilot'] = 'prc';
+                mimeTypeExtensions['application/x-rar-compressed'] = 'rar';
+                mimeTypeExtensions['application/x-redhat-package-manager'] = 'rpm';
+                mimeTypeExtensions['application/x-sea'] = 'sea';
+                mimeTypeExtensions['application/x-shockwave-flash'] = 'swf';
+                mimeTypeExtensions['application/x-stuffit'] = 'sit';
+                mimeTypeExtensions['application/x-tcl'] = 'tcl';
+                mimeTypeExtensions['application/x-x509-ca-cert'] = 'der';
+                mimeTypeExtensions['application/x-xpinstall'] = 'xpi';
+                mimeTypeExtensions['application/xhtml+xml'] = 'xhtml';
+                mimeTypeExtensions['application/zip'] = 'zip';
+                mimeTypeExtensions['audio/midi'] = 'mid';
+                mimeTypeExtensions['audio/mpeg'] = 'mp3';
+                mimeTypeExtensions['audio/ogg'] = 'ogg';
+                mimeTypeExtensions['audio/x-realaudio'] = 'ra';
+                mimeTypeExtensions['video/3gpp'] = '3gpp';
+                mimeTypeExtensions['video/mpeg'] = 'mpeg';
+                mimeTypeExtensions['video/quicktime'] = 'mov';
+                mimeTypeExtensions['video/x-flv'] = 'flv';
+                mimeTypeExtensions['video/x-mng'] = 'mng';
+                mimeTypeExtensions['video/x-ms-asf'] = 'asx';
+                mimeTypeExtensions['video/x-ms-wmv'] = 'wmv';
+                mimeTypeExtensions['video/x-msvideo'] = 'avi';
+                mimeTypeExtensions['video/mp4'] = 'm4v';
+                
+                function addFileExtension(name, mimeType) {
+                    var re = /(?:\.([^.]+))?$/;
+                    var ext = re.exec(name)[1];
+                    if(typeof ext === 'undefined' && typeof mimeTypeExtensions[mimeType] !== 'undefined') {
+                        name = name+'.'+mimeTypeExtensions[mimeType];
+                    } 
+                    return name;
+                }
+                
+            </script>
+            <style>.googlefile { white-space: pre-line; }</style>
+            <script type='text/javascript' src='https://apis.google.com/js/api.js'></script>";
+        }
+        
+        $picker .= "
         
         <script type='text/javascript'>
-
+        
             var developerKey$eleId = '".$ele_value['apikey']."';
             var clientId$eleId = '".$ele_value['clientid']."'
             var appId$eleId = '".$ele_value['projectnumber']."';
-            var scope$eleId = 'https://www.googleapis.com/auth/drive.file';
+            var scope$eleId = 'https://www.googleapis.com/auth/drive';
             var pickerApiLoaded$eleId = false;
             var oauthToken$eleId;
         
@@ -158,22 +253,85 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
         
             // Create and render a Picker object for searching images.
             function createPicker$eleId() {
-              if (pickerApiLoaded$eleId && oauthToken$eleId) {
-                var view$eleId = new google.picker.View(google.picker.ViewId.DOCS);";
-
-            if($ele_value['mimetypes']) {
+              if (pickerApiLoaded$eleId && oauthToken$eleId) {";
+            
+            if($ele_value['includeSharedDrives']) {
                 $picker .= "
-                view$eleId.setMimeTypes(\"".$ele_value['mimetypes']."\");";
+                var sharedDriveView$eleId = new google.picker.DocsView(google.picker.ViewId.DOCS);
+                sharedDriveView$eleId.setEnableDrives(true);";
+                if($ele_value['sharedDrivesDefaultFolder']) {
+                    $picker .= "
+                    sharedDriveView$eleId.setParent('".$ele_value['sharedDrivesDefaultFolder']."');";
+                } else {
+                    $picker .= "
+                    sharedDriveView$eleId.setIncludeFolders(true).setSelectFolderEnabled(false);";
+                }
+                if($ele_value['mimetypes']) {
+                $picker .= "
+                    sharedDriveView$eleId.setMimeTypes(\"".$ele_value['mimetypes']."\");";
+                }
+            }
+            
+            if($ele_value['includeGoogleDrive']) {
+                $picker .= "
+                var googleDriveView$eleId = new google.picker.DocsView(google.picker.ViewId.DOCS);";
+                if($ele_value['googleDriveDefaultFolder']) {
+                    $picker .= "
+                    googleDriveView$eleId.setParent('".$ele_value['googleDriveDefaultFolder']."');";
+                } else {
+                    $picker .= "
+                    googleDriveView$eleId.setIncludeFolders(true).setSelectFolderEnabled(false);";
+                }
+                if($ele_value['mimetypes']) {
+                    $picker .= "
+                    googleDriveView$eleId.setMimeTypes(\"".$ele_value['mimetypes']."\");";
+                }
+                
+            }
+
+            if($ele_value['upload']) {
+                $picker .= "
+                var uploadView$eleId = new google.picker.DocsUploadView();";
+                $uploadFolder = ($ele_value['includeGoogleDrive'] AND $ele_value['googleDriveDefaultFolder']) ? $ele_value['googleDriveDefaultFolder'] : "";
+                $uploadFolder = ($ele_value['includeSharedDrives'] AND $ele_value['sharedDrivesDefaultFolder']) ? $ele_value['sharedDrivesDefaultFolder'] : $uploadFolder;
+                if($uploadFolder) {
+                    $picker .= "
+                    uploadView$eleId.setParent('".$uploadFolder."');";
+                } else {
+                    $picker .= "
+                    uploadView$eleId.setIncludeFolders(true);";
+                }
+                if($ele_value['mimetypes']) {
+                    $picker .= "
+                    uploadView$eleId.setMimeTypes(\"".$ele_value['mimetypes']."\");";
+                }
             }
             
             $picker .= "
-                var picker$eleId = new google.picker.PickerBuilder()
-                    .enableFeature(google.picker.Feature.NAV_HIDDEN)
-                    .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
+                var picker$eleId = new google.picker.PickerBuilder()";
+            
+            if($ele_value['multiselect']) {
+                $picker .="
+                    .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)";
+            }
+            
+            $picker .= "
+                    .enableFeature(google.picker.Feature.SUPPORT_DRIVES)
                     .setAppId(appId$eleId)
-                    .setOAuthToken(oauthToken$eleId)
-                    .addView(view$eleId)
-                    .addView(new google.picker.DocsUploadView())
+                    .setOAuthToken(oauthToken$eleId)";
+            if($ele_value['includeGoogleDrive']) {
+                $picker .= "
+                    .addView(googleDriveView$eleId)";
+            }
+            if($ele_value['includeSharedDrives']) {
+                $picker .= "
+                    .addView(sharedDriveView$eleId)";
+            }
+            if($ele_value['upload']) {
+                $picker .= "
+                    .addView(uploadView$eleId)";
+            }
+            $picker .= "
                     .setDeveloperKey(developerKey$eleId)
                     .setCallback(pickerCallback$eleId)
                     .build();
@@ -184,23 +342,27 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
             function pickerCallback$eleId(data) {
                 if (data.action == google.picker.Action.PICKED) {
                     for(i in data.docs) {
-                        addToList$eleId(data.docs[i].name, data.docs[i].url, data.docs[i].id);
+                        addToList$eleId(addFileExtension(data.docs[i].name, data.docs[i].mimeType), data.docs[i].url, data.docs[i].iconUrl, data.docs[i].id);
                     }
                 }
             }
 
-            function addToList$eleId(name, url, id) {
+            function addToList$eleId(name, url, iconUrl, id) {
                 if(jQuery('#googlefile_".$markupName."_'+id).length == 0) {";
-                    $interactiveMarkup = $isDisabled ? "" : "<a href=\"\" onclick=\"warnAboutGoogleDelete$eleId(\''+id+'\', \''+name.replace(/\\\"/g, '&quot;')+'\');return false;\"><img src=\"".XOOPS_URL."/modules/formulize/images/x.gif\" /></a><input type=\"hidden\" name=\"".$markupName."[]\" value=\"'+name.replace(/\\\"/g, '&quot;')+'<{()}>'+url+'<{()}>'+id+'\">";
+                    $interactiveMarkup = $isDisabled ? "" : "<a href=\"\" onclick=\"warnAboutGoogleDelete$eleId(\''+id+'\', \''+name.replace(/\\\"/g, '&quot;')+'\', \'".$markupName."\');return false;\"><img src=\"".XOOPS_URL."/modules/formulize/images/x.gif\" /></a><input type=\"hidden\" name=\"".$markupName."[]\" value=\"'+name.replace(/\\\"/g, '&quot;')+'<{()}>'+url+'<{()}>'+id+'\">";
+                    if($ele_value['multiselect']==false) {
+                        $picker .= "
+                    jQuery('#".$markupName."_files').empty();";
+                    }
                     $picker .= "
-                    jQuery('#".$markupName."_files').append('<div class=\"googlefile googlefile_$eleId\" id=\"googlefile_".$markupName."_'+id+'\"><a href=\"'+url+'\" target=\"_blank\">'+name+'</a> ".$interactiveMarkup."</div>');
+                    jQuery('#".$markupName."_files').append('<div class=\"googlefile googlefile_$eleId\" id=\"googlefile_".$markupName."_'+id+'\"><img src=\"'+iconUrl+'\" /> <a href=\"'+url+'\" target=\"_blank\">'+name+'</a> ".$interactiveMarkup."</div>');
                 }
             }
             
-            function warnAboutGoogleDelete$eleId(id, name) {
+            function warnAboutGoogleDelete$eleId(id, name, markupName) {
                 var answer = confirm('" . _AM_GOOGLEFILE_DELETE_WARN . " '+name+'?');
                 if(answer) {
-                    jQuery(\"#googlefile_".$markupName."_\"+id).remove();
+                    jQuery(\"#googlefile_\"+markupName+\"_\"+id).remove();
                 }
                 return false;
             }";
@@ -218,14 +380,6 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
             $picker .= "
             
         </script>";
-        
-        static $boilerplateDrawn = false;
-        if(!$boilerplateDrawn) {
-            $picker .= "
-        <style>.googlefile { white-space: pre-line; }</style>
-        <script type='text/javascript' src='https://apis.google.com/js/api.js'></script>";
-            $boilerplateDrawn = true;
-        }
         
         if(!$isDisabled) {
             $picker .= "<p><input type='button' onclick='loadPicker$eleId();' value='"._AM_GOOGLEFILE_SELECT."'></p>";
