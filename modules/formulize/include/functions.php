@@ -81,6 +81,7 @@ while ($table = $xoopsDB->fetchRow($resultst)) {
     }
 }
 
+global $xoopsConfig;
 if (file_exists(XOOPS_ROOT_PATH . "/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
     include_once XOOPS_ROOT_PATH . "/modules/formulize/language/".$xoopsConfig['language']."/main.php";
 } else {
@@ -1570,7 +1571,7 @@ function prepareCellForSpreadsheetExport($column, $entry) {
         $data_to_write = $raw_data;
     }*/
     
-    $data_to_write = strip_tags(str_replace(array('<br>','<br />'), "\n", displayTogether($entry, $column, ", ")));
+    $data_to_write = strip_tags(str_replace(array('<br>','<br />'), "\n", preg_replace('#<script(.*?)>(.*?)</script>#is', '', displayTogether($entry, $column, ", "))));
     // really, we should go to the datatype of the thing that we're linking to, if the element is linked
     if($thisColumnElement->isLinked OR
         stristr($formDataTypes[$columnFid][$column], 'char') OR
@@ -2897,11 +2898,12 @@ function getTextboxDefault($ele_value, $form_id, $entry_id, $placeholder="") {
 
 
 function getDateElementDefault($default_hint) {
+    if($default_hint == "0000-00-00") { return ""; }
     if (preg_replace("/[^A-Z{}]/", "", $default_hint) === "{TODAY}") {
         $number = str_replace('+', '', preg_replace("/[^0-9+-]/", "", $default_hint));
         return mktime(0, 0, 0, date("m"), (date("d") + intval($number)), date("Y"));
     }
-    return strtotime($default_hint);
+    return $default_hint ? strtotime($default_hint) : "";
 }
 
 
@@ -4143,6 +4145,8 @@ function synchExistingSubformEntries($frid) {
                         foreach($subformElementIds as $ele_id) {
                             $subformElementObject = $element_handler->get($ele_id);
                             $ele_value = $subformElementObject->getVar('ele_value');
+                            // do not synchronize when the subform element has specifically turned off this feature!
+                            if(isset($ele_value['enforceFilterChanges']) AND $ele_value['enforceFilterChanges'] == 0) { continue; } 
                             $subformConditions = $ele_value[7];
                             $subformId = $ele_value[0];
                             //print 'subform id is'.$subformId;
@@ -5424,7 +5428,10 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
         // rest of the key-value pairs are whatever other forms are in the query
         $extractionQuery = true;
     }
-        
+    
+    global $nonLinkedCurlyBracketSelfReference;
+    $nonLinkedCurlyBracketSelfReference = false;
+    
     $conditionsfilter = "";
     $conditionsfilter_oom = "";
     $conditionsfilterArray = array();
@@ -5445,6 +5452,7 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
         $element_handler = xoops_getmodulehandler('elements', 'formulize');
         for ($filterId = 0;$filterId<count($filterElementHandles);$filterId++) {
+            
             $filterOps[$filterId] = $filterOps[$filterId] == 'NOT' ? '!=' : $filterOps[$filterId]; // convert NOT to != to avoid syntax error
             // if this filter term is a { } term that matches a $_GET value, then let's use that instead
             if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") {
@@ -5550,9 +5558,16 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
         if($curlyBracketFormconditionsfilter) {
             $curlyBracketFormFrom = " INNER JOIN $curlyBracketFormFrom ON ($curlyBracketFormconditionsfilter $curlyBracketFormconditionsfilter_oom) ";
         } elseif($curlyBracketFormconditionsfilter_oom) {
-            $curlyBracketFormFrom = " LEFT JOIN $curlyBracketFormFrom ON ($curlyBracketFormconditionsfilter_oom) ";
-            // strip out the part of the oom filter that we cannot use in the WHERE clause
+            // strip out the part of the oom filter that we cannot use in the WHERE clause -- AND MAYBE WE NEED TO DO THIS FOR THE NON-OOM FILTERS??
+            // IF THIS IS A SELF-REFERENCE, USE ONLY THE ENTRY ID PART IN THE on
+            // OTHERWISE, USE ONLY THE NON-ENTRY ID PART
+            // $nonLinkedCurlyBracketSelfReference is a global set in the building of the conditions...and our big assumption is that all { } references point to the same form, so if we detect that it has some circularity, then that needs to be the case across the board...seems brittle!
             $entryFilterPos = strpos($curlyBracketFormconditionsfilter_oom, 'AND curlybracketform.`entry_id`=');
+            if($nonLinkedCurlyBracketSelfReference) {
+                $curlyBracketFormFrom = " LEFT JOIN $curlyBracketFormFrom ON (".substr($curlyBracketFormconditionsfilter_oom, ($entryFilterPos+4)); // doesn't need a close bracket, because the $curlyBracketFormconditionsfilter_oom already has one
+            } else {
+                $curlyBracketFormFrom = " LEFT JOIN $curlyBracketFormFrom ON ($curlyBracketFormconditionsfilter_oom) ";
+            }
             $curlyBracketFormconditionsfilter_oom_WHERE = substr($curlyBracketFormconditionsfilter_oom, 0, $entryFilterPos).")"; // put back the final bracket which we will have cut off!
             if($conditionsfilter_oom) {
                 $conditionsfilter_oom .= " OR $curlyBracketFormconditionsfilter_oom_WHERE ";
@@ -5602,7 +5617,7 @@ function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias,
 // $filterTerms may be modified by this function
 function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filterElementIds, $targetFormElementTypes, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler) {
     
-    global $xoopsUser, $xoopsDB;
+    global $xoopsUser, $xoopsDB, $nonLinkedCurlyBracketSelfReference;
     $curlyBracketEntryQuoted = $curlyBracketEntry == 'new' ? "'new'" : $curlyBracketEntry; // can't put text into the query without quotes!
     $conditionsFilterComparisonValue = "";
     $curlyBracketFormFrom = "";
@@ -5700,6 +5715,8 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                                 ) ) ";
                         $filterOps[$filterId] = " IN ";
                     }
+                } elseif($targetSourceFid == $curlyBracketForm->getVar('id_form')) { // self reference to the same form, but with a non-linked element...need to do some funky stuff when parsing this into the ON clause of the join!
+                    $nonLinkedCurlyBracketSelfReference = true;
                 }
                 // curlybracket term found, but when it's not linked to the same source as the target, we have to work the likebits in as part of a concat, since our term is not a literal string anymore
                 if ($likebits) {
@@ -6469,9 +6486,13 @@ function formulize_makeOneToOneLinks($frid, $fid) {
                 }
                 $entryToWriteToForm1 = $GLOBALS['formulize_allWrittenEntryIds'][$form1][0] ? $GLOBALS['formulize_allWrittenEntryIds'][$form1][0] : '';
                 $entryToWriteToForm1 = (!$entryToWriteToForm1 AND $GLOBALS['formulize_allSubmittedEntryIds'][$form1][0]) ? $GLOBALS['formulize_allSubmittedEntryIds'][$form1][0] : $entryToWriteToForm1;
-                $entryToWriteToForm1 = (!$entryToWriteToForm1 AND $_POST['form_'.$form1.'_rendered_entry']) ? $_POST['form_'.$form1.'_rendered_entry'] : $entryToWriteToForm1;
-                if(!$entryToWriteToForm1) {
-                    if(isset($_POST['entry'.$form1]) AND is_numeric($_POST['entry'.$form1])) {
+                if(!$entryToWriteToForm1 AND is_array($_POST['form_'.$form1.'_rendered_entry']) AND isset($_POST['form_'.$form1.'_rendered_entry'][0]) AND is_numeric($_POST['form_'.$form1.'_rendered_entry'][0])) {
+                    if(count($_POST['form_'.$form1.'_rendered_entry']) == 1) {
+                        $entryToWriteToForm1 = intval($_POST['form_'.$form1.'_rendered_entry'][0]);
+                    } else {
+                        error_log("Formulize error: there was more than one entry in $form1 included in the dataset for this pageload, so we could not determine a single entry for establishing one-to-one connections.");
+                    }
+                    if(!$entryToWriteToForm1 AND isset($_POST['entry'.$form1]) AND is_numeric($_POST['entry'.$form1])) {
                         // last ditch... try to see if an entry in the main form was declared in the form submission itself (no element is present on screen it seems)
                         $entryToWriteToForm1 = $_POST['entry'.$form1];
                     } else {
@@ -6480,9 +6501,13 @@ function formulize_makeOneToOneLinks($frid, $fid) {
                 }
                 $entryToWriteToForm2 = $GLOBALS['formulize_allWrittenEntryIds'][$form2][0] ? $GLOBALS['formulize_allWrittenEntryIds'][$form2][0] : '';
                 $entryToWriteToForm2 = (!$entryToWriteToForm2 AND $GLOBALS['formulize_allSubmittedEntryIds'][$form2][0]) ? $GLOBALS['formulize_allSubmittedEntryIds'][$form1][0] : $entryToWriteToForm2;
-                $entryToWriteToForm2 = (!$entryToWriteToForm2 AND $_POST['form_'.$form2.'_rendered_entry']) ? $_POST['form_'.$form2.'_rendered_entry'] : $entryToWriteToForm2;
-                if(!$entryToWriteToForm2) {
-                    if(isset($_POST['entry'.$form2]) AND is_numeric($_POST['entry'.$form2])) {
+                if(!$entryToWriteToForm2 AND is_array($_POST['form_'.$form2.'_rendered_entry']) AND isset($_POST['form_'.$form2.'_rendered_entry'][0]) AND is_numeric($_POST['form_'.$form2.'_rendered_entry'][0])) {
+                    if(count($_POST['form_'.$form2.'_rendered_entry']) == 1) {
+                        $entryToWriteToForm2 = intval($_POST['form_'.$form2.'_rendered_entry'][0]);
+                    } else {
+                        error_log("Formulize error: there was more than one entry in $form2 included in the dataset for this pageload, so we could not determine a single entry for establishing one-to-one connections.");
+                    }
+                    if(!$entryToWriteToForm2 AND isset($_POST['entry'.$form2]) AND is_numeric($_POST['entry'.$form2])) {
                         // last ditch... try to see if an entry in the main form was declared in the form submission itself (no element is present on screen it seems)
                         $entryToWriteToForm2 = $_POST['entry'.$form2];
                     } else {
@@ -7315,14 +7340,15 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
     }
     
     list($columns, $headers, $explodedColumns, $superHeaders) = export_prepColumns($columns,$include_metadata);
-
-    if (strstr(strtolower(_CHARSET),'utf') AND $_POST['excel'] == 1) {
-        echo "\xef\xbb\xbf"; // necessary to trigger certain versions of Excel to recognize the file as unicode
-    }
-
+    
     // output export header
     $destination = $output_filename ? XOOPS_ROOT_PATH.'/modules/formulize/export/'.$output_filename : 'php://output'; // open a file handle to stdout if we're not making an actual file, because fputcsv() needs something to attach to
     $output_handle = fopen($destination, 'w');
+    
+    if (strstr(strtolower(_CHARSET),'utf') AND $_POST['excel'] == 1) {
+        fwrite($output_handle, "\xef\xbb\xbf"); // necessary to trigger certain versions of Excel to recognize the file as unicode
+    }
+    
     if(count($superHeaders)>0) {
         fputcsv($output_handle, $superHeaders);    
     }
@@ -7426,7 +7452,20 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
                                     }
                                 }
                             } else {
-                                $row[] = prepareCellForSpreadsheetExport($column, $entry);
+                                // if the cell has an "OTHER" option and the value of this entry is not a standard option, then simply put Other, and put the value into the next column
+                                $columnMetadata = formulize_getElementMetaData($column, true);
+                                if(strstr($columnMetadata['ele_value'],"{OTHER|")) {
+                                    $valueToCheck = display($entry, $column);
+                                    if($valueToCheck == "" OR optionIsValidForElement($valueToCheck, $columnMetadata['ele_id'])) { 
+                                        $row[] = prepareCellForSpreadsheetExport($column, $entry);
+                                        $row[] = "";
+                                    } else {
+                                        $row[] = _formulize_OPT_OTHERWORD;
+                                        $row[] = prepareCellForSpreadsheetExport($column, $entry);
+                                    }
+                                } else {
+                                    $row[] = prepareCellForSpreadsheetExport($column, $entry);
+                                }
                             }
                         }
                         if(isset($_POST['nullOption']) AND $row[$i] === "") {
@@ -7526,6 +7565,11 @@ function export_prepColumns($columns,$include_metadata=0) {
             } else {
                 $headers[] = $colMeta['ele_colhead'] ? trans($colMeta['ele_colhead']) : trans($colMeta['ele_caption']);
                 $superHeaders[] = "";
+                // append additional column for "OTHER"
+                if(strstr($colMeta['ele_value'],"{OTHER|")) {
+                    $headers[] = "Other Value";
+                    $superHeaders[] = "";
+                }
             }
         }
     }

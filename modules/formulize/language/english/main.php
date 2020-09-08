@@ -607,7 +607,8 @@ define("_formulize_USERNAME_HELP3", " characters long)");
 define("_formulize_PASSWORD_HELP1", " characters long)");
 
 // "Other" for checkboxes and radio buttons:
-define("_formulize_OPT_OTHER", "Other: ");
+define("_formulize_OPT_OTHERWORD", "Other"); 
+define("_formulize_OPT_OTHER", _formulize_OPT_OTHERWORD.": ");
 
 // Notifications
 define("_formulize_DE_NOTBUTTON", "Notifications");

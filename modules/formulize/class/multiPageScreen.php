@@ -195,6 +195,8 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 	// $screen is a screen object
 	function render($screen, $entry, $settings = array()) { // $settings is used internally to pass list of entries settings back and forth to editing screens
     
+        $previouslyRenderingScreen = $GLOBALS['formulize_screenCurrentlyRendering'];
+    
 		if(!is_array($settings)) {
 				$settings = array();
 		}
@@ -215,8 +217,10 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 		if(substr($doneDest, 0, 1)=='/') {
 		    $doneDest = XOOPS_URL.$doneDest;
 		}
-    		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplaypages.php";
+    	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplaypages.php";
+        $GLOBALS['formulize_screenCurrentlyRendering'] = $screen;
 		displayFormPages($formframe, $entry, $mainform, $pages, $conditions, html_entity_decode(html_entity_decode($screen->getVar('introtext', "e")), ENT_QUOTES), html_entity_decode(html_entity_decode($screen->getVar('thankstext', "e")), ENT_QUOTES), $doneDest, $screen->getVar('buttontext'), $settings,"", $screen->getVar('printall'), $screen); //nmc 2007.03.24 added 'printall' & 2 empty params
+        $GLOBALS['formulize_screenCurrentlyRendering'] = $previouslyRenderingScreen;
 	}
 
 

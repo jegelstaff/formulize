@@ -11,6 +11,10 @@ ini_set('max_execution_time', '600');
  
 include_once '../include/synchronization.php';
 
+if(!class_exists('ZipArchive')) {
+    print 'ERROR: Synchronization is not possible, because the server cannot create or read .zip files. Add the zip extension to PHP and restart the web server.';
+}
+
 $sync = array();
 
 $sync[1]['name'] = "Import Database for Synchronization";

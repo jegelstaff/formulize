@@ -482,7 +482,7 @@
     function extractCSVs($archivePath){
         global $successfulImport;
         // create temporary folder to extract CSV files to. will be deleted later
-        $tempFolderPath = XOOPS_ROOT_PATH . "/modules/formulize/temp" . date_format(date_create(), '(U)');
+        $tempFolderPath = XOOPS_ROOT_PATH . "/modules/formulize/temp/" . date_format(date_create(), '(U)');
          if (!file_exists($tempFolderPath) and !mkdir($tempFolderPath)){
             $successfulImport = 0;
             error_log("Extraction folder for CSV's could not be created.");

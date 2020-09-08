@@ -1870,13 +1870,13 @@ function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form
                             $GLOBALS['formulize_forceDerivedValueUpdate'] = true;
                         }
                         // if the new value is the same as the previous one, then skip updating and saving
-                        if ($derivedValue != $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0]) {
+                        if ($derivedValue !== $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0]) {
                             if ($xoopsDB) {
                                 // save value for writing to database if XOOPS is active
                                 $elementID = formulize_getIdFromElementHandle($thisMetaData['handle']);
                                 $dataToWrite[$elementID] = $derivedValue;
                             }
-                            $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0] = $derivedValue == '{WRITEASNULL}' ? NULL : $derivedValue;
+                            $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0] = $derivedValue === '{WRITEASNULL}' ? NULL : $derivedValue;
                         }
                     }
                 if ($xoopsDB and count($dataToWrite) > 0) {
@@ -2551,6 +2551,7 @@ function formulize_benchmark($text, $dumpLog = false) {
 							 }
                print "<br>$text --<br>\nElapsed since last: ".round($currentPageTime - $prevPageTime, 4)."<br>\n";
 							 print "Elapsed since start: ".($currentPageTime-$GLOBALS['startPageTime'])."<br>";
+                             print "MEMORY: ".number_format(memory_get_usage(),0,'.',',')."<br>";
 							 $elapsedLog[] = round($currentPageTime - $prevPageTime, 4);
 							 $prevPageTime = $currentPageTime;
 							 if($dumpLog) {

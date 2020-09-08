@@ -700,7 +700,7 @@ class FormulizeUser extends FormulizeObject {
             $newuser->setVar('login_name', $login_name, TRUE);
             $newuser->setVar('uname', $uname, TRUE);
             $newuser->setVar('email', $email, TRUE);
-            $newuser->setVar('name', $login_name, TRUE);
+            $newuser->setVar('name', '', TRUE);
             $newuser->setVar('timezone_offset', $timezone_offset, TRUE);
             $newuser->setVar('user_avatar', 'blank.gif', TRUE);
             $newuser->setVar( 'theme', 'impresstheme', TRUE);
@@ -726,9 +726,13 @@ class FormulizeUser extends FormulizeObject {
                 }
                 Formulize::init();
                 if(Formulize::createResourceMapping(Formulize::USER_RESOURCE, $_SESSION['resouceMapKey'], $newid)){
-                    $location = isset($_GET['newuser']) ? XOOPS_URL."/?code=".$_GET['newuser']."&newcode=".$_GET['newuser'] : XOOPS_URL;
-                    header("Location: ".$location);
-                    exit();
+                    $location = isset($_GET['newuser']) ? XOOPS_URL."/?code=".$_GET['newuser']."&newcode=".$_GET['newuser'] : "";
+                    if($location) {
+                        header("Location: ".$location);
+                        exit();
+                    } else {
+                        return $newid;
+                    }
                 } else {
                     $icmsConfigUser["stop_error"] = "Error: could not create resource mapping for new user. Please notify a webmaster about this error. You will not be able to login with this account until this error is resolved.";
                 }

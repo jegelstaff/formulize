@@ -449,11 +449,11 @@ class formulizeFormsHandler {
 		return new formulizeForm();
 	}
 
-	function get($fid,$includeAllElements=false) {
+	function get($fid,$includeAllElements=false,$refreshCache=false) {
 		$fid = intval($fid);
 		// this is cheap...we're caching form objects potentially twice because of a possible difference in whether we want all objects included or not.  This could be handled much better.  Maybe iterators could go over the object to return all elements, or all visible elements, or all kinds of other much more elegant stuff.
 		static $cachedForms = array();
-		if(isset($cachedForms[$fid][$includeAllElements])) { return $cachedForms[$fid][$includeAllElements]; }
+		if(!$refreshCache AND isset($cachedForms[$fid][$includeAllElements])) { return $cachedForms[$fid][$includeAllElements]; }
 		if($fid > 0) {
 			$cachedForms[$fid][$includeAllElements] = new formulizeForm($fid,$includeAllElements);
 			return $cachedForms[$fid][$includeAllElements];
@@ -935,7 +935,7 @@ class formulizeFormsHandler {
 		}
 		global $xoopsDB;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
-		$formObject = $form_handler->get($element->getVar('id_form'));
+		$formObject = $form_handler->get($element->getVar('id_form'),false,true);
 		$deleteFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " DROP `" . $element->getVar('ele_handle') . "`";
 		if(!$deleteFieldRes = $xoopsDB->queryF($deleteFieldSQL)) {
 			return false;
@@ -982,7 +982,7 @@ class formulizeFormsHandler {
         if($element->hasData) {
 		global $xoopsDB;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
-		$formObject = $form_handler->get($element->getVar('id_form'));
+		$formObject = $form_handler->get($element->getVar('id_form'),false,true);
 		$dataType = $dataType ? $dataType : "text";
 		$type_with_default = ("text" == $dataType ? "text" : "$dataType NULL default NULL");
 		$insertFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " ADD `" . $element->getVar('ele_handle') . "` $type_with_default";
@@ -1198,14 +1198,25 @@ class formulizeFormsHandler {
                 $secondOp = $filterSettings[1][$i] == "=" ? " IS " : " IS NOT ";
                 $perGroupFilter .= "($formAlias`".$filterSettings[0][$i]."` ".htmlspecialchars_decode($filterSettings[1][$i]) . " '' OR $formAlias`".$filterSettings[0][$i]."` $secondOp NULL)"; 
             } else {
+                $element_handler = xoops_getmodulehandler('elements', 'formulize');
+                $elementObject = $element_handler->get($filterSettings[0][$i]);
                 if(substr($termToUse,0,1)=="{" AND substr($termToUse,-1) == "}") { // convert { } references to field references
                     $termToUse = "`".formulize_db_escape(substr($termToUse,1,-1))."`";
+                } elseif($elementObject->canHaveMultipleValues AND !$elementObject->isLinked) { // if we're looking up against a multiselect element that stores data with the *=+*: prefix - ugh
+                    if($filterSettings[1][$i] == "=") {
+                        $filterSettings[1][$i] = "LIKE";
+                    }
+                    if($filterSettings[1][$i] == "NOT") {
+                        $filterSettings[1][$i] = "NOT LIKE";
+                    }
+                    $perGroupFilter .= "($formAlias`".$filterSettings[0][$i]."` ".htmlspecialchars_decode($filterSettings[1][$i]) . " " . "\"$likeBits"."*=+*:".formulize_db_escape($termToUse)."*=+*:"."$likeBits\" OR $formAlias`".$filterSettings[0][$i]."` ".htmlspecialchars_decode($filterSettings[1][$i]) . " " . "\"$likeBits"."*=+*:".formulize_db_escape($termToUse)."\")";
+                    continue; // in this case, skip the rest, we don't want to set the $perGroupFilter in the normal way below
                 } else {
-			$termToUse = (is_numeric($termToUse) AND !strstr(strtoupper($filterSettings[1][$i]), "LIKE")) ? $termToUse : "\"$likeBits".formulize_db_escape($termToUse)."$likeBits\"";
+                    $termToUse = (is_numeric($termToUse) AND !strstr(strtoupper($filterSettings[1][$i]), "LIKE")) ? $termToUse : "\"$likeBits".formulize_db_escape($termToUse)."$likeBits\"";
                 }
                 $filterSettings[1][$i] = ($filterSettings[1][$i] == "NOT") ? "!=" : $filterSettings[1][$i];
-			$perGroupFilter .= "$formAlias`".$filterSettings[0][$i]."` ".htmlspecialchars_decode($filterSettings[1][$i]) . " " . $termToUse; // htmlspecialchars_decode is used because &lt;= might be the operator coming out of the DB instead of <=
-		}
+                $perGroupFilter .= "$formAlias`".$filterSettings[0][$i]."` ".htmlspecialchars_decode($filterSettings[1][$i]) . " " . $termToUse; // htmlspecialchars_decode is used because &lt;= might be the operator coming out of the DB instead of <=
+            }
 		}
 
 		return $perGroupFilter;
