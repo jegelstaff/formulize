@@ -81,12 +81,14 @@ while ($table = $xoopsDB->fetchRow($resultst)) {
     }
 }
 
+/*
+ * experimental removal of language setting in functions.php - this should be set previously in other locations and this file should be a library with no dependancies on doing something specific for the bootstrapping of the page's resources
 global $xoopsConfig;
 if (file_exists(XOOPS_ROOT_PATH . "/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
     include_once XOOPS_ROOT_PATH . "/modules/formulize/language/".$xoopsConfig['language']."/main.php";
 } else {
     include_once XOOPS_ROOT_PATH . "/modules/formulize/language/english/main.php";
-}
+}*/
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/class/usersGroupsPerms.php";
