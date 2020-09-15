@@ -2138,7 +2138,9 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
                     $element_handler->insert($element);
                 }
                     $allValues = array_keys($ele_value[2]);
-                    $newWrittenValues[] = array_search($newValue, $allValues); // value to write is the number representing the position in the array of the key that is the text value the user made
+                    $selectedKey = array_search($newValue, $allValues); // value to write is the number representing the position in the array of the key that is the text value the user made
+                    $selectedKey = $element->canHaveMultipleValues ? $selectedKey : $selectedKey + 1; // because we add one to the key when evaluating against single option elements below and these thigns need to line up!! YUCK
+                    $newWrittenValues[] = $selectedKey;
                 }
                 // remove the candidate value from the original $ele so we don't have a duplicate when trying to sort it out later
                 if(is_array($ele)) {
