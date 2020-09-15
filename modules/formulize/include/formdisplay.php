@@ -1721,7 +1721,7 @@ function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $butto
 function drawGoBackForm($go_back, $currentURL, $settings, $entry, $screen) {
 	if($go_back['url'] == "" AND !isset($go_back['form'])) { // there are no back instructions at all, then make the done button go to the front page of whatever is going on in pageworks
 		print "<form name=go_parent action=\"$currentURL\" method=post>"; //onsubmit=\"javascript:verifyDone();\" method=post>";
-		if(is_array($settings)) { writeHiddenSettings($settings, null, array(), array(), $screen); }
+		if(is_array($settings)) { writeHiddenSettings($settings, null, array(), array(), $screen, 'forceWrite'); }
 		print "<input type=hidden name=lastentry value=$entry>";
 		print "</form>";
 	}
@@ -1732,12 +1732,12 @@ function drawGoBackForm($go_back, $currentURL, $settings, $entry, $screen) {
         print "<input type=hidden name=parent_page value=" . $go_back['page'] . ">";
         print "<input type=hidden name=parent_subformElementId value=" . $go_back['subformElementId'] . ">";
 		print "<input type=hidden name=ventry value=" . $settings['ventry'] . ">";
-		if(is_array($settings)) { writeHiddenSettings($settings, null, array(), array(), $screen); }
+		if(is_array($settings)) { writeHiddenSettings($settings, null, array(), array(), $screen, 'forceWrite'); }
 		print "<input type=hidden name=lastentry value=$entry>";
 		print "</form>";
 	} elseif($go_back['url']) {
 		print "<form name=go_parent action=\"" . $go_back['url'] . "\" method=post>"; //onsubmit=\"javascript:verifyDone();\" method=post>";
-		if(is_array($settings)) { writeHiddenSettings($settings, null, array(), array(), $screen); }		
+		if(is_array($settings)) { writeHiddenSettings($settings, null, array(), array(), $screen, 'forceWrite'); }		
 		print "<input type=hidden name=lastentry value=$entry>";
 		print "</form>";
 	} 
@@ -2949,10 +2949,10 @@ function formulize_formatDateTime($dt) {
 
 
 // write the settings passed to this page from the view entries page, so the view can be restored when they go back
-function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_entries = array(), $screen = null) {
+function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_entries = array(), $screen = null, $forceWrite = false) {
     // only write the settings one time (might have multiple forms being rendered)
     static $formulize_settingsWritten = 0;
-    if($formulize_settingsWritten) {
+    if($formulize_settingsWritten AND !$forceWrite) {
         return $form;
     }
     $formulize_settingsWritten = 1;
