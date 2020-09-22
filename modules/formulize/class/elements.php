@@ -197,6 +197,22 @@ class formulizeformulize extends XoopsObject {
         return $default;
     }
     
+    // returns true if the option is one of the values the user can choose from in this element
+    // returns false if the element does not have options
+    function optionIsValid($option) {
+        $ele_value = $this->getVar('ele_value');
+        $uitext = $this->getVar('ele_uitext');
+        switch($this->getVar('ele_type')) {
+            case "radio":
+                return (isset($ele_value[$option]) OR in_array($option, $uitext)) ? true : false;
+                break;
+            case "select":
+                return (isset($ele_value[2][$option]) OR in_array($option, $uitext)) ? true : false;
+                break;
+        }
+        return false;
+    }
+    
 }
 
 class formulizeElementsHandler {
@@ -594,4 +610,11 @@ class formulizeElementsHandler {
         return false;
     }
     
+}
+
+function optionIsValidForElement($option, $elementHandleOrId) {
+    if(!$element = _getElementObject($elementHandleOrId)) {
+		return false;
+    }
+    return $element->optionIsValid($option);
 }

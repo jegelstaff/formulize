@@ -2751,7 +2751,7 @@ function setupAuthentication() {
 
 	//want to request email info for username later on
 	$client->setScopes('email');
-    $client->addScope('https://www.googleapis.com/auth/drive.file');
+    $client->addScope('https://www.googleapis.com/auth/drive');
 	$client->addScope('profile');
 
 	//Send Client Request
