@@ -3099,7 +3099,7 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
         foreach($allEntries as $fid=>$fidEntries) {
             foreach($fidEntries as $entry_id) {
                 if($entry_id) {
-                    print "<input type='hidden' name='form_".$fid."_rendered_entry' value='".$entry_id."'>";
+                    print "<input type='hidden' name='form_".$fid."_rendered_entry[]' value='".$entry_id."'>";
                 }
             }
         }
