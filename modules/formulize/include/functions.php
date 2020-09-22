@@ -5776,6 +5776,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
         } else {
             foreach ($filterTerms as $key => $value) {
                 $filterTerms[$key] = parseUserAndToday($value, $filterElementIds[$filterId]); // pass element so we can check if it is a userlist and compare {USER} based on id instead of name
+                $filterTerms[$key] = str_replace('{ID}',$curlyBracketEntry,$filterTerms[$key]);
             }
         }
     }
@@ -5798,6 +5799,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
             if(!isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm])) {
                 // convert any literal terms (including {} references to linked selectboxes) into the actual DB value...based on current saved value
                 $literalToDBValue = prepareLiteralTextForDB($filterElementObject, $filterTerms[$filterId], $curlyBracketEntry, $userComparisonId); // prepends checkbox characters and converts yes/nos, {USER}, etc
+                $literalToDBValue = str_replace('{ID}',$curlyBracketEntry,$literalToDBValue);
                 // if no declared API format value, go look it up
                 if($curlyBracketEntry AND $curlyBracketEntry != 'new') {
                 $apiFormatValue = prepvalues($literalToDBValue, substr($filterTerms[$filterId],1,-1), $curlyBracketEntry); // will be an array
