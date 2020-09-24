@@ -3103,6 +3103,7 @@ function _findLinkedEntries($targetFormKeySelf, $targetFormFid, $valuesToLookFor
 // can take an entry in a framework and make copies of all relevant entries in all relevant forms
 // note that the same relative linked selectbox relationships are preserved in cloned framework entries, but links based on common values and uids are not modified at all. this might not be desired behaviour in all cases!!!
 // entries in single-entry forms are never cloned
+// $entry is the entry id number
 function cloneEntry($entry, $frid, $fid, $copies=1, $callback = null) {
     global $xoopsDB, $xoopsUser;
     
@@ -5531,22 +5532,30 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
             if ($filterTypes[$filterId] != "oom" AND !strstr($conditionsFilterComparisonValue, "curlybracketform")) {
                 $needIntroBoolean = true;
                 list($conditionsfilter, $thiscondition) = _appendToCondition($conditionsfilter, "AND", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
+                if($thiscondition) {
                 $conditionsfilterArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
+                }
             // regular oom conditions
             } elseif(!strstr($conditionsFilterComparisonValue, "curlybracketform")) {
                 $needIntroBoolean = true;
                 list($conditionsfilter_oom, $thiscondition) = _appendToCondition($conditionsfilter_oom, "OR", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
+                if($thiscondition) {
                 $conditionsfilter_oomArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
+                }
             // curlybracketform conditions    
             } elseif($filterTypes[$filterId] != "oom") {
                 $needIntroBoolean = false;
                 list($curlyBracketFormconditionsfilter, $thiscondition) = _appendToCondition($curlyBracketFormconditionsfilter, "AND", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
+                if($thiscondition) {
                 $conditionsfilterArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
+                }
             // curlybracketform oom conditions
             } else {
                 $needIntroBoolean = false;
                 list($curlyBracketFormconditionsfilter_oom, $thiscondition) = _appendToCondition($curlyBracketFormconditionsfilter_oom, "OR", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
+                if($thiscondition) {
                 $conditionsfilter_oomArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
+            }
             }
             $curlyBracketFormFrom = $thisCurlyBracketFormFrom ? $thisCurlyBracketFormFrom : $curlyBracketFormFrom; // if something was returned, use it, otherwise, stick with what we've got -- NOTE THIS MEANS YOU CAN'T HAVE DIVERGENT CURLY BRACKET REFERENCES??!!
             
@@ -5595,6 +5604,9 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
 
 // append a given value onto a given condition
 function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias, $filterElementHandle, $filterOp, $conditionsFilterComparisonValue) {
+    
+    if(!$conditionsFilterComparisonValue) { return array($condition, $conditionsFilterComparisonValue); }
+    
     if(!$condition AND $needIntroBoolean) {
         $condition = " AND (";
     } elseif(!$condition AND !$needIntroBoolean) {
@@ -5744,25 +5756,9 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 							    }
                     $filterOps[$filterId] = $overrideReturnedOp ? $overrideReturnedOp : '<=>';
                 // for new entries with a dynamic reference and no asynch value set...
-                } else { // can't do a subquery into a curly bracket form for a 'new' value...return impossible condition
-                    $filterOps[$filterId] = '<'; // don't want to trigger other operations below when op is =
-                    $filterTerms[$filterId] = "99999999999 AND TRUE AND FALSE"; // need to remove the { } from the term to avoid other processing of the bracketed term
-                    $conditionsFilterComparisonValue = $filterTerms[$filterId];
-                }
-                // USED TO BE A FURTHER CONDITIONS HERE TO HANDLE CASES IN WHICH THE SUBQUERY WOULDN'T KICK IN. BUT NOW THANKS TO THE or APPROACH TO THE SUBQUERIES, THEN ALL CASES CAN WORK WITH SUBQUERIES??
-                // IF NOT, THEN CODE BELOW NEEDS SOME REINSTATEMENT/REFACTORING
-                // NEED TO CHECK IN OTHER SYSTEMS TO SEE IF THIS BREAKS ANYTHING!
-                /*
-                 * elseif(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm]) AND substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") {
-                    // doing an asynchronous build of a new entry
-                    $conditionsFilterComparisonValue = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm];
-                    if(!is_numeric($conditionsFilterComparisonValue)) {
-                        $conditionsFilterComparisonValue = "'".formulize_db_escape($conditionsFilterComparisonValue)."'";
+                } else { // can't do a subquery into a curly bracket form for a 'new' value...return nothing
+                    return array("", "");
                     }
-                    if($literalTermToUse != $dbValueOfTerm) {
-                        $conditionsFilterComparisonValue .= '-->>ADDPLAINLITERAL<<--'.$literalTermToUse;
-                    }
-                } else */
             }
             if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
                 $conditionsFilterComparisonValue .= "  AND curlybracketform.`entry_id`=$curlyBracketEntryQuoted ";
