@@ -115,40 +115,20 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
             $timeScript = "";
             if(!$output_timeelement_js) {
                 $output_timeelement_js = $markupName;
-                
-                global $xoTheme, $timeScriptsAdded;
-                if($xoTheme AND $timeScriptsAdded != 'done') {
-                    $xoTheme->addStylesheet("/modules/formulize/libraries/jquery/timeentry/jquery.timeentry.css");
-                    $xoTheme->addScript("modules/formulize/libraries/jquery/timeentry/jquery.plugin.min.js");
-                    $xoTheme->addScript("modules/formulize/libraries/jquery/timeentry/jquery.timeentry.js");
-                    $xoTheme->addScript("modules/formulize/libraries/jquery/timeentry/jquery.mousewheel.js");
-                    $timeScriptsAdded = 'done';
-                } elseif(!$xoTheme) {
-                // depends on includeResource function which is part of formDisplay.php and will exist when any regular form has been rendered onto the screen.
-                // it will not be available when only an element by element rendering is in effect
-                    $loadScriptsIfNecessary = "
-    includeResource('".XOOPS_URL."/modules/formulize/libraries/jquery/timeentry/jquery.timeentry.css', 'link');
-    includeResource('".XOOPS_URL."/modules/formulize/libraries/jquery/timeentry/jquery.plugin.min.js', 'script');
-    includeResource('".XOOPS_URL."/modules/formulize/libraries/jquery/timeentry/jquery.timeentry.js', 'script');
-    includeResource('".XOOPS_URL."/modules/formulize/libraries/jquery/timeentry/jquery.mousewheel.js', 'script');
-";
-                }
-                // wait up to 8 seconds for the scripts to finish loading, but bail after that and don't initialize the elements (otherwise endless loop)
-                // complete the document.ready instructions started above...
                 $timeScript .= "<script type='text/javascript'>
-jQuery(document).ready(function(){
-    ".$loadScriptsIfNecessary."
-    initializeTimeElements();
-});
-var timeElementWaiting = 0;
+
 function initializeTimeElements() {
-    if(jQuery.timeEntry === undefined && timeElementWaiting <= 8) {
-        timeElementWaiting = timeElementWaiting + 1;
-        setTimeout(initializeTimeElements,500);
-    } else if(jQuery.timeEntry !== undefined) {
-        jQuery('.formulize-time-element').timeEntry({spinnerImage: '".XOOPS_URL."/modules/formulize/libraries/jquery/timeentry/spinnerDefault.png'});
-    }
+    jQuery('.formulize-time-element').timeEntry({spinnerImage: '".XOOPS_URL."/modules/formulize/libraries/jquery/timeentry/spinnerDefault.png'});
 }
+
+jQuery(document).ready(function(){    
+    if(jQuery.timeEntry === undefined) {
+        setTimeout(initializeTimeElements, 1000); // hail mary, wait for a second if jQuery isn't finished loading??
+    } else {
+        initializeTimeElements();
+    }
+});
+
 </script>";
                 
             }

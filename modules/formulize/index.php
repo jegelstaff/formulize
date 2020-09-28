@@ -57,6 +57,10 @@ global $xoTheme;
 if($xoTheme) {
     $xoTheme->addStylesheet("/modules/formulize/templates/css/formulize.css?v=6.0");
     $xoTheme->addScript("/modules/formulize/libraries/formulize.js");
+    $xoTheme->addStylesheet("/modules/formulize/libraries/jquery/timeentry/jquery.timeentry.css");
+    $xoTheme->addScript("modules/formulize/libraries/jquery/timeentry/jquery.plugin.min.js");
+    $xoTheme->addScript("modules/formulize/libraries/jquery/timeentry/jquery.timeentry.js");
+    $xoTheme->addScript("modules/formulize/libraries/jquery/timeentry/jquery.mousewheel.js");
 }
 include 'initialize.php';
 
