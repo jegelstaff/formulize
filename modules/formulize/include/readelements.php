@@ -96,6 +96,12 @@ $formulize_subformBlankCues = array();
 // loop through POST and catalogue everything that we need to do something with
 foreach($_POST as $k=>$v) {
 
+    // record all the present entries, which are sent from standard rendered forms (created in the writeHiddenSettings function)
+    if(substr($k, 0, 5) == 'form_' AND substr($k, -15) == '_rendered_entry') {
+        $presentFid = intval(str_replace('form_','',str_replace('_rendered_entry','',$k)));
+        $GLOBALS['formulize_allPresentEntryIds'][$presentFid] = $v;
+    }
+
 	if(substr($k, 0, 12) == "updateowner_" AND $v != "nochange") {
 		$updateOwnerData = explode("_", $k);
 		$updateOwnerFid = intval($updateOwnerData[1]);
@@ -395,12 +401,20 @@ foreach($formulize_allWrittenEntryIds as $allWrittenFid=>$entries) {
                     $foundEntries = checkForLinks($frid, array($allWrittenFid), $allWrittenFid, array($allWrittenFid=>array($thisEntry)));
                 }
                 foreach($foundEntries['entries'][$fid] as $mainFormEntry) {
-                        if(!in_array($mainFormEntry, $mainFormEntriesUpdatedForDerived) AND $mainFormEntry AND in_array($mainFormEntry, $formulize_allSubmittedEntryIds[$fid])) { // regarding final in_array... // if we have deduced the mainform entry, then depending on the structure of the relationship, it is possible that if checkforlinks was used above, it would return entries that were not part of pageload, in which case we must ignore them!!
+                    if(!in_array($mainFormEntry, $mainFormEntriesUpdatedForDerived)
+                       AND $mainFormEntry
+                       AND (
+                        in_array($mainFormEntry, $formulize_allSubmittedEntryIds[$fid])
+                        OR (isset($GLOBALS['formulize_allPresentEntryIds']) AND in_array($mainFormEntry, $formulize_allPresentEntryIds[$fid]))
+                        )
+                      ) {
+                        // regarding final in_array checks... // if we have deduced the mainform entry, then depending on the structure of the relationship, it is possible that if checkforlinks was used above, it would return entries that were not part of pageload, in which case we must ignore them!!
+                        // note that allPresentEntryIds will not exist if this is a disembodied rendering. Only standard renderings through formDisplay invoke writeHiddenSettings, which in turn causes the values in _POST which become that array
                         formulize_updateDerivedValues($mainFormEntry, $fid, $frid);
                         $mainFormEntriesUpdatedForDerived[] = $mainFormEntry;
-                        }
-                        if(!isset($formsUpdatedInFramework[$allWrittenFid]) AND in_array($mainFormEntry, $formulize_allSubmittedEntryIds[$fid])) { // if the form we're on has derived values, then flag it as one of the updated forms, since at least one matching mainform entry was found and will have been updated including the framework
-                            $formsUpdatedInFramework[$allWrittenFid] = $allWrittenFid;
+                    }
+                    if(!isset($formsUpdatedInFramework[$allWrittenFid]) AND ( in_array($mainFormEntry, $formulize_allSubmittedEntryIds[$fid]) OR (isset($GLOBALS['formulize_allPresentEntryIds']) AND in_array($mainFormEntry, $formulize_allPresentEntryIds[$fid])) )) { // if the form we're on has derived values, then flag it as one of the updated forms, since at least one matching mainform entry was found and will have been updated including the framework
+                        $formsUpdatedInFramework[$allWrittenFid] = $allWrittenFid;
                     }
                 }
             }
