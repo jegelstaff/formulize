@@ -375,7 +375,7 @@ function getDataCached($framework, $form, $filter="", $andor="AND", $scope="", $
     $id_reqsOnly=false, $resultOnly=false, $filterElements=null)
 {
     $cacheKey = serialize(func_get_args());
-    if (isset($GLOBALS['formulize_cachedGetDataResults'][$cacheKey])) {
+    if (isset($GLOBALS['formulize_cachedGetDataResults'][$cacheKey]) AND !isset($GLOBALS['formulize_forceDerivedValueUpdate'])) {
         return $GLOBALS['formulize_cachedGetDataResults'][$cacheKey];
     } else {
         return getData($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $dbTableUidField, $id_reqsOnly, $resultOnly, $filterElements, $cacheKey);
