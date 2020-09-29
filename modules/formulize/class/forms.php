@@ -1327,7 +1327,7 @@ class formulizeFormsHandler {
 		}
 
 		// replace ele_id flags that need replacing
-		$replaceSQL = "UPDATE ". $this->db->prefix("formulize") . " SET ele_handle=ele_id WHERE ele_handle=\"replace_with_ele_id\"";
+		$replaceSQL = "UPDATE ". $this->db->prefix("formulize") . " SET ele_handle=CONCAT('".$oldFormHandle."_',ele_id) WHERE ele_handle=\"replace_with_ele_id\"";
 		if(!$result = $this->db->queryF($replaceSQL)) {
 		   print "error setting the ele_handle values for the new form.<br>".$xoopsDB->error();
 		   return false;
