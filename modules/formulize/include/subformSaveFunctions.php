@@ -45,6 +45,7 @@ function formulize_subformSave_determineElementToWrite($frid, $fid, $entry, $tar
 // this function writes entries into a subform
 // $element_to_write is the element in the subform to write the key value to
 // $value_to_write is the value to write into the element
+// $mainFormFid is the mainform id number
 // $frid is the form relationship id in effect, if any
 // $target_sub is the form id of the subform
 // $entry is the entry id in the main form (parent form)
@@ -52,7 +53,7 @@ function formulize_subformSave_determineElementToWrite($frid, $fid, $entry, $tar
 // $overrideOwnerOfNewEntries is a flag to indicate if the mainform owner is assigned as the owner of newly created sub entries
 // $mainFormOwner is the owner of the main form entry
 // $numSubEnts is the number of sub entries to create
-function formulize_subformSave_writeNewEntry($element_to_write, $value_to_write, $frid, $target_sub, $entry, $subformConditions, $overrideOwnerOfNewEntries, $mainFormOwner, $numSubEnts) {
+function formulize_subformSave_writeNewEntry($element_to_write, $value_to_write, $mainFormFid, $frid, $target_sub, $entry, $subformConditions, $overrideOwnerOfNewEntries, $mainFormOwner, $numSubEnts) {
     // need to handle things differently depending on whether it's a common value or a linked selectbox type of link
     // uid links need to result in a "new" value in the displayElement boxes -- odd things will happen if people start adding linked values to entries that aren't theirs!
     global $subformSubEntryMap;
@@ -89,7 +90,11 @@ function formulize_subformSave_writeNewEntry($element_to_write, $value_to_write,
         if(isset($filterValues) AND count($filterValues)>0) {
             formulize_writeEntry($filterValues,$thisSubEntry);	
         }
-        formulize_updateDerivedValues($thisSubEntry,$target_sub,$frid);
+        if($frid) {
+            formulize_updateDerivedValues($entry,$mainFormFid,$frid);
+        } else {
+            formulize_updateDerivedValues($thisSubEntry,$target_sub);
+        }
     }
     return array($sub_entry_new,$sub_entry_written,$filterValues);
 }
