@@ -203,7 +203,7 @@ class formulize_themeForm extends XoopsThemeForm {
             // set the column value for all elements, regardless of if they're being rendered or not, so we can pick up the value from session if a conditional element is activated later asynchronously
             // but only do this when rendering the screen that the element is natively part of! -- conditionally hidden elements could otherwise end up with a different screen's settings as their cached-in-session settings
             $eleToCheckForReset = is_numeric($eleToSetForColumns) ? $eleToSetForColumns : $ele->formulize_element;
-            if($this->screen AND $this->screen->elementIsPartOfScreen($eleToCheckForReset)) {
+            if($this->screen AND ($this->screen->elementIsPartOfScreen($eleToCheckForReset) OR (is_object($ele) AND $ele->getName() == 'button-controls'))) {
                 $columns = $this->_getColumns($eleToSetForColumns, 'reset');
             }
 
