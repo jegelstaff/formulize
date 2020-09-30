@@ -513,30 +513,29 @@ class formulizeDataHandler  {
 	function findAllValuesForEntries($handle, $entries) {
 		if(!is_array($entries)) {
 			if(is_numeric($entries)) {
-				$tempEntries = $entries;
-				unset($entries);
-				$entries = array(0=>$tempEntries);
+				$entries = array($entries);
 			} else {
 				return false;
 			}
 		}
 		static $cachedValues = array();
-		$resultArray = array();
 		global $xoopsDB;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($this->fid);
-		foreach($entries as $entry) {
-			if(!isset($cachedValues[$handle][$entry])) {
-				$sql = "SELECT `$handle` FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')). " WHERE entry_id = ".intval($entry);
-				if($res = $xoopsDB->query($sql)) {
-					$array = $xoopsDB->fetchArray($res);
-					$cachedValues[$handle][$entry] = $array[$handle];
-				} else {
-					$cachedValues[$handle][$entry] = false;
-				}
-			} 
-			$resultArray[] = $cachedValues[$handle][$entry];
-		}
+		foreach($entries as $i=>$entry) {
+            $entries[$i] = intval($entry); // ensure we're not getting any funny business passed in to the DB
+        }
+        if(!isset($cachedValues[$handle][serialize($entries)])) {
+            $sql = "SELECT `$handle` FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')). " WHERE entry_id IN (".implode(',',$entries).")";
+            if($res = $xoopsDB->query($sql)) {
+                while($array = $xoopsDB->fetchArray($res)) {
+                    $cachedValues[$handle][serialize($entries)][] = $array[$handle];
+                }
+            } else {
+                $cachedValues[$handle][serialize($entries)][] = false;
+            }
+        } 
+		$resultArray = is_array($cachedValues[$handle][serialize($entries)]) ? $cachedValues[$handle][serialize($entries)] : array();
 		return $resultArray;
 	}
 	
