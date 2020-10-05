@@ -421,6 +421,10 @@ td.head a {
   padding: 1em;
   border: 1px solid darkgreen; }
 
+.xo-theme-form th {
+  border: 1px solid darkgreen;  
+}
+
 .odd, tr.odd td {
   background-color: #e6e6e6;
   color: #000;
@@ -698,9 +702,6 @@ th {
   background: #dcdee0;
   padding: 3px;
   border-bottom: 1px solid #ccc; }
-
-table.outer {
-  border: 1px solid darkgreen; }
 
 #session-timeout-warning {
   display: none;
