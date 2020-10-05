@@ -1253,7 +1253,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		}
 	
 		// draw in the submitbutton if necessary
-		if (!$formElementsOnly and formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
+		if (!$formElementsOnly) {
 			$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $entry, $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, $allDoneOverride, $printall, $screen);
 			}
 	
@@ -1592,6 +1592,10 @@ function addProfileFields($form, $profileForm) {
 // add the submit button to a form
 function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $button_text, $settings, $entry, $fids, $formframe, $mainform, $cur_entry, $profileForm, $elements_allowed="", $allDoneOverride=false, $printall=0, $screen=null) { //nmc 2007.03.24 - added $printall
 
+    global $xoopsUser;
+    $fid = $fids[key($fids)]; // get first element in array, might not be keyed as 0 :(
+    $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+
 	if($printall == 2) { // 2 is special setting in multipage screens that means do not include any printable buttons of any kind
 		return $form;
 	}
@@ -1690,12 +1694,14 @@ function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $butto
         $buttontray->setClass("no-print");
     
         if($save_text_temp) { $subButtonText = $save_text_temp; }
-        if($subButtonText != "{NOBUTTON}") {
+        
+        if($subButtonText != "{NOBUTTON}" AND formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
             $saveButton = new XoopsFormButton('', 'submitx', trans($subButtonText), 'button'); // doesn't use name submit since that conflicts with the submit javascript function
             $saveButton->setExtra("onclick=javascript:validateAndSubmit();");
             $buttontray->addElement($saveButton);
         }
-        if(isset($save_and_leave_text_temp) AND $save_and_leave_text_temp != "{NOBUTTON}") {
+
+        if(isset($save_and_leave_text_temp) AND $save_and_leave_text_temp != "{NOBUTTON}" AND formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
             // also add in the save and leave button
             $saveAndLeaveButton = new XoopsFormButton('', 'submit_save_and_leave', trans($save_and_leave_text_temp), 'button');
             $saveAndLeaveButton->setExtra("onclick=javascript:validateAndSubmit('leave');");
