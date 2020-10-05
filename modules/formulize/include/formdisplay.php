@@ -2267,6 +2267,8 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
     $deleteButton = "";
 	if(((count($sub_entries[$subform_id])>0 AND $sub_entries[$subform_id][0] != "") OR $sub_entry_new OR is_array($sub_entry_written)) AND $need_delete) {
         $deleteButton = "&nbsp;&nbsp;&nbsp;<input type=button name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del($subform_id, $sub_ent, '$viewType', ".intval($_GET['subformElementId']).", '$fid', '$entry');\">";
+        // for now, add clone button when delete button is available...sketchy though, we should make this more controlled
+        $deleteButton .= "&nbsp;&nbsp;&nbsp;<input type=button name=clonesubs value='" . _formulize_CLONE_CHECKED . "' onclick=\"javascript:sub_clone($subform_id, $sub_ent, '$viewType', ".intval($_GET['subformElementId']).", '$fid', '$entry');\">";
 	}
 
     // if the 'add x entries button' should be hidden or visible
@@ -2295,7 +2297,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
                     $col_two .= "<input type=text name=addsubentries$subform_id$subformElementId$subformInstance id=addsubentries$subform_id$subformElementId$subformInstance value=1 size=2 maxlength=2>";
                     $col_two .= $addEntriesText;
                 }
-                $col_two .= $deleteButton."&nbsp;&nbsp;&nbsp;<input type=button name=clonesubs value='" . _formulize_CLONE_CHECKED . "' onclick=\"javascript:sub_clone($subform_id, $sub_ent, '$viewType', ".intval($_GET['subformElementId']).", '$fid', '$entry');\"></div>";
+                $col_two .= $deleteButton."</div>";
             }
         }
     }
