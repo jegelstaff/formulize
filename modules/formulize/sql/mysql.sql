@@ -319,7 +319,7 @@ CREATE TABLE formulize_saved_views (
 
 CREATE TABLE group_lists (
   gl_id smallint(5) unsigned NOT NULL auto_increment,
-  gl_name varchar(255) NOT NULL default '',
+  gl_name varchar(250) NOT NULL default '',
   gl_groups text NOT NULL,
   PRIMARY KEY (gl_id),
   UNIQUE gl_name_id (gl_name)
@@ -387,8 +387,7 @@ CREATE TABLE formulize (
   ele_private tinyint(1) NOT NULL default '0',
   ele_use_default_when_blank tinyint(1) NOT NULL default '0',
   ele_exportoptions text NOT NULL,
-  PRIMARY KEY  (`ele_id`),
-  KEY `ele_display` (`ele_display` ( 255 ) ),
+  PRIMARY KEY  (`ele_id`),  
   KEY `ele_order` (`ele_order`)
 ) ENGINE=MyISAM;
 
