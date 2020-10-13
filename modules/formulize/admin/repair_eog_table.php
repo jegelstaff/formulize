@@ -30,7 +30,10 @@
 // This file receives ajax form submissions from the new admin UI
 
 include_once "../../../mainfile.php";
-ob_end_clean(); // in some cases ther appear to be two buffers active?!  So we must try to end twice.
+icms::$logger->disableLogger();
+while(ob_get_level()) {
+    ob_end_clean();
+}
 global $xoopsUser, $xoopsDB;
 if (!$xoopsUser) {
     print "Error: you are not logged in";
