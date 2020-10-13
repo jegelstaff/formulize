@@ -107,7 +107,9 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	// no handling of cookies here, so anonymous multi-page surveys will not benefit from that feature
 	// this emphasizes how we need to standardize a lot of these interfaces with a real class system
 	if(!$entry AND $_POST['entry'.$fid]) {
-		$entry = $_POST['entry'.$fid];
+		$entry = intval($_POST['entry'.$fid]);
+    } elseif(!$entry AND $_POST['form_'.$fid.'_rendered_entry']) {
+        $entry = intval($_POST['form_'.$fid.'_rendered_entry'][0]);
 	} elseif(!$entry) { // or check getSingle to see what the real entry is
 		$entry = $single_result['flag'] ? $single_result['entry'] : 0;
 	}
