@@ -5511,14 +5511,20 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
                    AND !strstr($filterTerms[$filterId], '{TODAY')) {
                         if($filterTermElement = $element_handler->get($bareFilterTerm)) {
                             $curlyBracketForm = $form_handler->get($filterTermElement->getVar('id_form'));
+                            // AND FOR NOW, WE DON'T SUPPORT { } DYNAMIC TERMS ON EXTRACTION QUERIES...WHAT WOULD THAT EVEN MEAN...we could possibly do this, it would require a lot of further complications in the SQL 
+                            continue;
+                        } elseif(isset($_POST[$bareFilterTerm]) OR isset($_GET[$bareFilterTerm])) {
+                            // term is a URL or POST reference, so grab that
+                            $curlyBracketForm = $form_handler->get(key($targetFormId));
+                            $filterTerms[$filterId] = isset($_POST[$bareFilterTerm]) ? $_POST[$bareFilterTerm] : $_GET[$bareFilterTerm];
+                            $bareFilterTerm = $filterTerms[$filterId];
                         } else {
-                            print "Error: { } term could not be resolved. Are you expecting it to be in the URL?";
+                            // don't know what the term is!
+                            print "Error: { } term could not be resolved. Were you expecting it to be in the URL?";
                             return;
                         }
-                        // AND FOR NOW, WE DON'T SUPPORT { } TERMS ON EXTRACTION QUERIES...WHAT WOULD THAT EVEN MEAN...we could possibly do this, it would require a lot of further complications in the SQL 
-                        continue;
                     } else {
-                        // { } term is not a handle reference, so use the main form (first key in the fid-alias array map that was passed in)
+                        // { } term is not a handle reference, or a URL reference, it's one of our reserved keywords, so use the main form (first key in the fid-alias array map that was passed in)
                         reset($targetFormId);
                         $curlyBracketForm = $form_handler->get(key($targetFormId));
                     }
