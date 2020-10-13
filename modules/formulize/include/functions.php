@@ -1241,11 +1241,19 @@ function checkForLinks($frid, $fids, $fid, $entries, $unified_display=false, $un
                         } else {
                             // get the entry in the $one_fid['fid'] form (form with the self element), that has the intval($entries[$fid][0]) entry (the entry we are calling up already) as it's linked value
                             $data_handler = new formulizeDataHandler($one_fid['fid']);
+                            global $xoopsUser;
+                            $scope_uids = array();
+                            $groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+                            $gperm_handler = xoops_gethandler('groupperm');
+                            // users who can only see their own entries should be linked to their own entry in a one-to-one connection of this kind                            
+                            if(!$gperm_handler->checkRight("view_globalscope", $one_fid['fid'], $groups, getFormulizeModId()) AND !$gperm_handler->checkRight("view_groupscope", $one_fid['fid'], $groups, getFormulizeModId())) {
+                                $scope_uids = array($xoopsUser->getVar('uid'));
+                            }
                             if($selfEleValue[1] == 1) {
                                 // if we support multiple selections, then prepend and append a comma
-                                $foundEntry = $data_handler->findFirstEntryWithValue($selfElement, ','.$thisTargetEntry.',', "LIKE");    
+                                $foundEntry = $data_handler->findFirstEntryWithValue($selfElement, ','.$thisTargetEntry.',', "LIKE", $scope_uids);    
                             } else {
-                                $foundEntry = $data_handler->findFirstEntryWithValue($selfElement, intval($thisTargetEntry));
+                                $foundEntry = $data_handler->findFirstEntryWithValue($selfElement, intval($thisTargetEntry), '=', $scope_uids);
                             }
                         }
                         if ($foundEntry !== false) {
