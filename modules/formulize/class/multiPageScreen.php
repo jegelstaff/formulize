@@ -337,8 +337,19 @@ function pageMeetsConditions($conditions, $currentPage, $entry_id, $fid, $frid) 
             $oomfilter = "";
     $blankORSearch = "";
     
-    if(count($elements)>0 AND !intval($entry_id)) { return false; } // new entries cannot meet conditions yet because they are not saved
-    if(count($elements)==0) { return true; } // pages with no conditions are always allowed!
+    // new entries cannot meet conditions yet because they are not saved
+    // UNLESS the condition is = {BLANK}
+    if(count($elements)>0 AND !intval($entry_id)) {
+        foreach($ops as $i=>$op) {
+            if($op != "=" OR $terms[$i] != "{BLANK}") {
+                return false;
+            }
+        }
+        return true; // all conditions are = {BLANK} so new entries would match (except for if there are default values specified for the field??)
+    }
+    
+    // pages with no conditions are always allowed!
+    if(count($elements)==0) { return true; } 
     
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
             foreach($elements as $i=>$thisElement) {
