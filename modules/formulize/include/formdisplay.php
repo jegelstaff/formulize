@@ -3756,12 +3756,13 @@ var conditionalCheckInProgress = 0;
 function callCheckCondition(name) {
     for(key in governedElements[name]) {
         var handle = governedElements[name][key];
-			elementValuesForURL = getRelevantElementValues(relevantElements[handle]);
-			if(oneToOneElements[handle]['onetoonefrid']) {
-				elementValuesForURL = elementValuesForURL + '&onetoonekey=1&onetoonefrid='+oneToOneElements[handle]['onetoonefrid']+'&onetoonefid='+oneToOneElements[handle]['onetoonefid']+'&onetooneentries='+oneToOneElements[handle]['onetooneentries']+'&onetoonefids='+oneToOneElements[handle]['onetoonefids'];			
-			}
-			checkCondition(handle, conditionalHTML[handle], elementValuesForURL);	
-		}
+        if(typeof handle != 'string') { continue; }
+        elementValuesForURL = getRelevantElementValues(relevantElements[handle]);
+        if(oneToOneElements[handle]['onetoonefrid']) {
+            elementValuesForURL = elementValuesForURL + '&onetoonekey=1&onetoonefrid='+oneToOneElements[handle]['onetoonefrid']+'&onetoonefid='+oneToOneElements[handle]['onetoonefid']+'&onetooneentries='+oneToOneElements[handle]['onetooneentries']+'&onetoonefids='+oneToOneElements[handle]['onetoonefids'];			
+        }
+        checkCondition(handle, conditionalHTML[handle], elementValuesForURL);
+	}
 }
 
 function assignConditionalHTML(handle, html) {
@@ -3821,7 +3822,8 @@ function getRelevantElementValues(elements) {
 	var ret = '';
 	for(key in elements) {
 		var handle = elements[key];
-		if(handle.indexOf('[]')!=-1) { // grab multiple value elements from a different tag
+        if(typeof handle != 'string') { continue; }
+        if(handle.indexOf('[]')!=-1) { // grab multiple value elements from a different tag
 			nameToUse = '[jquerytag='+handle.substring(0, handle.length-2)+']';
 		} else {
 			nameToUse = '[name='+handle+']';
