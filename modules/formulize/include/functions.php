@@ -5679,11 +5679,11 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                     $literalTermToUse = "'".formulize_db_escape($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm])."'";
                     $literalQuotes = "";
                 } elseif($curlyBracketEntry != 'new') {
-                    $apiFormatValue = prepvalues($dbValueOfTerm, $bareFilterTerm, $curlyBracketEntry); // will be an array
-                    if(is_array($apiFormatValue) AND count($apiFormatValue)==1) {
-                        $apiFormatValue = $apiFormatValue[0]; // take the single value if there's only one, same as display function does
+                    $preppedFormatValue = prepvalues($dbValueOfTerm, $bareFilterTerm, $curlyBracketEntry); // will be an array
+                    if(is_array($preppedFormatValue) AND count($preppedFormatValue)==1) {
+                        $preppedFormatValue = $preppedFormatValue[0]; // take the single value if there's only one, same as display function does
                     }
-                    $literalTermToUse = $apiFormatValue;
+                    $literalTermToUse = $preppedFormatValue;
                     $literalQuotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
                 } else {
                     // for new entries maybe we should get the defaults?
@@ -5797,11 +5797,11 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                 $literalToDBValue = prepareLiteralTextForDB($filterElementObject, $filterTerms[$filterId], $curlyBracketEntry, $userComparisonId); // prepends checkbox characters and converts yes/nos, {USER}, etc
                 // if no declared API format value, go look it up
                 if($curlyBracketEntry AND $curlyBracketEntry != 'new') {
-                $apiFormatValue = prepvalues($literalToDBValue, substr($filterTerms[$filterId],1,-1), $curlyBracketEntry); // will be an array
-                if(is_array($apiFormatValue) AND count($apiFormatValue)==1) {
-                    $apiFormatValue = $apiFormatValue[0]; // take the single value if there's only one, same as display function does
+                $preppedFormatValue = prepvalues($literalToDBValue, substr($filterTerms[$filterId],1,-1), $curlyBracketEntry); // will be an array
+                if(is_array($preppedFormatValue) AND count($preppedFormatValue)==1) {
+                    $preppedFormatValue = $preppedFormatValue[0]; // take the single value if there's only one, same as display function does
                 }
-                $plainLiteralValue = $apiFormatValue;
+                $plainLiteralValue = $preppedFormatValue;
             } else {
                     // for new entries get the defaults?? Needs testing
                 }
