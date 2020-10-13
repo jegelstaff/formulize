@@ -998,7 +998,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
         }
 		foreach($fids as $this_fid) {
 	
-			if(!$scheck = security_check($this_fid, $entries[$this_fid][0], $uid, $owner, $groups, $mid, $gperm_handler) AND !$viewallforms) {
+			if(!$scheck = security_check($this_fid, $entries[$this_fid][0]) AND !$viewallforms) {
 				continue;
 			}
 			
