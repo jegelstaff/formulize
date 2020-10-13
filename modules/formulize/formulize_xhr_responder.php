@@ -37,6 +37,10 @@
 require_once "../../mainfile.php"; // initialize the xoops stack so we have access to the user object, etc if necessary
 icms::$logger->disableLogger();
 
+while(ob_get_level()) {
+    ob_end_clean();
+}
+
 // check that the user who sent this request is the same user we have a session for now, if not, bail
 $sentUid = intval($_GET['uid']);
 
