@@ -872,6 +872,20 @@ class formulizeDataHandler  {
             // set metadata for new record
             $element_values["`creation_datetime`"]  = "NOW()";
             $element_values["`creation_uid`"]       = intval($creation_uid);
+            if($uid==0) {
+                foreach($_SESSION as $sessionVariable=>$value) {
+                    if(substr($sessionVariable, 0, 19) == 'formulize_passCode_' AND is_numeric(str_replace('formulize_passCode_', '', $sessionVariable))) {
+                        
+                        $sid = str_replace('formulize_passCode_', '', $sessionVariable);
+                        $screen_handler = xoops_getmodulehandler('screen','formulize');
+                        $screenObject = $screen_handler->get($sid);
+                        $passcodeFid = $screenObject->getVar('fid');
+                        if(in_array('anon_passcode_'.$passcodeFid, $handleElementMap)) { // passcode field exists in this data table, so we need to write the passcode to the entry
+                            $element_values['anon_passcode_'.$passcodeFid] = $this->formatValueForQuery('anon_passcode_'.$sid, $value);
+                        }
+                    }
+                }
+            }
 
             // write sql statement to insert new entry
             $sql = "INSERT INTO ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." (".
