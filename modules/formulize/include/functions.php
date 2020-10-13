@@ -6938,6 +6938,8 @@ function prepareLinkedElementGroupFilter($sourceFid, $groupSelections, $useOnlyU
         $pgroupsfilter .= ")";
     } elseif(count($pgroups) > 0) {
         $pgroupsfilter = " t2.groupid IN (".formulize_db_escape(implode(",",$pgroups)).") AND t2.fid=$sourceFid";
+    } elseif($groupSelections AND !in_array("all", $scopegroups) AND count($pgroups)==0) {
+        $pgroupsfilter = 'FALSE';
     } else {
         $pgroupsfilter = "";
     }
