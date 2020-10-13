@@ -1445,8 +1445,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
         $csvfile = prepExportSecondaryData($csvfile, $cols, $fd, $secondaryData);
         $secondaryData = array(); // reset the secondary data
         
-        $formhandle = getFormHandlesFromEntry($entry);
-        $ids = internalRecordIds($entry, $formhandle[0]);
+        $ids = internalRecordIds($entry, $fid);
         $id = $ids[0];
         $id_req[] = $id;
         
@@ -7406,8 +7405,7 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
                     foreach ($columns as $column) {
                         switch ($column) {
                             case "entry_id":
-                            $formhandle = getFormHandlesFromEntry($entry);
-                            $ids = internalRecordIds($entry, $formhandle[0]);
+                            $ids = internalRecordIds($entry, $fid);
                             $row[] = $ids[0];
                             break;
     

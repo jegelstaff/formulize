@@ -1846,8 +1846,8 @@ function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form
     if ($debugMode OR ((isset($GLOBALS['formulize_forceDerivedValueUpdate'])) AND !isset($GLOBALS['formulize_doingExport']))) {
     include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
     foreach ($entry as $formHandle => $record) {
-        $data_handler = new formulizeDataHandler(formulize_getFormIdFromName($formHandle));
         $formHandle = htmlspecialchars_decode($formHandle, ENT_QUOTES);
+        $data_handler = new formulizeDataHandler($metadata[$formHandle][0]['form_id']); // all items in the metadata[formHandle] array will have the same form id, because the form handle is the same
         if (isset($metadata[$formHandle])) {
             // if there are derived value formulas for this form
             if (!isset($parsedFormulas[$formHandle][$relationship_id][$form_id])) {
@@ -2206,7 +2206,7 @@ function getFormHandlesFromEntry($entry) {
 	if(is_array($entry)) {
 		return array_keys($entry);
 	}
-	return "";// exit("Error: no form handle found for element handle '$handle'");
+	return "";
 }
 
 // THIS FUNCTION IS USED AFTER THE MASTERRESULT HAS BEEN RETURNED.  THIS FUNCTION RETURNS THE VALUE OF THE CORRESPONDING ELEMENT HANDLE FOR THE GIVEN MASTER ENTRY ID.  
@@ -2377,7 +2377,6 @@ function displayList($entry, $handle, $type="bulleted", $id="NULL", $localid="NU
 // $formhandle can all just be a single handle
 // $formhandle values can be: the title of the form, or the id number of the form
 // If formhandle is an array, then $ids becomes a two dimensional array:  $ids[$formhandle][] = $id
-// Crazy in efficiencies going on here in terms of how ids and titles are getting converted back and forth and back and forth.  And using form titles in the data array is the last bit of general stupidity that should be squeezed out, but its a backwards compatibility issue now.
 function internalRecordIds($entry, $formhandle="", $id="NULL", $fidAsKeys = false) {
 	if(is_numeric($id)) {
 		$entry = $entry[$id];
@@ -2389,12 +2388,17 @@ function internalRecordIds($entry, $formhandle="", $id="NULL", $fidAsKeys = fals
 		 // need to convert possible legacy framework form handles to form ids
 		 $formhandle = dealWithDeprecatedFormHandles($formhandle);
 	}
-	if(is_array($formhandle)) {
+	if(is_array($formhandle)) {        
+        $element_handler = xoops_getmodulehandler('elements', 'formulize');
 		foreach($formhandle as $handle) {
-      $handle = _parseInternalRecordIdsFormHandle($handle);
-			foreach($entry[$handle] as $id=>$element) {
+            $handle = _parseInternalRecordIdsFormHandle($handle);
+			foreach($entry[$handle] as $id=>$localEntry) {
 				if($fidAsKeys) {
-					$fid = formulize_getFormIdFromName($handle); 
+                    $offset = isset($localEntry['entry_id']) ? 9 : 0; // first eight items will be the metadata fields if 'entry_id' is present, otherwise, take the first item from the array
+                    $localEntryElement = array_slice($localEntry, $offset, 1); 
+                    $localEntryElement = key($localEntryElement);
+                    $elementObject = $element_handler->get($localEntryElement);
+                    $fid = $elementObject->getVar('id_form');
 					$ids[$fid][] = $id;
 				} else {
 					$ids[$handle][] = $id;

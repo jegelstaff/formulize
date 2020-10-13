@@ -1745,7 +1745,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 					}
 					unset($linkids);
 
-					$linkids = internalRecordIds($entry, $mainFormHandle);
+					$linkids = internalRecordIds($entry, $fid);
 
 					// draw in the margin column where the links and metadata goes
 					if($useViewEntryLinks OR $useCheckboxes != 2) {
@@ -1925,7 +1925,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 				if($entry != "") {
 
 					// Set up the variables for the link to the current entry, and the checkbox that can be used to select the current entry
-					$linkids = internalRecordIds($entry, $mainFormHandle);
+					$linkids = internalRecordIds($entry, $fid);
 					$entry_id = $linkids[0]; // make a nice way of referring to this for in the eval'd code
 					$form_id = $fid; // make a nice way of referring to this for in the eval'd code
 					if(!$settings['lockcontrols']) { //  AND !$loadview) { // -- loadview removed from this function sept 24 2005
@@ -1949,7 +1949,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 						}
 					} // end of IF NO LOCKCONTROLS
 
-					$ids = internalRecordIds($entry, $mainFormHandle);
+					$ids = internalRecordIds($entry, $fid);
 					foreach($inlineButtons as $caid=>$thisCustomAction) {
 						list($caCode) = processCustomButton($caid, $thisCustomAction, $ids[0], $entry); // only bother with the code, since we already processed any clicked button above
 						if($caCode) {
