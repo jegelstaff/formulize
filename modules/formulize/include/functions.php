@@ -1704,7 +1704,7 @@ function getMetaData($entry, $member_handler, $fid="", $useOldCode=false) {
 // $groups is the grouplist of the current user.  It is optional.  If present it will limit the columns returned to the ones where display is 1 or the display includes that group
 function getAllColList($fid, $frid="", $groups="", $includeBreaks=false) {
     global $xoopsDB, $xoopsUser;
-    $gperm_handler = &xoops_gethandler('groupperm');
+    $gperm_handler = xoops_gethandler('groupperm');
     $mid = getFormulizeModId();
 
     // if $groups then build the necessary filter
