@@ -7363,15 +7363,28 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
     $data_sql = implode(" ", $queryData); // merge all remaining lines into one string to send to getData
     if(substr($data_sql, 0, 12)=="USETABLEFORM") {
         $params = explode(" -- ", $data_sql);
-        $data = dataExtractionTableForm($params[1], $params[2], $params[3], $params[4], $params[5], FALSE, FALSE, $params[8], $params[9]);
-        foreach($data as $entry) {
-            $row = array();
-            foreach($columns as $column) {
-                $row[] = trans(html_entity_decode(displayTogether($entry, $column, ", "), ENT_QUOTES));    
+        $sql = $params[1];
+        $formname = $params[2];
+        $fid = $params[3];
+        
+        $limitStart = 0;
+        $limitSize = 1000;
+        
+        do {
+        
+            $querySql = $sql . " LIMIT $limitStart,$limitSize";
+        
+            $data = dataExtractionTableForm($querySql, $formname, $fid, false, false, false, false, false, false, false, $columns);
+            foreach($data as $entry) {
+                $row = array();
+                foreach($columns as $column) {
+                    $row[] = trans(html_entity_decode(displayTogether($entry, $column, ", "), ENT_QUOTES));    
+                }
+                // output this row to the browser
+                fputcsv($output_handle, $row);
             }
-            // output this row to the browser
-            fputcsv($output_handle, $row);
-        }
+            $limitStart += $limitSize;
+        } while ( is_array($data) and count($data) > 0 );
         
     } else {
 
@@ -7398,6 +7411,7 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
                     $i = 0;
                     $row = array();
                     foreach ($columns as $column) {
+                        global $xoopsUser;
                         switch ($column) {
                             case "entry_id":
                             $formhandle = getFormHandlesFromEntry($entry);
@@ -7407,20 +7421,24 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
     
                             case "uid":
                             case "creation_uid":
-                            $c_uid = display($entry, 'creation_uid');
-                            $c_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$c_uid'");
-                            $row[] = (isset($c_name_q[0]['name']) ? $c_name_q[0]['name'] : $c_name_q[0]['uname']);
+                                if(!isset($GLOBALS['formulize_useForeignKeysInDataset']['creation_uid']) AND !isset($GLOBALS['formulize_useForeignKeysInDataset']['all'])) {
+                                    $c_uid = display($entry, 'creation_uid');
+                                    $c_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$c_uid'");
+                                    $row[] = (isset($c_name_q[0]['name']) AND $c_name_q[0]['name']) ? $c_name_q[0]['name'] : $c_name_q[0]['uname'];
+                                } else {
+                                    $row[] = display($entry, 'creation_uid');
+                                }
                             break;
     
                             case "proxyid":
                             case "mod_uid":
                             $m_uid = display($entry, 'mod_uid');
-                            if ($m_uid) {
+                            if ($m_uid AND !isset($GLOBALS['formulize_useForeignKeysInDataset']['mod_uid']) AND !isset($GLOBALS['formulize_useForeignKeysInDataset']['all'])) {
                                 $m_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$m_uid'");
-                                $row[] = (isset($m_name_q[0]['name']) ? $m_name_q[0]['name'] : $m_name_q[0]['uname']);
+                                $row[] = (isset($m_name_q[0]['name']) AND $m_name_q[0]['name']) ? $m_name_q[0]['name'] : $m_name_q[0]['uname'];
                             } else {
-                                $row[] = "";
-                            }
+                                $row[] = $m_uid;
+                            } 
                             break;
     
                             case "creation_date":
@@ -7431,6 +7449,10 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
                             case "mod_date":
                             case "mod_datetime":
                             $row[] = display($entry, 'mod_datetime');
+                            break;
+    
+                            case "creator_email":
+                                $row[] =  display($entry, 'creator_email');
                             break;
     
                             default:
