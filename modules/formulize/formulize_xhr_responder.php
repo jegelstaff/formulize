@@ -205,8 +205,8 @@ switch($op) {
           $data_handler = new formulizeDataHandler($onetoonefid);
           if($link->getVar('common')) {
             $entryId = $data_handler->findFirstEntryWithValue($targetElement, $databaseReadyValue);  
-          } elseif($sourceElement==$passedElementId) {
-            $entryId = $databaseReadyValue;
+          } elseif($sourceElement==$passedElementId AND $passedEntryId != 'new') {
+            $entryId = $passedEntryId;
           }
           break;
         }
