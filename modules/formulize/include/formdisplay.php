@@ -1279,16 +1279,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                 $form->addElement (new XoopsFormHidden ('clonesubsflag', 0));
 			}
 			
-			// saving message
-			print "<div id=savingmessage style=\"display: none; position: absolute; width: 100%; right: 0px; text-align: center; padding-top: 50px; z-index: 100;\">\n";
-			global $xoopsConfig;
-			if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/images/saving-".$xoopsConfig['language'].".gif") ) {
-				print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/saving-" . $xoopsConfig['language'] . ".gif\">\n";
-			} else {
-				print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/saving-english.gif\">\n";
-			}
-			print "</div>\n";
-
 			drawJavascript($nosave);
             $form->addElement(new xoopsFormHidden('save_and_leave', 0));
 		// lastly, put in a hidden element, that will tell us what the first, primary form was that we were working with on this form submission
@@ -3121,15 +3111,26 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 // draw in javascript for this form that is relevant to subforms
 // $nosave indicates that the user cannot save this entry, so we shouldn't check for formulizechanged
 function drawJavascript($nosave) {
+
+global $xoopsUser, $xoopsConfig;
+
 static $drawnJavascript = false;
 if($drawnJavascript) {
 	return;
 }
-global $xoopsUser;
+
+// saving message
+print "<div id=savingmessage style=\"display: none; position: absolute; width: 100%; right: 0px; text-align: center; padding-top: 50px; z-index: 100;\">\n";
+global $xoopsConfig;
+if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/images/saving-".$xoopsConfig['language'].".gif") ) {
+    print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/saving-" . $xoopsConfig['language'] . ".gif\">\n";
+} else {
+    print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/saving-english.gif\">\n";
+}
+print "</div>\n";
+
 $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
-// Left in for possible future use by the rankOrderList element type or other elements that might use jQuery
-//print "<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-1.3.2.min.js\"></script><script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-ui-1.7.2.custom.min.js\"></script>";
-//$GLOBALS['formulize_jQuery_included'] = true;
+
 print "\n<script type='text/javascript'>\n";
 
 print " initialize_formulize_xhr();\n";

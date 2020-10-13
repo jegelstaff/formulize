@@ -337,13 +337,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 			    print "<input type=hidden name=entry".$fid." value=".intval($entry).">"; // need this to persist the entry that the user is 
 		    }
 		    print "</form></div>";
-		    print "<div id=savingmessage style=\"display: none; position: absolute; width: 100%; right: 0px; text-align: center; padding-top: 50px;\">\n";
-		    if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/images/saving-".$xoopsConfig['language'].".gif") ) {
-			    print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/saving-" . $xoopsConfig['language'] . ".gif\">\n";
-		    } else {
-			    print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/saving-english.gif\">\n";
-		    }
-		    print "</div>\n";
+
 		    drawJavascript(!$usersCanSave); // inverse of whether the user can save, will be the correct 'nosave' flag (we need to pass true if the user cannot save)
 		    // need to create the form object, and add all the rendered elements to it, and then we'll have working required elements if we render the validation logic for the form
 		    print $formObjectForRequiredJS->renderValidationJS(true, true); // with tags, true, skip the extra js that checks for the formulize theme form divs around the elements so that conditional animation works, true
