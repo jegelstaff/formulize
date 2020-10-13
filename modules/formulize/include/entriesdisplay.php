@@ -2182,9 +2182,8 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
 	}
 	include_once XOOPS_ROOT_PATH . "/class/xoopsformloader.php";
 	$startDateElement = new XoopsFormTextDateSelect ('', 'formulize_daterange_sta_'.$handle, 15, strtotime($startText));
-	$startDateElement->setExtra("class='formulize_daterange'");
 	$endDateElement = new XoopsFormTextDateSelect ('', 'formulize_daterange_end_'.$handle, 15, strtotime($endText));
-	$endDateElement->setExtra("class='formulize_daterange' target='$handle'");
+	
 	static $js;
 	if($js) { // only need to include this code once!
 		$js = "";
@@ -2201,7 +2200,7 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
 		$().click(function() {
 			$('.formulize_daterange').change();
 		});
-		$('.formulize_daterange').change(function() {
+		$(\"[id^='formulize_daterange_sta_'],[id^='formulize_daterange_end_']\").change(function() {
 			var id = new String($(this).attr('id'));
 			var handle = id.substr(24);
 			var start = $('#formulize_daterange_sta_'+handle).val();
