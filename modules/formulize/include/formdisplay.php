@@ -3125,7 +3125,6 @@ print "\n<script type='text/javascript'>\n";
 
 print " initialize_formulize_xhr();\n";
 print " var formulizechanged=0;\n";
-print " var formulize_javascriptFileIncluded = new Array();\n";
 print " var formulize_xhr_returned_check_for_unique_value = new Array();\n";
 
 if(isset($GLOBALS['formulize_fckEditors'])) {
@@ -3169,27 +3168,8 @@ if(isset($_POST['yposition']) AND intval($_POST['yposition'])>0 AND !isset($_POS
 		print "\tjQuery(window).scrollTop(".intval($_POST['yposition']).");\n";
 		print "});\n";
 }
-?>
 
-function includeResource(filename, type) {
-   if(filename in formulize_javascriptFileIncluded == false) {
-     var head = document.getElementsByTagName('head')[0];
-     if(type == 'link') {
-       var resource = document.createElement("link");
-       resource.type = "text/css";
-       resource.rel = "stylesheet";
-       resource.href = filename;
-     } else if(type == 'script') {
-       var resource = document.createElement('script');
-       resource.type = 'text/javascript';
-       resource.src = filename;
-     }
-     head.appendChild(resource);
-     formulize_javascriptFileIncluded[filename] = true;
-   }
-} 
-
-<?php print checkForChrome(); ?>
+print checkForChrome(); ?>
 
 function showPop(url) {
 	if (window.formulize_popup == null) {

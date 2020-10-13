@@ -3402,26 +3402,6 @@ if (typeof jQuery == 'undefined') {
 	head.appendChild(script);
 }
 
-var formulize_javascriptFileIncluded = new Array();
-
-function includeResource(filename, type) {
-   if(filename in formulize_javascriptFileIncluded == false) {
-     var head = document.getElementsByTagName('head')[0];
-     if(type == 'link') {
-       var resource = document.createElement("link");
-       resource.type = "text/css";
-       resource.rel = "stylesheet";
-       resource.href = filename;
-     } else if(type == 'script') {
-       var resource = document.createElement('script');
-       resource.type = 'text/javascript';
-       resource.src = filename;
-     }
-     head.appendChild(resource);
-     formulize_javascriptFileIncluded[filename] = true;
-   }
-} 
-
 <?php
 if($useXhr) {
 	print " initialize_formulize_xhr();\n";
