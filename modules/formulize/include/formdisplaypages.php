@@ -173,7 +173,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	// conditions only checked once there is an entry!
     
 	$pagesSkipped = false;
-	if(is_array($conditions) AND $entry != 'new' AND (!$currentPageScreen OR ($screen AND $currentPageScreen == $screen->getVar('sid')))) {
+	if(is_array($conditions) AND (!$currentPageScreen OR ($screen AND $currentPageScreen == $screen->getVar('sid')))) {
 		$conditionsMet = false;
         $element_handler = xoops_getmodulehandler('elements','formulize');
 		while(!$conditionsMet) {
