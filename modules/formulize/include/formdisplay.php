@@ -3786,7 +3786,8 @@ function callCheckCondition(name) {
     for(key in governedElements[name]) {
         var handle = governedElements[name][key];
 			elementValuesForURL = getRelevantElementValues(relevantElements[handle]);
-			if(oneToOneElements[handle]['onetoonefrid']) {
+        var handleParts = handle.split('_');
+        if(oneToOneElements[handle]['onetoonefrid'] && handleParts[1] != oneToOneElements[handle]['onetoonefid']) {
 				elementValuesForURL = elementValuesForURL + '&onetoonekey=1&onetoonefrid='+oneToOneElements[handle]['onetoonefrid']+'&onetoonefid='+oneToOneElements[handle]['onetoonefid']+'&onetooneentries='+oneToOneElements[handle]['onetooneentries']+'&onetoonefids='+oneToOneElements[handle]['onetoonefids'];			
 			}
 			checkCondition(handle, conditionalHTML[handle], elementValuesForURL);	
@@ -3814,7 +3815,7 @@ function checkCondition(handle, currentHTML, elementValuesForURL) {
                 // do nothing
             }
 			// should only empty if there is a change from the current state
-			if(currentHTML != data || (window.document.getElementById('formulize-'+handle) !== null && window.document.getElementById('formulize-'+handle).style.display == 'none')) {
+            if(data != '{NOCHANGE}' && (currentHTML != data || (window.document.getElementById('formulize-'+handle) !== null && window.document.getElementById('formulize-'+handle).style.display == 'none'))) {
 				jQuery('#formulize-'+handle).empty();
 				jQuery('#formulize-'+handle).append(data);
                 // unless it is a hidden element, show the table row...
