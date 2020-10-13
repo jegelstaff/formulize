@@ -1155,7 +1155,7 @@ class formulizeElementRenderer{
 			$start = true; // flag used to force the loop to execute, even if the 0th position has the {
 			while($bracketPos = strpos($text, "{", $bracketPos+1) OR $start == true) {
 				$start = false;
-        $endBracketPos = strpos($text, "}", $bracketPos+1);
+                $endBracketPos = strpos($text, "}", $bracketPos+1);
 				$term = substr($text, $bracketPos+1, $endBracketPos-$bracketPos-1);
                 $elementObject = $element_handler->get($term);
                 if($elementObject) {
@@ -1163,8 +1163,11 @@ class formulizeElementRenderer{
 					// get the uitext value if necessary
 					$replacementTerm = formulize_swapUIText($replacementTerm, $elementObject->getVar('ele_uitext'));
                     $text = str_replace("{".$term."}",$replacementTerm,$text);
-				}
-				$bracketPos = $bracketPos + strlen($replacementTerm); // move ahead the length of what we replaced
+                    $lookAhead = strlen($replacementTerm); // move ahead the length of what we replaced
+				} else {
+                    $lookAhead = 1;
+                }
+				$bracketPos = $bracketPos + $lookAhead; 
       }
 		}
 		return $text;

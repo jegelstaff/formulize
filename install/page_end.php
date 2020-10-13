@@ -76,8 +76,9 @@ foreach(explode(";\r",str_replace(array("\n","\n\r","\r\n"), "\r", $formulizeSta
 	if($sql) {
 		if(!$formulizeResult = $dbm->query($sql)) {
 			$content = "<h3>Error:</h3><p>Some of the configuration settings were not saved properly in the database.  The website will still work, but it will behave more like a generic ImpressCMS+Formulize website, and not like a dedicated Formulize system.   Please send the following information to <a href=\"mailto:formulize@freeformsolutions.ca?subject=Formulize%20Standalone%20Install%20Error\">formulize@freeformsolutions.ca</a>:</p>
-			<p><pre>".mysqli_error($link)."</pre></p>".$content;
-		} 
+			<p><pre>".$dbm->db->error()."</pre></p>".$content;
+		} else {
+        }
 	}
 }
 // END OF MODIFIED CODE

@@ -449,11 +449,11 @@ class formulizeFormsHandler {
 		return new formulizeForm();
 	}
 
-	function get($fid,$includeAllElements=false) {
+	function get($fid,$includeAllElements=false,$refreshCache=false) {
 		$fid = intval($fid);
 		// this is cheap...we're caching form objects potentially twice because of a possible difference in whether we want all objects included or not.  This could be handled much better.  Maybe iterators could go over the object to return all elements, or all visible elements, or all kinds of other much more elegant stuff.
 		static $cachedForms = array();
-		if(isset($cachedForms[$fid][$includeAllElements])) { return $cachedForms[$fid][$includeAllElements]; }
+		if(!$refreshCache AND isset($cachedForms[$fid][$includeAllElements])) { return $cachedForms[$fid][$includeAllElements]; }
 		if($fid > 0) {
 			$cachedForms[$fid][$includeAllElements] = new formulizeForm($fid,$includeAllElements);
 			return $cachedForms[$fid][$includeAllElements];
@@ -935,7 +935,7 @@ class formulizeFormsHandler {
 		}
 		global $xoopsDB;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
-		$formObject = $form_handler->get($element->getVar('id_form'));
+		$formObject = $form_handler->get($element->getVar('id_form'),false,true);
 		$deleteFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " DROP `" . $element->getVar('ele_handle') . "`";
 		if(!$deleteFieldRes = $xoopsDB->queryF($deleteFieldSQL)) {
 			return false;
@@ -982,7 +982,7 @@ class formulizeFormsHandler {
         if($element->hasData) {
 		global $xoopsDB;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
-		$formObject = $form_handler->get($element->getVar('id_form'));
+		$formObject = $form_handler->get($element->getVar('id_form'),false,true);
 		$dataType = $dataType ? $dataType : "text";
 		$type_with_default = ("text" == $dataType ? "text" : "$dataType NULL default NULL");
 		$insertFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " ADD `" . $element->getVar('ele_handle') . "` $type_with_default";
@@ -1327,7 +1327,7 @@ class formulizeFormsHandler {
 		}
 
 		// replace ele_id flags that need replacing
-		$replaceSQL = "UPDATE ". $this->db->prefix("formulize") . " SET ele_handle=ele_id WHERE ele_handle=\"replace_with_ele_id\"";
+		$replaceSQL = "UPDATE ". $this->db->prefix("formulize") . " SET ele_handle=CONCAT('".$oldFormHandle."_',ele_id) WHERE ele_handle=\"replace_with_ele_id\"";
 		if(!$result = $this->db->queryF($replaceSQL)) {
 		   print "error setting the ele_handle values for the new form.<br>".$xoopsDB->error();
 		   return false;

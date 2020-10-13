@@ -41,6 +41,8 @@ if(isset($_POST['makepdf'])) {
 require_once "../../mainfile.php";
 include XOOPS_ROOT_PATH.'/header.php';
 
+include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
+
 global $icmsConfig, $icmsTheme, $xoopsUser;
 
 $module_handler =& xoops_gethandler('module');

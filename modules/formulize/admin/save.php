@@ -49,11 +49,21 @@ if ($formulizeConfig['isSaveLocked']){
   exit();
 }
 
-global $xoopsUser;
+global $xoopsUser, $xoopsConfig;
 if (!$xoopsUser) {
     print "Error: you are not logged in";
     return;
 }
+
+// load the formulize language constants if they haven't been loaded already
+if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
+    include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php";
+    include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/admin.php";
+} else {
+    include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/main.php";
+    include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/admin.php";
+}
+
 $gperm_handler = xoops_gethandler('groupperm');
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 $groups = $xoopsUser->getGroups();

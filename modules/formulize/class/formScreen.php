@@ -165,6 +165,7 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 	// $screen is a screen object
     // $settings is used internally to pass list of entries settings back and forth to editing screens
     function render($screen, $entry, $settings = array(), $elements_only = false) {
+        $previouslyRenderingScreen = $GLOBALS['formulize_screenCurrentlyRendering'];
 		if(!is_array($settings)) {
 				$settings = array();
 		}
@@ -201,8 +202,10 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 			$overrideMulti = 0;
 		}
 		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
+        $GLOBALS['formulize_screenCurrentlyRendering'] = $screen;
 		displayForm($formframe, $entry, $mainform, $donedest, array(0=>$alldonebuttontext, 1=>$savebuttontext, 2=>$saveandleavebuttontext, 3=>$printableviewbuttontext),
             $settings, $displayheading, "", $overrideMulti, "", 0, 0, 0, $screen);
+        $GLOBALS['formulize_screenCurrentlyRendering'] = $previouslyRenderingScreen;
 	}
 
 	function _getElementsForScreen($fid, $options) {

@@ -15,6 +15,12 @@ class icms_db_legacy_PdoDatabase extends icms_db_legacy_Database {
 	public function __construct( $connection, $allowWebChanges = false ) {
 		parent::__construct($connection, $allowWebChanges);
 		$this->pdo = $connection;
+        if($res = $this->query('SELECT @@character_set_database, @@collation_database')) {
+            $collation = $this->fetchRow($res);
+            if(strstr($collation[0], 'utf8mb4') AND strstr($collation[1], 'utf8mb4')) {
+                $this->query('SET NAMES utf8mb4');
+            }
+        }
         $getModes = 'SELECT @@SESSION.sql_mode';
         $modesSet = false;
         if($res = $this->query($getModes)) {

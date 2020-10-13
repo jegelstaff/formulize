@@ -137,6 +137,8 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
             return;
         }
         
+        $previouslyRenderingScreen = $GLOBALS['formulize_screenCurrentlyRendering'];
+        
         // SOME STANDARDS FOR HOW TO HANDLE 'SAVE' AND 'SAVE AND LEAVE' BUTTONS AND THE DONE DEST NEED TO BE DEVISED FOR TEMPLATE SCREENS!!
         
         global $xoTheme;
@@ -148,17 +150,38 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
         $custom_code_filename = $this->custom_code_filename($screen);
         $template_filename = $this->template_filename($screen);
 
+        $GLOBALS['formulize_screenCurrentlyRendering'] = $screen;
+        
         if (file_exists($custom_code_filename) and file_exists($template_filename)) {
             $vars = $this->run_template_php_code($screen, $custom_code_filename, $entry_id, $settings);
             global $xoopsTpl;
             foreach ($vars as $key => $value) {
                 $xoopsTpl->assign($key, $value);
             }
+            
+            // if the php code is not calling displayForm of some kind, then include necessary javascript
+            $codeContents = file_get_contents($custom_code_filename);
+            if(!strstr($codeContents,' displayForm(') AND !strstr($codeContents,' displayFormPages(') AND !strstr($codeContents,' ->render(') AND !strstr($codeContents,' displayElement(')) {
+                include_once XOOPS_ROOT_PATH.'/modules/formulize/include/formdisplay.php';
+                $doneDestination = $screen->getVar('donedest');
+                $doneDestination = substr($doneDestination,0,4) == 'http' ? $doneDestination : XOOPS_URL.$doneDestination;
+                print "
+                    <script>function xoopsFormValidate_formulize_mainform(){return true;}</script>
+                    <style> #savingmessage { display: none !important; } </style>
+                    <div id='formulizeform' style='display: none;'><form id='formulize_mainform' name='formulize_mainform' action='$doneDestination' method='post'></form>".
+                    drawJavascript().
+                    writeHiddenSettings($settings, null, array($screen->getVar('fid')=>array($entry_id)), array(), $screen).
+                    "</div></div>
+                ";
+                
+            }
+            
             $xoopsTpl->display("file:".$template_filename);
             // we need to put other code in here to persist $settings if any!!
         } else {
             echo "<p>Error: specified screen template does not exist.</p>";
         }
+        $GLOBALS['formulize_screenCurrentlyRendering'] = $previouslyRenderingScreen;
     }
 
 

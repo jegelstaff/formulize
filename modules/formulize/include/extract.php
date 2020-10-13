@@ -375,7 +375,7 @@ function getDataCached($framework, $form, $filter="", $andor="AND", $scope="", $
     $id_reqsOnly=false, $resultOnly=false, $filterElements=null)
 {
     $cacheKey = serialize(func_get_args());
-    if (isset($GLOBALS['formulize_cachedGetDataResults'][$cacheKey])) {
+    if (isset($GLOBALS['formulize_cachedGetDataResults'][$cacheKey]) AND !isset($GLOBALS['formulize_forceDerivedValueUpdate'])) {
         return $GLOBALS['formulize_cachedGetDataResults'][$cacheKey];
     } else {
         return getData($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $dbTableUidField, $id_reqsOnly, $resultOnly, $filterElements, $cacheKey);
@@ -1850,8 +1850,8 @@ function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form
     if ($debugMode OR ((isset($GLOBALS['formulize_forceDerivedValueUpdate'])) AND !isset($GLOBALS['formulize_doingExport']))) {
     include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
     foreach ($entry as $formHandle => $record) {
-        $data_handler = new formulizeDataHandler(formulize_getFormIdFromName($formHandle));
         $formHandle = htmlspecialchars_decode($formHandle, ENT_QUOTES);
+        $data_handler = new formulizeDataHandler($metadata[$formHandle][0]['form_id']); // all items in the metadata[formHandle] array will have the same form id, because the form handle is the same
         if (isset($metadata[$formHandle])) {
             // if there are derived value formulas for this form
             if (!isset($parsedFormulas[$formHandle][$relationship_id][$form_id])) {
@@ -1874,13 +1874,13 @@ function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form
                             $GLOBALS['formulize_forceDerivedValueUpdate'] = true;
                         }
                         // if the new value is the same as the previous one, then skip updating and saving
-                        if ($derivedValue != $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0]) {
+                        if ($derivedValue !== $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0]) {
                             if ($xoopsDB) {
                                 // save value for writing to database if XOOPS is active
                                 $elementID = formulize_getIdFromElementHandle($thisMetaData['handle']);
                                 $dataToWrite[$elementID] = $derivedValue;
                             }
-                            $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0] = $derivedValue == '{WRITEASNULL}' ? NULL : $derivedValue;
+                            $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0] = $derivedValue === '{WRITEASNULL}' ? NULL : $derivedValue;
                         }
                     }
                 if ($xoopsDB and count($dataToWrite) > 0) {
@@ -2253,7 +2253,7 @@ function getFormHandlesFromEntry($entry) {
 	if(is_array($entry)) {
 		return array_keys($entry);
 	}
-	return "";// exit("Error: no form handle found for element handle '$handle'");
+	return "";
 }
 
 // THIS FUNCTION IS USED AFTER THE MASTERRESULT HAS BEEN RETURNED.  THIS FUNCTION RETURNS THE VALUE OF THE CORRESPONDING ELEMENT HANDLE FOR THE GIVEN MASTER ENTRY ID.  
@@ -2424,7 +2424,6 @@ function displayList($entry, $handle, $type="bulleted", $id="NULL", $localid="NU
 // $formhandle can all just be a single handle
 // $formhandle values can be: the title of the form, or the id number of the form
 // If formhandle is an array, then $ids becomes a two dimensional array:  $ids[$formhandle][] = $id
-// Crazy in efficiencies going on here in terms of how ids and titles are getting converted back and forth and back and forth.  And using form titles in the data array is the last bit of general stupidity that should be squeezed out, but its a backwards compatibility issue now.
 function internalRecordIds($entry, $formhandle="", $id="NULL", $fidAsKeys = false) {
 	if(is_numeric($id)) {
 		$entry = $entry[$id];
@@ -2436,12 +2435,17 @@ function internalRecordIds($entry, $formhandle="", $id="NULL", $fidAsKeys = fals
 		 // need to convert possible legacy framework form handles to form ids
 		 $formhandle = dealWithDeprecatedFormHandles($formhandle);
 	}
-	if(is_array($formhandle)) {
+	if(is_array($formhandle)) {        
+        $element_handler = xoops_getmodulehandler('elements', 'formulize');
 		foreach($formhandle as $handle) {
-      $handle = _parseInternalRecordIdsFormHandle($handle);
-			foreach($entry[$handle] as $id=>$element) {
+            $handle = _parseInternalRecordIdsFormHandle($handle);
+			foreach($entry[$handle] as $id=>$localEntry) {
 				if($fidAsKeys) {
-					$fid = formulize_getFormIdFromName($handle); 
+                    $offset = isset($localEntry['entry_id']) ? 9 : 0; // first eight items will be the metadata fields if 'entry_id' is present, otherwise, take the first item from the array
+                    $localEntryElement = array_slice($localEntry, $offset, 1); 
+                    $localEntryElement = key($localEntryElement);
+                    $elementObject = $element_handler->get($localEntryElement);
+                    $fid = $elementObject->getVar('id_form');
 					$ids[$fid][] = $id;
 				} else {
 					$ids[$handle][] = $id;
@@ -2598,7 +2602,7 @@ function formulize_benchmark($text, $dumpLog = false) {
 							 }
                print "<br>$text --<br>\nElapsed since last: ".round($currentPageTime - $prevPageTime, 4)."<br>\n";
 							 print "Elapsed since start: ".($currentPageTime-$GLOBALS['startPageTime'])."<br>";
-                             print "Memory usage: ".memory_get_usage()."<br>";
+                             print "MEMORY: ".number_format(memory_get_usage(),0,'.',',')."<br>";
 							 $elapsedLog[] = round($currentPageTime - $prevPageTime, 4);
 							 $prevPageTime = $currentPageTime;
 							 if($dumpLog) {

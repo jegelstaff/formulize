@@ -116,18 +116,27 @@ class formulizePassCodeHandler {
         return self::getPasscodes($sid, '=');
     }
     
-    function getPasscodes($sid=0, $op="") {
+    // returns an array of passcodes matching what is passed. In each array/passcode, the fields are keyed as - passcode, notes, expiry, id
+    function getPasscode($passcode) {
+        return self::getPasscodes(0,"",$passcode);
+    }
+    
+    function getPasscodes($sid=0, $op="",$passcode="") {
         global $xoopsDB;
         $screenWhere = '';
+        $passcodeWhere = '';
         if($sid) {
             if(!$op OR ($op != '!=' AND $op != '=')) {
                 return array();
             }
             $screenWhere = ' AND screen '.$op.' '.intval($sid);
         }
+        if($passcode) {
+            $passcodeWhere = ' AND passcode = "'.formulize_db_escape($passcode).'"';
+        }
         $date = date('Y-m-d');
         self::cleanupExpiredPasscodes();
-        $sql = 'SELECT distinct(passcode) as passcode, notes, expiry, passcode_id as id FROM '.$xoopsDB->prefix('formulize_passcodes').' WHERE (expiry > "'.$date.'" OR expiry IS NULL) '.$screenWhere.' ORDER BY passcode_id ASC';
+        $sql = 'SELECT distinct(passcode) as passcode, notes, expiry, passcode_id as id FROM '.$xoopsDB->prefix('formulize_passcodes').' WHERE (expiry > "'.$date.'" OR expiry IS NULL) '.$screenWhere.$passcodeWhere.' ORDER BY passcode_id ASC';
         $passcodes = array();
         if($res = $xoopsDB->query($sql)) {
             while($array = $xoopsDB->fetchArray($res)) {

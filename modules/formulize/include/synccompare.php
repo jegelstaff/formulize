@@ -206,16 +206,18 @@ class SyncCompareCatalog {
         foreach ($this->changes as $tableName => $tableData) {
             if(!isset($processedTables[$tableName]) AND (!$onlyThisTableName OR $tableName == $onlyThisTableName)) {
             $fields = $tableData["fields"];
-                foreach ($tableData["inserts"] as $rec) {
-                    ($this->commitInsert($tableName, $rec, $fields)) ? $numSuccess++ : $numFail++;
-                }
                 foreach ($tableData["updates"] as $rec) {
                     ($this->commitUpdate($tableName, $rec)) ? $numSuccess++ : $numFail++;
                 }
+                foreach ($tableData["inserts"] as $rec) {
+                    ($this->commitInsert($tableName, $rec, $fields)) ? $numSuccess++ : $numFail++;
+                }
+                //print "<BR>FINISHED WITH $tableName<br>";
                     $processedTables[$tableName] = true;
                     if($tableName == $onlyThisTableName) {
                         break;
                 }
+                
             }
         }
 
@@ -420,7 +422,7 @@ class SyncCompareCatalog {
             $form_handler = xoops_getmodulehandler('forms','formulize');
             $curForm = $form_handler->get($record['id_form']);
             if($record['form_handle'] != $curForm->getVar('form_handle')) {
-                $this->commitUpdateTable($curForm->getVar('form_handle'), $record['form_handle']);
+                $this->commitUpdateTable($curForm->getVar('form_handle'), $record['form_handle'], $curForm);
             }
         }
 
@@ -476,15 +478,15 @@ class SyncCompareCatalog {
     }
 
     // rename a table
-    private function commitUpdateTable($oldName, $newName) {
+    private function commitUpdateTable($oldName, $newName, $formObject) {
         $formHandler = xoops_getmodulehandler('forms', 'formulize');
-        return $formHandler->renameDataTable($oldName, $newName);
+        return $formHandler->renameDataTable($oldName, $newName, $formObject);
     }
     
     // rename/update a field
     private function commitUpdateField($element, $oldName, $dataType=false, $newName="") {
         $formHandler = xoops_getmodulehandler('forms', 'formulize');
-        return updateField($element, $oldName, $dataType, $newName);    
+        return $formHandler->updateField($element, $oldName, $dataType, $newName);    
     }
     
     
