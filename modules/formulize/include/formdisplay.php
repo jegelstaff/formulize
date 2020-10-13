@@ -3111,7 +3111,7 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 
 // draw in javascript for this form that is relevant to subforms
 // $nosave indicates that the user cannot save this entry, so we shouldn't check for formulizechanged
-function drawJavascript($nosave) {
+function drawJavascript($nosave=false) {
 
 global $xoopsUser, $xoopsConfig;
 
