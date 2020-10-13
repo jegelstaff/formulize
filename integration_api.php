@@ -14,7 +14,7 @@ class Formulize {
 	private static $default_mapping_active = 1;
 
 	/**
-	 * Intialize the Formulize environment
+	 * Initialize the Formulize environment
 	 */
 	static function init() {
 		if (self::$db == null) {

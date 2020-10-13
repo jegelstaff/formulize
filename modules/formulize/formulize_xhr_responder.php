@@ -216,6 +216,7 @@ switch($op) {
         }
       }
     }
+    if(!$onetoonekey OR ($entryId AND $entryId != 'new')) {
     if(security_check($fid, $entryId)) {
         $html = renderElement($elementObject, $entryId);
         if(count($sendBackValue)>0) {
@@ -234,6 +235,9 @@ switch($op) {
             print $html;
         }
       }
+    } else {
+        print '{NOCHANGE}';
+    }
     break;
 
 
