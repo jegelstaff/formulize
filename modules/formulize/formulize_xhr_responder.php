@@ -37,6 +37,10 @@
 require_once "../../mainfile.php"; // initialize the xoops stack so we have access to the user object, etc if necessary
 icms::$logger->disableLogger();
 
+while(ob_get_level()) {
+    ob_end_clean();
+}
+
 // check that the user who sent this request is the same user we have a session for now, if not, bail
 $sentUid = intval($_GET['uid']);
 
@@ -205,13 +209,14 @@ switch($op) {
           $data_handler = new formulizeDataHandler($onetoonefid);
           if($link->getVar('common')) {
             $entryId = $data_handler->findFirstEntryWithValue($targetElement, $databaseReadyValue);  
-          } elseif($sourceElement==$passedElementId) {
-            $entryId = $databaseReadyValue;
+          } elseif($sourceElement==$passedElementId AND $passedEntryId != 'new') {
+            $entryId = $passedEntryId;
           }
           break;
         }
       }
     }
+    if(!$onetoonekey OR ($entryId AND $entryId != 'new')) {
     if(security_check($fid, $entryId)) {
         $html = renderElement($elementObject, $entryId);
         if(count($sendBackValue)>0) {
@@ -230,6 +235,9 @@ switch($op) {
             print $html;
         }
       }
+    } else {
+        print '{NOCHANGE}';
+    }
     break;
 
 

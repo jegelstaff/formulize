@@ -607,7 +607,8 @@ define("_formulize_USERNAME_HELP3", " characters long)");
 define("_formulize_PASSWORD_HELP1", " characters long)");
 
 // "Other" for checkboxes and radio buttons:
-define("_formulize_OPT_OTHER", "Other: ");
+define("_formulize_OPT_OTHERWORD", "Other"); 
+define("_formulize_OPT_OTHER", _formulize_OPT_OTHERWORD.": ");
 
 // Notifications
 define("_formulize_DE_NOTBUTTON", "Notifications");
@@ -756,6 +757,11 @@ define("_AM_UPLOAD_ERR_NO_TMP_DIR", "There is no temporary folder on the server 
 define("_AM_UPLOAD_ERR_CANT_WRITE", "Your file was uploaded, but could not be saved on the web server, maybe because the hard drive is full.  Please inform the webmaster about this error.");
 define("_AM_UPLOAD_ERR_EXTENSION", "The web server rejected your file (a PHP extension stopped it from being uploaded).");
 /* End Upload element translation by François */
+
+define("_AM_GOOGLEFILE_SELECT", "Select");
+define("_AM_GOOGLEFILE_DELETE_WARN", "Are you sure you want to remove");
+define("_AM_GOOGLEFILE_REQUIRED", "You must select a file for");
+
 
 define("_formulize_CLOSE_FORM_ELEMENT", "You need to close the form element that is open first before you edit this one");
 

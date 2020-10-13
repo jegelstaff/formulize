@@ -87,7 +87,7 @@ $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 $uid = isset($GLOBALS['userprofile_uid']) ? $GLOBALS['userprofile_uid'] : $uid; // if the userprofile form is in play and a new user has been set, then use that uid
 
 if(!$element_handler) {
-	$element_handler =& xoops_getmodulehandler('elements', 'formulize');
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
 }
 
 $formulize_up = array(); // container for user profile info
@@ -103,7 +103,7 @@ foreach($_POST as $k=>$v) {
 		$updateOwnerNewOwnerId = intval($v);
 	} elseif(substr($k, 0, 9) == "denosave_") { // handle no save elements
 		$element_metadata = explode("_", $k);
-		$element =& $element_handler->get($element_metadata[3]);
+		$element = $element_handler->get($element_metadata[3]);
 		$noSaveHandle = $element->getVar('ele_colhead') ? $element->getVar('ele_colhead') : $element->getVar('ele_caption');
 		$noSaveHandle = str_replace(" ", "", ucwords(strtolower($noSaveHandle)));
 		// note this will assign the raw value from POST to these globals.  It will not be human readable in many cases.
@@ -192,8 +192,10 @@ if(count($formulize_elementData) > 0 ) { // do security check if it looks like w
 	}
 }
 
-foreach($formulize_elementData as $elementFid=>$entryData) { // for every form we found data for...
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+
+foreach($formulize_elementData as $elementFid=>$entryData) { // for every form we found data for...
+    
 	$formulize_formObject = $form_handler->get($elementFid);
     // TODO: should the one-entry-per-group permission be checked in the permissions handler instead?
 	$oneEntryPerGroupForm = ($formulize_formObject->getVar('single') == "group");
@@ -280,7 +282,6 @@ if(!$viewEntryScreenObject AND $screen AND (is_a($screen, 'formulizeFormScreen')
 if($viewEntryScreenObject) {
     $viewEntryScreenDefaults = $viewEntryScreenObject->getVar('elementdefaults');
     if(is_array($viewEntryScreenDefaults) AND count($viewEntryScreenDefaults) > 0) {
-        $element_handler = xoops_getmodulehandler('elements', 'formulize');
         foreach($viewEntryScreenDefaults as $elementId=>$defaultValue) {
             if($elementObject = $element_handler->get($elementId)) {
                 // refactor getFilterValuesForEntry to work with this structure of inputs too...?
@@ -311,11 +312,21 @@ foreach($formulize_newEntryIds as $newEntryFid=>$entries){
 
 // reassign entry ownership for an entry if the user requested that, and has permission
 if(isset($updateOwnerFid) AND $gperm_handler->checkRight("update_entry_ownership", $updateOwnerFid, $groups, $mid)) {
-	$data_handler_for_owner_updating = new formulizeDataHandler($updateOwnerFid);
-	if(!$data_handler_for_owner_updating->setEntryOwnerGroups($updateOwnerNewOwnerId, $updateOwnerEntryId, true)) { // final true causes an update, instead of a normal setting of the groups from scratch.  Entry's creation user is updated too.
-		print "<b>Error: could not update the entry ownership information.  Please report this to the webmaster right away, including which entry you were trying to update.</b>";		
+	updateOwnerForFormEntry($updateOwnerFid, $updateOwnerNewOwnerId, $updateOwnerEntryId);
+    
+    // check if any other form that was submitted, is used in a subform element where the subform entries are supposed to be owned by the owner of the mainform entry
+    // if so, reassign the submitted entries from that form too
+    $formulize_formObject = $form_handler->get($updateOwnerFid);
+    $elementTypes = $formulize_formObject->getVar('elementTypes');    
+    foreach(array_keys($elementTypes, 'subform') as $subformElementId) {
+        $subformElement = $element_handler->get($subformElementId);
+        $subformEleValue = $subformElement->getVar('ele_value');
+        if(isset($_POST['form_'.$subformEleValue[0].'_rendered_entry']) AND $subformEleValue[5] == 1) { // this subform was part of the page, and it's supposed to have the same owner as the mainform entry
+            foreach($_POST['form_'.$subformEleValue[0].'_rendered_entry'] as $subformEntryId) {
+                updateOwnerForFormEntry($subformEleValue[0], $updateOwnerNewOwnerId, $subformEntryId);
+            }
+        }
 	}
-	$data_handler_for_owner_updating->updateCaches($updateOwnerEntryId);
 }
 
 // set the variables that need to be in global space, just in case this file was included from inside a function, which can happen in some cases
@@ -468,6 +479,15 @@ function afterSavingLogic($values,$entry_id) {
 			}
 		}
 	}
+}
+
+// THIS FUNCTION UPDATES THE OWNERSHIP INFORMATION ON A GIVEN FORM ENTRY
+function updateOwnerForFormEntry($updateOwnerFid, $updateOwnerNewOwnerId, $updateOwnerEntryId) {
+    $data_handler_for_owner_updating = new formulizeDataHandler($updateOwnerFid);
+	if(!$data_handler_for_owner_updating->setEntryOwnerGroups($updateOwnerNewOwnerId, $updateOwnerEntryId, true)) { // final true causes an update, instead of a normal setting of the groups from scratch.  Entry's creation user is updated too.
+		print "<b>Error: could not update the entry ownership information.  Please report this to the webmaster right away, including which entry you were trying to update.</b>";		
+	}
+	$data_handler_for_owner_updating->updateCaches($updateOwnerEntryId);
 }
 
 

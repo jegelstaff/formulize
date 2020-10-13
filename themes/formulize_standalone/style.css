@@ -7,6 +7,11 @@ html, body {
   font-size: 10pt;
   height: 100%; }
 
+textarea {
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    font-size: 10pt;
+}
+
 table {
   width: 100%;
   border-collapse: collapse; }
@@ -421,6 +426,13 @@ td.head a {
   padding: 1em;
   border: 1px solid darkgreen; }
 
+.xo-theme-form th {
+  border: 1px solid darkgreen;  
+}
+.xo-theme-form table th {
+    border: 0px;
+}
+
 .odd, tr.odd td {
   background-color: #e6e6e6;
   color: #000;
@@ -699,9 +711,6 @@ th {
   padding: 3px;
   border-bottom: 1px solid #ccc; }
 
-table.outer {
-  border: 1px solid darkgreen; }
-
 #session-timeout-warning {
   display: none;
   position: fixed;
@@ -926,3 +935,39 @@ body > #content {
     .no-print {
     display: none; }
 }
+
+#xo-content ul li.active-page, #formulize_form ul li.active-page {
+    background-color: #008179;
+}
+
+#xo-content ul.multi-page-list, #formulize_form ul.multi-page-list {
+	margin:2em 1em 2em 0em;
+	padding:0;background-color:#eef6e5;
+	border-radius:3px;
+	border-bottom:4px solid #cbd964;
+	}
+	
+#xo-content ul.multi-page-list li, #formulize_form ul.multi-page-list li{
+	display:inline-block;
+	padding: 1em;
+	margin:0;
+	cursor:pointer;
+	}
+	
+#xo-content ul li:hover, #formulize_form ul li:hover {
+	background-color:#e0eaa9;
+	border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+	}	
+#xo-content ul.multi-page-list li:first-child, #formulize_form ul.multi-page-list li:first-child,{
+	border-radius:3px 0 0 3px;
+	}
+
+    #xo-content ul li.active-page, #formulize_form ul li.active-page {
+	background-color: #d0dd67;
+	color: #008179;
+    font-weight: normal;
+	border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+	font-weight:bold;
+			}

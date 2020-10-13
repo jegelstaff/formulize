@@ -998,7 +998,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
         }
 		foreach($fids as $this_fid) {
 	
-			if(!$scheck = security_check($this_fid, $entries[$this_fid][0], $uid, $owner, $groups, $mid, $gperm_handler) AND !$viewallforms) {
+			if(!$scheck = security_check($this_fid, $entries[$this_fid][0]) AND !$viewallforms) {
 				continue;
 			}
 			
@@ -1253,7 +1253,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		}
 	
 		// draw in the submitbutton if necessary
-		if (!$formElementsOnly and formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
+		if (!$formElementsOnly) {
 			$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $entry, $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, $allDoneOverride, $printall, $screen);
 			}
 	
@@ -1279,16 +1279,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                 $form->addElement (new XoopsFormHidden ('clonesubsflag', 0));
 			}
 			
-			// saving message
-			print "<div id=savingmessage style=\"display: none; position: absolute; width: 100%; right: 0px; text-align: center; padding-top: 50px; z-index: 100;\">\n";
-			global $xoopsConfig;
-			if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/images/saving-".$xoopsConfig['language'].".gif") ) {
-				print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/saving-" . $xoopsConfig['language'] . ".gif\">\n";
-			} else {
-				print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/saving-english.gif\">\n";
-			}
-			print "</div>\n";
-
 			drawJavascript($nosave);
             $form->addElement(new xoopsFormHidden('save_and_leave', 0));
 		// lastly, put in a hidden element, that will tell us what the first, primary form was that we were working with on this form submission
@@ -1592,6 +1582,10 @@ function addProfileFields($form, $profileForm) {
 // add the submit button to a form
 function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $button_text, $settings, $entry, $fids, $formframe, $mainform, $cur_entry, $profileForm, $elements_allowed="", $allDoneOverride=false, $printall=0, $screen=null) { //nmc 2007.03.24 - added $printall
 
+    global $xoopsUser;
+    $fid = $fids[key($fids)]; // get first element in array, might not be keyed as 0 :(
+    $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+
 	if($printall == 2) { // 2 is special setting in multipage screens that means do not include any printable buttons of any kind
 		return $form;
 	}
@@ -1690,12 +1684,14 @@ function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $butto
         $buttontray->setClass("no-print");
     
         if($save_text_temp) { $subButtonText = $save_text_temp; }
-        if($subButtonText != "{NOBUTTON}") {
+        
+        if($subButtonText != "{NOBUTTON}" AND formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
             $saveButton = new XoopsFormButton('', 'submitx', trans($subButtonText), 'button'); // doesn't use name submit since that conflicts with the submit javascript function
             $saveButton->setExtra("onclick=javascript:validateAndSubmit();");
             $buttontray->addElement($saveButton);
         }
-        if(isset($save_and_leave_text_temp) AND $save_and_leave_text_temp != "{NOBUTTON}") {
+
+        if(isset($save_and_leave_text_temp) AND $save_and_leave_text_temp != "{NOBUTTON}" AND formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
             // also add in the save and leave button
             $saveAndLeaveButton = new XoopsFormButton('', 'submit_save_and_leave', trans($save_and_leave_text_temp), 'button');
             $saveAndLeaveButton->setExtra("onclick=javascript:validateAndSubmit('leave');");
@@ -1765,7 +1761,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 
     $addEntriesText = $addEntriesText ? $addEntriesText : _formulize_ADD_ENTRIES;
 
-	global $xoopsDB;
+	global $xoopsDB, $xoopsUser;
     
 	$GLOBALS['framework'] = $frid;
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
@@ -1790,7 +1786,6 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
     if (0 == strlen($element_to_write)) {
         error_log("Relationship $frid for subform $subform_id on form $fid is invalid.");
         $to_return = array("c1"=>"", "c2"=>"", "sigle"=>"");
-        global $xoopsUser;
         if (is_object($xoopsUser) and in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
             if (0 == $frid) {
                 $to_return['single'] = "This subform cannot be shown because no relationship is active.";
@@ -1947,6 +1942,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 		$headingDescriptions = array();
 		$headerq = q("SELECT ele_caption, ele_colhead, ele_desc, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id IN (" . implode(", ", $customElements). ") ORDER BY ele_order");
 		foreach($headerq as $thisHeaderResult) {
+            if($element_handler->isElementVisibleForUser($thisHeaderResult['ele_id'], $xoopsUser)) {
 			$elementsToDraw[] = $thisHeaderResult['ele_id'];
 			$headingDescriptions[]  = $thisHeaderResult['ele_desc'] ? $thisHeaderResult['ele_desc'] : "";
 			if($captionsForHeadings) {
@@ -1954,6 +1950,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 			} else {
 				$headersToDraw[] = $thisHeaderResult['ele_colhead'] ? $thisHeaderResult['ele_colhead'] : $thisHeaderResult['ele_caption'];
 			}
+		}
 		}
 	} else {
 		$subHeaderList = getHeaderList($subform_id);
@@ -2261,6 +2258,8 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
     $deleteButton = "";
 	if(((count($sub_entries[$subform_id])>0 AND $sub_entries[$subform_id][0] != "") OR $sub_entry_new OR is_array($sub_entry_written)) AND $need_delete) {
         $deleteButton = "&nbsp;&nbsp;&nbsp;<input type=button name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del($subform_id, $sub_ent, '$viewType', ".intval($_GET['subformElementId']).", '$fid', '$entry');\">";
+        // for now, add clone button when delete button is available...sketchy though, we should make this more controlled
+        $deleteButton .= "&nbsp;&nbsp;&nbsp;<input type=button name=clonesubs value='" . _formulize_CLONE_CHECKED . "' onclick=\"javascript:sub_clone($subform_id, $sub_ent, '$viewType', ".intval($_GET['subformElementId']).", '$fid', '$entry');\">";
 	}
 
     // if the 'add x entries button' should be hidden or visible
@@ -2289,7 +2288,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
                     $col_two .= "<input type=text name=addsubentries$subform_id$subformElementId$subformInstance id=addsubentries$subform_id$subformElementId$subformInstance value=1 size=2 maxlength=2>";
                     $col_two .= $addEntriesText;
                 }
-                $col_two .= $deleteButton."&nbsp;&nbsp;&nbsp;<input type=button name=clonesubs value='" . _formulize_CLONE_CHECKED . "' onclick=\"javascript:sub_clone($subform_id, $sub_ent, '$viewType', ".intval($_GET['subformElementId']).", '$fid', '$entry');\"></div>";
+                $col_two .= $deleteButton."</div>";
             }
         }
     }
@@ -3099,7 +3098,7 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
         foreach($allEntries as $fid=>$fidEntries) {
             foreach($fidEntries as $entry_id) {
                 if($entry_id) {
-                    print "<input type='hidden' name='form_".$fid."_rendered_entry' value='".$entry_id."'>";
+                    print "<input type='hidden' name='form_".$fid."_rendered_entry[]' value='".$entry_id."'>";
                 }
             }
         }
@@ -3112,16 +3111,27 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 
 // draw in javascript for this form that is relevant to subforms
 // $nosave indicates that the user cannot save this entry, so we shouldn't check for formulizechanged
-function drawJavascript($nosave) {
+function drawJavascript($nosave=false) {
+
+global $xoopsUser, $xoopsConfig;
+
 static $drawnJavascript = false;
 if($drawnJavascript) {
 	return;
 }
-global $xoopsUser;
+
+// saving message
+print "<div id=savingmessage style=\"display: none; position: absolute; width: 100%; right: 0px; text-align: center; padding-top: 50px; z-index: 100;\">\n";
+global $xoopsConfig;
+if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/images/saving-".$xoopsConfig['language'].".gif") ) {
+    print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/saving-" . $xoopsConfig['language'] . ".gif\">\n";
+} else {
+    print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/saving-english.gif\">\n";
+}
+print "</div>\n";
+
 $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
-// Left in for possible future use by the rankOrderList element type or other elements that might use jQuery
-//print "<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-1.3.2.min.js\"></script><script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-ui-1.7.2.custom.min.js\"></script>";
-//$GLOBALS['formulize_jQuery_included'] = true;
+
 print "\n<script type='text/javascript'>\n";
 
 print " initialize_formulize_xhr();\n";
@@ -3778,7 +3788,8 @@ function callCheckCondition(name) {
     for(key in governedElements[name]) {
         var handle = governedElements[name][key];
 			elementValuesForURL = getRelevantElementValues(relevantElements[handle]);
-			if(oneToOneElements[handle]['onetoonefrid']) {
+        var handleParts = handle.split('_');
+        if(oneToOneElements[handle]['onetoonefrid'] && handleParts[1] != oneToOneElements[handle]['onetoonefid']) {
 				elementValuesForURL = elementValuesForURL + '&onetoonekey=1&onetoonefrid='+oneToOneElements[handle]['onetoonefrid']+'&onetoonefid='+oneToOneElements[handle]['onetoonefid']+'&onetooneentries='+oneToOneElements[handle]['onetooneentries']+'&onetoonefids='+oneToOneElements[handle]['onetoonefids'];			
 			}
 			checkCondition(handle, conditionalHTML[handle], elementValuesForURL);	
@@ -3806,7 +3817,7 @@ function checkCondition(handle, currentHTML, elementValuesForURL) {
                 // do nothing
             }
 			// should only empty if there is a change from the current state
-			if(currentHTML != data || (window.document.getElementById('formulize-'+handle) !== null && window.document.getElementById('formulize-'+handle).style.display == 'none')) {
+            if(data != '{NOCHANGE}' && (currentHTML != data || (window.document.getElementById('formulize-'+handle) !== null && window.document.getElementById('formulize-'+handle).style.display == 'none'))) {
 				jQuery('#formulize-'+handle).empty();
 				jQuery('#formulize-'+handle).append(data);
                 // unless it is a hidden element, show the table row...

@@ -1241,11 +1241,19 @@ function checkForLinks($frid, $fids, $fid, $entries, $unified_display=false, $un
                         } else {
                             // get the entry in the $one_fid['fid'] form (form with the self element), that has the intval($entries[$fid][0]) entry (the entry we are calling up already) as it's linked value
                             $data_handler = new formulizeDataHandler($one_fid['fid']);
+                            global $xoopsUser;
+                            $scope_uids = array();
+                            $groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+                            $gperm_handler = xoops_gethandler('groupperm');
+                            // users who can only see their own entries should be linked to their own entry in a one-to-one connection of this kind                            
+                            if(!$gperm_handler->checkRight("view_globalscope", $one_fid['fid'], $groups, getFormulizeModId()) AND !$gperm_handler->checkRight("view_groupscope", $one_fid['fid'], $groups, getFormulizeModId())) {
+                                $scope_uids = array($xoopsUser->getVar('uid'));
+                            }
                             if($selfEleValue[1] == 1) {
                                 // if we support multiple selections, then prepend and append a comma
-                                $foundEntry = $data_handler->findFirstEntryWithValue($selfElement, ','.$thisTargetEntry.',', "LIKE");    
+                                $foundEntry = $data_handler->findFirstEntryWithValue($selfElement, ','.$thisTargetEntry.',', "LIKE", $scope_uids);    
                             } else {
-                                $foundEntry = $data_handler->findFirstEntryWithValue($selfElement, intval($thisTargetEntry));
+                                $foundEntry = $data_handler->findFirstEntryWithValue($selfElement, intval($thisTargetEntry), '=', $scope_uids);
                             }
                         }
                         if ($foundEntry !== false) {
@@ -1696,7 +1704,7 @@ function getMetaData($entry, $member_handler, $fid="", $useOldCode=false) {
 // $groups is the grouplist of the current user.  It is optional.  If present it will limit the columns returned to the ones where display is 1 or the display includes that group
 function getAllColList($fid, $frid="", $groups="", $includeBreaks=false) {
     global $xoopsDB, $xoopsUser;
-    $gperm_handler = &xoops_gethandler('groupperm');
+    $gperm_handler = xoops_gethandler('groupperm');
     $mid = getFormulizeModId();
 
     // if $groups then build the necessary filter
@@ -4087,7 +4095,7 @@ function formulize_writeEntry($values, $entry="new", $action="replace", $proxyUs
         // safety net in case NULL is passed as $entry
         $entry = "new";
     }
-
+    
     // get the form id from the element id of the first value in the values array
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
     $elementObject = $element_handler->get(key($values));
@@ -4114,6 +4122,9 @@ function formulize_writeEntry($values, $entry="new", $action="replace", $proxyUs
             }
         }
     } else {
+        print "<pre>";
+        debug_print_backtrace();
+        print "</pre>";
         exit("Error: invalid element in the value array: ".key($values).".");
     }
 }
@@ -4235,13 +4246,16 @@ function synchSubformBlankDefaults() {
                 $subformEle_Value = $subformElement->getVar('ele_value');
                 $subformConditions = $subformEle_Value[7];
                 if (is_array($subformConditions)) {
+                    $filterValues = array();
                     foreach ($subformConditions[1] as $i=>$thisOp) {
                         if ($thisOp == "=" AND $subformConditions[3][$i] != "oom") {
                             $conditionElementObject = $element_handler->get($subformConditions[0][$i]);
                             $filterValues[$subformConditions[0][$i]] = prepareLiteralTextForDB($conditionElementObject, $subformConditions[2][$i], $savedMainFormEntryId);
                         }
                     }
-                    formulize_writeEntry($filterValues,$id_req_to_write);
+                    if(count($filterValues)>0) {
+                        formulize_writeEntry($filterValues,$id_req_to_write);
+                    }
                 }
 
                 $ids_to_return[$sfid][] = $id_req_to_write; // add the just synched up entry to the list of entries in the subform
@@ -5334,6 +5348,7 @@ function removeNotApplicableRequireds($type, $req=0) {
         case "radio":
         case "checkbox":
         case "date":
+        case "yn":
             return $req;
     }
 
@@ -5497,14 +5512,20 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
                    AND !strstr($filterTerms[$filterId], '{TODAY')) {
                         if($filterTermElement = $element_handler->get($bareFilterTerm)) {
                             $curlyBracketForm = $form_handler->get($filterTermElement->getVar('id_form'));
+                            // AND FOR NOW, WE DON'T SUPPORT { } DYNAMIC TERMS ON EXTRACTION QUERIES...WHAT WOULD THAT EVEN MEAN...we could possibly do this, it would require a lot of further complications in the SQL 
+                            continue;
+                        } elseif(isset($_POST[$bareFilterTerm]) OR isset($_GET[$bareFilterTerm])) {
+                            // term is a URL or POST reference, so grab that
+                            $curlyBracketForm = $form_handler->get(key($targetFormId));
+                            $filterTerms[$filterId] = isset($_POST[$bareFilterTerm]) ? $_POST[$bareFilterTerm] : $_GET[$bareFilterTerm];
+                            $bareFilterTerm = $filterTerms[$filterId];
                         } else {
-                            print "Error: { } term could not be resolved. Are you expecting it to be in the URL?";
+                            // don't know what the term is!
+                            print "Error: { } term could not be resolved. Were you expecting it to be in the URL?";
                             return;
                         }
-                        // AND FOR NOW, WE DON'T SUPPORT { } TERMS ON EXTRACTION QUERIES...WHAT WOULD THAT EVEN MEAN...we could possibly do this, it would require a lot of further complications in the SQL 
-                        continue;
                     } else {
-                        // { } term is not a handle reference, so use the main form (first key in the fid-alias array map that was passed in)
+                        // { } term is not a handle reference, or a URL reference, it's one of our reserved keywords, so use the main form (first key in the fid-alias array map that was passed in)
                         reset($targetFormId);
                         $curlyBracketForm = $form_handler->get(key($targetFormId));
                     }
@@ -5766,6 +5787,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
         } else {
             foreach ($filterTerms as $key => $value) {
                 $filterTerms[$key] = parseUserAndToday($value, $filterElementIds[$filterId]); // pass element so we can check if it is a userlist and compare {USER} based on id instead of name
+                $filterTerms[$key] = str_replace('{ID}',$curlyBracketEntry,$filterTerms[$key]);
             }
         }
     }
@@ -5788,6 +5810,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
             if(!isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm])) {
                 // convert any literal terms (including {} references to linked selectboxes) into the actual DB value...based on current saved value
                 $literalToDBValue = prepareLiteralTextForDB($filterElementObject, $filterTerms[$filterId], $curlyBracketEntry, $userComparisonId); // prepends checkbox characters and converts yes/nos, {USER}, etc
+                $literalToDBValue = str_replace('{ID}',$curlyBracketEntry,$literalToDBValue);
                 // if no declared API format value, go look it up
                 if($curlyBracketEntry AND $curlyBracketEntry != 'new') {
                 $apiFormatValue = prepvalues($literalToDBValue, substr($filterTerms[$filterId],1,-1), $curlyBracketEntry); // will be an array
@@ -6917,6 +6940,8 @@ function prepareLinkedElementGroupFilter($sourceFid, $groupSelections, $useOnlyU
         $pgroupsfilter .= ")";
     } elseif(count($pgroups) > 0) {
         $pgroupsfilter = " t2.groupid IN (".formulize_db_escape(implode(",",$pgroups)).") AND t2.fid=$sourceFid";
+    } elseif($groupSelections AND !in_array("all", $scopegroups) AND count($pgroups)==0) {
+        $pgroupsfilter = 'FALSE';
     } else {
         $pgroupsfilter = "";
     }
@@ -7448,7 +7473,20 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
                                     }
                                 }
                             } else {
-                                $row[] = prepareCellForSpreadsheetExport($column, $entry);
+                                // if the cell has an "OTHER" option and the value of this entry is not a standard option, then simply put Other, and put the value into the next column
+                                $columnMetadata = formulize_getElementMetaData($column, true);
+                                if(strstr($columnMetadata['ele_value'],"{OTHER|")) {
+                                    $valueToCheck = display($entry, $column);
+                                    if($valueToCheck == "" OR optionIsValidForElement($valueToCheck, $columnMetadata['ele_id'])) { 
+                                        $row[] = prepareCellForSpreadsheetExport($column, $entry);
+                                        $row[] = "";
+                                    } else {
+                                        $row[] = _formulize_OPT_OTHERWORD;
+                                        $row[] = prepareCellForSpreadsheetExport($column, $entry);
+                                    }
+                                } else {
+                                    $row[] = prepareCellForSpreadsheetExport($column, $entry);
+                                }
                             }
                         }
                         if(isset($_POST['nullOption']) AND $row[$i] === "") {
@@ -7548,6 +7586,11 @@ function export_prepColumns($columns,$include_metadata=0) {
             } else {
                 $headers[] = $colMeta['ele_colhead'] ? trans($colMeta['ele_colhead']) : trans($colMeta['ele_caption']);
                 $superHeaders[] = "";
+                // append additional column for "OTHER"
+                if(strstr($colMeta['ele_value'],"{OTHER|")) {
+                    $headers[] = "Other Value";
+                    $superHeaders[] = "";
+                }
             }
         }
     }

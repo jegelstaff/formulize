@@ -14,12 +14,10 @@ class Formulize {
 	private static $default_mapping_active = 1;
 
 	/**
-	 * Intialize the Formulize environment
+	 * Initialize the Formulize environment
 	 */
 	static function init() {
 		static $init_done = false;
-		if ($init_done)
-			return; // only need to do it once
 
 		if (self::$db == null) {
 			include_once('mainfile.php');
