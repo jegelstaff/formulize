@@ -5347,6 +5347,7 @@ function removeNotApplicableRequireds($type, $req=0) {
         case "radio":
         case "checkbox":
         case "date":
+        case "yn":
             return $req;
     }
 
