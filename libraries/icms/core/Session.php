@@ -45,11 +45,10 @@ class icms_core_Session {
         
         // Also listens for a code from Google in the URL
         //if google user logged in and redirected to this page
-		if (isset($_GET['code'])) {
+		if (isset($_GET['code']) AND $client = setupAuthentication()) {
             $user_handler = icms::handler("icms_member");
                
             //Get a google client object and send Client Request for email
-			$client = setupAuthentication();
             $objOAuthService = new Google_Service_Oauth2($client);
         
             //Authenticate code from Google OAuth Flow
