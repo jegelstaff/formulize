@@ -140,7 +140,7 @@ function prepvalues($value, $field, $entry_id) {
 	}
 
     // handle cases where the value is linked to another form...returns false if the box is not linked
-    if($source_ele_value = formulize_isLinkedSelectBox($field, true)) {
+    if($source_ele_value = formulize_isLinkedSelectBox($field, true) AND !isset($GLOBALS['formulize_useForeignKeysInDataset'][$field]) AND !isset($GLOBALS['formulize_useForeignKeysInDataset']['all'])) {
         // value is an entry id in another form
         // need to get the form id by checking the ele_value[2] property of the element definition, to get the form id from the first part of that
         $sourceMeta = explode("#*=:*", $source_ele_value[2]); // [0] will be the fid of the form we're after, [1] is the handle of that element
@@ -206,7 +206,7 @@ function prepvalues($value, $field, $entry_id) {
 
     // check if this is fullnames/usernames box
     // wickedly inefficient to go to DB for each value!!  This loop executes once per datapoint in the result set!!
-    if($type == "select") {
+    if($type == "select" AND !isset($GLOBALS['formulize_useForeignKeysInDataset'][$field]) AND !isset($GLOBALS['formulize_useForeignKeysInDataset']['all'])) {
         $ele_value = unserialize($elementArray['ele_value']);
         if (is_array($ele_value) AND isset($ele_value[2]) AND is_array($ele_value[2])) {
             $listtype = key($ele_value[2]);
@@ -347,7 +347,7 @@ function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitS
     $sortOrder = ($sortOrder == "SORT_DESC") ? "DESC" : $sortOrder;
 
     if ($isTableForm) {
-        $result = dataExtractionTableForm($tableFormRow[0], $tableFormRow[1], $form, $filter, $andor, $limitStart, $limitSize, $sortField, $sortOrder);
+        $result = dataExtractionTableForm($tableFormRow[0], $tableFormRow[1], $form, $filter, $andor, $limitStart, $limitSize, $sortField, $sortOrder, $resultOnly);
     } elseif (substr($framework, 0, 3) == "db:") {
         // deprecated...tableforms are preferred approach now for direct table access
         $result = dataExtractionDB(substr($framework, 3), $filter, $andor, $scope, $dbTableUidField);
@@ -934,15 +934,19 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
      
      // Debug Code
      
+//     $validIPs = array('70.29.87.51');
+
+//if(in_array($_SERVER['REMOTE_ADDR'], $validIPs)) {
+     
      /*global $xoopsUser;
-     if($xoopsUser->getVar('uid') == 1) {
+     if($xoopsUser->getVar('uid') == 18399) {
      //     print "<br>Count query: $countMasterResults<br><br>";
         print "Master query: $masterQuerySQL<br>";
      //   print "Linkformids: ";
      //   print_r($linkformids);
-        print "<br>";
+     //   print "<br>";
      }*/
-     
+//}
 		 formulize_benchmark("Before query");
 
      if(count($linkformids)>1) { // AND $dummy=="never") { // when there is more than 1 joined form, we can get an exponential explosion of records returned, because SQL will give you all combinations of the joins, so we create a series of queries that will each handle the main form plus one of the linked forms, then we put all the data together into a single result set below
@@ -2025,7 +2029,7 @@ function formulize_convertCapOrColHeadToHandle($frid, $fid, $term) {
 // Filters cannot obviously use the standard metadata fields that are part of regular forms
 // At the time of writing (Nov 1 2005) supports single table queries only, no joins
 // SUPERSEDED BY THE "TABLEFORM" FEATURE
-function dataExtractionDB($table, $filter, $andor, $scope, $uidField) {
+function dataExtractionDB($table, $filter) {
 
 	global $xoopsDB;
 
@@ -2070,75 +2074,118 @@ function dataExtractionDB($table, $filter, $andor, $scope, $uidField) {
 	return $masterresult;
 }
 
-// THIS FUNCTION DOES A SIMPLE QUERY AGAINST A TABLE IN THE DATABASE AND RETURNS THE RESULT IN STANDARD "GETDATA" FORMAT
-function dataExtractionTableForm($tablename, $formname, $fid, $filter, $andor, $limitStart, $limitSize, $sortField, $sortOrder) {
+// this function prepares the fields for include/exclusion if any, from the tableform query
+// $fields is an array of element handles
+// $include is either 'include' or 'exclude'
+function prepareFieldIncludeExclude($fields, $include='include') {
+    $where = "";
+    if(is_array($fields) AND count($fields) > 0) {
+        $start = true;
+        if($include == 'include') {
+            $operator = '=';
+            $localAndOr = 'OR';
+        } else {
+            $operator = '!=';
+            $localAndOr = 'AND';
+        }
+        foreach($fields as $field) {
+            $where .= $start ? " AND (" : " $localAndOr ";
+            $where .= " ele_handle $operator '".formulize_db_escape($field)."'";
+            $start = false;
+        }
+        $where .= ") ";
+    }
+    return $where;
+}
 
-    $GLOBALS['formulize_queryForExport'] = "USETABLEFORM -- $tablename -- $formname -- $fid -- $filter -- $andor -- $limitStart -- $limitSize -- $sortField -- $sortOrder";
+// THIS FUNCTION DOES A SIMPLE QUERY AGAINST A TABLE IN THE DATABASE AND RETURNS THE RESULT IN STANDARD "GETDATA" FORMAT
+function dataExtractionTableForm($tablename, $formname, $fid, $filter=false, $andor=false, $limitStart=false, $limitSize=false, $sortField=false, $sortOrder=false, $resultOnly=false, $fields=array(), $excludeFields=array()) {
 
      global $xoopsDB;
-
-     // 2. parse the filter
-     // 3. construct the where clause based on the filter and andor
-     // 4. do the query
-     // 5. loop through results to package them up as getdata style data
-     // 6. return them
-
-     // setup a translation table for the formulize records of the fields, so we can use that lower down in several places
-     $sql = "SELECT ele_id, ele_caption FROM ".DBPRE."formulize WHERE id_form=".intval($fid);
-     $res = $xoopsDB->query($sql);
-     $elementsById = array();
-     $elementsByCaption = array();
-     $elementsByField = array();
-     while($array = $xoopsDB->fetchArray($res)) {
-          $field = str_replace(" " , "_", str_replace("`", "'", $array['ele_caption']));
-          $id = $array['ele_id'];
-          $caption = $array['ele_caption'];
-          $elementsById[$id]['caption'] = $caption;
-          $elementsById[$id]['field'] = $field;
-          $elementsByCaption[$caption]['id'] = $id;
-          $elementsByCaption[$caption]['field'] = $field;
-          $elementsByField[$field]['id'] = $id;
-          $elementsByField[$field]['caption'] = $caption;
-     }
-
-     $andor = $andor == "AND" ? "AND" : "OR";
-
-     // parse the filter
-     $whereClause = "";
-     if(is_array($filter)) { // array filters may never be used with tableforms, but whatever...
-          foreach($filter as $id=>$thisFilter) {
-               // filter array syntax is:
-               // $filter[0][0] -- the andor setting to use for all the filters in array 0
-               // $filter[0][1] -- the filter in array 0
-               if($id > 0) { // there's been a filter already
-                    $whereClause .= " $andor ";
-               }
-               $whereClause .= "(";
-               foreach($thisFilter as $thisid=>$thispart) { // loop will only execute twice
-                    if($thisid == 0) {
-                         $localandor = $thispart;
-                         continue;
-                    }
-                    $whereClause .= parseTableFormFilter($thispart, $localandor, $elementsById);
-               }
-               $whereClause = ")";
-          }
-     } else {
-          $whereClause = parseTableFormFilter($filter, $andor, $elementsById);
-     }
      
-     // query for the data
-     $whereClause = $whereClause ? "WHERE $whereClause" : "";
-     $basesql = "SELECT * FROM $tablename $whereClause ";
-		 $sql = $basesql;
-		 if($sortField) {
-					$sql .= " ORDER BY `".$elementsById[$sortField]['field']."` $sortOrder ";
-		 }
-		 if($limitSize) {
-					$sql .= " LIMIT $limitStart,$limitSize ";
-		 }
-     //print "<br>$sql<br>";
+    // 2. parse the filter
+    // 3. construct the where clause based on the filter and andor
+    // 4. do the query
+    // 5. loop through results to package them up as getdata style data
+    // 6. return them
+
+    $includeWhere = prepareFieldIncludeExclude($fields, 'include');
+    $excludeWhere = prepareFieldIncludeExclude($excludeFields, 'exclude');
+    
+    // setup a translation table for the formulize records of the fields, so we can use that lower down in several places
+    $sql = "SELECT ele_id, ele_caption FROM ".DBPRE."formulize WHERE id_form=".intval($fid)." $includeWhere $excludeWhere";
+    $res = $xoopsDB->query($sql);
+    $elementsById = array();
+    $elementsByCaption = array();
+    $elementsByField = array();
+    while($array = $xoopsDB->fetchArray($res)) {
+         $field = str_replace(" " , "_", str_replace("`", "'", $array['ele_caption']));
+         $id = $array['ele_id'];
+         $caption = $array['ele_caption'];
+         $elementsById[$id]['caption'] = $caption;
+         $elementsById[$id]['field'] = $field;
+         $elementsByCaption[$caption]['id'] = $id;
+         $elementsByCaption[$caption]['field'] = $field;
+         $elementsByField[$field]['id'] = $id;
+         $elementsByField[$field]['caption'] = $caption;
+    }
+   
+    if(strstr($tablename, 'SELECT ')) { // preped query for export being passed back in, so run with it
+        $sql = $tablename;
+    } else {
+   
+        $andor = $andor == "AND" ? "AND" : "OR";
+   
+        // parse the filter
+        $whereClause = "";
+        if(is_array($filter)) { // array filters may never be used with tableforms, but whatever...
+             foreach($filter as $id=>$thisFilter) {
+                  // filter array syntax is:
+                  // $filter[0][0] -- the andor setting to use for all the filters in array 0
+                  // $filter[0][1] -- the filter in array 0
+                  if($whereClause != "") { // there's been a filter already
+                       $whereClause .= " $andor ";
+                  }
+                  $whereClause .= "(";
+                  foreach($thisFilter as $thisid=>$thispart) { // loop will only execute twice
+                       if($thisid == 0) {
+                            $localandor = $thispart;
+                            continue;
+                       }
+                       $whereClause .= parseTableFormFilter($thispart, $localandor, $elementsById);
+                  }
+                  $whereClause .= ")";
+             }
+        } else {
+             $whereClause = parseTableFormFilter($filter, $andor, $elementsById);
+        }
+        
+        // query for the data
+        $whereClause = $whereClause ? "WHERE $whereClause" : "";
+        $basesql = "SELECT * FROM $tablename $whereClause ";
+            $sql = $basesql;
+            if($sortField) {
+                       $sql .= " ORDER BY `".$elementsById[$sortField]['field']."` $sortOrder ";
+            }
+            if($limitSize) {
+                       $sql .= " LIMIT $limitStart,$limitSize ";
+            }
+    }
+         
+    
+    /*if($_SERVER['REMOTE_ADDR'] == '70.29.87.51') {
+        print "<br>$sql<br>";
+        exit();
+    }*/
+    
+    if($resultOnly AND $resultOnly === 'bypass') {
+        $GLOBALS['formulize_queryForExport'] = "USETABLEFORM -- $sql -- $formname -- $fid";
+        return true; // just prepare the query, nothing else
+    }
+     
+     formulize_benchmark('done with parsing and all that... '.$sql);
      $res = $xoopsDB->query($sql);
+     
      $result = array();
      $indexer = 0;
      // result syntax is:
@@ -2146,11 +2193,11 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter, $andor, $
      // package up data in the format we need it
      while($array = $xoopsDB->fetchArray($res)) {
           foreach($elementsByField as $field=>$fieldDetails) {
-               $result[$indexer][$formname][$indexer][$elementsByField[$field]['id']][] = $array[$field];
+               $result[$indexer][$formname][$indexer2][$fieldDetails['id']][] = $array[$field];
           }
           $indexer++;
      }
-		 
+     
 		 // count master results
 		 $countSQL = str_replace("SELECT * FROM", "SELECT count(*) FROM", $basesql);
 		 $countRes = $xoopsDB->query($countSQL);
@@ -2178,7 +2225,7 @@ function parseTableFormFilter($filter, $andor, $elementsById) {
           $filterParts = explode("/**/", $thisFilter);
           $operator = isset($filterParts[2]) ? $filterParts[2] : "LIKE";
           $likeparts = ($operator == "LIKE" OR $operator == "NOT LIKE") ? "%" : "";
-          $whereClause .= $elementsById[$filterParts[0]]['field'] . " $operator '$likeparts" . formulize_db_escape($filterParts[1]) . "$likeparts'";
+          $whereClause .= "`".$elementsById[$filterParts[0]]['field']."` $operator '$likeparts" . formulize_db_escape($filterParts[1]) . "$likeparts'";
      }
      return $whereClause;
 }
@@ -2548,7 +2595,7 @@ function formulize_benchmark($text, $dumpLog = false) {
 		 static $prevPageTime = 0;
 		 static $elapsedLog = array();
      if(isset($GLOBALS['startPageTime']) AND $xoopsUser) {
-          if($xoopsUser->getVar('uid') == 5) {
+          if($xoopsUser->getVar('uid') == 18310) {
                $currentPageTime = microtime_float();
 							 if(!$prevPageTime) {
 										$prevPageTime = $currentPageTime;
