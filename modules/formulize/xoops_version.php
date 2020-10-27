@@ -662,6 +662,12 @@ $modversion['templates'][] = array(
 	'file' => 'admin/multipage_navigation2-below.html',
     'description' => '');
 $modversion['templates'][] = array(
+	'file' => 'admin/multipage_navigation3-above.html',
+    'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/multipage_navigation3-below.html',
+    'description' => '');
+$modversion['templates'][] = array(
 	'file' => 'admin/alternate_fields_for_linked_elements.html',
     'description' => '');
     

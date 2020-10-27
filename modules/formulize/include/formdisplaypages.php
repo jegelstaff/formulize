@@ -227,7 +227,8 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	
 		formulize_benchmark("Before drawing nav.");
 	
-		$previousButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['previousButtonText'])) ? $saveAndContinueButtonText['previousButtonText'] : _formulize_DMULTI_PREV;
+        $standardText = ($screen AND ($screen->getVar('navstyle') != 2 OR $currentPage != 1)) ? _formulize_DMULTI_PREV : _formulize_SAVE_AND_LEAVE;
+		$previousButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['previousButtonText'])) ? $saveAndContinueButtonText['previousButtonText'] : $standardText;
 		if($usersCanSave AND $nextPage==$thanksPage) {
 		    $nextButtonText = (is_array($saveAndContinueButtonText) AND $saveAndContinueButtonText['saveButtonText']) ? $saveAndContinueButtonText['saveButtonText'] :  _formulize_DMULTI_SAVE;
 		} else {
@@ -432,9 +433,15 @@ function drawPageNav($usersCanSave="", $aboveBelow, $screen, $templateVariables,
         } else {
             $xoopsTpl->display("file:".XOOPS_ROOT_PATH."/modules/formulize/templates/multipage-navigation2-below.html");
         }
+    } elseif($screen->getVar('navstyle')==2) {
+        if($aboveBelow!='below') {
+            $xoopsTpl->display("file:".XOOPS_ROOT_PATH."/modules/formulize/templates/multipage-navigation3-above.html");
+        } else {
+            $xoopsTpl->display("file:".XOOPS_ROOT_PATH."/modules/formulize/templates/multipage-navigation3-below.html");
+        }
     } else {
-    $xoopsTpl->display("file:".XOOPS_ROOT_PATH."/modules/formulize/templates/multipage-navigation.html");
-}
+        $xoopsTpl->display("file:".XOOPS_ROOT_PATH."/modules/formulize/templates/multipage-navigation.html");
+    }
 
     
 }

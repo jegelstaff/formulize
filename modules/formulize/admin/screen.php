@@ -373,7 +373,7 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
     $multipageOptions['paraentryrelationship'] = $screen->getVar('paraentryrelationship');
     $multipageOptions['donedest'] = $screen->getVar('donedest');
     $multipageOptions['finishisdone'] = $screen->getVar('finishisdone');
-    $multipageOptions['navstyle'] = $screen->getVar('navstyle') == 1 ? 1 : 0;
+    $multipageOptions['navstyle'] = $screen->getVar('navstyle') ? $screen->getVar('navstyle') : 0;
     $multipageOptions['buttontext'] = $screen->getVar('buttontext');
     $multipageOptions['printall'] = $screen->getVar('printall');
     $multipageOptions['displaycolumns'] = $screen->getVar('displaycolumns') == 1 ? "onecolumn" : "twocolumns";
