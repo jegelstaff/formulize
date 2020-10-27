@@ -2072,13 +2072,25 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
             $hideaddentries = 'hideaddentries';
         }
         
+        $sortClause = " sub.entry_id ";
+        $joinClause = "";
         if(isset($subform_element_object->ele_value["SortingElement"]) AND $subform_element_object->ele_value["SortingElement"]) {
             $sortElementObject = $element_handler->get($subform_element_object->ele_value["SortingElement"]);
             $sortDirection = $subform_element_object->ele_value["SortingDirection"] == "DESC" ? "DESC" : "ASC";
-            $sortClause = " `".$sortElementObject->getVar('ele_handle')."` ".$sortDirection;
-        } else {
-			$sortClause = " entry_id ";
-		}
+            $sortTablePrefix = $sortElementObject->isLinked ? 'source' : 'sub';
+            // if linked, go join to the source element
+            if($sortTablePrefix == 'source') {
+                $sortEleValue = $sortElementObject->getVar('ele_value');
+                $sortEleValue2Parts = explode("#*=:*", $sortEleValue[2]);
+                $sourceFid = $sortEleValue2Parts[0];
+                $sourceHandle = $sortEleValue2Parts[1];
+                $sourceFormObject = $form_handler->get($sourceFid);
+                $joinClause = " LEFT JOIN ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." as source ON sub.`".$sortElementObject->getVar('ele_handle')."` = source.entry_id ";
+                $sortClause = " source.`$sourceHandle` ".$sortDirection;
+            } else {
+                $sortClause = " $sortTablePrefix.`".$sortElementObject->getVar('ele_handle')."` ".$sortDirection;
+            }
+        } 
 		
         if(isset($subform_element_object->ele_value["UserFilterByElement"]) AND $subform_element_object->ele_value["UserFilterByElement"]) {
             $matchingEntryIds = array();
@@ -2088,7 +2100,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
                 foreach($matchingEntries as $matchingEntry) {
                     $matchingEntryIds = array_merge($matchingEntryIds, internalRecordIds($matchingEntry, $subform_id));
                 }
-                $filterClause = " AND entry_id IN (".implode(",", $matchingEntryIds).")";
+                $filterClause = " AND sub.entry_id IN (".implode(",", $matchingEntryIds).")";
             } else {
                 $filterClause = " AND false ";
             }
@@ -2097,7 +2109,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
         }
         
 		$sformObject = $form_handler->get($subform_id);
-		$subEntriesOrderSQL = "SELECT entry_id FROM ".$xoopsDB->prefix("formulize_".$sformObject->getVar('form_handle'))." WHERE entry_id IN (".implode(",", $sub_entries[$subform_id]).") $filterClause ORDER BY $sortClause";
+		$subEntriesOrderSQL = "SELECT sub.entry_id FROM ".$xoopsDB->prefix("formulize_".$sformObject->getVar('form_handle'))." as sub $joinClause WHERE sub.entry_id IN (".implode(",", $sub_entries[$subform_id]).") $filterClause ORDER BY $sortClause";
 		if($subEntriesOrderRes = $xoopsDB->query($subEntriesOrderSQL)) {
 			$sub_entries[$subform_id] = array();
 			while($subEntriesOrderArray = $xoopsDB->fetchArray($subEntriesOrderRes)) {
