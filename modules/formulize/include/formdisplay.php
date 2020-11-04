@@ -3183,10 +3183,10 @@ print checkForChrome(); ?>
 
 function showPop(url) {
 	if (window.formulize_popup == null) {
-		formulize_popup = window.open(url,'formulize_popup','toolbar=no,scrollbars=yes,resizable=yes,width=800,height=550,screenX=0,screenY=0,top=0,left=0');
+		formulize_popup = window.open(url,'formulize_popup','toolbar=no,scrollbars=yes,resizable=yes,width=1050,height=650,screenX=0,screenY=0,top=0,left=0');
       } else {
 		if (window.formulize_popup.closed) {
-			formulize_popup = window.open(url,'formulize_popup','toolbar=no,scrollbars=yes,resizable=yes,width=800,height=550,screenX=0,screenY=0,top=0,left=0');
+			formulize_popup = window.open(url,'formulize_popup','toolbar=no,scrollbars=yes,resizable=yes,width=1050,height=650,screenX=0,screenY=0,top=0,left=0');
             } else {
 			window.formulize_popup.location = url;              
 		}
