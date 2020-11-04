@@ -1890,6 +1890,7 @@ function buildScope($currentView, $uid, $fid, $currentViewCanExpand = false) {
 
     // do this second last, just in case currentview =all was passed in but not valid and defaulted back to group
     if ($currentView == "group") {
+        
         if (!$hasGroupScope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid) AND !$currentViewCanExpand) {
             $currentView = "mine";
         } else {
@@ -3583,7 +3584,7 @@ function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $rei
         $data_handler = new formulizeDataHandler($fid);
         $value = $data_handler->getElementValueInEntry($entry, intval($thiscon['not_cons_elementuids']));
         if ($value) {
-            $uids_temp = explode("*=+*:", $value);
+            $uids_temp = explode("*=+*:", trim($value,"*=+*:"));
             $uids_conditions = array_merge((array)$uids_temp, $uids_conditions);
         }
         unset($uids_temp);
