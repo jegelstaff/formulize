@@ -210,7 +210,8 @@ li {
 
 #xo-canvas-content {
   margin-left: 30px;
-  margin-right: 30px; }
+  margin-right: 30px;
+  margin-top: 20px; }
 
 #xo-canvas-leftcolumn {
   float: left;
@@ -971,3 +972,70 @@ body > #content {
     border-top-right-radius: 10px;
 	font-weight:bold;
 			}
+#submitx {
+    margin-bottom: 2em;
+}
+
+body {
+    font-size: 300%;
+}
+
+input, select, textarea, label {
+    font-size: 150%;
+}
+
+#xo-headerlogo {
+    font-size: 250%;
+}
+
+input[type='radio'], input[type='checkbox'] { 
+    transform: scale(3);
+    margin-top: -0.25em;
+    vertical-align: middle;
+}
+label {
+    margin-left: 0.5em;
+}
+
+@media only screen and (min-width: 767px)  {
+        body {
+            font-size: 200%;
+        }
+        input, select, textarea, label {
+            font-size: 125%;
+        }
+        input[type='radio'], input[type='checkbox'] { 
+            transform: scale(2);
+            margin-top: -0.25em;
+            vertical-align: middle;
+        }
+        label {
+            margin-left: 0.5em;
+        }
+
+    }
+    
+    @media only screen and (min-width: 1000px) {
+        body {
+            font-size: 100%;
+        }
+        input, select, textarea, label {
+            font-size: 100%;
+        }
+        input[type='radio'], input[type='checkbox'] {
+            transform: none;
+            margin-top: 0px;
+            vertical-align: baseline;
+        }
+        label {
+            margin-left: 0px;
+        }
+        
+        .leftcolumn-layout #xo-page {
+            clear: none;
+        }
+        .leftcolumn-layout #xo-canvas-leftcolumn {
+           width: 170px;
+        }
+
+    }
