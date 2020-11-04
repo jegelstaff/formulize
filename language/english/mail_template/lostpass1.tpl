@@ -1,13 +1,13 @@
 Hello {X_UNAME},
 
-A web user from {IP} has just requested a new password for your account at {SITENAME}.
-You can get your new password by clicking on the link below:
+Someone has just requested the account information for your account at {SITENAME}. 
 
+Click this link and your account information will be sent to you:
 {NEWPWD_LINK}
 
-If you didn't ask for this, don't worry. Just delete this Email.
+This email was requested by someone at the IP Address: {IP}
+If you did not request this, please advise the webmaster immediately at: {ADMINMAIL}
 
 -----------
-{SITENAME} ({SITEURL}) 
-webmaster
-{ADMINMAIL}
+{SITENAME}
+{SITEURL}
