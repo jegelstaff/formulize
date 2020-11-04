@@ -190,7 +190,7 @@ class formulizeElementRenderer{
 				if($ele_value[9]) {
 					$eltname = $form_ele_id;
 					$eltcaption = $ele_caption;
-					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
+					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
 					$eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
 					$eltmsgUnique = empty($eltcaption) ? sprintf( _formulize_REQUIRED_UNIQUE, $eltname ) : sprintf( _formulize_REQUIRED_UNIQUE, $eltcaption );
 					if($this->_ele->getVar('ele_req')) { // need to manually handle required setting, since only one validation routine can run for an element, so we need to include required checking in this unique checking routine, if the user selected required too
@@ -221,7 +221,7 @@ class formulizeElementRenderer{
 				} elseif($this->_ele->getVar('ele_req') AND !$isDisabled) {
 					$eltname = $form_ele_id;
 					$eltcaption = $ele_caption;
-					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
+					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
 					$eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
 					$form_ele->customValidationCode[] = "if (myform.{$eltname}.value == \"\") { window.alert(\"{$eltmsg}\"); myform.{$eltname}.focus(); return false; }";
 				}
@@ -245,7 +245,7 @@ class formulizeElementRenderer{
 
 						$eltname = $form_ele_id;
 						$eltcaption = $ele_caption;
-						$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
+						$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
 						$eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
 						$form_ele->customValidationCode[] = "\n var FCKGetInstance = FCKeditorAPI.GetInstance('$form_ele_id');\n";
 						$form_ele->customValidationCode[] = "var getText = FCKGetInstance.EditorDocument.body.innerHTML; \n";
@@ -739,7 +739,7 @@ class formulizeElementRenderer{
 				if($this->_ele->getVar('ele_req') AND !$isDisabled) {
 					$eltname = $form_ele_id;
 					$eltcaption = $ele_caption;
-					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
+					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
 					$eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
 					if($ele_value[8] == 1) {// Has been edited in order to not allow the user to submit a form when "No match found" or "Choose an Option" is selected from the quickselect box.
                         if($ele_value[1]) {
@@ -888,7 +888,7 @@ class formulizeElementRenderer{
 				if($this->_ele->getVar('ele_req') AND !$isDisabled) {
 					$eltname = $form_ele_id;
 					$eltcaption = $ele_caption;
-					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
+					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
 					$eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
 					$form_ele->customValidationCode[] = "selection = false;\n";
 					$form_ele->customValidationCode[] = "if(myform.{$eltname}.length) {\n";
@@ -921,7 +921,7 @@ class formulizeElementRenderer{
 				if($this->_ele->getVar('ele_req') AND !$isDisabled) {
 					$eltname = $form_ele_id;
 					$eltcaption = $ele_caption;
-					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
+					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
 					$eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
 					// parseInt() is used to determine if the element value contains a number
 					// Date.parse() would be better, except that it will fail for dd-mm-YYYY format, ie: 22-11-2013
