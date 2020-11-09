@@ -277,12 +277,14 @@ class formulizeElementRenderer{
 					$entry_id = $entry;
 					$entryData = $this->formulize_getCachedEntryData($id_form, $entry);
 					$creation_datetime = display($entryData, "creation_datetime");
+                    $entry = $entryData; // use this variable for the entry data so it is easily accessed in the eval'd code
 					$evalResult = eval($ele_value[0]);
 					if($evalResult === false) {
 						$ele_value[0] = _formulize_ERROR_IN_LEFTRIGHT;
 					} else {
 						$ele_value[0] = $value; // value is supposed to be the thing set in the eval'd code
 					}
+                    $entry = $entry_id; // revert this variable
 				}
 				$ele_value[0] = $this->formulize_replaceCurlyBracketVariables($ele_value[0], $entry, $id_form);
 				$form_ele = new XoopsFormLabel(
