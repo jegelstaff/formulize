@@ -7170,10 +7170,11 @@ function formulize_parseSearchesIntoFilter($searches) {
 				$searchgetkey = substr($one_search, 1, -1);
 
 				if (substr($searchgetkey, 0, 5) == "TODAY") {
-					$number = substr($searchgetkey, 6);
+                    $number = substr($searchgetkey, 5); // note -- includes the +/- sign
+                    $basetime = $number ? strtotime($number." day") : time();
                     $serverTimeZone = $xoopsConfig['server_TZ'];
                     $offset = $xoopsUser ? ($xoopsUser->getVar('timezone_offset') - $serverTimeZone) * 3600 : 0;
-					$one_search = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y"))+$offset);
+					$one_search = date("Y-m-d",($basetime+$offset));
 				} elseif($searchgetkey == "USER") {
 					if($xoopsUser) {
                         $one_search = htmlspecialchars_decode($xoopsUser->getVar('uname'), ENT_QUOTES);
