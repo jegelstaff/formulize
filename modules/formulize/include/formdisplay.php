@@ -111,9 +111,11 @@ class formulize_themeForm extends XoopsThemeForm {
 				. "' method='" . $this->getMethod()
 				. "' onsubmit='return xoopsFormValidate_" . $ele_name . "();'" . $this->getExtra() . ">
 			<div class='xo-theme-form'>
-			<table width='100%' class='outer' cellspacing='1'>
-			<tr><th colspan='2'><h1 class=\"formulize-form-title\">" . $this->getTitle() . "</h1></th></tr>
-		";
+			<table width='100%' class='outer' cellspacing='1'>";
+            if($this->getTitle()) {
+                $ret .= "<tr><th colspan='2'><h1 class=\"formulize-form-title\">" . $this->getTitle() . "</h1></th></tr>";
+            }
+		
 		$hidden = '';
 		list($ret, $hidden) = $this->_drawElements($this->getElements(), $ret, $hidden);
 		$ret .= "</table>\n$hidden\n</div>\n</form>\n";
@@ -1035,7 +1037,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			if(!$form) {
 
                 $firstform = 1;
-                if(isset($passedInTitle)) {
+                if(isset($passedInTitle) OR $titleOverride == 'all') {
                     $title = trans($passedInTitle);
                 } elseif($screen) {
                     $title = trans($screen->getVar('title'));

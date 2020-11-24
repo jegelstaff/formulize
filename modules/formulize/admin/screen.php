@@ -374,7 +374,17 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
     $multipageOptions['donedest'] = $screen->getVar('donedest');
     $multipageOptions['finishisdone'] = $screen->getVar('finishisdone');
     $multipageOptions['navstyle'] = $screen->getVar('navstyle') ? $screen->getVar('navstyle') : 0;
-    $multipageOptions['buttontext'] = $screen->getVar('buttontext');
+    $multipageOptions['showpageselector'] = $screen->getUIOption('showpageselector') ? 'checked' : '';
+    $multipageOptions['showpageindicator'] = $screen->getUIOption('showpageselector') ? 'checked' : '';
+    $multipageOptions['showpagetitles'] = $screen->getUIOption('showpagetitles') ? 'checked' : '';
+    $buttonText = $screen->getVar('buttontext');
+    $multipageOptions['thankyoulinktext'] = is_array($buttonText) ? $buttonText['thankyoulinktext'] : $buttonText;
+    $multipageOptions['thankyoulinktext'] = $multipageOptions['thankyoulinktext'] ? $multipageOptions['thankyoulinktext'] : _formulize_DMULTI_ALLDONE;
+    $multipageOptions['prevButtonText'] = (is_array($buttonText) AND $buttonText['prevButtonText']) ? $buttonText['prevButtonText'] : _formulize_DMULTI_PREV;
+    $multipageOptions['leaveButtonText'] = (is_array($buttonText) AND $buttonText['leaveButtonText']) ? $buttonText['leaveButtonText'] : _formulize_SAVE_AND_LEAVE;
+    $multipageOptions['saveButtonText'] = (is_array($buttonText) AND $buttonText['saveButtonText']) ? $buttonText['saveButtonText'] :  _formulize_SAVE;
+    $multipageOptions['finishButtonText'] = (is_array($buttonText) AND $buttonText['finishButtonText']) ? $buttonText['finishButtonText'] : _formulize_DMULTI_SAVE;
+    $multipageOptions['nextButtonText'] = (is_array($buttonText) AND $buttonText['nextButtonText']) ? $buttonText['nextButtonText'] : _formulize_DMULTI_NEXT;
     $multipageOptions['printall'] = $screen->getVar('printall');
     $multipageOptions['displaycolumns'] = $screen->getVar('displaycolumns') == 1 ? "onecolumn" : "twocolumns";
     $multipageOptions['column1width'] = $screen->getVar('column1width') ? $screen->getVar('column1width') : '20%';

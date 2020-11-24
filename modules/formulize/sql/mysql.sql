@@ -218,6 +218,9 @@ CREATE TABLE `formulize_screen_multipage` (
   `displaycolumns` tinyint(1) NOT NULL default 2,
   `column1width` varchar(255) NULL default NULL,
   `column2width` varchar(255) NULL default NULL,
+  `showpagetitles` tinyint(1) NOT NULL,
+  `showpageselector` tinyint(1) NOT NULL,
+  `showpageindicator` tinyint(1) NOT NULL,
   PRIMARY KEY (`multipageid`),
   INDEX i_sid (`sid`)
 ) ENGINE=MyISAM;
