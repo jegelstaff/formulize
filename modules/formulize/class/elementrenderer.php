@@ -508,8 +508,12 @@ class formulizeElementRenderer{
 						$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
                     // if we're rendering a disabled autocomplete box
 					} elseif($isDisabled AND $ele_value[8] == 1) {
-                        foreach($default_value as $dv) {
-                            $disabledOutputText[] = $cachedSourceValuesQ[intval($ele_value['snapshot'])][$sourceValuesQ][$dv];
+                        if($ele_value['snapshot'] == 1) {
+                                $disabledOutputText = $snapshotValues;
+                        } else {
+                            foreach($default_value as $dv) {
+                                $disabledOutputText[] = $cachedSourceValuesQ[intval($ele_value['snapshot'])][$sourceValuesQ][$dv];
+                            }
                         }
 					}
 
