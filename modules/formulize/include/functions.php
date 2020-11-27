@@ -3289,6 +3289,7 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
         $uids_conditions = array();
         $saved_conditions = array();
         $data = "";
+        global $formulize_existingValues;
         foreach ($cons as $thiscon) {
             // there is a specific condition for this notification
             if ($thiscon['not_cons_con'] !== "all") {
@@ -3298,10 +3299,33 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
                 $terms = unserialize($thesecons[2]);
                 $start = 1;
                 $blankFilters = array();
+                $noElementsChanged = true;
                 for ($i=0;$i<count($elements);$i++) {
+
+                    // if event is update, then check if term is changed from previous save
+                    // if all terms are same as previous save, then we ignore entry
+                    if($event == 'update_entry') {
+                        $elementEyeHandle = convertElementIdsToElementHandles(array($elements[$i]));
+                        $elementEyeHandle = $elementEyeHandle[0];
+                        if(isset($formulize_existingValues[$fid][$entry]['before_save'][$elementEyeHandle])
+                           AND isset($formulize_existingValues[$fid][$entry]['after_save'][$elementEyeHandle])
+                           AND $formulize_existingValues[$fid][$entry]['before_save'][$elementEyeHandle] !== $formulize_existingValues[$fid][$entry]['after_save'][$elementEyeHandle])
+                        {
+                            $noElementsChanged = false;
+                        }
+                    }
+                    
+                    $terms[$i] = parseUserAndToday($terms[$i]);
+                    
                     if ($ops[$i] == "NOT") {
                         $ops[$i] = "!=";
                     }
+                    // seed with the entry
+                    if($start) {
+                        $filter = $entry;
+                        $start = 0;
+                    }
+                    // add to blank filters if necessary, or add to regular filter
                     if ($terms[$i]=="{BLANK}") {
                         $blankFilter = $elements[$i]."/**//**/".$ops[$i]."][".$elements[$i]."/**//**/";
                         if ($ops[$i] == "!=" OR $ops[$i] == "NOT LIKE") {
@@ -3309,23 +3333,20 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
                         } else {
                             $blankFilters['or'][] = $blankFilter." IS NULL ";
                         }
-                        continue;
-                    }
-                                        
-                    $terms[$i] = parseUserAndToday($terms[$i]);
-                                        
-                    if ($start) {
-                        $filter = $entry."][".$elements[$i]."/**/".$terms[$i]."/**/".$ops[$i];
-                        $start = 0;
                     } else {
                         $filter .= "][".$elements[$i]."/**/".$terms[$i]."/**/".$ops[$i];
                     }
                 }
+                if($event == 'update_entry' AND $noElementsChanged) {
+                    continue; // did not pass since there hasn't actually be an update that changed the elements on which the notification state depends
+                }
+                // add in blank filter stuff
                 if (isset($blankFilters['and'])) {
                     foreach ($blankFilters['and'] as $thisAndFilter) {
                         $filter .= "][".$thisAndFilter;
                     }
                 }
+                // reconfigure if there's an 'or' filter for handling blanks
                 if (isset($blankFilters['or'])) {
                     $filter = array(0=>array(0=>"and",1=>$filter), 1=>array(0=>"or",1=>implode("][",$blankFilters['or'])));
                 }
