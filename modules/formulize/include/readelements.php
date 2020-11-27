@@ -217,26 +217,26 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
 			foreach($creation_users as $creation_user) {
                 if (formulizePermHandler::user_can_edit_entry($elementFid, $creation_user, $currentEntry)) {
 					if($writtenEntryId = formulize_writeEntry($values, $currentEntry, "", $creation_user, "", false)) { // last false causes setting ownership data to be skipped...it's more efficient for readelements to package up all the ownership info and write it all at once below.
-					if(isset($formulize_subformBlankCues[$elementFid])) {
-						$GLOBALS['formulize_subformCreateEntry'][$elementFid][] = $writtenEntryId;
-					}
-					$formulize_newEntryIds[$elementFid][] = $writtenEntryId; // log new ids (and all ids) and users for recording ownership info later
-					$formulize_newEntryUsers[$elementFid][] = $creation_user;
-					$formulize_allWrittenEntryIds[$elementFid][] = $writtenEntryId;
+                        if(isset($formulize_subformBlankCues[$elementFid])) {
+                            $GLOBALS['formulize_subformCreateEntry'][$elementFid][] = $writtenEntryId;
+                        }
+                        $formulize_newEntryIds[$elementFid][] = $writtenEntryId; // log new ids (and all ids) and users for recording ownership info later
+                        $formulize_newEntryUsers[$elementFid][] = $creation_user;
+                        $formulize_allWrittenEntryIds[$elementFid][] = $writtenEntryId;
                         $formulize_allSubmittedEntryIds[$elementFid][] = $writtenEntryId;
-					$formulize_newSubformBlankElementIds[$elementFid][$writtenEntryId] = $subformElementId;
-					if(!isset($formulize_allWrittenFids[$elementFid])) {
-						$formulize_allWrittenFids[$elementFid] = $elementFid;
-					}
-					$notEntriesList['new_entry'][$elementFid][] = $writtenEntryId; // log the notification info
-                    writeOtherValues($writtenEntryId, $elementFid, $subformBlankCounter); // write the other values for this entry
-					if($creation_user == 0) { // handle cookies for anonymous users
-						setcookie('entryid_'.$elementFid, $writtenEntryId, time()+60*60*24*7, '/');	// the slash indicates the cookie is available anywhere in the domain (not just the current folder)				
-						$_COOKIE['entryid_'.$elementFid] = $writtenEntryId;
-					}
-					afterSavingLogic($values, $writtenEntryId);
-				}
-			}
+                        $formulize_newSubformBlankElementIds[$elementFid][$writtenEntryId] = $subformElementId;
+                        if(!isset($formulize_allWrittenFids[$elementFid])) {
+                            $formulize_allWrittenFids[$elementFid] = $elementFid;
+                        }
+                        $notEntriesList['new_entry'][$elementFid][] = $writtenEntryId; // log the notification info
+                        writeOtherValues($writtenEntryId, $elementFid, $subformBlankCounter); // write the other values for this entry
+                        if($creation_user == 0) { // handle cookies for anonymous users
+                            setcookie('entryid_'.$elementFid, $writtenEntryId, time()+60*60*24*7, '/');	// the slash indicates the cookie is available anywhere in the domain (not just the current folder)				
+                            $_COOKIE['entryid_'.$elementFid] = $writtenEntryId;
+                        }
+                        afterSavingLogic($values, $writtenEntryId);
+                    }
+                }
 			}
 		} elseif($currentEntry > 0) {
             // save changes to existing elements
@@ -244,17 +244,17 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
             if (formulizePermHandler::user_can_edit_entry($elementFid, $uid, $currentEntry)) {
                 $formulize_allSubmittedEntryIds[$elementFid][] = $currentEntry;
 				if($writtenEntryId = formulize_writeEntry($values, $currentEntry)) {
-				$formulize_allWrittenEntryIds[$elementFid][] = $writtenEntryId; // log the written id
-				if(!isset($formulize_allWrittenFids[$elementFid])) {
-					$formulize_allWrittenFids[$elementFid] = $elementFid;
-				}
-				$notEntriesList['update_entry'][$elementFid][] = $writtenEntryId; // log the notification info
-				writeOtherValues($writtenEntryId, $elementFid); // write the other values for this entry
-				afterSavingLogic($values, $writtenEntryId);
-			}
-		}
-	}
-}
+                    $formulize_allWrittenEntryIds[$elementFid][] = $writtenEntryId; // log the written id
+                    if(!isset($formulize_allWrittenFids[$elementFid])) {
+                        $formulize_allWrittenFids[$elementFid] = $elementFid;
+                    }
+                    $notEntriesList['update_entry'][$elementFid][] = $writtenEntryId; // log the notification info
+                    writeOtherValues($writtenEntryId, $elementFid); // write the other values for this entry
+                    afterSavingLogic($values, $writtenEntryId);
+                }
+            }
+        }
+    }
 }
 
 unset($GLOBALS['formulize_afterSavingLogicRequired']); // now that saving is done, we don't need this any longer, so clean up
