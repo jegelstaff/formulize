@@ -166,6 +166,8 @@ class formulizeCalendarScreenHandler extends formulizeScreenHandler {
     // $settings is used internally to pass list of entries settings back and forth to editing screens
     function render($screen) {
 
+        $previouslyRenderingScreen = $GLOBALS['formulize_screenCurrentlyRendering'];
+    
         $formframes = array();
         $mainforms = array();
         $dateHandles = array();
@@ -196,7 +198,9 @@ class formulizeCalendarScreenHandler extends formulizeScreenHandler {
         eval(substr(file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/templates/screens/default/'.$screen->getVar('sid').'/bottomtemplate.php'), 5));
         $bottomtemplate = ob_get_clean();
      
+        $GLOBALS['formulize_screenCurrentlyRendering'] = $screen;
         displayCalendar($formframes, $mainforms, $viewHandles, $dateHandles, $filters, $clickTemplates, $scopes, $hidden, $type="month", $toptemplate, $bottomtemplate, $viewentryscreens, $useaddicons, $usedeleteicons, $textcolors);
+        $GLOBALS['formulize_screenCurrentlyRendering'] = $previouslyRenderingScreen;
         
 	}
 

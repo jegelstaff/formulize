@@ -4,7 +4,10 @@
 require_once '../../../mainfile.php';
 require_once 'formdisplay.php';
 require_once 'functions.php';
-ob_end_clean();
+icms::$logger->disableLogger();
+while(ob_get_level()) {
+    ob_end_clean();
+}
 include XOOPS_ROOT_PATH.'/header.php'; // need to initialize the theme object even though we're not displaying a full page
 
 $entry_id = intval($_GET['entry_id']); // need to not be intval if we want to support 'new' entries

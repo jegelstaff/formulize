@@ -633,6 +633,13 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			}
 		}
         
+        // check for starting and ending ! ! and put them back at the end if necessary
+        $needPreserveHiddenMarkers = false;
+        if(substr($v, 0, 1) == "!" AND substr($v, -1) == "!") {
+            $needPreserveHiddenMarkers = true;
+            $v = substr($v, 1, -1);
+        }
+        
         $operatorToPutBack = "";
         if(substr($v, 0, 1) == '=') {
             $operatorToPutBack = '=';
@@ -674,6 +681,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 					$filterValue = convertVariableSearchToLiteral($v, $requestKeyToUse); // returns updated value, or false to kill value, or true to do nothing
                     if(!is_bool($filterValue)) {
                         $_POST[$k] = $operatorToPutBack.$filterValue;
+                        if($needPreserveHiddenMarkers) {
+                           $_POST[$k] = '!'.$_POST[$k].'!';
+                        }
                     } elseif($filterValue === false) {
                         unset($_POST[$k]); // clear terms where no match was found, because this term is not active on the current page, so don't confuse users by showing it
                     }
@@ -1391,9 +1401,12 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		}
 
     formulize_benchmark("before rendering top template");
+        $buttonCodeArray['submitButton'] = $submitButton;
 		formulize_screenLOETemplate($screen, "top", $buttonCodeArray, $settings, $messageText);
     formulize_benchmark("after rendering top template");
-		$buttonCodeArray['submitButton'] = $submitButton; // send this back so that we can put it at the bottom of the page if necessary
+        if(strstr($screen->getTemplate('toptemplate'), "\$submitButton")) {
+            unset($buttonCodeArray['submitButton']); // do not send this back if it has been used. Otherwise, send it back and we can put it at the bottom of the page if necessary
+        }
 
 	}
 
@@ -1732,7 +1745,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 					}
 					unset($linkids);
 
-					$linkids = internalRecordIds($entry, $mainFormHandle);
+					$linkids = internalRecordIds($entry, $fid);
 
 					// draw in the margin column where the links and metadata goes
 					if($useViewEntryLinks OR $useCheckboxes != 2) {
@@ -1912,7 +1925,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 				if($entry != "") {
 
 					// Set up the variables for the link to the current entry, and the checkbox that can be used to select the current entry
-					$linkids = internalRecordIds($entry, $mainFormHandle);
+					$linkids = internalRecordIds($entry, $fid);
 					$entry_id = $linkids[0]; // make a nice way of referring to this for in the eval'd code
 					$form_id = $fid; // make a nice way of referring to this for in the eval'd code
 					if(!$settings['lockcontrols']) { //  AND !$loadview) { // -- loadview removed from this function sept 24 2005
@@ -1936,7 +1949,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 						}
 					} // end of IF NO LOCKCONTROLS
 
-					$ids = internalRecordIds($entry, $mainFormHandle);
+					$ids = internalRecordIds($entry, $fid);
 					foreach($inlineButtons as $caid=>$thisCustomAction) {
 						list($caCode) = processCustomButton($caid, $thisCustomAction, $ids[0], $entry); // only bother with the code, since we already processed any clicked button above
 						if($caCode) {
@@ -2169,9 +2182,8 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
 	}
 	include_once XOOPS_ROOT_PATH . "/class/xoopsformloader.php";
 	$startDateElement = new XoopsFormTextDateSelect ('', 'formulize_daterange_sta_'.$handle, 15, strtotime($startText));
-	$startDateElement->setExtra("class='formulize_daterange'");
 	$endDateElement = new XoopsFormTextDateSelect ('', 'formulize_daterange_end_'.$handle, 15, strtotime($endText));
-	$endDateElement->setExtra("class='formulize_daterange' target='$handle'");
+	
 	static $js;
 	if($js) { // only need to include this code once!
 		$js = "";
@@ -2188,7 +2200,7 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
 		$().click(function() {
 			$('.formulize_daterange').change();
 		});
-		$('.formulize_daterange').change(function() {
+		$(\"[id^='formulize_daterange_sta_'],[id^='formulize_daterange_end_']\").change(function() {
 			var id = new String($(this).attr('id'));
 			var handle = id.substr(24);
 			var start = $('#formulize_daterange_sta_'+handle).val();
@@ -3389,26 +3401,6 @@ if (typeof jQuery == 'undefined') {
 	head.appendChild(script);
 }
 
-var formulize_javascriptFileIncluded = new Array();
-
-function includeResource(filename, type) {
-   if(filename in formulize_javascriptFileIncluded == false) {
-     var head = document.getElementsByTagName('head')[0];
-     if(type == 'link') {
-       var resource = document.createElement("link");
-       resource.type = "text/css";
-       resource.rel = "stylesheet";
-       resource.href = filename;
-     } else if(type == 'script') {
-       var resource = document.createElement('script');
-       resource.type = 'text/javascript';
-       resource.src = filename;
-     }
-     head.appendChild(resource);
-     formulize_javascriptFileIncluded[filename] = true;
-   }
-} 
-
 <?php
 if($useXhr) {
 	print " initialize_formulize_xhr();\n";
@@ -3866,11 +3858,13 @@ foreach($lockedColumns as $thisColumn) {
 	});
 
 	var saveButtonOffset = jQuery('#floating-list-of-entries-save-button').offset();
-	saveButtonOffset.left = 15;
-	floatSaveButton(saveButtonOffset);
-	jQuery(window).scroll(function () {
-		floatSaveButton(saveButtonOffset);
-	});
+    if (saveButtonOffset) {
+        saveButtonOffset.left = 15;
+        floatSaveButton(saveButtonOffset);
+        jQuery(window).scroll(function () {
+            floatSaveButton(saveButtonOffset);
+        });
+    }
 
 });
 
@@ -4322,10 +4316,11 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 }
 
 // THIS FUNCTION PROCESSES THE REQUESTED BUTTONS AND GENERATES HTML PLUS SENDS BACK INFO ABOUT THAT BUTTON
-// $caid is the id of this button, $thisCustomAction is all the settings for this button, $entries is optional and is a comma separated list of entries that should be modified by this button (only takes effect on inline buttons, and possible future types)
-// $entries is the entry ID that should be altered when this button is clicked.  Only sent for inline buttons.  Looks like it is only ever a single ID of the main entry of the line where the button was clicked?
-// $entry is only sent from inline buttons, so that any PHP/HTML to be rendered inline has access to all the values of the current entry
-function processCustomButton($caid, $thisCustomAction, $entries="", $entry="") {
+// $caid is the id of this button,
+// $thisCustomAction is all the settings for this button, 
+// $entry_id is the entry ID that should be altered when this button is clicked.  Only sent for inline buttons.  Looks like it is only ever a single ID of the main entry of the line where the button was clicked?
+// $entry is the getData result package for this entry. Only sent from inline buttons, so that any PHP/HTML to be rendered inline has access to all the values of the current entry
+function processCustomButton($caid, $thisCustomAction, $entry_id="", $entry="") {
 
 	global $xoopsUser;
 	$userGroups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
@@ -4353,7 +4348,7 @@ function processCustomButton($caid, $thisCustomAction, $entries="", $entry="") {
 		$caActions[] = $effectProperties['action'];
 		$caValues[] = $effectProperties['value'];
 		$caPHP[] = isset($effectProperties['code']) ? $effectProperties['code'] : "";
-		$caHTML[$caid.'...'.$effectid.'...'.$entries] = isset($effectProperties['html']) ? $effectProperties['html'] : "";
+		$caHTML[$caid.'...'.$effectid.'...'.$entry_id] = isset($effectProperties['html']) ? $effectProperties['html'] : "";
 		$isHTML = isset($effectProperties['html']) ? true : $isHTML;
 	}
 	if($isHTML AND $entry) { // code to be rendered in place
@@ -4369,8 +4364,8 @@ function processCustomButton($caid, $thisCustomAction, $entries="", $entry="") {
 		}
 		$caCode = $allHTML;
 	} else {
-		$nameIdAddOn = $thisCustomAction['appearinline'] ? $nameIdAddOn+1 : "";
-		$caCode = "<input type=button style=\"width: 140px; cursor: pointer;\" name=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" id=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" value=\"" . trans($thisCustomAction['buttontext']) . "\" onclick=\"javascript:customButtonProcess('$caid', '$entries', '".str_replace("'","\'",$thisCustomAction['popuptext'])."');\">\n";
+		$nameIdAddOn = $thisCustomAction['appearinline'] ? $entry_id : "";
+		$caCode = "<input type=button style=\"cursor: pointer;\" name=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" id=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" value=\"" . trans($thisCustomAction['buttontext']) . "\" onclick=\"javascript:customButtonProcess('$caid', '$entry_id', '".str_replace("'","\'",$thisCustomAction['popuptext'])."');\">\n";
 	}
 
 	return array(0=>$caCode, 1=>$caElements, 2=>$caActions, 3=>$caValues, 4=>$thisCustomAction['messagetext'], 5=>$thisCustomAction['applyto'], 6=>$caPHP, 7=>$thisCustomAction['appearinline']);
@@ -4459,7 +4454,9 @@ function processClickedCustomButton($clickedElements, $clickedValues, $clickedAc
 				} else {
 					$valueToWrite = $clickedValues[$ixz];
 				}
+                
 				$maxIdReq = writeElementValue("", $clickedElements[$ixz], $thisEntry, $valueToWrite, $clickedActions[$ixz], "", $formulize_lvoverride, $csEntries[$id]);
+
 			}
 			if($maxIdReq) {
 				$element_handler = xoops_getmodulehandler('elements', 'formulize');
@@ -4593,7 +4590,7 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=deSubmitButton value='" . $buttonText . "' onclick=\"javascript:showLoading();\"></input>";
 				break;
 			case "globalQuickSearch":
-				return "<input type=text id=\"formulize_$button\" name=\"global_search\" placeholder='" . $buttonText . "' value='" . $settings['global_search'] . "' onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>";
+				return "<input type=text id=\"formulize_$button\" name=\"global_search\" value='" . $settings['global_search'] . "' onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>";
 				break;
 		}
 	} elseif($button == "currentViewList") { // must always set a currentview value in POST even if the list is not visible

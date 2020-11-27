@@ -69,6 +69,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
     if(isset($_POST['formulize_prevPage']) AND strstr($_POST['formulize_prevPage'],'-')) {
         $cpParts = explode('-',$_POST['formulize_prevPage']);
         $prevPage = $cpParts[0];
+        $prevScreen = $cpParts[1];
     } elseif(isset($_POST['formulize_prevPage'])) {
         $prevPage = intval($_POST['formulize_prevPage']);
     } else {
@@ -106,7 +107,9 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	// no handling of cookies here, so anonymous multi-page surveys will not benefit from that feature
 	// this emphasizes how we need to standardize a lot of these interfaces with a real class system
 	if(!$entry AND $_POST['entry'.$fid]) {
-		$entry = $_POST['entry'.$fid];
+		$entry = intval($_POST['entry'.$fid]);
+    } elseif(!$entry AND $_POST['form_'.$fid.'_rendered_entry']) {
+        $entry = intval($_POST['form_'.$fid.'_rendered_entry'][0]);
 	} elseif(!$entry) { // or check getSingle to see what the real entry is
 		$entry = $single_result['flag'] ? $single_result['entry'] : 0;
 	}
@@ -172,7 +175,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	// conditions only checked once there is an entry!
     
 	$pagesSkipped = false;
-	if(is_array($conditions) AND $entry != 'new' AND (!$currentPageScreen OR ($screen AND $currentPageScreen == $screen->getVar('sid')))) {
+	if(is_array($conditions) AND (!$currentPageScreen OR ($screen AND $currentPageScreen == $screen->getVar('sid')))) {
 		$conditionsMet = false;
         $element_handler = xoops_getmodulehandler('elements','formulize');
 		while(!$conditionsMet) {
@@ -219,7 +222,8 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 		$titleOverride = isset($pageTitles[$currentPage]) ? trans($pageTitles[$currentPage]) : "all"; // we can pass in any text value as the titleOverride, and it will have the same effect as "all", but the alternate text will be used as the title for the form
 	
 		$settings['formulize_currentPage'] = $currentPage;
-		$settings['formulize_prevPage'] = $prevPage; 
+		$settings['formulize_prevPage'] = $prevPage;
+        $settings['formulize_prevScreen'] = $prevScreen;
 	
 		formulize_benchmark("Before drawing nav.");
 	
@@ -335,13 +339,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 			    print "<input type=hidden name=entry".$fid." value=".intval($entry).">"; // need this to persist the entry that the user is 
 		    }
 		    print "</form></div>";
-		    print "<div id=savingmessage style=\"display: none; position: absolute; width: 100%; right: 0px; text-align: center; padding-top: 50px;\">\n";
-		    if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/images/saving-".$xoopsConfig['language'].".gif") ) {
-			    print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/saving-" . $xoopsConfig['language'] . ".gif\">\n";
-		    } else {
-			    print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/saving-english.gif\">\n";
-		    }
-		    print "</div>\n";
+
 		    drawJavascript(!$usersCanSave); // inverse of whether the user can save, will be the correct 'nosave' flag (we need to pass true if the user cannot save)
 		    // need to create the form object, and add all the rendered elements to it, and then we'll have working required elements if we render the validation logic for the form
 		    print $formObjectForRequiredJS->renderValidationJS(true, true); // with tags, true, skip the extra js that checks for the formulize theme form divs around the elements so that conditional animation works, true
@@ -457,9 +455,6 @@ function generatePrevNextButtonMarkup($buttonType, $buttonText, $usersCanSave, $
     }
     
     if($buttonType == "next" OR $buttonType == "save") {
-        if(!$usersCanSave AND $nextPage==$thanksPage) {
-            $buttonJavascriptAndExtraCode = "disabled=true";
-        }
         $buttonMarkup = "<input type=button name='$buttonType' id='$buttonType' class='formulize-form-submit-button' value='" . $buttonText . "' $buttonJavascriptAndExtraCode>\n";
     } elseif($buttonType == "prev") {
         if($previousPage == "none") {

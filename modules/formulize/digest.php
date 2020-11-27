@@ -39,6 +39,7 @@ $maxExec = 60; // max seconds the script has to execute in. Based on the lowest 
 if(!defined("XOOPS_MAINFILE_INCLUDED")) {
 
     include '../../mainfile.php';
+    icms::$logger->disableLogger();
     include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
     $elementHandler = xoops_getmodulehandler('elements', 'formulize');
     $memberHandler = xoops_gethandler('member');

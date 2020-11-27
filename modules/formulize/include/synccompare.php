@@ -30,6 +30,26 @@ class SyncCompareCatalog {
         // open a connection to the database
         $this->db = new \PDO('mysql'.':host='.XOOPS_DB_HOST.';dbname='.XOOPS_DB_NAME, XOOPS_DB_USER, XOOPS_DB_PASS);
         $this->db->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        
+        $getModes = 'SELECT @@SESSION.sql_mode';
+        $modesSet = false;
+        if($res = $this->db->query($getModes)) {
+            $modes = $res->fetch( PDO::FETCH_NUM );
+            $modes = $modes[0]; // only one result
+            $modesSet = true;
+            if(strstr($modes, 'STRICT_')) {
+                $modes = explode(',', str_replace(array('STRICT_TRANS_TABLES', 'STRICT_ALL_TABLES'), '', $modes)); // remove strict options
+                $modes = array_filter($modes); // remove blanks, possibly caused by commas after removed modes
+                $setModes = "SET SESSION sql_mode = '".implode(',',$modes)."'";
+                if(!$res = $this->db->query($setModes)) {
+                    $modesSet = false;
+                }
+            }
+        }
+        if(!$modesSet) {
+            exit('Error: the database mode could not be set for proper operation of Formulize. Please notify a webmaster immediately. Thank you.');            
+        }
+        
 
         // pull metadata from xoops_version file
         $module_handler = xoops_gethandler('module');
@@ -186,16 +206,18 @@ class SyncCompareCatalog {
         foreach ($this->changes as $tableName => $tableData) {
             if(!isset($processedTables[$tableName]) AND (!$onlyThisTableName OR $tableName == $onlyThisTableName)) {
             $fields = $tableData["fields"];
-                foreach ($tableData["inserts"] as $rec) {
-                    ($this->commitInsert($tableName, $rec, $fields)) ? $numSuccess++ : $numFail++;
-                }
                 foreach ($tableData["updates"] as $rec) {
                     ($this->commitUpdate($tableName, $rec)) ? $numSuccess++ : $numFail++;
                 }
+                foreach ($tableData["inserts"] as $rec) {
+                    ($this->commitInsert($tableName, $rec, $fields)) ? $numSuccess++ : $numFail++;
+                }
+                //print "<BR>FINISHED WITH $tableName<br>";
                     $processedTables[$tableName] = true;
                     if($tableName == $onlyThisTableName) {
                         break;
                 }
+                
             }
         }
 
@@ -312,7 +334,7 @@ class SyncCompareCatalog {
                 $recTableKey = $joinTableInfo["join_field"][0];
                 $recTableKeyVal = $record[$recTableKey];
 
-                $changesTable = $this->changes["_".$joinTableName];
+                $changesTable = $this->changes[$joinTableName];
                 $fieldValue = false;
                 if ($changesTable) {
                     foreach ($changesTable["inserts"] as $rec) {
@@ -400,7 +422,7 @@ class SyncCompareCatalog {
             $form_handler = xoops_getmodulehandler('forms','formulize');
             $curForm = $form_handler->get($record['id_form']);
             if($record['form_handle'] != $curForm->getVar('form_handle')) {
-                $this->commitUpdateTable($curForm->getVar('form_handle'), $record['form_handle']);
+                $this->commitUpdateTable($curForm->getVar('form_handle'), $record['form_handle'], $curForm);
             }
         }
 
@@ -456,15 +478,15 @@ class SyncCompareCatalog {
     }
 
     // rename a table
-    private function commitUpdateTable($oldName, $newName) {
+    private function commitUpdateTable($oldName, $newName, $formObject) {
         $formHandler = xoops_getmodulehandler('forms', 'formulize');
-        return $formHandler->renameDataTable($oldName, $newName);
+        return $formHandler->renameDataTable($oldName, $newName, $formObject);
     }
     
     // rename/update a field
     private function commitUpdateField($element, $oldName, $dataType=false, $newName="") {
         $formHandler = xoops_getmodulehandler('forms', 'formulize');
-        return updateField($element, $oldName, $dataType, $newName);    
+        return $formHandler->updateField($element, $oldName, $dataType, $newName);    
     }
     
     

@@ -35,6 +35,12 @@
 // this file listens for incoming formulize_xhr messages, and responds accordingly
 
 require_once "../../mainfile.php"; // initialize the xoops stack so we have access to the user object, etc if necessary
+icms::$logger->disableLogger();
+
+while(ob_get_level()) {
+    ob_end_clean();
+}
+
 // check that the user who sent this request is the same user we have a session for now, if not, bail
 $sentUid = intval($_GET['uid']);
 
@@ -42,7 +48,6 @@ if(($xoopsUser AND $sentUid != $xoopsUser->getVar('uid')) OR (!$xoopsUser AND $s
   exit();
 }
 
-ob_end_clean(); // stop all buffering of output (ie: related to the error logging, and/or xLangauge?)
 include_once "../../header.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
 include XOOPS_ROOT_PATH .'/modules/formulize/include/customCodeForApplications.php';
@@ -204,13 +209,14 @@ switch($op) {
           $data_handler = new formulizeDataHandler($onetoonefid);
           if($link->getVar('common')) {
             $entryId = $data_handler->findFirstEntryWithValue($targetElement, $databaseReadyValue);  
-          } elseif($sourceElement==$passedElementId) {
-            $entryId = $databaseReadyValue;
+          } elseif($sourceElement==$passedElementId AND $passedEntryId != 'new') {
+            $entryId = $passedEntryId;
           }
           break;
         }
       }
     }
+    if(!$onetoonekey OR ($entryId AND $entryId != 'new')) {
     if(security_check($fid, $entryId)) {
         $html = renderElement($elementObject, $entryId);
         if(count($sendBackValue)>0) {
@@ -229,6 +235,9 @@ switch($op) {
             print $html;
         }
       }
+    } else {
+        print '{NOCHANGE}';
+    }
     break;
 
 
@@ -250,8 +259,16 @@ switch($op) {
         $element_handler = xoops_getModuleHandler('elements', 'formulize');
         $formObject = $form_handler->get($formID);
         foreach($formObject->getVar('elementTypes') as $elementId=>$elementType) {
-            if($elementType == 'derived') {
-                $elementObject = $element_handler->get($elementId);
+            $elementObject = $element_handler->get($elementId);
+            $ele_value = $elementObject->getVar('ele_value');
+            // if it's derived, or it's text for display and the text for display has dynamic references, then render it and send it back
+            if($elementType == 'derived' OR (
+                (
+                    $elementType == 'areamodif' OR $elementType == 'ib') AND (
+                       strstr($ele_value[0], "\$value=") OR strstr($ele_value[0], "\$value =") OR (strstr($ele_value[0], "{") AND strstr($ele_value[0], "}"))
+                    )
+                )
+            ) {
                 if($html = renderElement($elementObject, $entryID)) {
                     $derivedValueMarkup[$elementId] = $html;
                 }
@@ -314,18 +331,24 @@ function renderElement($elementObject, $entryId) {
             }
         } else {
             $form_ele = $deReturnValue[0];
-            if($elementObject->getVar('ele_req')) {
+            if($elementObject->getVar('ele_req') AND is_object($form_ele)) {
                 $form_ele->setRequired();
             }
             $isDisabled = $deReturnValue[1];
             // rendered HTML code below is taken from the formulize classes at the top of include/formdisplay.php
             if($elementObject->getVar('ele_type') == "ib") {// if it's a break, handle it differently...
-              $class = ($form_ele[1] != '') ? " class='".$form_ele[1]."'" : '';
-              if ($form_ele[0]) {
-                $html = "<td colspan='2' $class><div style=\"font-weight: normal;\">" . trans(stripslashes($form_ele[0])) . "</div></td>";
-              } else {
-                $html = "<td colspan='2' $class>&nbsp;</td>";
-              }
+                $class = ($form_ele[1] != '') ? " class='".$form_ele[1]."'" : '';
+                $columnData = formulize_themeForm::_getColumns($elementObject->getVar('ele_id'));
+                $colspan = $columnData[0] == 1 ? "" : "colspan='2'";
+                if ($form_ele[0]) {
+                    $html = "<td $colspan $class><div style=\"font-weight: normal;\">" . trans(stripslashes($form_ele[0])) . "</div></td>";
+                } else {
+                    $html = "<td $colspan $class>&nbsp;</td>";
+                }
+                if(($columnData[0] != 1 AND $columnData[2] != 'auto' AND $columnData[1] != 'auto')
+                    OR ($columnData[0] == 1 AND $columnData[1] != 'auto')) {
+                        $html .= '<td class="formulize-spacer-column">&nbsp;</td>';
+                }
             } else {
               require_once XOOPS_ROOT_PATH."/modules/formulize/include/formdisplay.php"; // need the formulize_themeForm
               $html = formulize_themeForm::_drawElementElementHTML($form_ele);

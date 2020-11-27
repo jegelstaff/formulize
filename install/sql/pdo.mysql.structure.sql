@@ -546,7 +546,7 @@ CREATE TABLE tplsource (
 CREATE TABLE users (
   uid mediumint(8) unsigned NOT NULL auto_increment,
   name varchar(60) NOT NULL default '',
-  uname varchar(255) NOT NULL default '',
+  uname varchar(175) NOT NULL default '',
   email varchar(255) NOT NULL default '',
   url varchar(255) NOT NULL default '',
   user_avatar varchar(30) NOT NULL default 'blank.gif',
@@ -581,7 +581,7 @@ CREATE TABLE users (
   user_viewoid tinyint(1) unsigned NOT NULL default '0',
   pass_expired tinyint(1) unsigned NOT NULL default '0',
   enc_type tinyint(2) unsigned NOT NULL default '1',
-  login_name varchar(255) NOT NULL default '',
+  login_name varchar(175) NOT NULL default '',
   PRIMARY KEY  (uid),
   KEY uname (uname),
   UNIQUE KEY login_name (login_name)

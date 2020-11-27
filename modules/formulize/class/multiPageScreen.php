@@ -83,6 +83,18 @@ class formulizeMultiPageScreen extends formulizeScreen {
 	    ksort($processedConditions);
 	    return $processedConditions;
 	}
+    
+    function elementIsPartOfScreen($elementObjectOrId) {
+        if(!$element = _getElementObject($elementObjectOrId)) {
+            return false;
+        }
+        foreach($this->getVar('pages') as $page) {
+            if(in_array($element->getVar('ele_id'), $page)) {
+                return true;
+            }
+        }
+        return false;
+    }
 	
 }
 
@@ -183,6 +195,8 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 	// $screen is a screen object
 	function render($screen, $entry, $settings = array()) { // $settings is used internally to pass list of entries settings back and forth to editing screens
     
+        $previouslyRenderingScreen = $GLOBALS['formulize_screenCurrentlyRendering'];
+    
 		if(!is_array($settings)) {
 				$settings = array();
 		}
@@ -203,8 +217,10 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 		if(substr($doneDest, 0, 1)=='/') {
 		    $doneDest = XOOPS_URL.$doneDest;
 		}
-    		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplaypages.php";
+    	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplaypages.php";
+        $GLOBALS['formulize_screenCurrentlyRendering'] = $screen;
 		displayFormPages($formframe, $entry, $mainform, $pages, $conditions, html_entity_decode(html_entity_decode($screen->getVar('introtext', "e")), ENT_QUOTES), html_entity_decode(html_entity_decode($screen->getVar('thankstext', "e")), ENT_QUOTES), $doneDest, $screen->getVar('buttontext'), $settings,"", $screen->getVar('printall'), $screen); //nmc 2007.03.24 added 'printall' & 2 empty params
+        $GLOBALS['formulize_screenCurrentlyRendering'] = $previouslyRenderingScreen;
 	}
 
 
@@ -321,8 +337,19 @@ function pageMeetsConditions($conditions, $currentPage, $entry_id, $fid, $frid) 
             $oomfilter = "";
     $blankORSearch = "";
     
-    if(count($elements)>0 AND !intval($entry_id)) { return false; } // new entries cannot meet conditions yet because they are not saved
-    if(count($elements)==0) { return true; } // pages with no conditions are always allowed!
+    // new entries cannot meet conditions yet because they are not saved
+    // UNLESS the condition is = {BLANK}
+    if(count($elements)>0 AND !intval($entry_id)) {
+        foreach($ops as $i=>$op) {
+            if($op != "=" OR $terms[$i] != "{BLANK}") {
+                return false;
+            }
+        }
+        return true; // all conditions are = {BLANK} so new entries would match (except for if there are default values specified for the field??)
+    }
+    
+    // pages with no conditions are always allowed!
+    if(count($elements)==0) { return true; } 
     
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
             foreach($elements as $i=>$thisElement) {

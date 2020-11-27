@@ -72,6 +72,10 @@ if (!defined("XOOPS_MAINFILE_INCLUDED")) {
                 $drPart = substr($_SERVER["DOCUMENT_ROOT"],$slashPos+1,$nextSlashPos-$slashPos-1);
                 if($rpPart == $drPart) {
                     $slashPos = $nextSlashPos; // look for the next part of the path
+                } elseif($slashPos == 0) { // nothing in common, so give up on automatic detection of base url, user might need to specify manually!
+                    error_log('Formulize: could not detect base url automatically. If your website is not located in the root of the domain, you may need to specify the base url manually in the mainfile.php. Look for this message in there to see where to do it.');
+                    $base_url = '';
+                    break;
                 } else {
                     $base_url = str_replace('\\','/',substr(XOOPS_ROOT_PATH,$slashPos));
                     break;
@@ -83,7 +87,7 @@ if (!defined("XOOPS_MAINFILE_INCLUDED")) {
         }
 	}
 
-	$PortNum = (80 == $_SERVER["SERVER_PORT"]) ? "" : ":" . $_SERVER["SERVER_PORT"];
+	$PortNum = (80 == $_SERVER["SERVER_PORT"] OR 443 == $_SERVER["SERVER_PORT"]) ? "" : ":" . $_SERVER["SERVER_PORT"];
 	define('XOOPS_URL', ((443 == $_SERVER["SERVER_PORT"] OR (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) AND $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https')) ? "https://" : "http://") . $_SERVER['SERVER_NAME'] . $PortNum . SITE_BASE_URL );
 
 	define('XOOPS_CHECK_PATH', 0);
@@ -171,4 +175,3 @@ if (!defined("XOOPS_MAINFILE_INCLUDED")) {
 		include XOOPS_ROOT_PATH."/include/common.php";
 	}
 }
-?>
