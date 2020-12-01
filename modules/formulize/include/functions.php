@@ -6500,7 +6500,7 @@ function parseUserAndToday($term, $element=null) {
         $term = str_replace('{USER}', $name, $term);
 	}
  	if (substr(trim($term,"{}"), 0, 5) == "TODAY") {
-		$number = substr(trim($term, "{}"), 6);
+		$number = substr(trim($term, "{}"), 5);
 		$term = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
 	}
   return $term;
