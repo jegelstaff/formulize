@@ -378,6 +378,8 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 			$filterTerms[$i] = "";
 		}
         
+        $filterTerms[$i] = parseUserAndToday($filterTerms[$i]);
+        
         // convert { } element references to their API format version (prepValues function output), unless the filter element is creation_uid or mod_uid
         if(substr($filterTerms[$i],0,1) == "{" AND substr($filterTerms[$i],-1)=="}") {
             $handle_reference = substr($filterTerms[$i],1,-1);

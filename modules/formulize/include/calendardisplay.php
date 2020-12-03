@@ -330,18 +330,15 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
     }
 
     // process data set(s)
+    $element_handler = xoops_getmodulehandler('elements', 'formulize');
     for($i=0;$i<count($data);$i++) {
         foreach($data[$i] as $id=>$entry) {
-                if(!$frids[$i]) {
-                if(is_array($viewHandles[$i])) {
-                    $formhandle = getFormHandleFromEntry($entry, $viewHandles[$i][0]);
-                } else {
-                    $formhandle = getFormHandleFromEntry($entry, $viewHandles[$i]);
-                }
+            if(is_array($viewHandles[$i])) {
+                $elementObject = $element_handler->get($viewHandles[$i][0]);
             } else {
-                $formhandle = $mainforms[$i];
+                $elementObject = $element_handler->get($viewHandles[$i]);
             }
-            $ids = internalRecordIds($entry, $formhandle);
+            $ids = internalRecordIds($entry, $elementObject->getVar('id_form')); 
 
             if(is_array($viewHandles[$i])) {
                 $needsep = 0;

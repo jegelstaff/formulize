@@ -208,6 +208,8 @@ if($_POST['cloneelement']) {
   }
   $element_handler->insert($thisElementObject);
   $ele_id = $thisElementObject->getVar('ele_id');
+  $thisElementObject->setVar('ele_handle',$formObject->getVar('form_handle').'_'.$ele_id);
+  $element_handler->insert($thisElementObject);
   $ele_type = $thisElementObject->getVar('ele_type');
   $databaseElement = ($ele_type == "areamodif" OR $ele_type == "ib" OR $ele_type == "sep" OR $ele_type == "subform" OR $ele_type == "grid" OR (property_exists($thisElementObject,'hasData') AND $thisElementObject->hasData == false) ) ? false : true;
   if($databaseElement) {
@@ -218,7 +220,7 @@ if($_POST['cloneelement']) {
 		$fieldStateData = $xoopsDB->fetchArray($fieldStateRes);
 		$dataType = $fieldStateData['Type'];
 	}
-  $form_handler->insertElementField($thisElementObject, $dataType); 
+    $form_handler->insertElementField($thisElementObject, $dataType);
   }
   print "/* eval */ window.location = '".XOOPS_URL."/modules/formulize/admin/ui.php?page=element&ele_id=$ele_id&aid=".intval($_POST['aid'])."';";
 }

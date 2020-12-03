@@ -81,12 +81,14 @@ while ($table = $xoopsDB->fetchRow($resultst)) {
     }
 }
 
+/*
+ * experimental removal of language setting in functions.php - this should be set previously in other locations and this file should be a library with no dependancies on doing something specific for the bootstrapping of the page's resources
 global $xoopsConfig;
 if (file_exists(XOOPS_ROOT_PATH . "/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
     include_once XOOPS_ROOT_PATH . "/modules/formulize/language/".$xoopsConfig['language']."/main.php";
 } else {
     include_once XOOPS_ROOT_PATH . "/modules/formulize/language/english/main.php";
-}
+}*/
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/class/usersGroupsPerms.php";
@@ -1241,11 +1243,19 @@ function checkForLinks($frid, $fids, $fid, $entries, $unified_display=false, $un
                         } else {
                             // get the entry in the $one_fid['fid'] form (form with the self element), that has the intval($entries[$fid][0]) entry (the entry we are calling up already) as it's linked value
                             $data_handler = new formulizeDataHandler($one_fid['fid']);
+                            global $xoopsUser;
+                            $scope_uids = array();
+                            $groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+                            $gperm_handler = xoops_gethandler('groupperm');
+                            // users who can only see their own entries should be linked to their own entry in a one-to-one connection of this kind                            
+                            if(!$gperm_handler->checkRight("view_globalscope", $one_fid['fid'], $groups, getFormulizeModId()) AND !$gperm_handler->checkRight("view_groupscope", $one_fid['fid'], $groups, getFormulizeModId())) {
+                                $scope_uids = array($xoopsUser->getVar('uid'));
+                            }
                             if($selfEleValue[1] == 1) {
                                 // if we support multiple selections, then prepend and append a comma
-                                $foundEntry = $data_handler->findFirstEntryWithValue($selfElement, ','.$thisTargetEntry.',', "LIKE");    
+                                $foundEntry = $data_handler->findFirstEntryWithValue($selfElement, ','.$thisTargetEntry.',', "LIKE", $scope_uids);    
                             } else {
-                                $foundEntry = $data_handler->findFirstEntryWithValue($selfElement, intval($thisTargetEntry));
+                                $foundEntry = $data_handler->findFirstEntryWithValue($selfElement, intval($thisTargetEntry), '=', $scope_uids);
                             }
                         }
                         if ($foundEntry !== false) {
@@ -1443,8 +1453,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
         $csvfile = prepExportSecondaryData($csvfile, $cols, $fd, $secondaryData);
         $secondaryData = array(); // reset the secondary data
         
-        $formhandle = getFormHandlesFromEntry($entry);
-        $ids = internalRecordIds($entry, $formhandle[0]);
+        $ids = internalRecordIds($entry, $fid);
         $id = $ids[0];
         $id_req[] = $id;
         
@@ -1696,7 +1705,7 @@ function getMetaData($entry, $member_handler, $fid="", $useOldCode=false) {
 // $groups is the grouplist of the current user.  It is optional.  If present it will limit the columns returned to the ones where display is 1 or the display includes that group
 function getAllColList($fid, $frid="", $groups="", $includeBreaks=false) {
     global $xoopsDB, $xoopsUser;
-    $gperm_handler = &xoops_gethandler('groupperm');
+    $gperm_handler = xoops_gethandler('groupperm');
     $mid = getFormulizeModId();
 
     // if $groups then build the necessary filter
@@ -1881,6 +1890,7 @@ function buildScope($currentView, $uid, $fid, $currentViewCanExpand = false) {
 
     // do this second last, just in case currentview =all was passed in but not valid and defaulted back to group
     if ($currentView == "group") {
+        
         if (!$hasGroupScope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid) AND !$currentViewCanExpand) {
             $currentView = "mine";
         } else {
@@ -2136,7 +2146,9 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
                     $element_handler->insert($element);
                 }
                     $allValues = array_keys($ele_value[2]);
-                    $newWrittenValues[] = array_search($newValue, $allValues); // value to write is the number representing the position in the array of the key that is the text value the user made
+                    $selectedKey = array_search($newValue, $allValues); // value to write is the number representing the position in the array of the key that is the text value the user made
+                    $selectedKey = $element->canHaveMultipleValues ? $selectedKey : $selectedKey + 1; // because we add one to the key when evaluating against single option elements below and these thigns need to line up!! YUCK
+                    $newWrittenValues[] = $selectedKey;
                 }
                 // remove the candidate value from the original $ele so we don't have a duplicate when trying to sort it out later
                 if(is_array($ele)) {
@@ -3103,6 +3115,7 @@ function _findLinkedEntries($targetFormKeySelf, $targetFormFid, $valuesToLookFor
 // can take an entry in a framework and make copies of all relevant entries in all relevant forms
 // note that the same relative linked selectbox relationships are preserved in cloned framework entries, but links based on common values and uids are not modified at all. this might not be desired behaviour in all cases!!!
 // entries in single-entry forms are never cloned
+// $entry is the entry id number
 function cloneEntry($entry, $frid, $fid, $copies=1, $callback = null) {
     global $xoopsDB, $xoopsUser;
     
@@ -3592,7 +3605,7 @@ function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $rei
         $data_handler = new formulizeDataHandler($fid);
         $value = $data_handler->getElementValueInEntry($entry, intval($thiscon['not_cons_elementuids']));
         if ($value) {
-            $uids_temp = explode("*=+*:", $value);
+            $uids_temp = explode("*=+*:", trim($value,"*=+*:"));
             $uids_conditions = array_merge((array)$uids_temp, $uids_conditions);
         }
         unset($uids_temp);
@@ -4585,7 +4598,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
     if($multi) { // create the hidden field that will get the value assigned for submission
         $defaultHiddenValue = (!$overrides OR (substr($overrides,0,5)=="ORSET" AND substr($overrides, -2) == "//")) ? $overrides : "ORSET$multiCounter=".$overrides."//";
         $filter = "<input type='hidden' name='$id' id='".$id."_hiddenMulti' value='".strip_tags(htmlspecialchars($defaultHiddenValue))."'>\n
-        <div style='float: left; padding-right: 1em;'>\n";
+        <div style='float: left; padding-right: 1em; padding-bottom: 1em;'>\n";
     } else { // start the actual dropdown selectbox
         $filter = "<SELECT name=\"$id\" id=\"$id\"";
         if ($name == "{listofentries}") {
@@ -4719,7 +4732,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
         foreach ($options as $option=>$option_value) {
             
             if($multi AND $counter > 0 AND ($counter+1) % 7 == 0) {
-                $filter .= "\n</div><div style='float: left; padding-right: 1em;'>\n";
+                $filter .= "\n</div><div style='float: left; padding-right: 1em; padding-bottom: 1em;'>\n";
             }
             
             $multiIdCounter++;
@@ -5360,6 +5373,7 @@ function removeNotApplicableRequireds($type, $req=0) {
         case "radio":
         case "checkbox":
         case "date":
+        case "yn":
             return $req;
     }
 
@@ -5523,14 +5537,20 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
                    AND !strstr($filterTerms[$filterId], '{TODAY')) {
                         if($filterTermElement = $element_handler->get($bareFilterTerm)) {
                             $curlyBracketForm = $form_handler->get($filterTermElement->getVar('id_form'));
+                            // AND FOR NOW, WE DON'T SUPPORT { } DYNAMIC TERMS ON EXTRACTION QUERIES...WHAT WOULD THAT EVEN MEAN...we could possibly do this, it would require a lot of further complications in the SQL 
+                            continue;
+                        } elseif(isset($_POST[$bareFilterTerm]) OR isset($_GET[$bareFilterTerm])) {
+                            // term is a URL or POST reference, so grab that
+                            $curlyBracketForm = $form_handler->get(key($targetFormId));
+                            $filterTerms[$filterId] = isset($_POST[$bareFilterTerm]) ? $_POST[$bareFilterTerm] : $_GET[$bareFilterTerm];
+                            $bareFilterTerm = $filterTerms[$filterId];
                         } else {
-                            print "Error: { } term could not be resolved. Are you expecting it to be in the URL?";
+                            // don't know what the term is!
+                            print "Error: { } term could not be resolved. Were you expecting it to be in the URL?";
                             return;
                         }
-                        // AND FOR NOW, WE DON'T SUPPORT { } TERMS ON EXTRACTION QUERIES...WHAT WOULD THAT EVEN MEAN...we could possibly do this, it would require a lot of further complications in the SQL 
-                        continue;
                     } else {
-                        // { } term is not a handle reference, so use the main form (first key in the fid-alias array map that was passed in)
+                        // { } term is not a handle reference, or a URL reference, it's one of our reserved keywords, so use the main form (first key in the fid-alias array map that was passed in)
                         reset($targetFormId);
                         $curlyBracketForm = $form_handler->get(key($targetFormId));
                     }
@@ -5558,22 +5578,30 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
             if ($filterTypes[$filterId] != "oom" AND !strstr($conditionsFilterComparisonValue, "curlybracketform")) {
                 $needIntroBoolean = true;
                 list($conditionsfilter, $thiscondition) = _appendToCondition($conditionsfilter, "AND", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
+                if($thiscondition) {
                 $conditionsfilterArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
+                }
             // regular oom conditions
             } elseif(!strstr($conditionsFilterComparisonValue, "curlybracketform")) {
                 $needIntroBoolean = true;
                 list($conditionsfilter_oom, $thiscondition) = _appendToCondition($conditionsfilter_oom, "OR", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
+                if($thiscondition) {
                 $conditionsfilter_oomArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
+                }
             // curlybracketform conditions    
             } elseif($filterTypes[$filterId] != "oom") {
                 $needIntroBoolean = false;
                 list($curlyBracketFormconditionsfilter, $thiscondition) = _appendToCondition($curlyBracketFormconditionsfilter, "AND", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
+                if($thiscondition) {
                 $conditionsfilterArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
+                }
             // curlybracketform oom conditions
             } else {
                 $needIntroBoolean = false;
                 list($curlyBracketFormconditionsfilter_oom, $thiscondition) = _appendToCondition($curlyBracketFormconditionsfilter_oom, "OR", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
+                if($thiscondition) {
                 $conditionsfilter_oomArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
+            }
             }
             $curlyBracketFormFrom = $thisCurlyBracketFormFrom ? $thisCurlyBracketFormFrom : $curlyBracketFormFrom; // if something was returned, use it, otherwise, stick with what we've got -- NOTE THIS MEANS YOU CAN'T HAVE DIVERGENT CURLY BRACKET REFERENCES??!!
             
@@ -5622,6 +5650,9 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
 
 // append a given value onto a given condition
 function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias, $filterElementHandle, $filterOp, $conditionsFilterComparisonValue) {
+    
+    if(!$conditionsFilterComparisonValue) { return array($condition, $conditionsFilterComparisonValue); }
+    
     if(!$condition AND $needIntroBoolean) {
         $condition = " AND (";
     } elseif(!$condition AND !$needIntroBoolean) {
@@ -5703,11 +5734,11 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                     $literalTermToUse = "'".formulize_db_escape($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm])."'";
                     $literalQuotes = "";
                 } elseif($curlyBracketEntry != 'new') {
-                    $apiFormatValue = prepvalues($dbValueOfTerm, $bareFilterTerm, $curlyBracketEntry); // will be an array
-                    if(is_array($apiFormatValue) AND count($apiFormatValue)==1) {
-                        $apiFormatValue = $apiFormatValue[0]; // take the single value if there's only one, same as display function does
+                    $preppedFormatValue = prepvalues($dbValueOfTerm, $bareFilterTerm, $curlyBracketEntry); // will be an array
+                    if(is_array($preppedFormatValue) AND count($preppedFormatValue)==1) {
+                        $preppedFormatValue = $preppedFormatValue[0]; // take the single value if there's only one, same as display function does
                     }
-                    $literalTermToUse = $apiFormatValue;
+                    $literalTermToUse = $preppedFormatValue;
                     $literalQuotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
                 } else {
                     // for new entries maybe we should get the defaults?
@@ -5771,25 +5802,9 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 							    }
                     $filterOps[$filterId] = $overrideReturnedOp ? $overrideReturnedOp : '<=>';
                 // for new entries with a dynamic reference and no asynch value set...
-                } else { // can't do a subquery into a curly bracket form for a 'new' value...return impossible condition
-                    $filterOps[$filterId] = '<'; // don't want to trigger other operations below when op is =
-                    $filterTerms[$filterId] = "99999999999 AND TRUE AND FALSE"; // need to remove the { } from the term to avoid other processing of the bracketed term
-                    $conditionsFilterComparisonValue = $filterTerms[$filterId];
-                }
-                // USED TO BE A FURTHER CONDITIONS HERE TO HANDLE CASES IN WHICH THE SUBQUERY WOULDN'T KICK IN. BUT NOW THANKS TO THE or APPROACH TO THE SUBQUERIES, THEN ALL CASES CAN WORK WITH SUBQUERIES??
-                // IF NOT, THEN CODE BELOW NEEDS SOME REINSTATEMENT/REFACTORING
-                // NEED TO CHECK IN OTHER SYSTEMS TO SEE IF THIS BREAKS ANYTHING!
-                /*
-                 * elseif(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm]) AND substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") {
-                    // doing an asynchronous build of a new entry
-                    $conditionsFilterComparisonValue = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm];
-                    if(!is_numeric($conditionsFilterComparisonValue)) {
-                        $conditionsFilterComparisonValue = "'".formulize_db_escape($conditionsFilterComparisonValue)."'";
+                } else { // can't do a subquery into a curly bracket form for a 'new' value...return nothing
+                    return array("", "");
                     }
-                    if($literalTermToUse != $dbValueOfTerm) {
-                        $conditionsFilterComparisonValue .= '-->>ADDPLAINLITERAL<<--'.$literalTermToUse;
-                    }
-                } else */
             }
             if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
                 $conditionsFilterComparisonValue .= "  AND curlybracketform.`entry_id`=$curlyBracketEntryQuoted ";
@@ -5823,11 +5838,11 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                 $literalToDBValue = str_replace('{ID}',$curlyBracketEntry,$literalToDBValue);
                 // if no declared API format value, go look it up
                 if($curlyBracketEntry AND $curlyBracketEntry != 'new') {
-                $apiFormatValue = prepvalues($literalToDBValue, substr($filterTerms[$filterId],1,-1), $curlyBracketEntry); // will be an array
-                if(is_array($apiFormatValue) AND count($apiFormatValue)==1) {
-                    $apiFormatValue = $apiFormatValue[0]; // take the single value if there's only one, same as display function does
+                $preppedFormatValue = prepvalues($literalToDBValue, substr($filterTerms[$filterId],1,-1), $curlyBracketEntry); // will be an array
+                if(is_array($preppedFormatValue) AND count($preppedFormatValue)==1) {
+                    $preppedFormatValue = $preppedFormatValue[0]; // take the single value if there's only one, same as display function does
                 }
-                $plainLiteralValue = $apiFormatValue;
+                $plainLiteralValue = $preppedFormatValue;
             } else {
                     // for new entries get the defaults?? Needs testing
                 }
@@ -6048,7 +6063,13 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
         }
         if ("date" == $element_type) {
             $time_value = strtotime($v);
-            $v = (false === $time_value) ? "" : date(_SHORTDATESTRING, $time_value);
+            global $xoopsUser, $xoopsConfig;
+            $serverTimeZone = $xoopsConfig['server_TZ'];
+            $offset = $xoopsUser ? ($xoopsUser->getVar('timezone_offset') - $serverTimeZone) * 3600 : 0;
+            /*if($xoopsConfig['language'] == "french") {
+            	$return = setlocale("LC_TIME", "fr_FR.UTF8");
+            }*/
+            $v = (false === $time_value) ? "" : date(_SHORTDATESTRING, ($time_value)+$offset);
         }
         $output .= '<span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $handle, $textWidth, $thisEntryId)), $handle);
         if ($counter<$countOfValue) {
@@ -6479,7 +6500,7 @@ function parseUserAndToday($term, $element=null) {
         $term = str_replace('{USER}', $name, $term);
 	}
  	if (substr(trim($term,"{}"), 0, 5) == "TODAY") {
-		$number = substr(trim($term, "{}"), 6);
+		$number = substr(trim($term, "{}"), 5);
 		$term = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
 	}
   return $term;
@@ -6950,6 +6971,8 @@ function prepareLinkedElementGroupFilter($sourceFid, $groupSelections, $useOnlyU
         $pgroupsfilter .= ")";
     } elseif(count($pgroups) > 0) {
         $pgroupsfilter = " t2.groupid IN (".formulize_db_escape(implode(",",$pgroups)).") AND t2.fid=$sourceFid";
+    } elseif($groupSelections AND !in_array("all", $scopegroups) AND count($pgroups)==0) {
+        $pgroupsfilter = 'FALSE';
     } else {
         $pgroupsfilter = "";
     }
@@ -7168,8 +7191,11 @@ function formulize_parseSearchesIntoFilter($searches) {
 				$searchgetkey = substr($one_search, 1, -1);
 
 				if (substr($searchgetkey, 0, 5) == "TODAY") {
-					$number = substr($searchgetkey, 6);
-					$one_search = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
+                    $number = substr($searchgetkey, 5); // note -- includes the +/- sign
+                    $basetime = $number ? strtotime($number." day") : time();
+                    $serverTimeZone = $xoopsConfig['server_TZ'];
+                    $offset = $xoopsUser ? ($xoopsUser->getVar('timezone_offset') - $serverTimeZone) * 3600 : 0;
+					$one_search = date("Y-m-d",($basetime+$offset));
 				} elseif($searchgetkey == "USER") {
 					if($xoopsUser) {
                         $one_search = htmlspecialchars_decode($xoopsUser->getVar('uname'), ENT_QUOTES);
@@ -7394,15 +7420,28 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
     $data_sql = implode(" ", $queryData); // merge all remaining lines into one string to send to getData
     if(substr($data_sql, 0, 12)=="USETABLEFORM") {
         $params = explode(" -- ", $data_sql);
-        $data = dataExtractionTableForm($params[1], $params[2], $params[3], $params[4], $params[5], FALSE, FALSE, $params[8], $params[9]);
-        foreach($data as $entry) {
-            $row = array();
-            foreach($columns as $column) {
-                $row[] = trans(html_entity_decode(displayTogether($entry, $column, ", "), ENT_QUOTES));    
+        $sql = $params[1];
+        $formname = $params[2];
+        $fid = $params[3];
+        
+        $limitStart = 0;
+        $limitSize = 1000;
+        
+        do {
+        
+            $querySql = $sql . " LIMIT $limitStart,$limitSize";
+        
+            $data = dataExtractionTableForm($querySql, $formname, $fid, false, false, false, false, false, false, false, $columns);
+            foreach($data as $entry) {
+                $row = array();
+                foreach($columns as $column) {
+                    $row[] = trans(html_entity_decode(displayTogether($entry, $column, ", "), ENT_QUOTES));    
+                }
+                // output this row to the browser
+                fputcsv($output_handle, $row);
             }
-            // output this row to the browser
-            fputcsv($output_handle, $row);
-        }
+            $limitStart += $limitSize;
+        } while ( is_array($data) and count($data) > 0 );
         
     } else {
 
@@ -7429,29 +7468,33 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
                     $i = 0;
                     $row = array();
                     foreach ($columns as $column) {
+                        global $xoopsUser;
                         switch ($column) {
                             case "entry_id":
-                            $formhandle = getFormHandlesFromEntry($entry);
-                            $ids = internalRecordIds($entry, $formhandle[0]);
+                            $ids = internalRecordIds($entry, $fid);
                             $row[] = $ids[0];
                             break;
     
                             case "uid":
                             case "creation_uid":
-                            $c_uid = display($entry, 'creation_uid');
-                            $c_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$c_uid'");
-                            $row[] = (isset($c_name_q[0]['name']) ? $c_name_q[0]['name'] : $c_name_q[0]['uname']);
+                                if(!isset($GLOBALS['formulize_useForeignKeysInDataset']['creation_uid']) AND !isset($GLOBALS['formulize_useForeignKeysInDataset']['all'])) {
+                                    $c_uid = display($entry, 'creation_uid');
+                                    $c_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$c_uid'");
+                                    $row[] = (isset($c_name_q[0]['name']) AND $c_name_q[0]['name']) ? $c_name_q[0]['name'] : $c_name_q[0]['uname'];
+                                } else {
+                                    $row[] = display($entry, 'creation_uid');
+                                }
                             break;
     
                             case "proxyid":
                             case "mod_uid":
                             $m_uid = display($entry, 'mod_uid');
-                            if ($m_uid) {
+                            if ($m_uid AND !isset($GLOBALS['formulize_useForeignKeysInDataset']['mod_uid']) AND !isset($GLOBALS['formulize_useForeignKeysInDataset']['all'])) {
                                 $m_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$m_uid'");
-                                $row[] = (isset($m_name_q[0]['name']) ? $m_name_q[0]['name'] : $m_name_q[0]['uname']);
+                                $row[] = (isset($m_name_q[0]['name']) AND $m_name_q[0]['name']) ? $m_name_q[0]['name'] : $m_name_q[0]['uname'];
                             } else {
-                                $row[] = "";
-                            }
+                                $row[] = $m_uid;
+                            } 
                             break;
     
                             case "creation_date":
@@ -7462,6 +7505,10 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
                             case "mod_date":
                             case "mod_datetime":
                             $row[] = display($entry, 'mod_datetime');
+                            break;
+    
+                            case "creator_email":
+                                $row[] =  display($entry, 'creator_email');
                             break;
     
                             default:

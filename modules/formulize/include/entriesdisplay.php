@@ -1745,7 +1745,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 					}
 					unset($linkids);
 
-					$linkids = internalRecordIds($entry, $mainFormHandle);
+					$linkids = internalRecordIds($entry, $fid);
 
 					// draw in the margin column where the links and metadata goes
 					if($useViewEntryLinks OR $useCheckboxes != 2) {
@@ -1925,7 +1925,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 				if($entry != "") {
 
 					// Set up the variables for the link to the current entry, and the checkbox that can be used to select the current entry
-					$linkids = internalRecordIds($entry, $mainFormHandle);
+					$linkids = internalRecordIds($entry, $fid);
 					$entry_id = $linkids[0]; // make a nice way of referring to this for in the eval'd code
 					$form_id = $fid; // make a nice way of referring to this for in the eval'd code
 					if(!$settings['lockcontrols']) { //  AND !$loadview) { // -- loadview removed from this function sept 24 2005
@@ -1949,7 +1949,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 						}
 					} // end of IF NO LOCKCONTROLS
 
-					$ids = internalRecordIds($entry, $mainFormHandle);
+					$ids = internalRecordIds($entry, $fid);
 					foreach($inlineButtons as $caid=>$thisCustomAction) {
 						list($caCode) = processCustomButton($caid, $thisCustomAction, $ids[0], $entry); // only bother with the code, since we already processed any clicked button above
 						if($caCode) {
@@ -2182,9 +2182,8 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
 	}
 	include_once XOOPS_ROOT_PATH . "/class/xoopsformloader.php";
 	$startDateElement = new XoopsFormTextDateSelect ('', 'formulize_daterange_sta_'.$handle, 15, strtotime($startText));
-	$startDateElement->setExtra("class='formulize_daterange'");
 	$endDateElement = new XoopsFormTextDateSelect ('', 'formulize_daterange_end_'.$handle, 15, strtotime($endText));
-	$endDateElement->setExtra("class='formulize_daterange' target='$handle'");
+	
 	static $js;
 	if($js) { // only need to include this code once!
 		$js = "";
@@ -2201,7 +2200,7 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
 		$().click(function() {
 			$('.formulize_daterange').change();
 		});
-		$('.formulize_daterange').change(function() {
+		$(\"[id^='formulize_daterange_sta_'],[id^='formulize_daterange_end_']\").change(function() {
 			var id = new String($(this).attr('id'));
 			var handle = id.substr(24);
 			var start = $('#formulize_daterange_sta_'+handle).val();
@@ -3402,26 +3401,6 @@ if (typeof jQuery == 'undefined') {
 	head.appendChild(script);
 }
 
-var formulize_javascriptFileIncluded = new Array();
-
-function includeResource(filename, type) {
-   if(filename in formulize_javascriptFileIncluded == false) {
-     var head = document.getElementsByTagName('head')[0];
-     if(type == 'link') {
-       var resource = document.createElement("link");
-       resource.type = "text/css";
-       resource.rel = "stylesheet";
-       resource.href = filename;
-     } else if(type == 'script') {
-       var resource = document.createElement('script');
-       resource.type = 'text/javascript';
-       resource.src = filename;
-     }
-     head.appendChild(resource);
-     formulize_javascriptFileIncluded[filename] = true;
-   }
-} 
-
 <?php
 if($useXhr) {
 	print " initialize_formulize_xhr();\n";
@@ -4611,7 +4590,7 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=deSubmitButton value='" . $buttonText . "' onclick=\"javascript:showLoading();\"></input>";
 				break;
 			case "globalQuickSearch":
-				return "<input type=text id=\"formulize_$button\" name=\"global_search\" placeholder='" . $buttonText . "' value='" . $settings['global_search'] . "' onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>";
+				return "<input type=text id=\"formulize_$button\" name=\"global_search\" value='" . $settings['global_search'] . "' onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>";
 				break;
 		}
 	} elseif($button == "currentViewList") { // must always set a currentview value in POST even if the list is not visible

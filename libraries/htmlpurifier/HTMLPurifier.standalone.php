@@ -3073,7 +3073,7 @@ class HTMLPurifier_Encoder
 
         $len = strlen($str);
         for($i = 0; $i < $len; $i++) {
-            $in = ord($str{$i});
+            $in = ord($str[$i]);
             $char .= $str[$i]; // append byte to char
             if (0 == $mState) {
                 // When mState is zero we expect either a US-ASCII character
@@ -11027,7 +11027,7 @@ class HTMLPurifier_ChildDef_Custom extends HTMLPurifier_ChildDef
      */
     protected function _compileRegex() {
         $raw = str_replace(' ', '', $this->dtd_regex);
-        if ($raw{0} != '(') {
+        if ($raw[0] != '(') {
             $raw = "($raw)";
         }
         $el = '[#a-zA-Z0-9_.-]+';
@@ -11450,13 +11450,13 @@ class HTMLPurifier_ChildDef_Table extends HTMLPurifier_ChildDef
                     case 'tr':
                         $is_collecting = true;
                         $collection[] = $token;
-                        continue;
+                        continue 2;
                     default:
                         if (!empty($token->is_whitespace)) {
                             $collection[] = $token;
                             $tag_index++;
                         }
-                        continue;
+                        continue 2;
                 }
             }
         }
@@ -15952,7 +15952,7 @@ class HTMLPurifier_TagTransform_Font extends HTMLPurifier_TagTransform
         if (isset($attr['size'])) {
             // normalize large numbers
             if ($attr['size'] !== '') {
-                if ($attr['size']{0} == '+' || $attr['size']{0} == '-') {
+                if (substr($attr['size'],0,1) == '+' || substr($attr['size'],0,1) == '-') {
                     $size = (int) $attr['size'];
                     if ($size < -2) $attr['size'] = '-2';
                     if ($size > 4)  $attr['size'] = '+4';

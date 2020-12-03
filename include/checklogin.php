@@ -19,33 +19,14 @@ if (!defined('ICMS_ROOT_PATH')) {
 icms_loadLanguageFile('core', 'user');
 $uname = !isset($_POST['uname']) ? '' : trim($_POST['uname']);
 $pass = !isset($_POST['pass']) ? '' : trim($_POST['pass']);
-/**
- * Commented out for OpenID , we need to change it to make a better validation if OpenID is used
- */
-/*if ($uname == '' || $pass == '') {
- redirect_header(ICMS_URL.'/user.php', 1, _US_INCORRECTLOGIN);
- exit();
- }*/
+
 $member_handler = icms::handler('icms_member');
 
 icms_loadLanguageFile('core', 'auth');
 $icmsAuth =& icms_auth_Factory::getAuthConnection(icms_core_DataFilter::addSlashes($uname));
 
-// uname&email hack GIJ
-$uname4sql = addslashes(icms_core_DataFilter::stripSlashesGPC($uname));
-$pass4sql = addslashes(icms_core_DataFilter::stripSlashesGPC($pass));
-/*if (strstr( $uname , '@' )) {
- // check by email if uname includes '@'
- $criteria = new icms_db_criteria_Compo(new icms_db_criteria_Item('email', $uname4sql ));
- $criteria->add(new icms_db_criteria_Item('pass', $pass4sql));
- $user_handler = icms::handler('icms_member_user');
- $users =& $user_handler->getObjects($criteria, false);
- if (empty( $users ) || count( $users ) != 1 ) $user = false ;
- else $user = $users[0] ;
- unset( $users ) ;
- } */
 if (empty($user) || !is_object($user)) {
-	$user =& $icmsAuth->authenticate($uname4sql, $pass4sql);
+	$user =& $icmsAuth->authenticate($uname, $pass);
 }
 // end of uname&email hack GIJ
 
