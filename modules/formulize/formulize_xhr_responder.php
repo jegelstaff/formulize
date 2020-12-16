@@ -52,6 +52,14 @@ include_once "../../header.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
 include XOOPS_ROOT_PATH .'/modules/formulize/include/customCodeForApplications.php';
 
+global $xoopsConfig;
+// load the formulize language constants if they haven't been loaded already
+if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
+    include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php";
+} else {
+    include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/main.php";
+}
+
 $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'] = array();
 $GLOBALS['formulize_asynchronousFormDataInAPIFormat'] = array();
 

@@ -62,6 +62,14 @@ if(!defined("XOOPS_ROOT_PATH")) {
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
+global $xoopsConfig;
+// load the formulize language constants if they haven't been loaded already
+if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
+    include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php";
+} else {
+    include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/main.php";
+}
+
 // when called directly, no fid or frid will be set, because they are set in initialize.php as part of a normal Formulize page load. Therefore, we will take them from GET or POST as initialize.php would.
 if(!isset($frid)) {
     $frid = ((isset( $_GET['frid'])) AND is_numeric( $_GET['frid'])) ? intval( $_GET['frid']) : "" ;

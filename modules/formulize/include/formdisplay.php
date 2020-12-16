@@ -3497,36 +3497,45 @@ function saveSub(reload) {
             savingSubEntry = true;
             subEntryDialog.children('div').css('opacity', '0.5');
             subEntryDialog.append('<div id=savingmessage style="padding-top: 10px;"><?php print $savingMessageGif; ?></div>');
-            var formData = subEntryDialog.children('form').serialize();
-            jQuery.post('<?php print XOOPS_URL; ?>/modules/formulize/include/readelements.php', formData, function() {
-                jQuery.post('<?php print XOOPS_URL; ?>/modules/formulize/formulize_xhr_responder.php?op=update_derived_value&uid=<?php global $xoopsUser; print $xoopsUser ? $xoopsUser->getVar('uid') : 0; ?>&fid='+subEntryDialog.data('mainformFid')+'&frid='+subEntryDialog.data('frid')+'&entryId='+subEntryDialog.data('mainformEntryId')+'&returnElements=1', function(data) {
-                savingSubEntry = false;
-                    if(reload && reload == 'reload') {
-                    jQuery('#formulize_mainform').append(jQuery('#formulize_modal .delbox:checked'));
-                    subEntryDialog.dialog('close');
-                    validateAndSubmit();
-                } else {
-                        if(reload && reload == 'leave') {
+            jQuery('#formulize_modal input[type="hidden"]').prop('disabled', false);
+            var formData = new FormData(jQuery('#formulize_modal')[0]);
+            //var formData = subEntryDialog.children('form').serialize();
+            jQuery.post({
+                url: '<?php print XOOPS_URL; ?>/modules/formulize/include/readelements.php',
+                data: formData,
+                cache: false,
+                contentType: false,
+                processData: false,
+                success: function() {
+                    jQuery.post('<?php print XOOPS_URL; ?>/modules/formulize/formulize_xhr_responder.php?op=update_derived_value&uid=<?php global $xoopsUser; print $xoopsUser ? $xoopsUser->getVar('uid') : 0; ?>&fid='+subEntryDialog.data('mainformFid')+'&frid='+subEntryDialog.data('frid')+'&entryId='+subEntryDialog.data('mainformEntryId')+'&returnElements=1', function(data) {
+                        savingSubEntry = false;
+                        if(reload && reload == 'reload') {
+                            jQuery('#formulize_mainform').append(jQuery('#formulize_modal .delbox:checked'));
                             subEntryDialog.dialog('close');
+                            validateAndSubmit();
                         } else {
-                            if(reload && reload == 'new') {
-                                subEntryDialog.data('next_entry_id', 'new');
+                            if(reload && reload == 'leave') {
+                                subEntryDialog.dialog('close');
+                            } else {
+                                if(reload && reload == 'new') {
+                                    subEntryDialog.data('next_entry_id', 'new');
+                                }
+                                loadSub(subEntryDialog);
                             }
-                    loadSub(subEntryDialog);
+                            redrawSubRow(subEntryDialog.data('entry_id'), subEntryDialog.data('subformElementId'));
+                            var elements = JSON.parse(data);
+                            for(elementId in elements) {
+                                var rowSelector = 'formulize-de_'+subEntryDialog.data('mainformFid')+'_'+subEntryDialog.data('mainformEntryId')+'_'+elementId;
+                                // if the element is shown, and there has been a change of value, then update it
+                                if(window.document.getElementById(rowSelector) !== null && window.document.getElementById(rowSelector).style.display != 'none'
+                                    && jQuery('#'+rowSelector).html() != elements[elementId]) {
+                                        jQuery('#'+rowSelector).empty();
+                                        jQuery('#'+rowSelector).append(elements[elementId]);
+                                }
+                            }
                         }
-                    redrawSubRow(subEntryDialog.data('entry_id'), subEntryDialog.data('subformElementId'));
-                        var elements = JSON.parse(data);
-                        for(elementId in elements) {
-                            var rowSelector = 'formulize-de_'+subEntryDialog.data('mainformFid')+'_'+subEntryDialog.data('mainformEntryId')+'_'+elementId;
-                            // if the element is shown, and there has been a change of value, then update it
-                            if(window.document.getElementById(rowSelector) !== null && window.document.getElementById(rowSelector).style.display != 'none'
-                                && jQuery('#'+rowSelector).html() != elements[elementId]) {
-                                    jQuery('#'+rowSelector).empty();
-                                    jQuery('#'+rowSelector).append(elements[elementId]);
-                            }
+                    });
                 }
-                    }
-                });
             });
         }
     }
