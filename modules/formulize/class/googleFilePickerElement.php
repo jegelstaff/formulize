@@ -342,14 +342,14 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
             function pickerCallback$eleId(data) {
                 if (data.action == google.picker.Action.PICKED) {
                     for(i in data.docs) {
-                        addToList$eleId(addFileExtension(data.docs[i].name, data.docs[i].mimeType), data.docs[i].url, data.docs[i].iconUrl, data.docs[i].id);
+                        addToList$eleId(addFileExtension(data.docs[i].name, data.docs[i].mimeType), data.docs[i].url, data.docs[i].id, data.docs[i].iconUrl);
                     }
                 }
             }
 
-            function addToList$eleId(name, url, iconUrl, id) {
+            function addToList$eleId(name, url, id, iconUrl) {
                 if(jQuery('#googlefile_".$markupName."_'+id).length == 0) {";
-                    $interactiveMarkup = $isDisabled ? "" : "<a href=\"\" onclick=\"warnAboutGoogleDelete$eleId(\''+id+'\', \''+name.replace(/\\\"/g, '&quot;')+'\', \'".$markupName."\');return false;\"><img src=\"".XOOPS_URL."/modules/formulize/images/x.gif\" /></a><input type=\"hidden\" name=\"".$markupName."[]\" value=\"'+name.replace(/\\\"/g, '&quot;')+'<{()}>'+url+'<{()}>'+id+'\">";
+                    $interactiveMarkup = $isDisabled ? "" : "<a href=\"\" onclick=\"warnAboutGoogleDelete$eleId(\''+id+'\', \''+name.replace(/\\\"/g, '&quot;')+'\', \'".$markupName."\');return false;\"><img src=\"".XOOPS_URL."/modules/formulize/images/x.gif\" /></a><input type=\"hidden\" name=\"".$markupName."[]\" value=\"'+name.replace(/\\\"/g, '&quot;')+'<{()}>'+url+'<{()}>'+id+'<{()}>'+iconUrl+'\">";
                     if($ele_value['multiselect']==false) {
                         $picker .= "
                     jQuery('#".$markupName."_files').empty();";
@@ -365,26 +365,27 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
                     jQuery(\"#googlefile_\"+markupName+\"_\"+id).remove();
                 }
                 return false;
-            }";
-            
-            if(count($ele_value['files'])>0) {
-                $picker .= "
-                jQuery(document).ready(function() {";
-                foreach($ele_value['files'] as $file) {
-                    $picker .= "
-                    addToList$eleId(\"".str_replace('"','\"',htmlspecialchars_decode($file['name'], ENT_QUOTES))."\", \"".$file['url']."\", \"".$file['id']."\");";
-                }
-                $picker .= "
-                });";
             }
-            $picker .= "
             
         </script>";
         
         if(!$isDisabled) {
-            $picker .= "<p><input type='button' onclick='loadPicker$eleId();' value='"._AM_GOOGLEFILE_SELECT."'></p>";
+            $picker .= "<p><input type='button' onclick='loadPicker$eleId();' value='"._AM_GOOGLEFILE_SELECT."'></p>
+                <p id='".$markupName."_files'>";
+        } else {
+            $picker .= "<p>";
         }
-        $picker .= "<p id='".$markupName."_files'></p>";
+        
+        if(count($ele_value['files'])>0) {
+            foreach($ele_value['files'] as $file) {
+                $interactiveMarkup = $isDisabled ? "" : "<a href=\"\" onclick=\"warnAboutGoogleDelete$eleId('".$file['id']."', '".str_replace('"','\"',htmlspecialchars_decode($file['name'], ENT_QUOTES))."', '".$markupName."');return false;\"><img src=\"".XOOPS_URL."/modules/formulize/images/x.gif\" /></a><input type=\"hidden\" name=\"".$markupName."[]\" value=\"".str_replace('"','\"',htmlspecialchars_decode($file['name'], ENT_QUOTES))."<{()}>".$file['url']."<{()}>".$file['id']."<{()}>".$file['iconUrl']."\">";
+                $interactiveId = $isDisabled ? "" : "id=\"googlefile_".$markupName."_".$file['id']."\"";
+                $picker .= "
+                <div class=\"googlefile googlefile_$eleId\" $interactiveId><img src=\"".$file['iconUrl']."\" /> <a href=\"".$file['url']."\" target=\"_blank\">".str_replace('"','\"',htmlspecialchars_decode($file['name'], ENT_QUOTES))."</a> ".$interactiveMarkup."</div>";
+            }
+        }
+        
+        $picker .= "</p>";
         
         $element = new xoopsFormLabel($caption, $picker);
         
@@ -412,12 +413,12 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
 	// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
     // $subformBlankCounter is the instance of a blank subform entry we are saving. Multiple blank subform values can be saved on a given pageload and the counter differentiates the set of data belonging to each one prior to them being saved and getting an entry id of their own.
     function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
-        // rendered hidden elements pass back a string with the separator below, and the name, url and id in this order
+        // rendered hidden elements pass back a string with the separator below, and the name, url, id and iconUrl in this order
         // we serialize the data in an array for saving
         $files = array();
         foreach($value as $fileData) {
             $fileData = explode('<{()}>', $fileData);
-            $files[] = array('name'=>htmlspecialchars($fileData[0], ENT_QUOTES), 'url'=>$fileData[1], 'id'=>$fileData[2]);
+            $files[] = array('name'=>htmlspecialchars($fileData[0], ENT_QUOTES), 'url'=>$fileData[1], 'id'=>$fileData[2], 'iconUrl'=>$fileData[3]);
         }
         return serialize($files);
     }
