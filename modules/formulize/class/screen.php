@@ -241,40 +241,6 @@ class formulizeScreenHandler {
 		return true;
 	}
 
-	// this function handles all the admin side ui for the common parts of the edit screen
-	function editForm($screen, $fid) {
-
-		// provide ui for title, ui for frid, hidden fid, hidden sid
-		include_once XOOPS_ROOT_PATH."/class/xoopsformloader.php";
-		$form = new XoopsThemeForm(_AM_FORMULIZE_SCREEN_FORM, "editscreenform", "editscreen.php");
-		$form->addElement(new xoopsFormHidden('fid', $fid));
-		$title = is_object($screen) ? $screen->getVar('title') : "";
-		$sid = is_object($screen) ? $screen->getVar('sid') : 0;
-		$frid = is_object($screen) ? $screen->getVar('frid') : 0;
-		$form->addElement(new xoopsFormHidden('sid', $sid));
-		$form->addElement(new xoopsFormHidden('oneditscreen', 1));
-		$form->addElement(new xoopsFormText(_AM_FORMULIZE_SCREEN_TITLE, 'title', 30, 255, $title));
-
-		// get the frameworks that this form is involved in
-		$framework_handler =& xoops_getmodulehandler('frameworks', 'formulize');
-		$frameworks = $framework_handler->getFrameworksByForm($fid);
-		$options[0] = _AM_FORMULIZE_USE_NO_FRAMEWORK;
-		foreach($frameworks as $thisFramework) {
-        		$options[$thisFramework->getVar('frid')] = $thisFramework->getVar('name');
-		}
-		$frameworkChoice = new xoopsFormSelect(_AM_FORMULIZE_SELECT_FRAMEWORK, 'frid', $frid, 1, false);
-		$frameworkChoice->setExtra("onchange='javascript:frameworkChange(window.document.editscreenform.frid)'"); // set a javascript event for this element in case parts of some screen forms change depending on the framework selected
-		$frameworkChoice->addOptionArray($options);
-		$form->addElement($frameworkChoice);
-    
-    // show the security token question -- added Jan 25 2008 -- jwe
-    $useTokenDefault = $screen->getVar('sid') ? $screen->getVar('useToken') : 1;
-    $securityQuestion = new xoopsFormRadioYN(_AM_FORMULIZE_SCREEN_SECURITY, 'useToken', $useTokenDefault);
-    $securityQuestion->setDescription(_AM_FORMULIZE_SCREEN_SECURITY_DESC);
-    $form->addElement($securityQuestion);
-		return $form;
-	}
-
 	// TO BE CALLED FROM WITHIN THE CHILD CLASS AND THEN RETURNS SCREEN OBJECT, WHICH WILL HAVE THE CORRECT sid IN PLACE NOW
 	function insert($screen) {
 		if (!is_a($screen, 'formulizeScreen')) {
