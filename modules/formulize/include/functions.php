@@ -596,6 +596,7 @@ function cutString($string, $maxlen) {
         $len = (mb_strlen($string) > $maxlen)
             ? mb_strripos(mb_substr($string, 0, $maxlen), ' ')
             : $maxlen;
+        $len = $len ? $len : $maxlen;
         $cutStr = mb_substr($string, 0, $len);
         return (mb_strlen($string) > $maxlen)
             ? $cutStr . '...'
