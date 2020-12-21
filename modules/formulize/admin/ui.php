@@ -79,6 +79,14 @@ if (!isset($xoopsTpl)) {
 // sets up a template variable with the results of the op, called opResults
 include_once "op.php";
 
+// switch the theme for the screen if that's requested
+if(isset($_POST['themeswitch']) AND isset($_GET['sid'])) {
+    $screen_handler = xoops_getmodulehandler('screen', 'formulize');
+    $screen = $screen_handler->get($_GET['sid']);
+    $screen->setVar('theme', $_POST['themeswitch']);
+    $screen_handler->insert($screen);
+}
+
 // create the contents that we want to display for the currently selected page
 // the included php files create the values for $adminPage that are used for this page
 $adminPage = array();

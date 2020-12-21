@@ -6086,7 +6086,9 @@ function formulize_renderTemplate($templatename, $templateVariables, $sid) {
         ${$name} = $value;
     }
 
-    include XOOPS_ROOT_PATH . "/modules/formulize/templates/screens/default/" . $sid . "/" . $templatename . ".php";
+    global $xoopsConfig;
+    $theme = $xoopsConfig['theme_set'];
+	include XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/" . $sid . "/" . $templatename . ".php";
 }
 
 

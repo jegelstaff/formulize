@@ -336,6 +336,7 @@ function renderElement($elementObject, $entryId) {
             }
             $isDisabled = $deReturnValue[1];
             // rendered HTML code below is taken from the formulize classes at the top of include/formdisplay.php
+            // NEEDS REFACTORING TO WORK WITH NEW TEMPLATE BASED FORM RENDERING!!!
             if($elementObject->getVar('ele_type') == "ib") {// if it's a break, handle it differently...
                 $class = ($form_ele[1] != '') ? " class='".$form_ele[1]."'" : '';
                 $columnData = formulize_themeForm::_getColumns($elementObject->getVar('ele_id'));

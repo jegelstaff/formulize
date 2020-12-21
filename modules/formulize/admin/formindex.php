@@ -119,7 +119,7 @@ function patch40() {
      * ====================================== */
 
     $checkThisTable = 'formulize_screen_form';
-	$checkThisField = 'printableviewbuttontext';
+	$checkThisField = 'displayType';
 	$checkThisProperty = '';
 	$checkPropertyForValue = '';
 
@@ -255,6 +255,7 @@ function patch40() {
   `displaycolumns` tinyint(1) NOT NULL default 2,
   `column1width` varchar(255) NULL default NULL,
   `column2width` varchar(255) NULL default NULL,
+  `displayType` varchar(255) NOT NULL default 'block',
   PRIMARY KEY (`formid`),
   INDEX i_sid (`sid`)
 ) ENGINE=MyISAM;";
@@ -461,6 +462,8 @@ function patch40() {
         $sql['form_screen_printableview'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_form"). " ADD `printableviewbuttontext` varchar(255) NOT NULL default ''";
         $sql['rm_ext_id_null'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_resource_mapping") . " CHANGE `external_id` `external_id` INT(11) NULL DEFAULT NULL";
         $sql['sliderfix'] = "UPDATE " . $xoopsDB->prefix("formulize") . " SET ele_type = 'slider' WHERE ele_type = 'newslider'";
+        $sql['screen_theme'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD `theme` varchar(100) NOT NULL default ''";
+        $sql['form_screen_displaytype'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_form") . " ADD `displayType` varchar(255) NOT NULL default 'block'";
         
         $needToSetSaveAndLeave = true;
         $needToSetPrintableView = true;
@@ -554,10 +557,22 @@ function patch40() {
                     $needToSetPrintableView = false;
                 } elseif($key === "form_screen_multipage_column1width" OR $key === "form_screen_multipage_column2width" OR $key === "form_screen_multipage_displaycolumns") {
                     print "Multipage form screen display columns and column widths already added. result: OK<br>";
+                } elseif($key === "screen_theme") {
+                    print $xoopsDB->error();
+                    print $thissql;
+                    print "Theme setting for screens already added. result: OK<br>";
+                } elseif($key === "form_screen_displaytype") {    
+                    print "Form screen element container display type already added. result: OK<br>";
                 } else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
             }
+        }
+        
+        global $xoopsConfig;
+        $themeSql = 'UPDATE '.$xoopsDB->prefix('formulize_screen').' SET theme = "'.$xoopsConfig['theme_set'].'" WHERE theme = ""';
+        if(!$res = $xoopsDB->query($themeSql)) {
+            exit("Error patching DB for Formulize $versionNumber. Could not update screens with default theme. SQL dump:<br>".$themeSql."<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
         }
         
         $newConfigSQL = array();
@@ -789,11 +804,15 @@ function patch40() {
             print "Updating relationships with unified delete option.  result: OK<br>";
             }
         }
-
+        
+        $screenpathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/";
+        
+        // If current theme folder does not exists for templates, then create it and copy the default folder contents over to it.
+        if(!file_exists($screenpathname)) {
+            recurse_copy(XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/",$screenpathname);
+        }
 
         // CONVERTING EXISTING TEMPLATES IN DB TO TEMPLATE FILES
-        $screenpathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/";
-
         $templateSQL = "SELECT sid, toptemplate, listtemplate, bottomtemplate FROM ".$xoopsDB->prefix("formulize")."_screen_listofentries";
 
         $templateRes = $xoopsDB->query($templateSQL);
@@ -847,6 +866,23 @@ function patch40() {
     }
 }
 
+// THANKS TO https://stackoverflow.com/questions/2050859/copy-entire-contents-of-a-directory-to-another-using-php
+function recurse_copy($src,$dst) { 
+    $dir = opendir($src); 
+    @mkdir($dst); 
+    while(false !== ( $file = readdir($dir)) ) { 
+        if (( $file != '.' ) && ( $file != '..' )) { 
+            if ( is_dir($src . '/' . $file) ) { 
+                recurse_copy($src . '/' . $file,$dst . '/' . $file); 
+            } 
+            else { 
+                copy($src . '/' . $file,$dst . '/' . $file); 
+            } 
+        } 
+    } 
+    closedir($dir); 
+} 
+
 // Fixes the format if the template is empty
 function emptyTemplateFixer($dir) {
     if(is_dir($dir)) {
@@ -873,7 +909,8 @@ function emptyTemplateFixer($dir) {
 
 // Saves the given template to a template file on the disk
 function saveTemplate($template, $sid, $name) {
-    $filename = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/{$sid}/{$name}.php";
+    global $xoopsConfig;
+    $filename = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/default/{$sid}/{$name}.php";
 
     $text = trim(html_entity_decode($template));
     if ($text AND substr($text, 0, 5) != "<?php") {
@@ -884,7 +921,7 @@ function saveTemplate($template, $sid, $name) {
     if (false === file_put_contents($filename, $text)) {
         print "Warning: could not save " . $name . ".php for screen " . $sid . ".<br>";
     } else {
-        print "created templates/screens/default/" . $sid . "/". $name . ".php. result: OK<br>";
+        print "created templates/screens/".$xoopsConfig['theme_set']."/" . $sid . "/". $name . ".php. result: OK<br>";
     }
 }
 

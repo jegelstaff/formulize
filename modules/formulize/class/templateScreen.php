@@ -54,7 +54,6 @@ class formulizeTemplateScreen extends formulizeScreen {
 class formulizeTemplateScreenHandler extends formulizeScreenHandler {
     var $db;
 
-    const TEMPLATE_SCREENS_CACHE_FOLDER = "/modules/formulize/templates/screens/default/";
     const FORMULIZE_CSS_FILE = "/modules/formulize/templates/css/formulize.css";
     const FORMULIZE_JS_FILE = "/modules/formulize/libraries/formulize.js";
 
@@ -98,11 +97,11 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
 
         $success1 = true;
         if(isset($_POST['screens-custom_code'])) {
-            $success1 = $this->write_custom_code_to_file(trim($_POST['screens-custom_code']), $screen);
+            $success1 = $this->write_custom_code_to_file(trim($_POST['screens-custom_code']), $screen, $screen->getVar('theme'));
         }
         $success2 = true;
         if(isset($_POST['screens-template'])) {
-            $success2 = $this->write_template_to_file(trim($_POST['screens-template']), $screen);
+            $success2 = $this->write_template_to_file(trim($_POST['screens-template']), $screen, $screen->getVar('theme'));
         }
         if (!$success1 || !$success2) {
             return false;
@@ -161,7 +160,7 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
             
             // if the php code is not calling displayForm of some kind, then include necessary javascript
             $codeContents = file_get_contents($custom_code_filename);
-            if(!strstr($codeContents,' displayForm(') AND !strstr($codeContents,' displayFormPages(') AND !strstr($codeContents,' ->render(') AND !strstr($codeContents,' displayElement(')) {
+            if(!strstr($codeContents,' displayForm(') AND !strstr($codeContents,' displayFormPages(') AND !strstr($codeContents,'->render(') AND !strstr($codeContents,' displayElement(')) {
                 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/formdisplay.php';
                 $doneDestination = $screen->getVar('donedest');
                 $doneDestination = substr($doneDestination,0,4) == 'http' ? $doneDestination : XOOPS_URL.$doneDestination;
@@ -210,31 +209,35 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
     }
 
     // Returns a cache folder name of shape "{ROOT_PATH}/modules/formulize/templates/screens/default/{$sid}/
-    function cache_folder_name($screen) {
-        return XOOPS_ROOT_PATH. self::TEMPLATE_SCREENS_CACHE_FOLDER .$screen->getVar('sid')."/";
+    function cache_folder_name($screen, $theme="") {
+        if(!$theme) {
+            global $xoopsConfig;
+            $theme = $xoopsConfig['theme_set'];
+        }
+        return XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/".$screen->getVar('sid')."/";
     }
 
     // Returns a custom code filename of shape "{ROOT_PATH}/modules/formulize/templates/screens/default/{$sid}/code.php"
-    function custom_code_filename($screen) {
-        return $this->cache_folder_name($screen) . "/code.php";
+    function custom_code_filename($screen, $theme="") {
+        return $this->cache_folder_name($screen, $theme) . "code.php";
     }
 
     // Returns a template filename of shape "{ROOT_PATH}/modules/formulize/templates/screens/default/{$sid}/template.html"
-    function template_filename($screen) {
-        return $this->cache_folder_name($screen) ."/template.html";
+    function template_filename($screen, $theme="") {
+        return $this->cache_folder_name($screen, $theme) ."template.html";
     }
 
     // returns code.php file
-    function getCustomCode($screen) {
+    function getCustomCode($screen, $theme="") {
         static $templates = array();
         if (!isset($templates['custom_code'])) {
-            $pathname = $this->custom_code_filename($screen);
+            $pathname = $this->custom_code_filename($screen, $theme);
             if (file_exists($pathname)) {
                 $templates['custom_code'] = file_get_contents($pathname);
             } else {
                 $templates['custom_code'] = $screen->getVar('custom_code');
                 if (strlen($templates['custom_code']) > 0) {
-                    $this->write_custom_code_to_file(htmlspecialchars_decode($templates['custom_code'], ENT_QUOTES), $screen);
+                    $this->write_custom_code_to_file(htmlspecialchars_decode($templates['custom_code'], ENT_QUOTES), $screen, $theme);
                 }
             }
         }
@@ -243,17 +246,17 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
     }
 
     // returns template.html file
-    function getTemplateHtml($screen) {
+    function getTemplateHtml($screen, $theme="") {
         static $templates = array();
         if (!isset($templates['template'])) {
             // there is no template saved in memory, read it from the file;
-            $pathname = $this->template_filename($screen);
+            $pathname = $this->template_filename($screen, $theme);
             if (file_exists($pathname)) {
                 $templates['template'] = file_get_contents($pathname);
             } else {
                 $templates['template'] = $screen->getVar('template');
                 if (strlen($templates['template']) > 0) {
-                    $this->write_template_to_file(htmlspecialchars_decode($templates['template'], ENT_QUOTES), $screen);
+                    $this->write_template_to_file(htmlspecialchars_decode($templates['template'], ENT_QUOTES), $screen, $theme);
                 }
             }
         }
@@ -261,17 +264,17 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
     }
 
     // Writes a code.php file in /modules/formulize/templates/screens/default/$sid/code.php
-    function write_custom_code_to_file($content, $screen) {
-        return $this->write_to_file($content, $screen, "/code.php");
+    function write_custom_code_to_file($content, $screen, $theme="") {
+        return $this->write_to_file($content, $screen, "/code.php", $theme);
     }
 
     // Writes a template.html file in /modules/formulize/templates/screens/default/$sid/template.html
-    function write_template_to_file($content, $screen) {
-        return $this->write_to_file($content, $screen, "/template.html");
+    function write_template_to_file($content, $screen, $theme="") {
+        return $this->write_to_file($content, $screen, "/template.html", $theme);
     }
 
-    function write_to_file($content, $screen, $name) {
-        $foldername = $this->cache_folder_name($screen);
+    function write_to_file($content, $screen, $name, $theme="") {
+        $foldername = $this->cache_folder_name($screen, $theme);
 
         if (!is_dir($foldername)) {
             mkdir($foldername, 0777, true);

@@ -79,6 +79,7 @@ $(document).ready(function() {
   <input type="hidden" name="scrollx" value="">
   <input type="hidden" name="tabs_selected" value="">
   <input type="hidden" name="accordion_active" value="">
+  <input type="hidden" name="themeswitch" value="">
 </form>
 
 <{if $adminPage.show_user_view}>
@@ -154,7 +155,9 @@ $(document).ready(function() {
     setDisplay('savewarning','block');
     });
   $("select").change(function() {
-    setDisplay('savewarning','block');
+        if ($(this).attr('name') != 'screens-theme') { // switching themes is a special event, and can only be done when there's been no changes to the settings yet
+            setDisplay('savewarning','block');
+        }
     });
   $("textarea").keydown(function() {
     setDisplay('savewarning','block');
@@ -257,6 +260,15 @@ $(document).ready(function() {
     if( element ) {
       element.style.display = styleDisplay;
     }
+    if (elementId == 'savewarning') {
+        if (styleDisplay == 'block') {
+            // disable theme switching
+            $("[name='screens-theme']").attr('disabled', true);
+        } else {
+            // enable theme switching
+            $("[name='screens-theme']").attr('disabled', false);
+        }
+    }
   }
 
   $(document).ready(
@@ -280,5 +292,11 @@ $(document).ready(function() {
         });
     })
   );
+  
+    // change the themes, only possible when no changes to screen settings yet. Change theme property of screen and reload page.
+    $("[name='screens-theme']").change(function() {
+        window.document.scrollposition.themeswitch.value  = $(this).val();
+        reloadWithScrollPosition();
+    });
   
 </script>

@@ -232,7 +232,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
                         print <<<EOF
 <script type='text/javascript'>
 $(document).ready(function() {
-    jQuery("<div id=\"formulize-entry-lock-message\"><i id=\"formulize-entry-lock-icon\" class=\"icon-lock\"></i><p>"+$label+"</p></div>").insertBefore("#formulize .xo-theme-form table");
+    jQuery("<div id=\"formulize-entry-lock-message\"><i id=\"formulize-entry-lock-icon\" class=\"icon-lock\"></i><p>"+$label+"</p></div>").insertBefore("#formulizeform");
 });
 </script>
 EOF;
