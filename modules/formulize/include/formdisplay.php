@@ -1327,7 +1327,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                     }
                     foreach($GLOBALS['formulize_renderedElementsForForm'][$thisFid][$entryToLoop] as $renderedMarkupName => $thisElement) {
                             $GLOBALS['formulize_renderedElementHasConditions'][$renderedMarkupName] = $thisElement;
-                                $governingElements2 = _compileGoverningElements($entries, $keyElementObject, $renderedMarkupName);
+					        $governingElements2 = _compileGoverningElements($entries, $keyElementObject, $renderedMarkupName, true); // last true marks it as one to one compiling, when matching entry ids between governed and governing elements doesn't matter
                             foreach($governingElements2 as $key=>$value) {
                                     $formulize_oneToOneElements[$key] = true;
                                     $formulize_oneToOneMetaData[$key] = array('onetoonefrid' => $frid, 'onetoonefid' => $fid, 'onetooneentries' => urlencode(serialize($entries)), 'onetoonefids'=>urlencode(serialize($fids)));			
@@ -3976,7 +3976,8 @@ function mergeGoverningElements($masterList, $governingElements) {
 
 // elementObject is the element that governs whether the handle element shows up
 // renderedMarkupName is the de_ name for the handle element, in the current form
-function _compileGoverningElements($entries, $elementObject, $renderedMarkupName) {
+// onetoone controls whether governed and governing elements must be in the same entry - if true, then they can (must) be in different entries
+function _compileGoverningElements($entries, $elementObject, $renderedMarkupName, $onetoone=false) {
 	$type = $elementObject->getVar('ele_type');
 	$ele_value = $elementObject->getVar('ele_value');
 	if($type == "checkbox" OR ($type == "select" AND $ele_value[1])) {
@@ -3993,7 +3994,7 @@ function _compileGoverningElements($entries, $elementObject, $renderedMarkupName
 			if($thisEntry == "") {
 				$thisEntry = "new";
 			}
-            if($thisEntry == $renderedEntryId AND !isset($recordedEntries[$elementObject->getVar('id_form')][$thisEntry][$elementObject->getVar('ele_id')][$renderedMarkupName])) {
+            if(($onetoone OR $thisEntry == $renderedEntryId) AND !isset($recordedEntries[$elementObject->getVar('id_form')][$thisEntry][$elementObject->getVar('ele_id')][$renderedMarkupName])) {
 			$governingElements['de_'.$elementObject->getVar('id_form').'_'.$thisEntry.'_'.$elementObject->getVar('ele_id').$additionalNameParts][] = $renderedMarkupName;
 				$recordedEntries[$elementObject->getVar('id_form')][$thisEntry][$elementObject->getVar('ele_id')][$renderedMarkupName] = true;
 			}
