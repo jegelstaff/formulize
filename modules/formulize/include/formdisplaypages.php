@@ -187,7 +187,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	if(is_array($conditions) AND (!$currentPageScreen OR ($screen AND $currentPageScreen == $screen->getVar('sid')))) {
 		$conditionsMet = false;
         $element_handler = xoops_getmodulehandler('elements','formulize');
-		while(!$conditionsMet) {
+		while(!$conditionsMet AND $currentPage > 0) {
 			if(isset($conditions[$currentPage]) AND count($conditions[$currentPage][0])>0) { // conditions on the current page
 				if(pageMeetsConditions($conditions, $currentPage, $entry, $fid, $frid) == false) {
 					if($prevPageThisScreen <= $currentPage) {
@@ -205,7 +205,11 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 			}
 		}
 	}
-	
+
+    if(!$currentPage) {
+        $currentPage = $thanksPage;
+    }
+    
 	if($currentPage > 1) {
 	  $previousPage = $currentPage-1; // previous page numerically
 	} else {

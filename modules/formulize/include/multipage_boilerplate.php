@@ -67,6 +67,16 @@ if($currentPage == $thanksPage) {
     if(is_array($settings)) {
         print "<form name=calreturnform action=\"$done_dest\" method=post>\n";
         writeHiddenSettings($settings, null, array(), array(), $screen);
+        if($_POST['go_back_form']) {
+            $goBackParts = explode('-', $_POST['go_back_page']);
+            foreach($goBackParts as $i=>$part) {
+                $goBackParts[$i] = intval($part);
+            }
+            $go_back_page = implode('-', $goBackParts);
+            print "<input type='hidden' name='go_back_form' value='".intval($_POST['go_back_form'])."'>
+            <input type='hidden' name='go_back_entry' value='".intval($_POST['go_back_entry'])."'>
+            <input type='hidden' name='go_back_page' value='".$go_back_page."'>";
+        }
         print "</form>";
     }
 
