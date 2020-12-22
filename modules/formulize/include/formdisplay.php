@@ -240,6 +240,8 @@ class formulize_themeForm extends XoopsThemeForm {
 	// $ele is the renderable element object
 	function _drawElementElementHTML($ele) {
 	
+        if(!$ele) { return ""; }
+    
 		static $show_element_edit_link = null;
 		static $class = 'even';
 		global $formulize_drawnElements;
