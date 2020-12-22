@@ -116,7 +116,7 @@ class formulizeElementRenderer{
 		}
 		
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
-		$formObject = $form_handler->get($id_form);
+		$formObject = $form_handler->get($id_form, true); // true includes all elements even if they're not displayed
 	
 		switch ($ele_type){
 			case 'derived':
@@ -450,24 +450,25 @@ class formulizeElementRenderer{
 							$linked_column_count = count($linked_columns);
 							while($rowlinkedvaluesq = $xoopsDB->fetchRow($reslinkedvaluesq)) {
 								$linked_column_values = array();
-                                $foundSomething = false;
 								foreach (range(1, $linked_column_count) as $linked_column_index) {
-									if ($rowlinkedvaluesq[$linked_column_index] === "") {
-										$linked_column_values[] = "";
-									} else {
-                                        $foundSomething = true;
+                                    $linked_value = '';
+									if ($rowlinkedvaluesq[$linked_column_index] !== "") {
 										if ($sourceElementObject->isLinked) {
 											$linked_value = prepvalues($rowlinkedvaluesq[$linked_column_index], $linked_columns[$linked_column_index - 1], $rowlinkedvaluesq[0]);
-											$linked_column_values[] = $linked_value[0];
+											$linked_value = $linked_value[0];
 										} else {
-											$linked_column_values[] = stripslashes(strip_tags(trim($rowlinkedvaluesq[$linked_column_index])));
+                                            $linked_value = stripslashes(strip_tags(trim($rowlinkedvaluesq[$linked_column_index])));
 										}
 									}
+                                    if($linked_value != '' OR is_numeric($linked_value)) {
+                                        $linked_column_values[] = $linked_value;
+                                    }
 								}
-                                if(!$foundSomething) { continue; }// ignore empty values 
-                                $leoIndex = $ele_value['snapshot'] ? implode(" | ", $linked_column_values) : $rowlinkedvaluesq[0];
-								$linkedElementOptions[$leoIndex] = implode(" | ", $linked_column_values);
-							}
+                                if(count($linked_column_values)>0) {
+                                    $leoIndex = $ele_value['snapshot'] ? implode(" | ", $linked_column_values) : $rowlinkedvaluesq[0];
+                                    $linkedElementOptions[$leoIndex] = implode(" | ", $linked_column_values);
+                                }
+                            }
 						}
                         $linkedElementOptions = array_unique($linkedElementOptions); // remove duplicates 
 						$cachedSourceValuesQ[intval($ele_value['snapshot'])][$sourceValuesQ] = $linkedElementOptions;
