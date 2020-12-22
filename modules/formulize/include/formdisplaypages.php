@@ -75,6 +75,11 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
     } else {
         $prevPage = 1;
     }
+    if($screen AND isset($prevScreen) AND $screen->getVar('sid') != $prevScreen) { 
+        $prevPageThisScreen = 1;
+    } else {
+        $prevPageThisScreen = $prevPage;
+    }
     
 	// extract the optional page titles from the $pages array for use in the jump to box
 	// NOTE: pageTitles array must start with key 1, not 0.  Page 1 is the first page of the form
@@ -184,8 +189,8 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
         $element_handler = xoops_getmodulehandler('elements','formulize');
 		while(!$conditionsMet) {
 			if(isset($conditions[$currentPage]) AND count($conditions[$currentPage][0])>0) { // conditions on the current page
-				if(pageMeetsConditions($conditions, $currentPage, $entry, $fid, $frid) == false) { 
-					if($prevPage <= $currentPage) {
+				if(pageMeetsConditions($conditions, $currentPage, $entry, $fid, $frid) == false) {
+					if($prevPageThisScreen <= $currentPage) {
 						$currentPage++;
 					} else {
 						$currentPage--;
