@@ -259,8 +259,16 @@ switch($op) {
         $element_handler = xoops_getModuleHandler('elements', 'formulize');
         $formObject = $form_handler->get($formID);
         foreach($formObject->getVar('elementTypes') as $elementId=>$elementType) {
-            if($elementType == 'derived') {
-                $elementObject = $element_handler->get($elementId);
+            $elementObject = $element_handler->get($elementId);
+            $ele_value = $elementObject->getVar('ele_value');
+            // if it's derived, or it's text for display and the text for display has dynamic references, then render it and send it back
+            if($elementType == 'derived' OR (
+                (
+                    $elementType == 'areamodif' OR $elementType == 'ib') AND (
+                       strstr($ele_value[0], "\$value=") OR strstr($ele_value[0], "\$value =") OR (strstr($ele_value[0], "{") AND strstr($ele_value[0], "}"))
+                    )
+                )
+            ) {
                 if($html = renderElement($elementObject, $entryID)) {
                     $derivedValueMarkup[$elementId] = $html;
                 }
@@ -323,7 +331,7 @@ function renderElement($elementObject, $entryId) {
             }
         } else {
             $form_ele = $deReturnValue[0];
-            if($elementObject->getVar('ele_req')) {
+            if($elementObject->getVar('ele_req') AND is_object($form_ele)) {
                 $form_ele->setRequired();
             }
             $isDisabled = $deReturnValue[1];

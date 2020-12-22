@@ -54,8 +54,10 @@ if(isset($formulize_readElementsWasRun)) { return false; } // intended to make s
 
 if(!defined("XOOPS_ROOT_PATH")) {
 	include_once "../../../mainfile.php"; // include this if it hasn't been already!  -- we can call readelements.php directly when saving data via ajax...jump up three levels to get it, because we assume that we're running here as the start of the process when such an ajax call is made.  But when a normal page loads, it won't find the mainfile that high up, because the root of the normal page load is the index.php file one directory higher than /include/
-	ob_end_clean();
-	ob_end_clean(); // turn off two levels of output buffering, just in case (don't want extra stuff sent back with our ajax response)!
+    icms::$logger->disableLogger();
+	while(ob_get_level()) {
+        ob_end_clean(); // no other stuff in the ajax response please
+    }
 }
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
@@ -95,6 +97,12 @@ $formulize_elementData = array(); // this array has multiple dimensions, in this
 $formulize_subformBlankCues = array();
 // loop through POST and catalogue everything that we need to do something with
 foreach($_POST as $k=>$v) {
+
+    // record all the present entries, which are sent from standard rendered forms (created in the writeHiddenSettings function)
+    if(substr($k, 0, 5) == 'form_' AND substr($k, -15) == '_rendered_entry') {
+        $presentFid = intval(str_replace('form_','',str_replace('_rendered_entry','',$k)));
+        $GLOBALS['formulize_allPresentEntryIds'][$presentFid] = $v;
+    }
 
 	if(substr($k, 0, 12) == "updateowner_" AND $v != "nochange") {
 		$updateOwnerData = explode("_", $k);
@@ -219,26 +227,26 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
 			foreach($creation_users as $creation_user) {
                 if (formulizePermHandler::user_can_edit_entry($elementFid, $creation_user, $currentEntry)) {
 					if($writtenEntryId = formulize_writeEntry($values, $currentEntry, "", $creation_user, "", false)) { // last false causes setting ownership data to be skipped...it's more efficient for readelements to package up all the ownership info and write it all at once below.
-					if(isset($formulize_subformBlankCues[$elementFid])) {
-						$GLOBALS['formulize_subformCreateEntry'][$elementFid][] = $writtenEntryId;
-					}
-					$formulize_newEntryIds[$elementFid][] = $writtenEntryId; // log new ids (and all ids) and users for recording ownership info later
-					$formulize_newEntryUsers[$elementFid][] = $creation_user;
-					$formulize_allWrittenEntryIds[$elementFid][] = $writtenEntryId;
+                        if(isset($formulize_subformBlankCues[$elementFid])) {
+                            $GLOBALS['formulize_subformCreateEntry'][$elementFid][] = $writtenEntryId;
+                        }
+                        $formulize_newEntryIds[$elementFid][] = $writtenEntryId; // log new ids (and all ids) and users for recording ownership info later
+                        $formulize_newEntryUsers[$elementFid][] = $creation_user;
+                        $formulize_allWrittenEntryIds[$elementFid][] = $writtenEntryId;
                         $formulize_allSubmittedEntryIds[$elementFid][] = $writtenEntryId;
-					$formulize_newSubformBlankElementIds[$elementFid][$writtenEntryId] = $subformElementId;
-					if(!isset($formulize_allWrittenFids[$elementFid])) {
-						$formulize_allWrittenFids[$elementFid] = $elementFid;
-					}
-					$notEntriesList['new_entry'][$elementFid][] = $writtenEntryId; // log the notification info
-                    writeOtherValues($writtenEntryId, $elementFid, $subformBlankCounter); // write the other values for this entry
-					if($creation_user == 0) { // handle cookies for anonymous users
-						setcookie('entryid_'.$elementFid, $writtenEntryId, time()+60*60*24*7, '/');	// the slash indicates the cookie is available anywhere in the domain (not just the current folder)				
-						$_COOKIE['entryid_'.$elementFid] = $writtenEntryId;
-					}
-					afterSavingLogic($values, $writtenEntryId);
-				}
-			}
+                        $formulize_newSubformBlankElementIds[$elementFid][$writtenEntryId] = $subformElementId;
+                        if(!isset($formulize_allWrittenFids[$elementFid])) {
+                            $formulize_allWrittenFids[$elementFid] = $elementFid;
+                        }
+                        $notEntriesList['new_entry'][$elementFid][] = $writtenEntryId; // log the notification info
+                        writeOtherValues($writtenEntryId, $elementFid, $subformBlankCounter); // write the other values for this entry
+                        if($creation_user == 0) { // handle cookies for anonymous users
+                            setcookie('entryid_'.$elementFid, $writtenEntryId, time()+60*60*24*7, '/');	// the slash indicates the cookie is available anywhere in the domain (not just the current folder)				
+                            $_COOKIE['entryid_'.$elementFid] = $writtenEntryId;
+                        }
+                        afterSavingLogic($values, $writtenEntryId);
+                    }
+                }
 			}
 		} elseif($currentEntry > 0) {
             // save changes to existing elements
@@ -246,17 +254,17 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
             if (formulizePermHandler::user_can_edit_entry($elementFid, $uid, $currentEntry)) {
                 $formulize_allSubmittedEntryIds[$elementFid][] = $currentEntry;
 				if($writtenEntryId = formulize_writeEntry($values, $currentEntry)) {
-				$formulize_allWrittenEntryIds[$elementFid][] = $writtenEntryId; // log the written id
-				if(!isset($formulize_allWrittenFids[$elementFid])) {
-					$formulize_allWrittenFids[$elementFid] = $elementFid;
-				}
-				$notEntriesList['update_entry'][$elementFid][] = $writtenEntryId; // log the notification info
-				writeOtherValues($writtenEntryId, $elementFid); // write the other values for this entry
-				afterSavingLogic($values, $writtenEntryId);
-			}
-		}
-	}
-}
+                    $formulize_allWrittenEntryIds[$elementFid][] = $writtenEntryId; // log the written id
+                    if(!isset($formulize_allWrittenFids[$elementFid])) {
+                        $formulize_allWrittenFids[$elementFid] = $elementFid;
+                    }
+                    $notEntriesList['update_entry'][$elementFid][] = $writtenEntryId; // log the notification info
+                    writeOtherValues($writtenEntryId, $elementFid); // write the other values for this entry
+                    afterSavingLogic($values, $writtenEntryId);
+                }
+            }
+        }
+    }
 }
 
 unset($GLOBALS['formulize_afterSavingLogicRequired']); // now that saving is done, we don't need this any longer, so clean up
@@ -406,12 +414,20 @@ foreach($formulize_allWrittenEntryIds as $allWrittenFid=>$entries) {
                     $foundEntries = checkForLinks($frid, array($allWrittenFid), $allWrittenFid, array($allWrittenFid=>array($thisEntry)));
                 }
                 foreach($foundEntries['entries'][$fid] as $mainFormEntry) {
-                        if(!in_array($mainFormEntry, $mainFormEntriesUpdatedForDerived) AND $mainFormEntry AND in_array($mainFormEntry, $formulize_allSubmittedEntryIds[$fid])) { // regarding final in_array... // if we have deduced the mainform entry, then depending on the structure of the relationship, it is possible that if checkforlinks was used above, it would return entries that were not part of pageload, in which case we must ignore them!!
+                    if(!in_array($mainFormEntry, $mainFormEntriesUpdatedForDerived)
+                       AND $mainFormEntry
+                       AND (
+                        in_array($mainFormEntry, $formulize_allSubmittedEntryIds[$fid])
+                        OR (isset($GLOBALS['formulize_allPresentEntryIds']) AND in_array($mainFormEntry, $formulize_allPresentEntryIds[$fid]))
+                        )
+                      ) {
+                        // regarding final in_array checks... // if we have deduced the mainform entry, then depending on the structure of the relationship, it is possible that if checkforlinks was used above, it would return entries that were not part of pageload, in which case we must ignore them!!
+                        // note that allPresentEntryIds will not exist if this is a disembodied rendering. Only standard renderings through formDisplay invoke writeHiddenSettings, which in turn causes the values in _POST which become that array
                         formulize_updateDerivedValues($mainFormEntry, $fid, $frid);
                         $mainFormEntriesUpdatedForDerived[] = $mainFormEntry;
-                        }
-                        if(!isset($formsUpdatedInFramework[$allWrittenFid]) AND in_array($mainFormEntry, $formulize_allSubmittedEntryIds[$fid])) { // if the form we're on has derived values, then flag it as one of the updated forms, since at least one matching mainform entry was found and will have been updated including the framework
-                            $formsUpdatedInFramework[$allWrittenFid] = $allWrittenFid;
+                    }
+                    if(!isset($formsUpdatedInFramework[$allWrittenFid]) AND ( in_array($mainFormEntry, $formulize_allSubmittedEntryIds[$fid]) OR (isset($GLOBALS['formulize_allPresentEntryIds']) AND in_array($mainFormEntry, $formulize_allPresentEntryIds[$fid])) )) { // if the form we're on has derived values, then flag it as one of the updated forms, since at least one matching mainform entry was found and will have been updated including the framework
+                        $formsUpdatedInFramework[$allWrittenFid] = $allWrittenFid;
                     }
                 }
             }

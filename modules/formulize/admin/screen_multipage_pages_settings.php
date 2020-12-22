@@ -30,6 +30,7 @@
 // this file gets all the data about a particular page of a screen, so it can be edited
 
 require_once "../../../mainfile.php";
+include_once("admin_header.php");
 
 include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 include_once XOOPS_ROOT_PATH."/class/xoopsformloader.php";

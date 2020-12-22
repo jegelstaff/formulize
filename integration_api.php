@@ -17,22 +17,12 @@ class Formulize {
 	 * Initialize the Formulize environment
 	 */
 	static function init() {
-		static $init_done = false;
-
 		if (self::$db == null) {
 			include_once('mainfile.php');
 			self::$db = $GLOBALS['xoopsDB'];
 			self::$db->allowWebChanges = true;
+            require_once('modules/formulize/include/functions.php');
 		}
-		if($init_done) {
-			// This is very hacky and is a response to the fact that the bootstrap process calls
-			// the method that determines the resource mapping for the active user.
-			// That method call cannot lead to functions.php being included, because the overall bootstrap
-			// is not yet complete, so including it now might result in the wrong language file being loaded!
-			require_once('modules/formulize/include/functions.php');
-		}
-		$init_done = true;
-
 	}
 
 	/**

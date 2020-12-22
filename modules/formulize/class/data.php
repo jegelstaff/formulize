@@ -514,30 +514,29 @@ class formulizeDataHandler  {
 	function findAllValuesForEntries($handle, $entries) {
 		if(!is_array($entries)) {
 			if(is_numeric($entries)) {
-				$tempEntries = $entries;
-				unset($entries);
-				$entries = array(0=>$tempEntries);
+				$entries = array($entries);
 			} else {
 				return false;
 			}
 		}
 		static $cachedValues = array();
-		$resultArray = array();
 		global $xoopsDB;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($this->fid);
-		foreach($entries as $entry) {
-			if(!isset($cachedValues[$handle][$entry])) {
-				$sql = "SELECT `$handle` FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')). " WHERE entry_id = ".intval($entry);
-				if($res = $xoopsDB->query($sql)) {
-					$array = $xoopsDB->fetchArray($res);
-					$cachedValues[$handle][$entry] = $array[$handle];
-				} else {
-					$cachedValues[$handle][$entry] = false;
-				}
-			} 
-			$resultArray[] = $cachedValues[$handle][$entry];
-		}
+		foreach($entries as $i=>$entry) {
+            $entries[$i] = intval($entry); // ensure we're not getting any funny business passed in to the DB
+        }
+        if(!isset($cachedValues[$handle][serialize($entries)])) {
+            $sql = "SELECT `$handle` FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')). " WHERE entry_id IN (".implode(',',$entries).")";
+            if($res = $xoopsDB->query($sql)) {
+                while($array = $xoopsDB->fetchArray($res)) {
+                    $cachedValues[$handle][serialize($entries)][] = $array[$handle];
+                }
+            } else {
+                $cachedValues[$handle][serialize($entries)][] = false;
+            }
+        } 
+		$resultArray = is_array($cachedValues[$handle][serialize($entries)]) ? $cachedValues[$handle][serialize($entries)] : array();
 		return $resultArray;
 	}
 	
@@ -706,7 +705,7 @@ class formulizeDataHandler  {
 	// $update_metadata is a flag to allow us to skip updating the modification user and time.  Introduced for when we update derived values and the mod user and time should not change.
 	function writeEntry($entry, $values, $proxyUser=false, $forceUpdate=false, $update_metadata=true) {
 
-		global $xoopsDB, $xoopsUser;
+		global $xoopsDB, $xoopsUser, $formulize_existingValues;
 		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($this->fid);
@@ -846,6 +845,17 @@ class formulizeDataHandler  {
         if (0 == count($element_values)) {
             // no values to save, which is probably caused by the onBeforeSave() handler deleting all of the values
             return null;
+        }
+        
+        // cache in memory a copy of the existing values, for reference elsewhere, such as sending notifications
+        // also cache newly saved/written values
+        if($entry != 'new') {
+            if(!isset($formulize_existingValues[$this->fid][$entry]['before_save'])) {
+                // grab the first set of previous values we find, representing the state before the first writing during this page load
+                // multiple writings can happen because of derived values and save handlers and so on
+                $formulize_existingValues[$this->fid][$entry]['before_save'] = $existing_values;
+            }
+            $formulize_existingValues[$this->fid][$entry]['after_save'] = $clean_element_values;
         }
 
         // escape field names and values before writing to database

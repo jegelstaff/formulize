@@ -77,7 +77,7 @@ class icms_core_Session {
                 $_SESSION['resouceMapKey'] = $userData["email"];
                 $_SESSION['name'] = $userData["name"];
                 $_SESSION['newuser'] = $_GET['code']; //add the google code to session and url and check this on the other end to make sure that they are equal
-                $url = XOOPS_URL."/new_user.php?newuser=".$code;
+                $url = XOOPS_URL."/new_user.php?newuser=".$_GET['code'];
                 header("Location: ".$url);
                 exit;
             }

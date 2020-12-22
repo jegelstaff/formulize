@@ -151,14 +151,13 @@ if($fid) {
     $data = getData($frid, $fid, $filter, $andor, $scope, $limitStart, $limitSize, $sortHandle, $sortDir, false, 0, false, "", false, 'bypass', $filterElements); // 'bypass' before filterElements means don't even do the query, just prep eveything - avoids potentially expensive query and expensive pass through all the data!
     if($data === true) { // we'll get back false if we weren't able to 
         $exportTime = formulize_catchAndWriteExportQuery($fid);
+        $_GET['cols'] = "";
         if(isset($_GET['includeMetadata'])) {
             foreach(array('entry_id','creation_uid','mod_uid','creation_datetime','mod_datetime','creator_email') as $metadataField) {
                 if(in_array($metadataField,$excludeFields)) {continue;}
                 $_GET['cols'] .= $metadataField.',';
             }
-        } else {
-            $_GET['cols'] = "";
-        }
+        } 
         $_GET['cols'] .= implode(",", $allCols);
         $_GET['eq'] = $exportTime; // set this so we can load the cached query file when doing the export
         $_POST['metachoice'] = 0; // necessary so when we call the export file, it will trigger a download instead of showing UI

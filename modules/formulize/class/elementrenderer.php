@@ -190,7 +190,7 @@ class formulizeElementRenderer{
 				if($ele_value[9]) {
 					$eltname = $form_ele_id;
 					$eltcaption = $ele_caption;
-					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
+					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
 					$eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
 					$eltmsgUnique = empty($eltcaption) ? sprintf( _formulize_REQUIRED_UNIQUE, $eltname ) : sprintf( _formulize_REQUIRED_UNIQUE, $eltcaption );
 					if($this->_ele->getVar('ele_req')) { // need to manually handle required setting, since only one validation routine can run for an element, so we need to include required checking in this unique checking routine, if the user selected required too
@@ -221,7 +221,7 @@ class formulizeElementRenderer{
 				} elseif($this->_ele->getVar('ele_req') AND !$isDisabled) {
 					$eltname = $form_ele_id;
 					$eltcaption = $ele_caption;
-					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
+					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
 					$eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
 					$form_ele->customValidationCode[] = "if (myform.{$eltname}.value == \"\") { window.alert(\"{$eltmsg}\"); myform.{$eltname}.focus(); return false; }";
 				}
@@ -245,7 +245,7 @@ class formulizeElementRenderer{
 
 						$eltname = $form_ele_id;
 						$eltcaption = $ele_caption;
-						$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
+						$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
 						$eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
 						$form_ele->customValidationCode[] = "\n var FCKGetInstance = FCKeditorAPI.GetInstance('$form_ele_id');\n";
 						$form_ele->customValidationCode[] = "var getText = FCKGetInstance.EditorDocument.body.innerHTML; \n";
@@ -277,12 +277,14 @@ class formulizeElementRenderer{
 					$entry_id = $entry;
 					$entryData = $this->formulize_getCachedEntryData($id_form, $entry);
 					$creation_datetime = display($entryData, "creation_datetime");
+                    $entry = $entryData; // use this variable for the entry data so it is easily accessed in the eval'd code
 					$evalResult = eval($ele_value[0]);
 					if($evalResult === false) {
 						$ele_value[0] = _formulize_ERROR_IN_LEFTRIGHT;
 					} else {
 						$ele_value[0] = $value; // value is supposed to be the thing set in the eval'd code
 					}
+                    $entry = $entry_id; // revert this variable
 				}
 				$ele_value[0] = $this->formulize_replaceCurlyBracketVariables($ele_value[0], $entry, $id_form);
 				$form_ele = new XoopsFormLabel(
@@ -740,7 +742,7 @@ class formulizeElementRenderer{
 				if($this->_ele->getVar('ele_req') AND !$isDisabled) {
 					$eltname = $form_ele_id;
 					$eltcaption = $ele_caption;
-					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
+					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
 					$eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
 					if($ele_value[8] == 1) {// Has been edited in order to not allow the user to submit a form when "No match found" or "Choose an Option" is selected from the quickselect box.
                         if($ele_value[1]) {
@@ -889,7 +891,7 @@ class formulizeElementRenderer{
 				if($this->_ele->getVar('ele_req') AND !$isDisabled) {
 					$eltname = $form_ele_id;
 					$eltcaption = $ele_caption;
-					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
+					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
 					$eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
 					$form_ele->customValidationCode[] = "selection = false;\n";
 					$form_ele->customValidationCode[] = "if(myform.{$eltname}.length) {\n";
@@ -922,7 +924,7 @@ class formulizeElementRenderer{
 				if($this->_ele->getVar('ele_req') AND !$isDisabled) {
 					$eltname = $form_ele_id;
 					$eltcaption = $ele_caption;
-					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
+					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
 					$eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
 					// parseInt() is used to determine if the element value contains a number
 					// Date.parse() would be better, except that it will fail for dd-mm-YYYY format, ie: 22-11-2013
@@ -1156,7 +1158,7 @@ class formulizeElementRenderer{
 			$start = true; // flag used to force the loop to execute, even if the 0th position has the {
 			while($bracketPos = strpos($text, "{", $bracketPos+1) OR $start == true) {
 				$start = false;
-        $endBracketPos = strpos($text, "}", $bracketPos+1);
+                $endBracketPos = strpos($text, "}", $bracketPos+1);
 				$term = substr($text, $bracketPos+1, $endBracketPos-$bracketPos-1);
                 $elementObject = $element_handler->get($term);
                 if($elementObject) {
@@ -1164,8 +1166,11 @@ class formulizeElementRenderer{
 					// get the uitext value if necessary
 					$replacementTerm = formulize_swapUIText($replacementTerm, $elementObject->getVar('ele_uitext'));
                     $text = str_replace("{".$term."}",$replacementTerm,$text);
-				}
-				$bracketPos = $bracketPos + strlen($replacementTerm); // move ahead the length of what we replaced
+                    $lookAhead = strlen($replacementTerm); // move ahead the length of what we replaced
+				} else {
+                    $lookAhead = 1;
+                }
+				$bracketPos = $bracketPos + $lookAhead; 
       }
 		}
 		return $text;
@@ -1174,8 +1179,8 @@ class formulizeElementRenderer{
 	// gather an entry when required...this should really be abstracted out to the data handler class, which also needs a proper getter in a handler of its own, so we don't keep creating new instances of the data handler and it can store the cached info about entries that we want it to.
 	function formulize_getCachedEntryData($id_form, $entry) {
 		static $cachedEntryData = array();
-		if($entry === "new") {
-			return array();
+		if($entry === "new" OR !$entry) {
+            return array();
 		}
 		if(!isset($cachedEntryData[$id_form][$entry])) {
 			$cachedEntryData[$id_form][$entry] = getData("", $id_form, $entry);

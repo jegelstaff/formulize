@@ -173,11 +173,11 @@ class icms_form_elements_Checkbox extends icms_form_Element {
 			$this->setName($ele_name);
 		}
 		foreach ($ele_options as $value => $name) {
-			$ret .= "<span class='icms_checkboxoption'><input type='checkbox' name='".$ele_name."' id='item_".$value."_".$ele_name."' value='".htmlspecialchars($value, ENT_QUOTES)."'";
+			$ret .= "<span class='icms_checkboxoption'><label for='item_".$value."_".$ele_name."'><input type='checkbox' name='".$ele_name."' id='item_".$value."_".$ele_name."' value='".htmlspecialchars($value, ENT_QUOTES)."'";
 			if (count($ele_value) > 0 && in_array($value, $ele_value)) {
 				$ret .= " checked='checked'";
 			}
-			$ret .= $ele_extra." /><label for='item_".$value."_".$ele_name."'>$name</label></span>$ele_delimeter";
+			$ret .= $ele_extra." />$name</label></span>$ele_delimeter";
 		}
 		if (count($ele_options) > 1) {
 			$ret .= "<div class='icms_checkboxoption'><input type='checkbox' id='checkemall' class='checkemall' /><label for='checkemall'>"._CHECKALL."</label></div>";
