@@ -299,13 +299,22 @@ function pageMeetsConditions($conditions, $currentPage, $entry_id, $fid, $frid) 
     
     // new entries cannot meet conditions yet because they are not saved
     // UNLESS the condition is = {BLANK}
+	$allPassed = true;
+	$oomPassed = false;
+    $oomNotExists = true;
     if(count($elements)>0 AND !intval($entry_id)) {
         foreach($ops as $i=>$op) {
-            if($op != "=" OR $terms[$i] != "{BLANK}") {
-                return false;
+			switch($types[$i]) {
+				case 'all':
+					if($op != "=" OR $terms[$i] != "{BLANK}") { $allPassed = false; }
+					break;
+				case 'oom':
+                    $oomNotExists = false;
+					if($op == "=" AND $terms[$i] == "{BLANK}") { $oomPassed = true; }
+					break;
             }
         }
-        return true; // all conditions are = {BLANK} so new entries would match (except for if there are default values specified for the field??)
+        return ($allPassed AND ($oomPassed OR $oomNotExists)); // all conditions are = {BLANK} so new entries would match (except for if there are default values specified for the field??) Also, at least one OOM condition is = BLANK
     }
     
     // pages with no conditions are always allowed!
