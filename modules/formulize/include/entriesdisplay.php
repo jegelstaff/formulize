@@ -4786,6 +4786,12 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
         }
 		$data = getData($frid, $fid, $filter, "AND", $scope, $limitStart, $limitSize, $sort, $order, $forcequery);
 
+        // if we deleted entries and the current page is now empty, then shunt back 1 page
+        if(count($data)==0 AND $_POST['delconfirmed'] AND $limitStart > 0) {
+            $_POST['formulize_LOEPageStart'] = $_POST['formulize_LOEPageStart']-$formulize_LOEPageSize;
+            $data = getData($frid, $fid, $filter, "AND", $scope, ($limitStart-$formulize_LOEPageSize), $limitSize, $sort, $order, $forcequery);    
+        }
+        
     if($currentURL=="") { return array(0=>"", 1=>"", 2=>""); } //current URL should only be "" if this is called directly by the special formulize_getCalcs function
 
         // MASSIVELY DEPRECATED...
