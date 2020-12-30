@@ -61,7 +61,7 @@ class icms_form_elements_Select extends icms_form_Element {
 		$this->setName($name);
 		$this->_multiple = $multiple;
 		$this->_size = (int) ($size);
-		if (isset($value) AND ($value OR $value === 0)) {
+		if (isset($value) AND ($value OR (is_numeric($value) AND $value == 0))) {
 			$this->setValue($value);
 		}
 	}
