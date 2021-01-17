@@ -766,7 +766,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
                         switch($element["ele_type"]) {
                             
                             case "derived":
-                                continue; // ignore derived values for importing
+                                break; // ignore derived values for importing
                             
                             case "select":
                             $ele_value = unserialize($element["ele_value"]);

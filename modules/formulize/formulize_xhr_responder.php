@@ -331,7 +331,7 @@ function renderElement($elementObject, $entryId) {
             }
         } else {
             $form_ele = $deReturnValue[0];
-            if($elementObject->getVar('ele_req')) {
+            if($elementObject->getVar('ele_req') AND is_object($form_ele)) {
                 $form_ele->setRequired();
             }
             $isDisabled = $deReturnValue[1];

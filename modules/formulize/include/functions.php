@@ -1891,6 +1891,7 @@ function buildScope($currentView, $uid, $fid, $currentViewCanExpand = false) {
 
     // do this second last, just in case currentview =all was passed in but not valid and defaulted back to group
     if ($currentView == "group") {
+        
         if (!$hasGroupScope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid) AND !$currentViewCanExpand) {
             $currentView = "mine";
         } else {
@@ -3305,6 +3306,7 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
         $uids_conditions = array();
         $saved_conditions = array();
         $data = "";
+        global $formulize_existingValues;
         foreach ($cons as $thiscon) {
             // there is a specific condition for this notification
             if ($thiscon['not_cons_con'] !== "all") {
@@ -3314,10 +3316,33 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
                 $terms = unserialize($thesecons[2]);
                 $start = 1;
                 $blankFilters = array();
+                $noElementsChanged = true;
                 for ($i=0;$i<count($elements);$i++) {
+
+                    // if event is update, then check if term is changed from previous save
+                    // if all terms are same as previous save, then we ignore entry
+                    if($event == 'update_entry') {
+                        $elementEyeHandle = convertElementIdsToElementHandles(array($elements[$i]));
+                        $elementEyeHandle = $elementEyeHandle[0];
+                        if(isset($formulize_existingValues[$fid][$entry]['before_save'][$elementEyeHandle])
+                           AND isset($formulize_existingValues[$fid][$entry]['after_save'][$elementEyeHandle])
+                           AND $formulize_existingValues[$fid][$entry]['before_save'][$elementEyeHandle] !== $formulize_existingValues[$fid][$entry]['after_save'][$elementEyeHandle])
+                        {
+                            $noElementsChanged = false;
+                        }
+                    }
+                    
+                    $terms[$i] = parseUserAndToday($terms[$i]);
+                    
                     if ($ops[$i] == "NOT") {
                         $ops[$i] = "!=";
                     }
+                    // seed with the entry
+                    if($start) {
+                        $filter = $entry;
+                        $start = 0;
+                    }
+                    // add to blank filters if necessary, or add to regular filter
                     if ($terms[$i]=="{BLANK}") {
                         $blankFilter = $elements[$i]."/**//**/".$ops[$i]."][".$elements[$i]."/**//**/";
                         if ($ops[$i] == "!=" OR $ops[$i] == "NOT LIKE") {
@@ -3325,23 +3350,20 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
                         } else {
                             $blankFilters['or'][] = $blankFilter." IS NULL ";
                         }
-                        continue;
-                    }
-                                        
-                    $terms[$i] = parseUserAndToday($terms[$i]);
-                                        
-                    if ($start) {
-                        $filter = $entry."][".$elements[$i]."/**/".$terms[$i]."/**/".$ops[$i];
-                        $start = 0;
                     } else {
                         $filter .= "][".$elements[$i]."/**/".$terms[$i]."/**/".$ops[$i];
                     }
                 }
+                if($event == 'update_entry' AND $noElementsChanged) {
+                    continue; // did not pass since there hasn't actually be an update that changed the elements on which the notification state depends
+                }
+                // add in blank filter stuff
                 if (isset($blankFilters['and'])) {
                     foreach ($blankFilters['and'] as $thisAndFilter) {
                         $filter .= "][".$thisAndFilter;
                     }
                 }
+                // reconfigure if there's an 'or' filter for handling blanks
                 if (isset($blankFilters['or'])) {
                     $filter = array(0=>array(0=>"and",1=>$filter), 1=>array(0=>"or",1=>implode("][",$blankFilters['or'])));
                 }
@@ -3584,7 +3606,7 @@ function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $rei
         $data_handler = new formulizeDataHandler($fid);
         $value = $data_handler->getElementValueInEntry($entry, intval($thiscon['not_cons_elementuids']));
         if ($value) {
-            $uids_temp = explode("*=+*:", $value);
+            $uids_temp = explode("*=+*:", trim($value,"*=+*:"));
             $uids_conditions = array_merge((array)$uids_temp, $uids_conditions);
         }
         unset($uids_temp);
@@ -4577,7 +4599,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
     if($multi) { // create the hidden field that will get the value assigned for submission
         $defaultHiddenValue = (!$overrides OR (substr($overrides,0,5)=="ORSET" AND substr($overrides, -2) == "//")) ? $overrides : "ORSET$multiCounter=".$overrides."//";
         $filter = "<input type='hidden' name='$id' id='".$id."_hiddenMulti' value='".strip_tags(htmlspecialchars($defaultHiddenValue))."'>\n
-        <div style='float: left; padding-right: 1em;'>\n";
+        <div style='float: left; padding-right: 1em; padding-bottom: 1em;'>\n";
     } else { // start the actual dropdown selectbox
         $filter = "<SELECT name=\"$id\" id=\"$id\"";
         if ($name == "{listofentries}") {
@@ -4711,7 +4733,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
         foreach ($options as $option=>$option_value) {
             
             if($multi AND $counter > 0 AND ($counter+1) % 7 == 0) {
-                $filter .= "\n</div><div style='float: left; padding-right: 1em;'>\n";
+                $filter .= "\n</div><div style='float: left; padding-right: 1em; padding-bottom: 1em;'>\n";
             }
             
             $multiIdCounter++;
@@ -5592,17 +5614,25 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
         if($curlyBracketFormconditionsfilter) {
             $curlyBracketFormFrom = " INNER JOIN $curlyBracketFormFrom ON ($curlyBracketFormconditionsfilter $curlyBracketFormconditionsfilter_oom) ";
         } elseif($curlyBracketFormconditionsfilter_oom) {
-            // strip out the part of the oom filter that we cannot use in the WHERE clause -- AND MAYBE WE NEED TO DO THIS FOR THE NON-OOM FILTERS??
+            // strip out parts of the oom filter that we cannot use in the different clauses -- AND MAYBE WE NEED TO DO THIS FOR THE NON-OOM FILTERS??
             // IF THIS IS A SELF-REFERENCE, USE ONLY THE ENTRY ID PART IN THE on
             // OTHERWISE, USE ONLY THE NON-ENTRY ID PART
             // $nonLinkedCurlyBracketSelfReference is a global set in the building of the conditions...and our big assumption is that all { } references point to the same form, so if we detect that it has some circularity, then that needs to be the case across the board...seems brittle!
             $entryFilterPos = strpos($curlyBracketFormconditionsfilter_oom, 'AND curlybracketform.`entry_id`=');
+            $nextBracketPos = strpos($curlyBracketFormconditionsfilter_oom, ')', $entryFilterPos);
             if($nonLinkedCurlyBracketSelfReference) {
-                $curlyBracketFormFrom = " LEFT JOIN $curlyBracketFormFrom ON (".substr($curlyBracketFormconditionsfilter_oom, ($entryFilterPos+4)); // doesn't need a close bracket, because the $curlyBracketFormconditionsfilter_oom already has one
+                $curlyBracketFormFrom = " LEFT JOIN $curlyBracketFormFrom ON (".substr($curlyBracketFormconditionsfilter_oom, ($entryFilterPos+4), $nextBracketPos-$entryFilterPos-3); // grab everything up to the ) after the "entry_id =" part
             } else {
                 $curlyBracketFormFrom = " LEFT JOIN $curlyBracketFormFrom ON ($curlyBracketFormconditionsfilter_oom) ";
             }
-            $curlyBracketFormconditionsfilter_oom_WHERE = substr($curlyBracketFormconditionsfilter_oom, 0, $entryFilterPos).")"; // put back the final bracket which we will have cut off!
+            // strip out the part of the oom filter that we cannot use in the WHERE clause
+            $searchStartPos = 1;
+            $curlyBracketFormconditionsfilter_oom_WHERE = $curlyBracketFormconditionsfilter_oom;
+            while($entryFilterPos = strpos($curlyBracketFormconditionsfilter_oom_WHERE, 'AND curlybracketform.`entry_id`=', $searchStartPos)) {
+                $nextBracketPos = strpos($curlyBracketFormconditionsfilter_oom_WHERE, ')', $entryFilterPos);
+                $curlyBracketFormconditionsfilter_oom_WHERE = substr($curlyBracketFormconditionsfilter_oom_WHERE, 0, $entryFilterPos).substr($curlyBracketFormconditionsfilter_oom_WHERE, $nextBracketPos);
+                $searchStartPos = $nextBracketPos;
+            }
             if($conditionsfilter_oom) {
                 $conditionsfilter_oom .= " OR $curlyBracketFormconditionsfilter_oom_WHERE ";
             } else {
@@ -6042,7 +6072,13 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
         }
         if ("date" == $element_type) {
             $time_value = strtotime($v);
-            $v = (false === $time_value) ? "" : date(_SHORTDATESTRING, $time_value);
+            global $xoopsUser, $xoopsConfig;
+            $serverTimeZone = $xoopsConfig['server_TZ'];
+            $offset = $xoopsUser ? ($xoopsUser->getVar('timezone_offset') - $serverTimeZone) * 3600 : 0;
+            /*if($xoopsConfig['language'] == "french") {
+            	$return = setlocale("LC_TIME", "fr_FR.UTF8");
+            }*/
+            $v = (false === $time_value) ? "" : date(_SHORTDATESTRING, ($time_value)+$offset);
         }
         $output .= '<span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $handle, $textWidth, $thisEntryId)), $handle);
         if ($counter<$countOfValue) {
@@ -7166,8 +7202,11 @@ function formulize_parseSearchesIntoFilter($searches) {
 				$searchgetkey = substr($one_search, 1, -1);
 
 				if (substr($searchgetkey, 0, 5) == "TODAY") {
-					$number = substr($searchgetkey, 6);
-					$one_search = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
+                    $number = substr($searchgetkey, 5); // note -- includes the +/- sign
+                    $basetime = $number ? strtotime($number." day") : time();
+                    $serverTimeZone = $xoopsConfig['server_TZ'];
+                    $offset = $xoopsUser ? ($xoopsUser->getVar('timezone_offset') - $serverTimeZone) * 3600 : 0;
+					$one_search = date("Y-m-d",($basetime+$offset));
 				} elseif($searchgetkey == "USER") {
 					if($xoopsUser) {
                         $one_search = htmlspecialchars_decode($xoopsUser->getVar('uname'), ENT_QUOTES);
