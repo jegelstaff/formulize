@@ -454,13 +454,15 @@ class formulize_elementsOnlyForm extends formulize_themeForm {
 	function render() {
 		// just a slight modification of the render method so that we display only the elements and none of the extra form stuff
 		$ele_name = $this->getName();
-		$ret = "<div class='xo-theme-form'>
-			<table width='100%' class='outer' cellspacing='1'>
-			<tr><th colspan='2' class=\"formulize-subform-title\">" . $this->getTitle() . "</th></tr>
-		";
+        
+        $template = $this->getTemplate('toptemplate');
+        $ret = $this->processTemplate($template, array('formTitle'=>$this->getTitle()));
+        
 		$hidden = '';
 		list($ret, $hidden) = $this->_drawElements($this->getElements(), $ret, $hidden);
-		$ret .= "</table>\n$hidden\n</div>\n";
+        $template = $this->getTemplate('bottomtemplate');
+        $ret .= $this->processTemplate($template);
+		$ret .= "\n$hidden\n";
 		return $ret;
 	}
 
