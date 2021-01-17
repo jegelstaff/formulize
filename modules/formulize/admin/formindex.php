@@ -866,23 +866,6 @@ function patch40() {
     }
 }
 
-// THANKS TO https://stackoverflow.com/questions/2050859/copy-entire-contents-of-a-directory-to-another-using-php
-function recurse_copy($src,$dst) { 
-    $dir = opendir($src); 
-    @mkdir($dst); 
-    while(false !== ( $file = readdir($dir)) ) { 
-        if (( $file != '.' ) && ( $file != '..' )) { 
-            if ( is_dir($src . '/' . $file) ) { 
-                recurse_copy($src . '/' . $file,$dst . '/' . $file); 
-            } 
-            else { 
-                copy($src . '/' . $file,$dst . '/' . $file); 
-            } 
-        } 
-    } 
-    closedir($dir); 
-} 
-
 // Fixes the format if the template is empty
 function emptyTemplateFixer($dir) {
     if(is_dir($dir)) {

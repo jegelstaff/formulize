@@ -7798,3 +7798,21 @@ function checkForChrome() {
 }";
      
 }
+
+// THANKS TO https://stackoverflow.com/questions/2050859/copy-entire-contents-of-a-directory-to-another-using-php
+// AND gimmicklessgpt at gmail dot com found at https://www.php.net/manual/en/function.copy.php#91010
+function recurse_copy($src,$dst) { 
+    $dir = opendir($src);
+    if(!file_exists($dst)) { @mkdir($dst); }
+    while(false !== ( $file = readdir($dir)) ) { 
+        if (( $file != '.' ) && ( $file != '..' )) { 
+            if ( is_dir($src . '/' . $file) ) { 
+                recurse_copy($src . '/' . $file,$dst . '/' . $file); 
+            } 
+            else { 
+                copy($src . '/' . $file,$dst . '/' . $file); 
+            } 
+        } 
+    } 
+    closedir($dir); 
+} 

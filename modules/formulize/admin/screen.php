@@ -127,7 +127,9 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $templates['toptemplate'] = str_replace("&", "&amp;", $screen->getTemplate('toptemplate', $screen->getVar('theme')));
   $templates['bottomtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('bottomtemplate', $screen->getVar('theme')));
   $templates['listtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('listtemplate', $screen->getVar('theme')));
-
+  $templates['usingTemplates'] = ($templates['toptemplate'] OR $templates['bottomtemplate'] OR $templates['listtemplate']);
+  
+  
   // view data
   // gather all the available views
   // setup an option list of all views, as well as one just for the currently selected Framework setting
@@ -393,7 +395,8 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
     $multipageTemplates['toptemplate'] = str_replace("&", "&amp;", $screen->getTemplate('toptemplate', $screen->getVar('theme')));
     $multipageTemplates['elementtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('elementtemplate', $screen->getVar('theme')));
     $multipageTemplates['bottomtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('bottomtemplate', $screen->getVar('theme')));
-
+    $templates['usingTemplates'] = ($templates['toptemplate'] OR $templates['bottomtemplate'] OR $templates['elementtemplate']);
+    
     // pages data
     $multipagePages = array();
     $multipagePages['pages'] = $pages;
@@ -477,6 +480,7 @@ if ($screen_id != "new" && $settings['type'] == 'form') {
     $templates['elementtemplate2'] = str_replace("&", "&amp;", $screen->getTemplate('elementtemplate2', $screen->getVar('theme')));
     $templates['elementcontainero'] = str_replace("&", "&amp;", $screen->getTemplate('elementcontainero', $screen->getVar('theme')));
     $templates['elementcontainerc'] = str_replace("&", "&amp;", $screen->getTemplate('elementcontainerc', $screen->getVar('theme')));
+    $templates['usingTemplates'] = ($templates['toptemplate'] OR $templates['bottomtemplate'] OR $templates['elementtemplate1'] OR $templates['elementtemplate2'] OR $templates['elementcontainero'] OR $templates['elementcontainerc']);
 }
 
 
@@ -494,6 +498,7 @@ if ($screen_id != "new" && $settings['type'] == 'calendar') {
     $form_id = $screen->getVar('fid');
     $templates['toptemplate'] = str_replace("&", "&amp;", $screen->getTemplate('toptemplate', $screen->getVar('theme')));
     $templates['bottomtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('bottomtemplate', $screen->getVar('theme')));
+    $templates['usingTemplates'] = ($templates['toptemplate'] OR $templates['bottomtemplate']);
     $templates['caltype'] = $screen->getVar('caltype');
     $data = array();
     foreach($screen->getVar('datasets') as $i=>$dataset) {
@@ -521,7 +526,11 @@ if ($screen_id != "new" && $settings['type'] == 'calendar') {
 
 $templates['themes'] = icms_view_theme_Factory::getThemesList();
 $multipageTemplates['themes'] = icms_view_theme_Factory::getThemesList();
-
+$themeDefaultPath = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$screen->getVar('theme')."/default/".$settings['type']."/";
+$templates['seedtemplates'] = $themeDefaultPath;
+if(!file_exists($themeDefaultPath)) {
+    $templates['seedtemplates'] = str_replace($screen->getVar('theme'), '', $themeDefaultPath);    
+}
 
 // common values should be assigned to all tabs
 $common['name'] = $screenName;

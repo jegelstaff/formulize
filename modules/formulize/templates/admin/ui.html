@@ -80,6 +80,7 @@ $(document).ready(function() {
   <input type="hidden" name="tabs_selected" value="">
   <input type="hidden" name="accordion_active" value="">
   <input type="hidden" name="themeswitch" value="">
+  <input type="hidden" name="seedtemplates" value="">
 </form>
 
 <{if $adminPage.show_user_view}>
@@ -296,6 +297,12 @@ $(document).ready(function() {
     // change the themes, only possible when no changes to screen settings yet. Change theme property of screen and reload page.
     $("[name='screens-theme']").change(function() {
         window.document.scrollposition.themeswitch.value  = $(this).val();
+        reloadWithScrollPosition();
+    });
+    
+    // seed the templates, only possible when no custom templates yet exist for a screen.
+    $("#seedtemplates").click(function() {
+        window.document.scrollposition.seedtemplates.value = 1;
         reloadWithScrollPosition();
     });
   

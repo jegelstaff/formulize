@@ -80,12 +80,27 @@ if (!isset($xoopsTpl)) {
 include_once "op.php";
 
 // switch the theme for the screen if that's requested
-if(isset($_POST['themeswitch']) AND isset($_GET['sid'])) {
+if(isset($_POST['themeswitch']) AND $_POST['themeswitch'] AND isset($_GET['sid'])) {
     $screen_handler = xoops_getmodulehandler('screen', 'formulize');
     $screen = $screen_handler->get($_GET['sid']);
     $screen->setVar('theme', $_POST['themeswitch']);
     $screen_handler->insert($screen);
 }
+
+// create a set of templates for the screen if that's what the user requested
+if(isset($_POST['seedtemplates']) AND $_POST['seedtemplates'] AND isset($_GET['sid'])) {
+    $screen_handler = xoops_getmodulehandler('screen', 'formulize');
+    $screen = $screen_handler->get($_GET['sid']);
+    $themeDefaultPath = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$screen->getVar('theme')."/default/".$screen->getVar('type')."/";
+    if(!file_exists($themeDefaultPath)) {
+        $themeDefaultPath = str_replace($screen->getVar('theme'), '', $themeDefaultPath);    
+    }
+    if(!file_exists($themeDefaultPath)) {
+        exit('Error: could not locate a valid default template path for "'.$screen->getVar('type').'" screens.');
+    }
+    recurse_copy($themeDefaultPath, XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$screen->getVar('theme')."/".$screen->getVar('sid')."/");
+}
+
 
 // create the contents that we want to display for the currently selected page
 // the included php files create the values for $adminPage that are used for this page

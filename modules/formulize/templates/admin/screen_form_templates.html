@@ -11,6 +11,13 @@
     <div class="panel-content content">
         <p><b>Showing templates for use with this theme:</b> <{html_options name=screens-theme options=$content.themes selected=$content.selectedTheme}></p>
         <p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_TOPTEMPLATE3}></p><br />
+        
+        <{if !$content.usingTemplates}>
+            <p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_SEEDTEMPLATES1}><{$content.seedtemplates}><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_SEEDTEMPLATES2}></p><br /><p><input type="button" value="<{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_SEEDTEMPLATES3}>" id="seedtemplates"></p><br />        
+        <{/if}>
+        
+        <{if $content.usingTemplates}>
+        
         <div class="form-item">
             <fieldset>
                 <legend>Top Template</legend>
@@ -90,6 +97,8 @@
         </div>
         <div class='description'>The bottom template is rendered after the elements in the form. You can use it to close any tags you opened in the top template. You can also add other navigation or information below the form.</div>
         <br />
+        
+        <{/if}>
 
     </div>
 </form>
