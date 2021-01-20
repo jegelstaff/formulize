@@ -363,8 +363,8 @@ class formulize_themeForm extends XoopsThemeForm {
         }
         
         $templateVariables['elementName'] = $element_name;
-        $templateVariables['elementCaption'] = vocabSwap($ele->getCaption());
-        $templateVariables['elementHelpText'] = vocabSwap($ele->getDescription());
+        $templateVariables['elementCaption'] = $ele->getCaption();
+        $templateVariables['elementHelpText'] = $ele->getDescription();
         $templateVariables['elementIsRequired'] = $ele->isRequired();
         $templateVariables['renderedElement'] = trim($ele->render());
         $templateVariables['elementObject'] = $ele->formulize_element;
