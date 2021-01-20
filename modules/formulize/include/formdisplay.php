@@ -266,6 +266,9 @@ class formulize_themeForm extends XoopsThemeForm {
 
 			if (!is_object($ele)) {// just plain add stuff if it's a literal string...
                 $columnData = $this->_getColumns($ele);
+                $columns = $columnData[0];
+                $column1Width = str_replace(';','',$columnData[1]);
+                $column2Width = str_replace(';','',$columnData[2]);
 				if(strstr($ele, "<<||>>")) { 
 					$ele = explode("<<||>>", $ele);
                     if($ele[0] == '{STARTHIDDEN}') {
@@ -278,10 +281,11 @@ class formulize_themeForm extends XoopsThemeForm {
                         'elementCaption'=>'',
                         'elementHelpText'=>'',
                         'renderedElement'=>$ele[0],
-                        'labelClass'=>"formulize-label-".$ele[2]
+                        'labelClass'=>"formulize-label-".$ele[2],
+                        'column1Width'=>$column1Width
                     );
                     if($columnData[0] == 2 AND isset($ele[3])) { // by convention, only formulizeInsertBreak element, "spanning both columns" has a [3] key, so we need to put in the span flag
-                        $columnData[0] = 1;
+                        $columns = 1;
                         $templateVariables['colSpan'] = 'colspan=2';
                     }
 				} else {
@@ -290,7 +294,9 @@ class formulize_themeForm extends XoopsThemeForm {
                         'elementClass'=>'',
                         'elementCaption'=>'',
                         'elementHelpText'=>'',
-                        'renderedElement'=>$ele
+                        'renderedElement'=>$ele,
+                        'column1Width'=>$column1Width,
+                        'column2Width'=>$column2Width
                     );
 				}
                 if(($columnData[0] != 1 AND $columnData[2] != 'auto' AND $columnData[1] != 'auto')
@@ -301,7 +307,6 @@ class formulize_themeForm extends XoopsThemeForm {
                 $template = $this->getTemplate('elementcontainero');
                 $ret .= $this->processTemplate($template, $templateVariables);
                 
-                $columns = $columnData[0];
                 $template = $this->getTemplate('elementtemplate'.$columns);
                 $ret .= $this->processTemplate($template, $templateVariables);
                 
