@@ -287,6 +287,8 @@ class formulize_themeForm extends XoopsThemeForm {
                     if($columnData[0] == 2 AND isset($ele[3])) { // by convention, only formulizeInsertBreak element, "spanning both columns" has a [3] key, so we need to put in the span flag
                         $columns = 1;
                         $templateVariables['colSpan'] = 'colspan=2';
+                    }
+                    if(isset($ele[3])) { // respect any declared class
                         $templateVariables['cellClass'] = $ele[3];
                     }
 				} else {
