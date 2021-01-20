@@ -85,7 +85,7 @@ class formulize_themeForm extends XoopsThemeForm {
      * @name    string  $name   name of the element being inserted, which we keep so we can then put the right id tag into its row
      */
     public function insertBreakFormulize($extra = '', $class= '', $name, $element_handle) {
-        $ibContents = $extra."<<||>>".$name."<<||>>".$element_handle."<<||>>ib"; // can only assign strings or real element objects with addElement, not arrays
+        $ibContents = $extra."<<||>>".$name."<<||>>".$element_handle."<<||>>".$class; // can only assign strings or real element objects with addElement, not arrays
         $this->addElement($ibContents);
     }
 
@@ -282,11 +282,12 @@ class formulize_themeForm extends XoopsThemeForm {
                         'elementHelpText'=>'',
                         'renderedElement'=>$ele[0],
                         'labelClass'=>"formulize-label-".$ele[2],
-                        'column1Width'=>$column1Width
+                        'column1Width'=>$column1Width,
                     );
                     if($columnData[0] == 2 AND isset($ele[3])) { // by convention, only formulizeInsertBreak element, "spanning both columns" has a [3] key, so we need to put in the span flag
                         $columns = 1;
                         $templateVariables['colSpan'] = 'colspan=2';
+                        $templateVariables['cellClass'] = $ele[3];
                     }
 				} else {
                     $templateVariables = array(
