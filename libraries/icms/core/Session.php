@@ -137,7 +137,6 @@ class icms_core_Session {
         // if we're coming back from new_user.php after having made an account, we need to pick it up here
         if($_SESSION['resouceMapKey']) {
             $externalUid = $_SESSION['resouceMapKey'];
-            unset($_SESSION['resouceMapKey']);
         }
 
 		if ($externalUid) {
@@ -151,6 +150,7 @@ class icms_core_Session {
 				$_SESSION['xoopsUserLastLogin'] = $icms_user->getVar('last_login');
 				$_SESSION['xoopsUserLanguage'] = $icms_user->language();
 				$_SESSION['icms_fprint'] = $instance->createFingerprint();
+                unset($_SESSION['resouceMapKey']);
 
 				$xoops_user_theme = $icms_user->getVar('theme');
 				if (in_array($xoops_user_theme, $icmsConfig['theme_set_allowed'])) {

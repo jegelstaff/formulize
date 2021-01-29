@@ -730,6 +730,7 @@ class FormulizeUser extends FormulizeObject {
         } else {
             $icmsConfigUser["stop_error"] = explode("<br />", $stop);
         }
+        print $icmsConfigUser["stop_error"];
         return false;
     }
     
