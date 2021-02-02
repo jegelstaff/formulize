@@ -84,7 +84,7 @@ class formulize_themeForm extends XoopsThemeForm {
      * @param   string  $class  CSS class name for <td> tag
      * @name    string  $name   name of the element being inserted, which we keep so we can then put the right id tag into its row
      */
-    public function insertBreakFormulize($extra = '', $class= '', $name, $element_handle) {
+    public function insertBreakFormulize($extra = '', $class= '', $name='', $element_handle='') {
         $ibContents = $extra."<<||>>".$name."<<||>>".$element_handle."<<||>>".$class; // can only assign strings or real element objects with addElement, not arrays
         $this->addElement($ibContents);
     }
@@ -1242,7 +1242,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 
 			if($titleOverride=="1" AND !$firstform) { // set onetooneTitle flag to 1 when function invoked to force drawing of the form title over again
 				$title = trans(getFormTitle($this_fid));
-				$form->insertBreak("<table><th>$title</th></table>","");
+				$form->insertBreakFormulize("<table><th>$title</th></table>","head");
 			}
 
 			// if this form has a parent, then determine the $parentLinks
@@ -1328,7 +1328,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 				$subUICols = drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry);
 				unset($subLinkUI);
 				if(isset($subUICols['single'])) {
-					$form->insertBreak($subUICols['single'], "even");
+					$form->insertBreakFormulize($subUICols['single'], "even");
 				} else {
 					$subLinkUI = new XoopsFormLabel($subUICols['c1'], $subUICols['c2']);
 					$form->addElement($subLinkUI);
@@ -2676,7 +2676,7 @@ function compileElements($fid, $form, $element_handler, $prevEntry, $entry, $go_
                 // 2 is the number of default blanks, 3 is whether to show the view button or not, 4 is whether to use captions as headings or not, 5 is override owner of entry, $owner is mainform entry owner, 6 is hide the add button, 7 is the conditions settings for the subform element, 8 is the setting for showing just a row or the full form, 9 is text for the add entries button
                 $subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry, $customCaption, $customElements, $ele_value[2], $ele_value[3], $ele_value[4], $ele_value[5], $owner, $ele_value[6], $ele_value[7], $this_ele_id, $ele_value[8], $ele_value[9], $i);
 				if(isset($subUICols['single'])) {
-					$form->insertBreak($subUICols['single'], "even");
+					$form->insertBreakFormulize($subUICols['single'], "even");
 				} else {
 					$subLinkUI = new XoopsFormLabel($subUICols['c1'], $subUICols['c2']);
 					$form->addElement($subLinkUI);
@@ -2701,7 +2701,7 @@ function compileElements($fid, $form, $element_handler, $prevEntry, $entry, $go_
                 $form->addElement($gridElement);
                 unset($gridElement); // because addElement received values by reference, we need to destroy it here, so if it is recreated in a subsequent iteration, we don't end up overwriting elements we've already assigned. Ack! Ugly!
 			} else {
-				$form->insertBreak($gridContents, "head"); // head is the css class of the cell
+				$form->insertBreakFormulize($gridContents, "head"); // head is the css class of the cell
 			}
 		} elseif($ele_type == "ib" OR is_array($form_ele)) {
 			// if it's a break, handle it differently...$form_ele may be an array if it's a non-interactive element such as a grid
