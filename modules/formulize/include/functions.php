@@ -7792,6 +7792,17 @@ function determineViewEntryScreen($screen, $fid) {
             return $formObject->defaultform;
         }
     }
+    if($screen AND is_a($screen, 'formulizeTemplateScreen')) {
+        if(isset($_POST['formulize_renderedEntryScreen']) AND is_numeric($_POST['formulize_renderedEntryScreen'])) {
+            return intval($_POST['formulize_renderedEntryScreen']);
+        } elseif($_POST['overridescreen'] AND is_numeric($_POST['overridescreen'])) {
+            return intval($_POST['overridescreen']);
+        } else {
+            $form_handler = xoops_getmodulehandler('forms', 'formulize');
+            $formObject = $form_handler->get($fid);
+            return $formObject->defaultform;
+        }
+    }
     return false;
 }
 
