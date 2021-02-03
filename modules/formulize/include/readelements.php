@@ -400,8 +400,9 @@ foreach($formulize_allWrittenEntryIds as $allWrittenFid=>$entries) {
     if(!$frid) {
         $formObject = $form_handler->get($allWrittenFid, true); // true causes all elements to be gathered, including ones that are not displayed to the users
         if(array_search("derived", $formObject->getVar('elementTypes'))) { // only bother if there is a derived value in the form
+            $updateFrid = $allWrittenFid == $overrideFid ? $overrideFrid : $frid;
 			foreach($entries as $thisEntry) {
-				formulize_updateDerivedValues($thisEntry, $allWrittenFid);
+				formulize_updateDerivedValues($thisEntry, $allWrittenFid, $updateFrid);
 			}
 		}
 	} else {
