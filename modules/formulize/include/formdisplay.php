@@ -64,6 +64,9 @@ function memory_usage() {
 }
 
 
+// set once, outside class and methods, so it is set once and then all forms and subforms can fill it up as they are called and rendered
+$GLOBALS['formulize_startHiddenElements'] = array();
+
 // NEED TO USE OUR OWN VERSION OF THE CLASS, TO GET ELEMENT NAMES IN THE TR TAGS FOR EACH ROW <-- that's how it started... now so much more
 class formulize_themeForm extends XoopsThemeForm {
     
@@ -148,7 +151,6 @@ class formulize_themeForm extends XoopsThemeForm {
         $template = $this->getTemplate('toptemplate');
         $ret .= $this->processTemplate($template, array('formTitle'=>$this->getTitle()));
 		$hidden = '';
-        $GLOBALS['formulize_startHiddenElements'] = array();
 		list($ret, $hidden) = $this->_drawElements($this->getElements(), $ret, $hidden);
         $template = $this->getTemplate('bottomtemplate');
         $ret .= $this->processTemplate($template);
