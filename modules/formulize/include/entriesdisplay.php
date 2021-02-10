@@ -4389,7 +4389,7 @@ function processCustomButton($caid, $thisCustomAction, $entry_id="", $entry="") 
 		$caCode = $allHTML;
 	} else {
 		$nameIdAddOn = $thisCustomAction['appearinline'] ? $entry_id : "";
-		$caCode = "<input type=button style=\"cursor: pointer;\" name=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" id=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" value=\"" . trans($thisCustomAction['buttontext']) . "\" onclick=\"javascript:customButtonProcess('$caid', '$entry_id', '".str_replace("'","\'",$thisCustomAction['popuptext'])."');\">\n";
+		$caCode = "<input type=button style=\"cursor: pointer;\" name=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" id=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" value=\"" . trans($thisCustomAction['buttontext']) . "\" onclick=\"javascript:customButtonProcess('$caid', '$entry_id', '".trans(str_replace("'","\'",$thisCustomAction['popuptext']))."');\">\n";
 	}
 
 	return array(0=>$caCode, 1=>$caElements, 2=>$caActions, 3=>$caValues, 4=>$thisCustomAction['messagetext'], 5=>$thisCustomAction['applyto'], 6=>$caPHP, 7=>$thisCustomAction['appearinline']);
