@@ -7050,7 +7050,7 @@ function formulize_parseSearchesIntoFilter($searches) {
 	$ORfilter = "";
 	$individualORSearches = array();
     $element_handler = xoops_getmodulehandler('elements','formulize');
-	global $xoopsUser;
+	global $xoopsUser, $xoopsConfig;
 	foreach($searches as $key => $master_one_search) { // $key is the element handle
         
 		// convert "between 2001-01-01 and 2002-02-02" to a normal date filter with two dates
@@ -7170,8 +7170,11 @@ function formulize_parseSearchesIntoFilter($searches) {
 				$searchgetkey = substr($one_search, 1, -1);
 
 				if (substr($searchgetkey, 0, 5) == "TODAY") {
-					$number = substr($searchgetkey, 6);
-					$one_search = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
+					$number = substr($searchgetkey, 5); // note -- includes the +/- sign
+                    $basetime = $number ? strtotime($number." day") : time();
+                    $serverTimeZone = $xoopsConfig['server_TZ'];
+                    $offset = $xoopsUser ? ($xoopsUser->getVar('timezone_offset') - $serverTimeZone) * 3600 : 0;
+					$one_search = date("Y-m-d",($basetime+$offset));
 				} elseif($searchgetkey == "USER") {
 					if($xoopsUser) {
                         $one_search = htmlspecialchars_decode($xoopsUser->getVar('uname'), ENT_QUOTES);
@@ -7279,7 +7282,8 @@ function formulize_parseSearchesIntoFilter($searches) {
 			}
 		}
 		$filter = $arrayFilter;
-	} 
+	}
+    
     return $filter;
     
 }
