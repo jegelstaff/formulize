@@ -191,8 +191,8 @@ class formulizeProvinceListElementHandler extends formulizeElementsHandler {
     // $value is the raw value that has been found in the database
     // $handle is the element handle for the field that we're retrieving this for
     // $entry_id is the entry id of the entry in the form that we're retrieving this for
-    function prepareDataForDataset($value, $handle, $entry_id) {	
-		$provinceList = $this->getProvinceList();		
+    function prepareDataForDataset($value, $handle="", $entry_id="") {	
+		$provinceList = formulizeProvinceListElementHandler::getProvinceList();		
         return $provinceList[$value];
     }
     

@@ -3436,33 +3436,33 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
                     continue;
                 } else {
                     $templateFileContents = file_get_contents(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/mail_template/".$templateFileName);
-                    if (strstr($templateFileContents, "{ELEMENT")) {
-                        // gather the data for this entry and make it available to the template, since it uses an element tag in the message
-                        // Only do this getData call if we don't already have data from the database. $notificationTemplateData[$entry][0] == "" will probably never be true in Formulize 3.0 and higher, but will evaluate as expected, with a warning about [0] being an invalid offset or something like that
-                        if ($notificationTemplateData[$entry][0] == "" OR $notificationTemplateData[$entry] == "") {
-                            include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-                            $notificationTemplateData[$entry] = getData("", $fid, $entry);
-                            // if the revision table is on for the form, then gather the data from the most revent revision for the entry
-                            if(!isset($data_handler)) {
-                                $data_handler = new formulizeDataHandler($fid);
-                            }
-                            // get the last revision we flagged (after saving, before updating derived values!)
-                            if($event == 'update_entry' AND $revisionEntry = $data_handler->getRevisionForEntry($entry, $GLOBALS['formulize_snapshotRevisions'][$fid][$entry])) {
-                                $notificationTemplateRevisionData[$entry] = $revisionEntry;
-                            }
-                        }
-                        // get all the element IDs for the current form
-                        $form_handler = xoops_getmodulehandler('forms', 'formulize');
-                        $formObject = $form_handler->get($fid);
-                        foreach ($formObject->getVar('elementHandles') as $elementHandle) {
-                            $extra_tags['ELEMENT'.strtoupper($elementHandle)] = trans(html_entity_decode(displayTogether($notificationTemplateData[$entry][0], $elementHandle, ", "), ENT_QUOTES));
-                            if($notificationTemplateRevisionData[$entry]) {
-                                $extra_tags['REVISION_ELEMENT_'.strtoupper($elementHandle)] = trans(html_entity_decode(displayTogether($notificationTemplateRevisionData[$entry][0], $elementHandle, ", "), ENT_QUOTES));
-                            }
-                            // for legacy compatibility, we provide both with and without _ keys in the extra tags array.
-                            $extra_tags['ELEMENT_'.strtoupper($elementHandle)] = trans($extra_tags['ELEMENT'.strtoupper($elementHandle)]);
-                        }
+                }
+            }
+            if (($templateFileContents AND strstr($templateFileContents, "{ELEMENT")) OR strstr($thiscon['not_cons_subject'], "{ELEMENT")) {
+                // gather the data for this entry and make it available to the template, since it uses an element tag in the message
+                // Only do this getData call if we don't already have data from the database. $notificationTemplateData[$entry][0] == "" will probably never be true in Formulize 3.0 and higher, but will evaluate as expected, with a warning about [0] being an invalid offset or something like that
+                if ($notificationTemplateData[$entry][0] == "" OR $notificationTemplateData[$entry] == "") {
+                    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
+                    $notificationTemplateData[$entry] = getData("", $fid, $entry);
+                    // if the revision table is on for the form, then gather the data from the most revent revision for the entry
+                    if(!isset($data_handler)) {
+                        $data_handler = new formulizeDataHandler($fid);
                     }
+                    // get the last revision we flagged (after saving, before updating derived values!)
+                    if($event == 'update_entry' AND $revisionEntry = $data_handler->getRevisionForEntry($entry, $GLOBALS['formulize_snapshotRevisions'][$fid][$entry])) {
+                        $notificationTemplateRevisionData[$entry] = $revisionEntry;
+                    }
+                }
+                // get all the element IDs for the current form
+                $form_handler = xoops_getmodulehandler('forms', 'formulize');
+                $formObject = $form_handler->get($fid);
+                foreach ($formObject->getVar('elementHandles') as $elementHandle) {
+                    $extra_tags['ELEMENT'.strtoupper($elementHandle)] = trans(html_entity_decode(displayTogether($notificationTemplateData[$entry][0], $elementHandle, ", "), ENT_QUOTES));
+                    if($notificationTemplateRevisionData[$entry]) {
+                        $extra_tags['REVISION_ELEMENT_'.strtoupper($elementHandle)] = trans(html_entity_decode(displayTogether($notificationTemplateRevisionData[$entry][0], $elementHandle, ", "), ENT_QUOTES));
+                    }
+                    // for legacy compatibility, we provide both with and without _ keys in the extra tags array.
+                    $extra_tags['ELEMENT_'.strtoupper($elementHandle)] = trans($extra_tags['ELEMENT'.strtoupper($elementHandle)]);
                 }
             }
             $uids_cust_con = array();
@@ -7786,6 +7786,17 @@ function determineViewEntryScreen($screen, $fid) {
             return intval($_POST['overridescreen']);
         } elseif($screen AND $screen->getVar('viewentryscreen') != 'none') {
             return intval($screen->getVar('viewentryscreen'));
+        } else {
+            $form_handler = xoops_getmodulehandler('forms', 'formulize');
+            $formObject = $form_handler->get($fid);
+            return $formObject->defaultform;
+        }
+    }
+    if($screen AND is_a($screen, 'formulizeTemplateScreen')) {
+        if(isset($_POST['formulize_renderedEntryScreen']) AND is_numeric($_POST['formulize_renderedEntryScreen'])) {
+            return intval($_POST['formulize_renderedEntryScreen']);
+        } elseif($_POST['overridescreen'] AND is_numeric($_POST['overridescreen'])) {
+            return intval($_POST['overridescreen']);
         } else {
             $form_handler = xoops_getmodulehandler('forms', 'formulize');
             $formObject = $form_handler->get($fid);
