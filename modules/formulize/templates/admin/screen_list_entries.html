@@ -171,7 +171,7 @@
 	$.each(response, function( index, value ) {
             $(".default_view_list").each(function() {
                 if ($(this).find("option[value='"+value[0]+"']").length == 0) {
-                    $(this).append($('<option>', { label : value[1], value : value[0] }).text(value[1]));
+                    $(this).append($('<option>', { label : value[1], value : value[0] }).text(value[1].replace('"','\"')));
 	  }
 	});
         });
@@ -203,7 +203,7 @@
   function getFormColumns(number) {
     <{foreach from=$content.advanceviewoptions key=index item=value}>
 	  $("#cols-"+number).append($('<option>', { 
-	    value: "<{$index}>" }).text("<{$value}>"));
+	    value: "<{$index}>" }).text("<{$value|replace:'"':'\"'}>"));
     <{/foreach}>
   }
   

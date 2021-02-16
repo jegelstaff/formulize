@@ -66,9 +66,12 @@ if($screens['type'] == 'multiPage') {
     $screen_handler = xoops_getmodulehandler('calendarScreen', 'formulize');
 }
 
+global $xoopsConfig;
 
 if($isNew) {
   $screen = $screen_handler->create();
+  $screen->setVar('theme', $xoopsConfig['theme_set']);
+  
   if($screens['type'] == 'multiPage') {
     $screen->setVar('pagetitles',serialize(array(0=>'New page')));
     $screen->setVar('pages', serialize(array(0=>array())));
