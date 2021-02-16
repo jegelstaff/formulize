@@ -556,12 +556,16 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
             // or 2. we are looking for a single entry in the main form, and it is not the same as an entry we just submitted
             // THIS MEANS WE CANNOT HAVE RECURSIVE ONE-TO-ONE CONNECTIONS!
             // Probably for the best? would there be some kind of silly looping going on there?
-            if($linkedFid == $fid AND (!$linkisparent[$id] OR (isset($_POST['ventry']) AND is_numeric($filter) AND $_POST['ventry'] != $filter))) {
-                global $xoopsUser;
-                if($xoopsUser AND $xoopsUser->getVar('uid')==1) {
-                    print "Ignoring $linkedFid when fid is $fid and linkisparent: ".$linkisparent[$id].' - ventry: '.$_POST['ventry']." - filter: $filter<br>";
+				$singleEntryFilterValue = formulize_filterHasSingleEntry($filter);
+				if($linkedFid == $fid AND (
+					!$linkisparent[$id] 
+					OR (!isset($_POST['ventry']) AND $singleEntryFilterValue)
+					OR (isset($_POST['ventry']) AND $singleEntryFilterValue AND $_POST['ventry'] != $singleEntryFilterValue)
+				)) {
+                    //print "Ignoring $linkedFid when fid is $fid and linkisparent: ".$linkisparent[$id].' - ventry: '.$_POST['ventry']." - filter: $filter<br>";
+                    continue;
                 }
-                continue;
+                
             }
             
 	       // validate that the join conditions are valid...either both must have a value, or neither must have a value (match on user id)...otherwise the join is not possible
@@ -963,6 +967,26 @@ function formulize_generateJoinSQL($linkOrdinal, $linkcommonvalue, $linkselfids,
     }
     
     return $newJoinText;
+}
+
+// this function checks a filter and returns the single entry id being isolated, if one is involved in the filter
+function formulize_filterHasSingleEntry($filter) {
+	// most complex filter is an array with 0 key as boolean for joining terms and 1 key as a filter string
+	// filter strings can have multiple comparisons separated by ][
+	// a single number as the comparison value, means isolate that entry, and that's what we're looking for in this function
+	if(!is_array($filter)) {
+		$filter = array(0=>'AND', 1=>$filter);
+	}
+	foreach($filter as $thisFilter) {
+		$filterDetails = $thisFilter[1];
+		$filterParts = explode('][',$filterDetails);
+		foreach($filterParts as $part) {
+			if(is_numeric($part)) {
+				return $part;
+			}
+		}
+	}
+	return false;
 }
 
 // get arrays of metadata about the links in a relationship
