@@ -331,9 +331,9 @@ class csstidy_optimise
         if(strlen($color) == 7)
         {
             $color_temp = strtolower($color);
-            if($color_temp{0} == '#' && $color_temp{1} == $color_temp{2} && $color_temp{3} == $color_temp{4} && $color_temp{5} == $color_temp{6})
+            if($color_temp[0] == '#' && $color_temp[1] == $color_temp[2] && $color_temp[3] == $color_temp[4] && $color_temp[5] == $color_temp[6])
             {
-                $color = '#'.$color{1}.$color{3}.$color{5};
+                $color = '#'.$color[1].$color[3].$color[5];
             }
         }
 
@@ -385,7 +385,7 @@ class csstidy_optimise
         for ($l = 0; $l < count($temp); $l++)
         {
             // continue if no numeric value
-            if (!(strlen($temp[$l]) > 0 && ( is_numeric($temp[$l]{0}) || $temp[$l]{0} == '+' || $temp[$l]{0} == '-' ) ))
+            if (!(strlen($temp[$l]) > 0 && ( is_numeric(substr($temp[$l],0,1)) || substr($temp[$l],0,1) == '+' || substr($temp[$l],0,1) == '-' ) ))
             {
                 continue;
             }
@@ -562,28 +562,28 @@ class csstidy_optimise
             switch($status)
             {
                 case 'st':
-                if($string{$i} == $sep && !csstidy::escaped($string,$i))
+                if($string[$i] == $sep && !csstidy::escaped($string,$i))
                 {
                     ++$num;
                 }
-                elseif($string{$i} == '"' || $string{$i} == '\'' || $string{$i} == '(' && !csstidy::escaped($string,$i))
+                elseif($string[$i] == '"' || $string[$i] == '\'' || $string[$i] == '(' && !csstidy::escaped($string,$i))
                 {
                     $status = 'str';
-                    $to = ($string{$i} == '(') ? ')' : $string{$i};
-                    (isset($output[$num])) ? $output[$num] .= $string{$i} : $output[$num] = $string{$i};
+                    $to = ($string[$i] == '(') ? ')' : $string[$i];
+                    (isset($output[$num])) ? $output[$num] .= $string[$i] : $output[$num] = $string[$i];
                 }
                 else
                 {
-                    (isset($output[$num])) ? $output[$num] .= $string{$i} : $output[$num] = $string{$i};
+                    (isset($output[$num])) ? $output[$num] .= $string[$i] : $output[$num] = $string[$i];
                 }
                 break;
 
                 case 'str':
-                if($string{$i} == $to && !csstidy::escaped($string,$i))
+                if($string[$i] == $to && !csstidy::escaped($string,$i))
                 {
                     $status = 'st';
                 }
-                (isset($output[$num])) ? $output[$num] .= $string{$i} : $output[$num] = $string{$i};
+                (isset($output[$num])) ? $output[$num] .= $string[$i] : $output[$num] = $string[$i];
                 break;
             }
         }
@@ -695,11 +695,11 @@ class csstidy_optimise
                 {
                     $return['background-origin'] .= $str_value[$i][$j].',';
                 }
-                elseif($str_value[$i][$j]{0} == '(')
+                elseif(substr($str_value[$i][$j],0,1) == '(')
                 {
                     $return['background-size'] .= substr($str_value[$i][$j],1,-1).',';
                 }
-                elseif(in_array($str_value[$i][$j],$pos,TRUE) || is_numeric($str_value[$i][$j]{0}) || $str_value[$i][$j]{0} === NULL)
+                elseif(in_array($str_value[$i][$j],$pos,TRUE) || is_numeric(substr($str_value[$i][$j],0,1)) || substr($str_value[$i][$j],0,1) === NULL)
                 {
                     $return['background-position'] .= $str_value[$i][$j];
                     if(!$have['pos']) $return['background-position'] .= ' '; else $return['background-position'].= ',';

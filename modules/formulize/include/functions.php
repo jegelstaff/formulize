@@ -596,6 +596,7 @@ function cutString($string, $maxlen) {
         $len = (mb_strlen($string) > $maxlen)
             ? mb_strripos(mb_substr($string, 0, $maxlen), ' ')
             : $maxlen;
+        $len = $len ? $len : $maxlen;
         $cutStr = mb_substr($string, 0, $len);
         return (mb_strlen($string) > $maxlen)
             ? $cutStr . '...'
@@ -1890,6 +1891,7 @@ function buildScope($currentView, $uid, $fid, $currentViewCanExpand = false) {
 
     // do this second last, just in case currentview =all was passed in but not valid and defaulted back to group
     if ($currentView == "group") {
+        
         if (!$hasGroupScope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid) AND !$currentViewCanExpand) {
             $currentView = "mine";
         } else {
@@ -3604,7 +3606,7 @@ function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $rei
         $data_handler = new formulizeDataHandler($fid);
         $value = $data_handler->getElementValueInEntry($entry, intval($thiscon['not_cons_elementuids']));
         if ($value) {
-            $uids_temp = explode("*=+*:", $value);
+            $uids_temp = explode("*=+*:", trim($value,"*=+*:"));
             $uids_conditions = array_merge((array)$uids_temp, $uids_conditions);
         }
         unset($uids_temp);
@@ -4597,7 +4599,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
     if($multi) { // create the hidden field that will get the value assigned for submission
         $defaultHiddenValue = (!$overrides OR (substr($overrides,0,5)=="ORSET" AND substr($overrides, -2) == "//")) ? $overrides : "ORSET$multiCounter=".$overrides."//";
         $filter = "<input type='hidden' name='$id' id='".$id."_hiddenMulti' value='".strip_tags(htmlspecialchars($defaultHiddenValue))."'>\n
-        <div style='float: left; padding-right: 1em;'>\n";
+        <div style='float: left; padding-right: 1em; padding-bottom: 1em;'>\n";
     } else { // start the actual dropdown selectbox
         $filter = "<SELECT name=\"$id\" id=\"$id\"";
         if ($name == "{listofentries}") {
@@ -4731,7 +4733,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
         foreach ($options as $option=>$option_value) {
             
             if($multi AND $counter > 0 AND ($counter+1) % 7 == 0) {
-                $filter .= "\n</div><div style='float: left; padding-right: 1em;'>\n";
+                $filter .= "\n</div><div style='float: left; padding-right: 1em; padding-bottom: 1em;'>\n";
             }
             
             $multiIdCounter++;
@@ -5612,17 +5614,25 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
         if($curlyBracketFormconditionsfilter) {
             $curlyBracketFormFrom = " INNER JOIN $curlyBracketFormFrom ON ($curlyBracketFormconditionsfilter $curlyBracketFormconditionsfilter_oom) ";
         } elseif($curlyBracketFormconditionsfilter_oom) {
-            // strip out the part of the oom filter that we cannot use in the WHERE clause -- AND MAYBE WE NEED TO DO THIS FOR THE NON-OOM FILTERS??
+            // strip out parts of the oom filter that we cannot use in the different clauses -- AND MAYBE WE NEED TO DO THIS FOR THE NON-OOM FILTERS??
             // IF THIS IS A SELF-REFERENCE, USE ONLY THE ENTRY ID PART IN THE on
             // OTHERWISE, USE ONLY THE NON-ENTRY ID PART
             // $nonLinkedCurlyBracketSelfReference is a global set in the building of the conditions...and our big assumption is that all { } references point to the same form, so if we detect that it has some circularity, then that needs to be the case across the board...seems brittle!
             $entryFilterPos = strpos($curlyBracketFormconditionsfilter_oom, 'AND curlybracketform.`entry_id`=');
+            $nextBracketPos = strpos($curlyBracketFormconditionsfilter_oom, ')', $entryFilterPos);
             if($nonLinkedCurlyBracketSelfReference) {
-                $curlyBracketFormFrom = " LEFT JOIN $curlyBracketFormFrom ON (".substr($curlyBracketFormconditionsfilter_oom, ($entryFilterPos+4)); // doesn't need a close bracket, because the $curlyBracketFormconditionsfilter_oom already has one
+                $curlyBracketFormFrom = " LEFT JOIN $curlyBracketFormFrom ON (".substr($curlyBracketFormconditionsfilter_oom, ($entryFilterPos+4), $nextBracketPos-$entryFilterPos-3); // grab everything up to the ) after the "entry_id =" part
             } else {
                 $curlyBracketFormFrom = " LEFT JOIN $curlyBracketFormFrom ON ($curlyBracketFormconditionsfilter_oom) ";
             }
-            $curlyBracketFormconditionsfilter_oom_WHERE = substr($curlyBracketFormconditionsfilter_oom, 0, $entryFilterPos).")"; // put back the final bracket which we will have cut off!
+            // strip out the part of the oom filter that we cannot use in the WHERE clause
+            $searchStartPos = 1;
+            $curlyBracketFormconditionsfilter_oom_WHERE = $curlyBracketFormconditionsfilter_oom;
+            while($entryFilterPos = strpos($curlyBracketFormconditionsfilter_oom_WHERE, 'AND curlybracketform.`entry_id`=', $searchStartPos)) {
+                $nextBracketPos = strpos($curlyBracketFormconditionsfilter_oom_WHERE, ')', $entryFilterPos);
+                $curlyBracketFormconditionsfilter_oom_WHERE = substr($curlyBracketFormconditionsfilter_oom_WHERE, 0, $entryFilterPos).substr($curlyBracketFormconditionsfilter_oom_WHERE, $nextBracketPos);
+                $searchStartPos = $nextBracketPos;
+            }
             if($conditionsfilter_oom) {
                 $conditionsfilter_oom .= " OR $curlyBracketFormconditionsfilter_oom_WHERE ";
             } else {
@@ -6062,7 +6072,13 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
         }
         if ("date" == $element_type) {
             $time_value = strtotime($v);
-            $v = (false === $time_value) ? "" : date(_SHORTDATESTRING, $time_value);
+            global $xoopsUser, $xoopsConfig;
+            $serverTimeZone = $xoopsConfig['server_TZ'];
+            $offset = $xoopsUser ? ($xoopsUser->getVar('timezone_offset') - $serverTimeZone) * 3600 : 0;
+            /*if($xoopsConfig['language'] == "french") {
+            	$return = setlocale("LC_TIME", "fr_FR.UTF8");
+            }*/
+            $v = (false === $time_value) ? "" : date(_SHORTDATESTRING, ($time_value)+$offset);
         }
         $output .= '<span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $handle, $textWidth, $thisEntryId)), $handle);
         if ($counter<$countOfValue) {
@@ -6107,7 +6123,9 @@ function formulize_renderTemplate($templatename, $templateVariables, $sid) {
         ${$name} = $value;
     }
 
-    include XOOPS_ROOT_PATH . "/modules/formulize/templates/screens/default/" . $sid . "/" . $templatename . ".php";
+    global $xoopsConfig;
+    $theme = $xoopsConfig['theme_set'];
+	include XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/" . $sid . "/" . $templatename . ".php";
 }
 
 
@@ -6493,7 +6511,7 @@ function parseUserAndToday($term, $element=null) {
         $term = str_replace('{USER}', $name, $term);
 	}
  	if (substr(trim($term,"{}"), 0, 5) == "TODAY") {
-		$number = substr(trim($term, "{}"), 6);
+		$number = substr(trim($term, "{}"), 5);
 		$term = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
 	}
   return $term;
@@ -7184,8 +7202,11 @@ function formulize_parseSearchesIntoFilter($searches) {
 				$searchgetkey = substr($one_search, 1, -1);
 
 				if (substr($searchgetkey, 0, 5) == "TODAY") {
-					$number = substr($searchgetkey, 6);
-					$one_search = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
+                    $number = substr($searchgetkey, 5); // note -- includes the +/- sign
+                    $basetime = $number ? strtotime($number." day") : time();
+                    $serverTimeZone = $xoopsConfig['server_TZ'];
+                    $offset = $xoopsUser ? ($xoopsUser->getVar('timezone_offset') - $serverTimeZone) * 3600 : 0;
+					$one_search = date("Y-m-d",($basetime+$offset));
 				} elseif($searchgetkey == "USER") {
 					if($xoopsUser) {
                         $one_search = htmlspecialchars_decode($xoopsUser->getVar('uname'), ENT_QUOTES);
@@ -7771,6 +7792,17 @@ function determineViewEntryScreen($screen, $fid) {
             return $formObject->defaultform;
         }
     }
+    if($screen AND is_a($screen, 'formulizeTemplateScreen')) {
+        if(isset($_POST['formulize_renderedEntryScreen']) AND is_numeric($_POST['formulize_renderedEntryScreen'])) {
+            return intval($_POST['formulize_renderedEntryScreen']);
+        } elseif($_POST['overridescreen'] AND is_numeric($_POST['overridescreen'])) {
+            return intval($_POST['overridescreen']);
+        } else {
+            $form_handler = xoops_getmodulehandler('forms', 'formulize');
+            $formObject = $form_handler->get($fid);
+            return $formObject->defaultform;
+        }
+    }
     return false;
 }
 
@@ -7816,3 +7848,21 @@ function checkForChrome() {
 }";
      
 }
+
+// THANKS TO https://stackoverflow.com/questions/2050859/copy-entire-contents-of-a-directory-to-another-using-php
+// AND gimmicklessgpt at gmail dot com found at https://www.php.net/manual/en/function.copy.php#91010
+function recurse_copy($src,$dst) { 
+    $dir = opendir($src);
+    if(!file_exists($dst)) { @mkdir($dst); }
+    while(false !== ( $file = readdir($dir)) ) { 
+        if (( $file != '.' ) && ( $file != '..' )) { 
+            if ( is_dir($src . '/' . $file) ) { 
+                recurse_copy($src . '/' . $file,$dst . '/' . $file); 
+            } 
+            else { 
+                copy($src . '/' . $file,$dst . '/' . $file); 
+            } 
+        } 
+    } 
+    closedir($dir); 
+} 

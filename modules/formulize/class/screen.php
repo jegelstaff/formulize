@@ -46,6 +46,7 @@ class formulizeScreen extends xoopsObject {
 		$this->initVar('type', XOBJ_DTYPE_TXTBOX, '', true, 100);
 		$this->initVar('useToken', XOBJ_DTYPE_INT);
         $this->initVar('anonNeedsPasscode', XOBJ_DTYPE_INT);
+        $this->initVar('theme', XOBJ_DTYPE_TXTBOX, '', true, 100);
 	}
 
     static function normalize_values($key, $value) {
@@ -89,28 +90,36 @@ class formulizeScreen extends xoopsObject {
     }
 
 
-    function getTemplate($templatename) {
+    function getTemplate($templatename, $theme="") {
+        if(!$theme) {
+            global $xoopsConfig;
+            $theme = $xoopsConfig['theme_set'];
+        }
         static $templates = array();
-        if (!isset($templates[$templatename])) {
+        if (!isset($templates[$theme][$templatename])) {
             // there is no template saved in memory, read it from the file
-            $pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$this->getVar('sid')."/".$templatename.".php";
+            $pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/".$this->getVar('sid')."/".$templatename.".php";
             if (file_exists($pathname)) {
-                $templates[$templatename] = file_get_contents($pathname);
+                $templates[$theme][$templatename] = file_get_contents($pathname);
             } else {
-                $templates[$templatename] = $this->getVar($templatename);
-                if (strlen($templates[$templatename]) > 0) {
+                $templates[$theme][$templatename] = htmlspecialchars_decode($this->getVar($templatename), ENT_QUOTES);
+                if (strlen($templates[$theme][$templatename]) > 0) {
                     // the template content is stored in the database, but not the cache file
                     // database may have been copied from another site, so write to cache file
-                    $this->writeTemplateFile(htmlspecialchars_decode($templates[$templatename], ENT_QUOTES), $templatename);
+                    // Or, user has switched themes, so we initialze the theme file based on the last loaded theme file that was written to DB
+                    $this->writeTemplateFile(htmlspecialchars_decode($templates[$theme][$templatename], ENT_QUOTES), $templatename, $theme);
                 }
             }
         }
-        return $templates[$templatename];
+        return $templates[$theme][$templatename];
     }
 
-
-    function writeTemplateFile($template_content, $template_name) {
-        $pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$this->getVar('sid')."/";
+    function writeTemplateFile($template_content, $template_name, $theme="") {
+        if(!$theme) {
+            global $xoopsConfig;
+            $theme = $xoopsConfig['theme_set'];
+        }
+        $pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/".$this->getVar('sid')."/";
         // check if folder exists, if not, make it.
         if (!is_dir($pathname)) {
             mkdir($pathname, 0777, true);
@@ -232,43 +241,9 @@ class formulizeScreenHandler {
 		return true;
 	}
 
-	// this function handles all the admin side ui for the common parts of the edit screen
-	function editForm($screen, $fid) {
-
-		// provide ui for title, ui for frid, hidden fid, hidden sid
-		include_once XOOPS_ROOT_PATH."/class/xoopsformloader.php";
-		$form = new XoopsThemeForm(_AM_FORMULIZE_SCREEN_FORM, "editscreenform", "editscreen.php");
-		$form->addElement(new xoopsFormHidden('fid', $fid));
-		$title = is_object($screen) ? $screen->getVar('title') : "";
-		$sid = is_object($screen) ? $screen->getVar('sid') : 0;
-		$frid = is_object($screen) ? $screen->getVar('frid') : 0;
-		$form->addElement(new xoopsFormHidden('sid', $sid));
-		$form->addElement(new xoopsFormHidden('oneditscreen', 1));
-		$form->addElement(new xoopsFormText(_AM_FORMULIZE_SCREEN_TITLE, 'title', 30, 255, $title));
-
-		// get the frameworks that this form is involved in
-		$framework_handler =& xoops_getmodulehandler('frameworks', 'formulize');
-		$frameworks = $framework_handler->getFrameworksByForm($fid);
-		$options[0] = _AM_FORMULIZE_USE_NO_FRAMEWORK;
-		foreach($frameworks as $thisFramework) {
-        		$options[$thisFramework->getVar('frid')] = $thisFramework->getVar('name');
-		}
-		$frameworkChoice = new xoopsFormSelect(_AM_FORMULIZE_SELECT_FRAMEWORK, 'frid', $frid, 1, false);
-		$frameworkChoice->setExtra("onchange='javascript:frameworkChange(window.document.editscreenform.frid)'"); // set a javascript event for this element in case parts of some screen forms change depending on the framework selected
-		$frameworkChoice->addOptionArray($options);
-		$form->addElement($frameworkChoice);
-    
-    // show the security token question -- added Jan 25 2008 -- jwe
-    $useTokenDefault = $screen->getVar('sid') ? $screen->getVar('useToken') : 1;
-    $securityQuestion = new xoopsFormRadioYN(_AM_FORMULIZE_SCREEN_SECURITY, 'useToken', $useTokenDefault);
-    $securityQuestion->setDescription(_AM_FORMULIZE_SCREEN_SECURITY_DESC);
-    $form->addElement($securityQuestion);
-		return $form;
-	}
-
 	// TO BE CALLED FROM WITHIN THE CHILD CLASS AND THEN RETURNS SCREEN OBJECT, WHICH WILL HAVE THE CORRECT sid IN PLACE NOW
 	function insert($screen) {
-		if (!is_subclass_of($screen, 'formulizeScreen')) {
+		if (!is_a($screen, 'formulizeScreen')) {
                  return false;
             }
              if (!$screen->cleanVars()) {
@@ -279,9 +254,9 @@ class formulizeScreenHandler {
              }
              if ($sid == 0) {
                  //$sid = $this->db->genId($this->db->prefix('formulize_screen').'_sid_seq'); // mysql compatiblity layer just returns 0 here
-                 $sql = sprintf("INSERT INTO %s (title, fid, frid, type, useToken, anonNeedsPasscode) VALUES (%s, %u, %u, %s, %u, %u)", $this->db->prefix('formulize_screen'), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $anonNeedsPasscode);
+                 $sql = sprintf("INSERT INTO %s (title, fid, frid, type, useToken, anonNeedsPasscode, theme) VALUES (%s, %u, %u, %s, %u, %u, %s)", $this->db->prefix('formulize_screen'), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $anonNeedsPasscode, $this->db->quoteString($theme));
              } else {
-                 $sql = sprintf("UPDATE %s SET title = %s, fid = %u, frid = %u, type = %s, useToken = %u, anonNeedsPasscode = %u WHERE sid = %u", $this->db->prefix('formulize_screen'), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $anonNeedsPasscode, $sid);
+                 $sql = sprintf("UPDATE %s SET title = %s, fid = %u, frid = %u, type = %s, useToken = %u, anonNeedsPasscode = %u, theme = %s WHERE sid = %u", $this->db->prefix('formulize_screen'), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $anonNeedsPasscode, $this->db->quoteString($theme), $sid);
              }
 		 $result = $this->db->query($sql);
              if (!$result) {
@@ -294,7 +269,7 @@ class formulizeScreenHandler {
 	}
 
     function writeTemplateToFile($text, $filename, $screen) {
-        return $screen->writeTemplateFile($text, $filename);
+        return $screen->writeTemplateFile($text, $filename, $screen->getVar('theme'));
     }
 
     // FINDS AND RETURNS A NEW TITLE FOR A CLONED SCREEN

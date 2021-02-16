@@ -175,4 +175,3 @@ if (!defined("XOOPS_MAINFILE_INCLUDED")) {
 		include XOOPS_ROOT_PATH."/include/common.php";
 	}
 }
-?>

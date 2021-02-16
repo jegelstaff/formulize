@@ -232,7 +232,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
                         print <<<EOF
 <script type='text/javascript'>
 $(document).ready(function() {
-    jQuery("<div id=\"formulize-entry-lock-message\"><i id=\"formulize-entry-lock-icon\" class=\"icon-lock\"></i><p>"+$label+"</p></div>").insertBefore("#formulize .xo-theme-form table");
+    jQuery("<div id=\"formulize-entry-lock-message\"><i id=\"formulize-entry-lock-icon\" class=\"icon-lock\"></i><p>"+$label+"</p></div>").insertBefore("#formulizeform");
 });
 </script>
 EOF;
@@ -377,6 +377,8 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 		if($filterTerms[$i] === "{BLANK}") {
 			$filterTerms[$i] = "";
 		}
+        
+        $filterTerms[$i] = parseUserAndToday($filterTerms[$i]);
         
         // convert { } element references to their API format version (prepValues function output), unless the filter element is creation_uid or mod_uid
         if(substr($filterTerms[$i],0,1) == "{" AND substr($filterTerms[$i],-1)=="}") {

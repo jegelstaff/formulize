@@ -1745,7 +1745,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 					}
 					unset($linkids);
 
-					$linkids = internalRecordIds($entry, $fid);
+					$linkids = internalRecordIds($entry, $mainFormHandle);
 
 					// draw in the margin column where the links and metadata goes
 					if($useViewEntryLinks OR $useCheckboxes != 2) {
@@ -1925,7 +1925,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 				if($entry != "") {
 
 					// Set up the variables for the link to the current entry, and the checkbox that can be used to select the current entry
-					$linkids = internalRecordIds($entry, $fid);
+					$linkids = internalRecordIds($entry, $mainFormHandle);
 					$entry_id = $linkids[0]; // make a nice way of referring to this for in the eval'd code
 					$form_id = $fid; // make a nice way of referring to this for in the eval'd code
 					if(!$settings['lockcontrols']) { //  AND !$loadview) { // -- loadview removed from this function sept 24 2005
@@ -1949,7 +1949,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 						}
 					} // end of IF NO LOCKCONTROLS
 
-					$ids = internalRecordIds($entry, $fid);
+					$ids = internalRecordIds($entry, $mainFormHandle);
 					foreach($inlineButtons as $caid=>$thisCustomAction) {
 						list($caCode) = processCustomButton($caid, $thisCustomAction, $ids[0], $entry); // only bother with the code, since we already processed any clicked button above
 						if($caCode) {
@@ -1962,7 +1962,9 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 						print "\n<input type=\"hidden\" name=\"hiddencolumn_".$linkids[0]."_$thisHiddenCol\" value=\"" . htmlspecialchars(display($entry, $thisHiddenCol)) . "\"></input>\n";
 					}
 
-					include XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$screen->getVar('sid')."/listtemplate.php";
+                    global $xoopsConfig;
+                    $theme = $xoopsConfig['theme_set'];
+					include XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/".$screen->getVar('sid')."/listtemplate.php";
 				}
 			}
 		}
@@ -3401,6 +3403,26 @@ if (typeof jQuery == 'undefined') {
 	head.appendChild(script);
 }
 
+var formulize_javascriptFileIncluded = new Array();
+
+function includeResource(filename, type) {
+   if(filename in formulize_javascriptFileIncluded == false) {
+     var head = document.getElementsByTagName('head')[0];
+     if(type == 'link') {
+       var resource = document.createElement("link");
+       resource.type = "text/css";
+       resource.rel = "stylesheet";
+       resource.href = filename;
+     } else if(type == 'script') {
+       var resource = document.createElement('script');
+       resource.type = 'text/javascript';
+       resource.src = filename;
+     }
+     head.appendChild(resource);
+     formulize_javascriptFileIncluded[filename] = true;
+   }
+} 
+
 <?php
 if($useXhr) {
 	print " initialize_formulize_xhr();\n";
@@ -4300,7 +4322,9 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 	if($thisTemplate != "") {
 
     // process the template and output results
-		include XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$screen->getVar('sid')."/".$type."template.php";
+		global $xoopsConfig;
+        $theme = $xoopsConfig['theme_set'];
+        include XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/".$screen->getVar('sid')."/".$type."template.php";
 
 		// if there are no page nav controls in either template the template, then
 		if($type == "top" AND !strstr($screen->getTemplate('toptemplate'), 'pageNavControls') AND (!strstr($screen->getTemplate('bottomtemplate'), 'pageNavControls'))) {
@@ -4766,6 +4790,12 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
         }
 		$data = getData($frid, $fid, $filter, "AND", $scope, $limitStart, $limitSize, $sort, $order, $forcequery);
 
+        // if we deleted entries and the current page is now empty, then shunt back 1 page
+        if(count($data)==0 AND $_POST['delconfirmed'] AND $limitStart > 0) {
+            $_POST['formulize_LOEPageStart'] = $_POST['formulize_LOEPageStart']-$formulize_LOEPageSize;
+            $data = getData($frid, $fid, $filter, "AND", $scope, ($limitStart-$formulize_LOEPageSize), $limitSize, $sort, $order, $forcequery);    
+        }
+        
     if($currentURL=="") { return array(0=>"", 1=>"", 2=>""); } //current URL should only be "" if this is called directly by the special formulize_getCalcs function
 
         // MASSIVELY DEPRECATED...
@@ -4803,7 +4833,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 
 	print "<div id=listofentries>\n";
 
-	print "<form name=controls id=controls action=$currentURL method=post onsubmit=\"javascript:showLoading();\">\n";
+	print "<form name=controls id=controls autocomplete='off' action=$currentURL method=post onsubmit=\"javascript:showLoading();\">\n";
 	if(isset($GLOBALS['xoopsSecurity'])) {
 		print $GLOBALS['xoopsSecurity']->getTokenHTML();
 	}

@@ -2743,8 +2743,8 @@ function setupAuthentication() {
 		//set credentials for Auth
 		$client->setAuthConfig($auth_creds);
 	}else{
-		//TODO fix so that if ther is no client secrets file then probably redirect to instructions on how to get that
-		print 'Google client_secrets.json file not found in this directory:  '.XOOPS_TRUST_PATH;
+		error_log('Google client_secrets.json file not found in this directory:  '.XOOPS_TRUST_PATH);
+        return false;
 	}
 
 	$client->setRedirectUri($redirect_uri);
