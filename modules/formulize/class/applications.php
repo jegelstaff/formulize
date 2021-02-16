@@ -161,7 +161,7 @@ global $xoopsDB;
 
 				$sql = 'SELECT links.screen FROM '.$xoopsDB->prefix("formulize_menu_links").' AS links ';
 				$sql .= ' LEFT JOIN '.$xoopsDB->prefix("formulize_menu_permissions").' AS perm ON links.menu_id = perm.menu_id ';
-				$sql .= ' WHERE  default_screen = 1'. $groupSQL . 'ORDER BY perm.group_id';
+				$sql .= ' WHERE  default_screen = 1'. $groupSQL . 'ORDER BY links.rank';
 
 				$res = $xoopsDB->query ( $sql ) or die('SQL Error !<br />'.$sql.'<br />'.$xoopsDB->error());
 

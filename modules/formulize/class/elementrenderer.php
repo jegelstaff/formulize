@@ -116,7 +116,7 @@ class formulizeElementRenderer{
 		}
 		
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
-		$formObject = $form_handler->get($id_form);
+		$formObject = $form_handler->get($id_form, true); // true includes all elements even if they're not displayed
 	
 		switch ($ele_type){
 			case 'derived':
@@ -190,7 +190,7 @@ class formulizeElementRenderer{
 				if($ele_value[9]) {
 					$eltname = $form_ele_id;
 					$eltcaption = $ele_caption;
-					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
+					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
 					$eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
 					$eltmsgUnique = empty($eltcaption) ? sprintf( _formulize_REQUIRED_UNIQUE, $eltname ) : sprintf( _formulize_REQUIRED_UNIQUE, $eltcaption );
 					if($this->_ele->getVar('ele_req')) { // need to manually handle required setting, since only one validation routine can run for an element, so we need to include required checking in this unique checking routine, if the user selected required too
@@ -221,7 +221,7 @@ class formulizeElementRenderer{
 				} elseif($this->_ele->getVar('ele_req') AND !$isDisabled) {
 					$eltname = $form_ele_id;
 					$eltcaption = $ele_caption;
-					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
+					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
 					$eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
 					$form_ele->customValidationCode[] = "if (myform.{$eltname}.value == \"\") { window.alert(\"{$eltmsg}\"); myform.{$eltname}.focus(); return false; }";
 				}
@@ -245,7 +245,7 @@ class formulizeElementRenderer{
 
 						$eltname = $form_ele_id;
 						$eltcaption = $ele_caption;
-						$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
+						$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
 						$eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
 						$form_ele->customValidationCode[] = "\n var FCKGetInstance = FCKeditorAPI.GetInstance('$form_ele_id');\n";
 						$form_ele->customValidationCode[] = "var getText = FCKGetInstance.EditorDocument.body.innerHTML; \n";
@@ -277,12 +277,14 @@ class formulizeElementRenderer{
 					$entry_id = $entry;
 					$entryData = $this->formulize_getCachedEntryData($id_form, $entry);
 					$creation_datetime = display($entryData, "creation_datetime");
+                    $entry = $entryData; // use this variable for the entry data so it is easily accessed in the eval'd code
 					$evalResult = eval($ele_value[0]);
 					if($evalResult === false) {
 						$ele_value[0] = _formulize_ERROR_IN_LEFTRIGHT;
 					} else {
 						$ele_value[0] = $value; // value is supposed to be the thing set in the eval'd code
 					}
+                    $entry = $entry_id; // revert this variable
 				}
 				$ele_value[0] = $this->formulize_replaceCurlyBracketVariables($ele_value[0], $entry, $id_form);
 				$form_ele = new XoopsFormLabel(
@@ -450,24 +452,25 @@ class formulizeElementRenderer{
 							$linked_column_count = count($linked_columns);
 							while($rowlinkedvaluesq = $xoopsDB->fetchRow($reslinkedvaluesq)) {
 								$linked_column_values = array();
-                                $foundSomething = false;
 								foreach (range(1, $linked_column_count) as $linked_column_index) {
-									if ($rowlinkedvaluesq[$linked_column_index] === "") {
-										$linked_column_values[] = "";
-									} else {
-                                        $foundSomething = true;
+                                    $linked_value = '';
+									if ($rowlinkedvaluesq[$linked_column_index] !== "") {
 										if ($sourceElementObject->isLinked) {
 											$linked_value = prepvalues($rowlinkedvaluesq[$linked_column_index], $linked_columns[$linked_column_index - 1], $rowlinkedvaluesq[0]);
-											$linked_column_values[] = $linked_value[0];
+											$linked_value = $linked_value[0];
 										} else {
-											$linked_column_values[] = stripslashes(strip_tags(trim($rowlinkedvaluesq[$linked_column_index])));
+                                            $linked_value = stripslashes(strip_tags(trim($rowlinkedvaluesq[$linked_column_index])));
 										}
 									}
+                                    if($linked_value != '' OR is_numeric($linked_value)) {
+                                        $linked_column_values[] = $linked_value;
+                                    }
 								}
-                                if(!$foundSomething) { continue; }// ignore empty values 
-                                $leoIndex = $ele_value['snapshot'] ? implode(" | ", $linked_column_values) : $rowlinkedvaluesq[0];
-								$linkedElementOptions[$leoIndex] = implode(" | ", $linked_column_values);
-							}
+                                if(count($linked_column_values)>0) {
+                                    $leoIndex = $ele_value['snapshot'] ? implode(" | ", $linked_column_values) : $rowlinkedvaluesq[0];
+                                    $linkedElementOptions[$leoIndex] = implode(" | ", $linked_column_values);
+                                }
+                            }
 						}
                         $linkedElementOptions = array_unique($linkedElementOptions); // remove duplicates 
 						$cachedSourceValuesQ[intval($ele_value['snapshot'])][$sourceValuesQ] = $linkedElementOptions;
@@ -743,7 +746,7 @@ class formulizeElementRenderer{
 				if($this->_ele->getVar('ele_req') AND !$isDisabled) {
 					$eltname = $form_ele_id;
 					$eltcaption = $ele_caption;
-					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
+					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
 					$eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
 					if($ele_value[8] == 1) {// Has been edited in order to not allow the user to submit a form when "No match found" or "Choose an Option" is selected from the quickselect box.
                         if($ele_value[1]) {
@@ -892,7 +895,7 @@ class formulizeElementRenderer{
 				if($this->_ele->getVar('ele_req') AND !$isDisabled) {
 					$eltname = $form_ele_id;
 					$eltcaption = $ele_caption;
-					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
+					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
 					$eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
 					$form_ele->customValidationCode[] = "selection = false;\n";
 					$form_ele->customValidationCode[] = "if(myform.{$eltname}.length) {\n";
@@ -925,7 +928,7 @@ class formulizeElementRenderer{
 				if($this->_ele->getVar('ele_req') AND !$isDisabled) {
 					$eltname = $form_ele_id;
 					$eltcaption = $ele_caption;
-					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
+					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
 					$eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
 					// parseInt() is used to determine if the element value contains a number
 					// Date.parse() would be better, except that it will fail for dd-mm-YYYY format, ie: 22-11-2013
@@ -1181,8 +1184,8 @@ class formulizeElementRenderer{
 	// gather an entry when required...this should really be abstracted out to the data handler class, which also needs a proper getter in a handler of its own, so we don't keep creating new instances of the data handler and it can store the cached info about entries that we want it to.
 	function formulize_getCachedEntryData($id_form, $entry) {
 		static $cachedEntryData = array();
-		if($entry === "new") {
-			return array();
+		if($entry === "new" OR !$entry) {
+            return array();
 		}
 		if(!isset($cachedEntryData[$id_form][$entry])) {
 			$cachedEntryData[$id_form][$entry] = getData("", $id_form, $entry);

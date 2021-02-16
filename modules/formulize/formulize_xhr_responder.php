@@ -339,11 +339,12 @@ function renderElement($elementObject, $entryId) {
             }
         } else {
             $form_ele = $deReturnValue[0];
-            if($elementObject->getVar('ele_req')) {
+            if($elementObject->getVar('ele_req') AND is_object($form_ele)) {
                 $form_ele->setRequired();
             }
             $isDisabled = $deReturnValue[1];
             // rendered HTML code below is taken from the formulize classes at the top of include/formdisplay.php
+            // NEEDS REFACTORING TO WORK WITH NEW TEMPLATE BASED FORM RENDERING!!!
             if($elementObject->getVar('ele_type') == "ib") {// if it's a break, handle it differently...
                 $class = ($form_ele[1] != '') ? " class='".$form_ele[1]."'" : '';
                 $columnData = formulize_themeForm::_getColumns($elementObject->getVar('ele_id'));

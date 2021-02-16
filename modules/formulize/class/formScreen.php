@@ -55,6 +55,7 @@ class formulizeFormScreen extends formulizeScreen {
     $this->initVar('displaycolumns', XOBJ_DTYPE_INT);
     $this->initVar("column1width", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
     $this->initVar("column2width", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
+    $this->initVar("displayType", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
 	}
     
     function elementIsPartOfScreen($elementObjectOrId) {
@@ -66,6 +67,17 @@ class formulizeFormScreen extends formulizeScreen {
         }
         return false;
     }
+    
+    // return the displayType setting, unless there is no element container template, then use table-row which matches the default templates
+    function getDisplayType() {
+        if($this->getTemplate('elementcontainero')) {
+            return $this->getVar('displayType');
+        } else {
+            return 'table-row';
+        }
+    }
+    
+
     
 }
 
@@ -100,8 +112,8 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 	    $screen->setVar('dobr', 0);
 		// note: conditions is not written to the DB yet, since we're not gathering that info from the UI	
 		if (!$update) {
-            $sql = sprintf("INSERT INTO %s (sid, donedest, savebuttontext, saveandleavebuttontext, printableviewbuttontext, alldonebuttontext, displayheading, reloadblank, formelements, elementdefaults, displaycolumns, column1width, column2width)
-                VALUES (%u, %s, %s, %s, %s, %s, %u, %u, %s, %s, %u, %s, %s)",
+            $sql = sprintf("INSERT INTO %s (sid, donedest, savebuttontext, saveandleavebuttontext, printableviewbuttontext, alldonebuttontext, displayheading, reloadblank, formelements, elementdefaults, displaycolumns, column1width, column2width, displayType)
+                VALUES (%u, %s, %s, %s, %s, %s, %u, %u, %s, %s, %u, %s, %s, %s)",
                 $this->db->prefix('formulize_screen_form'),
                 $screen->getVar('sid'),
                 $this->db->quoteString($screen->getVar('donedest')),
@@ -115,10 +127,11 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
                 $this->db->quoteString(serialize($screen->getVar('elementdefaults'))),
                 $screen->getVar('displaycolumns'),
                 $this->db->quoteString($screen->getVar('column1width')),
-                $this->db->quoteString($screen->getVar('column2width'))                
+                $this->db->quoteString($screen->getVar('column2width')),
+                $this->db->quoteString($screen->getVar('displayType'))
                 ); // need to use serialize because cleanvars not called on object, and that would transparently serialize arrays in the background. Ugh.
         } else {
-            $sql = sprintf("UPDATE %s SET donedest = %s, savebuttontext = %s, saveandleavebuttontext = %s, printableviewbuttontext = %s, alldonebuttontext = %s, displayheading = %u, reloadblank = %u, formelements = %s, elementdefaults = %s, displaycolumns = %u, column1width = %s, column2width = %s
+            $sql = sprintf("UPDATE %s SET donedest = %s, savebuttontext = %s, saveandleavebuttontext = %s, printableviewbuttontext = %s, alldonebuttontext = %s, displayheading = %u, reloadblank = %u, formelements = %s, elementdefaults = %s, displaycolumns = %u, column1width = %s, column2width = %s, displayType = %s
                 WHERE sid = %u",
                 $this->db->prefix('formulize_screen_form'),
                 $this->db->quoteString($screen->getVar('donedest')),
@@ -131,7 +144,8 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
                 $this->db->quoteString(serialize($screen->getVar('elementdefaults'))),
                 $screen->getVar('displaycolumns'),
                 $this->db->quoteString($screen->getVar('column1width')),
-                $this->db->quoteString($screen->getVar('column2width')),                
+                $this->db->quoteString($screen->getVar('column2width')),
+                $this->db->quoteString($screen->getVar('displayType')),
                 $screen->getVar('sid'));
         }
         $result = $this->db->query($sql);
@@ -139,6 +153,36 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
             print "Error: could not save the screen properly: ".$this->db->error()." for query: $sql";
             return false;
         }
+        
+        $success1 = true;
+        if(isset($_POST['toptemplate'])) {
+            $success1 = $this->writeTemplateToFile(trim($_POST['toptemplate']), 'toptemplate', $screen);
+        }
+        $success2 = true;
+        if(isset($_POST['elementtemplate1'])) {
+            $success2 = $this->writeTemplateToFile(trim($_POST['elementtemplate1']), 'elementtemplate1', $screen);
+        }
+        $success3 = true;
+        if(isset($_POST['elementtemplate2'])) {
+            $success3 = $this->writeTemplateToFile(trim($_POST['elementtemplate2']), 'elementtemplate2', $screen);
+        }
+        $success4 = true;
+        if(isset($_POST['bottomtemplate'])) {
+            $success4 = $this->writeTemplateToFile(trim($_POST['bottomtemplate']), 'bottomtemplate', $screen);
+        }
+        $success5 = true;
+        if(isset($_POST['elementcontainerc'])) {
+            $success3 = $this->writeTemplateToFile(trim($_POST['elementcontainerc']), 'elementcontainerc', $screen);
+        }
+        $success6 = true;
+        if(isset($_POST['elementcontainero'])) {
+            $success4 = $this->writeTemplateToFile(trim($_POST['elementcontainero']), 'elementcontainero', $screen);
+        }
+
+        if (!$success1 || !$success2 || !$success3 || !$success4 || !$success5 || !$success6) {
+            return false;
+        }
+        
         return $sid;
 	}
 

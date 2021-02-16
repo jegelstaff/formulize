@@ -240,6 +240,7 @@ CREATE TABLE `formulize_screen_form` (
   `displaycolumns` tinyint(1) NOT NULL default 2,
   `column1width` varchar(255) NULL default NULL,
   `column2width` varchar(255) NULL default NULL,
+  `displayType` varchar(255) NOT NULL default 'block',
   PRIMARY KEY (`formid`),
   INDEX i_sid (`sid`)
 ) ENGINE=MyISAM;
@@ -252,6 +253,7 @@ CREATE TABLE `formulize_screen` (
   `type` varchar(100) NOT NULL default '',
   `useToken` tinyint(1) NOT NULL,
   `anonNeedsPasscode` tinyint(1) NOT NULL,
+  `theme` varchar(100) NOT NULL default '',
   PRIMARY KEY  (`sid`)
 ) ENGINE=MyISAM;
 

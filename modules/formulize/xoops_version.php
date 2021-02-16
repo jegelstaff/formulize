@@ -670,6 +670,9 @@ $modversion['templates'][] = array(
 $modversion['templates'][] = array(
 	'file' => 'admin/alternate_fields_for_linked_elements.html',
     'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/screen_form_templates.html',
+	'description' => '');
     
 //	Module Configs
 // $xoopsModuleConfig['t_width']
