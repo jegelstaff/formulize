@@ -1166,6 +1166,7 @@ class formulizeElementRenderer{
                     $replacementTerm = display($entryData, $term, '', $entry);
 					// get the uitext value if necessary
 					$replacementTerm = formulize_swapUIText($replacementTerm, $elementObject->getVar('ele_uitext'));
+                    $replacementTerm = formulize_numberFormat($replacementTerm, $term);
                     $text = str_replace("{".$term."}",$replacementTerm,$text);
                     $lookAhead = strlen($replacementTerm); // move ahead the length of what we replaced
 				} else {
