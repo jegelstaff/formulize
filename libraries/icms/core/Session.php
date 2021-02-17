@@ -534,7 +534,6 @@ class icms_core_Session {
 	 * If we don't get it after 10 seconds, we go with whatever we have in the DB at that time and write a note to the error log.
 	 */
 	private function readSession($sess_id) {
-        global $sessiondets;
         $ticks = 0;
         while($ticks<11) {
             $ticks++;
@@ -542,19 +541,20 @@ class icms_core_Session {
                 icms::$xoopsDB->prefix('session'), icms::$xoopsDB->quoteString($sess_id));
             if (false != $result = icms::$xoopsDB->query($sql)) {
                 if (list($sess_data, $sess_ip, $sess_updated) = icms::$xoopsDB->fetchRow($result)) {
+					static $sessionLoaded = false;
                     // tried 10 times, still locked, go with what we got
                     if($ticks == 10 AND $sess_updated == 1) {
                         error_log('Formulize Standalone Error: After 10 seconds the session data was still locked by a prior request, so we\'re going with the current state of the session data anyway!
                             URI: '.str_replace("&amp;", "&", htmlSpecialChars(strip_tags($_SERVER['REQUEST_URI']))));
-                    // session data locked, wait a second and try again
-                    } elseif($sess_updated==1) {
+                    // session data locked, and we haven't already loaded a session in this PHP instantiation, wait a second and try again
+                    } elseif($sess_updated==1 AND !$sessionLoaded) {
                         sleep(1);
                         continue;
                     // got the session data, so mark updated time as "1" to indicate a request is in progress, and carry on.
                     } else {
                         $sql = sprintf('UPDATE %s SET sess_updated = 1 WHERE sess_id = %s',icms::$xoopsDB->prefix('session'),icms::$xoopsDB->quoteString($sess_id));
-                        $sessiondets .= $sql."<br>\n";
                         icms::$xoopsDB->queryF($sql);
+						$sessionLoaded = true;
                     }
                     if ($this->ipv6securityLevel > 1 && icms_core_DataFilter::checkVar($sess_ip, 'ip', 'ipv6')) {
                         /**
