@@ -566,7 +566,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
                     continue;
                 }
                 
-            }
+            
             
 	       // validate that the join conditions are valid...either both must have a value, or neither must have a value (match on user id)...otherwise the join is not possible
 	       if(($joinHandles[$linkselfids[$id]] AND $joinHandles[$linktargetids[$id]]) OR ($linkselfids[$id] == '' AND $linktargetids[$id] == '')) { 
