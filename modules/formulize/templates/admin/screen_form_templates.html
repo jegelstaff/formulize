@@ -75,7 +75,7 @@
 <{$content.elementcontainerc}></textarea>
             </fieldset>
         </div>
-        <div class='description'>This markup closes the element container above. If you opened a table row, you need to use a &lt;tr> here, for example.</div>
+        <div class='description'>The element container (closing) ends the element container started above.<br>If you opened a table row above and show each element in a table cell, you would need to use a &lt;/tr> here, for example.</div>
         
         <!--
             displayType not actually used yet. Might be relevant in more complex themes? The js for displaying conditional elements simply sets the display property in css to null, and the browser figures out what is appropriate, but that's sort of a hack and might not work in all cases.
@@ -85,8 +85,8 @@
                 <{html_options name="screens-displayType" options=$content.displayOptions selected=$content.displayType}>
             </fieldset>
         </div>
-        <div class='description'>When conditional elements are shown, the CSS display setting is set to this value.</div>
-        <br /> -->
+        <div class='description'>When conditional elements are shown, the CSS display setting is set to this value.</div>-->
+        <br />
         
         <div class="form-item">
             <fieldset>
