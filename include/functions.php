@@ -2713,10 +2713,11 @@ function icms_need_do_br($moduleName=false) {
  */
 
 function authenticationURL($needAuth) {
-    if(!$needAuth) { return ''; }
-    $client = setupAuthentication();
-    $client->setPrompt('select_account');
-    $authUrl = $client->createAuthUrl();
+	$authUrl = '';
+    if($needAuth AND $client = setupAuthentication()) {
+	    $client->setPrompt('select_account');
+	    $authUrl = $client->createAuthUrl();
+	}
     return $authUrl;
 }
 
