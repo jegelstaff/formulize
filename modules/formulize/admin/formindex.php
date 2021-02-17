@@ -563,8 +563,6 @@ function patch40() {
                 } elseif($key === "form_screen_multipage_showpagetitles" OR $key === "form_screen_multipage_showpageselector" OR $key === "form_screen_multipage_showpageindicator") {
                     print "Multipage form screen UI controls already added. result OK<br>";
                 } elseif($key === "screen_theme") {
-                    print $xoopsDB->error();
-                    print $thissql;
                     print "Theme setting for screens already added. result: OK<br>";
                 } elseif($key === "form_screen_displaytype") {    
                     print "Form screen element container display type already added. result: OK<br>";
@@ -826,18 +824,13 @@ function patch40() {
                 if (!file_exists($screenpathname.$handleArray['sid'])) {
                     $pathname = $screenpathname.$handleArray['sid']."/";
                     mkdir($pathname, 0777, true);
-
-                    if (!is_writable($pathname)) {
-                        chmod($pathname, 0777);
-                    }
-
-                    saveTemplate($handleArray['toptemplate'], $handleArray['sid'], "toptemplate");
-                    saveTemplate($handleArray['bottomtemplate'], $handleArray['sid'], "bottomtemplate");
-                    saveTemplate($handleArray['listtemplate'], $handleArray['sid'], "listtemplate");
-
-                } else {
-                    print "screen templates for screen ".$handleArray['sid']." already exist. result: OK<br>";
+				}
+				if (!is_writable($pathname)) {
+                    chmod($pathname, 0777);
                 }
+                saveTemplate($handleArray['toptemplate'], $handleArray['sid'], "toptemplate");
+                saveTemplate($handleArray['bottomtemplate'], $handleArray['sid'], "bottomtemplate");
+                saveTemplate($handleArray['listtemplate'], $handleArray['sid'], "listtemplate");
             }
         }
 
@@ -849,18 +842,13 @@ function patch40() {
                 if (!file_exists($screenpathname.$handleArray['sid'])) {
                     $pathname = $screenpathname.$handleArray['sid']."/";
                     mkdir($pathname, 0777, true);
-
-                    if (!is_writable($pathname)) {
-                        chmod($pathname, 0777);
-                    }
-
-                    saveTemplate($handleArray['toptemplate'], $handleArray['sid'], "toptemplate");
-                    saveTemplate($handleArray['bottomtemplate'], $handleArray['sid'], "bottomtemplate");
-                    saveTemplate($handleArray['elementtemplate'], $handleArray['sid'], "elementtemplate");
-                } else {
-                    print "screen templates for screen ".$handleArray['sid']." already exist. result: OK<br>";
-                }
-
+				}
+                if (!is_writable($pathname)) {
+					chmod($pathname, 0777);
+				}
+				saveTemplate($handleArray['toptemplate'], $handleArray['sid'], "toptemplate");
+				saveTemplate($handleArray['bottomtemplate'], $handleArray['sid'], "bottomtemplate");
+				saveTemplate($handleArray['elementtemplate'], $handleArray['sid'], "elementtemplate");
             }
         }
 
@@ -898,7 +886,7 @@ function emptyTemplateFixer($dir) {
 // Saves the given template to a template file on the disk
 function saveTemplate($template, $sid, $name) {
     global $xoopsConfig;
-    $filename = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/default/{$sid}/{$name}.php";
+    $filename = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/{$sid}/{$name}.php";
 
     $text = trim(html_entity_decode($template));
     if ($text AND substr($text, 0, 5) != "<?php") {
@@ -906,7 +894,9 @@ function saveTemplate($template, $sid, $name) {
         $text = "<?php\n" . $text;
     }
 
-    if (false === file_put_contents($filename, $text)) {
+	if(file_exists($filename)) {
+		print "$name file for screen $sid already exists. result: OK<br>";
+	} elseif (false === file_put_contents($filename, $text)) {
         print "Warning: could not save " . $name . ".php for screen " . $sid . ".<br>";
     } else {
         print "created templates/screens/".$xoopsConfig['theme_set']."/" . $sid . "/". $name . ".php. result: OK<br>";
