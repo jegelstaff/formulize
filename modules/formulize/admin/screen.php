@@ -539,7 +539,7 @@ $multipageTemplates['themes'] = icms_view_theme_Factory::getThemesList();
 $themeDefaultPath = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$screen->getVar('theme')."/default/".$settings['type']."/";
 $templates['seedtemplates'] = $themeDefaultPath;
 if(!file_exists($themeDefaultPath)) {
-    $templates['seedtemplates'] = str_replace($screen->getVar('theme'), '', $themeDefaultPath);    
+    $templates['seedtemplates'] = str_replace($screen->getVar('theme').'/default', 'default', $themeDefaultPath);    
 }
 
 // common values should be assigned to all tabs
