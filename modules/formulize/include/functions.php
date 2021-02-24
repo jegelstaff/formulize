@@ -2910,12 +2910,25 @@ function getTextboxDefault($ele_value, $form_id, $entry_id, $placeholder="") {
 }
 
 
-function getDateElementDefault($default_hint) {
+function getDateElementDefault($default_hint, $entry_id = false) {
     if($default_hint == "0000-00-00") { return ""; }
     if (preg_replace("/[^A-Z{}]/", "", $default_hint) === "{TODAY}") {
         $number = str_replace('+', '', preg_replace("/[^0-9+-]/", "", $default_hint));
         return mktime(0, 0, 0, date("m"), (date("d") + intval($number)), date("Y"));
     }
+	if(substr($default_hint, 0, 1) == '{' AND substr($default_hint, -1) == '}') {
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		$element_handle = substr($default_hint, 1, -1);
+		$default_hint = '';
+		if($elementObject = $element_handler->get($element_handle)) {
+			if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$element_handle])) {
+				$default_hint = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$element_handle];
+			} elseif($entry_id AND $entry_id != 'new') {
+				$dataHandler = new formulizeDataHandler($elementObject->getVar('id_form'));
+				$default_hint = $dataHandler->getElementValueInEntry($entry_id, $element_handle);
+			}
+		}
+	}
     return $default_hint ? strtotime($default_hint) : "";
 }
 
@@ -7720,7 +7733,7 @@ function getEntryDefaults($target_fid,$target_entry) {
         $defaultTextToWrite = getTextboxDefault($ele_value_for_default[0], $target_fid, $target_entry); // position 0 is default value for text boxes
         break;
       case "date":
-        $defaultTextToWrite = getDateElementDefault($ele_value_for_default[0]);
+        $defaultTextToWrite = getDateElementDefault($ele_value_for_default[0], $target_entry);
         if (false === $defaultTextToWrite) {
             $defaultTextToWrite = "";
         } else {

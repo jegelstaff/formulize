@@ -2808,7 +2808,7 @@ function compileElements($fid, $form, $element_handler, $prevEntry, $entry, $go_
 // $groups is deprecated and not used in this function any longer
 // $owner_groups is used when dealing with a usernames or fullnames selectbox
 // $element is the element object representing the element we're loading the previously saved value for
-function loadValue($prevEntry, $element, $ele_value, $owner_groups, $groups, $entry, $profileForm="") {
+function loadValue($prevEntry, $element, $ele_value, $owner_groups, $groups, $entry_id, $profileForm="") {
 
 	global $myts;
 	/*
@@ -2860,7 +2860,7 @@ function loadValue($prevEntry, $element, $ele_value, $owner_groups, $groups, $en
      				// if the handle was not found in the existing values for this entry, then return the ele_value, unless we're looking at an existing entry, and then we need to clear defaults first
                 // unless we're supposed to use the defaults when the element is blank
      				if(!is_numeric($key) AND $key=="") { 
-                    if($entry AND $element->getVar('ele_use_default_when_blank') == false) {
+                    if($entry_id AND $element->getVar('ele_use_default_when_blank') == false) {
                         // clear defaults if applicable/necessary...
      						switch($type) {
      							case "text":
@@ -2988,7 +2988,7 @@ function loadValue($prevEntry, $element, $ele_value, $owner_groups, $groups, $en
 								}
 							}
 						}							
-						if ($type == "radio" AND $entry != "new" AND ($value === "" OR is_null($value)) AND array_search(1, $ele_value)) { // for radio buttons, if we're looking at an entry, and we've got no value to load, but there is a default value for the radio buttons, then use that default value (it's normally impossible to unset the default value of a radio button, so we want to ensure it is used when rendering the element in these conditions)
+						if ($type == "radio" AND $entry_id != "new" AND ($value === "" OR is_null($value)) AND array_search(1, $ele_value)) { // for radio buttons, if we're looking at an entry, and we've got no value to load, but there is a default value for the radio buttons, then use that default value (it's normally impossible to unset the default value of a radio button, so we want to ensure it is used when rendering the element in these conditions)
 							$ele_value = $ele_value;
 						} elseif ($type != "select")
 						{
@@ -3015,7 +3015,9 @@ function loadValue($prevEntry, $element, $ele_value, $owner_groups, $groups, $en
 					}
 					break;
 				case "date":
-
+					if(!$value AND substr($ele_value[0],0,1) == '{' AND substr($ele_value[0],-1) == '}') {
+						$value = $ele_value[0];
+					}
 					$ele_value[0] = $value;
 
 					break;

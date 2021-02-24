@@ -917,7 +917,7 @@ class formulizeElementRenderer{
                     $form_ele = new XoopsFormTextDateSelect($ele_caption, $form_ele_id, 15, "");
                     $form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
                 } else {
-                    $form_ele = new XoopsFormTextDateSelect($ele_caption, $form_ele_id, 15, getDateElementDefault($ele_value[0]));
+                    $form_ele = new XoopsFormTextDateSelect($ele_caption, $form_ele_id, 15, getDateElementDefault($ele_value[0], $entry_id));
                     $form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
                 } // end of check to see if the default setting is for real
 				// added validation code - sept 5 2007 - jwe
