@@ -9,15 +9,15 @@
         </div>
     </fieldset>
     <fieldset>
-        <legend>Date Validation</legend>
-        <div class="description">
-            <p>Limit the range of dates accepted. When editing existing entries, the date range is relative to the time the original entry was created, not today's date.</p>
-        </div>
+        <legend>Date Validation (optional)</legend>
         <div class="form-item">
-            <p><input type="checkbox" id="validate-past-dates" name="elements-ele_value[date_limit_past]" <{ if isset($content.ele_value.date_limit_past) and $content.ele_value.date_limit_past }>checked <{ /if }>/> <label for="validate-past-dates">Allow dates in the past up to</label> <input type="text" id="date_past_days" name="elements-ele_value[date_past_days]" value="<{$content.ele_value.date_past_days}>" size="5" maxlength="5"/> days before the current date.</p>
-            <p><input type="checkbox" id="validate-future-dates" name="elements-ele_value[date_limit_future]" <{ if isset($content.ele_value.date_limit_future) and $content.ele_value.date_limit_future }>checked <{ /if }>/> <label for="validate-future-dates">Allow dates in the future up to</label> <input type="text" id="date_future_days" name="elements-ele_value[date_future_days]" value="<{$content.ele_value.date_future_days}>" size="5" maxlength="5"/> days after the current date.</p>
+            <p><label>The minimum/earliest date the user can choose is: </label> <input type="text" id="date_past_days" name="elements-ele_value[date_past_days]" value="<{$content.ele_value.date_past_days}>" size="15" /> </p>
+            <p><label>The maximum/latest date the user can choose is: </label> <input type="text" id="date_future_days" name="elements-ele_value[date_future_days]" value="<{$content.ele_value.date_future_days}>" size="15" /> </p>
         </div>
   </fieldset>
+	<div class="description">
+		<p>You can use literal dates: 2021-05-09 or dates relative to the current date: {TODAY+7} or references to another element in this form: {element_handle} <br>If you use a reference to another element, that element must contain a valid literal date.</p>
+	</div>
 </div>
 
 <script type='text/javascript'>
