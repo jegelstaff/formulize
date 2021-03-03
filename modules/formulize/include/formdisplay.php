@@ -3566,7 +3566,11 @@ jQuery.ajaxSetup({
 function loadSub(dialogObject) {
     dialogObject.empty();
     dialogObject.html('<div id="subentry-dialog-content"><center><?php print $workingMessageGif; ?></center></div>');
-    dialogObject.load('<?php print XOOPS_URL; ?>/modules/formulize/include/subformdisplay-elementsonly.php?fid='+dialogObject.data('fid')+'&entry_id='+dialogObject.data('next_entry_id')+'&subformElementId='+dialogObject.data('subformElementId'));
+    dialogObject.load('<?php print XOOPS_URL; ?>/modules/formulize/include/subformdisplay-elementsonly.php?fid='+dialogObject.data('fid')+'&entry_id='+dialogObject.data('next_entry_id')+'&subformElementId='+dialogObject.data('subformElementId'), function() {
+        jQuery(".ui-dialog-content").scrollTop(dialogObject.yposition);
+        if(typeof setDatePickerMinMaxValues === 'function') { setDatePickerMinMaxValues(); }
+    });
+}
 }
 
 function redrawSubRow(entry_id,subformElementId) {
@@ -3601,8 +3605,6 @@ function goSubModal(ent, fid, frid, mainformFid, mainformEntryId, subformElement
     subEntryDialog.data('subformElementId', subformElementId);
     subEntryDialog.data('yposition', modalScroll);
     subEntryDialog.dialog('open');
-    setTimeout(function() {jQuery(".ui-dialog-content").scrollTop(modalScroll);}, 1000 );
-    
 }
 
 function saveSub(reload) {
