@@ -43,10 +43,10 @@ class formulizeElementRenderer{
 	}
 
 	// function params modified to accept passing of $ele_value from index.php
-	// $entry added June 1 2006 as part of 'Other' option for radio buttons and checkboxes
+	// $entry added June 1 2006 as part of 'Other' option for radio buttons and checkboxes (now $entry_id)
     // $ele_value is the prepared ele_value that has had the existing value of the element loaded into it as if that were a default!
     // ele_value from the element object is unchanged
-	function constructElement($form_ele_id, $ele_value, $entry, $isDisabled=false, $screen=null, $validationOnly=false){
+	function constructElement($form_ele_id, $ele_value, $entry_id, $isDisabled=false, $screen=null, $validationOnly=false){
         global $xoopsDB;
         $wasDisabled = false; // yuck, see comment below when this is reassigned
 		if (strstr(getCurrentURL(),"printview.php")) {
@@ -59,7 +59,7 @@ class formulizeElementRenderer{
 		// $form_ele_id contains the ele_id of the current link select box, but we have to remove "ele_" from the front of it.
 		//print "form_ele_id: $form_ele_id<br>"; // debug code
 		if(strstr($form_ele_id, "de_")) { // display element uses a slightly different element name so it can be distinguished on subsequent page load from regular elements...THIS IS NOT TRUE/NECESSARY ANYMORE SINCE FORMULIZE 3, WHERE ALL ELEMENTS ARE DISPLAY ELEMENTS
-			$true_ele_id = str_replace("de_".$this->_ele->getVar('id_form')."_".$entry."_", "", $form_ele_id);
+			$true_ele_id = str_replace("de_".$this->_ele->getVar('id_form')."_".$entry_id."_", "", $form_ele_id);
 			$displayElementInEffect = true;
 		} else {
 			$true_ele_id = str_replace("ele_", "", $form_ele_id);
@@ -95,14 +95,14 @@ class formulizeElementRenderer{
 			$ele_caption = $htmlCaption;
 		}
 		
-		$ele_caption = $this->formulize_replaceCurlyBracketVariables($ele_caption, $entry, $id_form);
+		$ele_caption = $this->formulize_replaceCurlyBracketVariables($ele_caption, $entry_id, $id_form);
 		
 		// ele_desc added June 6 2006 -- jwe
 		$ele_desc = $this->_ele->getVar('ele_desc', "f"); // the f causes no stupid reformatting by the ICMS core to take place
 
 		// determine the entry owner
-		if($entry != "new") {
-					$owner = getEntryOwner($entry, $id_form);
+		if($entry_id != "new") {
+					$owner = getEntryOwner($entry_id, $id_form);
 		} else {
 					$owner = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 		}
@@ -111,7 +111,7 @@ class formulizeElementRenderer{
 		$previousEntryUI = "";
 		if($screen AND $ele_type != "derived") {
 			if($screen->getVar('paraentryform') > 0) {
-				$previousEntryUI = $this->formulize_setupPreviousEntryUI($screen, $true_ele_id, $ele_type, $owner, $displayElementInEffect, $entry, $this->_ele->getVar('ele_handle'), $this->_ele->getVar('id_form'));
+				$previousEntryUI = $this->formulize_setupPreviousEntryUI($screen, $true_ele_id, $ele_type, $owner, $displayElementInEffect, $entry_id, $this->_ele->getVar('ele_handle'), $this->_ele->getVar('id_form'));
 			}
 		}
 		
@@ -120,7 +120,7 @@ class formulizeElementRenderer{
 	
 		switch ($ele_type){
 			case 'derived':
-				if($entry != "new") {
+				if($entry_id != "new") {
 					$form_ele = new xoopsFormLabel($this->_ele->getVar('ele_caption'), $ele_value[5]); 
 					$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
 				} else {
@@ -137,8 +137,7 @@ class formulizeElementRenderer{
 				if(trim($ele_value[0]) == "") { $ele_value[0] = $ele_caption; }
 				if(strstr($ele_value[0], "\$value=") OR strstr($ele_value[0], "\$value =")) {
 					$form_id = $id_form;
-					$entry_id = $entry;
-					$entryData = $this->formulize_getCachedEntryData($id_form, $entry);
+					$entryData = $this->formulize_getCachedEntryData($id_form, $entry_id);
 					$creation_datetime = display($entryData, "creation_datetime");
 					$evalResult = eval($ele_value[0]);
 					if($evalResult === false) {
@@ -147,17 +146,17 @@ class formulizeElementRenderer{
 						$ele_value[0] = $value; // value is supposed to be the thing set in the eval'd code
 					}
 				}
-				$ele_value[0] = $this->formulize_replaceCurlyBracketVariables($ele_value[0], $entry, $id_form);
+				$ele_value[0] = $this->formulize_replaceCurlyBracketVariables($ele_value[0], $entry_id, $id_form);
 				$form_ele = $ele_value; // an array, item 0 is the contents of the break, item 1 is the class of the table cell (for when the form is table rendered)
 				break;
 			case 'text':
 				$ele_value[2] = stripslashes($ele_value[2]);
 //        $ele_value[2] = $myts->displayTarea($ele_value[2]); // commented by jwe 12/14/04 so that info displayed for viewing in a form box does not contain HTML formatting
 				
-				$ele_value[2] = getTextboxDefault($ele_value[2], $id_form, $entry); // don't pass placeholder, because we want to get the actual value in this case...we'll swap it in and use as placeholder later
+				$ele_value[2] = getTextboxDefault($ele_value[2], $id_form, $entry_id); // don't pass placeholder, because we want to get the actual value in this case...we'll swap it in and use as placeholder later
 				
 				//if placeholder value is set
-				if($ele_value[11] AND ($entry == 'new' OR $ele_value[2] === "")) { // always go straight to source for placeholder for new entries, or entries where there is no value
+				if($ele_value[11] AND ($entry_id == 'new' OR $ele_value[2] === "")) { // always go straight to source for placeholder for new entries, or entries where there is no value
                     $rawEleValue = $this->_ele->getVar('ele_value');
 					$placeholder = $rawEleValue[2];
 					$ele_value[2] = "";
@@ -210,7 +209,7 @@ class formulizeElementRenderer{
 					$form_ele->customValidationCode[] = "\nvar formulize_xhr_params = []\n";
 					$form_ele->customValidationCode[] = "formulize_xhr_params[0] = myform.{$eltname}.value;\n";
 					$form_ele->customValidationCode[] = "formulize_xhr_params[1] = ".$this->_ele->getVar('ele_id').";\n";
-					$xhr_entry_to_send = is_numeric($entry) ? $entry : "'".$entry."'";
+					$xhr_entry_to_send = is_numeric($entry_id) ? $entry_id : "'".$entry_id."'";
 					$form_ele->customValidationCode[] = "formulize_xhr_params[2] = ".$xhr_entry_to_send.";\n";
                     $form_ele->customValidationCode[] = "formulize_xhr_params[4] = leave;\n"; // will have been passed in to the main function and we need to preserve it after xhr is done
 					$form_ele->customValidationCode[] = "formulize_xhr_send('check_for_unique_value', formulize_xhr_params);\n";
@@ -231,7 +230,7 @@ class formulizeElementRenderer{
 			case 'textarea':
 				$ele_value[0] = stripslashes($ele_value[0]);
 //        $ele_value[0] = $myts->displayTarea($ele_value[0]); // commented by jwe 12/14/04 so that info displayed for viewing in a form box does not contain HTML formatting
-				$ele_value[0] = getTextboxDefault($ele_value[0], $id_form, $entry);
+				$ele_value[0] = getTextboxDefault($ele_value[0], $id_form, $entry_id);
 				if (!strstr(getCurrentURL(),"printview.php") AND !$isDisabled) { 				// nmc 2007.03.24 - added 
 					if(isset($ele_value['use_rich_text']) AND $ele_value['use_rich_text']) {
 						include_once XOOPS_ROOT_PATH."/class/xoopsform/formeditor.php";
@@ -274,19 +273,16 @@ class formulizeElementRenderer{
 			case 'areamodif':
 				if(strstr($ele_value[0], "\$value=") OR strstr($ele_value[0], "\$value =")) {
 					$form_id = $id_form;
-					$entry_id = $entry;
-					$entryData = $this->formulize_getCachedEntryData($id_form, $entry);
-					$creation_datetime = display($entryData, "creation_datetime");
-                    $entry = $entryData; // use this variable for the entry data so it is easily accessed in the eval'd code
+					$entry = $this->formulize_getCachedEntryData($id_form, $entry_id);
+					$creation_datetime = display($entry, "creation_datetime");
 					$evalResult = eval($ele_value[0]);
 					if($evalResult === false) {
 						$ele_value[0] = _formulize_ERROR_IN_LEFTRIGHT;
 					} else {
 						$ele_value[0] = $value; // value is supposed to be the thing set in the eval'd code
 					}
-                    $entry = $entry_id; // revert this variable
 				}
-				$ele_value[0] = $this->formulize_replaceCurlyBracketVariables($ele_value[0], $entry, $id_form);
+				$ele_value[0] = $this->formulize_replaceCurlyBracketVariables($ele_value[0], $entry_id, $id_form);
 				$form_ele = new XoopsFormLabel(
 					$ele_caption,
 					$ele_value[0]
@@ -324,7 +320,7 @@ class formulizeElementRenderer{
 					
 					$sourceFormObject = $form_handler->get($sourceFid);
 
-					list($conditionsfilter, $conditionsfilter_oom, $parentFormFrom) = buildConditionsFilterSQL($ele_value[5], $sourceFid, $entry, $owner, $formObject, "t1");
+					list($conditionsfilter, $conditionsfilter_oom, $parentFormFrom) = buildConditionsFilterSQL($ele_value[5], $sourceFid, $entry_id, $owner, $formObject, "t1");
 
 					// if there is a restriction in effect, then add some SQL to reject options that have already been selected ??
 					$restrictSQL = "";
@@ -334,21 +330,21 @@ class formulizeElementRenderer{
                                  
 						$restrictSQL = " AND (
 						NOT EXISTS (
-						SELECT 1 FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS t4 WHERE t4.`".$this->_ele->getVar('ele_handle')."` LIKE CONCAT( '%,', t1.`entry_id` , ',%' ) AND t4.entry_id != ".intval($entry);
+						SELECT 1 FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS t4 WHERE t4.`".$this->_ele->getVar('ele_handle')."` LIKE CONCAT( '%,', t1.`entry_id` , ',%' ) AND t4.entry_id != ".intval($entry_id);
 						} else {
                                                     $restrictSQL = " AND (
                                                     NOT EXISTS (
-                                                    SELECT 1 FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS t4 WHERE t4.`".$this->_ele->getVar('ele_handle')."` = t1.`entry_id` AND t4.entry_id != ".intval($entry);
+                                                    SELECT 1 FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS t4 WHERE t4.`".$this->_ele->getVar('ele_handle')."` = t1.`entry_id` AND t4.entry_id != ".intval($entry_id);
                                                     $restrictSQL .= $this->addEntryRestrictionSQL($ele_value[9], $id_form, $groups); // pass in the flag about restriction scope, and the form id, and the groups
                                                     $restrictSQL .= " ) OR EXISTS (
-                                                    SELECT 1 FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS t4 WHERE t4.`".$this->_ele->getVar('ele_handle')."` = t1.`entry_id` AND t4.entry_id = ".intval($entry);
+                                                    SELECT 1 FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS t4 WHERE t4.`".$this->_ele->getVar('ele_handle')."` = t1.`entry_id` AND t4.entry_id = ".intval($entry_id);
 
                                                 }
 						
 						
 						$restrictSQL .= $this->addEntryRestrictionSQL($ele_value[9], $id_form, $groups); // pass in the flag about restriction scope, and the form id, and the groups
 						$restrictSQL .= " ) OR EXISTS (
-						SELECT 1 FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS t4 WHERE t4.`".$this->_ele->getVar('ele_handle')."` LIKE CONCAT( '%,', t1.`entry_id` , ',%' ) AND t4.entry_id = ".intval($entry);
+						SELECT 1 FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS t4 WHERE t4.`".$this->_ele->getVar('ele_handle')."` LIKE CONCAT( '%,', t1.`entry_id` , ',%' ) AND t4.entry_id = ".intval($entry_id);
 						$restrictSQL .= $this->addEntryRestrictionSQL($ele_value[9], $id_form, $groups);
 						$restrictSQL .= ") )";
 					}
@@ -390,7 +386,7 @@ class formulizeElementRenderer{
                     $directLimit = '';
                     if(isset($ele_value['optionsLimitByElement']) AND is_numeric($ele_value['optionsLimitByElement'])) {
                         if($optionsLimitByElement_ElementObject = $element_handler->get($ele_value['optionsLimitByElement'])) {
-                            list($optionsLimitFilter, $optionsLimitFilter_oom, $optionsLimitFilter_parentFormFrom) = buildConditionsFilterSQL($ele_value['optionsLimitByElementFilter'], $optionsLimitByElement_ElementObject->getVar('id_form'), $entry, $owner, $formObject, "olf");
+                            list($optionsLimitFilter, $optionsLimitFilter_oom, $optionsLimitFilter_parentFormFrom) = buildConditionsFilterSQL($ele_value['optionsLimitByElementFilter'], $optionsLimitByElement_ElementObject->getVar('id_form'), $entry_id, $owner, $formObject, "olf");
                             $optionsLimitFilterFormObject = $form_handler->get($optionsLimitByElement_ElementObject->getVar('id_form'));
                             $sql = "SELECT ".$optionsLimitByElement_ElementObject->getVar('ele_handle')." FROM ".$xoopsDB->prefix('formulize_'.$optionsLimitFilterFormObject->getVar('form_handle'))." as olf $optionsLimitFilter_parentFormFrom WHERE 1 $optionsLimitFilter $optionsLimitFilter_oom";
                             if($res = $xoopsDB->query($sql)) {
@@ -423,7 +419,7 @@ class formulizeElementRenderer{
 						// set the default selections, based on the entry_ids that have been selected as the defaults, if applicable
 						$hasNoValues = count($sourceEntryIds) == 0 ? true : false;
 						$useDefaultsWhenEntryHasNoValue = $ele_value[14];
-						if(($entry == "new" OR ($useDefaultsWhenEntryHasNoValue AND $hasNoValues)) AND ((is_array($ele_value[13]) AND count($ele_value[13]) > 0) OR $ele_value[13])) {
+						if(($entry_id == "new" OR ($useDefaultsWhenEntryHasNoValue AND $hasNoValues)) AND ((is_array($ele_value[13]) AND count($ele_value[13]) > 0) OR $ele_value[13])) {
 							$defaultSelected = $ele_value[13];
 						} else {
 							$defaultSelected = "";
@@ -616,7 +612,7 @@ class formulizeElementRenderer{
                             $directLimitUserIds = false;
                             if(isset($ele_value['optionsLimitByElement']) AND is_numeric($ele_value['optionsLimitByElement'])) {
                                 if($optionsLimitByElement_ElementObject = $element_handler->get($ele_value['optionsLimitByElement'])) {
-                                    list($optionsLimitFilter, $optionsLimitFilter_oom, $optionsLimitFilter_parentFormFrom) = buildConditionsFilterSQL($ele_value['optionsLimitByElementFilter'], $optionsLimitByElement_ElementObject->getVar('id_form'), $entry, $owner, $formObject, "olf");
+                                    list($optionsLimitFilter, $optionsLimitFilter_oom, $optionsLimitFilter_parentFormFrom) = buildConditionsFilterSQL($ele_value['optionsLimitByElementFilter'], $optionsLimitByElement_ElementObject->getVar('id_form'), $entry_id, $owner, $formObject, "olf");
                                     $optionsLimitFilterFormObject = $form_handler->get($optionsLimitByElement_ElementObject->getVar('id_form'));
                                     $sql = "SELECT ".$optionsLimitByElement_ElementObject->getVar('ele_handle')." FROM ".$xoopsDB->prefix('formulize_'.$optionsLimitFilterFormObject->getVar('form_handle'))." as olf $optionsLimitFilter_parentFormFrom WHERE 1 $optionsLimitFilter $optionsLimitFilter_oom";
                                     if($res = $xoopsDB->query($sql)) {
@@ -811,7 +807,7 @@ class formulizeElementRenderer{
 						$counter = 0;
 						while( $o = each($options) ){
 							$o = formulize_swapUIText($o, $this->_ele->getVar('ele_uitext'));
-							$other = $this->optOther($o['value'], $form_ele_id, $entry, $counter, false, $isDisabled);
+							$other = $this->optOther($o['value'], $form_ele_id, $entry_id, $counter, false, $isDisabled);
 							if( $other != false ){
 								$form_ele1->addOption($o['key'], _formulize_OPT_OTHER.$other);
 								if($o['key'] == $selected) {
@@ -844,7 +840,7 @@ class formulizeElementRenderer{
 								$form_ele_id,
 								$selected
 							);
-							$other = $this->optOther($o['value'], $form_ele_id, $entry, $counter, false, $isDisabled);
+							$other = $this->optOther($o['value'], $form_ele_id, $entry_id, $counter, false, $isDisabled);
 							if( $other != false ){
 								$t->addOption($o['key'], _formulize_OPT_OTHER."</label><label>$other"); // epic hack to terminate radio button's label so it doesn't include the clickable 'other' box!!
 								if($o['key'] == $selected) {
@@ -921,7 +917,7 @@ class formulizeElementRenderer{
                     $form_ele = new XoopsFormTextDateSelect($ele_caption, $form_ele_id, 15, "");
                     $form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
                 } else {
-                    $form_ele = new XoopsFormTextDateSelect($ele_caption, $form_ele_id, 15, getDateElementDefault($ele_value[0]));
+                    $form_ele = new XoopsFormTextDateSelect($ele_caption, $form_ele_id, 15, getDateElementDefault($ele_value[0], $entry_id));
                     $form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
                 } // end of check to see if the default setting is for real
 				// added validation code - sept 5 2007 - jwe
@@ -935,23 +931,15 @@ class formulizeElementRenderer{
 					$form_ele->customValidationCode[] = "\nif (isNaN(parseInt(myform.{$eltname}.value))) {\n window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n }\n";
 				}
                 if (!$isDisabled) {
-                    $limit_past = (isset($ele_value["date_limit_past"]) and $ele_value["date_limit_past"] != "");
-                    $limit_future = (isset($ele_value["date_limit_future"]) and $ele_value["date_limit_future"] != "");
+                    $limit_past = (isset($ele_value["date_past_days"]) and $ele_value["date_past_days"] != "");
+                    $limit_future = (isset($ele_value["date_future_days"]) and $ele_value["date_future_days"] != "");
                     if ($limit_past or $limit_future) {
-                        $reference_date = time();
-                        if ("new" != $entry) {
-                            $entryData = $this->formulize_getCachedEntryData($id_form, $entry);
-                            $reference_date = strtotime(display($entryData, "creation_date"));
-                        }
                         if ($limit_past) {
-                            $form_ele->setExtra(" min-date='".
-                                date("Y-m-d", strtotime("-".max(0, intval($ele_value["date_past_days"]))." days", $reference_date))."' ");
+                            $form_ele->setExtra(" min-date='".date('Y-m-d', getDateElementDefault($ele_value["date_past_days"], $entry_id))."' ");
                         }
                         if ($limit_future) {
-                            $form_ele->setExtra(" max-date='".
-                                date("Y-m-d", strtotime("+".max(0, intval($ele_value["date_future_days"]))." days", $reference_date))."' ");
+                            $form_ele->setExtra(" max-date='".date('Y-m-d', getDateElementDefault($ele_value["date_future_days"], $entry_id))."' ");
                         }
-
                         $form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;check_date_limits('$form_ele_id');\" onclick=\"javascript:check_date_limits('$form_ele_id');\" onblur=\"javascript:check_date_limits('$form_ele_id');\" jquerytag=\"$form_ele_id\" ");
                     } else {
                         $form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
@@ -1014,11 +1002,11 @@ class formulizeElementRenderer{
 			default:
 				if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
 					$elementTypeHandler = xoops_getmodulehandler($ele_type."Element", "formulize");
-					$form_ele = $elementTypeHandler->render($ele_value, $ele_caption, $form_ele_id, $isDisabled, $this->_ele, $entry, $screen, $owner); // $ele_value as passed in here, $caption, name that we use for the element in the markup, flag for whether it's disabled or not, element object, entry id number that this element belongs to, $screen is the screen object that was passed in, if any
+					$form_ele = $elementTypeHandler->render($ele_value, $ele_caption, $form_ele_id, $isDisabled, $this->_ele, $entry_id, $screen, $owner); // $ele_value as passed in here, $caption, name that we use for the element in the markup, flag for whether it's disabled or not, element object, entry id number that this element belongs to, $screen is the screen object that was passed in, if any
 					// if form_ele is an array, then we want to treat it the same as an "insertbreak" element, ie: it's not a real form element object
 					if(is_object($form_ele)) {
     					if(!$isDisabled AND ($this->_ele->getVar('ele_req') OR $this->_ele->alwaysValidateInputs) AND $this->_ele->hasData) { // if it's not disabled, and either a declared required element according to the webmaster, or the element type itself always forces validation...
-    						$form_ele->customValidationCode = $elementTypeHandler->generateValidationCode($ele_caption, $form_ele_id, $this->_ele, $entry);
+    						$form_ele->customValidationCode = $elementTypeHandler->generateValidationCode($ele_caption, $form_ele_id, $this->_ele, $entry_id);
     					}
     					$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
                         $wasDisabled = $isDisabled; // Ack!! see spaghetti code comments with $wasDisabled elsewhere
@@ -1108,7 +1096,7 @@ class formulizeElementRenderer{
 
 	// THIS FUNCTION COPIED FROM LIASE 1.26, onchange control added
 	// JWE -- JUNE 1 2006
-	function optOther($s='', $id, $entry, $counter, $checkbox=false, $isDisabled=false){
+	function optOther($s='', $id, $entry_id, $counter, $checkbox=false, $isDisabled=false){
         static $blankSubformCounters = array();
 		global $xoopsModuleConfig, $xoopsDB;
 		if( !preg_match('/\{OTHER\|+[0-9]+\}/', $s) ){
@@ -1128,8 +1116,8 @@ class formulizeElementRenderer{
 		
 		// gather the current value if there is one
 		$other_text = "";
-		if(is_numeric($entry)) {
-			$otherq = q("SELECT other_text FROM " . $xoopsDB->prefix("formulize_other") . " WHERE id_req='$entry' AND ele_id='$ele_id' LIMIT 0,1");
+		if(is_numeric($entry_id)) {
+			$otherq = q("SELECT other_text FROM " . $xoopsDB->prefix("formulize_other") . " WHERE id_req='$entry_id' AND ele_id='$ele_id' LIMIT 0,1");
 			$other_text = $otherq[0]['other_text'];
 		}
 		if(strstr($_SERVER['PHP_SELF'], "formulize/printview.php") OR $isDisabled) {
@@ -1137,12 +1125,12 @@ class formulizeElementRenderer{
 		}
 		$s = explode('|', preg_replace('/[\{\}]/', '', $s));
 		$len = !empty($s[1]) ? $s[1] : $xoopsModuleConfig['t_width'];
-        if($entry == "new") {
+        if($entry_id == "new") {
             $blankSubformCounters[$ele_id] = isset($blankSubformCounters[$ele_id]) ? $blankSubformCounters[$ele_id] + 1 : 0;
             $blankSubformCounter = $blankSubformCounters[$ele_id];
-            $otherKey = 'ele_'.$ele_id.'_'.$entry.'_'.$blankSubformCounter;
+            $otherKey = 'ele_'.$ele_id.'_'.$entry_id.'_'.$blankSubformCounter;
         } else {
-            $otherKey = 'ele_'.$ele_id.'_'.$entry;
+            $otherKey = 'ele_'.$ele_id.'_'.$entry_id;
         }
 		$box = new XoopsFormText('', 'other['.$otherKey.']', $len, 255, $other_text);
 		if($checkbox) {
@@ -1154,9 +1142,9 @@ class formulizeElementRenderer{
 	}
 
   // replace { } terms with data handle values from the current entry, if any exist
-	function formulize_replaceCurlyBracketVariables($text, $entry, $id_form) {
+	function formulize_replaceCurlyBracketVariables($text, $entry_id, $id_form) {
 		if(strstr($text, "}") AND strstr($text, "{")) {
-			$entryData = $this->formulize_getCachedEntryData($id_form, $entry);
+			$entryData = $this->formulize_getCachedEntryData($id_form, $entry_id);
             $element_handler = xoops_getmodulehandler('elements', 'formulize');
 			$bracketPos = -1;
 			$start = true; // flag used to force the loop to execute, even if the 0th position has the {
@@ -1166,7 +1154,7 @@ class formulizeElementRenderer{
 				$term = substr($text, $bracketPos+1, $endBracketPos-$bracketPos-1);
                 $elementObject = $element_handler->get($term);
                 if($elementObject) {
-                    $replacementTerm = display($entryData, $term, '', $entry);
+                    $replacementTerm = display($entryData, $term, '', $entry_id);
 					// get the uitext value if necessary
 					$replacementTerm = formulize_swapUIText($replacementTerm, $elementObject->getVar('ele_uitext'));
                     $replacementTerm = formulize_numberFormat($replacementTerm, $term);
@@ -1182,15 +1170,15 @@ class formulizeElementRenderer{
 	}
 
 	// gather an entry when required...this should really be abstracted out to the data handler class, which also needs a proper getter in a handler of its own, so we don't keep creating new instances of the data handler and it can store the cached info about entries that we want it to.
-	function formulize_getCachedEntryData($id_form, $entry) {
+	function formulize_getCachedEntryData($id_form, $entry_id) {
 		static $cachedEntryData = array();
-		if($entry === "new" OR !$entry) {
+		if($entry_id === "new" OR !$entry_id) {
             return array();
 		}
-		if(!isset($cachedEntryData[$id_form][$entry])) {
-			$cachedEntryData[$id_form][$entry] = getData("", $id_form, $entry);
+		if(!isset($cachedEntryData[$id_form][$entry_id])) {
+			$cachedEntryData[$id_form][$entry_id] = getData("", $id_form, $entry_id);
 		}
-		return $cachedEntryData[$id_form][$entry][0];
+		return $cachedEntryData[$id_form][$entry_id][0];
 	}
 
 	function formulize_renderQuickSelect($form_ele_id, $cachedLinkedOptionsFilename, $default_value='', $default_value_user='none', $maxLength=30, $validationOnly=false, $multiple = 0) {
@@ -1395,7 +1383,7 @@ if($multiple ){
 	// screen is the screen object with the data we need (form id with previous entries and rule for lining them up with current form)
 	// element_id is the ID of the element we're drawing (add ele_ to the front to make the javascript ID we need to know in order to set the value of the element to the one the user selects)
 	// type is the type of element, which affects how the javascript is written (textboxes aren't set the same as radio buttons, etc)
-	function formulize_setupPreviousEntryUI($screen, $element_id, $type, $owner, $de=false, $entryId="", $ele_handle, $fid) {
+	function formulize_setupPreviousEntryUI($screen, $element_id, $type, $owner, $de=false, $entry_id="", $ele_handle, $fid) {
 		
 		// 1. need to get and cache the values of the entry for this screen
 		// 2. need to put the values into a dropdown list with an onchange event that populates the actual form element
@@ -1433,7 +1421,7 @@ if($multiple ){
 		$previousCaptions = $previousForm->getVar('elementCaptions');
 		$previousElementHandle = array_search($captionToMatch, $previousCaptions);
 		if(!$previousElementHandle) { return ""; }
-		$elementName = $de ? "de_".$fid."_".$entryId."_".$element_id : "ele_".$element_id; // displayElement elements have different names from regular elements
+		$elementName = $de ? "de_".$fid."_".$entry_id."_".$element_id : "ele_".$element_id; // displayElement elements have different names from regular elements
 		$previousElementId = formulize_getIdFromElementHandle($previousElementHandle); // function is in extract.php
 		// setup the javascript based on the type of question, and setup other data that is required
 		switch($type) {
