@@ -101,6 +101,18 @@ class formulizeListOfEntriesScreen extends formulizeScreen {
         $this->initVar("viewentryscreen", XOBJ_DTYPE_TXTBOX, NULL, false, 10);
         $this->initVar("fundamental_filters", XOBJ_DTYPE_ARRAY);
     }
+	
+	function getTemplate($templatename, $theme="") {
+		$template = parent::getTemplate($templatename, $theme);
+		if(!$template) {
+			$template = parent::getDefaultTemplate($templatename, $theme);
+			if(!$template) {
+				error_log('Formulize Error: could not locate a '.$templatename.' for screen '.$this->getVar('sid').'. No screen template set, and no theme default at: '.$themeDefaultPath.'. And no system default at: '.$systemDefaultPath);
+			}
+		}
+		return $template;
+	}
+	
 }
 
 

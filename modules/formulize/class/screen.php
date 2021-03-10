@@ -89,29 +89,55 @@ class formulizeScreen extends xoopsObject {
         return $this->$name;
     }
 
+	function getDefaultTemplate($templatename, $theme="") {
+		global $xoopsConfig;
+		$theme = $theme ? $theme : $xoopsConfig['theme_set'];
+		$themeDefaultPath = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/default/".$this->getVar('type')."/".$templatename.".php";
+		if (file_exists($themeDefaultPath)) {
+			$template = file_get_contents($themeDefaultPath);
+		} else {
+			$systemDefaultPath = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$this->getVar('type')."/".$templatename.".php";
+			if (file_exists($systemDefaultPath)) {
+				$template = file_get_contents($systemDefaultPath);
+			} 
+		}
+		return $template;
+	}
 
+	function getTemplatePath($templatename) {
+		global $xoopsConfig;
+		$paths[] = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/".$this->getVar('sid')."/".$templatename.".php";
+		$paths[] = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/default/".$this->getVar('type')."/".$templatename.".php";
+		$paths[] = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$this->getVar('type')."/".$templatename.".php";
+		foreach($paths as $path) {
+			if(file_exists($path) AND filesize($path)) {
+				return $path;
+			}
+		}
+	}
+	
     function getTemplate($templatename, $theme="") {
         if(!$theme) {
             global $xoopsConfig;
             $theme = $xoopsConfig['theme_set'];
         }
         static $templates = array();
-        if (!isset($templates[$theme][$templatename])) {
+        if (!isset($templates[$theme][$this->getVar('sid')][$templatename])) {
             // there is no template saved in memory, read it from the file
             $pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/".$this->getVar('sid')."/".$templatename.".php";
             if (file_exists($pathname)) {
-                $templates[$theme][$templatename] = file_get_contents($pathname);
+                $templates[$theme][$this->getVar('sid')][$templatename] = file_get_contents($pathname);
             } else {
-                $templates[$theme][$templatename] = htmlspecialchars_decode($this->getVar($templatename), ENT_QUOTES);
-                if (strlen($templates[$theme][$templatename]) > 0) {
+                $templates[$theme][$this->getVar('sid')][$templatename] = htmlspecialchars_decode($this->getVar($templatename), ENT_QUOTES);
+                if (strlen($templates[$theme][$this->getVar('sid')][$templatename]) > 0) {
                     // the template content is stored in the database, but not the cache file
                     // database may have been copied from another site, so write to cache file
                     // Or, user has switched themes, so we initialze the theme file based on the last loaded theme file that was written to DB
-                    $this->writeTemplateFile(htmlspecialchars_decode($templates[$theme][$templatename], ENT_QUOTES), $templatename, $theme);
+                    $this->writeTemplateFile(htmlspecialchars_decode($templates[$theme][$this->getVar('sid')][$templatename], ENT_QUOTES), $templatename, $theme);
                 }
             }
         }
-        return $templates[$theme][$templatename];
+        return $templates[$theme][$this->getVar('sid')][$templatename];
     }
 
     function writeTemplateFile($template_content, $template_name, $theme="") {

@@ -1183,7 +1183,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 			$screenButtonText['addProxyButton'] = "";
 		}
 		$screenButtonText['exportButton'] = $screen->getVar('useexport');
-		$screenButtonText['importButton'] = $screen->getVar('useimport');
+		$screenButtonText['importButton'] = ($import_data = $gperm_handler->checkRight("import_data", $fid, $groups, $mid) AND !$frid) ? $screen->getVar('useimport') : "";
 		$screenButtonText['notifButton'] = $screen->getVar('usenotifications');
 		$screenButtonText['currentViewList'] = $screen->getVar('usecurrentviewlist');
 		$screenButtonText['saveButton'] = $screen->getVar('desavetext');
@@ -1194,7 +1194,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		$screenButtonText['exportCalcsButton'] = $screen->getVar('useexportcalcs');
 		// only include clone and delete if the checkboxes are in effect (2 means do not use checkboxes)
 		if($screen->getVar('usecheckboxes') != 2) {
-			$screenButtonText['cloneButton'] = $screen->getVar('useclone');
+			$screenButtonText['cloneButton'] = $add_own_entry ? $screen->getVar('useclone') : "";
             if ($user_can_delete and !$settings['lockcontrols']) {
 				$screenButtonText['deleteButton'] = $screen->getVar('usedelete');
 			} else {
@@ -1239,6 +1239,27 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 
 	$currentViewName = $settings['loadviewname'];
 
+	// variables used in the default template...
+	$buttonCodeArray['title'] = trans($title);
+	$buttonCodeArray['modifyScreenLink'] = $buttonCodeArray['modifyScreenLink'];
+	$buttonCodeArray['autoLoadedView'] = $loadview ? $loadviewname : '';
+	$buttonCodeArray['lockControls'] = $lockcontrols;
+	$buttonCodeArray['actionButtonHeading'] = $atLeastOneActionButton ? _formulize_DE_ACTIONS : "";
+	if($add_own_entry AND $singleMulti[0]['singleentry'] == "" AND ($buttonCodeArray['addButton'] OR $buttonCodeArray['addMultiButton'])) {
+		$buttonCodeArray['addProxyButton'] = '';
+	} elseif($add_own_entry AND $proxy AND ($buttonCodeArray['addButton'] OR $buttonCodeArray['addProxyButton'])) { // this is a single entry form, so add in the update and proxy buttons if they have proxy, otherwise, just add in update button
+		$buttonCodeArray['addMultiButton'] = '';
+	} elseif($add_own_entry AND $buttonCodeArray['addButton']) {
+		$buttonCodeArray['addMultiButton'] = '';
+		$buttonCodeArray['addProxyButton'] = '';
+	} elseif($proxy AND $buttonCodeArray['addProxyButton']) {
+		$buttonCodeArray['addMultiButton'] = '';
+		$buttonCodeArray['addButton'] = '';
+	}	
+	$buttonCodeArray['addButtonHeading'] = ($buttonCodeArray['addButton'] OR $buttonCodeArray['addMultiButton'] OR $buttonCodeArray['addProxyButton']) ? _formulize_DE_FILLINFORM : "";
+	$buttonCodeArray['submitButton'] = $submitButton;
+	$buttonCodeArray['lockControlsWarning'] = "<input type=hidden name=curviewid id=curviewid value=$curviewid>"._formulize_DE_WARNLOCK;
+	
 	if($useDefaultInterface) {
 
 		// if search is not used, generate the search boxes
@@ -4324,7 +4345,7 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
     // process the template and output results
 		global $xoopsConfig;
         $theme = $xoopsConfig['theme_set'];
-        include XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/".$screen->getVar('sid')."/".$type."template.php";
+        include $screen->getTemplatePath($type."template");
 
 		// if there are no page nav controls in either template the template, then
 		if($type == "top" AND !strstr($screen->getTemplate('toptemplate'), 'pageNavControls') AND (!strstr($screen->getTemplate('bottomtemplate'), 'pageNavControls'))) {
