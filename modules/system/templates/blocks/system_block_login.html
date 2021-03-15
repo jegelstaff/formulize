@@ -10,9 +10,11 @@
     <{/if}>
     <div><input type="hidden" name="xoops_redirect" value="<{$xoops_requesturi}>" /></div>
     <div><input type="hidden" name="op" value="login" /></div>
+	<input type="hidden" id="tfacode" name="tfacode" value="" />
     <div><input type="submit" value="<{$block.lang_login}>" /><br /></div>
     <{$block.sslloginlink}>
   </form>
+  <{php}>include_once XOOPS_ROOT_PATH.'/include/2fa/manage.php';print tfaLoginJS('block_login_form');<{/php}>
 <br />
   <{if $block.auth_openid}>
 	  <div style="text-align: <{$smarty.const._GLOBAL_LEFT}>;"><a href="<{$block.auth_url}>"><{$smarty.const._MB_SYSTEM_OPENID_LOGIN}></a></div>

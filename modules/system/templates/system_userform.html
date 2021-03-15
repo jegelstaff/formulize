@@ -13,10 +13,13 @@
 			    	<div><input type="checkbox" name="rememberme" value="On" /><{$lang_rememberme}><br /></div>
 			    <{/if}>
 			    <div><input type="hidden" name="op" value="login" /></div>
+				<input type="hidden" id="tfacode" name="tfacode" value="" />
 		    	<div><input type="hidden" name="xoops_redirect" value="<{$redirect_page}>"/>
+				
 			    <br />
 		    	<input type="submit" value="<{$lang_login}>" /></div>
 			</form>
+			<{php}>include_once XOOPS_ROOT_PATH.'/include/2fa/manage.php';print tfaLoginJS('icms_block_login_form');<{/php}>
   <{if $auth_openid}>
 <br />
 	  <div style="text-align: <{$smarty.const._GLOBAL_LEFT}>;"><a href="<{$auth_url}>"><{$lang_login_oid}></a></div>

@@ -2410,7 +2410,7 @@ function icms_unlinkRecursive($dir, $deleteRootToo=true){
  */
 function icms_PasswordMeter(){
 	global $xoTheme, $icmsConfigUser;
-	$xoTheme->addScript(ICMS_URL.'/libraries/jquery/jquery.js', array('type' => 'text/javascript'));
+	//$xoTheme->addScript(ICMS_URL.'/libraries/jquery/jquery.js', array('type' => 'text/javascript')); // jquery already included
 	$xoTheme->addScript(ICMS_URL.'/libraries/jquery/password_strength_plugin.js', array('type' => 'text/javascript'));
 	$xoTheme->addScript('', array('type' => ''), '
 				$(document).ready( function() {

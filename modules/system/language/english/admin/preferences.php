@@ -414,11 +414,11 @@ define("_MD_AM_GOOGLEONLYDSC","Select Yes to turn off regular authentication and
 define("_MD_AM_USE_GOOGLE_ANA"," Enable Google Analytics?");
 define("_MD_AM_USE_GOOGLE_ANA_DESC","");
 
-define("_MD_AM_AUTH2FA","Use 2-factor authentication");
-define("_MD_AM_AUTH2FADESC","Turn this on to give users a choice in their user profile of 2-factor authentication methods");
+define("_MD_AM_AUTH2FA","Use Two-Factor Authentication");
+define("_MD_AM_AUTH2FADESC","Turn this on to give users a choice in their user profile of two-factor authentication methods");
 
-define("_MD_AM_AUTH2FAGROUPS","Groups that must use 2-factor authentication");
-define("_MD_AM_AUTH2FAGROUPSDESC","If 2-factor authentication is turned on, then users in the groups selected here must use 2-factor authentication to login to the site.");
+define("_MD_AM_AUTH2FAGROUPS","Groups that must use Two-Factor Authentication");
+define("_MD_AM_AUTH2FAGROUPSDESC","If two-factor authentication is turned on, then users in the groups selected here must use two-factor authentication to login to the site.");
 
 define("_MD_AM_AUTHOKTA","Use SP-initiated Okta SAML authentication");
 define("_MD_AM_AUTHOKTADESC","If your site uses Okta as an authentication service, enter the SSO URL in this box. Only SP-initiated SAML authentication is supported. You must place a completed 'settings.php' file in the /libraries/php-saml/ directory.");
