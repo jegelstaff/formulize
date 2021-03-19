@@ -7734,9 +7734,7 @@ function getEntryDefaults($target_fid,$target_entry) {
         break;
       case "date":
         $defaultTextToWrite = getDateElementDefault($ele_value_for_default[0], $target_entry);
-        if (false === $defaultTextToWrite) {
-            $defaultTextToWrite = "";
-        } else {
+        if (false !== $defaultTextToWrite) {
             $defaultTextToWrite = date("Y-m-d", $defaultTextToWrite);
         }
         break;
@@ -7786,6 +7784,7 @@ function getEntryDefaults($target_fid,$target_entry) {
             }
         }
     }
+    if($defaultTextToWrite === "" OR $defaultTextToWrite === false OR $defaultTextToWrite === null) { continue; }
     $defaultValueMap[$thisDefaultEle->getVar('ele_id')] = $defaultTextToWrite;
   }
   return $defaultValueMap;

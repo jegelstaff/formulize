@@ -946,6 +946,18 @@ class formulizeDataHandler  {
 		return $entry_to_return;
 	}
 
+    // check a given field against the dataTypeMap, return true if it contains 'date'
+    function dataTypeIsDate($key) {
+        if(count($this->dataTypeMap)==0) {
+            $this->dataTypeMap = $this->gatherDataTypes();
+        }
+        $key = trim($key, "`");
+        if(stripos($this->dataTypeMap[$key], "date") !== false) {
+            return true;
+        }
+        return false; // no it's not
+    }
+    
     // check a given field against the dataTypeMap, return true if it's a numeric type
     function dataTypeIsNumeric($key) {
         if(count($this->dataTypeMap)==0) {
@@ -994,10 +1006,11 @@ class formulizeDataHandler  {
                 } else { // non numeric values cannot be written to a numeric field, so NULL them
                     return "NULL";
                 }
-            } else {
-                return "'".formulize_db_escape($value)."'";
+            } elseif($this->dataTypeIsDate($field) AND (!$value OR $value == _DATE_DEFAULT OR $value == '0000-00-00')) {
+                return "NULL";
             }
         }
+        return "'".formulize_db_escape($value)."'";
     }
 
 	// this function updates relevant caches after data has been updated in the database
