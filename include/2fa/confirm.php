@@ -12,50 +12,76 @@
  */
 
 include_once "../../mainfile.php";
+
+icms::$logger->disableLogger();
+while(ob_get_level()) {
+    ob_end_clean();
+}
+
 include "manage.php"; // defines constants
 
 global $xoopsUser;
 
 $codebox = "<br><br>Code: <input type='text' id='dialog-tfacode' value=''>";
 
-switch($_GET['method']) {
-    case TFA_OFF:
-        $profile_handler = xoops_getmodulehandler('profile', 'profile');
-		$profile = $profile_handler->get($xoopsUser->getVar('uid'));
-        switch($profile->getVar('2famethod')) {
-            case TFA_SMS:
-				$message = sendCode(); // will return errors
-                $method = 'texts';
-                break;
-            case TFA_APP:
-				$message = '';
-                $method = 'app';
-                break;
-            default:
-				$message = sendCode(); // will return errors
-                $method = 'email';
-        }
-        $message = $message ? $message : "To turn off Two-Factor Authentication, you need to enter the code from your ".$method.".$codebox";
-        break;
-    case TFA_SMS:
-        if($_GET['phone']) {
-            $code = sendCode(TFA_SMS, false, $_GET['phone']);
-            $message = "To turn on Two-Factor Authentication, you need to enter the code we texted to your phone.$codebox";
-        } else {
-            $message = "You have not entered a phone number. Please click Cancel and enter a phone number.";
-        }
-        break;
-    case TFA_EMAIL:
-        $message = sendCode(TFA_EMAIL); // will return errors
-        $message = $message ? $message : "To turn on Two-Factor Authentication, you need to enter the code we emailed you.$codebox";
-        break;
-    case TFA_APP:
-		global $xoopsDB;
-		$sql = 'DELETE FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($xoopsUser->getVar('uid')).' AND method = '.TFA_APP;
-		$xoopsDB->queryF($sql);
-        $message = sendCode(TFA_APP); // will return instructions
-        $message = $message.$codebox;
-        break;
+$profile_handler = xoops_getmodulehandler('profile', 'profile');
+$profile = $profile_handler->get($xoopsUser->getVar('uid'));
+
+// if user is changing password
+if($profile->getVar('2famethod') > 0 AND $_GET['method']==$profile->getVar('2famethod') AND $_GET['phone'] == preg_replace("/[^0-9]/", '', $profile->getVar('2faphone'))) {
+    switch($profile->getVar('2famethod')) {
+        case TFA_SMS:
+            $message = sendCode(); // will return errors
+            $method = 'texts';
+            break;
+        case TFA_APP:
+            $message = '';
+            $method = 'app';
+            break;
+        default:
+            $message = sendCode(); // will return errors
+            $method = 'email';
+    }
+    $message = $message ? $message : _US_TO_CHANGE_PASS.$method.".$codebox";
+// if user is turning on 2FA or changing phone number
+} else {
+    switch($_GET['method']) {
+        case TFA_OFF:
+            switch($profile->getVar('2famethod')) {
+                case TFA_SMS:
+                    $message = sendCode(); // will return errors
+                    $method = 'texts';
+                    break;
+                case TFA_APP:
+                    $message = '';
+                    $method = 'app';
+                    break;
+                default:
+                    $message = sendCode(); // will return errors
+                    $method = 'email';
+            }
+            $message = $message ? $message : _US_TO_TURN_OFF.$method.".$codebox";
+            break;
+        case TFA_SMS:
+            if($_GET['phone']) {
+                $code = sendCode(TFA_SMS, false, $_GET['phone']);
+                $message = _US_TURN_ON_PHONE.$codebox;
+            } else {
+                $message = _US_NO_PHONE_NUMBER;
+            }
+            break;
+        case TFA_EMAIL:
+            $message = sendCode(TFA_EMAIL); // will return errors
+            $message = $message ? $message : _US_TURN_ON_EMAIL.$codebox;
+            break;
+        case TFA_APP:
+            global $xoopsDB;
+            $sql = 'DELETE FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($xoopsUser->getVar('uid')).' AND method = '.TFA_APP;
+            $xoopsDB->queryF($sql);
+            $message = sendCode(TFA_APP); // will return instructions
+            $message = $message.$codebox;
+            break;
+    }
 }
 
 print "<center>$message</center>";

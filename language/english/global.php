@@ -314,3 +314,22 @@ define("_LOCAL_FOOTER",'<a href=\"http://www.freeformsolutions.ca/formulize/\" r
 // ADDED BY FREEFORM SOLUTIONS FOR THE DATE DEFAULT CHANGES IN FORMULIZE STANDALONE
 define("_DATE_DEFAULT", "YYYY-mm-dd");
 define("_CAL_MONDAYFIRST", "false");
+
+// 2FA related
+define("_US_SCAN_THIS_CODE", "Scan this QR code with your authenticator app:");
+define("_US_ENTER_THIS_MANUALLY", "Or enter this manually:");
+define("_US_ONCE_DONE_ENTER_CODE","Once you've done that, enter the code shown in your app.");
+define("_US_SMS_TEXT", "Use %s for %s - Requested from: %s - If you didn't request this, immediately contact %s");
+define("_US_EMAIL_SUBJECT", "Two-Factor Code: %s");
+define("_US_2FA","Two-factor Authentication");
+define("_US_TO_TURN_OFF","To turn off Two-Factor Authentication, you need to enter the code from your ");
+define("_US_TURN_ON_PHONE","To turn on Two-Factor Authentication, you need to enter the code we texted to your phone.");
+define("_US_NO_PHONE_NUMBER","You have not entered a phone number. Please click Cancel and enter a phone number.");
+define("_US_TURN_ON_EMAIL","To turn on Two-Factor Authentication, you need to enter the code we emailed you.");
+define("_US_ENTER_CODE","Enter the Two-Factor Authentication Code from your ");
+define("_US_2FA_CODE","Code: ");
+define("_US_DONT_ASK_AGAIN", "Don't ask again on this device");
+define("_US_FORGET_DEVICES", "Reset all your remembered devices");
+define("_US_FORGET_DEVICES_BUTTON", "Reset");
+define("_US_FORGET_DEVICES_DESC", "If you have checked the <i>\""._US_DONT_ASK_AGAIN."\"</i> box when logging in, click this button to forget all those devices so you will be asked for a code next time. This is very important to do immediately if your password has been stolen!");
+define("_US_TO_CHANGE_PASS","To change your password, enter the Two-Factor Authentication code from your ");

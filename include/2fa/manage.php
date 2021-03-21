@@ -26,7 +26,7 @@ function validateCode($code, $uid=false) {
         exit('No known user to check 2FA code for!');
     }
     $uid = $uid ? $uid : $xoopsUser->getVar('uid'); 
-    $sql = 'SELECT * FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($uid);
+    $sql = 'SELECT method, AES_DECRYPT(code, UNHEX(SHA2("'.XOOPS_DB_PASS.XOOPS_DB_PREFIX.'",512))) as code FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($uid);
     $res = $xoopsDB->query($sql);
     while($data = $xoopsDB->fetchArray($res)) {
         if($data['method'] == TFA_APP) {
@@ -35,7 +35,7 @@ function validateCode($code, $uid=false) {
 				return true;
 			}
         } else {
-            if($data['code'] == hash('sha256', trim($code).XOOPS_DB_SALT)) {
+            if($data['code'] == trim($code)) {
                 $sql = 'DELETE FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($uid);
                 print $sql;
                 $xoopsDB->queryF($sql);
@@ -61,14 +61,14 @@ function generateCode($method, $uid) {
         if($xoopsDB->getRowsNum($res)==0) { // only generate if there isn't one already, and in this case pass back the necessary stuff for making the QR code to initialize the app
 			$tfa = new TwoFactorAuth(trans($icmsConfig['sitename']));
             $secret = $tfa->createSecret(160);
-			$sql = 'INSERT INTO '.$xoopsDB->prefix('tfa_codes').' (uid, code, method) VALUES ('.intval($uid).', "'.$secret.'", '.intval($method).')';
+			$sql = 'INSERT INTO '.$xoopsDB->prefix('tfa_codes').' (uid, code, method) VALUES ('.intval($uid).', AES_ENCRYPT("'.$secret.'", UNHEX(SHA2("'.XOOPS_DB_PASS.XOOPS_DB_PREFIX.'",512))), '.intval($method).')';
 			$xoopsDB->queryF($sql);
 			return $secret;
         }
 		return '';
     } else {
         $code = random_int(111111,999999);
-        $sql = 'INSERT INTO '.$xoopsDB->prefix('tfa_codes').' (uid, code, method) VALUES ('.intval($uid).', "'.hash('sha256', $code.XOOPS_DB_SALT).'", '.intval($method).')';
+        $sql = 'INSERT INTO '.$xoopsDB->prefix('tfa_codes').' (uid, code, method) VALUES ('.intval($uid).', AES_ENCRYPT("'.$code.'", UNHEX(SHA2("'.XOOPS_DB_PASS.XOOPS_DB_PREFIX.'",512))), '.intval($method).')';
         $xoopsDB->queryF($sql);
         return $code;
     }
@@ -106,7 +106,7 @@ function sendCode($method=null, $uid=false, $phone=null) {
 	        $xoopsMailer->setToUsers($userObject);
 	        $xoopsMailer->setFromEmail($icmsConfig['adminmail']);
 	        $xoopsMailer->setFromName($icmsConfig['sitename']);
-	        $xoopsMailer->setSubject('Two-Factor Code: '.$code);
+	        $xoopsMailer->setSubject(sprintf(_US_EMAIL_SUBJECT, $code));
 			if (!$xoopsMailer->send()) {
 			    return $xoopsMailer->getErrors();
 			}
@@ -117,7 +117,7 @@ function sendCode($method=null, $uid=false, $phone=null) {
                 $phone = $profile->getVar('2faphone');
             }
 			include "sendSMS.php"; // file in the include/2fa folder, which must contain a function of the same name, that sends SMS messages using your provider, and returns any errors
-			$body = "Use $code for ".trans($icmsConfig['sitename'])." - Requested from: ".$_SERVER['REMOTE_ADDR']." - If you didn't request this, immediately contact ".$icmsConfig['adminmail'];
+			$body = sprintf(_US_SMS_TEXT, $code, trans($icmsConfig['sitename']), $_SERVER['REMOTE_ADDR'], $icmsConfig['adminmail']);
 			return sendSMS($body, $phone);
             break;
         case TFA_APP:
@@ -128,7 +128,7 @@ function sendCode($method=null, $uid=false, $phone=null) {
 				$tfa = new TwoFactorAuth(trans($icmsConfig['sitename']));
 				$qr = '<img src="'.$tfa->getQRCodeImageAsDataUri($userObject->getVar('login_name'), $code).'">';
 				$secret = chunk_split($code, 4, ' ');
-				$instructions = 'Scan this QR code with your authenticator app: <br>'.$qr.'<br><br>Or enter this manually:<br>'.$secret.'<br><br>Once you\'ve done that, enter the code shown in your app.';
+				$instructions = _US_SCAN_THIS_CODE.' <br>'.$qr.'<br><br>'._US_ENTER_THIS_MANUALLY.'<br>'.$secret.'<br><br>'._US_ONCE_DONE_ENTER_CODE;
 			}
             return $instructions; // when passed back to confirmation dialog, we use it to generate the QR code, etc
     }
@@ -175,7 +175,7 @@ function tfaLoginJS($id) {
 		tfadialog$counter = jQuery('#tfadialog-$id').dialog({
 			autoOpen: false,
 			modal: true,
-			title: 'Two-factor Authentication',
+			title: '"._US_2FA."',
 			width: '40%',
 			position: { my: 'center center', at: 'center center', of: window },
 			buttons: [

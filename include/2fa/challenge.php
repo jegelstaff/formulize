@@ -7,6 +7,12 @@
  */
 
 include_once "../../mainfile.php";
+
+icms::$logger->disableLogger();
+while(ob_get_level()) {
+    ob_end_clean();
+}
+
 include "manage.php"; // defines constants
 
 icms::$logger->disableLogger();
@@ -22,7 +28,7 @@ $user = $icmsAuth->authenticate(trim($_GET['u']), trim($_GET['p']));
 if($user) {
 	if($method = user2FAMethod($user)) {
         if(userRemembersDevice($user) == false) {
-            $codebox = "<br><br>Code: <input type='text' id='dialog-tfacode' value=''><br><input type='checkbox' id='dialog-tfaremember'> <label for='dialog-tfaremember'>Don't ask again on this device</label>";
+            $codebox = "<br><br>"._US_2FA_CODE."<input type='text' id='dialog-tfacode' value=''><br><input type='checkbox' id='dialog-tfaremember'> <label for='dialog-tfaremember'>"._US_DONT_ASK_AGAIN."</label>";
             switch($method) {
                 case TFA_SMS:
                     $message = sendCode(TFA_SMS, $user->getVar('uid')); // will return errors
@@ -36,7 +42,7 @@ if($user) {
                     $message = sendCode(TFA_EMAIL, $user->getVar('uid')); // will return errors
                     $method = 'email';
             }
-            $message = $message ? $message : "Enter the Two-Factor Authentication Code from your ".$method.".$codebox";
+            $message = $message ? $message : _US_ENTER_CODE.$method.".$codebox";
             print "<center>$message</center>";
         }
 	}

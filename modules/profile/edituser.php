@@ -30,21 +30,23 @@ switch ($op) {
 		if (!empty($_POST['uid'])) $uid = (int)$_POST['uid'];
 		if (empty($uid) || (icms::$user->getVar('uid') != $uid && !icms::$user->isAdmin())) redirect_header(ICMS_URL, 3, _MD_PROFILE_NOEDITRIGHT);
 
+        $login_name = isset($_POST['login_name']) ? trim($_POST['login_name']) : '';
+		$uname = isset($_POST['uname']) ? trim($_POST['uname']) : '';
+		$email = isset($_POST['email']) ? trim($_POST['email']) : '';
+		$pass = isset($_POST['password']) ? icms_core_DataFilter::stripSlashesGPC($_POST['password']) : '';
+		$vpass = isset($_POST['vpass']) ? icms_core_DataFilter::stripSlashesGPC($_POST['vpass']) : '';
+        
 		include_once XOOPS_ROOT_PATH.'/include/2fa/manage.php';
 		$profile_handler = xoops_getmodulehandler('profile', 'profile');
 		$profile = $profile_handler->get($uid);
 		if($uid == icms::$user->getVar('uid') AND
 		   ($_POST['2famethod'] != $profile->getVar('2famethod')
-			OR ($_POST['2famethod'] == 1 AND $_POST['2faphone'] != $profile->getVar('2faphone')))
+			OR ($_POST['2famethod'] == 1 AND $_POST['2faphone'] != $profile->getVar('2faphone'))
+            OR ($profile->getVar('2famethod') > 0 AND $pass AND $vpass)
+            )
 		   AND validateCode($_POST['tfacode']) == false ) {
 			redirect_header(ICMS_URL."/modules/profile/edituser.php", 3, "Invalid Two-factor Authentication Code");
 		}
-		
-		$login_name = isset($_POST['login_name']) ? trim($_POST['login_name']) : '';
-		$uname = isset($_POST['uname']) ? trim($_POST['uname']) : '';
-		$email = isset($_POST['email']) ? trim($_POST['email']) : '';
-		$pass = isset($_POST['password']) ? icms_core_DataFilter::stripSlashesGPC($_POST['password']) : '';
-		$vpass = isset($_POST['vpass']) ? icms_core_DataFilter::stripSlashesGPC($_POST['vpass']) : '';
 
 		icms_loadLanguageFile('core', 'user');
 		$user_handler = icms::handler('icms_member_user');
@@ -371,7 +373,7 @@ switch ($op) {
 				tfadialog = jQuery('#tfadialog').dialog({
 					autoOpen: false,
 					modal: true,
-					title: 'Two-factor Authentication',
+					title: '"._US_2FA."',
 					width: '40%',
 					position: { my: 'center center', at: 'center center', of: window },
 					buttons: [
@@ -412,8 +414,14 @@ switch ($op) {
 					var tfamethod = jQuery('#2famethod').val();
 					var tfaphone = jQuery('#2faphone').val();
 					var tfacode = jQuery('#tfacode').val();
+                    var password = jQuery('#password').val();
+                    var vpass = jQuery('#vpass').val();
 					var tfaphone = tfaphone.replace(/\D/g,'');
-					if(!tfacode && (tfamethod != ".$profile->getVar('2famethod')." || (tfamethod == 1 && tfaphone != '".preg_replace("/[^0-9]/", '', $profile->getVar('2faphone'))."'))) {
+					if(!tfacode && (
+                        tfamethod != ".$profile->getVar('2famethod')." ||
+                        (tfamethod == 1 && tfaphone != '".preg_replace("/[^0-9]/", '', $profile->getVar('2faphone'))."') || 
+                        (".$profile->getVar('2famethod')." > 0 && password && vpass)
+                        )) {
 						tfadialog.load('".XOOPS_URL."/include/2fa/confirm.php?method='+tfamethod+'&phone='+tfaphone);
 						tfadialog.dialog('open');
 						return false;
