@@ -232,11 +232,17 @@ function tfaLoginJS($id) {
 		
 		function close2FADialog(dialog, id) {
 			var code = jQuery('#dialog-tfacode').val();
+			var remember = jQuery('#dialog-tfaremember').is(':checked');
 			dialog.dialog( 'close' );
 			dialog.html('<center>".$workingMessageGif."</center>');
 			if(code) {
 				jQuery('input[name=\"tfacode\"]').each(function() {
 					jQuery(this).val(code);
+				});
+				jQuery('input[name=\"tfaremember\"]').each(function() {
+					if(remember) {
+						jQuery(this).val(1);
+					}
 				});
 				jQuery('#'+id+' form').submit();
 			}
@@ -247,4 +253,42 @@ function tfaLoginJS($id) {
 	
 	return $js;
 	
+}
+
+function getDeviceFingerprint() {
+	return md5($_SERVER['HTTP_USER_AGENT'].$_SERVER['REMOTE_ADDR']);
+}
+
+function rememberDevice($user=null) {
+	if(!$user) {
+		global $xoopsUser;
+		$user = $xoopsUser;
+	}
+	if($user) {
+		$fingerprint = getDeviceFingerprint();
+		$profile_handler = xoops_getmodulehandler('profile', 'profile');
+		$profile = $profile_handler->get($user->getVar('uid'));
+		$devices = unserialize($profile->getVar('2fadevices','n')); // 'n' necessary to do no htmlspecialchars magic or anything on the value, just return raw
+		$devices = is_array($devices) ? $devices : array();
+		$devices[$fingerprint] = true;
+		$profile->setVar('2fadevices', serialize($devices));
+		$profile_handler->insert($profile);
+	}
+}
+
+function userRemembersDevice($user=null) {
+	if(!$user) {
+		global $xoopsUser;
+		$user = $xoopsUser;
+	}
+	if($user) {
+		$fingerprint = getDeviceFingerprint();
+		$profile_handler = xoops_getmodulehandler('profile', 'profile');
+		$profile = $profile_handler->get($user->getVar('uid'));
+		$devices = unserialize($profile->getVar('2fadevices','n')); // 'n' necessary to do no htmlspecialchars magic or anything on the value, just return raw
+		if(isset($devices[$fingerprint])) {
+			return true;
+		}
+	}
+	return false;
 }

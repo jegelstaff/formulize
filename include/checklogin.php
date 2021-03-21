@@ -29,9 +29,11 @@ if (empty($user) || !is_object($user)) {
 	$user =& $icmsAuth->authenticate($uname, $pass);
 	if($user) { // 2FA added by Julian Egelstaff March 5 2021
 		include_once XOOPS_ROOT_PATH.'/include/2fa/manage.php';
-		if($method = user2FAMethod($user)) {
+		if($method = user2FAMethod($user) AND userRemembersDevice($user) == false) {
 			if(validateCode($_POST['tfacode'], $user->getVar('uid')) == false) {
 				unset($user);
+			} elseif($_POST['tfaremember']) {
+				rememberDevice($user);
 			}
 		}
 	}
