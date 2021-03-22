@@ -1,6 +1,11 @@
 <?php
 
-// clear the profile field where the devices are remembered
+/* Copyright the Formulize Project - Julian Egelstaff 2021
+ *
+ * Clear the profile field where the devices are remembered
+ */
+
+
 include_once "../../mainfile.php";
 icms::$logger->disableLogger();
 while(ob_get_level()) {
