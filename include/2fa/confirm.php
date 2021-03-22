@@ -28,7 +28,7 @@ $profile_handler = xoops_getmodulehandler('profile', 'profile');
 $profile = $profile_handler->get($xoopsUser->getVar('uid'));
 
 // if user is changing password
-if($profile->getVar('2famethod') > 0 AND $_GET['method']==$profile->getVar('2famethod') AND $_GET['phone'] == preg_replace("/[^0-9]/", '', $profile->getVar('2faphone'))) {
+if($profile->getVar('2famethod') > 0 AND $_GET['method']==$profile->getVar('2famethod') AND ($_GET['phone'] == preg_replace("/[^0-9]/", '', $profile->getVar('2faphone')) OR $profile->getVar('2famethod') != TFA_SMS)) {
     switch($profile->getVar('2famethod')) {
         case TFA_SMS:
             $message = sendCode(); // will return errors
