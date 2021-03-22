@@ -6,9 +6,9 @@
  */
 
 function sendSMS($body, $phone) { 
-	$id = "AC56176b80859cd83b4d615a2d2bcf878d"; // from Twilio account
-	$token = "c4c5e41faa5746ed6eddc8882740cf65"; // from Twilio account
-	$from = "+17098005969"; // from Twilio account
+	$id = ""; // from Twilio account
+	$token = ""; // from Twilio account
+	$from = ""; // from Twilio account (with +1 at front, etc)
 	$url = "https://api.twilio.com/2010-04-01/Accounts/$id/Messages.json";
 	$to = "+1".preg_replace("/[^0-9]/", '', $phone); // force North America!
 	$data = array (
