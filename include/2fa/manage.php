@@ -37,7 +37,6 @@ function validateCode($code, $uid=false) {
         } else {
             if($data['code'] == trim($code)) {
                 $sql = 'DELETE FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($uid);
-                print $sql;
                 $xoopsDB->queryF($sql);
                 return true;
             }
@@ -169,6 +168,7 @@ function tfaLoginJS($id) {
 	$counter++;
 	$js = "
 	<div id='tfadialog-$id'><center>".$workingMessageGif."</center></div>
+    <div id='tfalostpassdialog-$id'><center>".$workingMessageGif."</center></div>
 	<script type='text/javascript'>
 	var tfadialog$counter;
 	jQuery('document').ready(function() {
@@ -223,6 +223,41 @@ function tfaLoginJS($id) {
 			}
 			return true;
 		});
+        
+        tfalostpassdialog$counter = jQuery('#tfalostpassdialog-$id').dialog({
+			autoOpen: false,
+			modal: true,
+			title: '"._MB_SYSTEM_LPASS."',
+			width: '40%',
+			position: { my: 'center center', at: 'center center', of: window },
+			buttons: [
+				{ text: 'Cancel', icon: 'ui-icon-close', click: function() {
+						jQuery( this ).dialog( 'close' );
+						jQuery( this ).html('<center>".$workingMessageGif."</center>');
+					}
+				},
+				{ text: 'OK', icon: 'ui-icon-check', click: function() {
+						close2FALostPassDialog(jQuery(this), '$id');
+					}
+				}
+			],
+			open: function() {
+				jQuery(this).css('overflow-y', 'auto !important'); 
+			}					
+		});
+        
+        jQuery('#tfalostpassdialog-$id').keypress(function(e) {
+			if (e.keyCode == jQuery.ui.keyCode.ENTER) {
+				close2FALostPassDialog(tfalostpassdialog$counter, '$id');
+			}
+		});
+        
+        jQuery('#lostpass').click(function() {
+            event.preventDefault();
+            tfalostpassdialog$counter.html('<center>"._US_USERNAME_OR_EMAIL."<input type=\"text\" id=\"dialog-tfalostaccount\" value=\"\"></center>');
+            tfalostpassdialog$counter.dialog('open');
+        });
+        
 	});
 	</script>
 	";
@@ -247,6 +282,31 @@ function tfaLoginJS($id) {
 				jQuery('#'+id+' form').submit();
 			}
 		}
+        
+        function close2FALostPassDialog(dialog, id) {
+            var account = jQuery('#dialog-tfalostaccount').val();
+			var code = jQuery('#dialog-tfacode').val();
+            if(account) {
+                dialog.html('<center>".$workingMessageGif."</center>');
+                jQuery.ajax({
+					async: false,
+					type: 'GET',
+					url: '".XOOPS_URL."/include/2fa/challenge.php?a='+encodeURIComponent(account)+'&token='+encodeURIComponent('".$GLOBALS['xoopsSecurity']->createToken()."'),
+					success: function(data) {
+						if(data) {
+							dialog.html(data);
+						} else {
+							dialog.html('Error: we could not locate any relevant account information.');
+						}
+					}
+				});
+            } else if(code) {
+                var accountidentifier = jQuery('#dialog-tfaaccountidentifier').val();
+                window.location = '".XOOPS_URL."/lostpass.php?c='+encodeURIComponent(code)+'&a='+encodeURIComponent(accountidentifier)+'&token='+encodeURIComponent('".$GLOBALS['xoopsSecurity']->createToken()."');
+            }
+
+		}
+        
 		</script>
 		";
 	}

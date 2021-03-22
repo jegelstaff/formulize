@@ -36,21 +36,6 @@
 			<{/if}>
 		</fieldset>
 	</div>
-
-	<div>
-		<fieldset style="padding: 10px;">
-			<legend style="font-weight: bold;"><{$lang_lostpassword}></legend>
-			<div>
-				<{$lang_noproblem}>
-			</div>
-			<form action="lostpass.php" method="post">
-				<div><br /><{$lang_youremail}> <input type="text" name="email" size="26" maxlength="255" />&nbsp;&nbsp;<input type="hidden" name="op" value="mailpasswd" /><input type="hidden" name="t" value="<{$mailpasswd_token}>" />
-		    	<br />
-		    	<br />
-		     	<input type="submit" value="<{$lang_sendpassword}>" /></div>
-			</form>
-		</fieldset>
-	</div>
 </div>
 <{else}>
 <div style="position: relative;height: 250px;">

@@ -1,100 +1,70 @@
 <?php
-/**
- * All functions for lost password generator are going through here.
+
+/* Copyright the Formulize Project - Julian Egelstaff 2021
  *
- * Form and process for sending a new password to a user
- *
- * @copyright	http://www.impresscms.org/ The ImpressCMS Project
- * @license		http://www.gnu.org/licenses/old-licenses/gpl-2.0.html GNU General Public License (GPL)
- * @package		Member
- * @subpackage	Users
- * @version		SVN: $Id: lostpass.php 21047 2011-03-14 15:52:14Z m0nty_ $
+ * Give the user a UI for changing their password, if their code is valid
  */
 
-$xoopsOption['pagetype'] = 'user';
-/** Include mainfile.php - required */
-include 'mainfile.php';
 
-if (!empty($_POST)) foreach ($_POST as $k => $v) ${$k} = StopXSS($v);
-if (!empty($_GET)) foreach ($_GET as $k => $v) ${$k} = StopXSS($v);
-$email = (isset($_GET['email']))
-	? trim(filter_input(INPUT_GET, 'email'))
-	: ((isset($_POST['email'])) ? trim(filter_input(INPUT_POST, 'email')) : $email);
+include "mainfile.php";
 
-if ($email == '') {
-	redirect_header('user.php', 2, _US_SORRYNOTFOUND);
-}
-
-$member_handler = icms::handler('icms_member');
-$criteria = new icms_db_criteria_Compo();
-$criteria->add(new icms_db_criteria_Item('email', icms_core_DataFilter::addSlashes($email)));
-$criteria->add(new icms_db_criteria_Item('level', '-1', '!='));
-$getuser =& $member_handler->getUsers($criteria);
-
-if (empty($getuser)) {
-	$msg = _US_SORRYNOTFOUND;
-	redirect_header('user.php', 2, $msg);
-} else {
-	$icmspass = new icms_core_Password();
-
-	$code = isset($_GET['code']) ? trim(filter_input(INPUT_GET, 'code')) : '';
-	$areyou = substr($getuser[0]->getVar('pass'), 0, 5);
-	$enc_type = (int) $icmsConfigUser['enc_type'];
-	if ($code != '' && $areyou == $code) {
-		$newpass = $icmspass->createSalt(8);
-		$salt = $icmspass->createSalt();
-		$pass = $icmspass->encryptPass($newpass, $salt, $icmsConfigUser['enc_type']);
-		$xoopsMailer = new icms_messaging_Handler();
-		$xoopsMailer->useMail();
-		$xoopsMailer->setTemplate('lostpass2.tpl');
-		$xoopsMailer->assign('SITENAME', $icmsConfig['sitename']);
-		$xoopsMailer->assign('ADMINMAIL', $icmsConfig['adminmail']);
-		$xoopsMailer->assign('SITEURL', ICMS_URL . '/');
-		$xoopsMailer->assign('IP', $_SERVER['REMOTE_ADDR']);
-		$xoopsMailer->assign('NEWPWD', $newpass);
-		$xoopsMailer->setToUsers($getuser[0]);
-		$xoopsMailer->setFromEmail($icmsConfig['adminmail']);
-		$xoopsMailer->setFromName($icmsConfig['sitename']);
-		$xoopsMailer->setSubject(sprintf(_US_NEWPWDREQ, ICMS_URL));
-		if (!$xoopsMailer->send()) {
-			echo $xoopsMailer->getErrors();
-		}
-
-		// Next step: add the new password to the database
-		$sql = sprintf("UPDATE %s SET pass = '%s', salt = '%s', enc_type = '%u', pass_expired = '%u' WHERE uid = '%u'",
-						icms::$xoopsDB->prefix('users'), $pass, $salt, $enc_type, 0, (int) $getuser[0]->getVar('uid'));
-		if (!icms::$xoopsDB->queryF($sql)) {
-			/** Include header.php to start page rendering */
-			include 'header.php';
-			echo _US_MAILPWDNG;
-			/** Include footer.php to complete page rendering */
-			include 'footer.php';
-			exit();
-		}
-		redirect_header('user.php', 3, sprintf(_US_PWDMAILED, $getuser[0]->getVar('uname')), FALSE);
-		// If no Code, send it
-	} else {
-		$xoopsMailer = new icms_messaging_Handler();
-		$xoopsMailer->useMail();
-		$xoopsMailer->setTemplate('lostpass1.tpl');
-		$xoopsMailer->assign('SITENAME', $icmsConfig['sitename']);
-		$xoopsMailer->assign('ADMINMAIL', $icmsConfig['adminmail']);
-		$xoopsMailer->assign('SITEURL', ICMS_URL . '/');
-		$xoopsMailer->assign('IP', $_SERVER['REMOTE_ADDR']);
-		$xoopsMailer->assign('NEWPWD_LINK', ICMS_URL . '/lostpass.php?email=' . $email . '&code=' . $areyou);
-		$xoopsMailer->setToUsers($getuser[0]);
-		$xoopsMailer->setFromEmail($icmsConfig['adminmail']);
-		$xoopsMailer->setFromName($icmsConfig['sitename']);
-		$xoopsMailer->setSubject(sprintf(_US_NEWPWDREQ, $icmsConfig['sitename']));
-		/** Include header.php to start page rendering */
-		include 'header.php';
-		if (!$xoopsMailer->send()) {
-			echo $xoopsMailer->getErrors();
-		}
-		echo '<h4>';
-		printf(_US_CONFMAIL, $getuser[0]->getVar('uname'));
-		echo '</h4>';
-		/** Include footer.php to complete page rendering */
-		include 'footer.php';
-	}
+// check if the account id is at least valid...
+include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
+global $xoopsDB, $icmsConfigUser;
+$sql = 'SELECT uid, login_name FROM '.$xoopsDB->prefix('users').' WHERE login_name = "'.formulize_db_escape($_GET['a']).'" OR email = "'.formulize_db_escape($_GET['a']).'" LIMIT 0,1';
+$res = $xoopsDB->query($sql);
+if($xoopsDB->getRowsNum($res)==1) { // if account identifier returns us one account
+    $row = $xoopsDB->fetchArray($res);
+    $uid = $row['uid'];
+    // if no password submitted yet, we're setting up form
+    if(!isset($_POST['pass1'])) {
+        // if request is valid
+        if($GLOBALS['xoopsSecurity']->check(true, $_GET['token'])) {
+            include_once XOOPS_ROOT_PATH.'/include/2fa/manage.php';
+            if(validateCode($_GET['c'], $uid)) { // if the code they entered was valid, then show them pw reset form
+                include "header.php";
+                print "
+                <div style='padding: 2em;'>
+                <h1>"._US_RESET_PW_FOR.strip_tags(htmlspecialchars($row['login_name'], ENT_QUOTES))."</h1>
+                <form id='pwchange' action='".XOOPS_URL."/lostpass.php' method='post'>
+                <p>"._US_NEW_PASSWORD."<br><input type='password' name='pass1' value='' /></p><br>
+                <p>"._US_CONFIRM_PASSWORD."<br><input type='password' name='pass2' value='' /></p><br>
+                <input type='hidden' name='token' value='".$GLOBALS['xoopsSecurity']->createToken()."' />
+                <input type='hidden' name='a' value='".strip_tags(htmlspecialchars($_GET['a'], ENT_QUOTES))."' />
+                <input type='submit' name='submit' value='"._US_RESET_PW_BUTTON."'>
+                </form>
+                </div>
+                <script type='text/javascript'>
+                jQuery(document).ready(function() {
+                    jQuery('#pwchange').submit(function() {
+                        if(jQuery('input[name=\"pass1\"]').val() != jQuery('input[name=\"pass2\"]').val()) {
+                            alert(\""._US_PASSWORDS_DONT_MATCH."\");
+                            return false;
+                        }
+                        if(jQuery('input[name=\"pass1\"]').val().length < ".$icmsConfigUser['minpass'].") {
+                            alert(\"".sprintf(_US_PASSWORD_TOO_SHORT, $icmsConfigUser['minpass'])."\");
+                            return false;
+                        }
+                    });
+                });
+                </script>
+                ";
+                include "footer.php";           
+            }
+        }
+    } elseif($_POST['pass1'] AND $_POST['pass2'] AND $_POST['pass1'] == $_POST['pass2'] AND strlen($_POST['pass1']) >= $icmsConfigUser['minpass'] AND $GLOBALS['xoopsSecurity']->check(true, $_POST['token'])) { // user has submitted the form, valid password, valid token, so process it
+        $member_handler = xoops_gethandler('member');
+        $icmspass = new icms_core_Password();
+        $salt = $icmspass->createSalt();
+        $userObject = $member_handler->getUser($uid);
+        $userObject->setVar('salt', $salt);
+        global $icmsConfigUser;
+        $enc_type = $icmsConfigUser['enc_type'];
+        $pass1 = $icmspass->encryptPass($_POST['pass1'], $salt, $enc_type);
+        $userObject->setVar('pass', $pass1);
+        if(!$member_handler->insertUser($userObject, true)) {
+            exit("Error: could not save new password to the database.");
+        }
+        redirect_header(ICMS_URL, 5, _US_LOGIN_WITH_NEW_PW);
+    } 
 }
