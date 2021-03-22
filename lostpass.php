@@ -26,11 +26,10 @@ if($xoopsDB->getRowsNum($res)==1) { // if account identifier returns us one acco
                 print "
                 <div style='padding: 2em;'>
                 <h1>"._US_RESET_PW_FOR.strip_tags(htmlspecialchars($row['login_name'], ENT_QUOTES))."</h1>
-                <form id='pwchange' action='".XOOPS_URL."/lostpass.php' method='post'>
+                <form id='pwchange' action='".XOOPS_URL."/lostpass.php?a=".urlencode(strip_tags(htmlspecialchars($_GET['a'], ENT_QUOTES)))."' method='post'>
                 <p>"._US_NEW_PASSWORD."<br><input type='password' name='pass1' value='' /></p><br>
                 <p>"._US_CONFIRM_PASSWORD."<br><input type='password' name='pass2' value='' /></p><br>
                 <input type='hidden' name='token' value='".$GLOBALS['xoopsSecurity']->createToken()."' />
-                <input type='hidden' name='a' value='".strip_tags(htmlspecialchars($_GET['a'], ENT_QUOTES))."' />
                 <input type='submit' name='submit' value='"._US_RESET_PW_BUTTON."'>
                 </form>
                 </div>
