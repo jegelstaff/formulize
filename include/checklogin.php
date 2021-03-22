@@ -30,11 +30,15 @@ if (empty($user) || !is_object($user)) {
 	if($user) { // 2FA added by Julian Egelstaff March 5 2021
 		include_once XOOPS_ROOT_PATH.'/include/2fa/manage.php';
 		if($method = user2FAMethod($user) AND userRemembersDevice($user) == false) {
-			if(validateCode($_POST['tfacode'], $user->getVar('uid')) == false) {
+            $uidToCheck = $user->getVar('uid');
+			if(validateCode($_POST['tfacode'], $uidToCheck) == false) {
 				unset($user);
 			} elseif($_POST['tfaremember']) {
 				rememberDevice($user);
 			}
+            global $xoopsDB;
+			$sql = 'DELETE FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($uidToCheck).' AND method != '.TFA_APP;
+			$xoopsDB->queryF($sql);
 		}
 	}
 }
@@ -148,11 +152,12 @@ if (false != $user) {
 
 	redirect_header($url, 1, sprintf(_US_LOGGINGU, $user->getVar('uname')), false);
 } elseif (empty($_POST['xoops_redirect'])) {
-	redirect_header(ICMS_URL . '/user.php', 5, $icmsAuth->getHtmlErrors());
+	redirect_header(ICMS_URL, 5, _US_INCORRECTLOGIN);
 } else {
+    $xr = trim($_POST['xoops_redirect']);
+    $redirURL = ($xr AND $xr != '/') ? '/?xoops_redirect='.urlencode(trim($_POST['xoops_redirect'])) : '';
 	redirect_header(
-		ICMS_URL . '/user.php?xoops_redirect='
-		. urlencode(trim($_POST['xoops_redirect'])), 5, $icmsAuth->getHtmlErrors(), false
+		ICMS_URL . $redirURL, 5, _US_INCORRECTLOGIN, false
 	);
 }
 exit();
