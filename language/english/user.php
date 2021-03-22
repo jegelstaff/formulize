@@ -210,4 +210,3 @@ define("_US_OPENID_LOGIN", "Login with Google");
 define("_US_OPENID_URL", "Your OpenID URL:");
 define("_US_OPENID_NORMAL_LOGIN", "Go back to normal login");
 define("_US_OKTA_LOGIN", "Login with Okta");
-?>

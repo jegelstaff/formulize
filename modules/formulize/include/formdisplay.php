@@ -176,15 +176,21 @@ class formulize_themeForm extends XoopsThemeForm {
 			$js .= "\n<!-- Start Form Validation JavaScript //-->\n<script type='text/javascript'>\n<!--//\n";
 		}
         $js .= "jQuery(document).ready(function() {\n";
-        $js .= "    jQuery('.formulizeThemeForm').each(function() {\n";
-        $js .= "        jQuery(this).show(75);\n";
-        $js .= "    });\n";
         
+        // after document ready is done then call window load
+        // calling window load outside document ready means window load might complete before document ready is done
+        $js .= "    jQuery(window).load(function() {\n";
+        $js .= "        jQuery('.formulizeThemeForm').each(function() {\n";
+        $js .= "            jQuery(this).show();\n";
+        $js .= "        });\n";
+        $js .= "    });\n";
+
         foreach($GLOBALS['formulize_startHiddenElements'] as $markupName) {
             $js .= "    jQuery('#formulize-".$markupName."').hide();\n";
         }
         
-        $js .= "});\n";
+        $js .= "});\n"; // end of document ready
+        
 		$formname = $this->getName();
 		$js .= "function xoopsFormValidate_{$formname}(leave, myform) { \n";
 		$js .= $this->_drawValidationJS($skipConditionalCheck);
@@ -2306,7 +2312,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 					
 					if(!strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
 						$col_two .= "<div class=\"subform-deletebox\">$deleteBox</div><div class=\"subform-entry-container\" id=\"subform-".$subform_id."-"."$sub_ent\">
-	<p class=\"subform-header\"><a href=\"#\"><span class=\"accordion-name\">".$headerToWrite."</span></a></p>
+	<p class=\"subform-header\"><a class=\"accordion-name-anchor\" href=\"#\"><span class=\"accordion-name\">".$headerToWrite."</span></a></p>
 	<div class=\"accordion-content content\">";
 					}
 					ob_start();
@@ -3282,10 +3288,30 @@ jQuery(window).on('unload', function() {
 <?php
 global $codeToIncludejQueryWhenNecessary;
 print $codeToIncludejQueryWhenNecessary;
-if(isset($_POST['yposition']) AND intval($_POST['yposition'])>0 AND !isset($_POST['formulize_currentPage'])) {
-		print "\njQuery(window).load(function () {\n";
-		print "\tjQuery(window).scrollTop(".intval($_POST['yposition']).");\n";
-		print "});\n";
+
+if(isset($_POST['yposition']) AND $_POST['yposition'] != 0 AND !isset($_POST['formulize_currentPage'])) {
+    // run window load inside document ready closure, so we're sure to run code after all document ready scripts have finished!
+    print "
+jQuery(document).ready(function () {
+    jQuery(window).load(function() {";
+    // if the yposition is negative, then it's an offset of the formulizeform element so...
+    // get the parents of the formulizeform div, and presumably only one of them is scrollable! And set the scroll position based on the current "top" value of formulizeform, plus the previous offset of formulize form which was sent in POST
+    if(intval($_POST['yposition'])<0) {
+        print "
+        jQuery('#formulizeform').parents().each(function() {
+            if(jQuery(this)[0].scrollHeight > jQuery(this)[0].clientHeight) {
+                jQuery(this).scrollTop(jQuery('#formulizeform').offset().top + ".intval($_POST['yposition']*-1).");
+            }
+        });";
+    // otherwise, just set the scrollTop of the window
+    } elseif($_POST['yposition']>0) {
+        print "
+        jQuery(window).scrollTop(".intval($_POST['yposition']).");";
+    }
+    print "
+    });
+});
+";      
 }
 ?>
 
@@ -3393,8 +3419,12 @@ if(!$nosave) { // need to check for add or update permissions on the current use
         if(jQuery('#save_and_leave_button')) {
             jQuery('#save_and_leave_button').attr('disabled', 'disabled');
         }
-        jQuery('#yposition').val(jQuery(window).scrollTop());
-            showSavingGraphic();
+        if(jQuery(window).scrollTop()) {
+            jQuery('#yposition').val(jQuery(window).scrollTop());
+        } else {
+            jQuery('#yposition').val((jQuery('#formulizeform').offset().top));
+        }
+        showSavingGraphic();
         if (leave=='leave') {
             jQuery('#save_and_leave').val(1);
         }

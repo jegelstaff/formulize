@@ -22,17 +22,31 @@ $op = isset($_REQUEST['op']) ? $_REQUEST['op'] : 'editprofile';
 
 switch ($op) {
 	case 'save':
-		if (!icms::$security->check()) redirect_header(ICMS_URL."/modules/".basename(dirname(__FILE__)), 3, _NOPERM."<br />".implode('<br />', icms::$security->getErrors()));
-
+		if (!icms::$security->check()) {
+			redirect_header(ICMS_URL."/modules/".basename(dirname(__FILE__)), 3, _NOPERM."<br />".implode('<br />', icms::$security->getErrors()));
+		}
+		
 		$uid = 0;
 		if (!empty($_POST['uid'])) $uid = (int)$_POST['uid'];
 		if (empty($uid) || (icms::$user->getVar('uid') != $uid && !icms::$user->isAdmin())) redirect_header(ICMS_URL, 3, _MD_PROFILE_NOEDITRIGHT);
 
-		$login_name = isset($_POST['login_name']) ? trim($_POST['login_name']) : '';
+        $login_name = isset($_POST['login_name']) ? trim($_POST['login_name']) : '';
 		$uname = isset($_POST['uname']) ? trim($_POST['uname']) : '';
 		$email = isset($_POST['email']) ? trim($_POST['email']) : '';
 		$pass = isset($_POST['password']) ? icms_core_DataFilter::stripSlashesGPC($_POST['password']) : '';
 		$vpass = isset($_POST['vpass']) ? icms_core_DataFilter::stripSlashesGPC($_POST['vpass']) : '';
+        
+		include_once XOOPS_ROOT_PATH.'/include/2fa/manage.php';
+		$profile_handler = xoops_getmodulehandler('profile', 'profile');
+		$profile = $profile_handler->get($uid);
+		if($uid == icms::$user->getVar('uid') AND
+		   ($_POST['2famethod'] != $profile->getVar('2famethod')
+			OR ($_POST['2famethod'] == 1 AND $_POST['2faphone'] != $profile->getVar('2faphone'))
+            OR ($profile->getVar('2famethod') > 0 AND $pass AND $vpass)
+            )
+		   AND validateCode($_POST['tfacode']) == false ) {
+			redirect_header(ICMS_URL."/modules/profile/edituser.php", 3, "Invalid Two-factor Authentication Code");
+		}
 
 		icms_loadLanguageFile('core', 'user');
 		$user_handler = icms::handler('icms_member_user');
@@ -105,6 +119,29 @@ switch ($op) {
 					}
 					else {
 						$value = $fields[$i]->getValueForSave((isset($_REQUEST[$fieldname]) ? $_REQUEST[$fieldname] : ""), $profile->getVar($fieldname, 'n'));
+						
+						// ADDED BY JULIAN EGELSTAFF MAR 4 2021 TO HANDLE 2FA FEATURES
+						/* if user is in a group that must use 2fa and they have not selected a 2fa option, force them onto email
+						 * if user has selected phone, there must be a phone number, otherwise default to email */
+						if($fieldname == '2famethod') {
+							$edituserGroups = $edituser->getGroups();
+							$config_handler = icms::handler('icms_config');
+							$criteria = new Criteria('conf_name', 'auth_2fa_groups');
+							$auth_2fa_groups = $config_handler->getConfigs($criteria);
+							$auth_2fa_groups = $auth_2fa_groups[0];
+							$auth_2fa_groups = $auth_2fa_groups->getConfValueForOutput();
+							$phoneNumber = $_REQUEST['2faphone'];
+							if($value == TFA_OFF AND array_intersect($edituserGroups, $auth_2fa_groups)
+							   OR ($value == TFA_SMS AND !$phoneNumber)) {
+								$value = TFA_EMAIL; 
+							}
+							if($value != TFA_APP) { // if the value is not app, then remove any app codes stored in DB
+								global $xoopsDB;
+								$sql = 'DELETE FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($edituser->getVar('uid')).' AND method = '.TFA_APP;
+								$xoopsDB->queryF($sql);
+							}
+						}
+						
 						$profile->setVar($fieldname, $value);
 					}
 				}
@@ -119,6 +156,7 @@ switch ($op) {
 			$form->display();
 		} else {
 
+			$update_message = _MD_PROFILE_PROFUPDATED;
             global $icmsConfigAuth;
             if($icmsConfigAuth['auth_openid']) {
                 //update the user mapping table in case the email was used as an external id (needed for google login)
@@ -127,15 +165,13 @@ switch ($op) {
                 Formulize::init();
                 if(!Formulize::updateResourceMapping($oldemail, $email)){
                     $update_message = 'Could not fully update email. <br>Consult webmaster if this seems to compromise Login with Google functionality.';
-                }else{
-                    $update_message = _MD_PROFILE_PROFUPDATED;
                 }
             }
 
 			$profile->setVar('profileid', $edituser->getVar('uid'));
 			$profile_handler->insert($profile);
 			unset($_SESSION['xoopsUserTheme']);
-			redirect_header(ICMS_URL.'/modules/'.basename( dirname( __FILE__ ) ).'/userinfo.php?uid='.$uid, 2,$update_message);
+			redirect_header(ICMS_URL.'/modules/profile/edituser.php', 2,$update_message);
 		}		
 		break;
 	case 'delete':
@@ -298,6 +334,105 @@ switch ($op) {
 		if ($uid != icms::$user->getVar('uid') && !icms::$user->isAdmin()) redirect_header(ICMS_URL, 3, _NOPERM);
 		$form = getUserForm($thisUser);
 		$form->display();
+		
+		// JS for handling 2FA -- added Mar 4 2021 by Julian Egelstaff
+		$config_handler = icms::handler('icms_config');
+		$criteria = new Criteria('conf_name', 'auth_2fa');
+		$auth_2fa = $config_handler->getConfigs($criteria);
+		$auth_2fa = $auth_2fa[0];
+		$auth_2fa = $auth_2fa->getConfValueForOutput();
+		if($auth_2fa AND $uid == icms::$user->getVar('uid')) {
+			global $xoopsConfig;
+			if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/images/working-".$xoopsConfig['language'].".gif") ) {
+				$workingMessageGif = "<img src=\"" . XOOPS_URL . "/modules/formulize/images/working-" . $xoopsConfig['language'] . ".gif\">";
+			} else {
+				$workingMessageGif = "<img src=\"" . XOOPS_URL . "/modules/formulize/images/working-english.gif\">";
+			}
+			$profile_handler = xoops_getmodulehandler('profile', 'profile');
+			$profile = $profile_handler->get($uid);
+			print "
+			<div id='tfadialog'><center>".$workingMessageGif."</center></div>
+			<script type='text/javascript'>
+			var tfadialog;
+			jQuery('document').ready(function() {";
+				// remove the None option if the user is in a group that must have 2fa turned on
+				$config_handler = icms::handler('icms_config');
+				$criteria = new Criteria('conf_name', 'auth_2fa_groups');
+				$auth_2fa_groups = $config_handler->getConfigs($criteria);
+				$auth_2fa_groups = $auth_2fa_groups[0];
+				$auth_2fa_groups = $auth_2fa_groups->getConfValueForOutput();
+				if(array_intersect($thisUser->getGroups(), $auth_2fa_groups)) {
+					print "
+					jQuery('#2famethod option[value=0]').remove();";
+				}
+				// change submit button id to something else so the submit event and button id do not conflict!
+				print "
+				jQuery('#userinfo').append('<input type=\"hidden\" id=\"tfacode\" name=\"tfacode\" value=\"\">');
+				jQuery('input#submit').attr('id','submitx');
+				jQuery('input#submitx').attr('name','submitx');
+				tfadialog = jQuery('#tfadialog').dialog({
+					autoOpen: false,
+					modal: true,
+					title: '"._US_2FA."',
+					width: '40%',
+					position: { my: 'center center', at: 'center center', of: window },
+					buttons: [
+						{ text: 'Cancel', icon: 'ui-icon-close', click: function() {
+								jQuery( this ).dialog( 'close' );
+								jQuery( this ).html('<center>".$workingMessageGif."</center>');
+							}
+						},
+						{ text: 'OK', icon: 'ui-icon-check', click: function() {
+								var code = jQuery('#dialog-tfacode').val();
+								jQuery( this ).dialog( 'close' );
+								jQuery( this ).html('<center>".$workingMessageGif."</center>');
+								if(code) {
+									jQuery('#tfacode').val(code);
+									jQuery('#userinfo').submit();
+								}
+							}
+						}
+					],
+					open: function() {
+						jQuery(this).css('overflow-y', 'auto !important'); 
+					}					
+				});
+				
+				jQuery('#tfadialog').keypress(function(e) {
+					if (e.keyCode == jQuery.ui.keyCode.ENTER) {
+						var code = jQuery('#dialog-tfacode').val();
+						tfadialog.dialog( 'close' );
+						tfadialog.html('<center>".$workingMessageGif."</center>');
+						if(code) {
+							jQuery('#tfacode').val(code);
+							jQuery('#userinfo').submit();
+						}
+					}
+				});
+				
+				jQuery('#userinfo').on('submit', function() {
+					var tfamethod = jQuery('#2famethod').val();
+					var tfaphone = jQuery('#2faphone').val();
+					var tfacode = jQuery('#tfacode').val();
+                    var password = jQuery('#password').val();
+                    var vpass = jQuery('#vpass').val();
+					var tfaphone = tfaphone.replace(/\D/g,'');
+					if(!tfacode && (
+                        tfamethod != ".$profile->getVar('2famethod')." ||
+                        (tfamethod == 1 && tfaphone != '".preg_replace("/[^0-9]/", '', $profile->getVar('2faphone'))."') || 
+                        (".$profile->getVar('2famethod')." > 0 && password && vpass)
+                        )) {
+						tfadialog.load('".XOOPS_URL."/include/2fa/confirm.php?method='+tfamethod+'&phone='+tfaphone);
+						tfadialog.dialog('open');
+						return false;
+					}
+					return true;
+				});
+			});
+			</script>
+			";
+		}
+		
 		break;
 }
 
