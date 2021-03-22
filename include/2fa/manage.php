@@ -285,26 +285,12 @@ function tfaLoginJS($id) {
         
         function close2FALostPassDialog(dialog, id) {
             var account = jQuery('#dialog-tfalostaccount').val();
-			var code = jQuery('#dialog-tfacode').val();
             if(account) {
-                dialog.html('<center>".$workingMessageGif."</center>');
-                jQuery.ajax({
-					async: false,
-					type: 'GET',
-					url: '".XOOPS_URL."/include/2fa/challenge.php?a='+encodeURIComponent(account)+'&token='+encodeURIComponent('".$GLOBALS['xoopsSecurity']->createToken()."'),
-					success: function(data) {
-						if(data) {
-							dialog.html(data);
-						} else {
-							dialog.html('Error: we could not locate any relevant account information.');
-						}
-					}
-				});
-            } else if(code) {
-                var accountidentifier = jQuery('#dialog-tfaaccountidentifier').val();
-                window.location = '".XOOPS_URL."/lostpass.php?c='+encodeURIComponent(code)+'&a='+encodeURIComponent(accountidentifier)+'&token='+encodeURIComponent('".$GLOBALS['xoopsSecurity']->createToken()."');
+				window.location = '".XOOPS_URL."/lostpass.php?a='+encodeURIComponent(account)+'&token='+encodeURIComponent('".$GLOBALS['xoopsSecurity']->createToken()."');
+            } else {
+                dialog.dialog( 'close' );
+				dialog.html('<center>".$workingMessageGif."</center>');
             }
-
 		}
         
 		</script>
