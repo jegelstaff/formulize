@@ -925,6 +925,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	list($formulize_buttonCodeArray) = drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $loadview, $loadOnlyView, $screen, $searches, $formulize_LOEPageNav, $messageText, $hiddenQuickSearches);
 
 	// if there is messageText and no custom top template, and no messageText variable in the bottom template, then we have to output the message text here
+	// THIS NEEDS INTEGRATING WITH THE DEFAULT TOP TEMPLATE SOMEHOW??????
 	if($screen AND $messageText) {
 		if(trim($screen->getTemplate('toptemplate')) == "" AND !strstr($screen->getTemplate('bottomtemplate'), 'messageText')) {
 			print "<p><center><b>$messageText</b></center></p>\n";
@@ -1127,9 +1128,9 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$useSearch = 1;
 	if($screen) {
 		$useWorking = !$screen->getVar('useworkingmsg') ? false : true;
-		$useDefaultInterface = $screen->getTemplate('toptemplate') != "" ? false : true;
+		$useDefaultInterface = $screen->getTemplateToRender('toptemplate') != "" ? false : true;
 		$title = $screen->getVar('title'); // otherwise, title of the form is in the settings array for when no screen is in use
-		$useSearch = ($screen->getVar('usesearch') AND !$screen->getTemplate('listtemplate')) ? 1 : 0;
+		$useSearch = ($screen->getVar('usesearch') AND !$screen->getTemplate('listtemplate')) ? 1 : 0; // NEEDS TO BE UPDATED TO UNDERSTAND NEW LIST OPEN TEMPLATE!!!!
 	}
 
 	$submitButton =  "<input type=submit name=submitx style=\"position: absolute; left: -10000px;\" value='' ></input>\n";
@@ -1374,12 +1375,18 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	} else {
 		// IF THERE IS A CUSTOM TOP TEMPLATE IN EFFECT, DO SOMETHING COMPLETELY DIFFERENT
 
-		if(!strstr($screen->getTemplate('toptemplate'), 'currentViewList') AND !strstr($screen->getTemplate('bottomtemplate'), 'currentViewList')) { print "<input type=hidden name=currentview id=currentview value=\"$currentview\"></input>\n"; } // print it even if the text is blank, it will be a hidden value in this case
+		if(!strstr($screen->getTemplateToRender('toptemplate'), 'currentViewList') AND
+			 !strstr($screen->getTemplateToRender('bottomtemplate'), 'currentViewList') AND
+			 !strstr($screen->getTemplateToRender('openlisttemplate'), 'currentViewList') AND
+			 !strstr($screen->getTemplateToRender('closelisttemplate'), 'currentViewList') 
+			 ) { print "<input type=hidden name=currentview id=currentview value=\"$currentview\"></input>\n"; } // print it even if the text is blank, it will be a hidden value in this case
 
 			$filterTypes = array('\$quickDateRange', '\$quickFilter', '\$quickMultiFilter');
-			$filterHandles = extractHandles($filterTypes, $screen->getTemplate('toptemplate'));
-            $filterHandles = array_merge($filterHandles, extractHandles($filterTypes, $screen->getTemplate('listtemplate')));
-            $filterHandles = array_merge($filterHandles, extractHandles($filterTypes, $screen->getTemplate('bottomtemplate')));
+			$filterHandles = extractHandles($filterTypes, $screen->getTemplateToRender('toptemplate'));
+      $filterHandles = array_merge($filterHandles, extractHandles($filterTypes, $screen->getTemplateToRender('listtemplate')));
+      $filterHandles = array_merge($filterHandles, extractHandles($filterTypes, $screen->getTemplateToRender('bottomtemplate')));
+			$filterHandles = array_merge($filterHandles, extractHandles($filterTypes, $screen->getTemplateToRender('openlisttemplate')));
+			$filterHandles = array_merge($filterHandles, extractHandles($filterTypes, $screen->getTemplateToRender('closelisttemplate')));
 
       formulize_benchmark("before calling draw searches");
 			$quickSearchBoxes = drawSearches($searches, $settings, $useCheckboxes, $useViewEntryLinks, 0, true, $hiddenQuickSearches, $filterHandles); // first true means we will receive back the code instead of having it output to the screen, second (last) true means that all allowed filters should be generated
@@ -1388,19 +1395,35 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 			foreach($quickSearchBoxes as $handle=>$qscode) {
 				$handle = str_replace("-","_",$handle);
 				$foundQS = false;
-				if(strstr($screen->getTemplate('toptemplate'), 'quickSearch' . $handle) OR strstr($screen->getTemplate('bottomtemplate'), 'quickSearch' . $handle) OR in_array($handle, $settings['pubfilters'])) {
+				if(strstr($screen->getTemplateToRender('toptemplate'), 'quickSearch' . $handle) OR
+					 strstr($screen->getTemplateToRender('bottomtemplate'), 'quickSearch' . $handle) OR
+					 strstr($screen->getTemplateToRender('openlisttemplate'), 'quickSearch' . $handle) OR
+					 strstr($screen->getTemplateToRender('closelisttemplate'), 'quickSearch' . $handle) OR
+					 in_array($handle, $settings['pubfilters'])) {
 					$buttonCodeArray['quickSearch' . $handle] = $qscode['search']; // set variables for use in the template
           $foundQS = true;
         }
-				if(strstr($screen->getTemplate('toptemplate'), 'quickFilter' . $handle) OR strstr($screen->getTemplate('bottomtemplate'), 'quickFilter' . $handle) OR in_array($handle, $settings['pubfilters'])) {
+				if(strstr($screen->getTemplateToRender('toptemplate'), 'quickFilter' . $handle) OR
+					 strstr($screen->getTemplateToRender('bottomtemplate'), 'quickFilter' . $handle) OR
+					 strstr($screen->getTemplateToRender('openlisttemplate'), 'quickFilter' . $handle) OR
+					 strstr($screen->getTemplateToRender('closelisttemplate'), 'quickFilter' . $handle) OR
+					 in_array($handle, $settings['pubfilters'])) {
           $buttonCodeArray['quickFilter' . $handle] = $qscode['filter']; // set variables for use in the template
           $foundQS = true;
         }
-            if(strstr($screen->getTemplate('toptemplate'), 'quickMultiFilter' . $handle) OR strstr($screen->getTemplate('bottomtemplate'), 'quickMultiFilter' . $handle) OR in_array($handle, $settings['pubfilters'])) {
+            if(strstr($screen->getTemplateToRender('toptemplate'), 'quickMultiFilter' . $handle) OR
+							 strstr($screen->getTemplateToRender('bottomtemplate'), 'quickMultiFilter' . $handle) OR
+							 strstr($screen->getTemplateToRender('openlisttemplate'), 'quickMultiFilter' . $handle) OR
+							 strstr($screen->getTemplateToRender('closelisttemplate'), 'quickMultiFilter' . $handle) OR
+							 in_array($handle, $settings['pubfilters'])) {
                 $buttonCodeArray['quickMultiFilter' . $handle] = $qscode['multiFilter']; // set variables for use in the template
                 $foundQS = true;
             }
-				if(strstr($screen->getTemplate('toptemplate'), 'quickDateRange' . $handle) OR strstr($screen->getTemplate('bottomtemplate'), 'quickDateRange' . $handle) OR in_array($handle, $settings['pubfilters'])) {
+				if(strstr($screen->getTemplateToRender('toptemplate'), 'quickDateRange' . $handle) OR
+					 strstr($screen->getTemplateToRender('bottomtemplate'), 'quickDateRange' . $handle) OR
+					 strstr($screen->getTemplateToRender('openlisttemplate'), 'quickDateRange' . $handle) OR
+					 strstr($screen->getTemplateToRender('closelisttemplate'), 'quickDateRange' . $handle) OR
+					 in_array($handle, $settings['pubfilters'])) {
           $buttonCodeArray['quickDateRange' . $handle] = $qscode['dateRange']; // set variables for use in the template
           $foundQS = true;
         }
@@ -1411,6 +1434,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
    		// if search is not used, generate the search boxes and make them available in the template
 		// also setup searches when calculations are in effect, or there's a custom list template
 		// (essentially, whenever the search boxes would not be drawn in for whatever reason)
+		// INTERACTION WITH LIST TEMPLATE NOW SUPERSEDED BY LIST OPEN TEMPLATE POSSIBILITIES?????
 		if(!$useSearch OR ($calc_cols AND !$hcalc) OR $screen->getTemplate('listtemplate')) {
 			if(count($quickSearchesNotInTemplate) > 0) {
 				print "<div style=\"display: none;\">";
@@ -1425,7 +1449,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
         $buttonCodeArray['submitButton'] = $submitButton;
 		formulize_screenLOETemplate($screen, "top", $buttonCodeArray, $settings, $messageText);
     formulize_benchmark("after rendering top template");
-        if(strstr($screen->getTemplate('toptemplate'), "\$submitButton")) {
+        if(strstr($screen->getTemplateToRender('toptemplate'), "\$submitButton")) {
             unset($buttonCodeArray['submitButton']); // do not send this back if it has been used. Otherwise, send it back and we can put it at the bottom of the page if necessary
         }
 
@@ -1546,12 +1570,12 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 		if($textWidth == 0) { $textWidth = 10000; }
 		$useCheckboxes = $screen->getVar('usecheckboxes');
 		$useViewEntryLinks = $screen->getVar('useviewentrylinks');
-		$useSearch = ($screen->getVar('usesearch') AND !$screen->getTemplate('listtemplate')) ? 1 : 0;
+		$useSearch = ($screen->getVar('usesearch') AND !$screen->getTemplate('listtemplate')) ? 1 : 0; // AGAIN INTERACTION WITH LIST OPEN TEMPLATE AND SEARCHES AND SO ON NEEDS TO BE FIGURED OUT!!!!!!
 		$hiddenColumns = $screen->getVar('hiddencolumns');
 		$deColumns = $screen->getVar('decolumns');
 		$deDisplay = $screen->getVar('dedisplay');
 		$useSearchCalcMsgs = $screen->getVar('usesearchcalcmsgs');
-		$listTemplate = $screen->getTemplate("listtemplate");
+		$listTemplate = $screen->getTemplateToRender("listtemplate");
 		foreach($screen->getVar('customactions') as $caid=>$thisCustomAction) {
 			if($thisCustomAction['appearinline'] == 1) {
 				list($caCode) = processCustomButton($caid, $thisCustomAction);
@@ -3563,7 +3587,6 @@ function showPop(url) {
 
 }
 
-
 function confirmDel() {
 	var answer = confirm ('<?php print _formulize_DE_CONFIRMDEL; ?>');
 	if (answer) {
@@ -4333,13 +4356,21 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 	}
 
 	// if there is no save button specified in either of the templates, but one is available, then put it in below the list
-	if($type == "bottom" AND count($screen->getVar('decolumns')) > 0 AND !$screen->getVar('dedisplay') AND $GLOBALS['formulize_displayElement_LOE_Used'] AND !strstr($screen->getTemplate('toptemplate'), 'saveButton') AND !strstr($screen->getTemplate('bottomtemplate'), 'saveButton')) {
+	if($type == "bottom" AND
+		 count($screen->getVar('decolumns')) > 0 AND
+		 !$screen->getVar('dedisplay') AND
+		 $GLOBALS['formulize_displayElement_LOE_Used'] AND
+		 !strstr($screen->getTemplateToRender('toptemplate'), 'saveButton') AND
+		 !strstr($screen->getTemplateToRender('bottomtemplate'), 'saveButton') AND
+		 !strstr($screen->getTemplateToRender('openlisttemplate'), 'saveButton') AND
+		 !strstr($screen->getTemplateToRender('closelisttemplate'), 'saveButton')
+		 ) {
 		print "<div id=\"floating-list-of-entries-save-button\" class=\"\"><p>$saveButton</p></div>\n";
 	}
 
     $publishedFilters = is_array($settings['pubfilters']) ? $settings['pubfilters'] : array();
 
-	$thisTemplate = $screen->getTemplate($type.'template');
+	$thisTemplate = $screen->getTemplateToRender($type.'template');
 	if($thisTemplate != "") {
 
     // process the template and output results
@@ -4348,13 +4379,19 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
         include $screen->getTemplatePath($type."template");
 
 		// if there are no page nav controls in either template the template, then
-		if($type == "top" AND !strstr($screen->getTemplate('toptemplate'), 'pageNavControls') AND (!strstr($screen->getTemplate('bottomtemplate'), 'pageNavControls'))) {
+		if($type == "top" AND
+			 !strstr($screen->getTemplateToRender('toptemplate'), 'pageNavControls') AND
+			 !strstr($screen->getTemplateToRender('bottomtemplate'), 'pageNavControls') AND
+			 !strstr($screen->getTemplateToRender('openlisttemplate'), 'pageNavControls') AND
+			 !strstr($screen->getTemplateToRender('closelisttemplate'), 'pageNavControls') 
+			 ) {
 			print $pageNavControls;
 		}
 	}
 
 	// output the message text to the screen if it's not used in the custom templates somewhere
-	if($type == "top" AND $messageText AND !strstr($screen->getTemplate('toptemplate'), 'messageText') AND !strstr($screen->getTemplate('bottomtemplate'), 'messageText')) {
+	// THIS NEEDS CHECKING WITH OTHER MESSAGETEXT OUTPUT AND ALSO HOW LIST OPEN TEMPLATE WORKS, ETC
+	if($type == "top" AND $messageText AND !strstr($screen->getTemplateToRender('toptemplate'), 'messageText') AND !strstr($screen->getTemplateToRender('bottomtemplate'), 'messageText')) {
 		print "<p><center><b>$messageText</b></center></p>\n";
 	}
 

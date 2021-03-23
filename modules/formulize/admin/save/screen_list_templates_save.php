@@ -44,7 +44,6 @@ $sid = $_POST['formulize_admin_key'];
 
 $screens = $processedValues['screens'];
 
-
 $screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
 $screen = $screen_handler->get($sid);
 // CHECK IF THE FORM IS LOCKED DOWN AND SCOOT IF SO
@@ -57,11 +56,8 @@ if($formObject->getVar('lockedform')) {
 if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mid)) {
   return;
 }
-$screen->setVar('toptemplate',htmlspecialchars(trim($screens['toptemplate'])));
-$screen->setVar('bottomtemplate',htmlspecialchars(trim($screens['bottomtemplate'])));
-$screen->setVar('listtemplate',htmlspecialchars(trim($screens['listtemplate'])));
 
-if(!$screen_handler->insert($screen)) {
+if(!$screen_handler->insert($screen)) { // no properties to set but templates need savings to files!
   print "Error: could not save the screen properly: ".$xoopsDB->error();
 }
 

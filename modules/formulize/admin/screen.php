@@ -127,8 +127,9 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $templates['toptemplate'] = str_replace("&", "&amp;", $screen->getTemplate('toptemplate', $screen->getVar('theme')));
   $templates['bottomtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('bottomtemplate', $screen->getVar('theme')));
   $templates['listtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('listtemplate', $screen->getVar('theme')));
-  $templates['usingTemplates'] = ($templates['toptemplate'] OR $templates['bottomtemplate'] OR $templates['listtemplate']);
-  
+  $templates['openlisttemplate'] = str_replace("&", "&amp;", $screen->getTemplate('openlisttemplate', $screen->getVar('theme')));
+  $templates['closelisttemplate'] = str_replace("&", "&amp;", $screen->getTemplate('closelisttemplate', $screen->getVar('theme')));
+  $templates['usingTemplates'] = ($templates['toptemplate'] OR $templates['bottomtemplate'] OR $templates['listtemplate'] OR $templates['openlisttemplate'] OR $templates['closelisttemplate']);
   
   // view data
   // gather all the available views

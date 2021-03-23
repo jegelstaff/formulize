@@ -89,22 +89,7 @@ class formulizeScreen extends xoopsObject {
         return $this->$name;
     }
 
-	function getDefaultTemplate($templatename, $theme="") {
-		global $xoopsConfig;
-		$theme = $theme ? $theme : $xoopsConfig['theme_set'];
-		$themeDefaultPath = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/default/".$this->getVar('type')."/".$templatename.".php";
-		if (file_exists($themeDefaultPath)) {
-			$template = file_get_contents($themeDefaultPath);
-		} else {
-			$systemDefaultPath = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$this->getVar('type')."/".$templatename.".php";
-			if (file_exists($systemDefaultPath)) {
-				$template = file_get_contents($systemDefaultPath);
-			} 
-		}
-		return $template;
-	}
-
-	function getTemplatePath($templatename) {
+    function getTemplatePath($templatename) {
 		global $xoopsConfig;
 		$paths[] = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/".$this->getVar('sid')."/".$templatename.".php";
 		$paths[] = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/default/".$this->getVar('type')."/".$templatename.".php";
@@ -115,7 +100,38 @@ class formulizeScreen extends xoopsObject {
 			}
 		}
 	}
-	
+    
+    // returns the actual template we will use at render time. Reverts to default template if no specific template is set for this screen.
+	function getTemplateToRender($templatename, $theme="") {
+		$template = $this->getTemplate($templatename, $theme);
+		if(!$template) {
+			$template = $this->getDefaultTemplate($templatename, $theme);
+			if(!$template) {
+				error_log('Formulize Error: could not locate a '.$templatename.' for screen '.$this->getVar('sid').'. No screen template set, and no theme default at: '.$themeDefaultPath.'. And no system default at: '.$systemDefaultPath);
+			}
+		}
+		return $template;
+	}
+    
+	function getDefaultTemplate($templatename, $theme="") {
+		global $xoopsConfig;
+		$theme = $theme ? $theme : $xoopsConfig['theme_set'];
+        static $cachedDefaultTemplates = array();
+        if(!isset($cachedDefaultTemplates[$theme][$this->getVar('type')][$templatename])) {
+            $themeDefaultPath = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/default/".$this->getVar('type')."/".$templatename.".php";
+            if (file_exists($themeDefaultPath)) {
+                $template = file_get_contents($themeDefaultPath);
+            } else {
+                $systemDefaultPath = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$this->getVar('type')."/".$templatename.".php";
+                if (file_exists($systemDefaultPath)) {
+                    $template = file_get_contents($systemDefaultPath);
+                } 
+            }
+            $cachedDefaultTemplates[$theme][$this->getVar('type')][$templatename] = $template;
+        }
+		return $cachedDefaultTemplates[$theme][$this->getVar('type')][$templatename];
+	}
+
     function getTemplate($templatename, $theme="") {
         if(!$theme) {
             global $xoopsConfig;

@@ -9,10 +9,17 @@
     <input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
 
     <div class="panel-content content">
+        
         <p><b>Showing templates for use with this theme:</b> <{html_options name=screens-theme options=$content.themes selected=$content.selectedTheme}></p>
-        <p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_TOPTEMPLATE3}></p>
+        <p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_TOPTEMPLATE3}></p><br />
+        
+        <{if !$content.usingTemplates}>
+            <p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_SEEDTEMPLATES1}><{$content.seedtemplates}><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_SEEDTEMPLATES2}></p><br /><p><input type="button" value="<{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_SEEDTEMPLATES3}>" id="seedtemplates"></p><br />        
+        <{/if}>
+        
+        <{if $content.usingTemplates}>       
+        
         <p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_TOPTEMPLATE}></p>
-        <p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_TOPTEMPLATE2}></p>
         <p><a class="formulize-open-close-link" open-text="View template documentation" close-text="Hide template documentation" linked-block-id="#formulize-template-documentation">View template documentation</a> about how to include buttons and other interface elements.</p><br />
         <div id="formulize-template-documentation" style="display:none;">
             <fieldset>
@@ -32,7 +39,15 @@
 
         <div class="form-item">
             <fieldset>
-                <legend>List Template</legend>
+                <legend>Open List Template</legend>
+                <textarea id="screens-openlisttemplate"  name="screens-openlisttemplate" class="code-textarea" rows="20"/>
+<{$content.openlisttemplate}></textarea>
+            </fieldset>
+        </div>
+
+        <div class="form-item">
+            <fieldset>
+                <legend>List Item Template</legend>
                 <textarea id="screens-listtemplate" name="screens-listtemplate" class="code-textarea" rows="20"/>
 <{$content.listtemplate}></textarea>
                 <br />
@@ -52,11 +67,21 @@
 
         <div class="form-item">
             <fieldset>
+                <legend>Close List Template</legend>
+                <textarea id="screens-closelisttemplate"  name="screens-closelisttemplate" class="code-textarea" rows="20"/>
+<{$content.closelisttemplate}></textarea>
+            </fieldset>
+        </div>
+
+        <div class="form-item">
+            <fieldset>
             <legend>Bottom Template</legend>
                 <textarea id="screens-bottomtemplate" name="screens-bottomtemplate" class="code-textarea" rows="20"/>
 <{$content.bottomtemplate}></textarea>
             </fieldset>
         </div>
+
+        <{/if}>
 
     </div>
 </form>
@@ -64,8 +89,10 @@
 jQuery(document).ready(function() {
     jQuery(".savebutton").click(function() {
         fz_check_php_code(jQuery("#screens-toptemplate").val(), "Top template", "<{$icms_url}>", <{$icms_userid}>);
-        fz_check_php_code(jQuery("#screens-listtemplate").val(), "List template", "<{$icms_url}>", <{$icms_userid}>);
+        fz_check_php_code(jQuery("#screens-listtemplate").val(), "List Item template", "<{$icms_url}>", <{$icms_userid}>);
         fz_check_php_code(jQuery("#screens-bottomtemplate").val(), "Bottom template", "<{$icms_url}>", <{$icms_userid}>);
+        fz_check_php_code(jQuery("#screens-openlisttemplate").val(), "Open List template", "<{$icms_url}>", <{$icms_userid}>);
+        fz_check_php_code(jQuery("#screens-closelisttemplate").val(), "Close List template", "<{$icms_url}>", <{$icms_userid}>);
     });
 });
 </script>
