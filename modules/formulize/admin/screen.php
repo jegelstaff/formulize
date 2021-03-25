@@ -536,10 +536,12 @@ if ($screen_id != "new" && $settings['type'] == 'calendar') {
 
 $templates['themes'] = icms_view_theme_Factory::getThemesList();
 $multipageTemplates['themes'] = icms_view_theme_Factory::getThemesList();
-$themeDefaultPath = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$screen->getVar('theme')."/default/".$settings['type']."/";
+global $xoopsConfig;
+$themeFolder = $screen ? $screen->getVar('theme') : $xoopsConfig['theme_set'];
+$themeDefaultPath = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$themeFolder."/default/".$settings['type']."/";
 $templates['seedtemplates'] = $themeDefaultPath;
 if(!file_exists($themeDefaultPath)) {
-    $templates['seedtemplates'] = str_replace($screen->getVar('theme').'/default', 'default', $themeDefaultPath);    
+    $templates['seedtemplates'] = str_replace($themeFolder.'/default', 'default', $themeDefaultPath);    
 }
 
 // common values should be assigned to all tabs
