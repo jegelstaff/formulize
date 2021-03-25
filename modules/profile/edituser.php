@@ -348,8 +348,12 @@ switch ($op) {
 			} else {
 				$workingMessageGif = "<img src=\"" . XOOPS_URL . "/modules/formulize/images/working-english.gif\">";
 			}
+			include_once XOOPS_ROOT_PATH.'/include/2fa/manage.php';
 			$profile_handler = xoops_getmodulehandler('profile', 'profile');
 			$profile = $profile_handler->get($uid);
+			$method = $profile->getVar('2famethod') ? $profile->getVar('2famethod') : TFA_OFF;
+			$pwChangeMethod = $method ? $method : TFA_EMAIL;
+			$phoneNumber = preg_replace("/[^0-9]/", '', $profile->getVar('2faphone'));
 			print "
 			<div id='tfadialog'><center>".$workingMessageGif."</center></div>
 			<script type='text/javascript'>
@@ -417,12 +421,19 @@ switch ($op) {
                     var password = jQuery('#password').val();
                     var vpass = jQuery('#vpass').val();
 					var tfaphone = tfaphone.replace(/\D/g,'');
+					
+					if(password && vpass && password != vpass) {
+						alert(\""._US_PASSWORDS_DONT_MATCH."\");
+						return false;
+					}
+					
 					if(!tfacode && (
-                        tfamethod != ".$profile->getVar('2famethod')." ||
-                        (tfamethod == 1 && tfaphone != '".preg_replace("/[^0-9]/", '', $profile->getVar('2faphone'))."') || 
-                        (".$profile->getVar('2famethod')." > 0 && password && vpass)
+                        tfamethod != ".$method." ||
+                        (tfamethod == ".TFA_SMS." && tfaphone != '".$phoneNumber."') || 
+                        (password && vpass)
                         )) {
-						tfadialog.load('".XOOPS_URL."/include/2fa/confirm.php?method='+tfamethod+'&phone='+tfaphone);
+						methodToUse = tfamethod ? tfamethod : ".$pwChangeMethod.";
+						tfadialog.load('".XOOPS_URL."/include/2fa/confirm.php?method='+methodToUse+'&phone='+tfaphone+'&selectedMethod='+tfamethod);
 						tfadialog.dialog('open');
 						return false;
 					}
