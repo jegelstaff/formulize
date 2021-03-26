@@ -26,10 +26,11 @@ $codebox = "<br><br>Code: <input type='text' id='dialog-tfacode' value=''>";
 
 $profile_handler = xoops_getmodulehandler('profile', 'profile');
 $profile = $profile_handler->get($xoopsUser->getVar('uid'));
+$pwChangeMethod = $profile->getVar('2famethod') ? $profile->getVar('2famethod') : TFA_EMAIL;
 
 // if user is changing password
-if($profile->getVar('2famethod') > 0 AND $_GET['method']==$profile->getVar('2famethod') AND ($_GET['phone'] == preg_replace("/[^0-9]/", '', $profile->getVar('2faphone')) OR $profile->getVar('2famethod') != TFA_SMS)) {
-    switch($profile->getVar('2famethod')) {
+if($_GET['selectedMethod'] == $profile->getVar('2famethod') AND ($_GET['phone'] == preg_replace("/[^0-9]/", '', $profile->getVar('2faphone')) OR $profile->getVar('2famethod') != TFA_SMS)) {
+    switch($pwChangeMethod) {
         case TFA_SMS:
             $message = sendCode(); // will return errors
             $method = 'texts';
@@ -39,7 +40,7 @@ if($profile->getVar('2famethod') > 0 AND $_GET['method']==$profile->getVar('2fam
             $method = 'app';
             break;
         default:
-            $message = sendCode(); // will return errors
+            $message = sendCode(TFA_EMAIL); // will return errors
             $method = 'email';
     }
     $message = $message ? $message : _US_TO_CHANGE_PASS.$method.".$codebox";
@@ -57,7 +58,7 @@ if($profile->getVar('2famethod') > 0 AND $_GET['method']==$profile->getVar('2fam
                     $method = 'app';
                     break;
                 default:
-                    $message = sendCode(); // will return errors
+                    $message = sendCode(TFA_EMAIL); // will return errors
                     $method = 'email';
             }
             $message = $message ? $message : _US_TO_TURN_OFF.$method.".$codebox";

@@ -137,8 +137,9 @@ class formulizeElementRenderer{
 				if(trim($ele_value[0]) == "") { $ele_value[0] = $ele_caption; }
 				if(strstr($ele_value[0], "\$value=") OR strstr($ele_value[0], "\$value =")) {
 					$form_id = $id_form;
-					$entryData = $this->formulize_getCachedEntryData($id_form, $entry_id);
-					$creation_datetime = display($entryData, "creation_datetime");
+					$entry = $this->formulize_getCachedEntryData($id_form, $entry_id);
+					$creation_datetime = display($entry, "creation_datetime");
+					$entryData = $entry; // alternate variable name for backwards compatibility
 					$evalResult = eval($ele_value[0]);
 					if($evalResult === false) {
 						$ele_value[0] = _formulize_ERROR_IN_LEFTRIGHT;
@@ -275,6 +276,7 @@ class formulizeElementRenderer{
 					$form_id = $id_form;
 					$entry = $this->formulize_getCachedEntryData($id_form, $entry_id);
 					$creation_datetime = display($entry, "creation_datetime");
+					$entryData = $entry; // alternate variable name for backwards compatibility
 					$evalResult = eval($ele_value[0]);
 					if($evalResult === false) {
 						$ele_value[0] = _formulize_ERROR_IN_LEFTRIGHT;
@@ -1172,7 +1174,7 @@ class formulizeElementRenderer{
 	// gather an entry when required...this should really be abstracted out to the data handler class, which also needs a proper getter in a handler of its own, so we don't keep creating new instances of the data handler and it can store the cached info about entries that we want it to.
 	function formulize_getCachedEntryData($id_form, $entry_id) {
 		static $cachedEntryData = array();
-		if($entry_id === "new" OR !$entry_id) {
+		if(!is_numeric($entry_id) OR $entry_id < 1) {
             return array();
 		}
 		if(!isset($cachedEntryData[$id_form][$entry_id])) {
