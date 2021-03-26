@@ -3402,7 +3402,7 @@ if(!$nosave) { // need to check for add or update permissions on the current use
 	var validate = xoopsFormValidate_formulize_mainform(leave, window.document.formulize_mainform);
 	// this is an optional form validation function which can be provided by a screen template or form text element
 	if (window.formulizeExtraFormValidation && typeof(window.formulizeExtraFormValidation) === 'function') {
-		validate = window.formulizeExtraFormValidation();
+		validate = window.formulizeExtraFormValidation(validate);
 	}
 	if(validate) {
 		if(typeof savedPage != 'undefined' && savedPage && savedPrevPage) { // set in submitForm and will have values if we're on the second time around of a two step validation, like a uniqueness check with the server
