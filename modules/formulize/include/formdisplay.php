@@ -3571,7 +3571,6 @@ function loadSub(dialogObject) {
         if(typeof setDatePickerMinMaxValues === 'function') { setDatePickerMinMaxValues(); }
     });
 }
-}
 
 function redrawSubRow(entry_id,subformElementId) {
     jQuery.get('<?php print XOOPS_URL; ?>/modules/formulize/include/redrawSubformRow.php?entry_id='+entry_id+'&subformElementId='+subformElementId, function(data) {
