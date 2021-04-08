@@ -207,7 +207,7 @@ function tfaLoginJS($id) {
 				jQuery.ajax({
 					async: false,
 					type: 'GET',
-					url: '".XOOPS_URL."/include/2fa/challenge.php?u='+jQuery('#$id input[name=\"uname\"]').val()+'&p='+jQuery('#$id input[name=\"pass\"]').val(),
+					url: '".XOOPS_URL."/include/2fa/challenge.php?u='+encodeURIComponent(jQuery('#$id input[name=\"uname\"]').val())+'&p='+encodeURIComponent(jQuery('#$id input[name=\"pass\"]').val()),
 					success: function(data) {
 						if(data) {
 							tfadialog$counter.html(data);
