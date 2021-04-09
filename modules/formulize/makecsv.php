@@ -66,6 +66,7 @@ global $xoopsUser, $icmsUser;
 // authentication block
 $apiKeyHandler = xoops_getmodulehandler('apikey', 'formulize');
 $apiKeyHandler->delete(); // clear out expired keys
+$uid = 0;
 if($key AND $apikey = $apiKeyHandler->get($key)) {
     $uid = $apikey->getVar('uid');
     if($uidObject = $member_handler->getUser($uid)) {
@@ -79,7 +80,7 @@ if($key AND $apikey = $apiKeyHandler->get($key)) {
 } elseif($xoopsUser) {
     $uid = $xoopsUser->getVar('uid');
     $groups = $xoopsUser->getGroups();
-} else {
+} elseif($key) {
     print "Invalid authentication key";
     exit();
 }
@@ -95,7 +96,7 @@ $scope = buildScope($currentView, $uid, $fid);
 $scope = $scope[0]; // buildScope returns array of scope and possibly altered currentView
 
 
-if($fid) {
+if($fid AND $uid) {
     if($_GET['debug']==1) {
         print "$frid, $fid, $filter, $andor, $scope, $limitStart, $limitSize, $sortHandle, $sortDir, $fields";
         exit();
