@@ -50,6 +50,9 @@ $limitSize = (isset($_GET['limitSize']) AND $limitStart !== "") ? intval($_GET['
 $fields = isset($_GET['fields']) ? $_GET['fields'] : "";
 $excludeFields  = isset($_GET['excludeFields']) ? explode(',',$_GET['excludeFields']) : array();
 $key = preg_replace("/[^A-Za-z0-9]/", "", str_replace(" ","",$_GET['key'])); // keys must be only alphanumeric characters
+if(isset($_GET['showForeignKeys'])) {
+    $GLOBALS['formulize_useForeignKeysInDataset']['all'] = true;
+}
 
 // unpack any filters that are declared in the special formulize_makeCSVFilters param
 if(isset($_GET['formulize_makeCSVFilters'])) {
@@ -195,6 +198,7 @@ sortDir,optional,a direction for the sorting of data - default is ASC - valid va
 limitSize,optional,a number indicating how many rows to include from the overall query result - used as part of a standard LIMIT statement in the database query
 limitStart,optional,a number indicating where to start displaying rows from the overall query result - used as part of a standard LIMIT statement in the database query - defaults to 0 (results are numbered from 0)
 includeMetadata,optional,if present then the metadata columns will be included in the result - value doesn't matter
+showForeignKeys,optional,if present then the raw values in the database will be shown for references to other forms instead of the value from the other form - value doesn't matter
 
 Each authentication key is associated with a unique user and will only return data which that user has access to.
 
