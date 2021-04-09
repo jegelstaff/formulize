@@ -177,7 +177,8 @@ if($fid AND $uid) {
     }
 } else {
     // print out help info
-    print "Valid URL parameters for the Formulize makecsv.php file:
+    print "<pre>
+Valid URL parameters for the Formulize makecsv.php file:
     
 key,a valid authentication key issued by a webmaster for your site (if there is no key, a user must be logged in)
 fid,required,the id number of the form you are querying - if absent this help text is displayed
