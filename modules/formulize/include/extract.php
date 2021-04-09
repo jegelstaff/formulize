@@ -2147,7 +2147,16 @@ function prepareFieldIncludeExclude($fields, $include='include') {
 // THIS FUNCTION DOES A SIMPLE QUERY AGAINST A TABLE IN THE DATABASE AND RETURNS THE RESULT IN STANDARD "GETDATA" FORMAT
 function dataExtractionTableForm($tablename, $formname, $fid, $filter=false, $andor=false, $limitStart=false, $limitSize=false, $sortField=false, $sortOrder=false, $resultOnly=false, $fields=array(), $excludeFields=array()) {
 
-     global $xoopsDB;
+    $fid = intval($fid);
+
+    // user must have permission to access the form!
+    $gperm_handler = xoops_gethandler('groupperm');
+    global $xoopsUser;
+    if(!$xoopsUser OR !$gperm_handler->checkRight("view_form", $fid, $xoopsUser->getGroups(), getFormulizeModId())) {
+        return array();
+    }
+
+    global $xoopsDB;
      
     // 2. parse the filter
     // 3. construct the where clause based on the filter and andor
@@ -2159,7 +2168,7 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter=false, $an
     $excludeWhere = prepareFieldIncludeExclude($excludeFields, 'exclude');
     
     // setup a translation table for the formulize records of the fields, so we can use that lower down in several places
-    $sql = "SELECT ele_id, ele_caption FROM ".DBPRE."formulize WHERE id_form=".intval($fid)." $includeWhere $excludeWhere";
+    $sql = "SELECT ele_id, ele_caption FROM ".DBPRE."formulize WHERE id_form=".$fid." $includeWhere $excludeWhere";
     $res = $xoopsDB->query($sql);
     $elementsById = array();
     $elementsByCaption = array();
