@@ -594,7 +594,7 @@ function patch40() {
         if($res = $xoopsDB->query($sql)) {
             if($xoopsDB->getRowsNum($res)==0) {
                 $newConfigSQL[] = "INSERT INTO ".$xoopsDB->prefix("config")." (`conf_modid`, `conf_catid`, `conf_name`, `conf_title`, `conf_value`, `conf_desc`, `conf_formtype`, `conf_valuetype`, `conf_order`) VALUES (0, 7, 'auth_2fa', '_MD_AM_AUTH2FA', '0', '_MD_AM_AUTH2FADESC', 'yesno', 'int', 1)";
-                $newConfigSQL[] = "INSERT INTO ".$xoopsDB->prefix("config")." (`conf_modid`, `conf_catid`, `conf_name`, `conf_title`, `conf_value`, `conf_desc`, `conf_formtype`, `conf_valuetype`, `conf_order`) VALUES (0, 7, 'auth_2fa_groups', '_MD_AM_AUTH2FAGROUPS', 'a:1:{i:0;s:1:\"2\";}', '_MD_AM_AUTH2FAGROUPSDESC', 'group_multi', 'array', 1)";
+                $newConfigSQL[] = "INSERT INTO ".$xoopsDB->prefix("config")." (`conf_modid`, `conf_catid`, `conf_name`, `conf_title`, `conf_value`, `conf_desc`, `conf_formtype`, `conf_valuetype`, `conf_order`) VALUES (0, 7, 'auth_2fa_groups', '_MD_AM_AUTH2FAGROUPS', '', '_MD_AM_AUTH2FAGROUPSDESC', 'group_multi', 'array', 1)";
             }
         }
         $sql = "SELECT * FROM ".$xoopsDB->prefix("config")." WHERE conf_name = 'auth_okta'";

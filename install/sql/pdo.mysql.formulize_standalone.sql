@@ -339,7 +339,7 @@ INSERT INTO `REPLACE_WITH_PREFIX_config` (`conf_id`, `conf_modid`, `conf_catid`,
 (335, 5, 0, 'enable_manip_check', '_MI_PROTECTOR_MANIPUCHECK', '1', '_MI_PROTECTOR_MANIPUCHECKDSC', 'yesno', 'int', 31),
 (336, 5, 0, 'manip_value', '_MI_PROTECTOR_MANIPUVALUE', '', '_MI_PROTECTOR_MANIPUVALUEDSC', 'textbox', 'text', 32),
 (337, 0, 7, 'auth_2fa', '_MD_AM_AUTH2FA', '1', '_MD_AM_AUTH2FADESC', 'yesno', 'int', 1),
-(338, 0, 7, 'auth_2fa_groups', '_MD_AM_AUTH2FAGROUPS', 'a:1:{i:0;s:1:\"2\";}', '_MD_AM_AUTH2FAGROUPSDESC', 'group_multi', 'array', 1),
+(338, 0, 7, 'auth_2fa_groups', '_MD_AM_AUTH2FAGROUPS', '', '_MD_AM_AUTH2FAGROUPSDESC', 'group_multi', 'array', 1),
 (339, 0, 7, 'auth_okta', '_MD_AM_AUTHOKTA', '', '_MD_AM_AUTHOKTADESC', 'textbox', 'text', 1);
 
 TRUNCATE `REPLACE_WITH_PREFIX_group_permission`;
