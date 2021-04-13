@@ -136,6 +136,18 @@ function sendCode($method=null, $uid=false, $phone=null) {
 // returns 2FA method for the current user
 // will default to email if the user must use 2FA but they don't have a method set
 function user2FAMethod($user=null) {
+
+    // check if 2FA is on    
+    $config_handler = icms::handler('icms_config');
+	$criteria = new Criteria('conf_name', 'auth_2fa');
+	$auth_2fa = $config_handler->getConfigs($criteria);
+	$auth_2fa = $auth_2fa[0];
+	$auth_2fa = $auth_2fa->getConfValueForOutput();
+    if($auth_2fa == false) {
+        return false;
+    }
+   
+    // if 2FA is on, return the user's method if any, or email if they have no method but are in a group that must use 2FA
 	if(!$user) {
 		global $xoopsUser;
 		$user = $xoopsUser;
@@ -145,7 +157,6 @@ function user2FAMethod($user=null) {
 	if($profile->getVar('2famethod')) {
 		return $profile->getVar('2famethod');
 	}
-	$config_handler = icms::handler('icms_config');
 	$criteria = new Criteria('conf_name', 'auth_2fa_groups');
 	$auth_2fa_groups = $config_handler->getConfigs($criteria);
 	$auth_2fa_groups = $auth_2fa_groups[0];
