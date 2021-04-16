@@ -84,7 +84,7 @@ function sendCode($method=null, $uid=false, $phone=null) {
     $profile_handler = xoops_getmodulehandler('profile', 'profile');
 	$profile = $profile_handler->get($uid);
     if(!$method) {
-        $method = $profile->getVar('2famethod');
+        $method = intval($profile->getVar('2famethod'));
     }
     
     $code = generateCode($method, $uid);

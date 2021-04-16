@@ -29,7 +29,7 @@ $profile = $profile_handler->get($xoopsUser->getVar('uid'));
 $pwChangeMethod = $profile->getVar('2famethod') ? $profile->getVar('2famethod') : TFA_EMAIL;
 
 // if user is changing password
-if($_GET['selectedMethod'] == $profile->getVar('2famethod') AND ($_GET['phone'] == preg_replace("/[^0-9]/", '', $profile->getVar('2faphone')) OR $profile->getVar('2famethod') != TFA_SMS)) {
+if(intval($_GET['selectedMethod']) == intval($profile->getVar('2famethod')) AND ($_GET['phone'] == preg_replace("/[^0-9]/", '', $profile->getVar('2faphone')) OR $profile->getVar('2famethod') != TFA_SMS)) {
     switch($pwChangeMethod) {
         case TFA_SMS:
             $message = sendCode(); // will return errors
