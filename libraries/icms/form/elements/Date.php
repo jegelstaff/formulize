@@ -115,7 +115,7 @@ var datepicker_defaults = {
     changeYear: true,
     hideIfNoPrevNext: true, // do not show the prev/next links if they are disabled
     numberOfMonths: 1,
-    yearRange: "c-20:c+20",
+    yearRange: "c-50:c+50",
     showOn: "both",
     buttonImageOnly: true,
     buttonImage: "$ICMS_URL/images/calendar.png",
