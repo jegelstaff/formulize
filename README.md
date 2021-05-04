@@ -1,4 +1,4 @@
-formulize
+Formulize
 =========
 
 Data management and reporting on the web, in your CMS, and on your mobile device.
