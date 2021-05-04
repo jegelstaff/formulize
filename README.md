@@ -1,9 +1,9 @@
 Formulize
 =========
 
-Data management and reporting on the web, in your CMS, and on your mobile device.
-
-Docs and other materials (incl. video tutorials) here: http://www.formulize.org
+* Data entry, collection, management, workflows and reporting.
+* On the web, in your CMS, and on your mobile device.
+* Docs and other materials (incl. video tutorials) here: http://www.formulize.org
 
 To get the latest, just download the source code of the latest release, or the latest commit if you want the cutting edge, which is almost always fully functional.
 
