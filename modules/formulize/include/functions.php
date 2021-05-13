@@ -1498,6 +1498,14 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
                 $name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid=".intval(display($entry, $col)));
                 $data_to_write = $name_q[0]['name'];
                 if (!$data_to_write) { $data_to_write = $name_q[0]['uname']; }
+            } elseif($col == 'entry_id') {
+                $data_to_write = $id;
+            } elseif($col == 'creation_datetime') {
+                $data_to_write = $c_date;
+            } elseif($col == 'mod_datetime') {
+                $data_to_write = $m_date;
+            } elseif($col == 'creator_email') {
+                $data_to_write = display($entry, 'creator_email');
             } else {
                 $data_to_write = prepareCellForSpreadsheetExport($col, $entry);
             }
