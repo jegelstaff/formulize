@@ -62,6 +62,14 @@ if(!defined("XOOPS_ROOT_PATH")) {
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
+global $xoopsConfig;
+// load the formulize language constants if they haven't been loaded already
+if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
+    include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php";
+} else {
+    include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/main.php";
+}
+
 // when called directly, no fid or frid will be set, because they are set in initialize.php as part of a normal Formulize page load. Therefore, we will take them from GET or POST as initialize.php would.
 if(!isset($frid)) {
     $frid = ((isset( $_GET['frid'])) AND is_numeric( $_GET['frid'])) ? intval( $_GET['frid']) : "" ;
@@ -400,8 +408,9 @@ foreach($formulize_allWrittenEntryIds as $allWrittenFid=>$entries) {
     if(!$frid) {
         $formObject = $form_handler->get($allWrittenFid, true); // true causes all elements to be gathered, including ones that are not displayed to the users
         if(array_search("derived", $formObject->getVar('elementTypes'))) { // only bother if there is a derived value in the form
+            $updateFrid = $allWrittenFid == $overrideFid ? $overrideFrid : $frid;
 			foreach($entries as $thisEntry) {
-				formulize_updateDerivedValues($thisEntry, $allWrittenFid);
+				formulize_updateDerivedValues($thisEntry, $allWrittenFid, $updateFrid);
 			}
 		}
 	} else {

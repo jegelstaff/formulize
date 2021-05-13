@@ -1,3 +1,12 @@
+CREATE TABLE `tfa_codes` (
+  `code_id` int(11) unsigned NOT NULL auto_increment,
+  `uid` int(11) unsigned DEFAULT NULL,
+  `code` varchar(255) DEFAULT NULL,
+  `method` tinyint(1) unsigned DEFAULT NULL,
+  PRIMARY KEY (`code_id`),
+  INDEX i_uid (`uid`)
+) ENGINE=InnoDB;
+
 CREATE TABLE `formulize_screen_calendar` (
   `calendar_id` int(11) unsigned NOT NULL auto_increment,
   `sid` int(11) DEFAULT NULL,
@@ -218,6 +227,9 @@ CREATE TABLE `formulize_screen_multipage` (
   `displaycolumns` tinyint(1) NOT NULL default 2,
   `column1width` varchar(255) NULL default NULL,
   `column2width` varchar(255) NULL default NULL,
+  `showpagetitles` tinyint(1) NOT NULL,
+  `showpageselector` tinyint(1) NOT NULL,
+  `showpageindicator` tinyint(1) NOT NULL,
   PRIMARY KEY (`multipageid`),
   INDEX i_sid (`sid`)
 ) ENGINE=MyISAM;
@@ -237,6 +249,7 @@ CREATE TABLE `formulize_screen_form` (
   `displaycolumns` tinyint(1) NOT NULL default 2,
   `column1width` varchar(255) NULL default NULL,
   `column2width` varchar(255) NULL default NULL,
+  `displayType` varchar(255) NOT NULL default 'block',
   PRIMARY KEY (`formid`),
   INDEX i_sid (`sid`)
 ) ENGINE=MyISAM;
@@ -249,6 +262,7 @@ CREATE TABLE `formulize_screen` (
   `type` varchar(100) NOT NULL default '',
   `useToken` tinyint(1) NOT NULL,
   `anonNeedsPasscode` tinyint(1) NOT NULL,
+  `theme` varchar(100) NOT NULL default '',
   PRIMARY KEY  (`sid`)
 ) ENGINE=MyISAM;
 

@@ -126,11 +126,14 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
         static $fileDeleteCode;
         $introToUploadBox = "";
         if($isDisabled) {
-            $formElement = new xoopsFormLabel($caption, $ele_value[3]);
+            $displayName = $ele_value[4];
+            $url = $this->createFileURL($element, $entry_id, serialize(array('name'=>$ele_value[3], 'isfile'=>$ele_value[5])));
+            $link = $this->createDownloadLink($element, $url, $displayName);
+            $formElement = new xoopsFormLabel($caption, $link);
         } else {
             // create the file upload element, and also a hidden element with the correct markup name.  That hidden value will trigger the correct saving logic, and is necessary because file upload elements are excluded from POST.
             if(!$ele_value[5]) {
-                $introToUploadBox = "<div id='formulize_fileStatus_".$element->getVar('ele_id')."_$entry_id' class='no-print formulize-fileupload-element'>".$ele_value[3]."" . _AM_UPLOAD;
+                $introToUploadBox = "<div id='formulize_fileStatus_".$element->getVar('ele_id')."_$entry_id' class='no-print formulize-fileupload-element'>".$ele_value[3]." ". _AM_UPLOAD;
             } elseif($ele_value[3]) {
                 if(!$fileDeleteCode) { // only do this once per page load
                     $fileDeleteCode = "<script type='text/javascript'>
@@ -207,7 +210,6 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
     // $value is what the user submitted
     // $element is the element object
     function prepareDataForSaving($value, $element) {
-        
         $fileKey = 'fileupload_'.$value;
         if($_FILES[$fileKey]['error'] == 0) {
             // get the extension for the uploaded file

@@ -282,14 +282,19 @@ class icms_member_Handler {
 		$table = new icms_db_legacy_updater_Table('users');
 
 		if ($email !== '') {
-			if ($table->fieldExists('loginname')) {
-				$sql = icms::$xoopsDB->query("SELECT loginname, email FROM " . icms::$xoopsDB->prefix('users')
-					. " WHERE email = '" . @htmlspecialchars($email, ENT_QUOTES, _CHARSET) . "'");
-			} elseif ($table->fieldExists('login_name')) {
-				$sql = icms::$xoopsDB->query("SELECT login_name, email FROM " . icms::$xoopsDB->prefix('users')
-					 . " WHERE email = '" . @htmlspecialchars($email, ENT_QUOTES, _CHARSET) . "'");
-			}
-			list($uname, $email) = icms::$xoopsDB->fetchRow($sql);
+            $sql = icms::$xoopsDB->query("SELECT login_name, email FROM " . icms::$xoopsDB->prefix('users')
+					. " WHERE login_name = '" . @htmlspecialchars($email, ENT_QUOTES, _CHARSET) . "'");
+            list($uname, $email) = icms::$xoopsDB->fetchRow($sql);
+            if(!$uname) {
+                if ($table->fieldExists('loginname')) {
+                    $sql = icms::$xoopsDB->query("SELECT loginname, email FROM " . icms::$xoopsDB->prefix('users')
+                        . " WHERE email = '" . @htmlspecialchars($email, ENT_QUOTES, _CHARSET) . "'");
+                } elseif ($table->fieldExists('login_name')) {
+                    $sql = icms::$xoopsDB->query("SELECT login_name, email FROM " . icms::$xoopsDB->prefix('users')
+                         . " WHERE email = '" . @htmlspecialchars($email, ENT_QUOTES, _CHARSET) . "'");
+                }
+                list($uname, $email) = icms::$xoopsDB->fetchRow($sql);
+            }
 		} else {
 			redirect_header('user.php', 2, _US_SORRYNOTFOUND);
 		}

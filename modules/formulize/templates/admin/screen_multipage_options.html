@@ -14,9 +14,17 @@
         <legend>Appearance</legend>
         <div class="form-item">
             <p>What style of page navigation should this form use?<br>
-            <label for="screens-navstyle-0"><input type="radio" id=screens-navstyle-0 name="screens-navstyle" value=0> Continue and Back buttons, and a dropdown list of pages</label><br />
+            <label for="screens-navstyle-0"><input type="radio" id=screens-navstyle-0 name="screens-navstyle" value=0> Continue and Back buttons</label><br />
             <label for="screens-navstyle-1"><input type="radio" id=screens-navstyle-1 name="screens-navstyle" value=1> Tabs for each page</label></p>
+            <label for="screens-navstyle-2"><input type="radio" id=screens-navstyle-2 name="screens-navstyle" value=2> Tabs and Buttons</label></p>
 	    </div>
+        
+        <div class="form-item">
+            <input id="showpageindicator" type="checkbox" name="screens-showpageindicator" value=1 <{$content.showpageindicator}>> <label for="showpageindicator">Show 'page 1 of X'</label><br>
+            <input id="showpageselector" type="checkbox" name="screens-showpageselector" value=1 <{$content.showpageselector}>> <label for="showpageselector">Show the page selection dropdown list</label><br>
+            <input id="showpagetitles" type="checkbox" name="screens-showpagetitles" value=1 <{$content.showpagetitles}>> <label for="showpagetitles">Show the page title at the top of the form</label>
+	    </div>
+        
         <div class="form-item">
             <p>Display the form elements as:<br>
             <label for="onecolumn"><input type='radio' id="onecolumn" name="screens-displaycolumns" value="1"/> a single column</label><br>
@@ -39,9 +47,31 @@
       <input type="text" id="screens-donedest" name="screens-donedest" value="<{$content.donedest}>" size="50" maxlength="255"/>
 	  </div>
 	  <div class="form-item">
-		  <label for="screens-buttontext"><{$smarty.const._AM_FORMULIZE_SCREEN_BUTTONTEXT}></label>
-      <input type="text" id="screens-buttontext" name="screens-buttontext" value="<{$content.buttontext}>" size="50" maxlength="255"/>
+		  <label for="screens-buttontext"><{$smarty.const._AM_FORMULIZE_SCREEN_THANKYOULINKTEXT}></label>
+      <input type="text" id="screens-buttontext" name="thankyoulinktext" value="<{$content.thankyoulinktext}>" size="50" maxlength="255"/>
 	  </div>
+      	  <div class="form-item">
+		  <label for="screens-buttontext"><{$smarty.const._AM_FORMULIZE_SCREEN_LEAVEBUTTONTEXT}></label>
+      <input type="text" id="screens-buttontext" name="leaveButtonText" value="<{$content.leaveButtonText}>" size="50" maxlength="255"/>
+	  </div>
+	  <div class="form-item">
+		  <label for="screens-buttontext"><{$smarty.const._AM_FORMULIZE_SCREEN_PREVBUTTONTEXT}></label>
+      <input type="text" id="screens-buttontext" name="prevButtonText" value="<{$content.prevButtonText}>" size="50" maxlength="255"/>
+	  </div>
+	  <div class="form-item">
+		  <label for="screens-buttontext"><{$smarty.const._AM_FORMULIZE_SCREEN_SAVEBUTTONTEXT}></label>
+      <input type="text" id="screens-buttontext" name="saveButtonText" value="<{$content.saveButtonText}>" size="50" maxlength="255"/>
+	  </div>
+	  <div class="form-item">
+		  <label for="screens-buttontext"><{$smarty.const._AM_FORMULIZE_SCREEN_NEXTBUTTONTEXT}></label>
+      <input type="text" id="screens-buttontext" name="nextButtonText" value="<{$content.nextButtonText}>" size="50" maxlength="255"/>
+	  </div>
+	  <div class="form-item">
+		  <label for="screens-buttontext"><{$smarty.const._AM_FORMULIZE_SCREEN_FINISHBUTTONTEXT}></label>
+      <input type="text" id="screens-buttontext" name="finishButtonText" value="<{$content.finishButtonText}>" size="50" maxlength="255"/>
+      <div class="description">To turn off a button, clear the text for that button.</div>
+	  </div>
+      
 	</fieldset>
   <fieldset>
     <legend>Answers from a previous entry</legend>

@@ -119,7 +119,7 @@ function patch40() {
      * ====================================== */
 
     $checkThisTable = 'formulize_screen_form';
-	$checkThisField = 'printableviewbuttontext';
+	$checkThisField = 'displayType';
 	$checkThisProperty = '';
 	$checkPropertyForValue = '';
 
@@ -160,6 +160,17 @@ function patch40() {
 
         $sql = array();
 
+        if (!in_array($xoopsDB->prefix("tfa_codes"), $existingTables)) {
+                $sql[] = "CREATE TABLE `".$xoopsDB->prefix("tfa_codes")."` (
+          `code_id` int(11) unsigned NOT NULL auto_increment,
+          `uid` int(11) unsigned DEFAULT NULL,
+          `code` varchar(255) DEFAULT NULL,
+          `method` tinyint(1) unsigned DEFAULT NULL,
+          PRIMARY KEY (`code_id`),
+          INDEX i_uid (`uid`)
+        ) ENGINE=InnoDB;";
+        }
+        
         if (!in_array($xoopsDB->prefix("formulize_digest_data"), $existingTables)) {
             $sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_digest_data")."` (
                 `digest_id` int(11) unsigned NOT NULL auto_increment,
@@ -255,6 +266,7 @@ function patch40() {
   `displaycolumns` tinyint(1) NOT NULL default 2,
   `column1width` varchar(255) NULL default NULL,
   `column2width` varchar(255) NULL default NULL,
+  `displayType` varchar(255) NOT NULL default 'block',
   PRIMARY KEY (`formid`),
   INDEX i_sid (`sid`)
 ) ENGINE=MyISAM;";
@@ -461,7 +473,12 @@ function patch40() {
         $sql['form_screen_printableview'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_form"). " ADD `printableviewbuttontext` varchar(255) NOT NULL default ''";
         $sql['rm_ext_id_null'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_resource_mapping") . " CHANGE `external_id` `external_id` INT(11) NULL DEFAULT NULL";
         $sql['sliderfix'] = "UPDATE " . $xoopsDB->prefix("formulize") . " SET ele_type = 'slider' WHERE ele_type = 'newslider'";
-        
+        $sql['buttontexttext'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_multipage") . " CHANGE `buttontext` `buttontext` TEXT NULL DEFAULT NULL";
+        $sql['form_screen_multipage_showpagetitles'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_multipage") . " ADD `showpagetitles` tinyint(1) NOT NULL";
+        $sql['form_screen_multipage_showpageselector'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_multipage") . " ADD `showpageselector` tinyint(1) NOT NULL";
+        $sql['form_screen_multipage_showpageindicator'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_multipage") . " ADD `showpageindicator` tinyint(1) NOT NULL";
+        $sql['screen_theme'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD `theme` varchar(100) NOT NULL default ''";
+        $sql['form_screen_displaytype'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_form") . " ADD `displayType` varchar(255) NOT NULL default 'block'";
         $needToSetSaveAndLeave = true;
         $needToSetPrintableView = true;
         foreach($sql as $key=>$thissql) {
@@ -554,10 +571,22 @@ function patch40() {
                     $needToSetPrintableView = false;
                 } elseif($key === "form_screen_multipage_column1width" OR $key === "form_screen_multipage_column2width" OR $key === "form_screen_multipage_displaycolumns") {
                     print "Multipage form screen display columns and column widths already added. result: OK<br>";
+                } elseif($key === "form_screen_multipage_showpagetitles" OR $key === "form_screen_multipage_showpageselector" OR $key === "form_screen_multipage_showpageindicator") {
+                    print "Multipage form screen UI controls already added. result OK<br>";
+                } elseif($key === "screen_theme") {
+                    print "Theme setting for screens already added. result: OK<br>";
+                } elseif($key === "form_screen_displaytype") {    
+                    print "Form screen element container display type already added. result: OK<br>";
                 } else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
             }
+        }
+        
+        global $xoopsConfig;
+        $themeSql = 'UPDATE '.$xoopsDB->prefix('formulize_screen').' SET theme = "'.$xoopsConfig['theme_set'].'" WHERE theme = ""';
+        if(!$res = $xoopsDB->query($themeSql)) {
+            exit("Error patching DB for Formulize $versionNumber. Could not update screens with default theme. SQL dump:<br>".$themeSql."<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
         }
         
         $newConfigSQL = array();
@@ -565,7 +594,7 @@ function patch40() {
         if($res = $xoopsDB->query($sql)) {
             if($xoopsDB->getRowsNum($res)==0) {
                 $newConfigSQL[] = "INSERT INTO ".$xoopsDB->prefix("config")." (`conf_modid`, `conf_catid`, `conf_name`, `conf_title`, `conf_value`, `conf_desc`, `conf_formtype`, `conf_valuetype`, `conf_order`) VALUES (0, 7, 'auth_2fa', '_MD_AM_AUTH2FA', '0', '_MD_AM_AUTH2FADESC', 'yesno', 'int', 1)";
-                $newConfigSQL[] = "INSERT INTO ".$xoopsDB->prefix("config")." (`conf_modid`, `conf_catid`, `conf_name`, `conf_title`, `conf_value`, `conf_desc`, `conf_formtype`, `conf_valuetype`, `conf_order`) VALUES (0, 7, 'auth_2fa_groups', '_MD_AM_AUTH2FAGROUPS', 'a:1:{i:0;s:1:\"2\";}', '_MD_AM_AUTH2FAGROUPSDESC', 'group_multi', 'array', 1)";
+                $newConfigSQL[] = "INSERT INTO ".$xoopsDB->prefix("config")." (`conf_modid`, `conf_catid`, `conf_name`, `conf_title`, `conf_value`, `conf_desc`, `conf_formtype`, `conf_valuetype`, `conf_order`) VALUES (0, 7, 'auth_2fa_groups', '_MD_AM_AUTH2FAGROUPS', '', '_MD_AM_AUTH2FAGROUPSDESC', 'group_multi', 'array', 1)";
             }
         }
         $sql = "SELECT * FROM ".$xoopsDB->prefix("config")." WHERE conf_name = 'auth_okta'";
@@ -585,15 +614,44 @@ function patch40() {
                 $sql = "INSERT INTO ".$xoopsDB->prefix("profile_field")." (`catid`, `field_type`, `field_valuetype`, `field_name`, `field_title`, `url`, `field_description`, `field_required`, `field_maxlength`, `field_weight`, `field_default`, `field_notnull`, `field_edit`, `field_show`, `field_options`, `exportable`, `step_id`, `system`) VALUES (0, 'select', '3', '2famethod', '2-factor authentication method', '', '', 0, '0', 7, '', 1, 1, 1, 'a:4:{i:0;s:8:\"--None--\";i:1;s:14:\"Text me a code\";i:2;s:15:\"Email me a code\";i:3;s:24:\"Use an authenticator app\";}', 1, 1, 1)";
                 if($res = $xoopsDB->query($sql)) {
                     $profileId = $xoopsDB->getInsertId();
-                    $sql = "INSERT INTO ".$xoopsDB->prefix("profile_visibility")." (`fieldid`, `user_group`, `profile_group`) VALUES ($profileId, 2, 0)";
-                    if(!$res = $xoopsDB->query($sql)) {
-                        exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
-                    }
-                    $sql = "INSERT INTO ".$xoopsDB->prefix("group_permission")." (`gperm_groupid`, `gperm_itemid`, `gperm_modid`, `gperm_name`) VALUES (2, $profileId, 2, 'profile_edit')";
+                    $sql = "INSERT INTO ".$xoopsDB->prefix("profile_visibility")." (`fieldid`, `user_group`, `profile_group`) VALUES ($profileId, 1, 0)";
                     if(!$res = $xoopsDB->query($sql)) {
                         exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                     }
                     $sql = "ALTER TABLE ".$xoopsDB->prefix("profile_profile")." ADD `2famethod` INT NULL DEFAULT NULL";
+                    if(!$res = $xoopsDB->query($sql)) {
+                        exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+                    }
+                } else {
+                    exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+                }
+            }
+        }
+        $sql = "SELECT * FROM ".$xoopsDB->prefix("profile_field")." WHERE field_name = '2faphone'";
+        if($res = $xoopsDB->query($sql)) {
+            if($xoopsDB->getRowsNum($res)==0) {
+                $sql = "INSERT INTO ".$xoopsDB->prefix("profile_field")." (`catid`, `field_type`, `field_valuetype`, `field_name`, `field_title`, `url`, `field_description`, `field_required`, `field_maxlength`, `field_weight`, `field_default`, `field_notnull`, `field_edit`, `field_show`, `field_options`, `exportable`, `step_id`, `system`) VALUES (0, 'textbox', '1', '2faphone', 'Phone Number', '', '', 0, '255', 8, '', 1, 1, 1, 'a:0:{}', 1, 2, 1)";
+                if($res = $xoopsDB->query($sql)) {
+                    $profileId = $xoopsDB->getInsertId();
+                    $sql = "INSERT INTO ".$xoopsDB->prefix("profile_visibility")." (`fieldid`, `user_group`, `profile_group`) VALUES ($profileId, 1, 0)";
+                    if(!$res = $xoopsDB->query($sql)) {
+                        exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+                    }
+                    $sql = "ALTER TABLE ".$xoopsDB->prefix("profile_profile")." ADD `2faphone` VARCHAR(15) NULL DEFAULT NULL";
+                    if(!$res = $xoopsDB->query($sql)) {
+                        exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+                    }
+                } else {
+                    exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+                }
+            }
+        }
+        $sql = "SELECT * FROM ".$xoopsDB->prefix("profile_field")." WHERE field_name = '2fadevices'";
+        if($res = $xoopsDB->query($sql)) {
+            if($xoopsDB->getRowsNum($res)==0) {
+                $sql = "INSERT INTO ".$xoopsDB->prefix("profile_field")." (`catid`, `field_type`, `field_valuetype`, `field_name`, `field_title`, `url`, `field_description`, `field_required`, `field_maxlength`, `field_weight`, `field_default`, `field_notnull`, `field_edit`, `field_show`, `field_options`, `exportable`, `step_id`, `system`) VALUES (0, 'textarea', '2', '2fadevices', 'Devices', '', '', 0, '0', 9, '', 1, 1, 0, 'a:0:{}', 1, 2, 1)";
+                if($res = $xoopsDB->query($sql)) {
+                    $sql = "ALTER TABLE ".$xoopsDB->prefix("profile_profile")." ADD `2fadevices` TEXT NULL DEFAULT NULL";
                     if(!$res = $xoopsDB->query($sql)) {
                         exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                     }
@@ -789,11 +847,15 @@ function patch40() {
             print "Updating relationships with unified delete option.  result: OK<br>";
             }
         }
-
+        
+        $screenpathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/";
+        
+        // If current theme folder does not exists for templates, then create it and copy the default folder contents over to it.
+        if(!file_exists($screenpathname)) {
+            recurse_copy(XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/",$screenpathname);
+        }
 
         // CONVERTING EXISTING TEMPLATES IN DB TO TEMPLATE FILES
-        $screenpathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/";
-
         $templateSQL = "SELECT sid, toptemplate, listtemplate, bottomtemplate FROM ".$xoopsDB->prefix("formulize")."_screen_listofentries";
 
         $templateRes = $xoopsDB->query($templateSQL);
@@ -802,18 +864,13 @@ function patch40() {
                 if (!file_exists($screenpathname.$handleArray['sid'])) {
                     $pathname = $screenpathname.$handleArray['sid']."/";
                     mkdir($pathname, 0777, true);
-
-                    if (!is_writable($pathname)) {
-                        chmod($pathname, 0777);
-                    }
-
-                    saveTemplate($handleArray['toptemplate'], $handleArray['sid'], "toptemplate");
-                    saveTemplate($handleArray['bottomtemplate'], $handleArray['sid'], "bottomtemplate");
-                    saveTemplate($handleArray['listtemplate'], $handleArray['sid'], "listtemplate");
-
-                } else {
-                    print "screen templates for screen ".$handleArray['sid']." already exist. result: OK<br>";
+				}
+				if (!is_writable($pathname)) {
+                    chmod($pathname, 0777);
                 }
+                saveTemplate($handleArray['toptemplate'], $handleArray['sid'], "toptemplate");
+                saveTemplate($handleArray['bottomtemplate'], $handleArray['sid'], "bottomtemplate");
+                saveTemplate($handleArray['listtemplate'], $handleArray['sid'], "listtemplate");
             }
         }
 
@@ -825,18 +882,13 @@ function patch40() {
                 if (!file_exists($screenpathname.$handleArray['sid'])) {
                     $pathname = $screenpathname.$handleArray['sid']."/";
                     mkdir($pathname, 0777, true);
-
-                    if (!is_writable($pathname)) {
-                        chmod($pathname, 0777);
-                    }
-
-                    saveTemplate($handleArray['toptemplate'], $handleArray['sid'], "toptemplate");
-                    saveTemplate($handleArray['bottomtemplate'], $handleArray['sid'], "bottomtemplate");
-                    saveTemplate($handleArray['elementtemplate'], $handleArray['sid'], "elementtemplate");
-                } else {
-                    print "screen templates for screen ".$handleArray['sid']." already exist. result: OK<br>";
-                }
-
+				}
+                if (!is_writable($pathname)) {
+					chmod($pathname, 0777);
+				}
+				saveTemplate($handleArray['toptemplate'], $handleArray['sid'], "toptemplate");
+				saveTemplate($handleArray['bottomtemplate'], $handleArray['sid'], "bottomtemplate");
+				saveTemplate($handleArray['elementtemplate'], $handleArray['sid'], "elementtemplate");
             }
         }
 
@@ -873,7 +925,8 @@ function emptyTemplateFixer($dir) {
 
 // Saves the given template to a template file on the disk
 function saveTemplate($template, $sid, $name) {
-    $filename = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/{$sid}/{$name}.php";
+    global $xoopsConfig;
+    $filename = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/{$sid}/{$name}.php";
 
     $text = trim(html_entity_decode($template));
     if ($text AND substr($text, 0, 5) != "<?php") {
@@ -881,10 +934,12 @@ function saveTemplate($template, $sid, $name) {
         $text = "<?php\n" . $text;
     }
 
-    if (false === file_put_contents($filename, $text)) {
+	if(file_exists($filename)) {
+		print "$name file for screen $sid already exists. result: OK<br>";
+	} elseif (false === file_put_contents($filename, $text)) {
         print "Warning: could not save " . $name . ".php for screen " . $sid . ".<br>";
     } else {
-        print "created templates/screens/default/" . $sid . "/". $name . ".php. result: OK<br>";
+        print "created templates/screens/".$xoopsConfig['theme_set']."/" . $sid . "/". $name . ".php. result: OK<br>";
     }
 }
 

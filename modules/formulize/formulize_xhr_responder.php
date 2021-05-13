@@ -52,6 +52,14 @@ include_once "../../header.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
 include XOOPS_ROOT_PATH .'/modules/formulize/include/customCodeForApplications.php';
 
+global $xoopsConfig;
+// load the formulize language constants if they haven't been loaded already
+if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
+    include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php";
+} else {
+    include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/main.php";
+}
+
 $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'] = array();
 $GLOBALS['formulize_asynchronousFormDataInAPIFormat'] = array();
 
@@ -336,6 +344,7 @@ function renderElement($elementObject, $entryId) {
             }
             $isDisabled = $deReturnValue[1];
             // rendered HTML code below is taken from the formulize classes at the top of include/formdisplay.php
+            // NEEDS REFACTORING TO WORK WITH NEW TEMPLATE BASED FORM RENDERING!!!
             if($elementObject->getVar('ele_type') == "ib") {// if it's a break, handle it differently...
                 $class = ($form_ele[1] != '') ? " class='".$form_ele[1]."'" : '';
                 $columnData = formulize_themeForm::_getColumns($elementObject->getVar('ele_id'));

@@ -2410,7 +2410,7 @@ function icms_unlinkRecursive($dir, $deleteRootToo=true){
  */
 function icms_PasswordMeter(){
 	global $xoTheme, $icmsConfigUser;
-	$xoTheme->addScript(ICMS_URL.'/libraries/jquery/jquery.js', array('type' => 'text/javascript'));
+	//$xoTheme->addScript(ICMS_URL.'/libraries/jquery/jquery.js', array('type' => 'text/javascript')); // jquery already included
 	$xoTheme->addScript(ICMS_URL.'/libraries/jquery/password_strength_plugin.js', array('type' => 'text/javascript'));
 	$xoTheme->addScript('', array('type' => ''), '
 				$(document).ready( function() {
@@ -2713,10 +2713,11 @@ function icms_need_do_br($moduleName=false) {
  */
 
 function authenticationURL($needAuth) {
-    if(!$needAuth) { return ''; }
-    $client = setupAuthentication();
-    $client->setPrompt('select_account');
-    $authUrl = $client->createAuthUrl();
+	$authUrl = '';
+    if($needAuth AND $client = setupAuthentication()) {
+	    $client->setPrompt('select_account');
+	    $authUrl = $client->createAuthUrl();
+	}
     return $authUrl;
 }
 
@@ -2743,8 +2744,8 @@ function setupAuthentication() {
 		//set credentials for Auth
 		$client->setAuthConfig($auth_creds);
 	}else{
-		//TODO fix so that if ther is no client secrets file then probably redirect to instructions on how to get that
-		print 'Google client_secrets.json file not found in this directory:  '.XOOPS_TRUST_PATH;
+		error_log('Google client_secrets.json file not found in this directory:  '.XOOPS_TRUST_PATH);
+        return false;
 	}
 
 	$client->setRedirectUri($redirect_uri);

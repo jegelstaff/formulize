@@ -1962,7 +1962,9 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 						print "\n<input type=\"hidden\" name=\"hiddencolumn_".$linkids[0]."_$thisHiddenCol\" value=\"" . htmlspecialchars(display($entry, $thisHiddenCol)) . "\"></input>\n";
 					}
 
-					include XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$screen->getVar('sid')."/listtemplate.php";
+                    global $xoopsConfig;
+                    $theme = $xoopsConfig['theme_set'];
+					include XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/".$screen->getVar('sid')."/listtemplate.php";
 				}
 			}
 		}
@@ -4320,7 +4322,9 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 	if($thisTemplate != "") {
 
     // process the template and output results
-		include XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$screen->getVar('sid')."/".$type."template.php";
+		global $xoopsConfig;
+        $theme = $xoopsConfig['theme_set'];
+        include XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/".$screen->getVar('sid')."/".$type."template.php";
 
 		// if there are no page nav controls in either template the template, then
 		if($type == "top" AND !strstr($screen->getTemplate('toptemplate'), 'pageNavControls') AND (!strstr($screen->getTemplate('bottomtemplate'), 'pageNavControls'))) {
@@ -4385,7 +4389,7 @@ function processCustomButton($caid, $thisCustomAction, $entry_id="", $entry="") 
 		$caCode = $allHTML;
 	} else {
 		$nameIdAddOn = $thisCustomAction['appearinline'] ? $entry_id : "";
-		$caCode = "<input type=button style=\"cursor: pointer;\" name=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" id=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" value=\"" . trans($thisCustomAction['buttontext']) . "\" onclick=\"javascript:customButtonProcess('$caid', '$entry_id', '".str_replace("'","\'",$thisCustomAction['popuptext'])."');\">\n";
+		$caCode = "<input type=button style=\"cursor: pointer;\" name=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" id=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" value=\"" . trans($thisCustomAction['buttontext']) . "\" onclick=\"javascript:customButtonProcess('$caid', '$entry_id', '".trans(str_replace("'","\'",$thisCustomAction['popuptext']))."');\">\n";
 	}
 
 	return array(0=>$caCode, 1=>$caElements, 2=>$caActions, 3=>$caValues, 4=>$thisCustomAction['messagetext'], 5=>$thisCustomAction['applyto'], 6=>$caPHP, 7=>$thisCustomAction['appearinline']);
@@ -4829,7 +4833,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 
 	print "<div id=listofentries>\n";
 
-	print "<form name=controls id=controls action=$currentURL method=post onsubmit=\"javascript:showLoading();\">\n";
+	print "<form name=controls id=controls autocomplete='off' action=$currentURL method=post onsubmit=\"javascript:showLoading();\">\n";
 	if(isset($GLOBALS['xoopsSecurity'])) {
 		print $GLOBALS['xoopsSecurity']->getTokenHTML();
 	}

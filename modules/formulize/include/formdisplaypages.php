@@ -44,7 +44,7 @@ global $xoopsConfig;
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
 
-function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditions="", $introtext="", $thankstext="", $done_dest="", $button_text="", $settings=array(), $overrideValue="", $printall=0, $screen=null, $saveAndContinueButtonText=null) { // nmc 2007.03.24 - added 'printall'
+function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditions="", $introtext="", $thankstext="", $done_dest="", $button_text=array(), $settings=array(), $overrideValue="", $printall=0, $screen=null, $saveAndContinueButtonText=null) { // nmc 2007.03.24 - added 'printall'
 	
 	formulize_benchmark("Start of displayFormPages.");
 	
@@ -75,6 +75,11 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
     } else {
         $prevPage = 1;
     }
+    if($screen AND isset($prevScreen) AND $screen->getVar('sid') != $prevScreen) { 
+        $prevPageThisScreen = 1;
+    } else {
+        $prevPageThisScreen = $prevPage;
+    }
     
 	// extract the optional page titles from the $pages array for use in the jump to box
 	// NOTE: pageTitles array must start with key 1, not 0.  Page 1 is the first page of the form
@@ -85,9 +90,13 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	}
 	
 	if(!$saveAndContinueButtonText AND isset($_POST['formulize_saveAndContinueButtonText'])) { $saveAndContinueButtonText = unserialize($_POST['formulize_saveAndContinueButtonText']); }
-	if(!$done_dest AND $_POST['formulize_doneDest']) { $done_dest = $_POST['formulize_doneDest']; }
+	if(!$done_dest AND $_POST['formulize_doneDest']) { $done_dest = $_POST['formulize_doneDest']; } // probably won't ever have these things in post if they're not defined, since the posted values are originally based on what is passed in to this function??
 	if(!$button_text AND $_POST['formulize_buttonText']) { $button_text = $_POST['formulize_buttonText']; }
-	
+    
+    $button_text = $button_text ? $button_text : _formulize_DMULTI_ALLDONE;
+    
+    $settings['formulize_doneDest'] = $done_dest;
+    $settings['formulize_buttonText'] = $button_text;
 	
 	list($fid, $frid) = getFormFramework($formframe, $mainform);
 	
@@ -178,10 +187,10 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	if(is_array($conditions) AND (!$currentPageScreen OR ($screen AND $currentPageScreen == $screen->getVar('sid')))) {
 		$conditionsMet = false;
         $element_handler = xoops_getmodulehandler('elements','formulize');
-		while(!$conditionsMet) {
+		while(!$conditionsMet AND $currentPage > 0) {
 			if(isset($conditions[$currentPage]) AND count($conditions[$currentPage][0])>0) { // conditions on the current page
-				if(pageMeetsConditions($conditions, $currentPage, $entry, $fid, $frid) == false) { 
-					if($prevPage <= $currentPage) {
+				if(pageMeetsConditions($conditions, $currentPage, $entry, $fid, $frid) == false) {
+					if($prevPageThisScreen <= $currentPage) {
 						$currentPage++;
 					} else {
 						$currentPage--;
@@ -196,7 +205,11 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 			}
 		}
 	}
-	
+
+    if(!$currentPage) {
+        $currentPage = $thanksPage;
+    }
+    
 	if($currentPage > 1) {
 	  $previousPage = $currentPage-1; // previous page numerically
 	} else {
@@ -219,23 +232,40 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	  }
 		$forminfo['elements'] = $elements_allowed;
 		$forminfo['formframe'] = $formframe;
-		$titleOverride = isset($pageTitles[$currentPage]) ? trans($pageTitles[$currentPage]) : "all"; // we can pass in any text value as the titleOverride, and it will have the same effect as "all", but the alternate text will be used as the title for the form
-	
+        $showPageTitles = ($screen AND $screen->getUIOption('showpagetitles')) ? true : false;
+		$titleOverride = (isset($pageTitles[$currentPage]) AND $showPageTitles) ? trans($pageTitles[$currentPage]) : "all"; // we can pass in any text value as the titleOverride, and it will have the same effect as "all", but the alternate text will be used as the title for the form
+        
 		$settings['formulize_currentPage'] = $currentPage;
 		$settings['formulize_prevPage'] = $prevPage;
         $settings['formulize_prevScreen'] = $prevScreen;
 	
 		formulize_benchmark("Before drawing nav.");
 	
-		$previousButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['previousButtonText'])) ? $saveAndContinueButtonText['previousButtonText'] : _formulize_DMULTI_PREV;
+        if(!is_array($saveAndContinueButtonText)) {
+            $saveAndContinueButtonText = array();
+            $saveAndContinueButtonText['prevButtonText'] = trans(_formulize_DMULTI_PREV);
+            $saveAndContinueButtonText['leaveButtonText'] = trans(_formulize_SAVE_AND_LEAVE);
+            $saveAndContinueButtonText['saveButtonText'] = trans(_formulize_SAVE);
+            $saveAndContinueButtonText['finishButtonText'] =  trans(_formulize_DMULTI_SAVE);
+            $saveAndContinueButtonText['nextButtonText'] = trans(_formulize_DMULTI_NEXT);
+        }
+    
+        if($currentPage != 1) {
+            // previousButtonText used to be valid... backwards compatibility
+            $previousButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['previousButtonText'])) ? $saveAndContinueButtonText['previousButtonText'] : '';
+            $previousButtonText = (!$previousButtonText AND is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['prevButtonText'])) ? $saveAndContinueButtonText['prevButtonText'] : '';
+        } else {
+            $previousButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['leaveButtonText'])) ? $saveAndContinueButtonText['leaveButtonText'] : '';
+        }
+        $saveButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['saveButtonText'])) ? $saveAndContinueButtonText['saveButtonText'] : '';
 		if($usersCanSave AND $nextPage==$thanksPage) {
-		    $nextButtonText = (is_array($saveAndContinueButtonText) AND $saveAndContinueButtonText['saveButtonText']) ? $saveAndContinueButtonText['saveButtonText'] :  _formulize_DMULTI_SAVE;
+		    $nextButtonText = (is_array($saveAndContinueButtonText) AND $saveAndContinueButtonText['finishButtonText']) ? $saveAndContinueButtonText['finishButtonText'] :  '';
 		} else {
-		    $nextButtonText = (is_array($saveAndContinueButtonText) AND $saveAndContinueButtonText['nextButtonText']) ? $saveAndContinueButtonText['nextButtonText'] : _formulize_DMULTI_NEXT;
+		    $nextButtonText = (is_array($saveAndContinueButtonText) AND $saveAndContinueButtonText['nextButtonText']) ? $saveAndContinueButtonText['nextButtonText'] : '';
 		}
 		$previousPageButton = generatePrevNextButtonMarkup("prev", $previousButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
 		$nextPageButton = generatePrevNextButtonMarkup("next", $nextButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
-		$savePageButton = generatePrevNextButtonMarkup("save", _formulize_SAVE, $usersCanSave, $nextPage, $previousPage, $thanksPage);
+		$savePageButton = generatePrevNextButtonMarkup("save", $saveButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
 		$totalPages = count($pages);
 		$skippedPageMessage = $pagesSkipped ? _formulize_DMULTI_SKIP : "";
 		$pageSelectionList = pageSelectionList($currentPage, $totalPages, $pageTitles, "above", $conditions, $entry, $fid, $frid);   // calling for the 'above' drawPageNav 
@@ -243,7 +273,8 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
         // setting up the basic templateVars for all templates
         $templateVariables = array('previousPageButton' => $previousPageButton, 'nextPageButton' => $nextPageButton, 'savePageButton' => $savePageButton,
             'totalPages' => $totalPages, 'currentPage' => $currentPage, 'skippedPageMessage' => $skippedPageMessage,
-            'pageSelectionList'=>$pageSelectionList, 'pageTitles' => $pageTitles, 'entry_id'=>$entry, 'form_id'=>$fid, 'owner'=>$owner);
+            'pageSelectionList'=>$pageSelectionList, 'pageTitles' => $pageTitles, 'entry_id'=>$entry, 'form_id'=>$fid, 'owner'=>$owner,
+            'saveAndLeaveText'=>$saveAndContinueButtonText['leaveButtonText'], 'saveAndGoBackText'=>$saveAndContinueButtonText['prevButtonText']);
 
         // cache the rendered header, in case this is the header we need for the page right now
         static $multipageHeader = array();
@@ -419,28 +450,44 @@ function drawPageNav($usersCanSave="", $aboveBelow, $screen, $templateVariables,
     $xoopsTpl->assign("savePageButton", $templateVariables['savePageButton']);
     global $formulize_displayingSubform;
     if($formulize_displayingSubform) {
-        $xoopsTpl->assign("saveAndLeave", trans(_formulize_SAVE_AND_GOBACK));
+        $xoopsTpl->assign("saveAndLeave", $templateVariables['saveAndGoBackText'] ? trans($templateVariables['saveAndGoBackText']) : trans(_formulize_SAVE_AND_GOBACK));
     } else {
-        $xoopsTpl->assign("saveAndLeave", trans(_formulize_SAVE_AND_LEAVE));
+        $xoopsTpl->assign("saveAndLeave", $templateVariables['saveAndLeaveText'] ? trans($templateVariables['saveAndLeaveText']) : trans(_formulize_SAVE_AND_LEAVE));
     }
     $xoopsTpl->assign("_formulize_DMULTI_PAGE", _formulize_DMULTI_PAGE);
     $xoopsTpl->assign("_formulize_DMULTI_OF", _formulize_DMULTI_OF);
     $xoopsTpl->assign("_formulize_DMULTI_JUMPTO", _formulize_DMULTI_JUMPTO);
+    $xoopsTpl->assign("showpageindicator", $screen->getUIOption("showpageindicator"));
+    $xoopsTpl->assign("showpageselector", $screen->getUIOption("showpageselector"));
     if($screen->getVar('navstyle')==1) {
         if($aboveBelow!='below') {
             $xoopsTpl->display("file:".XOOPS_ROOT_PATH."/modules/formulize/templates/multipage-navigation2-above.html");
         } else {
             $xoopsTpl->display("file:".XOOPS_ROOT_PATH."/modules/formulize/templates/multipage-navigation2-below.html");
         }
+    } elseif($screen->getVar('navstyle')==2) {
+        
+        // remove ids so the appearance matches the Save button
+        $xoopsTpl->assign("nextPageButton", str_replace("id='next'", "", $templateVariables['nextPageButton']));
+        $xoopsTpl->assign("previousPageButton", str_replace("id='prev'", "", $templateVariables['previousPageButton']));
+        
+        if($aboveBelow!='below') {
+            $xoopsTpl->display("file:".XOOPS_ROOT_PATH."/modules/formulize/templates/multipage-navigation3-above.html");
+        } else {
+            $xoopsTpl->display("file:".XOOPS_ROOT_PATH."/modules/formulize/templates/multipage-navigation3-below.html");
+        }
     } else {
-    $xoopsTpl->display("file:".XOOPS_ROOT_PATH."/modules/formulize/templates/multipage-navigation.html");
-}
+        $xoopsTpl->display("file:".XOOPS_ROOT_PATH."/modules/formulize/templates/multipage-navigation.html");
+    }
 
     
 }
 
 // THIS FUNCTION GENERATES THE MARKUP FOR THE PREVIOUS AND NEXT BUTTONS
 function generatePrevNextButtonMarkup($buttonType, $buttonText, $usersCanSave, $nextPage, $previousPage, $thanksPage) {
+    
+    if(!$buttonText) { return ''; }
+    
     $buttonMarkup = "";
     
     switch($buttonType) {
@@ -460,7 +507,7 @@ function generatePrevNextButtonMarkup($buttonType, $buttonText, $usersCanSave, $
         if($previousPage == "none") {
             $buttonJavascriptAndExtraCode = "onclick=\"javascript:submitForm($thanksPage, 1);return false;\"";
         }
-        $buttonMarkup = "<input type=button name=prev id=prev class='formulize-form-submit-button' value='" . $buttonText . "' $buttonJavascriptAndExtraCode>\n";
+        $buttonMarkup = "<input type=button name='prev' id='prev' class='formulize-form-submit-button' value='" . $buttonText . "' $buttonJavascriptAndExtraCode>\n";
     }
     return $buttonMarkup;
 }

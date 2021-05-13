@@ -429,93 +429,11 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 
 	  $form_handler = xoops_getmodulehandler('forms', 'formulize');
 	  $formObject = $form_handler->get($fid);
+      
+      list($linkkeys, $linkisparent, $linkformids, $linktargetids, $linkselfids, $linkcommonvalue) = formulize_gatherLinkMetadata($frid, $fid, $mainFormOnly);
        
-	     if($frid AND !$mainFormOnly) {
-		     // GET THE LINK INFORMATION FOR THE CURRENT FRAMEWORK BASED ON THE REQUESTED FORM
-		     $linklist1 = go("SELECT fl_form2_id, fl_key1, fl_key2, fl_relationship, fl_unified_display, fl_common_value FROM " . DBPRE . "formulize_framework_links WHERE fl_frame_id = '$frid' AND fl_form1_id = '$fid'");
-		     $linklist2 = go("SELECT fl_form1_id, fl_key1, fl_key2, fl_relationship, fl_unified_display, fl_common_value FROM " . DBPRE . "formulize_framework_links WHERE fl_frame_id = '$frid' AND fl_form2_id = '$fid'");
-	     }
-       
-	     // link list 1 is the list of form2s that the requested form links to
-	     // link list 2 is the list of form1s that the requested form links to
-	     // ie: the link list number denotes the position of the requested form in the pair
-	     
-     //	print "Frame: $frame ($frid)<br>";
-     //	print "Form: $form ($fid)<br>";
-	     
-     
-	     // generate the list of key fields in the current form, so we can use the values in these fields to filter the linked forms. -- sept 27 2005
-			     $linkkeys1 = array();
-			     $linkisparent1 = array();
-			     $linkformids1 = array();
-			     $linktargetids1 = array();
-	   $linkselfids1 = array();
-			     $linkcommonvalue1 = array();
-	   $linkkeys2 = array();
-			     $linkisparent2 = array();
-			     $linkformids2 = array();
-			     $linktargetids2 = array();
-	   $linkselfids2 = array();
-			     $linkcommonvalue2 = array();
-     
-	     if($frid AND !$mainFormOnly) {
-		     if(count($linklist1) > 0) {
-		     foreach($linklist1 as $theselinks) {
-			     $linkformids1[] = $theselinks['fl_form2_id'];
-			     if($theselinks['fl_key1'] != 0) {
-				     $handleforlink = formulize_getElementHandleFromID($theselinks['fl_key1']);
-				     $linkkeys1[] = $handleforlink;
-				     $linktargetids1[] = $theselinks['fl_key2'];
-				     $linkselfids1[] = $theselinks['fl_key1'];
-			     } else {
-				     $linkkeys1[] = "";
-				     $linktargetids1[] = "";
-			     }
-			     if($theselinks['fl_relationship'] == 2) { // 2 is one to many relationship...this does not appear to be referenced anywhere in the extraction layer!
-				     $linkisparent1[] = 1;
-			     } else {
-				     $linkisparent1[] = 0;
-			     }
-			     $linkcommonvalue1[] = $theselinks['fl_common_value'];
-		     }
-		     }
-		     
-		     if(count($linklist2) > 0) {
-		     foreach($linklist2 as $theselinks) {
-			     $linkformids2[] = $theselinks['fl_form1_id'];
-			     if($theselinks['fl_key2'] != 0) {
-				     $handleforlink = formulize_getElementHandleFromID($theselinks['fl_key2']);
-				     $linkkeys2[] = $handleforlink;
-				     $linktargetids2[] = $theselinks['fl_key1'];
-				     $linkselfids2[] = $theselinks['fl_key2'];
-			     } else {
-				     $linkkeys2[] = "";
-				     $linktargetids2[] = "";
-			     }
-			     if($theselinks['fl_relationship'] == 3) { // 3 is many to one relationship...this does not appear to be referenced anywhere in the extraction layer!
-				     $linkisparent2[] = 1;
-			     } else {
-				     $linkisparent2[] = 0;
-			     }
-			     $linkcommonvalue2[] = $theselinks['fl_common_value'];
-		     }
-		     }
-		     $linkkeys = array_merge($linkkeys1, $linkkeys2);
-		     $linkisparent = array_merge($linkisparent1, $linkisparent2);
-		     $linkformids = array_merge($linkformids1, $linkformids2);
-		     $linktargetids = array_merge($linktargetids1, $linktargetids2);
-	 $linkselfids = array_merge($linkselfids1, $linkselfids2);
-		     $linkcommonvalue = array_merge($linkcommonvalue1, $linkcommonvalue2);
-	     } else {
-		     $linkkeys = "";
-		     $linkisparent = "";
-             $linkformids = array();
-		     $linktargetids = "";
-	 $linkselfids = "";
-		     $linkcommonvalue = "";
-	     }
-			 //print_r( $linkformids );
-			 $GLOBALS['formulize_linkformidsForCalcs'] = $linkformids; 
+        //print_r( $linkformids );
+        $GLOBALS['formulize_linkformidsForCalcs'] = $linkformids; 
   
 	      // now that we have the full details from the framework, figure out the full SQL necessary to get the entire dataset
 	  // This whole approach is predicated on being able to do reliable joins between the key fields of each form
@@ -638,13 +556,17 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
             // or 2. we are looking for a single entry in the main form, and it is not the same as an entry we just submitted
             // THIS MEANS WE CANNOT HAVE RECURSIVE ONE-TO-ONE CONNECTIONS!
             // Probably for the best? would there be some kind of silly looping going on there?
-            if($linkedFid == $fid AND (!$linkisparent[$id] OR (isset($_POST['ventry']) AND is_numeric($filter) AND $_POST['ventry'] != $filter))) {
-                global $xoopsUser;
-                if($xoopsUser AND $xoopsUser->getVar('uid')==1) {
-                    print "Ignoring $linkedFid when fid is $fid and linkisparent: ".$linkisparent[$id].' - ventry: '.$_POST['ventry']." - filter: $filter<br>";
+				$singleEntryFilterValue = formulize_filterHasSingleEntry($filter);
+				if($linkedFid == $fid AND (
+					!$linkisparent[$id] 
+					OR (!isset($_POST['ventry']) AND $singleEntryFilterValue)
+					OR (isset($_POST['ventry']) AND $singleEntryFilterValue AND $_POST['ventry'] != $singleEntryFilterValue)
+				)) {
+                    //print "Ignoring $linkedFid when fid is $fid and linkisparent: ".$linkisparent[$id].' - ventry: '.$_POST['ventry']." - filter: $filter<br>";
+                    continue;
                 }
-                continue;
-            }
+                
+            
             
 	       // validate that the join conditions are valid...either both must have a value, or neither must have a value (match on user id)...otherwise the join is not possible
 	       if(($joinHandles[$linkselfids[$id]] AND $joinHandles[$linktargetids[$id]]) OR ($linkselfids[$id] == '' AND $linktargetids[$id] == '')) { 
@@ -658,39 +580,10 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		    $joinText .= " $joinType JOIN " . DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$id ON"; // NOTE: we are aliasing the linked form tables to f$id where $id is the key of the position in the linked form metadata arrays where that form's info is stored
 		    $newexistsJoinText = $existsJoinText ? " $andor " : "";
 		    $newexistsJoinText .= " EXISTS(SELECT 1 FROM ". DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$id WHERE "; // set this up also so we have it available for one to many/many to one calculations that require it 
-		    if($linkcommonvalue[$id]) { // common value
-		      $newJoinText = " main.`" . $joinHandles[$linkselfids[$id]] . "`=f$id.`" . $joinHandles[$linktargetids[$id]]."`";
-		    } elseif($linktargetids[$id]) { // linked selectbox
-		      
-		      
-		      if($target_ele_value = formulize_isLinkedSelectBox($linktargetids[$id])) {
-                            if ($target_ele_value[1]) {
-                                // multiple values allowed
-                                $newJoinText = " f$id.`" . $joinHandles[$linktargetids[$id]] . "` LIKE CONCAT('%,',main.entry_id,',%')";
-                            } else {
-                                // single value only
-                                $newJoinText = " f$id.`" . $joinHandles[$linktargetids[$id]] . "` = main.entry_id";
-                            }
-                        } else {
-                            $main_ele_value = formulize_isLinkedSelectBox($linkselfids[$id]); 
-                            //  we know it's linked because this is a linked selectbox join, we just need the ele_value properties
-                            if ($main_ele_value[1]) {
-                                // multiple values allowed
-                                $newJoinText = " main.`" . $joinHandles[$linkselfids[$id]] . "` LIKE CONCAT('%,',f$id.entry_id,',%')";
-                            } else {
-                                // single value only
-                                $newJoinText = " main.`" . $joinHandles[$linkselfids[$id]] . "` = f$id.entry_id";
-                            }
-                        }
-		      
-		      
-		      
-		    } else { // join by uid
-		      $newJoinText = " main.creation_uid=f$id.creation_uid";
-		    }
-							if(isset($perGroupFiltersPerForms[$linkedFid])) {
-								$newJoinText .= $perGroupFiltersPerForms[$linkedFid];
-							}
+		    $newJoinText = formulize_generateJoinSQL($id, $linkcommonvalue, $linkselfids, $linktargetids);
+            if(isset($perGroupFiltersPerForms[$linkedFid])) {
+                $newJoinText .= $perGroupFiltersPerForms[$linkedFid];
+            }
 		    $joinTextIndex[$linkedFid] = $newJoinText;
 		    
 		    $joinText .= $newJoinText;
@@ -1031,9 +924,162 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
      
 } // end of dataExtraction function
 
-	  
-	  // we need to loop through all the query results that were generated above, and gradually build up the same full results array out of them
-	  // then we also need to loop through all main entries one more time once we're done building, and set all the derived values
+// generate the actual blah = blah SQL for joining tables in a relationship
+// linkOrdinal is which item in the metadata arrays we are concerned with, ie: which link, numbered from 0, and based on the way they come out of the db in the gatherLinkMetadata operation - easiest to do array_search in linkformids to find the ordinal for the non-main form you're concerned about. Problem is if there is more than one link between the same pair of forms??
+// $linkcommonvalue, $linkselfids, $linktargetids are the standard metadata coming out of the gatherLinkMetadata function
+// tableAliases is optional and can be used to insert your own table aliases into the SQL, rather than use the extraction layer defaults (which are main and f0, f1, f2 for the different linked forms) - use keys 0 for mainform alias, and 1 for subform alias
+function formulize_generateJoinSQL($linkOrdinal, $linkcommonvalue, $linkselfids, $linktargetids, $tableAliases = false ) {
+
+    if($tableAliases) {
+        $mainAlias = $tableAliases[0];
+        $subAlias = $tableAliases[1];
+    } else {
+        $mainAlias = 'main';
+        $subAlias = "f$linkOrdinal";
+    }
+    
+    $joinHandles = formulize_getJoinHandles(array(0=>$linkselfids, 1=>$linktargetids));
+
+    if($linkcommonvalue[$linkOrdinal]) { // common value
+        $newJoinText = " $mainAlias.`" . $joinHandles[$linkselfids[$linkOrdinal]] . "`=$subAlias.`" . $joinHandles[$linktargetids[$linkOrdinal]]."`";
+    } elseif($linktargetids[$linkOrdinal]) { // linked selectbox
+        if($target_ele_value = formulize_isLinkedSelectBox($linktargetids[$linkOrdinal])) {
+            if ($target_ele_value[1]) {
+                // multiple values allowed
+                $newJoinText = " $subAlias.`" . $joinHandles[$linktargetids[$linkOrdinal]] . "` LIKE CONCAT('%,',$mainAlias.entry_id,',%')";
+            } else {
+                // single value only
+                $newJoinText = " $subAlias.`" . $joinHandles[$linktargetids[$linkOrdinal]] . "` = $mainAlias.entry_id";
+            }
+        } else {
+            $main_ele_value = formulize_isLinkedSelectBox($linkselfids[$linkOrdinal]); 
+            //  we know it's linked because this is a linked selectbox join, we just need the ele_value properties
+            if ($main_ele_value[1]) {
+                // multiple values allowed
+                $newJoinText = " $mainAlias.`" . $joinHandles[$linkselfids[$linkOrdinal]] . "` LIKE CONCAT('%,',$subAlias.entry_id,',%')";
+            } else {
+                // single value only
+                $newJoinText = " $mainAlias.`" . $joinHandles[$linkselfids[$linkOrdinal]] . "` = $subAlias.entry_id";
+            }
+        }
+    } else { // join by uid
+      $newJoinText = " $mainAlias.creation_uid=$subAlias.creation_uid";
+    }
+    
+    return $newJoinText;
+}
+
+// this function checks a filter and returns the single entry id being isolated, if one is involved in the filter
+function formulize_filterHasSingleEntry($filter) {
+	// most complex filter is an array with 0 key as boolean for joining terms and 1 key as a filter string
+	// filter strings can have multiple comparisons separated by ][
+	// a single number as the comparison value, means isolate that entry, and that's what we're looking for in this function
+	if(!is_array($filter)) {
+		$filter = array(0=>'AND', 1=>$filter);
+	}
+	foreach($filter as $thisFilter) {
+		$filterDetails = $thisFilter[1];
+		$filterParts = explode('][',$filterDetails);
+		foreach($filterParts as $part) {
+			if(is_numeric($part)) {
+				return $part;
+			}
+		}
+	}
+	return false;
+}
+
+// get arrays of metadata about the links in a relationship
+function formulize_gatherLinkMetadata($frid, $fid, $mainFormOnly=false) {
+
+    if(!$frid OR $mainFormOnly) {
+        $linkkeys = "";
+        $linkisparent = "";
+        $linkformids = array();
+        $linktargetids = "";
+        $linkselfids = "";
+	    $linkcommonvalue = "";
+    } else {
+
+        // GET THE LINK INFORMATION FOR THE CURRENT FRAMEWORK BASED ON THE REQUESTED FORM
+        $linklist1 = go("SELECT fl_form2_id, fl_key1, fl_key2, fl_relationship, fl_unified_display, fl_common_value FROM " . DBPRE . "formulize_framework_links WHERE fl_frame_id = '$frid' AND fl_form1_id = '$fid'");
+        $linklist2 = go("SELECT fl_form1_id, fl_key1, fl_key2, fl_relationship, fl_unified_display, fl_common_value FROM " . DBPRE . "formulize_framework_links WHERE fl_frame_id = '$frid' AND fl_form2_id = '$fid'");
+           
+        // link list 1 is the list of form2s that the requested form links to
+        // link list 2 is the list of form1s that the requested form links to
+        // ie: the link list number denotes the position of the requested form in the pair
+             
+        //	print "Frame: $frame ($frid)<br>";
+        //	print "Form: $form ($fid)<br>";
+             
+        // generate the list of key fields in the current form, so we can use the values in these fields to filter the linked forms. -- sept 27 2005
+        $linkkeys1 = array();
+        $linkisparent1 = array();
+        $linkformids1 = array();
+        $linktargetids1 = array();
+        $linkselfids1 = array();
+        $linkcommonvalue1 = array();
+        if(count($linklist1) > 0) {
+            foreach($linklist1 as $theselinks) {
+                $linkformids1[] = $theselinks['fl_form2_id'];
+                if($theselinks['fl_key1'] != 0) {
+                    $handleforlink = formulize_getElementHandleFromID($theselinks['fl_key1']);
+                    $linkkeys1[] = $handleforlink;
+                    $linktargetids1[] = $theselinks['fl_key2'];
+                    $linkselfids1[] = $theselinks['fl_key1'];
+                } else {
+                    $linkkeys1[] = "";
+                    $linktargetids1[] = "";
+                }
+                if($theselinks['fl_relationship'] == 2) { // 2 is one to many relationship...this does not appear to be referenced anywhere in the extraction layer!
+                    $linkisparent1[] = 1;
+                } else {
+                    $linkisparent1[] = 0;
+                }
+                $linkcommonvalue1[] = $theselinks['fl_common_value'];
+            }
+        }
+        
+        $linkkeys2 = array();
+        $linkisparent2 = array();
+        $linkformids2 = array();
+        $linktargetids2 = array();
+        $linkselfids2 = array();
+        $linkcommonvalue2 = array();
+        if(count($linklist2) > 0) {
+            foreach($linklist2 as $theselinks) {
+                $linkformids2[] = $theselinks['fl_form1_id'];
+                if($theselinks['fl_key2'] != 0) {
+                    $handleforlink = formulize_getElementHandleFromID($theselinks['fl_key2']);
+                    $linkkeys2[] = $handleforlink;
+                    $linktargetids2[] = $theselinks['fl_key1'];
+                    $linkselfids2[] = $theselinks['fl_key2'];
+                } else {
+                    $linkkeys2[] = "";
+                    $linktargetids2[] = "";
+                }
+                if($theselinks['fl_relationship'] == 3) { // 3 is many to one relationship...this does not appear to be referenced anywhere in the extraction layer!
+                    $linkisparent2[] = 1;
+                } else {
+                    $linkisparent2[] = 0;
+                }
+                $linkcommonvalue2[] = $theselinks['fl_common_value'];
+            }
+        }
+        $linkkeys = array_merge($linkkeys1, $linkkeys2);
+        $linkisparent = array_merge($linkisparent1, $linkisparent2);
+        $linkformids = array_merge($linkformids1, $linkformids2);
+        $linktargetids = array_merge($linktargetids1, $linktargetids2);
+        $linkselfids = array_merge($linkselfids1, $linkselfids2);
+        $linkcommonvalue = array_merge($linkcommonvalue1, $linkcommonvalue2);
+    }
+
+    return array($linkkeys, $linkisparent, $linkformids, $linktargetids, $linkselfids, $linkcommonvalue);
+
+}
+
+// we need to loop through all the query results that were generated above, and gradually build up the same full results array out of them
+// then we also need to loop through all main entries one more time once we're done building, and set all the derived values
 // this is done on a series of result sets potentially, to avoid an exponential explosion of results in the SQL, and instead we only have a linear progression of results to parse
 
 // resultData needs to be an array, with three keys:
@@ -2101,7 +2147,16 @@ function prepareFieldIncludeExclude($fields, $include='include') {
 // THIS FUNCTION DOES A SIMPLE QUERY AGAINST A TABLE IN THE DATABASE AND RETURNS THE RESULT IN STANDARD "GETDATA" FORMAT
 function dataExtractionTableForm($tablename, $formname, $fid, $filter=false, $andor=false, $limitStart=false, $limitSize=false, $sortField=false, $sortOrder=false, $resultOnly=false, $fields=array(), $excludeFields=array()) {
 
-     global $xoopsDB;
+    $fid = intval($fid);
+
+    // user must have permission to access the form!
+    $gperm_handler = xoops_gethandler('groupperm');
+    global $xoopsUser;
+    if(!$xoopsUser OR !$gperm_handler->checkRight("view_form", $fid, $xoopsUser->getGroups(), getFormulizeModId())) {
+        return array();
+    }
+
+    global $xoopsDB;
      
     // 2. parse the filter
     // 3. construct the where clause based on the filter and andor
@@ -2113,7 +2168,7 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter=false, $an
     $excludeWhere = prepareFieldIncludeExclude($excludeFields, 'exclude');
     
     // setup a translation table for the formulize records of the fields, so we can use that lower down in several places
-    $sql = "SELECT ele_id, ele_caption FROM ".DBPRE."formulize WHERE id_form=".intval($fid)." $includeWhere $excludeWhere";
+    $sql = "SELECT ele_id, ele_caption FROM ".DBPRE."formulize WHERE id_form=".$fid." $includeWhere $excludeWhere";
     $res = $xoopsDB->query($sql);
     $elementsById = array();
     $elementsByCaption = array();

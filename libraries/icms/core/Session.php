@@ -45,11 +45,10 @@ class icms_core_Session {
         
         // Also listens for a code from Google in the URL
         //if google user logged in and redirected to this page
-		if (isset($_GET['code'])) {
+		if (isset($_GET['code']) AND $client = setupAuthentication()) {
             $user_handler = icms::handler("icms_member");
                
             //Get a google client object and send Client Request for email
-			$client = setupAuthentication();
             $objOAuthService = new Google_Service_Oauth2($client);
         
             //Authenticate code from Google OAuth Flow
@@ -137,7 +136,6 @@ class icms_core_Session {
         // if we're coming back from new_user.php after having made an account, we need to pick it up here
         if($_SESSION['resouceMapKey']) {
             $externalUid = $_SESSION['resouceMapKey'];
-            unset($_SESSION['resouceMapKey']);
         }
 
 		if ($externalUid) {
@@ -151,6 +149,7 @@ class icms_core_Session {
 				$_SESSION['xoopsUserLastLogin'] = $icms_user->getVar('last_login');
 				$_SESSION['xoopsUserLanguage'] = $icms_user->language();
 				$_SESSION['icms_fprint'] = $instance->createFingerprint();
+                unset($_SESSION['resouceMapKey']);
 
 				$xoops_user_theme = $icms_user->getVar('theme');
 				if (in_array($xoops_user_theme, $icmsConfig['theme_set_allowed'])) {
@@ -525,35 +524,62 @@ class icms_core_Session {
 	 * Read a session from the database
 	 * @param	string  &sess_id    ID of the session
 	 * @return	array   Session data
+	 * MODIFIED TO LOCK THE READING OF THE SESSION IF A PRIOR REQUEST FOR SAME USER IS STILL ACTIVE
+	 * THIS IS TO PRESERVE THE INTEGRITY OF $_SESSION
+	 * IF MULTIPLE REQUESTS (PROBABLY AJAX REQUESTS) ARRIVE CLOSE TOGETHER, ONE COULD START BEFORE THE PREVIOUS IS FINISHED AND SO THEY WOULD BOTH GET THE SAME $_SESSION.
+	 * HOWEVER THIS IS BAD IF THE SUBSEQUENT REQUEST DEPENDS ON VALUES WRITTEN TO THE SESSION DATA DURING THE PRIOR REQUEST.
+	 * THIS IS ESPECIALLY RELEVANT WITH REGARD TO THE ANTI-CSRF TOKENS WHICH ARE STORED IN THE SESSION
+	 * When the session is loaded, sess_updated is set to 1. When session is written back at end of request, current time stamp replaces the 1
+	 * If when we load a session, sess_updated is 1, we try once a second for up to 10 seconds to load it again
+	 * If we don't get it after 10 seconds, we go with whatever we have in the DB at that time and write a note to the error log.
 	 */
 	private function readSession($sess_id) {
-		$sql = sprintf('SELECT sess_data, sess_ip FROM %s WHERE sess_id = %s',
-			icms::$xoopsDB->prefix('session'), icms::$xoopsDB->quoteString($sess_id));
-		if (false != $result = icms::$xoopsDB->query($sql)) {
-			if (list($sess_data, $sess_ip) = icms::$xoopsDB->fetchRow($result)) {
-				if ($this->ipv6securityLevel > 1 && icms_core_DataFilter::checkVar($sess_ip, 'ip', 'ipv6')) {
-					/**
-					 * also cover IPv6 localhost string
-					 */
-					if ($_SERVER['REMOTE_ADDR'] == "::1") {
-						$pos = 3;
-					} else {
-						$pos = strpos($sess_ip, ":", $this->ipv6securityLevel - 1);
-					}
-
-					if (strncmp($sess_ip, $_SERVER['REMOTE_ADDR'], $pos)) {
-						$sess_data = '';
-					}
-				} elseif ($this->securityLevel > 1 && icms_core_DataFilter::checkVar($sess_ip, 'ip', 'ipv4')) {
-					$pos = strpos($sess_ip, ".", $this->securityLevel - 1);
-
-					if (strncmp($sess_ip, $_SERVER['REMOTE_ADDR'], $pos)) {
-						$sess_data = '';
-					}
-				}
-				return $sess_data;
-			}
-		}
+        $ticks = 0;
+        while($ticks<11) {
+            $ticks++;
+            $sql = sprintf('SELECT sess_data, sess_ip, sess_updated FROM %s WHERE sess_id = %s',
+                icms::$xoopsDB->prefix('session'), icms::$xoopsDB->quoteString($sess_id));
+            if (false != $result = icms::$xoopsDB->query($sql)) {
+                if (list($sess_data, $sess_ip, $sess_updated) = icms::$xoopsDB->fetchRow($result)) {
+					static $sessionLoaded = false;
+                    // tried 10 times, still locked, go with what we got
+                    if($ticks == 10 AND $sess_updated == 1) {
+                        error_log('Formulize Standalone Error: After 10 seconds the session data was still locked by a prior request, so we\'re going with the current state of the session data anyway!
+                            URI: '.str_replace("&amp;", "&", htmlSpecialChars(strip_tags($_SERVER['REQUEST_URI']))));
+                    // session data locked, and we haven't already loaded a session in this PHP instantiation, wait a second and try again
+                    } elseif($sess_updated==1 AND !$sessionLoaded) {
+                        sleep(1);
+                        continue;
+                    // got the session data, so mark updated time as "1" to indicate a request is in progress, and carry on.
+                    } else {
+                        $sql = sprintf('UPDATE %s SET sess_updated = 1 WHERE sess_id = %s',icms::$xoopsDB->prefix('session'),icms::$xoopsDB->quoteString($sess_id));
+                        icms::$xoopsDB->queryF($sql);
+						$sessionLoaded = true;
+                    }
+                    if ($this->ipv6securityLevel > 1 && icms_core_DataFilter::checkVar($sess_ip, 'ip', 'ipv6')) {
+                        /**
+                         * also cover IPv6 localhost string
+                         */
+                        if ($_SERVER['REMOTE_ADDR'] == "::1") {
+                            $pos = 3;
+                        } else {
+                            $pos = strpos($sess_ip, ":", $this->ipv6securityLevel - 1);
+                        }
+    
+                        if (strncmp($sess_ip, $_SERVER['REMOTE_ADDR'], $pos)) {
+                            $sess_data = '';
+                        }
+                    } elseif ($this->securityLevel > 1 && icms_core_DataFilter::checkVar($sess_ip, 'ip', 'ipv4')) {
+                        $pos = strpos($sess_ip, ".", $this->securityLevel - 1);
+    
+                        if (strncmp($sess_ip, $_SERVER['REMOTE_ADDR'], $pos)) {
+                            $sess_data = '';
+                        }
+                    }
+                    return $sess_data;
+                }
+            }
+        }
 		return '';
 	}
 

@@ -43,8 +43,8 @@ function multipageSetHiddenFields(page, prevpage) {
   }
   window.document.formulize_mainform.formulize_currentPage.value = page<?php print $screen ? "+'-".$screen->getVar('sid')."'" : ""; ?>;
   window.document.formulize_mainform.formulize_prevPage.value = prevpage<?php print $screen ? "+'-".$screen->getVar('sid')."'" : ""; ?>;
-  window.document.formulize_mainform.formulize_doneDest.value = '<?php print $done_dest; ?>';
-  window.document.formulize_mainform.formulize_buttonText.value = '<?php print $button_text; ?>';
+  window.document.formulize_mainform.formulize_doneDest.value = '<?php print $settings['formulize_doneDest']; ?>';
+  window.document.formulize_mainform.formulize_buttonText.value = '<?php print $settings['formulize_buttonText']; ?>';
 }
 
 function pageJump(options, prevpage) {
@@ -67,6 +67,16 @@ if($currentPage == $thanksPage) {
     if(is_array($settings)) {
         print "<form name=calreturnform action=\"$done_dest\" method=post>\n";
         writeHiddenSettings($settings, null, array(), array(), $screen);
+        if($_POST['go_back_form']) {
+            $goBackParts = explode('-', $_POST['go_back_page']);
+            foreach($goBackParts as $i=>$part) {
+                $goBackParts[$i] = intval($part);
+            }
+            $go_back_page = implode('-', $goBackParts);
+            print "<input type='hidden' name='go_back_form' value='".intval($_POST['go_back_form'])."'>
+            <input type='hidden' name='go_back_entry' value='".intval($_POST['go_back_entry'])."'>
+            <input type='hidden' name='go_back_page' value='".$go_back_page."'>";
+        }
         print "</form>";
     }
 
@@ -80,7 +90,7 @@ if($currentPage == $thanksPage) {
     if($pagesSkipped) {
         print _formulize_DMULTI_SKIP . "</p><p>\n";
     }
-    $button_text = $button_text ? $button_text : _formulize_DMULTI_ALLDONE;
+    
     if($button_text != "{NOBUTTON}") {
         print "<a href='$done_dest'";
         if(is_array($settings)) {

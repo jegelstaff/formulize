@@ -596,6 +596,7 @@ function cutString($string, $maxlen) {
         $len = (mb_strlen($string) > $maxlen)
             ? mb_strripos(mb_substr($string, 0, $maxlen), ' ')
             : $maxlen;
+        $len = $len ? $len : $maxlen;
         $cutStr = mb_substr($string, 0, $len);
         return (mb_strlen($string) > $maxlen)
             ? $cutStr . '...'
@@ -2909,12 +2910,25 @@ function getTextboxDefault($ele_value, $form_id, $entry_id, $placeholder="") {
 }
 
 
-function getDateElementDefault($default_hint) {
+function getDateElementDefault($default_hint, $entry_id = false) {
     if($default_hint == "0000-00-00") { return ""; }
     if (preg_replace("/[^A-Z{}]/", "", $default_hint) === "{TODAY}") {
         $number = str_replace('+', '', preg_replace("/[^0-9+-]/", "", $default_hint));
         return mktime(0, 0, 0, date("m"), (date("d") + intval($number)), date("Y"));
     }
+	if(substr($default_hint, 0, 1) == '{' AND substr($default_hint, -1) == '}') {
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		$element_handle = substr($default_hint, 1, -1);
+		$default_hint = '';
+		if($elementObject = $element_handler->get($element_handle)) {
+			if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$element_handle])) {
+				$default_hint = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$element_handle];
+			} elseif($entry_id AND $entry_id != 'new') {
+				$dataHandler = new formulizeDataHandler($elementObject->getVar('id_form'));
+				$default_hint = $dataHandler->getElementValueInEntry($entry_id, $element_handle);
+			}
+		}
+	}
     return $default_hint ? strtotime($default_hint) : "";
 }
 
@@ -3435,33 +3449,33 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
                     continue;
                 } else {
                     $templateFileContents = file_get_contents(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/mail_template/".$templateFileName);
-                    if (strstr($templateFileContents, "{ELEMENT")) {
-                        // gather the data for this entry and make it available to the template, since it uses an element tag in the message
-                        // Only do this getData call if we don't already have data from the database. $notificationTemplateData[$entry][0] == "" will probably never be true in Formulize 3.0 and higher, but will evaluate as expected, with a warning about [0] being an invalid offset or something like that
-                        if ($notificationTemplateData[$entry][0] == "" OR $notificationTemplateData[$entry] == "") {
-                            include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-                            $notificationTemplateData[$entry] = getData("", $fid, $entry);
-                            // if the revision table is on for the form, then gather the data from the most revent revision for the entry
-                            if(!isset($data_handler)) {
-                                $data_handler = new formulizeDataHandler($fid);
-                            }
-                            // get the last revision we flagged (after saving, before updating derived values!)
-                            if($event == 'update_entry' AND $revisionEntry = $data_handler->getRevisionForEntry($entry, $GLOBALS['formulize_snapshotRevisions'][$fid][$entry])) {
-                                $notificationTemplateRevisionData[$entry] = $revisionEntry;
-                            }
-                        }
-                        // get all the element IDs for the current form
-                        $form_handler = xoops_getmodulehandler('forms', 'formulize');
-                        $formObject = $form_handler->get($fid);
-                        foreach ($formObject->getVar('elementHandles') as $elementHandle) {
-                            $extra_tags['ELEMENT'.strtoupper($elementHandle)] = trans(html_entity_decode(displayTogether($notificationTemplateData[$entry][0], $elementHandle, ", "), ENT_QUOTES));
-                            if($notificationTemplateRevisionData[$entry]) {
-                                $extra_tags['REVISION_ELEMENT_'.strtoupper($elementHandle)] = trans(html_entity_decode(displayTogether($notificationTemplateRevisionData[$entry][0], $elementHandle, ", "), ENT_QUOTES));
-                            }
-                            // for legacy compatibility, we provide both with and without _ keys in the extra tags array.
-                            $extra_tags['ELEMENT_'.strtoupper($elementHandle)] = trans($extra_tags['ELEMENT'.strtoupper($elementHandle)]);
-                        }
+                }
+            }
+            if (($templateFileContents AND strstr($templateFileContents, "{ELEMENT")) OR strstr($thiscon['not_cons_subject'], "{ELEMENT")) {
+                // gather the data for this entry and make it available to the template, since it uses an element tag in the message
+                // Only do this getData call if we don't already have data from the database. $notificationTemplateData[$entry][0] == "" will probably never be true in Formulize 3.0 and higher, but will evaluate as expected, with a warning about [0] being an invalid offset or something like that
+                if ($notificationTemplateData[$entry][0] == "" OR $notificationTemplateData[$entry] == "") {
+                    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
+                    $notificationTemplateData[$entry] = getData("", $fid, $entry);
+                    // if the revision table is on for the form, then gather the data from the most revent revision for the entry
+                    if(!isset($data_handler)) {
+                        $data_handler = new formulizeDataHandler($fid);
                     }
+                    // get the last revision we flagged (after saving, before updating derived values!)
+                    if($event == 'update_entry' AND $revisionEntry = $data_handler->getRevisionForEntry($entry, $GLOBALS['formulize_snapshotRevisions'][$fid][$entry])) {
+                        $notificationTemplateRevisionData[$entry] = $revisionEntry;
+                    }
+                }
+                // get all the element IDs for the current form
+                $form_handler = xoops_getmodulehandler('forms', 'formulize');
+                $formObject = $form_handler->get($fid);
+                foreach ($formObject->getVar('elementHandles') as $elementHandle) {
+                    $extra_tags['ELEMENT'.strtoupper($elementHandle)] = trans(html_entity_decode(displayTogether($notificationTemplateData[$entry][0], $elementHandle, ", "), ENT_QUOTES));
+                    if($notificationTemplateRevisionData[$entry]) {
+                        $extra_tags['REVISION_ELEMENT_'.strtoupper($elementHandle)] = trans(html_entity_decode(displayTogether($notificationTemplateRevisionData[$entry][0], $elementHandle, ", "), ENT_QUOTES));
+                    }
+                    // for legacy compatibility, we provide both with and without _ keys in the extra tags array.
+                    $extra_tags['ELEMENT_'.strtoupper($elementHandle)] = trans($extra_tags['ELEMENT'.strtoupper($elementHandle)]);
                 }
             }
             $uids_cust_con = array();
@@ -6122,7 +6136,9 @@ function formulize_renderTemplate($templatename, $templateVariables, $sid) {
         ${$name} = $value;
     }
 
-    include XOOPS_ROOT_PATH . "/modules/formulize/templates/screens/default/" . $sid . "/" . $templatename . ".php";
+    global $xoopsConfig;
+    $theme = $xoopsConfig['theme_set'];
+	include XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/" . $sid . "/" . $templatename . ".php";
 }
 
 
@@ -7079,7 +7095,7 @@ function formulize_parseSearchesIntoFilter($searches) {
 	$ORfilter = "";
 	$individualORSearches = array();
     $element_handler = xoops_getmodulehandler('elements','formulize');
-	global $xoopsUser;
+	global $xoopsUser, $xoopsConfig;
 	foreach($searches as $key => $master_one_search) { // $key is the element handle
         
 		// convert "between 2001-01-01 and 2002-02-02" to a normal date filter with two dates
@@ -7311,7 +7327,8 @@ function formulize_parseSearchesIntoFilter($searches) {
 			}
 		}
 		$filter = $arrayFilter;
-	} 
+	}
+    
     return $filter;
     
 }
@@ -7716,7 +7733,7 @@ function getEntryDefaults($target_fid,$target_entry) {
         $defaultTextToWrite = getTextboxDefault($ele_value_for_default[0], $target_fid, $target_entry); // position 0 is default value for text boxes
         break;
       case "date":
-        $defaultTextToWrite = getDateElementDefault($ele_value_for_default[0]);
+        $defaultTextToWrite = getDateElementDefault($ele_value_for_default[0], $target_entry);
         if (false === $defaultTextToWrite) {
             $defaultTextToWrite = "";
         } else {
@@ -7789,6 +7806,17 @@ function determineViewEntryScreen($screen, $fid) {
             return $formObject->defaultform;
         }
     }
+    if($screen AND is_a($screen, 'formulizeTemplateScreen')) {
+        if(isset($_POST['formulize_renderedEntryScreen']) AND is_numeric($_POST['formulize_renderedEntryScreen'])) {
+            return intval($_POST['formulize_renderedEntryScreen']);
+        } elseif($_POST['overridescreen'] AND is_numeric($_POST['overridescreen'])) {
+            return intval($_POST['overridescreen']);
+        } else {
+            $form_handler = xoops_getmodulehandler('forms', 'formulize');
+            $formObject = $form_handler->get($fid);
+            return $formObject->defaultform;
+        }
+    }
     return false;
 }
 
@@ -7834,3 +7862,21 @@ function checkForChrome() {
 }";
      
 }
+
+// THANKS TO https://stackoverflow.com/questions/2050859/copy-entire-contents-of-a-directory-to-another-using-php
+// AND gimmicklessgpt at gmail dot com found at https://www.php.net/manual/en/function.copy.php#91010
+function recurse_copy($src,$dst) { 
+    $dir = opendir($src);
+    if(!file_exists($dst)) { @mkdir($dst); }
+    while(false !== ( $file = readdir($dir)) ) { 
+        if (( $file != '.' ) && ( $file != '..' )) { 
+            if ( is_dir($src . '/' . $file) ) { 
+                recurse_copy($src . '/' . $file,$dst . '/' . $file); 
+            } 
+            else { 
+                copy($src . '/' . $file,$dst . '/' . $file); 
+            } 
+        } 
+    } 
+    closedir($dir); 
+} 

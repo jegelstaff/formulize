@@ -191,11 +191,14 @@ class formulizeCalendarScreenHandler extends formulizeScreenHandler {
         include_once XOOPS_ROOT_PATH.'/modules/formulize/include/calendardisplay.php';
         include_once XOOPS_ROOT_PATH.'/modules/formulize/include/entriesdisplay.php';
         
+        global $xoopsConfig;
+        $theme = $xoopsConfig['theme_set'];
+        
         ob_start();
-        eval(substr(file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/templates/screens/default/'.$screen->getVar('sid').'/toptemplate.php'), 5));
+        eval(substr(file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/templates/screens/'.$theme.'/'.$screen->getVar('sid').'/toptemplate.php'), 5));
         $toptemplate = ob_get_clean();
         ob_start();
-        eval(substr(file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/templates/screens/default/'.$screen->getVar('sid').'/bottomtemplate.php'), 5));
+        eval(substr(file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/templates/screens/'.$theme.'/'.$screen->getVar('sid').'/bottomtemplate.php'), 5));
         $bottomtemplate = ob_get_clean();
      
         $GLOBALS['formulize_screenCurrentlyRendering'] = $screen;

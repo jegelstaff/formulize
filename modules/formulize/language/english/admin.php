@@ -598,7 +598,12 @@ define("_AM_FORMULIZE_SCREEN_FINISHISDONE", "The final page of the form should b
 define("_AM_FORMULIZE_SCREEN_FINISHISDONE_THANKSPAGE", "<b>The Thank-you page</b>, which the user gets after clicking the \"Save and Finish\" button on the last page with questions");
 define("_AM_FORMULIZE_SCREEN_FINISHISDONE_FINISHBUTTON", "<b>The last page with questions</b>, and when the user clicks the \"Save and Finish\" button, they leave the form");
 define("_AM_FORMULIZE_SCREEN_DONEDEST", "The URL that users go to when leaving the form (Optional, Formulize will usually set this automatically when the form is displayed, based on where the user came from.  If the last page of the form has questions, then the next page the users go to should be a Formulize page or else the answers to the questions won't be saved)");
-define("_AM_FORMULIZE_SCREEN_BUTTONTEXT", "If the Thank-you page is shown, what should be used as the clickable text for the URL?");
+define("_AM_FORMULIZE_SCREEN_THANKYOULINKTEXT", "If the Thank-you page is shown, what should be used as the clickable text for the URL?");
+define("_AM_FORMULIZE_SCREEN_LEAVEBUTTONTEXT", "Text for the Save and Leave button");
+define("_AM_FORMULIZE_SCREEN_PREVBUTTONTEXT", "Text for the Save and Go Back button");
+define("_AM_FORMULIZE_SCREEN_SAVEBUTTONTEXT", "Text for the Save button");
+define("_AM_FORMULIZE_SCREEN_NEXTBUTTONTEXT", "Text for the Save and Continue button");
+define("_AM_FORMULIZE_SCREEN_FINISHBUTTONTEXT", "Text for the Save and Finish button");
 define("_AM_FORMULIZE_SCREEN_PRINTALL", "Make the 'Printable View - All Pages' button available at the end of the form"); //nmc 2007.03.24
 define("_AM_FORMULIZE_SCREEN_PRINTALL_Y", "Yes"); //nmc 2007.03.24
 define("_AM_FORMULIZE_SCREEN_PRINTALL_N", "No"); //nmc 2007.03.24
@@ -739,6 +744,10 @@ define("_AM_FORMULIZE_SCREEN_LOE_TEMPLATEINTRO2", "<span style=\"font-weight: no
 define("_AM_FORMULIZE_SCREEN_LOE_TOPTEMPLATE", "Template for the top portion of the page, above the list:");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_TOPTEMPLATE", "You can type PHP code into any or all of the three template boxes below.  Code in the <i>top template</i> box will replace the default user interface above the list.  Code in the <i>list template</i> box will replace the default way that each row in the list is displayed.  Code in the <i>bottom template</i> box will be rendered below the last row in the list.");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_TOPTEMPLATE2", "If you turn off the scrollbox, then these three templates will all be drawn to the screen consecutively.  This means you can start a table in the <i>top template</i>, specify the &lt;tr&gt; tags in the <i>list template</i> and close the table in the <i>bottom template</i>.  Essentially, these three templates give you control over the entire page layout.");
+define("_AM_FORMULIZE_SCREEN_LOE_DESC_TOPTEMPLATE3", "You can create different sets of templates for each theme in this installation. The themes correspond to the folders inside the 'themes' folder at the root of the site. The different template sets will be used in conjunction with different themes.");
+define("_AM_FORMULIZE_SCREEN_LOE_DESC_SEEDTEMPLATES1", "For this theme, this screen is using the default templates found at '");
+define("_AM_FORMULIZE_SCREEN_LOE_DESC_SEEDTEMPLATES2", "'.");
+define("_AM_FORMULIZE_SCREEN_LOE_DESC_SEEDTEMPLATES3", "Customize the Templates");
 define("_AM_FORMULIZE_SCREEN_LOE_BOTTOMTEMPLATE", "Template for the bottom portion of the page, below the list:");
 define("_AM_FORMULIZE_SCREEN_LOE_LISTTEMPLATE", "Template for each entry in the list portion of the page:");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_LISTTEMPLATE", "If you specify a List Template, certain buttons and configuration options mentioned above may be unavailable.");
