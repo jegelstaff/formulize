@@ -39,7 +39,12 @@ switch ($op) {
 		include_once XOOPS_ROOT_PATH.'/include/2fa/manage.php';
 		$profile_handler = xoops_getmodulehandler('profile', 'profile');
 		$profile = $profile_handler->get($uid);
-		if($uid == icms::$user->getVar('uid') AND
+		$config_handler = icms::handler('icms_config');
+		$criteria = new Criteria('conf_name', 'auth_2fa');
+		$auth_2fa = $config_handler->getConfigs($criteria);
+		$auth_2fa = $auth_2fa[0];
+		$auth_2fa = $auth_2fa->getConfValueForOutput();
+		if($auth_2fa AND $uid == icms::$user->getVar('uid') AND
 		   (intval($_POST['2famethod']) != intval($profile->getVar('2famethod'))
 			OR ($_POST['2famethod'] == 1 AND $_POST['2faphone'] != $profile->getVar('2faphone'))
             OR ($pass AND $vpass)
