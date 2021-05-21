@@ -127,7 +127,7 @@ class formulizeEmailElementHandler extends formulizeElementsHandler {
         }
 
         $validationCode[] =
-        "if(myform.{$markupName}.value != '' && /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(myform.{$markupName}.value) == false){
+        "if(myform.{$markupName}.value != '' && /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,63})+$/.test(myform.{$markupName}.value) == false){
           alert('The email address you have entered is not valid.');
           myform.{$markupName}.focus();
           return false;
