@@ -1498,6 +1498,14 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
                 $name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid=".intval(display($entry, $col)));
                 $data_to_write = $name_q[0]['name'];
                 if (!$data_to_write) { $data_to_write = $name_q[0]['uname']; }
+            } elseif($col == 'entry_id') {
+                $data_to_write = $id;
+            } elseif($col == 'creation_datetime') {
+                $data_to_write = $c_date;
+            } elseif($col == 'mod_datetime') {
+                $data_to_write = $m_date;
+            } elseif($col == 'creator_email') {
+                $data_to_write = display($entry, 'creator_email');
             } else {
                 $data_to_write = prepareCellForSpreadsheetExport($col, $entry);
             }
@@ -1583,7 +1591,8 @@ function prepareCellForSpreadsheetExport($column, $entry) {
     
     $data_to_write = strip_tags(str_replace(array('<br>','<br />'), "\n", preg_replace('#<script(.*?)>(.*?)</script>#is', '', displayTogether($entry, $column, ", "))));
     // really, we should go to the datatype of the thing that we're linking to, if the element is linked
-    if($thisColumnElement->isLinked OR
+    if(strstr($data_to_write, ',') OR
+        $thisColumnElement->isLinked OR
         stristr($formDataTypes[$columnFid][$column], 'char') OR
         stristr($formDataTypes[$columnFid][$column], 'text') OR
         stristr($formDataTypes[$columnFid][$column], 'binary') OR
