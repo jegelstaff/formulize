@@ -26,7 +26,8 @@ function validateCode($code, $uid=false) {
         exit('No known user to check 2FA code for!');
     }
     $uid = $uid ? $uid : $xoopsUser->getVar('uid'); 
-    $sql = 'SELECT method, AES_DECRYPT(code, UNHEX(SHA2("'.XOOPS_DB_PASS.XOOPS_DB_PREFIX.'",512))) as code FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($uid);
+    //$sql = 'SELECT method, AES_DECRYPT(code, UNHEX(SHA2("'.XOOPS_DB_PASS.XOOPS_DB_PREFIX.'",512))) as code FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($uid);
+    $sql = 'SELECT method, code FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($uid);
     $res = $xoopsDB->query($sql);
     while($data = $xoopsDB->fetchArray($res)) {
         if($data['method'] == TFA_APP) {
@@ -60,14 +61,16 @@ function generateCode($method, $uid) {
         if($xoopsDB->getRowsNum($res)==0) { // only generate if there isn't one already, and in this case pass back the necessary stuff for making the QR code to initialize the app
 			$tfa = new TwoFactorAuth(trans($icmsConfig['sitename']));
             $secret = $tfa->createSecret(160);
-			$sql = 'INSERT INTO '.$xoopsDB->prefix('tfa_codes').' (uid, code, method) VALUES ('.intval($uid).', AES_ENCRYPT("'.$secret.'", UNHEX(SHA2("'.XOOPS_DB_PASS.XOOPS_DB_PREFIX.'",512))), '.intval($method).')';
+			//$sql = 'INSERT INTO '.$xoopsDB->prefix('tfa_codes').' (uid, code, method) VALUES ('.intval($uid).', AES_ENCRYPT("'.$secret.'", UNHEX(SHA2("'.XOOPS_DB_PASS.XOOPS_DB_PREFIX.'",512))), '.intval($method).')';
+            $sql = 'INSERT INTO '.$xoopsDB->prefix('tfa_codes').' (uid, code, method) VALUES ('.intval($uid).', "'.$secret.'", '.intval($method).')';
 			$xoopsDB->queryF($sql);
 			return $secret;
         }
 		return '';
     } else {
         $code = random_int(111111,999999);
-        $sql = 'INSERT INTO '.$xoopsDB->prefix('tfa_codes').' (uid, code, method) VALUES ('.intval($uid).', AES_ENCRYPT("'.$code.'", UNHEX(SHA2("'.XOOPS_DB_PASS.XOOPS_DB_PREFIX.'",512))), '.intval($method).')';
+        //$sql = 'INSERT INTO '.$xoopsDB->prefix('tfa_codes').' (uid, code, method) VALUES ('.intval($uid).', AES_ENCRYPT("'.$code.'", UNHEX(SHA2("'.XOOPS_DB_PASS.XOOPS_DB_PREFIX.'",512))), '.intval($method).')';
+        $sql = 'INSERT INTO '.$xoopsDB->prefix('tfa_codes').' (uid, code, method) VALUES ('.intval($uid).', "'.$code.'", '.intval($method).')';
         $xoopsDB->queryF($sql);
         return $code;
     }
