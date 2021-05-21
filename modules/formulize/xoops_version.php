@@ -31,7 +31,7 @@
 
 $modversion = array(
 	'name' => _MI_formulize_NAME,
-	'version' => "6.0",
+	'version' => "6.2",
 	'description' => _MI_formulize_DESC,
 	'author' => "Julian Egelstaff & Freeform Solutions",
 	'credits' => "",
