@@ -40,9 +40,9 @@ switch ($op) {
 		$profile_handler = xoops_getmodulehandler('profile', 'profile');
 		$profile = $profile_handler->get($uid);
 		if($uid == icms::$user->getVar('uid') AND
-		   ($_POST['2famethod'] != $profile->getVar('2famethod')
+		   (intval($_POST['2famethod']) != intval($profile->getVar('2famethod'))
 			OR ($_POST['2famethod'] == 1 AND $_POST['2faphone'] != $profile->getVar('2faphone'))
-            OR ($profile->getVar('2famethod') > 0 AND $pass AND $vpass)
+            OR ($pass AND $vpass)
             )
 		   AND validateCode($_POST['tfacode']) == false ) {
 			redirect_header(ICMS_URL."/modules/profile/edituser.php", 3, "Invalid Two-factor Authentication Code");

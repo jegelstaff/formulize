@@ -6094,10 +6094,10 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
             $v = (false === $time_value) ? "" : date(_SHORTDATESTRING, ($time_value)+$offset);
         }
         $output .= '<span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $handle, $textWidth, $thisEntryId)), $handle);
+        $output .= '</span>';
         if ($counter<$countOfValue) {
             $output .= "<br>";
         }
-        $output .= '</span>';
         $counter++;
     }
         $output .= "</div>";

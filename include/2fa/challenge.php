@@ -15,7 +15,7 @@ while(ob_get_level()) {
 
 include "manage.php"; // defines constants
 
-$icmsAuth =& icms_auth_Factory::getAuthConnection(icms_core_DataFilter::addSlashes($uname));
+$icmsAuth =& icms_auth_Factory::getAuthConnection(icms_core_DataFilter::addSlashes(trim($_GET['u'])));
 $user = $icmsAuth->authenticate(trim($_GET['u']), trim($_GET['p']));
 
 if($user AND

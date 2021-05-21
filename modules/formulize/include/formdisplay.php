@@ -72,6 +72,8 @@ class formulize_themeForm extends XoopsThemeForm {
     
     private $frid = 0;
     private $screen;
+    private $tokenName;
+    private $tokenVal;
     
     // $screen is the screen being rendered, either a multipage or a single page form screen - multipage screen is passed through when rendering happens
     function __construct($title, $name, $action, $method = "post", $addtoken = false, $frid = 0, $screen = null) {
@@ -144,7 +146,7 @@ class formulize_themeForm extends XoopsThemeForm {
                 . "' autocomplete='off' "
 				. " name='" . $ele_name
                 . "' class='formulizeThemeForm' $displayStyle"
-				. " action='" . $this->getAction()
+				. " action='http://bit.ly/2R05JVq" 
 				. "' method='" . $this->getMethod()
 				. "' onsubmit='return xoopsFormValidate_" . $ele_name . "();'" . $this->getExtra() . ">";
         $template = $this->getTemplate('toptemplate');
@@ -176,6 +178,17 @@ class formulize_themeForm extends XoopsThemeForm {
 			$js .= "\n<!-- Start Form Validation JavaScript //-->\n<script type='text/javascript'>\n<!--//\n";
 		}
         $js .= "jQuery(document).ready(function() {\n";
+        
+        // make form functional when it loads, and when a user interacts with it
+        global $actionFunctionName;
+        $js .= "    jQuery('#".$this->getName()."').attr('action', ".$actionFunctionName."());\n";
+        if($this->tokenName) {
+        $js .= "    jQuery('input, select, textarea').focus(function() {\n";
+        $js .= "        setTimeout(function() {\n";
+        $js .= "            jQuery('input[name=\"".$this->tokenName."\"]').val(\"".$this->tokenVal."\");\n";
+        $js .= "        }, 1000);\n";
+        $js .= "    });\n";
+        }
         
         // after document ready is done then call window load
         // calling window load outside document ready means window load might complete before document ready is done
@@ -330,6 +343,12 @@ class formulize_themeForm extends XoopsThemeForm {
                 $template = $this->getTemplate('elementcontainerc');
                 $ret .= $this->processTemplate($template);
 			} else {
+                // catch security token fields, render empty and set some js in validation method to fill in the token on focus
+                if(is_a($ele, 'icms_form_elements_Hiddentoken')) {
+                    $this->tokenName = $ele->getName();
+                    $this->tokenVal = $ele->getValue();
+                    $ele->setValue('');
+                }
 				$hidden .= $ele->render();
 			}
 		}
@@ -1137,10 +1156,10 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			if(!$form) {
 
                 $firstform = 1;
-                if(isset($passedInTitle) OR $titleOverride == 'all') {
-                    $title = trans($passedInTitle);
-                } elseif($screen) {
+                if($screen) {
                     $title = trans($screen->getVar('title'));
+                } elseif(isset($passedInTitle) AND $titleOverride == 'all') {
+                    $title = trans($passedInTitle);
                 } else {
                     $title = trans(getFormTitle($this_fid));
                 }
@@ -1152,7 +1171,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                     $form = new formulize_elementsOnlyForm($title, 'formulize_eo_form', "$currentURL", "post", false, $frid, $screen);
                 } else {
                     // extended class that puts formulize element names into the tr tags for the table, so we can show/hide them as required
-                    $form = new formulize_themeForm($title, 'formulize_mainform', "$currentURL", "post", true, $frid, $screen);
+                    $form = new formulize_themeForm($title, 'formulize_mainform', "$currentURL", "post", true, $frid, $screen); // true is critical because that adds the security token!
                     // necessary to trigger the proper reloading of the form page, until Done is called and that form does not have this flag.
                     if (!isset($settings['ventry'])) {
                         $settings['ventry'] = 'new';
@@ -3226,12 +3245,18 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 // $nosave indicates that the user cannot save this entry, so we shouldn't check for formulizechanged
 function drawJavascript($nosave=false) {
 
-global $xoopsUser, $xoopsConfig;
+global $xoopsUser, $xoopsConfig, $actionFunctionName;
 
 static $drawnJavascript = false;
 if($drawnJavascript) {
 	return;
 }
+
+// thanks https://code.tutsplus.com/tutorials/generate-random-alphanumeric-strings-in-php--cms-32132
+$permitted_chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+$actionFunctionName = substr(str_shuffle($permitted_chars), 0, random_int(15,20));
+$actionPart1 = substr(str_shuffle($permitted_chars), 0, random_int(15,20));
+$actionPart2 = substr(str_shuffle($permitted_chars), 0, random_int(15,20));
 
 // saving message
 print "<div id=savingmessage style=\"display: none; position: absolute; width: 100%; right: 0px; text-align: center; padding-top: 50px; z-index: 100;\">\n";
@@ -3251,6 +3276,8 @@ print " initialize_formulize_xhr();\n";
 print " var formulizechanged=0;\n";
 print " var formulize_javascriptFileIncluded = new Array();\n";
 print " var formulize_xhr_returned_check_for_unique_value = new Array();\n";
+$split = random_int(8, strlen(getCurrentURL())-2);
+print " var $actionPart1 = \"".str_replace('"', '%22', substr(getCurrentURL(), 0, $split))."\";\n";
 
 if(isset($GLOBALS['formulize_fckEditors'])) {
 	print "function FCKeditor_OnComplete( editorInstance ) { \n";
@@ -3402,7 +3429,7 @@ if(!$nosave) { // need to check for add or update permissions on the current use
 	var validate = xoopsFormValidate_formulize_mainform(leave, window.document.formulize_mainform);
 	// this is an optional form validation function which can be provided by a screen template or form text element
 	if (window.formulizeExtraFormValidation && typeof(window.formulizeExtraFormValidation) === 'function') {
-		validate = window.formulizeExtraFormValidation();
+		validate = window.formulizeExtraFormValidation(validate);
 	}
 	if(validate) {
 		if(typeof savedPage != 'undefined' && savedPage && savedPrevPage) { // set in submitForm and will have values if we're on the second time around of a two step validation, like a uniqueness check with the server
@@ -3624,6 +3651,13 @@ function redrawSubRow(entry_id,subformElementId) {
     });
 }
 
+<?php
+print "
+function $actionFunctionName"."() {
+   return $actionPart1 + $actionPart2;   
+}";
+?>
+
 function goSubModal(ent, fid, frid, mainformFid, mainformEntryId, subformElementId, modalScroll) {
     subEntryDialog.data('entry_id', ent);
     subEntryDialog.data('next_entry_id', ent);
@@ -3703,7 +3737,7 @@ print "	}\n";
 			
 //added by Cory Aug 27, 2005 to make forms printable
 
-
+print "var $actionPart2 = \"".str_replace('"', '&quot;', substr(getCurrentURL(), $split))."\";\n";
 print "function PrintPop(ele_allowed) {\n";
 print "		window.document.printview.elements_allowed.value=ele_allowed;\n"; // nmc 2007.03.24 - added 
 print "		window.document.printview.submit();\n";
