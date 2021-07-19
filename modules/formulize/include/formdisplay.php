@@ -183,7 +183,7 @@ class formulize_themeForm extends XoopsThemeForm {
         global $actionFunctionName;
         $js .= "    jQuery('#".$this->getName()."').attr('action', ".$actionFunctionName."());\n";
         if($this->tokenName) {
-        $js .= "    jQuery('input, select, textarea').focus(function() {\n";
+        $js .= "    jQuery('input, select, textarea, div').focusin(function() {\n";
         $js .= "        setTimeout(function() {\n";
         $js .= "            jQuery('input[name=\"".$this->tokenName."\"]').val(\"".$this->tokenVal."\");\n";
         $js .= "        }, 269);\n";
@@ -3288,6 +3288,57 @@ if(isset($GLOBALS['formulize_fckEditors'])) {
 	print "}\n";
 }
 
+// on first load, turn on rich text editors -- conditional loads are handled elsewhere
+if(isset($GLOBALS['formulize_CKEditors'])) {
+    
+    foreach($GLOBALS['formulize_CKEditors'] as $editorID) { 
+        print "var CKEditors = {};\n";
+    }
+    
+    print "
+    function initializeCKEditor(editorID) {
+        if(jQuery('#'+editorID).length > 0) {
+            ClassicEditor
+                .create( document.querySelector( '#'+editorID ) )
+                .then( editor => {
+                    CKEditors[editorID] = editor;
+                    CKEditors[editorID].model.document.on('change:data', function() {
+                        formulizechanged = 1;
+                    });
+                    jQuery('#'+editorID).attr('name', 'useCKEditor');
+                    jQuery(\"<input type='hidden' value='' name='\"+editorID.replace('_tarea', '')+\"' id='hidden_\"+editorID+\"' />\").appendTo(jQuery('#'+editorID).parent());
+                    })
+                .catch( error => {
+                    console.error( error );
+                } );
+        }
+    }";
+
+    print "
+    jQuery(document).ready(function () {
+    ";
+
+    foreach($GLOBALS['formulize_CKEditors'] as $editorID) {
+        print "initializeCKEditor('$editorID');\n";
+    }    
+    
+    print "
+    });
+    
+    function updateCKEditors() {";
+        
+        foreach($GLOBALS['formulize_CKEditors'] as $editorID) {
+            print "
+            if(jQuery('#$editorID').length > 0) {
+                jQuery('#hidden_$editorID').val(CKEditors['$editorID'].getData().replace(\"'\", '&#039;'));
+            }";
+        }
+        
+    print "
+    }\n";
+    
+} 
+
 ?>
 
 window.onbeforeunload = function (e) {
@@ -3432,6 +3483,7 @@ if(!$nosave) { // need to check for add or update permissions on the current use
 		validate = window.formulizeExtraFormValidation(validate);
 	}
 	if(validate) {
+        if(typeof updateCKEditors === 'function') { updateCKEditors(); }
 		if(typeof savedPage != 'undefined' && savedPage && savedPrevPage) { // set in submitForm and will have values if we're on the second time around of a two step validation, like a uniqueness check with the server
 			multipageSetHiddenFields(savedPage, savedPrevPage);
 		}
@@ -3677,6 +3729,7 @@ function saveSub(reload) {
             subEntryDialog.children('div').css('opacity', '0.5');
             subEntryDialog.append('<div id=savingmessage style="padding-top: 10px;"><?php print $savingMessageGif; ?></div>');
             jQuery('#formulize_modal input[type="hidden"]').prop('disabled', false);
+            if(typeof updateCKEditors === 'function') { updateCKEditors(); }
             var formData = new FormData(jQuery('#formulize_modal')[0]);
             //var formData = subEntryDialog.children('form').serialize();
             jQuery.post({
@@ -4014,8 +4067,8 @@ function checkCondition(handle, currentHTML, elementValuesForURL) {
                     if(window.document.getElementById('formulize-'+handle) !== null) {
                         window.document.getElementById('formulize-'+handle).style.display = null; // doesn't need real value, just needs to be not set to 'none'
                     }
-                    ShowHideTableRow('#formulize-'+handle,false,0,function() {}); // because the newly appended row will have full opacity so immediately make it transparent
-                    ShowHideTableRow('#formulize-'+handle,true,1500,function() {});
+                    ShowHideTableRow(handle,false,0,function() {}); // because the newly appended row will have full opacity so immediately make it transparent
+                    ShowHideTableRow(handle,true,1500,function() {});
                     if (typeof window['formulize_initializeAutocomplete'+handle] === 'function') {
                         window['formulize_initializeAutocomplete'+handle]();
                     }
@@ -4027,7 +4080,7 @@ function checkCondition(handle, currentHTML, elementValuesForURL) {
 			}
 		} else {
 			if( window.document.getElementById('formulize-'+handle) !== null && window.document.getElementById('formulize-'+handle).style.display != 'none') {
-				ShowHideTableRow('#formulize-'+handle,false,700,function() {
+				ShowHideTableRow(handle,false,700,function() {
 					jQuery('#formulize-'+handle).empty();
 					window.document.getElementById('formulize-'+handle).style.display = 'none';
 					assignConditionalHTML(handle, data);
@@ -4080,9 +4133,9 @@ function getRelevantElementValues(elements) {
 }
 
 
-function ShowHideTableRow(rowSelector, show, speed, callback)
+function ShowHideTableRow(handle, show, speed, callback)
 {
-    var childCellsSelector = jQuery(rowSelector).children();
+    var childCellsSelector = jQuery('#formulize-'+handle).children();
     var ubound = childCellsSelector.length - 1;
     var lastCallback = null;
 
@@ -4094,11 +4147,14 @@ function ShowHideTableRow(rowSelector, show, speed, callback)
 
         if (show)
         {
-            jQuery(this).fadeIn(speed, lastCallback)
+            if(ubound == i) {
+                if(typeof initializeCKEditor === 'function') { initializeCKEditor(handle+'_tarea'); }
+            }
+            jQuery(this).fadeIn(speed, lastCallback);
         }
         else
         {
-            jQuery(this).fadeOut(speed, lastCallback)
+            jQuery(this).fadeOut(speed, lastCallback);
         }
     });
 }

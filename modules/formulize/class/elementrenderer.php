@@ -237,24 +237,25 @@ class formulizeElementRenderer{
 						include_once XOOPS_ROOT_PATH."/class/xoopsform/formeditor.php";
 						$form_ele = new XoopsFormEditor(
 							$ele_caption,
-							'FCKeditor',
+							'CKEditor',
 							$editor_configs = array("name"=>$form_ele_id, "value"=>$ele_value[0]),
 							$noHtml=false,
 							$OnFailure = ""
 						);
 
-						$eltname = $form_ele_id;
-						$eltcaption = $ele_caption;
-						$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
-						$eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
-						$form_ele->customValidationCode[] = "\n var FCKGetInstance = FCKeditorAPI.GetInstance('$form_ele_id');\n";
-						$form_ele->customValidationCode[] = "var getText = FCKGetInstance.EditorDocument.body.innerHTML; \n";
-						$form_ele->customValidationCode[] = "var StripTag = getText.replace(/(<([^>]+)>)/ig,''); \n";
-						$form_ele->customValidationCode[] = "if(StripTag=='' || StripTag=='&nbsp;') {\n";
-						$form_ele->customValidationCode[] = "window.alert(\"{$eltmsg}\");\n FCKGetInstance.Focus();\n return false;\n";
-						$form_ele->customValidationCode[] = "}\n";
+                        if($this->_ele->getVar('ele_req')) {
+                            $eltname = $form_ele_id;
+                            $eltcaption = $ele_caption;
+                            $eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
+                            $eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
+                            $form_ele->customValidationCode[] = "var getText = CKEditors['".$eltname."_tarea'].getData();\n";
+                            $form_ele->customValidationCode[] = "var StripTag = getText.replace(/(<([^>]+)>)/ig,''); \n";
+                            $form_ele->customValidationCode[] = "if(StripTag=='' || StripTag=='&nbsp;') {\n";
+                            $form_ele->customValidationCode[] = "window.alert(\"{$eltmsg}\");\n CKEditors['".$eltname."_tarea'].focus();\n return false;\n";
+                            $form_ele->customValidationCode[] = "}\n";
+                        }
 
-						$GLOBALS['formulize_fckEditors'] = true;
+						$GLOBALS['formulize_CKEditors'][] = $form_ele_id.'_tarea';
 						
 					} else {
 					$form_ele = new XoopsFormTextArea(
@@ -1046,6 +1047,7 @@ class formulizeElementRenderer{
             }
             
 			$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\"");
+            
 			// reuse caption, put two spaces between element and previous entry UI
 			$form_ele_new = new xoopsFormLabel($form_ele->getCaption(), $form_ele->render().$previousEntryUIRendered.$specialValidationLogicDisplay.$elementCue);
 			$form_ele_new->formulize_element = $this->_ele;
