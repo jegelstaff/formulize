@@ -186,7 +186,7 @@ class formulize_themeForm extends XoopsThemeForm {
         $js .= "    jQuery('input, select, textarea').focus(function() {\n";
         $js .= "        setTimeout(function() {\n";
         $js .= "            jQuery('input[name=\"".$this->tokenName."\"]').val(\"".$this->tokenVal."\");\n";
-        $js .= "        }, 1000);\n";
+        $js .= "        }, 269);\n";
         $js .= "    });\n";
         }
         
