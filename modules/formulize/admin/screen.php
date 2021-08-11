@@ -380,7 +380,7 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
     $multipageOptions['finishisdone'] = $screen->getVar('finishisdone');
     $multipageOptions['navstyle'] = $screen->getVar('navstyle') ? $screen->getVar('navstyle') : 0;
     $multipageOptions['showpageselector'] = $screen->getUIOption('showpageselector') ? 'checked' : '';
-    $multipageOptions['showpageindicator'] = $screen->getUIOption('showpageselector') ? 'checked' : '';
+    $multipageOptions['showpageindicator'] = $screen->getUIOption('showpageindicator') ? 'checked' : '';
     $multipageOptions['showpagetitles'] = $screen->getUIOption('showpagetitles') ? 'checked' : '';
     $buttonText = $screen->getVar('buttontext');
     $multipageOptions['thankyoulinktext'] = is_array($buttonText) ? $buttonText['thankyoulinktext'] : $buttonText;
