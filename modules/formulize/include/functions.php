@@ -61,25 +61,7 @@ if (typeof jQuery.ui == 'undefined') {
 }
 ";
 
-// setup flag for whether the Freeform Solutions user archiving patch has been applied to the core
-global $xoopsDB, $xoopsConfig;
-$sqlInFunctions = "SELECT * FROM " . $xoopsDB->prefix("users") . " LIMIT 0,1";
-if ($resInFunctions = $xoopsDB->query($sqlInFunctions)) {
-    $resarrayInFunctions = $xoopsDB->fetchArray($resInFunctions);
-    $GLOBALS['formulize_archived_available'] = isset($resarrayInFunctions['archived']) ? true : false;
-} else {
-    $GLOBALS['formulize_archived_available'] = false;
-}
-
-$testsql = "SHOW TABLES";
-$resultst = $xoopsDB->queryF($testsql);
 $GLOBALS['formulize_versionFourOrHigher'] = true;
-while ($table = $xoopsDB->fetchRow($resultst)) {
-    if ($table[0] == $xoopsDB->prefix("formulize_framework_elements")) {
-        $GLOBALS['formulize_versionFourOrHigher'] = false;
-        break;
-    }
-}
 
 /*
  * experimental removal of language setting in functions.php - this should be set previously in other locations and this file should be a library with no dependancies on doing something specific for the bootstrapping of the page's resources
@@ -103,27 +85,15 @@ function getFormFramework($formframe, $mainform="") {
     
     if (!empty($mainform)) {
         // a framework
+        $frid = $formframe;
+        $fid = $mainform;
         if (!is_numeric($formframe)) {
             $frameid = q("SELECT frame_id FROM " . $xoopsDB->prefix("formulize_frameworks") . " WHERE frame_name='" . formulize_db_escape($formframe) . "'");
             $frid = $frameid[0]['frame_id'];
-        } else {
-            $frid = $formframe;
-        }
+        } 
         if (!is_numeric($mainform)) {
-            // only a deprecated framework form handle would apply in this situation
-            if ($GLOBALS['formulize_versionFourOrHigher'] == false) {
-                $formcheck = q("SELECT ff_form_id FROM " . $xoopsDB->prefix("formulize_framework_forms") . " WHERE ff_frame_id='$frid' AND ff_handle='" . formulize_db_escape($mainform) . "'");
-                if (isset($formcheck[0]['ff_form_id'])) {
-                    $fid = $formcheck[0]['ff_form_id'];
-                } else {
-                    exit("Cannot identify mainform using this text '".strip_tags(htmlspecialchars($mainform))."'");
-                }
-            } else {
-                exit("Cannot identify mainform using this text '".strip_tags(htmlspecialchars($mainform))."'");
-            }
-        } else {
-            $fid = $mainform;
-        }
+            exit("Cannot identify mainform using this text '".strip_tags(htmlspecialchars($mainform))."'");
+        } 
         if (!$fid) {
             print "Form Name: " . $form . "<br>";
             print "Form id: " . $fid . "<br>";
@@ -1343,15 +1313,6 @@ function checkForLinks($frid, $fids, $fid, $entries, $unified_display=false, $un
 // $groups is the user's groups
 function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $template=false, $fid, $groups="") {
     
-    // export of calculations added August 22 2006
-    // come up with a filename and then return it
-    // rest of logic in entriesdisplay.php will take the filename and create a file with the calculations in it once they are performed
-    if ($fdchoice == "calcs") {
-        $tempfold = microtime(true);
-        $exfilename = _formulize_DE_XF . $tempfold . ".html";
-        return XOOPS_URL . SPREADSHEET_EXPORT_FOLDER . "$exfilename";
-    }
-
     global $xoopsDB, $xoopsUser;
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 
@@ -1367,7 +1328,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
                 $cols[] = $col['ele_handle'];
             }
             unset($headers);
-            $headers = getHeaders($cols, true); // array of element handles, boolean for if the cols are handles (or ids, which is the default assumption)
+            $headers = getHeaders($cols);
         }
     }
     if ($fdchoice == "comma") {
@@ -1534,7 +1495,6 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
         }
     }
 
-    // need to add in logic to cull old files
     return XOOPS_URL . SPREADSHEET_EXPORT_FOLDER . "$exfilename";
 }
 
@@ -1765,61 +1725,7 @@ function getAllColList($fid, $frid="", $groups="", $includeBreaks=false) {
     return $cols;
 }
 
-
-// This function takes an array of advanced search terms and composes a human readable version of the query
-function writableQuery($items, $mod="") {
-    for ($i=0;$i<count($items);$i++) {
-        unset($temp_text);
-        if (substr($items['as_' . $i], 0, 7) == "[field]" AND substr($items['as_' . $i], -8) == "[/field]") {
-            // a field has been found
-            $fieldLen = strlen($items['as_' . $i]);
-            $items['as_' . $i] = substr($items['as_' . $i], 7, $fieldLen-15); // 15 is the length of [field][/field]
-            $temp_text = getCalcHandleText($items['as_' . $i], true); // last param forces colhead
-            if (strlen($temp_text)>20) {
-                $items['as_' . $i] = "<a href=\"\" alt=\"" . trans($temp_text) . "\" title=\"" . trans($temp_text) . "\" onclick=\"javascript:return false;\">" . printSmart(trans($temp_text), "20") ."</a>";
-            } else {
-                $items['as_' . $i] = trans($temp_text);
-            }
-        } elseif ($items['as_' . $i] == "==") {
-            $items['as_' . $i]="=";
-        } elseif ($items['as_' . $i] == "!=") {
-             $items['as_' . $i]=" NOT ";
-        } elseif ($items['as_' . $i] == "NOT") {
-            $items['as_' . $i]=" NOT ";
-        } elseif ($items['as_' . $i] == "AND") {
-            $items['as_' . $i]=" AND ";
-        } elseif ($items['as_' . $i] == "OR") {
-            $items['as_' . $i]=" OR ";
-        } elseif ($items['as_' . $i] == "LIKE") {
-            $items['as_' . $i]=" LIKE ";
-        } elseif ($items['as_' . $i] == "NOT LIKE") {
-            $items['as_' . $i]=" NOT LIKE ";
-        } elseif ($items['as_' . $i] == "{USER}" AND $mod != 1) {
-            global $xoopsUser;
-            $term = $xoopsUser->getVar('name');
-            if (!$term) { $term = $xoopsUser->getVar('uname'); }
-            $items['as_' . $i] = $term;
-        } elseif ($items['as_' . $i] == "{BLANK}" AND $mod != 1) {
-            $items['as_' . $i] = "\" \"";
-        } elseif (preg_replace("/[^A-Z{}]/","", $items['as_' . $i]) == "{TODAY}" AND $mod != 1) {
-            $number = preg_replace("/[^0-9+-]/","", $items['as_' . $i]);
-            $items['as_' . $i] = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
-        }
-
-        $item_to_write = stripslashes($items['as_' . $i]);
-
-        if (strlen($item_to_write)>20 AND !$temp_text) {
-            $item_to_write = "<a href=\"\" alt=\"" . $items['as_' . $i] . "\" title=\"" . $items['as_' . $i] . "\" onclick=\"javascript:return false;\">" . printSmart($item_to_write, "20") ."</a>";
-        }
-
-        $qstring .= $item_to_write;
-    }
-    return $qstring;
-}
-
-
 // THIS FUNCTION TAKES A ID FROM THE CALCULATIONS RESULT AND RETURNS THE TEXT TO PUT ON THE SCREEN THAT CORRESPONDS TO IT
-// Also used for advanced searches
 function getCalcHandleText($handle, $forceColhead=true) {
     global $xoopsDB;
     if ($handle == "entry_id") {
@@ -1937,20 +1843,6 @@ function trans($string, $lang = null) {
         $string = $myts->formatForML($string);
     }
     return $string;
-}
-
-
-// THIS FUNCTION FIGURES OUT THE MAX ID_REQ IN USE AND RETURNS THE NEXT VALID ID_REQ
-// ***DEPRECATED*** only used in the patching logic for patching up to 3.0
-function getMaxIdReq() {
-    global $xoopsDB;
-    $sql = $xoopsDB->query("SELECT id_req from " . $xoopsDB->prefix("formulize_form")." order by id_req DESC LIMIT 0,1");
-    list($id_req) = $xoopsDB->fetchRow($sql);
-    if ($id_req == 0) {
-        $num_id = 1;
-    }
-    else if ($num_id <= $id_req) $num_id = $id_req + 1;
-    return $num_id;
 }
 
 
@@ -2781,12 +2673,11 @@ function formatLinks($matchtext, $handle, $textWidth=35, $entryBeingFormatted) {
         }
     } elseif ($ele_type =='select' AND (isset($ele_value[2]['{USERNAMES}']) OR isset($ele_value[2]['{FULLNAMES}'])) AND $ele_value[7] == 1) {
         $nametype = isset($ele_value[2]['{USERNAMES}']) ? "uname" : "name";
-        $archiveFilter = $GLOBALS['formulize_archived_available'] ? " AND archived = 0" : "";
         static $cachedUidResults = array();
         if (isset($cachedUidResults[$matchtext])) {
             $uids = $cachedUidResults[$matchtext];
         } else {
-            $uids = q("SELECT uid FROM " . $xoopsDB->prefix("users") . " WHERE $nametype = '" . formulize_db_escape($matchtext) . "' $archiveFilter");
+            $uids = q("SELECT uid FROM " . $xoopsDB->prefix("users") . " WHERE $nametype = '" . formulize_db_escape($matchtext) . "' ");
             $cachedUidResults[$matchtext] = $uids;
         }
         if (count($uids) == 1) {
@@ -3764,33 +3655,33 @@ function formulize_getLock($fileResource) {
 
 
 // this function takes a series of columns and gets the headers for them
-function getHeaders($cols, $colsIsElementHandles = false) {
+function getHeaders($cols, $colsIsElementHandles = true) {
     global $xoopsDB;
 
     foreach ($cols as $col) {
         if($col == "entry_id") {
-            $headers[] = _formulize_ENTRY_ID;
+            $headers[$col] = _formulize_ENTRY_ID;
         }elseif ($col == "creation_uid") {
-            $headers[] = _formulize_DE_CALC_CREATOR;
+            $headers[$col] = _formulize_DE_CALC_CREATOR;
         } elseif ($col == "mod_uid") {
-            $headers[] = _formulize_DE_CALC_MODIFIER;
+            $headers[$col] = _formulize_DE_CALC_MODIFIER;
         } elseif ($col=="creation_datetime") {
-            $headers[] = _formulize_DE_CALC_CREATEDATE;
+            $headers[$col] = _formulize_DE_CALC_CREATEDATE;
         } elseif ($col=="mod_datetime") {
-            $headers[] = _formulize_DE_CALC_MODDATE;
+            $headers[$col] = _formulize_DE_CALC_MODDATE;
         } elseif ($col=="creator_email") {
-            $headers[] = _formulize_DE_CALC_CREATOR_EMAIL;
+            $headers[$col] = _formulize_DE_CALC_CREATOR_EMAIL;
         } else {
             if ($colsIsElementHandles) {
                 $whereClause = "ele_handle = '$col'";
             } else {
                 $whereClause = "ele_id = '$col'";
             }
-            $temp_cap = q("SELECT ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize") . " WHERE $whereClause");
+            $temp_cap = q("SELECT ele_caption, ele_colhead, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE $whereClause");
             if ($temp_cap[0]['ele_colhead'] != "") {
-                $headers[] = $temp_cap[0]['ele_colhead'];
+                $headers[$temp_cap[0]['ele_handle']] = $temp_cap[0]['ele_colhead'];
             } else {
-                $headers[] = $temp_cap[0]['ele_caption'];
+                $headers[$temp_cap[0]['ele_handle']] = $temp_cap[0]['ele_caption'];
             }
         }
     }
@@ -4326,96 +4217,6 @@ function _getElementObject($element) {
         }
     }
 }
-
-
-// This function takes a string and checks to see if it's a framework form handle, and if so, returns the ID, otherwise returns the string as is
-function dealWithDeprecatedFormHandles($handle) {
-    if (is_numeric($handle) OR $GLOBALS['formulize_versionFourOrHigher'] == true) {
-        return $handle;
-    }
-    global $xoopsDB;
-    static $cachedHandles = array();
-    if (!isset($cachedHandles[$handle])) {
-        $sql = "SELECT ff_form_id FROM ".$xoopsDB->prefix("formulize_framework_forms")." WHERE ff_handle = '".formulize_db_escape($handle)."'";
-        if ($res = $xoopsDB->query($sql)) {
-            $numRows = $xoopsDB->getRowsNum($res);
-            if ($numRows == 0) {
-                $cachedHandles[$handle] = $handle;
-            } elseif ($numRows == 1) {
-                $array = $xoopsDB->fetchArray($res);
-                $cachedHandles[$handle] = $array['ff_form_id'];
-            } else {
-                while ($array = $xoopsDB->fetchArray($res)) {
-                    if (isset($prevFormId)) {
-                        $prevFormId = $form_id; // cache previous if we're on a second run through
-                    }
-                    $form_id = $array['ff_form_id'];
-                    if (!isset($prevFormId)) {
-                        $prevFormId = $form_id; // initialize prev value if we're on the first run through
-                    }
-                    if ($prevFormId != $form_id) {
-                        exit("Error: could not determine the form id from this ambiguous framework form handle: $handle.  If you update your API code so it uses form IDs instead of deprecated framework form handles, then this problem should go away.");
-                    }
-                }
-                $cachedHandles[$handle] = $form_id;
-            }
-        }
-    }
-    return $cachedHandles[$handle];
-}
-
-
-// This function figures out if the handles passed are framework handles for the specified framework, and if so, it converts them to element handles and returns
-// $handles is a single handle or an array of handles
-// $frid is the ID of the framework
-// $frid can be boolean false, which means that rather than there being no framework in effect, we do not know if there is a framework, and so we have to match based on handle alone
-// $frid appears to be ignored!  But perhaps it could be used later to zero in on a specific framework. but really, the time has passed for this, so we'll probably leave this alone and never come back to it.
-// $returnFormId will cause an array to be returned with the handle and the form id in it.  Only supported when passing in a single handle, not an array.  This is off by default and probably only used when parsing handles in derived value formulas
-function dealWithDeprecatedFrameworkHandles($handles, $frid=false, $returnFormId=false) {
-    if ((!$frid AND $frid !== false) OR $GLOBALS['formulize_versionFourOrHigher'] == true) {
-        if ($returnFormId AND !is_array($handles)) {
-            return array($handles, 0);
-        } else {
-            return $handles;
-        }
-    }
-
-    $workingHandles = array();
-    if (is_array($handles)) {
-        $workingHandles = $handles;
-    } else {
-        $workingHandles[0] = $handles;
-    }
-
-    static $cachedHandles = array();
-    $serializedWorkingHandles = serialize($workingHandles);
-    if (isset($cachedHandles[$serializedWorkingHandles][$returnFormId])) {
-        return $cachedHandles[$serializedWorkingHandles][$returnFormId];
-    }
-    global $xoopsDB;
-    $handleSQL = "SELECT elements.ele_handle, handles.fe_handle, elements.id_form FROM ".$xoopsDB->prefix("formulize")." as elements, ".$xoopsDB->prefix("formulize_framework_elements")." as handles WHERE (handles.fe_handle = '".implode("' OR handles.fe_handle = '",$workingHandles)."') AND handles.fe_element_id = elements.ele_id";
-    if ($handleRes = $xoopsDB->query($handleSQL)) {
-        while ($handleArray = $xoopsDB->fetchArray($handleRes)) {
-            $foundKey = array_search($handleArray['fe_handle'],$workingHandles);
-            if ($foundKey !== false) {
-                $workingHandles[$foundKey] = $handleArray['ele_handle'];
-            }
-        }
-        if (is_array($handles)) {
-            $cachedHandles[$serializedWorkingHandles][$returnFormId] = $workingHandles;
-        } else {
-            if ($returnFormId) {
-                // assumption is that there would only be a record returned, or at least, the last record processed would be the one that we're returning in terms of handle anyway.
-                $cachedHandles[$serializedWorkingHandles][$returnFormId] = array($workingHandles[0], $handleArray['id_form']);
-            } else {
-                $cachedHandles[$serializedWorkingHandles][$returnFormId] = $workingHandles[0];
-            }
-        }
-        return $cachedHandles[$serializedWorkingHandles][$returnFormId];
-    }
-    return $handles;
-}
-
 
 // still in use but could/should be refactored
 function convertElementIdsToElementHandles($ids, $fid=false) {
@@ -6075,9 +5876,11 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
     $fid = $cachedFormIds[$handle];
     $element_type = $cached_object_type[$handle];
     foreach ($value as $valueId=>$v) {
-        $elestyle = '';
+        $elstyle = 'style="display: inline-block;width: 100%;text-align: ';
         if (is_numeric($v)) {
-            $elstyle = 'style="text-align: right;display: inline-block;"'; // and if there is a width that pushes the right edge over then it looks nice, sort of, but more formatting controls on table and whitespace between cells, etc... is necessary
+            $elstyle .= 'right;"'; // and if there is a width that pushes the right edge over then it looks nice, sort of, but more formatting controls on table and whitespace between cells, etc... is necessary
+        } else {
+            $elstyle .= 'left"';    
         }
         $thisEntryId = isset($localIds[$valueId]) ? $localIds[$valueId] : $entryId;
         if ($counter == 1 AND $deDisplay AND $element_type != 'derived') {
@@ -6118,27 +5921,6 @@ function htmlForElement($elementHandle, $nameForHTML="orphaned_formulize_element
     } else {
         return $renderedElementArray;
     }
-}
-
-
-/*
- *  @name formulize_renderTemplate
- *
- *  This function renders a template for formdisplaypages.php
- *  It should be called as follows:
- *  	renderTemplate($templatenameX, $templateVariables, $sid);
- *
- */
-
-function formulize_renderTemplate($templatename, $templateVariables, $sid) {
-    // get our templateVaraibles first
-    foreach ($templateVariables as $name => $value) {
-        ${$name} = $value;
-    }
-
-    global $xoopsConfig;
-    $theme = $xoopsConfig['theme_set'];
-	include XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/" . $sid . "/" . $templatename . ".php";
 }
 
 
@@ -6723,13 +6505,15 @@ function convertVariableSearchToLiteral($v, $requestKeyToUse) {
 // The idea is to show columns based on their forms, in a way that mimics the links in the active relationships
 function generateTidyElementList($cols, $selectedCols=array()) {
     
-    $html = "";
+    $html = "<div>";
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $counter = 0;
     foreach($cols as $thisFid=>$columns) {
         $formObject = $form_handler->get($thisFid);
         $boxeshtml = "";
-        $hideform = count($cols) > 1 ? "style='display:none;'" : ""; // start forms closed unless they have selected columns, or unless this is the only form in the set
+        $hideform = count($cols) > 1 ? "style='opacity: 0; max-height: 0;'" : "style='opacity: 1; max-height: 10000px;'"; // start forms closed unless they have selected columns, or unless this is the only form in the set
+        $upDisplay = count($cols) > 1 ? "style='display: none;'" : "style='display: inline;'";
+        $downDisplay = count($cols) > 1 ? "style='display: inline;'" : "style='display: none;'";
         if($counter == 0) { // add in metadata columns first time through
             array_unshift($columns,
                 array('ele_handle'=>'entry_id', 'ele_caption' => _formulize_ENTRY_ID),                          
@@ -6742,24 +6526,40 @@ function generateTidyElementList($cols, $selectedCols=array()) {
         foreach($columns as $column) {
             $counter++;
             $selected = in_array($column['ele_handle'], $selectedCols) ? "checked='checked'" : "";
-            if($selected) { $hideform = ""; }
+            if($selected) {
+                $hideform = "style='opacity: 1; max-height: 10000px;'";
+                $upDisplay = "style='display: inline;'";
+                $downDisplay = "style='display: none;'";
+            }
             $text = (isset($column['ele_colhead']) AND $column['ele_colhead'] != "") ? printSmart(trans($column['ele_colhead']), 75) : printSmart(trans(strip_tags($column['ele_caption'])), 75);
             $boxeshtml .= "<input type='checkbox' name='popnewcols[]' id='popnewcols".$counter."' class='colbox' value=\"{$column['ele_handle']}\" $selected />&nbsp;&nbsp;&nbsp;<label for='popnewcols".$counter."'>$text</label><br />\n";
         }
-        $html .= "<p><a onclick='javascript:toggleCols($thisFid);return false;' style='cursor: pointer;'>".$formObject->getVar('title')."</a></p>\n";
-        $html .= "<div id='cols_$thisFid' $hideform>\n";
+        $html .= "<p><a onclick='javascript:toggleCols($thisFid);return false;' style='cursor: pointer;'>".$formObject->getVar('title')." <span id='up_".$thisFid."' $upDisplay>&and;</span><span id='down_".$thisFid."' $downDisplay>&or;</span></a></p>\n";
+        $html .= "<div class='elements-checkbox-list' id='cols_$thisFid' $hideform>\n";
         $html .= $boxeshtml;
         $html .= "</div>";
     }
-    $html .="
+    $html .="</div>
+    
+    <style>
+        .elements-checkbox-list {
+            transition: all 1s ease 0.25s;
+        }
+    </style>
     
     <script type='text/javascript'>    
     function toggleCols(fid) {
-        currentStyle = document.getElementById('cols_'+fid).style.display;
-        if (currentStyle == 'none') { 
-            document.getElementById('cols_'+fid).style.display = 'block';
+        currentOpacity = document.getElementById('cols_'+fid).style.opacity;
+        if (currentOpacity != 1) {
+            document.getElementById('up_'+fid).style.display = 'inline';
+            document.getElementById('down_'+fid).style.display = 'none';
+            document.getElementById('cols_'+fid).style.maxHeight = '10000px';
+            document.getElementById('cols_'+fid).style.opacity = 1;
         } else {
-            document.getElementById('cols_'+fid).style.display = 'none';
+            document.getElementById('up_'+fid).style.display = 'none';
+            document.getElementById('down_'+fid).style.display = 'inline';
+            document.getElementById('cols_'+fid).style.maxHeight = 0;
+            document.getElementById('cols_'+fid).style.opacity = 0;
         }
     }
     </script>
@@ -7879,3 +7679,24 @@ function recurse_copy($src,$dst) {
     } 
     closedir($dir); 
 } 
+
+// element template is copied to elementtemplate1 and elementtemplate2 on so multipage templates are up to standard
+function updateMultipageTemplates($screen) {
+    $path = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$screen->getVar('theme')."/".$screen->getVar('sid')."/";
+    $fileMappings = array(
+        'elementtemplate'=>array(
+            'elementtemplate1',
+            'elementtemplate2'
+        )
+    );
+    foreach($fileMappings as $oldFile=>$newFiles) {
+        if(file_exists($path.$oldFile.'.php')) {
+            foreach($newFiles as $newFile) {
+                if(!copy($path.$oldFile.'.php', $path.$newFile.'.php')) {
+                    exit("Could not copy $oldFile to $newFile for screen ".$screen->getVar('sid').". Please notify the webmaster or contact info@formulize.org for assistance.");
+                }
+            }
+            unlink($path.$oldFile.'.php');
+        }    
+    }
+}

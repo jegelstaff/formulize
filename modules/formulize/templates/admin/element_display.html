@@ -66,40 +66,9 @@ $(document).ready(function() {
 <div class="accordion-box">
     <div class="form-item">
     <fieldset>
-	<legend>Regular Form Screens to display to</legend>
-	<div class="form-item">
-		<label for="elements_form_screens">Which form screens should element display on?</label>
-		<select id="elements_form_screens" name="elements_form_screens[]" size="8" multiple>
-		<{foreach from=$content.form_screens item=form_screen}>
-		<{assign var=formscreenid value=$form_screen.sid}>
-        <option value=<{$formscreenid}><{$content.ele_form_screens.$formscreenid}>><{$form_screen.title}></option>
-        <{/foreach}>
-		</select>
-    </div>
-    </fieldset>
-    </div>
-</div>
-
-<div class="accordion-box-wide">
-	<div class="form-item">
-   	<fieldset>
-      <legend><label for="elements_ele_filtersettings" class="question">Only display the element in the form if the entry being edited meets these conditions:</label></legend>
-			<div id="displayfilter">
-			<{$content.filtersettings}>
-			</div>
-			<div class="description">
-				<p>When an entry is saved, these conditions will be checked and this element will be displayed or not displayed on the next page load.  This feature is most useful on multipage form screens, which save the entry between pages.</p>
-			</div>
-		</fieldset>
-	</div>
-</div>
-
-<div class="accordion-box">
-    <div class="form-item">
-    <fieldset>
-	<legend>Multi-Page Form Screens to display to</legend>
+	<legend>Form Screens to display this element on</legend>
     <ul id="multi-screen-tree">
-		<label for="multi_page_screens">Which pages of the screens should element display on?</label>
+		<label for="multi_page_screens">Select the pages where the element will appear</label>
 		<{foreach from=$content.multi_form_screens item=form_screen}>
 			<{assign var=formscreenid value=$form_screen.sid}>
 			<{assign var=formscreenpages value=$form_screen.pages}>
@@ -121,17 +90,50 @@ $(document).ready(function() {
     </div>
 </div>
 
+<{if $content.form_screens|count && $content.ele_form_screens|count}>
+<div class="accordion-box">
+    <div class="form-item">
+    <fieldset>
+	<legend>Legacy Form Screens to display on</legend>
+	<div class="form-item">
+		<label for="elements_form_screens">On which legacy form screens should this element appear?</label>
+		<select id="elements_form_screens" name="elements_form_screens[]" size="8" multiple>
+		<{foreach from=$content.form_screens item=form_screen}>
+		<{assign var=formscreenid value=$form_screen.sid}>
+        <option value=<{$formscreenid}><{$content.ele_form_screens.$formscreenid}>><{$form_screen.title}></option>
+        <{/foreach}>
+		</select>
+    </div>
+    </fieldset>
+    </div>
+</div>
+<{/if}>
+
+<div class="accordion-box-wide">
+	<div class="form-item">
+   	<fieldset>
+      <legend><label for="elements_ele_filtersettings" class="question">Only display the element in the form if the entry being edited meets these conditions:</label></legend>
+			<div id="displayfilter">
+			<{$content.filtersettings}>
+			</div>
+			<div class="description">
+				<p>When an entry is saved, these conditions will be checked and this element will be displayed or not displayed on the next page load.  This feature is most useful on multipage form screens, which save the entry between pages.</p>
+			</div>
+		</fieldset>
+	</div>
+</div>
+
 <div class="accordion-box">
 	<div class="form-item">
    	<fieldset>
       <legend><label class="question">Additional display options:</label></legend>
-			<input type="checkbox" name="elements-ele_forcehidden" value="1"<{$content.ele_forcehidden}>> If this element is not displayed to a user, still save its value when the form is submitted.
-			<div class="description">
-				This can be useful for setting default values in a form, for elements the user should not interact with.
-			</div>
-			<br /><input type="checkbox" name="elements-ele_private" value="1"<{$content.ele_private}>> Only display this element to users who have permission to "view private elements".
+			<input type="checkbox" name="elements-ele_private" value="1"<{$content.ele_private}>> Only display this element to users who have permission to "view private elements".
 			<div class="description">
 				This can be useful for hiding information like phone numbers and other personal details from most other users.
+			</div><br />
+            <input type="checkbox" name="elements-ele_forcehidden" value="1"<{$content.ele_forcehidden}>> DEPRECATED - use default values for the element instead - If this element is not displayed to a user, still save its value when the form is submitted.
+			<div class="description">
+				This can be useful for setting default values in a form, for elements the user should not interact with.
 			</div>
 		</fieldset>
 	</div>

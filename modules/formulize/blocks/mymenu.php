@@ -67,11 +67,22 @@ function block_formulizeMENU_show() {
 				return $block;
   }
 	$forceOpen = count($menuTexts)==1 ? true : false;
+    $menuData = array();
 	foreach($menuTexts as $thisMenuData) {
-				$block['content'] .= drawMenuSection($thisMenuData['application'], $thisMenuData['links'], $forceOpen, $form_handler);
+				list($content, $data) = drawMenuSection($thisMenuData['application'], $thisMenuData['links'], $forceOpen, $form_handler);
+                $block['content'] .= $content;
+                $menuData[] = $data;
 	}
 	
   $block['content'] .= "</td></tr></table>";
+  
+  $module_handler = xoops_gethandler('module');
+  $config_handler = xoops_gethandler('config');
+  $formulizeModule = $module_handler->getByDirname("formulize");
+  $formulizeConfig = $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
+  if($formulizeConfig['f7MenuTemplate']) {
+    $block['content'] = $menuData;
+  } 
 
   return $block;
 
@@ -90,6 +101,8 @@ function getMenuTextsForForms($forms, $form_handler) {
 }
 
 function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
+        
+        $data = array();
         
         if($application == 0) {
             
@@ -129,16 +142,13 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
 
 
         if (!$topwritten) {
-            
             $block = "<a class=\"menuTop$menuActive\" href=\"$itemurl\">$name</a>";
-            
             $topwritten = 1;
-            
          } else {
-                
              $block = "<a class=\"menuMain$menuActive\" href=\"$itemurl\">$name</a>";
-                
          }
+
+        $data = array('url'=>$itemurl, 'title'=>$name, 'active'=>($menuActive ? 1 : 0));
         
         $isThisSubMenu = false;
         
@@ -204,8 +214,10 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
       {
         $menuSubActive=" menuSubActive";
       }
-			$block .= "<a class=\"menuSub$menuSubActive\" $target href='$suburl'>".$menulink->getVar("text")."</a>";
+            $text = $menulink->getVar("text");
+			$block .= "<a class=\"menuSub$menuSubActive\" $target href='$suburl'>".$text."</a>";
+            $data['subs'][] = array('url'=>$suburl, 'title'=>$text, 'active'=>($menuSubActive ? 1 : 0));
 		}	
 	}
-	return $block;
+	return array($block, $data);
 }

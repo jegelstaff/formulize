@@ -111,8 +111,7 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
         $slider_html .= "max=\"{$ele_value[1]}\" ";
         $slider_html .= "step=\"{$ele_value[2]}\" ";
         $slider_html .= "value=\"{$ele_value[3]}\" ";
-        $slider_html .= "oninput=\"updateTextInput(value);formulizechanged=1;\" ";
-        $slider_html .= "style=\"width: 25em;\">";
+        $slider_html .= "oninput=\"updateTextInput(value);formulizechanged=1;\">";
         $slider_html .= "</input>";
 
         $value_html = "<br><output id=\"rangeValue\" type=\"text\" size=\"2\"";
@@ -124,7 +123,8 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
 
         $update_script = "<script type=\"text/javascript\">";
         $update_script .= "function updateTextInput(val) {";
-        $update_script .= "document.getElementById('rangeValue').value=val;}";
+        $update_script .= "document.getElementById('rangeValue').value=val;}\n";
+        $update_script .= "document.getElementById('rangeValue').value=document.getElementById('{$markupName}').value;\n";
         $update_script .= "</script>";
 
         if($isDisabled) {

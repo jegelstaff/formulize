@@ -44,7 +44,7 @@ global $xoopsConfig;
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
 
-function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditions="", $introtext="", $thankstext="", $done_dest="", $button_text=array(), $settings=array(), $overrideValue="", $printall=0, $screen=null, $saveAndContinueButtonText=null) { // nmc 2007.03.24 - added 'printall'
+function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditions="", $introtext="", $thankstext="", $done_dest="", $button_text=array(), $settings=array(), $overrideValue="", $printall=0, $screen=null, $saveAndContinueButtonText=null, $elements_only = false) { // nmc 2007.03.24 - added 'printall'
 	
 	formulize_benchmark("Start of displayFormPages.");
 	
@@ -89,6 +89,31 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 		unset($pages['titles']);
 	}
 	
+    // $overrideMulti probably doesn't even need to be set, but for legacy compatibility, we'll keep this in for now
+    // removing the entry value is the critical thing, so a new entry is displayed
+    $overrideMulti = 0;
+    $removeEntryValue = false;
+    if(count($pages) == 1 AND $screen) {
+        $reloadblank = $screen->getVar('reloadblank');
+        // figure out the form's properties...
+        // if it's more than one entry per user, and we have requested reload blank, then override multi is 0, otherwise 1
+        // if it's one entry per user, and we have requested reload blank, then override multi is 1, otherwise 0
+        $form_handler = xoops_getmodulehandler('forms', 'formulize');
+        $formObject = $form_handler->get($screen->getVar('fid'));
+        if($formObject->getVar('single')=="off" AND $reloadblank) {
+            $removeEntryValue = true;
+            $overrideMulti = 0;
+        } elseif($formObject->getVar('single')=="off" AND !$reloadblank) {
+            $overrideMulti = 1;
+        } elseif(($formObject->getVar('single')=="group" OR $formObject->getVar('single')=="user") AND $reloadblank) {
+            $overrideMulti = 1;
+        } elseif(($formObject->getVar('single')=="group" OR $formObject->getVar('single')=="user") AND !$reloadblank) {
+            $overrideMulti = 0;
+        } else {
+            $overrideMulti = 0;
+        }
+    }
+    
 	if(!$saveAndContinueButtonText AND isset($_POST['formulize_saveAndContinueButtonText'])) { $saveAndContinueButtonText = unserialize($_POST['formulize_saveAndContinueButtonText']); }
 	if(!$done_dest AND $_POST['formulize_doneDest']) { $done_dest = $_POST['formulize_doneDest']; } // probably won't ever have these things in post if they're not defined, since the posted values are originally based on what is passed in to this function??
 	if(!$button_text AND $_POST['formulize_buttonText']) { $button_text = $_POST['formulize_buttonText']; }
@@ -124,7 +149,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	}
 	
 	// formulize_newEntryIds is set when saving data
-	if((!$entry OR $entry == 'new') AND isset($GLOBALS['formulize_newEntryIds'][$fid])) {
+	if((!$entry OR $entry == 'new') AND isset($GLOBALS['formulize_newEntryIds'][$fid]) AND !$removeEntryValue) {
 		$entry = $GLOBALS['formulize_newEntryIds'][$fid][0];
 	} elseif(!$entry) {
         $entry = 'new';
@@ -221,267 +246,120 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	$done_dest = $done_dest ? $done_dest : getCurrentURL();
 	$done_dest = substr($done_dest,0,4) == "http" ? $done_dest : "http://".$done_dest;
 	
-	$GLOBALS['formulize_displayingMultipageScreen'] = $screen ? $screen->getVar('sid') : true;
-	
 	// display a form if that's what this page is...
 	if($currentPage != $thanksPage AND $pages[$currentPage][0] !== "HTML" AND $pages[$currentPage][0] !== "PHP") {
 	
-		$buttonArray = array(0=>"{NOBUTTON}", 1=>"{NOBUTTON}", 2=>"{NOBUTTON}");
 		foreach($pages[$currentPage] as $element) {
-		  $elements_allowed[] = $element;
-	  }
+            $elements_allowed[] = $element;
+	    }
 		$forminfo['elements'] = $elements_allowed;
 		$forminfo['formframe'] = $formframe;
-        $showPageTitles = ($screen AND $screen->getUIOption('showpagetitles')) ? true : false;
-		$titleOverride = (isset($pageTitles[$currentPage]) AND $showPageTitles) ? trans($pageTitles[$currentPage]) : "all"; // we can pass in any text value as the titleOverride, and it will have the same effect as "all", but the alternate text will be used as the title for the form
-        
-		$settings['formulize_currentPage'] = $currentPage;
+        $settings['formulize_currentPage'] = $currentPage;
 		$settings['formulize_prevPage'] = $prevPage;
         $settings['formulize_prevScreen'] = $prevScreen;
+
+        $titleOverride = $elements_only ? 'formElementsOnly' : 'all';        
 	
 		formulize_benchmark("Before drawing nav.");
 	
-        if(!is_array($saveAndContinueButtonText)) {
-            $saveAndContinueButtonText = array();
-            $saveAndContinueButtonText['prevButtonText'] = trans(_formulize_DMULTI_PREV);
-            $saveAndContinueButtonText['leaveButtonText'] = trans(_formulize_SAVE_AND_LEAVE);
-            $saveAndContinueButtonText['saveButtonText'] = trans(_formulize_SAVE);
-            $saveAndContinueButtonText['finishButtonText'] =  trans(_formulize_DMULTI_SAVE);
-            $saveAndContinueButtonText['nextButtonText'] = trans(_formulize_DMULTI_NEXT);
-        }
-    
-        if($currentPage != 1) {
-            // previousButtonText used to be valid... backwards compatibility
-            $previousButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['previousButtonText'])) ? $saveAndContinueButtonText['previousButtonText'] : '';
-            $previousButtonText = (!$previousButtonText AND is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['prevButtonText'])) ? $saveAndContinueButtonText['prevButtonText'] : '';
-        } else {
-            $previousButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['leaveButtonText'])) ? $saveAndContinueButtonText['leaveButtonText'] : '';
-        }
-        $saveButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['saveButtonText'])) ? $saveAndContinueButtonText['saveButtonText'] : '';
-		if($usersCanSave AND $nextPage==$thanksPage) {
-		    $nextButtonText = (is_array($saveAndContinueButtonText) AND $saveAndContinueButtonText['finishButtonText']) ? $saveAndContinueButtonText['finishButtonText'] :  '';
-		} else {
-		    $nextButtonText = (is_array($saveAndContinueButtonText) AND $saveAndContinueButtonText['nextButtonText']) ? $saveAndContinueButtonText['nextButtonText'] : '';
-		}
-		$previousPageButton = generatePrevNextButtonMarkup("prev", $previousButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
-		$nextPageButton = generatePrevNextButtonMarkup("next", $nextButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
-		$savePageButton = generatePrevNextButtonMarkup("save", $saveButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
-		$totalPages = count($pages);
-		$skippedPageMessage = $pagesSkipped ? _formulize_DMULTI_SKIP : "";
-		$pageSelectionList = pageSelectionList($currentPage, $totalPages, $pageTitles, "above", $conditions, $entry, $fid, $frid);   // calling for the 'above' drawPageNav 
-
-        // setting up the basic templateVars for all templates
-        $templateVariables = array('previousPageButton' => $previousPageButton, 'nextPageButton' => $nextPageButton, 'savePageButton' => $savePageButton,
-            'totalPages' => $totalPages, 'currentPage' => $currentPage, 'skippedPageMessage' => $skippedPageMessage,
-            'pageSelectionList'=>$pageSelectionList, 'pageTitles' => $pageTitles, 'entry_id'=>$entry, 'form_id'=>$fid, 'owner'=>$owner,
-            'saveAndLeaveText'=>$saveAndContinueButtonText['leaveButtonText'], 'saveAndGoBackText'=>$saveAndContinueButtonText['prevButtonText']);
-
-        // cache the rendered header, in case this is the header we need for the page right now
-        static $multipageHeader = array();
-        static $multipageFooter = array();
-        global $multipageInstances;
-        $multipageInstances = !is_numeric($multipageInstances) ? -1 : $multipageInstances;
-        $multipageInstances++;
-        ob_start();
-		print "<form name=\"pageNavOptions_above\" id=\"pageNavOptions_above\">\n";
-		if($screen AND $toptemplate = $screen->getTemplate('toptemplate')) {
-		    formulize_renderTemplate('toptemplate', $templateVariables, $screen->getVar('sid'));
-		} else {
-            drawPageNav($usersCanSave, "above", $screen, $templateVariables, $conditions, $entry, $fid, $frid);
-		}
-        print "</form>\n";
-        $multipageHeader[$multipageInstances] = ob_get_clean();
-		
-		formulize_benchmark("After drawing nav/before displayForm.");
-		
-        // if this is our first time running through all this, then start buffering
-		if(!isset($GLOBALS['formulize_completedFormRendering'])) {
-            $GLOBALS['formulize_completedFormRendering'] = false;
-            ob_start();
-        }
+        if(!$elements_only) {
+            
+            $GLOBALS['formulize_displayingMultipageScreen'] = $screen ? array('sid'=>$screen->getVar('sid')) : array('sid'=>false);
+            
+            $showPageTitles = ($screen AND $screen->getUIOption('showpagetitles')) ? true : false;
+            $titleOverride = (isset($pageTitles[$currentPage]) AND $showPageTitles) ? trans($pageTitles[$currentPage]) : "all"; // we can pass in any text value as the titleOverride, and it will have the same effect as "all", but the alternate text will be used as the title for the form
         
-	    // need to check for the existence of an elementtemplate property in the screen, like we did with the top and bottom templates
-	    // if there's an eleemnt template, then do this loop, otherwise, do the displayForm call like normal
-	    if ($screen AND $elementtemplate = $screen->getTemplate('elementtemplate')) {  // Code added by Julian 2012-09-04 and Gordon Woodmansey 2012-09-05 to render the elementtemplate
-		    if(!security_check($fid, $entry)) {
-			exit();
-		    }
-		    // start the form manually...
-		    $formObjectForRequiredJS = new formulize_themeForm('form object for required js', 'formulize_mainform', getCurrentURL(), "post", true);
-		    $element_handler = xoops_getmodulehandler('elements', 'formulize');
-		    print "<div id='formulizeform'><form id='formulize_mainform' name='formulize_mainform' action='".getCurrentURL()."' method='post' onsubmit='return xoopsFormValidate_formulize_mainform('', window.document.formulize_mainform);' enctype='multipart/form-data'>";
-		    foreach ($elements_allowed as $thisElement) {   // entry is a recordid, $thisElement is the element id
-			    // to get the conditional logic to be captured, we should buffer the drawing of the displayElement, and then output that later, because when displayElement does NOT return an object, then we get conditional logic -- subform rendering does it this way
-			    unset($form_ele); // previously set elements may linger when added to the form object, due to assignment of objects by reference or something odd like that...legacy of old code in the form class I think
-			    $deReturnValue = displayElement("", $thisElement, $entry, false, $screen, null, false);
-			    if (is_array($deReturnValue)) {
-				    $form_ele = $deReturnValue[0];
-				    $isDisabled = $deReturnValue[1];
-				    if(isset($deReturnValue[2])) {
-					$hiddenElements = $deReturnValue[2];
-				    }
-			    } else {
-				    $form_ele = $deReturnValue;
-				    $isDisabled = false;
-			    }
-			    if ($form_ele == "not_allowed") {
-				continue;
-			    } elseif($form_ele == "hidden") {
-				$cueEntryValue = $entry ? $entry : "new";
-				$cueElement = new xoopsFormHidden("decue_".$fid."_".$cueEntryValue."_".$thisElement, 1);
-				print $cueElement->render();
-				if(is_array($hiddenElements)) {
-					foreach($hiddenElements as $thisHiddenElement) {
-						if($is_object($thisHiddenElement)) {
-							print $thisHiddenElement->render()."\n";
-						}
-					}
-				} elseif(is_object($hiddenElements)) {
-					print $hiddenElements->render()."\n";
-				}
-				continue;
-			    } else {
-				$thisElementObject = $element_handler->get($thisElement);
-				$req = !$isDisabled ? intval($thisElementObject->getVar('ele_req')) : 0; 
-				$formObjectForRequiredJS->addElement($form_ele, $req);
-				$elementMarkup = $form_ele->render();
-				$elementCaption = displayCaption("", $thisElement);
-				$elementDescription = displayDescription("", $thisElement);
-				$templateVariables['elementObjectForRendering'] = $form_ele;
-				$templateVariables['elementCaption'] = $elementCaption;  // here we can assume that the $previousPageButton etc has not be changed before rendering 
-			        $templateVariables['elementMarkup'] = $elementMarkup;
-			        $templateVariables['elementDescription'] = $elementDescription;
-			        $templateVariables['element_id'] = $thisElement;
-				formulize_renderTemplate('elementtemplate', $templateVariables, $screen->getVar('sid'));
-			        
-			    }
-		    }
-		    // now we also need to add in some bits that are necessary for the form submission logic to work...borrowed from parts of formdisplay.php mostly...this should be put together into a more distinct rendering system for forms, so we can call the pieces as needed
-            $currentPageToSend = $screen ? $settings['formulize_currentPage'].'-'.$screen->getVar('sid') : $settings['formulize_currentPage'];
-            $prevPageToSend = $screen ? $settings['formulize_prevPage'].'-'.$screen->getVar('sid') : $settings['formulize_prevPage'];
-		    print "<input type=hidden name=formulize_currentPage value='".$currentPageToSend."'>";
-		    print "<input type=hidden name=formulize_prevPage value='".$prevPageToSend."'>";
-		    print "<input type=hidden name=formulize_doneDest value='".$settings['formulize_doneDest']."'>";
-		    print "<input type=hidden name=formulize_buttonText value='".$settings['formulize_buttonText']."'>";
-            print "<input type=hidden name=deletesubsflag value=0>";
-		    print "<input type=hidden name=ventry value='".$settings['ventry']."'>";
-		    print $GLOBALS['xoopsSecurity']->getTokenHTML();
-		    if($entry) {
-			    print "<input type=hidden name=entry".$fid." value=".intval($entry).">"; // need this to persist the entry that the user is 
-		    }
-		    print "</form></div>";
-
-		    drawJavascript(!$usersCanSave); // inverse of whether the user can save, will be the correct 'nosave' flag (we need to pass true if the user cannot save)
-		    // need to create the form object, and add all the rendered elements to it, and then we'll have working required elements if we render the validation logic for the form
-		    print $formObjectForRequiredJS->renderValidationJS(true, true); // with tags, true, skip the extra js that checks for the formulize theme form divs around the elements so that conditional animation works, true
-		    // print "<script type=\"text/javascript\">function xoopsFormValidate_formulize_mainform(){return true;}</script>"; // shim for the validation javascript that is created by the xoopsThemeForms, and which our saving logic currently references...saving won't work without this...we should actually render the proper validation logic at some point, but not today.
-            $GLOBALS['formulize_completedFormRendering'] = true;
-	    } else {
-            if(count($elements_allowed)==0) {
-                print "Error: there are no form elements specified for page number $currentPage. Please contact the webmaster.";
-            } else {
-                displayForm($forminfo, $entry, $mainform, "", $buttonArray, $settings, $titleOverride, $overrideValue, "", "", 0, 0, $printall, $screen); // nmc 2007.03.24 - added empty params & '$printall'
+            if(!is_array($saveAndContinueButtonText)) {
+                $saveAndContinueButtonText = array();
+                $saveAndContinueButtonText['prevButtonText'] = trans(_formulize_DMULTI_PREV);
+                $saveAndContinueButtonText['leaveButtonText'] = trans(_formulize_SAVE_AND_LEAVE);
+                $saveAndContinueButtonText['saveButtonText'] = trans(_formulize_SAVE);
+                $saveAndContinueButtonText['finishButtonText'] =  trans(_formulize_DMULTI_SAVE);
+                $saveAndContinueButtonText['nextButtonText'] = trans(_formulize_DMULTI_NEXT);
+                $saveAndContinueButtonText['printableViewButtonText'] = trans(_formulize_PRINTVIEW);
             }
-	    }
-	    
-		formulize_benchmark("After displayForm.");
-    }
-
-    if($currentPage != $thanksPage) {
-	    // have to get the new value for $pageSelection list if the user requires it on the users view.
-	    $pageSelectionList = pageSelectionList($currentPage, $totalPages, $pageTitles, "below", $conditions, $entry, $fid, $frid);
-        ob_start();
-	    print "<form name=\"pageNavOptions_below\" id=\"pageNavOptions_below\">\n";
-        $templateVariables['pageSelectionList'] = $pageSelectionList; // assign the new pageSelectionList, since it was redone for the bottom section
-	    if ($screen AND $bottomtemplate = $screen->getTemplate('bottomtemplate')) { 
-		    $templateVariables['pageSelectionList'] = $pageSelectionList; // assign the new pageSelectionList, since it was redone for the bottom section
-		    formulize_renderTemplate('bottomtemplate', $templateVariables, $screen->getVar('sid'));
-	    } else {
-		    drawPageNav($usersCanSave, "below", $screen, $templateVariables, $conditions, $entry, $fid, $frid);
-	    }
-	    print "</form>";
-        $multipageFooter[$multipageInstances] = ob_get_clean();
-    }
-    
-    // if we have actually completed rendering (and not simply going around and around in a recursive loop) then capture what has been rendered, and then output it with the header for the most recent run through (ie: the innermost nested multipage subform call, if that's the circumstance that caused the recursive looping)
-    // since we're checking current page's screen against the declared screen we're rendering, this won't actually cache the top and bottom templates for the parent screen, but we could modify that to still get the top template for screens we're not rendering, so that we can do nested tabs later if we want
-    if($currentPage == $thanksPage
-       OR ($currentPage != $thanksPage AND ($pages[$currentPage][0] === "HTML" OR $pages[$currentPage][0] === "PHP"))
-       OR (isset($GLOBALS['formulize_completedFormRendering']) AND $GLOBALS['formulize_completedFormRendering'])
-       ) {
-        $formRendering = ob_get_clean();
-
-        include XOOPS_ROOT_PATH.'/modules/formulize/include/multipage_boilerplate.php';
         
-        print $multipageHeader[$multipageInstances].$formRendering.$multipageFooter[$multipageInstances];
-        unset($GLOBALS['formulize_completedFormRendering']);
+            if($currentPage != 1) {
+                // previousButtonText used to be valid... backwards compatibility
+                $previousButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['previousButtonText'])) ? $saveAndContinueButtonText['previousButtonText'] : '';
+                $previousButtonText = (!$previousButtonText AND is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['prevButtonText'])) ? $saveAndContinueButtonText['prevButtonText'] : '';
+            } else {
+                $previousButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['leaveButtonText'])) ? $saveAndContinueButtonText['leaveButtonText'] : '';
+            }
+            $saveButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['saveButtonText'])) ? $saveAndContinueButtonText['saveButtonText'] : '';
+            if($usersCanSave AND $nextPage==$thanksPage) {
+                $nextButtonText = (is_array($saveAndContinueButtonText) AND $saveAndContinueButtonText['finishButtonText']) ? $saveAndContinueButtonText['finishButtonText'] :  '';
+            } else {
+                $nextButtonText = (is_array($saveAndContinueButtonText) AND $saveAndContinueButtonText['nextButtonText']) ? $saveAndContinueButtonText['nextButtonText'] : '';
+            }
+            $previousPageButton = generatePrevNextButtonMarkup("prev", $previousButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
+            $nextPageButton = generatePrevNextButtonMarkup("next", $nextButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
+            $savePageButton = generatePrevNextButtonMarkup("save", $saveButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
+            $totalPages = count($pages);
+            $skippedPageMessage = $pagesSkipped ? _formulize_DMULTI_SKIP : "";
+            $pageSelectionList = pageSelectionList($currentPage, $totalPages, $pageTitles, "below", $conditions, $entry, $fid, $frid); // pageSelector can only show up once on the page, and we draw it with 'below' as the designation, since by default it shows up in the bottom templates. Used to be two versions, above and below, which allowed two copies of this to be functional in the page. Different names were required by the JS, which could be refactored to not need that. But expecting only one per page is valid and simpler for now.
+    
+            $pageIndicator = $screen->getUIOption("showpageindicator") ? "<div id='page-indicator'>"._formulize_DMULTI_PAGE." $currentPage "._formulize_DMULTI_OF." $totalPages</div>" : "";
+            $pageSelector = $screen->getUIOption("showpageselector") ? "<div id='page-selector'>"._formulize_DMULTI_JUMPTO."&nbsp;&nbsp;$pageSelectionList<div>" : "";
+            
+            // setting up the basic templateVars for all templates
+            $templateVariables = array(
+                // navstyle - 0 is buttons, 1 is tabs, 2 is tabs and buttons, 3 is nothing at all
+                'previousPageButton' => (($screen->getVar('navstyle') == 1 OR $screen->getVar('navstyle') == 3) ? "" : $previousPageButton),
+                'nextPageButton' => (($screen->getVar('navstyle') == 1 OR $screen->getVar('navstyle') == 3) ? "" : $nextPageButton),
+                'savePageButton' => $savePageButton,
+                'totalPages' => $totalPages,
+                'currentPage' => $currentPage,
+                'skippedPageMessage' => $skippedPageMessage,
+                'pageSelectionList' => $pageSelectionList,
+                'pageTitles' => $pageTitles,
+                'entry_id' => $entry,
+                'form_id' => $fid,
+                'owner' => $owner,
+                'saveAndLeaveText' => $saveAndContinueButtonText['leaveButtonText'],
+                'saveAndGoBackText' => $saveAndContinueButtonText['prevButtonText'],
+                'pageIndicator' => $pageIndicator,
+                'pageSelector' => $pageSelector,
+                'usersCanSave' => $usersCanSave,
+                'showpageindicator' => $screen->getUIOption("showpageindicator"),
+                'showpageselector' => $screen->getUIOption("showpageselector"),
+                'showTabs' => (($screen->getVar('navstyle') == 1 OR $screen->getVar('navstyle') == 2) ? true : false)
+                );
+            
+            $templatePageTitles = array();
+            unset($templateVariables['pageTitles'][0]);
+            foreach($templateVariables['pageTitles'] as $i=>$title) {
+                if(pageMeetsConditions($conditions, $i, $entry, $fid, $frid)) {
+                    $templatePageTitles[$i] = $title;
+                }
+            }
+            $templateVariables['pageTitles'] = $templatePageTitles;
+            $templateVariables['aboveBelow'] = 'above';
+            
+            global $formulize_displayingSubform;
+            if($formulize_displayingSubform) {
+                $templateVariables['saveAndLeave'] = $templateVariables['saveAndGoBackText'] ? trans($templateVariables['saveAndGoBackText']) : trans(_formulize_SAVE_AND_GOBACK);
+            } else {
+                $templateVariables['saveAndLeave'] = $templateVariables['saveAndLeaveText'] ? trans($templateVariables['saveAndLeaveText']) : trans(_formulize_SAVE_AND_LEAVE);
+            }
+            
+            $printableViewButonText = $saveAndContinueButtonText['printableViewButtonText'] ? $saveAndContinueButtonText['printableViewButtonText'] : "{NOBUTTON}";
+            $buttonArray = array(0=>"{NOBUTTON}", 1=>"{NOBUTTON}", 2=>"{NOBUTTON}", 3=>$printableViewButonText);
+            $GLOBALS['formulize_displayingMultipageScreen']['templateVariables'] = $templateVariables;
+        }
+        
+        if(count($elements_allowed)==0) {
+            print "Error: there are no form elements specified for page number $currentPage. Please contact the webmaster.";
+        } else {
+            displayForm($forminfo, $entry, $mainform, "", $buttonArray, $settings, $titleOverride, $overrideValue, $overrideMulti, "", 0, 0, $printall, $screen); // nmc 2007.03.24 - added empty params & '$printall'
+        }
+	    
     }
 
-    
+    include_once XOOPS_ROOT_PATH.'/modules/formulize/include/multipage_boilerplate.php';
     
     formulize_benchmark("End of displayFormPages.");
 } // end of the function!
-
-
-function drawPageNav($usersCanSave="", $aboveBelow, $screen, $templateVariables, $conditions, $entry_id, $fid, $frid)
-{
-    global $xoopsTpl;
-    $xoopsTpl->assign("usersCanSave", $usersCanSave);
-    $xoopsTpl->assign("currentPage", $templateVariables['currentPage']);
-    $xoopsTpl->assign("totalPages", $templateVariables['totalPages']);
-    unset($templateVariables['pageTitles'][0]);
-    $templatePageTitles = array();
-    foreach($templateVariables['pageTitles'] as $i=>$title) {
-        if(pageMeetsConditions($conditions, $i, $entry_id, $fid, $frid)) {
-            $templatePageTitles[$i] = $title;
-        }
-    }
-    $xoopsTpl->assign("pageTitles", $templatePageTitles);
-    $xoopsTpl->assign("aboveBelow", $aboveBelow);
-    if($aboveBelow == 'below') {
-        $xoopsTpl->assign("bottom", 'Bottom');
-    } else {
-        $xoopsTpl->assign("bottom", '');
-    }
-    $xoopsTpl->assign("nextPageButton", $templateVariables['nextPageButton']);
-    $xoopsTpl->assign("previousPageButton", $templateVariables['previousPageButton']);
-    $xoopsTpl->assign("skippedPageMessage", $templateVariables['skippedPageMessage']);
-    $xoopsTpl->assign("pageSelectionList", $templateVariables['pageSelectionList']);
-    $xoopsTpl->assign("savePageButton", $templateVariables['savePageButton']);
-    global $formulize_displayingSubform;
-    if($formulize_displayingSubform) {
-        $xoopsTpl->assign("saveAndLeave", $templateVariables['saveAndGoBackText'] ? trans($templateVariables['saveAndGoBackText']) : trans(_formulize_SAVE_AND_GOBACK));
-    } else {
-        $xoopsTpl->assign("saveAndLeave", $templateVariables['saveAndLeaveText'] ? trans($templateVariables['saveAndLeaveText']) : trans(_formulize_SAVE_AND_LEAVE));
-    }
-    $xoopsTpl->assign("_formulize_DMULTI_PAGE", _formulize_DMULTI_PAGE);
-    $xoopsTpl->assign("_formulize_DMULTI_OF", _formulize_DMULTI_OF);
-    $xoopsTpl->assign("_formulize_DMULTI_JUMPTO", _formulize_DMULTI_JUMPTO);
-    $xoopsTpl->assign("showpageindicator", $screen->getUIOption("showpageindicator"));
-    $xoopsTpl->assign("showpageselector", $screen->getUIOption("showpageselector"));
-    if($screen->getVar('navstyle')==1) {
-        if($aboveBelow!='below') {
-            $xoopsTpl->display("file:".XOOPS_ROOT_PATH."/modules/formulize/templates/multipage-navigation2-above.html");
-        } else {
-            $xoopsTpl->display("file:".XOOPS_ROOT_PATH."/modules/formulize/templates/multipage-navigation2-below.html");
-        }
-    } elseif($screen->getVar('navstyle')==2) {
-        
-        // remove ids so the appearance matches the Save button
-        $xoopsTpl->assign("nextPageButton", str_replace("id='next'", "", $templateVariables['nextPageButton']));
-        $xoopsTpl->assign("previousPageButton", str_replace("id='prev'", "", $templateVariables['previousPageButton']));
-        
-        if($aboveBelow!='below') {
-            $xoopsTpl->display("file:".XOOPS_ROOT_PATH."/modules/formulize/templates/multipage-navigation3-above.html");
-        } else {
-            $xoopsTpl->display("file:".XOOPS_ROOT_PATH."/modules/formulize/templates/multipage-navigation3-below.html");
-        }
-    } else {
-        $xoopsTpl->display("file:".XOOPS_ROOT_PATH."/modules/formulize/templates/multipage-navigation.html");
-    }
-
-    
-}
 
 // THIS FUNCTION GENERATES THE MARKUP FOR THE PREVIOUS AND NEXT BUTTONS
 function generatePrevNextButtonMarkup($buttonType, $buttonText, $usersCanSave, $nextPage, $previousPage, $thanksPage) {
@@ -491,14 +369,14 @@ function generatePrevNextButtonMarkup($buttonType, $buttonText, $usersCanSave, $
     $buttonMarkup = "";
     
     switch($buttonType) {
-	case 'next':
-		$buttonJavascriptAndExtraCode = "onclick=\"javascript:submitForm($nextPage, ".($previousPage+1).");return false;\"";
-		break;
-	case 'prev':
-		$buttonJavascriptAndExtraCode = "onclick=\"javascript:submitForm($previousPage, ".($previousPage+1).");return false;\"";	
-		break;
-	case 'save':
-		$buttonJavascriptAndExtraCode = "onclick=\"javascript:submitForm(".($previousPage+1).", ".($previousPage+1).");return false;\"";
+        case 'next':
+            $buttonJavascriptAndExtraCode = "onclick=\"javascript:submitForm($nextPage, ".($previousPage+1).");return false;\"";
+            break;
+        case 'prev':
+            $buttonJavascriptAndExtraCode = "onclick=\"javascript:submitForm($previousPage, ".($previousPage+1).");return false;\"";	
+            break;
+        case 'save':
+            $buttonJavascriptAndExtraCode = "onclick=\"javascript:submitForm(".($previousPage+1).", ".($previousPage+1).");return false;\"";
     }
     
     if($buttonType == "next" OR $buttonType == "save") {

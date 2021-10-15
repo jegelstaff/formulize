@@ -158,8 +158,8 @@ define("_AM_FRAME_ELEMENT_CAPTIONS", "Captions");
 define("_AM_FRAME_ELEMENT_HANDLES", "Handles");
 define("_AM_FRAME_HANDLESHELP", "Use this page to specify <i>Handles</i> for this form and its elements.  Handles are short names that can be used to refer to this form and its elements from outside the Formulize module.");
 
-define("_AM_SELECT_PROXY", "Is this info submitted on behalf of someone else?");
-define("_AM_SELECT_UPDATE_OWNER", "Change owner/creator of this entry?");
+define("_AM_SELECT_PROXY", "Set entry owner");
+define("_AM_SELECT_UPDATE_OWNER", "Change entry owner");
 define("_AM_SELECT_UPDATE_NOCHANGE", "Current owner: ");
 
 define("_FORM_EXP_CREE","File has been exported with success");
@@ -265,7 +265,7 @@ define("_formulize_exfile", "exported_data_");
 define("_formulize_DLTEXT", "<b>Right-click on the link below and select <i>Save</i>.</b> (Ctrl-click on a Mac.)  Once the file is on your computer, you will be able to open it in a spreadsheet program.  If the fields do not align properly when you open the file, try exporting with a different delimiter.");
 define("_formulize_DLHEADER", "Your file is ready for download.");
 
-define("_formulize_PICKAPROXY", "No Proxy User Selected");
+define("_formulize_PICKAPROXY", "Current logged-in user");
 define("_formulize_PROXYFLAG", "(Proxy)");
 
 define("_formulize_DELBUTTON", "Delete");
@@ -313,8 +313,8 @@ define("_formulize_SUBFORM_SIMPLE_BUTTON", "Display a simple button for adding o
 define("_formulize_SUBFORM_SIMPLE_LABEL", "What text should appear on the button?");
 define("_formulize_SUBFORM_MULTIPLE_BUTTON", "Display a button with a text box for choosing the number of entries to add");
 define("_formulize_SUBFORM_MULTIPLE_LABEL", "What text should be used to describe each entry? ie: Add x Entries, Add x Participants, etc.");
-define("_formulize_DELETE_CHECKED", "Delete checked items");
-define("_formulize_CLONE_CHECKED", "Clone checked items");
+define("_formulize_DELETE_CHECKED", "Delete");
+define("_formulize_CLONE_CHECKED", "Clone");
 define("_formulize_ADD_HELP", "Add an entry in this section by clicking the <i>Add</i> button.");
 define("_formulize_ADD_HELP2", "See an entire entry by clicking the <i>View</i> button.");
 define("_formulize_ADD_HELP3", "Update an entry by changing the values on the right.");
@@ -352,7 +352,7 @@ define("_formulize_PRINTALLVIEW", "Printable View - All Pages"); // nmc 2007.03.
 
 // constants related to the new display entries functions...
 
-define("_formulize_DE_CURRENT_VIEW", "Current View: ");
+define("_formulize_DE_CURRENT_VIEW", "Showing: ");
 define("_formulize_DE_FILLINFORM", "Fill In This Form: ");
 define("_formulize_DE_ACTIONS", "Actions: ");
 define("_formulize_DE_NODATAFOUND", "No entries were found in the current view that match the current search terms.");
@@ -360,7 +360,7 @@ define("_formulize_DE_STANDARD_VIEWS", "STANDARD VIEWS:");
 define("_formulize_DE_NO_STANDARD_VIEWS", "No standard views available");
 define("_formulize_DE_SAVED_VIEWS", "YOUR SAVED VIEWS:");
 define("_formulize_DE_PUB_VIEWS", "PUBLISHED VIEWS:");
-define("_formulize_DE_SEARCH_HELP", "Type search terms here");
+define("_formulize_DE_SEARCH_HELP", "Search here");
 define("_formulize_DE_SEARCH_POP_HELP", "Click here for info about the search terms");
 define("_formulize_DE_WARNLOCK", "<p>The view that you have selected is set to <i>lock the controls</i>.  This means that you cannot change the columns, do calculations, do advanced searches, or export data.</p><p>You can perform sorting and basic searches using the controls at the top of each column.</p>");
 define("_formulize_DE_MINE", "Entries by me");
@@ -498,23 +498,6 @@ define("_formulize_DE_PER_TOTALRESPONSES", "responses");
 define("_formulize_DE_PER_TOTALENTRIES", "entries");
 define("_formulize_DE_PER_RESPONSESPERENTRY", "response(s) / entry");
 define("_formulize_DE_DATAHEADING", "List of Entries");
-
-//ADVANCED SEARCH:
-define("_formulize_DE_BUILDQUERY", "Build your query");
-define("_formulize_DE_AS_DEPRECATED", "The \"Advanced Search\" feature is not recommended any more.  Searches you do here will not be reflected in any calculations.  Searches you do here are applied to each page of results after the page has been built, so some pages will have less than the normal number of entries.  Some pages may have no entries left after the search is done.  This can be very confusing.<br><br><a href=\"".XOOPS_URL."/modules/formulize/docs/search_help.xhtml\">Read about the many different kinds of searches you can do using the \"Quicksearch\" boxes at the top of each column.</a>");
-define("_formulize_DE_AS_FIELD", "To search this field(s):");
-define("_formulize_DE_AS_MULTI_AND", "use AND between multiple fields");
-define("_formulize_DE_AS_MULTI_OR", "use OR between multiple fields");
-define("_formulize_DE_AS_OPTERM", "Use this operator and term:");
-define("_formulize_DE_AS_ADD", "Add this search to the query");
-define("_formulize_DE_AS_ADDOTHER", "Other items you can add:");
-define("_formulize_DE_AS_REMOVE", "Remove last item from the query");
-define("_formulize_DE_ADVSEARCH", "Advanced search");
-define("_formulize_DE_ADVSEARCH_ERROR", "There was a \"parse error\" in the advanced search query you specified.  Most often, this is caused by not having an AND or an OR in between two search terms.  Another common cause is not having ( ) arranged correctly, or not having an equal number of opening and closing ones.");
-define("_formulize_DE_SEARCHGO", "Perform Requested Query");
-define("_formulize_DE_AS_QUERYSOFAR", "Requested Query So Far:");
-define("_formulize_DE_CANCELASEARCH", "Cancel this search");
-define("_formulize_DE_MOD_ADVSEARCH", "Modify search");
 
 //CHANGE SCOPE:
 define("_formulize_DE_ADVSCOPE", "Advanced scope");
@@ -738,6 +721,7 @@ define("_formulize_GENERIC_FILTER_MATCH_ONEORMORE", "Match one or more of these:
 define("_formulize_REQUIRED_UNIQUE", "The value you entered for '%s' has been entered already.  You must type a unique value for that question.");
 
 define("_formulize_NO_MATCH_FOUND", "No match found");
+define("_formulize_NEW_VALUE", "New Value: ");
 
 define("_formulize_ENTRY_IS_LOCKED", "Some or all of the data on this page has been opened by '%s', therefore it is locked and you cannot make any changes to it.  Wait for the other person to save the data, or get a webmaster to save it (webmasters can override locks like this).");
 

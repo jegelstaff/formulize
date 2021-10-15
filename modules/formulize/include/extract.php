@@ -319,21 +319,6 @@ function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitS
         return $result;
     }
 
-    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
-    $sortField = dealWithDeprecatedFrameworkHandles($sortField, $framework);
-
-	// have to check for the pressence of the Freeform Solutions archived user patch, and if present, then the includeArchived flag can be used
-	// if not present, ignore includeArchived
-/*	static $archres = array();
-	if(count($archres) == 0) {
-		$archres = go("SELECT * FROM " . DBPRE . "users LIMIT 0,1");
-	}
-	if(isset($archres[0]['archived'])) {
-		$includeArchived = $includeArchived ? true : false;
-	} else {
-		$includeArchived = false;
-	}*/
-
     // check to see if this form is a "tableform", ie: a reference to plain db table
     $isTableForm = false;
     if (is_numeric($form)) {
@@ -384,308 +369,300 @@ function getDataCached($framework, $form, $filter="", $andor="AND", $scope="", $
 
 
 function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived=false, $id_reqsOnly=false, $resultOnly=false, $filterElements=null) {
-     global $xoopsDB;
-     
-     $limitStart = intval($limitStart);
-     $limitSize = intval($limitSize);
-     
-     // DARA HACK!!
-     // if it's a full name field, sort by last name instead
-     // needs to be turned into a proper feature on elements, that you can specify an alternate sort field
-     if(strstr(getCurrentURL(), 'dara.daniels') AND $sortField=='hr_module_name') {
-        $sortField = 'hr_module_last_name';
-     }
-     
-     $sortField = formulize_db_escape($sortField);
-     $sortOrder = formulize_db_escape($sortOrder);
-
-     if(isset($_GET['debug'])) { $time_start = microtime_float(); }
-     
-	     if($scope == "uid=\"blankscope\"") { return array(); }
-     
-     if(is_numeric($frame)) {
-		     $frid = $frame;
-	     } elseif($frame != "") {
-		     $frameid = go("SELECT frame_id FROM " . DBPRE . "formulize_frameworks WHERE frame_name='$frame'");
-		     $frid = $frameid[0]['frame_id'];
-		     unset($frameid);
-	     } else {
-		     $frid = "";
-	   }
-	   if(is_numeric($form)) {
-		     $fid = $form;
-	   } elseif($GLOBALS['formulize_versionFourOrHigher'] == false) {
-		     $formcheck = go("SELECT ff_form_id FROM " . DBPRE . "formulize_framework_forms WHERE ff_frame_id='$frid' AND ff_handle='$form'");
-		     $fid = $formcheck[0]['ff_form_id'];
-		     unset($formcheck);
-	   }
-	   if (!$fid) { 
-		     print "Form Name: " . $form . "<br>";
-		     print "Form id: " . $fid . "<br>";
-		     print "Frame Name: " . $frame . "<br>";
-		     print "Frame id: " . $frid . "<br>";
-		     exit("selected form does not exist in framework"); 
-	   }
-
-	  $form_handler = xoops_getmodulehandler('forms', 'formulize');
-	  $formObject = $form_handler->get($fid);
-      
-      list($linkkeys, $linkisparent, $linkformids, $linktargetids, $linkselfids, $linkcommonvalue) = formulize_gatherLinkMetadata($frid, $fid, $mainFormOnly);
-       
-        //print_r( $linkformids );
-        $GLOBALS['formulize_linkformidsForCalcs'] = $linkformids; 
-  
-	      // now that we have the full details from the framework, figure out the full SQL necessary to get the entire dataset
-	  // This whole approach is predicated on being able to do reliable joins between the key fields of each form
-	  
-	  // Structure of the SQL should be...
-	  // SELECT main.entry_id, main.creation_uid, main.mod_uid, main.creation_datetime, main.mod_datetime, main.handle1...main.handleN, f2.entry_id, f2.1..f2.n, etc FROM formulize_A AS main [join syntax] WHERE main.handle1 = "whatever" AND/OR f2.handle1 = "whatever"
-	  // Join syntax:  if there are query terms on the f2 or subsequent forms, then use INNER JOIN formulize_B AS f2 ON main.1 LIKE CONCAT('%,', f2.entry_id, ',%') -- or no %, ,% if only one value is allowed
-	  // If there are no query terms on the f2 or subsequent forms, then use LEFT JOIN
-	  
-	  // establish the join type and all that
-	  
-	  $joinText = "";
-	  $linkSelect = "";
-	  $exportOverrideQueries = array();
-
-    $limitClause = "";
-    if ($limitSize) {
-        $limitClause = " LIMIT ".intval($limitStart).", ".intval($limitSize)." ";
-    }
-
-	  if(is_array($filter) OR (substr($filter, 0, 6) != "SELECT" AND substr($filter, 0, 6) != "INSERT")) { // if the filter is not itself a fully formed SQL statement...
-    
-            $config_handler = xoops_gethandler('config');
-            $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-            if(trim($formulizeConfig['customScope'])!='' AND strstr($formulizeConfig['customScope'], "return \$scope;")) {
-                $customScope = eval(htmlspecialchars_decode($formulizeConfig['customScope'], ENT_QUOTES));
-                if($customScope !== false) {
-                    $scope = $customScope;
-                }
-            }
-    
-	       $scopeFilter = "";
-	       if(is_array($scope)) { // assume any arrays are groupid arrays, and so make a valid scope string based on this.  Use the new entry owner table.
-		    if(count($scope) > 0 ) {
-			 $start = true;
-			 foreach($scope as $groupid) { // need to loop through the array, and not use implode, so we can sanitize the values
-			      if(!$start) {
-				   $scopeFilter .= " OR scope.groupid=".intval($groupid);
-			      } else {
-				   $start = false;
-           $scopeFilter = " AND EXISTS(SELECT 1 FROM ".DBPRE."formulize_entry_owner_groups AS scope WHERE (scope.entry_id=main.entry_id AND scope.fid=".intval($fid).") AND (scope.groupid=".intval($groupid);
-			      }
-			 }
-       $scopeFilter .= ")) "; // need two closing brackets for the exists statement and its where clause
-		    } else { // no valid entries found, so show no entries
-			 $scopeFilter = " AND main.entry_id<0 ";
-		    }
-	       } elseif($scope) { // need to handle old "uid = X OR..." syntax
-		    $scopeFilter = " AND (".str_replace("uid", "main.creation_uid", $scope).") ";
-	       }
-
-         formulize_getElementMetaData("", false, $fid); // initialize the element metadata for this form...serious performance gain from this 
-	       list($formFieldFilterMap, $whereClause, $orderByClause, $oneSideFilters, $otherPerGroupFilterJoins, $otherPerGroupFilterWhereClause) = formulize_parseFilter($filter, $andor, $linkformids, $fid, $frid);
-         
-         // ***********************
-         // NOTE:  the oneSideFilters are divided into two sections, the AND filters and OR filters for a given form
-         // These will need to be constructed differently if we are ever to support OR filters that are spread across forms.
-         // Right now, oneSideFilters get rendered with all other filters for their form, which is fine if the OR filters all belong to the same form
-         // But if there are OR filters on two different forms, then we will need to do some kind of much more complex handling of the OR filters, or else the count query, and the queries for calculations, will be screwed up
-         // The proper approach to this would be to have the AND oneSideFilters divided by form, like now, but for the ORs, we would need to loop through all ORs on all forms at once, and concatenate them somehow, ie:
-         // foreach($oneSideFilters as $thisOneSideFid=>$oneSideFilterData) {
-         //   foreach($oneSideFilterData as $oneSideAndOr=>$thisOneSideFilter) {
-         //     if($oneSideAndOr == "and") { // note, it's forced to lowercase in the parseFilter function
-         //       // then add this filter to the exists/other construction/whatever for this particular form
-         //     } else {
-         //       // then add this filter to a more complex exists/other construction/whatever that contains all the ORs, grouped by form, with ORs in between them
-         //       // ie, the final output would be like:  AND ( exists(select 1 from table1 where field11=x or field12=y) OR exists(select 1 from table2 where field21 LIKE '%t%') OR (exists(select 1 from table3 where field31 > 23) )
-         //       // And this entire construction would be then added to queries, to account properly for all the OR operators that had been requested
-         //     }
-         //   }
-         // }
+	global $xoopsDB;
 	 
-	 // NOTE: Oct 17 2011 -- since we are now splitting multiform queries into may different individual collections of entries, it may be possible to do what's suggested above more easily. However, we still need the full where clause at our disposal in the main query that gets the main form entry ids, or else we'll have an incorrect master list of entry ids to return.  :-(
+	$limitStart = intval($limitStart);
+	$limitSize = intval($limitSize);
 	 
-         // ***********************
-         
-         if(isset($oneSideFilters[$fid])) {
-               foreach($oneSideFilters[$fid] as $thisOneSideFilter) {
-                    $mainFormWhereClause .= " AND ( $thisOneSideFilter ) ";
-               }
-         } else {
-               $mainFormWhereClause = "";
-         }
+	// DARA HACK!!
+	// if it's a full name field, sort by last name instead
+	// needs to be turned into a proper feature on elements, that you can specify an alternate sort field
+	if(strstr(getCurrentURL(), 'dara.daniels') AND $sortField=='hr_module_name') {
+	   $sortField = 'hr_module_last_name';
+	}
+	 
+	$sortField = formulize_db_escape($sortField);
+	$sortOrder = formulize_db_escape($sortOrder);
 
-           $firstThreeCharsOfWhere = substr(strtolower(trim($whereClause)),0,3);
-	       if($firstThreeCharsOfWhere != 'and' AND $whereClause) {
-		    $whereClause = "AND $whereClause";
-	       }     
-	       
-	       // create the per-group filters, if any, that apply to this user...only available when all XOOPS is invoked, not available when extract.php is being direct included
-					global $xoopsDB;
-					$perGroupFilter = "";
-					$perGroupFiltersPerForms = array(); // used with exists clauses and other per-form situations
-					if($xoopsDB) {
-							 $form_handler = xoops_getmodulehandler('forms', 'formulize');
-							 $perGroupFilter = $form_handler->getPerGroupFilterWhereClause($fid, "main");
-							 $perGroupFiltersPerForms[$fid] = $perGroupFilter;
-							 if($frid) {
-										foreach($linkformids as $id=>$thisLinkFid) {
-												 $perGroupFiltersPerForms[$thisLinkFid] = $form_handler->getPerGroupFilterWhereClause($thisLinkFid, "f".$id);
-										}
-							 }
-					}			 
+	if(isset($_GET['debug'])) { $time_start = microtime_float(); }
+	
+		if($scope == "uid=\"blankscope\"") { return array(); }
+	
+	$frid = "";
+	if(is_numeric($frame)) {
+		$frid = $frame;
+	} elseif($frame != "") {
+		$frameid = go("SELECT frame_id FROM " . DBPRE . "formulize_frameworks WHERE frame_name='$frame'");
+		$frid = $frameid[0]['frame_id'];
+	}
+	$fid = "";
+	if(is_numeric($form)) {
+		$fid = $form;
+	} else {
+		exit("The passed in value $form does not correspond to an existing form"); 
+	}
+
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	$formObject = $form_handler->get($fid);
+	
+	list($linkkeys, $linkisparent, $linkformids, $linktargetids, $linkselfids, $linkcommonvalue) = formulize_gatherLinkMetadata($frid, $fid, $mainFormOnly);
+	 
+	//print_r( $linkformids );
+	$GLOBALS['formulize_linkformidsForCalcs'] = $linkformids; 
+
+	// now that we have the full details from the framework, figure out the full SQL necessary to get the entire dataset
+	// This whole approach is predicated on being able to do reliable joins between the key fields of each form
+	
+	// Structure of the SQL should be...
+	// SELECT main.entry_id, main.creation_uid, main.mod_uid, main.creation_datetime, main.mod_datetime, main.handle1...main.handleN, f2.entry_id, f2.1..f2.n, etc FROM formulize_A AS main [join syntax] WHERE main.handle1 = "whatever" AND/OR f2.handle1 = "whatever"
+	// Join syntax:  if there are query terms on the f2 or subsequent forms, then use INNER JOIN formulize_B AS f2 ON main.1 LIKE CONCAT('%,', f2.entry_id, ',%') -- or no %, ,% if only one value is allowed
+	// If there are no query terms on the f2 or subsequent forms, then use LEFT JOIN
+	
+	// establish the join type and all that
+	
+	$joinText = "";
+	$linkSelect = "";
+	$exportOverrideQueries = array();
+
+	$limitClause = "";
+	if ($limitSize) {
+		$limitClause = " LIMIT ".intval($limitStart).", ".intval($limitSize)." ";
+	}
+
+	if(is_array($filter) OR (substr($filter, 0, 6) != "SELECT" AND substr($filter, 0, 6) != "INSERT")) { // if the filter is not itself a fully formed SQL statement...
+	
+		$config_handler = xoops_gethandler('config');
+		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+		if(trim($formulizeConfig['customScope'])!='' AND strstr($formulizeConfig['customScope'], "return \$scope;")) {
+			$customScope = eval(htmlspecialchars_decode($formulizeConfig['customScope'], ENT_QUOTES));
+			if($customScope !== false) {
+				$scope = $customScope;
+			}
+		}
+	
+		// FIGURE OUT THE SCOPE (WHICH ENTRIES ARE INCLUDED BASED ON GROUPS ETC)
+		$scopeFilter = "";
+		if(is_array($scope)) { // assume any arrays are groupid arrays, and so make a valid scope string based on this.  Use the new entry owner table.
+			if	(count($scope) > 0 ) {
+				$start = true;
+				foreach($scope as $groupid) { // need to loop through the array, and not use implode, so we can sanitize the values
+					if(!$start) {
+						$scopeFilter .= " OR scope.groupid=".intval($groupid);
+					} else {
+						$start = false;
+						$scopeFilter = " AND EXISTS(SELECT 1 FROM ".DBPRE."formulize_entry_owner_groups AS scope WHERE (scope.entry_id=main.entry_id AND scope.fid=".intval($fid).") AND (scope.groupid=".intval($groupid);
+					}
+				}
+				$scopeFilter .= ")) "; // need two closing brackets for the exists statement and its where clause
+			} else { // no valid entries found, so show no entries
+				$scopeFilter = " AND main.entry_id<0 ";
+			}
+		} elseif($scope) { // need to handle old "uid = X OR..." syntax
+			$scopeFilter = " AND (".str_replace("uid", "main.creation_uid", $scope).") ";
+		}
+
+		// PARSE THE FILTER THAT HAS BEEN PASSED IN, INTO WHERE CLAUSE AND OTHER RELATED CLAUSES WE WILL NEED
+		formulize_getElementMetaData("", false, $fid); // initialize the element metadata for this form...serious performance gain from this 
+		list($formFieldFilterMap, $whereClause, $orderByClause, $oneSideFilters, $otherPerGroupFilterJoins, $otherPerGroupFilterWhereClause) = formulize_parseFilter($filter, $andor, $linkformids, $fid, $frid);
+		 
+		// ***********************
+		// NOTE:  the oneSideFilters are divided into two sections, the AND filters and OR filters for a given form
+		// These will need to be constructed differently if we are ever to support OR filters that are spread across forms.
+		// Right now, oneSideFilters get rendered with all other filters for their form, which is fine if the OR filters all belong to the same form
+		// But if there are OR filters on two different forms, then we will need to do some kind of much more complex handling of the OR filters, or else the count query, and the queries for calculations, will be screwed up
+		// The proper approach to this would be to have the AND oneSideFilters divided by form, like now, but for the ORs, we would need to loop through all ORs on all forms at once, and concatenate them somehow, ie:
+		// foreach($oneSideFilters as $thisOneSideFid=>$oneSideFilterData) {
+		//   foreach($oneSideFilterData as $oneSideAndOr=>$thisOneSideFilter) {
+		//     if($oneSideAndOr == "and") { // note, it's forced to lowercase in the parseFilter function
+		//       // then add this filter to the exists/other construction/whatever for this particular form
+		//     } else {
+		//       // then add this filter to a more complex exists/other construction/whatever that contains all the ORs, grouped by form, with ORs in between them
+		//       // ie, the final output would be like:  AND ( exists(select 1 from table1 where field11=x or field12=y) OR exists(select 1 from table2 where field21 LIKE '%t%') OR (exists(select 1 from table3 where field31 > 23) )
+		//       // And this entire construction would be then added to queries, to account properly for all the OR operators that had been requested
+		//     }
+		//   }
+		// }
+	 
+		// NOTE: Oct 17 2011 -- since we are now splitting multiform queries into may different individual collections of entries, it may be possible to do what's suggested above more easily. However, we still need the full where clause at our disposal in the main query that gets the main form entry ids, or else we'll have an incorrect master list of entry ids to return.  :-(
+	 
+		// ***********************
+		 
+		if(isset($oneSideFilters[$fid])) {
+			foreach($oneSideFilters[$fid] as $thisOneSideFilter) {
+				$mainFormWhereClause .= " AND ( $thisOneSideFilter ) ";
+			}
+		} else {
+			$mainFormWhereClause = "";
+		}
+
+		$firstThreeCharsOfWhere = substr(strtolower(trim($whereClause)),0,3);
+		if($firstThreeCharsOfWhere != 'and' AND $whereClause) {
+			$whereClause = "AND $whereClause";
+		}     
+		   
+		// create the per-group filters, if any, that apply to this user...only available when all XOOPS is invoked, not available when extract.php is being direct included
+		global $xoopsDB;
+		$perGroupFilter = "";
+		$perGroupFiltersPerForms = array(); // used with exists clauses and other per-form situations
+		if($xoopsDB) {
+			$form_handler = xoops_getmodulehandler('forms', 'formulize');
+			$perGroupFilter = $form_handler->getPerGroupFilterWhereClause($fid, "main");
+			$perGroupFiltersPerForms[$fid] = $perGroupFilter;
+			if($frid) {
+				foreach($linkformids as $id=>$thisLinkFid) {
+					$perGroupFiltersPerForms[$thisLinkFid] = $form_handler->getPerGroupFilterWhereClause($thisLinkFid, "f".$id);
+				}
+			}
+		}			 
 				 
-	       
-           $linkSelect = "";
-	       if($frid) {
-           $joinHandles = formulize_getJoinHandles(array(0=>$linkselfids, 1=>$linktargetids)); // get the element handles for these elements, since we need those to properly construct the join clauses
-           $newJoinText = ""; // "new" variables initilized in each loop
-           $joinTextIndex = array();
-	   $joinTextTableRef = array();
-	   $linkSelectIndex = array();
-           $newexistsJoinText = "";
-           $joinText = ""; // not "new" variables persist (with .= operator)
-           $existsJoinText = "";
-           foreach($linkformids as $id=>$linkedFid) {
-            
-            // ignore recursive connections if...
-            // 1. they are not 'parent' connections
-            // or 2. we are looking for a single entry in the main form, and it is not the same as an entry we just submitted
-            // THIS MEANS WE CANNOT HAVE RECURSIVE ONE-TO-ONE CONNECTIONS!
-            // Probably for the best? would there be some kind of silly looping going on there?
+		// FIGURE OUT JOIN CLAUSES FOR ANY RELATED FORMS THAT ARE INVOLVED IN THIS QUERY
+		$linkSelect = "";
+		if($frid) {
+			$joinHandles = formulize_getJoinHandles(array(0=>$linkselfids, 1=>$linktargetids)); // get the element handles for these elements, since we need those to properly construct the join clauses
+			$newJoinText = ""; // "new" variables initilized in each loop
+			$joinTextIndex = array();
+			$joinTextTableRef = array();
+			$linkSelectIndex = array();
+			$newexistsJoinText = "";
+			$joinText = ""; // not "new" variables persist (with .= operator)
+			$existsJoinText = "";
+			foreach($linkformids as $id=>$linkedFid) {
+			 
+				// ignore recursive connections if...
+				// 1. they are not 'parent' connections
+				// or 2. we are looking for a single entry in the main form, and it is not the same as an entry we just submitted
+				// THIS MEANS WE CANNOT HAVE RECURSIVE ONE-TO-ONE CONNECTIONS!
+				// Probably for the best? would there be some kind of silly looping going on there?
 				$singleEntryFilterValue = formulize_filterHasSingleEntry($filter);
 				if($linkedFid == $fid AND (
 					!$linkisparent[$id] 
 					OR (!isset($_POST['ventry']) AND $singleEntryFilterValue)
 					OR (isset($_POST['ventry']) AND $singleEntryFilterValue AND $_POST['ventry'] != $singleEntryFilterValue)
-				)) {
-                    //print "Ignoring $linkedFid when fid is $fid and linkisparent: ".$linkisparent[$id].' - ventry: '.$_POST['ventry']." - filter: $filter<br>";
-                    continue;
-                }
-                
-            
-            
-	       // validate that the join conditions are valid...either both must have a value, or neither must have a value (match on user id)...otherwise the join is not possible
-	       if(($joinHandles[$linkselfids[$id]] AND $joinHandles[$linktargetids[$id]]) OR ($linkselfids[$id] == '' AND $linktargetids[$id] == '')) { 
-		   
-		    formulize_getElementMetaData("", false, $linkedFid); // initialize the element metadata for this form...serious performance gain from this
-		    $linkSelectIndex[$linkedFid] = "f$id.entry_id AS f".$id."_entry_id, f$id.creation_uid AS f".$id."_creation_uid, f$id.mod_uid AS f".$id."_mod_uid, f$id.creation_datetime AS f".$id."_creation_datetime, f$id.mod_datetime AS f".$id."_mod_datetime, f$id.*";
-		    $linkSelect .= ", f$id.entry_id AS f".$id."_entry_id, f$id.creation_uid AS f".$id."_creation_uid, f$id.mod_uid AS f".$id."_mod_uid, f$id.creation_datetime AS f".$id."_creation_datetime, f$id.mod_datetime AS f".$id."_mod_datetime, f$id.*";
-		    $joinType = isset($formFieldFilterMap[$linkedFid]) ? "INNER" : "LEFT";
-		    $linkedFormObject = $form_handler->get($linkedFid);
-		    $joinTextTableRef[$linkedFid] = DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$id ON ";
-		    $joinText .= " $joinType JOIN " . DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$id ON"; // NOTE: we are aliasing the linked form tables to f$id where $id is the key of the position in the linked form metadata arrays where that form's info is stored
-		    $newexistsJoinText = $existsJoinText ? " $andor " : "";
-		    $newexistsJoinText .= " EXISTS(SELECT 1 FROM ". DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$id WHERE "; // set this up also so we have it available for one to many/many to one calculations that require it 
-		    $newJoinText = formulize_generateJoinSQL($id, $linkcommonvalue, $linkselfids, $linktargetids);
-            if(isset($perGroupFiltersPerForms[$linkedFid])) {
-                $newJoinText .= $perGroupFiltersPerForms[$linkedFid];
-            }
-		    $joinTextIndex[$linkedFid] = $newJoinText;
-		    
-		    $joinText .= $newJoinText;
-		    if(count($oneSideFilters[$linkedFid])>0) { // only setup the existsJoinText when there is a where clause that applies to this form...otherwise, we don't care, this form is not relevant to the query that the calculations will do (except maybe when the mainform is not the one-side form...but that's another story)
-		      $existsJoinText .= $newexistsJoinText . $newJoinText;
-		      foreach($oneSideFilters[$linkedFid] as $thisOneSideFilter) {
-										       $thisLinkedFidPerGroupFilter = isset($perGroupFiltersPerForms[$linkedFid]) ? $perGroupFiltersPerForms[$linkedFid] : "";
-			   $existsJoinText .= " AND ( $thisOneSideFilter $thisLinkedFidPerGroupFilter) ";
-		      }
-		      $existsJoinText .= ") "; // close the exists clause itself
-		    }
-	       }
-           }
-	       }
-	       
-	       // specify the join info for user table (depending whether there's a query on creator_email or not)
-	       $userJoinType = $formFieldFilterMap['creator_email'] ? "INNER" : "LEFT";
-	       $userJoinText = " $userJoinType JOIN " . DBPRE . "users AS usertable ON main.creation_uid=usertable.uid";
-	       
-          $sortIsOnMain = true;
-          if(!$orderByClause AND $sortField) {
-               
-               if($sortField == "creation_uid" OR $sortField == "mod_uid" OR $sortField == "creation_datetime" OR $sortField == "mod_datetime" OR $sortField == "revision_id") {
-                    $elementMetaData['id_form'] = $fid;
-               } elseif($sortField == "uid") {
-                    $sortField = "creation_uid";
-                    $elementMetaData['id_form'] = $fid;
-               } elseif($sortField == "proxyid") {
-                    $sortField = "mod_uid";
-                    $elementMetaData['id_form'] = $fid;
-               } elseif($sortField == "creation_date") {
-                    $sortField = "creation_datetime";
-                    $elementMetaData['id_form'] = $fid;
-               } elseif($sortField == "mod_date") {
-                    $sortField = "mod_datetime";
-                    $elementMetaData['id_form'] = $fid;
-               } elseif($sortField == "entry_id") {
-                    $sortField = "entry_id";
-                    $elementMetaData['id_form'] = $fid;
-               } else {
-                    $elementMetaData = formulize_getElementMetaData($sortField, true); // need to get form that sort field is part of...               
-               }
-               $sortFid = $elementMetaData['id_form'];
-               if($sortFid == $fid) {
-                    $sortFidAlias = "main";
-               } else {
-                    $sortFidAlias = array_keys($linkformids, $sortFid); // position of this form in the linking relationships is important for identifying which form alias to use
-                    $sortFidAlias = "f".$sortFidAlias[0];
-                    $sortIsOnMain = false;
-               }
-							 $sortFieldMetaData = formulize_getElementMetaData($sortField, true);
-							 if($sortFieldMetaData['ele_encrypt']) {
-										$sortFieldFullValue = "AES_DECRYPT($sortFidAlias.`$sortField`, '".getAESPassword()."')"; // sorts as text, which will screw up number fields
-							 } elseif(formulize_isLinkedSelectBox($sortField, true)) {
-							    $ele_value = unserialize($sortFieldMetaData['ele_value']);
-							    $boxproperties = explode("#*=:*", $ele_value[2]);
-							    $target_fid = $boxproperties[0];
-							    $target_element_handle = $boxproperties[1];
-							    $form_handler = xoops_getmodulehandler('forms', 'formulize');
-							    $targetFormObject = $form_handler->get($target_fid);
-							    // note you cannot sort by multi select boxes!
-							    $sortFieldFullValue = "(SELECT sourceSortForm.`".$target_element_handle."` FROM ".DBPRE."formulize_".$targetFormObject->getVar('form_handle')." as sourceSortForm WHERE sourceSortForm.`entry_id` = ".$sortFidAlias.".`".$sortField."`)";
-							 } else {
-								$sortFieldFullValue = "$sortFidAlias.`$sortField`";
-							 }
-               $orderByClause = " ORDER BY $sortFieldFullValue $sortOrder ";
-          } elseif(!$orderByClause) {
-               $orderByClause = "ORDER BY main.entry_id";
-          }
-	  		    
-	       debug_memory("Before retrieving mainresults");
+					)) {
+					//print "Ignoring $linkedFid when fid is $fid and linkisparent: ".$linkisparent[$id].' - ventry: '.$_POST['ventry']." - filter: $filter<br>";
+					continue;
+				}
+					 
 					
-	       //$beforeQueryTime = microtime_float();
+					
+				// validate that the join conditions are valid...either both must have a value, or neither must have a value (match on user id)...otherwise the join is not possible
+				if(($joinHandles[$linkselfids[$id]] AND $joinHandles[$linktargetids[$id]]) OR ($linkselfids[$id] == '' AND $linktargetids[$id] == '')) { 
+				   
+					formulize_getElementMetaData("", false, $linkedFid); // initialize the element metadata for this form...serious performance gain from this
+					$linkSelectIndex[$linkedFid] = "f$id.entry_id AS f".$id."_entry_id, f$id.creation_uid AS f".$id."_creation_uid, f$id.mod_uid AS f".$id."_mod_uid, f$id.creation_datetime AS f".$id."_creation_datetime, f$id.mod_datetime AS f".$id."_mod_datetime, f$id.*";
+					$linkSelect .= ", f$id.entry_id AS f".$id."_entry_id, f$id.creation_uid AS f".$id."_creation_uid, f$id.mod_uid AS f".$id."_mod_uid, f$id.creation_datetime AS f".$id."_creation_datetime, f$id.mod_datetime AS f".$id."_mod_datetime, f$id.*";
+					$joinType = isset($formFieldFilterMap[$linkedFid]) ? "INNER" : "LEFT";
+					$linkedFormObject = $form_handler->get($linkedFid);
+					$joinTextTableRef[$linkedFid] = DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$id ON ";
+					$joinText .= " $joinType JOIN " . DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$id ON"; // NOTE: we are aliasing the linked form tables to f$id where $id is the key of the position in the linked form metadata arrays where that form's info is stored
+					$newexistsJoinText = $existsJoinText ? " $andor " : "";
+					$newexistsJoinText .= " EXISTS(SELECT 1 FROM ". DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$id WHERE "; // set this up also so we have it available for one to many/many to one calculations that require it 
+					$newJoinText = formulize_generateJoinSQL($id, $linkcommonvalue, $linkselfids, $linktargetids);
+					if(isset($perGroupFiltersPerForms[$linkedFid])) {
+						$newJoinText .= $perGroupFiltersPerForms[$linkedFid];
+					}
+					$joinTextIndex[$linkedFid] = $newJoinText;
+					
+					$joinText .= $newJoinText;
+					if(count($oneSideFilters[$linkedFid])>0) { // only setup the existsJoinText when there is a where clause that applies to this form...otherwise, we don't care, this form is not relevant to the query that the calculations will do (except maybe when the mainform is not the one-side form...but that's another story)
+						$existsJoinText .= $newexistsJoinText . $newJoinText;
+						foreach($oneSideFilters[$linkedFid] as $thisOneSideFilter) {
+							$thisLinkedFidPerGroupFilter = isset($perGroupFiltersPerForms[$linkedFid]) ? $perGroupFiltersPerForms[$linkedFid] : "";
+							$existsJoinText .= " AND ( $thisOneSideFilter $thisLinkedFidPerGroupFilter) ";
+						}
+						$existsJoinText .= ") "; // close the exists clause itself
+					}
+				}
+			}
+		}
+		   
+		// specify the join info for user table (depending whether there's a query on creator_email or not)
+		$userJoinType = $formFieldFilterMap['creator_email'] ? "INNER" : "LEFT";
+		$userJoinText = " $userJoinType JOIN " . DBPRE . "users AS usertable ON main.creation_uid=usertable.uid";
+		
+		// FIGURE OUT THE SORT CLAUSE   
+		$sortIsOnMain = true;
+		if(!$orderByClause AND $sortField) {
+			   
+			if($sortField == "creation_uid" OR $sortField == "mod_uid" OR $sortField == "creation_datetime" OR $sortField == "mod_datetime" OR $sortField == "revision_id") {
+				$elementMetaData['id_form'] = $fid;
+			} elseif($sortField == "uid") {
+				$sortField = "creation_uid";
+				$elementMetaData['id_form'] = $fid;
+			} elseif($sortField == "proxyid") {
+				$sortField = "mod_uid";
+				$elementMetaData['id_form'] = $fid;
+			} elseif($sortField == "creation_date") {
+				$sortField = "creation_datetime";
+				$elementMetaData['id_form'] = $fid;
+			} elseif($sortField == "mod_date") {
+				$sortField = "mod_datetime";
+				$elementMetaData['id_form'] = $fid;
+			} elseif($sortField == "entry_id") {
+				$sortField = "entry_id";
+				$elementMetaData['id_form'] = $fid;
+			} else {
+				$elementMetaData = formulize_getElementMetaData($sortField, true); // need to get form that sort field is part of...               
+			}
+			$sortFid = $elementMetaData['id_form'];
+			if($sortFid == $fid) {
+				$sortFidAlias = "main";
+			} else {
+				$sortFidAlias = array_keys($linkformids, $sortFid); // position of this form in the linking relationships is important for identifying which form alias to use
+				$sortFidAlias = "f".$sortFidAlias[0];
+				$sortIsOnMain = false;
+			}
+			$sortFieldMetaData = formulize_getElementMetaData($sortField, true);
+			if($sortFieldMetaData['ele_encrypt']) {
+				$sortFieldFullValue = "AES_DECRYPT($sortFidAlias.`$sortField`, '".getAESPassword()."')"; // sorts as text, which will screw up number fields
+			} elseif(formulize_isLinkedSelectBox($sortField, true)) {
+				$ele_value = unserialize($sortFieldMetaData['ele_value']);
+				$boxproperties = explode("#*=:*", $ele_value[2]);
+				$target_fid = $boxproperties[0];
+				$target_element_handle = $boxproperties[1];
+				$form_handler = xoops_getmodulehandler('forms', 'formulize');
+				$targetFormObject = $form_handler->get($target_fid);
+				// note you cannot sort by multi select boxes!
+				$sortFieldFullValue = "(SELECT sourceSortForm.`".$target_element_handle."` FROM ".DBPRE."formulize_".$targetFormObject->getVar('form_handle')." as sourceSortForm WHERE sourceSortForm.`entry_id` = ".$sortFidAlias.".`".$sortField."`)";
+			} else {
+				$sortFieldFullValue = "$sortFidAlias.`$sortField`";
+			}
+			$orderByClause = " ORDER BY $sortFieldFullValue $sortOrder ";
+		} elseif(!$orderByClause) {
+			$orderByClause = "ORDER BY main.entry_id";
+		}
+				
+		debug_memory("Before retrieving mainresults");
 
-        $revisionTableYesNo = (!$frid AND isset($GLOBALS['formulize_getDataFromRevisionsTable'])) ? "_revisions" : "";
+		// DO A PRELIMINARY QUERY TO COUNT THE NUMBER OF RESULTS IN THE DATASET, INDEPENDENT OF WHAT WE WILL QUERY TO GET THE ACTUAL DATA					
+		$revisionTableYesNo = (!$frid AND isset($GLOBALS['formulize_getDataFromRevisionsTable'])) ? "_revisions" : "";
 		$countMasterResults = "SELECT COUNT(main.entry_id) FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo." AS main ";
-	    $countMasterResults .= "$userJoinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $mainFormWhereClause $scopeFilter $otherPerGroupFilterWhereClause "; 
-	    $countMasterResults .= $existsJoinText ? " AND ($existsJoinText) " : "";
-	    $countMasterResults .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
+		$countMasterResults .= "$userJoinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $mainFormWhereClause $scopeFilter $otherPerGroupFilterWhereClause "; 
+		$countMasterResults .= $existsJoinText ? " AND ($existsJoinText) " : "";
+		$countMasterResults .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
 		if(isset($GLOBALS['formulize_getCountForPageNumbers'])) {
-	       // If there's an LOE Limit in place, check that we're not over it first
-	       global $formulize_LOE_limit;
-	       if($countMasterResultsRes = $xoopsDB->query($countMasterResults)) {
-		    $countMasterResultsRow = $xoopsDB->fetchRow($countMasterResultsRes);
-		    if($countMasterResultsRow[0] > $formulize_LOE_limit AND $formulize_LOE_limit > 0 AND !$forceQuery AND !$limitClause) {
-			 return $countMasterResultsRow[0];
-		    } else {
-			 // if we're in a getData call from displayEntries, put the count in a special place for use in generating page numbers
-			 $GLOBALS['formulize_countMasterResultsForPageNumbers'] = $countMasterResultsRow[0]; 
-		    } 
-	       } else {
-		    exit("Error: could not count master results.<br>".$xoopsDB->error()."<br>SQL:$countMasterResults<br>");
-	       }
-	       unset($GLOBALS['formulize_getCountForPageNumbers']);
+			// If there's an LOE Limit in place, check that we're not over it first
+			global $formulize_LOE_limit;
+			if($countMasterResultsRes = $xoopsDB->query($countMasterResults)) {
+				$countMasterResultsRow = $xoopsDB->fetchRow($countMasterResultsRes);
+				if($countMasterResultsRow[0] > $formulize_LOE_limit AND $formulize_LOE_limit > 0 AND !$forceQuery AND !$limitClause) {
+					return $countMasterResultsRow[0];
+				} else {
+					// if we're in a getData call from displayEntries, put the count in a special place for use in generating page numbers
+					$GLOBALS['formulize_countMasterResultsForPageNumbers'] = $countMasterResultsRow[0]; 
+				} 
+			} else {
+				exit("Error: could not count master results.<br>".$xoopsDB->error()."<br>SQL:$countMasterResults<br>");
+			}
+			unset($GLOBALS['formulize_getCountForPageNumbers']);
 		}   
-        // now, if there's framework in effect, get the entry ids of the entries in the main form that match the criteria, so we can use a specific query for them instead of the order clause in the master query
-        $limitByEntryId = "";
+		// now, if there's framework in effect, get the entry ids of the entries in the main form that match the criteria, so we can use a specific query for them instead of the order clause in the master query
+		$limitByEntryId = "";
 		$useAsSortSubQuery = "";
-        if($frid) {
-            $limitByEntryId = " AND (";
-            $entryIdQuery = str_replace("COUNT(main.entry_id)", "main.entry_id as main_entry_id", $countMasterResults); // don't count the entries, select their id numbers
-            if(!$sortIsOnMain) {
+		if($frid) {
+			$limitByEntryId = " AND (";
+			$entryIdQuery = str_replace("COUNT(main.entry_id)", "main.entry_id as main_entry_id", $countMasterResults); // don't count the entries, select their id numbers
+			if(!$sortIsOnMain) {
 				$sortFieldMetaData = formulize_getElementMetaData($sortField, true);
 				$sortFormObject = $form_handler->get($sortFid);
 				if($sortFieldMetaData['ele_encrypt']) {
@@ -695,233 +672,235 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 				}
 				$entryIdQuery = str_replace("SELECT main.entry_id as main_entry_id ", "SELECT $useAsSortSubQuery, main.entry_id as main_entry_id ", $entryIdQuery); // sorts as text which will screw up number fields
 				$thisOrderByClause = " ORDER BY usethissort $sortOrder ";
-	        } else {
+			} else {
 				$thisOrderByClause = $orderByClause;
-	        }
+			}
 			$entryIdQuery .= " $thisOrderByClause $limitClause";
-		    $entryIdResult = $xoopsDB->query($entryIdQuery);
-		    $start = true;
-		    while($entryIdValue = $xoopsDB->fetchArray($entryIdResult)) {
-			    $limitByEntryId .= !$start ? " OR " : "";
-			    $limitByEntryId .= "main.entry_id = " . $entryIdValue['main_entry_id'];
-			    $start = false;
-		    }
-		    $limitByEntryId .= ") ";
-		    if(!$start) {
+			$entryIdResult = $xoopsDB->query($entryIdQuery);
+			$start = true;
+			while($entryIdValue = $xoopsDB->fetchArray($entryIdResult)) {
+				$limitByEntryId .= !$start ? " OR " : "";
+				$limitByEntryId .= "main.entry_id = " . $entryIdValue['main_entry_id'];
+				$start = false;
+			}
+			$limitByEntryId .= ") ";
+			if(!$start) {
 				$limitClause = ""; // nullify the existing limitClause since we don't want to use it in the actual query 
-		    } else {
+			} else {
 				$limitByEntryId = "";
-		    }
-	    }
-      
-
-    $selectClause = "";
-    $sqlFilterElements = array();
-    $sqlFilterElementsIndex = array();
-    if( $filterElements ) { // THIS IS HIGHLY EXPERIMENTAL...BECAUSE THE PROCESSING OF DATASETS RELIES RIGHT NOW ON METADATA BEING PRESENT AT THE FRONT OF EACH SET OF FIELDS, THERE IS FURTHER WORK REQUIRED TO MAKE THIS FUNCTION WITH THE CODE THAT PROCESSES ENTRIES
-      //print_r( $filterElements );
-      //print_r( $linkformids );
-      foreach($filterElements as $passedForm=>$passedElements) {
-        if($passedForm == $fid) {
-           $formAlias = "main";
-        } else {
-           $keys = array_keys( $linkformids, $passedForm );
-           //print_r( $keys );
-           $formAlias = "f" . $keys[0];
-        }
-        foreach($passedElements as $thisPassedElement) {
-          $fieldSelect = $formAlias . ".`" . formulize_db_escape($thisPassedElement) . "`";
-          $sqlFilterElements[] = $fieldSelect;
-          if($passedForm == $fid) {
-            $sqlFilterElementsIndex['main'][] = $fieldSelect;
-          } else {
-            $sqlFilterElementsIndex[$passedForm][] = $fieldSelect;
-          }
-        }
-      }
-    }
-    if( count( $sqlFilterElements ) > 0 ) {
-        
-        // update any linked form select statements to use only the fields that have been requested
-        if($linkSelect) {
-            foreach($sqlFilterElementsIndex as $key=>$fields) {
-                if($key == 'main') { continue; }
-                $keys = array_keys( $linkformids, $key );
-                $target = "f".$keys[0].".*";
-                $linkSelect = str_replace($target, implode(",", $fields), $linkSelect);
-                $linkSelectIndex[$key] = str_replace($target, implode(",", $fields), $linkSelectIndex[$key]);
-            }
-        }
-        $selectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, ".implode( ",", $sqlFilterElements );
-        $mainSelectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, ".implode( ",", $sqlFilterElementsIndex['main'] );
-    } else {
-      $selectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect";
-        $mainSelectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* "; // used when querying three or more forms with one-many relationships, see below
-    }
-
-
-    // if this is being done for gathering calculations, and the calculation is requested on the one side of a one to many/many to one relationship, then we will need to use different SQL to avoid duplicate values being returned by the database
-    // note: when the main form is on the many side of the relationship, then we need to do something rather different...not sure what it is yet...the SQL as prepared is based on the calculation field and the main form being the one side (and so both are called main), but when field is on one side and main form is many side, then the aliases don't match, and scopefilter issues abound.
-    // NOTE: Oct 17 2011 - the $oneSideSQL is also used when there are multiple linked subforms, since the exists structure is efficient compared to multiple joins
-    $oneSideSQL = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText WHERE main.entry_id>0 $scopeFilter "; // does the mainFormWhereClause need to be used here too?  Needs to be tested. -- further note: Oct 17 2011 -- appears oneSideFilters[fid] is the same as the mainformwhereclause
-    $oneSideSQL .= $existsJoinText ? " AND ($existsJoinText) " : "";
-    if(count($oneSideFilters[$fid])>0) {
-        $oneSideSQL .= " AND (";
-        $start = true;
-        foreach($oneSideFilters[$fid] as $thisOneSideFilter) {
-           $oneSideSQL .= $start ? " ( $thisOneSideFilter ) " : " $andor ( $thisOneSideFilter ) "; 
-           $start = false;
-        }
-        $oneSideSQL .= ") ";
-    }
-    $oneSideSQL .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
-
-     $restOfTheSQL = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo." AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause ";
-     $restOfTheSQLForExport = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo." AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $orderByClause ";  // don't use limitByEntryId since exports include all entries
-     if(count($linkformids)>1) { // AND $dummy == "never") { // when there is more than 1 joined form, we can get an exponential explosion of records returned, because SQL will give you all combinations of the joins
-       if(!$sortIsOnMain) {
-	    $orderByToUse = " ORDER BY usethissort $sortOrder ";
-	    $useAsSortSubQuery = " @rownum:=@rownum+1, $useAsSortSubQuery,"; // need to add a counter as the first field, used as the master sorting key
-       } else {
-	    $orderByToUse = $orderByClause;
-	    $useAsSortSubQuery = "  @rownum:=@rownum+1, "; // need to add a counter as the first field, used as the master sorting key
-       }
-       $oneSideSQLToUse = str_replace(" AS main $userJoinText"," AS main JOIN (SELECT @rownum := 0) as r $userJoinText",$oneSideSQL); // need to add the initialization of the rownum, which is what we use as the master sorting key
-       $masterQuerySQL = "SELECT $useAsSortSubQuery main.entry_id $oneSideSQLToUse $limitByEntryId $orderByToUse ";
-       $masterQuerySQLForExport = "SELECT $useAsSortSubQuery main.entry_id $oneSideSQLToUse $orderByToUse "; // no limit by entry id, since all entries should be included in exports
-	    // so let's build a temp table with the unique entry ids in the forms that we care about, and then query each linked form separately for its records, so that we end up processing as few result rows as possible
-	    $masterQuerySQL = "INSERT INTO ".DBPRE."formulize_temp_extract_REPLACEWITHTIMESTAMP $masterQuerySQL ";
-	    $masterQuerySQLForExport = "INSERT INTO ".DBPRE."formulize_temp_extract_REPLACEWITHTIMESTAMP $masterQuerySQLForExport ";
-     } else { 
-	  $masterQuerySQL = "SELECT $selectClause, usertable.user_viewemail AS main_user_viewemail, usertable.email AS main_email $restOfTheSQL ";
-	  $masterQuerySQLForExport = "SELECT $selectClause, usertable.user_viewemail AS main_user_viewemail, usertable.email AS main_email $restOfTheSQLForExport ";
-     }
-     
-
-     $GLOBALS['formulize_queryForCalcs'] = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo." AS main $userJoinText $joinText WHERE main.entry_id>0  $whereClause $scopeFilter ";
-     $GLOBALS['formulize_queryForCalcs'] .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
-     $GLOBALS['formulize_queryForOneSideCalcs'] = $oneSideSQL;
-     if($GLOBALS['formulize_returnAfterSettingBaseQuery']) { return true; } // if we are only setting up calculations, then return now that the base query is built
-	  $sortIsOnMainFlag = $sortIsOnMain ? 1 : 0;
-	  // need to include the query first, so the SELECT or INSERT is the first thing in the string, so we catch it properly when coming back through the export process
-	  $GLOBALS['formulize_queryForExport'] = $masterQuerySQLForExport." -- SEPARATOR FOR EXPORT QUERIES -- ".$sortIsOnMainFlag; // "$selectClauseToUse FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause $limitClause";
+			}
+		}
 	  
-  } else { // end of if the filter has a SELECT in it
-	  if(strstr($filter," -- SEPARATOR FOR EXPORT QUERIES -- ")) {
-	       $exportOverrideQueries = explode(" -- SEPARATOR FOR EXPORT QUERIES -- ",$filter);
-	       $masterQuerySQL = $exportOverrideQueries[0];
-	       $sortIsOnMain = $exportOverrideQueries[1];
-	  } else {
-	       $masterQuerySQL = $filter; // need to split this based on some separator, because export ends up passing in a series of statements     
-	  }
-  }
+
+		$selectClause = "";
+		$sqlFilterElements = array();
+		$sqlFilterElementsIndex = array();
+		if( $filterElements ) { // THIS IS HIGHLY EXPERIMENTAL...BECAUSE THE PROCESSING OF DATASETS RELIES RIGHT NOW ON METADATA BEING PRESENT AT THE FRONT OF EACH SET OF FIELDS, THERE IS FURTHER WORK REQUIRED TO MAKE THIS FUNCTION WITH THE CODE THAT PROCESSES ENTRIES
+			//print_r( $filterElements );
+			//print_r( $linkformids );
+			foreach($filterElements as $passedForm=>$passedElements) {
+				if($passedForm == $fid) {
+					$formAlias = "main";
+				} else {
+					$keys = array_keys( $linkformids, $passedForm );
+					//print_r( $keys );
+					$formAlias = "f" . $keys[0];
+				}
+				foreach($passedElements as $thisPassedElement) {
+					$fieldSelect = $formAlias . ".`" . formulize_db_escape($thisPassedElement) . "`";
+					$sqlFilterElements[] = $fieldSelect;
+					if($passedForm == $fid) {
+						$sqlFilterElementsIndex['main'][] = $fieldSelect;
+					} else {
+						$sqlFilterElementsIndex[$passedForm][] = $fieldSelect;
+					}
+				}
+			}
+		}
+		
+		// SETUP THE MAIN SELECT STATEMENT
+		if( count( $sqlFilterElements ) > 0 ) {
+			// update any linked form select statements to use only the fields that have been requested
+			if($linkSelect) {
+				foreach($sqlFilterElementsIndex as $key=>$fields) {
+					if($key == 'main') { continue; }
+					$keys = array_keys( $linkformids, $key );
+					$target = "f".$keys[0].".*";
+					$linkSelect = str_replace($target, implode(",", $fields), $linkSelect);
+					$linkSelectIndex[$key] = str_replace($target, implode(",", $fields), $linkSelectIndex[$key]);
+				}
+			}
+			$selectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, ".implode( ",", $sqlFilterElements );
+			$mainSelectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, ".implode( ",", $sqlFilterElementsIndex['main'] );
+		} else {
+			$selectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect";
+			$mainSelectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* "; // used when querying three or more forms with one-many relationships, see below
+		}
+
+		// if this is being done for gathering calculations, and the calculation is requested on the one side of a one to many/many to one relationship, then we will need to use different SQL to avoid duplicate values being returned by the database
+		// note: when the main form is on the many side of the relationship, then we need to do something rather different...not sure what it is yet...the SQL as prepared is based on the calculation field and the main form being the one side (and so both are called main), but when field is on one side and main form is many side, then the aliases don't match, and scopefilter issues abound.
+		// NOTE: Oct 17 2011 - the $oneSideSQL is also used when there are multiple linked subforms, since the exists structure is efficient compared to multiple joins
+		$oneSideSQL = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText WHERE main.entry_id>0 $scopeFilter "; // does the mainFormWhereClause need to be used here too?  Needs to be tested. -- further note: Oct 17 2011 -- appears oneSideFilters[fid] is the same as the mainformwhereclause
+		$oneSideSQL .= $existsJoinText ? " AND ($existsJoinText) " : "";
+		if(count($oneSideFilters[$fid])>0) {
+			$oneSideSQL .= " AND (";
+			$start = true;
+			foreach($oneSideFilters[$fid] as $thisOneSideFilter) {
+			   $oneSideSQL .= $start ? " ( $thisOneSideFilter ) " : " $andor ( $thisOneSideFilter ) "; 
+			   $start = false;
+			}
+			$oneSideSQL .= ") ";
+		}
+		$oneSideSQL .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
+
+		$restOfTheSQL = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo." AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause ";
+		$restOfTheSQLForExport = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo." AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $orderByClause ";  // don't use limitByEntryId since exports include all entries
+		if(count($linkformids)>1) { // AND $dummy == "never") { // when there is more than 1 joined form, we can get an exponential explosion of records returned, because SQL will give you all combinations of the joins
+			if(!$sortIsOnMain) {
+				$orderByToUse = " ORDER BY usethissort $sortOrder ";
+				$useAsSortSubQuery = " @rownum:=@rownum+1, $useAsSortSubQuery,"; // need to add a counter as the first field, used as the master sorting key
+			} else {
+				$orderByToUse = $orderByClause;
+				$useAsSortSubQuery = "  @rownum:=@rownum+1, "; // need to add a counter as the first field, used as the master sorting key
+			}
+			$oneSideSQLToUse = str_replace(" AS main $userJoinText"," AS main JOIN (SELECT @rownum := 0) as r $userJoinText",$oneSideSQL); // need to add the initialization of the rownum, which is what we use as the master sorting key
+			$masterQuerySQL = "SELECT $useAsSortSubQuery main.entry_id $oneSideSQLToUse $limitByEntryId $orderByToUse ";
+			$masterQuerySQLForExport = "SELECT $useAsSortSubQuery main.entry_id $oneSideSQLToUse $orderByToUse "; // no limit by entry id, since all entries should be included in exports
+			// so let's build a temp table with the unique entry ids in the forms that we care about, and then query each linked form separately for its records, so that we end up processing as few result rows as possible
+			$masterQuerySQL = "INSERT INTO ".DBPRE."formulize_temp_extract_REPLACEWITHTIMESTAMP $masterQuerySQL ";
+			$masterQuerySQLForExport = "INSERT INTO ".DBPRE."formulize_temp_extract_REPLACEWITHTIMESTAMP $masterQuerySQLForExport ";
+		} else { 
+			$masterQuerySQL = "SELECT $selectClause, usertable.user_viewemail AS main_user_viewemail, usertable.email AS main_email $restOfTheSQL ";
+			$masterQuerySQLForExport = "SELECT $selectClause, usertable.user_viewemail AS main_user_viewemail, usertable.email AS main_email $restOfTheSQLForExport ";
+		}
+	 
+
+		$GLOBALS['formulize_queryForCalcs'] = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo." AS main $userJoinText $joinText WHERE main.entry_id>0  $whereClause $scopeFilter ";
+		$GLOBALS['formulize_queryForCalcs'] .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
+		$GLOBALS['formulize_queryForOneSideCalcs'] = $oneSideSQL;
+		if($GLOBALS['formulize_returnAfterSettingBaseQuery']) { return true; } // if we are only setting up calculations, then return now that the base query is built
+		$sortIsOnMainFlag = $sortIsOnMain ? 1 : 0;
+		// need to include the query first, so the SELECT or INSERT is the first thing in the string, so we catch it properly when coming back through the export process
+		$GLOBALS['formulize_queryForExport'] = $masterQuerySQLForExport." -- SEPARATOR FOR EXPORT QUERIES -- ".$sortIsOnMainFlag; // "$selectClauseToUse FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause $limitClause";
+	  
+	} else { // end of if the filter has a SELECT in it
+		if(strstr($filter," -- SEPARATOR FOR EXPORT QUERIES -- ")) {
+			$exportOverrideQueries = explode(" -- SEPARATOR FOR EXPORT QUERIES -- ",$filter);
+			$masterQuerySQL = $exportOverrideQueries[0];
+			$sortIsOnMain = $exportOverrideQueries[1];
+		} else {
+			$masterQuerySQL = $filter; // need to split this based on some separator, because export ends up passing in a series of statements     
+		}
+	}
   
-  // after the export query has been generated, then let's put the limit on:
-  $masterQuerySQL .= $limitClause;
+	// after the export query has been generated, then let's put the limit on:
+	$masterQuerySQL .= $limitClause;
   
-     /*global $xoopsUser;
-     if($xoopsUser->getVar('uid') == 4613) {
-          $queryTime = $afterQueryTime - $beforeQueryTime;
-          print "Query time: " . $queryTime . "<br>";
-     }*/
-     
-     // Debug Code
-     
-//     $validIPs = array('70.29.87.51');
+	 /*global $xoopsUser;
+	 if($xoopsUser->getVar('uid') == 4613) {
+		  $queryTime = $afterQueryTime - $beforeQueryTime;
+		  print "Query time: " . $queryTime . "<br>";
+	 }*/
+	 
+	 // Debug Code
+	 
+	//     $validIPs = array('70.29.87.51');
+	
+	//if(in_array($_SERVER['REMOTE_ADDR'], $validIPs)) {
+		 
+		 /*global $xoopsUser;
+		 if($xoopsUser->getVar('uid') == 18399) {
+		 //     print "<br>Count query: $countMasterResults<br><br>";
+			print "Master query: $masterQuerySQL<br>";
+		 //   print "Linkformids: ";
+		 //   print_r($linkformids);
+		 //   print "<br>";
+		 }*/
+	//}
+	formulize_benchmark("Before query");
 
-//if(in_array($_SERVER['REMOTE_ADDR'], $validIPs)) {
-     
-     /*global $xoopsUser;
-     if($xoopsUser->getVar('uid') == 18399) {
-     //     print "<br>Count query: $countMasterResults<br><br>";
-        print "Master query: $masterQuerySQL<br>";
-     //   print "Linkformids: ";
-     //   print_r($linkformids);
-     //   print "<br>";
-     }*/
-//}
-		 formulize_benchmark("Before query");
+	// IF THERE'S MORE THAN ONE LINKED FORM, THEN WE QUERY THEM SEPARATELY, LINKING TO THE TEMP TABLE WE SETUP OF ENTRY IDS THAT WE CARE ABOUT -- MUCH MORE PERFORMANT, MULTIPLE LINKS TO OTHER FORMS CAN GRIND THIS ALL TO A HALT IF DONE WITH NORMAL SQL
+	if(count($linkformids)>1) { // AND $dummy=="never") { // when there is more than 1 joined form, we can get an exponential explosion of records returned, because SQL will give you all combinations of the joins, so we create a series of queries that will each handle the main form plus one of the linked forms, then we put all the data together into a single result set below
+		$timestamp = str_replace(".","",microtime(true));
+		if(!$sortIsOnMain) {
+			$createTableSQL = "CREATE TABLE ".DBPRE."formulize_temp_extract_$timestamp ( `mastersort` BIGINT(11), `throwaway_sort_values` text, `entry_id` BIGINT(11), PRIMARY KEY (`mastersort`), INDEX i_entry_id (`entry_id`) ) ENGINE=MyISAM;"; // when the sort is not on the main form, then we are including a special field in the select statement that we sort it by, so that the order is correct, and so it has to have a place to get inserted here
+		} else {
+			$createTableSQL = "CREATE TABLE ".DBPRE."formulize_temp_extract_$timestamp ( `mastersort` BIGINT(11), `entry_id` BIGINT(11), PRIMARY KEY (`mastersort`), INDEX i_entry_id (`entry_id`) ) ENGINE=MyISAM;";
+		}
+		//print $createTableSQL.'<br>';
+		if($createTableRes = $xoopsDB->queryF($createTableSQL)) {
+			//print str_replace("REPLACEWITHTIMESTAMP", $timestamp, $masterQuerySQL).'<br>';
+			$gatherIdsRes = $xoopsDB->queryF(str_replace("REPLACEWITHTIMESTAMP", $timestamp, $masterQuerySQL));
+		} else {
+			print "Failed to create temp table, with this SQL: $createTableSQL<br>Error: ".$xoopsDB->error();
+			exit();
+		}
+		$linkQueryRes = array();
+		if(isset($exportOverrideQueries[2])) {
+			for($i=2;$i<count($exportOverrideQueries);$i++) {
+				$sql = str_replace("REPLACEWITHTIMESTAMP",$timestamp,$exportOverrideQueries[$i]);
+				$linkQueryRes[] = $xoopsDB->query($sql);
+			}
+		} else {	
+			// FURTHER OPTIMIZATIONS ARE POSSIBLE HERE...WE COULD NOT INCLUDE THE MAIN FORM AGAIN IN ALL THE SELECTS, THAT WOULD IMPROVE THE PROCESSING TIME A BIT, BUT WE WOULD HAVE TO CAREFULLY REFACTOR MORE OF THE LOOPING CODE BELOW THAT PARSES THE ENTRIES, BECAUSE RIGHT NOW IT'S ASSUMING THE FULL MAIN ENTRY IS PRESENT.  AT LEAST THE MAIN ENTRY ID WOULD NEED TO STILL BE USED, SINCE WE USE THAT TO SYNCH UP ALL THE ENTRIES FROM THE OTHER FORMS.
+			foreach($linkformids as $linkId=>$thisLinkFid) {
+				$linkQuery = "SELECT $mainSelectClause , "
+					.$linkSelectIndex[$thisLinkFid].
+					", usertable.user_viewemail AS main_user_viewemail, usertable.email AS main_email FROM "
+					.DBPRE."formulize_" . $formObject->getVar('form_handle') . " AS main
+					LEFT JOIN " . DBPRE . "users AS usertable ON main.creation_uid=usertable.uid
+					LEFT JOIN ".$joinTextTableRef[$thisLinkFid] . $joinTextIndex[$thisLinkFid]."
+					INNER JOIN ".DBPRE."formulize_temp_extract_REPLACEWITHTIMESTAMP as sort_and_limit_table ON main.entry_id = sort_and_limit_table.entry_id ";
+				if (isset($oneSideFilters[$thisLinkFid]) and is_array($oneSideFilters[$thisLinkFid])) {
+					$start = true;
+					foreach($oneSideFilters[$thisLinkFid] as $thisOneSideFilter) {
+						if(!$start) {
+							$linkQuery .= " AND ( $thisOneSideFilter ) ";
+						} else {
+							$linkQuery .= " WHERE ( $thisOneSideFilter ) ";
+							$start = false;
+						}
+					}
+				}
+				$linkQuery .= " ORDER BY sort_and_limit_table.mastersort";
+				if($resultOnly !== 'bypass') {
+					//print str_replace("REPLACEWITHTIMESTAMP",$timestamp,$linkQuery).'<br>';
+					$linkQueryRes[] = $xoopsDB->query(str_replace("REPLACEWITHTIMESTAMP",$timestamp,$linkQuery));
+				}
+				$GLOBALS['formulize_queryForExport'] .= " -- SEPARATOR FOR EXPORT QUERIES -- ".$linkQuery;
+			}
+		}
+		$dropRes = $xoopsDB->queryF("DROP TABLE ".DBPRE."formulize_temp_extract_$timestamp");
+		$resultData = array('results'=>$linkQueryRes, 'fid'=>$fid, 'frid'=>$frid, 'linkFids'=>$linkformids);
+	
+	} else { 
+		if($resultOnly !== 'bypass') {
+			$masterQueryRes = $xoopsDB->query($masterQuerySQL);
+		}
+		$resultData = array('results'=>array($masterQueryRes), 'fid'=>$fid, 'frid'=>$frid, 'linkFids'=>$linkformids);
+	}
 
-     if(count($linkformids)>1) { // AND $dummy=="never") { // when there is more than 1 joined form, we can get an exponential explosion of records returned, because SQL will give you all combinations of the joins, so we create a series of queries that will each handle the main form plus one of the linked forms, then we put all the data together into a single result set below
-	         $timestamp = str_replace(".","",microtime(true));
-		 if(!$sortIsOnMain) {
-		    $createTableSQL = "CREATE TABLE ".DBPRE."formulize_temp_extract_$timestamp ( `mastersort` BIGINT(11), `throwaway_sort_values` text, `entry_id` BIGINT(11), PRIMARY KEY (`mastersort`), INDEX i_entry_id (`entry_id`) ) ENGINE=MyISAM;"; // when the sort is not on the main form, then we are including a special field in the select statement that we sort it by, so that the order is correct, and so it has to have a place to get inserted here
-		 } else {
-		    $createTableSQL = "CREATE TABLE ".DBPRE."formulize_temp_extract_$timestamp ( `mastersort` BIGINT(11), `entry_id` BIGINT(11), PRIMARY KEY (`mastersort`), INDEX i_entry_id (`entry_id`) ) ENGINE=MyISAM;";
-		 }
-         //print $createTableSQL.'<br>';
-		 if($createTableRes = $xoopsDB->queryF($createTableSQL)) {
-            //print str_replace("REPLACEWITHTIMESTAMP", $timestamp, $masterQuerySQL).'<br>';
-            $gatherIdsRes = $xoopsDB->queryF(str_replace("REPLACEWITHTIMESTAMP", $timestamp, $masterQuerySQL));
-         } else {
-            print "Failed to create temp table, with this SQL: $createTableSQL<br>Error: ".$xoopsDB->error();
-            exit();
-         }
-		 $linkQueryRes = array();
-	         if(isset($exportOverrideQueries[2])) {
-		    for($i=2;$i<count($exportOverrideQueries);$i++) {
-			 $sql = str_replace("REPLACEWITHTIMESTAMP",$timestamp,$exportOverrideQueries[$i]);
-			 $linkQueryRes[] = $xoopsDB->query($sql);
-		    }
-		 } else {
-		    // FURTHER OPTIMIZATIONS ARE POSSIBLE HERE...WE COULD NOT INCLUDE THE MAIN FORM AGAIN IN ALL THE SELECTS, THAT WOULD IMPROVE THE PROCESSING TIME A BIT, BUT WE WOULD HAVE TO CAREFULLY REFACTOR MORE OF THE LOOPING CODE BELOW THAT PARSES THE ENTRIES, BECAUSE RIGHT NOW IT'S ASSUMING THE FULL MAIN ENTRY IS PRESENT.  AT LEAST THE MAIN ENTRY ID WOULD NEED TO STILL BE USED, SINCE WE USE THAT TO SYNCH UP ALL THE ENTRIES FROM THE OTHER FORMS.
-		    foreach($linkformids as $linkId=>$thisLinkFid) {
-                $linkQuery = "SELECT $mainSelectClause , "
-   .$linkSelectIndex[$thisLinkFid].
-   ", usertable.user_viewemail AS main_user_viewemail, usertable.email AS main_email FROM "
-   .DBPRE."formulize_" . $formObject->getVar('form_handle') . " AS main
-   LEFT JOIN " . DBPRE . "users AS usertable ON main.creation_uid=usertable.uid
-   LEFT JOIN ".$joinTextTableRef[$thisLinkFid] . $joinTextIndex[$thisLinkFid]."
-   INNER JOIN ".DBPRE."formulize_temp_extract_REPLACEWITHTIMESTAMP as sort_and_limit_table ON main.entry_id = sort_and_limit_table.entry_id ";
-            if (isset($oneSideFilters[$thisLinkFid]) and is_array($oneSideFilters[$thisLinkFid])) {
-                $start = true;
-                foreach($oneSideFilters[$thisLinkFid] as $thisOneSideFilter) {
-                    if(!$start) {
-                        $linkQuery .= " AND ( $thisOneSideFilter ) ";
-                    } else {
-                        $linkQuery .= " WHERE ( $thisOneSideFilter ) ";
-                        $start = false;
-                    }
-                }
-            }
-			 $linkQuery .= " ORDER BY sort_and_limit_table.mastersort";
-                if($resultOnly !== 'bypass') {
-                    //print str_replace("REPLACEWITHTIMESTAMP",$timestamp,$linkQuery).'<br>';
-			  $linkQueryRes[] = $xoopsDB->query(str_replace("REPLACEWITHTIMESTAMP",$timestamp,$linkQuery));
-                }
-			  $GLOBALS['formulize_queryForExport'] .= " -- SEPARATOR FOR EXPORT QUERIES -- ".$linkQuery;
-		    }
-		 }
-	         $dropRes = $xoopsDB->queryF("DROP TABLE ".DBPRE."formulize_temp_extract_$timestamp");
-        $resultData = array('results'=>$linkQueryRes, 'fid'=>$fid, 'frid'=>$frid, 'linkFids'=>$linkformids);
-     } else { 
-        if($resultOnly !== 'bypass') {
-         $masterQueryRes = $xoopsDB->query($masterQuerySQL);
-     }
-        $resultData = array('results'=>array($masterQueryRes), 'fid'=>$fid, 'frid'=>$frid, 'linkFids'=>$linkformids);
-    }
+	formulize_benchmark("After query");
+	
+	if($resultOnly) {
+		if($resultOnly === 'bypass') {
+			return true; // all we care about here is prepping the query for export (or some other reason)
+		} elseif(count($linkformids)>1) {
+			foreach($linkQueryRes as $thisRes) {
+				if($thisRes AND $xoopsDB->getRowsNum($thisRes)>0) {
+					return $resultData; // if there's at least one linked query result, then send back the package of result data
+				}
+			}
+			return false;
+		} elseif($masterQueryRes AND $xoopsDB->getRowsNum($masterQueryRes)>0) {
+			return $resultData;
+		} else {
+			return false;
+		}
+	}
 
-    if($resultOnly) {
-      if($resultOnly === 'bypass') {
-        return true; // all we care about here is prepping the query for export (or some other reason)
-      } elseif(count($linkformids)>1) {
-        foreach($linkQueryRes as $thisRes) {
-          if($thisRes AND $xoopsDB->getRowsNum($thisRes)>0) {
-            return $resultData;
-          }
-        }
-        return false;
-      } elseif($masterQueryRes AND $xoopsDB->getRowsNum($masterQueryRes)>0) {
-        return $resultData;
-        } else {
-          return false;
-        }
-      }
-
-     formulize_benchmark("After query");
-     
-    return processGetDataResults($resultData); 
-     
+	return processGetDataResults($resultData); 
+	 
 } // end of dataExtraction function
 
 // generate the actual blah = blah SQL for joining tables in a relationship
@@ -1689,7 +1668,6 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
 function prepareElementMetaData($frid, $fid, $linkfids, $ifPartsZero, $formFieldFilterMap){
 		 // first convert any handles to element Handles, and/or get the element id if necessary...element id is necessary for creating the formfieldfiltermap, since that function was written the first time we tried to do this, when there were no element handles in the mix
 		 if($frid AND !is_numeric($ifPartsZero)) {
-					$ifPartsZero = dealWithDeprecatedFrameworkHandles($ifPartsZero, $frid); // will convert a framework handle if necessary
 					$element_id = formulize_getIdFromElementHandle($ifPartsZero);
 		 } elseif(is_numeric($ifPartsZero)) { // using a numeric element id
 					$element_id = $ifPartsZero;
@@ -1997,76 +1975,64 @@ function formulize_convertCapOrColHeadToHandle($frid, $fid, $term) {
      // check first for a match in the colhead field, then in the caption field
      // once a match is found return the handle
      
-		 global $xoopsDB; // just used to check if XOOPS is in effect or not (in which case extract.php is being included directly)
-     static $results_array = array();
-     static $framework_results = array();
-		 static $formNames = array();
-     $handle = "";
-     $term = trim($term, "\"");
+	global $xoopsDB; // just used to check if XOOPS is in effect or not (in which case extract.php is being included directly)
+    static $results_array = array();
+    static $framework_results = array();
+	static $formNames = array();
+    $handle = "";
+    $term = trim($term, "\"");
      
-		 if(strstr($term, "\$formName") AND $xoopsDB) { 		 // setup the name of the form and replace that value in the term, only when $xoopsDB is in effect, ie: full XOOPS stack
-					if(!isset($formNames[$fid])) {
-					  $form_handler = xoops_getmodulehandler('forms', 'formulize');
-					  $formObject = $form_handler->get($fid);
-						$formNames[$fid] = $formObject->getVar('title');
-					}
-					$term = str_replace("\$formName", $formNames[$fid], $term);
-		 }
+	if(strstr($term, "\$formName")) { 		 // setup the name of the form and replace that value in the term, only when $xoopsDB is in effect, ie: full XOOPS stack
+		if(!isset($formNames[$fid])) {
+			$form_handler = xoops_getmodulehandler('forms', 'formulize');
+			$formObject = $form_handler->get($fid);
+			$formNames[$fid] = $formObject->getVar('title');
+		}
+		$term = str_replace("\$formName", $formNames[$fid], $term);
+	}
 		 
-     if($term == "uid" OR $term == "proxyid" OR $term == "creation_date" OR $term == "mod_date" OR $term == "creator_email" OR $term == "creation_uid" OR $term == "mod_uid" OR $term == "creation_datetime" OR $term == "mod_datetime") {
+    if($term == "uid" OR $term == "proxyid" OR $term == "creation_date" OR $term == "mod_date" OR $term == "creator_email" OR $term == "creation_uid" OR $term == "mod_uid" OR $term == "creation_datetime" OR $term == "mod_datetime") {
         return array($term, $fid);
-     }
+    }
      
-     if(!$frid) {
-          $formList[] = $fid; // mimic what the result of the framework query below would be...
-     } else {
-          
-					list($termAfterDeal, $dealFid) = dealWithDeprecatedFrameworkHandles($term, $frid, true); // true will cause it to return the form id as well when you're getting only asking for a single handle back.
-					if($termAfterDeal != $term) { // if the terms was found and converted to an element handle, then return that.
-               return array($termAfterDeal, $dealFid);
-          }
-					
-          if(isset($framework_results[$frid])) {
-               $formList = $framework_results[$frid];
-          } else {
-               $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
-							 $frameworkObject = $framework_handler->get($frid);
-							 $formList = $frameworkObject->getVar('fids');
-							 $framework_results[$frid] = $formList;
-          }
-     }
-     
+    if(!$frid) {
+        $formList[] = $fid; // mimic what the result of the framework query below would be...
+    } elseif(isset($framework_results[$frid])) {
+        $formList = $framework_results[$frid];
+    } else {
+        $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
+		$frameworkObject = $framework_handler->get($frid);
+		$formList = $frameworkObject->getVar('fids');
+		$framework_results[$frid] = $formList;
+	}
 
-     foreach($formList as $form_id) {
-          if(isset($results_array[$form_id][$term][$frid])) { return $results_array[$form_id][$term][$frid]; }
-          // first check if this is a handle
-					//print "hq: SELECT ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND ele_handle = \"".formulize_db_escape($term)."\"";
-          $handle_query = go("SELECT ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND ele_handle = \"".formulize_db_escape($term)."\"");
-          if(count($handle_query) > 0) { // if this is a valid handle, then use it
-							 $handle = $term;
-          } else {
-							 //print "chq: SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND ele_colhead = \"" . formulize_db_escape($term) . "\"";
-               $colhead_query = go("SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND (ele_colhead = \"" . formulize_db_escape($term) . "\" OR ele_colhead LIKE '%]".formulize_db_escape($term)."[/%')");
-               if(count($colhead_query) > 0) {
-										$handle = $colhead_query[0]['ele_handle'];
-               } else {
-										//print "capq: SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND ele_caption = \"" . formulize_db_escape($term) . "\"";
-                    $caption_query = go("SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND (ele_caption = \"" . formulize_db_escape($term) . "\" OR ele_caption LIKE '%]".formulize_db_escape($term)."[/%')");
-                    if(count($caption_query) > 0 ) {
-												 $handle = $caption_query[0]['ele_handle'];
-                    }
-               }
-          }
-          if($handle) {
-               $results_array[$form_id][$term][$frid] = array($handle, $form_id);
-               break;
-          }     
-     }
-     if(!$handle) {
-	  $handle = "{nonefound}";
-	  $form_id = 0;
-     }
-     return array($handle, $form_id);
+    foreach($formList as $form_id) {
+        if(isset($results_array[$form_id][$term][$frid])) { return $results_array[$form_id][$term][$frid]; }
+		// first check if this is a handle
+		$handle_query = go("SELECT ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND ele_handle = \"".formulize_db_escape($term)."\"");
+		if(count($handle_query) > 0) { // if this is a valid handle, then use it
+			$handle = $term;
+		} else {
+			$colhead_query = go("SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND (ele_colhead = \"" . formulize_db_escape($term) . "\" OR ele_colhead LIKE '%]".formulize_db_escape($term)."[/%')");
+			if(count($colhead_query) > 0) {
+				$handle = $colhead_query[0]['ele_handle'];
+			} else {
+				$caption_query = go("SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND (ele_caption = \"" . formulize_db_escape($term) . "\" OR ele_caption LIKE '%]".formulize_db_escape($term)."[/%')");
+				if(count($caption_query) > 0 ) {
+					$handle = $caption_query[0]['ele_handle'];
+				}
+			}
+		}
+		if($handle) {
+			$results_array[$form_id][$term][$frid] = array($handle, $form_id);
+			break;
+		}     
+    }
+    if(!$handle) {
+		$handle = "{nonefound}";
+		$form_id = 0;
+    }
+    return array($handle, $form_id);
 }
 
 
@@ -2283,15 +2249,15 @@ function parseTableFormFilter($filter, $andor, $elementsById) {
 
 // returns the form handle for the form that the given element handle belongs to
 function getFormHandleFromEntry($entry, $handle) {
-     if(is_array($entry)) {
-     	 foreach($entry as $formHandle=>$record) {
-     		 foreach($record as $elements) {
-            if(array_key_exists($handle, $elements)) { return $formHandle; }
-     		 }
-       }
-     } else {
-        return "";// exit("Error: no form handle found for element handle '$handle'");        
-     }
+	if(is_array($entry)) {
+		foreach($entry as $formHandle=>$record) {
+			foreach($record as $elements) {
+				if(array_key_exists($handle, $elements)) { return $formHandle; }
+			}
+		}
+	} else {
+		return "";// exit("Error: no form handle found for element handle '$handle'");        
+	}
 }
 
 // returns all the form handles for the given entry
@@ -2313,8 +2279,6 @@ function display($entry, $handle, $id=null, $localid="NULL") {
   if(is_numeric($id)) {
 		$entry = $entry[$id];
 	}
-	
-	$handle = dealWithDeprecatedFrameworkHandles($handle);
 	
   if(!$formhandle = getFormHandleFromEntry($entry, $handle)) { return ""; } // return nothing if handle is not part of entry
 
@@ -2477,10 +2441,8 @@ function internalRecordIds($entry, $formhandle="", $id="NULL", $fidAsKeys = fals
   
 	if(!$formhandle) {
 		$formhandle = getFormHandlesFromEntry($entry);
-	} else {
-		 // need to convert possible legacy framework form handles to form ids
-		 $formhandle = dealWithDeprecatedFormHandles($formhandle);
 	}
+	
 	if(is_array($formhandle)) {        
         $element_handler = xoops_getmodulehandler('elements', 'formulize');
 		foreach($formhandle as $handle) {

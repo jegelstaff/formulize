@@ -269,7 +269,7 @@ if($canSetNots) {
 	$setwho_linkcreatorlist->addOptionArray($linkcreator_options);
 	$linkcreatorlist = $setwho_linkcreatorlist->render();
 	$setwho_linkcreator = new xoopsFormRadio('', 'setwho', $_POST['setwho']);
-	$setwho_linkcreator->addOption('linkcreator', _formulize_DE_SETNOT_WHO_LINKCREATOR."<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;".$linkcreatorlist);
+	$setwho_linkcreator->addOption('linkcreator', _formulize_DE_SETNOT_WHO_LINKCREATOR.$linkcreatorlist);
 	
 	$setwho_elementemaillist = new xoopsFormSelect('', 'email_ele_id', $_POST['email_ele_id'], 1);
 	$setwho_elementemaillist->setExtra("onfocus=\"javascript:window.document.setnot.setwho[5].checked=true\"");
@@ -309,7 +309,7 @@ if($_POST['addcon']) {
 		$setnot->addElement(new xoopsFormHidden('elements[]', $_POST['elements'][$i]));
 		$setnot->addElement(new xoopsFormHidden('ops[]', $_POST['ops'][$i]));
 		$setnot->addElement(new xoopsFormHidden('terms[]', $_POST['terms'][$i]));
-		$conditionlist .= $options[$_POST['elements'][$i]] . " " . $_POST['ops'][$i] . " " . $_POST['terms'][$i] . "<br />";
+		$conditionlist .= "<p>".$options[$_POST['elements'][$i]] . " " . $_POST['ops'][$i] . " " . $_POST['terms'][$i] . "</p>";
 	} 
 }
 
@@ -338,7 +338,7 @@ $opterm->addElement($term);
 $addcon = new xoopsFormButton('', 'addcon', _formulize_DE_SETNOT_ADDCON, 'submit');
 $addcon->setExtra("onfocus=\"javascript:window.document.setnot.setfor[1].checked=true\"");
 
-$conditionui = "<br />$conditionlist" . $opterm->render() . "<br />" . $addcon->render();
+$conditionui = "$conditionlist <p>" . $opterm->render() . "</p>" . $addcon->render();
 
 $setfor_con = new xoopsFormRadio('' , 'setfor', $_POST['setfor']);
 $setfor_con->addOption('con', _formulize_DE_SETNOT_FOR_CON.$conditionui);

@@ -149,8 +149,7 @@ if (is_array($raw_pages)) {
     }
 }
 
-$formScreenHandler = xoops_getmodulehandler('formScreen', 'formulize');
-$all_multi_screens = $formScreenHandler->getMultiScreens($fid);
+$all_multi_screens = $form_handler->getMultiScreens($fid);
 
 // Go through each possible multi-paged screen's pages, and make changes accordingly
 foreach ($all_multi_screens as $i => $screen_array) {

@@ -57,6 +57,13 @@ function pageJump(options, prevpage) {
     return false;
 }
 
+jQuery('.navtab').click(function(){
+    var targetPage = jQuery(this).attr('this-page');
+    if (targetPage > 0) {
+        submitForm(targetPage, <?php print $currentPage; ?>);
+    }
+});
+
 </script><noscript>
 <h1>You do not have javascript enabled in your web browser.  This form will not work with your web browser.  Please contact the webmaster for assistance.</h1>
 </noscript>

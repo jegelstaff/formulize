@@ -391,8 +391,9 @@ EOF;
         }
     }
 
+    // returns only the parent screen, not the full screen object, since default might be a legacy form screen or a multipage screen
     public function default_form_screen() {
-        $screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
+        $screen_handler = xoops_getmodulehandler('screen', 'formulize');
         return $screen_handler->get($this->defaultform);
     }
 
@@ -1022,7 +1023,7 @@ class formulizeFormsHandler {
 			$dataType = $fieldStateData['Type'];
 		}
 		$newName = $newName ? $newName : $element->getVar('ele_handle');
-		$updateFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " CHANGE `$oldName` `$newName` ". $dataType; 
+		$updateFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " CHANGE `$oldName` `$newName` ". $dataType;
 		if(!$updateFieldRes = $xoopsDB->queryF($updateFieldSQL)) {
 		  return false;
 		}
@@ -1391,9 +1392,9 @@ class formulizeFormsHandler {
 	 */
 	public function formScreenForClonedForm($newtitle, $newfid)
 	{
-		$formScreenHandler = xoops_getmodulehandler('formScreen', 'formulize');
+		$formScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 		$defaultFormScreen = $formScreenHandler->create();
-		$formScreenHandler->setDefaultFormScreenVars($defaultFormScreen, $newtitle, $newfid);
+		$formScreenHandler->setDefaultFormScreenVars($defaultFormScreen, $newtitle.' Form', $newfid, $newtitle);
 		if(!$defaultFormScreenId = $formScreenHandler->insert($defaultFormScreen)) {
 			print "Error: could not create default form screen";
 			return $defaultFormScreenId;
@@ -1411,7 +1412,7 @@ class formulizeFormsHandler {
 	{
 		$listScreenHandler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
 		$screen = $listScreenHandler->create();
-		$listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $newtitle, $newfid);
+		$listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $newtitle.' List', $newfid);
 
 		if(!$defaultListScreenId = $listScreenHandler->insert($screen)) {
 			print "Error: could not create default list screen";
@@ -1491,4 +1492,35 @@ class formulizeFormsHandler {
 			$res = $this->db->queryF($sql);
         }
 	}
+    
+    public function getMultiScreens($fid) {
+        if(!$fid) {
+            return array();
+        }
+        $formObject = $this->get($fid);
+		$screens = array();
+		$screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+		$criteria_object = new CriteriaCompo(new Criteria('type','multiPage'));
+		$formScreens = $screen_handler->getObjects($criteria_object,$fid);
+		foreach($formScreens as $screen) {
+			$sid = $screen->getVar('sid');
+			$screenData = $screen_handler->get($sid);	
+		  	$screens[$sid]['sid'] = $screenData->getVar('sid');
+		  	$screens[$sid]['title'] = $screenData->getVar('title');
+		  	$screens[$sid]['type'] = $screenData->getVar('type');
+		  	$screens[$sid]['pages'] = $screenData->getVar('pages');
+		  	$screens[$sid]['pagetitles'] = $screenData->getVar('pagetitles');
+            // find the pages that contain all elements in this form, and add 'new' as an element on that page, so the page will be selected when creating new elements
+            foreach($screens[$sid]['pages'] as $i=>$page) {
+                foreach($formObject->getVar('elements') as $ele_id) { // check for all elements (but ignore 'display to no group' elements which are not included in the object by default)
+                    if(!in_array($ele_id, $page)) {
+                        continue 2; // go to next page
+                    }
+                }
+                // page did contain all the elements, so flag it as valid for 'new'
+                $screens[$sid]['pages'][$i][] = 'new';
+            }
+		}
+		return $screens;
+	}	
 }

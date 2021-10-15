@@ -41,6 +41,8 @@ if (isset($icmsConfig['startpage']) && $icmsConfig['startpage'] != "" && $icmsCo
 			$xoopsOption['show_cblock'] = 1;
 			/** Included to start page rendering */
 			include "header.php";
+            global $xoopsTpl;
+            $xoopsTpl->assign('openClass', 'site-layout__sidebar--open');
 			/** Included to complete page rendering */
 			include "footer.php";
 		}
@@ -52,6 +54,8 @@ if (isset($icmsConfig['startpage']) && $icmsConfig['startpage'] != "" && $icmsCo
 	$xoopsOption['show_cblock'] = 1;
 	/** Included to start page rendering */
 	include "header.php";
+    global $xoopsTpl;
+    $xoopsTpl->assign('openClass', 'site-layout__sidebar--open');
 	/** Included to complete page rendering */
 	include "footer.php";
 }

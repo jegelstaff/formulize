@@ -82,7 +82,8 @@ if (!isset($_POST['metachoice']) AND !isset($formulize_doingManualExport)) {
     print "<body style=\"background: white; margin-top:20px;\"><center>";
     print "<table width=100%><tr><td width=5%></td><td width=90%>";
     print "<form id=\"metachoiceform\" name=\"metachoiceform\" action=\"".getCurrentURL() . "\" method=\"post\">\n";
-    print "<center><h1>"._formulize_DE_EXPORT_TITLE."</h1><br></center>\n";
+    
+    print "<table class='outer popup'><tr><th>"._formulize_DE_EXPORT_TITLE."</th></tr><tr><td>\n";
 
     if ($_GET['type'] == "update") {
         print "<p>"._formulize_DE_IMPORT_DATATEMP4." <a href=\"\" onclick=\"javascript:window.opener.showPop('" . XOOPS_URL . "/modules/formulize/include/import.php?fid=$fid&eq=".intval($_GET['eq'])."');return false;\">"._formulize_DE_IMPORT_DATATEMP5."</a></p>\n";
@@ -113,7 +114,7 @@ if (!isset($_POST['metachoice']) AND !isset($formulize_doingManualExport)) {
     print "<p>"._formulize_DB_EXPORT_NULL_OPTION." <input type=\"text\" name=\"nullOption\" value=\"\"></input></p>\n";
     
     
-    print "</div>\n";
+    print "</div>\n</td></tr></table>";
     print "</form>";
 
     print "</td><td width=5%></td></tr></table>";

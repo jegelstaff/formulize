@@ -343,7 +343,7 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
         $GLOBALS['formulize_screenCurrentlyRendering'] = $previouslyRenderingScreen;
     }
 
-    public function setDefaultListScreenVars($defaultListScreen, $defaultFormScreenId, $title, $fid)
+    public function setDefaultListScreenVars($defaultListScreen, $defaultFormScreenId, $formTitle='', $fid)
     {
         // View
         $defaultListScreen->setVar('defaultview', 'all');
@@ -355,7 +355,7 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
         $defaultListScreen->setVar('viewentryscreen', $defaultFormScreenId);
         // Headings
         $defaultListScreen->setVar('useheadings', 1);
-        $defaultListScreen->setVar('repeatheaders', 5);
+        $defaultListScreen->setVar('repeatheaders', 10);
         $defaultListScreen->setVar('usesearchcalcmsgs', 1);
         $defaultListScreen->setVar('usesearch', 1);
         $defaultListScreen->setVar('columnwidth', 0);
@@ -382,7 +382,7 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
         $defaultListScreen->setVar('usereset', _formulize_DE_RESETVIEW);
         $defaultListScreen->setVar('usesave', _formulize_DE_SAVE);
         $defaultListScreen->setVar('usedeleteview', _formulize_DE_DELETE);
-        $defaultListScreen->setVar('title', "Entries in '$title'");
+        $defaultListScreen->setVar('title', $formTitle);
         $defaultListScreen->setVar('fid', $fid);
         $defaultListScreen->setVar('frid', 0);
         $defaultListScreen->setVar('type', 'listOfEntries');

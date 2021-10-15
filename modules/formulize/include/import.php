@@ -123,7 +123,7 @@ print "</head>";
 print "<body style=\"background: white; margin-top:20px;\"><center>"; 
 print "<table width=100%><tr><td width=5%></td><td width=90%>";
 
-print "<table class=outer><tr><th colspan=2>" . _formulize_DE_IMPORT . "</th></tr>";
+print "<table id='import-instructions' class='outer popup'><tr><th colspan=2>" . _formulize_DE_IMPORT . "</th></tr>";
 
 define("IMPORT_WRITE", true);
 define("IMPORT_DEBUG", false);
@@ -181,7 +181,7 @@ $cols = array();
 foreach($cols1[$fid] as $col) {
 	$cols[] = $col['ele_id'];
 }
-$headers = getHeaders($cols);
+$headers = getHeaders($cols, false); // false means we're sending element ids
 $template = $regfid == $fid ? "blankprofile" : "blank";
 $blank_template = prepExport($headers, $cols, "", "comma", "", "", $template, $fid);
 

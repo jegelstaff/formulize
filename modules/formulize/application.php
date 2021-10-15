@@ -56,8 +56,6 @@ foreach($applicationsToDraw as $aid) {
     if(is_object($aid)) {
         $aid = $aid->getVar('appid'); // when 'all' is requested, the array will be of objects, not ids
     }
-    //checkMenuLinks($aid);
-
     $links;
     if($aid) {
         $links = $application_handler->getMenuLinksForApp($aid);
@@ -103,51 +101,3 @@ function getNavDataForForms($links) {
     return $formsToSend;
 }
 
-
-
-/*This function checks if the menu link is still valid
- *added by Jian Feb 2015
- *not done yet. I left this function in case of we want to check menu links when loading the page.
- *
-
- *you can check ApplicationHandler->deleteMenuLinkByScreen($screen)
- * *form_screens_save.php  uses this function means to delete menu links when deleting a screen
- * *application_forms_save.php uses this function means to delete menu links when deleting a form,this is just for making sure links to form get deleted
- * *forms.php also using this function because forms.php will internally delete some screen and other stuff with out using form_screens_save.php
- * *
-
-function checkMenuLinks($aid){
-    $application_handler = xoops_getmodulehandler('applications', 'formulize');
-    $form_handler = xoops_getmodulehandler('forms', 'formulize');
-    $screen_handler = xoops_getmodulehandler('screen', 'formulize');
-    $appLinks = $application_handler->getMenuLinksForApp($aid);
-
-    $menulinks=array();
-    $index = 0;
-    foreach ($appLinks as $menulink){
-        $menulinks[$index] = $menulink->getVar('screen');
-        if(preg_match("/^fid=.*$/",$menulinks[$index])){
-            error_log("a fid");
-            $fid=intval(substr($menulinks[$index],4));
-            $form_object=$form_handler->get($fid);
-            if($form_object==null){
-                echo("fid= ".$fid." not found");
-            }else {
-                error_log("fid found");
-            }
-        }else if(preg_match("/^sid=.*$/",$menulinks[$index])){
-            error_log("a sid");
-            $sid=intval(substr($menulinks[$index],4));
-            $screen_object=$screen_handler->get($sid);
-            if($screen_object==null){
-                echo("sid= ".$sid." not found");
-                //$application_handler->deleteMenuLink($aid, $menuitem);
-            }else {
-                error_log("sid found");
-            }
-        }
-        $index ++;
-    }
-    error_log("linsScreen ".print_r($menulinks));
-}
-*/

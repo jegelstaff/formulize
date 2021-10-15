@@ -397,7 +397,7 @@ define("_formulize_DE_SAVE_UPDATE", "Mise à jour: ");
 define("_formulize_DE_SAVE_USECURRENT", "Utiliser les paramètres de la vue courante pour...");
 define("_formulize_DE_SAVED_VIEWS", "VOS VUES SAUVEGARDEES:");
 define("_formulize_DE_SAVEVIEW", "Options pour la sauvegarde de cette vue");	
-define("_formulize_DE_SEARCH_HELP", "Indiquer les mots de la recherché ici");
+define("_formulize_DE_SEARCH_HELP", "recherché ici");
 define("_formulize_DE_SEARCH_POP_HELP", "Cliquez ici pour des infos à propos des termes de recherche");
 define("_formulize_DE_SEARCHGO", "Effectuer la requête demandée");
 define("_formulize_DE_SELALL", "Sélectionner toutes les entrées");

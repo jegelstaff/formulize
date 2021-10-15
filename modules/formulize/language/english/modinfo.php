@@ -65,8 +65,8 @@ define("_MI_formulize_NUMBER_SUFFIX_DESC", "For example, if your entire site onl
 define("_MI_formulize_NUMBER_DECIMALSEP", "By default, if decimals are used, what punctuation should separate them from the rest of the number?");
 define("_MI_formulize_NUMBER_SEP", "By default, what punctuation should be used to separate thousands in numbers?");
 
-define("_MI_formulize_HEADING_HELP_LINK", "Should the help link ([?]) appear at the top of each column in a list of entries?");
-define("_MI_formulize_HEADING_HELP_LINK_DESC", "This link provides a popup window that shows details about the question in the form, such as the full text of the question, the choice of options if the question is a radio button, etc.");
+define("_MI_formulize_HEADING_HELP_LINK", "Should the help link ([?]) and lock icons appear at the top of each column in a list of entries?");
+define("_MI_formulize_HEADING_HELP_LINK_DESC", "The help link provides a popup window that shows details about the question in the form, such as the full text of the question, the choice of options if the question is a radio button, etc. The lock icon allows the user to keep a column visible on screen as they scroll to the right, like 'Freeze Panes' in Excel.");
        
 define("_MI_formulize_USECACHE", "Use caching to speed up Procedures?");
 define("_MI_formulize_USECACHEDESC", "By default, caching is on.");
@@ -91,6 +91,9 @@ define("_MI_formulize_ISSAVELOCKEDDESC", "When locked, you can only change the c
 
 define("_MI_formulize_CUSTOMSCOPE", "Use custom code for determining the scope of queries");
 define("_MI_formulize_CUSTOMSCOPEDESC", "Leave this blank, unless you specifically want to override the \$scope variable used in the data extraction layer. The contents of this box will be run as PHP code, and will receive the \$scope variable, which is typically an array of group ids. You can return a set of different ids, or a string in the format 'uid = X' or 'uid = X OR uid = Y...' This is useful if you can isolate certain groups using only one or a few user ids, since then the subquery to the Entry Owner Groups table is bypassed, dramatically improving query speed in large databases.");
+
+define("_MI_formulize_F7MENUTEMPLATE", "Use the modern, mobile friendly menu layout - compatible with the Formulize 7 Theme \"Anari\"");
+define("_MI_formulize_F7MENUTEMPLATEDESC", "If you have upgraded from an older version of Formulize, this will be set to \"No\" but if/when you update the theme of your website to \"Anari\" then you should switch this to \"Yes\".");
 
 // The name of this module
 define("_MI_formulizeMENU_NAME","MyMenu");

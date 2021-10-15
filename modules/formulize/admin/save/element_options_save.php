@@ -120,6 +120,13 @@ if($ele_type == "yn") {
 }
 if($ele_type == "subform") {
 
+    if(!isset($processedValues['elements']['ele_value']['show_delete_button'])) {
+        $processedValues['elements']['ele_value']['show_delete_button'] = 0;
+    }
+    if(!isset($processedValues['elements']['ele_value']['show_clone_button'])) {
+        $processedValues['elements']['ele_value']['show_clone_button'] = 0;
+    }
+
     if(!isset($processedValues['elements']['ele_value']['enforceFilterChanges'])) {
         $processedValues['elements']['ele_value']['enforceFilterChanges'] = 0;
     }
