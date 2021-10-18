@@ -747,6 +747,11 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	} elseif(isset($_POST['formulize_originalVentry']) AND is_numeric($_POST['formulize_originalVentry'])) {
 		$settings['ventry'] = $_POST['formulize_originalVentry'];
 	} else {
+        // if the user has requested a ve in the URL, set it now as if they clicked on a link to go into an entry
+        if((!isset($_POST['ventry']) OR !$_POST['ventry']) AND
+            isset($_GET['ve']) AND is_numeric($_GET['ve']) AND $_GET['ve'] > 0) {
+            $_POST['ventry'] = $_GET['ve'];
+        }
 		$settings['ventry'] = $_POST['ventry'];
 	}
 

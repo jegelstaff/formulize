@@ -39,7 +39,7 @@ function submitForm(page, prevpage) {
 function multipageSetHiddenFields(page, prevpage) {
   if(page == <?php print $thanksPage; ?>) {
     window.document.formulize_mainform.ventry.value = ''; 
-    jQuery('form[name=formulize]').attr('action', '<?php print $done_dest; ?>');
+    jQuery('form[name=formulize_mainform]').attr('action', '<?php print $done_dest; ?>');
   }
   window.document.formulize_mainform.formulize_currentPage.value = page<?php print $screen ? "+'-".$screen->getVar('sid')."'" : ""; ?>;
   window.document.formulize_mainform.formulize_prevPage.value = prevpage<?php print $screen ? "+'-".$screen->getVar('sid')."'" : ""; ?>;

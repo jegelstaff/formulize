@@ -244,6 +244,12 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	$nextPage = $currentPage+1;
 	
 	$done_dest = $done_dest ? $done_dest : getCurrentURL();
+    // strip out any ve portion of a done destination, so we don't end up forcing the user back to this entry after they're done
+    if($vepos = strpos($done_dest,'&ve=')) {
+        if(is_numeric(substr($done_dest, $vepos+4))) {
+            $done_dest = substr($done_dest, 0, $vepos);
+        }
+    }
 	$done_dest = substr($done_dest,0,4) == "http" ? $done_dest : "http://".$done_dest;
 	
 	// display a form if that's what this page is...

@@ -3638,6 +3638,7 @@ function formulize_javascriptForAfterRemovingLocks(action) {
 				document.open();
 				document.write(html);
 				document.close();
+                window.history.pushState({}, '', formAction);
 			}
 		});
 	}
