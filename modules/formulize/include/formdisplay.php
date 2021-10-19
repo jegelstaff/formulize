@@ -2185,10 +2185,10 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
        ("hideaddentries" != $hideaddentries AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php"))       
        ) {
         if(!isset($subform_element_object->ele_value["show_delete_button"]) OR $subform_element_object->ele_value["show_delete_button"]) {
-            $deleteButton = "&nbsp;&nbsp;&nbsp;<input class='subform-delete-clone-buttons' style='display: none;' type=button name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del($subform_id, '$viewType', ".intval($_GET['subformElementId']).", '$fid', '$entry');\">";
+            $deleteButton = "&nbsp;&nbsp;&nbsp;<input class='subform-delete-clone-buttons$subformElementId$subformInstance' style='display: none;' type=button name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del($subform_id, '$viewType', ".intval($_GET['subformElementId']).", '$fid', '$entry');\">";
         }
         if(!isset($subform_element_object->ele_value["show_clone_button"]) OR $subform_element_object->ele_value["show_clone_button"]) {
-            $deleteButton .= "&nbsp;&nbsp;&nbsp;<input class='subform-delete-clone-buttons' style='display: none' type=button name=clonesubs value='" . _formulize_CLONE_CHECKED . "' onclick=\"javascript:sub_clone($subform_id, '$viewType', ".intval($_GET['subformElementId']).", '$fid', '$entry');\">";
+            $deleteButton .= "&nbsp;&nbsp;&nbsp;<input class='subform-delete-clone-buttons$subformElementId$subformInstance' style='display: none' type=button name=clonesubs value='" . _formulize_CLONE_CHECKED . "' onclick=\"javascript:sub_clone($subform_id, '$viewType', ".intval($_GET['subformElementId']).", '$fid', '$entry');\">";
         }
 	}
 
@@ -2379,7 +2379,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 						and formulizePermHandler::user_can_delete_entry($subform_id, $uid, $sub_ent) AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php"))
 					{
 						// note: if the add/delete entry buttons are hidden, then these delete checkboxes are hidden as well
-						$col_two .= "<input type=checkbox class='delbox' name=delbox$sub_ent value=$sub_ent onclick='showHideDeleteClone();'></input>";
+						$col_two .= "<input type=checkbox class='delbox' name=delbox$sub_ent value=$sub_ent onclick='showHideDeleteClone($subformElementId$subformInstance);'></input>";
 					}
 					$col_two .= "</td>\n";
                     $modalParams = $viewType == 'Modal' ? "'$frid', '$fid', '$entry', " : "";
@@ -2429,7 +2429,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 					// check to see if we draw a delete box or not
 					$deleteBox = "";
 					if ("hideaddentries" != $hideaddentries AND $sub_ent !== "new" and formulizePermHandler::user_can_delete_entry($subform_id, $uid, $sub_ent) AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
-						$deleteBox = "<input type=checkbox class='delbox' name=delbox$sub_ent value=$sub_ent onclick='showHideDeleteClone();'></input>&nbsp;&nbsp;";
+						$deleteBox = "<input type=checkbox class='delbox' name=delbox$sub_ent value=$sub_ent onclick='showHideDeleteClone($subformElementId$subformInstance);'></input>&nbsp;&nbsp;";
 					}
 					
 					if(!strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
@@ -2497,13 +2497,13 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	} // end of if we're closing the subform inferface where entries are supposed to be collapsable forms
 
     $col_two .= "
-        function showHideDeleteClone() {
+        function showHideDeleteClone(elementInstance) {
             var checkedBoxes = jQuery(\".delbox:checked\");
-            if(jQuery(\".subform-delete-clone-buttons\").css(\"display\") == \"none\" &&
+            if(jQuery(\".subform-delete-clone-buttons\"+elementInstance).css(\"display\") == \"none\" &&
             checkedBoxes.length > 0) {
-                jQuery(\".subform-delete-clone-buttons\").show(200);
+                jQuery(\".subform-delete-clone-buttons\"+elementInstance).show(200);
             } else if(checkedBoxes.length == 0) {
-                jQuery(\".subform-delete-clone-buttons\").hide(200);
+                jQuery(\".subform-delete-clone-buttons\"+elementInstance).hide(200);
             }
         }
     </script>";
