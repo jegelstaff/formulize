@@ -1382,6 +1382,8 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                             $_POST['goto_sfid'] = $subScreenObject->getVar('fid');
                             $_POST['goto_sub'] = $newSubEntry;
                             $_POST['goto_subformElementId'] = $candidate->getVar('ele_id');
+                            $_POST['formulize_prevPage'] = $_POST['formulize_currentPage'];
+                            $_POST['formulize_prevPage'] .= $screen ? '-'.$screen->getVar('sid') : '';
                             unset($_POST['formulize_currentPage']); // want to make sure we land on page 1
                             $GLOBALS['formulize_unsetSelectboxCaches'] = true; // totally horrible hack to get around the fact that subforms don't figure out there is a new entry to display until we get here. They should do this without having to render the elements first! We have to basically undo any caching of selectbox options that happened when we were fake rendering the page just to figure out what new entry had been created.
                             $newSubEntryScreen_handler->render($subScreenObject, $newSubEntry, $settings);
