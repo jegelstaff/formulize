@@ -7508,6 +7508,12 @@ function writeEntryDefaults($target_fid,$target_entry) {
 // valid for a specific entry
 function getEntryDefaults($target_fid,$target_entry) {
 
+  static $cachedDefaults = array();
+  
+  if(isset($cachedDefaults[$target_fid][$target_entry])) {
+    return $cachedDefaults[$target_fid][$target_entry];
+  }
+
   $defaultValueMap = array();
 
   $element_handler = xoops_getmodulehandler('elements', 'formulize');
@@ -7587,6 +7593,7 @@ function getEntryDefaults($target_fid,$target_entry) {
     if($defaultTextToWrite === "" OR $defaultTextToWrite === false OR $defaultTextToWrite === null) { continue; }
     $defaultValueMap[$thisDefaultEle->getVar('ele_id')] = $defaultTextToWrite;
   }
+  $cachedDefaults[$target_fid][$target_entry] = $defaultValueMap;
   return $defaultValueMap;
 }
 

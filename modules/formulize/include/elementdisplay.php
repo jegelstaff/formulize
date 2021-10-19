@@ -404,19 +404,11 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 		if(isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry][$filterElements[$i]])) {
 			$compValue = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry][$filterElements[$i]];
 		} elseif($entry == "new") {
-			// for textboxes, let's try to get their default value
-			// for other elements, generate the default is too tricky to get it to work at present, not enough time available
 			$elementObject = $element_handler->get($filterElements[$i]);
 			if(is_object($elementObject)) {
-				$ele_type = $elementObject->getVar('ele_type');
-				if($ele_type == "text" OR $ele_type == "textarea") {
-					$ele_value = $elementObject->getVar('ele_value');
-					$defaultKey = $ele_type == "text" ? 2 : 0; // default key is in different places for different types of elements
-                    $placeholder = $ele_type == "text" ? $ele_value[11] : "";
-					$compValue = getTextboxDefault($ele_value[$defaultKey], $elementObject->getVar('id_form'), $entry, $placeholder);
-				} else {
-					$compValue = "";
-				}
+                // get defaults for certain element types, function needs expanding
+                $defaultValueMap = getEntryDefaults($elementObject->getVar('id_form'),$entry);
+                $compValue = isset($defaultValueMap[$elementObject->getVar('ele_id')]) ? $defaultValueMap[$elementObject->getVar('ele_id')] : "";
 			} else {
 				$compValue = "";
 			}
