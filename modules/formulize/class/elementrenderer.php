@@ -349,14 +349,14 @@ class formulizeElementRenderer{
 						$restrictSQL .= ") )";
 					}
 
-                    // horrible hack to handle cases where new subform entries are created and we need to flush values that would have been generated when we were fake making the page before we new a new subform entry is what we were really aiming for. See comment where global is instantiated.
+                    // horrible hack to handle cases where new subform entries are created and we need to flush values that would have been generated when we were fake making the page before we knew a new subform entry is what we were really aiming for. See comment where global is instantiated.
                     // all comes from not having proper controller in charge of what we should be displaying. Ugh.
                     if(isset($GLOBALS['formulize_unsetSelectboxCaches']) AND isset($GLOBALS['SelectboxCachesSet'])) {
                         $cachedSourceValuesQ = array();
                         $cachedSourceValuesAutocompleteFile = array();
                         $cachedSourceValuesAutocompleteLength = array();
                         unset($GLOBALS['formulize_unsetSelectboxCaches']);
-                    } else {
+                    } elseif(!isset($GLOBALS['SelectboxCachesSet'])) {
                         $GLOBALS['SelectboxCachesSet'] = true;
                         static $cachedSourceValuesQ = array();
                         static $cachedSourceValuesAutocompleteFile = array();

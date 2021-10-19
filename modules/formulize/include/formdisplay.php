@@ -1359,6 +1359,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		}	// end of for each fids
 
         // if a new entry was created in a subform element that displays in multipage, then jump to that entry
+        // VERY UGLY THAT WE ARE HAVING TO COMPILE ALL THE ELEMENTS JUST TO DETERMINE THIS??!! So messy and potentially slow!
         global $formulize_subformElementsWithNewEntries, $formulize_newSubformEntries;
         global $xoopsUser;
 
