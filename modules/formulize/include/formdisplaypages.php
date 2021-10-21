@@ -362,7 +362,9 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	    
     }
 
-    include_once XOOPS_ROOT_PATH.'/modules/formulize/include/multipage_boilerplate.php';
+	if(!isset($GLOBALS['formulize_inlineSubformFrid']) AND !strstr(getCurrentURL(), 'subformdisplay-elementsonly.php')) {
+		include_once XOOPS_ROOT_PATH.'/modules/formulize/include/multipage_boilerplate.php';
+	}
     
     formulize_benchmark("End of displayFormPages.");
 } // end of the function!
