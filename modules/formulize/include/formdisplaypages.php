@@ -46,7 +46,7 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
 
 function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditions="", $introtext="", $thankstext="", $done_dest="", $button_text=array(), $settings=array(), $overrideValue="", $printall=0, $screen=null, $saveAndContinueButtonText=null, $elements_only = false) { // nmc 2007.03.24 - added 'printall'
 	
-	formulize_benchmark("Start of displayFormPages.");
+    formulize_benchmark("Start of displayFormPages.");
 	
     // instantiate multipage screen handler just because we might need some functions from that file (plain functions, not methods on the class, because they're not necessarily related to handling a screen, and we might not even have a screen in effect)
     $multiPageScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
@@ -164,10 +164,10 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
             $currentPage = 1;    
         }
     } else {
-	$currentPage = isset($_POST['formulize_currentPage']) ? $_POST['formulize_currentPage'] : 1;
+        $currentPage = (!$elements_only AND isset($_POST['formulize_currentPage'])) ? $_POST['formulize_currentPage'] : 1;
     }
 	$thanksPage = count($pages) + 1;
-	
+    
 	// debug control:
 	$currentPage = (isset($_GET['debugpage']) AND is_numeric($_GET['debugpage'])) ? $_GET['debugpage'] : $currentPage;
 	
@@ -207,13 +207,12 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	// check to see if there are conditions on this page, and if so are they met
 	// if the conditions are not met, move on to the next page and repeat the condition check
 	// conditions only checked once there is an entry!
-    
-	$pagesSkipped = false;
+ 	$pagesSkipped = false;
 	if(is_array($conditions) AND (!$currentPageScreen OR ($screen AND $currentPageScreen == $screen->getVar('sid')))) {
 		$conditionsMet = false;
         $element_handler = xoops_getmodulehandler('elements','formulize');
 		while(!$conditionsMet AND $currentPage > 0) {
-			if(isset($conditions[$currentPage]) AND count($conditions[$currentPage][0])>0) { // conditions on the current page
+			if(isset($conditions[$currentPage][0]) AND count($conditions[$currentPage][0])>0) { // conditions on the current page
 				if(pageMeetsConditions($conditions, $currentPage, $entry, $fid, $frid) == false) {
 					if($prevPageThisScreen <= $currentPage) {
 						$currentPage++;
@@ -243,7 +242,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	
 	$nextPage = $currentPage+1;
 	
-	$done_dest = $done_dest ? $done_dest : getCurrentURL();
+ 	$done_dest = $done_dest ? $done_dest : getCurrentURL();
     // strip out any ve portion of a done destination, so we don't end up forcing the user back to this entry after they're done
     if($vepos = strpos($done_dest,'&ve=')) {
         if(is_numeric(substr($done_dest, $vepos+4))) {
@@ -362,7 +361,9 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	    
     }
 
-    include_once XOOPS_ROOT_PATH.'/modules/formulize/include/multipage_boilerplate.php';
+    if(!$elements_only) {
+        include_once XOOPS_ROOT_PATH.'/modules/formulize/include/multipage_boilerplate.php';
+    }
     
     formulize_benchmark("End of displayFormPages.");
 } // end of the function!

@@ -239,8 +239,6 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
     
         $previouslyRenderingScreen = $GLOBALS['formulize_screenCurrentlyRendering'];
         
-        //$GLOBALS['formulize_formElementsOnly'] = $elements_only ? true : false;
-    
 		if(!is_array($settings)) {
 				$settings = array();
 		}
