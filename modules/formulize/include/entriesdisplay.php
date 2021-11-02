@@ -3948,13 +3948,7 @@ function formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers) {
 
     // setup default navigation - and in Anari theme, put in a hack to extend the height of the scrollbox if necessary -- need to rebuild markup for list so this kind of thing is not necessary!
     $pageNav = "";
-    global $xoopsConfig,$xoopsUser;
-    /*if($xoopsUser AND $xoopsUser->getVar('uid')==19) {
-            print 'helloworld';
-            print_r($xoopsConfig);
-            exit();
-        }*/
-        
+    global $xoopsConfig;
     if($xoopsConfig['theme_set']=='Anari') {
         $pageNav = "<script type='text/javascript'>
     jQuery(document).ready(function() {
