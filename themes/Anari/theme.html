@@ -167,6 +167,19 @@
     });
   </script>
   
+    <{ if $masquerade_username }>
+        <div id="formulize-masquerade-block">
+            Masquerading as <b><{$masquerade_username}></b>
+            <form method="post" action="<{$smarty.const.XOOPS_URL}>/modules/formulize/">
+                <input type="hidden" name="revert" value="1" />
+                <input type="hidden" name="op" value="masquerade" />
+                <input type="hidden" name="masquerade_end" value="1" />
+                <input type="submit" name="confirm_submit" value="Revert" />
+            </form>
+        </div>
+        <div style="clear:both;"></div>
+    <{ /if }>
+  
 </body>
 
 </html>

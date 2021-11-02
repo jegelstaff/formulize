@@ -2952,6 +2952,20 @@ img {
   padding-left: 200px;
 }
 
+#formulize-masquerade-block {
+  bottom: 1em;
+  right: 1em;
+  position: absolute;
+  }
+  #formulize-masquerade-block form {
+    display: inline; }
+  #formulize-masquerade-block input[type=submit] {
+    padding: 0px 6px;
+    min-width: 5em;
+    }
+  #formulize-masquerade-block input[type=submit]:hover {
+    transform: none; }
+
 .google-icon-wrapper {
     display: flex;
     flex-direction: row;
