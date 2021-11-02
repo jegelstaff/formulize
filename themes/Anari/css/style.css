@@ -73,11 +73,11 @@ table {
   border-spacing: 0;
 }
 
-.print-only {
+.print-only, .only-print {
   display: none;
 }
 @media print {
-  .print-only {
+  .print-only, .only-print {
     display: block;
   }
 }
