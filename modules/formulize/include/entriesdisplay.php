@@ -3946,13 +3946,30 @@ function formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers) {
 		$data = array();
 	}
 
+    // setup default navigation - and in Anari theme, put in a hack to extend the height of the scrollbox if necessary -- need to rebuild markup for list so this kind of thing is not necessary!
+    $pageNav = "";
+    global $xoopsConfig,$xoopsUser;
+    /*if($xoopsUser AND $xoopsUser->getVar('uid')==19) {
+            print 'helloworld';
+            print_r($xoopsConfig);
+            exit();
+        }*/
+        
+    if($xoopsConfig['theme_set']=='Anari') {
+        $pageNav = "<script type='text/javascript'>
+    jQuery(document).ready(function() {
+        jQuery('.scrollbox').css('height','100%');
+    });
+</script>";
+    }   
+    
 	$numberPerPage = is_object($screen) ? $screen->getVar('entriesperpage') : 10;
 	if($numberPerPage == 0 OR $_POST['hlist']) {
 		// if all entries are supposed to be on one page for this screen, then return no navigation controls.  Also return nothing if the list is hidden.
-		return "";
+		return $pageNav;
 	}
 
-	$pageNav = "";
+	
 	// regenerate essentially causes the user to jump back to page 0 because something about the dataset has fundamentally changed (like a new search term or something)
 	$currentPage = (isset($_POST['formulize_LOEPageStart']) AND !$regeneratePageNumbers) ? intval($_POST['formulize_LOEPageStart']) : 0;
 
@@ -3982,7 +3999,7 @@ function formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers) {
 			$lastDisplayPage = $pageNumbers;
 		}
 
-		$pageNav .= "<p><div class=\"formulize-page-navigation\"><span class=\"page-navigation-label\">". _AM_FORMULIZE_LOE_ONPAGE."</span>";
+		$pageNav = "<p><div class=\"formulize-page-navigation\"><span class=\"page-navigation-label\">". _AM_FORMULIZE_LOE_ONPAGE."</span>";
 		if ($currentPage > 1) {
 			$pageNav .= "<a href=\"\" class=\"page-navigation-prev\" onclick=\"javascript:pageJump('".($currentPage - $numberPerPage)."');return false;\">"._AM_FORMULIZE_LOE_PREVIOUS."</a>";
 		}
@@ -4006,7 +4023,7 @@ function formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers) {
 		}
 		$pageNav .= "</div><span class=\"page-navigation-total\">".
 			sprintf(_AM_FORMULIZE_LOE_TOTAL, $GLOBALS['formulize_countMasterResultsForPageNumbers'])."</span></p>\n";
-	}
+	} 
 	return $pageNav;
 }
 

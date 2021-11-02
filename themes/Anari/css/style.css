@@ -696,8 +696,11 @@ table:first-child div.applinks h1 {
     font-size: 150%;
 }
 
+div.list-of-entries .card__body {
+    height: 77vh;
+}
 .scrollbox {
-    height: 64vh;
+    height: 92%;
     width: 93vw;
 }
 
