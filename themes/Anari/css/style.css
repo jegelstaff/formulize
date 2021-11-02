@@ -683,6 +683,12 @@ table:first-child div.applinks h1 {
   overflow: auto;
   height: 91vh;
 }
+@media print {
+    .main-content {
+        overflow: visible;
+    }
+}
+
 #xo-canvas-leftcolumn {
   height: 94vh;
   overflow: auto;
