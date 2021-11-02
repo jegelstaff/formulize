@@ -1839,7 +1839,7 @@ function createQuickSearches($searches, $settings, $hiddenQuickSearches=array(),
 	$hiddenQuickSearchesToMake = array_merge($hiddenQuickSearches, $pubfilters); // include the published filters/searches that the user may have assigned to this screen
 	foreach($hiddenQuickSearchesToMake as $thisHQS) {
 		$search_text = isset($searches[$thisHQS]) ? strip_tags(htmlspecialchars($searches[$thisHQS], ENT_QUOTES)) : ""; // striping tags after htmlspecialchars is probably unnecessary, but can't hurt(?)
-		$quickSearchBox[$thisHQS] = packageSearches($thisHQS, $search_text, $filtersRequired);
+		$quickSearches[$thisHQS] = packageSearches($thisHQS, $search_text, $filtersRequired);
 	}
 		
 	return $quickSearches;
