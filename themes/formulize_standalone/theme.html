@@ -32,38 +32,6 @@
     <!-- Sheet Css -->
     <link rel="stylesheet" type="text/css" media="all" href="<{$icms_imageurl}><{if isset($icms_rtl) and $icms_rtl}>rtl/<{/if}>style.css" />
     
-    <script type="text/javascript">
-        jQuery(document).ready(function() {
-            jQuery('#formulizeform input, #formulizeform select, #formulizeform textarea').first().focus();
-            jQuery('#formulizeform input[type="radio"]').keypress(function(e) {
-                var key = String.fromCharCode(e.keyCode).toLowerCase();
-                jQuery('input[name="'+jQuery(this).attr('name')+'"]').each(function() {
-                    checkText = jQuery('label[for='+jQuery(this).attr('id')+']').text();
-                    if(key == checkText || key == checkText.charAt(0).toLowerCase()) {
-                        jQuery(this).prop('checked', true).focus().trigger('change');
-                    } 
-                })
-            });
-
-            // make radio buttons uncheckable
-            jQuery("input[type=radio]").each(function() {
-                jQuery(this).data('checkedstatus', jQuery(this).prop("checked"));
-            });
-            jQuery("input[type=radio]").click(function () {
-                if (jQuery(this).data('checkedstatus')) {
-                    jQuery(this).prop("checked", false).change();
-                    jQuery(this).data('checkedstatus', false);
-                } else {
-                    jQuery(this).prop("checked", true).change();
-                    jQuery(this).data('checkedstatus', true);
-                }
-                jQuery(this).siblings('input[type="radio"]').data('checkedstatus', false);
-            });
-        });
-    </script>
-    
-    
-    
 </head>
 
 <body id="<{$icms_dirname}>" class="<{$icms_langcode}><{if isset($formulize_screen_id) and $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}>">
