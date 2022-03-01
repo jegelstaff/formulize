@@ -81,12 +81,12 @@ INSERT INTO `REPLACE_WITH_PREFIX_config` (`conf_id`, `conf_modid`, `conf_catid`,
 (78, 0, 3, 'meta_robots', '_MD_AM_METAROBOTS', 'noindex,nofollow', '_MD_AM_METAROBOTSDSC', 'select', 'text', 2),
 (79, 0, 3, 'meta_rating', '_MD_AM_METARATING', 'general', '_MD_AM_METARATINGDSC', 'select', 'text', 3),
 (80, 0, 3, 'meta_author', '_MD_AM_METAAUTHOR', 'Formulize', '_MD_AM_METAAUTHORDSC', 'textbox', 'text', 4),
-(81, 0, 3, 'meta_copyright', '_MD_AM_METACOPYR', 'Copyright © 2007-2011', '_MD_AM_METACOPYRDSC', 'textbox', 'text', 5),
+(81, 0, 3, 'meta_copyright', '_MD_AM_METACOPYR', 'Copyright © 2004-2022', '_MD_AM_METACOPYRDSC', 'textbox', 'text', 5),
 (82, 0, 3, 'google_meta', '_MD_AM_METAGOOGLE', '', '_MD_AM_METAGOOGLE_DESC', 'textbox', 'text', 6),
-(83, 0, 3, 'footer', '_MD_AM_FOOTER', '<a href="http://www.freeformsolutions.ca/formulize/" rel="external" target="_blank">Formulize Standalone Version</a> &copy; 2004-2014 &mdash; <a href="http://www.impresscms.org/" rel="external" target="_blank">The ImpressCMS Project</a> &copy; 2007-2011 ', '_MD_AM_FOOTERDSC', 'textsarea', 'text', 7),
+(83, 0, 3, 'footer', '_MD_AM_FOOTER', '<a href="http://www.formulize.org/" rel="external" target="_blank">Formulize Standalone Version</a> &copy; 2004-2022 &mdash; <a href="http://www.impresscms.org/" rel="external" target="_blank">The ImpressCMS Project</a> &copy; 2007-2011 ', '_MD_AM_FOOTERDSC', 'textsarea', 'text', 7),
 (84, 0, 3, 'use_google_analytics', '_MD_AM_USE_GOOGLE_ANA', '0', '_MD_AM_USE_GOOGLE_ANA_DESC', 'yesno', 'int', 8),
 (85, 0, 3, 'google_analytics', '_MD_AM_GOOGLE_ANA', '', '_MD_AM_GOOGLE_ANA_DESC', 'textbox', 'text', 9),
-(86, 0, 3, 'footadm', '_MD_AM_FOOTADM', '<a href="http://www.freeformsolutions.ca/formulize/" rel="external" target="_blank">Formulize Standalone Version</a> &copy; 2004-2014 &mdash; <a href="http://www.impresscms.org/" rel="external" target="_blank">The ImpressCMS Project</a> &copy; 2007-2011 ', '_MD_AM_FOOTADM_DESC', 'textsarea', 'text', 10),
+(86, 0, 3, 'footadm', '_MD_AM_FOOTADM', '<a href="http://www.formulize.org/" rel="external" target="_blank">Formulize Standalone Version</a> &copy; 2004-2022 &mdash; <a href="http://www.impresscms.org/" rel="external" target="_blank">The ImpressCMS Project</a> &copy; 2007-2011 ', '_MD_AM_FOOTADM_DESC', 'textsarea', 'text', 10),
 (87, 0, 4, 'censor_enable', '_MD_AM_DOCENSOR', '0', '_MD_AM_DOCENSORDSC', 'yesno', 'int', 0),
 (88, 0, 4, 'censor_words', '_MD_AM_CENSORWRD', 'a:5:{i:0;s:4:"fuck";i:1;s:4:"shit";i:2;s:4:"cunt";i:3;s:6:"wanker";i:4;s:7:"bastard";}', '_MD_AM_CENSORWRDDSC', 'textsarea', 'array', 1),
 (89, 0, 4, 'censor_replace', '_MD_AM_CENSORRPLC', '#OOPS#', '_MD_AM_CENSORRPLCDSC', 'textbox', 'text', 2),
@@ -499,7 +499,7 @@ TRUNCATE `REPLACE_WITH_PREFIX_newblocks`;
 
 INSERT INTO `REPLACE_WITH_PREFIX_newblocks` (`bid`, `mid`, `func_num`, `options`, `name`, `title`, `content`, `side`, `weight`, `visible`, `block_type`, `c_type`, `isactive`, `dirname`, `func_file`, `show_func`, `edit_func`, `template`, `bcachetime`, `last_modified`) VALUES
 (1, 1, 1, '', 'User Menu', 'User Menu', '', 1, 0, 0, 'S', 'H', 1, 'system', 'system_blocks.php', 'b_system_user_show', '', 'system_block_user.html', 0, 1324237597),
-(2, 1, 2, '', 'Login', 'Login', '', 1, 0, 1, 'S', 'H', 1, 'system', 'system_blocks.php', 'b_system_login_show', '', 'system_block_login.html', 0, 1324009012),
+(2, 1, 2, '', 'Login', '', '', 1, 0, 1, 'S', 'H', 1, 'system', 'system_blocks.php', 'b_system_login_show', '', 'system_block_login.html', 0, 1324009012),
 (3, 1, 3, '', 'Search', 'Search', '', 2, 0, 0, 'S', 'H', 1, 'system', 'system_blocks.php', 'b_system_search_show', '', 'system_block_search.html', 0, 1324230443),
 (4, 1, 4, '1|5', 'Waiting Contents', 'Waiting Contents', '', 9, 0, 0, 'S', 'H', 1, 'system', 'system_waiting.php', 'b_system_waiting_show', 'b_system_waiting_edit', 'system_block_waiting.html', 0, 1324230522),
 (5, 1, 5, '', 'Main Menu', 'Main Menu', '', 1, 0, 0, 'S', 'H', 1, 'system', 'system_blocks.php', 'b_system_main_show', '', 'system_block_mainmenu.html', 0, 1324230437),
@@ -521,7 +521,7 @@ INSERT INTO `REPLACE_WITH_PREFIX_newblocks` (`bid`, `mid`, `func_num`, `options`
 (21, 0, 0, '', 'Custom Block (Auto Format + smilies)', 'Welcome!', 'Please login on the left.', 4, 0, 1, 'C', 'S', 1, '', '', '', '', '', 0, 1324230576),
 (22, 2, 0, '0|1|1|1', 'Content', 'Content', '', 1, 0, 0, 'M', 'H', 1, 'content', 'content_display.php', 'content_content_display_show', 'content_content_display_edit', 'content_content_display.html', 0, 1324009074),
 (23, 2, 1, 'content_title|ASC|1|#59ADDB|0', 'Content Menu', 'Content Menu', '', 1, 0, 0, 'M', 'H', 1, 'content', 'content_menu.php', 'content_content_menu_show', 'content_content_menu_edit', 'content_content_menu.html', 0, 1324009074),
-(24, 3, 1, '', 'Form Menu', 'Form Menu', '', 1, 0, 1, 'M', 'H', 1, 'formulize', 'mymenu.php', 'block_formulizeMENU_show', '', '', 0, 1324230836),
+(24, 3, 1, '', 'Form Menu', '', '', 1, 0, 1, 'M', 'H', 1, 'formulize', 'mymenu.php', 'block_formulizeMENU_show', '', '', 0, 1324230836),
 (25, 4, 1, '5', 'My friends', 'My friends', '', 1, 0, 0, 'M', 'H', 1, 'profile', 'blocks.php', 'b_profile_friends_show', 'b_profile_friends_edit', 'profile_block_friends.html', 0, 1324009084),
 (26, 4, 2, '', 'User Menu', 'User Menu', '', 1, 0, 0, 'M', 'H', 1, 'profile', 'blocks.php', 'b_profile_usermenu_show', '', 'profile_block_usermenu.html', 0, 1324009084);
 

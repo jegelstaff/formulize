@@ -997,6 +997,13 @@ label {
     margin-left: 0.5em;
 }
 
+.numeric-text {
+    text-align: right;
+}
+.autocomplete-icon {
+    transform: scale(0.7) translateY(1.1em);
+}
+
 @media only screen and (min-width: 767px)  {
         body {
             font-size: 200%;
