@@ -3562,13 +3562,18 @@ function sendNotificationToEmail($email, $event, $tags, $overrideSubject="", $ov
   } else {
 	$emails = array($email);
   }
-  $toreturn = true;
-  
+  $success = false;
   foreach($emails as $email) {
-	  $xoopsMailer = getMailer();
+	$xoopsMailer = getMailer();
     $xoopsMailer->useMail();
     foreach ($tags as $k=>$v) {
-        $xoopsMailer->assign($k, preg_replace("/&amp;/i", '&', $v));
+        if(substr($k, 0, 11) == "ATTACHFILE-") {
+            $fileName = substr($k, 11, strlen($k));
+            $filePath = $v;
+            $xoopsMailer->addAttachment($filePath, $fileName);
+        } else {
+            $xoopsMailer->assign($k, preg_replace("/&amp;/i", '&', $v));
+        }
     }
     // Set up the mailer
     $xoopsMailer->setTemplateDir($templateDir);
@@ -3577,12 +3582,10 @@ function sendNotificationToEmail($email, $event, $tags, $overrideSubject="", $ov
     }
     $xoopsMailer->setTemplate($template);
     $xoopsMailer->setToEmails($email);
-
     $xoopsMailer->setSubject($subject);
     $success = $xoopsMailer->send();
-	  $toreturn = $success AND $toreturn ? true : false;
   }
-  return $toreturn;
+  return $success;
 }
 
 
@@ -3715,6 +3718,9 @@ function formulize_processNotification($event, $extra_tags, $fid, $uids_to_notif
     $formulizeConfig = $config_handler->getConfigsByCat(0, $mid);
     $notifyByCron = $formulizeConfig['notifyByCron'];
 
+    // template gets .tpl added on end when the notification system runs, so trip out any .tpl that might be in there now just in case
+    $template = str_replace('.tpl', '', $template);
+    
     if($notifyByCron) {
         $notFile = fopen(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotifications.txt","a");
         formulize_getLock($notFile);
