@@ -137,6 +137,9 @@ switch($active_page) {
     case "managetokens":
         include "managetokens.php";
         break;
+    case "mailusers":
+        include "mailusers.php";
+        break;
     default:
     case "home":
         include "home.php";

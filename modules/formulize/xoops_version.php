@@ -673,6 +673,9 @@ $modversion['templates'][] = array(
 $modversion['templates'][] = array(
 	'file' => 'admin/screen_form_templates.html',
 	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/mailusers.html',
+	'description' => '');
     
 //	Module Configs
 // $xoopsModuleConfig['t_width']

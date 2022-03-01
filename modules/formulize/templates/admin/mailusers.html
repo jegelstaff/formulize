@@ -1,0 +1,30 @@
+<div class="panel-content content">
+
+    <{if $adminPage.mailStatus}>
+    <h2>Mail Status:</h2>
+    <{$adminPage.mailStatus}>
+    <{/if}>
+
+    <h2>Email Users</h2>
+
+    <form method='post' enctype='multipart/form-data'>
+    
+    <p><b>Send To:</b></p>
+    <select name='groups[]' size=<{$adminPage.groupListSize}> multiple>
+        <{html_options values=$adminPage.groupIds output=$adminPage.groupNames}>
+    </select>
+    
+    <p><b>Subject:</b></p>
+    <input type='text' name='subject'>
+        
+    <p><b>Body:</b></p>
+    <textarea name='body' rows=10></textarea>
+    
+    <p><b>Attachment:</b> (optional)</p>
+    <input type='file' name='attachment'>
+    
+    <p><input type='submit' name='submit' value='Send'></p>
+    
+    </form>
+    
+    </div>
