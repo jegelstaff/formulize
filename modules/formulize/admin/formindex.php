@@ -425,9 +425,6 @@ function patch40() {
         $sql['add_dedisplay'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " ADD `dedisplay` int(1) NOT NULL";
         $sql['add_store_revisions'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `store_revisions` tinyint(1) NOT NULL default '0'";
         $sql['add_finishisdone'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_multipage") . " ADD `finishisdone` tinyint(1) NOT NULL default 0";
-        $sql['add_toptext'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_multipage") . " ADD `toptemplate` text NOT NULL";
-        $sql['add_elementtext'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_multipage") . " ADD `elementtemplate` text NOT NULL";
-        $sql['add_bottomtext'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_multipage") . " ADD `bottomtemplate` text NOT NULL";
         $sql['add_formelements'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_form") . " ADD `formelements` text";
         $sql['add_on_before_save'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `on_before_save` text";
         $sql['add_on_after_save'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `on_after_save` text";
@@ -501,12 +498,6 @@ function patch40() {
                     print "store_revisions already added.  result: OK<br>";
                 } elseif ($key === "add_finishisdone") {
                     print "finishisdone for multipage forms already added.  result: OK<br>";
-                } elseif ($key === "add_toptext") {
-                    print "toptemplate already added for multipage screens.  result: OK<br>";
-                } elseif ($key === "add_elementtext") {
-                    print "elementtemplate already added for multipage screens.  result: OK<br>";
-                } elseif ($key === "add_bottomtext") {
-                    print "bottomtemplate already added for multipage screens.  result: OK<br>";
                 } elseif ($key === "add_formelements") {
                     print "formelements field already added for single page screens.  result: OK<br>";
                 } elseif ($key === "add_on_before_save") {
@@ -830,39 +821,39 @@ function patch40() {
         }
 
         // CONVERTING EXISTING TEMPLATES IN DB TO TEMPLATE FILES
+        // Only kicks in if the template fields are still present in the relevant tables, otherwise queries fail
         $templateSQL = "SELECT sid, toptemplate, listtemplate, bottomtemplate FROM ".$xoopsDB->prefix("formulize")."_screen_listofentries";
-
-        $templateRes = $xoopsDB->query($templateSQL);
-        if ($xoopsDB->getRowsNum($templateRes) > 0) {
-            while($handleArray = $xoopsDB->fetchArray($templateRes)) {
-                if (!file_exists($screenpathname.$handleArray['sid'])) {
-                    $pathname = $screenpathname.$handleArray['sid']."/";
-                    mkdir($pathname, 0777, true);
-				}
-				if (!is_writable($pathname)) {
-                    chmod($pathname, 0777);
+        if($templateRes = $xoopsDB->query($templateSQL)) {
+            if ($xoopsDB->getRowsNum($templateRes) > 0) {
+                while($handleArray = $xoopsDB->fetchArray($templateRes)) {
+                    if (!file_exists($screenpathname.$handleArray['sid'])) {
+                        $pathname = $screenpathname.$handleArray['sid']."/";
+                        mkdir($pathname, 0777, true);
+                    }
+                    if (!is_writable($pathname)) {
+                        chmod($pathname, 0777);
+                    }
+                    saveTemplate($handleArray['toptemplate'], $handleArray['sid'], "toptemplate");
+                    saveTemplate($handleArray['bottomtemplate'], $handleArray['sid'], "bottomtemplate");
+                    saveTemplate($handleArray['listtemplate'], $handleArray['sid'], "listtemplate");
                 }
-                saveTemplate($handleArray['toptemplate'], $handleArray['sid'], "toptemplate");
-                saveTemplate($handleArray['bottomtemplate'], $handleArray['sid'], "bottomtemplate");
-                saveTemplate($handleArray['listtemplate'], $handleArray['sid'], "listtemplate");
             }
         }
-
         $multitemplateSQL = "SELECT sid, toptemplate, elementtemplate, bottomtemplate FROM ".$xoopsDB->prefix("formulize")."_screen_multipage";
-
-        $multitemplateRes = $xoopsDB->query($multitemplateSQL);
-        if ($xoopsDB->getRowsNum($multitemplateRes) > 0) {
-            while($handleArray = $xoopsDB->fetchArray($multitemplateRes)) {
-                if (!file_exists($screenpathname.$handleArray['sid'])) {
-                    $pathname = $screenpathname.$handleArray['sid']."/";
-                    mkdir($pathname, 0777, true);
-				}
-                if (!is_writable($pathname)) {
-					chmod($pathname, 0777);
-				}
-				saveTemplate($handleArray['toptemplate'], $handleArray['sid'], "toptemplate");
-				saveTemplate($handleArray['bottomtemplate'], $handleArray['sid'], "bottomtemplate");
-				saveTemplate($handleArray['elementtemplate'], $handleArray['sid'], "elementtemplate");
+        if($multitemplateRes = $xoopsDB->query($multitemplateSQL)) {
+            if ($xoopsDB->getRowsNum($multitemplateRes) > 0) {
+                while($handleArray = $xoopsDB->fetchArray($multitemplateRes)) {
+                    if (!file_exists($screenpathname.$handleArray['sid'])) {
+                        $pathname = $screenpathname.$handleArray['sid']."/";
+                        mkdir($pathname, 0777, true);
+                    }
+                    if (!is_writable($pathname)) {
+                        chmod($pathname, 0777);
+                    }
+                    saveTemplate($handleArray['toptemplate'], $handleArray['sid'], "toptemplate");
+                    saveTemplate($handleArray['bottomtemplate'], $handleArray['sid'], "bottomtemplate");
+                    saveTemplate($handleArray['elementtemplate'], $handleArray['sid'], "elementtemplate");
+                }
             }
         }
 
@@ -997,6 +988,17 @@ function patch40() {
             
         }
 
+        $sql = array();
+        $sql[] = "ALTER TABLE " . $xoopsDB->prefix("formulize")."_screen_listofentries DROP `toptemplate`";
+        $sql[] = "ALTER TABLE " . $xoopsDB->prefix("formulize")."_screen_listofentries DROP `listtemplate`";
+        $sql[] = "ALTER TABLE " . $xoopsDB->prefix("formulize")."_screen_listofentries DROP `bottomtemplate`";
+        $sql[] = "ALTER TABLE " . $xoopsDB->prefix("formulize")."_screen_multipage DROP `toptemplate`";
+        $sql[] = "ALTER TABLE " . $xoopsDB->prefix("formulize")."_screen_multipage DROP `elementtemplate`";
+        $sql[] = "ALTER TABLE " . $xoopsDB->prefix("formulize")."_screen_multipage DROP `bottomtemplate`";
+        foreach($sql as $thisSql) {
+            $xoopsDB->query($thisSql);
+        }
+        
         print "DB updates completed.  result: OK";
     }
 }
@@ -1031,17 +1033,18 @@ function saveTemplate($template, $sid, $name) {
     $filename = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/{$sid}/{$name}.php";
 
     $text = trim(html_entity_decode($template));
-    if ($text AND !strstr($text, "<?php")) {
-        // if there's no php open-tag in the text already, add one
-        $text = "<?php\n" . $text;
-    }
-
-	if(file_exists($filename)) {
-		print "$name file for screen $sid already exists. result: OK<br>";
-	} elseif (false === file_put_contents($filename, $text)) {
-        print "Warning: could not save " . $name . ".php for screen " . $sid . ".<br>";
-    } else {
-        print "created templates/screens/".$xoopsConfig['theme_set']."/" . $sid . "/". $name . ".php. result: OK<br>";
+    if($text) {
+        if (!strstr($text, "<?php")) {
+            // if there's no php open-tag in the text already, add one
+            $text = "<?php\n" . $text;
+        }
+        if(file_exists($filename)) {
+            print "$name file for screen $sid already exists. result: OK<br>";
+        } elseif (false === file_put_contents($filename, $text)) {
+            print "Warning: could not save " . $name . ".php for screen " . $sid . ".<br>";
+        } else {
+            print "created templates/screens/".$xoopsConfig['theme_set']."/" . $sid . "/". $name . ".php. result: OK<br>";
+        }
     }
 }
 
