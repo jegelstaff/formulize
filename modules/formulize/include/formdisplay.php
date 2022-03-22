@@ -3849,7 +3849,7 @@ print "		document.formulize_mainform.goto_subformElementId.value = subformElemen
 global $formulize_displayingMultipageScreen;
 if($formulize_displayingMultipageScreen) {
 print "		document.formulize_mainform.formulize_prevPage.value = document.formulize_mainform.formulize_currentPage.value;\n";    
-print "		document.formulize_mainform.formulize_currentPage.value = 1;\n";
+print "		document.formulize_mainform.formulize_currentPage.value = 1\n";
 }
 print "		validateAndSubmit();\n";
 print "	}\n";
