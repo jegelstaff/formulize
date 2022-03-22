@@ -525,9 +525,9 @@ class formulize_themeForm extends XoopsThemeForm {
                     $js = $validationJs;
 				} 
 				if($checkConditionalRow) {
-					$fullJs .= "if(window.document.getElementById('formulize-".$elt->getName()."').style.display != 'none') {\n".$js."\n}\n\n";
+					$fullJs .= "if(formulizechanged && window.document.getElementById('formulize-".$elt->getName()."').style.display != 'none') {\n".$js."\n}\n\n";
 				} else {
-					$fullJs .= "\n".$js."\n";
+					$fullJs .= "if(formulizechanged) {\n".$js."\n}\n\n";
 				}
 			}
 		}
@@ -829,7 +829,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                 } else {
                     list($passedFid, $passedFrid) = getFormFramework($formframe, $mainform); // don't assign to canonical fid and frid since there is some odd stuff below that happens in order, before these are actually assigned
                     $originalFid = $passedFid;
-                $originalEntry = $entry;
+                    $originalEntry = $entry;
                 }
                 $formframe = $screen->getVar('frid');
                 $mainform = $screen->getVar('fid');
