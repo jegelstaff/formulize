@@ -50,6 +50,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	
     // instantiate multipage screen handler just because we might need some functions from that file (plain functions, not methods on the class, because they're not necessarily related to handling a screen, and we might not even have a screen in effect)
     $multiPageScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+    $element_handler = xoops_getmodulehandler('elements','formulize');
     
     // pickup a declared page that we're going back onto...will/might include screen id after a hyphen
     if(isset($_POST['parent_page'])) {
@@ -58,6 +59,16 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
         $_POST['formulize_currentPage'] = $parent_page[$lastKey];
     }
 	
+    // attach the target screen id to the currentPage value, if we have been directed to a sub from the previous page request
+    // currentPage will have been reset to 1 in javascript prior to this submission. Now we need to add the screen ID, based on the subform element id, which we will have from the submission
+    if(isset($_POST['goto_subformElementId']) AND $_POST['goto_subformElementId'] AND isset($_POST['formulize_currentPage']) AND $_POST['formulize_currentPage'] == 1) {
+        if($gotoSubformElementObject = $element_handler->get($_POST['goto_subformElementId'])) {
+            if($subformScreenIdToAppend = get_display_screen_for_subform($gotoSubformElementObject)) {
+                $_POST['formulize_currentPage'] .= '-'.$subformScreenIdToAppend;
+            }
+        }
+    }
+    
     $currentPageScreen = 0;
     // reset $_POST['formulize_currentPage'] which is referred to many places to get the official page we're on
     if(isset($_POST['formulize_currentPage']) AND strstr($_POST['formulize_currentPage'],'-')) {
@@ -66,14 +77,13 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
         $currentPageScreen = $cpParts[1];
     }
     // set prevPage, last page that the user was on, not necessarily the previous page numerically
+    $prevPage = 1;
     if(isset($_POST['formulize_prevPage']) AND strstr($_POST['formulize_prevPage'],'-')) {
         $cpParts = explode('-',$_POST['formulize_prevPage']);
         $prevPage = $cpParts[0];
         $prevScreen = $cpParts[1];
     } elseif(isset($_POST['formulize_prevPage'])) {
         $prevPage = intval($_POST['formulize_prevPage']);
-    } else {
-        $prevPage = 1;
     }
     if($screen AND isset($prevScreen) AND $screen->getVar('sid') != $prevScreen) { 
         $prevPageThisScreen = 1;
@@ -210,7 +220,6 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
  	$pagesSkipped = false;
 	if(is_array($conditions) AND (!$currentPageScreen OR ($screen AND $currentPageScreen == $screen->getVar('sid')))) {
 		$conditionsMet = false;
-        $element_handler = xoops_getmodulehandler('elements','formulize');
 		while(!$conditionsMet AND $currentPage > 0) {
 			if(isset($conditions[$currentPage][0]) AND count($conditions[$currentPage][0])>0) { // conditions on the current page
 				if(pageMeetsConditions($conditions, $currentPage, $entry, $fid, $frid) == false) {
