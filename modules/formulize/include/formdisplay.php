@@ -2515,26 +2515,26 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
             }
         }
     </script>";
-    
-    $to_return['c1'] = $col_one;
-    $to_return['c2'] = $col_two;
-    $to_return['single'] = $col_one . $col_two;
 
+    $edit_link = "";    
     if (is_object($subform_element_object)) {
         global $xoopsUser;
         $show_element_edit_link = (is_object($xoopsUser) and in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups()));
-        $edit_link = "";
-        if ($show_element_edit_link AND property_exists($ele, 'formulize_element') AND is_object($ele->formulize_element)) {
+        if ($show_element_edit_link) {
             $application_handler = xoops_getmodulehandler('applications', 'formulize');
-            $apps = $application_handler->getApplicationsByForm($ele->formulize_element->getVar('id_form'));
+            $apps = $application_handler->getApplicationsByForm($subform_id);
             $app = is_array($apps) ? $apps[0] : $apps;
             $appId = $app->getVar('appid');
             $edit_link = "<a class=\"formulize-element-edit-link\" tabindex=\"-1\" href=\"" . XOOPS_URL .
                 "/modules/formulize/admin/ui.php?page=element&aid=$appId&ele_id=" .
                 $subform_element_object->getVar("ele_id") . "\" target=\"_blank\">edit element</a>";
         }
-        $to_return['single'] = "<div class=\"formulize-subform-".$subform_element_object->getVar("ele_handle")."\">$edit_link $col_one $col_two</div>";
     }
+    
+    $to_return['c1'] = $edit_link.$col_one;
+    $to_return['c2'] = $col_two;
+    $to_return['single'] = $edit_link.$col_one.$col_two;
+
 
     return $to_return;
 }
