@@ -1962,6 +1962,13 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	$GLOBALS['framework'] = $frid;
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
 
+    // if no sub entries, then go figure out sub entries again based on the correct main form id
+    // This will return different sub entries when the mainform has a one to one form in the relationship, and then the subform is connected to the one to one. Sub is more than one hop away from main, so primary determination of entries does not pick up the sub entries
+    if($subform_element_object AND count($sub_entries[$subform_id]) == 0) {
+        $secondLinkResults = checkForLinks($frid, array($subform_element_object->getVar('id_form')), $subform_element_object->getVar('id_form'), array($subform_element_object->getVar('id_form') => array($entry)), true); // final true means only include entries from unified display linkages
+        $sub_entries = $secondLinkResults['sub_entries'];
+    }
+        
 	// limit the sub_entries array to just the entries that match the conditions, if any
 	if(is_array($subformConditions) and is_array($sub_entries[$subform_id])) {
 		list($conditionsFilter, $conditionsFilterOOM, $curlyBracketFormFrom) = buildConditionsFilterSQL($subformConditions, $subform_id, $entry, $mainFormOwner, $fid); // pass in mainFormOwner as the comparison ID for evaluating {USER} so that the included entries are consistent when an admin looks at a set of entries made by someone else.
