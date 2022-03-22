@@ -479,7 +479,7 @@ function patch40() {
         $sql['form_screen_multipage_displayheading'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_multipage") . " ADD `displayheading` tinyint(1) NOT NULL default 0";
         $sql['form_screen_multipage_reloadblank'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_multipage") . " ADD `reloadblank` tinyint(1) NOT NULL default 0";
         $sql['form_screen_multipage_elementdefaults'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_multipage") . " ADD `elementdefaults` text NOT NULL";
-        $sql['not_cons_arbitary'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_notification_conditions") . " ADD `not_cons_arbitrary` text NULL default NULL";
+        $sql['not_cons_arbitrary'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_notification_conditions") . " ADD `not_cons_arbitrary` text NULL default NULL";
 
         $needToSetSaveAndLeave = true;
         $needToSetPrintableView = true;
