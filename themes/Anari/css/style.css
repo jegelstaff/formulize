@@ -37,21 +37,16 @@ footer, header, hgroup, menu, nav, section {
   display: block;
 }
 
-.ui-menu-item {
-    font-family: Poppins, Helvetica, Verdana, sans-serif;
-    font-size: 16px;
-}
-
 body {
   line-height: 1;
 }
 
 h2 {
-    font-size: 120%;
+    font-size: 1.2rem;
 }
 
 h1 {
-    font-size: 140%;
+    font-size: 1.4rem;
 }
 
 ol, ul {
@@ -114,87 +109,12 @@ table:first-child div.applinks h1 {
     text-decoration: none !important;
 }
 
-.report-table {
-  background-color: #FFF;
-  width: calc(100% - 36px);
+.googlefile {
+    margin-top: 0.5rem;
+    display: flex;
 }
-
-.report-table tr {
-  border-bottom: solid 1px #F5F6F8;
-  height: 64px;
-}
-
-.report-table th {
-  color: #334D6E;
-  opacity: 0.5;
-  font-weight: 400;
-  font-style: normal;
-  line-height: 19px;
-  letter-spacing: 0.01em;
-  height: 48px;
-  vertical-align: middle;
-  text-align: left;
-  padding-left: 8px;
-}
-
-.report-table th:first-child {
-  text-align: left;
-}
-
-.report-table td {
-  font-weight: 400;
-  color: #707683;
-  font-size: 13px;
-  line-height: 19px;
-  letter-spacing: 0.01em;
-  height: 64px;
-  vertical-align: middle;
-  text-align: left;
-}
-
-.report-table td.row-item {
-  padding-left: 8px;
-}
-
-.report-table__employee td.row-item__name {
-  font-weight: 500;
-  text-align: left;
-}
-
-.table-action__button {
-  cursor: pointer;
-  width: 54px;
-  height: 56px;
-  border: none;
-}
-
-.table-action__button--archive {
-  background-color: #334D6E;
-}
-
-.table-action__button--delete {
-  background-color: #FF365F;
-}
-
-.table-tool-bar {
-  display: flex;
-  flex-direction: row;
-  width: calc(100% - 36px);
-}
-
-.table-tool-bar__title {
-  font-style: normal;
-  font-weight: normal;
-  font-size: 12px;
-  line-height: 18px;
-  color: #6A707E;
-}
-
-.table-tool-bar_tools {
-  flex: 1;
-  justify-content: flex-end;
-  display: flex;
-  flex-direction: row;
+.googlefile a, .googlefile img {
+    margin-right: 0.5rem;
 }
 
 @media (min-width: 1024px) {
@@ -692,14 +612,14 @@ table:first-child div.applinks h1 {
 #xo-canvas-leftcolumn {
   height: 94vh;
   overflow: auto;
-  left: 1em;
+  margin-left: 1.5em;
   top: 1em;
   position: relative;
 }
 
 .xo-blocktitle h3 {
     font-weight: bold;
-    font-size: 150%;
+    font-size: 1.5rem;
 }
 
 div.list-of-entries .card__body {
@@ -958,6 +878,8 @@ button, input[type="submit"], input[type="button"], input[type="reset"],
     text-indent: 0;
     background-image: none;
     background-color: #109CF1;
+    font-size: 0.9rem;
+    text-align: center;
 }
 
 td.subentry-delete-cell,
@@ -972,7 +894,13 @@ table.formulize-subform-table {
 table.formulize-subform-table input[type=text],
 table.formulize-subform-table input[type=range],
 table.formulize-subform-table textarea {
+    min-width: 200px;
     max-width: 200px;
+}
+
+table.formulize-subform-table input[type=text].formulize-time-element {
+    min-width: 100px;
+    max-width: 100px;
 }
 
 div.subform_button_controls input[type="button"] {
@@ -1187,7 +1115,7 @@ table.outer textarea,
   -webkit-appearance: none;
   background: transparent;
   font: inherit;
-  font-size: 16px;
+  font-size: 1rem;
   color: #323C47;
   /*display: block;*/
   width: 100%;
@@ -1334,9 +1262,16 @@ table.outer textarea[disabled],
   }
 }
 
-.form-row input.formulize-time-element {
-    width: 90%; 
+.form-row input.formulize-time-element
+{
     max-width: 270px;
+}
+.form-row input.hasDatepicker,
+tr.entry-row td input.hasDatepicker,
+.form-row input.formulize-time-element,
+tr.entry-row td input.formulize-time-element
+{
+    width: calc(100% - 27px); 
 }
 .form-row input.formulize_autocomplete {
     max-width: 270px;
@@ -1344,37 +1279,38 @@ table.outer textarea[disabled],
 
 /* datepicker is native in mobile so when super narrow we don't need this because calendar icon goes away*/
 @media (min-width: 350px) {
-    .form-row input.hasDatepicker {
-    width: 90%; 
-    max-width: 270px; 
-    }
-    .form-row .col2 input.hasDatepicker,
-    .form-row .col2 input.formulize-time-element {
-        width: 90%;
+    .form-row input.hasDatepicker { 
+        max-width: 270px; 
     }
 }
 
 @media (min-width: 768px) {
     .form-row input.hasDatepicker,
     .form-row input.formulize-time-element {
-        width: 95%;
-        max-width: 700px; 
+        width: 673px;
+        max-width: 673px;
+        min-width: 673px;
     }
     .form-row input.formulize_autocomplete {
-        max-width: 700px; 
+        width: 673px;
+        max-width: 673px;
+        min-width: 673px;
     }
     .form-row .col2 input.hasDatepicker,
     .form-row .col2 input.formulize-time-element,
-    .form-row .col2 input.formulize_autocomplete{
-        width: auto;
-        max-width: 700px; 
+    .form-row .col2 input.formulize_autocomplete,
+    #formulize_modal input.hasDatepicker {
+        width: 673px;
+        max-width: 673px;
+        min-width: 673px;
     }
 
 }
 
 table.formulize-subform-table input.hasDatepicker,
 #formulize_modal table.formulize-subform-table input.hasDatepicker {
-    width: 85%;
+    width: calc(100% - 27px);
+    min-width: 6.5em; 
 }
 
 .form-container textarea, table.outer textarea,
@@ -1386,27 +1322,36 @@ table.formulize-subform-table input.hasDatepicker,
 input,
 select,
 textarea {
-  font-size: 16px;
+  font-size: 1rem;
+  background-color: white;
+}
+.ui-widget input,
+.ui-widget select,
+.ui-widget textarea {
+  font-size: 1rem;  
 }
 
 table.outer select, .form-container select, #formulize_modal select {
     border: 0;
     border-bottom: 1px solid #818E9B;
-    padding: 0.5em;
+    padding-left: 0.25em;
     width: 100%;
     max-width: 300px;
+    color: #323C47;
 }
 
 div.formulize_autocomplete {
     max-width: 300px;
     display: block;
     float: left;
+    padding-top: 0.2rem;
 }
 .autocomplete-icon {
     display: inline;
     transform: scale(0.75);
     margin-left: -0.2em;
     vertical-align: bottom;
+    padding-top: 0.3em;
 }
 
 
@@ -1416,13 +1361,12 @@ div.formulize_autocomplete {
     }
     
     div.formulize_autocomplete {
-        width: 100%;
+        width: calc(100% - 30px);
         display: inline;
     }
     
     .form-container .col2 select,
     #formulize_modal .col2 select,
-    .col2 div.formulize_autocomplete,
     .col2 input[type="text"],
     .col2 textarea,
     .col2 input[type="range"] {
@@ -1730,74 +1674,6 @@ div.subform-entry-container .ui-widget-content {
 
 [data-toggle] {
   cursor: pointer;
-}
-
-.rating-knob {
-  position: relative;
-}
-
-.rating-knob__input {
-  appearance: none;
-  padding: 0;
-  width: 100%;
-  height: 280px;
-  cursor: pointer;
-  display: block;
-}
-@media (min-width: 768px) {
-  .rating-knob__input {
-    height: 460px;
-  }
-}
-.rating-knob__input:focus {
-  outline: none;
-}
-.rating-knob__input[disabled] {
-  opacity: 0.3;
-  cursor: default;
-}
-
-.rating-knob__output {
-  position: absolute;
-  left: 9px;
-  top: 9px;
-  transform-origin: 0 0;
-  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  user-select: none;
-}
-
-.rating-knob__output-text {
-  display: block;
-  position: absolute;
-  height: 60px;
-  line-height: 60px;
-  min-width: 72px;
-  padding: 0 20px;
-  top: -29px;
-  transform: translate(-50%, -100%);
-  background: #323C47;
-  color: #fff;
-  border-radius: 100px;
-  white-space: nowrap;
-  font-weight: bold;
-  font-size: 1.2em;
-  text-align: center;
-}
-.rating-knob__output-text:before {
-  content: "";
-  position: absolute;
-  bottom: -8px;
-  left: 50%;
-  border: 10px solid #323C47;
-  border-bottom: none;
-  border-left-color: transparent;
-  border-right-color: transparent;
-  transform: translateX(-50%);
-}
-@media print {
-  .rating-knob__output-text:before {
-    display: none;
-  }
 }
 
 .rangeslider {
@@ -2194,7 +2070,7 @@ input::-ms-thumb {
   }
 }
 
-div, span, textarea, select, p, input, th, td {
+div, span, textarea, select, p, input, th, td, .ui-widget div, .ui-widget span, .ui-widget textarea, .ui-widget select, .ui-widget p, .ui-widget input, .ui-widget th, .ui-widget td {
   font-family: Poppins, Helvetica, Verdana, sans-serif;  
 }
 
@@ -3066,7 +2942,7 @@ img {
 }
 
 .currentViewList-list #currentview {
-    font-size: 1em;
+    font-size: 1rem;
     width: auto;
 }
 input[name='pickdiffgroup'] {
@@ -3116,7 +2992,7 @@ input[name='pickdiffgroup'] {
 }
 
 #firstbox::placeholder {
-    font-size: 10pt;
+    font-size: 0.9rem;
     color: dimgrey;
 }
 
@@ -3383,4 +3259,8 @@ form[name='metachoiceform'] td p {
 #import-instructions input,
 #setnot table.outer p {
     margin-top: 1em;
+}
+
+.appcatspacer {
+    width: auto;
 }

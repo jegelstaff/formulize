@@ -72,6 +72,13 @@ foreach($applicationsToDraw as $aid) {
     
 }
 
+// retrieve the xoops_version info
+$module_handler = xoops_gethandler('module');
+$formulizeModule = $module_handler->getByDirname("formulize");
+$metadata = $formulizeModule->getInfo();
+
+$xoTheme->addStylesheet("/modules/formulize/templates/css/formulize.css?v=".$metadata['version']);
+
 $xoopsTpl->assign("allAppData", $allAppData);
 
 require(XOOPS_ROOT_PATH."/footer.php");
