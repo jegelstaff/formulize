@@ -53,6 +53,24 @@ ol, ul {
   list-style: none;
 }
 
+div.ck-content ul {
+    list-style: disc;
+    padding-left: 1em;
+}
+
+div.ck-content ol {
+    list-style: decimal;
+    padding-left: 1em;
+}
+
+div.ck-content i {
+    font-style: italic;
+}
+
+div.ck-toolbar button {
+    box-shadow: none;
+}
+
 blockquote, q {
   quotes: none;
 }
