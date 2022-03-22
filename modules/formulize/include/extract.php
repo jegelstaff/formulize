@@ -691,7 +691,6 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 			}
 		}
 	  
-
 		$selectClause = "";
 		$sqlFilterElements = array();
 		$sqlFilterElementsIndex = array();
@@ -731,11 +730,13 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 				}
 			}
 			$selectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, ".implode( ",", $sqlFilterElements );
-			$mainSelectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, ".implode( ",", $sqlFilterElementsIndex['main'] );
-		} else {
-			$selectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect";
-			$mainSelectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* "; // used when querying three or more forms with one-many relationships, see below
-		}
+            $mainSelectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime ";
+            $firstTimeGetAllMainFields = implode( ",", $sqlFilterElementsIndex['main'] ).", ";
+        } else {
+            $selectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect";
+            $mainSelectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime "; // used when querying three or more forms with one-many relationships, see below
+            $firstTimeGetAllMainFields = " main.*, ";
+        }
 
 		// if this is being done for gathering calculations, and the calculation is requested on the one side of a one to many/many to one relationship, then we will need to use different SQL to avoid duplicate values being returned by the database
 		// note: when the main form is on the many side of the relationship, then we need to do something rather different...not sure what it is yet...the SQL as prepared is based on the calculation field and the main form being the one side (and so both are called main), but when field is on one side and main form is many side, then the aliases don't match, and scopefilter issues abound.
@@ -796,111 +797,112 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	// after the export query has been generated, then let's put the limit on:
 	$masterQuerySQL .= $limitClause;
   
-	 /*global $xoopsUser;
-	 if($xoopsUser->getVar('uid') == 4613) {
-		  $queryTime = $afterQueryTime - $beforeQueryTime;
-		  print "Query time: " . $queryTime . "<br>";
-	 }*/
-	 
-	 // Debug Code
-	 
-	//     $validIPs = array('70.29.87.51');
-	
-	//if(in_array($_SERVER['REMOTE_ADDR'], $validIPs)) {
-		 
-		 /*global $xoopsUser;
-		 if($xoopsUser->getVar('uid') == 18399) {
-		 //     print "<br>Count query: $countMasterResults<br><br>";
-			print "Master query: $masterQuerySQL<br>";
-		 //   print "Linkformids: ";
-		 //   print_r($linkformids);
-		 //   print "<br>";
-		 }*/
-	//}
+     /*global $xoopsUser;
+     if($xoopsUser->getVar('uid') == 4613) {
+          $queryTime = $afterQueryTime - $beforeQueryTime;
+          print "Query time: " . $queryTime . "<br>";
+     }*/
+     
+     // Debug Code
+     
+//     $validIPs = array('70.29.87.51');
+
+//if(in_array($_SERVER['REMOTE_ADDR'], $validIPs)) {
+     
+     /*global $xoopsUser;
+     if($xoopsUser->getVar('uid') == 18399) {
+     //     print "<br>Count query: $countMasterResults<br><br>";
+        print "Master query: $masterQuerySQL<br>";
+     //   print "Linkformids: ";
+     //   print_r($linkformids);
+     //   print "<br>";
+     }*/
+//}
 	formulize_benchmark("Before query");
 
-	// IF THERE'S MORE THAN ONE LINKED FORM, THEN WE QUERY THEM SEPARATELY, LINKING TO THE TEMP TABLE WE SETUP OF ENTRY IDS THAT WE CARE ABOUT -- MUCH MORE PERFORMANT, MULTIPLE LINKS TO OTHER FORMS CAN GRIND THIS ALL TO A HALT IF DONE WITH NORMAL SQL
-	if(count($linkformids)>1) { // AND $dummy=="never") { // when there is more than 1 joined form, we can get an exponential explosion of records returned, because SQL will give you all combinations of the joins, so we create a series of queries that will each handle the main form plus one of the linked forms, then we put all the data together into a single result set below
-		$timestamp = str_replace(".","",microtime(true));
-		if(!$sortIsOnMain) {
-			$createTableSQL = "CREATE TABLE ".DBPRE."formulize_temp_extract_$timestamp ( `mastersort` BIGINT(11), `throwaway_sort_values` text, `entry_id` BIGINT(11), PRIMARY KEY (`mastersort`), INDEX i_entry_id (`entry_id`) ) ENGINE=MyISAM;"; // when the sort is not on the main form, then we are including a special field in the select statement that we sort it by, so that the order is correct, and so it has to have a place to get inserted here
+    if(count($linkformids)>1) { // AND $dummy=="never") { // when there is more than 1 joined form, we can get an exponential explosion of records returned, because SQL will give you all combinations of the joins, so we create a series of queries that will each handle the main form plus one of the linked forms, then we put all the data together into a single result set below
+        $timestamp = str_replace(".","",microtime(true));
+        if(!$sortIsOnMain) {
+            $createTableSQL = "CREATE TABLE ".DBPRE."formulize_temp_extract_$timestamp ( `mastersort` BIGINT(11), `throwaway_sort_values` text, `entry_id` BIGINT(11), PRIMARY KEY (`mastersort`), INDEX i_entry_id (`entry_id`) ) ENGINE=MyISAM;"; // when the sort is not on the main form, then we are including a special field in the select statement that we sort it by, so that the order is correct, and so it has to have a place to get inserted here
 		} else {
-			$createTableSQL = "CREATE TABLE ".DBPRE."formulize_temp_extract_$timestamp ( `mastersort` BIGINT(11), `entry_id` BIGINT(11), PRIMARY KEY (`mastersort`), INDEX i_entry_id (`entry_id`) ) ENGINE=MyISAM;";
+		    $createTableSQL = "CREATE TABLE ".DBPRE."formulize_temp_extract_$timestamp ( `mastersort` BIGINT(11), `entry_id` BIGINT(11), PRIMARY KEY (`mastersort`), INDEX i_entry_id (`entry_id`) ) ENGINE=MyISAM;";
 		}
-		//print $createTableSQL.'<br>';
+        //print $createTableSQL.'<br>';
 		if($createTableRes = $xoopsDB->queryF($createTableSQL)) {
-			//print str_replace("REPLACEWITHTIMESTAMP", $timestamp, $masterQuerySQL).'<br>';
-			$gatherIdsRes = $xoopsDB->queryF(str_replace("REPLACEWITHTIMESTAMP", $timestamp, $masterQuerySQL));
-		} else {
-			print "Failed to create temp table, with this SQL: $createTableSQL<br>Error: ".$xoopsDB->error();
-			exit();
-		}
+            //print str_replace("REPLACEWITHTIMESTAMP", $timestamp, $masterQuerySQL).'<br>';
+            $gatherIdsRes = $xoopsDB->queryF(str_replace("REPLACEWITHTIMESTAMP", $timestamp, $masterQuerySQL));
+        } else {
+            print "Failed to create temp table, with this SQL: $createTableSQL<br>Error: ".$xoopsDB->error();
+            exit();
+        }
 		$linkQueryRes = array();
-		if(isset($exportOverrideQueries[2])) {
-			for($i=2;$i<count($exportOverrideQueries);$i++) {
-				$sql = str_replace("REPLACEWITHTIMESTAMP",$timestamp,$exportOverrideQueries[$i]);
-				$linkQueryRes[] = $xoopsDB->query($sql);
-			}
-		} else {	
-			// FURTHER OPTIMIZATIONS ARE POSSIBLE HERE...WE COULD NOT INCLUDE THE MAIN FORM AGAIN IN ALL THE SELECTS, THAT WOULD IMPROVE THE PROCESSING TIME A BIT, BUT WE WOULD HAVE TO CAREFULLY REFACTOR MORE OF THE LOOPING CODE BELOW THAT PARSES THE ENTRIES, BECAUSE RIGHT NOW IT'S ASSUMING THE FULL MAIN ENTRY IS PRESENT.  AT LEAST THE MAIN ENTRY ID WOULD NEED TO STILL BE USED, SINCE WE USE THAT TO SYNCH UP ALL THE ENTRIES FROM THE OTHER FORMS.
-			foreach($linkformids as $linkId=>$thisLinkFid) {
-				$linkQuery = "SELECT $mainSelectClause , "
-					.$linkSelectIndex[$thisLinkFid].
-					", usertable.user_viewemail AS main_user_viewemail, usertable.email AS main_email FROM "
-					.DBPRE."formulize_" . $formObject->getVar('form_handle') . " AS main
-					LEFT JOIN " . DBPRE . "users AS usertable ON main.creation_uid=usertable.uid
-					LEFT JOIN ".$joinTextTableRef[$thisLinkFid] . $joinTextIndex[$thisLinkFid]."
-					INNER JOIN ".DBPRE."formulize_temp_extract_REPLACEWITHTIMESTAMP as sort_and_limit_table ON main.entry_id = sort_and_limit_table.entry_id ";
-				if (isset($oneSideFilters[$thisLinkFid]) and is_array($oneSideFilters[$thisLinkFid])) {
-					$start = true;
-					foreach($oneSideFilters[$thisLinkFid] as $thisOneSideFilter) {
-						if(!$start) {
-							$linkQuery .= " AND ( $thisOneSideFilter ) ";
-						} else {
-							$linkQuery .= " WHERE ( $thisOneSideFilter ) ";
-							$start = false;
-						}
-					}
-				}
-				$linkQuery .= " ORDER BY sort_and_limit_table.mastersort";
-				if($resultOnly !== 'bypass') {
-					//print str_replace("REPLACEWITHTIMESTAMP",$timestamp,$linkQuery).'<br>';
-					$linkQueryRes[] = $xoopsDB->query(str_replace("REPLACEWITHTIMESTAMP",$timestamp,$linkQuery));
-				}
-				$GLOBALS['formulize_queryForExport'] .= " -- SEPARATOR FOR EXPORT QUERIES -- ".$linkQuery;
-			}
-		}
-		$dropRes = $xoopsDB->queryF("DROP TABLE ".DBPRE."formulize_temp_extract_$timestamp");
-		$resultData = array('results'=>$linkQueryRes, 'fid'=>$fid, 'frid'=>$frid, 'linkFids'=>$linkformids);
-	
-	} else { 
-		if($resultOnly !== 'bypass') {
-			$masterQueryRes = $xoopsDB->query($masterQuerySQL);
-		}
-		$resultData = array('results'=>array($masterQueryRes), 'fid'=>$fid, 'frid'=>$frid, 'linkFids'=>$linkformids);
-	}
-
-	formulize_benchmark("After query");
-	
-	if($resultOnly) {
-		if($resultOnly === 'bypass') {
-			return true; // all we care about here is prepping the query for export (or some other reason)
-		} elseif(count($linkformids)>1) {
-			foreach($linkQueryRes as $thisRes) {
-				if($thisRes AND $xoopsDB->getRowsNum($thisRes)>0) {
-					return $resultData; // if there's at least one linked query result, then send back the package of result data
-				}
-			}
-			return false;
-		} elseif($masterQueryRes AND $xoopsDB->getRowsNum($masterQueryRes)>0) {
-			return $resultData;
+        // PERFORM PRE-PREPREPARED QUERIES FOR AN EXPORT
+	    if(isset($exportOverrideQueries[2])) {
+		    for($i=2;$i<count($exportOverrideQueries);$i++) {
+                $sql = str_replace("REPLACEWITHTIMESTAMP",$timestamp,$exportOverrideQueries[$i]);
+                $linkQueryRes[] = $xoopsDB->query($sql);
+		    }
+        // PERFORM NORMAL QUERIES FOR NORMAL OPERATION
 		} else {
-			return false;
+		    // FURTHER OPTIMIZATIONS ARE POSSIBLE HERE...WE COULD NOT INCLUDE THE MAIN FORM AGAIN IN ALL THE SELECTS, THAT WOULD IMPROVE THE PROCESSING TIME A BIT, BUT WE WOULD HAVE TO CAREFULLY REFACTOR MORE OF THE LOOPING CODE BELOW THAT PARSES THE ENTRIES, BECAUSE RIGHT NOW IT'S ASSUMING THE FULL MAIN ENTRY IS PRESENT.  AT LEAST THE MAIN ENTRY ID WOULD NEED TO STILL BE USED, SINCE WE USE THAT TO SYNCH UP ALL THE ENTRIES FROM THE OTHER FORMS.
+		    foreach($linkformids as $linkId=>$thisLinkFid) {
+                $linkQuery = "SELECT $mainSelectClause , $firstTimeGetAllMainFields "
+                    .$linkSelectIndex[$thisLinkFid].
+                    ", usertable.user_viewemail AS main_user_viewemail, usertable.email AS main_email FROM "
+                    .DBPRE."formulize_" . $formObject->getVar('form_handle') . " AS main
+                    LEFT JOIN " . DBPRE . "users AS usertable ON main.creation_uid=usertable.uid
+                    LEFT JOIN ".$joinTextTableRef[$thisLinkFid] . $joinTextIndex[$thisLinkFid]."
+                    INNER JOIN ".DBPRE."formulize_temp_extract_REPLACEWITHTIMESTAMP as sort_and_limit_table ON main.entry_id = sort_and_limit_table.entry_id ";
+                if (isset($oneSideFilters[$thisLinkFid]) and is_array($oneSideFilters[$thisLinkFid])) {
+                    $start = true;
+                    foreach($oneSideFilters[$thisLinkFid] as $thisOneSideFilter) {
+                        if(!$start) {
+                            $linkQuery .= " AND ( $thisOneSideFilter ) ";
+                        } else {
+                            $linkQuery .= " WHERE ( $thisOneSideFilter ) ";
+                            $start = false;
+                        }
+                    }
+                }
+                $linkQuery .= " ORDER BY sort_and_limit_table.mastersort";
+                if($resultOnly !== 'bypass') {
+                    //print str_replace("REPLACEWITHTIMESTAMP",$timestamp,$linkQuery).'<br>';
+                    $linkQueryRes[] = $xoopsDB->query(str_replace("REPLACEWITHTIMESTAMP",$timestamp,$linkQuery));
+                }
+                $GLOBALS['formulize_queryForExport'] .= " -- SEPARATOR FOR EXPORT QUERIES -- ".$linkQuery;
+                $firstTimeGetAllMainFields = ""; // only get the main fields in the first query, because we don't need to gather all that data again and again and again
+		    }
 		}
-	}
+	    $dropRes = $xoopsDB->queryF("DROP TABLE ".DBPRE."formulize_temp_extract_$timestamp");
+        $resultData = array('results'=>$linkQueryRes, 'fid'=>$fid, 'frid'=>$frid, 'linkFids'=>$linkformids);
+    } else { 
+        if($resultOnly !== 'bypass') {
+            $masterQueryRes = $xoopsDB->query($masterQuerySQL);
+        }
+        $resultData = array('results'=>array($masterQueryRes), 'fid'=>$fid, 'frid'=>$frid, 'linkFids'=>$linkformids);
+    }
 
-	return processGetDataResults($resultData); 
-	 
+    if($resultOnly) {
+        if($resultOnly === 'bypass') {
+            return true; // all we care about here is prepping the query for export (or some other reason)
+        } elseif(count($linkformids)>1) {
+            foreach($linkQueryRes as $thisRes) {
+                if($thisRes AND $xoopsDB->getRowsNum($thisRes)>0) {
+                    return $resultData;
+                }
+            }
+            return false;
+        } elseif($masterQueryRes AND $xoopsDB->getRowsNum($masterQueryRes)>0) {
+            return $resultData;
+        } else {
+            return false;
+        }
+    }
+
+    formulize_benchmark("After query");
+     
+    return processGetDataResults($resultData); 
+     
 } // end of dataExtraction function
 
 // generate the actual blah = blah SQL for joining tables in a relationship
@@ -1092,9 +1094,9 @@ function processGetDataResults($resultData) {
 		$this_userid = 0;
 	}
 	  
-	foreach($queryRes as $thisRes) {     
-	       // loop through the found data and create the dataset array in "getData" format
-	       $prevFieldNotMeta = true;
+	foreach($queryRes as $queryResIndex => $thisRes) {     
+        // loop through the found data and create the dataset array in "getData" format
+        $prevFieldNotMeta = true;
 	    while($masterQueryArray = $xoopsDB->fetchRow($thisRes)) {
             formulize_benchmark("starting record");
             $creatorAllowsEmailViewing = null;
@@ -1126,9 +1128,9 @@ function processGetDataResults($resultData) {
         				}
                     }
                     continue;
-        }
+                }
                 // if it is one of the properly aliased metadata fields...
-			 if(strstr($field, "creation_uid") OR strstr($field, "creation_datetime") OR strstr($field, "mod_uid") OR strstr($field, "mod_datetime") OR strstr($field, "entry_id")) {
+                if(strstr($field, "creation_uid") OR strstr($field, "creation_datetime") OR strstr($field, "mod_uid") OR strstr($field, "mod_datetime") OR strstr($field, "entry_id")) {
                     $fieldNameParts = explode("_", $field);
                     $curFormAlias = $fieldNameParts[0];
                     $curFormId = $curFormAlias == 'main' ? $fid : $linkformids[substr($curFormAlias, 1)]; // the table aliases are based on the keys of the linked forms in the linkformids array, so if we get the number out of the table alias, that key will give us the form id of the linked form as stored in the linkformids array
@@ -1139,64 +1141,47 @@ function processGetDataResults($resultData) {
                         if(strstr($field, "creation_uid")) {
                             $creatorUid = $value;
                         }
-			      // dealing with a new metadata field
-			      // We account for a mainform entry appearing multiple times in the list, because when there are multiple entries in a subform, and SQL returns one row per subform,  we need to not change the main form and internal record until we pass to a new mainform entry
+                        // dealing with a new metadata field
+                        // We account for a mainform entry appearing multiple times in the list, because when there are multiple entries in a subform, and SQL returns one row per subform,  we need to not change the main form and internal record until we pass to a new mainform entry
                         if($prevFieldNotMeta) { // only do once for each form, metadata fields are processed first before all regular fields (and fyi mainforms before other forms)
                             // if this is a different main form entry than the last one we did...
                             if($prevMainId != $entryIdIndex['main']) {
-      					$writtenMains[$prevMainId] = true;
+                                $writtenMains[$prevMainId] = true;
                                 if(isset($writtenMains[$entryIdIndex['main']])) {
                                     $masterIndexer = $masterQueryArrayIndex[$entryIdIndex['main']]; // use the master index value for this main entry id if we've already logged it
-        					} else {
-        					     $masterIndexer = count($masterResults); // use the next available number for the master indexer
+                                } else {
+                                    $masterIndexer = count($masterResults); // use the next available number for the master indexer
                                     $masterQueryArrayIndex[$entryIdIndex['main']] = $masterIndexer; // log it so we can reuse it for this entry when it comes up in another query
-        					}
+                                }
                                 $prevMainId = $entryIdIndex['main']; // if the current form is a main, then store it's ID for use later when we're on a new record
-    				   }
-			      }
-			      $prevFieldNotMeta = false;
-				      if($field == "main_creation_uid" OR $field == "main_mod_uid" OR $field == "main_creation_datetime" OR $field == "main_mod_datetime" OR $field == "main_entry_id") {
-					      $elementHandle = $fieldNameParts[1] . "_" . $fieldNameParts[2];
-				      } 
-			      } else {
+                            }
+                        }
+                        $prevFieldNotMeta = false;
+                        if($field == "main_creation_uid" OR $field == "main_mod_uid" OR $field == "main_creation_datetime" OR $field == "main_mod_datetime" OR $field == "main_entry_id") {
+                            $elementHandle = $fieldNameParts[1] . "_" . $fieldNameParts[2];
+                        } 
+                    } else {
                         continue; // skip metadata fields for non main forms, but we've recorded the curformid and alias above
-			      }
-			 } elseif(!strstr($field, "main_email") AND !strstr($field, "main_user_viewemail")) {
-			      // dealing with a regular element field
-			      $prevFieldNotMeta = true;
-			      $elementHandle = $field;
+                    }
+                } elseif(!strstr($field, "main_email") AND !strstr($field, "main_user_viewemail")) {
+                    // dealing with a regular element field
+                    $prevFieldNotMeta = true;
+                    $elementHandle = $field;
                 } else { // it's some other field...??
-			      continue;
-			 }               
-			 // Check to see if this is a main entry that has already been catalogued, and if so, then skip it
+                    continue;
+                }               
+                // Check to see if this is a main entry that has already been catalogued, and if so, then skip it
                 if($curFormAlias == "main" AND isset($writtenMains[$entryIdIndex['main']])) {
-			      continue;
-			 } 
+                    continue;
+                } 
                 formulize_benchmark("processing ".$field.": $value");
                 //formulize_benchmark("preping value...");
                 $valueArray = prepvalues($value, $elementHandle, $entryIdIndex[$curFormAlias]); // note...metadata fields must not be in an array for compatibility with the 'display' function...not all values returned will actually be arrays, but if there are multiple values in a cell, then those will be arrays
                 //formulize_benchmark("done preping value");
                 $masterResults[$masterIndexer][getFormTitle($curFormId)][$entryIdIndex[$curFormAlias]][$elementHandle] = $valueArray;
-                if($elementHandle == "creation_uid" OR $elementHandle == "mod_uid" OR $elementHandle == "creation_datetime" OR $elementHandle == "mod_datetime") {
-			      // for backwards compatibility, replicate the old metadata fields
-			      switch($elementHandle) {
-				   case "creation_uid":
-					$old_meta = "uid";
-					break;
-				   case "mod_uid":
-					$old_meta = "proxyid";
-					break;
-				   case "creation_datetime":
-					$old_meta = "creation_date";
-					break;
-				   case "mod_datetime":
-					$old_meta = "mod_date";
-					break;
-			      }
-                    $masterResults[$masterIndexer][getFormTitle($curFormId)][$entryIdIndex[$curFormAlias]][$old_meta] = $valueArray;
-			 }
 		    } // end of foreach field loop within a record
-	       } // end of main while loop for all records
+	    } // end of main while loop for all records
+        unset($queryRes[$queryResIndex]);
 	} // end of foreach query result
 	  
     // potentially run through the derived value fields as long as we're not doing an export of data
@@ -2113,7 +2098,16 @@ function prepareFieldIncludeExclude($fields, $include='include') {
 // THIS FUNCTION DOES A SIMPLE QUERY AGAINST A TABLE IN THE DATABASE AND RETURNS THE RESULT IN STANDARD "GETDATA" FORMAT
 function dataExtractionTableForm($tablename, $formname, $fid, $filter=false, $andor=false, $limitStart=false, $limitSize=false, $sortField=false, $sortOrder=false, $resultOnly=false, $fields=array(), $excludeFields=array()) {
 
-     global $xoopsDB;
+    $fid = intval($fid);
+
+    // user must have permission to access the form!
+    $gperm_handler = xoops_gethandler('groupperm');
+    global $xoopsUser;
+    if(!$xoopsUser OR !$gperm_handler->checkRight("view_form", $fid, $xoopsUser->getGroups(), getFormulizeModId())) {
+        return array();
+    }
+
+    global $xoopsDB;
      
     // 2. parse the filter
     // 3. construct the where clause based on the filter and andor
@@ -2125,7 +2119,7 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter=false, $an
     $excludeWhere = prepareFieldIncludeExclude($excludeFields, 'exclude');
     
     // setup a translation table for the formulize records of the fields, so we can use that lower down in several places
-    $sql = "SELECT ele_id, ele_caption FROM ".DBPRE."formulize WHERE id_form=".intval($fid)." $includeWhere $excludeWhere";
+    $sql = "SELECT ele_id, ele_caption FROM ".DBPRE."formulize WHERE id_form=".$fid." $includeWhere $excludeWhere";
     $res = $xoopsDB->query($sql);
     $elementsById = array();
     $elementsByCaption = array();

@@ -1459,6 +1459,14 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
                 $name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid=".intval(display($entry, $col)));
                 $data_to_write = $name_q[0]['name'];
                 if (!$data_to_write) { $data_to_write = $name_q[0]['uname']; }
+            } elseif($col == 'entry_id') {
+                $data_to_write = $id;
+            } elseif($col == 'creation_datetime') {
+                $data_to_write = $c_date;
+            } elseif($col == 'mod_datetime') {
+                $data_to_write = $m_date;
+            } elseif($col == 'creator_email') {
+                $data_to_write = display($entry, 'creator_email');
             } else {
                 $data_to_write = prepareCellForSpreadsheetExport($col, $entry);
             }
@@ -1543,7 +1551,8 @@ function prepareCellForSpreadsheetExport($column, $entry) {
     
     $data_to_write = strip_tags(str_replace(array('<br>','<br />'), "\n", preg_replace('#<script(.*?)>(.*?)</script>#is', '', displayTogether($entry, $column, ", "))));
     // really, we should go to the datatype of the thing that we're linking to, if the element is linked
-    if($thisColumnElement->isLinked OR
+    if(strstr($data_to_write, ',') OR
+        $thisColumnElement->isLinked OR
         stristr($formDataTypes[$columnFid][$column], 'char') OR
         stristr($formDataTypes[$columnFid][$column], 'text') OR
         stristr($formDataTypes[$columnFid][$column], 'binary') OR
@@ -3444,13 +3453,18 @@ function sendNotificationToEmail($email, $event, $tags, $overrideSubject="", $ov
   } else {
 	$emails = array($email);
   }
-  $toreturn = true;
-  
+  $success = false;
   foreach($emails as $email) {
-	  $xoopsMailer = getMailer();
+	$xoopsMailer = getMailer();
     $xoopsMailer->useMail();
     foreach ($tags as $k=>$v) {
-        $xoopsMailer->assign($k, preg_replace("/&amp;/i", '&', $v));
+        if(substr($k, 0, 11) == "ATTACHFILE-") {
+            $fileName = substr($k, 11, strlen($k));
+            $filePath = $v;
+            $xoopsMailer->addAttachment($filePath, $fileName);
+        } else {
+            $xoopsMailer->assign($k, preg_replace("/&amp;/i", '&', $v));
+        }
     }
     // Set up the mailer
     $xoopsMailer->setTemplateDir($templateDir);
@@ -3459,12 +3473,10 @@ function sendNotificationToEmail($email, $event, $tags, $overrideSubject="", $ov
     }
     $xoopsMailer->setTemplate($template);
     $xoopsMailer->setToEmails($email);
-
     $xoopsMailer->setSubject($subject);
     $success = $xoopsMailer->send();
-	  $toreturn = $success AND $toreturn ? true : false;
   }
-  return $toreturn;
+  return $success;
 }
 
 
@@ -3600,6 +3612,9 @@ function formulize_processNotification($event, $extra_tags, $fid, $uids_to_notif
     $formulizeConfig = $config_handler->getConfigsByCat(0, $mid);
     $notifyByCron = $formulizeConfig['notifyByCron'];
 
+    // template gets .tpl added on end when the notification system runs, so trip out any .tpl that might be in there now just in case
+    $template = str_replace('.tpl', '', $template);
+    
     if($notifyByCron) {
         $notFile = fopen(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotifications.txt","a");
         formulize_getLock($notFile);
@@ -4442,7 +4457,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
             $filter .= $multi ? "<input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' value='none' $checked onclick=\"jQuery('#".$id."_hiddenMulti').val('none');jQuery('.$id').each(function() { jQuery(this).removeAttr('checked') });\"> <label for='".$multiIdCounter."_".$id."'>$defaulttext</label><br/>\n" :"<option value=\"none\">".$defaulttext."</option>\n";
         }
 
-        $form_element = q("SELECT ele_value, ele_type, ele_uitext FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = " . $ele_id);
+        $form_element = q("SELECT ele_value, ele_type, ele_uitext, id_form FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = " . $ele_id);
         $element_value = unserialize($form_element[0]["ele_value"]);
         $ele_uitext = unserialize($form_element[0]["ele_uitext"]);
         switch ($form_element[0]["ele_type"]) {
@@ -4467,14 +4482,15 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
             $source_element_handle = $boxproperties[1];
 
             // process the limits
-            $limitCondition = "";
+            $limitConditionTable = "";
+            $limitConditionWhere = "";
             // NOTE: LIMIT['ELE_ID'] MUST BE THE HANDLE OF THE ELEMENT, NOT THE ELEMENT ID...THIS OBSCURE FEATURE ONLY USED IN THE MAP SITE WAS NOT UPDATED FOR 3.1...AS LONG AS ELEMENT HANDLES ARE NOT CUSTOMIZED, THIS SHOULD NOT BE A PROBLEM
             if (is_array($limit)) {
                 //$limitCondition = $limit['ele_id'] . "/**/" . $limit['term'];
                 //$limitCondition .= isset($limit['operator']) ? "/**/" . $limit['operator'] : "";
                 $limitOperator = isset($limit['operator']) ? $limit['operator'] : " LIKE ";
                 $likebits = (strstr($limitOperator, "LIKE") AND substr($limit['term'], 0, 1) != "%" AND substr($limit['term'], -1) != "%") ? "%" : "";
-                $limitCondition = " WHERE t1`".$limit['ele_id']."` ".$limitOperator." '$likebits".formulize_db_escape($limit['term'])."$likebits' ";
+                $limitConditionWhere = " WHERE t1`".$limit['ele_id']."` ".$limitOperator." '$likebits".formulize_db_escape($limit['term'])."$likebits' ";
             } elseif ($subfilter) { // for subfilters, we're jumping back to another form to get the values, hence the join
                 $element_handler = xoops_getmodulehandler('elements', 'formulize');
                 $linkedSourceElementObject = $element_handler->get($linked_ele_id);
@@ -4482,11 +4498,28 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
                 // first part will be the form id of the source form, second part will be the element handle in that form
                 $linkedSourceElementEleValueParts = explode("#*=:*", $linkedSourceElementEleValue[2]);
                 $linkedFormObject = $form_handler->get($linkedSourceElementEleValueParts[0]);
-                $limitCondition = ", ".$xoopsDB->prefix("formulize_".$linkedFormObject->getVar('form_handle'))." as t2 WHERE t1.`$linked_ele_id` LIKE CONCAT('%',t2.entry_id,'%') AND t2.`".$linkedSourceElementEleValueParts[1]."` LIKE '%".formulize_db_escape($_POST[$linked_data_id])."%'";
+                $limitConditionTable = ", ".$xoopsDB->prefix("formulize_".$linkedFormObject->getVar('form_handle'))." as t2 ";
+                $limitConditionWhere = " WHERE t1.`$linked_ele_id` LIKE CONCAT('%',t2.entry_id,'%') AND t2.`".$linkedSourceElementEleValueParts[1]."` LIKE '%".formulize_db_escape($_POST[$linked_data_id])."%'";
             }
             unset($options);
+            
+            $conditionsfilter = "";
+            $conditionsfilter_oom = "";
+            $extra_clause = "";
+            if($elementFormObject = $form_handler->get($form_element[0]['id_form'])) {
+                global $xoopsUser;
+                $fakeOwnerUid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+                list($conditionsfilter, $conditionsfilter_oom, $parentFormFrom) = buildConditionsFilterSQL($element_value[5], $source_form_id, 'new', $fakeOwnerUid, $elementFormObject, "t1");
+                $sourceEntryIdsForFilters = array(); // filters never have any preselected values from the database
+                list($sourceEntrySafetyNetStart, $sourceEntrySafetyNetEnd) = prepareLinkedElementSafetyNets($sourceEntryIdsForFilters, $conditionsfilter, $conditionsfilter_oom);
+                $pgroupsfilter = prepareLinkedElementGroupFilter($source_form_id, $element_value[3], $element_value[4], $element_value[6]);
+                $extra_clause = prepareLinkedElementExtraClause($pgroupsfilter, $parentFormFrom, $sourceEntrySafetyNetStart);
+                $limitConditionWhere = substr($limitConditionWhere, 7); // cut off the WHERE in this clause, because the extra_clause already intros it
+            }
+            
             $sourceFormObject = $form_handler->get($source_form_id);
-            if ($dataResult = $xoopsDB->query("SELECT distinct(t1.`$source_element_handle`) FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." as t1 ".$limitCondition." ORDER BY t1.`$source_element_handle`")) {
+            
+            if ($dataResult = $xoopsDB->query("SELECT distinct(t1.`$source_element_handle`) FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." as t1 $limitConditionTable $extra_clause $conditionsfilter $conditionsfilter_oom $limitConditionWhere ORDER BY t1.`$source_element_handle`")) {
                 while ($dataArray = $xoopsDB->fetchArray($dataResult)) {
                     $options[$dataArray[$source_element_handle]] = "";
                 }
@@ -5900,10 +5933,10 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
             $v = (false === $time_value) ? "" : date(_SHORTDATESTRING, ($time_value)+$offset);
         }
         $output .= '<span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $handle, $textWidth, $thisEntryId)), $handle);
+        $output .= '</span>';
         if ($counter<$countOfValue) {
             $output .= "<br>";
         }
-        $output .= '</span>';
         $counter++;
     }
         $output .= "</div>";

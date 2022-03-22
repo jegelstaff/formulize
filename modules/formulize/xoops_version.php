@@ -679,7 +679,9 @@ $modversion['templates'][] = array(
 $modversion['templates'][] = array(
 	'file' => 'blocks/menu.html',
 	'description' => '');
-
+$modversion['templates'][] = array(
+	'file' => 'admin/mailusers.html',
+	'description' => '');
     
 //	Module Configs
 // $xoopsModuleConfig['t_width']

@@ -9,11 +9,12 @@
     <hr>
     <br>
     <form id='managekeys' name='managekeys' method='post'>
-    <p>Generate key for user
-    <select name='uid'>
-        <{html_options options=$adminPage.uids}>
-    </select>
-    that expires
+        
+    <{if $adminPage.uids}>
+
+    <p>Generate key for user:<br />
+    <{html_radios name='uid' options=$adminPage.uids separator='<br />'}>
+    </p><p>Key expires
     <select name='expiry'>
         <option value=''>Never</option>
         <option value='1'>in 1 hour</option>
@@ -31,8 +32,15 @@
         <option value='1344'>in 8 weeks</option>
         <option value='4368'>in 6 months</option>
         <option value='8760'>in 1 year</option>
-    </select> &nbsp;&nbsp;&nbsp;<input type='submit' name='save' value='Create'>
+    </select> </p><p> <input type='submit' name='save' value='Create'>
     </p>
+    
+    <{else}>
+        
+    <p>To make keys, search for users: <input type='text' name='usersearch' /> <input type='submit' name='search' value='Search'></p>
+    
+    <{/if}>
+     
     <input type='hidden' value='' id='deletekey' name='deletekey' />
     </form>
     <br/><hr><br/>

@@ -1,3 +1,12 @@
+CREATE TABLE `tfa_codes` (
+  `code_id` int(11) unsigned NOT NULL auto_increment,
+  `uid` int(11) unsigned DEFAULT NULL,
+  `code` varchar(255) DEFAULT NULL,
+  `method` tinyint(1) unsigned DEFAULT NULL,
+  PRIMARY KEY (`code_id`),
+  INDEX i_uid (`uid`)
+) ENGINE=InnoDB;
+
 CREATE TABLE `formulize_screen_calendar` (
   `calendar_id` int(11) unsigned NOT NULL auto_increment,
   `sid` int(11) DEFAULT NULL,

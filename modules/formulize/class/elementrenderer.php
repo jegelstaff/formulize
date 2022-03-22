@@ -137,8 +137,9 @@ class formulizeElementRenderer{
 				if(trim($ele_value[0]) == "") { $ele_value[0] = $ele_caption; }
 				if(strstr($ele_value[0], "\$value=") OR strstr($ele_value[0], "\$value =")) {
 					$form_id = $id_form;
-					$entryData = $this->formulize_getCachedEntryData($id_form, $entry_id);
-					$creation_datetime = display($entryData, "creation_datetime");
+					$entry = $this->formulize_getCachedEntryData($id_form, $entry_id);
+					$creation_datetime = display($entry, "creation_datetime");
+					$entryData = $entry; // alternate variable name for backwards compatibility
 					$evalResult = eval($ele_value[0]);
 					if($evalResult === false) {
 						$ele_value[0] = _formulize_ERROR_IN_LEFTRIGHT;
@@ -236,24 +237,25 @@ class formulizeElementRenderer{
 						include_once XOOPS_ROOT_PATH."/class/xoopsform/formeditor.php";
 						$form_ele = new XoopsFormEditor(
 							$ele_caption,
-							'FCKeditor',
+							'CKEditor',
 							$editor_configs = array("name"=>$form_ele_id, "value"=>$ele_value[0]),
 							$noHtml=false,
 							$OnFailure = ""
 						);
 
-						$eltname = $form_ele_id;
-						$eltcaption = $ele_caption;
-						$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
-						$eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
-						$form_ele->customValidationCode[] = "\n var FCKGetInstance = FCKeditorAPI.GetInstance('$form_ele_id');\n";
-						$form_ele->customValidationCode[] = "var getText = FCKGetInstance.EditorDocument.body.innerHTML; \n";
-						$form_ele->customValidationCode[] = "var StripTag = getText.replace(/(<([^>]+)>)/ig,''); \n";
-						$form_ele->customValidationCode[] = "if(StripTag=='' || StripTag=='&nbsp;') {\n";
-						$form_ele->customValidationCode[] = "window.alert(\"{$eltmsg}\");\n FCKGetInstance.Focus();\n return false;\n";
-						$form_ele->customValidationCode[] = "}\n";
+                        if($this->_ele->getVar('ele_req')) {
+                            $eltname = $form_ele_id;
+                            $eltcaption = $ele_caption;
+                            $eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
+                            $eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
+                            $form_ele->customValidationCode[] = "var getText = CKEditors['".$eltname."_tarea'].getData();\n";
+                            $form_ele->customValidationCode[] = "var StripTag = getText.replace(/(<([^>]+)>)/ig,''); \n";
+                            $form_ele->customValidationCode[] = "if(StripTag=='' || StripTag=='&nbsp;') {\n";
+                            $form_ele->customValidationCode[] = "window.alert(\"{$eltmsg}\");\n CKEditors['".$eltname."_tarea'].focus();\n return false;\n";
+                            $form_ele->customValidationCode[] = "}\n";
+                        }
 
-						$GLOBALS['formulize_fckEditors'] = true;
+						$GLOBALS['formulize_CKEditors'][] = $form_ele_id.'_tarea';
 						
 					} else {
 					$form_ele = new XoopsFormTextArea(
@@ -275,6 +277,7 @@ class formulizeElementRenderer{
 					$form_id = $id_form;
 					$entry = $this->formulize_getCachedEntryData($id_form, $entry_id);
 					$creation_datetime = display($entry, "creation_datetime");
+					$entryData = $entry; // alternate variable name for backwards compatibility
 					$evalResult = eval($ele_value[0]);
 					if($evalResult === false) {
 						$ele_value[0] = _formulize_ERROR_IN_LEFTRIGHT;
@@ -1054,6 +1057,7 @@ class formulizeElementRenderer{
             }
             
 			$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\"");
+            
 			// reuse caption, put two spaces between element and previous entry UI
 			$form_ele_new = new xoopsFormLabel($form_ele->getCaption(), $form_ele->render().$previousEntryUIRendered.$specialValidationLogicDisplay.$elementCue);
 			$form_ele_new->formulize_element = $this->_ele;
@@ -1182,7 +1186,7 @@ class formulizeElementRenderer{
 	// gather an entry when required...this should really be abstracted out to the data handler class, which also needs a proper getter in a handler of its own, so we don't keep creating new instances of the data handler and it can store the cached info about entries that we want it to.
 	function formulize_getCachedEntryData($id_form, $entry_id) {
 		static $cachedEntryData = array();
-		if($entry_id === "new" OR !$entry_id) {
+		if(!is_numeric($entry_id) OR $entry_id < 1) {
             return array();
 		}
 		if(!isset($cachedEntryData[$id_form][$entry_id])) {

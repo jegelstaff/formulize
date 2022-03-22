@@ -13,10 +13,14 @@
 			    	<div><input type="checkbox" name="rememberme" value="On" /><{$lang_rememberme}><br /></div>
 			    <{/if}>
 			    <div><input type="hidden" name="op" value="login" /></div>
+				<input type="hidden" id="tfacode" name="tfacode" value="" />
+				<input type="hidden" id="tfaremember" name="tfaremember" value="" />
 		    	<div><input type="hidden" name="xoops_redirect" value="<{$redirect_page}>"/>
+				
 			    <br />
 		    	<input type="submit" value="<{$lang_login}>" /></div>
 			</form>
+			<{php}>include_once XOOPS_ROOT_PATH.'/include/2fa/manage.php';print tfaLoginJS('icms_block_login_form');<{/php}>
   <{if $auth_openid}>
 <br />
 	  <div style="text-align: <{$smarty.const._GLOBAL_LEFT}>;"><a href="<{$auth_url}>"><{$lang_login_oid}></a></div>
@@ -30,21 +34,6 @@
 			<{if $allow_registration }>
 				<div style="text-align: <{$smarty.const._GLOBAL_RIGHT}>;"><{$lang_notregister}><br /></div>
 			<{/if}>
-		</fieldset>
-	</div>
-
-	<div style='margin-top: 2em;'>
-		<fieldset style="padding: 10px;">
-			<legend style="font-weight: bold; font-size: 150%;"><{$lang_lostpassword}></legend>
-			<div>
-				<{$lang_noproblem}>
-			</div>
-			<form action="lostpass.php" method="post">
-				<div><br /><{$lang_youremail}> <input type="text" name="email" size="26" maxlength="255" />&nbsp;&nbsp;<input type="hidden" name="op" value="mailpasswd" /><input type="hidden" name="t" value="<{$mailpasswd_token}>" />
-		    	<br />
-		    	<br />
-		     	<input type="submit" value="<{$lang_sendpassword}>" /></div>
-			</form>
 		</fieldset>
 	</div>
 </div>

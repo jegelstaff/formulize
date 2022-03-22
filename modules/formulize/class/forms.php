@@ -1323,7 +1323,7 @@ class formulizeFormsHandler {
 				return false;
 			}
 			if($oldNewEleIdMap[$ele['ele_handle']] == "replace_with_ele_id") {
-				$oldNewEleIdMap[$ele['ele_handle']] = $this->db->getInsertId();
+				$oldNewEleIdMap[$ele['ele_handle']] = $oldFormHandle.'_'.$this->db->getInsertId();
 			}
 		}
 

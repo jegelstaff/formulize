@@ -81,12 +81,12 @@ INSERT INTO `REPLACE_WITH_PREFIX_config` (`conf_id`, `conf_modid`, `conf_catid`,
 (78, 0, 3, 'meta_robots', '_MD_AM_METAROBOTS', 'noindex,nofollow', '_MD_AM_METAROBOTSDSC', 'select', 'text', 2),
 (79, 0, 3, 'meta_rating', '_MD_AM_METARATING', 'general', '_MD_AM_METARATINGDSC', 'select', 'text', 3),
 (80, 0, 3, 'meta_author', '_MD_AM_METAAUTHOR', 'Formulize', '_MD_AM_METAAUTHORDSC', 'textbox', 'text', 4),
-(81, 0, 3, 'meta_copyright', '_MD_AM_METACOPYR', 'Copyright © 2007-2011', '_MD_AM_METACOPYRDSC', 'textbox', 'text', 5),
+(81, 0, 3, 'meta_copyright', '_MD_AM_METACOPYR', 'Copyright © 2004-2022', '_MD_AM_METACOPYRDSC', 'textbox', 'text', 5),
 (82, 0, 3, 'google_meta', '_MD_AM_METAGOOGLE', '', '_MD_AM_METAGOOGLE_DESC', 'textbox', 'text', 6),
-(83, 0, 3, 'footer', '_MD_AM_FOOTER', '<a href="http://www.freeformsolutions.ca/formulize/" rel="external" target="_blank">Formulize Standalone Version</a> &copy; 2004-2014 &mdash; <a href="http://www.impresscms.org/" rel="external" target="_blank">The ImpressCMS Project</a> &copy; 2007-2011 ', '_MD_AM_FOOTERDSC', 'textsarea', 'text', 7),
+(83, 0, 3, 'footer', '_MD_AM_FOOTER', '<a href="http://www.formulize.org/" rel="external" target="_blank">Formulize Standalone Version</a> &copy; 2004-2022 &mdash; <a href="http://www.impresscms.org/" rel="external" target="_blank">The ImpressCMS Project</a> &copy; 2007-2011 ', '_MD_AM_FOOTERDSC', 'textsarea', 'text', 7),
 (84, 0, 3, 'use_google_analytics', '_MD_AM_USE_GOOGLE_ANA', '0', '_MD_AM_USE_GOOGLE_ANA_DESC', 'yesno', 'int', 8),
 (85, 0, 3, 'google_analytics', '_MD_AM_GOOGLE_ANA', '', '_MD_AM_GOOGLE_ANA_DESC', 'textbox', 'text', 9),
-(86, 0, 3, 'footadm', '_MD_AM_FOOTADM', '<a href="http://www.freeformsolutions.ca/formulize/" rel="external" target="_blank">Formulize Standalone Version</a> &copy; 2004-2014 &mdash; <a href="http://www.impresscms.org/" rel="external" target="_blank">The ImpressCMS Project</a> &copy; 2007-2011 ', '_MD_AM_FOOTADM_DESC', 'textsarea', 'text', 10),
+(86, 0, 3, 'footadm', '_MD_AM_FOOTADM', '<a href="http://www.formulize.org/" rel="external" target="_blank">Formulize Standalone Version</a> &copy; 2004-2022 &mdash; <a href="http://www.impresscms.org/" rel="external" target="_blank">The ImpressCMS Project</a> &copy; 2007-2011 ', '_MD_AM_FOOTADM_DESC', 'textsarea', 'text', 10),
 (87, 0, 4, 'censor_enable', '_MD_AM_DOCENSOR', '0', '_MD_AM_DOCENSORDSC', 'yesno', 'int', 0),
 (88, 0, 4, 'censor_words', '_MD_AM_CENSORWRD', 'a:5:{i:0;s:4:"fuck";i:1;s:4:"shit";i:2;s:4:"cunt";i:3;s:6:"wanker";i:4;s:7:"bastard";}', '_MD_AM_CENSORWRDDSC', 'textsarea', 'array', 1),
 (89, 0, 4, 'censor_replace', '_MD_AM_CENSORRPLC', '#OOPS#', '_MD_AM_CENSORRPLCDSC', 'textbox', 'text', 2),
@@ -338,8 +338,8 @@ INSERT INTO `REPLACE_WITH_PREFIX_config` (`conf_id`, `conf_modid`, `conf_catid`,
 (334, 5, 0, 'filters', '_MI_PROTECTOR_FILTERS', '', '_MI_PROTECTOR_FILTERSDSC', 'textarea', 'text', 30),
 (335, 5, 0, 'enable_manip_check', '_MI_PROTECTOR_MANIPUCHECK', '1', '_MI_PROTECTOR_MANIPUCHECKDSC', 'yesno', 'int', 31),
 (336, 5, 0, 'manip_value', '_MI_PROTECTOR_MANIPUVALUE', '', '_MI_PROTECTOR_MANIPUVALUEDSC', 'textbox', 'text', 32),
-(337, 0, 7, 'auth_2fa', '_MD_AM_AUTH2FA', '0', '_MD_AM_AUTH2FADESC', 'yesno', 'int', 1),
-(338, 0, 7, 'auth_2fa_groups', '_MD_AM_AUTH2FAGROUPS', 'a:1:{i:0;s:1:\"2\";}', '_MD_AM_AUTH2FAGROUPSDESC', 'group_multi', 'array', 1),
+(337, 0, 7, 'auth_2fa', '_MD_AM_AUTH2FA', '1', '_MD_AM_AUTH2FADESC', 'yesno', 'int', 1),
+(338, 0, 7, 'auth_2fa_groups', '_MD_AM_AUTH2FAGROUPS', '', '_MD_AM_AUTH2FAGROUPSDESC', 'group_multi', 'array', 1),
 (339, 0, 7, 'auth_okta', '_MD_AM_AUTHOKTA', '', '_MD_AM_AUTHOKTADESC', 'textbox', 'text', 1);
 
 TRUNCATE `REPLACE_WITH_PREFIX_group_permission`;
@@ -487,9 +487,10 @@ INSERT INTO `REPLACE_WITH_PREFIX_group_permission` (`gperm_id`, `gperm_groupid`,
 (171, 2, 15, 1, 'block_read'),
 (172, 2, 17, 1, 'block_read'),
 (173, 2, 24, 1, 'block_read'),
-(179, 2, 18, 4, 'profile_edit'),
-(180, 2, 19, 4, 'profile_edit'),
-(181, 2, 29, 4, 'profile_edit');
+(179, 2, 18, REPLACE_WITH_PROFILE_MODULE_ID, 'profile_edit'),
+(180, 2, 19, REPLACE_WITH_PROFILE_MODULE_ID, 'profile_edit'),
+(181, 2, 29, REPLACE_WITH_PROFILE_MODULE_ID, 'profile_edit'),
+(182, 2, 30, REPLACE_WITH_PROFILE_MODULE_ID, 'profile_edit');
 
 
 UPDATE `REPLACE_WITH_PREFIX_block_module_link` SET page_id=0 WHERE block_id=24;
@@ -498,7 +499,7 @@ TRUNCATE `REPLACE_WITH_PREFIX_newblocks`;
 
 INSERT INTO `REPLACE_WITH_PREFIX_newblocks` (`bid`, `mid`, `func_num`, `options`, `name`, `title`, `content`, `side`, `weight`, `visible`, `block_type`, `c_type`, `isactive`, `dirname`, `func_file`, `show_func`, `edit_func`, `template`, `bcachetime`, `last_modified`) VALUES
 (1, 1, 1, '', 'User Menu', 'User Menu', '', 1, 0, 0, 'S', 'H', 1, 'system', 'system_blocks.php', 'b_system_user_show', '', 'system_block_user.html', 0, 1324237597),
-(2, 1, 2, '', 'Login', 'Login', '', 1, 0, 1, 'S', 'H', 1, 'system', 'system_blocks.php', 'b_system_login_show', '', 'system_block_login.html', 0, 1324009012),
+(2, 1, 2, '', 'Login', '', '', 1, 0, 1, 'S', 'H', 1, 'system', 'system_blocks.php', 'b_system_login_show', '', 'system_block_login.html', 0, 1324009012),
 (3, 1, 3, '', 'Search', 'Search', '', 2, 0, 0, 'S', 'H', 1, 'system', 'system_blocks.php', 'b_system_search_show', '', 'system_block_search.html', 0, 1324230443),
 (4, 1, 4, '1|5', 'Waiting Contents', 'Waiting Contents', '', 9, 0, 0, 'S', 'H', 1, 'system', 'system_waiting.php', 'b_system_waiting_show', 'b_system_waiting_edit', 'system_block_waiting.html', 0, 1324230522),
 (5, 1, 5, '', 'Main Menu', 'Main Menu', '', 1, 0, 0, 'S', 'H', 1, 'system', 'system_blocks.php', 'b_system_main_show', '', 'system_block_mainmenu.html', 0, 1324230437),
@@ -520,7 +521,7 @@ INSERT INTO `REPLACE_WITH_PREFIX_newblocks` (`bid`, `mid`, `func_num`, `options`
 (21, 0, 0, '', 'Custom Block (Auto Format + smilies)', 'Welcome!', 'Please login on the left.', 4, 0, 1, 'C', 'S', 1, '', '', '', '', '', 0, 1324230576),
 (22, 2, 0, '0|1|1|1', 'Content', 'Content', '', 1, 0, 0, 'M', 'H', 1, 'content', 'content_display.php', 'content_content_display_show', 'content_content_display_edit', 'content_content_display.html', 0, 1324009074),
 (23, 2, 1, 'content_title|ASC|1|#59ADDB|0', 'Content Menu', 'Content Menu', '', 1, 0, 0, 'M', 'H', 1, 'content', 'content_menu.php', 'content_content_menu_show', 'content_content_menu_edit', 'content_content_menu.html', 0, 1324009074),
-(24, 3, 1, '', 'Form Menu', 'Form Menu', '', 1, 0, 1, 'M', 'H', 1, 'formulize', 'mymenu.php', 'block_formulizeMENU_show', '', '', 0, 1324230836),
+(24, 3, 1, '', 'Form Menu', '', '', 1, 0, 1, 'M', 'H', 1, 'formulize', 'mymenu.php', 'block_formulizeMENU_show', '', '', 0, 1324230836),
 (25, 4, 1, '5', 'My friends', 'My friends', '', 1, 0, 0, 'M', 'H', 1, 'profile', 'blocks.php', 'b_profile_friends_show', 'b_profile_friends_edit', 'profile_block_friends.html', 0, 1324009084),
 (26, 4, 2, '', 'User Menu', 'User Menu', '', 1, 0, 0, 'M', 'H', 1, 'profile', 'blocks.php', 'b_profile_usermenu_show', '', 'profile_block_usermenu.html', 0, 1324009084);
 
@@ -560,9 +561,13 @@ INSERT INTO `REPLACE_WITH_PREFIX_profile_field` (`fieldid`, `catid`, `field_type
 (26, 4, 'openid', '1', 'openid', 'OpenID', 'openid.gif', '', 0, '255', 6, '', 1, 0, 0, 'a:0:{}', 1, 0, 1),
 (27, 4, 'dhtml', '2', 'user_sig', 'Signature', 'signature.gif', '', 0, '0', 7, '', 1, 1, 0, 'a:0:{}', 1, 0, 1),
 (28, 2, 'email', '1', 'email', 'Email', 'email.gif', '', 1, '255', 5, '', 1, 0, 1, 'a:0:{}', 1, 1, 1),
-(29, 0, 'select', '3', '2famethod', '2-factor authentication method', '', '', 0, '0', 7, '', 1, 1, 1, 'a:4:{i:0;s:8:\"--None--\";i:1;s:14:\"Text me a code\";i:2;s:15:\"Email me a code\";i:3;s:24:\"Use an authenticator app\";}', 1, 1, 1);
+(29, 0, 'select', '3', '2famethod', '2-factor authentication method', '', '', 0, '0', 7, '', 1, 1, 1, 'a:4:{i:0;s:8:\"--None--\";i:1;s:14:\"Text me a code\";i:2;s:15:\"Email me a code\";i:3;s:24:\"Use an authenticator app\";}', 1, 1, 1),
+(30, 0, 'textbox', '1', '2faphone', 'Phone Number', '', '', 0, '255', 8, '', 1, 1, 1, 'a:0:{}', 1, 2, 1),
+(31, 0, 'textarea', '2', '2fadevices', 'Devices', '', '', 0, '0', 9, '', 1, 1, 0, 'a:0:{}', 1, 2, 1);
 
 ALTER TABLE `REPLACE_WITH_PREFIX_profile_profile` ADD `2famethod` INT NULL DEFAULT NULL;
+ALTER TABLE `REPLACE_WITH_PREFIX_profile_profile` ADD `2faphone` VARCHAR(15) NULL DEFAULT NULL;
+ALTER TABLE `REPLACE_WITH_PREFIX_profile_profile` ADD `2fadevices` TEXT NULL DEFAULT NULL;
 
 TRUNCATE `REPLACE_WITH_PREFIX_profile_profile`;
 
@@ -582,7 +587,9 @@ INSERT INTO `REPLACE_WITH_PREFIX_profile_visibility` (`fieldid`, `user_group`, `
 (26, 1, 0),
 (28, 1, 0),
 (28, 2, 0),
-(29, 2, 0);
+(29, 1, 0),
+(30, 1, 0);
+
 
 UPDATE `REPLACE_WITH_PREFIX_users` SET theme='formulize_standalone';
 

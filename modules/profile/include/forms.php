@@ -320,6 +320,12 @@ function getUserForm(&$user, $profile = false, $action = false) {
         $form->addElement(new icms_form_elements_Label($title, $desc), false);
         foreach (array_keys($elements[$k]) as $i) {
             $form->addElement($elements[$k][$i]['element'], $elements[$k][$i]['required']);
+            if($elements[$k][$i]['element']->getName() == '2faphone') {
+                $forgetButton = "<input type='button' value='"._US_FORGET_DEVICES_BUTTON."' onclick='jQuery.post(\"/include/2fa/forget.php\");'>";
+                $forgetElement = new xoopsFormLabel(_US_FORGET_DEVICES, $forgetButton);
+                $forgetElement->setDescription(_US_FORGET_DEVICES_DESC);
+                $form->addElement($forgetElement);
+            }
         }
     }
 

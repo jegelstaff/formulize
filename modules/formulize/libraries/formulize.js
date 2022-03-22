@@ -9,7 +9,7 @@ if (typeof xoopsGetElementById != 'function') {
 
     jQuery(document).ready(function() {
         // for grouped checkbox elements, this performs the 'check all' behaviour
-        jQuery('input.checkemall').click(function() {
+        jQuery('input.checkemall').live('click', function() {
             if (jQuery(this).is(":checked")) {
                 jQuery(this).parents(".grouped").find("input").attr("checked", true);
             } else {

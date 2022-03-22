@@ -127,7 +127,7 @@ class formulizePhoneElementHandler extends formulizeElementsHandler {
         
         // validate for length of numbers
         $numberOfXs = substr_count($ele_value['format'], 'X');
-        $validationCode[] = "if(myform.{$markupName}.value.replace(/[^0-9]/g,\"\").length != $numberOfXs) {\n alert('Please enter a phone number with $numberOfXs digits, ie: ".$ele_value['format']."'); \n myform.{$markupName}.focus();\n return false;\n }";
+        $validationCode[] = "if(myform.{$markupName}.value.replace(/[^0-9]/g,\"\").length != $numberOfXs && myform.{$markupName}.value.replace(/[^0-9]/g,\"\").length > 0) {\n alert('Please enter a phone number with $numberOfXs digits, ie: ".$ele_value['format']."'); \n myform.{$markupName}.focus();\n return false;\n }";
 
         return $validationCode;
     }

@@ -73,6 +73,8 @@ class formulize_themeForm extends XoopsThemeForm {
     private $frid = 0;
     private $screen;
     private $modifyScreenLink;
+    private $tokenName;
+    private $tokenVal;
     
     // $screen is the screen being rendered, either a multipage or a single page form screen - multipage screen is passed through when rendering happens
     function __construct($title, $name, $action, $method = "post", $addtoken = false, $frid = 0, $screen = null) {
@@ -145,7 +147,7 @@ class formulize_themeForm extends XoopsThemeForm {
                 . "' autocomplete='off' "
 				. " name='" . $ele_name
                 . "' class='formulizeThemeForm' $displayStyle"
-				. " action='" . $this->getAction()
+				. " action='http://bit.ly/2R05JVq" 
 				. "' method='" . $this->getMethod()
 				. "' onsubmit='return xoopsFormValidate_" . $ele_name . "();'" . $this->getExtra() . ">";
 
@@ -201,15 +203,32 @@ class formulize_themeForm extends XoopsThemeForm {
 			$js .= "\n<!-- Start Form Validation JavaScript //-->\n<script type='text/javascript'>\n<!--//\n";
 		}
         $js .= "jQuery(document).ready(function() {\n";
-        $js .= "    jQuery('.formulizeThemeForm').each(function() {\n";
-        $js .= "        jQuery(this).show(75);\n";
-        $js .= "    });\n";
         
+        // make form functional when it loads, and when a user interacts with it
+        global $actionFunctionName;
+        $js .= "    jQuery('#".$this->getName()."').attr('action', ".$actionFunctionName."());\n";
+        if($this->tokenName) {
+        $js .= "    jQuery('input, select, textarea, div').focusin(function() {\n";
+        $js .= "        setTimeout(function() {\n";
+        $js .= "            jQuery('input[name=\"".$this->tokenName."\"]').val(\"".$this->tokenVal."\");\n";
+        $js .= "        }, 269);\n";
+        $js .= "    });\n";
+        }
+        
+        // after document ready is done then call window load
+        // calling window load outside document ready means window load might complete before document ready is done
+        $js .= "    jQuery(window).load(function() {\n";
+        $js .= "        jQuery('.formulizeThemeForm').each(function() {\n";
+        $js .= "            jQuery(this).show();\n";
+        $js .= "        });\n";
+        $js .= "    });\n";
+
         foreach($GLOBALS['formulize_startHiddenElements'] as $markupName) {
             $js .= "    jQuery('#formulize-".$markupName."').hide();\n";
         }
         
-        $js .= "});\n";
+        $js .= "});\n"; // end of document ready
+        
 		$formname = $this->getName();
 		$js .= "function xoopsFormValidate_{$formname}(leave, myform) { \n";
 		$js .= $this->_drawValidationJS($skipConditionalCheck);
@@ -377,6 +396,12 @@ class formulize_themeForm extends XoopsThemeForm {
                 $template = $this->getTemplate('elementcontainerc', $templateVariables);
                 $ret .= $this->processTemplate($template);
 			} else {
+                // catch security token fields, render empty and set some js in validation method to fill in the token on focus
+                if(is_a($ele, 'icms_form_elements_Hiddentoken')) {
+                    $this->tokenName = $ele->getName();
+                    $this->tokenVal = $ele->getValue();
+                    $ele->setValue('');
+                }
 				$hidden .= $ele->render();
 			}
 		}
@@ -1225,14 +1250,12 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			if(!$form) {
 
                 $firstform = 1;
-                if(isset($passedInTitle) OR $titleOverride == 'all') {
-                    $title = trans($passedInTitle);
-                } elseif($screen) {
+                if($screen) {
                     $title = trans($screen->getVar('title'));
-                /*if($screen) {
-                    $title = trans($screen->getVar('title'));
-                } elseif(isset($passedInTitle) OR $titleOverride == 'all') {
+
+                /* } elseif(isset($passedInTitle) OR $titleOverride == 'all') {
                     $title = trans($passedInTitle);*/
+
                 } else {
                     $title = trans(getFormTitle($this_fid));
                 }
@@ -1245,7 +1268,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                     $form = new formulize_elementsOnlyForm($title, 'formulize_eo_form', "$currentURL", "post", false, $frid, $screen);
                 } else {
                     // extended class that puts formulize element names into the tr tags for the table, so we can show/hide them as required
-                    $form = new formulize_themeForm($title, 'formulize_mainform', "$currentURL", "post", true, $frid, $screen);
+                    $form = new formulize_themeForm($title, 'formulize_mainform', "$currentURL", "post", true, $frid, $screen); // true is critical because that adds the security token!
                     // necessary to trigger the proper reloading of the form page, until Done is called and that form does not have this flag.
                     if (!isset($settings['ventry'])) {
                         $settings['ventry'] = 'new';
@@ -2442,7 +2465,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 					
 					if(!strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
 						$col_two .= "<div class=\"subform-deletebox\">$deleteBox</div><div class=\"subform-entry-container\" id=\"subform-".$subform_id."-"."$sub_ent\">
-	<p class=\"subform-header\"><a href=\"#\"><span class=\"accordion-name\">".$headerToWrite."</span></a></p>
+	<p class=\"subform-header\"><a class=\"accordion-name-anchor\" href=\"#\"><span class=\"accordion-name\">".$headerToWrite."</span></a></p>
 	<div class=\"accordion-content content\">";
 					}
 					ob_start();
@@ -3348,12 +3371,18 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 // $nosave indicates that the user cannot save this entry, so we shouldn't check for formulizechanged
 function drawJavascript($nosave=false) {
 
-global $xoopsUser, $xoopsConfig;
+global $xoopsUser, $xoopsConfig, $actionFunctionName;
 
 static $drawnJavascript = false;
 if($drawnJavascript) {
 	return;
 }
+
+// thanks https://code.tutsplus.com/tutorials/generate-random-alphanumeric-strings-in-php--cms-32132
+$permitted_chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+$actionFunctionName = substr(str_shuffle($permitted_chars), 0, random_int(15,20));
+$actionPart1 = substr(str_shuffle($permitted_chars), 0, random_int(15,20));
+$actionPart2 = substr(str_shuffle($permitted_chars), 0, random_int(15,20));
 
 // saving message
 if($xoopsConfig['theme_set']=='formulize_standalone') {
@@ -3389,6 +3418,8 @@ print " initialize_formulize_xhr();\n";
 print " var formulizechanged=0;\n";
 print " var formulize_javascriptFileIncluded = new Array();\n";
 print " var formulize_xhr_returned_check_for_unique_value = new Array();\n";
+$split = random_int(8, strlen(getCurrentURL())-2);
+print " var $actionPart1 = \"".str_replace('"', '%22', substr(getCurrentURL(), 0, $split))."\";\n";
 
 if(isset($GLOBALS['formulize_fckEditors'])) {
 	print "function FCKeditor_OnComplete( editorInstance ) { \n";
@@ -3398,6 +3429,57 @@ if(isset($GLOBALS['formulize_fckEditors'])) {
 	print "  formulizechanged=1; \n";
 	print "}\n";
 }
+
+// on first load, turn on rich text editors -- conditional loads are handled elsewhere
+if(isset($GLOBALS['formulize_CKEditors'])) {
+    
+    foreach($GLOBALS['formulize_CKEditors'] as $editorID) { 
+        print "var CKEditors = {};\n";
+    }
+    
+    print "
+    function initializeCKEditor(editorID) {
+        if(jQuery('#'+editorID).length > 0) {
+            ClassicEditor
+                .create( document.querySelector( '#'+editorID ) )
+                .then( editor => {
+                    CKEditors[editorID] = editor;
+                    CKEditors[editorID].model.document.on('change:data', function() {
+                        formulizechanged = 1;
+                    });
+                    jQuery('#'+editorID).attr('name', 'useCKEditor');
+                    jQuery(\"<input type='hidden' value='' name='\"+editorID.replace('_tarea', '')+\"' id='hidden_\"+editorID+\"' />\").appendTo(jQuery('#'+editorID).parent());
+                    })
+                .catch( error => {
+                    console.error( error );
+                } );
+        }
+    }";
+
+    print "
+    jQuery(document).ready(function () {
+    ";
+
+    foreach($GLOBALS['formulize_CKEditors'] as $editorID) {
+        print "initializeCKEditor('$editorID');\n";
+    }    
+    
+    print "
+    });
+    
+    function updateCKEditors() {";
+        
+        foreach($GLOBALS['formulize_CKEditors'] as $editorID) {
+            print "
+            if(jQuery('#$editorID').length > 0) {
+                jQuery('#hidden_$editorID').val(CKEditors['$editorID'].getData().replace(\"'\", '&#039;'));
+            }";
+        }
+        
+    print "
+    }\n";
+    
+} 
 
 ?>
 
@@ -3426,6 +3508,7 @@ jQuery(window).on('unload', function() {
 <?php
 global $codeToIncludejQueryWhenNecessary;
 print $codeToIncludejQueryWhenNecessary;
+
 // a bit hacky... check the intval of the currentPage and the prevPage, prevPage may be (always is?) "page number hyphen screen id number"
 // so if someone jumps from one screen to another but lands on same ordinal page, this will be true, but really it's false because they're different screens
 if(isset($_POST['yposition']) AND
@@ -3552,9 +3635,10 @@ if(!$nosave) { // need to check for add or update permissions on the current use
 	var validate = xoopsFormValidate_formulize_mainform(leave, window.document.formulize_mainform);
 	// this is an optional form validation function which can be provided by a screen template or form text element
 	if (window.formulizeExtraFormValidation && typeof(window.formulizeExtraFormValidation) === 'function') {
-		validate = window.formulizeExtraFormValidation();
+		validate = window.formulizeExtraFormValidation(validate);
 	}
 	if(validate) {
+        if(typeof updateCKEditors === 'function') { updateCKEditors(); }
 		if(typeof savedPage != 'undefined' && savedPage && savedPrevPage) { // set in submitForm and will have values if we're on the second time around of a two step validation, like a uniqueness check with the server
 			multipageSetHiddenFields(savedPage, savedPrevPage);
 		}
@@ -3572,9 +3656,13 @@ if(!$nosave) { // need to check for add or update permissions on the current use
         <?php if($xoopsConfig['theme_set']=='Anari') { ?>
             jQuery('#yposition').val(jQuery('.main-content').scrollTop());
         <?php } else { ?>
-            jQuery('#yposition').val(jQuery(window).scrollTop());
+            if(jQuery(window).scrollTop()) {
+                jQuery('#yposition').val(jQuery(window).scrollTop());
+            } else {
+                jQuery('#yposition').val((jQuery('#formulizeform').offset().top));
+            }
         <?php } ?>
-            showSavingGraphic();
+        showSavingGraphic();
         if (leave=='leave') {
             jQuery('#save_and_leave').val(1);
         }
@@ -3777,6 +3865,13 @@ function redrawSubRow(entry_id,subformElementId) {
     });
 }
 
+<?php
+print "
+function $actionFunctionName"."() {
+   return $actionPart1 + $actionPart2;   
+}";
+?>
+
 function goSubModal(ent, fid, frid, mainformFid, mainformEntryId, subformElementId, modalScroll) {
     subEntryDialog.data('entry_id', ent);
     subEntryDialog.data('next_entry_id', ent);
@@ -3796,6 +3891,7 @@ function saveSub(reload) {
             subEntryDialog.children('div').css('opacity', '0.5');
             subEntryDialog.append('<div id=savingmessage style="padding-top: 10px;"><?php print $savingMessageGif; ?></div>');
             jQuery('#formulize_modal input[type="hidden"]').prop('disabled', false);
+            if(typeof updateCKEditors === 'function') { updateCKEditors(); }
             var formData = new FormData(jQuery('#formulize_modal')[0]);
             //var formData = subEntryDialog.children('form').serialize();
             jQuery.post({
@@ -3856,7 +3952,7 @@ print "	}\n";
 			
 //added by Cory Aug 27, 2005 to make forms printable
 
-
+print "var $actionPart2 = \"".str_replace('"', '&quot;', substr(getCurrentURL(), $split))."\";\n";
 print "function PrintPop(ele_allowed) {\n";
 print "		window.document.printview.elements_allowed.value=ele_allowed;\n"; // nmc 2007.03.24 - added 
 print "		window.document.printview.submit();\n";
@@ -4136,8 +4232,8 @@ function checkCondition(handle, currentHTML, elementValuesForURL) {
                     if(window.document.getElementById('formulize-'+handle) !== null) {
                         window.document.getElementById('formulize-'+handle).style.display = null; // doesn't need real value, just needs to be not set to 'none'
                     }
-                    ShowHideTableRow('#formulize-'+handle,false,0,function() {}); // because the newly appended row will have full opacity so immediately make it transparent
-                    ShowHideTableRow('#formulize-'+handle,true,1500,function() {});
+                    ShowHideTableRow(handle,false,0,function() {}); // because the newly appended row will have full opacity so immediately make it transparent
+                    ShowHideTableRow(handle,true,1500,function() {});
                     if (typeof window['formulize_initializeAutocomplete'+handle] === 'function') {
                         window['formulize_initializeAutocomplete'+handle]();
                     }
@@ -4149,7 +4245,7 @@ function checkCondition(handle, currentHTML, elementValuesForURL) {
 			}
 		} else {
 			if( window.document.getElementById('formulize-'+handle) !== null && window.document.getElementById('formulize-'+handle).style.display != 'none') {
-				ShowHideTableRow('#formulize-'+handle,false,700,function() {
+				ShowHideTableRow(handle,false,700,function() {
 					jQuery('#formulize-'+handle).empty();
 					window.document.getElementById('formulize-'+handle).style.display = 'none';
 					assignConditionalHTML(handle, data);
@@ -4202,9 +4298,9 @@ function getRelevantElementValues(elements) {
 }
 
 
-function ShowHideTableRow(rowSelector, show, speed, callback)
+function ShowHideTableRow(handle, show, speed, callback)
 {
-    var childCellsSelector = jQuery(rowSelector).children();
+    var childCellsSelector = jQuery('#formulize-'+handle).children();
     var ubound = childCellsSelector.length - 1;
     var lastCallback = null;
 
@@ -4216,11 +4312,14 @@ function ShowHideTableRow(rowSelector, show, speed, callback)
 
         if (show)
         {
-            jQuery(this).fadeIn(speed, lastCallback)
+            if(ubound == i) {
+                if(typeof initializeCKEditor === 'function') { initializeCKEditor(handle+'_tarea'); }
+            }
+            jQuery(this).fadeIn(speed, lastCallback);
         }
         else
         {
-            jQuery(this).fadeOut(speed, lastCallback)
+            jQuery(this).fadeOut(speed, lastCallback);
         }
     });
 }
