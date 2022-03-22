@@ -42,6 +42,19 @@
 </head>
 
 <body id="<{$icms_dirname}>" class="<{$icms_langcode}><{if $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}>" style='display: none; overflow: hidden;'>
+
+<{php}>
+// set the base font size if the user has adjusted it in their profile
+global $xoopsUser;
+if($xoopsUser) {
+    $profile_handler = xoops_getmodulehandler('profile', 'profile');
+    $profile = $profile_handler->get($xoopsUser->getVar('uid'));
+    if($fontsize = $profile->getVar('fontsize')) {
+        print "<style>html { font-size: ".$fontsize."; }</style>";    
+    }
+}
+<{/php}>
+
 <{if $xoBlocks.canvas_left and $xoBlocks.canvas_right}>
 <{assign var=columns_layout value='threecolumns-layout'}>
 <{elseif $xoBlocks.canvas_left}>

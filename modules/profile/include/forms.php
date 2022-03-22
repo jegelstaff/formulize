@@ -218,6 +218,24 @@ function getUserForm(&$user, $profile = false, $action = false) {
 		$elements[0][] = array('element' => new icms_form_elements_Label(_MD_PROFILE_EMAIL, $user->getVar('email')), 'required' => 0);
 		$weights[0][] = 0;
     }
+    
+    // Added by Julian Egelstaff Nov 23 2021
+    // if Anari theme, add font size
+    global $xoopsConfig;
+    if($xoopsConfig['theme_set'] == 'Anari') {
+        $elements[0][] = array('element' => new icms_form_elements_Label('Font Size', "<a href='' onclick='fontSizeChange(-1);;return false;'> - <span style='font-size: 0.75rem;'>A</span><span style='font-size: 0.85rem;'>A</span><span style='font-size: 0.95rem;'>A</span></a><a href='' onclick='fontSizeChange(1);;return false;'><span style='font-size: 1.05rem;'>A</span><span style='font-size: 1.15rem;'>A</span><span style='font-size: 1.25rem;'>A</span> + </a>
+            <input type='hidden' name='fontsize' value=0>
+            <script type='text/javascript'>
+                function fontSizeChange(increment) {
+                    var currentSize = jQuery('html').css('font-size').replace(/[^0-9\.]+/g,\"\");
+                    var currentUnit = jQuery('html').css('font-size').replace(/[0-9\.]+/g,\"\");
+                    var newsize = +currentSize + +increment;
+                    jQuery('html').css('font-size', newsize + currentUnit);
+                    jQuery('input[name=fontsize]').val(newsize + currentUnit);
+                }
+            </script>"));
+        $weights[0][] = 0;
+    }
 
     if ($icmsConfigAuth['auth_openid'] == 1) {
         $openid_tray = new icms_form_elements_Tray(_MD_PROFILE_OPENID, '<br />');
@@ -258,6 +276,13 @@ function getUserForm(&$user, $profile = false, $action = false) {
     $categories = $profile_cat_handler->getObjects(null, true, false);
 
     foreach (array_keys($fields) as $i) {
+        
+        // Added by Julian Egelstaff Nov 23 2021
+        // do not render fontsize, handled above if the Anari theme is in effect
+        if($fieldname == 'fontsize') {
+            continue;
+        }
+        
         if (in_array($fields[$i]->getVar('fieldid'), $editable_fields)) {
 			if ($fields[$i]->getVar('field_edit') == 1) {
 				$fieldinfo['element'] = $fields[$i]->getEditElement($user, $profile);
