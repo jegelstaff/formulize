@@ -468,6 +468,7 @@ function patch40() {
         $sql['form_screen_multipage_displayheading'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_multipage") . " ADD `displayheading` tinyint(1) NOT NULL default 0";
         $sql['form_screen_multipage_reloadblank'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_multipage") . " ADD `reloadblank` tinyint(1) NOT NULL default 0";
         $sql['form_screen_multipage_elementdefaults'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_multipage") . " ADD `elementdefaults` text NOT NULL";
+        $sql['not_cons_arbitary'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_notification_conditions") . " ADD `not_cons_arbitrary` text NULL default NULL";
 
         $needToSetSaveAndLeave = true;
         $needToSetPrintableView = true;
@@ -571,6 +572,8 @@ function patch40() {
                 } elseif($key === "form_screen_multipage_elementdefaults") {
                     print "Multipage screens elementdefaults already added. result: OK<br>";
                     $needToMigrateFormScreensToMultipage = false;
+                } elseif($key === "not_cons_arbitrary") {
+                    print "Arbitrary email already added to notification options. result: OK<br>";
                 } else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
@@ -602,6 +605,11 @@ function patch40() {
                 exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
             }
         }
+        // get profile module ID
+        $profileModIdSQL = "SELECT mid FROM ".$xoopsDB->prefix("modules")." WHERE dirname='profile'";
+        $profileModIdRes = $xoopsDB->query($profileModIdSQL);
+        $profileModIdRow = $xoopsDB->fetchRow($profileModIdRes);
+        $profileModId = $profileModIdRow[0];
         $sql = "SELECT * FROM ".$xoopsDB->prefix("profile_field")." WHERE field_name = '2famethod'";
         if($res = $xoopsDB->query($sql)) {
             if($xoopsDB->getRowsNum($res)==0) {
@@ -612,11 +620,36 @@ function patch40() {
                     if(!$res = $xoopsDB->query($sql)) {
                         exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                     }
-                    $sql = "INSERT INTO ".$xoopsDB->prefix("group_permission")." (`gperm_groupid`, `gperm_itemid`, `gperm_modid`, `gperm_name`) VALUES (2, $profileId, 2, 'profile_edit')";
+                    $sql = "INSERT INTO ".$xoopsDB->prefix("group_permission")." (`gperm_groupid`, `gperm_itemid`, `gperm_modid`, `gperm_name`) VALUES (2, $profileId, $profileModId, 'profile_edit')";
                     if(!$res = $xoopsDB->query($sql)) {
                         exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                     }
                     $sql = "ALTER TABLE ".$xoopsDB->prefix("profile_profile")." ADD `2famethod` INT NULL DEFAULT NULL";
+                    if(!$res = $xoopsDB->query($sql)) {
+                        exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+                    }
+                } else {
+                    exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+                }
+            }
+        }
+        
+        // ADD FONT SIZE OPTION TO PROFILE
+        $sql = "SELECT * FROM ".$xoopsDB->prefix("profile_field")." WHERE field_name = 'fontsize'";
+        if($res = $xoopsDB->query($sql)) {
+            if($xoopsDB->getRowsNum($res)==0) {
+                $sql = "INSERT INTO ".$xoopsDB->prefix("profile_field")." (`catid`, `field_type`, `field_valuetype`, `field_name`, `field_title`, `url`, `field_description`, `field_required`, `field_maxlength`, `field_weight`, `field_default`, `field_notnull`, `field_edit`, `field_show`, `field_options`, `exportable`, `step_id`, `system`) VALUES (0, 'textbox', '1', 'fontsize', 'Font Size', '', '', 0, '255', 7, '', 1, 1, 1, '', 1, 1, 1)";
+                if($res = $xoopsDB->query($sql)) {
+                    $profileId = $xoopsDB->getInsertId();
+                    $sql = "INSERT INTO ".$xoopsDB->prefix("profile_visibility")." (`fieldid`, `user_group`, `profile_group`) VALUES ($profileId, 2, 0)";
+                    if(!$res = $xoopsDB->query($sql)) {
+                        exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+                    }
+                    $sql = "INSERT INTO ".$xoopsDB->prefix("group_permission")." (`gperm_groupid`, `gperm_itemid`, `gperm_modid`, `gperm_name`) VALUES (2, $profileId, $profileModId, 'profile_edit')";
+                    if(!$res = $xoopsDB->query($sql)) {
+                        exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+                    }
+                    $sql = "ALTER TABLE ".$xoopsDB->prefix("profile_profile")." ADD `fontsize` varchar(255) NULL DEFAULT NULL";
                     if(!$res = $xoopsDB->query($sql)) {
                         exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                     }

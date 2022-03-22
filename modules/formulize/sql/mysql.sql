@@ -273,6 +273,7 @@ CREATE TABLE formulize_notification_conditions (
   not_cons_elementuids smallint(5) NOT NULL default 0,
   not_cons_linkcreator smallint(5) NOT NULL default 0,
   not_cons_elementemail smallint(5) NOT NULL default 0,
+  not_cons_arbitrary text NULL default NULL,
   not_cons_con text NOT NULL,
   not_cons_template varchar(255) default '',
   not_cons_subject varchar(255) default '',

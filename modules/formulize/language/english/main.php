@@ -611,6 +611,7 @@ define("_formulize_DE_SETNOT_NOELEMENTOPTIONS", "No user lists in this form");
 define("_formulize_DE_SETNOT_WHO_LINKCREATOR", "the user who created the selected item(s) in this element: ");
 define("_formulize_DE_SETNOT_NOLINKCREATOROPTIONS", "No linked elements in this form");
 define("_formulize_DE_SETNOT_WHO_GROUP", "users in this group: ");
+define("_formulize_DE_SETNOT_WHO_ARBITRARY", "these email addresses: ");
 define("_formulize_DE_SETNOT_FOR", "Send this notification for:");
 define("_formulize_DE_SETNOT_FOR_ALL", "all entries");
 define("_formulize_DE_SETNOT_FOR_CON", "only entries that meet these conditions:");

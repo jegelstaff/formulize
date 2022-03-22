@@ -127,6 +127,7 @@ if($_POST['save']) {
 	$not_cons_elementuids = 0;
 	$not_cons_linkcreator = 0;
 	$not_cons_elementemail = 0;
+    $not_cons_arbitrary = '';
 
 	if($_POST['setwho'] === "curuser") {
 		$not_cons_curuser = 1;
@@ -140,6 +141,8 @@ if($_POST['save']) {
 		$not_cons_linkcreator = intval($_POST['lc_ele_id']);
 	} elseif($_POST['setwho'] === "elementemail" AND intval($_POST['email_ele_id']) > 0) {
 		$not_cons_elementemail = intval($_POST['email_ele_id']);
+    } elseif($_POST['setwho'] === "arbitrary" AND $_POST['arbitrary']) {
+        $not_cons_arbitrary = strip_tags(htmlspecialchars($_POST['arbitrary'], ENT_QUOTES));
 	} else {
 		$not_cons_uid = $uid;
 		// since this is a user specific notification, set a subscription for it
@@ -150,7 +153,7 @@ if($_POST['save']) {
 	$not_cons_con = ($_POST['setfor'] == "all" OR count($_POST['terms']) == 0) ? "all" : serialize(array(serialize($_POST['elements']), serialize($_POST['ops']), serialize($_POST['terms'])));
 	
 	$template_filename = strstr($_POST['template'], ".tpl") ? str_replace(".tpl", "", $_POST['template']) : $_POST['template']; // strip .tpl out of the template name if it's present
-	$sql = "INSERT INTO " . $xoopsDB->prefix("formulize_notification_conditions") . " (not_cons_fid, not_cons_event, not_cons_uid, not_cons_curuser, not_cons_groupid, not_cons_creator, not_cons_elementuids, not_cons_linkcreator, not_cons_elementemail, not_cons_con, not_cons_template, not_cons_subject) VALUES (\"$fid\", \"".formulize_db_escape($_POST['setwhen'])."\", \"$not_cons_uid\", \"$not_cons_curuser\", \"$not_cons_groupid\", \"$not_cons_creator\", \"$not_cons_elementuids\", \"$not_cons_linkcreator\", \"$not_cons_elementemail\", \"".formulize_db_escape($not_cons_con)."\", \"".formulize_db_escape($template_filename)."\", \"".formulize_db_escape($_POST['subject'])."\")";
+	$sql = "INSERT INTO " . $xoopsDB->prefix("formulize_notification_conditions") . " (not_cons_fid, not_cons_event, not_cons_uid, not_cons_curuser, not_cons_groupid, not_cons_creator, not_cons_elementuids, not_cons_linkcreator, not_cons_elementemail, not_cons_arbitrary, not_cons_con, not_cons_template, not_cons_subject) VALUES (\"$fid\", \"".formulize_db_escape($_POST['setwhen'])."\", \"$not_cons_uid\", \"$not_cons_curuser\", \"$not_cons_groupid\", \"$not_cons_creator\", \"$not_cons_elementuids\", \"$not_cons_linkcreator\", \"$not_cons_elementemail\", \"".formulize_db_escape($not_cons_arbitrary)."\", \"".formulize_db_escape($not_cons_con)."\", \"".formulize_db_escape($template_filename)."\", \"".formulize_db_escape($_POST['subject'])."\")";
 	if(!$result = $xoopsDB->query($sql)) {
 		exit("Error:  notification could not be saved.  SQL:<br>$sql<br>");
 	}
@@ -284,6 +287,12 @@ if($canSetNots) {
 	$grouplist = $setwho_grouplist->render();
 	$setwho_group = new xoopsFormRadio('', 'setwho', $_POST['setwho']);
 	$setwho_group->addOption('groupid', _formulize_DE_SETNOT_WHO_GROUP.$grouplist);
+    
+    $setwho_arbitrary = new xoopsFormRadio('', 'setwho', $_POST['setwho']);
+    $arbitraryEmailBox = new xoopsFormText('', 'arbitrary', 50, 255, $_POST['arbitrary']); 
+    $arbitraryEmailBox = $arbitraryEmailBox->render();
+    $setwho_arbitrary->addOption('arbitrary', _formulize_DE_SETNOT_WHO_ARBITRARY.$arbitraryEmailBox);
+    
 	$setwho->addElement($setwho_me);
 	$setwho->addElement($setwho_curuser);
 	$setwho->addElement($setwho_creator);
@@ -291,6 +300,7 @@ if($canSetNots) {
 	$setwho->addElement($setwho_linkcreator);
 	$setwho->addElement($setwho_elementemail);
 	$setwho->addElement($setwho_group);
+    $setwho->addElement($setwho_arbitrary);
 	$setnot->addElement($setwho);
 }
 
@@ -403,9 +413,9 @@ if(!$noNots) {
 			if(!$element_handler) { $element_handler = xoops_getmodulehandler('elements', 'formulize'); }
 			$elementObject = $element_handler->get($thisnot['not_cons_elementemail']);
 			$text .= $elementObject->getVar('ele_colhead') ? printSmart(trans($elementObject->getVar('ele_colhead'))) : printSmart(trans($elementObject->getVar('ele_caption'))); 
-		}
-		
-		
+		} elseif($thisnot['not_cons_arbitrary']) {
+            $text .= _formulize_DE_SETNOT_WHO_ARBITRARY.$thisnot['not_cons_arbitrary'];
+        }
 		
 		if($thisnot['not_cons_con'] !== "all") {
 			$cons = unserialize($thisnot['not_cons_con']);

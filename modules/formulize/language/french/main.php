@@ -421,6 +421,7 @@ define("_formulize_DE_SETNOT_WHO", "Envoyer cette notification à:");
 define("_formulize_DE_SETNOT_WHO_CREATOR", "l'utilisateur qui a créé l'entrée");
 define("_formulize_DE_SETNOT_WHO_CURUSER", "l'utilisateur qui vient juste de créer/mettre à jour/effacer cette entrée");
 define("_formulize_DE_SETNOT_WHO_ELEMENTEMAIL", "l'adresse email spécifié dans cet élément: ");
+define("_formulize_DE_SETNOT_WHO_ARBITRARY", "ces adresses email: ");
 define("_formulize_DE_SETNOT_WHO_ELEMENTUIDS", "le/les utilisateur(s) sélectionné(s) dans: ");
 define("_formulize_DE_SETNOT_WHO_GROUP", "utilisateurs dans ce groupe: ");
 define("_formulize_DE_SETNOT_WHO_LINKCREATOR", "celui qui a créé l'item sélectionné dans cet élément: ");

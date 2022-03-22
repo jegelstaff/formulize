@@ -3557,8 +3557,11 @@ function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $rei
             $value = implode(",", $good_values);
 
             $GLOBALS['formulize_notification_email'] = $value;
-            $uids_conditions = array_merge(array(-1), $uids_conditions);
+            $uids_conditions = array_merge(array(-1), $uids_conditions); // minus 1 means we're sending direct to an email address, not using internal user notification logic based on user objects
         }
+    } elseif($thiscon['not_cons_arbitrary']) {
+        $GLOBALS['formulize_notification_email'] = $thiscon['not_cons_arbitrary'];
+        $uids_conditions = array_merge(array(-1), $uids_conditions); // minus 1 means we're sending direct to an email address, not using internal user notification logic based on user objects
     }
     if (in_array($uid, $uids_conditions)) {
         // in Formulize, users are always notified of things, even things they do themselves.
