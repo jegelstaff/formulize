@@ -3911,7 +3911,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 	if($useWorking) {
 		// working message
 		global $xoopsConfig;
-		print "<div id=workingmessage style=\"display: none; position: fixed; right: 45%; text-align: center; padding-top: 50px; z-index: 100;\">\n";
+		print "<div id=workingmessage style=\"display: none; position: fixed; right: 45%; top: 45%; text-align: center; padding-top: 50px; z-index: 100;\">\n";
 		if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/images/working-".$xoopsConfig['language'].".gif") ) {
 			print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/working-" . $xoopsConfig['language'] . ".gif\">\n";
 		} else {
