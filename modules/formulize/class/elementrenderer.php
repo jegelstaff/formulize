@@ -1297,7 +1297,12 @@ class formulizeElementRenderer{
                 focus: function( event, ui ) {
                     event.preventDefault();
                     if(ui.item.value != 'none') {
-                        jQuery('#".$form_ele_id."_user').val(ui.item.label);
+                        var itemLabel = ui.item.label;
+                        var itemLabelPrefix = itemLabel.substr(0, ".strlen(_formulize_NEW_VALUE).");
+                        if(itemLabelPrefix == '"._formulize_NEW_VALUE."') {
+                            itemLabel = itemLabel.substr(".strlen(_formulize_NEW_VALUE).");   
+                        }
+                        jQuery('#".$form_ele_id."_user').val(itemLabel);
                         setAutocompleteValue('".$form_ele_id."', ui.item.value, 0, ".$multiple.");
                         ".$form_ele_id."_clearbox = false;
                     } else {
