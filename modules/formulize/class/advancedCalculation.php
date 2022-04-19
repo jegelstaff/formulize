@@ -1443,7 +1443,7 @@ function createProceduresTable($array, $permTableName = "") {
 	$fieldList[]  = $fieldName;
     }
     $sql .= implode(",", $indexList);
-    $sql .= ") ENGINE=MyISAM;";
+    $sql .= ") ENGINE=InnoDB;";
     global $xoopsDB;
    //print "$sql<br>";
     if(!$res = $xoopsDB->queryF($sql)) {

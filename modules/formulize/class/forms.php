@@ -881,7 +881,7 @@ class formulizeFormsHandler {
 			$newTableSQL .= "PRIMARY KEY (`entry_id`),";	
 		}
 		$newTableSQL .= "INDEX i_creation_uid (creation_uid)";
-		$newTableSQL .= ") ENGINE=MyISAM;";
+		$newTableSQL .= ") ENGINE=InnoDB;";
 		// make the table
 		if(!$tableCreationRes = $xoopsDB->queryF($newTableSQL)) {
 			print $xoopsDB->error();

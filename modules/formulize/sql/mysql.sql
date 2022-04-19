@@ -39,7 +39,7 @@ CREATE TABLE `formulize_passcodes` (
     INDEX i_passcode (passcode(50)),
     INDEX i_screen (screen),
     INDEX i_expiry (expiry)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 CREATE TABLE `formulize_apikeys` (
     `key_id` int(11) unsigned NOT NULL auto_increment,
     `uid` int(11) NOT NULL default '0',
@@ -49,7 +49,7 @@ CREATE TABLE `formulize_apikeys` (
     INDEX i_uid (uid),
     INDEX i_apikey (apikey),
     INDEX i_expiry (expiry)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TABLE `formulize_tokens` (
     `key_id` int(11) unsigned NOT NULL auto_increment,
@@ -64,7 +64,7 @@ CREATE TABLE `formulize_tokens` (
     INDEX i_expiry (expiry),
     INDEX i_maxuses (maxuses),
     INDEX i_currentuses (currentuses)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TABLE `formulize_menu_links` (
     `menu_id` int(11) unsigned NOT NULL auto_increment,
@@ -76,7 +76,7 @@ CREATE TABLE `formulize_menu_links` (
     `note` text,
     PRIMARY KEY (`menu_id`),
     INDEX i_menus_appid (appid)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
     
 CREATE TABLE `formulize_menu_permissions` (
     `permission_id` int(11) unsigned NOT NULL auto_increment,
@@ -85,7 +85,7 @@ CREATE TABLE `formulize_menu_permissions` (
     `default_screen` tinyint(1) NOT NULL default '0',
     PRIMARY KEY (`permission_id`),
     INDEX i_menu_permissions (menu_id)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TABLE `formulize_resource_mapping` (
     mapping_id int(11) NOT NULL auto_increment,
@@ -99,7 +99,7 @@ CREATE TABLE `formulize_resource_mapping` (
     INDEX i_external_id (external_id),
     INDEX i_resource_type (resource_type),
     INDEX i_external_id_string (external_id_string(10))
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TABLE `formulize_advanced_calculations` (
   `acid` int(11) NOT NULL auto_increment,
@@ -114,7 +114,7 @@ CREATE TABLE `formulize_advanced_calculations` (
   `fltr_grptitles` text NOT NULL,
   PRIMARY KEY  (`acid`),
   KEY `i_fid` (`fid`)
-) ENGINE=MyISAM; 
+) ENGINE=InnoDB; 
 
 CREATE TABLE `formulize_applications` (
   `appid` int(11) NOT NULL auto_increment,
@@ -122,7 +122,7 @@ CREATE TABLE `formulize_applications` (
   `description` text NOT NULL,
   `custom_code` mediumtext,
   PRIMARY KEY (`appid`)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TABLE `formulize_application_form_link` (
   `linkid` int(11) NOT NULL auto_increment,
@@ -131,7 +131,7 @@ CREATE TABLE `formulize_application_form_link` (
   PRIMARY KEY (`linkid`),
   INDEX i_fid (`fid`),
   INDEX i_appid (`appid`)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 
 CREATE TABLE `formulize_group_filters` (
@@ -142,7 +142,7 @@ CREATE TABLE `formulize_group_filters` (
   PRIMARY KEY (`filterid`),
   INDEX i_fid (`fid`),
   INDEX i_groupid (`groupid`)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TABLE `formulize_groupscope_settings` (
   `groupscope_id` int(11) NOT NULL auto_increment,
@@ -153,7 +153,7 @@ CREATE TABLE `formulize_groupscope_settings` (
   INDEX i_groupid (`groupid`),
 	INDEX i_fid (`fid`),
   INDEX i_view_groupid (`view_groupid`)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 
 CREATE TABLE `formulize_screen_listofentries` (
@@ -201,7 +201,7 @@ CREATE TABLE `formulize_screen_listofentries` (
   `fundamental_filters` text NOT NULL,
   PRIMARY KEY (`listofentriesid`),
   INDEX i_sid (`sid`)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TABLE `formulize_screen_multipage` (
   `multipageid` int(11) NOT NULL auto_increment,
@@ -229,7 +229,7 @@ CREATE TABLE `formulize_screen_multipage` (
   `elementdefaults` text NOT NULL,
   PRIMARY KEY (`multipageid`),
   INDEX i_sid (`sid`)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TABLE `formulize_screen_form` (
   `formid` int(11) NOT NULL auto_increment,
@@ -249,7 +249,7 @@ CREATE TABLE `formulize_screen_form` (
   `displayType` varchar(255) NOT NULL default 'block',
   PRIMARY KEY (`formid`),
   INDEX i_sid (`sid`)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TABLE `formulize_screen` (
   `sid` int(11) NOT NULL auto_increment,
@@ -261,7 +261,7 @@ CREATE TABLE `formulize_screen` (
   `anonNeedsPasscode` tinyint(1) NOT NULL,
   `theme` varchar(100) NOT NULL default '',
   PRIMARY KEY  (`sid`)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TABLE formulize_valid_imports (
   import_id smallint(5) NOT NULL auto_increment,
@@ -269,7 +269,7 @@ CREATE TABLE formulize_valid_imports (
   id_reqs text NOT NULL,
   fid int(5),
   PRIMARY KEY (`import_id`)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TABLE formulize_notification_conditions (
   not_cons_id smallint(5) NOT NULL auto_increment,
@@ -291,7 +291,7 @@ CREATE TABLE formulize_notification_conditions (
   INDEX i_not_cons_uid (not_cons_uid),
   INDEX i_not_cons_groupid (not_cons_groupid),
   INDEX i_not_cons_fidevent (not_cons_fid, not_cons_event(1))
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TABLE formulize_other (
   other_id int(5) NOT NULL auto_increment,
@@ -301,7 +301,7 @@ CREATE TABLE formulize_other (
   PRIMARY KEY (`other_id`),
   INDEX i_ele_id (ele_id),
   INDEX i_id_req (id_req)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TABLE formulize_saved_views (
   sv_id smallint(5) NOT NULL auto_increment,
@@ -327,7 +327,7 @@ CREATE TABLE formulize_saved_views (
   sv_global_search text,
   sv_pubfilters text,
   PRIMARY KEY (sv_id)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TABLE group_lists (
   gl_id smallint(5) unsigned NOT NULL auto_increment,
@@ -335,13 +335,13 @@ CREATE TABLE group_lists (
   gl_groups text NOT NULL,
   PRIMARY KEY (gl_id),
   UNIQUE gl_name_id (gl_name)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TABLE formulize_frameworks (
   frame_id smallint(5) NOT NULL auto_increment,
   frame_name varchar(255) default NULL,
   PRIMARY KEY (`frame_id`)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TABLE formulize_framework_links (
   fl_id smallint(5) NOT NULL auto_increment,
@@ -355,7 +355,7 @@ CREATE TABLE formulize_framework_links (
   fl_unified_delete smallint(5),
   fl_common_value tinyint(1) NOT NULL default '0',
   PRIMARY KEY (`fl_id`)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TABLE formulize_id (
   id_form smallint(5) NOT NULL auto_increment,
@@ -375,7 +375,7 @@ CREATE TABLE formulize_id (
   note text,
   send_digests tinyint(1) NOT NULL default 0,
   PRIMARY KEY  (`id_form`)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TABLE formulize (
   id_form int(5) NOT NULL default '0',
@@ -401,7 +401,7 @@ CREATE TABLE formulize (
   ele_exportoptions text NOT NULL,
   PRIMARY KEY  (`ele_id`),  
   KEY `ele_order` (`ele_order`)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TABLE formulize_entry_owner_groups (
   owner_id int(5) unsigned NOT NULL auto_increment,
@@ -412,7 +412,7 @@ CREATE TABLE formulize_entry_owner_groups (
   INDEX i_fid (fid),
   INDEX i_entry_id (entry_id),
   INDEX i_groupid (groupid)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TABLE `formulize_procedure_logs` (
   `proc_log_id` int(11) unsigned NOT NULL auto_increment,
@@ -422,7 +422,7 @@ CREATE TABLE `formulize_procedure_logs` (
   PRIMARY KEY (`proc_log_id`),
   INDEX i_proc_id (proc_id),
   INDEX i_proc_uid (proc_uid)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TABLE `formulize_procedure_logs_params` (
   `proc_log_param_id` int(11) unsigned NOT NULL auto_increment,
@@ -431,7 +431,7 @@ CREATE TABLE `formulize_procedure_logs_params` (
   `proc_log_value` varchar(255),
   PRIMARY KEY (`proc_log_param_id`),
   INDEX i_proc_log_id (proc_log_id)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TABLE formulize_deletion_logs (
   del_log_id int(11) unsigned NOT NULL auto_increment,
@@ -442,7 +442,7 @@ CREATE TABLE formulize_deletion_logs (
   deletion_date timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (del_log_id),
   INDEX i_del_id (del_log_id)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TABLE formulize_screen_template (
   templateid int(11) NOT NULL auto_increment,
@@ -454,5 +454,5 @@ CREATE TABLE formulize_screen_template (
   template text NOT NULL,
   PRIMARY KEY (`templateid`),
   INDEX i_sid (`sid`)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 

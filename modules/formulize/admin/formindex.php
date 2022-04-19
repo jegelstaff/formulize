@@ -196,7 +196,7 @@ function patch40() {
                 INDEX i_groupid (`groupid`),
                 INDEX i_fid (`fid`),
                 INDEX i_view_groupid (`view_groupid`)
-              ) ENGINE=MyISAM;";
+              ) ENGINE=InnoDB;";
         }
 
         if (!in_array($xoopsDB->prefix("formulize_tokens"), $existingTables)) {
@@ -213,7 +213,7 @@ function patch40() {
                 INDEX i_expiry (expiry),
                 INDEX i_maxuses (maxuses),
                 INDEX i_currentuses (currentuses)
-            ) ENGINE=MyISAM;";
+            ) ENGINE=InnoDB;";
         } 
         
         
@@ -227,7 +227,7 @@ function patch40() {
   PRIMARY KEY (`filterid`),
   INDEX i_fid (`fid`),
   INDEX i_groupid (`groupid`)
-) ENGINE=MyISAM;";
+) ENGINE=InnoDB;";
         }
 
         if (!in_array($xoopsDB->prefix("formulize_applications"), $existingTables)) {
@@ -236,7 +236,7 @@ function patch40() {
   `name` varchar(255) NOT NULL default '',
   `description` text NOT NULL,
   PRIMARY KEY (`appid`)
-) ENGINE=MyISAM;";
+) ENGINE=InnoDB;";
         }
 
         if (!in_array($xoopsDB->prefix("formulize_application_form_link"), $existingTables)) {
@@ -247,7 +247,7 @@ function patch40() {
   PRIMARY KEY (`linkid`),
   INDEX i_fid (`fid`),
   INDEX i_appid (`appid`)
-) ENGINE=MyISAM;";
+) ENGINE=InnoDB;";
         }
 
         if (!in_array($xoopsDB->prefix("formulize_screen_form"), $existingTables)) {
@@ -269,7 +269,7 @@ function patch40() {
   `displayType` varchar(255) NOT NULL default 'block',
   PRIMARY KEY (`formid`),
   INDEX i_sid (`sid`)
-) ENGINE=MyISAM;";
+) ENGINE=InnoDB;";
         }
 
         if (!in_array($xoopsDB->prefix("formulize_advanced_calculations"), $existingTables)) {
@@ -286,7 +286,7 @@ function patch40() {
   `fltr_grptitles` text NOT NULL,
   PRIMARY KEY  (`acid`),
   KEY `i_fid` (`fid`)
-) ENGINE=MyISAM;";
+) ENGINE=InnoDB;";
         }
 
         if (!in_array($xoopsDB->prefix("formulize_procedure_logs"), $existingTables)) {
@@ -298,7 +298,7 @@ function patch40() {
   PRIMARY KEY (`proc_log_id`),
   INDEX i_proc_id (proc_id),
   INDEX i_proc_uid (proc_uid)
-) ENGINE=MyISAM;";
+) ENGINE=InnoDB;";
         }
 
         if (!in_array($xoopsDB->prefix("formulize_procedure_logs_params"), $existingTables)) {
@@ -309,7 +309,7 @@ function patch40() {
   `proc_log_value` varchar(255),
   PRIMARY KEY (`proc_log_param_id`),
   INDEX i_proc_log_id (proc_log_id)
-) ENGINE=MyISAM;";
+) ENGINE=InnoDB;";
         }
 
 
@@ -326,7 +326,7 @@ function patch40() {
     INDEX i_external_id (external_id),
     INDEX i_resource_type (resource_type),
     INDEX i_external_id_string (external_id_string(10))
-) ENGINE=MyISAM;";
+) ENGINE=InnoDB;";
         }
 
         if (!in_array($xoopsDB->prefix("formulize_deletion_logs"), $existingTables)) {
@@ -339,7 +339,7 @@ function patch40() {
                   deletion_date timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
                   PRIMARY KEY (del_log_id),
                   INDEX i_del_id (del_log_id)
-        ) ENGINE=MyISAM;";
+        ) ENGINE=InnoDB;";
         }
 
         if (!in_array($xoopsDB->prefix("formulize_screen_template"), $existingTables)) {
@@ -353,7 +353,7 @@ function patch40() {
             template text NOT NULL,
             PRIMARY KEY (`templateid`),
             INDEX i_sid (`sid`)
-        ) ENGINE=MyISAM;";
+        ) ENGINE=InnoDB;";
         }
         
         if (!in_array($xoopsDB->prefix("formulize_apikeys"), $existingTables)) {
@@ -366,7 +366,7 @@ function patch40() {
                 INDEX i_uid (uid),
                 INDEX i_apikey (apikey),
                 INDEX i_expiry (expiry)
-            ) ENGINE=MyISAM;";
+            ) ENGINE=InnoDB;";
         }      
 
 
@@ -381,7 +381,7 @@ function patch40() {
                 INDEX i_passcode (passcode(50)),
                 INDEX i_screen (screen),
                 INDEX i_expiry (expiry)
-            ) ENGINE=MyISAM;";
+            ) ENGINE=InnoDB;";
         }
 
         if (!in_array($xoopsDB->prefix("formulize_screen_calendar"), $existingTables)) {
