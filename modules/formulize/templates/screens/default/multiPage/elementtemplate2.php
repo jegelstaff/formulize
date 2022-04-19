@@ -19,7 +19,5 @@ $editElementLink
     $renderedElement
     $elementHelpText
 </div>
-
 ";
-
 

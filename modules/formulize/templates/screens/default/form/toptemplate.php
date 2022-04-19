@@ -1,7 +1,12 @@
 <?php
 
-print "<div class='xo-theme-form'>
-<table width='100%' class='outer' cellspacing='1'>";
-if($formTitle) {
-    print "<tr><th colspan='2'><h1 class=\"formulize-form-title\">" . $formTitle . "</h1></th></tr>";
-}
+print "
+<div class='card'>
+
+<div class='card__header'>
+	<h3 class='card__title'>".$formTitle."</h3>
+</div>
+
+<div class='card__body'>
+<div class='form-container'>
+";
