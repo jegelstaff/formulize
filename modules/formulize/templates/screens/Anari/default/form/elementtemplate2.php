@@ -1,9 +1,9 @@
 <?php
 
-$required = $elementIsRequired ? "<span style='color: red;'> *</span>" : "";
+$required = $elementIsRequired ? "<span style='color: red;'>*</span>" : "";
 
 if(trim($elementCaption) AND $elementCaption != '&nbsp;') {
-	$elementCaption = "<label for='$elementName' class='form-label'>$elementCaption $required</label>";
+	$elementCaption = "<label for='$elementName' class='form-label'>$elementCaption&nbsp;$required</label>";
 }
 
 if(trim($elementHelpText)) {
