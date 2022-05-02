@@ -206,10 +206,15 @@ class icms_core_Session {
 				if ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '') {
 					// we need to secure cookie when using SSL
 					$secure = substr(ICMS_URL, 0, 5) == 'https' ? 1 : 0;
-					setcookie(
-						$icmsConfig['session_name'], session_id(),
-                        array('expires'=>time()+(60*$icmsConfig['session_expire']), 'samesite'=>'None'), '/', '', $secure, 1
-					);
+                    $arr_cookie_options = array (
+                        'expires' => time()+(60*$icmsConfig['session_expire']),
+                        'path' => '/',
+                        'domain' => '',
+                        'secure' => $secure ? true : false,     
+                        'httponly' => true,    
+                        'samesite' => 'None' // None || Lax  || Strict
+                        );
+					setcookie($icmsConfig['session_name'], session_id(), $arr_cookie_options);
 				}
 				$icms_user->setGroups($_SESSION['xoopsUserGroups']); // ALTERED BY FREEFORM SOLUTIONS TO AVOID NAMING CONFLICT WITH GLOBAL USER OBJECT FROM EXTERNAL SYSTEMS
 				if (!isset($_SESSION['UserLanguage']) || empty($_SESSION['UserLanguage'])) {
@@ -384,7 +389,15 @@ class icms_core_Session {
 					? $icmsConfig['session_expire'] * 60 : ini_get('session.cookie_lifetime'));
 		$session_id = empty($sess_id) ? session_id() : $sess_id;
         $expiry = $session_expire ? time() + $session_expire : 0;
-		setcookie($session_name, $session_id, array('expires'=>$expiry, 'samesite'=>'None'), '/',  '', $secure, 1);
+        $arr_cookie_options = array (
+            'expires' => time()+(60*$icmsConfig['session_expire']),
+            'path' => '/',
+            'domain' => '',
+            'secure' => $secure ? true : false,     
+            'httponly' => true,    
+            'samesite' => 'None' // None || Lax  || Strict
+            );
+        setcookie($session_name, $session_id, $arr_cookie_options);
 	}
 
 	/**
