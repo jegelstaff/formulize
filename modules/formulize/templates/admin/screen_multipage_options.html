@@ -12,69 +12,117 @@
 <div class="panel-content content">
 	<fieldset>
         <legend>Appearance</legend>
-        <div class="form-item">
-            <p>What style of page navigation should this form use?<br>
-            <label for="screens-navstyle-0"><input type="radio" id=screens-navstyle-0 name="screens-navstyle" value=0> Continue and Back buttons</label><br />
-            <label for="screens-navstyle-1"><input type="radio" id=screens-navstyle-1 name="screens-navstyle" value=1> Tabs for each page</label></p>
-            <label for="screens-navstyle-2"><input type="radio" id=screens-navstyle-2 name="screens-navstyle" value=2> Tabs and Buttons</label></p>
-	    </div>
         
         <div class="form-item">
+            <input id="navstyletabs" type="checkbox" name="navstyletabs" value=1 <{$content.navstyletabs}>> <label for="navstyletabs">Show navigation tabs at the top of the form</label><br>
+            <input id="navstylebuttons" type="checkbox" name="navstylebuttons" value=1 <{$content.navstylebuttons}>> <label for="navstylebuttons">Show navigation buttons at the bottom of the form</label><br>
             <input id="showpageindicator" type="checkbox" name="screens-showpageindicator" value=1 <{$content.showpageindicator}>> <label for="showpageindicator">Show 'page 1 of X'</label><br>
             <input id="showpageselector" type="checkbox" name="screens-showpageselector" value=1 <{$content.showpageselector}>> <label for="showpageselector">Show the page selection dropdown list</label><br>
             <input id="showpagetitles" type="checkbox" name="screens-showpagetitles" value=1 <{$content.showpagetitles}>> <label for="showpagetitles">Show the page title at the top of the form</label>
 	    </div>
         
         <div class="form-item">
-            <p>Display the form elements as:<br>
-            <label for="onecolumn"><input type='radio' id="onecolumn" name="screens-displaycolumns" value="1"/> a single column</label><br>
-            <label for="twocolumns"><input type='radio' id="twocolumns" name="screens-displaycolumns" value="2"/> two columns</label>
-            </p>
-            <p>Width for column one: <input type='text' name='screens-column1width' value="<{$content.column1width}>"><br>
-            Width for column two: <input type='text' name='screens-column2width' value="<{$content.column2width}>"></p>
-            <div class="description">The widths can be specified using any valid CSS value.</div>
+            <p>Layout Options:<br>
+            <table style='border: none; width: auto; margin-top: 0.5em;'>
+                <tr>
+                    <td><label for="onecolumn"><input type='radio' id="onecolumn" name="screens-displaycolumns" value="1" /> One Column</label></td>
+                    <td style='border-left: 1px solid;'><label for="twocolumns"><input type='radio' id="twocolumns" name="screens-displaycolumns" value="2"/> Two Columns</label></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td><center>Width:<br>
+                        <input type='text' name='singlecolumn1width' size=5 value="<{$content.column1width}>"></center></td>
+                    <td style='border-left: 1px solid;'><center>Col. 1 Width:<br>
+                        <input type='text' name='doublecolumn1width' size=5 value="<{$content.column1width}>"></center></td>
+                    <td><center>Col. 2 Width:<br>
+                        <input type='text' name='screens-column2width' size=5 value="<{$content.column2width}>"></center></td>
+                </tr>
+            </table>
+            <div class="description">Two column layout will compress to one column on phones. The widths can be specified using any valid CSS value, 'auto' is recommended for column two.</div>
         </div>
     </fieldset>
 	<fieldset>
-		<legend>Link on the final page of the form</legend>
+		<legend>Buttons, text and behaviour</legend>
 	  <div class="form-item">
 		<label for="screens-finishisdone"><{$smarty.const._AM_FORMULIZE_SCREEN_FINISHISDONE}></label><br>
 		<input type="radio" id=screens-finishisdone-0 name="screens-finishisdone" value=0> <{$smarty.const._AM_FORMULIZE_SCREEN_FINISHISDONE_THANKSPAGE}><br />
 		<input type="radio" id=screens-finishisdone-1 name="screens-finishisdone" value=1> <{$smarty.const._AM_FORMULIZE_SCREEN_FINISHISDONE_FINISHBUTTON}>
-	  </div>
+	  </div><br><br>
+      
 	  <div class="form-item">
-		  <label for="screens-donedest"><{$smarty.const._AM_FORMULIZE_SCREEN_DONEDEST}></label>
-      <input type="text" id="screens-donedest" name="screens-donedest" value="<{$content.donedest}>" size="50" maxlength="255"/>
-	  </div>
-	  <div class="form-item">
-		  <label for="screens-buttontext"><{$smarty.const._AM_FORMULIZE_SCREEN_THANKYOULINKTEXT}></label>
-      <input type="text" id="screens-buttontext" name="thankyoulinktext" value="<{$content.thankyoulinktext}>" size="50" maxlength="255"/>
-	  </div>
-      	  <div class="form-item">
-		  <label for="screens-buttontext"><{$smarty.const._AM_FORMULIZE_SCREEN_LEAVEBUTTONTEXT}></label>
-      <input type="text" id="screens-buttontext" name="leaveButtonText" value="<{$content.leaveButtonText}>" size="50" maxlength="255"/>
-	  </div>
-	  <div class="form-item">
-		  <label for="screens-buttontext"><{$smarty.const._AM_FORMULIZE_SCREEN_PREVBUTTONTEXT}></label>
-      <input type="text" id="screens-buttontext" name="prevButtonText" value="<{$content.prevButtonText}>" size="50" maxlength="255"/>
-	  </div>
-	  <div class="form-item">
-		  <label for="screens-buttontext"><{$smarty.const._AM_FORMULIZE_SCREEN_SAVEBUTTONTEXT}></label>
-      <input type="text" id="screens-buttontext" name="saveButtonText" value="<{$content.saveButtonText}>" size="50" maxlength="255"/>
-	  </div>
-	  <div class="form-item">
-		  <label for="screens-buttontext"><{$smarty.const._AM_FORMULIZE_SCREEN_NEXTBUTTONTEXT}></label>
-      <input type="text" id="screens-buttontext" name="nextButtonText" value="<{$content.nextButtonText}>" size="50" maxlength="255"/>
-	  </div>
-	  <div class="form-item">
-		  <label for="screens-buttontext"><{$smarty.const._AM_FORMULIZE_SCREEN_FINISHBUTTONTEXT}></label>
-      <input type="text" id="screens-buttontext" name="finishButtonText" value="<{$content.finishButtonText}>" size="50" maxlength="255"/>
-      <div class="description">To turn off a button, clear the text for that button.</div>
+		  <label for="screens-donedest"><{$smarty.const._AM_FORMULIZE_SCREEN_DONEDEST}></label><br>
+      <input type="text" id="screens-donedest" name="screens-donedest" value="<{$content.donedest}>" size="50" maxlength="255"/><br><br>
 	  </div>
       
+      <div class="form-item">
+            <p>How should the form reload, after the user has saved a <b>new</b> entry?</p>
+            <div class="form-radios">
+              <label for="entry"><input type="radio" id="entry" name="screens-reloadblank" value=0 />Reload showing the entry the user has just created</label>
+            </div>
+            <div class="form-radios">
+              <label for="blank"><input type="radio" id="blank" name="screens-reloadblank" value=1 />Reload blank, so another new entry can be created</label>
+            <div class="description">Only applies to forms with one page. When a user arrives from a list of entries, this setting will be ignored and the button the user clicked will take precedence (either the <b>Add one entry</b> button or the <b>Add multiple entries</b> button).</div>
+            </div>
+      </div>
+      <br><hr><br>
+	  <div class="form-item">
+		  <label for="thankyoulinktext"><{$smarty.const._AM_FORMULIZE_SCREEN_THANKYOULINKTEXT}></label><br>
+      <input type="text" id="thankyoulinktext" name="thankyoulinktext" value="<{$content.thankyoulinktext}>" size="50" maxlength="255"/><br><br>
+      	  <div class="form-item">
+		  <label for="leaveButtonText"><{$smarty.const._AM_FORMULIZE_SCREEN_LEAVEBUTTONTEXT}></label><br>
+      <input type="text" id="leaveButtonText" name="leaveButtonText" value="<{$content.leaveButtonText}>" size="50" maxlength="255"/><br><br>
+	  </div>
+	  <div class="form-item">
+		  <label for="prevButtonText"><{$smarty.const._AM_FORMULIZE_SCREEN_PREVBUTTONTEXT}></label><br>
+      <input type="text" id="prevButtonText" name="prevButtonText" value="<{$content.prevButtonText}>" size="50" maxlength="255"/><br><br>
+	  </div>
+	  <div class="form-item">
+		  <label for="saveButtonText"><{$smarty.const._AM_FORMULIZE_SCREEN_SAVEBUTTONTEXT}></label><br>
+      <input type="text" id="saveButtonText" name="saveButtonText" value="<{$content.saveButtonText}>" size="50" maxlength="255"/><br><br>
+	  </div>
+	  <div class="form-item">
+		  <label for="nextButtonText"><{$smarty.const._AM_FORMULIZE_SCREEN_NEXTBUTTONTEXT}></label><br>
+      <input type="text" id="nextButtonText" name="nextButtonText" value="<{$content.nextButtonText}>" size="50" maxlength="255"/><br><br>
+	  </div>
+	  <div class="form-item">
+		  <label for="finishButtonText"><{$smarty.const._AM_FORMULIZE_SCREEN_FINISHBUTTONTEXT}></label><br>
+      <input type="text" id="finishButtonText" name="finishButtonText" value="<{$content.finishButtonText}>" size="50" maxlength="255"/><br><br>
+      </div>
+      <div class="form-item">
+        <label for="printableViewButtonText">Text for the Printable View button?</label><br>
+		<input type="text" id="printableViewButtonText" name="printableViewButtonText" value="<{$content.printableViewButtonText}>"/><br><br>
+	  </div>
+      <div class="form-item">
+        <label for="screens-printall"><{$smarty.const._AM_FORMULIZE_SCREEN_PRINTALL}></label>
+        <div class="form-radios">
+            <label for="1"><input type="radio" id="screens-printall" name="screens-printall"<{if $content.printall eq 1}> checked="checked"<{/if}> value="1"/><{$smarty.const._AM_FORMULIZE_SCREEN_PRINTALL_Y}></label>
+        </div>
+        <div class="form-radios">
+            <label for="0"><input type="radio" id="screens-printall" name="screens-printall"<{if $content.printall eq 0}> checked="checked"<{/if}> value="0"/><{$smarty.const._AM_FORMULIZE_SCREEN_PRINTALL_N}></label>
+        </div>
+        <div class="form-radios">
+            <label for="2"><input type="radio" id="screens-printall" name="screens-printall"<{if $content.printall eq 2}> checked="checked"<{/if}> value="2"/><{$smarty.const._AM_FORMULIZE_SCREEN_PRINTALL_NONE}></label>
+        </div>
+      </div>
 	</fieldset>
-  <fieldset>
-    <legend>Answers from a previous entry</legend>
+    
+    <fieldset>
+		<legend>Element Defaults</legend>
+		<div class="form-item">
+			<p><label for="elementchoice">Do you want to force certain elements to have certain default values when displayed in this screen?</label>
+            <br>
+			<select id="elementchoice" name="elementchoice" size="1">
+			<{html_options options=$content.element_list}>
+			</select>
+            <input type="text" id="elementdefault" name="elementdefault">
+            <input type="button" id="edadd" value="Add This Default"></p>
+            <p id="addeddefaults"></p>
+			<div class="description">Defaults that you set for elements here, will take effect only on this screen. The elements will behave normally on other screens (if those screens do not have any defaults set of their own).</div>
+		</div>
+	</fieldset>
+    
+    <fieldset>
+      <legend>Answers from a previous entry</legend>
 	  <div class="form-item">
 		  <label for="screens-paraentryform"><{$smarty.const._AM_FORMULIZE_SCREEN_PARAENTRYFORM}></label>
 	    <select id="screens-paraentryform" name="screens-paraentryform" size="1">
@@ -90,26 +138,42 @@
 	    </select>
 	  </div>
 	</fieldset>
-	<fieldset>
-		<legend>Printable View button</legend>
-	  <div class="form-item">
-		  <label for="screens-printall"><{$smarty.const._AM_FORMULIZE_SCREEN_PRINTALL}></label>
-		  <div class="form-radios">
-			  <label for="1"><input type="radio" id="screens-printall" name="screens-printall"<{if $content.printall eq 1}> checked="checked"<{/if}> value="1"/><{$smarty.const._AM_FORMULIZE_SCREEN_PRINTALL_Y}></label>
-		  </div>
-		  <div class="form-radios">
-			  <label for="0"><input type="radio" id="screens-printall" name="screens-printall"<{if $content.printall eq 0}> checked="checked"<{/if}> value="0"/><{$smarty.const._AM_FORMULIZE_SCREEN_PRINTALL_N}></label>
-		  </div>
-		  <div class="form-radios">
-			  <label for="2"><input type="radio" id="screens-printall" name="screens-printall"<{if $content.printall eq 2}> checked="checked"<{/if}> value="2"/><{$smarty.const._AM_FORMULIZE_SCREEN_PRINTALL_NONE}></label>
-		  </div>
-	</fieldset>
+	
 </div>
 
 </form>
 
 <script type='text/javascript'>
 $("#screens-finishisdone-<{$content.finishisdone}>").attr('checked',1);
-$("#screens-navstyle-<{$content.navstyle}>").attr('checked',1);
+$("#<{$content.reloadblank}>").attr('checked', true);
 $("#<{$content.displaycolumns}>").attr('checked', true);
+
+$("#edadd").click(function() {
+    appendDefault($('#elementchoice').val(), $('#elementchoice').children('option:selected').text(), $('#elementdefault').val().replace(/"/g, '&quot;'));
+    $('#elementdefault').val('');       
+});
+$('.adefault').live('click', function() {
+    $('#'+$(this).attr('id').replace('def','hidden')).remove();
+    $(this).remove();
+    setDisplay('savewarning','block');
+});
+
+<{foreach from=$content.elementdefaults key=id item=defaultText}>
+<{if $id}>
+appendDefault(<{$id}>, '<{$content.element_list.$id}>', "<{$defaultText|replace:'"':'&quot;'}>");
+<{/if}>
+<{/foreach}>
+
+function appendDefault(id, elementText, defaultText) {
+    $('#addeddefaults').append('<input type="hidden" name="screens-elementdefaults['+id+']" id="hidden_'+id+'" value="'+defaultText+'"><span class="adefault" id="def_'+id+'">'+elementText+' >> '+defaultText+'<br></span>');    
+}
+
 </script>
+
+<style>
+    .adefault:hover {
+        color: red;
+        text-decoration: line-through;
+        cursor: pointer;
+    }
+</style>

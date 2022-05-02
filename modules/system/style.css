@@ -86,7 +86,7 @@ BUTTON, INPUT[type=submit] , INPUT[type=clear] , INPUT[type=button] , INPUT[type
     BORDER: outset 1px #ccc;
 }
 
-hr { height: 3px; width: 95%; text-align:center; border: 3px #E18A00 solid;}
+hr { width: 95%; text-align:center; }
 
 /* lists */
 ul { margin: 2px; padding: 2px; list-style: decimal inside; text-align: left;}

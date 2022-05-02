@@ -11,7 +11,7 @@
 			<textarea name="top-template"/></textarea>
 			<div class="description">
 				<p><strong>For top portion of the page, above the list.</strong></p>
-				<p>If you turn off the scrollbox, and do not use the Export buttons, then the code you type here and in the List and Bottom Templates, will all be drawn to the screen consecutively. This means you can start a table in the Top Template, specify the &lt;tr&gt; tags in the List Template and close the table in the Bottom Template. Essentially, these three Templates give you control over the entire page layout.</p>
+				<p>If you turn off the scrollbox, and do not use the Export buttons, then the code you type here and in the List and Bottom Templates, will all be drawn to the screen consecutively. This means you can start a table in the Top Template, specify the &lt;tr&gt; tags in the List Item Template and close the table in the Bottom Template. Essentially, these three Templates give you control over the entire page layout.</p>
 			</div>
 		</fieldset>
 	</div>
@@ -69,12 +69,12 @@
 	</div>
 	<div class="form-item">
 		<fieldset>
-		<legend>List Template</legend>
+		<legend>List Item Template</legend>
 			<textarea name="entry-template"/></textarea>
 			<div class="description">
-				<p>If you specify a List Template, certain buttons and configuration options mentioned above may be unavailable. Below is a list of element data handles for all the elements in this form. Use them with the display function. Use "$entry_id" to refer to the entry id number.</p>
+				<p>If you specify a List Item Template, certain buttons and configuration options mentioned above may be unavailable. Below is a list of element data handles for all the elements in this form. Use them with the display function. Use "$entry_id" to refer to the entry id number.</p>
 				<p>Show the entities here:</p>
-				<p>If you specify any PHP code for the List Template, it will be used to draw in each row of the list.</p>
+				<p>If you specify any PHP code for the List Item Template, it will be used to draw in each row of the list.</p>
 				<p>You do not need to create a foreach loop or any other loop structure in this template. The PHP code you specify will be executed inside a loop that runs once for each entry.</p>
 				<p>You have full access to XOOPS and Formulize objects, functions, variables and constants in this template, including $fid for the form ID. Use $entry to refer to the current entry in the list. For example:</p>
 				<code>display($entry, "phonenumber");</code>

@@ -212,7 +212,7 @@ a.tooltip {
   text-transform: none;
   -webkit-font-smoothing: antialiased;
   text-decoration: inherit;
-  font-size: 11pt;
+  font-size: 1.6rem;
   cursor: help;
   position: relative;
   background: transparent;
@@ -220,11 +220,13 @@ a.tooltip {
 
 a.tooltip:before {
   content: "\f110";
-  font-size: 15pt;
+  font-size: 1.6rem;
   color: #59a7d4; }
 
 a.tooltip > span {
-  display: none; }
+  display: none;
+  font-family: Verdana, Arial, sans-serif;
+  }
 
 a.tooltip:hover {
   background: transparent;
@@ -464,8 +466,7 @@ a.loe-edit-entry {
   text-transform: none;
   -webkit-font-smoothing: antialiased;
   text-decoration: inherit;
-  font-size: 11pt;
-  font-size: 12pt;
+  font-size: 1rem;
   margin: 0;
   margin-left: 0.5em;
   padding: 0.1em; }

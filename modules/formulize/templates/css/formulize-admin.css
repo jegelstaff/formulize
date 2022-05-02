@@ -380,7 +380,7 @@ h6 {
   float: right;
   width: 100%;
   min-height: 100%;
-  margin-bottom: -19px; }
+ }
 
 #xo-canvas-content {
   margin-left: 30px;
@@ -1700,4 +1700,13 @@ p.useroptions input[type="text"] {
 
 .right-align-text {
     text-align: right;
+}
+
+#multi-screen-tree {
+    padding-left: 1em !important;
+}
+.form-item .ui-icon-triangle-1-e, .form-item .ui-icon-triangle-1-se {
+    display: inline-block;
+    top: 0.6em !important;
+    transform: scale(175%);
 }

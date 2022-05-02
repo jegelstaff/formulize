@@ -23,9 +23,11 @@ $subformElementObject = $element_handler->get($subformElementId);
 print "<form id='formulize_modal'>\n";
 // get default screen if any
 if($subformDisplayScreen = get_display_screen_for_subform($subformElementObject)) {
-    $subScreen_handler = xoops_getmodulehandler('formScreen', 'formulize');
+    $subScreen_handler = xoops_getmodulehandler('screen', 'formulize');
     if($screen = $subScreen_handler->get($subformDisplayScreen)) {
-    $subScreen_handler->render($screen, $entry_id, null, true);
+        $renderHandler = xoops_getmodulehandler($screen->getVar('type').'Screen', 'formulize');
+        $screen = $renderHandler->get($screen->getVar('sid'));
+        $renderHandler->render($screen, $entry_id, null, true);
 } else {
         exit("Error: could not render screen $subformDisplayScreen");
     }
@@ -37,11 +39,17 @@ if(isset($GLOBALS['xoopsSecurity'])) {
     print $GLOBALS['xoopsSecurity']->getTokenHTML();
 }
 
-print "</form><hr><br />\n";
-if($subformDisplayScreen) {
-    $savebuttontext = $screen->getVar("savebuttontext");
-    $saveandleavebuttontext = $screen->getVar("saveandleavebuttontext");
-    $alldonebuttontext = $screen->getVar("alldonebuttontext");
+print "</form><div style='clear: both;'><hr><br />\n";
+if($screen) {
+    if($screen->getVar('type') == 'form') {
+        $savebuttontext = $screen->getVar("savebuttontext");
+        $saveandleavebuttontext = $screen->getVar("saveandleavebuttontext");
+        $alldonebuttontext = $screen->getVar("alldonebuttontext");
+    } elseif($screen->getVar('type') == 'multiPage') {
+        $buttonText = $screen->getVar('buttontext');
+        $savebuttontext = $buttonText["saveButtonText"];
+        $saveandleavebuttontext = $buttonText["leaveButtonText"];        
+    }
     $buttons = array();
     $reloadblank = $screen->getVar("reloadblank");
     $setNewEntry = "";
@@ -63,7 +71,7 @@ if($subformDisplayScreen) {
 }
 
 // MODAL VALIDATION DOES NOT CURRENTLY SUPPORT UNIQUE VALUE CHECKS!
-print "\n<br /><br />
+print "</div>\n<br /><br />
 <script type='text/javascript'>
 function xoopsFormValidate_formulize_modal(myform) {
     ";

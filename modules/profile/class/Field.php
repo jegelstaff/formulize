@@ -132,7 +132,6 @@ class mod_profile_Field extends icms_ipf_Object {
 				break;
 			case "timezone":
 				$element = new icms_form_elements_select_Timezone($caption, $name, $value);
-				$element->setExtra("style='width: 280px;'");
 				break;
 			case "rank":
 				$element = new icms_form_elements_Select($caption, $name, $value);

@@ -31,7 +31,7 @@
 
 $modversion = array(
 	'name' => _MI_formulize_NAME,
-	'version' => "6.2",
+	'version' => "7.0",
 	'description' => _MI_formulize_DESC,
 	'author' => "Julian Egelstaff & Freeform Solutions",
 	'credits' => "",
@@ -674,6 +674,12 @@ $modversion['templates'][] = array(
 	'file' => 'admin/screen_form_templates.html',
 	'description' => '');
 $modversion['templates'][] = array(
+	'file' => 'admin/screen_form_template_boxes.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'blocks/menu.html',
+	'description' => '');
+$modversion['templates'][] = array(
 	'file' => 'admin/mailusers.html',
 	'description' => '');
     
@@ -922,13 +928,23 @@ $modversion['config'][] = array(
 	'default' => '0',
 );
 
+$modversion['config'][] = array(
+	'name' => 'f7MenuTemplate',
+	'title' => '_MI_formulize_F7MENUTEMPLATE',
+	'description' => '_MI_formulize_F7MENUTEMPLATEDESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => '0',
+);
+
 //bloc
 $modversion['blocks'][1] = array(
 	'file' => "mymenu.php",
 	'name' => _MI_formulizeMENU_BNAME,
-	'description' => "Zeigt individuelles Menu an",
-	'show_func' => "block_formulizeMENU_show");
-
+	'description' => "",
+	'show_func' => "block_formulizeMENU_show",
+    'template' => 'menu_controller.html');
+    
 // Notifications -- added by jwe 10/10/04, removed for 2.0, reinstated for 2.2 with improved options
 $modversion['hasNotification'] = 1;
 
@@ -983,3 +999,6 @@ if(isset($GLOBALS['formulize_notificationSubjectOverride'])) {
 	$modversion['notification']['event'][2]['mail_subject'] = $GLOBALS['formulize_notificationSubjectOverride'];
 	$modversion['notification']['event'][3]['mail_subject'] = $GLOBALS['formulize_notificationSubjectOverride'];
 }
+
+// ADD PREFERENCES FOR THE NAVSTYLE FOR NEW FORMS AND THE DEFAULT PAGE TITLE?
+// currently default is tabs, and default page title is the screen title

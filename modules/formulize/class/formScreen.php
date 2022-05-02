@@ -69,6 +69,7 @@ class formulizeFormScreen extends formulizeScreen {
     }
     
     // return the displayType setting, unless there is no element container template, then use table-row which matches the default templates
+    // not used (yet?)
     function getDisplayType() {
         if($this->getTemplate('elementcontainero')) {
             return $this->getVar('displayType');
@@ -263,8 +264,7 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 	}
 
 	public function getSelectedElementsForScreen($sid) {
-		$screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
-    	$screen = $screen_handler->get($sid);
+    	$screen = $this->get($sid);
     	$elements = $screen->getVar('formelements');
         if (!is_array($elements)) {
             // this is always expected to be an array, so make sure it is
@@ -287,24 +287,6 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 		}
 		return $screens;
 	}
-
-	public function getMultiScreens($fid) {
-
-		$screens = array();
-		$screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
-		$criteria_object = new CriteriaCompo(new Criteria('type','multiPage'));
-		$formScreens = $screen_handler->getObjects($criteria_object,$fid);
-		foreach($formScreens as $screen) {
-			$sid = $screen->getVar('sid');
-			$screenData = $screen_handler->get($sid);	
-		  	$screens[$sid]['sid'] = $screenData->getVar('sid');
-		  	$screens[$sid]['title'] = $screenData->getVar('title');
-		  	$screens[$sid]['type'] = $screenData->getVar('type');
-		  	$screens[$sid]['pages'] = $screenData->getVar('pages');
-		  	$screens[$sid]['pagetitles'] = $screenData->getVar('pagetitles');
-		}
-		return $screens;
-	}	
 
 	public function getSelectedScreens($fid) {
 		$selected_screens = array();
@@ -363,18 +345,5 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
         }
     }
 
-	public function setDefaultFormScreenVars($defaultFormScreen, $title, $fid)
-	{
-		$defaultFormScreen->setVar('displayheading', 1);
-		$defaultFormScreen->setVar('reloadblank', 0);
-		$defaultFormScreen->setVar('savebuttontext', _formulize_SAVE);
-		$defaultFormScreen->setVar('alldonebuttontext', _formulize_DONE);
-		$defaultFormScreen->setVar('title', "Regular '$title'");
-		$defaultFormScreen->setVar('fid', $fid);
-		$defaultFormScreen->setVar('frid', 0);
-		$defaultFormScreen->setVar('type', 'form');
-		$defaultFormScreen->setVar('useToken', 1);
-	}
 
 }
-?>

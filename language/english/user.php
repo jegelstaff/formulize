@@ -61,7 +61,7 @@ define('_US_NEWUSERREGAT','New user registration at %s');
 define('_US_HASJUSTREG','%s has just registered!');
 
 define('_US_INVALIDMAIL','ERROR: Invalid email');
-define('_US_INVALIDNICKNAME','ERROR: Invalid Loginname, please try an other Loginname.');
+define('_US_INVALIDNICKNAME','ERROR: Invalid Loginname, please try another Loginname.');
 define('_US_NICKNAMETOOLONG','Username is too long. It must be less than %s characters.');
 define('_US_NICKNAMETOOSHORT','Username is too short. It must be more than %s characters.');
 define('_US_NAMERESERVED','ERROR: Name is reserved.');

@@ -55,7 +55,13 @@ if(!isset($formulize_screen_id) OR !is_numeric($formulize_screen_id)) {
 include XOOPS_ROOT_PATH.'/header.php';
 global $xoTheme;
 if($xoTheme) {
-    $xoTheme->addStylesheet("/modules/formulize/templates/css/formulize.css?v=6.0");
+    
+    // retrieve the xoops_version info
+    $module_handler = xoops_gethandler('module');
+    $formulizeModule = $module_handler->getByDirname("formulize");
+    $metadata = $formulizeModule->getInfo();
+    
+    $xoTheme->addStylesheet("/modules/formulize/templates/css/formulize.css?v=".$metadata['version']);
     $xoTheme->addScript("/modules/formulize/libraries/formulize.js");
     $xoTheme->addStylesheet("/modules/formulize/libraries/jquery/timeentry/jquery.timeentry.css");
     $xoTheme->addScript("modules/formulize/libraries/jquery/timeentry/jquery.plugin.min.js");

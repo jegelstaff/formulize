@@ -1,9 +1,10 @@
 <div id="block_login_form">
     <{if $block.auth_googleonly == FALSE}>
+  <br />
   <form style="margin-top: 0px;" action="<{$xoops_url}>/user.php" method="post">
     <p><{$block.lang_username}></p>
     <div><input type="text" class="uname" name="uname" size="12" value="<{$block.unamevalue}>" maxlength="200" /><br /></div>
-    <p><{$block.lang_password}></p>
+    <br /><p><{$block.lang_password}></p>
     <div><input type="password" name="pass" size="12" maxlength="32" /><br /></div>
     <{if $block.rememberme }>
     <div><input type="checkbox" name="rememberme" value="On" /><{$block.lang_rememberme}><br /></div>
@@ -34,9 +35,8 @@
         <div class='google-only-login-div' style="text-align: <{$smarty.const._GLOBAL_LEFT}>;"><a class='google-only-login-link' href="<{$block.auth_url}>">
           <div class="google-btn" style="max-width: 192px;">
           <div class="google-icon-wrapper">
-          <img class="google-icon-svg" src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg"/>
-          </div>
-          <p class="btn-text"><b>Login with Google</b></p>
+            <img class="google-icon-svg" src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg"/>
+            <span class="btn-text btn"><b>Login with Google</b></span>
           </div>
 </a></div>
         </div>

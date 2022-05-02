@@ -49,15 +49,6 @@ class formulizeFramework extends XoopsObject {
 			// but we'll keep it around if it did exist (prior to an upgrade) so we can check framework handles first when necessary
 			$handles = array();
 			$element_ids = array();
-			if($GLOBALS['formulize_versionFourOrHigher'] == false) {
-				$frame_elements_q = q("SELECT * FROM " . $xoopsDB->prefix("formulize_framework_elements") . " WHERE fe_frame_id=$frid");
-				if(isset($frame_elements_q[0])) { // elements are not a required part of a framework...well, they should be, but if they're not defined, that doesn't mean the rest of the data is invalid, so don't call NotAFramework on this framework
-					foreach($frame_elements_q as $row=>$value) {
-						$handles[$value['fe_element_id']] = $value['fe_handle'];
-						$element_ids[$value['fe_handle']] = $value['fe_element_id'];
-					}
-				}
-			}
 			$frame_links_q = q("SELECT * FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_frame_id=\"" . formulize_db_escape($frid). "\"");
 			if(!isset($frame_links_q[0])) {
 				$notAFramework = true;

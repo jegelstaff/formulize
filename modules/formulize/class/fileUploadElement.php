@@ -133,7 +133,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
         } else {
             // create the file upload element, and also a hidden element with the correct markup name.  That hidden value will trigger the correct saving logic, and is necessary because file upload elements are excluded from POST.
             if(!$ele_value[5]) {
-                $introToUploadBox = "<div id='formulize_fileStatus_".$element->getVar('ele_id')."_$entry_id' class='no-print formulize-fileupload-element'>".$ele_value[3]." ". _AM_UPLOAD;
+                $introToUploadBox = "<div id='formulize_fileStatus_".$element->getVar('ele_id')."_$entry_id' class='no-print formulize-fileupload-element'>".$ele_value[3]."</div>";
             } elseif($ele_value[3]) {
                 if(!$fileDeleteCode) { // only do this once per page load
                     $fileDeleteCode = "<script type='text/javascript'>
@@ -153,7 +153,8 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
                     
                     function formulize_delete_successful(response) {
                         response = eval('('+response+')');
-                        window.document.getElementById('formulize_fileStatus_'+response.element_id+'_'+response.entry_id).innerHTML = 'Upload a file:';
+                        window.document.getElementById('formulize_fileStatus_'+response.element_id+'_'+response.entry_id).innerHTML = '';
+                        jQuery('#fileUploadUI_de_".$element->getVar('id_form')."_'+response.entry_id+'_'+response.element_id).show();
                         var fileExistsFlag = 'formulizeFilede_".$element->getVar('id_form')."_'+response.entry_id+'_'+response.element_id+'Exists = false';
                         eval(fileExistsFlag) 
                     }
@@ -165,7 +166,6 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
                     </script>";
                     
                     $introToUploadBox .= $fileDeleteCode;
-                    // <input type='hidden' id='formulize_fileDelete' name='formulize_fileDelete' value= '' />";
                 } elseif($element->getVar('ele_req')) { // just set the flag that tells the required element logic that the file is present
                     $introToUploadBox .= "<script type='text/javascript'>              
                     var formulizeFile".$markupName."Exists = true;
@@ -173,12 +173,13 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
                 }
                 // have to spoof the raw value from the database, in order to generate the URL for use in the download link, since that's what the URL method is expecting
                 $fakeRawValue = serialize(array('name'=>$ele_value[3], 'isfile'=>$ele_value[5]));
-                $introToUploadBox .= "<div id='formulize_fileStatus_".$element->getVar('ele_id')."_$entry_id' class='no-print formulize-fileupload-element'>".$this->createDownloadLink($element, $this->createFileURL($element, $entry_id, $fakeRawValue), $ele_value[4])." &mdash; <a href='' onclick='warnAboutFileDelete(\"".str_replace("de_","formulize_",$markupName)."\", \"".$element->getVar('ele_id')."\", \"$entry_id\");return false;'><img src='".XOOPS_URL."/modules/formulize/images/x.gif' />" . _AM_UPLOAD_DELETE . "</a><br />" . _AM_UPLOAD_MOD;
+                $introToUploadBox .= "<div id='formulize_fileStatus_".$element->getVar('ele_id')."_$entry_id' class='no-print formulize-fileupload-element'>".$this->createDownloadLink($element, $this->createFileURL($element, $entry_id, $fakeRawValue), $ele_value[4])." &mdash; <a class='formulize_fileUploadDeleteButton' href='' onclick='warnAboutFileDelete(\"".str_replace("de_","formulize_",$markupName)."\", \"".$element->getVar('ele_id')."\", \"$entry_id\");return false;'>" . _DELETE . "</a></div>";
             } else {
-                $introToUploadBox = "<div id='formulize_fileStatus_".$element->getVar('ele_id')."_$entry_id' class='no-print formulize-fileupload-element'>" . _AM_UPLOAD;
+                $introToUploadBox = "<div id='formulize_fileStatus_".$element->getVar('ele_id')."_$entry_id' class='no-print formulize-fileupload-element'></div>";
             }
-            $htmlForUpload = "$introToUploadBox<br /><input type='hidden' name='MAX_FILE_SIZE' value='".($ele_value[0]*1048576)."' /><input type='file' name='fileupload_".$markupName."' size=50 id='".$markupName."' onchange=\"javascript:formulizechanged=1;\"  class='no-print' /><input type='hidden' id='$markupName' name='$markupName' value='$markupName' /></div>";
-            $formElement = new xoopsFormLabel($caption, $htmlForUpload);
+            $displayUploadUI = $ele_value[5] ? "style='display: none;'" : ""; 
+            $introToUploadBox .= "<input type='hidden' name='MAX_FILE_SIZE' value='".($ele_value[0]*1048576)."' /><div id='fileUploadUI_".$markupName."' $displayUploadUI><input type='file' name='fileupload_".$markupName."' size=50 id='".$markupName."' onchange=\"javascript:formulizechanged=1;\"  class='no-print' /><input type='hidden' id='$markupName' name='$markupName' value='$markupName' /></div>";
+            $formElement = new xoopsFormLabel($caption, $introToUploadBox);
         }
         return $formElement;
     }

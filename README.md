@@ -20,6 +20,6 @@ To update existing install:
 
 If you have issues, please contact info@formulize.org
 
-Community Summit happening in Toronto in October? Get vaccinated. Details to follow.
+Community Summit happening in Toronto in the fall. Details to follow.
 
 [![Build Status](https://travis-ci.org/jegelstaff/formulize.png)](https://travis-ci.org/jegelstaff/formulize)

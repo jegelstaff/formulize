@@ -203,7 +203,9 @@ if ($_GET['ele_id'] != "new") {
         case "subform":
             $ele_value[2] = 1;
             $ele_value[3] = 1;
-        $ele_value['simple_add_one_button'] = 1;
+            $ele_value['simple_add_one_button'] = 1;
+            $ele_value['show_delete_button'] = 1;
+            $ele_value['show_clone_button'] = 1;
             break;
         case "grid":
             $ele_value[3] = "horizontal";
@@ -312,6 +314,13 @@ if ($ele_type=='text') {
     $options['ele_value_no'] = $ele_value['_NO'];
 } elseif ($ele_type == "subform") {
     
+    if(!isset($ele_value['show_delete_button'])) {
+        $ele_value['show_delete_button'] = 1;
+    }
+    if(!isset($ele_value['show_clone_button'])) {
+        $ele_value['show_clone_button'] = 1;
+    }
+    
     $ele_value['enforceFilterChanges'] = isset($ele_value['enforceFilterChanges']) ? $ele_value['enforceFilterChanges'] : 1;
     
     $ele_value[1] = explode(",",$ele_value[1]);
@@ -358,11 +367,7 @@ if ($ele_type=='text') {
     $screen_options = q("SELECT sid, title, type FROM ".$xoopsDB->prefix("formulize_screen")." WHERE fid=".intval($formtouse)." and (type='form' OR type='multiPage')");
     $options['subform_screens'][0] = "(Use Default Screen)";
     foreach($screen_options as $screen_option) {
-        if($screen_option["type"] == 'multiPage') {
-            $options['subform_screens'][$screen_option["sid"]] = $screen_option["title"]." (row display only, when entries open full screen)";            
-        } else {
-            $options['subform_screens'][$screen_option["sid"]] = $screen_option["title"];
-    }
+        $options['subform_screens'][$screen_option["sid"]] = $screen_option["title"];
     }
 
     // setup the UI for the subform conditions filter
@@ -551,7 +556,7 @@ $adminPage['tabs'][$tabindex]['template'] = "db:admin/element_display.html";
 $adminPage['tabs'][$tabindex]['content'] = $display + $common;
 $formScreenHandler = xoops_getmodulehandler('formScreen', 'formulize');
 $adminPage['tabs'][$tabindex]['content']['form_screens'] = $formScreenHandler->getScreensForElement($common['fid']);
-$adminPage['tabs'][$tabindex]['content']['multi_form_screens'] = $formScreenHandler->getMultiScreens($common['fid']);
+$adminPage['tabs'][$tabindex]['content']['multi_form_screens'] = $form_handler->getMultiScreens($common['fid']);
 // for new elements, pre-select all of the "filled up" screens
 if ($ele_id == "new") {
     $adminPage['tabs'][$tabindex]['content']['ele_form_screens'] = $formScreenHandler->getSelectedScreensForNewElement();

@@ -218,7 +218,9 @@ switch($op) {
           if($link->getVar('common')) {
             $entryId = $data_handler->findFirstEntryWithValue($targetElement, $databaseReadyValue);  
           } elseif($sourceElement==$passedElementId AND $passedEntryId != 'new') {
-            $entryId = $passedEntryId;
+            $entryId = $passedEntryId; // use entry id from the conditional element that triggered this, ie: the id of the entry on one side of the relationship? -- really?? Maybe should be databaseReadyValue same as when passed entry id is 'new'? Perhaps this only kicks in when an element from the B form is included with the A form?
+          } elseif($sourceElement==$passedElementId AND $passedEntryId == 'new') {
+            $entryId = $databaseReadyValue; // use entry id of the value selected in the conditional element that triggered this -- expected when the A form contains a link to the B form, and the B form values are supposed to come in when something is selected
           }
           break;
         }
