@@ -69,6 +69,12 @@ function setScrollDisplay(element) {
 	}
 }
 
+function setSearchRowTop() {
+    var headingHeight = jQuery('td[id=celladdress_h1_1]').innerHeight();
+    var topValue = headingHeight+1;
+    jQuery('td[id^=celladdress_1_]').css('top',topValue+'px');
+}
+
 jQuery(window).load(function() {
     
 	jQuery('.lockcolumn').live("click", function() {
@@ -112,11 +118,19 @@ jQuery(window).load(function() {
 	jQuery(window).scroll(function () {
 		setScrollDisplay(jQuery(window));
 	});
-
+    
 });
 
 jQuery(window).scroll(function () {
     jQuery('.floating-column').css('margin-top', ((window.pageYOffset)*-1));
+});
+
+jQuery(document).ready(function() {
+    setTimeout(setSearchRowTop,500);
+});
+
+jQuery(window).resize(function () {
+    setSearchRowTop();
 });
 
 </script>
