@@ -41,12 +41,14 @@ class icms_core_Session {
 		// If this is a page load by another system, and we're being included, then we establish the user session based on the user id of the user in effect in the other system
 		// This approach assumes correspondence between the user ids.
 		
+        $externalUid = 0;
+        $xoops_userid = 0;
+        
         include_once ICMS_ROOT_PATH . '/include/functions.php';
         
         // Also listens for a code from Google in the URL
         //if google user logged in and redirected to this page
 		if (isset($_GET['code']) AND $client = setupAuthentication()) {
-            $user_handler = icms::handler("icms_member");
                
             //Get a google client object and send Client Request for email
             $objOAuthService = new Google_Service_Oauth2($client);
@@ -117,6 +119,17 @@ class icms_core_Session {
                 }
             }
         }
+
+        // if the email passed by the validated OAuth request, that later passed authentication with Brightspace, matches an existing account, log that person in        
+        if(isset($_SESSION['apiUserId']) AND $_SESSION['apiUserId'] AND isset($_SESSION['email'])) {
+            $user_handler = icms::handler("icms_member");
+            $criteria = new Criteria('email',$_SESSION['email']);
+            $foundUsers = $user_handler->getUsers($criteria);
+            if(is_array($foundUsers) AND count($foundUsers)==1) {
+                $foundUser = $foundUsers[0];
+                $xoops_userid = $foundUser->getVar('uid');
+            }
+        }
         
 
 		global $user;
@@ -139,7 +152,11 @@ class icms_core_Session {
         }
 
 		if ($externalUid) {
-			$xoops_userid = Formulize::getXoopsResourceID(Formulize::USER_RESOURCE, $externalUid);
+            $xoops_userid = Formulize::getXoopsResourceID(Formulize::USER_RESOURCE, $externalUid);
+        }
+        
+        if($xoops_userid) {
+			
 		    $icms_user = icms::handler('icms_member')->getUser($xoops_userid);
 
 			if (is_object($icms_user)) {
@@ -189,10 +206,15 @@ class icms_core_Session {
 				if ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '') {
 					// we need to secure cookie when using SSL
 					$secure = substr(ICMS_URL, 0, 5) == 'https' ? 1 : 0;
-					setcookie(
-						$icmsConfig['session_name'], session_id(),
-						time()+(60*$icmsConfig['session_expire']), '/', '', $secure, 1
-					);
+                    $arr_cookie_options = array (
+                        'expires' => time()+(60*$icmsConfig['session_expire']),
+                        'path' => '/',
+                        'domain' => '',
+                        'secure' => $secure ? true : false,     
+                        'httponly' => true,    
+                        'samesite' => 'None' // None || Lax  || Strict
+                        );
+					setcookie($icmsConfig['session_name'], session_id(), $arr_cookie_options);
 				}
 				$icms_user->setGroups($_SESSION['xoopsUserGroups']); // ALTERED BY FREEFORM SOLUTIONS TO AVOID NAMING CONFLICT WITH GLOBAL USER OBJECT FROM EXTERNAL SYSTEMS
 				if (!isset($_SESSION['UserLanguage']) || empty($_SESSION['UserLanguage'])) {
@@ -366,7 +388,16 @@ class icms_core_Session {
 				: (($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '')
 					? $icmsConfig['session_expire'] * 60 : ini_get('session.cookie_lifetime'));
 		$session_id = empty($sess_id) ? session_id() : $sess_id;
-		setcookie($session_name, $session_id, $session_expire ? time() + $session_expire : 0, '/',  '', $secure, 1);
+        $expiry = $session_expire ? time() + $session_expire : 0;
+        $arr_cookie_options = array (
+            'expires' => time()+(60*$icmsConfig['session_expire']),
+            'path' => '/',
+            'domain' => '',
+            'secure' => $secure ? true : false,     
+            'httponly' => true,    
+            'samesite' => 'None' // None || Lax  || Strict
+            );
+        setcookie($session_name, $session_id, $arr_cookie_options);
 	}
 
 	/**
