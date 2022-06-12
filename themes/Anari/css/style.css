@@ -2871,6 +2871,15 @@ img {
     }
   #formulize-masquerade-block input[type=submit]:hover {
     transform: none; }
+    
+@media print {
+    #formulize-masquerade-block {
+        display: none;
+    }
+    div[id^=formulize-updateowner_] {
+        display: none;
+    }
+}
 
 .google-icon-wrapper {
     display: flex;
