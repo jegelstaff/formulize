@@ -5912,7 +5912,7 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
     $fid = $cachedFormIds[$handle];
     $element_type = $cached_object_type[$handle];
     foreach ($value as $valueId=>$v) {
-        $elstyle = 'style="display: inline-block;width: 100%;text-align: ';
+        $elstyle = 'style="width: 100%;text-align: ';
         if (is_numeric($v)) {
             $elstyle .= 'right;"'; // and if there is a width that pushes the right edge over then it looks nice, sort of, but more formatting controls on table and whitespace between cells, etc... is necessary
         } else {

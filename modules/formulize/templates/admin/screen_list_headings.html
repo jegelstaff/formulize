@@ -44,9 +44,20 @@
       <div class="form-radios">
 			  <label for="1"><input type="radio" id="screens-usesearch" name="screens-usesearch"<{if $content.usesearch eq 1}> checked="checked"<{/if}> value="1"/><{$smarty.const._YES}></label>
 		  </div>
+    <{php}>
+        global $xoopsConfig;
+    if($xoopsConfig['theme_set']!='formulize_standalone') {
+    <{/php}>
+          <div class="form-radios">
+			  <label for="2"><input type="radio" id="screens-usesearch" name="screens-usesearch"<{if $content.usesearch eq 2}> checked="checked"<{/if}> value="2"/>Yes, but hide the row, user can open with a click</label>
+		  </div>
+    <{php}>
+        }
+    <{/php}>
 		  <div class="form-radios">
 			  <label for="0"><input type="radio" id="screens-usesearch" name="screens-usesearch"<{if $content.usesearch eq 0}> checked="checked"<{/if}> value="0"/><{$smarty.const._NO}></label>
 		  </div>
+          
       <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_USESEARCH}></div>
     </div>
     <div class="form-item">

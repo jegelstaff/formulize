@@ -58,7 +58,7 @@ foreach($_POST['col-value'] as $index=>$col) {
     $sort = 0;
   }
     if(!is_numeric($col) OR intval($col) != 0) {
-        $advanceview[] = array($col, $_POST['search-value'][$index], $sort);
+        $advanceview[] = array($col, $_POST['search-value'][$index], $sort, $_POST['search-type'][$index]);
   }
 }
 

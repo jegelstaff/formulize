@@ -63,6 +63,9 @@ function getRequestedDataType() {
 		case 'text':
 			$dataType = 'text';
 			break;
+        case 'date':
+            $dataType = 'date';
+            break;
 		default:
 			print "ERROR: unrecognized datatype has been specified: ".strip_tags(htmlspecialchars($_POST['element_datatype']));
 	}

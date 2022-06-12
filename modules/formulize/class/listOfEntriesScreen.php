@@ -69,7 +69,7 @@ class formulizeListOfEntriesScreen extends formulizeScreen {
         $this->initVar("usesave", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
         $this->initVar("usedeleteview", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
         $this->initVar("useheadings", XOBJ_DTYPE_INT);
-        $this->initVar("usesearch", XOBJ_DTYPE_INT);
+        $this->initVar("usesearch", XOBJ_DTYPE_INT); // 0 is off, 1 is on, 2 is on but hidden by default
         $this->initVar("usecheckboxes", XOBJ_DTYPE_INT); // 0 is default, 1 is all, 2 is none
         $this->initVar("useviewentrylinks", XOBJ_DTYPE_INT);
         $this->initVar("usescrollbox", XOBJ_DTYPE_INT);

@@ -544,6 +544,7 @@ define("_AM_FORM_DATATYPE_VARCHAR1","Store as text, up to a maximum of ");
 define("_AM_FORM_DATATYPE_VARCHAR2"," characters (varchar)");
 define("_AM_FORM_DATATYPE_CHAR1","Store as text, exactly ");
 define("_AM_FORM_DATATYPE_CHAR2"," characters in length (char)");
+define("_AM_FORM_DATATYPE_DATE"," Store as a date");
 
 
 // SCREENS...including multipage
@@ -752,6 +753,7 @@ define("_AM_FORMULIZE_SCREEN_LOE_LISTTEMPLATE_HELPINTRO_FORM", "Below is a list 
 define("_AM_FORMULIZE_SCREEN_LOE_DISPLAY_ONLY_COLUMNS", "Display only these columns");
 define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_COLUMNS", "Column");
 define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_SEARCH_BY", "Search by this");
+define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_SEARCH_TYPE", "Search Interface");
 define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_SORT_BY", "Sort by this");
 define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_DELETE_COLUMN", "Remove column");
 define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_DESCRIPTION", "If you add columns here this will become the default view. The 'search by this' and 'sort by this' are optional fields");
