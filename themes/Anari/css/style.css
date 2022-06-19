@@ -3037,6 +3037,21 @@ td.column a.header-info-link {
     padding-right: 0;
 }
 
+/* scrolling headers for LOE */
+
+.list-of-entries-container table.outer td[id^=celladdress_h1_],
+.list-of-entries-container table.outer td[id^=celladdress_1_] {
+    position: sticky;
+    background-color: white;
+    z-index: 509;
+}
+.list-of-entries-container table.outer td[id^=celladdress_h1_] {
+    top: 0px;
+}
+.list-of-entries-container table.outer td[id^=celladdress_1_] {
+    top: 4.1em;
+}
+
 /* compatibility with classic xoops table layout */
 
 table.outer {
@@ -3044,6 +3059,10 @@ table.outer {
   border-radius: 4px;
   box-shadow: 6px 0px 10px 0px rgba(51, 77, 110, 0.08);
   margin-bottom: 30px;
+}
+
+.list-of-entries-container table.outer {
+    border-collapse: separate;
 }
 
 .list-of-entries-container table.outer td {
