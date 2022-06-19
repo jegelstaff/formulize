@@ -349,12 +349,16 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
     $evaluationCondition = "";
     
     // convert the internal database representation to the displayed value, if this element has uitext that we're supposed to use
-        $element_metadata = formulize_getElementMetaData($element, true);
-    if($element_metadata['ele_uitextshow']) {
+    // translate yes/no choices for yes/no elements if French is active language
+    global $xoopsConfig;
         foreach ($filterElements as $key => $element) {
-        if (isset($element_metadata['ele_uitext'])) {
+        $element_metadata = formulize_getElementMetaData($element, true);
+        if($element_metadata['ele_uitextshow'] AND isset($element_metadata['ele_uitext'])) {
             $filterTerms[$key] = formulize_swapUIText($filterTerms[$key], unserialize($element_metadata['ele_uitext']));
         }
+        if($element_metadata['ele_type'] == 'yn' AND ($filterTerms[$key] == 'Yes' OR $filterTerms[$key] == 'No') AND $xoopsConfig['language'] == 'french') {
+            $filterTerms[$key] = $filterTerms[$key] == 'Yes' ? 'Oui' : $filterTerms[$key];
+            $filterTerms[$key] = $filterTerms[$key] == 'No' ? 'Non' : $filterTerms[$key];
     }
     }
 
