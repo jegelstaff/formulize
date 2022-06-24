@@ -75,18 +75,26 @@ function setSearchRowTop() {
     jQuery('td[id^=celladdress_1_]').css('top',topValue+'px');
 }
 
+var toggleSearchesOnFirst = <?php print $toggleSearchesOnFirst; ?>;
 function toggleSearches() {
-	if(jQuery('#cellcontents_1_0').css('display') == 'none') {
+	if(jQuery('#cellcontents_1_0').css('display') == 'none' || toggleSearchesOnFirst) {
+		// style searches open
 		jQuery('td[id^="celladdress_1_"]').css('padding','24px');
         jQuery('td[id^="celladdress_1_"]').css('padding-left','0.3em');
 		jQuery('.search-toggle-link').css('transform', 'rotate(180deg)');
+		
 	} else {
+		// style searches closed
 		jQuery('td[id^="celladdress_1_"]').css('padding','0.3em');	
 		jQuery('td[id^="celladdress_1_"]').css('padding-top','0');	
 		jQuery('.search-toggle-link').css('transform', 'none');
 	}
-	jQuery('div[id^="cellcontents_1_"]').toggle();
-	jQuery('#celladdress_1_margin .header-info-link').toggle();
+	// toggle on/off except if they should remain open at first
+	if(!toggleSearchesOnFirst) {
+		jQuery('div[id^="cellcontents_1_"]').toggle();
+		jQuery('#celladdress_1_margin .header-info-link').toggle();
+	}
+	toggleSearchesOnFirst = false;
 }
 
 jQuery(window).load(function() {
@@ -134,11 +142,8 @@ jQuery(window).load(function() {
 	});
     
     if(jQuery('.search-toggle-link').length) {
-		jQuery('#celladdress_1_margin .header-info-link').toggle();
-		jQuery('div[id^="cellcontents_1_"]').toggle();
+		toggleSearches();
 		jQuery('#celladdress_1_margin').css('max-width', '20px');
-		jQuery('td[id^="celladdress_1_"]').css('padding','0.3em');
-		jQuery('td[id^="celladdress_1_"]').css('padding-top','0');	
 		jQuery('td[id^="celladdress_1_"]').css('transition', 'padding 0.5s');
 		jQuery('#celladdress_1_margin').parent().click(function (event) {
 			if(event.target.id.includes('celladdress_1_')) {

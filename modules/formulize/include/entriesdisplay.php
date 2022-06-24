@@ -905,6 +905,14 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	formulize_benchmark("after entries");
 
 	// render the bottomtemplate
+    $visibleSearches = 0;
+    foreach($searches as $thisSearch) {
+        if(substr($thisSearch,0,1) != "!" OR substr($thisSearch, -1) != "!") {
+            $visibleSearches = 1;
+            break;
+        }
+    }
+    $formulize_buttonCodeArray['toggleSearchesOnFirst'] = $visibleSearches;
 	formulize_screenLOETemplate($screen, "bottom", $formulize_buttonCodeArray, $settings);
 	
 	$listOfEntriesBufferContents = ob_get_clean();
@@ -1540,8 +1548,8 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 	$searchHelp = "<a href='' class='header-info-link' onclick=\"javascript:showPop('".$search_help_filepath."'); return false;\" title='"._formulize_DE_SEARCH_POP_HELP."'></a>";
     $toggleSearches = "<a href='' class='search-toggle-link' onclick=\"javascript:toggleSearches(); return false;\" title='"._formulize_DE_TOGGLE_SEARCHES."'>
         &#9013;
-    </a>";
-
+        </a>";
+    
     global $procedureResults; // set in drawInterface
 	
 	$templateVariables = array(
