@@ -356,6 +356,10 @@ footer a:hover {
     color: black !important;
 }
 
+#icon {
+    border: 1px solid black;
+}
+
 /* #Media Queries
 ================================================== */
 
