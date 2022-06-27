@@ -25,11 +25,7 @@ It's time to launch Formulize 7, the completely rededsigned and most mobile frie
 ---
 
 ## Cost is free, so RSVP today to [info@formulize.org](mailto:info@formulize.org?subject=Formulize Summit, count me in!)
-
-### Don't delay, space is limited
-
 * Spaces left as of June 27: 39
-
 * If you're coming from out of town and need a place to stay, [you can get 25% off a hotel room](https://reservations.travelclick.com/95964?groupID=3556585).
 
 
