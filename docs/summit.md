@@ -28,4 +28,6 @@ It's time to launch Formulize 7, the completely rededsigned and most mobile frie
 
 * Spaces left as of June 27: 39
 
+* If you're coming from out of town and need a place to stay, [you can get 25% off a hotel room](https://reservations.travelclick.com/95964?groupID=3556585).
+
 
