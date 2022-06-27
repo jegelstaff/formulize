@@ -24,7 +24,9 @@ It's time to launch Formulize 7, the completely rededsigned and most mobile frie
 
 ---
 
-## RSVP today to [info@formulize.org](mailto:info@formulize.org?subject=Formulize Summit, count me in!) and don't delay, space is limited.
+## Cost is free, so RSVP today to [info@formulize.org](mailto:info@formulize.org?subject=Formulize Summit, count me in!)
+
+### Don't delay, space is limited
 
 * Spaces left as of June 27: 39
 
