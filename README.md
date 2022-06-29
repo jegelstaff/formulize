@@ -20,6 +20,6 @@ To update existing install:
 
 If you have issues, please contact info@formulize.org
 
-Community Summit happening in Toronto in the fall. Details to follow.
+Formulize Summit - August 30 2022, Toronto Ontario - details: https://www.formulize.org/summit
 
 [![Build Status](https://travis-ci.org/jegelstaff/formulize.png)](https://travis-ci.org/jegelstaff/formulize)
