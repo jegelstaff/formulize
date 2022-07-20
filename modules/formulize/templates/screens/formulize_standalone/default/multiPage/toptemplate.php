@@ -1,6 +1,7 @@
 <?php
 
-print "
+if($showTabs) {
+	print "
     <div id='pageNavTable'>
         <ul class='multi-page-list'>
             <li this-page='".($totalPages+1)."' class='icon-arrow-backward navtab'> $saveAndLeave</li>";
@@ -14,8 +15,10 @@ print "
             
             print"
         </ul>    
-    </div>
+    </div>";
+}
 
+print "
     <div class='xo-theme-form'>
         <table width='100%' class='outer' cellspacing='1'>
 ";
