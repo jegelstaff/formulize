@@ -5687,11 +5687,17 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
     }
     
     $plainLiteralValue = "";
+	$literalToDBValue = "";
     if ($filterOps[$filterId] == "<=>") {
         
         // if we're handling a dynamic reference to an element, and the thing we're comparing the dynamic reference to is not a linked element, then we're going to cover our bases and do an OR of both the DB and literal value
         if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND !$targetElementObject->isLinked) {
-            if(!isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm])) {
+			if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
+				// get the literal value based on the passed in database ready format
+                $literalToDBValue = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm];
+                // use the already declared API format value (determined when conditional elements are generated for example)
+                $plainLiteralValue = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm];
+			} elseif(!isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm])) {
                 // convert any literal terms (including {} references to linked selectboxes) into the actual DB value...based on current saved value
                 $literalToDBValue = prepareLiteralTextForDB($filterElementObject, $filterTerms[$filterId], $curlyBracketEntry, $userComparisonId); // prepends checkbox characters and converts yes/nos, {USER}, etc
                 $literalToDBValue = str_replace('{ID}',$curlyBracketEntry,$literalToDBValue);
@@ -5705,11 +5711,6 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
             } else {
                     // for new entries get the defaults?? Needs testing
                 }
-            } else {
-                // get the literal value based on the passed in database ready format
-                $literalToDBValue = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm];
-                // use the already declared API format value (determined when conditional elements are generated for example)
-                $plainLiteralValue = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm];
             }
             $plainLiteralValue = $plainLiteralValue != $literalToDBValue ? $plainLiteralValue : "";
             $filterTerms[$filterId] = $literalToDBValue;
