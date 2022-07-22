@@ -262,9 +262,11 @@ function getUserForm(&$user, $profile = false, $action = false) {
             $level_radio->addOption(1, _MD_PROFILE_ACTIVE);
             $level_radio->addOption(0, _MD_PROFILE_INACTIVE);
             $level_radio->addOption(-1, _MD_PROFILE_DISABLED);
-            $elements[0][] = array('element' => $level_radio, 'required' => 0);
-            $weights[0][] = 0;
-		}
+		} else {
+            $level_radio = new icms_form_elements_Hidden('level', $user->getVar('level'));
+        }
+        $elements[0][] = array('element' => $level_radio, 'required' => 0);
+        $weights[0][] = 0;
     }
 
     $elements[0][] = array('element' => new icms_form_elements_Hidden('uid', $user->getVar('uid')), 'required' => 0);
