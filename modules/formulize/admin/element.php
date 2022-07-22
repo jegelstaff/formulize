@@ -638,7 +638,9 @@ function createDataTypeUI($ele_type, $element,$id_form,$ele_encrypt) {
         $charTypeSize = new XoopsFormText('', 'element_datatype_charsize', 3, 3, $charTypeSizeDefault);
         $charTypeSize->setExtra(" style=\"width: 3em;\" ");
         $charType->addOption('char', _AM_FORM_DATATYPE_CHAR1.$charTypeSize->render()._AM_FORM_DATATYPE_CHAR2);
-        if ($defaultType != "text" AND $defaultType != "int" AND $defaultType != "decimal" AND $defaultType != "varchar" AND $defaultType != "char") {
+        $dateType = new XoopsFormRadio('', 'element_datatype', $defaultType);
+        $dateType->addOption('date', _AM_FORM_DATATYPE_DATE);
+        if ($defaultType != "text" AND $defaultType != "int" AND $defaultType != "decimal" AND $defaultType != "varchar" AND $defaultType != "char" AND $defaultType != "date") {
             $otherType = new XoopsFormRadio('', 'element_datatype', $defaultType);
             $otherType->addOption($defaultType, _AM_FORM_DATATYPE_OTHER.$defaultType);
             $dataTypeTray->addElement($otherType);
@@ -648,6 +650,7 @@ function createDataTypeUI($ele_type, $element,$id_form,$ele_encrypt) {
         $dataTypeTray->addElement($decimalType);
         $dataTypeTray->addElement($varcharType);
         $dataTypeTray->addElement($charType);
+        $dataTypeTray->addElement($dateType);
         $renderedUI .= $dataTypeTray->render();
     }
     return $renderedUI;

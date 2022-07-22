@@ -905,6 +905,14 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	formulize_benchmark("after entries");
 
 	// render the bottomtemplate
+    $visibleSearches = 0;
+    foreach($searches as $thisSearch) {
+        if(substr($thisSearch,0,1) != "!" OR substr($thisSearch, -1) != "!") {
+            $visibleSearches = 1;
+            break;
+        }
+    }
+    $formulize_buttonCodeArray['toggleSearchesOnFirst'] = $visibleSearches;
 	formulize_screenLOETemplate($screen, "bottom", $formulize_buttonCodeArray, $settings);
 	
 	$listOfEntriesBufferContents = ob_get_clean();
@@ -1273,41 +1281,42 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$filterHandles = array_merge($filterHandles, extractHandles($filterTypes, getTemplateToRender('bottomtemplate', $screenOrScreenType)));
 	$filterHandles = array_merge($filterHandles, extractHandles($filterTypes, getTemplateToRender('openlisttemplate', $screenOrScreenType)));
 	$filterHandles = array_merge($filterHandles, extractHandles($filterTypes, getTemplateToRender('closelisttemplate', $screenOrScreenType)));
+    // add any columns for which the advanceview settings call for not just a box
+    if($screen) {
+        foreach($screen->getVar('advanceview') as $avData) {
+            if(isset($avData[3]) AND $avData[3] != 'Box') {
+                if(!in_array($avData[0], $filterHandles)) {
+                    $filterHandles[] = $avData[0];
+                }
+            }
+        }
+    }
 
 	$quickSearches = createQuickSearches($searches, $settings, $hiddenQuickSearches, $filterHandles); 
 
-	$quickSearchesNotInTemplate = array();
 	foreach($quickSearches as $handle=>$qsCode) {
 		$handle = str_replace("-","_",$handle);
-		if(strstr(getTemplateToRender('toptemplate', $screenOrScreenType), 'quickSearch' . $handle) OR
-			strstr(getTemplateToRender('bottomtemplate', $screenOrScreenType), 'quickSearch' . $handle) OR
-			strstr(getTemplateToRender('openlisttemplate', $screenOrScreenType), 'quickSearch' . $handle) OR
-			strstr(getTemplateToRender('closelisttemplate', $screenOrScreenType), 'quickSearch' . $handle) OR
-			in_array($handle, $settings['pubfilters'])) {
+		if(screenUsesSearchStringWithHandle(
+            $screenOrScreenType, array('quickSearch', 'quickSearchBox_'), $handle)
+            OR in_array($handle, $settings['pubfilters'])) {
 				$buttonCodeArray['quickSearch' . $handle] = $qsCode['search']; // set variables for use in the template
 				$buttonCodeArray['quickSearchBox_'.$handle] = $qsCode['search'];
 		}
-		if(strstr(getTemplateToRender('toptemplate', $screenOrScreenType), 'quickFilter' . $handle) OR
-			strstr(getTemplateToRender('bottomtemplate', $screenOrScreenType), 'quickFilter' . $handle) OR
-			strstr(getTemplateToRender('openlisttemplate', $screenOrScreenType), 'quickFilter' . $handle) OR
-			strstr(getTemplateToRender('closelisttemplate', $screenOrScreenType), 'quickFilter' . $handle) OR
-			in_array($handle, $settings['pubfilters'])) {
+		if(screenUsesSearchStringWithHandle(
+            $screenOrScreenType, array('quickFilter', 'quickSearchFilter_'), $handle)
+            OR in_array($handle, $settings['pubfilters'])) {
 				$buttonCodeArray['quickFilter' . $handle] = $qsCode['filter']; // set variables for use in the template
 				$buttonCodeArray['quickSearchFilter_'.$handle] = $qsCode['filter'];
 		}
-		if(strstr(getTemplateToRender('toptemplate', $screenOrScreenType), 'quickMultiFilter' . $handle) OR
-			strstr(getTemplateToRender('bottomtemplate', $screenOrScreenType), 'quickMultiFilter' . $handle) OR
-			strstr(getTemplateToRender('openlisttemplate', $screenOrScreenType), 'quickMultiFilter' . $handle) OR
-			strstr(getTemplateToRender('closelisttemplate', $screenOrScreenType), 'quickMultiFilter' . $handle) OR
-			in_array($handle, $settings['pubfilters'])) {
+		if(screenUsesSearchStringWithHandle(
+            $screenOrScreenType, array('quickMultiFilter', 'quickSearchMultiFilter_'), $handle)
+            OR in_array($handle, $settings['pubfilters'])) {
 				$buttonCodeArray['quickMultiFilter' . $handle] = $qsCode['multiFilter']; // set variables for use in the template
 				$buttonCodeArray['quickSearchMultiFilter_'.$handle] = $qsCode['multiFilter'];
 		}
-		if(strstr(getTemplateToRender('toptemplate', $screenOrScreenType), 'quickDateRange' . $handle) OR
-			 strstr(getTemplateToRender('bottomtemplate', $screenOrScreenType), 'quickDateRange' . $handle) OR
-			 strstr(getTemplateToRender('openlisttemplate', $screenOrScreenType), 'quickDateRange' . $handle) OR
-			 strstr(getTemplateToRender('closelisttemplate', $screenOrScreenType), 'quickDateRange' . $handle) OR
-			 in_array($handle, $settings['pubfilters'])) {
+		if(screenUsesSearchStringWithHandle(
+            $screenOrScreenType, array('quickDateRange', 'quickSearchDateRange_'), $handle)
+            OR in_array($handle, $settings['pubfilters'])) {
 				$buttonCodeArray['quickDateRange' . $handle] = $qsCode['dateRange']; // set variables for use in the template
 				$buttonCodeArray['quickSearchDateRange_'.$handle] = $qsCode['dateRange'];
 		}
@@ -1398,6 +1407,21 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	return $buttonCodeArray;
 }
 
+// check for a handle being used in a quickSearch variable anywhere in relevant templates
+function screenUsesSearchStringWithHandle($screenOrScreenType, $searchString, $handle) {
+    $searchString = !is_array($searchString) ? array($searchString) : $searchString;
+    foreach($searchString as $thisSearchString) {
+        if(
+            strstr(getTemplateToRender('toptemplate', $screenOrScreenType), $thisSearchString . $handle) OR
+    		strstr(getTemplateToRender('bottomtemplate', $screenOrScreenType), $thisSearchString . $handle) OR
+    		strstr(getTemplateToRender('openlisttemplate', $screenOrScreenType), $thisSearchString . $handle) OR
+    		strstr(getTemplateToRender('closelisttemplate', $screenOrScreenType), $thisSearchString . $handle)    
+        ) {
+            return true;
+        }
+    }
+    return false;
+}
 
 // THIS FUNCTION DRAWS IN THE RESULTS OF THE QUERY
 function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone="", $currentURL, $gperm_handler, $uid, $mid, $groups, $settings, $member_handler, $screen, $data, $regeneratePageNumbers, $hiddenQuickSearches, $cResults, $buttonCodeArray) { // , $loadview="") { // -- loadview removed from this function sept 24 2005
@@ -1423,6 +1447,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 	$inlineButtons = array();
 	$hiddenColumns = array();
 	$formulize_LOEPageSize = 10;
+    $searchTypes = array_fill_keys($cols, 'Box');
 	if($screen) {
 		$useScrollBox = $screen->getVar('usescrollbox');
 		$useHeadings = $screen->getVar('useheadings');
@@ -1432,7 +1457,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 		if($textWidth == 0) { $textWidth = 10000; }
 		$useCheckboxes = $screen->getVar('usecheckboxes');
 		$useViewEntryLinks = $screen->getVar('useviewentrylinks');
-		$useSearch = $screen->getVar('usesearch') ? 1 : 0;
+		$useSearch = $screen->getVar('usesearch') ? $screen->getVar('usesearch') : 0;
 		$hiddenColumns = $screen->getVar('hiddencolumns');
 		$deColumns = $screen->getVar('decolumns');
 		$deDisplay = $screen->getVar('dedisplay');
@@ -1446,6 +1471,9 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 			}
 		}
 		$formulize_LOEPageSize = $screen->getVar('entriesperpage');
+        foreach($screen->getVar('advanceview') as $avData) {
+            $searchTypes[$avData[0]] = isset($avData[3]) ? $avData[3] : 'Box'; // default to quickSearch boxes, otherwise use type specified in screen settings
+        }
 	}
 
 	// Prepare link for downloading calculations
@@ -1518,7 +1546,10 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 		$search_help_filepath = XOOPS_URL."/modules/formulize/docs/search_help.xhtml";
 	}
 	$searchHelp = "<a href='' class='header-info-link' onclick=\"javascript:showPop('".$search_help_filepath."'); return false;\" title='"._formulize_DE_SEARCH_POP_HELP."'></a>";
-
+    $toggleSearches = "<a href='' class='search-toggle-link' onclick=\"javascript:toggleSearches(); return false;\" title='"._formulize_DE_TOGGLE_SEARCHES."'>
+        &#9013;
+        </a>";
+    
     global $procedureResults; // set in drawInterface
 	
 	$templateVariables = array(
@@ -1540,16 +1571,23 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 		'cancelCalcsButton' => $cancelCalcsButton,
 		'toggleCalcsButton' => $toggleCalcsButton,
 		'searchesShown' => $useSearch,
+        'toggleSearches' => ($useSearch == 2 ? $toggleSearches : ''),
 		'searchHelp' => (($useCheckboxes != 2 OR $useViewEntryLinks) ? $searchHelp : ''),
+        'searchTypes' => $searchTypes,
 		'columns' => $cols
 	);
 	
 	// add all search boxes to the available set of variables
+    // and the specified filter type if there's a declared type in the advanceview
 	foreach($buttonCodeArray['quickSearches'] as $handle=>$qsCode) {
 		if(!isset($buttonCodeArray['quickSearch'.$handle])) {
 			$buttonCodeArray['quickSearch'.$handle] = $qsCode['search'];
 			$buttonCodeArray['quickSearchBox_'.$handle] = $qsCode['search']; // new naming convention that applies to other types also, see above
 		}
+        if(isset($searchTypes[$handle]) AND $searchTypes[$handle] != 'Box') {
+            $buttonCodeArray['quick'.$searchTypes[$handle].$handle] = $qsCode[lcfirst($searchTypes[$handle])]; 
+            $buttonCodeArray['quickSearch'.$searchTypes[$handle].'_'.$handle] = $qsCode[lcfirst($searchTypes[$handle])]; 
+        }
 	}
 	
 	// setup the view name variables, with true only set for the last loaded view
@@ -1893,50 +1931,51 @@ function formulize_buildQSFilter($handle, $search_text, $multi=false) {
 
 // THIS FUNCTION CREATES THE HTML FOR A DATE RANGE FILTER
 function formulize_buildDateRangeFilter($handle, $search_text) {
-   $elementMetaData = formulize_getElementMetaData($handle, true); // true means this is a handle
-   if($elementMetaData['ele_type']=="date") {
-	// split any search_text into start and end values
-	if(strstr($search_text, "//")) {
-		$startEnd = explode("//",$search_text);
-		$startText = isset($startEnd[0]) ? parseUserAndToday(substr(htmlspecialchars_decode($startEnd[0]), 2)) : _formulize_QSdateRange_startText;
-		$endText = isset($startEnd[1]) ? parseUserAndToday(substr(htmlspecialchars_decode($startEnd[1]), 2)) : _formulize_QSdateRange_endText;
-	} else {
-		$startText = "";
-		$endText = "";
-	}
-	include_once XOOPS_ROOT_PATH . "/class/xoopsformloader.php";
-	$startDateElement = new XoopsFormTextDateSelect ('', 'formulize_daterange_sta_'.$handle, 15, strtotime($startText));
-	$endDateElement = new XoopsFormTextDateSelect ('', 'formulize_daterange_end_'.$handle, 15, strtotime($endText));
-	
-	static $js;
-	if($js) { // only need to include this code once!
-		$js = "";
-	} else {
-		$js = "<script type='text/javascript'>
-		if (typeof jQuery == 'undefined') {
-				var head = document.getElementsByTagName('head')[0];
-				script = document.createElement('script');
-				script.id = 'jQuery';
-				script.type = 'text/javascript';
-				script.src = '".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-1.4.2.min.js';
-				head.appendChild(script);
-		}
-		$().click(function() {
-			$('.formulize_daterange').change();
-		});
-		$(\"[id^='formulize_daterange_sta_'],[id^='formulize_daterange_end_']\").change(function() {
-			var id = new String($(this).attr('id'));
-			var handle = id.substr(24);
-			var start = $('#formulize_daterange_sta_'+handle).val();
-			var end = $('#formulize_daterange_end_'+handle).val();
-			$('#formulize_hidden_daterange_'+handle).val('>='+start+'//'+'<='+end);
-		});
-		</script>";
-	}
-	return $startDateElement->render() . " ". _formulize_QDR_to . " " . $endDateElement->render() . " <input type=button name=qdrGoButton value='" . _formulize_QDR_go . "' onclick=\"javascript:showLoading();\"></input>\n<input type='hidden' id='formulize_hidden_daterange_".$handle."' name='search_".$handle."' value='".$search_text."' ></input>\n$js";
-   } else {
-	return "";
-   }
+    $element_handler = xoops_getmodulehandler('elements', 'formulize');
+    if($elementObject = $element_handler->get($handle)) {
+        $typeInfo = $elementObject->getDataTypeInformation();
+        if($typeInfo['dataType'] == 'date') {
+            $startText = "";
+            $endText = "";
+            // split any search_text into start and end values
+            if(strstr($search_text, "//")) {
+                $startEnd = explode("//",$search_text);
+                $startText = isset($startEnd[0]) ? parseUserAndToday(substr(htmlspecialchars_decode($startEnd[0]), 2)) : _formulize_QSdateRange_startText;
+                $endText = isset($startEnd[1]) ? parseUserAndToday(substr(htmlspecialchars_decode($startEnd[1]), 2)) : _formulize_QSdateRange_endText;
+            } 
+            include_once XOOPS_ROOT_PATH . "/class/xoopsformloader.php";
+            $startDateElement = new XoopsFormTextDateSelect ('', 'formulize_daterange_sta_'.$handle, 15, strtotime($startText));
+            $endDateElement = new XoopsFormTextDateSelect ('', 'formulize_daterange_end_'.$handle, 15, strtotime($endText));
+            
+            static $js;
+            if($js) { // only need to include this code once!
+                $js = "";
+            } else {
+                $js = "<script type='text/javascript'>
+                if (typeof jQuery == 'undefined') {
+                        var head = document.getElementsByTagName('head')[0];
+                        script = document.createElement('script');
+                        script.id = 'jQuery';
+                        script.type = 'text/javascript';
+                        script.src = '".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-1.4.2.min.js';
+                        head.appendChild(script);
+                }
+                $().click(function() {
+                    $('.formulize_daterange').change();
+                });
+                $(\"[id^='formulize_daterange_sta_'],[id^='formulize_daterange_end_']\").change(function() {
+                    var id = new String($(this).attr('id'));
+                    var handle = id.substr(24);
+                    var start = $('#formulize_daterange_sta_'+handle).val();
+                    var end = $('#formulize_daterange_end_'+handle).val();
+                    $('#formulize_hidden_daterange_'+handle).val('>='+start+'//'+'<='+end);
+                });
+                </script>";
+            }
+            return $startDateElement->render() . " ". _formulize_QDR_to . " " . $endDateElement->render() . " <input type=button name=qdrGoButton value='" . _formulize_QDR_go . "' onclick=\"javascript:showLoading();\"></input>\n<input type='hidden' id='formulize_hidden_daterange_".$handle."' name='search_".$handle."' value='".$search_text."' ></input>\n$js";
+        } 
+    }
+    return "";
 }
 
 // THIS FUNCTION RETURNS THE ELEMENT HANDLE AND FORM ALIAS IN THE CURRENT GETDATA QUERY, WHEN GIVEN THE ELEMENT ID NUMBER
@@ -2992,7 +3031,7 @@ function renderElementHtml(elementHtml,params) {
 	entryId = params[2];
 	fid = params[3];
 	deInstanceCounter = params[5];
-	jQuery("#deDiv_"+handle+"_"+entryId+"_"+deInstanceCounter).html(elementHtml+"<br /><a href=\"\" onclick=\"renderElement('"+handle+"', "+element_id+", "+entryId+", "+fid+",1,"+deInstanceCounter+");return false;\"><img src=\"<?php print XOOPS_URL; ?>/modules/formulize/images/check.gif\" /></a>&nbsp;&nbsp;&nbsp;<a href=\"\" onclick=\"javascript:renderElement('"+handle+"', "+element_id+", "+entryId+", "+fid+",0,"+deInstanceCounter+");return false;\"><img src=\"<?php print XOOPS_URL; ?>/modules/formulize/images/x-wide.gif\" /></a>");
+	jQuery("#deDiv_"+handle+"_"+entryId+"_"+deInstanceCounter).html(elementHtml+"<br /><a style=\"display: inline-block;\" href=\"\" onclick=\"renderElement('"+handle+"', "+element_id+", "+entryId+", "+fid+",1,"+deInstanceCounter+");return false;\"><img src=\"<?php print XOOPS_URL; ?>/modules/formulize/images/check.gif\" /></a>&nbsp;&nbsp;&nbsp;<a style=\"display: inline-block;\" href=\"\" onclick=\"javascript:renderElement('"+handle+"', "+element_id+", "+entryId+", "+fid+",0,"+deInstanceCounter+");return false;\"><img src=\"<?php print XOOPS_URL; ?>/modules/formulize/images/x-wide.gif\" /></a>");
 }
 
 function renderElementNewValue(elementValue,params) {

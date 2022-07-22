@@ -446,8 +446,9 @@ td a.header-info-link {
   text-transform: none;
   -webkit-font-smoothing: antialiased;
   text-decoration: inherit;
-  font-size: 13pt;
-  float: right;
+  font-size: 16pt;
+  position: relative;
+  left: -2.5px;
   color: #aad2e9; }
 
 .header-info-link:before {

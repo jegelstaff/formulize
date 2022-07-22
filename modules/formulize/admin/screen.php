@@ -213,6 +213,7 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
         $advanceViewSelected[$index]["column"] = $arr[0];
         $advanceViewSelected[$index]["text"] = $arr[1];
         $advanceViewSelected[$index]["sort"] = $arr[2];
+        $advanceViewSelected[$index]["searchtype"] = $arr[3];
         $index++;
     }
     
@@ -221,6 +222,7 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
 
   $entries = array();
   $entries['advanceviewoptions'] = array(0=>_AM_ELE_SELECT_NONE)+$elementOptions; // add a 0 value default to the element list
+  $entries['advanceviewsearchtypeoptions'] = array('Box'=>'Search Box','Filter'=>'Dropdown List', 'MultiFilter'=>'Checkboxes', 'DateRange'=>'Date Range');
   $entries['advanceview'] = $advanceViewSelected;
   $entries['defaultview'] = $screen->getVar('defaultview');
   // Convert to arrays if a legacy value

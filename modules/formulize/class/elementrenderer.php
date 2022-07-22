@@ -481,6 +481,28 @@ class formulizeElementRenderer{
                                 }
                             }
 						}
+						
+					
+						
+						// in case there are duplicate options, and there's a selected value that is a duplicate, then preserve the duplicate value rather than the first duplicate in the list
+						// do this by checking a unique version of the list to see that the selected value is present, and if not, swap the values and recheck. 
+						// convoluted process necessary to preserve ordering of the array :(
+						$preservedSelections = array();
+						if(count($sourceEntryIds) > 0) {
+							foreach($sourceEntryIds as $sei) {
+								$preservedSelections[$sei] = $linkedElementOptions[$sei];
+							}
+						}
+						if($this->uniqueLinkedElementOptionsMissingSelections($linkedElementOptions, $preservedSelections)) {
+							foreach($preservedSelections as $sei=>$preservedValue) {
+								$targetKeys = array_keys($linkedElementOptions, $preservedValue);
+								foreach($targetKeys as $tk) {
+									if($sei != $tk) {
+										unset($linkedElementOptions[$tk]);
+									}
+								}
+							}
+						}
                         $linkedElementOptions = array_unique($linkedElementOptions); // remove duplicates 
 						$cachedSourceValuesQ[intval($ele_value['snapshot'])][$sourceValuesQ] = $linkedElementOptions;
 						/* ALTERED - 20100318 - freeform - jeff/julian - start */
@@ -1507,6 +1529,16 @@ if($multiple ){
 		$prevUI->addOptionArray($previousOptions);
 		$prevUI->setExtra($javascript);
 		return $prevUI;
+	}
+	
+	function uniqueLinkedElementOptionsMissingSelections($options, $selections) {
+		$options = array_unique($options);
+		foreach($selections as $key=>$value) {
+			if(!isset($options[$key])) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 }

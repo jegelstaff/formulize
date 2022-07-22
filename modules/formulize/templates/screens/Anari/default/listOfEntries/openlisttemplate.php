@@ -29,19 +29,20 @@ print "
             print "<tr>";
             
             // draw in the search help text if necessary, in the first column where the selection checkboxes and view entry links would be
-            if($searchHelp) {
-                print "<td class='head'>$searchHelp</td>";
+            if($searchHelp OR $toggleSearches) {
+                print "<td class='head' id='celladdress_1_margin'>$toggleSearches $searchHelp</td>";
             }
             
             // draw in a cell for the locked columns feature
             print "<td class='head floating-column' id='floatingcelladdress_1'></td>";
             
             // draw cells for all the search boxes
+            // examples of search box variables: $quickSearchBox_quantity, $quickSearchFilter_ordertype
             foreach($columns as $columnNumber=>$elementHandle) {
                 print "
                     <td $columnWidthStyle class='head column column$columnNumber' id='celladdress_1_$columnNumber'>
                         <div class='main-cell-div' id='cellcontents_1_$columnNumber'>
-                            ${'quickSearchBox_'.$elementHandle}
+                            ${'quickSearch'.$searchTypes[$elementHandle].'_'.$elementHandle} 
                         </div>
                     </td>";
             }
@@ -92,7 +93,7 @@ function drawHeaderRow($headers, $checkBoxesShown, $viewEntryLinksShown, $column
 	
 	// draw in a cell for the column with the selection checkboxes and view entry links
 	if($checkBoxesShown OR $viewEntryLinksShown) {
-		$cells[] = "<td class='head formulize-controls-head'>&nbsp;</td>";
+		$cells[] = "<td class='head formulize-controls-head' id='celladdress_h$headingRowNumber"."_"."margin>&nbsp;</td>";
 	}
 	
 	// draw in a cell for the locked columns feature

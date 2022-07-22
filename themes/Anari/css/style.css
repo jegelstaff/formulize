@@ -2852,6 +2852,12 @@ img {
   padding-left: 200px;
 }
 
+.search-toggle-link {
+   text-decoration: none;
+   display: inline-block;
+   font-size: 1.2rem;
+}
+
 #formulize-masquerade-block {
   bottom: 1em;
   right: 1em;
@@ -2865,6 +2871,15 @@ img {
     }
   #formulize-masquerade-block input[type=submit]:hover {
     transform: none; }
+    
+@media print {
+    #formulize-masquerade-block {
+        display: none;
+    }
+    div[id^=formulize-updateowner_] {
+        display: none;
+    }
+}
 
 .google-icon-wrapper {
     display: flex;
@@ -2926,11 +2941,6 @@ img {
 .list-of-entries table.outer .head {
     border-bottom: 1px solid #d1d1df;
 }
-
-.list-of-entries table.outer td.formulize-controls {
-    border-bottom: 1px dotted #d1d1df;
-}
-
 
 .list-of-entries table.outer td:not(.head) {
     border-bottom: 1px dotted #d1d1df;
@@ -3043,13 +3053,32 @@ td.column a.header-info-link {
 .list-of-entries-container table.outer td[id^=celladdress_1_] {
     position: sticky;
     background-color: white;
-    z-index: 509;
+    z-index: 1;
 }
 .list-of-entries-container table.outer td[id^=celladdress_h1_] {
     top: 0px;
 }
 .list-of-entries-container table.outer td[id^=celladdress_1_] {
     top: 4.1em;
+}
+
+/* quickSearchFilters lining up right with search boxes */
+.list-of-entries-container table.outer td[id^=celladdress_1_] select {
+    position: relative;
+    top: 0.5em;
+}
+
+/* give inline table elements 100% of space */
+#listofentries div.main-cell-div div input {
+    width: auto;
+}
+
+.list-of-entries table.outer td.formulize-controls {
+    border-bottom: 1px dotted #d1d1df;
+    left: 0px;
+    position: sticky;
+    border-right: 1px dotted #d1d1df;
+    background-color: white;
 }
 
 /* compatibility with classic xoops table layout */
@@ -3300,4 +3329,10 @@ form[name='metachoiceform'] td p {
 
 .appcatspacer {
     width: auto;
+}
+
+@media print {
+    input[type="button"], input[type="submit"] {
+        display: none;
+    }
 }
