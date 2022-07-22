@@ -208,7 +208,11 @@ class formulize_themeForm extends XoopsThemeForm {
         global $actionFunctionName;
         $js .= "    jQuery('#".$this->getName()."').attr('action', ".$actionFunctionName."());\n";
         if($this->tokenName) {
-        $js .= "    jQuery('input, select, textarea, div').focusin(function() {\n";
+            if(stripos($_SERVER['HTTP_USER_AGENT'], 'safari') AND !stripos($_SERVER['HTTP_USER_AGENT'], 'chrome')) {
+                $js .= "    jQuery('input, select, textarea, div').click(function() {\n"; // safari does not like focusin
+            } else {
+                $js .= "    jQuery('input, select, textarea, div').focusin(function() {\n";
+            }
         $js .= "        setTimeout(function() {\n";
         $js .= "            jQuery('input[name=\"".$this->tokenName."\"]').val(\"".$this->tokenVal."\");\n";
         $js .= "        }, 269);\n";
