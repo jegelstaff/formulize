@@ -2758,8 +2758,7 @@ function compileElements($fid, $form, $element_handler, $prevEntry, $entry, $go_
                 	// debug
                 	//var_dump($overrideValue);
 					foreach($overrideValue as $ov) {
-						//if(ereg ("([0-9]{4})-([0-9]{2})-([0-9]{2})", $ov, $regs)) {
-						if(ereg ("([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})", $ov, $regs)) {
+                        if(preg_match ("/([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})/", $ov, $regs)) {
 							$ele_value[0] = $ov;
 						}
 					}
