@@ -1686,6 +1686,8 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 					$templateVariables['class'] = ($templateVariables['class'] == 'even' ? 'odd' : 'even');
 					$templateVariables['rowNumber'] = $id+2;
 					$templateVariables['columnContents'] = array();
+                    $templateVariables['entry'] = $entry;
+                    $templateVariables['entry_id'] = $entry_id;
 					
 					for($i=0;$i<count($cols);$i++) {
 			

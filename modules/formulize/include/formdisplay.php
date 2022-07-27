@@ -208,7 +208,11 @@ class formulize_themeForm extends XoopsThemeForm {
         global $actionFunctionName;
         $js .= "    jQuery('#".$this->getName()."').attr('action', ".$actionFunctionName."());\n";
         if($this->tokenName) {
-        $js .= "    jQuery('input, select, textarea, div').focusin(function() {\n";
+            if(stripos($_SERVER['HTTP_USER_AGENT'], 'safari') AND !stripos($_SERVER['HTTP_USER_AGENT'], 'chrome')) {
+                $js .= "    jQuery('input, select, textarea, div').click(function() {\n"; // safari does not like focusin
+            } else {
+                $js .= "    jQuery('input, select, textarea, div').focusin(function() {\n";
+            }
         $js .= "        setTimeout(function() {\n";
         $js .= "            jQuery('input[name=\"".$this->tokenName."\"]').val(\"".$this->tokenVal."\");\n";
         $js .= "        }, 269);\n";
@@ -2758,8 +2762,7 @@ function compileElements($fid, $form, $element_handler, $prevEntry, $entry, $go_
                 	// debug
                 	//var_dump($overrideValue);
 					foreach($overrideValue as $ov) {
-						//if(ereg ("([0-9]{4})-([0-9]{2})-([0-9]{2})", $ov, $regs)) {
-						if(ereg ("([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})", $ov, $regs)) {
+                        if(preg_match ("/([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})/", $ov, $regs)) {
 							$ele_value[0] = $ov;
 						}
 					}
