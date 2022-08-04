@@ -142,6 +142,10 @@ class icms_messaging_Handler {
 	public function useMail() {
 		$this->isMail = true;
 	}
+    
+    public function isHTML() {
+        $this->multimailer->isHTML();
+    }
 
 	public function usePM() {
 		$this->isPM = true;
