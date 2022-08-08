@@ -1379,7 +1379,7 @@ class formulizeElementRenderer{
         }
         
         jQuery(window).load(formulize_initializeAutocomplete".$form_ele_id."());
-        checkForChrome();
+        jQuery(document).ready(function() { checkForChrome(); });
 ";
 
 if($multiple ){

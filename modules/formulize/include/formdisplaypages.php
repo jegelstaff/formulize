@@ -382,6 +382,7 @@ function generatePrevNextButtonMarkup($buttonType, $buttonText, $usersCanSave, $
     
     if(!$buttonText) { return ''; }
     
+    $buttonText = trans($buttonText);
     $buttonMarkup = "";
     
     switch($buttonType) {
