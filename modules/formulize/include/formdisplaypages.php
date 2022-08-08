@@ -380,7 +380,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 // THIS FUNCTION GENERATES THE MARKUP FOR THE PREVIOUS AND NEXT BUTTONS
 function generatePrevNextButtonMarkup($buttonType, $buttonText, $usersCanSave, $nextPage, $previousPage, $thanksPage) {
     
-    if(!$buttonText) { return ''; }
+    if(!$buttonText OR ($buttonType == 'save' AND !$usersCanSave)) { return ''; }
     
     $buttonText = trans($buttonText);
     $buttonMarkup = "";

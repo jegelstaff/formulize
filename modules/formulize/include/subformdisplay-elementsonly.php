@@ -39,6 +39,9 @@ if(isset($GLOBALS['xoopsSecurity'])) {
     print $GLOBALS['xoopsSecurity']->getTokenHTML();
 }
 
+global $xoopsUser;
+$usersCanSave = formulizePermHandler::user_can_edit_entry($fid, ($xoopsUser ? $xoopsUser->getVar('uid') : 0), $entry_id);
+
 print "</form><div style='clear: both;'><hr><br />\n";
 if($screen) {
     if($screen->getVar('type') == 'form') {
@@ -56,17 +59,17 @@ if($screen) {
     if($reloadblank) {
         //$setNewEntry = '"new"'; // cannot reload modals blank yet.... needs to detect whether it's a newly created opening or am edit-existing-opening. Also, when saving, need to connect to the parent entry properly and set linking field values.
     }
-    if($savebuttontext) {
+    if($savebuttontext AND $usersCanSave) {
         $buttons[] = "<input type='button' id='submitSub' name='submitSub' value='".$savebuttontext."' onclick='saveSub(".$setNewEntry.")'>\n";
     }
-    if($saveandleavebuttontext) {
+    if($saveandleavebuttontext AND $usersCanSave) {
         $buttons[] = "<input type='button' id='submitSub' name='submitSub' value='".$saveandleavebuttontext."' onclick='saveSub(\"leave\")'>\n";
     }
     if($alldonebuttontext) {
         $buttons[] = "<input type='button' id='submitSub' name='submitSub' value='".$alldonebuttontext."' onclick='jQuery(\".ui-dialog-content\").dialog(\"close\");'>\n";
     }
     print implode('&nbsp;&nbsp;&nbsp;', $buttons);
-} else {
+} elseif($usersCanSave) {
     print "<input type='button' id='submitSub' name='submitSub' value='"._formulize_SAVE."' onclick='saveSub()'>";
 }
 
