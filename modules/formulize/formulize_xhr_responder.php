@@ -255,9 +255,10 @@ switch($op) {
     $formRelationID = $_GET['frid'];
     $entryID = isset($_GET['entryId']) ? intval($_GET['entryId']) : "";
     $limitStart = $_GET['limitstart'];
+    $limitSize = $_GET['limitsize'] ? intval($_GET['limitsize']) : 50;
     $GLOBALS['formulize_forceDerivedValueUpdate'] = true;
     ob_start();
-    $data = getData($formRelationID, $formID, $entryID, "AND","",$limitStart,50);
+    $data = getData($formRelationID, $formID, $entryID, "AND","",$limitStart,$limitSize);
     ob_clean(); // this catches any errors or other output because it would stop the update from running
     $GLOBALS['formulize_forceDerivedValueUpdate'] = false;
     if(isset($_GET['returnElements'])) {
