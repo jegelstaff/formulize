@@ -1573,6 +1573,12 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
 			      } else {
           			   // could/should put better handling in here of multiple value boxes, so = operators actually only look for matches within the individual values??  Is that possible?
           			   $newWhereClause = "$queryElement " . $operator . $quotes . $likebits . $searchTerm . $likebits . $quotes;
+                       // exclude 0 from searches for empty values (because we use lazy mode in MySQL we have to do this manually Argh!!)
+                       if($searchTerm === '' AND ($operator == "=" OR $operator == "!=")) {
+                            $extraBoolean = $operator == "=" ? 'AND' : 'OR';
+                            $regexYN = $operator == "=" ? "NOT" : "";
+                            $newWhereClause = "( $newWhereClause $extraBoolean $queryElement $regexYN REGEXP '^[0\.]+$' )"; // must use REGEXP because = 0 matches blank not null cells in not strict mode! Ack!
+                       }
 			      }
 			 } else {
 			      $newWhereClause = "($queryElement = 1 AND $queryElement = 2)"; // impossible condition, since no values were found that match the user's states search terms (false or nothing must have been passed back from the prepareLiteralTextForDB method)
