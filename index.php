@@ -11,7 +11,7 @@
  **/
 
 /** Need the mainfile */
-include "mainfile.php";
+include_once "mainfile.php";
 
 $member_handler = icms::handler('icms_member');
 $group = $member_handler->getUserBestGroup((@is_object(icms::$user) ? icms::$user->getVar('uid') : 0));

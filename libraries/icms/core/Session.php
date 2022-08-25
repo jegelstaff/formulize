@@ -120,19 +120,20 @@ class icms_core_Session {
             }
         }
 
-        // if the email passed by the validated OAuth request, that later passed authentication with Brightspace, matches an existing account, log that person in        
-        if(isset($_SESSION['apiUserId']) AND $_SESSION['apiUserId'] AND isset($_SESSION['email'])) {
-            $user_handler = icms::handler("icms_member");
-            $criteria = new Criteria('email',$_SESSION['email']);
-            $foundUsers = $user_handler->getUsers($criteria);
-            if(is_array($foundUsers) AND count($foundUsers)==1) {
-                $foundUser = $foundUsers[0];
-                $xoops_userid = $foundUser->getVar('uid');
+        // if the email passed by the validated OAuth request, that later passed authentication with Brightspace, matches an existing account, log that person in
+        // Brightspace / LTI integration does not use the resource mapping table and the integration API because there may be multiple different integrations with a site, it is not designed to have a single integration with a single Formulize instance.
+        if(isset($_SESSION['brightspaceUserId']) AND $_SESSION['brightspaceUserId'] AND isset($_SESSION['ext_d2l_orgdefinedid'])) {
+            // lookup user who matches canonical id from brightspace
+            include XOOPS_ROOT_PATH.'/libraries/brightspace/finduser.php';
+            $xoops_userid = lookupBrightspaceUser($_SESSION['ext_d2l_orgdefinedid']);
+            if(!$xoops_userid) {
+                $externalUid = 0;
+				$cookie_time = time() - 10000;
+				$instance->update_cookie(session_id(), $cookie_time);
+				$instance->destroy(session_id());
+				unset($_SESSION['xoopsUserId']);
             }
         }
-        
-
-		global $user;
 
 		if (isset($GLOBALS['formulizeHostSystemUserId'])) {
 			if ($GLOBALS['formulizeHostSystemUserId']) {
@@ -221,7 +222,9 @@ class icms_core_Session {
 					$_SESSION['UserLanguage'] = $icms_user->getVar('language'); // ALTERED BY FREEFORM SOLUTIONS TO AVOID NAMING CONFLICT WITH GLOBAL USER OBJECT FROM EXTERNAL SYSTEMS
 				}
 			}
-		}
+		} else { // set anon session cookie - necessary for preserving state in LTI systems...some browsers set one by default anyway, but it won't be secure and Samesite=None
+            icms_core_Session::update_cookie();
+        }
 		return $instance;
 	}
 
@@ -379,7 +382,7 @@ class icms_core_Session {
 	 * @param   int     $expire     Time in seconds until a session expires
 	 * @return  bool
 	 **/
-	public function update_cookie($sess_id = null, $expire = null) {
+	static public function update_cookie($sess_id = null, $expire = null) {
 		global $icmsConfig;
 		$secure = substr(ICMS_URL, 0, 5) == 'https' ? 1 : 0; // we need to secure cookie when using SSL
 		$session_name = ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '')
