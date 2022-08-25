@@ -213,6 +213,10 @@ http://mysite.com/formulize/makecsv.php?key=ABC123&fid=2&province=Newfoundland&s
 Include only the 'population' and 'language' fields
 http://mysite.com/formulize/makecsv.php?key=ABC123&fid=2&province=Newfoundland&fields=pop,lang
 
+Filter on the 'pop' field for greater than 1000 
+http://mysite.com/formulize/makecsv.php?key=ABC123&fid=2&pop=>1000
+(note the > is included in the search term, but the = sign is still necessary because this is a URL)
+
 Sort results by the element 'city'
 http://mysite.com/formulize/makecsv.php?key=ABC123&fid=2&sortHandle=city
 
