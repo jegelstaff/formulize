@@ -1471,6 +1471,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 			}
 		}
 		$formulize_LOEPageSize = $screen->getVar('entriesperpage');
+        $formulize_LOEPageSize = isset($_POST['formulize_entriesPerPage']) ? intval($_POST['formulize_entriesPerPage']) : $formulize_LOEPageSize;
         foreach($screen->getVar('advanceview') as $avData) {
             $searchTypes[$avData[0]] = isset($avData[3]) ? $avData[3] : 'Box'; // default to quickSearch boxes, otherwise use type specified in screen settings
         }
@@ -3906,6 +3907,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 			$regeneratePageNumbers = true;
 		}
 	$formulize_LOEPageSize = is_object($screen) ? $screen->getVar('entriesperpage') : 10;
+    $formulize_LOEPageSize = isset($_POST['formulize_entriesPerPage']) ? intval($_POST['formulize_entriesPerPage']) : $formulize_LOEPageSize;
 	if($formulize_LOEPageSize) {
 	  $limitStart = (isset($_POST['formulize_LOEPageStart']) AND !$regeneratePageNumbers) ? intval($_POST['formulize_LOEPageStart']) : 0;
 	  $limitSize = $formulize_LOEPageSize;
@@ -3999,6 +4001,7 @@ function formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers) {
     }   
     
 	$numberPerPage = is_object($screen) ? $screen->getVar('entriesperpage') : 10;
+    $numberPerPage = isset($_POST['formulize_entriesPerPage']) ? intval($_POST['formulize_entriesPerPage']) : $numberPerPage; 
 	if($numberPerPage == 0 OR $_POST['hlist']) {
 		// if all entries are supposed to be on one page for this screen, then return no navigation controls.  Also return nothing if the list is hidden.
 		return $pageNav;
