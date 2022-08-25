@@ -422,7 +422,6 @@ foreach($returned['rc'] as $hidden) {
 			$colname = _formulize_DE_CALC_CREATOR_EMAIL;
 			break;
 		default:
-            print "SELECT ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = '" . $hidden['column'] . "'<br>";
 			$temp_cap = q("SELECT ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = '" . $hidden['column'] . "'"); 
 			$colname = trans($temp_cap[0]['ele_caption']);
 	}

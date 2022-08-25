@@ -1792,9 +1792,9 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 		
 	$noDataFound = "";
 	if((!isset($data) OR count($data) == $blankentries) AND !$LOE_limit) { // if no data was returned, or the dataset was empty...
-		$notDataFound = "<b>"._formulize_DE_NODATAFOUND."</b>";
+		$noDataFound = "<b>"._formulize_DE_NODATAFOUND."</b>";
 	} elseif($LOE_limit) {
-		$notDataFound = _formulize_DE_LOE_LIMIT_REACHED1 . " <b>" . $LOE_limit . "</b> " . _formulize_DE_LOE_LIMIT_REACHED2 . " <a href=\"\" onclick=\"javascript:forceQ();return false;\">" . _formulize_DE_LOE_LIMIT_REACHED3 . "</a>";
+		$noDataFound = _formulize_DE_LOE_LIMIT_REACHED1 . " <b>" . $LOE_limit . "</b> " . _formulize_DE_LOE_LIMIT_REACHED2 . " <a href=\"\" onclick=\"javascript:forceQ();return false;\">" . _formulize_DE_LOE_LIMIT_REACHED3 . "</a>";
 	}
 	
 	$templateVariables['calculationResults'] = $calculationResults;
