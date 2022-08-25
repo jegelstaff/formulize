@@ -3081,6 +3081,13 @@ td.column a.header-info-link {
     background-color: white;
 }
 
+.loe-edit-entry::before {
+    color: inherit;    
+}
+a.loe-edit-entry:hover {
+    text-shadow: none;
+}
+
 /* compatibility with classic xoops table layout */
 
 table.outer {
