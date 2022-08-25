@@ -11,7 +11,9 @@
  **/
 
 /** Need the mainfile */
-include_once "mainfile.php";
+if (!defined("XOOPS_MAINFILE_INCLUDED")) {
+    include_once "mainfile.php";
+}
 
 $member_handler = icms::handler('icms_member');
 $group = $member_handler->getUserBestGroup((@is_object(icms::$user) ? icms::$user->getVar('uid') : 0));
