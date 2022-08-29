@@ -3343,3 +3343,7 @@ form[name='metachoiceform'] td p {
         display: none;
     }
 }
+
+#dialog-tfalostaccount, #block_login_form input, #pwchange input {
+    margin-top: 0.4em;
+}
