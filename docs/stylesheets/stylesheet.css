@@ -170,11 +170,14 @@ a.button span {
 #view-on-github span {
   background: transparent url(../images/octocat-icon.png) 12px 50% no-repeat;
 }
-#join-slack {
-  margin-right: 0;
-}
 #join-slack span {
   background: transparent url(../images/slack-icon.png) 12px 50% no-repeat;
+}
+#follow-twitter span {
+  background: transparent url(../images/twitter-icon.png) 12px 50% no-repeat;
+}
+#follow-twitter {
+  margin-right: 0;
 }
 
 
