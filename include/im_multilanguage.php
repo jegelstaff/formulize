@@ -100,6 +100,13 @@ if (! preg_match('?' . preg_quote(ICMS_ROOT_PATH, '?') . '(/common/)?', $_SERVER
 		$easiestml_charset = $easiestml_charsets[EASIESTML_DEFAULT_LANG];
 	}
 
+    // ADDED BY JULIAN EGELSTAFF - set icmsConfig language based on language found here
+    if(isset($offset)) {
+        global $icmsConfig;
+        $easiestml_langnames = explode(',', $icmsConfigMultilang['ml_names']);
+        $icmsConfig['language'] = $easiestml_langnames[$offset];
+    }
+    
 	// charset for Content-Type
 
 	ob_start('easiestml');
