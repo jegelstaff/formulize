@@ -3081,6 +3081,13 @@ td.column a.header-info-link {
     background-color: white;
 }
 
+.loe-edit-entry::before {
+    color: inherit;    
+}
+a.loe-edit-entry:hover {
+    text-shadow: none;
+}
+
 /* compatibility with classic xoops table layout */
 
 table.outer {
@@ -3335,4 +3342,8 @@ form[name='metachoiceform'] td p {
     input[type="button"], input[type="submit"] {
         display: none;
     }
+}
+
+#dialog-tfalostaccount, #block_login_form input, #pwchange input {
+    margin-top: 0.4em;
 }

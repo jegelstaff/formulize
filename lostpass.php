@@ -9,6 +9,7 @@
 include "mainfile.php";
 
 if(!$GLOBALS['xoopsSecurity']->check(true, $_GET['token'])) {
+    include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
     redirect_header(XOOPS_URL, 5, trans("[en]Please try again. Do not click 'Back' in your browser.[/en][fr]Veuillez réessayer. Ne cliquez pas sur 'Retour' dans votre navigateur.[/fr]"));
     exit();
 }

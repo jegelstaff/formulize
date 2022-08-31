@@ -680,6 +680,9 @@ $modversion['templates'][] = array(
 	'file' => 'blocks/menu.html',
 	'description' => '');
 $modversion['templates'][] = array(
+	'file' => 'blocks/menu_controller.html',
+	'description' => '');
+$modversion['templates'][] = array(
 	'file' => 'admin/mailusers.html',
 	'description' => '');
     

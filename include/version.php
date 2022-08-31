@@ -10,7 +10,7 @@
  * @version		$Id: version.php 22698 2011-09-18 11:06:01Z phoenyx $
  */
 
-define('ICMS_VERSION_NAME', 'Formulize 6 Standalone'); // ALTERED BY FREEFORM SOLUTIONS FOR THE FORMULIZE 6 STANDALONE VERSION
+define('ICMS_VERSION_NAME', 'Formulize 7 Standalone'); // ALTERED BY FREEFORM SOLUTIONS FOR THE FORMULIZE 6 STANDALONE VERSION
 
 // For backward compatibility with XOOPS
 define('XOOPS_VERSION', ICMS_VERSION_NAME);
