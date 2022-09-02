@@ -312,7 +312,7 @@ blockquote {
   padding: 0 0 0 30px;
 }
 
-ul li {
+ul li, li ul li {
   list-style: disc outside;
   margin-left: 17px;
   padding-left: 3px;
