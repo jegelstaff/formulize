@@ -286,11 +286,10 @@ define("_US_NO_PHONE_NUMBER","You have not entered a phone number. Please click 
 define("_US_TURN_ON_EMAIL","To turn on Two-Factor Authentication, you need to enter the code we emailed you.");
 define("_US_ENTER_CODE","Enter the Two-Factor Authentication Code from your ");
 define("_US_2FA_CODE","Code: ");
-define("_US_DONT_ASK_AGAIN", "Don't ask again on this device");
-define("_US_FORGET_DEVICES", "Reset all your remembered devices");
+define("_US_DONT_ASK_AGAIN", "Ne plus demander sur cet appareil");
+define("_US_FORGET_DEVICES", "Réinitialiser tous vos appareils mémorisés");
 define("_US_FORGET_DEVICES_BUTTON", "Reset");
-define("_US_FORGET_DEVICES_DESC", "If you have checked the <i>\""._US_DONT_ASK_AGAIN."\"</i> box when logging in, click this button to forget all those devices so you will be asked for a code next time. This is very important to do immediately if your password has been stolen!");
-define("_US_TO_CHANGE_PASS","To change your password, enter the Two-Factor Authentication code from your ");
+define("_US_FORGET_DEVICES_DESC", "Si vous avez coché la case <i>\""._US_DONT_ASK_AGAIN."\"</i> lors de la connexion, cliquez sur ce bouton pour oublier tous ces appareils afin qu'un code vous soit demandé la prochaine fois. Ceci est très important à faire immédiatement si votre mot de passe a été volé !");define("_US_TO_CHANGE_PASS","To change your password, enter the Two-Factor Authentication code from your ");
 define("_US_NO_ACCOUNT","No matching account");
 define("_US_USERNAME_OR_EMAIL","Enter the username or email address for the account: ");
 define("_US_RESET_PW_FOR", "Reset password for ");
