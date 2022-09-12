@@ -209,7 +209,7 @@ CREATE TABLE `formulize_screen_multipage` (
   `introtext` text NOT NULL,
   `thankstext` text NOT NULL,
   `donedest` varchar(255) NOT NULL default '',
-  `buttontext` varchar(255) NOT NULL default '',
+  `buttontext` text NOT NULL default '',
   `finishisdone` tinyint(1) NOT NULL default 0,
   `navstyle` tinyint(1) NOT NULL default 0,
   `pages` text NOT NULL,
@@ -259,7 +259,7 @@ CREATE TABLE `formulize_screen` (
   `type` varchar(100) NOT NULL default '',
   `useToken` tinyint(1) NOT NULL,
   `anonNeedsPasscode` tinyint(1) NOT NULL,
-  `theme` varchar(100) NOT NULL default '',
+  `theme` varchar(101) NOT NULL default '',
   PRIMARY KEY  (`sid`)
 ) ENGINE=InnoDB;
 
@@ -400,7 +400,8 @@ CREATE TABLE formulize (
   ele_use_default_when_blank tinyint(1) NOT NULL default '0',
   ele_exportoptions text NOT NULL,
   PRIMARY KEY  (`ele_id`),  
-  KEY `ele_order` (`ele_order`)
+  KEY `ele_order` (`ele_order`),
+  KEY `ele_display` ( `ele_display` ( 255 ) )
 ) ENGINE=InnoDB;
 
 CREATE TABLE formulize_entry_owner_groups (

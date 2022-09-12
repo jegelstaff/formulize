@@ -118,10 +118,10 @@ function patch40() {
      *
      * ====================================== */
 
-    $checkThisTable = 'formulize_screen_multipage';
-	$checkThisField = 'elementdefaults';
-	$checkThisProperty = '';
-	$checkPropertyForValue = '';
+    $checkThisTable = 'formulize_screen';
+	$checkThisField = 'theme';
+	$checkThisProperty = 'Type';
+	$checkPropertyForValue = 'varchar(101)';
 
     $needsPatch = false;
 
@@ -474,12 +474,13 @@ function patch40() {
         $sql['form_screen_multipage_showpagetitles'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_multipage") . " ADD `showpagetitles` tinyint(1) NOT NULL";
         $sql['form_screen_multipage_showpageselector'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_multipage") . " ADD `showpageselector` tinyint(1) NOT NULL";
         $sql['form_screen_multipage_showpageindicator'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_multipage") . " ADD `showpageindicator` tinyint(1) NOT NULL";
-        $sql['screen_theme'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD `theme` varchar(100) NOT NULL default ''";
+        $sql['screen_theme'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD `theme` varchar(101) NOT NULL default ''";
         $sql['form_screen_displaytype'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_form") . " ADD `displayType` varchar(255) NOT NULL default 'block'";
         $sql['form_screen_multipage_displayheading'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_multipage") . " ADD `displayheading` tinyint(1) NOT NULL default 0";
         $sql['form_screen_multipage_reloadblank'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_multipage") . " ADD `reloadblank` tinyint(1) NOT NULL default 0";
         $sql['form_screen_multipage_elementdefaults'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_multipage") . " ADD `elementdefaults` text NOT NULL";
         $sql['not_cons_arbitrary'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_notification_conditions") . " ADD `not_cons_arbitrary` text NULL default NULL";
+        $sql['screen_theme_change'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " CHANGE `theme` `theme` varchar(101) NOT NULL default ''";
 
         $needToSetSaveAndLeave = true;
         $needToSetPrintableView = true;
@@ -492,6 +493,8 @@ function patch40() {
                     print "lockedform field already added.  result: OK<br>";
                 } elseif ($key === "add_filtersettings") {
                     print "element filtersettings field already added.  result: OK<br>";
+                } elseif ($key == 'ele_display_dropindex' OR $key == 'ele_display_addindex') {
+                    print "ele_display index already handled. result: OK<br>";
                 } elseif ($key === "add_defaultform") {
                     print "defaultform field already added.  result: OK<br>";
                 } elseif ($key === "add_defaultlist") {
