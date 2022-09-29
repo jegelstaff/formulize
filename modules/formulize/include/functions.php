@@ -4394,6 +4394,7 @@ function convertAllHandlesAndIds($handles, $frid, $reverse=false, $ids=false, $f
 // The dropdown list is made up of the options for the specified ele_id
 // If the dropdown list is a linked selectbox, the values can be optionally limited by the "limit" params, based on values in another field in each entry that underlies the link
 // ie: build a filter with the names of all activity entries, but limit it to activity entries where the date of the activity is 2007
+// name is the name of the form in the DOM, which will be submitted on change. Leave blank to not have the filter submit anything
 // multi is used to determine if the options should be returned as a checkbox series supporting multiple values
 function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0=>""), $subfilter=false, $linked_ele_id = 0, $linked_data_id=0, $limit=false, $multi=false) {
     
