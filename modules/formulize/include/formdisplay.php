@@ -793,10 +793,10 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 
     // if the go_back form was triggered, ie: we're coming back from displaying a different entry, then we need to adjust and show the parent entry/form/etc
     // important to do these setup things only once per page load
+    // ALSO, may not be showing the parent... could be going down the rabbit hole to another sub!!
     static $cameBackFromSubformAlready = false;
 	if($_POST['parent_form'] AND !$cameBackFromSubformAlready) { // if we're coming back from a subform
         $cameBackFromSubformAlready = true;
-
         $parent_form = htmlspecialchars(strip_tags($_POST['parent_form']));
         $parent_form = strstr($parent_form, ',') ? explode(',',$parent_form) : array($parent_form);
         $parent_entry = htmlspecialchars(strip_tags($_POST['parent_entry']));
@@ -879,7 +879,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		unset($formframe);
 		$formframe = $formframetemp;
 	}
-
     list($fid, $frid) = getFormFramework($formframe, $mainform);
 
     // propagate the go_back values from page load to page load, so we can eventually return there when the user is ready
@@ -890,7 +889,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		$go_back['entry'] = htmlspecialchars(strip_tags($_POST['go_back_entry']));
         $go_back['page'] = htmlspecialchars(strip_tags($_POST['go_back_page']));
         $go_back['subformElementId'] = htmlspecialchars(strip_tags($_POST['go_back_subformElementId']));
-        
 	}
 
 	// set $entry in the case of a form_submission where we were editing an entry (just in case that entry is not what is used to call this function in the first place -- ie: we're on a subform and the mainform has no entry specified, or we're clicking submit over again on a single-entry form where we started with no entry)
@@ -1003,13 +1001,19 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 	if($entry == "proxy") { $entry = ""; } // convert the proxy flag to the actual null value expected for new entry situations (do this after the single check!)
 	$editing = is_numeric($entry); // will be true if there is an entry we're looking at already
 
-	if(!$scheck = security_check($fid, $entry, $uid, $owner, $groups) AND !$viewallforms AND !$profileForm) {
-		print "<p>" . _NO_PERM . "</p>";
-		return;
-	}
-
-    if($entry AND $updateMainformDerivedAfterSubEntryDeletion) {
-        formulize_updateDerivedValues($entry, $fid, $frid);
+    // super klugey! when going to a sub form the entry is not set correctly yet, so premature to do security check and update derived at this point!
+    // Flow of this code from opening of function until main foreach of the $fids, needs to be straightened out for sure!
+    // Possibly more than that since we leap off to render subforms in different places too. But the main ugly part is all this stuff that sets and overrides and overrides the fid and entry
+    if(isset($_POST['goto_sfid']) AND is_numeric($_POST['goto_sfid']) AND $_POST['goto_sfid'] > 0) {
+    } else {
+        if(!$scheck = security_check($fid, $entry, $uid, $owner, $groups) AND !$viewallforms AND !$profileForm) {
+            print "<p>" . _NO_PERM . "</p>";
+            return;
+        }
+    
+        if($entry AND $updateMainformDerivedAfterSubEntryDeletion) {
+            formulize_updateDerivedValues($entry, $fid, $frid);
+        }
     }
     
 	// main security check passed, so let's initialize flags	
@@ -1093,8 +1097,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 	// used to allow saving of information when you don't want the form itself to reappear
 	if($settings == "{RETURNAFTERSAVE}" AND $_POST['form_submitted']) { return "returning_after_save"; }
 
-      // need to add code here to switch some things around if we're on a subform for the first time (add)
-	// note: double nested sub forms will not work currently, since on the way back to the intermediate level, the go_back values will not be set correctly
+    // need to add code here to switch some things around if we're on a subform for the first time (add)
 	if(isset($_POST['goto_sfid']) AND is_numeric($_POST['goto_sfid']) AND $_POST['goto_sfid'] > 0) {
         
         // unpack details of the parent entry that we were showing, if we're now displaying a subform screen
@@ -1111,7 +1114,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
         $newEntry = $originalEntry ? $originalEntry : $temp_entries[$fid][0];
 		$go_back['form'] .= $go_back['form'] ? ','.$newFid : $newFid;
 		$go_back['entry'] .= $go_back['entry'] ? ','.$newEntry : $newEntry;
-        $go_back['page'] .= (isset($go_back['page']) AND $go_back['page'] !== '') ? ','.htmlspecialchars(string_tags($_POST['formulize_prevPage'])) : htmlspecialchars(strip_tags($_POST['formulize_prevPage']));
+        $go_back['page'] .= (isset($go_back['page']) AND $go_back['page'] !== '') ? ','.htmlspecialchars(strip_tags($_POST['formulize_prevPage'])) : htmlspecialchars(strip_tags($_POST['formulize_prevPage']));
         $go_back['subformElementId'] .= (isset($go_back['subformElementId']) AND $go_back['subformElementId'] !== '') ? ','.intval($_POST['prev_subformElementId']) : intval($_POST['prev_subformElementId']);
 		unset($entries);
 		unset($fids);
@@ -3765,8 +3768,11 @@ print "function add_sub(sfid, numents, instance_id, frid, fid, mainformentry, su
         window.document.formulize_mainform.modalscroll.value = subEntryDialog.scrollTop();
         saveSub('reload');
     } else {
+        if(formulizechanged == 0) {
+            jQuery(\"input[name^='decue_']\").remove();
+        }
         validateAndSubmit();
-    }
+    } 
 }\n";
 
 print "	function sub_del(sfid, type, parentSubformElement, fid, entry) {
@@ -3782,6 +3788,9 @@ print "	function sub_del(sfid, type, parentSubformElement, fid, entry) {
             window.document.formulize_mainform.modalscroll.value = subEntryDialog.scrollTop();
             saveSub('reload');
         } else {
+            if(formulizechanged == 0) {
+                jQuery(\"input[name^='decue_']\").remove();
+            }
             validateAndSubmit();
         }
     } else {
@@ -3800,6 +3809,9 @@ print "	function sub_clone(sfid, type, parentSubformElement, fid, entry) {
         window.document.formulize_mainform.modalscroll.value = subEntryDialog.scrollTop();
         saveSub('reload');
     } else {
+        if(formulizechanged == 0) {
+            jQuery(\"input[name^='decue_']\").remove();
+        }
         validateAndSubmit();
     }
 }\n";
@@ -3940,21 +3952,24 @@ function saveSub(reload) {
     }
 }
 
-
+function goSub(ent, fid, subformElementId) {
+    document.formulize_mainform.goto_sub.value = ent;
+    document.formulize_mainform.goto_sfid.value = fid;
+    document.formulize_mainform.goto_subformElementId.value = subformElementId;
 <?php
-
-print "	function goSub(ent, fid, subformElementId) {\n";
-print "		document.formulize_mainform.goto_sub.value = ent;\n";
-print "		document.formulize_mainform.goto_sfid.value = fid;\n";
-print "		document.formulize_mainform.goto_subformElementId.value = subformElementId;\n";
 global $formulize_displayingMultipageScreen;
 if($formulize_displayingMultipageScreen) {
 print "		document.formulize_mainform.formulize_prevPage.value = document.formulize_mainform.formulize_currentPage.value;\n";    
 print "		document.formulize_mainform.formulize_currentPage.value = 1\n";
 }
-print "		validateAndSubmit();\n";
-print "	}\n";
-			
+?>
+    if(formulizechanged == 0) {
+        jQuery("input[name^='decue_']").remove();
+    }
+    validateAndSubmit();
+}
+
+<?php			
 //added by Cory Aug 27, 2005 to make forms printable
 
 print "var $actionPart2 = \"".str_replace('"', '&quot;', substr(getCurrentURL(), $split))."\";\n";
