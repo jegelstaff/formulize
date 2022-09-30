@@ -2400,22 +2400,25 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 				if($rowsOrForms=='row' OR $rowsOrForms =='') {
 					
 					if(!$drawnHeadersOnce) {
-						$col_two .= "<tr><th class='subentry-delete-cell'></th>\n";
+						$col_two .= "<tr>";
+                        if ($sub_ent !== "new" and ("hideaddentries" != $hideaddentries)
+                            and formulizePermHandler::user_can_delete_entry($subform_id, $uid, $sub_ent) AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
+                            $col_two .= "<th class='subentry-delete-cell'></th>\n";
+                        }
                         if(!$renderingSubformUIInModal AND $showViewButtons AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) { $col_two .= "<th class='subentry-view-cell'></th>\n"; }
 						$col_two .= drawRowSubformHeaders($headersToDraw, $headingDescriptions);
 						$col_two .= "</tr>\n";
 						$drawnHeadersOnce = true;
 					}
                     $subElementId = is_object($subform_element_object) ? $subform_element_object->getVar('ele_id') : '';
-					$col_two .= "<tr class='row-".$sub_ent."-".$subElementId."'>\n<td class='subentry-delete-cell'>";
+					$col_two .= "<tr class='row-".$sub_ent."-".$subElementId."'>\n";
 					// check to see if we draw a delete box or not
 					if ($sub_ent !== "new" and ("hideaddentries" != $hideaddentries)
 						and formulizePermHandler::user_can_delete_entry($subform_id, $uid, $sub_ent) AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php"))
 					{
 						// note: if the add/delete entry buttons are hidden, then these delete checkboxes are hidden as well
-						$col_two .= "<input type=checkbox class='delbox' name=delbox$sub_ent value=$sub_ent onclick='showHideDeleteClone($subformElementId$subformInstance);'></input>";
+						$col_two .= "<td class='subentry-delete-cell'><input type=checkbox class='delbox' name=delbox$sub_ent value=$sub_ent onclick='showHideDeleteClone($subformElementId$subformInstance);'></input></td>";
 					}
-					$col_two .= "</td>\n";
                     $modalParams = $viewType == 'Modal' ? "'$frid', '$fid', '$entry', " : "";
                     if(!$renderingSubformUIInModal AND $showViewButtons AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) { $col_two .= "<td class='subentry-view-cell'><a href='' class='loe-edit-entry' id='view".$sub_ent."' onclick=\"javascript:goSub".$viewType."('$sub_ent', '$subform_id', $modalParams".$subform_element_object->getVar('ele_id').",0);return false;\">&nbsp;</a></td>\n"; }
 					include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
