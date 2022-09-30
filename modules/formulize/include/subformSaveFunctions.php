@@ -72,6 +72,8 @@ function formulize_subformSave_writeNewEntry($element_to_write, $value_to_write,
             }
             $subEntWritten = writeElementValue($target_sub, $element_to_write, "new", $value_to_write, $creation_user_touse, "", true); // Last param is override that allows direct writing to linked selectboxes if we have prepped the value first!
             writeEntryDefaults($target_sub,$subEntWritten);
+            $data_handler = new formulizeDataHandler($target_sub);
+            $data_handler->writeEntry($subEntWritten, array()); // pass empty values just to trigger on before save, and potentially on after save if the on before save changes anything. Such a hack!!
             $sub_entry_written[] = $subEntWritten;
             $subformSubEntryMap[$target_sub][] = array('parent'=>$entry, 'self'=>$subEntWritten);
         }
