@@ -5932,7 +5932,7 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
             /*if($xoopsConfig['language'] == "french") {
             	$return = setlocale("LC_TIME", "fr_FR.UTF8");
             }*/
-            $v = (false === $time_value) ? "" : date(_SHORTDATESTRING, ($time_value)+$offset);
+            $v = (false === $time_value) ? "" : date(_MEDIUMDATESTRING, ($time_value)+$offset);
         }
         $output .= '<span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $handle, $textWidth, $thisEntryId)), $handle);
         $output .= '</span>';
