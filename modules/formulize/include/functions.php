@@ -1892,6 +1892,7 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
             $value = stripslashes($value);
         }
         $value = $myts->htmlSpecialChars($value);
+        $value = (!is_numeric($value) AND $value == "") ? "{WRITEASNULL}" : $value;
         break;
 
 
@@ -1901,6 +1902,7 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
             $value = stripslashes($value);
         }
         $value = $myts->htmlSpecialChars($value);
+        $value = (!is_numeric($value) AND $value == "") ? "{WRITEASNULL}" : $value;
         break;
 
 
