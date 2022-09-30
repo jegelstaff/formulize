@@ -605,7 +605,7 @@ class formulizeDataHandler  {
 	}
 	
 	// derive the owner groups and write them to the owner groups table
-	// $uids and $entryids can be parallel arrays with multiple users and entries
+	// $uids and $entryids must be parallel, either single ids, or arrays with multiple users and entries. Single uid with array of entries won't work, needs array of repeated uid in that case, kinda dumb, but that's how it works
 	// arrays must start with 0 key and increase sequentially (no gaps, no associative keys, etc)
 	// all groups the user is a member of are written to the database, regardless of their current permission on the form
 	// interpretation of permissions is to be done when reading this information, to allow for more flexibility
