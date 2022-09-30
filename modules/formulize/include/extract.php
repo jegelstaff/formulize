@@ -2450,7 +2450,7 @@ function internalRecordIds($entry, $formhandle="", $id="NULL", $fidAsKeys = fals
             $handle = _parseInternalRecordIdsFormHandle($handle);
 			foreach($entry[$handle] as $id=>$localEntry) {
 				if($fidAsKeys) {
-                    $offset = isset($localEntry['entry_id']) ? 9 : 0; // first eight items will be the metadata fields if 'entry_id' is present, otherwise, take the first item from the array
+                    $offset = isset($localEntry['entry_id']) ? 5 : 0; // first five items will be the metadata fields if 'entry_id' is present, otherwise, take the first item from the array
                     $localEntryElement = array_slice($localEntry, $offset, 1); 
                     $localEntryElement = key($localEntryElement);
                     $elementObject = $element_handler->get($localEntryElement);
