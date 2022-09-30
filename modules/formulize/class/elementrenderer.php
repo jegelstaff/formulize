@@ -1306,7 +1306,7 @@ class formulizeElementRenderer{
             $output .= "
             jQuery('#".$form_ele_id."_user').autocomplete({
                 source: '".XOOPS_URL."/modules/formulize/include/formulize_quickselect.php?cache=".$cachedLinkedOptionsFilename."&allow_new_values=".$allow_new_values."',
-                minLength: 0,
+                minLength: 1,
                 delay: 0,
                 select: function(event, ui) {
                     event.preventDefault();
