@@ -461,7 +461,6 @@ class formulizeDataHandler  {
     // this function returns the entry ID of the first entry found in the form with all the specified values in the specified elements
     // $values is a key value pair of element handles and values
 	function findFirstEntryWithAllValues($values, $op="=") {
-        $likeBits = $op == "LIKE" ? "%" : "";
 		global $xoopsDB;
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
         $formObject = $form_handler->get($this->fid);
@@ -471,7 +470,26 @@ class formulizeDataHandler  {
             if(!$element = _getElementObject($elementIdOrHandle)) {
                 continue;
             }
-            $valuesSQL[] = "`". $element->getVar('ele_handle') . "` ".formulize_db_escape($op)." \"$likeBits" . formulize_db_escape($value) . "$likeBits\"";
+            $quotes = '"';
+            $likeBits = $op == "LIKE" ? "%" : "";
+            $workingOp = $op;
+            if($value === null) {
+                switch($op) {
+                    case "!=":
+                        $value = " IS NOT NULL ";
+                        break;
+                    case "=":
+                    default:
+                        $value = " IS NULL ";
+                }
+                $workingOp = '';
+                $quotes = '';
+                $likeBits = '';
+            } else {
+                $value = formulize_db_escape($value);
+                $quotes = (is_numeric($value) AND !$likeBits) ? '' : $quotes;
+            }
+            $valuesSQL[] = "`". $element->getVar('ele_handle') . "` ".formulize_db_escape($workingOp)." ".$quotes.$likeBits.$value.$likeBits.$quotes;
         }
         $sql .= implode(' AND ', $valuesSQL)." ORDER BY entry_id LIMIT 0,1";
 		if(!$res = $xoopsDB->query($sql)) {
