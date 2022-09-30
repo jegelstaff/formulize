@@ -5775,6 +5775,19 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
             }
         }
     }
+    
+    // expand = '' to include is null
+    if($conditionsFilterComparisonValue == "''" OR $conditionsFilterComparisonValue == '""') {
+        switch($filterOps[$filterId]) {
+            case "<=>":
+            case "=":
+                $conditionsFilterComparisonValue .= " OR `".$filterElementObject->getVar('ele_handle')."` IS NULL";
+                break;
+            case "!=":
+                $conditionsFilterComparisonValue .= " AND `".$filterElementObject->getVar('ele_handle')."` IS NOT NULL";
+                break;
+        }
+    }
     return array($conditionsFilterComparisonValue, $curlyBracketFormFrom);
 }
 
