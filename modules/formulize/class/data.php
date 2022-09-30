@@ -163,7 +163,7 @@ class formulizeDataHandler  {
 	}
 
 	// this function makes a copy of an entry in one form
-	function cloneEntry($entry, $callback = null) {
+	function cloneEntry($entry, $callback = null, $targetEntry = "new") {
 		if(!is_numeric($entry)) {
 			return false;
 		}
@@ -186,7 +186,7 @@ class formulizeDataHandler  {
 		unset($data['mod_datetime']);
 		unset($data['creation_uid']);
 		unset($data['mod_uid']);
-		return $this->writeEntry("new", $data, false, true); // no proxy user (use current xoopsuser, the default behaviour), do force the creation of the entry if we're on a GET request
+		return $this->writeEntry($targetEntry, $data, false, true); // no proxy user (use current xoopsuser, the default behaviour), do force the creation of the entry if we're on a GET request
   }
 
 

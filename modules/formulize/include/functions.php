@@ -3031,8 +3031,8 @@ function _findLinkedEntries($targetFormKeySelf, $targetFormFid, $valuesToLookFor
 // can take an entry in a framework and make copies of all relevant entries in all relevant forms
 // note that the same relative linked selectbox relationships are preserved in cloned framework entries, but links based on common values and uids are not modified at all. this might not be desired behaviour in all cases!!!
 // entries in single-entry forms are never cloned
-// $entry is the entry id number
-function cloneEntry($entry, $frid, $fid, $copies=1, $callback = null) {
+// $entryOrFilter is the entry id number, or can be a filter string or array!
+function cloneEntry($entryOrFilter, $frid, $fid, $copies=1, $callback = null, $targetEntry = "new") {
     global $xoopsDB, $xoopsUser;
     
     // used for updating derived values later
@@ -3060,16 +3060,17 @@ function cloneEntry($entry, $frid, $fid, $copies=1, $callback = null) {
             }
             }
         }
-        $entries_query = getData($frid, $fid, $entry);
-        $ids = internalRecordIds($entries_query[0], "", "", true); // true causes the first key of the returned array to be the fids
+    }
+    $entries_data = getData($frid, $fid, $entryOrFilter);
+    foreach($entries_data as $entry_data) {
+        $ids = internalRecordIds($entry_data, "", "", true); // true causes the first key of the returned array to be the fids
         foreach ($ids as $fid=>$entryids) {
             foreach ($entryids as $id) {
                 $entries_to_clone[$fid][] = $id;
             }
         }
-    } else {
-        $entries_to_clone[$fid][] = $entry;
     }
+    
     $dataHandlers = array();
     $entryMap = array();
     for ($copy_counter = 0; $copy_counter<$copies; $copy_counter++) {
@@ -3083,7 +3084,7 @@ function cloneEntry($entry, $frid, $fid, $copies=1, $callback = null) {
                 if (!isset($dataHandlers[$fid])) {
                     $dataHandlers[$fid] = new formulizeDataHandler($fid);
                 }
-                $clonedEntryId = $dataHandlers[$fid]->cloneEntry($thisentry, $callback);
+                $clonedEntryId = $dataHandlers[$fid]->cloneEntry($thisentry, $callback, $targetEntry);
                 $dataHandlers[$fid]->setEntryOwnerGroups(getEntryOwner($clonedEntryId, $fid), $clonedEntryId);
                 $entryMap[$fid][$thisentry][] = $clonedEntryId;
             }
@@ -3098,8 +3099,10 @@ function cloneEntry($entry, $frid, $fid, $copies=1, $callback = null) {
         $dataHandlers[$lsbElement->getVar('id_form')]->reassignLSB($sourceElement->getVar('id_form'), $lsbElement, $entryMap);
     }
     
-    foreach($entryMap[$originalFid][$entry] as $newEntryId) {
-        formulize_updateDerivedValues($newEntryId, $originalFid, $originalFrid);    
+    foreach($entryMap[$originalFid] as $clonedMainformEntries) {
+        foreach($clonedMainformEntries as $clonedMainformEntryId) {
+            formulize_updateDerivedValues($clonedMainformEntryId, $originalFid, $originalFrid);
+        }
     }
     
     return $entryMap;
