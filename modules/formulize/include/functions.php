@@ -6781,10 +6781,10 @@ function formulize_validatePHPCode($theCode) {
     while(ob_get_level()) {
         ob_end_clean();
     }
-    if (function_exists("shell_exec")) {
-        $tmpfname = tempnam(sys_get_temp_dir(), 'FZ');
+    if ($theCode = trim($theCode) AND function_exists("shell_exec")) {
+        $tmpfname = tempnam(XOOPS_ROOT_PATH.'/cache', 'FZ');
         file_put_contents($tmpfname, trim($theCode));
-        $output = shell_exec('php -l "'.$tmpfname.'" 2>&1');
+        //$output = shell_exec('php -l "'.$tmpfname.'" 2>&1');
         unlink($tmpfname);
         if (false !== strpos($output, "PHP Parse error")) {
             // remove the second line because detail about the error is on the first line
