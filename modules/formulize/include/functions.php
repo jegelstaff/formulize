@@ -5410,13 +5410,14 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
             }
             if(!$extractionQuery AND !$targetFormObject) { // setup the targetFormObject once, based on the passed in targetFormId
                 $targetFormObject = $form_handler->get($targetFormId, true); // true forces inclusion of all element types
-                $targetFormElementTypes = $targetFormObject->getVar('elementTypes');
             } elseif($extractionQuery) {
                 // target form and alias depends on which form the filter element handle belongs to
                 if($elementObject = $element_handler->get($filterElementIds[$filterId])) {
                     $targetFormObject = $form_handler->get($elementObject->getVar('id_form'), true); // true forces inclusion of all element types
-                    $targetFormElementTypes = $targetFormObject->getVar('elementTypes');
                     $targetAlias = $targetFormId[$filterElementFid];
+                } elseif(isMetaDataField($filterElementIds[$filterId])) {
+                    $targetFormObject = $form_handler->get(key($targetFormId), true); // true forces inclusion of all element types
+                    $targetAlias = $targetFormId[key($targetFormId)];
                 } else {
                     print 'ERROR: could not gather element information for "'.strip_tags(htmlspecialchars($filterElementIds[$filterId])).'" when creating a SQL filter.';
                     continue;
@@ -5424,7 +5425,7 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
             }
             $targetAlias .= ($targetAlias AND substr($targetAlias, -1) != '.') ? "." : ""; // add a period to the end of the alias, if there is an alias and if it doesn't have a dot, so it will work in the sql statement
             
-            list($conditionsFilterComparisonValue, $thisCurlyBracketFormFrom) =  _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterElementIds, $targetFormElementTypes, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler);
+            list($conditionsFilterComparisonValue, $thisCurlyBracketFormFrom) =  _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterElementIds, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler);
 
             // regular conditions            
             if ($filterTypes[$filterId] != "oom" AND !strstr($conditionsFilterComparisonValue, "curlybracketform")) {
@@ -5533,7 +5534,7 @@ function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias,
 // this function takes the info from the above function, and actually builds the parts of the SQL statement by analyzing the current situation
 // $filterOps may be modified by this function
 // $filterTerms may be modified by this function
-function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filterElementIds, $targetFormElementTypes, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler) {
+function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filterElementIds, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler) {
     
     global $xoopsUser, $xoopsDB, $nonLinkedCurlyBracketSelfReference;
     $curlyBracketEntryQuoted = $curlyBracketEntry == 'new' ? "'new'" : $curlyBracketEntry; // can't put text into the query without quotes!
@@ -5553,7 +5554,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
         $quotes = is_numeric($filterTerms[$filterId]) ? "" : "'";
         $filterOps[$filterId] = $filterOps[$filterId] == "=" ? "<=>" : $filterOps[$filterId];
     }
-    if(!isset($filterElementIds[$filterId]) OR !isset($targetFormElementTypes[$filterElementIds[$filterId]])) {
+    if(!isset($filterElementIds[$filterId])) {
         print "Critical Error: You have a condition set that is relying on an deleted or renamed element: ".$filterElementIds[$filterId]." OR ".$filterId."<br>";
         print "The terms of the condition are: ";
         print_r($filterTerms);
@@ -5563,9 +5564,11 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
     } else {
         // check for whether the source element is a linked element, and if so, figure out the entry id of the record in the source of that linked selectbox which matches the filter term instead
         // ie: left side is linked to something else
-        $targetElementObject = $element_handler->get($filterElementIds[$filterId]);
+        if(!isMetaDataField($filterElementIds[$filterId])) {
+            $targetElementObject = $element_handler->get($filterElementIds[$filterId]);
             $targetElementEleValue = $targetElementObject->getVar('ele_value'); // get the properties of the source element
-        if ($targetElementObject->isLinked AND !$targetElementEleValue['snapshot']) {
+        }
+        if (!isMetaDataField($filterElementIds[$filterId]) AND $targetElementObject->isLinked AND !$targetElementEleValue['snapshot']) {
             $targetElementEleValueProperties = explode("#*=:*", $targetElementEleValue[2]); // split them up to get the properties of the linked selectbox that the source element is pointing at
             $targetSourceFid = $targetElementEleValueProperties[0]; // get the Fid that the source element is point at (the source of the source)
             $targetSourceFormObject = $form_handler->get($targetSourceFid); // get the form object based on that fid (we'll need the form handle later)
@@ -5692,7 +5695,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
     if ($filterOps[$filterId] == "<=>") {
         
         // if we're handling a dynamic reference to an element, and the thing we're comparing the dynamic reference to is not a linked element, then we're going to cover our bases and do an OR of both the DB and literal value
-        if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND !$targetElementObject->isLinked) {
+        if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND (isMetaDataField($filterElementIds[$filterId]) OR !$targetElementObject->isLinked)) {
 			if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
 				// get the literal value based on the passed in database ready format
                 $literalToDBValue = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm];
@@ -5733,7 +5736,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 
     // if it's a { } term, then assume it's a data handle for a field in the form where the element is being included
     // do this only when the left side is NOT linked, so as an alternative to the handling of { } above when left side is linked
-    if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND !$targetElementObject->isLinked) {
+    if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND (isMetaDataField($filterElementIds[$filterId]) OR !$targetElementObject->isLinked)) {
         if (isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
             $conditionsFilterComparisonValue = "'".$likebits.formulize_db_escape($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm]).$likebits."'";
         } elseif ($curlyBracketEntry == "new") {
@@ -6329,7 +6332,9 @@ function parseUserAndToday($term, $element=null) {
     if (strstr($term, "{USER}")) {
         $name = 0;
 		if($xoopsUser) {
-            if($element) {
+            if(isMetaDataField($element)) {
+                $name = $xoopsUser->getVar('uid');
+            } elseif($element) {
                 $element = _getElementObject($element);
                 $ele_value = $element->getVar('ele_value');
                 if(strstr(key($ele_value[2]), 'NAMES}')) {
