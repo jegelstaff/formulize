@@ -128,11 +128,11 @@ function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientatio
 	if($headingAtSide) {
 		$gridContents[0] = $title;
 		$class = "even";
-		print "<table class=''>\n<tr>";
+		print "<table class='formulize-grid'>\n<tr>";
 		if ($actual_numrows > 0)
-			echo "<td class=head></td>";
+			echo "<td class='head'></td>";
 	} else {
-		print "<table class=outer>\n";
+		print "<table class='outer formulize-grid'>\n";
 		$class = "head";
 		if($title) { print "<tr><th colspan='$numcols'>$title</th></tr>\n"; }
 		print "<tr>\n<td class=\"head\">&nbsp;</td>\n";

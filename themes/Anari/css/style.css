@@ -2866,6 +2866,32 @@ img {
    font-size: 1.2rem;
 }
 
+.formulize-grid {
+    width: 100%;
+    max-width: 300px;
+}
+.formulize-grid input, .formulize-grid select {
+    width: auto !important;
+    max-width: 75px !important;
+}
+@media (min-width: 768px) {
+    .formulize-grid {
+        width: 700px;
+    }
+    .formulize-grid select {
+        min-width: 0px !important;
+        max-width: 100% !important;    
+    }
+    .formulize-grid input {
+        min-width: 0px !important;
+        max-width: 200px !important;    
+    }
+}
+
+.formulize-grid td {
+    padding-right: 1em;
+}
+
 a.loe-edit-entry {
     color: #1080FF;
     font-size: 1.5rem;
