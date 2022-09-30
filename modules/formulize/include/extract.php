@@ -86,12 +86,13 @@ function prepvalues($value, $field, $entry_id) {
 
   $original_value = $value;
   static $cachedPrepedValues = array();
-  if(isset($cachedPrepedValues[$original_value][$field][$entry_id])) {
+  $fk = (!isset($GLOBALS['formulize_useForeignKeysInDataset'][$field]) AND !isset($GLOBALS['formulize_useForeignKeysInDataset']['all']));
+  if(isset($cachedPrepedValues[$original_value][$field][$entry_id][$fk])) {
     /*global $xoopsUser;
     if($xoopsUser->getVar('uid')==110) {
         print "RETURNING FROM CACHE<br>";
     }*/
-    return $cachedPrepedValues[$original_value][$field][$entry_id];
+    return $cachedPrepedValues[$original_value][$field][$entry_id][$fk];
   }
 
   global $xoopsDB;
@@ -99,7 +100,7 @@ function prepvalues($value, $field, $entry_id) {
   // return metadata values without putting them in an array
   if(isMetaDataField($field)) {
     if(!isset($GLOBALS['formulize_doNotCacheDataSet'])) {
-    $cachedPrepedValues[$original_value][$field][$entry_id] = $value;
+    $cachedPrepedValues[$original_value][$field][$entry_id][$fk] = $value;
     }
      return $value;
   }
@@ -117,7 +118,7 @@ function prepvalues($value, $field, $entry_id) {
 			$value = "";
 		}
         if(!isset($GLOBALS['formulize_doNotCacheDataSet'])) {
-        $cachedPrepedValues[$original_value][$field][$entry_id] = $value;
+        $cachedPrepedValues[$original_value][$field][$entry_id][$fk] = $value;
         }
 		return $value;
 	}
@@ -128,12 +129,12 @@ function prepvalues($value, $field, $entry_id) {
 		 if($decryptResult = $xoopsDB->query($decryptSQL)) {
 					$decryptRow = $xoopsDB->fetchRow($decryptResult);
                     if(!isset($GLOBALS['formulize_doNotCacheDataSet'])) {
-                    $cachedPrepedValues[$original_value][$field][$entry_id] = $decryptRow[0];
+                    $cachedPrepedValues[$original_value][$field][$entry_id][$fk] = $decryptRow[0];
                     }
 					return $decryptRow[0];
 		 } else {
                     if(!isset($GLOBALS['formulize_doNotCacheDataSet'])) {
-                    $cachedPrepedValues[$original_value][$field][$entry_id] = "";
+                    $cachedPrepedValues[$original_value][$field][$entry_id][$fk] = "";
                     }
 					return "";
 		 }
@@ -273,7 +274,7 @@ function prepvalues($value, $field, $entry_id) {
       }
 
     if(!isset($GLOBALS['formulize_doNotCacheDataSet'])) {  
-    $cachedPrepedValues[$original_value][$field][$entry_id] = $valueToReturn;
+    $cachedPrepedValues[$original_value][$field][$entry_id][$fk] = $valueToReturn;
     }
 	return $valueToReturn;
 }
