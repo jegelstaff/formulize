@@ -7584,6 +7584,7 @@ function getEntryDefaults($target_fid,$target_entry) {
   $criteria->add(new Criteria('ele_type', 'textarea'), 'OR');
   $criteria->add(new Criteria('ele_type', 'date'), 'OR');
   $criteria->add(new Criteria('ele_type', 'radio'), 'OR');
+  $criteria->add(new Criteria('ele_type', 'checkbox'), 'OR');
   $criteria->add(new Criteria('ele_type', 'yn'), 'OR');
   $criteria->add(new Criteria('ele_type', 'select'), 'OR');
   $elementsForDefaults = $element_handler->getObjects($criteria,$target_fid); // get all the text or textarea elements in the form 
@@ -7618,6 +7619,7 @@ function getEntryDefaults($target_fid,$target_entry) {
         }
         break;
       case "select":
+      case "checkbox":
         $thisDefaultEleValue = $thisDefaultEle->getVar('ele_value');
         if($thisDefaultEle->isLinked AND !$thisDefaultEleValue['snapshot'])  {
             // default will be a foreign key or keys
