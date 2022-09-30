@@ -37,12 +37,16 @@ include_once XOOPS_ROOT_PATH."/class/xoopsformloader.php";
 
 // setup a smarty object that we can use for templating our own pages
 
+global $icmsConfig;
 require_once XOOPS_ROOT_PATH.'/class/template.php';
 require_once XOOPS_ROOT_PATH.'/class/theme.php';
 require_once XOOPS_ROOT_PATH.'/class/theme_blocks.php';
-$xoopsThemeFactory = new xos_opal_ThemeFactory();
+$xoopsThemeFactory = new icms_view_theme_Factory();
+$xoopsThemeFactory->allowedThemes = $icmsConfig['theme_set_allowed'];
+$xoopsThemeFactory->defaultTheme = $icmsConfig['theme_set'];
 $xoTheme =& $xoopsThemeFactory->createInstance();
 $xoopsTpl =& $xoTheme->template;
+
 
 $pageIndex = intval($_GET['page']);
 $sid = intval($_GET['sid']);
