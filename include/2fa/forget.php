@@ -16,5 +16,7 @@ if($xoopsUser) {
     $profile_handler = xoops_getmodulehandler('profile', 'profile');
     $profile = $profile_handler->get($xoopsUser->getVar('uid'));
 	$profile->setVar('2fadevices', '');
-	$profile_handler->insert($profile);
+	if($profile_handler->insert($profile)) {
+        print 1;
+    }
 }
