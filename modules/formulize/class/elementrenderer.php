@@ -131,9 +131,6 @@ class formulizeElementRenderer{
 
 
 			case 'ib':
-				if(get_magic_quotes_gpc()) {
-					$ele_value[0] = stripslashes($ele_value[0]);
- 				}
 				if(trim($ele_value[0]) == "") { $ele_value[0] = $ele_caption; }
 				if(strstr($ele_value[0], "\$value=") OR strstr($ele_value[0], "\$value =")) {
 					$form_id = $id_form;
@@ -810,18 +807,18 @@ class formulizeElementRenderer{
 				$disabledHiddenValue = "";
 				$options = array();
 				$opt_count = 1;
-				while( $i = each($ele_value) ){
+                foreach($ele_value as $iKey=>$iValue) {
 					switch ($ele_type){
 						case 'radio':
-							$options[$opt_count] = $myts->stripSlashesGPC($i['key']);
+							$options[$opt_count] = $myts->stripSlashesGPC($iKey);
               $options[$opt_count] = $myts->displayTarea($options[$opt_count]);
 						break;
 						case 'yn':
-							$options[$opt_count] = constant($i['key']);
+							$options[$opt_count] = constant($iKey);
 							$options[$opt_count] = $myts->stripSlashesGPC($options[$opt_count]);
 						break;
 					}
-					if( $i['value'] > 0 ){
+					if( $iValue > 0 ){
 						$selected = $opt_count;
 					}
 					$opt_count++;
@@ -840,22 +837,21 @@ class formulizeElementRenderer{
 							$selected
 						);
 						$counter = 0;
-						while( $o = each($options) ){
-							$o = formulize_swapUIText($o, $this->_ele->getVar('ele_uitext'));
-							$other = $this->optOther($o['value'], $form_ele_id, $entry_id, $counter, false, $isDisabled);
+                        foreach($options as $oKey=>$oValue) {
+							list($oValue) = formulize_swapUIText(array('value'=>$oValue), $this->_ele->getVar('ele_uitext'));
+							$other = $this->optOther($oValue, $form_ele_id, $entry_id, $counter, false, $isDisabled);
 							if( $other != false ){
-								$form_ele1->addOption($o['key'], _formulize_OPT_OTHER.$other);
-								if($o['key'] == $selected) {
+								$form_ele1->addOption($oKey, _formulize_OPT_OTHER.$other);
+								if($oKey == $selected) {
 									$disabledOutputText = _formulize_OPT_OTHER.$other;
 								}
 							}else{
-								$o['value'] = get_magic_quotes_gpc() ? stripslashes($o['value']) : $o['value'];
-								$form_ele1->addOption($o['key'], $o['value']);
-								if($o['key'] == $selected) {
-									$disabledOutputText = $o['value'];
+								$form_ele1->addOption($oKey, $oValue);
+								if($oKey == $selected) {
+									$disabledOutputText = $oValue;
 								}
-								if(strstr($o['value'], _formulize_OUTOFRANGE_DATA)) {
-									$hiddenOutOfRangeValuesToWrite[$o['key']] = str_replace(_formulize_OUTOFRANGE_DATA, "", $o['value']); // if this is an out of range value, grab the actual value so we can stick it in a hidden element later
+								if(strstr($oValue, _formulize_OUTOFRANGE_DATA)) {
+									$hiddenOutOfRangeValuesToWrite[$oKey] = str_replace(_formulize_OUTOFRANGE_DATA, "", $oValue); // if this is an out of range value, grab the actual value so we can stick it in a hidden element later
 								}
 							}
 							$counter++;
@@ -868,30 +864,29 @@ class formulizeElementRenderer{
 					default:
 						$form_ele1 = new XoopsFormElementTray('', $delimSetting);
 						$counter = 0;
-						while( $o = each($options) ){
-							$o = formulize_swapUIText($o, $this->_ele->getVar('ele_uitext'));
+                        foreach($options as $oKey=>$oValue) {
+							list($oValue) = formulize_swapUIText(array('value'=>$oValue), $this->_ele->getVar('ele_uitext'));
 							$t = new XoopsFormRadio(
 								'',
 								$form_ele_id,
 								$selected
 							);
-							$other = $this->optOther($o['value'], $form_ele_id, $entry_id, $counter, false, $isDisabled);
+							$other = $this->optOther($oValue, $form_ele_id, $entry_id, $counter, false, $isDisabled);
 							if( $other != false ){
-								$t->addOption($o['key'], _formulize_OPT_OTHER."</label><label>$other"); // epic hack to terminate radio button's label so it doesn't include the clickable 'other' box!!
-								if($o['key'] == $selected) {
+								$t->addOption($oKey, _formulize_OPT_OTHER."</label><label>$other"); // epic hack to terminate radio button's label so it doesn't include the clickable 'other' box!!
+								if($oKey == $selected) {
 									$disabledOutputText = _formulize_OPT_OTHER.$other;
 								}
-                                $GLOBALS['formulize_lastRenderedElementOptions'][$o['key']] = _formulize_OPT_OTHER;
+                                $GLOBALS['formulize_lastRenderedElementOptions'][$oKey] = _formulize_OPT_OTHER;
 							}else{
-								$o['value'] = get_magic_quotes_gpc() ? stripslashes($o['value']) : $o['value'];
-								$t->addOption($o['key'], $o['value']);
-								if($o['key'] == $selected) {
-									$disabledOutputText = $o['value'];
+								$t->addOption($oKey, $oValue);
+								if($oKey == $selected) {
+									$disabledOutputText = $oValue;
 								}
-								if(strstr($o['value'], _formulize_OUTOFRANGE_DATA)) {
-									$hiddenOutOfRangeValuesToWrite[$o['key']] = str_replace(_formulize_OUTOFRANGE_DATA, "", $o['value']); // if this is an out of range value, grab the actual value so we can stick it in a hidden element later
+								if(strstr($oValue, _formulize_OUTOFRANGE_DATA)) {
+									$hiddenOutOfRangeValuesToWrite[$oKey] = str_replace(_formulize_OUTOFRANGE_DATA, "", $oValue); // if this is an out of range value, grab the actual value so we can stick it in a hidden element later
 								}
-                                $GLOBALS['formulize_lastRenderedElementOptions'][$o['key']] = $o['value'];
+                                $GLOBALS['formulize_lastRenderedElementOptions'][$oKey] = $oValue;
 							}
 							$t->setExtra("onchange=\"javascript:formulizechanged=1;\"");
 							$form_ele1->addElement($t);
@@ -1132,10 +1127,10 @@ class formulizeElementRenderer{
 
 	// THIS FUNCTION COPIED FROM LIASE 1.26, onchange control added
 	// JWE -- JUNE 1 2006
-	function optOther($s='', $id, $entry_id, $counter, $checkbox=false, $isDisabled=false){
+	static function optOther($s='', $id, $entry_id, $counter, $checkbox=false, $isDisabled=false){
         static $blankSubformCounters = array();
 		global $xoopsModuleConfig, $xoopsDB;
-		if( !preg_match('/\{OTHER\|+[0-9]+\}/', $s) ){
+		if( !is_string($s) OR !preg_match('/\{OTHER\|+[0-9]+\}/', $s) ){
 			return false;
 		}
 		// deal with displayElement elements...

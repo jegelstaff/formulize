@@ -1,5 +1,7 @@
 <?php
 
+require_once XOOPS_ROOT_PATH.'/language/english/core.php';
+
 class icms_db_legacy_PdoDatabase extends icms_db_legacy_Database {
 	/**
 	 * The PDO connection that performs operations behind the scenes

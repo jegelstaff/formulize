@@ -425,7 +425,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 					$selected
 				);
 				$counter = 0; // counter used for javascript that works with 'Other' box
-				while( $o = each($options) ){
+                foreach($options as $o) {
 					$o = formulize_swapUIText($o, $ele_uitext);
 					$other = formulizeElementRenderer::optOther($o['value'], $markupName, $entry_id, $counter, true, $isDisabled);
 					if( $other != false ){
@@ -450,9 +450,9 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 			default:
 				$form_ele1 = new XoopsFormElementTray($caption, $delimSetting);
 				$counter = 0; // counter used for javascript that works with 'Other' box
-				while( $o = each($options) ){
-					$o = formulize_swapUIText($o, $ele_uitext);
-					$other = formulizeElementRenderer::optOther($o['value'], $markupName, $entry_id, $counter, true, $isDisabled);
+                foreach($options as $oKey=>$oValue) {
+					list($oValue) = formulize_swapUIText(array('value'=>$oValue), $ele_uitext);
+					$other = formulizeElementRenderer::optOther($oValue, $markupName, $entry_id, $counter, true, $isDisabled);
 					$t = new XoopsFormCheckBox(
 						'',
 						$markupName.'[]',
@@ -460,20 +460,20 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 						""
 					); // "" means absolutely nothing as delimiter, which gets chucked onto the end of this individual box at render time. :(
 					if($other != false){
-						$t->addOption($o['key'], _formulize_OPT_OTHER.$other);
-						if(in_array($o['key'], $selected)) {
+						$t->addOption($oKey, _formulize_OPT_OTHER.$other);
+						if(in_array($oKey, $selected)) {
 							$disabledOutputText[] = _formulize_OPT_OTHER.$other;
 						}
-                        $GLOBALS['formulize_lastRenderedElementOptions'][$o['key']] = _formulize_OPT_OTHER;
+                        $GLOBALS['formulize_lastRenderedElementOptions'][$oKey] = _formulize_OPT_OTHER;
 					}else{
-						$t->addOption($o['key'], $o['value']);
-						if(in_array($o['key'], $selected)) {
-							$disabledOutputText[] = $o['value'];
+						$t->addOption($oKey, $oValue);
+						if(in_array($oKey, $selected)) {
+							$disabledOutputText[] = $oValue;
 						}
-						if(strstr($o['value'], _formulize_OUTOFRANGE_DATA)) {
-							$hiddenOutOfRangeValuesToWrite[$o['key']] = str_replace(_formulize_OUTOFRANGE_DATA, "", $o['value']); // if this is an out of range value, grab the actual value so we can stick it in a hidden element later
+						if(strstr($oValue, _formulize_OUTOFRANGE_DATA)) {
+							$hiddenOutOfRangeValuesToWrite[$oKey] = str_replace(_formulize_OUTOFRANGE_DATA, "", $oValue); // if this is an out of range value, grab the actual value so we can stick it in a hidden element later
 						}
-                        $GLOBALS['formulize_lastRenderedElementOptions'][$o['key']] = $o['value'];
+                        $GLOBALS['formulize_lastRenderedElementOptions'][$oKey] = $oValue;
 					}
 					$t->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$markupName\" ");
 					$form_ele1->addElement($t);

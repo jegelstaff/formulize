@@ -387,13 +387,13 @@ function generatePrevNextButtonMarkup($buttonType, $buttonText, $usersCanSave, $
     
     switch($buttonType) {
         case 'next':
-            $buttonJavascriptAndExtraCode = "onclick=\"javascript:submitForm($nextPage, ".($previousPage+1).");return false;\"";
+            $buttonJavascriptAndExtraCode = "onclick=\"javascript:submitForm($nextPage, ".(intval($previousPage)+1).");return false;\"";
             break;
         case 'prev':
-            $buttonJavascriptAndExtraCode = "onclick=\"javascript:submitForm($previousPage, ".($previousPage+1).");return false;\"";	
+            $buttonJavascriptAndExtraCode = "onclick=\"javascript:submitForm($previousPage, ".(intval($previousPage)+1).");return false;\"";	
             break;
         case 'save':
-            $buttonJavascriptAndExtraCode = "onclick=\"javascript:submitForm(".($previousPage+1).", ".($previousPage+1).");return false;\"";
+            $buttonJavascriptAndExtraCode = "onclick=\"javascript:submitForm(".(intval($previousPage)+1).", ".(intval($previousPage)+1).");return false;\"";
     }
     
     if($buttonType == "next" OR $buttonType == "save") {

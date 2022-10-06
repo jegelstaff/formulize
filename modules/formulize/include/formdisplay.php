@@ -112,7 +112,7 @@ class formulize_themeForm extends XoopsThemeForm {
      * get the template of the specified type, from the screen and for the active theme, or fail over to the default template
      *
      */
-    public function getTemplate($type) {
+    public static function getTemplate($type) {
         $template = '';
         if(isset($this) AND $this instanceof formulize_themeForm AND is_object($this->screen)) {
             $template = getTemplateToRender($type, $this->screen);
@@ -173,7 +173,7 @@ class formulize_themeForm extends XoopsThemeForm {
 		return $ret;
 	}
 	
-    public function processTemplate($templateCode, $variables=array()) {
+    public static function processTemplate($templateCode, $variables=array()) {
         foreach($variables as $k=>$v) {
             ${$k} = $v;
         }
@@ -240,7 +240,7 @@ class formulize_themeForm extends XoopsThemeForm {
 	}
 
     // reset will cause the cached copy of columns to be bypassed - this is done when a form is rendered, so that we don't reuse the setting for an element when it appeared on a different screen in the past in this same session
-    function _getColumns($ele, $reset = false) {
+    static function _getColumns($ele, $reset = false) {
         global $xoopsUser, $xoopsConfig;
         $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
         // cache in the session the column setting we used for a given element last time it was rendered
@@ -410,7 +410,7 @@ class formulize_themeForm extends XoopsThemeForm {
 
 	// draw the HTML for the element, a table row normally
 	// $ele is the renderable element object
-	function _drawElementElementHTML($ele) {
+	static function _drawElementElementHTML($ele) {
 	
         if(!$ele) { return ""; }
     
@@ -597,7 +597,7 @@ class formulize_elementsOnlyForm extends formulize_themeForm {
 	}
 
 	// render the validation code without the opening/closing part of the validation function, since the form is embedded inside another
-	public function renderValidationJS() {
+	public function renderValidationJS($withtags = true, $skipConditionalCheck = false) {
 		return $this->_drawValidationJS(false);
 	}
 }
@@ -3096,7 +3096,6 @@ function loadValue($prevEntry, $element, $ele_value, $owner_groups, $groups, $en
 						// important: this is safe because $value itself is not being sent to the browser!
 						// we're comparing the output of these two lines against what is stored in the form specification, which does not have HTML escaped characters, and has extra slashes.  Assumption is that lack of HTML filtering is okay since only admins and trusted users have access to form creation.  Not good, but acceptable for now.
 						$value = $myts->undoHtmlSpecialChars($value);
-						if(get_magic_quotes_gpc()) { $value = addslashes($value); } 
 	
 						$selvalarray = explode("*=+*:", $value);
 						$numberOfSelectedValues = strstr($value, "*=+*:") ? count($selvalarray)-1 : 1; // if this is a multiple selection value, then count the array values, minus 1 since there will be one leading separator on the string.  Otherwise, it's a single value element so the number of selections is 1.

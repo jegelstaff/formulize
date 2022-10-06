@@ -192,7 +192,7 @@ class SyncCompareCatalog {
     
     }
 
-    public function clearCachedChanges() {
+    public static function clearCachedChanges() {
         unlink(XOOPS_ROOT_PATH.'/modules/formulize/cache/'."sync-changes-" .  session_id() . ".cache");
         unlink(XOOPS_ROOT_PATH.'/modules/formulize/cache/'."sync-filepaths-" .  session_id() . ".cache");
     }

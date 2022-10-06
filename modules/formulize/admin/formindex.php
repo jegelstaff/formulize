@@ -866,7 +866,7 @@ function patch40() {
                 $ele_value = unserialize($metaData['ele_value']);
 
                 // select only single option, linked select boxes, and not snapshot boxes!
-                if (!$ele_value['snapshot'] AND !$ele_value[1] AND strstr($ele_value[2], "#*=:*")) {
+                if (!$ele_value['snapshot'] AND !$ele_value[1] AND is_string($ele_value[2]) AND strstr($ele_value[2], "#*=:*")) {
                     $successSelectBox = convertSelectBoxToSingle($xoopsDB->prefix('formulize_' . $handleArray['form_handle']), $handleArray['ele_handle']);
                     if (!$successSelectBox) {
                         print "could not convert column " . $handleArray['ele_handle'] . " in table " . $xoopsDB->prefix('formulize_' . $handleArray['form_handle']) . "<br>";

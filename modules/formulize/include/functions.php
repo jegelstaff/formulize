@@ -1888,18 +1888,12 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
         } else {
             $value = $ele;
         }
-        if (get_magic_quotes_gpc()) {
-            $value = stripslashes($value);
-        }
         $value = $myts->htmlSpecialChars($value);
         break;
 
 
         case 'textarea':
         $value = $ele;
-        if (get_magic_quotes_gpc()) {
-            $value = stripslashes($value);
-        }
         $value = $myts->htmlSpecialChars($value);
         break;
 
@@ -5132,19 +5126,6 @@ function convertTypeToText($type, $ele_value) {
             return $customTypeObject->name;
     }
 }
-
-
-function recursive_stripslashes($value) {
-    if (!get_magic_quotes_gpc()){
-        return $value;
-    }
-    $value = is_array($value) ?
-        array_map('recursive_stripslashes', $value) :
-        stripslashes($value);
-    return $value;
-}
-
-
 
 /*
  * Returns the HTML formatted results of the calculation process

@@ -101,11 +101,6 @@ $cols = getAllColList($fid, "", $groups); // notifications can only be set on a 
 $canSetNots = $gperm_handler->checkRight("set_notifications_for_others", $fid, $groups, $mid);
 
 // add latest element condition to existing conditions
-if(get_magic_quotes_gpc()) {
-	$_POST['new_term'] = stripslashes($_POST['new_term']);
-	$_POST['template'] = stripslashes($_POST['template']);
-	$_POST['subject'] = stripslashes($_POST['subject']);
-}
 
 if($_POST['new_term']) {
 	$_POST['elements'][] = $_POST['new_element'];

@@ -42,7 +42,7 @@ class icms_view_block_Handler extends icms_ipf_Handler {
 	 * @return array
 	 */
 	public function getBlockPositions($full = false) {
-		if (!count($this->block_positions)) {
+		if (!is_array($this->block_positions) OR !count($this->block_positions)) {
 			// TODO: Implement IPF for block_positions
 			$icms_blockposition_handler = icms::handler('icms_view_block_position');
 			//			$sql = 'SELECT * FROM '.$this->db->prefix('block_positions').' ORDER BY id ASC';
@@ -189,7 +189,7 @@ class icms_view_block_Handler extends icms_ipf_Handler {
 		$sql = "SELECT DISTINCT gperm_itemid FROM " . $this->db->prefix('group_permission')
 			. " WHERE gperm_name = 'block_read' AND gperm_modid = '1'";
 		if (is_array($groupid)) {
-			$gid = array_map(create_function('$a', '$r = "\'" . intval($a) . "\'"; return($r);'), $groupid);
+			$gid = array_map(function($a) { return intval($a); }, $groupid);
 			$sql .= " AND gperm_groupid IN (" . implode(',', $gid) . ")";
 		} else {
 			if ((int) $groupid > 0) {

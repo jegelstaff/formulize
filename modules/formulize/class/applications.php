@@ -141,7 +141,7 @@ global $xoopsDB;
         }
 		
 		// returns an array of the fid,sid applicable to the current user, based on menu settings and permissions
-		function getDefaultScreenForUser() {
+		static function getDefaultScreenForUser() {
 		
 			static $cachedFidSid = null;
 			if(is_null($cachedFidSid)) {

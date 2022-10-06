@@ -143,9 +143,10 @@ function user2FAMethod($user=null) {
     // check if 2FA is on    
     $config_handler = icms::handler('icms_config');
 	$criteria = new Criteria('conf_name', 'auth_2fa');
-	$auth_2fa = $config_handler->getConfigs($criteria);
-	$auth_2fa = $auth_2fa[0];
-	$auth_2fa = $auth_2fa->getConfValueForOutput();
+	if($auth_2fa = $config_handler->getConfigs($criteria)) {
+        $auth_2fa = $auth_2fa[0];
+        $auth_2fa = $auth_2fa->getConfValueForOutput();
+    }
     if($auth_2fa == false) {
         return false;
     }
