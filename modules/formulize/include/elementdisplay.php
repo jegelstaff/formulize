@@ -134,7 +134,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 	}
 	
 	$elementFilterSettings = $element->getVar('ele_filtersettings');
-	if($allowed AND count($elementFilterSettings[0]) > 0 AND (!$noSave OR $entry != 'new')) {
+	if($allowed AND is_array($elementFilterSettings[0]) AND count($elementFilterSettings[0]) > 0 AND (!$noSave OR $entry != 'new')) {
 		// cache the filterElements for this element, so we can build the right stuff with them later in javascript, to make dynamically appearing elements
 		$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName] = $elementFilterSettings[0];
 		

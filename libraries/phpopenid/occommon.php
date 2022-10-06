@@ -137,10 +137,6 @@ $consumer = new Auth_OpenID_Consumer($store);
  * Sanitization Functions
  */
 function quote_smart($value) {
-    // Stripslashes
-    if (get_magic_quotes_gpc()) {
-        $value = stripslashes($value);
-    }
     // Escape non-numeric string
     if (!is_numeric($value)) {
         $value = "'" . icms::$xoopsDB->escape($value) . "'";

@@ -124,7 +124,7 @@ class icms_view_theme_Object {
 			: ICMS_THEME_URL . '/' . $this->folderName;
 
 		$this->template = new icms_view_Tpl();
-		$this->template->currentTheme =& $this;
+		$this->template->currentTheme = $this;
 		$this->template->assign_by_ref('xoTheme', $this);
 
 		global $icmsConfig, $icmsConfigMetaFooter, $icmsModule, $xoopsModule;

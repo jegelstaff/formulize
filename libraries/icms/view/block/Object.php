@@ -253,7 +253,7 @@ class icms_view_block_Object extends icms_ipf_Object {
 	 * @deprecated use the handler method 'insert', instead
 	 * @todo	Remove in version 1.4
 	 */
-	public function store() {
+	public function store($force = false) {
 		icms_core_Debug::setDeprecated('icms_view_block_Handler->insert', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		$this->handler->insert($this);
 		return $this->getVar('bid');
@@ -267,7 +267,7 @@ class icms_view_block_Object extends icms_ipf_Object {
 	 * @deprecated use the handler method, instead
 	 * @todo	Remove in version 1.4
 	 */
-	public function delete() {
+	public function delete($force = false) {
 		icms_core_Debug::setDeprecated('icms_view_block_Handler->delete', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->handler->delete($this);
 	}

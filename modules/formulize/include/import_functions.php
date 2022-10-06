@@ -448,9 +448,6 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
                                                 }
                                                 if (!$foundit) {
                                                     for (reset($options); $key = key($options); next($options)) {
-                                                        if (get_magic_quotes_gpc()) {
-                                                            $key = stripslashes($key);
-                                                        }
                                                         $result[] = $key;
                                                     }
 
@@ -468,18 +465,12 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
                                             // last option causes strict matching by type
                                             // then do a check against the translated options
                                             foreach ($options as $thisoption=>$default_value) {
-                                                if (get_magic_quotes_gpc()) {
-                                                    $thisoption = stripslashes($thisoption);
-                                                }
                                                 if (trim($cell_value) == trim(trans($thisoption))) {
                                                     break 2;
                                                 }
                                             }
 
                                             for (reset($options); $key = key($options); next($options)) {
-                                                if (get_magic_quotes_gpc()) {
-                                                    $key = stripslashes($key);
-                                                }
                                                 $result[] = $key;
                                             }
 
@@ -508,9 +499,6 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
                                     $foundit = false;
                                     $hasother = false;
                                     foreach ($options as $thisoption=>$default_value) {
-                                        if (get_magic_quotes_gpc()) {
-                                            $thisoption = stripslashes($thisoption);
-                                        }
                                         if (trim($item_value) == trim(trans($thisoption))) {
                                             $foundit = true;
                                         }
@@ -520,16 +508,6 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
                                     }
                                     if (!$foundit AND !$hasother) {
                                         $keys_output = implode(', ', array_keys($options));
-                                        /*for (reset($options); $key = key($options); next($options)) {
-                                            if (get_magic_quotes_gpc()) {
-                                                $key = stripslashes($key);
-                                            }
-                                            if ($keys_output != "") {
-                                                $keys_output .= ", ";
-                                            }
-                                            $keys_output .= $key;
-                                        }*/
-
                                         $errors[] = "<li>line " . $rowCount .
                                             ", column " . $importSet[3][$link] .
                                             ",<br> <b>found</b>: " . $item_value .
@@ -547,9 +525,6 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
                                 $foundit = false;
                                 $hasother = false;
                                 foreach ($options as $thisoption=>$default_value) {
-                                    if (get_magic_quotes_gpc()) {
-                                        $thisoption = stripslashes($thisoption);
-                                    }
                                     if (trim($cell_value) == trim(trans($thisoption))) {
                                         $foundit = true;
                                     }
@@ -559,9 +534,6 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
                                 if (!$foundit AND !$hasother) {
                                     $keys_output = "";
                                     for (reset($options); $key = key($options); next($options)) {
-                                        if (get_magic_quotes_gpc()) {
-                                            $key = stripslashes($key);
-                                        }
                                         if ($keys_output != "") {
                                             $keys_output .= ", ";
                                         }
