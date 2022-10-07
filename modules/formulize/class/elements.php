@@ -542,7 +542,7 @@ class formulizeElementsHandler {
 	}
 	
 	// this method is used by custom elements, to do final output from the "local" formatDataForList method, so the custom element developer can simply set booleans there, and they will be enforced here
-	function formatDataForList($value, $handle, $entry_id) {
+	function formatDataForList($value, $handle="", $entry_id=0) {
 		global $myts;
 		if($this->length == 0) {
 			$this->length = 35;

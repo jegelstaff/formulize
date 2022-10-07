@@ -163,7 +163,7 @@ foreach($_POST as $k=>$v) {
 }
 
 // write all the user profile info
-if(count($formulize_up)>0) {
+if(count((array) $formulize_up)>0) {
 	  $formulize_up['uid'] = $GLOBALS['userprofile_uid'];
 		writeUserProfile($formulize_up, $uid);
 }
@@ -176,7 +176,7 @@ if(isset($_POST['proxyuser'])) {
 		$creation_users[] = $puser;
 	}
 }
-if(count($creation_users) == 0) { // no proxy users specified
+if(count((array) $creation_users) == 0) { // no proxy users specified
 	$creation_users[] = $uid;
 }
 
@@ -190,7 +190,7 @@ $formulize_allSubmittedEntryIds = array();
 $formulize_newSubformBlankElementIds = array();
 $formulize_allWrittenFids = array();
 $notEntriesList = array();
-if(count($formulize_elementData) > 0 ) { // do security check if it looks like we're going to be writing things...
+if(count((array) $formulize_elementData) > 0 ) { // do security check if it looks like we're going to be writing things...
 	$cururl = getCurrentURL();
 	$module_handler =& xoops_gethandler('module');
 	$config_handler =& xoops_gethandler('config');
@@ -297,7 +297,7 @@ if(!$viewEntryScreenObject AND $screen AND (is_a($screen, 'formulizeFormScreen')
 }
 if($viewEntryScreenObject) {
     $viewEntryScreenDefaults = $viewEntryScreenObject->getVar('elementdefaults');
-    if(is_array($viewEntryScreenDefaults) AND count($viewEntryScreenDefaults) > 0) {
+    if(is_array($viewEntryScreenDefaults) AND count((array) $viewEntryScreenDefaults) > 0) {
         foreach($viewEntryScreenDefaults as $elementId=>$defaultValue) {
             if($elementObject = $element_handler->get($elementId)) {
                 // refactor getFilterValuesForEntry to work with this structure of inputs too...?
@@ -306,7 +306,7 @@ if($viewEntryScreenObject) {
         }
     }
 }
-if(count($fundamentalDefaults) == 0 AND $screen AND is_a($screen, 'formulizeListOfEntriesScreen')) {
+if(count((array) $fundamentalDefaults) == 0 AND $screen AND is_a($screen, 'formulizeListOfEntriesScreen')) {
     $fundamental_filters = $screen->getVar('fundamental_filters')    ;
     if(is_array($fundamental_filters)) {
         $fundamentalDefaults = getFilterValuesForEntry($fundamental_filters);
@@ -581,7 +581,7 @@ function writeUserProfile($data, $uid) {
             $errors[] = _US_PASSNOTSAME;
      	  }
     }
-    if (count($errors) > 0) {
+    if (count((array) $errors) > 0) {
         echo '<div>';
         foreach ($errors as $er) {
             echo '<span style="color: #ff0000; font-weight: bold;">'.$er.'</span><br />';

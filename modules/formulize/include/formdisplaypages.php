@@ -55,7 +55,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
     // pickup a declared page that we're going back onto...will/might include screen id after a hyphen
     if(isset($_POST['parent_page'])) {
         $parent_page = strstr($_POST['parent_page'], ',') ? explode(',',$_POST['parent_page']) : array($_POST['parent_page']);
-        $lastKey = count($parent_page)-1;
+        $lastKey = count((array) $parent_page)-1;
         $_POST['formulize_currentPage'] = $parent_page[$lastKey];
     }
 	
@@ -103,7 +103,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
     // removing the entry value is the critical thing, so a new entry is displayed
     $overrideMulti = 0;
     $removeEntryValue = false;
-    if(count($pages) == 1 AND $screen) {
+    if(count((array) $pages) == 1 AND $screen) {
         $reloadblank = $screen->getVar('reloadblank');
         // figure out the form's properties...
         // if it's more than one entry per user, and we have requested reload blank, then override multi is 0, otherwise 1
@@ -176,7 +176,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
     } else {
         $currentPage = (!$elements_only AND isset($_POST['formulize_currentPage'])) ? $_POST['formulize_currentPage'] : 1;
     }
-	$thanksPage = count($pages) + 1;
+	$thanksPage = count((array) $pages) + 1;
     
 	// debug control:
 	$currentPage = (isset($_GET['debugpage']) AND is_numeric($_GET['debugpage'])) ? $_GET['debugpage'] : $currentPage;
@@ -221,7 +221,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	if(is_array($conditions) AND (!$currentPageScreen OR ($screen AND $currentPageScreen == $screen->getVar('sid')))) {
 		$conditionsMet = false;
 		while(!$conditionsMet AND $currentPage > 0) {
-			if(isset($conditions[$currentPage][0]) AND count($conditions[$currentPage][0])>0) { // conditions on the current page
+			if(isset($conditions[$currentPage][0]) AND count((array) $conditions[$currentPage][0])>0) { // conditions on the current page
 				if(pageMeetsConditions($conditions, $currentPage, $entry, $fid, $frid) == false) {
 					if($prevPageThisScreen <= $currentPage) {
 						$currentPage++;
@@ -309,7 +309,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
             $previousPageButton = generatePrevNextButtonMarkup("prev", $previousButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
             $nextPageButton = generatePrevNextButtonMarkup("next", $nextButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
             $savePageButton = generatePrevNextButtonMarkup("save", $saveButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
-            $totalPages = count($pages);
+            $totalPages = count((array) $pages);
             $skippedPageMessage = $pagesSkipped ? _formulize_DMULTI_SKIP : "";
             $pageSelectionList = pageSelectionList($currentPage, $totalPages, $pageTitles, "below", $conditions, $entry, $fid, $frid); // pageSelector can only show up once on the page, and we draw it with 'below' as the designation, since by default it shows up in the bottom templates. Used to be two versions, above and below, which allowed two copies of this to be functional in the page. Different names were required by the JS, which could be refactored to not need that. But expecting only one per page is valid and simpler for now.
     
@@ -362,7 +362,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
             $GLOBALS['formulize_displayingMultipageScreen']['templateVariables'] = $templateVariables;
         }
         
-        if(count($elements_allowed)==0) {
+        if(count((array) $elements_allowed)==0) {
             print "Error: there are no form elements specified for page number $currentPage. Please contact the webmaster.";
         } else {
             displayForm($forminfo, $entry, $mainform, "", $buttonArray, $settings, $titleOverride, $overrideValue, $overrideMulti, "", 0, 0, $printall, $screen); // nmc 2007.03.24 - added empty params & '$printall'

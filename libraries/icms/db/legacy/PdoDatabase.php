@@ -1,6 +1,11 @@
 <?php
 
-require_once XOOPS_ROOT_PATH.'/language/english/core.php';
+global $icmsConfig;
+if(file_exists(XOOPS_ROOT_PATH.'/language/'.$icmsConfig['language'].'/core.php')) {
+    require_once XOOPS_ROOT_PATH.'/language/'.$icmsConfig['language'].'/core.php';
+} elseif(file_exists(XOOPS_ROOT_PATH.'/language/english/core.php')) {
+    require_once XOOPS_ROOT_PATH.'/language/english/core.php';
+}
 
 class icms_db_legacy_PdoDatabase extends icms_db_legacy_Database {
 	/**

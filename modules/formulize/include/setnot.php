@@ -47,7 +47,7 @@ function handleDelete($uid, $fid, $mid) {
 			}
 			// check if the current user has any items left for a this event on this form, and if not, then unsub from that event 
 			$anyleft = q("SELECT * FROM " . $xoopsDB->prefix("formulize_notification_conditions") . " WHERE not_cons_uid=".intval($uid)." AND not_cons_fid = ".intval($fid)." AND not_cons_event=\"".$event[0]['not_cons_event']."\"");
-			if(count($anyleft) == 0) {
+			if(count((array) $anyleft) == 0) {
 				$notification_handler =& xoops_gethandler('notification');
 				$notification_handler->unsubscribe('form', $fid, $event[0]['not_cons_event'], $mid, $uid);
 			}
@@ -145,7 +145,7 @@ if($_POST['save']) {
 		$notification_handler->subscribe('form', $fid, $_POST['setwhen'], '', $mid, $not_cons_uid);
 		$thisnot = $notification_handler->getNotification($mid, 'form', $fid, $_POST['setwhen'], $not_cons_uid);
 	}
-	$not_cons_con = ($_POST['setfor'] == "all" OR count($_POST['terms']) == 0) ? "all" : serialize(array(serialize($_POST['elements']), serialize($_POST['ops']), serialize($_POST['terms'])));
+	$not_cons_con = ($_POST['setfor'] == "all" OR count((array) $_POST['terms']) == 0) ? "all" : serialize(array(serialize($_POST['elements']), serialize($_POST['ops']), serialize($_POST['terms'])));
 	
 	$template_filename = strstr($_POST['template'], ".tpl") ? str_replace(".tpl", "", $_POST['template']) : $_POST['template']; // strip .tpl out of the template name if it's present
 	$sql = "INSERT INTO " . $xoopsDB->prefix("formulize_notification_conditions") . " (not_cons_fid, not_cons_event, not_cons_uid, not_cons_curuser, not_cons_groupid, not_cons_creator, not_cons_elementuids, not_cons_linkcreator, not_cons_elementemail, not_cons_arbitrary, not_cons_con, not_cons_template, not_cons_subject) VALUES (\"$fid\", \"".formulize_db_escape($_POST['setwhen'])."\", \"$not_cons_uid\", \"$not_cons_curuser\", \"$not_cons_groupid\", \"$not_cons_creator\", \"$not_cons_elementuids\", \"$not_cons_linkcreator\", \"$not_cons_elementemail\", \"".formulize_db_escape($not_cons_arbitrary)."\", \"".formulize_db_escape($not_cons_con)."\", \"".formulize_db_escape($template_filename)."\", \"".formulize_db_escape($_POST['subject'])."\")";
@@ -161,7 +161,7 @@ $deleted = handleDelete($uid, $fid, $mid); // returns 1 if a deletion was made, 
 // $nots will be an array sent back by the q function
 $nots = getCurNots($fid, $canSetNots, $xoopsUser->getVar('uid'));
 
-$noNots = count($nots) == 0 ? true : false;
+$noNots = count((array) $nots) == 0 ? true : false;
 
 // get the groups and group names, and the elements with fullnames or usernames in them
 if($canSetNots) {
@@ -310,7 +310,7 @@ $setfor_all->addOption('all', _formulize_DE_SETNOT_FOR_ALL);
 // process existing conditions...
 
 if($_POST['addcon']) {
-	for($i=0;$i<count($_POST['elements']);$i++) {
+	for($i=0;$i<count((array) $_POST['elements']);$i++) {
 		$setnot->addElement(new xoopsFormHidden('elements[]', $_POST['elements'][$i]));
 		$setnot->addElement(new xoopsFormHidden('ops[]', $_POST['ops'][$i]));
 		$setnot->addElement(new xoopsFormHidden('terms[]', $_POST['terms'][$i]));
@@ -419,7 +419,7 @@ if(!$noNots) {
 			$terms = unserialize($cons[2]);
 			$text .=", ". _formulize_DE_NOT_CONTEXTIF;
 			$start = 1;
-			for($i=0;$i<count($elements);$i++) {
+			for($i=0;$i<count((array) $elements);$i++) {
 				if(!$start) {
 					$text .= _formluize_DE_NOT_CONTEXTAND;
 				}
@@ -476,7 +476,7 @@ function buildNotOptionList($sql, $type) {
 		while($array = $xoopsDB->fetchArray($res)) {
 			$options[$array['ele_id']] = $array['ele_colhead'] ? printSmart(trans($array['ele_colhead'])) : printSmart(trans($array['ele_caption']));
 		}
-		if(count($options) == 0) {
+		if(count((array) $options) == 0) {
 			$options[0] = $noOptionText;
 		}
 	} else {

@@ -427,7 +427,7 @@ if ($_GET['fid'] != "new") {
     }
     $groupsCanEditDefaults = $xoopsUser->getGroups();
     $regUserGroupKey = array_search(2, $groupsCanEditDefaults);
-    if(count($groupsCanEditDefaults)>1 AND $regUserGroupKey !== false) {
+    if(count((array) $groupsCanEditDefaults)>1 AND $regUserGroupKey !== false) {
         unset($groupsCanEditDefaults[$regUserGroupKey]); // don't give edit_form perm to registered users group unless it is the only group the user is a member of
     }
     $member_handler = xoops_gethandler('member');
@@ -559,7 +559,7 @@ if ($fid != "new") {
         if (isset($elements)) {
             $adminPage['tabs'][$i]['content']['elements'] = $elements;
         }
-        if (count($customElements)>0) {
+        if (count((array) $customElements)>0) {
             $adminPage['tabs'][$i]['content']['customElements'] = $customElements;
         }
         $i++;

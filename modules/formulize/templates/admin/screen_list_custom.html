@@ -12,7 +12,7 @@
 <input type="hidden" name="removeeffect" value=>
 
 
-<{if $content.custombuttons|@count == 0}>
+<{if $content.custombuttons|is_array AND $content.custombuttons|@count == 0}>
 		<h2>No custom buttons have been created for this screen</h2>
 <{/if}>
 

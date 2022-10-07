@@ -179,6 +179,11 @@ function tfaLoginJS($id) {
 	} else {
 		$workingMessageGif = "<img src=\"" . XOOPS_URL . "/modules/formulize/images/working-english.gif\">";
 	}
+    if(file_exists(XOOPS_ROOT_PATH.'/modules/system/language/'.$xoopsConfig['language'].'/blocks.php')) {
+        require_once XOOPS_ROOT_PATH.'/modules/system/language/'.$xoopsConfig['language'].'/blocks.php';
+    } elseif(file_exists(XOOPS_ROOT_PATH.'/modules/system/language/english/blocks.php')) {
+        require_once XOOPS_ROOT_PATH.'/modules/system/language/english/blocks.php';
+    }
 	static $counter = 0;
 	$counter++;
 	$js = "

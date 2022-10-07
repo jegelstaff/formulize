@@ -114,12 +114,12 @@
      /* Catch the number of required axis */
      $LabelSerie = $Data["Abscissa"];
      if ( $LabelSerie != "" )
-      { $Points = count($Data["Series"][$LabelSerie]["Data"]); }
+      { $Points = count((array) $Data["Series"][$LabelSerie]["Data"]); }
      else
       {
        $Points = 0;
        foreach($Data["Series"] as $SerieName => $DataArray)
-        { if ( count($DataArray["Data"]) > $Points ) { $Points = count($DataArray["Data"]); } }
+        { if ( count((array) $DataArray["Data"]) > $Points ) { $Points = count((array) $DataArray["Data"]); } }
       }
 
      /* Draw the axis */
@@ -366,7 +366,7 @@
           $Color = array("R"=>$Palette[$ID]["R"],"G"=>$Palette[$ID]["G"],"B"=>$Palette[$ID]["B"],"Alpha"=>$PolyAlpha,"Surrounding"=>$PointSurrounding);
 
          $PointsArray = "";
-         for($i=0; $i<count($Points);$i++) 
+         for($i=0; $i<count((array) $Points);$i++) 
           { $PointsArray[] = $Points[$i][0]; $PointsArray[] = $Points[$i][1]; }
          $Object->drawPolygon($PointsArray,$Color);
         }
@@ -384,12 +384,12 @@
        /* Loop to the starting points if asked */
        $Color["Weight"]=0.8; // ADDED BY FREEFORM SOLUTIONS TO FORCE THE RADAR PLOTS TO HAVE A WIDER LINE
        if ( $LineLoopStart && $DrawLines )
-        $Object->drawLine($Points[count($Points)-1][0],$Points[count($Points)-1][1],$Points[0][0],$Points[0][1],$Color);
+        $Object->drawLine($Points[count((array) $Points)-1][0],$Points[count((array) $Points)-1][1],$Points[0][0],$Points[0][1],$Color);
 
        /* Draw the lines & points */
-       for($i=0; $i<count($Points);$i++) 
+       for($i=0; $i<count((array) $Points);$i++) 
         {
-         if ( $DrawLines && $i < count($Points)-1)
+         if ( $DrawLines && $i < count((array) $Points)-1)
           $Object->drawLine($Points[$i][0],$Points[$i][1],$Points[$i+1][0],$Points[$i+1][1],$Color);
 
          if ( $DrawPoints )
@@ -486,12 +486,12 @@
      /* Catch the number of required axis */
      $LabelSerie = $Data["Abscissa"];
      if ( $LabelSerie != "" )
-      { $Points = count($Data["Series"][$LabelSerie]["Data"]); }
+      { $Points = count((array) $Data["Series"][$LabelSerie]["Data"]); }
      else
       {
        $Points = 0;
        foreach($Data["Series"] as $SerieName => $DataArray)
-        { if ( count($DataArray["Data"]) > $Points ) { $Points = count($DataArray["Data"]); } }
+        { if ( count((array) $DataArray["Data"]) > $Points ) { $Points = count((array) $DataArray["Data"]); } }
       }
 
      /* Draw the axis */
@@ -651,7 +651,7 @@
           $Color = array("R"=>$Palette[$ID]["R"],"G"=>$Palette[$ID]["G"],"B"=>$Palette[$ID]["B"],"Alpha"=>$PolyAlpha,"Surrounding"=>$PointSurrounding);
 
          $PointsArray = "";
-         for($i=0; $i<count($Points);$i++) 
+         for($i=0; $i<count((array) $Points);$i++) 
           { $PointsArray[] = $Points[$i][0]; $PointsArray[] = $Points[$i][1]; }
 
          $Object->drawPolygon($PointsArray,$Color);
@@ -669,12 +669,12 @@
 
        /* Loop to the starting points if asked */
        if ( $LineLoopStart && $DrawLines )
-        $Object->drawLine($Points[count($Points)-1][0],$Points[count($Points)-1][1],$Points[0][0],$Points[0][1],$Color);
+        $Object->drawLine($Points[count((array) $Points)-1][0],$Points[count((array) $Points)-1][1],$Points[0][0],$Points[0][1],$Color);
        
        /* Draw the lines & points */
-       for($i=0; $i<count($Points);$i++) 
+       for($i=0; $i<count((array) $Points);$i++) 
         {
-         if ( $DrawLines && $i < count($Points)-1)
+         if ( $DrawLines && $i < count((array) $Points)-1)
           $Object->drawLine($Points[$i][0],$Points[$i][1],$Points[$i+1][0],$Points[$i+1][1],$Color);
 
          if ( $DrawPoints )

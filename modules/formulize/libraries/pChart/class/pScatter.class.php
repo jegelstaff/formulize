@@ -570,7 +570,7 @@
           $Result[] = $this->pChartObject->GraphAreaX1 + $Data["Axis"][$AxisID]["Margin"] + ($Step * ($Value-$Data["Axis"][$AxisID]["ScaleMin"]));
         }
 
-       if ( count($Result) == 1 ) { return($Result[0]); } else { return($Result); }
+       if ( count((array) $Result) == 1 ) { return($Result[0]); } else { return($Result); }
       }
      else
       {
@@ -587,7 +587,7 @@
           $Result[] = $this->pChartObject->GraphAreaY2 - $Data["Axis"][$AxisID]["Margin"] - ($Step * ($Value-$Data["Axis"][$AxisID]["ScaleMin"]));
         }
 
-       if ( count($Result) == 1 ) { return($Result[0]); } else { return($Result); }
+       if ( count((array) $Result) == 1 ) { return($Result[0]); } else { return($Result); }
       }
     }
 
@@ -649,7 +649,7 @@
            if ( $Boundaries["B"] < $BoxArray[1]["Y"]+2+$IconAreaHeight/2 ) { $Boundaries["B"] = $BoxArray[1]["Y"]+2+$IconAreaHeight/2; }
 
            $Lines = preg_split("/\n/",$Series["Description"]);
-           $vY = $vY + max($this->pChartObject->FontSize*count($Lines),$IconAreaHeight) + 5;
+           $vY = $vY + max($this->pChartObject->FontSize*count((array) $Lines),$IconAreaHeight) + 5;
           }
          elseif ( $Mode == LEGEND_HORIZONTAL )
           {
@@ -724,7 +724,7 @@
            foreach($Lines as $Key => $Value)
             $this->pChartObject->drawText($X+$IconAreaWidth+4,$Y+$IconAreaHeight/2+(($this->pChartObject->FontSize+3)*$Key),$Value,array("R"=>$FontR,"G"=>$FontG,"B"=>$FontB,"Align"=>TEXT_ALIGN_MIDDLELEFT));
 
-           $Y=$Y+max($this->pChartObject->FontSize*count($Lines),$IconAreaHeight) + 5;
+           $Y=$Y+max($this->pChartObject->FontSize*count((array) $Lines),$IconAreaHeight) + 5;
           }
          elseif ( $Mode == LEGEND_HORIZONTAL )
           {
@@ -788,7 +788,7 @@
            if ( $Boundaries["B"] < $BoxArray[1]["Y"]+2+$IconAreaHeight/2 ) { $Boundaries["B"] = $BoxArray[1]["Y"]+2+$IconAreaHeight/2; }
 
            $Lines = preg_split("/\n/",$Series["Description"]);
-           $vY = $vY + max($this->pChartObject->FontSize*count($Lines),$IconAreaHeight) + 5;
+           $vY = $vY + max($this->pChartObject->FontSize*count((array) $Lines),$IconAreaHeight) + 5;
           }
          elseif ( $Mode == LEGEND_HORIZONTAL )
           {
@@ -851,7 +851,7 @@
            $Sxx = $Sxx + $X*$X;
           }
 
-         $n = count($PosArrayX);
+         $n = count((array) $PosArrayX);
 
          if ((($n*$Sxx) == ($Sx*$Sx)))
           {

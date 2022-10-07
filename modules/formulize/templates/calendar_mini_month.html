@@ -66,7 +66,7 @@ a.info:hover div
 	<tr>
 	    <{foreach item=day from=$week}>
 	        <td class="<{ if $rowStyleEven == true }>even<{elseif $rowStyleEven == false }>odd<{/if}>">
-		        <{ if count($day[1]) > 0 }>
+		        <{ if count((array) $day[1]) > 0 }>
 	                <a class=info href="" onclick="return false;"><{ $day[0][0] }><div class="event-day-listing"><ul><{foreach item=dayItem from=$day[1]}><li><{ $dayItem[3] }></li><{/foreach}></ul></div></a>
 				<{else}>
 	                <{ $day[0][0] }>

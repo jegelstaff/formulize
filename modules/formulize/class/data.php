@@ -214,7 +214,7 @@ class formulizeDataHandler  {
 					}
 				}
 				
-				if(count($newIds) > 1) {
+				if(count((array) $newIds) > 1) {
 					$newEleHandleValue = "\",".implode(",",$newIds).",\"";
 				} else {
 					$newEleHandleValue = $newIds[0];
@@ -606,7 +606,7 @@ class formulizeDataHandler  {
 			$entryids = array();
 			$entryids[] = $tempentryids;
 		}
-		if(count($uids) != count($entryids)) {
+		if(count((array) $uids) != count((array) $entryids)) {
 			return false;
 		}
 		if($update) { // clear the ownership records for these entries first...
@@ -623,7 +623,7 @@ class formulizeDataHandler  {
 		  // update the entry's creation and modification user ids
 		  $form_handler = xoops_getmodulehandler('forms', 'formulize');
 		  $formObject = $form_handler->get($this->fid);
-		  for($i=0;$i<count($uids);$i++) { // loop through all the users
+		  for($i=0;$i<count((array) $uids);$i++) { // loop through all the users
 			$uidUpdateSQL = "UPDATE ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." SET `creation_uid` = ".intval($uids[$i])." WHERE `entry_id` = ".intval($entryids[$i]);
 			if(!$uidUpdateResult = $xoopsDB->queryF($uidUpdateSQL)) {
 				return false;
@@ -634,7 +634,7 @@ class formulizeDataHandler  {
 		$ownerInsertSQLArray = array();
 		$ownerInsertSQLBase = "INSERT INTO " . $xoopsDB->prefix("formulize_entry_owner_groups") . " (`fid`, `entry_id`, `groupid`) VALUES ";
 		$ownerInsertSQLCurrent = $ownerInsertSQLBase;
-		for($i=0;$i<count($uids);$i++) { // loop through all the users
+		for($i=0;$i<count((array) $uids);$i++) { // loop through all the users
 			$ownerGroups = array();
 			if($uids[$i]) { // get the user's group
 				$member_handler =& xoops_gethandler('member');
@@ -752,7 +752,7 @@ class formulizeDataHandler  {
 		if(!isset($handleElementMap)) {
 			$handleElementMap = $cachedMaps[$this->fid][$mapIDs];
 		}
-        if(count($this->dataTypeMap)==0) {
+        if(count((array) $this->dataTypeMap)==0) {
             $this->dataTypeMap = $cachedDataTypeMaps[$this->fid]; // now assign the value of the property, based on the cached static array
 		}
 		
@@ -771,10 +771,10 @@ class formulizeDataHandler  {
 			}
 		}
 
-		if(count($idElements)>0 OR count($seqElements)>0) {
+		if(count((array) $idElements)>0 OR count((array) $seqElements)>0) {
 			$lockIsOn = true;
 			$xoopsDB->query("LOCK TABLES ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." WRITE"); // need to lock table since there are multiple operations required on it for this one write transaction
-			if(count($idElements)>0) {
+			if(count((array) $idElements)>0) {
 				if($entry == "new") {
 					$idMaxSQL = "SELECT AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA = '".XOOPS_DB_NAME."' AND TABLE_NAME = '".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."'";
 					if($idMaxRes = $xoopsDB->query($idMaxSQL)) {
@@ -791,7 +791,7 @@ class formulizeDataHandler  {
 					}
 				}
 			}
-			if(count($seqElements)>0) {
+			if(count((array) $seqElements)>0) {
 				foreach($seqElements as $seqElement) {
 					$maxSQL = "SELECT MAX(`".$handleElementMap[$seqElement]."`) FROM ". $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'));
 					if($maxRes = $xoopsDB->query($maxSQL)) {
@@ -842,7 +842,7 @@ class formulizeDataHandler  {
             }
         }
         
-        if (0 == count($element_values)) {
+        if (0 == count((array) $element_values)) {
             // no values to save, which is probably caused by the onBeforeSave() handler deleting all of the values
             return null;
         }
@@ -948,7 +948,7 @@ class formulizeDataHandler  {
 
     // check a given field against the dataTypeMap, return true if it contains 'date'
     function dataTypeIsDate($key) {
-        if(count($this->dataTypeMap)==0) {
+        if(count((array) $this->dataTypeMap)==0) {
             $this->dataTypeMap = $this->gatherDataTypes();
         }
         $key = trim($key, "`");
@@ -960,7 +960,7 @@ class formulizeDataHandler  {
     
     // check a given field against the dataTypeMap, return true if it's a numeric type
     function dataTypeIsNumeric($key) {
-        if(count($this->dataTypeMap)==0) {
+        if(count((array) $this->dataTypeMap)==0) {
             $this->dataTypeMap = $this->gatherDataTypes();
         }
         $key = trim($key, "`");
@@ -975,7 +975,7 @@ class formulizeDataHandler  {
     }
     
     function gatherDataTypes() {
-        if(count($this->dataTypeMap)!=0) {
+        if(count((array) $this->dataTypeMap)!=0) {
             return $this->dataTypeMap;
         }
         global $xoopsDB;
@@ -1139,7 +1139,7 @@ class formulizeDataHandler  {
 			} else {
 				$currentValues = array(0=>$array[$element->getVar('ele_handle')]);				
 			}
-			for($i=0;$i<count($newValues);$i++) {
+			for($i=0;$i<count((array) $newValues);$i++) {
 				if($newValues[$i] === $oldValues[$i]) { // ignore values that haven't changed
 					continue;
 				}
@@ -1150,7 +1150,7 @@ class formulizeDataHandler  {
 					if(!is_numeric($currentValues[$key]) AND $oldValues[$i] == '0') { continue; }
 					$currentValues[$key] = $newValues[$i];
 					$foundIndex[$key] = true;
-					if(count($foundIndex)==count($currentValues)) {
+					if(count((array) $foundIndex)==count((array) $currentValues)) {
 						break; // all currentValues have been replaced, so let's move on
 					}
 				}
@@ -1162,7 +1162,7 @@ class formulizeDataHandler  {
 			}
 			$updateSql[] = "UPDATE ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." SET `".$element->getVar('ele_handle')."` = '".formulize_db_escape($replacementString)."' WHERE entry_id = ".$array['entry_id'];
 		}
-		if(count($updateSql) > 0) { // if we have some SQL generated, then run it.
+		if(count((array) $updateSql) > 0) { // if we have some SQL generated, then run it.
 			foreach($updateSql as $thisSql) {
 				//print $thisSql."<br>";
 				if(!$res = $xoopsDB->query($thisSql)) {

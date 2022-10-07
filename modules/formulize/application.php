@@ -66,7 +66,7 @@ foreach($applicationsToDraw as $aid) {
         $app_name = _AM_CATGENERAL;
     }
     $formsToSend = getNavDataForForms($links);
-    if(count($formsToSend)>0) {
+    if(count((array) $formsToSend)>0) {
         $allAppData[] = array('app_name'=>$app_name, 'noforms'=>0, 'formData'=>$formsToSend);
     }
     

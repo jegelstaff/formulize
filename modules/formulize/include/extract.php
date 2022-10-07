@@ -162,7 +162,7 @@ function prepvalues($value, $field, $entry_id) {
                 // unfortunately, sometimes sourceMeta[1] seems to be saved as element handles rather than element IDs, and in that case,
                 // convertElementIdsToElementHandles() returns array(0 => 'none') which causes an error in the query below.
                 // check for that case here and revert back to the value of sourceMeta[1] before convertElementIdsToElementHandles()
-                if ((1 == count($sourceMeta[1]) and isset($sourceMeta[1][0]) and "none" == $sourceMeta[1][0]) OR $sourceMeta[1] == "none") {
+                if ((1 == count((array) $sourceMeta[1]) and isset($sourceMeta[1][0]) and "none" == $sourceMeta[1][0]) OR $sourceMeta[1] == "none") {
                     $sourceMeta[1] = $before_conversion;
                 }
             }
@@ -212,8 +212,8 @@ function prepvalues($value, $field, $entry_id) {
             $listtype = key($ele_value[2]);
             if($listtype === "{USERNAMES}" OR $listtype === "{FULLNAMES}") {
                 $uids = explode("*=+*:", $value);
-                if(count($uids) > 0) {
-                    if(count($uids) > 1) {
+                if(count((array) $uids) > 0) {
+                    if(count((array) $uids) > 1) {
                         array_shift($uids);
                     }
                     $uidFilter = extract_makeUidFilter($uids);
@@ -443,7 +443,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		// FIGURE OUT THE SCOPE (WHICH ENTRIES ARE INCLUDED BASED ON GROUPS ETC)
 		$scopeFilter = "";
 		if(is_array($scope)) { // assume any arrays are groupid arrays, and so make a valid scope string based on this.  Use the new entry owner table.
-			if	(count($scope) > 0 ) {
+			if	(count((array) $scope) > 0 ) {
 				$start = true;
 				foreach($scope as $groupid) { // need to loop through the array, and not use implode, so we can sanitize the values
 					if(!$start) {
@@ -718,7 +718,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		}
 		
 		// SETUP THE MAIN SELECT STATEMENT
-		if( count( $sqlFilterElements ) > 0 ) {
+		if( count((array)  $sqlFilterElements ) > 0 ) {
 			// update any linked form select statements to use only the fields that have been requested
 			if($linkSelect) {
 				foreach($sqlFilterElementsIndex as $key=>$fields) {
@@ -756,7 +756,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 
 		$restOfTheSQL = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo." AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause ";
 		$restOfTheSQLForExport = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo." AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $orderByClause ";  // don't use limitByEntryId since exports include all entries
-		if(count($linkformids)>1) { // AND $dummy == "never") { // when there is more than 1 joined form, we can get an exponential explosion of records returned, because SQL will give you all combinations of the joins
+		if(count((array) $linkformids)>1) { // AND $dummy == "never") { // when there is more than 1 joined form, we can get an exponential explosion of records returned, because SQL will give you all combinations of the joins
 			if(!$sortIsOnMain) {
 				$orderByToUse = " ORDER BY usethissort $sortOrder ";
 				$useAsSortSubQuery = " @rownum:=@rownum+1, $useAsSortSubQuery,"; // need to add a counter as the first field, used as the master sorting key
@@ -820,7 +820,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 //}
 	formulize_benchmark("Before query");
 
-    if(count($linkformids)>1) { // AND $dummy=="never") { // when there is more than 1 joined form, we can get an exponential explosion of records returned, because SQL will give you all combinations of the joins, so we create a series of queries that will each handle the main form plus one of the linked forms, then we put all the data together into a single result set below
+    if(count((array) $linkformids)>1) { // AND $dummy=="never") { // when there is more than 1 joined form, we can get an exponential explosion of records returned, because SQL will give you all combinations of the joins, so we create a series of queries that will each handle the main form plus one of the linked forms, then we put all the data together into a single result set below
         $timestamp = str_replace(".","",microtime(true));
         if(!$sortIsOnMain) {
             $createTableSQL = "CREATE TABLE ".DBPRE."formulize_temp_extract_$timestamp ( `mastersort` BIGINT(11), `throwaway_sort_values` text, `entry_id` BIGINT(11), PRIMARY KEY (`mastersort`), INDEX i_entry_id (`entry_id`) ) ENGINE=InnoDB;"; // when the sort is not on the main form, then we are including a special field in the select statement that we sort it by, so that the order is correct, and so it has to have a place to get inserted here
@@ -838,7 +838,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		$linkQueryRes = array();
         // PERFORM PRE-PREPREPARED QUERIES FOR AN EXPORT
 	    if(isset($exportOverrideQueries[2])) {
-		    for($i=2;$i<count($exportOverrideQueries);$i++) {
+		    for($i=2;$i<count((array) $exportOverrideQueries);$i++) {
                 $sql = str_replace("REPLACEWITHTIMESTAMP",$timestamp,$exportOverrideQueries[$i]);
                 $linkQueryRes[] = $xoopsDB->query($sql);
 		    }
@@ -885,7 +885,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
     if($resultOnly) {
         if($resultOnly === 'bypass') {
             return true; // all we care about here is prepping the query for export (or some other reason)
-        } elseif(count($linkformids)>1) {
+        } elseif(count((array) $linkformids)>1) {
             foreach($linkQueryRes as $thisRes) {
                 if($thisRes AND $xoopsDB->getRowsNum($thisRes)>0) {
                     return $resultData;
@@ -1000,7 +1000,7 @@ function formulize_gatherLinkMetadata($frid, $fid, $mainFormOnly=false) {
         $linktargetids1 = array();
         $linkselfids1 = array();
         $linkcommonvalue1 = array();
-        if(count($linklist1) > 0) {
+        if(count((array) $linklist1) > 0) {
             foreach($linklist1 as $theselinks) {
                 $linkformids1[] = $theselinks['fl_form2_id'];
                 if($theselinks['fl_key1'] != 0) {
@@ -1027,7 +1027,7 @@ function formulize_gatherLinkMetadata($frid, $fid, $mainFormOnly=false) {
         $linktargetids2 = array();
         $linkselfids2 = array();
         $linkcommonvalue2 = array();
-        if(count($linklist2) > 0) {
+        if(count((array) $linklist2) > 0) {
             foreach($linklist2 as $theselinks) {
                 $linkformids2[] = $theselinks['fl_form1_id'];
                 if($theselinks['fl_key2'] != 0) {
@@ -1150,7 +1150,7 @@ function processGetDataResults($resultData) {
                                 if(isset($writtenMains[$entryIdIndex['main']])) {
                                     $masterIndexer = $masterQueryArrayIndex[$entryIdIndex['main']]; // use the master index value for this main entry id if we've already logged it
                                 } else {
-                                    $masterIndexer = count($masterResults); // use the next available number for the master indexer
+                                    $masterIndexer = count((array) $masterResults); // use the next available number for the master indexer
                                     $masterQueryArrayIndex[$entryIdIndex['main']] = $masterIndexer; // log it so we can reuse it for this entry when it comes up in another query
                                 }
                                 $prevMainId = $entryIdIndex['main']; // if the current form is a main, then store it's ID for use later when we're on a new record
@@ -1187,7 +1187,7 @@ function processGetDataResults($resultData) {
     // potentially run through the derived value fields as long as we're not doing an export of data
     if(!isset($GLOBALS['formulize_doingExport']) OR $GLOBALS['formulize_doingExport'] !== true) {
         $derivedFieldMetadata = gatherDerivedValueFieldMetadata($fid, $linkformids);
-	  if(count($derivedFieldMetadata) > 0 AND $masterIndexer > -1) { // if there is derived value info for this data set and we have started to create values...need to do this one more time for the last value that we would have gathered data for...
+	  if(count((array) $derivedFieldMetadata) > 0 AND $masterIndexer > -1) { // if there is derived value info for this data set and we have started to create values...need to do this one more time for the last value that we would have gathered data for...
 	    foreach($masterResults as $masterIndex=>$thisRecord) {
 	       $masterResults[$masterIndex] = formulize_calcDerivedColumns($thisRecord, $derivedFieldMetadata, $frid, $fid);
 	    }
@@ -1470,7 +1470,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                                global $xoopsDB;
                                if($xoopsDB) {
                                    $form_handler = xoops_getmodulehandler('forms', 'formulize');
-                                   $otherpgfCount = count($otherPerGroupFilterJoins) + 1;
+                                   $otherpgfCount = count((array) $otherPerGroupFilterJoins) + 1;
                                    $otherPerGroupFilterWhereClause[] = $form_handler->getPerGroupFilterWhereClause($sourceMeta[0], "otherpgf".$otherpgfCount);
                                    $tempOtherPGFJoin = " LEFT JOIN ".DBPRE."formulize_".$sourceFormObject->getVar('form_handle')." AS otherpgf".$otherpgfCount." ON ";
                                    $tempOtherPGFJoin .= " otherpgf".$otherpgfCount.".entry_id IN (TRIM(',' FROM $queryElement)) ";
@@ -1484,7 +1484,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                                // Exists works in all cases.  :-)
                                if (is_array($sourceMeta[1])) {
                                    // when searching a linked box which presents multiple columns, concat the columns to search
-                                   if (1 == count($sourceMeta[1]) and "none" == $sourceMeta[1][0]) {
+                                   if (1 == count((array) $sourceMeta[1]) and "none" == $sourceMeta[1][0]) {
                                        // no columns were selected for display, so search all of them
                                        $search_column = convertElementIdsToElementHandles($sourceFormObject->getVar('elements'), $sourceMeta[0]);
                                        $search_column = "CONCAT_WS('', source.`".implode("`, source.`", $search_column)."`)";
@@ -1616,7 +1616,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
         }
     }
      
-    if(count($fundamental_filters)>0) {
+    if(count((array) $fundamental_filters)>0) {
         // parse the fundamental filters
         // apply to the whereClause
         // apply relevant terms to the oneSideFilters
@@ -1898,7 +1898,7 @@ function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form
                             $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0] = $derivedValue === '{WRITEASNULL}' ? NULL : $derivedValue;
                         }
                     }
-                if ($xoopsDB and count($dataToWrite) > 0) {
+                if ($xoopsDB and count((array) $dataToWrite) > 0) {
                     // false for no proxy user, true to force the update even on get requests, false is do not update the metadata (modification user)
                     $data_handler->writeEntry($primary_entry_id, $dataToWrite, false, true, false);
                 }
@@ -2001,15 +2001,15 @@ function formulize_convertCapOrColHeadToHandle($frid, $fid, $term) {
         if(isset($results_array[$form_id][$term][$frid])) { return $results_array[$form_id][$term][$frid]; }
 		// first check if this is a handle
 		$handle_query = go("SELECT ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND ele_handle = \"".formulize_db_escape($term)."\"");
-		if(count($handle_query) > 0) { // if this is a valid handle, then use it
+		if(count((array) $handle_query) > 0) { // if this is a valid handle, then use it
 			$handle = $term;
 		} else {
 			$colhead_query = go("SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND (ele_colhead = \"" . formulize_db_escape($term) . "\" OR ele_colhead LIKE '%]".formulize_db_escape($term)."[/%')");
-			if(count($colhead_query) > 0) {
+			if(count((array) $colhead_query) > 0) {
 				$handle = $colhead_query[0]['ele_handle'];
 			} else {
 				$caption_query = go("SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND (ele_caption = \"" . formulize_db_escape($term) . "\" OR ele_caption LIKE '%]".formulize_db_escape($term)."[/%')");
-				if(count($caption_query) > 0 ) {
+				if(count((array) $caption_query) > 0 ) {
 					$handle = $caption_query[0]['ele_handle'];
 				}
 			}
@@ -2297,7 +2297,7 @@ function display($entry, $handle, $id=null, $localid="NULL") {
 		}
 	}
   
-	if(count($foundValues) == 1) {
+	if(count((array) $foundValues) == 1) {
     $GLOBALS['formulize_mostRecentLocalId'] = $GLOBALS['formulize_mostRecentLocalId'][0];
 		return $foundValues[0];
 	} else {
@@ -2325,7 +2325,7 @@ function makeList($string, $type="bulleted") {
 		$type = "ul>";
 	} 
 	$listItems = explode("\r", $string);
-	if(count($listItems)>1) {
+	if(count((array) $listItems)>1) {
 		$list = "<" . $type;
 		foreach($listItems as $item) {
 			if(trim($item) != "") { // exclude empty items, ie: this accounts for multiple "returns" at the end of a line
@@ -2349,7 +2349,7 @@ function makePara($string, $parasToReturn="NULL") {
 	} else {
 		$paras = explode("\r", $string);
 	}
-	if(count($paras)>1) {
+	if(count((array) $paras)>1) {
 		$ptr = explode(",", $parasToReturn);
 		$counter = 0;
 		foreach($paras as $item) {
@@ -2370,7 +2370,7 @@ function makePara($string, $parasToReturn="NULL") {
 
 function makeBR($string) {
 	$brs = explode("\r", $string);
-	if(count($brs)>1) {
+	if(count((array) $brs)>1) {
 		$start = 1;
 		foreach($brs as $br) {
 			if(trim($br) != "") { // exclude empty items, ie: this accounts for multiple "returns" at the end of a line
@@ -2529,7 +2529,7 @@ function resultSortRelevance($data, $handleArray, $wordArray, $weight="") {
 	if(!$weight) {
 		// if no weights specified then build a weight array with equal weighting for all handles
 		unset($weight);
-		for($i=0;$i<count($handleArray);$i++) {
+		for($i=0;$i<count((array) $handleArray);$i++) {
 			$weight[] = 1;
 		}
 	}
@@ -2542,7 +2542,7 @@ function resultSortRelevance($data, $handleArray, $wordArray, $weight="") {
 
 	foreach($data as $id=>$entry) {
 		foreach($wordArray as $word) {
-			for($i=0;$i<count($handleArray);$i++) {
+			for($i=0;$i<count((array) $handleArray);$i++) {
 				$hits = countHits($entry, $handleArray[$i], $word);
 				$weightedhits = $hits * $weight[$i];
 				$wordScores[$id] += $weightedhits;

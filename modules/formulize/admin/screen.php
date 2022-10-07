@@ -147,7 +147,7 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $viewOptions['mine'] = _AM_FORMULIZE_SCREEN_LOE_DVMINE;
   $viewOptions['group'] = _AM_FORMULIZE_SCREEN_LOE_DVGROUP;
   $viewOptions['all'] = _AM_FORMULIZE_SCREEN_LOE_DVALL;
-  for($i=0;$i<count($views);$i++) {
+  for($i=0;$i<count((array) $views);$i++) {
       if (!$viewPublished[$i]) { continue; }
       $viewOptions[$views[$i]] = $viewNames[$i];
       if ($viewFrids[$i]) {
@@ -283,7 +283,7 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   // custom button data
   $custom = array();
   $applyToOptions = array('inline'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_INLINE, 'selected'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_SELECTED, 'all'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_ALL, 'new'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEW, 'new_per_selected'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEWPERSELECTED);
-  if (count($allFids) > 1) {
+  if (count((array) $allFids) > 1) {
     foreach ($allFids as $i=>$thisFid) {
       if ($thisFid == $form_id) { continue; } // don't treat the current form as if it's an 'other' form
       $applyToOptions['new_'.$thisFid] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEW_OTHER . printSmart($allFidObjs[$thisFid]->getVar('title'), 20) . "'";
@@ -298,7 +298,7 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
       $custom['custombuttons'][$buttonId]['content'] = $buttonData;
       $custom['custombuttons'][$buttonId]['content']['id'] = $buttonId; // add id to the date for the template
       $custom['custombuttons'][$buttonId]['name'] = $buttonData['handle'];
-      $custom['custombuttons'][$buttonId]['groups'] = unserialize($buttonData['groups']);
+      $custom['custombuttons'][$buttonId]['groups'] = unserialize((string) $buttonData['groups']);
       foreach($buttonData as $key=>$value) {
         if (is_numeric($key)) { // effects have numeric keys
           if ($buttonData['applyto'] == 'custom_code') {
@@ -362,7 +362,7 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
 
     // group entries
     $pages = array();
-    for($i=0;$i<(count($pageTitles)+$pageCounterOffset);$i++) {
+    for($i=0;$i<(count((array) $pageTitles)+$pageCounterOffset);$i++) {
     $pages[$i]['name'] = $pageTitles[$i];
     $pages[$i]['content']['index'] = $i;
     $pages[$i]['content']['number'] = $i+1;

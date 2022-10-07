@@ -69,7 +69,7 @@ foreach($screens as $k=>$v) {
 		if($_POST['conditionsdelete'] != "" AND $conditionsDeleteParts[1] == $page_number) { // key 1 will be the page number where the X was clicked
 		  // go through the passed filter settings starting from the one we need to remove, and shunt the rest down one space
 		  // need to do this in a loop, because unsetting and key-sorting will maintain the key associations of the remaining high values above the one that was deleted
-		  $originalCount = count($_POST[$filter_key.'_elements']);
+		  $originalCount = count((array) $_POST[$filter_key.'_elements']);
 		  for($i=$conditionsDeleteParts[2];$i<$originalCount;$i++) { // 2 is the X that was clicked for this page
 		    if($i>$conditionsDeleteParts[2]) {
 		      $_POST[$filter_key."_elements"][$i-1] = $_POST[$filter_key."_elements"][$i];
@@ -89,7 +89,7 @@ foreach($screens as $k=>$v) {
 		}
 		$conditions[$page_number] = array();
 		// now package everything up into the conditions we need
-		if(count($_POST['pagefilter_'.$page_number.'_terms']) > 0) {
+		if(count((array) $_POST['pagefilter_'.$page_number.'_terms']) > 0) {
 			foreach($_POST['pagefilter_'.$page_number.'_elements'] as $key=>$value) {
 				$conditions[$page_number][0][$key] = $value;
 			}

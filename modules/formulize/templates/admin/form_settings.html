@@ -100,7 +100,7 @@
 			<div style="clear: both;"></div>
 		<{/if}>
 	
-		<{if $content.fid != "new" && $content.elementheadings|@count}>
+		<{if $content.fid != "new" AND $content.elementheadings|is_array AND $content.elementheadings|@count}>
 		<div class="accordion-box">
 			<div class="form-item">
 				<fieldset>
@@ -152,7 +152,7 @@
     
 	<{/if}>
 	
-	<{if $content.applications|@count > 0}>
+	<{if $content.applications|is_array AND $content.applications|@count > 0}>
 	<div class="accordion-box">
 		<div class="form-item">
 			<fieldset>

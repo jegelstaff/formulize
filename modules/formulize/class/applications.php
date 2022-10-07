@@ -382,7 +382,7 @@ class formulizeApplicationsHandler {
 
 		$runRemoval = false;
 		$runInsert = false;
-    if(count($formsForInsert)>0) {
+    if(count((array) $formsForInsert)>0) {
     	$insertStart = true;
       $insertSQL = "INSERT INTO ".$this->db->prefix("formulize_application_form_link")." (`fid`, `appid`) VALUES ";
       foreach($formsForInsert as $thisFid) {
@@ -392,7 +392,7 @@ class formulizeApplicationsHandler {
   			$runInsert = true;
       }
     }
-    if(count($formsForRemoval)>0) {
+    if(count((array) $formsForRemoval)>0) {
       $removalSQL = "DELETE FROM ".$this->db->prefix("formulize_application_form_link")." WHERE ";
       $removalStart = true;
       foreach($formsForRemoval as $thisFid) {
@@ -484,7 +484,7 @@ class formulizeApplicationsHandler {
 		}else{
 			
 			$menuid = $xoopsDB->getInsertId();
-			if($linkValues[4] != "null" and count($linkValues[4]) > 0){
+			if($linkValues[4] != "null" and count((array) $linkValues[4]) > 0){
                 $groupsThatCanView = explode(",",$linkValues[4]);
 				$groupsThatCanView = array_map(array($xoopsDB, 'escape'), $groupsThatCanView);
                 $groupsWithDefaultPage = explode(",",$linkValues[5]);
@@ -546,7 +546,7 @@ class formulizeApplicationsHandler {
         	$deletepermissions = "DELETE FROM `".$xoopsDB->prefix("formulize_menu_permissions")."` WHERE menu_id=".formulize_db_escape($linkValues[0]).";";
        	 	$result = $xoopsDB->query($deletepermissions);
         
-       	 	if($linkValues[4] != "null" and count($linkValues[4]) > 0){
+       	 	if($linkValues[4] != "null" and count((array) $linkValues[4]) > 0){
                 $groupsThatCanView = explode(",",$linkValues[4]);
 				$groupsThatCanView = array_map(array($xoopsDB, 'escape'), $groupsThatCanView);
                 $groupsWithDefaultPage = explode(",",$linkValues[5]);

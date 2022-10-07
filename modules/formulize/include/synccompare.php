@@ -68,7 +68,7 @@ class SyncCompareCatalog {
     public function addRecord($tableName, $record, $fields) {
         
         // there should be one record value for each field string
-        if (count($record) != count($fields)) {
+        if (count((array) $record) != count((array) $fields)) {
             throw new Exception("compare(...) requires record and fields to have the same number of values");
         }
 
@@ -121,7 +121,7 @@ class SyncCompareCatalog {
                 //}
 
                 // compare each record field for changes
-                for ($i = 0; $i < count($record); $i++) {
+                for ($i = 0; $i < count((array) $record); $i++) {
                     $field = $fields[$i];
                     $value = $record[$i];
                     $dbValue = $dbRecord[$field];
@@ -281,7 +281,7 @@ class SyncCompareCatalog {
 
     private function getPrimaryField($tableName) {
         $result = $this->db->query('SHOW COLUMNS FROM '.prefixTable($tableName).' WHERE `Key` = "PRI"')->fetchAll();
-        if (count($result) > 1) {
+        if (count((array) $result) > 1) {
             throw new Exception("Synchronization compare for table ".$tableName." returns multiple primary key fields");
         }
         return $result[0]['Field'];
@@ -289,7 +289,7 @@ class SyncCompareCatalog {
 
     private function convertRec($record, $fields) {
         $result = array();
-        for ($i = 0; $i < count($record); $i++) {
+        for ($i = 0; $i < count((array) $record); $i++) {
             $key = $fields[$i];
             $val = $record[$i];
             $result[$key] = $val;
@@ -325,7 +325,7 @@ class SyncCompareCatalog {
         }
 
         // for joined table fields check the changes list, then fallback to DB
-        if (isset($tableMetaInfo["joins"]) AND count($tableMetaInfo["joins"]) > 0) {
+        if (isset($tableMetaInfo["joins"]) AND count((array) $tableMetaInfo["joins"]) > 0) {
             foreach ($tableMetaInfo["joins"] as $joinTableInfo) {
                 
                 $joinTableName = $joinTableInfo["join_table"];

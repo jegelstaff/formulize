@@ -53,7 +53,7 @@
       { if ( $SerieName != $LabelSerie && $DataSerie == "" ) { $DataSerie = $SerieName; } }
 
      $DataSerieSum   = array_sum($Data["Series"][$DataSerie]["Data"]);
-     $DataSerieCount = count($Data["Series"][$DataSerie]["Data"]);
+     $DataSerieCount = count((array) $Data["Series"][$DataSerie]["Data"]);
 
      /* Scale Processing */
      if ( $TextPos == TEXT_POS_RIGHT )

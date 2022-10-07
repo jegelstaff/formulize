@@ -2,7 +2,7 @@
 <div class="optionlist">
 <p><input type="button" class="formButton" name="addoption" value="<{$smarty.const._AM_ELE_ADD_OPT_SUBMIT}> 1"></p>
 
-<{if $content.useroptions|@count > 0}>
+<{if $content.useroptions|is_array AND $content.useroptions|@count > 0}>
   <{foreach from=$content.useroptions key=text item=checked name=optionsloop}>
     <p class="useroptions" name="<{$smarty.foreach.optionsloop.index}>">
     <{if $content.type == "radio"}><input type="radio" name="defaultoption" value=<{$smarty.foreach.optionsloop.index}> <{if $checked}>checked<{/if}>></input>
