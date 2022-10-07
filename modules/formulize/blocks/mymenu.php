@@ -47,7 +47,7 @@ function block_formulizeMENU_show() {
         
         		$links = $thisApplication->getVar('links');
         
-        		if(count($links) > 0){
+        		if(count((array) $links) > 0){
             
             			$menuTexts[$i]['application'] = $thisApplication;
             
@@ -58,15 +58,15 @@ function block_formulizeMENU_show() {
             		}
  	}
 	$links = $application_handler->getMenuLinksForApp(0);
-	if(count($links)>0) {
+	if(count((array) $links)>0) {
         $menuTexts[$i]['links'] = $links;
         $menuTexts[$i]['application'] = 0;
   }
-	if(count($menuTexts) == 0) { // if no menu entries were found, return nothing
+	if(count((array) $menuTexts) == 0) { // if no menu entries were found, return nothing
 				$block['content'] = _AM_NOFORMS_AVAIL;
 				return $block;
   }
-	$forceOpen = count($menuTexts)==1 ? true : false;
+	$forceOpen = count((array) $menuTexts)==1 ? true : false;
     $menuData = array();
 	foreach($menuTexts as $thisMenuData) {
 				list($content, $data) = drawMenuSection($thisMenuData['application'], $thisMenuData['links'], $forceOpen, $form_handler);

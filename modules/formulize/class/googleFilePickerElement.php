@@ -376,7 +376,7 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
             $picker .= "<p>";
         }
         
-        if(count($ele_value['files'])>0) {
+        if(count((array) $ele_value['files'])>0) {
             foreach($ele_value['files'] as $file) {
                 $interactiveMarkup = $isDisabled ? "" : "<a href=\"\" onclick=\"warnAboutGoogleDelete$eleId('".$file['id']."', '".str_replace('"','\"',htmlspecialchars_decode($file['name'], ENT_QUOTES))."', '".$markupName."');return false;\"><img src=\"".XOOPS_URL."/modules/formulize/images/x.gif\" /></a><input type=\"hidden\" name=\"".$markupName."[]\" value=\"".str_replace('"','\"',htmlspecialchars_decode($file['name'], ENT_QUOTES))."<{()}>".$file['url']."<{()}>".$file['id']."<{()}>".$file['iconUrl']."\">";
                 $interactiveId = $isDisabled ? "" : "id=\"googlefile_".$markupName."_".$file['id']."\"";
@@ -460,7 +460,7 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
     // this method will format a dataset value for display on screen when a list of entries is prepared
     // for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
     // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
-    function formatDataForList($value, $handle, $entry_id) {
+    function formatDataForList($value, $handle="", $entry_id=0) {
         $this->clickable = false; // make urls clickable
         $this->striphtml = false; // remove html tags as a security precaution
         $this->length = 100000; // truncate to a maximum of 2000 characters, and append ... on the end

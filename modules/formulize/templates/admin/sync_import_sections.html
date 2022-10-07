@@ -4,9 +4,9 @@
     <span style="color:green;">New table!</span>
     <{/if}>
 
-    <{if count($sectionContent.inserts) > 0}>
+    <{if count((array) $sectionContent.inserts) > 0}>
     <fieldset>
-        <legend>Inserts (<{$sectionContent.inserts|@count}>)</legend>
+        <legend>Inserts (<{if $sectionContent.inserts|is_array}><{$sectionContent.inserts|@count}><{/if}>)</legend>
         <ul>
             <{foreach from=$sectionContent.inserts item=rec}>
             <li><{$rec}></li>
@@ -15,9 +15,9 @@
     </fieldset>
     <{/if}>
 
-    <{if count($sectionContent.updates) > 0}>
+    <{if count((array) $sectionContent.updates) > 0}>
     <fieldset>
-        <legend>Updates (<{$sectionContent.updates|@count}>)</legend>
+        <legend>Updates (<{if $sectionContent.updates|is_array}><{$sectionContent.updates|@count}><{/if}>)</legend>
         <ul>
             <{foreach from=$sectionContent.updates item=rec}>
             <li><{$rec}></li>
@@ -26,9 +26,9 @@
     </fieldset>
     <{/if}>
 
-    <{if count($sectionContent.deletes) > 0}>
+    <{if count((array) $sectionContent.deletes) > 0}>
     <fieldset>
-        <legend>Deletions (<{$sectionContent.deletes|@count}>)</legend>
+        <legend>Deletions (<{if $sectionContent.deletes|is_array}><{$sectionContent.deletes|@count}><{/if}>)</legend>
         <ul>
             <{foreach from=$sectionContent.deletes item=rec}>
             <li><{$rec}></li>

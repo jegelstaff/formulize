@@ -905,6 +905,14 @@ td.subentry-view-cell {
     width: 3em;
 }
 
+input[type=checkbox] {
+  -ms-transform: scale(1.25); /* IE */
+  -moz-transform: scale(1.25); /* FF */
+  -webkit-transform: scale(1.25); /* Safari and Chrome */
+  -o-transform: scale(1.25); /* Opera */
+  transform: scale(1.25);
+}
+
 table.formulize-subform-table {
     /*width: 100%;*/
 }
@@ -2858,6 +2866,37 @@ img {
    font-size: 1.2rem;
 }
 
+.formulize-grid {
+    width: 100%;
+    max-width: 300px;
+}
+.formulize-grid input, .formulize-grid select {
+    width: auto !important;
+    max-width: 75px !important;
+}
+@media (min-width: 768px) {
+    .formulize-grid {
+        width: 700px;
+    }
+    .formulize-grid select {
+        min-width: 0px !important;
+        max-width: 100% !important;    
+    }
+    .formulize-grid input {
+        min-width: 0px !important;
+        max-width: 200px !important;    
+    }
+}
+
+.formulize-grid td {
+    padding-right: 1em;
+}
+
+a.loe-edit-entry {
+    color: #1080FF;
+    font-size: 1.5rem;
+}
+
 #formulize-masquerade-block {
   bottom: 1em;
   right: 1em;
@@ -3079,6 +3118,13 @@ td.column a.header-info-link {
     position: sticky;
     border-right: 1px dotted #d1d1df;
     background-color: white;
+}
+
+.loe-edit-entry::before {
+    color: inherit;    
+}
+a.loe-edit-entry:hover {
+    text-shadow: none;
 }
 
 /* compatibility with classic xoops table layout */
@@ -3335,4 +3381,8 @@ form[name='metachoiceform'] td p {
     input[type="button"], input[type="submit"] {
         display: none;
     }
+}
+
+#dialog-tfalostaccount, #block_login_form input, #pwchange input {
+    margin-top: 0.4em;
 }

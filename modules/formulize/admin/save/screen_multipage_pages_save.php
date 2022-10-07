@@ -72,7 +72,7 @@ $newOrder = explode("drawer-5[]=", str_replace("&", "", $_POST['pageorder']));
 unset($newOrder[0]);
 
 
-if(count($newOrder) != count($pagetitles)) {
+if(count((array) $newOrder) != count((array) $pagetitles)) {
 
 	print "Error: number of pages being saved does not match number of pages in this screen!";
 

@@ -6,6 +6,7 @@
  */
 
 include_once "../../mainfile.php";
+include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 
 require_once "loader.php";
 Loader::register('../../libraries/TwoFactorAuth/','RobThree\\Auth');
@@ -143,9 +144,10 @@ function user2FAMethod($user=null) {
     // check if 2FA is on    
     $config_handler = icms::handler('icms_config');
 	$criteria = new Criteria('conf_name', 'auth_2fa');
-	$auth_2fa = $config_handler->getConfigs($criteria);
-	$auth_2fa = $auth_2fa[0];
-	$auth_2fa = $auth_2fa->getConfValueForOutput();
+	if($auth_2fa = $config_handler->getConfigs($criteria)) {
+        $auth_2fa = $auth_2fa[0];
+        $auth_2fa = $auth_2fa->getConfValueForOutput();
+    }
     if($auth_2fa == false) {
         return false;
     }
@@ -178,6 +180,11 @@ function tfaLoginJS($id) {
 	} else {
 		$workingMessageGif = "<img src=\"" . XOOPS_URL . "/modules/formulize/images/working-english.gif\">";
 	}
+    if(file_exists(XOOPS_ROOT_PATH.'/modules/system/language/'.$xoopsConfig['language'].'/blocks.php')) {
+        require_once XOOPS_ROOT_PATH.'/modules/system/language/'.$xoopsConfig['language'].'/blocks.php';
+    } elseif(file_exists(XOOPS_ROOT_PATH.'/modules/system/language/english/blocks.php')) {
+        require_once XOOPS_ROOT_PATH.'/modules/system/language/english/blocks.php';
+    }
 	static $counter = 0;
 	$counter++;
 	$js = "
@@ -190,16 +197,16 @@ function tfaLoginJS($id) {
 			autoOpen: false,
 			modal: true,
 			title: '"._US_2FA."',
-			width: '40%',
+			width: 'auto',
 			position: { my: 'center center', at: 'center center', of: window },
 			buttons: [
+                { text: 'OK', icon: 'ui-icon-check', click: function() {
+						close2FADialog(jQuery(this), '$id');
+					}
+				},
 				{ text: 'Cancel', icon: 'ui-icon-close', click: function() {
 						jQuery( this ).dialog( 'close' );
 						jQuery( this ).html('<center>".$workingMessageGif."</center>');
-					}
-				},
-				{ text: 'OK', icon: 'ui-icon-check', click: function() {
-						close2FADialog(jQuery(this), '$id');
 					}
 				}
 			],

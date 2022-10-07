@@ -1575,7 +1575,6 @@ function icms_escapeValue($value, $quotes = true)
 {
 	if(is_string($value))
 	{
-		if(get_magic_quotes_gpc) {$value = stripslashes($value);}
 		$value = icms::$xoopsDB->escape($value);
 		if($quotes) {$value = '"'.$value.'"';}
 	}

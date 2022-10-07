@@ -128,10 +128,7 @@ class icms_core_DataFilter {
 	 * @return  string
 	 */
 	static public function addSlashes($text) {
-		if (!get_magic_quotes_gpc()) {
-			$text = addslashes($text);
-		}
-		return $text;
+		return addslashes($text);
 	}
 
 	/**
@@ -143,9 +140,6 @@ class icms_core_DataFilter {
 	 * @return   string
 	 */
 	static public function stripSlashesGPC($text) {
-		if (get_magic_quotes_gpc()) {
-			$text = stripslashes($text);
-		}
 		return $text;
 	}
 

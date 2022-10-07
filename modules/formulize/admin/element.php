@@ -115,7 +115,7 @@ if ($_GET['ele_id'] != "new") {
     }
 
     $ele_filtersettings = $elementObject->getVar('ele_filtersettings');
-    $filterSettingsToSend = count($ele_filtersettings > 0) ? $ele_filtersettings : "";
+    $filterSettingsToSend = (count((array) $ele_filtersettings) > 0) ? $ele_filtersettings : "";
     $display['filtersettings'] = formulize_createFilterUI($filterSettingsToSend, "elementfilter", $fid, "form-3");
     $display['ele_forcehidden'] = $elementObject->getVar('ele_forcehidden') ? " checked" : "";
     $display['ele_private'] = $elementObject->getVar('ele_private') ? " checked" : "";
@@ -345,13 +345,13 @@ if ($ele_type=='text') {
             }
         }
     }
-    if (count($validForms) == 0) {
+    if (count((array) $validForms) == 0) {
         $validForms['none'] = _AM_ELE_SUBFORM_NONE;
     }
     $options['subforms'] = $validForms;
     if ($caughtfirst) {
         $formtouse = $ele_value[0] ? $ele_value[0] : $firstform; // use the user's selection, unless there isn't one, then use the first form found
-        $elementsq = q("SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=" . intval($formtouse) . " AND ele_type != \"areamodif\" AND ele_type != \"grid\" AND ele_type != \"ib\" AND ele_type != \"subform\" ORDER BY ele_order");
+        $elementsq = q("SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=" . intval($formtouse) . " AND ele_type != \"grid\" AND ele_type != \"ib\" AND ele_type != \"subform\" ORDER BY ele_order");
         $options['subformUserFilterElements'][0] = _formulize_NONE;
         foreach($elementsq as $oneele) {
             $options['subformelements'][$oneele['ele_id']] = $oneele['ele_colhead'] ? $oneele['ele_colhead'] : printSmart($oneele['ele_caption']);
@@ -406,7 +406,7 @@ if ($ele_type=='text') {
             $options['islinked'] = 1;
         } else {
             $options['islinked'] = 0;
-            if (is_array($ele_uitext) AND count($ele_uitext) > 0) {
+            if (is_array($ele_uitext) AND count((array) $ele_uitext) > 0) {
                 $ele_value[2] = formulize_mergeUIText($ele_value[2], $ele_uitext);
             }
             $options['useroptions'] = $ele_value[2];
@@ -519,7 +519,7 @@ $options['ele_value'] = $ele_value;
 if($elementObject->hasMultipleOptions AND !$elementObject->isLinked) {
     $advanced['hasMultipleOptions'] = true;
     $exportOptions = $elementObject->getVar('ele_exportoptions');
-    $advanced['exportoptions_onoff'] = (is_array($exportOptions) AND count($exportOptions) > 0) ? 1 : 0;
+    $advanced['exportoptions_onoff'] = (is_array($exportOptions) AND count((array) $exportOptions) > 0) ? 1 : 0;
     $advanced['exportoptions_hasvalue'] = $exportOptions['indicators']['hasValue'];
     $advanced['exportoptions_doesnothavevalue'] = $exportOptions['indicators']['doesNotHaveValue'];
 } else {
@@ -544,7 +544,7 @@ $adminPage['tabs'][$tabindex]['content'] = $names+$common;
 if ($ele_type!='colorpick') {
     $adminPage['tabs'][++$tabindex]['name'] = "Options";
     $adminPage['tabs'][$tabindex]['template'] = "db:admin/element_options.html";
-    if (count($customValues)>0) {
+    if (count((array) $customValues)>0) {
     $adminPage['tabs'][$tabindex]['content'] = $customValues + $options + $common;
     } else {
     $adminPage['tabs'][$tabindex]['content'] = $options + $common;

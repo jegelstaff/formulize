@@ -61,7 +61,7 @@ if(($_POST['new_app_yes_no'] == "yes" AND $_POST['applications-name'])) {
 }
 
 // get all the existing applcations that this form object was assigned to
-if(isset($_POST['apps']) AND count($_POST['apps']) > 0) {
+if(isset($_POST['apps']) AND count((array) $_POST['apps']) > 0) {
   $selectedAppObjects = $application_handler->get($_POST['apps']);
 }
 

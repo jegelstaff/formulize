@@ -90,7 +90,7 @@ $(document).ready(function() {
     </div>
 </div>
 
-<{if $content.form_screens|count && $content.ele_form_screens|count}>
+<{if $content.form_screens|is_array AND $content.form_screens|@count AND $content.ele_form_screens|is_array AND $content.ele_form_screens|@count}>
 <div class="accordion-box">
     <div class="form-item">
     <fieldset>

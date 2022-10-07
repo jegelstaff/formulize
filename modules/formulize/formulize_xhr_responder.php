@@ -182,7 +182,7 @@ switch($op) {
             if(substr($v, 0, 9)=="newvalue:") { $sendBackValue[$k] = $databaseReadyValue; }
         $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$passedEntryId][$handle] = $databaseReadyValue;
         $apiFormatValue = prepvalues($databaseReadyValue, $handle, $passedEntryId); // will be an array
-        if(is_array($apiFormatValue) AND count($apiFormatValue)==1) {
+        if(is_array($apiFormatValue) AND count((array) $apiFormatValue)==1) {
           $apiFormatValue = $apiFormatValue[0]; // take the single value if there's only one, same as display function does
         }
         $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$passedEntryId][$handle] = $apiFormatValue;
@@ -217,9 +217,7 @@ switch($op) {
           $data_handler = new formulizeDataHandler($onetoonefid);
           if($link->getVar('common')) {
             $entryId = $data_handler->findFirstEntryWithValue($targetElement, $databaseReadyValue);  
-          } elseif($sourceElement==$passedElementId AND $passedEntryId != 'new') {
-            $entryId = $passedEntryId; // use entry id from the conditional element that triggered this, ie: the id of the entry on one side of the relationship? -- really?? Maybe should be databaseReadyValue same as when passed entry id is 'new'? Perhaps this only kicks in when an element from the B form is included with the A form?
-          } elseif($sourceElement==$passedElementId AND $passedEntryId == 'new') {
+          } elseif($sourceElement==$passedElementId) {
             $entryId = $databaseReadyValue; // use entry id of the value selected in the conditional element that triggered this -- expected when the A form contains a link to the B form, and the B form values are supposed to come in when something is selected
           }
           break;
@@ -229,7 +227,7 @@ switch($op) {
     if(!$onetoonekey OR ($entryId AND $entryId != 'new')) {
     if(security_check($fid, $entryId)) {
         $html = renderElement($elementObject, $entryId);
-        if(count($sendBackValue)>0) {
+        if(count((array) $sendBackValue)>0) {
           // if we wrote any new values in autocomplete boxes, pass them back so we can alter their values in markup so new entries are not created again!
           print '{ "data" : '.json_encode($html).', "newvalues" : [';
           $start = true;
@@ -257,9 +255,10 @@ switch($op) {
     $formRelationID = $_GET['frid'];
     $entryID = isset($_GET['entryId']) ? intval($_GET['entryId']) : "";
     $limitStart = $_GET['limitstart'];
+    $limitSize = $_GET['limitsize'] ? intval($_GET['limitsize']) : 50;
     $GLOBALS['formulize_forceDerivedValueUpdate'] = true;
     ob_start();
-    $data = getData($formRelationID, $formID, $entryID, "AND","",$limitStart,50);
+    $data = getData($formRelationID, $formID, $entryID, "AND","",$limitStart,$limitSize);
     ob_clean(); // this catches any errors or other output because it would stop the update from running
     $GLOBALS['formulize_forceDerivedValueUpdate'] = false;
     if(isset($_GET['returnElements'])) {
@@ -286,7 +285,7 @@ switch($op) {
         }
         print json_encode($derivedValueMarkup);
     } else {
-        print count($data); // return the number of entries found. when this reaches 0, the client will know to stop calling, in the case where this is called by admin UI to update all entries after derived value formulas are changed
+        print count((array) $data); // return the number of entries found. when this reaches 0, the client will know to stop calling, in the case where this is called by admin UI to update all entries after derived value formulas are changed
     }
     break;
 
@@ -306,7 +305,7 @@ switch($op) {
 
     list($views, $viewNames, $viewFrids, $viewPublished) = $formulizeForm->getFormViews($_POST['form_id']);
     $frameworks = $framework_handler->getFrameworksByForm($_POST['form_id']);
-    for ($i = 0; $i <= count($viewNames); $i++) {
+    for ($i = 0; $i <= count((array) $viewNames); $i++) {
         if(!$viewPublished[$i]) {
             unset($views[$i]);
             unset($viewNames[$i]);
@@ -345,24 +344,15 @@ function renderElement($elementObject, $entryId) {
                 $form_ele->setRequired();
             }
             $isDisabled = $deReturnValue[1];
-            // rendered HTML code below is taken from the formulize classes at the top of include/formdisplay.php
-            // NEEDS REFACTORING TO WORK WITH NEW TEMPLATE BASED FORM RENDERING!!!
+            require_once XOOPS_ROOT_PATH."/modules/formulize/include/formdisplay.php"; // need the formulize_themeForm
+            $form = new formulize_themeForm('formulizeAsynchElementRender','',''); // prepare empty form object just for rendering element
             if($elementObject->getVar('ele_type') == "ib") {// if it's a break, handle it differently...
-                $class = ($form_ele[1] != '') ? " class='".$form_ele[1]."'" : '';
-                $columnData = formulize_themeForm::_getColumns($elementObject->getVar('ele_id'));
-                $colspan = $columnData[0] == 1 ? "" : "colspan='2'";
-                if ($form_ele[0]) {
-                    $html = "<td $colspan $class><div style=\"font-weight: normal;\">" . trans(stripslashes($form_ele[0])) . "</div></td>";
-                } else {
-                    $html = "<td $colspan $class>&nbsp;</td>";
-                }
-                if(($columnData[0] != 1 AND $columnData[2] != 'auto' AND $columnData[1] != 'auto')
-                    OR ($columnData[0] == 1 AND $columnData[1] != 'auto')) {
-                        $html .= '<td class="formulize-spacer-column">&nbsp;</td>';
-                }
+                $form->insertBreakFormulize("<div class=\"formulize-text-for-display\">" . trans(stripslashes($form_ele[0])) . "</div>", $form_ele[1], 'de_'.$fid.'_'.$entryForDEElements.'_'.$this_ele_id, $i->getVar("ele_handle"));
+                $hidden = '';
+                $html = '';
+                list($html, $hidden) = $form->_drawElements($form->getElements(), $html, $hidden);
             } else {
-              require_once XOOPS_ROOT_PATH."/modules/formulize/include/formdisplay.php"; // need the formulize_themeForm
-              $html = formulize_themeForm::_drawElementElementHTML($form_ele);
+              $html = $form->_drawElementElementHTML($form_ele);
             }
             if($html) {
                 $html = trans($html);

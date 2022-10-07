@@ -140,7 +140,7 @@ if($fid AND $uid) {
     if($searchFilter AND !is_array($searchFilter)) { // if search is a string, append it to any existing filter or use it outright
         $filter .= $filter ? $filter.']['.$searchFilter : $searchFilter;
     } elseif($filter AND $searchFilter) { // if search is an array, stick an existing filter into the array and use that
-        $filterIndex = count($searchFilter);
+        $filterIndex = count((array) $searchFilter);
         $searchFilter[$filterIndex][0] = $andor;
         $searchFilter[$filterIndex][1] = $filter;
         $filter = $searchFilter;
@@ -151,7 +151,7 @@ if($fid AND $uid) {
         //var_dump($filter);
         //exit();
 				}
-    $filterElements = count($filterElements) == 0 ? null : $filterElements;
+    $filterElements = count((array) $filterElements) == 0 ? null : $filterElements;
     $data = getData($frid, $fid, $filter, $andor, $scope, $limitStart, $limitSize, $sortHandle, $sortDir, false, 0, false, "", false, 'bypass', $filterElements); // 'bypass' before filterElements means don't even do the query, just prep eveything - avoids potentially expensive query and expensive pass through all the data!
     if($data === true) { // we'll get back false if we weren't able to 
         $exportTime = formulize_catchAndWriteExportQuery($fid);

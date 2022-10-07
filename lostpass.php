@@ -9,6 +9,8 @@
 include "mainfile.php";
 
 if(!$GLOBALS['xoopsSecurity']->check(true, $_GET['token'])) {
+    include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
+    redirect_header(XOOPS_URL, 5, trans("[en]Please try again. Do not click 'Back' in your browser.[/en][fr]Veuillez réessayer. Ne cliquez pas sur 'Retour' dans votre navigateur.[/fr]"));
     exit();
 }
 
@@ -74,7 +76,7 @@ print "
 <div style='padding: 2em;'>
 <h1>"._US_RESET_PW_FOR.strip_tags(htmlspecialchars($row['login_name'], ENT_QUOTES))."</h1>$errorMessage
 <form id='pwchange' action='".XOOPS_URL."/lostpass.php?a=".urlencode(strip_tags(htmlspecialchars($_GET['a'], ENT_QUOTES)))."&token=".urlencode($GLOBALS['xoopsSecurity']->createToken())."' method='post'>
-<p>"._US_TO_CHANGE_PASS.$method.":<br><input type='text' autocomplete='one-time-code' inputmode='numeric' name='code' value='' /></p><br>
+<p><b>"._US_TO_CHANGE_PASS.$method.":</b><br><input type='text' autocomplete='one-time-code' inputmode='numeric' name='code' value='' /></p><br>
 <p>"._US_NEW_PASSWORD."<br><input type='password' autocomplete='new-password' name='pass1' value='' /></p><br>
 <p>"._US_CONFIRM_PASSWORD."<br><input type='password' autocomplete='new-password' name='pass2' value='' /></p><br>
 <input type='submit' name='submit' value='"._US_RESET_PW_BUTTON."'>

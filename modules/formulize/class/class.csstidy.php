@@ -417,7 +417,7 @@ function load_template($content, $from_file=true)
 	$content = str_replace("\r\n","\n",$content); // Unify newlines (because the output also only uses \n)
 	$template = explode('|',$content);
 
-	for ($i = 0; $i < count($template); $i++ )
+	for ($i = 0; $i < count((array) $template); $i++ )
 	{
 		$this->template[$i] = $template[$i];
 	}
@@ -832,7 +832,7 @@ function explode_selectors()
         $this->sel_separate[] = strlen($this->selector);
         foreach($this->sel_separate as $num => $pos)
         {
-            if($num == count($this->sel_separate)-1) {
+            if($num == count((array) $this->sel_separate)-1) {
                 $pos += 1;
             }
             
@@ -840,7 +840,7 @@ function explode_selectors()
             $lastpos = $pos;
         }
  
-        if(count($new_sels) > 1)
+        if(count((array) $new_sels) > 1)
         {
             foreach($new_sels as $selector)
             {

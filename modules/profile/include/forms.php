@@ -262,9 +262,11 @@ function getUserForm(&$user, $profile = false, $action = false) {
             $level_radio->addOption(1, _MD_PROFILE_ACTIVE);
             $level_radio->addOption(0, _MD_PROFILE_INACTIVE);
             $level_radio->addOption(-1, _MD_PROFILE_DISABLED);
-            $elements[0][] = array('element' => $level_radio, 'required' => 0);
-            $weights[0][] = 0;
-		}
+		} else {
+            $level_radio = new icms_form_elements_Hidden('level', $user->getVar('level'));
+        }
+        $elements[0][] = array('element' => $level_radio, 'required' => 0);
+        $weights[0][] = 0;
     }
 
     $elements[0][] = array('element' => new icms_form_elements_Hidden('uid', $user->getVar('uid')), 'required' => 0);
@@ -321,7 +323,7 @@ function getUserForm(&$user, $profile = false, $action = false) {
         foreach (array_keys($elements[$k]) as $i) {
             $form->addElement($elements[$k][$i]['element'], $elements[$k][$i]['required']);
             if($elements[$k][$i]['element']->getName() == '2faphone') {
-                $forgetButton = "<input type='button' value='"._US_FORGET_DEVICES_BUTTON."' onclick='jQuery.post(\"/include/2fa/forget.php\");'>";
+                $forgetButton = "<input type='button' value='"._US_FORGET_DEVICES_BUTTON."' onclick='jQuery.post(\"/include/2fa/forget.php\", function(data) { if(data == 1) { alert(\""._US_FORGET_DEVICES_DONE."\"); } });'>";
                 $forgetElement = new xoopsFormLabel(_US_FORGET_DEVICES, $forgetButton);
                 $forgetElement->setDescription(_US_FORGET_DEVICES_DESC);
                 $form->addElement($forgetElement);

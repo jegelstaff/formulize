@@ -383,15 +383,10 @@ switch ($op) {
 					autoOpen: false,
 					modal: true,
 					title: '"._US_2FA."',
-					width: '40%',
+					width: 'auto',
 					position: { my: 'center center', at: 'center center', of: window },
 					buttons: [
-						{ text: 'Cancel', icon: 'ui-icon-close', click: function() {
-								jQuery( this ).dialog( 'close' );
-								jQuery( this ).html('<center>".$workingMessageGif."</center>');
-							}
-						},
-						{ text: 'OK', icon: 'ui-icon-check', click: function() {
+                        { text: 'OK', icon: 'ui-icon-check', click: function() {
 								var code = jQuery('#dialog-tfacode').val();
 								jQuery( this ).dialog( 'close' );
 								jQuery( this ).html('<center>".$workingMessageGif."</center>');
@@ -399,6 +394,11 @@ switch ($op) {
 									jQuery('#tfacode').val(code);
 									jQuery('#userinfo').submit();
 								}
+							}
+						},
+						{ text: 'Cancel', icon: 'ui-icon-close', click: function() {
+								jQuery( this ).dialog( 'close' );
+								jQuery( this ).html('<center>".$workingMessageGif."</center>');
 							}
 						}
 					],

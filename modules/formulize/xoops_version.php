@@ -31,7 +31,7 @@
 
 $modversion = array(
 	'name' => _MI_formulize_NAME,
-	'version' => "7.0",
+	'version' => "7.01",
 	'description' => _MI_formulize_DESC,
 	'author' => "Julian Egelstaff & Freeform Solutions",
 	'credits' => "",
@@ -680,7 +680,13 @@ $modversion['templates'][] = array(
 	'file' => 'blocks/menu.html',
 	'description' => '');
 $modversion['templates'][] = array(
+	'file' => 'blocks/menu_controller.html',
+	'description' => '');
+$modversion['templates'][] = array(
 	'file' => 'admin/mailusers.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/managepermissions.html',
 	'description' => '');
     
 //	Module Configs

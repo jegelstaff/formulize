@@ -86,6 +86,7 @@ if(isset($_GET['x_a']) AND isset($_GET['x_b'])) {
     $_SESSION['lmsUserId'] = $userId;
     $_SESSION['name'] = $name;
     //$_SESSION['email'] = 'bgabriel@ilns';
+    $_SESSION['ext_d2l_orgdefinedid'] = $_POST['ext_d2l_orgdefinedid'];
     $_SESSION['email'] = $email;
     $_SESSION['ou'] = $queryParams['ou'];
     $_SESSION['parentNode'] = $queryParams['parentNode'];
@@ -102,8 +103,8 @@ $opContext = $authContext->createUserContextFromHostSpec($hostSpec, null, null, 
 
 if($opContext != null) {
   // We have everything we need to create user context.  Go to the main page after saving user API key and ID.
-  $_SESSION['apiUserId'] = $opContext->getUserId();
-  $_SESSION['apiUserKey'] = $opContext->getUserKey();
+  $_SESSION['brightspaceUserId'] = $opContext->getUserId();
+  $_SESSION['brightspaceUserKey'] = $opContext->getUserKey();
   //print_r($_SESSION);
   //exit('heading to controller');
   header("Location: /libraries/brightspace/controller.php");

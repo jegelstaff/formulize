@@ -155,7 +155,7 @@ if($ele_type == "subform") {
 
   }
   $processedValues['elements']['ele_value'][1] = implode(",",$_POST['elements_ele_value_1']);
-  $processedValues['elements']['ele_value']['disabledelements'] = (isset($_POST['elements_ele_value_disabledelements']) AND count($_POST['elements_ele_value_disabledelements']) > 0) ? implode(",",$_POST['elements_ele_value_disabledelements']) : array();
+  $processedValues['elements']['ele_value']['disabledelements'] = (isset($_POST['elements_ele_value_disabledelements']) AND count((array) $_POST['elements_ele_value_disabledelements']) > 0) ? implode(",",$_POST['elements_ele_value_disabledelements']) : array();
   $processedValues['elements']['ele_value'][7] = parseSubmittedConditions('subformfilter', 'optionsconditionsdelete'); // post key, delete key
 }
 
@@ -265,7 +265,7 @@ if($ele_type == "select") {
     $deleteTarget = intval($conditionsDeleteParts[1]);
     // go through the passed filter settings starting from the one we need to remove, and shunt the rest down one space
     // need to do this in a loop, because unsetting and key-sorting will maintain the key associations of the remaining high values above the one that was deleted
-    $originalCount = count($_POST[$filter_key."_elements"]);
+    $originalCount = count((array) $_POST[$filter_key."_elements"]);
     for($i=$deleteTarget;$i<$originalCount;$i++) { 
       if($i>$deleteTarget) {
         $_POST[$filter_key."_elements"][$i-1] = $_POST[$filter_key."_elements"][$i];
@@ -283,7 +283,7 @@ if($ele_type == "select") {
     }
     $_POST['reload_option_page'] = true;
   }
-  if(count($_POST[$filter_key."_elements"]) > 0){
+  if(count((array) $_POST[$filter_key."_elements"]) > 0){
     $processedValues['elements']['ele_value'][5][0] = $_POST[$filter_key."_elements"];
     $processedValues['elements']['ele_value'][5][1] = $_POST[$filter_key."_ops"];
     $processedValues['elements']['ele_value'][5][2] = $_POST[$filter_key."_terms"];

@@ -83,7 +83,7 @@
 
 <div class="accordion-box">
 
-	<{if $content.groupperms|@count == 0}>
+	<{if $content.groupperms|is_array AND $content.groupperms|@count == 0}>
 		<div class="form-item">
 		<fieldset>
 			<legend><label class="question"><{$smarty.const._AM_PERMISSIONS_SELECT_GROUP}></label></legend>

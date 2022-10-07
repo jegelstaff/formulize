@@ -177,7 +177,7 @@ class formulizeForm extends XoopsObject {
 			$viewFrids = array();
 			$viewPublished = array();
 		} else {
-			for($i=0;$i<count($viewq);$i++) {
+			for($i=0;$i<count((array) $viewq);$i++) {
 				
 				$views[$i] = $viewq[$i]['sv_id'];
 				$viewNames[$i] = stripslashes($viewq[$i]['sv_name']);
@@ -792,7 +792,7 @@ class formulizeFormsHandler {
 		}
 		global $xoopsDB;
 		$existingTables = array();
-		if(count($existingTables)==0) {
+		if(count((array) $existingTables)==0) {
 			$testsql = "SHOW TABLES LIKE '%_revisions'";
 			$resultst = $xoopsDB->queryF($testsql);
 			while($table = $xoopsDB->fetchRow($resultst)) {
@@ -1142,7 +1142,7 @@ class formulizeFormsHandler {
 			// find the filter indexes for 'match all' and 'match one or more'
 			$filterAll = array();
 			$filterOOM = array();
-			for($i=0;$i<count($filterSettings[3]);$i++) {
+			for($i=0;$i<count((array) $filterSettings[3]);$i++) {
 				if($filterSettings[3][$i] == "all") {
 					$filterAll[] = $i;
 				} else {
@@ -1182,14 +1182,14 @@ class formulizeFormsHandler {
 	function buildPerGroupFilterWhereClause($match,$indexes,$filterSettings,$uid,$formAlias) {
 		$perGroupFilter = "";
 
-		for($io=0;$io<count($indexes);$io++) {
+		for($io=0;$io<count((array) $indexes);$io++) {
 			$i = $indexes[$io];
 			if(!($perGroupFilter == "")) {
 				$perGroupFilter .= " $match ";
 			}
 
 			$likeBits = (strstr(strtoupper($filterSettings[1][$i]), "LIKE") AND substr($filterSettings[2][$i], 0, 1) != "%" AND substr($filterSettings[2][$i], -1) != "%") ? "%" : "";
-			$termToUse = str_replace("{USER}", $uid, $filterSettings[2][$i]); 
+			$termToUse = str_replace(array("{USER}", "{USER_ID}"), $uid, $filterSettings[2][$i]); 
 			if (preg_replace("[^A-Z{}]","", $termToUse) === "{TODAY}") {
 				$number = preg_replace("[^0-9+-]","", $termToUse);
 				$termToUse = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
