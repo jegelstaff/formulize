@@ -378,7 +378,7 @@ define("_AM_ELE_SUBFORM_ADD_PARENT", "Yes, only if the user can add entries in t
 
 
 // grids
-define("_AM_ELE_GRID", "Table of existing elements (place BEFORE the elements it contains)");
+define("_AM_ELE_GRID", "Table of existing elements");
 define("_AM_ELE_GRID_HEADING", "What text should appear as the heading for this table?");
 define("_AM_ELE_GRID_HEADING_USE_CAPTION", "The caption typed above");
 define("_AM_ELE_GRID_HEADING_USE_FORM", "The title of this form");

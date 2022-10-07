@@ -1462,7 +1462,7 @@ div.save-view-access {
 
 #savebutton input, #popupsavebutton input {
   float: left;
-  font-size: 1.1em;
+  font-size: 1.1rem;
   width: 150px;
   text-align: center;
   margin-bottom: 1em;

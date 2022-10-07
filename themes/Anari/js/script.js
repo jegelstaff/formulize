@@ -140,6 +140,13 @@ function initHamburgerMenu() {
     evt.preventDefault();
     flyoutMenu.classList.remove('site-layout__sidebar--open');
   });
+  var login_button = document.querySelector('#block_login_form input[type=submit]');
+  if (login_button) {
+    login_button.addEventListener('click', function(evt) {
+      flyoutMenu.classList.remove('site-layout__sidebar--open');
+    });
+  }
+  
 }
 /**
  * Toggle cards

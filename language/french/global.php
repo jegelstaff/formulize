@@ -289,6 +289,7 @@ define("_US_2FA_CODE","Code: ");
 define("_US_DONT_ASK_AGAIN", "Ne plus demander sur cet appareil");
 define("_US_FORGET_DEVICES", "Réinitialiser tous vos appareils mémorisés");
 define("_US_FORGET_DEVICES_BUTTON", "Reset");
+define("_US_FORGET_DEVICES_DONE", "Vos appareils mémorisés ont été réinitialisés");
 define("_US_FORGET_DEVICES_DESC", "Si vous avez coché la case <i>\""._US_DONT_ASK_AGAIN."\"</i> lors de la connexion, cliquez sur ce bouton pour oublier tous ces appareils afin qu'un code vous soit demandé la prochaine fois. Ceci est très important à faire immédiatement si votre mot de passe a été volé !");define("_US_TO_CHANGE_PASS","To change your password, enter the Two-Factor Authentication code from your ");
 define("_US_NO_ACCOUNT","No matching account");
 define("_US_USERNAME_OR_EMAIL","Enter the username or email address for the account: ");

@@ -21,7 +21,7 @@ $user = $icmsAuth->authenticate(trim($_GET['u']), trim($_GET['p']));
 if($user AND
    $method = user2FAMethod($user) AND
    userRemembersDevice($user) == false) {
-    $codebox = "<br><br>"._US_2FA_CODE."<input type='text' id='dialog-tfacode' value=''><br><input type='checkbox' id='dialog-tfaremember'> <label for='dialog-tfaremember'>"._US_DONT_ASK_AGAIN."</label>";
+    $codebox = "<br><br>"._US_2FA_CODE."<input type='text' id='dialog-tfacode' value=''><br><br><input type='checkbox' id='dialog-tfaremember'> <label for='dialog-tfaremember'>"._US_DONT_ASK_AGAIN."</label>";
     switch($method) {
         case TFA_SMS:
             $message = sendCode(TFA_SMS, $user->getVar('uid')); // will return errors

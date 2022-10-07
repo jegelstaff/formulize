@@ -793,10 +793,10 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 
     // if the go_back form was triggered, ie: we're coming back from displaying a different entry, then we need to adjust and show the parent entry/form/etc
     // important to do these setup things only once per page load
+    // ALSO, may not be showing the parent... could be going down the rabbit hole to another sub!!
     static $cameBackFromSubformAlready = false;
 	if($_POST['parent_form'] AND !$cameBackFromSubformAlready) { // if we're coming back from a subform
         $cameBackFromSubformAlready = true;
-
         $parent_form = htmlspecialchars(strip_tags($_POST['parent_form']));
         $parent_form = strstr($parent_form, ',') ? explode(',',$parent_form) : array($parent_form);
         $parent_entry = htmlspecialchars(strip_tags($_POST['parent_entry']));
@@ -879,7 +879,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		unset($formframe);
 		$formframe = $formframetemp;
 	}
-
     list($fid, $frid) = getFormFramework($formframe, $mainform);
 
     // propagate the go_back values from page load to page load, so we can eventually return there when the user is ready
@@ -890,7 +889,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		$go_back['entry'] = htmlspecialchars(strip_tags($_POST['go_back_entry']));
         $go_back['page'] = htmlspecialchars(strip_tags($_POST['go_back_page']));
         $go_back['subformElementId'] = htmlspecialchars(strip_tags($_POST['go_back_subformElementId']));
-        
 	}
 
 	// set $entry in the case of a form_submission where we were editing an entry (just in case that entry is not what is used to call this function in the first place -- ie: we're on a subform and the mainform has no entry specified, or we're clicking submit over again on a single-entry form where we started with no entry)
@@ -1003,13 +1001,19 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 	if($entry == "proxy") { $entry = ""; } // convert the proxy flag to the actual null value expected for new entry situations (do this after the single check!)
 	$editing = is_numeric($entry); // will be true if there is an entry we're looking at already
 
-	if(!$scheck = security_check($fid, $entry, $uid, $owner, $groups) AND !$viewallforms AND !$profileForm) {
-		print "<p>" . _NO_PERM . "</p>";
-		return;
-	}
-
-    if($entry AND $updateMainformDerivedAfterSubEntryDeletion) {
-        formulize_updateDerivedValues($entry, $fid, $frid);
+    // super klugey! when going to a sub form the entry is not set correctly yet, so premature to do security check and update derived at this point!
+    // Flow of this code from opening of function until main foreach of the $fids, needs to be straightened out for sure!
+    // Possibly more than that since we leap off to render subforms in different places too. But the main ugly part is all this stuff that sets and overrides and overrides the fid and entry
+    if(isset($_POST['goto_sfid']) AND is_numeric($_POST['goto_sfid']) AND $_POST['goto_sfid'] > 0) {
+    } else {
+        if(!$scheck = security_check($fid, $entry, $uid, $owner, $groups) AND !$viewallforms AND !$profileForm) {
+            print "<p>" . _NO_PERM . "</p>";
+            return;
+        }
+    
+        if($entry AND $updateMainformDerivedAfterSubEntryDeletion) {
+            formulize_updateDerivedValues($entry, $fid, $frid);
+        }
     }
     
 	// main security check passed, so let's initialize flags	
@@ -1093,8 +1097,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 	// used to allow saving of information when you don't want the form itself to reappear
 	if($settings == "{RETURNAFTERSAVE}" AND $_POST['form_submitted']) { return "returning_after_save"; }
 
-      // need to add code here to switch some things around if we're on a subform for the first time (add)
-	// note: double nested sub forms will not work currently, since on the way back to the intermediate level, the go_back values will not be set correctly
+    // need to add code here to switch some things around if we're on a subform for the first time (add)
 	if(isset($_POST['goto_sfid']) AND is_numeric($_POST['goto_sfid']) AND $_POST['goto_sfid'] > 0) {
         
         // unpack details of the parent entry that we were showing, if we're now displaying a subform screen
@@ -1111,7 +1114,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
         $newEntry = $originalEntry ? $originalEntry : $temp_entries[$fid][0];
 		$go_back['form'] .= $go_back['form'] ? ','.$newFid : $newFid;
 		$go_back['entry'] .= $go_back['entry'] ? ','.$newEntry : $newEntry;
-        $go_back['page'] .= (isset($go_back['page']) AND $go_back['page'] !== '') ? ','.htmlspecialchars(string_tags($_POST['formulize_prevPage'])) : htmlspecialchars(strip_tags($_POST['formulize_prevPage']));
+        $go_back['page'] .= (isset($go_back['page']) AND $go_back['page'] !== '') ? ','.htmlspecialchars(strip_tags($_POST['formulize_prevPage'])) : htmlspecialchars(strip_tags($_POST['formulize_prevPage']));
         $go_back['subformElementId'] .= (isset($go_back['subformElementId']) AND $go_back['subformElementId'] !== '') ? ','.intval($_POST['prev_subformElementId']) : intval($_POST['prev_subformElementId']);
 		unset($entries);
 		unset($fids);
@@ -2398,22 +2401,25 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 				if($rowsOrForms=='row' OR $rowsOrForms =='') {
 					
 					if(!$drawnHeadersOnce) {
-						$col_two .= "<tr><th class='subentry-delete-cell'></th>\n";
+						$col_two .= "<tr>";
+                        if ($sub_ent !== "new" and ("hideaddentries" != $hideaddentries)
+                            and formulizePermHandler::user_can_delete_entry($subform_id, $uid, $sub_ent) AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
+                            $col_two .= "<th class='subentry-delete-cell'></th>\n";
+                        }
                         if(!$renderingSubformUIInModal AND $showViewButtons AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) { $col_two .= "<th class='subentry-view-cell'></th>\n"; }
 						$col_two .= drawRowSubformHeaders($headersToDraw, $headingDescriptions);
 						$col_two .= "</tr>\n";
 						$drawnHeadersOnce = true;
 					}
                     $subElementId = is_object($subform_element_object) ? $subform_element_object->getVar('ele_id') : '';
-					$col_two .= "<tr class='row-".$sub_ent."-".$subElementId."'>\n<td class='subentry-delete-cell'>";
+					$col_two .= "<tr class='row-".$sub_ent."-".$subElementId."'>\n";
 					// check to see if we draw a delete box or not
 					if ($sub_ent !== "new" and ("hideaddentries" != $hideaddentries)
 						and formulizePermHandler::user_can_delete_entry($subform_id, $uid, $sub_ent) AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php"))
 					{
 						// note: if the add/delete entry buttons are hidden, then these delete checkboxes are hidden as well
-						$col_two .= "<input type=checkbox class='delbox' name=delbox$sub_ent value=$sub_ent onclick='showHideDeleteClone($subformElementId$subformInstance);'></input>";
+						$col_two .= "<td class='subentry-delete-cell'><input type=checkbox class='delbox' name=delbox$sub_ent value=$sub_ent onclick='showHideDeleteClone($subformElementId$subformInstance);'></input></td>";
 					}
-					$col_two .= "</td>\n";
                     $modalParams = $viewType == 'Modal' ? "'$frid', '$fid', '$entry', " : "";
                     if(!$renderingSubformUIInModal AND $showViewButtons AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) { $col_two .= "<td class='subentry-view-cell'><a href='' class='loe-edit-entry' id='view".$sub_ent."' onclick=\"javascript:goSub".$viewType."('$sub_ent', '$subform_id', $modalParams".$subform_element_object->getVar('ele_id').",0);return false;\">&nbsp;</a></td>\n"; }
 					include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
@@ -2673,6 +2679,12 @@ function compileElements($fid, $form, $element_handler, $prevEntry, $entry, $go_
 	} else {
 		$criteria = $criteriaBase; // otherwise, just use the base
 	}
+    // exclude grids on mobile
+    if(userHasMobileClient()) {
+        $criteriaNoGrid = new CriteriaCompo();
+        $criteriaNoGrid->add(new Criteria('ele_type', 'grid', '!='), 'AND');
+        $criteria->add($criteriaNoGrid);
+    }
 	$criteria->setSort('ele_order');
 	$criteria->setOrder('ASC');
 	$elements =& $element_handler->getObjects($criteria,$fid,true); // true makes the keys of the returned array be the element ids
@@ -3761,8 +3773,11 @@ print "function add_sub(sfid, numents, instance_id, frid, fid, mainformentry, su
         window.document.formulize_mainform.modalscroll.value = subEntryDialog.scrollTop();
         saveSub('reload');
     } else {
+        if(formulizechanged == 0) {
+            jQuery(\"input[name^='decue_']\").remove();
+        }
         validateAndSubmit();
-    }
+    } 
 }\n";
 
 print "	function sub_del(sfid, type, parentSubformElement, fid, entry) {
@@ -3778,6 +3793,9 @@ print "	function sub_del(sfid, type, parentSubformElement, fid, entry) {
             window.document.formulize_mainform.modalscroll.value = subEntryDialog.scrollTop();
             saveSub('reload');
         } else {
+            if(formulizechanged == 0) {
+                jQuery(\"input[name^='decue_']\").remove();
+            }
             validateAndSubmit();
         }
     } else {
@@ -3796,6 +3814,9 @@ print "	function sub_clone(sfid, type, parentSubformElement, fid, entry) {
         window.document.formulize_mainform.modalscroll.value = subEntryDialog.scrollTop();
         saveSub('reload');
     } else {
+        if(formulizechanged == 0) {
+            jQuery(\"input[name^='decue_']\").remove();
+        }
         validateAndSubmit();
     }
 }\n";
@@ -3936,21 +3957,24 @@ function saveSub(reload) {
     }
 }
 
-
+function goSub(ent, fid, subformElementId) {
+    document.formulize_mainform.goto_sub.value = ent;
+    document.formulize_mainform.goto_sfid.value = fid;
+    document.formulize_mainform.goto_subformElementId.value = subformElementId;
 <?php
-
-print "	function goSub(ent, fid, subformElementId) {\n";
-print "		document.formulize_mainform.goto_sub.value = ent;\n";
-print "		document.formulize_mainform.goto_sfid.value = fid;\n";
-print "		document.formulize_mainform.goto_subformElementId.value = subformElementId;\n";
 global $formulize_displayingMultipageScreen;
 if($formulize_displayingMultipageScreen) {
 print "		document.formulize_mainform.formulize_prevPage.value = document.formulize_mainform.formulize_currentPage.value;\n";    
 print "		document.formulize_mainform.formulize_currentPage.value = 1\n";
 }
-print "		validateAndSubmit();\n";
-print "	}\n";
-			
+?>
+    if(formulizechanged == 0) {
+        jQuery("input[name^='decue_']").remove();
+    }
+    validateAndSubmit();
+}
+
+<?php			
 //added by Cory Aug 27, 2005 to make forms printable
 
 print "var $actionPart2 = \"".str_replace('"', '&quot;', substr(getCurrentURL(), $split))."\";\n";
@@ -3976,8 +4000,7 @@ print "jQuery(document).ready(function() {
 
 drawXhrJavascript();
 // if we're not on mobile, do the default date picker stuff
-$useragent=$_SERVER['HTTP_USER_AGENT'];
-if(!preg_match('/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i',$useragent)||preg_match('/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i',substr($useragent,0,4))) {
+if(!userHasMobileClient()) {
 ?>
 jQuery(document).ready(function() {
     setDatePickerMinMaxValues();

@@ -257,13 +257,13 @@ EOF;
 			$ele_value = loadValue($prevEntry, $element, $ele_value, $data_handler->getEntryOwnerGroups($entry), $groups, $entry, $profileForm); // get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
 		}
 		
-		formulize_benchmark("About to render element ".$element->getVar('ele_caption').".");
+		//formulize_benchmark("About to render element ".$element->getVar('ele_caption').".");
 		
 		$form_ele =& $renderer->constructElement($renderedElementName, $ele_value, $entry, $isDisabled, $screen);
 		if(strstr($_SERVER['PHP_SELF'], "formulize/printview.php") AND is_object($form_ele)) {
 			$form_ele->setDescription('');
 		}
-		formulize_benchmark("Done rendering element.");
+		//formulize_benchmark("Done rendering element.");
 		
 		// put a lock on this entry in this form, so we know that the element is being edited.  Lock will be removed next time the entry is saved.
 		if (!$noSave AND $entry != "new" AND $entry > 0 AND !isset($lockedEntries[$form_id][$entry])

@@ -221,7 +221,11 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $templates['listtemplatehelp'] = $listTemplateHelp;
 
   $entries = array();
-  $entries['advanceviewoptions'] = array(0=>_AM_ELE_SELECT_NONE)+$elementOptions; // add a 0 value default to the element list
+  $entries['advanceviewoptions'] = array(0=>_AM_ELE_SELECT_NONE)+array(
+        'creation_uid'=>_formulize_DE_CREATED,
+        'mod_uid'=>_formulize_DE_LASTMOD,
+        'creation_datetime'=>_formulize_DE_CALC_CREATEDATE,
+        'mod_datetime'=>_formulize_DE_CALC_MODDATE)+$elementOptions; // add a 0 value default to the element list
   $entries['advanceviewsearchtypeoptions'] = array('Box'=>'Search Box','Filter'=>'Dropdown List', 'MultiFilter'=>'Checkboxes', 'DateRange'=>'Date Range');
   $entries['advanceview'] = $advanceViewSelected;
   $entries['defaultview'] = $screen->getVar('defaultview');

@@ -323,7 +323,7 @@ function getUserForm(&$user, $profile = false, $action = false) {
         foreach (array_keys($elements[$k]) as $i) {
             $form->addElement($elements[$k][$i]['element'], $elements[$k][$i]['required']);
             if($elements[$k][$i]['element']->getName() == '2faphone') {
-                $forgetButton = "<input type='button' value='"._US_FORGET_DEVICES_BUTTON."' onclick='jQuery.post(\"/include/2fa/forget.php\");'>";
+                $forgetButton = "<input type='button' value='"._US_FORGET_DEVICES_BUTTON."' onclick='jQuery.post(\"/include/2fa/forget.php\", function(data) { if(data == 1) { alert(\""._US_FORGET_DEVICES_DONE."\"); } });'>";
                 $forgetElement = new xoopsFormLabel(_US_FORGET_DEVICES, $forgetButton);
                 $forgetElement->setDescription(_US_FORGET_DEVICES_DESC);
                 $form->addElement($forgetElement);

@@ -349,18 +349,17 @@ class formulizeElementRenderer{
 						$restrictSQL .= ") )";
 					}
 
+                    static $cachedSourceValuesQ = array();
+                    static $cachedSourceValuesAutocompleteFile = array();
+                    static $cachedSourceValuesAutocompleteLength = array();
                     // horrible hack to handle cases where new subform entries are created and we need to flush values that would have been generated when we were fake making the page before we knew a new subform entry is what we were really aiming for. See comment where global is instantiated.
                     // all comes from not having proper controller in charge of what we should be displaying. Ugh.
-                    if(isset($GLOBALS['formulize_unsetSelectboxCaches']) AND isset($GLOBALS['SelectboxCachesSet'])) {
+                    if(isset($GLOBALS['formulize_unsetSelectboxCaches'])) {
+                        //formulize_benchmark('unsetting caches!');
                         $cachedSourceValuesQ = array();
                         $cachedSourceValuesAutocompleteFile = array();
                         $cachedSourceValuesAutocompleteLength = array();
                         unset($GLOBALS['formulize_unsetSelectboxCaches']);
-                    } elseif(!isset($GLOBALS['SelectboxCachesSet'])) {
-                        $GLOBALS['SelectboxCachesSet'] = true;
-                        static $cachedSourceValuesQ = array();
-                        static $cachedSourceValuesAutocompleteFile = array();
-                        static $cachedSourceValuesAutocompleteLength = array();
                     }
                     
 					// setup the sort order based on ele_value[12], which is an element id number
@@ -1304,7 +1303,7 @@ class formulizeElementRenderer{
             $output .= "
             jQuery('#".$form_ele_id."_user').autocomplete({
                 source: '".XOOPS_URL."/modules/formulize/include/formulize_quickselect.php?cache=".$cachedLinkedOptionsFilename."&allow_new_values=".$allow_new_values."',
-                minLength: 0,
+                minLength: 1,
                 delay: 0,
                 select: function(event, ui) {
                     event.preventDefault();
