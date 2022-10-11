@@ -82,60 +82,6 @@ switch ($op) {
 		exit();
 		break;
 
-	case 'resetpass':
-		if (!icms::$user) {
-			$xoopsOption['template_main'] = 'system_userform.html';
-			include 'header.php';
-			$redirect = FALSE;
-			if (isset($_GET['xoops_redirect'])) {
-				$redirect = htmlspecialchars(trim($_GET['xoops_redirect']), ENT_QUOTES);
-				$isExternal = FALSE;
-				if ($pos = strpos( $redirect, '://' )) {
-					$icmsLocation = substr( ICMS_URL, strpos( ICMS_URL, '://' ) + 3 );
-					if (substr($redirect, $pos + 3, strlen($icmsLocation)) != $icmsLocation) {
-						$redirect = ICMS_URL;
-					} elseif (substr($redirect, $pos + 3, strlen($icmsLocation)+1) == $icmsLocation . '.') {
-						$redirect = ICMS_URL;
-					}
-				}
-			}
-			icms_makeSmarty(array(
-	            'redirect_page' => $redirect,
-	            'lang_reset' => 1,
-	            'lang_username' => _USERNAME,
-	            'lang_uname' => isset($_GET['uname']) ? filter_input(INPUT_GET, 'uname') : '',
-	            'lang_resetpassword' => _US_RESETPASSWORD,
-	            'lang_resetpassinfo' => _US_RESETPASSINFO,
-	            'lang_youremail' => _US_YOUREMAIL,
-	            'lang_sendpassword' => _US_SENDPASSWORD,
-	            'lang_subresetpassword' => _US_SUBRESETPASSWORD,
-	            'lang_currentpass' => _US_CURRENTPASS,
-	            'lang_newpass' => _US_NEWPASSWORD,
-	            'lang_newpass2' => _US_VERIFYPASS,
-	            'resetpassword_token' => icms::$security->createToken(),
-	            'icms_pagetitle' => _LOGIN
-			));
-			include 'footer.php';
-		} elseif (!empty($_GET['xoops_redirect'])) {
-			$redirect = htmlspecialchars(trim($_GET['xoops_redirect']));
-			$isExternal = FALSE;
-			if ($pos = strpos($redirect, '://')) {
-				$icmsLocation = substr(ICMS_URL, strpos(ICMS_URL, '://') +3);
-				if (substr($redirect, $pos + 3, strlen($icmsLocation)) != $icmsLocation) {
-					$redirect = ICMS_URL;
-				} elseif (substr($redirect, $pos + 3, strlen($icmsLocation)+1) == $icmsLocation . '.') {
-					$redirect = ICMS_URL;
-				}
-			}
-			header('Location: ' . $redirect);
-			exit();
-		} else {
-			header('Location: ' . ICMS_URL . '/userinfo.php?uid='. (int) icms::$user->getVar('uid'));
-			exit();
-		}
-		exit();
-		break;
-
 	case 'login':
 		include_once ICMS_ROOT_PATH . '/include/checklogin.php';
 		exit();
