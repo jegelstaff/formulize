@@ -152,6 +152,7 @@ if($fid AND $uid) {
         //exit();
 				}
     $filterElements = count($filterElements) == 0 ? null : $filterElements;
+    $GLOBALS['formulize_setQueryForExport'] = true;
     $data = getData($frid, $fid, $filter, $andor, $scope, $limitStart, $limitSize, $sortHandle, $sortDir, false, 0, false, "", false, 'bypass', $filterElements); // 'bypass' before filterElements means don't even do the query, just prep eveything - avoids potentially expensive query and expensive pass through all the data!
     if($data === true) { // we'll get back false if we weren't able to 
         $exportTime = formulize_catchAndWriteExportQuery($fid);

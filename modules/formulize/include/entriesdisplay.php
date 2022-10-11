@@ -3926,12 +3926,14 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 	//print "limitStart: $limitStart<br>limitSize: $limitSize<br>";
 
 		$GLOBALS['formulize_getCountForPageNumbers'] = true; // flag used to trigger setting of the count of entries in the dataset
-		if($screen) {
-			$fundamental_filters = $screen->getVar('fundamental_filters');
-			if(is_array($fundamental_filters) AND count($fundamental_filters)>0) {
-				$filter = array('fundamental_filters'=>$fundamental_filters, 'active_filters'=>$filter);
-			}
-		}
+        $GLOBALS['formulize_setBaseQueryForCalcs'] = true; // flag used to trigger setting of the basequery for calculations
+        $GLOBALS['formulize_setQueryForExport'] = true;
+        if($screen) {
+            $fundamental_filters = $screen->getVar('fundamental_filters');
+            if(is_array($fundamental_filters) AND count($fundamental_filters)>0) {
+                $filter = array('fundamental_filters'=>$fundamental_filters, 'active_filters'=>$filter);
+            }
+        }
 		$data = getData($frid, $fid, $filter, "AND", $scope, $limitStart, $limitSize, $sort, $order, $forcequery);
 
 		// if we deleted entries and the current page is now empty, then shunt back 1 page
