@@ -205,11 +205,14 @@ class formulizePermHandler {
 		global $xoopsDB;
 		$insertSQL = "INSERT INTO ".$xoopsDB->prefix("formulize_groupscope_settings"). " (`groupid`, `fid`, `view_groupid`) VALUES ";
 		$start = true;
-		foreach($groupsToInsert as $thisInsertGroup) {
-			if($thisInsertGroup === 0) { continue; }
-			if(!$start) { $insertSQL .= ", "; }
-			$insertSQL .= "($gid, ".$this->fid.", $thisInsertGroup)";
-			$start = false;
+		foreach($groupsToInsert as $k=>$thisInsertGroup) {
+			if(is_numeric($thisInsertGroup) AND $thisInsertGroup > 0) { 
+                if(!$start) { $insertSQL .= ", "; }
+                $insertSQL .= "($gid, ".$this->fid.", $thisInsertGroup)";
+                $start = false;
+            } else {
+                unset($groupsToInsert[$k]);
+            }
 		}
 		if(count($groupsToInsert) > 0) {
 			if(!$res = $xoopsDB->query($insertSQL))  {
@@ -251,7 +254,7 @@ class formulizePermHandler {
 		if(!isset($cachedGroupScopeInfo[$this->fid][$gid]) OR $updateCache) {
 			$cachedGroupScopeInfo[$this->fid][$gid] = array();
 			global $xoopsDB;
-			$sql = "SELECT t1.view_groupid, t2.name FROM ".$xoopsDB->prefix("formulize_groupscope_settings")." as t1, ".$xoopsDB->prefix("groups")." as t2 WHERE t1.groupid=".intval($gid)." AND t1.fid = ".$this->fid." AND t1.view_groupid=t2.groupid";
+			$sql = "SELECT t1.view_groupid, t2.name FROM ".$xoopsDB->prefix("formulize_groupscope_settings")." as t1, ".$xoopsDB->prefix("groups")." as t2 WHERE t1.groupid=".intval($gid)." AND t1.fid = ".$this->fid." AND t1.view_groupid=t2.groupid AND t1.view_groupid > 0";
 			if($res = $xoopsDB->query($sql)) {
         if($xoopsDB->getRowsNum($res) != 0) {			
 					while($array = $xoopsDB->fetchArray($res)) {

@@ -6,6 +6,7 @@
  */
 
 include_once "../../mainfile.php";
+include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 
 require_once "loader.php";
 Loader::register('../../libraries/TwoFactorAuth/','RobThree\\Auth');
@@ -190,16 +191,16 @@ function tfaLoginJS($id) {
 			autoOpen: false,
 			modal: true,
 			title: '"._US_2FA."',
-			width: '40%',
+			width: 'auto',
 			position: { my: 'center center', at: 'center center', of: window },
 			buttons: [
+                { text: 'OK', icon: 'ui-icon-check', click: function() {
+						close2FADialog(jQuery(this), '$id');
+					}
+				},
 				{ text: 'Cancel', icon: 'ui-icon-close', click: function() {
 						jQuery( this ).dialog( 'close' );
 						jQuery( this ).html('<center>".$workingMessageGif."</center>');
-					}
-				},
-				{ text: 'OK', icon: 'ui-icon-check', click: function() {
-						close2FADialog(jQuery(this), '$id');
 					}
 				}
 			],

@@ -685,6 +685,9 @@ $modversion['templates'][] = array(
 $modversion['templates'][] = array(
 	'file' => 'admin/mailusers.html',
 	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/managepermissions.html',
+	'description' => '');
     
 //	Module Configs
 // $xoopsModuleConfig['t_width']

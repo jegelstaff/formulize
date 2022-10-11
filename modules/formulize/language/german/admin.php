@@ -145,7 +145,7 @@ define("_AM_ELE_SUBFORM_REFRESH", "Refresh elements list to match selected form"
 define("_AM_ELE_SUBFORM_BLANKS", "How many blank spaces should be shown for this subform when the page first loads?");
 
 // grids
-define("_AM_ELE_GRID", "Table of existing elements (place BEFORE the elements it contains)");
+define("_AM_ELE_GRID", "Table of existing elements");
 define("_AM_ELE_GRID_HEADING", "What text should appear as the heading for this table?");
 define("_AM_ELE_GRID_HEADING_USE_CAPTION", "The caption typed above");
 define("_AM_ELE_GRID_HEADING_USE_FORM", "The title of this form");

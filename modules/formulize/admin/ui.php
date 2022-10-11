@@ -140,6 +140,9 @@ switch($active_page) {
     case "mailusers":
         include "mailusers.php";
         break;
+    case "managepermissions":
+        include "managepermissions.php";
+        break;
     default:
     case "home":
         include "home.php";

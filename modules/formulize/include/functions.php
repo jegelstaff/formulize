@@ -1890,6 +1890,7 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
             $value = stripslashes($value);
         }
         $value = $myts->htmlSpecialChars($value);
+        $value = (!is_numeric($value) AND $value == "") ? "{WRITEASNULL}" : $value;
         break;
 
 
@@ -1899,6 +1900,7 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
             $value = stripslashes($value);
         }
         $value = $myts->htmlSpecialChars($value);
+        $value = (!is_numeric($value) AND $value == "") ? "{WRITEASNULL}" : $value;
         break;
 
 
@@ -3027,8 +3029,8 @@ function _findLinkedEntries($targetFormKeySelf, $targetFormFid, $valuesToLookFor
 // can take an entry in a framework and make copies of all relevant entries in all relevant forms
 // note that the same relative linked selectbox relationships are preserved in cloned framework entries, but links based on common values and uids are not modified at all. this might not be desired behaviour in all cases!!!
 // entries in single-entry forms are never cloned
-// $entry is the entry id number
-function cloneEntry($entry, $frid, $fid, $copies=1, $callback = null) {
+// $entryOrFilter is the entry id number, or can be a filter string or array!
+function cloneEntry($entryOrFilter, $frid, $fid, $copies=1, $callback = null, $targetEntry = "new") {
     global $xoopsDB, $xoopsUser;
     
     // used for updating derived values later
@@ -3056,16 +3058,17 @@ function cloneEntry($entry, $frid, $fid, $copies=1, $callback = null) {
             }
             }
         }
-        $entries_query = getData($frid, $fid, $entry);
-        $ids = internalRecordIds($entries_query[0], "", "", true); // true causes the first key of the returned array to be the fids
+    }
+    $entries_data = getData($frid, $fid, $entryOrFilter);
+    foreach($entries_data as $entry_data) {
+        $ids = internalRecordIds($entry_data, "", "", true); // true causes the first key of the returned array to be the fids
         foreach ($ids as $fid=>$entryids) {
             foreach ($entryids as $id) {
                 $entries_to_clone[$fid][] = $id;
             }
         }
-    } else {
-        $entries_to_clone[$fid][] = $entry;
     }
+    
     $dataHandlers = array();
     $entryMap = array();
     for ($copy_counter = 0; $copy_counter<$copies; $copy_counter++) {
@@ -3079,7 +3082,7 @@ function cloneEntry($entry, $frid, $fid, $copies=1, $callback = null) {
                 if (!isset($dataHandlers[$fid])) {
                     $dataHandlers[$fid] = new formulizeDataHandler($fid);
                 }
-                $clonedEntryId = $dataHandlers[$fid]->cloneEntry($thisentry, $callback);
+                $clonedEntryId = $dataHandlers[$fid]->cloneEntry($thisentry, $callback, $targetEntry);
                 $dataHandlers[$fid]->setEntryOwnerGroups(getEntryOwner($clonedEntryId, $fid), $clonedEntryId);
                 $entryMap[$fid][$thisentry][] = $clonedEntryId;
             }
@@ -3094,8 +3097,10 @@ function cloneEntry($entry, $frid, $fid, $copies=1, $callback = null) {
         $dataHandlers[$lsbElement->getVar('id_form')]->reassignLSB($sourceElement->getVar('id_form'), $lsbElement, $entryMap);
     }
     
-    foreach($entryMap[$originalFid][$entry] as $newEntryId) {
-        formulize_updateDerivedValues($newEntryId, $originalFid, $originalFrid);    
+    foreach($entryMap[$originalFid] as $clonedMainformEntries) {
+        foreach($clonedMainformEntries as $clonedMainformEntryId) {
+            formulize_updateDerivedValues($clonedMainformEntryId, $originalFid, $originalFrid);
+        }
     }
     
     return $entryMap;
@@ -5134,7 +5139,7 @@ function convertTypeToText($type, $ele_value) {
             return "Subform (another form with a relationship to this one)";
 
         case "grid":
-            return "Table of existing elements (place BEFORE the elements it contains)";
+            return "Table of existing elements";
 
         case "derived":
             return "Value derived from other elements";
@@ -5426,13 +5431,14 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
             }
             if(!$extractionQuery AND !$targetFormObject) { // setup the targetFormObject once, based on the passed in targetFormId
                 $targetFormObject = $form_handler->get($targetFormId, true); // true forces inclusion of all element types
-                $targetFormElementTypes = $targetFormObject->getVar('elementTypes');
             } elseif($extractionQuery) {
                 // target form and alias depends on which form the filter element handle belongs to
                 if($elementObject = $element_handler->get($filterElementIds[$filterId])) {
                     $targetFormObject = $form_handler->get($elementObject->getVar('id_form'), true); // true forces inclusion of all element types
-                    $targetFormElementTypes = $targetFormObject->getVar('elementTypes');
                     $targetAlias = $targetFormId[$filterElementFid];
+                } elseif(isMetaDataField($filterElementIds[$filterId])) {
+                    $targetFormObject = $form_handler->get(key($targetFormId), true); // true forces inclusion of all element types
+                    $targetAlias = $targetFormId[key($targetFormId)];
                 } else {
                     print 'ERROR: could not gather element information for "'.strip_tags(htmlspecialchars($filterElementIds[$filterId])).'" when creating a SQL filter.';
                     continue;
@@ -5440,7 +5446,7 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
             }
             $targetAlias .= ($targetAlias AND substr($targetAlias, -1) != '.') ? "." : ""; // add a period to the end of the alias, if there is an alias and if it doesn't have a dot, so it will work in the sql statement
             
-            list($conditionsFilterComparisonValue, $thisCurlyBracketFormFrom) =  _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterElementIds, $targetFormElementTypes, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler);
+            list($conditionsFilterComparisonValue, $thisCurlyBracketFormFrom) =  _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterElementIds, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler);
 
             // regular conditions            
             if ($filterTypes[$filterId] != "oom" AND !strstr($conditionsFilterComparisonValue, "curlybracketform")) {
@@ -5549,7 +5555,7 @@ function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias,
 // this function takes the info from the above function, and actually builds the parts of the SQL statement by analyzing the current situation
 // $filterOps may be modified by this function
 // $filterTerms may be modified by this function
-function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filterElementIds, $targetFormElementTypes, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler) {
+function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filterElementIds, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler) {
     
     global $xoopsUser, $xoopsDB, $nonLinkedCurlyBracketSelfReference;
     $curlyBracketEntryQuoted = $curlyBracketEntry == 'new' ? "'new'" : $curlyBracketEntry; // can't put text into the query without quotes!
@@ -5569,7 +5575,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
         $quotes = is_numeric($filterTerms[$filterId]) ? "" : "'";
         $filterOps[$filterId] = $filterOps[$filterId] == "=" ? "<=>" : $filterOps[$filterId];
     }
-    if(!isset($filterElementIds[$filterId]) OR !isset($targetFormElementTypes[$filterElementIds[$filterId]])) {
+    if(!isset($filterElementIds[$filterId])) {
         print "Critical Error: You have a condition set that is relying on an deleted or renamed element: ".$filterElementIds[$filterId]." OR ".$filterId."<br>";
         print "The terms of the condition are: ";
         print_r($filterTerms);
@@ -5579,9 +5585,11 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
     } else {
         // check for whether the source element is a linked element, and if so, figure out the entry id of the record in the source of that linked selectbox which matches the filter term instead
         // ie: left side is linked to something else
-        $targetElementObject = $element_handler->get($filterElementIds[$filterId]);
+        if(!isMetaDataField($filterElementIds[$filterId])) {
+            $targetElementObject = $element_handler->get($filterElementIds[$filterId]);
             $targetElementEleValue = $targetElementObject->getVar('ele_value'); // get the properties of the source element
-        if ($targetElementObject->isLinked AND !$targetElementEleValue['snapshot']) {
+        }
+        if (!isMetaDataField($filterElementIds[$filterId]) AND $targetElementObject->isLinked AND !$targetElementEleValue['snapshot']) {
             $targetElementEleValueProperties = explode("#*=:*", $targetElementEleValue[2]); // split them up to get the properties of the linked selectbox that the source element is pointing at
             $targetSourceFid = $targetElementEleValueProperties[0]; // get the Fid that the source element is point at (the source of the source)
             $targetSourceFormObject = $form_handler->get($targetSourceFid); // get the form object based on that fid (we'll need the form handle later)
@@ -5672,10 +5680,10 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                 } elseif($curlyBracketEntry != 'new' OR (substr($filterTerms[$filterId],0,1) != "{" AND substr($filterTerms[$filterId],-1)!="}") OR isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
                     // do a subquery against the source of the left side element...
                     $conditionsFilterComparisonValue = " (SELECT ss.entry_id FROM " . $xoopsDB->prefix("formulize_" . $targetSourceFormObject->getVar('form_handle')) . " AS ss WHERE ".$subQueryWhereClause. ") ";
-							    // need to change the filterOp being used, so when this is inserted into the main query, we have a different op introducing the subquery
-							    if($filterOps[$filterId] == "LIKE" OR $filterOps[$filterId] == "NOT LIKE") {
-							      $overrideReturnedOp = "IN";
-							    }
+                                // need to change the filterOp being used, so when this is inserted into the main query, we have a different op introducing the subquery
+                                if($filterOps[$filterId] == "LIKE" OR $filterOps[$filterId] == "NOT LIKE") {
+                                  $overrideReturnedOp = "IN";
+                                }
                     $filterOps[$filterId] = $overrideReturnedOp ? $overrideReturnedOp : '<=>';
                 // for new entries with a dynamic reference and no asynch value set...
                 } else { // can't do a subquery into a curly bracket form for a 'new' value...return nothing
@@ -5708,7 +5716,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
     if ($filterOps[$filterId] == "<=>") {
         
         // if we're handling a dynamic reference to an element, and the thing we're comparing the dynamic reference to is not a linked element, then we're going to cover our bases and do an OR of both the DB and literal value
-        if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND !$targetElementObject->isLinked) {
+        if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND (isMetaDataField($filterElementIds[$filterId]) OR !$targetElementObject->isLinked)) {
 			if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
 				// get the literal value based on the passed in database ready format
                 $literalToDBValue = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm];
@@ -5749,7 +5757,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 
     // if it's a { } term, then assume it's a data handle for a field in the form where the element is being included
     // do this only when the left side is NOT linked, so as an alternative to the handling of { } above when left side is linked
-    if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND !$targetElementObject->isLinked) {
+    if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND (isMetaDataField($filterElementIds[$filterId]) OR !$targetElementObject->isLinked)) {
         if (isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
             $conditionsFilterComparisonValue = "'".$likebits.formulize_db_escape($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm]).$likebits."'";
         } elseif ($curlyBracketEntry == "new") {
@@ -5781,6 +5789,19 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                 $filterOps[$filterId] = " != ";
                 $conditionsFilterComparisonValue = " 'lkjdaf9887asd09809KJA$@$%98SD7ASDLJASLD32' "; // GUARANTEED NOT TO MATCH ANYTHING, SO ALL OPTIONS WILL BE RETURNED, SINCE FILTERTERM DOES NOT BELONG TO THE CURLY BRACKET FORM, SO wtf (But can happen if the element filter is used to limit subform values that are being prepopulated!)
             }
+        }
+    }
+    
+    // expand = '' to include is null
+    if($conditionsFilterComparisonValue == "''" OR $conditionsFilterComparisonValue == '""') {
+        switch($filterOps[$filterId]) {
+            case "<=>":
+            case "=":
+                $conditionsFilterComparisonValue .= " OR `".$filterElementObject->getVar('ele_handle')."` IS NULL";
+                break;
+            case "!=":
+                $conditionsFilterComparisonValue .= " AND `".$filterElementObject->getVar('ele_handle')."` IS NOT NULL";
+                break;
         }
     }
     return array($conditionsFilterComparisonValue, $curlyBracketFormFrom);
@@ -5948,7 +5969,7 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
             /*if($xoopsConfig['language'] == "french") {
             	$return = setlocale("LC_TIME", "fr_FR.UTF8");
             }*/
-            $v = (false === $time_value) ? "" : date(_SHORTDATESTRING, ($time_value)+$offset);
+            $v = (false === $time_value) ? "" : date(_MEDIUMDATESTRING, ($time_value)+$offset);
         }
         $output .= '<span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $handle, $textWidth, $thisEntryId)), $handle);
         $output .= '</span>';
@@ -6345,7 +6366,9 @@ function parseUserAndToday($term, $element=null) {
     if (strstr($term, "{USER}")) {
         $name = 0;
 		if($xoopsUser) {
-            if($element) {
+            if(isMetaDataField($element)) {
+                $name = $xoopsUser->getVar('uid');
+            } elseif($element) {
                 $element = _getElementObject($element);
                 $ele_value = $element->getVar('ele_value');
                 if(strstr(key($ele_value[2]), 'NAMES}')) {
@@ -6774,10 +6797,10 @@ function formulize_validatePHPCode($theCode) {
     while(ob_get_level()) {
         ob_end_clean();
     }
-    if (function_exists("shell_exec")) {
-        $tmpfname = tempnam(sys_get_temp_dir(), 'FZ');
+    if ($theCode = trim($theCode) AND function_exists("shell_exec")) {
+        $tmpfname = tempnam(XOOPS_ROOT_PATH.'/cache', 'FZ');
         file_put_contents($tmpfname, trim($theCode));
-        $output = shell_exec('php -l "'.$tmpfname.'" 2>&1');
+        //$output = shell_exec('php -l "'.$tmpfname.'" 2>&1');
         unlink($tmpfname);
         if (false !== strpos($output, "PHP Parse error")) {
             // remove the second line because detail about the error is on the first line
@@ -7577,6 +7600,7 @@ function getEntryDefaults($target_fid,$target_entry) {
   $criteria->add(new Criteria('ele_type', 'textarea'), 'OR');
   $criteria->add(new Criteria('ele_type', 'date'), 'OR');
   $criteria->add(new Criteria('ele_type', 'radio'), 'OR');
+  $criteria->add(new Criteria('ele_type', 'checkbox'), 'OR');
   $criteria->add(new Criteria('ele_type', 'yn'), 'OR');
   $criteria->add(new Criteria('ele_type', 'select'), 'OR');
   $elementsForDefaults = $element_handler->getObjects($criteria,$target_fid); // get all the text or textarea elements in the form 
@@ -7611,6 +7635,7 @@ function getEntryDefaults($target_fid,$target_entry) {
         }
         break;
       case "select":
+      case "checkbox":
         $thisDefaultEleValue = $thisDefaultEle->getVar('ele_value');
         if($thisDefaultEle->isLinked AND !$thisDefaultEleValue['snapshot'])  {
             // default will be a foreign key or keys
@@ -7760,4 +7785,12 @@ function updateMultipageTemplates($screen) {
             unlink($path.$oldFile.'.php');
         }    
     }
+}
+
+function userHasMobileClient() {
+    $useragent=$_SERVER['HTTP_USER_AGENT'];
+    if(preg_match('/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i',$useragent)||preg_match('/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i',substr($useragent,0,4))) {
+        return true;
+    }
+    return false;
 }

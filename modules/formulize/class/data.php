@@ -163,7 +163,7 @@ class formulizeDataHandler  {
 	}
 
 	// this function makes a copy of an entry in one form
-	function cloneEntry($entry, $callback = null) {
+	function cloneEntry($entry, $callback = null, $targetEntry = "new") {
 		if(!is_numeric($entry)) {
 			return false;
 		}
@@ -186,7 +186,7 @@ class formulizeDataHandler  {
 		unset($data['mod_datetime']);
 		unset($data['creation_uid']);
 		unset($data['mod_uid']);
-		return $this->writeEntry("new", $data, false, true); // no proxy user (use current xoopsuser, the default behaviour), do force the creation of the entry if we're on a GET request
+		return $this->writeEntry($targetEntry, $data, false, true); // no proxy user (use current xoopsuser, the default behaviour), do force the creation of the entry if we're on a GET request
   }
 
 
@@ -461,7 +461,6 @@ class formulizeDataHandler  {
     // this function returns the entry ID of the first entry found in the form with all the specified values in the specified elements
     // $values is a key value pair of element handles and values
 	function findFirstEntryWithAllValues($values, $op="=") {
-        $likeBits = $op == "LIKE" ? "%" : "";
 		global $xoopsDB;
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
         $formObject = $form_handler->get($this->fid);
@@ -471,7 +470,26 @@ class formulizeDataHandler  {
             if(!$element = _getElementObject($elementIdOrHandle)) {
                 continue;
             }
-            $valuesSQL[] = "`". $element->getVar('ele_handle') . "` ".formulize_db_escape($op)." \"$likeBits" . formulize_db_escape($value) . "$likeBits\"";
+            $quotes = '"';
+            $likeBits = $op == "LIKE" ? "%" : "";
+            $workingOp = $op;
+            if($value === null) {
+                switch($op) {
+                    case "!=":
+                        $value = " IS NOT NULL ";
+                        break;
+                    case "=":
+                    default:
+                        $value = " IS NULL ";
+                }
+                $workingOp = '';
+                $quotes = '';
+                $likeBits = '';
+            } else {
+                $value = formulize_db_escape($value);
+                $quotes = (is_numeric($value) AND !$likeBits) ? '' : $quotes;
+            }
+            $valuesSQL[] = "`". $element->getVar('ele_handle') . "` ".formulize_db_escape($workingOp)." ".$quotes.$likeBits.$value.$likeBits.$quotes;
         }
         $sql .= implode(' AND ', $valuesSQL)." ORDER BY entry_id LIMIT 0,1";
 		if(!$res = $xoopsDB->query($sql)) {
@@ -587,7 +605,7 @@ class formulizeDataHandler  {
 	}
 	
 	// derive the owner groups and write them to the owner groups table
-	// $uids and $entryids can be parallel arrays with multiple users and entries
+	// $uids and $entryids must be parallel, either single ids, or arrays with multiple users and entries. Single uid with array of entries won't work, needs array of repeated uid in that case, kinda dumb, but that's how it works
 	// arrays must start with 0 key and increase sequentially (no gaps, no associative keys, etc)
 	// all groups the user is a member of are written to the database, regardless of their current permission on the form
 	// interpretation of permissions is to be done when reading this information, to allow for more flexibility
@@ -837,7 +855,7 @@ class formulizeDataHandler  {
         $clean_element_values = $element_values; // save a clean copy of the original values before the escaping for writing to DB, so we can use these later in "on after save"
         
         foreach($existing_values as $existingHandle=>$existingValue) {
-            if($element_values[$existingHandle] === $existingValue) {
+            if(isset($element_values[$existingHandle]) AND $element_values[$existingHandle] === $existingValue) {
                 unset($element_values[$existingHandle]); // don't write things that are unchanged from their current state in the database
             }
         }
