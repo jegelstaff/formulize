@@ -453,7 +453,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 				$counter = 0; // counter used for javascript that works with 'Other' box
                 foreach($options as $oKey=>$oValue) {
 					$oValue = formulize_swapUIText($oValue, $ele_uitext);
-					$other = formulizeElementRenderer::optOther($oValue, $markupName, $entry_id, $counter, true, $isDisabled);
+					$other = optOther($oValue, $markupName, $entry_id, $counter, true, $isDisabled);
 					$t = new XoopsFormCheckBox(
 						'',
 						$markupName.'[]',
