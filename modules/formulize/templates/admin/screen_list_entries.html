@@ -25,7 +25,7 @@
 	<td><label><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_SORT_BY}></label></td>
 	<td></td>
       </tr>
-	<{if $content.advanceview|in_array AND $content.advanceview|@count > 0}>
+	<{if $content.advanceview|is_array AND $content.advanceview|@count > 0}>
 	  <{foreach from=$content.advanceview key=index item=value}>
 	    <tr class="advanceviewcol" name="<{$index}>">
 	      <td>

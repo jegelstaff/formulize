@@ -444,6 +444,7 @@ class formulizeElementRenderer{
 					}
 					
 					if(!isset($cachedSourceValuesQ[intval($ele_value['snapshot'])][$sourceValuesQ])) {
+                        $linkedElementOptions = array();
 						$sourceElementObject = $element_handler->get($boxproperties[1]);
 						if($sourceElementObject->isLinked) {
 							// need to jump one more level back to get value that this value is pointing at
@@ -479,17 +480,11 @@ class formulizeElementRenderer{
 						}
 						
 						// in case there are duplicate options, and there's a selected value that is a duplicate, then preserve the duplicate value rather than the first duplicate in the list
-						// do this by checking a unique version of the list to see that the selected value is present, and if not, swap the values and recheck. 
-						// convoluted process necessary to preserve ordering of the array :(
-						$preservedSelections = array();
+						// do this by removing duplicate values from the list, other than the one that was selected 
+						// convoluted process preserves ordering of the array
 						if(count((array) $sourceEntryIds) > 0) {
 							foreach($sourceEntryIds as $sei) {
-								$preservedSelections[$sei] = $linkedElementOptions[$sei];
-							}
-						}
-						if($this->uniqueLinkedElementOptionsMissingSelections($linkedElementOptions, $preservedSelections)) {
-							foreach($preservedSelections as $sei=>$preservedValue) {
-								$targetKeys = array_keys($linkedElementOptions, $preservedValue);
+                                $targetKeys = array_keys($linkedElementOptions, $linkedElementOptions[$sei]);
 								foreach($targetKeys as $tk) {
 									if($sei != $tk) {
 										unset($linkedElementOptions[$tk]);
@@ -1097,7 +1092,9 @@ class formulizeElementRenderer{
             $form_ele->formulize_element = $this->_ele;
 			return $form_ele;
 		} else { // form ele is not an object...and/or has no data.  Happens for IBs and for non-interactive elements, like grids.
-            $form_ele->formulize_element = $this->_ele;
+            if(is_object($form_ele)) {
+                $form_ele->formulize_element = $this->_ele;
+            }
 			return $form_ele;
 		}
 	}
@@ -1128,7 +1125,7 @@ class formulizeElementRenderer{
 
 	// THIS FUNCTION COPIED FROM LIASE 1.26, onchange control added
 	// JWE -- JUNE 1 2006
-	static function optOther($s='', $id, $entry_id, $counter, $checkbox=false, $isDisabled=false){
+	static function optOther($s, $id, $entry_id, $counter, $checkbox=false, $isDisabled=false){
         static $blankSubformCounters = array();
 		global $xoopsModuleConfig, $xoopsDB;
 		if( !is_string($s) OR !preg_match('/\{OTHER\|+[0-9]+\}/', $s) ){
@@ -1180,7 +1177,7 @@ class formulizeElementRenderer{
             $element_handler = xoops_getmodulehandler('elements', 'formulize');
 			$bracketPos = -1;
 			$start = true; // flag used to force the loop to execute, even if the 0th position has the {
-			while($bracketPos = strpos($text, "{", $bracketPos+1) OR $start == true) {
+			while($bracketPos+1 <= strlen($text) AND $bracketPos = strpos($text, "{", $bracketPos+1) OR $start == true) {
 				$start = false;
                 $endBracketPos = strpos($text, "}", $bracketPos+1);
 				$term = substr($text, $bracketPos+1, $endBracketPos-$bracketPos-1);
@@ -1432,7 +1429,7 @@ if($multiple ){
 	// screen is the screen object with the data we need (form id with previous entries and rule for lining them up with current form)
 	// element_id is the ID of the element we're drawing (add ele_ to the front to make the javascript ID we need to know in order to set the value of the element to the one the user selects)
 	// type is the type of element, which affects how the javascript is written (textboxes aren't set the same as radio buttons, etc)
-	function formulize_setupPreviousEntryUI($screen, $element_id, $type, $owner, $de=false, $entry_id="", $ele_handle, $fid) {
+	function formulize_setupPreviousEntryUI($screen, $element_id, $type, $owner, $de, $entry_id, $ele_handle, $fid) {
 		
 		// 1. need to get and cache the values of the entry for this screen
 		// 2. need to put the values into a dropdown list with an onchange event that populates the actual form element
@@ -1525,16 +1522,6 @@ if($multiple ){
 		$prevUI->addOptionArray($previousOptions);
 		$prevUI->setExtra($javascript);
 		return $prevUI;
-	}
-	
-	function uniqueLinkedElementOptionsMissingSelections($options, $selections) {
-		$options = array_unique($options);
-		foreach($selections as $key=>$value) {
-			if(!isset($options[$key])) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 }

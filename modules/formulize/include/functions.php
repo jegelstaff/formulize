@@ -935,11 +935,16 @@ function deleteIdReq($id_req, $fid) {
 // owner and owner_groups to be passed in when available (if called from a function where they have already been determined
 // $fid is required
 // $excludeFids is an array of forms that we do not want to delete from in this case regardless (optional)
-function deleteEntry($id_req, $frid="", $fid, $excludeFids=array()) {
+function deleteEntry($id_req, $frid, $fid, $excludeFids=array()) {
     
     global $xoopsDB;
     $deletedEntries = array();
 
+    if(!$id_req OR !$fid) {
+        error_log("Formulize error: deletion requested without required parameters: entry id - ".$id_req.". form id - ".$fid.".");
+        return false;
+    }
+    
     if ($frid) {
         // if a framework is passed, then delete all sub entry items found in a unified display relationship with the base entry, in addition to the base entry itself.
         $fids[0] = $fid;
@@ -1306,12 +1311,11 @@ function checkForLinks($frid, $fids, $fid, $entries, $unified_display=false, $un
 // $headers is the list of column headings in use
 // $cols is the list of handles in the $data to use to get all the data for display, must be in synch with headers
 // $data is the full dataset that is being prepped
-// $fdchoice is either comma or calcs (calcs for when calcs are to be exported)
+// $fdchoice is either comma or calcs (calcs for when calcs are to be exported) - or custom, in which case custdel needs to contain the delimiter
 // $title does not appear to be used
-// $template is a flag indicating whether we are making a template for use updating/uploading data -- blank for a blank template, update for a template with data, blankprofile for the userprofile form
+// $template is a flag indicating whether we are making a template for use updating/uploading data -- blank for a blank template, update for a template with data, blankprofile for the userprofile form, or boolean false otherwise
 // $fid is the form id
-// $groups is the user's groups
-function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $template=false, $fid, $groups="") {
+function prepExport($headers, $cols, $data, $fdchoice, $custdel, $template, $fid) {
     
     global $xoopsDB, $xoopsUser;
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
@@ -2573,7 +2577,11 @@ function findMatchingIdReq($element, $fid, $value) {
 // THIS FUNCTION OUTPUTS THE TEXT THAT GOES ON THE SCREEN IN THE LIST OF ENTRIES TABLE
 // It intelligently outputs links if the text should be a link (because of textbox associations, or linked selectboxes)
 // $handle is the data handle for the element
-function formatLinks($matchtext, $handle, $textWidth=35, $entryBeingFormatted) {
+function formatLinks($matchtext, $handle, $textWidth, $entryBeingFormatted) {
+    
+    if(!$textWidth) {
+        $textWidth = 35;
+    }
     
     // if the value has HTML formatting, leave it alone
     if(strlen($matchtext) > strlen(strip_tags($matchtext))) {
@@ -3498,7 +3506,7 @@ function formulize_getUsersByGroups($groups, $member_handler="") {
 
 
 // this function can be called from within a loop, and will merge uids_conditions with all previously recorded values
-function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $reinitialize=false, $entry, $fid) {
+function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $reinitialize, $entry, $fid) {
     static $omit_user = null;
     if ($reinitialize) {
         // need to do this when handling saved conditions, since each time we call this function it's a new "event" that we're dealing with
@@ -3743,12 +3751,10 @@ function getDefaultCols($fid, $frid="") {
 } 
 
 // THIS FUNCTION OVERWRITES OR APPENDS TO A VALUE IN A SPECIFIED FORM ELEMENT
-// Formerly located in pageworks/include/functions.php
-//function writeElementValue($ele, $entry, $value, $append, $prevValue) {
 // DEPRECATED. VERY INEFFICIENT, SINCE IT ONLY UPDATES ONE FIELD AT A TIME.  BETTER TO USE formulize_writeEntry, except in cases where you actually need to only update one field.  In most cases you want to update multiple fields in an entry, so don't use this inside a loop. it will generate more queries than you need
 // prevValue is now completely not required.  lvoverride is only used if you want to pass in a pre-formatted ,1,3,15,17, style string for inserting into a linked selectbox field.
 // linkedTargetHint is used if we are writing to a linked selectbox element, and we have some indication from the UI what the entry is that we're supposed to link to.  This allows for disambiguation of target values that we might be trying to link to, that might occur in more than one entry.
-function writeElementValue($formframe = "", $ele, $entry, $value, $append="replace", $prevValue=null, $lvoverride=false, $linkedTargetHint = "") {
+function writeElementValue($formframe, $ele, $entry, $value, $append="replace", $prevValue=null, $lvoverride=false, $linkedTargetHint = "") {
 
     global $xoopsUser, $formulize_mgr, $xoopsDB, $myts;
     if (!is_object($myts)) {
@@ -4655,6 +4661,7 @@ function formulize_swapUIText($value, $uitexts=array()) {
 }
 // THIS FUNCTION TAKES A VALUE AND THE UITEXT FOR THE ELEMENT, AND RETURNS THE CORRESPONDING DB VALUE IF THE PASSED VALUE MATCHES A UITEXT
 function formulize_swapDBText($value, $uitexts=array()) {
+    if(!is_array($uitexts)) { return $value; }
     $dbtexts = array_flip($uitexts);
     $originalValue = $value;
     // if value is an array, it has a key called 'value', which needs to be swapped
@@ -5466,7 +5473,7 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
             // strip out the part of the oom filter that we cannot use in the WHERE clause
             $searchStartPos = 1;
             $curlyBracketFormconditionsfilter_oom_WHERE = $curlyBracketFormconditionsfilter_oom;
-            while($entryFilterPos = strpos($curlyBracketFormconditionsfilter_oom_WHERE, 'AND curlybracketform.`entry_id`=', $searchStartPos)) {
+            while($searchStartPos <= strlen($curlyBracketFormconditionsfilter_oom_WHERE) AND $entryFilterPos = strpos($curlyBracketFormconditionsfilter_oom_WHERE, 'AND curlybracketform.`entry_id`=', $searchStartPos)) {
                 $nextBracketPos = strpos($curlyBracketFormconditionsfilter_oom_WHERE, ')', $entryFilterPos);
                 $curlyBracketFormconditionsfilter_oom_WHERE = substr($curlyBracketFormconditionsfilter_oom_WHERE, 0, $entryFilterPos).substr($curlyBracketFormconditionsfilter_oom_WHERE, $nextBracketPos);
                 $searchStartPos = $nextBracketPos;
@@ -5884,7 +5891,7 @@ function formulize_javascriptForRemovingEntryLocks($unload=false) {
 // localIds is an array of ids that will match the order of the values in the array...used to get the id for a subform entry that is being displayed in the list
 // $fid is used only in the event of a mod_datetime or creation_datetime or creator_email field being drawn
 // $deInstanceCounter is used for addressing editable elements in the list
-function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200, $localIds=array(), $fid, $row, $column, $deInstanceCounter=false) {
+function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200, $localIds=array(), $fid=0, $row=0, $column=0, $deInstanceCounter=false) {
     $output = "<div class='main-cell-div' id='cellcontents_".$row."_".$column."'>";
     if (!is_array($value)) {
         $value = array($value);
@@ -6109,7 +6116,7 @@ function generateHiddenElements($elements, $entry, $screen) {
                         $valueToUse = "";
                     } elseif (preg_replace("/[^A-Z{}]/","", $ele_value[0]) === "{TODAY}") {
                         $number = preg_replace("/[^0-9+-]/","", $ele_value[0]);
-                        $valueToUse = date("Y-m-d", mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
+                        $valueToUse = date("Y-m-d", mktime(0, 0, 0, date("m") , intval(date("d"))+intval($number), date("Y")));
                     } else {
                         $valueToUse = $ele_value[0];
                     }
@@ -7176,7 +7183,7 @@ function formulize_parseSearchesIntoFilter($searches) {
 }
 
 
-function do_update_export($queryData, $frid, $fid, $groups) {
+function do_update_export($queryData, $frid, $fid) {
     // this is the old export code, which is used for 'update' mode
     $fdchoice = "update";
 
@@ -7190,7 +7197,7 @@ function do_update_export($queryData, $frid, $fid, $groups) {
     
     list($cols, $headers) = export_prepColumns($cols);
 
-    $filename = prepExport($headers, $cols, $data, $fdchoice, "", "", false, $fid, $groups);
+    $filename = prepExport($headers, $cols, $data, $fdchoice, "", false, $fid);
 
     $pathToFile = str_replace(XOOPS_URL,XOOPS_ROOT_PATH, $filename);
 
