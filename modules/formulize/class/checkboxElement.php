@@ -428,7 +428,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
                 foreach($options as $oKey=>$oValue) {
                     $o = array('key'=>$oKey, 'value'=>$oValue); // kinda ugly compatibility hack to refactor the really ugly use of 'each' for PHP 8
 					$o = formulize_swapUIText($o, $ele_uitext);
-					$other = formulizeElementRenderer::optOther($o['value'], $markupName, $entry_id, $counter, true, $isDisabled);
+					$other = optOther($o['value'], $markupName, $entry_id, $counter, true, $isDisabled);
 					if( $other != false ){
 						$form_ele1->addOption($o['key'], _formulize_OPT_OTHER.$other);
 						if(in_array($o['key'], $selected)) {
