@@ -5958,7 +5958,8 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
             /*if($xoopsConfig['language'] == "french") {
             	$return = setlocale("LC_TIME", "fr_FR.UTF8");
             }*/
-            $v = (false === $time_value) ? "" : date(_MEDIUMDATESTRING, ($time_value)+$offset);
+            $dateStringFormat = ($handle == "mod_datetime" OR $handle == "creation_datetime") ? _MEDIUMDATESTRING : _SHORTDATESTRING; // constants set in /language/english/global.php
+            $v = (false === $time_value) ? "" : date($dateStringFormat, ($time_value)+$offset);
         }
         $output .= '<span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $handle, $textWidth, $thisEntryId)), $handle);
         $output .= '</span>';
