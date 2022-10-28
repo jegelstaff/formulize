@@ -776,14 +776,18 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 			$masterQuerySQLForExport = "SELECT $selectClause, usertable.user_viewemail AS main_user_viewemail, usertable.email AS main_email $restOfTheSQLForExport ";
 		}
 	 
-
-		$GLOBALS['formulize_queryForCalcs'] = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo." AS main $userJoinText $joinText WHERE main.entry_id>0  $whereClause $scopeFilter ";
-		$GLOBALS['formulize_queryForCalcs'] .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
-		$GLOBALS['formulize_queryForOneSideCalcs'] = $oneSideSQL;
-		if($GLOBALS['formulize_returnAfterSettingBaseQuery']) { return true; } // if we are only setting up calculations, then return now that the base query is built
+        if(isset($GLOBALS['formulize_setBaseQueryForCalcs']) OR isset($GLOBALS['formulize_returnAfterSettingBaseQuery'])) {
+            $GLOBALS['formulize_queryForCalcs'] = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo." AS main $userJoinText $joinText WHERE main.entry_id>0  $whereClause $scopeFilter ";
+            $GLOBALS['formulize_queryForCalcs'] .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
+            $GLOBALS['formulize_queryForOneSideCalcs'] = $oneSideSQL;
+            unset($GLOBALS['formulize_setBaseQueryForCalcs']);
+            if($GLOBALS['formulize_returnAfterSettingBaseQuery']) { return true; } // if we are only setting up calculations, then return now that the base query is built
+        }
 		$sortIsOnMainFlag = $sortIsOnMain ? 1 : 0;
 		// need to include the query first, so the SELECT or INSERT is the first thing in the string, so we catch it properly when coming back through the export process
-		$GLOBALS['formulize_queryForExport'] = $masterQuerySQLForExport." -- SEPARATOR FOR EXPORT QUERIES -- ".$sortIsOnMainFlag; // "$selectClauseToUse FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause $limitClause";
+        if(isset($GLOBALS['formulize_setQueryForExport'])) {
+            $GLOBALS['formulize_queryForExport'] = $masterQuerySQLForExport." -- SEPARATOR FOR EXPORT QUERIES -- ".$sortIsOnMainFlag; // "$selectClauseToUse FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause $limitClause";
+        }
 	  
 	} else { // end of if the filter has a SELECT in it
 		if(strstr($filter," -- SEPARATOR FOR EXPORT QUERIES -- ")) {
@@ -810,14 +814,15 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 
 //if(in_array($_SERVER['REMOTE_ADDR'], $validIPs)) {
      
-     /*global $xoopsUser;
-     if($xoopsUser->getVar('uid') == 18399) {
+     //global $xoopsUser;
+     //if($xoopsUser->getVar('uid') == 4436 AND isset($GLOBALS['debuggingg'])) {
      //     print "<br>Count query: $countMasterResults<br><br>";
-        print "Master query: $masterQuerySQL<br>";
+        //print "Master query: $masterQuerySQL<br>";
+        //exit();
      //   print "Linkformids: ";
      //   print_r($linkformids);
      //   print "<br>";
-     }*/
+     //}
 //}
 	formulize_benchmark("Before query");
 
@@ -870,7 +875,9 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
                     //print str_replace("REPLACEWITHTIMESTAMP",$timestamp,$linkQuery).'<br>';
                     $linkQueryRes[] = $xoopsDB->query(str_replace("REPLACEWITHTIMESTAMP",$timestamp,$linkQuery));
                 }
-                $GLOBALS['formulize_queryForExport'] .= " -- SEPARATOR FOR EXPORT QUERIES -- ".$linkQuery;
+                if(isset($GLOBALS['formulize_setQueryForExport'])) {
+                    $GLOBALS['formulize_queryForExport'] .= " -- SEPARATOR FOR EXPORT QUERIES -- ".$linkQuery;
+                }
                 $firstTimeGetAllMainFields = ""; // only get the main fields in the first query, because we don't need to gather all that data again and again and again
 		    }
 		}
@@ -882,6 +889,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
         }
         $resultData = array('results'=>array($masterQueryRes), 'fid'=>$fid, 'frid'=>$frid, 'linkFids'=>$linkformids);
     }
+    unset($GLOBALS['formulize_setQueryForExport']);
 
     if($resultOnly) {
         if($resultOnly === 'bypass') {
@@ -1800,8 +1808,12 @@ function formulize_getJoinHandles($elementArrays) {
      foreach($elementArrays as $elementArray) { // must be a multidimensional array, ie: even if we're only asking for one element, it's got to be $elementsArrays[0][0] = idnumber
           foreach($elementArray as $element) {
                if(!isset($cachedJoinHandles[$element])) {
-                    $metaData = formulize_getElementMetaData($element);
-                    $cachedJoinHandles[$element] = $metaData['ele_handle'];
+                    if($element == -1) {
+                        $cachedJoinHandles[$element] = 'entry_id';   
+                    } else {
+                        $metaData = formulize_getElementMetaData($element);
+                        $cachedJoinHandles[$element] = $metaData['ele_handle'];
+                    }
                }
           }
      }

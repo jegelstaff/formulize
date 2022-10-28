@@ -835,7 +835,7 @@ class formulizeElementRenderer{
 						$counter = 0;
                         foreach($options as $oKey=>$oValue) {
 							$oValue = formulize_swapUIText($oValue, $this->_ele->getVar('ele_uitext'));
-							$other = $this->optOther($oValue, $form_ele_id, $entry_id, $counter, false, $isDisabled);
+							$other = optOther($oValue, $form_ele_id, $entry_id, $counter, false, $isDisabled);
 							if( $other != false ){
 								$form_ele1->addOption($oKey, _formulize_OPT_OTHER.$other);
 								if($oKey == $selected) {
@@ -867,7 +867,7 @@ class formulizeElementRenderer{
 								$form_ele_id,
 								$selected
 							);
-							$other = $this->optOther($oValue, $form_ele_id, $entry_id, $counter, false, $isDisabled);
+							$other = optOther($oValue, $form_ele_id, $entry_id, $counter, false, $isDisabled);
 							if( $other != false ){
 								$t->addOption($oKey, _formulize_OPT_OTHER."</label><label>$other"); // epic hack to terminate radio button's label so it doesn't include the clickable 'other' box!!
 								if($oKey == $selected) {
@@ -1120,54 +1120,6 @@ class formulizeElementRenderer{
 				break;
 		}
 		return $sql;
-	}
-
-
-	// THIS FUNCTION COPIED FROM LIASE 1.26, onchange control added
-	// JWE -- JUNE 1 2006
-	static function optOther($s, $id, $entry_id, $counter, $checkbox=false, $isDisabled=false){
-        static $blankSubformCounters = array();
-		global $xoopsModuleConfig, $xoopsDB;
-		if( !is_string($s) OR !preg_match('/\{OTHER\|+[0-9]+\}/', $s) ){
-			return false;
-		}
-		// deal with displayElement elements...
-		$id_parts = explode("_", $id);
-		/* // displayElement elements will be in the format de_{id_req}_{ele_id} (deh?)
-		// regular elements will be in the format ele_{ele_id}
-		if(count((array) $id_parts) == 3) {
-			$ele_id = $id_parts[2];
-		} else {
-			$ele_id = $id_parts[1];
-		}*/
-		// NOW, in Formulize 3, id_parts[3] will always be the element id. :-)
-		$ele_id = $id_parts[3];
-		
-		// gather the current value if there is one
-		$other_text = "";
-		if(is_numeric($entry_id)) {
-			$otherq = q("SELECT other_text FROM " . $xoopsDB->prefix("formulize_other") . " WHERE id_req='$entry_id' AND ele_id='$ele_id' LIMIT 0,1");
-			$other_text = $otherq[0]['other_text'];
-		}
-		if(strstr($_SERVER['PHP_SELF'], "formulize/printview.php") OR $isDisabled) {
-			return $other_text;			
-		}
-		$s = explode('|', preg_replace('/[\{\}]/', '', $s));
-		$len = !empty($s[1]) ? $s[1] : $xoopsModuleConfig['t_width'];
-        if($entry_id == "new") {
-            $blankSubformCounters[$ele_id] = isset($blankSubformCounters[$ele_id]) ? $blankSubformCounters[$ele_id] + 1 : 0;
-            $blankSubformCounter = $blankSubformCounters[$ele_id];
-            $otherKey = 'ele_'.$ele_id.'_'.$entry_id.'_'.$blankSubformCounter;
-        } else {
-            $otherKey = 'ele_'.$ele_id.'_'.$entry_id;
-        }
-		$box = new XoopsFormText('', 'other['.$otherKey.']', $len, 255, $other_text);
-		if($checkbox) {
-			$box->setExtra("onchange=\"javascript:formulizechanged=1;\" onkeydown=\"javascript:if(this.value != ''){this.form.elements['" . $id . "[]'][$counter].checked = true;}\"");
-		} else {
-			$box->setExtra("onchange=\"javascript:formulizechanged=1;\" onkeydown=\"javascript:if(this.value != ''){this.form." . $id . "[$counter].checked = true;}\"");
-		}
-		return $box->render();
 	}
 
   // replace { } terms with data handle values from the current entry, if any exist
@@ -1524,4 +1476,51 @@ if($multiple ){
 		return $prevUI;
 	}
 
+}
+
+// THIS FUNCTION COPIED FROM LIASE 1.26, onchange control added
+// JWE -- JUNE 1 2006
+function optOther($s, $id, $entry_id, $counter, $checkbox=false, $isDisabled=false){
+    static $blankSubformCounters = array();
+    global $xoopsModuleConfig, $xoopsDB;
+    if( !is_string($s) OR !preg_match('/\{OTHER\|+[0-9]+\}/', $s) ){
+        return false;
+    }
+    // deal with displayElement elements...
+    $id_parts = explode("_", $id);
+    /* // displayElement elements will be in the format de_{id_req}_{ele_id} (deh?)
+    // regular elements will be in the format ele_{ele_id}
+    if(count((array) $id_parts) == 3) {
+        $ele_id = $id_parts[2];
+    } else {
+        $ele_id = $id_parts[1];
+    }*/
+    // NOW, in Formulize 3, id_parts[3] will always be the element id. :-)
+    $ele_id = $id_parts[3];
+    
+    // gather the current value if there is one
+    $other_text = "";
+    if(is_numeric($entry_id)) {
+        $otherq = q("SELECT other_text FROM " . $xoopsDB->prefix("formulize_other") . " WHERE id_req='$entry_id' AND ele_id='$ele_id' LIMIT 0,1");
+        $other_text = $otherq[0]['other_text'];
+    }
+    if(strstr($_SERVER['PHP_SELF'], "formulize/printview.php") OR $isDisabled) {
+        return $other_text;			
+    }
+    $s = explode('|', preg_replace('/[\{\}]/', '', $s));
+    $len = !empty($s[1]) ? $s[1] : $xoopsModuleConfig['t_width'];
+    if($entry_id == "new") {
+        $blankSubformCounters[$ele_id] = isset($blankSubformCounters[$ele_id]) ? $blankSubformCounters[$ele_id] + 1 : 0;
+        $blankSubformCounter = $blankSubformCounters[$ele_id];
+        $otherKey = 'ele_'.$ele_id.'_'.$entry_id.'_'.$blankSubformCounter;
+    } else {
+        $otherKey = 'ele_'.$ele_id.'_'.$entry_id;
+    }
+    $box = new XoopsFormText('', 'other['.$otherKey.']', $len, 255, $other_text);
+    if($checkbox) {
+        $box->setExtra("onchange=\"javascript:formulizechanged=1;\" onkeydown=\"javascript:if(this.value != ''){this.form.elements['" . $id . "[]'][$counter].checked = true;}\"");
+    } else {
+        $box->setExtra("onchange=\"javascript:formulizechanged=1;\" onkeydown=\"javascript:if(this.value != ''){this.form." . $id . "[$counter].checked = true;}\"");
+    }
+    return $box->render();
 }

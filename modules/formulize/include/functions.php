@@ -61,8 +61,6 @@ if (typeof jQuery.ui == 'undefined') {
 }
 ";
 
-$GLOBALS['formulize_versionFourOrHigher'] = true;
-
 /*
  * experimental removal of language setting in functions.php - this should be set previously in other locations and this file should be a library with no dependancies on doing something specific for the bootstrapping of the page's resources
 global $xoopsConfig;
@@ -3094,13 +3092,14 @@ function cloneEntry($entryOrFilter, $frid, $fid, $copies=1, $callback = null, $t
     }
 
     // all entries have been made.  Now we need to fix up any linked selectboxes
-    $element_handler = xoops_getmodulehandler('elements', 'formulize');
-    foreach ($lsbpairs as $source=>$lsb) {
-        $sourceElement = $element_handler->get($source);
-        $lsbElement = $element_handler->get($lsb);
-        $dataHandlers[$lsbElement->getVar('id_form')]->reassignLSB($sourceElement->getVar('id_form'), $lsbElement, $entryMap);
+    if(count($entryMap) > 0 ) {
+        $element_handler = xoops_getmodulehandler('elements', 'formulize');
+        foreach ($lsbpairs as $source=>$lsb) {
+            $sourceElement = $element_handler->get($source);
+            $lsbElement = $element_handler->get($lsb);
+            $dataHandlers[$lsbElement->getVar('id_form')]->reassignLSB($sourceElement->getVar('id_form'), $lsbElement, $entryMap);
+        }
     }
-    
     foreach($entryMap[$originalFid] as $clonedMainformEntries) {
         foreach($clonedMainformEntries as $clonedMainformEntryId) {
             formulize_updateDerivedValues($clonedMainformEntryId, $originalFid, $originalFrid);
@@ -4743,8 +4742,12 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
                 unset($_POST[$k]);
             }
         }
+        
+        $settings = array();
         // load the saved view requested, and get everything ready for calling gatherDataSet
-        list($_POST['currentview'], $_POST['oldcols'], $_POST['asearch'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $_POST['hlist'], $_POST['hcalc'], $_POST['lockcontrols'], $quicksearches) = loadReport($savedView, $fid, $frid);
+        // pubfilters are ignored, not relevant for just getting calculations
+        // the way this is all parsed may not be entirely right! reading in view and parsing cols, searches, etc, should be standardized in functions, this repeats some code from entriesdisplay.php that should be refactored!
+        list($_POST['currentview'], $_POST['oldcols'], $_POST['asearch'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $_POST['hlist'], $_POST['hcalc'], $_POST['lockcontrols'], $quicksearches, $settings['global_search'], $pubfilters) = loadReport($savedView, $fid, $frid);
         // must check for this and set it here, inside this section, where we know for sure that $_POST['lockcontrols'] has been set based on the database value for the saved view, and not anything else sent from the user!!!  Otherwise the user might be injecting a greater scope for themselves than they should have!
         $currentViewCanExpand = $_POST['lockcontrols'] ? false : true;
         // explode quicksearches into the search_ values
@@ -4776,7 +4779,7 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
         // by calling this, we will set the base query that needs to be used in order to generate the calculations
         // special flag is used to force return once base query is set
         $GLOBALS['formulize_returnAfterSettingBaseQuery'] = true;
-        formulize_gatherDataSet(array(), $searches, "", "", $frid, $fid, $scope);
+        formulize_gatherDataSet($settings, $searches, "", "", $frid, $fid, $scope);
         unset($GLOBALS['formulize_returnAfterSettingBaseQuery']);
 
         $ccols = explode("/", $_POST['calc_cols']);
@@ -4796,6 +4799,15 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
     }
 
     $calcResults = $cachedResults[$frid][$fid][$savedView];
+    
+    // calcResults has five keys: /*
+    /*
+    $to_return[0] = $masterResults; // main array used to make standard results in Formulize
+	$to_return[1] = $blankSettings; // the blank settings for each column and requested calculation
+	$to_return[2] = $groupingSettings; // the grouping settings for each column and requested calculation
+	$to_return[3] = $groupingValues; // the actual value by which the result was grouped, for each column, calculation and specific calc id (representing an individual result)
+	$to_return[4] = $masterResultsRaw; // the raw value of the calculation, by column, requested calculation, and calculation id -- not including some avg and any per
+    */
 
     // individual handle requested, so convert to array
     $origHandle = $handle;
@@ -4827,7 +4839,12 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
             if ($type == $calcType OR $type == "all") {
                 foreach ($results as $groupingId=>$thisResult) {
                     if (isset($groupingTypeMap[$calcType][$groupingId]) OR $grouping == "all") {
-                        $resultArray[$handle][$calcType][$indexer]['result'] = $thisResult;
+                        if(isset($calcResults[4][$handle][$calcType][$groupingId])) {
+                            $resultArray[$handle][$calcType][$indexer]['result'] = $calcResults[4][$handle][$calcType][$groupingId];    
+                            $resultArray[$handle][$calcType][$indexer]['readable'] = $thisResult;
+                        } else {
+                            $resultArray[$handle][$calcType][$indexer]['result'] = $thisResult;
+                        }
                         $resultArray[$handle][$calcType][$indexer]['grouping'] = $calcResults[3][$handle][$calcType][$groupingId];
                         $indexer++;
                     }
@@ -6552,18 +6569,23 @@ function convertVariableSearchToLiteral($v, $requestKeyToUse) {
 
 // This function generates HTML for a smart list of columns to use in the change columns list and elsewhere
 // The idea is to show columns based on their forms, in a way that mimics the links in the active relationships
-function generateTidyElementList($cols, $selectedCols=array()) {
+function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
     
     $html = "<div>";
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $counter = 0;
+    $prevFid = 0;
     foreach($cols as $thisFid=>$columns) {
+        if($thisFid != $prevFid) {
+            $fidCounter = 0;
+            $prevFid = $thisFid;
+        }
         $formObject = $form_handler->get($thisFid);
         $boxeshtml = "";
         $hideform = count((array) $cols) > 1 ? "style='opacity: 0; max-height: 0;'" : "style='opacity: 1; max-height: 10000px;'"; // start forms closed unless they have selected columns, or unless this is the only form in the set
         $upDisplay = count((array) $cols) > 1 ? "style='display: none;'" : "style='display: inline;'";
         $downDisplay = count((array) $cols) > 1 ? "style='display: inline;'" : "style='display: none;'";
-        if($counter == 0) { // add in metadata columns first time through
+        if($counter == 0 AND $thisFid == $mainformFid) { // add in metadata columns first time through
             array_unshift($columns,
                 array('ele_handle'=>'entry_id', 'ele_caption' => _formulize_ENTRY_ID),                          
                 array('ele_handle'=>'creation_uid', 'ele_caption' => _formulize_DE_CALC_CREATOR),
@@ -6574,6 +6596,7 @@ function generateTidyElementList($cols, $selectedCols=array()) {
         }
         foreach($columns as $column) {
             $counter++;
+            $fidCounter++;
             $selected = in_array($column['ele_handle'], $selectedCols) ? "checked='checked'" : "";
             if($selected) {
                 $hideform = "style='opacity: 1; max-height: 10000px;'";

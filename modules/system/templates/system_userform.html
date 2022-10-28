@@ -1,4 +1,3 @@
-<{if $lang_reset !== 1}>
 <div style="position: relative;">
 	<div>
 		<fieldset style="padding: 10px;">
@@ -37,25 +36,4 @@
 		</fieldset>
 	</div>
 </div>
-<{else}>
-<div style="position: relative;height: 250px;">
-	<div style="float: <{$smarty.const._GLOBAL_LEFT}>; width: 80% ">
-		<fieldset style="padding: 10px;">
-			<legend style="font-weight: bold;"><{$smarty.const._US_RESETPASSWORD}></legend>
-			<h1><{$smarty.const._US_RESETPASSTITLE}></h1>
-			<div><{$smarty.const._US_RESETPASSINFO}></div>
-			<br />
-			<form action="resetpass.php" method="post">
-				<{$lang_youremail}> <input type="text" name="email" size="26" maxlength="255" /><br />
-				<{$lang_username}> <input type="username" name="username" size="26" maxlength="255" value="<{$lang_uname}>"/><br />
-				<{$lang_currentpass}> <input type="password" name="c_password" size="26" maxlength="255" /><br />
-				<{$lang_newpass}> <input type="password" name="password" size="26" maxlength="255" /><br />
-				<{$lang_newpass2}> <input type="password" name="password2" size="26" maxlength="255" />&nbsp;&nbsp;<input type="hidden" name="op" value="resetpass" /><input type="hidden" name="t" value="<{$resetpassword_token}>" />
-		    	<br />
-		    	<br />
-		     	<input type="submit" value="<{$smarty.const._US_RESETPASSWORD}>" />
-			</form>
-		</fieldset>
-	</div>
-</div>
-<{/if}>
+

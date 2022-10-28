@@ -383,7 +383,7 @@ if($pubflag) {
     // get the pubfilters for the viewselection
     $pubfilters = q("SELECT sv_pubfilters FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id = '" . substr($viewselection, 1) . "'");
     $pubfilters = $pubfilters[0]['sv_pubfilters'] ? explode(",",$pubfilters[0]['sv_pubfilters']) : array();
-    $filterChoices = new xoopsFormLabel(_formulize_DE_SAVE_PUBFILTERS, generateTidyElementList(getAllColList($fid, $frid, $groups), $pubfilters, $fid));
+    $filterChoices = new xoopsFormLabel(_formulize_DE_SAVE_PUBFILTERS, generateTidyElementList($fid, getAllColList($fid, $frid, $groups), $pubfilters));
     $filterChoices->setDescription(_formulize_DE_SAVE_PUBFILTERS_DESC);
     $saveform->addElement($filterChoices);
     

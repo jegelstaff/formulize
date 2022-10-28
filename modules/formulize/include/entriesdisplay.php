@@ -2016,7 +2016,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 
   global $xoopsDB;
   $masterResults = array();
-  $masterResultsRaw = array();
+  $masterResultsRaw = array(); // not all avg values, and no per values are stored here, because the formatting of them is very complex and we haven't needed them raw yet
   $blankSettings = array();
   $groupingSettings = array();
   $groupingValues = array();
@@ -2262,6 +2262,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		  }
 		}
 		$masterResults[$cols[$i]][$calc][$calcId] = _formulize_DE_CALC_MIN . ": ".formulize_numberFormat($thisResult["$fidAlias$handle"], $handle);
+        $masterResultsRaw[$cols[$i]][$calc][$calcId]['min'] = $thisResult["$fidAlias$handle"];
 		break;
 		  case "max":
 		foreach($theseGroupings as $gid=>$thisGrouping) {
@@ -2271,6 +2272,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		  }
 		}
 		$masterResults[$cols[$i]][$calc][$calcId] = _formulize_DE_CALC_MAX . ": ".formulize_numberFormat($thisResult["$fidAlias$handle"], $handle);
+        $masterResultsRaw[$cols[$i]][$calc][$calcId]['max'] = $thisResult["$fidAlias$handle"];
 		break;
 		  case "count":
 		foreach($theseGroupings as $gid=>$thisGrouping) {
@@ -2279,8 +2281,8 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 			$groupingValues[$cols[$i]][$calc][$calcId][] = convertRawValuesToRealValues($thisResult["$galias$ghandle"], $ghandle, true);
 		  }
 		}
-				$masterResultsRaw[$cols[$i]][$calc][$calcId]['count'] = $thisResult["count$fidAlias$handle"];
-				$masterResultsRaw[$cols[$i]][$calc][$calcId]['countunique'] = $thisResult["distinct$fidAlias$handle"];
+        $masterResultsRaw[$cols[$i]][$calc][$calcId]['count'] = $thisResult["count$fidAlias$handle"];
+        $masterResultsRaw[$cols[$i]][$calc][$calcId]['countunique'] = $thisResult["distinct$fidAlias$handle"];
 		$masterResults[$cols[$i]][$calc][$calcId] = _formulize_DE_CALC_NUMENTRIES . ": ".$thisResult["count$fidAlias$handle"]."<br>"._formulize_DE_CALC_NUMUNIQUE . ": " .$thisResult["distinct$fidAlias$handle"];
 		break;
 		  case "avg":
@@ -2291,6 +2293,8 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		  }
 		}
 		$masterResults[$cols[$i]][$calc][$calcId] =  _formulize_DE_CALC_MEAN . ": ".formulize_numberFormat($thisResult["avg$fidAlias$handle"], $handle)."<br>" . _formulize_DE_CALC_STD . ": ".formulize_numberFormat($thisResult["std$fidAlias$handle"], $handle)."<br><br>";
+        $masterResultsRaw[$cols[$i]][$calc][$calcId]['avg'] = $thisResult["avg$fidAlias$handle"];
+        $masterResultsRaw[$cols[$i]][$calc][$calcId]['avgstd'] = $thisResult["std$fidAlias$handle"];
 		break;
 		  case "per":
 		$groupingWhere = array();
@@ -2536,7 +2540,8 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 // this could be made into a replacement for the prepvalues function in the extract.php file that does the same kind of thing when preparing a dataset
 // returnFlat is a flag to cause multiple values to be returned as comma separated strings
 // value can be an array, and if so, an array will be passed
-function convertRawValuestoRealValues($value, $handle, $returnFlat=false) {
+function convertRawValuesToRealValues($value, $handle, $returnFlat=false) {
+    
   if(!is_array($value)) {
 		$value = array(0=>$value);
 		$arrayWasPassedIn = false;
@@ -2571,7 +2576,7 @@ function convertRawValuestoRealValues($value, $handle, $returnFlat=false) {
 			// convert the pointers for the linked selectbox values, to their source values
 			$sourceMeta = explode("#*=:*", $linkedMetaData[2]);
 			$data_handler = new formulizeDataHandler($sourceMeta[0]);
-			$realValues = $data_handler->findAllValuesForEntries($sourceMeta[1], explode(",",trim($thisValue, ","))); // trip opening and closing commas and split by comma into an array
+			$realValues = $data_handler->findAllValuesForEntries($sourceMeta[1], explode(",",trim($thisValue, ","))); // trim opening and closing commas and split by comma into an array
 			// findAllValuesForEntries method returns an array, so convert to a single value
 			if(is_array($realValues) AND $returnFlat) {
 				$realValues = implode(", ", $realValues);
@@ -2597,7 +2602,10 @@ function convertRawValuestoRealValues($value, $handle, $returnFlat=false) {
 		$users = $user_handler->getObjects($criteria, true); // true causes key of returned array to be uids
 		foreach($allRealValuesNames as $thisUid) {
 			if(is_numeric($thisUid) AND isset($users[$thisUid])) {
-				$allRealValues[] = $users[$thisUid]->getVar($isNamesList);
+                if(!$nameToUse = $users[$thisUid]->getVar($isNamesList)) {
+                    $nameToUse = $users[$thisUid]->getVar('uname');
+                }
+                $allRealValues[] = $nameToUse;
 			} else {
 				$allRealValues[] = _formulize_BLANK_KEYWORD;
 			}
@@ -3918,12 +3926,14 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 	//print "limitStart: $limitStart<br>limitSize: $limitSize<br>";
 
 		$GLOBALS['formulize_getCountForPageNumbers'] = true; // flag used to trigger setting of the count of entries in the dataset
-		if($screen) {
-			$fundamental_filters = $screen->getVar('fundamental_filters');
-			if(is_array($fundamental_filters) AND count((array) $fundamental_filters)>0) {
-				$filter = array('fundamental_filters'=>$fundamental_filters, 'active_filters'=>$filter);
-			}
-		}
+        $GLOBALS['formulize_setBaseQueryForCalcs'] = true; // flag used to trigger setting of the basequery for calculations
+        $GLOBALS['formulize_setQueryForExport'] = true;
+        if($screen) {
+            $fundamental_filters = $screen->getVar('fundamental_filters');
+            if(is_array($fundamental_filters) AND count($fundamental_filters)>0) {
+                $filter = array('fundamental_filters'=>$fundamental_filters, 'active_filters'=>$filter);
+            }
+        }
 		$data = getData($frid, $fid, $filter, "AND", $scope, $limitStart, $limitSize, $sort, $order, $forcequery);
 
 		// if we deleted entries and the current page is now empty, then shunt back 1 page

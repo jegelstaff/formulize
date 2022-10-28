@@ -147,11 +147,8 @@ if($fid AND $uid) {
     } elseif($searchFilter) { // if search is an array and there is no existing filter, then use the search array as the filter
         $filter = $searchFilter;
     }
-    if($_SERVER['REMOTE_ADDR']=='70.49.243.84') {
-        //var_dump($filter);
-        //exit();
-				}
     $filterElements = count((array) $filterElements) == 0 ? null : $filterElements;
+    $GLOBALS['formulize_setQueryForExport'] = true;
     $data = getData($frid, $fid, $filter, $andor, $scope, $limitStart, $limitSize, $sortHandle, $sortDir, false, 0, false, "", false, 'bypass', $filterElements); // 'bypass' before filterElements means don't even do the query, just prep eveything - avoids potentially expensive query and expensive pass through all the data!
     if($data === true) { // we'll get back false if we weren't able to 
         $exportTime = formulize_catchAndWriteExportQuery($fid);

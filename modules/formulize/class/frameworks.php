@@ -308,12 +308,12 @@ class formulizeFrameworkLink extends XoopsObject {
             if (is_object($ele1)) {
                 $name1 = $ele1->getVar('ele_colhead') ? printSmart($ele1->getVar('ele_colhead')) : printSmart($ele1->getVar('ele_caption'));
             } else {
-                $name1 = '';
+                $name1 = $this->getVar('key1') == -1 ? 'Entry ID (experimental!)' : '';
             }
             if (is_object($ele2)) {
                 $name2 = $ele2->getVar('ele_colhead') ? printSmart($ele2->getVar('ele_colhead')) : printSmart($ele2->getVar('ele_caption'));
             } else {
-                $name2 = '';
+                $name2 = $this->getVar('key2') == -1 ? 'Entry ID (experimental!)' : '';
             }
             $link_options[$loi]['value'] = $this->getVar('key1') . "+" . $this->getVar('key2');
             $link_options[$loi]['name'] = _AM_FRAME_COMMON_VALUES . printSmart($name1,20) . " & " . printSmart($name2,20);
