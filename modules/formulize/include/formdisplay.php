@@ -3872,7 +3872,7 @@ function redrawSubRow(entry_id,subformElementId) {
             var rowObject = jQuery(this);
             jQuery(this).children().each(function() {
                 counter = counter + 1;
-                if(counter >= 3) {
+                if(jQuery(this).attr('class') != 'subentry-view-cell' && jQuery(this).attr('class') != 'subentry-delete-cell') {
                     jQuery(this).remove();
                 }
                 if(counter == numChildren) {
