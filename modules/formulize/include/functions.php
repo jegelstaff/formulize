@@ -3090,13 +3090,14 @@ function cloneEntry($entryOrFilter, $frid, $fid, $copies=1, $callback = null, $t
     }
 
     // all entries have been made.  Now we need to fix up any linked selectboxes
-    $element_handler = xoops_getmodulehandler('elements', 'formulize');
-    foreach ($lsbpairs as $source=>$lsb) {
-        $sourceElement = $element_handler->get($source);
-        $lsbElement = $element_handler->get($lsb);
-        $dataHandlers[$lsbElement->getVar('id_form')]->reassignLSB($sourceElement->getVar('id_form'), $lsbElement, $entryMap);
+    if(count($entryMap) > 0 ) {
+        $element_handler = xoops_getmodulehandler('elements', 'formulize');
+        foreach ($lsbpairs as $source=>$lsb) {
+            $sourceElement = $element_handler->get($source);
+            $lsbElement = $element_handler->get($lsb);
+            $dataHandlers[$lsbElement->getVar('id_form')]->reassignLSB($sourceElement->getVar('id_form'), $lsbElement, $entryMap);
+        }
     }
-    
     foreach($entryMap[$originalFid] as $clonedMainformEntries) {
         foreach($clonedMainformEntries as $clonedMainformEntryId) {
             formulize_updateDerivedValues($clonedMainformEntryId, $originalFid, $originalFrid);
