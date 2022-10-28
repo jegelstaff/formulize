@@ -76,7 +76,7 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
 
     // Set some required variables
     $mid = getFormulizeModId();
-    for($i=0;$i<count($formframes);$i++) {
+    for($i=0;$i<count((array) $formframes);$i++) {
         unset($fid);
         unset($frid);
         if($mainforms[$i]) {
@@ -183,7 +183,7 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
     // 2. do the extraction (filter by calview)
 
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-    for($i=0;$i<count($fids);$i++) {
+    for($i=0;$i<count((array) $fids);$i++) {
         $scope="";
         if($scopes[$i]) {
             list($scope, $throwAwayCurrentView) = buildScope($scopes[$i], $uid, $fids[$i]);
@@ -313,7 +313,7 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
         $xoopsTpl->assign('nextMonth', ((($dateMonth + 1) > 12) ? ($dateYear + 1) . "-01" : $dateYear . "-" . ((($dateMonth + 1) < 10) ? "0" . ($dateMonth + 1) : ($dateMonth + 1))));
 
         $monthSelector = array();
-        $numberOfMonths = count($arrayMonthNames);
+        $numberOfMonths = count((array) $arrayMonthNames);
         for($intMonth = 0; $intMonth < $numberOfMonths; $intMonth++) {
             $monthName = $arrayMonthNames[$intMonth];
             $monthSelector[((($intMonth + 1) < 10) ? "0" . ($intMonth + 1) : ($intMonth + 1))] = $monthName;
@@ -331,7 +331,7 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
 
     // process data set(s)
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
-    for($i=0;$i<count($data);$i++) {
+    for($i=0;$i<count((array) $data);$i++) {
         foreach($data[$i] as $id=>$entry) {
             if(is_array($viewHandles[$i])) {
                 $elementObject = $element_handler->get($viewHandles[$i][0]);

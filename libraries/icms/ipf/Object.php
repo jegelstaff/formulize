@@ -798,7 +798,7 @@ class icms_ipf_Object extends icms_core_Object {
 						// ML Hack by marcan
 						$ret = icms_core_DataFilter::htmlSpecialChars($ret);
 
-						if (method_exists($myts, 'formatForML')) {
+						if (is_object($myts) AND method_exists($myts, 'formatForML')) {
 							return $ts->formatForML($ret);
 						} else {
 							return $ret;

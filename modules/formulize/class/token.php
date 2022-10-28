@@ -95,7 +95,7 @@ class formulizeTokenHandler {
         } else {
             return false;
         }
-        if(count($cachedKeys)>0) {
+        if(count((array) $cachedKeys)>0) {
         return $cachedKeys;
         }
         return false;

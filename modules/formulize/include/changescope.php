@@ -125,7 +125,7 @@ $groupsWithViewForm = $gperm_handler->getGroupIds("view_form", $fid, $mid);
 if($globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid)) { // get all groups
 	// need to make option array with values as gids and text as names of groups
 	$allgroups =& $member_handler->getGroups();
-	for($i=0;$i<count($allgroups);$i++) {
+	for($i=0;$i<count((array) $allgroups);$i++) {
 		if(in_array($allgroups[$i]->getVar('groupid'), $groupsWithViewForm)) {
 			$availgroups[$allgroups[$i]->getVar('groupid')] = $allgroups[$i]->getVar('name');
 		}
@@ -138,7 +138,7 @@ if($globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, 
 	if($groupScopeGroups !== false) {
 		$availgroups = $groupScopeGroups;
 	} else {
-		for($i=0;$i<count($groups);$i++) {
+		for($i=0;$i<count((array) $groups);$i++) {
 			$thisgroup =& $member_handler->getGroup($groups[$i]);
 			if(in_array($groups[$i], $groupsWithViewForm)) {
 				$availgroups[$groups[$i]] = $thisgroup->getVar('name');
@@ -169,7 +169,7 @@ print "<body style=\"background: white; margin-top:20px;\"><center>";
 print "<table style=\"width: 100%;\"><tr><td style=\"width: 5%;\"></td><td style=\"width: 90%;\">";
 $advscope = new xoopsThemeForm(_formulize_DE_PICKASCOPE, 'advscope', XOOPS_URL."/modules/formulize/include/advscope.php?fid=$fid&frid=$frid");
 
-$gcount = count($availgroups);
+$gcount = count((array) $availgroups);
 $size = ($gcount<10) ? $gcount : 10 ;
 $grouplist = new xoopsFormSelect(_formulize_DE_AVAILGROUPS, 'newscope', $curgroups, $size, true);
 $grouplist->addOptionArray($availgroups);

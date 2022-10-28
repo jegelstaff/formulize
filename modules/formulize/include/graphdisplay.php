@@ -179,7 +179,7 @@ function gatherGraphData($fid, $frid, $filter, $labelElement, $dataElement, $ope
 			// count the values in each label of the array
 			foreach(array_keys($dataPoints) as $key){
 				if(!empty($dataPoints[$key])){
-					$dataPoints[$key] = count($dataPoints[$key]);
+					$dataPoints[$key] = count((array) $dataPoints[$key]);
 				} else {
 					$dataPoints[$key] = 0;
 				}
@@ -200,7 +200,7 @@ function gatherGraphData($fid, $frid, $filter, $labelElement, $dataElement, $ope
 			break;
 		case "count-unique" :
 			foreach ($dataPoints as $thisLabel => $theseValues) {
-				$dataPoints[$thisLabel] = count(array_unique($theseValues));
+				$dataPoints[$thisLabel] = count((array) array_unique($theseValues));
 			}
 			if($dataElement == $labelElement){
 				$dataElement = "count of unique " . $labelElement;

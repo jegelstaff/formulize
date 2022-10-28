@@ -80,7 +80,7 @@ $deleteTarget = $conditionsDeleteParts[1];
 if($_POST['conditionsdelete']) { 
   // go through the passed filter settings starting from the one we need to remove, and shunt the rest down one space
   // need to do this in a loop, because unsetting and key-sorting will maintain the key associations of the remaining high values above the one that was deleted
-  $originalCount = count($_POST[$filter_key."_elements"]);
+  $originalCount = count((array) $_POST[$filter_key."_elements"]);
   for($i=$deleteTarget;$i<$originalCount;$i++) { // 2 is the X that was clicked for this page
     if($i>$deleteTarget) {
       $_POST[$filter_key."_elements"][$i-1] = $_POST[$filter_key."_elements"][$i];

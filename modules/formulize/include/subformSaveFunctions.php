@@ -14,7 +14,7 @@ function formulize_subformSave_determineElementToWrite($frid, $fid, $entry, $tar
 
     $elementq = q("SELECT fl_key1, fl_key2, fl_common_value, fl_form2_id FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_frame_id=" . intval($frid) . " AND fl_form2_id=" . intval($fid) . " AND fl_form1_id=" . intval($target_sub_to_use). " AND fl_relationship=3");
 	// element_to_write is used below in writing results of "add x entries" clicks, plus it is used for defaultblanks on first drawing blank entries, so we need to get this outside of the saving routine
-	if(count($elementq) > 0) {
+	if(count((array) $elementq) > 0) {
 		$element_to_write = $elementq[0]['fl_key1'];
 		$value_source = $elementq[0]['fl_key2'];
 		$value_source_form = $elementq[0]['fl_form2_id'];
@@ -89,7 +89,7 @@ function formulize_subformSave_writeNewEntry($element_to_write, $value_to_write,
         $filterValues = $filterValues[key($filterValues)]; // subform element conditions are always on one form only so we just take the first set of values found (filterValues are grouped by form id)
     } 
     foreach($sub_entry_written as $thisSubEntry) {
-        if(isset($filterValues) AND count($filterValues)>0) {
+        if(isset($filterValues) AND count((array) $filterValues)>0) {
             formulize_writeEntry($filterValues,$thisSubEntry);	
         }
         if($frid) {

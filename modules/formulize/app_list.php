@@ -70,7 +70,7 @@ foreach ($application_list as $application) {
     }
 
     // Only add applications that have links accessible to the user
-    if (count($links_arr) > 0) {
+    if (count((array) $links_arr) > 0) {
         $app_data["links"] = $links_arr;
         array_push($applications_array, $app_data);
     }

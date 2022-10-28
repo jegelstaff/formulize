@@ -81,7 +81,7 @@ function sendCalcs(formObj) {
 // options can change between POSTings, but calcs and columns do not change, hence the need to go to javascript for the options.
 
 if($_POST['column']) {
-	$numCols = count($_POST['column']);
+	$numCols = count((array) $_POST['column']);
 	for ($i = 0; $i < $numCols; $i++) {
 		$columns[] = $_POST['column'][$i];
 	$calcs[] = implode(",", $_POST['calculations']);
@@ -100,7 +100,7 @@ foreach($_POST as $k=>$v) {
 	}
 }
 
-$colcount = count($columns);
+$colcount = count((array) $columns);
 
 for($i=0;$i<$colcount;$i++) {
 	// make the calc and column arrays and get the options from javascript.
@@ -167,7 +167,7 @@ function addReqdCalcs($form) {
 
 	// add the most recently submitted calc if it is necessary...
 	if($_POST['submitx']) {
-		$numCols = count($_POST['column']);
+		$numCols = count((array) $_POST['column']);
 		for ($i = 0; $i < $numCols; $i++) {
 			$form->addElement(new xoopsFormHidden('reqdcalc_column_' . $_POST['column'][$i], $_POST['column'][$i]));
 			// flatten $_POST['calculation'] array
@@ -219,7 +219,7 @@ function setURLCalcs() {
      	$blanks = explode("/", $_GET['calc_blanks']);
      	$grouping = explode("/", $_GET['calc_grouping']);
 
-	for($i=0;$i<count($cols);$i++) {
+	for($i=0;$i<count((array) $cols);$i++) {
 		$_POST['reqdcalc_column_' . $cols[$i]] = $cols[$i];
 		$_POST['reqdcalc_calcs_' . $cols[$i]] = $calcs[$i];
 		unset($ex_calcs);
@@ -228,7 +228,7 @@ function setURLCalcs() {
 		$ex_calcs = explode(",", $calcs[$i]);
 		$ex_blanks = explode(",", $blanks[$i]);
 		$ex_grouping = explode(",", $grouping[$i]);
-		for($z=0;$z<count($ex_calcs);$z++) {
+		for($z=0;$z<count((array) $ex_calcs);$z++) {
 			if(substr($ex_blanks[$z],0,6)=="custom") {
 				$_POST[$ex_calcs[$z] . $cols[$i]] = "custom";
 				$_POST[$ex_calcs[$z] . $cols[$i]."_custom"] = substr(str_replace("!@^%*", ",", $ex_blanks[$z]),6);
@@ -355,7 +355,7 @@ $pickcalc = new xoopsThemeForm(_formulize_DE_PICKCALCS, 'pickcalc', $_SERVER["RE
 $returned = addReqdCalcs($pickcalc);
 $pickcalc = $returned['form'];
 
-$columns = new xoopsFormSelect(_formulize_DE_CALC_COL, 'column', "", min(count($options) + 6, 18), true);
+$columns = new xoopsFormSelect(_formulize_DE_CALC_COL, 'column', "", min(count((array) $options) + 6, 18), true);
 if(!in_array("creation_uid", $_POST['column']) AND !$_POST['reqdcalc_column_uid']) {
 	$columns->addOption("creation_uid", _formulize_DE_CALC_CREATOR);
 }
@@ -379,7 +379,7 @@ $calcs['min'] = _formulize_DE_CALC_MIN;
 $calcs['max'] = _formulize_DE_CALC_MAX;
 $calcs['count'] = _formulize_DE_CALC_COUNT;
 $calcs['per'] = _formulize_DE_CALC_PER;
-$calculations = new xoopsFormSelect(_formulize_DE_CALC_CALCS, 'calculations', '', count($calcs), true);
+$calculations = new xoopsFormSelect(_formulize_DE_CALC_CALCS, 'calculations', '', count((array) $calcs), true);
 $calculations->addOptionArray($calcs);
 
 $subButton = new xoopsFormButton('', 'submitx', _formulize_DE_CALCSUB, 'submit');
@@ -399,7 +399,7 @@ $doneButton->setExtra("onclick=\"javascript:sendCalcs(this.form);return false;\"
 //$doneTray->addElement($doneButton);
 //$doneTray->addElement($nolistdisplay);
 
-if(count($returned['rc'])>0) {
+if(count((array) $returned['rc'])>0) {
 	$pickcalc->insertBreak("</td></tr></table><table class='outer requested-calcs'><tr><th colspan=2>" . _formulize_DE_REQDCALCS . "</th></tr><tr><td class=even colspan=2><center>" . $doneButton->render() . "</center>", "");
 //	$pickcalc->addElement($doneButton);
 }

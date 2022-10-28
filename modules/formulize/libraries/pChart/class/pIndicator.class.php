@@ -75,7 +75,7 @@
        if ( $Settings["End"] > $OverallMax )   { $OverallMax = $Settings["End"]; }
        if ( $Settings["Start"] < $OverallMin ) { $OverallMin = $Settings["Start"]; }
       }
-     $RealWidth = $Width - (count($IndicatorSections)-1)*$SectionsMargin;
+     $RealWidth = $Width - (count((array) $IndicatorSections)-1)*$SectionsMargin;
      $XScale    = $RealWidth / ($OverallMax-$OverallMin);
 
      $X1 = $X; $ValuesPos = "";
@@ -147,7 +147,7 @@
        else
         $this->pChartObject->drawFilledRectangle($X1,$Y,$X2,$Y+$Height,$Color);
 
-       if ( $Key == count($IndicatorSections)-1 && $DrawRightHead )
+       if ( $Key == count((array) $IndicatorSections)-1 && $DrawRightHead )
         {
          $Poly = ""; $Poly[] = $X2+1; $Poly[] = $Y; $Poly[] = $X2+1; $Poly[] = $Y+$Height; $Poly[] = $X2+1+$HeadSize; $Poly[] = $Y+($Height/2);
          $this->pChartObject->drawPolygon($Poly,$Color);

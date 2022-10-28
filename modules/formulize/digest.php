@@ -199,7 +199,7 @@ if(!defined("XOOPS_MAINFILE_INCLUDED")) {
         file_put_contents(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/mail_template/digestTemplate.tpl", $mailTemplate);
         sendNotificationToEmail($email, "", "", $mailSubject, 'digestTemplate.tpl');
         unset($email);
-        if(count($ids)>0) {
+        if(count((array) $ids)>0) {
             $sql = "DELETE FROM ".$xoopsDB->prefix("formulize_digest_data")." WHERE digest_id IN (".implode(",",$ids).")";
             $res = $xoopsDB->queryF($sql);
         } else {

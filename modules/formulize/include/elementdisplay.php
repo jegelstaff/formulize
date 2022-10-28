@@ -134,7 +134,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 	}
 	
 	$elementFilterSettings = $element->getVar('ele_filtersettings');
-	if($allowed AND count($elementFilterSettings[0]) > 0 AND (!$noSave OR $entry != 'new')) {
+	if($allowed AND is_array($elementFilterSettings[0]) AND count((array) $elementFilterSettings[0]) > 0 AND (!$noSave OR $entry != 'new')) {
 		// cache the filterElements for this element, so we can build the right stuff with them later in javascript, to make dynamically appearing elements
 		$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName] = $elementFilterSettings[0];
 		
@@ -156,7 +156,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		// find the filter indexes for 'match all' and 'match one or more'
 		$filterElementsAll = array();
 		$filterElementsOOM = array();
-		for($i=0;$i<count($filterTypes);$i++) {
+		for($i=0;$i<count((array) $filterTypes);$i++) {
 			if($filterTypes[$i] == "all") {
 				$filterElementsAll[] = $i;
 			} else {
@@ -227,7 +227,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 				list($lockUid, $lockUsername) = explode(",", file_get_contents(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName"));
 				if($lockUid != $user_id) {
 					// lock is still valid, hasn't expired yet.
-                    if (count($lockedEntries) == 0) {
+                    if (count((array) $lockedEntries) == 0) {
                         $label = json_encode(sprintf(_formulize_ENTRY_IS_LOCKED, $lockUsername));
                         print <<<EOF
 <script type='text/javascript'>
@@ -266,7 +266,7 @@ EOF;
 		//formulize_benchmark("Done rendering element.");
 		
 		// put a lock on this entry in this form, so we know that the element is being edited.  Lock will be removed next time the entry is saved.
-		if (!$noSave AND $entry > 0 AND !isset($lockedEntries[$form_id][$entry])
+		if (!$noSave AND $entry != "new" AND $entry > 0 AND !isset($lockedEntries[$form_id][$entry])
             and !isset($entriesThatHaveBeenLockedThisPageLoad[$form_id][$entry]))
         {
             if (is_writable(XOOPS_ROOT_PATH."/modules/formulize/temp/")) {
@@ -363,7 +363,7 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
     }
 
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
-	for($io=0;$io<count($indexes);$io++) {
+	for($io=0;$io<count((array) $indexes);$io++) {
 		$i = $indexes[$io];
 		if(!($evaluationCondition == "")) {
 			$evaluationCondition .= " $match ";

@@ -316,7 +316,7 @@
        foreach($SerieData as $Key => $Value)
         $DeviationSum = $DeviationSum + ($Value-$Average)*($Value-$Average);
 
-       $Deviation = sqrt($DeviationSum/count($SerieData));
+       $Deviation = sqrt($DeviationSum/count((array) $SerieData));
 
        return($Deviation);
       }
@@ -364,7 +364,7 @@
     {
      if (!isset($this->Data["Series"][$Serie]["Data"])) { return(NULL); }
 
-     $Values = count($this->Data["Series"][$Serie]["Data"])-1;
+     $Values = count((array) $this->Data["Series"][$Serie]["Data"])-1;
      if ( $Values < 0 ) { $Values = 0; }
 
      $PercentilID  = floor(($Values/100)*$Percentil+.5);
@@ -537,7 +537,7 @@
        if ( preg_match("/,/",$buffer) )
         {
          list($R,$G,$B,$Alpha) = preg_split("/,/",$buffer);
-         if ( $this->Palette == "" ) { $ID = 0; } else { $ID = count($this->Palette); }
+         if ( $this->Palette == "" ) { $ID = 0; } else { $ID = count((array) $this->Palette); }
          $this->Palette[$ID] = array("R"=>$R,"G"=>$G,"B"=>$B,"Alpha"=>$Alpha);
         }
       }
@@ -583,7 +583,7 @@
    /* Initialise a given serie */
    function initialise($Serie)
     {
-     if ( isset($this->Data["Series"]) ) { $ID = count($this->Data["Series"]); } else { $ID = 0; }
+     if ( isset($this->Data["Series"]) ) { $ID = count((array) $this->Data["Series"]); } else { $ID = 0; }
 
      $this->Data["Series"][$Serie]["Description"]	= $Serie;
      $this->Data["Series"][$Serie]["isDrawable"]	= TRUE;
@@ -622,7 +622,7 @@
           {
            $SelectedSeries[$SerieName] = $SerieName;
 
-           if ( count($Serie["Data"] ) > $MaxVal ) { $MaxVal = count($Serie["Data"]); }
+           if ( count((array) $Serie["Data"] ) > $MaxVal ) { $MaxVal = count((array) $Serie["Data"]); }
           }
         }
       }

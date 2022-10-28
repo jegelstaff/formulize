@@ -68,14 +68,14 @@ function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientatio
 	include_once XOOPS_ROOT_PATH.'/modules/formulize/include/elementdisplay.php';
 	include_once XOOPS_ROOT_PATH.'/modules/formulize/class/data.php';
 	global $xoopsUser, $xoopsDB, $gridCounter;
-	$numcols = count($colcaps);
+	$numcols = count((array) $colcaps);
 	if(is_array($finalCell)) {
 		$numcols = $numcols+2;
 	} else {
 		$numcols = $numcols+1;
 	}
-	$numrows = count($rowcaps);
-	$actual_numrows = count(array_filter($rowcaps), 'nonNullGridRowCaps');	# count non-null row captions
+	$numrows = count((array) $rowcaps);
+	$actual_numrows = count((array) array_filter($rowcaps), 'nonNullGridRowCaps');	# count non-null row captions
 	if($title == "{FORMTITLE}") {
 		$title = trans(getFormTitle($fid));
 	} else {
@@ -267,7 +267,7 @@ function compileGrid($ele_value, $title, $element) {
 	$toreturn[] = $ele_value[4];
 
 	// number of cells in this grid
-	$toreturn[] = count($toreturn[1]) * count($toreturn[2]);
+	$toreturn[] = count((array) $toreturn[1]) * count((array) $toreturn[2]);
 
 	return $toreturn;
 }

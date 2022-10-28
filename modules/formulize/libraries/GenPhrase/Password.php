@@ -119,7 +119,7 @@ class Password
             }
             
             $words = $this->_wordlistHandler->getWordsAsArray();
-            $count = count($words);
+            $count = count((array) $words);
             if ($count < self::MIN_WORD_COUNT)
             {
                 throw new \RuntimeException('Wordlist must have at least ' . self::MIN_WORD_COUNT . ' unique words');

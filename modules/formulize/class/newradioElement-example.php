@@ -133,7 +133,7 @@ class formulizeNewRadioElementHandler extends formulizeElementsHandler {
 
 		if($temparraykeys[0] === "{FULLNAMES}" OR $temparraykeys[0] === "{USERNAMES}") { // ADDED June 18 2005 to handle pulling in usernames for the user's group(s)
 			$ele_value[2]['{SELECTEDNAMES}'] = explode("*=+*:", $value);
-			if(count($ele_value[2]['{SELECTEDNAMES}']) > 1) { array_shift($ele_value[2]['{SELECTEDNAMES}']); }
+			if(count((array) $ele_value[2]['{SELECTEDNAMES}']) > 1) { array_shift($ele_value[2]['{SELECTEDNAMES}']); }
 			$ele_value[2]['{OWNERGROUPS}'] = $owner_groups;
 			break;
 		}
@@ -147,7 +147,7 @@ class formulizeNewRadioElementHandler extends formulizeElementsHandler {
 		} 
 
 		$selvalarray = explode("*=+*:", $value);
-		$numberOfSelectedValues = strstr($value, "*=+*:") ? count($selvalarray)-1 : 1; // if this is a multiple selection value, then count the array values, minus 1 since there will be one leading separator on the string.  Otherwise, it's a single value element so the number of selections is 1.
+		$numberOfSelectedValues = strstr($value, "*=+*:") ? count((array) $selvalarray)-1 : 1; // if this is a multiple selection value, then count the array values, minus 1 since there will be one leading separator on the string.  Otherwise, it's a single value element so the number of selections is 1.
 		
 		$assignedSelectedValues = array();
 		foreach($temparraykeys as $k)
@@ -167,7 +167,7 @@ class formulizeNewRadioElementHandler extends formulizeElementsHandler {
 				$temparray[$k] = 0;
 			}
 		}
-		if((!empty($value) OR $value === 0 OR $value === "0") AND count($assignedSelectedValues) < $numberOfSelectedValues) { // if we have not assigned the selected value from the db to one of the options for this element, then lets add it to the array of options, and flag it as out of range.  This is to preserve out of range values in the db that are there from earlier times when the options were different, and also to preserve values that were imported without validation on purpose
+		if((!empty($value) OR $value === 0 OR $value === "0") AND count((array) $assignedSelectedValues) < $numberOfSelectedValues) { // if we have not assigned the selected value from the db to one of the options for this element, then lets add it to the array of options, and flag it as out of range.  This is to preserve out of range values in the db that are there from earlier times when the options were different, and also to preserve values that were imported without validation on purpose
 			foreach($selvalarray as $selvalue) {
 				if(!isset($assignedSelectedValues[$selvalue]) AND (!empty($selvalue) OR $selvalue === 0 OR $selvalue === "0")) {
 					$temparray[_formulize_OUTOFRANGE_DATA.$selvalue] = 1;
@@ -284,7 +284,7 @@ class formulizeNewRadioElementHandler extends formulizeElementsHandler {
 		}
 		
 		$renderedHoorvs = "";
-		if(count($hiddenOutOfRangeValuesToWrite) > 0) {
+		if(count((array) $hiddenOutOfRangeValuesToWrite) > 0) {
 			foreach($hiddenOutOfRangeValuesToWrite as $hoorKey=>$hoorValue) {
 				$thisHoorv = new xoopsFormHidden('formulize_hoorv_'.$true_ele_id.'_'.$hoorKey, $hoorValue);
 				$renderedHoorvs .= $thisHoorv->render() . "\n";
@@ -400,7 +400,7 @@ class formulizeNewRadioElementHandler extends formulizeElementsHandler {
     // this method will format a dataset value for display on screen when a list of entries is prepared
     // for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
     // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
-    function formatDataForList($value, $handle, $entry_id) {
+    function formatDataForList($value, $handle="", $entry_id=0) {
         return $value;
     }
     

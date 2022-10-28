@@ -214,7 +214,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
             if($_POST['optionsconditionsdelete']) {
                 // go through the passed filter settings starting from the one we need to remove, and shunt the rest down one space
                 // need to do this in a loop, because unsetting and key-sorting will maintain the key associations of the remaining high values above the one that was deleted
-                $originalCount = count($_POST[$filter_key."_elements"]);
+                $originalCount = count((array) $_POST[$filter_key."_elements"]);
                 for($i=$deleteTarget;$i<$originalCount;$i++) { // 2 is the X that was clicked for this page
                     if($i>$deleteTarget) {
                         $_POST[$filter_key."_elements"][$i-1] = $_POST[$filter_key."_elements"][$i];
@@ -232,7 +232,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
                 }
                 $changed = true;
             }
-            if(count($_POST[$filter_key."_elements"]) > 0){
+            if(count((array) $_POST[$filter_key."_elements"]) > 0){
                 $ele_value[5][0] = $_POST[$filter_key."_elements"];
                 $ele_value[5][1] = $_POST[$filter_key."_ops"];
                 $ele_value[5][2] = $_POST[$filter_key."_terms"];
@@ -285,7 +285,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 		$value = $myts->undoHtmlSpecialChars($value);
 
 		$selvalarray = explode("*=+*:", $value);
-		$numberOfSelectedValues = strstr($value, "*=+*:") ? count($selvalarray)-1 : 1; // if this is a multiple selection value, then count the array values, minus 1 since there will be one leading separator on the string.  Otherwise, it's a single value element so the number of selections is 1.
+		$numberOfSelectedValues = strstr($value, "*=+*:") ? count((array) $selvalarray)-1 : 1; // if this is a multiple selection value, then count the array values, minus 1 since there will be one leading separator on the string.  Otherwise, it's a single value element so the number of selections is 1.
 		
 		$assignedSelectedValues = array();
 		foreach($temparraykeys as $k) {
@@ -317,7 +317,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 			}
 			
 		}
-		if((!empty($value) OR $value === 0 OR $value === "0") AND count($assignedSelectedValues) < $numberOfSelectedValues) { // if we have not assigned the selected value from the db to one of the options for this element, then lets add it to the array of options, and flag it as out of range.  This is to preserve out of range values in the db that are there from earlier times when the options were different, and also to preserve values that were imported without validation on purpose
+		if((!empty($value) OR $value === 0 OR $value === "0") AND count((array) $assignedSelectedValues) < $numberOfSelectedValues) { // if we have not assigned the selected value from the db to one of the options for this element, then lets add it to the array of options, and flag it as out of range.  This is to preserve out of range values in the db that are there from earlier times when the options were different, and also to preserve values that were imported without validation on purpose
 			foreach($selvalarray as $selvalue) {
 				if(!isset($assignedSelectedValues[$selvalue]) AND (!empty($selvalue) OR $selvalue === 0 OR $selvalue === "0")) {
 					$temparray[_formulize_OUTOFRANGE_DATA.$selvalue] = 1;
@@ -425,7 +425,8 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 					$selected
 				);
 				$counter = 0; // counter used for javascript that works with 'Other' box
-				while( $o = each($options) ){
+                foreach($options as $oKey=>$oValue) {
+                    $o = array('key'=>$oKey, 'value'=>$oValue); // kinda ugly compatibility hack to refactor the really ugly use of 'each' for PHP 8
 					$o = formulize_swapUIText($o, $ele_uitext);
 					$other = formulizeElementRenderer::optOther($o['value'], $markupName, $entry_id, $counter, true, $isDisabled);
 					if( $other != false ){
@@ -450,9 +451,9 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 			default:
 				$form_ele1 = new XoopsFormElementTray($caption, $delimSetting);
 				$counter = 0; // counter used for javascript that works with 'Other' box
-				while( $o = each($options) ){
-					$o = formulize_swapUIText($o, $ele_uitext);
-					$other = formulizeElementRenderer::optOther($o['value'], $markupName, $entry_id, $counter, true, $isDisabled);
+                foreach($options as $oKey=>$oValue) {
+					$oValue = formulize_swapUIText($oValue, $ele_uitext);
+					$other = formulizeElementRenderer::optOther($oValue, $markupName, $entry_id, $counter, true, $isDisabled);
 					$t = new XoopsFormCheckBox(
 						'',
 						$markupName.'[]',
@@ -460,20 +461,20 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 						""
 					); // "" means absolutely nothing as delimiter, which gets chucked onto the end of this individual box at render time. :(
 					if($other != false){
-						$t->addOption($o['key'], _formulize_OPT_OTHER.$other);
-						if(in_array($o['key'], $selected)) {
+						$t->addOption($oKey, _formulize_OPT_OTHER.$other);
+						if(in_array($oKey, $selected)) {
 							$disabledOutputText[] = _formulize_OPT_OTHER.$other;
 						}
-                        $GLOBALS['formulize_lastRenderedElementOptions'][$o['key']] = _formulize_OPT_OTHER;
+                        $GLOBALS['formulize_lastRenderedElementOptions'][$oKey] = _formulize_OPT_OTHER;
 					}else{
-						$t->addOption($o['key'], $o['value']);
-						if(in_array($o['key'], $selected)) {
-							$disabledOutputText[] = $o['value'];
+						$t->addOption($oKey, $oValue);
+						if(in_array($oKey, $selected)) {
+							$disabledOutputText[] = $oValue;
 						}
-						if(strstr($o['value'], _formulize_OUTOFRANGE_DATA)) {
-							$hiddenOutOfRangeValuesToWrite[$o['key']] = str_replace(_formulize_OUTOFRANGE_DATA, "", $o['value']); // if this is an out of range value, grab the actual value so we can stick it in a hidden element later
+						if(strstr($oValue, _formulize_OUTOFRANGE_DATA)) {
+							$hiddenOutOfRangeValuesToWrite[$oKey] = str_replace(_formulize_OUTOFRANGE_DATA, "", $oValue); // if this is an out of range value, grab the actual value so we can stick it in a hidden element later
 						}
-                        $GLOBALS['formulize_lastRenderedElementOptions'][$o['key']] = $o['value'];
+                        $GLOBALS['formulize_lastRenderedElementOptions'][$oKey] = $oValue;
 					}
 					$t->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$markupName\" ");
 					$form_ele1->addElement($t);
@@ -484,7 +485,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 		}
 		$renderedHoorvs = "";
 
-		if(count($hiddenOutOfRangeValuesToWrite) > 0) {
+		if(count((array) $hiddenOutOfRangeValuesToWrite) > 0) {
 			foreach($hiddenOutOfRangeValuesToWrite as $hoorKey=>$hoorValue) {
 				$thisHoorv = new xoopsFormHidden('formulize_hoorv_'.$element->getVar('ele_id').'_'.$hoorKey, $hoorValue); 
 				$renderedHoorvs .= $thisHoorv->render() . "\n";
@@ -550,7 +551,8 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
         $opt_count = 1;
         $numberOfSelectionsFound = 0;
 		$ele_id = $element->getVar('ele_id');
-        while ($v = each($ele_value[2]) ) {
+        foreach($ele_value[2] as $vKey=>$vValue) {
+            $v = array('key'=>$vKey, 'value'=>$vValue);
             // it's always an array, right?!
             if (is_array($value)) {
                 if (in_array($opt_count, $value) ) {
@@ -571,7 +573,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
         }
 
         // if a value was received that was out of range. in this case we are assuming that if there are more values passed back than selections found in the valid options for the element, then there are out-of-range values we want to preserve
-        while ($numberOfSelectionsFound < count($value) AND $opt_count < 1000) {
+        while ($numberOfSelectionsFound < count((array) $value) AND $opt_count < 1000) {
             // keep looking for more values. get them out of the hiddenOutOfRange info
             if (in_array($opt_count, $value)) {
                 $selected_value = $selected_value.'*=+*:'.$myts->htmlSpecialChars($_POST['formulize_hoorv_'.$ele_id.'_'.$opt_count]);
@@ -620,7 +622,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
     // this method will format a dataset value for display on screen when a list of entries is prepared
     // for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
     // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
-    function formatDataForList($value, $handle, $entry_id) {
+    function formatDataForList($value, $handle="", $entry_id=0) {
         $this->clickable = true; // make urls clickable
         $this->striphtml = true; // remove html tags as a security precaution
         $this->length = 1000; // truncate to a maximum of 100 characters, and append ... on the end
