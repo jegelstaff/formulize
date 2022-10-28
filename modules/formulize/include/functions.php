@@ -6580,18 +6580,23 @@ function convertVariableSearchToLiteral($v, $requestKeyToUse) {
 
 // This function generates HTML for a smart list of columns to use in the change columns list and elsewhere
 // The idea is to show columns based on their forms, in a way that mimics the links in the active relationships
-function generateTidyElementList($cols, $selectedCols=array()) {
+function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
     
     $html = "<div>";
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $counter = 0;
+    $prevFid = 0;
     foreach($cols as $thisFid=>$columns) {
+        if($thisFid != $prevFid) {
+            $fidCounter = 0;
+            $prevFid = $thisFid;
+        }
         $formObject = $form_handler->get($thisFid);
         $boxeshtml = "";
         $hideform = count($cols) > 1 ? "style='opacity: 0; max-height: 0;'" : "style='opacity: 1; max-height: 10000px;'"; // start forms closed unless they have selected columns, or unless this is the only form in the set
         $upDisplay = count($cols) > 1 ? "style='display: none;'" : "style='display: inline;'";
         $downDisplay = count($cols) > 1 ? "style='display: inline;'" : "style='display: none;'";
-        if($counter == 0) { // add in metadata columns first time through
+        if($fidCounter == 0 AND $thisFid == $mainformFid) { // add in metadata columns first time through
             array_unshift($columns,
                 array('ele_handle'=>'entry_id', 'ele_caption' => _formulize_ENTRY_ID),                          
                 array('ele_handle'=>'creation_uid', 'ele_caption' => _formulize_DE_CALC_CREATOR),
@@ -6602,6 +6607,7 @@ function generateTidyElementList($cols, $selectedCols=array()) {
         }
         foreach($columns as $column) {
             $counter++;
+            $fidCounter++;
             $selected = in_array($column['ele_handle'], $selectedCols) ? "checked='checked'" : "";
             if($selected) {
                 $hideform = "style='opacity: 1; max-height: 10000px;'";

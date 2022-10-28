@@ -153,7 +153,7 @@ onclick=\"var boxes = document.getElementsByClassName('colbox');for(var i=0;i<bo
 <br><br>
 <input type='reset' name='reset' style='cursor: pointer;' value='". _formulize_DE_RESET_COLS."' /></td><td class=even>";
 
-print generateTidyElementList($cols, $selectedCols);
+print generateTidyElementList($fid, $cols, $selectedCols);
 
 print "</td></tr>\n";
 
