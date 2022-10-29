@@ -930,11 +930,16 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	print "<div id='hidden_quick_searches' style='display: none;'>\n";
 
 	foreach($formulize_buttonCodeArray['quickSearches'] as $handle=>$qsCode) {
-		if(!strstr($listOfEntriesBufferContents, $qsCode['search']) AND
-		   !strstr($listOfEntriesBufferContents, $qsCode['filter']) AND
-		   !strstr($listOfEntriesBufferContents, $qsCode['multiFilter']) AND
-		   !strstr($listOfEntriesBufferContents, $qsCode['dateRange'])) {
-			print $qsCode['search']."\n";
+		if(!strstr($listOfEntriesBufferContents, $qsCode['search'])
+            AND (!isset($qsCode['filter']) OR !strstr($listOfEntriesBufferContents, $qsCode['filter']))
+            AND (!isset($qsCode['multiFilter']) OR !strstr($listOfEntriesBufferContents, $qsCode['multiFilter']))
+            AND (!isset($qsCode['dateRange']) OR !strstr($listOfEntriesBufferContents, $qsCode['dateRange'])) ) {
+            foreach(array('search', 'filter', 'multiFilter', 'dateRange') as $searchType) {
+                if(isset($qsCode[$searchType])) {
+                    print $qsCode[$searchType]."\n";
+                    break;
+                }
+            }
 		}
 	}
 	print "</div>\n";
