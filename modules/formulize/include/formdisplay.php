@@ -631,7 +631,7 @@ function getParentLinks($fid, $frid) {
 // this function returns the captions and values that are in the DB for an existing entry
 // $elements is used to specify a shortlist of elements to display, based on their IDs.  Used in conjunction with the array option for $formform
 // $element_handler is not required any longer!
-function getEntryValues($entry, $element_handler, $groups, $fid, $elements="", $mid, $uid, $owner, $groupEntryWithUpdateRights) {
+function getEntryValues($entry, $element_handler, $groups, $fid, $elements, $mid, $uid, $owner, $groupEntryWithUpdateRights) {
 
 	if(!$fid) { // fid is required
 		return "";
@@ -871,10 +871,12 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 	if ($screen and is_a($screen, "formulizeFormScreen")) {
 		$elements_allowed = $screen->getVar("formelements");
 	}
+    $printViewPages = array();
+    $printViewPageTitles = array();
 	if(is_array($formframe)) {
 		$elements_allowed = $formframe['elements'];
-		$printViewPages = isset($formframe['pages']) ? $formframe['pages'] : "";
-		$printViewPageTitles = isset($formframe['pagetitles']) ? $formframe['pagetitles'] : "";
+		$printViewPages = isset($formframe['pages']) ? $formframe['pages'] : array();
+		$printViewPageTitles = isset($formframe['pagetitles']) ? $formframe['pagetitles'] : array();
 		$formframetemp = $formframe['formframe'];
 		unset($formframe);
 		$formframe = $formframetemp;
@@ -1803,7 +1805,7 @@ function addProfileFields($form, $profileForm) {
 
 
 // add the submit button to a form
-function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $button_text, $settings, $entry, $fids, $formframe, $mainform, $cur_entry, $profileForm, $elements_allowed="", $allDoneOverride=false, $printall=0, $screen=null) { //nmc 2007.03.24 - added $printall
+function addSubmitButton($form, $subButtonText, $go_back, $currentURL, $button_text, $settings, $entry, $fids, $formframe, $mainform, $cur_entry, $profileForm, $elements_allowed="", $allDoneOverride=false, $printall=0, $screen=null) { //nmc 2007.03.24 - added $printall
 
     global $xoopsUser;
     $fid = $fids[key($fids)]; // get first element in array, might not be keyed as 0 :(
@@ -2654,7 +2656,7 @@ function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid,
 //this function takes a formid and compiles all the elements for that form
 //elements_allowed is NOT based off the display values.  It is based off of the elements that are specifically designated for the current displayForm function (used to display parts of forms at once)
 // $title is the title of a grid that is being displayed
-function compileElements($fid, $form, $element_handler, $prevEntry, $entry, $go_back, $parentLinks, $owner_groups, $groups, $overrideValue="", $elements_allowed="", $profileForm="", $frid="", $mid, $sub_entries, $sub_fids, $member_handler, $gperm_handler, $title, $screen=null, $printViewPages="", $printViewPageTitles="") {
+function compileElements($fid, $form, $element_handler, $prevEntry, $entry, $go_back, $parentLinks, $owner_groups, $groups, $overrideValue, $elements_allowed, $profileForm, $frid, $mid, $sub_entries, $sub_fids, $member_handler, $gperm_handler, $title, $screen=null, $printViewPages="", $printViewPageTitles="") {
 	
 	include_once XOOPS_ROOT_PATH.'/modules/formulize/include/elementdisplay.php';
 	
@@ -2721,10 +2723,11 @@ function compileElements($fid, $form, $element_handler, $prevEntry, $entry, $go_
 			if(!$currentPrintViewPage) {
 				$currentPrintViewPage = 1;
 			}
-			while(!in_array($this_ele_id, $printViewPages[$currentPrintViewPage]) AND $currentPrintViewPage <= count((array) $printViewPages)) {
+			while((!isset($printViewPages[$currentPrintViewPage]) OR !in_array($this_ele_id, $printViewPages[$currentPrintViewPage]))
+                AND $currentPrintViewPage <= count((array) $printViewPages)) {
 				$currentPrintViewPage++;
 			}
-			if($this_ele_id == $printViewPages[$currentPrintViewPage][0]) {
+			if(isset($printViewPages[$currentPrintViewPage]) AND $this_ele_id == $printViewPages[$currentPrintViewPage][0]) {
 				$form->insertBreak("<div id=\"formulize-printpreview-pagetitle\">" . $printViewPageTitles[$currentPrintViewPage] . "</div>", "head");
 			}
 		}
