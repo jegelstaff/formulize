@@ -467,7 +467,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			// explode quicksearches into the search_ values
 			$allqsearches = explode("&*=%4#", $quicksearches);
 			$colsforsearches = explode(",", $_POST['oldcols']);
-			for($i=0;$i<count($allqsearches);$i++) {
+			for($i=0;$i<count((array) $allqsearches);$i++) {
 				if($allqsearches[$i] != "") {
 					$_POST["search_" . str_replace("hiddencolumn_", "", $colsforsearches[$i])] = $allqsearches[$i]; // need to remove the hiddencolumn indicator if it is present
 					if(strstr($colsforsearches[$i], "hiddencolumn_")) {
@@ -519,10 +519,10 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		$currentView = $loadview;
 	}
 
-	$pubfilters = strlen($_POST['pubfilters']) > 0 ? explode(",", $_POST['pubfilters']) : "";
+	$pubfilters = strlen($_POST['pubfilters']) > 0 ? explode(",", $_POST['pubfilters']) : array();
 
 	// if we did not load a full report/saved view, then load an advanceview if any is specified and the current page load is appropriate for it (see above for couldLoadAdvanceView))
-	if($screen AND count($screen->getVar('advanceview')) > 0 AND $couldLoadAdvanceView) {
+	if($screen AND count((array) $screen->getVar('advanceview')) > 0 AND $couldLoadAdvanceView) {
 		// kill the quicksearches, unless we've found a special flag that will cause them to be preserved
 		if(!isset($_POST['formulize_preserveQuickSearches']) AND !isset($_GET['formulize_preserveQuickSearches'])) {
 			foreach($_POST as $k=>$v) {
@@ -539,7 +539,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		// explode quicksearches into the search_ values
 		$allqsearches = explode(",", $quicksearches);
 		$colsforsearches = explode(",", $_POST['oldcols']);
-		for($i=0;$i<count($allqsearches);$i++) {
+		for($i=0;$i<count((array) $allqsearches);$i++) {
 			if($allqsearches[$i] != "") {
 				$_POST["search_" . $colsforsearches[$i]] = $allqsearches[$i]; 
 			}
@@ -599,7 +599,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	foreach($_POST as $k=>$v) {
 		
 		if(substr($k, 0, 7) == "search_" AND !in_array(substr($k, 7), $showcols) AND !in_array(substr($k, 7), $pubfilters)) {
-			if(substr($v, 0, 1) == "!" AND substr($v, -1) == "!") {// don't strip searches that have ! at front and back
+			if(is_string($v) AND substr($v, 0, 1) == "!" AND substr($v, -1) == "!") {// don't strip searches that have ! at front and back
 				$hiddenQuickSearches[] = substr($k, 7);
 				continue; // since the { } replacement is meant for the ease of use of non-admin users, and hiddenQuickSearches never show up to users on screen, we can skip the potentially expensive operations below in this loop
 			} else {
@@ -609,31 +609,31 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		
 		// check for starting and ending ! ! and put them back at the end if necessary
 		$needPreserveHiddenMarkers = false;
-		if(substr($v, 0, 1) == "!" AND substr($v, -1) == "!") {
+		if(is_string($v) AND substr($v, 0, 1) == "!" AND substr($v, -1) == "!") {
 			$needPreserveHiddenMarkers = true;
 			$v = substr($v, 1, -1);
 		}
 		
 		$operatorToPutBack = "";
-		if(substr($v, 0, 1) == '=') {
+		if(is_string($v) AND substr($v, 0, 1) == '=') {
 			$operatorToPutBack = '=';
 		}
-		if(substr($v, 0, 1) == '>') {
+		if(is_string($v) AND substr($v, 0, 1) == '>') {
 			$operatorToPutBack = '>';
 		}
-		if(substr($v, 0, 1) == '<') {
+		if(is_string($v) AND substr($v, 0, 1) == '<') {
 			$operatorToPutBack = '<';
 		}
-		if(substr($v, 0, 1) == '!') {
+		if(is_string($v) AND substr($v, 0, 1) == '!') {
 			$operatorToPutBack = '!';
 		}
-		if(substr($v, 0, 2) == '!=') {
+		if(is_string($v) AND substr($v, 0, 2) == '!=') {
 			$operatorToPutBack = '!=';
 		}
-		if(substr($v, 0, 2) == '<=') {
+		if(is_string($v) AND substr($v, 0, 2) == '<=') {
 			$operatorToPutBack = '<=';
 		}
-		if(substr($v, 0, 2) == '>=') {
+		if(is_string($v) AND substr($v, 0, 2) == '>=') {
 			$operatorToPutBack = '>=';
 		}
 		
@@ -732,7 +732,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	// if there's a bunch of go_back info, and no entry, then we should not show list, we need to display something else entirely
 	if(isset($_POST['go_back_form']) AND $_POST['go_back_form'] AND isset($_POST['go_back_entry']) AND $_POST['go_back_entry'] AND (!isset($_POST['ventry']) OR !$_POST['ventry'])) {
 		$go_back_entry = strstr($_POST['go_back_entry'], ',') ? explode(',',$_POST['go_back_entry']) : array($_POST['go_back_entry']);
-		$lastKey = count($go_back_entry)-1;
+		$lastKey = count((array) $go_back_entry)-1;
 		$settings['ventry'] = $go_back_entry[$lastKey];
 		$_POST['ventry'] = $go_back_entry[$lastKey];
 		$_POST['parent_entry'] = $_POST['go_back_entry'];
@@ -930,11 +930,16 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	print "<div id='hidden_quick_searches' style='display: none;'>\n";
 
 	foreach($formulize_buttonCodeArray['quickSearches'] as $handle=>$qsCode) {
-		if(!strstr($listOfEntriesBufferContents, $qsCode['search']) AND
-		   !strstr($listOfEntriesBufferContents, $qsCode['filter']) AND
-		   !strstr($listOfEntriesBufferContents, $qsCode['multiFilter']) AND
-		   !strstr($listOfEntriesBufferContents, $qsCode['dateRange'])) {
-			print $qsCode['search']."\n";
+		if(!strstr($listOfEntriesBufferContents, $qsCode['search'])
+            AND (!isset($qsCode['filter']) OR !strstr($listOfEntriesBufferContents, $qsCode['filter']))
+            AND (!isset($qsCode['multiFilter']) OR !strstr($listOfEntriesBufferContents, $qsCode['multiFilter']))
+            AND (!isset($qsCode['dateRange']) OR !strstr($listOfEntriesBufferContents, $qsCode['dateRange'])) ) {
+            foreach(array('search', 'filter', 'multiFilter', 'dateRange') as $searchType) {
+                if(isset($qsCode[$searchType])) {
+                    print $qsCode[$searchType]."\n";
+                    break;
+                }
+            }
 		}
 	}
 	print "</div>\n";
@@ -1024,11 +1029,11 @@ function generateViews($fid, $uid, $groups, $frid="0", $currentView, $loadedView
 	$lastStandardView = $vcounter;
 
 	if(!$limitViews) { // cannot pick saved views in the screen UI so these will never be available if views are being limited
-		if((count($s_reports)>0 OR count($ns_reports)>0) AND !$limitViews) { // we have saved reports...
+		if((count((array) $s_reports)>0 OR count((array) $ns_reports)>0) AND !$limitViews) { // we have saved reports...
 			$options .= "<option value=\"\">" . _formulize_DE_SAVED_VIEWS . "</option>\n";
 			$vcounter++;
 		}
-		for($i=0;$i<count($s_reports);$i++) {
+		for($i=0;$i<count((array) $s_reports);$i++) {
 			if($loadedView == "sold_" . $s_reports[$i]['report_id'] OR $prevview == "sold_" . $s_reports[$i]['report_id']) {
 				$vcounter++;
 				$options .= "<option value=$currentView selected>&nbsp;&nbsp;" . stripslashes($s_reports[$i]['report_name']) . "</option>\n"; // " (id: " . $s_reports[$i]['report_id'] . ")</option>\n";
@@ -1039,7 +1044,7 @@ function generateViews($fid, $uid, $groups, $frid="0", $currentView, $loadedView
 				$options .= "<option value=sold_" . $s_reports[$i]['report_id'] . ">&nbsp;&nbsp;" . stripslashes($s_reports[$i]['report_name']) . "</option>\n"; // " (id: " . $s_reports[$i]['report_id'] . ")</option>\n";
 			}
 		}
-		for($i=0;$i<count($ns_reports);$i++) {
+		for($i=0;$i<count((array) $ns_reports);$i++) {
 			if($loadedView == "s" . $ns_reports[$i]['sv_id'] OR $prevview == "s" . $ns_reports[$i]['sv_id']) {
 				$vcounter++;
 				$options .= "<option value=$currentView selected>&nbsp;&nbsp;" . stripslashes($ns_reports[$i]['sv_name']) . "</option>\n"; // " (id: " . $ns_reports[$i]['sv_id'] . ")</option>\n";
@@ -1053,13 +1058,13 @@ function generateViews($fid, $uid, $groups, $frid="0", $currentView, $loadedView
 	}
 
 
-	if((count($p_reports)>0 OR count($np_reports)>0) AND !$limitViews) { // we have saved reports...
+	if((count((array) $p_reports)>0 OR count((array) $np_reports)>0) AND !$limitViews) { // we have saved reports...
 		$options .= "<option value=\"\">" . _formulize_DE_PUB_VIEWS . "</option>\n";
 		$vcounter++;
 	}
 	$firstPublishedView = $vcounter + 1;
 	if(!$limitViews) { // old reports are not selectable in the screen UI so will never be in the limit list
-		for($i=0;$i<count($p_reports);$i++) {
+		for($i=0;$i<count((array) $p_reports);$i++) {
 			if($loadedView == "pold_" . $p_reports[$i]['report_id'] OR $prevview == "pold_" . $p_reports[$i]['report_id']) {
 				$vcounter++;
 				$options .= "<option value=$currentView selected>&nbsp;&nbsp;" . stripslashes($p_reports[$i]['report_name']) . "</option>\n"; // " (id: " . $p_reports[$i]['report_id'] . ")</option>\n";
@@ -1072,7 +1077,7 @@ function generateViews($fid, $uid, $groups, $frid="0", $currentView, $loadedView
 		}
 	}
 	$publishedViewNames = array();
-	for($i=0;$i<count($np_reports);$i++) {
+	for($i=0;$i<count((array) $np_reports);$i++) {
 		if(!$limitViews OR in_array($np_reports[$i]['sv_id'], $screenLimitViews)) {
 			if($loadedView == "p" . $np_reports[$i]['sv_id'] OR $prevview == "p" . $np_reports[$i]['sv_id'] OR ($forceLastLoaded AND $lastLoaded == "p" . $np_reports[$i]['sv_id'])) {
 				$vcounter++;
@@ -1492,7 +1497,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 
 	// determine if we need scrollbox class for the outer most container
 	$scrollBoxClassOnOff = '';
-	if($useScrollBox AND count($data) > 0) {
+	if($useScrollBox AND count((array) $data) > 0) {
 		$scrollBoxClassOnOff =  " scrollbox ";
 	}
 
@@ -1506,7 +1511,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 	$headingHelpAndLockShown = $formulizeConfig['heading_help_link'];
 	
 	// work out how many columns are possible
-	$colspan = count($cols) + count($inlineButtons) + 1; // columns, plus inline buttons, plus hidden floating column
+	$colspan = count((array) $cols) + count((array) $inlineButtons) + 1; // columns, plus inline buttons, plus hidden floating column
 	if($useViewEntryLinks OR $useCheckboxes != 2) {
 		$colspan++; // plus 1 for the checkbox/view entry link column
 	}
@@ -1562,7 +1567,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 		'checkBoxesShown' => ($useCheckboxes != 2 ? true : false),
 		'viewEntryLinksShown' => $useViewEntryLinks,
 		'lockedColumns' => $settings['lockedColumns'],
-		'numberOfInlineCustomButtons' => count($inlineButtons),
+		'numberOfInlineCustomButtons' => count((array) $inlineButtons),
 		'spacerNeeded' => ($columnWidth ? true : false),
 		'columnWidthStyle' => ($columnWidth ? "style='width: $columnWidth"."px'" : ""),
 		'colspan' => $colspan,
@@ -1614,7 +1619,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 	// MASTER HIDELIST CONDITIONAL...
 	if(!$settings['hlist']) {
 		
-		if (count($data) == 0) {
+		if (count((array) $data) == 0) {
 			// kill an empty dataset so there's no rows drawn
 			unset($data);
 		} else {
@@ -1690,7 +1695,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
                     $templateVariables['entry'] = $entry;
                     $templateVariables['entry_id'] = $entry_id;
 					
-					for($i=0;$i<count($cols);$i++) {
+					for($i=0;$i<count((array) $cols);$i++) {
 			
 						$col = $cols[$i];
 						$colhandle = $settings['columnhandles'][$i];
@@ -1791,7 +1796,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 	}	
 		
 	$noDataFound = "";
-	if((!isset($data) OR count($data) == $blankentries) AND !$LOE_limit) { // if no data was returned, or the dataset was empty...
+	if((!isset($data) OR count((array) $data) == $blankentries) AND !$LOE_limit) { // if no data was returned, or the dataset was empty...
 		$noDataFound = "<b>"._formulize_DE_NODATAFOUND."</b>";
 	} elseif($LOE_limit) {
 		$noDataFound = _formulize_DE_LOE_LIMIT_REACHED1 . " <b>" . $LOE_limit . "</b> " . _formulize_DE_LOE_LIMIT_REACHED2 . " <a href=\"\" onclick=\"javascript:forceQ();return false;\">" . _formulize_DE_LOE_LIMIT_REACHED3 . "</a>";
@@ -1803,7 +1808,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 	formulize_screenLOETemplate($screen, 'closelist', $templateVariables, $settings);
 	
 	global $entriesThatHaveBeenLockedThisPageLoad;
-	if(is_array($entriesThatHaveBeenLockedThisPageLoad) AND count($entriesThatHaveBeenLockedThisPageLoad) > 0) {
+	if(is_array($entriesThatHaveBeenLockedThisPageLoad) AND count((array) $entriesThatHaveBeenLockedThisPageLoad) > 0) {
 		?>
 		<script type='text/javascript'>
 			jQuery(window).on('unload', function() {
@@ -1866,7 +1871,7 @@ function createQuickSearches($searches, $settings, $hiddenQuickSearches=array(),
 	$pubfilters = is_array($settings['pubfilters']) ? $settings['pubfilters'] : array();
 	$cols = $settings['columns'];
 
-	for($i=0;$i<count($cols);$i++) {
+	for($i=0;$i<count((array) $cols);$i++) {
 		$search_text = isset($searches[$cols[$i]]) ? strip_tags(htmlspecialchars($searches[$cols[$i]]), ENT_QUOTES) : "";
 		$boxid = "";
 		$clear_help_javascript = "";
@@ -2075,7 +2080,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
   $form_handler = xoops_getmodulehandler('forms', 'formulize');
   $element_handler = xoops_getmodulehandler('elements', 'formulize');
 
-  for($i=0;$i<count($cols);$i++) {
+  for($i=0;$i<count((array) $cols);$i++) {
 	// convert to element handle from element id
 	list($handle, $fidAlias, $handleFid) = getCalcHandleAndFidAlias($cols[$i], $fid); // returns ELEMENT handles for use in query
 	$handleFormObject = $form_handler->get($handleFid);
@@ -2176,7 +2181,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 	$dataTypeInfo = $calcElementObject->getDataTypeInformation();
 
 	$allowedWhere = "";
-	if(count($allowedValues)>0) {
+	if(count((array) $allowedValues)>0) {
 	  $start = true;
 	  foreach($allowedValues as $value) {
 		if($start) {
@@ -2209,7 +2214,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 	}
 
 	$excludedWhere = "";
-	if(count($excludedValues)>0) {
+	if(count((array) $excludedValues)>0) {
 	  $start = true;
 	  foreach($excludedValues as $value) {
 		if($start) {
@@ -2356,7 +2361,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 			}
 		  }
 		}
-		if(count($groupingWhere)>0) {
+		if(count((array) $groupingWhere)>0) {
 		  $groupingWhere = "AND (".implode(" AND ", $groupingWhere).")";
 		} else {
 		  $groupingWhere = "";
@@ -2402,7 +2407,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 	  // work out the mode...
 	  $modeCounts = array();
 	  $modeQuery = "$selectAvgCount $thisBaseQuery $allowedWhere $excludedWhere ) as tempQuery $groupByClauseMode ORDER BY ";
-	  if(count($allGroupings)>0) {
+	  if(count((array) $allGroupings)>0) {
 		$modeQuery .= implode(", ",$allGroupings) . ", ";
 	  }
 	  $modeQuery .= "avgcount$fidAlias$handle DESC";
@@ -2479,7 +2484,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		$start = false;
 		$per25Results .= formulize_numberFormat($per25Array["$fidAlias$handle"], $handle);
 		}
-		if(count($perPair) < 2) {
+		if(count((array) $perPair) < 2) {
 		  $allPerResults .= $per25Results;
 		} elseif($perPair[0] != $perPair[1]) { // we have multiple values at the median/percentile point, so figure out the weighted average
 		  $allPerResults .= formulize_numberFormat(($per25Fraction * ($perPair[1]-$perPair[0])) + $perPair[0], $handle, "", 2) . " ($per25Results)";
@@ -2496,7 +2501,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		$start = false;
 		$per50Results .= formulize_numberFormat($per50Array["$fidAlias$handle"], $handle);
 		}
-		if(count($perPair) < 2) {
+		if(count((array) $perPair) < 2) {
 		  $allPerResults .= $per50Results;
 		} elseif($perPair[0] != $perPair[1]) { // we have multiple values at the median/percentile point, so figure out the average
 		  $allPerResults .= formulize_numberFormat(($per50Fraction * ($perPair[1]-$perPair[0])) + $perPair[0], $handle, "", 2) . " ($per50Results)";
@@ -2513,7 +2518,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		$start = false;
 		$per75Results .= formulize_numberFormat($per75Array["$fidAlias$handle"], $handle);
 		}
-		if(count($perPair) < 2) {
+		if(count((array) $perPair) < 2) {
 		  $allPerResults .= $per75Results;
 		} elseif($perPair[0] != $perPair[1]) { // we have multiple values at the median/percential point, so figure out the average
 		  $allPerResults .= formulize_numberFormat(($per75Fraction * ($perPair[1]-$perPair[0])) + $perPair[0], $handle, "", 2) . " ($per75Results)";
@@ -2550,7 +2555,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		$start = false;
 		arsort($indivCounts[$cols[$i]][$calc][$groupCountData['indexerToUse']]);
 		foreach($indivCounts[$cols[$i]][$calc][$groupCountData['indexerToUse']] as $indivText=>$indivTotal) {
-		  if(count($nameReplacementMap)>0) { $indivText = $nameReplacementMap[$indivText]; } // swap in a name for this user, if applicable
+		  if(count((array) $nameReplacementMap)>0) { $indivText = $nameReplacementMap[$indivText]; } // swap in a name for this user, if applicable
 		  if($groupCountData['countValue'] == $groupCountData['responseCountValue']) {
 		$typeout .= "<tr><td style=\"vertical-align: top;\">$indivText</td><td style=\"vertical-align: top;\">$indivTotal</td><td style=\"vertical-align: top;\">".round(($indivTotal/$groupCountData['countValue'])*100,2)."%</td></tr>\n";
 		  } else {
@@ -2606,7 +2611,7 @@ function convertRawValuesToRealValues($value, $handle, $returnFlat=false) {
 	$isNamesList = false;
 	if(is_array($ele_value)) {
 		if(isset($ele_value[2])) {
-			if(strstr($ele_value[2], "#*=:*")) {
+			if(is_string($ele_value[2]) AND strstr($ele_value[2], "#*=:*")) {
 				$isLinkedSelectBox = true;
 				$linkedMetaData = formulize_isLinkedSelectBox($thisElement->getVar('ele_id'));
 			} elseif(isset($ele_value[2]["{FULLNAMES}"]) OR isset($ele_value[2]["{USERNAMES}"]))  {
@@ -2634,7 +2639,7 @@ function convertRawValuesToRealValues($value, $handle, $returnFlat=false) {
 			$allRealValues[] = $thisValue;
 		}
 	}
-	if(count($allRealValuesNames) > 0) {
+	if(count((array) $allRealValuesNames) > 0) {
 		// convert all uids found into names with only one query
 		$user_handler = xoops_gethandler('user');
 		$criteria = new CriteriaCompo();
@@ -2725,7 +2730,7 @@ function calcValuePlusText($value, $handle, $col, $calc, $groupingValue) {
   $ele_type = $element->getVar('ele_type');
   if($ele_type == "select") {
 	$ele_value = $element->getVar('ele_value');
-	if(key($ele_value[2]) === "{USERNAMES}" OR key($ele_value[2]) === "{FULLNAMES}") {
+	if(is_array($ele_value[2]) AND (key($ele_value[2]) === "{USERNAMES}" OR key($ele_value[2]) === "{FULLNAMES}")) {
 	  if(!isset($GLOBALS['formulize_fullNameUserNameCalculationReplacementList'][$col][$calc][$groupingValue])) {
 		$GLOBALS['formulize_fullNameUserNameCalculationReplacementList'][$col][$calc][$groupingValue]['nametype'] = key($ele_value[2]) === "{USERNAMES}" ? "uname" : "name";
 	  }
@@ -2763,7 +2768,7 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
 		$output .= printSmart(trans(getCalcHandleText($elementId)), 100);
 		$output .= "\n</td></tr>\n";
 		foreach($calcs as $calc=>$groups) {
-			$countGroups = count($groups);
+			$countGroups = count((array) $groups);
 			$rowspan = ($countGroups > 1 AND $calc != "count" AND $calc != "sum") ? $countGroups : 1;
 		$output .= "<tr><td class=even rowspan=$rowspan>\n"; // start of row with calculation results (possibly first row among many)
 			switch($calc) {
@@ -2893,7 +2898,7 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
 		  if(!$start) { $output .= "<tr>\n"; }
 		  $start=0;
 		  $output .= "<td class=odd>\n";
-		  //if(count($groups)>1) { // OR count($groups)>1) { // output the heading section for this group of results
+		  //if(count((array) $groups)>1) { // OR count((array) $groups)>1) { // output the heading section for this group of results
 			$output .= "<p><b>";
 			$start2 = true;
 			foreach(explode("!@^%*", $groupingSettings[$elementId][$calc]) as $id=>$thisGroupSetting) {
@@ -3573,7 +3578,7 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 
 	// if there is no save button specified in either of the templates, but one is available, then put it in below the list
 	if($screen AND $type == "bottom" AND
-		count($screen->getVar('decolumns')) > 0 AND
+		count((array) $screen->getVar('decolumns')) > 0 AND
 		!$screen->getVar('dedisplay') AND
 		$GLOBALS['formulize_displayElement_LOE_Used'] AND
 		!strstr(getTemplateToRender('toptemplate', $screenOrScreenType), 'saveButton') AND
@@ -3629,7 +3634,7 @@ function processCustomButton($caid, $thisCustomAction, $entry_id="", $entry="") 
 	}
 	if(is_array($thisCustomAction['groups'])) {
 		$groupOverlap = array_intersect($thisCustomAction['groups'], $userGroups);
-		if(count($groupOverlap) == 0) {
+		if(count((array) $groupOverlap) == 0) {
 			return array();
 		}
 	}
@@ -3697,9 +3702,9 @@ function processClickedCustomButton($clickedElements, $clickedValues, $clickedAc
 				}
 			}
 		}
-		if(count($clickedEntries) == 0 AND count($GLOBALS['formulize_selectedEntries']) == 0) {
+		if(count((array) $clickedEntries) == 0 AND count((array) $GLOBALS['formulize_selectedEntries']) == 0) {
 			$clickedEntries[] = "";
-		} elseif(count($clickedEntries) == 0) { // if this is not an inline button and there are selected entries, use them (inline buttons override selected checkboxes in this case for now)
+		} elseif(count((array) $clickedEntries) == 0) { // if this is not an inline button and there are selected entries, use them (inline buttons override selected checkboxes in this case for now)
 			$clickedEntries = $GLOBALS['formulize_selectedEntries'];
 		}
 		foreach($caPHP as $thisCustomCode) {
@@ -3745,7 +3750,7 @@ function processClickedCustomButton($clickedElements, $clickedValues, $clickedAc
 			$maxIdReq = 0;
 			// don't use "i" in this loop, since it's a common variable name and would potentially conflict with names in the eval'd scope
 			// same is true of "thisentry" and other variables here!
-			for($ixz=0;$ixz<count($clickedElements);$ixz++) { // loop through all actions for this button
+			for($ixz=0;$ixz<count((array) $clickedElements);$ixz++) { // loop through all actions for this button
 				if($thisEntry == "new" AND $maxIdReq > 0) { $thisEntry = $maxIdReq; } // for multiple effects on the same button, when the button applies to a new entry, reuse the initial id_req that was created during the first effect
 				$formulize_lvoverride = false;
 				if(strstr($clickedValues[$ixz], "\$value")) {
@@ -3782,7 +3787,7 @@ function gatherHiddenValue($handle) {
 		$returnValue = explode('=]-!', $_POST["hiddencolumn_" . $formulize_thisEntryId . "_" . $handle]);
 		if($returnValue === false) {
 			return false;
-		} elseif(count($returnValue)==1) {
+		} elseif(count((array) $returnValue)==1) {
 			return htmlspecialchars(strip_tags($returnValue[0]));
 		} else {
 			$cleanValues = array();
@@ -3808,7 +3813,7 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 			case "modifyScreenLink":
 				$applications_handler = xoops_getmodulehandler('applications', 'formulize');
 				$apps = $applications_handler->getApplicationsByForm($screen->getVar('fid'));
-				if(is_array($apps) AND count($apps)>0) {
+				if(is_array($apps) AND count((array) $apps)>0) {
 					$firstAppId = $apps[key($apps)]->getVar('appid');
 				} else {
 					$firstAppId = 0;
@@ -3829,7 +3834,7 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 				// only if any procedures (advanced calculations) are defined for this form
 				$procedureHandler = xoops_getmodulehandler('advancedCalculation','formulize');
 				$procList = $procedureHandler->getList($fid);
-				if(is_array($procList) AND count($procList) > 0) {
+				if(is_array($procList) AND count((array) $procList) > 0) {
 				  return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=advcalculations value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickadvcalcs.php?fid=$fid&frid=$frid&$advcalc_acid');\"></input>";
 				} else {
 					return false;
@@ -3981,7 +3986,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 		$data = getData($frid, $fid, $filter, "AND", $scope, $limitStart, $limitSize, $sort, $order, $forcequery);
 
 		// if we deleted entries and the current page is now empty, then shunt back 1 page
-		if(count($data)==0 AND $_POST['delconfirmed'] AND $limitStart > 0) {
+		if(count((array) $data)==0 AND $_POST['delconfirmed'] AND $limitStart > 0) {
 			$_POST['formulize_LOEPageStart'] = $_POST['formulize_LOEPageStart']-$formulize_LOEPageSize;
 			$data = getData($frid, $fid, $filter, "AND", $scope, ($limitStart-$formulize_LOEPageSize), $limitSize, $sort, $order, $forcequery);    
 		}

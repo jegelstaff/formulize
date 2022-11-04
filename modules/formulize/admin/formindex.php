@@ -866,7 +866,7 @@ function patch40() {
                 $ele_value = unserialize($metaData['ele_value']);
 
                 // select only single option, linked select boxes, and not snapshot boxes!
-                if (!$ele_value['snapshot'] AND !$ele_value[1] AND strstr($ele_value[2], "#*=:*")) {
+                if (!$ele_value['snapshot'] AND !$ele_value[1] AND is_string($ele_value[2]) AND strstr($ele_value[2], "#*=:*")) {
                     $successSelectBox = convertSelectBoxToSingle($xoopsDB->prefix('formulize_' . $handleArray['form_handle']), $handleArray['ele_handle']);
                     if (!$successSelectBox) {
                         print "could not convert column " . $handleArray['ele_handle'] . " in table " . $xoopsDB->prefix('formulize_' . $handleArray['form_handle']) . "<br>";
@@ -987,7 +987,7 @@ function patch40() {
                 $multipageScreenObject->setVar('finishisdone', 1);
                 // use the declared elements for the page, or if none that means use all so go look up all the ids
                 $elementsForPage = $formScreenObject->getVar('formelements');
-                if(!is_array($elementsForPage) OR count($elementsForPage)==0) {
+                if(!is_array($elementsForPage) OR count((array) $elementsForPage)==0) {
                     $sql = "SELECT ele_id FROM ".$xoopsDB->prefix('formulize')." WHERE id_form = ".$formScreenObject->getVar('fid')." ORDER BY ele_order";
                     $res = $xoopsDB->query($sql);
                     $elementsForPage = array();

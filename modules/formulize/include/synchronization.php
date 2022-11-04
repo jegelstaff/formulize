@@ -104,7 +104,7 @@
         $cols = array();
         $types = array();
         
-        for($i = 0; $i < count($dataArray["columns"]); $i ++){
+        for($i = 0; $i < count((array) $dataArray["columns"]); $i ++){
             array_push($cols, $dataArray["columns"][$i][0]); // add each column name
             array_push($types, $dataArray["types"][$i][0]); // add each column type
         }
@@ -112,7 +112,7 @@
         array_push($formattedData, $types); // add column types array
         
         // push each row of data into formattedData as arrays
-        for($i = 0; $i < count($dataArray["records"]); $i ++){ // row index
+        for($i = 0; $i < count((array) $dataArray["records"]); $i ++){ // row index
             $row = array();
             foreach($dataArray["columns"] as $columnData) {
                 array_push($row, $dataArray["records"][$i][$columnData[0]]); 
@@ -305,7 +305,7 @@
         foreach($csvPaths as $file){
             unlink($file);
         }
-        if (count($csvPaths) != 0){
+        if (count((array) $csvPaths) != 0){
             rmdir(dirname($csvPaths[0]));
         }
     }

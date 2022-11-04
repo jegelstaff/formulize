@@ -178,7 +178,7 @@ if ($screen_sort_order == "DESC") {
 }
 
 $screen_page = $screen_page < 1 ? 1 : $screen_page;
-$resultNum = count($screen_handler->getObjects(null, null, $aid, $screen_sort, $screen_sort_order));
+$resultNum = count((array) $screen_handler->getObjects(null, null, $aid, $screen_sort, $screen_sort_order));
 $pageNumbers = ceil($resultNum / $screen_limit);
 
 $pageNav = "";

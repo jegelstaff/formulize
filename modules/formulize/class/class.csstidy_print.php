@@ -143,7 +143,7 @@ class csstidy_print
         }
         
         if (!empty($this->import)) {
-            for ($i = 0, $size = count($this->import); $i < $size; $i ++) {
+            for ($i = 0, $size = count((array) $this->import); $i < $size; $i ++) {
                 $output .= $template[0].'@import '.$template[5].$this->import[$i].$template[6];
             }
         }

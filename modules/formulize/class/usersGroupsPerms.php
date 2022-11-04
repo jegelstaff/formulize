@@ -214,12 +214,12 @@ class formulizePermHandler {
                 unset($groupsToInsert[$k]);
             }
 		}
-		if(count($groupsToInsert) > 0) {
+		if(count((array) $groupsToInsert) > 0) {
 			if(!$res = $xoopsDB->query($insertSQL))  {
 				return false;
 			}
 		}
-		if(count($groupsToDelete) > 0) {
+		if(count((array) $groupsToDelete) > 0) {
 			$deleteSQL = "DELETE FROM ".$xoopsDB->prefix("formulize_groupscope_settings") . " WHERE `fid` = ".$this->fid." AND `groupid` = ".intval($gid)." AND `view_groupid` IN (".implode(", ", $groupsToDelete).")";
 			if(!$res = $xoopsDB->query($deleteSQL)) {
 				return false;
@@ -241,7 +241,7 @@ class formulizePermHandler {
 			}
 		}
 		ksort($groupScopeInfo);
-		if(count($groupScopeInfo) > 0) {
+		if(count((array) $groupScopeInfo) > 0) {
 			return $groupScopeInfo;
 		} else {
 			return false;

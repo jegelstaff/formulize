@@ -43,7 +43,7 @@ if (isset($$cache)) {
     }
 }
 
-if (0 == count($found)) {
+if (0 == count((array) $found)) {
     include_once "../../../mainfile.php";
     icms::$logger->disableLogger();    
     while(ob_get_level()) {

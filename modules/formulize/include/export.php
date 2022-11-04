@@ -136,7 +136,7 @@ if (!isset($_POST['metachoice']) AND !isset($formulize_doingManualExport)) {
     // query fid must match passed fid in URL, and the current user id must match the userid at the time the export file was created
     if (trim($queryData[0]) == intval($_GET['fid']) AND trim($queryData[1]) == $exportUid) {
         if ($_GET['type'] == "update") {
-            do_update_export($queryData, $frid, $fid, $groups);
+            do_update_export($queryData, $frid, $fid);
         } else {
             $columns = explode(",", $_GET['cols']);
             $include_metadata = (1 == $_POST['metachoice']);

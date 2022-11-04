@@ -55,7 +55,7 @@ class formulizeRankOrderListHandler {
     $addopt = $_POST['addopt'];
     if( !empty($ele_id) ){
       $keys = array_keys($value);
-      for( $i=0; $i<count($keys); $i++ ){
+      for( $i=0; $i<count((array) $keys); $i++ ){
         $r = $value[$keys[$i]] ? $opt_count : null;
         $v = $myts->makeTboxData4PreviewInForm($keys[$i]);
         $options[] = new xoopsFormText('', 'ele_value['.$opt_count.']', 40, 255, $v); // function in the admin/elements.php file
@@ -87,7 +87,7 @@ class formulizeRankOrderListHandler {
     $opt_tray = new XoopsFormElementTray(_AM_ELE_OPT, '<br />');
     $opt_tray->setDescription(_AM_ELE_OPT_DESC_RANKORDERLISTS.'<br /><br />'._AM_ELE_OPT_UITEXT);
     
-    for( $i=0; $i<count($options); $i++ ){
+    for( $i=0; $i<count((array) $options); $i++ ){
       $opt_tray->addElement($options[$i]);
     }
     $opt_tray->addElement(addOptionsTray());

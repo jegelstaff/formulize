@@ -82,7 +82,7 @@ if ($isNew) {
 
     // group entries
     $steps = array();
-    for($i=0;$i<(count($stepTitles));$i++) {
+    for($i=0;$i<(count((array) $stepTitles));$i++) {
         $steps[$i]['name'] = $stepTitles[$i];
         $steps[$i]['content']['index'] = $i;
         $steps[$i]['content']['number'] = $i+1;
@@ -98,7 +98,7 @@ if ($isNew) {
 
     // group entries
     $fltr_grps = array();
-    for ($i=0; $i<(count($fltr_grpTitles)); $i++) {
+    for ($i=0; $i<(count((array) $fltr_grpTitles)); $i++) {
         $fltr_grps[$i]['name'] = $fltr_grpTitles[$i];
         $fltr_grps[$i]['content']['index'] = $i;
         $fltr_grps[$i]['content']['number'] = $i+1;

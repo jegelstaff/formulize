@@ -84,7 +84,6 @@ foreach($_POST as $k=>$v) {
         continue;
     }
     list($class, $property) = explode("-", $k);
-    $v = recursive_stripslashes($v);
     if (is_array($v) AND $class != "elements") {
         // elements class is written using cleanVars so arrays are serialized automagically
         $v = serialize($v);

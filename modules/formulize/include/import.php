@@ -183,7 +183,7 @@ foreach($cols1[$fid] as $col) {
 }
 $headers = getHeaders($cols, false); // false means we're sending element ids
 $template = $regfid == $fid ? "blankprofile" : "blank";
-$blank_template = prepExport($headers, $cols, "", "comma", "", "", $template, $fid);
+$blank_template = prepExport($headers, $cols, "", "comma", "", $template, $fid);
 
 print "<p><b>" . _formulize_DE_IMPORT_EITHEROR . "</b><p>";
 

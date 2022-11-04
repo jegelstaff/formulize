@@ -41,7 +41,7 @@ if ( !defined("ICMS_C_ERRORHANDLER_INCLUDED") ) {
          * 
          * @global  $icmsConfig
 		 **/
-		function show($e_code, $pages=1)
+		public static function show($e_code, $pages=1)
 		{
 			global $icmsConfig, $icmsUser, $xoopsRequestUri, $icmsModule, $xoopsLogger;
 			$errmsg = array(
@@ -112,4 +112,3 @@ if ( !defined("ICMS_C_ERRORHANDLER_INCLUDED") ) {
 		}
 	}
 }
-?>

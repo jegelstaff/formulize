@@ -67,4 +67,4 @@ foreach ($missingEntries as $entry){
     }
 }
 
-echo "found and fixed ". count($missingEntries) . " ownership problems in your form";
+echo "found and fixed ". count((array) $missingEntries) . " ownership problems in your form";

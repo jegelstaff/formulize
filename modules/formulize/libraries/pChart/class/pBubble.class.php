@@ -43,7 +43,7 @@
 
        $this->pDataObject->setSerieDrawable($SerieWeightName,FALSE);
 
-       if ( count($this->pDataObject->Data["Series"][$SerieName]["Data"]) > $MaxValues ) { $MaxValues = count($this->pDataObject->Data["Series"][$SerieName]["Data"]); }
+       if ( count((array) $this->pDataObject->Data["Series"][$SerieName]["Data"]) > $MaxValues ) { $MaxValues = count((array) $this->pDataObject->Data["Series"][$SerieName]["Data"]); }
 
        foreach($this->pDataObject->Data["Series"][$SerieName]["Data"] as $Key => $Value)
         {

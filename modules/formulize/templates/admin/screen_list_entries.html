@@ -25,7 +25,7 @@
 	<td><label><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_SORT_BY}></label></td>
 	<td></td>
       </tr>
-	<{if $content.advanceview|@count > 0}>
+	<{if $content.advanceview|is_array AND $content.advanceview|@count > 0}>
 	  <{foreach from=$content.advanceview key=index item=value}>
 	    <tr class="advanceviewcol" name="<{$index}>">
 	      <td>
@@ -53,7 +53,7 @@
 	      </td>
 	    </tr>
 	  <{/foreach}>
-	  <input type="hidden" id="numberOfRows" name="rows" value=<{$content.advanceview|@count}>></input>
+	  <input type="hidden" id="numberOfRows" name="rows" value=<{if $content.advanceview|is_array}><{$content.advanceview|@count}><{/if}>></input>
 	<{else}>
 	    <tr class="advanceviewcol" name="0">
 	      <td>
@@ -72,7 +72,7 @@
 	      </td>
 	      <td></td>
 	    </tr>
-	    <input type="hidden" id="numberOfRows" name="rows" value=<{$content.advanceview|@count}>></input>
+	    <input type="hidden" id="numberOfRows" name="rows" value=<{if $content.advanceview|is_array}><{$content.advanceview|@count}><{/if}>></input>
 	<{/if}>
     </table>
     <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_DESCRIPTION}></div>

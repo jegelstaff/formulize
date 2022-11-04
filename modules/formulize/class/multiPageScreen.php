@@ -355,7 +355,7 @@ function pageMeetsConditions($conditions, $currentPage, $entry_id, $fid, $frid) 
 	$allPassed = true;
 	$oomPassed = false;
     $oomNotExists = true;
-    if(count($elements)>0 AND !intval($entry_id)) {
+    if(is_array($elements) AND count($elements)>0 AND !intval($entry_id)) {
         foreach($ops as $i=>$op) {
 			switch($types[$i]) {
 				case 'all':
@@ -371,7 +371,7 @@ function pageMeetsConditions($conditions, $currentPage, $entry_id, $fid, $frid) 
     }
     
     // pages with no conditions are always allowed!
-    if(count($elements)==0) { return true; } 
+    if(!is_array($elements) OR count($elements)==0) { return true; } 
     
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
             foreach($elements as $i=>$thisElement) {

@@ -144,9 +144,10 @@ function user2FAMethod($user=null) {
     // check if 2FA is on    
     $config_handler = icms::handler('icms_config');
 	$criteria = new Criteria('conf_name', 'auth_2fa');
-	$auth_2fa = $config_handler->getConfigs($criteria);
-	$auth_2fa = $auth_2fa[0];
-	$auth_2fa = $auth_2fa->getConfValueForOutput();
+	if($auth_2fa = $config_handler->getConfigs($criteria)) {
+        $auth_2fa = $auth_2fa[0];
+        $auth_2fa = $auth_2fa->getConfValueForOutput();
+    }
     if($auth_2fa == false) {
         return false;
     }
@@ -179,6 +180,11 @@ function tfaLoginJS($id) {
 	} else {
 		$workingMessageGif = "<img src=\"" . XOOPS_URL . "/modules/formulize/images/working-english.gif\">";
 	}
+    if(file_exists(XOOPS_ROOT_PATH.'/modules/system/language/'.$xoopsConfig['language'].'/blocks.php')) {
+        require_once XOOPS_ROOT_PATH.'/modules/system/language/'.$xoopsConfig['language'].'/blocks.php';
+    } elseif(file_exists(XOOPS_ROOT_PATH.'/modules/system/language/english/blocks.php')) {
+        require_once XOOPS_ROOT_PATH.'/modules/system/language/english/blocks.php';
+    }
 	static $counter = 0;
 	$counter++;
 	$js = "

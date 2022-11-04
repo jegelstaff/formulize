@@ -158,7 +158,7 @@ function gatherNames($groups, $nametype, $requireAllGroups=false, $filter=false,
         $foundUsers = false;
         foreach ($usersByGroup as $group => $theseUsers) {
             // only include the users from this group if we're not limiting by the users groups, or if we are limiting, then there must be at least one user in this group who is in some group that the user is also a member of (not necessarily this group...current user and the matched user might have a different group in common, not this one, that's fine, we'll still use this group)
-            if (!$limitByUsersGroups OR count(array_intersect($all_users_limited, $theseUsers))>0) {
+            if (!$limitByUsersGroups OR count((array) array_intersect($all_users_limited, $theseUsers))>0) {
                 if (!$foundUsers) {
                     // need to seed the all users array so there's something to intersect with the first time, otherwise the list will be empty
                     $all_users = $theseUsers;
@@ -199,7 +199,7 @@ function gatherNames($groups, $nametype, $requireAllGroups=false, $filter=false,
         $filterTerms = $filter[2];
         include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
         $start = true;
-        for ($filterId = 0;$filterId<count($filterElements);$filterId++) {
+        for ($filterId = 0;$filterId<count((array) $filterElements);$filterId++) {
             if ($ops[$i] == "NOT") {
                 $ops[$i] = "!=";
             }
@@ -305,7 +305,7 @@ function availReports($uid, $groups, $fid, $frid="0") {
     // cull published reports to ones that are published to a group that the user belongs to
     $indexer = 0;
     $available_published_reports = array();
-    for ($i = 0; $i < count($published_reports); $i++) {
+    for ($i = 0; $i < count((array) $published_reports); $i++) {
         $report_groups = explode(",", $published_reports[$i]['sv_pubgroups']);
         if (array_intersect($groups, $report_groups)) {
             $available_published_reports[$indexer]['sv_id']   = $published_reports[$i]['sv_id'];
@@ -434,7 +434,7 @@ function security_check($fid, $entry="", $uid="", $owner="", $groups="", $mid=""
                 }
                 sort($intersect_groups); // necessary to make sure that 0 will be a valid key to use below
 
-                if (!$view_groupscope OR (count($intersect_groups) == 1 AND $intersect_groups[0] == XOOPS_GROUP_USERS) OR count($intersect_groups) == 0) {
+                if (!$view_groupscope OR (count((array) $intersect_groups) == 1 AND $intersect_groups[0] == XOOPS_GROUP_USERS) OR count((array) $intersect_groups) == 0) {
                     // if they have no groupscope, or if they do have groupscope, but the only point of overlap between the owner, the current user, and the groups with access is the registered users group, then..... (note that registered users will probably be an irrelevant check since the new "groups with access" checking ought to exclude registered users group in complex group setups)
                     // last hope...check for a unlocked view that has been published to them which covers a group that includes this entry
                     // 1. get groups for unlocked view for this user's groups where the mainform is $fid or there is no mainform and formframe is $fid
@@ -537,7 +537,7 @@ function fetchCats() {
 function getMenuCat($fid) {
     global $xoopsDB;
     $foundCat = q("SELECT cat_id FROM " . $xoopsDB->prefix("formulize_menu_cats") . " WHERE id_form_array LIKE \"%,$fid,%\"");
-    if (count($foundCat)>0) {
+    if (count((array) $foundCat)>0) {
         return($foundCat[0]['cat_id']);
     } else {
         return 0;
@@ -682,7 +682,7 @@ function getHeaderList ($fid, $needids=false, $convertIdsToElementHandles=false)
         }
     }
 
-    if (count($headerlist)==0) { // if no header fields specified, then
+    if (count((array) $headerlist)==0) { // if no header fields specified, then
         // gather required fields for this form
         $reqfq = "SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_req=1 AND id_form='$fid' AND (ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subform\" AND ele_type != \"grid\") ORDER BY ele_order ASC LIMIT 3";
         if ($result = $xoopsDB->query($reqfq)) {
@@ -700,7 +700,7 @@ function getHeaderList ($fid, $needids=false, $convertIdsToElementHandles=false)
         }
     }
 
-    if (count($headerlist) == 0) {
+    if (count((array) $headerlist) == 0) {
         // IF there are no required fields THEN ... go with first three fields
         $firstfq = "SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$fid' AND (ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subform\" AND ele_type != \"grid\") ORDER BY ele_order ASC LIMIT 3";
         if ($result = $xoopsDB->query($firstfq)) {
@@ -727,7 +727,7 @@ function getHeaderList ($fid, $needids=false, $convertIdsToElementHandles=false)
             }
         }
         // if there are any numeric headers, then get the handles
-        if (count($headerlist)>0) {
+        if (count((array) $headerlist)>0) {
             $sql = "SELECT ele_handle FROM ".$xoopsDB->prefix("formulize") . " WHERE ele_id IN (".implode(",",$headerlist).") ORDER BY ele_order";
             if ($res = $xoopsDB->query($sql)) {
                 $headerlist = array();
@@ -844,9 +844,9 @@ function fetchFormsInCat($thisid, $allowedForms="") {
         // 3. make formsInCat equal the difference between found array and allowed forms
         foreach ($allowedForms as $thisform) {
             $found_q = q("SELECT * FROM " . $xoopsDB->prefix("formulize_menu_cats") . " WHERE id_form_array LIKE \"%,$thisform,%\"");
-            if (count($found_q)>0) { $foundForms[] = $thisform; }
+            if (count((array) $found_q)>0) { $foundForms[] = $thisform; }
         }
-        if (count($foundForms) > 0 ) {
+        if (count((array) $foundForms) > 0 ) {
             $formsInCat1 = array_diff($allowedForms, $foundForms);
         } else {
             $formsInCat1 = $allowedForms;
@@ -859,7 +859,7 @@ function fetchFormsInCat($thisid, $allowedForms="") {
     // exclude inactive forms, and sort
     foreach ($formsInCat1 as $thisform) {
         $status_q = q("SELECT menuid, position FROM " . $xoopsDB->prefix("formulize_menu") . " WHERE menuid='$thisform' AND status=1");
-        if (count($status_q) > 0 AND in_array($thisform, $allowedForms)) {
+        if (count((array) $status_q) > 0 AND in_array($thisform, $allowedForms)) {
             // only include active forms that the user is allowed to see
             $formpos[] = $status_q[0]['position'];
             $formsInCat[] = $thisform;
@@ -878,7 +878,7 @@ function drawMenu($thisid, $thiscat, $allowedForms, $id_form, $topwritten, $forc
     $formsInCat = fetchFormsInCat($thisid, $allowedForms);
 
     // user is allowed to see at least one form in this category
-    if (count($formsInCat)>0) {
+    if (count((array) $formsInCat)>0) {
         $itemurl = XOOPS_URL."/modules/formulize/cat.php?cat=$thisid";
         if ($topwritten != 1) {
             $block = "<a class=\"menuTop\" href=\"$itemurl\">$thiscat</a>";
@@ -933,11 +933,16 @@ function deleteIdReq($id_req, $fid) {
 // owner and owner_groups to be passed in when available (if called from a function where they have already been determined
 // $fid is required
 // $excludeFids is an array of forms that we do not want to delete from in this case regardless (optional)
-function deleteEntry($id_req, $frid="", $fid, $excludeFids=array()) {
+function deleteEntry($id_req, $frid, $fid, $excludeFids=array()) {
     
     global $xoopsDB;
     $deletedEntries = array();
 
+    if(!$id_req OR !$fid) {
+        error_log("Formulize error: deletion requested without required parameters: entry id - ".$id_req.". form id - ".$fid.".");
+        return false;
+    }
+    
     if ($frid) {
         // if a framework is passed, then delete all sub entry items found in a unified display relationship with the base entry, in addition to the base entry itself.
         $fids[0] = $fid;
@@ -1006,7 +1011,7 @@ function getEntryOwner($entry, $fid) {
 // THIS FUNCTION MAKES A UID= or UID= FILTER FOR AN sql QUERY
 function makeUidFilter($users) {
     if (is_array($users)) {
-        if (count($users) > 1) {
+        if (count((array) $users) > 1) {
             return "uid=" . implode(" OR uid=", $users);
         } else {
             return "uid=" . intval($users[0]);
@@ -1304,12 +1309,11 @@ function checkForLinks($frid, $fids, $fid, $entries, $unified_display=false, $un
 // $headers is the list of column headings in use
 // $cols is the list of handles in the $data to use to get all the data for display, must be in synch with headers
 // $data is the full dataset that is being prepped
-// $fdchoice is either comma or calcs (calcs for when calcs are to be exported)
+// $fdchoice is either comma or calcs (calcs for when calcs are to be exported) - or custom, in which case custdel needs to contain the delimiter
 // $title does not appear to be used
-// $template is a flag indicating whether we are making a template for use updating/uploading data -- blank for a blank template, update for a template with data, blankprofile for the userprofile form
+// $template is a flag indicating whether we are making a template for use updating/uploading data -- blank for a blank template, update for a template with data, blankprofile for the userprofile form, or boolean false otherwise
 // $fid is the form id
-// $groups is the user's groups
-function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $template=false, $fid, $groups="") {
+function prepExport($headers, $cols, $data, $fdchoice, $custdel, $template, $fid) {
     
     global $xoopsDB, $xoopsUser;
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
@@ -1317,7 +1321,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
     if ($fdchoice == "update") { // reset headers and cols to include all data -- when creating a blank template, this reset has already happened before prepexport is called
         $fdchoice = "comma";
         $template = "update";
-        if(!is_array($cols) OR count($cols)==0 OR (count($cols)==1 AND $cols[0] == "")) {
+        if(!is_array($cols) OR count((array) $cols)==0 OR (count((array) $cols)==1 AND $cols[0] == "")) {
             unset($cols);
             $cols = array();
             $groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
@@ -1567,7 +1571,7 @@ function prepareCellForSpreadsheetExport($column, $entry) {
 // draw in secondary data rows (unique to AOHC)
 function prepExportSecondaryData($csvfile, $cols, $fd, $secondaryData) {
     $secondaryDataKey = 1;
-    while(count($secondaryData)>0) {
+    while(count((array) $secondaryData)>0) {
         $lineStarted = false;
         if($_POST['metachoice'] == 1) { // not sure about this...interaction of selected/visible metadata columns plus request to include metadata columns might mess things up here.
             $csvfile .= $fd . $fd . $fd . $fd;
@@ -1786,7 +1790,7 @@ function buildScope($currentView, $uid, $fid, $currentViewCanExpand = false) {
             $grouplist = array_intersect($groups, $grouplist);
         }
         // safeguard against empty or invalid grouplists
-        if (count($grouplist)==0) {
+        if (count((array) $grouplist)==0) {
             $all_users[] = "";
             $scope = makeUidFilter($all_users);
         } else {
@@ -1815,7 +1819,7 @@ function buildScope($currentView, $uid, $fid, $currentViewCanExpand = false) {
                 $scopeGroups = array_intersect($groupsWithAccess, $groups);
             }
             // safeguard against empty or invalid grouplists
-            if (count($scopeGroups)==0) {
+            if (count((array) $scopeGroups)==0) {
                 $all_users[] = $uid;
                 $scope = makeUidFilter($all_users);
             } else {
@@ -1886,9 +1890,6 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
         } else {
             $value = $ele;
         }
-        if (get_magic_quotes_gpc()) {
-            $value = stripslashes($value);
-        }
         $value = $myts->htmlSpecialChars($value);
         $value = (!is_numeric($value) AND $value == "") ? "{WRITEASNULL}" : $value;
         break;
@@ -1896,9 +1897,6 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
 
         case 'textarea':
         $value = $ele;
-        if (get_magic_quotes_gpc()) {
-            $value = stripslashes($value);
-        }
         $value = $myts->htmlSpecialChars($value);
         $value = (!is_numeric($value) AND $value == "") ? "{WRITEASNULL}" : $value;
         break;
@@ -2065,7 +2063,7 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
             if(is_array($ele)) {
                 $ele[] = $thisNewValue;
             } else {
-                if(count($newWrittenValues)>1) {
+                if(count((array) $newWrittenValues)>1) {
                     print "ERROR: more than one new value created in a selectbox, when the selectbox does not allow multiple values. Check the settings of element '".$element->getVar('ele_caption')."'.";
                 }
                 $ele = $thisNewValue;
@@ -2152,7 +2150,7 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
             // handle out of range values that are in the DB, added March 2 2008 by jwe
             if (is_array($ele)) {
                 // if a value was received that was out of range. in this case we are assuming that if there are more values passed back than selections found in the valid options for the element, then there are out-of-range values we want to preserve
-                while ($numberOfSelectionsFound < count($ele) AND $entrycounterjwe < 1000) {
+                while ($numberOfSelectionsFound < count((array) $ele) AND $entrycounterjwe < 1000) {
                     // keep looking for more values. get them out of the hiddenOutOfRange info
                     if (in_array($entrycounterjwe, $ele)) {
                         $value = $value.'*=+*:'.$myts->htmlSpecialChars($_POST['formulize_hoorv_'.$ele_id.'_'.$entrycounterjwe]);
@@ -2577,7 +2575,11 @@ function findMatchingIdReq($element, $fid, $value) {
 // THIS FUNCTION OUTPUTS THE TEXT THAT GOES ON THE SCREEN IN THE LIST OF ENTRIES TABLE
 // It intelligently outputs links if the text should be a link (because of textbox associations, or linked selectboxes)
 // $handle is the data handle for the element
-function formatLinks($matchtext, $handle, $textWidth=35, $entryBeingFormatted) {
+function formatLinks($matchtext, $handle, $textWidth, $entryBeingFormatted) {
+    
+    if(!$textWidth) {
+        $textWidth = 35;
+    }
     
     // if the value has HTML formatting, leave it alone
     if(strlen($matchtext) > strlen(strip_tags($matchtext))) {
@@ -2689,7 +2691,7 @@ function formatLinks($matchtext, $handle, $textWidth=35, $entryBeingFormatted) {
             $uids = q("SELECT uid FROM " . $xoopsDB->prefix("users") . " WHERE $nametype = '" . formulize_db_escape($matchtext) . "' ");
             $cachedUidResults[$matchtext] = $uids;
         }
-        if (count($uids) == 1) {
+        if (count((array) $uids) == 1) {
             return "<a href='" . XOOPS_URL . "/userinfo.php?uid=" . $uids[0]['uid'] . "' target=_blank>" . printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth) . "</a>";
         } else {
             return printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth);
@@ -2811,7 +2813,7 @@ function getTextboxDefault($ele_value, $form_id, $entry_id, $placeholder="") {
 
 
 function getDateElementDefault($default_hint, $entry_id = false) {
-    if($default_hint == "0000-00-00") { return ""; }
+    if($default_hint == "0000-00-00") { return time(); }
     if (preg_replace("/[^A-Z{}]/", "", $default_hint) === "{TODAY}") {
         $number = str_replace('+', '', preg_replace("/[^0-9+-]/", "", $default_hint));
         return mktime(0, 0, 0, date("m"), (date("d") + intval($number)), date("Y"));
@@ -2829,7 +2831,7 @@ function getDateElementDefault($default_hint, $entry_id = false) {
 			}
 		}
 	}
-    return $default_hint ? strtotime($default_hint) : "";
+    return $default_hint ? strtotime($default_hint) : time();
 }
 
 
@@ -2880,7 +2882,7 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
         $data_handler_target = new formulizeDataHandler($targetForm['fid']);
         list($creation_datetime, $mod_datetime, $creation_uid, $mod_uid) = $data_handler_start->getEntryMeta($startEntry);
         $entry_ids = $data_handler_target->getAllEntriesForUsers($creation_uid, $all_users, $all_groups);
-        if (count($entry_ids) > 0) {
+        if (count((array) $entry_ids) > 0) {
             $entries_to_return = $entry_ids;
         } else {
             $entries_to_return = "";
@@ -2932,16 +2934,16 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
         $entries_to_return = array();
         foreach(explode('*=+*:',$foundValue) as $thisFoundValue) {
             $entry_ids = $data_handler_target->findAllEntriesWithValue($targetForm['keyself'], $thisFoundValue, $all_users, $all_groups);
-            if (count($entry_ids) > 0) {
+            if (count((array) $entry_ids) > 0) {
                 $entries_to_return = array_unique(array_merge($entries_to_return, $entry_ids));
             }
             if($selfEleValue[1]) {
                 $entry_ids = $data_handler_target->findAllEntriesWithValue($targetForm['keyself'], '%*=+*:'.$thisFoundValue.'*=+*:%', $all_users, $all_groups, "LIKE");
-        if (count($entry_ids) > 0) {
+        if (count((array) $entry_ids) > 0) {
                     $entries_to_return = array_unique(array_merge($entries_to_return, $entry_ids));
                 }
                 $entry_ids = $data_handler_target->findAllEntriesWithValue($targetForm['keyself'], '%*=+*:'.$thisFoundValue, $all_users, $all_groups, "LIKE");
-                if (count($entry_ids) > 0) {
+                if (count((array) $entry_ids) > 0) {
                     $entries_to_return = array_unique(array_merge($entries_to_return, $entry_ids));
                 }
             }
@@ -2955,7 +2957,7 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
         $startEleValue = $startElement->getVar('ele_value');
         $startEleValueParts = strstr($startEleValue[2], "#*=:*") ? explode("#*=:*", $startEleValue[2]) : array();
         // option 2, start form is the linked selectbox that points to the form in question
-        if (count($startEleValueParts)>0 AND $startEleValueParts[0] == $targetForm['fid']) {
+        if (count((array) $startEleValueParts)>0 AND $startEleValueParts[0] == $targetForm['fid']) {
             // so look in the startEntry for the values in its linked field and return them.  They will be a comma separated list of entry ids in the target form.
             $data_handler_start = new formulizeDataHandler($startForm);
             $foundValue = $data_handler_start->getElementValueInEntry($startEntry, $targetForm['keyother'], $all_users, $all_groups);
@@ -2977,7 +2979,7 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
             if($targetEleValue['snapshot']) {
                 $data_handler_start = new formulizeDataHandler($startForm);
                 // if the targetElement has an alternate element choice for the list box display, use that field instead of the keyother
-                if((is_array($targetEleValue[17]) AND count($targetEleValue[17]) > 0) OR $targetEleValue[17]) {
+                if((is_array($targetEleValue[17]) AND count((array) $targetEleValue[17]) > 0) OR $targetEleValue[17]) {
                     $fieldToCheck = is_array($targetEleValue[17]) ? $targetEleValue[17][0] : $targetEleValue[17];
                 } else {
                     $fieldToCheck = $targetForm['keyother']; 
@@ -3016,7 +3018,7 @@ function _findLinkedEntries($targetFormKeySelf, $targetFormFid, $valuesToLookFor
             }
         } 
     }
-    if (count($totalEntriesToReturn) > 0 ) {
+    if (count((array) $totalEntriesToReturn) > 0 ) {
         return $totalEntriesToReturn;
             } else {
                 return false;
@@ -3090,13 +3092,14 @@ function cloneEntry($entryOrFilter, $frid, $fid, $copies=1, $callback = null, $t
     }
 
     // all entries have been made.  Now we need to fix up any linked selectboxes
-    $element_handler = xoops_getmodulehandler('elements', 'formulize');
-    foreach ($lsbpairs as $source=>$lsb) {
-        $sourceElement = $element_handler->get($source);
-        $lsbElement = $element_handler->get($lsb);
-        $dataHandlers[$lsbElement->getVar('id_form')]->reassignLSB($sourceElement->getVar('id_form'), $lsbElement, $entryMap);
+    if(count($entryMap) > 0 ) {
+        $element_handler = xoops_getmodulehandler('elements', 'formulize');
+        foreach ($lsbpairs as $source=>$lsb) {
+            $sourceElement = $element_handler->get($source);
+            $lsbElement = $element_handler->get($lsb);
+            $dataHandlers[$lsbElement->getVar('id_form')]->reassignLSB($sourceElement->getVar('id_form'), $lsbElement, $entryMap);
+        }
     }
-    
     foreach($entryMap[$originalFid] as $clonedMainformEntries) {
         foreach($clonedMainformEntries as $clonedMainformEntryId) {
             formulize_updateDerivedValues($clonedMainformEntryId, $originalFid, $originalFrid);
@@ -3144,7 +3147,7 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
 
     // 1.  get all conditions for this fid and event
     $cons = q("SELECT * FROM " . $xoopsDB->prefix("formulize_notification_conditions") . " WHERE not_cons_fid=".intval($fid)." AND not_cons_event=\"".formulize_db_escape($event)."\"");
-    if (count($cons) == 0) {
+    if (count((array) $cons) == 0) {
         return;
     }
 
@@ -3177,7 +3180,7 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
     $notificationTemplateRevisionData[$entry] = "";
       
         // user list is potentially different for each entry. ignore anything that was passed in for $groups
-        if (count($groups) == 0) { // if no groups specified as the owner of the current entry, then let's get that from the table
+        if (count((array) $groups) == 0) { // if no groups specified as the owner of the current entry, then let's get that from the table
             $data_handler = new formulizeDataHandler($fid);
             $groups = $data_handler->getEntryOwnerGroups($entry);
         }
@@ -3211,11 +3214,11 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
         $group_uids = array_unique(array_merge((array)$specified_group_uids, (array)$group_uids));
 
         $uids_complete = array(0=>getEntryOwner($entry,$fid));
-        if (count($group_uids) > 0 AND count($global_uids) > 0) {
+        if (count((array) $group_uids) > 0 AND count((array) $global_uids) > 0) {
             $uids_complete = array_unique(array_merge((array)$group_uids, (array)$global_uids, $uids_complete));
-        } elseif (count($group_uids) > 0) {
+        } elseif (count((array) $group_uids) > 0) {
             $uids_complete = array_unique(array_merge((array)$group_uids, $uids_complete));
-        } elseif (count($global_uids) > 0) {
+        } elseif (count((array) $global_uids) > 0) {
             $uids_complete = array_unique(array_merge((array)$global_uids, $uids_complete));
         }
 
@@ -3233,7 +3236,7 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
                 $start = 1;
                 $blankFilters = array();
                 $noElementsChanged = true;
-                for ($i=0;$i<count($elements);$i++) {
+                for ($i=0;$i<count((array) $elements);$i++) {
 
                     // if event is update, then check if term is changed from previous save
                     // if all terms are same as previous save, then we ignore entry
@@ -3334,7 +3337,7 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
         $extra_tags['ENTRYID'] = $entry;
         $extra_tags['SITEURL'] = XOOPS_URL;
 
-        if (count($uids_real) > 0) {
+        if (count((array) $uids_real) > 0) {
             formulize_processNotification($event, $extra_tags, $fid, $uids_real, $mid, $omit_user);
         }
         // reset for the potential processing of saved conditions
@@ -3387,7 +3390,7 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
                 $uids_complete[] = -1; // if we are notifying an arbitrary e-mail address, then this uid will have been added to the uids_conditions array, so let's add it to the complete array, so that our notification doesn't get ignored as being "out of scope" based on uids
             }
             $uids_cust_real = compileNotUsers2($uids_cust_con, $uids_complete, $fid, $event, $mid);
-            if (count($uids_cust_real) > 0) {
+            if (count((array) $uids_cust_real) > 0) {
                 formulize_processNotification($event, $extra_tags, $fid, $uids_cust_real, $mid, $omit_user, $thiscon['not_cons_subject'], $thiscon['not_cons_template']);
             }
             // reset for the next runthrough of the loop
@@ -3502,7 +3505,7 @@ function formulize_getUsersByGroups($groups, $member_handler="") {
 
 
 // this function can be called from within a loop, and will merge uids_conditions with all previously recorded values
-function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $reinitialize=false, $entry, $fid) {
+function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $reinitialize, $entry, $fid) {
     static $omit_user = null;
     if ($reinitialize) {
         // need to do this when handling saved conditions, since each time we call this function it's a new "event" that we're dealing with
@@ -3535,7 +3538,7 @@ function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $rei
         $value = $data_handler->getElementValueInEntry($entry, intval($thiscon['not_cons_linkcreator'])); // get the values in the linked fields
         // the entry ids (in their source form) of the items selected in the linked selectbox, should always be an array of at least one value
         $entry_ids = explode(",", trim($value, ","));
-        if (count($entry_ids) > 0) {
+        if (count((array) $entry_ids) > 0) {
             // need to get the form that 'not_cons_linkcreator' is linked to
             $element_handler =& xoops_getmodulehandler('elements', 'formulize');
             $elementObject = $element_handler->get(intval($thiscon['not_cons_linkcreator']));
@@ -3543,7 +3546,7 @@ function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $rei
             $linkProperties = explode("#*=:*", $elementObject->getVar('ele_value'));
             $data_handler2 = new formulizeDataHandler($linkProperties[0]);
             $uids_temp = $data_handler2->getAllUsersForEntries($entry_ids);
-            if (count($uids_temp) > 0) {
+            if (count((array) $uids_temp) > 0) {
                 // no need for type hint (array) in this case because getAllUsersForEntries always returns an array, even if its empty
                 $uids_conditions = array_merge($uids_temp, $uids_conditions);
             }
@@ -3747,12 +3750,10 @@ function getDefaultCols($fid, $frid="") {
 } 
 
 // THIS FUNCTION OVERWRITES OR APPENDS TO A VALUE IN A SPECIFIED FORM ELEMENT
-// Formerly located in pageworks/include/functions.php
-//function writeElementValue($ele, $entry, $value, $append, $prevValue) {
 // DEPRECATED. VERY INEFFICIENT, SINCE IT ONLY UPDATES ONE FIELD AT A TIME.  BETTER TO USE formulize_writeEntry, except in cases where you actually need to only update one field.  In most cases you want to update multiple fields in an entry, so don't use this inside a loop. it will generate more queries than you need
 // prevValue is now completely not required.  lvoverride is only used if you want to pass in a pre-formatted ,1,3,15,17, style string for inserting into a linked selectbox field.
 // linkedTargetHint is used if we are writing to a linked selectbox element, and we have some indication from the UI what the entry is that we're supposed to link to.  This allows for disambiguation of target values that we might be trying to link to, that might occur in more than one entry.
-function writeElementValue($formframe = "", $ele, $entry, $value, $append="replace", $prevValue=null, $lvoverride=false, $linkedTargetHint = "") {
+function writeElementValue($formframe, $ele, $entry, $value, $append="replace", $prevValue=null, $lvoverride=false, $linkedTargetHint = "") {
 
     global $xoopsUser, $formulize_mgr, $xoopsDB, $myts;
     if (!is_object($myts)) {
@@ -3854,7 +3855,7 @@ function writeElementValue($formframe = "", $ele, $entry, $value, $append="repla
             }
         }
 
-        if (count($searchForValues) > 0) {
+        if (count((array) $searchForValues) > 0) {
             $boxFormObject = $form_handler->get($boxproperties[0]);
             $entry_id_q = q("SELECT `entry_id`, `".$boxproperties[1]."` FROM " . $xoopsDB->prefix("formulize_".$boxFormObject->getVar('form_handle')) . " WHERE `".$boxproperties[1]."` = '".implode("' OR `".$boxproperties[1]."` = '", $searchForValues) . "' $linkedTargetHintInQuery");
             foreach ($entry_id_q as $thisEntryId) {
@@ -3862,9 +3863,9 @@ function writeElementValue($formframe = "", $ele, $entry, $value, $append="repla
                 $foundEntryIds[] = $thisEntryId['entry_id'];
             }
         }
-        if (count($foundEntryIds)>1) {
+        if (count((array) $foundEntryIds)>1) {
             $foundEntryIdString = ",".implode(",", $foundEntryIds).",";
-	} elseif(count($foundEntryIds) == 1) {
+	} elseif(count((array) $foundEntryIds) == 1) {
 	    $foundEntryIdString = $foundEntryIds[0];
 	} else {
             $foundEntryIdString = "";
@@ -4135,7 +4136,7 @@ function synchExistingSubformEntries($frid) {
                                             }
                                         }
                                     }
-                                    if(count($filterValues)) {
+                                    if(count((array) $filterValues)) {
                                         formulize_writeEntry($filterValues, $subformEntryId);
                                     }
                                 }
@@ -4204,7 +4205,7 @@ function synchSubformBlankDefaults() {
                             $filterValues[$subformConditions[0][$i]] = prepareLiteralTextForDB($conditionElementObject, $subformConditions[2][$i], $savedMainFormEntryId);
                         }
                     }
-                    if(count($filterValues)>0) {
+                    if(count((array) $filterValues)>0) {
                         formulize_writeEntry($filterValues,$id_req_to_write);
                     }
                 }
@@ -4366,7 +4367,7 @@ function convertAllHandlesAndIds($handles, $frid, $reverse=false, $ids=false, $f
     }
 
     // if to_return was not set already, ie: when doing a database query, then loop through handles to get the values we need from the cached values array.  Also if the to_return array is not as big as we need it to be (probably because of duplicate ids/handles in the original handles array)
-    if (count($to_return)==0 OR count($to_return) != count($handles)) {
+    if (count((array) $to_return)==0 OR count((array) $to_return) != count((array) $handles)) {
         $to_return = array();
         foreach ($handles as $handle) {
             if(!is_numeric($handle)) { // if we have a mix of ids and handles in the source, then let's just use the original source for non numerics!!
@@ -4480,7 +4481,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
 
         // if the $options is from a linked selectbox, then figure that out and gather the possible values
         // only linked selectboxes have this string in their options field
-        if (strstr($options, "#*=:*")) {
+        if (is_string($options) AND strstr($options, "#*=:*")) {
             $boxproperties = explode("#*=:*", $options);
             $source_form_id = $boxproperties[0];
             $source_element_handle = $boxproperties[1];
@@ -4552,7 +4553,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
                                 $pgroups[] = $gid;
                             }
                         }
-                        if (count($pgroups) > 0) {
+                        if (count((array) $pgroups) > 0) {
                             unset($groups);
                             $groups = $pgroups;
                         } else {
@@ -4659,6 +4660,7 @@ function formulize_swapUIText($value, $uitexts=array()) {
 }
 // THIS FUNCTION TAKES A VALUE AND THE UITEXT FOR THE ELEMENT, AND RETURNS THE CORRESPONDING DB VALUE IF THE PASSED VALUE MATCHES A UITEXT
 function formulize_swapDBText($value, $uitexts=array()) {
+    if(!is_array($uitexts)) { return $value; }
     $dbtexts = array_flip($uitexts);
     $originalValue = $value;
     // if value is an array, it has a key called 'value', which needs to be swapped
@@ -4751,7 +4753,7 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
         // explode quicksearches into the search_ values
         $allqsearches = explode("&*=%4#", $quicksearches);
         $colsforsearches = explode(",", $_POST['oldcols']);
-        for ($i=0;$i<count($allqsearches);$i++) {
+        for ($i=0;$i<count((array) $allqsearches);$i++) {
             if ($allqsearches[$i] != "") {
                 // need to remove the hiddencolumn indicator if it is present
                 $_POST["search_" . str_replace("hiddencolumn_", "", $colsforsearches[$i])] = $allqsearches[$i];
@@ -4788,7 +4790,7 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
             if (!is_array($thesecalcs)) {
                 $thesecalcs[0] = "";
             }
-            $totalalcs = $totalcalcs + count($thesecalcs);
+            $totalalcs = $totalcalcs + count((array) $thesecalcs);
         }
         $cblanks = explode("/", $_POST['calc_blanks']);
         $cgrouping = explode("/", $_POST['calc_grouping']);
@@ -5155,19 +5157,6 @@ function convertTypeToText($type, $ele_value) {
     }
 }
 
-
-function recursive_stripslashes($value) {
-    if (!get_magic_quotes_gpc()){
-        return $value;
-    }
-    $value = is_array($value) ?
-        array_map('recursive_stripslashes', $value) :
-        stripslashes($value);
-    return $value;
-}
-
-
-
 /*
  * Returns the HTML formatted results of the calculation process
  *
@@ -5291,7 +5280,7 @@ function parseSubmittedConditions($filter_key, $delete_key) {
     if ($_POST[$delete_key]) {
         // go through the passed filter settings starting from the one we need to remove, and shunt the rest down one space
         // need to do this in a loop, because unsetting and key-sorting will maintain the key associations of the remaining high values above the one that was deleted
-        $originalCount = count($_POST[$filter_key."_elements"]);
+        $originalCount = count((array) $_POST[$filter_key."_elements"]);
         for ($i = $deleteTarget; $i < $originalCount; $i++) { // 2 is the X that was clicked for this page
             if ($i>$deleteTarget) {
                 $_POST[$filter_key."_elements"][$i-1] = $_POST[$filter_key."_elements"][$i];
@@ -5310,7 +5299,7 @@ function parseSubmittedConditions($filter_key, $delete_key) {
         $_POST['reload_option_page'] = true;
     }
 
-    if (count($_POST[$filter_key."_elements"]) > 0){
+    if (count((array) $_POST[$filter_key."_elements"]) > 0){
         $returnValues = array();
         $returnValues[0] = $_POST[$filter_key."_elements"];
         $returnValues[1] = $_POST[$filter_key."_ops"];
@@ -5365,7 +5354,7 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
         $targetFormObject = "";
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
         $element_handler = xoops_getmodulehandler('elements', 'formulize');
-        for ($filterId = 0;$filterId<count($filterElementHandles);$filterId++) {
+        for ($filterId = 0;$filterId<count((array) $filterElementHandles);$filterId++) {
             
             $filterOps[$filterId] = $filterOps[$filterId] == 'NOT' ? '!=' : $filterOps[$filterId]; // convert NOT to != to avoid syntax error
             // if this filter term is a { } term that matches a $_GET value, then let's use that instead
@@ -5501,7 +5490,7 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
             // strip out the part of the oom filter that we cannot use in the WHERE clause
             $searchStartPos = 1;
             $curlyBracketFormconditionsfilter_oom_WHERE = $curlyBracketFormconditionsfilter_oom;
-            while($entryFilterPos = strpos($curlyBracketFormconditionsfilter_oom_WHERE, 'AND curlybracketform.`entry_id`=', $searchStartPos)) {
+            while($searchStartPos <= strlen($curlyBracketFormconditionsfilter_oom_WHERE) AND $entryFilterPos = strpos($curlyBracketFormconditionsfilter_oom_WHERE, 'AND curlybracketform.`entry_id`=', $searchStartPos)) {
                 $nextBracketPos = strpos($curlyBracketFormconditionsfilter_oom_WHERE, ')', $entryFilterPos);
                 $curlyBracketFormconditionsfilter_oom_WHERE = substr($curlyBracketFormconditionsfilter_oom_WHERE, 0, $entryFilterPos).substr($curlyBracketFormconditionsfilter_oom_WHERE, $nextBracketPos);
                 $searchStartPos = $nextBracketPos;
@@ -5619,7 +5608,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                     $literalQuotes = "";
                 } elseif($curlyBracketEntry != 'new') {
                     $preppedFormatValue = prepvalues($dbValueOfTerm, $bareFilterTerm, $curlyBracketEntry); // will be an array
-                    if(is_array($preppedFormatValue) AND count($preppedFormatValue)==1) {
+                    if(is_array($preppedFormatValue) AND count((array) $preppedFormatValue)==1) {
                         $preppedFormatValue = $preppedFormatValue[0]; // take the single value if there's only one, same as display function does
                     }
                     $literalTermToUse = $preppedFormatValue;
@@ -5729,7 +5718,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                 // if no declared API format value, go look it up
                 if($curlyBracketEntry AND $curlyBracketEntry != 'new') {
                 $preppedFormatValue = prepvalues($literalToDBValue, substr($filterTerms[$filterId],1,-1), $curlyBracketEntry); // will be an array
-                if(is_array($preppedFormatValue) AND count($preppedFormatValue)==1) {
+                if(is_array($preppedFormatValue) AND count((array) $preppedFormatValue)==1) {
                     $preppedFormatValue = $preppedFormatValue[0]; // take the single value if there's only one, same as display function does
                 }
                 $plainLiteralValue = $preppedFormatValue;
@@ -5919,7 +5908,7 @@ function formulize_javascriptForRemovingEntryLocks($unload=false) {
 // localIds is an array of ids that will match the order of the values in the array...used to get the id for a subform entry that is being displayed in the list
 // $fid is used only in the event of a mod_datetime or creation_datetime or creator_email field being drawn
 // $deInstanceCounter is used for addressing editable elements in the list
-function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200, $localIds=array(), $fid, $row, $column, $deInstanceCounter=false) {
+function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200, $localIds=array(), $fid=0, $row=0, $column=0, $deInstanceCounter=false) {
     $output = "<div class='main-cell-div' id='cellcontents_".$row."_".$column."'>";
     if (!is_array($value)) {
         $value = array($value);
@@ -5927,7 +5916,7 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
     if (!is_array($localIds)) {
         $localIds = array($localIds);
     }
-    $countOfValue = count($value);
+    $countOfValue = count((array) $value);
     $counter = 1;
     static $cachedFormIds = array();
     static $cachedElementIds = array();
@@ -5969,7 +5958,8 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
             /*if($xoopsConfig['language'] == "french") {
             	$return = setlocale("LC_TIME", "fr_FR.UTF8");
             }*/
-            $v = (false === $time_value) ? "" : date(_MEDIUMDATESTRING, ($time_value)+$offset);
+            $dateStringFormat = ($handle == "mod_datetime" OR $handle == "creation_datetime") ? _MEDIUMDATESTRING : _SHORTDATESTRING; // constants set in /language/english/global.php
+            $v = (false === $time_value) ? "" : date($dateStringFormat, ($time_value)+$offset);
         }
         $output .= '<span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $handle, $textWidth, $thisEntryId)), $handle);
         $output .= '</span>';
@@ -6144,7 +6134,7 @@ function generateHiddenElements($elements, $entry, $screen) {
                         $valueToUse = "";
                     } elseif (preg_replace("/[^A-Z{}]/","", $ele_value[0]) === "{TODAY}") {
                         $number = preg_replace("/[^0-9+-]/","", $ele_value[0]);
-                        $valueToUse = date("Y-m-d", mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
+                        $valueToUse = date("Y-m-d", mktime(0, 0, 0, date("m") , intval(date("d"))+intval($number), date("Y")));
                     } else {
                         $valueToUse = $ele_value[0];
                     }
@@ -6420,7 +6410,7 @@ function formulize_makeOneToOneLinks($frid, $fid) {
                 $entryToWriteToForm1 = $GLOBALS['formulize_allWrittenEntryIds'][$form1][0] ? $GLOBALS['formulize_allWrittenEntryIds'][$form1][0] : '';
                 $entryToWriteToForm1 = (!$entryToWriteToForm1 AND $GLOBALS['formulize_allSubmittedEntryIds'][$form1][0]) ? $GLOBALS['formulize_allSubmittedEntryIds'][$form1][0] : $entryToWriteToForm1;
                 if(!$entryToWriteToForm1 AND is_array($_POST['form_'.$form1.'_rendered_entry']) AND isset($_POST['form_'.$form1.'_rendered_entry'][0]) AND is_numeric($_POST['form_'.$form1.'_rendered_entry'][0])) {
-                    if(count($_POST['form_'.$form1.'_rendered_entry']) == 1) {
+                    if(count((array) $_POST['form_'.$form1.'_rendered_entry']) == 1) {
                         $entryToWriteToForm1 = intval($_POST['form_'.$form1.'_rendered_entry'][0]);
                     } else {
                         error_log("Formulize error: there was more than one entry in $form1 included in the dataset for this pageload, so we could not determine a single entry for establishing one-to-one connections.");
@@ -6435,7 +6425,7 @@ function formulize_makeOneToOneLinks($frid, $fid) {
                 $entryToWriteToForm2 = $GLOBALS['formulize_allWrittenEntryIds'][$form2][0] ? $GLOBALS['formulize_allWrittenEntryIds'][$form2][0] : '';
                 $entryToWriteToForm2 = (!$entryToWriteToForm2 AND $GLOBALS['formulize_allSubmittedEntryIds'][$form2][0]) ? $GLOBALS['formulize_allSubmittedEntryIds'][$form2][0] : $entryToWriteToForm2;
                 if(!$entryToWriteToForm2 AND is_array($_POST['form_'.$form2.'_rendered_entry']) AND isset($_POST['form_'.$form2.'_rendered_entry'][0]) AND is_numeric($_POST['form_'.$form2.'_rendered_entry'][0])) {
-                    if(count($_POST['form_'.$form2.'_rendered_entry']) == 1) {
+                    if(count((array) $_POST['form_'.$form2.'_rendered_entry']) == 1) {
                         $entryToWriteToForm2 = intval($_POST['form_'.$form2.'_rendered_entry'][0]);
                     } else {
                         error_log("Formulize error: there was more than one entry in $form2 included in the dataset for this pageload, so we could not determine a single entry for establishing one-to-one connections.");
@@ -6476,7 +6466,7 @@ function formulize_makeOneToOneLinks($frid, $fid) {
                     $linkedElement1 = $element_handler->get($key1);
                     $linkedElement1EleValue = $linkedElement1->getVar('ele_value');
                     $linkedElement1EleValueParts = strstr($linkedElement1EleValue[2], "#*=:*") ? explode("#*=:*", $linkedElement1EleValue[2]) : array();
-                    if(count($linkedElement1EleValueParts)>0 AND $linkedElement1EleValueParts[0] == $form2) {
+                    if(count((array) $linkedElement1EleValueParts)>0 AND $linkedElement1EleValueParts[0] == $form2) {
                             // element 1 is the linked selectbox, so get the value of entry id for what we just created in form 2, and put it in element 1
                             $linkedValueToWrite = isset($GLOBALS['formulize_newEntryIds'][$form2][0]) ? $GLOBALS['formulize_newEntryIds'][$form2][0] : "";
                             $linkedValueToWrite = (!$linkedValueToWrite AND isset($GLOBALS['formulize_allSubmittedEntryIds'][$form2][0])) ? $GLOBALS['formulize_allSubmittedEntryIds'][$form2][0] : $linkedValueToWrite; // or get the first entry ID that we wrote to the form, if no new entries were written to the form
@@ -6580,18 +6570,23 @@ function convertVariableSearchToLiteral($v, $requestKeyToUse) {
 
 // This function generates HTML for a smart list of columns to use in the change columns list and elsewhere
 // The idea is to show columns based on their forms, in a way that mimics the links in the active relationships
-function generateTidyElementList($cols, $selectedCols=array()) {
+function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
     
     $html = "<div>";
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $counter = 0;
+    $prevFid = 0;
     foreach($cols as $thisFid=>$columns) {
+        if($thisFid != $prevFid) {
+            $fidCounter = 0;
+            $prevFid = $thisFid;
+        }
         $formObject = $form_handler->get($thisFid);
         $boxeshtml = "";
-        $hideform = count($cols) > 1 ? "style='opacity: 0; max-height: 0;'" : "style='opacity: 1; max-height: 10000px;'"; // start forms closed unless they have selected columns, or unless this is the only form in the set
-        $upDisplay = count($cols) > 1 ? "style='display: none;'" : "style='display: inline;'";
-        $downDisplay = count($cols) > 1 ? "style='display: inline;'" : "style='display: none;'";
-        if($counter == 0) { // add in metadata columns first time through
+        $hideform = count((array) $cols) > 1 ? "style='opacity: 0; max-height: 0;'" : "style='opacity: 1; max-height: 10000px;'"; // start forms closed unless they have selected columns, or unless this is the only form in the set
+        $upDisplay = count((array) $cols) > 1 ? "style='display: none;'" : "style='display: inline;'";
+        $downDisplay = count((array) $cols) > 1 ? "style='display: inline;'" : "style='display: none;'";
+        if($counter == 0 AND $thisFid == $mainformFid) { // add in metadata columns first time through
             array_unshift($columns,
                 array('ele_handle'=>'entry_id', 'ele_caption' => _formulize_ENTRY_ID),                          
                 array('ele_handle'=>'creation_uid', 'ele_caption' => _formulize_DE_CALC_CREATOR),
@@ -6602,6 +6597,7 @@ function generateTidyElementList($cols, $selectedCols=array()) {
         }
         foreach($columns as $column) {
             $counter++;
+            $fidCounter++;
             $selected = in_array($column['ele_handle'], $selectedCols) ? "checked='checked'" : "";
             if($selected) {
                 $hideform = "style='opacity: 1; max-height: 10000px;'";
@@ -6861,7 +6857,7 @@ function prepareLinkedElementGroupFilter($sourceFid, $groupSelections, $useOnlyU
 
     array_unique($pgroups); // remove duplicate groups from the list
     
-    if($userMustBeInAllGroups AND count($pgroups) > 0) {  // means we must match all the current user's groups with the entry's groups, so we setup a series of exists clauses
+    if($userMustBeInAllGroups AND count((array) $pgroups) > 0) {  // means we must match all the current user's groups with the entry's groups, so we setup a series of exists clauses
         $pgroupsfilter = " (";
         $start = true;
         foreach($pgroups as $thisPgroup) {
@@ -6870,9 +6866,9 @@ function prepareLinkedElementGroupFilter($sourceFid, $groupSelections, $useOnlyU
             $start = false;
         }
         $pgroupsfilter .= ")";
-    } elseif(count($pgroups) > 0) {
+    } elseif(count((array) $pgroups) > 0) {
         $pgroupsfilter = " t2.groupid IN (".formulize_db_escape(implode(",",$pgroups)).") AND t2.fid=$sourceFid";
-    } elseif($groupSelections AND !in_array("all", $scopegroups) AND count($pgroups)==0) {
+    } elseif($groupSelections AND !in_array("all", $scopegroups) AND count((array) $pgroups)==0) {
         $pgroupsfilter = 'FALSE';
     } else {
         $pgroupsfilter = "";
@@ -6884,7 +6880,7 @@ function prepareLinkedElementGroupFilter($sourceFid, $groupSelections, $useOnlyU
 // setup an OR condition as an alternative to the filter we've determined, just in case the selected value is outside what the filter returns
 // t1 is the form we're gathering entries from
 function prepareLinkedElementSafetyNets($sourceEntryIds) {
-    if(count($sourceEntryIds)>0 AND $sourceEntryIds[0]) {
+    if(count((array) $sourceEntryIds)>0 AND $sourceEntryIds[0]) {
         $sourceEntrySafetyNetStart = "( ";
         $sourceEntrySafetyNetEnd = " ) OR t1.entry_id IN (".implode(",",$sourceEntryIds).") ";
     } else {
@@ -7185,7 +7181,7 @@ function formulize_parseSearchesIntoFilter($searches) {
 	//print $filter;
 	// if there's a set of options that have been OR'd, then we need to construction a more complex filter
 	
-	if($ORfilter OR count($individualORSearches)>0) {
+	if($ORfilter OR count((array) $individualORSearches)>0) {
 		$filterIndex = 0;
         if($filter) {
     		$arrayFilter[$filterIndex][0] = "and";
@@ -7196,7 +7192,7 @@ function formulize_parseSearchesIntoFilter($searches) {
 			$arrayFilter[$filterIndex][0] = "or";
 			$arrayFilter[$filterIndex][1] = $ORfilter;
 		}
-		if(count($individualORSearches)>0) {
+		if(count((array) $individualORSearches)>0) {
 			foreach($individualORSearches as $thisORfilter) {
 				$filterIndex++;
 				$arrayFilter[$filterIndex][0] = "or";
@@ -7211,7 +7207,7 @@ function formulize_parseSearchesIntoFilter($searches) {
 }
 
 
-function do_update_export($queryData, $frid, $fid, $groups) {
+function do_update_export($queryData, $frid, $fid) {
     // this is the old export code, which is used for 'update' mode
     $fdchoice = "update";
 
@@ -7225,7 +7221,7 @@ function do_update_export($queryData, $frid, $fid, $groups) {
     
     list($cols, $headers) = export_prepColumns($cols);
 
-    $filename = prepExport($headers, $cols, $data, $fdchoice, "", "", false, $fid, $groups);
+    $filename = prepExport($headers, $cols, $data, $fdchoice, "", false, $fid);
 
     $pathToFile = str_replace(XOOPS_URL,XOOPS_ROOT_PATH, $filename);
 
@@ -7306,7 +7302,7 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
         fwrite($output_handle, "\xef\xbb\xbf"); // necessary to trigger certain versions of Excel to recognize the file as unicode
     }
     
-    if(count($superHeaders)>0) {
+    if(count((array) $superHeaders)>0) {
         fputcsv($output_handle, $superHeaders);    
     }
     fputcsv($output_handle, $headers);
@@ -7343,7 +7339,7 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
                 fputcsv($output_handle, $row);
             }
             $limitStart += $limitSize;
-        } while ( is_array($data) and count($data) > 0 );
+        } while ( is_array($data) and count((array) $data) > 0 );
         
     } else {
 
@@ -7424,7 +7420,7 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
                                     if(substr($thisOption, 0, 7) == "{OTHER|") {
                                         $diff = array_diff($colValues, array_keys($explodedColumns[$column]));
                                         $diff = array_values($diff); // indexes will be preserved from source, we need to index from 0
-                                        $row[] = (count($diff) > 0 AND trim($diff[0]) !== "") ? $indicators['hasValue'] : $indicators['doesNotHaveValue'];
+                                        $row[] = (count((array) $diff) > 0 AND trim($diff[0]) !== "") ? $indicators['hasValue'] : $indicators['doesNotHaveValue'];
                                     } else {
                                         $row[] = in_array($thisOption, $colValues) ? $indicators['hasValue'] : $indicators['doesNotHaveValue'];
                                     }
@@ -7461,7 +7457,7 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
                 $limitStart += $limitSize;
             }
             }
-        } while (!isset($_GET['limitSize']) AND is_array($data) and count($data) > 0 );
+        } while (!isset($_GET['limitSize']) AND is_array($data) and count((array) $data) > 0 );
 
     }
         
@@ -7526,7 +7522,7 @@ function export_prepColumns($columns,$include_metadata=0) {
                 );
             }*/
             
-            if(is_array($exportOptions) AND count($exportOptions)>0) {
+            if(is_array($exportOptions) AND count((array) $exportOptions)>0) {
                 $superHeaderAssigned = false;
                 foreach($exportOptions['columns'] as $explodedColumnHeader) {
                     if($superHeaderAssigned) {
@@ -7556,7 +7552,7 @@ function export_prepColumns($columns,$include_metadata=0) {
         $superHeaders = array();
     }
     
-    if ($include_metadata AND count($metaDataColsToAdd)>0) {
+    if ($include_metadata AND count((array) $metaDataColsToAdd)>0) {
         // include metadata columns if the user requested them
         $columns = array_merge($metaDataColsToAdd, $columns);
         $headers = array_merge($metaDataHeaders,$headers);
@@ -7619,7 +7615,7 @@ function getEntryDefaults($target_fid,$target_entry) {
       case "date":
         $defaultTextToWrite = getDateElementDefault($ele_value_for_default[0], $target_entry);
         if (false !== $defaultTextToWrite) {
-            $defaultTextToWrite = date("Y-m-d", $defaultTextToWrite);
+            $defaultTextToWrite = is_int($defaultTextToWrite) ? date("Y-m-d", $defaultTextToWrite) : $defaultTextToWrite;
         }
         break;
       case "radio":
@@ -7794,3 +7790,4 @@ function userHasMobileClient() {
     }
     return false;
 }
+

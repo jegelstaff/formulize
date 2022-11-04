@@ -220,7 +220,7 @@ function formulize_notify($event, $extra_tags, $fid, $uids_to_notify, $mid, $omi
             }
             unset( $uids_to_notify[array_search(-1, $uids_to_notify)]); // now remove the special flag that indicates we're sending to direct e-mails
         }
-        if(count($uids_to_notify)>0) {
+        if(count((array) $uids_to_notify)>0) {
             $member_handler = xoops_gethandler('member');
             foreach($uids_to_notify as $uid) {
                 if($userObject = $member_handler->getUser($uid)) {
@@ -234,7 +234,7 @@ function formulize_notify($event, $extra_tags, $fid, $uids_to_notify, $mid, $omi
             sendNotificationToEmail($GLOBALS['formulize_notification_email'], $event, $extra_tags, $mailSubject, $mailTemplate);
             unset( $uids_to_notify[array_search(-1, $uids_to_notify)]); // now remove the special flag before triggering the event
         }
-        if(count($uids_to_notify)>0) {
+        if(count((array) $uids_to_notify)>0) {
             $notification_handler->triggerEvent("form", $fid, $event, $extra_tags, $uids_to_notify, $mid, $omit_user);
         }
     }

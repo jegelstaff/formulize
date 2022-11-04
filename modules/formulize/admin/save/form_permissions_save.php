@@ -112,7 +112,7 @@ foreach($group_list as $group_id) {
   }
 
     // enable only the selected permissions
-    if (count($enabled_permissions) > 0) {
+    if (count((array) $enabled_permissions) > 0) {
         $insertSQL = "INSERT INTO ".$xoopsDB->prefix("group_permission") . " (`gperm_groupid`, `gperm_itemid`, `gperm_modid`, `gperm_name`) VALUES ".
             implode(", ", $enabled_permissions);
     if(!$xoopsDB->query($insertSQL)) {
@@ -144,7 +144,7 @@ foreach($group_list as $group_id) {
   if($_POST['conditionsdelete'] != "" AND $conditionsDeleteParts[1] == $group_id) { // key 1 will be the group id where the X was clicked
     // go through the passed filter settings starting from the one we need to remove, and shunt the rest down one space
     // need to do this in a loop, because unsetting and key-sorting will maintain the key associations of the remaining high values above the one that was deleted
-    $originalCount = count($_POST[$filter_key."_elements"]);
+    $originalCount = count((array) $_POST[$filter_key."_elements"]);
     for($i=$conditionsDeleteParts[3];$i<$originalCount;$i++) { // 3 is the X that was clicked for this group
       if($i>$conditionsDeleteParts[3]) {
         $_POST[$filter_key."_elements"][$i-1] = $_POST[$filter_key."_elements"][$i];
@@ -161,7 +161,7 @@ foreach($group_list as $group_id) {
       }
     }
   }
-  if(!is_array($_POST[$filter_key."_elements"]) OR count($_POST[$filter_key."_elements"]) == 0) {
+  if(!is_array($_POST[$filter_key."_elements"]) OR count((array) $_POST[$filter_key."_elements"]) == 0) {
     $groupsToClear[] = $group_id;
   } else {
     $filterSettings[$group_id][0] = $_POST[$filter_key."_elements"];
@@ -172,10 +172,10 @@ foreach($group_list as $group_id) {
 }
 
 // now update the per group filters
-if(count($groupsToClear)>0) {
+if(count((array) $groupsToClear)>0) {
   $form_handler->clearPerGroupFilters($groupsToClear, $form_id);
 }
-if(count($filterSettings)>0) {
+if(count((array) $filterSettings)>0) {
   $form_handler->setPerGroupFilters($filterSettings, $form_id);
 }
 
