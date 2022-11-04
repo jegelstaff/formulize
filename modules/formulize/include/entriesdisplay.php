@@ -593,6 +593,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	// clear quick searches for any columns not included now
 	// also, convert any { } terms to literal values for users who can't update other reports, if the last loaded report doesn't belong to them (they're presumably just report consumers, so they don't need to preserve the abstract terms)
 	$hiddenQuickSearches = array(); // array used to indicate quick searches that should be present even if the column is not displayed to the user
+    $activeViewId = substr($settings['lastloaded'], 1); // will have a p in front of the number, to show it's a published view (or an s, but that's unlikely to ever happen in this case)
+	$ownerOfLastLoadedViewData = q("SELECT sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id=".intval($activeViewId));
+	$ownerOfLastLoadedView = $ownerOfLastLoadedViewData[0]['sv_owner_uid'];
 	foreach($_POST as $k=>$v) {
 		
 		if(substr($k, 0, 7) == "search_" AND !in_array(substr($k, 7), $showcols) AND !in_array(substr($k, 7), $pubfilters)) {
@@ -645,9 +648,6 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		{
 			$requestKeyToUse = substr($valueToCheck,1,-1);
 			if(!strstr($requestKeyToUse,"}") AND !strstr($requestKeyToUse, "{")) { // double check that there's no other { } in the term!
-				$activeViewId = substr($settings['lastloaded'], 1); // will have a p in front of the number, to show it's a published view (or an s, but that's unlikely to ever happen in this case)
-				$ownerOfLastLoadedViewData = q("SELECT sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id=".intval($activeViewId));
-				$ownerOfLastLoadedView = $ownerOfLastLoadedViewData[0]['sv_owner_uid'];
 				if(!$update_other_reports AND $uid != $ownerOfLastLoadedView) {
 					$filterValue = convertVariableSearchToLiteral($v, $requestKeyToUse); // returns updated value, or false to kill value, or true to do nothing
 					if(!is_bool($filterValue)) {

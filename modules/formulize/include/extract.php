@@ -409,7 +409,9 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	list($linkkeys, $linkisparent, $linkformids, $linktargetids, $linkselfids, $linkcommonvalue) = formulize_gatherLinkMetadata($frid, $fid, $mainFormOnly);
 	 
 	//print_r( $linkformids );
-	$GLOBALS['formulize_linkformidsForCalcs'] = $linkformids; 
+    if(isset($GLOBALS['formulize_setBaseQueryForCalcs']) OR isset($GLOBALS['formulize_returnAfterSettingBaseQuery'])) {
+        $GLOBALS['formulize_linkformidsForCalcs'] = $linkformids;
+    }
 
 	// now that we have the full details from the framework, figure out the full SQL necessary to get the entire dataset
 	// This whole approach is predicated on being able to do reliable joins between the key fields of each form
@@ -1013,7 +1015,7 @@ function formulize_gatherLinkMetadata($frid, $fid, $mainFormOnly=false) {
             foreach($linklist1 as $theselinks) {
                 $linkformids1[] = $theselinks['fl_form2_id'];
                 if($theselinks['fl_key1'] != 0) {
-                    $handleforlink = formulize_getElementHandleFromID($theselinks['fl_key1']);
+                    $handleforlink = $theselinks['fl_key1'] == -1 ? 'entry_id' : formulize_getElementHandleFromID($theselinks['fl_key1']);
                     $linkkeys1[] = $handleforlink;
                     $linktargetids1[] = $theselinks['fl_key2'];
                     $linkselfids1[] = $theselinks['fl_key1'];
@@ -1040,7 +1042,7 @@ function formulize_gatherLinkMetadata($frid, $fid, $mainFormOnly=false) {
             foreach($linklist2 as $theselinks) {
                 $linkformids2[] = $theselinks['fl_form1_id'];
                 if($theselinks['fl_key2'] != 0) {
-                    $handleforlink = formulize_getElementHandleFromID($theselinks['fl_key2']);
+                    $handleforlink = $theselinks['fl_key2'] == -1 ? 'entry_id' : formulize_getElementHandleFromID($theselinks['fl_key2']);
                     $linkkeys2[] = $handleforlink;
                     $linktargetids2[] = $theselinks['fl_key1'];
                     $linkselfids2[] = $theselinks['fl_key2'];
@@ -2450,12 +2452,10 @@ function displayList($entry, $handle, $type="bulleted", $id="NULL", $localid="NU
 function internalRecordIds($entry, $formhandle="", $id="NULL", $fidAsKeys = false) {
 	if(is_numeric($id)) {
 		$entry = $entry[$id];
-	}
-  
+	}  
 	if(!$formhandle) {
 		$formhandle = getFormHandlesFromEntry($entry);
 	}
-	
 	if(is_array($formhandle)) {        
         $element_handler = xoops_getmodulehandler('elements', 'formulize');
 		foreach($formhandle as $handle) {
@@ -2486,16 +2486,16 @@ function internalRecordIds($entry, $formhandle="", $id="NULL", $fidAsKeys = fals
 
 // this function takes a formhandle and if it's numeric, returns the title for that form
 function _parseInternalRecordIdsFormHandle($formhandle) {
-     global $xoopsDB;
-     if(!is_numeric($formhandle)) { return $formhandle; }
-     static $cachedDescForm = array();
-     if(!isset($cachedDescForm[$formhandle])) {
-          $sql = "SELECT desc_form FROM ".DBPRE."formulize_id WHERE id_form=".intval($formhandle);
-          $res = $xoopsDB->query($sql);
-          $array = $xoopsDB->fetchArray($res);
-          $cachedDescForm[$formhandle] = $array['desc_form'];
-     }
-     return $cachedDescForm[$formhandle];
+    global $xoopsDB;
+    if(!is_numeric($formhandle)) { return $formhandle; }
+    static $cachedDescForm = array();
+    if(!isset($cachedDescForm[$formhandle])) {
+       $sql = "SELECT desc_form FROM ".DBPRE."formulize_id WHERE id_form=".intval($formhandle);
+       $res = $xoopsDB->query($sql);
+       $array = $xoopsDB->fetchArray($res);
+       $cachedDescForm[$formhandle] = $array['desc_form'];
+    }
+    return $cachedDescForm[$formhandle];
 }
 
 // THIS FUNCTION SORTS A RESULT SET, BASED ON THE VALUES OF ONE NON-MULTI FIELD (IE: CANNOT SORT BY CHECKBOX FIELD)
