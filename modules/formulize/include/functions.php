@@ -3413,6 +3413,17 @@ function sendNotificationToEmail($email, $event, $tags, $overrideSubject="", $ov
     $module_handler = xoops_gethandler('module');
     $module = $module_handler->get(getFormulizeModId());
 
+    global $xoopsConfig;
+    if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/mail_template/form_newentry.tpl")) {
+        include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/modinfo.php";
+        $templateDir = XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/mail_template/";
+        include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/notification.php";
+    } else {
+        $templateDir = XOOPS_ROOT_PATH."/modules/formulize/language/english/mail_template/";
+        include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/modinfo.php";
+        include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/notification.php';
+    }
+    
     $tags['X_ITEM_NAME'] = '[' . _NOT_ITEMNAMENOTAVAILABLE . ']';
     $tags['X_ITEM_URL']  = '[' . _NOT_ITEMURLNOTAVAILABLE . ']';
     $tags['X_ITEM_TYPE'] = '[' . _NOT_ITEMTYPENOTAVAILABLE . ']';
@@ -3420,15 +3431,6 @@ function sendNotificationToEmail($email, $event, $tags, $overrideSubject="", $ov
     $tags['X_MODULE_URL'] = XOOPS_URL . '/modules/' . $module->getVar('dirname') . '/';
     $tags['X_NOTIFY_CATEGORY'] = $category;
     $tags['X_NOTIFY_EVENT'] = $event;
-
-    global $xoopsConfig;
-    if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/mail_template/form_newentry.tpl")) {
-        include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/modinfo.php";
-        $templateDir = XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/mail_template/";
-    } else {
-        $templateDir = XOOPS_ROOT_PATH."/modules/formulize/language/english/mail_template/";
-        include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/modinfo.php";
-    }
 
     switch ($event) {
         case("new_entry"):
@@ -4126,7 +4128,7 @@ function synchExistingSubformEntries($frid) {
                                             // check to see if the element we're writing to is linked and not snapshot, and pointing to the same form that a dynamic reference belongs to, if so use the mainform entry id
                                             $dynamicRefElement = $element_handler->get(substr($subformConditions[2][$i], 1, -1));
                                             $conditionElementEleValue = $conditionElementObject->getVar('ele_value');
-                                            $conditionElementLinkProperties = explode("#*=:*", $conditionElementEleValue[2]);
+                                            $conditionElementLinkProperties = explode("#*=:*", (string) $conditionElementEleValue[2]);
                                             if($dynamicRefElement AND $conditionElementObject->isLinked AND !$conditionElementEleValue['snapshot'] AND $dynamicRefElement->getVar('id_form') == $conditionElementLinkProperties[0]) {
                                                 $filterValues[$subformConditions[0][$i]] = $entry_id;
                                             } elseif($dynamicRefElement) {

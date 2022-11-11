@@ -971,7 +971,7 @@ function formulize_filterHasSingleEntry($filter) {
 	}
 	foreach($filter as $thisFilter) {
 		$filterDetails = $thisFilter[1];
-		$filterParts = explode('][',$filterDetails);
+		$filterParts = explode('][',(string) $filterDetails);
 		foreach($filterParts as $part) {
 			if(is_numeric($part)) {
 				return $part;

@@ -27,6 +27,13 @@ if (("masquerade" == $op) and ($_REQUEST['id'] == $_SESSION['xoopsUserId'])) {
     $op = "list";
 }
 
+global $icmsConfig;
+if (file_exists(ICMS_ROOT_PATH."/modules/profile/language/".$icmsConfig['language']."/modinfo.php")) {
+    include_once ICMS_ROOT_PATH."/modules/profile/language/".$icmsConfig['language']."/modinfo.php";
+} else {
+    include_once ICMS_ROOT_PATH."/modules/profile/language/english/modinfo.php";
+}
+
 switch($op) {
 	default:
 	case 'list':
