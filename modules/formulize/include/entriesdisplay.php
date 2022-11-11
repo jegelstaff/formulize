@@ -1949,9 +1949,6 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
                 $startEnd = explode("//",$search_text);
                 $startText = isset($startEnd[0]) ? strtotime(parseUserAndToday(substr(htmlspecialchars_decode($startEnd[0]), 2))) : "";
                 $endText = isset($startEnd[1]) ? strtotime(parseUserAndToday(substr(htmlspecialchars_decode($startEnd[1]), 2))) : "";
-            } else {
-                $startText = "";
-                $endText = "";
             }
             include_once XOOPS_ROOT_PATH . "/class/xoopsformloader.php";
             $startDateElement = new XoopsFormTextDateSelect ('', 'formulize_daterange_sta_'.$handle, 15, $startText);
