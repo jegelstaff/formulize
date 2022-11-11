@@ -1938,51 +1938,6 @@ function formulize_buildQSFilter($handle, $search_text, $multi=false) {
 
 // THIS FUNCTION CREATES THE HTML FOR A DATE RANGE FILTER
 function formulize_buildDateRangeFilter($handle, $search_text) {
-   $elementMetaData = formulize_getElementMetaData($handle, true); // true means this is a handle
-   if($elementMetaData['ele_type']=="date") {
-	// split any search_text into start and end values
-	if(strstr($search_text, "//")) {
-		$startEnd = explode("//",$search_text);
-		$startText = isset($startEnd[0]) ? strtotime(parseUserAndToday(substr(htmlspecialchars_decode($startEnd[0]), 2))) : "";
-		$endText = isset($startEnd[1]) ? strtotime(parseUserAndToday(substr(htmlspecialchars_decode($startEnd[1]), 2))) : "";
-	} else {
-		$startText = "";
-		$endText = "";
-	}
-	include_once XOOPS_ROOT_PATH . "/class/xoopsformloader.php";
-	$startDateElement = new XoopsFormTextDateSelect ('', 'formulize_daterange_sta_'.$handle, 15, $startText);
-	$endDateElement = new XoopsFormTextDateSelect ('', 'formulize_daterange_end_'.$handle, 15, $endText);
-	
-	static $js;
-	if($js) { // only need to include this code once!
-		$js = "";
-	} else {
-		$js = "<script type='text/javascript'>
-		if (typeof jQuery == 'undefined') {
-				var head = document.getElementsByTagName('head')[0];
-				script = document.createElement('script');
-				script.id = 'jQuery';
-				script.type = 'text/javascript';
-				script.src = '".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-1.4.2.min.js';
-				head.appendChild(script);
-		}
-		$().click(function() {
-			$('.formulize_daterange').change();
-		});
-		$(\"[id^='formulize_daterange_sta_'],[id^='formulize_daterange_end_']\").change(function() {
-			var id = new String($(this).attr('id'));
-			var handle = id.substr(24);
-			var start = $('#formulize_daterange_sta_'+handle).val();
-			var end = $('#formulize_daterange_end_'+handle).val();
-			$('#formulize_hidden_daterange_'+handle).val('>='+start+'//'+'<='+end);
-		});
-		</script>";
-	}
-	return "";
-}
-
-// THIS FUNCTION CREATES THE HTML FOR A DATE RANGE FILTER
-function formulize_buildDateRangeFilter($handle, $search_text) {
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
     if($elementObject = $element_handler->get($handle)) {
         $typeInfo = $elementObject->getDataTypeInformation();
@@ -1992,12 +1947,15 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
             // split any search_text into start and end values
             if(strstr($search_text, "//")) {
                 $startEnd = explode("//",$search_text);
-                $startText = isset($startEnd[0]) ? parseUserAndToday(substr(htmlspecialchars_decode($startEnd[0]), 2)) : _formulize_QSdateRange_startText;
-                $endText = isset($startEnd[1]) ? parseUserAndToday(substr(htmlspecialchars_decode($startEnd[1]), 2)) : _formulize_QSdateRange_endText;
-            } 
+                $startText = isset($startEnd[0]) ? strtotime(parseUserAndToday(substr(htmlspecialchars_decode($startEnd[0]), 2))) : "";
+                $endText = isset($startEnd[1]) ? strtotime(parseUserAndToday(substr(htmlspecialchars_decode($startEnd[1]), 2))) : "";
+            } else {
+                $startText = "";
+                $endText = "";
+            }
             include_once XOOPS_ROOT_PATH . "/class/xoopsformloader.php";
-            $startDateElement = new XoopsFormTextDateSelect ('', 'formulize_daterange_sta_'.$handle, 15, strtotime($startText));
-            $endDateElement = new XoopsFormTextDateSelect ('', 'formulize_daterange_end_'.$handle, 15, strtotime($endText));
+            $startDateElement = new XoopsFormTextDateSelect ('', 'formulize_daterange_sta_'.$handle, 15, $startText);
+            $endDateElement = new XoopsFormTextDateSelect ('', 'formulize_daterange_end_'.$handle, 15, $endText);
             
             static $js;
             if($js) { // only need to include this code once!
