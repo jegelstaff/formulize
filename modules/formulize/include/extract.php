@@ -369,7 +369,7 @@ function getDataCached($framework, $form, $filter="", $andor="AND", $scope="", $
 }
 
 
-function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived=false, $id_reqsOnly=false, $resultOnly=false, $filterElements=null) {
+function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived=false, $id_reqsOnly=false, $resultOnly=false, $filterElements=null) {
 	global $xoopsDB;
 	 
 	$limitStart = intval($limitStart);
