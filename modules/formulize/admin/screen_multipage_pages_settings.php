@@ -87,7 +87,7 @@ $conditions = $screen->getVar("conditions");
 $pageTitle = $pageTitles[$pageIndex];
 $pageNumber = $pageIndex+1;
 $pageElements = $elements[$pageIndex];
-$filterSettingsToSend = count((array) $conditions[$pageIndex] > 0) ? $conditions[$pageIndex] : "";
+$filterSettingsToSend = (is_array($conditions) AND isset($conditions[$pageIndex]) AND count($conditions[$pageIndex]) > 0) ? $conditions[$pageIndex] : "";
 if (isset($filterSettingsToSend['details'])) { // if this is in the old format (pre-version 4, these conditions used a non-standard syntax), convert it!
     $newFilterSettingsToSend = array();
     $newFilterSettingsToSend[0] = $filterSettingsToSend['details']['elements'];

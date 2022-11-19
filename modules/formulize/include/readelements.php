@@ -426,8 +426,8 @@ foreach($formulize_allWrittenEntryIds as $allWrittenFid=>$entries) {
                     if(!in_array($mainFormEntry, $mainFormEntriesUpdatedForDerived)
                        AND $mainFormEntry
                        AND (
-                        in_array($mainFormEntry, $formulize_allSubmittedEntryIds[$fid])
-                        OR (isset($GLOBALS['formulize_allPresentEntryIds']) AND in_array($mainFormEntry, $formulize_allPresentEntryIds[$fid]))
+                        (isset($formulize_allSubmittedEntryIds[$fid]) AND in_array($mainFormEntry, $formulize_allSubmittedEntryIds[$fid]))
+                        OR (isset($GLOBALS['formulize_allPresentEntryIds']) AND isset($GLOBALS['formulize_allPresentEntryIds'][$fid]) AND in_array($mainFormEntry, $GLOBALS['formulize_allPresentEntryIds'][$fid]))
                         )
                       ) {
                         // regarding final in_array checks... // if we have deduced the mainform entry, then depending on the structure of the relationship, it is possible that if checkforlinks was used above, it would return entries that were not part of pageload, in which case we must ignore them!!
@@ -435,7 +435,7 @@ foreach($formulize_allWrittenEntryIds as $allWrittenFid=>$entries) {
                         formulize_updateDerivedValues($mainFormEntry, $fid, $frid);
                         $mainFormEntriesUpdatedForDerived[] = $mainFormEntry;
                     }
-                    if(!isset($formsUpdatedInFramework[$allWrittenFid]) AND ( in_array($mainFormEntry, $formulize_allSubmittedEntryIds[$fid]) OR (isset($GLOBALS['formulize_allPresentEntryIds']) AND in_array($mainFormEntry, $formulize_allPresentEntryIds[$fid])) )) { // if the form we're on has derived values, then flag it as one of the updated forms, since at least one matching mainform entry was found and will have been updated including the framework
+                    if(!isset($formsUpdatedInFramework[$allWrittenFid]) AND ( (isset($formulize_allSubmittedEntryIds[$fid]) AND in_array($mainFormEntry, $formulize_allSubmittedEntryIds[$fid])) OR (isset($GLOBALS['formulize_allPresentEntryIds']) AND isset($GLOBALS['formulize_allPresentEntryIds'][$fid]) AND in_array($mainFormEntry, $GLOBALS['formulize_allPresentEntryIds'][$fid])) )) { // if the form we're on has derived values, then flag it as one of the updated forms, since at least one matching mainform entry was found and will have been updated including the framework
                         $formsUpdatedInFramework[$allWrittenFid] = $allWrittenFid;
                     }
                 }

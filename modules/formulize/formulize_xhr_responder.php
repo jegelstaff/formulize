@@ -347,7 +347,8 @@ function renderElement($elementObject, $entryId) {
             require_once XOOPS_ROOT_PATH."/modules/formulize/include/formdisplay.php"; // need the formulize_themeForm
             $form = new formulize_themeForm('formulizeAsynchElementRender','',''); // prepare empty form object just for rendering element
             if($elementObject->getVar('ele_type') == "ib") {// if it's a break, handle it differently...
-                $form->insertBreakFormulize("<div class=\"formulize-text-for-display\">" . trans(stripslashes($form_ele[0])) . "</div>", $form_ele[1], 'de_'.$fid.'_'.$entryForDEElements.'_'.$this_ele_id, $i->getVar("ele_handle"));
+                $entryForDEElements = (is_numeric($entryId) AND $entryId) ? $entryId : 'new';
+                $form->insertBreakFormulize("<div class=\"formulize-text-for-display\">" . trans(stripslashes($form_ele[0])) . "</div>", $form_ele[1], 'de_'.$elementObject->getVar('id_form').'_'.$entryForDEElements.'_'.$elementObject->getVar('ele_id'), $elementObject->getVar("ele_handle"));
                 $hidden = '';
                 $html = '';
                 list($html, $hidden) = $form->_drawElements($form->getElements(), $html, $hidden);

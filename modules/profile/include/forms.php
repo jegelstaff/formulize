@@ -22,7 +22,8 @@
 *
 * @return object
 */
-function &getRegisterForm(&$user, $profile, $next_step = 0, $step) {
+function &getRegisterForm(&$user, $profile, $next_step, $step) {
+    $next_step = $next_step ? $next_step : 0;
     $action = $_SERVER['REQUEST_URI'];
     global $icmsConfigUser;
 	$reg_form = new icms_form_Theme($step->getVar('step_name'), "regform", $action, "post");

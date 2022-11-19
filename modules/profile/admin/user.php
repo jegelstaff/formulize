@@ -51,7 +51,7 @@ switch($op) {
 		$form->display();
 		echo "<br />\n";
 		$user_count = $member_handler->getUserCount(new icms_db_criteria_Item('level', '-1'));
-			if(count($user_count)>1){
+			if(count((array) $user_count)>1){
 				$form = new icms_form_Theme(_AM_PROFILE_REMOVEDUSERS, 'form', 'user.php');
 				$form->addElement(new icms_form_elements_select_User(_AM_PROFILE_SELECTUSER, 'id', false, false, false, false, true, true));
 				$form->addElement(new icms_form_elements_Hidden('op', 'editordeleteormasquerade'));

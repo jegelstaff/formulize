@@ -78,7 +78,7 @@ print "</div>\n<br /><br />
 <script type='text/javascript'>
 function xoopsFormValidate_formulize_modal(myform) {
     ";
-print trim(implode("\n\r",$GLOBALS['formulize_elementsOnlyForm_validationCode']));
+print trim(implode("\n\r",(array) $GLOBALS['formulize_elementsOnlyForm_validationCode']));
 print "\n\r return true;
 }
 </script>";

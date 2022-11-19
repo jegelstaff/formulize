@@ -75,39 +75,32 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/class/usersGroupsPerms.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 
 
-function getFormFramework($formframe, $mainform="") {
-    global $xoopsDB;
-
+function getFormFramework($formframe, $mainform=0) {
     static $cachedToReturn = array();
-    if(isset($cachedToReturn[$formframe][$mainform])) { return $cachedToReturn[$formframe][$mainform]; }
-    
-    if (!empty($mainform)) {
+    if($formframe AND isset($cachedToReturn[$formframe]) AND is_array($cachedToReturn[$formframe]) AND isset($cachedToReturn[$formframe][$mainform])) { return $cachedToReturn[$formframe][$mainform]; }
+    if ($mainform) {
         // a framework
+        if (!is_numeric($mainform)) {
+            exit("Mainform must be numeric, was: '".strip_tags(htmlspecialchars($mainform))."'");
+        }
         $frid = $formframe;
         $fid = $mainform;
         if (!is_numeric($formframe)) {
             $frameid = q("SELECT frame_id FROM " . $xoopsDB->prefix("formulize_frameworks") . " WHERE frame_name='" . formulize_db_escape($formframe) . "'");
-            $frid = $frameid[0]['frame_id'];
+            if(!$frid = intval($frameid[0]['frame_id'])) {
+                exit("Cannot identify relationship using this text '".strip_tags(htmlspecialchars($formframe))."'");
+            }
         } 
-        if (!is_numeric($mainform)) {
-            exit("Cannot identify mainform using this text '".strip_tags(htmlspecialchars($mainform))."'");
-        } 
-        if (!$fid) {
-            print "Form Name: " . $form . "<br>";
-            print "Form id: " . $fid . "<br>";
-            print "Frame Name: " . $frame . "<br>";
-            print "Frame id: " . $frid . "<br>";
-            exit("selected form does not exist in framework");
-        }
     } else {
         // a form
         $frid = "";
+        $fid = $formframe;
         if (!is_numeric($formframe)) { // if it's a title, convert to the id
             $formid = q("SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE desc_form = '" . formulize_db_escape($formframe) . "'");
-            $fid = $formid[0]['id_form'];
-        } else {
-            $fid = $formframe;
-        }
+            if(!$fid = intval($formid[0]['id_form'])) {                
+                exit("Cannot identify mainform using this text '".strip_tags(htmlspecialchars($formframe))."'");
+            }
+        } 
     }
     $to_return[0] = $fid;
     $to_return[1] = $frid;
@@ -3815,7 +3808,7 @@ function writeElementValue($formframe, $ele, $entry, $value, $append="replace", 
 
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
 
-    if ($foundit = strstr($ele_value[2], "#*=:*") AND !$lvoverride AND !$ele_value['snapshot']) {
+    if (is_string($ele_value[2]) AND $foundit = strstr($ele_value[2], "#*=:*") AND !$lvoverride AND !$ele_value['snapshot']) {
         // completely rejig things for a linked selectbox
         $boxproperties = explode("#*=:*", $ele_value[2]);
         // NOTE:

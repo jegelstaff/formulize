@@ -641,7 +641,7 @@ class icms_core_Session {
 				icms::$xoopsDB->quoteString($_SERVER['REMOTE_ADDR']),
 				$sess_data
 			);
-			return icms::$xoopsDB->queryF($sql);
+            if(icms::$xoopsDB->queryF($sql)) { return true; } else { return false; }
 		}
 		return true;
 	}

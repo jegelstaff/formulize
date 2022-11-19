@@ -790,6 +790,18 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 	$mid = getFormulizeModId();
 
 	$currentURL = getCurrentURL();
+    
+    $elements_allowed = "";
+    $printViewPages = array();
+    $printViewPageTitles = array();
+	if(is_array($formframe)) {
+		$elements_allowed = $formframe['elements'];
+		$printViewPages = isset($formframe['pages']) ? $formframe['pages'] : array();
+		$printViewPageTitles = isset($formframe['pagetitles']) ? $formframe['pagetitles'] : array();
+		$formframetemp = $formframe['formframe'];
+		unset($formframe);
+		$formframe = $formframetemp;
+	}
 
     // if the go_back form was triggered, ie: we're coming back from displaying a different entry, then we need to adjust and show the parent entry/form/etc
     // important to do these setup things only once per page load
@@ -865,22 +877,11 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
         }
     }
     
-	// identify form or framework
-	$elements_allowed = "";
 	// if a screen object is passed in, select the elements for display based on the screen's settings
-	if ($screen and is_a($screen, "formulizeFormScreen")) {
+	if (!$elements_allowed AND $screen and is_a($screen, "formulizeFormScreen")) {
 		$elements_allowed = $screen->getVar("formelements");
 	}
-    $printViewPages = array();
-    $printViewPageTitles = array();
-	if(is_array($formframe)) {
-		$elements_allowed = $formframe['elements'];
-		$printViewPages = isset($formframe['pages']) ? $formframe['pages'] : array();
-		$printViewPageTitles = isset($formframe['pagetitles']) ? $formframe['pagetitles'] : array();
-		$formframetemp = $formframe['formframe'];
-		unset($formframe);
-		$formframe = $formframetemp;
-	}
+    
     list($fid, $frid) = getFormFramework($formframe, $mainform);
 
     // propagate the go_back values from page load to page load, so we can eventually return there when the user is ready
@@ -1255,12 +1256,10 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			if(!$form) {
 
                 $firstform = 1;
-                if($screen) {
+                if(isset($passedInTitle) OR $titleOverride == 'all') {
+                    $title = trans($passedInTitle);
+                } elseif($screen) {
                     $title = trans($screen->getVar('title'));
-
-                /* } elseif(isset($passedInTitle) OR $titleOverride == 'all') {
-                    $title = trans($passedInTitle);*/
-
                 } else {
                     $title = trans(getFormTitle($this_fid));
                 }
@@ -2033,7 +2032,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	$subformInstance = $formulize_subformInstance+1;
     $formulize_subformInstance = $subformInstance;
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
-	
+    
 	if($_POST['target_sub'] AND $_POST['target_sub'] == $subform_id AND $_POST['target_sub_instance'] == $subformElementId.$subformInstance) { // important we only do this on the run through for that particular sub form (hence target_sub == sfid), and also only for the specific instance of this subform on the page too, since not all entries may apply to all subform instances any longer with conditions in effect now
         list($sub_entry_new,$sub_entry_written,$filterValues) = formulize_subformSave_writeNewEntry($element_to_write, $value_to_write, $fid, $frid, $_POST['target_sub'], $entry, $subformConditions, $overrideOwnerOfNewEntries, $mainFormOwner, $_POST['numsubents']);
         if(is_array($sub_entry_written)) {
@@ -2041,9 +2040,9 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
             $formulize_subFidsWithNewEntries[] = $_POST['target_sub'];
             $formulize_subformElementsWithNewEntries[] = $subform_element_object;
             $formulize_newSubformEntries[$_POST['target_sub']] = $sub_entry_written; // an array of entries that were written, since multiple subs can be created at once
-			}
-			}
-	
+		}
+	}
+    
     $data_handler = new formulizeDataHandler($subform_id);
 	
 
