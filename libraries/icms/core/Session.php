@@ -223,7 +223,7 @@ class icms_core_Session {
 				}
 			}
 		} else { // set anon session cookie - necessary for preserving state in LTI systems...some browsers set one by default anyway, but it won't be secure and Samesite=None
-            icms_core_Session::update_cookie();
+            $instance->update_cookie();
         }
 		return $instance;
 	}
@@ -370,7 +370,7 @@ class icms_core_Session {
 		// Force updating cookie for session cookie is not issued correctly in some IE versions,
 		// or not automatically issued prior to PHP 4.3.3 for all browsers
 		if ($success) {
-			self::update_cookie();
+			$this->update_cookie();
 		}
 		return $success;
 	}
@@ -382,7 +382,7 @@ class icms_core_Session {
 	 * @param   int     $expire     Time in seconds until a session expires
 	 * @return  bool
 	 **/
-	static public function update_cookie($sess_id = null, $expire = null) {
+	public function update_cookie($sess_id = null, $expire = null) {
 		global $icmsConfig;
 		$secure = substr(ICMS_URL, 0, 5) == 'https' ? 1 : 0; // we need to secure cookie when using SSL
 		$session_name = ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '')
