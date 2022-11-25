@@ -314,8 +314,7 @@ button, input[type='submit'], input[type='button'], input[type='reset'] {
   border-color: #ccc; }
 
 button:hover, .xo-formbuttons:hover, .formButton:hover {
-  transform: scale(1.2);
-  box-shadow: 0 0 65px #F4F9FE inset, 0 0 20px #F4F9FE inset, 0 0 15px #333; }
+  cursor: pointer; }
 
 button:focus, input[type='submit']:focus, input[type='button']:focus, input[type='reset']:focus, .xo-formbuttons:focus, .formButton:focus {
   background-color: #f4f4f4;

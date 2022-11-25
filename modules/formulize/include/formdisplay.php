@@ -165,7 +165,7 @@ class formulize_themeForm extends XoopsThemeForm {
         
         // hidden elements, close form, js
 		$ret .= "\n$hidden\n</form>\n";
-		$ret .= $this->renderValidationJS(true);
+		$ret .= $this->renderValidationJS();
         
         // set the max width for elements rendered as numeric text
         $ret = str_replace('width: REPLACEWITHMAXem;', 'width: '.$GLOBALS['formulize_renderedNumericElementsMaxWidth'].'em;',$ret);
@@ -197,11 +197,8 @@ class formulize_themeForm extends XoopsThemeForm {
         return ob_get_clean();
     }
     
-	public function renderValidationJS( $withtags = true, $skipConditionalCheck = false ) {
-		$js = "";
-		if ( $withtags ) {
-			$js .= "\n<!-- Start Form Validation JavaScript //-->\n<script type='text/javascript'>\n<!--//\n";
-		}
+	public function renderValidationJS($withtags = true) {
+		$js = "\n<!-- Start Form Validation JavaScript //-->\n<script type='text/javascript'>\n<!--//\n";
         $js .= "jQuery(document).ready(function() {\n";
         
         // make form functional when it loads, and when a user interacts with it
@@ -231,11 +228,9 @@ class formulize_themeForm extends XoopsThemeForm {
         
 		$formname = $this->getName();
 		$js .= "function xoopsFormValidate_{$formname}(leave, myform) { \n";
-		$js .= $this->_drawValidationJS($skipConditionalCheck);
+		$js .= $this->_drawValidationJS();
 		$js .= "\nreturn true;\n}\n";
-		if ( $withtags ) {
-			$js .= "//--></script>\n<!-- End Form Vaidation JavaScript //-->\n";
-		}
+        $js .= "//--></script>\n<!-- End Form Vaidation JavaScript //-->\n";
 		return $js;
 	}
 
@@ -413,10 +408,14 @@ class formulize_themeForm extends XoopsThemeForm {
 	function _drawElementElementHTML($ele) {
 	
         if(!$ele) { return ""; }
+        
+        $templateVariables = array();
+        $templateVariables['renderedElement'] = trim($ele->render());
+        if(!$templateVariables['renderedElement']) { return ""; }
     
 		static $show_element_edit_link = null;
 		global $formulize_drawnElements;
-        $columnData = $this->_getColumns($ele); // we might be in a static context so can't call via $this
+        $columnData = $this->_getColumns($ele); 
 		// initialize things first time through...
 		if($show_element_edit_link === null) {
 			$formulize_drawnElements = array();
@@ -454,11 +453,11 @@ class formulize_themeForm extends XoopsThemeForm {
             }
         }
         
+        $templateVariables['elementContainerId'] = 'formulize-'.$ele->getName();
         $templateVariables['elementName'] = $element_name;
         $templateVariables['elementCaption'] = $ele->getCaption();
         $templateVariables['elementHelpText'] = $ele->getDescription();
         $templateVariables['elementIsRequired'] = $ele->isRequired();
-        $templateVariables['renderedElement'] = trim($ele->render());
         $templateVariables['elementObject'] = $ele->formulize_element;
 
         // make numeric values align right (probably derived values) - only takes effect in the two column layout by default
@@ -474,7 +473,7 @@ class formulize_themeForm extends XoopsThemeForm {
             $templateVariables['elementObjectForRendering'] = $ele;
 			$templateVariables['elementMarkup'] = $templateVariables['renderedElement'];
 			$templateVariables['elementDescription'] = $templateVariables['elementHelpText'];
-            if (is_object($ele) and isset($ele->formulize_element)) {
+            if (isset($ele->formulize_element)) {
                 $templateVariables['element_id'] = $ele->formulize_element->getVar("ele_id");
             }
         }
@@ -502,24 +501,25 @@ class formulize_themeForm extends XoopsThemeForm {
 	}
 
 	// need to check whether the element is a standard element, if if so, add the check for whether its row exists or not	
-	function _drawValidationJS($skipConditionalCheck) {
+	function _drawValidationJS() {
         global $fullJsCatalogue;
 		$fullJs = "";
 		
 		$elements = $this->getElements( true );
-		foreach ( $elements as $elt ) {
+		foreach ( $elements as $ele ) {
             
-			if ( method_exists( $elt, 'renderValidationJS' ) ) {
-                $validationJs = $elt->renderValidationJS();
+			if ( method_exists( $ele, 'renderValidationJS' ) ) {
+                $validationJs = $ele->renderValidationJS();
                 $catalogueKey = md5(trim($validationJs));
                 if(!$validationJs OR isset($fullJsCatalogue[$catalogueKey])) {
                     continue;
 				} else {
                     $fullJsCatalogue[$catalogueKey] = true;
                 }
-					$checkConditionalRow = false;
-				if(substr($elt->getName(),0,3)=="de_") {
-                    $elementNameParts = explode("_", $elt->getName());
+
+				$checkConditionalRow = false;
+				if(substr($ele->getName(),0,3)=="de_") {
+                    $elementNameParts = explode("_", $ele->getName());
                     $our_fid = $elementNameParts[1];
                     $our_entry_id = $elementNameParts[2];
                     $linkedEntries = checkForLinks($this->frid,array($our_fid),$our_fid,array($our_fid=>array($our_entry_id)),true);
@@ -543,14 +543,16 @@ class formulize_themeForm extends XoopsThemeForm {
                         }
                     }
                     $js .= ")==false) {\n".$validationJs."\n}";
-                    if(!$skipConditionalCheck) {
+                    $columnData = $this->_getColumns($ele);
+                    $columns = $columnData[0];
+                    if(strstr($this->getTemplate('elementcontainero'), "\$elementContainerId") OR strstr($this->getTemplate('elementtemplate'.$columns), "\$elementContainerId")) {
                         $checkConditionalRow = true;
                     }
 				} else {
                     $js = $validationJs;
 				} 
 				if($checkConditionalRow) {
-					$fullJs .= "if(formulizechanged && window.document.getElementById('formulize-".$elt->getName()."').style.display != 'none') {\n".$js."\n}\n\n";
+					$fullJs .= "if(formulizechanged && window.document.getElementById('formulize-".$ele->getName()."').style.display != 'none') {\n".$js."\n}\n\n";
 				} else {
 					$fullJs .= "if(formulizechanged) {\n".$js."\n}\n\n";
 				}
@@ -597,8 +599,8 @@ class formulize_elementsOnlyForm extends formulize_themeForm {
 	}
 
 	// render the validation code without the opening/closing part of the validation function, since the form is embedded inside another
-	public function renderValidationJS($withtags = true, $skipConditionalCheck = false) {
-		return $this->_drawValidationJS(false);
+	public function renderValidationJS($withtags = true) {
+		return $this->_drawValidationJS();
 	}
 }
 

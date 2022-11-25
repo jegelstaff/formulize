@@ -135,7 +135,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 	}
 
 	function insert($screen) {
-		$update = ($screen->getVar('sid') == 0) ? false : true;
+		$update = !$screen->getVar('sid') ? false : true;
 		if(!$sid = parent::insert($screen)) { // write the basic info to the db, handle cleaning vars and all that jazz.  Object passed by reference, so updates will have affected it in the other method.
 			return false;
 		}
@@ -198,13 +198,13 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
             }
             $success5 = true;
             if(isset($_POST['elementcontainerc'])) {
-                $success3 = $this->writeTemplateToFile(trim($_POST['elementcontainerc']), 'elementcontainerc', $screen);
+                $success5 = $this->writeTemplateToFile(trim($_POST['elementcontainerc']), 'elementcontainerc', $screen);
             }
             $success6 = true;
             if(isset($_POST['elementcontainero'])) {
-                $success4 = $this->writeTemplateToFile(trim($_POST['elementcontainero']), 'elementcontainero', $screen);
+                $success6 = $this->writeTemplateToFile(trim($_POST['elementcontainero']), 'elementcontainero', $screen);
             }
-    
+
             if (!$success1 || !$success2 || !$success3 || !$success4 || !$success5 || !$success6) {
                 return false;
             }

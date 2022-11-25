@@ -88,7 +88,7 @@ if ($screen_id == "new") {
     $adminPage["template"] = "ABC, mellonfarmers!";
 }
 
-if ($aid == 0) {
+if (!$aid) {
     $appName = "Forms with no app";
 } else {
   $application_handler = xoops_getmodulehandler('applications','formulize');

@@ -404,8 +404,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}
 	
 	// debug block to show key settings being passed back to the page
-	/*
-	if($uid == 1) {
+	
+	/*if($uid == 19511) {
 	print "delview: " . $_POST['delview'] . "<br>";
 	print "advscope: " . $_POST['advscope'] . "<br>";
 	print "asearch: " . $_POST['asearch'] . "<br>";
@@ -547,7 +547,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		$_POST['oldcols'] = implode(",",$colsforsearches);
 	}    
 	
-	// get columns for this form/framework or use columns sent from interface
+    // get columns for this form/framework or use columns sent from interface
 	// ele_handles for a form, handles for a framework, includes handles of all unified display forms
 	if($_POST['oldcols']) {
 		$showcols = explode(",", $_POST['oldcols']);
@@ -819,13 +819,12 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			$this_ent = $settings['ventry'];
 		}
 
-		if(($screen AND $screen->getVar("viewentryscreen")) OR $_POST['overridescreen']) {
-			if(strstr($screen->getVar("viewentryscreen"), "p")) { // if there's a p in the specified viewentryscreen, then it's a pageworks page -- added April 16 2009 by jwe
+		if($screen OR $_POST['overridescreen']) {
+			if($screen AND is_string($screen->getVar("viewentryscreen")) AND strstr($screen->getVar("viewentryscreen"), "p")) { // if there's a p in the specified viewentryscreen, then it's a pageworks page -- added April 16 2009 by jwe
 				$page = intval(substr($screen->getVar("viewentryscreen"), 1));
 				include XOOPS_ROOT_PATH . "/modules/pageworks/index.php";
 				return;
-			} else {
-				$screenToLoad = determineViewEntryScreen($screen, $fid);
+			} elseif($screenToLoad = determineViewEntryScreen($screen, $fid)) {
 				$viewEntryScreenObject = $screen_handler->get($screenToLoad);
 				if($viewEntryScreenObject->getVar('type')=="listOfEntries") {
 					exit("You're sending the user to a list of entries screen instead of some kind of form screen, when they're editing an entry.  Check what screen is defined as the screen to use for editing an entry, or what screen id you're using in the viewEntryLink or viewEntryButton functions in the template.");
@@ -853,25 +852,26 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				$renderedFormulizeScreen = $displayScreen;
 				return;
 			}
-		} else {
-			if($_POST['ventry'] != "single") {
-				if($frid) {
-					displayForm($frid, $this_ent, $fid, $currentURL, "", $settings, "", "", "", "", $viewallforms); // "" is the done text
-					return;
-				} else {
-					displayForm($fid, $this_ent, "", $currentURL, "", $settings, "", "", "", "", $viewallforms); // "" is the done text
-					return;
-				}
-			} else { // if a single entry was requested for a form that can have multiple entries, then specifically override the multiple entry UI (which causes a blank form to appear on save)
-				if($frid) {
-					displayForm($frid, $this_ent, $fid, $currentURL, "", $settings, "", "", "1", "", $viewallforms); // "" is the done text
-					return;
-				} else {
-					displayForm($fid, $this_ent, "", $currentURL, "", $settings, "", "", "1", "", $viewallforms); // "" is the done text
-					return;
-				}
-			}
-		} 
+        }
+        // if we're still here, then load up a plain non-screen version of the form
+        if($_POST['ventry'] != "single") {
+            if($frid) {
+                displayForm($frid, $this_ent, $fid, $currentURL, "", $settings, "", "", "", "", $viewallforms); // "" is the done text
+                return;
+            } else {
+                displayForm($fid, $this_ent, "", $currentURL, "", $settings, "", "", "", "", $viewallforms); // "" is the done text
+                return;
+            }
+        } else { // if a single entry was requested for a form that can have multiple entries, then specifically override the multiple entry UI (which causes a blank form to appear on save)
+            if($frid) {
+                displayForm($frid, $this_ent, $fid, $currentURL, "", $settings, "", "", "1", "", $viewallforms); // "" is the done text
+                return;
+            } else {
+                displayForm($fid, $this_ent, "", $currentURL, "", $settings, "", "", "1", "", $viewallforms); // "" is the done text
+                return;
+            }
+        }
+		
 	}
 
 	// user is still here, so go get the data and start building the page...        
@@ -925,12 +925,16 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	
 	// check for any searches that were not used, and output them in a hidden div, so their values are not lost
 	// this was an old way of enforcing fundamental filters which are better done on the admin side as part of screen settings
-	// or done as part of scope permissions for the user's group(s)
+	// or done as part of scope permissions for the user's group(s).
+    // Have to do this by text analysis and not looking for variable name, because variable names might not be present if dynamically generated
+    // NOTE: if one is playing games in the template and doing string manipulation of the quick searches, then they will be broken because this code will not pick up their presence
+    // RECOMMENDATION: users should put original search code into an html comment
+    // we could extract the name attribute and do a regular expression match with the opening input tag and the name, or something like that (or select tag, etc) but way way more complex
 
 	print "<div id='hidden_quick_searches' style='display: none;'>\n";
 
 	foreach($formulize_buttonCodeArray['quickSearches'] as $handle=>$qsCode) {
-		if(!strstr($listOfEntriesBufferContents, $qsCode['search'])
+		if( (($searches[$handle] OR is_numeric($searches[$handle])) AND !strstr($listOfEntriesBufferContents, $qsCode['search']))
             AND (!isset($qsCode['filter']) OR !strstr($listOfEntriesBufferContents, $qsCode['filter']))
             AND (!isset($qsCode['multiFilter']) OR !strstr($listOfEntriesBufferContents, $qsCode['multiFilter']))
             AND (!isset($qsCode['dateRange']) OR !strstr($listOfEntriesBufferContents, $qsCode['dateRange'])) ) {
@@ -1651,7 +1655,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 
 					// draw in the heading row if necessary and keep track of how many rows it's been
 					if($headcounter == $repeatHeaders AND $repeatHeaders > 0) {
-						if($useHeadings) {
+						if($useHeadings AND function_exists('drawHeaderRow')) {
 							print drawHeaderRow($templateVariables['headers'], $templateVariables['checkBoxesShown'], $templateVariables['viewEntryLinksShown'], $templateVariables['columnWidthStyle'], $templateVariables['headingHelpAndLockShown'], $templateVariables['lockedColumns'], $templateVariables['numberOfInlineCustomButtons'], $templateVariables['spacerNeeded']);
 						}
 						$headcounter = 0;

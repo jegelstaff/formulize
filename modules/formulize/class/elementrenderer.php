@@ -211,7 +211,7 @@ class formulizeElementRenderer{
 					$form_ele->customValidationCode[] = "formulize_xhr_params[2] = ".$xhr_entry_to_send.";\n";
                     $form_ele->customValidationCode[] = "formulize_xhr_params[4] = leave;\n"; // will have been passed in to the main function and we need to preserve it after xhr is done
 					$form_ele->customValidationCode[] = "formulize_xhr_send('check_for_unique_value', formulize_xhr_params);\n";
-                    $form_ele->customValidationCode[] = "showSavingGraphic();\n";
+                    //$form_ele->customValidationCode[] = "showSavingGraphic();\n";
 					$form_ele->customValidationCode[] = "return false;\n"; 
 					$form_ele->customValidationCode[] = "}\n";
                     $form_ele->customValidationCode[] = "}\n";
@@ -672,7 +672,7 @@ class formulizeElementRenderer{
                                 $opt_count++;
                             }
                         }
-					}
+                    }
 	
 					$count = count((array) $options);
 					$size = $ele_value[0];

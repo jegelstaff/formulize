@@ -143,9 +143,11 @@ function patch40() {
     }
 
     if (!isset($_POST['patch40'])) {
-        print "<form action=\"ui.php?op=patchDB\" method=post>";
+        $additional_themes = isset($_GET['additional_themes']) ? '&additional_themes='.preg_replace("/[^,a-zA-Z0-9_-]+/", "", $_GET['additional_themes']) : '';
+        $skipRefUpdates = isset($_GET['skip_ref_updates']) ? '&skip_ref_updates=1' : '';
         print "<h1>Your database structure is not up to date!  Click the button below to apply the necesssary patch to the database.</h1>";
         print "<h2>Warning: this patch makes several changes to the database.  Backup your database prior to applying this patch!</h2>";
+        print "<form action=\"ui.php?op=patchDB$additional_themes$skipRefUpdates\" method=post>";
         print "<input type = submit name=patch40 value=\"Apply Database Patch for Formulize\">";
         print "</form>";
     } else {
@@ -899,7 +901,9 @@ function patch40() {
 
         // CONVERTING EXISTING TEMPLATES IN DB TO TEMPLATE FILES
         // Only kicks in if the template fields are still present in the relevant tables, otherwise queries fail
-        $templateSQL = "SELECT sid, toptemplate, listtemplate, bottomtemplate FROM ".$xoopsDB->prefix("formulize")."_screen_listofentries";
+        $templateSQL = "SELECT l.sid as sid, l.toptemplate as toptemplate, l.listtemplate as listtemplate, l.bottomtemplate as bottomtemplate, s.theme as theme
+            FROM ".$xoopsDB->prefix("formulize")."_screen_listofentries AS l
+            LEFT JOIN ".$xoopsDB->prefix("formulize")."_screen AS s ON l.sid = s.sid";
         if($templateRes = $xoopsDB->query($templateSQL)) {
             if ($xoopsDB->getRowsNum($templateRes) > 0) {
                 while($handleArray = $xoopsDB->fetchArray($templateRes)) {
@@ -910,13 +914,30 @@ function patch40() {
                     if (!is_writable($pathname)) {
                         chmod($pathname, 0777);
                     }
-                    saveTemplate($handleArray['toptemplate'], $handleArray['sid'], "toptemplate");
-                    saveTemplate($handleArray['bottomtemplate'], $handleArray['sid'], "bottomtemplate");
-                    saveTemplate($handleArray['listtemplate'], $handleArray['sid'], "listtemplate");
+                    saveTemplate($handleArray['toptemplate'], $handleArray['sid'], "toptemplate", $handleArray['theme']);
+                    saveTemplate($handleArray['bottomtemplate'], $handleArray['sid'], "bottomtemplate", $handleArray['theme']);
+                    saveTemplate($handleArray['listtemplate'], $handleArray['sid'], "listtemplate", $handleArray['theme']);
+                    // if the screen is complex enough to have a complete set of templates, then add placeholder templates so that the defaults are not used for open and close
+                    // repeat for additional themes as necessary, on the assumption that the screen would be complex enough in all themes
+                    if($handleArray['toptemplate'] AND $handleArray['bottomtemplate'] AND $handleArray['listtemplate']) {
+                        saveTemplate("// Placeholder because this older screen predates the use of the Open List Template", $handleArray['sid'], "openlisttemplate", $handleArray['theme']);
+                        saveTemplate("// Placeholder because this older screen predates the use of the Close List Template", $handleArray['sid'], "closelisttemplate", $handleArray['theme']);
+                        if(isset($_GET['additional_themes'])) {
+                            foreach(explode(',',$_GET['additional_themes']) as $additional_theme) {
+                                $additional_theme = preg_replace("/[^a-zA-Z0-9_-]+/", "", $additional_theme);
+                                if($additional_theme != $handleArray['theme']) {
+                                    saveTemplate("// Placeholder because this older screen predates the use of the Open List Template", $handleArray['sid'], "openlisttemplate", $additional_theme);
+                                    saveTemplate("// Placeholder because this older screen predates the use of the Close List Template", $handleArray['sid'], "closelisttemplate", $additional_theme);
+                                }    
+                            }
+                        }
+                    }
                 }
             }
         }
-        $multitemplateSQL = "SELECT sid, toptemplate, elementtemplate, bottomtemplate FROM ".$xoopsDB->prefix("formulize")."_screen_multipage";
+        $multitemplateSQL = "SELECT m.sid as sid, m.toptemplate as toptemplate, m.elementtemplate as elementtemplate, m.bottomtemplate as bottomtemplate, s.theme as theme
+            FROM ".$xoopsDB->prefix("formulize")."_screen_multipage AS m
+            LEFT JOIN ".$xoopsDB->prefix("formulize")."_screen AS s ON m.sid = s.sid";
         if($multitemplateRes = $xoopsDB->query($multitemplateSQL)) {
             if ($xoopsDB->getRowsNum($multitemplateRes) > 0) {
                 while($handleArray = $xoopsDB->fetchArray($multitemplateRes)) {
@@ -927,9 +948,24 @@ function patch40() {
                     if (!is_writable($pathname)) {
                         chmod($pathname, 0777);
                     }
-                    saveTemplate($handleArray['toptemplate'], $handleArray['sid'], "toptemplate");
-                    saveTemplate($handleArray['bottomtemplate'], $handleArray['sid'], "bottomtemplate");
-                    saveTemplate($handleArray['elementtemplate'], $handleArray['sid'], "elementtemplate");
+                    saveTemplate($handleArray['toptemplate'], $handleArray['sid'], "toptemplate", $handleArray['theme']);
+                    saveTemplate($handleArray['bottomtemplate'], $handleArray['sid'], "bottomtemplate", $handleArray['theme']);
+                    saveTemplate($handleArray['elementtemplate'], $handleArray['sid'], "elementtemplate", $handleArray['theme']);
+                    // if the screen is complex enough to have a complete set of templates, then add placeholder templates so that the defaults are not used for open and close
+                    // repeat for additional themes as necessary, on the assumption that the screen would be complex enough in all themes
+                    if($handleArray['toptemplate'] AND $handleArray['bottomtemplate'] AND $handleArray['elementtemplate']) {
+                        saveTemplate("// Placeholder because this older screen predates the use of the Element Container Template (opening)", $handleArray['sid'], "elementcontainero", $handleArray['theme']);
+                        saveTemplate("// Placeholder because this older screen predates the use of the Element Container Template (closing)", $handleArray['sid'], "elementcontainerc", $handleArray['theme']);
+                        if(isset($_GET['additional_themes'])) {
+                            foreach(explode(',',$_GET['additional_themes']) as $additional_theme) {
+                                $additional_theme = preg_replace("/[^a-zA-Z0-9_-]+/", "", $additional_theme);
+                                if($additional_theme != $handleArray['theme']) {
+                                    saveTemplate("// Placeholder because this older screen predates the use of the Element Container Template (opening)", $handleArray['sid'], "elementcontainero", $additional_theme);
+                                    saveTemplate("// Placeholder because this older screen predates the use of the Element Container Template (closing)", $handleArray['sid'], "elementcontainerc", $additional_theme);
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -1005,63 +1041,100 @@ function patch40() {
                 $multipageScreenObject->setVar('showpagetitles', 0);
                 $multipageScreenObject->setVar('showpageindicator', 0);
                 $multipageScreenObject->setVar('showpageselector', 0);
+
+                $_POST['toptemplate'] = $formScreenObject->getTemplate('toptemplate', $formScreenObject->getVar('theme'));
+                $_POST['elementtemplate1'] = $formScreenObject->getTemplate('elementtemplate1', $formScreenObject->getVar('theme'));
+                $_POST['elementtemplate2'] = $formScreenObject->getTemplate('elementtemplate2', $formScreenObject->getVar('theme'));
+                $_POST['bottomtemplate'] = $formScreenObject->getTemplate('bottomtemplate', $formScreenObject->getVar('theme'));
+                $_POST['elementcontainerc'] = $formScreenObject->getTemplate('elementcontainerc', $formScreenObject->getVar('theme'));
+                $_POST['elementcontainero'] = $formScreenObject->getTemplate('elementcontainero', $formScreenObject->getVar('theme'));
+                if($multiSid = $multipage_screen_handler->insert($multipageScreenObject)) {
+                    $formToMultipageMap[$fs->getVar('sid')] = $multiSid;
+                    print "New version of form screen ".$fs->getVar('sid')." created. Result: OK<br>";
+                } else {
+                    print "ERROR: could not create new version of form screen ".$fs->getVar('sid')."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.<br>";
+                }
                 
-                $_POST['toptemplate'] = $formScreenObject->getTemplate('toptemplate');
-                $_POST['elementtemplate1'] = $formScreenObject->getTemplate('elementtemplate1');
-                $_POST['elementtemplate2'] = $formScreenObject->getTemplate('elementtemplate2');
-                $_POST['bottomtemplate'] = $formScreenObject->getTemplate('bottomtemplate');
-                $_POST['elementcontainerc'] = $formScreenObject->getTemplate('elementcontainerc');
-                $_POST['elementcontainero'] = $formScreenObject->getTemplate('elementcontainero');
-                $multiSid = $multipage_screen_handler->insert($multipageScreenObject);
-                $formToMultipageMap[$fs->getVar('sid')] = $multiSid;
-                
+                // copy to an additional theme(s) that may have been specified
+                if(isset($_GET['additional_themes'])) {
+                    $skipTheme = $formScreenObject->getVar('theme');
+                    foreach(explode(',',$_GET['additional_themes']) as $additional_theme) {
+                        $additional_theme = preg_replace("/[^a-zA-Z0-9_-]+/", "", $additional_theme);
+                        if($skipTheme != $additional_theme) {
+                            $_POST['toptemplate'] = $formScreenObject->getTemplate('toptemplate', $additional_theme);
+                            $_POST['elementtemplate1'] = $formScreenObject->getTemplate('elementtemplate1', $additional_theme);
+                            $_POST['elementtemplate2'] = $formScreenObject->getTemplate('elementtemplate2', $additional_theme);
+                            $_POST['bottomtemplate'] = $formScreenObject->getTemplate('bottomtemplate', $additional_theme);
+                            $_POST['elementcontainerc'] = $formScreenObject->getTemplate('elementcontainerc', $additional_theme);
+                            $_POST['elementcontainero'] = $formScreenObject->getTemplate('elementcontainero', $additional_theme);
+                            $multipageScreenObject->setVar('sid', $multiSid);
+                            $multipageScreenObject->setVar('theme', $additional_theme);
+                            if($multipage_screen_handler->insert($multipageScreenObject) == false) {
+                                print "ERROR: could not create new version of form screen ".$fs->getVar('sid')." for additional theme $additional_theme<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.<br>";        
+                            }
+                        }
+                    }
+                }
+                    
+                unset($_POST['toptemplate']);
+                unset($_POST['elementtemplate1']);
+                unset($_POST['elementtemplate2']);
+                unset($_POST['bottomtemplate']);
+                unset($_POST['elementcontainerc']);
+                unset($_POST['elementcontainero']);
                 $formScreenObject->setVar('title', $formScreenObject->getVar('title').' (Legacy)');
-                $form_screen_handler->insert($formScreenObject);
+                if($form_screen_handler->insert($formScreenObject) == false) {
+                    print "ERROR: could not update form screen ".$fs->getVar('sid')." with (Legacy) flag<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.<br>";
+                }
                                 
             }
             
-            // swap all subform element screen declarations
-            $criteria = new Criteria('ele_type', 'subform');
-            $element_handler = xoops_getmodulehandler('elements','formulize');
-            $subformElements = $element_handler->getObjects($criteria);
-            foreach($subformElements as $element) {
-                $ele_value = $element->getVar('ele_value');
-                if(isset($formToMultipageMap[$ele_value['display_screen']])) {
-                    $ele_value['display_screen'] = $formToMultipageMap[$ele_value['display_screen']];
-                    $element->setVar('ele_value', $ele_value);
-                    if($element_handler->insert($element) == false) {
-                        print "ERROR: could not update display screen for subform element ".$element->getVar('ele_id')." in form ".$element->getVar('id_form').". Legacy form screen will still be in use.<br>";
+            if(!isset($_GET['skip_ref_updates'])) {
+            
+                // swap all subform element screen declarations
+                $criteria = new Criteria('ele_type', 'subform');
+                $element_handler = xoops_getmodulehandler('elements','formulize');
+                $subformElements = $element_handler->getObjects($criteria);
+                foreach($subformElements as $element) {
+                    $ele_value = $element->getVar('ele_value');
+                    if(isset($formToMultipageMap[$ele_value['display_screen']])) {
+                        $ele_value['display_screen'] = $formToMultipageMap[$ele_value['display_screen']];
+                        $element->setVar('ele_value', $ele_value);
+                        if($element_handler->insert($element) == false) {
+                            print "ERROR: could not update display screen for subform element ".$element->getVar('ele_id')." in form ".$element->getVar('id_form').". Legacy form screen will still be in use.<br>";
+                        }
                     }
                 }
-            }
-            
-            // swap all list of entries display screen declarations, including "default form" to actual sid
-            $criteria = new Criteria('type', 'listOfEntries');
-            $list_screen_handler = xoops_getmodulehandler('listOfEntriesScreen','formulize');
-            $listScreens = $screen_handler->getObjects($criteria);
-            foreach($listScreens as $screen) {
-                $screen = $list_screen_handler->get($screen->getVar('sid'));
-                $ves = $screen->getVar('viewentryscreen');
-                $tryInsert = false;
-                if(!$ves OR $ves === 'none') {
-                    $form_handler = xoops_getmodulehandler('forms', 'formulize');
-                    $formObject = $form_handler->get($screen->getVar('fid'));
-                    if($formObject->defaultform AND isset($formToMultipageMap[$formObject->defaultform])) {
-                        $screen->setVar('viewentryscreen', $formToMultipageMap[$formObject->defaultform]);
+                
+                // swap all list of entries display screen declarations, including "default form" to actual sid
+                $criteria = new Criteria('type', 'listOfEntries');
+                $list_screen_handler = xoops_getmodulehandler('listOfEntriesScreen','formulize');
+                $listScreens = $screen_handler->getObjects($criteria);
+                foreach($listScreens as $screen) {
+                    $screen = $list_screen_handler->get($screen->getVar('sid'));
+                    $ves = $screen->getVar('viewentryscreen');
+                    $tryInsert = false;
+                    if(!$ves OR $ves === 'none') {
+                        $form_handler = xoops_getmodulehandler('forms', 'formulize');
+                        $formObject = $form_handler->get($screen->getVar('fid'));
+                        if($formObject->defaultform AND isset($formToMultipageMap[$formObject->defaultform])) {
+                            $screen->setVar('viewentryscreen', $formToMultipageMap[$formObject->defaultform]);
+                            $tryInsert = true;
+                        }
+                    } elseif(isset($formToMultipageMap[$ves])) {
+                        $screen->setVar('viewentryscreen', $formToMultipageMap[$ves]);
                         $tryInsert = true;
                     }
-                } elseif(isset($formToMultipageMap[$ves])) {
-                    $screen->setVar('viewentryscreen', $formToMultipageMap[$ves]);
-                    $tryInsert = true;
-                }
-                if($tryInsert) {
-                    if($list_screen_handler->insert($screen) == false) {
-                        print "ERROR: could not update display screen for list of entries ".$screen->getVar('sid')." in form ".$screen->getVar('fid').". Legacy form screen will still be in use.<br>";
+                    if($tryInsert) {
+                        if($list_screen_handler->insert($screen) == false) {
+                            print "ERROR: could not update display screen for list of entries ".$screen->getVar('sid')." in form ".$screen->getVar('fid').". Legacy form screen will still be in use.<br>";
+                        }
                     }
                 }
+            
             }
             
-            print "<script>alert(\"Formulize 7 introduces an all new, modern and mobile friendly theme called 'Anari'. To use the new theme, go to System -> Site Configuration -> Preferences -> General Settings and change the Default Theme to 'Anari'.</script>";
+            print "<script>alert(\"Formulize 7 introduces an all new, modern and mobile friendly theme called 'Anari'. To use the new theme, go to System -> Site Configuration -> Preferences -> General Settings and change the Default Theme to 'Anari'.\");</script>";
             
         }
 
@@ -1105,9 +1178,10 @@ function emptyTemplateFixer($dir) {
 }
 
 // Saves the given template to a template file on the disk
-function saveTemplate($template, $sid, $name) {
+function saveTemplate($template, $sid, $name, $theme="") {
     global $xoopsConfig;
-    $filename = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/{$sid}/{$name}.php";
+    $theme = $theme ? preg_replace("/[^a-zA-Z0-9_-]+/", "", $theme) : $xoopsConfig['theme_set'];
+    $filename = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/{$sid}/{$name}.php";
 
     $text = trim(html_entity_decode($template));
     if($text) {
@@ -1120,7 +1194,7 @@ function saveTemplate($template, $sid, $name) {
         } elseif (false === file_put_contents($filename, $text)) {
             print "Warning: could not save " . $name . ".php for screen " . $sid . ".<br>";
         } else {
-            print "created templates/screens/".$xoopsConfig['theme_set']."/" . $sid . "/". $name . ".php. result: OK<br>";
+            print "created templates/screens/".$theme."/" . $sid . "/". $name . ".php. result: OK<br>";
         }
     }
 }

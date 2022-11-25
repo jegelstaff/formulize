@@ -249,28 +249,28 @@ class formulizeScreenHandler {
 	// TO BE CALLED FROM WITHIN THE CHILD CLASS AND THEN RETURNS SCREEN OBJECT, WHICH WILL HAVE THE CORRECT sid IN PLACE NOW
 	function insert($screen) {
 		if (!is_a($screen, 'formulizeScreen')) {
-                 return false;
-            }
-             if (!$screen->cleanVars()) {
-                 return false;
-             }
-             foreach ($screen->cleanVars as $k => $v) {
-                 ${$k} = $v;
-             }
-             if ($sid == 0) {
-                 //$sid = $this->db->genId($this->db->prefix('formulize_screen').'_sid_seq'); // mysql compatiblity layer just returns 0 here
-                 $sql = sprintf("INSERT INTO %s (title, fid, frid, type, useToken, anonNeedsPasscode, theme) VALUES (%s, %u, %u, %s, %u, %u, %s)", $this->db->prefix('formulize_screen'), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $anonNeedsPasscode, $this->db->quoteString($theme));
-             } else {
-                 $sql = sprintf("UPDATE %s SET title = %s, fid = %u, frid = %u, type = %s, useToken = %u, anonNeedsPasscode = %u, theme = %s WHERE sid = %u", $this->db->prefix('formulize_screen'), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $anonNeedsPasscode, $this->db->quoteString($theme), $sid);
-             }
-		 $result = $this->db->query($sql);
-             if (!$result) {
-                 return false;
-             }
-             if ($sid == 0) {
-                 $sid = $this->db->getInsertId();
-             }
-		 return $sid;
+            return false;
+        }
+        if (!$screen->cleanVars()) {
+            return false;
+        }
+        foreach ($screen->cleanVars as $k => $v) {
+            ${$k} = $v;
+        }
+        if (!$sid) {
+            $sql = sprintf("INSERT INTO %s (title, fid, frid, type, useToken, anonNeedsPasscode, theme) VALUES (%s, %u, %u, %s, %u, %u, %s)", $this->db->prefix('formulize_screen'), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $anonNeedsPasscode, $this->db->quoteString($theme));
+        } else {
+            $sql = sprintf("UPDATE %s SET title = %s, fid = %u, frid = %u, type = %s, useToken = %u, anonNeedsPasscode = %u, theme = %s WHERE sid = %u", $this->db->prefix('formulize_screen'), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $anonNeedsPasscode, $this->db->quoteString($theme), $sid);
+        }
+        $result = $this->db->query($sql);
+        if (!$result) {
+            print 'DB error: '.$this->db->error() . '<br>'.$sql.'<br>';
+            return false;
+        }
+        if (!$sid) {
+            $sid = $this->db->getInsertId();
+        }
+        return $sid;
 	}
 
     function writeTemplateToFile($text, $filename, $screen) {

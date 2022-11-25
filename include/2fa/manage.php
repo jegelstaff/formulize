@@ -7,6 +7,12 @@
 
 include_once "../../mainfile.php";
 include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
+global $xoopsConfig;
+if (file_exists(XOOPS_ROOT_PATH . "/language/".$xoopsConfig['language']."/user.php") ) {
+    include_once XOOPS_ROOT_PATH . "/language/".$xoopsConfig['language']."/user.php";
+} else {
+    XOOPS_ROOT_PATH . "/language/english/user.php";
+}
 
 require_once "loader.php";
 Loader::register('../../libraries/TwoFactorAuth/','RobThree\\Auth');

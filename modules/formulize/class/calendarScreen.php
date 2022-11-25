@@ -86,7 +86,7 @@ class formulizeCalendarScreenHandler extends formulizeScreenHandler {
 
 
 	function insert($screen) {
-		$update = ($screen->getVar('sid') == 0) ? false : true;
+		$update = !$screen->getVar('sid') ? false : true;
 
 		if(!$sid = parent::insert($screen)) { // write the basic info to the db, handle cleaning vars and all that jazz.  Object passed by reference, so updates will have affected it in the other method.
 			return false;

@@ -61,15 +61,6 @@ if (typeof jQuery.ui == 'undefined') {
 }
 ";
 
-/*
- * experimental removal of language setting in functions.php - this should be set previously in other locations and this file should be a library with no dependancies on doing something specific for the bootstrapping of the page's resources
-global $xoopsConfig;
-if (file_exists(XOOPS_ROOT_PATH . "/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
-    include_once XOOPS_ROOT_PATH . "/modules/formulize/language/".$xoopsConfig['language']."/main.php";
-} else {
-    include_once XOOPS_ROOT_PATH . "/modules/formulize/language/english/main.php";
-}*/
-
 include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/class/usersGroupsPerms.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
@@ -954,7 +945,7 @@ function deleteEntry($id_req, $frid, $fid, $excludeFids=array()) {
         $linkresults = checkForLinks($frid, $fids, $fid, $entries, $unified_display, $unified_delete);
         foreach ($linkresults['entries'] as $thisfid=>$ents) {
             foreach ($ents as $ent) {
-                if ($ent AND !in_array($thisfid, $excludeFids)) {
+                if ($ent AND !in_array($thisfid, (array) $excludeFids)) {
                     deleteIdReq($ent, $thisfid);
                     $deletedEntries[$thisfid][] = $ent;
                 }
@@ -962,7 +953,7 @@ function deleteEntry($id_req, $frid, $fid, $excludeFids=array()) {
         }
         foreach ($linkresults['sub_entries'] as $thisfid=>$ents) {
             foreach ($ents as $ent) {
-                if ($ent AND !in_array($thisfid, $excludeFids)) {
+                if ($ent AND !in_array($thisfid, (array) $excludeFids)) {
                     // look for any subsub links...they have to be defined as part of the relationship in effect
                     $sublinkresults = checkForLinks($frid, array($thisfid), $thisfid, array($thisfid=>array($ent)), $unified_display, $unified_delete);
                     foreach($sublinkresults['sub_entries'] as $subfid=>$subent) {
@@ -5879,7 +5870,7 @@ function formulize_javascriptForRemovingEntryLocks($unload=false) {
                 $js .= "fd.append('entry_ids_".$thisForm."[]', $thisEntryId);\n";
             }
         }
-        $js .= "fd.append('form_ids[]', [".implode(", ", array_keys($entriesThatHaveBeenLockedThisPageLoad))."]);\n";
+        $js .= "fd.append('form_ids[]', [".implode(", ", array_keys((array) $entriesThatHaveBeenLockedThisPageLoad))."]);\n";
         $js .= "navigator.sendBeacon('".XOOPS_URL."/modules/formulize/formulize_deleteEntryLock.php', fd);\n";
     } else {
         $js = "jQuery.post('".XOOPS_URL."/modules/formulize/formulize_deleteEntryLock.php', {\n";
@@ -7674,7 +7665,7 @@ function determineViewEntryScreen($screen, $fid) {
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
         if($_POST['overridescreen'] AND is_numeric($_POST['overridescreen'])) {
             return intval($_POST['overridescreen']);
-        } elseif($screen AND $screen->getVar('viewentryscreen') != 'none') {
+        } elseif($screen AND $screen->getVar('viewentryscreen') AND $screen->getVar('viewentryscreen') != 'none') {
             return intval($screen->getVar('viewentryscreen'));
         } else {
             $form_handler = xoops_getmodulehandler('forms', 'formulize');
