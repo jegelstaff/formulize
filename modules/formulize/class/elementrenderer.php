@@ -939,7 +939,7 @@ class formulizeElementRenderer{
 
             case 'date':
                 // if there's no value (ie: it's blank) ... OR it's the default value because someone submitted a date field without actually specifying a date, that last part added by jwe 10/23/04
-                if($ele_value[0] == "" OR $ele_value[0] == _DATE_DEFAULT) {
+                if(!$ele_value[0] OR $ele_value[0] == _DATE_DEFAULT) {
                     $form_ele = new XoopsFormTextDateSelect($ele_caption, $form_ele_id, 15, "");
                     $form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
                 } else {

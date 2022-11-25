@@ -2824,7 +2824,7 @@ function getDateElementDefault($default_hint, $entry_id = false) {
 			}
 		}
 	}
-    return $default_hint ? strtotime($default_hint) : time();
+    return $default_hint ? strtotime($default_hint) : "";
 }
 
 
