@@ -71,9 +71,6 @@ function formulize_subformSave_writeNewEntry($element_to_write, $value_to_write,
               $creation_user_touse = "";
             }
             $subEntWritten = writeElementValue($target_sub, $element_to_write, "new", $value_to_write, $creation_user_touse, "", true); // Last param is override that allows direct writing to linked selectboxes if we have prepped the value first!
-            writeEntryDefaults($target_sub,$subEntWritten);
-            $data_handler = new formulizeDataHandler($target_sub);
-            $data_handler->writeEntry($subEntWritten, array()); // pass empty values just to trigger on before save, and potentially on after save if the on before save changes anything. Such a hack!!
             $sub_entry_written[] = $subEntWritten;
             $subformSubEntryMap[$target_sub][] = array('parent'=>$entry, 'self'=>$subEntWritten);
         }
@@ -83,15 +80,24 @@ function formulize_subformSave_writeNewEntry($element_to_write, $value_to_write,
     }
 
     // need to also enforce any equals conditions that are on the subform element, if any, and assign those values to the entries that were just added
+    // and write default values, and trigger on before/after save (could calling writeEntry alone handle the defaults??)
     // also, enforce any derived values on the subform entry itself
     if(is_array($subformConditions)) {
         $filterValues = getFilterValuesForEntry($subformConditions, $entry);
         $filterValues = $filterValues[key($filterValues)]; // subform element conditions are always on one form only so we just take the first set of values found (filterValues are grouped by form id)
-    } 
+    }
+    $data_handler = new formulizeDataHandler($target_sub);
     foreach($sub_entry_written as $thisSubEntry) {
         if(isset($filterValues) AND count((array) $filterValues)>0) {
             formulize_writeEntry($filterValues,$thisSubEntry);	
+        } else {
+            // if we didn't have to otherwise trigger normal writing operation...
+            // pass empty values just to trigger on before save, and potentially on after save if the on before save changes anything. Such a hack!!
+            $data_handler->writeEntry($thisSubEntry, array()); 
         }
+        // need to parse/write the defaults one more time, because some defaults are dependent on other defaults
+        // this is kind of awkward! the writing of defaults should proceed in order like derived values and then later can be dependent on previous
+        writeEntryDefaults($target_sub,$thisSubEntry); 
         if($frid) {
             formulize_updateDerivedValues($entry,$mainFormFid,$frid);
         } else {
