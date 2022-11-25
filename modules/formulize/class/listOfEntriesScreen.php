@@ -343,7 +343,7 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
         $GLOBALS['formulize_screenCurrentlyRendering'] = $previouslyRenderingScreen;
     }
 
-    public function setDefaultListScreenVars($defaultListScreen, $defaultFormScreenId, $formTitle='', $fid)
+    public function setDefaultListScreenVars($defaultListScreen, $defaultFormScreenId, $formTitle, $fid)
     {
         // View
         $defaultListScreen->setVar('defaultview', 'all');
