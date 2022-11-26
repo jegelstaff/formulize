@@ -96,8 +96,9 @@ class icms_core_DataFilter {
 	* @return   string
 	*/
 	static public function htmlSpecialChars($text) {
+        $charset = defined('_CHARSET') ? _CHARSET : 'utf-8';
 		return preg_replace(array("/&amp;/i", "/&nbsp;/i"), array('&', '&amp;nbsp;'),
-			@htmlspecialchars($text, ENT_QUOTES, _CHARSET));
+			@htmlspecialchars($text, ENT_QUOTES, $charset));
 	}
 
 	/**

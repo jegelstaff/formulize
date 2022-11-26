@@ -166,7 +166,9 @@ class icms_messaging_Handler {
 				}
 				return false;
 			}
-			$this->setBody(fread($fd, filesize($path)));
+            if(filesize($path) > 0) {
+                $this->setBody(fread($fd, filesize($path)));
+            } 
 		}
 
 		// for sending mail only

@@ -472,7 +472,7 @@ class icms_core_Session {
 			$online_handler->destroy($uid);
 		}
 		icms_Event::trigger('icms_core_Session', 'sessionClose', $this);
-		return;
+		return true;
 	}
 
 	/**
@@ -507,7 +507,7 @@ class icms_core_Session {
 
 		self::removeExpiredCustomSession('xoopsUserId');
 		icms_Event::trigger('icms_core_Session', 'sessionStart', $this);
-		return;
+		return true;
 	}
 
 	// Internal function. Returns sha256 from fingerprint.
@@ -673,6 +673,6 @@ class icms_core_Session {
 		}
 		$mintime = time() - (int) $expire;
 		$sql = sprintf("DELETE FROM %s WHERE sess_updated < '%u'", icms::$xoopsDB->prefix('session'), $mintime);
-		return icms::$xoopsDB->queryF($sql);
+		if(icms::$xoopsDB->queryF($sql)) { return true; } else { return false; }
 	}
 }
