@@ -19,8 +19,14 @@
     <fieldset>
         <legend>Updates (<{if $sectionContent.updates|is_array}><{$sectionContent.updates|@count}><{/if}>)</legend>
         <ul>
-            <{foreach from=$sectionContent.updates item=rec}>
-            <li><{$rec}></li>
+            <{foreach from=$sectionContent.updates key=i item=rec}>
+            <li>
+                <{$rec}> &mdash; Changed: 
+                <{foreach from=$sectionContent.fields.$i name=details item=field}>
+                    <{if $smarty.foreach.details.iteration > 1}>, <{/if}>
+                    <a href='' onclick='alert("<{$sectionContent.changes.$i.$field.db|replace:'"':'\"'}>\n&#9013;&#9013;&#9013;\n<{$sectionContent.changes.$i.$field.sourceValue|replace:'"':'\"'}>");return false;'><{$field}></a>
+                <{/foreach}>
+            </li>
             <{/foreach}>
         </ul>
     </fieldset>

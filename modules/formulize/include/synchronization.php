@@ -325,6 +325,19 @@
         }
         return $tablesList;
     }
+    
+    function syncGroupsInCommonLists() {
+        static $syncGroupsInCommonLists = array();
+        if(count($syncGroupsInCommonLists)==0) {
+            $module_handler = xoops_gethandler('module');
+            $formulizeModule = $module_handler->getByDirname("formulize");
+            $metadata = $formulizeModule->getInfo();
+            $syncGroupsInCommonLists['group_id_fields'] = $metadata['formulize_group_id_fields'];
+            $syncGroupsInCommonLists['group_tables'] = $metadata['formulize_group_tables'];
+            $syncGroupsInCommonLists['group_id_embedded'] = $metadata['formulize_group_id_embedded'];
+        }
+        return $syncGroupsInCommonLists;
+    }
 
     //syncDataTablesList function gets the default tables for export and add the user selected forms
     // and returns the complete list of tables to be exported

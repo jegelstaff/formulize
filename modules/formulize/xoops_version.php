@@ -53,7 +53,6 @@ $modversion['tables'] = array(
 	"formulize_menu_links",
 	"formulize_menu_permissions",
 	"formulize_resource_mapping",
-	"formulize_reports",
 	"formulize_frameworks",
 	"formulize_framework_forms",
 	"formulize_framework_elements",
@@ -82,7 +81,8 @@ $modversion['tables'] = array(
     "formulize_apikeys",
 	"formulize_tokens",
     "formulize_digest_data",
-    "formulize_passcodes"
+    "formulize_passcodes",
+    "tfa_codes"
 );
 
 $modversion['formulize_exportable_tables'] = array(
@@ -91,7 +91,6 @@ $modversion['formulize_exportable_tables'] = array(
 	"formulize_menu",
 	"formulize_menu_links",
 	"formulize_menu_permissions",
-	"formulize_reports",
 	"formulize_frameworks",
 	"formulize_framework_forms",
 	"formulize_framework_elements",
@@ -116,6 +115,34 @@ $modversion['formulize_exportable_tables'] = array(
     "formulize_passcodes"
 );
 
+// tables that we skip when only dealing with groups in common
+// formulize_tokens is presumed to be managed independently in different site instances with different groups
+$modversion['formulize_group_tables'] = array(
+    "groups",
+    "group_lists",
+    "formulize_tokens"
+);
+
+// fields that indicate a critical group that the record in the table is about
+// so we would not sync records related to this group when only syncing groups in common
+$modversion['formulize_group_id_fields'] = array(
+    "group_permission" => array('groupid'),
+    "formulize_entry_owner_groups" => array('groupid'),
+    "formulize_groupscope_settings" => array('groupid', 'view_groupid'),
+    "formulize_group_filters" => array('groupid'),
+    "formulize_notification_conditions" => array('not_cons_groupid'),
+    "formulize_menu_permissions" => array('group_id')
+);
+
+// fields that are foreign keys to groups, but the record in the table is not about the group
+// so we would sync changes in this record, except for the group-related info, when we're only syncing groups in common
+// PROBLEM IS THERE ARE DIFFERENT METHODS FOR UNEARTHING THE DAMNED GROUP ID!
+// REPURPOSE THE MANAGEPERMISSIONS LOGIC FOR GETTING AT THE VALUES??
+$modversion['formulize_group_id_embedded'] = array(
+    "formulize"=>array("ele_value","ele_display","ele_disabled"),
+    "formulize_screen_listofentries"=>array("customactions"),
+    "formulize_saved_views"=>array("sv_pubgroups")
+);
 
 /*
  * Table metadata general structure
@@ -165,8 +192,6 @@ $modversion['table_metadata'] = array(
 			)
         ),
     ),
-    "formulize_resource_mapping" => array(),
-    "formulize_reports" => array(),
     "formulize_frameworks" => array(
         "fields" => array("frame_name"),
         "joins" => array()
