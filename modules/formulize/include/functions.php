@@ -3402,11 +3402,11 @@ function sendNotificationToEmail($email, $event, $tags, $overrideSubject="", $ov
     if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/mail_template/form_newentry.tpl")) {
         include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/modinfo.php";
         $templateDir = XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/mail_template/";
-        include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/notification.php";
+        include_once XOOPS_ROOT_PATH."/language/".$xoopsConfig['language']."/notification.php";
     } else {
         $templateDir = XOOPS_ROOT_PATH."/modules/formulize/language/english/mail_template/";
         include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/modinfo.php";
-        include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/notification.php';
+        include_once XOOPS_ROOT_PATH.'/language/english/notification.php';
     }
     
     $tags['X_ITEM_NAME'] = '[' . _NOT_ITEMNAMENOTAVAILABLE . ']';
