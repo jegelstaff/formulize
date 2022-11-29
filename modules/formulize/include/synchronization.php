@@ -402,7 +402,7 @@
             $counter = 0;
             foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($csvFolderPath)) as $filePath){
                 if ($filePath->isDir()) continue; // skip "." and ".."
-                if (in_array($filePath->getPathName(), $comparator->doneFilePaths)) continue;
+                if (in_array($filePath->getPathName(), (array)$comparator->doneFilePaths)) continue;
                 $counter++;
                 $partialImport = 1;
                 if($counter > 3) break; // only do three at a time

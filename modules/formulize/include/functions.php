@@ -4520,6 +4520,10 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
             }
         }
 
+        if(!$options) {
+            return '';
+        }
+        
         $nametype = "";
         // code copied from elementrender.php to make fullnames work for Drupalcamp demo
         if (key($options) === "{FULLNAMES}" OR key($options) === "{USERNAMES}") {
