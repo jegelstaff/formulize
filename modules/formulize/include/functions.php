@@ -68,6 +68,7 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 
 function getFormFramework($formframe, $mainform=0) {
     static $cachedToReturn = array();
+    global $xoopsDB;
     if($formframe AND isset($cachedToReturn[$formframe]) AND is_array($cachedToReturn[$formframe]) AND isset($cachedToReturn[$formframe][$mainform])) { return $cachedToReturn[$formframe][$mainform]; }
     if ($mainform) {
         // a framework
