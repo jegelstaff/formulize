@@ -301,3 +301,5 @@ define("_US_CONFIRM_PASSWORD","Confirm Password: ");
 define("_US_PASSWORD_TOO_SHORT","The password must be at least %s characters long.");
 define("_US_LOGIN_WITH_NEW_PW","You can now login with your new password");
 define("_US_INVALID_CODE","Invalid Two Factor Authentication code");
+
+include_once ICMS_ROOT_PATH.'/language/english/global.php'; // define any other constants that aren't included here for some reason

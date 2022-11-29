@@ -494,7 +494,6 @@ define("_formulize_INFO_NOSAVE", "Vous pouvez revoir cette entrée, mais vous <i
 define("_formulize_INFO_RECEIVED", "Nous avons bien reçu vos informations.");
 define("_formulize_INFO_SAVE1", "Pour enregistrer vos changements, cliquez le bouton <i>");
 define("_formulize_INFO_SAVE2", "</i>.");
-define("_formulize_INFO_SAVEBUTTON", "Pour enregistrer vos changements, cliquez le bouton <i>" . _formulize_SAVE . "</i>.");
 define("_formulize_SAVE_AND_GOBACK", "Enregistrer et Retourner");
 define("_formulize_SAVE_AND_LEAVE", "Enregistrer et Quitter");
 define("_formulize_INFO_SAVEANDLEAVE1", "Cliquez le bouton <i>");
@@ -560,6 +559,7 @@ define("_formulize_RESETBUTTON", "Nettoyer");
 define("_formulize_SAME_PERMS", "Set the same permissions for all the selected groups?");
 define("_formulize_SAME_PERMS_TEXT", "Choose the permissions that you want applied to all of these groups.<br>WARNING! Any existing permissions will be replaced by the permissions you select here!<br>Click 'Return to the main page' above to cancel this operation.<br><br>The groups you selected:");
 define("_formulize_SAVE", "Enregistrer");
+define("_formulize_INFO_SAVEBUTTON", "Pour enregistrer vos changements, cliquez le bouton <i>" . _formulize_SAVE . "</i>.");
 define("_formulize_SAVEREPORTBUTTON", "Sauvegarder");
 define("_formulize_SEARCH_HELP", "Si vous spécifiez les termes de recherche dans plus d'une colonne, les paramètres interchamps ET/OU détermine si rechercher les entrées qui s'assortissent dans toutes les colonnes (ET), ou en fait à une colonne (OU).<br><br>L'option ET/OU détermine si les boites de termes s'associe aux entrées de tous les termes (ET), ou à un des terme (OU).<br><br>Utilisez une virgule pour séparer les termes.  Utilisez [,] entre chaque terme.");
 define("_formulize_SEARCH_OPERATOR", "Opérateur:");
@@ -618,3 +618,5 @@ define("_formulize_DE_EXPORT_SHOW_ADVANCED", "Montrer les options avancées");
 define("_formulize_DE_EXPORT_HIDE_ADVANCED", "Masquer les options avancées");
 define("_formulize_DE_IMPORT_UPDATEDERIVED", "Automatically updated derived values in the form");
 define("_formulize_DE_IMPORT_SENDNOTIFICATIONS", "Automatically send notifications to users based on the imported data");
+
+include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/main.php';
