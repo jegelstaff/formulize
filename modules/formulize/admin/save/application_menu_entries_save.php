@@ -64,7 +64,7 @@
 		if($_POST['menuorder']) {
             
 			// retrieve all the links that belong to this application
-			$Links = $application_handler->getMenuLinksForApp($appid, all);
+			$Links = $application_handler->getMenuLinksForApp($appid, 'all');
             
 			// get the new order of the links...
 	$newOrder = explode("drawer-".intval($_POST['tabnumber'])."[]=", str_replace("&", "", $_POST['menuorder']));
