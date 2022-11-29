@@ -960,11 +960,11 @@ class formulizeElementRenderer{
                     $limit_past = (isset($ele_value["date_past_days"]) and $ele_value["date_past_days"] != "");
                     $limit_future = (isset($ele_value["date_future_days"]) and $ele_value["date_future_days"] != "");
                     if ($limit_past or $limit_future) {
-                        if ($limit_past) {
-                            $form_ele->setExtra(" min-date='".date('Y-m-d', getDateElementDefault($ele_value["date_past_days"], $entry_id))."' ");
+                        if($limit_past AND $pastSeedDate = getDateElementDefault($ele_value["date_past_days"], $entry_id)) {
+                            $form_ele->setExtra(" min-date='".date('Y-m-d', $pastSeedDate)."' ");
                         }
-                        if ($limit_future) {
-                            $form_ele->setExtra(" max-date='".date('Y-m-d', getDateElementDefault($ele_value["date_future_days"], $entry_id))."' ");
+                        if($limit_future AND $futureSeedDate = getDateElementDefault($ele_value["date_future_days"], $entry_id)) {
+                            $form_ele->setExtra(" max-date='".date('Y-m-d', $futureSeedDate)."' ");
                         }
                         $form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;check_date_limits('$form_ele_id');\" onclick=\"javascript:check_date_limits('$form_ele_id');\" onblur=\"javascript:check_date_limits('$form_ele_id');\" jquerytag=\"$form_ele_id\" ");
                     } else {
