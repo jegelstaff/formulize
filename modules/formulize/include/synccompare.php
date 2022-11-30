@@ -260,7 +260,8 @@ class SyncCompareCatalog {
 
         foreach ($this->changes as $tableName => $tableData) {
             if(!isset($processedTables[$tableName]) AND (!$onlyThisTableName OR $tableName == $onlyThisTableName)) {
-            $fields = $tableData["fields"];
+                $fields = $tableData["fields"];
+                $this->db->query("SET NAMES utf8mb4"); // necessary for real utf8 multibyte with accents, SET NAMES forces server to understand requests, as well as send data, according to this charset
                 foreach ($tableData["updates"] as $rec) {
                     ($this->commitUpdate($tableName, $rec)) ? $numSuccess++ : $numFail++;
                 }
@@ -295,15 +296,16 @@ class SyncCompareCatalog {
         if ($type !== "insert" && $type !== "update" && $type !== "delete") {
             throw new Exception("SyncCompareCatalog::addRecChange() only supports 'insert'/'update' change types.");
         }
+
+        // convert record to associative array (which implicitly handles encoding too)
+        $data = $this->convertRec($record, $fields);
         
         // if we're only doing groups in common, check if this record should be used
         if($this->syncOnlyGroupsInCommon) {
-            $record = $this->recordFailsGroupsInCommon($record, $fields, $tableName);
-            if($record === true) { return false; } // a boolean returned means it failed, we must skip it (and return false up the food chain)
+            $failed = $this->dataFailsGroupsInCommon($data, $tableName);
+            if($failed === true) { return false; } // a boolean true returned means it failed, we must skip it (and return false up the food chain)
+            $data = $failed; // didn't fail so use this data, which has possibly been modified
         }
-
-        // convert record to associative array
-        $data = $this->convertRec($record, $fields);
 
         // simple modification of change type for indexing into the $changes table data structure
         $typeArrayName = $type.'s';
@@ -328,22 +330,21 @@ class SyncCompareCatalog {
         $this->changeDetails[$tableName][$record][$field]['sourceValue'] = $sourceValue;
     }
     
-    private function recordFailsGroupsInCommon($record, $fields, $tableName) {
+    private function dataFailsGroupsInCommon($data, $tableName) {
         $syncGroupsInCommonLists = syncGroupsInCommonLists();
-        // if there are no groups to sync set, everything passes (at least groups 1, 2, 3 will match)
+        // if there are no groups to sync set, everything passes (at least groups 1, 2, 3 will be in common if we're synching groups in common)
         if(count($this->groupsToSync) == 0) {
-            return $record;
+            return $data;
         }
         // if the table is not a table being synched, skip it
         if(in_array($tableName, $syncGroupsInCommonLists['group_tables'])) {
-            return true;
+            return true; // true, data fails
         }
         // if a group id field is a reference to a group id that we're not synching, skip the record
         if(isset($syncGroupsInCommonLists['group_id_fields'][$tableName])) {
             foreach($syncGroupsInCommonLists['group_id_fields'][$tableName] as $groupFieldName) {
-                $groupFieldKey = array_search($groupFieldName,$fields);
-                if(!isset($this->groupsToSync[$record[$groupFieldKey]])) {
-                    return true;
+                if(!isset($this->groupsToSync[$data[$groupFieldName]])) {
+                    return true; // true, data fails
                 }
             }
         }
@@ -351,30 +352,50 @@ class SyncCompareCatalog {
         // need to try and detect what method of extraction of id we need to perform
         if(isset($syncGroupsInCommonLists['group_id_embedded'][$tableName])) {
             foreach($syncGroupsInCommonLists['group_id_embedded'][$tableName] as $groupFieldName) {
-                $groupFieldKey = array_search($groupFieldName,$fields);
                 // possible situations... comma separated list of groupids, which might have trailing and preceeding commas, or not
                 // a serialized array, which has a numeric key, and for each of those a 'groups' key which is probably an array of group ids, but must be unserialized if it's not an array and then after unserialization it will be an array of group ids
-                // a serialized array, which has a key 3, or a key formlink_scope, which is a comma separated group id list, and does not have trailing commas or preceeding commas
-                $usRecord = unserialize($this->cleanEncoding($record[$groupFieldKey]));
+                // a serialized array, which has a key 3, or a key formlink_scope, which is a comma separated group id list, and does not have trailing commas or preceeding commas                
+                $usRecord = unserialize($data[$groupFieldName]);
                 if(is_array($usRecord)) {
                     if(isset($usRecord[0]) AND is_array($usRecord[0]) AND isset($usRecord[0]['groups']) AND isset($usRecord[0]['buttontext']) AND isset($usRecord[0]['applyto'])) {
                         foreach($usRecord as $i=>$customActionMetadata) {
                             if(!is_array($usRecord[$i]['groups'])) {
                                 $usRecord[$i]['groups'] = unserialize($usRecord[$i]['groups']);
                             }
+                            /*print "customactions groups switch: ";
+                            print_r($usRecord[$i]['groups']);
+                            print "<br>";*/
+                            $usRecord[$i]['groups'] = array_intersect($usRecord[$i]['groups'], array_keys($this->groupsToSync));
+                            /*print_r($usRecord[$i]['groups']);
+                            print "<br>";*/
                         }
-                    } elseif($record[array_search('ele_type',$fields)] == 'select' AND isset($usRecord[3]) AND is_string($usRecord[3]) AND preg_replace("/[^,0-9]/", "", $usRecord[3]) === $usRecord[3]) {
+                    } elseif(isset($data['ele_type']) AND $data['ele_type'] == 'select' AND isset($usRecord[3]) AND is_string($usRecord[3]) AND preg_replace("/[^,0-9]/", "", $usRecord[3]) === $usRecord[3]) {
+                        /*print "selectbox $groupFieldName switch: ";
+                        print $usRecord[3];
+                        print "<br>";*/
                         $usRecord[3] = $this->stripGroupsFromCommaList($usRecord[3]);
-                    } elseif($record[array_search('ele_type',$fields)] == 'checkbox' AND isset($usRecord['formlink_scope']) AND is_string($usRecord['formlink_scope']) AND preg_replace("/[^,0-9]/", "", $usRecord['formlink_scope']) === $usRecord['formlink_scope']) {
-                        $usRecord['formlink_scope'] = $this->stripGroupsFromCommaList($usRecord['formlink_scope']);    
+                        /*print $usRecord[3];
+                        print "<br>";*/
+                    } elseif(isset($data['ele_type']) AND $data['ele_type'] == 'checkbox' AND isset($usRecord['formlink_scope']) AND is_string($usRecord['formlink_scope']) AND preg_replace("/[^,0-9]/", "", $usRecord['formlink_scope']) === $usRecord['formlink_scope']) {
+                        /*print "checkbox $groupFieldName switch: ";
+                        print $usRecord['formlink_scope'];
+                        print "<br>";*/
+                        $usRecord['formlink_scope'] = $this->stripGroupsFromCommaList($usRecord['formlink_scope']);
+                        /*print $usRecord['formlink_scope'];
+                        print "<br>";*/
                     } 
-                    $record[$groupFieldKey] = serialize($usRecord);
-                } elseif(is_string($record[$groupFieldKey]) AND strstr($record[$groupFieldKey],',') !== false AND preg_replace("/[^,0-9]/", "", $record[$groupFieldKey]) === $record[$groupFieldKey]) {
-                    $record[$groupFieldKey] = $this->stripGroupsFromCommaList($record[$groupFieldKey]);
+                    $data[$groupFieldName] = serialize($usRecord);
+                } elseif(is_string($data[$groupFieldName]) AND strstr($data[$groupFieldName],',') !== false AND preg_replace("/[^,0-9]/", "", $data[$groupFieldName]) === $data[$groupFieldName]) {
+                    /*print "checkbox $groupFieldName switch: ";
+                    print $data[$groupFieldName];
+                    print "<br>";*/
+                    $data[$groupFieldName] = $this->stripGroupsFromCommaList($data[$groupFieldName]);
+                    /*print $data[$groupFieldName];
+                    print "<br>";*/
                 } 
             }
         }
-        return $record; // record passes, possibly with modifications based on group_id_embedded
+        return $data; // record passes, possibly with modifications based on group_id_embedded
     }
     
     private function stripGroupsFromCommaList($commaSeparatedList) {
@@ -437,8 +458,8 @@ class SyncCompareCatalog {
         $record = sha1(serialize($record));
         foreach($this->changeDetails[$tableName][$record] as $field=>$values) {
             $fields[] = $field;
-            $changes[$field]['sourceValue'] = tidyArrayForPrint($values['sourceValue']);
-            $changes[$field]['db'] = tidyArrayForPrint($values['db']);
+            $changes[$field]['sourceValue'] = $this->tidyArrayForPrint($values['sourceValue']);
+            $changes[$field]['db'] = $this->tidyArrayForPrint($values['db']);
         }
         return array($fields, $changes);
     }
@@ -535,6 +556,7 @@ class SyncCompareCatalog {
         $sql .= ');'; //close values brackets
 
         //file_put_contents(XOOPS_ROOT_PATH."/modules/formulize/temp/importSQL.sql", $sql."\n\r", FILE_APPEND);
+        //return true;
         $result = $this->db->query($sql);
         
         // creation operations depend on the metadata being inserted into the db already!
@@ -547,6 +569,7 @@ class SyncCompareCatalog {
         
         // returns success/failure of query based on number of affected rows
         return $result->rowCount() == 1;
+        
     }
 
     // update an existing record in the database
@@ -593,9 +616,11 @@ class SyncCompareCatalog {
         }
 
         //file_put_contents(XOOPS_ROOT_PATH."/modules/formulize/temp/importSQL.sql", $sql."\n\r", FILE_APPEND);
+        //return true;
         $result = $this->db->query($sql);
         // returns success/failure of query based on number of affected rows
         return $result->rowCount() == 1;
+        
     }
 
     // use the forms class to create a new form data table in the database
@@ -635,7 +660,28 @@ class SyncCompareCatalog {
         return $formHandler->updateField($element, $oldName, $dataType, $newName);    
     }
     
+    private function tidyArrayForPrint($array) {
+        $usValue = null;
+        if(!is_array($array)) {
+            $usValue = unserialize($array);
+        }
+        $tidyValue = is_array($usValue) ? $usValue : $array;
+        $tidyValue = $this->recursivePrintSmart($tidyValue);
+        $tidyValue = is_array($tidyValue) ? json_encode($tidyValue, JSON_PRETTY_PRINT) : $tidyValue;
+        $tidyValue = str_replace("\n", '\n', str_replace('\"', '&quot;"', $tidyValue));
+        return $tidyValue;    
+    }
     
+    private function recursivePrintSmart($value) {
+        if(!is_array($value)) {
+            return printSmart($this->cleanEncoding($value), 75);
+        } else {
+            foreach($value as $k=>$v) {
+                $value[$k] = $this->recursivePrintSmart($v);
+            }
+            return $value;
+        }
+    }
 }
 
 function prefixTable($tableName) {
@@ -665,22 +711,6 @@ function loadCachedVar($varname) {
     return unserialize($fileStr);
 }
 
-function recursivePrintSmart($value) {
-    if(!is_array($value)) {
-        return printSmart($value, 100);
-    } else {
-        foreach($value as $k=>$v) {
-            $value[$k] = recursivePrintSmart($v);
-        }
-        return $value;
-    }
-}
 
-function tidyArrayForPrint($array) {
-    $usValue = unserialize($array);
-    $tidyValue = (!is_array($array) AND is_array($usValue)) ? $usValue : $array;
-    $tidyValue = recursivePrintSmart($tidyValue);
-    $tidyValue = is_array($tidyValue) ? json_encode($tidyValue, JSON_PRETTY_PRINT) : $tidyValue;
-    $tidyValue = str_replace("\n", '\n', str_replace('\"', '"', $tidyValue));
-    return $tidyValue;    
-}
+
+

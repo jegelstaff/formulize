@@ -106,6 +106,7 @@ else if(isset($_POST['import']) OR isset($_GET['partial'])) {
     } elseif($dbResult["success"] == true) {
         $groupsMatch = ((isset($_POST['groupsMatch']) AND $_POST['groupsMatch'] == 2) OR (isset($_GET['groupsMatch']) AND $_GET['groupsMatch'] == 2)) ? 2 : 1;
         header("Location: ui.php?page=synchronize&partial=".urlencode($csvPath)."&groupsMatch=$groupsMatch"); // redirect to continue import
+        // alternatively, process all in one page load, but could be prohibitive in a large database due to timeouts!
         /*while($dbResult["partial"] != false) {
             $dbResult = csvToDB($csvPath);
         }

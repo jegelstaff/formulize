@@ -17,7 +17,7 @@ class tableInfo {
 
     private function getTableTypes($tableName) {
         $conn = $this->openConn(DB_INFO_NAME);
-
+        $conn->query("SET NAMES utf8mb4");
         $query = "SELECT DATA_TYPE FROM COLUMNS WHERE TABLE_SCHEMA = '".XOOPS_DB_NAME."' AND TABLE_NAME = '".$tableName."';";
         $types = $conn->query($query)->fetchAll();
 
@@ -26,7 +26,7 @@ class tableInfo {
 
     private function getTableCols($tableName) {
         $conn = $this->openConn(DB_INFO_NAME);
-
+        $conn->query("SET NAMES utf8mb4");
         $query = "SELECT COLUMN_NAME FROM COLUMNS WHERE TABLE_SCHEMA = '".XOOPS_DB_NAME."' AND TABLE_NAME = '".$tableName."';";
         $cols = $conn->query($query)->fetchAll();
 
@@ -35,7 +35,7 @@ class tableInfo {
 
     private function getTableRecords($tableName) {
         $conn = $this->openConn(XOOPS_DB_NAME);
-
+        $conn->query("SET NAMES utf8mb4");
         $eogfilter = "";
         if(strstr($tableName, "_formulize_entry_owner_groups")) {
             $eogfilter = array();
@@ -52,7 +52,7 @@ class tableInfo {
 
     private function getFilteredTableRecords($tableName, $columnName, $value) {
         $conn = $this->openConn(XOOPS_DB_NAME);
-
+        $conn->query("SET NAMES utf8mb4");
         $query = "SELECT * FROM ".$tableName." WHERE ".$columnName." = ".$value.";";
         $records = $conn->query($query)->fetchAll();
 
