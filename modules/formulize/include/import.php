@@ -65,7 +65,7 @@ global $xoopsConfig;
 global $xoopsDB, $xoopsUser;
 
 $config_handler =& xoops_gethandler('config');
-$confType = defined(XOOPS_CONF_USER) ? XOOPS_CONF_USER : ICMS_CONF_USER;
+$confType = defined('XOOPS_CONF_USER') ? XOOPS_CONF_USER : ICMS_CONF_USER;
 $xoopsConfigUser =& $config_handler->getConfigsByCat($confType);
 
 
