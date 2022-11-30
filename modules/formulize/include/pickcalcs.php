@@ -308,6 +308,8 @@ $deleted = handleDelete(); // returns 1 if a deletion was made, 0 if not.
 
 $visible_columns = explode(",", $_GET['cols']);
 
+$usedvals = array();
+
 foreach($cols as $f=>$vs) {
     foreach($vs as $row=>$values) {
         if (in_array($values['ele_handle'], $visible_columns)) {
@@ -356,19 +358,19 @@ $returned = addReqdCalcs($pickcalc);
 $pickcalc = $returned['form'];
 
 $columns = new xoopsFormSelect(_formulize_DE_CALC_COL, 'column', "", min(count((array) $options) + 6, 18), true);
-if(!in_array("creation_uid", $_POST['column']) AND !$_POST['reqdcalc_column_uid']) {
+if(!in_array("creation_uid", (array)$_POST['column']) AND !$_POST['reqdcalc_column_uid']) {
 	$columns->addOption("creation_uid", _formulize_DE_CALC_CREATOR);
 }
-if(!in_array("mod_uid", $_POST['column']) AND !$_POST['reqdcalc_column_proxyid']) {
+if(!in_array("mod_uid", (array)$_POST['column']) AND !$_POST['reqdcalc_column_proxyid']) {
 	$columns->addOption("mod_uid", _formulize_DE_CALC_MODIFIER);
 }
-if(!in_array("creation_datetime", $_POST['column']) AND !$_POST['reqdcalc_column_creation_date']) {
+if(!in_array("creation_datetime", (array)$_POST['column']) AND !$_POST['reqdcalc_column_creation_date']) {
 	$columns->addOption("creation_datetime", _formulize_DE_CALC_CREATEDATE);
 }
-if(!in_array("mod_datetime", $_POST['column']) AND !$_POST['reqdcalc_column_mod_date']) {
+if(!in_array("mod_datetime", (array)$_POST['column']) AND !$_POST['reqdcalc_column_mod_date']) {
 	$columns->addOption("mod_datetime", _formulize_DE_CALC_MODDATE);
 }
-if(!in_array("creator_email", $_POST['column']) AND !$_POST['reqdcalc_column_creator_email']) {
+if(!in_array("creator_email", (array)$_POST['column']) AND !$_POST['reqdcalc_column_creator_email']) {
 	$columns->addOption("creator_email", _formulize_DE_CALC_CREATOR_EMAIL);
 }
 $columns->addOptionArray($options);
@@ -427,7 +429,7 @@ foreach($returned['rc'] as $hidden) {
 	}
     
 	$pickcalc->addElement(new xoopsFormButton($colname, "delete_" . $hidden['column'], _formulize_DE_REMOVECALC, 'submit'));
-	$calcs = explode(",", $hidden['calcs']);
+	$calcs = explode(",", (string)$hidden['calcs']);
 	foreach($calcs as $calc) {
 		$tempname = $calc . $hidden['column'];
 		if(!$_POST[$tempname]) {
@@ -494,7 +496,7 @@ foreach($returned['rc'] as $hidden) {
 		$tempcalcCustom->setExtra("class='exclude-options-custom' onclick='javascript:window.document.pickcalc.elements[\"".$calc.$hidden['column']."\"].options[5].selected = true;window.document.pickcalc.elements[\"".$calc.$hidden['column']."\"].value=\"custom\"'");
 		$tempcalclabel = new xoopsFormLabel("", _formulize_DE_CALC_BTEXT . "<br>". $tempcalc1->render(). " ".$tempcalcCustom->render());
 		
-		$groupingDefaults = explode("!@^%*", $_POST['grouping_' . $calc . "_" . $hidden['column']]); // get the individual grouping settings from the one value that has been passed back
+		$groupingDefaults = explode("!@^%*", (string)$_POST['grouping_' . $calc . "_" . $hidden['column']]); // get the individual grouping settings from the one value that has been passed back
 		$groupingDefaults1 = $groupingDefaults[0];
 		if(isset($_POST['grouping2_' . $calc . "_" . $hidden['column']])) {
 			$groupingDefaults2 = $_POST['grouping2_' . $calc . "_" . $hidden['column']];
