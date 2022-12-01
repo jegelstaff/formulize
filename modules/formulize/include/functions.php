@@ -6577,7 +6577,7 @@ function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
         $hideform = count((array) $cols) > 1 ? "style='opacity: 0; max-height: 0;'" : "style='opacity: 1; max-height: 10000px;'"; // start forms closed unless they have selected columns, or unless this is the only form in the set
         $upDisplay = count((array) $cols) > 1 ? "style='display: none;'" : "style='display: inline;'";
         $downDisplay = count((array) $cols) > 1 ? "style='display: inline;'" : "style='display: none;'";
-        if($counter == 0 AND $thisFid == $mainformFid) { // add in metadata columns first time through
+        if($fidCounter == 0 AND $thisFid == $mainformFid) { // add in metadata columns first time through
             array_unshift($columns,
                 array('ele_handle'=>'entry_id', 'ele_caption' => _formulize_ENTRY_ID),                          
                 array('ele_handle'=>'creation_uid', 'ele_caption' => _formulize_DE_CALC_CREATOR),
