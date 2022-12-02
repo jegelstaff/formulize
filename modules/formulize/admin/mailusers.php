@@ -24,6 +24,7 @@ if(isset($_POST['body']) AND
             $emails[] = $user->getVar('email');
         }
     }
+    $emails = array_unique($emails);
     $xoopsMailer->setToEmails($emails);
     $xoopsMailer->setSubject($_POST['subject']);
     
