@@ -21,7 +21,7 @@ class XoopsFormckeditor extends icms_form_elements_Textarea
      * @param	array   $configs  Editor Options
      * @param	binary 	$checkCompatible  true - return false on failure
 	 */
-	function XoopsFormckeditor($configs, $checkCompatible = false)
+	function __construct($configs, $checkCompatible = false)
 	{
 		$current_path = __FILE__;
 		if (DIRECTORY_SEPARATOR != "/" ) $current_path = str_replace( strpos( $current_path, "\\\\", 2 ) ? "\\\\" : DIRECTORY_SEPARATOR, "/", $current_path);

@@ -38,7 +38,7 @@ class icms_form_elements_Editor extends icms_form_elements_Textarea {
 	 * @param	bool  	$noHtml       use non-WYSIWYG eitor onfailure
 	 * @param	string  $OnFailure editor to be used if current one failed
 	 */
-	function icms_form_elements_Editor($caption, $name, $editor_configs = null, $noHtml=false, $OnFailure = "")
+	function __construct($caption, $name, $editor_configs = null, $noHtml=false, $OnFailure = "")
 	{
 		parent::__construct($caption, $editor_configs["name"]);
 		$editor_handler = icms_plugins_EditorHandler::getInstance();
