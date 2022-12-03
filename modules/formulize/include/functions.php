@@ -6574,7 +6574,7 @@ function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
         }
         $formObject = $form_handler->get($thisFid);
         $boxeshtml = "";
-        $hideform = count((array) $cols) > 1 ? "style='opacity: 0; max-height: 0;'" : "style='opacity: 1; max-height: 10000px;'"; // start forms closed unless they have selected columns, or unless this is the only form in the set
+        $hideform = count((array) $cols) > 1 ? "style='opacity: 0; max-height: 0; display: none;'" : "style='opacity: 1; max-height: 10000px; display: block;'"; // start forms closed unless they have selected columns, or unless this is the only form in the set
         $upDisplay = count((array) $cols) > 1 ? "style='display: none;'" : "style='display: inline;'";
         $downDisplay = count((array) $cols) > 1 ? "style='display: inline;'" : "style='display: none;'";
         if($fidCounter == 0 AND $thisFid == $mainformFid) { // add in metadata columns first time through
@@ -6591,7 +6591,7 @@ function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
             $fidCounter++;
             $selected = in_array($column['ele_handle'], $selectedCols) ? "checked='checked'" : "";
             if($selected) {
-                $hideform = "style='opacity: 1; max-height: 10000px;'";
+                $hideform = "style='opacity: 1; max-height: 10000px; display: block;'";
                 $upDisplay = "style='display: inline;'";
                 $downDisplay = "style='display: none;'";
             }
@@ -6619,11 +6619,13 @@ function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
             document.getElementById('down_'+fid).style.display = 'none';
             document.getElementById('cols_'+fid).style.maxHeight = '10000px';
             document.getElementById('cols_'+fid).style.opacity = 1;
+            document.getElementById('cols_'+fid).style.display = 'block';
         } else {
             document.getElementById('up_'+fid).style.display = 'none';
             document.getElementById('down_'+fid).style.display = 'inline';
             document.getElementById('cols_'+fid).style.maxHeight = 0;
             document.getElementById('cols_'+fid).style.opacity = 0;
+            document.getElementById('cols_'+fid).style.display = 'none';
         }
     }
     </script>

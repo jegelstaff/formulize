@@ -151,7 +151,7 @@ print "<tr><td class=head><br>
 <input type='button' name='clearall' style='cursor: pointer;' value='". _formulize_DE_CLEAR_ALL."'
 onclick=\"var boxes = document.getElementsByClassName('colbox');for(var i=0;i<boxes.length;i++){boxes[i].checked = false;}\" />
 <br><br>
-<input type='reset' name='reset' style='cursor: pointer;' value='". _formulize_DE_RESET_COLS."' /></td><td class=even>";
+<input type='reset' name='reset' style='cursor: pointer;' value='". _formulize_DE_RESET_COLS."' /></td><td class=even style='width: 75%;'>";
 
 print generateTidyElementList($fid, $cols, $selectedCols);
 
