@@ -3018,6 +3018,7 @@ function _findLinkedEntries($targetFormKeySelf, $targetFormFid, $valuesToLookFor
 // entries in single-entry forms are never cloned
 // $entryOrFilter is the entry id number, or can be a filter string or array!
 function cloneEntry($entryOrFilter, $frid, $fid, $copies=1, $callback = null, $targetEntry = "new") {
+
     global $xoopsDB, $xoopsUser;
     
     // used for updating derived values later
@@ -5433,30 +5434,31 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
                 $needIntroBoolean = true;
                 list($conditionsfilter, $thiscondition) = _appendToCondition($conditionsfilter, "AND", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
                 if($thiscondition) {
-                $conditionsfilterArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
+                    $conditionsfilterArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
                 }
             // regular oom conditions
             } elseif(!strstr($conditionsFilterComparisonValue, "curlybracketform")) {
                 $needIntroBoolean = true;
                 list($conditionsfilter_oom, $thiscondition) = _appendToCondition($conditionsfilter_oom, "OR", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
                 if($thiscondition) {
-                $conditionsfilter_oomArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
+                    $conditionsfilter_oomArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
                 }
             // curlybracketform conditions    
             } elseif($filterTypes[$filterId] != "oom") {
                 $needIntroBoolean = false;
                 list($curlyBracketFormconditionsfilter, $thiscondition) = _appendToCondition($curlyBracketFormconditionsfilter, "AND", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
                 if($thiscondition) {
-                $conditionsfilterArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
+                    $conditionsfilterArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
                 }
             // curlybracketform oom conditions
             } else {
                 $needIntroBoolean = false;
                 list($curlyBracketFormconditionsfilter_oom, $thiscondition) = _appendToCondition($curlyBracketFormconditionsfilter_oom, "OR", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
                 if($thiscondition) {
-                $conditionsfilter_oomArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
+                    $conditionsfilter_oomArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
+                }
             }
-            }
+            
             $curlyBracketFormFrom = $thisCurlyBracketFormFrom ? $thisCurlyBracketFormFrom : $curlyBracketFormFrom; // if something was returned, use it, otherwise, stick with what we've got -- NOTE THIS MEANS YOU CAN'T HAVE DIVERGENT CURLY BRACKET REFERENCES??!!
             
         }
@@ -5668,7 +5670,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                 // for new entries with a dynamic reference and no asynch value set...
                 } else { // can't do a subquery into a curly bracket form for a 'new' value...return nothing
                     return array("", "");
-                    }
+                }
             }
             if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
                 $conditionsFilterComparisonValue .= "  AND curlybracketform.`entry_id`=$curlyBracketEntryQuoted ";
