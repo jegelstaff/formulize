@@ -2213,14 +2213,26 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter=false, $an
      formulize_benchmark('done with parsing and all that... '.$sql);
      $res = $xoopsDB->query($sql);
      
+	 // figure out the PK field in the form, if any
+	 $sql = "SELECT COLUMN_NAME FROM `KEY_COLUMN_USAGE` WHERE `CONSTRAINT_NAME` = 'PRIMARY' AND `TABLE_NAME` = '".formulize_db_escape($tablename)."'";
+	 $pkField = '';
+	 if($pkRes = $xoopsDB->query($sql)) {
+		if($xoopsDB->getRowsNum($pkRes) == 1) {
+			$pkRow = $xoopsDB->fetchRow($pkRes);
+			$pkField = $pkRow[0];
+		}
+	 }
+	 
+	 
      $result = array();
      $indexer = 0;
      // result syntax is:
-     // [id][title of form][primary id -- meaningless in tableforms, until we need to edit entries][formulize element id][value id]
+     // [id][title of form][primary id][formulize element id][value id]
      // package up data in the format we need it
      while($array = $xoopsDB->fetchArray($res)) {
           foreach($elementsByField as $field=>$fieldDetails) {
-               $result[$indexer][$formname][$indexer2][$fieldDetails['id']][] = $array[$field];
+				$pkValue = $pfField ? $array[$pkField] : $array[key($array)]; // use first field if no PK found above
+               $result[$indexer][$formname][$pkValue][$fieldDetails['id']][] = $array[$field];
           }
           $indexer++;
      }
