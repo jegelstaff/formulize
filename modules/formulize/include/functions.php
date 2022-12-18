@@ -5886,7 +5886,7 @@ function formulize_javascriptForRemovingEntryLocks($unload=false) {
     foreach($entriesThatHaveBeenLockedThisPageLoad as $thisForm=>$theseEntries) {
             $js .= "			'entry_ids_".$thisForm."[]': [".implode(", ", array_keys($theseEntries))."], \n";
     }
-    $js .= "     'form_ids[]': [".implode(", ", array_keys($entriesThatHaveBeenLockedThisPageLoad))."],
+    $js .= "     'form_ids[]': [".implode(", ", array_keys((array) $entriesThatHaveBeenLockedThisPageLoad))."],
     async: false
 });\n";
     }
@@ -7413,7 +7413,7 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
                                 $colValues = is_array($colValues) ? $colValues : array($colValues);
                                 foreach($explodedColumns[$column] as $thisOption=>$indicators) {
                                     if(substr($thisOption, 0, 7) == "{OTHER|") {
-                                        $diff = array_diff($colValues, array_keys($explodedColumns[$column]));
+                                        $diff = array_diff($colValues, array_keys((array)$explodedColumns[$column]));
                                         $diff = array_values($diff); // indexes will be preserved from source, we need to index from 0
                                         $row[] = (count((array) $diff) > 0 AND trim($diff[0]) !== "") ? $indicators['hasValue'] : $indicators['doesNotHaveValue'];
                                     } else {
