@@ -115,12 +115,12 @@ echo '<body>';
 				<?php echo $content; ?>
 			</div>
 			<div id="buttons">
-				<?php if ($wizard->currentPage != 0  && ( $wizard->currentPage != 11 )) { ?>
+				<?php if ($wizard->currentPage != 0  && ( $wizard->currentPage != end(array_keys($wizard->pages)) )) { ?>
 				<button type="button" title="<?php echo BUTTON_PREVIOUS; ?>" onclick="location.href='<?php echo $wizard->pageURI('-1'); ?>'" class="prev">
 					<img src="img/left-arr.png" alt="<?php echo BUTTON_PREVIOUS; ?>"  title="<?php echo BUTTON_PREVIOUS; ?>" width="16" />
 				</button>
 				<?php } ?>
-				<?php if ($wizard->currentPage == 11) { ?>
+				<?php if ($wizard->currentPage == end(array_keys($wizard->pages))) { ?>
 				<button  id="hmo" title="<?php echo BUTTON_SHOW_SITE; ?>" type="button" onclick="location.href='<?php echo $wizard->pageURI('11'); ?>?success=true'" class="finish">
 					<img src="img/Home.png" alt="<?php echo BUTTON_SHOW_SITE; ?>" title="<?php echo BUTTON_SHOW_SITE; ?>" width="32" />
 				</button>

@@ -201,7 +201,7 @@ class mod_content_Content extends icms_ipf_seo_Object {
 	 *
 	 * @return bool true if user can view this page, false if not
 	 */
-	function accessGranted() {
+	function accessGranted($perm_name) {
 		$gperm_handler = icms::handler('icms_member_groupperm');
 		$groups = is_object(icms::$user) ? icms::$user->getGroups() : array(ICMS_GROUP_ANONYMOUS);
 
@@ -293,7 +293,7 @@ class mod_content_Content extends icms_ipf_seo_Object {
 		return $ret;
 	}
 
-	function getViewItemLink() {
+	function getViewItemLink($onlyUrl = false, $withimage = true, $userSide = false) {
 		$ret = '<a href="' . $this->handler->_moduleUrl . 'admin/' . $this->handler->_itemname . '.php?op=view&amp;content_id=' . $this->getVar('content_id', 'e') . '" title="' . _AM_CONTENT_VIEW . '"><img src="' . ICMS_IMAGES_SET_URL . '/actions/viewmag.png" /></a>';
 
 		return $ret;
