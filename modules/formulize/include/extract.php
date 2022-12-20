@@ -1420,7 +1420,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
 										list($ifParts[0], $formFieldFilterMap, $mappedForm, $element_id, $elementPrefix, $queryElement) = prepareElementMetaData($frid, $fid, $linkfids, $ifParts[0], $formFieldFilterMap);
                     
                     // set query term for yes/no questions
-                    if($formFieldFilterMap[$mappedForm][$element_id]['isyn']) {
+                    if($formFieldFilterMap[$mappedForm][$element_id]['isyn'] AND $ifParts[1] !== "") {
                          if(strstr(strtoupper(_formulize_TEMP_QYES), strtoupper($ifParts[1])) OR strtoupper($ifParts[1]) == "YES") { // since we're matching based on even a single character match between the query and the yes/no language constants, if the current language has the same letters or letter combinations in yes and no, then sometimes only Yes may be searched for
                               $ifParts[1] = 1;
                          } elseif(strstr(strtoupper(_formulize_TEMP_QNO), strtoupper($ifParts[1])) OR strtoupper($ifParts[1]) == "NO") {
