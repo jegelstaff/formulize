@@ -173,11 +173,11 @@ table:first-child div.applinks h1 {
   flex-grow: 1;
   padding-bottom: 100px;
 }
-@media (min-width: 1024px) {
+/*@media (min-width: 1024px) {
   .site-layout__main {
     width: auto;
   }
-}
+}*/
 @media print {
   .site-layout__main {
     display: block;
@@ -191,12 +191,12 @@ table:first-child div.applinks h1 {
   padding-left: 20px;
   padding-right: 20px;
 }
-@media (min-width: 1024px) {
+/*@media (min-width: 1024px) {
   .container {
     padding-left: 40px;
     padding-right: 40px;
   }
-}
+}*/
 
 @media (min-width: 1260px) {
   .layout-two-up {

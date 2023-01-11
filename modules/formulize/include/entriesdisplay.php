@@ -4111,7 +4111,7 @@ function getDefaultViewForActiveUser($loadview) {
 	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 	$foundAView = false;
 	// Search for group user belongs to in list of default views
-	foreach(array_keys($loadview) as $checkGroup) {
+	foreach(array_keys((array)$loadview) as $checkGroup) {
 		// First group/default view found that user belongs to will be set
 		if(in_array($checkGroup, $groups)) {
 		  $loadview = $loadview[$checkGroup];

@@ -324,7 +324,7 @@ class mod_content_ContentHandler extends icms_ipf_Handler {
 	}
 
 
-	public function getList($content_status = null) {
+	public function getList($content_status = null, $limit = 0, $start = 0, $debug = false) {
 		$criteria = new icms_db_criteria_Compo();
 
 		if (isset($content_status)) {

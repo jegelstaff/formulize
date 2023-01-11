@@ -149,6 +149,7 @@ define("_AM_CALC_EXPLAIN","vous permet de créer une série de requêtes ou des 
 define("_AM_CALC_CREATE_NEW"," Créer une nouvelle procédure");
 define("_AM_CALC_CLONE"," Cloner");
 define("_AM_CALC_DELETE"," Effacer");
+define("_AM_CALC_REMOVE"," Remove");
 define("_AM_CALC_CONFIRM_DELETE","Voulez vous vraiment effacer cette procédure?  Tous les réglages pour cette procédure seront perdus!");
 define("_AM_CALC_PROCEDURE_NAME","Nom de la Procédure");
 define("_AM_CALC_PROCEDURE_DESCR","Description de la Procédure:");

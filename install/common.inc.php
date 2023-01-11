@@ -34,6 +34,10 @@ include_once '../include/version.php';
 // including a few functions
 require_once 'include/functions.php';
 
+// ADDING REQUIRED LANGUAGE CONSTANTS - JWE DEC 16 2022
+include_once '../modules/system/language/english/common.php';
+include_once '../language/english/global.php';
+
 require_once '../libraries/icms/Autoloader.php';
 icms_Autoloader::setup();
 
@@ -75,7 +79,7 @@ class XoopsInstallWizard {
 			$this->pages[]= 'safe_mode';
 			} */
 		else {
-			$this->pages[]= 'langselect';
+			//$this->pages[]= 'langselect';
 			$this->pages[]= 'start';
 			$this->pages[]= 'modcheck';
 			$this->pages[]= 'pathsettings';
@@ -96,7 +100,7 @@ class XoopsInstallWizard {
 		} elseif ($this->safe_mode) {
 			$this->pagesNames[]= SAFE_MODE;
 		} else {
-			$this->pagesNames[] = LANGUAGE_SELECTION;
+			//$this->pagesNames[] = LANGUAGE_SELECTION;
 			$this->pagesNames[] = INTRODUCTION;
 			$this->pagesNames[] = CONFIGURATION_CHECK;
 			$this->pagesNames[] = PATHS_SETTINGS;
@@ -115,7 +119,7 @@ class XoopsInstallWizard {
 		} elseif ($this->safe_mode) {
 			$this->pagesTitles[]= SAFE_MODE_TITLE;
 		} else {
-			$this->pagesTitles[] = LANGUAGE_SELECTION_TITLE;
+			//$this->pagesTitles[] = LANGUAGE_SELECTION_TITLE;
 			$this->pagesTitles[] = INTRODUCTION_TITLE;
 			$this->pagesTitles[] = CONFIGURATION_CHECK_TITLE;
 			$this->pagesTitles[] = PATHS_SETTINGS_TITLE;
@@ -211,10 +215,10 @@ class XoopsInstallWizard {
 	}
 
 	function pageURI( $page) {
-		if (!(int)$page{0}) {
-			if ($page{0} == '+') {
+		if (!is_int(substr($page, 0, 1))) {
+			if (substr($page, 0, 1) == '+') {
 				$page = $this->currentPage + substr( $page, 1 );
-			} elseif ($page{0} == '-') {
+			} elseif (substr($page, 0, 1) == '-') {
 				$page = $this->currentPage - substr( $page, 1 );
 			} else {
 				$page = (int)array_search( $page, $this->pages );

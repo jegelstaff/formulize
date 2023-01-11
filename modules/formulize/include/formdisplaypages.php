@@ -44,7 +44,7 @@ global $xoopsConfig;
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
 
-function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditions="", $introtext="", $thankstext="", $done_dest="", $button_text=array(), $settings=array(), $overrideValue="", $printall=0, $screen=null, $saveAndContinueButtonText=null, $elements_only = false) { // nmc 2007.03.24 - added 'printall'
+function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="", $introtext="", $thankstext="", $done_dest="", $button_text=array(), $settings=array(), $overrideValue="", $printall=0, $screen=null, $saveAndContinueButtonText=null, $elements_only = false) { // nmc 2007.03.24 - added 'printall'
 	
     formulize_benchmark("Start of displayFormPages.");
 	

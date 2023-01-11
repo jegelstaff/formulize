@@ -293,7 +293,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
         }
     }
     
-    public function setDefaultFormScreenVars($defaultFormScreen, $formTitle='', $fid, $pageOneTitle='')
+    public function setDefaultFormScreenVars($defaultFormScreen, $formTitle, $fid, $pageOneTitle='')
 	{
         global $xoopsConfig;
         $defaultFormScreen->setVar('theme', $xoopsConfig['theme_set']);
