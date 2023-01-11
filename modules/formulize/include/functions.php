@@ -6352,7 +6352,7 @@ function parseUserAndToday($term, $element=null) {
             } elseif($element) {
                 $element = _getElementObject($element);
                 $ele_value = $element->getVar('ele_value');
-                if(strstr(key($ele_value[2]), 'NAMES}')) {
+                if(is_array($ele_value[2]) AND strstr(key($ele_value[2]), 'NAMES}')) {
                     $name = $xoopsUser->getVar('uid');
                 }
             }

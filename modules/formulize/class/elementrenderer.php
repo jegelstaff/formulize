@@ -646,7 +646,7 @@ class formulizeElementRenderer{
                                             if($xoopsDB->getRowsNum($res)==1) {
                                                 $row = $xoopsDB->fetchRow($res);
                                                 $elementObjectEleValue = $optionsLimitByElement_ElementObject->getVar('ele_value');
-                                                if(strstr(implode('',array_keys($elementObjectEleValue[2])), "NAMES}")) {
+                                                if(is_array($elementObjectEleValue[2]) AND strstr(implode('',array_keys($elementObjectEleValue[2])), "NAMES}")) {
                                                     $directLimitUserIds = explode("*=+*:",trim($row[0], "*=+*:"));
                                                 }
                                             }
