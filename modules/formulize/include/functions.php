@@ -7133,7 +7133,7 @@ function formulize_parseSearchesIntoFilter($searches) {
                     $search_date = strtotime($one_search);
                     // only search on a valid date string (otherwise it will be converted to the unix epoch)
                     if (false === $search_date) {
-                        $one_search = "";
+                        continue;
                     }
 				}
 			}

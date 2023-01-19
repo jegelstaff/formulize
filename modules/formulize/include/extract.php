@@ -1354,15 +1354,9 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
 										$orderByClause = " ORDER BY $queryElement DESC LIMIT 0," . substr($ifParts[2], 6);
 										continue;
 							 }
-							 
-               if($numIndivFilters > 0) {
-                    $whereClause .= $filterParts[0]; // apply local andor setting
-               }
                
                $newWhereClause = ""; // tracks just the current iteration of this loop, so we can capture this filter and add it to the record of filters for this form lower down
                
-               $whereClause .= "("; // bracket each individual component of the whereclause
-                    
                $operator = isset($ifParts[2]) ? $ifParts[2] : "LIKE";
                if(trim($operator) == "LIKE" OR trim($operator) == "NOT LIKE") {
                     if(strlen($ifParts[1]) > 1 AND (substr($ifParts[1], 0, 1) == "%" OR substr($ifParts[1], -1) == "%")) { // if the query term includes % at the front or back (or both), then we let that work as the "likebits" and don't put in any ourselves
@@ -1426,7 +1420,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                          } elseif(strstr(strtoupper(_formulize_TEMP_QNO), strtoupper($ifParts[1])) OR strtoupper($ifParts[1]) == "NO") {
                               $ifParts[1] = 2;
                          } else {
-                              $ifParts[1] = "";
+                              continue; // search term is not valid for the yes/no column
                          }
                     }
                     
@@ -1597,7 +1591,11 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                     }
                }
 
-               $whereClause .= $newWhereClause;
+               if($numIndivFilters > 0) {
+                    $whereClause .= $filterParts[0]; // apply local andor setting
+               }
+               
+               $whereClause .= "(".$newWhereClause;
                
                if(!isset($oneSideFiltersTemp[$mappedForm][strtolower(trim($filterParts[0]))][$numSeachExps])) {
                     $oneSideFiltersTemp[$mappedForm][strtolower(trim($filterParts[0]))][$numSeachExps] = " $newWhereClause ";   // don't add the local andor on the first term for a form
