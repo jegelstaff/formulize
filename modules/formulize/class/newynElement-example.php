@@ -217,7 +217,7 @@ class formulizeNewYnElementHandler extends formulizeElementsHandler {
 		}
 		
 		$renderedHoorvs = "";
-		if(count($hiddenOutOfRangeValuesToWrite) > 0) {
+		if(count((array) $hiddenOutOfRangeValuesToWrite) > 0) {
 			foreach($hiddenOutOfRangeValuesToWrite as $hoorKey=>$hoorValue) {
 				$thisHoorv = new xoopsFormHidden('formulize_hoorv_'.$true_ele_id.'_'.$hoorKey, $hoorValue);
 				$renderedHoorvs .= $thisHoorv->render() . "\n";
@@ -323,7 +323,7 @@ class formulizeNewYnElementHandler extends formulizeElementsHandler {
     // this method will format a dataset value for display on screen when a list of entries is prepared
     // for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
     // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
-    function formatDataForList($value, $handle, $entry_id) {
+    function formatDataForList($value, $handle="", $entry_id=0) {
         return $value;
     }
 }

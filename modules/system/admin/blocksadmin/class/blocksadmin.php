@@ -163,7 +163,7 @@ class SystemBlocksadmin extends icms_view_block_Object {
 	 * Overrides parent method 
 	 * @see htdocs/libraries/icms/ipf/icms_ipf_Object::getAdminViewItemLink()
 	 */
-	public function getAdminViewItemLink() {
+	public function getAdminViewItemLink($onlyUrl = false) {
 		$rtn = $this->getVar('title');
 		return $rtn;
 	}

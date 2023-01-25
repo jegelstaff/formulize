@@ -177,7 +177,7 @@ class formulizeForm extends XoopsObject {
 			$viewFrids = array();
 			$viewPublished = array();
 		} else {
-			for($i=0;$i<count($viewq);$i++) {
+			for($i=0;$i<count((array) $viewq);$i++) {
 				
 				$views[$i] = $viewq[$i]['sv_id'];
 				$viewNames[$i] = stripslashes($viewq[$i]['sv_name']);
@@ -391,8 +391,9 @@ EOF;
         }
     }
 
+    // returns only the parent screen, not the full screen object, since default might be a legacy form screen or a multipage screen
     public function default_form_screen() {
-        $screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
+        $screen_handler = xoops_getmodulehandler('screen', 'formulize');
         return $screen_handler->get($this->defaultform);
     }
 
@@ -791,7 +792,7 @@ class formulizeFormsHandler {
 		}
 		global $xoopsDB;
 		$existingTables = array();
-		if(count($existingTables)==0) {
+		if(count((array) $existingTables)==0) {
 			$testsql = "SHOW TABLES LIKE '%_revisions'";
 			$resultst = $xoopsDB->queryF($testsql);
 			while($table = $xoopsDB->fetchRow($resultst)) {
@@ -880,7 +881,7 @@ class formulizeFormsHandler {
 			$newTableSQL .= "PRIMARY KEY (`entry_id`),";	
 		}
 		$newTableSQL .= "INDEX i_creation_uid (creation_uid)";
-		$newTableSQL .= ") ENGINE=MyISAM;";
+		$newTableSQL .= ") ENGINE=InnoDB;";
 		// make the table
 		if(!$tableCreationRes = $xoopsDB->queryF($newTableSQL)) {
 			print $xoopsDB->error();
@@ -1022,7 +1023,7 @@ class formulizeFormsHandler {
 			$dataType = $fieldStateData['Type'];
 		}
 		$newName = $newName ? $newName : $element->getVar('ele_handle');
-		$updateFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " CHANGE `$oldName` `$newName` ". $dataType; 
+		$updateFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " CHANGE `$oldName` `$newName` ". $dataType;
 		if(!$updateFieldRes = $xoopsDB->queryF($updateFieldSQL)) {
 		  return false;
 		}
@@ -1141,7 +1142,7 @@ class formulizeFormsHandler {
 			// find the filter indexes for 'match all' and 'match one or more'
 			$filterAll = array();
 			$filterOOM = array();
-			for($i=0;$i<count($filterSettings[3]);$i++) {
+			for($i=0;$i<count((array) $filterSettings[3]);$i++) {
 				if($filterSettings[3][$i] == "all") {
 					$filterAll[] = $i;
 				} else {
@@ -1181,14 +1182,14 @@ class formulizeFormsHandler {
 	function buildPerGroupFilterWhereClause($match,$indexes,$filterSettings,$uid,$formAlias) {
 		$perGroupFilter = "";
 
-		for($io=0;$io<count($indexes);$io++) {
+		for($io=0;$io<count((array) $indexes);$io++) {
 			$i = $indexes[$io];
 			if(!($perGroupFilter == "")) {
 				$perGroupFilter .= " $match ";
 			}
 
 			$likeBits = (strstr(strtoupper($filterSettings[1][$i]), "LIKE") AND substr($filterSettings[2][$i], 0, 1) != "%" AND substr($filterSettings[2][$i], -1) != "%") ? "%" : "";
-			$termToUse = str_replace("{USER}", $uid, $filterSettings[2][$i]); 
+			$termToUse = str_replace(array("{USER}", "{USER_ID}"), $uid, $filterSettings[2][$i]); 
 			if (preg_replace("[^A-Z{}]","", $termToUse) === "{TODAY}") {
 				$number = preg_replace("[^0-9+-]","", $termToUse);
 				$termToUse = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
@@ -1322,7 +1323,7 @@ class formulizeFormsHandler {
 				return false;
 			}
 			if($oldNewEleIdMap[$ele['ele_handle']] == "replace_with_ele_id") {
-				$oldNewEleIdMap[$ele['ele_handle']] = $this->db->getInsertId();
+				$oldNewEleIdMap[$ele['ele_handle']] = $oldFormHandle.'_'.$this->db->getInsertId();
 			}
 		}
 
@@ -1391,9 +1392,9 @@ class formulizeFormsHandler {
 	 */
 	public function formScreenForClonedForm($newtitle, $newfid)
 	{
-		$formScreenHandler = xoops_getmodulehandler('formScreen', 'formulize');
+		$formScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 		$defaultFormScreen = $formScreenHandler->create();
-		$formScreenHandler->setDefaultFormScreenVars($defaultFormScreen, $newtitle, $newfid);
+		$formScreenHandler->setDefaultFormScreenVars($defaultFormScreen, $newtitle.' Form', $newfid, $newtitle);
 		if(!$defaultFormScreenId = $formScreenHandler->insert($defaultFormScreen)) {
 			print "Error: could not create default form screen";
 			return $defaultFormScreenId;
@@ -1411,7 +1412,7 @@ class formulizeFormsHandler {
 	{
 		$listScreenHandler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
 		$screen = $listScreenHandler->create();
-		$listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $newtitle, $newfid);
+		$listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $newtitle.' List', $newfid);
 
 		if(!$defaultListScreenId = $listScreenHandler->insert($screen)) {
 			print "Error: could not create default list screen";
@@ -1491,4 +1492,35 @@ class formulizeFormsHandler {
 			$res = $this->db->queryF($sql);
         }
 	}
+    
+    public function getMultiScreens($fid) {
+        if(!$fid) {
+            return array();
+        }
+        $formObject = $this->get($fid);
+		$screens = array();
+		$screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+		$criteria_object = new CriteriaCompo(new Criteria('type','multiPage'));
+		$formScreens = $screen_handler->getObjects($criteria_object,$fid);
+		foreach($formScreens as $screen) {
+			$sid = $screen->getVar('sid');
+			$screenData = $screen_handler->get($sid);	
+		  	$screens[$sid]['sid'] = $screenData->getVar('sid');
+		  	$screens[$sid]['title'] = $screenData->getVar('title');
+		  	$screens[$sid]['type'] = $screenData->getVar('type');
+		  	$screens[$sid]['pages'] = $screenData->getVar('pages');
+		  	$screens[$sid]['pagetitles'] = $screenData->getVar('pagetitles');
+            // find the pages that contain all elements in this form, and add 'new' as an element on that page, so the page will be selected when creating new elements
+            foreach($screens[$sid]['pages'] as $i=>$page) {
+                foreach($formObject->getVar('elements') as $ele_id) { // check for all elements (but ignore 'display to no group' elements which are not included in the object by default)
+                    if(!in_array($ele_id, $page)) {
+                        continue 2; // go to next page
+                    }
+                }
+                // page did contain all the elements, so flag it as valid for 'new'
+                $screens[$sid]['pages'][$i][] = 'new';
+            }
+		}
+		return $screens;
+	}	
 }

@@ -60,7 +60,7 @@ class formulizePassCodeHandler {
 		}
 		return $instance;
 	}
-	function &create($passCode='',$screen,$expiry='') {
+	function &create($passCode='',$screen=0,$expiry='') {
         if(!$screen OR !is_numeric($screen)) {
             return false;
         }

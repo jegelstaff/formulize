@@ -27,6 +27,13 @@ if (("masquerade" == $op) and ($_REQUEST['id'] == $_SESSION['xoopsUserId'])) {
     $op = "list";
 }
 
+global $icmsConfig;
+if (file_exists(ICMS_ROOT_PATH."/modules/profile/language/".$icmsConfig['language']."/modinfo.php")) {
+    include_once ICMS_ROOT_PATH."/modules/profile/language/".$icmsConfig['language']."/modinfo.php";
+} else {
+    include_once ICMS_ROOT_PATH."/modules/profile/language/english/modinfo.php";
+}
+
 switch($op) {
 	default:
 	case 'list':
@@ -44,7 +51,7 @@ switch($op) {
 		$form->display();
 		echo "<br />\n";
 		$user_count = $member_handler->getUserCount(new icms_db_criteria_Item('level', '-1'));
-			if(count($user_count)>1){
+			if(count((array) $user_count)>1){
 				$form = new icms_form_Theme(_AM_PROFILE_REMOVEDUSERS, 'form', 'user.php');
 				$form->addElement(new icms_form_elements_select_User(_AM_PROFILE_SELECTUSER, 'id', false, false, false, false, true, true));
 				$form->addElement(new icms_form_elements_Hidden('op', 'editordeleteormasquerade'));

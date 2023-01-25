@@ -61,9 +61,27 @@ $buttonText = array(
     'prevButtonText'=>$_POST['prevButtonText'],
     'saveButtonText'=>$_POST['saveButtonText'],
     'nextButtonText'=>$_POST['nextButtonText'],
-    'finishButtonText'=>$_POST['finishButtonText']
+    'finishButtonText'=>$_POST['finishButtonText'],
+    'printableViewButtonText'=>$_POST['printableViewButtonText']
 );
 
+$navstyle = 1;
+if($_POST['navstyletabs'] == 1 AND $_POST['navstylebuttons'] == 1) {
+    $navstyle = 2;
+} elseif($_POST['navstyletabs'] != 1 AND $_POST['navstylebuttons'] != 1) {
+    $navstyle = 3; // show nothing!
+} elseif($_POST['navstyletabs'] == 1 AND $_POST['navstylebuttons'] != 1) {
+    $navstyle = 1;    
+} elseif($_POST['navstyletabs'] != 1 AND $_POST['navstylebuttons'] == 1) {
+    $navstyle = 0;    
+}
+
+$column1width = null;
+if(isset($_POST['singlecolumn1width']) AND isset($screens['displaycolumns']) AND $screens['displaycolumns'] == 1) {
+    $column1width = $_POST['singlecolumn1width'];     
+} elseif(isset($_POST['doublecolumn1width']) AND isset($screens['displaycolumns']) AND $screens['displaycolumns'] == 2) {
+    $column1width = $_POST['doublecolumn1width'];
+}
 
 $screen->setVar('paraentryform',$screens['paraentryform']);
 $screen->setVar('paraentryrelationship',$screens['paraentryrelationship']);
@@ -71,13 +89,15 @@ $screen->setVar('donedest',$screens['donedest']);
 $screen->setVar('buttontext', serialize($buttonText)); // ugh. multipage screen insert does not call cleanvars (which serializes arrays if necessary), so we must serialize now so when getVars is called to retrieve value to put into the insert statement, it can unserialize the data (getVars unserliazes data declared as array in the class)
 $screen->setVar('printall',$screens['printall']);
 $screen->setVar('finishisdone',$screens['finishisdone']);
-$screen->setVar('navstyle',$screens['navstyle']);
+$screen->setVar('navstyle',$navstyle);
 $screen->setVar('displaycolumns', isset($screens['displaycolumns']) ? $screens['displaycolumns'] : 2);
-$screen->setVar('column1width', isset($screens['column1width']) ? $screens['column1width'] : null);
+$screen->setVar('column1width', $column1width);
 $screen->setVar('column2width', isset($screens['column2width']) ? $screens['column2width'] : null);
 $screen->setVar('showpagetitles', $screens['showpagetitles'] ? 1 : 2);
 $screen->setVar('showpageindicator', $screens['showpageindicator'] ? 1 : 2);
 $screen->setVar('showpageselector', $screens['showpageselector'] ? 1 : 2);
+$screen->setVar('elementdefaults', isset($screens['elementdefaults']) ? $screens['elementdefaults'] : "");
+$screen->setVar('reloadblank',$screens['reloadblank']);
 
 
 if(!$screen_handler->insert($screen)) {

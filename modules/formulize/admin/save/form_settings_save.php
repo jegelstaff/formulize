@@ -61,7 +61,7 @@ if(($_POST['new_app_yes_no'] == "yes" AND $_POST['applications-name'])) {
 }
 
 // get all the existing applcations that this form object was assigned to
-if(isset($_POST['apps']) AND count($_POST['apps']) > 0) {
+if(isset($_POST['apps']) AND count((array) $_POST['apps']) > 0) {
   $selectedAppObjects = $application_handler->get($_POST['apps']);
 }
 
@@ -108,17 +108,16 @@ if($_POST['formulize_admin_key'] == "new") {
   global $xoopsDB;
 
   // create the default screens for this form
-  $formScreenHandler = xoops_getmodulehandler('formScreen', 'formulize');
-  $defaultFormScreen = $formScreenHandler->create();
-  $formScreenHandler->setDefaultFormScreenVars($defaultFormScreen, $formObject->getVar('title'), $fid);
+  $multiPageScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+  $defaultFormScreen = $multiPageScreenHandler->create();
+  $multiPageScreenHandler->setDefaultFormScreenVars($defaultFormScreen, $formObject->getVar('title').' Form', $fid, $formObject->getVar('title')); // defaultFormScreen object "passed by reference by default" (or more precisely, the pointer to the object is passed by value, since that's "object variables" are)
 
-
-  if(!$defaultFormScreenId = $formScreenHandler->insert($defaultFormScreen)) {
+  if(!$defaultFormScreenId = $multiPageScreenHandler->insert($defaultFormScreen)) {
     print "Error: could not create default form screen";
   }
   $listScreenHandler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
     $screen = $listScreenHandler->create();
-    $listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $formObject->getVar('title'), $fid);
+    $listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $formObject->getVar('title').' List', $fid);
 
   if(!$defaultListScreenId = $listScreenHandler->insert($screen)) {
     print "Error: could not create default list screen";

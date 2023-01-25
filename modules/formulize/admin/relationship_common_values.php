@@ -92,6 +92,7 @@ function generateElementList($form) {
             $saveoptions[$ele->getVar('ele_id')] = $ele->getVar('ele_colhead') ? $ele->getVar('ele_colhead') : $ele->getVar('ele_caption');
         }
     }
+    $saveoptions[-1] = 'Entry ID (experimental!)';
     return $saveoptions;
 }
 

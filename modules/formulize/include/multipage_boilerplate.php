@@ -39,7 +39,7 @@ function submitForm(page, prevpage) {
 function multipageSetHiddenFields(page, prevpage) {
   if(page == <?php print $thanksPage; ?>) {
     window.document.formulize_mainform.ventry.value = ''; 
-    jQuery('form[name=formulize]').attr('action', '<?php print $done_dest; ?>');
+    jQuery('form[name=formulize_mainform]').attr('action', '<?php print $done_dest; ?>');
   }
   window.document.formulize_mainform.formulize_currentPage.value = page<?php print $screen ? "+'-".$screen->getVar('sid')."'" : ""; ?>;
   window.document.formulize_mainform.formulize_prevPage.value = prevpage<?php print $screen ? "+'-".$screen->getVar('sid')."'" : ""; ?>;
@@ -57,6 +57,13 @@ function pageJump(options, prevpage) {
     return false;
 }
 
+jQuery('.navtab').click(function(){
+    var targetPage = jQuery(this).attr('this-page');
+    if (targetPage > 0) {
+        submitForm(targetPage, <?php print $currentPage; ?>);
+    }
+});
+
 </script><noscript>
 <h1>You do not have javascript enabled in your web browser.  This form will not work with your web browser.  Please contact the webmaster for assistance.</h1>
 </noscript>
@@ -64,18 +71,30 @@ function pageJump(options, prevpage) {
 
 if($currentPage == $thanksPage) {
 
+    // have not got into displayForm, so none of the navigation metadata we would normally rely on has been parsed and set yet :(
+    // need to deduce the form, entry, and page from 
+
     if(is_array($settings)) {
         print "<form name=calreturnform action=\"$done_dest\" method=post>\n";
         writeHiddenSettings($settings, null, array(), array(), $screen);
         if($_POST['go_back_form']) {
-            $goBackParts = explode('-', $_POST['go_back_page']);
+            $go_back_page = $_POST['go_back_page'];
+            $go_back_entry = intval($_POST['go_back_entry']);
+            $go_back_form = intval($_POST['go_back_form']);
+        } elseif(isset($GLOBALS['formulize_displayingSubform'])) { // if we land on the thanks page of a subform because all pages fail conditions, then we'll be here and we should set things to go back to the prior screen and page and entry
+            $go_back_page = $_POST['formulize_prevPage'];
+            $go_back_entry = intval($GLOBALS['formulize_displayingSubform']['originalEntry']);
+            $go_back_form = intval($GLOBALS['formulize_displayingSubform']['originalFid']);
+        }
+        if($go_back_page AND $go_back_entry AND $go_back_form) {
+            $goBackParts = explode('-', $go_back_page);
             foreach($goBackParts as $i=>$part) {
                 $goBackParts[$i] = intval($part);
             }
             $go_back_page = implode('-', $goBackParts);
-            print "<input type='hidden' name='go_back_form' value='".intval($_POST['go_back_form'])."'>
-            <input type='hidden' name='go_back_entry' value='".intval($_POST['go_back_entry'])."'>
-            <input type='hidden' name='go_back_page' value='".$go_back_page."'>";
+            print "<input type='hidden' name='go_back_form' value='".$go_back_form."'>
+                <input type='hidden' name='go_back_entry' value='".$go_back_entry."'>
+                <input type='hidden' name='go_back_page' value='".$go_back_page."'>";
         }
         print "</form>";
     }

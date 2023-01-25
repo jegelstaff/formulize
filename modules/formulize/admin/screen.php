@@ -53,7 +53,7 @@ if ($screen_id == "new") {
     $config_handler = $config_handler = xoops_gethandler('config');
     $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
     $settings['useToken'] = $formulizeConfig['useToken'];
-    $settings['anonNeedsPasscode'] = 0;
+    $settings['anonNeedsPasscode'] = 1;
     $screenName = "New screen";
 } else {
     $screen_handler = xoops_getmodulehandler('screen', 'formulize');
@@ -88,7 +88,7 @@ if ($screen_id == "new") {
     $adminPage["template"] = "ABC, mellonfarmers!";
 }
 
-if ($aid == 0) {
+if (!$aid) {
     $appName = "Forms with no app";
 } else {
   $application_handler = xoops_getmodulehandler('applications','formulize');
@@ -116,9 +116,7 @@ $relationshipSettings = array(
 if ($screen_id != 'new') {
   $relationshipSettings['frid'] = $screen->getVar('frid');
   $templates = array();
-  $multipageTemplates = array();
   $templates['selectedTheme'] =  $screen->getVar('theme');
-  $multipageTemplates['selectedTheme'] =  $screen->getVar('theme');
 }
 
 // prepare data for sub-page
@@ -127,8 +125,9 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $templates['toptemplate'] = str_replace("&", "&amp;", $screen->getTemplate('toptemplate', $screen->getVar('theme')));
   $templates['bottomtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('bottomtemplate', $screen->getVar('theme')));
   $templates['listtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('listtemplate', $screen->getVar('theme')));
-  $templates['usingTemplates'] = ($templates['toptemplate'] OR $templates['bottomtemplate'] OR $templates['listtemplate']);
-  
+  $templates['openlisttemplate'] = str_replace("&", "&amp;", $screen->getTemplate('openlisttemplate', $screen->getVar('theme')));
+  $templates['closelisttemplate'] = str_replace("&", "&amp;", $screen->getTemplate('closelisttemplate', $screen->getVar('theme')));
+  $templates['usingTemplates'] = ($templates['toptemplate'] OR $templates['bottomtemplate'] OR $templates['listtemplate'] OR $templates['openlisttemplate'] OR $templates['closelisttemplate']);
   
   // view data
   // gather all the available views
@@ -148,7 +147,7 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $viewOptions['mine'] = _AM_FORMULIZE_SCREEN_LOE_DVMINE;
   $viewOptions['group'] = _AM_FORMULIZE_SCREEN_LOE_DVGROUP;
   $viewOptions['all'] = _AM_FORMULIZE_SCREEN_LOE_DVALL;
-  for($i=0;$i<count($views);$i++) {
+  for($i=0;$i<count((array) $views);$i++) {
       if (!$viewPublished[$i]) { continue; }
       $viewOptions[$views[$i]] = $viewNames[$i];
       if ($viewFrids[$i]) {
@@ -214,6 +213,7 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
         $advanceViewSelected[$index]["column"] = $arr[0];
         $advanceViewSelected[$index]["text"] = $arr[1];
         $advanceViewSelected[$index]["sort"] = $arr[2];
+        $advanceViewSelected[$index]["searchtype"] = $arr[3];
         $index++;
     }
     
@@ -221,7 +221,12 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $templates['listtemplatehelp'] = $listTemplateHelp;
 
   $entries = array();
-  $entries['advanceviewoptions'] = array(0=>_AM_ELE_SELECT_NONE)+$elementOptions; // add a 0 value default to the element list
+  $entries['advanceviewoptions'] = array(0=>_AM_ELE_SELECT_NONE)+array(
+        'creation_uid'=>_formulize_DE_CREATED,
+        'mod_uid'=>_formulize_DE_LASTMOD,
+        'creation_datetime'=>_formulize_DE_CALC_CREATEDATE,
+        'mod_datetime'=>_formulize_DE_CALC_MODDATE)+$elementOptions; // add a 0 value default to the element list
+  $entries['advanceviewsearchtypeoptions'] = array('Box'=>'Search Box','Filter'=>'Dropdown List', 'MultiFilter'=>'Checkboxes', 'DateRange'=>'Date Range');
   $entries['advanceview'] = $advanceViewSelected;
   $entries['defaultview'] = $screen->getVar('defaultview');
   // Convert to arrays if a legacy value
@@ -282,7 +287,7 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   // custom button data
   $custom = array();
   $applyToOptions = array('inline'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_INLINE, 'selected'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_SELECTED, 'all'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_ALL, 'new'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEW, 'new_per_selected'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEWPERSELECTED);
-  if (count($allFids) > 1) {
+  if (count((array) $allFids) > 1) {
     foreach ($allFids as $i=>$thisFid) {
       if ($thisFid == $form_id) { continue; } // don't treat the current form as if it's an 'other' form
       $applyToOptions['new_'.$thisFid] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEW_OTHER . printSmart($allFidObjs[$thisFid]->getVar('title'), 20) . "'";
@@ -297,7 +302,7 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
       $custom['custombuttons'][$buttonId]['content'] = $buttonData;
       $custom['custombuttons'][$buttonId]['content']['id'] = $buttonId; // add id to the date for the template
       $custom['custombuttons'][$buttonId]['name'] = $buttonData['handle'];
-      $custom['custombuttons'][$buttonId]['groups'] = unserialize($buttonData['groups']);
+      $custom['custombuttons'][$buttonId]['groups'] = unserialize((string) $buttonData['groups']);
       foreach($buttonData as $key=>$value) {
         if (is_numeric($key)) { // effects have numeric keys
           if ($buttonData['applyto'] == 'custom_code') {
@@ -361,7 +366,7 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
 
     // group entries
     $pages = array();
-    for($i=0;$i<(count($pageTitles)+$pageCounterOffset);$i++) {
+    for($i=0;$i<(count((array) $pageTitles)+$pageCounterOffset);$i++) {
     $pages[$i]['name'] = $pageTitles[$i];
     $pages[$i]['content']['index'] = $i;
     $pages[$i]['content']['number'] = $i+1;
@@ -373,14 +378,17 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
 
     // options data
     $multipageOptions = array();
+    $multipageOptions['reloadblank'] = $screen->getVar('reloadblank') ? "blank" : "entry";
     $multipageOptions['allformoptions'] = $allFormOptions;
     $multipageOptions['paraentryform'] = $screen->getVar('paraentryform');
     $multipageOptions['paraentryrelationship'] = $screen->getVar('paraentryrelationship');
     $multipageOptions['donedest'] = $screen->getVar('donedest');
     $multipageOptions['finishisdone'] = $screen->getVar('finishisdone');
-    $multipageOptions['navstyle'] = $screen->getVar('navstyle') ? $screen->getVar('navstyle') : 0;
+    $navstyle = $screen->getVar('navstyle') ? $screen->getVar('navstyle') : 0;
+    $multipageOptions['navstyletabs'] = ($navstyle == 1 OR $navstyle == 2) ? 'checked' : '';
+    $multipageOptions['navstylebuttons'] = ($navstyle == 0 OR $navstyle == 2) ? 'checked' : '';
     $multipageOptions['showpageselector'] = $screen->getUIOption('showpageselector') ? 'checked' : '';
-    $multipageOptions['showpageindicator'] = $screen->getUIOption('showpageselector') ? 'checked' : '';
+    $multipageOptions['showpageindicator'] = $screen->getUIOption('showpageindicator') ? 'checked' : '';
     $multipageOptions['showpagetitles'] = $screen->getUIOption('showpagetitles') ? 'checked' : '';
     $buttonText = $screen->getVar('buttontext');
     $multipageOptions['thankyoulinktext'] = is_array($buttonText) ? $buttonText['thankyoulinktext'] : $buttonText;
@@ -390,6 +398,7 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
     $multipageOptions['saveButtonText'] = (is_array($buttonText) AND $buttonText['saveButtonText']) ? $buttonText['saveButtonText'] :  _formulize_SAVE;
     $multipageOptions['finishButtonText'] = (is_array($buttonText) AND $buttonText['finishButtonText']) ? $buttonText['finishButtonText'] : _formulize_DMULTI_SAVE;
     $multipageOptions['nextButtonText'] = (is_array($buttonText) AND $buttonText['nextButtonText']) ? $buttonText['nextButtonText'] : _formulize_DMULTI_NEXT;
+    $multipageOptions['printableViewButtonText'] = (is_array($buttonText)) ? $buttonText['printableViewButtonText'] : _formulize_PRINTVIEW;
     $multipageOptions['printall'] = $screen->getVar('printall');
     $multipageOptions['displaycolumns'] = $screen->getVar('displaycolumns') == 1 ? "onecolumn" : "twocolumns";
     $multipageOptions['column1width'] = $screen->getVar('column1width') ? $screen->getVar('column1width') : '20%';
@@ -402,14 +411,35 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
     $multipageText['thankstext'] = undoAllHTMLChars($screen->getVar('thankstext', "e")); // need the e to make sure it doesn't convert links to clickable HTML!
 
     // template data
-    $multipageTemplates['toptemplate'] = str_replace("&", "&amp;", $screen->getTemplate('toptemplate', $screen->getVar('theme')));
-    $multipageTemplates['elementtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('elementtemplate', $screen->getVar('theme')));
-    $multipageTemplates['bottomtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('bottomtemplate', $screen->getVar('theme')));
-    $templates['usingTemplates'] = ($templates['toptemplate'] OR $templates['bottomtemplate'] OR $templates['elementtemplate']);
+    updateMultipageTemplates($screen);
+    $templates['toptemplate'] =  str_replace("&", "&amp;", $screen->getTemplate('toptemplate', $screen->getVar('theme')));
+    $templates['bottomtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('bottomtemplate', $screen->getVar('theme')));
+    $templates['elementtemplate1'] = str_replace("&", "&amp;", $screen->getTemplate('elementtemplate1', $screen->getVar('theme')));
+    $templates['elementtemplate2'] = str_replace("&", "&amp;", $screen->getTemplate('elementtemplate2', $screen->getVar('theme')));
+    $templates['elementcontainero'] = str_replace("&", "&amp;", $screen->getTemplate('elementcontainero', $screen->getVar('theme')));
+    $templates['elementcontainerc'] = str_replace("&", "&amp;", $screen->getTemplate('elementcontainerc', $screen->getVar('theme')));
+    $templates['usingTemplates'] = ($templates['toptemplate'] OR $templates['bottomtemplate'] OR $templates['elementtemplate1'] OR $templates['elementtemplate2'] OR $templates['elementcontainero'] OR $templates['elementcontainerc']);
     
     // pages data
     $multipagePages = array();
     $multipagePages['pages'] = $pages;
+    
+    $element_list = multiPageScreen_addToOptionsList($form_id, array());
+    $frid = $screen->getVar("frid");
+    if ($frid) {
+        $framework_handler =& xoops_getModuleHandler('frameworks');
+        $frameworkObject = $framework_handler->get($frid);
+        foreach($frameworkObject->getVar("links") as $thisLinkObject) {
+            if ($thisLinkObject->getVar("unifiedDisplay") AND $thisLinkObject->getVar("relationship") == 1) {
+                $thisFid = $thisLinkObject->getVar("form1") == $form_id ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
+                $element_list = multiPageScreen_addToOptionsList($thisFid, $element_list);
+            }
+        }
+    }
+    $multipageOptions['element_list'] = $element_list;
+    $multipageOptions['elementdefaults'] = $screen->getVar('elementdefaults');
+    
+    
 }
 
 if ($screen_id != "new" && $settings['type'] == 'form') {
@@ -535,11 +565,12 @@ if ($screen_id != "new" && $settings['type'] == 'calendar') {
 }
 
 $templates['themes'] = icms_view_theme_Factory::getThemesList();
-$multipageTemplates['themes'] = icms_view_theme_Factory::getThemesList();
-$themeDefaultPath = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$screen->getVar('theme')."/default/".$settings['type']."/";
+global $xoopsConfig;
+$themeFolder = $screen ? $screen->getVar('theme') : $xoopsConfig['theme_set'];
+$themeDefaultPath = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$themeFolder."/default/".$settings['type']."/";
 $templates['seedtemplates'] = $themeDefaultPath;
 if(!file_exists($themeDefaultPath)) {
-    $templates['seedtemplates'] = str_replace($screen->getVar('theme').'/default', 'default', $themeDefaultPath);    
+    $templates['seedtemplates'] = str_replace($themeFolder.'/default', 'default', $themeDefaultPath);    
 }
 
 // common values should be assigned to all tabs
@@ -610,7 +641,7 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
     $adminPage['tabs'][] = array(
         'name'      => _AM_FORM_SCREEN_TEMPLATES,
         'template'  => "db:admin/screen_multipage_templates.html",
-        'content'   => $multipageTemplates + $common
+        'content'   => $templates + $common
     );
 }
 

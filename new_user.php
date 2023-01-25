@@ -30,7 +30,7 @@ if (isset($_GET['newuser']) && ($_GET['newuser'] == $_SESSION['newuser'])) {
                 $tokenGroupsString = $token->getVar('groups');
                 $tokenGroups = explode(" ", $tokenGroupsString);
                 $newFormulizeUser = new FormulizeUser(array(
-                   'login_name'=>$_POST['login_name'],
+                   'login_name'=>preg_replace('/[^a-zA-Z0-9\_\-]/', '', $_POST['login_name']),
                    'uname'=>$_POST['uname'],
                    'email'=>$_POST['email'],
                    'timezone_offset'=>$_POST['timezone_offset']
@@ -75,7 +75,7 @@ function renderRegForm(){
         if (count($steps) == 0) redirect_header(ICMS_URL.'/', 6, _MD_PROFILE_NOSTEPSAVAILABLE);
 
         //set some of the inputs with the info we get from google
-        $newuser->setVar('login_name', str_replace(" ","",$_SESSION['name']));
+        $newuser->setVar('login_name', preg_replace('/[^a-zA-Z0-9\_\-]/', '', $_SESSION['name']));
         $newuser->setVar('uname', $_SESSION['name']);
         $newuser->setVar('email', $_SESSION['email']);
 

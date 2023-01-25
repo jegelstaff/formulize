@@ -134,7 +134,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 	}
 	
 	$elementFilterSettings = $element->getVar('ele_filtersettings');
-	if($allowed AND count($elementFilterSettings[0]) > 0 AND (!$noSave OR $entry != 'new')) {
+	if($allowed AND is_array($elementFilterSettings[0]) AND count((array) $elementFilterSettings[0]) > 0 AND (!$noSave OR $entry != 'new')) {
 		// cache the filterElements for this element, so we can build the right stuff with them later in javascript, to make dynamically appearing elements
 		$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName] = $elementFilterSettings[0];
 		
@@ -156,7 +156,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		// find the filter indexes for 'match all' and 'match one or more'
 		$filterElementsAll = array();
 		$filterElementsOOM = array();
-		for($i=0;$i<count($filterTypes);$i++) {
+		for($i=0;$i<count((array) $filterTypes);$i++) {
 			if($filterTypes[$i] == "all") {
 				$filterElementsAll[] = $i;
 			} else {
@@ -227,7 +227,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 				list($lockUid, $lockUsername) = explode(",", file_get_contents(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName"));
 				if($lockUid != $user_id) {
 					// lock is still valid, hasn't expired yet.
-                    if (count($lockedEntries) == 0) {
+                    if (count((array) $lockedEntries) == 0) {
                         $label = json_encode(sprintf(_formulize_ENTRY_IS_LOCKED, $lockUsername));
                         print <<<EOF
 <script type='text/javascript'>
@@ -257,16 +257,16 @@ EOF;
 			$ele_value = loadValue($prevEntry, $element, $ele_value, $data_handler->getEntryOwnerGroups($entry), $groups, $entry, $profileForm); // get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
 		}
 		
-		formulize_benchmark("About to render element ".$element->getVar('ele_caption').".");
+		//formulize_benchmark("About to render element ".$element->getVar('ele_caption').".");
 		
 		$form_ele =& $renderer->constructElement($renderedElementName, $ele_value, $entry, $isDisabled, $screen);
 		if(strstr($_SERVER['PHP_SELF'], "formulize/printview.php") AND is_object($form_ele)) {
 			$form_ele->setDescription('');
 		}
-		formulize_benchmark("Done rendering element.");
+		//formulize_benchmark("Done rendering element.");
 		
 		// put a lock on this entry in this form, so we know that the element is being edited.  Lock will be removed next time the entry is saved.
-		if (!$noSave AND $entry > 0 AND !isset($lockedEntries[$form_id][$entry])
+		if (!$noSave AND $entry != "new" AND $entry > 0 AND !isset($lockedEntries[$form_id][$entry])
             and !isset($entriesThatHaveBeenLockedThisPageLoad[$form_id][$entry]))
         {
             if (is_writable(XOOPS_ROOT_PATH."/modules/formulize/temp/")) {
@@ -349,17 +349,21 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
     $evaluationCondition = "";
     
     // convert the internal database representation to the displayed value, if this element has uitext that we're supposed to use
-        $element_metadata = formulize_getElementMetaData($element, true);
-    if($element_metadata['ele_uitextshow']) {
+    // translate yes/no choices for yes/no elements if French is active language
+    global $xoopsConfig;
         foreach ($filterElements as $key => $element) {
-        if (isset($element_metadata['ele_uitext'])) {
+        $element_metadata = formulize_getElementMetaData($element, true);
+        if($element_metadata['ele_uitextshow'] AND isset($element_metadata['ele_uitext'])) {
             $filterTerms[$key] = formulize_swapUIText($filterTerms[$key], unserialize($element_metadata['ele_uitext']));
         }
+        if($element_metadata['ele_type'] == 'yn' AND ($filterTerms[$key] == 'Yes' OR $filterTerms[$key] == 'No') AND $xoopsConfig['language'] == 'french') {
+            $filterTerms[$key] = $filterTerms[$key] == 'Yes' ? 'Oui' : $filterTerms[$key];
+            $filterTerms[$key] = $filterTerms[$key] == 'No' ? 'Non' : $filterTerms[$key];
     }
     }
 
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
-	for($io=0;$io<count($indexes);$io++) {
+	for($io=0;$io<count((array) $indexes);$io++) {
 		$i = $indexes[$io];
 		if(!($evaluationCondition == "")) {
 			$evaluationCondition .= " $match ";
@@ -404,19 +408,11 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 		if(isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry][$filterElements[$i]])) {
 			$compValue = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry][$filterElements[$i]];
 		} elseif($entry == "new") {
-			// for textboxes, let's try to get their default value
-			// for other elements, generate the default is too tricky to get it to work at present, not enough time available
 			$elementObject = $element_handler->get($filterElements[$i]);
 			if(is_object($elementObject)) {
-				$ele_type = $elementObject->getVar('ele_type');
-				if($ele_type == "text" OR $ele_type == "textarea") {
-					$ele_value = $elementObject->getVar('ele_value');
-					$defaultKey = $ele_type == "text" ? 2 : 0; // default key is in different places for different types of elements
-                    $placeholder = $ele_type == "text" ? $ele_value[11] : "";
-					$compValue = getTextboxDefault($ele_value[$defaultKey], $elementObject->getVar('id_form'), $entry, $placeholder);
-				} else {
-					$compValue = "";
-				}
+                // get defaults for certain element types, function needs expanding
+                $defaultValueMap = getEntryDefaults($elementObject->getVar('id_form'),$entry);
+                $compValue = isset($defaultValueMap[$elementObject->getVar('ele_id')]) ? $defaultValueMap[$elementObject->getVar('ele_id')] : "";
 			} else {
 				$compValue = "";
 			}

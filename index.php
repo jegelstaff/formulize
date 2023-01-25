@@ -11,7 +11,9 @@
  **/
 
 /** Need the mainfile */
-include "mainfile.php";
+if (!defined("XOOPS_MAINFILE_INCLUDED")) {
+    include_once "mainfile.php";
+}
 
 $member_handler = icms::handler('icms_member');
 $group = $member_handler->getUserBestGroup((@is_object(icms::$user) ? icms::$user->getVar('uid') : 0));
@@ -41,6 +43,8 @@ if (isset($icmsConfig['startpage']) && $icmsConfig['startpage'] != "" && $icmsCo
 			$xoopsOption['show_cblock'] = 1;
 			/** Included to start page rendering */
 			include "header.php";
+            global $xoopsTpl;
+            $xoopsTpl->assign('openClass', 'site-layout__sidebar--open');
 			/** Included to complete page rendering */
 			include "footer.php";
 		}
@@ -52,6 +56,8 @@ if (isset($icmsConfig['startpage']) && $icmsConfig['startpage'] != "" && $icmsCo
 	$xoopsOption['show_cblock'] = 1;
 	/** Included to start page rendering */
 	include "header.php";
+    global $xoopsTpl;
+    $xoopsTpl->assign('openClass', 'site-layout__sidebar--open');
 	/** Included to complete page rendering */
 	include "footer.php";
 }

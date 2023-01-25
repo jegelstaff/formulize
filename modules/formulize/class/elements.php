@@ -227,7 +227,7 @@ class formulizeElementsHandler {
 		}
 		return $instance;
 	}
-	function &create() {
+	function create() {
 		return new formulizeformulize();
 	}
 
@@ -307,7 +307,7 @@ class formulizeElementsHandler {
 				foreach( $element->cleanVars as $k=>$v ){
 					${$k} = $v;
 				}
-   		if( $element->isNew() || $ele_id == 0){
+   		if( $element->isNew() || !$ele_id ) { // isNew is never set on the element object or parent??
 				$sql = sprintf("INSERT INTO %s (
 				id_form, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_req, ele_value, ele_uitext, ele_uitextshow, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private, ele_encrypt, ele_filtersettings, ele_use_default_when_blank, ele_exportoptions
 				) VALUES (
@@ -396,7 +396,7 @@ class formulizeElementsHandler {
 			print "Error: this element could not be saved in the database.  SQL: $sql<br>".$this->db->error();
 			return false;
 		}
-		if( $ele_id == 0 ){ // only occurs for new elements
+		if( !$ele_id ){ // only occurs for new elements
 			$ele_id = $this->db->getInsertId();
 			$element->setVar('ele_id', $ele_id);
 			if(!$element->getVar('ele_handle')) { // set the handle same as the element id on new elements, as long as the handle wasn't actually passed in with the element
@@ -454,13 +454,13 @@ class formulizeElementsHandler {
 	}
 
 	// id_as_key can be true, false or "handle" or "element_id" in which case handles or the element ids will be used
-	function &getObjects($criteria = null, $id_form , $id_as_key = false){
+	function &getObjects($criteria = null, $id_form = 0, $id_as_key = false){
 		$ret = array();
 		$limit = $start = 0;
 //		awareness of $criteria added, Sept 1 2005, jwe
 //		removal of ele_display=1 from next line and addition of the renderWhere line in the conditional below
-		$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE id_form='.$id_form;
-
+        $idFormOperator = $id_form > 0 ? "=" : ">";
+		$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE id_form '.$idFormOperator.' '.intval($id_form);
 
 		if( isset($criteria)) { 
 			$sql .= $criteria->render() ? ' AND ('.$criteria->render().')' : '';
@@ -542,7 +542,7 @@ class formulizeElementsHandler {
 	}
 	
 	// this method is used by custom elements, to do final output from the "local" formatDataForList method, so the custom element developer can simply set booleans there, and they will be enforced here
-	function formatDataForList($value) {
+	function formatDataForList($value, $handle="", $entry_id=0) {
 		global $myts;
 		if($this->length == 0) {
 			$this->length = 35;

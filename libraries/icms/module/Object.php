@@ -299,7 +299,7 @@ class icms_module_Object extends icms_core_Object {
 				'headermenucount' => count($this->getAdminHeaderMenu()),
 				'submenus' => $submenus,
 				'currentsub' => $currentsub,
-				'submenuscount' => count($submenus)
+				'submenuscount' => count((array) $submenus)
 			)
 		);
 		$tpl->display(ICMS_ROOT_PATH . '/modules/system/templates/admin/system_adm_modulemenu.html');

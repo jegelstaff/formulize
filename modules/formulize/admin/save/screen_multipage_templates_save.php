@@ -52,8 +52,7 @@ if($formObject->getVar('lockedform')) {
 // check if the user has permission to edit the form
 if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mid)) {
   return;
-}  // code changed by Gordon Woodmansey, 2012-08-29
-
+}  
 
 $screen->setVar('toptemplate',htmlspecialchars(trim($screens['toptemplate'])));
 $screen->setVar('elementtemplate',htmlspecialchars(trim($screens['elementtemplate'])));
@@ -62,4 +61,3 @@ $screen->setVar('bottomtemplate',htmlspecialchars(trim($screens['bottomtemplate'
 if(!$screen_handler->insert($screen)) {
   print "Error: could not save the screen properly: ".$xoopsDB->error();
 }
-?>

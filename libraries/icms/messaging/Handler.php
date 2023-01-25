@@ -142,6 +142,10 @@ class icms_messaging_Handler {
 	public function useMail() {
 		$this->isMail = true;
 	}
+    
+    public function isHTML() {
+        $this->multimailer->isHTML();
+    }
 
 	public function usePM() {
 		$this->isPM = true;
@@ -162,7 +166,9 @@ class icms_messaging_Handler {
 				}
 				return false;
 			}
-			$this->setBody(fread($fd, filesize($path)));
+            if(filesize($path) > 0) {
+                $this->setBody(fread($fd, filesize($path)));
+            } 
 		}
 
 		// for sending mail only

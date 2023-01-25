@@ -29,7 +29,6 @@
 	    <tr>
 		    <th>Name</th>
 			<th>id</th>
-		    <th>Type</th>
 		    <th>Default</th>
 		    <th>Action</th>
             <th>Relationships</th>
@@ -38,11 +37,9 @@
 	      <tr>
 		      <td><label for="screens-defaultform-<{$screen.sid}>"><a class="configscreen" target-sid="<{$screen.sid}>" href="?page=screen&aid=<{$content.aid}>&fid=<{$content.fid}>&sid=<{$screen.sid}>"><img src="../images/kedit.png"> <{$screen.title}></a></label></td>
 					<td><{$screen.sid}></td>
-		      <td><{if $screen.type eq 'multiPage'}>Multi page<{else}>Regular<{/if}></td>
 		      <td><div class="form-radios"><input type="radio" id="screens-defaultform-<{$screen.sid}>" name="screens-defaultform" value="<{$screen.sid}>"<{if $screen.sid eq $content.defaultform}> checked="checked"<{/if}>/></div></td>
   		    <td><a href="<{$xoops_url}>/modules/formulize/index.php?sid=<{$screen.sid}>" target="_blank"><img src="../images/kfind.png"> View</a>&nbsp;&nbsp;&nbsp;&nbsp;
-                <a target="<{$screen.sid}>" href="" <{if $screen.type eq 'form'}> class="cloneformscreen"<{/if}>
-                <{if $screen.type eq 'multiPage'}> class="clonemultiscreen"<{/if}>/>
+                <a target="<{$screen.sid}>" href="" class="clonemultiscreen" />
                 <img src="../images/clone.gif">Clone</a>&nbsp;&nbsp;&nbsp;&nbsp;
                 <a class="deletescreen" target="<{$screen.sid}>" href=""><img src="../images/editdelete.gif"> Remove</a></td>
             <td>
@@ -80,7 +77,7 @@
   </div>
 
 
-    <{if $content.template|@count != 0}>
+    <{if $content.template|is_array AND $content.template|@count != 0}>
     <h2><{$smarty.const._AM_SCREEN_TEMPLATESCREENS}></h2>
     <div class="form-item">
         <table>
@@ -105,7 +102,7 @@
     </div>
     <{/if}>
 
-    <{if $content.calendar|@count != 0}>
+    <{if $content.calendar|is_array AND $content.calendar|@count != 0}>
 
     <h2><{$smarty.const._AM_SCREEN_CALENDARSCREENS}></h2>
     <div class="form-item">
@@ -122,6 +119,33 @@
                 <td><a href="<{$xoops_url}>/modules/formulize/index.php?sid=<{$screen.sid}>" target="_blank"><img src="../images/kfind.png"> View</a>&nbsp;&nbsp;&nbsp;&nbsp;
                     <a class="clonecalendarscreen" target="<{$screen.sid}>" href=""><img src="../images/clone.gif">Clone</a>&nbsp;&nbsp;&nbsp;&nbsp;
                     <a class="deletescreen" target="<{$screen.sid}>" href=""><img src="../images/editdelete.gif"> Remove</a></td>
+            </tr>
+            <{/foreach}>
+        </table>
+    </div>
+    <{/if}>
+        
+    <{if $content.legacy|is_array AND $content.legacy|@count != 0}>
+
+    <h2>Legacy Form Screens</h2>
+    <p>These screens are the old "Regular" single page form screens.<br>
+    There is a new version of each of these screens, under "Form Screens" above.<br>
+    The new versions can have one or more pages instead of being limited to just one.<br><br></p>
+    <div class="form-item">
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>id</th>
+                <th>Default</th>
+                <th>Action</th>
+            </tr>
+            <{foreach from=$content.legacy item=screen}>
+            <tr>
+                <td><a class="configscreen" target-sid="<{$screen.sid}>" href="?page=screen&aid=<{$content.aid}>&fid=<{$content.fid}>&sid=<{$screen.sid}>"><img src="../images/kedit.png"> <{$screen.title}></a></label></td>
+                <td><{$screen.sid}></td>
+                <td><div class="form-radios"><input type="radio" name="legacydefaultform" <{if $screen.sid eq $content.defaultform}> checked="checked"<{/if}> disabled /></div></td>
+                <td><a href="<{$xoops_url}>/modules/formulize/index.php?sid=<{$screen.sid}>" target="_blank"><img src="../images/kfind.png"> View</a>&nbsp;&nbsp;&nbsp;&nbsp;
+                <a class="deletescreen" target="<{$screen.sid}>" href=""><img src="../images/editdelete.gif"> Remove</a></td>
             </tr>
             <{/foreach}>
         </table>

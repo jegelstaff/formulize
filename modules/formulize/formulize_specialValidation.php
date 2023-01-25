@@ -114,7 +114,7 @@ if($element_id==88) {
                 $conflictSections[] = $conflictCode."-".display($conflict,"sections_section_number");
             }
         }
-        if(count($conflictSections)>0) {
+        if(count((array) $conflictSections)>0) {
             $conflictText = "".implode(", ",$conflictSections);
         } else {
             $conflictText = "";

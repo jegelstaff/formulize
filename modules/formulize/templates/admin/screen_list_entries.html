@@ -21,10 +21,11 @@
       <tr>
 	<td><label><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_COLUMNS}></label></td>
 	<td><label><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_SEARCH_BY}></label></td>
+    <td><label><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_SEARCH_TYPE}></label></td>
 	<td><label><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_SORT_BY}></label></td>
 	<td></td>
       </tr>
-	<{if $content.advanceview|@count > 0}>
+	<{if $content.advanceview|is_array AND $content.advanceview|@count > 0}>
 	  <{foreach from=$content.advanceview key=index item=value}>
 	    <tr class="advanceviewcol" name="<{$index}>">
 	      <td>
@@ -35,6 +36,11 @@
 	      <td>
 		<input type="text" name="search-value[<{$index}>]" value="<{$value.text}>"></input>
 	      </td>
+          <td>
+        <select id="search-type-<{$index}>" name="search-type[<{$index}>]" size="1">
+		  <{html_options options=$content.advanceviewsearchtypeoptions selected=$value.searchtype}>
+		</select>
+          </td>
 	      <td>
 		<{if $value.sort == 1}>
 		  <input type="radio" name="sort-by" value=<{$index}> checked></input>
@@ -47,7 +53,7 @@
 	      </td>
 	    </tr>
 	  <{/foreach}>
-	  <input type="hidden" id="numberOfRows" name="rows" value=<{$content.advanceview|@count}>></input>
+	  <input type="hidden" id="numberOfRows" name="rows" value=<{if $content.advanceview|is_array}><{$content.advanceview|@count}><{/if}>></input>
 	<{else}>
 	    <tr class="advanceviewcol" name="0">
 	      <td>
@@ -58,12 +64,15 @@
 	      <td>
 		<input type="text" name="search-value[0]"></input>
 	      </td>
+          <td>
+            <select id="search-type-0" name="search-type[0]"><option label="Search Box" value="Box">Search Box</option><option label="Dropdown List" value="Filter">Dropdown List</option><option label="Checkboxes" value="MultiFilter">Checkboxes</option><option label="Date Range" value="DateRange">Date Range</option></select>
+          </td>
 	      <td>
 		<input type="radio" name="sort-by" value=0></input>
 	      </td>
 	      <td></td>
 	    </tr>
-	    <input type="hidden" id="numberOfRows" name="rows" value=<{$content.advanceview|@count}>></input>
+	    <input type="hidden" id="numberOfRows" name="rows" value=<{if $content.advanceview|is_array}><{$content.advanceview|@count}><{/if}>></input>
 	<{/if}>
     </table>
     <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_DESCRIPTION}></div>
@@ -210,10 +219,12 @@
   function addAdvanceViewRow(number) {
     appendContents1 = '<td><select id="cols-'+number+'" name="col-value['+number+']"></select></td>';
     appendContents2 = '<td><input type="text" name="search-value['+number+']"></input></td>';
+    appendContents25 = '<td><select id="search-type-'+number+'" name="search-type['+number+']"><option label="Search Box" value="Box">Search Box</option><option label="Dropdown List" value="Filter">Dropdown List</option><option label="Checkboxes" value="MultiFilter">Checkboxes</option><option label="Date Range" value="DateRange">Date Range</option></select></td>';
     appendContents3 = '<td><input type="radio" name="sort-by" value='+number+'></input></td>';
     $(".advanceview:last").append('<tr class="advanceviewcol" name="'+number+'"></tr>');
     $(".advanceviewcol:last").append(appendContents1);
     $(".advanceviewcol:last").append(appendContents2);
+    $(".advanceviewcol:last").append(appendContents25);
     $(".advanceviewcol:last").append(appendContents3);
     $(".advanceviewcol:last").append("<td class='removeImage'></td>");
   }

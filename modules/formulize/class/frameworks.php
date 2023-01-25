@@ -49,15 +49,6 @@ class formulizeFramework extends XoopsObject {
 			// but we'll keep it around if it did exist (prior to an upgrade) so we can check framework handles first when necessary
 			$handles = array();
 			$element_ids = array();
-			if($GLOBALS['formulize_versionFourOrHigher'] == false) {
-				$frame_elements_q = q("SELECT * FROM " . $xoopsDB->prefix("formulize_framework_elements") . " WHERE fe_frame_id=$frid");
-				if(isset($frame_elements_q[0])) { // elements are not a required part of a framework...well, they should be, but if they're not defined, that doesn't mean the rest of the data is invalid, so don't call NotAFramework on this framework
-					foreach($frame_elements_q as $row=>$value) {
-						$handles[$value['fe_element_id']] = $value['fe_handle'];
-						$element_ids[$value['fe_handle']] = $value['fe_element_id'];
-					}
-				}
-			}
 			$frame_links_q = q("SELECT * FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_frame_id=\"" . formulize_db_escape($frid). "\"");
 			if(!isset($frame_links_q[0])) {
 				$notAFramework = true;
@@ -317,12 +308,12 @@ class formulizeFrameworkLink extends XoopsObject {
             if (is_object($ele1)) {
                 $name1 = $ele1->getVar('ele_colhead') ? printSmart($ele1->getVar('ele_colhead')) : printSmart($ele1->getVar('ele_caption'));
             } else {
-                $name1 = '';
+                $name1 = $this->getVar('key1') == -1 ? 'Entry ID (experimental!)' : '';
             }
             if (is_object($ele2)) {
                 $name2 = $ele2->getVar('ele_colhead') ? printSmart($ele2->getVar('ele_colhead')) : printSmart($ele2->getVar('ele_caption'));
             } else {
-                $name2 = '';
+                $name2 = $this->getVar('key2') == -1 ? 'Entry ID (experimental!)' : '';
             }
             $link_options[$loi]['value'] = $this->getVar('key1') . "+" . $this->getVar('key2');
             $link_options[$loi]['name'] = _AM_FRAME_COMMON_VALUES . printSmart($name1,20) . " & " . printSmart($name2,20);

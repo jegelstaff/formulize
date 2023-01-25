@@ -63,11 +63,19 @@ $contentModule = $module_handler->getByDirname('content');
 $contentModuleId = $contentModule->getVar('mid');
 $profileModule = $module_handler->getByDirname('profile');
 $profileModuleId = $profileModule->getVar('mid');
+$protectorModule = $module_handler->getByDirname('protector');
+$protectorModuleId = $profileModule->getVar('mid');
+$timezone = new DateTimeZone(date_default_timezone_get());
+$testDate = new DateTime("December 31 1969", $timezone);
+$offset = $timezone->getOffset($testDate)/60/60;
+$year = date("Y");
 
 $formulizeStandaloneQueries = str_replace("REPLACE_WITH_PROFILE_MODULE_ID", $profileModuleId, $formulizeStandaloneQueries);
 $formulizeStandaloneQueries = str_replace("REPLACE_WITH_CONTENT_MODULE_ID", $contentModuleId, $formulizeStandaloneQueries);
 $formulizeStandaloneQueries = str_replace("REPLACE_WITH_FORMULIZE_MODULE_ID", $formulizeModuleId, $formulizeStandaloneQueries);
-
+$formulizeStandaloneQueries = str_replace("REPLACE_WITH_PROTECTOR_MODULE_ID", $protectorModuleId, $formulizeStandaloneQueries);
+$formulizeStandaloneQueries = str_replace("REPLACE_WITH_TIMEZONE", $offset, $formulizeStandaloneQueries);
+$formulizeStandaloneQueries = str_replace("REPLACE_WITH_YEAR", $year, $formulizeStandaloneQueries);
 
 $vars = & $_SESSION ['settings'];
 $link = @mysqli_connect ( $vars ['DB_HOST'], $vars ['DB_USER'], $vars ['DB_PASS'], true );

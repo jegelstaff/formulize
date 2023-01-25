@@ -446,7 +446,7 @@
    function reversePlots($Plots)
     {
      $Result = "";
-     for($i=count($Plots)-2;$i>=0;$i=$i-2) { $Result[] = $Plots[$i]; $Result[] = $Plots[$i+1]; }
+     for($i=count((array) $Plots)-2;$i>=0;$i=$i-2) { $Result[] = $Plots[$i]; $Result[] = $Plots[$i+1]; }
      return($Result);
     }
 

@@ -245,7 +245,7 @@ class formulizeNewSelectElementHandler extends formulizeElementsHandler {
 		if($_POST['optionsconditionsdelete']) { 
 			// go through the passed filter settings starting from the one we need to remove, and shunt the rest down one space
 			// need to do this in a loop, because unsetting and key-sorting will maintain the key associations of the remaining high values above the one that was deleted
-			$originalCount = count($_POST[$filter_key."_elements"]);
+			$originalCount = count((array) $_POST[$filter_key."_elements"]);
 			for($i=$deleteTarget;$i<$originalCount;$i++) { // 2 is the X that was clicked for this page
 				if($i>$deleteTarget) {
 					$_POST[$filter_key."_elements"][$i-1] = $_POST[$filter_key."_elements"][$i];
@@ -262,7 +262,7 @@ class formulizeNewSelectElementHandler extends formulizeElementsHandler {
 				}
 			}	
 		}
-		if(count($_POST[$filter_key."_elements"]) > 0){
+		if(count((array) $_POST[$filter_key."_elements"]) > 0){
 			$ele_value[5][0] = $_POST[$filter_key."_elements"];
 			$ele_value[5][1] = $_POST[$filter_key."_ops"];
 			$ele_value[5][2] = $_POST[$filter_key."_terms"];
@@ -306,7 +306,7 @@ class formulizeNewSelectElementHandler extends formulizeElementsHandler {
 
 			if($temparraykeys[0] === "{FULLNAMES}" OR $temparraykeys[0] === "{USERNAMES}") { // ADDED June 18 2005 to handle pulling in usernames for the user's group(s)
 				$ele_value[2]['{SELECTEDNAMES}'] = explode("*=+*:", $value);
-				if(count($ele_value[2]['{SELECTEDNAMES}']) > 1) { array_shift($ele_value[2]['{SELECTEDNAMES}']); }
+				if(count((array) $ele_value[2]['{SELECTEDNAMES}']) > 1) { array_shift($ele_value[2]['{SELECTEDNAMES}']); }
 				$ele_value[2]['{OWNERGROUPS}'] = $owner_groups;
 				break;
 			}
@@ -320,7 +320,7 @@ class formulizeNewSelectElementHandler extends formulizeElementsHandler {
 			} 
 
 			$selvalarray = explode("*=+*:", $value);
-			$numberOfSelectedValues = strstr($value, "*=+*:") ? count($selvalarray)-1 : 1; // if this is a multiple selection value, then count the array values, minus 1 since there will be one leading separator on the string.  Otherwise, it's a single value element so the number of selections is 1.
+			$numberOfSelectedValues = strstr($value, "*=+*:") ? count((array) $selvalarray)-1 : 1; // if this is a multiple selection value, then count the array values, minus 1 since there will be one leading separator on the string.  Otherwise, it's a single value element so the number of selections is 1.
 			
 			$assignedSelectedValues = array();
 			foreach($temparraykeys as $k)
@@ -340,7 +340,7 @@ class formulizeNewSelectElementHandler extends formulizeElementsHandler {
 					$temparray[$k] = 0;
 				}
 			}
-			if((!empty($value) OR $value === 0 OR $value === "0") AND count($assignedSelectedValues) < $numberOfSelectedValues) { // if we have not assigned the selected value from the db to one of the options for this element, then lets add it to the array of options, and flag it as out of range.  This is to preserve out of range values in the db that are there from earlier times when the options were different, and also to preserve values that were imported without validation on purpose
+			if((!empty($value) OR $value === 0 OR $value === "0") AND count((array) $assignedSelectedValues) < $numberOfSelectedValues) { // if we have not assigned the selected value from the db to one of the options for this element, then lets add it to the array of options, and flag it as out of range.  This is to preserve out of range values in the db that are there from earlier times when the options were different, and also to preserve values that were imported without validation on purpose
 				foreach($selvalarray as $selvalue) {
 					if(!isset($assignedSelectedValues[$selvalue]) AND (!empty($selvalue) OR $selvalue === 0 OR $selvalue === "0")) {
 						$temparray[_formulize_OUTOFRANGE_DATA.$selvalue] = 1;
@@ -416,7 +416,7 @@ class formulizeNewSelectElementHandler extends formulizeElementsHandler {
 					} else { // just use scopegroups
 						$pgroups = $scopegroups;
 					}
-					if(count($pgroups) == 0) { // specific scope was specified, and nothing found, so we should show nothing
+					if(count((array) $pgroups) == 0) { // specific scope was specified, and nothing found, so we should show nothing
 						$emptylist = true;
 					}
 				} else {
@@ -441,7 +441,7 @@ class formulizeNewSelectElementHandler extends formulizeElementsHandler {
 			// NEW WAY: if a specific group(s) was specified, and no match with the current user was found, then we return an empty list
 			array_unique($pgroups); // remove duplicate groups from the list
 			
-			if($ele_value[6] AND count($pgroups) > 0) {  
+			if($ele_value[6] AND count((array) $pgroups) > 0) {  
 				$pgroupsfilter = " (";
 				$start = true;
 				foreach($pgroups as $thisPgroup) {
@@ -450,7 +450,7 @@ class formulizeNewSelectElementHandler extends formulizeElementsHandler {
 					$start = false;
 				}
 				$pgroupsfilter .= ")";
-			} elseif(count($pgroups) > 0) {
+			} elseif(count((array) $pgroups) > 0) {
 				$pgroupsfilter = " t2.groupid IN (".formulize_db_escape(implode(",",$pgroups)).") AND t2.entry_id=t1.entry_id AND t2.fid=$sourceFid";
 			} else {
 				$pgroupsfilter = "";
@@ -496,7 +496,7 @@ class formulizeNewSelectElementHandler extends formulizeElementsHandler {
 				// set the default selections, based on the entry_ids that have been selected as the defaults, if applicable
 				$hasNoValues = trim($boxproperties[2]) == "" ? true : false;
 				$useDefaultsWhenEntryHasNoValue = $ele_value[14];
-				if(($entry_id == "new" OR ($useDefaultsWhenEntryHasNoValue AND $hasNoValues)) AND ((is_array($ele_value[13]) AND count($ele_value[13]) > 0) OR $ele_value[13])) {
+				if(($entry_id == "new" OR ($useDefaultsWhenEntryHasNoValue AND $hasNoValues)) AND ((is_array($ele_value[13]) AND count((array) $ele_value[13]) > 0) OR $ele_value[13])) {
 					$defaultSelected = $ele_value[13];
 				} else {
 					$defaultSelected = "";
@@ -591,7 +591,7 @@ class formulizeNewSelectElementHandler extends formulizeElementsHandler {
 				$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
 			} elseif($ele_value[8] == 0) {
 				// this is a hack because the size attribute is private and only has a getSize and not a setSize, setting the size can only be done through the constructor
-				$count = count( $form_ele->getOptions() );
+				$count = count((array)  $form_ele->getOptions() );
 				$size = $ele_value[0];
 				$new_size = ( $count < $size ) ? $count : $size;
 				$form_ele->_size = $new_size;
@@ -653,7 +653,7 @@ class formulizeNewSelectElementHandler extends formulizeElementsHandler {
 										$pgroups[] = $gid;
 									}
 								}
-								if(count($pgroups) > 0) { 
+								if(count((array) $pgroups) > 0) { 
 									unset($groups);
 									$groups = $pgroups;
 								} else {
@@ -694,7 +694,7 @@ class formulizeNewSelectElementHandler extends formulizeElementsHandler {
 				}
 			}
 
-			$count = count($options);
+			$count = count((array) $options);
 			$size = $ele_value[0];
 			$final_size = ( $count < $size ) ? $count : $size;
 
@@ -731,7 +731,7 @@ class formulizeNewSelectElementHandler extends formulizeElementsHandler {
 			}
 
 			$renderedHoorvs = "";
-			if(count($hiddenOutOfRangeValuesToWrite) > 0) {
+			if(count((array) $hiddenOutOfRangeValuesToWrite) > 0) {
 				foreach($hiddenOutOfRangeValuesToWrite as $hoorKey=>$hoorValue) {
 					$thisHoorv = new xoopsFormHidden('formulize_hoorv_'.$true_ele_id.'_'.$hoorKey, $hoorValue);
 					$renderedHoorvs .= $thisHoorv->render() . "\n";
@@ -903,7 +903,7 @@ class formulizeNewSelectElementHandler extends formulizeElementsHandler {
 			}
               // handle out of range values that are in the DB, added March 2 2008 by jwe
               if(is_array($ele)) {
-                while($numberOfSelectionsFound < count($ele) AND $entrycounterjwe < 1000) { // if a value was received that was out of range...added by jwe March 2 2008...in this case we are assuming that if there are more values passed back than selections found in the valid options for the element, then there are out-of-range values we want to preserve
+                while($numberOfSelectionsFound < count((array) $ele) AND $entrycounterjwe < 1000) { // if a value was received that was out of range...added by jwe March 2 2008...in this case we are assuming that if there are more values passed back than selections found in the valid options for the element, then there are out-of-range values we want to preserve
                   if(in_array($entrycounterjwe, $ele)) { // keep looking for more values...get them out of the hiddenOutOfRange info
                     $value = $value.'*=+*:'.$myts->htmlSpecialChars($_POST['formulize_hoorv_'.$ele_id.'_'.$entrycounterjwe]);
                     $numberOfSelectionsFound++;
@@ -942,8 +942,8 @@ class formulizeNewSelectElementHandler extends formulizeElementsHandler {
      	$listtype = key($ele_value[2]);
 		if($listtype === "{USERNAMES}" OR $listtype === "{FULLNAMES}") {
 			$uids = explode("*=+*:", $value);
-			if(count($uids) > 0) {
-				if(count($uids) > 1){ 
+			if(count((array) $uids) > 0) {
+				if(count((array) $uids) > 1){ 
 					array_shift($uids); 
 				}
 				$uidFilter = extract_makeUidFilter($uids);
@@ -973,7 +973,7 @@ class formulizeNewSelectElementHandler extends formulizeElementsHandler {
     // this method will format a dataset value for display on screen when a list of entries is prepared
     // for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
     // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
-    function formatDataForList($value, $handle, $entry_id) {
+    function formatDataForList($value, $handle="", $entry_id=0) {
 		return $value;
     }
     

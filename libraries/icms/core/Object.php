@@ -439,11 +439,11 @@ class icms_core_Object {
 					case XOBJ_DTYPE_TXTBOX:
 						if ($v['required'] && $cleanv != '0' && $cleanv == '') {
 							$this->setErrors(sprintf(_XOBJ_ERR_REQUIRED, $k));
-							continue;
+							continue 2;
 						}
 						if (isset($v['maxlength']) && strlen($cleanv) > (int) ($v['maxlength'])) {
 							$this->setErrors(sprintf(_XOBJ_ERR_SHORTERTHAN, $k, (int) $v['maxlength']));
-							continue;
+							continue 2;
 						}
 						if (!$v['not_gpc']) {
 							$cleanv = icms_core_DataFilter::stripSlashesGPC(icms_core_DataFilter::censorString($cleanv));
@@ -455,7 +455,7 @@ class icms_core_Object {
 					case XOBJ_DTYPE_TXTAREA:
 						if ($v['required'] && $cleanv != '0' && $cleanv == '') {
 							$this->setErrors(sprintf(_XOBJ_ERR_REQUIRED, $k));
-							continue;
+							continue 2;
 						}
 						if (!$v['not_gpc']) {
 							$cleanv = icms_core_DataFilter::stripSlashesGPC(icms_core_DataFilter::censorString($cleanv));
@@ -488,11 +488,11 @@ class icms_core_Object {
 					case XOBJ_DTYPE_EMAIL:
 						if ($v['required'] && $cleanv == '') {
 							$this->setErrors(sprintf(_XOBJ_ERR_REQUIRED, $k));
-							continue;
+							continue 2;
 						}
 						if ($cleanv != '' && !preg_match("/^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+([\.][a-z0-9-]+)+$/i", $cleanv)) {
 							$this->setErrors(_CORE_DB_INVALIDEMAIL);
-							continue;
+							continue 2;
 						}
 						if (!$v['not_gpc']) {
 							$cleanv = icms_core_DataFilter::stripSlashesGPC($cleanv);
@@ -502,7 +502,7 @@ class icms_core_Object {
 					case XOBJ_DTYPE_URL:
 						if ($v['required'] && $cleanv == '') {
 							$this->setErrors(sprintf(_XOBJ_ERR_REQUIRED, $k));
-							continue;
+							continue 2;
 						}
 						if ($cleanv != '' && !preg_match("/^http[s]*:\/\//i", $cleanv)) {
 							$cleanv = 'http://' . $cleanv;

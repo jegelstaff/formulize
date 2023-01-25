@@ -111,8 +111,7 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
         $slider_html .= "max=\"{$ele_value[1]}\" ";
         $slider_html .= "step=\"{$ele_value[2]}\" ";
         $slider_html .= "value=\"{$ele_value[3]}\" ";
-        $slider_html .= "oninput=\"updateTextInput(value);formulizechanged=1;\" ";
-        $slider_html .= "style=\"width: 25em;\">";
+        $slider_html .= "oninput=\"updateTextInput(value);formulizechanged=1;\">";
         $slider_html .= "</input>";
 
         $value_html = "<br><output id=\"rangeValue\" type=\"text\" size=\"2\"";
@@ -124,7 +123,8 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
 
         $update_script = "<script type=\"text/javascript\">";
         $update_script .= "function updateTextInput(val) {";
-        $update_script .= "document.getElementById('rangeValue').value=val;}";
+        $update_script .= "document.getElementById('rangeValue').value=val;}\n";
+        $update_script .= "document.getElementById('rangeValue').value=document.getElementById('{$markupName}').value;\n";
         $update_script .= "</script>";
 
         if($isDisabled) {
@@ -183,7 +183,7 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
     // this method will format a dataset value for display on screen when a list of entries is prepared
     // for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
     // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
-    function formatDataForList($value, $handle, $entry_id) {
+    function formatDataForList($value, $handle="", $entry_id=0) {
         $this->clickable = true; // make urls clickable
         $this->striphtml = true; // remove html tags as a security precaution
         $this->length = 100; // truncate to a maximum of 100 characters, and append ... on the end

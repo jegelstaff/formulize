@@ -31,7 +31,7 @@
 
 $modversion = array(
 	'name' => _MI_formulize_NAME,
-	'version' => "6.0",
+	'version' => "7.11",
 	'description' => _MI_formulize_DESC,
 	'author' => "Julian Egelstaff & Freeform Solutions",
 	'credits' => "",
@@ -53,7 +53,6 @@ $modversion['tables'] = array(
 	"formulize_menu_links",
 	"formulize_menu_permissions",
 	"formulize_resource_mapping",
-	"formulize_reports",
 	"formulize_frameworks",
 	"formulize_framework_forms",
 	"formulize_framework_elements",
@@ -82,7 +81,8 @@ $modversion['tables'] = array(
     "formulize_apikeys",
 	"formulize_tokens",
     "formulize_digest_data",
-    "formulize_passcodes"
+    "formulize_passcodes",
+    "tfa_codes"
 );
 
 $modversion['formulize_exportable_tables'] = array(
@@ -91,7 +91,6 @@ $modversion['formulize_exportable_tables'] = array(
 	"formulize_menu",
 	"formulize_menu_links",
 	"formulize_menu_permissions",
-	"formulize_reports",
 	"formulize_frameworks",
 	"formulize_framework_forms",
 	"formulize_framework_elements",
@@ -116,6 +115,34 @@ $modversion['formulize_exportable_tables'] = array(
     "formulize_passcodes"
 );
 
+// tables that we skip when only dealing with groups in common
+// formulize_tokens is presumed to be managed independently in different site instances with different groups
+$modversion['formulize_group_tables'] = array(
+    "groups",
+    "group_lists",
+    "formulize_tokens"
+);
+
+// fields that indicate a critical group that the record in the table is about
+// so we would not sync records related to this group when only syncing groups in common
+$modversion['formulize_group_id_fields'] = array(
+    "group_permission" => array('groupid'),
+    "formulize_entry_owner_groups" => array('groupid'),
+    "formulize_groupscope_settings" => array('groupid', 'view_groupid'),
+    "formulize_group_filters" => array('groupid'),
+    "formulize_notification_conditions" => array('not_cons_groupid'),
+    "formulize_menu_permissions" => array('group_id')
+);
+
+// fields that are foreign keys to groups, but the record in the table is not about the group
+// so we would sync changes in this record, except for the group-related info, when we're only syncing groups in common
+// PROBLEM IS THERE ARE DIFFERENT METHODS FOR UNEARTHING THE DAMNED GROUP ID!
+// REPURPOSE THE MANAGEPERMISSIONS LOGIC FOR GETTING AT THE VALUES??
+$modversion['formulize_group_id_embedded'] = array(
+    "formulize"=>array("ele_value","ele_display","ele_disabled"),
+    "formulize_screen_listofentries"=>array("customactions"),
+    "formulize_saved_views"=>array("sv_pubgroups")
+);
 
 /*
  * Table metadata general structure
@@ -165,8 +192,6 @@ $modversion['table_metadata'] = array(
 			)
         ),
     ),
-    "formulize_resource_mapping" => array(),
-    "formulize_reports" => array(),
     "formulize_frameworks" => array(
         "fields" => array("frame_name"),
         "joins" => array()
@@ -673,6 +698,21 @@ $modversion['templates'][] = array(
 $modversion['templates'][] = array(
 	'file' => 'admin/screen_form_templates.html',
 	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/screen_form_template_boxes.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'blocks/menu.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'blocks/menu_controller.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/mailusers.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/managepermissions.html',
+	'description' => '');
     
 //	Module Configs
 // $xoopsModuleConfig['t_width']
@@ -919,13 +959,23 @@ $modversion['config'][] = array(
 	'default' => '0',
 );
 
+$modversion['config'][] = array(
+	'name' => 'f7MenuTemplate',
+	'title' => '_MI_formulize_F7MENUTEMPLATE',
+	'description' => '_MI_formulize_F7MENUTEMPLATEDESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => '0',
+);
+
 //bloc
 $modversion['blocks'][1] = array(
 	'file' => "mymenu.php",
 	'name' => _MI_formulizeMENU_BNAME,
-	'description' => "Zeigt individuelles Menu an",
-	'show_func' => "block_formulizeMENU_show");
-
+	'description' => "",
+	'show_func' => "block_formulizeMENU_show",
+    'template' => 'menu_controller.html');
+    
 // Notifications -- added by jwe 10/10/04, removed for 2.0, reinstated for 2.2 with improved options
 $modversion['hasNotification'] = 1;
 
@@ -980,3 +1030,6 @@ if(isset($GLOBALS['formulize_notificationSubjectOverride'])) {
 	$modversion['notification']['event'][2]['mail_subject'] = $GLOBALS['formulize_notificationSubjectOverride'];
 	$modversion['notification']['event'][3]['mail_subject'] = $GLOBALS['formulize_notificationSubjectOverride'];
 }
+
+// ADD PREFERENCES FOR THE NAVSTYLE FOR NEW FORMS AND THE DEFAULT PAGE TITLE?
+// currently default is tabs, and default page title is the screen title

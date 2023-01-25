@@ -427,7 +427,7 @@ if ($_GET['fid'] != "new") {
     }
     $groupsCanEditDefaults = $xoopsUser->getGroups();
     $regUserGroupKey = array_search(2, $groupsCanEditDefaults);
-    if(count($groupsCanEditDefaults)>1 AND $regUserGroupKey !== false) {
+    if(count((array) $groupsCanEditDefaults)>1 AND $regUserGroupKey !== false) {
         unset($groupsCanEditDefaults[$regUserGroupKey]); // don't give edit_form perm to registered users group unless it is the only group the user is a member of
     }
     $member_handler = xoops_gethandler('member');
@@ -484,14 +484,12 @@ $permissions['hello'] = "Hello Permission World";
 // need to get screen data so this can be populated properly
 $screens = array();
 $screen_handler = xoops_getmodulehandler('screen', 'formulize');
-$criteria_object = new CriteriaCompo(new Criteria('type','multiPage'));
-$criteria_object->add(new Criteria('type','form'), 'OR');
-$mulitPageAndFormScreens = $screen_handler->getObjects($criteria_object,$fid);
+$criteria_object = new Criteria('type','multiPage');
+$multiPageFormScreens = $screen_handler->getObjects($criteria_object,$fid);
 $i = 1;
-foreach($mulitPageAndFormScreens as $screen) {
+foreach($multiPageFormScreens as $screen) {
     $screens['screens'][$i]['sid'] = $screen->getVar('sid');
     $screens['screens'][$i]['title'] = $screen->getVar('title');
-    $screens['screens'][$i]['type'] = $screen->getVar('type');
     $i++;
 }
 $listOfEntriesScreens = $screen_handler->getObjects(new Criteria('type','listOfEntries'),$fid);
@@ -515,7 +513,14 @@ foreach($calendarScreens as $screen) {
     $screens['calendar'][$i]['title'] = $screen->getVar('title');
     $i++;
 }
-
+$criteria_object = new Criteria('type','form');
+$legacyFormScreens = $screen_handler->getObjects($criteria_object,$fid);
+$i = 1;
+foreach($legacyFormScreens as $screen) {
+    $screens['legacy'][$i]['sid'] = $screen->getVar('sid');
+    $screens['legacy'][$i]['title'] = $screen->getVar('title');
+    $i++;
+}
 
 $settings = array();
 $settings['singleentry'] = $singleentry;
@@ -554,7 +559,7 @@ if ($fid != "new") {
         if (isset($elements)) {
             $adminPage['tabs'][$i]['content']['elements'] = $elements;
         }
-        if (count($customElements)>0) {
+        if (count((array) $customElements)>0) {
             $adminPage['tabs'][$i]['content']['customElements'] = $customElements;
         }
         $i++;

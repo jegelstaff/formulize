@@ -34,7 +34,7 @@
             <legend>When creating a new entry in the linked source form, map other values to the source form too:</legend>
             <input type='button' name='new-mapping' value='Add 1' /><br /><br />
             <div id='mappingcontainer'>
-              <{if $content.linkedSourceMappings|@count > 0}>
+              <{if $content.linkedSourceMappings|is_array AND $content.linkedSourceMappings|@count > 0}>
                 <{foreach from=$content.linkedSourceMappings key=index item=value name=mappings}>
                   <div class="elementmappings" name="<{$index}>">
                   <{if is_numeric($value.thisForm)}>

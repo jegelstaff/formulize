@@ -67,7 +67,7 @@ $newOrder = explode("drawer-2[]=", str_replace("&", "", $_POST['elementorder']))
 unset($newOrder[0]);
 // newOrder will have keys corresponding to the new order, and values corresponding to the old order
 
-if(count($elements) != count($newOrder)) {
+if(count((array) $elements) != count((array) $newOrder)) {
 	print "Error: the number of elements being saved did not match the number of elements already in the database";
 	return;
 }
@@ -208,7 +208,7 @@ if($_POST['cloneelement']) {
   }
   $element_handler->insert($thisElementObject);
   $ele_id = $thisElementObject->getVar('ele_id');
-  $thisElementObject->setVar('ele_handle',$formObject->getVar('form_handle').'_'.$ele_id);
+  $thisElementObject->setVar('ele_handle',$oldHandle.'_'.$ele_id);
   $element_handler->insert($thisElementObject);
   $ele_type = $thisElementObject->getVar('ele_type');
   $databaseElement = ($ele_type == "areamodif" OR $ele_type == "ib" OR $ele_type == "sep" OR $ele_type == "subform" OR $ele_type == "grid" OR (property_exists($thisElementObject,'hasData') AND $thisElementObject->hasData == false) ) ? false : true;

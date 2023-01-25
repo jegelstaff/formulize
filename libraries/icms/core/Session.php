@@ -41,12 +41,14 @@ class icms_core_Session {
 		// If this is a page load by another system, and we're being included, then we establish the user session based on the user id of the user in effect in the other system
 		// This approach assumes correspondence between the user ids.
 		
+        $externalUid = 0;
+        $xoops_userid = 0;
+        
         include_once ICMS_ROOT_PATH . '/include/functions.php';
         
         // Also listens for a code from Google in the URL
         //if google user logged in and redirected to this page
 		if (isset($_GET['code']) AND $client = setupAuthentication()) {
-            $user_handler = icms::handler("icms_member");
                
             //Get a google client object and send Client Request for email
             $objOAuthService = new Google_Service_Oauth2($client);
@@ -117,9 +119,21 @@ class icms_core_Session {
                 }
             }
         }
-        
 
-		global $user;
+        // if the email passed by the validated OAuth request, that later passed authentication with Brightspace, matches an existing account, log that person in
+        // Brightspace / LTI integration does not use the resource mapping table and the integration API because there may be multiple different integrations with a site, it is not designed to have a single integration with a single Formulize instance.
+        if(isset($_SESSION['brightspaceUserId']) AND $_SESSION['brightspaceUserId'] AND isset($_SESSION['ext_d2l_orgdefinedid'])) {
+            // lookup user who matches canonical id from brightspace
+            include XOOPS_ROOT_PATH.'/libraries/brightspace/finduser.php';
+            $xoops_userid = lookupBrightspaceUser($_SESSION['ext_d2l_orgdefinedid']);
+            if(!$xoops_userid) {
+                $externalUid = 0;
+				$cookie_time = time() - 10000;
+				$instance->update_cookie(session_id(), $cookie_time);
+				$instance->destroy(session_id());
+				unset($_SESSION['xoopsUserId']);
+            }
+        }
 
 		if (isset($GLOBALS['formulizeHostSystemUserId'])) {
 			if ($GLOBALS['formulizeHostSystemUserId']) {
@@ -139,7 +153,11 @@ class icms_core_Session {
         }
 
 		if ($externalUid) {
-			$xoops_userid = Formulize::getXoopsResourceID(Formulize::USER_RESOURCE, $externalUid);
+            $xoops_userid = Formulize::getXoopsResourceID(Formulize::USER_RESOURCE, $externalUid);
+        }
+        
+        if($xoops_userid) {
+			
 		    $icms_user = icms::handler('icms_member')->getUser($xoops_userid);
 
 			if (is_object($icms_user)) {
@@ -189,17 +207,24 @@ class icms_core_Session {
 				if ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '') {
 					// we need to secure cookie when using SSL
 					$secure = substr(ICMS_URL, 0, 5) == 'https' ? 1 : 0;
-					setcookie(
-						$icmsConfig['session_name'], session_id(),
-						time()+(60*$icmsConfig['session_expire']), '/', '', $secure, 1
-					);
+                    $arr_cookie_options = array (
+                        'expires' => time()+(60*$icmsConfig['session_expire']),
+                        'path' => '/',
+                        'domain' => '',
+                        'secure' => $secure ? true : false,     
+                        'httponly' => true,    
+                        'samesite' => 'None' // None || Lax  || Strict
+                        );
+					setcookie($icmsConfig['session_name'], session_id(), $arr_cookie_options);
 				}
 				$icms_user->setGroups($_SESSION['xoopsUserGroups']); // ALTERED BY FREEFORM SOLUTIONS TO AVOID NAMING CONFLICT WITH GLOBAL USER OBJECT FROM EXTERNAL SYSTEMS
 				if (!isset($_SESSION['UserLanguage']) || empty($_SESSION['UserLanguage'])) {
 					$_SESSION['UserLanguage'] = $icms_user->getVar('language'); // ALTERED BY FREEFORM SOLUTIONS TO AVOID NAMING CONFLICT WITH GLOBAL USER OBJECT FROM EXTERNAL SYSTEMS
 				}
 			}
-		}
+		} else { // set anon session cookie - necessary for preserving state in LTI systems...some browsers set one by default anyway, but it won't be secure and Samesite=None
+            $instance->update_cookie();
+        }
 		return $instance;
 	}
 
@@ -345,7 +370,7 @@ class icms_core_Session {
 		// Force updating cookie for session cookie is not issued correctly in some IE versions,
 		// or not automatically issued prior to PHP 4.3.3 for all browsers
 		if ($success) {
-			self::update_cookie();
+			$this->update_cookie();
 		}
 		return $success;
 	}
@@ -366,7 +391,16 @@ class icms_core_Session {
 				: (($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '')
 					? $icmsConfig['session_expire'] * 60 : ini_get('session.cookie_lifetime'));
 		$session_id = empty($sess_id) ? session_id() : $sess_id;
-		setcookie($session_name, $session_id, $session_expire ? time() + $session_expire : 0, '/',  '', $secure, 1);
+        $expiry = $session_expire ? time() + $session_expire : 0;
+        $arr_cookie_options = array (
+            'expires' => time()+(60*$icmsConfig['session_expire']),
+            'path' => '/',
+            'domain' => '',
+            'secure' => $secure ? true : false,     
+            'httponly' => true,    
+            'samesite' => 'None' // None || Lax  || Strict
+            );
+        setcookie($session_name, $session_id, $arr_cookie_options);
 	}
 
 	/**
@@ -438,7 +472,7 @@ class icms_core_Session {
 			$online_handler->destroy($uid);
 		}
 		icms_Event::trigger('icms_core_Session', 'sessionClose', $this);
-		return;
+		return true;
 	}
 
 	/**
@@ -473,7 +507,7 @@ class icms_core_Session {
 
 		self::removeExpiredCustomSession('xoopsUserId');
 		icms_Event::trigger('icms_core_Session', 'sessionStart', $this);
-		return;
+		return true;
 	}
 
 	// Internal function. Returns sha256 from fingerprint.
@@ -607,7 +641,7 @@ class icms_core_Session {
 				icms::$xoopsDB->quoteString($_SERVER['REMOTE_ADDR']),
 				$sess_data
 			);
-			return icms::$xoopsDB->queryF($sql);
+            if(icms::$xoopsDB->queryF($sql)) { return true; } else { return false; }
 		}
 		return true;
 	}
@@ -639,6 +673,6 @@ class icms_core_Session {
 		}
 		$mintime = time() - (int) $expire;
 		$sql = sprintf("DELETE FROM %s WHERE sess_updated < '%u'", icms::$xoopsDB->prefix('session'), $mintime);
-		return icms::$xoopsDB->queryF($sql);
+		if(icms::$xoopsDB->queryF($sql)) { return true; } else { return false; }
 	}
 }

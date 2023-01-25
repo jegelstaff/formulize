@@ -338,7 +338,7 @@ if($publish_globalscope) {
 	}
 }
 
-if(count($publishgroups) > 1 ) { $pubflag = 1; }
+if(count((array) $publishgroups) > 1 ) { $pubflag = 1; }
 
 // write in publishing options if any...
 if($pubflag) {
@@ -361,11 +361,11 @@ if($pubflag) {
 	}
 
 	$overlap = array_intersect($lastpubgroups, array_keys($publishgroups));
-	if(count($overlap) == 0) { // ie: no default is actually part of the available groups
+	if(count((array) $overlap) == 0) { // ie: no default is actually part of the available groups
 		$lastpubgroups[0] = "donotpub";
 	}
 
-	$size = count($publishgroups);
+	$size = count((array) $publishgroups);
 	if($size > 7) { $size = 7; }
 	$pubgrouplist = new xoopsFormSelect(_formulize_DE_SAVE_PUBGROUPS, 'pubgrouplist', $lastpubgroups, $size, true);
 	$pubgrouplist->addOptionArray($publishgroups);
@@ -383,7 +383,7 @@ if($pubflag) {
     // get the pubfilters for the viewselection
     $pubfilters = q("SELECT sv_pubfilters FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id = '" . substr($viewselection, 1) . "'");
     $pubfilters = $pubfilters[0]['sv_pubfilters'] ? explode(",",$pubfilters[0]['sv_pubfilters']) : array();
-    $filterChoices = new xoopsFormLabel(_formulize_DE_SAVE_PUBFILTERS, generateTidyElementList(getAllColList($fid, $frid, $groups), $pubfilters, $fid));
+    $filterChoices = new xoopsFormLabel(_formulize_DE_SAVE_PUBFILTERS, generateTidyElementList($fid, getAllColList($fid, $frid, $groups), $pubfilters));
     $filterChoices->setDescription(_formulize_DE_SAVE_PUBFILTERS_DESC);
     $saveform->addElement($filterChoices);
     

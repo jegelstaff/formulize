@@ -64,16 +64,16 @@
 		if($_POST['menuorder']) {
             
 			// retrieve all the links that belong to this application
-			$Links = $application_handler->getMenuLinksForApp($appid, all);
+			$Links = $application_handler->getMenuLinksForApp($appid, 'all');
             
 			// get the new order of the links...
 	$newOrder = explode("drawer-".intval($_POST['tabnumber'])."[]=", str_replace("&", "", $_POST['menuorder']));
 			unset($newOrder[0]);
 	if($menuLinkAdded) {
-	    $newOrder[] = count($newOrder); // assign the current count, to a new key (so the key and value will be the same, to represent the most recent menu entry)
+	    $newOrder[] = count((array) $newOrder); // assign the current count, to a new key (so the key and value will be the same, to represent the most recent menu entry)
 	}
 			// newOrder will have keys corresponding to the new order, and values corresponding to the old order
-			if(count($Links) != count($newOrder)) {
+			if(count((array) $Links) != count((array) $newOrder)) {
 				print "Error: the number of links being saved did not match the number of links already in the database";
 				return;
 			}

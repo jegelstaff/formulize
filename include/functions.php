@@ -1575,7 +1575,6 @@ function icms_escapeValue($value, $quotes = true)
 {
 	if(is_string($value))
 	{
-		if(get_magic_quotes_gpc) {$value = stripslashes($value);}
 		$value = icms::$xoopsDB->escape($value);
 		if($quotes) {$value = '"'.$value.'"';}
 	}
@@ -2410,7 +2409,7 @@ function icms_unlinkRecursive($dir, $deleteRootToo=true){
  */
 function icms_PasswordMeter(){
 	global $xoTheme, $icmsConfigUser;
-	$xoTheme->addScript(ICMS_URL.'/libraries/jquery/jquery.js', array('type' => 'text/javascript'));
+	//$xoTheme->addScript(ICMS_URL.'/libraries/jquery/jquery.js', array('type' => 'text/javascript')); // Avoid conflict with jquery which is included in base page template as part of standard header
 	$xoTheme->addScript(ICMS_URL.'/libraries/jquery/password_strength_plugin.js', array('type' => 'text/javascript'));
 	$xoTheme->addScript('', array('type' => ''), '
 				$(document).ready( function() {

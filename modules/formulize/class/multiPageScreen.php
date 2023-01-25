@@ -43,9 +43,6 @@ class formulizeMultiPageScreen extends formulizeScreen {
 	function __construct() {
 		parent::__construct();
 		$this->initVar("introtext", XOBJ_DTYPE_TXTAREA);
-		$this->initVar("toptemplate", XOBJ_DTYPE_TXTAREA);  	// added by Gordon Woodmansey (bgw) 2012-08-29
-		$this->initVar("elementtemplate", XOBJ_DTYPE_TXTAREA); 	// added by Gordon Woodmansey (bgw) 2012-08-29
-		$this->initVar("bottomtemplate", XOBJ_DTYPE_TXTAREA); 	// added by Gordon Woodmansey (bgw) 2012-08-29
 		$this->initVar("thankstext", XOBJ_DTYPE_TXTAREA);
 		$this->initVar("donedest", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
 		$this->initVar("buttontext", XOBJ_DTYPE_ARRAY);
@@ -54,19 +51,21 @@ class formulizeMultiPageScreen extends formulizeScreen {
 		$this->initVar("pagetitles", XOBJ_DTYPE_ARRAY);
 		$this->initVar("conditions", XOBJ_DTYPE_ARRAY);
 		$this->initVar("printall", XOBJ_DTYPE_INT); //nmc - 2007.03.24
-    $this->initVar("paraentryform", XOBJ_DTYPE_INT); 
-    $this->initVar("paraentryrelationship", XOBJ_DTYPE_INT);
-    $this->initVar("navstyle", XOBJ_DTYPE_INT);	
-    $this->initVar("dobr", XOBJ_DTYPE_INT, 1, false);
-    $this->initVar("dohtml", XOBJ_DTYPE_INT, 1, false);
-    $this->assignVar("dobr", false); // don't convert line breaks to <br> when using the getVar method
-    $this->initVar('displaycolumns', XOBJ_DTYPE_INT);
-    $this->initVar("column1width", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
-    $this->initVar("column2width", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
-    $this->initVar('showpagetitles', XOBJ_DTYPE_INT);
-    $this->initVar('showpageindicator', XOBJ_DTYPE_INT);
-    $this->initVar('showpageselector', XOBJ_DTYPE_INT);
-    
+        $this->initVar("paraentryform", XOBJ_DTYPE_INT); 
+        $this->initVar("paraentryrelationship", XOBJ_DTYPE_INT);
+        $this->initVar("navstyle", XOBJ_DTYPE_INT);	
+        $this->initVar("dobr", XOBJ_DTYPE_INT, 1, false);
+        $this->initVar("dohtml", XOBJ_DTYPE_INT, 1, false);
+        $this->assignVar("dobr", false); // don't convert line breaks to <br> when using the getVar method
+        $this->initVar('displaycolumns', XOBJ_DTYPE_INT);
+        $this->initVar("column1width", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
+        $this->initVar("column2width", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
+        $this->initVar('showpagetitles', XOBJ_DTYPE_INT);
+        $this->initVar('showpageindicator', XOBJ_DTYPE_INT);
+        $this->initVar('showpageselector', XOBJ_DTYPE_INT);
+        $this->initVar('displayheading', XOBJ_DTYPE_INT);
+        $this->initVar('reloadblank', XOBJ_DTYPE_INT);
+        $this->initVar('elementdefaults', XOBJ_DTYPE_ARRAY);
 	}
 	
 	// setup the conditions array...format has changed over time...
@@ -136,7 +135,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 	}
 
 	function insert($screen) {
-		$update = ($screen->getVar('sid') == 0) ? false : true;
+		$update = !$screen->getVar('sid') ? false : true;
 		if(!$sid = parent::insert($screen)) { // write the basic info to the db, handle cleaning vars and all that jazz.  Object passed by reference, so updates will have affected it in the other method.
 			return false;
 		}
@@ -147,20 +146,19 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 
 		// note: conditions is not written to the DB yet, since we're not gathering that info from the UI	
 		if (!$update) {
-                 $sql = sprintf("INSERT INTO %s (sid, introtext, thankstext, toptemplate, elementtemplate, bottomtemplate, donedest, buttontext, finishisdone, pages, pagetitles, conditions, printall, paraentryform, paraentryrelationship, navstyle, displaycolumns, column1width, column2width, showpagetitles, showpageindicator, showpageselector) VALUES (%u, %s, %s, %s, %s, %s, %s, %s, %u, %s, %s, %s, %u, %u, %u, %u, %u, %s, %s, %u, %u, %u)",
+                 $sql = sprintf("INSERT INTO %s (sid, introtext, thankstext, donedest, buttontext, finishisdone, pages, pagetitles, conditions, printall, paraentryform, paraentryrelationship, navstyle, displaycolumns, column1width, column2width, showpagetitles, showpageindicator, showpageselector, displayheading, reloadblank, elementdefaults) VALUES (%u, %s, %s, %s, %s, %u, %s, %s, %s, %u, %u, %u, %u, %u, %s, %s, %u, %u, %u, %u, %u, %s)",
                     $this->db->prefix('formulize_screen_multipage'),
                     $screen->getVar('sid'),
                     $this->db->quoteString($screen->getVar('introtext', "e")),
                     $this->db->quoteString($screen->getVar('thankstext', "e")),
-                    $this->db->quoteString($screen->getVar('toptemplate')),
-                    $this->db->quoteString($screen->getVar('elementtemplate')),
-                    $this->db->quoteString($screen->getVar('bottomtemplate')),
                     $this->db->quoteString($screen->getVar('donedest')),
                     $this->db->quoteString(serialize($screen->getVar('buttontext'))),
-                    $screen->getVar('finishisdone'), $this->db->quoteString(serialize($screen->getVar('pages'))),
+                    $screen->getVar('finishisdone'),
+                    $this->db->quoteString(serialize($screen->getVar('pages'))),
                     $this->db->quoteString(serialize($screen->getVar('pagetitles'))),
                     $this->db->quoteString(serialize($screen->getVar('conditions'))),
-                    $screen->getVar('printall'), $screen->getVar('paraentryform'),
+                    $screen->getVar('printall'),
+                    $screen->getVar('paraentryform'),
                     $screen->getVar('paraentryrelationship'),
                     $screen->getVar('navstyle'),
                     $screen->getVar('displaycolumns'),
@@ -168,33 +166,49 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
                     $this->db->quoteString($screen->getVar('column2width')),
                     $screen->getVar('showpagetitles'),
                     $screen->getVar('showpageindicator'),
-                    $screen->getVar('showpageselector'));
+                    $screen->getVar('showpageselector'),
+                    $screen->getVar('displayheading'),
+                    $screen->getVar('reloadblank'),
+                    $this->db->quoteString(serialize($screen->getVar('elementdefaults')))
+                    );
                     //nmc 2007.03.24 added 'printall' & fixed pagetitles
              } else {
-                 $sql = sprintf("UPDATE %s SET introtext = %s, thankstext = %s, toptemplate = %s, elementtemplate = %s, bottomtemplate = %s, donedest = %s, buttontext = %s, finishisdone = %u, pages = %s, pagetitles = %s, conditions = %s, printall = %u, paraentryform = %u, paraentryrelationship = %u, navstyle = %u, displaycolumns = %u, column1width = %s, column2width = %s, showpagetitles = %u, showpageindicator = %u, showpageselector = %u WHERE sid = %u", $this->db->prefix('formulize_screen_multipage'), $this->db->quoteString($screen->getVar('introtext', "e")), $this->db->quoteString($screen->getVar('thankstext', "e")), $this->db->quoteString($screen->getVar('toptemplate')), $this->db->quoteString($screen->getVar('elementtemplate')), $this->db->quoteString($screen->getVar('bottomtemplate')), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString(serialize($screen->getVar('buttontext'))), $screen->getVar('finishisdone'), $this->db->quoteString(serialize($screen->getVar('pages'))), $this->db->quoteString(serialize($screen->getVar('pagetitles'))), $this->db->quoteString(serialize($screen->getVar('conditions'))), $screen->getVar('printall'), $screen->getVar('paraentryform'), $screen->getVar('paraentryrelationship'), $screen->getVar('navstyle'),  $screen->getVar('displaycolumns'), $this->db->quoteString($screen->getVar('column1width')), $this->db->quoteString($screen->getVar('column2width')), $screen->getVar('showpagetitles'), $screen->getVar('showpageindicator'), $screen->getVar('showpageselector'), $screen->getVar('sid')); //nmc 2007.03.24 added 'printall'
+                 $sql = sprintf("UPDATE %s SET introtext = %s, thankstext = %s, donedest = %s, buttontext = %s, finishisdone = %u, pages = %s, pagetitles = %s, conditions = %s, printall = %u, paraentryform = %u, paraentryrelationship = %u, navstyle = %u, displaycolumns = %u, column1width = %s, column2width = %s, showpagetitles = %u, showpageindicator = %u, showpageselector = %u, displayheading = %u, reloadblank = %u, elementdefaults = %s WHERE sid = %u", $this->db->prefix('formulize_screen_multipage'), $this->db->quoteString($screen->getVar('introtext', "e")), $this->db->quoteString($screen->getVar('thankstext', "e")), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString(serialize($screen->getVar('buttontext'))), $screen->getVar('finishisdone'), $this->db->quoteString(serialize($screen->getVar('pages'))), $this->db->quoteString(serialize($screen->getVar('pagetitles'))), $this->db->quoteString(serialize($screen->getVar('conditions'))), $screen->getVar('printall'), $screen->getVar('paraentryform'), $screen->getVar('paraentryrelationship'), $screen->getVar('navstyle'),  $screen->getVar('displaycolumns'), $this->db->quoteString($screen->getVar('column1width')), $this->db->quoteString($screen->getVar('column2width')), $screen->getVar('showpagetitles'), $screen->getVar('showpageindicator'), $screen->getVar('showpageselector'), $screen->getVar('displayheading'), $screen->getVar('reloadblank'), $this->db->quoteString(serialize($screen->getVar('elementdefaults'))), $screen->getVar('sid')); //nmc 2007.03.24 added 'printall'
              }
 		 $result = $this->db->query($sql);
-		
-		$success1 = true;
-		if(isset($_POST['screens-toptemplate'])) { 
-		    $success1 = $this->writeTemplateToFile(stripslashes(trim($_POST['screens-toptemplate'])), 'toptemplate', $screen);
-		}
-		$success2 = true;
-		if(isset($_POST['screens-bottomtemplate'])) { 
-		    $success2 = $this->writeTemplateToFile(stripslashes(trim($_POST['screens-bottomtemplate'])), 'bottomtemplate', $screen);
-		}
-		$success3 = true;
-		if(isset($_POST['screens-elementtemplate'])) { 
-		    $success3 = $this->writeTemplateToFile(stripslashes(trim($_POST['screens-elementtemplate'])), 'elementtemplate', $screen);
-		}
+         if(!$result) {
+            print $this->db->error(). "<br>\n $sql <br>\n";
+            return false;
+         } else {
+            $success1 = true;
+            if(isset($_POST['toptemplate'])) {
+                $success1 = $this->writeTemplateToFile(trim($_POST['toptemplate']), 'toptemplate', $screen);
+            }
+            $success2 = true;
+            if(isset($_POST['elementtemplate1'])) {
+                $success2 = $this->writeTemplateToFile(trim($_POST['elementtemplate1']), 'elementtemplate1', $screen);
+            }
+            $success3 = true;
+            if(isset($_POST['elementtemplate2'])) {
+                $success3 = $this->writeTemplateToFile(trim($_POST['elementtemplate2']), 'elementtemplate2', $screen);
+            }
+            $success4 = true;
+            if(isset($_POST['bottomtemplate'])) {
+                $success4 = $this->writeTemplateToFile(trim($_POST['bottomtemplate']), 'bottomtemplate', $screen);
+            }
+            $success5 = true;
+            if(isset($_POST['elementcontainerc'])) {
+                $success5 = $this->writeTemplateToFile(trim($_POST['elementcontainerc']), 'elementcontainerc', $screen);
+            }
+            $success6 = true;
+            if(isset($_POST['elementcontainero'])) {
+                $success6 = $this->writeTemplateToFile(trim($_POST['elementcontainero']), 'elementcontainero', $screen);
+            }
 
-		if (!$success1 || !$success2 || !$success3) {
-		    return false;
-		}
- 
-             if (!$result) {
-                 return false;
-             }
+            if (!$success1 || !$success2 || !$success3 || !$success4 || !$success5 || !$success6) {
+                return false;
+            }
+         }
 		 return $sid;
 	}
 
@@ -219,10 +233,12 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 
 	// THIS METHOD HANDLES ALL THE LOGIC ABOUT HOW TO ACTUALLY DISPLAY THIS TYPE OF SCREEN
 	// $screen is a screen object
-	function render($screen, $entry, $settings = array()) { // $settings is used internally to pass list of entries settings back and forth to editing screens
+    // $settings is used internally to pass list of entries settings back and forth to editing screens
+    // $elements_only means we are rendering elements in a special situation, like a modal display or some other disembodied state
+	function render($screen, $entry, $settings = array(), $elements_only = null) { 
     
         $previouslyRenderingScreen = $GLOBALS['formulize_screenCurrentlyRendering'];
-    
+        
 		if(!is_array($settings)) {
 				$settings = array();
 		}
@@ -251,7 +267,9 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
         $thankYouLinkText = is_array($buttonText) ? $buttonText['thankYouLinkText'] : $buttonText;
         $buttonText = is_array($buttonText) ? $buttonText : array();
         
-		displayFormPages($formframe, $entry, $mainform, $pages, $conditions, html_entity_decode(html_entity_decode($screen->getVar('introtext', "e")), ENT_QUOTES), html_entity_decode(html_entity_decode($screen->getVar('thankstext', "e")), ENT_QUOTES), $doneDest, $thankYouLinkText, $settings,"", $screen->getVar('printall'), $screen, $screen->getVar('buttontext')); //nmc 2007.03.24 added 'printall' & 2 empty params
+        updateMultipageTemplates($screen);
+        
+		displayFormPages($formframe, $entry, $mainform, $pages, $conditions, html_entity_decode(html_entity_decode($screen->getVar('introtext', "e")), ENT_QUOTES), html_entity_decode(html_entity_decode($screen->getVar('thankstext', "e")), ENT_QUOTES), $doneDest, $thankYouLinkText, $settings,"", $screen->getVar('printall'), $screen, $screen->getVar('buttontext'), $elements_only); //nmc 2007.03.24 added 'printall' & 2 empty params
         $GLOBALS['formulize_screenCurrentlyRendering'] = $previouslyRenderingScreen;
 	}
 
@@ -274,7 +292,42 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
             return false;
         }
     }
-
+    
+    public function setDefaultFormScreenVars($defaultFormScreen, $formTitle, $fid, $pageOneTitle='')
+	{
+        global $xoopsConfig;
+        $defaultFormScreen->setVar('theme', $xoopsConfig['theme_set']);
+        $defaultFormScreen->setVar('title', $formTitle);
+        $defaultFormScreen->setVar('displayheading', 0);
+		$defaultFormScreen->setVar('reloadblank', 0);
+        $defaultFormScreen->setVar('finishisdone', 1);
+		$defaultFormScreen->setVar('fid', $fid);
+		$defaultFormScreen->setVar('frid', 0);
+		$defaultFormScreen->setVar('type', 'multiPage');
+		$defaultFormScreen->setVar('useToken', 1);
+        $defaultFormScreen->setVar('pagetitles',serialize(array(0=>$pageOneTitle)));
+        $defaultFormScreen->setVar('pages', serialize(array(0=>array())));
+        $defaultFormScreen->setVar('navstyle', 1);
+        $defaultFormScreen->setVar('buttontext', serialize(array(
+            'thankyoulinktext'=>'',
+            'leaveButtonText'=>trans(_formulize_SAVE_AND_LEAVE),
+            'prevButtonText'=>trans(_formulize_DMULTI_PREV),
+            'saveButtonText'=>trans(_formulize_SAVE),
+            'nextButtonText'=>trans(_formulize_DMULTI_NEXT),
+            'finishButtonText'=>trans(_formulize_DMULTI_SAVE),
+            'printableViewButtonText'=>trans(_formulize_PRINTVIEW)
+        )));
+        $defaultFormScreen->setVar('printall', 0);
+        $defaultFormScreen->setVar('paraentryform', 0); 
+        $defaultFormScreen->setVar('paraentryrelationship', 0);
+        $defaultFormScreen->setVar('showpagetitles', 0);
+        $defaultFormScreen->setVar('showpageindicator', 0);
+        $defaultFormScreen->setVar('showpageselector', 0);
+        $defaultFormScreen->setVar('displaycolumns', 2);
+        $defaultFormScreen->setVar('column1width', '20%');
+        $defaultFormScreen->setVar('column2width', 'auto');
+    }
+    
 }
 
 function multiPageScreen_addToOptionsList($fid, $options) {
@@ -302,7 +355,7 @@ function pageMeetsConditions($conditions, $currentPage, $entry_id, $fid, $frid) 
 	$allPassed = true;
 	$oomPassed = false;
     $oomNotExists = true;
-    if(count($elements)>0 AND !intval($entry_id)) {
+    if(is_array($elements) AND count($elements)>0 AND !intval($entry_id)) {
         foreach($ops as $i=>$op) {
 			switch($types[$i]) {
 				case 'all':
@@ -318,7 +371,7 @@ function pageMeetsConditions($conditions, $currentPage, $entry_id, $fid, $frid) 
     }
     
     // pages with no conditions are always allowed!
-    if(count($elements)==0) { return true; } 
+    if(!is_array($elements) OR count($elements)==0) { return true; } 
     
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
             foreach($elements as $i=>$thisElement) {

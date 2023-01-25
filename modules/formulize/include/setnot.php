@@ -47,7 +47,7 @@ function handleDelete($uid, $fid, $mid) {
 			}
 			// check if the current user has any items left for a this event on this form, and if not, then unsub from that event 
 			$anyleft = q("SELECT * FROM " . $xoopsDB->prefix("formulize_notification_conditions") . " WHERE not_cons_uid=".intval($uid)." AND not_cons_fid = ".intval($fid)." AND not_cons_event=\"".$event[0]['not_cons_event']."\"");
-			if(count($anyleft) == 0) {
+			if(count((array) $anyleft) == 0) {
 				$notification_handler =& xoops_gethandler('notification');
 				$notification_handler->unsubscribe('form', $fid, $event[0]['not_cons_event'], $mid, $uid);
 			}
@@ -101,11 +101,6 @@ $cols = getAllColList($fid, "", $groups); // notifications can only be set on a 
 $canSetNots = $gperm_handler->checkRight("set_notifications_for_others", $fid, $groups, $mid);
 
 // add latest element condition to existing conditions
-if(get_magic_quotes_gpc()) {
-	$_POST['new_term'] = stripslashes($_POST['new_term']);
-	$_POST['template'] = stripslashes($_POST['template']);
-	$_POST['subject'] = stripslashes($_POST['subject']);
-}
 
 if($_POST['new_term']) {
 	$_POST['elements'][] = $_POST['new_element'];
@@ -127,6 +122,7 @@ if($_POST['save']) {
 	$not_cons_elementuids = 0;
 	$not_cons_linkcreator = 0;
 	$not_cons_elementemail = 0;
+    $not_cons_arbitrary = '';
 
 	if($_POST['setwho'] === "curuser") {
 		$not_cons_curuser = 1;
@@ -140,6 +136,8 @@ if($_POST['save']) {
 		$not_cons_linkcreator = intval($_POST['lc_ele_id']);
 	} elseif($_POST['setwho'] === "elementemail" AND intval($_POST['email_ele_id']) > 0) {
 		$not_cons_elementemail = intval($_POST['email_ele_id']);
+    } elseif($_POST['setwho'] === "arbitrary" AND $_POST['arbitrary']) {
+        $not_cons_arbitrary = strip_tags(htmlspecialchars($_POST['arbitrary'], ENT_QUOTES));
 	} else {
 		$not_cons_uid = $uid;
 		// since this is a user specific notification, set a subscription for it
@@ -147,10 +145,10 @@ if($_POST['save']) {
 		$notification_handler->subscribe('form', $fid, $_POST['setwhen'], '', $mid, $not_cons_uid);
 		$thisnot = $notification_handler->getNotification($mid, 'form', $fid, $_POST['setwhen'], $not_cons_uid);
 	}
-	$not_cons_con = ($_POST['setfor'] == "all" OR count($_POST['terms']) == 0) ? "all" : serialize(array(serialize($_POST['elements']), serialize($_POST['ops']), serialize($_POST['terms'])));
+	$not_cons_con = ($_POST['setfor'] == "all" OR count((array) $_POST['terms']) == 0) ? "all" : serialize(array(serialize($_POST['elements']), serialize($_POST['ops']), serialize($_POST['terms'])));
 	
 	$template_filename = strstr($_POST['template'], ".tpl") ? str_replace(".tpl", "", $_POST['template']) : $_POST['template']; // strip .tpl out of the template name if it's present
-	$sql = "INSERT INTO " . $xoopsDB->prefix("formulize_notification_conditions") . " (not_cons_fid, not_cons_event, not_cons_uid, not_cons_curuser, not_cons_groupid, not_cons_creator, not_cons_elementuids, not_cons_linkcreator, not_cons_elementemail, not_cons_con, not_cons_template, not_cons_subject) VALUES (\"$fid\", \"".formulize_db_escape($_POST['setwhen'])."\", \"$not_cons_uid\", \"$not_cons_curuser\", \"$not_cons_groupid\", \"$not_cons_creator\", \"$not_cons_elementuids\", \"$not_cons_linkcreator\", \"$not_cons_elementemail\", \"".formulize_db_escape($not_cons_con)."\", \"".formulize_db_escape($template_filename)."\", \"".formulize_db_escape($_POST['subject'])."\")";
+	$sql = "INSERT INTO " . $xoopsDB->prefix("formulize_notification_conditions") . " (not_cons_fid, not_cons_event, not_cons_uid, not_cons_curuser, not_cons_groupid, not_cons_creator, not_cons_elementuids, not_cons_linkcreator, not_cons_elementemail, not_cons_arbitrary, not_cons_con, not_cons_template, not_cons_subject) VALUES (\"$fid\", \"".formulize_db_escape($_POST['setwhen'])."\", \"$not_cons_uid\", \"$not_cons_curuser\", \"$not_cons_groupid\", \"$not_cons_creator\", \"$not_cons_elementuids\", \"$not_cons_linkcreator\", \"$not_cons_elementemail\", \"".formulize_db_escape($not_cons_arbitrary)."\", \"".formulize_db_escape($not_cons_con)."\", \"".formulize_db_escape($template_filename)."\", \"".formulize_db_escape($_POST['subject'])."\")";
 	if(!$result = $xoopsDB->query($sql)) {
 		exit("Error:  notification could not be saved.  SQL:<br>$sql<br>");
 	}
@@ -163,7 +161,7 @@ $deleted = handleDelete($uid, $fid, $mid); // returns 1 if a deletion was made, 
 // $nots will be an array sent back by the q function
 $nots = getCurNots($fid, $canSetNots, $xoopsUser->getVar('uid'));
 
-$noNots = count($nots) == 0 ? true : false;
+$noNots = count((array) $nots) == 0 ? true : false;
 
 // get the groups and group names, and the elements with fullnames or usernames in them
 if($canSetNots) {
@@ -269,7 +267,7 @@ if($canSetNots) {
 	$setwho_linkcreatorlist->addOptionArray($linkcreator_options);
 	$linkcreatorlist = $setwho_linkcreatorlist->render();
 	$setwho_linkcreator = new xoopsFormRadio('', 'setwho', $_POST['setwho']);
-	$setwho_linkcreator->addOption('linkcreator', _formulize_DE_SETNOT_WHO_LINKCREATOR."<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;".$linkcreatorlist);
+	$setwho_linkcreator->addOption('linkcreator', _formulize_DE_SETNOT_WHO_LINKCREATOR.$linkcreatorlist);
 	
 	$setwho_elementemaillist = new xoopsFormSelect('', 'email_ele_id', $_POST['email_ele_id'], 1);
 	$setwho_elementemaillist->setExtra("onfocus=\"javascript:window.document.setnot.setwho[5].checked=true\"");
@@ -284,6 +282,12 @@ if($canSetNots) {
 	$grouplist = $setwho_grouplist->render();
 	$setwho_group = new xoopsFormRadio('', 'setwho', $_POST['setwho']);
 	$setwho_group->addOption('groupid', _formulize_DE_SETNOT_WHO_GROUP.$grouplist);
+    
+    $setwho_arbitrary = new xoopsFormRadio('', 'setwho', $_POST['setwho']);
+    $arbitraryEmailBox = new xoopsFormText('', 'arbitrary', 50, 255, $_POST['arbitrary']); 
+    $arbitraryEmailBox = $arbitraryEmailBox->render();
+    $setwho_arbitrary->addOption('arbitrary', _formulize_DE_SETNOT_WHO_ARBITRARY.$arbitraryEmailBox);
+    
 	$setwho->addElement($setwho_me);
 	$setwho->addElement($setwho_curuser);
 	$setwho->addElement($setwho_creator);
@@ -291,6 +295,7 @@ if($canSetNots) {
 	$setwho->addElement($setwho_linkcreator);
 	$setwho->addElement($setwho_elementemail);
 	$setwho->addElement($setwho_group);
+    $setwho->addElement($setwho_arbitrary);
 	$setnot->addElement($setwho);
 }
 
@@ -305,11 +310,11 @@ $setfor_all->addOption('all', _formulize_DE_SETNOT_FOR_ALL);
 // process existing conditions...
 
 if($_POST['addcon']) {
-	for($i=0;$i<count($_POST['elements']);$i++) {
+	for($i=0;$i<count((array) $_POST['elements']);$i++) {
 		$setnot->addElement(new xoopsFormHidden('elements[]', $_POST['elements'][$i]));
 		$setnot->addElement(new xoopsFormHidden('ops[]', $_POST['ops'][$i]));
 		$setnot->addElement(new xoopsFormHidden('terms[]', $_POST['terms'][$i]));
-		$conditionlist .= $options[$_POST['elements'][$i]] . " " . $_POST['ops'][$i] . " " . $_POST['terms'][$i] . "<br />";
+		$conditionlist .= "<p>".$options[$_POST['elements'][$i]] . " " . $_POST['ops'][$i] . " " . $_POST['terms'][$i] . "</p>";
 	} 
 }
 
@@ -338,7 +343,7 @@ $opterm->addElement($term);
 $addcon = new xoopsFormButton('', 'addcon', _formulize_DE_SETNOT_ADDCON, 'submit');
 $addcon->setExtra("onfocus=\"javascript:window.document.setnot.setfor[1].checked=true\"");
 
-$conditionui = "<br />$conditionlist" . $opterm->render() . "<br />" . $addcon->render();
+$conditionui = "$conditionlist <p>" . $opterm->render() . "</p>" . $addcon->render();
 
 $setfor_con = new xoopsFormRadio('' , 'setfor', $_POST['setfor']);
 $setfor_con->addOption('con', _formulize_DE_SETNOT_FOR_CON.$conditionui);
@@ -403,9 +408,9 @@ if(!$noNots) {
 			if(!$element_handler) { $element_handler = xoops_getmodulehandler('elements', 'formulize'); }
 			$elementObject = $element_handler->get($thisnot['not_cons_elementemail']);
 			$text .= $elementObject->getVar('ele_colhead') ? printSmart(trans($elementObject->getVar('ele_colhead'))) : printSmart(trans($elementObject->getVar('ele_caption'))); 
-		}
-		
-		
+		} elseif($thisnot['not_cons_arbitrary']) {
+            $text .= _formulize_DE_SETNOT_WHO_ARBITRARY.$thisnot['not_cons_arbitrary'];
+        }
 		
 		if($thisnot['not_cons_con'] !== "all") {
 			$cons = unserialize($thisnot['not_cons_con']);
@@ -414,7 +419,7 @@ if(!$noNots) {
 			$terms = unserialize($cons[2]);
 			$text .=", ". _formulize_DE_NOT_CONTEXTIF;
 			$start = 1;
-			for($i=0;$i<count($elements);$i++) {
+			for($i=0;$i<count((array) $elements);$i++) {
 				if(!$start) {
 					$text .= _formluize_DE_NOT_CONTEXTAND;
 				}
@@ -471,7 +476,7 @@ function buildNotOptionList($sql, $type) {
 		while($array = $xoopsDB->fetchArray($res)) {
 			$options[$array['ele_id']] = $array['ele_colhead'] ? printSmart(trans($array['ele_colhead'])) : printSmart(trans($array['ele_caption']));
 		}
-		if(count($options) == 0) {
+		if(count((array) $options) == 0) {
 			$options[0] = $noOptionText;
 		}
 	} else {

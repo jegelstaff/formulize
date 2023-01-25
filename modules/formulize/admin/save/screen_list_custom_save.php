@@ -111,7 +111,7 @@ foreach($_POST as $k=>$v) {
 
 // handle any requests for new buttons or effects
 if($_POST['newbutton']) {
-  $buttonId = count($buttonData);
+  $buttonId = count((array) $buttonData);
   $buttonData[$buttonId]['handle'] = "New button";
 }
 if($_POST['neweffect']!=="") {

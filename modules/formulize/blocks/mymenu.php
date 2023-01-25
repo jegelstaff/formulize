@@ -23,6 +23,11 @@
 function block_formulizeMENU_show() {
         global $xoopsDB, $xoopsUser, $xoopsModule, $myts;
 		    $myts =& MyTextSanitizer::getInstance();
+			
+		if(!defined('_AM_NOFORMS_AVAIL')) {
+				include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/main.php';
+		}
+			
 
         $block = array();
         $groups = array();
@@ -47,7 +52,7 @@ function block_formulizeMENU_show() {
         
         		$links = $thisApplication->getVar('links');
         
-        		if(count($links) > 0){
+        		if(count((array) $links) > 0){
             
             			$menuTexts[$i]['application'] = $thisApplication;
             
@@ -58,20 +63,31 @@ function block_formulizeMENU_show() {
             		}
  	}
 	$links = $application_handler->getMenuLinksForApp(0);
-	if(count($links)>0) {
+	if(count((array) $links)>0) {
         $menuTexts[$i]['links'] = $links;
         $menuTexts[$i]['application'] = 0;
   }
-	if(count($menuTexts) == 0) { // if no menu entries were found, return nothing
+	if(count((array) $menuTexts) == 0) { // if no menu entries were found, return nothing
 				$block['content'] = _AM_NOFORMS_AVAIL;
 				return $block;
   }
-	$forceOpen = count($menuTexts)==1 ? true : false;
+	$forceOpen = count((array) $menuTexts)==1 ? true : false;
+    $menuData = array();
 	foreach($menuTexts as $thisMenuData) {
-				$block['content'] .= drawMenuSection($thisMenuData['application'], $thisMenuData['links'], $forceOpen, $form_handler);
+				list($content, $data) = drawMenuSection($thisMenuData['application'], $thisMenuData['links'], $forceOpen, $form_handler);
+                $block['content'] .= $content;
+                $menuData[] = $data;
 	}
 	
   $block['content'] .= "</td></tr></table>";
+  
+  $module_handler = xoops_gethandler('module');
+  $config_handler = xoops_gethandler('config');
+  $formulizeModule = $module_handler->getByDirname("formulize");
+  $formulizeConfig = $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
+  if($formulizeConfig['f7MenuTemplate']) {
+    $block['content'] = $menuData;
+  } 
 
   return $block;
 
@@ -90,6 +106,8 @@ function getMenuTextsForForms($forms, $form_handler) {
 }
 
 function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
+        
+        $data = array();
         
         if($application == 0) {
             
@@ -129,16 +147,13 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
 
 
         if (!$topwritten) {
-            
             $block = "<a class=\"menuTop$menuActive\" href=\"$itemurl\">$name</a>";
-            
             $topwritten = 1;
-            
          } else {
-                
              $block = "<a class=\"menuMain$menuActive\" href=\"$itemurl\">$name</a>";
-                
          }
+
+        $data = array('url'=>$itemurl, 'title'=>$name, 'active'=>($menuActive ? 1 : 0));
         
         $isThisSubMenu = false;
         
@@ -204,8 +219,10 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
       {
         $menuSubActive=" menuSubActive";
       }
-			$block .= "<a class=\"menuSub$menuSubActive\" $target href='$suburl'>".$menulink->getVar("text")."</a>";
+            $text = $menulink->getVar("text");
+			$block .= "<a class=\"menuSub$menuSubActive\" $target href='$suburl'>".$text."</a>";
+            $data['subs'][] = array('url'=>$suburl, 'title'=>$text, 'active'=>($menuSubActive ? 1 : 0));
 		}	
 	}
-	return $block;
+	return array($block, $data);
 }

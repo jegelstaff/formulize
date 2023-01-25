@@ -115,7 +115,7 @@ if ($_GET['ele_id'] != "new") {
     }
 
     $ele_filtersettings = $elementObject->getVar('ele_filtersettings');
-    $filterSettingsToSend = count($ele_filtersettings > 0) ? $ele_filtersettings : "";
+    $filterSettingsToSend = (count((array) $ele_filtersettings) > 0) ? $ele_filtersettings : "";
     $display['filtersettings'] = formulize_createFilterUI($filterSettingsToSend, "elementfilter", $fid, "form-3");
     $display['ele_forcehidden'] = $elementObject->getVar('ele_forcehidden') ? " checked" : "";
     $display['ele_private'] = $elementObject->getVar('ele_private') ? " checked" : "";
@@ -203,7 +203,9 @@ if ($_GET['ele_id'] != "new") {
         case "subform":
             $ele_value[2] = 1;
             $ele_value[3] = 1;
-        $ele_value['simple_add_one_button'] = 1;
+            $ele_value['simple_add_one_button'] = 1;
+            $ele_value['show_delete_button'] = 1;
+            $ele_value['show_clone_button'] = 1;
             break;
         case "grid":
             $ele_value[3] = "horizontal";
@@ -312,10 +314,19 @@ if ($ele_type=='text') {
     $options['ele_value_no'] = $ele_value['_NO'];
 } elseif ($ele_type == "subform") {
     
+    if(!isset($ele_value['show_delete_button'])) {
+        $ele_value['show_delete_button'] = 1;
+    }
+    if(!isset($ele_value['show_clone_button'])) {
+        $ele_value['show_clone_button'] = 1;
+    }
+    
     $ele_value['enforceFilterChanges'] = isset($ele_value['enforceFilterChanges']) ? $ele_value['enforceFilterChanges'] : 1;
     
     $ele_value[1] = explode(",",$ele_value[1]);
-    $ele_value['disabledelements'] = explode(",",$ele_value['disabledelements']);
+    if (is_string($ele_value['disabledelements'])) {
+        $ele_value['disabledelements'] = explode(",",$ele_value['disabledelements']);
+    }
     global $xoopsDB;
     $validForms1 = q("SELECT t1.fl_form1_id, t2.desc_form FROM " . $xoopsDB->prefix("formulize_framework_links") . " AS t1, " . $xoopsDB->prefix("formulize_id") . " AS t2 WHERE t1.fl_form2_id=" . intval($fid) . " AND t1.fl_unified_display=1 AND t1.fl_relationship != 1 AND t1.fl_form1_id=t2.id_form");
     $validForms2 = q("SELECT t1.fl_form2_id, t2.desc_form FROM " . $xoopsDB->prefix("formulize_framework_links") . " AS t1, " . $xoopsDB->prefix("formulize_id") . " AS t2 WHERE t1.fl_form1_id=" . intval($fid) . " AND t1.fl_unified_display=1 AND t1.fl_relationship != 1 AND t1.fl_form2_id=t2.id_form");
@@ -336,13 +347,13 @@ if ($ele_type=='text') {
             }
         }
     }
-    if (count($validForms) == 0) {
+    if (count((array) $validForms) == 0) {
         $validForms['none'] = _AM_ELE_SUBFORM_NONE;
     }
     $options['subforms'] = $validForms;
     if ($caughtfirst) {
         $formtouse = $ele_value[0] ? $ele_value[0] : $firstform; // use the user's selection, unless there isn't one, then use the first form found
-        $elementsq = q("SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=" . intval($formtouse) . " AND ele_type != \"areamodif\" AND ele_type != \"grid\" AND ele_type != \"ib\" AND ele_type != \"subform\" ORDER BY ele_order");
+        $elementsq = q("SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=" . intval($formtouse) . " AND ele_type != \"grid\" AND ele_type != \"ib\" AND ele_type != \"subform\" ORDER BY ele_order");
         $options['subformUserFilterElements'][0] = _formulize_NONE;
         foreach($elementsq as $oneele) {
             $options['subformelements'][$oneele['ele_id']] = $oneele['ele_colhead'] ? $oneele['ele_colhead'] : printSmart($oneele['ele_caption']);
@@ -358,11 +369,7 @@ if ($ele_type=='text') {
     $screen_options = q("SELECT sid, title, type FROM ".$xoopsDB->prefix("formulize_screen")." WHERE fid=".intval($formtouse)." and (type='form' OR type='multiPage')");
     $options['subform_screens'][0] = "(Use Default Screen)";
     foreach($screen_options as $screen_option) {
-        if($screen_option["type"] == 'multiPage') {
-            $options['subform_screens'][$screen_option["sid"]] = $screen_option["title"]." (row display only, when entries open full screen)";            
-        } else {
-            $options['subform_screens'][$screen_option["sid"]] = $screen_option["title"];
-    }
+        $options['subform_screens'][$screen_option["sid"]] = $screen_option["title"];
     }
 
     // setup the UI for the subform conditions filter
@@ -401,7 +408,7 @@ if ($ele_type=='text') {
             $options['islinked'] = 1;
         } else {
             $options['islinked'] = 0;
-            if (is_array($ele_uitext) AND count($ele_uitext) > 0) {
+            if (is_array($ele_uitext) AND count((array) $ele_uitext) > 0) {
                 $ele_value[2] = formulize_mergeUIText($ele_value[2], $ele_uitext);
             }
             $options['useroptions'] = $ele_value[2];
@@ -514,7 +521,7 @@ $options['ele_value'] = $ele_value;
 if($elementObject->hasMultipleOptions AND !$elementObject->isLinked) {
     $advanced['hasMultipleOptions'] = true;
     $exportOptions = $elementObject->getVar('ele_exportoptions');
-    $advanced['exportoptions_onoff'] = (is_array($exportOptions) AND count($exportOptions) > 0) ? 1 : 0;
+    $advanced['exportoptions_onoff'] = (is_array($exportOptions) AND count((array) $exportOptions) > 0) ? 1 : 0;
     $advanced['exportoptions_hasvalue'] = $exportOptions['indicators']['hasValue'];
     $advanced['exportoptions_doesnothavevalue'] = $exportOptions['indicators']['doesNotHaveValue'];
 } else {
@@ -539,7 +546,7 @@ $adminPage['tabs'][$tabindex]['content'] = $names+$common;
 if ($ele_type!='colorpick') {
     $adminPage['tabs'][++$tabindex]['name'] = "Options";
     $adminPage['tabs'][$tabindex]['template'] = "db:admin/element_options.html";
-    if (count($customValues)>0) {
+    if (count((array) $customValues)>0) {
     $adminPage['tabs'][$tabindex]['content'] = $customValues + $options + $common;
     } else {
     $adminPage['tabs'][$tabindex]['content'] = $options + $common;
@@ -551,7 +558,7 @@ $adminPage['tabs'][$tabindex]['template'] = "db:admin/element_display.html";
 $adminPage['tabs'][$tabindex]['content'] = $display + $common;
 $formScreenHandler = xoops_getmodulehandler('formScreen', 'formulize');
 $adminPage['tabs'][$tabindex]['content']['form_screens'] = $formScreenHandler->getScreensForElement($common['fid']);
-$adminPage['tabs'][$tabindex]['content']['multi_form_screens'] = $formScreenHandler->getMultiScreens($common['fid']);
+$adminPage['tabs'][$tabindex]['content']['multi_form_screens'] = $form_handler->getMultiScreens($common['fid']);
 // for new elements, pre-select all of the "filled up" screens
 if ($ele_id == "new") {
     $adminPage['tabs'][$tabindex]['content']['ele_form_screens'] = $formScreenHandler->getSelectedScreensForNewElement();
@@ -633,7 +640,9 @@ function createDataTypeUI($ele_type, $element,$id_form,$ele_encrypt) {
         $charTypeSize = new XoopsFormText('', 'element_datatype_charsize', 3, 3, $charTypeSizeDefault);
         $charTypeSize->setExtra(" style=\"width: 3em;\" ");
         $charType->addOption('char', _AM_FORM_DATATYPE_CHAR1.$charTypeSize->render()._AM_FORM_DATATYPE_CHAR2);
-        if ($defaultType != "text" AND $defaultType != "int" AND $defaultType != "decimal" AND $defaultType != "varchar" AND $defaultType != "char") {
+        $dateType = new XoopsFormRadio('', 'element_datatype', $defaultType);
+        $dateType->addOption('date', _AM_FORM_DATATYPE_DATE);
+        if ($defaultType != "text" AND $defaultType != "int" AND $defaultType != "decimal" AND $defaultType != "varchar" AND $defaultType != "char" AND $defaultType != "date") {
             $otherType = new XoopsFormRadio('', 'element_datatype', $defaultType);
             $otherType->addOption($defaultType, _AM_FORM_DATATYPE_OTHER.$defaultType);
             $dataTypeTray->addElement($otherType);
@@ -643,6 +652,7 @@ function createDataTypeUI($ele_type, $element,$id_form,$ele_encrypt) {
         $dataTypeTray->addElement($decimalType);
         $dataTypeTray->addElement($varcharType);
         $dataTypeTray->addElement($charType);
+        $dataTypeTray->addElement($dateType);
         $renderedUI .= $dataTypeTray->render();
     }
     return $renderedUI;

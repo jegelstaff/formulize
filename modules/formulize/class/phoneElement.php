@@ -127,7 +127,7 @@ class formulizePhoneElementHandler extends formulizeElementsHandler {
         
         // validate for length of numbers
         $numberOfXs = substr_count($ele_value['format'], 'X');
-        $validationCode[] = "if(myform.{$markupName}.value.replace(/[^0-9]/g,\"\").length != $numberOfXs) {\n alert('Please enter a phone number with $numberOfXs digits, ie: ".$ele_value['format']."'); \n myform.{$markupName}.focus();\n return false;\n }";
+        $validationCode[] = "if(myform.{$markupName}.value.replace(/[^0-9]/g,\"\").length != $numberOfXs && myform.{$markupName}.value.replace(/[^0-9]/g,\"\").length > 0) {\n alert('Please enter a phone number with $numberOfXs digits, ie: ".$ele_value['format']."'); \n myform.{$markupName}.focus();\n return false;\n }";
 
         return $validationCode;
     }
@@ -191,7 +191,7 @@ class formulizePhoneElementHandler extends formulizeElementsHandler {
     // this method will format a dataset value for display on screen when a list of entries is prepared
     // for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
     // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
-    function formatDataForList($value, $handle, $entry_id) {
+    function formatDataForList($value, $handle="", $entry_id=0) {
         $this->clickable = true; // make urls clickable
         $this->striphtml = false; // remove html tags as a security precaution
         $this->length = 1000; // truncate to a maximum of 100 characters, and append ... on the end

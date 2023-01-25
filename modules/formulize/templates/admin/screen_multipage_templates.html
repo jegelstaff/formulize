@@ -8,33 +8,21 @@
 <input type="hidden" name="formulize_admin_handler" value="screen_multipage_templates">
 <input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
 
-
 <div class="panel-content content">
     <p><b>Showing templates for use with this theme:</b> <{html_options name='screens-theme' options=$content.themes selected=$content.selectedTheme}></p>
         <p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_TOPTEMPLATE3}></p>
-  <fieldset>
-    <legend><{$smarty.const._AM_FORMULIZE_SCREEN_MULTIPAGE_TEMPLATES}> <em><{$content.title}></em></legend>
-	  <p><{$smarty.const._AM_FORMULIZE_SCREEN_MULTIPAGE_TEMPLATES_INTRO}></p>
-	  <div class="form-item">
-		  <label for="screens-toptemplate"><{$smarty.const._AM_FORMULIZE_SCREEN_TOPTEMPLATE}></label>
-		  <textarea name="screens-toptemplate" class="code-textarea" rows="20"/>
-<{$content.toptemplate}></textarea>
-		  <div class="description"></div>
-	  </div>
-	  <div class="form-item">
-		  <label for="screens-elementtemplate"><{$smarty.const._AM_FORMULIZE_SCREEN_ELEMENTTEMPLATE}></label>
-		  <textarea name="screens-elementtemplate" class="code-textarea" rows="20"/>
-<{$content.elementtemplate}></textarea>
-		  <div class="description"></div>
-	  </div>
-	  <div class="form-item">
-		  <label for="screens-bottomtemplate"><{$smarty.const._AM_FORMULIZE_SCREEN_BOTTOMTEMPLATE}></label>
-		  <textarea name="screens-bottomtemplate" class="code-textarea" rows="20"/>
-<{$content.bottomtemplate}></textarea>
-		  <div class="description"></div>
-	  </div>
-	  <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_MULTIPAGE_TEMPLATES_HELP}></div>
-  </fieldset>
+		
+		
+		<{if !$content.usingTemplates}>
+            <p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_SEEDTEMPLATES1}><{$content.seedtemplates}><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_SEEDTEMPLATES2}></p><br /><p><input type="button" value="<{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_SEEDTEMPLATES3}>" id="seedtemplates"></p><br />        
+        <{/if}>
+        
+        <{if $content.usingTemplates}>
+		
+			<{include file="db:admin/screen_form_template_boxes.html"}>
+		
+		<{/if}>
+	
 </div>
 
 </form>

@@ -50,6 +50,9 @@ $limitSize = (isset($_GET['limitSize']) AND $limitStart !== "") ? intval($_GET['
 $fields = isset($_GET['fields']) ? $_GET['fields'] : "";
 $excludeFields  = isset($_GET['excludeFields']) ? explode(',',$_GET['excludeFields']) : array();
 $key = preg_replace("/[^A-Za-z0-9]/", "", str_replace(" ","",$_GET['key'])); // keys must be only alphanumeric characters
+if(isset($_GET['showForeignKeys'])) {
+    $GLOBALS['formulize_useForeignKeysInDataset']['all'] = true;
+}
 
 // unpack any filters that are declared in the special formulize_makeCSVFilters param
 if(isset($_GET['formulize_makeCSVFilters'])) {
@@ -66,6 +69,7 @@ global $xoopsUser, $icmsUser;
 // authentication block
 $apiKeyHandler = xoops_getmodulehandler('apikey', 'formulize');
 $apiKeyHandler->delete(); // clear out expired keys
+$uid = 0;
 if($key AND $apikey = $apiKeyHandler->get($key)) {
     $uid = $apikey->getVar('uid');
     if($uidObject = $member_handler->getUser($uid)) {
@@ -79,7 +83,7 @@ if($key AND $apikey = $apiKeyHandler->get($key)) {
 } elseif($xoopsUser) {
     $uid = $xoopsUser->getVar('uid');
     $groups = $xoopsUser->getGroups();
-} else {
+} elseif($key) {
     print "Invalid authentication key";
     exit();
 }
@@ -95,7 +99,7 @@ $scope = buildScope($currentView, $uid, $fid);
 $scope = $scope[0]; // buildScope returns array of scope and possibly altered currentView
 
 
-if($fid) {
+if($fid AND $uid) {
     if($_GET['debug']==1) {
         print "$frid, $fid, $filter, $andor, $scope, $limitStart, $limitSize, $sortHandle, $sortDir, $fields";
         exit();
@@ -136,18 +140,15 @@ if($fid) {
     if($searchFilter AND !is_array($searchFilter)) { // if search is a string, append it to any existing filter or use it outright
         $filter .= $filter ? $filter.']['.$searchFilter : $searchFilter;
     } elseif($filter AND $searchFilter) { // if search is an array, stick an existing filter into the array and use that
-        $filterIndex = count($searchFilter);
+        $filterIndex = count((array) $searchFilter);
         $searchFilter[$filterIndex][0] = $andor;
         $searchFilter[$filterIndex][1] = $filter;
         $filter = $searchFilter;
     } elseif($searchFilter) { // if search is an array and there is no existing filter, then use the search array as the filter
         $filter = $searchFilter;
     }
-    if($_SERVER['REMOTE_ADDR']=='70.49.243.84') {
-        //var_dump($filter);
-        //exit();
-				}
-    $filterElements = count($filterElements) == 0 ? null : $filterElements;
+    $filterElements = count((array) $filterElements) == 0 ? null : $filterElements;
+    $GLOBALS['formulize_setQueryForExport'] = true;
     $data = getData($frid, $fid, $filter, $andor, $scope, $limitStart, $limitSize, $sortHandle, $sortDir, false, 0, false, "", false, 'bypass', $filterElements); // 'bypass' before filterElements means don't even do the query, just prep eveything - avoids potentially expensive query and expensive pass through all the data!
     if($data === true) { // we'll get back false if we weren't able to 
         $exportTime = formulize_catchAndWriteExportQuery($fid);
@@ -176,7 +177,8 @@ if($fid) {
     }
 } else {
     // print out help info
-    print "Valid URL parameters for the Formulize makecsv.php file:
+    print "<pre>
+Valid URL parameters for the Formulize makecsv.php file:
     
 key,a valid authentication key issued by a webmaster for your site (if there is no key, a user must be logged in)
 fid,required,the id number of the form you are querying - if absent this help text is displayed
@@ -193,6 +195,7 @@ sortDir,optional,a direction for the sorting of data - default is ASC - valid va
 limitSize,optional,a number indicating how many rows to include from the overall query result - used as part of a standard LIMIT statement in the database query
 limitStart,optional,a number indicating where to start displaying rows from the overall query result - used as part of a standard LIMIT statement in the database query - defaults to 0 (results are numbered from 0)
 includeMetadata,optional,if present then the metadata columns will be included in the result - value doesn't matter
+showForeignKeys,optional,if present then the raw values in the database will be shown for references to other forms instead of the value from the other form - value doesn't matter
 
 Each authentication key is associated with a unique user and will only return data which that user has access to.
 
@@ -206,6 +209,10 @@ http://mysite.com/formulize/makecsv.php?key=ABC123&fid=2&province=Newfoundland&s
 
 Include only the 'population' and 'language' fields
 http://mysite.com/formulize/makecsv.php?key=ABC123&fid=2&province=Newfoundland&fields=pop,lang
+
+Filter on the 'pop' field for greater than 1000 
+http://mysite.com/formulize/makecsv.php?key=ABC123&fid=2&pop=>1000
+(note the > is included in the search term, but the = sign is still necessary because this is a URL)
 
 Sort results by the element 'city'
 http://mysite.com/formulize/makecsv.php?key=ABC123&fid=2&sortHandle=city

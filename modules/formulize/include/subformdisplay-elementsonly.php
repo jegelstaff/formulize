@@ -23,9 +23,11 @@ $subformElementObject = $element_handler->get($subformElementId);
 print "<form id='formulize_modal'>\n";
 // get default screen if any
 if($subformDisplayScreen = get_display_screen_for_subform($subformElementObject)) {
-    $subScreen_handler = xoops_getmodulehandler('formScreen', 'formulize');
+    $subScreen_handler = xoops_getmodulehandler('screen', 'formulize');
     if($screen = $subScreen_handler->get($subformDisplayScreen)) {
-    $subScreen_handler->render($screen, $entry_id, null, true);
+        $renderHandler = xoops_getmodulehandler($screen->getVar('type').'Screen', 'formulize');
+        $screen = $renderHandler->get($screen->getVar('sid'));
+        $renderHandler->render($screen, $entry_id, null, true);
 } else {
         exit("Error: could not render screen $subformDisplayScreen");
     }
@@ -37,37 +39,46 @@ if(isset($GLOBALS['xoopsSecurity'])) {
     print $GLOBALS['xoopsSecurity']->getTokenHTML();
 }
 
-print "</form><hr><br />\n";
-if($subformDisplayScreen) {
-    $savebuttontext = $screen->getVar("savebuttontext");
-    $saveandleavebuttontext = $screen->getVar("saveandleavebuttontext");
-    $alldonebuttontext = $screen->getVar("alldonebuttontext");
+global $xoopsUser;
+$usersCanSave = formulizePermHandler::user_can_edit_entry($fid, ($xoopsUser ? $xoopsUser->getVar('uid') : 0), $entry_id);
+
+print "</form><div style='clear: both;'><hr><br />\n";
+if($screen) {
+    if($screen->getVar('type') == 'form') {
+        $savebuttontext = $screen->getVar("savebuttontext");
+        $saveandleavebuttontext = $screen->getVar("saveandleavebuttontext");
+        $alldonebuttontext = $screen->getVar("alldonebuttontext");
+    } elseif($screen->getVar('type') == 'multiPage') {
+        $buttonText = $screen->getVar('buttontext');
+        $savebuttontext = $buttonText["saveButtonText"];
+        $saveandleavebuttontext = $buttonText["leaveButtonText"];        
+    }
     $buttons = array();
     $reloadblank = $screen->getVar("reloadblank");
     $setNewEntry = "";
     if($reloadblank) {
         //$setNewEntry = '"new"'; // cannot reload modals blank yet.... needs to detect whether it's a newly created opening or am edit-existing-opening. Also, when saving, need to connect to the parent entry properly and set linking field values.
     }
-    if($savebuttontext) {
+    if($savebuttontext AND $usersCanSave) {
         $buttons[] = "<input type='button' id='submitSub' name='submitSub' value='".$savebuttontext."' onclick='saveSub(".$setNewEntry.")'>\n";
     }
-    if($saveandleavebuttontext) {
+    if($saveandleavebuttontext AND $usersCanSave) {
         $buttons[] = "<input type='button' id='submitSub' name='submitSub' value='".$saveandleavebuttontext."' onclick='saveSub(\"leave\")'>\n";
     }
     if($alldonebuttontext) {
         $buttons[] = "<input type='button' id='submitSub' name='submitSub' value='".$alldonebuttontext."' onclick='jQuery(\".ui-dialog-content\").dialog(\"close\");'>\n";
     }
     print implode('&nbsp;&nbsp;&nbsp;', $buttons);
-} else {
+} elseif($usersCanSave) {
     print "<input type='button' id='submitSub' name='submitSub' value='"._formulize_SAVE."' onclick='saveSub()'>";
 }
 
 // MODAL VALIDATION DOES NOT CURRENTLY SUPPORT UNIQUE VALUE CHECKS!
-print "\n<br /><br />
+print "</div>\n<br /><br />
 <script type='text/javascript'>
 function xoopsFormValidate_formulize_modal(myform) {
     ";
-print trim(implode("\n\r",$GLOBALS['formulize_elementsOnlyForm_validationCode']));
+print trim(implode("\n\r",(array) $GLOBALS['formulize_elementsOnlyForm_validationCode']));
 print "\n\r return true;
 }
 </script>";

@@ -367,7 +367,7 @@ class formulizeAdvancedCalculationHandler {
         if( $thisGrouping['type']['kind'] == 3 ) {    // Checkboxes
           // if more then one is selected then do the grouping, else just do the grouping
           //print isset($_POST[$acid."_groupingchoices"][$index])." AND ".array_key_exists( $acid . "_" .$thisGrouping['handle'], $_POST )." AND ".is_array( $_POST[$acid . "_" .$thisGrouping['handle']] )." AND ".count( $_POST[$acid . "_" .$thisGrouping['handle']] );
-          if( isset($_POST[$acid."_groupingchoices"][$index]) AND ( (is_array( $_POST[$acid . "_" .$thisGrouping['handle']] ) AND count( $_POST[$acid . "_" .$thisGrouping['handle']] ) != 1 ) OR !is_array($_POST[$acid . "_" .$thisGrouping['handle']]) ) )  {
+          if( isset($_POST[$acid."_groupingchoices"][$index]) AND ( (is_array( $_POST[$acid . "_" .$thisGrouping['handle']] ) AND count((array)  $_POST[$acid . "_" .$thisGrouping['handle']] ) != 1 ) OR !is_array($_POST[$acid . "_" .$thisGrouping['handle']]) ) )  {
 	    $savedGroupingFilterValue[$thisGrouping['handle']] = $_POST[$acid . "_" .$thisGrouping['handle']]; // save this value so we can use it again after
 	    $groups[] = $index;
           }
@@ -432,7 +432,7 @@ class formulizeAdvancedCalculationHandler {
               foreach( $options as $optionKey => $optionValue ) {
                 $option = $options[$optionKey];
                 $value = explode( "|", $option );
-                if( count( $value ) == 2 ) {
+                if( count((array)  $value ) == 2 ) {
                   if( $postOptions == $value[0] ) {
                     //print "<br>... " . $thisFilter['fltr_label'] . " = " . $value[1];
                     $this->createLogParam( $logid, $thisFilter['fltr_label'], $value[1] );
@@ -452,7 +452,7 @@ class formulizeAdvancedCalculationHandler {
               foreach( $postOptions as $postKey => $postValue ) {
                 $option = $options[$postKey];
                 $value = explode( "|", $option );
-                if( count( $value ) == 2 ) {
+                if( count((array)  $value ) == 2 ) {
                   //print "<br>... " . $thisFilter['fltr_label'] . "[] = " . $value[1];
                   $this->createLogParam( $logid, $thisFilter['fltr_label'] . "[]", $value[1] );
                 } else {
@@ -499,7 +499,7 @@ class formulizeAdvancedCalculationHandler {
     // setup the processing environment
     $stack = array();
     $level = -1;
-    if( count( $groups ) > 0 ) {
+    if( count((array)  $groups ) > 0 ) {
       $hasGroups = true;
       array_push( $stack, array( -1, null, & $groupCombinations, null ) );
     } else {
@@ -513,7 +513,7 @@ class formulizeAdvancedCalculationHandler {
     $activeGroupings = array(); // will contain the metadata for the filter/grouping option, plus the "value" which is the value we're filtering on.  In the case of checkbox filters, because they are set differently based on the item position in the options array, the "value" may be different from the value pulled off the stack.
 
     // process the stack
-    while( count( $stack ) > 0 ) {
+    while( count((array)  $stack ) > 0 ) {
       // get the next item to process from the stack
       $item = null; // just to make sure there's nothing left over from the previous iteration
       $item = array_pop( $stack );
@@ -563,7 +563,7 @@ class formulizeAdvancedCalculationHandler {
 	  
 
           // if the last level has been reached, then we need to calculate
-          if( $item[0] == count( $groups ) - 1 ) {
+          if( $item[0] == count((array)  $groups ) - 1 ) {
             $doCalc = true;
           }
 
@@ -572,7 +572,7 @@ class formulizeAdvancedCalculationHandler {
         }
 
         // put the children items on the stack for processing
-        if( $item[0] != count( $groups ) - 1 ) {
+        if( $item[0] != count((array)  $groups ) - 1 ) {
           foreach( $item[2] as $key => & $value ) {
             array_push( $stack, array( $item[0] + 1, $key, & $value, & $item[2] ) );
           }
@@ -679,7 +679,7 @@ class formulizeAdvancedCalculationHandler {
     $this->destroyTables();
 
     if($hasGroups) {
-	if(count($savedGroupingFilterValue)>0) {
+	if(count((array) $savedGroupingFilterValue)>0) {
             $calculationResult = serialize($groupCombinations); // now that all groups have been processed, then we need to use the original groupCombinations array, where the individual results were assigned by reference, as the result that we're going to send back.
             $calculationResult = unserialize($calculationResult); // this is the stupid thing we have to do if checkbox selections are involved, since there's some deep reference involving POST, which screws up the results when we reset it to the user's original choice.  So we cannot assign the value here in a normal way, we have to munge the reference that is in place by converting the array to a string!!
 	} else {
@@ -744,7 +744,7 @@ class formulizeAdvancedCalculationHandler {
   function groupBy( $acid, $filtersAndGroupings, $groups, $level = 0 ) {
     $groupCombinations = array();
 
-    $groupsCount = count( $groups );
+    $groupsCount = count((array)  $groups );
 
     $group = $groups[ $level ];
     if($group == "year" OR $group == "quarter") {
@@ -808,7 +808,7 @@ class formulizeAdvancedCalculationHandler {
     } elseif( $fltr_grp['type']['kind'] == 2 AND $_POST[ $acid."_".$fltr_grp['handle'] ] == '' AND $_POST[ $acid."_".$fltr_grp['handle'] ] !== 0 ) { // Select
       foreach( $fltr_grp['type']['options'] as $option ) {
         $value = explode( "|", $option );
-        if( count( $value ) == 2 ) {
+        if( count((array)  $value ) == 2 ) {
           $key = $value[0];
         } else {
           $key = $option;
@@ -831,7 +831,7 @@ class formulizeAdvancedCalculationHandler {
 	/*array_key_exists( $acid . "_" .$fltr_grp['handle'], $_POST )
 	AND */
 
-      if(is_array( $_POST[$acid . "_" .$fltr_grp['handle']] ) AND count( $_POST[$acid . "_" .$fltr_grp['handle']] ) > 1) {
+      if(is_array( $_POST[$acid . "_" .$fltr_grp['handle']] ) AND count((array)  $_POST[$acid . "_" .$fltr_grp['handle']] ) > 1) {
 	$selected_grps = $_POST[$acid . "_" .$fltr_grp['handle']];
       } else {
 	$selected_grps = false;
@@ -1080,7 +1080,7 @@ class formulizeAdvancedCalculationHandler {
       $options[""] = "Choose an option...";
       foreach( $definedOptions as $definedOption ) {
         $value = explode( "|", $definedOption );
-        if( count( $value ) == 2 ) {
+        if( count((array)  $value ) == 2 ) {
           $options[$value[0]] = $value[1];
           if( $selectedValue == $value[0] ) {
             $selected = trim($value[1]);
@@ -1109,7 +1109,7 @@ class formulizeAdvancedCalculationHandler {
           $checked = '';
         }
         $option_value = explode( "|", $definedOption );
-        if( count( $option_value ) == 2 ) {
+        if( count((array)  $option_value ) == 2 ) {
           $tmp_html .= '<input type="checkbox" id="' . $elementArrayName . '" class="'. $elementUnderlyingField . ' ' . $elementName . '" name="' . $elementArrayName . '" value="1"' . $checked . '>';
           $tmp_html .= $option_value[1] . "<br>";
           if( $value == 1 ) {
@@ -1124,7 +1124,7 @@ class formulizeAdvancedCalculationHandler {
         }
         $index++;
       }
-      if( count( $selected ) == 0 ) {
+      if( count((array)  $selected ) == 0 ) {
         $selected = "All";
       }
     } else if($kind == 4) { // textbox
@@ -1163,7 +1163,7 @@ class formulizeAdvancedCalculationHandler {
         $value = $_POST[$elementName][$index];    
     } elseif(isset($_GET[$elementName][$index])) { // or if they were set in the URL...
         $value = $_GET[$elementName][$index];
-    } elseif(count($_POST)==0 AND !isset($_GET[$elementName])) { // if no form submission at all and nothing set in the URL, gather defaults
+    } elseif(count((array) $_POST)==0 AND !isset($_GET[$elementName])) { // if no form submission at all and nothing set in the URL, gather defaults
         $value = in_array($index, $fltr_grp["type"]["defaults"]);
     }
     return $value;
@@ -1196,7 +1196,7 @@ class formulizeAdvancedCalculationHandler {
     if($fltr_grp["type"]["kind"] == 3) {
       $index = 0;
       $numberChecked = 0;
-      while($index <= count($fltr_grp["type"]["options"]) AND $numberChecked < 2) {
+      while($index <= count((array) $fltr_grp["type"]["options"]) AND $numberChecked < 2) {
 	if($this->_getFilterOptionsCheckboxStatus($fltr_grp, $index, $acid . "_" . $fltr_grp["handle"])) {
 	    $numberChecked++;
 	}
@@ -1316,12 +1316,12 @@ jQuery(document).ready(function() {
 		$options = array();
 		foreach($_POST[$postName] as $index=>$flag) {
 		    $optionValue = explode( "|", $thisFilter["type"]["options"][$index] );
-		    if( count( $optionValue ) == 2 ) {
+		    if( count((array)  $optionValue ) == 2 ) {
 			$optionValue = $optionValue[0];
 		    }
 		    $options[] = is_numeric($optionValue) ? $optionValue : "'".formulize_db_escape($optionValue)."'";
 		}
-		if(count($options) > 0) {
+		if(count((array) $options) > 0) {
 		    $filterValue .= implode(", ",$options);
 		    if($thisFilter['form'] AND is_numeric($thisFilter['form'])) {
 			$filterValue .= ")";
@@ -1443,7 +1443,7 @@ function createProceduresTable($array, $permTableName = "") {
 	$fieldList[]  = $fieldName;
     }
     $sql .= implode(",", $indexList);
-    $sql .= ") ENGINE=MyISAM;";
+    $sql .= ") ENGINE=InnoDB;";
     global $xoopsDB;
    //print "$sql<br>";
     if(!$res = $xoopsDB->queryF($sql)) {
@@ -1475,7 +1475,7 @@ function createProceduresTable($array, $permTableName = "") {
 		    $values[$index][$fieldName] = $thisValue;
 		    $index++;
 		}
-		$thisDataMultipleCount = count($values);
+		$thisDataMultipleCount = count((array) $values);
 		$thisDataMultipleField = $fieldName;
 	    } else {
 		$values[0][$fieldName] = $fieldData[$fieldName];

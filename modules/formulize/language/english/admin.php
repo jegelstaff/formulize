@@ -158,6 +158,7 @@ define("_AM_PERMISSIONS_REVIEW_PERMISSIONS","Review permissions for a user");
 define("_AM_CALC_EXPLAIN","let you create a series of queries and logical steps, that get carried out on the data that users have submitted in the form.  You can use Procedures for advanced, multi-step calculations, or any other situation where a single query or single operation is not enough to get to the outcome you want.");
 define("_AM_CALC_CLONE"," Clone");
 define("_AM_CALC_DELETE"," Delete");
+define("_AM_CALC_REMOVE"," Remove");
 define("_AM_CALC_CONFIRM_DELETE","Are you sure you want to delete this procedure?  All settings for this procedure will be lost!");
 define("_AM_CALC_PROCEDURE_NAME","Name of the Procedure");
 define("_AM_CALC_PROCEDURE_DESCR","Description of the Procedure:");
@@ -378,7 +379,7 @@ define("_AM_ELE_SUBFORM_ADD_PARENT", "Yes, only if the user can add entries in t
 
 
 // grids
-define("_AM_ELE_GRID", "Table of existing elements (place BEFORE the elements it contains)");
+define("_AM_ELE_GRID", "Table of existing elements");
 define("_AM_ELE_GRID_HEADING", "What text should appear as the heading for this table?");
 define("_AM_ELE_GRID_HEADING_USE_CAPTION", "The caption typed above");
 define("_AM_ELE_GRID_HEADING_USE_FORM", "The title of this form");
@@ -544,6 +545,7 @@ define("_AM_FORM_DATATYPE_VARCHAR1","Store as text, up to a maximum of ");
 define("_AM_FORM_DATATYPE_VARCHAR2"," characters (varchar)");
 define("_AM_FORM_DATATYPE_CHAR1","Store as text, exactly ");
 define("_AM_FORM_DATATYPE_CHAR2"," characters in length (char)");
+define("_AM_FORM_DATATYPE_DATE"," Store as a date");
 
 
 // SCREENS...including multipage
@@ -633,7 +635,7 @@ define("_AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEW", "Which published view should be u
 define("_AM_FORMULIZE_SCREEN_LOE_EDIT_VIEW", "Configure the available views for this screen");
 define("_AM_FORMULIZE_SCREEN_LOE_EDIT_VIEW_DETAILS", "This link will open a new page that shows the master version of the list of entries, where you can manage the views.  If a relationship is in effect for this screen, then it will be active on the page that opens.");
 define("_AM_FORMULIZE_SCREEN_LOE_BLANK_DEFAULTVIEW", "Use a blank default view (ie: display no entries)");
-define("_AM_FORMULIZE_SCREEN_LOE_DESC_DEFAULTVIEW", "If you are customizing the list template, the default view will still be used to control which entries are initially included in the list. NOTE: In the case of a user belonging to multiple groups with different default views, the view displayed to the user will be in order of priority.");
+define("_AM_FORMULIZE_SCREEN_LOE_DESC_DEFAULTVIEW", "If you are customizing the list item template, the default view will still be used to control which entries are initially included in the list. NOTE: In the case of a user belonging to multiple groups with different default views, the view displayed to the user will be in order of priority.");
 define("_AM_FORMULIZE_SCREEN_LOE_LIMITVIEWS", "If the 'Current View' list is in use, include these views:");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_LIMITVIEWS", "If you include the basic views (\"Entries by...\"), then the selected view will switch to a basic view when the user makes a change, such as a sort or Quicksearch.");
 define("_AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEWLIMIT", "Include all views");
@@ -645,12 +647,8 @@ define("_AM_FORMULIZE_SCREEN_LOE_NOPUBDVIEWS", "There are no published views for
 define("_AM_FORMULIZE_SCREEN_LOE_NOVIEWSAVAIL", "There are no views available");
 define("_AM_FORMULIZE_SCREEN_LOE_USEWORKING", "Should the 'Working' message appear when the page is reloading?");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_USEWORKING", "If the user is likely to click the back button in your interface, turning off this message may improve usability.");
-define("_AM_FORMULIZE_SCREEN_LOE_USESCROLLBOX", "Should the list of entries be contained inside a scrolling box?");
-define("_AM_FORMULIZE_SCREEN_LOE_USESEARCHCALCMSGS", "Should the 'Advanced Search' or 'Calculations' status messages appear at the top of the list?");
-define("_AM_FORMULIZE_SCREEN_LOE_USCM_NEITHER", "use neither<br>");
-define("_AM_FORMULIZE_SCREEN_LOE_USCM_BOTH", "use both<br>");
-define("_AM_FORMULIZE_SCREEN_LOE_USCM_SEARCH", "just the 'Advanced Search' status<br>");
-define("_AM_FORMULIZE_SCREEN_LOE_USCM_CALC", "just the 'Calculations' status");
+define("_AM_FORMULIZE_SCREEN_LOE_USESCROLLBOX", "Should the list of entries be contained inside a scrolling box? (Deprecated &mdash; No effect in Formulize 7)");
+define("_AM_FORMULIZE_SCREEN_LOE_USESEARCHCALCMSGS", "Should the Modify/Cancel/View Entries buttons appear at the top of the list when 'Calculations' are active?");
 define("_AM_FORMULIZE_SCREEN_LOE_USEHEADINGS", "Should headings appear at the top of each column?");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_USEHEADINGS", "Without headings at the top of columns, no one will be able to sort the entries in the view.");
 define("_AM_FORMULIZE_SCREEN_LOE_REPEATHEADERS", "If you are using headings, how often should they repeat within the list of entries?");
@@ -670,7 +668,7 @@ define("_AM_FORMULIZE_SCREEN_LOE_USECHECKBOXES", "Should checkboxes appear to th
 define("_AM_FORMULIZE_SCREEN_LOE_UCHDEFAULT", "Yes, show the checkboxes based on the user's permission to delete entries<br>");
 define("_AM_FORMULIZE_SCREEN_LOE_UCHALL", "Yes, show the checkboxes on all entries<br>");
 define("_AM_FORMULIZE_SCREEN_LOE_UCHNONE", "No, do not show the checkboxes");
-define("_AM_FORMULIZE_SCREEN_LOE_DESC_USECHECKBOXES", "If you use a custom List Template, this option will control whether the <i>\$selectionCheckbox</i> variable is set for each row in the list.");
+define("_AM_FORMULIZE_SCREEN_LOE_DESC_USECHECKBOXES", "If you use a custom List Item Template, this option will control whether the <i>\$selectionCheckbox</i> variable is set for each row in the list.");
 define("_AM_FORMULIZE_SCREEN_LOE_USEVIEWENTRYLINKS", "Should the 'magnifying glass links' appear to the left of each entry, so users can click through to the full details?");
 define("_AM_FORMULIZE_SCREEN_LOE_HIDDENCOLUMNS", "Select any columns where you would like the current value from each entry to be included in the list as a hidden form element.");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_HIDDENCOLUMNS", "This option is useful if you need some text on the screen to be sent back in <i>\$_POST</i> as part of the next page load.  You can use <i>gatherHiddenValue('</i>handle<i>');</i> in a custom button access the values you receive.  Any columns you choose will still be displayed normally in the list, in addition to having the hidden form elements created.");
@@ -681,11 +679,11 @@ define("_AM_FORMULIZE_SCREEN_LOE_DVMINE", "Entries by the current user");
 define("_AM_FORMULIZE_SCREEN_LOE_DVGROUP", "Entries by the current user's group(s)");
 define("_AM_FORMULIZE_SCREEN_LOE_DVALL", "Entries by all groups");
 define("_AM_FORMULIZE_SCREEN_LOE_BUTTON_SECTION1", "You can change the text on the buttons below.  Also, if you use a custom Top or Bottom Template, these buttons will be available there.");
-define("_AM_FORMULIZE_SCREEN_LOE_BUTTON_SECTION2", "You can change the text on the buttons below.  If you use a custom List Template, these buttons will not appear on the screen by default, but you can use a custom Top or Bottom Template to specifically include them.");
-define("_AM_FORMULIZE_SCREEN_LOE_CONFIG_SECTION1", "The configuration options below have an effect regardless of whether you use a custom List Template.");
-define("_AM_FORMULIZE_SCREEN_LOE_CONFIG_SECTION2", "Most configuration options below have NO effect if you use a custom List Template, except as noted.");
+define("_AM_FORMULIZE_SCREEN_LOE_BUTTON_SECTION2", "You can change the text on the buttons below.  If you use a custom List Item Template, these buttons will not appear on the screen by default, but you can use a custom Top or Bottom Template to specifically include them.");
+define("_AM_FORMULIZE_SCREEN_LOE_CONFIG_SECTION1", "The configuration options below have an effect regardless of whether you use a custom List Item Template.");
+define("_AM_FORMULIZE_SCREEN_LOE_CONFIG_SECTION2", "Most configuration options below have NO effect if you use a custom List Item Template, except as noted.");
 define("_AM_FORMULIZE_SCREEN_LOE_TEMPLATEINTRO", "OPTIONAL - Specify any custom template options for this screen:");
-define("_AM_FORMULIZE_SCREEN_LOE_TEMPLATEINTRO2", "<span style=\"font-weight: normal\"><p><b>Top and Bottom Templates</b></p>\n<p>If you specify any PHP code in the Top or Bottom Templates, it will be used to control the appearance of the space either above or below the list of entries.</p>\n<p><b>WARNING:</b> if you include any checkbox elements in your templates, turn off the checkboxes that appear on the left side of the list!</p>\n<p>Use this PHP code to setup your preferred layout of buttons, or include custom instructions, etc.</p>\n<p>To include buttons and controls, use these variables:</p>
+define("_AM_FORMULIZE_SCREEN_LOE_TEMPLATEINTRO2", "<span style=\"font-weight: normal\"><p><b>Top and Bottom Templates</b></p>\n<p>If you specify any PHP code in the Top, Bottom, Open List or Close List Templates, it will be used to control the appearance of the space either above or below the list of entries.</p>\n<p><b>WARNING:</b> if you include any checkbox elements in your templates, turn off the checkboxes that appear on the left side of the list!</p>\n<p>Use this PHP code to setup your preferred layout of buttons, or include custom instructions, etc.</p>\n<p>To include buttons and controls, use these variables:</p>
 <table cellpadding=5 border=0>
 <tr>
 <td>
@@ -717,11 +715,11 @@ define("_AM_FORMULIZE_SCREEN_LOE_TEMPLATEINTRO2", "<span style=\"font-weight: no
 </td>
 </tr>
 </table>
-<p>For Quicksearch boxes, use \"\$quickSearch<i>Column</i>\" where <i>Column</i> is the element's data handle. See the List Template above for <a href=\"#elementhandles\">a list of the element handles</a>.  <b>Note:</b> you must turn off the quicksearch boxes at the top of the columns before you can use them in a top template.</p>\n
+<p>For Quicksearch boxes, use \"\$quickSearch<i>Column</i>\" where <i>Column</i> is the element's data handle. See the List Item Template above for <a href=\"#elementhandles\">a list of the element handles</a>.  <b>Note:</b> you must turn off the quicksearch boxes at the top of the columns before you can use them in a top template.</p>\n
 <p>You can also make Quickfilter dropdown boxes, by using \"\$quickFilter<i>Column</i>\".  This only works for selectboxes, radio buttons and checkboxes.</p>\n
 <p>You can also make QuickMultiFilter checkboxes, by using \"\$quickMultiFilter<i>Column</i>\".  This only works for selectboxes, radio buttons and checkboxes.</p>\n
 <p>You can also make Quickfilter date range selectors, by using \"\$quickDateRange<i>Column</i>\".  This only works for date boxes.</p>\n
-<p>For Custom Buttons, use \"\$handle\" where <i>handle</i> is the handle you specified for that button.  You can use \"\$messageText\" to control where the clicked button's message will appear on the screen.  By default, the message appears centred at the top.</p>\n<p>If the current view list is available, you can determine which view was last selected from the list, by checking whether <i>\$The_view_name</i> is true or not.  You can also check <i>\$viewX</i> where X is a number corresponding to the position of the view in the list, 1 through n.  You can use this to put if..else clauses into your template, so it changes depending what view is selected.</p>\n<p><b>List Template</b></p>\n<p>If you specify any PHP code for the List Template, it will be used to draw in each row of the list.</p>\n<p>You do not need to create a foreach loop or any other loop structure in this template.  The PHP code you specify will be executed inside a loop that runs once for each entry.</p>\n<p>You have full access to Formulize objects, functions, variables and constants in this template, including <i>\$fid</i> for the form ID.  Use \$entry to refer to the current entry in the list.  For example:</p>\n<p style=\"font-family: courier\">&nbsp;&nbsp;&nbsp;display(\$entry, \"phonenumber\");</p>\n<p>That code will display the phone number recorded in that entry (assuming \"phonenumber\" is a valid element handle).</p><p>You can use \"\$selectionCheckbox\" to display the special checkbox used to select an entry.</p><p>You can use a special function called \"viewEntryLink\" to create a link to the entry so users can edit it.  This function takes up to three parameters.  The first is the text that will be clickable.  Examples:</p><p style=\"font-family: courier\">&nbsp;&nbsp;&nbsp;print viewEntryLink(\"Click to view this entry\");<br>&nbsp;&nbsp;&nbsp;print viewEntryLink(display(\$entry, \"taskname\"));<br>&nbsp;&nbsp;&nbsp;print viewEntryLink(\"&lt;img src='images/button.jpg'&gt;\");</p>
+<p>For Custom Buttons, use \"\$handle\" where <i>handle</i> is the handle you specified for that button.  You can use \"\$messageText\" to control where the clicked button's message will appear on the screen.  By default, the message appears centred at the top.</p>\n<p>If the current view list is available, you can determine which view was last selected from the list, by checking whether <i>\$The_view_name</i> is true or not.  You can also check <i>\$viewX</i> where X is a number corresponding to the position of the view in the list, 1 through n.  You can use this to put if..else clauses into your template, so it changes depending what view is selected.</p>\n<p><b>List Item Template</b></p>\n<p>If you specify any PHP code for the List Item Template, it will be used to draw in each row of the list.</p>\n<p>You do not need to create a foreach loop or any other loop structure in this template.  The PHP code you specify will be executed inside a loop that runs once for each entry.</p>\n<p>You have full access to Formulize objects, functions, variables and constants in this template, including <i>\$fid</i> for the form ID.  Use \$entry to refer to the current entry in the list.  For example:</p>\n<p style=\"font-family: courier\">&nbsp;&nbsp;&nbsp;display(\$entry, \"phonenumber\");</p>\n<p>That code will display the phone number recorded in that entry (assuming \"phonenumber\" is a valid element handle).</p><p>You can use \"\$selectionCheckbox\" to display the special checkbox used to select an entry.</p><p>You can use a special function called \"viewEntryLink\" to create a link to the entry so users can edit it.  This function takes up to three parameters.  The first is the text that will be clickable.  Examples:</p><p style=\"font-family: courier\">&nbsp;&nbsp;&nbsp;print viewEntryLink(\"Click to view this entry\");<br>&nbsp;&nbsp;&nbsp;print viewEntryLink(display(\$entry, \"taskname\"));<br>&nbsp;&nbsp;&nbsp;print viewEntryLink(\"&lt;img src='images/button.jpg'&gt;\");</p>
 <p>Optionally, you can also specify a specific entry to edit, and also which screen to edit it in.  This is often useful when the dataset contains more than one form (from a relationship), and you are using the <i>internalRecordIds</i> function to identify which entries in the other forms are being included.  Examples:</p><p style=\"font-family: courier\">&nbsp;&nbsp;&nbsp;print viewEntryLink(\"Click to view this entry\", 123); // takes the user to entry 123 in this form<br><br>
 &nbsp;&nbsp;&nbsp;\$ids = internalRecordIds(\$entry, 12); <br>
 &nbsp;&nbsp;&nbsp;foreach(\$ids as \$id) { <br>
@@ -742,21 +740,21 @@ define("_AM_FORMULIZE_SCREEN_LOE_TEMPLATEINTRO2", "<span style=\"font-weight: no
 <p>You can use a special function called \"clickableSortLink\" to create a clickable element on the page, so users can control the sorting order of entries in the list.  This function takes two parameters.  The first is the element handle of the element you want to sort by.  The second is the text or HTML that you want to be clickable.  When the sort is active, a black triangle will appear next to the clickable element.  Examples:</p><p style=\"font-family: courier\">&nbsp;&nbsp;&nbsp;print clickableSortLink(\"last_name\", \"Sort by last name\");<br>&nbsp;&nbsp;&nbsp;print clickableSortLink(\"creation_datetime\", \"&lt;img src='images/clock.jpg'&gt;\");</p>
 </span>\n");
 define("_AM_FORMULIZE_SCREEN_LOE_TOPTEMPLATE", "Template for the top portion of the page, above the list:");
-define("_AM_FORMULIZE_SCREEN_LOE_DESC_TOPTEMPLATE", "You can type PHP code into any or all of the three template boxes below.  Code in the <i>top template</i> box will replace the default user interface above the list.  Code in the <i>list template</i> box will replace the default way that each row in the list is displayed.  Code in the <i>bottom template</i> box will be rendered below the last row in the list.");
-define("_AM_FORMULIZE_SCREEN_LOE_DESC_TOPTEMPLATE2", "If you turn off the scrollbox, then these three templates will all be drawn to the screen consecutively.  This means you can start a table in the <i>top template</i>, specify the &lt;tr&gt; tags in the <i>list template</i> and close the table in the <i>bottom template</i>.  Essentially, these three templates give you control over the entire page layout.");
+define("_AM_FORMULIZE_SCREEN_LOE_DESC_TOPTEMPLATE", "You can type PHP code into any or all of the template boxes below.  Code in the <i>Top Template</i> box will replace the default user interface above the list.  Code in the <i>Open List Template</i> box can be used to start a container for the list items. Code in the <i>List Item Template</i> box will be used to draw each entry onto the page. Code in the <i>Close List Template</i> box will be used after the list to close anything you started in the Open List Template. Code in the <i>Bottom Template</i> box will be rendered below the list.");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_TOPTEMPLATE3", "You can create different sets of templates for each theme in this installation. The themes correspond to the folders inside the 'themes' folder at the root of the site. The different template sets will be used in conjunction with different themes.");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_SEEDTEMPLATES1", "For this theme, this screen is using the default templates found at '");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_SEEDTEMPLATES2", "'.");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_SEEDTEMPLATES3", "Customize the Templates");
 define("_AM_FORMULIZE_SCREEN_LOE_BOTTOMTEMPLATE", "Template for the bottom portion of the page, below the list:");
 define("_AM_FORMULIZE_SCREEN_LOE_LISTTEMPLATE", "Template for each entry in the list portion of the page:");
-define("_AM_FORMULIZE_SCREEN_LOE_DESC_LISTTEMPLATE", "If you specify a List Template, certain buttons and configuration options mentioned above may be unavailable.");
+define("_AM_FORMULIZE_SCREEN_LOE_DESC_LISTTEMPLATE", "If you specify a List Item Template, certain buttons and configuration options mentioned above may be unavailable.");
 define("_AM_FORMULIZE_SCREEN_LOE_LISTTEMPLATE_HELPINTRO_FRAMEWORK", "Below is a list of handles for all the form elements in this Framework.  Use them with the <i>display</i> function.<br><br>Use \"<i>\$entry_id</i>\" to refer to the main form's entry id number.<br><br>Use \"<i>\$form_id</i>\" to refer to the id number of the main form.");
 define("_AM_FORMULIZE_SCREEN_LOE_LISTTEMPLATE_HELPINTRO_FORM", "Below is a list of element data handles for all the elements in this form. Use them with the <i>display</i> function.<br><br>Use \"<i>\$entry_id</i>\" to refer to the entry id number.<br><br>Use \"<i>\$form_id</i>\" to refer to the form id number.");
 
 define("_AM_FORMULIZE_SCREEN_LOE_DISPLAY_ONLY_COLUMNS", "Display only these columns");
 define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_COLUMNS", "Column");
 define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_SEARCH_BY", "Search by this");
+define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_SEARCH_TYPE", "Search Interface");
 define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_SORT_BY", "Sort by this");
 define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_DELETE_COLUMN", "Remove column");
 define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_DESCRIPTION", "If you add columns here this will become the default view. The 'search by this' and 'sort by this' are optional fields");
@@ -775,7 +773,7 @@ define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_MESSAGETEXT", "What text should ap
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_POPUPTEXT", "What text should appear in a popup to confirm that the user wants to activate this button? (Leave blank for no popup)");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_GROUPS", "For which groups should this custom button appear?");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_INLINE", "Should this button appear once on every line of the list of entries?");
-define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_INLINE_DESC", "If no, then the button will be available in the Top and Bottom Templates.  If yes, the button will appear in the list, or will be available in the List Template if you use one.");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_INLINE_DESC", "If no, then the button will be available in the Top and Bottom Templates.  If yes, the button will appear in the list, or will be available in the List Item Template if you use one.");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO", "Which entries should be modified when this button is clicked?");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_INLINE", "Only the entry on the line where the button is (only works if this button appears on every line)");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_SELECTED", "Only the selected entries (only works if checkboxes are enabled above)");

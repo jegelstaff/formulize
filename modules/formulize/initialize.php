@@ -43,6 +43,8 @@ $GLOBALS['formulize_asynchronousFormDataInAPIFormat'] = array();
 
 $GLOBALS['formulize_subformInstance'] = 100;
 
+$GLOBALS['formulize_displayingMultipageScreen'] = false; // later, will be set to the screen id if we're displaying a multipage screen, or just true if we're displaying a multipage form without a screen specified
+
 global $xoopsDB, $myts, $xoopsUser, $xoopsModule, $xoopsTpl, $xoopsConfig, $renderedFormulizeScreen;
 
 // load the formulize language constants if they haven't been loaded already

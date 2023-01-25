@@ -170,9 +170,16 @@ a.button span {
 #view-on-github span {
   background: transparent url(../images/octocat-icon.png) 12px 50% no-repeat;
 }
-#view-on-github {
+#join-slack span {
+  background: transparent url(../images/slack-icon.png) 12px 50% no-repeat;
+}
+#follow-twitter span {
+  background: transparent url(../images/twitter-icon.png) 12px 50% no-repeat;
+}
+#follow-twitter {
   margin-right: 0;
 }
+
 
 code, pre {
   font-family: Monaco, "Bitstream Vera Sans Mono", "Lucida Console", Terminal;
@@ -305,7 +312,7 @@ blockquote {
   padding: 0 0 0 30px;
 }
 
-ul li {
+ul li, li ul li {
   list-style: disc outside;
   margin-left: 17px;
   padding-left: 3px;
@@ -354,6 +361,10 @@ footer a:hover {
 
 .header-home {
     color: black !important;
+}
+
+#icon {
+    border: 1px solid black;
 }
 
 /* #Media Queries

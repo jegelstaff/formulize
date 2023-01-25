@@ -107,7 +107,7 @@ FCKConfig.ToolbarSets["Default"] = [
 	['JustifyLeft','JustifyCenter','JustifyRight','JustifyFull'],
 	'/',
 	['Style','FontFormat','FontName','FontSize'],
-	['TextColor','BGColor']
+	['TextColor','BGColor', 'Link']
 ] ;
 
 FCKConfig.ToolbarSets["Basic"] = [

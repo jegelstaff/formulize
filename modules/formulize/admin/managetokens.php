@@ -38,10 +38,8 @@ if(isset($_POST['save'])) {
 
     foreach($groupList as $group) {
         $id = $group['groupid'];
-        if(isset($_POST[$id ])){
-            
-            $groups = $groups ." " .$id;
-
+        if(isset($_POST[$id])){
+            $groups = $groups ." " .intval($id);
         }
     }
     $tokenHandler->insert($groups,intval($_POST['expiry']), intval($_POST['tokenlength']), intval($_POST['maxuses']));

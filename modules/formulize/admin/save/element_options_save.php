@@ -100,7 +100,7 @@ if($_POST['element_delimit']) {
 if($ele_type == "date" AND $processedValues['elements']['ele_value'][0] != _DATE_DEFAULT AND $processedValues['elements']['ele_value'][0] != "") { // still checking for old YYYY-mm-dd string, just in case.  It should never be sent back as a value now, but if we've missed something and it is sent back, leaving this check here ensures it will properly be turned into "", ie: no date.
 	if(preg_replace("/[^A-Z{}]/","", $processedValues['elements']['ele_value'][0]) === "{TODAY}") {
 	  $processedValues['elements']['ele_value'][0] = $processedValues['elements']['ele_value'][0];
-	} else {
+	} elseif(substr($processedValues['elements']['ele_value'][0], 0, 1) !='{' OR substr($processedValues['elements']['ele_value'][0], -1) !='}') {
 	  $processedValues['elements']['ele_value'][0] = date("Y-m-d", strtotime($processedValues['elements']['ele_value'][0]));
 	}
 } elseif($ele_type == "date") {
@@ -119,6 +119,13 @@ if($ele_type == "yn") {
   }
 }
 if($ele_type == "subform") {
+
+    if(!isset($processedValues['elements']['ele_value']['show_delete_button'])) {
+        $processedValues['elements']['ele_value']['show_delete_button'] = 0;
+    }
+    if(!isset($processedValues['elements']['ele_value']['show_clone_button'])) {
+        $processedValues['elements']['ele_value']['show_clone_button'] = 0;
+    }
 
     if(!isset($processedValues['elements']['ele_value']['enforceFilterChanges'])) {
         $processedValues['elements']['ele_value']['enforceFilterChanges'] = 0;
@@ -148,7 +155,7 @@ if($ele_type == "subform") {
 
   }
   $processedValues['elements']['ele_value'][1] = implode(",",$_POST['elements_ele_value_1']);
-  $processedValues['elements']['ele_value']['disabledelements'] = (isset($_POST['elements_ele_value_disabledelements']) AND count($_POST['elements_ele_value_disabledelements']) > 0) ? implode(",",$_POST['elements_ele_value_disabledelements']) : array();
+  $processedValues['elements']['ele_value']['disabledelements'] = (isset($_POST['elements_ele_value_disabledelements']) AND count((array) $_POST['elements_ele_value_disabledelements']) > 0) ? implode(",",$_POST['elements_ele_value_disabledelements']) : array();
   $processedValues['elements']['ele_value'][7] = parseSubmittedConditions('subformfilter', 'optionsconditionsdelete'); // post key, delete key
 }
 
@@ -258,7 +265,7 @@ if($ele_type == "select") {
     $deleteTarget = intval($conditionsDeleteParts[1]);
     // go through the passed filter settings starting from the one we need to remove, and shunt the rest down one space
     // need to do this in a loop, because unsetting and key-sorting will maintain the key associations of the remaining high values above the one that was deleted
-    $originalCount = count($_POST[$filter_key."_elements"]);
+    $originalCount = count((array) $_POST[$filter_key."_elements"]);
     for($i=$deleteTarget;$i<$originalCount;$i++) { 
       if($i>$deleteTarget) {
         $_POST[$filter_key."_elements"][$i-1] = $_POST[$filter_key."_elements"][$i];
@@ -276,7 +283,7 @@ if($ele_type == "select") {
     }
     $_POST['reload_option_page'] = true;
   }
-  if(count($_POST[$filter_key."_elements"]) > 0){
+  if(count((array) $_POST[$filter_key."_elements"]) > 0){
     $processedValues['elements']['ele_value'][5][0] = $_POST[$filter_key."_elements"];
     $processedValues['elements']['ele_value'][5][1] = $_POST[$filter_key."_ops"];
     $processedValues['elements']['ele_value'][5][2] = $_POST[$filter_key."_terms"];

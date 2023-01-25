@@ -376,7 +376,7 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
             $picker .= "<p>";
         }
         
-        if(count($ele_value['files'])>0) {
+        if(count((array) $ele_value['files'])>0) {
             foreach($ele_value['files'] as $file) {
                 $interactiveMarkup = $isDisabled ? "" : "<a href=\"\" onclick=\"warnAboutGoogleDelete$eleId('".$file['id']."', '".str_replace('"','\"',htmlspecialchars_decode($file['name'], ENT_QUOTES))."', '".$markupName."');return false;\"><img src=\"".XOOPS_URL."/modules/formulize/images/x.gif\" /></a><input type=\"hidden\" name=\"".$markupName."[]\" value=\"".str_replace('"','\"',htmlspecialchars_decode($file['name'], ENT_QUOTES))."<{()}>".$file['url']."<{()}>".$file['id']."<{()}>".$file['iconUrl']."\">";
                 $interactiveId = $isDisabled ? "" : "id=\"googlefile_".$markupName."_".$file['id']."\"";
@@ -438,7 +438,13 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
     // $handle is the element handle for the field that we're retrieving this for
     // $entry_id is the entry id of the entry in the form that we're retrieving this for
     function prepareDataForDataset($value, $handle, $entry_id) {
-        return $value; // we're not making any modifications for this element type
+        $value = unserialize($value);
+        $urls = array();
+        foreach($value as $fileData) {
+            $GLOBALS['formulize_googleFileUploadElementDisplayName'][$fileData['url']] = $fileData['name']; // set aside in GLOBALS for use in creating download link later
+            $urls[] = $fileData['url'];
+        }
+        return implode(',',$urls); 
     }
     
     // this method will take a text value that the user has specified at some point, and convert it to a value that will work for comparing with values in the database.  This is used primarily for preparing user submitted text values for saving in the database, or for comparing to values in the database, such as when users search for things.  The typical user submitted values would be coming from a condition form (ie: fieldX = [term the user typed in]) or other situation where the user types in a value that needs to interact with the database.
@@ -454,12 +460,22 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
     // this method will format a dataset value for display on screen when a list of entries is prepared
     // for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
     // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
-    function formatDataForList($value, $handle, $entry_id) {
-        $this->clickable = true; // make urls clickable
-        $this->striphtml = true; // remove html tags as a security precaution
-        $this->length = 100; // truncate to a maximum of 100 characters, and append ... on the end
-        
-        return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
+    function formatDataForList($value, $handle="", $entry_id=0) {
+        $this->clickable = false; // make urls clickable
+        $this->striphtml = false; // remove html tags as a security precaution
+        $this->length = 100000; // truncate to a maximum of 2000 characters, and append ... on the end
+        // value set to array of URLs by prepareDataForDataset
+        $links = array();
+        foreach(explode(',',$value) as $url) {
+            $links[] = $this->createDownloadLink($url);    
+        }
+        return parent::formatDataForList(implode('<br />',$links)); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
     }
     
+    // this method is for the google file upload element only.  It will return a href that links to the actual file.
+    function createDownloadLink($url) {
+        $displayName = $GLOBALS['formulize_googleFileUploadElementDisplayName'][$url]; // set aside in prepareDataForDataset above
+        return "<a href=\"".$url."\" target=\"_blank\">".str_replace('"','\"',htmlspecialchars_decode($displayName, ENT_QUOTES))."</a>";
+    }
+
 }
