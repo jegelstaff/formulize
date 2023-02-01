@@ -342,13 +342,13 @@ function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitS
     }
 
     if ($cacheKey AND !isset($GLOBALS['formulize_doNotCacheDataSet'])) {
-        // doNotCacheDataSet can be set, so that this query will be repeated next time instead of pulled from the cache.  This is most useful to declare in derived value formulas that cause a change to the underlyin dataset by writing things to a form that is involved in this dataset.
+        // doNotCacheDataSet can be set, so that this query will be repeated next time instead of pulled from the cache. This is useful if a derived value makes changes to another field's value, and that value will be crucial later on in the same page load.
         // This is also useful to set when a query will not be done over again and we want to conserve resources esp. memory!
         $GLOBALS['formulize_cachedGetDataResults'][$cacheKey] = $result;
     }
 
     if (isset($GLOBALS['formulize_doNotCacheDataSet'])) {
-        // this needs to be declared before or during each extraction that should now be cached...caching is too important a cost savings when building the page
+        // this needs to be declared before or during each extraction that should not be cached...caching is too important a cost savings when building the page
         unset($GLOBALS['formulize_doNotCacheDataSet']);
     }
 
@@ -1862,7 +1862,7 @@ function formulize_getElementMetaData($elementOrHandle, $isHandle=false, $fid=0)
 // Odd results may occur when a derived column is inside a subform in a framework!
 // Derived values should always be in the mainform only?
 function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form_id) {
-    global $xoopsDB;
+    
     static $parsedFormulas = array();
     
     static $debugMode;
@@ -1892,28 +1892,25 @@ function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form
                 if(!$primary_entry_id) { continue; } // datasets can contain empty values for subforms, etc, when no entries exist. We must not process phantom non-existent entries.
                 $dataToWrite = array();
                 foreach ($metadata[$formHandle] as $formulaNumber => $thisMetaData) {
-                        $functionName = "derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", $formHandle)."_".$relationship_id."_".$form_id."_".$formulaNumber;
-                        // want to turn off the derived value update flag for the actual processing of a value, since the function might have a getData call in it!!
-                        $resetDerivedValueFlag = false;
-                        if (isset($GLOBALS['formulize_forceDerivedValueUpdate'])) {
-                            unset($GLOBALS['formulize_forceDerivedValueUpdate']);
-                            $resetDerivedValueFlag = true;
-                        }
-                        $derivedValue = $functionName($entry, $form_id, $primary_entry_id, $relationship_id);
-                        if ($resetDerivedValueFlag) {
-                            $GLOBALS['formulize_forceDerivedValueUpdate'] = true;
-                        }
-                        // if the new value is the same as the previous one, then skip updating and saving
-                        if ($derivedValue !== $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0]) {
-                            if ($xoopsDB) {
-                                // save value for writing to database if XOOPS is active
-                                $elementID = formulize_getIdFromElementHandle($thisMetaData['handle']);
-                                $dataToWrite[$elementID] = $derivedValue;
-                            }
-                            $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0] = $derivedValue === '{WRITEASNULL}' ? NULL : $derivedValue;
-                        }
+                    $functionName = "derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", $formHandle)."_".$relationship_id."_".$form_id."_".$formulaNumber;
+                    // want to turn off the derived value update flag for the actual processing of a value, since the function might have a getData call in it!!
+                    $resetDerivedValueFlag = false;
+                    if (isset($GLOBALS['formulize_forceDerivedValueUpdate'])) {
+                        unset($GLOBALS['formulize_forceDerivedValueUpdate']);
+                        $resetDerivedValueFlag = true;
                     }
-                if ($xoopsDB and count((array) $dataToWrite) > 0) {
+                    $derivedValue = $functionName($entry, $form_id, $primary_entry_id, $relationship_id);
+                    if ($resetDerivedValueFlag) {
+                        $GLOBALS['formulize_forceDerivedValueUpdate'] = true;
+                    }
+                    // if the new value is the same as the previous one, then skip updating and saving
+                    if ($derivedValue !== $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0]) {
+                        $elementID = formulize_getIdFromElementHandle($thisMetaData['handle']);
+                        $dataToWrite[$elementID] = $derivedValue;
+                        $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0] = $derivedValue === '{WRITEASNULL}' ? NULL : $derivedValue;
+                    }
+                }
+                if (count((array) $dataToWrite) > 0) {
                     // false for no proxy user, true to force the update even on get requests, false is do not update the metadata (modification user)
                     $data_handler->writeEntry($primary_entry_id, $dataToWrite, false, true, false);
                 }
