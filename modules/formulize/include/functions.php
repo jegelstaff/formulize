@@ -7786,3 +7786,25 @@ function userHasMobileClient() {
     return false;
 }
 
+// this function reads the go_back values from POST and sets up parent entries in POST, which are used as a flag in key situations.
+// the Go Back form, setup with the legacy form screen submit buttons, normally would include the parent entries
+// however they are missing when a multipage form does a Go Back operation
+// So the list screens check if they need to do this, and call this function if so
+// Multipage screens check for this too, and call this function
+// Essentially, this is a replacement for the Go Back form that's part of legacy form screens, which isn't really used anymore
+// This function returns the active entry that should be displayed
+function setupParentFormValuesInPostAndReturnEntryId() {
+    $go_back_entry = strstr($_POST['go_back_entry'], ',') ? explode(',',$_POST['go_back_entry']) : array($_POST['go_back_entry']);
+    $lastKey = count((array) $go_back_entry)-1;
+    $_POST['parent_entry'] = $_POST['go_back_entry'];
+    $_POST['parent_form'] = $_POST['go_back_form'];
+    $_POST['parent_page'] = $_POST['go_back_page'];
+    $_POST['parent_subformElementId'] = $_POST['go_back_subformElementId'];
+    unset($_POST['go_back_form']);
+    unset($_POST['go_back_entry']);
+    unset($_POST['go_back_page']);
+    unset($_POST['goto_sfid']);
+    unset($_POST['sub_fid']);
+    return $go_back_entry[$lastKey];
+}
+
