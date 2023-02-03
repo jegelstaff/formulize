@@ -980,7 +980,7 @@ class icms_core_DataFilter {
 					break;
 
 					case "host":
-						$valid = filter_var($data, FILTER_VALIDATE_URL, FILTER_FLAG_HOST_REQUIRED);
+						$valid = filter_var($data, FILTER_VALIDATE_URL);
 					break;
 
 					case "path":

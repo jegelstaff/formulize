@@ -201,7 +201,7 @@ class mod_content_Content extends icms_ipf_seo_Object {
 	 *
 	 * @return bool true if user can view this page, false if not
 	 */
-	function accessGranted($perm_name) {
+	function accessGranted($perm_name='') {
 		$gperm_handler = icms::handler('icms_member_groupperm');
 		$groups = is_object(icms::$user) ? icms::$user->getGroups() : array(ICMS_GROUP_ANONYMOUS);
 

@@ -2236,7 +2236,7 @@ function icms_random_str($numchar){
 	$letras = "a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,x,w,y,z,1,2,3,4,5,6,7,8,9,0";
 	$array = explode(",", $letras);
 	shuffle($array);
-	$senha = implode($array, "");
+	$senha = implode("", $array);
 	return substr($senha, 0, $numchar);
 }
 
