@@ -731,19 +731,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	// if there's a bunch of go_back info, and no entry, then we should not show list, we need to display something else entirely
 	if(isset($_POST['go_back_form']) AND $_POST['go_back_form'] AND isset($_POST['go_back_entry']) AND $_POST['go_back_entry'] AND (!isset($_POST['ventry']) OR !$_POST['ventry'])) {
-		$go_back_entry = strstr($_POST['go_back_entry'], ',') ? explode(',',$_POST['go_back_entry']) : array($_POST['go_back_entry']);
-		$lastKey = count((array) $go_back_entry)-1;
-		$settings['ventry'] = $go_back_entry[$lastKey];
-		$_POST['ventry'] = $go_back_entry[$lastKey];
-		$_POST['parent_entry'] = $_POST['go_back_entry'];
-		$_POST['parent_form'] = $_POST['go_back_form'];
-		$_POST['parent_page'] = $_POST['go_back_page'];
-		$_POST['parent_subformElementId'] = $_POST['go_back_subformElementId'];
-		unset($_POST['go_back_form']);
-		unset($_POST['go_back_entry']);
-		unset($_POST['go_back_page']);
-		unset($_POST['goto_sfid']);
-		unset($_POST['sub_fid']);
+        $_POST['ventry'] = setupParentFormValuesInPostAndReturnEntryId();
+        $settings['ventry'] = $_POST['ventry'];
 	} elseif(isset($_POST['formulize_originalVentry']) AND is_numeric($_POST['formulize_originalVentry'])) {
 		$settings['ventry'] = $_POST['formulize_originalVentry'];
 	} else {

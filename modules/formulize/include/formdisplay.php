@@ -1484,7 +1484,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		// draw in the submitbutton if necessary
 		if (!$formElementsOnly) {
 			$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $entry, $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, $allDoneOverride, $printall, $screen);
-			}
+    	}
 	   
 		if(!$formElementsOnly) {
 			// add flag to indicate that the form has been submitted
@@ -1847,10 +1847,6 @@ function addSubmitButton($form, $subButtonText, $go_back, $currentURL, $button_t
             }
         }
     
-
-
-
-
         // formulize_displayingMultipageScreen is set in formdisplaypages to indicate we're displaying a multipage form
         global $formulize_displayingMultipageScreen;
         // do not use printable button for profile forms
@@ -1866,8 +1862,8 @@ function addSubmitButton($form, $subButtonText, $go_back, $currentURL, $button_t
             
             $currentPage = "";
             $screenid = "";
-        if($screen) {
-              $screenid = $screen->getVar('sid');
+            if($screen) {
+                $screenid = $screen->getVar('sid');
                 // check for a current page setting
                 if(isset($settings['formulize_currentPage'])) {
                     $currentPage = $settings['formulize_currentPage'];
@@ -1891,7 +1887,7 @@ function addSubmitButton($form, $subButtonText, $go_back, $currentURL, $button_t
                 print "<input type=hidden name=elements_allowed value=''>";
             }
             print "</form>";
-		//added by Cory Aug 27, 2005 to make forms printable
+            //added by Cory Aug 27, 2005 to make forms printable
             
             $printbutton = new XoopsFormButton('', 'printbutton',  $pv_text_temp, 'button');
             if(is_array($elements_allowed)) {
@@ -1930,13 +1926,13 @@ function addSubmitButton($form, $subButtonText, $go_back, $currentURL, $button_t
             $donebutton = new XoopsFormButton('', 'donebutton', trans($button_text), 'button');
             $donebutton->setExtra("onclick=javascript:verifyDone();");
             $buttontray->addElement($donebutton); 
-	}
-
-	$trayElements = $buttontray->getElements();
-        if(count((array) $trayElements) > 0 OR $formulize_displayingMultipageScreen) {
-		$form->addElement($buttontray);
-	}
-	return $form;
+        }
+    
+        $trayElements = $buttontray->getElements();
+            if(count((array) $trayElements) > 0 OR $formulize_displayingMultipageScreen) {
+            $form->addElement($buttontray);
+        }
+        return $form;
 	}
 }
 

@@ -48,6 +48,12 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 	
     formulize_benchmark("Start of displayFormPages.");
 	
+    global $xoopsUser;
+    if(!isset($_POST['parent_entry']) AND !isset($_POST['parent_form']) AND !isset($_POST['parent_page']) AND !isset($_POST['parent_subformElementId'])
+       AND isset($_POST['go_back_form']) AND $_POST['go_back_form'] AND isset($_POST['go_back_entry']) AND $_POST['go_back_entry'] AND (!isset($_POST['ventry']) OR !$_POST['ventry'])) {
+        $entry = setupParentFormValuesInPostAndReturnEntryId();
+    }
+    
     // instantiate multipage screen handler just because we might need some functions from that file (plain functions, not methods on the class, because they're not necessarily related to handling a screen, and we might not even have a screen in effect)
     $multiPageScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
     $element_handler = xoops_getmodulehandler('elements','formulize');
