@@ -42,7 +42,7 @@ $GLOBALS['formulize_renderedElementHasConditions'] = array();
 
 // $groups is optional and can be passed in to override getting the user's groups.  This is necessary for the registration form to work with custom displayed elements
 // $noSave is used to specify a different name for the element, so we can get back an HTML element that we will use in a different context than a normal form
-function displayElement($formframe="", $ele, $entry="new", $noSave = false, $screen=null, $prevEntry=null, $renderElement=true, $profileForm = null, $groups="") {
+function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $screen=null, $prevEntry=null, $renderElement=true, $profileForm = null, $groups="") {
 
 	static $cachedPrevEntries = array();
 	static $lockedEntries = array(); // keep track of the entries we have determined are locked 
@@ -445,7 +445,7 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 
 // THIS FUNCTION RETURNS THE CAPTION FOR AN ELEMENT 
 // added June 25 2006 -- jwe
-function displayCaption($formframe="", $ele) {
+function displayCaption($formframe="", $ele=0) {
 	$element = _formulize_returnElement($ele, $formframe);
   if(!is_object($element)) {
     return "invalid_element";
@@ -454,7 +454,7 @@ function displayCaption($formframe="", $ele) {
 }
 
 // THIS FUNCTION RETURNS THE description FOR AN ELEMENT 
-function displayDescription($formframe="", $ele) {
+function displayDescription($formframe="", $ele=0) {
 	$element = _formulize_returnElement($ele, $formframe);
   if(!is_object($element)) {
     return "invalid_element";

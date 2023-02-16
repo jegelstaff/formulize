@@ -2318,7 +2318,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 				foreach($elementsToDraw as $thisele) {
 					if($thisele) { 
                         $unsetDisabledFlag = false;
-                        if($subform_element_object AND in_array($thisele, explode(',',$subform_element_object->ele_value['disabledelements']))) {
+                        if($subform_element_object AND in_array($thisele, explode(',',(string)$subform_element_object->ele_value['disabledelements']))) {
                             $unsetDisabledFlag = !isset($GLOBALS['formulize_forceElementsDisabled']);
                             $GLOBALS['formulize_forceElementsDisabled'] = true;
                         }
