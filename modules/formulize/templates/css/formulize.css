@@ -178,7 +178,18 @@
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
   font-size: 15px; }
 
+.formulize-form-submit-button {
+    background-color: #008CC4 !important; 
+    text-indent: 0;
+    font-weight: normal;
+    min-width: 185px;
+    height: 36px;
+    color: white !important;
+}
 
+#page-indicator, #page-selector {
+    display: inline-block;
+}
 
 .formulize-page-navigation {
   display: inline-block;
