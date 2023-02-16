@@ -397,6 +397,11 @@ function xoops_getbanner() {
  */
 function redirect_header($url, $time = 3, $message = '', $addredirect = true, $allowExternalLink = false)
 {
+    
+    if(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+        exit(); // do not do redirects for ajax requests
+    }
+    
 	global $icmsConfig, $icmsConfigPersona;
 	if(preg_match("/[\\0-\\31]|about:|script:/i", $url))
 	{
