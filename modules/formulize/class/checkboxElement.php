@@ -50,7 +50,13 @@ class formulizeCheckboxElement extends formulizeformulize {
     // returns true if the option is one of the values the user can choose from in this element    
     function optionIsValid($option) {
         $ele_value = $this->getVar('ele_value');
-        return (isset($ele_value[2][$option]) OR in_array($option, $this->getVar('ele_uitext'))) ? true : false;
+        $option = is_array($option) ? $option : array($option);
+        foreach($option as $thisOption) {
+            if(!isset($ele_value[2][$thisOption]) AND !in_array($thisOption, $this->getVar('ele_uitext'))) {
+                return false;
+            }
+        }
+        return true;
     }
     
 }
