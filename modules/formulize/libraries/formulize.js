@@ -45,10 +45,11 @@ jQuery(document).ready(function() {
     });
     jQuery("input[type=radio]").click(function () {
         if (jQuery(this).data('checkedstatus')) {
+            // if unchecking, trigger change event
             jQuery(this).prop("checked", false).change();
             jQuery(this).data('checkedstatus', false);
         } else {
-            jQuery(this).prop("checked", true).change();
+            jQuery(this).prop("checked", true);
             jQuery(this).data('checkedstatus', true);
         }
         jQuery(this).siblings('input[type="radio"]').data('checkedstatus', false);
