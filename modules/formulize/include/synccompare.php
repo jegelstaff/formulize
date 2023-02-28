@@ -166,7 +166,8 @@ class SyncCompareCatalog {
     private function cleanEncoding($text) {
         // absurd encoding detection required to know if we should explicitly force UTF-8, which is necessary in case there are Microsoft Smart Quotes and/or accented characters, etc.
         // Because Windows 1252 contains ISO-8859-1, we can convert from Windows 1252 safely. Detection will often incorrectly detect ISO, but all we really care about is that it's one of these and not already UTF-8 for example.
-        if(mb_detect_encoding($text,'Windows-1252,ISO-8859-1')) {
+        // When mb_detect_encoding is not in strict mode (last param, default is false), it will return the closest matching encoding, and never be FALSE, so we can always expect one of the declared encodings as the result
+        if(mb_detect_encoding($text,'UTF-8,Windows-1252,ISO-8859-1') != 'UTF-8') {
             $text = mb_convert_encoding($text,'UTF-8','Windows-1252'); // from windows to utf-8
         }
         return $text;
