@@ -331,6 +331,7 @@ class formulize_themeForm extends XoopsThemeForm {
                     if($columnData[0] == 2 AND isset($ele[3])) { // by convention, only formulizeInsertBreak element, "spanning both columns" has a [3] key, so we need to put in the span flag
                         $columns = 1;
                         $templateVariables['colSpan'] = 'colspan=2';
+                        $templateVariables['column1Width'] = 'auto';
                     }
                     if(isset($ele[3])) { // respect any declared class
                         $templateVariables['cellClass'] = $ele[3];
@@ -368,14 +369,21 @@ class formulize_themeForm extends XoopsThemeForm {
                         $templateVariables['spacerNeeded'] = true;
                 }
                 
+                // render the element including containers, unless this is an asynch render (for conditional elements?) in which case we just want the element itself
                 $template = $this->getTemplate('elementcontainero');
-                $ret .= $this->processTemplate($template, $templateVariables);
+                $containerOpen = $this->processTemplate($template, $templateVariables);
                 
                 $template = $this->getTemplate('elementtemplate'.$columns);
-                $ret .= $this->processTemplate($template, $templateVariables);
+                $containerContents = $this->processTemplate($template, $templateVariables);
                 
                 $template = $this->getTemplate('elementcontainerc');
-                $ret .= $this->processTemplate($template, $templateVariables);
+                $containerClose = $this->processTemplate($template, $templateVariables);
+                
+                if($this->getTitle() != 'formulizeAsynchElementRender') {
+                    $ret .= $containerOpen.$containerContents.$containerClose;
+                } else {
+                    $ret .= $containerContents;
+                }
             
 			} elseif ( !$ele->isHidden() ) {
                 $template = $this->getTemplate('elementcontainero');
