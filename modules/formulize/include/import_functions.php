@@ -436,7 +436,7 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
                                         foreach ($items as $item) {
                                             $item_value = trim($item);
 
-                                            if (!in_array($item_value, $options, true)) {
+                                            if (!in_array($item_value, (array)$options, true)) {
                                                 // last option causes strict matching by type
                                                 $foundit = false;
                                                 foreach ($options as $thisoption=>$default_value) {
@@ -461,7 +461,7 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
                                     } else {
                                         // Single option
                                         $options = $ele_value[2];
-                                        if (!in_array($cell_value, $options, true)) {
+                                        if (!in_array($cell_value, (array)$options, true)) {
                                             // last option causes strict matching by type
                                             // then do a check against the translated options
                                             foreach ($options as $thisoption=>$default_value) {
@@ -494,7 +494,7 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
                             }
                             foreach ($items as $item) {
                                 $item_value = trim($item);
-                                if (!in_array($item_value, $options, true)) {
+                                if (!in_array($item_value, (array)$options, true)) {
                                     // last option causes strict matching by type
                                     $foundit = false;
                                     $hasother = false;
@@ -507,7 +507,7 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
                                         }
                                     }
                                     if (!$foundit AND !$hasother) {
-                                        $keys_output = implode(', ', array_keys($options));
+                                        $keys_output = implode(', ', array_keys((array)$options));
                                         $errors[] = "<li>line " . $rowCount .
                                             ", column " . $importSet[3][$link] .
                                             ",<br> <b>found</b>: " . $item_value .
@@ -519,7 +519,7 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
 
                             case "radio":
                             $options = unserialize($element["ele_value"]);
-                            if (!in_array($cell_value, $options, true)) {
+                            if (!in_array($cell_value, (array)$options, true)) {
                                 // last option causes strict matching by type
                                 // then do a check against the translated options
                                 $foundit = false;
@@ -850,7 +850,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
                                     $items = explode("\n", $row_value);
                                     foreach ($items as $item) {
                                         $item_value = trim($item);
-                                        if (!in_array($item_value, $options, true)) {
+                                        if (!in_array($item_value, (array)$options, true)) {
                                             // last option causes strict matching by type
                                             foreach ($options as $thisoption=>$default_value) {
                                                 if (trim($item_value) == trim(trans($thisoption))) {
@@ -865,7 +865,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
                                 } else {
                                     // Single option
                                     $options = $ele_value[2];
-                                    if (!in_array($row_value, $options, true)) {
+                                    if (!in_array($row_value, (array)$options, true)) {
                                         // last option causes strict matching by type
                                         foreach ($options as $thisoption=>$default_value) {
                                             if (trim($row_value) == trim(trans($thisoption))) {
@@ -898,7 +898,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
                             }
                             foreach ($items as $item) {
                                 $item_value = trim($item);
-                                if (!in_array($item_value, $options, true)) {
+                                if (!in_array($item_value, (array)$options, true)) {
                                     // last option causes strict matching by type
                                     $foundit = false;
                                     $hasother = false;
@@ -932,7 +932,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
 
                             case "radio":
                             $options = unserialize($element["ele_value"]);
-                            if (!in_array($row_value, $options, true)) {
+                            if (!in_array($row_value, (array)$options, true)) {
                                 // last option causes strict matching by type
                                 $foundit = false;
                                 $hasother = false;
