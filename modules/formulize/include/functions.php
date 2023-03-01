@@ -5515,7 +5515,11 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
 // append a given value onto a given condition
 function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias, $filterElementHandle, $filterOp, $conditionsFilterComparisonValue) {
     
-    if(!$conditionsFilterComparisonValue) { return array($condition, $conditionsFilterComparisonValue); }
+    if(!$conditionsFilterComparisonValue
+       AND $conditionsFilterComparisonValue !== 0
+       AND $conditionsFilterComparisonValue !== "0") {
+        return array($condition, $conditionsFilterComparisonValue);
+    }
     
     if(!$condition AND $needIntroBoolean) {
         $condition = " AND (";

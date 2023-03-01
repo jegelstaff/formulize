@@ -195,13 +195,15 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
         }
         
         // make this a configuration option on the Templates tab!!!
-        $templateScreenData = getData('', $screen->getVar('fid'), $entry_id);
-        $form_handler = xoops_getmodulehandler('forms', 'formulize');
-        $formObject = $form_handler->get($screen->getVar('fid'));
-        foreach($formObject->getVar('elementHandles') as $thisHandle) {
-            $$thisHandle = display($templateScreenData[0], $thisHandle);    
+        if (!empty($entry_id)) {
+            $templateScreenData = getData('', $screen->getVar('fid'), $entry_id);
+            $form_handler = xoops_getmodulehandler('forms', 'formulize');
+            $formObject = $form_handler->get($screen->getVar('fid'));
+            foreach($formObject->getVar('elementHandles') as $thisHandle) {
+                $$thisHandle = display($templateScreenData[0], $thisHandle);    
+            }
+            $entry = $templateScreenData[0];
         }
-        $entry = $templateScreenData[0];
         
         include_once($code_filename);
         return get_defined_vars();
