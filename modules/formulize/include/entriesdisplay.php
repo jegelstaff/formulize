@@ -944,7 +944,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 }
 
 // return the available current view settings based on the user's permissions
-function generateViews($fid, $uid, $groups, $frid="0", $currentView, $loadedView="", $view_groupscope, $view_globalscope, $prevview="", $loadOnlyView=0, $screen, $lastLoaded) {
+function generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $view_groupscope, $view_globalscope, $prevview, $loadOnlyView, $screen, $lastLoaded) {
 	global $xoopsDB;
 
 	$limitViews = false;
@@ -1096,7 +1096,7 @@ function generateViews($fid, $uid, $groups, $frid="0", $currentView, $loadedView
 }
 
 // this function draws in the interface parts of a display entries widget
-function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $loadview="", $loadOnlyView=0, $screen, $searches, $pageNav, $messageText, $hiddenQuickSearches) {
+function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $loadview, $loadOnlyView, $screen, $searches, $pageNav, $messageText, $hiddenQuickSearches) {
 	global $xoopsDB;
 	global $xoopsUser;
 
@@ -1422,7 +1422,7 @@ function screenUsesSearchStringWithHandle($screenOrScreenType, $searchString, $h
 }
 
 // THIS FUNCTION DRAWS IN THE RESULTS OF THE QUERY
-function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone="", $currentURL, $gperm_handler, $uid, $mid, $groups, $settings, $member_handler, $screen, $data, $regeneratePageNumbers, $hiddenQuickSearches, $cResults, $buttonCodeArray) { // , $loadview="") { // -- loadview removed from this function sept 24 2005
+function drawEntries($fid, $cols, $searches, $frid, $scope, $standalone, $currentURL, $gperm_handler, $uid, $mid, $groups, $settings, $member_handler, $screen, $data, $regeneratePageNumbers, $hiddenQuickSearches, $cResults, $buttonCodeArray) { // , $loadview="") { // -- loadview removed from this function sept 24 2005
 	// determine if the query reached a limit in the number of entries to return
 	$LOE_limit = 0;
 	if(!is_array($data)) {
