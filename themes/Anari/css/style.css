@@ -658,6 +658,11 @@ div.list-of-entries .card__body {
 }
 
 
+.formulize-form-submit-button {
+  background: #109CF1 !important;
+  height: auto; 
+}
+
 button, input[type="submit"], input[type="button"], input[type="reset"],
 .btn {
   font-weight: 600;
