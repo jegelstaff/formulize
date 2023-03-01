@@ -1708,35 +1708,44 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 						ob_start();
 						// set in the display function, corresponds to the entry id of the record in the form where the current value was retrieved from.  If there is more than one local entry id, because of a one to many framework, then this will be an array that corresponds to the order of the values returned by display.
 						$currentColumnLocalId = $GLOBALS['formulize_mostRecentLocalId'];
+                        
+                        $elementDisplayed = false;
 						// if we're supposed to display this column as an element... (only show it if they have permission to update this entry)
-						if (in_array($colhandle, $deColumns) and formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
+						if (in_array($colhandle, $deColumns)) {
 							include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
 							if($frid) { // need to work out which form this column belongs to, and use that form's entry ID.  Need to loop through the entry to find all possible internal IDs, since a subform situation would lead to multiple values appearing in a single cell, so multiple displayElement calls would be made each with their own internal ID.
 								foreach($entry as $entryFormHandle=>$entryFormData) {
 									$multiValueBRNeeded = false;
 									foreach($entryFormData as $internalID=>$entryElements) {
-										$deThisIntId = false;
-										foreach($entryElements as $entryHandle=>$values) {
-											if($entryHandle == $col AND $internalID) { // we found the element that we're trying to display
-												if($deThisIntId) { print "\n<br />\n"; } // could be a subform so we'd display multiple values
-												if($deDisplay) {
-													if($multiValueBRNeeded) { print "\n<br />\n"; } // in the case of multiple values, split them based on this
-													print '<div id="deDiv_'.$colhandle.'_'.$internalID.'_'.$deInstanceCounter.'">';
-													print getHTMLForList($values, $colhandle, $internalID, $deDisplay, $textWidth, $internalID, $fid, $cellRowAddress, $i, $deInstanceCounter); // $internalID passed in in place of $currentColumnLocalId because we are manually looping through the data to get to the lowest level, so we can be sure of the local id that is in use, and it won't be an array, etc (unless we're showing a checkbox element??? or something else with multiple values??? - probably doesn't matter because the entry id is the same for all values of a single element that allows multiple selection)
-													print "</div>";
-													$deInstanceCounter++;
-												} else {
-													if($deThisIntId) { print "\n<br />\n"; } // extra break to separate multiple form elements in the same cell, for readability/usability
-													// NEEDS DEBUG - ELEMENTS NOT DISPLAYING
-													displayElement("", $colhandle, $internalID);
-												}
-												$deThisIntId = true;
-												$multiValueBRNeeded = true;
-											}
-										}
+                                        $deThisIntId = false;
+                                        foreach($entryElements as $entryHandle=>$values) {
+                                            if($entryHandle == $col AND $internalID) { // we found the element that we're trying to display
+                                                if(!$element_handler) {
+                                                    $element_handler = xoops_getmodulehandler('elements', 'formulize');
+                                                }
+                                                $displayElementObject = $element_handler->get($entryHandle);
+                                                if(formulizePermHandler::user_can_edit_entry($displayElementObject->getVar('id_form'), $uid, $internalID)) {
+                                                    if($deThisIntId) { print "\n<br />\n"; } // could be a subform so we'd display multiple values
+                                                    if($deDisplay) {
+                                                        if($multiValueBRNeeded) { print "\n<br />\n"; } // in the case of multiple values, split them based on this
+                                                        print '<div id="deDiv_'.$colhandle.'_'.$internalID.'_'.$deInstanceCounter.'">';
+                                                        print getHTMLForList($values, $colhandle, $internalID, $deDisplay, $textWidth, $internalID, $fid, $cellRowAddress, $i, $deInstanceCounter); // $internalID passed in in place of $currentColumnLocalId because we are manually looping through the data to get to the lowest level, so we can be sure of the local id that is in use, and it won't be an array, etc (unless we're showing a checkbox element??? or something else with multiple values??? - probably doesn't matter because the entry id is the same for all values of a single element that allows multiple selection)
+                                                        print "</div>";
+                                                        $deInstanceCounter++;
+                                                    } else {
+                                                        if($deThisIntId) { print "\n<br />\n"; } // extra break to separate multiple form elements in the same cell, for readability/usability
+                                                        // NEEDS DEBUG - ELEMENTS NOT DISPLAYING
+                                                        displayElement("", $colhandle, $internalID);
+                                                    }
+                                                    $deThisIntId = true;
+                                                    $multiValueBRNeeded = true;
+                                                    $elementDisplayed = true;
+                                                }
+                                            }
+                                        }
 									}
 								}
-							} else { // display based on the mainform entry id
+							} elseif(formulizePermHandler::user_can_edit_entry($fid, $uid, $entry_id)) { // display based on the mainform entry id
 								if($deDisplay) {
 									print '<div id="deDiv_'.$colhandle.'_'.$entry_id.'_'.$deInstanceCounter.'">';
 									print getHTMLForList($value,$colhandle,$entry_id, $deDisplay, $textWidth, $currentColumnLocalId, $fid, $cellRowAddress, $i, $deInstanceCounter);
@@ -1746,11 +1755,13 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 									// NEEDS DEBUG - ELEMENTS NOT DISPLAYING
 									displayElement("", $colhandle, $entry_id); // works for mainform only!  To work on elements from a framework, we need to figure out the form the element is from, and the entry ID in that form, which is done above
 								}
+                                $elementDisplayed = true;
 							}
 							$GLOBALS['formulize_displayElement_LOE_Used'] = true;
-						} elseif($col != "creation_uid" AND $col!= "mod_uid" AND $col != "entry_id") {
+						}
+                        if(!$elementDisplayed AND ($col != "creation_uid" AND $col!= "mod_uid" AND $col != "entry_id")) {
 							print getHTMLForList($value, $col, $entry_id, 0, $textWidth, $currentColumnLocalId, $fid, $cellRowAddress, $i);
-						} else { // no special formatting on the uid columns:
+						} elseif(!$elementDisplayed) { // no special formatting on the uid columns:
 							print $value;
 						}
 						$templateVariables['columnContents'][] = ob_get_clean();
