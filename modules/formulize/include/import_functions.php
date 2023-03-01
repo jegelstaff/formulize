@@ -1143,7 +1143,7 @@ function getUserID($stringName) {
     global $xoopsDB, $xoopsUser;
 
     $sql = "SELECT uid FROM " . $xoopsDB->prefix("users") .
-        " WHERE uname='" . formulize_db_escape($stringName) . "'";
+        " WHERE uname='" . formulize_db_escape(str_replace("'","&#039;",$stringName)) . "'";
 
     $result = $xoopsDB->query($sql);
     if ($xoopsDB->getRowsNum($result) > 0) {
