@@ -50,7 +50,8 @@ print "
             // add extra cells for each of the inline custom buttons, if any
             while($numberOfInlineCustomButtons > 0) {
                 $numberOfInlineCustomButtons--;
-                print "<td class=head>&nbsp;</td>";
+                print "<td id='celladdress_1_$columnNumber' class=head>&nbsp;</td>";
+                $columnNumber++;
             }
             
             // add a spacer column if necessary
@@ -122,7 +123,8 @@ function drawHeaderRow($headers, $checkBoxesShown, $viewEntryLinksShown, $column
 	// add extra cells for each of the inline custom buttons, if any
 	while($numberOfInlineCustomButtons > 0) {
 		$numberOfInlineCustomButtons--;
-		$cells[] = "<td class=head>&nbsp;</td>";
+		$cells[] = "<td id='celladdress_h$headingRowNumber"."_"."$columnNumber' class=head>&nbsp;</td>";
+        $columnNumber++;
 	}
 	
 	// add a spacer column if necessary
