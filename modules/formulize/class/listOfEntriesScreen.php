@@ -355,7 +355,7 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
         $defaultListScreen->setVar('viewentryscreen', $defaultFormScreenId);
         // Headings
         $defaultListScreen->setVar('useheadings', 1);
-        $defaultListScreen->setVar('repeatheaders', 10);
+        $defaultListScreen->setVar('repeatheaders', 0);
         $defaultListScreen->setVar('usesearchcalcmsgs', 1);
         $defaultListScreen->setVar('usesearch', 1);
         $defaultListScreen->setVar('columnwidth', 0);
