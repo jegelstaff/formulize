@@ -3096,6 +3096,7 @@ td.column a.header-info-link {
 }
 .list-of-entries-container table.outer td[id^=celladdress_h1_] {
     top: 0px;
+    padding-top: 0;
 }
 .list-of-entries-container table.outer td[id^=celladdress_1_] {
     top: 4.1em;
@@ -3147,6 +3148,12 @@ table.outer {
 
 .list-of-entries-container table.outer td.floating-column {
     display: none;
+}
+
+#formulize-list-of-entries-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 @media (max-width: 450px) {

@@ -695,7 +695,7 @@ define("_AM_FORMULIZE_LOE_LASTPAGE", "Last >>");
 define("_AM_FORMULIZE_LOE_ONPAGE", "Page");
 define("_AM_FORMULIZE_LOE_PREVIOUS", "Previous");
 define("_AM_FORMULIZE_LOE_NEXT", "Next");
-define("_AM_FORMULIZE_LOE_TOTAL", "Total Entries: %d");
+define("_AM_FORMULIZE_LOE_TOTAL", "Showing entries %d to %d of %d");
 
 define("_formulize_DE_LOE_LIMIT_REACHED1", "There are");
 define("_formulize_DE_LOE_LIMIT_REACHED2", "entries in the list.  It would take a long time to retrieve them.  You can use search terms to limit the number of entries, or");

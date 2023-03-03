@@ -881,12 +881,12 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	//formulize_benchmark("after performing calcs");
 	
 	//formulize_benchmark("after generating calcs/before creating pagenav");
-	$formulize_LOEPageNav = formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers);
+	list($formulize_LOEPageNav, $formulize_LOEEntryCount) = formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers);
 	//formulize_benchmark("after nav/before interface");
 	
 	ob_start();
 	// drawInterface... renders the top template, sets up searches, many template variables including all the action buttons...
-	$formulize_buttonCodeArray = drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $loadview, $loadOnlyView, $screen, $searches, $formulize_LOEPageNav, $messageText, $hiddenQuickSearches);
+	$formulize_buttonCodeArray = drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $loadview, $loadOnlyView, $screen, $searches, $formulize_LOEPageNav, $formulize_LOEEntryCount, $messageText, $hiddenQuickSearches);
 
 	// drawEntries ... renders the openlist, list and closelist templates
 	formulize_benchmark("before entries");
@@ -1096,7 +1096,7 @@ function generateViews($fid, $uid, $groups, $frid="0", $currentView, $loadedView
 }
 
 // this function draws in the interface parts of a display entries widget
-function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $loadview="", $loadOnlyView=0, $screen, $searches, $pageNav, $messageText, $hiddenQuickSearches) {
+function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $loadview="", $loadOnlyView=0, $screen, $searches, $pageNav, $entryTotals, $messageText, $hiddenQuickSearches) {
 	global $xoopsDB;
 	global $xoopsUser;
 
@@ -1237,6 +1237,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		$buttonCodeArray['exportButton'] = $buttonCodeArray['exportCalcsButton'];
 	}
 	$buttonCodeArray['pageNavControls'] = $pageNav; // put this unique UI element into the buttonCodeArray for use elsewhere if necessary
+    $buttonCodeArray['numberOfEntries'] = $entryTotals; 
 
 	$currentViewName = $settings['loadviewname'];
 
@@ -1972,7 +1973,7 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
                 });
                 </script>";
             }
-            return $startDateElement->render() . " ". _formulize_QDR_to . " " . $endDateElement->render() . " <input type=button name=qdrGoButton value='" . _formulize_QDR_go . "' onclick=\"javascript:showLoading();\"></input>\n<input type='hidden' id='formulize_hidden_daterange_".$handle."' name='search_".$handle."' value='".$search_text."' ></input>\n$js";
+            return '<div>'._formulize_FROM.' <div style="display: flex;">'.$startDateElement->render(). "</div><br>"._formulize_TO . " <div style='display: flex;'>" . $endDateElement->render() . "</div><br>\n<input type=button style='display: none;' id='formulize_daterange_button_".$handle."' class='formulize-small-button' name=qdrGoButton value='" . _formulize_SUBMITTEXT . "' onclick=\"javascript:showLoading();\"></input>\n<input type='hidden' id='formulize_hidden_daterange_".$handle."' name='search_".$handle."' value='".$search_text."' ></input></div>\n$js";
         } 
     }
     return "";
@@ -3998,6 +3999,12 @@ function formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers) {
 
     // setup default navigation - and in Anari theme, put in a hack to extend the height of the scrollbox if necessary -- need to rebuild markup for list so this kind of thing is not necessary!
     $pageNav = "";
+    
+    if($_POST['hlist']) {
+		// return no navigation controls if the list is hidden.
+		return $pageNav;
+	}
+    
     global $xoopsConfig;
     if($xoopsConfig['theme_set']=='Anari') {
         $pageNav = "<script type='text/javascript'>
@@ -4009,67 +4016,70 @@ function formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers) {
     
 	$numberPerPage = is_object($screen) ? $screen->getVar('entriesperpage') : 10;
     $numberPerPage = isset($_POST['formulize_entriesPerPage']) ? intval($_POST['formulize_entriesPerPage']) : $numberPerPage; 
-	if($numberPerPage == 0 OR $_POST['hlist']) {
-		// if all entries are supposed to be on one page for this screen, then return no navigation controls.  Also return nothing if the list is hidden.
-		return $pageNav;
-	}
-
 	
 	// regenerate essentially causes the user to jump back to page 0 because something about the dataset has fundamentally changed (like a new search term or something)
 	$currentPage = (isset($_POST['formulize_LOEPageStart']) AND !$regeneratePageNumbers) ? intval($_POST['formulize_LOEPageStart']) : 0;
+    $userPageNumber = $currentPage > 0 ? ($currentPage / $numberPerPage) + 1 : 1;
+    
+    $lastEntryNumber = $numberPerPage > 0 ? $numberPerPage*($userPageNumber) : $GLOBALS['formulize_countMasterResultsForPageNumbers'];
+    $lastEntryNumber = $lastEntryNumber > $GLOBALS['formulize_countMasterResultsForPageNumbers'] ? $GLOBALS['formulize_countMasterResultsForPageNumbers'] : $lastEntryNumber;        
+	$entryTotals = "<span class=\"page-navigation-total\">".
+        sprintf(_AM_FORMULIZE_LOE_TOTAL, ((($userPageNumber-1)*$numberPerPage)+1), $lastEntryNumber, $GLOBALS['formulize_countMasterResultsForPageNumbers'])."</span></p>\n";
 
-	// will receive via javascript the page number that was clicked, or will cause the current page to reload if anything else happens
-	print "\n<input type=hidden name=formulize_LOEPageStart id=formulize_LOEPageStart value=\"$currentPage\">\n";
-	$allPageStarts = array();
-	$pageNumbers = 0;
-	for($i = 0; $i < $GLOBALS['formulize_countMasterResultsForPageNumbers']; $i = $i + $numberPerPage) {
-		$pageNumbers++;
-		$allPageStarts[$pageNumbers] = $i;
-	}
-	$userPageNumber = $currentPage > 0 ? ($currentPage / $numberPerPage) + 1 : 1;
-	if($pageNumbers > 1) {
-		if($pageNumbers > 9) {
-			if($userPageNumber < 6) {
-				$firstDisplayPage = 1;
-				$lastDisplayPage = 9;
-			} elseif($userPageNumber + 4 > $pageNumbers) { // too close to the end
-				$firstDisplayPage = $userPageNumber - 4 - ($userPageNumber+4-$pageNumbers); // the previous four, plus the difference by which we're over the end when we add 4
-				$lastDisplayPage = $pageNumbers;
-			} else { // somewhere in the middle
-				$firstDisplayPage = $userPageNumber - 4;
-				$lastDisplayPage = $userPageNumber + 4;
-			}
-		} else {
-			$firstDisplayPage = 1;
-			$lastDisplayPage = $pageNumbers;
-		}
-
-		$pageNav = "<p><div class=\"formulize-page-navigation\"><span class=\"page-navigation-label\">". _AM_FORMULIZE_LOE_ONPAGE."</span>";
-		if ($currentPage > 1) {
-			$pageNav .= "<a href=\"\" class=\"page-navigation-prev\" onclick=\"javascript:pageJump('".($currentPage - $numberPerPage)."');return false;\">"._AM_FORMULIZE_LOE_PREVIOUS."</a>";
-		}
-		if($firstDisplayPage > 1) {
-			$pageNav .= "<a href=\"\" onclick=\"javascript:pageJump('0');return false;\">1</a><span class=\"page-navigation-skip\">—</span>";
-		}
-		for($i = $firstDisplayPage; $i <= $lastDisplayPage; $i++) {
-			$thisPageStart = ($i * $numberPerPage) - $numberPerPage;
-			if($thisPageStart == $currentPage) {
-				$pageNav .= "<a href=\"\" class=\"page-navigation-active\" onclick=\"javascript:pageJump('$thisPageStart');return false;\">$i</a>";
-			} else {
-				$pageNav .= "<a href=\"\" onclick=\"javascript:pageJump('$thisPageStart');return false;\">$i</a>";
-			}
-		}
-		if($lastDisplayPage < $pageNumbers) {
-			$lastPageStart = ($pageNumbers * $numberPerPage) - $numberPerPage;
-			$pageNav .= "<span class=\"page-navigation-skip\">—</span><a href=\"\" onclick=\"javascript:pageJump('$lastPageStart');return false;\">" . $pageNumbers . "</a>";
-		}
-		if ($currentPage < ($GLOBALS['formulize_countMasterResultsForPageNumbers'] - $numberPerPage)) {
-			$pageNav .= "<a href=\"\" class=\"page-navigation-next\" onclick=\"javascript:pageJump('".($currentPage + $numberPerPage)."');return false;\">"._AM_FORMULIZE_LOE_NEXT."</a>";
-		}
-		$pageNav .= "</div><span class=\"page-navigation-total\">".
-			sprintf(_AM_FORMULIZE_LOE_TOTAL, $GLOBALS['formulize_countMasterResultsForPageNumbers'])."</span></p>\n";
-	} 
-	return $pageNav;
+    if($numberPerPage > 0) {
+        // will receive via javascript the page number that was clicked, or will cause the current page to reload if anything else happens
+        print "\n<input type=hidden name=formulize_LOEPageStart id=formulize_LOEPageStart value=\"$currentPage\">\n";
+        $allPageStarts = array();
+        $pageNumbers = 0;
+        for($i = 0; $i < $GLOBALS['formulize_countMasterResultsForPageNumbers']; $i = $i + $numberPerPage) {
+            $pageNumbers++;
+            $allPageStarts[$pageNumbers] = $i;
+        }
+        
+        if($pageNumbers > 1) {
+            if($pageNumbers > 9) {
+                if($userPageNumber < 6) {
+                    $firstDisplayPage = 1;
+                    $lastDisplayPage = 9;
+                } elseif($userPageNumber + 4 > $pageNumbers) { // too close to the end
+                    $firstDisplayPage = $userPageNumber - 4 - ($userPageNumber+4-$pageNumbers); // the previous four, plus the difference by which we're over the end when we add 4
+                    $lastDisplayPage = $pageNumbers;
+                } else { // somewhere in the middle
+                    $firstDisplayPage = $userPageNumber - 4;
+                    $lastDisplayPage = $userPageNumber + 4;
+                }
+            } else {
+                $firstDisplayPage = 1;
+                $lastDisplayPage = $pageNumbers;
+            }
+    
+            $pageNav = "<p></p><div class=\"formulize-page-navigation\"><span class=\"page-navigation-label\">". _AM_FORMULIZE_LOE_ONPAGE."</span>";
+            if ($currentPage > 1) {
+                $pageNav .= "<a href=\"\" class=\"page-navigation-prev\" onclick=\"javascript:pageJump('".($currentPage - $numberPerPage)."');return false;\">"._AM_FORMULIZE_LOE_PREVIOUS."</a>";
+            }
+            if($firstDisplayPage > 1) {
+                $pageNav .= "<a href=\"\" onclick=\"javascript:pageJump('0');return false;\">1</a><span class=\"page-navigation-skip\">—</span>";
+            }
+            for($i = $firstDisplayPage; $i <= $lastDisplayPage; $i++) {
+                $thisPageStart = ($i * $numberPerPage) - $numberPerPage;
+                if($thisPageStart == $currentPage) {
+                    $pageNav .= "<a href=\"\" class=\"page-navigation-active\" onclick=\"javascript:pageJump('$thisPageStart');return false;\">$i</a>";
+                } else {
+                    $pageNav .= "<a href=\"\" onclick=\"javascript:pageJump('$thisPageStart');return false;\">$i</a>";
+                }
+            }
+            if($lastDisplayPage < $pageNumbers) {
+                $lastPageStart = ($pageNumbers * $numberPerPage) - $numberPerPage;
+                $pageNav .= "<span class=\"page-navigation-skip\">—</span><a href=\"\" onclick=\"javascript:pageJump('$lastPageStart');return false;\">" . $pageNumbers . "</a>";
+            }
+            if ($currentPage < ($GLOBALS['formulize_countMasterResultsForPageNumbers'] - $numberPerPage)) {
+                $pageNav .= "<a href=\"\" class=\"page-navigation-next\" onclick=\"javascript:pageJump('".($currentPage + $numberPerPage)."');return false;\">"._AM_FORMULIZE_LOE_NEXT."</a>";
+            }
+            $pageNav .= "</div>";
+        }
+    }
+    
+	return array($pageNav,$entryTotals);
 }
 
 
