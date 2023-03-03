@@ -929,7 +929,8 @@ table.formulize-subform-table input[type=text].formulize-time-element {
     max-width: 100px;
 }
 
-div.subform_button_controls input[type="button"] {
+div.subform_button_controls input[type="button"],
+#listofentries div.main-cell-div div input.formulize-small-button {
     min-width: 4em;
     width: auto;
     padding-left: 1em;

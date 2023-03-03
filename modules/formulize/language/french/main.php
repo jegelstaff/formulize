@@ -619,4 +619,7 @@ define("_formulize_DE_EXPORT_HIDE_ADVANCED", "Masquer les options avancées");
 define("_formulize_DE_IMPORT_UPDATEDERIVED", "Automatically updated derived values in the form");
 define("_formulize_DE_IMPORT_SENDNOTIFICATIONS", "Automatically send notifications to users based on the imported data");
 
+define("_formulize_FROM", "De :");
+define("_formulize_TO", "À :");
+
 include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/main.php';

@@ -1933,9 +1933,10 @@ function formulize_buildQSFilter($handle, $search_text, $multi=false) {
 // THIS FUNCTION CREATES THE HTML FOR A DATE RANGE FILTER
 function formulize_buildDateRangeFilter($handle, $search_text) {
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
-    if($elementObject = $element_handler->get($handle)) {
-        $typeInfo = $elementObject->getDataTypeInformation();
-        if($typeInfo['dataType'] == 'date') {
+    $elementObject = false;
+    if($handle == 'creation_datetime' OR $handle == 'mod_datetime' OR $elementObject = $element_handler->get($handle)) {
+        $typeInfo = $elementObject ? $elementObject->getDataTypeInformation() : true;
+        if($typeInfo == true OR $typeInfo['dataType'] == 'date') {
             $startText = "";
             $endText = "";
             // split any search_text into start and end values
@@ -1970,6 +1971,7 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
                     var start = $('#formulize_daterange_sta_'+handle).val();
                     var end = $('#formulize_daterange_end_'+handle).val();
                     $('#formulize_hidden_daterange_'+handle).val('>='+start+'//'+'<='+end);
+                    $('#formulize_daterange_button_'+handle).show(200);
                 });
                 </script>";
             }

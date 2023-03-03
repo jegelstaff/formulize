@@ -4395,6 +4395,8 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
         $multiCounter++;
     }
     
+    $counter = -1;
+    
     // Changes made to allow the linking of one filter to another. This is acheieved as follows:
     // 1. Create a formulize form for managing the Main Filter List (form M)
     // 2. Create a formulize form for managing the Sub Filter list (form S), which includes a linked element to the data in form M,
@@ -4437,17 +4439,30 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
 
     if ($subfilter AND !(isset($_POST[$linked_data_id])) AND !(isset($_GET[$linked_data_id]))) {
         // If its a subfilter and the main filter is unselected, then put in 'Please select from above options first
-        $filter .= $multi ? "<input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' value='none' onclick=\"jQuery('#".$id."_hiddenMulti').val('none');jQuery('.$id').each(function() { jQuery(this).removeAttr('checked') });\"> <label for='".$multiIdCounter."_".$id."'>Please select a primary filter first</label><br/>\n" : "<option value=\"none\">Please select a primary filter first</option>\n";
+        $filter .= $multi ? " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' value='none' onclick=\"jQuery('#".$id."_hiddenMulti').val('none');jQuery('.$id').each(function() { jQuery(this).removeAttr('checked') }); jQuery('#apply-button-".$id."').show(200);\">&nbsp;Please select a primary filter first</label><br/>\n" : "<option value=\"none\">Please select a primary filter first</option>\n";
     } else {
         // Either it is not a subfilter, or it is a subfilter with the linked values set
         $defaulttext = $defaulttext ? $defaulttext: _AM_FORMLINK_PICK;
         if ($name == "{listofentries}") {
             // must not pass back a value when we're putting a filter on the list of entries page
             $checked = ((!isset($_POST[$id]) OR $_POST[$id] == '') AND (!isset($_GET[$id]) OR $_GET[$id] == '')) ? "checked" : "";
-            $filter .= $multi ? "<input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' value='' $checked onclick=\"jQuery('#".$id."_hiddenMulti').val('');jQuery('.$id').each(function() { jQuery(this).removeAttr('checked') });\"> <label for='".$multiIdCounter."_".$id."'>$defaulttext</label><br/>\n" : "<option value=\"\">".$defaulttext."</option>\n";
+            $filter .= $multi ? " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' value='' $checked onclick=\"jQuery('#".$id."_hiddenMulti').val('');jQuery('.$id').each(function() { jQuery(this).removeAttr('checked') }); jQuery('#apply-button-".$id."').show(200);\">&nbsp;$defaulttext</label><br/>\n" : "<option value=\"\">".$defaulttext."</option>\n";
+            // add {BLANK} option if we're doing this for a QSF filter in a list of entries page
+            if($defaulttext == _formulize_QSF_DefaultText) {
+                $multiIdCounter++;
+                $counter++;
+                $checked = "";
+                $selected = "";
+                $checkboxOption = "ORSET$multiCounter={BLANK}//";
+                if(isset($_POST[$id])) {
+                    $checked = strstr($_POST[$id], $checkboxOption) ? "checked" : "";
+                    $selected = $_POST[$id] === 'qsf_0_{BLANK}' ? "selected" : "";
+                }
+                $filter .= $multi ? " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='ORSET$multiCounter={BLANK}//' $checked onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'".$checkboxOption."'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('".$checkboxOption."', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\">&nbsp;{BLANK}</label><br/>\n" : "<option value=\"qsf_".$counter."_{BLANK}\" $selected>{BLANK}</option>\n";
+            }
         } else {
             $checked = ((!isset($_POST[$id]) OR $_POST[$id] == 'none') AND (!isset($_GET[$id]) OR $_GET[$id] == 'none')) ? "checked" : "";
-            $filter .= $multi ? "<input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' value='none' $checked onclick=\"jQuery('#".$id."_hiddenMulti').val('none');jQuery('.$id').each(function() { jQuery(this).removeAttr('checked') });\"> <label for='".$multiIdCounter."_".$id."'>$defaulttext</label><br/>\n" :"<option value=\"none\">".$defaulttext."</option>\n";
+            $filter .= $multi ? " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' value='none' $checked onclick=\"jQuery('#".$id."_hiddenMulti').val('none');jQuery('.$id').each(function() { jQuery(this).removeAttr('checked') }); jQuery('#apply-button-".$id."').show(200);\">&nbsp;$defaulttext</label><br/>\n" :"<option value=\"none\">".$defaulttext."</option>\n";
         }
 
         $form_element = q("SELECT ele_value, ele_type, ele_uitext, id_form FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = " . $ele_id);
@@ -4502,6 +4517,18 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
             if($elementFormObject = $form_handler->get($form_element[0]['id_form'])) {
                 global $xoopsUser;
                 $fakeOwnerUid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+                // remove any dynamic filters pointing to form elements since we're rendering without entry context
+                foreach($element_value[5][2] as $i=>$conditionTerm) {
+                    if(substr($conditionTerm, 0, 1)=="{" AND substr($conditionTerm, -1)=="}") {
+                        $termToCheck = substr($conditionTerm, 1, -1);
+                        if(!isset($_GET[$termToCheck]) AND !isset($_POST[$termToCheck])) {
+                            unset($element_value[5][0][$i]);
+                            unset($element_value[5][1][$i]);
+                            unset($element_value[5][2][$i]);
+                            unset($element_value[5][3][$i]);
+                        }
+                    }
+                }
                 list($conditionsfilter, $conditionsfilter_oom, $parentFormFrom) = buildConditionsFilterSQL($element_value[5], $source_form_id, 'new', $fakeOwnerUid, $elementFormObject, "t1");
                 $sourceEntryIdsForFilters = array(); // filters never have any preselected values from the database
                 list($sourceEntrySafetyNetStart, $sourceEntrySafetyNetEnd) = prepareLinkedElementSafetyNets($sourceEntryIdsForFilters, $conditionsfilter, $conditionsfilter_oom);
@@ -4576,7 +4603,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
 
         if ($name != "{listofentries}") { ksort($options); }
 
-        $counter = 0;
+        $counter++;
         foreach ($options as $option=>$option_value) {
             
             if($multi AND $counter > 0 AND ($counter+1) % 7 == 0) {
@@ -4588,7 +4615,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
             if (is_array($overrides) AND isset($overrides[$option])) {
                 if($multi) {
                     $checked = (strstr($_POST[$id], "ORSET$multiCounter=".$option."//") OR strstr($_GET[$id], "ORSET$multiCounter=".$option."//")) ? "checked" : "";
-                    $filter .= "<input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$overrides[$option][1]."' $checked onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'ORSET$multiCounter=".$overrides[$option][1]."//'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('ORSET$multiCounter=".$overrides[$option][1]."//', '')); } jQuery('#1_".$id."').removeAttr('checked');\"> <label for='".$multiIdCounter."_".$id."'>".$overrides[$option][0]."</label><br/>\n";
+                    $filter .= "<label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$overrides[$option][1]."' $checked onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'ORSET$multiCounter=".$overrides[$option][1]."//'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('ORSET$multiCounter=".$overrides[$option][1]."//', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\">&nbsp;".$overrides[$option][0]."</label><br/>\n";
                 } else {
                     $selected = ($_POST[$id] == $option OR $_GET[$id] == $option) ? "selected" : "";
                     $filter .= "<option value=\"" . $overrides[$option][1] . "\" $selected>" . $overrides[$option][0] . "</option>\n";
@@ -4622,15 +4649,15 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
                     $passoption = "qsf_".$counter."_$passoption";
                 }
                 if($multi) {
-                    $filter .= "<input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$passoption."' $selected onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'".$passoption."'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('".$passoption."', '')); } jQuery('#1_".$id."').removeAttr('checked');\"> <label for='".$multiIdCounter."_".$id."'>".formulize_swapUIText($option, $ele_uitext)."</label><br/>\n";
+                    $filter .= " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$passoption."' $selected onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'".$passoption."'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('".$passoption."', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\">&nbsp;".formulize_swapUIText($option, $ele_uitext)."</label><br/>\n";
                 } else {
-                $filter .= "<option value=\"$passoption\" $selected>".formulize_swapUIText($option, $ele_uitext)."</option>\n";
-            }
+                    $filter .= "<option value=\"$passoption\" $selected>".formulize_swapUIText($option, $ele_uitext)."</option>\n";
+                }
             }
             $counter++;
         }
     }
-    $filter .= !$multi ? "</SELECT>\n" : "</div><div style='clear: both'></div>\n";
+    $filter .= !$multi ? "</SELECT>\n" : "<br><input id='apply-button-".$id."' type='button' class='formulize-small-button' style='display: none' value='"._formulize_SUBMITTEXT."' onclick='showLoading();'></div><div style='clear: both'></div>\n";
 
     return $filter;
 }
