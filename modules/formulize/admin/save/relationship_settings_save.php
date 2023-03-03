@@ -207,12 +207,25 @@ function updatelinks($fl_id, $value) {
     } else {
         $common = $processedValues['relationships']['preservecommon'.$fl_id] == $value ? 1 : 0;
     }
+    
+    // if the elements are actually linked together, discard the common flag!
+    // also set indexes if necessary
+    $element_handler = xoops_getmodulehandler('elements','formulize');
+    $elementKeyZero = null;
+    $elementKeyOne = null;
     if($keys[0] > 0){
         updateIndex($keys[0]);
+        $elementKeyZero = $element_handler->get($keys[0]);
     }
-
     if($keys[1] > 0){
         updateIndex($keys[1]);
+        $elementKeyOne = $element_handler->get($keys[1]);
+    }
+    if(elementsAreLinked($elementKeyZero, $elementKeyOne)) {
+        if($common) {
+            print "/* eval */ reloadWithScrollPosition();"; // reload since we're changing what the user has chosen so need to update display
+        }
+        $common = 0;   
     }
 
     $sql = "UPDATE " . $xoopsDB->prefix("formulize_framework_links") . " SET fl_key1='" . $keys[0] . "', fl_key2='" . $keys[1] . "', fl_common_value='$common' WHERE fl_id='$fl_id'";
@@ -221,6 +234,34 @@ function updatelinks($fl_id, $value) {
     }
 }
 
+function elementsAreLinked($element1, $element2) {
+    if(is_object($element1)
+       AND is_object($element2)
+       AND ($element1->getVar('ele_handle') == sourceHandleForElement($element2)
+           OR $element2->getVar('ele_handle') == sourceHandleForElement($element1))
+      ) {
+        return true;
+    }
+    return false;
+}
+
+// element must be an element object 
+function sourceHandleForElement($element) {
+    $sourceHandle = false;
+    $ele_value = $element->getVar('ele_value');
+    if(is_array($ele_value)
+       AND isset($ele_value[2])
+       AND is_string($ele_value[2])
+       AND strstr($ele_value[2], "#*=:*")
+       AND (!isset($ele_value['snapshot']) OR !$ele_value['snapshot'])
+      ) {
+        $boxproperties = explode("#*=:*", $ele_value[2]);
+        $element_handler = xoops_getmodulehandler('elements','formulize');
+        $sourceElement = $element_handler->get($boxproperties[1]);
+        $sourceHandle = $sourceElement->getVar('ele_handle');
+    }
+    return $sourceHandle;
+}
 
 function updatedisplays($fl_id, $value) {
     global $xoopsDB;
