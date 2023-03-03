@@ -7599,14 +7599,17 @@ function export_prepColumns($columns,$include_metadata=0) {
 
 // this function figures out certain default values for elements in a given entry in a form, and writes them to that entry
 // used for setting values that are supposed to exist by default in newly created subform entries
-function writeEntryDefaults($target_fid,$target_entry) {
+function writeEntryDefaults($target_fid,$target_entry,$excludeHandles = array()) {
 
   $defaultValueMap = getEntryDefaults($target_fid,$target_entry);
+  $defaultElementHandles = convertElementIdsToElementHandles(array_keys($defaultValueMap));
   
+  $i = 0;
   foreach($defaultValueMap as $elementId=>$defaultTextToWrite) {
-    if($defaultTextToWrite) {
+    if($defaultTextToWrite AND !in_array($defaultElementHandles[$i],$excludeHandles)) {
       writeElementValue($target_fid, $elementId, $target_entry, $defaultTextToWrite, "replace", null, true); // last true means we are passing in linked value foreign keys, no need to sort them out inside the function
     }
+    $i++;
   }
   
 }

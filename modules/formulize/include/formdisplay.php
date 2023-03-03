@@ -2154,7 +2154,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
             if($valuesToWrite[$optionElementObject->getVar('ele_handle')] !== "" AND $valuesToWrite[$optionElementObject->getVar('ele_handle')] !== "{WRITEASNULL}") {
                 $proxyUser = $overrideOwnerOfNewEntries ? $mainFormOwner : false;
                 if($writtenEntryId = formulize_writeEntry($valuesToWrite, 'new', 'replace', $proxyUser, true)) { // last true forces writing even when not using POST method on page request. Necessary for prepop in modal drawing.
-                    writeEntryDefaults($subform_id,$writtenEntryId);
+                    writeEntryDefaults($subform_id,$writtenEntryId,array_keys($valuesToWrite));
                     $sub_entries[$subform_id][] = $writtenEntryId;
                 }
             }
