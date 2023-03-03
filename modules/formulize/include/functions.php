@@ -7316,6 +7316,12 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
     
     if(!$output_filename) {
     
+        icms::$logger->disableLogger();
+        
+        while(ob_get_level()) {
+            ob_end_clean();
+        }
+            
         // output http headers
         header('Content-Description: File Transfer');
         header('Content-Type: text/csv; charset='._CHARSET);
