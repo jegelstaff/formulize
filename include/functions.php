@@ -397,6 +397,11 @@ function xoops_getbanner() {
  */
 function redirect_header($url, $time = 3, $message = '', $addredirect = true, $allowExternalLink = false)
 {
+    
+    if(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+        exit(); // do not do redirects for ajax requests
+    }
+    
 	global $icmsConfig, $icmsConfigPersona;
 	if(preg_match("/[\\0-\\31]|about:|script:/i", $url))
 	{
@@ -2236,7 +2241,7 @@ function icms_random_str($numchar){
 	$letras = "a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,x,w,y,z,1,2,3,4,5,6,7,8,9,0";
 	$array = explode(",", $letras);
 	shuffle($array);
-	$senha = implode($array, "");
+	$senha = implode("", $array);
 	return substr($senha, 0, $numchar);
 }
 

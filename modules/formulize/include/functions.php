@@ -5542,7 +5542,11 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
 // append a given value onto a given condition
 function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias, $filterElementHandle, $filterOp, $conditionsFilterComparisonValue) {
     
-    if(!$conditionsFilterComparisonValue) { return array($condition, $conditionsFilterComparisonValue); }
+    if(!$conditionsFilterComparisonValue
+       AND $conditionsFilterComparisonValue !== 0
+       AND $conditionsFilterComparisonValue !== "0") {
+        return array($condition, $conditionsFilterComparisonValue);
+    }
     
     if(!$condition AND $needIntroBoolean) {
         $condition = " AND (";
@@ -5968,7 +5972,7 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
         }
         $thisEntryId = isset($localIds[$valueId]) ? $localIds[$valueId] : $entryId;
         if ($counter == 1 AND $deDisplay AND $element_type != 'derived') {
-            $output .= '<div style="float: left; margin-right: 5px; margin-bottom: 5px;"><a href="" onclick="renderElement(\''.$handle.'\', '.$cachedElementIds[$handle].', '.$thisEntryId.', '.$fid.',0,'.$deInstanceCounter.');return false;"><img src="'.XOOPS_URL.'/modules/formulize/images/kedit.gif" /></a></div>';
+            $output .= '<div style="float: left; margin-right: 5px; margin-bottom: 5px;"><a class="de-edit-icon" href="" onclick="renderElement(\''.$handle.'\', '.$cachedElementIds[$handle].', '.$thisEntryId.', '.$fid.',0,'.$deInstanceCounter.');return false;"></a></div>';
         }
         if ("date" == $element_type) {
             $time_value = strtotime($v);

@@ -461,12 +461,8 @@ class formulizeElementRenderer{
 								foreach (range(1, $linked_column_count) as $linked_column_index) {
                                     $linked_value = '';
 									if ($rowlinkedvaluesq[$linked_column_index] !== "") {
-										if ($sourceElementObject->isLinked) {
-											$linked_value = prepvalues($rowlinkedvaluesq[$linked_column_index], $linked_columns[$linked_column_index - 1], $rowlinkedvaluesq[0]);
-											$linked_value = $linked_value[0];
-										} else {
-                                            $linked_value = stripslashes(strip_tags(trim($rowlinkedvaluesq[$linked_column_index])));
-										}
+                                        $linked_value = prepvalues($rowlinkedvaluesq[$linked_column_index], $linked_columns[$linked_column_index - 1], $rowlinkedvaluesq[0]);
+                                        $linked_value = $linked_value[0];
 									}
                                     if($linked_value != '' OR is_numeric($linked_value)) {
                                         $linked_column_values[] = $linked_value;
