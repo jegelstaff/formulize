@@ -82,9 +82,10 @@ function formulize_subformSave_writeNewEntry($element_to_write, $value_to_write,
     // need to also enforce any equals conditions that are on the subform element, if any, and assign those values to the entries that were just added
     // and write default values, and trigger on before/after save (could calling writeEntry alone handle the defaults??)
     // also, enforce any derived values on the subform entry itself
+    $filterValues = array();
     if(is_array($subformConditions)) {
         $filterValues = getFilterValuesForEntry($subformConditions, $entry);
-        $filterValues = $filterValues[key($filterValues)]; // subform element conditions are always on one form only so we just take the first set of values found (filterValues are grouped by form id)
+        $filterValues = count($filterValues) > 0 ? $filterValues[key($filterValues)] : $filterValues; // subform element conditions are always on one form only so we just take the first set of values found (filterValues are grouped by form id)
     }
     $data_handler = new formulizeDataHandler($target_sub);
     foreach($sub_entry_written as $thisSubEntry) {
@@ -97,7 +98,7 @@ function formulize_subformSave_writeNewEntry($element_to_write, $value_to_write,
         }
         // need to parse/write the defaults one more time, because some defaults are dependent on other defaults
         // this is kind of awkward! the writing of defaults should proceed in order like derived values and then later can be dependent on previous
-        writeEntryDefaults($target_sub,$thisSubEntry); 
+        writeEntryDefaults($target_sub,$thisSubEntry,array_keys($filterValues)); 
         if($frid) {
             formulize_updateDerivedValues($entry,$mainFormFid,$frid);
         } else {

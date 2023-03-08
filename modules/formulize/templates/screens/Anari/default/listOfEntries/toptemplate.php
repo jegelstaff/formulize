@@ -41,6 +41,5 @@ $submitButton
                 $notifButton
             </div>
         </div>
-    
-        $pageNavControls
+
 ";

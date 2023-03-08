@@ -20,7 +20,7 @@ define("_AM_FORMULIZE_LOE_LASTPAGE", "Dernière page >>");
 define("_AM_FORMULIZE_LOE_NEXT", "prochain");
 define("_AM_FORMULIZE_LOE_ONPAGE", "Sur la page ");
 define("_AM_FORMULIZE_LOE_PREVIOUS", "précédent");
-define("_AM_FORMULIZE_LOE_TOTAL", "nombre total d'entrées : %d");
+define("_AM_FORMULIZE_LOE_TOTAL", "Affichage de %d à %d sur %d");
 define("_AM_FORMULIZE_PREVIOUS_OPTION", "Utiliser la réponse précédente:");
 define("_AM_FORMULIZE_SCREEN_LOE_TEMPLATE_ERROR", "There is an error in your template code.  Sorry, we don't know more than that.  Typos or syntax errors are the most common problems.  Also, if your template has an if...else condition around all its code, and that condition is never met, then there will be no template found which can cause this error.  To avoid that, make sure your template always outputs something, even if it's only '&amp;nbsp;'");
 define("_AM_FRAME_ADDFORM", "Ajouter une paire de formulaire à ce Framework:");
@@ -618,5 +618,8 @@ define("_formulize_DE_EXPORT_SHOW_ADVANCED", "Montrer les options avancées");
 define("_formulize_DE_EXPORT_HIDE_ADVANCED", "Masquer les options avancées");
 define("_formulize_DE_IMPORT_UPDATEDERIVED", "Automatically updated derived values in the form");
 define("_formulize_DE_IMPORT_SENDNOTIFICATIONS", "Automatically send notifications to users based on the imported data");
+
+define("_formulize_FROM", "De :");
+define("_formulize_TO", "À :");
 
 include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/main.php';
