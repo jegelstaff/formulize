@@ -52,8 +52,12 @@ if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
 // do saving of defaults here
 $screens = $processedValues['screens'];
 $form = $form_handler->get($fid);
-$form->setVar('defaultform',intval($screens['defaultform']));
-$form->setVar('defaultlist',intval($screens['defaultlist']));
+if(intval($screens['defaultform'])) {
+    $form->setVar('defaultform',intval($screens['defaultform']));
+}
+if(intval($screens['defaultlist'])) {
+    $form->setVar('defaultlist',intval($screens['defaultlist']));
+}
 
 if(!$fid = $form_handler->insert($form)) {
   print "Error: could not save the form properly: ".$xoopsDB->error();
