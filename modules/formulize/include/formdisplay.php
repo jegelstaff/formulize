@@ -3217,7 +3217,7 @@ function formulize_formatDateTime($dt) {
 	$tzDiffSeconds = $tzDiff*3600;
 	
 	if($xoopsConfig['language'] == "french") {
-		$return = setlocale("LC_TIME", "fr_FR.UTF8");
+		$return = setlocale(LC_TIME, "fr_FR.UTF8");
 	}
 	return _formulize_TEMP_AT . " " . strftime(dateFormatToStrftime(_MEDIUMDATESTRING), strtotime($dt)+$tzDiffSeconds); 
 }
