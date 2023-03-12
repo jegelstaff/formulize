@@ -3614,25 +3614,92 @@ function processCustomButton($caid, $thisCustomAction, $entry_id="", $entry="") 
 		$caPHP[] = isset($effectProperties['code']) ? $effectProperties['code'] : "";
 		$caHTML[$caid.'...'.$effectid.'...'.$entry_id] = isset($effectProperties['html']) ? $effectProperties['html'] : "";
 		$isHTML = isset($effectProperties['html']) ? true : $isHTML;
+        
+        // experimental... need all types of element values and actions, etc, to be worked out
+        $useClickedText = false;
+        if($entry_id AND $thisCustomAction['appearinline'] == 1 AND $effectProperties['element'] AND $effectProperties['action'] AND $effectProperties['value']) {
+            $element_handler = xoops_getmodulehandler('elements', 'formulize');
+            if($elementObject = $element_handler->get($effectProperties['element'])) {
+                $dataHandler = new formulizeDataHandler($elementObject->getVar('id_form'));
+                $elementValueInEntry = $dataHandler->getElementValueInEntry($entry_id, $elementObject);
+                $valueToCheck = processButtonValue($effectProperties['value'], $entry_id);
+                switch($effectProperties['action']) {
+                    case 'replace':
+                        $useClickedText = $elementValueInEntry == $valueToCheck ? true : false;
+                        break;
+                    case 'append':
+                        $strFound = strstr((string)$elementValueInEntry, (string)$valueToCheck);
+                        $useClickedText = $strFound===false ? false : true;
+                        break;
+                    case 'remove':
+                        $strFound = strstr((string)$elementValueInEntry, (string)$valueToCheck);
+                        $useClickedText = $strFound===false ? true : false;
+                        break;
+                    
+                }
+            }
+        }
+        
 	}
-	if($isHTML AND $entry) { // code to be rendered in place
+    
+    // run HTML when there's no $entry, only if the code is not looking for $entry (not foolproof! but better than simply not running at all when there's no $entry)
+    // need to run through all the code in advance of loop below because in the loop below we're caching the processing of the results and we don't want to cached results that are empty only because there's no $entry on this run through. There might be a valid $entry on a subsequent attempt
+    $dollarEntryPresentInCode = false;
+    foreach($caHTML as $key=>$thisHTML) {
+        if(strstr($thisHTML,"\$entry") !== false) {
+            $dollarEntryPresentInCode = true;
+            break;
+        }
+    }
+	if($isHTML AND ($entry OR !$dollarEntryPresentInCode)) { // code to be rendered in place
 		static $cachedCAHTML = array(); // this function is called a few times...we want to generate the HTML only once
 		$allHTML = "";
 		foreach($caHTML as $key=>$thisHTML) {
 			if(!isset($cachedCAHTML[$key])) {
-			ob_start();
-			eval($thisHTML);
-				$cachedCAHTML[$key] = ob_get_clean();
+                ob_start();
+                eval($thisHTML);
+ 				$cachedCAHTML[$key] = ob_get_clean();
 			}
 			$allHTML .= $cachedCAHTML[$key];
 		}
 		$caCode = $allHTML;
 	} else {
 		$nameIdAddOn = $thisCustomAction['appearinline'] ? $entry_id : "";
-		$caCode = "<input type=button style=\"cursor: pointer;\" name=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" id=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" value=\"" . trans($thisCustomAction['buttontext']) . "\" onclick=\"javascript:customButtonProcess('$caid', '$entry_id', '".trans(str_replace("'","\'",$thisCustomAction['popuptext']))."');\">\n";
+        
+        // figure out if the action(s) of the button have already been applied, and if so, use the clickedtext, otherwise use the buttontext
+        // experimental... roughing this in with 'Shared' as the clickedtext
+        $thisCustomAction['clickedtext'] = $thisCustomAction['buttontext'];
+        if($caElements[0] == 192 AND strstr($thisCustomAction['buttontext'],'Share with Counsellor')) {
+            $thisCustomAction['clickedtext'] = '[en]Shared[/en][fr]Partagé[/fr]';
+        }
+        
+        if($useClickedText AND $caElements[0] == 192 AND strstr($thisCustomAction['buttontext'],'Share with Counsellor')) {
+            $caCode = "<p>".$thisCustomAction['clickedtext']."</p>";
+        } else {
+            $caCode = "<input type=button style=\"cursor: pointer;\" name=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" id=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" value=\"" . trans($thisCustomAction['buttontext']) . "\" onclick=\"javascript:customButtonProcess('$caid', '$entry_id', '".trans(str_replace("'","\'",$thisCustomAction['popuptext']))."');\">\n";            
+        }
+        
+        $buttonTextToUse = $useClickedText ? $thisCustomAction['clickedtext'] : $thisCustomAction['buttontext'];
+        
 	}
 
 	return array(0=>$caCode, 1=>$caElements, 2=>$caActions, 3=>$caValues, 4=>$thisCustomAction['messagetext'], 5=>$thisCustomAction['applyto'], 6=>$caPHP, 7=>$thisCustomAction['appearinline']);
+}
+
+// THIS FUNCTION PROCESSES THE VALUE FOR A BUTTON, HANDLING PHP CODE IF NECESSARY
+// buttonValue is the declared value the button is supposed to apply to the element
+// entry_id is the ID number of the entry that is being affected by the button
+function processButtonValue($buttonValue, $entry_id) {
+    $valueToWrite = $buttonValue;
+    $GLOBALS['formulize_thisEntryId'] = $entry_id; // sent up to global scope so it can be accessed by the gatherHiddenValues function without the user having to type ", $id" in the function call
+    $formulize_thisEntryId = $entry_id;
+    $formulize_lvoverride = false;
+    if(strstr($buttonValue, "\$value")) {
+        eval($buttonValue);
+        $valueToWrite = $value;
+    }
+    $GLOBALS['formulize_lvoverride'] = $formulize_lvoverride; // kludgy way to pass it back when we might need to listen for it in writeElementValue!
+    return $valueToWrite;
 }
 
 // THIS FUNCTION PROCESSES CLICKED CUSTOM BUTTONS
@@ -3704,31 +3771,22 @@ function processClickedCustomButton($clickedElements, $clickedValues, $clickedAc
 
 		// process changes to each entry
 		foreach($caEntries as $id=>$thisEntry) { // loop through all the entries this button click applies to
-		$GLOBALS['formulize_thisEntryId'] = $csEntries[$id]; // sent up to global scope so it can be accessed by the gatherHiddenValues function without the user having to type ", $id" in the function call
-			$formulize_thisEntryId = $csEntries[$id];
 			$maxIdReq = 0;
 			// don't use "i" in this loop, since it's a common variable name and would potentially conflict with names in the eval'd scope
 			// same is true of "thisentry" and other variables here!
 			for($ixz=0;$ixz<count((array) $clickedElements);$ixz++) { // loop through all actions for this button
 				if($thisEntry == "new" AND $maxIdReq > 0) { $thisEntry = $maxIdReq; } // for multiple effects on the same button, when the button applies to a new entry, reuse the initial id_req that was created during the first effect
-				$formulize_lvoverride = false;
-				if(strstr($clickedValues[$ixz], "\$value")) {
-					eval($clickedValues[$ixz]);
-					$valueToWrite = $value;
-				} else {
-					$valueToWrite = $clickedValues[$ixz];
-				}
-				
+                $valueToWrite = processButtonValue($clickedValues[$ixz], $csEntries[$id]);
+                $formulize_lvoverride = $GLOBALS['formulize_lvoverride'];
 				$maxIdReq = writeElementValue("", $clickedElements[$ixz], $thisEntry, $valueToWrite, $clickedActions[$ixz], "", $formulize_lvoverride, $csEntries[$id]);
-
 			}
 			if($maxIdReq) {
 				$element_handler = xoops_getmodulehandler('elements', 'formulize');
 				$elementObject = $element_handler->get($clickedElements[0]);
-					// NOTE: if there are derived values involving something other than the fid of the updated form, and the frid of the screen, then they won't be updated when this custom button is clicked!!
-					$frid = $screen ? $screen->getVar('frid') : 0;
-					formulize_updateDerivedValues($maxIdReq, $elementObject->getVar('id_form'), $frid);
-				}
+                // NOTE: if there are derived values involving something other than the fid of the updated form, and the frid of the screen, then they won't be updated when this custom button is clicked!!
+                $frid = $screen ? $screen->getVar('frid') : 0;
+                formulize_updateDerivedValues($maxIdReq, $elementObject->getVar('id_form'), $frid);
+            }
 		}
 	}
 	return $clickedMessageText;
@@ -4122,7 +4180,6 @@ function getDefaultViewForActiveUser($loadview) {
 	if(!$foundAView) {
 	  $loadview = null;
 	}
-	
 	return $loadview;
 	
 } 
