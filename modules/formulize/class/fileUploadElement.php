@@ -224,6 +224,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
                 $ele_value = $element->getVar('ele_value');
                 $allowedExtensions = str_replace(array(" ","."),"",strtolower(trim($ele_value[1])));
                 if(in_array($extension,explode(",",$allowedExtensions))) {
+                    // CHECK WITH mime_content_type
                     $fileExtensionOK = true;
                 }
             }
