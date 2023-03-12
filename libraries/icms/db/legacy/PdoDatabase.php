@@ -144,8 +144,8 @@ class icms_db_legacy_PdoDatabase extends icms_db_legacy_Database {
     public function queryFromFile($file) {
         if (false !== ($fp = fopen($file, 'r'))) {
 			$sql_queries = trim(fread($fp, filesize($file)));
-            $sqlutil = new icms_db_legacy_mysql_Utility();
-			$sqlutil->splitMySqlFile($pieces, $sql_queries);
+            $pieces = array();
+			icms_db_legacy_mysql_Utility::splitMySqlFile($pieces, $sql_queries);
 			foreach ($pieces as $query) {
 				// [0] contains the prefixed query
 				// [4] contains unprefixed table name

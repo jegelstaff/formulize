@@ -158,6 +158,7 @@ define("_AM_PERMISSIONS_REVIEW_PERMISSIONS","Review permissions for a user");
 define("_AM_CALC_EXPLAIN","let you create a series of queries and logical steps, that get carried out on the data that users have submitted in the form.  You can use Procedures for advanced, multi-step calculations, or any other situation where a single query or single operation is not enough to get to the outcome you want.");
 define("_AM_CALC_CLONE"," Clone");
 define("_AM_CALC_DELETE"," Delete");
+define("_AM_CALC_REMOVE"," Remove");
 define("_AM_CALC_CONFIRM_DELETE","Are you sure you want to delete this procedure?  All settings for this procedure will be lost!");
 define("_AM_CALC_PROCEDURE_NAME","Name of the Procedure");
 define("_AM_CALC_PROCEDURE_DESCR","Description of the Procedure:");

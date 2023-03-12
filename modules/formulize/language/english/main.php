@@ -695,7 +695,7 @@ define("_AM_FORMULIZE_LOE_LASTPAGE", "Last >>");
 define("_AM_FORMULIZE_LOE_ONPAGE", "Page");
 define("_AM_FORMULIZE_LOE_PREVIOUS", "Previous");
 define("_AM_FORMULIZE_LOE_NEXT", "Next");
-define("_AM_FORMULIZE_LOE_TOTAL", "Total Entries: %d");
+define("_AM_FORMULIZE_LOE_TOTAL", "Showing entries %d to %d of %d");
 
 define("_formulize_DE_LOE_LIMIT_REACHED1", "There are");
 define("_formulize_DE_LOE_LIMIT_REACHED2", "entries in the list.  It would take a long time to retrieve them.  You can use search terms to limit the number of entries, or");
@@ -753,4 +753,7 @@ define("_AM_GOOGLEFILE_REQUIRED", "You must select a file for");
 define("_formulize_CLOSE_FORM_ELEMENT", "You need to close the form element that is open first before you edit this one");
 
 define("_formulize_ENTRY_ID", "Entry ID");
+
+define("_formulize_FROM", "From:");
+define("_formulize_TO", "To:");
 

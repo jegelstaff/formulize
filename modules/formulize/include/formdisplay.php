@@ -331,6 +331,7 @@ class formulize_themeForm extends XoopsThemeForm {
                     if($columnData[0] == 2 AND isset($ele[3])) { // by convention, only formulizeInsertBreak element, "spanning both columns" has a [3] key, so we need to put in the span flag
                         $columns = 1;
                         $templateVariables['colSpan'] = 'colspan=2';
+                        $templateVariables['column1Width'] = 'auto';
                     }
                     if(isset($ele[3])) { // respect any declared class
                         $templateVariables['cellClass'] = $ele[3];
@@ -368,14 +369,21 @@ class formulize_themeForm extends XoopsThemeForm {
                         $templateVariables['spacerNeeded'] = true;
                 }
                 
+                // render the element including containers, unless this is an asynch render (for conditional elements?) in which case we just want the element itself
                 $template = $this->getTemplate('elementcontainero');
-                $ret .= $this->processTemplate($template, $templateVariables);
+                $containerOpen = $this->processTemplate($template, $templateVariables);
                 
                 $template = $this->getTemplate('elementtemplate'.$columns);
-                $ret .= $this->processTemplate($template, $templateVariables);
+                $containerContents = $this->processTemplate($template, $templateVariables);
                 
                 $template = $this->getTemplate('elementcontainerc');
-                $ret .= $this->processTemplate($template, $templateVariables);
+                $containerClose = $this->processTemplate($template, $templateVariables);
+                
+                if($this->getTitle() != 'formulizeAsynchElementRender') {
+                    $ret .= $containerOpen.$containerContents.$containerClose;
+                } else {
+                    $ret .= $containerContents;
+                }
             
 			} elseif ( !$ele->isHidden() ) {
                 $template = $this->getTemplate('elementcontainero');
@@ -1484,7 +1492,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		// draw in the submitbutton if necessary
 		if (!$formElementsOnly) {
 			$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $entry, $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, $allDoneOverride, $printall, $screen);
-			}
+    	}
 	   
 		if(!$formElementsOnly) {
 			// add flag to indicate that the form has been submitted
@@ -1847,10 +1855,6 @@ function addSubmitButton($form, $subButtonText, $go_back, $currentURL, $button_t
             }
         }
     
-
-
-
-
         // formulize_displayingMultipageScreen is set in formdisplaypages to indicate we're displaying a multipage form
         global $formulize_displayingMultipageScreen;
         // do not use printable button for profile forms
@@ -1866,8 +1870,8 @@ function addSubmitButton($form, $subButtonText, $go_back, $currentURL, $button_t
             
             $currentPage = "";
             $screenid = "";
-        if($screen) {
-              $screenid = $screen->getVar('sid');
+            if($screen) {
+                $screenid = $screen->getVar('sid');
                 // check for a current page setting
                 if(isset($settings['formulize_currentPage'])) {
                     $currentPage = $settings['formulize_currentPage'];
@@ -1891,7 +1895,7 @@ function addSubmitButton($form, $subButtonText, $go_back, $currentURL, $button_t
                 print "<input type=hidden name=elements_allowed value=''>";
             }
             print "</form>";
-		//added by Cory Aug 27, 2005 to make forms printable
+            //added by Cory Aug 27, 2005 to make forms printable
             
             $printbutton = new XoopsFormButton('', 'printbutton',  $pv_text_temp, 'button');
             if(is_array($elements_allowed)) {
@@ -1930,13 +1934,13 @@ function addSubmitButton($form, $subButtonText, $go_back, $currentURL, $button_t
             $donebutton = new XoopsFormButton('', 'donebutton', trans($button_text), 'button');
             $donebutton->setExtra("onclick=javascript:verifyDone();");
             $buttontray->addElement($donebutton); 
-	}
-
-	$trayElements = $buttontray->getElements();
-        if(count((array) $trayElements) > 0 OR $formulize_displayingMultipageScreen) {
-		$form->addElement($buttontray);
-	}
-	return $form;
+        }
+    
+        $trayElements = $buttontray->getElements();
+            if(count((array) $trayElements) > 0 OR $formulize_displayingMultipageScreen) {
+            $form->addElement($buttontray);
+        }
+        return $form;
 	}
 }
 
@@ -2158,7 +2162,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
             if($valuesToWrite[$optionElementObject->getVar('ele_handle')] !== "" AND $valuesToWrite[$optionElementObject->getVar('ele_handle')] !== "{WRITEASNULL}") {
                 $proxyUser = $overrideOwnerOfNewEntries ? $mainFormOwner : false;
                 if($writtenEntryId = formulize_writeEntry($valuesToWrite, 'new', 'replace', $proxyUser, true)) { // last true forces writing even when not using POST method on page request. Necessary for prepop in modal drawing.
-                    writeEntryDefaults($subform_id,$writtenEntryId);
+                    writeEntryDefaults($subform_id,$writtenEntryId,array_keys($valuesToWrite));
                     $sub_entries[$subform_id][] = $writtenEntryId;
                 }
             }
@@ -2318,7 +2322,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 				foreach($elementsToDraw as $thisele) {
 					if($thisele) { 
                         $unsetDisabledFlag = false;
-                        if($subform_element_object AND in_array($thisele, explode(',',$subform_element_object->ele_value['disabledelements']))) {
+                        if($subform_element_object AND in_array($thisele, explode(',',(string)$subform_element_object->ele_value['disabledelements']))) {
                             $unsetDisabledFlag = !isset($GLOBALS['formulize_forceElementsDisabled']);
                             $GLOBALS['formulize_forceElementsDisabled'] = true;
                         }

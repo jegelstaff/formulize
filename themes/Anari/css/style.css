@@ -173,11 +173,11 @@ table:first-child div.applinks h1 {
   flex-grow: 1;
   padding-bottom: 100px;
 }
-@media (min-width: 1024px) {
+/*@media (min-width: 1024px) {
   .site-layout__main {
     width: auto;
   }
-}
+}*/
 @media print {
   .site-layout__main {
     display: block;
@@ -191,12 +191,12 @@ table:first-child div.applinks h1 {
   padding-left: 20px;
   padding-right: 20px;
 }
-@media (min-width: 1024px) {
+/*@media (min-width: 1024px) {
   .container {
     padding-left: 40px;
     padding-right: 40px;
   }
-}
+}*/
 
 @media (min-width: 1260px) {
   .layout-two-up {
@@ -658,6 +658,11 @@ div.list-of-entries .card__body {
 }
 
 
+.formulize-form-submit-button {
+  background: #109CF1 !important;
+  height: auto; 
+}
+
 button, input[type="submit"], input[type="button"], input[type="reset"],
 .btn {
   font-weight: 600;
@@ -929,7 +934,8 @@ table.formulize-subform-table input[type=text].formulize-time-element {
     max-width: 100px;
 }
 
-div.subform_button_controls input[type="button"] {
+div.subform_button_controls input[type="button"],
+#listofentries div.main-cell-div div input.formulize-small-button {
     min-width: 4em;
     width: auto;
     padding-left: 1em;
@@ -2892,9 +2898,20 @@ img {
     padding-right: 1em;
 }
 
-a.loe-edit-entry {
+a.loe-edit-entry,
+a.de-edit-icon {
     color: #1080FF;
+}
+a.loe-edit-entry {
     font-size: 1.5rem;
+}
+.loe-edit-entry::before,
+a.de-edit-icon::before {
+    color: inherit;    
+}
+a.loe-edit-entry:hover,
+a.de-edit-icon:hover{
+    text-shadow: none;
 }
 
 #formulize-masquerade-block {
@@ -3096,6 +3113,7 @@ td.column a.header-info-link {
 }
 .list-of-entries-container table.outer td[id^=celladdress_h1_] {
     top: 0px;
+    padding-top: 0;
 }
 .list-of-entries-container table.outer td[id^=celladdress_1_] {
     top: 4.1em;
@@ -3120,13 +3138,6 @@ td.column a.header-info-link {
     background-color: white;
 }
 
-.loe-edit-entry::before {
-    color: inherit;    
-}
-a.loe-edit-entry:hover {
-    text-shadow: none;
-}
-
 /* compatibility with classic xoops table layout */
 
 table.outer {
@@ -3147,6 +3158,12 @@ table.outer {
 
 .list-of-entries-container table.outer td.floating-column {
     display: none;
+}
+
+#formulize-list-of-entries-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 @media (max-width: 450px) {

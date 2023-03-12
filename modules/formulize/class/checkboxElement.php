@@ -50,7 +50,13 @@ class formulizeCheckboxElement extends formulizeformulize {
     // returns true if the option is one of the values the user can choose from in this element    
     function optionIsValid($option) {
         $ele_value = $this->getVar('ele_value');
-        return (isset($ele_value[2][$option]) OR in_array($option, $this->getVar('ele_uitext'))) ? true : false;
+        $option = is_array($option) ? $option : array($option);
+        foreach($option as $thisOption) {
+            if(!isset($ele_value[2][$thisOption]) AND !in_array($thisOption, $this->getVar('ele_uitext'))) {
+                return false;
+            }
+        }
+        return true;
     }
     
 }
@@ -339,7 +345,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
     // $entry_id is the ID number of the entry where this particular element comes from
     // $screen is the screen object that is in effect, if any (may be null)
     // $renderAsHiddenDefault is a flag to control what happens when we render as a hidden element for users who can't normally access the element -- typically we would set the default value inside a hidden element, or the current value if for some reason an entry is passed
-    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen=false, $owner, $renderAsHiddenDefault = false) {
+    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen=false, $owner=null, $renderAsHiddenDefault = false) {
 	
 		$ele_value = $this->backwardsCompatibility($ele_value);
 	

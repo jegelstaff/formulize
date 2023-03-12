@@ -179,7 +179,7 @@ switch($op) {
         $handle = $passedElementObject->getVar('ele_handle');
         $databaseReadyValue = prepDataForWrite($passedElementObject, $v, $_GET['entryId']);
         $databaseReadyValue = $databaseReadyValue === "{WRITEASNULL}" ? NULL : $databaseReadyValue;
-            if(substr($v, 0, 9)=="newvalue:") { $sendBackValue[$k] = $databaseReadyValue; }
+            if(is_string($v) && substr($v, 0, 9)=="newvalue:") { $sendBackValue[$k] = $databaseReadyValue; }
         $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$passedEntryId][$handle] = $databaseReadyValue;
         $apiFormatValue = prepvalues($databaseReadyValue, $handle, $passedEntryId); // will be an array
         if(is_array($apiFormatValue) AND count((array) $apiFormatValue)==1) {

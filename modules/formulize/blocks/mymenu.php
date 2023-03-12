@@ -23,6 +23,11 @@
 function block_formulizeMENU_show() {
         global $xoopsDB, $xoopsUser, $xoopsModule, $myts;
 		    $myts =& MyTextSanitizer::getInstance();
+			
+		if(!defined('_AM_NOFORMS_AVAIL')) {
+				include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/main.php';
+		}
+			
 
         $block = array();
         $groups = array();

@@ -37,7 +37,7 @@ class icms_db_legacy_mysql_Utility {
 	 * @param   string   the sql commands
 	 * @return  boolean  always true
 	 */
-	public function splitMySqlFile(&$ret, $sql) {
+	static public function splitMySqlFile(&$ret, $sql) {
 		$sql               = trim($sql);
 		$sql_len           = strlen($sql);
 		$char              = '';
@@ -145,7 +145,7 @@ class icms_db_legacy_mysql_Utility {
 	 * @param   string   the sql commands
 	 * @return  boolean  always true
 	 */
-	public function splitSqlFile(&$ret, $sql) {
+	static public function splitSqlFile(&$ret, $sql) {
 		$sql               = trim($sql);
 		$sql_len           = strlen($sql);
 		$char              = '';
@@ -250,7 +250,7 @@ class icms_db_legacy_mysql_Utility {
 	 * @param   string  $prefix prefix to add to all table names
 	 * @return  mixed   FALSE on failure
 	 */
-	public function prefixQuery($query, $prefix) {
+	static public function prefixQuery($query, $prefix) {
 		$pattern = "/^(INSERT INTO|CREATE TABLE|ALTER TABLE|UPDATE)(\s)+([`]?)([^`\s]+)\\3(\s)+/siU";
 		$pattern2 = "/^(DROP TABLE)(\s)+([`]?)([^`\s]+)\\3(\s)?$/siU";
 		if (preg_match($pattern, $query, $matches) || preg_match($pattern2, $query, $matches)) {

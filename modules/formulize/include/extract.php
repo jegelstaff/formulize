@@ -342,13 +342,13 @@ function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitS
     }
 
     if ($cacheKey AND !isset($GLOBALS['formulize_doNotCacheDataSet'])) {
-        // doNotCacheDataSet can be set, so that this query will be repeated next time instead of pulled from the cache.  This is most useful to declare in derived value formulas that cause a change to the underlyin dataset by writing things to a form that is involved in this dataset.
+        // doNotCacheDataSet can be set, so that this query will be repeated next time instead of pulled from the cache. This is useful if a derived value makes changes to another field's value, and that value will be crucial later on in the same page load.
         // This is also useful to set when a query will not be done over again and we want to conserve resources esp. memory!
         $GLOBALS['formulize_cachedGetDataResults'][$cacheKey] = $result;
     }
 
     if (isset($GLOBALS['formulize_doNotCacheDataSet'])) {
-        // this needs to be declared before or during each extraction that should now be cached...caching is too important a cost savings when building the page
+        // this needs to be declared before or during each extraction that should not be cached...caching is too important a cost savings when building the page
         unset($GLOBALS['formulize_doNotCacheDataSet']);
     }
 
@@ -1354,15 +1354,9 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
 										$orderByClause = " ORDER BY $queryElement DESC LIMIT 0," . substr($ifParts[2], 6);
 										continue;
 							 }
-							 
-               if($numIndivFilters > 0) {
-                    $whereClause .= $filterParts[0]; // apply local andor setting
-               }
                
                $newWhereClause = ""; // tracks just the current iteration of this loop, so we can capture this filter and add it to the record of filters for this form lower down
                
-               $whereClause .= "("; // bracket each individual component of the whereclause
-                    
                $operator = isset($ifParts[2]) ? $ifParts[2] : "LIKE";
                if(trim($operator) == "LIKE" OR trim($operator) == "NOT LIKE") {
                     if(strlen($ifParts[1]) > 1 AND (substr($ifParts[1], 0, 1) == "%" OR substr($ifParts[1], -1) == "%")) { // if the query term includes % at the front or back (or both), then we let that work as the "likebits" and don't put in any ourselves
@@ -1420,13 +1414,13 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
 										list($ifParts[0], $formFieldFilterMap, $mappedForm, $element_id, $elementPrefix, $queryElement) = prepareElementMetaData($frid, $fid, $linkfids, $ifParts[0], $formFieldFilterMap);
                     
                     // set query term for yes/no questions
-                    if($formFieldFilterMap[$mappedForm][$element_id]['isyn']) {
+                    if($formFieldFilterMap[$mappedForm][$element_id]['isyn'] AND $ifParts[1] !== "") {
                          if(strstr(strtoupper(_formulize_TEMP_QYES), strtoupper($ifParts[1])) OR strtoupper($ifParts[1]) == "YES") { // since we're matching based on even a single character match between the query and the yes/no language constants, if the current language has the same letters or letter combinations in yes and no, then sometimes only Yes may be searched for
                               $ifParts[1] = 1;
                          } elseif(strstr(strtoupper(_formulize_TEMP_QNO), strtoupper($ifParts[1])) OR strtoupper($ifParts[1]) == "NO") {
                               $ifParts[1] = 2;
                          } else {
-                              $ifParts[1] = "";
+                              continue; // search term is not valid for the yes/no column
                          }
                     }
                     
@@ -1597,7 +1591,11 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                     }
                }
 
-               $whereClause .= $newWhereClause;
+               if($numIndivFilters > 0) {
+                    $whereClause .= $filterParts[0]; // apply local andor setting
+               }
+               
+               $whereClause .= "(".$newWhereClause;
                
                if(!isset($oneSideFiltersTemp[$mappedForm][strtolower(trim($filterParts[0]))][$numSeachExps])) {
                     $oneSideFiltersTemp[$mappedForm][strtolower(trim($filterParts[0]))][$numSeachExps] = " $newWhereClause ";   // don't add the local andor on the first term for a form
@@ -1862,7 +1860,7 @@ function formulize_getElementMetaData($elementOrHandle, $isHandle=false, $fid=0)
 // Odd results may occur when a derived column is inside a subform in a framework!
 // Derived values should always be in the mainform only?
 function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form_id) {
-    global $xoopsDB;
+    
     static $parsedFormulas = array();
     
     static $debugMode;
@@ -1892,28 +1890,25 @@ function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form
                 if(!$primary_entry_id) { continue; } // datasets can contain empty values for subforms, etc, when no entries exist. We must not process phantom non-existent entries.
                 $dataToWrite = array();
                 foreach ($metadata[$formHandle] as $formulaNumber => $thisMetaData) {
-                        $functionName = "derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", $formHandle)."_".$relationship_id."_".$form_id."_".$formulaNumber;
-                        // want to turn off the derived value update flag for the actual processing of a value, since the function might have a getData call in it!!
-                        $resetDerivedValueFlag = false;
-                        if (isset($GLOBALS['formulize_forceDerivedValueUpdate'])) {
-                            unset($GLOBALS['formulize_forceDerivedValueUpdate']);
-                            $resetDerivedValueFlag = true;
-                        }
-                        $derivedValue = $functionName($entry, $form_id, $primary_entry_id, $relationship_id);
-                        if ($resetDerivedValueFlag) {
-                            $GLOBALS['formulize_forceDerivedValueUpdate'] = true;
-                        }
-                        // if the new value is the same as the previous one, then skip updating and saving
-                        if ($derivedValue !== $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0]) {
-                            if ($xoopsDB) {
-                                // save value for writing to database if XOOPS is active
-                                $elementID = formulize_getIdFromElementHandle($thisMetaData['handle']);
-                                $dataToWrite[$elementID] = $derivedValue;
-                            }
-                            $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0] = $derivedValue === '{WRITEASNULL}' ? NULL : $derivedValue;
-                        }
+                    $functionName = "derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", $formHandle)."_".$relationship_id."_".$form_id."_".$formulaNumber;
+                    // want to turn off the derived value update flag for the actual processing of a value, since the function might have a getData call in it!!
+                    $resetDerivedValueFlag = false;
+                    if (isset($GLOBALS['formulize_forceDerivedValueUpdate'])) {
+                        unset($GLOBALS['formulize_forceDerivedValueUpdate']);
+                        $resetDerivedValueFlag = true;
                     }
-                if ($xoopsDB and count((array) $dataToWrite) > 0) {
+                    $derivedValue = $functionName($entry, $form_id, $primary_entry_id, $relationship_id);
+                    if ($resetDerivedValueFlag) {
+                        $GLOBALS['formulize_forceDerivedValueUpdate'] = true;
+                    }
+                    // if the new value is the same as the previous one, then skip updating and saving
+                    if ($derivedValue !== $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0]) {
+                        $elementID = formulize_getIdFromElementHandle($thisMetaData['handle']);
+                        $dataToWrite[$elementID] = $derivedValue;
+                        $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0] = $derivedValue === '{WRITEASNULL}' ? NULL : $derivedValue;
+                    }
+                }
+                if (count((array) $dataToWrite) > 0) {
                     // false for no proxy user, true to force the update even on get requests, false is do not update the metadata (modification user)
                     $data_handler->writeEntry($primary_entry_id, $dataToWrite, false, true, false);
                 }
@@ -2213,14 +2208,26 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter=false, $an
      formulize_benchmark('done with parsing and all that... '.$sql);
      $res = $xoopsDB->query($sql);
      
+	 // figure out the PK field in the form, if any
+	 $sql = "SELECT COLUMN_NAME FROM `KEY_COLUMN_USAGE` WHERE `CONSTRAINT_NAME` = 'PRIMARY' AND `TABLE_NAME` = '".formulize_db_escape($tablename)."'";
+	 $pkField = '';
+	 if($pkRes = $xoopsDB->query($sql)) {
+		if($xoopsDB->getRowsNum($pkRes) == 1) {
+			$pkRow = $xoopsDB->fetchRow($pkRes);
+			$pkField = $pkRow[0];
+		}
+	 }
+	 
+	 
      $result = array();
      $indexer = 0;
      // result syntax is:
-     // [id][title of form][primary id -- meaningless in tableforms, until we need to edit entries][formulize element id][value id]
+     // [id][title of form][primary id][formulize element id][value id]
      // package up data in the format we need it
      while($array = $xoopsDB->fetchArray($res)) {
           foreach($elementsByField as $field=>$fieldDetails) {
-               $result[$indexer][$formname][$indexer2][$fieldDetails['id']][] = $array[$field];
+				$pkValue = $pfField ? $array[$pkField] : $array[key($array)]; // use first field if no PK found above
+               $result[$indexer][$formname][$pkValue][$fieldDetails['id']][] = $array[$field];
           }
           $indexer++;
      }

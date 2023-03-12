@@ -218,7 +218,7 @@ if($pageNumbers > 1) {
 		$pageNav .= "<a href=\"?page=application&aid=". $aid ."&tab=screens&sort=". $screen_sort ."&order=". $screen_sort_order ."&nav=". ($screen_page + 1) ."\" class=\"page-navigation-next\">"._AM_FORMULIZE_LOE_NEXT."</a>";
 	}
 	$pageNav .= "</div><span class=\"page-navigation-total\">".
-			sprintf(_AM_FORMULIZE_LOE_TOTAL, $resultNum)."</span></p>\n";
+			"Total entries: ".$resultNum."</span></p>\n";
 }
 
 $common['pageNav'] = $pageNav;

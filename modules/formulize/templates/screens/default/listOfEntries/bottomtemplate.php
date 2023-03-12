@@ -1,8 +1,12 @@
 <?php
 
 print "
-    </div>  
+        <div id='formulize-list-of-entries-footer'>
+            <div>$numberOfEntries</div><div>$pageNavControls</div>
+        </div>    
+    </div>
 </div>
+
 ";
 
 // include Javascript necessary for the locked columns feature

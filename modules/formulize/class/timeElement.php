@@ -118,7 +118,9 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
                 $timeScript .= "<script type='text/javascript'>
 
 function initializeTimeElements() {
-    jQuery('.formulize-time-element').timeEntry({spinnerImage: '".XOOPS_URL."/modules/formulize/libraries/jquery/timeentry/spinnerDefault.png'});
+    jQuery('.formulize-time-element').timeEntry({spinnerImage: '".XOOPS_URL."/modules/formulize/libraries/jquery/timeentry/spinnerDefault.png'}).change(function() {
+        formulizechanged = 1;
+    });
 }
 
 jQuery(document).ready(function(){    

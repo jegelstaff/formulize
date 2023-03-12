@@ -3018,6 +3018,7 @@ function _findLinkedEntries($targetFormKeySelf, $targetFormFid, $valuesToLookFor
 // entries in single-entry forms are never cloned
 // $entryOrFilter is the entry id number, or can be a filter string or array!
 function cloneEntry($entryOrFilter, $frid, $fid, $copies=1, $callback = null, $targetEntry = "new") {
+
     global $xoopsDB, $xoopsUser;
     
     // used for updating derived values later
@@ -4395,6 +4396,8 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
         $multiCounter++;
     }
     
+    $counter = -1;
+    
     // Changes made to allow the linking of one filter to another. This is acheieved as follows:
     // 1. Create a formulize form for managing the Main Filter List (form M)
     // 2. Create a formulize form for managing the Sub Filter list (form S), which includes a linked element to the data in form M,
@@ -4437,17 +4440,30 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
 
     if ($subfilter AND !(isset($_POST[$linked_data_id])) AND !(isset($_GET[$linked_data_id]))) {
         // If its a subfilter and the main filter is unselected, then put in 'Please select from above options first
-        $filter .= $multi ? "<input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' value='none' onclick=\"jQuery('#".$id."_hiddenMulti').val('none');jQuery('.$id').each(function() { jQuery(this).removeAttr('checked') });\"> <label for='".$multiIdCounter."_".$id."'>Please select a primary filter first</label><br/>\n" : "<option value=\"none\">Please select a primary filter first</option>\n";
+        $filter .= $multi ? " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' value='none' onclick=\"jQuery('#".$id."_hiddenMulti').val('none');jQuery('.$id').each(function() { jQuery(this).removeAttr('checked') }); jQuery('#apply-button-".$id."').show(200);\">&nbsp;Please select a primary filter first</label><br/>\n" : "<option value=\"none\">Please select a primary filter first</option>\n";
     } else {
         // Either it is not a subfilter, or it is a subfilter with the linked values set
         $defaulttext = $defaulttext ? $defaulttext: _AM_FORMLINK_PICK;
         if ($name == "{listofentries}") {
             // must not pass back a value when we're putting a filter on the list of entries page
             $checked = ((!isset($_POST[$id]) OR $_POST[$id] == '') AND (!isset($_GET[$id]) OR $_GET[$id] == '')) ? "checked" : "";
-            $filter .= $multi ? "<input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' value='' $checked onclick=\"jQuery('#".$id."_hiddenMulti').val('');jQuery('.$id').each(function() { jQuery(this).removeAttr('checked') });\"> <label for='".$multiIdCounter."_".$id."'>$defaulttext</label><br/>\n" : "<option value=\"\">".$defaulttext."</option>\n";
+            $filter .= $multi ? " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' value='' $checked onclick=\"jQuery('#".$id."_hiddenMulti').val('');jQuery('.$id').each(function() { jQuery(this).removeAttr('checked') }); jQuery('#apply-button-".$id."').show(200);\">&nbsp;$defaulttext</label><br/>\n" : "<option value=\"\">".$defaulttext."</option>\n";
+            // add {BLANK} option if we're doing this for a QSF filter in a list of entries page
+            if($defaulttext == _formulize_QSF_DefaultText) {
+                $multiIdCounter++;
+                $counter++;
+                $checked = "";
+                $selected = "";
+                $checkboxOption = "ORSET$multiCounter={BLANK}//";
+                if(isset($_POST[$id])) {
+                    $checked = strstr($_POST[$id], $checkboxOption) ? "checked" : "";
+                    $selected = $_POST[$id] === 'qsf_0_{BLANK}' ? "selected" : "";
+                }
+                $filter .= $multi ? " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='ORSET$multiCounter={BLANK}//' $checked onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'".$checkboxOption."'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('".$checkboxOption."', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\">&nbsp;{BLANK}</label><br/>\n" : "<option value=\"qsf_".$counter."_{BLANK}\" $selected>{BLANK}</option>\n";
+            }
         } else {
             $checked = ((!isset($_POST[$id]) OR $_POST[$id] == 'none') AND (!isset($_GET[$id]) OR $_GET[$id] == 'none')) ? "checked" : "";
-            $filter .= $multi ? "<input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' value='none' $checked onclick=\"jQuery('#".$id."_hiddenMulti').val('none');jQuery('.$id').each(function() { jQuery(this).removeAttr('checked') });\"> <label for='".$multiIdCounter."_".$id."'>$defaulttext</label><br/>\n" :"<option value=\"none\">".$defaulttext."</option>\n";
+            $filter .= $multi ? " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' value='none' $checked onclick=\"jQuery('#".$id."_hiddenMulti').val('none');jQuery('.$id').each(function() { jQuery(this).removeAttr('checked') }); jQuery('#apply-button-".$id."').show(200);\">&nbsp;$defaulttext</label><br/>\n" :"<option value=\"none\">".$defaulttext."</option>\n";
         }
 
         $form_element = q("SELECT ele_value, ele_type, ele_uitext, id_form FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = " . $ele_id);
@@ -4502,6 +4518,18 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
             if($elementFormObject = $form_handler->get($form_element[0]['id_form'])) {
                 global $xoopsUser;
                 $fakeOwnerUid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+                // remove any dynamic filters pointing to form elements since we're rendering without entry context
+                foreach($element_value[5][2] as $i=>$conditionTerm) {
+                    if(substr($conditionTerm, 0, 1)=="{" AND substr($conditionTerm, -1)=="}") {
+                        $termToCheck = substr($conditionTerm, 1, -1);
+                        if(!isset($_GET[$termToCheck]) AND !isset($_POST[$termToCheck])) {
+                            unset($element_value[5][0][$i]);
+                            unset($element_value[5][1][$i]);
+                            unset($element_value[5][2][$i]);
+                            unset($element_value[5][3][$i]);
+                        }
+                    }
+                }
                 list($conditionsfilter, $conditionsfilter_oom, $parentFormFrom) = buildConditionsFilterSQL($element_value[5], $source_form_id, 'new', $fakeOwnerUid, $elementFormObject, "t1");
                 $sourceEntryIdsForFilters = array(); // filters never have any preselected values from the database
                 list($sourceEntrySafetyNetStart, $sourceEntrySafetyNetEnd) = prepareLinkedElementSafetyNets($sourceEntryIdsForFilters, $conditionsfilter, $conditionsfilter_oom);
@@ -4576,7 +4604,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
 
         if ($name != "{listofentries}") { ksort($options); }
 
-        $counter = 0;
+        $counter++;
         foreach ($options as $option=>$option_value) {
             
             if($multi AND $counter > 0 AND ($counter+1) % 7 == 0) {
@@ -4588,7 +4616,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
             if (is_array($overrides) AND isset($overrides[$option])) {
                 if($multi) {
                     $checked = (strstr($_POST[$id], "ORSET$multiCounter=".$option."//") OR strstr($_GET[$id], "ORSET$multiCounter=".$option."//")) ? "checked" : "";
-                    $filter .= "<input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$overrides[$option][1]."' $checked onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'ORSET$multiCounter=".$overrides[$option][1]."//'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('ORSET$multiCounter=".$overrides[$option][1]."//', '')); } jQuery('#1_".$id."').removeAttr('checked');\"> <label for='".$multiIdCounter."_".$id."'>".$overrides[$option][0]."</label><br/>\n";
+                    $filter .= "<label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$overrides[$option][1]."' $checked onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'ORSET$multiCounter=".$overrides[$option][1]."//'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('ORSET$multiCounter=".$overrides[$option][1]."//', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\">&nbsp;".$overrides[$option][0]."</label><br/>\n";
                 } else {
                     $selected = ($_POST[$id] == $option OR $_GET[$id] == $option) ? "selected" : "";
                     $filter .= "<option value=\"" . $overrides[$option][1] . "\" $selected>" . $overrides[$option][0] . "</option>\n";
@@ -4622,15 +4650,15 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
                     $passoption = "qsf_".$counter."_$passoption";
                 }
                 if($multi) {
-                    $filter .= "<input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$passoption."' $selected onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'".$passoption."'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('".$passoption."', '')); } jQuery('#1_".$id."').removeAttr('checked');\"> <label for='".$multiIdCounter."_".$id."'>".formulize_swapUIText($option, $ele_uitext)."</label><br/>\n";
+                    $filter .= " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$passoption."' $selected onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'".$passoption."'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('".$passoption."', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\">&nbsp;".formulize_swapUIText($option, $ele_uitext)."</label><br/>\n";
                 } else {
-                $filter .= "<option value=\"$passoption\" $selected>".formulize_swapUIText($option, $ele_uitext)."</option>\n";
-            }
+                    $filter .= "<option value=\"$passoption\" $selected>".formulize_swapUIText($option, $ele_uitext)."</option>\n";
+                }
             }
             $counter++;
         }
     }
-    $filter .= !$multi ? "</SELECT>\n" : "</div><div style='clear: both'></div>\n";
+    $filter .= !$multi ? "</SELECT>\n" : "<br><input id='apply-button-".$id."' type='button' class='formulize-small-button' style='display: none' value='"._formulize_SUBMITTEXT."' onclick='showLoading();'></div><div style='clear: both'></div>\n";
 
     return $filter;
 }
@@ -5434,30 +5462,31 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
                 $needIntroBoolean = true;
                 list($conditionsfilter, $thiscondition) = _appendToCondition($conditionsfilter, "AND", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
                 if($thiscondition) {
-                $conditionsfilterArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
+                    $conditionsfilterArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
                 }
             // regular oom conditions
             } elseif(!strstr($conditionsFilterComparisonValue, "curlybracketform")) {
                 $needIntroBoolean = true;
                 list($conditionsfilter_oom, $thiscondition) = _appendToCondition($conditionsfilter_oom, "OR", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
                 if($thiscondition) {
-                $conditionsfilter_oomArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
+                    $conditionsfilter_oomArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
                 }
             // curlybracketform conditions    
             } elseif($filterTypes[$filterId] != "oom") {
                 $needIntroBoolean = false;
                 list($curlyBracketFormconditionsfilter, $thiscondition) = _appendToCondition($curlyBracketFormconditionsfilter, "AND", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
                 if($thiscondition) {
-                $conditionsfilterArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
+                    $conditionsfilterArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
                 }
             // curlybracketform oom conditions
             } else {
                 $needIntroBoolean = false;
                 list($curlyBracketFormconditionsfilter_oom, $thiscondition) = _appendToCondition($curlyBracketFormconditionsfilter_oom, "OR", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
                 if($thiscondition) {
-                $conditionsfilter_oomArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
+                    $conditionsfilter_oomArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
+                }
             }
-            }
+            
             $curlyBracketFormFrom = $thisCurlyBracketFormFrom ? $thisCurlyBracketFormFrom : $curlyBracketFormFrom; // if something was returned, use it, otherwise, stick with what we've got -- NOTE THIS MEANS YOU CAN'T HAVE DIVERGENT CURLY BRACKET REFERENCES??!!
             
         }
@@ -5514,7 +5543,11 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
 // append a given value onto a given condition
 function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias, $filterElementHandle, $filterOp, $conditionsFilterComparisonValue) {
     
-    if(!$conditionsFilterComparisonValue) { return array($condition, $conditionsFilterComparisonValue); }
+    if(!$conditionsFilterComparisonValue
+       AND $conditionsFilterComparisonValue !== 0
+       AND $conditionsFilterComparisonValue !== "0") {
+        return array($condition, $conditionsFilterComparisonValue);
+    }
     
     if(!$condition AND $needIntroBoolean) {
         $condition = " AND (";
@@ -5669,7 +5702,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                 // for new entries with a dynamic reference and no asynch value set...
                 } else { // can't do a subquery into a curly bracket form for a 'new' value...return nothing
                     return array("", "");
-                    }
+                }
             }
             if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
                 $conditionsFilterComparisonValue .= "  AND curlybracketform.`entry_id`=$curlyBracketEntryQuoted ";
@@ -5885,7 +5918,7 @@ function formulize_javascriptForRemovingEntryLocks($unload=false) {
     foreach($entriesThatHaveBeenLockedThisPageLoad as $thisForm=>$theseEntries) {
             $js .= "			'entry_ids_".$thisForm."[]': [".implode(", ", array_keys($theseEntries))."], \n";
     }
-    $js .= "     'form_ids[]': [".implode(", ", array_keys($entriesThatHaveBeenLockedThisPageLoad))."],
+    $js .= "     'form_ids[]': [".implode(", ", array_keys((array) $entriesThatHaveBeenLockedThisPageLoad))."],
     async: false
 });\n";
     }
@@ -5940,7 +5973,7 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
         }
         $thisEntryId = isset($localIds[$valueId]) ? $localIds[$valueId] : $entryId;
         if ($counter == 1 AND $deDisplay AND $element_type != 'derived') {
-            $output .= '<div style="float: left; margin-right: 5px; margin-bottom: 5px;"><a href="" onclick="renderElement(\''.$handle.'\', '.$cachedElementIds[$handle].', '.$thisEntryId.', '.$fid.',0,'.$deInstanceCounter.');return false;"><img src="'.XOOPS_URL.'/modules/formulize/images/kedit.gif" /></a></div>';
+            $output .= '<div style="float: left; margin-right: 5px; margin-bottom: 5px;"><a class="de-edit-icon" href="" onclick="renderElement(\''.$handle.'\', '.$cachedElementIds[$handle].', '.$thisEntryId.', '.$fid.',0,'.$deInstanceCounter.');return false;"></a></div>';
         }
         if ("date" == $element_type) {
             $time_value = strtotime($v);
@@ -6353,7 +6386,7 @@ function parseUserAndToday($term, $element=null) {
             } elseif($element) {
                 $element = _getElementObject($element);
                 $ele_value = $element->getVar('ele_value');
-                if(strstr(key($ele_value[2]), 'NAMES}')) {
+                if(is_array($ele_value[2]) AND strstr(key($ele_value[2]), 'NAMES}')) {
                     $name = $xoopsUser->getVar('uid');
                 }
             }
@@ -6640,9 +6673,22 @@ function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
 
 // update derived values in the passed in entry
 function formulize_updateDerivedValues($entry, $fid, $frid="") {
+    
+    global $formulize_derivedValueBeingUpdated; // record what combination of updates we're doing, and don't retrigger the same one until we're done. This avoids nested calls which can create infinite loops, if for example a before or after save procedure triggers updating derived values in the same form
+    if(!is_array($formulize_derivedValueBeingUpdated)) {
+        $formulize_derivedValueBeingUpdated = array();
+    } else {
+        if(isset($formulize_derivedValueBeingUpdated[$entry][$fid][$frid])) {
+            return;
+        }
+    }
+    $formulize_derivedValueBeingUpdated[$entry][$fid][$frid] = true;
+    
 	$GLOBALS['formulize_forceDerivedValueUpdate'] = true;
 	getData($frid, $fid, $entry);
 	unset($GLOBALS['formulize_forceDerivedValueUpdate']);
+    
+    unset($formulize_derivedValueBeingUpdated[$entry][$fid][$frid]);
 }
 
 // this function writes the export query generated by getData, to a file for picking up later so we don't have to figure out all the bits and pieces again
@@ -7132,7 +7178,7 @@ function formulize_parseSearchesIntoFilter($searches) {
                     $search_date = strtotime($one_search);
                     // only search on a valid date string (otherwise it will be converted to the unix epoch)
                     if (false === $search_date) {
-                        $one_search = "";
+                        continue;
                     }
 				}
 			}
@@ -7275,6 +7321,12 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
     
     if(!$output_filename) {
     
+        icms::$logger->disableLogger();
+        
+        while(ob_get_level()) {
+            ob_end_clean();
+        }
+            
         // output http headers
         header('Content-Description: File Transfer');
         header('Content-Type: text/csv; charset='._CHARSET);
@@ -7412,7 +7464,7 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
                                 $colValues = is_array($colValues) ? $colValues : array($colValues);
                                 foreach($explodedColumns[$column] as $thisOption=>$indicators) {
                                     if(substr($thisOption, 0, 7) == "{OTHER|") {
-                                        $diff = array_diff($colValues, array_keys($explodedColumns[$column]));
+                                        $diff = array_diff($colValues, array_keys((array)$explodedColumns[$column]));
                                         $diff = array_values($diff); // indexes will be preserved from source, we need to index from 0
                                         $row[] = (count((array) $diff) > 0 AND trim($diff[0]) !== "") ? $indicators['hasValue'] : $indicators['doesNotHaveValue'];
                                     } else {
@@ -7558,14 +7610,17 @@ function export_prepColumns($columns,$include_metadata=0) {
 
 // this function figures out certain default values for elements in a given entry in a form, and writes them to that entry
 // used for setting values that are supposed to exist by default in newly created subform entries
-function writeEntryDefaults($target_fid,$target_entry) {
+function writeEntryDefaults($target_fid,$target_entry,$excludeHandles = array()) {
 
   $defaultValueMap = getEntryDefaults($target_fid,$target_entry);
+  $defaultElementHandles = convertElementIdsToElementHandles(array_keys($defaultValueMap));
   
+  $i = 0;
   foreach($defaultValueMap as $elementId=>$defaultTextToWrite) {
-    if($defaultTextToWrite) {
+    if($defaultTextToWrite AND !in_array($defaultElementHandles[$i],$excludeHandles)) {
       writeElementValue($target_fid, $elementId, $target_entry, $defaultTextToWrite, "replace", null, true); // last true means we are passing in linked value foreign keys, no need to sort them out inside the function
     }
+    $i++;
   }
   
 }
@@ -7783,5 +7838,27 @@ function userHasMobileClient() {
         return true;
     }
     return false;
+}
+
+// this function reads the go_back values from POST and sets up parent entries in POST, which are used as a flag in key situations.
+// the Go Back form, setup with the legacy form screen submit buttons, normally would include the parent entries
+// however they are missing when a multipage form does a Go Back operation
+// So the list screens check if they need to do this, and call this function if so
+// Multipage screens check for this too, and call this function
+// Essentially, this is a replacement for the Go Back form that's part of legacy form screens, which isn't really used anymore
+// This function returns the active entry that should be displayed
+function setupParentFormValuesInPostAndReturnEntryId() {
+    $go_back_entry = strstr($_POST['go_back_entry'], ',') ? explode(',',$_POST['go_back_entry']) : array($_POST['go_back_entry']);
+    $lastKey = count((array) $go_back_entry)-1;
+    $_POST['parent_entry'] = $_POST['go_back_entry'];
+    $_POST['parent_form'] = $_POST['go_back_form'];
+    $_POST['parent_page'] = $_POST['go_back_page'];
+    $_POST['parent_subformElementId'] = $_POST['go_back_subformElementId'];
+    unset($_POST['go_back_form']);
+    unset($_POST['go_back_entry']);
+    unset($_POST['go_back_page']);
+    unset($_POST['goto_sfid']);
+    unset($_POST['sub_fid']);
+    return $go_back_entry[$lastKey];
 }
 

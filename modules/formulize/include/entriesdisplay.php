@@ -731,19 +731,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	// if there's a bunch of go_back info, and no entry, then we should not show list, we need to display something else entirely
 	if(isset($_POST['go_back_form']) AND $_POST['go_back_form'] AND isset($_POST['go_back_entry']) AND $_POST['go_back_entry'] AND (!isset($_POST['ventry']) OR !$_POST['ventry'])) {
-		$go_back_entry = strstr($_POST['go_back_entry'], ',') ? explode(',',$_POST['go_back_entry']) : array($_POST['go_back_entry']);
-		$lastKey = count((array) $go_back_entry)-1;
-		$settings['ventry'] = $go_back_entry[$lastKey];
-		$_POST['ventry'] = $go_back_entry[$lastKey];
-		$_POST['parent_entry'] = $_POST['go_back_entry'];
-		$_POST['parent_form'] = $_POST['go_back_form'];
-		$_POST['parent_page'] = $_POST['go_back_page'];
-		$_POST['parent_subformElementId'] = $_POST['go_back_subformElementId'];
-		unset($_POST['go_back_form']);
-		unset($_POST['go_back_entry']);
-		unset($_POST['go_back_page']);
-		unset($_POST['goto_sfid']);
-		unset($_POST['sub_fid']);
+        $_POST['ventry'] = setupParentFormValuesInPostAndReturnEntryId();
+        $settings['ventry'] = $_POST['ventry'];
 	} elseif(isset($_POST['formulize_originalVentry']) AND is_numeric($_POST['formulize_originalVentry'])) {
 		$settings['ventry'] = $_POST['formulize_originalVentry'];
 	} else {
@@ -892,12 +881,12 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	//formulize_benchmark("after performing calcs");
 	
 	//formulize_benchmark("after generating calcs/before creating pagenav");
-	$formulize_LOEPageNav = formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers);
+	list($formulize_LOEPageNav, $formulize_LOEEntryCount) = formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers);
 	//formulize_benchmark("after nav/before interface");
 	
 	ob_start();
 	// drawInterface... renders the top template, sets up searches, many template variables including all the action buttons...
-	$formulize_buttonCodeArray = drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $loadview, $loadOnlyView, $screen, $searches, $formulize_LOEPageNav, $messageText, $hiddenQuickSearches);
+	$formulize_buttonCodeArray = drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $loadview, $loadOnlyView, $screen, $searches, $formulize_LOEPageNav, $formulize_LOEEntryCount, $messageText, $hiddenQuickSearches);
 
 	// drawEntries ... renders the openlist, list and closelist templates
 	formulize_benchmark("before entries");
@@ -955,7 +944,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 }
 
 // return the available current view settings based on the user's permissions
-function generateViews($fid, $uid, $groups, $frid="0", $currentView, $loadedView="", $view_groupscope, $view_globalscope, $prevview="", $loadOnlyView=0, $screen, $lastLoaded) {
+function generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $view_groupscope, $view_globalscope, $prevview, $loadOnlyView, $screen, $lastLoaded) {
 	global $xoopsDB;
 
 	$limitViews = false;
@@ -1107,7 +1096,9 @@ function generateViews($fid, $uid, $groups, $frid="0", $currentView, $loadedView
 }
 
 // this function draws in the interface parts of a display entries widget
-function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $loadview="", $loadOnlyView=0, $screen, $searches, $pageNav, $messageText, $hiddenQuickSearches) {
+
+function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $loadview="", $loadOnlyView=0, $screen, $searches, $pageNav, $entryTotals, $messageText, $hiddenQuickSearches) {
+
 	global $xoopsDB;
 	global $xoopsUser;
 
@@ -1248,6 +1239,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		$buttonCodeArray['exportButton'] = $buttonCodeArray['exportCalcsButton'];
 	}
 	$buttonCodeArray['pageNavControls'] = $pageNav; // put this unique UI element into the buttonCodeArray for use elsewhere if necessary
+    $buttonCodeArray['numberOfEntries'] = $entryTotals; 
 
 	$currentViewName = $settings['loadviewname'];
 
@@ -1433,7 +1425,7 @@ function screenUsesSearchStringWithHandle($screenOrScreenType, $searchString, $h
 }
 
 // THIS FUNCTION DRAWS IN THE RESULTS OF THE QUERY
-function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone="", $currentURL, $gperm_handler, $uid, $mid, $groups, $settings, $member_handler, $screen, $data, $regeneratePageNumbers, $hiddenQuickSearches, $cResults, $buttonCodeArray) { // , $loadview="") { // -- loadview removed from this function sept 24 2005
+function drawEntries($fid, $cols, $searches, $frid, $scope, $standalone, $currentURL, $gperm_handler, $uid, $mid, $groups, $settings, $member_handler, $screen, $data, $regeneratePageNumbers, $hiddenQuickSearches, $cResults, $buttonCodeArray) { // , $loadview="") { // -- loadview removed from this function sept 24 2005
 	// determine if the query reached a limit in the number of entries to return
 	$LOE_limit = 0;
 	if(!is_array($data)) {
@@ -1719,35 +1711,44 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 						ob_start();
 						// set in the display function, corresponds to the entry id of the record in the form where the current value was retrieved from.  If there is more than one local entry id, because of a one to many framework, then this will be an array that corresponds to the order of the values returned by display.
 						$currentColumnLocalId = $GLOBALS['formulize_mostRecentLocalId'];
+                        
+                        $elementDisplayed = false;
 						// if we're supposed to display this column as an element... (only show it if they have permission to update this entry)
-						if (in_array($colhandle, $deColumns) and formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
+						if (in_array($colhandle, $deColumns)) {
 							include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
 							if($frid) { // need to work out which form this column belongs to, and use that form's entry ID.  Need to loop through the entry to find all possible internal IDs, since a subform situation would lead to multiple values appearing in a single cell, so multiple displayElement calls would be made each with their own internal ID.
 								foreach($entry as $entryFormHandle=>$entryFormData) {
 									$multiValueBRNeeded = false;
 									foreach($entryFormData as $internalID=>$entryElements) {
-										$deThisIntId = false;
-										foreach($entryElements as $entryHandle=>$values) {
-											if($entryHandle == $col AND $internalID) { // we found the element that we're trying to display
-												if($deThisIntId) { print "\n<br />\n"; } // could be a subform so we'd display multiple values
-												if($deDisplay) {
-													if($multiValueBRNeeded) { print "\n<br />\n"; } // in the case of multiple values, split them based on this
-													print '<div id="deDiv_'.$colhandle.'_'.$internalID.'_'.$deInstanceCounter.'">';
-													print getHTMLForList($values, $colhandle, $internalID, $deDisplay, $textWidth, $internalID, $fid, $cellRowAddress, $i, $deInstanceCounter); // $internalID passed in in place of $currentColumnLocalId because we are manually looping through the data to get to the lowest level, so we can be sure of the local id that is in use, and it won't be an array, etc (unless we're showing a checkbox element??? or something else with multiple values??? - probably doesn't matter because the entry id is the same for all values of a single element that allows multiple selection)
-													print "</div>";
-													$deInstanceCounter++;
-												} else {
-													if($deThisIntId) { print "\n<br />\n"; } // extra break to separate multiple form elements in the same cell, for readability/usability
-													// NEEDS DEBUG - ELEMENTS NOT DISPLAYING
-													displayElement("", $colhandle, $internalID);
-												}
-												$deThisIntId = true;
-												$multiValueBRNeeded = true;
-											}
-										}
+                                        $deThisIntId = false;
+                                        foreach($entryElements as $entryHandle=>$values) {
+                                            if($entryHandle == $col AND $internalID) { // we found the element that we're trying to display
+                                                if(!$element_handler) {
+                                                    $element_handler = xoops_getmodulehandler('elements', 'formulize');
+                                                }
+                                                $displayElementObject = $element_handler->get($entryHandle);
+                                                if(formulizePermHandler::user_can_edit_entry($displayElementObject->getVar('id_form'), $uid, $internalID)) {
+                                                    if($deThisIntId) { print "\n<br />\n"; } // could be a subform so we'd display multiple values
+                                                    if($deDisplay) {
+                                                        if($multiValueBRNeeded) { print "\n<br />\n"; } // in the case of multiple values, split them based on this
+                                                        print '<div id="deDiv_'.$colhandle.'_'.$internalID.'_'.$deInstanceCounter.'">';
+                                                        print getHTMLForList($values, $colhandle, $internalID, $deDisplay, $textWidth, $internalID, $fid, $cellRowAddress, $i, $deInstanceCounter); // $internalID passed in in place of $currentColumnLocalId because we are manually looping through the data to get to the lowest level, so we can be sure of the local id that is in use, and it won't be an array, etc (unless we're showing a checkbox element??? or something else with multiple values??? - probably doesn't matter because the entry id is the same for all values of a single element that allows multiple selection)
+                                                        print "</div>";
+                                                        $deInstanceCounter++;
+                                                    } else {
+                                                        if($deThisIntId) { print "\n<br />\n"; } // extra break to separate multiple form elements in the same cell, for readability/usability
+                                                        // NEEDS DEBUG - ELEMENTS NOT DISPLAYING
+                                                        displayElement("", $colhandle, $internalID);
+                                                    }
+                                                    $deThisIntId = true;
+                                                    $multiValueBRNeeded = true;
+                                                    $elementDisplayed = true;
+                                                }
+                                            }
+                                        }
 									}
 								}
-							} else { // display based on the mainform entry id
+							} elseif(formulizePermHandler::user_can_edit_entry($fid, $uid, $entry_id)) { // display based on the mainform entry id
 								if($deDisplay) {
 									print '<div id="deDiv_'.$colhandle.'_'.$entry_id.'_'.$deInstanceCounter.'">';
 									print getHTMLForList($value,$colhandle,$entry_id, $deDisplay, $textWidth, $currentColumnLocalId, $fid, $cellRowAddress, $i, $deInstanceCounter);
@@ -1757,11 +1758,13 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 									// NEEDS DEBUG - ELEMENTS NOT DISPLAYING
 									displayElement("", $colhandle, $entry_id); // works for mainform only!  To work on elements from a framework, we need to figure out the form the element is from, and the entry ID in that form, which is done above
 								}
+                                $elementDisplayed = true;
 							}
 							$GLOBALS['formulize_displayElement_LOE_Used'] = true;
-						} elseif($col != "creation_uid" AND $col!= "mod_uid" AND $col != "entry_id") {
+						}
+                        if(!$elementDisplayed AND ($col != "creation_uid" AND $col!= "mod_uid" AND $col != "entry_id")) {
 							print getHTMLForList($value, $col, $entry_id, 0, $textWidth, $currentColumnLocalId, $fid, $cellRowAddress, $i);
-						} else { // no special formatting on the uid columns:
+						} elseif(!$elementDisplayed) { // no special formatting on the uid columns:
 							print $value;
 						}
 						$templateVariables['columnContents'][] = ob_get_clean();
@@ -1943,9 +1946,10 @@ function formulize_buildQSFilter($handle, $search_text, $multi=false) {
 // THIS FUNCTION CREATES THE HTML FOR A DATE RANGE FILTER
 function formulize_buildDateRangeFilter($handle, $search_text) {
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
-    if($elementObject = $element_handler->get($handle)) {
-        $typeInfo = $elementObject->getDataTypeInformation();
-        if($typeInfo['dataType'] == 'date') {
+    $elementObject = false;
+    if($handle == 'creation_datetime' OR $handle == 'mod_datetime' OR $elementObject = $element_handler->get($handle)) {
+        $typeInfo = $elementObject ? $elementObject->getDataTypeInformation() : true;
+        if($typeInfo == true OR $typeInfo['dataType'] == 'date') {
             $startText = "";
             $endText = "";
             // split any search_text into start and end values
@@ -1980,10 +1984,11 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
                     var start = $('#formulize_daterange_sta_'+handle).val();
                     var end = $('#formulize_daterange_end_'+handle).val();
                     $('#formulize_hidden_daterange_'+handle).val('>='+start+'//'+'<='+end);
+                    $('#formulize_daterange_button_'+handle).show(200);
                 });
                 </script>";
             }
-            return $startDateElement->render() . " ". _formulize_QDR_to . " " . $endDateElement->render() . " <input type=button name=qdrGoButton value='" . _formulize_QDR_go . "' onclick=\"javascript:showLoading();\"></input>\n<input type='hidden' id='formulize_hidden_daterange_".$handle."' name='search_".$handle."' value='".$search_text."' ></input>\n$js";
+            return '<div>'._formulize_FROM.' <div style="display: flex;">'.$startDateElement->render(). "</div><br>"._formulize_TO . " <div style='display: flex;'>" . $endDateElement->render() . "</div><br>\n<input type=button style='display: none;' id='formulize_daterange_button_".$handle."' class='formulize-small-button' name=qdrGoButton value='" . _formulize_SUBMITTEXT . "' onclick=\"javascript:showLoading();\"></input>\n<input type='hidden' id='formulize_hidden_daterange_".$handle."' name='search_".$handle."' value='".$search_text."' ></input></div>\n$js";
         } 
     }
     return "";
@@ -3931,7 +3936,7 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 }
 
 // THIS FUNCTION HANDLES GATHERING A DATASET FOR DISPLAY IN THE LIST
-function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order="", $frid, $fid, $scope, $screen="", $currentURL="", $forcequery = 0) {
+function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fid, $scope, $screen="", $currentURL="", $forcequery = 0) {
 	if (!is_array($searches))
 		$searches = array();
 
@@ -4067,6 +4072,12 @@ function formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers) {
 
     // setup default navigation - and in Anari theme, put in a hack to extend the height of the scrollbox if necessary -- need to rebuild markup for list so this kind of thing is not necessary!
     $pageNav = "";
+    
+    if($_POST['hlist']) {
+		// return no navigation controls if the list is hidden.
+		return $pageNav;
+	}
+    
     global $xoopsConfig;
     if($xoopsConfig['theme_set']=='Anari') {
         $pageNav = "<script type='text/javascript'>
@@ -4078,67 +4089,70 @@ function formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers) {
     
 	$numberPerPage = is_object($screen) ? $screen->getVar('entriesperpage') : 10;
     $numberPerPage = isset($_POST['formulize_entriesPerPage']) ? intval($_POST['formulize_entriesPerPage']) : $numberPerPage; 
-	if($numberPerPage == 0 OR $_POST['hlist']) {
-		// if all entries are supposed to be on one page for this screen, then return no navigation controls.  Also return nothing if the list is hidden.
-		return $pageNav;
-	}
-
 	
 	// regenerate essentially causes the user to jump back to page 0 because something about the dataset has fundamentally changed (like a new search term or something)
 	$currentPage = (isset($_POST['formulize_LOEPageStart']) AND !$regeneratePageNumbers) ? intval($_POST['formulize_LOEPageStart']) : 0;
+    $userPageNumber = $currentPage > 0 ? ($currentPage / $numberPerPage) + 1 : 1;
+    
+    $lastEntryNumber = $numberPerPage > 0 ? $numberPerPage*($userPageNumber) : $GLOBALS['formulize_countMasterResultsForPageNumbers'];
+    $lastEntryNumber = $lastEntryNumber > $GLOBALS['formulize_countMasterResultsForPageNumbers'] ? $GLOBALS['formulize_countMasterResultsForPageNumbers'] : $lastEntryNumber;        
+	$entryTotals = "<span class=\"page-navigation-total\">".
+        sprintf(_AM_FORMULIZE_LOE_TOTAL, ((($userPageNumber-1)*$numberPerPage)+1), $lastEntryNumber, $GLOBALS['formulize_countMasterResultsForPageNumbers'])."</span></p>\n";
 
-	// will receive via javascript the page number that was clicked, or will cause the current page to reload if anything else happens
-	print "\n<input type=hidden name=formulize_LOEPageStart id=formulize_LOEPageStart value=\"$currentPage\">\n";
-	$allPageStarts = array();
-	$pageNumbers = 0;
-	for($i = 0; $i < $GLOBALS['formulize_countMasterResultsForPageNumbers']; $i = $i + $numberPerPage) {
-		$pageNumbers++;
-		$allPageStarts[$pageNumbers] = $i;
-	}
-	$userPageNumber = $currentPage > 0 ? ($currentPage / $numberPerPage) + 1 : 1;
-	if($pageNumbers > 1) {
-		if($pageNumbers > 9) {
-			if($userPageNumber < 6) {
-				$firstDisplayPage = 1;
-				$lastDisplayPage = 9;
-			} elseif($userPageNumber + 4 > $pageNumbers) { // too close to the end
-				$firstDisplayPage = $userPageNumber - 4 - ($userPageNumber+4-$pageNumbers); // the previous four, plus the difference by which we're over the end when we add 4
-				$lastDisplayPage = $pageNumbers;
-			} else { // somewhere in the middle
-				$firstDisplayPage = $userPageNumber - 4;
-				$lastDisplayPage = $userPageNumber + 4;
-			}
-		} else {
-			$firstDisplayPage = 1;
-			$lastDisplayPage = $pageNumbers;
-		}
-
-		$pageNav = "<p><div class=\"formulize-page-navigation\"><span class=\"page-navigation-label\">". _AM_FORMULIZE_LOE_ONPAGE."</span>";
-		if ($currentPage > 1) {
-			$pageNav .= "<a href=\"\" class=\"page-navigation-prev\" onclick=\"javascript:pageJump('".($currentPage - $numberPerPage)."');return false;\">"._AM_FORMULIZE_LOE_PREVIOUS."</a>";
-		}
-		if($firstDisplayPage > 1) {
-			$pageNav .= "<a href=\"\" onclick=\"javascript:pageJump('0');return false;\">1</a><span class=\"page-navigation-skip\">—</span>";
-		}
-		for($i = $firstDisplayPage; $i <= $lastDisplayPage; $i++) {
-			$thisPageStart = ($i * $numberPerPage) - $numberPerPage;
-			if($thisPageStart == $currentPage) {
-				$pageNav .= "<a href=\"\" class=\"page-navigation-active\" onclick=\"javascript:pageJump('$thisPageStart');return false;\">$i</a>";
-			} else {
-				$pageNav .= "<a href=\"\" onclick=\"javascript:pageJump('$thisPageStart');return false;\">$i</a>";
-			}
-		}
-		if($lastDisplayPage < $pageNumbers) {
-			$lastPageStart = ($pageNumbers * $numberPerPage) - $numberPerPage;
-			$pageNav .= "<span class=\"page-navigation-skip\">—</span><a href=\"\" onclick=\"javascript:pageJump('$lastPageStart');return false;\">" . $pageNumbers . "</a>";
-		}
-		if ($currentPage < ($GLOBALS['formulize_countMasterResultsForPageNumbers'] - $numberPerPage)) {
-			$pageNav .= "<a href=\"\" class=\"page-navigation-next\" onclick=\"javascript:pageJump('".($currentPage + $numberPerPage)."');return false;\">"._AM_FORMULIZE_LOE_NEXT."</a>";
-		}
-		$pageNav .= "</div><span class=\"page-navigation-total\">".
-			sprintf(_AM_FORMULIZE_LOE_TOTAL, $GLOBALS['formulize_countMasterResultsForPageNumbers'])."</span></p>\n";
-	} 
-	return $pageNav;
+    if($numberPerPage > 0) {
+        // will receive via javascript the page number that was clicked, or will cause the current page to reload if anything else happens
+        print "\n<input type=hidden name=formulize_LOEPageStart id=formulize_LOEPageStart value=\"$currentPage\">\n";
+        $allPageStarts = array();
+        $pageNumbers = 0;
+        for($i = 0; $i < $GLOBALS['formulize_countMasterResultsForPageNumbers']; $i = $i + $numberPerPage) {
+            $pageNumbers++;
+            $allPageStarts[$pageNumbers] = $i;
+        }
+        
+        if($pageNumbers > 1) {
+            if($pageNumbers > 9) {
+                if($userPageNumber < 6) {
+                    $firstDisplayPage = 1;
+                    $lastDisplayPage = 9;
+                } elseif($userPageNumber + 4 > $pageNumbers) { // too close to the end
+                    $firstDisplayPage = $userPageNumber - 4 - ($userPageNumber+4-$pageNumbers); // the previous four, plus the difference by which we're over the end when we add 4
+                    $lastDisplayPage = $pageNumbers;
+                } else { // somewhere in the middle
+                    $firstDisplayPage = $userPageNumber - 4;
+                    $lastDisplayPage = $userPageNumber + 4;
+                }
+            } else {
+                $firstDisplayPage = 1;
+                $lastDisplayPage = $pageNumbers;
+            }
+    
+            $pageNav = "<p></p><div class=\"formulize-page-navigation\"><span class=\"page-navigation-label\">". _AM_FORMULIZE_LOE_ONPAGE."</span>";
+            if ($currentPage > 1) {
+                $pageNav .= "<a href=\"\" class=\"page-navigation-prev\" onclick=\"javascript:pageJump('".($currentPage - $numberPerPage)."');return false;\">"._AM_FORMULIZE_LOE_PREVIOUS."</a>";
+            }
+            if($firstDisplayPage > 1) {
+                $pageNav .= "<a href=\"\" onclick=\"javascript:pageJump('0');return false;\">1</a><span class=\"page-navigation-skip\">—</span>";
+            }
+            for($i = $firstDisplayPage; $i <= $lastDisplayPage; $i++) {
+                $thisPageStart = ($i * $numberPerPage) - $numberPerPage;
+                if($thisPageStart == $currentPage) {
+                    $pageNav .= "<a href=\"\" class=\"page-navigation-active\" onclick=\"javascript:pageJump('$thisPageStart');return false;\">$i</a>";
+                } else {
+                    $pageNav .= "<a href=\"\" onclick=\"javascript:pageJump('$thisPageStart');return false;\">$i</a>";
+                }
+            }
+            if($lastDisplayPage < $pageNumbers) {
+                $lastPageStart = ($pageNumbers * $numberPerPage) - $numberPerPage;
+                $pageNav .= "<span class=\"page-navigation-skip\">—</span><a href=\"\" onclick=\"javascript:pageJump('$lastPageStart');return false;\">" . $pageNumbers . "</a>";
+            }
+            if ($currentPage < ($GLOBALS['formulize_countMasterResultsForPageNumbers'] - $numberPerPage)) {
+                $pageNav .= "<a href=\"\" class=\"page-navigation-next\" onclick=\"javascript:pageJump('".($currentPage + $numberPerPage)."');return false;\">"._AM_FORMULIZE_LOE_NEXT."</a>";
+            }
+            $pageNav .= "</div>";
+        }
+    }
+    
+	return array($pageNav,$entryTotals);
 }
 
 
@@ -4169,7 +4183,7 @@ function getDefaultViewForActiveUser($loadview) {
 	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 	$foundAView = false;
 	// Search for group user belongs to in list of default views
-	foreach(array_keys($loadview) as $checkGroup) {
+	foreach(array_keys((array)$loadview) as $checkGroup) {
 		// First group/default view found that user belongs to will be set
 		if(in_array($checkGroup, $groups)) {
 		  $loadview = $loadview[$checkGroup];
