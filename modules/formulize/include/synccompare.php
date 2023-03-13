@@ -676,7 +676,7 @@ class SyncCompareCatalog {
     
     private function recursivePrintSmart($value) {
         if(!is_array($value)) {
-            return printSmart($this->cleanEncoding($value), 75);
+            return printSmart(removeLanguageTags($this->cleanEncoding($value)), 200);
         } else {
             foreach($value as $k=>$v) {
                 $value[$k] = $this->recursivePrintSmart($v);
@@ -713,6 +713,17 @@ function loadCachedVar($varname) {
     return unserialize($fileStr);
 }
 
-
+function removeLanguageTags($string) {
+    if(defined('EASIESTML_LANGS')) {
+        global $icmsConfigMultilang;
+        $easiestml_langnames = explode(',', $icmsConfigMultilang['ml_names']);
+        $easiestml_langs = explode(',', EASIESTML_LANGS);
+        foreach($easiestml_langs as $i=>$langCode) {
+            $string = str_replace("[$langCode]", "[".$easiestml_langnames[$i]."]",$string);
+            $string = str_replace("[/$langCode]", "[/".$easiestml_langnames[$i]."]",$string);
+        }
+    }
+    return $string;
+}
 
 
