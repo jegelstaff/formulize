@@ -243,6 +243,7 @@ class SyncCompareCatalog {
         $this->changeDetails = loadCachedVar($sessVarNameDetails);
         $this->doneFilePaths = loadCachedVar($sessVarNameFilePaths);
         $this->groupsToSync = loadCachedVar($sessVarNameGTS);
+        $this->groupsToSync = is_array($this->groupsToSync) ? $this->groupsToSync : array(); // doesn't come out of cache right sometimes?
         return $this->changes ? true : false;
     
     }
