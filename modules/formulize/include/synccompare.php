@@ -136,13 +136,14 @@ class SyncCompareCatalog {
                 for ($i = 0; $i < count((array) $record); $i++) {
                     $field = $fields[$i];
                     $value = $this->cleanEncoding($record[$i]);
-                    $dbValue = $dbRecord[$field];
+                    $dbValue = $this->cleanEncoding($dbRecord[$field]);
                     if ($dbValue != $value) {
                         if(!$changeFound) {
                             $changeFound = true;
                             // first time, add record to the change list
                             $newRecord = $this->addRecChange("update", $tableName, $fields, $record);
                             if($newRecord === false) {
+                                // change did not pass verification in the method, so we're bailing on it
                                 continue;
                             }
                         }
