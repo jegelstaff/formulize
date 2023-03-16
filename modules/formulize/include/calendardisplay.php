@@ -61,14 +61,14 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 // ie: formframes[2] and viewHandles[2]...that's the form or framework used for dataset 2, and the handle for the element in that dataset which should be displayed on the calendar.
 // Note about scopes: scopes must be converted to the format described for the $scope param for the getData function
 
-function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles, $filters, $viewPrefixes, $scopes, $hidden, $type="month", $toptemplate, $bottomtemplate, $viewentryscreens, $useaddicons, $usedeleteicons, $textcolors, $start="", $multiPageData="") {
+function displayCalendar($formframes, $mainforms, $viewHandles, $dateHandles, $filters, $viewPrefixes, $scopes, $hidden, $type, $toptemplate, $bottomtemplate, $viewentryscreens, $useaddicons, $usedeleteicons, $textcolors, $start="", $multiPageData="") {
     
     // hack to handle the switching of dateHandles...
     if($_POST['datetype']=='due') {
         $dateHandles[0] = 'contacts_last_due_date';
     }
     
-    
+    $type = $type ? $type : 'month';
     
     global $xoopsDB, $xoopsUser;
 
