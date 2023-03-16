@@ -7823,8 +7823,10 @@ function updateMultipageTemplates($screen) {
     foreach($fileMappings as $oldFile=>$newFiles) {
         if(file_exists($path.$oldFile.'.php')) {
             foreach($newFiles as $newFile) {
-                if(!copy($path.$oldFile.'.php', $path.$newFile.'.php')) {
-                    exit("Could not copy $oldFile to $newFile for screen ".$screen->getVar('sid').". Please notify the webmaster or contact info@formulize.org for assistance.");
+                if(!file_exists($path.$newFile.'.php')) {
+                    if(!copy($path.$oldFile.'.php', $path.$newFile.'.php')) {
+                        exit("Could not copy $oldFile to $newFile for screen ".$screen->getVar('sid').". Please notify the webmaster or contact info@formulize.org for assistance.");
+                    }
                 }
             }
             unlink($path.$oldFile.'.php');
