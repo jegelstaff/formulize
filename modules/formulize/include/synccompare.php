@@ -136,13 +136,14 @@ class SyncCompareCatalog {
                 for ($i = 0; $i < count((array) $record); $i++) {
                     $field = $fields[$i];
                     $value = $this->cleanEncoding($record[$i]);
-                    $dbValue = $dbRecord[$field];
+                    $dbValue = $this->cleanEncoding($dbRecord[$field]);
                     if ($dbValue != $value) {
                         if(!$changeFound) {
                             $changeFound = true;
                             // first time, add record to the change list
                             $newRecord = $this->addRecChange("update", $tableName, $fields, $record);
                             if($newRecord === false) {
+                                // change did not pass verification in the method, so we're bailing on it
                                 continue;
                             }
                         }
@@ -243,6 +244,7 @@ class SyncCompareCatalog {
         $this->changeDetails = loadCachedVar($sessVarNameDetails);
         $this->doneFilePaths = loadCachedVar($sessVarNameFilePaths);
         $this->groupsToSync = loadCachedVar($sessVarNameGTS);
+        $this->groupsToSync = is_array($this->groupsToSync) ? $this->groupsToSync : array(); // doesn't come out of cache right sometimes?
         return $this->changes ? true : false;
     
     }
@@ -675,7 +677,7 @@ class SyncCompareCatalog {
     
     private function recursivePrintSmart($value) {
         if(!is_array($value)) {
-            return printSmart($this->cleanEncoding($value), 75);
+            return printSmart(removeLanguageTags($this->cleanEncoding($value)), 200);
         } else {
             foreach($value as $k=>$v) {
                 $value[$k] = $this->recursivePrintSmart($v);
@@ -712,6 +714,17 @@ function loadCachedVar($varname) {
     return unserialize($fileStr);
 }
 
-
+function removeLanguageTags($string) {
+    if(defined('EASIESTML_LANGS')) {
+        global $icmsConfigMultilang;
+        $easiestml_langnames = explode(',', $icmsConfigMultilang['ml_names']);
+        $easiestml_langs = explode(',', EASIESTML_LANGS);
+        foreach($easiestml_langs as $i=>$langCode) {
+            $string = str_replace("[$langCode]", "[".$easiestml_langnames[$i]."]",$string);
+            $string = str_replace("[/$langCode]", "[/".$easiestml_langnames[$i]."]",$string);
+        }
+    }
+    return $string;
+}
 
 

@@ -3100,6 +3100,7 @@ function cloneEntry($entryOrFilter, $frid, $fid, $copies=1, $callback = null, $t
 // Does some unconventional stuff to handle custom templates for messages, and sending to everyone in a group, or to the current user (like a confirmation message)
 // $groups is ignored, and should not be specified.  Param exists for historical reasons only.
 function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
+    
     // don't send a notification twice, so we store what we have processed already and don't process again
     static $processedNotifications = array();
     $serializedEntries = serialize($entries);
@@ -5980,7 +5981,7 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
             $serverTimeZone = $xoopsConfig['server_TZ'];
             $offset = $xoopsUser ? ($xoopsUser->getVar('timezone_offset') - $serverTimeZone) * 3600 : 0;
             /*if($xoopsConfig['language'] == "french") {
-            	$return = setlocale("LC_TIME", "fr_FR.UTF8");
+            	$return = setlocale(LC_TIME, "fr_FR.UTF8");
             }*/
             $dateStringFormat = ($handle == "mod_datetime" OR $handle == "creation_datetime") ? _MEDIUMDATESTRING : _SHORTDATESTRING; // constants set in /language/english/global.php
             $v = (false === $time_value) ? "" : date($dateStringFormat, ($time_value)+$offset);

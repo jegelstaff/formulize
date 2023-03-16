@@ -14,6 +14,9 @@
         <{html_options values=$adminPage.groupIds output=$adminPage.groupNames}>
     </select>
     
+    <p><label for='all'><input type='radio' checked id='all' name='include' value='all'> <b>Include all users from each selected group</b></label><br />
+    <label for='overlap'><input type='radio' id='overlap' name='include' value='overlap'> <b>Include only users who are members of all the selected groups</b></label></p>
+    
     <p><b>Subject:</b></p>
     <input type='text' name='subject'>
         

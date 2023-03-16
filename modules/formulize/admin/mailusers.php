@@ -17,11 +17,23 @@ if(isset($_POST['body']) AND
     $xoopsMailer->setTemplate('tempmailbody.tpl');
 	$member_handler = xoops_gethandler('member');
     // gather emails
-    $emails = array();    
-    foreach($_POST['groups'] as $group_id) {
-        $users = $member_handler->getUsersByGroup($group_id, true); // true returns users as objects
-        foreach($users as $user) {
-            $emails[] = $user->getVar('email');
+    $emails = array();
+    if(!isset($_POST['include']) OR $_POST['include'] == 'all') {
+        foreach($_POST['groups'] as $group_id) {
+            $users = $member_handler->getUsersByGroup($group_id, true); // true returns users as objects
+            foreach($users as $user) {
+                $emails[] = $user->getVar('email');
+            }
+        }
+    } else {
+        foreach($_POST['groups'] as $i=>$group_id) {
+            $groupUsers = array();
+            $users = $member_handler->getUsersByGroup($group_id, true); // true returns users as objects
+            foreach($users as $user) {
+                $groupUsers[] = $user->getVar('email');
+            }
+            if($i==0) { $emails = $groupUsers; } // seed it with values from first group
+            $emails = array_intersect($emails, $groupUsers); // retain previous values only if they are present in this group
         }
     }
     $emails = array_unique($emails);
@@ -64,7 +76,7 @@ if(isset($_POST['body']) AND
         }
         print "<p><b>$value</b></p>";
     }
-    
+
     if(!$attachment OR $attachmentSuccess) {
         file_put_contents(XOOPS_ROOT_PATH."/cache/tempmailbody.tpl", $_POST['body']);
         if(!$success = $xoopsMailer->send()) {

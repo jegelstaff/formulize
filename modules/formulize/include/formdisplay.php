@@ -3221,7 +3221,7 @@ function formulize_formatDateTime($dt) {
 	$tzDiffSeconds = $tzDiff*3600;
 	
 	if($xoopsConfig['language'] == "french") {
-		$return = setlocale("LC_TIME", "fr_FR.UTF8");
+		$return = setlocale(LC_TIME, "fr_FR.UTF8");
 	}
 	return _formulize_TEMP_AT . " " . strftime(dateFormatToStrftime(_MEDIUMDATESTRING), strtotime($dt)+$tzDiffSeconds); 
 }
@@ -4144,6 +4144,8 @@ function removeTags(html) {
 // THIS FUNCTION ACTUALLY DRAWS IN THE NECESSARY JAVASCRIPT FOR ALL ELEMENTS FOR WHICH ITS PROPERTIES ARE DEPENDENT ON ANOTHER ELEMENT
 // PRIMARILY THIS APPLIES TO CONDITIONAL ELEMENTS, BUT ALSO USED IN ONE-TO-ONE RELATIONSHIPS
 // NOTE THAT THROUGHOUT THIS CODE, HANDLE MEANS THE RENDERED MARKUP NAME!!  This should totally be refactored, ala XP
+// conditionalElements is array with keys that are the DOM ids of the elements that have conditions. Values can just be boolean true (though are typically some part of the element condition settings)
+// governingElements is array with keys that are the DOM ids of the elements that govern other elements, and the values are arrays of the elements being governed (each of which is listed in the conditionalElements array also)
 function drawJavascriptForConditionalElements($conditionalElements, $governingElements, $oneToOneElements, $oneToOneMetaData=false) {
 
     $initCode = "
