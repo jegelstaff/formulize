@@ -88,6 +88,7 @@ if($_POST['formulize_admin_key'] == "new") {
 }
 
 $element->setVar('ele_order', figureOutOrder($_POST['orderpref'], $element->getVar('ele_order'), $fid));
+$element->setVar('ele_sort', $_POST['sortpref']);
 
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
 $formObject = $form_handler->get($fid);

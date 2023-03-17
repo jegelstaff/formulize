@@ -381,6 +381,15 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 	if(strstr(getCurrentURL(), 'dara.daniels') AND $sortField=='hr_module_name') {
 	   $sortField = 'hr_module_last_name';
 	}
+    // use alternate sorting field specified
+    if($sortField) {
+        $element_handler = xoops_getmodulehandler('elements','formulize');
+        $sortElementObject = $element_handler->get($sortField);
+        if($sortElementObject->getVar('ele_sort')) {
+            $altSortElementObject = $element_handler->get($sortElementObject->getVar('ele_sort'));
+            $sortField = $altSortElementObject->getVar('ele_handle');
+        }
+    }
 	 
 	$sortField = formulize_db_escape($sortField);
 	$sortOrder = formulize_db_escape($sortOrder);
