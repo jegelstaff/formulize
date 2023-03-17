@@ -94,7 +94,8 @@ $formulizeConfig =& $config_handler->getConfigsByCat(0, $mid);
 
 if( !$fid AND !$sid) {
     include_once XOOPS_ROOT_PATH."/modules/formulize/class/applications.php";
-	list($fid,$sid) = formulizeApplicationMenuLinksHandler::getDefaultScreenForUser();
+    $includeMenuURLs = true;
+	list($fid,$sid) = formulizeApplicationMenuLinksHandler::getDefaultScreenForUser($includeMenuURLs);
 }
 
 $screen_handler =& xoops_getmodulehandler('screen', 'formulize');
