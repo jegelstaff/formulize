@@ -9,7 +9,10 @@ print "
 			<td class='head $class formulize-controls'>
 				$selectionCheckbox $viewEntryLink
 			</td>";
-	}
+	} elseif($searchHelp OR $toggleSearches) {
+        print "
+            <td class='head $class formulize-controls'></td>";
+    }
 	
 	// draw in a cell for the locked columns feature
 	print "<td $columnWidthStyle class='$class floating-column' id='floatingcelladdress_$rowNumber'></td>";

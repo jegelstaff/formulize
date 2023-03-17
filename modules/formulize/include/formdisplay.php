@@ -3329,6 +3329,7 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
         }
         if($screen) {
             $form->addElement(new XoopsFormHidden ('formulize_renderedEntryScreen', $screen->getVar('sid')));
+            $form->addElement (new XoopsFormHidden ('originalReloadBlank', $screen->getVar('reloadblank')));
         }
 		return $form;
 	} else { // write as HTML
@@ -3384,6 +3385,7 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
         }
         if($screen) {
             print "<input type=hidden name=formulize_renderedEntryScreen value='".$screen->getVar('sid')."'>";
+            print "<input type=hidden name=originalReloadBlank value='" . $screen->getVar('reloadblank') . "'>";
         }
 	}
 }

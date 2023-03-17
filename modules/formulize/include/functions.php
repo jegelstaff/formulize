@@ -4483,12 +4483,16 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
                 $options = array();
         }
 
+        $nametype = ""; // flag to indicate if we should use the values of the $options array, or the keys (using keys is default, if this is set to something, use values)
+        $useValue = ""; // flag to indicate if the value should be used for the label that users see, otherwise we use the key
+        
         // if the $options is from a linked selectbox, then figure that out and gather the possible values
         // only linked selectboxes have this string in their options field
         if (is_string($options) AND strstr($options, "#*=:*")) {
             $boxproperties = explode("#*=:*", $options);
             $source_form_id = $boxproperties[0];
             $source_element_handle = $boxproperties[1];
+            $element_handler = xoops_getmodulehandler('elements', 'formulize');
 
             // process the limits
             $limitConditionTable = "";
@@ -4501,7 +4505,6 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
                 $likebits = (strstr($limitOperator, "LIKE") AND substr($limit['term'], 0, 1) != "%" AND substr($limit['term'], -1) != "%") ? "%" : "";
                 $limitConditionWhere = " WHERE t1`".$limit['ele_id']."` ".$limitOperator." '$likebits".formulize_db_escape($limit['term'])."$likebits' ";
             } elseif ($subfilter) { // for subfilters, we're jumping back to another form to get the values, hence the join
-                $element_handler = xoops_getmodulehandler('elements', 'formulize');
                 $linkedSourceElementObject = $element_handler->get($linked_ele_id);
                 $linkedSourceElementEleValue = $linkedSourceElementObject->getVar('ele_value');
                 // first part will be the form id of the source form, second part will be the element handle in that form
@@ -4511,6 +4514,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
                 $limitConditionWhere = " WHERE t1.`$linked_ele_id` LIKE CONCAT('%',t2.entry_id,'%') AND t2.`".$linkedSourceElementEleValueParts[1]."` LIKE '%".formulize_db_escape($_POST[$linked_data_id])."%'";
             }
             unset($options);
+            $options = array();
             
             $conditionsfilter = "";
             $conditionsfilter_oom = "";
@@ -4540,20 +4544,61 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
             
             $sourceFormObject = $form_handler->get($source_form_id);
             
-            if ($dataResult = $xoopsDB->query("SELECT distinct(t1.`$source_element_handle`) FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." as t1 $limitConditionTable $extra_clause $conditionsfilter $conditionsfilter_oom $limitConditionWhere ORDER BY t1.`$source_element_handle`")) {
-                while ($dataArray = $xoopsDB->fetchArray($dataResult)) {
-                    $options[$dataArray[$source_element_handle]] = "";
-                }
-            } else {
-                $options = array();
+            // if no extra elements are selected for display as a form element, then display the linked element
+            $linked_columns = array($boxproperties[1]);
+            if (is_array($element_value[EV_MULTIPLE_FORM_COLUMNS]) AND count((array) $element_value[EV_MULTIPLE_FORM_COLUMNS]) > 0 AND $element_value[EV_MULTIPLE_FORM_COLUMNS][0] != 'none') {
+                if($sourceElementObject = $element_handler->get($source_element_handle)) {
+                    $form_handler = xoops_getmodulehandler('forms', 'formulize');
+                    $sourceFormObject = $form_handler->get($sourceElementObject->getVar('id_form'));
+                    $linked_columns = convertElementIdsToElementHandles($element_value[EV_MULTIPLE_FORM_COLUMNS], $sourceFormObject->getVar('id_form'));
+                    // remove empty entries, which can happen if the "use the linked field selected above" option is selected
+                    $linked_columns = array_filter($linked_columns);
+                } 
             }
+            
+            if(count($linked_columns)==1) {
+                $select_column = "distinct(t1.`".$linked_columns[0]."`)";
+            } else {
+                for($i=0;isset($linked_columns[$i]);$i++) {
+                    $select_column .= ', t1.`'.$linked_columns[$i]."`";
+                }
+                $select_column = trim($select_column, ",");
+            }
+            
+            if ($dataResult = $xoopsDB->query("SELECT $select_column, t1.entry_id FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." as t1 $limitConditionTable $extra_clause $conditionsfilter $conditionsfilter_oom $limitConditionWhere ORDER BY t1.`$source_element_handle`")) {
+                $useValue = 'entryid';
+                if(count($linked_columns)>1) {
+                    $linked_column_count = count((array) $linked_columns);
+                    while ($dataRow = $xoopsDB->fetchRow($dataResult)) {
+                        $linked_column_values = array();
+                        foreach (range(0, ($linked_column_count-1)) as $linked_column_index) {
+                            $linked_value = '';
+                            if ($dataRow[$linked_column_index] !== "") {
+                                $linked_value = prepvalues($dataRow[$linked_column_index], $linked_columns[$linked_column_index], $dataRow[$linked_column_count]);
+                                $linked_value = $linked_value[0];
+                            }
+                            if($linked_value != '' OR is_numeric($linked_value)) {
+                                $linked_column_values[] = $linked_value;
+                            }
+                        }
+                        if(count((array) $linked_column_values)>0) {
+                            // set option to entry id, with the linked columns as the label
+                            $options[$dataRow[$linked_column_count]] = implode(" | ", $linked_column_values);
+                        } 
+                    }
+                } else {
+                    while($dataRow = $xoopsDB->fetchRow($dataResult)) {
+                        $linked_value = prepvalues($dataRow[0], $linked_columns[0], $dataRow[1]);
+                        $options[$dataRow[1]] = $linked_value[0];
+                    }
+                }
+            } 
         }
 
         if(!$options) {
             return '';
         }
         
-        $nametype = "";
         // code copied from elementrender.php to make fullnames work for Drupalcamp demo
         if (key($options) === "{FULLNAMES}" OR key($options) === "{USERNAMES}") {
             if (key($options) === "{FULLNAMES}") { $nametype = "name"; }
@@ -4627,6 +4672,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
                 }
                 // if a nametype is in effect, then use the value, otherwise, use the key -- also, no longer swapping out spaces for underscores
                 $passoption = $nametype ? $option_value : $option;
+                $labeloption = $useValue ? $option_value : $passoption;
                 if($multi) {
                     $passoption = "ORSET$multiCounter=".$passoption."//";
                 }
@@ -4634,7 +4680,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
                     if ($name == "{listofentries}") {
                         if($multi AND strstr("ORSET$multiCounter=".$overrides."//", $passoption)) { // the whole overrides as counter idea... so old, multi filters are not going to work with that...
                             $selected = "checked";
-                        } elseif ( (is_numeric($overrides) AND $overrides == $counter) OR (!is_numeric($overrides) AND $overrides === $option) ) {
+                        } elseif ( (is_numeric($overrides) AND $overrides == $counter) OR (!is_numeric($overrides) AND $overrides === $passoption) ) {
                             $selected = "selected";
                     }
                 } else {
@@ -4650,9 +4696,9 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
                     $passoption = "qsf_".$counter."_$passoption";
                 }
                 if($multi) {
-                    $filter .= " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$passoption."' $selected onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'".$passoption."'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('".$passoption."', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\">&nbsp;".formulize_swapUIText($option, $ele_uitext)."</label><br/>\n";
+                    $filter .= " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$passoption."' $selected onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'".$passoption."'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('".$passoption."', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\">&nbsp;".formulize_swapUIText($labeloption, $ele_uitext)."</label><br/>\n";
                 } else {
-                    $filter .= "<option value=\"$passoption\" $selected>".formulize_swapUIText($option, $ele_uitext)."</option>\n";
+                    $filter .= "<option value=\"$passoption\" $selected>".formulize_swapUIText($labeloption, $ele_uitext)."</option>\n";
                 }
             }
             $counter++;
