@@ -285,7 +285,8 @@ class formulizeElementRenderer{
 				$ele_value[0] = $this->formulize_replaceCurlyBracketVariables($ele_value[0], $entry_id, $id_form);
 				$form_ele = new XoopsFormLabel(
 					$ele_caption,
-					$ele_value[0]
+					$ele_value[0],
+                    $form_ele_id
 				);
 			break;
 
