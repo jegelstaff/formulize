@@ -386,7 +386,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 	   $sortField = 'hr_module_last_name';
 	}
     // use alternate sorting field specified
-    if($sortField) {
+    if($sortField AND !isMetaDataField($sortField)) {
         $element_handler = xoops_getmodulehandler('elements','formulize');
         $sortElementObject = $element_handler->get($sortField);
         if($sortElementObject->getVar('ele_sort')) {
