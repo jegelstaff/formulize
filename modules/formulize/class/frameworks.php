@@ -94,7 +94,9 @@ class formulizeFramework extends XoopsObject {
 	}
 
 	// this method returns either "one" or "many" or "onetoone" to indicate if a given handle is on a one side or a many side of the relationship in the framework
-	function whatSideIsHandleOn($key) {
+    // also returns a second param in an array to indicate if the handle is in the mainform or not
+    // usage: list($side, $onMainForm) = $framework->whatSideIsHandleOn($handleOrElementId, $mainformFid);
+	function whatSideIsHandleOn($key, $mainformFid) {
 		static $cachedHandles = array();
 		if(!isset($cachedHandles[$key])) {
 			
@@ -135,7 +137,7 @@ class formulizeFramework extends XoopsObject {
 				}
 			}
 		}
-		return $cachedHandles[$key];
+		return array($cachedHandles[$key],($mainformFid==$targetFid));
 	}
 
 

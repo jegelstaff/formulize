@@ -1,6 +1,11 @@
 <?php
 require_once '../../../mainfile.php';
-ob_end_clean();
+
+icms::$logger->disableLogger();
+while(ob_get_level()) {
+    ob_end_clean();
+}
+
 require_once 'functions.php';
 require_once 'elementdisplay.php';
 
@@ -12,9 +17,16 @@ $element_handler = xoops_getmodulehandler('elements','formulize');
 $subformElement = $element_handler->get($subformElementId);
 $ele_value = $subformElement->getVar('ele_value');
 $elementsToDraw = explode(",", $ele_value[1]);
+$firstElementToDrawObject = $element_handler->get($elementsToDraw[0]);
+$subformFormId = $firstElementToDrawObject->getVar('id_form');
+$criteria = new CriteriaCompo();
+$criteria->add(new Criteria('ele_id', "(".$ele_value[1].")", "IN"));
+$criteria->setSort('ele_order');
+$criteria->setOrder('ASC');
+$elements = $element_handler->getObjects($criteria,$subformFormId,true); // true makes the keys of the returned array be the element ids
 
 $markup = "";
-foreach($elementsToDraw as $thisele) {
+foreach($elements as $thisele=>$elementObject) {
     if($thisele) { 
         $unsetDisabledFlag = false;
         if(in_array($thisele, explode(',',$subformElement->ele_value['disabledelements']))) {

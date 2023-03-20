@@ -73,6 +73,7 @@ if ($_GET['ele_id'] != "new") {
     if (!$defaultOrder) {
         $firstElementOrder = " selected";
     }
+    $defaultSort = $elementObject->getVar('ele_sort');
     $colhead = $elementObject->getVar('ele_colhead');
     $caption = $elementObject->getVar('ele_caption', "f"); // the f causes no stupid reformatting by the ICMS core to take place, like making clickable links, etc
     $ele_type = $elementObject->getVar('ele_type');
@@ -171,6 +172,7 @@ if ($_GET['ele_id'] != "new") {
     $fid = intval($_GET['fid']);
     $elementName = "New element";
     $defaultOrder = "bottom";
+    $defaultSort = "";
     $elementObject = false;
     $names['ele_caption'] = $elementName;
     $ele_type = $_GET['type'];
@@ -243,6 +245,7 @@ $formName = printSmart($formObject->getVar('title'), 30);
 $formHandle=printSmart($formObject->getVar('form_handle'), 30);
 
 // package up the elements into a list for ordering purposes
+// also, the sort options
 $orderOptions = array();
 $ele_colheads = $formObject->getVar('elementColheads');
 $ele_captions = $formObject->getVar('elementCaptions');
@@ -250,11 +253,14 @@ foreach($formObject->getVar('elements') as $elementId) {
     $elementTextToDisplay = $ele_colheads[$elementId] ? printSmart($ele_colheads[$elementId]) : printSmart($ele_captions[$elementId]);
     if ($ele_id != $elementId) {
         $orderOptions[$elementId] = "After: ".$elementTextToDisplay;
+        $sortOptions[$elementId] = "Sort by value of: ".$elementTextToDisplay;
     }
 }
 $names['orderoptions'] = $orderOptions;
 $names['defaultorder'] = $defaultOrder;
 $names['firstelementorder'] = $firstElementOrder;
+$names['sortoptions'] = $sortOptions;
+$names['defaultsort'] = $defaultSort;
 
 // common values should be assigned to all tabs
 $common['name'] = '';

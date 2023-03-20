@@ -82,6 +82,9 @@ function extract_makeUidFilter($users) {
 }
 
 // id_req and ffcaption only used for converting 'other' values
+// this function takes a value and a handle (field) and an entry id, and returns an array containing the item(s) that represent the value in a human readable way for use in a list of entries, dataset, etc
+// unless the handle is a metadata handle, and then it is returned flat, because there's no way it would ever have multiple values
+// in some cases, even a textbox field would come back with an array of values here, because an array of values could have been passed in, if for example the textbox field is on the many side of a one to many relationship
 function prepvalues($value, $field, $entry_id) { 
 
   $original_value = $value;
@@ -376,11 +379,21 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 	$limitSize = intval($limitSize);
 	 
 	// DARA HACK!!
+    // CAN BE REMOVED WITH NEW SORTING OPTION AFTER UPGRADE
 	// if it's a full name field, sort by last name instead
 	// needs to be turned into a proper feature on elements, that you can specify an alternate sort field
 	if(strstr(getCurrentURL(), 'dara.daniels') AND $sortField=='hr_module_name') {
 	   $sortField = 'hr_module_last_name';
 	}
+    // use alternate sorting field specified
+    if($sortField AND !isMetaDataField($sortField)) {
+        $element_handler = xoops_getmodulehandler('elements','formulize');
+        $sortElementObject = $element_handler->get($sortField);
+        if($sortElementObject->getVar('ele_sort')) {
+            $altSortElementObject = $element_handler->get($sortElementObject->getVar('ele_sort'));
+            $sortField = $altSortElementObject->getVar('ele_handle');
+        }
+    }
 	 
 	$sortField = formulize_db_escape($sortField);
 	$sortOrder = formulize_db_escape($sortOrder);
@@ -2274,7 +2287,7 @@ function getFormHandleFromEntry($entry, $handle) {
 	if(is_array($entry)) {
 		foreach($entry as $formHandle=>$record) {
 			foreach($record as $elements) {
-				if(array_key_exists($handle, $elements)) { return $formHandle; }
+				if(array_key_exists($handle, (array)$elements)) { return $formHandle; }
 			}
 		}
 	} else {

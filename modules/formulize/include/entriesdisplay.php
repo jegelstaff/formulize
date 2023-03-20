@@ -834,7 +834,11 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				if(!$_POST['overridescreen'] AND $displayScreen->getVar('fid') != $fid) {
 					// display screen is for another form in the active relationship, so figure out what all the entries are, and display the first entry in the set that's for the form this screen is based on
 					$dataSetEntries = checkForLinks($frid, array($fid), $fid, array($fid=>array($this_ent))); // returns array of the forms and entries in the dataset
-					$this_ent = $dataSetEntries['entries'][$displayScreen->getVar('fid')][0]; // first entry for the screen's form, in this dataset - see formdisplay.php for more detailed example of usage of checkforlinks
+                    if(in_array($displayScreen->getVar('fid'),$dataSetEntries['fids'])) {
+                        $this_ent = $dataSetEntries['entries'][$displayScreen->getVar('fid')][0]; // first entry for the screen's form, in this dataset - see formdisplay.php for more detailed example of usage of checkforlinks    
+                    } elseif(in_array($displayScreen->getVar('fid'),$dataSetEntries['sub_fids'])) {
+                        exit('Error: cannot yet determine the correct subform entry to display in the alternate form display screen specified in the list\'s settings.');
+                    }
 				}
 				$viewEntryScreen_handler->render($displayScreen, $this_ent, $settings);
 				global $renderedFormulizeScreen; // picked up at the end of initialize.php so we set the right info in the template when the whole page is rendered
@@ -1097,7 +1101,7 @@ function generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $v
 
 // this function draws in the interface parts of a display entries widget
 
-function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $loadview="", $loadOnlyView=0, $screen, $searches, $pageNav, $entryTotals, $messageText, $hiddenQuickSearches) {
+function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $loadview, $loadOnlyView, $screen, $searches, $pageNav, $entryTotals, $messageText, $hiddenQuickSearches) {
 
 	global $xoopsDB;
 	global $xoopsUser;
@@ -1623,6 +1627,8 @@ function drawEntries($fid, $cols, $searches, $frid, $scope, $standalone, $curren
 			$mainFormHandle = key($data[key($data)]);
 		}
 		
+        $element_handler = xoops_getmodulehandler('elements', 'formulize');
+        
 		// setup counter for cells, because we need to id each deDiv uniquely
 		$deInstanceCounter = 1;
 		$headcounter = 0;
@@ -1688,6 +1694,8 @@ function drawEntries($fid, $cols, $searches, $frid, $scope, $standalone, $curren
 					$templateVariables['class'] = ($templateVariables['class'] == 'even' ? 'odd' : 'even');
 					$templateVariables['rowNumber'] = $id+2;
 					$templateVariables['columnContents'] = array();
+                    $templateVariables['columnHandles'] = array();
+                    $templateVariables['columnFormIds'] = array();
                     $templateVariables['entry'] = $entry;
                     $templateVariables['entry_id'] = $entry_id;
 					
@@ -1696,6 +1704,10 @@ function drawEntries($fid, $cols, $searches, $frid, $scope, $standalone, $curren
 						$col = $cols[$i];
 						$colhandle = $settings['columnhandles'][$i];
 						
+                        $templateVariables['columnHandles'][] = $colhandle;
+                        $colElementObject = $element_handler->get($colhandle);
+                        $templateVariables['columnFormIds'][] = $colElementObject ? $colElementObject->getVar('id_form') : $fid;
+                        
 						if($col == "creation_uid" OR $col == "mod_uid") {
 							$userObject = $member_handler->getUser(display($entry, $col));
 							if($userObject) {
@@ -1723,9 +1735,6 @@ function drawEntries($fid, $cols, $searches, $frid, $scope, $standalone, $curren
                                         $deThisIntId = false;
                                         foreach($entryElements as $entryHandle=>$values) {
                                             if($entryHandle == $col AND $internalID) { // we found the element that we're trying to display
-                                                if(!$element_handler) {
-                                                    $element_handler = xoops_getmodulehandler('elements', 'formulize');
-                                                }
                                                 $displayElementObject = $element_handler->get($entryHandle);
                                                 if(formulizePermHandler::user_can_edit_entry($displayElementObject->getVar('id_form'), $uid, $internalID)) {
                                                     if($deThisIntId) { print "\n<br />\n"; } // could be a subform so we'd display multiple values
@@ -2059,10 +2068,11 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 	foreach(explode(",", $calcs[$i]) as $cid=>$calc) {
 
 	  // set the base query to use:
-	  // if this calculation is being done on a field that is on the one side of a one to many relationship, then we need to use a special version of the baseQuery
+	  // if this calculation is being done on a field that is on the other none main form in a relationship, then we need to use a special version of the baseQuery that includes the join
 	  if($frid) {
-		if($frameworkObject->whatSideIsHandleOn($cols[$i]) == "one") {
-		  $thisBaseQuery = $oneSideBaseQuery;
+        list($side, $onMainForm) = $frameworkObject->whatSideIsHandleOn($cols[$i], $fid);
+		if($side == "one" AND $onMainForm) {
+		  $thisBaseQuery = $oneSideBaseQuery; // isolates the one side form, which we need to do in this case, see comment in extract.php, definite issues if calcs are done on "many" side of a one-to-many relationship?
 		} else {
 		  $thisBaseQuery = $baseQuery;
 		}
@@ -2071,12 +2081,12 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 	  }
 
 	// figure out if the field is encrypted, and setup the calcElement accordingly
-	$calcElementObject = $element_handler->get($handle);
-	$calcElementMetaData = formulize_getElementMetaData($handle, true);
-	if($calcElementMetaData['ele_encrypt']) {
-		$calcElement = "AES_DECRYPT($fidAlias.`$handle`, '".getAESPassword()."')";
-	} else {
-		$calcElement = "$fidAlias.`$handle`";
+    $calcElement = "$fidAlias.`$handle`";
+	if($calcElementObject = $element_handler->get($handle)) {
+        $calcElementMetaData = formulize_getElementMetaData($handle, true);
+        if(isset($calcElementMetaData['ele_encrypt']) AND $calcElementMetaData['ele_encrypt']) {
+        	$calcElement = "AES_DECRYPT($fidAlias.`$handle`, '".getAESPassword()."')";
+        } 
 	}
 
 	// figure out the group by clause (grouping is expressed as element ids right now)
@@ -2130,7 +2140,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		$selectAvgCount = "SELECT tempElement as $fidAlias$handle, count(tempElement) as avgcount$fidAlias$handle $outerGroupingSelectAvgCount FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement $innerGroupingSelectAvgCount";
 		break;
 	  case "per":
-		$select = "SELECT tempElement as $fidAlias$handle, count(tempElement) as percount$fidAlias$handle $outerGroupingSelect FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement $innerGroupingSelect";
+		$select = "SELECT tempElement as $fidAlias$handle, count(tempElement) as percount$fidAlias$handle $outerGroupingSelect, entry_id FROM (SELECT distinct($fidAlias.`entry_id`) as entry_id, $calcElement as tempElement $innerGroupingSelect";
 		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php"; // need a function here later on
 		break;
 	  default:
@@ -2142,7 +2152,16 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 	list($allowedValues, $excludedValues) = calcParseBlanksSetting($excludes[$cid]);
 
 	$numericDataTypes = array('decimal'=>0, 'float'=>0, 'numeric'=>0, 'double'=>0, 'int'=>0, 'mediumint'=>0, 'tinyint'=>0, 'bigint'=>0, 'smallint'=>0, 'integer'=>0);
-	$dataTypeInfo = $calcElementObject->getDataTypeInformation();
+    if($calcElementObject) {
+        $dataTypeInfo = $calcElementObject->getDataTypeInformation();    
+    } else {
+        $dataHandler = new formulizeDataHandler($fid);
+        if(isset($dataHandler->metadataFieldTypes[$handle])) {
+            $dataTypeInfo = array('dataType'=>$dataHandler->metadataFieldTypes[$handle]);
+        } else {
+            print "Error: could not determine datatype for element '$handle'<br>";
+        }
+    }
 
 	$allowedWhere = "";
 	if(count((array) $allowedValues)>0) {
@@ -2226,7 +2245,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 	} elseif($calc == "avg") {
 	  $groupByClauseMode = " GROUP BY $fidAlias$handle";
 	} elseif($calc == "per") {
-	  $groupByClause = " GROUP BY $fidAlias$handle";
+	  $groupByClause = " GROUP BY $fidAlias$handle, entry_id";
 	  $orderByClause = " ORDER BY percount$fidAlias$handle DESC";
 	}
 
@@ -2234,9 +2253,9 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 	$calcResult = array();
 	$calcResultSQL = "$select $thisBaseQuery $allowedWhere $excludedWhere) as tempQuery $groupByClause $orderByClause ";
 	global $xoopsUser;
-	//if($xoopsUser->getVar('uid') == 1) {
-	//  print "$calcResultSQL<br><br>";
-	//}*/
+	/*if($xoopsUser->getVar('uid') == 1) {
+	  print "$calcResultSQL<br><br>";
+	}*/
 	$calcResultRes = $xoopsDB->query($calcResultSQL);
 	while($calcResultArray = $xoopsDB->fetchArray($calcResultRes)) {
 	  $calcResult[] = $calcResultArray;
@@ -2351,10 +2370,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		  $rawIndivValues = explode("*=+*:", $thisResult["$fidAlias$handle"]);
 		  array_shift($rawIndivValues); // current convention is to have the separator at the beginning of the string, so the exploded array will have a blank value at the beginning
 		} elseif($linkedMetaData = formulize_isLinkedSelectBox($cols[$i])) {
-		  // convert the pointers for the linked selectbox values, to their source values
-		  $sourceMeta = explode("#*=:*", $linkedMetaData[2]);
-		  $data_handler = new formulizeDataHandler($sourceMeta[0]);
-		  $rawIndivValues = $data_handler->findAllValuesForEntries($sourceMeta[1], explode(",",trim($thisResult["$fidAlias$handle"], ","))); // trip opening and closing commas and split by comma into an array
+            $rawIndivValues = prepValues($thisResult["$fidAlias$handle"], $handle, $thisResult['entry_id']);
 		} else {
 		  $rawIndivValues = array(0=>$thisResult["$fidAlias$handle"]);
 		}
@@ -2589,7 +2605,7 @@ function convertRawValuesToRealValues($value, $handle, $returnFlat=false) {
 			// convert the pointers for the linked selectbox values, to their source values
 			$sourceMeta = explode("#*=:*", $linkedMetaData[2]);
 			$data_handler = new formulizeDataHandler($sourceMeta[0]);
-			$realValues = $data_handler->findAllValuesForEntries($sourceMeta[1], explode(",",trim($thisValue, ","))); // trim opening and closing commas and split by comma into an array
+			$realValues = $data_handler->findAllValuesForEntries($sourceMeta[1], explode(",",trim($thisValue, ",")), true); // trim opening and closing commas and split by comma into an array, final true causes values to be prepped for display to users
 			// findAllValuesForEntries method returns an array, so convert to a single value
 			if(is_array($realValues) AND $returnFlat) {
 				$realValues = implode(", ", $realValues);
@@ -2675,13 +2691,15 @@ function calcParseBlanksSetting($setting) {
 // This is only used when determining the item values for percentage breakdown calculations
 function calcValuePlusText($value, $handle, $col, $calc, $groupingValue) {
 
-  if($handle=="creation_date" OR $handle == "mod_date" OR $handle == "creation_datetime" OR $handle == "mod_datetime" OR $handle == "creator_email") {
+  if($handle == "entry_id" OR $handle=="creation_date" OR $handle == "mod_date" OR $handle == "creation_datetime" OR $handle == "mod_datetime" OR $handle == "creator_email") {
 	return $value;
   }
-  if($handle == "uid" OR $handle=="proxyid" OR $handle == "creation_uid" OR $handle == "mod_uid" OR $handle == "entry_id") {
+  if($handle == "uid" OR $handle=="proxyid" OR $handle == "creation_uid" OR $handle == "mod_uid") {
 	$member_handler = xoops_gethandler('member');
-	$userObject = $member_handler->getUser(display($entry, $handle));
-	$nameToDisplay = $userObject->getVar('name') ? $userObject->getVar('name') : $userObject->getVar('uname');
+    $nameToDisplay = _FORM_ANON_USER;
+    if($userObject = $member_handler->getUser($value)) {
+        $nameToDisplay = $userObject->getVar('name') ? $userObject->getVar('name') : $userObject->getVar('uname');
+    }
 	return $nameToDisplay;
   }
   if($handle == "email" AND strstr($value, "@")) { // creator e-mail metadata field will be treated as having handle "email" in the calculation SQL, so we need this special condition
@@ -3937,6 +3955,7 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 
 // THIS FUNCTION HANDLES GATHERING A DATASET FOR DISPLAY IN THE LIST
 function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fid, $scope, $screen="", $currentURL="", $forcequery = 0) {
+    
 	if (!is_array($searches))
 		$searches = array();
 
@@ -4095,9 +4114,10 @@ function formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers) {
     $userPageNumber = $currentPage > 0 ? ($currentPage / $numberPerPage) + 1 : 1;
     
     $lastEntryNumber = $numberPerPage > 0 ? $numberPerPage*($userPageNumber) : $GLOBALS['formulize_countMasterResultsForPageNumbers'];
-    $lastEntryNumber = $lastEntryNumber > $GLOBALS['formulize_countMasterResultsForPageNumbers'] ? $GLOBALS['formulize_countMasterResultsForPageNumbers'] : $lastEntryNumber;        
+    $lastEntryNumber = $lastEntryNumber > $GLOBALS['formulize_countMasterResultsForPageNumbers'] ? $GLOBALS['formulize_countMasterResultsForPageNumbers'] : $lastEntryNumber;
+    $firstEntryNumber = $GLOBALS['formulize_countMasterResultsForPageNumbers'] > 0 ? ((($userPageNumber-1)*$numberPerPage)+1) : 0;
 	$entryTotals = "<span class=\"page-navigation-total\">".
-        sprintf(_AM_FORMULIZE_LOE_TOTAL, ((($userPageNumber-1)*$numberPerPage)+1), $lastEntryNumber, $GLOBALS['formulize_countMasterResultsForPageNumbers'])."</span></p>\n";
+        sprintf(_AM_FORMULIZE_LOE_TOTAL, $firstEntryNumber, $lastEntryNumber, $GLOBALS['formulize_countMasterResultsForPageNumbers'])."</span></p>\n";
 
     if($numberPerPage > 0) {
         // will receive via javascript the page number that was clicked, or will cause the current page to reload if anything else happens

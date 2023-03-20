@@ -529,7 +529,8 @@ class formulizeDataHandler  {
 	}
 	
 	// this function returns all the values of a given field, for the entries that are passed to it
-	function findAllValuesForEntries($handle, $entries) {
+    // prepValues will cause the values to be cleaned up by the prepValues function, which makes them more readable
+	function findAllValuesForEntries($handle, $entries, $prepValues=false) {
 		if(!is_array($entries)) {
 			if(is_numeric($entries)) {
 				$entries = array($entries);
@@ -545,10 +546,16 @@ class formulizeDataHandler  {
             $entries[$i] = intval($entry); // ensure we're not getting any funny business passed in to the DB
         }
         if(!isset($cachedValues[$handle][serialize($entries)])) {
-            $sql = "SELECT `$handle` FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')). " WHERE entry_id IN (".implode(',',$entries).")";
+            $sql = "SELECT `$handle`, `entry_id` FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')). " WHERE entry_id IN (".implode(',',$entries).")";
             if($res = $xoopsDB->query($sql)) {
                 while($array = $xoopsDB->fetchArray($res)) {
-                    $cachedValues[$handle][serialize($entries)][] = $array[$handle];
+                    if($prepValues) {
+                        $value = prepValues($array[$handle], $handle, $array['entry_id']);
+                        $cachedValues[$handle][serialize($entries)][] = is_array($value) ? $value[0] : $value;    
+                    } else {
+                        $cachedValues[$handle][serialize($entries)][] = $array[$handle];
+                    }
+                    
                 }
             } else {
                 $cachedValues[$handle][serialize($entries)][] = false;
