@@ -3231,10 +3231,12 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
                         $elementEyeHandle = convertElementIdsToElementHandles(array($elements[$i]));
                         $elementEyeHandle = $elementEyeHandle[0];
                         if(isset($formulize_existingValues[$fid][$entry]['before_save'][$elementEyeHandle])
-                           AND isset($formulize_existingValues[$fid][$entry]['after_save'][$elementEyeHandle])
-                           AND $formulize_existingValues[$fid][$entry]['before_save'][$elementEyeHandle] !== $formulize_existingValues[$fid][$entry]['after_save'][$elementEyeHandle])
-                        {
-                            $noElementsChanged = false;
+                           OR isset($formulize_existingValues[$fid][$entry]['after_save'][$elementEyeHandle])) {
+                            $beforeCheckValue = isset($formulize_existingValues[$fid][$entry]['before_save'][$elementEyeHandle]) ? $formulize_existingValues[$fid][$entry]['before_save'][$elementEyeHandle] : '';
+                            $afterCheckValue = isset($formulize_existingValues[$fid][$entry]['after_save'][$elementEyeHandle]) ? $formulize_existingValues[$fid][$entry]['after_save'][$elementEyeHandle] : '';
+                            if($beforeCheckValue !== $afterCheckValue) {
+                                $noElementsChanged = false;
+                            }
                         }
                     }
                     
