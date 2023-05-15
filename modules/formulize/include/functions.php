@@ -4426,8 +4426,13 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
     global $xoopsDB; // required by q
     $multiIdCounter = 1;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
+    $element_handler = xoops_getmodulehandler('elements', 'formulize');
+    $elementObject = $element_handler->get($ele_id);
+    
+    $ORSETOperator = $elementObject->canHaveMultipleValues ? '' : '='; // if the element supports multiple values, which are crammed into the same cell in the DB, then no equals operator... if the options are inclusive of one another, ie: active and inactive, then this isn't going to work cleanly!
+    
     if($multi) { // create the hidden field that will get the value assigned for submission
-        $defaultHiddenValue = (!$overrides OR (substr($overrides,0,5)=="ORSET" AND substr($overrides, -2) == "//")) ? $overrides : "ORSET$multiCounter=".$overrides."//";
+        $defaultHiddenValue = (!$overrides OR (substr($overrides,0,5)=="ORSET" AND substr($overrides, -2) == "//")) ? $overrides : "ORSET$multiCounter$ORSETOperator".$overrides."//";
         $filter = "<input type='hidden' name='$id' id='".$id."_hiddenMulti' value='".strip_tags(htmlspecialchars($defaultHiddenValue))."'>\n
         <div style='float: left; padding-right: 1em; padding-bottom: 1em;'>\n";
     } else { // start the actual dropdown selectbox
@@ -4468,19 +4473,18 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
             $filter .= $multi ? " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' value='none' $checked onclick=\"jQuery('#".$id."_hiddenMulti').val('none');jQuery('.$id').each(function() { jQuery(this).removeAttr('checked') }); jQuery('#apply-button-".$id."').show(200);\">&nbsp;$defaulttext</label><br/>\n" :"<option value=\"none\">".$defaulttext."</option>\n";
         }
 
-        $form_element = q("SELECT ele_value, ele_type, ele_uitext, id_form FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = " . $ele_id);
-        $element_value = unserialize($form_element[0]["ele_value"]);
-        $ele_uitext = unserialize($form_element[0]["ele_uitext"]);
-        switch ($form_element[0]["ele_type"]) {
+        $element_value = $elementObject->getVar('ele_value');
+        $ele_uitext = $elementObject->getVar('ele_uitext');
+        switch ($elementObject->getVar('ele_type')) {
             case "select":
                 $options = $element_value[2];
                 break;
-
-            case "radio":
             case "checkbox":
-                $options = $element_value;
+                $checkboxHandler = xoops_getmodulehandler("checkboxElement", "formulize");
+                $element_value = $checkboxHandler->backwardsCompatibility($element_value);
+                $options = $element_value[2];
+            case "radio":
                 break;
-
             default:
                 $options = array();
         }
@@ -4494,7 +4498,6 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
             $boxproperties = explode("#*=:*", $options);
             $source_form_id = $boxproperties[0];
             $source_element_handle = $boxproperties[1];
-            $element_handler = xoops_getmodulehandler('elements', 'formulize');
 
             // process the limits
             $limitConditionTable = "";
@@ -4521,7 +4524,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
             $conditionsfilter = "";
             $conditionsfilter_oom = "";
             $extra_clause = "";
-            if($elementFormObject = $form_handler->get($form_element[0]['id_form'])) {
+            if($elementFormObject = $form_handler->get($elementObject->getVar('id_form'))) {
                 global $xoopsUser;
                 $fakeOwnerUid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
                 // remove any dynamic filters pointing to form elements since we're rendering without entry context
@@ -4662,8 +4665,8 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
             $selected = "";
             if (is_array($overrides) AND isset($overrides[$option])) {
                 if($multi) {
-                    $checked = (strstr($_POST[$id], "ORSET$multiCounter=".$option."//") OR strstr($_GET[$id], "ORSET$multiCounter=".$option."//")) ? "checked" : "";
-                    $filter .= "<label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$overrides[$option][1]."' $checked onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'ORSET$multiCounter=".$overrides[$option][1]."//'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('ORSET$multiCounter=".$overrides[$option][1]."//', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\">&nbsp;".$overrides[$option][0]."</label><br/>\n";
+                    $checked = (strstr($_POST[$id], "ORSET$multiCounter$ORSETOperator".$option."//") OR strstr($_GET[$id], "ORSET$multiCounter$ORSETOperator".$option."//")) ? "checked" : "";
+                    $filter .= "<label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$overrides[$option][1]."' $checked onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'ORSET$multiCounter$ORSETOperator".$overrides[$option][1]."//'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('ORSET$multiCounter$ORSETOperator".$overrides[$option][1]."//', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\">&nbsp;".$overrides[$option][0]."</label><br/>\n";
                 } else {
                     $selected = ($_POST[$id] == $option OR $_GET[$id] == $option) ? "selected" : "";
                     $filter .= "<option value=\"" . $overrides[$option][1] . "\" $selected>" . $overrides[$option][0] . "</option>\n";
@@ -4676,11 +4679,11 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
                 $passoption = $nametype ? $option_value : $option;
                 $labeloption = $useValue ? $option_value : $passoption;
                 if($multi) {
-                    $passoption = "ORSET$multiCounter=".$passoption."//";
+                    $passoption = "ORSET$multiCounter$ORSETOperator".$passoption."//";
                 }
                 if ((isset($_POST[$id]) OR isset($_GET[$id])) AND $overrides !== false) {
                     if ($name == "{listofentries}") {
-                        if($multi AND strstr("ORSET$multiCounter=".$overrides."//", $passoption)) { // the whole overrides as counter idea... so old, multi filters are not going to work with that...
+                        if($multi AND strstr("ORSET$multiCounter$ORSETOperator".$overrides."//", $passoption)) { // the whole overrides as counter idea... so old, multi filters are not going to work with that...
                             $selected = "checked";
                         } elseif ( (is_numeric($overrides) AND $overrides == $counter) OR (!is_numeric($overrides) AND $overrides === $passoption) ) {
                             $selected = "selected";
