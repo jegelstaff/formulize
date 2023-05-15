@@ -1939,10 +1939,10 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
             // need to add an option to the option list for the element list, if this is not a link. 
             // check for the value first, in case we are handling a series of quick ajax requests for new elements, in which a new value is being sent with all of them. We don't want to write the new value once per request!
                 $newValue = substr($candidateNewValue, 9);
-            if ($element->isLinked) {
-                $boxproperties = explode("#*=:*", $ele_value[2]);
-                $sourceHandle = $boxproperties[1];
-                $needToWriteEntry = false;
+                if ($element->isLinked) {
+                    $boxproperties = explode("#*=:*", $ele_value[2]);
+                    $sourceHandle = $boxproperties[1];
+                    $needToWriteEntry = false;
                     $dataArrayToWrite[$sourceHandle] = $newValue;
                     if($newValue !== '') {
                         $needToWriteEntry = true;
@@ -2018,18 +2018,18 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
                         $dataHandler = new formulizeDataHandler($boxproperties[0]); // 0 key is the source fid
                         if(!$newEntryId = $dataHandler->findFirstEntryWithAllValues($dataArrayToWrite)) { // check if this value has been written already, if so, use that ID
                             if($newEntryId = formulize_writeEntry($dataArrayToWrite)) {
-                        formulize_updateDerivedValues($newEntryId, $sourceFormObject->getVar('id_form'));
-                    }
-                } 
+                            formulize_updateDerivedValues($newEntryId, $sourceFormObject->getVar('id_form'));
+                            }
+                        } 
                         $newWrittenValues[] = $newEntryId;
                     }
-            } else {
-                $element_handler = xoops_getmodulehandler('elements', 'formulize');
-                if(!isset($ele_value[2][$newValue])) {
-                    $ele_value[2][$newValue] = 0; // create new key in ele_value[2] for this new option, set to 0 to indicate it's not selected by default in new entries
-                    $element->setVar('ele_value', $ele_value);
-                    $element_handler->insert($element);
-                }
+                } else {
+                    $element_handler = xoops_getmodulehandler('elements', 'formulize');
+                    if(!is_array($ele_value[2]) OR !isset($ele_value[2][$newValue])) {
+                        $ele_value[2][$newValue] = 0; // create new key in ele_value[2] for this new option, set to 0 to indicate it's not selected by default in new entries
+                        $element->setVar('ele_value', $ele_value);
+                        $element_handler->insert($element);
+                    }
                     $allValues = array_keys($ele_value[2]);
                     $selectedKey = array_search($newValue, $allValues); // value to write is the number representing the position in the array of the key that is the text value the user made
                     $selectedKey = $element->canHaveMultipleValues ? $selectedKey : $selectedKey + 1; // because we add one to the key when evaluating against single option elements below and these thigns need to line up!! YUCK
@@ -2090,6 +2090,10 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
         } else {
             $value = '';
             // The following code block is a replacement for the previous method for reading a select box which didn't work reliably -- jwe 7/26/04
+            if(!is_array($ele_value[2])) {
+                $ele_value[2] = array();
+                error_log('Formulize error: attempted to save data to selectbox that has no options (element id '.$ele_id.'). In prepDataForWrite function (modules/formulize/include/functions.php)');
+            }
             $temparraykeys = array_keys($ele_value[2]);
             // ADDED June 18 2005 to handle pulling in usernames for the user's group(s) -- updated for real live use September 6 2006
             if ($temparraykeys[0] === "{FULLNAMES}" OR $temparraykeys[0] === "{USERNAMES}") {
