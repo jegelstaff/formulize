@@ -3165,6 +3165,11 @@ table.outer {
     justify-content: space-between;
     align-items: center;
 }
+#formulize-list-of-entries-footer div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 
 @media (max-width: 450px) {
     table.outer td {
