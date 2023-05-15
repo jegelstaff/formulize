@@ -4815,7 +4815,7 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
         // load the saved view requested, and get everything ready for calling gatherDataSet
         // pubfilters are ignored, not relevant for just getting calculations
         // the way this is all parsed may not be entirely right! reading in view and parsing cols, searches, etc, should be standardized in functions, this repeats some code from entriesdisplay.php that should be refactored!
-        list($_POST['currentview'], $_POST['oldcols'], $_POST['asearch'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $_POST['hlist'], $_POST['hcalc'], $_POST['lockcontrols'], $quicksearches, $settings['global_search'], $pubfilters) = loadReport($savedView, $fid, $frid);
+        list($_POST['currentview'], $_POST['oldcols'], $_POST['asearch'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $_POST['hlist'], $_POST['hcalc'], $_POST['lockcontrols'], $quicksearches, $settings['global_search'], $pubfilters, $entriesPerPage) = loadReport($savedView, $fid, $frid);
         // must check for this and set it here, inside this section, where we know for sure that $_POST['lockcontrols'] has been set based on the database value for the saved view, and not anything else sent from the user!!!  Otherwise the user might be injecting a greater scope for themselves than they should have!
         $currentViewCanExpand = $_POST['lockcontrols'] ? false : true;
         // explode quicksearches into the search_ values
