@@ -25,5 +25,5 @@ function sendSMS($body, $phone) {
 	curl_setopt($x, CURLOPT_USERPWD, "$id:$token");
 	curl_setopt($x, CURLOPT_POSTFIELDS, $post);
 	$y = curl_exec($x);
-	return curl_error();
+	return curl_error($x);
 }
