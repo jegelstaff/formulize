@@ -91,9 +91,9 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
         $changed = false;
         if($ele_value[0] == 0) {
             $ele_value[0] = 10; // set ten as a default if there is no file size specified
-            $element->setVar('ele_value',$ele_value);
             $changed = true;
-        }        
+        }
+        $element->setVar('ele_value',$ele_value);
         return $changed;
     }
     
@@ -177,8 +177,17 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
             } else {
                 $introToUploadBox = "<div id='formulize_fileStatus_".$element->getVar('ele_id')."_$entry_id' class='no-print formulize-fileupload-element'></div>";
             }
-            $displayUploadUI = $ele_value[5] ? "style='display: none;'" : ""; 
-            $introToUploadBox .= "<input type='hidden' name='MAX_FILE_SIZE' value='".($ele_value[0]*1048576)."' /><div id='fileUploadUI_".$markupName."' $displayUploadUI><input type='file' name='fileupload_".$markupName."' size=50 id='".$markupName."' onchange=\"javascript:formulizechanged=1;\"  class='no-print' /><input type='hidden' id='$markupName' name='$markupName' value='$markupName' /></div>";
+            $displayUploadUI = $ele_value[5] ? "style='display: none;'" : "";
+            $allowedExtensions = explode(',',strtolower(trim($ele_value[1])));
+            $acceptExtensions = array();
+            foreach($allowedExtensions as $ext) {
+                if($ext) {
+                    $acceptExtensions[] = '.'.str_replace('.','',$ext);
+                }
+            }
+            $acceptExtensions = implode(',',$acceptExtensions);
+            $acceptAttribute = $acceptExtensions ? 'accept="'.$acceptExtensions.'"' : '';
+            $introToUploadBox .= "<input type='hidden' name='MAX_FILE_SIZE' value='".($ele_value[0]*1048576)."' /><div id='fileUploadUI_".$markupName."' $displayUploadUI><input type='file' name='fileupload_".$markupName."' size=50 id='".$markupName."' onchange=\"javascript:formulizechanged=1;\" $acceptAttribute class='no-print' /><input type='hidden' id='$markupName' name='$markupName' value='$markupName' /></div>";
             $formElement = new xoopsFormLabel($caption, $introToUploadBox);
         }
         return $formElement;
@@ -211,6 +220,11 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
     // $value is what the user submitted
     // $element is the element object
     function prepareDataForSaving($value, $element) {
+        
+        // mimetype map - thanks to https://stackoverflow.com/questions/7519393/php-mime-types-list-of-mime-types-publically-available
+        // file defines $mime_types_map, array of key=>value pairs that is extensions and mime types
+        include XOOPS_ROOT_PATH."/modules/formulize/include/mime_types_map.php";  
+        
         $fileKey = 'fileupload_'.$value;
         if($_FILES[$fileKey]['error'] == 0) {
             // get the extension for the uploaded file
@@ -223,11 +237,22 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
                 $extension = strtolower(substr($_FILES[$fileKey]['name'],$dotPos+1));
                 $ele_value = $element->getVar('ele_value');
                 $allowedExtensions = str_replace(array(" ","."),"",strtolower(trim($ele_value[1])));
-                if(in_array($extension,explode(",",$allowedExtensions))) {
-                    // CHECK WITH mime_content_type
-                    $fileExtensionOK = true;
+                if(!$allowedExtensions OR in_array($extension,explode(",",$allowedExtensions))) {
+                    $deducedMimeType = mime_content_type($_FILES[$fileKey]['tmp_name']);
+                    $browserMimeType = $_FILES[$fileKey]['type'];
+                    $extensionMimeType = isset($mime_types_map[$extension]) ? $mime_types_map[$extension] : false;
+                    // if we accept all files, or this is a type that we don't have records for (at least it matched literal extension), or some of the mime type info is in agreement (if the extension type is a mismatch, maybe the browser type can redeem things?)  
+                    if(!$allowedExtensions
+                        OR !$extensionMimeType
+                        OR $extensionMimeType == $deducedMimeType
+                        OR $browserMimeType == $deducedMimeType) {
+                        $fileExtensionOK = true;
+                    }
                 }
             }
+            // catalogue the mime type if it wasn't in our list
+            $this->logMissingMimeType($extension,$deducedMimeType,$mime_types_map);
+            $this->logMissingMimeType($extension,$browserMimeType,$mime_types_map);
             if($fileExtensionOK) {
                 $ele_value = $element->getVar('ele_value');
                 $obscureFile = $ele_value[2] ? "" : microtime(true)."+---+";
@@ -289,10 +314,10 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
                     $value = _AM_UPLOAD_ERR_EXTENSION;
                     break;
             }
-            print "<p><b>$value</b></p>";
+            print "<script>alert(\"".str_replace('"','\"',$value)."\");</script>";
         }
         if(!is_array($value)) {
-            $value = array('name'=>$value, 'isfile'=>false);
+            return "{WRITEASNULL}";
         }
         return serialize($value); 
     }
@@ -353,12 +378,13 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
         if($isFile) {
             $ele_value = $element->getVar('ele_value');
             if($ele_value[2]) { // users can connect directly to file or not?
+                $fileName = rawurlencode($fileName);
                 return XOOPS_URL."/uploads/formulize_".$element->getVar('id_form')."_".$entry_id."_".$element->getVar('ele_id')."/$fileName";            
             } else {
                 return XOOPS_URL."/modules/formulize/download.php?element=".$element->getVar('ele_id')."&entry_id=$entry_id";
             }    
         } else {
-            return $fileName; // will be an error message or something like that
+            return $fileName; // may be an error message or something like that
         }
     }
     
@@ -379,5 +405,17 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
         return $displayName;
     }
     
-    
+    // this method will write the extension and mimeType to a list for later review
+    function logMissingMimeType($extension, $mimeType, $map) {
+        if(!isset($map[$extension]) OR $map[$extension] != $mimeType) {
+            $missingList = file(XOOPS_ROOT_PATH.'/uploads/missingMimeTypes.txt');
+            $line = "$extension,$mimeType\n";
+            if(!is_array($missingList) OR !in_array($line,$missingList)) {
+                $missingMimeTypes = fopen(XOOPS_ROOT_PATH.'/uploads/missingMimeTypes.txt', 'a');
+                fwrite($missingMimeTypes, $line);
+                fclose($missingMimeTypes);
+            }
+        }
+    }
 }
+
