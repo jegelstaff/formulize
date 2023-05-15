@@ -1124,9 +1124,9 @@ class formulizeElementRenderer{
 		if(strstr($text, "}") AND strstr($text, "{")) {
 			$entryData = $this->formulize_getCachedEntryData($id_form, $entry_id);
             $element_handler = xoops_getmodulehandler('elements', 'formulize');
-			$bracketPos = -1;
+			$bracketPos = 0;
 			$start = true; // flag used to force the loop to execute, even if the 0th position has the {
-			while($bracketPos+1 <= strlen($text) AND $bracketPos = strpos($text, "{", $bracketPos+1) OR $start == true) {
+			while($bracketPos <= strlen($text) AND $bracketPos = strpos($text, "{", $bracketPos) OR $start == true) {
 				$start = false;
                 $endBracketPos = strpos($text, "}", $bracketPos+1);
 				$term = substr($text, $bracketPos+1, $endBracketPos-$bracketPos-1);
@@ -1142,7 +1142,7 @@ class formulizeElementRenderer{
                     $lookAhead = 1;
                 }
 				$bracketPos = $bracketPos + $lookAhead; 
-      }
+            }
 		}
 		return $text;
 	}

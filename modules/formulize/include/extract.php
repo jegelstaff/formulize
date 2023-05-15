@@ -1960,7 +1960,7 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
                     $quotePos = $quotePos + $numberOfChars + strlen($newterm);
                     $formula = str_replace($term, $replacement, $formula);
                 } else {
-                    $quotePos = $quotePos + strlen($term) + 2; // move ahead the length of the found term, plus its quotes
+                    $quotePos = $quotePos + strlen($term);
                 }
             }
         }
