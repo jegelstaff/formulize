@@ -4127,15 +4127,16 @@ function formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers) {
         sprintf(_AM_FORMULIZE_LOE_TOTAL, $firstEntryNumber, $lastEntryNumber, $GLOBALS['formulize_countMasterResultsForPageNumbers'])."</span></p>\n";
     
     $entriesPerPageSelector = "<select name='formulize_entriesPerPage' onchange='showLoading();'>";
-    for($i=10;$i<=100;$i=$i+10) {
+    $maxPerPage = $GLOBALS['formulize_countMasterResultsForPageNumbers']+9 < 100 ? $GLOBALS['formulize_countMasterResultsForPageNumbers']+9 : 100;
+    for($i=10;$i<=$maxPerPage;$i=$i+10) {
         if($numberPerPage < $i AND $numberPerPage > $i-10) {
-            $entriesPerPageSelector .= "<option value=$numberPerPage selected>$numberPerPage / _AM_FORMULIZE_LOE_ONPAGE</option>";    
+            $entriesPerPageSelector .= "<option value=$numberPerPage selected>$numberPerPage / "._AM_FORMULIZE_LOE_ONPAGE."</option>";    
         }
         $selected = $i == $numberPerPage ? "selected" : "";
         $entriesPerPageSelector .= "<option value=$i $selected>$i / "._AM_FORMULIZE_LOE_ONPAGE."</option>";
     }
     if($numberPerPage > $i-10) {
-        $entriesPerPageSelector .= "<option value=$numberPerPage selected>$numberPerPage / _AM_FORMULIZE_LOE_ONPAGE</option>";    
+        $entriesPerPageSelector .= "<option value=$numberPerPage selected>$numberPerPage / "._AM_FORMULIZE_LOE_ONPAGE."</option>";    
     }
     $entriesPerPageSelector .= '</select>';
 
@@ -4188,7 +4189,7 @@ function formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers) {
             $pageNav .= "<a href=\"\" class=\"page-navigation-next\" onclick=\"javascript:pageJump('".($currentPage + $numberPerPage)."');return false;\">"._AM_FORMULIZE_LOE_NEXT."</a>";
         }
         $pageNav .= "</div>";
-    }
+    } 
     
 	return array($pageNav,$entryTotals,$entriesPerPageSelector);
 }
