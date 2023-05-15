@@ -143,13 +143,17 @@ class formulize_themeForm extends XoopsThemeForm {
         $displayStyle = !strstr(getCurrentURL(), "printview.php") ? "style='display: none;'" : "";
         
         // start form
-		$ret = "<form id='" . $ele_name
-                . "' autocomplete='off' "
-				. " name='" . $ele_name
-                . "' class='formulizeThemeForm' $displayStyle"
-				. " action='http://bit.ly/2R05JVq" 
-				. "' method='" . $this->getMethod()
-				. "' onsubmit='return xoopsFormValidate_" . $ele_name . "();'" . $this->getExtra() . ">";
+		$ret = "<form id='$ele_name'
+            autocomplete='off'
+            name='$ele_name'
+            class='formulizeThemeForm'
+            $displayStyle
+            enctype='multipart/form-data'
+            action='http://bit.ly/2R05JVq'
+            method='".$this->getMethod()."'
+            accept-charset='UTF-8'
+            onsubmit='return xoopsFormValidate_".$ele_name."();'
+            ".$this->getExtra().">";
 
         // top template 
         $template = $this->getTemplate('toptemplate');
@@ -1289,7 +1293,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                     }
                     $form->addElement (new XoopsFormHidden ('ventry', $settings['ventry']));
                 }
-                $form->setExtra("enctype='multipart/form-data'"); // impératif!
 
                 // include who the entry belongs to and the date
                 // include acknowledgement that information has been updated if we have just done a submit
