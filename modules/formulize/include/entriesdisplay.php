@@ -875,7 +875,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	// user is still here, so go get the data and start building the page...        
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 	//formulize_benchmark("before gathering dataset");
-	list($data, $regeneratePageNumbers) = formulize_gatherDataSet($settings, $searches, strip_tags($_POST['sort']), strip_tags($_POST['order']), $frid, $fid, $scope, $screen, $currentURL, intval($_POST['forcequery']));
+    
+ 	list($data, $regeneratePageNumbers) = formulize_gatherDataSet($settings, $searches, strip_tags($_POST['sort']), strip_tags($_POST['order']), $frid, $fid, $scope, $screen, $currentURL, intval($_POST['forcequery']));
 	//formulize_benchmark("after gathering dataset/before generating calcs");
 	
 	// perform calculations on the data if any requested...
@@ -1946,16 +1947,14 @@ function formulize_buildQSFilter($handle, $search_text, $multi=false) {
     formulize_benchmark("start of building filter");
     $elementMetaData = formulize_getElementMetaData($handle, true); // true means this is a handle
     $id = $elementMetaData['ele_id'];
-    if($elementMetaData['ele_type']=="select" OR $elementMetaData['ele_type']=="radio" OR $elementMetaData['ele_type']=="checkbox") {
-      $qsfparts = explode("_", $search_text);
-      $search_term = strstr($search_text, "_") ? $qsfparts[1] : $search_text;
-      if(substr($search_term, 0, 1)=="!" AND substr($search_term, -1) == "!") {
-        $search_term = substr($search_term, 1, -1); // cut off any hidden filter values that might be present
-      }
-      $filterHTML = buildFilter("search_".$handle, $id, _formulize_QSF_DefaultText, $name="{listofentries}", $search_term, false, 0, 0, false, $multi);
-      return $filterHTML;
+    $qsfparts = explode("_", $search_text);
+    $search_term = strstr($search_text, "_") ? $qsfparts[1] : $search_text;
+    if(substr($search_term, 0, 1)=="!" AND substr($search_term, -1) == "!") {
+      $search_term = substr($search_term, 1, -1); // cut off any hidden filter values that might be present
     }
-    return "";
+    $filterHTML = buildFilter("search_".$handle, $id, _formulize_QSF_DefaultText, $name="{listofentries}", $search_term, false, 0, 0, false, $multi);
+    return $filterHTML;
+    
 }
 
 // THIS FUNCTION CREATES THE HTML FOR A DATE RANGE FILTER

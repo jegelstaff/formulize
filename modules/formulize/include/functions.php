@@ -407,16 +407,10 @@ function security_check($fid, $entry="", $uid="", $owner="", $groups="", $mid=""
                         $view_groupscope = true;
                     }
                 }
-                // get the groupscope groups if specified, otherwise, use view_form permission to determine the groups
-                $formulize_permHandler = new formulizePermHandler($fid);
-                $specificScopeGroups = $formulize_permHandler->getGroupScopeGroupIds($groups);
+                
+                $groupScopeGroups = getGroupScopeGroups($fid, $groups);
                 $data_handler = new formulizeDataHandler($fid);
-                if ($specificScopeGroups === false) {
-                    $groupsWithAccess = $gperm_handler->getGroupIds("view_form", $fid, $mid);
-                    $intersect_groups = array_intersect($data_handler->getEntryOwnerGroups($entry), $groupsWithAccess, $groups);
-                } else {
-                    $intersect_groups = array_intersect($data_handler->getEntryOwnerGroups($entry), $specificScopeGroups); // when new groupscope is in effect, the specific groups are independent of the user's groups, so don't include $groups in the intersect
-                }
+                $intersect_groups = array_intersect($data_handler->getEntryOwnerGroups($entry), $groupScopeGroups);
                 sort($intersect_groups); // necessary to make sure that 0 will be a valid key to use below
 
                 if (!$view_groupscope OR (count((array) $intersect_groups) == 1 AND $intersect_groups[0] == XOOPS_GROUP_USERS) OR count((array) $intersect_groups) == 0) {
@@ -466,6 +460,26 @@ function security_check($fid, $entry="", $uid="", $owner="", $groups="", $mid=""
     return true;
 }
 
+// get the groupscope groups for a given form, for a given user
+// use the specific groupscope groups if specified, otherwise, use view_form permission and the overlap with the user's groups, to determine the groups that form the groupscope
+function getGroupScopeGroups($fid, $groups=array()) {
+    if(!is_array($groups) OR count($groups)==0) {
+        global $xoopsUser;
+        $groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+    }
+    $gperm_handler = xoops_gethandler('groupperm');
+    if($view_groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, getFormulizeModId())) {
+        $formulize_permHandler = new formulizePermHandler($fid);
+        $specificScopeGroups = $formulize_permHandler->getGroupScopeGroupIds($groups);
+        if ($specificScopeGroups === false) {
+            $groupsWithAccess = $gperm_handler->getGroupIds("view_form", $fid, getFormulizeModId());
+            return array_intersect($groupsWithAccess, $groups);
+        } else {
+            return $specificScopeGroups;        
+        }
+    }
+    return array();
+}
 
 // GET THE MODULE ID -- specifically get formulize, since if called from within a block, the xoopsModule module ID will not be formulize's id
 function getFormulizeModId() {
@@ -4487,7 +4501,9 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
                 $checkboxHandler = xoops_getmodulehandler("checkboxElement", "formulize");
                 $element_value = $checkboxHandler->backwardsCompatibility($element_value);
                 $options = $element_value[2];
+                break;
             case "radio":
+                $options = $element_value;
                 break;
             default:
                 $options = array();
@@ -4605,7 +4621,39 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
         }
 
         if(!$options) {
-            return '';
+            // figure out the distinct values for this field, use those instead
+            // strip out HTML. Or, if there is <span class='formulize-filter-value'>Text</span> present in the value, use that marked up value instead.
+            // only show the user values that match their visibility settings
+            $gperm_handler = xoops_gethandler('groupperm');
+            global $xoopsUser;
+            $groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+            $groupScopeGroups = array();
+            $scopeUids = array();
+            if(!$view_globalscope = $gperm_handler->checkRight("view_globalscope", $elementObject->getVar('id_form'), $groups, getFormulizeModId())) {
+                $groupScopeGroups = getGroupScopeGroups($elementObject->getVar('id_form'), $groups);
+                if(count($groupScopeGroups)==0) {
+                    $scopeUids[] = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+                }
+            }
+            $dataHandler = new formulizeDataHandler($elementObject->getVar('id_form'));
+            // if no groups passed and no scope uids passed, then it just gets everything
+            $options = $dataHandler->findAllValuesForField($elementObject->getVar('ele_handle'),'ASC',$groupScopeGroups,$scopeUids,true);// last true forces per group filters to be respected
+            $options = is_array($options) ? array_unique($options) : array();
+            $parsedOptions = array();
+            foreach($options as $option) {
+                $option = undoAllHTMLChars($option, ENT_QUOTES);
+                if($pos = strpos($option,"formulize-filter-value")) {
+                    $startPos = strpos($option, '>', $pos);
+                    $endPos = strpos($option, '<', $startPos);
+                    $candidateOption = 'NOQSFEQUALS'.strip_tags(htmlspecialchars(substr($option, $startPos+1, $endPos-$startPos-1), ENT_QUOTES));
+                } else {
+                    $candidateOption = strip_tags(htmlspecialchars($option, ENT_QUOTES));
+                }
+                if(!isset($parsedOptions[$candidateOption])) {
+                    $parsedOptions[$candidateOption] = 0;    
+                }
+            }
+            $options = $parsedOptions;
         }
         
         // code copied from elementrender.php to make fullnames work for Drupalcamp demo
@@ -4656,7 +4704,9 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
             }
         }
 
-        if ($name != "{listofentries}") { ksort($options); }
+        if ($name != "{listofentries}") {
+            array_multisort(array_keys($options), SORT_NATURAL, $options);
+        }
 
         $counter++;
         foreach ($options as $option=>$option_value) {
@@ -4682,6 +4732,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
                 // if a nametype is in effect, then use the value, otherwise, use the key -- also, no longer swapping out spaces for underscores
                 $passoption = $nametype ? $option_value : $option;
                 $labeloption = $useValue ? $option_value : $passoption;
+                $labeloption = str_replace('NOQSFEQUALS','',$labeloption); // When the special flag is being used to override equals operator for searches, we must not show the flag! Super kludgey, but it's such a nested exception, hard to make generalized and only takes a couple lines to handle like this
                 if($multi) {
                     $passoption = "ORSET$multiCounter$ORSETOperator".$passoption."//";
                 }
@@ -4689,15 +4740,15 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
                     if ($name == "{listofentries}") {
                         if($multi AND strstr("ORSET$multiCounter$ORSETOperator".$overrides."//", $passoption)) { // the whole overrides as counter idea... so old, multi filters are not going to work with that...
                             $selected = "checked";
-                        } elseif ( (is_numeric($overrides) AND $overrides == $counter) OR (!is_numeric($overrides) AND $overrides === $passoption) ) {
+                        } elseif ( (is_numeric($overrides) AND $overrides == $counter) OR (!is_numeric($overrides) AND ($overrides === $passoption OR $overrides === '='.$passoption)) ) {
                             $selected = "selected";
-                    }
-                } else {
+                        }
+                    } else {
                         if($multi AND (strstr($_POST[$id], $passoption) OR strstr($_GET[$id],$passoption))) {
                             $selected = "checked";
                         } elseif($_POST[$id] == $passoption OR $_GET[$id] == $passoption) {
                            $selected = "selected";
-                }
+                        }
                     }
                 } 
                 if ($name == "{listofentries}" AND !$multi) {
@@ -7137,7 +7188,9 @@ function formulize_parseSearchesIntoFilter($searches) {
 			  if($allowsMulti) {
 				$one_search = $qsfparts[2]; // will default to using LIKE since there's no operator
 			  } else {
-				$one_search = "=".$qsfparts[2];
+                // if we've received the flag to not use the equals operator, remove the flag and don't use the operator
+                $finalQSFParts2 = str_replace('NOQSFEQUALS','',$qsfparts[2]);
+				$one_search = $finalQSFParts2 == $qsfparts[2] ? "=".$qsfparts[2] : $finalQSFParts2; // if no flag, two strings will be identical because nothing removed. simple, one speedy operation this way
 			  }
 		    }
 	
