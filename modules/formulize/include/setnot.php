@@ -455,7 +455,7 @@ print "</HTML>";
 
 // this function returns all the current notifications for a form, including notifications for other groups if the user has permission to set such things
 // does not return other user's own personal notifications
-function getCurNots($fid, $setNots=false, $uid) {
+function getCurNots($fid, $setNots, $uid) {
 	global $xoopsDB;
 	if($setNots) {
 		$getNoGroups = " OR not_cons_uid=0";
