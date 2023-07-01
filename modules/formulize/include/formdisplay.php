@@ -209,7 +209,7 @@ class formulize_themeForm extends XoopsThemeForm {
         global $actionFunctionName;
         $js .= "    jQuery('#".$this->getName()."').attr('action', ".$actionFunctionName."());\n";
         if($this->tokenName) {
-            $js .= "    jQuery(document).on('focusin click', 'input, select, textarea, div', function() {\n";
+            $js .= "    jQuery(document).on('focusin click', 'p.auto_multi, input, select, textarea, div', function() {\n";
             $js .= "        setTimeout(function() {\n";
             $js .= "            jQuery('input[name=\"".$this->tokenName."\"]').val(\"".$this->tokenVal."\");\n";
             $js .= "        }, 269);\n";
