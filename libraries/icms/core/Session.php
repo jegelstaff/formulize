@@ -503,8 +503,9 @@ class icms_core_Session {
 		} else {
 			session_name('ICMSSESSION');
 		}
+        
 		session_start();
-
+        
 		self::removeExpiredCustomSession('xoopsUserId');
 		icms_Event::trigger('icms_core_Session', 'sessionStart', $this);
 		return true;
@@ -602,12 +603,14 @@ class icms_core_Session {
     
                         if (strncmp($sess_ip, $_SERVER['REMOTE_ADDR'], $pos)) {
                             $sess_data = '';
+                            $this->destroySession($sess_id);
                         }
                     } elseif ($this->securityLevel > 1 && icms_core_DataFilter::checkVar($sess_ip, 'ip', 'ipv4')) {
                         $pos = strpos($sess_ip, ".", $this->securityLevel - 1);
     
                         if (strncmp($sess_ip, $_SERVER['REMOTE_ADDR'], $pos)) {
                             $sess_data = '';
+                            $this->destroySession($sess_id);
                         }
                     }
                     return $sess_data;
