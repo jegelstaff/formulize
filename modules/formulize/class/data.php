@@ -566,18 +566,48 @@ class formulizeDataHandler  {
 	}
 	
 	// this function returns all the values of a given field
-	function findAllValuesForField($handle, $sort="") {
+    // sort can be ASC or DESC, if left out then results are in creation order
+    // scope_groups can be an array of group ids, which will limit the values to those which are owned by users in the given group(s)
+    // scope_uids can be an array of user ids, which will limit the values to those created by the declared users
+    // usePerGroupFilters will trigger the use of permission filters set for the user's groups
+	function findAllValuesForField($handle, $sort="", $scope_groups=array(), $scope_uids=array(), $usePerGroupFilters=false) {
 		static $cachedValues = array();
 		global $xoopsDB;
 		if(!isset($cachedValues[$handle]) AND $this->fid) {
 			if($sort=="ASC") {
-				$sort = " ORDER BY `$handle` ASC";
+				$sort = " ORDER BY f.`$handle` ASC";
 			} elseif($sort =="DESC") {
-				$sort = " ORDER BY `$handle` DESC";
-			}
+				$sort = " ORDER BY f.`$handle` DESC";
+			} else {
+                $sort = "";
+            }
 			$form_handler = xoops_getmodulehandler('forms', 'formulize');
 			$formObject = $form_handler->get($this->fid);
-			$sql = "SELECT `$handle`, `entry_id` FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')).$sort;
+            $scope = '';
+            if(is_array($scope_groups) AND count($scope_groups)>0) {
+                $scopeWhere = array();
+                $scope_groups = array_unique($scope_groups);
+                foreach($scope_groups as $gid) {
+                    if(is_numeric($gid)) {
+                        $scopeWhere[] = " eog.groupid = $gid ";
+                    }
+                }
+                if(count($scopeWhere)>0) {
+                    $scope = "WHERE EXISTS(SELECT 1 FROM ".$xoopsDB->prefix("formulize_entry_owner_groups")." AS eog WHERE eog.fid = ".$this->fid." AND eog.entry_id = f.entry_id AND (".implode('OR',$scopeWhere)."))";
+                }
+            }
+            $uidFilter = $this->_buildScopeFilter($scope_uids);
+            $uidFilter = $scope ? $uidFilter : str_replace(' AND ', ' WHERE ', $uidFilter);
+            $uidFilter = str_replace('creation_uid', 'f.creation_uid', $uidFilter);
+            $perGroupFilters = "";
+            if($usePerGroupFilters) {
+                $form_handler = xoops_getmodulehandler('forms', 'formulize');
+                $perGroupFilters = $form_handler->getPerGroupFilterWhereClause($this->fid, 'f');
+                if(!$scope AND !$uidFilter) {
+                    $perGroupFilters = "WHERE 1 ".$perGroupFilters;
+                }
+            }
+			$sql = "SELECT f.`$handle`, f.`entry_id` FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS f $scope $uidFilter $perGroupFilters $sort";
 			if($res = $xoopsDB->query($sql)) {
 				while($array = $xoopsDB->fetchArray($res)) {
 					$cachedValues[$handle][$array['entry_id']] = $array[$handle];	
@@ -595,13 +625,13 @@ class formulizeDataHandler  {
 	function _buildScopeFilter($scope_uids, $scope_groups=array()) {
 		if(is_array($scope_uids)) {
 			if(count($scope_uids) > 0) {
-				$scopeFilter = " AND (creation_uid = " . implode(" OR creation_uid = ", $scope_uids) . ")";
+				$scopeFilter = " AND (creation_uid = " . implode(" OR creation_uid = ", array_filter($scope_uids, 'is_int')) . ")";
 			} else {
 				$scopeFilter = "";
 			}
 		} elseif(is_array($scope_groups)) {
 			if(count($scope_groups) > 0) {
-			  $scopeFilter = " AND (t2.groupid IN (".implode(",", $scope_groups).") AND t2.entry_id=t1.entry_id AND t2.fid=".intval($this->fid).")";
+			  $scopeFilter = " AND (t2.groupid IN (".implode(",", array_filter($scope_groups, 'is_int')).") AND t2.entry_id=t1.entry_id AND t2.fid=".intval($this->fid).")";
 			} else {
 				$scopeFilter = "";
 			}

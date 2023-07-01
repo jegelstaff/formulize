@@ -629,6 +629,10 @@ td.head div.xoops-form-element-caption, td.head div.xoops-form-element-caption-r
     width: auto;
 }
 
+span.formulize-filter-value {
+    display: none;
+}
+
 #formulize-button-controls input {
     margin: 1em;
 }
