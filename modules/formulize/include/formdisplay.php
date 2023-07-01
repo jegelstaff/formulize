@@ -899,7 +899,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
     list($fid, $frid) = getFormFramework($formframe, $mainform);
 
     // propagate the go_back values from page load to page load, so we can eventually return there when the user is ready
-	if($_POST['go_back_form']) { // we just received a subform submission
+	if($_POST['go_back_form'] AND !isset($GLOBALS['formulize_inlineSubformFrid'])) { // we just received a subform submission
 		$entry = intval($_POST['sub_submitted']);
 		$fid = intval($_POST['sub_fid']);
 		$go_back['form'] = htmlspecialchars(strip_tags($_POST['go_back_form']));
@@ -1115,7 +1115,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 	if($settings == "{RETURNAFTERSAVE}" AND $_POST['form_submitted']) { return "returning_after_save"; }
 
     // need to add code here to switch some things around if we're on a subform for the first time (add)
-	if(isset($_POST['goto_sfid']) AND is_numeric($_POST['goto_sfid']) AND $_POST['goto_sfid'] > 0) {
+	if(isset($_POST['goto_sfid']) AND is_numeric($_POST['goto_sfid']) AND $_POST['goto_sfid'] > 0 AND !isset($GLOBALS['formulize_inlineSubformFrid'])) {
         
         // unpack details of the parent entry that we were showing, if we're now displaying a subform screen
         $originalFid = "";
