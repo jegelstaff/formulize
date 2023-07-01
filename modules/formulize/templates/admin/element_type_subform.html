@@ -149,7 +149,7 @@
 		<{html_options options=$content.subformUserFilterElements selected=$content.ele_value.SortingElement}>
 	</select>
     &nbsp;&nbsp;&nbsp;
-    <input type='radio' name='elements-ele_value[SortingDirection]' value='ASC'>A...Z</input> &nbsp;&nbsp;&nbsp; <input type='radio' name='elements-ele_value[SortingDirection]' value='DESC'>Z...A</input></p>
+    <input type='radio' name='elements-ele_value[SortingDirection]' <{if $content.ele_value.SortingDirection != 'DESC'}>checked<{/if}> value='ASC'>A...Z</input> &nbsp;&nbsp;&nbsp; <input type='radio' name='elements-ele_value[SortingDirection]' <{if $content.ele_value.SortingDirection == 'DESC'}>checked<{/if}> value='DESC'>Z...A</input></p>
 </fieldset>
 </div>
     
