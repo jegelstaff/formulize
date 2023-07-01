@@ -2003,6 +2003,18 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
                     $('#formulize_hidden_daterange_'+handle).val('>='+start+'//'+'<='+end);
                     $('#formulize_daterange_button_'+handle).show(200);
                 });
+                $(\"[id^='formulize_daterange_sta_']\").change(function() {
+                    var id = new String($(this).attr('id'));
+                    var handle = id.substr(24);
+                    var start = $('#formulize_daterange_sta_'+handle).val();
+                    var end = $('#formulize_daterange_end_'+handle).val();
+                    if((end == '' || end == '"._DATE_DEFAULT."') && start) {
+                        $('#formulize_daterange_end_'+handle).val(start);
+                        end = start;
+                        $('#formulize_hidden_daterange_'+handle).val('>='+start+'//'+'<='+end);
+                        $('#formulize_daterange_button_'+handle).show(200);
+                    }
+                });
                 </script>";
             }
             return '<div>'._formulize_FROM.' <div style="display: flex;">'.$startDateElement->render(). "</div><br>"._formulize_TO . " <div style='display: flex;'>" . $endDateElement->render() . "</div><br>\n<input type=button style='display: none;' id='formulize_daterange_button_".$handle."' class='formulize-small-button' name=qdrGoButton value='" . _formulize_SUBMITTEXT . "' onclick=\"javascript:showLoading();\"></input>\n<input type='hidden' id='formulize_hidden_daterange_".$handle."' name='search_".$handle."' value='".$search_text."' ></input></div>\n$js";
