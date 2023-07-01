@@ -2766,7 +2766,7 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
 
 	$output = "";
 	foreach($masterResults as $elementId=>$calcs) {
-		$output .= "<tr><td class=head colspan=2>\n";
+		$output .= "<tr><td class='head formulize-calc-heading' colspan=2>\n";
 		$output .= printSmart(trans(getCalcHandleText($elementId)), 100);
 		$output .= "\n</td></tr>\n";
 		foreach($calcs as $calc=>$groups) {

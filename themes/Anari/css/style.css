@@ -3354,6 +3354,13 @@ table.popup th,
     margin-bottom: 1em;
 }
 
+table.outer td.formulize-calc-heading {
+    font-size: 115%;
+    font-weight: bold;
+    line-height: 0;
+    padding-bottom: 1em;
+}
+
 #setnot table.outer td.head {
     width: 35%;
 }
