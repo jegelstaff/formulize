@@ -1827,6 +1827,8 @@ function drawEntries($fid, $cols, $searches, $frid, $scope, $standalone, $curren
 	
 	$templateVariables['calculationResults'] = $calculationResults;
 	$templateVariables['noDataFound'] = $noDataFound;
+
+    print "<input type='hidden' name='formulize_entry_lock_token' value='".getEntryLockSecurityToken()."' />\n";
 		
 	formulize_screenLOETemplate($screen, 'closelist', $templateVariables, $settings);
 	
@@ -1999,6 +2001,18 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
                     var end = $('#formulize_daterange_end_'+handle).val();
                     $('#formulize_hidden_daterange_'+handle).val('>='+start+'//'+'<='+end);
                     $('#formulize_daterange_button_'+handle).show(200);
+                });
+                $(\"[id^='formulize_daterange_sta_']\").change(function() {
+                    var id = new String($(this).attr('id'));
+                    var handle = id.substr(24);
+                    var start = $('#formulize_daterange_sta_'+handle).val();
+                    var end = $('#formulize_daterange_end_'+handle).val();
+                    if((end == '' || end == '"._DATE_DEFAULT."') && start) {
+                        $('#formulize_daterange_end_'+handle).val(start);
+                        end = start;
+                        $('#formulize_hidden_daterange_'+handle).val('>='+start+'//'+'<='+end);
+                        $('#formulize_daterange_button_'+handle).show(200);
+                    }
                 });
                 </script>";
             }
@@ -2751,7 +2765,7 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
 
 	$output = "";
 	foreach($masterResults as $elementId=>$calcs) {
-		$output .= "<tr><td class=head colspan=2>\n";
+		$output .= "<tr><td class='head formulize-calc-heading' colspan=2>\n";
 		$output .= printSmart(trans(getCalcHandleText($elementId)), 100);
 		$output .= "\n</td></tr>\n";
 		foreach($calcs as $calc=>$groups) {

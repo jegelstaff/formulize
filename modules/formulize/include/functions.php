@@ -4010,32 +4010,13 @@ function formulize_scandirAndClean($dir, $filter="", $timeWindow=21600) {
     $targetTime = $currentTime - $timeWindow;
     $foundFiles = array();
 
-    // if it's PHP 5, then do this:
-    if (function_exists("scandir")) {
-        // native scandir in PHP is much faster!!!
-        foreach (scandir($dir) as $fileName) {
-            if (strstr($fileName, $filter)) {
-                if (filemtime($dir.$fileName) < $targetTime) {
-                    unlink($dir.$fileName);
-                } else {
-                    $foundFiles[] = $fileName;
-                }
+    foreach (scandir($dir) as $fileName) {
+        if (strstr($fileName, $filter)) {
+            if (filemtime($dir.$fileName) < $targetTime) {
+                unlink($dir.$fileName);
+            } else {
+                $foundFiles[] = $fileName;
             }
-        }
-    } else {
-        // if it's PHP 4, then do this:
-        if ($handle = opendir($dir)) {
-            while (false !== ($file = readdir($handle))) {
-                $fileName = basename($file);
-                if (strstr($fileName, $filter)) {
-                    if (filemtime($dir.$fileName) < $targetTime) {
-                        unlink($dir.$fileName);
-                    } else {
-                        $foundFiles[] = $fileName;
-                    }
-                }
-            }
-            closedir($handle);
         }
     }
     return $foundFiles;
@@ -4509,7 +4490,6 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
                 $options = array();
         }
 
-        $nametype = ""; // flag to indicate if we should use the values of the $options array, or the keys (using keys is default, if this is set to something, use values)
         $useValue = ""; // flag to indicate if the value should be used for the label that users see, otherwise we use the key
         
         // if the $options is from a linked selectbox, then figure that out and gather the possible values
@@ -4732,36 +4712,34 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
                 if (preg_match('/\{OTHER\|+[0-9]+\}/', $option)) {
                     $option = str_replace(":", "", _formulize_OPT_OTHER);
                 }
-                // if a nametype is in effect, then use the value, otherwise, use the key -- also, no longer swapping out spaces for underscores
-                $passoption = $nametype ? $option_value : $option;
-                $labeloption = $useValue ? $option_value : $passoption;
+                $labeloption = $useValue ? $option_value : $option;
                 $labeloption = str_replace('NOQSFEQUALS','',$labeloption); // When the special flag is being used to override equals operator for searches, we must not show the flag! Super kludgey, but it's such a nested exception, hard to make generalized and only takes a couple lines to handle like this
                 if($multi) {
-                    $passoption = "ORSET$multiCounter$ORSETOperator".$passoption."//";
+                    $option = "ORSET$multiCounter$ORSETOperator".$option."//";
                 }
                 if ((isset($_POST[$id]) OR isset($_GET[$id])) AND $overrides !== false) {
                     if ($name == "{listofentries}") {
-                        if($multi AND strstr("ORSET$multiCounter$ORSETOperator".$overrides."//", $passoption)) { // the whole overrides as counter idea... so old, multi filters are not going to work with that...
+                        if($multi AND strstr("ORSET$multiCounter$ORSETOperator".$overrides."//", $option)) { // the whole overrides as counter idea... so old, multi filters are not going to work with that...
                             $selected = "checked";
-                        } elseif ( (is_numeric($overrides) AND $overrides == $counter) OR (!is_numeric($overrides) AND ($overrides === $passoption OR $overrides === '='.$passoption)) ) {
+                        } elseif ( (is_numeric($overrides) AND $overrides == $counter) OR (!is_numeric($overrides) AND ($overrides === $option OR $overrides === '='.$option)) ) {
                             $selected = "selected";
                         }
                     } else {
-                        if($multi AND (strstr($_POST[$id], $passoption) OR strstr($_GET[$id],$passoption))) {
+                        if($multi AND (strstr($_POST[$id], $option) OR strstr($_GET[$id],$option))) {
                             $selected = "checked";
-                        } elseif($_POST[$id] == $passoption OR $_GET[$id] == $passoption) {
+                        } elseif($_POST[$id] == $option OR $_GET[$id] == $option) {
                            $selected = "selected";
                         }
                     }
                 } 
                 if ($name == "{listofentries}" AND !$multi) {
                     // need to pass this stupid thing back because we can't compare the option and the contents of $_POST...a typing problem in PHP??!!
-                    $passoption = "qsf_".$counter."_$passoption";
+                    $option = "qsf_".$counter."_$option";
                 }
                 if($multi) {
-                    $filter .= " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$passoption."' $selected onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'".$passoption."'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('".$passoption."', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\">&nbsp;".formulize_swapUIText($labeloption, $ele_uitext)."</label><br/>\n";
+                    $filter .= " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$option."' $selected onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'".$option."'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('".$option."', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\">&nbsp;".formulize_swapUIText($labeloption, $ele_uitext)."</label><br/>\n";
                 } else {
-                    $filter .= "<option value=\"$passoption\" $selected>".formulize_swapUIText($labeloption, $ele_uitext)."</option>\n";
+                    $filter .= "<option value=\"$option\" $selected>".formulize_swapUIText($labeloption, $ele_uitext)."</option>\n";
                 }
             }
             $counter++;
@@ -5845,6 +5823,17 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                 $literalToDBValue = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm];
                 // use the already declared API format value (determined when conditional elements are generated for example)
                 $plainLiteralValue = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm];
+                // if the $bareFilterTerm is a linked element that points to the element we're querying against, then switch to the value of that element as found in the entry with entry id matching the asynch literal DB value. Bewildering but works.
+                $curlyBracketElementObject = $element_handler->get($bareFilterTerm);
+                if ($curlyBracketElementObject->isLinked) {
+                    $curlyBracketTargetElementEleValue = $curlyBracketElementObject->getVar('ele_value');
+                    $curlyBracketTargetElementEleValueProperties = explode("#*=:*", $curlyBracketTargetElementEleValue[2]);
+                    $curlyBracketTargetElementLinkedSourceElementObject = $element_handler->get($curlyBracketTargetElementEleValueProperties[1]);
+                    if($curlyBracketTargetElementLinkedSourceElementObject AND $curlyBracketTargetElementLinkedSourceElementObject->getVar('ele_id') == $filterElementIds[$filterId] AND $curlyBracketTargetElementEleValue['snapshot'] != 1) {
+                        $dataHandler = new formulizeDataHandler($curlyBracketTargetElementEleValueProperties[0]);
+                        $literalToDBValue = $dataHandler->getElementValueInEntry($literalToDBValue, $filterElementIds[$filterId]);
+                    }
+                }
 			} elseif(!isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm])) {
                 // convert any literal terms (including {} references to linked selectboxes) into the actual DB value...based on current saved value
                 $literalToDBValue = prepareLiteralTextForDB($filterElementObject, $filterTerms[$filterId], $curlyBracketEntry, $userComparisonId); // prepends checkbox characters and converts yes/nos, {USER}, etc
@@ -6000,38 +5989,38 @@ function formulize_xhr_send(op,params) {
 <?php
 }
 
+// provides the token that is associated witht he entry locking/unlocking for this page load
+function getEntryLockSecurityToken() {
+    static $token;
+    $token = $token ? $token : $GLOBALS['xoopsSecurity']->createToken(0, 'formulize_entry_lock_token');
+    return $token;
+}
+
 // this function creates the javascript snippet that will send the kill locks request
-// unload causes it to return the script necessary for in an unload event, which uses a different call
+// unload causes it to return the script necessary for in an unload event, which uses a different call (beacon)
 function formulize_javascriptForRemovingEntryLocks($unload=false) {
-    global $entriesThatHaveBeenLockedThisPageLoad, $xoopsUser;
-        $token = $GLOBALS['xoopsSecurity']->createToken();
+    static $cachedJS = array();
+    if(count($cachedJS)==0) { // prepare everything only once
+        global $entriesThatHaveBeenLockedThisPageLoad, $xoopsUser;
+        $token = getEntryLockSecurityToken();
         $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
         formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/temp/", ".token");
-        file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/temp/'.$token.'.token', '');
-    if($unload) {
-        // write a value that we can check later as an antiCSRF token. Cannot validate through the built in token system since it relies on session which will be borked if the user logs out.
-        $js = "var fd = new FormData();\n";
-        $js .= "fd.append('token', '".$token."');\n";
-        $js .= "fd.append('uid', '".$uid."');\n"; 
-        foreach($entriesThatHaveBeenLockedThisPageLoad as $thisForm=>$theseEntries) {
-            foreach(array_keys($theseEntries) as $thisEntryId) {
-                $js .= "fd.append('entry_ids_".$thisForm."[]', $thisEntryId);\n";
-            }
+        if(count($entriesThatHaveBeenLockedThisPageLoad)>0) {
+            file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/temp/'.$token.$uid.'.token', serialize($entriesThatHaveBeenLockedThisPageLoad));
         }
-        $js .= "fd.append('form_ids[]', [".implode(", ", array_keys((array) $entriesThatHaveBeenLockedThisPageLoad))."]);\n";
-        $js .= "navigator.sendBeacon('".XOOPS_URL."/modules/formulize/formulize_deleteEntryLock.php', fd);\n";
-    } else {
-        $js = "jQuery.post('".XOOPS_URL."/modules/formulize/formulize_deleteEntryLock.php', {\n";
-        $js .= "    'token': '".$token."',\n";
-        $js .= "    'uid': '".$uid."',\n";
-    foreach($entriesThatHaveBeenLockedThisPageLoad as $thisForm=>$theseEntries) {
-            $js .= "			'entry_ids_".$thisForm."[]': [".implode(", ", array_keys($theseEntries))."], \n";
+        // write a value that we can check later as an antiCSRF token. Cannot validate through the built in token system since it relies on session which will be borked if the user logs out. So we write a file instead.
+        // must be raw js since this is sent through the beacon after page is torn down
+        $cachedJS['unload'] = "var fd = new FormData();\n";
+        $cachedJS['unload'] .= "fd.append('formulize_entry_lock_token', '".$token."');\n";
+        $cachedJS['unload'] .= "fd.append('formulize_entry_lock_uid', '".$uid."');\n"; 
+        $cachedJS['unload'] .= "navigator.sendBeacon('".XOOPS_URL."/modules/formulize/formulize_deleteEntryLock.php', fd);\n";
+        // can do cleaner with jQuery since this runs inside the page while it exists
+        $cachedJS['jQuery'] = "jQuery.post('".XOOPS_URL."/modules/formulize/formulize_deleteEntryLock.php', {\n";
+        $cachedJS['jQuery'] .= "    'formulize_entry_lock_token': '".$token."',\n";
+        $cachedJS['jQuery'] .= "    'formulize_entry_lock_uid': '".$uid."',\n";
+        $cachedJS['jQuery'] .= "    async: false\n});\n";
     }
-    $js .= "     'form_ids[]': [".implode(", ", array_keys((array) $entriesThatHaveBeenLockedThisPageLoad))."],
-    async: false
-});\n";
-    }
-    return $js;
+    return $unload ? $cachedJS['unload'] : $cachedJS['jQuery'];
 }
 
 

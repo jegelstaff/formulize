@@ -154,7 +154,7 @@ if($ele_type == "subform") {
         break;
 
   }
-  $processedValues['elements']['ele_value'][1] = implode(",",$_POST['elements_ele_value_1']);
+  $processedValues['elements']['ele_value'][1] = implode(",",(array)$_POST['elements_ele_value_1']);
   $processedValues['elements']['ele_value']['disabledelements'] = (isset($_POST['elements_ele_value_disabledelements']) AND count((array) $_POST['elements_ele_value_disabledelements']) > 0) ? implode(",",$_POST['elements_ele_value_disabledelements']) : array();
   $processedValues['elements']['ele_value'][7] = parseSubmittedConditions('subformfilter', 'optionsconditionsdelete'); // post key, delete key
 }

@@ -27,6 +27,8 @@ $allOrFormulizeOnly = $_POST['formulize-or-all'] == 'formulize-perms' ? 'formuli
 
 // NEED TO MAKE THIS RERUNNABLE WITHOUT DAMAGING ANYTHING
 // NEED TO ADD MENU PERMISSIONS TO THIS!
+// AND LIST OF ENTRIES CUSTOMACTIONS FIELD
+// AND SAVED VIEWS PUBGROUPS FIELD
 
 if($sourceGroupId AND count($targetGroupIds)>0 AND $allOrFormulizeOnly) {
     
