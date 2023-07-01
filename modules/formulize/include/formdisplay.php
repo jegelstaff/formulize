@@ -1428,6 +1428,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                             unset($_POST['formulize_currentPage']); // want to make sure we land on page 1
 							$GLOBALS['formulize_subformInstance'] = 100; // reset the subform instance counter since we're throwing away this page rendering!
                             $GLOBALS['formulize_unsetSelectboxCaches'] = true; // totally horrible hack to get around the fact that subforms don't figure out there is a new entry to display until we get here. They should do this without having to render the elements first! We have to basically undo any caching of selectbox options that happened when we were fake rendering the page just to figure out what new entry had been created.
+                            $GLOBALS['output_datepicker_defaults'] = ''; // nevermind any datepicker defaults that have been output because we're never going to render this pass at the form! Ugly!
                             $newSubEntryScreen_handler->render($subScreenObject, $newSubEntry, $settings);
                             unset($GLOBALS['formulize_unsetSelectboxCaches']);
                             return;
