@@ -1632,7 +1632,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
     if(!strstr($currentURL, "printview.php") AND !$formElementsOnly) {
         $newSubEntryInModal = false;
         if(!in_array($_POST['target_sub'], $formulize_subFidsWithNewEntries) AND isset($_POST['target_sub']) AND $_POST['target_sub'] AND count((array) $subs_to_del)==0 AND count((array) $subs_to_clone)==0) {
-            list($elementq, $element_to_write, $value_to_write, $value_source, $value_source_form) = formulize_subformSave_determineElementToWrite($_POST['target_sub_frid'], $_POST['target_sub_fid'], $_POST['target_sub_mainformentry'], $_POST['target_sub']);
+            list($elementq, $element_to_write, $value_to_write, $value_source, $value_source_form, $alt_element_to_write) = formulize_subformSave_determineElementToWrite($_POST['target_sub_frid'], $_POST['target_sub_fid'], $_POST['target_sub_mainformentry'], $_POST['target_sub']);
             $element_handler = xoops_getmodulehandler('elements','formulize');
             $subformElementObject = $element_handler->get($_POST['target_sub_subformelement']);
             $subformElementEleValue = $subformElementObject->getVar('ele_value');
@@ -2022,7 +2022,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 	$target_sub_to_use = ($_POST['target_sub'] AND $_POST['target_sub'] == $subform_id AND $_POST['target_sub_instance'] == $subformElementId.$subformInstance) ? $_POST['target_sub'] : $subform_id; 
-    list($elementq, $element_to_write, $value_to_write, $value_source, $value_source_form) = formulize_subformSave_determineElementToWrite($frid, $fid, $entry, $target_sub_to_use);
+    list($elementq, $element_to_write, $value_to_write, $value_source, $value_source_form, $alt_element_to_write) = formulize_subformSave_determineElementToWrite($frid, $fid, $entry, $target_sub_to_use);
 
     if (0 == strlen($element_to_write)) {
         error_log("Relationship $frid for subform $subform_id on form $fid is invalid.");
@@ -2404,7 +2404,9 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
             
             // validate that the sub entry has a value for the key field that it needs to (in cases where there is a sub linked to a main and a another sub (ie: it's a sub sub of a sub, and a sub of the main, at the same time, we don't want to draw in entries in the wrong place -- they will be part of the sub_entries array, because they are part of the dataset, but they should not be part of the UI for this subform instance!)
             // $element_to_write is the element in the subform that needs to have a value
-            if($element_to_write AND !$subFormKeyElementValue = $data_handler->getElementValueInEntry($sub_ent, $element_to_write)) {
+            // Also, strange relationship config possible where the same sub is linked to the main via two fields. This should only be done when no new entries are being created! Or else we won't know which key element to use for writing, but anyway we can still validate the entries against both possible linkages
+            if($element_to_write AND !$subFormKeyElementValue = $data_handler->getElementValueInEntry($sub_ent, $element_to_write)
+               AND (!$alt_element_to_write OR !$altSubFormKeyElementValue = $data_handler->getElementValueInEntry($sub_ent, $alt_element_to_write))) {
                 continue;
             }   
             
