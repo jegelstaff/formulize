@@ -4474,7 +4474,6 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
                 $options = array();
         }
 
-        $nametype = ""; // flag to indicate if we should use the values of the $options array, or the keys (using keys is default, if this is set to something, use values)
         $useValue = ""; // flag to indicate if the value should be used for the label that users see, otherwise we use the key
         
         // if the $options is from a linked selectbox, then figure that out and gather the possible values
@@ -4660,35 +4659,33 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
                 if (preg_match('/\{OTHER\|+[0-9]+\}/', $option)) {
                     $option = str_replace(":", "", _formulize_OPT_OTHER);
                 }
-                // if a nametype is in effect, then use the value, otherwise, use the key -- also, no longer swapping out spaces for underscores
-                $passoption = $nametype ? $option_value : $option;
-                $labeloption = $useValue ? $option_value : $passoption;
+                $labeloption = $useValue ? $option_value : $option;
                 if($multi) {
-                    $passoption = "ORSET$multiCounter$ORSETOperator".$passoption."//";
+                    $option = "ORSET$multiCounter$ORSETOperator".$option."//";
                 }
                 if ((isset($_POST[$id]) OR isset($_GET[$id])) AND $overrides !== false) {
                     if ($name == "{listofentries}") {
-                        if($multi AND strstr("ORSET$multiCounter$ORSETOperator".$overrides."//", $passoption)) { // the whole overrides as counter idea... so old, multi filters are not going to work with that...
+                        if($multi AND strstr("ORSET$multiCounter$ORSETOperator".$overrides."//", $option)) { // the whole overrides as counter idea... so old, multi filters are not going to work with that...
                             $selected = "checked";
-                        } elseif ( (is_numeric($overrides) AND $overrides == $counter) OR (!is_numeric($overrides) AND $overrides === $passoption) ) {
+                        } elseif ( (is_numeric($overrides) AND $overrides == $counter) OR (!is_numeric($overrides) AND $overrides === $option) ) {
                             $selected = "selected";
                     }
                 } else {
-                        if($multi AND (strstr($_POST[$id], $passoption) OR strstr($_GET[$id],$passoption))) {
+                        if($multi AND (strstr($_POST[$id], $option) OR strstr($_GET[$id],$option))) {
                             $selected = "checked";
-                        } elseif($_POST[$id] == $passoption OR $_GET[$id] == $passoption) {
+                        } elseif($_POST[$id] == $option OR $_GET[$id] == $option) {
                            $selected = "selected";
                 }
                     }
                 } 
                 if ($name == "{listofentries}" AND !$multi) {
                     // need to pass this stupid thing back because we can't compare the option and the contents of $_POST...a typing problem in PHP??!!
-                    $passoption = "qsf_".$counter."_$passoption";
+                    $option = "qsf_".$counter."_$option";
                 }
                 if($multi) {
-                    $filter .= " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$passoption."' $selected onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'".$passoption."'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('".$passoption."', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\">&nbsp;".formulize_swapUIText($labeloption, $ele_uitext)."</label><br/>\n";
+                    $filter .= " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$option."' $selected onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'".$option."'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('".$option."', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\">&nbsp;".formulize_swapUIText($labeloption, $ele_uitext)."</label><br/>\n";
                 } else {
-                    $filter .= "<option value=\"$passoption\" $selected>".formulize_swapUIText($labeloption, $ele_uitext)."</option>\n";
+                    $filter .= "<option value=\"$option\" $selected>".formulize_swapUIText($labeloption, $ele_uitext)."</option>\n";
                 }
             }
             $counter++;
