@@ -2882,7 +2882,8 @@ img {
 }
 @media (min-width: 768px) {
     .formulize-grid {
-        width: 700px;
+        width: auto;
+        max-width: 100%;
     }
     .formulize-grid select {
         min-width: 0px !important;
@@ -2896,6 +2897,7 @@ img {
 
 .formulize-grid td {
     padding-right: 1em;
+    vertical-align: top;
 }
 
 a.loe-edit-entry,
