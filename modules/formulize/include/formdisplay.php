@@ -2228,9 +2228,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
     }
     
     $deleteButton = "";
-	if(((count((array) $sub_entries[$subform_id])>0 AND $sub_entries[$subform_id][0] != "") OR $sub_entry_new OR is_array($sub_entry_written)) AND
-       ("hideaddentries" != $hideaddentries AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php"))       
-       ) {
+	if(((count((array) $sub_entries[$subform_id])>0 AND $sub_entries[$subform_id][0] != "") OR $sub_entry_new OR is_array($sub_entry_written)) AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
         if(!isset($subform_element_object->ele_value["show_delete_button"]) OR $subform_element_object->ele_value["show_delete_button"]) {
             $deleteButton = "&nbsp;&nbsp;&nbsp;<input class='subform-delete-clone-buttons$subformElementId$subformInstance' style='display: none;' type=button name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del($subform_id, '$viewType', ".intval($_GET['subformElementId']).", '$fid', '$entry');\">";
         }
@@ -2240,35 +2238,40 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	}
 
     // if the 'add x entries button' should be hidden or visible
-    if ("hideaddentries" != $hideaddentries) {
-        $allowed_to_add_entries = false;
-        if ("subform" == $hideaddentries OR 1 == $hideaddentries) {
-            // for compatability, accept '1' which is the old value which corresponds to the new use-subform-permissions (saved as "subform")
-            // user can add entries if they have permission on the sub form
-            $allowed_to_add_entries = $gperm_handler->checkRight("add_own_entry", $subform_id, $groups, $mid);
-        } else {
-            // user can add entries if they have permission on the main form
-            // the user should only be able to add subform entries if they can *edit* the main form entry, since adding a subform entry
-            //  is like editing the main form entry. otherwise they could add subform entries on main form entries owned by other users
-            $allowed_to_add_entries = formulizePermHandler::user_can_edit_entry($fid, $uid, $entry);
-        }
-        if ($allowed_to_add_entries AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
-            if (count((array) $sub_entries[$subform_id]) == 1 AND $sub_entries[$subform_id][0] === "" AND $sub_single) {
-                $col_two .= "<div id='subform_button_controls_$subform_id$subformElementId$subformInstance' class='subform_button_controls'><input type=button name=addsub value='". _formulize_ADD_ONE . "' onclick=\"javascript:add_sub('$subform_id', 1, ".$subformElementId.$subformInstance.", '$frid', '$fid', '$entry', '$subformElementId', '$addViewType', ".intval($_GET['subformElementId']).");\"></p>";
-            } elseif(!$sub_single) {
-                $use_simple_add_one_button = (isset($subform_element_object->ele_value["simple_add_one_button"]) ?
-                    1 == $subform_element_object->ele_value["simple_add_one_button"] : false);
-                $col_two .= "<div id='subform_button_controls_$subform_id$subformElementId$subformInstance' class='subform_button_controls'><input type=button name=addsub value='".($use_simple_add_one_button ? trans($subform_element_object->ele_value['simple_add_one_button_text']) : _formulize_ADD)."' onclick=\"javascript:add_sub('$subform_id', jQuery('#addsubentries".$subform_id.$subformElementId.$subformInstance."').val(), ".$subformElementId.$subformInstance.", '$frid', '$fid', '$entry', '$subformElementId', '$addViewType', ".intval($_GET['subformElementId']).");\">";
-                if ($use_simple_add_one_button) {
-                    $col_two .= "<input type=\"hidden\" name=addsubentries$subform_id$subformElementId$subformInstance id=addsubentries$subform_id$subformElementId$subformInstance value=\"1\">";
-                } else {
-                    $col_two .= "<input type=text name=addsubentries$subform_id$subformElementId$subformInstance id=addsubentries$subform_id$subformElementId$subformInstance value=1 size=2 maxlength=2>";
-                    $col_two .= $addEntriesText;
-                }
-                $col_two .= $deleteButton."</div>";
+    $hidingAddEntries = false;
+    if ("hideaddentries" == $hideaddentries) {
+        $hidingAddEntries = true;
+    }
+    $allowed_to_add_entries = false;
+    if ("subform" == $hideaddentries OR 1 == $hideaddentries) {
+        // for compatability, accept '1' which is the old value which corresponds to the new use-subform-permissions (saved as "subform")
+        // user can add entries if they have permission on the sub form
+        $allowed_to_add_entries = $gperm_handler->checkRight("add_own_entry", $subform_id, $groups, $mid);
+    } else {
+        // user can add entries if they have permission on the main form
+        // the user should only be able to add subform entries if they can *edit* the main form entry, since adding a subform entry
+        // is like editing the main form entry. otherwise they could add subform entries on main form entries owned by other users
+        $allowed_to_add_entries = formulizePermHandler::user_can_edit_entry($fid, $uid, $entry);
+    }
+
+    if (($allowed_to_add_entries OR $deleteButton) AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
+        $col_two .= "<div id='subform_button_controls_$subform_id$subformElementId$subformInstance' class='subform_button_controls'>";
+        if ($allowed_to_add_entries AND !$hidingAddEntries AND count((array) $sub_entries[$subform_id]) == 1 AND $sub_entries[$subform_id][0] === "" AND $sub_single) {
+            $col_two .= "<input type=button name=addsub value='". _formulize_ADD_ONE . "' onclick=\"javascript:add_sub('$subform_id', 1, ".$subformElementId.$subformInstance.", '$frid', '$fid', '$entry', '$subformElementId', '$addViewType', ".intval($_GET['subformElementId']).");\">";
+        } elseif(!$sub_single) {
+            $use_simple_add_one_button = (isset($subform_element_object->ele_value["simple_add_one_button"]) ? 1 == $subform_element_object->ele_value["simple_add_one_button"] : false);
+            if($allowed_to_add_entries AND !$hidingAddEntries) {
+                $col_two .= "<input type=button name=addsub value='".($use_simple_add_one_button ? trans($subform_element_object->ele_value['simple_add_one_button_text']) : _formulize_ADD)."' onclick=\"javascript:add_sub('$subform_id', jQuery('#addsubentries".$subform_id.$subformElementId.$subformInstance."').val(), ".$subformElementId.$subformInstance.", '$frid', '$fid', '$entry', '$subformElementId', '$addViewType', ".intval($_GET['subformElementId']).");\">";
+            }
+            if ($allowed_to_add_entries AND !$hidingAddEntries AND $use_simple_add_one_button) {
+                $col_two .= "<input type=\"hidden\" name=addsubentries$subform_id$subformElementId$subformInstance id=addsubentries$subform_id$subformElementId$subformInstance value=\"1\">";
+            } elseif($allowed_to_add_entries AND !$hidingAddEntries) {
+                $col_two .= "<input type=text name=addsubentries$subform_id$subformElementId$subformInstance id=addsubentries$subform_id$subformElementId$subformInstance value=1 size=2 maxlength=2>";
+                $col_two .= $addEntriesText;
             }
         }
-    }    
+        $col_two .= $deleteButton."</div>";
+    }  
     
 	if($rowsOrForms=="row" OR $rowsOrForms =='') {
 		$col_two .= "<div class='formulize-subform-table-scrollbox'><table id=\"formulize-subform-table-$subform_id\" class=\"formulize-subform-table\">";
@@ -2400,8 +2403,17 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 
 		$currentSubformInstance = $subformInstance;
 
-		foreach($sub_entries[$subform_id] as $sub_ent) {
+        // check if user can delete any subform entry
+        if(!$userCouldDeleteOrClone = $gperm_handler->checkRight("add_own_entry", $subform_id, $groups, $mid) AND $deleteButton) {
+            foreach($sub_entries[$subform_id] as $sub_ent) {
+                if($userCouldDeleteOrClone = formulizePermHandler::user_can_delete_entry($subform_id, $uid, $sub_ent)) {
+                    break;
+                }
+            }
+        }
             
+		foreach($sub_entries[$subform_id] as $sub_ent) {
+
             // validate that the sub entry has a value for the key field that it needs to (in cases where there is a sub linked to a main and a another sub (ie: it's a sub sub of a sub, and a sub of the main, at the same time, we don't want to draw in entries in the wrong place -- they will be part of the sub_entries array, because they are part of the dataset, but they should not be part of the UI for this subform instance!)
             // $element_to_write is the element in the subform that needs to have a value
             // Also, strange relationship config possible where the same sub is linked to the main via two fields. This should only be done when no new entries are being created! Or else we won't know which key element to use for writing, but anyway we can still validate the entries against both possible linkages
@@ -2416,8 +2428,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 					
 					if(!$drawnHeadersOnce) {
 						$col_two .= "<tr>";
-                        if ($sub_ent !== "new" and ("hideaddentries" != $hideaddentries)
-                            and formulizePermHandler::user_can_delete_entry($subform_id, $uid, $sub_ent) AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
+                        if ($sub_ent !== "new" AND $deleteButton AND $userCouldDeleteOrClone AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
                             $col_two .= "<th class='subentry-delete-cell'></th>\n";
                         }
                         if(!$renderingSubformUIInModal AND $showViewButtons AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) { $col_two .= "<th class='subentry-view-cell'></th>\n"; }
@@ -2428,9 +2439,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
                     $subElementId = is_object($subform_element_object) ? $subform_element_object->getVar('ele_id') : '';
 					$col_two .= "<tr class='row-".$sub_ent."-".$subElementId."'>\n";
 					// check to see if we draw a delete box or not
-					if ($sub_ent !== "new" and ("hideaddentries" != $hideaddentries)
-						and formulizePermHandler::user_can_delete_entry($subform_id, $uid, $sub_ent) AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php"))
-					{
+					if ($sub_ent !== "new" AND $deleteButton AND $userCouldDeleteOrClone AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
 						// note: if the add/delete entry buttons are hidden, then these delete checkboxes are hidden as well
 						$col_two .= "<td class='subentry-delete-cell'><input type=checkbox class='delbox' name=delbox$sub_ent value=$sub_ent onclick='showHideDeleteClone($subformElementId$subformInstance);'></input></td>";
 					}
@@ -2463,7 +2472,9 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 						}
 					}
 					$col_two .= "</tr>\n";
-				} else { // display the full form
+				
+                } else { // display the full form
+                    
 					$headerValues = array();
 					foreach($elementsToDraw as $thisele) {
 						$value = $data_handler->getElementValueInEntry($sub_ent, $thisele);
