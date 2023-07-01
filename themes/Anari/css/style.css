@@ -956,6 +956,7 @@ div.subform_button_controls {
 table.formulize-subform-table th,
 table.formulize-subform-table td {
     padding-right: 1em;
+    vertical-align: top;
 }
 
 .pill-tabs {
