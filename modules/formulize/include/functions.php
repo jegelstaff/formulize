@@ -5772,6 +5772,17 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                 $literalToDBValue = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm];
                 // use the already declared API format value (determined when conditional elements are generated for example)
                 $plainLiteralValue = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm];
+                // if the $bareFilterTerm is a linked element that points to the element we're querying against, then switch to the value of that element as found in the entry with entry id matching the asynch literal DB value. Bewildering but works.
+                $curlyBracketElementObject = $element_handler->get($bareFilterTerm);
+                if ($curlyBracketElementObject->isLinked) {
+                    $curlyBracketTargetElementEleValue = $curlyBracketElementObject->getVar('ele_value');
+                    $curlyBracketTargetElementEleValueProperties = explode("#*=:*", $curlyBracketTargetElementEleValue[2]);
+                    $curlyBracketTargetElementLinkedSourceElementObject = $element_handler->get($curlyBracketTargetElementEleValueProperties[1]);
+                    if($curlyBracketTargetElementLinkedSourceElementObject AND $curlyBracketTargetElementLinkedSourceElementObject->getVar('ele_id') == $filterElementIds[$filterId] AND $curlyBracketTargetElementEleValue['snapshot'] != 1) {
+                        $dataHandler = new formulizeDataHandler($curlyBracketTargetElementEleValueProperties[0]);
+                        $literalToDBValue = $dataHandler->getElementValueInEntry($literalToDBValue, $filterElementIds[$filterId]);
+                    }
+                }
 			} elseif(!isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm])) {
                 // convert any literal terms (including {} references to linked selectboxes) into the actual DB value...based on current saved value
                 $literalToDBValue = prepareLiteralTextForDB($filterElementObject, $filterTerms[$filterId], $curlyBracketEntry, $userComparisonId); // prepends checkbox characters and converts yes/nos, {USER}, etc
