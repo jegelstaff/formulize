@@ -3996,32 +3996,13 @@ function formulize_scandirAndClean($dir, $filter="", $timeWindow=21600) {
     $targetTime = $currentTime - $timeWindow;
     $foundFiles = array();
 
-    // if it's PHP 5, then do this:
-    if (function_exists("scandir")) {
-        // native scandir in PHP is much faster!!!
-        foreach (scandir($dir) as $fileName) {
-            if (strstr($fileName, $filter)) {
-                if (filemtime($dir.$fileName) < $targetTime) {
-                    unlink($dir.$fileName);
-                } else {
-                    $foundFiles[] = $fileName;
-                }
+    foreach (scandir($dir) as $fileName) {
+        if (strstr($fileName, $filter)) {
+            if (filemtime($dir.$fileName) < $targetTime) {
+                unlink($dir.$fileName);
+            } else {
+                $foundFiles[] = $fileName;
             }
-        }
-    } else {
-        // if it's PHP 4, then do this:
-        if ($handle = opendir($dir)) {
-            while (false !== ($file = readdir($handle))) {
-                $fileName = basename($file);
-                if (strstr($fileName, $filter)) {
-                    if (filemtime($dir.$fileName) < $targetTime) {
-                        unlink($dir.$fileName);
-                    } else {
-                        $foundFiles[] = $fileName;
-                    }
-                }
-            }
-            closedir($handle);
         }
     }
     return $foundFiles;
@@ -5946,38 +5927,38 @@ function formulize_xhr_send(op,params) {
 <?php
 }
 
+// provides the token that is associated witht he entry locking/unlocking for this page load
+function getEntryLockSecurityToken() {
+    static $token;
+    $token = $token ? $token : $GLOBALS['xoopsSecurity']->createToken(0, 'formulize_entry_lock_token');
+    return $token;
+}
+
 // this function creates the javascript snippet that will send the kill locks request
-// unload causes it to return the script necessary for in an unload event, which uses a different call
+// unload causes it to return the script necessary for in an unload event, which uses a different call (beacon)
 function formulize_javascriptForRemovingEntryLocks($unload=false) {
-    global $entriesThatHaveBeenLockedThisPageLoad, $xoopsUser;
-        $token = $GLOBALS['xoopsSecurity']->createToken();
+    static $cachedJS = array();
+    if(count($cachedJS)==0) { // prepare everything only once
+        global $entriesThatHaveBeenLockedThisPageLoad, $xoopsUser;
+        $token = getEntryLockSecurityToken();
         $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
         formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/temp/", ".token");
-        file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/temp/'.$token.'.token', '');
-    if($unload) {
-        // write a value that we can check later as an antiCSRF token. Cannot validate through the built in token system since it relies on session which will be borked if the user logs out.
-        $js = "var fd = new FormData();\n";
-        $js .= "fd.append('token', '".$token."');\n";
-        $js .= "fd.append('uid', '".$uid."');\n"; 
-        foreach($entriesThatHaveBeenLockedThisPageLoad as $thisForm=>$theseEntries) {
-            foreach(array_keys($theseEntries) as $thisEntryId) {
-                $js .= "fd.append('entry_ids_".$thisForm."[]', $thisEntryId);\n";
-            }
+        if(count($entriesThatHaveBeenLockedThisPageLoad)>0) {
+            file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/temp/'.$token.$uid.'.token', serialize($entriesThatHaveBeenLockedThisPageLoad));
         }
-        $js .= "fd.append('form_ids[]', [".implode(", ", array_keys((array) $entriesThatHaveBeenLockedThisPageLoad))."]);\n";
-        $js .= "navigator.sendBeacon('".XOOPS_URL."/modules/formulize/formulize_deleteEntryLock.php', fd);\n";
-    } else {
-        $js = "jQuery.post('".XOOPS_URL."/modules/formulize/formulize_deleteEntryLock.php', {\n";
-        $js .= "    'token': '".$token."',\n";
-        $js .= "    'uid': '".$uid."',\n";
-    foreach($entriesThatHaveBeenLockedThisPageLoad as $thisForm=>$theseEntries) {
-            $js .= "			'entry_ids_".$thisForm."[]': [".implode(", ", array_keys($theseEntries))."], \n";
+        // write a value that we can check later as an antiCSRF token. Cannot validate through the built in token system since it relies on session which will be borked if the user logs out. So we write a file instead.
+        // must be raw js since this is sent through the beacon after page is torn down
+        $cachedJS['unload'] = "var fd = new FormData();\n";
+        $cachedJS['unload'] .= "fd.append('formulize_entry_lock_token', '".$token."');\n";
+        $cachedJS['unload'] .= "fd.append('formulize_entry_lock_uid', '".$uid."');\n"; 
+        $cachedJS['unload'] .= "navigator.sendBeacon('".XOOPS_URL."/modules/formulize/formulize_deleteEntryLock.php', fd);\n";
+        // can do cleaner with jQuery since this runs inside the page while it exists
+        $cachedJS['jQuery'] = "jQuery.post('".XOOPS_URL."/modules/formulize/formulize_deleteEntryLock.php', {\n";
+        $cachedJS['jQuery'] .= "    'formulize_entry_lock_token': '".$token."',\n";
+        $cachedJS['jQuery'] .= "    'formulize_entry_lock_uid': '".$uid."',\n";
+        $cachedJS['jQuery'] .= "    async: false\n});\n";
     }
-    $js .= "     'form_ids[]': [".implode(", ", array_keys((array) $entriesThatHaveBeenLockedThisPageLoad))."],
-    async: false
-});\n";
-    }
-    return $js;
+    return $unload ? $cachedJS['unload'] : $cachedJS['jQuery'];
 }
 
 

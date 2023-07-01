@@ -197,6 +197,10 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
 	}
 	
 	if($allowed) {
+        
+        // clear prior entry locks for this user - will be based on the token used to lock the prior page load, which is passed through POST key 'formulize_entry_lock_token' 
+        include_once XOOPS_ROOT_PATH.'/modules/formulize/formulize_deleteEntryLock.php';
+        
 		if($element->getVar('ele_type') == "subform") {
 			return array("", $isDisabled);
 		}
@@ -213,21 +217,26 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
             $isDisabled = !formulizePermHandler::user_can_edit_entry($form_id, $user_id, $entry);
 		}
 
-		// check whether the entry is locked, and if so, then the element is not allowed.  Set a message to say that elements were disabled due to entries being edited elsewhere (first time only).
+		// check whether the entry is locked, and if so, then the element will be disabled.  Set a message to say that elements were disabled due to entries being edited elsewhere (first time only).
 		// groups with ignore lock permission bypass this, and therefore can save entries even when locked, and saving an entry removes the lock, so that gets you out of a jam if the lock is in place when it shouldn't be.
 		// locks are only valid for the session time, so if a lock is older than that, it is ignored and cleared
 		// Do this last, since locking overrides other permissions!
 		
 		$lockFileName = "entry_".$entry."_in_form_".$form_id."_is_locked_for_editing";
 		// if we haven't found a lock for this entry, check if there is one...(as long as it's not an entry that we locked ourselves on this page load)
-		if($entry != "new" AND !isset($lockedEntries[$form_id][$entry]) AND !isset($entriesThatHaveBeenLockedThisPageLoad[$form_id][$entry]) AND file_exists(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName") AND !$gperm_handler->checkRight("ignore_editing_lock", $form_id, $groups, $mid)) {
-			$maxSessionLifeTime = ini_get("session.gc_maxlifetime");
-			$fileCreationTime = filectime(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName");
-			if($fileCreationTime + $maxSessionLifeTime > time()) {
+        // only care about the existence of a lock if there's an editable element in play
+		if(!$isDisabled AND $entry != "new" AND $entry > 0
+           AND !isset($lockedEntries[$form_id][$entry])
+           AND !isset($entriesThatHaveBeenLockedThisPageLoad[$form_id][$entry])
+           AND $element->hasData AND $element->getVar('ele_type') != 'derived'
+           AND !strstr(getCurrentURL(),"printview.php")
+           AND file_exists(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName")
+           AND !$gperm_handler->checkRight("ignore_editing_lock", $form_id, $groups, $mid)) {
+			formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/temp/", "_is_locked_for_editing", ini_get("session.gc_maxlifetime")); // clean up expired locks
+            if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName")) {
 				list($lockUid, $lockUsername) = explode(",", file_get_contents(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName"));
 				if($lockUid != $user_id) {
-					// lock is still valid, hasn't expired yet.
-                    if (count((array) $lockedEntries) == 0) {
+                    if (count((array) $lockedEntries) == 0) { // first time here, make the warning label
                         $label = json_encode(sprintf(_formulize_ENTRY_IS_LOCKED, $lockUsername));
                         print <<<EOF
 <script type='text/javascript'>
@@ -239,10 +248,7 @@ EOF;
 					}
 					$lockedEntries[$form_id][$entry] = true;
 				}
-			} else {
-				// clean up expired locks
-				formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/temp/", "_".$entry."_in_form_".$form_id."_", $maxSessionLifeTime); 
-			}
+			} 
 		}
 		// if we've ever found a lock for this entry as part of this pageload...
 		if(isset($lockedEntries[$form_id][$entry])) {
@@ -265,10 +271,13 @@ EOF;
 		}
 		//formulize_benchmark("Done rendering element.");
 		
-		// put a lock on this entry in this form, so we know that the element is being edited.  Lock will be removed next time the entry is saved.
-		if (!$noSave AND $entry != "new" AND $entry > 0 AND !isset($lockedEntries[$form_id][$entry])
-            and !isset($entriesThatHaveBeenLockedThisPageLoad[$form_id][$entry]))
-        {
+		// put a lock on this entry in this form, so we know that the element is being edited.  Lock will be removed next page load.
+		if (!$isDisabled AND !$noSave AND $entry != "new" AND $entry > 0
+            AND !isset($lockedEntries[$form_id][$entry])
+            AND !isset($entriesThatHaveBeenLockedThisPageLoad[$form_id][$entry])
+            AND $element->hasData AND $element->getVar('ele_type') != 'derived'
+            AND !strstr(getCurrentURL(),"printview.php")) {
+
             if (is_writable(XOOPS_ROOT_PATH."/modules/formulize/temp/")) {
                 $lockFile = fopen(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName", "w");
                 if (false !== $lockFile) {
@@ -277,10 +286,10 @@ EOF;
                     $entriesThatHaveBeenLockedThisPageLoad[$form_id][$entry] = true;
                 }
             } else {
+                // cannot write to Formulize temp folder to create lock entries
                 if (defined("ICMS_ERROR_LOG_SEVERITY") and ICMS_ERROR_LOG_SEVERITY >= E_WARNING) {
                     static $lock_file_warning_issued = false;
                     if (!$lock_file_warning_issued) {
-                        // cannot write to Formulize temp folder to create lock entries
                         error_log("Notice: Formulize temp folder does not exist or is not writeable, so lock file cannot be created in ".
                             XOOPS_ROOT_PATH."/modules/formulize/temp/");
                         $lock_file_warning_issued = true;

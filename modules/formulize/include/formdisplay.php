@@ -1518,7 +1518,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                 $form->addElement (new XoopsFormHidden ('clonesubsflag', 0));
 			}
 			
-			drawJavascript($nosave);
+			drawJavascript($nosave); // must be called after compileElements!
             $form->addElement(new xoopsFormHidden('save_and_leave', 0));
 		// lastly, put in a hidden element, that will tell us what the first, primary form was that we were working with on this form submission
 		$form->addElement (new XoopsFormHidden ('primaryfid', $fids[0]));
@@ -3334,6 +3334,7 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
             $form->addElement(new XoopsFormHidden ('formulize_renderedEntryScreen', $screen->getVar('sid')));
             $form->addElement (new XoopsFormHidden ('originalReloadBlank', $screen->getVar('reloadblank')));
         }
+        $form->addElement (new XoopsFormHidden ('formulize_entry_lock_token', getEntryLockSecurityToken()));
 		return $form;
 	} else { // write as HTML
 		print "<input type=hidden name=sort value='" . $sort . "'>";
@@ -3390,6 +3391,7 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
             print "<input type=hidden name=formulize_renderedEntryScreen value='".$screen->getVar('sid')."'>";
             print "<input type=hidden name=originalReloadBlank value='" . $screen->getVar('reloadblank') . "'>";
         }
+        print "<input type='hidden' name='formulize_entry_lock_token' value='".getEntryLockSecurityToken()."'>";
 	}
 }
 
@@ -3862,6 +3864,9 @@ jQuery(document).ready(function() {
             jQuery(this).parent().css('left', (parseInt(jQuery(this).parent().css('left').replace('px', '')) - 10)+'px');
             jQuery(this).css('overflow-y', 'auto !important'); 
             jQuery(this).css('height', (parseInt(jQuery(window).height())-100)+'px');
+        },
+        close: function() {
+            removeModalEntryLocks();
         }
     });
 });
@@ -3937,6 +3942,7 @@ function saveSub(reload) {
                 contentType: false,
                 processData: false,
                 success: function() {
+                    removeModalEntryLocks();
                     jQuery.post('<?php print XOOPS_URL; ?>/modules/formulize/formulize_xhr_responder.php?op=update_derived_value&uid=<?php global $xoopsUser; print $xoopsUser ? $xoopsUser->getVar('uid') : 0; ?>&fid='+subEntryDialog.data('mainformFid')+'&frid='+subEntryDialog.data('frid')+'&entryId='+subEntryDialog.data('mainformEntryId')+'&returnElements=1', function(data) {
                         savingSubEntry = false;
                         if(reload && reload == 'reload') {

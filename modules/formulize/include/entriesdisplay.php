@@ -1826,6 +1826,8 @@ function drawEntries($fid, $cols, $searches, $frid, $scope, $standalone, $curren
 	
 	$templateVariables['calculationResults'] = $calculationResults;
 	$templateVariables['noDataFound'] = $noDataFound;
+
+    print "<input type='hidden' name='formulize_entry_lock_token' value='".getEntryLockSecurityToken()."' />\n";
 		
 	formulize_screenLOETemplate($screen, 'closelist', $templateVariables, $settings);
 	
