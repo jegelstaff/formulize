@@ -4645,9 +4645,12 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
                 if($pos = strpos($option,"formulize-filter-value")) {
                     $startPos = strpos($option, '>', $pos);
                     $endPos = strpos($option, '<', $startPos);
-                    $candidateOption = 'NOQSFEQUALS'.strip_tags(htmlspecialchars(substr($option, $startPos+1, $endPos-$startPos-1), ENT_QUOTES));
+                    $candidateOption = 'NOQSFEQUALS'.htmlspecialchars(strip_tags(substr($option, $startPos+1, $endPos-$startPos-1)), ENT_QUOTES);
                 } else {
-                    $candidateOption = strip_tags(htmlspecialchars($option, ENT_QUOTES));
+                    $candidateOption = htmlspecialchars(strip_tags($option), ENT_QUOTES);
+                    if($candidateOption != $option) {
+                        $candidateOption = 'NOQSFEQUALS'.$candidateOption;
+                    }
                 }
                 if(!isset($parsedOptions[$candidateOption])) {
                     $parsedOptions[$candidateOption] = 0;    
