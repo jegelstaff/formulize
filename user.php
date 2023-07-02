@@ -22,6 +22,12 @@ switch ($op) {
 	case 'main':
 	
 		if (!icms::$user) {
+            
+            if($icmsConfigAuth['auth_googleonly']) {
+                header('Location: ' . authenticationURL($icmsConfigAuth['auth_openid']));
+                exit();
+            }
+            
 			$xoopsOption['template_main'] = 'system_userform.html';
 			include 'header.php';
 			$redirect = FALSE;

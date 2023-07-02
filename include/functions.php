@@ -2737,6 +2737,9 @@ function setupAuthentication() {
 	require_once XOOPS_ROOT_PATH.'/libraries/googleapiclient/vendor/autoload.php';
 	//redirect uri for when google authentication is done and it comes back to formulize
 	$redirect_uri = XOOPS_URL;
+    if(isset($_GET['xoops_redirect'])) {
+        $_SESSION['google_xoops_redirect'] = $_GET['xoops_redirect'];
+    }
 	
 	//Create Client Request to access Google API
 	$client = new Google_Client();
