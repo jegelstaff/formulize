@@ -1181,7 +1181,10 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 	$formulizeConfig = $config_handler->getConfigsByCat(0, $mid);
 	// remove the all done button if the config option says 'no', and we're on a single-entry form, or the function was called to look at an existing entry, or we're on an overridden Multi-entry form
     $allDoneOverride = (!$formulizeConfig['all_done_singles'] AND !$profileForm AND (($single OR $overrideMulti OR $original_entry) AND !$_POST['target_sub'] AND !$_POST['goto_sfid'] AND !$_POST['deletesubsflag'] AND !$_POST['parent_form'])) ? true : false;
-    if(($allDoneOverride OR (isset($_POST['save_and_leave']) AND $_POST['save_and_leave'])) AND $_POST['form_submitted']) {
+    global $formulize_displayingMultipageScreen;
+    if((($formulize_displayingMultipageScreen === false AND $allDoneOverride)
+        OR (isset($_POST['save_and_leave']) AND $_POST['save_and_leave']))
+        AND $_POST['form_submitted']) {
 		drawGoBackForm($go_back, $currentURL, $settings, $entry, $screen);
 		print "<script type=\"text/javascript\">window.document.go_parent.submit();</script>\n";
 		return;
