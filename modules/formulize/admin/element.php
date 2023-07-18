@@ -320,6 +320,9 @@ if ($ele_type=='text') {
     if(!isset($ele_value['show_clone_button'])) {
         $ele_value['show_clone_button'] = 1;
     }
+    if(!isset($ele_value['FilterByElementStartState'])) {
+        $ele_value['FilterByElementStartState'] = 0;
+    }
     
     $ele_value['enforceFilterChanges'] = isset($ele_value['enforceFilterChanges']) ? $ele_value['enforceFilterChanges'] : 1;
     

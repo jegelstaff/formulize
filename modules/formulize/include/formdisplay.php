@@ -2218,7 +2218,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
     
     // hacking in a filter for existing entries
     if($subform_element_object AND isset($subform_element_object->ele_value["UserFilterByElement"]) AND $subform_element_object->ele_value["UserFilterByElement"]) {
-        $col_two .= "<br>"._formulize_SUBFORM_FILTER_SEARCH."<input type='text' name='subformFilterBox_$subformInstance' value='".htmlspecialchars(strip_tags(str_replace("'","&#039;",$_POST['subformFilterBox_'.$subformInstance])))."' /> <input type='button' value='"._formulize_SUBFORM_FILTER_GO."' onclick='validateAndSubmit();' /><br>";
+        $col_two .= "<br>"._formulize_SUBFORM_FILTER_SEARCH."<input type='text' name='subformFilterBox_$subformInstance' value='".htmlspecialchars(strip_tags(str_replace("'","&#039;",$_POST['subformFilterBox_'.$subformInstance])))."' onkeypress='javascript: if(event.keyCode == 13) validateAndSubmit();'/> <input type='button' value='"._formulize_SUBFORM_FILTER_GO."' onclick='validateAndSubmit();' /><br>";
 	} else {
 		$col_two .= "";
     }
@@ -2374,7 +2374,10 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
                 $sortClause = " $sortTablePrefix.`".$sortElementObject->getVar('ele_handle')."` ".$sortDirection;
             }
         } 
-		
+
+        // apply any filter from the user if applicable
+        // if no start state given, then show nothing
+        $filterClause = "";
         if(isset($subform_element_object->ele_value["UserFilterByElement"]) AND $subform_element_object->ele_value["UserFilterByElement"]) {
             $matchingEntryIds = array();
             if(isset($_POST['subformFilterBox_'.$subformInstance]) AND $_POST['subformFilterBox_'.$subformInstance]) {
@@ -2383,13 +2386,15 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
                 foreach($matchingEntries as $matchingEntry) {
                     $matchingEntryIds = array_merge($matchingEntryIds, internalRecordIds($matchingEntry, $subform_id));
                 }
-                $filterClause = " AND sub.entry_id IN (".implode(",", $matchingEntryIds).")";
-            } else {
+                if(count($matchingEntryIds)>0) {
+                    $filterClause = " AND sub.entry_id IN (".implode(",", $matchingEntryIds).")";
+                } else {
+                    $filterClause = " AND false ";
+                }
+            } elseif(!isset($subform_element_object->ele_value["FilterByElementStartState"]) OR $subform_element_object->ele_value["FilterByElementStartState"] == 0) {
                 $filterClause = " AND false ";
             }
-        } else {
-            $filterClause = "";
-        }
+        } 
         
 		$sformObject = $form_handler->get($subform_id);
 		$subEntriesOrderSQL = "SELECT sub.entry_id FROM ".$xoopsDB->prefix("formulize_".$sformObject->getVar('form_handle'))." as sub $joinClause WHERE sub.entry_id IN (".implode(",", $sub_entries[$subform_id]).") $filterClause ORDER BY $sortClause";
