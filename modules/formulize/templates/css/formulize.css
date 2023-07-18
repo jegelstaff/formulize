@@ -297,6 +297,10 @@ a.formulize-open-close-link {
   width: 350px;
   font-size: 1.2em; }
 
+.subform-textarea-element {
+    white-space: normal;
+}
+
 .formulize-subform-table {
   width: auto;
   border-collapse: collapse;

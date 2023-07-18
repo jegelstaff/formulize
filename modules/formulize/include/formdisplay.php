@@ -2335,7 +2335,11 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 						ob_end_clean();
                         if($unsetDisabledFlag) { unset($GLOBALS['formulize_forceElementsDisabled']); }
 						if($col_two_temp OR $renderResult == "rendered" OR $renderResult == "rendered-disabled") { // only draw in a cell if there actually is an element rendered (some elements might be rendered as nothing (such as derived values)
-							$col_two .= "<td class='formulize_subform_".$thisele."'>$col_two_temp</td>\n";
+                            $textAreaClass = '';
+                            if($elementObject = _getElementObject($thisele)) {
+                                $textAreaClass = $elementObject->getVar('ele_type') == 'textarea' ? ' subform-textarea-element' : '';  
+                            }
+							$col_two .= "<td class='formulize_subform_".$thisele.$textAreaClass."'>$col_two_temp</td>\n";
 						} else {
 							$col_two .= "<td>******</td>";
 						}
@@ -2452,7 +2456,11 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
                                     $col_two_temp = formulize_numberFormat($col_two_temp, $thisele);
                                     $textAlign = " right-align-text";
                                 }
-								$col_two .= "<td class='formulize_subform_".$thisele."$textAlign'>$col_two_temp</td>\n";
+                                $textAreaClass = '';
+                                if($elementObject = _getElementObject($thisele)) {
+                                    $textAreaClass = $elementObject->getVar('ele_type') == 'textarea' ? ' subform-textarea-element' : '';  
+                                }
+								$col_two .= "<td class='formulize_subform_".$thisele."$textAlign$textAreaClass'>$col_two_temp</td>\n";
 							} else {
 								$col_two .= "<td>******</td>";
 							}
