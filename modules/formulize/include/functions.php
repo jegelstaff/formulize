@@ -5580,13 +5580,15 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
     $bareFilterTerm = substr($filterTerms[$filterId],1,-1);
     $filterElementObject = $element_handler->get($filterElementIds[$filterId]);
     if ($filterOps[$filterId] == "NOT") { $filterOps[$filterId] = "!="; }
+    $likebits = "";
+    $origlikebits = "";
     if (strstr(strtoupper($filterOps[$filterId]), "LIKE")) {
-        $likebits = "%";
-        $origlikebits = "%";
+        if(!strstr(trim($filterTerms[$filterId]), '%')) {
+            $likebits = "%";
+            $origlikebits = "%";
+        }
         $quotes = "'";
     } else {
-        $likebits = "";
-        $origlikebits = "";
         $quotes = is_numeric($filterTerms[$filterId]) ? "" : "'";
         $filterOps[$filterId] = $filterOps[$filterId] == "=" ? "<=>" : $filterOps[$filterId];
     }
