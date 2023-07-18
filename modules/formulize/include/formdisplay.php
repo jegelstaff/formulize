@@ -2271,7 +2271,9 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	} else {
 		$col_two .= "";
 		if(!strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
-			$col_two .= "<div id=\"subform-$subformElementId$subformInstance\" class=\"subform-accordion-container\" subelementid=\"$subformElementId$subformInstance\" style=\"display: none;\">";
+            $styleDisplayNone = $rowsOrForms == 'flatform' ? "" : "style=\"display: none;\"";
+            $accordionClassName = $rowsOrForms == 'flatform' ? "subform-flatform-container" : "subform-accordion-container";
+			$col_two .= "<div id=\"subform-$subformElementId$subformInstance\" class=\"$accordionClassName\" subelementid=\"$subformElementId$subformInstance\" $styleDisplayNone>";
 		}
 		$col_two .= "<input type='hidden' name='subform_entry_".$subformElementId.$subformInstance."_active' id='subform_entry_".$subformElementId.$subformInstance."_active' value='' />";
 	}
@@ -2479,9 +2481,13 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 					}
 					
 					if(!strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
-						$col_two .= "<div class=\"subform-deletebox\">$deleteBox</div><div class=\"subform-entry-container\" id=\"subform-".$subform_id."-"."$sub_ent\">
-	<p class=\"subform-header\"><a class=\"accordion-name-anchor\" href=\"#\"><span class=\"accordion-name\">".$headerToWrite."</span></a></p>
-	<div class=\"accordion-content content\">";
+						$col_two .= "<div class=\"subform-deletebox\">$deleteBox</div><div class=\"subform-entry-container\" id=\"subform-".$subform_id."-"."$sub_ent\"><p class=\"subform-header\">";
+                        if($rowsOrForms == 'flatform') {
+                            $col_two .= "<p class=\"flatform-name\">".$headerToWrite."</p>";
+                        } else {
+                            $col_two .= "<a class=\"accordion-name-anchor\" href=\"#\"><span class=\"accordion-name\">".$headerToWrite."</span></a>";
+                        }
+                        $col_two .= "</p><div class=\"accordion-content content\">";
 					}
 					ob_start();
 					$GLOBALS['formulize_inlineSubformFrid'] = $frid;
@@ -2516,29 +2522,34 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
         <script>";	
 	} else {
 		if(!strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
-			$col_two .= "</div>"; // close of the subform-accordion-container
+            // close of the subform-accordion-container
+			$col_two .= "</div>
+            <script type=\"text/javascript\">"; 
 		}
-		$col_two .= "\n
-<script type=\"text/javascript\">
-	jQuery(document).ready(function() {
-		jQuery(\"#subform-$subformElementId$subformInstance\").accordion({
-            heightStyle: 'content', 
-            autoHeight: false, // legacy
-			collapsible: true, // sections can be collapsed
-			active: ";
-			if($_POST['target_sub_instance'] == $subformElementId.$subformInstance AND $_POST['target_sub'] == $subform_id) {
-				$col_two .= count((array) $sub_entries[$subform_id])-$_POST['numsubents'];
-			} elseif(is_numeric($_POST['subform_entry_'.$subformElementId.$subformInstance.'_active'])) {
-				$col_two .= $_POST['subform_entry_'.$subformElementId.$subformInstance.'_active'];
-			} else {
-				$col_two .= 'false';
-			}
-			$col_two .= ",
-			header: \"> div > p.subform-header\"
-		});
-		jQuery(\"#subform-$subformElementId$subformInstance\").fadeIn();
-	});
-    ";
+        
+        if($rowsOrForms=='form') { // if we're doing accordions, put in the JS, otherwise it's flat-forms
+        
+            $col_two .= "
+                    jQuery(document).ready(function() {
+                        jQuery(\"#subform-$subformElementId$subformInstance\").accordion({
+                            heightStyle: 'content', 
+                            autoHeight: false, // legacy
+                            collapsible: true, // sections can be collapsed
+                            active: ";
+                            if($_POST['target_sub_instance'] == $subformElementId.$subformInstance AND $_POST['target_sub'] == $subform_id) {
+                                $col_two .= count((array) $sub_entries[$subform_id])-$_POST['numsubents'];
+                            } elseif(is_numeric($_POST['subform_entry_'.$subformElementId.$subformInstance.'_active'])) {
+                                $col_two .= $_POST['subform_entry_'.$subformElementId.$subformInstance.'_active'];
+                            } else {
+                                $col_two .= 'false';
+                            }
+                            $col_two .= ",
+                            header: \"> div > p.subform-header\"
+                        });
+                        jQuery(\"#subform-$subformElementId$subformInstance\").fadeIn();
+                    });
+            ";
+        }
 
 	} // end of if we're closing the subform inferface where entries are supposed to be collapsable forms
 
