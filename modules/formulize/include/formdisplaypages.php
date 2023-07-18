@@ -268,6 +268,10 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 	
 	// display a form if that's what this page is...
 	if($currentPage != $thanksPage AND $pages[$currentPage][0] !== "HTML" AND $pages[$currentPage][0] !== "PHP") {
+        
+        if($currentPage == 1 AND $pages[1][0] !== "HTML" AND $pages[1][0] !== "PHP" AND !$_POST['goto_sfid']) { // only show intro text on first page if there's actually a form there
+            print undoAllHTMLChars($introtext);
+        }
 	
 		foreach($pages[$currentPage] as $element) {
             $elements_allowed[] = $element;
