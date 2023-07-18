@@ -418,17 +418,20 @@ class formulizeDataHandler  {
 	
 	
 	// this function finds the first entry for a given user in the form
-	function getFirstEntryForUsers($uids, $scope_uids=array()) {
+	function getFirstEntryForUsers($uids) {
 		if(!is_array($uids)) {
-			$sentID = $uids;
-			$uids = array();
-			$uids[0] = $sentID;
+			$uids = array($uids);
 		}
-		$scopeFilter = $this->_buildScopeFilter($scope_uids);
+        foreach($uids as $i=>$uid) {
+            if(is_object($uid)) {
+                $uids[$i] = intval($uid->getVar('uid'));
+            }
+        }
+		$scopeFilter = $this->_buildScopeFilter($uids);
 		global $xoopsDB;
-    $form_handler = xoops_getmodulehandler('forms', 'formulize');
-    $formObject = $form_handler->get($this->fid);
-		$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE (creation_uid = " . implode(" OR creation_uid = ", $uids) . ") $scopeFilter ORDER BY entry_id LIMIT 0,1";
+        $form_handler = xoops_getmodulehandler('forms', 'formulize');
+        $formObject = $form_handler->get($this->fid);
+		$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE 1 $scopeFilter ORDER BY entry_id LIMIT 0,1"; // need where 1 so the AND at start of scopeFilter is syntactically sound
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
 		}
