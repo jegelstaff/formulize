@@ -437,8 +437,13 @@ class formulizeDataHandler  {
 	
 	}
 	
+    // this function returns the entry ID of the last entry found in the form with the specified value in the specified element
+    function findLastEntryWithValue($element_id, $value, $op="=", $scope_uids=array()) {
+        return $this->findFirstEntryWithValue($element_id, $value, $op, $scope_uids, true);
+    }
+    
 	// this function returns the entry ID of the first entry found in the form with the specified value in the specified element
-	function findFirstEntryWithValue($element_id, $value, $op="=", $scope_uids=array()) {
+	function findFirstEntryWithValue($element_id, $value, $op="=", $scope_uids=array(), $desc=false) {
 		if(!$element = _getElementObject($element_id)) {
 			return false;
 		}
@@ -447,7 +452,8 @@ class formulizeDataHandler  {
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
         $formObject = $form_handler->get($this->fid);
         $scopeFilter = $this->_buildScopeFilter($scope_uids);
-        $sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $element->getVar('ele_handle') . "` ".formulize_db_escape($op)." \"$likeBits" . formulize_db_escape($value) . "$likeBits\" $scopeFilter ORDER BY entry_id LIMIT 0,1";
+        $desc = $desc ? 'DESC' : '';
+        $sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $element->getVar('ele_handle') . "` ".formulize_db_escape($op)." \"$likeBits" . formulize_db_escape($value) . "$likeBits\" $scopeFilter ORDER BY entry_id $desc LIMIT 0,1";
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
 		}
