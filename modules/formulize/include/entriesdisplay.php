@@ -2220,6 +2220,12 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 	  } elseif($calc == "per") {
 		$orderByClause = " ORDER BY $groupByClause, percount$fidAlias$handle DESC";
 		$groupByClause = " GROUP BY $fidAlias$handle, ".$groupByClause;
+      } elseif($calc == "count") {
+        $orderByClause = " ORDER BY count$fidAlias$handle DESC";
+        $groupByClause = " GROUP BY ".$groupByClause;
+      } elseif($calc == "sum") {
+        $orderByClause = " ORDER BY $fidAlias$handle DESC";
+        $groupByClause = " GROUP BY ".$groupByClause;
 	  } else {
 		$groupByClause = " GROUP BY ".$groupByClause;
 	  }
