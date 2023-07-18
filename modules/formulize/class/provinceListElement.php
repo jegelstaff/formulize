@@ -95,7 +95,7 @@ class formulizeProvinceListElementHandler extends formulizeElementsHandler {
     // You can modify the element object in this function and since it is an object, and passed by reference by default, then your changes will be saved when the element is saved.
     // You should return a flag to indicate if any changes were made, so that the page can be reloaded for the user, and they can see the changes you've made here.
     function adminSave($element, $ele_value) {
-        return false;
+        $element->setVar('ele_value', $ele_value);
     }
     
     // this method reads the current state of an element based on the user's input, and the admin options, and sets ele_value to what it needs to be so we can render the element correctly
