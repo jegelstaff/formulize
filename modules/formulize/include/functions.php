@@ -4533,7 +4533,8 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
                 list($conditionsfilter, $conditionsfilter_oom, $parentFormFrom) = buildConditionsFilterSQL($element_value[5], $source_form_id, 'new', $fakeOwnerUid, $elementFormObject, "t1");
                 $sourceEntryIdsForFilters = array(); // filters never have any preselected values from the database
                 list($sourceEntrySafetyNetStart, $sourceEntrySafetyNetEnd) = prepareLinkedElementSafetyNets($sourceEntryIdsForFilters, $conditionsfilter, $conditionsfilter_oom);
-                $pgroupsfilter = prepareLinkedElementGroupFilter($source_form_id, $element_value[3], $element_value[4], $element_value[6]);
+                $ele_value['formlink_useonlyusersentries'] = isset($ele_value['formlink_useonlyusersentries']) ? $ele_value['formlink_useonlyusersentries'] : 0;
+                $pgroupsfilter = prepareLinkedElementGroupFilter($source_form_id, $element_value[3], $element_value[4], $element_value[6], $ele_value['formlink_useonlyusersentries']);
                 $extra_clause = prepareLinkedElementExtraClause($pgroupsfilter, $parentFormFrom, $sourceEntrySafetyNetStart);
                 $limitConditionWhere = substr($limitConditionWhere, 7); // cut off the WHERE in this clause, because the extra_clause already intros it
             }
@@ -6851,7 +6852,7 @@ function formulize_validatePHPCode($theCode) {
 // return SQL ready for use in special queries for linked element source values
 // t1 is the table where the values are being gathered from
 // t2 is the entry_owner_groups table
-function prepareLinkedElementGroupFilter($sourceFid, $groupSelections, $useOnlyUsersGroups, $userMustBeInAllGroups) {
+function prepareLinkedElementGroupFilter($sourceFid, $groupSelections, $useOnlyUsersGroups, $userMustBeInAllGroups, $useOnlyUsersEntries) {
     
     global $regcode, $xoopsUser, $xoopsDB;
     // determine the groups that we're dealing with...
@@ -6896,8 +6897,10 @@ function prepareLinkedElementGroupFilter($sourceFid, $groupSelections, $useOnlyU
     }
 
     array_unique($pgroups); // remove duplicate groups from the list
-    
-    if($userMustBeInAllGroups AND count((array) $pgroups) > 0) {  // means we must match all the current user's groups with the entry's groups, so we setup a series of exists clauses
+
+    if($useOnlyUsersEntries) {
+        $pgroupsfilter = " t1.creation_uid = ".($xoopsUser ? $xoopsUser->getVar('uid') : 0);
+    } elseif($userMustBeInAllGroups AND count((array) $pgroups) > 0) {  // means we must match all the current user's groups with the entry's groups, so we setup a series of exists clauses
         $pgroupsfilter = " (";
         $start = true;
         foreach($pgroups as $thisPgroup) {

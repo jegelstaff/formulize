@@ -316,7 +316,8 @@ class formulizeElementRenderer{
 					}
 					$module_id = getFormulizeModId();
 					
-                    $pgroupsfilter = prepareLinkedElementGroupFilter($sourceFid, $ele_value[3], $ele_value[4], $ele_value[6]);
+                    $ele_value['formlink_useonlyusersentries'] = isset($ele_value['formlink_useonlyusersentries']) ? $ele_value['formlink_useonlyusersentries'] : 0;
+                    $pgroupsfilter = prepareLinkedElementGroupFilter($sourceFid, $ele_value[3], $ele_value[4], $ele_value[6], $ele_value['formlink_useonlyusersentries']);
 					
 					$sourceFormObject = $form_handler->get($sourceFid);
 

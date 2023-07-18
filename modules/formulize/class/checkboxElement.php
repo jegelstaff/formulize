@@ -374,7 +374,8 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 				$sortOrderClause = " ORDER BY t1.`$sortHandle` $sortOrder";
 			}
 		
-            $groupLimitClause = prepareLinkedElementGroupFilter($sourceFid, $ele_value['formlink_scope'], $ele_value['checkbox_scopelimit'], $ele_value['checkbox_formlink_anyorall']);
+            $ele_value['formlink_useonlyusersentries'] = isset($ele_value['formlink_useonlyusersentries']) ? $ele_value['formlink_useonlyusersentries'] : 0;
+            $groupLimitClause = prepareLinkedElementGroupFilter($sourceFid, $ele_value['formlink_scope'], $ele_value['checkbox_scopelimit'], $ele_value['checkbox_formlink_anyorall'], $ele_value['formlink_useonlyusersentries']);
             list($sourceEntrySafetyNetStart, $sourceEntrySafetyNetEnd) = prepareLinkedElementSafetyNets($sourceEntryIds);
             $extra_clause = prepareLinkedElementExtraClause($groupLimitClause, $parentFormFrom, $sourceEntrySafetyNetStart);
             
