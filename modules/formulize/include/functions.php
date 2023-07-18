@@ -2683,6 +2683,10 @@ function formatLinks($matchtext, $handle, $textWidth, $entryBeingFormatted) {
         }
     } elseif ($ele_type == 'derived') {
         return formulize_text_to_hyperlink($matchtext, $textWidth); // allow HTML codes in derived values
+    } elseif($ele_type == "textarea" AND isset($ele_value['use_rich_text']) AND $ele_value['use_rich_text']) {
+        return printSmart(strip_tags($matchtext), 100); // don't mess with rich text!
+    } elseif($ele_type == 'radio') {
+        return trans($matchtext);
     } else { // regular element
         formulize_benchmark("done formatting, about to print");
         return _formatLinksRegularElement($matchtext, $textWidth, $ele_type, $handle, $entryBeingFormatted);
@@ -2697,15 +2701,8 @@ function _formatLinksRegularElement($matchtext, $textWidth, $ele_type, $handle, 
         $matchtext = $elementTypeHandler->formatDataForList($matchtext, $handle, $entryBeingFormatted);
         return $matchtext;
     } else {
-        $elementHandler = xoops_getmodulehandler('elements', 'formulize');
-        $elementObject = $elementHandler->get($handle);
-        $ele_value = $elementObject->getVar('ele_value');
-        if($ele_type == "textarea" AND isset($ele_value['use_rich_text']) AND $ele_value['use_rich_text']) {
-          return printSmart(strip_tags($matchtext), 100); // don't mess with rich text!   
-        } else {
-        	global $myts;
-        	return formulize_text_to_hyperlink($myts->htmlSpecialChars($matchtext), $textWidth);
-        }
+        global $myts;
+        return formulize_text_to_hyperlink($myts->htmlSpecialChars($matchtext), $textWidth);
     }
 }
 
