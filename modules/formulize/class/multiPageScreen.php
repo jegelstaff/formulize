@@ -334,8 +334,9 @@ function multiPageScreen_addToOptionsList($fid, $options) {
 		$formObject = new formulizeForm($fid);
 		$elements = $formObject->getVar('elements');
 		$elementCaptions = $formObject->getVar('elementCaptions');
-    foreach($elementCaptions as $key=>$elementCaption) {
-			$options[$elements[$key]] = printSmart(trans(strip_tags($elementCaption))); // need to pull out potential HTML tags from the caption
+        $elementColheads = $formObject->getVar('elementColheads');
+        foreach($elementCaptions as $key=>$elementCaption) {
+            $options[$elements[$key]] = trans(strip_tags($elementColheads[$key])) ? printSmart(trans(strip_tags($elementColheads[$key]))) : printSmart(trans(strip_tags($elementCaption))); // need to pull out potential HTML tags from the caption/colhead
 		}
 		return $options;
 }
