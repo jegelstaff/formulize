@@ -193,14 +193,15 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
 	$validationmsg = str_replace("'", "\'", stripslashes( $validationmsg ) );
         $cueName = str_replace("de_","decue_",$markupName);
         $validationCode = array();
-        $validationCode[] = "if(myform.fileupload_{$markupName}.value == '') {\n"; // if no file has been selected, then neuter the cue element that tells us we need to handle this one when saving
-        $validationCode[] = "  myform.{$cueName}.name = 'skipit!';\n";
-        $validationCode[] = "} else {\n";
-        $validationCode[] = "  myform.{$cueName}.name = '{$cueName}';\n";
-        $validationCode[] = "}\n";
         if($element->getVar('ele_req')) { // need to include this only if the admin wants to force a value for this element, and there's no file selected already
-            $validationCode[] = "if(myform.fileupload_{$markupName}.value == '' && (typeof formulizeFile".$markupName."Exists == 'undefined' || formulizeFile".$markupName."Exists == false)) {\n";
+            $validationCode[] = "if(formulizechanged && myform.fileupload_{$markupName}.value == '' && (typeof formulizeFile".$markupName."Exists == 'undefined' || formulizeFile".$markupName."Exists == false)) {\n";
             $validationCode[] = "  window.alert('{$validationmsg}');\n myform.fileupload_{$markupName}.focus();\n return false;\n ";
+            $validationCode[] = "}\n";
+        } else { // file not required, if there's going to be a bonafide form submission, remove the cue if there's no file here
+            $validationCode[] = "if(formulizechanged && myform.fileupload_{$markupName}.value == '') {\n"; // if no file has been selected, then neuter the cue element that tells us we need to handle this one when saving
+            $validationCode[] = "  myform.{$cueName}.name = 'skipit!';\n";
+            $validationCode[] = "} else if(formulizechanged) {\n";
+            $validationCode[] = "  myform.{$cueName}.name = '{$cueName}';\n";
             $validationCode[] = "}\n";
         }
         return $validationCode;
