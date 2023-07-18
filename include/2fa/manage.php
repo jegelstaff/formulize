@@ -104,15 +104,19 @@ function sendCode($method=null, $uid=false, $phone=null) {
             $member_handler = xoops_gethandler('member');
 			$userObject = $member_handler->getUser($uid);
             $email = $userObject->getVar('email');
-			$xoopsMailer = new icms_messaging_Handler();
-			$xoopsMailer->useMail();
+            $xoopsMailer = new icms_messaging_Handler();
+            $xoopsMailer->useMail();
+            if(!$email AND $xoopsUser AND isset($_GET['email']) AND filter_var($_GET['email'], FILTER_VALIDATE_EMAIL)) {
+                $xoopsMailer->setToEmails($_GET['email']);
+            } else {
+                $xoopsMailer->setToUsers($userObject);    
+            }
 			$xoopsMailer->setTemplate('2fa.tpl');
 			$xoopsMailer->assign('SITENAME', $icmsConfig['sitename']);
 			$xoopsMailer->assign('ADMINMAIL', $icmsConfig['adminmail']);
 			$xoopsMailer->assign('SITEURL', ICMS_URL . '/');
 			$xoopsMailer->assign('IP', $_SERVER['REMOTE_ADDR']);
 			$xoopsMailer->assign('CODE', $code);
-	        $xoopsMailer->setToUsers($userObject);
 	        $xoopsMailer->setFromEmail($icmsConfig['adminmail']);
 	        $xoopsMailer->setFromName($icmsConfig['sitename']);
 	        $xoopsMailer->setSubject(sprintf(_US_EMAIL_SUBJECT, $code));
@@ -122,9 +126,7 @@ function sendCode($method=null, $uid=false, $phone=null) {
 			return false; // no errors
             break;
         case TFA_SMS:
-            if(!$phone) {
-                $phone = $profile->getVar('2faphone');
-            }
+            $phone = $phone ? $phone : $profile->getVar('2faphone');
 			include "sendSMS.php"; // file in the include/2fa folder, which must contain a function of the same name, that sends SMS messages using your provider, and returns any errors
 			$body = sprintf(_US_SMS_TEXT, $code, trans($icmsConfig['sitename']), $_SERVER['REMOTE_ADDR'], $icmsConfig['adminmail']);
 			return sendSMS($body, $phone);
