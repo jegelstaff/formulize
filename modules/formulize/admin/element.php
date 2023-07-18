@@ -389,7 +389,11 @@ if ($ele_type=='text') {
 
 } elseif ($ele_type=="radio") {
     $ele_value = formulize_mergeUIText($ele_value, $ele_uitext);
-    $options['useroptions'] = $ele_value;
+    $newEleValueForRadios = array();
+    foreach($ele_value as $k=>$v) {
+        $newEleValueForRadios[str_replace('&', '&amp;', $k)] = $v;
+    }
+    $options['useroptions'] = $newEleValueForRadios;
 
 } elseif ($ele_type=="select") {
     if ($ele_id == "new") {
