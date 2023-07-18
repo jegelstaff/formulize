@@ -410,7 +410,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 			// linked checkboxes will send back the entry id to save
 			// non linked boxes send back an ordinal number that shows which options were picked
 			$valueToUse = $isLinked ? $key : $opt_count;
-			$options[$valueToUse] = $myts->stripSlashesGPC($key);
+			$options[$valueToUse] = $key;
 			if( $value > 0 ){
 				$selected[] = $valueToUse;
 				$disabledHiddenValue[] = "<input type=hidden name=\"".$markupName."[]\" value=\"$opt_count\">";

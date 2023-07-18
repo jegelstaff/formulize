@@ -802,12 +802,10 @@ class formulizeElementRenderer{
                 foreach($ele_value as $iKey=>$iValue) {
 					switch ($ele_type){
 						case 'radio':
-							$options[$opt_count] = $myts->stripSlashesGPC($iKey);
-              $options[$opt_count] = $myts->displayTarea($options[$opt_count]);
+                            $options[$opt_count] = $myts->displayTarea($iKey, 1); // 1 means allow HTML through
 						break;
 						case 'yn':
 							$options[$opt_count] = constant($iKey);
-							$options[$opt_count] = $myts->stripSlashesGPC($options[$opt_count]);
 						break;
 					}
 					if( $iValue > 0 ){
