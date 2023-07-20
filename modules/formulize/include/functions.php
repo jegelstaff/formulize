@@ -2795,12 +2795,15 @@ function getTextboxDefault($ele_value, $form_id, $entry_id, $placeholder="") {
 
 
 function getDateElementDefault($default_hint, $entry_id = false) {
-    if($default_hint == "0000-00-00") { return time(); }
-    if (preg_replace("/[^A-Z{}]/", "", $default_hint) === "{TODAY}") {
+    if($default_hint == "0000-00-00") {
+        $offset = formulize_getUserUTCOffsetSecs(); // user offset from UTC
+        return time() + $offset;
+    } elseif(preg_replace("/[^A-Z{}]/", "", $default_hint) === "{TODAY}") {
         $number = str_replace('+', '', preg_replace("/[^0-9+-]/", "", $default_hint));
-        return mktime(0, 0, 0, date("m"), (date("d") + intval($number)), date("Y"));
-    }
-	if(substr($default_hint, 0, 1) == '{' AND substr($default_hint, -1) == '}') {
+        $seedTime = mktime(date("H"), date("i"), date("s"), date("m"), (date("d") + intval($number)), date("Y")); // will be based on UTC
+        $offset = formulize_getUserUTCOffsetSecs(timestamp: $seedTime); // user offset from UTC
+        return $seedTime + $offset;
+    } elseif(substr($default_hint, 0, 1) == '{' AND substr($default_hint, -1) == '}') {
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
 		$element_handle = substr($default_hint, 1, -1);
 		$default_hint = '';
@@ -5978,12 +5981,8 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
         }
         if ("date" == $element_type) {
             $time_value = strtotime($v);
-            global $xoopsUser, $xoopsConfig;
-            $serverTimeZone = $xoopsConfig['server_TZ'];
-            $offset = $xoopsUser ? ($xoopsUser->getVar('timezone_offset') - $serverTimeZone) * 3600 : 0;
-            /*if($xoopsConfig['language'] == "french") {
-            	$return = setlocale(LC_TIME, "fr_FR.UTF8");
-            }*/
+            global $xoopsUser;
+            $offset = ($handle == "mod_datetime" OR $handle == "creation_datetime") ? formulize_getUserServerOffsetSecs(timestamp: $time_value) : 0; // no hours/mins in plain dates, but for metadata, get user offset from server timezone which DB should have used to make the dates in question
             $dateStringFormat = ($handle == "mod_datetime" OR $handle == "creation_datetime") ? _MEDIUMDATESTRING : _SHORTDATESTRING; // constants set in /language/english/global.php
             $v = (false === $time_value) ? "" : date($dateStringFormat, ($time_value)+$offset);
         }
@@ -7133,8 +7132,7 @@ function formulize_parseSearchesIntoFilter($searches) {
 				if (substr($searchgetkey, 0, 5) == "TODAY") {
                     $number = substr($searchgetkey, 5); // note -- includes the +/- sign
                     $basetime = $number ? strtotime($number." day") : time();
-                    $serverTimeZone = $xoopsConfig['server_TZ'];
-                    $offset = $xoopsUser ? ($xoopsUser->getVar('timezone_offset') - $serverTimeZone) * 3600 : 0;
+                    $offset = formulize_getUserUTCOffsetSecs(timestamp: $basetime); // need to adjust for user time vs UTC, since time() is based on UTC
 					$one_search = date("Y-m-d",($basetime+$offset));
 				} elseif($searchgetkey == "USER") {
 					if($xoopsUser) {
@@ -7865,3 +7863,81 @@ function setupParentFormValuesInPostAndReturnEntryId() {
     return $go_back_entry[$lastKey];
 }
 
+// user offset from server tz
+// assume timestamp is based on server timezone!
+// returns seconds
+function formulize_getUserServerOffsetSecs($userObject=null, $timestamp=null) {
+	// checks if the user's timezone and/or server timezone were in daylight savings at the given $timestamp (or current time) and adjusts offset accordingly
+	global $xoopsConfig, $xoopsUser;
+    $userObject = is_object($userObject) ? $userObject : $xoopsUser;
+    $timestamp = $timestamp ? $timestamp : time();
+	$serverTimeZone = $xoopsConfig['server_TZ'];
+	$userTimeZone = $userObject ? $userObject->getVar('timezone_offset') : $serverTimeZone;
+	$tzDiff = $userTimeZone - $serverTimeZone;
+    $daylightSavingsAdjustment = getDaylightSavingsAdjustment($userTimeZone, $serverTimeZone, $timestamp);
+    $tzDiff = $tzDiff + $daylightSavingsAdjustment;
+    return $tzDiff * 3600;
+}
+
+// get user offset from UTC
+// returns seconds
+function formulize_getUserUTCOffsetSecs($userObject=null, $timestamp=null) {
+    global $xoopsConfig, $xoopsUser;
+    $userObject = is_object($userObject) ? $userObject : $xoopsUser;
+    $timestamp = $timestamp ? $timestamp : time();
+	$serverTimeZone = $xoopsConfig['server_TZ'];
+	$userTimeZone = $userObject ? $userObject->getVar('timezone_offset') : $serverTimeZone;
+    $userTimeZone = $userTimeZone + getDaylightSavingsAdjustment($userTimeZone, 0, $timestamp);
+    return $userTimeZone * 3600;
+}
+
+// $userTimeZone and $compareTimeZone are numbers for the base offset (ie: when standard time is in effect)
+// timestamp is a timestamp from the **$compareTimeZone** timezone, that we are using the determine if daylight savings is in effect
+// This will necessarily be off by 1 hour when we're using the old basic tz numbers in XOOPS! (because they're standard time only)
+// since the window for an error is really small and only at the moment the time changes, that's acceptable? Seems to be the best we can do without overhauling the entire timezone system :(
+// we are seriously hampered by the fact that old XOOPS only uses a number for the timezone offset, not the actual timezone. Numbers to not equal timezones!
+// if timezones are the same, no adjustment
+// if timezones are both in daylight savings at a given time, no adjustment
+// if timezones are neither in daylight savings at a given time, no adjustment
+// if timezones are one in daylight savings and one not in daylight savings, calculate adjustment
+// returns difference in hours
+function getDaylightSavingsAdjustment($userTimeZone, $compareTimeZone, $timestamp) {
+    
+    // timezone name and number equivalents. crude!!
+    // could/should be expanded (or better yet, proper timezones recorded for users!!)
+    // XOOPS does not support two digit decimals for timezones (yet, we could add it)
+    // In Australia, different timezones with the same base offset, have different daylight savings rules :(
+    $tzNames = array(
+        '-8'=>'PST8PDT',
+        '-7'=>'MST7MDT',
+        '-6'=>'CST6CDT',
+        '-5'=>'EST5EDT',
+        '-4'=>'Canada/Atlantic',
+        '-3.5'=>'Canada/Newfoundland',
+        '+0'=>'UTC',
+        '+8'=>'Australia/Perth',
+        '+8.75'=>'Australia/Eucla',
+        '+9.5'=>'Australia/Adelaide',
+        '+10'=>'Australia/Sydney'
+    );
+    
+    // need plus or minus on the timezone number, even zero
+    $userTimeZone = floatval($userTimeZone) >= 0 ? "+$userTimeZone" : "$userTimeZone";
+    $compareTimeZone = floatval($compareTimeZone) >= 0 ? "+$compareTimeZone" : "$compareTimeZone";
+    
+    $adjustment = 0;
+    if($userTimeZone != $compareTimeZone) {
+        $timestamp = '@'.strtotime(date('Y-m-d H:i:s', $timestamp).' '.$compareTimeZone); // need to construct new timestamp with the xoops tz offset included, and @ sign in front so PHP dateTime will understand it
+        $dt = new DateTime($timestamp);
+        $dt->setTimezone(new DateTimeZone($tzNames[$compareTimeZone]));
+        $compareDST = $dt->format('I');
+        $dt->setTimezone(new DateTimeZone($tzNames[$userTimeZone]));
+        $userDST = $dt->format('I');
+        if($compareDST AND !$userDST) {
+            $adjustment = -1;  
+        } elseif(!$compareDST AND $userDST) {
+            $adjustment = +1;
+        }
+    }
+    return $adjustment;
+}

@@ -2406,7 +2406,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 			while($subEntriesOrderArray = $xoopsDB->fetchArray($subEntriesOrderRes)) {
 				$sub_entries[$subform_id][] = $subEntriesOrderArray['entry_id'];
 			}
-		}
+		} 
 
 		$currentSubformInstance = $subformInstance;
 
@@ -3238,15 +3238,10 @@ function loadValue($prevEntry, $element, $ele_value, $owner_groups, $groups, $en
 
 
 // THIS FUNCTION FORMATS THE DATETIME INFO FOR DISPLAY CLEANLY AT THE TOP OF THE FORM
+// $dt should be a representation of a timestamp in the server timezone
 function formulize_formatDateTime($dt) {
-	// assumption is that the server timezone has been set correctly!
-	// needs to figure out daylight savings time correctly...ie: is the user's timezone one that has daylight savings, and if so, if they are currently in a different dst condition than they were when the entry was created, add or subtract an hour from the seconds offset, so that the time information is displayed correctly.
-	global $xoopsConfig, $xoopsUser;
-	$serverTimeZone = $xoopsConfig['server_TZ'];
-	$userTimeZone = $xoopsUser ? $xoopsUser->getVar('timezone_offset') : $serverTimeZone;
-	$tzDiff = $userTimeZone - $serverTimeZone;
-	$tzDiffSeconds = $tzDiff*3600;
-	
+    global $xoopsConfig, $xoopsUser;
+    $tzDiffSeconds = formulize_getUserServerOffsetSecs(timestamp: strtotime($dt));
 	if($xoopsConfig['language'] == "french") {
 		$return = setlocale(LC_TIME, "fr_FR.UTF8");
 	}
