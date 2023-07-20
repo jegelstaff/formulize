@@ -303,18 +303,18 @@ function availReports($uid, $groups, $fid, $frid="0") {
     // parse out details from arrays for passing back
     $sortnames = array();
     foreach ($saved_reports as $id=>$details) {
-        $sortnames[] = $details['report_name'];
+        $sortnames[] = $details['sv_name'];
     }
     array_multisort($sortnames, $saved_reports);
 
     $sortnames = array();
     foreach ($available_published_reports as $id=>$details) {
-        $sortnames[] = $details['report_name'];
+        $sortnames[] = $details['sv_name'];
     }
     array_multisort($sortnames, $available_published_reports);
 
     $to_return[0] = array();    // in an older version the saved and published reports were returned but then the
-    $to_return[1] = array();    //  methed changed, and new array indexes were added and these were left for compatability
+    $to_return[1] = array();    //  method changed, and new array indexes were added and these were left for compatability
     $to_return[2] = $saved_reports;
     $to_return[3] = $available_published_reports;
 
