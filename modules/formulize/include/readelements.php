@@ -61,6 +61,7 @@ if(!defined("XOOPS_ROOT_PATH")) {
 }
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+include_once XOOPS_ROOT_PATH .'/modules/formulize/include/customCodeForApplications.php';
 
 global $xoopsConfig;
 // load the formulize language constants if they haven't been loaded already
