@@ -18,11 +18,13 @@ function formulize_subformSave_determineElementToWrite($frid, $fid, $entry, $tar
 		$element_to_write = $elementq[0]['fl_key1'];
 		$value_source = $elementq[0]['fl_key2'];
 		$value_source_form = $elementq[0]['fl_form2_id'];
+        $alt_element_to_write = isset($elementq[1]['fl_key1']) ? $elementq[1]['fl_key1'] : '';
 	} else {
 		$elementq = q("SELECT fl_key2, fl_key1, fl_common_value, fl_form1_id FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_frame_id=" . intval($frid) . " AND fl_form1_id=" . intval($fid) . " AND fl_form2_id=" . intval($target_sub_to_use) . " AND fl_relationship=2");
 		$element_to_write = $elementq[0]['fl_key2'];
 		$value_source = $elementq[0]['fl_key1'];
-		$value_source_form = $elementq[0]['fl_form1_id'];		
+		$value_source_form = $elementq[0]['fl_form1_id'];
+        $alt_element_to_write = isset($elementq[1]['fl_key2']) ? $elementq[1]['fl_key2'] : '';
 	}
     
     // in case we need it for writing later...figure out the matching value in the main form, if any...
@@ -39,7 +41,9 @@ function formulize_subformSave_determineElementToWrite($frid, $fid, $entry, $tar
         $value_to_write = $entry; 
     }
     
-    return array($elementq, $element_to_write, $value_to_write, $value_source, $value_source_form);
+    
+    
+    return array($elementq, $element_to_write, $value_to_write, $value_source, $value_source_form, $alt_element_to_write);
 }
 
 // this function writes entries into a subform

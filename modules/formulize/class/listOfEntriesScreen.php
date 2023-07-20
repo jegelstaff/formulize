@@ -345,6 +345,7 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
 
     public function setDefaultListScreenVars($defaultListScreen, $defaultFormScreenId, $formTitle, $fid)
     {
+        global $xoopsConfig;
         // View
         $defaultListScreen->setVar('defaultview', 'all');
         $defaultListScreen->setVar('usecurrentviewlist', _formulize_DE_CURRENT_VIEW);
@@ -387,6 +388,7 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
         $defaultListScreen->setVar('frid', 0);
         $defaultListScreen->setVar('type', 'listOfEntries');
         $defaultListScreen->setVar('useToken', 1);
+        $defaultListScreen->setVar('theme', $xoopsConfig['theme_set']);
     }
 }
 

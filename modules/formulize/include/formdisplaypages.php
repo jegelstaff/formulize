@@ -109,8 +109,9 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
     // removing the entry value is the critical thing, so a new entry is displayed
     $overrideMulti = 0;
     $removeEntryValue = false;
+    
     if(count((array) $pages) == 1 AND $screen) {
-        $reloadblank = $screen->getVar('reloadblank');
+        $reloadblank = isset($_POST['originalReloadBlank']) ? $_POST['originalReloadBlank'] : $screen->getVar('reloadblank');
         // figure out the form's properties...
         // if it's more than one entry per user, and we have requested reload blank, then override multi is 0, otherwise 1
         // if it's one entry per user, and we have requested reload blank, then override multi is 1, otherwise 0
@@ -257,11 +258,14 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 	
 	$nextPage = $currentPage+1;
 	
- 	$done_dest = $done_dest ? $done_dest : getCurrentURL();
-    // strip out any ve portion of a done destination, so we don't end up forcing the user back to this entry after they're done
-    if($vepos = strpos($done_dest,'&ve=')) {
-        if(is_numeric(substr($done_dest, $vepos+4))) {
-            $done_dest = substr($done_dest, 0, $vepos);
+    if(!$done_dest) {
+        $done_dest = getCurrentURL();
+    } else {
+        // strip out any ve portion of a done destination, so we don't end up forcing the user back to this entry after they're done
+        if($vepos = strpos($done_dest,'&ve=')) {
+            if(is_numeric(substr($done_dest, $vepos+4))) {
+                $done_dest = substr($done_dest, 0, $vepos);
+            }
         }
     }
 	$done_dest = substr($done_dest,0,4) == "http" ? $done_dest : "http://".$done_dest;

@@ -960,6 +960,7 @@ div.subform_button_controls {
 table.formulize-subform-table th,
 table.formulize-subform-table td {
     padding-right: 1em;
+    vertical-align: top;
 }
 
 .pill-tabs {
@@ -2894,7 +2895,8 @@ img {
 }
 @media (min-width: 768px) {
     .formulize-grid {
-        width: 700px;
+        width: auto;
+        max-width: 100%;
     }
     .formulize-grid select {
         min-width: 0px !important;
@@ -2908,6 +2910,7 @@ img {
 
 .formulize-grid td {
     padding-right: 1em;
+    vertical-align: top;
 }
 
 a.loe-edit-entry,
@@ -3177,6 +3180,11 @@ table.outer {
     justify-content: space-between;
     align-items: center;
 }
+#formulize-list-of-entries-footer div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 
 @media (max-width: 450px) {
     table.outer td {
@@ -3359,6 +3367,13 @@ table.popup th,
 #pickcalc .first-grouping,
 #pickcalc .exclude-options {
     margin-bottom: 1em;
+}
+
+table.outer td.formulize-calc-heading {
+    font-size: 115%;
+    font-weight: bold;
+    line-height: 0;
+    padding-bottom: 1em;
 }
 
 #setnot table.outer td.head {

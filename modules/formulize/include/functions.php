@@ -407,16 +407,10 @@ function security_check($fid, $entry="", $uid="", $owner="", $groups="", $mid=""
                         $view_groupscope = true;
                     }
                 }
-                // get the groupscope groups if specified, otherwise, use view_form permission to determine the groups
-                $formulize_permHandler = new formulizePermHandler($fid);
-                $specificScopeGroups = $formulize_permHandler->getGroupScopeGroupIds($groups);
+                
+                $groupScopeGroups = getGroupScopeGroups($fid, $groups);
                 $data_handler = new formulizeDataHandler($fid);
-                if ($specificScopeGroups === false) {
-                    $groupsWithAccess = $gperm_handler->getGroupIds("view_form", $fid, $mid);
-                    $intersect_groups = array_intersect($data_handler->getEntryOwnerGroups($entry), $groupsWithAccess, $groups);
-                } else {
-                    $intersect_groups = array_intersect($data_handler->getEntryOwnerGroups($entry), $specificScopeGroups); // when new groupscope is in effect, the specific groups are independent of the user's groups, so don't include $groups in the intersect
-                }
+                $intersect_groups = array_intersect($data_handler->getEntryOwnerGroups($entry), $groupScopeGroups);
                 sort($intersect_groups); // necessary to make sure that 0 will be a valid key to use below
 
                 if (!$view_groupscope OR (count((array) $intersect_groups) == 1 AND $intersect_groups[0] == XOOPS_GROUP_USERS) OR count((array) $intersect_groups) == 0) {
@@ -466,6 +460,26 @@ function security_check($fid, $entry="", $uid="", $owner="", $groups="", $mid=""
     return true;
 }
 
+// get the groupscope groups for a given form, for a given user
+// use the specific groupscope groups if specified, otherwise, use view_form permission and the overlap with the user's groups, to determine the groups that form the groupscope
+function getGroupScopeGroups($fid, $groups=array()) {
+    if(!is_array($groups) OR count($groups)==0) {
+        global $xoopsUser;
+        $groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+    }
+    $gperm_handler = xoops_gethandler('groupperm');
+    if($view_groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, getFormulizeModId())) {
+        $formulize_permHandler = new formulizePermHandler($fid);
+        $specificScopeGroups = $formulize_permHandler->getGroupScopeGroupIds($groups);
+        if ($specificScopeGroups === false) {
+            $groupsWithAccess = $gperm_handler->getGroupIds("view_form", $fid, getFormulizeModId());
+            return array_intersect($groupsWithAccess, $groups);
+        } else {
+            return $specificScopeGroups;        
+        }
+    }
+    return array();
+}
 
 // GET THE MODULE ID -- specifically get formulize, since if called from within a block, the xoopsModule module ID will not be formulize's id
 function getFormulizeModId() {
@@ -1939,10 +1953,10 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
             // need to add an option to the option list for the element list, if this is not a link. 
             // check for the value first, in case we are handling a series of quick ajax requests for new elements, in which a new value is being sent with all of them. We don't want to write the new value once per request!
                 $newValue = substr($candidateNewValue, 9);
-            if ($element->isLinked) {
-                $boxproperties = explode("#*=:*", $ele_value[2]);
-                $sourceHandle = $boxproperties[1];
-                $needToWriteEntry = false;
+                if ($element->isLinked) {
+                    $boxproperties = explode("#*=:*", $ele_value[2]);
+                    $sourceHandle = $boxproperties[1];
+                    $needToWriteEntry = false;
                     $dataArrayToWrite[$sourceHandle] = $newValue;
                     if($newValue !== '') {
                         $needToWriteEntry = true;
@@ -2018,18 +2032,18 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
                         $dataHandler = new formulizeDataHandler($boxproperties[0]); // 0 key is the source fid
                         if(!$newEntryId = $dataHandler->findFirstEntryWithAllValues($dataArrayToWrite)) { // check if this value has been written already, if so, use that ID
                             if($newEntryId = formulize_writeEntry($dataArrayToWrite)) {
-                        formulize_updateDerivedValues($newEntryId, $sourceFormObject->getVar('id_form'));
-                    }
-                } 
+                            formulize_updateDerivedValues($newEntryId, $sourceFormObject->getVar('id_form'));
+                            }
+                        } 
                         $newWrittenValues[] = $newEntryId;
                     }
-            } else {
-                $element_handler = xoops_getmodulehandler('elements', 'formulize');
-                if(!isset($ele_value[2][$newValue])) {
-                    $ele_value[2][$newValue] = 0; // create new key in ele_value[2] for this new option, set to 0 to indicate it's not selected by default in new entries
-                    $element->setVar('ele_value', $ele_value);
-                    $element_handler->insert($element);
-                }
+                } else {
+                    $element_handler = xoops_getmodulehandler('elements', 'formulize');
+                    if(!is_array($ele_value[2]) OR !isset($ele_value[2][$newValue])) {
+                        $ele_value[2][$newValue] = 0; // create new key in ele_value[2] for this new option, set to 0 to indicate it's not selected by default in new entries
+                        $element->setVar('ele_value', $ele_value);
+                        $element_handler->insert($element);
+                    }
                     $allValues = array_keys($ele_value[2]);
                     $selectedKey = array_search($newValue, $allValues); // value to write is the number representing the position in the array of the key that is the text value the user made
                     $selectedKey = $element->canHaveMultipleValues ? $selectedKey : $selectedKey + 1; // because we add one to the key when evaluating against single option elements below and these thigns need to line up!! YUCK
@@ -2090,6 +2104,10 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
         } else {
             $value = '';
             // The following code block is a replacement for the previous method for reading a select box which didn't work reliably -- jwe 7/26/04
+            if(!is_array($ele_value[2])) {
+                $ele_value[2] = array();
+                error_log('Formulize error: attempted to save data to selectbox that has no options (element id '.$ele_id.'). In prepDataForWrite function (modules/formulize/include/functions.php)');
+            }
             $temparraykeys = array_keys($ele_value[2]);
             // ADDED June 18 2005 to handle pulling in usernames for the user's group(s) -- updated for real live use September 6 2006
             if ($temparraykeys[0] === "{FULLNAMES}" OR $temparraykeys[0] === "{USERNAMES}") {
@@ -3231,10 +3249,12 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
                         $elementEyeHandle = convertElementIdsToElementHandles(array($elements[$i]));
                         $elementEyeHandle = $elementEyeHandle[0];
                         if(isset($formulize_existingValues[$fid][$entry]['before_save'][$elementEyeHandle])
-                           AND isset($formulize_existingValues[$fid][$entry]['after_save'][$elementEyeHandle])
-                           AND $formulize_existingValues[$fid][$entry]['before_save'][$elementEyeHandle] !== $formulize_existingValues[$fid][$entry]['after_save'][$elementEyeHandle])
-                        {
-                            $noElementsChanged = false;
+                           OR isset($formulize_existingValues[$fid][$entry]['after_save'][$elementEyeHandle])) {
+                            $beforeCheckValue = isset($formulize_existingValues[$fid][$entry]['before_save'][$elementEyeHandle]) ? $formulize_existingValues[$fid][$entry]['before_save'][$elementEyeHandle] : '';
+                            $afterCheckValue = isset($formulize_existingValues[$fid][$entry]['after_save'][$elementEyeHandle]) ? $formulize_existingValues[$fid][$entry]['after_save'][$elementEyeHandle] : '';
+                            if($beforeCheckValue !== $afterCheckValue) {
+                                $noElementsChanged = false;
+                            }
                         }
                     }
                     
@@ -3990,32 +4010,13 @@ function formulize_scandirAndClean($dir, $filter="", $timeWindow=21600) {
     $targetTime = $currentTime - $timeWindow;
     $foundFiles = array();
 
-    // if it's PHP 5, then do this:
-    if (function_exists("scandir")) {
-        // native scandir in PHP is much faster!!!
-        foreach (scandir($dir) as $fileName) {
-            if (strstr($fileName, $filter)) {
-                if (filemtime($dir.$fileName) < $targetTime) {
-                    unlink($dir.$fileName);
-                } else {
-                    $foundFiles[] = $fileName;
-                }
+    foreach (scandir($dir) as $fileName) {
+        if (strstr($fileName, $filter)) {
+            if (filemtime($dir.$fileName) < $targetTime) {
+                unlink($dir.$fileName);
+            } else {
+                $foundFiles[] = $fileName;
             }
-        }
-    } else {
-        // if it's PHP 4, then do this:
-        if ($handle = opendir($dir)) {
-            while (false !== ($file = readdir($handle))) {
-                $fileName = basename($file);
-                if (strstr($fileName, $filter)) {
-                    if (filemtime($dir.$fileName) < $targetTime) {
-                        unlink($dir.$fileName);
-                    } else {
-                        $foundFiles[] = $fileName;
-                    }
-                }
-            }
-            closedir($handle);
         }
     }
     return $foundFiles;
@@ -4424,8 +4425,13 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
     global $xoopsDB; // required by q
     $multiIdCounter = 1;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
+    $element_handler = xoops_getmodulehandler('elements', 'formulize');
+    $elementObject = $element_handler->get($ele_id);
+    
+    $ORSETOperator = $elementObject->canHaveMultipleValues ? '' : '='; // if the element supports multiple values, which are crammed into the same cell in the DB, then no equals operator... if the options are inclusive of one another, ie: active and inactive, then this isn't going to work cleanly!
+    
     if($multi) { // create the hidden field that will get the value assigned for submission
-        $defaultHiddenValue = (!$overrides OR (substr($overrides,0,5)=="ORSET" AND substr($overrides, -2) == "//")) ? $overrides : "ORSET$multiCounter=".$overrides."//";
+        $defaultHiddenValue = (!$overrides OR (substr($overrides,0,5)=="ORSET" AND substr($overrides, -2) == "//")) ? $overrides : "ORSET$multiCounter$ORSETOperator".$overrides."//";
         $filter = "<input type='hidden' name='$id' id='".$id."_hiddenMulti' value='".strip_tags(htmlspecialchars($defaultHiddenValue))."'>\n
         <div style='float: left; padding-right: 1em; padding-bottom: 1em;'>\n";
     } else { // start the actual dropdown selectbox
@@ -4466,23 +4472,26 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
             $filter .= $multi ? " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' value='none' $checked onclick=\"jQuery('#".$id."_hiddenMulti').val('none');jQuery('.$id').each(function() { jQuery(this).removeAttr('checked') }); jQuery('#apply-button-".$id."').show(200);\">&nbsp;$defaulttext</label><br/>\n" :"<option value=\"none\">".$defaulttext."</option>\n";
         }
 
-        $form_element = q("SELECT ele_value, ele_type, ele_uitext, id_form FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = " . $ele_id);
-        $element_value = unserialize($form_element[0]["ele_value"]);
-        $ele_uitext = unserialize($form_element[0]["ele_uitext"]);
-        switch ($form_element[0]["ele_type"]) {
+        $element_value = $elementObject->getVar('ele_value');
+        $ele_uitext = $elementObject->getVar('ele_uitext');
+        switch ($elementObject->getVar('ele_type')) {
             case "select":
                 $options = $element_value[2];
                 break;
-
-            case "radio":
             case "checkbox":
+                $checkboxHandler = xoops_getmodulehandler("checkboxElement", "formulize");
+                $element_value = $checkboxHandler->backwardsCompatibility($element_value);
+                $options = $element_value[2];
+                break;
+            case "radio":
                 $options = $element_value;
                 break;
-
             default:
                 $options = array();
         }
 
+        $useValue = ""; // flag to indicate if the value should be used for the label that users see, otherwise we use the key
+        
         // if the $options is from a linked selectbox, then figure that out and gather the possible values
         // only linked selectboxes have this string in their options field
         if (is_string($options) AND strstr($options, "#*=:*")) {
@@ -4501,7 +4510,6 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
                 $likebits = (strstr($limitOperator, "LIKE") AND substr($limit['term'], 0, 1) != "%" AND substr($limit['term'], -1) != "%") ? "%" : "";
                 $limitConditionWhere = " WHERE t1`".$limit['ele_id']."` ".$limitOperator." '$likebits".formulize_db_escape($limit['term'])."$likebits' ";
             } elseif ($subfilter) { // for subfilters, we're jumping back to another form to get the values, hence the join
-                $element_handler = xoops_getmodulehandler('elements', 'formulize');
                 $linkedSourceElementObject = $element_handler->get($linked_ele_id);
                 $linkedSourceElementEleValue = $linkedSourceElementObject->getVar('ele_value');
                 // first part will be the form id of the source form, second part will be the element handle in that form
@@ -4511,11 +4519,12 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
                 $limitConditionWhere = " WHERE t1.`$linked_ele_id` LIKE CONCAT('%',t2.entry_id,'%') AND t2.`".$linkedSourceElementEleValueParts[1]."` LIKE '%".formulize_db_escape($_POST[$linked_data_id])."%'";
             }
             unset($options);
+            $options = array();
             
             $conditionsfilter = "";
             $conditionsfilter_oom = "";
             $extra_clause = "";
-            if($elementFormObject = $form_handler->get($form_element[0]['id_form'])) {
+            if($elementFormObject = $form_handler->get($elementObject->getVar('id_form'))) {
                 global $xoopsUser;
                 $fakeOwnerUid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
                 // remove any dynamic filters pointing to form elements since we're rendering without entry context
@@ -4541,20 +4550,96 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
             
             $sourceFormObject = $form_handler->get($source_form_id);
             
-            if ($dataResult = $xoopsDB->query("SELECT distinct(t1.`$source_element_handle`) FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." as t1 $limitConditionTable $extra_clause $conditionsfilter $conditionsfilter_oom $limitConditionWhere ORDER BY t1.`$source_element_handle`")) {
-                while ($dataArray = $xoopsDB->fetchArray($dataResult)) {
-                    $options[$dataArray[$source_element_handle]] = "";
-                }
-            } else {
-                $options = array();
+            // if no extra elements are selected for display as a form element, then display the linked element
+            $linked_columns = array($boxproperties[1]);
+            if (is_array($element_value[EV_MULTIPLE_FORM_COLUMNS]) AND count((array) $element_value[EV_MULTIPLE_FORM_COLUMNS]) > 0 AND $element_value[EV_MULTIPLE_FORM_COLUMNS][0] != 'none') {
+                if($sourceElementObject = $element_handler->get($source_element_handle)) {
+                    $form_handler = xoops_getmodulehandler('forms', 'formulize');
+                    $sourceFormObject = $form_handler->get($sourceElementObject->getVar('id_form'));
+                    $linked_columns = convertElementIdsToElementHandles($element_value[EV_MULTIPLE_FORM_COLUMNS], $sourceFormObject->getVar('id_form'));
+                    // remove empty entries, which can happen if the "use the linked field selected above" option is selected
+                    $linked_columns = array_filter($linked_columns);
+                } 
             }
+            
+            if(count($linked_columns)==1) {
+                $select_column = "distinct(t1.`".$linked_columns[0]."`)";
+            } else {
+                for($i=0;isset($linked_columns[$i]);$i++) {
+                    $select_column .= ', t1.`'.$linked_columns[$i]."`";
+                }
+                $select_column = trim($select_column, ",");
+            }
+            
+            if ($dataResult = $xoopsDB->query("SELECT $select_column, t1.entry_id FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." as t1 $limitConditionTable $extra_clause $conditionsfilter $conditionsfilter_oom $limitConditionWhere ORDER BY t1.`$source_element_handle`")) {
+                $useValue = 'entryid';
+                if(count($linked_columns)>1) {
+                    $linked_column_count = count((array) $linked_columns);
+                    while ($dataRow = $xoopsDB->fetchRow($dataResult)) {
+                        $linked_column_values = array();
+                        foreach (range(0, ($linked_column_count-1)) as $linked_column_index) {
+                            $linked_value = '';
+                            if ($dataRow[$linked_column_index] !== "") {
+                                $linked_value = prepvalues($dataRow[$linked_column_index], $linked_columns[$linked_column_index], $dataRow[$linked_column_count]);
+                                $linked_value = $linked_value[0];
+                            }
+                            if($linked_value != '' OR is_numeric($linked_value)) {
+                                $linked_column_values[] = $linked_value;
+                            }
+                        }
+                        if(count((array) $linked_column_values)>0) {
+                            // set option to entry id, with the linked columns as the label
+                            $options[$dataRow[$linked_column_count]] = implode(" | ", $linked_column_values);
+                        } 
+                    }
+                } else {
+                    while($dataRow = $xoopsDB->fetchRow($dataResult)) {
+                        $linked_value = prepvalues($dataRow[0], $linked_columns[0], $dataRow[1]);
+                        $options[$dataRow[1]] = $linked_value[0];
+                    }
+                }
+            } 
         }
 
         if(!$options) {
-            return '';
+            // figure out the distinct values for this field, use those instead
+            // strip out HTML. Or, if there is <span class='formulize-filter-value'>Text</span> present in the value, use that marked up value instead.
+            // only show the user values that match their visibility settings
+            $gperm_handler = xoops_gethandler('groupperm');
+            global $xoopsUser;
+            $groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+            $groupScopeGroups = array();
+            $scopeUids = array();
+            if(!$view_globalscope = $gperm_handler->checkRight("view_globalscope", $elementObject->getVar('id_form'), $groups, getFormulizeModId())) {
+                $groupScopeGroups = getGroupScopeGroups($elementObject->getVar('id_form'), $groups);
+                if(count($groupScopeGroups)==0) {
+                    $scopeUids[] = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+                }
+            }
+            $dataHandler = new formulizeDataHandler($elementObject->getVar('id_form'));
+            // if no groups passed and no scope uids passed, then it just gets everything
+            $options = $dataHandler->findAllValuesForField($elementObject->getVar('ele_handle'),'ASC',$groupScopeGroups,$scopeUids,true);// last true forces per group filters to be respected
+            $options = is_array($options) ? array_unique($options) : array();
+            $parsedOptions = array();
+            foreach($options as $option) {
+                $option = undoAllHTMLChars($option, ENT_QUOTES);
+                if($pos = strpos($option,"formulize-filter-value")) {
+                    $startPos = strpos($option, '>', $pos);
+                    $endPos = strpos($option, '<', $startPos);
+                    $candidateOption = 'NOQSFEQUALS'.htmlspecialchars(strip_tags(substr($option, $startPos+1, $endPos-$startPos-1)), ENT_QUOTES);
+                } else {
+                    $candidateOption = htmlspecialchars(strip_tags($option), ENT_QUOTES);
+                    if($candidateOption != $option) {
+                        $candidateOption = 'NOQSFEQUALS'.$candidateOption;
+                    }
+                }
+                if(!isset($parsedOptions[$candidateOption])) {
+                    $parsedOptions[$candidateOption] = 0;    
+                }
+            }
+            $options = $parsedOptions;
         }
         
-        $nametype = "";
         // code copied from elementrender.php to make fullnames work for Drupalcamp demo
         if (key($options) === "{FULLNAMES}" OR key($options) === "{USERNAMES}") {
             if (key($options) === "{FULLNAMES}") { $nametype = "name"; }
@@ -4603,7 +4688,9 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
             }
         }
 
-        if ($name != "{listofentries}") { ksort($options); }
+        if ($name != "{listofentries}") {
+            array_multisort(array_keys($options), SORT_NATURAL, $options);
+        }
 
         $counter++;
         foreach ($options as $option=>$option_value) {
@@ -4616,8 +4703,8 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
             $selected = "";
             if (is_array($overrides) AND isset($overrides[$option])) {
                 if($multi) {
-                    $checked = (strstr($_POST[$id], "ORSET$multiCounter=".$option."//") OR strstr($_GET[$id], "ORSET$multiCounter=".$option."//")) ? "checked" : "";
-                    $filter .= "<label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$overrides[$option][1]."' $checked onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'ORSET$multiCounter=".$overrides[$option][1]."//'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('ORSET$multiCounter=".$overrides[$option][1]."//', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\">&nbsp;".$overrides[$option][0]."</label><br/>\n";
+                    $checked = (strstr($_POST[$id], "ORSET$multiCounter$ORSETOperator".$option."//") OR strstr($_GET[$id], "ORSET$multiCounter$ORSETOperator".$option."//")) ? "checked" : "";
+                    $filter .= "<label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$overrides[$option][1]."' $checked onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'ORSET$multiCounter$ORSETOperator".$overrides[$option][1]."//'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('ORSET$multiCounter$ORSETOperator".$overrides[$option][1]."//', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\">&nbsp;".$overrides[$option][0]."</label><br/>\n";
                 } else {
                     $selected = ($_POST[$id] == $option OR $_GET[$id] == $option) ? "selected" : "";
                     $filter .= "<option value=\"" . $overrides[$option][1] . "\" $selected>" . $overrides[$option][0] . "</option>\n";
@@ -4626,34 +4713,34 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
                 if (preg_match('/\{OTHER\|+[0-9]+\}/', $option)) {
                     $option = str_replace(":", "", _formulize_OPT_OTHER);
                 }
-                // if a nametype is in effect, then use the value, otherwise, use the key -- also, no longer swapping out spaces for underscores
-                $passoption = $nametype ? $option_value : $option;
+                $labeloption = $useValue ? $option_value : $option;
+                $labeloption = str_replace('NOQSFEQUALS','',$labeloption); // When the special flag is being used to override equals operator for searches, we must not show the flag! Super kludgey, but it's such a nested exception, hard to make generalized and only takes a couple lines to handle like this
                 if($multi) {
-                    $passoption = "ORSET$multiCounter=".$passoption."//";
+                    $option = "ORSET$multiCounter$ORSETOperator".$option."//";
                 }
                 if ((isset($_POST[$id]) OR isset($_GET[$id])) AND $overrides !== false) {
                     if ($name == "{listofentries}") {
-                        if($multi AND strstr("ORSET$multiCounter=".$overrides."//", $passoption)) { // the whole overrides as counter idea... so old, multi filters are not going to work with that...
+                        if($multi AND strstr("ORSET$multiCounter$ORSETOperator".$overrides."//", $option)) { // the whole overrides as counter idea... so old, multi filters are not going to work with that...
                             $selected = "checked";
-                        } elseif ( (is_numeric($overrides) AND $overrides == $counter) OR (!is_numeric($overrides) AND $overrides === $option) ) {
+                        } elseif ( (is_numeric($overrides) AND $overrides == $counter) OR (!is_numeric($overrides) AND ($overrides === $option OR $overrides === '='.$option)) ) {
                             $selected = "selected";
-                    }
-                } else {
-                        if($multi AND (strstr($_POST[$id], $passoption) OR strstr($_GET[$id],$passoption))) {
+                        }
+                    } else {
+                        if($multi AND (strstr($_POST[$id], $option) OR strstr($_GET[$id],$option))) {
                             $selected = "checked";
-                        } elseif($_POST[$id] == $passoption OR $_GET[$id] == $passoption) {
+                        } elseif($_POST[$id] == $option OR $_GET[$id] == $option) {
                            $selected = "selected";
-                }
+                        }
                     }
                 } 
                 if ($name == "{listofentries}" AND !$multi) {
                     // need to pass this stupid thing back because we can't compare the option and the contents of $_POST...a typing problem in PHP??!!
-                    $passoption = "qsf_".$counter."_$passoption";
+                    $option = "qsf_".$counter."_$option";
                 }
                 if($multi) {
-                    $filter .= " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$passoption."' $selected onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'".$passoption."'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('".$passoption."', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\">&nbsp;".formulize_swapUIText($option, $ele_uitext)."</label><br/>\n";
+                    $filter .= " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$option."' $selected onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'".$option."'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('".$option."', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\">&nbsp;".formulize_swapUIText($labeloption, $ele_uitext)."</label><br/>\n";
                 } else {
-                    $filter .= "<option value=\"$passoption\" $selected>".formulize_swapUIText($option, $ele_uitext)."</option>\n";
+                    $filter .= "<option value=\"$option\" $selected>".formulize_swapUIText($labeloption, $ele_uitext)."</option>\n";
                 }
             }
             $counter++;
@@ -4769,7 +4856,7 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
         // load the saved view requested, and get everything ready for calling gatherDataSet
         // pubfilters are ignored, not relevant for just getting calculations
         // the way this is all parsed may not be entirely right! reading in view and parsing cols, searches, etc, should be standardized in functions, this repeats some code from entriesdisplay.php that should be refactored!
-        list($_POST['currentview'], $_POST['oldcols'], $_POST['asearch'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $_POST['hlist'], $_POST['hcalc'], $_POST['lockcontrols'], $quicksearches, $settings['global_search'], $pubfilters) = loadReport($savedView, $fid, $frid);
+        list($_POST['currentview'], $_POST['oldcols'], $_POST['asearch'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $_POST['hlist'], $_POST['hcalc'], $_POST['lockcontrols'], $quicksearches, $settings['global_search'], $pubfilters, $entriesPerPage) = loadReport($savedView, $fid, $frid);
         // must check for this and set it here, inside this section, where we know for sure that $_POST['lockcontrols'] has been set based on the database value for the saved view, and not anything else sent from the user!!!  Otherwise the user might be injecting a greater scope for themselves than they should have!
         $currentViewCanExpand = $_POST['lockcontrols'] ? false : true;
         // explode quicksearches into the search_ values
@@ -5740,6 +5827,17 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                 $literalToDBValue = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm];
                 // use the already declared API format value (determined when conditional elements are generated for example)
                 $plainLiteralValue = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm];
+                // if the $bareFilterTerm is a linked element that points to the element we're querying against, then switch to the value of that element as found in the entry with entry id matching the asynch literal DB value. Bewildering but works.
+                $curlyBracketElementObject = $element_handler->get($bareFilterTerm);
+                if ($curlyBracketElementObject->isLinked) {
+                    $curlyBracketTargetElementEleValue = $curlyBracketElementObject->getVar('ele_value');
+                    $curlyBracketTargetElementEleValueProperties = explode("#*=:*", $curlyBracketTargetElementEleValue[2]);
+                    $curlyBracketTargetElementLinkedSourceElementObject = $element_handler->get($curlyBracketTargetElementEleValueProperties[1]);
+                    if($curlyBracketTargetElementLinkedSourceElementObject AND $curlyBracketTargetElementLinkedSourceElementObject->getVar('ele_id') == $filterElementIds[$filterId] AND $curlyBracketTargetElementEleValue['snapshot'] != 1) {
+                        $dataHandler = new formulizeDataHandler($curlyBracketTargetElementEleValueProperties[0]);
+                        $literalToDBValue = $dataHandler->getElementValueInEntry($literalToDBValue, $filterElementIds[$filterId]);
+                    }
+                }
 			} elseif(!isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm])) {
                 // convert any literal terms (including {} references to linked selectboxes) into the actual DB value...based on current saved value
                 $literalToDBValue = prepareLiteralTextForDB($filterElementObject, $filterTerms[$filterId], $curlyBracketEntry, $userComparisonId); // prepends checkbox characters and converts yes/nos, {USER}, etc
@@ -5895,38 +5993,38 @@ function formulize_xhr_send(op,params) {
 <?php
 }
 
+// provides the token that is associated witht he entry locking/unlocking for this page load
+function getEntryLockSecurityToken() {
+    static $token;
+    $token = $token ? $token : $GLOBALS['xoopsSecurity']->createToken(0, 'formulize_entry_lock_token');
+    return $token;
+}
+
 // this function creates the javascript snippet that will send the kill locks request
-// unload causes it to return the script necessary for in an unload event, which uses a different call
+// unload causes it to return the script necessary for in an unload event, which uses a different call (beacon)
 function formulize_javascriptForRemovingEntryLocks($unload=false) {
-    global $entriesThatHaveBeenLockedThisPageLoad, $xoopsUser;
-        $token = $GLOBALS['xoopsSecurity']->createToken();
+    static $cachedJS = array();
+    if(count($cachedJS)==0) { // prepare everything only once
+        global $entriesThatHaveBeenLockedThisPageLoad, $xoopsUser;
+        $token = getEntryLockSecurityToken();
         $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
         formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/temp/", ".token");
-        file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/temp/'.$token.'.token', '');
-    if($unload) {
-        // write a value that we can check later as an antiCSRF token. Cannot validate through the built in token system since it relies on session which will be borked if the user logs out.
-        $js = "var fd = new FormData();\n";
-        $js .= "fd.append('token', '".$token."');\n";
-        $js .= "fd.append('uid', '".$uid."');\n"; 
-        foreach($entriesThatHaveBeenLockedThisPageLoad as $thisForm=>$theseEntries) {
-            foreach(array_keys($theseEntries) as $thisEntryId) {
-                $js .= "fd.append('entry_ids_".$thisForm."[]', $thisEntryId);\n";
-            }
+        if(count($entriesThatHaveBeenLockedThisPageLoad)>0) {
+            file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/temp/'.$token.$uid.'.token', serialize($entriesThatHaveBeenLockedThisPageLoad));
         }
-        $js .= "fd.append('form_ids[]', [".implode(", ", array_keys((array) $entriesThatHaveBeenLockedThisPageLoad))."]);\n";
-        $js .= "navigator.sendBeacon('".XOOPS_URL."/modules/formulize/formulize_deleteEntryLock.php', fd);\n";
-    } else {
-        $js = "jQuery.post('".XOOPS_URL."/modules/formulize/formulize_deleteEntryLock.php', {\n";
-        $js .= "    'token': '".$token."',\n";
-        $js .= "    'uid': '".$uid."',\n";
-    foreach($entriesThatHaveBeenLockedThisPageLoad as $thisForm=>$theseEntries) {
-            $js .= "			'entry_ids_".$thisForm."[]': [".implode(", ", array_keys($theseEntries))."], \n";
+        // write a value that we can check later as an antiCSRF token. Cannot validate through the built in token system since it relies on session which will be borked if the user logs out. So we write a file instead.
+        // must be raw js since this is sent through the beacon after page is torn down
+        $cachedJS['unload'] = "var fd = new FormData();\n";
+        $cachedJS['unload'] .= "fd.append('formulize_entry_lock_token', '".$token."');\n";
+        $cachedJS['unload'] .= "fd.append('formulize_entry_lock_uid', '".$uid."');\n"; 
+        $cachedJS['unload'] .= "navigator.sendBeacon('".XOOPS_URL."/modules/formulize/formulize_deleteEntryLock.php', fd);\n";
+        // can do cleaner with jQuery since this runs inside the page while it exists
+        $cachedJS['jQuery'] = "jQuery.post('".XOOPS_URL."/modules/formulize/formulize_deleteEntryLock.php', {\n";
+        $cachedJS['jQuery'] .= "    'formulize_entry_lock_token': '".$token."',\n";
+        $cachedJS['jQuery'] .= "    'formulize_entry_lock_uid': '".$uid."',\n";
+        $cachedJS['jQuery'] .= "    async: false\n});\n";
     }
-    $js .= "     'form_ids[]': [".implode(", ", array_keys((array) $entriesThatHaveBeenLockedThisPageLoad))."],
-    async: false
-});\n";
-    }
-    return $js;
+    return $unload ? $cachedJS['unload'] : $cachedJS['jQuery'];
 }
 
 
@@ -7084,7 +7182,9 @@ function formulize_parseSearchesIntoFilter($searches) {
 			  if($allowsMulti) {
 				$one_search = $qsfparts[2]; // will default to using LIKE since there's no operator
 			  } else {
-				$one_search = "=".$qsfparts[2];
+                // if we've received the flag to not use the equals operator, remove the flag and don't use the operator
+                $finalQSFParts2 = str_replace('NOQSFEQUALS','',$qsfparts[2]);
+				$one_search = $finalQSFParts2 == $qsfparts[2] ? "=".$qsfparts[2] : $finalQSFParts2; // if no flag, two strings will be identical because nothing removed. simple, one speedy operation this way
 			  }
 		    }
 	
@@ -7824,8 +7924,10 @@ function updateMultipageTemplates($screen) {
     foreach($fileMappings as $oldFile=>$newFiles) {
         if(file_exists($path.$oldFile.'.php')) {
             foreach($newFiles as $newFile) {
-                if(!copy($path.$oldFile.'.php', $path.$newFile.'.php')) {
-                    exit("Could not copy $oldFile to $newFile for screen ".$screen->getVar('sid').". Please notify the webmaster or contact info@formulize.org for assistance.");
+                if(!file_exists($path.$newFile.'.php')) {
+                    if(!copy($path.$oldFile.'.php', $path.$newFile.'.php')) {
+                        exit("Could not copy $oldFile to $newFile for screen ".$screen->getVar('sid').". Please notify the webmaster or contact info@formulize.org for assistance.");
+                    }
                 }
             }
             unlink($path.$oldFile.'.php');
@@ -7861,6 +7963,33 @@ function setupParentFormValuesInPostAndReturnEntryId() {
     unset($_POST['goto_sfid']);
     unset($_POST['sub_fid']);
     return $go_back_entry[$lastKey];
+}
+
+// this function takes a form id number and returns an array of the records in the DB where entries were found that did not have ownership info
+// it repairs the ownership info of those entries, based on the current group memberships of the creation uid of the entries
+function repairEOGTable($fid) {
+    //check to see if there are entries in the form which 
+    //do not appear in the entry_owner_groups table. If so, it finds the 
+    // owner/creator of the entry and calls setEntryOwnerGroups() which inserts the
+    //first, get the form ids and handles.
+    if($fid = intval($fid)) {
+        global $xoopsDB;
+        $form_handler = xoops_getmodulehandler('forms','formulize');
+        $formObject = $form_handler->get($fid);
+        $form_handle = $formObject->getVar('form_handle');
+        $missingEntries=q("SELECT main.entry_id,main.creation_uid From " . $xoopsDB->prefix("formulize_".$form_handle) . " as main WHERE NOT EXISTS(
+        SELECT 1 FROM " . $xoopsDB->prefix("formulize_entry_owner_groups") . " as eog WHERE eog.fid=$fid and eog.entry_id=main.entry_id )");
+        //now we got the missing entries in the form and the users who created them.    
+        $data_handler = new formulizeDataHandler($fid);
+        foreach ($missingEntries as $entry){
+            if (!$groupResult = $data_handler->setEntryOwnerGroups($entry['creation_uid'],$entry['entry_id'],true)) {
+                print "ERROR: failed to write the entry ownership information to the database.<br>";
+            }
+        }
+        return $missingEntries;
+    } else {
+        error_log('Formulize error: invalid fid passed to repairEOGTable');
+    }
 }
 
 // user offset from server tz
@@ -7940,4 +8069,5 @@ function getDaylightSavingsAdjustment($userTimeZone, $compareTimeZone, $timestam
         }
     }
     return $adjustment;
+
 }

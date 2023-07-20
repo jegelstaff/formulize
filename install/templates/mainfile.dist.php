@@ -77,7 +77,16 @@ if (!defined("XOOPS_MAINFILE_INCLUDED")) {
                     $base_url = '';
                     break;
                 } else {
-                    $base_url = str_replace('\\','/',substr(XOOPS_ROOT_PATH,$slashPos));
+                    // starting from the point of divergence, take the XOOPS_ROOT_PATH characters because we assume they represent an additional folder past the document root (which would typically just be the root of the website)
+                    // however, in rare cases the server might be configured to name the document root fundamentally differently if it's got an alias for a folder going on or something
+                    // so to rule out that case, we need to check if there is a correspondence at the other end of the two strings. Ugh.
+                    $lastSlashRP = strrpos(XOOPS_ROOT_PATH,$slashType);
+                    $lastSlashDR = strrpos($_SERVER["DOCUMENT_ROOT"],$slashType);
+                    if($lastSlashRP AND $lastSlashDR AND substr(XOOPS_ROOT_PATH,$lastSlashRP) == substr($_SERVER["DOCUMENT_ROOT"],$lastSlashDR)) {
+                        $base_url = ''; // assume there's a configuration issue that means there is in fact no special extra folders or anything
+                    } else {
+                        $base_url = str_replace('\\','/',substr(XOOPS_ROOT_PATH,$slashPos));
+                    }
                     break;
                 }
             }

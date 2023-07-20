@@ -62,6 +62,19 @@
 		</fieldset>
 	</div>
 </div>
+
+<div class="accordion-box">
+	<div class="form-item">
+   	<fieldset>
+      <legend><label for="sortpref" class="question">How to sort values in this element</label></legend>
+			<select name="sortpref" size=1>
+				<option value="">Sort by their normal value</option>
+				<{html_options options=$content.sortoptions selected=$content.defaultsort}>
+			</select>
+		</fieldset>
+	</div>
+</div>
+
 <div style="clear:both;"></div>
 <{if $content.ele_req_on}>
 <div class="accordion-box" >

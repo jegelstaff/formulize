@@ -177,8 +177,8 @@ class formulizeCalendarScreenHandler extends formulizeScreenHandler {
         $type = $screen->getVar('caltype'); // needs to be made editable in UI!! ****************
     
         foreach($screen->getVar('datasets') as $i=>$dataset) {
-            $formframes[$i] = $dataset->getVar('frid') ? $dataset->getVar('frid') : $screen->getVar('frid') ? $screen->getVar('frid') : $screen->getVar('fid');
-            $mainforms[$i] = $dataset->getVar('fid') ? $dataset->getVar('fid') : $screen->getVar('frid') ? $screen->getVar('fid') : '';
+            $formframes[$i] = $dataset->getVar('frid') ? $dataset->getVar('frid') : ($screen->getVar('frid') ? $screen->getVar('frid') : $screen->getVar('fid'));
+            $mainforms[$i] = $dataset->getVar('fid') ? $dataset->getVar('fid') : ($screen->getVar('frid') ? $screen->getVar('fid') : '');
             $clickTemplates[$i] = $dataset->getVar('clicktemplate');
             $dateHandles[$i] = $dataset->getVar('datehandle');
             $scopes[$i] = $dataset->getVar('scope');
@@ -202,7 +202,7 @@ class formulizeCalendarScreenHandler extends formulizeScreenHandler {
         $bottomtemplate = ob_get_clean();
      
         $GLOBALS['formulize_screenCurrentlyRendering'] = $screen;
-        displayCalendar($formframes, $mainforms, $viewHandles, $dateHandles, $filters, $clickTemplates, $scopes, $hidden, $type="month", $toptemplate, $bottomtemplate, $viewentryscreens, $useaddicons, $usedeleteicons, $textcolors);
+        displayCalendar($formframes, $mainforms, $viewHandles, $dateHandles, $filters, $clickTemplates, $scopes, $hidden, 'month', $toptemplate, $bottomtemplate, $viewentryscreens, $useaddicons, $usedeleteicons, $textcolors);
         $GLOBALS['formulize_screenCurrentlyRendering'] = $previouslyRenderingScreen;
         
 	}

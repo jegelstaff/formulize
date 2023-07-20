@@ -94,7 +94,8 @@ $formulizeConfig =& $config_handler->getConfigsByCat(0, $mid);
 
 if( !$fid AND !$sid) {
     include_once XOOPS_ROOT_PATH."/modules/formulize/class/applications.php";
-	list($fid,$sid) = formulizeApplicationMenuLinksHandler::getDefaultScreenForUser();
+    $includeMenuURLs = true;
+	list($fid,$sid) = formulizeApplicationMenuLinksHandler::getDefaultScreenForUser($includeMenuURLs);
 }
 
 $screen_handler =& xoops_getmodulehandler('screen', 'formulize');
@@ -126,7 +127,8 @@ $title = $myts->displayTarea($desc_form);
 $currentURL = getCurrentURL();
 if($fid AND !$view_form = $gperm_handler->checkRight("view_form", $fid, $groups, $mid)) {
     if(strstr($currentURL, "/modules/formulize/")) { // if it's a formulize page, reload to login screen
-        redirect_header(XOOPS_URL . "/user.php?op=nopermission&xoops_redirect=$currentURL", 3, _formulize_NO_PERMISSION);
+        $nopermission = $xoopsUser ? "op=nopermission&" : ""; // no permission flag will bump the user to the All Applications page since they don't have perm for this page. If no user, they will be prompted for login.
+        redirect_header(XOOPS_URL . "/user.php?".$nopermission."xoops_redirect=".urlencode($currentURL), 3, _formulize_NO_PERMISSION, false);
     } else { // if formulize is just being included elsewhere, then simply show error and end script
         global $user;
         if(isset($GLOBALS['formulizeHostSystemUserId']) AND is_object($user) AND is_array($user->roles) AND !$xoopsUser) {

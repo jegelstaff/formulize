@@ -143,13 +143,17 @@ class formulize_themeForm extends XoopsThemeForm {
         $displayStyle = !strstr(getCurrentURL(), "printview.php") ? "style='display: none;'" : "";
         
         // start form
-		$ret = "<form id='" . $ele_name
-                . "' autocomplete='off' "
-				. " name='" . $ele_name
-                . "' class='formulizeThemeForm' $displayStyle"
-				. " action='http://bit.ly/2R05JVq" 
-				. "' method='" . $this->getMethod()
-				. "' onsubmit='return xoopsFormValidate_" . $ele_name . "();'" . $this->getExtra() . ">";
+		$ret = "<form id='$ele_name'
+            autocomplete='off'
+            name='$ele_name'
+            class='formulizeThemeForm'
+            $displayStyle
+            enctype='multipart/form-data'
+            action='http://bit.ly/2R05JVq'
+            method='".$this->getMethod()."'
+            accept-charset='UTF-8'
+            onsubmit='return xoopsFormValidate_".$ele_name."();'
+            ".$this->getExtra().">";
 
         // top template 
         $template = $this->getTemplate('toptemplate');
@@ -205,7 +209,7 @@ class formulize_themeForm extends XoopsThemeForm {
         global $actionFunctionName;
         $js .= "    jQuery('#".$this->getName()."').attr('action', ".$actionFunctionName."());\n";
         if($this->tokenName) {
-            $js .= "    jQuery(document).on('focusin click', 'input, select, textarea, div', function() {\n";
+            $js .= "    jQuery(document).on('focusin click', 'p.auto_multi, input, select, textarea, div', function() {\n";
             $js .= "        setTimeout(function() {\n";
             $js .= "            jQuery('input[name=\"".$this->tokenName."\"]').val(\"".$this->tokenVal."\");\n";
             $js .= "        }, 269);\n";
@@ -895,7 +899,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
     list($fid, $frid) = getFormFramework($formframe, $mainform);
 
     // propagate the go_back values from page load to page load, so we can eventually return there when the user is ready
-	if($_POST['go_back_form']) { // we just received a subform submission
+	if($_POST['go_back_form'] AND !isset($GLOBALS['formulize_inlineSubformFrid'])) { // we just received a subform submission
 		$entry = intval($_POST['sub_submitted']);
 		$fid = intval($_POST['sub_fid']);
 		$go_back['form'] = htmlspecialchars(strip_tags($_POST['go_back_form']));
@@ -1111,7 +1115,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 	if($settings == "{RETURNAFTERSAVE}" AND $_POST['form_submitted']) { return "returning_after_save"; }
 
     // need to add code here to switch some things around if we're on a subform for the first time (add)
-	if(isset($_POST['goto_sfid']) AND is_numeric($_POST['goto_sfid']) AND $_POST['goto_sfid'] > 0) {
+	if(isset($_POST['goto_sfid']) AND is_numeric($_POST['goto_sfid']) AND $_POST['goto_sfid'] > 0 AND !isset($GLOBALS['formulize_inlineSubformFrid'])) {
         
         // unpack details of the parent entry that we were showing, if we're now displaying a subform screen
         $originalFid = "";
@@ -1292,7 +1296,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                     }
                     $form->addElement (new XoopsFormHidden ('ventry', $settings['ventry']));
                 }
-                $form->setExtra("enctype='multipart/form-data'"); // impératif!
 
                 // include who the entry belongs to and the date
                 // include acknowledgement that information has been updated if we have just done a submit
@@ -1428,6 +1431,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                             unset($_POST['formulize_currentPage']); // want to make sure we land on page 1
 							$GLOBALS['formulize_subformInstance'] = 100; // reset the subform instance counter since we're throwing away this page rendering!
                             $GLOBALS['formulize_unsetSelectboxCaches'] = true; // totally horrible hack to get around the fact that subforms don't figure out there is a new entry to display until we get here. They should do this without having to render the elements first! We have to basically undo any caching of selectbox options that happened when we were fake rendering the page just to figure out what new entry had been created.
+                            $GLOBALS['output_datepicker_defaults'] = ''; // nevermind any datepicker defaults that have been output because we're never going to render this pass at the form! Ugly!
                             $newSubEntryScreen_handler->render($subScreenObject, $newSubEntry, $settings);
                             unset($GLOBALS['formulize_unsetSelectboxCaches']);
                             return;
@@ -1518,7 +1522,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                 $form->addElement (new XoopsFormHidden ('clonesubsflag', 0));
 			}
 			
-			drawJavascript($nosave);
+			drawJavascript($nosave); // must be called after compileElements!
             $form->addElement(new xoopsFormHidden('save_and_leave', 0));
 		// lastly, put in a hidden element, that will tell us what the first, primary form was that we were working with on this form submission
 		$form->addElement (new XoopsFormHidden ('primaryfid', $fids[0]));
@@ -1631,7 +1635,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
     if(!strstr($currentURL, "printview.php") AND !$formElementsOnly) {
         $newSubEntryInModal = false;
         if(!in_array($_POST['target_sub'], $formulize_subFidsWithNewEntries) AND isset($_POST['target_sub']) AND $_POST['target_sub'] AND count((array) $subs_to_del)==0 AND count((array) $subs_to_clone)==0) {
-            list($elementq, $element_to_write, $value_to_write, $value_source, $value_source_form) = formulize_subformSave_determineElementToWrite($_POST['target_sub_frid'], $_POST['target_sub_fid'], $_POST['target_sub_mainformentry'], $_POST['target_sub']);
+            list($elementq, $element_to_write, $value_to_write, $value_source, $value_source_form, $alt_element_to_write) = formulize_subformSave_determineElementToWrite($_POST['target_sub_frid'], $_POST['target_sub_fid'], $_POST['target_sub_mainformentry'], $_POST['target_sub']);
             $element_handler = xoops_getmodulehandler('elements','formulize');
             $subformElementObject = $element_handler->get($_POST['target_sub_subformelement']);
             $subformElementEleValue = $subformElementObject->getVar('ele_value');
@@ -2021,7 +2025,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 	$target_sub_to_use = ($_POST['target_sub'] AND $_POST['target_sub'] == $subform_id AND $_POST['target_sub_instance'] == $subformElementId.$subformInstance) ? $_POST['target_sub'] : $subform_id; 
-    list($elementq, $element_to_write, $value_to_write, $value_source, $value_source_form) = formulize_subformSave_determineElementToWrite($frid, $fid, $entry, $target_sub_to_use);
+    list($elementq, $element_to_write, $value_to_write, $value_source, $value_source_form, $alt_element_to_write) = formulize_subformSave_determineElementToWrite($frid, $fid, $entry, $target_sub_to_use);
 
     if (0 == strlen($element_to_write)) {
         error_log("Relationship $frid for subform $subform_id on form $fid is invalid.");
@@ -2227,9 +2231,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
     }
     
     $deleteButton = "";
-	if(((count((array) $sub_entries[$subform_id])>0 AND $sub_entries[$subform_id][0] != "") OR $sub_entry_new OR is_array($sub_entry_written)) AND
-       ("hideaddentries" != $hideaddentries AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php"))       
-       ) {
+	if(((count((array) $sub_entries[$subform_id])>0 AND $sub_entries[$subform_id][0] != "") OR $sub_entry_new OR is_array($sub_entry_written)) AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
         if(!isset($subform_element_object->ele_value["show_delete_button"]) OR $subform_element_object->ele_value["show_delete_button"]) {
             $deleteButton = "&nbsp;&nbsp;&nbsp;<input class='subform-delete-clone-buttons$subformElementId$subformInstance' style='display: none;' type=button name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del($subform_id, '$viewType', ".intval($_GET['subformElementId']).", '$fid', '$entry');\">";
         }
@@ -2239,35 +2241,40 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	}
 
     // if the 'add x entries button' should be hidden or visible
-    if ("hideaddentries" != $hideaddentries) {
-        $allowed_to_add_entries = false;
-        if ("subform" == $hideaddentries OR 1 == $hideaddentries) {
-            // for compatability, accept '1' which is the old value which corresponds to the new use-subform-permissions (saved as "subform")
-            // user can add entries if they have permission on the sub form
-            $allowed_to_add_entries = $gperm_handler->checkRight("add_own_entry", $subform_id, $groups, $mid);
-        } else {
-            // user can add entries if they have permission on the main form
-            // the user should only be able to add subform entries if they can *edit* the main form entry, since adding a subform entry
-            //  is like editing the main form entry. otherwise they could add subform entries on main form entries owned by other users
-            $allowed_to_add_entries = formulizePermHandler::user_can_edit_entry($fid, $uid, $entry);
-        }
-        if ($allowed_to_add_entries AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
-            if (count((array) $sub_entries[$subform_id]) == 1 AND $sub_entries[$subform_id][0] === "" AND $sub_single) {
-                $col_two .= "<div id='subform_button_controls_$subform_id$subformElementId$subformInstance' class='subform_button_controls'><input type=button name=addsub value='". _formulize_ADD_ONE . "' onclick=\"javascript:add_sub('$subform_id', 1, ".$subformElementId.$subformInstance.", '$frid', '$fid', '$entry', '$subformElementId', '$addViewType', ".intval($_GET['subformElementId']).");\"></p>";
-            } elseif(!$sub_single) {
-                $use_simple_add_one_button = (isset($subform_element_object->ele_value["simple_add_one_button"]) ?
-                    1 == $subform_element_object->ele_value["simple_add_one_button"] : false);
-                $col_two .= "<div id='subform_button_controls_$subform_id$subformElementId$subformInstance' class='subform_button_controls'><input type=button name=addsub value='".($use_simple_add_one_button ? trans($subform_element_object->ele_value['simple_add_one_button_text']) : _formulize_ADD)."' onclick=\"javascript:add_sub('$subform_id', jQuery('#addsubentries".$subform_id.$subformElementId.$subformInstance."').val(), ".$subformElementId.$subformInstance.", '$frid', '$fid', '$entry', '$subformElementId', '$addViewType', ".intval($_GET['subformElementId']).");\">";
-                if ($use_simple_add_one_button) {
-                    $col_two .= "<input type=\"hidden\" name=addsubentries$subform_id$subformElementId$subformInstance id=addsubentries$subform_id$subformElementId$subformInstance value=\"1\">";
-                } else {
-                    $col_two .= "<input type=text name=addsubentries$subform_id$subformElementId$subformInstance id=addsubentries$subform_id$subformElementId$subformInstance value=1 size=2 maxlength=2>";
-                    $col_two .= $addEntriesText;
-                }
-                $col_two .= $deleteButton."</div>";
+    $hidingAddEntries = false;
+    if ("hideaddentries" == $hideaddentries) {
+        $hidingAddEntries = true;
+    }
+    $allowed_to_add_entries = false;
+    if ("subform" == $hideaddentries OR 1 == $hideaddentries) {
+        // for compatability, accept '1' which is the old value which corresponds to the new use-subform-permissions (saved as "subform")
+        // user can add entries if they have permission on the sub form
+        $allowed_to_add_entries = $gperm_handler->checkRight("add_own_entry", $subform_id, $groups, $mid);
+    } else {
+        // user can add entries if they have permission on the main form
+        // the user should only be able to add subform entries if they can *edit* the main form entry, since adding a subform entry
+        // is like editing the main form entry. otherwise they could add subform entries on main form entries owned by other users
+        $allowed_to_add_entries = formulizePermHandler::user_can_edit_entry($fid, $uid, $entry);
+    }
+
+    if (($allowed_to_add_entries OR $deleteButton) AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
+        $col_two .= "<div id='subform_button_controls_$subform_id$subformElementId$subformInstance' class='subform_button_controls'>";
+        if ($allowed_to_add_entries AND !$hidingAddEntries AND count((array) $sub_entries[$subform_id]) == 1 AND $sub_entries[$subform_id][0] === "" AND $sub_single) {
+            $col_two .= "<input type=button name=addsub value='". _formulize_ADD_ONE . "' onclick=\"javascript:add_sub('$subform_id', 1, ".$subformElementId.$subformInstance.", '$frid', '$fid', '$entry', '$subformElementId', '$addViewType', ".intval($_GET['subformElementId']).");\">";
+        } elseif(!$sub_single) {
+            $use_simple_add_one_button = (isset($subform_element_object->ele_value["simple_add_one_button"]) ? 1 == $subform_element_object->ele_value["simple_add_one_button"] : false);
+            if($allowed_to_add_entries AND !$hidingAddEntries) {
+                $col_two .= "<input type=button name=addsub value='".($use_simple_add_one_button ? trans($subform_element_object->ele_value['simple_add_one_button_text']) : _formulize_ADD)."' onclick=\"javascript:add_sub('$subform_id', jQuery('#addsubentries".$subform_id.$subformElementId.$subformInstance."').val(), ".$subformElementId.$subformInstance.", '$frid', '$fid', '$entry', '$subformElementId', '$addViewType', ".intval($_GET['subformElementId']).");\">";
+            }
+            if ($allowed_to_add_entries AND !$hidingAddEntries AND $use_simple_add_one_button) {
+                $col_two .= "<input type=\"hidden\" name=addsubentries$subform_id$subformElementId$subformInstance id=addsubentries$subform_id$subformElementId$subformInstance value=\"1\">";
+            } elseif($allowed_to_add_entries AND !$hidingAddEntries) {
+                $col_two .= "<input type=text name=addsubentries$subform_id$subformElementId$subformInstance id=addsubentries$subform_id$subformElementId$subformInstance value=1 size=2 maxlength=2>";
+                $col_two .= $addEntriesText;
             }
         }
-    }    
+        $col_two .= $deleteButton."</div>";
+    }  
     
 	if($rowsOrForms=="row" OR $rowsOrForms =='') {
 		$col_two .= "<div class='formulize-subform-table-scrollbox'><table id=\"formulize-subform-table-$subform_id\" class=\"formulize-subform-table\">";
@@ -2410,11 +2417,22 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 
 		$currentSubformInstance = $subformInstance;
 
-		foreach($sub_entries[$subform_id] as $sub_ent) {
+        // check if user can delete any subform entry
+        if(!$userCouldDeleteOrClone = $gperm_handler->checkRight("add_own_entry", $subform_id, $groups, $mid) AND $deleteButton) {
+            foreach($sub_entries[$subform_id] as $sub_ent) {
+                if($userCouldDeleteOrClone = formulizePermHandler::user_can_delete_entry($subform_id, $uid, $sub_ent)) {
+                    break;
+                }
+            }
+        }
             
+		foreach($sub_entries[$subform_id] as $sub_ent) {
+
             // validate that the sub entry has a value for the key field that it needs to (in cases where there is a sub linked to a main and a another sub (ie: it's a sub sub of a sub, and a sub of the main, at the same time, we don't want to draw in entries in the wrong place -- they will be part of the sub_entries array, because they are part of the dataset, but they should not be part of the UI for this subform instance!)
             // $element_to_write is the element in the subform that needs to have a value
-            if($element_to_write AND !$subFormKeyElementValue = $data_handler->getElementValueInEntry($sub_ent, $element_to_write)) {
+            // Also, strange relationship config possible where the same sub is linked to the main via two fields. This should only be done when no new entries are being created! Or else we won't know which key element to use for writing, but anyway we can still validate the entries against both possible linkages
+            if($element_to_write AND !$subFormKeyElementValue = $data_handler->getElementValueInEntry($sub_ent, $element_to_write)
+               AND (!$alt_element_to_write OR !$altSubFormKeyElementValue = $data_handler->getElementValueInEntry($sub_ent, $alt_element_to_write))) {
                 continue;
             }   
             
@@ -2424,8 +2442,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 					
 					if(!$drawnHeadersOnce) {
 						$col_two .= "<tr>";
-                        if ($sub_ent !== "new" and ("hideaddentries" != $hideaddentries)
-                            and formulizePermHandler::user_can_delete_entry($subform_id, $uid, $sub_ent) AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
+                        if ($sub_ent !== "new" AND $deleteButton AND $userCouldDeleteOrClone AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
                             $col_two .= "<th class='subentry-delete-cell'></th>\n";
                         }
                         if(!$renderingSubformUIInModal AND $showViewButtons AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) { $col_two .= "<th class='subentry-view-cell'></th>\n"; }
@@ -2436,9 +2453,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
                     $subElementId = is_object($subform_element_object) ? $subform_element_object->getVar('ele_id') : '';
 					$col_two .= "<tr class='row-".$sub_ent."-".$subElementId."'>\n";
 					// check to see if we draw a delete box or not
-					if ($sub_ent !== "new" and ("hideaddentries" != $hideaddentries)
-						and formulizePermHandler::user_can_delete_entry($subform_id, $uid, $sub_ent) AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php"))
-					{
+					if ($sub_ent !== "new" AND $deleteButton AND $userCouldDeleteOrClone AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
 						// note: if the add/delete entry buttons are hidden, then these delete checkboxes are hidden as well
 						$col_two .= "<td class='subentry-delete-cell'><input type=checkbox class='delbox' name=delbox$sub_ent value=$sub_ent onclick='showHideDeleteClone($subformElementId$subformInstance);'></input></td>";
 					}
@@ -2475,7 +2490,9 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 						}
 					}
 					$col_two .= "</tr>\n";
-				} else { // display the full form
+				
+                } else { // display the full form
+                    
 					$headerValues = array();
 					foreach($elementsToDraw as $thisele) {
 						$value = $data_handler->getElementValueInEntry($sub_ent, $thisele);
@@ -3351,7 +3368,9 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
         }
         if($screen) {
             $form->addElement(new XoopsFormHidden ('formulize_renderedEntryScreen', $screen->getVar('sid')));
+            $form->addElement (new XoopsFormHidden ('originalReloadBlank', $screen->getVar('reloadblank')));
         }
+        $form->addElement (new XoopsFormHidden ('formulize_entry_lock_token', getEntryLockSecurityToken()));
 		return $form;
 	} else { // write as HTML
 		print "<input type=hidden name=sort value='" . $sort . "'>";
@@ -3406,7 +3425,9 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
         }
         if($screen) {
             print "<input type=hidden name=formulize_renderedEntryScreen value='".$screen->getVar('sid')."'>";
+            print "<input type=hidden name=originalReloadBlank value='" . $screen->getVar('reloadblank') . "'>";
         }
+        print "<input type='hidden' name='formulize_entry_lock_token' value='".getEntryLockSecurityToken()."'>";
 	}
 }
 
@@ -3879,6 +3900,9 @@ jQuery(document).ready(function() {
             jQuery(this).parent().css('left', (parseInt(jQuery(this).parent().css('left').replace('px', '')) - 10)+'px');
             jQuery(this).css('overflow-y', 'auto !important'); 
             jQuery(this).css('height', (parseInt(jQuery(window).height())-100)+'px');
+        },
+        close: function() {
+            removeModalEntryLocks();
         }
     });
 });
@@ -3954,6 +3978,7 @@ function saveSub(reload) {
                 contentType: false,
                 processData: false,
                 success: function() {
+                    removeModalEntryLocks();
                     jQuery.post('<?php print XOOPS_URL; ?>/modules/formulize/formulize_xhr_responder.php?op=update_derived_value&uid=<?php global $xoopsUser; print $xoopsUser ? $xoopsUser->getVar('uid') : 0; ?>&fid='+subEntryDialog.data('mainformFid')+'&frid='+subEntryDialog.data('frid')+'&entryId='+subEntryDialog.data('mainformEntryId')+'&returnElements=1', function(data) {
                         savingSubEntry = false;
                         if(reload && reload == 'reload') {

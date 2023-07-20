@@ -118,10 +118,10 @@ function patch40() {
      *
      * ====================================== */
 
-    $checkThisTable = 'formulize_screen';
-	$checkThisField = 'theme';
-	$checkThisProperty = 'Type';
-	$checkPropertyForValue = 'varchar(101)';
+    $checkThisTable = 'formulize_saved_views';
+	$checkThisField = 'sv_entriesperpage';
+	$checkThisProperty = '';
+	$checkPropertyForValue = '';
 
     $needsPatch = false;
 
@@ -483,6 +483,8 @@ function patch40() {
         $sql['form_screen_multipage_elementdefaults'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_multipage") . " ADD `elementdefaults` text NOT NULL";
         $sql['not_cons_arbitrary'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_notification_conditions") . " ADD `not_cons_arbitrary` text NULL default NULL";
         $sql['screen_theme_change'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " CHANGE `theme` `theme` varchar(101) NOT NULL default ''";
+        $sql['element_sort'] = "ALTER TABLE ".$xoopsDB->prefix("formulize") . " ADD `ele_sort` smallint(2) NULL default NULL";
+        $sql['sv_entriesperpage'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views") . " ADD `sv_entriesperpage` varchar(4) NOT NULL default ''";
 
         $needToSetSaveAndLeave = true;
         $needToSetPrintableView = true;
@@ -590,6 +592,10 @@ function patch40() {
                     $needToMigrateFormScreensToMultipage = false;
                 } elseif($key === "not_cons_arbitrary") {
                     print "Arbitrary email already added to notification options. result: OK<br>";
+                } elseif($key === "element_sort") {
+                    print "Element sorting order already added. result: OK<br>";
+                } elseif($key === "sv_entriesperpage") {
+                    print "Entries per page already added. result: OK<br>";
                 } else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }

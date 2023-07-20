@@ -428,7 +428,8 @@ td.even .formulize-element-edit-link:hover, td.odd .formulize-element-edit-link:
   #formulize-entry-lock-message #formulize-entry-lock-icon {
     float: left;
     font-size: 200%;
-    padding: 0.4em 0.7em; }
+    position: relative;
+    top: -0.2em }
 
 td a.heading-locked, td a.heading-unlocked {
   font-family: "formulize-icons";
@@ -630,6 +631,10 @@ td.head div.xoops-form-element-caption, td.head div.xoops-form-element-caption-r
 
 .formulize-spacer-column {
     width: auto;
+}
+
+span.formulize-filter-value {
+    display: none;
 }
 
 #formulize-button-controls input {

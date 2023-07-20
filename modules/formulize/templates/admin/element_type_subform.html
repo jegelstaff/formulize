@@ -85,50 +85,49 @@
 			    <fieldset>
 				    <legend><{$smarty.const._AM_ELE_SUBFORM_IFROW}></legend>
 				    <p><{$smarty.const._AM_ELE_SUBFORM_HEADINGSORCAPTIONS}></p>
-			    <div class="form-radios">
-				    <label for="elements-ele_value[4]-0"><input type="radio" id="elements-ele_value[4]-0" name="elements-ele_value[4]" value="0"<{if $content.ele_value[4] eq 0}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_HEADINGSORCAPTIONS_HEADINGS}></label>
-			    </div>
-			    <div class="form-radios">
-				    <label for="elements-ele_value[4]-1"><input type="radio" id="elements-ele_value[4]-1" name="elements-ele_value[4]" value="1"<{if $content.ele_value[4] eq 1}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_HEADINGSORCAPTIONS_CAPTIONS}></label>
-			    </div>
-<br />
-                <p><{$smarty.const._AM_ELE_SUBFORM_START}></p>
-                <div class="form-radios">
-				    <label for="elements-ele_value[2]-0"><input type="radio" id="elements-ele_value[2]-0" name="subform_start" value="empty"<{if $content.ele_value.subform_prepop_element == 0 AND $content.ele_value[2] == 0 }> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_START_EMPTY}></label>
-			    </div>
-			    <div class="form-radios">
-				    <input type="radio" id="subform_start_blanks" name="subform_start" value="blanks"<{if $content.ele_value.subform_prepop_element == 0 AND $content.ele_value[2] > 0}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_START_BLANKS1}> <input type="text" id="number_of_subform_blanks" name="number_of_subform_blanks" value="<{ $content.ele_value[2] }>" size="2" maxlength="2"/> <{$smarty.const._AM_ELE_SUBFORM_START_BLANKS2}> 
-			    </div>
-                <div class="form-radios">
-				    <input type="radio" id="subform_start_prepop" name="subform_start" value="prepop"<{if $content.ele_value.subform_prepop_element > 0 AND $content.ele_value[2] == 0 }> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_START_PREPOPULATE}> <select id="subform_start_prepop_element" name="subform_start_prepop_element" size=1><{html_options options=$content.subformelements selected=$content.ele_value.subform_prepop_element}></select>
-			    </div>
+                    <div class="form-radios">
+                        <label for="elements-ele_value[4]-0"><input type="radio" id="elements-ele_value[4]-0" name="elements-ele_value[4]" value="0"<{if $content.ele_value[4] eq 0}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_HEADINGSORCAPTIONS_HEADINGS}></label>
+                    </div>
+                    <div class="form-radios">
+                        <label for="elements-ele_value[4]-1"><input type="radio" id="elements-ele_value[4]-1" name="elements-ele_value[4]" value="1"<{if $content.ele_value[4] eq 1}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_HEADINGSORCAPTIONS_CAPTIONS}></label>
+                    </div>
+    <br />
+                    <p><{$smarty.const._AM_ELE_SUBFORM_START}></p>
+                    <div class="form-radios">
+                        <label for="elements-ele_value[2]-0"><input type="radio" id="elements-ele_value[2]-0" name="subform_start" value="empty"<{if $content.ele_value.subform_prepop_element == 0 AND $content.ele_value[2] == 0 }> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_START_EMPTY}></label>
+                    </div>
+                    <div class="form-radios">
+                        <input type="radio" id="subform_start_blanks" name="subform_start" value="blanks"<{if $content.ele_value.subform_prepop_element == 0 AND $content.ele_value[2] > 0}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_START_BLANKS1}> <input type="text" id="number_of_subform_blanks" name="number_of_subform_blanks" value="<{ $content.ele_value[2] }>" size="2" maxlength="2"/> <{$smarty.const._AM_ELE_SUBFORM_START_BLANKS2}> 
+                    </div>
+                    <div class="form-radios">
+                        <input type="radio" id="subform_start_prepop" name="subform_start" value="prepop"<{if $content.ele_value.subform_prepop_element > 0 AND $content.ele_value[2] == 0 }> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_START_PREPOPULATE}> <select id="subform_start_prepop_element" name="subform_start_prepop_element" size=1><{html_options options=$content.subformelements selected=$content.ele_value.subform_prepop_element}></select>
+                    </div>
                     <div class="description"><{$smarty.const._AM_ELE_SUBFORM_START_HELP}></div>
-<br />
-                <div class="form-item">
-                    <p><{$smarty.const._AM_ELE_SUBFORM_VIEW}></p>
-                     <div class="form-radios">
-				    <label for="elements-ele_value[3]-0"><input type="radio" id="elements-ele_value[3]-0" name="elements-ele_value[3]" value="0"<{if !$content.ele_value[3] }> checked="checked"<{/if}>/>Do not show the <i>View</i> buttons</label>
-			    </div>
-			    <div class="form-radios">
-				    <label for="elements-ele_value[3]-2"><input type="radio" id="elements-ele_value[3]-2" name="elements-ele_value[3]" value="2"<{if $content.ele_value[3] == 2 }> checked="checked"<{/if}>/>Show the <i>View</i> buttons, open entries in a dialog box. New entries show up in the dialog.</label>
-                </div>
-                    <label for="elements-ele_value[3]-3"><input type="radio" id="elements-ele_value[3]-3" name="elements-ele_value[3]" value="3"<{if $content.ele_value[3] == 3 }> checked="checked"<{/if}>/>Show the <i>View</i> buttons, open entries in a dialog box. New entries show up as new rows.</label>
-			    <div class="form-radios">
-			    </div>
-                <div class="form-radios">
-				    <label for="elements-ele_value[3]-1"><input type="radio" id="elements-ele_value[3]-1" name="elements-ele_value[3]" value="1"<{if $content.ele_value[3] == 1 }> checked="checked"<{/if}>/>Show the <i>View</i> buttons, open entries full screen (reloads the page, clicking <i>Save and Leave</i> returns to the main form)</label>
-			    </div>
-                <div class="form-radios">
-                <br>
-                <p>Disable these elements in each row:</p>
-                <select name="elements_ele_value_disabledelements[]" size="10" multiple>
-				<{html_options options=$content.subformelements selected=$content.ele_value.disabledelements}>
-                </select>
-                <div class="description">Elements selected will be rendered as "read only" values, instead of as form elements.</div>
-                </div>
-                
-                
-                </div>
+                    <div class="form-item">
+                        <p>Show <i>View</i> buttons, and view entries in a <b>dialog box</b></p>
+                        <div class="form-radios">
+                            <label for="elements-ele_value[3]-2"><input type="radio" id="elements-ele_value[3]-2" name="elements-ele_value[3]" value="2"<{if $content.ele_value[3] == 2 }> checked="checked"<{/if}>/>New entries show up in the dialog</label><br>
+                            <label for="elements-ele_value[3]-3"><input type="radio" id="elements-ele_value[3]-3" name="elements-ele_value[3]" value="3"<{if $content.ele_value[3] == 3 }> checked="checked"<{/if}>/>New entries show up as new rows</label>
+                        </div>
+                        <p>Show <i>View</i> buttons, and view entries <b>full screen</b></p>
+                        <div class="form-radios">
+                            <label for="elements-ele_value[3]-1"><input type="radio" id="elements-ele_value[3]-1" name="elements-ele_value[3]" value="1"<{if $content.ele_value[3] == 1 }> checked="checked"<{/if}>/>New entries are displayed full screen</label><br>
+                            <label for="elements-ele_value[3]-4"><input type="radio" id="elements-ele_value[3]-4" name="elements-ele_value[3]" value="4"<{if $content.ele_value[3] == 4 }> checked="checked"<{/if}>/>New entries show up as new rows</label>
+                        </div>
+                        <p>Do not show the <i>View</i> buttons</p>
+                         <div class="form-radios">
+                        <label for="elements-ele_value[3]-0"><input type="radio" id="elements-ele_value[3]-0" name="elements-ele_value[3]" value="0"<{if !$content.ele_value[3] }> checked="checked"<{/if}>/><i>View</i> buttons are off </label>
+                        </div>
+                    </div>
+                    <div class="form-item">
+                        <div class="form-radios">
+                            <p>Disable these elements in each row:</p>
+                            <select name="elements_ele_value_disabledelements[]" size="10" multiple>
+                                <{html_options options=$content.subformelements selected=$content.ele_value.disabledelements}>
+                            </select>
+                            <div class="description">Elements selected will be rendered as "read only" values, instead of as form elements.</div>
+                        </div>
+                    </div>
 			    
 			    </fieldset>
 			    </div>
@@ -152,7 +151,7 @@
 		<{html_options options=$content.subformUserFilterElements selected=$content.ele_value.SortingElement}>
 	</select>
     &nbsp;&nbsp;&nbsp;
-    <input type='radio' name='elements-ele_value[SortingDirection]' value='ASC'>A...Z</input> &nbsp;&nbsp;&nbsp; <input type='radio' name='elements-ele_value[SortingDirection]' value='DESC'>Z...A</input></p>
+    <input type='radio' name='elements-ele_value[SortingDirection]' <{if $content.ele_value.SortingDirection != 'DESC'}>checked<{/if}> value='ASC'>A...Z</input> &nbsp;&nbsp;&nbsp; <input type='radio' name='elements-ele_value[SortingDirection]' <{if $content.ele_value.SortingDirection == 'DESC'}>checked<{/if}> value='DESC'>Z...A</input></p>
 </fieldset>
 </div>
     
