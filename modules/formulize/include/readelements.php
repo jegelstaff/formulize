@@ -240,7 +240,12 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
                             $GLOBALS['formulize_subformCreateEntry'][$elementFid][] = $writtenEntryId;
                         }
                         $formulize_newEntryIds[$elementFid][] = $writtenEntryId; // log new ids (and all ids) and users for recording ownership info later
-                        $formulize_newEntryUsers[$elementFid][] = $creation_user;
+                        if(isset($GLOBALS['formulize_overrideProxyUser'])) {
+                            $formulize_newEntryUsers[$elementFid][] = intval($GLOBALS['formulize_overrideProxyUser']);
+                            unset($GLOBALS['formulize_overrideProxyUser']);
+                        } else {
+                            $formulize_newEntryUsers[$elementFid][] = $creation_user;
+                        }
                         $formulize_allWrittenEntryIds[$elementFid][] = $writtenEntryId;
                         $formulize_allSubmittedEntryIds[$elementFid][] = $writtenEntryId;
                         $formulize_newSubformBlankElementIds[$elementFid][$writtenEntryId] = $subformElementId;

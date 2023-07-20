@@ -872,6 +872,10 @@ class formulizeDataHandler  {
             }
         }
         
+        if(isset($GLOBALS['formulize_overrideProxyUser'])) {
+            $creation_uid = intval($GLOBALS['formulize_overrideProxyUser']);
+        }
+        
         if (0 == count((array) $element_values)) {
             // no values to save, which is probably caused by the onBeforeSave() handler deleting all of the values
             return null;

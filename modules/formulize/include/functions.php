@@ -4043,16 +4043,21 @@ function formulize_writeEntry($values, $entry="new", $action="replace", $proxyUs
     if (is_object($elementObject)) {
         $data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
         if ($result = $data_handler->writeEntry($entry, $values, $proxyUser, $forceUpdate)) {
-            global $xoopsUser;
-            if ($proxyUser) {
-                $ownerForGroups = $proxyUser;
-            } elseif ($xoopsUser) {
-                $ownerForGroups = $xoopsUser->getVar('uid');
-            } else {
-                $ownerForGroups = 0;
-            }
             if ($entry == "new" AND $writeOwnerInfo) {
+                global $xoopsUser;
+                if(isset($GLOBALS['formulize_overrideProxyUser'])) {
+                    $ownerForGroups = $GLOBALS['formulize_overrideProxyUser'];
+                } elseif ($proxyUser) {
+                    $ownerForGroups = $proxyUser;
+                } elseif ($xoopsUser) {
+                    $ownerForGroups = $xoopsUser->getVar('uid');
+                } else {
+                    $ownerForGroups = 0;
+                }
                 $data_handler->setEntryOwnerGroups($ownerForGroups, $result); // result will be the ID number of the entry that was just written.
+                if(isset($GLOBALS['formulize_overrideProxyUser'])) {
+                    unset($GLOBALS['formulize_overrideProxyUser']);
+                }
             }
             return $result;
         } else {
