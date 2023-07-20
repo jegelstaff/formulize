@@ -305,20 +305,21 @@ switch($op) {
 
     list($views, $viewNames, $viewFrids, $viewPublished) = $formulizeForm->getFormViews($_POST['form_id']);
     $frameworks = $framework_handler->getFrameworksByForm($_POST['form_id']);
-    for ($i = 0; $i <= count((array) $viewNames); $i++) {
+    $sendNames = array();
+    foreach($viewNames as $i=>$viewName) {
         if(!$viewPublished[$i]) {
-            unset($views[$i]);
-            unset($viewNames[$i]);
             continue;
         }
         if($viewFrids[$i]) {
-            $viewNames[$i] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_IN_FRAME . $frameworks[$viewFrids[$i]]->getVar('name') . ")";
+            $sendNames[$views[$i]] = $viewName." (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_IN_FRAME . $frameworks[$viewFrids[$i]]->getVar('name') . ")";
         } else {
-            $viewNames[$i] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_NO_FRAME . ")";
+            $sendNames[$views[$i]] = $viewName." (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_NO_FRAME . ")";
         }
     }
-
-    $array = array_map(null, $views, $viewNames);
+    asort($sendNames);
+    // make an array where each value is an array made up of the values from the passed arrays, ie: the key from each entry in sendNames, and the value
+    // necessary because of how the iteration happens on the receiving end
+    $array = array_map(null, array_keys($sendNames), $sendNames);
 
     echo json_encode($array);
     break;
