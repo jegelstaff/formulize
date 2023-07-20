@@ -43,7 +43,7 @@ class formulizeForm extends XoopsObject {
 
 		// validate $id_form
 		global $xoopsDB;
-        
+
 		if(!is_numeric($id_form)) {
 			// set empty defaults
 			$id_form = "";
@@ -404,7 +404,7 @@ EOF;
                 }
             }
         }
-    
+
         $this->onDeleteExistingValues[$entry_id] = $existingValues;
     }
 
