@@ -167,9 +167,12 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
 
         foreach($menulinks as $menulink) {
 		
+            $url = buildMenuLinkURL($menulink);
+        
             if($menulink->getVar("menu_id") == $getMenuId
 				OR $menulink->getVar("screen") == 'sid='.$getSid
 				OR $menulink->getVar("screen") == 'fid='.$getFid
+                OR getCurrentURL() == $url
 				OR (
 				getCurrentURL() == XOOPS_URL.'/modules/formulize/' AND (
 				$menulink->getVar("screen") == 'sid='.$defaultSid
@@ -198,27 +201,14 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
         ) { // if we're viewing this application or a form in this application, or this is the being forced open (only application)...
         
 		foreach($menulinks as $menulink) {
-			$suburl = XOOPS_URL."/modules/formulize/index.php?".$menulink->getVar("screen");
-			$url = $menulink->getVar("url");
-			$target = "";
-      
-			if(strlen($url) > 0){
-                if(substr($url, 0, 1)=="/") {
-                    $url = XOOPS_URL.$url;
-                } else {
-       				$pos = strpos($url,"://");
-       				if($pos === false){
-       					$url = "http://".$url;
-       				}
-                }
-				$suburl = $url;
-                $target = strstr($url, XOOPS_URL) ? "" : " target='_blank' ";
-			}
-      $menuSubActive="";
-      if(getCurrentURL() == XOOPS_URL.'/modules/formulize/index.php?'.$menulink->getVar("screen"))
-      {
-        $menuSubActive=" menuSubActive";
-      }
+		    $url = buildMenuLinkURL($menulink);
+            $suburl = $url ? $url : XOOPS_URL."/modules/formulize/index.php?".$menulink->getVar("screen");
+			$target = (!$url OR strstr($url, XOOPS_URL)) ? "" : " target='_blank' ";
+            $menuSubActive="";
+            if(getCurrentURL() == XOOPS_URL.'/modules/formulize/index.php?'.$menulink->getVar("screen")
+                OR getCurrentURL() == $url) {
+                $menuSubActive=" menuSubActive";
+            }
             $text = $menulink->getVar("text");
 			$block .= "<a class=\"menuSub$menuSubActive\" $target href='$suburl'>".$text."</a>";
             $data['subs'][] = array('url'=>$suburl, 'title'=>$text, 'active'=>($menuSubActive ? 1 : 0));

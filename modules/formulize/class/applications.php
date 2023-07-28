@@ -606,4 +606,20 @@ class formulizeApplicationsHandler {
 }
 
 
+function buildMenuLinkURL($menulink) {
+    $url = $menulink->getVar("url");
+    if(strlen($url) > 0){
+        if(substr($url, 0, 1)=="/") {
+            $url = XOOPS_URL.$url;
+        } else {
+            $pos = strpos($url,"://");
+            if($pos === false){
+                $url = "http://".$url;
+            }
+        }
+    }
+    return $url;
+}
+
+
 
