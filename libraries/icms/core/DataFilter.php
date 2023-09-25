@@ -245,7 +245,7 @@ class icms_core_DataFilter {
 	 * @param $options2
 	 */
 	static public function checkVar($data, $type, $options1 = '', $options2 = '') {
-		if (!$data || !$type) return false;
+		if ((!$data && !is_numeric($data)) || !$type) return false; // allow zeros through
 
 		$valid_types = array('url', 'email', 'ip', 'str', 'int', 'special', 'html', 'text');
 		if (!in_array($type, $valid_types)) {
