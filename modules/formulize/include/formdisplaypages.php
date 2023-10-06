@@ -272,6 +272,10 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 	
 	// display a form if that's what this page is...
 	if($currentPage != $thanksPage AND $pages[$currentPage][0] !== "HTML" AND $pages[$currentPage][0] !== "PHP") {
+        
+        if($currentPage == 1 AND $pages[1][0] !== "HTML" AND $pages[1][0] !== "PHP" AND !$_POST['goto_sfid']) { // only show intro text on first page if there's actually a form there
+            print undoAllHTMLChars($introtext);
+        }
 	
 		foreach($pages[$currentPage] as $element) {
             $elements_allowed[] = $element;
@@ -288,7 +292,8 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 	
         if(!$elements_only) {
             
-            $GLOBALS['formulize_displayingMultipageScreen'] = $screen ? array('sid'=>$screen->getVar('sid')) : array('sid'=>false);
+            global $formulize_displayingMultipageScreen;
+            $formulize_displayingMultipageScreen = $screen ? array('sid'=>$screen->getVar('sid')) : array('sid'=>false);
             
             $showPageTitles = ($screen AND $screen->getUIOption('showpagetitles')) ? true : false;
             $titleOverride = (isset($pageTitles[$currentPage]) AND $showPageTitles) ? trans($pageTitles[$currentPage]) : "all"; // we can pass in any text value as the titleOverride, and it will have the same effect as "all", but the alternate text will be used as the title for the form

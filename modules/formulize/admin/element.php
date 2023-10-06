@@ -326,6 +326,9 @@ if ($ele_type=='text') {
     if(!isset($ele_value['show_clone_button'])) {
         $ele_value['show_clone_button'] = 1;
     }
+    if(!isset($ele_value['FilterByElementStartState'])) {
+        $ele_value['FilterByElementStartState'] = 0;
+    }
     
     $ele_value['enforceFilterChanges'] = isset($ele_value['enforceFilterChanges']) ? $ele_value['enforceFilterChanges'] : 1;
     
@@ -395,7 +398,11 @@ if ($ele_type=='text') {
 
 } elseif ($ele_type=="radio") {
     $ele_value = formulize_mergeUIText($ele_value, $ele_uitext);
-    $options['useroptions'] = $ele_value;
+    $newEleValueForRadios = array();
+    foreach($ele_value as $k=>$v) {
+        $newEleValueForRadios[str_replace('&', '&amp;', $k)] = $v;
+    }
+    $options['useroptions'] = $newEleValueForRadios;
 
 } elseif ($ele_type=="select") {
     if ($ele_id == "new") {

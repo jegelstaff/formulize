@@ -317,7 +317,8 @@ class formulizeElementRenderer{
 					}
 					$module_id = getFormulizeModId();
 					
-                    $pgroupsfilter = prepareLinkedElementGroupFilter($sourceFid, $ele_value[3], $ele_value[4], $ele_value[6]);
+                    $ele_value['formlink_useonlyusersentries'] = isset($ele_value['formlink_useonlyusersentries']) ? $ele_value['formlink_useonlyusersentries'] : 0;
+                    $pgroupsfilter = prepareLinkedElementGroupFilter($sourceFid, $ele_value[3], $ele_value[4], $ele_value[6], $ele_value['formlink_useonlyusersentries']);
 					
 					$sourceFormObject = $form_handler->get($sourceFid);
 
@@ -803,12 +804,10 @@ class formulizeElementRenderer{
                 foreach($ele_value as $iKey=>$iValue) {
 					switch ($ele_type){
 						case 'radio':
-							$options[$opt_count] = $myts->stripSlashesGPC($iKey);
-              $options[$opt_count] = $myts->displayTarea($options[$opt_count]);
+                            $options[$opt_count] = $myts->displayTarea($iKey, 1); // 1 means allow HTML through
 						break;
 						case 'yn':
 							$options[$opt_count] = constant($iKey);
-							$options[$opt_count] = $myts->stripSlashesGPC($options[$opt_count]);
 						break;
 					}
 					if( $iValue > 0 ){
@@ -1160,33 +1159,6 @@ class formulizeElementRenderer{
 	}
 
 	function formulize_renderQuickSelect($form_ele_id, $cachedLinkedOptionsFilename, $default_value='', $default_value_user='none', $maxLength=30, $validationOnly=false, $multiple = 0) {
-        
-        static $autocompleteIncluded = false;
-        if(!$autocompleteIncluded AND !$validationOnly) {
-            // elementId is the hidden element we're interacting with - can be a series of elements with [] which would be the case if multiple is set
-            // value is the value we're setting
-            // change is a flag to indicate if we trigger a change on the element when we do this
-            // multiple indicates if this is a multi-select autocomplete
-            $output .= "<script type='text/javascript'>
-            
-            function setAutocompleteValue(elementId, value, change, multiple) {
-                if(multiple) {
-                    var targetElementId = 'last_selected_'+elementId;
-                } else {
-                    var targetElementId = elementId;
-                }
-                if(change) {
-                    jQuery('#'+targetElementId).val(value).trigger('change');
-                } else {
-                    jQuery('#'+targetElementId).val(value);
-                }
-                formulizechanged=1;
-            }
-            
-            </script>\n";
-            
-            $autocompleteIncluded = true;
-        }
         
         if($multiple) {
             global $easiestml_lang;

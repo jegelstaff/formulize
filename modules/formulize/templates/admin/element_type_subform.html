@@ -22,6 +22,9 @@
 		 <div class="form-radios">
 		     <label for="elements-ele_value[8]-form"><input type="radio" id="elements-ele_value[8]-form" name="elements-ele_value[8]" value="form"<{if $content.ele_value[8] eq 'form'}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_UITYPE_FORM}></label>
 		 </div>
+         <div class="form-radios">
+		     <label for="elements-ele_value[8]-flatform"><input type="radio" id="elements-ele_value[8]-flatform" name="elements-ele_value[8]" value="flatform"<{if $content.ele_value[8] eq 'flatform'}> checked="checked"<{/if}>/>Display each subform entry using the full form, NOT inside a collapsable area</label>
+		 </div>
 		</div>
 
         <div class="form-item">
@@ -172,6 +175,9 @@
         <select name="elements-ele_value[UserFilterByElement]" size="1">
             <{html_options options=$content.subformUserFilterElements selected=$content.ele_value.UserFilterByElement}>
         </select>
+        <p>If users can filter manually:<br>
+        <label for='startstate-0'><input type='radio' checked id='startstate-0' name='elements-ele_value[FilterByElementStartState]' value=0> Start by showing no entries, user must filter to see entries</label><br>
+        <label for='startstate-1'><input type='radio' id='startstate-1' name='elements-ele_value[FilterByElementStartState]' value=1> Start by showing entries normally, user can refine the list</label></p>
     </div>            
     <div class="description">
         If you allow the user to filter based on a selected element, then no subform entries will appear until the user has typed something in the filter box. Then, only the matching entries will be shown. Filters you specify above will be applied in addition to the filter the user types.
@@ -215,6 +221,8 @@
 		});
 	});
 	
+    $("#startstate-<{$content.ele_value.FilterByElementStartState}>").attr('checked',1);
+    
     $("#subform_start_prepop_element").change(function() {
        $("#subform_start_prepop").attr("checked", "checked");
     });

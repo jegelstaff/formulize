@@ -449,8 +449,10 @@ if ($screen_id != "new" && $settings['type'] == 'form') {
             $formObject = new formulizeForm($form_id, true); // true causes all elements, even ones now shown to any user, to be included
             $elements = $formObject->getVar('elements');
             $elementCaptions = $formObject->getVar('elementCaptions');
+            $elementColheads = $formObject->getVar('elementColheads');
             foreach($elementCaptions as $key=>$elementCaption) {
-                $options[$elements[$key]] = printSmart(trans(strip_tags($elementCaption))); // need to pull out potential HTML tags from the caption
+                print $elementColheads[$key] .'-'.$elementCaption.'<br>';
+                $options[$elements[$key]] = trans(strip_tags($elementColheads[$key])) ? printSmart(trans(strip_tags($elementColheads[$key]))) : printSmart(trans(strip_tags($elementCaption))); // need to pull out potential HTML tags from the caption/colhead
             }
             return $options;
         }

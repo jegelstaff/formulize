@@ -31,6 +31,10 @@ time, mark, audio, video {
   vertical-align: baseline;
 }
 
+input {
+    font-family: inherit;
+}
+
 /* HTML5 display-role reset for older browsers */
 article, aside, details, figcaption, figure,
 footer, header, hgroup, menu, nav, section {
@@ -1620,7 +1624,7 @@ table.formulize-subform-table th p a:hover {
     color: black;
     text-decoration: none;
 }
-.subform-accordion-container {
+.subform-accordion-container, .subform-flatform-container {
     margin-top: 1.5em;
 }
 .subform-entry-container .ui-state-default {
@@ -1636,6 +1640,14 @@ table.formulize-subform-table th p a:hover {
     top: -0.5em;
     position: relative;
 }
+
+.subform-entry-container .flatform-name {
+    position: relative;
+    font-size: 1.2rem;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
 .subform-entry-container .ui-accordion-header-icon {
     transform: scale(1.5);
 }

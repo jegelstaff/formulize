@@ -1185,7 +1185,10 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 	$formulizeConfig = $config_handler->getConfigsByCat(0, $mid);
 	// remove the all done button if the config option says 'no', and we're on a single-entry form, or the function was called to look at an existing entry, or we're on an overridden Multi-entry form
     $allDoneOverride = (!$formulizeConfig['all_done_singles'] AND !$profileForm AND (($single OR $overrideMulti OR $original_entry) AND !$_POST['target_sub'] AND !$_POST['goto_sfid'] AND !$_POST['deletesubsflag'] AND !$_POST['parent_form'])) ? true : false;
-    if(($allDoneOverride OR (isset($_POST['save_and_leave']) AND $_POST['save_and_leave'])) AND $_POST['form_submitted']) {
+    global $formulize_displayingMultipageScreen;
+    if((($formulize_displayingMultipageScreen === false AND $allDoneOverride)
+        OR (isset($_POST['save_and_leave']) AND $_POST['save_and_leave']))
+        AND $_POST['form_submitted']) {
 		drawGoBackForm($go_back, $currentURL, $settings, $entry, $screen);
 		print "<script type=\"text/javascript\">window.document.go_parent.submit();</script>\n";
 		return;
@@ -2222,7 +2225,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
     
     // hacking in a filter for existing entries
     if($subform_element_object AND isset($subform_element_object->ele_value["UserFilterByElement"]) AND $subform_element_object->ele_value["UserFilterByElement"]) {
-        $col_two .= "<br>"._formulize_SUBFORM_FILTER_SEARCH."<input type='text' name='subformFilterBox_$subformInstance' value='".htmlspecialchars(strip_tags(str_replace("'","&#039;",$_POST['subformFilterBox_'.$subformInstance])))."' /> <input type='button' value='"._formulize_SUBFORM_FILTER_GO."' onclick='validateAndSubmit();' /><br>";
+        $col_two .= "<br>"._formulize_SUBFORM_FILTER_SEARCH."<input type='text' name='subformFilterBox_$subformInstance' value='".htmlspecialchars(strip_tags(str_replace("'","&#039;",$_POST['subformFilterBox_'.$subformInstance])))."' onkeypress='javascript: if(event.keyCode == 13) validateAndSubmit();'/> <input type='button' value='"._formulize_SUBFORM_FILTER_GO."' onclick='validateAndSubmit();' /><br>";
 	} else {
 		$col_two .= "";
     }
@@ -2278,7 +2281,9 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	} else {
 		$col_two .= "";
 		if(!strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
-			$col_two .= "<div id=\"subform-$subformElementId$subformInstance\" class=\"subform-accordion-container\" subelementid=\"$subformElementId$subformInstance\" style=\"display: none;\">";
+            $styleDisplayNone = $rowsOrForms == 'flatform' ? "" : "style=\"display: none;\"";
+            $accordionClassName = $rowsOrForms == 'flatform' ? "subform-flatform-container" : "subform-accordion-container";
+			$col_two .= "<div id=\"subform-$subformElementId$subformInstance\" class=\"$accordionClassName\" subelementid=\"$subformElementId$subformInstance\" $styleDisplayNone>";
 		}
 		$col_two .= "<input type='hidden' name='subform_entry_".$subformElementId.$subformInstance."_active' id='subform_entry_".$subformElementId.$subformInstance."_active' value='' />";
 	}
@@ -2340,7 +2345,11 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 						ob_end_clean();
                         if($unsetDisabledFlag) { unset($GLOBALS['formulize_forceElementsDisabled']); }
 						if($col_two_temp OR $renderResult == "rendered" OR $renderResult == "rendered-disabled") { // only draw in a cell if there actually is an element rendered (some elements might be rendered as nothing (such as derived values)
-							$col_two .= "<td class='formulize_subform_".$thisele."'>$col_two_temp</td>\n";
+                            $textAreaClass = '';
+                            if($elementObject = _getElementObject($thisele)) {
+                                $textAreaClass = $elementObject->getVar('ele_type') == 'textarea' ? ' subform-textarea-element' : '';  
+                            }
+							$col_two .= "<td class='formulize_subform_".$thisele.$textAreaClass."'>$col_two_temp</td>\n";
 						} else {
 							$col_two .= "<td>******</td>";
 						}
@@ -2375,7 +2384,10 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
                 $sortClause = " $sortTablePrefix.`".$sortElementObject->getVar('ele_handle')."` ".$sortDirection;
             }
         } 
-		
+
+        // apply any filter from the user if applicable
+        // if no start state given, then show nothing
+        $filterClause = "";
         if(isset($subform_element_object->ele_value["UserFilterByElement"]) AND $subform_element_object->ele_value["UserFilterByElement"]) {
             $matchingEntryIds = array();
             if(isset($_POST['subformFilterBox_'.$subformInstance]) AND $_POST['subformFilterBox_'.$subformInstance]) {
@@ -2384,13 +2396,15 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
                 foreach($matchingEntries as $matchingEntry) {
                     $matchingEntryIds = array_merge($matchingEntryIds, internalRecordIds($matchingEntry, $subform_id));
                 }
-                $filterClause = " AND sub.entry_id IN (".implode(",", $matchingEntryIds).")";
-            } else {
+                if(count($matchingEntryIds)>0) {
+                    $filterClause = " AND sub.entry_id IN (".implode(",", $matchingEntryIds).")";
+                } else {
+                    $filterClause = " AND false ";
+                }
+            } elseif(!isset($subform_element_object->ele_value["FilterByElementStartState"]) OR $subform_element_object->ele_value["FilterByElementStartState"] == 0) {
                 $filterClause = " AND false ";
             }
-        } else {
-            $filterClause = "";
-        }
+        } 
         
 		$sformObject = $form_handler->get($subform_id);
 		$subEntriesOrderSQL = "SELECT sub.entry_id FROM ".$xoopsDB->prefix("formulize_".$sformObject->getVar('form_handle'))." as sub $joinClause WHERE sub.entry_id IN (".implode(",", $sub_entries[$subform_id]).") $filterClause ORDER BY $sortClause";
@@ -2399,7 +2413,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 			while($subEntriesOrderArray = $xoopsDB->fetchArray($subEntriesOrderRes)) {
 				$sub_entries[$subform_id][] = $subEntriesOrderArray['entry_id'];
 			}
-		}
+		} 
 
 		$currentSubformInstance = $subformInstance;
 
@@ -2465,7 +2479,11 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
                                     $col_two_temp = formulize_numberFormat($col_two_temp, $thisele);
                                     $textAlign = " right-align-text";
                                 }
-								$col_two .= "<td class='formulize_subform_".$thisele."$textAlign'>$col_two_temp</td>\n";
+                                $textAreaClass = '';
+                                if($elementObject = _getElementObject($thisele)) {
+                                    $textAreaClass = $elementObject->getVar('ele_type') == 'textarea' ? ' subform-textarea-element' : '';  
+                                }
+								$col_two .= "<td class='formulize_subform_".$thisele."$textAlign$textAreaClass'>$col_two_temp</td>\n";
 							} else {
 								$col_two .= "<td>******</td>";
 							}
@@ -2482,7 +2500,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 						$value = prepvalues($value, $element_object->getVar("ele_handle"), $sub_ent);
 						if (is_array($value))
 							$value = implode(" - ", $value); // may be an array if the element allows multiple selections (checkboxes, multiselect list boxes, etc)
-						$headerValues[] = $value;
+						$headerValues[] = undoAllHTMLChars($value);
 					}
 					$headerToWrite = implode(" &mdash; ", $headerValues);
 					if(str_replace(" &mdash; ", "", $headerToWrite) == "") {
@@ -2496,9 +2514,13 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 					}
 					
 					if(!strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
-						$col_two .= "<div class=\"subform-deletebox\">$deleteBox</div><div class=\"subform-entry-container\" id=\"subform-".$subform_id."-"."$sub_ent\">
-	<p class=\"subform-header\"><a class=\"accordion-name-anchor\" href=\"#\"><span class=\"accordion-name\">".$headerToWrite."</span></a></p>
-	<div class=\"accordion-content content\">";
+						$col_two .= "<div class=\"subform-deletebox\">$deleteBox</div><div class=\"subform-entry-container\" id=\"subform-".$subform_id."-"."$sub_ent\"><p class=\"subform-header\">";
+                        if($rowsOrForms == 'flatform') {
+                            $col_two .= "<p class=\"flatform-name\">".$headerToWrite."</p>";
+                        } else {
+                            $col_two .= "<a class=\"accordion-name-anchor\" href=\"#\"><span class=\"accordion-name\">".$headerToWrite."</span></a>";
+                        }
+                        $col_two .= "</p><div class=\"accordion-content content\">";
 					}
 					ob_start();
 					$GLOBALS['formulize_inlineSubformFrid'] = $frid;
@@ -2533,29 +2555,34 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
         <script>";	
 	} else {
 		if(!strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
-			$col_two .= "</div>"; // close of the subform-accordion-container
+            // close of the subform-accordion-container
+			$col_two .= "</div>
+            <script type=\"text/javascript\">"; 
 		}
-		$col_two .= "\n
-<script type=\"text/javascript\">
-	jQuery(document).ready(function() {
-		jQuery(\"#subform-$subformElementId$subformInstance\").accordion({
-            heightStyle: 'content', 
-            autoHeight: false, // legacy
-			collapsible: true, // sections can be collapsed
-			active: ";
-			if($_POST['target_sub_instance'] == $subformElementId.$subformInstance AND $_POST['target_sub'] == $subform_id) {
-				$col_two .= count((array) $sub_entries[$subform_id])-$_POST['numsubents'];
-			} elseif(is_numeric($_POST['subform_entry_'.$subformElementId.$subformInstance.'_active'])) {
-				$col_two .= $_POST['subform_entry_'.$subformElementId.$subformInstance.'_active'];
-			} else {
-				$col_two .= 'false';
-			}
-			$col_two .= ",
-			header: \"> div > p.subform-header\"
-		});
-		jQuery(\"#subform-$subformElementId$subformInstance\").fadeIn();
-	});
-    ";
+        
+        if($rowsOrForms=='form') { // if we're doing accordions, put in the JS, otherwise it's flat-forms
+        
+            $col_two .= "
+                    jQuery(document).ready(function() {
+                        jQuery(\"#subform-$subformElementId$subformInstance\").accordion({
+                            heightStyle: 'content', 
+                            autoHeight: false, // legacy
+                            collapsible: true, // sections can be collapsed
+                            active: ";
+                            if($_POST['target_sub_instance'] == $subformElementId.$subformInstance AND $_POST['target_sub'] == $subform_id) {
+                                $col_two .= count((array) $sub_entries[$subform_id])-$_POST['numsubents'];
+                            } elseif(is_numeric($_POST['subform_entry_'.$subformElementId.$subformInstance.'_active'])) {
+                                $col_two .= $_POST['subform_entry_'.$subformElementId.$subformInstance.'_active'];
+                            } else {
+                                $col_two .= 'false';
+                            }
+                            $col_two .= ",
+                            header: \"> div > p.subform-header\"
+                        });
+                        jQuery(\"#subform-$subformElementId$subformInstance\").fadeIn();
+                    });
+            ";
+        }
 
 	} // end of if we're closing the subform inferface where entries are supposed to be collapsable forms
 
@@ -3228,15 +3255,10 @@ function loadValue($prevEntry, $element, $ele_value, $owner_groups, $groups, $en
 
 
 // THIS FUNCTION FORMATS THE DATETIME INFO FOR DISPLAY CLEANLY AT THE TOP OF THE FORM
+// $dt should be a representation of a timestamp in the server timezone
 function formulize_formatDateTime($dt) {
-	// assumption is that the server timezone has been set correctly!
-	// needs to figure out daylight savings time correctly...ie: is the user's timezone one that has daylight savings, and if so, if they are currently in a different dst condition than they were when the entry was created, add or subtract an hour from the seconds offset, so that the time information is displayed correctly.
-	global $xoopsConfig, $xoopsUser;
-	$serverTimeZone = $xoopsConfig['server_TZ'];
-	$userTimeZone = $xoopsUser ? $xoopsUser->getVar('timezone_offset') : $serverTimeZone;
-	$tzDiff = $userTimeZone - $serverTimeZone;
-	$tzDiffSeconds = $tzDiff*3600;
-	
+    global $xoopsConfig, $xoopsUser;
+    $tzDiffSeconds = formulize_getUserServerOffsetSecs(timestamp: strtotime($dt));
 	if($xoopsConfig['language'] == "french") {
 		$return = setlocale(LC_TIME, "fr_FR.UTF8");
 	}
@@ -4162,6 +4184,25 @@ function removeTags(html) {
         print $output;
     }
 
+    // elementId is the hidden element we're interacting with - can be a series of elements with [] which would be the case if multiple is set
+    // value is the value we're setting
+    // change is a flag to indicate if we trigger a change on the element when we do this
+    // multiple indicates if this is a multi-select autocomplete
+    print "
+    function setAutocompleteValue(elementId, value, change, multiple) {
+        if(multiple) {
+            var targetElementId = 'last_selected_'+elementId;
+        } else {
+            var targetElementId = elementId;
+        }
+        if(change) {
+            jQuery('#'+targetElementId).val(value).trigger('change');
+        } else {
+            jQuery('#'+targetElementId).val(value);
+        }
+        formulizechanged=1;
+    }
+    ";
     print "</script>\n";
     $drawnJavascript = true;
 }

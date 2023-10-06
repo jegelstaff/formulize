@@ -2701,6 +2701,10 @@ function formatLinks($matchtext, $handle, $textWidth, $entryBeingFormatted) {
         }
     } elseif ($ele_type == 'derived') {
         return formulize_text_to_hyperlink($matchtext, $textWidth); // allow HTML codes in derived values
+    } elseif($ele_type == "textarea" AND isset($ele_value['use_rich_text']) AND $ele_value['use_rich_text']) {
+        return printSmart(strip_tags($matchtext), 100); // don't mess with rich text!
+    } elseif($ele_type == 'radio') {
+        return trans($matchtext);
     } else { // regular element
         formulize_benchmark("done formatting, about to print");
         return _formatLinksRegularElement($matchtext, $textWidth, $ele_type, $handle, $entryBeingFormatted);
@@ -2715,15 +2719,8 @@ function _formatLinksRegularElement($matchtext, $textWidth, $ele_type, $handle, 
         $matchtext = $elementTypeHandler->formatDataForList($matchtext, $handle, $entryBeingFormatted);
         return $matchtext;
     } else {
-        $elementHandler = xoops_getmodulehandler('elements', 'formulize');
-        $elementObject = $elementHandler->get($handle);
-        $ele_value = $elementObject->getVar('ele_value');
-        if($ele_type == "textarea" AND isset($ele_value['use_rich_text']) AND $ele_value['use_rich_text']) {
-          return printSmart(strip_tags($matchtext), 100); // don't mess with rich text!   
-        } else {
-        	global $myts;
-        	return formulize_text_to_hyperlink($myts->htmlSpecialChars($matchtext), $textWidth);
-        }
+        global $myts;
+        return formulize_text_to_hyperlink($myts->htmlSpecialChars($matchtext), $textWidth);
     }
 }
 
@@ -2816,12 +2813,15 @@ function getTextboxDefault($ele_value, $form_id, $entry_id, $placeholder="") {
 
 
 function getDateElementDefault($default_hint, $entry_id = false) {
-    if($default_hint == "0000-00-00") { return time(); }
-    if (preg_replace("/[^A-Z{}]/", "", $default_hint) === "{TODAY}") {
+    if($default_hint == "0000-00-00") {
+        $offset = formulize_getUserUTCOffsetSecs(); // user offset from UTC
+        return time() + $offset;
+    } elseif(preg_replace("/[^A-Z{}]/", "", $default_hint) === "{TODAY}") {
         $number = str_replace('+', '', preg_replace("/[^0-9+-]/", "", $default_hint));
-        return mktime(0, 0, 0, date("m"), (date("d") + intval($number)), date("Y"));
-    }
-	if(substr($default_hint, 0, 1) == '{' AND substr($default_hint, -1) == '}') {
+        $seedTime = mktime(date("H"), date("i"), date("s"), date("m"), (date("d") + intval($number)), date("Y")); // will be based on UTC
+        $offset = formulize_getUserUTCOffsetSecs(timestamp: $seedTime); // user offset from UTC
+        return $seedTime + $offset;
+    } elseif(substr($default_hint, 0, 1) == '{' AND substr($default_hint, -1) == '}') {
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
 		$element_handle = substr($default_hint, 1, -1);
 		$default_hint = '';
@@ -4542,7 +4542,8 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
                 list($conditionsfilter, $conditionsfilter_oom, $parentFormFrom) = buildConditionsFilterSQL($element_value[5], $source_form_id, 'new', $fakeOwnerUid, $elementFormObject, "t1");
                 $sourceEntryIdsForFilters = array(); // filters never have any preselected values from the database
                 list($sourceEntrySafetyNetStart, $sourceEntrySafetyNetEnd) = prepareLinkedElementSafetyNets($sourceEntryIdsForFilters, $conditionsfilter, $conditionsfilter_oom);
-                $pgroupsfilter = prepareLinkedElementGroupFilter($source_form_id, $element_value[3], $element_value[4], $element_value[6]);
+                $ele_value['formlink_useonlyusersentries'] = isset($ele_value['formlink_useonlyusersentries']) ? $ele_value['formlink_useonlyusersentries'] : 0;
+                $pgroupsfilter = prepareLinkedElementGroupFilter($source_form_id, $element_value[3], $element_value[4], $element_value[6], $ele_value['formlink_useonlyusersentries']);
                 $extra_clause = prepareLinkedElementExtraClause($pgroupsfilter, $parentFormFrom, $sourceEntrySafetyNetStart);
                 $limitConditionWhere = substr($limitConditionWhere, 7); // cut off the WHERE in this clause, because the extra_clause already intros it
             }
@@ -4752,6 +4753,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
 
 
 // THIS FUNCTION TAKES A VALUE AND THE UITEXT FOR THE ELEMENT, AND RETURNS THE UITEXT IN PLACE OF THE "DATA" TEXT
+// also ensures HTML will work
 function formulize_swapUIText($value, $uitexts=array()) {
     $originalValue = $value;
     // if value is an array, it has a key called 'value', which needs to be swapped
@@ -5666,13 +5668,15 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
     $bareFilterTerm = substr($filterTerms[$filterId],1,-1);
     $filterElementObject = $element_handler->get($filterElementIds[$filterId]);
     if ($filterOps[$filterId] == "NOT") { $filterOps[$filterId] = "!="; }
+    $likebits = "";
+    $origlikebits = "";
     if (strstr(strtoupper($filterOps[$filterId]), "LIKE")) {
-        $likebits = "%";
-        $origlikebits = "%";
+        if(!strstr(trim($filterTerms[$filterId]), '%')) {
+            $likebits = "%";
+            $origlikebits = "%";
+        }
         $quotes = "'";
     } else {
-        $likebits = "";
-        $origlikebits = "";
         $quotes = is_numeric($filterTerms[$filterId]) ? "" : "'";
         $filterOps[$filterId] = $filterOps[$filterId] == "=" ? "<=>" : $filterOps[$filterId];
     }
@@ -6075,12 +6079,8 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
         }
         if ("date" == $element_type) {
             $time_value = strtotime($v);
-            global $xoopsUser, $xoopsConfig;
-            $serverTimeZone = $xoopsConfig['server_TZ'];
-            $offset = $xoopsUser ? ($xoopsUser->getVar('timezone_offset') - $serverTimeZone) * 3600 : 0;
-            /*if($xoopsConfig['language'] == "french") {
-            	$return = setlocale(LC_TIME, "fr_FR.UTF8");
-            }*/
+            global $xoopsUser;
+            $offset = ($handle == "mod_datetime" OR $handle == "creation_datetime") ? formulize_getUserServerOffsetSecs(timestamp: $time_value) : 0; // no hours/mins in plain dates, but for metadata, get user offset from server timezone which DB should have used to make the dates in question
             $dateStringFormat = ($handle == "mod_datetime" OR $handle == "creation_datetime") ? _MEDIUMDATESTRING : _SHORTDATESTRING; // constants set in /language/english/global.php
             $v = (false === $time_value) ? "" : date($dateStringFormat, ($time_value)+$offset);
         }
@@ -6949,7 +6949,7 @@ function formulize_validatePHPCode($theCode) {
 // return SQL ready for use in special queries for linked element source values
 // t1 is the table where the values are being gathered from
 // t2 is the entry_owner_groups table
-function prepareLinkedElementGroupFilter($sourceFid, $groupSelections, $useOnlyUsersGroups, $userMustBeInAllGroups) {
+function prepareLinkedElementGroupFilter($sourceFid, $groupSelections, $useOnlyUsersGroups, $userMustBeInAllGroups, $useOnlyUsersEntries) {
     
     global $regcode, $xoopsUser, $xoopsDB;
     // determine the groups that we're dealing with...
@@ -6994,8 +6994,10 @@ function prepareLinkedElementGroupFilter($sourceFid, $groupSelections, $useOnlyU
     }
 
     array_unique($pgroups); // remove duplicate groups from the list
-    
-    if($userMustBeInAllGroups AND count((array) $pgroups) > 0) {  // means we must match all the current user's groups with the entry's groups, so we setup a series of exists clauses
+
+    if($useOnlyUsersEntries) {
+        $pgroupsfilter = " t1.creation_uid = ".($xoopsUser ? $xoopsUser->getVar('uid') : 0);
+    } elseif($userMustBeInAllGroups AND count((array) $pgroups) > 0) {  // means we must match all the current user's groups with the entry's groups, so we setup a series of exists clauses
         $pgroupsfilter = " (";
         $start = true;
         foreach($pgroups as $thisPgroup) {
@@ -7230,8 +7232,7 @@ function formulize_parseSearchesIntoFilter($searches) {
 				if (substr($searchgetkey, 0, 5) == "TODAY") {
                     $number = substr($searchgetkey, 5); // note -- includes the +/- sign
                     $basetime = $number ? strtotime($number." day") : time();
-                    $serverTimeZone = $xoopsConfig['server_TZ'];
-                    $offset = $xoopsUser ? ($xoopsUser->getVar('timezone_offset') - $serverTimeZone) * 3600 : 0;
+                    $offset = formulize_getUserUTCOffsetSecs(timestamp: $basetime); // need to adjust for user time vs UTC, since time() is based on UTC
 					$one_search = date("Y-m-d",($basetime+$offset));
 				} elseif($searchgetkey == "USER") {
 					if($xoopsUser) {
@@ -7992,4 +7993,84 @@ function repairEOGTable($fid) {
     } else {
         error_log('Formulize error: invalid fid passed to repairEOGTable');
     }
+}
+
+// user offset from server tz
+// assume timestamp is based on server timezone!
+// returns seconds
+function formulize_getUserServerOffsetSecs($userObject=null, $timestamp=null) {
+	// checks if the user's timezone and/or server timezone were in daylight savings at the given $timestamp (or current time) and adjusts offset accordingly
+	global $xoopsConfig, $xoopsUser;
+    $userObject = is_object($userObject) ? $userObject : $xoopsUser;
+    $timestamp = $timestamp ? $timestamp : time();
+	$serverTimeZone = $xoopsConfig['server_TZ'];
+	$userTimeZone = $userObject ? $userObject->getVar('timezone_offset') : $serverTimeZone;
+	$tzDiff = $userTimeZone - $serverTimeZone;
+    $daylightSavingsAdjustment = getDaylightSavingsAdjustment($userTimeZone, $serverTimeZone, $timestamp);
+    $tzDiff = $tzDiff + $daylightSavingsAdjustment;
+    return $tzDiff * 3600;
+}
+
+// get user offset from UTC
+// returns seconds
+function formulize_getUserUTCOffsetSecs($userObject=null, $timestamp=null) {
+    global $xoopsConfig, $xoopsUser;
+    $userObject = is_object($userObject) ? $userObject : $xoopsUser;
+    $timestamp = $timestamp ? $timestamp : time();
+	$serverTimeZone = $xoopsConfig['server_TZ'];
+	$userTimeZone = $userObject ? $userObject->getVar('timezone_offset') : $serverTimeZone;
+    $userTimeZone = $userTimeZone + getDaylightSavingsAdjustment($userTimeZone, 0, $timestamp);
+    return $userTimeZone * 3600;
+}
+
+// $userTimeZone and $compareTimeZone are numbers for the base offset (ie: when standard time is in effect)
+// timestamp is a timestamp from the **$compareTimeZone** timezone, that we are using the determine if daylight savings is in effect
+// This will necessarily be off by 1 hour when we're using the old basic tz numbers in XOOPS! (because they're standard time only)
+// since the window for an error is really small and only at the moment the time changes, that's acceptable? Seems to be the best we can do without overhauling the entire timezone system :(
+// we are seriously hampered by the fact that old XOOPS only uses a number for the timezone offset, not the actual timezone. Numbers to not equal timezones!
+// if timezones are the same, no adjustment
+// if timezones are both in daylight savings at a given time, no adjustment
+// if timezones are neither in daylight savings at a given time, no adjustment
+// if timezones are one in daylight savings and one not in daylight savings, calculate adjustment
+// returns difference in hours
+function getDaylightSavingsAdjustment($userTimeZone, $compareTimeZone, $timestamp) {
+    
+    // timezone name and number equivalents. crude!!
+    // could/should be expanded (or better yet, proper timezones recorded for users!!)
+    // XOOPS does not support two digit decimals for timezones (yet, we could add it)
+    // In Australia, different timezones with the same base offset, have different daylight savings rules :(
+    $tzNames = array(
+        '-8'=>'PST8PDT',
+        '-7'=>'MST7MDT',
+        '-6'=>'CST6CDT',
+        '-5'=>'EST5EDT',
+        '-4'=>'Canada/Atlantic',
+        '-3.5'=>'Canada/Newfoundland',
+        '+0'=>'UTC',
+        '+8'=>'Australia/Perth',
+        '+8.75'=>'Australia/Eucla',
+        '+9.5'=>'Australia/Adelaide',
+        '+10'=>'Australia/Sydney'
+    );
+    
+    // need plus or minus on the timezone number, even zero
+    $userTimeZone = floatval($userTimeZone) >= 0 ? "+$userTimeZone" : "$userTimeZone";
+    $compareTimeZone = floatval($compareTimeZone) >= 0 ? "+$compareTimeZone" : "$compareTimeZone";
+    
+    $adjustment = 0;
+    if($userTimeZone != $compareTimeZone) {
+        $timestamp = '@'.strtotime(date('Y-m-d H:i:s', $timestamp).' '.$compareTimeZone); // need to construct new timestamp with the xoops tz offset included, and @ sign in front so PHP dateTime will understand it
+        $dt = new DateTime($timestamp);
+        $dt->setTimezone(new DateTimeZone($tzNames[$compareTimeZone]));
+        $compareDST = $dt->format('I');
+        $dt->setTimezone(new DateTimeZone($tzNames[$userTimeZone]));
+        $userDST = $dt->format('I');
+        if($compareDST AND !$userDST) {
+            $adjustment = -1;  
+        } elseif(!$compareDST AND $userDST) {
+            $adjustment = +1;
+        }
+    }
+    return $adjustment;
+
 }

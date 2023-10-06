@@ -76,7 +76,14 @@
 		<legend>If the options are linked -- or are {FULLNAMES} or {USERNAMES}</legend>
 		<div class="form-item">
 		<fieldset>
-			<legend>Limit them to values from the groups selected here</legend>
+            <legend>Limit them to...</legend>
+            <div class="form-radios">
+                <label for="elements-ele_value[formlink_useonlyusersentries]-1"><input type="radio" id="elements-ele_value[formlink_useonlyusersentries]-1" name="elements-ele_value[formlink_useonlyusersentries]" value="1"<{if $content.ele_value.formlink_useonlyusersentries eq 1}> checked="checked"<{/if}>/>The entries created by the user</label>
+            </div>
+            <div class="form-radios">
+                <label for="elements-ele_value[formlink_useonlyusersentries]-0"><input type="radio" id="elements-ele_value[formlink_useonlyusersentries]-0" name="elements-ele_value[formlink_useonlyusersentries]" value="0"<{if $content.ele_value.formlink_useonlyusersentries eq 0}> checked="checked"<{/if}>/>The entries created by these groups:</label>
+            </div>
+            <br>
 			<select id="element-formlink_scope" name="element_formlink_scope[]" size="10" multiple>
 			<{html_options options=$content.formlink_scope_options selected=$content.formlink_scope}>
 			</select>

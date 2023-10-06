@@ -52,7 +52,7 @@ if(!isset($formulize_screen_id) OR !is_numeric($formulize_screen_id)) {
     require_once "../../mainfile.php";
 }
         
-include XOOPS_ROOT_PATH.'/header.php';
+include_once XOOPS_ROOT_PATH.'/header.php';
 global $xoTheme;
 if($xoTheme) {
     

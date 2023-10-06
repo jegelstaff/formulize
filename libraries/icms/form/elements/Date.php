@@ -11,6 +11,7 @@
  **/
 
 defined('ICMS_ROOT_PATH') or die("ImpressCMS root path not defined");
+include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 /**
  * A text field with calendar popup
@@ -33,14 +34,18 @@ class icms_form_elements_Date extends icms_form_elements_Text {
 	 * @param mixed		$value
 	 */
 	public function __construct($caption, $name, $size = 15, $value= 0) {
-		// ALTERED BY FREEFORM SOLUTIONS FOR THE DATE DEFAULT CHANGES IN FORMULIZE STANDALONE
+		// ALTERED BY FREEFORM SOLUTIONS FOR THE DATE DEFAULT CHANGES IN FORMULIZE STANDALONE 
 		if($value === "") {
 			$value = _DATE_DEFAULT;
 		} elseif(preg_replace("[^A-Z{}]","", $value) === "{TODAY}") { // check for {TODAY}, {TODAY-14} etc
 			$number = preg_replace("[^0-9+-]","", $value);
-			$value = mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")); 
+			$value = mktime(date("H"), date("i"), date("s"), date("m") , date("d")+$number, date("Y")); // $value is going to be deterined based on UTC because the functions involved have no timezone awareness
+            $offset = formulize_getUserUTCOffsetSecs(timestamp: $value);
+            $value = $value + $offset;
 		} elseif(!is_numeric($value)) {
-			$value = time();
+			$value = mktime(date("H"), date("i"), date("s"), date("m") , date("d"), date("Y")); // $value is going to be deterined based on UTC because the functions involved have no timezone awareness
+            $offset = formulize_getUserUTCOffsetSecs(timestamp: $value);
+            $value = $value + $offset;
 		} else {
 			$value = intval($value);
 		}

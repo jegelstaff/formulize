@@ -141,6 +141,7 @@ class SyncCompareCatalog {
                         if(!$changeFound) {
                             $changeFound = true;
                             // first time, add record to the change list
+                            // newRecord will be packed up into a field=>value array
                             $newRecord = $this->addRecChange("update", $tableName, $fields, $record);
                             if($newRecord === false) {
                                 // change did not pass verification in the method, so we're bailing on it
@@ -150,7 +151,9 @@ class SyncCompareCatalog {
                         /*if($debugOn) {
                             print "NO MATCH ON FIELD: $field [$dbValue : $value]-- UPDATING RECORD<BR>";
                         }*/
-                        $this->addChangeDetail($tableName, $fields, $newRecord, $field, $dbValue, $newRecord[array_search($field, $fields)]);
+                        if($newRecord) {
+                            $this->addChangeDetail($tableName, $newRecord, $field, $dbValue, $newRecord[$field]);
+                        }
                     }
                 }
 
@@ -196,7 +199,7 @@ class SyncCompareCatalog {
 
             foreach ($tableInfo["updates"] as $rec) {
                 $metadata = $this->getRecMetadata($tableName, "update", $rec);
-                list($fields, $changes) = $this->getRecDetails($tableName, $rec, $metadata);
+                list($fields, $changes) = $this->getRecDetails($tableName, $rec);
                 $descrs[$tableName]["updates"][] = implode(" / ", $metadata);
                 $descrs[$tableName]["fields"][] = $fields; 
                 $descrs[$tableName]["changes"][] = $changes; 
@@ -323,14 +326,13 @@ class SyncCompareCatalog {
         $changeTypeList = &$this->changes[$tableName][$typeArrayName];
         array_push($changeTypeList, $data);
         
-        return $record;
+        return $data;
     }
 
-    private function addChangeDetail($tableName, $fields, $record, $field, $dbValue, $sourceValue) {
-        $data = $this->convertRec($record, $fields); // this is how things are packaged up and then unpacked later when reading them
-        $record = sha1(serialize($data));
-        $this->changeDetails[$tableName][$record][$field]['db'] = $dbValue;
-        $this->changeDetails[$tableName][$record][$field]['sourceValue'] = $sourceValue;
+    private function addChangeDetail($tableName, $data, $field, $dbValue, $sourceValue) {
+        $key = sha1(serialize($data));        
+        $this->changeDetails[$tableName][$key][$field]['db'] = $dbValue;
+        $this->changeDetails[$tableName][$key][$field]['sourceValue'] = $sourceValue;
     }
     
     private function dataFailsGroupsInCommon($data, $tableName) {
