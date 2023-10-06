@@ -7438,7 +7438,7 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
 
     }
     
-    list($columns, $headers, $explodedColumns, $superHeaders) = export_prepColumns($columns,$include_metadata);
+    list($columns, $headers, $explodedColumns, $superHeaders, $handles) = export_prepColumns($columns,$include_metadata);
     
     // output export header
     $destination = $output_filename ? XOOPS_ROOT_PATH.'/modules/formulize/export/'.$output_filename : 'php://output'; // open a file handle to stdout if we're not making an actual file, because fputcsv() needs something to attach to
@@ -7453,7 +7453,7 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
     }
     fputcsv($output_handle, $headers);
     if(isset($_GET['showHandles'])) {
-        fputcsv($output_handle, $columns);
+        fputcsv($output_handle, $handles);
     }
 
     // output export data
@@ -7614,12 +7614,14 @@ function export_prepColumns($columns,$include_metadata=0) {
     
     // get a list of columns for export
     $headers = array();
+    $handles = array();
     $explodedColumns = array();
     $superHeaders = array();
     $superHeaderAssigned = false;
     $metaDataHeaders = array(_formulize_ENTRY_ID, _formulize_DE_CALC_CREATOR, _formulize_DE_CALC_MODIFIER, _formulize_DE_CALC_CREATEDATE, _formulize_DE_CALC_MODDATE, _formulize_DE_CALC_CREATOR_EMAIL);
     $metaDataColsToAdd = array("entry_id","creation_uid","mod_uid","creation_datetime","mod_datetime","creator_email");
     foreach ($columns as $thiscol) {
+        $handles[] = $thiscol;
         if ("creator_email" == $thiscol) {
             $headers[] = _formulize_DE_CALC_CREATOR_EMAIL;
             unset($metaDataColsToAdd[5]);
@@ -7689,6 +7691,7 @@ function export_prepColumns($columns,$include_metadata=0) {
                 if(strstr($colMeta['ele_value'],"{OTHER|")) {
                     $headers[] = "Other Value";
                     $superHeaders[] = "";
+                    $handles[] = "";
                 }
             }
         }
@@ -7703,7 +7706,7 @@ function export_prepColumns($columns,$include_metadata=0) {
         $columns = array_merge($metaDataColsToAdd, $columns);
         $headers = array_merge($metaDataHeaders,$headers);
     }
-    return array($columns,$headers,$explodedColumns, $superHeaders);
+    return array($columns,$headers,$explodedColumns,$superHeaders,$handles);
 }
 
 
