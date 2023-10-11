@@ -901,7 +901,7 @@ class formulizeDataHandler  {
         $clean_element_values = $element_values; // save a clean copy of the original values before the escaping for writing to DB, so we can use these later in "on after save"
         
         foreach($element_values as $evHandle=>$thisElementValue) {
-            $thisElementValue = $thisElementValue == "{WRITEASNULL}" ? NULL : $thisElementValue;
+            $thisElementValue = $thisElementValue === "{WRITEASNULL}" ? NULL : $thisElementValue;
             if($existing_values[$evHandle] === $thisElementValue) { 
                 unset($element_values[$evHandle]); // don't write things that are unchanged from their current state in the database
             }
