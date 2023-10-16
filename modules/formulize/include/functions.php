@@ -325,11 +325,6 @@ function availReports($uid, $groups, $fid, $frid="0") {
 // security check to see if a form is allowed for the user:
 function security_check($fid, $entry="", $uid="", $owner="", $groups="", $mid="", $gperm_handler="") {
 
-    if (!$groups) { // if no groups specified, use current user
-        global $xoopsUser;
-        $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
-    }
-
     if (!$mid) { // if no mid specified, set it
         $mid = getFormulizeModId();
     }
@@ -338,6 +333,25 @@ function security_check($fid, $entry="", $uid="", $owner="", $groups="", $mid=""
         $gperm_handler =& xoops_gethandler('groupperm');
     }
 
+    $uid = intval($uid);
+    if (!$uid) {
+        global $xoopsUser;
+        $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+    }
+    
+    if (!$groups) { // if no groups specified, use the declared uid user's groups
+        global $xoopsUser;
+        $groups = array(0=>XOOPS_GROUP_ANONYMOUS);
+        if($xoopsUser AND $uid == $xoopsUser->getVar('uid')) {
+            $groups = $xoopsUser->getGroups();
+        } elseif($uid) {
+            $member_handler = xoops_gethandler('member');
+            if($uidObject = $member_handler->getUser($uid)) {
+                $groups = $uidObject->getGroups();
+            }
+        } 
+    }
+    
     if (!$gperm_handler->checkRight("view_form", $fid, $groups, $mid)) {
         return false;
     }
@@ -352,11 +366,6 @@ function security_check($fid, $entry="", $uid="", $owner="", $groups="", $mid=""
     
     if($entry == "new" OR $entry == "proxy") {
         $entry = ""; // if this is a new entry, then we don't do the check below to look for permissions on a specific entry, since there isn't one yet!
-    }
-    
-    if (!$uid) {
-        global $xoopsUser;
-        $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
     }
 
     // do security check on entry in form -- note: based on the initial entry passed, does not consider entries in one-to-one linked forms which are assumed to be allowed for the user if the main entry is.
