@@ -962,7 +962,6 @@ function formulize_generateJoinSQL($linkOrdinal, $linkcommonvalue, $linkselfids,
                 // single value only
                 $newJoinText = " $subAlias.`" . $joinHandles[$linktargetids[$linkOrdinal]] . "` = $mainAlias.entry_id";
             }
-        } else {
         // if the main is the link, or they're both links and the main is pointing to the target
         } elseif(($main_ele_value AND !$target_ele_value)
             OR ($main_ele_value AND $target_ele_value AND $mainBoxProperties[1] == $joinHandles[$linktargetids[$linkOrdinal]])) {
@@ -973,6 +972,7 @@ function formulize_generateJoinSQL($linkOrdinal, $linkcommonvalue, $linkselfids,
                 // single value only
                 $newJoinText = " $mainAlias.`" . $joinHandles[$linkselfids[$linkOrdinal]] . "` = $subAlias.entry_id";
             }
+        } else {
             exit("Fatal Formulize Error: could not determine nature of linkage between linked selectbox(es)");
         }
     } else { // join by uid
