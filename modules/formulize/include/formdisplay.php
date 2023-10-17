@@ -4184,6 +4184,25 @@ function removeTags(html) {
         print $output;
     }
 
+    // elementId is the hidden element we're interacting with - can be a series of elements with [] which would be the case if multiple is set
+    // value is the value we're setting
+    // change is a flag to indicate if we trigger a change on the element when we do this
+    // multiple indicates if this is a multi-select autocomplete
+    print "
+    function setAutocompleteValue(elementId, value, change, multiple) {
+        if(multiple) {
+            var targetElementId = 'last_selected_'+elementId;
+        } else {
+            var targetElementId = elementId;
+        }
+        if(change) {
+            jQuery('#'+targetElementId).val(value).trigger('change');
+        } else {
+            jQuery('#'+targetElementId).val(value);
+        }
+        formulizechanged=1;
+    }
+    ";
     print "</script>\n";
     $drawnJavascript = true;
 }

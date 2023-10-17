@@ -68,7 +68,9 @@
                 }
                 if(pathParts[i] == '') { continue; }
                 pathParts[i] = pathParts[i].replace('_', ' ');
-                pathParts[i] = eachWord(pathParts[i]);
+                if (/[A-Z]/.test(pathParts[i]) == false) {
+                  pathParts[i] = eachWord(pathParts[i]);
+                }
                 window.document.write(crumbSep+'<a href="'+crumbPath+'">'+pathParts[i]+'</a>\n');
             }
             window.document.write('<hr>');

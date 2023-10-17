@@ -323,12 +323,7 @@ function availReports($uid, $groups, $fid, $frid="0") {
 
 
 // security check to see if a form is allowed for the user:
-function security_check($fid, $entry="", $uid="", $owner="", $groups="", $mid="", $gperm_handler="") {
-
-    if (!$groups) { // if no groups specified, use current user
-        global $xoopsUser;
-        $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
-    }
+function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups="", $mid="", $gperm_handler="") {
 
     if (!$mid) { // if no mid specified, set it
         $mid = getFormulizeModId();
@@ -338,25 +333,39 @@ function security_check($fid, $entry="", $uid="", $owner="", $groups="", $mid=""
         $gperm_handler =& xoops_gethandler('groupperm');
     }
 
-    if (!$gperm_handler->checkRight("view_form", $fid, $groups, $mid)) {
+    $user_id = intval($user_id);
+    if (!$user_id) {
+        global $xoopsUser;
+        $user_id = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+    }
+    
+    if (!$groups) { // if no groups specified, use the declared uid user's groups
+        global $xoopsUser;
+        $groups = array(0=>XOOPS_GROUP_ANONYMOUS);
+        if($xoopsUser AND $user_id == $xoopsUser->getVar('uid')) {
+            $groups = $xoopsUser->getGroups();
+        } elseif($user_id) {
+            $member_handler = xoops_gethandler('member');
+            if($uidObject = $member_handler->getUser($user_id)) {
+                $groups = $uidObject->getGroups();
+            }
+        } 
+    }
+    
+    if (!$gperm_handler->checkRight("view_form", $form_id, $groups, $mid)) {
         return false;
     }
     
-    if ($entry == "proxy" AND !$gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid)) {
+    if ($entry_id == "proxy" AND !$gperm_handler->checkRight("add_proxy_entries", $form_id, $groups, $mid)) {
         return false;
     } 
     
-    if ($entry == "new" AND !$gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid)) {
+    if ($entry_id == "new" AND !$gperm_handler->checkRight("add_own_entry", $form_id, $groups, $mid)) {
         return false;
     }
     
-    if($entry == "new" OR $entry == "proxy") {
-        $entry = ""; // if this is a new entry, then we don't do the check below to look for permissions on a specific entry, since there isn't one yet!
-    }
-    
-    if (!$uid) {
-        global $xoopsUser;
-        $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+    if($entry_id == "new" OR $entry_id == "proxy") {
+        $entry_id = ""; // if this is a new entry, then we don't do the check below to look for permissions on a specific entry, since there isn't one yet!
     }
 
     // do security check on entry in form -- note: based on the initial entry passed, does not consider entries in one-to-one linked forms which are assumed to be allowed for the user if the main entry is.
@@ -364,18 +373,18 @@ function security_check($fid, $entry="", $uid="", $owner="", $groups="", $mid=""
     // any entry if they have view_globalscope
     // other users in the appropriate group if they have view_groupscope
     // --report overrides need to be added in here for display of entries in reports
-    if ($entry) {
-        $view_globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid);
+    if ($entry_id) {
+        $view_globalscope = $gperm_handler->checkRight("view_globalscope", $form_id, $groups, $mid);
         if (!$view_globalscope) {
             
             if (!$owner) {
-               $owner = getEntryOwner($entry, $fid);
+               $owner = getEntryOwner($entry_id, $form_id);
             }
             
-            if($owner == $uid AND $uid == 0) {
+            if($owner == $user_id AND $user_id == 0) {
                 // anonymous user so ownership isn't good enough, they either need explicit groupscope
                 // or the entry needs to be one that they have rights to in virtue of a cookie or passcode on a screen on this form
-                if(!$view_groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid)) {
+                if(!$view_groupscope = $gperm_handler->checkRight("view_groupscope", $form_id, $groups, $mid)) {
                     $screen_handler = xoops_getmodulehandler('screen', 'formulize');
                     $candidateEntries = array();
                     $sid = 0;
@@ -383,44 +392,44 @@ function security_check($fid, $entry="", $uid="", $owner="", $groups="", $mid=""
                         if(substr($sessionVariable, 0, 19) == 'formulize_passCode_' AND is_numeric(str_replace('formulize_passCode_', '', $sessionVariable))) {
                             $sid = str_replace('formulize_passCode_', '', $sessionVariable);
                             $screenObject = $screen_handler->get($sid);
-                            if($screenObject->getVar('fid') == $fid) {
-                                $data_handler = new formulizeDataHandler($fid);
-                                $candidateEntries = array_merge($candidateEntries, $data_handler->findAllEntriesWithValue('anon_passcode_'.$fid, $value));
+                            if($screenObject->getVar('fid') == $form_id) {
+                                $data_handler = new formulizeDataHandler($form_id);
+                                $candidateEntries = array_merge($candidateEntries, $data_handler->findAllEntriesWithValue('anon_passcode_'.$form_id, $value));
                             }
                         }
                     }
-                    if(!$sid AND isset($_COOKIE['entryid_'.$fid])) {
-                        $candidateEntries[] = intval($_COOKIE['entryid_'.$fid]);
+                    if(!$sid AND isset($_COOKIE['entryid_'.$form_id])) {
+                        $candidateEntries[] = intval($_COOKIE['entryid_'.$form_id]);
                     }
-                    if(in_array($entry, $candidateEntries)) {
+                    if(in_array($entry_id, $candidateEntries)) {
                         return true;
                     }
                     return false;
                 }
-            } elseif ($owner != $uid) {
-                $view_groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid);
+            } elseif ($owner != $user_id) {
+                $view_groupscope = $gperm_handler->checkRight("view_groupscope", $form_id, $groups, $mid);
                 // if no view_groupscope, then check to see if the settings for the form are "one entry per group" in which case override the groupscope setting
                 if (!$view_groupscope) {
                     global $xoopsDB;
-                    $smq = q("SELECT singleentry FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form=$fid");
+                    $smq = q("SELECT singleentry FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form=$form_id");
                     if ($smq[0]['singleentry'] == "group") {
                         $view_groupscope = true;
                     }
                 }
                 
-                $groupScopeGroups = getGroupScopeGroups($fid, $groups);
-                $data_handler = new formulizeDataHandler($fid);
-                $intersect_groups = array_intersect($data_handler->getEntryOwnerGroups($entry), $groupScopeGroups);
+                $groupScopeGroups = getGroupScopeGroups($form_id, $groups);
+                $data_handler = new formulizeDataHandler($form_id);
+                $intersect_groups = array_intersect($data_handler->getEntryOwnerGroups($entry_id), $groupScopeGroups);
                 sort($intersect_groups); // necessary to make sure that 0 will be a valid key to use below
 
                 if (!$view_groupscope OR (count((array) $intersect_groups) == 1 AND $intersect_groups[0] == XOOPS_GROUP_USERS) OR count((array) $intersect_groups) == 0) {
                     // if they have no groupscope, or if they do have groupscope, but the only point of overlap between the owner, the current user, and the groups with access is the registered users group, then..... (note that registered users will probably be an irrelevant check since the new "groups with access" checking ought to exclude registered users group in complex group setups)
                     // last hope...check for a unlocked view that has been published to them which covers a group that includes this entry
-                    // 1. get groups for unlocked view for this user's groups where the mainform is $fid or there is no mainform and formframe is $fid
+                    // 1. get groups for unlocked view for this user's groups where the mainform is $form_id or there is no mainform and formframe is $form_id
                     // 2. if group or all scope, allow it
                     // 3. or if there's an intersection on the owner_groups and the groups in an unlocked view, then allow it.
                     global $xoopsDB;
-                    $unlockviews = q("SELECT sv_currentview, sv_pubgroups FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_lockcontrols=0 AND ((sv_formframe='$fid' AND sv_mainform='') OR sv_mainform='$fid')");
+                    $unlockviews = q("SELECT sv_currentview, sv_pubgroups FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_lockcontrols=0 AND ((sv_formframe='$form_id' AND sv_mainform='') OR sv_mainform='$form_id')");
                     foreach ($unlockviews as $thisview) {
                         $pubbedgroups = explode(",", $thisview['sv_pubgroups']);
                         // if this saved view has been published to the user's groups
@@ -431,7 +440,7 @@ function security_check($fid, $entry="", $uid="", $owner="", $groups="", $mid=""
                             }
                             // what about groupscope in the view?  is that accounted for below, or should we check against "group"??
                             $viewgroups = explode(",", $thisview['sv_currentview']);
-                            if (array_intersect($data_handler->getEntryOwnerGroups($entry), $viewgroups)) {
+                            if (array_intersect($data_handler->getEntryOwnerGroups($entry_id), $viewgroups)) {
                                 return true;
                             }
                         }
@@ -443,10 +452,10 @@ function security_check($fid, $entry="", $uid="", $owner="", $groups="", $mid=""
 
         // check to see if the entry matches the user's per group filters, if any
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
-        $formObject = $form_handler->get($fid);
-        if ($perGroupFilter = $form_handler->getPerGroupFilterWhereClause($fid)) {
+        $formObject = $form_handler->get($form_id);
+        if ($perGroupFilter = $form_handler->getPerGroupFilterWhereClause($form_id)) {
             global $xoopsDB;
-            $checkSQL = "SELECT count(entry_id) FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." WHERE entry_id = $entry $perGroupFilter";
+            $checkSQL = "SELECT count(entry_id) FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." WHERE entry_id = $entry_id $perGroupFilter";
             if (!$checkRes = $xoopsDB->query($checkSQL)) {
                 return false;
             }
@@ -4032,10 +4041,10 @@ function formulize_scandirAndClean($dir, $filter="", $timeWindow=21600) {
 // $forceUpdate will cause queryF to be used in the data handler, which will allow updates on a get request
 // $writeOwnerInfo causes the entry_owner_groups table to be updated when a new entry is written
 // NOTE: $values takes ID numbers as keys, since that's how the datahandler expects things
-function formulize_writeEntry($values, $entry="new", $action="replace", $proxyUser=false, $forceUpdate=false, $writeOwnerInfo=true) {
-    if ($entry < 1 and "new" != $entry) {
-        // safety net in case NULL is passed as $entry
-        $entry = "new";
+function formulize_writeEntry($values, $entry_id="new", $action="replace", $proxyUser=false, $forceUpdate=false, $writeOwnerInfo=true) {
+    if ($entry_id < 1 and "new" != $entry_id) {
+        // safety net in case NULL is passed as $entry_id
+        $entry_id = "new";
     }
     
     // get the form id from the element id of the first value in the values array
@@ -4043,7 +4052,7 @@ function formulize_writeEntry($values, $entry="new", $action="replace", $proxyUs
     $elementObject = $element_handler->get(key($values));
     if (is_object($elementObject)) {
         $data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
-        if ($result = $data_handler->writeEntry($entry, $values, $proxyUser, $forceUpdate)) {
+        if ($result = $data_handler->writeEntry($entry_id, $values, $proxyUser, $forceUpdate)) {
             global $xoopsUser;
             if ($proxyUser) {
                 $ownerForGroups = $proxyUser;
@@ -4052,15 +4061,15 @@ function formulize_writeEntry($values, $entry="new", $action="replace", $proxyUs
             } else {
                 $ownerForGroups = 0;
             }
-            if ($entry == "new" AND $writeOwnerInfo) {
+            if ($entry_id == "new" AND $writeOwnerInfo) {
                 $data_handler->setEntryOwnerGroups($ownerForGroups, $result); // result will be the ID number of the entry that was just written.
             }
             return $result;
         } else {
             if($result !== null) {
-            exit("Error: data could not be written to the database for entry $entry in form ". $elementObject->getVar('id_form').".");
+            exit("Error: data could not be written to the database for entry $entry_id in form ". $elementObject->getVar('id_form').".");
             } else {
-                error_log('Formulize Notice: Nothing written for entry "'.$entry.'" presumably because the passed in values are unchanged from the saved values.');
+                error_log('Formulize Notice: Nothing written for entry "'.$entry_id.'" presumably because the passed in values are unchanged from the saved values.');
             }
         }
     } else {
@@ -7439,7 +7448,7 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
 
     }
     
-    list($columns, $headers, $explodedColumns, $superHeaders) = export_prepColumns($columns,$include_metadata);
+    list($columns, $headers, $explodedColumns, $superHeaders, $handles) = export_prepColumns($columns,$include_metadata);
     
     // output export header
     $destination = $output_filename ? XOOPS_ROOT_PATH.'/modules/formulize/export/'.$output_filename : 'php://output'; // open a file handle to stdout if we're not making an actual file, because fputcsv() needs something to attach to
@@ -7454,7 +7463,7 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
     }
     fputcsv($output_handle, $headers);
     if(isset($_GET['showHandles'])) {
-        fputcsv($output_handle, $columns);
+        fputcsv($output_handle, $handles);
     }
 
     // output export data
@@ -7615,12 +7624,14 @@ function export_prepColumns($columns,$include_metadata=0) {
     
     // get a list of columns for export
     $headers = array();
+    $handles = array();
     $explodedColumns = array();
     $superHeaders = array();
     $superHeaderAssigned = false;
     $metaDataHeaders = array(_formulize_ENTRY_ID, _formulize_DE_CALC_CREATOR, _formulize_DE_CALC_MODIFIER, _formulize_DE_CALC_CREATEDATE, _formulize_DE_CALC_MODDATE, _formulize_DE_CALC_CREATOR_EMAIL);
     $metaDataColsToAdd = array("entry_id","creation_uid","mod_uid","creation_datetime","mod_datetime","creator_email");
     foreach ($columns as $thiscol) {
+        $handles[] = $thiscol;
         if ("creator_email" == $thiscol) {
             $headers[] = _formulize_DE_CALC_CREATOR_EMAIL;
             unset($metaDataColsToAdd[5]);
@@ -7690,6 +7701,7 @@ function export_prepColumns($columns,$include_metadata=0) {
                 if(strstr($colMeta['ele_value'],"{OTHER|")) {
                     $headers[] = "Other Value";
                     $superHeaders[] = "";
+                    $handles[] = "";
                 }
             }
         }
@@ -7704,7 +7716,7 @@ function export_prepColumns($columns,$include_metadata=0) {
         $columns = array_merge($metaDataColsToAdd, $columns);
         $headers = array_merge($metaDataHeaders,$headers);
     }
-    return array($columns,$headers,$explodedColumns, $superHeaders);
+    return array($columns,$headers,$explodedColumns,$superHeaders,$handles);
 }
 
 
