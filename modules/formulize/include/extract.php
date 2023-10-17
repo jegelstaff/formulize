@@ -948,7 +948,13 @@ function formulize_generateJoinSQL($linkOrdinal, $linkcommonvalue, $linkselfids,
     if($linkcommonvalue[$linkOrdinal]) { // common value
         $newJoinText = " $mainAlias.`" . $joinHandles[$linkselfids[$linkOrdinal]] . "`=$subAlias.`" . $joinHandles[$linktargetids[$linkOrdinal]]."`";
     } elseif($linktargetids[$linkOrdinal]) { // linked selectbox
-        if($target_ele_value = formulize_isLinkedSelectBox($linktargetids[$linkOrdinal])) {
+        $main_ele_value = formulize_isLinkedSelectBox($linkselfids[$linkOrdinal]);
+        $target_ele_value = formulize_isLinkedSelectBox($linktargetids[$linkOrdinal]);
+        $mainBoxProperties = explode("#*=:*", $main_ele_value[2]);
+        $targetBoxProperties = explode("#*=:*", $target_ele_value[2]);
+        // if the target is the link, or they're both links and the target is pointing to the main
+        if(($target_ele_value AND !$main_ele_value)
+           OR ($target_ele_value AND $main_ele_value AND $targetBoxProperties[1] == $joinHandles[$linkselfids[$linkOrdinal]])) {
             if ($target_ele_value[1]) {
                 // multiple values allowed
                 $newJoinText = " $subAlias.`" . $joinHandles[$linktargetids[$linkOrdinal]] . "` LIKE CONCAT('%,',$mainAlias.entry_id,',%')";
@@ -957,8 +963,9 @@ function formulize_generateJoinSQL($linkOrdinal, $linkcommonvalue, $linkselfids,
                 $newJoinText = " $subAlias.`" . $joinHandles[$linktargetids[$linkOrdinal]] . "` = $mainAlias.entry_id";
             }
         } else {
-            $main_ele_value = formulize_isLinkedSelectBox($linkselfids[$linkOrdinal]); 
-            //  we know it's linked because this is a linked selectbox join, we just need the ele_value properties
+        // if the main is the link, or they're both links and the main is pointing to the target
+        } elseif(($main_ele_value AND !$target_ele_value)
+            OR ($main_ele_value AND $target_ele_value AND $mainBoxProperties[1] == $joinHandles[$linktargetids[$linkOrdinal]])) {
             if ($main_ele_value[1]) {
                 // multiple values allowed
                 $newJoinText = " $mainAlias.`" . $joinHandles[$linkselfids[$linkOrdinal]] . "` LIKE CONCAT('%,',$subAlias.entry_id,',%')";
@@ -966,6 +973,7 @@ function formulize_generateJoinSQL($linkOrdinal, $linkcommonvalue, $linkselfids,
                 // single value only
                 $newJoinText = " $mainAlias.`" . $joinHandles[$linkselfids[$linkOrdinal]] . "` = $subAlias.entry_id";
             }
+            exit("Fatal Formulize Error: could not determine nature of linkage between linked selectbox(es)");
         }
     } else { // join by uid
       $newJoinText = " $mainAlias.creation_uid=$subAlias.creation_uid";
