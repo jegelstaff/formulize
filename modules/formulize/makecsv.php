@@ -91,13 +91,7 @@ if($key AND $apikey = $apiKeyHandler->get($key)) {
 
 // try for as much data as we can, see what the user is allowed
 $currentView = "all";
-
-// extra stuff we need while still using the old interface in the buildScope function
-$gperm_handler = xoops_gethandler('groupperm');
-$mid = getFormulizeModId();
-$scope = buildScope($currentView, $uid, $fid); 
-$scope = $scope[0]; // buildScope returns array of scope and possibly altered currentView
-
+list($scope, $currentView) = buildScope($currentView, $uid, $fid); // buildScope returns array of scope and possibly altered currentView
 
 if($fid AND $uid) {
     if($_GET['debug']==1) {

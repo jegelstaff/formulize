@@ -215,7 +215,7 @@ class formulizeDataHandler  {
 				}
 				
 				if(count((array) $newIds) > 1) {
-					$newEleHandleValue = "\",".implode(",",$newIds).",\"";
+					$newEleHandleValue = "\",".implode(",",array_filter($newIds, 'is_int')).",\"";
 				} else {
 					$newEleHandleValue = $newIds[0];
 				}
@@ -241,13 +241,13 @@ class formulizeDataHandler  {
 		$ids = array_map(array($xoopsDB, 'escape'), $ids);
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($this->fid);
-		$sql = "DELETE FROM " .$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = " . implode(" OR entry_id = ", $ids);
+		$sql = "DELETE FROM " .$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = " . implode(" OR entry_id = ", array_filter($ids, 'is_int'));
 		if(!$deleteSuccess = $xoopsDB->query($sql)) {
 			return false;
 		}
-		$sql = "DELETE FROM " . $xoopsDB->prefix("formulize_entry_owner_groups") . " WHERE fid=".formulize_db_escape($this->fid)." AND (entry_id = " . implode(" OR entry_id = ", $ids) . ")";
+		$sql = "DELETE FROM " . $xoopsDB->prefix("formulize_entry_owner_groups") . " WHERE fid=".formulize_db_escape($this->fid)." AND (entry_id = " . implode(" OR entry_id = ", array_filter($ids, 'is_int')) . ")";
 		if(!$deleteOwernshipSuccess = $xoopsDB->query($sql)) {
-			print "Error: could not delete entry ownership information for form ". formulize_db_escape($this->fid) . ", entries: " . implode(", ", $ids) . ". Check the DB queries debug info for details.";
+			print "Error: could not delete entry ownership information for form ". formulize_db_escape($this->fid) . ", entries: " . implode(", ", array_filter($ids, 'is_int')) . ". Check the DB queries debug info for details.";
 		}
 		if($formObject->getVar('store_revisions')) {
 			global $xoopsUser;
@@ -305,12 +305,15 @@ class formulizeDataHandler  {
 	}
 	
 	// this function returns the creation users for a series of entries
+    function findAllUsersForEntries($ids, $scope_uids=array()) {
+        return $this->getAllUsersForEntries($ids, $scope_uids);
+    }
 	function getAllUsersForEntries($ids, $scope_uids=array()) {
 		$scopeFilter = $this->_buildScopeFilter($scope_uids);
 		global $xoopsDB;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($this->fid);
-		$sql = "SELECT creation_uid FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id IN (" . implode(",", $ids) . ") $scopefilter";
+		$sql = "SELECT creation_uid FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id IN (" . implode(",", array_filter($ids, 'is_int')) . ") $scopefilter";
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
 		}
@@ -343,8 +346,8 @@ class formulizeDataHandler  {
 	}
 	
 	// this function returns the value of a given element in the given entry
-	// use of $scope_uids should only be for when entries by the current user are searched for.  All other group based scopes should be done based on the scope_groups.
-	function getElementValueInEntry($id, $element_id, $scope_uids=array(), $scope_groups=array()) {
+	// use of $scope_uids should only be for when entries by the current user are searched for.  All other group based scopes should be done based on the scope_group_ids.
+	function getElementValueInEntry($id, $element_id, $scope_uids=array(), $scope_group_ids=array()) {
 		if(!$element = _getElementObject($element_id)) {
 			return false;
 		}
@@ -354,8 +357,8 @@ class formulizeDataHandler  {
 		if(is_array($scope_uids) AND count($scope_uids)>0) {
 			$scopeFilter = $this->_buildScopeFilter($scope_uids);
 			$sql = "SELECT `". $element->getVar('ele_handle') . "` FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = " . intval($id) . $scopeFilter;
-		} elseif(is_array($scope_groups) AND count($scope_groups)>0) {
-			$scopeFilter = $this->_buildScopeFilter("", $scope_groups);
+		} elseif(is_array($scope_group_ids) AND count($scope_group_ids)>0) {
+			$scopeFilter = $this->_buildScopeFilter("", $scope_group_ids);
 			$sql = "SELECT `t1.". $element->getVar('ele_handle') . "` FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . "AS t1, " . $xoopsDB->prefix("formulize_entry_owner_groups") . " AS t2 WHERE t1.entry_id = " . intval($id) . $scopeFilter;
 		} else {
 			$sql = "SELECT `". $element->getVar('ele_handle') . "` FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = " . intval($id);
@@ -368,8 +371,11 @@ class formulizeDataHandler  {
 	}
 	
 	// this function finds all entries created by a given user in the form
-	// use of $scope_uids should only be for when entries by the current user are searched for.  All other group based scopes should be done based on the scope_groups.
-	function getAllEntriesForUsers($uids, $scope_uids=array(), $scope_groups=array()) {
+	// use of $scope_uids should only be for when entries by the current user are searched for.  All other group based scopes should be done based on the scope_group_ids.
+    function findAllEntriesForUsers($uids, $scope_uids=array(), $scope_group_ids=array()) {
+        return $this->getAllEntriesForUsers($uids, $scope_uids, $scope_group_ids);
+    }
+	function getAllEntriesForUsers($uids, $scope_uids=array(), $scope_group_ids=array()) {
 		if(!is_array($uids)) {
 			$sentID = $uids;
 			$uids = array();
@@ -380,12 +386,12 @@ class formulizeDataHandler  {
     $formObject = $form_handler->get($this->fid);
 		if(is_array($scope_uids) AND count($scope_uids) > 0) {
 			$scopeFilter = $this->_buildScopeFilter($scope_uids);
-			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE (creation_uid = " . implode(" OR creation_uid = ", $uids) . ") $scopeFilter ORDER BY entry_id";
-		} elseif(is_array($scope_groups) AND count($scope_groups)>0) {
-			$scopeFilter = $this->_buildScopeFilter("", $scope_groups);
-			$sql = "SELECT t1.entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . "AS t1, " . $xoopsDB->prefix("formulize_entry_owner_groups") . " AS t2 WHERE (t1.creation_uid = " . implode(" OR t1.creation_uid = ", $uids) . ") $scopeFilter ORDER BY t1.entry_id";
+			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE (creation_uid = " . implode(" OR creation_uid = ", array_filter($uids, 'is_int')) . ") $scopeFilter ORDER BY entry_id";
+		} elseif(is_array($scope_group_ids) AND count($scope_group_ids)>0) {
+			$scopeFilter = $this->_buildScopeFilter("", $scope_group_ids);
+			$sql = "SELECT t1.entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . "AS t1, " . $xoopsDB->prefix("formulize_entry_owner_groups") . " AS t2 WHERE (t1.creation_uid = " . implode(" OR t1.creation_uid = ", array_filter($uids, 'is_int')) . ") $scopeFilter ORDER BY t1.entry_id";
 		} else {
-			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE (creation_uid = " . implode(" OR creation_uid = ", $uids) . ") ORDER BY entry_id";
+			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE (creation_uid = " . implode(" OR creation_uid = ", array_filter($uids, 'is_int')) . ") ORDER BY entry_id";
 		}
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
@@ -399,6 +405,9 @@ class formulizeDataHandler  {
 	}
 	
 	// this function finds the first entry for a given user in the form
+    function findFirstEntryForGroups($group_ids) {
+        return $this->getFirstEntryForGroups($group_ids);
+    }
 	function getFirstEntryForGroups($group_ids) {
 		if(!is_array($group_ids)) {
 			$group_ids = array(0=>intval($groupids));
@@ -407,7 +416,7 @@ class formulizeDataHandler  {
 		global $xoopsDB;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($this->fid);
-		$sql = "SELECT t1.entry_id FROM ". $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " as t1, ". $xoopsDB->prefix("formulize_entry_owner_groups") ." as t2 WHERE t1.entry_id = t2.entry_id AND t2.fid=".$this->fid." AND t2.groupid IN (".implode(",",$group_ids).") ORDER BY t1.entry_id LIMIT 0,1";
+		$sql = "SELECT t1.entry_id FROM ". $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " as t1, ". $xoopsDB->prefix("formulize_entry_owner_groups") ." as t2 WHERE t1.entry_id = t2.entry_id AND t2.fid=".$this->fid." AND t2.groupid IN (".implode(",",array_filter($group_ids, 'is_int')).") ORDER BY t1.entry_id LIMIT 0,1";
 		global $xoopsUser;
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
@@ -418,6 +427,9 @@ class formulizeDataHandler  {
 	
 	
 	// this function finds the first entry for a given user in the form
+    function findFirstEntryForUsers($uids) {
+        return $this->getFirstEntryForUsers($uids);
+    }
 	function getFirstEntryForUsers($uids) {
 		if(!is_array($uids)) {
 			$uids = array($uids);
@@ -441,22 +453,22 @@ class formulizeDataHandler  {
 	}
 	
     // this function returns the entry ID of the last entry found in the form with the specified value in the specified element
-    function findLastEntryWithValue($element_id, $value, $op="=", $scope_uids=array()) {
-        return $this->findFirstEntryWithValue($element_id, $value, $op, $scope_uids, true);
+    function findLastEntryWithValue($element_id, $value, $operator="=", $scope_uids=array()) {
+        return $this->findFirstEntryWithValue($element_id, $value, $operator, $scope_uids, true);
     }
     
 	// this function returns the entry ID of the first entry found in the form with the specified value in the specified element
-	function findFirstEntryWithValue($element_id, $value, $op="=", $scope_uids=array(), $desc=false) {
+	function findFirstEntryWithValue($element_id, $value, $operator="=", $scope_uids=array(), $desc=false) {
 		if(!$element = _getElementObject($element_id)) {
 			return false;
 		}
-        $likeBits = $op == "LIKE" ? "%" : "";
+        $likeBits = $operator == "LIKE" ? "%" : "";
 		global $xoopsDB;
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
         $formObject = $form_handler->get($this->fid);
         $scopeFilter = $this->_buildScopeFilter($scope_uids);
         $desc = $desc ? 'DESC' : '';
-        $sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $element->getVar('ele_handle') . "` ".formulize_db_escape($op)." \"$likeBits" . formulize_db_escape($value) . "$likeBits\" $scopeFilter ORDER BY entry_id $desc LIMIT 0,1";
+        $sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $element->getVar('ele_handle') . "` ".formulize_db_escape($operator)." \"$likeBits" . formulize_db_escape($value) . "$likeBits\" $scopeFilter ORDER BY entry_id $desc LIMIT 0,1";
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
 		}
@@ -469,7 +481,7 @@ class formulizeDataHandler  {
 		
     // this function returns the entry ID of the first entry found in the form with all the specified values in the specified elements
     // $values is a key value pair of element handles and values
-	function findFirstEntryWithAllValues($values, $op="=") {
+	function findFirstEntryWithAllValues($values, $operator="=") {
 		global $xoopsDB;
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
         $formObject = $form_handler->get($this->fid);
@@ -480,10 +492,10 @@ class formulizeDataHandler  {
                 continue;
             }
             $quotes = '"';
-            $likeBits = $op == "LIKE" ? "%" : "";
-            $workingOp = $op;
+            $likeBits = $operator == "LIKE" ? "%" : "";
+            $workingOp = $operator;
             if($value === null) {
-                switch($op) {
+                switch($operator) {
                     case "!=":
                         $value = " IS NOT NULL ";
                         break;
@@ -509,8 +521,8 @@ class formulizeDataHandler  {
 	}
     	
 	// this function returns the entry ID of all entries found in the form with the specified value in the specified element
-	// use of $scope_uids should only be for when entries by the current user are searched for.  All other group based scopes should be done based on the scope_groups.
-	function findAllEntriesWithValue($element_id, $value, $scope_uids=array(), $scope_groups=array(), $operator="=") {
+	// use of $scope_uids should only be for when entries by the current user are searched for.  All other group based scopes should be done based on the scope_group_ids.
+	function findAllEntriesWithValue($element_id, $value, $scope_uids=array(), $scope_group_ids=array(), $operator="=") {
 		if(!$element = _getElementObject($element_id)) {
 			return false;
 		}
@@ -521,8 +533,8 @@ class formulizeDataHandler  {
 		if(is_array($scope_uids) AND count($scope_uids) > 0) {
 			$scopeFilter = $this->_buildScopeFilter($scope_uids, array());
 			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $element->getVar('ele_handle') . "` $operator $queryValue $scopeFilter GROUP BY entry_id ORDER BY entry_id";
-		} elseif(is_array($scope_groups) AND count($scope_groups)>0) {
-			$scopeFilter = $this->_buildScopeFilter("", $scope_groups);
+		} elseif(is_array($scope_group_ids) AND count($scope_group_ids)>0) {
+			$scopeFilter = $this->_buildScopeFilter("", $scope_group_ids);
 			$sql = "SELECT t1.entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " AS t1, " . $xoopsDB->prefix("formulize_entry_owner_groups") . " AS t2 WHERE t1.`". $element->getVar('ele_handle') . "` $operator $queryValue $scopeFilter GROUP BY t1.entry_id ORDER BY t1.entry_id";
 		} else {
 			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $element->getVar('ele_handle') . "` $operator $queryValue GROUP BY entry_id ORDER BY entry_id";			
@@ -555,7 +567,7 @@ class formulizeDataHandler  {
             $entries[$i] = intval($entry); // ensure we're not getting any funny business passed in to the DB
         }
         if(!isset($cachedValues[$handle][serialize($entries)])) {
-            $sql = "SELECT `$handle`, `entry_id` FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')). " WHERE entry_id IN (".implode(',',$entries).")";
+            $sql = "SELECT `$handle`, `entry_id` FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')). " WHERE entry_id IN (".implode(',',array_filter($entries, 'is_int')).")";
             if($res = $xoopsDB->query($sql)) {
                 while($array = $xoopsDB->fetchArray($res)) {
                     if($prepValues) {
@@ -576,10 +588,10 @@ class formulizeDataHandler  {
 	
 	// this function returns all the values of a given field
     // sort can be ASC or DESC, if left out then results are in creation order
-    // scope_groups can be an array of group ids, which will limit the values to those which are owned by users in the given group(s)
+    // scope_group_ids can be an array of group ids, which will limit the values to those which are owned by users in the given group(s)
     // scope_uids can be an array of user ids, which will limit the values to those created by the declared users
     // usePerGroupFilters will trigger the use of permission filters set for the user's groups
-	function findAllValuesForField($handle, $sort="", $scope_groups=array(), $scope_uids=array(), $usePerGroupFilters=false) {
+	function findAllValuesForField($handle, $sort="", $scope_group_ids=array(), $scope_uids=array(), $usePerGroupFilters=false) {
 		static $cachedValues = array();
 		global $xoopsDB;
 		if(!isset($cachedValues[$handle]) AND $this->fid) {
@@ -593,10 +605,10 @@ class formulizeDataHandler  {
 			$form_handler = xoops_getmodulehandler('forms', 'formulize');
 			$formObject = $form_handler->get($this->fid);
             $scope = '';
-            if(is_array($scope_groups) AND count($scope_groups)>0) {
+            if(is_array($scope_group_ids) AND count($scope_group_ids)>0) {
                 $scopeWhere = array();
-                $scope_groups = array_unique($scope_groups);
-                foreach($scope_groups as $gid) {
+                $scope_group_ids = array_unique($scope_group_ids);
+                foreach($scope_group_ids as $gid) {
                     if(is_numeric($gid)) {
                         $scopeWhere[] = " eog.groupid = $gid ";
                     }
@@ -631,16 +643,16 @@ class formulizeDataHandler  {
 	}
 		
 		
-	function _buildScopeFilter($scope_uids, $scope_groups=array()) {
+	function _buildScopeFilter($scope_uids, $scope_group_ids=array()) {
 		if(is_array($scope_uids)) {
 			if(count($scope_uids) > 0) {
 				$scopeFilter = " AND (creation_uid = " . implode(" OR creation_uid = ", array_filter($scope_uids, 'is_int')) . ")";
 			} else {
 				$scopeFilter = "";
 			}
-		} elseif(is_array($scope_groups)) {
-			if(count($scope_groups) > 0) {
-			  $scopeFilter = " AND (t2.groupid IN (".implode(",", array_filter($scope_groups, 'is_int')).") AND t2.entry_id=t1.entry_id AND t2.fid=".intval($this->fid).")";
+		} elseif(is_array($scope_group_ids)) {
+			if(count($scope_group_ids) > 0) {
+			  $scopeFilter = " AND (t2.groupid IN (".implode(",", array_filter($scope_group_ids, 'is_int')).") AND t2.entry_id=t1.entry_id AND t2.fid=".intval($this->fid).")";
 			} else {
 				$scopeFilter = "";
 			}
@@ -655,6 +667,7 @@ class formulizeDataHandler  {
 	// arrays must start with 0 key and increase sequentially (no gaps, no associative keys, etc)
 	// all groups the user is a member of are written to the database, regardless of their current permission on the form
 	// interpretation of permissions is to be done when reading this information, to allow for more flexibility
+    // $update is deprecated
 	function setEntryOwnerGroups($uids, $entryids, $update=false) {
         if($entryids === false) {
             return false;
@@ -673,6 +686,12 @@ class formulizeDataHandler  {
 		if(count((array) $uids) != count((array) $entryids)) {
 			return false;
 		}
+        $update = false;
+        // check if there is any ownership info for any entry we're setting details for
+        // if so, then we need to clear existing ownership info, update creation users
+        if($this->getEntryOwnerGroups($entryids)) {
+            $update = true;
+        }
 		if($update) { // clear the ownership records for these entries first...
 		  $ownerClearSQL = "DELETE FROM	".$xoopsDB->prefix("formulize_entry_owner_groups") . " WHERE `fid` = ".$this->fid." AND `entry_id` IN (";
 		  $start = true;
@@ -740,26 +759,38 @@ class formulizeDataHandler  {
 	// remember that all groups the creator was a member of at the time of creation will be returned...interpretation of which groups are important must still be performed in logic once this info has been retrieved
 	function getEntryOwnerGroups($entry_id=0) {
 		static $cachedEntryOwnerGroups = array();
+        global $xoopsDB;
         if($entry_id == 'new') {
             global $xoopsUser;
             return $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
         }
-		$entry_id = intval($entry_id);
-		if(!isset($cachedEntryOwnerGroups[$this->fid][$entry_id])) {
-			global $xoopsDB;
-			$entryFilter = $entry_id ? " AND entry_id='".intval($entry_id)."' " : ""; // when making strings that get dropped into others, good habit is to leave spaces at ends
-			$sql = "SELECT DISTINCT(groupid) FROM ".$xoopsDB->prefix("formulize_entry_owner_groups") . " WHERE fid='".$this->fid."' $entryFilter ORDER BY groupid";
-			if($res = $xoopsDB->query($sql)) {
-				$groupArray = array();
-				while($row = $xoopsDB->fetchRow($res)) {
-					$groupArray[] = $row[0];
-				}
-				$cachedEntryOwnerGroups[$this->fid][$entry_id]=$groupArray;
-			} else {
-				$cachedEntryOwnerGroups[$this->fid][$entry_id]=false;
-			}	
-		}
-		return $cachedEntryOwnerGroups[$this->fid][$entry_id];
+        // if we're checking a series of entries, just return true/false for whether there's any ownership info for any of them
+        // this is an internal feature used by setEntryOwnerGroups
+        if(is_array($entry_id)) {
+            $entryFilter = " AND entry_id IN (".implode(", ", array_filter($entry_id, 'is_int')).") "; 
+            $sql = "SELECT DISTINCT(groupid) FROM ".$xoopsDB->prefix("formulize_entry_owner_groups") . " WHERE fid='".$this->fid."' $entryFilter ORDER BY groupid";
+            if($res = $xoopsDB->query($sql)) {
+                return $xoopsDB->getRowsNum($res);
+            } else {
+                return false;
+            }
+        } else {
+            $entry_id = intval($entry_id);
+            if(!isset($cachedEntryOwnerGroups[$this->fid][$entry_id]) OR $cachedEntryOwnerGroups[$this->fid][$entry_id] === false OR $cachedEntryOwnerGroups[$this->fid][$entry_id] === array()) {
+                $entryFilter = $entry_id ? " AND entry_id='".intval($entry_id)."' " : ""; // when making strings that get dropped into others, good habit is to leave spaces at ends
+                $sql = "SELECT DISTINCT(groupid) FROM ".$xoopsDB->prefix("formulize_entry_owner_groups") . " WHERE fid='".$this->fid."' $entryFilter ORDER BY groupid";
+                if($res = $xoopsDB->query($sql)) {
+                    $groupArray = array();
+                    while($row = $xoopsDB->fetchRow($res)) {
+                        $groupArray[] = $row[0];
+                    }
+                    $cachedEntryOwnerGroups[$this->fid][$entry_id]=$groupArray;
+                } else {
+                    $cachedEntryOwnerGroups[$this->fid][$entry_id]=false;
+                }	
+            }
+            return $cachedEntryOwnerGroups[$this->fid][$entry_id];
+        }
 		
 	}
 	
