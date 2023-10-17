@@ -341,7 +341,7 @@
          foreach($DataS["Data"] as $Key => $Value)
           {
            $Angle  = (360/$Points) * $Key;
-           $Length = ($EdgeHeight/($Segments*$SegmentHeight))*$Value;
+           $Length = ($EdgeHeight/($Segments*$SegmentHeight))*floatval($Value);
 
            $X = cos(deg2rad($Angle+$AxisRotation)) * $Length  + $CenterX;
            $Y = sin(deg2rad($Angle+$AxisRotation)) * $Length  + $CenterY;
