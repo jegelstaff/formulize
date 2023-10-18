@@ -8063,8 +8063,8 @@ function getDaylightSavingsAdjustment($userTimeZone, $compareTimeZone, $timestam
     );
     
     // need plus or minus on the timezone number, even zero
-    $userTimeZone = floatval($userTimeZone) >= 0 ? "+$userTimeZone" : "$userTimeZone";
-    $compareTimeZone = floatval($compareTimeZone) >= 0 ? "+$compareTimeZone" : "$compareTimeZone";
+    $userTimeZone = floatval($userTimeZone) >= 0 ? strval("+".floatval($userTimeZone)) : strval(floatval($userTimeZone));
+    $compareTimeZone = floatval($compareTimeZone) >= 0 ? strval("+".floatval($compareTimeZone)) : strval(floatval($compareTimeZone));
     
     $adjustment = 0;
     if($userTimeZone != $compareTimeZone) {
