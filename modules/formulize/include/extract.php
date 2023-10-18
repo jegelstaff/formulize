@@ -378,13 +378,6 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 	$limitStart = intval($limitStart);
 	$limitSize = intval($limitSize);
 	 
-	// DARA HACK!!
-    // CAN BE REMOVED WITH NEW SORTING OPTION AFTER UPGRADE
-	// if it's a full name field, sort by last name instead
-	// needs to be turned into a proper feature on elements, that you can specify an alternate sort field
-	if(strstr(getCurrentURL(), 'dara.daniels') AND $sortField=='hr_module_name') {
-	   $sortField = 'hr_module_last_name';
-	}
     // use alternate sorting field specified
     if($sortField AND !isMetaDataField($sortField)) {
         $element_handler = xoops_getmodulehandler('elements','formulize');
