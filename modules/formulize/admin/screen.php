@@ -451,7 +451,6 @@ if ($screen_id != "new" && $settings['type'] == 'form') {
             $elementCaptions = $formObject->getVar('elementCaptions');
             $elementColheads = $formObject->getVar('elementColheads');
             foreach($elementCaptions as $key=>$elementCaption) {
-                print $elementColheads[$key] .'-'.$elementCaption.'<br>';
                 $options[$elements[$key]] = trans(strip_tags($elementColheads[$key])) ? printSmart(trans(strip_tags($elementColheads[$key]))) : printSmart(trans(strip_tags($elementCaption))); // need to pull out potential HTML tags from the caption/colhead
             }
             return $options;
