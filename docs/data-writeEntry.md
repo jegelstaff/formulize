@@ -45,7 +45,7 @@ $values = array(
 );
 $form_id = 6;
 $dataHandler = new formulizeDataHandler($form_id);
-$entry_id = $dataHandler->writeEntry("new", $values)
+$entry_id = $dataHandler->writeEntry("new", $values);
 ~~~
 
 ~~~
