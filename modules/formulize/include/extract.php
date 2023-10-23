@@ -1996,13 +1996,15 @@ function formulize_convertCapOrColHeadToHandle($frid, $fid, $term) {
      // first search the $fid, and then if we don't find anything, search the other forms in the $frid
      // check first for a match in the colhead field, then in the caption field
      // once a match is found return the handle
-     
+    
 	global $xoopsDB; // just used to check if XOOPS is in effect or not (in which case extract.php is being included directly)
     static $results_array = array();
     static $framework_results = array();
 	static $formNames = array();
     $handle = "";
     $term = trim($term, "\"");
+
+    if($term == "") { return "{nonefound}"; }
      
 	if(strstr($term, "\$formName")) { 		 // setup the name of the form and replace that value in the term, only when $xoopsDB is in effect, ie: full XOOPS stack
 		if(!isset($formNames[$fid])) {
