@@ -215,7 +215,7 @@ class formulizeDataHandler  {
 				}
 				
 				if(count((array) $newIds) > 1) {
-					$newEleHandleValue = "\",".implode(",",array_filter($newIds, 'is_int')).",\"";
+					$newEleHandleValue = "\",".implode(",",array_filter($newIds, 'is_numeric')).",\"";
 				} else {
 					$newEleHandleValue = $newIds[0];
 				}
@@ -241,13 +241,13 @@ class formulizeDataHandler  {
 		$ids = array_map(array($xoopsDB, 'escape'), $ids);
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($this->fid);
-		$sql = "DELETE FROM " .$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = " . implode(" OR entry_id = ", array_filter($ids, 'is_int'));
+		$sql = "DELETE FROM " .$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = " . implode(" OR entry_id = ", array_filter($ids, 'is_numeric'));
 		if(!$deleteSuccess = $xoopsDB->query($sql)) {
 			return false;
 		}
-		$sql = "DELETE FROM " . $xoopsDB->prefix("formulize_entry_owner_groups") . " WHERE fid=".formulize_db_escape($this->fid)." AND (entry_id = " . implode(" OR entry_id = ", array_filter($ids, 'is_int')) . ")";
+		$sql = "DELETE FROM " . $xoopsDB->prefix("formulize_entry_owner_groups") . " WHERE fid=".formulize_db_escape($this->fid)." AND (entry_id = " . implode(" OR entry_id = ", array_filter($ids, 'is_numeric')) . ")";
 		if(!$deleteOwernshipSuccess = $xoopsDB->query($sql)) {
-			print "Error: could not delete entry ownership information for form ". formulize_db_escape($this->fid) . ", entries: " . implode(", ", array_filter($ids, 'is_int')) . ". Check the DB queries debug info for details.";
+			print "Error: could not delete entry ownership information for form ". formulize_db_escape($this->fid) . ", entries: " . implode(", ", array_filter($ids, 'is_numeric')) . ". Check the DB queries debug info for details.";
 		}
 		if($formObject->getVar('store_revisions')) {
 			global $xoopsUser;
@@ -313,7 +313,7 @@ class formulizeDataHandler  {
 		global $xoopsDB;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($this->fid);
-		$sql = "SELECT creation_uid FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id IN (" . implode(",", array_filter($ids, 'is_int')) . ") $scopefilter";
+		$sql = "SELECT creation_uid FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id IN (" . implode(",", array_filter($ids, 'is_numeric')) . ") $scopefilter";
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
 		}
@@ -386,12 +386,12 @@ class formulizeDataHandler  {
     $formObject = $form_handler->get($this->fid);
 		if(is_array($scope_uids) AND count($scope_uids) > 0) {
 			$scopeFilter = $this->_buildScopeFilter($scope_uids);
-			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE (creation_uid = " . implode(" OR creation_uid = ", array_filter($uids, 'is_int')) . ") $scopeFilter ORDER BY entry_id";
+			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE (creation_uid = " . implode(" OR creation_uid = ", array_filter($uids, 'is_numeric')) . ") $scopeFilter ORDER BY entry_id";
 		} elseif(is_array($scope_group_ids) AND count($scope_group_ids)>0) {
 			$scopeFilter = $this->_buildScopeFilter("", $scope_group_ids);
-			$sql = "SELECT t1.entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . "AS t1, " . $xoopsDB->prefix("formulize_entry_owner_groups") . " AS t2 WHERE (t1.creation_uid = " . implode(" OR t1.creation_uid = ", array_filter($uids, 'is_int')) . ") $scopeFilter ORDER BY t1.entry_id";
+			$sql = "SELECT t1.entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . "AS t1, " . $xoopsDB->prefix("formulize_entry_owner_groups") . " AS t2 WHERE (t1.creation_uid = " . implode(" OR t1.creation_uid = ", array_filter($uids, 'is_numeric')) . ") $scopeFilter ORDER BY t1.entry_id";
 		} else {
-			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE (creation_uid = " . implode(" OR creation_uid = ", array_filter($uids, 'is_int')) . ") ORDER BY entry_id";
+			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE (creation_uid = " . implode(" OR creation_uid = ", array_filter($uids, 'is_numeric')) . ") ORDER BY entry_id";
 		}
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
@@ -416,7 +416,7 @@ class formulizeDataHandler  {
 		global $xoopsDB;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($this->fid);
-		$sql = "SELECT t1.entry_id FROM ". $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " as t1, ". $xoopsDB->prefix("formulize_entry_owner_groups") ." as t2 WHERE t1.entry_id = t2.entry_id AND t2.fid=".$this->fid." AND t2.groupid IN (".implode(",",array_filter($group_ids, 'is_int')).") ORDER BY t1.entry_id LIMIT 0,1";
+		$sql = "SELECT t1.entry_id FROM ". $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " as t1, ". $xoopsDB->prefix("formulize_entry_owner_groups") ." as t2 WHERE t1.entry_id = t2.entry_id AND t2.fid=".$this->fid." AND t2.groupid IN (".implode(",",array_filter($group_ids, 'is_numeric')).") ORDER BY t1.entry_id LIMIT 0,1";
 		global $xoopsUser;
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
@@ -567,7 +567,7 @@ class formulizeDataHandler  {
             $entries[$i] = intval($entry); // ensure we're not getting any funny business passed in to the DB
         }
         if(!isset($cachedValues[$handle][serialize($entries)])) {
-            $sql = "SELECT `$handle`, `entry_id` FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')). " WHERE entry_id IN (".implode(',',array_filter($entries, 'is_int')).")";
+            $sql = "SELECT `$handle`, `entry_id` FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')). " WHERE entry_id IN (".implode(',',array_filter($entries, 'is_numeric')).")";
             if($res = $xoopsDB->query($sql)) {
                 while($array = $xoopsDB->fetchArray($res)) {
                     if($prepValues) {
@@ -646,13 +646,13 @@ class formulizeDataHandler  {
 	function _buildScopeFilter($scope_uids, $scope_group_ids=array()) {
 		if(is_array($scope_uids)) {
 			if(count($scope_uids) > 0) {
-				$scopeFilter = " AND (creation_uid = " . implode(" OR creation_uid = ", array_filter($scope_uids, 'is_int')) . ")";
+				$scopeFilter = " AND (creation_uid = " . implode(" OR creation_uid = ", array_filter($scope_uids, 'is_numeric')) . ")";
 			} else {
 				$scopeFilter = "";
 			}
 		} elseif(is_array($scope_group_ids)) {
 			if(count($scope_group_ids) > 0) {
-			  $scopeFilter = " AND (t2.groupid IN (".implode(",", array_filter($scope_group_ids, 'is_int')).") AND t2.entry_id=t1.entry_id AND t2.fid=".intval($this->fid).")";
+			  $scopeFilter = " AND (t2.groupid IN (".implode(",", array_filter($scope_group_ids, 'is_numeric')).") AND t2.entry_id=t1.entry_id AND t2.fid=".intval($this->fid).")";
 			} else {
 				$scopeFilter = "";
 			}
@@ -767,7 +767,7 @@ class formulizeDataHandler  {
         // if we're checking a series of entries, just return true/false for whether there's any ownership info for any of them
         // this is an internal feature used by setEntryOwnerGroups
         if(is_array($entry_id)) {
-            $entryFilter = " AND entry_id IN (".implode(", ", array_filter($entry_id, 'is_int')).") "; 
+            $entryFilter = " AND entry_id IN (".implode(", ", array_filter($entry_id, 'is_numeric')).") "; 
             $sql = "SELECT DISTINCT(groupid) FROM ".$xoopsDB->prefix("formulize_entry_owner_groups") . " WHERE fid='".$this->fid."' $entryFilter ORDER BY groupid";
             if($res = $xoopsDB->query($sql)) {
                 return $xoopsDB->getRowsNum($res);
