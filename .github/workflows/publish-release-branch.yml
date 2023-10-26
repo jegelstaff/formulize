@@ -13,6 +13,11 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
 
+    - name: Set Git Identity
+      run: |
+        git config --global user.email "machine@formulize.net"
+        git config --global user.name "Git Machine"
+
     - name: Create or Update 'release' Branch
       run: |
         # Check if 'release' branch exists, create it if not
