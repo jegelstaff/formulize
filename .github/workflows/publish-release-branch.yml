@@ -36,4 +36,4 @@ jobs:
         git commit -m "Remove unwanted files for release"
 
     - name: Push Changes to 'release' Branch
-      run: git push origin release
+      run: git push origin release -f
