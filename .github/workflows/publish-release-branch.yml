@@ -1,0 +1,34 @@
+name: Update Release Branch
+
+on:
+  push:
+    branches:
+      - TASK/update-release-branch
+
+jobs:
+  update-release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v2
+
+    - name: Create or Update 'release' Branch
+      run: |
+        # Check if 'release' branch exists, create it if not
+        if ! git show-ref --quiet refs/heads/release; then
+          git checkout -b release
+        else
+          git checkout release && git pull origin master
+        fi
+
+    - name: Remove Unwanted Files
+      run: |
+        # Remove files you don't want in the 'release' branch
+        git rm -r --cached cache
+        git rm -r --cached .github
+        git rm -r --cached .travis.yml
+        git commit -m "Remove unwanted files for release"
+
+    - name: Push Changes to 'release' Branch
+      run: git push origin release
