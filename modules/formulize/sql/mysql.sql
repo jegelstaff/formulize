@@ -326,6 +326,7 @@ CREATE TABLE formulize_saved_views (
   sv_quicksearches text,
   sv_global_search text,
   sv_pubfilters text,
+  sv_entriesperpage varchar(4) NOT NULL default '',
   PRIMARY KEY (sv_id)
 ) ENGINE=InnoDB;
 

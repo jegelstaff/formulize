@@ -121,7 +121,7 @@ echo '<body>';
 				</button>
 				<?php } ?>
 				<?php if ($wizard->currentPage == end(array_keys($wizard->pages))) { ?>
-				<button  id="hmo" title="<?php echo BUTTON_SHOW_SITE; ?>" type="button" onclick="location.href='<?php echo $wizard->pageURI('11'); ?>?success=true'" class="finish">
+				<button  id="hmo" title="<?php echo BUTTON_SHOW_SITE; ?>" type="button" onclick="location.href='<?php echo $wizard->pageURI('end'); ?>?success=true'" class="finish">
 					<img src="img/Home.png" alt="<?php echo BUTTON_SHOW_SITE; ?>" title="<?php echo BUTTON_SHOW_SITE; ?>" width="32" />
 				</button>
 				<?php } ?>

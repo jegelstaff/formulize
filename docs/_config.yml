@@ -2,4 +2,3 @@ markdown: kramdown
 baseurl: /
 url: http://www.formulize.org/
 permalink: /:title/
-theme: jekyll-theme-tactile

@@ -216,7 +216,11 @@ function getUserForm(&$user, $profile = false, $action = false) {
             $elements[0][] = array('element' => new icms_form_elements_Label(_US_NICKNAME, $user->getVar('uname')), 'required' => 0);
         }
 		$weights[0][] = 0;
-		$elements[0][] = array('element' => new icms_form_elements_Label(_MD_PROFILE_EMAIL, $user->getVar('email')), 'required' => 0);
+        if ($icmsConfigUser['allow_chgmail'] == 1) {
+            $elements[0][] = array('element' => new icms_form_elements_Text(_MD_PROFILE_EMAIL, 'email', 30, 60, $user->getVar('email')), 'required' => 1);
+        } else {
+            $elements[0][] = array('element' => new icms_form_elements_Label(_MD_PROFILE_EMAIL, $user->getVar('email')), 'required' => 0);
+        }
 		$weights[0][] = 0;
     }
     

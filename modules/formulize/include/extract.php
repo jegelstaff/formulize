@@ -378,13 +378,6 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 	$limitStart = intval($limitStart);
 	$limitSize = intval($limitSize);
 	 
-	// DARA HACK!!
-    // CAN BE REMOVED WITH NEW SORTING OPTION AFTER UPGRADE
-	// if it's a full name field, sort by last name instead
-	// needs to be turned into a proper feature on elements, that you can specify an alternate sort field
-	if(strstr(getCurrentURL(), 'dara.daniels') AND $sortField=='hr_module_name') {
-	   $sortField = 'hr_module_last_name';
-	}
     // use alternate sorting field specified
     if($sortField AND !isMetaDataField($sortField)) {
         $element_handler = xoops_getmodulehandler('elements','formulize');
@@ -948,7 +941,13 @@ function formulize_generateJoinSQL($linkOrdinal, $linkcommonvalue, $linkselfids,
     if($linkcommonvalue[$linkOrdinal]) { // common value
         $newJoinText = " $mainAlias.`" . $joinHandles[$linkselfids[$linkOrdinal]] . "`=$subAlias.`" . $joinHandles[$linktargetids[$linkOrdinal]]."`";
     } elseif($linktargetids[$linkOrdinal]) { // linked selectbox
-        if($target_ele_value = formulize_isLinkedSelectBox($linktargetids[$linkOrdinal])) {
+        $main_ele_value = formulize_isLinkedSelectBox($linkselfids[$linkOrdinal]);
+        $target_ele_value = formulize_isLinkedSelectBox($linktargetids[$linkOrdinal]);
+        $mainBoxProperties = explode("#*=:*", $main_ele_value[2]);
+        $targetBoxProperties = explode("#*=:*", $target_ele_value[2]);
+        // if the target is the link, or they're both links and the target is pointing to the main
+        if(($target_ele_value AND !$main_ele_value)
+           OR ($target_ele_value AND $main_ele_value AND $targetBoxProperties[1] == $joinHandles[$linkselfids[$linkOrdinal]])) {
             if ($target_ele_value[1]) {
                 // multiple values allowed
                 $newJoinText = " $subAlias.`" . $joinHandles[$linktargetids[$linkOrdinal]] . "` LIKE CONCAT('%,',$mainAlias.entry_id,',%')";
@@ -956,9 +955,9 @@ function formulize_generateJoinSQL($linkOrdinal, $linkcommonvalue, $linkselfids,
                 // single value only
                 $newJoinText = " $subAlias.`" . $joinHandles[$linktargetids[$linkOrdinal]] . "` = $mainAlias.entry_id";
             }
-        } else {
-            $main_ele_value = formulize_isLinkedSelectBox($linkselfids[$linkOrdinal]); 
-            //  we know it's linked because this is a linked selectbox join, we just need the ele_value properties
+        // if the main is the link, or they're both links and the main is pointing to the target
+        } elseif(($main_ele_value AND !$target_ele_value)
+            OR ($main_ele_value AND $target_ele_value AND $mainBoxProperties[1] == $joinHandles[$linktargetids[$linkOrdinal]])) {
             if ($main_ele_value[1]) {
                 // multiple values allowed
                 $newJoinText = " $mainAlias.`" . $joinHandles[$linkselfids[$linkOrdinal]] . "` LIKE CONCAT('%,',$subAlias.entry_id,',%')";
@@ -966,6 +965,8 @@ function formulize_generateJoinSQL($linkOrdinal, $linkcommonvalue, $linkselfids,
                 // single value only
                 $newJoinText = " $mainAlias.`" . $joinHandles[$linkselfids[$linkOrdinal]] . "` = $subAlias.entry_id";
             }
+        } else {
+            exit("Fatal Formulize Error: could not determine nature of linkage between linked selectbox(es)");
         }
     } else { // join by uid
       $newJoinText = " $mainAlias.creation_uid=$subAlias.creation_uid";
@@ -1960,7 +1961,7 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
                     $quotePos = $quotePos + $numberOfChars + strlen($newterm);
                     $formula = str_replace($term, $replacement, $formula);
                 } else {
-                    $quotePos = $quotePos + strlen($term) + 2; // move ahead the length of the found term, plus its quotes
+                    $quotePos = $quotePos + strlen($term);
                 }
             }
         }
@@ -1988,13 +1989,15 @@ function formulize_convertCapOrColHeadToHandle($frid, $fid, $term) {
      // first search the $fid, and then if we don't find anything, search the other forms in the $frid
      // check first for a match in the colhead field, then in the caption field
      // once a match is found return the handle
-     
+    
 	global $xoopsDB; // just used to check if XOOPS is in effect or not (in which case extract.php is being included directly)
     static $results_array = array();
     static $framework_results = array();
 	static $formNames = array();
     $handle = "";
     $term = trim($term, "\"");
+
+    if($term == "") { return "{nonefound}"; }
      
 	if(strstr($term, "\$formName")) { 		 // setup the name of the form and replace that value in the term, only when $xoopsDB is in effect, ie: full XOOPS stack
 		if(!isset($formNames[$fid])) {

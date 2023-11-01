@@ -34,10 +34,9 @@ if($subformDisplayScreen = get_display_screen_for_subform($subformElementObject)
 } else {
     $renderResult = displayForm($fid, $entry_id, "", "",  "", "", "formElementsOnly");
 }
-// add security token
-if(isset($GLOBALS['xoopsSecurity'])) {
-    print $GLOBALS['xoopsSecurity']->getTokenHTML();
-}
+// add security token, and token for deleting entry locks
+print $GLOBALS['xoopsSecurity']->getTokenHTML();
+print "<input type='hidden' name='formulize_entry_lock_token' value='".getEntryLockSecurityToken()."'>";
 
 global $xoopsUser;
 $usersCanSave = formulizePermHandler::user_can_edit_entry($fid, ($xoopsUser ? $xoopsUser->getVar('uid') : 0), $entry_id);
@@ -81,6 +80,15 @@ function xoopsFormValidate_formulize_modal(myform) {
 print trim(implode("\n\r",(array) $GLOBALS['formulize_elementsOnlyForm_validationCode']));
 print "\n\r return true;
 }
+
+function removeModalEntryLocks() {
+".formulize_javascriptForRemovingEntryLocks()."
+}
+
+jQuery(window).on('unload', function() {
+    ".formulize_javascriptForRemovingEntryLocks('unload')."
+});
+
 </script>";
 
 

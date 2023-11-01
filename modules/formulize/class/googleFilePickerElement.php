@@ -245,9 +245,8 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
                 oauthToken$eleId = authResult.access_token;
                 createPicker$eleId();
               } else if(authResult) {
-                // need to add in here the option for using this feature without Google sign in as the default authentication for the website!
-                // probably need to use window.gapi.auth2.init and then .signin ??
-                // OR WE NEED TO MAKE IT A USER OPTION IN THE ELEMENT, WHETHER TO PROMPT USER OR NOT...OR WE CHECK IF GOOGLE AUTHENTICATION IS ON AND PROMPT USER WHEN IT IS NOT ON.
+                window.gapi.auth2.init();
+                window.gapi.auth2.signIn();
               }
             }
         
@@ -343,13 +342,14 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
                 if (data.action == google.picker.Action.PICKED) {
                     for(i in data.docs) {
                         addToList$eleId(addFileExtension(data.docs[i].name, data.docs[i].mimeType), data.docs[i].url, data.docs[i].id, data.docs[i].iconUrl);
+                        formulizechanged = 1;
                     }
                 }
             }
 
             function addToList$eleId(name, url, id, iconUrl) {
                 if(jQuery('#googlefile_".$markupName."_'+id).length == 0) {";
-                    $interactiveMarkup = $isDisabled ? "" : "<a href=\"\" onclick=\"warnAboutGoogleDelete$eleId(\''+id+'\', \''+name.replace(/\\\"/g, '&quot;')+'\', \'".$markupName."\');return false;\"><img src=\"".XOOPS_URL."/modules/formulize/images/x.gif\" /></a><input type=\"hidden\" name=\"".$markupName."[]\" value=\"'+name.replace(/\\\"/g, '&quot;')+'<{()}>'+url+'<{()}>'+id+'<{()}>'+iconUrl+'\">";
+                    $interactiveMarkup = $isDisabled ? "" : "<a href=\"\" onclick=\"warnAboutGoogleDelete$eleId(\''+id+'\', \''+name.replace(/\\\"/g, '&quot;')+'\', \'".$markupName."\');return false;\"><img src=\"".XOOPS_URL."/modules/formulize/images/x.gif\" /></a><input type=\"hidden\" name=\"".$markupName."[]\" value=\"'+name.replace(/\\\"/g, '&quot;')+'<{()}>'+url+'<{()}>'+id+'<{()}>'+iconUrl+'\" />";
                     if($ele_value['multiselect']==false) {
                         $picker .= "
                     jQuery('#".$markupName."_files').empty();";
@@ -363,6 +363,7 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
                 var answer = confirm('" . _AM_GOOGLEFILE_DELETE_WARN . " '+name+'?');
                 if(answer) {
                     jQuery(\"#googlefile_\"+markupName+\"_\"+id).remove();
+                    formulizechanged = 1;
                 }
                 return false;
             }
@@ -371,21 +372,21 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
         
         if(!$isDisabled) {
             $picker .= "<p><input type='button' onclick='loadPicker$eleId();' value='"._AM_GOOGLEFILE_SELECT."'></p>
-                <p id='".$markupName."_files'>";
+                <div id='".$markupName."_files'>";
         } else {
-            $picker .= "<p>";
+            $picker .= "<div>";
         }
         
         if(count((array) $ele_value['files'])>0) {
             foreach($ele_value['files'] as $file) {
-                $interactiveMarkup = $isDisabled ? "" : "<a href=\"\" onclick=\"warnAboutGoogleDelete$eleId('".$file['id']."', '".str_replace('"','\"',htmlspecialchars_decode($file['name'], ENT_QUOTES))."', '".$markupName."');return false;\"><img src=\"".XOOPS_URL."/modules/formulize/images/x.gif\" /></a><input type=\"hidden\" name=\"".$markupName."[]\" value=\"".str_replace('"','\"',htmlspecialchars_decode($file['name'], ENT_QUOTES))."<{()}>".$file['url']."<{()}>".$file['id']."<{()}>".$file['iconUrl']."\">";
+                $interactiveMarkup = $isDisabled ? "" : "<a href=\"\" onclick=\"warnAboutGoogleDelete$eleId('".$file['id']."', '".str_replace('"','\"',htmlspecialchars_decode($file['name'], ENT_QUOTES))."', '".$markupName."');return false;\"><img src=\"".XOOPS_URL."/modules/formulize/images/x.gif\" /></a><input type=\"hidden\" name=\"".$markupName."[]\" value=\"".str_replace('"','\"',htmlspecialchars_decode($file['name'], ENT_QUOTES))."<{()}>".$file['url']."<{()}>".$file['id']."<{()}>".$file['iconUrl']."\" />";
                 $interactiveId = $isDisabled ? "" : "id=\"googlefile_".$markupName."_".$file['id']."\"";
                 $picker .= "
                 <div class=\"googlefile googlefile_$eleId\" $interactiveId><img src=\"".$file['iconUrl']."\" /> <a href=\"".$file['url']."\" target=\"_blank\">".str_replace('"','\"',htmlspecialchars_decode($file['name'], ENT_QUOTES))."</a> ".$interactiveMarkup."</div>";
             }
         }
         
-        $picker .= "</p>";
+        $picker .= "</div>";
         
         $element = new xoopsFormLabel($caption, $picker);
         

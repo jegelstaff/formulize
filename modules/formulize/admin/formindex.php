@@ -484,6 +484,7 @@ function patch40() {
         $sql['not_cons_arbitrary'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_notification_conditions") . " ADD `not_cons_arbitrary` text NULL default NULL";
         $sql['screen_theme_change'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " CHANGE `theme` `theme` varchar(101) NOT NULL default ''";
         $sql['element_sort'] = "ALTER TABLE ".$xoopsDB->prefix("formulize") . " ADD `ele_sort` smallint(2) NULL default NULL";
+        $sql['sv_entriesperpage'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views") . " ADD `sv_entriesperpage` varchar(4) NOT NULL default ''";
         $sql['on_delete'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id") . " ADD `on_delete` text";
 
         $needToSetSaveAndLeave = true;
@@ -594,6 +595,8 @@ function patch40() {
                     print "Arbitrary email already added to notification options. result: OK<br>";
                 } elseif($key === "element_sort") {
                     print "Element sorting order already added. result: OK<br>";
+                } elseif($key === "sv_entriesperpage") {
+                    print "Entries per page already added. result: OK<br>";
                 } elseif($key === "on_delete") {
                     print "On Delete already added. result: OK<br>";
                 } else {

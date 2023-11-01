@@ -74,7 +74,7 @@ function setScrollDisplay(element) {
 }
 
 function setSearchRowTop() {
-    var headingHeight = jQuery('td[id=celladdress_h1_1]').innerHeight();
+    var headingHeight = jQuery('td[id=celladdress_h1_0]').innerHeight();
     var topValue = headingHeight+1;
     jQuery('td[id^=celladdress_1_]').css('top',topValue+'px');
 }
@@ -163,6 +163,7 @@ jQuery(window).scroll(function () {
 });
 
 jQuery(document).ready(function() {
+    setSearchRowTop();
     setTimeout(setSearchRowTop,500);
 });
 

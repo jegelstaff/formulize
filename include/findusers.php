@@ -410,6 +410,9 @@ if (empty($_POST["user_submit"])) {
 			</tr>";
 			$ucount = 0;
 			foreach (array_keys($foundusers) as $j) {
+                if(is_numeric($foundusers[$j])) {
+                    $foundusers[$j] = $user_handler->getUser($foundusers[$j]);   
+                }
 				if ($ucount % 2 == 0) {
 					$class = 'even';
 				} else {

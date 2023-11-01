@@ -18,6 +18,12 @@ if (!defined("XOOPS_MAINFILE_INCLUDED")) {
 $member_handler = icms::handler('icms_member');
 $group = $member_handler->getUserBestGroup((@is_object(icms::$user) ? icms::$user->getVar('uid') : 0));
 
+if(isset($_SESSION['google_xoops_redirect'])) {
+    header('Location: ' . $_SESSION['google_xoops_redirect']);
+    unset($_SESSION['google_xoops_redirect']);
+    exit();
+}
+
 // added failover to default startpage for the registered users group -- JULIAN EGELSTAFF Apr 3 2017
 $groups = @is_object(icms::$user) ? icms::$user->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
 if(($icmsConfig['startpage'][$group] == "" OR $icmsConfig['startpage'][$group] == "--") 

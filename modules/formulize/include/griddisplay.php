@@ -75,7 +75,7 @@ function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientatio
 		$numcols = $numcols+1;
 	}
 	$numrows = count((array) $rowcaps);
-	$actual_numrows = count((array) array_filter($rowcaps), 'nonNullGridRowCaps');	# count non-null row captions
+	$actual_numrows = count((array) array_filter($rowcaps, 'nonNullGridRowCaps'));	# count non-null row captions
 	if($title == "{FORMTITLE}") {
 		$title = trans(getFormTitle($fid));
 	} else {

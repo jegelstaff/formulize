@@ -66,13 +66,12 @@ switch ($op) {
 
 		$member_handler = icms::handler('icms_member');
 		$edituser = $member_handler->getUser($uid);
+        //need this for mapping table update
+        $oldemail = $edituser->getVar('email');
 		if (icms::$user->isAdmin()) {
 			$edituser->setVar('login_name', $login_name);
 			$edituser->setVar('uname', $uname);
-			//need this for mapping table update
-			$oldemail = $edituser->getVar('email');
 			$edituser->setVar('email', $email);
-
 			if ($edituser->getVar('uid') != icms::$user->getVar('uid')) {
 				if ($pass != '') {
 					$icmspass = new icms_core_Password();
@@ -85,8 +84,9 @@ switch ($op) {
 				}
 				$edituser->setVar('level', (int)$_POST['level']);
 			}
-		} else {
+		} elseif($edituser->getVar('uid') == icms::$user->getVar('uid')) {
 			if ($icmsConfigUser['allow_chguname'] == 1) $edituser->setVar('uname', $uname);
+            if ($icmsConfigUser['allow_chgmail'] == 1) $edituser->setVar('email', $email);
 		}
 		if ($icmsConfigAuth['auth_openid'] == 1) {
 			$edituser->setVar('openid', icms_core_DataFilter::stripSlashesGPC(trim($_POST['openid'])));
@@ -359,6 +359,7 @@ switch ($op) {
 			$method = $profile->getVar('2famethod') ? $profile->getVar('2famethod') : TFA_OFF;
 			$pwChangeMethod = $method ? $method : TFA_EMAIL;
 			$phoneNumber = preg_replace("/[^0-9]/", '', $profile->getVar('2faphone'));
+            $email = $thisUser->getVar('email');
 			print "
 			<div id='tfadialog'><center>".$workingMessageGif."</center></div>
 			<script type='text/javascript'>
@@ -426,6 +427,7 @@ switch ($op) {
                     var password = jQuery('#password').val();
                     var vpass = jQuery('#vpass').val();
 					var tfaphone = tfaphone.replace(/\D/g,'');
+                    var email = jQuery('#email').val();
 					
 					if(password && vpass && password != vpass) {
 						alert(\""._US_PASSWORDS_DONT_MATCH."\");
@@ -434,11 +436,13 @@ switch ($op) {
 					
 					if(!tfacode && (
                         tfamethod != ".$method." ||
-                        (tfamethod == ".TFA_SMS." && tfaphone != '".$phoneNumber."') || 
+                        (tfamethod == ".TFA_SMS." && tfaphone != '".$phoneNumber."') ||
+                        (tfamethod == ".TFA_EMAIL." && email != '".$email."') ||
+                        (tfamethod == ".TFA_OFF." && email != '".$email."') ||
                         (password && vpass)
                         )) {
 						methodToUse = tfamethod ? tfamethod : ".$pwChangeMethod.";
-						tfadialog.load('".XOOPS_URL."/include/2fa/confirm.php?method='+methodToUse+'&phone='+tfaphone+'&selectedMethod='+tfamethod);
+						tfadialog.load('".XOOPS_URL."/include/2fa/confirm.php?method='+methodToUse+'&phone='+tfaphone+'&email='+email+'&selectedMethod='+tfamethod);
 						tfadialog.dialog('open');
 						return false;
 					}

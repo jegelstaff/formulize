@@ -374,7 +374,8 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 				$sortOrderClause = " ORDER BY t1.`$sortHandle` $sortOrder";
 			}
 		
-            $groupLimitClause = prepareLinkedElementGroupFilter($sourceFid, $ele_value['formlink_scope'], $ele_value['checkbox_scopelimit'], $ele_value['checkbox_formlink_anyorall']);
+            $ele_value['formlink_useonlyusersentries'] = isset($ele_value['formlink_useonlyusersentries']) ? $ele_value['formlink_useonlyusersentries'] : 0;
+            $groupLimitClause = prepareLinkedElementGroupFilter($sourceFid, $ele_value['formlink_scope'], $ele_value['checkbox_scopelimit'], $ele_value['checkbox_formlink_anyorall'], $ele_value['formlink_useonlyusersentries']);
             list($sourceEntrySafetyNetStart, $sourceEntrySafetyNetEnd) = prepareLinkedElementSafetyNets($sourceEntryIds);
             $extra_clause = prepareLinkedElementExtraClause($groupLimitClause, $parentFormFrom, $sourceEntrySafetyNetStart);
             
@@ -410,7 +411,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 			// linked checkboxes will send back the entry id to save
 			// non linked boxes send back an ordinal number that shows which options were picked
 			$valueToUse = $isLinked ? $key : $opt_count;
-			$options[$valueToUse] = $myts->stripSlashesGPC($key);
+			$options[$valueToUse] = $key;
 			if( $value > 0 ){
 				$selected[] = $valueToUse;
 				$disabledHiddenValue[] = "<input type=hidden name=\"".$markupName."[]\" value=\"$opt_count\">";

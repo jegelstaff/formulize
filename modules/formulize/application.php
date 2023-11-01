@@ -66,7 +66,10 @@ foreach($applicationsToDraw as $aid) {
         $app_name = _AM_CATGENERAL;
     }
     $formsToSend = getNavDataForForms($links);
-    if(count((array) $formsToSend)>0) {
+    if(count((array) $formsToSend)==1) {
+        header("location: ".$formsToSend[0]['url']);
+        exit();
+    } elseif(count((array) $formsToSend)>0) {
         $allAppData[] = array('app_name'=>$app_name, 'noforms'=>0, 'formData'=>$formsToSend);
     }
     
@@ -88,19 +91,8 @@ function getNavDataForForms($links) {
     $formsToSend = array();
     $i=0;
     foreach($links as $link) {
-        $suburl = XOOPS_URL."/modules/formulize/index.php?".$link->getVar("screen");
-        $url = $link->getVar("url");
-        if(strlen($url) > 0){
-            if(substr($url, 0, 1)=="/") {
-                $url = XOOPS_URL.$url;
-            } else {
-            $pos = strpos($url,"://");
-            if($pos === false){
-                $url = "http://".$url;
-                }
-            }
-            $suburl = $url;
-        }
+        $url = buildMenuLinkURL($link);
+        $suburl = $url ? $url : XOOPS_URL."/modules/formulize/index.php?".$link->getVar("screen");
         $formsToSend[$i]['url'] = $suburl;
         $formsToSend[$i]['title'] = $link->getVar("text");
         $i++;

@@ -77,9 +77,6 @@ $formulizeStandaloneQueries = str_replace("REPLACE_WITH_PROTECTOR_MODULE_ID", $p
 $formulizeStandaloneQueries = str_replace("REPLACE_WITH_TIMEZONE", $offset, $formulizeStandaloneQueries);
 $formulizeStandaloneQueries = str_replace("REPLACE_WITH_YEAR", $year, $formulizeStandaloneQueries);
 
-$vars = & $_SESSION ['settings'];
-$link = @mysqli_connect ( $vars ['DB_HOST'], $vars ['DB_USER'], $vars ['DB_PASS'], true );
-
 foreach(explode(";\r",str_replace(array("\n","\n\r","\r\n"), "\r", $formulizeStandaloneQueries)) as $sql) { // convert all kinds of line breaks to \r and then split on semicolon-linebreak to get individual queries
 	if($sql) {
 		if(!$formulizeResult = $dbm->query($sql)) {
