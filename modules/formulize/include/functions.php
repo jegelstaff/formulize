@@ -61,10 +61,7 @@ if (typeof jQuery.ui == 'undefined') {
 }
 ";
 
-include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
-include_once XOOPS_ROOT_PATH . "/modules/formulize/class/usersGroupsPerms.php";
-include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
 
 function getFormFramework($formframe, $mainform=0) {
     static $cachedToReturn = array();

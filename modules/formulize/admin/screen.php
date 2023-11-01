@@ -231,7 +231,7 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $entries['defaultview'] = $screen->getVar('defaultview');
   // Convert to arrays if a legacy value
   if(!is_array($entries['defaultview'])) {
-    $entries['defaultview'] = array(XOOPS_GROUP_USERS => $entries['defaultview']);
+    $entries['defaultview'] = array(XOOPS_GROUP_USERS => FORMULIZE_QUERY_SCOPE_GLOBAL);
   }
   $entries['viewoptions'] = $viewOptions;
   $entries['usecurrentviewlist'] = $screen->getVar('usecurrentviewlist');

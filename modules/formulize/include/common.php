@@ -43,6 +43,7 @@ include_once XOOPS_ROOT_PATH."/class/xoopsformloader.php";
 $formulize_mgr =& xoops_getmodulehandler('elements', 'formulize');
 include_once formulize_ROOT_PATH.'class/elementrenderer.php';
 
+include_once formulize_ROOT_PATH.'include/constants.php';
 include_once formulize_ROOT_PATH.'include/functions.php';
 include_once formulize_ROOT_PATH.'include/formdisplay.php';
 include_once formulize_ROOT_PATH.'include/entriesdisplay.php';
@@ -50,6 +51,7 @@ include_once formulize_ROOT_PATH.'include/graphdisplay.php';
 include_once formulize_ROOT_PATH.'include/calendardisplay.php';
 include_once formulize_ROOT_PATH.'include/elementdisplay.php';
 include_once formulize_ROOT_PATH.'include/extract.php';
+include_once formulize_ROOT_PATH.'class/usersGroupsPerms.php';
 include_once formulize_ROOT_PATH.'class/data.php';
 
 //Add the language constants
