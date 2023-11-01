@@ -347,7 +347,7 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
     {
         global $xoopsConfig;
         // View
-        $defaultListScreen->setVar('defaultview', array(XOOPS_GROUP_USERS => FORMULIZE_QUERY_SCOPE_GLOBAL));
+        $defaultListScreen->setVar('defaultview', serialize(array(XOOPS_GROUP_USERS => FORMULIZE_QUERY_SCOPE_GLOBAL)));
         $defaultListScreen->setVar('usecurrentviewlist', _formulize_DE_CURRENT_VIEW);
         $defaultListScreen->setVar('limitviews', serialize(array(0 => 'allviews')));
         $defaultListScreen->setVar('useworkingmsg', 1);
