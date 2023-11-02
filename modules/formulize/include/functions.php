@@ -4049,8 +4049,8 @@ function formulize_writeEntry($values, $entry_id="new", $action="replace", $prox
     $elementObject = $element_handler->get(key($values));
     if (is_object($elementObject)) {
         $data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
-        if ($result = $data_handler->writeEntry($entry, $values, $proxyUser, $forceUpdate)) {
-            if ($entry == "new" AND $writeOwnerInfo) {
+        if ($result = $data_handler->writeEntry($entry_id, $values, $proxyUser, $forceUpdate)) {
+            if ($entry_id == "new" AND $writeOwnerInfo) {
                 global $xoopsUser;
                 if(isset($GLOBALS['formulize_overrideProxyUser'])) {
                     $ownerForGroups = $GLOBALS['formulize_overrideProxyUser'];
