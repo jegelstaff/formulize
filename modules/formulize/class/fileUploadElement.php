@@ -293,7 +293,10 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
                 print "<p><b>$value</b></p>";
             }
         } elseif($_FILES[$fileKey]['error'] == UPLOAD_ERR_NO_FILE) {
-            return "{WRITEASNULL}"; // no replacement file sent, so keep whatever we've got already...we should be skipping these uploads!
+            list($fieldtype, $de, $form_id, $entry_id, $element_id) = explode('_', $fileKey);
+            $dataHandler = new formulizeDataHandler($form_id);
+            // Return the existing serialized value in the database
+            return $dataHandler->getElementValueInEntry($entry_id, $element_id);
         } else {
             switch($_FILES[$fileKey]['error']) {
                 case UPLOAD_ERR_INI_SIZE:
