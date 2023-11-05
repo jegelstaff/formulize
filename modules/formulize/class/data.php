@@ -238,10 +238,14 @@ class formulizeDataHandler  {
 			$ids[0] = $sentID;
 		}
 		global $xoopsDB;
-		$ids = array_map(array($xoopsDB, 'escape'), $ids);
-    $form_handler = xoops_getmodulehandler('forms', 'formulize');
-    $formObject = $form_handler->get($this->fid);
-		$sql = "DELETE FROM " .$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = " . implode(" OR entry_id = ", array_filter($ids, 'is_numeric'));
+
+		$ids = array_filter($ids, 'is_numeric'); 
+        $form_handler = xoops_getmodulehandler('forms', 'formulize');
+        $formObject = $form_handler->get($this->fid);
+        foreach($ids as $id) {
+            $existing_values = $formObject->onDelete($id);
+        }
+		$sql = "DELETE FROM " .$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = " . implode(" OR entry_id = ", $ids);
 		if(!$deleteSuccess = $xoopsDB->query($sql)) {
 			return false;
 		}
@@ -382,8 +386,8 @@ class formulizeDataHandler  {
 			$uids[0] = $sentID;
 		}
 		global $xoopsDB;
-    $form_handler = xoops_getmodulehandler('forms', 'formulize');
-    $formObject = $form_handler->get($this->fid);
+        $form_handler = xoops_getmodulehandler('forms', 'formulize');
+        $formObject = $form_handler->get($this->fid);    
 		if(is_array($scope_uids) AND count($scope_uids) > 0) {
 			$scopeFilter = $this->_buildScopeFilter($scope_uids);
 			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE (creation_uid = " . implode(" OR creation_uid = ", array_filter($uids, 'is_numeric')) . ") $scopeFilter ORDER BY entry_id";
@@ -936,6 +940,10 @@ class formulizeDataHandler  {
             if(array_key_exists($evHandle, $existing_values) AND $existing_values[$evHandle] === $thisElementValue) { 
                 unset($element_values[$evHandle]); // don't write things that are unchanged from their current state in the database
             }
+        }
+        
+        if(isset($GLOBALS['formulize_overrideProxyUser'])) {
+            $creation_uid = intval($GLOBALS['formulize_overrideProxyUser']);
         }
         
         if (0 == count((array) $element_values)) {

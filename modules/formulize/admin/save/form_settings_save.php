@@ -210,7 +210,7 @@ if((isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1) OR $for
   }
   print "/* eval */ ";
   if($formulize_altered_form_handle) {
-    print " alert('The Form Handle was changed for uniqueness, or because dome characters, such as punctuation, are not allowed in the database table names or PHP variables.');\n";
+    print " alert('The Form Handle was changed for uniqueness, or because some characters, such as punctuation, are not allowed in the database table names or PHP variables.');\n";
   }
   print " reloadWithScrollPosition('".XOOPS_URL ."/modules/formulize/admin/ui.php?page=form&aid=$appidToUse&fid=$fid');";
 }

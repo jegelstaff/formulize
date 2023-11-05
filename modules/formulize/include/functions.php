@@ -61,10 +61,7 @@ if (typeof jQuery.ui == 'undefined') {
 }
 ";
 
-include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
-include_once XOOPS_ROOT_PATH . "/modules/formulize/class/usersGroupsPerms.php";
-include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
 
 function getFormFramework($formframe, $mainform=0) {
     static $cachedToReturn = array();
@@ -303,18 +300,18 @@ function availReports($uid, $groups, $fid, $frid="0") {
     // parse out details from arrays for passing back
     $sortnames = array();
     foreach ($saved_reports as $id=>$details) {
-        $sortnames[] = $details['report_name'];
+        $sortnames[] = $details['sv_name'];
     }
     array_multisort($sortnames, $saved_reports);
 
     $sortnames = array();
     foreach ($available_published_reports as $id=>$details) {
-        $sortnames[] = $details['report_name'];
+        $sortnames[] = $details['sv_name'];
     }
     array_multisort($sortnames, $available_published_reports);
 
     $to_return[0] = array();    // in an older version the saved and published reports were returned but then the
-    $to_return[1] = array();    //  methed changed, and new array indexes were added and these were left for compatability
+    $to_return[1] = array();    //  method changed, and new array indexes were added and these were left for compatability
     $to_return[2] = $saved_reports;
     $to_return[3] = $available_published_reports;
 
@@ -4053,16 +4050,21 @@ function formulize_writeEntry($values, $entry_id="new", $action="replace", $prox
     if (is_object($elementObject)) {
         $data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
         if ($result = $data_handler->writeEntry($entry_id, $values, $proxyUser, $forceUpdate)) {
-            global $xoopsUser;
-            if ($proxyUser) {
-                $ownerForGroups = $proxyUser;
-            } elseif ($xoopsUser) {
-                $ownerForGroups = $xoopsUser->getVar('uid');
-            } else {
-                $ownerForGroups = 0;
-            }
             if ($entry_id == "new" AND $writeOwnerInfo) {
+                global $xoopsUser;
+                if(isset($GLOBALS['formulize_overrideProxyUser'])) {
+                    $ownerForGroups = $GLOBALS['formulize_overrideProxyUser'];
+                } elseif ($proxyUser) {
+                    $ownerForGroups = $proxyUser;
+                } elseif ($xoopsUser) {
+                    $ownerForGroups = $xoopsUser->getVar('uid');
+                } else {
+                    $ownerForGroups = 0;
+                }
                 $data_handler->setEntryOwnerGroups($ownerForGroups, $result); // result will be the ID number of the entry that was just written.
+                if(isset($GLOBALS['formulize_overrideProxyUser'])) {
+                    unset($GLOBALS['formulize_overrideProxyUser']);
+                }
             }
             return $result;
         } else {

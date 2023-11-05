@@ -19,6 +19,7 @@
  * @package     Session
  * @author	    Kazumi Ono	<onokazu@xoops.org>
  */
+
 class icms_core_Session {
 
 	/**
@@ -208,10 +209,10 @@ class icms_core_Session {
 					// we need to secure cookie when using SSL
 					$secure = substr(ICMS_URL, 0, 5) == 'https' ? 1 : 0;
                     $arr_cookie_options = array (
-                        'expires' => time()+(60*$icmsConfig['session_expire']),
+                        'expires' => 0,
                         'path' => '/',
                         'domain' => '',
-                        'secure' => $secure ? true : false,     
+                        'secure' => ($secure ? true : false),     
                         'httponly' => true,    
                         'samesite' => 'None' // None || Lax  || Strict
                         );
@@ -387,16 +388,12 @@ class icms_core_Session {
 		$secure = substr(ICMS_URL, 0, 5) == 'https' ? 1 : 0; // we need to secure cookie when using SSL
 		$session_name = ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '')
 				? $icmsConfig['session_name'] : session_name();
-		$session_expire = $expire !== NULL ? (int) $expire
-				: (($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '')
-					? $icmsConfig['session_expire'] * 60 : ini_get('session.cookie_lifetime'));
 		$session_id = empty($sess_id) ? session_id() : $sess_id;
-        $expiry = $session_expire ? time() + $session_expire : 0;
         $arr_cookie_options = array (
-            'expires' => time()+(60*$icmsConfig['session_expire']),
+            'expires' => 0, 
             'path' => '/',
             'domain' => '',
-            'secure' => $secure ? true : false,     
+            'secure' => ($secure ? true : false),     
             'httponly' => true,    
             'samesite' => 'None' // None || Lax  || Strict
             );
@@ -495,9 +492,11 @@ class icms_core_Session {
 			if (function_exists('session_cache_expire')) {
 				session_cache_expire($icmsConfig['session_expire']);
 			}
-			@ini_set('session.gc_maxlifetime', $icmsConfig['session_expire'] * 60);
 		}
-
+        if(intval($icmsConfig['session_expire']) > 0) {
+            @ini_set('session.gc_maxlifetime', intval($icmsConfig['session_expire']) * 60);
+        }
+        
 		if ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '') {
 			session_name($icmsConfig['session_name']);
 		} else {

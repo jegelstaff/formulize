@@ -767,8 +767,8 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		$restOfTheSQLForExport = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo." AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $orderByClause ";  // don't use limitByEntryId since exports include all entries
 		if(count((array) $linkformids)>1) { // AND $dummy == "never") { // when there is more than 1 joined form, we can get an exponential explosion of records returned, because SQL will give you all combinations of the joins
 			if(!$sortIsOnMain) {
-				$orderByToUse = " ORDER BY usethissort $sortOrder ";
-				$useAsSortSubQuery = " @rownum:=@rownum+1, $useAsSortSubQuery,"; // need to add a counter as the first field, used as the master sorting key
+				$orderByToUse = " ) as innertable ORDER BY usethissort $sortOrder ";
+				$useAsSortSubQuery = " @rownum:=@rownum+1, usethissort, entry_id FROM ( SELECT $useAsSortSubQuery,"; // need to add a counter as the first field, used as the master sorting key
 			} else {
 				$orderByToUse = $orderByClause;
 				$useAsSortSubQuery = "  @rownum:=@rownum+1, "; // need to add a counter as the first field, used as the master sorting key
