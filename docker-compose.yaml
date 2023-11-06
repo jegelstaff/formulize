@@ -21,7 +21,7 @@ services:
     image: "mariadb"
     restart: 'always'
     volumes: 
-      - ./:docker-entrypoint-initdb.d
+      - ./:/docker-entrypoint-initdb.d
     ports:
       - 3306:3306
     expose:

@@ -1,0 +1,5 @@
+If using the Docker setup in Formulize, you can dump the DB to a file like this:
+
+docker exec formulize-mariadb-1 mariadb-dump --user user --password=password formulize > formulize.sql
+
+All .sql files in the root will be run when you "Compose Up" the Docker container (in alphabetical order)
