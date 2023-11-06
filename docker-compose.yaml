@@ -20,8 +20,6 @@ services:
   mariadb:
     image: "mariadb"
     restart: 'always'
-    volumes: 
-      - ./:/docker-entrypoint-initdb.d
     ports:
       - 3306:3306
     expose:
@@ -31,3 +29,5 @@ services:
       MYSQL_DATABASE: "formulize"
       MYSQL_USER: "user"
       MYSQL_PASSWORD: "password"
+    volumes: 
+      - .:/docker-entrypoint-initdb.d
