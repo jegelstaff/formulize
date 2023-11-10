@@ -2514,11 +2514,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 					}
 					
 					if(!strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
-                        $flatformClass = '';
-                        if($rowsOrForms == 'flatform') {
-                            //$col_two .= '<div>';
-                            $flatformClass = 'subform-flatform';
-                        }
+                        $flatformClass = ($rowsOrForms == 'flatform') ? 'subform-flatform' : '';
 						$col_two .= "<div class=\"subform-deletebox\">$deleteBox</div><div class=\"subform-entry-container $flatformClass\" id=\"subform-".$subform_id."-"."$sub_ent\"><p class=\"subform-header\">";
                         if($rowsOrForms == 'flatform') {
                             $col_two .= "<p class=\"flatform-name\">".$headerToWrite."</p>";
@@ -2546,9 +2542,6 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 					$col_two .= $col_two_temp;
 					if(!strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) { 
 						$col_two .= "</div>\n</div>\n";
-                        if($rowsOrForms == 'flatform') {
-                            //$col_two .= '</div>';
-                        }
 					}
 				}
 			}
