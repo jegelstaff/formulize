@@ -640,7 +640,7 @@ class formulizeDataHandler  {
 			} else {
 				$cachedValues[$handle] = false;
 			}
-		} else {
+		} elseif(!$this->fid) {
 			$cachedValues[$handle] = false; // fid passed into constructor was not valid!
 		}
 		return $cachedValues[$handle];
