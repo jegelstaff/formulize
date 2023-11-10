@@ -1954,7 +1954,7 @@ function formulize_buildQSFilter($handle, $search_text, $multi=false) {
     if(substr($search_term, 0, 1)=="!" AND substr($search_term, -1) == "!") {
       $search_term = substr($search_term, 1, -1); // cut off any hidden filter values that might be present
     }
-    $filterHTML = buildFilter("search_".$handle, $id, _formulize_QSF_DefaultText, $name="{listofentries}", $search_term, false, 0, 0, false, $multi);
+    $filterHTML = buildFilter("search_".$handle, $id, _formulize_QSF_DefaultText, "{listofentries}", $search_term, false, 0, 0, false, $multi);
     return $filterHTML;
     
 }
@@ -3814,27 +3814,47 @@ function processClickedCustomButton($clickedElements, $clickedValues, $clickedAc
 				$csEntriesTemp = explode(",", htmlspecialchars(strip_tags($_POST['caentries'])));
 				$csEntries[0] = $csEntriesTemp[0];
 			} else {
-				$csEntries = $GLOBALS['formulize_selectedEntries'];
+				$csEntries[0] = $GLOBALS['formulize_selectedEntries'][array_key_first($GLOBALS['formulize_selectedEntries'])];
 			}
 		}
 
 		// process changes to each entry
+		global $xoopsUser;
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		$elementObject = $element_handler->get($clickedElements[0]);
+		$formId = $elementObject->getVar('id_form');
+		$data_handler = new formulizeDataHandler($formId);
+		$config_handler = xoops_gethandler('config');
+		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+		$useOldCustomButtonEffectWriting = $formulizeConfig['useOldCustomButtonEffectWriting'];
 		foreach($caEntries as $id=>$thisEntry) { // loop through all the entries this button click applies to
 			$maxIdReq = 0;
-			// don't use "i" in this loop, since it's a common variable name and would potentially conflict with names in the eval'd scope
-			// same is true of "thisentry" and other variables here!
+			$needToSetOwner = false;
+			$valuesToWrite = array();
 			for($ixz=0;$ixz<count((array) $clickedElements);$ixz++) { // loop through all actions for this button
-				if($thisEntry == "new" AND $maxIdReq > 0) { $thisEntry = $maxIdReq; } // for multiple effects on the same button, when the button applies to a new entry, reuse the initial id_req that was created during the first effect
+				if($thisEntry == "new" AND $maxIdReq > 0) { // for multiple effects on the same button, when the button applies to a new entry, reuse the initial id_req that was created during the first effect
+					$thisEntry = $maxIdReq; 
+					$needToSetOwner = true;
+				} 
                 $valueToWrite = processButtonValue($clickedValues[$ixz], $csEntries[$id]);
-                $formulize_lvoverride = $GLOBALS['formulize_lvoverride'];
-				$maxIdReq = writeElementValue("", $clickedElements[$ixz], $thisEntry, $valueToWrite, $clickedActions[$ixz], "", $formulize_lvoverride, $csEntries[$id]);
+				if($useOldCustomButtonEffectWriting) {
+					$formulize_lvoverride = $GLOBALS['formulize_lvoverride'];
+					$maxIdReq = writeElementValue("", $clickedElements[$ixz], $thisEntry, $valueToWrite, $clickedActions[$ixz], "", $formulize_lvoverride, $csEntries[$id]);
+				} else {
+					$valuesToWrite[$clickedElements[$ixz]] = $valueToWrite;
+				}
+			}
+			if(count($valuesToWrite)>0) {
+				$maxIdReq = $data_handler->writeEntry($thisEntry, $valuesToWrite);
 			}
 			if($maxIdReq) {
-				$element_handler = xoops_getmodulehandler('elements', 'formulize');
-				$elementObject = $element_handler->get($clickedElements[0]);
                 // NOTE: if there are derived values involving something other than the fid of the updated form, and the frid of the screen, then they won't be updated when this custom button is clicked!!
                 $frid = $screen ? $screen->getVar('frid') : 0;
-                formulize_updateDerivedValues($maxIdReq, $elementObject->getVar('id_form'), $frid);
+                formulize_updateDerivedValues($maxIdReq, $formId, $frid);
+				if($needToSetOwner) {
+					$newOwner = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+        			$data_handler->setEntryOwnerGroups($newOwner, $maxIdReq); 
+				}
             }
 		}
 	}

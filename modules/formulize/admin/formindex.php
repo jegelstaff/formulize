@@ -602,6 +602,11 @@ function patch40() {
                 } else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
+            } elseif($key === "on_delete") {
+                // on delete successfully added, and so this one time and one time only, never in the future (and since on delete was added now, it will never be added again) set the config option for custom button effects to Yes
+                if(!$xoopsDB->query("UPDATE ".$xoopsDB->prefix('config')." SET conf_value = 1 WHERE conf_name = 'useOldCustomButtonEffectWriting'")) {
+                    print "Error setting preference for old custom button writing method<br>";
+                }
             }
         }
         

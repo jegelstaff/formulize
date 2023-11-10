@@ -95,6 +95,9 @@ define("_MI_formulize_CUSTOMSCOPEDESC", "Leave this blank, unless you specifical
 define("_MI_formulize_F7MENUTEMPLATE", "Use the modern, mobile friendly menu layout - compatible with the Formulize 7 Theme \"Anari\"");
 define("_MI_formulize_F7MENUTEMPLATEDESC", "If you have upgraded from an older version of Formulize, this will be set to \"No\" but if/when you update the theme of your website to \"Anari\" then you should switch this to \"Yes\".");
 
+define("_MI_formulize_USEOLDCUSTOMBUTTONEFFECTWRITING", "Use the old method of writing effects for custom buttons");
+define("_MI_formulize_USEOLDCUSTOMBUTTONEFFECTWRITINGDESC", "This should always be \"No\" unless this is an older installation that already has custom buttons that are dependent on the old method, which was based on the declaring human readable values, instead of the database values for elements.");
+
 // The name of this module
 define("_MI_formulizeMENU_NAME","MyMenu");
 
