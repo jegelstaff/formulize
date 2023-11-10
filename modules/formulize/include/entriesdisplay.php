@@ -1954,7 +1954,7 @@ function formulize_buildQSFilter($handle, $search_text, $multi=false) {
     if(substr($search_term, 0, 1)=="!" AND substr($search_term, -1) == "!") {
       $search_term = substr($search_term, 1, -1); // cut off any hidden filter values that might be present
     }
-    $filterHTML = buildFilter("search_".$handle, $id, _formulize_QSF_DefaultText, $name="{listofentries}", $search_term, false, 0, 0, false, $multi);
+    $filterHTML = buildFilter("search_".$handle, $id, _formulize_QSF_DefaultText, "{listofentries}", $search_term, false, 0, 0, false, $multi);
     return $filterHTML;
     
 }
