@@ -52,6 +52,18 @@ if(!isset($formulize_screen_id) OR !is_numeric($formulize_screen_id)) {
     require_once "../../mainfile.php";
 }
 
+// ajax request from a different server, so set $formulize_screen_id now, and we won't use the theme to render the contents of the page
+if(!strstr($_SERVER['HTTP_REFERER'], XOOPS_URL)
+    AND isset($_SERVER['HTTP_FORMULIZE_REMOTE_INCLUDE']) 
+    AND isset($_GET['sid'])
+    AND intval($_GET['sid'])) {
+        $formulize_screen_id = $_GET['sid'];
+}
+
+// need to declare the allowable CORS locations -- must be configurable
+header('Access-Control-Allow-Origin: https://polygon.red');
+header('Access-Control-Allow-Headers: formulize-remote-include, x-requested-with, Content-Type, referer');
+        
 include_once XOOPS_ROOT_PATH.'/header.php';
 
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
