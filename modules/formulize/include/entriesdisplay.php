@@ -2127,39 +2127,39 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 	  } else {
 		$groupByClause .= ", ";
 	  }
-	  $allGroupings[] = "$galias$ghandle";
-	  $groupByClause .= "$galias$ghandle";
+	  $allGroupings[] = "`$galias$ghandle`";
+	  $groupByClause .= "`$galias$ghandle`";
 	  if($ghandle == "creation_uid" OR $ghandle == "mod_uid") {
-		  $innerGroupingSelect .= ", (SELECT CASE usertable.name WHEN '' THEN usertable.uname ELSE usertable.name END FROM ". DBPRE."users as usertable WHERE usertable.uid = ".$galias.".".$ghandle.") as inner$galias$ghandle";
-		  $innerGroupingSelectAvgCount .= ", (SELECT CASE usertable.name WHEN '' THEN usertable.uname ELSE usertable.name END FROM ". DBPRE."users as usertable WHERE usertable.uid = ".$galias.".".$ghandle.") as inner$galias$ghandle";
+		  $innerGroupingSelect .= ", (SELECT CASE usertable.name WHEN '' THEN usertable.uname ELSE usertable.name END FROM ". DBPRE."users as usertable WHERE usertable.uid = ".$galias.".`".$ghandle."`) as `inner$galias$ghandle`";
+		  $innerGroupingSelectAvgCount .= ", (SELECT CASE usertable.name WHEN '' THEN usertable.uname ELSE usertable.name END FROM ". DBPRE."users as usertable WHERE usertable.uid = ".$galias.".`".$ghandle."`) as `inner$galias$ghandle`";
 	  } else {
-		  $innerGroupingSelect .= ", $galias.`$ghandle` as inner$galias$ghandle";
-		  $innerGroupingSelectAvgCount .= ", $galias.`$ghandle` as inner$galias$ghandle";
+		  $innerGroupingSelect .= ", $galias.`$ghandle` as `inner$galias$ghandle`";
+		  $innerGroupingSelectAvgCount .= ", $galias.`$ghandle` as `inner$galias$ghandle`";
 	  }
-	  $outerGroupingSelect .= ", inner$galias$ghandle as $galias$ghandle";
-	  $outerGroupingSelectAvgCount .= ", inner$galias$ghandle as $galias$ghandle";
+	  $outerGroupingSelect .= ", `inner$galias$ghandle` as `$galias$ghandle`";
+	  $outerGroupingSelectAvgCount .= ", `inner$galias$ghandle` as `$galias$ghandle`";
 	}
 
 	// figure out what to ask for for this calculation
 	switch($calc) {
 	  case "sum":
-		$select = "SELECT sum(tempElement) as $fidAlias$handle $outerGroupingSelect FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement $innerGroupingSelect";
+		$select = "SELECT sum(tempElement) as `$fidAlias$handle` $outerGroupingSelect FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement $innerGroupingSelect";
 		break;
 	  case "min":
-		$select = "SELECT min(tempElement) as $fidAlias$handle $outerGroupingSelect FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement $innerGroupingSelect";
+		$select = "SELECT min(tempElement) as `$fidAlias$handle` $outerGroupingSelect FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement $innerGroupingSelect";
 		break;
 	  case "max":
-		$select = "SELECT max(tempElement) as $fidAlias$handle $outerGroupingSelect FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement $innerGroupingSelect";
+		$select = "SELECT max(tempElement) as `$fidAlias$handle` $outerGroupingSelect FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement $innerGroupingSelect";
 		break;
 	  case "count":
-		$select = "SELECT count(tempElement) as count$fidAlias$handle, count(distinct(tempElement)) as distinct$fidAlias$handle $outerGroupingSelect FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement $innerGroupingSelect";
+		$select = "SELECT count(tempElement) as `count$fidAlias$handle`, count(distinct(tempElement)) as `distinct$fidAlias$handle` $outerGroupingSelect FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement $innerGroupingSelect";
 		break;
 	  case "avg":
-		$select = "SELECT avg(tempElement) as avg$fidAlias$handle, std(tempElement) as std$fidAlias$handle $outerGroupingSelect FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement $innerGroupingSelect";
-		$selectAvgCount = "SELECT tempElement as $fidAlias$handle, count(tempElement) as avgcount$fidAlias$handle $outerGroupingSelectAvgCount FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement $innerGroupingSelectAvgCount";
+		$select = "SELECT avg(tempElement) as `avg$fidAlias$handle`, std(tempElement) as `std$fidAlias$handle` $outerGroupingSelect FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement $innerGroupingSelect";
+		$selectAvgCount = "SELECT tempElement as `$fidAlias$handle`, count(tempElement) as `avgcount$fidAlias$handle` $outerGroupingSelectAvgCount FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement $innerGroupingSelectAvgCount";
 		break;
 	  case "per":
-		$select = "SELECT tempElement as $fidAlias$handle, count(tempElement) as percount$fidAlias$handle $outerGroupingSelect, entry_id FROM (SELECT distinct($fidAlias.`entry_id`) as entry_id, $calcElement as tempElement $innerGroupingSelect";
+		$select = "SELECT tempElement as `$fidAlias$handle`, count(tempElement) as `percount$fidAlias$handle` $outerGroupingSelect, entry_id FROM (SELECT distinct($fidAlias.`entry_id`) as entry_id, $calcElement as tempElement $innerGroupingSelect";
 		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php"; // need a function here later on
 		break;
 	  default:
@@ -2253,25 +2253,25 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 	$groupByClauseMode = "";
 	if($groupByClause) {
 	  if($calc == "avg") {
-		$groupByClauseMode = " GROUP BY $fidAlias$handle, ".$groupByClause;
+		$groupByClauseMode = " GROUP BY `$fidAlias$handle`, ".$groupByClause;
 		$groupByClause = " GROUP BY ".$groupByClause;
 	  } elseif($calc == "per") {
-		$orderByClause = " ORDER BY $groupByClause, percount$fidAlias$handle DESC";
-		$groupByClause = " GROUP BY $fidAlias$handle, ".$groupByClause;
+		$orderByClause = " ORDER BY $groupByClause, `percount$fidAlias$handle` DESC";
+		$groupByClause = " GROUP BY `$fidAlias$handle`, ".$groupByClause;
       } elseif($calc == "count") {
-        $orderByClause = " ORDER BY count$fidAlias$handle DESC";
+        $orderByClause = " ORDER BY `count$fidAlias$handle` DESC";
         $groupByClause = " GROUP BY ".$groupByClause;
       } elseif($calc == "sum") {
-        $orderByClause = " ORDER BY $fidAlias$handle DESC";
+        $orderByClause = " ORDER BY `$fidAlias$handle` DESC";
         $groupByClause = " GROUP BY ".$groupByClause;
 	  } else {
 		$groupByClause = " GROUP BY ".$groupByClause;
 	  }
 	} elseif($calc == "avg") {
-	  $groupByClauseMode = " GROUP BY $fidAlias$handle";
+	  $groupByClauseMode = " GROUP BY `$fidAlias$handle`";
 	} elseif($calc == "per") {
-	  $groupByClause = " GROUP BY $fidAlias$handle, entry_id";
-	  $orderByClause = " ORDER BY percount$fidAlias$handle DESC";
+	  $groupByClause = " GROUP BY `$fidAlias$handle`, entry_id";
+	  $orderByClause = " ORDER BY `percount$fidAlias$handle` DESC";
 	}
 
 	// do the query
@@ -2377,7 +2377,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		if(!isset($groupCounts[$groupingWhere])) { // need to figure out the total count for this grouping setting
 		  $perindexer++;
 		  $groupingValues[$cols[$i]][$calc][$perindexer] = convertRawValuesToRealValues($groupingValuesFound, $ghandle, true);
-		  $countSQL = "SELECT count(tempElement) as count$fidAlias$handle FROM (SELECT distinct($fidAlias.`entry_id`), $fidAlias.`$handle` as tempElement $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere) as tempQuery";
+		  $countSQL = "SELECT count(tempElement) as `count$fidAlias$handle` FROM (SELECT distinct($fidAlias.`entry_id`), $fidAlias.`$handle` as tempElement $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere) as tempQuery";
 		  //print "$countSQL<br>";
 		  $countRes = $xoopsDB->query($countSQL);
 		  $countArray = $xoopsDB->fetchArray($countRes);
@@ -2451,7 +2451,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		  // need to convert grouping values into the where clause for the percentile calculations
 		  $groupingWhere .= $modeHandle === 'none' ? "" : " AND ($modeHandle = '$modeGrouping')";
 		}
-		$countSQL = "SELECT count(tempElement) as count$fidAlias$handle FROM (SELECT distinct($fidAlias.`entry_id`), $fidAlias.`$handle` as tempElement $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere) as tempQuery";
+		$countSQL = "SELECT count(tempElement) as `count$fidAlias$handle` FROM (SELECT distinct($fidAlias.`entry_id`), $fidAlias.`$handle` as tempElement $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere) as tempQuery";
 		//print "<br>$countSQL<br>";
 		$countRes = $xoopsDB->query($countSQL);
 		$countArray = $xoopsDB->fetchArray($countRes);
@@ -2468,11 +2468,11 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		$per50Fraction = (($countValue+1)/2)-$per50Limit;
 		$per50Limit = $per50Limit-1; // since Limit statements interpret rank orders as starting from 0, must subtract 1
 		$per50Size = ($countValue+1) % 2 == 0 ? 1 : 2;
-		$per25SQL = "SELECT distinct($fidAlias.`entry_id`), $fidAlias.`$handle` as $fidAlias$handle $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere ORDER BY $fidAlias$handle LIMIT $per25Limit,$per25Size";
+		$per25SQL = "SELECT distinct($fidAlias.`entry_id`), $fidAlias.`$handle` as `$fidAlias$handle` $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere ORDER BY $fidAlias$handle LIMIT $per25Limit,$per25Size";
 		//print "$per25SQL<Br><Br>";
-		$per75SQL = "SELECT distinct($fidAlias.`entry_id`), $fidAlias.`$handle` as $fidAlias$handle $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere ORDER BY $fidAlias$handle LIMIT $per75Limit,$per75Size";
+		$per75SQL = "SELECT distinct($fidAlias.`entry_id`), $fidAlias.`$handle` as `$fidAlias$handle` $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere ORDER BY $fidAlias$handle LIMIT $per75Limit,$per75Size";
 		//print "$per75SQL<Br><Br>";
-		$per50SQL = "SELECT distinct($fidAlias.`entry_id`), $fidAlias.`$handle` as $fidAlias$handle $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere ORDER BY $fidAlias$handle LIMIT $per50Limit,$per50Size";
+		$per50SQL = "SELECT distinct($fidAlias.`entry_id`), $fidAlias.`$handle` as `$fidAlias$handle` $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere ORDER BY $fidAlias$handle LIMIT $per50Limit,$per50Size";
 		//print "$per50SQL<Br><Br>";
 		$per25Res = $xoopsDB->query($per25SQL);
 		$per75Res = $xoopsDB->query($per75SQL);
@@ -2562,15 +2562,15 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		foreach($indivCounts[$cols[$i]][$calc][$groupCountData['indexerToUse']] as $indivText=>$indivTotal) {
 		  if(count((array) $nameReplacementMap)>0) { $indivText = $nameReplacementMap[$indivText]; } // swap in a name for this user, if applicable
 		  if($groupCountData['countValue'] == $groupCountData['responseCountValue']) {
-		$typeout .= "<tr><td style=\"vertical-align: top;\">$indivText</td><td style=\"vertical-align: top;\">$indivTotal</td><td style=\"vertical-align: top;\">".round(($indivTotal/$groupCountData['countValue'])*100,2)."%</td></tr>\n";
+		$typeout .= "<tr><td style=\"vertical-align: top;\">$indivText</td><td style=\"vertical-align: top;\">$indivTotal</td><td style=\"vertical-align: top;\">".($groupCountData['countValue'] ? round(($indivTotal/$groupCountData['countValue'])*100,2) : '-')."%</td></tr>\n";
 		  } else {
-		$typeout .= "<tr><td style=\"vertical-align: top;\">$indivText</td><td style=\"vertical-align: top;\">$indivTotal</td><td style=\"vertical-align: top;\">".round(($indivTotal/$groupCountData['responseCountValue'])*100,2)."%</td><td style=\"vertical-align: top;\">".round(($indivTotal/$groupCountData['countValue'])*100,2)."%</td></tr>\n";
+		$typeout .= "<tr><td style=\"vertical-align: top;\">$indivText</td><td style=\"vertical-align: top;\">$indivTotal</td><td style=\"vertical-align: top;\">".round(($indivTotal/$groupCountData['responseCountValue'])*100,2)."%</td><td style=\"vertical-align: top;\">".($groupCountData['countValue'] ? round(($indivTotal/$groupCountData['countValue'])*100,2) : '-')."%</td></tr>\n";
 		  }
 		}
 		if($groupCountData['countValue'] == $groupCountData['responseCountValue']) {
-		  $typeout .= "<tr><td style=\"vertical-align: top;\"><hr>" . _formulize_DE_PER_TOTAL . "</td><td style=\"vertical-align: top;\"><hr>".$groupCountData['countValue']."</td><td style=\"vertical-align: top;\"><hr>100%</td></tr>\n</table>\n";
+		  $typeout .= "<tr><td style=\"vertical-align: top;\"><hr>" . _formulize_DE_PER_TOTAL . "</td><td style=\"vertical-align: top;\"><hr>".($groupCountData['countValue'] ? $groupCountData['countValue'] : '-')."</td><td style=\"vertical-align: top;\"><hr>100%</td></tr>\n</table>\n";
 		} else {
-		  $typeout .= "<tr><td style=\"vertical-align: top;\"><hr>" . _formulize_DE_PER_TOTAL . "</td><td style=\"vertical-align: top;\"><hr>".$groupCountData['responseCountValue']. " " ._formulize_DE_PER_TOTALRESPONSES."<br>".$groupCountData['countValue']. " " ._formulize_DE_PER_TOTALENTRIES."</td><td style=\"vertical-align: top;\"><hr>100%</td><td style=\"vertical-align: top;\"><hr>" . round($groupCountData['responseCountValue']/$groupCountData['countValue'], 2) . " " . _formulize_DE_PER_RESPONSESPERENTRY . "</td></tr>\n</table>";
+		  $typeout .= "<tr><td style=\"vertical-align: top;\"><hr>" . _formulize_DE_PER_TOTAL . "</td><td style=\"vertical-align: top;\"><hr>".$groupCountData['responseCountValue']. " " ._formulize_DE_PER_TOTALRESPONSES."<br>".$groupCountData['countValue']. " " ._formulize_DE_PER_TOTALENTRIES."</td><td style=\"vertical-align: top;\"><hr>100%</td><td style=\"vertical-align: top;\"><hr>" .($groupCountData['countValue'] ? round($groupCountData['responseCountValue']/$groupCountData['countValue'], 2) : '-'). " " . _formulize_DE_PER_RESPONSESPERENTRY . "</td></tr>\n</table>";
 		}
 		$masterResults[$cols[$i]][$calc][$groupCountData['indexerToUse']] = $typeout;
 	  }
