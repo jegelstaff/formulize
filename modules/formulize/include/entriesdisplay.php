@@ -3980,7 +3980,7 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 }
 
 // THIS FUNCTION HANDLES GATHERING A DATASET FOR DISPLAY IN THE LIST
-function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fid, $scope, $screen="", $currentURL="", $forcequery = 0) {
+function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fid, $scope, $screen=null, $currentURL="", $forcequery = 0) {
     
 	if (!is_array($searches))
 		$searches = array();
