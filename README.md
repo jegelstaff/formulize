@@ -19,5 +19,3 @@ To update existing install:
 4) click on the Modules menu heading at the top of the page on the admin side and then click the circle arrows to update the Formulize "module"
 
 If you have issues, please contact info@formulize.org
-
-Formulize Summit - August 30 2022, Toronto Ontario - details: https://www.formulize.org/summit
