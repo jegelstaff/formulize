@@ -5836,8 +5836,13 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                 $likebits = "";
             } else {
                 // term is not a dynamic reference to an element...
+								// the  target is a linked element (already know that from above), and so it has a foreign key in the database, and if the filter term is numeric and the operator is equals then no subquery is necessary, do a direct comparison instead
+								if(is_numeric($filterTerms[$filterId]) AND $filterOps[$filterId] === "<=>") {
+										$conditionsFilterComparisonValue = $filterTerms[$filterId];;
+								} else {
                 $filterTermToUse = formulize_db_escape($filterTerms[$filterId]);
                 $subQueryWhereClause = "ss.`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$filterTermToUse.$likebits.$quotes;
+								}
             }
             // if we didn't jump the gun and set the comparison value already above...
             if (!$conditionsFilterComparisonValue) {
