@@ -2552,52 +2552,49 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 
 	if($rowsOrForms=='row' OR $rowsOrForms =='') {
 		// complete the table if we're drawing rows
-		$col_two .= "</table></div>
-        <script>";	
-	} else {
-		if(!strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
-            // close of the subform-accordion-container
-			$col_two .= "</div>
-            <script type=\"text/javascript\">"; 
-		}
-        
-        if($rowsOrForms=='form') { // if we're doing accordions, put in the JS, otherwise it's flat-forms
-        
-            $col_two .= "
-                    jQuery(document).ready(function() {
-                        jQuery(\"#subform-$subformElementId$subformInstance\").accordion({
-                            heightStyle: 'content', 
-                            autoHeight: false, // legacy
-                            collapsible: true, // sections can be collapsed
-                            active: ";
-                            if($_POST['target_sub_instance'] == $subformElementId.$subformInstance AND $_POST['target_sub'] == $subform_id) {
-                                $col_two .= count((array) $sub_entries[$subform_id])-$_POST['numsubents'];
-                            } elseif(is_numeric($_POST['subform_entry_'.$subformElementId.$subformInstance.'_active'])) {
-                                $col_two .= $_POST['subform_entry_'.$subformElementId.$subformInstance.'_active'];
-                            } else {
-                                $col_two .= 'false';
-                            }
-                            $col_two .= ",
-                            header: \"> div > p.subform-header\"
-                        });
-                        jQuery(\"#subform-$subformElementId$subformInstance\").fadeIn();
-                    });
-            ";
-        }
+		$col_two .= "</table></div>";
+	} elseif(!strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
+        // close of the subform-accordion-container, unless we're on a printable view
+		$col_two .= "</div>\n";
+	}
+    $col_two .= "<script type='text/javascript'>";
 
-	} // end of if we're closing the subform inferface where entries are supposed to be collapsable forms
+    if($rowsOrForms=='form') { // if we're doing accordions, put in the JS, otherwise it's flat-forms
+        $col_two .= "
+            jQuery(document).ready(function() {
+                jQuery(\"#subform-$subformElementId$subformInstance\").accordion({
+                    heightStyle: 'content', 
+                    autoHeight: false, // legacy
+                    collapsible: true, // sections can be collapsed
+                    active: ";
+                    if($_POST['target_sub_instance'] == $subformElementId.$subformInstance AND $_POST['target_sub'] == $subform_id) {
+                        $col_two .= count((array) $sub_entries[$subform_id])-$_POST['numsubents'];
+                    } elseif(is_numeric($_POST['subform_entry_'.$subformElementId.$subformInstance.'_active'])) {
+                        $col_two .= $_POST['subform_entry_'.$subformElementId.$subformInstance.'_active'];
+                    } else {
+                        $col_two .= 'false';
+                    }
+                    $col_two .= ",
+                    header: \"> div > p.subform-header\"
+                });
+                jQuery(\"#subform-$subformElementId$subformInstance\").fadeIn();
+            });
+        ";
+    }
 
     $col_two .= "
-        function showHideDeleteClone(elementInstance) {
-            var checkedBoxes = jQuery(\".delbox:checked\");
-            if(jQuery(\".subform-delete-clone-buttons\"+elementInstance).css(\"display\") == \"none\" &&
-            checkedBoxes.length > 0) {
-                jQuery(\".subform-delete-clone-buttons\"+elementInstance).show(200);
-            } else if(checkedBoxes.length == 0) {
-                jQuery(\".subform-delete-clone-buttons\"+elementInstance).hide(200);
+        <script type='text/javascript'>
+            function showHideDeleteClone(elementInstance) {
+                var checkedBoxes = jQuery(\".delbox:checked\");
+                if(jQuery(\".subform-delete-clone-buttons\"+elementInstance).css(\"display\") == \"none\" &&
+                checkedBoxes.length > 0) {
+                    jQuery(\".subform-delete-clone-buttons\"+elementInstance).show(200);
+                } else if(checkedBoxes.length == 0) {
+                    jQuery(\".subform-delete-clone-buttons\"+elementInstance).hide(200);
+                }
             }
-        }
-    </script>";
+        </script>
+    ";
 
     $edit_link = "";    
     if (is_object($subform_element_object)) {
