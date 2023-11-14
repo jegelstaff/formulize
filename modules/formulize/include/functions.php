@@ -5577,7 +5577,7 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
                         } else {
                             // don't know what the term is!
                             global $xoopsUser;
-                            if($xoopsUser AND in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups()) {
+                            if($xoopsUser AND in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
                                 print "Error: { } term could not be resolved. Were you expecting it to be in the URL?";
                             }
                             return;
