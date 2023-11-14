@@ -2557,10 +2557,9 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
         // close of the subform-accordion-container, unless we're on a printable view
 		$col_two .= "</div>\n";
 	}
-    $col_two .= "<script type='text/javascript'>";
-
+    $subformJS = '';
     if($rowsOrForms=='form') { // if we're doing accordions, put in the JS, otherwise it's flat-forms
-        $col_two .= "
+        $subformJS .= "
             jQuery(document).ready(function() {
                 jQuery(\"#subform-$subformElementId$subformInstance\").accordion({
                     heightStyle: 'content', 
@@ -2581,18 +2580,20 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
             });
         ";
     }
-
+    $subformJS .= "
+        function showHideDeleteClone(elementInstance) {
+            var checkedBoxes = jQuery(\".delbox:checked\");
+            if(jQuery(\".subform-delete-clone-buttons\"+elementInstance).css(\"display\") == \"none\" &&
+            checkedBoxes.length > 0) {
+                jQuery(\".subform-delete-clone-buttons\"+elementInstance).show(200);
+            } else if(checkedBoxes.length == 0) {
+                jQuery(\".subform-delete-clone-buttons\"+elementInstance).hide(200);
+            }
+        }
+    ";
     $col_two .= "
         <script type='text/javascript'>
-            function showHideDeleteClone(elementInstance) {
-                var checkedBoxes = jQuery(\".delbox:checked\");
-                if(jQuery(\".subform-delete-clone-buttons\"+elementInstance).css(\"display\") == \"none\" &&
-                checkedBoxes.length > 0) {
-                    jQuery(\".subform-delete-clone-buttons\"+elementInstance).show(200);
-                } else if(checkedBoxes.length == 0) {
-                    jQuery(\".subform-delete-clone-buttons\"+elementInstance).hide(200);
-                }
-            }
+            $subformJS
         </script>
     ";
 
