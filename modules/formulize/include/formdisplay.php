@@ -2567,13 +2567,13 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
                     collapsible: true, // sections can be collapsed
                     active: ";
                     if($_POST['target_sub_instance'] == $subformElementId.$subformInstance AND $_POST['target_sub'] == $subform_id) {
-                        $col_two .= count((array) $sub_entries[$subform_id])-$_POST['numsubents'];
+                        $subformJS .= count((array) $sub_entries[$subform_id])-$_POST['numsubents'];
                     } elseif(is_numeric($_POST['subform_entry_'.$subformElementId.$subformInstance.'_active'])) {
-                        $col_two .= $_POST['subform_entry_'.$subformElementId.$subformInstance.'_active'];
+                        $subformJS .= $_POST['subform_entry_'.$subformElementId.$subformInstance.'_active'];
                     } else {
-                        $col_two .= 'false';
+                        $subformJS .= 'false';
                     }
-                    $col_two .= ",
+                    $subformJS .= ",
                     header: \"> div > p.subform-header\"
                 });
                 jQuery(\"#subform-$subformElementId$subformInstance\").fadeIn();
