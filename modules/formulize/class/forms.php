@@ -37,11 +37,13 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 class formulizeForm extends XoopsObject {
 
+    private array $onDeleteExistingValues;
+
 	function __construct($id_form="", $includeAllElements=false){
 
 		// validate $id_form
 		global $xoopsDB;
-
+        
 		if(!is_numeric($id_form)) {
 			// set empty defaults
 			$id_form = "";
@@ -95,7 +97,7 @@ class formulizeForm extends XoopsObject {
 						$encryptedElements[$value['ele_id']] = $value['ele_handle'];
 					}
 				}
-				
+
 				// propertly format the single value
 				switch($formq[0]['singleentry']) {
 					case "group":
@@ -116,11 +118,11 @@ class formulizeForm extends XoopsObject {
 				$defaultform = $formq[0]['defaultform'];
 				$defaultlist = $formq[0]['defaultlist'];
 			}
-			
+
 			// gather the view information
             list($views, $viewNames, $viewFrids, $viewPublished) = self::getFormViews($id_form);
-            
-			
+
+
 			// setup the filter settings
 			$filterSettingsq = q("SELECT groupid, filter FROM " . $xoopsDB->prefix("formulize_group_filters") . " WHERE fid='$id_form'");
 			if(!isset($filterSettingsq[0])) {
@@ -168,9 +170,9 @@ class formulizeForm extends XoopsObject {
 	*  This function also gets invoked by an ajax call from screen_list_entries.html to reload all available views on the dropdown menu.
 	*/
 	function getFormViews($id_form) {
-		
-		global $xoopsDB;        
-		
+
+		global $xoopsDB;
+
 		$viewq = q("SELECT * FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_mainform = '".intval($id_form)."' OR (sv_mainform = '' AND sv_formframe = '".intval($id_form)."')");
 		if(!isset($viewq[0])) {
 			$views = array();
@@ -179,7 +181,7 @@ class formulizeForm extends XoopsObject {
 			$viewPublished = array();
 		} else {
 			for($i=0;$i<count((array) $viewq);$i++) {
-				
+
 				$views[$i] = $viewq[$i]['sv_id'];
 				$viewNames[$i] = stripslashes($viewq[$i]['sv_name']);
 				$viewFrids[$i] = $viewq[$i]['sv_mainform'] ? $viewq[$i]['sv_formframe'] : "";
@@ -188,7 +190,7 @@ class formulizeForm extends XoopsObject {
 		}
 		return array($views, $viewNames, $viewFrids, $viewPublished);
 	}
-    
+
     static function sanitize_handle_name($handle_name) {
         // strip non-alphanumeric characters from form and element handles
         return preg_replace("/[^a-zA-Z0-9_-]+/", "", $handle_name);
@@ -225,7 +227,7 @@ class formulizeForm extends XoopsObject {
         // form ID is used so the function name is unique
         return "form_".$this->id_form."_on_delete";
     }
-    
+
     protected function on_before_save_function_name() {
         // form ID is used so the function name is unique
         return "form_".$this->id_form."_on_before_save";
@@ -240,7 +242,7 @@ class formulizeForm extends XoopsObject {
         // save the code in the icms cache folder (because it is known to be writeable)
         return ICMS_CACHE_PATH."/{$this->on_delete_function_name}.php";
     }
-    
+
     protected function on_before_save_filename() {
         // save the code in the icms cache folder (because it is known to be writeable)
         return ICMS_CACHE_PATH."/{$this->on_before_save_function_name}.php";
@@ -256,7 +258,7 @@ class formulizeForm extends XoopsObject {
             $on_delete_code = <<<EOF
 <?php
 
-function form_{$this->id_form}_on_delete(\$entry_id, \$formulize_element_values, \$form_id) {    
+function form_{$this->id_form}_on_delete(\$entry_id, \$formulize_element_values, \$form_id) {
     foreach(\$formulize_element_values as \$formulize_element_key=>\$formulize_element_value) {
         if(is_numeric(\$formulize_element_key)) {
             \$formulize_element_key = 'elementId'.\$formulize_element_key;
@@ -279,7 +281,7 @@ EOF;
             return true;
         }
     }
-    
+
     private function cache_on_before_save_code() {
         if (strlen($this->on_before_save) > 0) {
             $on_before_save_code = <<<EOF
@@ -296,7 +298,7 @@ function form_{$this->id_form}_on_before_save(\$entry_id, \$formulize_element_va
 
 {$this->on_before_save}
 
-    return get_defined_vars();  // this converts PHP variables back into an array
+    	return get_defined_vars();  // this converts PHP variables back into an array
 }
 
 EOF;
@@ -315,7 +317,7 @@ EOF;
             $on_after_save_code = <<<EOF
 <?php
 
-function form_{$this->id_form}_on_after_save(\$entry_id, \$form_id, \$formulize_element_values, \$currentValues) {
+function form_{$this->id_form}_on_after_save(\$entry_id, \$form_id, \$formulize_element_values, \$currentValues, \$newEntry) {
 
 foreach(\$formulize_element_values as \$formulize_element_key=>\$formulize_element_value) {
     if(is_numeric(\$formulize_element_key)) {
@@ -372,7 +374,7 @@ EOF;
         // this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
         return $this->vars['on_delete']['value'];
     }
-    
+
     public function on_before_save() {
         // this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
         return $this->vars['on_before_save']['value'];
@@ -388,15 +390,14 @@ EOF;
         return $this->vars['custom_edit_check']['value'];
     }
 
-    public function onDelete($entry_id) {
-        
+    public function onDeletePrep($entry_id) {
         $existingValues = array();
-        
+
         // if there is any code to run before saving, include it (write if necessary), and run the function
         if (is_numeric($entry_id) AND $entry_id AND strlen($this->on_delete) > 0 and (file_exists($this->on_delete_filename) or $this->cache_on_delete_code())) {
             include_once $this->on_delete_filename;
 
-            // get all the values of fields from the existing entry    
+            // get all the values of fields from the existing entry
             global $xoopsDB;
             $sql = "SELECT * FROM ".$xoopsDB->prefix('formulize_'.$this->getVar('form_handle'))." WHERE entry_id = ".intval($entry_id);
             if($res = $xoopsDB->query($sql)) {
@@ -404,22 +405,30 @@ EOF;
                     $existingValues[$handle] = $value;
                 }
             }
+        }
+    
+        $this->onDeleteExistingValues[$entry_id] = $existingValues;
+    }
 
-            $existingValues = call_user_func($this->on_delete_function_name, $entry_id, $existingValues, $this->getVar('id_form'));
-           
-            // if a numeric element handle had a value set, then by convention it needs the prefix elementId before the number so we can handle it here and make it a numeric array key again
-            foreach($existingValues as $key=>$value) {
-                if(substr($key, 0, 9)=='elementId') {
-                    unset($existingValues[$key]);
-                    $existingValues[str_replace('elementId','',$key)] = $value;
-                }
+    public function onDelete($entry_id) {
+
+        $existingValues = $this->onDeleteExistingValues[$entry_id];
+
+        $existingValues = call_user_func($this->on_delete_function_name, $entry_id, $existingValues, $this->getVar('id_form'));
+
+        // if a numeric element handle had a value set, then by convention it needs the prefix elementId before the number so we can handle it here and make it a numeric array key again
+        foreach($existingValues as $key=>$value) {
+            if(substr($key, 0, 9)=='elementId') {
+                unset($existingValues[$key]);
+                $existingValues[str_replace('elementId','',$key)] = $value;
             }
         }
+        
         return $existingValues;
     }
-    
+
     public function onBeforeSave($entry_id, $element_values) {
-        
+
         // get all the values of fields from the existing entry
         $existingValues = array();
 
@@ -435,13 +444,15 @@ EOF;
                 }
             }
         }
-        
+
         // if there is any code to run before saving, include it (write if necessary), and run the function
         if (strlen($this->on_before_save) > 0 and (file_exists($this->on_before_save_filename) or $this->cache_on_before_save_code())) {
             include_once $this->on_before_save_filename;
 
             $element_values = call_user_func($this->on_before_save_function_name, $entry_id, $element_values, $this->getVar('id_form'), $existingValues);
-           
+
+						if($element_values === false) { return array(false, $existingValues); } // user aborted save
+
             // if a numeric element handle had a value set, then by convention it needs the prefix elementId before the number so we can handle it here and make it a numeric array key again
             foreach($element_values as $key=>$value) {
                 if(substr($key, 0, 9)=='elementId') {
@@ -453,11 +464,11 @@ EOF;
         return array($element_values, $existingValues);
     }
 
-    public function onAfterSave($entry_id, $element_values, $existing_values) {
+    public function onAfterSave($entry_id, $element_values, $existing_values, $originalEntryId) {
         // if there is any code to run after saving, include it (write if necessary), and run the function
         if (strlen($this->on_after_save) > 0 and (file_exists($this->on_after_save_filename) or $this->cache_on_after_save_code())) {
             include_once $this->on_after_save_filename;
-            call_user_func($this->on_after_save_function_name, $entry_id, $this->getVar('id_form'), $element_values, $existing_values);
+            call_user_func($this->on_after_save_function_name, $entry_id, $this->getVar('id_form'), $element_values, $existing_values, ($originalEntryId == 'new'));
         }
     }
 
@@ -543,7 +554,7 @@ class formulizeFormsHandler {
 		}
 		return false;
 	}
-	
+
 	function getByHandle($handle) {
 		global $xoopsDB;
 		$sql = "SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE form_handle = '".formulize_db_escape($handle) . "'";
@@ -551,7 +562,7 @@ class formulizeFormsHandler {
 			$array = $xoopsDB->fetchArray($res);
 			return $this->get($array['id_form']);
 		}
-		
+
 	}
 
 	function getAllForms($includeAllElements=false) {
@@ -564,7 +575,7 @@ class formulizeFormsHandler {
 		}
 		return $foundFids;
 	}
-		
+
 	// accepts a framework object or frid
 	function getFormsByFramework($framework_Object_or_Frid) {
 		if(is_object($framework_Object_or_Frid)) {
@@ -634,7 +645,7 @@ class formulizeFormsHandler {
 				foreach( $formObject->cleanVars as $k=>$v ){
 					${$k} = $v;
 				}
-				
+
 				$singleToWrite = "";
 				switch($single) {
 					case('user'):
@@ -692,24 +703,24 @@ class formulizeFormsHandler {
 					$id_form = $this->db->getInsertId();
 				}
 				$formObject->assignVar('id_form', $id_form);
-				
+
 				if( $form_handle == "" ){ // only occurs when forms have no handles specified by the user, which is probably only new forms, because non-new forms would default to the fid (but for new forms, fid is not known yet when insert is called)
 					$formObject->setVar('form_handle', $id_form);
-					$this->insert($formObject, $force); 
+					$this->insert($formObject, $force);
 				}
-				
+
 				return $id_form;
-				
+
 	}
 
 	function createTableFormElements($targetTableName, $fid) {
-		
+
 		$result = $this->db->query("SHOW COLUMNS FROM " . formulize_db_escape($targetTableName));
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
 		$element_order = 0;
 		while($row = $this->db->fetchRow($result)) {
 			$element =& $element_handler->create();
-			$element->setVar('ele_caption', str_replace("_", " ", $row[0])); 
+			$element->setVar('ele_caption', str_replace("_", " ", $row[0]));
 			$element->setVar('ele_desc', "");
 			$element->setVar('ele_colhead', "");
 			$element->setVar('ele_req', 0);
@@ -725,7 +736,7 @@ class formulizeFormsHandler {
 			$element->setVar('ele_type', 'textarea');
 			if( !$element_handler->insert($element) ){
 				return false;
-			}	
+			}
 			unset($element);
 		}
 		$handleUpdateSQL = "UPDATE ".$this->db->prefix("formulize")." SET ele_handle=ele_id WHERE id_form=".intval($fid);
@@ -735,7 +746,7 @@ class formulizeFormsHandler {
     }
 		return true;
 	}
-		
+
 	// lock the form...set the lockedform flag to indicate that no further editing of this form is allowed
 	function lockForm($fid) {
 		global $xoopsDB;
@@ -826,7 +837,7 @@ class formulizeFormsHandler {
 				$sql1="select menu_id from ".$xoopsDB->prefix("formulize_menu_links")." where sid=".intval($array['sid']);
 				$res1=$xoopsDB->query($sql1);
 				$sql2="DELETE FROM ".$xoopsDB->prefix("formulize_menu_links")." where sid=".intval($array['sid']);
-				
+
 				if(!$result = $xoopsDB->query($sql2)) {
 						print "Error: could not delete menu item ".htmlspecialchars(strip_tags($array['sid']))." for form $fid";
 						$isError=true;
@@ -886,7 +897,7 @@ class formulizeFormsHandler {
 		return $foundval;
 	}
 
-	
+
 	// create a data table for a form object (or form)
 	// $fid can be an id or an object
 	// Note that this method will add in fields for the elements in the form, if invoked as part of the 3.0 patch process, or when cloning forms.
@@ -916,7 +927,7 @@ class formulizeFormsHandler {
 			$newTableSQL .= "`revision_id` bigint(7) unsigned NOT NULL auto_increment,";
 			$newTableSQL .= "`entry_id` int(7) unsigned NOT NULL,";
 		} else {
-			$newTableSQL .= "`entry_id` int(7) unsigned NOT NULL auto_increment,";	
+			$newTableSQL .= "`entry_id` int(7) unsigned NOT NULL auto_increment,";
 		}
 		$newTableSQL .= "`creation_datetime` Datetime NULL default NULL, ";
 		$newTableSQL .= "`mod_datetime` Datetime NULL default NULL, ";
@@ -961,7 +972,7 @@ class formulizeFormsHandler {
 			$newTableSQL .= "PRIMARY KEY (`revision_id`),";
 			$newTableSQL .= "INDEX i_entry_id (entry_id),";
 		} else {
-			$newTableSQL .= "PRIMARY KEY (`entry_id`),";	
+			$newTableSQL .= "PRIMARY KEY (`entry_id`),";
 		}
 		$newTableSQL .= "INDEX i_creation_uid (creation_uid)";
 		$newTableSQL .= ") ENGINE=InnoDB;";
@@ -1001,7 +1012,7 @@ class formulizeFormsHandler {
 			$dropSQL = "DROP TABLE " . $xoopsDB->prefix("formulize_" . $form_handle."_revisions");
 			if(!$dropRes = $xoopsDB->queryF($dropSQL)) {
 				print "Error: could not remove the revisions table for form $fid";
-			}	
+			}
 		}
 		// remove the entry owner groups info for that form
 		$ownershipSQL = "DELETE FROM " . $xoopsDB->prefix("formulize_entry_owner_groups") . " WHERE fid=$fid";
@@ -1010,7 +1021,7 @@ class formulizeFormsHandler {
 		}
 		return true;
 	}
-	
+
 	// this function deletes an element field from the data table
 	// $id can be numeric or an object
 	function deleteElementField($element) {
@@ -1033,7 +1044,7 @@ class formulizeFormsHandler {
 		}
 		return true;
 	}
-	
+
     // this function checks if an element field exists on the form's datatable
     // $element can be numeric or an object
     // $elementHandle is an alternative handle that we're going to look for...necessary for when elements are cloned since the element object retrieved might have a different handle already from the one we're looking for
@@ -1056,7 +1067,7 @@ class formulizeFormsHandler {
         }
         return false;
     }
-    
+
 	// this function adds an element field to the data table
 	// $element can be numeric or an object
 	function insertElementField($element, $dataType) {
@@ -1086,7 +1097,7 @@ class formulizeFormsHandler {
             return false;
         }
 	}
-	
+
 	// update the field name in the datatable.  $element can be an id or an object.
 	// $newName can be used to override the current ele_handle value.  Introduced for handling the toggling of encryption on/off where we need to rename fields to something other than the ele_handle value.
 	function updateField($element, $oldName, $dataType=false, $newName="") {
@@ -1111,7 +1122,7 @@ class formulizeFormsHandler {
 		  return false;
 		}
 		if($this->revisionsTableExists($element->getVar('id_form'))) {
-			$updateFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " CHANGE `$oldName` `$newName` ". $dataType; 
+			$updateFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " CHANGE `$oldName` `$newName` ". $dataType;
 			if(!$updateFieldRes = $xoopsDB->queryF($updateFieldSQL)) {
 			  print "Error: could not update the field name for $oldName in form ".$formObject->getVar('form_handle');
 			  return false;
@@ -1119,7 +1130,7 @@ class formulizeFormsHandler {
 		}
 		return true;
 	}
-	
+
 	// this function updates the per group filter settings for a form
 	// $filterSettings should be an array that has keys for groups, and then an array of all the filter settings (which will be an array of three other arrays, one for elements, one for ops and one for terms, all in synch)
 	function setPerGroupFilters($filterSettings, $fid) {
@@ -1134,7 +1145,7 @@ class formulizeFormsHandler {
 		while($checkArray = $xoopsDB->fetchArray($checkRes)) {
 			$foundGroups[$checkArray['groupid']] = true;
 		}
-		
+
 		$insertStart = true;
 		$insertSQL = "INSERT INTO ".$xoopsDB->prefix("formulize_group_filters")." (`fid`, `groupid`, `filter`) VALUES ";
 		$updateSQL = "UPDATE ".$xoopsDB->prefix("formulize_group_filters")." SET filter = CASE groupid ";
@@ -1154,7 +1165,7 @@ class formulizeFormsHandler {
 			}
 		}
 		$updateSQL .= " ELSE filter END WHERE fid=".$fid;
-		
+
 		if($runInsert) {
 			if(!$xoopsDB->query($insertSQL)) {
 				return false;
@@ -1166,9 +1177,9 @@ class formulizeFormsHandler {
 			}
 		}
 		return true;
-	
+
 	}
-	
+
 	// this function clears the per group filters for a form
 	function clearPerGroupFilters($groupids, $fid) {
 		if(!is_array($groupids)) {
@@ -1200,12 +1211,12 @@ class formulizeFormsHandler {
 		if(!is_array($groupids)) {
 			$groupids = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 		}
-		
-		
+
+
 		if($formAlias) {
 			$formAlias .= "."; // add a period at the end of the alias so it will work with the field names in the query
 		}
-		
+
 		// get all the filters in effect for the specified groups, the process them all into a variable we can tack onto the end of any query
 		// all filters are always on the mainform only
 		global $xoopsDB;
@@ -1272,15 +1283,15 @@ class formulizeFormsHandler {
 			}
 
 			$likeBits = (strstr(strtoupper($filterSettings[1][$i]), "LIKE") AND substr($filterSettings[2][$i], 0, 1) != "%" AND substr($filterSettings[2][$i], -1) != "%") ? "%" : "";
-			$termToUse = str_replace(array("{USER}", "{USER_ID}"), $uid, $filterSettings[2][$i]); 
+			$termToUse = str_replace(array("{USER}", "{USER_ID}"), $uid, $filterSettings[2][$i]);
 			if (preg_replace("[^A-Z{}]","", $termToUse) === "{TODAY}") {
 				$number = preg_replace("[^0-9+-]","", $termToUse);
 				$termToUse = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
 			}
-            
+
             if($termToUse == "{BLANK}") {
                 $secondOp = $filterSettings[1][$i] == "=" ? " IS " : " IS NOT ";
-                $perGroupFilter .= "($formAlias`".$filterSettings[0][$i]."` ".htmlspecialchars_decode($filterSettings[1][$i]) . " '' OR $formAlias`".$filterSettings[0][$i]."` $secondOp NULL)"; 
+                $perGroupFilter .= "($formAlias`".$filterSettings[0][$i]."` ".htmlspecialchars_decode($filterSettings[1][$i]) . " '' OR $formAlias`".$filterSettings[0][$i]."` $secondOp NULL)";
             } else {
                 $element_handler = xoops_getmodulehandler('elements', 'formulize');
                 $elementObject = $element_handler->get($filterSettings[0][$i]);
@@ -1305,7 +1316,7 @@ class formulizeFormsHandler {
 
 		return $perGroupFilter;
 	}
-	
+
 	function cloneForm($fid, $clonedata=false) {
 		if(is_object($fid)) {
 			if(!get_class($fid) == "formulizeForm") {
@@ -1354,14 +1365,14 @@ class formulizeFormsHandler {
 		}
 
 		$newfid = $this->db->getInsertId();
-		
+
 		// replace formhandle of the new form
 		$replaceSQL = "UPDATE ". $this->db->prefix("formulize_id") . " SET form_handle='".formulize_db_escape($oldFormHandle."_".$newfid)."' WHERE form_handle=\"replace_with_handle_and_id\"";
 		if(!$result = $this->db->queryF($replaceSQL)) {
 		  print "error setting the form_handle for the new form.<br>".$xoopsDB->error();
 		  return false;
-		}		
-	
+		}
+
 		$getelements = q("SELECT * FROM " . $this->db->prefix("formulize") . " WHERE id_form = $fid");
 		$oldNewEleIdMap = array();
 		foreach($getelements as $ele) { // for each element in the form....
@@ -1418,7 +1429,7 @@ class formulizeFormsHandler {
 		}
 
 	  // Need to create the new data table now -- July 1 2007
-    if(!$tableCreationResult = $this->createDataTable($newfid, $fid, $oldNewEleIdMap)) { 
+    if(!$tableCreationResult = $this->createDataTable($newfid, $fid, $oldNewEleIdMap)) {
       print "Error: could not make the necessary new datatable for form " . $newfid . ".  Please delete the cloned form and report this error to <a href=\"mailto:info@formulize.org\">info@formulize.org</a>.<br>".$xoopsDB->error();
       return false;
     }
@@ -1575,7 +1586,7 @@ class formulizeFormsHandler {
 			$res = $this->db->queryF($sql);
         }
 	}
-    
+
     public function getMultiScreens($fid) {
         if(!$fid) {
             return array();
@@ -1587,7 +1598,7 @@ class formulizeFormsHandler {
 		$formScreens = $screen_handler->getObjects($criteria_object,$fid);
 		foreach($formScreens as $screen) {
 			$sid = $screen->getVar('sid');
-			$screenData = $screen_handler->get($sid);	
+			$screenData = $screen_handler->get($sid);
 		  	$screens[$sid]['sid'] = $screenData->getVar('sid');
 		  	$screens[$sid]['title'] = $screenData->getVar('title');
 		  	$screens[$sid]['type'] = $screenData->getVar('type');
@@ -1605,5 +1616,5 @@ class formulizeFormsHandler {
             }
 		}
 		return $screens;
-	}	
+	}
 }

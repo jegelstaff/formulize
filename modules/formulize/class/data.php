@@ -36,7 +36,7 @@
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 class formulizeDataHandler  {
-	
+
 	var $fid; // the form this Data Handler object is attached to
 	var $metadataFields; //
     var $metadataFieldTypes;
@@ -51,7 +51,7 @@ class formulizeDataHandler  {
 			$this->fid = false;
 		}
         $this->dataTypeMap = array();
-		
+
 		//set the available metadata fields to a global
 		$this->metadataFields = array("entry_id",
 		  						"creation_datetime",
@@ -67,7 +67,7 @@ class formulizeDataHandler  {
                                     "mod_datetime" => "date",
                                     "creation_datetime" => "date");
 	}
-	
+
 	// this function copies data from one form to another
 	// sourceFid is the ID of the form that we're copying data from
 	// map is an array with the keys being the handles in the source form, and the values being the handle in the new cloned form
@@ -83,7 +83,7 @@ class formulizeDataHandler  {
 			return false;
 		}
 		$oldNewEntryIdMap = array();
-				
+
 		while($sourceDataArray = $xoopsDB->fetchArray($sourceDataRes)) {
 			$start = true;
       		$formObject = $form_handler->get($this->fid);
@@ -91,7 +91,7 @@ class formulizeDataHandler  {
 			foreach($sourceDataArray as $field=>$value) {
 				if($field == "entry_id") {
 					$originalEntryId = $value;
-					continue; // use new ID numbers in the new table, don't include entry id in the SQL statement. 
+					continue; // use new ID numbers in the new table, don't include entry id in the SQL statement.
 				}
 				if(isset($map[$field])) { $field = $map[$field]; } // if this field is in the map, then use the value from the map as the field name (this will match the field name in the cloned form)
 				if(!$start) { $insertSQL .= ", "; }
@@ -127,7 +127,7 @@ class formulizeDataHandler  {
 				// 1. open up the metadata for the target form
 				// 2. get and reinsert the element object after changing the ele_value[2]
 				// 3. do SQL with the replace function, to change all the recorded entry_ids to the new ones
-				
+
 				// figure out current source form
 				$element_handler = xoops_getmodulehandler('elements', 'formulize');
 				$elementObject = $element_handler->get($elementId); // gets the element from the old form, that the user just clicked on to make a copy of
@@ -141,7 +141,7 @@ class formulizeDataHandler  {
 				$newElement = $element_handler->get($map[$elementObject->getVar('ele_handle')]);
 				$newEleValue = $newElement->getVar('ele_value');
 				$newEleValue[2] = $targetForm."#*=:*".$targetHandleMap[$boxproperties[1]]; // change the element pointer
-				$newElement->setVar('ele_value', $newEleValue);				
+				$newElement->setVar('ele_value', $newEleValue);
 				if(!$element_handler->insert($newElement)) { // update the element properties in the database
 					print "Error: could not relink linked selectbox element ".$map[$elementObject->getVar('ele_handle')]." to the selected new target form.<br>";
 					return false;
@@ -157,8 +157,8 @@ class formulizeDataHandler  {
 				}
 			}
 		}
-		
-		
+
+
 		return true;
 	}
 
@@ -213,13 +213,13 @@ class formulizeDataHandler  {
 						$newIds[] = $thisId;
 					}
 				}
-				
+
 				if(count((array) $newIds) > 1) {
 					$newEleHandleValue = "\",".implode(",",array_filter($newIds, 'is_numeric')).",\"";
 				} else {
 					$newEleHandleValue = $newIds[0];
 				}
-				
+
 				$sql = "UPDATE " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " SET `".$lsbElement->getVar('ele_handle')."` = $newEleHandleValue WHERE entry_id=$thisEntry";
 				if(!$res = $xoopsDB->query($sql)) {
 					return false;
@@ -239,16 +239,19 @@ class formulizeDataHandler  {
 		}
 		global $xoopsDB;
 
-		$ids = array_filter($ids, 'is_numeric'); 
+		$ids = array_filter($ids, 'is_numeric');
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
         $formObject = $form_handler->get($this->fid);
         foreach($ids as $id) {
-            $existing_values = $formObject->onDelete($id);
+            $existing_values = $formObject->onDeletePrep($id);
         }
 		$sql = "DELETE FROM " .$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = " . implode(" OR entry_id = ", $ids);
 		if(!$deleteSuccess = $xoopsDB->query($sql)) {
 			return false;
 		}
+        foreach($ids as $id) {
+            $existing_values = $formObject->onDelete($id);
+        }
 		$sql = "DELETE FROM " . $xoopsDB->prefix("formulize_entry_owner_groups") . " WHERE fid=".formulize_db_escape($this->fid)." AND (entry_id = " . implode(" OR entry_id = ", array_filter($ids, 'is_numeric')) . ")";
 		if(!$deleteOwernshipSuccess = $xoopsDB->query($sql)) {
 			print "Error: could not delete entry ownership information for form ". formulize_db_escape($this->fid) . ", entries: " . implode(", ", array_filter($ids, 'is_numeric')) . ". Check the DB queries debug info for details.";
@@ -267,7 +270,7 @@ class formulizeDataHandler  {
 		}
 		return true;
 	}
-	
+
 	// this function checks to see if a given entry exists
 	function entryExists($id) {
 		static $cachedEntryExists = array();
@@ -286,7 +289,7 @@ class formulizeDataHandler  {
 		}
 		return $cachedEntryExists[$this->fid][$id];
 	}
-	
+
 	// this function gets the metadata on an entry
 	// returns an array with keys 0 through 3, corresponding to creation datetime, mod datetime, creation uid, mod uid
 	// intended to be called like this:
@@ -307,7 +310,7 @@ class formulizeDataHandler  {
 		}
 		return $cachedEntryMeta[$this->fid][$id];
 	}
-	
+
 	// this function returns the creation users for a series of entries
     function findAllUsersForEntries($ids, $scope_uids=array()) {
         return $this->getAllUsersForEntries($ids, $scope_uids);
@@ -327,8 +330,8 @@ class formulizeDataHandler  {
 		}
 		return $users;
 	}
-	
-	
+
+
 	// this function figures out if a given element has a value in the given entry
 	function elementHasValueInEntry($id, $element_id) {
 		if(!$element = _getElementObject($element_id)) {
@@ -348,7 +351,7 @@ class formulizeDataHandler  {
 			return false;
 		}
 	}
-	
+
 	// this function returns the value of a given element in the given entry
 	// use of $scope_uids should only be for when entries by the current user are searched for.  All other group based scopes should be done based on the scope_group_ids.
 	function getElementValueInEntry($id, $element_id, $scope_uids=array(), $scope_group_ids=array()) {
@@ -373,7 +376,7 @@ class formulizeDataHandler  {
 		$row = $xoopsDB->fetchRow($res);
 		return $row[0];
 	}
-	
+
 	// this function finds all entries created by a given user in the form
 	// use of $scope_uids should only be for when entries by the current user are searched for.  All other group based scopes should be done based on the scope_group_ids.
     function findAllEntriesForUsers($uids, $scope_uids=array(), $scope_group_ids=array()) {
@@ -387,7 +390,7 @@ class formulizeDataHandler  {
 		}
 		global $xoopsDB;
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
-        $formObject = $form_handler->get($this->fid);    
+        $formObject = $form_handler->get($this->fid);
 		if(is_array($scope_uids) AND count($scope_uids) > 0) {
 			$scopeFilter = $this->_buildScopeFilter($scope_uids);
 			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE (creation_uid = " . implode(" OR creation_uid = ", array_filter($uids, 'is_numeric')) . ") $scopeFilter ORDER BY entry_id";
@@ -405,9 +408,9 @@ class formulizeDataHandler  {
 			$entries[] = $row[0];
 		}
 		return $entries;
-	
+
 	}
-	
+
 	// this function finds the first entry for a given user in the form
     function findFirstEntryForGroups($group_ids) {
         return $this->getFirstEntryForGroups($group_ids);
@@ -416,7 +419,7 @@ class formulizeDataHandler  {
 		if(!is_array($group_ids)) {
 			$group_ids = array(0=>intval($groupids));
 		}
-		
+
 		global $xoopsDB;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($this->fid);
@@ -428,8 +431,8 @@ class formulizeDataHandler  {
 		$row = $xoopsDB->fetchRow($res);
 		return $row[0];
 	}
-	
-	
+
+
 	// this function finds the first entry for a given user in the form
     function findFirstEntryForUsers($uids) {
         return $this->getFirstEntryForUsers($uids);
@@ -453,14 +456,14 @@ class formulizeDataHandler  {
 		}
 		$row = $xoopsDB->fetchRow($res);
 		return $row[0];
-	
+
 	}
-	
+
     // this function returns the entry ID of the last entry found in the form with the specified value in the specified element
     function findLastEntryWithValue($element_id, $value, $operator="=", $scope_uids=array()) {
         return $this->findFirstEntryWithValue($element_id, $value, $operator, $scope_uids, true);
     }
-    
+
 	// this function returns the entry ID of the first entry found in the form with the specified value in the specified element
 	function findFirstEntryWithValue($element_id, $value, $operator="=", $scope_uids=array(), $desc=false) {
 		if(!$element = _getElementObject($element_id)) {
@@ -482,7 +485,7 @@ class formulizeDataHandler  {
 		$row = $xoopsDB->fetchRow($res);
 		return $row[0];
 	}
-		
+
     // this function returns the entry ID of the first entry found in the form with all the specified values in the specified elements
     // $values is a key value pair of element handles and values
 	function findFirstEntryWithAllValues($values, $operator="=") {
@@ -523,7 +526,7 @@ class formulizeDataHandler  {
 		$row = $xoopsDB->fetchRow($res);
 		return $row[0];
 	}
-    	
+
 	// this function returns the entry ID of all entries found in the form with the specified value in the specified element
 	// use of $scope_uids should only be for when entries by the current user are searched for.  All other group based scopes should be done based on the scope_group_ids.
 	function findAllEntriesWithValue($element_id, $value, $scope_uids=array(), $scope_group_ids=array(), $operator="=") {
@@ -541,7 +544,7 @@ class formulizeDataHandler  {
 			$scopeFilter = $this->_buildScopeFilter("", $scope_group_ids);
 			$sql = "SELECT t1.entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " AS t1, " . $xoopsDB->prefix("formulize_entry_owner_groups") . " AS t2 WHERE t1.`". $element->getVar('ele_handle') . "` $operator $queryValue $scopeFilter GROUP BY t1.entry_id ORDER BY t1.entry_id";
 		} else {
-			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $element->getVar('ele_handle') . "` $operator $queryValue GROUP BY entry_id ORDER BY entry_id";			
+			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $element->getVar('ele_handle') . "` $operator $queryValue GROUP BY entry_id ORDER BY entry_id";
 		}
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
@@ -552,7 +555,7 @@ class formulizeDataHandler  {
 		}
 		return $entries;
 	}
-	
+
 	// this function returns all the values of a given field, for the entries that are passed to it
     // prepValues will cause the values to be cleaned up by the prepValues function, which makes them more readable
 	function findAllValuesForEntries($handle, $entries, $prepValues=false) {
@@ -576,20 +579,20 @@ class formulizeDataHandler  {
                 while($array = $xoopsDB->fetchArray($res)) {
                     if($prepValues) {
                         $value = prepValues($array[$handle], $handle, $array['entry_id']);
-                        $cachedValues[$handle][serialize($entries)][] = is_array($value) ? $value[0] : $value;    
+                        $cachedValues[$handle][serialize($entries)][] = is_array($value) ? $value[0] : $value;
                     } else {
                         $cachedValues[$handle][serialize($entries)][] = $array[$handle];
                     }
-                    
+
                 }
             } else {
                 $cachedValues[$handle][serialize($entries)][] = false;
             }
-        } 
+        }
 		$resultArray = is_array($cachedValues[$handle][serialize($entries)]) ? $cachedValues[$handle][serialize($entries)] : array();
 		return $resultArray;
 	}
-	
+
 	// this function returns all the values of a given field
     // sort can be ASC or DESC, if left out then results are in creation order
     // scope_group_ids can be an array of group ids, which will limit the values to those which are owned by users in the given group(s)
@@ -635,7 +638,7 @@ class formulizeDataHandler  {
 			$sql = "SELECT f.`$handle`, f.`entry_id` FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS f $scope $uidFilter $perGroupFilters $sort";
 			if($res = $xoopsDB->query($sql)) {
 				while($array = $xoopsDB->fetchArray($res)) {
-					$cachedValues[$handle][$array['entry_id']] = $array[$handle];	
+					$cachedValues[$handle][$array['entry_id']] = $array[$handle];
 				}
 			} else {
 				$cachedValues[$handle] = false;
@@ -645,8 +648,8 @@ class formulizeDataHandler  {
 		}
 		return $cachedValues[$handle];
 	}
-		
-		
+
+
 	function _buildScopeFilter($scope_uids, $scope_group_ids=array()) {
 		if(is_array($scope_uids)) {
 			if(count($scope_uids) > 0) {
@@ -665,7 +668,7 @@ class formulizeDataHandler  {
 		}
 		return $scopeFilter;
 	}
-	
+
 	// derive the owner groups and write them to the owner groups table
 	// $uids and $entryids MUST BE PARALLEL, either single ids, or arrays with multiple users and entries. Single uid with array of entries won't work, needs array of repeated uid in that case, kinda dumb, but that's how it works
 	// arrays must start with 0 key and increase sequentially (no gaps, no associative keys, etc)
@@ -716,7 +719,7 @@ class formulizeDataHandler  {
 				return false;
 			}
 		  }
-		} 
+		}
 		$start = true;
 		$ownerInsertSQLArray = array();
 		$ownerInsertSQLBase = "INSERT INTO " . $xoopsDB->prefix("formulize_entry_owner_groups") . " (`fid`, `entry_id`, `groupid`) VALUES ";
@@ -735,7 +738,7 @@ class formulizeDataHandler  {
 				$ownerGroups[] = XOOPS_GROUP_ANONYMOUS;
 			}
 			foreach($ownerGroups as $index=>$thisGroup) { // add this user's groups and this entry id to the insert statement
-				if(!$start) { 
+				if(!$start) {
 					$ownerInsertSQLCurrent .= ", "; // add a comma between successive inserts
 				}
 				$start = false;
@@ -748,7 +751,7 @@ class formulizeDataHandler  {
 			}
 		}
 		if(!$start) {
-			$ownerInsertSQLArray[] = $ownerInsertSQLCurrent;	
+			$ownerInsertSQLArray[] = $ownerInsertSQLCurrent;
 		}
 		foreach($ownerInsertSQLArray as $ownerInsertSQL) {
 			if(!$ownerInsertRes = $xoopsDB->queryF($ownerInsertSQL)) {
@@ -757,7 +760,7 @@ class formulizeDataHandler  {
 		}
 		return true;
 	}
-	
+
 	// This function returns the entry_owner_groups for the given entry
 	// if no entry is specified, then returns all groups that have entries on this form
 	// remember that all groups the creator was a member of at the time of creation will be returned...interpretation of which groups are important must still be performed in logic once this info has been retrieved
@@ -771,7 +774,7 @@ class formulizeDataHandler  {
         // if we're checking a series of entries, just return true/false for whether there's any ownership info for any of them
         // this is an internal feature used by setEntryOwnerGroups
         if(is_array($entry_id)) {
-            $entryFilter = " AND entry_id IN (".implode(", ", array_filter($entry_id, 'is_numeric')).") "; 
+            $entryFilter = " AND entry_id IN (".implode(", ", array_filter($entry_id, 'is_numeric')).") ";
             $sql = "SELECT DISTINCT(groupid) FROM ".$xoopsDB->prefix("formulize_entry_owner_groups") . " WHERE fid='".$this->fid."' $entryFilter ORDER BY groupid";
             if($res = $xoopsDB->query($sql)) {
                 return $xoopsDB->getRowsNum($res);
@@ -791,13 +794,13 @@ class formulizeDataHandler  {
                     $cachedEntryOwnerGroups[$this->fid][$entry_id]=$groupArray;
                 } else {
                     $cachedEntryOwnerGroups[$this->fid][$entry_id]=false;
-                }	
+                }
             }
             return $cachedEntryOwnerGroups[$this->fid][$entry_id];
         }
-		
+
 	}
-	
+
 	// This function writes a set of values to an entry
 	// $values will be an array of element ids and prepared values, or handles and prepared values.  Array must use all ids as keys or all handles as keys!
 	// $proxyUser is optional and if present will override the current xoopsuser uid as the creation user
@@ -844,7 +847,7 @@ class formulizeDataHandler  {
                 }
 			}
 			$cachedMaps[$this->fid][$mapIDs] = $handleElementMap;
-            
+
             // also, gather once all the data types for the fid in question
             $cachedDataTypeMaps[$this->fid] = $this->gatherDataTypes(); // cannot write this directly to the object property, do that below, because statics live in this method and ARE SHARED ACROSS ALL OBJECTS. Properties are unique to the object, so we must instantiate this as a static, same as the element maps, then assign to the property below.
 		}
@@ -854,7 +857,7 @@ class formulizeDataHandler  {
         if(count((array) $this->dataTypeMap)==0) {
             $this->dataTypeMap = $cachedDataTypeMaps[$this->fid]; // now assign the value of the property, based on the cached static array
 		}
-		
+
 		// check for presence of ID or SEQUENCE and look up the values we'll need to write
 		$lockIsOn = false;
 		$idElements = array_keys($values, "{ID}");
@@ -918,39 +921,41 @@ class formulizeDataHandler  {
                     if(!$mapIDs) {
                         $handles = convertElementIdsToElementHandles(array($defaultValueElementId));
                         $hemKey = $handles[0];
-                    } 
+                    }
                     if(!isset($element_values[$handleElementMap[$hemKey]])) {
                         $element_values[$handleElementMap[$hemKey]] = $defaultValueToWrite;
                     }
                 }
             }
         }
-            
+
         // call a hook which can modify the values before saving
         list($element_values, $existing_values) = $formObject->onBeforeSave($entry, $element_values);
+
+				if ($element_values === false) { return null; }
 
         // ensure the hook has not created any invalid element handles because that would cause the sql query to fail
         // note that array_flip means both arrays use element handles as keys. values from the second array are ignored in the intersect
         $element_values = array_intersect_key($element_values, array_flip($handleElementMap));
 
         $clean_element_values = $element_values; // save a clean copy of the original values before the escaping for writing to DB, so we can use these later in "on after save"
-        
+
         foreach($element_values as $evHandle=>$thisElementValue) {
             $thisElementValue = $thisElementValue === "{WRITEASNULL}" ? NULL : $thisElementValue;
-            if(array_key_exists($evHandle, $existing_values) AND $existing_values[$evHandle] === $thisElementValue) { 
+            if(array_key_exists($evHandle, $existing_values) AND $existing_values[$evHandle] === $thisElementValue) {
                 unset($element_values[$evHandle]); // don't write things that are unchanged from their current state in the database
             }
         }
-        
+
         if(isset($GLOBALS['formulize_overrideProxyUser'])) {
             $creation_uid = intval($GLOBALS['formulize_overrideProxyUser']);
         }
-        
+
         if (0 == count((array) $element_values)) {
             // no values to save, which is probably caused by the onBeforeSave() handler deleting all of the values
             return null;
         }
-        
+
         // cache in memory a copy of the existing values, for reference elsewhere, such as sending notifications
         // also cache newly saved/written values
         if($entry != 'new') {
@@ -969,7 +974,7 @@ class formulizeDataHandler  {
             unset($element_values[$key]);   // since field name is not escaped, remove from array
             $key = "`".formulize_db_escape($key)."`";                // escape field name
             $element_values[$key] = $this->formatValueForQuery($key, $value);
-            
+
             if ($encrypt_this) {
                 // this element should be encrypted. note that the actual value is quoted and escapted already
                 $element_values[$key] = "AES_ENCRYPT({$element_values[$key]}, '$aes_password')";
@@ -981,7 +986,7 @@ class formulizeDataHandler  {
             $element_values["`mod_datetime`"]   = "NOW()";
             $element_values["`mod_uid`"]        = intval($uid);
         }
-        
+
         // do the actual writing now that we have prepared all the info we need
         if ($entry == "new") {
             // set metadata for new record
@@ -990,7 +995,7 @@ class formulizeDataHandler  {
             if($uid==0) {
                 foreach($_SESSION as $sessionVariable=>$value) {
                     if(substr($sessionVariable, 0, 19) == 'formulize_passCode_' AND is_numeric(str_replace('formulize_passCode_', '', $sessionVariable))) {
-                        
+
                         $sid = str_replace('formulize_passCode_', '', $sessionVariable);
                         $screen_handler = xoops_getmodulehandler('screen','formulize');
                         $screenObject = $screen_handler->get($sid);
@@ -1021,7 +1026,7 @@ class formulizeDataHandler  {
         }
 
         formulize_updateRevisionData($formObject, $entry_to_return, $forceUpdate);
-        
+
 		if($forceUpdate) {
 			if(!$res = $xoopsDB->queryF($sql)) {
 				exit("Error: your data could not be saved in the database.  This was the query that failed:<br>$sql<br>Query was forced and still failed so the SQL is probably bad.<br>".$xoopsDB->error());
@@ -1045,7 +1050,7 @@ class formulizeDataHandler  {
 		}
 
         $entry_to_return = $entry_to_return ? $entry_to_return : $lastWrittenId;
-        $formObject->onAfterSave($entry_to_return, $clean_element_values, $existing_values);
+        $formObject->onAfterSave($entry_to_return, $clean_element_values, $existing_values, $entry); // last param, original entry id, will be 'new' if new save
 
 		return $entry_to_return;
 	}
@@ -1061,7 +1066,7 @@ class formulizeDataHandler  {
         }
         return false; // no it's not
     }
-    
+
     // check a given field against the dataTypeMap, return true if it's a numeric type
     function dataTypeIsNumeric($key) {
         if(count((array) $this->dataTypeMap)==0) {
@@ -1077,7 +1082,7 @@ class formulizeDataHandler  {
         }
         return false; // no it's not
     }
-    
+
     function gatherDataTypes() {
         if(count((array) $this->dataTypeMap)!=0) {
             return $this->dataTypeMap;
@@ -1097,7 +1102,7 @@ class formulizeDataHandler  {
         }
         return $dataTypeMap;
     }
-    
+
     // format a given value for inclusion in a DB insert or update query, based on the data type of the element, and the numeric or strig value of the data
     function formatValueForQuery($field, $value) {
         if ("{WRITEASNULL}" === $value or null === $value) {
@@ -1122,7 +1127,7 @@ class formulizeDataHandler  {
 		//so far, only metadata cache is affected
 		$this->getEntryMeta($id, true);
 	}
-	
+
 	// change radio button data to checkbox format
 	// added to handle the situations where the radio button elements are converted to checkboxes
 	// $element can be an id or an object
@@ -1140,7 +1145,7 @@ class formulizeDataHandler  {
 		}
 		return true;
 	}
-	
+
   // change checkbox data to radio button format
 	// added to handle the situations where the radio button elements are converted to checkboxes
 	// $element can be an id or an object
@@ -1155,11 +1160,11 @@ class formulizeDataHandler  {
 		// replace *=+*: in the field with ", " but only on the part of the string after the first five characters (which will omit the *=+*: that preceeds all items)
     $sql = "UPDATE ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')). " SET `".$element->getVar('ele_handle')."` = REPLACE(RIGHT(`".$element->getVar('ele_handle')."`, CHAR_LENGTH(`".$element->getVar('ele_handle')."`)-5), \"*=+*:\", \", \")";
 		if(!$res = $xoopsDB->queryF($sql)) {
-			return false; 
+			return false;
 		}
 		return true;
 	}
-	
+
 	// this method does some operations on the database to convert the values in a field to/from encrypted status
 	// note that $elementHandle is the current value of the ele_handle, and we can't go off the element object's properties, since the element is in the middle of being updated in element_save.php when this method is called
 	function toggleEncryption($elementHandle, $currentEncryptionStatus) {
@@ -1179,7 +1184,7 @@ class formulizeDataHandler  {
 			$aesFunction = 'AES_DECRYPT';
 		} else {
 			$dataType = 'blob';
-			$aesFunction = 'AES_ENCRYPT';			
+			$aesFunction = 'AES_ENCRYPT';
 		}
 		global $xoopsDB;
 		$formObject = $form_handler->get($element->getVar('id_form'));
@@ -1198,7 +1203,7 @@ class formulizeDataHandler  {
 		}
 		return true;
 	}
-	
+
 	// this function changes selected options that users have made in radio buttons, checkboxes or selectboxes so that they match new options specified by the user...ie: old first option converted to new first option, etc
 	// newValues is the array that is about to be passed in as the new $ele_value[2], which is the array of options
 	// element_id_or_handle is the element we're working with, cannot pass in object!
@@ -1207,7 +1212,7 @@ class formulizeDataHandler  {
 		if(!$element = _getElementObject($element_id_or_handle)) {
 			return false;
 		}
-		
+
 		// multiple selection elements have data saved with the special prefix to separate values in the cell:  *=+*:
 		// we need to determine if this element allows multiple values and prepare to handle it
 		$ele_type = $element->getVar('ele_type');
@@ -1241,14 +1246,14 @@ class formulizeDataHandler  {
 			if($prefix) {
 				$currentValues = explode($prefix, ltrim($array[$element->getVar('ele_handle')], $prefix)); // since prefix is at the beginning of the string, we need to remove it before doing the explode
 			} else {
-				$currentValues = array(0=>$array[$element->getVar('ele_handle')]);				
+				$currentValues = array(0=>$array[$element->getVar('ele_handle')]);
 			}
 			for($i=0;$i<count((array) $newValues);$i++) {
 				if($newValues[$i] === $oldValues[$i]) { // ignore values that haven't changed
 					continue;
 				}
 				$foundIndex = array();
-				$key = array_search($oldValues[$i], $currentValues); 
+				$key = array_search($oldValues[$i], $currentValues);
 				if($key !== false AND !isset($foundIndex[$key])) { // if we find one of the old values in the current values, then swap in the new value it should have
 					// need to check that the match wasn't a 0 or on a string, etc...cannot use strict matching in array_search since that screws up all matches since the values don't really have their correct type owing to having been spun through lots of functions by now
 					if(!is_numeric($currentValues[$key]) AND $oldValues[$i] == '0') { continue; }
@@ -1276,7 +1281,7 @@ class formulizeDataHandler  {
 		}
 		return true;
 	}
-    
+
     // this function returns the most recent entry in the revision table for a given entry
     // id is the entry id
     function getRevisionForEntry($id, $revisionId=null) {
@@ -1295,7 +1300,7 @@ class formulizeDataHandler  {
             return false;
         }
     }
-    
-	
+
+
 }
-	
+
