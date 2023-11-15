@@ -372,6 +372,7 @@ CREATE TABLE formulize_id (
   store_revisions tinyint(1) NOT NULL default '0',
   on_before_save text,
   on_after_save text,
+  on_delete text,
   custom_edit_check text,
   note text,
   send_digests tinyint(1) NOT NULL default 0,

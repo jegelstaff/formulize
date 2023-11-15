@@ -31,7 +31,7 @@
 
 $modversion = array(
 	'name' => _MI_formulize_NAME,
-	'version' => "7.11",
+	'version' => "7.2",
 	'description' => _MI_formulize_DESC,
 	'author' => "Julian Egelstaff & Freeform Solutions",
 	'credits' => "",
@@ -963,6 +963,15 @@ $modversion['config'][] = array(
 	'name' => 'f7MenuTemplate',
 	'title' => '_MI_formulize_F7MENUTEMPLATE',
 	'description' => '_MI_formulize_F7MENUTEMPLATEDESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => '0',
+);
+
+$modversion['config'][] = array(
+	'name' => 'useOldCustomButtonEffectWriting',
+	'title' => '_MI_formulize_USEOLDCUSTOMBUTTONEFFECTWRITING',
+	'description' => '_MI_formulize_USEOLDCUSTOMBUTTONEFFECTWRITINGDESC',
 	'formtype' => 'yesno',
 	'valuetype' => 'int',
 	'default' => '0',

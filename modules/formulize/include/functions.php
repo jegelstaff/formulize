@@ -61,10 +61,7 @@ if (typeof jQuery.ui == 'undefined') {
 }
 ";
 
-include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
-include_once XOOPS_ROOT_PATH . "/modules/formulize/class/usersGroupsPerms.php";
-include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
 
 function getFormFramework($formframe, $mainform=0) {
     static $cachedToReturn = array();
@@ -303,18 +300,18 @@ function availReports($uid, $groups, $fid, $frid="0") {
     // parse out details from arrays for passing back
     $sortnames = array();
     foreach ($saved_reports as $id=>$details) {
-        $sortnames[] = $details['report_name'];
+        $sortnames[] = $details['sv_name'];
     }
     array_multisort($sortnames, $saved_reports);
 
     $sortnames = array();
     foreach ($available_published_reports as $id=>$details) {
-        $sortnames[] = $details['report_name'];
+        $sortnames[] = $details['sv_name'];
     }
     array_multisort($sortnames, $available_published_reports);
 
     $to_return[0] = array();    // in an older version the saved and published reports were returned but then the
-    $to_return[1] = array();    //  methed changed, and new array indexes were added and these were left for compatability
+    $to_return[1] = array();    //  method changed, and new array indexes were added and these were left for compatability
     $to_return[2] = $saved_reports;
     $to_return[3] = $available_published_reports;
 
@@ -4053,16 +4050,21 @@ function formulize_writeEntry($values, $entry_id="new", $action="replace", $prox
     if (is_object($elementObject)) {
         $data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
         if ($result = $data_handler->writeEntry($entry_id, $values, $proxyUser, $forceUpdate)) {
-            global $xoopsUser;
-            if ($proxyUser) {
-                $ownerForGroups = $proxyUser;
-            } elseif ($xoopsUser) {
-                $ownerForGroups = $xoopsUser->getVar('uid');
-            } else {
-                $ownerForGroups = 0;
-            }
             if ($entry_id == "new" AND $writeOwnerInfo) {
+                global $xoopsUser;
+                if(isset($GLOBALS['formulize_overrideProxyUser'])) {
+                    $ownerForGroups = $GLOBALS['formulize_overrideProxyUser'];
+                } elseif ($proxyUser) {
+                    $ownerForGroups = $proxyUser;
+                } elseif ($xoopsUser) {
+                    $ownerForGroups = $xoopsUser->getVar('uid');
+                } else {
+                    $ownerForGroups = 0;
+                }
                 $data_handler->setEntryOwnerGroups($ownerForGroups, $result); // result will be the ID number of the entry that was just written.
+                if(isset($GLOBALS['formulize_overrideProxyUser'])) {
+                    unset($GLOBALS['formulize_overrideProxyUser']);
+                }
             }
             return $result;
         } else {
@@ -4399,7 +4401,7 @@ function convertAllHandlesAndIds($handles, $frid, $reverse=false, $ids=false, $f
 // ie: build a filter with the names of all activity entries, but limit it to activity entries where the date of the activity is 2007
 // name is the name of the form in the DOM, which will be submitted on change. Leave blank to not have the filter submit anything
 // multi is used to determine if the options should be returned as a checkbox series supporting multiple values
-function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0=>""), $subfilter=false, $linked_ele_id = 0, $linked_data_id=0, $limit=false, $multi=false) {
+function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $defaultValue=false, $subfilter=false, $linked_ele_id = 0, $linked_data_id=0, $limit=false, $multi=false) {
     
     static $multiCounter = -1;
     if($multi) {
@@ -4416,7 +4418,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
     ///
     // In such a case, the parameters have the following meaning:
     //  - $id is the element id of the field to be filtered in Form D
-    //  - $ele_id is also the element id of the field to be filtered in Form D
+    //  - $element_identifier is also the element id of the field to be filtered in Form D
     //  - $subfilter specifies if this filter is a subfilter
     //  - $linked_ele_id specifies the ele_id of the Main Filter field as it appears in Form S
     //  - $linked_data_id specifies the ele_id of the Main Filter field as it appears in Form D
@@ -4435,20 +4437,35 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
     $multiIdCounter = 1;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
-    $elementObject = $element_handler->get($ele_id);
+    $elementObject = (is_object($element_identifier) AND is_a($element_identifier, 'formulizeformulize')) ? $element_identifier : $element_handler->get($element_identifier);
     
     $ORSETOperator = $elementObject->canHaveMultipleValues ? '' : '='; // if the element supports multiple values, which are crammed into the same cell in the DB, then no equals operator... if the options are inclusive of one another, ie: active and inactive, then this isn't going to work cleanly!
     
     if($multi) { // create the hidden field that will get the value assigned for submission
-        $defaultHiddenValue = (!$overrides OR (substr($overrides,0,5)=="ORSET" AND substr($overrides, -2) == "//")) ? $overrides : "ORSET$multiCounter$ORSETOperator".$overrides."//";
+        $defaultHiddenValue = "";
+        if(isset($_POST[$id])) {
+            $defaultHiddenValue = htmlspecialchars(strip_tags($_POST[$id]), ENT_QUOTES);
+        } elseif(isset($_GET[$id])) {
+            $defaultHiddenValue = htmlspecialchars(strip_tags($_GET[$id]), ENT_QUOTES);
+        } elseif($defaultValue) {
+            if(is_string($defaultValue) AND substr($defaultValue,0,5)=="ORSET" AND substr($defaultValue, -2) == "//") {
+                $defaultHiddenValue = $defaultValue;
+            } elseif(is_string($defaultValue)) {
+                $defaultHiddenValue = "ORSET$multiCounter$ORSETOperator".$defaultValue."//";
+            } elseif(is_array($defaultValue)) {
+                foreach($defaultValue as $dv) {
+                    $defaultHiddenValue .= "ORSET$multiCounter$ORSETOperator".$dv."//";
+                }
+            } 
+        }
         $filter = "<input type='hidden' name='$id' id='".$id."_hiddenMulti' value='".strip_tags(htmlspecialchars($defaultHiddenValue))."'>\n
         <div style='float: left; padding-right: 1em; padding-bottom: 1em;'>\n";
     } else { // start the actual dropdown selectbox
         $filter = "<SELECT name=\"$id\" id=\"$id\"";
-        if ($name == "{listofentries}") {
+        if ($formDOMId == "{listofentries}") {
             $filter .= " onchange='javascript:showLoading();'"; // list of entries has a special javascript thing
-        } elseif ($name) {
-            $filter .= " onchange='javascript:document.$name.submit();'";
+        } elseif ($formDOMId) {
+            $filter .= " onchange='javascript:document.$formDOMId.submit();'";
         }
         $filter .= ">\n";
     }
@@ -4458,13 +4475,13 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
         $filter .= $multi ? " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' value='none' onclick=\"jQuery('#".$id."_hiddenMulti').val('none');jQuery('.$id').each(function() { jQuery(this).removeAttr('checked') }); jQuery('#apply-button-".$id."').show(200);\">&nbsp;Please select a primary filter first</label><br/>\n" : "<option value=\"none\">Please select a primary filter first</option>\n";
     } else {
         // Either it is not a subfilter, or it is a subfilter with the linked values set
-        $defaulttext = $defaulttext ? $defaulttext: _AM_FORMLINK_PICK;
-        if ($name == "{listofentries}") {
+        if ($formDOMId == "{listofentries}") {
+            $defaultText = !$defaultText ? _AM_FORMLINK_PICK : $defaultText;
             // must not pass back a value when we're putting a filter on the list of entries page
             $checked = ((!isset($_POST[$id]) OR $_POST[$id] == '') AND (!isset($_GET[$id]) OR $_GET[$id] == '')) ? "checked" : "";
-            $filter .= $multi ? " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' value='' $checked onclick=\"jQuery('#".$id."_hiddenMulti').val('');jQuery('.$id').each(function() { jQuery(this).removeAttr('checked') }); jQuery('#apply-button-".$id."').show(200);\">&nbsp;$defaulttext</label><br/>\n" : "<option value=\"\">".$defaulttext."</option>\n";
+            $filter .= $multi ? " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' value='' $checked onclick=\"jQuery('#".$id."_hiddenMulti').val('');jQuery('.$id').each(function() { jQuery(this).removeAttr('checked') }); jQuery('#apply-button-".$id."').show(200);\">&nbsp;$defaultText</label><br/>\n" : "<option value=\"\">".$defaultText."</option>\n";
             // add {BLANK} option if we're doing this for a QSF filter in a list of entries page
-            if($defaulttext == _formulize_QSF_DefaultText) {
+            if($defaultText == _formulize_QSF_DefaultText) {
                 $multiIdCounter++;
                 $counter++;
                 $checked = "";
@@ -4477,8 +4494,21 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
                 $filter .= $multi ? " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='ORSET$multiCounter={BLANK}//' $checked onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'".$checkboxOption."'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('".$checkboxOption."', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\">&nbsp;{BLANK}</label><br/>\n" : "<option value=\"qsf_".$counter."_{BLANK}\" $selected>{BLANK}</option>\n";
             }
         } else {
-            $checked = ((!isset($_POST[$id]) OR $_POST[$id] == 'none') AND (!isset($_GET[$id]) OR $_GET[$id] == 'none')) ? "checked" : "";
-            $filter .= $multi ? " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' value='none' $checked onclick=\"jQuery('#".$id."_hiddenMulti').val('none');jQuery('.$id').each(function() { jQuery(this).removeAttr('checked') }); jQuery('#apply-button-".$id."').show(200);\">&nbsp;$defaulttext</label><br/>\n" :"<option value=\"none\">".$defaulttext."</option>\n";
+            // not a filter for core use on list of entries screen, so if multi, set default text to "Any", otherwise use the "Choose an option" default, unless the user has specified something
+            $defaultText = ($multi AND !$defaultText) ? _formulize_QSF_DefaultText : $defaultText;
+            $defaultText = !$defaultText ? _AM_FORMLINK_PICK : $defaultText;
+            $checked = "";
+            // no form submission...
+            if(!isset($_POST[$id]) AND !isset($_GET[$id])) {
+                // there's no particular default specified, or we're simply going to set to whatever the user chooses on subsequent loads
+                if(!$defaultValue OR $defaultValue === true) {
+                    $checked = "checked";
+                } 
+            // there is a form submission... check for "none" being checked
+            } elseif($_POST[$id] == "none" OR $_GET[$id] == "none") { 
+                $checked = "checked";
+            }
+            $filter .= $multi ? " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' value='none' $checked onclick=\"jQuery('#".$id."_hiddenMulti').val('none');jQuery('.$id').each(function() { jQuery(this).removeAttr('checked') }); jQuery('#apply-button-".$id."').show(200);\">&nbsp;$defaultText</label><br/>\n" :"<option value=\"none\">".$defaultText."</option>\n";
         }
 
         $element_value = $elementObject->getVar('ele_value');
@@ -4692,16 +4722,15 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
                 $options = array();
                 $namelist = gatherNames($groups, $nametype);
                 foreach ($namelist as $auid=>$aname) {
-                    $options[$aname] = $auid; // backwards to how elementrenderer.php does it, since logic below to build list is different
+                    $options[$auid] = $aname; 
                 }
+                $useValue = 'uid';
+                natcasesort($options);
             }
         }
 
-        if ($name != "{listofentries}") {
-            array_multisort(array_keys($options), SORT_NATURAL, $options);
-        }
-
         $counter++;
+        $anythingChecked = false;
         foreach ($options as $option=>$option_value) {
             
             if($multi AND $counter > 0 AND ($counter+1) % 7 == 0) {
@@ -4710,28 +4739,35 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
             
             $multiIdCounter++;
             $selected = "";
-            if (is_array($overrides) AND isset($overrides[$option])) {
+            $labeloption = $useValue ? $option_value : $option;
+            $labeloption = str_replace('NOQSFEQUALS','',$labeloption); // When the special flag is being used to override equals operator for searches, we must not show the flag! Super kludgey, but it's such a nested exception, hard to make generalized and only takes a couple lines to handle like this
+            $labeloption = formulize_swapUIText($labeloption, $ele_uitext);
+            if (is_array($defaultValue)) {
                 if($multi) {
-                    $checked = (strstr($_POST[$id], "ORSET$multiCounter$ORSETOperator".$option."//") OR strstr($_GET[$id], "ORSET$multiCounter$ORSETOperator".$option."//")) ? "checked" : "";
-                    $filter .= "<label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$overrides[$option][1]."' $checked onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'ORSET$multiCounter$ORSETOperator".$overrides[$option][1]."//'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('ORSET$multiCounter$ORSETOperator".$overrides[$option][1]."//', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\">&nbsp;".$overrides[$option][0]."</label><br/>\n";
+                    $checked = "";
+                    if($_POST[$id] != "none" AND $_GET[$id] != "none") {
+                        $checked = (strstr($_POST[$id], "ORSET$multiCounter$ORSETOperator".$option."//") OR strstr($_GET[$id], "ORSET$multiCounter$ORSETOperator".$option."//")) ? "checked" : "";
+                        $anythingChecked = $checked ? true : $anythingChecked;
+                        $checked = (!$anythingChecked AND in_array($option, $defaultValue)) ? "checked" : $checked;
+                    } 
+                    $filter .= "<label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$option."' $checked onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'ORSET$multiCounter$ORSETOperator".$option."//'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('ORSET$multiCounter$ORSETOperator".$option."//', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\">&nbsp;".$labeloption."</label><br/>\n";
                 } else {
                     $selected = ($_POST[$id] == $option OR $_GET[$id] == $option) ? "selected" : "";
-                    $filter .= "<option value=\"" . $overrides[$option][1] . "\" $selected>" . $overrides[$option][0] . "</option>\n";
+                    $selected = (!$selected AND in_array($option, $defaultValue)) ? "selected" : $selected;
+                    $filter .= "<option value=\"" . $option . "\" $selected>" . $labeloption . "</option>\n";
                 }
             } else {
                 if (preg_match('/\{OTHER\|+[0-9]+\}/', $option)) {
                     $option = str_replace(":", "", _formulize_OPT_OTHER);
                 }
-                $labeloption = $useValue ? $option_value : $option;
-                $labeloption = str_replace('NOQSFEQUALS','',$labeloption); // When the special flag is being used to override equals operator for searches, we must not show the flag! Super kludgey, but it's such a nested exception, hard to make generalized and only takes a couple lines to handle like this
                 if($multi) {
                     $option = "ORSET$multiCounter$ORSETOperator".$option."//";
                 }
-                if ((isset($_POST[$id]) OR isset($_GET[$id])) AND $overrides !== false) {
-                    if ($name == "{listofentries}") {
-                        if($multi AND strstr("ORSET$multiCounter$ORSETOperator".$overrides."//", $option)) { // the whole overrides as counter idea... so old, multi filters are not going to work with that...
+                if ((isset($_POST[$id]) OR isset($_GET[$id])) AND $defaultValue !== false) {
+                    if ($formDOMId == "{listofentries}") {
+                        if($multi AND strstr("ORSET$multiCounter$ORSETOperator".$defaultValue."//", $option)) { // the whole overrides as counter idea... so old, multi filters are not going to work with that...
                             $selected = "checked";
-                        } elseif ( (is_numeric($overrides) AND $overrides == $counter) OR (!is_numeric($overrides) AND ($overrides === $option OR $overrides === '='.$option)) ) {
+                        } elseif ( (is_numeric($defaultValue) AND $defaultValue == $counter) OR (!is_numeric($defaultValue) AND ($defaultValue === $option OR $defaultValue === '='.$option)) ) {
                             $selected = "selected";
                         }
                     } else {
@@ -4741,21 +4777,35 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
                            $selected = "selected";
                         }
                     }
-                } 
-                if ($name == "{listofentries}" AND !$multi) {
+                } elseif($defaultValue) {
+                    if($multi AND ($option == $defaultValue OR $labeloption == $defaultValue)) {
+                        $selected = "checked";
+                    } elseif($option == $defaultValue) {
+                        $selected = "selected";
+                    }
+                }
+                if ($formDOMId == "{listofentries}" AND !$multi) {
                     // need to pass this stupid thing back because we can't compare the option and the contents of $_POST...a typing problem in PHP??!!
                     $option = "qsf_".$counter."_$option";
                 }
                 if($multi) {
-                    $filter .= " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$option."' $selected onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'".$option."'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('".$option."', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\">&nbsp;".formulize_swapUIText($labeloption, $ele_uitext)."</label><br/>\n";
+                    $filter .= " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$option."' $selected onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'".$option."'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('".$option."', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\">&nbsp;".$labeloption."</label><br/>\n";
                 } else {
-                    $filter .= "<option value=\"$option\" $selected>".formulize_swapUIText($labeloption, $ele_uitext)."</option>\n";
+                    $filter .= "<option value=\"$option\" $selected>".$labeloption."</option>\n";
                 }
             }
             $counter++;
         }
     }
-    $filter .= !$multi ? "</SELECT>\n" : "<br><input id='apply-button-".$id."' type='button' class='formulize-small-button' style='display: none' value='"._formulize_SUBMITTEXT."' onclick='showLoading();'></div><div style='clear: both'></div>\n";
+    if(!$multi) {
+        $filter .= "</SELECT>\n";
+    } elseif($formDOMId == "{listofentries}") {
+        $filter .= "<br><input id='apply-button-".$id."' type='button' class='formulize-small-button' style='display: none' value='"._formulize_SUBMITTEXT."' onclick='showLoading();'></div><div style='clear: both'></div>\n";
+    } elseif($formDOMId) {
+        $filter .= "<br><input id='apply-button-".$id."' type='button' class='formulize-small-button' style='display: none' value='"._formulize_SUBMITTEXT."' onclick='window.document.".$formDOMId.".submit();'></div><div style='clear: both'></div>\n";
+    } else {
+        $filter .= "</div><div style='clear: both'></div>\n";
+    }
 
     return $filter;
 }
@@ -5526,7 +5576,10 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
                             $bareFilterTerm = $filterTerms[$filterId];
                         } else {
                             // don't know what the term is!
-                            print "Error: { } term could not be resolved. Were you expecting it to be in the URL?";
+                            global $xoopsUser;
+                            if($xoopsUser AND in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
+                                print "Error: { } term could not be resolved. Were you expecting it to be in the URL?";
+                            }
                             return;
                         }
                     } else {
@@ -5783,8 +5836,13 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                 $likebits = "";
             } else {
                 // term is not a dynamic reference to an element...
+								// the  target is a linked element (already know that from above), and so it has a foreign key in the database, and if the filter term is numeric and the operator is equals then no subquery is necessary, do a direct comparison instead
+								if(is_numeric($filterTerms[$filterId]) AND $filterOps[$filterId] === "<=>") {
+										$conditionsFilterComparisonValue = $filterTerms[$filterId];;
+								} else {
                 $filterTermToUse = formulize_db_escape($filterTerms[$filterId]);
                 $subQueryWhereClause = "ss.`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$filterTermToUse.$likebits.$quotes;
+								}
             }
             // if we didn't jump the gun and set the comparison value already above...
             if (!$conditionsFilterComparisonValue) {
@@ -8063,8 +8121,8 @@ function getDaylightSavingsAdjustment($userTimeZone, $compareTimeZone, $timestam
     );
     
     // need plus or minus on the timezone number, even zero
-    $userTimeZone = floatval($userTimeZone) >= 0 ? "+$userTimeZone" : "$userTimeZone";
-    $compareTimeZone = floatval($compareTimeZone) >= 0 ? "+$compareTimeZone" : "$compareTimeZone";
+    $userTimeZone = floatval($userTimeZone) >= 0 ? strval("+".floatval($userTimeZone)) : strval(floatval($userTimeZone));
+    $compareTimeZone = floatval($compareTimeZone) >= 0 ? strval("+".floatval($compareTimeZone)) : strval(floatval($compareTimeZone));
     
     $adjustment = 0;
     if($userTimeZone != $compareTimeZone) {

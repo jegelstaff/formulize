@@ -1,0 +1,15 @@
+If using the Docker setup in Formulize, you can dump the DB to a file like this (in a Powershell terminal):
+
+docker exec formulize-mariadb-1 mariadb-dump --user user --password=password --default-character-set=utf8mb4 --databases formulize > formulize.sql
+
+All .sql files in the /docker/mariadb/seed folder will be run the first time you "Compose Up" the Docker container (in alphabetical order)
+
+You can also run sql against the DB manually by putting a .sql file in the /docker/mariadb/seed folder and doing this:
+
+docker exec formulize-mariadb-1 /bin/sh -c 'mariadb -u user --password=password </docker-entrypoint-initdb.d/formulize.sql'
+
+You can also connect directly to mariadb through localhost:3306
+
+Note: make sure your sql files are UTF8 encoded!! Depending on OS, etc, you may need to convert the encoding of the file prior to starting Docker.
+
+Note: the mariadb database files will be stored in the /docker/mariadb/data folder and any files there will be used by mariadb when the container is next instantiated.

@@ -963,6 +963,14 @@ table.formulize-subform-table td {
     vertical-align: top;
 }
 
+.subform-deletebox {
+  height: 1.3em;
+}
+
+.subform-flatform {
+  padding-bottom: 5.5em;
+}
+
 .pill-tabs {
   display: inline-block;
 }
@@ -1625,7 +1633,7 @@ table.formulize-subform-table th p a:hover {
     text-decoration: none;
 }
 .subform-accordion-container, .subform-flatform-container {
-    margin-top: 1.5em;
+    margin-top: 3em;
 }
 .subform-entry-container .ui-state-default {
   width: auto;

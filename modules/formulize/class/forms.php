@@ -158,6 +158,7 @@ class formulizeForm extends XoopsObject {
         $this->initVar("store_revisions", XOBJ_DTYPE_INT, $formq[0]['store_revisions'], true);
         $this->initVar("on_before_save", XOBJ_DTYPE_TXTAREA, $formq[0]['on_before_save']);
         $this->initVar("on_after_save", XOBJ_DTYPE_TXTAREA, $formq[0]['on_after_save']);
+        $this->initVar("on_delete", XOBJ_DTYPE_TXTAREA, $formq[0]['on_delete']);
         $this->initVar("custom_edit_check", XOBJ_DTYPE_TXTAREA, $formq[0]['custom_edit_check']);//
         $this->initVar("note", XOBJ_DTYPE_TXTAREA, $formq[0]['note']);
         $this->initVar("send_digests", XOBJ_DTYPE_INT, $formq[0]['send_digests'], true);
@@ -211,11 +212,20 @@ class formulizeForm extends XoopsObject {
         if ("on_after_save" == $key) {
             $this->cache_on_after_save_code();
         }
+        if ("on_delete" == $key) {
+            $this->cache_on_delete_code();
+        }
+
         if ("custom_edit_check" == $key) { // Added for custom_edit_check var
             $this->cache_custom_edit_check_code();
         }
     }
 
+    protected function on_delete_function_name() {
+        // form ID is used so the function name is unique
+        return "form_".$this->id_form."_on_delete";
+    }
+    
     protected function on_before_save_function_name() {
         // form ID is used so the function name is unique
         return "form_".$this->id_form."_on_before_save";
@@ -226,6 +236,11 @@ class formulizeForm extends XoopsObject {
         return "form_".$this->id_form."_on_after_save";
     }
 
+    protected function on_delete_filename() {
+        // save the code in the icms cache folder (because it is known to be writeable)
+        return ICMS_CACHE_PATH."/{$this->on_delete_function_name}.php";
+    }
+    
     protected function on_before_save_filename() {
         // save the code in the icms cache folder (because it is known to be writeable)
         return ICMS_CACHE_PATH."/{$this->on_before_save_function_name}.php";
@@ -236,12 +251,42 @@ class formulizeForm extends XoopsObject {
         return ICMS_CACHE_PATH."/{$this->on_after_save_function_name}.php";
     }
 
+    private function cache_on_delete_code() {
+        if (strlen($this->on_delete) > 0) {
+            $on_delete_code = <<<EOF
+<?php
+
+function form_{$this->id_form}_on_delete(\$entry_id, \$formulize_element_values, \$form_id) {    
+    foreach(\$formulize_element_values as \$formulize_element_key=>\$formulize_element_value) {
+        if(is_numeric(\$formulize_element_key)) {
+            \$formulize_element_key = 'elementId'.\$formulize_element_key;
+        }
+        \${\$formulize_element_key} = \$formulize_element_value;
+    }
+
+{$this->on_delete}
+
+    return get_defined_vars();  // this converts PHP variables back into an array
+}
+
+EOF;
+            // todo: there is a way to validate php files on disk, so do that and report any syntax errors
+            return (false !== file_put_contents($this->on_delete_filename, $on_delete_code));
+        } else {
+            if (file_exists($this->on_delete_filename)) {
+                unlink($this->on_delete_filename);
+            }
+            return true;
+        }
+    }
+    
     private function cache_on_before_save_code() {
         if (strlen($this->on_before_save) > 0) {
             $on_before_save_code = <<<EOF
 <?php
 
-function form_{$this->id_form}_on_before_save(\$entry_id, \$formulize_element_values, \$form_id, \$currentValues) {    
+function form_{$this->id_form}_on_before_save(\$entry_id, \$formulize_element_values, \$form_id, \$currentValues) {
+
     foreach(\$formulize_element_values as \$formulize_element_key=>\$formulize_element_value) {
         if(is_numeric(\$formulize_element_key)) {
             \$formulize_element_key = 'elementId'.\$formulize_element_key;
@@ -271,6 +316,7 @@ EOF;
 <?php
 
 function form_{$this->id_form}_on_after_save(\$entry_id, \$form_id, \$formulize_element_values, \$currentValues) {
+
 foreach(\$formulize_element_values as \$formulize_element_key=>\$formulize_element_value) {
     if(is_numeric(\$formulize_element_key)) {
         \$formulize_element_key = 'elementId'.\$formulize_element_key;
@@ -322,6 +368,11 @@ EOF;
         }
     }
 
+    public function on_delete() {
+        // this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
+        return $this->vars['on_delete']['value'];
+    }
+    
     public function on_before_save() {
         // this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
         return $this->vars['on_before_save']['value'];
@@ -337,10 +388,41 @@ EOF;
         return $this->vars['custom_edit_check']['value'];
     }
 
+    public function onDelete($entry_id) {
+        
+        $existingValues = array();
+        
+        // if there is any code to run before saving, include it (write if necessary), and run the function
+        if (is_numeric($entry_id) AND $entry_id AND strlen($this->on_delete) > 0 and (file_exists($this->on_delete_filename) or $this->cache_on_delete_code())) {
+            include_once $this->on_delete_filename;
+
+            // get all the values of fields from the existing entry    
+            global $xoopsDB;
+            $sql = "SELECT * FROM ".$xoopsDB->prefix('formulize_'.$this->getVar('form_handle'))." WHERE entry_id = ".intval($entry_id);
+            if($res = $xoopsDB->query($sql)) {
+                foreach($xoopsDB->fetchArray($res) as $handle=>$value) {
+                    $existingValues[$handle] = $value;
+                }
+            }
+
+            $existingValues = call_user_func($this->on_delete_function_name, $entry_id, $existingValues, $this->getVar('id_form'));
+           
+            // if a numeric element handle had a value set, then by convention it needs the prefix elementId before the number so we can handle it here and make it a numeric array key again
+            foreach($existingValues as $key=>$value) {
+                if(substr($key, 0, 9)=='elementId') {
+                    unset($existingValues[$key]);
+                    $existingValues[str_replace('elementId','',$key)] = $value;
+                }
+            }
+        }
+        return $existingValues;
+    }
+    
     public function onBeforeSave($entry_id, $element_values) {
         
         // get all the values of fields from the existing entry
         $existingValues = array();
+
         if(is_numeric($entry_id)) {
             global $xoopsDB;
             $sql = "SELECT * FROM ".$xoopsDB->prefix('formulize_'.$this->getVar('form_handle'))." WHERE entry_id = ".intval($entry_id);
@@ -570,12 +652,12 @@ class formulizeFormsHandler {
                 if($formObject->isNew() || empty($id_form)) {
                     $sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`desc_form`, `singleentry`, `tableform`, ".
                         "`defaultform`, `defaultlist`, `menutext`, `form_handle`, `store_revisions`, `on_before_save`, ".
-                        "`on_after_save`, `custom_edit_check`, `note`, `send_digests`) VALUES (".
+                        "`on_after_save`, `on_delete`, `custom_edit_check`, `note`, `send_digests`) VALUES (".
                         $this->db->quoteString($title).", ".$this->db->quoteString($singleToWrite).", ".
                         $this->db->quoteString($tableform).", ".intval($defaultform).", ".intval($defaultlist).
                         ", ".$this->db->quoteString($menutext).", ".$this->db->quoteString($form_handle).", ".
                         intval($store_revisions).", ".$this->db->quoteString($on_before_save).", ".
-                        $this->db->quoteString($on_after_save).", ".$this->db->quoteString($custom_edit_check).
+                        $this->db->quoteString($on_after_save).", ".$this->db->quoteString($on_delete).", ".$this->db->quoteString($custom_edit_check).
                         ", ".$this->db->quoteString($note).", ".intval($send_digests).")";
                 } else {
                     $sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET".
@@ -589,6 +671,7 @@ class formulizeFormsHandler {
                         ", `store_revisions` = ".intval($store_revisions).
                         ", `on_before_save` = ".$this->db->quoteString($on_before_save).
                         ", `on_after_save` = ".$this->db->quoteString($on_after_save).
+                        ", `on_delete` = ".$this->db->quoteString($on_delete).
                         ", `custom_edit_check` = ".$this->db->quoteString($custom_edit_check).
                         ", `note` = ".$this->db->quoteString($note).
                         ", `send_digests` = ".intval($send_digests).

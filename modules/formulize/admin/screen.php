@@ -147,17 +147,20 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $viewOptions['mine'] = _AM_FORMULIZE_SCREEN_LOE_DVMINE;
   $viewOptions['group'] = _AM_FORMULIZE_SCREEN_LOE_DVGROUP;
   $viewOptions['all'] = _AM_FORMULIZE_SCREEN_LOE_DVALL;
+  $viewOptionsC = array();
   for($i=0;$i<count((array) $views);$i++) {
       if (!$viewPublished[$i]) { continue; }
-      $viewOptions[$views[$i]] = $viewNames[$i];
+      $viewOptionsC[$views[$i]] = $viewNames[$i];
       if ($viewFrids[$i]) {
-          $viewOptions[$views[$i]] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_IN_FRAME . (is_object($frameworks[$viewFrids[$i]]) ? $frameworks[$viewFrids[$i]]->getVar('name') : "Deleted??") . ")";
+          $viewOptionsC[$views[$i]] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_IN_FRAME . (is_object($frameworks[$viewFrids[$i]]) ? $frameworks[$viewFrids[$i]]->getVar('name') : "Deleted??") . ")";
       } else {
-          $viewOptions[$views[$i]] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_NO_FRAME . ")";
+          $viewOptionsC[$views[$i]] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_NO_FRAME . ")";
       }
   }
   $limitViewOptions['allviews'] = _AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEWLIMIT;
-  $limitViewOptions += $viewOptions;
+  asort($viewOptionsC);
+  $limitViewOptions += $viewOptionsC;
+  $viewOptions += $viewOptionsC;
   unset($limitViewOptions['blank']);
   // get the available screens
   $screen_handler = xoops_getmodulehandler('screen', 'formulize');
@@ -231,7 +234,7 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $entries['defaultview'] = $screen->getVar('defaultview');
   // Convert to arrays if a legacy value
   if(!is_array($entries['defaultview'])) {
-    $entries['defaultview'] = array(XOOPS_GROUP_USERS => $entries['defaultview']);
+    $entries['defaultview'] = array(XOOPS_GROUP_USERS => FORMULIZE_QUERY_SCOPE_GLOBAL);
   }
   $entries['viewoptions'] = $viewOptions;
   $entries['usecurrentviewlist'] = $screen->getVar('usecurrentviewlist');

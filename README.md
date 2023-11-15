@@ -3,7 +3,7 @@ Formulize
 
 * Data entry, collection, management, workflows and reporting.
 * On the web, in your CMS, and on your mobile device.
-* Docs and other materials (incl. video tutorials) here: http://www.formulize.org
+* Docs and other materials (incl. video tutorials) here: https://www.formulize.org
 
 To get the latest, just download the source code of the latest release, or the latest commit if you want the cutting edge, which is almost always fully functional.
 
@@ -19,7 +19,3 @@ To update existing install:
 4) click on the Modules menu heading at the top of the page on the admin side and then click the circle arrows to update the Formulize "module"
 
 If you have issues, please contact info@formulize.org
-
-Formulize Summit - August 30 2022, Toronto Ontario - details: https://www.formulize.org/summit
-
-[![Build Status](https://travis-ci.org/jegelstaff/formulize.png)](https://travis-ci.org/jegelstaff/formulize)

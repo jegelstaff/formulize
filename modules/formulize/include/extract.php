@@ -767,8 +767,8 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		$restOfTheSQLForExport = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo." AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $orderByClause ";  // don't use limitByEntryId since exports include all entries
 		if(count((array) $linkformids)>1) { // AND $dummy == "never") { // when there is more than 1 joined form, we can get an exponential explosion of records returned, because SQL will give you all combinations of the joins
 			if(!$sortIsOnMain) {
-				$orderByToUse = " ORDER BY usethissort $sortOrder ";
-				$useAsSortSubQuery = " @rownum:=@rownum+1, $useAsSortSubQuery,"; // need to add a counter as the first field, used as the master sorting key
+				$orderByToUse = " ) as innertable ORDER BY usethissort $sortOrder ";
+				$useAsSortSubQuery = " @rownum:=@rownum+1, usethissort, entry_id FROM ( SELECT $useAsSortSubQuery,"; // need to add a counter as the first field, used as the master sorting key
 			} else {
 				$orderByToUse = $orderByClause;
 				$useAsSortSubQuery = "  @rownum:=@rownum+1, "; // need to add a counter as the first field, used as the master sorting key
@@ -1581,7 +1581,34 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
 			      } else {
 				   $searchTerm = $customTypeHandler->prepareLiteralTextForDB($ifParts[1], $customTypeHandler->get($element_id));
 			      }
-			 }
+				// check if the element is a radio button or selectbox or checkbox series that uses the pipe character
+				// if so, check if the list uses the human readable version (and only the DB has the data values)
+				// if so, then let's look in the list of possible values for this element, and convert what the user typed to the right data value
+				} elseif(($formFieldFilterMap[$mappedForm][$element_id]['ele_type'] == 'radio'
+					OR $formFieldFilterMap[$mappedForm][$element_id]['ele_type'] == 'select'
+					OR $formFieldFilterMap[$mappedForm][$element_id]['ele_type'] == 'checkbox')
+					AND $formFieldFilterMap[$mappedForm][$element_id]['ele_uitextshow']) {
+					$thisElementUITexts = $formFieldFilterMap[$mappedForm][$element_id]['ele_uitext']; // unserialized when assigned to the map in formulize_mapFormFieldFilter
+					// if there's an actual value for the first UI text key, then we must have some real UI text, not just an empty array which happens when there's nothing
+					if(is_array($thisElementUITexts)
+						 AND count($thisElementUITexts)>0
+						 AND $thisElementUITexts[array_key_first($thisElementUITexts)]) {
+							foreach($thisElementUITexts as $thisDBValue=>$thisUIText) {
+									switch($operator) {
+											case '=':
+													if($thisUIText == $searchTerm) {
+															$searchTerm = $thisDBValue;
+															break 2; // Break out of the foreach
+													}
+											default:
+													if(stristr($thisUIText, $searchTerm)) {
+															$searchTerm = $thisDBValue;
+															break 2; // Break out of the foreach
+													}
+									}
+							}
+					}
+			}
 			 if($searchTerm === $ifParts[1]) {
 			      // no change, so let's escape it, otherwise the prepareLiteralTextForDB method should have returned a safe value
 			      $searchTerm = formulize_db_escape($ifParts[1]);	
@@ -1737,9 +1764,10 @@ function formulize_mapFormFieldFilter($element_id, $formFieldFilterMap) {
           //$res = $xoopsDB->query($sql);
           //$array = $xoopsDB->fetchArray($res);
           $array = formulize_getElementMetaData($element_id);
+          $ele_value = $array['ele_value']; // raw value
           if(strstr($array['ele_value'], "#*=:*")) {
-               $ele_value = unserialize($array['ele_value']);
-               $formFieldFilterMap[$array['id_form']][$element_id]['islinked'] = (!isset($ele_value['snapshot']) OR !$ele_value['snapshot']) ? explode("#*=:*", $ele_value[2]) : false; // put an array of the source form id and source handle into the "islinked" flag               
+               $ele_value = unserialize($array['ele_value']); // in this case we know we need to unserialize
+               $formFieldFilterMap[$array['id_form']][$element_id]['islinked'] = (!isset($ele_value['snapshot']) OR !$ele_value['snapshot']) ? explode("#*=:*", $ele_value[2]) : false; // put an array of the source form id and source handle into the "islinked" flag
           } else {
                $formFieldFilterMap[$array['id_form']][$element_id]['islinked'] = false;
           }
@@ -1755,8 +1783,10 @@ function formulize_mapFormFieldFilter($element_id, $formFieldFilterMap) {
                $formFieldFilterMap[$array['id_form']][$element_id]['isnamelist'] = false;
           }
           $foundForm = $array['id_form'];
-	  $formFieldFilterMap[$array['id_form']][$element_id]['ele_value'] = $ele_value; // just to be on the safe side, send the entire ele_value as well in case we need something from it
-	  $formFieldFilterMap[$array['id_form']][$element_id]['ele_type'] = $array['ele_type']; 
+	  $formFieldFilterMap[$array['id_form']][$element_id]['ele_value'] = $ele_value; // just to be on the safe side, send the entire ele_value as well in case we need something from it -- but it will only be unserialized in the case of a linked element!
+	  $formFieldFilterMap[$array['id_form']][$element_id]['ele_type'] = $array['ele_type'];
+      $formFieldFilterMap[$array['id_form']][$element_id]['ele_uitext'] = unserialize($array['ele_uitext']); 
+      $formFieldFilterMap[$array['id_form']][$element_id]['ele_uitextshow'] = $array['ele_uitextshow'];
      }
      return array(0=>$formFieldFilterMap, 1=>$foundForm);
 }
@@ -1904,7 +1934,7 @@ function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form
                 if(!$primary_entry_id) { continue; } // datasets can contain empty values for subforms, etc, when no entries exist. We must not process phantom non-existent entries.
                 $dataToWrite = array();
                 foreach ($metadata[$formHandle] as $formulaNumber => $thisMetaData) {
-                    $functionName = "derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", $formHandle)."_".$relationship_id."_".$form_id."_".$formulaNumber;
+                    $functionName = "derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "ï¿½", ",", ")", "(", "[", "]"), "_", $formHandle)."_".$relationship_id."_".$form_id."_".$formulaNumber;
                     // want to turn off the derived value update flag for the actual processing of a value, since the function might have a getData call in it!!
                     $resetDerivedValueFlag = false;
                     if (isset($GLOBALS['formulize_forceDerivedValueUpdate'])) {
@@ -1975,7 +2005,7 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
         }
         $fileName = XOOPS_ROOT_PATH.'/modules/formulize/cache/Derived_value_formula_for_'.$thisMetaData['handle'].'_in_form_'.$thisMetaData['form_id']."_(fid_".$fid."_frid_".$frid."_fn_".$formulaNumber.").php";
         file_put_contents($fileName, "<?php
-    function derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", $formHandle)."_".$frid."_".$fid."_".$formulaNumber."(\$entry, \$form_id, \$entry_id, \$relationship_id) {
+    function derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "ï¿½", ",", ")", "(", "[", "]"), "_", $formHandle)."_".$frid."_".$fid."_".$formulaNumber."(\$entry, \$form_id, \$entry_id, \$relationship_id) {
         $formula
         return \$value;
     }\r\n");

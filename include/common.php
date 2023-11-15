@@ -64,15 +64,17 @@ if (isset($xoopsOption['pagetype']) && FALSE === strpos($xoopsOption['pagetype']
 
 defined("XOOPS_USE_MULTIBYTES") or define("XOOPS_USE_MULTIBYTES", 0);
 
-if (!empty($_POST['xoops_theme_select']) && in_array($_POST['xoops_theme_select'], $icmsConfig['theme_set_allowed'])) {
-	$icmsConfig['theme_set'] = $_POST['xoops_theme_select'];
-	$_SESSION['xoopsUserTheme'] = $_POST['xoops_theme_select'];
-} elseif (!empty($_POST['theme_select']) && in_array($_POST['theme_select'], $icmsConfig['theme_set_allowed'])) {
-	$icmsConfig['theme_set'] = $_POST['theme_select'];
-	$_SESSION['xoopsUserTheme'] = $_POST['theme_select'];
-} elseif (!empty($_SESSION['xoopsUserTheme'])
-		&& in_array($_SESSION['xoopsUserTheme'], $icmsConfig['theme_set_allowed'])) {
-	$icmsConfig['theme_set'] = $_SESSION['xoopsUserTheme'];
+if(!empty($icmsConfig['theme_set_allowed'])) {
+    if (!empty($_POST['xoops_theme_select']) && in_array($_POST['xoops_theme_select'], $icmsConfig['theme_set_allowed'])) {
+        $icmsConfig['theme_set'] = $_POST['xoops_theme_select'];
+        $_SESSION['xoopsUserTheme'] = $_POST['xoops_theme_select'];
+    } elseif (!empty($_POST['theme_select']) && in_array($_POST['theme_select'], $icmsConfig['theme_set_allowed'])) {
+        $icmsConfig['theme_set'] = $_POST['theme_select'];
+        $_SESSION['xoopsUserTheme'] = $_POST['theme_select'];
+    } elseif (!empty($_SESSION['xoopsUserTheme'])
+            && in_array($_SESSION['xoopsUserTheme'], $icmsConfig['theme_set_allowed'])) {
+        $icmsConfig['theme_set'] = $_SESSION['xoopsUserTheme'];
+    }
 }
 
 if ($icmsConfig['closesite'] == 1) {

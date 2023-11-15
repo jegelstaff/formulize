@@ -152,6 +152,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
                     }
                     
                     function formulize_delete_successful(response) {
+                        formulizechanged = 1;
                         response = eval('('+response+')');
                         window.document.getElementById('formulize_fileStatus_'+response.element_id+'_'+response.entry_id).innerHTML = '';
                         jQuery('#fileUploadUI_de_".$element->getVar('id_form')."_'+response.entry_id+'_'+response.element_id).show();
@@ -205,6 +206,10 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
         if($element->getVar('ele_req')) { // need to include this only if the admin wants to force a value for this element, and there's no file selected already
             $validationCode[] = "if(formulizechanged && myform.fileupload_{$markupName}.value == '' && (typeof formulizeFile".$markupName."Exists == 'undefined' || formulizeFile".$markupName."Exists == false)) {\n";
             $validationCode[] = "  window.alert('{$validationmsg}');\n myform.fileupload_{$markupName}.focus();\n return false;\n ";
+            $validationCode[] = "} else if(formulizechanged && myform.fileupload_{$markupName}.value == '' && typeof formulizeFile".$markupName."Exists != 'undefined' && formulizeFile".$markupName."Exists == true) {\n";
+            $validationCode[] = "  myform.{$cueName}.name = 'skipit!';\n";
+            $validationCode[] = "} else if(formulizechanged) {\n";
+            $validationCode[] = "  myform.{$cueName}.name = '{$cueName}';\n";
             $validationCode[] = "}\n";
         } else { // file not required, if there's going to be a bonafide form submission, remove the cue if there's no file here
             $validationCode[] = "if(formulizechanged && myform.fileupload_{$markupName}.value == '') {\n"; // if no file has been selected, then neuter the cue element that tells us we need to handle this one when saving
@@ -293,7 +298,10 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
                 print "<p><b>$value</b></p>";
             }
         } elseif($_FILES[$fileKey]['error'] == UPLOAD_ERR_NO_FILE) {
-            return "{WRITEASNULL}"; // no replacement file sent, so keep whatever we've got already...we should be skipping these uploads!
+            list($fieldtype, $de, $form_id, $entry_id, $element_id) = explode('_', $fileKey);
+            $dataHandler = new formulizeDataHandler($form_id);
+            // Return the existing serialized value in the database. This should never happen because validation javascript should eliminate the cue in the relevant cases.
+            return $dataHandler->getElementValueInEntry($entry_id, $element_id);
         } else {
             switch($_FILES[$fileKey]['error']) {
                 case UPLOAD_ERR_INI_SIZE:

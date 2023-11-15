@@ -1050,7 +1050,7 @@ class formulizeAdvancedCalculationHandler {
 	$form_ele = new XoopsFormTextDateSelect("", $elementName, 15, $dateValue);
 	$form_ele->setExtra(' class="'. $elementUnderlyingField . '" ');
       }
-      $selected = date("Y-m-d", $dateValue);
+      $selected = date("Y-m-d", (int)$dateValue);
       // special catch for dates without a year, which is valid for OCANDS multi year groupings with only quarters specified
       if($selected == "1969-12-31" AND (strstr($elementName, "_startDate") OR strstr($elementName, "_endDate")) AND $selected != $_POST[$elementName] AND $selected != $_GET[$elementName]) {
 	$selected = $_POST[$elementName];
@@ -1164,7 +1164,7 @@ class formulizeAdvancedCalculationHandler {
     } elseif(isset($_GET[$elementName][$index])) { // or if they were set in the URL...
         $value = $_GET[$elementName][$index];
     } elseif(count((array) $_POST)==0 AND !isset($_GET[$elementName])) { // if no form submission at all and nothing set in the URL, gather defaults
-        $value = in_array($index, $fltr_grp["type"]["defaults"]);
+        $value = in_array($index, (array)$fltr_grp["type"]["defaults"]);
     }
     return $value;
   }
@@ -1203,7 +1203,7 @@ class formulizeAdvancedCalculationHandler {
 	$index++;
       }
     }
-    if( array_key_exists( $fltr_grp_index, $value ) OR $numberChecked >= 2 ) {
+    if( array_key_exists( $fltr_grp_index, (array)$value ) OR $numberChecked >= 2 ) {
       $checked = ' CHECKED';
     } else {
       $checked = '';
@@ -1390,7 +1390,7 @@ function reportProceduresTime($label, $averageOverThisNumber=0) {
 	$totalTime += $elapsedTime;
 	$time = $currentTime;
     }
-    if($averageOverThisNumber) {
+    if($averageOverThisNumber AND is_numeric($averageOverThisNumber)) {
 	$averageTime = round($elapsedTime / $averageOverThisNumber,8);;
     } else {
 	$averageTime = 0;
