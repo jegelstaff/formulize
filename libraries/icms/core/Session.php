@@ -148,7 +148,7 @@ class icms_core_Session {
 		}
         
         // if we're coming back from new_user.php after having made an account, we need to pick it up here
-        if($_SESSION['resouceMapKey']) {
+        if(isset($_SESSION['resouceMapKey']) AND $_SESSION['resouceMapKey']) {
             $externalUid = $_SESSION['resouceMapKey'];
         }
 

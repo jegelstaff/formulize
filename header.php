@@ -14,7 +14,7 @@ icms::$logger->startTime('ICMS output init');
 global $xoopsOption, $icmsConfig, $icmsModule;
 $xoopsOption['theme_use_smarty'] = 1;
 
-if (@$xoopsOption['template_main']) {
+if (isset($xoopsOption['template_main']) AND $xoopsOption['template_main']) {
 	if (FALSE === strpos($xoopsOption['template_main'], ':')) {
 		$xoopsOption['template_main'] = 'db:' . $xoopsOption['template_main'];
 	}
@@ -26,7 +26,7 @@ $xoopsThemeFactory->defaultTheme = $icmsConfig['theme_set'];
 /**
  * @var icms_view_theme_Object
  */
-$icmsTheme = $xoTheme =& $xoopsThemeFactory->createInstance(array('contentTemplate' => @$xoopsOption['template_main'],));
+$icmsTheme = $xoTheme =& $xoopsThemeFactory->createInstance(array('contentTemplate' => (isset($xoopsOption['template_main']) ? $xoopsOption['template_main'] : ''),));
 $GLOBALS['icmsTheme'] = $icmsTheme;
 $GLOBALS['xoTheme'] = $xoTheme;
 $xoopsTpl = $icmsTpl =& $xoTheme->template;

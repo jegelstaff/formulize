@@ -1,7 +1,7 @@
 <?php
 
 global $icmsConfig;
-if(file_exists(XOOPS_ROOT_PATH.'/language/'.$icmsConfig['language'].'/core.php')) {
+if(is_array($icmsConfig) AND isset($icmsConfig['language']) AND file_exists(XOOPS_ROOT_PATH.'/language/'.$icmsConfig['language'].'/core.php')) {
     require_once XOOPS_ROOT_PATH.'/language/'.$icmsConfig['language'].'/core.php';
 } elseif(file_exists(XOOPS_ROOT_PATH.'/language/english/core.php')) {
     require_once XOOPS_ROOT_PATH.'/language/english/core.php';

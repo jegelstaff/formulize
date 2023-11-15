@@ -345,7 +345,8 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
         $url = $this->createFileURL($this->get($handle), $entry_id, $value);
         // store the displayName in case we need to format this in a list later -- only the URL will be passed to the formatDataForList method, since that's all we're passing back here, so we need another way of getting the displayName into that method
         $value = unserialize($value);
-        $GLOBALS['formulize_fileUploadElementDisplayName'][$entry_id][$handle] = $this->getFileDisplayName($value['name']);
+        $name = isset($value['name']) ? $value['name'] : '';
+        $GLOBALS['formulize_fileUploadElementDisplayName'][$entry_id][$handle] = $this->getFileDisplayName($name);
         return $url;
     }
     
@@ -374,8 +375,8 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
     // $value is the serialized raw value from the database for this particular entry
     function createFileURL($element, $entry_id, $value) {
         $value = unserialize($value);
-        $fileName = $value['name'];
-        $isFile = $value['isfile'];
+        $fileName = isset($value['name']) ? $value['name'] : '';
+        $isFile = isset($value['isfile']) ? $value['isfile'] : '';
         if($isFile) {
             $ele_value = $element->getVar('ele_value');
             if($ele_value[2]) { // users can connect directly to file or not?

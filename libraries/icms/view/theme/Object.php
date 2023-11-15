@@ -503,7 +503,7 @@ class icms_view_theme_Object {
 				case 'script':
 					foreach ($this->metas[$type] as $attrs) {
 						$str .= '<script' . $this->renderAttributes($attrs) . ">";
-						if (@$attrs['_']) {
+						if (isset($attrs['_']) AND @$attrs['_']) {
 							$str .= "\n" . $attrs['_'] . "\n";
 						}
 						$str .= "</script>\n";
@@ -518,7 +518,7 @@ class icms_view_theme_Object {
 
 				case 'stylesheet':
 					foreach ($this->metas[$type] as $attrs) {
-						if (@$attrs['_']) {
+						if (isset($attrs['_']) AND @$attrs['_']) {
 							$str .= '<style' . $this->renderAttributes($attrs) . ">\n" . $attrs['_'] . "\n</style>";
 						} else {
 							$str .= '<link rel="stylesheet"' . $this->renderAttributes($attrs) . " />\n";

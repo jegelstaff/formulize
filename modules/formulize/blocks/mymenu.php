@@ -129,6 +129,7 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
         
         $itemurl = XOOPS_URL."/modules/formulize/application.php?id=$aid";
         
+        $menuActive = '';
         if(
            $forceOpen
            OR (
@@ -140,8 +141,7 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
                strstr(getCurrentURL(), "/modules/formulize/index.php?fid=")
                AND in_array($getFid, $forms)
                )
-           OR $isThisSubMenu
-        ){
+            ){
           $menuActive=' menuActive';
         }
 

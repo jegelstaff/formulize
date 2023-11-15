@@ -164,26 +164,23 @@ global $xoopsDB;
             $res = $xoopsDB->query ( $sql ) or die('SQL Error !<br />'.$sql.'<br />'.$xoopsDB->error());
 
             if ( $res ) {
-                $row = $xoopsDB->fetchArray ( $res );
-                
-                if($includeMenuURLs AND $row['url']) {
-                    if(substr($row['url'],0,1)=='/') {
-                        header('Location: ' . XOOPS_URL . $row['url']);
-                    } elseif(!strstr($row['url'],'://')) {
-                        header('Location: ' . 'http://' . $row['url']);
-                    } else {
-                        header('Location: ' . $row['url']);
+                if($row = $xoopsDB->fetchArray ( $res )) {
+                    if($includeMenuURLs AND $row['url']) {
+                        if(substr($row['url'],0,1)=='/') {
+                            header('Location: ' . XOOPS_URL . $row['url']);
+                        } elseif(!strstr($row['url'],'://')) {
+                            header('Location: ' . 'http://' . $row['url']);
+                        } else {
+                            header('Location: ' . $row['url']);
+                        }
+                        exit();
                     }
-                    exit();
-                }
-                
-                $screenID = $row['screen'];
-                
-                if ( strpos($screenID,"fid=") !== false){
-                    $fid = substr($screenID, strpos($screenID,"=")+1 );
-                }
-                else{
-                    $sid = substr($screenID, strpos($screenID,"=")+1 );
+                    $screenID = $row['screen'];
+                    if ( strpos($screenID,"fid=") !== false){
+                        $fid = substr($screenID, strpos($screenID,"=")+1 );
+                    } else {
+                        $sid = substr($screenID, strpos($screenID,"=")+1 );
+                    }
                 }
             }
             return array($fid,$sid);
