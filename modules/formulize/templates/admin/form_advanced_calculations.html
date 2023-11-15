@@ -15,12 +15,12 @@
 <div class="panel-content content">
 
     <h2>Before Saving</h2>
-    <p>This special procedure runs before an entry is saved. Values that are about to be saved are available as PHP variables using the element handle name. The current values in the database (prior to this save) are available as $currentValues['handle_name'], so you can check if something is about to change. The ID of the current entry (or 'new') is available as $entry_id.</p><br />
+    <p>This special procedure runs before an entry is saved. Values that are about to be saved are available as PHP variables using the element handle name. The current values in the database (prior to this save) are available as $currentValues['handle_name'], so you can check if something is about to change. The ID of the current entry (or 'new') is available as $entry_id. If you return <i>false</i> then the save operation will not proceed.</p><br />
     <textarea id="forms-on_before_save" name="forms-on_before_save" class="code-textarea"><{$content.form_object->on_before_save}>
 </textarea><{* closing tag on a new line so the textarea has a blank line at the bottom *}>
 
     <h2>After Saving</h2>
-    <p>This special procedure runs after an entry is saved. Values are available as PHP variables using the element handle name. The prior values are available as $currentValues['handle_name'], so you can check if something has actually changed. The ID of the entry is available as $entry_id. This will be the new ID if the entry was newly saved.</p><br />
+    <p>This special procedure runs after an entry is saved. Values are available as PHP variables using the element handle name. The prior values are available as $currentValues['handle_name'], so you can check if something has actually changed. The ID of the entry is available as $entry_id. This will be the new ID if the entry was newly saved. A variable \$newEntry is available and will be true or false, depending if this is the first time the entry was saved or not.</p><br />
     <textarea id="forms-on_after_save" name="forms-on_after_save" class="code-textarea"><{$content.form_object->on_after_save}>
 </textarea><{* closing tag on a new line so the textarea has a blank line at the bottom *}>
 

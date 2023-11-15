@@ -243,12 +243,15 @@ class formulizeDataHandler  {
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
         $formObject = $form_handler->get($this->fid);
         foreach($ids as $id) {
-            $existing_values = $formObject->onDelete($id);
+            $existing_values = $formObject->onDeletePrep($id);
         }
 		$sql = "DELETE FROM " .$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = " . implode(" OR entry_id = ", $ids);
 		if(!$deleteSuccess = $xoopsDB->query($sql)) {
 			return false;
 		}
+        foreach($ids as $id) {
+            $existing_values = $formObject->onDelete($id);
+        }
 		$sql = "DELETE FROM " . $xoopsDB->prefix("formulize_entry_owner_groups") . " WHERE fid=".formulize_db_escape($this->fid)." AND (entry_id = " . implode(" OR entry_id = ", array_filter($ids, 'is_numeric')) . ")";
 		if(!$deleteOwernshipSuccess = $xoopsDB->query($sql)) {
 			print "Error: could not delete entry ownership information for form ". formulize_db_escape($this->fid) . ", entries: " . implode(", ", array_filter($ids, 'is_numeric')) . ". Check the DB queries debug info for details.";
@@ -1045,7 +1048,7 @@ class formulizeDataHandler  {
 		}
 
         $entry_to_return = $entry_to_return ? $entry_to_return : $lastWrittenId;
-        $formObject->onAfterSave($entry_to_return, $clean_element_values, $existing_values);
+        $formObject->onAfterSave($entry_to_return, $clean_element_values, $existing_values, $entry); // last param, original entry id, will be 'new' if new save
 
 		return $entry_to_return;
 	}
