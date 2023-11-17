@@ -88,6 +88,7 @@ class formulizeDataHandler  {
 			$start = true;
       		$formObject = $form_handler->get($this->fid);
 			$insertSQL = "INSERT INTO " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " SET ";
+			$originalEntryId = 0;
 			foreach($sourceDataArray as $field=>$value) {
 				if($field == "entry_id") {
 					$originalEntryId = $value;
@@ -320,7 +321,7 @@ class formulizeDataHandler  {
 		global $xoopsDB;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($this->fid);
-		$sql = "SELECT creation_uid FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id IN (" . implode(",", array_filter($ids, 'is_numeric')) . ") $scopefilter";
+		$sql = "SELECT creation_uid FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id IN (" . implode(",", array_filter($ids, 'is_numeric')) . ") $scopeFilter";
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
 		}
@@ -417,7 +418,7 @@ class formulizeDataHandler  {
     }
 	function getFirstEntryForGroups($group_ids) {
 		if(!is_array($group_ids)) {
-			$group_ids = array(0=>intval($groupids));
+			$group_ids = array(0=>intval($group_ids));
 		}
 
 		global $xoopsDB;

@@ -127,7 +127,7 @@ foreach($_POST as $k=>$v) {
 		$GLOBALS['formulizeEleSub_' . $noSaveHandle] = $v;
 		$GLOBALS['formulizeEleSub_' . $element_metadata[3]] = $v;
 		unset($element);
-		
+
 	} elseif(substr($k, 0, 9) == "desubform") { // handle blank subform elements
 		$elementMetaData = explode("_", $k);
 		$elementObject = $element_handler->get($elementMetaData[3]);
@@ -145,9 +145,9 @@ foreach($_POST as $k=>$v) {
 		// also...the entry id that the new entries received was stored after writing in this array:
 		// this is the subform id, and the subform placeholder, which must receive the last insert id when it's values are saved
 		//$GLOBALS['formulize_subformCreateEntry'][$element->getVar('id_form')][$desubformEntryIndex]
-		
+
 	} elseif(substr($k, 0, 6) == "decue_") {
-		// store values according to form, entry and element ID 
+		// store values according to form, entry and element ID
 		// prep them all for writing
 		$elementMetaData = explode("_", $k);
         $elementObject = $element_handler->get($elementMetaData[3]);
@@ -156,8 +156,8 @@ foreach($_POST as $k=>$v) {
 			$formulize_elementData[$elementMetaData[1]][$elementMetaData[2]][$elementMetaData[3]] = $v;
 		} elseif(is_numeric($elementMetaData[1]) AND $elementObject->getVar('ele_type') != 'anonPasscode') {
 			$formulize_elementData[$elementMetaData[1]][$elementMetaData[2]][$elementMetaData[3]] = "{WRITEASNULL}"; // no value returned for this element that was included (cue was found) so we write it as blank to the db
-		}		
-	
+		}
+
 	} elseif(substr($k, 0, 12) == "userprofile_") {
 		$formulize_up[substr($k, 12)] = $v;
 	}
@@ -198,7 +198,7 @@ if(count((array) $formulize_elementData) > 0 ) { // do security check if it look
   $formulizeModule =& $module_handler->getByDirname("formulize");
   $formulizeConfig =& $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
   $modulePrefUseToken = $formulizeConfig['useToken'];
-	$useToken = $screen ? $screen->getVar('useToken') : $modulePrefUseToken; 
+	$useToken = $screen ? $screen->getVar('useToken') : $modulePrefUseToken;
 	if(isset($GLOBALS['xoopsSecurity']) AND $useToken) { // avoid security check for versions of XOOPS that don't have that feature, or for when it's turned off
 		$GLOBALS['formulize_securityCheckPassed'] = true;
 		if (!$GLOBALS['xoopsSecurity']->check() AND (!strstr($cururl, "modules/wfdownloads") AND !strstr($cururl, "modules/smartdownload"))) { // skip the security check if we're in wfdownloads/smartdownloads since that module should already be handling the security checking
@@ -212,7 +212,7 @@ if(count((array) $formulize_elementData) > 0 ) { // do security check if it look
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
 
 foreach($formulize_elementData as $elementFid=>$entryData) { // for every form we found data for...
-    
+
 	$formulize_formObject = $form_handler->get($elementFid);
     // TODO: should the one-entry-per-group permission be checked in the permissions handler instead?
 	$oneEntryPerGroupForm = ($formulize_formObject->getVar('single') == "group");
@@ -255,7 +255,7 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
                         $notEntriesList['new_entry'][$elementFid][] = $writtenEntryId; // log the notification info
                         writeOtherValues($writtenEntryId, $elementFid, $subformBlankCounter); // write the other values for this entry
                         if($creation_user == 0) { // handle cookies for anonymous users
-                            setcookie('entryid_'.$elementFid, $writtenEntryId, time()+60*60*24*7, '/');	// the slash indicates the cookie is available anywhere in the domain (not just the current folder)				
+                            setcookie('entryid_'.$elementFid, $writtenEntryId, time()+60*60*24*7, '/');	// the slash indicates the cookie is available anywhere in the domain (not just the current folder)
                             $_COOKIE['entryid_'.$elementFid] = $writtenEntryId;
                         }
                         afterSavingLogic($values, $writtenEntryId);
@@ -316,7 +316,7 @@ if(count((array) $fundamentalDefaults) == 0 AND $screen AND is_a($screen, 'formu
     $fundamental_filters = $screen->getVar('fundamental_filters')    ;
     if(is_array($fundamental_filters)) {
         $fundamentalDefaults = getFilterValuesForEntry($fundamental_filters);
-    } 
+    }
 }
 // set the ownership info of the new entries created...use a custom named handler, so we don't conflict with any other data handlers that might be using the more conventional 'data_handler' name, which can happen depending on the scope within which this file is included
 // plus set any fundamental filters on new entries
@@ -327,19 +327,19 @@ foreach($formulize_newEntryIds as $newEntryFid=>$entries){
     // first, set any fundamental filters if any
     if(isset($fundamentalDefaults[$newEntryFid])) {
         foreach($entries as $thisEntry) {
-            formulize_writeEntry($fundamentalDefaults[$newEntryFid],$thisEntry);	
+            formulize_writeEntry($fundamentalDefaults[$newEntryFid],$thisEntry);
         }
-    }    
+    }
 }
 
 // reassign entry ownership for an entry if the user requested that, and has permission
 if(isset($updateOwnerFid) AND $gperm_handler->checkRight("update_entry_ownership", $updateOwnerFid, $groups, $mid)) {
 	updateOwnerForFormEntry($updateOwnerFid, $updateOwnerNewOwnerId, $updateOwnerEntryId);
-    
+
     // check if any other form that was submitted, is used in a subform element where the subform entries are supposed to be owned by the owner of the mainform entry
     // if so, reassign the submitted entries from that form too
     $formulize_formObject = $form_handler->get($updateOwnerFid);
-    $elementTypes = $formulize_formObject->getVar('elementTypes');    
+    $elementTypes = $formulize_formObject->getVar('elementTypes');
     foreach(array_keys($elementTypes, 'subform') as $subformElementId) {
         $subformElement = $element_handler->get($subformElementId);
         $subformEleValue = $subformElement->getVar('ele_value');
@@ -448,7 +448,7 @@ foreach($formulize_allWrittenEntryIds as $allWrittenFid=>$entries) {
             }
         }
     }
-	
+
 	// check for things that we should be updating based on the framework in effect for any override screen that has been declared...should we be doing the same lookup of entries in checkForLinks as we do above in normal procedure, so we update only based on mainform(s) in the overrideFrid??
 	if($overrideFrid AND $overrideFrid != $frid AND $derivedValueFound) {
         if($allWrittenFid == $overrideFid) {
@@ -460,7 +460,7 @@ foreach($formulize_allWrittenEntryIds as $allWrittenFid=>$entries) {
             }
         }
 	}
-	
+
 }
 
 // check for any forms that were written, that did not have derived values updated as part of the framework
@@ -479,7 +479,7 @@ if($frid) {
 // send notifications
 foreach($notEntriesList as $notEvent=>$notDetails) {
 	foreach($notDetails as $notFid=>$notEntries) {
-		$notEntries = array_unique($notEntries); 
+		$notEntries = array_unique($notEntries);
 		sendNotifications($notFid, $notEvent, $notEntries);
 	}
 }
@@ -516,7 +516,7 @@ function afterSavingLogic($values,$entry_id) {
 function updateOwnerForFormEntry($updateOwnerFid, $updateOwnerNewOwnerId, $updateOwnerEntryId) {
     $data_handler_for_owner_updating = new formulizeDataHandler($updateOwnerFid);
 	if(!$data_handler_for_owner_updating->setEntryOwnerGroups($updateOwnerNewOwnerId, $updateOwnerEntryId, true)) { // final true causes an update, instead of a normal setting of the groups from scratch.  Entry's creation user is updated too.
-		print "<b>Error: could not update the entry ownership information.  Please report this to the webmaster right away, including which entry you were trying to update.</b>";		
+		print "<b>Error: could not update the entry ownership information.  Please report this to the webmaster right away, including which entry you were trying to update.</b>";
 	}
 	$data_handler_for_owner_updating->updateCaches($updateOwnerEntryId);
 }
@@ -542,8 +542,7 @@ function writeUserProfile($data, $uid) {
 
 	global $xoopsUser, $xoopsConfig;
 	$config_handler =& xoops_gethandler('config');
-    $confType = defined('XOOPS_CONF_USER') ? XOOPS_CONF_USER : ICMS_CONF_USER;
-	$xoopsConfigUser =& $config_handler->getConfigsByCat($confType);
+	$xoopsConfigUser =& $config_handler->getConfigsByCat(2); // 2 is the user category
 
 	include_once XOOPS_ROOT_PATH . "/language/" . $xoopsConfig['language'] . "/user.php";
 
@@ -551,14 +550,14 @@ function writeUserProfile($data, $uid) {
     if (!empty($data['uid'])) {
         $uid = intval($data['uid']);
     }
-		
+
     if (empty($uid)) {
 	redirect_header(XOOPS_URL,3,_US_NOEDITRIGHT);
         exit();
     } elseif(is_object($xoopsUser)) {
 			if($xoopsUser->getVar('uid') != $uid) {
 				redirect_header(XOOPS_URL,3,_US_NOEDITRIGHT);
-				exit();	
+				exit();
 			}
     }
 
@@ -581,7 +580,7 @@ function writeUserProfile($data, $uid) {
      	  if (strlen($password) < $xoopsConfigUser['minpass']) {
            	$errors[] = sprintf(_US_PWDTOOSHORT,$xoopsConfigUser['minpass']);
         }
-        if (!empty($data['vpass'])) { 
+        if (!empty($data['vpass'])) {
      	      $vpass = $myts->stripSlashesGPC(trim($data['vpass']));
         }
      	  if ($password != $vpass) {

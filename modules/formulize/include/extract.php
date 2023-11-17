@@ -70,6 +70,7 @@ function debug_memory($text) {
 // This function makes a "uid" filter, not "creation_uid" so it will not work with the formulize data tables.
 function extract_makeUidFilter($users) {
 	$start = 1;
+	$uq = '';
 	foreach($users as $user) {
 		if($start) {
 			$uq = "uid=$user";
@@ -248,8 +249,6 @@ function prepvalues($value, $field, $entry_id) {
 
 	// Convert 'Other' options into the actual text the user typed
 	if(($type == "radio") AND preg_match('/\{OTHER\|+[0-9]+\}/', $value)) {
-		// convert ffcaption to regular and then query for id
-		$realcap = str_replace("`", "'", $ffcaption);
 		$newValueq = go("SELECT other_text FROM " . DBPRE . "formulize_other, " . DBPRE . "formulize WHERE " . DBPRE . "formulize_other.ele_id=" . DBPRE . "formulize.ele_id AND " . DBPRE . "formulize.ele_handle=\"" . formulize_db_escape($field) . "\" AND " . DBPRE . "formulize_other.id_req='".intval($entry_id)."' LIMIT 0,1");
 		//$value_other = _formulize_OPT_OTHER . $newValueq[0]['other_text'];
         // removing the "Other: " part...we just want to show what people actually typed...doesn't have to be flagged specifically as an "other" value
@@ -338,9 +337,6 @@ function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitS
 
     if ($isTableForm) {
         $result = dataExtractionTableForm($tableFormRow[0], $tableFormRow[1], $form, $filter, $andor, $limitStart, $limitSize, $sortField, $sortOrder, $resultOnly);
-    } elseif (substr($framework, 0, 3) == "db:") {
-        // deprecated...tableforms are preferred approach now for direct table access
-        $result = dataExtractionDB(substr($framework, 3), $filter, $andor, $scope, $dbTableUidField);
     } else {
         $result = dataExtraction($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $id_reqsOnly, $resultOnly, $filterElements);
     }
@@ -501,12 +497,11 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 
 		// ***********************
 
+		$mainFormWhereClause = '';
 		if(isset($oneSideFilters[$fid])) {
 			foreach($oneSideFilters[$fid] as $thisOneSideFilter) {
 				$mainFormWhereClause .= " AND ( $thisOneSideFilter ) ";
 			}
-		} else {
-			$mainFormWhereClause = "";
 		}
 
 		$firstThreeCharsOfWhere = substr(strtolower(trim($whereClause)),0,3);
@@ -705,6 +700,8 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			}
 		}
 
+		$selectClause = "";
+		$sqlFilterElements = array();
 		$sqlFilterElementsIndex = array();
 		if( $filterElements ) {
 			foreach($filterElements as $passedForm=>$passedElements) {
@@ -960,7 +957,7 @@ function formulize_generateJoinSQL($linkOrdinal, $linkcommonvalue, $linkselfids,
                 $newJoinText = " $mainAlias.`" . $joinHandles[$linkselfids[$linkOrdinal]] . "` = $subAlias.entry_id";
             }
         } else {
-            exit("Fatal Formulize Error: could not determine nature of linkage between linked selectbox(es). Main element: ".$joinHandles[$linkselfids[$linkOrdinal]].". Target element: ".$joinHandles[$linktargetids[$linkOrdinal]]);        
+            exit("Fatal Formulize Error: could not determine nature of linkage between linked selectbox(es). Main element: ".$joinHandles[$linkselfids[$linkOrdinal]].". Target element: ".$joinHandles[$linktargetids[$linkOrdinal]]);
         }
     } else { // join by uid
       $newJoinText = " $mainAlias.creation_uid=$subAlias.creation_uid";
@@ -1115,6 +1112,7 @@ function processGetDataResults($resultData) {
 		$this_userid = 0;
 	}
 
+	$entryIdIndex = array(); // set to the entry ids once we're in the loops
 	foreach($queryRes as $queryResIndex => $thisRes) {
         // loop through the found data and create the dataset array in "getData" format
         $prevFieldNotMeta = true;
@@ -1141,12 +1139,13 @@ function processGetDataResults($resultData) {
                         $creatorAllowsEmailViewing = $value;
                     }
                     // handle the setting of the user's e-mail if applicable...
+										// will be collected with mainform ($fid) data
                     if($field == 'main_email') {
-                        if($is_webmaster OR $view_private_fields OR $creatorAllowsEmailViewing OR $creatorUid == $this_userid) {
-                            $masterResults[$masterIndexer][getFormTitle($curFormId)][$entryIdIndex[$curFormAlias]]['creator_email'] = $value;
-                        } else {
-        					$masterResults[$masterIndexer][getFormTitle($curFormId)][$entryIdIndex[$curFormAlias]]['creator_email'] = "";
-        				}
+											if($is_webmaster OR $view_private_fields OR $creatorAllowsEmailViewing OR $creatorUid == $this_userid) {
+												$masterResults[$masterIndexer][getFormTitle($fid)][$entryIdIndex['main']]['creator_email'] = $value;
+											} else {
+												$masterResults[$masterIndexer][getFormTitle($fid)][$entryIdIndex['main']]['creator_email'] = "";
+											}
                     }
                     continue;
                 }
@@ -1662,7 +1661,8 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
         }
     }
 
-    if(count((array) $fundamental_filters)>0) {
+		$basicOneSideFilter = ''; // possibly this needs to be initialized inside a loop, so that it resets for each iteration?
+		if(count((array) $fundamental_filters)>0) {
         // parse the fundamental filters
         // apply to the whereClause
         // apply relevant terms to the oneSideFilters
@@ -2078,57 +2078,6 @@ function formulize_convertCapOrColHeadToHandle($frid, $fid, $term) {
     return array($handle, $form_id);
 }
 
-
-// THIS FUNCTION QUERIES A TABLE IN THE DATABASE AND RETURNS THE RESULTS IN STANDARD getData FORMAT
-// Uses the standard filter syntax, and can use scope if a uidField name is specified
-// Filters cannot obviously use the standard metadata fields that are part of regular forms
-// At the time of writing (Nov 1 2005) supports single table queries only, no joins
-// SUPERSEDED BY THE "TABLEFORM" FEATURE
-function dataExtractionDB($table, $filter) {
-
-	global $xoopsDB;
-
-	// numeric filters are assumed to be queries on the primary key
-	// string filters are assumed to be WHERE clauses -- note the obvious security issues with that!
-	$describe_query = "DESCRIBE $table";
-	$res = $xoopsDB->query($describe_query);
-	if($res) {
-
-		while($array = $xoopsDB->fetchArray($res)) {
-			if($array['Key'] == "PRI") {
-				$primary_field = $array['Field'];
-				$break;
-			}
-		}
-	} else {
-		exit("Describe query failed for table $table");
-	}
-
-	if(is_numeric($filter)) {
-		$where_clause = "WHERE `$primary_field`=$filter";
-	} elseif($filter) {
-		$where_clause = "WHERE $filter";
-	} else {
-		$where_clause = "";
-	}
-
-	$sql = "SELECT * FROM $table $where_clause";
-	$res = $xoopsDB->query($sql);
-	if($res) {
-		$indexer = 0;
-		while($array = $xoopsDB->fetchArray($res)) {
-			foreach($array as $field=>$value) {
-				if(is_numeric($field)) { continue; }
-				$masterresult[$indexer][$table][$array[$primary_field]][$field] = $value;
-			}
-			$indexer++;
-		}
-	} else {
-		exit("Database query failed: $sql");
-	}
-	return $masterresult;
-}
-
 // this function prepares the fields for include/exclusion if any, from the tableform query
 // $fields is an array of element handles
 // $include is either 'include' or 'exclude'
@@ -2210,15 +2159,8 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter=false, $an
                   if($whereClause != "") { // there's been a filter already
                        $whereClause .= " $andor ";
                   }
-                  $whereClause .= "(";
-                  foreach($thisFilter as $thisid=>$thispart) { // loop will only execute twice
-                       if($thisid == 0) {
-                            $localandor = $thispart;
-                            continue;
-                       }
-                       $whereClause .= parseTableFormFilter($thispart, $localandor, $elementsById);
-                  }
-                  $whereClause .= ")";
+									$localandor = $thisFilter[0];
+									$whereClause .= "(".parseTableFormFilter($thisFilter[1], $localandor, $elementsById).")";
              }
         } else {
              $whereClause = parseTableFormFilter($filter, $andor, $elementsById);
@@ -2268,7 +2210,7 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter=false, $an
      // package up data in the format we need it
      while($array = $xoopsDB->fetchArray($res)) {
           foreach($elementsByField as $field=>$fieldDetails) {
-				$pkValue = $pfField ? $array[$pkField] : $array[key($array)]; // use first field if no PK found above
+				$pkValue = $pkField ? $array[$pkField] : $array[key($array)]; // use first field if no PK found above
                $result[$indexer][$formname][$pkValue][$fieldDetails['id']][] = $array[$field];
           }
           $indexer++;
@@ -2416,6 +2358,7 @@ function makePara($string, $parasToReturn="NULL") {
 	if(count((array) $paras)>1) {
 		$ptr = explode(",", $parasToReturn);
 		$counter = 0;
+		$para = '';
 		foreach($paras as $item) {
 			if(trim($item) != "") { // exclude empty items, ie: this accounts for multiple "returns" at the end of a line
 				if(($parasToReturn == "NULL" AND !is_numeric($parasToReturn)) OR in_array($counter, $ptr)) { // only return paras requested, if specific paras were requested
@@ -2436,6 +2379,7 @@ function makeBR($string) {
 	$brs = explode("\r", $string);
 	if(count((array) $brs)>1) {
 		$start = 1;
+		$output = '';
 		foreach($brs as $br) {
 			if(trim($br) != "") { // exclude empty items, ie: this accounts for multiple "returns" at the end of a line
 				if($start) {
@@ -2602,6 +2546,7 @@ function resultSortRelevance($data, $handleArray, $wordArray, $weight="") {
 	// 3. record total "hits" for each entry in an array
 	// 4. sort the array of hits and sort the dataset according to this array
 
+	$wordScores = array();
 	foreach($data as $id=>$entry) {
 		foreach($wordArray as $word) {
 			for($i=0;$i<count((array) $handleArray);$i++) {

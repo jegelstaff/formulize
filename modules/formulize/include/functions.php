@@ -230,6 +230,7 @@ function groupNameList($list, $obeyMemberOnlyFlag = true) {
     }
 
     $start = 1;
+		$names = '';
     foreach ($grouplist as $gid) {
         if (!$obeyMemberOnlyFlag OR in_array($gid, $groups)) {
             $groupnames = q("SELECT name FROM " . $xoopsDB->prefix("groups") . " WHERE groupid='$gid'");
@@ -320,7 +321,7 @@ function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups=
     }
 
     if (!$gperm_handler) {
-        $gperm_handler =& xoops_gethandler('groupperm');
+        $gperm_handler = xoops_gethandler('groupperm');
     }
 
     $user_id = intval($user_id);
@@ -578,6 +579,7 @@ function getHeaderList ($fid, $needids=false, $convertIdsToElementHandles=false)
             if (!$needids) {
                 $start = 1;
                 $metaHeaderlist = array();
+								$where_clause = '';
                 foreach ($headerlist as $headerid=>$thisheaderid) {
                     if ($thisheaderid == "entry_id") {
                         $metaHeaderlist[] = _formulize_ENTRY_ID;
@@ -812,13 +814,6 @@ function deleteEntry($id_req, $frid, $fid, $excludeFids=array()) {
         // if a framework is passed, then delete all sub entry items found in a unified display relationship with the base entry, in addition to the base entry itself.
         $fids[0] = $fid;
         $entries[$fid][0] = $id_req;
-        if (!$owner) {
-            $owner = getEntryOwner($id_req, $fid);
-        }
-        if (!$owner_groups) {
-            $data_handler = new formulizeDataHandler($fid);
-            $owner_groups = $data_handler->getEntryOwnerGroups($id_req);
-        }
 
         // check for entries in forms with a relationship to this one, where the unified_delete setting is enabled
         $unified_display = false;
@@ -1259,7 +1254,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel, $template, $fid
 
     foreach ($headers as $header) {
         // ignore the metadata columns if they are selected, since we already handle them better above. as long as the user requested that they be included
-        if ($header == "" OR ($_POST['metachoice'] == 1 AND ($header == _formulized_ENTRY_ID OR $header == _formulize_DE_CALC_CREATOR OR $header == _formulize_DE_CALC_MODIFIER OR $header==_formulize_DE_CALC_CREATEDATE OR $header ==_formulize_DE_CALC_MODDATE))) {
+        if ($header == "" OR ($_POST['metachoice'] == 1 AND ($header == _formulize_ENTRY_ID OR $header == _formulize_DE_CALC_CREATOR OR $header == _formulize_DE_CALC_MODIFIER OR $header==_formulize_DE_CALC_CREATEDATE OR $header ==_formulize_DE_CALC_MODDATE))) {
             continue;
         }
         $header = str_replace("\"", "\"\"", $header);
@@ -1705,7 +1700,6 @@ function buildScope($currentView, $uid, $fid, $currentViewCanExpand = false) {
 // THIS FUNCTION IS ALSO AWARE OF THE XLANGUAGE MODULE IF THAT IS INSTALLED.
 // $lang is optional and will force the translation to be in a certain language
 function trans($string, $lang = null) {
-    $myts = MyTextSanitizer::getInstance();
     if (function_exists('easiestml')) {
         global $easiestml_lang;
         $easiestml_lang = isset($_GET['lang']) ? $_GET['lang'] : $easiestml_lang;   // this is required when linked with a Drupal install
@@ -1713,10 +1707,6 @@ function trans($string, $lang = null) {
         $easiestml_lang = $lang ? $lang : $easiestml_lang;
         $string = easiestml($string);
         $easiestml_lang = $original_easiestml_lang;
-    } elseif (function_exists('xlanguage_ml')) {
-        $string = xlanguage_ml($string);
-    } elseif (method_exists($myts, 'formatForML')) {
-        $string = $myts->formatForML($string);
     }
     return $string;
 }
@@ -1785,7 +1775,6 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
                         $GLOBALS['formulize_other'][$ele_id][$entry_id] = $otherValue;
                     }
                 }
-                $msg.= $myts->stripSlashesGPC($ele_value_key).'<br>';
                 $ele_value_key = $myts->htmlSpecialChars($ele_value_key);
                 $value = $ele_value_key;
             }
@@ -1851,6 +1840,7 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
                             } else {
                                 $newValue = $thisMapping['thisForm']; // literal mapping value instead of an element reference
                             }
+														$otherElementEleValue = $otherElementToWrite->getVar('ele_value');
                             if($otherElementToWrite->isLinked AND !$otherElementEleValue['snapshot'] AND !$valueToPrep AND $valueToPrep !== 0) {
                                 // if the field we're mapping to is linked, and we didn't find a value to prep in POST or GET, then we need to convert the literal value to the correct foreign key
                                 // UNLESS the two fields are both linked and pointing to the same source, then we can use the value we've got right now, which will be the foreign key
@@ -1870,10 +1860,7 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
                                         }
                                     }
                                 }
-                                $otherElementEleValue = $otherElementToWrite->getVar('ele_value');
-                                if($otherElementToWrite->isLinked) {
-                                    $linkProperties = explode("#*=:*", $otherElementEleValue[2]); // returns array, first key is form id we're linked to, second key is element we're linked to
-                                }
+                                $linkProperties = explode("#*=:*", $otherElementEleValue[2]); // returns array, first key is form id we're linked to, second key is element we're linked to
                                 // check what we're supposed to do...use the value we have, lookup the linktolink value, or lookup the value in the source of the other form, based on the value we have
                                 if($element->isLinked AND $linkProperties[0] == $thisFormMappingElementLinkProperties[0]) {
                                     // two fields are pointing to the same source, so use the value we have...redundant but captured here for readability
@@ -2338,10 +2325,8 @@ function writeOtherValues($id_req, $fid, $subformBlankCounter=null) {
 // note that ele_value has different contents for textboxes and selectboxes
 function createFieldList($val, $textbox=false, $limitToForm=false, $name="", $firstValue="", $multi_select = false) {
     global $xoopsDB;
-    array($formids);
-    array($formnames);
-    array($totalcaptionlist);
-    array($totalvaluelist);
+    $totalcaptionlist = array();
+    $totalvaluelist = array();
     $captionlistindex = 0;
 
     if ($limitToForm) {
@@ -2610,6 +2595,7 @@ function getTextboxDefault($ele_value, $form_id, $entry_id, $placeholder="") {
     global $xoopsUser;
 
     if (strstr($ele_value, "\$default")) { // php default value
+			  $default = '';
         eval(stripslashes($ele_value));
         $ele_value = $default;
     }
@@ -3363,7 +3349,7 @@ function sendNotificationToEmail($email, $event, $tags, $overrideSubject="", $ov
 
 function formulize_getUsersByGroups($groups, $member_handler="") {
     if (!$member_handler) {
-        $member_handler =& xoops_gethandler('member');
+        $member_handler = xoops_gethandler('member');
     }
 
     $users = array();
@@ -3761,7 +3747,7 @@ function writeElementValue($formframe, $ele, $entry, $value, $append="replace", 
         $maxValueSQL = "SELECT MAX(`$fromField`) FROM " . $xoopsDB->prefix("formulize_".$elementFormObject->getVar('form_handle'));
         if ($maxValueRes = $xoopsDB->query($maxValueSQL)) {
             $maxValueArray = $xoopsDB->fetchArray($maxValueRes);
-            $value = $maxValueArray["MAX(`$fromfield`)"] + 1;
+            $value = $maxValueArray["MAX(`$fromField`)"] + 1;
         } else {
             exit("Error: could not determine max value to use for $value.  SQL:<br>$maxValueSQL<br>");
         }
@@ -4463,6 +4449,10 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
                 }
             }
 
+<<<<<<< HEAD
+=======
+						$select_column = '';
+>>>>>>> c22929e25 (Various style, tidy up, problem fixes, primarily highlighted by VSCode)
             if(count($linked_columns)==1) {
                 $select_column = "distinct(t1.`".$linked_columns[0]."`)";
             } else {
@@ -5463,7 +5453,7 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
                 // target form and alias depends on which form the filter element handle belongs to
                 if($elementObject = $element_handler->get($filterElementIds[$filterId])) {
                     $targetFormObject = $form_handler->get($elementObject->getVar('id_form'), true); // true forces inclusion of all element types
-                    $targetAlias = $targetFormId[$filterElementFid];
+                    $targetAlias = $targetFormId[$elementObject->getVar('id_form')];
                 } elseif(isMetaDataField($filterElementIds[$filterId])) {
                     $targetFormObject = $form_handler->get(key($targetFormId), true); // true forces inclusion of all element types
                     $targetAlias = $targetFormId[key($targetFormId)];
@@ -6093,7 +6083,7 @@ function generateHiddenElements($elements, $entry, $screen) {
                         }
                         $hiddenElements[$thisElement->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entry.'_'.$thisElement->getVar('ele_id'), $defaultValue);
                     } else {
-                        $indexer++;
+                        $indexer = 1;
                         $ele_value = $thisElement->getVar('ele_value');
                         foreach ($ele_value[2] as $k=>$v) {
                             if ($v == 1) {
@@ -6562,7 +6552,7 @@ function formulize_makeOneToOneLinks($frid, $fid) {
         }
         $oneToOneLinksMade[$frid][$fid] = array($form1s, $form2s, $form1EntryIds, $form2EntryIds);
     }
-    return $oneToOneLinksMake[$frid][$fid];
+    return $oneToOneLinksMade[$frid][$fid];
 }
 
 // THIS FUNCTION FIGURES OUT THE COMMON VALUE THAT WE SHOULD WRITE WHEN A FORM IN A ONE-TO-ONE RELATIONSHIP IS BEING DISPLAYED AFTER A NEW ENTRY HAS BEEN WRITTEN
@@ -6875,6 +6865,7 @@ function getFilterValuesForEntry($subformConditions, $curlyBracketEntryid=null) 
         if($thisOp == "=" AND $subformConditions[3][$i] != "oom") {
             if($conditionElementObject = $element_handler->get($subformConditions[0][$i])) {
                 // check first for URL matches
+								$conditionElementFid = $conditionElementObject->getVar('id_form');
                 if(substr($subformConditions[2][$i],0,1) == "{" AND substr($subformConditions[2][$i],-1)=="}") {
                     $curlyBracketTerm = substr($subformConditions[2][$i],1,-1);
                     if(isset($_GET[$curlyBracketTerm]) AND ($_GET[$curlyBracketTerm] OR $_GET[$curlyBracketTerm] === 0)) {
@@ -6882,7 +6873,6 @@ function getFilterValuesForEntry($subformConditions, $curlyBracketEntryid=null) 
                         continue;
                     }
                 }
-                $conditionElementFid = $conditionElementObject->getVar('id_form');
                 // if $subformConditions[0][$i] (left side) is linked to form X
                 // and $subformConditions[2][$i] is a { } reference to an element in form X
                 // then we just want to use $curlyBracketEntryid as the value
@@ -6915,7 +6905,9 @@ function formulize_validatePHPCode($theCode) {
     if ($theCode = trim($theCode) AND function_exists("shell_exec")) {
         $tmpfname = tempnam(XOOPS_ROOT_PATH.'/cache', 'FZ');
         file_put_contents($tmpfname, trim($theCode));
+				// shell_exec seems to be available on some servers and not others, naturally. Turning off for now, need a more bulletproof solution to checking the content
         //$output = shell_exec('php -l "'.$tmpfname.'" 2>&1');
+				$output = '';
         unlink($tmpfname);
         if (false !== strpos($output, "PHP Parse error")) {
             // remove the second line because detail about the error is on the first line

@@ -70,11 +70,13 @@ $GLOBALS['formulize_startHiddenElements'] = array();
 // NEED TO USE OUR OWN VERSION OF THE CLASS, TO GET ELEMENT NAMES IN THE TR TAGS FOR EACH ROW <-- that's how it started... now so much more
 class formulize_themeForm extends XoopsThemeForm {
 
+
     private $frid = 0;
     private $screen;
     private $modifyScreenLink;
     private $tokenName;
     private $tokenVal;
+
 
     // $screen is the screen being rendered, either a multipage or a single page form screen - multipage screen is passed through when rendering happens
     function __construct($title, $name, $action, $method = "post", $addtoken = false, $frid = 0, $screen = null) {
@@ -114,6 +116,8 @@ class formulize_themeForm extends XoopsThemeForm {
      */
     public function getTemplate($type) {
         $template = '';
+				global $xoopsUser;
+				$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
         if($this->getTitle() != 'formulizeAsynchElementRender' AND is_object($this->screen)) {
             $template = getTemplateToRender($type, $this->screen);
         } elseif(isset($_SESSION['formulizeScreenId'][$uid]) AND $sid = $_SESSION['formulizeScreenId'][$uid]) {
@@ -722,10 +726,10 @@ function getEntryValues($entry, $element_handler, $groups, $fid, $elements, $mid
 			$vqindexer++;
 		}
 
-		// build query for display groups and disabled
+		// build query for display groups
+		$gq = '';
 		foreach($groups as $thisgroup) {
 			$gq .= " OR ele_display LIKE '%,$thisgroup,%'";
-			//$dgq .= " AND ele_disabled NOT LIKE '%,$thisgroup,%'"; // not sure that this is necessary
 		}
 
 		// exclude private elements unless the user has view_private_elements permission, or update_entry permission on a one-entry-per group entry
@@ -737,7 +741,7 @@ function getEntryValues($entry, $element_handler, $groups, $fid, $elements, $mid
 			$private_filter = " AND ele_private=0";
 		}
 
-		$allowedquery = q("SELECT ele_caption, ele_disabled, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=$fid AND (ele_display='1' $gq) $private_filter"); // AND (ele_disabled != 1 $dgq)"); // not sure that filtering for disabled elements is necessary
+		$allowedquery = q("SELECT ele_caption, ele_disabled, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=$fid AND (ele_display='1' $gq) $private_filter");
 		$allowedDisabledStatus = array();
 		$allowedhandles = array();
 		foreach($allowedquery as $onecap) {
@@ -1194,9 +1198,11 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 	$config_handler =& xoops_gethandler('config');
 	$formulizeConfig = $config_handler->getConfigsByCat(0, $mid);
 	// remove the all done button if the config option says 'no', and we're on a single-entry form, or the function was called to look at an existing entry, or we're on an overridden Multi-entry form
-    $allDoneOverride = (!$formulizeConfig['all_done_singles'] AND !$profileForm AND (($single OR $overrideMulti OR $original_entry) AND !$_POST['target_sub'] AND !$_POST['goto_sfid'] AND !$_POST['deletesubsflag'] AND !$_POST['parent_form'])) ? true : false;
-    global $formulize_displayingMultipageScreen;
-    if((($formulize_displayingMultipageScreen === false AND $allDoneOverride)
+	$allDoneOverride = (!$formulizeConfig['all_done_singles'] AND !$profileForm AND (($single OR $overrideMulti OR $original_entry) AND !$_POST['target_sub'] AND !$_POST['goto_sfid'] AND !$_POST['deletesubsflag'] AND !$_POST['parent_form'])) ? true : false;
+  global $formulize_displayingMultipageScreen;
+
+	// if we're leaving the page now, draw the go back form and then activate it in js - super ugly!
+  if((($formulize_displayingMultipageScreen === false AND $allDoneOverride)
         OR (isset($_POST['save_and_leave']) AND $_POST['save_and_leave']))
         AND $_POST['form_submitted']) {
 		drawGoBackForm($go_back, $currentURL, $settings, $entry, $screen);
@@ -1210,17 +1216,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		if(!$allDoneOverride AND !$formulizeConfig['all_done_singles'] AND !$profileForm AND ($_POST['target_sub'] OR $_POST['goto_sfid'] OR $_POST['deletesubsflag'] OR $_POST['parent_form']) AND ($single OR $original_entry OR $overrideMulti)) {
 			$allDoneOverride = true;
 		}
-
-		/*if($uid==19) {
-		print "Forms: ";
-		print_r($fids);
-		print "<br>Entries: ";
-		print_r($entries);
-		print "<br>Subforms: ";
-		print_r($sub_fids);
-		print "<br>Subentries: ";
-		print_r($sub_entries); // debug block - ONLY VISIBLE TO USER 1 RIGHT NOW
-		} */
 
 		formulize_benchmark("Ready to start building form.");
 
@@ -1248,26 +1243,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			if(!$scheck = security_check($this_fid, $entries[$this_fid][0]) AND !$viewallforms) {
 				continue;
 			}
-
-            // if there is more than one form, try to make the 1-1 links
-            // and if we made any, then include the newly linked up entries
-            // in the index of entries that we're keeping track of
-            // makeOneToOneLinks will return the relevant ids, based on the links that were made when it was called earlier in readelements.php
-            if(count((array) $fids) > 1) {
-                list($form1s, $form2s, $form1EntryIds, $form2EntryIds) = formulize_makeOneToOneLinks($frid, $this_fid);
-                foreach($form1EntryIds as $i=>$form1EntryId) {
-                    // $form1EntryId set above, now set other values for this iteration based on the key
-                    $form2EntryId = $form2EntryIds[$i];
-                    $form1 = $form1s[$i];
-                    $form2 = $form2s[$i];
-						if($form1EntryId) {
-							$entries[$form1][0] = $form1EntryId;
-						}
-						if($form2EntryId) {
-							$entries[$form2][0] = $form2EntryId;
-						}
-					}
-				}
 
 				unset($prevEntry);
             // if there is an entry, then get the data for that entry
@@ -1405,7 +1380,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 
 			formulize_benchmark("Before Compile Elements.");
 			$form = compileElements($this_fid, $form, $element_handler, $prevEntry, $entries[$this_fid][0], $go_back,
-				$parentLinks[$this_fid], $owner_groups, $groups, $overrideValue, $elements_allowed, $profileForm,
+				$parentLinks[$this_fid], $groups, $overrideValue, $elements_allowed, $profileForm,
 				$frid, $mid, $sub_entries, $sub_fids, $member_handler, $gperm_handler, $title, $screen,
 				$printViewPages, $printViewPageTitles);
 			formulize_benchmark("After Compile Elements.");
@@ -1695,8 +1670,7 @@ function addProfileFields($form, $profileForm) {
 
 	global $xoopsUser, $xoopsConfig, $xoopsConfigUser;
 	$config_handler =& xoops_gethandler('config');
-    $confType = defined('XOOPS_CONF_USER') ? XOOPS_CONF_USER : ICMS_CONF_USER;
-	$xoopsConfigUser =& $config_handler->getConfigsByCat($confType);
+	$xoopsConfigUser =& $config_handler->getConfigsByCat(2); // 2 is the user category
 	$user_handler =& xoops_gethandler('user');
 	$thisUser = $user_handler->get($profileForm);
 
@@ -2635,7 +2609,7 @@ function drawRowSubformHeaders($headersToDraw, $headingDescriptions) {
     $col_two = "";
     foreach($headersToDraw as $i=>$thishead) {
         if($thishead) {
-            $headerHelpLink = $headingDescriptions[$i] ? "<a class='icon-help' href=\"#\" onclick=\"return false;\" alt=\"".strip_tags(htmlspecialchars($headingDescriptions[$x]))."\" title=\"".strip_tags(htmlspecialchars($headingDescriptions[$i]))."\"></a>" : "";
+            $headerHelpLink = $headingDescriptions[$i] ? "<a class='icon-help' href=\"#\" onclick=\"return false;\" alt=\"".strip_tags(htmlspecialchars($headingDescriptions[$i]))."\" title=\"".strip_tags(htmlspecialchars($headingDescriptions[$i]))."\"></a>" : "";
             $col_two .= "<th><p>$thishead $headerHelpLink</p></th>\n";
         }
     }
@@ -2716,7 +2690,7 @@ function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid,
 //this function takes a formid and compiles all the elements for that form
 //elements_allowed is NOT based off the display values.  It is based off of the elements that are specifically designated for the current displayForm function (used to display parts of forms at once)
 // $title is the title of a grid that is being displayed
-function compileElements($fid, $form, $element_handler, $prevEntry, $entry, $go_back, $parentLinks, $owner_groups, $groups, $overrideValue, $elements_allowed, $profileForm, $frid, $mid, $sub_entries, $sub_fids, $member_handler, $gperm_handler, $title, $screen=null, $printViewPages="", $printViewPageTitles="") {
+function compileElements($fid, $form, $element_handler, $prevEntry, $entry, $go_back, $parentLinks, $groups, $overrideValue, $elements_allowed, $profileForm, $frid, $mid, $sub_entries, $sub_fids, $member_handler, $gperm_handler, $title, $screen=null, $printViewPages=array(), $printViewPageTitles="") {
 
 	include_once XOOPS_ROOT_PATH.'/modules/formulize/include/elementdisplay.php';
 

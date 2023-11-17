@@ -33,7 +33,7 @@ $modversion = array(
 	'name' => _MI_formulize_NAME,
 	'version' => "7.21",
 	'description' => _MI_formulize_DESC,
-	'author' => "Julian Egelstaff & Freeform Solutions",
+	'author' => "The Formulize Project",
 	'credits' => "",
 	'help' => "",
 	'license' => "GPL",
@@ -714,6 +714,7 @@ $modversion['templates'][] = array(
 	'file' => 'admin/managepermissions.html',
 	'description' => '');
 
+
 //	Module Configs
 // $xoopsModuleConfig['t_width']
 $modversion['config'][1] = array(
@@ -755,7 +756,6 @@ $modversion['config'][] = array(
 	'default' => '35',
 );
 
-// $xoopsModuleConfig['delimeter']
 $modversion['config'][] = array(
 	'name' => 'delimeter',
 	'title' => '_MI_formulize_DELIMETER',
@@ -795,7 +795,6 @@ $modversion['config'][] = array(
 	'default' => 1,
 );
 
-// $xoopsModuleConfig['LOE_limit']
 $modversion['config'][] = array(
 	'name' => 'LOE_limit',
 	'title' => '_MI_formulize_LOE_limit',
@@ -805,7 +804,6 @@ $modversion['config'][] = array(
 	'default' => '5000',
 );
 
-// $xoopsModuleConfig['useToken']
 $modversion['config'][] = array(
 	'name' => 'useToken',
 	'title' => '_MI_formulize_USETOKEN',
@@ -822,10 +820,9 @@ $modversion['config'][] = array(
 	'description' => '_MI_formulize_ISSAVELOCKEDDESC',
 	'formtype' => 'yesno',
 	'valuetype' => 'int',
-	'default' => 0, // no is the default
+	'default' => 0
 );
 
-// number formatting options
 $modversion['config'][] = array(
 	'name' =>'number_decimals',
 	'title' => '_MI_formulize_NUMBER_DECIMALS',
@@ -880,7 +877,6 @@ $modversion['config'][] = array(
 	'default' => 1,
 );
 
-// control if caching is on or off
 $modversion['config'][] = array(
 	'name' => 'useCache',
 	'title' => '_MI_formulize_USECACHE',
@@ -977,7 +973,6 @@ $modversion['config'][] = array(
 	'default' => '0',
 );
 
-//bloc
 $modversion['blocks'][1] = array(
 	'file' => "mymenu.php",
 	'name' => _MI_formulizeMENU_BNAME,
@@ -1039,6 +1034,3 @@ if(isset($GLOBALS['formulize_notificationSubjectOverride'])) {
 	$modversion['notification']['event'][2]['mail_subject'] = $GLOBALS['formulize_notificationSubjectOverride'];
 	$modversion['notification']['event'][3]['mail_subject'] = $GLOBALS['formulize_notificationSubjectOverride'];
 }
-
-// ADD PREFERENCES FOR THE NAVSTYLE FOR NEW FORMS AND THE DEFAULT PAGE TITLE?
-// currently default is tabs, and default page title is the screen title
