@@ -393,10 +393,8 @@ EOF;
     public function onDeletePrep($entry_id) {
         $existingValues = array();
 
-        // if there is any code to run before saving, include it (write if necessary), and run the function
+        // if there is any code to run before saving, store the contents of the deleted record
         if (is_numeric($entry_id) AND $entry_id AND strlen($this->on_delete) > 0 and (file_exists($this->on_delete_filename) or $this->cache_on_delete_code())) {
-            include_once $this->on_delete_filename;
-
             // get all the values of fields from the existing entry
             global $xoopsDB;
             $sql = "SELECT * FROM ".$xoopsDB->prefix('formulize_'.$this->getVar('form_handle'))." WHERE entry_id = ".intval($entry_id);
@@ -411,11 +409,11 @@ EOF;
     }
 
     public function onDelete($entry_id) {
-
         $existingValues = $this->onDeleteExistingValues[$entry_id];
-
+				// if there is any code to run before saving, include it (write if necessary), and run the function
+				if (is_numeric($entry_id) AND $entry_id AND strlen($this->on_delete) > 0 and (file_exists($this->on_delete_filename) or $this->cache_on_delete_code())) {
+						include_once $this->on_delete_filename;
         $existingValues = call_user_func($this->on_delete_function_name, $entry_id, $existingValues, $this->getVar('id_form'));
-
         // if a numeric element handle had a value set, then by convention it needs the prefix elementId before the number so we can handle it here and make it a numeric array key again
         foreach($existingValues as $key=>$value) {
             if(substr($key, 0, 9)=='elementId') {
@@ -423,7 +421,7 @@ EOF;
                 $existingValues[str_replace('elementId','',$key)] = $value;
             }
         }
-        
+				}
         return $existingValues;
     }
 
