@@ -766,26 +766,6 @@ $modversion['config'][] = array(
 	'options' => array(_MI_formulize_DELIMETER_BR=>'br', _MI_formulize_DELIMETER_SPACE=>'space'),
 );
 
-// get all the available forms and populate the options array
-// this is not permission controlled yet -- should make use of the edit_form permission perhaps
-global $xoopsDB;
-$getFormsSQL = "SELECT id_form, desc_form FROM " . $xoopsDB->prefix("formulize_id");
-$resFormsSQL = $xoopsDB->query($getFormsSQL);
-$pformoptions["-------------"] = 0;
-while($resArray = $xoopsDB->fetchArray($resFormsSQL)) {
-	$pformoptions[$resArray['desc_form']] = $resArray['id_form'];
-}
-// $xoopsModuleConfig['profileForm']
-$modversion['config'][] = array(
-	'name' => 'profileForm',
-	'title' => '_MI_formulize_PROFILEFORM',
-	'description' => '',
-	'formtype' => 'select',
-	'valuetype' => 'int',
-	'default' => '0',
-	'options' => $pformoptions,
-);
-
 $modversion['config'][] = array(
 	'name' => 'all_done_singles',
 	'title' => '_MI_formulize_ALL_DONE_SINGLES',
