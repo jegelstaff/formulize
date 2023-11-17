@@ -5154,6 +5154,7 @@ function formulize_conditionsCleanOps($op) {
  $ops['<='] = "<=";
  $ops['LIKE'] = "LIKE";
  $ops['NOT LIKE'] = "NOT LIKE";
+ $ops['IN'] = 'IN';
  if(isset($ops[$op])) {
     return $op;
  } else {
@@ -5176,6 +5177,7 @@ function formulize_createFilterUIMatch($newElementName,$formName,$filterName,$op
     $ops['<='] = "<=";
     $ops['LIKE'] = "LIKE";
     $ops['NOT LIKE'] = "NOT LIKE";
+		$ops['IN'] = 'IN';
     $op->addOptionArray($ops);
     $term = new xoopsFormText('', $newTermName, 10, 255);
     $term->setExtra(" class=\"condition_term\" ");
@@ -5845,19 +5847,25 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
             } else {
 								// term is not a dynamic reference to an element...
 								$filterTermToUse = formulize_db_escape($filterTerms[$filterId]);
+								if($filterOps[$filterId] == 'IN') {
+									$likebits = '';
+									$quotes = '';
+									$filterTermParts = explode(',',str_replace("'", "''", $filterTermToUse));
+									$filterTermToUse = '("'.implode('","',$filterTermParts).'")';
+								}
 								$subQueryWhereClause = "ss.`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$filterTermToUse.$likebits.$quotes;
 								if($filterOps[$filterId] === "<=>") {
 									$targetSourceDataHandler = new formulizeDataHandler($targetSourceFid);
 									$foundEntries = $targetSourceDataHandler->findAllEntriesWithValue($targetSourceHandle, $filterTermToUse, operator: '<=>');
 									if(is_numeric($filterTerms[$filterId]) AND ($foundEntries === false OR count($foundEntries) == 0)) {
-                                        // the  target is a linked element (already know that from above), and so it has a foreign key in the database, and if the filter term is numeric and the operator is equals then no subquery is necessary, do a direct comparison instead
-                                        // check first if the subquery would return values. If so, then we stick with that. Otherwise, toss the subquery and go with a straight comparison to the filter term on the assumption it is a foreign key.
+										// the  target is a linked element (already know that from above), and so it has a foreign key in the database, and if the filter term is numeric and the operator is equals then no subquery is necessary, do a direct comparison instead
+										// check first if the subquery would return values. If so, then we stick with that. Otherwise, toss the subquery and go with a straight comparison to the filter term on the assumption it is a foreign key.
 										$conditionsFilterComparisonValue = $filterTerms[$filterId];
 										unset($subQueryWhereClause);
 									} elseif(count($foundEntries)>1) {
-                                        // subquery will return more than one row, so the IN operator must be used when constructing the full statement, this gets assigned to the $filterOps[$filterId] below (which has been passed by reference)
-                                        $overrideReturnedOp = "IN";
-                                    }
+										// subquery will return more than one row, so the IN operator must be used when constructing the full statement, this gets assigned to the $filterOps[$filterId] below (which has been passed by reference)
+										$overrideReturnedOp = "IN";
+								  }
 								}
             }
             // if we didn't jump the gun and set the comparison value already above...
