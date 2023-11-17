@@ -12,7 +12,7 @@ Gets the first entry id which matches all of the values specified for the corres
 ## Parameters
 
 __$elementsAndValues__ - an array of key=>value pairs, where the keys are the element identifiers and the values are the values to look for. Only entries that match every pair will be returned.<br>
-__$operator__ -  Optional.  the operator to use in when querying for the values. The same operator is used for all key=>value pairs. Defaults to equals. Any valid SQL operator can be used. If LIKE is used, _then the values will be automatically wrapped in % signs_ to support pattern matching.
+__$operator__ -  Optional.  the operator to use in when querying for the values. The same operator is used for all key=>value pairs. Defaults to equals. Any valid SQL operator can be used. If LIKE is used, _then the values will be automatically wrapped in % signs_ to support pattern matching. If the IN operator is used, the values must be a valid comma separated set of values that will work in a SQL statement. This means strings need to be quoted.
 
 ## Return Values
 
@@ -43,4 +43,14 @@ $values = array(
     99=>'bar'
 );
 $entry_id = $dataHandler->findFirstEntryWithAllValues($values, "LIKE");
+~~~
+
+~~~
+// find the first entry created where the value for element 99 is 'goals' or 'assists'
+$form_id = 6;
+$dataHandler = new formulizeDataHandler($form_id);
+$values = array(
+    99=>"'goals','assists'";
+);
+$entry_id = $dataHandler->findFirstEntryWithAllValues($values, "IN");
 ~~~
