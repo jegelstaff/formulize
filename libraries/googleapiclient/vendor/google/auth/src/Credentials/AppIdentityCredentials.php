@@ -24,43 +24,53 @@ namespace Google\Auth\Credentials;
  */
 use google\appengine\api\app_identity\AppIdentityService;
 use Google\Auth\CredentialsLoader;
+use Google\Auth\ProjectIdProviderInterface;
 use Google\Auth\SignBlobInterface;
 
 /**
+ * @deprecated
+ *
  * AppIdentityCredentials supports authorization on Google App Engine.
  *
  * It can be used to authorize requests using the AuthTokenMiddleware or
  * AuthTokenSubscriber, but will only succeed if being run on App Engine:
  *
- *   use Google\Auth\Credentials\AppIdentityCredentials;
- *   use Google\Auth\Middleware\AuthTokenMiddleware;
- *   use GuzzleHttp\Client;
- *   use GuzzleHttp\HandlerStack;
+ * Example:
+ * ```
+ * use Google\Auth\Credentials\AppIdentityCredentials;
+ * use Google\Auth\Middleware\AuthTokenMiddleware;
+ * use GuzzleHttp\Client;
+ * use GuzzleHttp\HandlerStack;
  *
- *   $gae = new AppIdentityCredentials('https://www.googleapis.com/auth/books');
- *   $middleware = new AuthTokenMiddleware($gae);
- *   $stack = HandlerStack::create();
- *   $stack->push($middleware);
+ * $gae = new AppIdentityCredentials('https://www.googleapis.com/auth/books');
+ * $middleware = new AuthTokenMiddleware($gae);
+ * $stack = HandlerStack::create();
+ * $stack->push($middleware);
  *
- *   $client = new Client([
- *       'handler' => $stack,
- *       'base_uri' => 'https://www.googleapis.com/books/v1',
- *       'auth' => 'google_auth'
- *   ]);
+ * $client = new Client([
+ *     'handler' => $stack,
+ *     'base_uri' => 'https://www.googleapis.com/books/v1',
+ *     'auth' => 'google_auth'
+ * ]);
  *
- *   $res = $client->get('volumes?q=Henry+David+Thoreau&country=US');
+ * $res = $client->get('volumes?q=Henry+David+Thoreau&country=US');
+ * ```
  */
-class AppIdentityCredentials extends CredentialsLoader implements SignBlobInterface
+class AppIdentityCredentials extends CredentialsLoader implements
+    SignBlobInterface,
+    ProjectIdProviderInterface
 {
     /**
      * Result of fetchAuthToken.
      *
-     * @array
+     * @var array<mixed>
      */
     protected $lastReceivedToken;
 
     /**
      * Array of OAuth2 scopes to be requested.
+     *
+     * @var string[]
      */
     private $scope;
 
@@ -69,9 +79,12 @@ class AppIdentityCredentials extends CredentialsLoader implements SignBlobInterf
      */
     private $clientName;
 
-    public function __construct($scope = array())
+    /**
+     * @param string|string[] $scope One or more scopes.
+     */
+    public function __construct($scope = [])
     {
-        $this->scope = $scope;
+        $this->scope = is_array($scope) ? $scope : explode(' ', (string) $scope);
     }
 
     /**
@@ -79,7 +92,7 @@ class AppIdentityCredentials extends CredentialsLoader implements SignBlobInterf
      * SERVER_SOFTWARE environment variable (prod) or the APPENGINE_RUNTIME
      * environment variable (dev).
      *
-     * @return true if this an App Engine Instance, false otherwise
+     * @return bool true if this an App Engine Instance, false otherwise
      */
     public static function onAppEngine()
     {
@@ -104,11 +117,12 @@ class AppIdentityCredentials extends CredentialsLoader implements SignBlobInterf
      * the GuzzleHttp\ClientInterface instance passed in will not be used.
      *
      * @param callable $httpHandler callback which delivers psr7 request
+     * @return array<mixed> {
+     *     A set of auth related metadata, containing the following
      *
-     * @return array A set of auth related metadata, containing the following
-     *     keys:
-     *         - access_token (string)
-     *         - expiration_time (string)
+     *     @type string $access_token
+     *     @type string $expiration_time
+     * }
      */
     public function fetchAuthToken(callable $httpHandler = null)
     {
@@ -118,10 +132,8 @@ class AppIdentityCredentials extends CredentialsLoader implements SignBlobInterf
             return [];
         }
 
-        // AppIdentityService expects an array when multiple scopes are supplied
-        $scope = is_array($this->scope) ? $this->scope : explode(' ', $this->scope);
-
-        $token = AppIdentityService::getAccessToken($scope);
+        /** @phpstan-ignore-next-line */
+        $token = AppIdentityService::getAccessToken($this->scope);
         $this->lastReceivedToken = $token;
 
         return $token;
@@ -140,7 +152,28 @@ class AppIdentityCredentials extends CredentialsLoader implements SignBlobInterf
     {
         $this->checkAppEngineContext();
 
+        /** @phpstan-ignore-next-line */
         return base64_encode(AppIdentityService::signForApp($stringToSign)['signature']);
+    }
+
+    /**
+     * Get the project ID from AppIdentityService.
+     *
+     * Returns null if AppIdentityService is unavailable.
+     *
+     * @param callable $httpHandler Not used by this type.
+     * @return string|null
+     */
+    public function getProjectId(callable $httpHandler = null)
+    {
+        try {
+            $this->checkAppEngineContext();
+        } catch (\Exception $e) {
+            return null;
+        }
+
+        /** @phpstan-ignore-next-line */
+        return AppIdentityService::getApplicationId();
     }
 
     /**
@@ -157,6 +190,7 @@ class AppIdentityCredentials extends CredentialsLoader implements SignBlobInterf
         $this->checkAppEngineContext();
 
         if (!$this->clientName) {
+            /** @phpstan-ignore-next-line */
             $this->clientName = AppIdentityService::getServiceAccountName();
         }
 
@@ -164,7 +198,7 @@ class AppIdentityCredentials extends CredentialsLoader implements SignBlobInterf
     }
 
     /**
-     * @return array|null
+     * @return array{access_token:string,expires_at:int}|null
      */
     public function getLastReceivedToken()
     {
@@ -189,6 +223,9 @@ class AppIdentityCredentials extends CredentialsLoader implements SignBlobInterf
         return '';
     }
 
+    /**
+     * @return void
+     */
     private function checkAppEngineContext()
     {
         if (!self::onAppEngine() || !class_exists('google\appengine\api\app_identity\AppIdentityService')) {

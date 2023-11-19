@@ -18,6 +18,7 @@
 namespace Google\Auth\Credentials;
 
 use Google\Auth\CredentialsLoader;
+use Google\Auth\GetQuotaProjectInterface;
 use Google\Auth\OAuth2;
 
 /**
@@ -31,13 +32,8 @@ use Google\Auth\OAuth2;
  *
  * @see [Application Default Credentials](http://goo.gl/mkAHpZ)
  */
-class UserRefreshCredentials extends CredentialsLoader
+class UserRefreshCredentials extends CredentialsLoader implements GetQuotaProjectInterface
 {
-    const CLOUD_SDK_CLIENT_ID =
-        '764086051850-6qr4p6gpi6hn506pt8ejuq83di341hur.apps.googleusercontent.com';
-
-    const SUPPRESS_CLOUD_SDK_CREDS_WARNING_ENV = 'SUPPRESS_GCLOUD_CREDS_WARNING';
-
     /**
      * The OAuth2 instance used to conduct authorization.
      *
@@ -46,11 +42,18 @@ class UserRefreshCredentials extends CredentialsLoader
     protected $auth;
 
     /**
+     * The quota project associated with the JSON credentials
+     *
+     * @var string
+     */
+    protected $quotaProject;
+
+    /**
      * Create a new UserRefreshCredentials.
      *
-     * @param string|array $scope the scope of the access request, expressed
+     * @param string|string[] $scope the scope of the access request, expressed
      *   either as an Array or as a space-delimited String.
-     * @param string|array $jsonKey JSON credential file path or JSON credentials
+     * @param string|array<mixed> $jsonKey JSON credential file path or JSON credentials
      *   as an associative array
      */
     public function __construct(
@@ -61,22 +64,25 @@ class UserRefreshCredentials extends CredentialsLoader
             if (!file_exists($jsonKey)) {
                 throw new \InvalidArgumentException('file does not exist');
             }
-            $jsonKeyStream = file_get_contents($jsonKey);
-            if (!$jsonKey = json_decode($jsonKeyStream, true)) {
+            $json = file_get_contents($jsonKey);
+            if (!$jsonKey = json_decode((string) $json, true)) {
                 throw new \LogicException('invalid json for auth config');
             }
         }
         if (!array_key_exists('client_id', $jsonKey)) {
             throw new \InvalidArgumentException(
-                'json key is missing the client_id field');
+                'json key is missing the client_id field'
+            );
         }
         if (!array_key_exists('client_secret', $jsonKey)) {
             throw new \InvalidArgumentException(
-                'json key is missing the client_secret field');
+                'json key is missing the client_secret field'
+            );
         }
         if (!array_key_exists('refresh_token', $jsonKey)) {
             throw new \InvalidArgumentException(
-                'json key is missing the refresh_token field');
+                'json key is missing the refresh_token field'
+            );
         }
         $this->auth = new OAuth2([
             'clientId' => $jsonKey['client_id'],
@@ -85,34 +91,23 @@ class UserRefreshCredentials extends CredentialsLoader
             'scope' => $scope,
             'tokenCredentialUri' => self::TOKEN_CREDENTIAL_URI,
         ]);
-        if ($jsonKey['client_id'] === self::CLOUD_SDK_CLIENT_ID
-            && getenv(self::SUPPRESS_CLOUD_SDK_CREDS_WARNING_ENV) !== 'true') {
-            trigger_error(
-                'Your application has authenticated using end user credentials '
-                . 'from Google Cloud SDK. We recommend that most server '
-                . 'applications use service accounts instead. If your '
-                . 'application continues to use end user credentials '
-                . 'from Cloud SDK, you might receive a "quota exceeded" '
-                . 'or "API not enabled" error. For more information about '
-                . 'service accounts, see '
-                . 'https://cloud.google.com/docs/authentication/. '
-                . 'To disable this warning, set '
-                . self::SUPPRESS_CLOUD_SDK_CREDS_WARNING_ENV
-                . ' environment variable to "true".',
-                E_USER_WARNING);
+        if (array_key_exists('quota_project_id', $jsonKey)) {
+            $this->quotaProject = (string) $jsonKey['quota_project_id'];
         }
     }
 
     /**
      * @param callable $httpHandler
      *
-     * @return array A set of auth related metadata, containing the following
-     * keys:
-     *   - access_token (string)
-     *   - expires_in (int)
-     *   - scope (string)
-     *   - token_type (string)
-     *   - id_token (string)
+     * @return array<mixed> {
+     *     A set of auth related metadata, containing the following
+     *
+     *     @type string $access_token
+     *     @type int $expires_in
+     *     @type string $scope
+     *     @type string $token_type
+     *     @type string $id_token
+     * }
      */
     public function fetchAuthToken(callable $httpHandler = null)
     {
@@ -128,10 +123,30 @@ class UserRefreshCredentials extends CredentialsLoader
     }
 
     /**
-     * @return array
+     * @return array<mixed>
      */
     public function getLastReceivedToken()
     {
         return $this->auth->getLastReceivedToken();
+    }
+
+    /**
+     * Get the quota project used for this API request
+     *
+     * @return string|null
+     */
+    public function getQuotaProject()
+    {
+        return $this->quotaProject;
+    }
+
+    /**
+     * Get the granted scopes (if they exist) for the last fetched token.
+     *
+     * @return string|null
+     */
+    public function getGrantedScope()
+    {
+        return $this->auth->getGrantedScope();
     }
 }
