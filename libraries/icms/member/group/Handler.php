@@ -151,6 +151,9 @@ class icms_member_group_Handler extends icms_core_ObjectHandler {
 		$sql = "SELECT * FROM " . icms::$xoopsDB->prefix('groups');
 		if (isset($criteria) && is_subclass_of($criteria, 'icms_db_criteria_Element')) {
 			$sql .= " " . $criteria->renderWhere();
+            if( $criteria->getSort() != '' ){
+				$sql .= ' ORDER BY '.$criteria->getSort().' '.$criteria->getOrder();
+			}
 			$limit = $criteria->getLimit();
 			$start = $criteria->getStart();
 		}

@@ -33,13 +33,19 @@ class icms_form_elements_select_Group extends icms_form_elements_Select {
 	 * @param	bool    $multiple       Allow multiple selections?
 	 */
 	public function __construct($caption, $name, $include_anon = false, $value = null, $size = 1, $multiple = false) {
-		parent::__construct($caption, $name, $value, $size, $multiple);
 		$member_handler = icms::handler('icms_member');
 		if (!$include_anon) {
-			$this->addOptionArray($member_handler->getGroupList(new icms_db_criteria_Item('groupid', ICMS_GROUP_ANONYMOUS, '!=')));
+            $criteria = new icms_db_criteria_Item('groupid', ICMS_GROUP_ANONYMOUS, '!=');
+            $criteria->setSort('name');
+			$groupList = $member_handler->getGroupList($criteria);
 		} else {
-			$this->addOptionArray($member_handler->getGroupList());
+            $criteria = new icms_db_criteria_Item('groupid', 0, '>');
+            $criteria->setSort('name');            
+			$groupList = $member_handler->getGroupList($criteria);
 		}
+        $size = $size < count($groupList) ? $size : count($groupList);
+        parent::__construct($caption, $name, $value, $size, $multiple);
+        $this->addOptionArray($groupList);
 	}
 }
 
