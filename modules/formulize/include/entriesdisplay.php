@@ -754,6 +754,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	$settings['order'] = $_POST['order'];
 
 	//get all submitted search text
+	$searches = array();
 	foreach($_POST as $k=>$v) {
 		if(substr($k, 0, 7) == "search_" AND $v != "") {
 			$thiscol = substr($k, 7);
@@ -933,7 +934,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	print "<div id='hidden_quick_searches' style='display: none;'>\n";
 
 	foreach($formulize_buttonCodeArray['quickSearches'] as $handle=>$qsCode) {
-		if( (($searches[$handle] OR is_numeric($searches[$handle])) AND !strstr($listOfEntriesBufferContents, $qsCode['search']))
+		if( (isset($searches[$handle]) AND ($searches[$handle] OR is_numeric($searches[$handle])) AND !strstr($listOfEntriesBufferContents, $qsCode['search']))
             AND (!isset($qsCode['filter']) OR !strstr($listOfEntriesBufferContents, $qsCode['filter']))
             AND (!isset($qsCode['multiFilter']) OR !strstr($listOfEntriesBufferContents, $qsCode['multiFilter']))
             AND (!isset($qsCode['dateRange']) OR !strstr($listOfEntriesBufferContents, $qsCode['dateRange'])) ) {
