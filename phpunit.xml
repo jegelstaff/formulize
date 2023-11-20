@@ -1,9 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/|version|/phpunit.xsd">
-    <testsuites>
-        <testsuite name="unit">
-            <directory suffix=".spec.php">modules/formulize </directory>
-        </testsuite>
-    </testsuites>
+<phpunit
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.4/phpunit.xsd"
+	cacheDirectory=".phpunit.cache"
+	processIsolation="true"
+>
+  <php>
+    <const name="XOOPS_URL" value="http://localhost"/>
+    <const name="XOOPS_ROOT_PATH" value="."/>
+  </php>
+  <testsuites>
+    <testsuite name="unit">
+      <directory suffix=".spec.php">modules/formulize</directory>
+    </testsuite>
+  </testsuites>
 </phpunit>
