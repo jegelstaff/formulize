@@ -4449,10 +4449,8 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
                 }
             }
 
-<<<<<<< HEAD
-=======
+
 						$select_column = '';
->>>>>>> c22929e25 (Various style, tidy up, problem fixes, primarily highlighted by VSCode)
             if(count($linked_columns)==1) {
                 $select_column = "distinct(t1.`".$linked_columns[0]."`)";
             } else {
