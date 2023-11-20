@@ -33,7 +33,7 @@
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 
 class formulizeGoogleFilePickerElement extends formulizeformulize {
-    
+
     function __construct() {
         $this->name = "Google File Picker";
         $this->hasData = true; // set to false if this is a non-data element, like the subform or the grid
@@ -45,24 +45,24 @@ class formulizeGoogleFilePickerElement extends formulizeformulize {
         $this->hasMultipleOptions = false; // set to true if this element has multiple fixed options, such as a radio button set, or checkboxes, or a dropdown list, etc.
         parent::__construct();
     }
-    
+
 }
 
 class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
-    
+
     var $db;
     var $clickable; // used in formatDataForList
     var $striphtml; // used in formatDataForList
     var $length; // used in formatDataForList
-    
+
     function __construct($db) {
         $this->db =& $db;
     }
-    
+
     function create() {
         return new formulizeGoogleFilePickerElement();
     }
-    
+
     // this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
     // it receives the element object and returns an array of data that will go to the admin UI template
     // when dealing with new elements, $element might be FALSE
@@ -73,7 +73,7 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
         }
         return $ele_value;
     }
-    
+
     // this method would read back any data from the user after they click save in the admin UI, and save the data to the database, if it were something beyond what is handled in the basic element class
     // this is called as part of saving the options tab.  It receives a copy of the element object immediately prior to it being saved, so the element object will have all its properties set as they would be based on the user's changes in the names & settings tab, and in the options tab (the tabs are saved in order from left to right).
     // the exception is the special ele_value array, which is passed separately from the object (this will contain the values the user set in the Options tab)
@@ -96,7 +96,7 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
         ));
         return $changed;
     }
-    
+
     // this method reads the current state of an element based on the user's input, and the admin options, and sets ele_value to what it needs to be so we can render the element correctly
     // it must return $ele_value, with the correct value set in it, so that it will render as expected in the render method
     // $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
@@ -107,7 +107,7 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
         $ele_value['files'] = unserialize($value);
         return $ele_value;
     }
-    
+
     // this method renders the element for display in a form
     // the caption has been pre-prepared and passed in separately from the element object
     // if the element is disabled, then the method must take that into account and return a non-interactable label with some version of the element's value in it
@@ -121,9 +121,9 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
     // $owner is the user id of the owner of the entry
     // $renderAsHiddenDefault is a flag to control what happens when we render as a hidden element for users who can't normally access the element -- typically we would set the default value inside a hidden element, or the current value if for some reason an entry is passed
     function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner, $renderAsHiddenDefault = false) {
-        
+
         $eleId = $element->getVar('ele_id');
-        
+
         global $formulize_pickerBoilerPlateIncluded;
         if($formulize_pickerBoilerPlateIncluded !== true) {
             $formulize_pickerBoilerPlateIncluded = true;
@@ -193,35 +193,35 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
                 mimeTypeExtensions['video/x-ms-wmv'] = 'wmv';
                 mimeTypeExtensions['video/x-msvideo'] = 'avi';
                 mimeTypeExtensions['video/mp4'] = 'm4v';
-                
+
                 function addFileExtension(name, mimeType) {
                     var re = /(?:\.([^.]+))?$/;
                     var ext = re.exec(name)[1];
                     if(typeof ext === 'undefined' && typeof mimeTypeExtensions[mimeType] !== 'undefined') {
                         name = name+'.'+mimeTypeExtensions[mimeType];
-                    } 
+                    }
                     return name;
                 }
-                
+
             </script>
             <style>.googlefile { white-space: pre-line; }</style>
             <script type='text/javascript' src='https://apis.google.com/js/api.js'></script>";
         }
-        
+
         $picker .= "
-        
+
         <script type='text/javascript'>
-        
+
             var developerKey$eleId = '".$ele_value['apikey']."';
-            var clientId$eleId = '".$ele_value['clientid']."'
+            var clientId$eleId = '".$ele_value['clientid']."';
             var appId$eleId = '".$ele_value['projectnumber']."';
             var scope$eleId = 'https://www.googleapis.com/auth/drive';
             var pickerApiLoaded$eleId = false;
             var oauthToken$eleId;
-        
+
             // Use the Google API Loader script to load the google.picker script.
             function loadPicker$eleId() {
-              gapi.load('auth2', {'callback': onAuthApiLoad$eleId});              
+              gapi.load('auth2', {'callback': onAuthApiLoad$eleId});
               gapi.load('picker', {'callback': onPickerApiLoad$eleId});
             }
 
@@ -234,12 +234,12 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
                   },
                   handleAuthResult$eleId);
             }
-            
+
             function onPickerApiLoad$eleId() {
               pickerApiLoaded$eleId = true;
               createPicker$eleId();
             }
-        
+
             function handleAuthResult$eleId(authResult) {
               if (authResult && !authResult.error) {
                 oauthToken$eleId = authResult.access_token;
@@ -249,11 +249,11 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
                 window.gapi.auth2.signIn();
               }
             }
-        
+
             // Create and render a Picker object for searching images.
             function createPicker$eleId() {
               if (pickerApiLoaded$eleId && oauthToken$eleId) {";
-            
+
             if($ele_value['includeSharedDrives']) {
                 $picker .= "
                 var sharedDriveView$eleId = new google.picker.DocsView(google.picker.ViewId.DOCS);
@@ -270,7 +270,7 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
                     sharedDriveView$eleId.setMimeTypes(\"".$ele_value['mimetypes']."\");";
                 }
             }
-            
+
             if($ele_value['includeGoogleDrive']) {
                 $picker .= "
                 var googleDriveView$eleId = new google.picker.DocsView(google.picker.ViewId.DOCS);";
@@ -285,7 +285,7 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
                     $picker .= "
                     googleDriveView$eleId.setMimeTypes(\"".$ele_value['mimetypes']."\");";
                 }
-                
+
             }
 
             if($ele_value['upload']) {
@@ -305,15 +305,15 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
                     uploadView$eleId.setMimeTypes(\"".$ele_value['mimetypes']."\");";
                 }
             }
-            
+
             $picker .= "
                 var picker$eleId = new google.picker.PickerBuilder()";
-            
+
             if($ele_value['multiselect']) {
                 $picker .="
                     .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)";
             }
-            
+
             $picker .= "
                     .enableFeature(google.picker.Feature.SUPPORT_DRIVES)
                     .setAppId(appId$eleId)
@@ -337,7 +337,7 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
                  picker$eleId.setVisible(true);
               }
             }
-            
+
             function pickerCallback$eleId(data) {
                 if (data.action == google.picker.Action.PICKED) {
                     for(i in data.docs) {
@@ -358,7 +358,7 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
                     jQuery('#".$markupName."_files').append('<div class=\"googlefile googlefile_$eleId\" id=\"googlefile_".$markupName."_'+id+'\"><img src=\"'+iconUrl+'\" /> <a href=\"'+url+'\" target=\"_blank\">'+name+'</a> ".$interactiveMarkup."</div>');
                 }
             }
-            
+
             function warnAboutGoogleDelete$eleId(id, name, markupName) {
                 var answer = confirm('" . _AM_GOOGLEFILE_DELETE_WARN . " '+name+'?');
                 if(answer) {
@@ -367,16 +367,16 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
                 }
                 return false;
             }
-            
+
         </script>";
-        
+
         if(!$isDisabled) {
             $picker .= "<p><input type='button' onclick='loadPicker$eleId();' value='"._AM_GOOGLEFILE_SELECT."'></p>
                 <div id='".$markupName."_files'>";
         } else {
             $picker .= "<div>";
         }
-        
+
         if(count((array) $ele_value['files'])>0) {
             foreach($ele_value['files'] as $file) {
                 $interactiveMarkup = $isDisabled ? "" : "<a href=\"\" onclick=\"warnAboutGoogleDelete$eleId('".$file['id']."', '".str_replace('"','\"',htmlspecialchars_decode($file['name'], ENT_QUOTES))."', '".$markupName."');return false;\"><img src=\"".XOOPS_URL."/modules/formulize/images/x.gif\" /></a><input type=\"hidden\" name=\"".$markupName."[]\" value=\"".str_replace('"','\"',htmlspecialchars_decode($file['name'], ENT_QUOTES))."<{()}>".$file['url']."<{()}>".$file['id']."<{()}>".$file['iconUrl']."\" />";
@@ -385,14 +385,14 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
                 <div class=\"googlefile googlefile_$eleId\" $interactiveId><img src=\"".$file['iconUrl']."\" /> <a href=\"".$file['url']."\" target=\"_blank\">".str_replace('"','\"',htmlspecialchars_decode($file['name'], ENT_QUOTES))."</a> ".$interactiveMarkup."</div>";
             }
         }
-        
+
         $picker .= "</div>";
-        
+
         $element = new xoopsFormLabel($caption, $picker);
-        
+
         return $element;
     }
-    
+
     // this method returns any custom validation code (javascript) that should figure out how to validate this element
     // 'myform' is a name enforced by convention that refers to the form where this element resides
     // use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
@@ -406,7 +406,7 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
         $validationCode[] = "}\n";
         return $validationCode;
     }
-    
+
     // this method will read what the user submitted, and package it up however we want for insertion into the form's datatable
     // You can return {WRITEASNULL} to cause a null value to be saved in the database
     // $value is what the user submitted
@@ -423,7 +423,7 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
         }
         return serialize($files);
     }
-    
+
     // this method will handle any final actions that have to happen after data has been saved
     // this is typically required for modifications to new entries, after the entry ID has been assigned, because before now, the entry ID will have been "new"
     // value is the value that was just saved
@@ -432,7 +432,7 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
     // ALSO, $GLOBALS['formulize_afterSavingLogicRequired']['elementId'] = type , must be declared in the prepareDataForSaving step if further action is required now -- see fileUploadElement.php for an example
     function afterSavingLogic($value, $element_id, $entry_id) {
     }
-    
+
     // this method will prepare a raw data value from the database, to be included in a dataset when formulize generates a list of entries or the getData API call is made
     // in the standard elements, this particular step is where multivalue elements, like checkboxes, get converted from a string that comes out of the database, into an array, for example
     // $value is the raw value that has been found in the database
@@ -445,19 +445,19 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
             $GLOBALS['formulize_googleFileUploadElementDisplayName'][$fileData['url']] = $fileData['name']; // set aside in GLOBALS for use in creating download link later
             $urls[] = $fileData['url'];
         }
-        return implode(',',$urls); 
+        return implode(',',$urls);
     }
-    
+
     // this method will take a text value that the user has specified at some point, and convert it to a value that will work for comparing with values in the database.  This is used primarily for preparing user submitted text values for saving in the database, or for comparing to values in the database, such as when users search for things.  The typical user submitted values would be coming from a condition form (ie: fieldX = [term the user typed in]) or other situation where the user types in a value that needs to interact with the database.
     // it is only necessary to do special logic here if the values stored in the database do not match what users would be typing, ie: you're using coded numbers in the database, but displaying text on screen to users
     // this would be where a Yes value would be converted to a 1, for example, in the case of a yes/no element, since 1 is how yes is represented in the database for that element type
     // $partialMatch is used to indicate if we should search the values for partial string matches, like On matching Ontario.  This happens in the getData function when processing filter terms (ie: searches typed by users in a list of entries)
     // if $partialMatch is true, then an array may be returned, since there may be more than one matching value, otherwise a single value should be returned.
-    // if literal text that users type can be used as is to interact with the database, simply return the $value 
+    // if literal text that users type can be used as is to interact with the database, simply return the $value
     function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
         return $value;
     }
-    
+
     // this method will format a dataset value for display on screen when a list of entries is prepared
     // for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
     // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
@@ -468,11 +468,11 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
         // value set to array of URLs by prepareDataForDataset
         $links = array();
         foreach(explode(',',$value) as $url) {
-            $links[] = $this->createDownloadLink($url);    
+            $links[] = $this->createDownloadLink($url);
         }
         return parent::formatDataForList(implode('<br />',$links)); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
     }
-    
+
     // this method is for the google file upload element only.  It will return a href that links to the actual file.
     function createDownloadLink($url) {
         $displayName = $GLOBALS['formulize_googleFileUploadElementDisplayName'][$url]; // set aside in prepareDataForDataset above
