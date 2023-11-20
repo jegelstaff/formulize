@@ -53,8 +53,8 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/libraries/pChart/class/pImage
  * 		a. display country with it's poplution
  * 			displayGraph("Bar", country_form, province_relation, country, province_population, "sum", $graphOptions);
  */
- 
- 
+
+
  /**
   * Instruction of the parameter "graphOptions"
   * "graphOptions" should be an array of key value pairs. Here is a list of valid keys:
@@ -65,14 +65,14 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/libraries/pChart/class/pImage
   * 3. orientation:
   * 	Set the graph orientation. The value for this key should be either "horizontal" or "vertical".
   * 4. backgroundcolor:
-  * 	Set the background color of the bar graph. The value for this key should be another array of key value pair, contain the three values of 
+  * 	Set the background color of the bar graph. The value for this key should be another array of key value pair, contain the three values of
   * 	R, G and B. For example, "backgroundcolor" => array("R" => 0, "G" => 0 , "B" => 0) indicates setting the background color of the graph to black.
   * 5. barcolor:
-  * 	Set the color for the bars. The value for this key should be another array of key value pair, contain the three values of 
+  * 	Set the color for the bars. The value for this key should be another array of key value pair, contain the three values of
   * 	R, G and B.
-  * 
+  *
   */
- 
+
 /**
  * Main entrance of displayGraph API
  * @param $graphType type of the graph to be displayed with input data
@@ -110,7 +110,7 @@ function displayGraph($graphType, $fid, $frid, $labelElement, $dataElement, $ope
  * @param $operation the operation to be used on raw data
  */
 function gatherGraphData($fid, $frid, $filter, $labelElement, $dataElement, $operation) {
-	if (is_int($frid) && $frid > 0) {
+	if (is_numeric($frid) && $frid > 0) {
 		$dbData = getData($frid, $fid, $filter);
 	} else {
 		$dbData = getData("", $fid, $filter);
@@ -143,7 +143,7 @@ function gatherGraphData($fid, $frid, $filter, $labelElement, $dataElement, $ope
 		}
 		$completeDataRawValue[] = $dataRawValue;
 		$completeLabelRawValue[] = $labelRawValue;
-		
+
 		// futureworx data, would end up looking like this:
 		/*
 		$completeLabelRawValue[0] = 'Presentation'; // I think actually, in this case we would end up with a 5 instead of Presentation, because the value of the field is 5, and the value seems to be what they're packing up...but we want the caption...hmmm
@@ -173,7 +173,7 @@ function gatherGraphData($fid, $frid, $filter, $labelElement, $dataElement, $ope
 	$elementObject = $elementHandler->get($dataElement);
 	$dataElement = $elementObject->getVar('ele_colhead') ? $elementObject->getVar('ele_colhead') : printSmart($elementObject->getVar('ele_caption'));
 	// end of Update
-	
+
 	switch($operation) {
 		case "count" :
 			// count the values in each label of the array
@@ -212,7 +212,7 @@ function gatherGraphData($fid, $frid, $filter, $labelElement, $dataElement, $ope
 			echo "Sorry, the operation \"$operation\" for Bar graph is not supported at the moment!";
 			return;
 	}
-	
+
     return array($dataPoints, $dataElement, $labelElement);
 }
 
@@ -225,20 +225,20 @@ function displayBarGraph($dataPoints, $labelElement, $dataElement, $graphOptions
 
 	$graphFileName = uniqueGraphFileName($dataPoints, $labelElement, $dataElement, $graphOptions);
 	if (!file_exists(XOOPS_ROOT_PATH.$graphFileName)) {
-	
+
 	// process the graph options
 	// these defaults will be used, unless overwritten by values from the $graphOptions array
 	$sizeMultiplier = sizeof(array_keys($dataPoints));
 	$BAR_THICKNESS = 40;
 	$IMAGE_WIDTH = 600;
 	$IMAGE_DEFAULT_WIDTH = $IMAGE_WIDTH;
-	
+
 	if( $sizeMultiplier > 1){
 		$IMAGE_HEIGHT = $BAR_THICKNESS * $sizeMultiplier/0.5;
 	}else{
-		$IMAGE_HEIGHT = $BAR_THICKNESS * 4;	
+		$IMAGE_HEIGHT = $BAR_THICKNESS * 4;
 	}
-	
+
 	$IMAGE_DEFAULT_HEIGHT = $IMAGE_HEIGHT;
 	$IMAGE_ORIENTATION = "vertical";
 	$BACKGROUND_R = 141;
@@ -247,7 +247,7 @@ function displayBarGraph($dataPoints, $labelElement, $dataElement, $graphOptions
 	$BARCOLOR_R = 143;
 	$BARCOLOR_G = 190;
 	$BARCOLOR_B = 88;
-	
+
 	if (sizeof($graphOptions) > 0) {
 		foreach ($graphOptions as $graphoption => $value) {
 
@@ -316,7 +316,7 @@ function displayBarGraph($dataPoints, $labelElement, $dataElement, $graphOptions
 			}
 		}
 	}
-	
+
 	// reset width/height of the image in case the label is too long
 	if( (strlen($labelElement)*4.5 >= $IMAGE_HEIGHT) AND $IMAGE_ORIENTATION == "vertical"){
 		if( $IMAGE_HEIGHT == $IMAGE_DEFAULT_HEIGHT ){
@@ -343,7 +343,7 @@ function displayBarGraph($dataPoints, $labelElement, $dataElement, $graphOptions
 			$dataElement = substr($dataElement, 0, $IMAGE_HEIGHT/4.5-3)."...";
 		}
 	}
-	
+
 	// Code straightly copied from pChart documentation to draw the graph
 	$myData = new pData();
 	$myData -> addPoints(array_values($dataPoints), $dataElement);
@@ -359,7 +359,7 @@ function displayBarGraph($dataPoints, $labelElement, $dataElement, $graphOptions
 		$chartImage->drawGradientArea(0, 0, $IMAGE_WIDTH, $IMAGE_HEIGHT, DIRECTION_VERTICAL, array("StartR"=>$BACKGROUND_R, "StartG"=>$BACKGROUND_G, "StartB"=>$BACKGROUND_B, "EndR"=>$BACKGROUND_R, "EndG"=>$BACKGROUND_G, "EndB"=>$BACKGROUND_B, "Alpha"=>100));
 		$chartImage->drawGradientArea(0,0,500,500,DIRECTION_HORIZONTAL,array("StartR"=>240,"StartG"=>240,"StartB"=>240,"EndR"=>180,"EndG"=>180,"EndB"=>180,"Alpha"=>30));
 		$chartImage->setFontProperties(array("FontName"=>"modules/formulize/libraries/pChart/fonts/arial.ttf", "FontSize"=>8));
-	
+
 	$paddingtoLeft = $IMAGE_WIDTH * 0.15;
 	$paddingtoTop = $IMAGE_HEIGHT * 0.2;
 	if( $paddingtoTop > 50){
@@ -368,22 +368,22 @@ function displayBarGraph($dataPoints, $labelElement, $dataElement, $graphOptions
 
 	/* Draw the chart scale */
 		$chartImage->setGraphArea($paddingtoLeft, $paddingtoTop, $IMAGE_WIDTH * 0.90, $IMAGE_HEIGHT * 0.88);
-	
+
 	if($IMAGE_ORIENTATION == "vertical"){
 			$chartImage->drawScale(array("CycleBackground"=>TRUE, "DrawSubTicks"=>TRUE, "GridR"=>0, "GridG"=>0, "GridB"=>0, "GridAlpha"=>10, "Pos"=>SCALE_POS_TOPBOTTOM, "Mode"=>SCALE_MODE_ADDALL_START0, "Decimal"=>0, "MinDivHeight"=>50));
 	}else{
 			$chartImage->drawScale(array("CycleBackground"=>TRUE, "DrawSubTicks"=>TRUE, "GridR"=>0, "GridG"=>0, "GridB"=>0, "GridAlpha"=>10, "Mode"=>SCALE_MODE_ADDALL_START0, "Decimal"=>0, "MinDivHeight"=>50));
 	}
-		
+
 	/* Turn on shadow computing */
 		$chartImage->setShadow(TRUE, array("X"=>1, "Y"=>1, "R"=>0, "G"=>0, "B"=>0, "Alpha"=>10));
-	
+
 	$Palette = array("0"=>array("R"=>$BARCOLOR_R,"G"=>$BARCOLOR_G,"B"=>$BARCOLOR_B,"Alpha"=>100));
-	
+
 	for($i = 1 ; $i < $sizeMultiplier ; $i++){
 		$Palette[$i] = array("R"=>$BARCOLOR_R,"G"=>$BARCOLOR_G,"B"=>$BARCOLOR_B,"Alpha"=>100);
 	}
-	
+
 	$myPicture->drawBarChart(array("OverrideColors"=>$Palette));
 
 	/* Draw the chart */
