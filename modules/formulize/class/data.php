@@ -515,7 +515,12 @@ class formulizeDataHandler  {
                 $likeBits = '';
             } else {
                 $value = formulize_db_escape($value);
-                $quotes = (is_numeric($value) AND !$likeBits) ? '' : $quotes;
+								if($operator == 'IN') {
+									$quotes = '';
+									$value = "($value)";
+								} else {
+                	$quotes = (is_numeric($value) AND !$likeBits) ? '' : $quotes;
+								}
             }
             $valuesSQL[] = "`". $element->getVar('ele_handle') . "` ".formulize_db_escape($workingOp)." ".$quotes.$likeBits.$value.$likeBits.$quotes;
         }
