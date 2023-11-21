@@ -143,8 +143,6 @@ if($fid AND !$view_form = $gperm_handler->checkRight("view_form", $fid, $groups,
     }
 }
 
-include XOOPS_ROOT_PATH .'/modules/formulize/include/customCodeForApplications.php';
-
 // IF A SCREEN IS REQUESTED, GET DETAILS FOR THAT SCREEN AND CALL THE NECESSARY DISPLAY FUNCTION
 $rendered = false;
 $screen = false;
@@ -185,7 +183,7 @@ if ($screen) {
     // this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
     $renderedFormulizeScreen = $screen;
-    
+
     // validate any passcode for anon users that has been saved in session, or require one from users first before anything else
     if($uid == 0 AND $screen->getVar('anonNeedsPasscode')) {
         $screenAllowedForUser = false;
@@ -209,7 +207,7 @@ if ($screen) {
         // group based permission for other non-anon users will go here
         $screenAllowedForUser = true;
     }
-    
+
     if($screenAllowedForUser) {
     if($screen->getVar('type') == "listOfEntries" AND ((isset($_GET['iform']) AND $_GET['iform'] == "e") OR isset($_GET['showform']))) { // form itself specifically requested, so force it to load here instead of a list
         if($screen->getVar('frid')) {
