@@ -314,6 +314,7 @@ class formulize_themeForm extends XoopsThemeForm {
             $columns = $columnData[0];
             $column1Width = str_replace(';','',$columnData[1]);
             $column2Width = str_replace(';','',$columnData[2]);
+            $startHidden = false;
 
 			if (!is_object($ele)) {// just plain add stuff if it's a literal string...
 				if(strstr($ele, "<<||>>")) { 
@@ -321,6 +322,7 @@ class formulize_themeForm extends XoopsThemeForm {
                     if($ele[0] == '{STARTHIDDEN}') {
                         $ele[0] = '';
                         $GLOBALS['formulize_startHiddenElements'][] = $ele[1];
+                        $startHidden = true;
                     }
                     $templateVariables = array(
                         'elementContainerId'=>'formulize-'.$ele[1],
@@ -331,6 +333,9 @@ class formulize_themeForm extends XoopsThemeForm {
                         'labelClass'=>"formulize-label-".$ele[2],
                         'columns'=>$columns,
                         'column1Width'=>$column1Width,
+                        'column2Width'=>$column2Width,
+                        'colSpan'=>'',
+                        'startHidden'=>$startHidden
                     );
                     if($columnData[0] == 2 AND isset($ele[3])) { // by convention, only formulizeInsertBreak element, "spanning both columns" has a [3] key, so we need to put in the span flag
                         $columns = 1;
@@ -349,7 +354,9 @@ class formulize_themeForm extends XoopsThemeForm {
                         'renderedElement'=>$ele,
                         'columns'=>$columns,
                         'column1Width'=>$column1Width,
-                        'column2Width'=>$column2Width
+                        'column2Width'=>$column2Width,
+                        'colSpan'=>'',
+                        'startHidden'=>$startHidden
                     );
 				}
 
@@ -396,7 +403,10 @@ class formulize_themeForm extends XoopsThemeForm {
                     'elementClass'=>$ele->getClass(),
                     'columns'=>$columns,
                     'column1Width'=>$column1Width,
-                    'column2Width'=>$column2Width
+                    'column2Width'=>$column2Width,
+                    'column2Width'=>$column2Width,
+                    'colSpan'=>'',
+                    'startHidden'=>$startHidden
                 );
                 $ret .= $this->processTemplate($template, $templateVariables);
 				$ret .= $this->_drawElementElementHTML($ele);
