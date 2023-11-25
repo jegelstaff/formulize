@@ -16,7 +16,7 @@ class icms_DebugEventHandler {
 		case "config":
 			global $xoopsOption, $icmsConfig;
 			if (!isset($xoopsOption['nodebug']) || !$xoopsOption['nodebug']) {
-				if ($icmsConfig['debug_mode'] == 1 || $icmsConfig['debug_mode'] == 2) {
+				if (strstr($_SERVER['REQUEST_URI'], 'makecsv.php') === false AND ($icmsConfig['debug_mode'] == 1 || $icmsConfig['debug_mode'] == 2)) {
 					error_reporting(E_ALL);
                     ini_set('display_errors', 1);
 					icms::$logger->enableRendering();
