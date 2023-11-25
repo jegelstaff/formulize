@@ -4662,6 +4662,7 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
             $parsedOptions = array();
             foreach($options as $option) {
                 $option = undoAllHTMLChars($option, ENT_QUOTES);
+                if($option === "") { continue; } // skip blanks. {BLANK} is an option already.
                 if($pos = strpos($option,"formulize-filter-value")) {
                     $startPos = strpos($option, '>', $pos);
                     $endPos = strpos($option, '<', $startPos);
