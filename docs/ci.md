@@ -5,6 +5,8 @@ permalink: developers/ci/
 
 # Continuous Integration
 
+**This is a nice idea, but we don't actively use Travis or Sauce Labs currently**
+
 We use [Travis](https://travis-ci.org/jegelstaff/formulize/builds) and [Sauce Labs](http://www.saucelabs.com) as our continuous integration platform.  We currently test only using Selenium 2 in-browser tests of the Formulize application.  This page describes the configuration and setup of our integration with these CI tools.
 
 If all the tests pass successfully, then this lets us know that the current build of Formulize has not broken any features that are used in the recorded Selenium tests. In addition, Sauce Labs records videos of the tests running in the browser so that you can see exactly what happens when a test fails.
@@ -21,35 +23,35 @@ These credentials are dependent on the repo; the same encrypted credentials will
 
 ## Travis Configuration
 
-Julian has signed up for a free account on Travis. In the profile for that account, there is an option to connect it to the Formulize Github repository (since the Travis account knows Julian's GitHub username). When that connection is switched on, Travis listens for commits to Github. 
+Julian has signed up for a free account on Travis. In the profile for that account, there is an option to connect it to the Formulize Github repository (since the Travis account knows Julian's GitHub username). When that connection is switched on, Travis listens for commits to Github.
 
 When there is a commit, Travis spins up a Debian Linux server in the cloud, and copies the contents of the GitHub repository to this folder on the server: **formulize/**.  It then reads the **.travis.yml** file in the root of the repository, and proceeds to apply further configuration to the server. That file contains code like this:
-    
+
     env:
       global:
       - secure: f1Dkf/AObhtZJf/OtM/NREIZRzVeuw/QXQkV82WrbszKdpLrm1RwfwTAgcUa+JDiE931LJ41W86JWUia3PbS3pLVSL9gSwfBPk+PU6VM7AeYIVuje1V1tXpZoGlf+0RcfGHZA3JzeNSo65QjKl5iUxrT31wnpQpQ9rdG/bXQrUg=
       - secure: Xjc2qZs42LLIk4lRMc/JdFxeN5pmXUTLFd/stohOTX3g1rmRInXXqYpnXW/S15FjShqgtQAvvmnU/SV9QNpfaMhQVgS1ORVTS10gvy3aLPodW5hB9AGCDiQHXD0r9p+73LfNzenvdtmDme9Pp8PdLwb+spSroRbXgJ3tqHpXntM=
       - secure: n7FDSdDI6AlTIe91ZFfaWA89PloZGjR36M2U1XZwKK9FMFDHRJMORmW30veV1OuC6e7/F/56MpQ+PHMKeeBPdTEIQRJeCTwyLTkIQ8eh18oVE6M9pdXNrUlhLf5dejXk2kAl3vWe8LBC+x1pWsql0mb8AAkdLwQfRddPlCbkRHY=
       - WEB_PORT_80_TCP_ADDR=localhost
-    
+
     language: php
-    
+
     sudo: required
     dist: trusty
-    
+
     php:
         - 7.0
-    
+
     addons:
       sauce_connect: true
       hosts:
         - local.dev
-        
+
     cache:
       - apt
-    
+
     before_install:
-     
+
       # Install Apache2
       - sudo apt-get update
       - sudo apt-get install -y --force-yes apache2
@@ -72,7 +74,7 @@ When there is a commit, Travis spins up a Debian Linux server in the cloud, and 
       - sudo service php7.0-fpm restart
       # copy Formulize to the web root
       - cd ..
-      - sudo cp -R formulize/* /var/www 
+      - sudo cp -R formulize/* /var/www
       # copy selenium_debug.js which modifies some javascript behaviour to behave better with selenium
       - sudo cp -f /var/www/ci/travis/selenium_debug.js /var/www/modules/formulize/selenium_debug.js
       # set 777 on necessary directories
@@ -92,7 +94,7 @@ When there is a commit, Travis spins up a Debian Linux server in the cloud, and 
       # make the trust path because the fcgi process cannot
       - sudo mkdir /var/www/selenium-848d24bb54d726d
       - sudo chmod 777 /var/www/selenium-848d24bb54d726d
-        
+
     before_script:
       - npm install -g se-interpreter
       - mysql -e 'create database formulize;'
@@ -105,19 +107,19 @@ When there is a commit, Travis spins up a Debian Linux server in the cloud, and 
       # - sudo cp -f /var/www/ci/mainfile.php /var/www/mainfile.php
       # - sudo cp -f /var/www/ci/0dd528b71d72ed19bb9dd658ab2dad58.php /var/www/selenium-848d24bb54d726d/0dd528b71d72ed19bb9dd658ab2dad58.php
       - echo "USE mysql;\nUPDATE user SET password=PASSWORD('password') WHERE user='root';\nFLUSH PRIVILEGES;\n" | mysql -u root
-    
+
     script:
       - se-interpreter /var/www/ci/travis/interpreter_config.json
       - tail -100 /tmp/error.log
       - curl http://localhost/
-    
+
     after_script:
       # Include '[update test db]' in a commit message from the master branch, if you want
       # to reset the ci/formulize_test_db.sql to be based on all the current tests.
       # ONLY DO THIS WITH COMMITS FROM THE MASTER BRANCH!!
       # DO NOT DO THIS IN A BRANCH THAT HAS AN ACTIVE PULL REQUEST!!
       - if [[ $TRAVIS_COMMIT_MESSAGE == *"[update test db]"* ]] ; then bash /var/www/ci/travis/update-test-db.sh; fi
-   
+
 ### What the sections do
 
 The current version of the .travis.yml file owes a lot to [the work of Mitchell Krog](https://github.com/mitchellkrogza/Travis-CI-for-Apache-For-Testing-Apache-and-PHP-Configurations). Here is an explanation of the main sections of the file:
@@ -212,7 +214,7 @@ To see the Selenium tests in action, you have to log in to the Open Sauce accoun
 By adding this line to the readme.md file in the Formulize repo, we can get an automatic indication of the current build status:
 
     [![Build Status](https://travis-ci.org/jegelstaff/formulize.png)](https://travis-ci.org/jegelstaff/formulize)
-    
+
 In addition, in the list of pull requests, there will be green checkmarks or red x's, depending if the code passes or not. Note that the Sauce credentials are only valid when used in conjunction with the original, jegelstaff/formulize repo. A pull request from a forked repo will automatically fail because of that dependency, but a forked repo could alter the .travis.yml file to use their own Sauce credentials and then it should work.
 
 
