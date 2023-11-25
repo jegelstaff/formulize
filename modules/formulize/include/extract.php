@@ -1036,6 +1036,7 @@ function formulize_gatherLinkMetadata($frid, $fid, $mainFormOnly=false) {
                 } else {
                     $linkkeys1[] = "";
                     $linktargetids1[] = "";
+                    $linkselfids1[] = $theselinks['fl_key1'];
                 }
                 if($theselinks['fl_relationship'] == 2) { // 2 is one to many relationship...this does not appear to be referenced anywhere in the extraction layer!
                     $linkisparent1[] = 1;
@@ -1063,6 +1064,7 @@ function formulize_gatherLinkMetadata($frid, $fid, $mainFormOnly=false) {
                 } else {
                     $linkkeys2[] = "";
                     $linktargetids2[] = "";
+                    $linkselfids2[] = $theselinks['fl_key2'];
                 }
                 if($theselinks['fl_relationship'] == 3) { // 3 is many to one relationship...this does not appear to be referenced anywhere in the extraction layer!
                     $linkisparent2[] = 1;

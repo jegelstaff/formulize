@@ -52,6 +52,7 @@ if(isset($_GET['id']) AND $_GET['id'] === "all") {
 }
 
 $allAppData = array();
+$soloLink = 'start';
 foreach($applicationsToDraw as $aid) {
     if(is_object($aid)) {
         $aid = $aid->getVar('appid'); // when 'all' is requested, the array will be of objects, not ids
@@ -67,12 +68,19 @@ foreach($applicationsToDraw as $aid) {
     }
     $formsToSend = getNavDataForForms($links);
     if(count((array) $formsToSend)==1) {
-        header("location: ".$formsToSend[0]['url']);
-        exit();
+        $soloLink = $soloLink === 'start' ? $formsToSend[0]['url'] : ""; // will only be set to a URL the first time, if there is anything else
     } elseif(count((array) $formsToSend)>0) {
         $allAppData[] = array('app_name'=>$app_name, 'noforms'=>0, 'formData'=>$formsToSend);
+        $soloLink = count($formsToSend) > 1 ? "" : $soloLink;
     }
     
+}
+
+// only one link in the entire menu, so go to that page
+if($soloLink) {
+    header("location: ".$soloLink);
+    exit();
+
 }
 
 // retrieve the xoops_version info
