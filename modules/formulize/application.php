@@ -73,11 +73,11 @@ foreach($applicationsToDraw as $aid) {
         $allAppData[] = array('app_name'=>$app_name, 'noforms'=>0, 'formData'=>$formsToSend);
         $soloLink = count($formsToSend) > 1 ? "" : $soloLink;
     }
-    
+
 }
 
 // only one link in the entire menu, so go to that page
-if($soloLink) {
+if($soloLink AND $soloLink != 'start') {
     header("location: ".$soloLink);
     exit();
 
