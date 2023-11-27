@@ -3337,7 +3337,18 @@ function forceQ() {
 	showLoading();
 }
 
+var formulize_entriesPerPageSelection = '';
+// make page selectors all work in sync if there are multiple per page
+jQuery('select[name=\"formulize_entriesPerPage\"]').on('change', function() {
+  formulize_entriesPerPageSelection = jQuery(this).val();
+	jQuery('select[name=\"formulize_entriesPerPage\"]').each(function() {
+		jQuery(this).val(formulize_entriesPerPageSelection);
+	});
+	showLoading();
+});
+
 function showLoading() {
+
 	window.document.controls.formulize_scrollx.value = jQuery(window).scrollTop();
 	window.document.controls.formulize_scrolly.value = jQuery(window).scrollLeft();
 	<?php
@@ -4166,7 +4177,7 @@ function formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers) {
 	$entryTotals = "<span class=\"page-navigation-total\">".
         sprintf(_AM_FORMULIZE_LOE_TOTAL, $firstEntryNumber, $lastEntryNumber, $GLOBALS['formulize_countMasterResultsForPageNumbers'])."</span></p>\n";
 
-    $entriesPerPageSelector = "<select name='formulize_entriesPerPage' onchange='showLoading();'>";
+    $entriesPerPageSelector = "<select name='formulize_entriesPerPage'>";
     $maxPerPage = $GLOBALS['formulize_countMasterResultsForPageNumbers']+9 < 100 ? $GLOBALS['formulize_countMasterResultsForPageNumbers']+9 : 100;
     for($i=10;$i<=$maxPerPage;$i=$i+10) {
         if($numberPerPage < $i AND $numberPerPage > $i-10) {
