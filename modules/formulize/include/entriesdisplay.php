@@ -3339,12 +3339,16 @@ function forceQ() {
 
 var formulize_entriesPerPageSelection = '';
 // make page selectors all work in sync if there are multiple per page
-jQuery('select[name=\"formulize_entriesPerPage\"]').on('change', function() {
-  formulize_entriesPerPageSelection = jQuery(this).val();
+jQuery(window).load(function() {
 	jQuery('select[name=\"formulize_entriesPerPage\"]').each(function() {
-		jQuery(this).val(formulize_entriesPerPageSelection);
+		jQuery(this).on('change', function() {
+			formulize_entriesPerPageSelection = jQuery(this).val();
+			jQuery('select[name=\"formulize_entriesPerPage\"]').each(function() {
+				jQuery(this).val(formulize_entriesPerPageSelection);
+			});
+			showLoading();
+		});
 	});
-	showLoading();
 });
 
 function showLoading() {
