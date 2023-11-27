@@ -395,7 +395,6 @@ button:focus, input[type='submit']:focus, input[type='button']:focus, input[type
   display: inline-block; }
 
 .formulize-element-edit-link {
-  float: right;
   font-weight: normal;
   border: 1px solid #b3b3b3;
   padding: 0.1em 0.5em;

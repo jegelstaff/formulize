@@ -2967,6 +2967,10 @@ a.de-edit-icon:hover{
     align-items: center;
     width: 125%;
 }
+.google-icon-svg {
+    width: 30px;
+}
+
 .google-only-login-link {
     text-decoration: none;
 }
