@@ -4,6 +4,7 @@ Formulize
 * Data entry, collection, management, workflows and reporting.
 * On the web, in your CMS, and on your mobile device.
 * Docs and other materials (incl. video tutorials) here: https://www.formulize.org
+* To setup a local dev environment, follow the steps here: https://www.formulize.org/developers/development_environment/
 
 To get the latest, just download the source code of the latest release, or the latest commit if you want the cutting edge, which is almost always fully functional.
 
