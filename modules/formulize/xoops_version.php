@@ -31,7 +31,7 @@
 
 $modversion = array(
 	'name' => _MI_formulize_NAME,
-	'version' => "7.2",
+	'version' => "7.21",
 	'description' => _MI_formulize_DESC,
 	'author' => "Julian Egelstaff & Freeform Solutions",
 	'credits' => "",
@@ -713,7 +713,7 @@ $modversion['templates'][] = array(
 $modversion['templates'][] = array(
 	'file' => 'admin/managepermissions.html',
 	'description' => '');
-    
+
 //	Module Configs
 // $xoopsModuleConfig['t_width']
 $modversion['config'][1] = array(
@@ -984,7 +984,7 @@ $modversion['blocks'][1] = array(
 	'description' => "",
 	'show_func' => "block_formulizeMENU_show",
     'template' => 'menu_controller.html');
-    
+
 // Notifications -- added by jwe 10/10/04, removed for 2.0, reinstated for 2.2 with improved options
 $modversion['hasNotification'] = 1;
 
