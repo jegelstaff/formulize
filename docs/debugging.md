@@ -3,27 +3,43 @@ layout: default
 permalink: developers/debugging/
 ---
 
-# Debugging
+# Debugging with XDebug
+
+If you have setup a [local development environment using Docker](../development_environment/), then you can use XDebug with PHP to do live debugging in your local environment.
+
+(You can also setup XDebug to do remote debugging on a server elsewhere, and all sorts of other fun things, but this page just focuses on the local Docker environment.)
+
+The Docker environment includes XDebug by default. Your IDE should more or less do the rest. We have detailed instructions for VS Code on Windows.
+
+## Setting up XDebug with Formulize and Docker in VS Code on Windows
+
+1. Install [VS Code](https://code.visualstudio.com/).
+
+2. Install [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/).
+
+3. Add the following extensions to VS Code: Docker, PHP Debug. Also, other recommended extensions are: EditorConfig for VS Code, GitLens, PHP Intelephense, SQLTools MySQL/MariaDB/TiDB (depends on SQLTools)
+
+	![VS Code Extensions](../../images/vscode-extensions.PNG)
+
+4. Open the folder for your [local development environment](../development_environment/).
+
+5. Find the docker-compose.yml file, right click on it, and select 'Compose Up.'
+
+    ![Running Docker Compose Up](../../images/vscode-compose-up.PNG)
+
+6. After a few moments, the Docker containers will be running. You will know it's all done when you get a response browsing to [http://localhost:8080](http://localhost:8080)
+
+    ![Docker is working](../../images/vscode-docker-working.PNG)
+
+7. Switch to the Run and Debug view by clicking the icon in the Activity Bar on the side.
+
+    ![Switch to Run and Debug view](../../images/vscode-run-and-debug.PNG)
+
+8. Click the play icon to start XDebug.
+
+    ![Click the play icon](../../images/vscode-play-icon.PNG)
+
+9. Open a file, set breakpoints, and browse to [http://localhost:8080](http://localhost:8080) in your web browser. VS Code will show you the value of variables, let you step through the code, etc.
 
 
-
-
-Make a new branch based on the master branch, and set it up with the trust path files and database dump from a live Formulize installation (this lets you run a local copy of a website, so you can do debugging and other development work).
-
-4. If you simply checkout the _master_ branch and start a Docker container to run it locally, you will end up on the installer. See the If you go through the installer, there are several key things you need to know:
-	1. You must create a folder called _/trust/_ at the root of the repository. Then, when the installer you need to specify the trust path, it must be _/var/www/trust_. Additionally, you must create a folder called _/trust/_  folder This folder is mapped to you will need to specify the "trust path" where the Formulize database credentials are stored
-
-## Setting up Formulize and Docker in VSCode on Windows
-
-1. Install [https://code.visualstudio.com/](VSCode).
-
-2. Install [https://docs.docker.com/desktop/install/windows-install/](Docker Desktop for Windows).
-
-2. Add the following extensions to VSCode: Docker, PHP Debug. Also, other recommended extensions are: EditorConfig for VS Code, GitLens, PHP Intelephense, SQLTools MySQL/MariaDB/TiDB (depends on SQLTools)
-
-	![VSCode Extensions](../../images/vscode-extensions.PNG)
-
-3. In the Checkout the _master_ branch
-
-	![Checkout the master branch](../../images/checkout-master.PNG)
 

@@ -5,7 +5,9 @@ permalink: developers/development_environment/
 
 # Development Environment
 
-Formulize can be run locally using Docker containers. Here are the relevant files and locations:
+Formulize can be run locally using Docker containers. This makes [local debugging with XDebug](/developers/debugging) very easy.
+
+Here are the relevant files and locations involved in the Docker setup:
 
 1. There is a docker-compose.yaml file in the root of the respository.
 2. There is a Docker folder that contains a _Dockerfile_, and a _php_ folder with .ini files in it, and a _mariadb_ folder with the database in it
