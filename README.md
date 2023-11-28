@@ -15,7 +15,7 @@ To install fresh:
 To update existing install:
 1) backup files and DB, 
 2) overwrite the files with these ones (except for mainfile.php and the /install folder), 
-3) login and go to the admin side, run the database update when prompted (or go to .../modules/formulize/admin/ui.php?op=patchDB)
-4) click on the Modules menu heading at the top of the page on the admin side and then click the circle arrows to update the Formulize "module"
+3) login and go to the admin side, click on the Modules menu heading at the top of the page, and then click the circle arrows to update the Formulize "module",
+4) go to the main Formulize admin page (Modules -> Forms) and run the database update if prompted (or go to .../modules/formulize/admin/ui.php?op=patchDB)
 
 If you have issues, please contact info@formulize.org
