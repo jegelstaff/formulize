@@ -5,7 +5,7 @@ permalink: developers/development_environment/
 
 # Development Environment
 
-Formulize can be run locally using Docker containers. This makes [local debugging with XDebug](/developers/debugging) very easy.
+Formulize can be run locally using Docker containers. This makes [local debugging with XDebug](/developers/debugging) very easy. There are [step-by-step instructions for setting up Formulize and Docker in VS Code on Windows](/developers/debugging#formulize-vscode).
 
 Here are the relevant files and locations involved in the Docker setup:
 

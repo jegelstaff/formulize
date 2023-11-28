@@ -11,7 +11,7 @@ If you have setup a [local development environment using Docker](../development_
 
 The Docker environment includes XDebug by default. Your IDE should more or less do the rest. We have detailed instructions for VS Code on Windows.
 
-## Setting up XDebug with Formulize and Docker in VS Code on Windows
+## <a name="formulize-vscode"></a>Setting up Formulize and Docker with XDebug in VS Code on Windows
 
 1. Install [VS Code](https://code.visualstudio.com/).
 
