@@ -3044,7 +3044,6 @@ a.de-edit-icon:hover{
 .currentViewList {
     display: flex;
     align-items: center;
-    justify-content: right;
 }
 
 .currentViewList-caption {
