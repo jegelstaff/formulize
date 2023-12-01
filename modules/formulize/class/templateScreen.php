@@ -176,6 +176,15 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
             
             $xoopsTpl->display("file:".$template_filename);
             // we need to put other code in here to persist $settings if any!!
+            $applications_handler = xoops_getmodulehandler('applications', 'formulize');
+			$apps = $applications_handler->getApplicationsByForm($screen->getVar('fid'));
+			if(is_array($apps) AND count($apps)>0) {
+				$firstAppId = $apps[key($apps)]->getVar('appid');
+			} else {
+				$firstAppId = 0;
+			}
+            $url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&sid=".$screen->getVar('sid')."&fid=".$screen->getVar('fid')."&aid=".$firstAppId;
+            $xoopsTpl->assign('modifyScreenUrl', $url);
         } else {
             echo "<p>Error: specified screen template does not exist.</p>";
         }
