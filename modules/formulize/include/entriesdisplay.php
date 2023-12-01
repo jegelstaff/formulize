@@ -1848,43 +1848,62 @@ function drawEntries($fid, $cols, $searches, $frid, $scope, $standalone, $curren
 }
 
 // this function outputs the html to view an entry, based on the value the user wants clickable, and the pre-determined view link code for the entry
-// $linkContents is the clickable text/item. If empty, then the default link will be created, with the standard loe-edit-entry class
-// overrideId is an alternative ID that we should construct the link to display instead of the active entry
-// overrideScreen is the ID of the screen that the overrideID should be displayed in.  If not specified, then the current screen would be used.
-// Note: for the $overrideId, pass in 'proxy' to start a new proxy entry, 'single' to start a new entry without the "add multiple entries" behaviour, 'addnew' to start adding multiple new entries
-function viewEntryLink($linkContents="", $overrideId="", $overrideScreen="") {
-	$anchorMarkup = $GLOBALS['formulize_viewEntryLinkCode'];
+// $clickable_text is the clickable text/item. If empty, then the default link will be created, with the standard loe-edit-entry class
+// entry_id_or_dataset_record is an alternative ID that we should construct the link to display instead of the active entry - can be an entry id, or a single entry from the result of a getData call (ie: foreach($data as $entry)... the $entry is a valid thing to pass in here... we take the first entry found, so if there are multiple forms involved in the dataset, good luck.)
+// override_screen_id is the ID of the screen that the entry_id_or_dataset_record should be displayed in.  If not specified, then the current screen would be used.
+// Note: for the $entry_id_or_dataset_record, pass in 'proxy' to start a new proxy entry, 'single' to start a new entry without the "add multiple entries" behaviour, 'addnew' to start adding multiple new entries
+function viewEntryLink($clickable_text="", $entry_id_or_dataset_record="", $override_screen_id="") {
+	$anchorMarkup = $GLOBALS['formulize_viewEntryLinkCode'] ? $GLOBALS['formulize_viewEntryLinkCode'] : '<a href="" onclick="goDetails();return false;"'; // use a shim with onclick since that's what we're lokoing for to do the replacement below
 	if(!$anchorMarkup) { return ""; }
-	if($overrideId) {
-		// swap out the goDetails instruction for the new one based on overrideId and overrideScreen
-		$screenParam = $overrideScreen ? intval($overrideScreen) : "";
+	if($entry_id_or_dataset_record) {
+		// swap out the goDetails instruction for the new one based on entry_id_or_dataset_record and override_screen_id
+		$screenParam = $override_screen_id ? intval($override_screen_id) : "";
 		$onClickPos = strpos($anchorMarkup, 'onclick');
 		$semicolonPos = strpos($anchorMarkup, ';', $onClickPos);
-		$anchorMarkup = substr_replace($anchorMarkup, "onclick=\"javascript:goDetails('".$overrideId ."', '". $screenParam ."')", $onClickPos, ($semicolonPos-$onClickPos));
+        $entry_id_or_dataset_record = processViewEntryLinkOverrideId($entry_id_or_dataset_record);
+		$anchorMarkup = substr_replace($anchorMarkup, "onclick=\"javascript:goDetails('".$entry_id_or_dataset_record ."', '". $screenParam ."')", $onClickPos, ($semicolonPos-$onClickPos));
 	}
-	if(!$linkContents) {
+	if(!$clickable_text) {
 		$anchorMarkup .= " class='loe-edit-entry' alt='"._formulize_DE_VIEWDETAILS."' title='"._formulize_DE_VIEWDETAILS."'>&nbsp;</a>";
 	} else {
-		$anchorMarkup .= ">".$linkContents."</a>";
+		$anchorMarkup .= ">".$clickable_text."</a>";
 	}
 	return $anchorMarkup;
 }
 
 // this function outputs a clickable button that will lead to the entry when clicked, just the same as viewEntryLink above
-// overrideId is an alternative ID that we should construct the link to display instead of the active entry
-// overrideScreen is the ID of the screen that the overrideID should be displayed in.  If not specified, then the current screen would be used.
-// Note: for the $overrideId, pass in 'proxy' to start a new proxy entry, 'single' to start a new entry without the "add multiple entries" behaviour, 'addnew' to start adding multiple new entries
-function viewEntryButton($linkContents, $overrideId="", $overrideScreen="") {
-	if($overrideId) {
-		$screenParam = $overrideScreen ? "', '".intval($overrideScreen) : "";
+// entry_id_or_dataset_record is an alternative ID that we should construct the link to display instead of the active entry - can be an entry id, or a single entry from the result of a getData call (ie: foreach($data as $entry)... the $entry is a valid thing to pass in here... we take the first entry found, so if there are multiple forms involved in the dataset, good luck.)
+// override_screen_id is the ID of the screen that the entry_id_or_dataset_record should be displayed in.  If not specified, then the current screen would be used.
+// Note: for the $entry_id_or_dataset_record, pass in 'proxy' to start a new proxy entry, 'single' to start a new entry without the "add multiple entries" behaviour, 'addnew' to start adding multiple new entries
+function viewEntryButton($clickable_text, $entry_id_or_dataset_record="", $override_screen_id="") {
+	if($entry_id_or_dataset_record) {
+        $entry_id_or_dataset_record = processViewEntryLinkOverrideId($entry_id_or_dataset_record);
+		$screenParam = $override_screen_id ? "', '".intval($override_screen_id) : "";
 	} else {
 		$screenParam = "";
-		$overrideId = $GLOBALS['formulize_viewEntryId'];
+		$entry_id_or_dataset_record = $GLOBALS['formulize_viewEntryId'];
 	}
-	return "<input type=\"button\" name=\"formulize_veb\" value=\"$linkContents\" onclick=\"javascript:goDetails('" . $overrideId . $screenParam ."');return false;\"></input>";
+	return "<input type=\"button\" name=\"formulize_veb\" value=\"$clickable_text\" onclick=\"javascript:goDetails('" . $entry_id_or_dataset_record . $screenParam ."');return false;\"></input>";
 }
 
-
+function processViewEntryLinkOverrideId($overrideId) {
+    if(is_numeric($overrideId)) {
+        return $overrideId;
+    } elseif(is_array($overrideId)) {
+        // if the overrideId is not numeric, then it must be an array from a getData dataset
+        // use the first entry id from the first form in the dataset (probably the only entry in the dataset since people wouldn't use this behaviour with a complex multiform dataset?)
+        $ids = internalRecordIds($overrideId);
+        if(!is_array($ids)) {
+            ob_start();
+            var_dump($overrideId);
+            $overrideIdVarDump = ob_get_clean();
+            exit("Error: could not determine the entry id for viewEntryLink or Button. This was passed in: $overrideIdVarDump");
+        }
+        return $ids[array_key_first($ids)][0];
+    } else {
+        exit('Error: viewEntry function called with invalid overrideId');
+    }
+}
 
 // this function creates the search boxes, filters, date ranges, etc
 // $searches is the searches the user has typed in (or defaults)
