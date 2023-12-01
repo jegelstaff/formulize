@@ -655,6 +655,8 @@ function createDataTypeUI($ele_type, $element,$id_form,$ele_encrypt) {
         $charType->addOption('char', _AM_FORM_DATATYPE_CHAR1.$charTypeSize->render()._AM_FORM_DATATYPE_CHAR2);
         $dateType = new XoopsFormRadio('', 'element_datatype', $defaultType);
         $dateType->addOption('date', _AM_FORM_DATATYPE_DATE);
+        $dateTimeType = new XoopsFormRadio('', 'element_datatype', $defaultType);
+        $dateTimeType->addOption('datetime', _AM_FORM_DATATYPE_DATETIME);
         if ($defaultType != "text" AND $defaultType != "int" AND $defaultType != "decimal" AND $defaultType != "varchar" AND $defaultType != "char" AND $defaultType != "date") {
             $otherType = new XoopsFormRadio('', 'element_datatype', $defaultType);
             $otherType->addOption($defaultType, _AM_FORM_DATATYPE_OTHER.$defaultType);
@@ -666,6 +668,7 @@ function createDataTypeUI($ele_type, $element,$id_form,$ele_encrypt) {
         $dataTypeTray->addElement($varcharType);
         $dataTypeTray->addElement($charType);
         $dataTypeTray->addElement($dateType);
+        $dataTypeTray->addElement($dateTimeType);
         $renderedUI .= $dataTypeTray->render();
     }
     return $renderedUI;

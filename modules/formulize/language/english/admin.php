@@ -546,6 +546,7 @@ define("_AM_FORM_DATATYPE_VARCHAR2"," characters (varchar)");
 define("_AM_FORM_DATATYPE_CHAR1","Store as text, exactly ");
 define("_AM_FORM_DATATYPE_CHAR2"," characters in length (char)");
 define("_AM_FORM_DATATYPE_DATE"," Store as a date");
+define("_AM_FORM_DATATYPE_DATETIME"," Store as a date and time");
 
 
 // SCREENS...including multipage

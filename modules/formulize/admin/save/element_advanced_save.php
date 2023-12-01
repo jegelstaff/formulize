@@ -66,6 +66,10 @@ function getRequestedDataType() {
         case 'date':
             $dataType = 'date';
             break;
+        case 'datetime':
+            $dataType = 'datetime';
+            break;
+
 		default:
 			print "ERROR: unrecognized datatype has been specified: ".strip_tags(htmlspecialchars($_POST['element_datatype']));
 	}
@@ -218,7 +222,8 @@ if($databaseElement AND (!$_POST['original_handle'] OR $form_handler->elementFie
 	}
 // need to update the name of the field in the data table, and possibly update the type too
 	if(!$updateResult = $form_handler->updateField($element, $_POST['original_handle'], $dataType)) {
-		print "Error: could not update the data table field to match the new settings";
+		print "\nError: could not update the data table field to match the new settings";
+        return;
 	}
 
 }
@@ -245,6 +250,7 @@ if(isset($_POST['exportoptions_onoff']) AND $_POST['exportoptions_onoff']) {
 
 if(!$element_handler->insert($element)) {
 	print "Error: could not save Advanced settings for the element.";
+    return;
 }
 
 //New index handling

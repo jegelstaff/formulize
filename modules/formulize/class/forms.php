@@ -1109,6 +1109,7 @@ class formulizeFormsHandler {
 			// first get its current state:
 			$fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) ." LIKE '$oldName'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
 			if(!$fieldStateRes = $xoopsDB->queryF($fieldStateSQL)) {
+                print $xoopsDB->error();
 				return false;
 			}
 			$fieldStateData = $xoopsDB->fetchArray($fieldStateRes);
@@ -1117,6 +1118,7 @@ class formulizeFormsHandler {
 		$newName = $newName ? $newName : $element->getVar('ele_handle');
 		$updateFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " CHANGE `$oldName` `$newName` ". $dataType;
 		if(!$updateFieldRes = $xoopsDB->queryF($updateFieldSQL)) {
+          print $xoopsDB->error();
 		  return false;
 		}
 		if($this->revisionsTableExists($element->getVar('id_form'))) {
