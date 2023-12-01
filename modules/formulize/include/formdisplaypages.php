@@ -259,7 +259,20 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 	$nextPage = $currentPage+1;
 	
     if(!$done_dest) {
-        $done_dest = getCurrentURL();
+        // check for a dd in get and use that as a screen id
+        if(isset($_GET['dd']) AND is_numeric($_GET['dd'])) {
+            $done_dest = XOOPS_URL.'/modules/formulize/index.php?sid='.$_GET['dd'];
+        } else {
+            $done_dest = getCurrentURL();
+            // check if the done destination is for this specific form screen that we're rendering, if so, switch done destination to the default list for the form if any
+            if($screen AND strstr($done_dest, 'sid='.$screen->getVar('sid'))) {
+                $form_handler = xoops_getmodulehandler('forms', 'formulize');
+                $formObject = $form_handler->get($screen->getVar('fid'));
+                if($defaultListScreenId = $formObject->getVar('defaultlist')) {
+                    $done_dest = XOOPS_URL.'/modules/formulize/index.php?sid='.$defaultListScreenId;
+                } 
+            }
+        }
     } else {
         // strip out any ve portion of a done destination, so we don't end up forcing the user back to this entry after they're done
         if($vepos = strpos($done_dest,'&ve=')) {
