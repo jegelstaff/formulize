@@ -132,7 +132,7 @@ class db {
                 case self::GET_RESULTS_ARRAY:
                 {
                     $ret = array();
-                    do {} while(null !== ($row = mysqli_fetch_array($result, MYSQL_ASSOC)) && $ret[] = $row);
+                    do {} while(null !== ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) && $ret[] = $row);
                 }
                 break;
                 case self::GET_INSERT:
