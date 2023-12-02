@@ -45,7 +45,9 @@ function model_autoloader($class) {
     }
     if (null != $xoopsDB->queryF("select count(*) from $table_name")) {
         $the_class = create_model_file_for_tables($table_name, $class);
-        eval($the_class);
+				$fileName = XOOPS_ROOT_PATH.'/cache/'.$class.'.php';
+				file_put_contents($fileName, "<?php\n\n".$the_class);
+        include_once $fileName;
     } else {
         //error_log("table $table_name not found when making a class for $class");
     }
