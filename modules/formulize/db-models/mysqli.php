@@ -646,7 +646,7 @@ throw new Exception("bam"); # how does subquery work?
                 "mysql_port"=>3306, "mysql_socket"=>null, "debug"=>false);
         }
         if (null == self::$connection) {
-            self::$connection = mysqli_connect(self::$settings['hostname'],  self::$settings['username'],
+            self::$connection = mysqli_connect('p:'.self::$settings['hostname'],  self::$settings['username'],
                 self::$settings['password'], self::_get_setting('database'), self::_get_setting('mysql_port'),
                 self::_get_setting('mysql_socket'));
             if (null != self::$connection) {
