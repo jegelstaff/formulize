@@ -664,7 +664,7 @@ div.list-of-entries .card__body {
 
 .formulize-form-submit-button {
   background: #109CF1 !important;
-  height: auto; 
+  height: auto;
 }
 
 button, input[type="submit"], input[type="button"], input[type="reset"],
@@ -890,7 +890,7 @@ button, input[type="submit"], input[type="button"], input[type="reset"],
     margin-bottom: 2em;
 }
 @media (max-width: 550px) {
-    #multipage-controls {    
+    #multipage-controls {
         justify-content: center;
     }
 }
@@ -944,7 +944,7 @@ div.subform_button_controls input[type="button"],
     width: auto;
     padding-left: 1em;
     padding-right: 1em;
-    
+
 }
 
 div.subform_button_controls input[type="text"] {
@@ -1006,7 +1006,7 @@ table.formulize-subform-table td {
 }
 
 .pill-tabs__item--active {
-  background: white; /* #109CF1;*/ 
+  background: white; /* #109CF1;*/
   border: 1px solid #109CF1;
   border-bottom: 1px solid white;
   color: #109CF1; /*#FFF;*/
@@ -1316,7 +1316,7 @@ tr.entry-row td input.hasDatepicker,
 .form-row input.formulize-time-element,
 tr.entry-row td input.formulize-time-element
 {
-    width: calc(100% - 27px); 
+    width: calc(100% - 27px);
 }
 .form-row input.formulize_autocomplete {
     max-width: 270px;
@@ -1324,8 +1324,8 @@ tr.entry-row td input.formulize-time-element
 
 /* datepicker is native in mobile so when super narrow we don't need this because calendar icon goes away*/
 @media (min-width: 350px) {
-    .form-row input.hasDatepicker { 
-        max-width: 270px; 
+    .form-row input.hasDatepicker {
+        max-width: 270px;
     }
 }
 
@@ -1355,7 +1355,7 @@ tr.entry-row td input.formulize-time-element
 table.formulize-subform-table input.hasDatepicker,
 #formulize_modal table.formulize-subform-table input.hasDatepicker {
     width: calc(100% - 27px);
-    min-width: 6.5em; 
+    min-width: 6.5em;
 }
 
 .form-container textarea, table.outer textarea,
@@ -1373,7 +1373,7 @@ textarea {
 .ui-widget input,
 .ui-widget select,
 .ui-widget textarea {
-  font-size: 1rem;  
+  font-size: 1rem;
 }
 
 table.outer select, .form-container select, #formulize_modal select {
@@ -1402,20 +1402,20 @@ div.formulize_autocomplete {
 
 @media (min-width: 768px) {
     table.outer select, .form-container select, div.formulize_autocomplete, #formulize_modal select {
-        max-width: 700px;    
+        max-width: 700px;
     }
-    
+
     div.formulize_autocomplete {
         width: calc(100% - 30px);
         display: inline;
     }
-    
+
     .form-container .col2 select,
     #formulize_modal .col2 select,
     .col2 input[type="text"],
     .col2 textarea,
     .col2 input[type="range"] {
-        min-width: 700px;    
+        min-width: 700px;
     }
     /*.formulize_autocomplete input.formulize_autocomplete_multiple {
         width: 81%;
@@ -2124,7 +2124,7 @@ input::-ms-thumb {
 }
 
 div, span, textarea, select, p, input, th, td, .ui-widget div, .ui-widget span, .ui-widget textarea, .ui-widget select, .ui-widget p, .ui-widget input, .ui-widget th, .ui-widget td {
-  font-family: Poppins, Helvetica, Verdana, sans-serif;  
+  font-family: Poppins, Helvetica, Verdana, sans-serif;
 }
 
 img, svg {
@@ -2908,11 +2908,11 @@ img {
     }
     .formulize-grid select {
         min-width: 0px !important;
-        max-width: 100% !important;    
+        max-width: 100% !important;
     }
     .formulize-grid input {
         min-width: 0px !important;
-        max-width: 200px !important;    
+        max-width: 200px !important;
     }
 }
 
@@ -2930,7 +2930,7 @@ a.loe-edit-entry {
 }
 .loe-edit-entry::before,
 a.de-edit-icon::before {
-    color: inherit;    
+    color: inherit;
 }
 a.loe-edit-entry:hover,
 a.de-edit-icon:hover{
@@ -2938,9 +2938,10 @@ a.de-edit-icon:hover{
 }
 
 #formulize-masquerade-block {
-  bottom: 1em;
-  right: 1em;
-  position: absolute;
+		top: 4em;
+		text-align: center;
+		position: absolute;
+		width: 100%;
   }
   #formulize-masquerade-block form {
     display: inline; }
@@ -2950,7 +2951,7 @@ a.de-edit-icon:hover{
     }
   #formulize-masquerade-block input[type=submit]:hover {
     transform: none; }
-    
+
 @media print {
     #formulize-masquerade-block {
         display: none;
@@ -3348,7 +3349,7 @@ table.popup th,
 #saveoptions table.outer .xoops-form-element-caption,
 #advscope table.outer .xoops-form-element-caption{
     color: black;
-    
+
 }
 #setnot table.outer .caption-marker,
 #notlist table.outer .caption-marker,
@@ -3361,7 +3362,7 @@ table.popup th,
 #pickcalc table.outer td.head,
 #saveoptions table.outer td.head,
 #advscope table.outer td.head {
-    vertical-align: top;    
+    vertical-align: top;
 }
 .requested-calcs .xoops-form-element-caption {
     font-weight: bold;
