@@ -1228,7 +1228,7 @@ function checkForLinks($frid, $fids, $fid, $entries, $unified_display=false, $un
                             $gperm_handler = xoops_gethandler('groupperm');
                             // users who can only see their own entries should be linked to their own entry in a one-to-one connection of this kind
                             if(!$gperm_handler->checkRight("view_globalscope", $one_fid['fid'], $groups, getFormulizeModId()) AND !$gperm_handler->checkRight("view_groupscope", $one_fid['fid'], $groups, getFormulizeModId())) {
-                                $scope_uids = array($xoopsUser->getVar('uid'));
+                                $scope_uids = $xoopsUser ? array($xoopsUser->getVar('uid')) : array(0);
                             }
                             if($selfEleValue[1] == 1) {
                                 // if we support multiple selections, then prepend and append a comma
