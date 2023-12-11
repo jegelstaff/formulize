@@ -1887,7 +1887,7 @@ function viewEntryButton($clickable_text, $entry_id_or_dataset_record="", $overr
 }
 
 function processViewEntryLinkOverrideId($overrideId) {
-    if(is_numeric($overrideId)) {
+    if(is_numeric($overrideId) OR $overrideId == 'new') {
         return $overrideId;
     } elseif(is_array($overrideId)) {
         // if the overrideId is not numeric, then it must be an array from a getData dataset
