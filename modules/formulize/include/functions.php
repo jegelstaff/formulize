@@ -2599,12 +2599,14 @@ function formatLinks($matchtext, $handle, $textWidth, $entryBeingFormatted) {
     global $xoopsDB, $myts;
     static $cachedValues = array();
     static $cachedTypes = array();
+		static $cachedEleUIText = array();
     $matchtext = $myts->undoHtmlSpecialChars($matchtext);
     if (isMetaDataField($handle)) {
         return printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth);
     }
     if (!isset($cachedValues[$handle])) {
         $elementMetaData = formulize_getElementMetaData($handle, true);
+				$cachedEleUIText[$handle] = $elementMetaData['ele_uitextshow'] ? unserialize($elementMetaData['ele_uitext']) : array();
         $ele_value = unserialize($elementMetaData['ele_value']);
         $ele_type = $elementMetaData['ele_type'];
         if (!$ele_value) {
@@ -2709,8 +2711,8 @@ function formatLinks($matchtext, $handle, $textWidth, $entryBeingFormatted) {
         return formulize_text_to_hyperlink($matchtext, $textWidth); // allow HTML codes in derived values
     } elseif($ele_type == "textarea" AND isset($ele_value['use_rich_text']) AND $ele_value['use_rich_text']) {
         return printSmart(strip_tags($matchtext), 100); // don't mess with rich text!
-    } elseif($ele_type == 'radio') {
-        return trans($matchtext);
+    } elseif($ele_type == 'radio' OR $ele_type == 'checkbox') {
+        return trans(formulize_swapUIText($matchtext, $cachedEleUIText[$handle]));
     } else { // regular element
         formulize_benchmark("done formatting, about to print");
         return _formatLinksRegularElement($matchtext, $textWidth, $ele_type, $handle, $entryBeingFormatted);
@@ -6148,7 +6150,7 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
         }
         $thisEntryId = isset($localIds[$valueId]) ? $localIds[$valueId] : $entryId;
         if ($counter == 1 AND $deDisplay AND $element_type != 'derived') {
-            $output .= '<div style="float: left; margin-right: 5px; margin-bottom: 5px;"><a class="de-edit-icon" href="" onclick="renderElement(\''.$handle.'\', '.$cachedElementIds[$handle].', '.$thisEntryId.', '.$fid.',0,'.$deInstanceCounter.');return false;"></a></div>';
+            $output .= '<div class="formulize-display-element-edit-icon"><a class="de-edit-icon" href="" onclick="renderElement(\''.$handle.'\', '.$cachedElementIds[$handle].', '.$thisEntryId.', '.$fid.',0,'.$deInstanceCounter.');return false;"></a></div><div class="formulize-display-element-contents">';
         }
         if ("date" == $element_type) {
             $time_value = strtotime($v);
@@ -6164,6 +6166,9 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
         }
         $counter++;
     }
+		if ($deDisplay AND $element_type != 'derived') {
+			$output .= '</div>';
+		}
         $output .= "</div>";
     return $output;
 }
