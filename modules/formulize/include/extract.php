@@ -384,9 +384,12 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
         $element_handler = xoops_getmodulehandler('elements','formulize');
         if($sortElementObject = $element_handler->get($sortField)) {
             if($sortElementObject->getVar('ele_sort')) {
-                $altSortElementObject = $element_handler->get($sortElementObject->getVar('ele_sort'));
-                $sortField = $altSortElementObject->getVar('ele_handle');
+                if($altSortElementObject = $element_handler->get($sortElementObject->getVar('ele_sort'))) {
+                    $sortField = $altSortElementObject->getVar('ele_handle');
+                }
             }
+        } else {
+            $sortField = '';
         }
     }
 
