@@ -382,10 +382,11 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
     // use alternate sorting field specified
     if($sortField AND !isMetaDataField($sortField)) {
         $element_handler = xoops_getmodulehandler('elements','formulize');
-        $sortElementObject = $element_handler->get($sortField);
-        if($sortElementObject->getVar('ele_sort')) {
-            $altSortElementObject = $element_handler->get($sortElementObject->getVar('ele_sort'));
-            $sortField = $altSortElementObject->getVar('ele_handle');
+        if($sortElementObject = $element_handler->get($sortField)) {
+            if($sortElementObject->getVar('ele_sort')) {
+                $altSortElementObject = $element_handler->get($sortElementObject->getVar('ele_sort'));
+                $sortField = $altSortElementObject->getVar('ele_handle');
+            }
         }
     }
 
