@@ -701,23 +701,17 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			}
 		}
 
-		$selectClause = "";
-		$sqlFilterElements = array();
 		$sqlFilterElementsIndex = array();
-		if( $filterElements ) { // THIS IS HIGHLY EXPERIMENTAL...BECAUSE THE PROCESSING OF DATASETS RELIES RIGHT NOW ON METADATA BEING PRESENT AT THE FRONT OF EACH SET OF FIELDS, THERE IS FURTHER WORK REQUIRED TO MAKE THIS FUNCTION WITH THE CODE THAT PROCESSES ENTRIES
-			//print_r( $filterElements );
-			//print_r( $linkformids );
+		if( $filterElements ) { 
 			foreach($filterElements as $passedForm=>$passedElements) {
 				if($passedForm == $fid) {
 					$formAlias = "main";
 				} else {
 					$keys = array_keys( $linkformids, $passedForm );
-					//print_r( $keys );
 					$formAlias = "f" . $keys[0];
 				}
 				foreach($passedElements as $thisPassedElement) {
 					$fieldSelect = $formAlias . ".`" . formulize_db_escape($thisPassedElement) . "`";
-					$sqlFilterElements[] = $fieldSelect;
 					if($passedForm == $fid) {
 						$sqlFilterElementsIndex['main'][] = $fieldSelect;
 					} else {
@@ -728,25 +722,20 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		}
 
 		// SETUP THE MAIN SELECT STATEMENT
-		if( count((array)  $sqlFilterElements ) > 0 ) {
-			// update any linked form select statements to use only the fields that have been requested
-			if($linkSelect) {
-				foreach($sqlFilterElementsIndex as $key=>$fields) {
-					if($key == 'main') { continue; }
-					$keys = array_keys( $linkformids, $key );
-					$target = "f".$keys[0].".*";
-					$linkSelect = str_replace($target, implode(",", $fields), $linkSelect);
-					$linkSelectIndex[$key] = str_replace($target, implode(",", $fields), $linkSelectIndex[$key]);
-				}
-			}
-			$selectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, ".implode( ",", $sqlFilterElements );
-            $mainSelectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime ";
-            $firstTimeGetAllMainFields = implode( ",", $sqlFilterElementsIndex['main'] ).", ";
-        } else {
-            $selectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect";
-            $mainSelectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime "; // used when querying three or more forms with one-many relationships, see below
-            $firstTimeGetAllMainFields = " main.*, ";
+        // update any linked form select statements to use only the fields that have been requested
+        if($linkSelect) {
+            foreach($sqlFilterElementsIndex as $key=>$fields) {
+                if($key == 'main') { continue; }
+                $keys = array_keys( $linkformids, $key );
+                $target = "f".$keys[0].".*";
+                $linkSelect = str_replace($target, implode(",", $fields), $linkSelect);
+                $linkSelectIndex[$key] = str_replace($target, implode(",", $fields), $linkSelectIndex[$key]);
+            }
         }
+        $mainSelectFields = $sqlFilterElementsIndex['main'] ? implode( ",", $sqlFilterElementsIndex['main'] ) : "main.*"; // prepare for only the main form fields that have been requested
+        $mainSelectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime ";
+		$selectClause = "$mainSelectClause , $mainSelectFields $linkSelect";
+        $firstTimeGetAllMainFields = "$mainSelectFields , ";
 
 		// if this is being done for gathering calculations, and the calculation is requested on the one side of a one to many/many to one relationship, then we will need to use different SQL to avoid duplicate values being returned by the database
 		// note: when the main form is on the many side of the relationship, then we need to do something rather different...not sure what it is yet...the SQL as prepared is based on the calculation field and the main form being the one side (and so both are called main), but when field is on one side and main form is many side, then the aliases don't match, and scopefilter issues abound.
@@ -824,9 +813,9 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 //if(in_array($_SERVER['REMOTE_ADDR'], $validIPs)) {
 
      //global $xoopsUser;
-     //if($xoopsUser->getVar('uid') == 4436 AND isset($GLOBALS['debuggingg'])) {
+     //if($xoopsUser->getVar('uid') == 19 ) {//AND isset($GLOBALS['debuggingg'])) {
      //     print "<br>Count query: $countMasterResults<br><br>";
-        //print "Master query: $masterQuerySQL<br>";
+     //   print "Master query: $masterQuerySQL<br>";
         //exit();
      //   print "Linkformids: ";
      //   print_r($linkformids);
@@ -1204,7 +1193,7 @@ function processGetDataResults($resultData) {
                 }
                 formulize_benchmark("processing ".$field.": $value");
                 //formulize_benchmark("preping value...");
-                $valueArray = prepvalues($value, $elementHandle, $entryIdIndex[$curFormAlias]); // note...metadata fields must not be in an array for compatibility with the 'display' function...not all values returned will actually be arrays, but if there are multiple values in a cell, then those will be arrays
+                $valueArray = prepvalues($value, $elementHandle, $entryIdIndex[$curFormAlias]); // note...metadata fields must not be in an array for compatibility with the 'display' function.
                 //formulize_benchmark("done preping value");
                 $masterResults[$masterIndexer][getFormTitle($curFormId)][$entryIdIndex[$curFormAlias]][$elementHandle] = $valueArray;
 		    } // end of foreach field loop within a record
@@ -2672,7 +2661,7 @@ function formulize_benchmark($text, $dumpLog = false) {
 		 static $prevPageTime = 0;
 		 static $elapsedLog = array();
      if(isset($GLOBALS['startPageTime']) AND $xoopsUser) {
-          if($xoopsUser->getVar('uid') == 18310) {
+          if($xoopsUser->getVar('uid') == 19) {
                $currentPageTime = microtime_float();
 							 if(!$prevPageTime) {
 										$prevPageTime = $currentPageTime;
