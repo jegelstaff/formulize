@@ -5,7 +5,7 @@ services:
     build:
       context: ./docker/php
       dockerfile: Dockerfile
-    restart: 'always'
+    restart: 'no'
     depends_on:
       - mariadb
     volumes:
@@ -19,7 +19,7 @@ services:
       - mariadb
   mariadb:
     image: "mariadb"
-    restart: 'always'
+    restart: 'no'
     ports:
       - 3306:3306
     expose:
