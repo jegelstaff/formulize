@@ -142,7 +142,9 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
 		static $cachedEntries = array();
 		if($entry != "new") {
 			if(!isset($cachedEntries[$form_id][$entry])) {
+                $GLOBALS['formulize_forceDerivedValueUpdate'] = true; // always get the latest data when setting up this cache; updating derived values bypasses the cache
 				$cachedEntries[$form_id][$entry] = getData("", $form_id, $entry);
+                unset($GLOBALS['formulize_forceDerivedValueUpdate']);
 			}	
 			$entryData = $cachedEntries[$form_id][$entry];
 		}
