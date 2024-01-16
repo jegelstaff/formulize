@@ -38,9 +38,11 @@ require(XOOPS_ROOT_PATH."/header.php");
 
 global $xoopsDB;
 
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
+
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
 $application_handler = xoops_getmodulehandler('applications', 'formulize');
-include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 $allowedForms = allowedForms();
 
 if(isset($_GET['id']) AND $_GET['id'] === "all") {

@@ -7909,8 +7909,9 @@ function determineViewEntryScreen($screen, $fid) {
             return intval($screen->getVar('viewentryscreen'));
         } else {
             $form_handler = xoops_getmodulehandler('forms', 'formulize');
-            $formObject = $form_handler->get($fid);
-            return $formObject->defaultform;
+            if($formObject = $form_handler->get($fid)) {
+                return $formObject->defaultform;
+            }
         }
     }
     if($screen AND is_a($screen, 'formulizeTemplateScreen')) {
@@ -7920,8 +7921,9 @@ function determineViewEntryScreen($screen, $fid) {
             return intval($_POST['overridescreen']);
         } else {
             $form_handler = xoops_getmodulehandler('forms', 'formulize');
-            $formObject = $form_handler->get($fid);
-            return $formObject->defaultform;
+            if($formObject = $form_handler->get($fid)) {
+                return $formObject->defaultform;
+            }
         }
     }
     return false;
