@@ -177,6 +177,7 @@ class icms_form_elements_Checkbox extends icms_form_Element {
 			if (count($ele_value) > 0 && in_array($value, $ele_value)) {
 				$ret .= " checked='checked'";
 			}
+			$ret .= " aria-describedby='" . $this->getName() . "-help-text' ";
 			$ret .= $ele_extra." />$name</label></span>$ele_delimeter";
 		}
 		if (count($ele_options) > 1) {
