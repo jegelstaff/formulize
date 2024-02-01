@@ -7,7 +7,7 @@ if(trim($elementCaption) AND $elementCaption != '&nbsp;') {
 }
 
 if(trim($elementHelpText)) {
-	$elementHelpText = "<p class='form-help-text'>$elementHelpText</p>";
+	$elementHelpText = "<p id='".$elementName."-help-text' class='form-help-text'>$elementHelpText</p>";
 }
 
 print "
@@ -15,7 +15,7 @@ $editElementLink
 <div style='width: $column1Width;' class='col1 $labelClass'>
     $elementCaption
 </div>
-<div style='width: $column2Width;' class='col2 $inputClass'>    
+<div style='width: $column2Width;' class='col2 $inputClass'>
     $renderedElement
     $elementHelpText
 </div>
