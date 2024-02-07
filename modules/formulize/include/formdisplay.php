@@ -3926,7 +3926,6 @@ function loadSub(dialogObject) {
     dialogObject.html('<div id="subentry-dialog-content"><center><?php print $workingMessageGif; ?></center></div>');
     dialogObject.load('<?php print XOOPS_URL; ?>/modules/formulize/include/subformdisplay-elementsonly.php?fid='+dialogObject.data('fid')+'&entry_id='+dialogObject.data('next_entry_id')+'&subformElementId='+dialogObject.data('subformElementId'), function() {
         jQuery(".ui-dialog-content").scrollTop(dialogObject.yposition);
-        if(typeof setDatePickerMinMaxValues === 'function') { setDatePickerMinMaxValues(); }
     });
 }
 
@@ -4065,45 +4064,14 @@ print "jQuery(document).ready(function() {
 \n";
 
 drawXhrJavascript();
-// if we're not on mobile, do the default date picker stuff
-if(!userHasMobileClient()) {
-?>
-jQuery(document).ready(function() {
-    setDatePickerMinMaxValues();
-});
 
-function setDatePickerMinMaxValues() {
-	jQuery(".icms-date-box").each(function(){
-        date_input = jQuery(this);
-        var options = {};
-        // copy datepicker_defaults so the original is not modified
-        jQuery.extend(options, datepicker_defaults);
-        var min_date = date_input.attr('min-date');
-        if (min_date && min_date.length > 0) {
-            // adjust so that the date does use the current time zone
-            min_date = new Date(min_date);
-            min_date.setTime(min_date.getTime() + min_date.getTimezoneOffset()*60*1000);
-            options.minDate = new Date(min_date);
-        }
-        var max_date = date_input.attr('max-date');
-        if (max_date && max_date.length > 0) {
-            // adjust so that the date does use the current time zone
-            max_date = new Date(max_date);
-            max_date.setTime(max_date.getTime() + max_date.getTimezoneOffset()*60*1000);
-            options.maxDate = new Date(max_date);
-        }
-        if (options.minDate || options.maxDate) {
-            date_input.datepicker("destroy");
-            date_input.datepicker(options);
-        }
-    });
-}
+?>
 
 function check_date_limits(element_id) {
     var date_input = jQuery("#"+element_id);
-    var min_date = date_input.attr('min-date');
-    var max_date = date_input.attr('max-date');
-    var selected_date = new Date(date_input.datepicker('getDate'));
+	var min_date = date_input.attr('min');
+	var max_date = date_input.attr('max');
+	var selected_date = new Date(date_input.val());
     <?php
         // if the selected_date is not valid then getTime() returns NaN (not-a-number)
         // NaN is NOT equal to NaN, so the comparison ensures the date is valid
@@ -4115,11 +4083,11 @@ function check_date_limits(element_id) {
             // adjust the time zone before displaying the date, otherwise it could show the wrong day if
             //  the user and server are in different time zones
              ?>
-            min_date.setTime(min_date.getTime() + (min_date.getTimezoneOffset() * 60 * 1000));
             if (selected_date < min_date) {
                 // date is too far in the past
                 selected_date = null;
                 date_input.val('');
+							min_date.setTime(min_date.getTime() + (min_date.getTimezoneOffset() * 60 * 1000));
                 alert("The date you selected is too far in the past.\n\n"+
                     "Please select a date on or after "+min_date.toDateString()+".");
             }
@@ -4130,10 +4098,10 @@ function check_date_limits(element_id) {
             // adjust the time zone before displaying the date, otherwise it could show the wrong day if
             //  the user and server are in different time zones
              ?>
-            max_date.setTime(max_date.getTime() + (max_date.getTimezoneOffset() * 60 * 1000));
             if (selected_date > max_date) {
                 // date is too far in the future
                 date_input.val('');
+							max_date.setTime(max_date.getTime() + (max_date.getTimezoneOffset() * 60 * 1000));
                 alert("The date you selected is too far in the future.\n\n"+
                     "Please select a date on or before "+max_date.toDateString()+".");
             }
@@ -4143,8 +4111,8 @@ function check_date_limits(element_id) {
         date_input.val('');
     }
 }
+
 <?php
-} // end of if we're not on mobile
 
     if(isset($GLOBALS['formulize_specialValidationLogicHook'])) {
         ?>
@@ -4337,7 +4305,6 @@ function checkCondition(handle, currentHTML, elementValuesForURL) {
             if(data != '{NOCHANGE}' && (currentHTML != data || (window.document.getElementById('formulize-'+handle) !== null && window.document.getElementById('formulize-'+handle).style.display == 'none'))) {
 				jQuery('#formulize-'+handle).empty();
 				jQuery('#formulize-'+handle).append(data);
-				if(typeof setDatePickerMinMaxValues === 'function') { setDatePickerMinMaxValues(); }
                 // unless it is a hidden element, show the table row...
                 if(parseInt(data.indexOf(\"input type='hidden'\"))!=0) {
                     if(window.document.getElementById('formulize-'+handle) !== null) {
