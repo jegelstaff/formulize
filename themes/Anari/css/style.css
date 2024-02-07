@@ -1702,8 +1702,18 @@ div.subform-entry-container .ui-widget-content {
   }
 }
 
+button.card__title {
+	font-family: inherit;
+  font-size: 100%;
+  line-height: 1.15;
+  margin: 0;
+	padding: 0;
+	background-color: inherit !important;
+	border: 0;
+}
+
 .card__title {
-  color: #323C47;
+  color: #323C47 !important;
   line-height: 1;
   font-weight: 500;
 }

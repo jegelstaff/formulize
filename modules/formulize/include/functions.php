@@ -6782,9 +6782,6 @@ function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
         }
         $formObject = $form_handler->get($thisFid);
         $boxeshtml = "";
-        $hideform = count((array) $cols) > 1 ? "style='opacity: 0; max-height: 0; display: none;'" : "style='opacity: 1; max-height: 10000px; display: block;'"; // start forms closed unless they have selected columns, or unless this is the only form in the set
-        $upDisplay = count((array) $cols) > 1 ? "style='display: none;'" : "style='display: inline;'";
-        $downDisplay = count((array) $cols) > 1 ? "style='display: inline;'" : "style='display: none;'";
         if($fidCounter == 0 AND $thisFid == $mainformFid) { // add in metadata columns first time through
             array_unshift($columns,
                 array('ele_handle'=>'entry_id', 'ele_caption' => _formulize_ENTRY_ID),
@@ -6798,22 +6795,63 @@ function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
             $counter++;
             $fidCounter++;
             $selected = in_array($column['ele_handle'], $selectedCols) ? "checked='checked'" : "";
-            if($selected) {
-                $hideform = "style='opacity: 1; max-height: 10000px; display: block;'";
-                $upDisplay = "style='display: inline;'";
-                $downDisplay = "style='display: none;'";
-            }
             $text = (isset($column['ele_colhead']) AND $column['ele_colhead'] != "") ? printSmart(trans($column['ele_colhead']), 75) : printSmart(trans(strip_tags($column['ele_caption'])), 75);
             $boxeshtml .= "<input type='checkbox' name='popnewcols[]' id='popnewcols".$counter."' class='colbox' value=\"{$column['ele_handle']}\" $selected />&nbsp;&nbsp;&nbsp;<label for='popnewcols".$counter."'>$text</label><br />\n";
         }
-        $html .= "<p><a onclick='javascript:toggleCols($thisFid);return false;' style='cursor: pointer;'>".$formObject->getVar('title')." <span id='up_".$thisFid."' $upDisplay>&and;</span><span id='down_".$thisFid."' $downDisplay>&or;</span></a></p>\n";
-        $html .= "<div class='elements-checkbox-list' id='cols_$thisFid' $hideform>\n";
-        $html .= $boxeshtml;
-        $html .= "</div>";
+         $html .= "
+					<button
+						onclick='toggleCols($thisFid);return false;'
+						id='id-change-columns-toggle-header-".$thisFid."'
+						class='toggle-button-change-columns'
+						aria-expanded='true'
+						aria-controls='id-change-columns-toggle-panel-".$thisFid."'
+						data-accordion-header
+					>
+						".$formObject->getVar('title')." <span id='arrow-up' aria-label='up arrow'>&and;</span><span id='arrow-down' aria-label='down arrow'>&or;</span>
+					</button>
+				";
+				$html .= "
+					<div
+						class='elements-checkbox-list'
+						id='id-change-columns-toggle-panel-".$thisFid."'
+						aria-labelledby='id-change-columns-toggle-header-".$thisFid."'
+					>
+						".$boxeshtml."
+					</div>
+				";
     }
     $html .="</div>
 
     <style>
+			button.toggle-button-change-columns {
+				font-family: inherit;
+				font-size: 100%;
+				line-height: 1.15;
+				margin: 0 0 10px 0;
+				padding: 0;
+				font-weight: bold;
+				color: #666;
+				background-color: inherit !important;
+				border: 0;
+			}
+
+			.elements-checkbox-list {
+				max-height: 10000px;
+			}
+
+			button[aria-expanded='true'] span#arrow-up {
+				display: inline;
+			}
+			button[aria-expanded='false'] span#arrow-up {
+				display: none;
+			}
+			button[aria-expanded='true'] span#arrow-down {
+				display: none;
+			}
+			button[aria-expanded='false'] span#arrow-down {
+				display: inline;
+			}
+
         .elements-checkbox-list {
             transition: all 1s ease 0.25s;
         }
@@ -6821,23 +6859,13 @@ function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
 
     <script type='text/javascript'>
     function toggleCols(fid) {
-        currentOpacity = document.getElementById('cols_'+fid).style.opacity;
-        if (currentOpacity != 1) {
-            document.getElementById('up_'+fid).style.display = 'inline';
-            document.getElementById('down_'+fid).style.display = 'none';
-            document.getElementById('cols_'+fid).style.maxHeight = '10000px';
-            document.getElementById('cols_'+fid).style.opacity = 1;
-            document.getElementById('cols_'+fid).style.display = 'block';
-        } else {
-            document.getElementById('up_'+fid).style.display = 'none';
-            document.getElementById('down_'+fid).style.display = 'inline';
-            document.getElementById('cols_'+fid).style.maxHeight = 0;
-            document.getElementById('cols_'+fid).style.opacity = 0;
-            document.getElementById('cols_'+fid).style.display = 'none';
-        }
+				const toggleHeader = document.querySelector('#id-change-columns-toggle-header-' + fid);
+				const togglePanel = document.querySelector('#id-change-columns-toggle-panel-' + fid);
+				let expanded = toggleHeader.getAttribute('aria-expanded') === 'true' || false;
+				toggleHeader.setAttribute('aria-expanded', !expanded);
+				togglePanel.hidden = expanded;
     }
     </script>
-
     ";
 
     return $html;

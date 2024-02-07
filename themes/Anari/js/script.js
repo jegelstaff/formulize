@@ -123,6 +123,7 @@ parcelRequire = (function (modules, cache, entry, globalName) {
  */
 document.addEventListener('DOMContentLoaded', function () {
   initHamburgerMenu();
+	initAccessibleCardToggles();
 });
 /**
  * Add support for opening and closing the hamburger menu
@@ -146,12 +147,28 @@ function initHamburgerMenu() {
       flyoutMenu.classList.remove('site-layout__sidebar--open');
     });
   }
-  
+
 }
+
+/**
+ * Accessible Toggle cards
+ */
+function initAccessibleCardToggles() {
+	const accordionHeaders = document.querySelectorAll('[data-accordion-header]');
+	Array.prototype.forEach.call(accordionHeaders, accordionHeader => {
+		let target = accordionHeader.parentElement.nextElementSibling;
+		accordionHeader.onclick = (event) => {
+			event.preventDefault();
+			let expanded = accordionHeader.getAttribute('aria-expanded') === 'true' || false;
+			accordionHeader.setAttribute('aria-expanded', !expanded);
+			target.hidden = expanded;
+		}
+	})
+}
+
 /**
  * Toggle cards
  */
-
 
 (function initCardToggles($) {
   if (!$) return console.warn('jQuery not loaded'); // Hide all togglable
