@@ -6886,9 +6886,15 @@ function formulize_updateDerivedValues($entry, $fid, $frid="") {
     }
     $formulize_derivedValueBeingUpdated[$entry][$fid][$frid] = true;
 
-	$GLOBALS['formulize_forceDerivedValueUpdate'] = true;
+	$unsetDerivedValueIsRequired = false;
+	if(!isset($GLOBALS['formulize_forceDerivedValueUpdate'])) {
+		$GLOBALS['formulize_forceDerivedValueUpdate'] = true;
+		$unsetDerivedValueIsRequired = true;
+	}
 	getData($frid, $fid, $entry);
-	unset($GLOBALS['formulize_forceDerivedValueUpdate']);
+	if($unsetDerivedValueIsRequired) {
+		unset($GLOBALS['formulize_forceDerivedValueUpdate']);
+	}
 
     unset($formulize_derivedValueBeingUpdated[$entry][$fid][$frid]);
 }
