@@ -4628,13 +4628,18 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
                         }
                         if(count((array) $linked_column_values)>0) {
                             // set option to entry id, with the linked columns as the label
-                            $options[$dataRow[$linked_column_count]] = implode(" | ", $linked_column_values);
+                            $concatenatedValues = implode(" | ", $linked_column_values);
+                            if(!in_array($concatenatedValues, $options)) {
+                                $options[$dataRow[$linked_column_count]] = $concatenatedValues;
+                            }
                         }
                     }
                 } else {
                     while($dataRow = $xoopsDB->fetchRow($dataResult)) {
                         $linked_value = prepvalues($dataRow[0], $linked_columns[0], $dataRow[1]);
-                        $options[$dataRow[1]] = $linked_value[0];
+                        if(!in_array($linked_value[0], $options)) {
+                            $options[$dataRow[1]] = $linked_value[0];
+                        }
                     }
                 }
             }
