@@ -130,7 +130,7 @@ if($ele_type == "subform") {
     if(!isset($processedValues['elements']['ele_value']['enforceFilterChanges'])) {
         $processedValues['elements']['ele_value']['enforceFilterChanges'] = 0;
     }
-    
+
   if(!$_POST['elements-ele_value'][3]) {
     $processedValues['elements']['ele_value'][3] = 0;
   }
@@ -173,8 +173,8 @@ if($ele_type == "select") {
   $ele_value = $element->getVar('ele_value');
 
   if(isset($_POST['formlink']) AND $_POST['formlink'] != "none") {
-    // select box is not currently linked and user is requesting to link
-    if (!$element->isLinked){
+    // select box is not currently linked and user is requesting to link (as long as it's not the first save of the element)
+    if ($_POST['formulize_admin_key'] != 'new' AND !$element->isLinked) {
       $form_handler->updateField($element, $element->getVar("ele_handle"), "bigint(20)");
     }
 
@@ -196,7 +196,7 @@ if($ele_type == "select") {
       }
     }
   }
-  
+
   // gather any additional mappings specified by the user
   $mappingCounter = 0;
   $processedValues['elements']['ele_value']['linkedSourceMappings'] = array();
@@ -210,7 +210,7 @@ if($ele_type == "select") {
   if($mappingCounter == 0) { // nothing written
     $processedValues['elements']['ele_value']['linkedSourceMappings'] = null;
   }
-  
+
   $processedValues['elements']['ele_value'][8] = 0;
   if($_POST['elements_listordd'] == 2) {
     $processedValues['elements']['ele_value'][0] = 1; // rows is 1
@@ -266,7 +266,7 @@ if($ele_type == "select") {
     // go through the passed filter settings starting from the one we need to remove, and shunt the rest down one space
     // need to do this in a loop, because unsetting and key-sorting will maintain the key associations of the remaining high values above the one that was deleted
     $originalCount = count((array) $_POST[$filter_key."_elements"]);
-    for($i=$deleteTarget;$i<$originalCount;$i++) { 
+    for($i=$deleteTarget;$i<$originalCount;$i++) {
       if($i>$deleteTarget) {
         $_POST[$filter_key."_elements"][$i-1] = $_POST[$filter_key."_elements"][$i];
         $_POST[$filter_key."_ops"][$i-1] = $_POST[$filter_key."_ops"][$i];
@@ -302,18 +302,18 @@ if($ele_type == "select") {
     *
     *when $processedValues['elements']['ele_value'][2]['{USERNAMES}'] = 1, that means this one is checked;
     *	if it's 0, then it's not checked
-    *							
+    *
     *this also applys in database: "{USERNAMES}";i:1; as selected;
     *			       "{USERNAMES}";i:0; for not selected.
     *
-    *you can use those lines to check the value. 
+    *you can use those lines to check the value.
     *  error_log("usernames: ".print_r($processedValues['elements']['ele_value'][2]['{USERNAMES}']));
     *  error_log("fullnames: ".print_r($processedValues['elements']['ele_value'][2]['{FULLNAMES}']));
     *
     *Added by Jinfu MAR 2015
     */
 
-    if($processedValues['elements']['ele_value'][8] == 1 && is_array($processedValues['elements']['ele_value'][2]) && 
+    if($processedValues['elements']['ele_value'][8] == 1 && is_array($processedValues['elements']['ele_value'][2]) &&
        (isset($processedValues['elements']['ele_value'][2]['{USERNAMES}']) || isset($processedValues['elements']['ele_value'][2]['{FULLNAMES}']))) {
       $processedValues['elements']['ele_value'][16]=0;
   }
@@ -346,7 +346,7 @@ if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.ph
   $customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
   $ele_value_before_adminSave = serialize($element->getVar('ele_value'));
   $changed = $customTypeHandler->adminSave($element, $processedValues['elements']['ele_value']); // cannot use getVar to retrieve ele_value from element, due to limitation of the base object class, when dealing with set values that are arrays and not being gathered directly from the database (it wants to unserialize them instead of treating them as literals)
-  $ele_value_after_adminSave = is_array($element->vars['ele_value']['value']) ? serialize($element->vars['ele_value']['value']) : $element->vars['ele_value']['value']; // get raw value because it won't have been serialized yet since it hasn't been written to the DB...if we use getVar, it will try to unserialize it for us, but that won't work because it hasn't been serialized yet -- if this value is not an array, take it as is though, since then it is simply unchanged from when it was originally set as the serialized value we want  
+  $ele_value_after_adminSave = is_array($element->vars['ele_value']['value']) ? serialize($element->vars['ele_value']['value']) : $element->vars['ele_value']['value']; // get raw value because it won't have been serialized yet since it hasn't been written to the DB...if we use getVar, it will try to unserialize it for us, but that won't work because it hasn't been serialized yet -- if this value is not an array, take it as is though, since then it is simply unchanged from when it was originally set as the serialized value we want
   if($ele_value_before_adminSave === $ele_value_after_adminSave) {
     unset($processedValues['elements']['ele_value']); // no change, so nothing to write below
   }
@@ -360,7 +360,7 @@ if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.ph
 foreach($processedValues['elements'] as $property=>$value) {
   // if we're setting something other than ele_value, or
   // we're setting ele_value for an element type that
-  // has an adminSave method of its own. 
+  // has an adminSave method of its own.
   // We don't want to set ele_value if it was modified during
   // adminSave, because we might clobber user's changes
   // so the user has to setVar in adminSave themselves!
