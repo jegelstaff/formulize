@@ -188,7 +188,10 @@ switch($op) {
         $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$passedEntryId][$handle] = $apiFormatValue;
       }
     }
-    $elementObject = $element_handler->get($elementId);
+    $jsonSep = '';
+    $json = '{ "elements" : [';
+    foreach(explode(',',$elementId) as $thisElementId) {
+      $elementObject = $element_handler->get($thisElementId);
     $html = "";
     if($onetoonekey AND $entryId != 'new') {
       // the onetoonekey is what changed, not a regular conditional element, so in that case, we need to re-determine the entryId that we should be displaying
@@ -224,28 +227,29 @@ switch($op) {
         }
       }
     }
-    if(!$onetoonekey OR ($entryId AND $entryId != 'new')) {
-    if(security_check($fid, $entryId)) {
+      $json .= $jsonSep.'{ "handle" : '.json_encode('de_'.$_GET['fid'].'_'.$_GET['entryId'].'_'.$thisElementId);
+      if((!$onetoonekey OR ($entryId AND $entryId != 'new')) AND security_check($fid, $entryId)) {
         $html = renderElement($elementObject, $entryId);
+        $json .= ', "data" : '.json_encode($html); 
         if(count((array) $sendBackValue)>0) {
           // if we wrote any new values in autocomplete boxes, pass them back so we can alter their values in markup so new entries are not created again!
-          print '{ "data" : '.json_encode($html).', "newvalues" : [';
+          $json .= ', "newvalues" : [';
           $start = true;
           foreach($sendBackValue as $key=>$value) {
-            if(!$start) {
-                print ', ';
-            }
-            print '{ "name" : "'.$key.'" , "value" : '.json_encode($value).' }';
+            if(!$start) { $json .= ', '; }
+            $json .= '{ "name" : "'.$key.'" , "value" : '.json_encode($value).' }';
             $start = false;
+            }
+          $json .= ']';
           }
-          print "] }";
         } else {
-            print $html;
+        $json .= ', "data" : '.json_encode('{NOCHANGE}');
         }
+      $json .= '}';
+      $jsonSep = ', '; // set the separator now in case there are more elements to process
       }
-    } else {
-        print '{NOCHANGE}';
-    }
+    $json .= ']}';
+    print $json;
     break;
 
 
