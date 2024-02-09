@@ -5576,7 +5576,11 @@ function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias,
     }
     $dbSource = isset($GLOBALS['formulize_DBSourceJoin'][$filterElementHandle]) ? "(".$GLOBALS['formulize_DBSourceJoin'][$filterElementHandle].")" : "$targetAlias`".$filterElementHandle."`";
     if(strstr($conditionsFilterComparisonValue,'-->>ADDPLAINLITERAL<<--')) {
-        $conditionsFilterComparisonValue = str_replace("-->>ADDPLAINLITERAL<<--", " OR $dbSource $filterOp ", $conditionsFilterComparisonValue);
+        $boolean = 'OR';
+        if($filterOp == '!=' OR $filterOp == 'NOT LIKE') {
+            $boolean = 'AND';
+        }
+        $conditionsFilterComparisonValue = str_replace("-->>ADDPLAINLITERAL<<--", " $boolean $dbSource $filterOp ", $conditionsFilterComparisonValue);
     }
     $thiscondition = "($dbSource ".$filterOp." ".$conditionsFilterComparisonValue.")";
     $condition .= $thiscondition;
@@ -5827,7 +5831,18 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
     // do this only when the left side is NOT linked, so as an alternative to the handling of { } above when left side is linked
     if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND (isMetaDataField($filterElementIds[$filterId]) OR !$targetElementObject->isLinked)) {
         if (isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
-            $conditionsFilterComparisonValue = "'".$likebits.formulize_db_escape($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm]).$likebits."'";
+            $literalToDBValue = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm];
+            $conditionsFilterComparisonValue = "'".$likebits.formulize_db_escape($literalToDBValue).$likebits."'";
+            $plainLiteralValue = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm];
+            if($literalToDBValue != $plainLiteralValue) {
+                $specialCharsTerm = htmlspecialchars($plainLiteralValue, ENT_QUOTES);
+                if($specialCharsTerm != $plainLiteralValue) {
+                    $quotes = (is_numeric($specialCharsTerm) AND !$likebits) ? "" : "'";
+                    $conditionsFilterComparisonValue .= '-->>ADDPLAINLITERAL<<--'.$quotes.$likebits.formulize_db_escape($specialCharsTerm).$likebits.$quotes;
+                }
+                $quotes = (is_numeric($plainLiteralValue) AND !$likebits) ? "" : "'";
+                $conditionsFilterComparisonValue .= '-->>ADDPLAINLITERAL<<--'.$quotes.$likebits.formulize_db_escape($plainLiteralValue).$likebits.$quotes;
+            }    
         } elseif ($curlyBracketEntry == "new") {
             $elementObject = $element_handler->get($bareFilterTerm);
             if (is_object($elementObject)) {
