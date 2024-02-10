@@ -161,7 +161,7 @@ class formulizeForm extends XoopsObject {
         $this->initVar("on_before_save", XOBJ_DTYPE_TXTAREA, $formq[0]['on_before_save']);
         $this->initVar("on_after_save", XOBJ_DTYPE_TXTAREA, $formq[0]['on_after_save']);
         $this->initVar("on_delete", XOBJ_DTYPE_TXTAREA, $formq[0]['on_delete']);
-        $this->initVar("custom_edit_check", XOBJ_DTYPE_TXTAREA, $formq[0]['custom_edit_check']);//
+        $this->initVar("custom_edit_check", XOBJ_DTYPE_TXTAREA, $formq[0]['custom_edit_check']);
         $this->initVar("note", XOBJ_DTYPE_TXTAREA, $formq[0]['note']);
         $this->initVar("send_digests", XOBJ_DTYPE_INT, $formq[0]['send_digests'], true);
     }

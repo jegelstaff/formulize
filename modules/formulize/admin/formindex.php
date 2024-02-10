@@ -617,9 +617,9 @@ function patch40() {
 				// 4. ib $ele_value[0] if they contain $value
 				// 5. areamodif $ele_value[0] if they contain $value
 				$elementsNeedingOpeningPHPTagsSQL = "SELECT ele_id, ele_type, ele_value FROM ".$xoopsDB->prefix('formulize')." WHERE
-					(ele_type = 'derived' AND ele_value NOT LIKE '%<?php%')
-					OR (ele_type IN ('ib', 'areamodif') AND ele_value NOT LIKE '%<?php%' AND ele_value LIKE '%\$value%')
-					OR (ele_type IN ('text', 'textarea') AND ele_value NOT LIKE '%<?php%' AND ele_value LIKE '%\$default%') ";
+					(ele_type = 'derived' AND ele_value NOT LIKE '<?php%')
+					OR (ele_type IN ('ib', 'areamodif') AND ele_value NOT LIKE '<?php%' AND ele_value LIKE '%\$value%')
+					OR (ele_type IN ('text', 'textarea') AND ele_value NOT LIKE '<?php%' AND ele_value LIKE '%\$default%') ";
 				if($res = $xoopsDB->query($elementsNeedingOpeningPHPTagsSQL)) {
 					while($record = $xoopsDB->fetchArray($res)) {
 						$eleValueKey = 0;
@@ -638,6 +638,31 @@ function patch40() {
 					exit("Error detecting code snippets that need opening PHP tags. SQL dump:<br>".$elementsNeedingOpeningPHPTagsSQL."<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
 				}
 
+				// Same operation, on the form procedures
+				$formProceduresNeedingOpeningPHPTagsSQL = "SELECT id_form as fid, on_before_save, on_after_save, on_delete, custom_edit_check
+					FROM ".$xoopsDB->prefix('formulize_id')." WHERE
+					(on_before_save != '' AND on_before_save NOT LIKE '<?php%')
+					OR (on_after_save != '' AND on_after_save NOT LIKE '<?php%')
+					OR (on_delete != '' AND on_delete NOT LIKE '<?php%')
+					OR (custom_edit_check != '' AND custom_edit_check NOT LIKE '<?php%') ";
+				if($res = $xoopsDB->query($formProceduresNeedingOpeningPHPTagsSQL)) {
+					while($record = $xoopsDB->fetchArray($res)) {
+						$events = array('on_before_save', 'on_after_save', 'on_delete', 'custom_edit_check');
+						foreach($events as $i=>$event) {
+							if($record[$event] AND substr($record[$event], 0, 5) != '<?php') {
+								$events[$i] = "$event = ".$xoopsDB->quoteString("<?php\n".$record[$event]);
+							} else {
+								unset($events[$i]);
+							}
+						}
+						$updateProcSQL = "UPDATE ".$xoopsDB->prefix('formulize_id')." SET ".implode(', ',$events)." WHERE id_form = ".$record['fid'];
+						if(!$updateProcRes = $xoopsDB->query($updateProcSQL)) {
+							print "Notice: could not add opening PHP tag to the code in procedures for form ".$record['fid']." with the SQL:<br>".str_replace('<', '&lt;',$updateProcSQL)."<br>".$xoopsDB->error()."<br>This is not a critical error. You can add the tag yourself at the top of the code, if you want the editor to provide highlighting. For more information contact <a href=mailto:info@formulize.org>info@formulize.org</a>.<br>";
+						}
+					}
+				} else {
+					exit("Error detecting procedures that need opening PHP tags. SQL dump:<br>".$formProceduresNeedingOpeningPHPTagsSQL."<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+				}
 
         global $xoopsConfig;
         $themeSql = 'UPDATE '.$xoopsDB->prefix('formulize_screen').' SET theme = "'.$xoopsConfig['theme_set'].'" WHERE theme = ""';
