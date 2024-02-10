@@ -217,15 +217,9 @@ class formulizeForm extends XoopsObject {
         if ("on_delete" == $key) {
             $this->cache_on_delete_code();
         }
-
-        if ("custom_edit_check" == $key) { // Added for custom_edit_check var
+        if ("custom_edit_check" == $key) {
             $this->cache_custom_edit_check_code();
         }
-    }
-
-    protected function on_delete_function_name() {
-        // form ID is used so the function name is unique
-        return "form_".$this->id_form."_on_delete";
     }
 
     protected function on_before_save_function_name() {
@@ -238,10 +232,15 @@ class formulizeForm extends XoopsObject {
         return "form_".$this->id_form."_on_after_save";
     }
 
-    protected function on_delete_filename() {
-        // save the code in the icms cache folder (because it is known to be writeable)
-        return ICMS_CACHE_PATH."/{$this->on_delete_function_name}.php";
-    }
+		protected function on_delete_function_name() {
+			// form ID is used so the function name is unique
+			return "form_".$this->id_form."_on_delete";
+		}
+
+		protected function custom_edit_check_function_name() {
+			// form ID is used so the function name is unique
+			return "form_".$this->id_form."_custom_edit_check";
+		}
 
     protected function on_before_save_filename() {
         // save the code in the icms cache folder (because it is known to be writeable)
@@ -253,37 +252,41 @@ class formulizeForm extends XoopsObject {
         return ICMS_CACHE_PATH."/{$this->on_after_save_function_name}.php";
     }
 
-    private function cache_on_delete_code() {
-        if (strlen($this->on_delete) > 0) {
-            $on_delete_code = <<<EOF
-<?php
+    protected function on_delete_filename() {
+			// save the code in the icms cache folder (because it is known to be writeable)
+			return ICMS_CACHE_PATH."/{$this->on_delete_function_name}.php";
+		}
 
-function form_{$this->id_form}_on_delete(\$entry_id, \$formulize_element_values, \$form_id) {
-    foreach(\$formulize_element_values as \$formulize_element_key=>\$formulize_element_value) {
-        if(is_numeric(\$formulize_element_key)) {
-            \$formulize_element_key = 'elementId'.\$formulize_element_key;
-        }
-        \${\$formulize_element_key} = \$formulize_element_value;
-    }
+		protected function custom_edit_check_filename() {
+				// save the code in the icms cache folder (because it is known to be writeable)
+				return ICMS_CACHE_PATH."/{$this->custom_edit_check_function_name}.php";
+		}
 
-{$this->on_delete}
+		public function on_before_save() {
+				// this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
+				return $this->vars['on_before_save']['value'];
+		}
 
-    return get_defined_vars();  // this converts PHP variables back into an array
-}
+		public function on_after_save() {
+				// this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
+				return $this->vars['on_after_save']['value'];
+		}
 
-EOF;
-            // todo: there is a way to validate php files on disk, so do that and report any syntax errors
-            return (false !== file_put_contents($this->on_delete_filename, $on_delete_code));
-        } else {
-            if (file_exists($this->on_delete_filename)) {
-                unlink($this->on_delete_filename);
-            }
-            return true;
-        }
-    }
+		public function on_delete() {
+			// this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
+			return $this->vars['on_delete']['value'];
+		}
+
+		public function custom_edit_check() {
+				// this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
+				return $this->vars['custom_edit_check']['value'];
+		}
 
     private function cache_on_before_save_code() {
         if (strlen($this->on_before_save) > 0) {
+
+						$this->on_before_save = removeOpeningPHPTag($this->on_before_save);
+
             $on_before_save_code = <<<EOF
 <?php
 
@@ -314,6 +317,9 @@ EOF;
 
     private function cache_on_after_save_code() {
         if (strlen($this->on_after_save) > 0) {
+
+						$this->on_after_save = removeOpeningPHPTag($this->on_after_save);
+
             $on_after_save_code = <<<EOF
 <?php
 
@@ -340,17 +346,44 @@ EOF;
         }
     }
 
-    protected function custom_edit_check_function_name() {
-        // form ID is used so the function name is unique
-        return "form_".$this->id_form."_custom_edit_check";
-    }
+    private function cache_on_delete_code() {
+				if (strlen($this->on_delete) > 0) {
 
-    protected function custom_edit_check_filename() {
-        // save the code in the icms cache folder (because it is known to be writeable)
-        return ICMS_CACHE_PATH."/{$this->custom_edit_check_function_name}.php";
-    }
+						$this->on_delete = removeOpeningPHPTag($this->on_delete);
+
+						$on_delete_code = <<<EOF
+<?php
+
+function form_{$this->id_form}_on_delete(\$entry_id, \$formulize_element_values, \$form_id) {
+	foreach(\$formulize_element_values as \$formulize_element_key=>\$formulize_element_value) {
+			if(is_numeric(\$formulize_element_key)) {
+					\$formulize_element_key = 'elementId'.\$formulize_element_key;
+			}
+			\${\$formulize_element_key} = \$formulize_element_value;
+	}
+
+{$this->on_delete}
+
+	return get_defined_vars();  // this converts PHP variables back into an array
+}
+
+EOF;
+						// todo: there is a way to validate php files on disk, so do that and report any syntax errors
+						return (false !== file_put_contents($this->on_delete_filename, $on_delete_code));
+				} else {
+						if (file_exists($this->on_delete_filename)) {
+								unlink($this->on_delete_filename);
+						}
+						return true;
+				}
+		}
+
+
     private function cache_custom_edit_check_code() {
         if (strlen($this->custom_edit_check) > 0) {
+
+						$this->custom_edit_check = removeOpeningPHPTag($this->custom_edit_check);
+
             $custom_edit_check_code = <<<EOF
 <?php
 
@@ -368,61 +401,6 @@ EOF;
             }
             return true;
         }
-    }
-
-    public function on_delete() {
-        // this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
-        return $this->vars['on_delete']['value'];
-    }
-
-    public function on_before_save() {
-        // this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
-        return $this->vars['on_before_save']['value'];
-    }
-
-    public function on_after_save() {
-        // this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
-        return $this->vars['on_after_save']['value'];
-    }
-
-    public function custom_edit_check() {
-        // this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
-        return $this->vars['custom_edit_check']['value'];
-    }
-
-    public function onDeletePrep($entry_id) {
-        $existingValues = array();
-
-        // if there is any code to run before saving, store the contents of the deleted record
-        if (is_numeric($entry_id) AND $entry_id AND strlen($this->on_delete) > 0 and (file_exists($this->on_delete_filename) or $this->cache_on_delete_code())) {
-            // get all the values of fields from the existing entry
-            global $xoopsDB;
-            $sql = "SELECT * FROM ".$xoopsDB->prefix('formulize_'.$this->getVar('form_handle'))." WHERE entry_id = ".intval($entry_id);
-            if($res = $xoopsDB->query($sql)) {
-                foreach($xoopsDB->fetchArray($res) as $handle=>$value) {
-                    $existingValues[$handle] = $value;
-                }
-            }
-        }
-
-        $this->onDeleteExistingValues[$entry_id] = $existingValues;
-    }
-
-    public function onDelete($entry_id) {
-        $existingValues = $this->onDeleteExistingValues[$entry_id];
-				// if there is any code to run before saving, include it (write if necessary), and run the function
-				if (is_numeric($entry_id) AND $entry_id AND strlen($this->on_delete) > 0 and (file_exists($this->on_delete_filename) or $this->cache_on_delete_code())) {
-						include_once $this->on_delete_filename;
-        $existingValues = call_user_func($this->on_delete_function_name, $entry_id, $existingValues, $this->getVar('id_form'));
-        // if a numeric element handle had a value set, then by convention it needs the prefix elementId before the number so we can handle it here and make it a numeric array key again
-        foreach($existingValues as $key=>$value) {
-            if(substr($key, 0, 9)=='elementId') {
-                unset($existingValues[$key]);
-                $existingValues[str_replace('elementId','',$key)] = $value;
-            }
-        }
-				}
-        return $existingValues;
     }
 
     public function onBeforeSave($entry_id, $element_values) {
@@ -469,6 +447,41 @@ EOF;
             call_user_func($this->on_after_save_function_name, $entry_id, $this->getVar('id_form'), $element_values, $existing_values, ($originalEntryId == 'new'));
         }
     }
+
+    public function onDeletePrep($entry_id) {
+				$existingValues = array();
+
+				// if there is any code to run before saving, store the contents of the deleted record
+				if (is_numeric($entry_id) AND $entry_id AND strlen($this->on_delete) > 0 and (file_exists($this->on_delete_filename) or $this->cache_on_delete_code())) {
+						// get all the values of fields from the existing entry
+						global $xoopsDB;
+						$sql = "SELECT * FROM ".$xoopsDB->prefix('formulize_'.$this->getVar('form_handle'))." WHERE entry_id = ".intval($entry_id);
+						if($res = $xoopsDB->query($sql)) {
+								foreach($xoopsDB->fetchArray($res) as $handle=>$value) {
+										$existingValues[$handle] = $value;
+								}
+						}
+				}
+
+				$this->onDeleteExistingValues[$entry_id] = $existingValues;
+		}
+
+		public function onDelete($entry_id) {
+				$existingValues = $this->onDeleteExistingValues[$entry_id];
+				// if there is any code to run before saving, include it (write if necessary), and run the function
+				if (is_numeric($entry_id) AND $entry_id AND strlen($this->on_delete) > 0 and (file_exists($this->on_delete_filename) or $this->cache_on_delete_code())) {
+						include_once $this->on_delete_filename;
+				$existingValues = call_user_func($this->on_delete_function_name, $entry_id, $existingValues, $this->getVar('id_form'));
+				// if a numeric element handle had a value set, then by convention it needs the prefix elementId before the number so we can handle it here and make it a numeric array key again
+				foreach($existingValues as $key=>$value) {
+						if(substr($key, 0, 9)=='elementId') {
+								unset($existingValues[$key]);
+								$existingValues[str_replace('elementId','',$key)] = $value;
+						}
+				}
+				}
+				return $existingValues;
+		}
 
     public function customEditCheck($form_id, $entry_id, $user_id, $allow_editing) {
         // if there is any code to run to check if editing is allowed, include it (write if necessary), and run the function
