@@ -33,9 +33,9 @@ define( 'SDATA_DB_NAME', 'formulize' );
 
 // Table Prefix
 // This prefix will be added to all new tables created to avoid name conflict in the database. If you are unsure, just use the default 'icms'
-define( 'SDATA_DB_PREFIX', 'i97f012fe' );
+define( 'SDATA_DB_PREFIX', 'ai8k7Bba' );
 
 // Password Salt Key $mainSalt
 // This salt will be appended to passwords in the icms_encryptPass() function.
 // Do NOT change this once your site is Live, doing so will invalidate everyones Password.
-define( 'SDATA_DB_SALT', 'XXx6Rsq9tuvKGgGzxVABr5mrEvkZy919T0EkGk92L0JV6h0SyInB3FxBm6q1lCzPP' );
+define( 'SDATA_DB_SALT', '1WECCCfgVHxyhMCDNyg98OLMrsvDEVXzZygCzEFgDaBhCgvVaMB1kLReUreNKM0kv' );
