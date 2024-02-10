@@ -397,11 +397,11 @@ function xoops_getbanner() {
  */
 function redirect_header($url, $time = 3, $message = '', $addredirect = true, $allowExternalLink = false)
 {
-    
+
     if(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
         exit(); // do not do redirects for ajax requests
     }
-    
+
 	global $icmsConfig, $icmsConfigPersona;
 	if(preg_match("/[\\0-\\31]|about:|script:/i", $url))
 	{
@@ -1994,10 +1994,16 @@ function &icms_getModuleHandler($name = null, $module_dir = null, $module_basena
 		} else {
 			if($module_dir != 'system') {
 				$hnd_file = ICMS_ROOT_PATH . "/modules/{$module_dir}/class/{$name}.php";
+				$hnd_file2 = ICMS_ROOT_PATH . "/modules/{$module_dir}/class/{$name}Handler.php";
 			} else {
 				$hnd_file = ICMS_ROOT_PATH . "/modules/{$module_dir}/admin/{$name}/class/{$name}.php";
+				$hnd_file2 = '';
 			}
 			if (file_exists($hnd_file)) {include_once $hnd_file;}
+			if (file_exists($hnd_file2)) {include_once $hnd_file2;}
+			if (class_exists($class)) {
+				$handlers[$module_dir][$name] = new $class(icms::$xoopsDB);
+			}
 			$class = ucfirst(strtolower($module_basename)) . ucfirst($name) . 'Handler';
 			if (class_exists($class)) {
 				$handlers[$module_dir][$name] = new $class(icms::$xoopsDB);
@@ -2740,12 +2746,12 @@ function setupAuthentication() {
     if(isset($_GET['xoops_redirect'])) {
         $_SESSION['google_xoops_redirect'] = $_GET['xoops_redirect'];
     }
-	
+
 	//Create Client Request to access Google API
 	$client = new Google_Client();
-	
+
     $client->setAccessType ("offline");
-    
+
 	$auth_creds = XOOPS_TRUST_PATH.'/client_secrets.json';
 	if (file_exists($auth_creds)) {
 		//set credentials for Auth
