@@ -706,7 +706,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		}
 
 		$sqlFilterElementsIndex = array();
-		if( $filterElements ) { 
+		if( $filterElements ) {
 			foreach($filterElements as $passedForm=>$passedElements) {
 				if($passedForm == $fid) {
 					$formAlias = "main";
@@ -1597,7 +1597,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
 															break 2; // Break out of the foreach
 													}
 											default:
-													if(stristr($thisUIText, $searchTerm)) {
+													if($searchTerm AND stristr($thisUIText, $searchTerm) !== false) {
 															$searchTerm = $thisDBValue;
 															break 2; // Break out of the foreach
 													}
