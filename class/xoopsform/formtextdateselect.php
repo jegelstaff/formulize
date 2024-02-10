@@ -24,7 +24,7 @@ if (!defined('ICMS_ROOT_PATH')) {
  *
  * @author	    Kazumi Ono	<onokazu@xoops.org>
  * @copyright	copyright (c) 2000-2003 XOOPS.org
- * @deprecated	use icms_form_elements_Date
+ * deprecated	use icms_form_elements_Date
  * @todo		Remove in version 1.4
  */
 

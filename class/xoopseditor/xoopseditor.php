@@ -1,7 +1,7 @@
 <?php
 /**
  * For backward compatibility of xoopseditors, some modules are still using this path.
- * @deprecated	use icms_plugins_EditorHandler instead. No need for an additional message here, the warning is in the deprecated class
+ * deprecated	use icms_plugins_EditorHandler instead. No need for an additional message here, the warning is in the deprecated class
  * @todo		Remove in 1.4
  *
  * @copyright	http://www.xoops.org/ The XOOPS Project

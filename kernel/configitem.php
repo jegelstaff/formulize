@@ -1,7 +1,7 @@
 <?php
 if (!defined('ICMS_ROOT_PATH')) die("ImpressCMS root path not defined");
 /**
- * @deprecated	Use icms_config_item_Object, instead
+ * deprecated	Use icms_config_item_Object, instead
  * @todo		Remove in version 1.4
  */
 class XoopsConfigItem extends icms_config_item_Object {
@@ -12,7 +12,7 @@ class XoopsConfigItem extends icms_config_item_Object {
 	}
 }
 /**
- * @deprecated	Use icms_config_item_Handler, instead
+ * deprecated	Use icms_config_item_Handler, instead
  * @todo		Remove in version 1.4
  */
 class XoopsConfigItemHandler extends icms_config_item_Handler {

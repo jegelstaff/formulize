@@ -26,7 +26,7 @@ if (!defined('ICMS_ROOT_PATH')) {
  *
  * @author	    Kazumi Ono	<onokazu@xoops.org>
  * @copyright	copyright (c) 2000-2003 XOOPS.org
- * @deprecated	Use icms_form_element_Select instead
+ * deprecated	Use icms_form_element_Select instead
  * @todo		Remove in version 1.4
  */
 class XoopsFormSelect extends icms_form_elements_Select {

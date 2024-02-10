@@ -26,7 +26,7 @@ if (!defined('ICMS_ROOT_PATH')) die("ImpressCMS root path not defined");
  * @author Kazumi Ono (AKA onokazu)
  * @copyright copyright &copy; 2000 XOOPS.org
  * @package kernel
- * @deprecated	Use icms_view_template_file_Object, instead
+ * deprecated	Use icms_view_template_file_Object, instead
  * @todo		Remove in version 1.4
  **/
 class XoopsTplfile extends icms_view_template_file_Object
@@ -50,7 +50,7 @@ class XoopsTplfile extends icms_view_template_file_Object
  *
  *
  * @author  Kazumi Ono <onokazu@xoops.org>
- * @deprecated	Use icms_view_template_file_Handler, instead
+ * deprecated	Use icms_view_template_file_Handler, instead
  * @todo		Remove in version 1.4
  */
 class XoopsTplfileHandler extends icms_view_template_file_Handler

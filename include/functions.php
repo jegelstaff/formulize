@@ -117,7 +117,7 @@ function icms_error_msg($msg, $title='', $render = true){
  *
  * @param string $msg
  * @param string $title
- * @deprecated	Use icms_coreMessage::error, instead
+ * deprecated	Use icms_coreMessage::error, instead
  * @todo		Remove in version 1.4 - all occurrences have been removed from the core
  */
 function xoops_error($msg, $title=''){
@@ -141,7 +141,7 @@ function icms_warning_msg($msg, $title='', $render = false){
 
 /**
  * Backwards Compatibility Function
- * @deprecated use icms_core_Message::warning instead
+ * deprecated use icms_core_Message::warning instead
  * @see icms_core_Message::warning
  * @todo Remove in version 1.4 - all occurrences have been removed from the core
  * @param string $msg
@@ -2025,7 +2025,7 @@ function &icms_getModuleHandler($name = null, $module_dir = null, $module_basena
  * @param	string  $name  The name of the module
  * @param	string	$module_dir		The module directory where to get the module class
  * @return	object  $inst	The reference to the generated object
- * @deprecated Use icms_getmodulehandler instead
+ * deprecated Use icms_getmodulehandler instead
  * @todo Remove this function in version 1.4
  */
 function &xoops_getmodulehandler($name = null, $module_dir = null, $optional = false)

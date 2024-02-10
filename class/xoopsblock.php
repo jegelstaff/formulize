@@ -10,7 +10,7 @@
  *
  * @version		$Id: xoopsblock.php 19425 2010-06-14 23:03:14Z skenow $
  *
- * @deprecated	use icms_core_Block class, instead - the file will be autoloaded
+ * deprecated	use icms_core_Block class, instead - the file will be autoloaded
  * @todo		Remove from this file from the core on ImpressCMS 1.4
  */
 
