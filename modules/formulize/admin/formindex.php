@@ -617,9 +617,9 @@ function patch40() {
 				// 4. ib $ele_value[0] if they contain $value
 				// 5. areamodif $ele_value[0] if they contain $value
 				$elementsNeedingOpeningPHPTagsSQL = "SELECT ele_id, ele_type, ele_value FROM ".$xoopsDB->prefix('formulize')." WHERE
-					(ele_type = 'derived' AND ele_value NOT LIKE '<?php%')
-					OR (ele_type IN ('ib', 'areamodif') AND ele_value NOT LIKE '<?php%' AND ele_value LIKE '%\$value%')
-					OR (ele_type IN ('text', 'textarea') AND ele_value NOT LIKE '<?php%' AND ele_value LIKE '%\$default%') ";
+					(ele_type = 'derived')
+					OR (ele_type IN ('ib', 'areamodif') AND ele_value LIKE '%\$value%')
+					OR (ele_type IN ('text', 'textarea') AND ele_value LIKE '%\$default%') ";
 				if($res = $xoopsDB->query($elementsNeedingOpeningPHPTagsSQL)) {
 					while($record = $xoopsDB->fetchArray($res)) {
 						$eleValueKey = 0;
@@ -627,11 +627,13 @@ function patch40() {
 							$eleValueKey = 2;
 						}
 						$newEleValue = unserialize(($record['ele_value']));
-						$newEleValue[$eleValueKey] = "<?php\n".$newEleValue[$eleValueKey];
-						$newEleValue = serialize($newEleValue);
-						$updateSQL = "UPDATE ".$xoopsDB->prefix('formulize')." SET ele_value = ".$xoopsDB->quoteString($newEleValue)." WHERE ele_id = ".$record['ele_id'];
-						if(!$updateRes = $xoopsDB->query($updateSQL)) {
-							print "Notice: could not add opening PHP tag to the code in element ".$record['ele_id']." with the SQL:<br>".str_replace('<', '&lt;',$updateSQL)."<br>".$xoopsDB->error()."<br>This is not a critical error. You can add the tag yourself at the top of the code, if you want the editor to provide highlighting. For more information contact <a href=mailto:info@formulize.org>info@formulize.org</a>.<br>";
+						if(substr($newEleValue[$eleValueKey], 0, 5) != '<?php') {
+							$newEleValue[$eleValueKey] = "<?php\n".$newEleValue[$eleValueKey];
+							$newEleValue = serialize($newEleValue);
+							$updateSQL = "UPDATE ".$xoopsDB->prefix('formulize')." SET ele_value = ".$xoopsDB->quoteString($newEleValue)." WHERE ele_id = ".$record['ele_id'];
+							if(!$updateRes = $xoopsDB->query($updateSQL)) {
+								print "Notice: could not add opening PHP tag to the code in element ".$record['ele_id']." with the SQL:<br>".str_replace('<', '&lt;',$updateSQL)."<br>".$xoopsDB->error()."<br>This is not a critical error. You can add the tag yourself at the top of the code, if you want the editor to provide highlighting. For more information contact <a href=mailto:info@formulize.org>info@formulize.org</a>.<br>";
+							}
 						}
 					}
 				} else {
