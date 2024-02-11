@@ -488,6 +488,7 @@ class formulizeDataHandler  {
 
     // this function returns the entry ID of the first entry found in the form with all the specified values in the specified elements
     // $values is a key value pair of element handles and values
+		// $operatior is a string, or an array with an operator to be used for each key value pair in the values array
 	function findFirstEntryWithAllValues($values, $operator="=") {
 		global $xoopsDB;
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
@@ -495,14 +496,17 @@ class formulizeDataHandler  {
         $sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE ";
         $valuesSQL = array();
         foreach($values as $elementIdOrHandle=>$value) {
+
+						$opp = is_array($operator) ? $operator[$elementIdOrHandle] : $operator;
+
             if(!$element = _getElementObject($elementIdOrHandle)) {
                 continue;
             }
             $quotes = '"';
-            $likeBits = $operator == "LIKE" ? "%" : "";
-            $workingOp = $operator;
+            $likeBits = $opp == "LIKE" ? "%" : "";
+            $workingOp = $opp;
             if($value === null) {
-                switch($operator) {
+                switch($opp) {
                     case "!=":
                         $value = " IS NOT NULL ";
                         break;
@@ -515,7 +519,7 @@ class formulizeDataHandler  {
                 $likeBits = '';
             } else {
                 $value = formulize_db_escape($value);
-								if($operator == 'IN') {
+								if($opp == 'IN') {
 									$quotes = '';
 									$value = "($value)";
 								} else {
