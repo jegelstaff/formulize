@@ -1,13 +1,13 @@
 ---
 layout: default
-permalink: developers/API/classes/data_handler/findFirstEntryWithAllValues/
+permalink: developers/API/classes/data_handler/findAllEntriesWithAllValues/
 ---
 
-# findFirstEntryWithAllValues( <span style='font-size: 14pt;'>(array) $elementsAndValues, (string | array) $operator = "=", (string) $fieldsToReturn = "entry_id" </span> )
+# findAllEntriesWithAllValues( <span style='font-size: 14pt;'>(array) $elementsAndValues, (string | array) $operator = "=", (string) $fieldsToReturn = "entry_id" </span> )
 
 ## Description
 
-Gets the first entry id which matches all of the values specified for the corresponding elements specified. Values must match the raw value stored in the database, and won't necessarily be human readable (could be an id number, etc).
+Gets all the entries that match all of the values specified. Values must match the raw value stored in the database, and won't necessarily be human readable (could be an id number, etc). Returns an array of results.
 
 ## Parameters
 
@@ -17,48 +17,36 @@ __$fieldsToReturn__ - Optional. the fields to select out of the database. Defaul
 
 ## Return Values
 
-Returns the __first (earliest) entry id found__, or __an alternate field requested with _$fieldsToReturn_.__ If multiple fields were requested then it returns __an array of the values of the requested fields__, where the keys are the element handles requested.
+Returns __an array of results__, where each item in the array is one record, and each record contains an array where the keys are the field names requested (defaults to _entry_id_) and the values are the values from the database. If _entry_id_ was one of the fields returned, the keys for each record will be the entry ids, otherwise they are sequential from zero.
 
 Returns __false__ if the query fails, or if the query finds no entries that match the values.
 
 ## Example
 
 ~~~
-// find the first entry created that has 'blue' as the value for the 'colour' element,
+// find all entries created that have 'blue' as the value for the 'colour' element,
 // and 'hot' as the value for the 'temperature' element, in form 6
 $form_id = 6;
 $dataHandler = new formulizeDataHandler($form_id);
-$entry_id = $dataHandler->findFirstEntryWithAllValues(array(
+$entries = $dataHandler->findAllEntriesWithAllValues(array(
     'colour'=>'blue',
     'temperature'=>'hot'
 ));
 ~~~
 
 ~~~
-// find the first entry created where the value for element 33 contains 'foo'
-// and the value for element 99 contains 'bar', in form 6
-$form_id = 6;
-$dataHandler = new formulizeDataHandler($form_id);
-$values = array(
-    33=>'foo',
-    99=>'bar'
-);
-$entry_id = $dataHandler->findFirstEntryWithAllValues($values, "LIKE");
-~~~
-
-~~~
-// find the first entry created where the value for element 99 is 'goals' or 'assists'
+// find all the entries created where the value for element 99 is 'goals' or 'assists'
 // uses the IN operator to simulate 'or'
 $form_id = 6;
 $dataHandler = new formulizeDataHandler($form_id);
 $values = array(
     99=>"'goals','assists'";
 );
-$entry_id = $dataHandler->findFirstEntryWithAllValues($values, "IN");
+$entries = $dataHandler->findFirstEntryWithAllValues($values, "IN");
 ~~~
 
 ~~~
-// return the entry id and the player from the first entry in form 6 where the city is Toronto
+// return all the entries in form 6 where the city is Toronto, and include the entry_id and player fields
 // Note the operator will be = implicitly, because that parameter has been skipped when the method is called
 // Note also that the third parameter has to be named specifically in order to skip the operator parameter
 $form_id = 6;
@@ -67,7 +55,10 @@ $values = array(
     'city'=>'Toronto';
 );
 $fieldsToReturn = 'entry_id, player'
-$values = $dataHandler->findFirstEntryWithAllValues($values, fieldsToReturn: $fieldsToReturn);
+$entries = $dataHandler->findFirstEntryWithAllValues($values, fieldsToReturn: $fieldsToReturn);
 
-var_dump($values); // will output an array something like this: 'entry_id'=>125, 'player'=>'Timashov'
+var_dump($entries);
+// will output an array something like this (note the entry ids are used as keys since entry_id was a requested field):
+// 34=>array('entry_id'=>34, 'player'=>'Matthews'),
+// 125=>array('entry_id'=>125, 'player'=>'Timashov')
 ~~~
