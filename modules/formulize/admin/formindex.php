@@ -118,8 +118,8 @@ function patch40() {
      *
      * ====================================== */
 
-    $checkThisTable = 'formulize_id';
-	$checkThisField = 'on_delete';
+    $checkThisTable = 'formulize_saved_views';
+	$checkThisField = 'sv_use_features';
 	$checkThisProperty = '';
 	$checkPropertyForValue = '';
 
@@ -486,6 +486,7 @@ function patch40() {
         $sql['element_sort'] = "ALTER TABLE ".$xoopsDB->prefix("formulize") . " ADD `ele_sort` smallint(2) NULL default NULL";
         $sql['sv_entriesperpage'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views") . " ADD `sv_entriesperpage` varchar(4) NOT NULL default ''";
         $sql['on_delete'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id") . " ADD `on_delete` text";
+				$sql['sv_use_features'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " ADD `sv_use_features` varchar(255) NULL default NULL";
 
         $needToSetSaveAndLeave = true;
         $needToSetPrintableView = true;
@@ -599,6 +600,8 @@ function patch40() {
                     print "Entries per page already added. result: OK<br>";
                 } elseif($key === "on_delete") {
                     print "On Delete already added. result: OK<br>";
+								} elseif($key === "sv_use_features") {
+										print "'Use which features' option already added to saved views. result: OK<br>";
                 } else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
