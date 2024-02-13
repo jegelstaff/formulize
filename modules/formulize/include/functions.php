@@ -4441,6 +4441,8 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
 
     $ORSETOperator = $elementObject->canHaveMultipleValues ? '' : '='; // if the element supports multiple values, which are crammed into the same cell in the DB, then no equals operator... if the options are inclusive of one another, ie: active and inactive, then this isn't going to work cleanly!
 
+		$defaultValue = parseUserAndToday($defaultValue, $elementObject->getVar('ele_handle'));
+
     if($multi) { // create the hidden field that will get the value assigned for submission
         $defaultHiddenValue = "";
         if(isset($_POST[$id])) {
@@ -6578,7 +6580,7 @@ function parseUserAndToday($term, $element=null) {
 	}
  	if (substr(trim($term,"{}"), 0, 5) == "TODAY") {
 		$number = substr(trim($term, "{}"), 5);
-		$term = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
+		$term = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+intval($number), date("Y")));
 	}
   return $term;
 }

@@ -1967,8 +1967,9 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
     if($handle == 'creation_datetime' OR $handle == 'mod_datetime' OR $elementObject = $element_handler->get($handle)) {
         $typeInfo = $elementObject ? $elementObject->getDataTypeInformation() : true;
         if($typeInfo == true OR $typeInfo['dataType'] == 'date') {
-            $startText = "";
-            $endText = "";
+						$search_text = parseUserAndToday($search_text);
+            $startText = $search_text ? strtotime($search_text) : '';
+            $endText = $startText;
             // split any search_text into start and end values
             if(strstr($search_text, "//")) {
                 $startEnd = explode("//",$search_text);
