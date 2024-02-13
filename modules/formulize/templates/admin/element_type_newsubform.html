@@ -10,7 +10,7 @@
 	    </div>
 	</fieldset>
     </div>
-    
+
     <div class="form-item">
 	<fieldset>
 		<legend>User interface options</legend>
@@ -37,12 +37,12 @@
 		<div class="form-item">
 			<fieldset>
 				<legend><{$smarty.const._AM_ELE_SUBFORM_ELEMENT_LIST}></legend>
-				
+
 			<select name="elements_ele_value_1[]" size="10" multiple>
 				<{html_options options=$content.subformelements selected=$content.ele_value[1]}>
 			</select>
 			<div class="description"><{$smarty.const._AM_ELE_SUBFORM_ELEMENTS_DESC}></div>
-			
+
 			</fieldset>
 		</div>
 
@@ -62,16 +62,16 @@
 	    <div class="description"><{$smarty.const._AM_ELE_SUBFORM_BLANKS_HELP}></div>
 		</div>
 
-			    
-	
+
+
 			<div class="form-item"><input type="checkbox" id="element-subformviewbutton" name="elements-ele_value[3]" <{if $content.ele_value[3]}>checked="checked"<{/if}> value="1"/> <{$smarty.const._AM_ELE_SUBFORM_VIEW}>
 				<div class="description"><{$smarty.const._AM_ELE_SUBFORM_VIEW_DESC}></div>
 			</div>
-			
-			    
+
+
 			    </fieldset>
-			    </div>		
-    
+			    </div>
+
 
 <div class="form-item">
 <fieldset>
@@ -88,13 +88,13 @@ By default, all entries in a subform that are tied to the main form will be acce
 				</div>
 				<{else}>
 					<p>You need to select a subform and save this element before you can choose conditions.</p>
-<{/if}>					
+<{/if}>
 </fieldset>
 </div>
 
 
 
-    
+
 
 	<div class="form-item">
 		<fieldset>
@@ -123,7 +123,7 @@ By default, all entries in a subform that are tied to the main form will be acce
 			}
 		});
 	});
-	
+
 	$("div#filterdiv > a.conditionsdelete").click(function () {
 		$(".optionsconditionsdelete").val($(this).attr('target'));
 		$("[name=reload_option_page]").val(1);
@@ -132,7 +132,7 @@ By default, all entries in a subform that are tied to the main form will be acce
 	});
 
 
-	$("div#filterdiv > input#addcon").click(function () {
+	$("div#filterdiv > input[name=addcon]").click(function () {
 		$("[name=reload_option_page]").val(1);
 	  $(".savebutton").click();
 		return false;
