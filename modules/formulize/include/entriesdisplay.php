@@ -291,7 +291,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 					"sv_quicksearches, " .
 					"sv_global_search, " .
 					"sv_pubfilters, " .
-                    "sv_entriesperpage" .
+          "sv_entriesperpage" .
+					"sv_use_features" .
 				") VALUES (" .
 					"\"".formulize_db_escape($savename)					."\", ".
 					"\"".formulize_db_escape($savegroups)				."\", ".
@@ -314,7 +315,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 					"\"".formulize_db_escape($qsearches)				."\", ".
 					"\"".formulize_db_escape($_POST['global_search'])	."\", ".
 					"\"".formulize_db_escape($_POST['pubfilters'])      ."\", ".
-                    "\"".((isset($_POST['formulize_entriesPerPage']) AND $_POST['formulize_entriesPerPage'] !== "") ? intval($_POST['formulize_entriesPerPage']) : ""). "\"".
+          "\"".((isset($_POST['formulize_entriesPerPage']) AND $_POST['formulize_entriesPerPage'] !== "") ? intval($_POST['formulize_entriesPerPage']) : ""). "\", ".
+					"\"".formulize_db_escape($_POST['sv_use_features'])      ."\" ". // NOTE WHEN SAVING A LIMITED SET OF FEATURES AND SEARCHES ARE INCLUDED BUT COLUMNS ARE NOT, THE SEARCHES ARE OUT OF ORDER BECAUSE THEY ARE SAVED IN AN ARRAY ASSUMED TO BE PARALLEL TO THE COLUMNS. THIS DATA STRUCTURE NEEDS TO BE REJIGGED AND A DB PATCH NEEDS TO BE PREPARED.
 				")";
 		} else {
 			// print "UPDATE " . $xoopsDB->prefix("formulize_saved_views") . " SET sv_pubgroups=\"$savegroups\", sv_mod_uid=\"$uid\", sv_lockcontrols=\"{$_POST['savelock']}\", sv_hidelist=\"{$_POST['hlist']}\", sv_hidecalc=\"{$_POST['hcalc']}\", sv_asearch=\"$savesearches\", sv_sort=\"{$_POST['sort']}\", sv_order=\"{$_POST['order']}\", sv_oldcols=\"{$_POST['oldcols']}\", sv_currentview=\"{$_POST['savescope']}\", sv_calc_cols=\"{$_POST['calc_cols']}\", sv_calc_calcs=\"{$_POST['calc_calcs']}\", sv_calc_blanks=\"{$_POST['calc_blanks']}\", sv_calc_grouping=\"{$_POST['calc_grouping']}\", sv_quicksearches=\"$qsearches\" WHERE sv_id = \"" . substr($saveid_formulize, 1) . "\"";
@@ -339,7 +341,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 					"sv_quicksearches 	= \"".formulize_db_escape($qsearches) 				."\", ".
 					"sv_global_search   = \"".formulize_db_escape($_POST['global_search'])	."\", ".
 					"sv_pubfilters      = \"".formulize_db_escape($_POST['pubfilters'])	    ."\", ".
-                    "sv_entriesperpage  = \"".((isset($_POST['formulize_entriesPerPage']) AND $_POST['formulize_entriesPerPage'] !== "") ? intval($_POST['formulize_entriesPerPage']) : "")."\"".
+          "sv_entriesperpage  = \"".((isset($_POST['formulize_entriesPerPage']) AND $_POST['formulize_entriesPerPage'] !== "") ? intval($_POST['formulize_entriesPerPage']) : "")."\", ".
+					"sv_use_features      = \"".formulize_db_escape($_POST['sv_use_features'])	    ."\" ".
 				" WHERE " .
 					"sv_id = \"" . substr($saveid_formulize, 1) . "\"";
 		}
@@ -366,7 +369,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		}
 	}
 
-	$forceLoadView = false;
+	$currentView = "";
 	if($screen) {
 		$loadview = is_numeric($loadview) ? $loadview : $screen->getVar('defaultview'); // flag the screen default for loading if no specific view has been requested
 		if (is_array($loadview)) {
@@ -434,6 +437,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	// set flag to indicate whether we let the user's scope setting expand beyond their normal permission level (happens when unlocked published views are in effect)
 	$currentViewCanExpand = false;
 
+	$_loaded_sv_use_features = '';
 	// handling change in view, and loading reports/saved views if necessary
 	if($_POST['loadreport']) {
 
@@ -449,26 +453,74 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				}
 			}
 			list(
-				$_POST['currentview'],
-				$_POST['oldcols'],
+				$_loaded_currentview,
+				$_loaded_oldcols,
 				$_POST['asearch'],
-				$_POST['calc_cols'],
-				$_POST['calc_calcs'],
-				$_POST['calc_blanks'],
-				$_POST['calc_grouping'],
-				$_POST['sort'],
-				$_POST['order'],
-				$savedViewHList,
-				$savedViewHCalc,
+				$_loaded_calc_cols,
+				$_loaded_calc_calcs,
+				$_loaded_calc_blanks,
+				$_loaded_calc_grouping,
+				$_loaded_sort,
+				$_loaded_order,
+				$_loaded_savedViewHList,
+				$_loaded_savedViewHCalc,
 				$_POST['lockcontrols'],
-				$quicksearches,
-				$_POST['global_search'],
-                $_POST['pubfilters'],
-                $_POST['formulize_entriesPerPage']) = loadReport(substr($_POST['currentview'], 1), $fid, $frid);
-			if(!isset($_POST['formulize_preserveListCalcPage']) AND !isset($_GET['formulize_preserveListCalcPage'])) {
+				$_loaded_quicksearches,
+				$_loaded_global_search,
+        $_POST['pubfilters'],
+        $_loaded_formulize_entriesPerPage,
+				$_loaded_sv_use_features) = loadReport(substr($_POST['currentview'], 1), $fid, $frid);
+
+				$quicksearches = "";
+				foreach(explode(',', $_loaded_sv_use_features) as $thisFeature) {
+					$couldLoadAdvanceView = true; // advance view can layer in on top of this stuff
+					switch($thisFeature) {
+						case 'scope':
+							$_POST['currentview'] = $_loaded_currentview;
+							break;
+						case 'cols':
+							$_POST['oldcols'] = $_loaded_oldcols;
+							break;
+						case 'searches':
+							$quicksearches = $_loaded_quicksearches;
+							$_POST['global_search'] = $_loaded_global_search;
+							break;
+						case 'sort':
+							$_POST['sort'] = $_loaded_sort;
+							$_POST['order'] = $_loaded_order;
+							break;
+						case 'calcs':
+							$_POST['calc_cols'] = $_loaded_calc_cols;
+							$_POST['calc_calcs'] = $_loaded_calc_calcs;
+							$_POST['calc_blanks'] = $_loaded_calc_blanks;
+							$_POST['calc_grouping'] = $_loaded_calc_grouping;
+							$savedViewHList = $_loaded_savedViewHList;
+							$savedViewHCalc =  $_loaded_savedViewHCalc;
+							break;
+						case 'epp':
+							$_POST['formulize_entriesPerPage'] = $_loaded_formulize_entriesPerPage;
+							break;
+					}
+				}
+				// if we didn't load in a scope from the saved view, then we have to set it up now (it is only setup above if no saved view will be loaded... spaghetti! But unfortunately this 'controller' at the top of the displayEntries function is among the oldest and fiddliest parts of the code (circa 2005))
+				if(!is_numeric(substr((string)$_POST['currentview'],0,1))) {
+					if($view_globalscope) {
+						$_POST['currentview'] = "all";
+					} elseif($view_groupscope) {
+						$_POST['currentview'] = "group";
+					} else {
+						$_POST['currentview'] = "mine";
+					}
+				}
+
+				if(!isset($_POST['formulize_preserveListCalcPage']) AND !isset($_GET['formulize_preserveListCalcPage'])) {
 				$_POST['hlist'] = $savedViewHList;
 				$_POST['hcalc'] = $savedViewHCalc;
 			}
+
+			// NEED TO RESPECT A NEW OPTION TO TREAT THE QUICKSEARCHES COMING OUT OF THE SAVED VIEW AS FUNDAMENTAL FILTERS INSTEAD OF NORMAL SEARCHES
+			// THEY CAN BE ADDED TO THE SCREEN OBJECT, THE FUNDAMENTAL_FILTERS PROPERTY, WHICH IS AN ARRAY OF FILTER CONDITIONS
+
 			// explode quicksearches into the search_ values
 			$allqsearches = explode("&*=%4#", $quicksearches);
 			$colsforsearches = explode(",", $_POST['oldcols']);
@@ -482,10 +534,6 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			}
 			$_POST['oldcols'] = implode(",",$colsforsearches); // need to reconstruct this in case any columns were removed because of persistent searches on a hidden column
 
-			// BIG HACK FOR DARA THAT NEEDS TO BE BASED ON NEW UI IN CHANGE COLUMNS
-			if(strstr(getCurrentURL(),'dara.daniels') AND isset($_GET['sid']) AND $_GET['sid']==66) {
-				$_POST['oldcols'] = "ro_module_ug_grad_shortform,ro_module_semester,ro_module_program,ro_module_full_course_title,sections_section_number,ro_module_lecture_studio,ro_module_course_weight_ui,instr_assignments_instructor,instr_assignments_split_weight_override,course_components_teaching_weighting_display,course_components_teaching_weighting_ove,ro_module_course_coordinator,ro_module_coordinatorship_weighting_display,ro_module_coord_weighting_override";
-			}
 		}
 
 		$currentView = $_POST['currentview'];
@@ -516,7 +564,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			// a saved view was requested as the current view, but we don't want to load the entire thing....this means that we just want to use the view to generate the scope, we don't want to load all settings.  So we have to load the view, but discard everything but the view's currentview value
 			// if we were supposed to load the whole thing, loadreport would have been set in post and the above code would have kicked in
 			$loadedViewSettings = loadReport(substr($_POST['currentview'], 1), $fid, $frid);
-			$currentview = $loadedViewSettings[0];
+			$currentView = $loadedViewSettings[0];
 		} else {
 			$currentView = $_POST['currentview'];
 		}
@@ -528,18 +576,34 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	// if we did not load a full report/saved view, then load an advanceview if any is specified and the current page load is appropriate for it (see above for couldLoadAdvanceView))
 	if($screen AND count((array) $screen->getVar('advanceview')) > 0 AND $couldLoadAdvanceView) {
+
+		$features_loaded_from_saved_view = explode(',',$_loaded_sv_use_features);
+
 		// kill the quicksearches, unless we've found a special flag that will cause them to be preserved
-		if(!isset($_POST['formulize_preserveQuickSearches']) AND !isset($_GET['formulize_preserveQuickSearches'])) {
+		if(!isset($_POST['formulize_preserveQuickSearches']) AND !isset($_GET['formulize_preserveQuickSearches']) AND !in_array('searches', $features_loaded_from_saved_view)) {
 			foreach($_POST as $k=>$v) {
 				if(substr($k, 0, 7) == "search_" AND $v != "") {
 					unset($_POST[$k]);
 				}
 			}
 		}
-		list($_POST['oldcols'],
-			 $_POST['sort'],
-			 $_POST['order'],
-			 $quicksearches) = loadAdvanceView($fid, $screen->getVar('advanceview'));
+
+		$quicksearches = "";
+		list($_av_oldcols,
+			 $_av_sort,
+			 $_av_order,
+			 $_av_quicksearches) = loadAdvanceView($fid, $screen->getVar('advanceview'));
+
+		if(!in_array('cols', $features_loaded_from_saved_view)) {
+			$_POST['oldcols'] = $_av_oldcols;
+		}
+		if(!in_array('searches', $features_loaded_from_saved_view)) {
+			$quicksearches = $_av_quicksearches;
+		}
+		if(!in_array('sort', $features_loaded_from_saved_view)) {
+			$_POST['sort'] = $_av_sort;
+			$_POST['order'] = $_av_order;
+		}
 
 		// explode quicksearches into the search_ values
 		$allqsearches = explode(",", $quicksearches);
@@ -1357,6 +1421,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	print "<input type=hidden name=lastloaded id=lastloaded value=\"$lastloaded\"></input>\n";
 	print "<input type=hidden name=saveviewname id=saveviewname value=\"\"></input>\n";
 	print "<input type=hidden name=saveviewoptions id=saveviewoptions value=\"\"></input>\n";
+	print "<input type=hidden name=sv_use_features id=sv_use_features value=\"\"></input>\n";
 
 	// setup HTML to receive custom button values -- javascript function sets these based on which button is clicked
 	print "<input type=hidden name=caid id=caid value=\"\"></input>\n";
@@ -3540,7 +3605,8 @@ function loadReport($id, $fid, $frid) {
 	$to_return[12] = $thisview[0]['sv_quicksearches'];
 	$to_return[13] = $thisview[0]['sv_global_search'];
 	$to_return[14] = $thisview[0]['sv_pubfilters'];
-    $to_return[15] = $thisview[0]['sv_entriesperpage'];
+  $to_return[15] = $thisview[0]['sv_entriesperpage'];
+	$to_return[16] = $thisview[0]['sv_use_features'];
 	return $to_return;
 }
 

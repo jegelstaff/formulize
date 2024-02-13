@@ -539,6 +539,13 @@ define("_formulize_DE_SAVE_NOPUB", "[Do not publish this view]");
 define("_formulize_DE_SAVE_LOCKCONTROLS", "Lock the controls?");
 define("_formulize_DE_SAVE_LOCKCONTROLS_HELP1", "<span style=\"font-weight: bold;\">About locking the controls:</span>");
 define("_formulize_DE_SAVE_LOCKCONTROLS_HELP2", "<span style=\"font-weight: normal;\">Certain actions, such as advanced searches, calculations and changing columns, can reveal more information to the viewer than what is presented by default.  When the controls are locked, and this view is selected by viewers who don't otherwise have access to these entries, then all actions that can reveal more information are turned off.  Locking the controls has no effect on viewers who can normally view all the details by themselves.</span>");
+define("_formulize_DE_SAVE_USE_FEATURES", "Which features of the list should be saved?");
+define("_formulize_DE_SAVE_UF_SCOPE", "Scope (entries from which groups)");
+define("_formulize_DE_SAVE_UF_COLS", "Columns");
+define("_formulize_DE_SAVE_UF_SEARCHES", "Searches");
+define("_formulize_DE_SAVE_UF_SORT", "Sorting Order");
+define("_formulize_DE_SAVE_UF_CALCS", "Caclulations");
+define("_formulize_DE_SAVE_UF_EPP", "Entries per page");
 define("_formulize_DE_SAVE_BUTTON", "Save the current view settings with these options");
 define("_formulize_DE_SAVE_NEWPROMPT", "Please type a name for this view:");
 

@@ -68,7 +68,7 @@ function saveSettings(formObj) {
 			var newname = prompt("<?php print _formulize_DE_SAVE_NEWPROMPT; ?>", oldname);
 			if(!newname) {
 				return false;
-			} 
+			}
 			i=saveElement.options.length;
 		}
 	}
@@ -109,22 +109,35 @@ if($pubflag) {
 		}
 	}
 
-    var cols='';
-    var start=1;
-    var colboxes = document.getElementsByClassName('colbox');
-    for(var i=0; colboxes[i]; ++i) {
-        if (colboxes[i].checked) {
-            if (start) {
-                cols = colboxes[i].value;
-                start = 0;
-            } else {
-                cols = cols +','+colboxes[i].value;
-            }
-        }
-    }
-        
-    window.opener.document.controls.pubfilters.value = cols;
-   
+	var cols='';
+	var start=1;
+	var colboxes = document.getElementsByClassName('colbox');
+	for(var i=0; colboxes[i]; ++i) {
+			if (colboxes[i].checked) {
+					if (start) {
+							cols = colboxes[i].value;
+							start = 0;
+					} else {
+							cols = cols +','+colboxes[i].value;
+					}
+			}
+	}
+	window.opener.document.controls.pubfilters.value = cols;
+
+	var sv_use_features='';
+	var start=1;
+	var features_list = document.getElementsByName('features_list[]');
+	for(var i=0; features_list[i]; ++i) {
+			if (features_list[i].checked) {
+					if (start) {
+						sv_use_features = features_list[i].value;
+							start = 0;
+					} else {
+						sv_use_features = sv_use_features +','+features_list[i].value;
+					}
+			}
+	}
+	window.opener.document.controls.sv_use_features.value = sv_use_features;
 
 	window.opener.document.controls.savegroups.value = pubgroups;
 	window.opener.document.controls.savelock.value = locksetting;
@@ -134,10 +147,15 @@ if($pubflag) {
 	window.opener.document.controls.savescope.value = newscope;
 	window.opener.document.controls.saveid_formulize.value = newid;
 	window.opener.document.controls.savename.value = newname;
+
 	window.opener.showLoading();
 	window.self.close();
 }
 
+onload = function () {
+	window.document.getElementById('checkemall').style.display = 'none';
+	window.document.querySelectorAll('label[for="checkemall"]')[0].style.display = 'none';
+}
 
 -->
 </script>
@@ -168,7 +186,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 	}
 	$frid = "";
 	if(!$frid = $_GET['frid']) {
-		$frid = intval($_POST['frid']);	
+		$frid = intval($_POST['frid']);
 	}
 
 	$gperm_handler = &xoops_gethandler('groupperm');
@@ -196,7 +214,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 	$view_globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid);
 	$publish_reports = $gperm_handler->checkRight("publish_reports", $fid, $groups, $mid);
 	$publish_globalscope = $gperm_handler->checkRight("publish_globalscope", $fid, $groups, $mid);
-	if(strstr($_GET['currentview'], ",")) { 
+	if(strstr($_GET['currentview'], ",")) {
 		$specificgroups = explode(",", trim($_GET['currentview'], ","));
 		if($publish_reports OR $publish_globalscope) {
 			$groupNames = groupNameList(trim($_GET['currentview'], ","), false); // false forces all groups to be got even if the "onlymembergroups" flag is present
@@ -204,7 +222,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 			$groupNames = groupNameList(trim($_GET['currentview'], ","));
 		}
 	}
-	
+
 
 // main body of page goes here...
 include_once XOOPS_ROOT_PATH . "/class/xoopsformloader.php";
@@ -226,7 +244,7 @@ print ".caption-marker { display: none; }\n";
 print "</style>\n";
 
 print "</head>";
-print "<body style=\"background: white; margin-top:20px;\"><center>"; 
+print "<body style=\"background: white; margin-top:20px;\"><center>";
 print "<table width=100%><tr><td width=5%></td><td width=90%>";
 
 
@@ -275,21 +293,21 @@ if($view_groupscope OR $view_globalscope OR $specificgroups) {
 	$scope->addOption("mine", $s1);
 }
 if($view_groupscope AND ($view_globalscope OR $specificgroups) AND !$loadOnlyView) {
-	$scope->addOption("group", $s2 . "<br>"); 
-} elseif($view_groupscope AND !$loadOnlyView) { 
-	$scope->addOption("group", $s2); 
+	$scope->addOption("group", $s2 . "<br>");
+} elseif($view_groupscope AND !$loadOnlyView) {
+	$scope->addOption("group", $s2);
 }
-if($view_globalscope AND $specificgroups AND !$loadOnlyView) { 
-	$scope->addOption("all", $s3 . "<br>"); 
+if($view_globalscope AND $specificgroups AND !$loadOnlyView) {
+	$scope->addOption("all", $s3 . "<br>");
 } elseif($view_globalscope AND !$loadOnlyView) {
-	$scope->addOption("all", $s3); 
+	$scope->addOption("all", $s3);
 }
 if($specificgroups) {
 	if(substr($_GET['currentview'], 0, 17) == ",onlymembergroups") {
 		if(!$publish_reports AND !$publish_globalscope) { // publishing permission is taken to be all that we need, but it's actually the disused update report permissions that should probably be trotted out for this
 			$plainSpecGroups = ",".implode(",",array_intersect($groups, $specificgroups)).",";
 		} else {
-			$plainSpecGroups = substr($_GET['currentview'], 17);			
+			$plainSpecGroups = substr($_GET['currentview'], 17);
 		}
 		$memberonlySpecGroups = $_GET['currentview'];
 	} else {
@@ -352,12 +370,15 @@ if($pubflag) {
 			$currentlock = 0;
 		}
 	} elseif($viewselection AND $viewselection != "new" AND $viewselection != "x1" AND $viewselection != "x2") { // new view
-		$lastpub = q("SELECT sv_pubgroups, sv_lockcontrols FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id = '" . substr($viewselection, 1) . "'");
+		$lastpub = q("SELECT sv_pubgroups, sv_lockcontrols, sv_use_features FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id = '" . substr($viewselection, 1) . "'");
 		$lastpubgroups = explode(",", $lastpub[0]['sv_pubgroups']);
+		$features_list = explode(",", $lastpub[0]['sv_use_features']);
+		$features_list = $features_list ? $features_list : explode(',','scope,cols,searches,sort,calcs,epp');
 		$currentlock = $lastpub[0]['sv_lockcontrols'];
 	} else {
 		$lastpubgroups[0] = "donotpub";
 		$currentlock = 1; // default to locked
+		$features_list = explode(',','scope,cols,searches,sort,calcs,epp');
 	}
 
 	$overlap = array_intersect($lastpubgroups, array_keys($publishgroups));
@@ -371,7 +392,7 @@ if($pubflag) {
 	$pubgrouplist->addOptionArray($publishgroups);
 
 	$lockcontrols = new xoopsFormElementTray(_formulize_DE_SAVE_LOCKCONTROLS, "<br>");
-	$yes = new xoopsFormRadio('', 'lockcontrols', $currentlock); 
+	$yes = new xoopsFormRadio('', 'lockcontrols', $currentlock);
 	$yes->addOption("1", _YES);
 	$no = new xoopsFormRadio('', 'lockcontrols', $currentlock);
 	$no->addOption("0", _NO);
@@ -379,14 +400,25 @@ if($pubflag) {
 	$lockcontrols->addElement($no);
 
 	$saveform->addElement($pubgrouplist);
-    
+
+	$sv_use_features = new XoopsFormCheckBox(_formulize_DE_SAVE_USE_FEATURES, 'features_list', $features_list, '<br>');
+	$sv_use_features->addOptionArray(array(
+		'scope'=>_formulize_DE_SAVE_UF_SCOPE,
+		'cols'=>_formulize_DE_SAVE_UF_COLS,
+		'searches'=>_formulize_DE_SAVE_UF_SEARCHES,
+		'sort'=>_formulize_DE_SAVE_UF_SORT,
+		'calcs'=>_formulize_DE_SAVE_UF_CALCS,
+		'epp'=>_formulize_DE_SAVE_UF_EPP,
+	));
+	$saveform->addElement($sv_use_features);
+
     // get the pubfilters for the viewselection
     $pubfilters = q("SELECT sv_pubfilters FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id = '" . substr($viewselection, 1) . "'");
     $pubfilters = $pubfilters[0]['sv_pubfilters'] ? explode(",",$pubfilters[0]['sv_pubfilters']) : array();
     $filterChoices = new xoopsFormLabel(_formulize_DE_SAVE_PUBFILTERS, generateTidyElementList($fid, getAllColList($fid, $frid, $groups), $pubfilters));
     $filterChoices->setDescription(_formulize_DE_SAVE_PUBFILTERS_DESC);
     $saveform->addElement($filterChoices);
-    
+
 	$saveform->addElement($lockcontrols);
 
 }
@@ -400,6 +432,7 @@ $subButton->setExtra("onclick=\"javascript:saveSettings(this.form);\"");
 $saveform->addElement($subButton);
 
 if($pubflag) {
+
  	$saveform->insertBreak(_formulize_DE_SAVE_LOCKCONTROLS_HELP1 . " " . _formulize_DE_SAVE_LOCKCONTROLS_HELP2, "head");
 }
 
@@ -420,48 +453,48 @@ function makeSaveList($s_reports, $ns_reports, $other_p_reports, $other_np_repor
 $saveoptions["new"] = _formulize_DE_SAVE_AS;
 if($s_reports[0] != "" OR $ns_reports[0] != "") { $saveoptions["x1"] = _formulize_DE_SAVED_VIEWS; }
 foreach($s_reports as $report) {
-	if($viewselection == "sold_" . $report['report_id'] OR $viewselection == "pold_" . $report['report_id']) { 
+	if($viewselection == "sold_" . $report['report_id'] OR $viewselection == "pold_" . $report['report_id']) {
 //		$saveoptions["sold_" . $report['report_id']] = ".  " . _formulize_DE_SAVE_UPDATE . $report['report_name'];
 		$defaultSave = "sold_" . $report['report_id'];
 	} //else {
 	$saveoptions["sold_" . $report['report_id']] = ".  " . _formulize_DE_SAVE_REPLACE . stripslashes($report['report_name']);
 //	}
 	if($lastloaded == "sold_" . $report['report_id'] OR $lastloaded == "pold_" . $report['report_id']) {
-		$saveoptions["sold_" . $report['report_id']] .= " (" . _formulize_DE_SAVE_LASTLOADED . ")"; 
+		$saveoptions["sold_" . $report['report_id']] .= " (" . _formulize_DE_SAVE_LASTLOADED . ")";
 	}
 }
 foreach($ns_reports as $report) {
-	if($viewselection == "s" . $report['sv_id'] OR $viewselection == "p" . $report['sv_id']) { 
+	if($viewselection == "s" . $report['sv_id'] OR $viewselection == "p" . $report['sv_id']) {
 //		$saveoptions["s" . $report['sv_id']] = ".  " . _formulize_DE_SAVE_UPDATE . $report['sv_name'] . " (" . _formulize_DE_SAVE_LASTLOADED . ")";
 		$defaultSave = "s" . $report['sv_id'];
 	} //else {
 	$saveoptions["s" . $report['sv_id']] = ".  " . _formulize_DE_SAVE_REPLACE . stripslashes($report['sv_name']);
 //	}
 	if($lastloaded == "s" . $report['sv_id'] OR $lastloaded == "p" . $report['sv_id']) {
-		$saveoptions["s" . $report['sv_id']] .= " (" . _formulize_DE_SAVE_LASTLOADED . ")"; 
+		$saveoptions["s" . $report['sv_id']] .= " (" . _formulize_DE_SAVE_LASTLOADED . ")";
 	}
 }
 if($other_p_reports[0] != "" OR $other_np_reports[0] != "") { $saveoptions["x2"] = _formulize_DE_PUB_VIEWS; }
 foreach($other_p_reports as $report) {
-	if($viewselection == "sold_" . $report['report_id'] OR $viewselection == "pold_" . $report['report_id']) { 
+	if($viewselection == "sold_" . $report['report_id'] OR $viewselection == "pold_" . $report['report_id']) {
 //		$saveoptions["sold_" . $report['report_id']] = ".  " . _formulize_DE_SAVE_UPDATE . $report['report_name'] . " (" . _formulize_DE_SAVE_LASTLOADED . ")";
 		$defaultSave = "sold_" . $report['report_id'];
 	} //else {
 	$saveoptions["sold_" . $report['report_id']] = ".  " . _formulize_DE_SAVE_REPLACE . stripslashes($report['report_name']);
 //	}
 	if($lastloaded == "sold_" . $report['report_id'] OR $lastloaded == "pold_" . $report['report_id']) {
-		$saveoptions["sold_" . $report['report_id']] .= " (" . _formulize_DE_SAVE_LASTLOADED . ")"; 
+		$saveoptions["sold_" . $report['report_id']] .= " (" . _formulize_DE_SAVE_LASTLOADED . ")";
 	}
 }
 foreach($other_np_reports as $report) {
-	if($viewselection == "s" . $report['sv_id'] OR $viewselection == "p" . $report['sv_id']) { 
+	if($viewselection == "s" . $report['sv_id'] OR $viewselection == "p" . $report['sv_id']) {
 //		$saveoptions["s" . $report['sv_id']] = ".  " . _formulize_DE_SAVE_UPDATE . $report['sv_name'] . " (" . _formulize_DE_SAVE_LASTLOADED . ")";
 		$defaultSave = "s" . $report['sv_id'];
 	} //else {
 	$saveoptions["s" . $report['sv_id']] = ".  " . _formulize_DE_SAVE_REPLACE . stripslashes($report['sv_name']);
 //	}
 	if($lastloaded == "s" . $report['sv_id'] OR $lastloaded == "p" . $report['sv_id']) {
-		$saveoptions["s" . $report['sv_id']] .= " (" . _formulize_DE_SAVE_LASTLOADED . ")"; 
+		$saveoptions["s" . $report['sv_id']] .= " (" . _formulize_DE_SAVE_LASTLOADED . ")";
 	}
 }
 
