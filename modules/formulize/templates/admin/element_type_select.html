@@ -28,7 +28,7 @@
 	</div>
 
 	<{include file="db:admin/element_linkedoptionlist.html"}>
-        
+
     <div class="form-item" id='linkedsourcemapping' style='display: none;'>
         <fieldset>
             <legend>When creating a new entry in the linked source form, map other values to the source form too:</legend>
@@ -109,7 +109,7 @@
                     <{$content.optionsLimitByElementFilter}><br />
                     <div class="description">Use the filter options to isolate a specific entry in the other form. Dynamic { } references are possible for referring to the values of elements in this form.</div>
                     <{else}>
-                    <div class="description">Select an element and then save, to get filter options for isolating a single entry in the selected form.</div>    
+                    <div class="description">Select an element and then save, to get filter options for isolating a single entry in the selected form.</div>
                     <{/if}>
                 </div>
             </fieldset>
@@ -120,11 +120,11 @@
 	</div>
     </fieldset>
 </div>
-        
+
         <{include file="db:admin/element_linkedfilter.html"}>
-        
+
         <{include file="db:admin/element_linkedsortoptions.html"}>
-        
+
 		  <div class="form-item">
 		    <fieldset>
 			    <legend>Show as links in lists of entries?</legend>
@@ -184,7 +184,7 @@
 </div>
 
 <script type="text/javascript">
-    
+
   $("[name='new-mapping']").click(function (){
     number = $(".elementmappings:last").attr('name');
     number = parseInt(number) + 1;
@@ -199,7 +199,7 @@
     $("[name='new-mapping']").blur();
     setDisplay('savewarning','block');
   });
-    
+
     $("[name^=mappingthisform]").live('change', function() {
         if ($(this).val() == 'mapaliteralvalue') {
             $(this).attr('name', 'turnedoff');
@@ -207,12 +207,12 @@
             $(this).hide();
         }
     });
-    
+
     function removeMapping(number) {
         $('.elementmappings').remove('[name="'+number+'"]');
         setDisplay('savewarning','block');
     }
-    
+
  $("#elements-ele_value_0").focus(function() {
 	  $("#list").attr('checked',1);
  });
@@ -256,15 +256,15 @@
 	  $(".savebutton").click();
 		return false;
 	});
- 
- 	$("div#optionsLimitByElementFilterDiv > input#addcon").click(function () {
+
+ 	$("div#optionsLimitByElementFilterDiv > input[name=addcon]").click(function () {
 		$("[name=reload_option_page]").val(1);
 	  $(".savebutton").click();
 		return false;
 	});
- 
+
     $("#snapshot-<{$content.ele_value.snapshot}>").attr('checked',1);
-    
+
     <{if $content.ele_id != 'new'}>
     var snapshotWarning = true;
     $('input[name*="snapshot"]').change(function() {
@@ -274,7 +274,7 @@
         }
     })
     <{/if}>
-    
+
     $('input[name="linked_yesno"]').change(function() {
         if($('input[name="linked_yesno"]:checked').val() == 1) {
             $('#snapshot-values').show(200);
@@ -282,8 +282,8 @@
             $('#snapshot-values').hide(200);
         }
     });
- 
- 
+
+
     function showHideLinkedSourceMapping() {
         if ($('[name="elements_listordd"]:checked').val()==2 && $('[name="elements-ele_value\\[snapshot\\]"]:checked').val() != 1 && $('[name="elements-ele_value\\[16\\]"]:checked').val() == 1 && $('#formlink').val() != 'none') {
             if($('#linkedsourcemapping').css('display') == 'none') {
@@ -297,18 +297,18 @@
             $('#linkedsourcemapping').css('display', 'none');
         }
     }
-    
+
     $(document).ready(function() {
         showHideLinkedSourceMapping();
-        
+
         $('[name="elements_listordd"]').change(function() {
             showHideLinkedSourceMapping();
         });
-        
+
         $('[name="elements-ele_value\\[16\\]"]').change(function() {
             showHideLinkedSourceMapping();
         });
-        
+
         $('#formlink').change(function() {
             showHideLinkedSourceMapping();
 	});
@@ -316,7 +316,7 @@
         $('[name="elements-ele_value\\[snapshot\\]"]').change(function() {
             showHideLinkedSourceMapping();
         })
-       
+
 
 	});
 
