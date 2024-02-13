@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html xml:lang="<{$icms_langcode}>">
+
+<head>
+    <!-- Center block custom positioning -->
+    <{* Center blocks display order
+        valid values are:  lrc (left right / center) lcr (left center right) clr (center / left right)
+    *}>
+    <{assign var=theme_top_order value=lrc}>
+    <{assign var=theme_bottom_order value=lcr}>
+
+    <!-- Theme name -->
+    <{assign var=theme_name value=$xoTheme->folderName}>
+
+    <!-- Title and meta -->
+    <title><{if $xoops_pagetitle !=''}><{$xoops_pagetitle}> : <{/if}><{$icms_sitename}></title>
+    <meta http-equiv="content-type" content="text/html; charset=<{$icms_charset}>" />
+    <meta name="robots" content="<{$icms_meta_robots}>" />
+    <meta name="keywords" content="<{$icms_meta_keywords}>" />
+    <meta name="description" content="<{$icms_meta_description}>" />
+    <meta name="rating" content="<{$icms_meta_rating}>" />
+    <meta name="author" content="<{$icms_meta_author}>" />
+    <meta name="copyright" content="<{$icms_meta_copyright}>" />
+    <meta name="generator" content="Formulize" />
+
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1">
+
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Module Header -->
+    <{$icms_module_header}>
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" type="image/ico" href="<{$icms_imageurl}>icons/favicon.ico" />
+    <link rel="icon" type="image/png" href="<{$icms_imageurl}>icons/icon.png" />
+
+    <!-- CSS -->
+    <link rel="stylesheet" type="text/css" media="all" href="<{$icms_imageurl}><{if $icms_rtl}>rtl/<{/if}>css/style.css?v=1.4" />
+
+    <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+
+</head>
+
+<body id="<{$icms_dirname}>" class="<{$icms_langcode}><{if $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}>">
+
+<{php}>
+// set the base font size if the user has adjusted it in their profile
+global $xoopsUser;
+if($xoopsUser) {
+    $profile_handler = xoops_getmodulehandler('profile', 'profile');
+    $profile = $profile_handler->get($xoopsUser->getVar('uid'));
+    if($fontsize = $profile->getVar('fontsize')) {
+        print "<style>html { font-size: ".$fontsize."; }</style>";
+    }
+}
+<{/php}>
+
+<{if $xoBlocks.canvas_left and $xoBlocks.canvas_right}>
+<{assign var=columns_layout value='threecolumns-layout'}>
+<{elseif $xoBlocks.canvas_left}>
+<{assign var=columns_layout value='leftcolumn-layout'}>
+<{elseif $xoBlocks.canvas_right}>
+<{assign var=columns_layout value='rightcolumn-layout'}>
+<{/if}>
+  <div class="site-layout">
+
+    <!-- LAYOUT -> SIDEBAR -->
+    <{if $xoops_requesturi|strstr:'/modules/formulize/application.php'}>
+    <{assign var=openClass value='site-layout__sidebar--open'}>
+    <!-- <script type='text/javascript'>
+      jQuery(document).ready(function() {
+        if (jQuery('.main-menu__item-link--active').length) {
+            window.addEventListener('formulize_pageShown', function () {
+                jQuery('#xo-canvas-leftcolumn').scrollTop(jQuery('.main-menu__item-link--active').offset().top-jQuery('#xo-canvas-leftcolumn').offset().top);
+            });
+        }
+      });
+    </script> -->
+    <{/if}>
+    <div class="site-layout__sidebar js-flyout-menu <{$openClass}>">
+
+      <div class="sidebar">
+
+        <!-- LOGO AREA -->
+        <div class="site-branding">
+
+          <div class="site-branding__menu-icon">
+            <a href="#" class="hamburger-menu-icon js-site-menu-close-trigger">
+              <!-- <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4L20 20M4 20L20 4">
+                </path>
+              </svg> -->
+            </a>
+          </div>
+
+          <div class="site-branding__logo">
+            <a href='<{$icms_url}>'><img class="site-branding__logo-image" src="<{$icms_imageurl}>images/logo.png" alt="Logo image"></a>
+          </div>
+
+        </div>
+
+        <!-- MENU -->
+
+        <{if $xoBlocks.canvas_left}>
+            <{includeq file="$theme_name/blockszone.html" blocks=$xoBlocks.canvas_left
+                zoneClass='xo-canvas-column' zoneId='xo-canvas-leftcolumn'
+            }>
+        <{/if}>
+
+
+      </div>
+    </div>
+
+    <!-- LAYOUT -> MAIN -->
+    <div class="site-layout__main">
+
+      <div class="site-header">
+        <div class="container">
+
+          <div class="site-header__layout">
+            <!-- Menu icon -->
+            <div id='burger-and-logo'>
+                <a href="#" class="hamburger-menu-icon js-site-menu-open-trigger">
+                  <!-- <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16">
+                    </path>
+                  </svg> -->
+                </a>
+
+                <div class="site-branding__logo" id='main-logo'>
+                  <a href='<{$icms_url}>'><img class="site-branding__logo-image" src="<{$icms_imageurl}>images/logo.png" alt="Logo image"></a>
+                </div>
+            </div>
+
+
+            <!-- Actions (top right) -->
+            <div class="site-header__actions">
+
+              <!-- User actions -->
+              <div class="user-actions">
+
+                  <{if $xoops_isadmin}>
+                  <a class="user-actions__link" href="<{if $modifyScreenUrl}><{$modifyScreenUrl}><{else}><{$icms_url}>/modules/formulize/admin/ui.php<{/if}>" title="admin">Admin</a>
+                  <{/if}>
+                  <{if $xoops_isuser}>
+                  <a class="user-actions__link" href="<{$icms_url}>/edituser.php" title="Edit Account">Edit Account</a>
+                  <a class="user-actions__link" href="<{$icms_url}>/user.php?op=logout" title="Logout">Logout</a>
+                  <{/if}>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- MAIN CONTENT (gray background) -->
+      <div class="main-content">
+        <div class="container">
+
+        <{$icms_contents}>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+	<footer>
+		<div class="footer-content">
+			<div>Charitable Registration Number: 119034643 RR0001</div>
+			<div>© 2024 Massey College. All Rights Reserved.</div>
+			<div><a href="https://www.masseycollege.ca/privacy-policy" target="_blank">Privacy Policy</a></div>
+		</div>
+	</footer>
+
+  <script src="<{$icms_imageurl}>js/script.js"></script>
+
+  <script type='text/javascript'>
+    jQuery(document).ready(function() {
+        jQuery(window).load(function() {
+            jQuery('body').show(200, function() {
+                var formulize_pageShown = new CustomEvent('formulize_pageShown');
+                window.dispatchEvent(formulize_pageShown);
+            });
+        });
+    });
+  </script>
+
+    <{ if $masquerade_username }>
+        <div id="formulize-masquerade-block">
+            Masquerading as <b><{$masquerade_username}></b>
+            <form method="post" action="<{$smarty.const.XOOPS_URL}>/modules/formulize/">
+                <input type="hidden" name="revert" value="1" />
+                <input type="hidden" name="op" value="masquerade" />
+                <input type="hidden" name="masquerade_end" value="1" />
+                <input type="submit" name="confirm_submit" value="Revert" />
+            </form>
+        </div>
+        <div style="clear:both;"></div>
+    <{ /if }>
+
+</body>
+
+</html>
