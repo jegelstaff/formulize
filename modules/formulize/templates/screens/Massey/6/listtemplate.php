@@ -1,18 +1,26 @@
 <?php
 
+$activityImageLink = viewEntryLink("<img src='/themes/Massey/images/logo-for-calendar.png'>");
+$activityTitleLink = viewEntryLink(display($entry, 'activities_activity_name'));
+$activityType = display($entry, 'activities_type');
+$activityDate = display($entry, 'activities_activity_date');
+$activityTime = display($entry, 'activities_activity_time');
+$activityLocation = display($entry, 'activities_activity_location');
+
 print "
 <article class='activity-list-of-entries-row'>
 	<div class='activity-list-of-entries-row-image'>
-		<img src='http://localhost:8080/themes/Massey/images/logo-for-calendar.png' />
+		".$activityImageLink."
 	</div>
 	<div class='activity-list-of-entries-row-content'>
-		".($viewEntryLinksShown ? $viewEntryLink : '')."
-		<h2>".display($entry, 'activities_activity_name')."</h2>
+		<h2>".$activityTitleLink."</h2>
 		<p>".display($entry, 'activities_details')."</p>
 	</div>
 	<div class='activity-list-of-entries-row-details'>
-		<div>Date: ".display($entry, 'activities_date')."</h2>
-		<div>Time: ".display($entry, 'activities_time')."</h2>
-		<div>Location: ".display($entry, 'activities_location')."</h2>
+		".($activityType ? "<div>Type: ".$activityType."</div>" : '')."
+		".($activityDate ? "<div>Date: ".$activityDate."</div>" : '')."
+		".($activityTime ? "<div>Time: ".$activityTime."</div>" : '')."
+		".($activityLocation ? "<div>Location: ".$activityLocation."</div>" : '')."
 	</div>
-</article>";
+</article>
+";
