@@ -578,7 +578,7 @@ class formulize_themeForm extends XoopsThemeForm {
                     $js = $validationJs;
 				}
 				if($checkConditionalRow) {
-					$fullJs .= "if(formulizechanged && window.document.getElementById('formulize-".$ele->getName()."').style.display != 'none') {\n".$js."\n}\n\n";
+					$fullJs .= "if(formulizechanged && jQuery('[name^=".$ele->getName()."]').length && window.document.getElementById('formulize-".$ele->getName()."').style.display != 'none') {\n".$js."\n}\n\n";
 				} else {
 					$fullJs .= "if(formulizechanged) {\n".$js."\n}\n\n";
 				}

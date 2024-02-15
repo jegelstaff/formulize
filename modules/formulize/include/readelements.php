@@ -223,6 +223,32 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
 
     // for every entry in the form...
     foreach($entryData as $currentEntry => $values) {
+
+				// FIRST, try to handle any one to one situations where new entries have been written...
+				// If the entry is new, check if a newvalue was submitted from a counterpart form in a one to one connection to this one, use that entry instead of 'new'
+				// Depends on the form with the autocomplete occuring first in the screen! So it will be written to the DB first.
+				if(substr($currentEntry, 0 , 3) == "new") {
+					checkForLinks($frid, array(), $elementFid, entries: false, unified_display: true); // sets up the $GLOBALS metadata we loop through next, which will be an array of arrays, each having keys fid, keyself, keyother, common
+					foreach($GLOBALS['formulize_checkForLinks_oneToOneMetaData'] as $linkData) {
+						// if the form for this link was submitted this pageload...
+						if(in_array($linkData['fid'], array_keys($formulize_elementData))) {
+							// figure out the fid, entry id, and element id that we should lookup in $_POST to see if it has the 'newvalue:' prefix
+							// assume only one entry (first) written in the page for the fid is all we care about, and if the entry is a new entry, then we know the entry id in $_POST was 'new'
+							// We require the form with the autocomplete to be earlier in the screen so it is already processed and a new entry would have been written!
+							$lookupFid = $linkData['fid'];
+							$lookupEntryId = $formulize_allWrittenEntryIds[$linkData['fid']][0] == $formulize_newEntryIds[$linkData['fid']][0] ? 'new' : $formulize_allWrittenEntryIds[$linkData['fid']][0];
+							$lookupElementId = $linkData['keyself'];
+							$keyselfElementObject = $element_handler->get($lookupElementId);
+							// if the keyself element is a linked element and it wrote a new value into the target form
+							if($keyselfElementObject->isLinked AND substr($_POST["de_{$lookupFid}_{$lookupEntryId}_{$lookupElementId}"], 0, 9) === 'newvalue:') {
+								// write the current data ($values) that we'll be saving next, into that entry which was just written in response to the 'newvalue' operation, instead of creating another new entry in this form
+								$currentEntry = $formulize_elementData[$lookupFid][$lookupEntryId][$lookupElementId];
+								break; // go with the first one we found
+							}
+						}
+					}
+				}
+
         if(substr($currentEntry, 0 , 3) == "new") {
             // handle entries in the form that are new. if there is more than one new entry, they will be listed as new1, new2, new3, etc
 			$subformElementId = 0;
@@ -547,7 +573,7 @@ function writeUserProfile($data, $uid) {
 	global $xoopsUser, $xoopsConfig;
 	$config_handler =& xoops_gethandler('config');
   $xoopsConfigUser =& $config_handler->getConfigsByCat(2); // 2 is the user category
-  
+
 	include_once XOOPS_ROOT_PATH . "/language/" . $xoopsConfig['language'] . "/user.php";
 
 	$errors = array();
