@@ -172,14 +172,22 @@ switch($op) {
             ${$k} = $v;
         }
       } elseif(substr($k, 0, 3) == 'de_') {
-        $keyParts = explode("_", $k); // ANY KEY PASSED THAT IS THE NAME OF A DE_ ELEMENT IN MARKUP, WILL GET UNPACKED AS A VALUE THAT CAN BE SUBBED IN WHEN DOING LOOKUPS LATER ON.
+        $keyParts = explode("_", $k); // ANY KEY PASSED THAT IS THE NAME OF A DE_ ELEMENT IN MARKUP, WILL GET UNPACKED AS A VALUE THAT CAN BE SUBBED IN WHEN DOING LOOKUPS LATER ON. This is because these elements are the elements that might determine how the conditionally rendered element behaves; it might be sensitive to these values.
         $passedEntryId = $keyParts[2];
         $passedElementId = $keyParts[3];
         $passedElementObject = $element_handler->get($passedElementId);
         $handle = $passedElementObject->getVar('ele_handle');
-        $databaseReadyValue = prepDataForWrite($passedElementObject, $v, $_GET['entryId']);
-        $databaseReadyValue = $databaseReadyValue === "{WRITEASNULL}" ? NULL : $databaseReadyValue;
-            if(is_string($v) && substr($v, 0, 9)=="newvalue:") { $sendBackValue[$k] = $databaseReadyValue; }
+				// if the condition is triggered based on a new value in an autocomplete box, the entry is 'new' because it's not saved yet
+				// this is a change from previous code that processed the newvalue to write an entry, stored it in $sendBackValue
+				// and then passed back the written entry so the markup could be altered to reflect the entry id.
+				// That resulted in lots of empty entries in the source forms for linked autocomplete boxes
+				// the one to one linking logic can figure out the values that should match without this??
+        if(is_string($v) && substr($v, 0, 9)=="newvalue:") {
+					$databaseReadyValue = 'new';
+				} else {
+					$databaseReadyValue = prepDataForWrite($passedElementObject, $v, $entryId);
+					$databaseReadyValue = $databaseReadyValue === "{WRITEASNULL}" ? NULL : $databaseReadyValue;
+				}
         $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$passedEntryId][$handle] = $databaseReadyValue;
         $apiFormatValue = prepvalues($databaseReadyValue, $handle, $passedEntryId); // will be an array
         if(is_array($apiFormatValue) AND count((array) $apiFormatValue)==1) {
@@ -188,66 +196,37 @@ switch($op) {
         $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$passedEntryId][$handle] = $apiFormatValue;
       }
     }
+		// if there's a one to one key that changed, and a specific existing entry was selected, use that entrythe other form in the one to one pair was showing a specific entry,
+		// then we need to morph into the entry that matches the present choice just made in the one to one key field
+		// so go lookup the links and become that entry instead of the one that was on screen for the user up till now.
+		if($onetoonekey) {
+			if($entryId == 'new') { // need to account for common values too? lookup the entry where the databaseReadyValue value is present?
+				$entryId = $databaseReadyValue;
+			} else {
+				// something not working about test cases here?!
+				$onetooneentries = array($onetoonefid => array($onetooneentries[$onetoonefid][0]));
+				$onetoonefids = array($onetoonefid);
+				$checkForLinksResults = checkForLinks($onetoonefrid, $onetoonefids, $onetoonefid, $onetooneentries);
+				$entryId = $checkForLinksResults['entries'][$fid][0];
+				$entryId = $entryId ? $entryId : 'new';
+			}
+		}
+		// render the elements and package them in JSON
     $jsonSep = '';
     $json = '{ "elements" : [';
     foreach(explode(',',$elementId) as $thisElementId) {
       $elementObject = $element_handler->get($thisElementId);
-    $html = "";
-    if($onetoonekey AND $entryId != 'new') {
-      // the onetoonekey is what changed, not a regular conditional element, so in that case, we need to re-determine the entryId that we should be displaying
-      // rebuild entries and fids so it only has the main form entry in it, since we want to get the correct other one-to-one entries back
-      $onetooneentries = array($onetoonefid => array($onetooneentries[$onetoonefid][0]));
-      $onetoonefids = array($onetoonefid);
-      $checkForLinksResults = checkForLinks($onetoonefrid, $onetoonefids, $onetoonefid, $onetooneentries);
-      $entryId = $checkForLinksResults['entries'][$elementObject->getVar('id_form')][0];
-      $entryId = $entryId ? $entryId : 0;
-    } elseif($onetoonekey) {
-      // we're supposed to pull in an entry based solely on the value in the conditional element...
-      // what we need is the element in the dependent one to one form that is linked to the main form
-      include_once XOOPS_ROOT_PATH . "/modules/formulize/class/frameworks.php";
-      include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
-      $relationship = new formulizeFramework($onetoonefrid);
-      $targetElement = false;
-      foreach($relationship->getVar('links') as $link) {
-        if($link->getVar('form1')==$onetoonefid AND $link->getVar('form2')==$fid AND $link->getVar('relationship')==1) {
-          $sourceElement = $link->getVar('key1');
-          $targetElement = $link->getVar('key2');
-        } elseif($link->getVar('form2')==$onetoonefid AND $link->getVar('form1')==$fid AND $link->getVar('relationship')==1) {
-          $sourceElement = $link->getVar('key2');
-          $targetElement = $link->getVar('key1');
-        }
-        if($targetElement) {
-          $data_handler = new formulizeDataHandler($onetoonefid);
-          if($link->getVar('common')) {
-            $entryId = $data_handler->findFirstEntryWithValue($targetElement, $databaseReadyValue);  
-          } elseif($sourceElement==$passedElementId) {
-            $entryId = $databaseReadyValue; // use entry id of the value selected in the conditional element that triggered this -- expected when the A form contains a link to the B form, and the B form values are supposed to come in when something is selected
-          }
-          break;
-        }
-      }
-    }
+			$html = "";
       $json .= $jsonSep.'{ "handle" : '.json_encode('de_'.$_GET['fid'].'_'.$_GET['entryId'].'_'.$thisElementId);
-      if((!$onetoonekey OR ($entryId AND $entryId != 'new')) AND security_check($fid, $entryId)) {
+      if(security_check($fid, $entryId)) {
         $html = renderElement($elementObject, $entryId);
-        $json .= ', "data" : '.json_encode($html); 
-        if(count((array) $sendBackValue)>0) {
-          // if we wrote any new values in autocomplete boxes, pass them back so we can alter their values in markup so new entries are not created again!
-          $json .= ', "newvalues" : [';
-          $start = true;
-          foreach($sendBackValue as $key=>$value) {
-            if(!$start) { $json .= ', '; }
-            $json .= '{ "name" : "'.$key.'" , "value" : '.json_encode($value).' }';
-            $start = false;
-            }
-          $json .= ']';
-          }
-        } else {
-        $json .= ', "data" : '.json_encode('{NOCHANGE}');
-        }
+        $json .= ', "data" : '.json_encode($html);
+      } else {
+       	$json .= ', "data" : '.json_encode('{NOCHANGE}');
+      }
       $json .= '}';
       $jsonSep = ', '; // set the separator now in case there are more elements to process
-      }
+    }
     $json .= ']}';
     print $json;
     break;
@@ -332,7 +311,7 @@ switch($op) {
 }
 
 function renderElement($elementObject, $entryId) {
-    
+
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
     // "" is framework, ie: not applicable
     $GLOBALS['formulize_asynchronousRendering'][$elementObject->getVar('ele_handle')] = true;

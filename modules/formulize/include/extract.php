@@ -145,7 +145,10 @@ function prepvalues($value, $field, $entry_id) {
 	}
 
     // handle cases where the value is linked to another form...returns false if the box is not linked
-    if($source_ele_value = formulize_isLinkedSelectBox($field, true) AND !isset($GLOBALS['formulize_useForeignKeysInDataset'][$field]) AND !isset($GLOBALS['formulize_useForeignKeysInDataset']['all'])) {
+    if($source_ele_value = formulize_isLinkedSelectBox($field, true)
+			AND !isset($GLOBALS['formulize_useForeignKeysInDataset'][$field])
+			AND !isset($GLOBALS['formulize_useForeignKeysInDataset']['all'])
+			AND $value != 'new') {
         // value is an entry id in another form
         // need to get the form id by checking the ele_value[2] property of the element definition, to get the form id from the first part of that
         $sourceMeta = explode("#*=:*", $source_ele_value[2]); // [0] will be the fid of the form we're after, [1] is the handle of that element

@@ -1085,6 +1085,8 @@ function checkForLinks($frid, $fids, $fid, $entries, $unified_display=false, $un
         $indexer++;
     }
 
+		$GLOBALS['formulize_checkForLinks_oneToOneMetaData'] = $one_to_one; // so we can check for this right after this function call, if necessary
+
     // get one-to-many links
     $indexer=0;
     $many_q1 = q("SELECT fl_form1_id, fl_key1, fl_key2, fl_common_value FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_form2_id = $fid AND fl_relationship = 3 AND fl_frame_id = $frid $unified_display $unified_delete");
@@ -2037,9 +2039,9 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
                         // check if the new value plus all mappings, is actually new, and if so, write it. If we find something that matches, don't write it, use that entry id instead.
                         $dataHandler = new formulizeDataHandler($boxproperties[0]); // 0 key is the source fid
                         if(!$newEntryId = $dataHandler->findFirstEntryWithAllValues($dataArrayToWrite)) { // check if this value has been written already, if so, use that ID
-                            if($newEntryId = formulize_writeEntry($dataArrayToWrite)) {
-                            formulize_updateDerivedValues($newEntryId, $sourceFormObject->getVar('id_form'));
-                            }
+													if($newEntryId = formulize_writeEntry($dataArrayToWrite)) {
+														formulize_updateDerivedValues($newEntryId, $sourceFormObject->getVar('id_form'));
+													}
                         }
                         $newWrittenValues[] = $newEntryId;
                     }
@@ -6675,7 +6677,17 @@ function formulize_makeOneToOneLinks($frid, $fid) {
                             $linkedValueToWrite = isset($GLOBALS['formulize_newEntryIds'][$form2][0]) ? $GLOBALS['formulize_newEntryIds'][$form2][0] : "";
                             $linkedValueToWrite = (!$linkedValueToWrite AND isset($GLOBALS['formulize_allSubmittedEntryIds'][$form2][0])) ? $GLOBALS['formulize_allSubmittedEntryIds'][$form2][0] : $linkedValueToWrite; // or get the first entry ID that we wrote to the form, if no new entries were written to the form
                             $linkedValueToWrite = (!$linkedValueToWrite AND $entryToWriteToForm2) ? $entryToWriteToForm2 : $linkedValueToWrite;
-                        if($entryToWriteToForm1 AND !$existingValueForKey1 AND ((!isset($_POST["de_".$form1."_new_".$key1]) OR $_POST["de_".$form1."_new_".$key1] === "") AND (!isset($_POST["de_".$form1."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form1][0]."_".$key1]) OR $_POST["de_".$form1."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form1][0]."_".$key1] === ""))) {
+												// if we have a candidate entry to write to in form 1...
+                        if($entryToWriteToForm1 AND
+													// it has no existing value yet, and there was no value written into form 1 on this pageload
+													(!$existingValueForKey1 AND
+														(!isset($_POST["de_".$form1."_new_".$key1]) OR $_POST["de_".$form1."_new_".$key1] === "")
+														AND (!isset($_POST["de_".$form1."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form1][0]."_".$key1]) OR $_POST["de_".$form1."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form1][0]."_".$key1] === "")
+													// OR if it has an existing value and there was either nothing written or a written value that was a newvalue from an autocomplete box that can write new values...
+													) OR ($existingValueForKey1 AND
+														(!isset($_POST["de_".$form1."_new_".$key1]) OR substr($_POST["de_".$form1."_new_".$key1], 0, 9) === "newvalue:")
+														AND (!isset($_POST["de_".$form1."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form1][0]."_".$key1]) OR substr($_POST["de_".$form1."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form1][0]."_".$key1], 0, 9) === "newvalue:")
+													)) {
                             $form1EntryId = formulize_writeEntry(array($key1=>$linkedValueToWrite), $entryToWriteToForm1);
                         } elseif(!$entryToWriteToForm1) {
                             $entryToWriteToForm1 = formulize_writeEntry(array($key1=>$linkedValueToWrite));
