@@ -24,7 +24,7 @@ if (!defined('ICMS_ROOT_PATH')) die("ImpressCMS root path not defined");
  *
  * @package     kernel
  * @subpackage	config
- * @deprecated	Use icms_config_category_Object, instead
+ * deprecated	Use icms_config_category_Object, instead
  * @todo		Remove in version 1.4
  */
 class XoopsConfigCategory extends icms_config_category_Object
@@ -53,7 +53,7 @@ class XoopsConfigCategory extends icms_config_category_Object
  *
  * @package     kernel
  * @subpackage  config
- * @deprecated	Use icms_config_category_Handler, instead
+ * deprecated	Use icms_config_category_Handler, instead
  * @todo		Remove in version 1.4
  */
 class XoopsConfigCategoryHandler extends icms_config_category_Handler

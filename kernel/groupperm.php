@@ -28,7 +28,7 @@ if (!defined('ICMS_ROOT_PATH')) die("ImpressCMS root path not defined");
  * @subpackage	member
  * @author	    Kazumi Ono	<onokazu@xoops.org>
  * @copyright	copyright (c) 2000-2003 XOOPS.org
- * @deprecated	Use icms_member_groupperm_Object
+ * deprecated	Use icms_member_groupperm_Object
  * @todo		Remove in version 1.4
  */
 class XoopsGroupPerm extends icms_member_groupperm_Object
@@ -56,7 +56,7 @@ class XoopsGroupPerm extends icms_member_groupperm_Object
  * @see          XoopsGroupPerm
  * @author       Kazumi Ono  <onokazu@xoops.org>
  * @copyright	copyright (c) 2000-2003 XOOPS.org
- * @deprecated	Use icms_member_groupperm_Handler, instead
+ * deprecated	Use icms_member_groupperm_Handler, instead
  * @todo		Remove in version 1.4
  */
 class XoopsGroupPermHandler extends icms_member_groupperm_Handler

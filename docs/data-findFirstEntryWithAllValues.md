@@ -3,7 +3,7 @@ layout: default
 permalink: developers/API/classes/data_handler/findFirstEntryWithAllValues/
 ---
 
-# findFirstEntryWithAllValues( <span style='font-size: 14pt;'>(array) $elementsAndValues, (string) $operator = "="</span> )
+# findFirstEntryWithAllValues( <span style='font-size: 14pt;'>(array) $elementsAndValues, (string | array) $operator = "="</span> )
 
 ## Description
 
@@ -12,7 +12,7 @@ Gets the first entry id which matches all of the values specified for the corres
 ## Parameters
 
 __$elementsAndValues__ - an array of key=>value pairs, where the keys are the element identifiers and the values are the values to look for. Only entries that match every pair will be returned.<br>
-__$operator__ -  Optional.  the operator to use in when querying for the values. The same operator is used for all key=>value pairs. Defaults to equals. Any valid SQL operator can be used. If LIKE is used, _then the values will be automatically wrapped in % signs_ to support pattern matching. If the IN operator is used, the values must be a valid comma separated set of values that will work in a SQL statement. This means strings need to be quoted.
+__$operator__ -  Optional.  the operator to use in when querying for the values. If this is a string, then that same operator is used for all key=>value pairs. If it is an array of strings, then each string is used for the corresponding item in the _$elementsAndValues_ array, ie: first operator for first element/value pair, second operator for second pair, etc. Defaults to equals. Any valid SQL operator can be used. If LIKE is used, _then the values will be automatically wrapped in % signs_ to support pattern matching. If the IN operator is used, the values must be a valid comma separated set of values that will work in a SQL statement. This means strings need to be quoted.
 
 ## Return Values
 

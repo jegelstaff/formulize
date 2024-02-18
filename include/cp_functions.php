@@ -374,7 +374,7 @@ if (! empty( $_SESSION['redirect_message'] )) {
  *
  * @since XOOPS
  * @version $Id: cp_functions.php 22632 2011-09-10 12:19:31Z phoenyx $
- * @deprecated use icms_cp_header instead
+ * deprecated use icms_cp_header instead
  * @todo		Remove in version 1.4 -  - all occurrences in the core have been removed
  *
  * @author The Xoops Project <http://www.xoops.org>
@@ -425,7 +425,7 @@ function icms_cp_footer() {
  * Backwards compatibility function
  *
  * @version $Id: cp_functions.php 22632 2011-09-10 12:19:31Z phoenyx $
- * @deprecated use icms_cp_footer instead
+ * deprecated use icms_cp_footer instead
  * @todo remove in 1.4 - all occurrences in the core have been removed
  *
  * @author The XOOPS Project <http://www.xoops.org>

@@ -32,7 +32,7 @@ require_once XOOPS_ROOT_PATH.'/kernel/object.php';
 global $xoopsDB;
 
     class formulizeApplicationMenuLink extends XoopsObject {
-        
+
         function __construct() {
             parent::__construct();
             $this->initVar("menu_id", XOBJ_DTYPE_INT, NULL, false);
@@ -47,36 +47,36 @@ global $xoopsDB;
             $this->initVar("default_screen", XOBJ_DTYPE_TXTBOX, NULL, false, 255); //added oct 2013
 	    $this->initVar("note",XOBJ_DTYPE_TXTBOX,null,false,255);
         }
-        
+
         // override the parent's getVar, since we want to allow for abbreviated URLs in the UI, to avoid users having to type the current site URL into the system
         function getVar($var, $raw=false) {
             $value = parent::getVar($var, $raw);
             if($var == 'url') {
                 if(!strstr($value,'://') AND (strstr($value, 'sid=') OR strstr($value, 'fid=')) AND !$raw) {
                     $value = XOOPS_URL."/modules/formulize/index.php?".htmlspecialchars(strip_tags($value));
-                } 
+                }
             }
             return $value;
         }
-        
+
     }
-    
+
     class formulizeApplicationMenuLinksHandler  {
-        
+
         var $db;
         function __construct(&$db) {
             $this->db =& $db;
         }
-        
+
         function get($id, $all = false) {
             global $xoopsDB;
             $form_handler = xoops_getmodulehandler('forms', 'formulize');
             $screen_handler = xoops_getmodulehandler('screen', 'formulize');
-            $linksArray = array();	
-            
+            $linksArray = array();
+
             global $xoopsUser;
             $groupSQL = "";
-            
+
             $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0 => XOOPS_GROUP_ANONYMOUS);
             if(!$all){
                 foreach($groups as $group) {
@@ -88,41 +88,41 @@ global $xoopsDB;
                 }
                 $groupSQL .= ")";
             }
-            
+
             $sql = 'SELECT links.*, group_concat(group_id separator \',\') as permissions FROM '.$xoopsDB->prefix("formulize_menu_links").' as links ';
 			$sql .= ' LEFT JOIN '.$xoopsDB->prefix("formulize_menu_permissions").' as perm ON links.menu_id = perm.menu_id ';
 			$sql .= ' WHERE appid = ' . $id. ' '. $groupSQL .' GROUP BY menu_id,appid,screen,`rank`,url,link_text ORDER BY `rank`';
-            
-            if ($result = $this->db->query($sql)) { 
-                
-                while($resultArray = $this->db->fetchArray($result)) {			
+
+            if ($result = $this->db->query($sql)) {
+
+                while($resultArray = $this->db->fetchArray($result)) {
                     $newLinks = new formulizeApplicationMenuLink();
                     $newLinks->assignVars($resultArray);
                     array_push($linksArray, $newLinks);
-                }			
+                }
             }
-            
+
             foreach($linksArray as $menulink) {
-                
+
                 // added Oct 2013
-                // groups that use the link as a default screen 
+                // groups that use the link as a default screen
                 $menuid = $menulink->getVar('menu_id');
-                
+
                 $sql = 'SELECT group_concat(group_id separator \',\') as default_screen FROM '.$xoopsDB->prefix("formulize_menu_permissions");
 				$sql .= ' WHERE menu_id = ' . $menuid. ' AND default_screen = 1' ;
-				
-				if ($result = $this->db->query($sql)) { 
-               		$resultArray = $this->db->fetchArray($result);	
-                	$menulink->assignVar('default_screen',$resultArray['default_screen']);	 	                	 	
+
+				if ($result = $this->db->query($sql)) {
+               		$resultArray = $this->db->fetchArray($result);
+                	$menulink->assignVar('default_screen',$resultArray['default_screen']);
             	}
-                
+
                 $menutext =	$menulink->getVar('link_text');
                 $screenidname= "";
                 if($menutext == ""){
                     $id = explode("=",$menulink->getVar('screen'));
-                    
+
                     if($menulink->getVar('screen')=="") {   //handle external url
-            			$menutext = $menulink->getVar('url'); 
+            			$menutext = $menulink->getVar('url');
 
             		} elseif(strpos($menulink->getVar('screen'),"fid=") !== false ){
                         $menutext = $form_handler->get($id[1])->getVar('title');
@@ -130,19 +130,19 @@ global $xoopsDB;
                     }else{
                         $menutext = $screen_handler->get($id[1])->getVar('title');
                         $screenidname = " - screen ID: ".$screen_handler->get($id[1])->getVar('sid');
-                    }	
+                    }
                 }
-                
+
                 $menulink->assignVar('text',$menutext);
                 $menulink->assignVar('name',$menutext.$screenidname);
             }
-            
+
             return $linksArray;
         }
-		
+
 		// returns an array of the fid,sid applicable to the current user, based on menu settings and permissions
 		static function getDefaultScreenForUser($includeMenuURLs=false) {
-		
+
             global $xoopsUser, $xoopsDB;
             $fid = null;
             $sid = null;
@@ -184,13 +184,13 @@ global $xoopsDB;
                 }
             }
             return array($fid,$sid);
-        } 
-		
+        }
+
     }
-        
-    
+
+
 class formulizeApplication extends XoopsObject {
-  
+
   private $_forms = null;
 
   function __construct() {
@@ -203,7 +203,7 @@ class formulizeApplication extends XoopsObject {
     $this->initVar("all_links", XOBJ_DTYPE_ARRAY);
     $this->initVar("custom_code", XOBJ_DTYPE_TXTBOX, NULL, false); //added jan 2015
   }
-  
+
     function forms() {
         if (null == $this->_forms) {
             $form_handler = xoops_getmodulehandler('forms', 'formulize');
@@ -211,6 +211,16 @@ class formulizeApplication extends XoopsObject {
         }
         return $this->_forms;
     }
+
+		function getVar($key, $format = 's') {
+			if($key == 'custom_code' AND $appid = $this->getVar('appid')) {
+				$filename=XOOPS_ROOT_PATH."/modules/formulize/custom_code/application_custom_code_".$appid.".php";
+				if(file_exists($filename)) {
+					return file_get_contents($filename);
+				}
+			}
+			return parent::getVar($key, $format);
+		}
 }
 
 class formulizeApplicationsHandler {
@@ -218,11 +228,11 @@ class formulizeApplicationsHandler {
 	function __construct(&$db) {
 		$this->db =& $db;
 	}
-  
+
   function &create() {
 		return new formulizeApplication();
 	}
-  
+
   function get($ids, $fid=0) { // takes a single ID or an array of ids, or the keyword 'all', Plus, if $fid is greater than 0, limit applications retrieved to ones where that form is involved
     static $cachedApps = array();
     global $xoopsDB;
@@ -274,22 +284,22 @@ class formulizeApplicationsHandler {
       if($fid > 0) {
         $sql = 'SELECT * FROM '.$xoopsDB->prefix("formulize_applications").' as t1, '.$xoopsDB->prefix("formulize_application_form_link").' as t2 WHERE t1.appid = t2.appid AND t2.fid = '.$fid.' ORDER BY t1.name';
       } else {
-        $sql = 'SELECT * FROM '.$xoopsDB->prefix("formulize_applications").' ORDER BY name';  
+        $sql = 'SELECT * FROM '.$xoopsDB->prefix("formulize_applications").' ORDER BY name';
       }
     }
-      
-    $links_handler = xoops_getmodulehandler('ApplicationMenuLinks', 'formulize'); // JAKEADDED 
+
+    $links_handler = xoops_getmodulehandler('ApplicationMenuLinks', 'formulize'); // JAKEADDED
 
     // query the DB for the ids we're supposed to
-    if ($result = $this->db->query($sql)) { 
+    if ($result = $this->db->query($sql)) {
       while($resultArray = $this->db->fetchArray($result)) {
         $newApp = new formulizeApplication();
         $newApp->assignVars($resultArray);
         $newAppId = $newApp->getVar('appid');
-        $menulinks = $links_handler->get($newAppId); // JAKEADDED			
+        $menulinks = $links_handler->get($newAppId); // JAKEADDED
         $newApp->assignVar('links', serialize($menulinks)); // JAKE ADDED
-        $menulinks = $links_handler->get($newAppId,true); // JAKEADDED			
-        $newApp->assignVar('all_links', serialize($menulinks));  
+        $menulinks = $links_handler->get($newAppId,true); // JAKEADDED
+        $newApp->assignVar('all_links', serialize($menulinks));
         // add in the forms
         $sql = 'SELECT link.fid FROM '.$xoopsDB->prefix("formulize_application_form_link").' as link, '.$xoopsDB->prefix("formulize_id").' as forms WHERE link.appid = '.$newAppId.' AND forms.id_form = link.fid ORDER BY forms.desc_form';
         $foundForms = array();
@@ -326,15 +336,15 @@ class formulizeApplicationsHandler {
       return $foundApps[0];
     }
 	}
-  
+
   function getAllApplications() {
     return $this->get('all');
   }
- 
+
   function getApplicationsByForm($fid) {
     return $this->get('all',$fid);
   }
-  
+
   function insert(&$appObject, $force=false) {
     if( get_class($appObject) != 'formulizeApplication'){
         return false;
@@ -357,7 +367,7 @@ class formulizeApplicationsHandler {
     //after executing insertion or updating, we put file in the following path with custom_code
     $filename=XOOPS_ROOT_PATH."/modules/formulize/custom_code/application_custom_code_".$appid.".php";
     file_put_contents($filename,$custom_code);
-    
+
     if( false != $force ){
         $result = $this->db->queryF($sql);
     }else{
@@ -372,9 +382,9 @@ class formulizeApplicationsHandler {
       $appid = $this->db->getInsertId();
     }
     $appObject->assignVar('appid', $appid);
-    
+
     // now assign the forms
-    
+
     $foundForms = array();
 		$checkSQL = "SELECT fid FROM ".$this->db->prefix("formulize_application_form_link"). " WHERE appid=".$appid;
 		$checkRes = $this->db->query($checkSQL);
@@ -407,7 +417,7 @@ class formulizeApplicationsHandler {
         $runRemoval = true;
       }
     }
-    
+
 		if($runInsert) {
       if($force) {
         $result = $this->db->queryF($insertSQL);
@@ -429,7 +439,7 @@ class formulizeApplicationsHandler {
       return $appid;
     }
 	}
-  
+
   function delete($appid) {
     if(is_object($appid)) {
 			if(!get_class("formulizeApplication")) {
@@ -465,13 +475,13 @@ class formulizeApplicationsHandler {
         }
         return $foundLinks;
     }
-    
-    
+
+
     //modified Oct 2013 W.R.
     function insertMenuLink($appid,$menuitem){
-        
+
         global $xoopsDB;
-        
+
         $rank = 1;
         $rankquery = "SELECT MAX(`rank`) FROM `".$xoopsDB->prefix("formulize_menu_links")."` WHERE appid=".$appid.";";
         if($result = $xoopsDB->query($rankquery)) {
@@ -479,15 +489,15 @@ class formulizeApplicationsHandler {
             $max = $xoopsDB->fetchArray($result);
             $rank= $max['MAX(`rank`)']+1;
         }
-        
-        //0=menuid, 1=menuText, 2=screen, 3=url, 4=groupids, 5=default_screen  6=note 
+
+        //0=menuid, 1=menuText, 2=screen, 3=url, 4=groupids, 5=default_screen  6=note
         $linkValues = explode("::",$menuitem);
 //	error_log("link values ".print_r($linkValues));
         $insertsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_links")."` VALUES (null,". $appid.",'". formulize_db_escape($linkValues[2])."',".$rank.",'".formulize_db_escape($linkValues[3])."','".formulize_db_escape($linkValues[1])."','". formulize_db_escape($linkValues[6])."');";
 		if(!$result = $xoopsDB->query($insertsql)) {
 			exit("Error inserting Menu Item. SQL dump:\n" . $insertsql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
 		}else{
-			
+
 			$menuid = $xoopsDB->getInsertId();
 			if($linkValues[4] != "null" and count((array) $linkValues[4]) > 0){
                 $groupsThatCanView = explode(",",$linkValues[4]);
@@ -496,25 +506,25 @@ class formulizeApplicationsHandler {
 				$groupsWithDefaultPage = array_map(array($xoopsDB, 'escape'), $groupsWithDefaultPage);
 				$defaultScreen = 0;
 				foreach($groupsThatCanView as $groupid) {
-                    //check for default screen					
+                    //check for default screen
 					if (in_array($groupid, $groupsWithDefaultPage)){
 						$defaultScreen = 1;
 					}
-					$permissionsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_permissions")."` VALUES (null,".$menuid.",". $groupid.", ".$defaultScreen.")";                     
+					$permissionsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_permissions")."` VALUES (null,".$menuid.",". $groupid.", ".$defaultScreen.")";
 					if(!$result = $xoopsDB->query($permissionsql)) {
 						exit("Error inserting Menu Item permissions.".$linkValues[4]." SQL dump:\n" . $permissionsql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
 					}
                     $defaultScreen = 0;
 				}
 			}
-		}   
+		}
 	}
     //end of insertMenuLink()
 
-    
+
     // modified Oct 2013 W.R.
     function deleteMenuLink($appid,$menuitem ){
-        global $xoopsDB;       
+        global $xoopsDB;
         $deletemenuitems = "DELETE FROM `".$xoopsDB->prefix("formulize_menu_links")."` WHERE appid=".$appid." AND menu_id=" .$menuitem .";";
         $deletemenupermissions = "DELETE FROM `".$xoopsDB->prefix("formulize_menu_permissions")."` WHERE menu_id=" .$menuitem .";";
         if(!$result = $xoopsDB->query($deletemenuitems)) {
@@ -538,7 +548,7 @@ class formulizeApplicationsHandler {
 
      // modified Oct 2013 W.R.
     function updateMenuLink($appid,$menuitems){
-        global $xoopsDB;       
+        global $xoopsDB;
         //0=menuid, 1=menuText, 2=screen, 3=url, 4=groupids, 5=default_screen 6=note
         $linkValues = explode("::",$menuitems);
 	//error_log("link values ".print_r($linkValues));
@@ -550,7 +560,7 @@ class formulizeApplicationsHandler {
         	//delete existing permissions for this menu item
         	$deletepermissions = "DELETE FROM `".$xoopsDB->prefix("formulize_menu_permissions")."` WHERE menu_id=".formulize_db_escape($linkValues[0]).";";
        	 	$result = $xoopsDB->query($deletepermissions);
-        
+
        	 	if($linkValues[4] != "null" and count((array) $linkValues[4]) > 0){
                 $groupsThatCanView = explode(",",$linkValues[4]);
 				$groupsThatCanView = array_map(array($xoopsDB, 'escape'), $groupsThatCanView);
@@ -558,11 +568,11 @@ class formulizeApplicationsHandler {
 				$groupsWithDefaultPage = array_map(array($xoopsDB, 'escape'), $groupsWithDefaultPage);
                 $defaultScreen = 0;
         		foreach($groupsThatCanView as $groupid) {
-                    //check for default screen					
+                    //check for default screen
                     if (in_array($groupid, $groupsWithDefaultPage)){
                         $defaultScreen = 1;
                     }
-                    $permissionsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_permissions")."` VALUES (null,".formulize_db_escape($linkValues[0]).",". $groupid.",".$defaultScreen.")";                     
+                    $permissionsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_permissions")."` VALUES (null,".formulize_db_escape($linkValues[0]).",". $groupid.",".$defaultScreen.")";
            	     if(!$result = $xoopsDB->query($permissionsql)) {
            	     	exit("Error updating Menu Item permissions.".$linkValues[4]." SQL dump:\n" . $permissionsql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
            	 		}
@@ -571,13 +581,13 @@ class formulizeApplicationsHandler {
         	 }
 		}
 	}
-	
+
 	// added Oct 2013 W.R.
     function updateSorting($Links){
         global $xoopsDB;
         foreach($Links as $link) {
-  			$menu_id = $link->getVar('menu_id');	
-  			$rank = $link->getVar('rank');           
+  			$menu_id = $link->getVar('menu_id');
+  			$rank = $link->getVar('rank');
         	$updatesql = "UPDATE `".$xoopsDB->prefix("formulize_menu_links")."` SET `rank`= ".$rank." where menu_id=".$menu_id.";";
         	if(!$result = $xoopsDB->query($updatesql)) {
             	exit("Error sorting Menu List. SQL dump:\n" . $updatesql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
@@ -587,15 +597,15 @@ class formulizeApplicationsHandler {
 
     //added Oct 2013
     function getGroupsWithDefaultScreen(){
-        global $xoopsDB; 
-        
+        global $xoopsDB;
+
         $sql = 'SELECT group_concat( DISTINCT(group_id) separator \',\') as default_screen FROM '.$xoopsDB->prefix("formulize_menu_permissions");
         $sql .= ' WHERE default_screen = 1' ;
-        
-        if ($result = $xoopsDB->query($sql)) { 
+
+        if ($result = $xoopsDB->query($sql)) {
             $resultArray = $xoopsDB->fetchArray($result);
-            return $resultArray['default_screen'];	 	                	 	
-        }	 
+            return $resultArray['default_screen'];
+        }
         else {
             exit("Error checking default screen. SQL dump:\n" . $checksql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
         }

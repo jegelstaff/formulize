@@ -52,7 +52,6 @@
 		<{else}>
 			<input type="radio" name="sort-by" id="<{$index}>-DESC" value="<{$index}>-DESC"><label for="<{$index}>-DESC">Z..A</label></input>
 		<{/if}>
-
 	      </td>
 	      <td class='removeImage'>
 		<img class="removeCol" style="cursor: pointer;" onclick="removeColumn(<{$index}>)" src="../images/editdelete.gif"></img>
@@ -88,7 +87,7 @@
     <legend><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_VIEW_DATA_TO_DISPLAY_HEADER}></legend>
 	<div class="form-item float-left half-width">
 
-	  <label for="screens-defaultview"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEW}></label>
+	  <h2><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEW}></h2>
 
 	  <p><input type="button" name="add_view" class="formButton" value="<{$smarty.const._AM_ELE_ADD_OPT_SUBMIT}> Default View"</p><br /><br />
 
@@ -114,7 +113,7 @@
 	</div>
 
 	<div class="form-item clear-both">
-        Fundamental Filters<br>
+        <h2>Fundamental Filters</h2>
         <div id='fundamentalfilters'>
             <br>
             <{$content.fundamentalfilters}>

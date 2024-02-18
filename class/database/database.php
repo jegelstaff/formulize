@@ -50,7 +50,7 @@ abstract class IcmsDatabase extends icms_db_legacy_Database{
  * @copyright   copyright (c) 2000-2003 XOOPS.org
  * @license		http://www.gnu.org/licenses/old-licenses/gpl-2.0.html GNU General Public License (GPL)
  *
- * @deprecated Use IcmsDatabase instead
+ * deprecated Use IcmsDatabase instead
  * @todo Remove this from the core in version 1.4
  */
 abstract class XoopsDatabase extends IcmsDatabase { /* For Backwards compatibility */ }

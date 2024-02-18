@@ -25,7 +25,7 @@ if (!defined('ICMS_ROOT_PATH')) {
  *
  * @author	    Kazumi Ono	<onokazu@xoops.org>
  * @copyright	copyright (c) 2000-2003 XOOPS.org
- * @deprecated	Use icms_form_elements_select_Group
+ * deprecated	Use icms_form_elements_select_Group
  * @todo		Remove in version 1.4 - all instances have been removed from the core
  */
 class XoopsFormSelectGroup extends icms_form_elements_select_Group

@@ -23,13 +23,13 @@ if (!defined('ICMS_ROOT_PATH')) die("ImpressCMS root path not defined");
  *
  * @author	    Kazumi Ono	<onokazu@xoops.org>
  * @copyright	copyright (c) 2000-2003 XOOPS.org
- * @deprecated	Use icms_form_elements_Hidden, instead
+ * deprecated	Use icms_form_elements_Hidden, instead
  * @todo		Remove in version 1.4
  */
 class XoopsFormHidden extends icms_form_elements_Hidden {
 
 	private $_deprecated;
-	
+
 	/**
 	 * Constructor
 	 *

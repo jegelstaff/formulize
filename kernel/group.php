@@ -1,7 +1,7 @@
 <?php
 if (!defined('ICMS_ROOT_PATH')) die("ImpressCMS root path not defined");
 /**
- * @deprecated	Use icms_member_group_Object, instead
+ * deprecated	Use icms_member_group_Object, instead
  * @todo		Remove in version 1.4
  *
  */
@@ -13,7 +13,7 @@ class XoopsGroup extends icms_member_group_Object {
 	}
 }
 /**
- * @deprecated	Use icms_member_group_Handler, instead
+ * deprecated	Use icms_member_group_Handler, instead
  * @todo		Remove in version 1.4
  *
  */
@@ -25,7 +25,7 @@ class XoopsGroupHandler extends icms_member_group_Handler {
 	}
 }
 /**
- * @deprecated	Use icms_member_group_membership_Object, instead
+ * deprecated	Use icms_member_group_membership_Object, instead
  * @todo		Remove in version 1.4
  *
  */
@@ -37,7 +37,7 @@ class XoopsMembership extends icms_member_group_membership_Object {
 	}
 }
 /**
- * @deprecated	Use icms_member_group_membership_Handler, instead
+ * deprecated	Use icms_member_group_membership_Handler, instead
  * @todo		Remove in version 1.4
  *
  */

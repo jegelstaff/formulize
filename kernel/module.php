@@ -11,7 +11,7 @@
  * @author	http://www.xoops.org The XOOPS Project
  * @author	modified by UnderDog <underdog@impresscms.org>
  * @version	$Id: module.php 19118 2010-03-27 17:46:23Z skenow $
- * @deprecated
+ * deprecated
  * @todo	Remove in version 1.4
  */
 
@@ -24,7 +24,7 @@ if(!defined('ICMS_ROOT_PATH')){exit();}
  * @package	kernel
  * @author	Kazumi Ono 	<onokazu@xoops.org>
  * @copyright	(c) 2000-2003 The Xoops Project - www.xoops.org
- * @deprecated	Use icms_module_Object, instead
+ * deprecated	Use icms_module_Object, instead
  * @todo		Remove in version 1.4
  **/
 class XoopsModule extends icms_module_Object {
@@ -51,7 +51,7 @@ class XoopsModule extends icms_module_Object {
  * @package	kernel
  * @author	Kazumi Ono 	<onokazu@xoops.org>
  * @copyright	(c) 2000-2003 The Xoops Project - www.xoops.org
- * @deprecated	Use icms_module_Handler, instead
+ * deprecated	Use icms_module_Handler, instead
  * @todo		Remove in version 1.4
  **/
 class XoopsModuleHandler extends icms_module_Handler {
