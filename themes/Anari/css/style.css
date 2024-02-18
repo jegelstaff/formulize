@@ -10,6 +10,12 @@ body {
   line-height: 1.4;
 }
 
+:root {
+  --button-color: #109CF1;
+  --accent-color: #109CF1;
+}
+
+
 html, body, div, span, applet, object, iframe,
 h1, h2, h3, h4, h5, h6, p, blockquote, pre,
 a, abbr, acronym, address, big, cite, code,
@@ -430,7 +436,7 @@ table:first-child div.applinks h1 {
   outline: none;
 }
 .site-header__search-input:focus + .site-header__search-icon {
-  color: #109CF1;
+  color:  var(--accent-color);
 }
 
 .site-header__actions {
@@ -496,7 +502,6 @@ table:first-child div.applinks h1 {
 
 .site-branding__logo {
   height: 30px;
-  background: #F5F6F8;
   display: flex;
   align-items: center;
 }
@@ -535,10 +540,10 @@ table:first-child div.applinks h1 {
 }
 
 .main-menu__item-link--active {
-  color: #109CF1;
+  color:  var(--accent-color);
 }
 .main-menu__item-link--active .main-menu__item-link-icon {
-  color: #109CF1;
+  color:  var(--accent-color);
 }
 
 .main-menu__subitem {
@@ -663,7 +668,7 @@ div.list-of-entries .card__body {
 
 
 .formulize-form-submit-button {
-  background: #109CF1 !important;
+  background:  var(--button-color) !important;
   height: auto;
 }
 
@@ -678,7 +683,7 @@ button, input[type="submit"], input[type="button"], input[type="reset"],
   text-decoration: none;
   border: 0;
   border-radius: 10px;
-  background: #109CF1;
+  background:  var(--button-color);
   text-align: center;
 }
 button:hover, input[type="submit"]:hover, input[type="button"]:hover, input[type="reset"]:hover,
@@ -690,7 +695,7 @@ button:hover, input[type="submit"]:hover, input[type="button"]:hover, input[type
 
 button:focus, input[type="submit"]:focus, input[type="button"]:focus, input[type="reset"]:focus,
 .btn:focus {
-    background-color: #109CF1;
+    background-color:  var(--button-color);
 }
 
 
@@ -716,7 +721,7 @@ button, input[type="submit"], input[type="button"], input[type="reset"],
 
 button, input[type="submit"], input[type="button"], input[type="reset"],
 .btn--primary {
-  background-color: #109CF1;
+  background-color:  var(--button-color);
   box-shadow: 0px 4px 10px 0px rgba(16, 156, 241, 0.24);
 }
 @media print {
@@ -853,7 +858,7 @@ button, input[type="submit"], input[type="button"], input[type="reset"],
 }
 
 .chip--blue {
-  background: #109CF1;
+  background:  var(--accent-color);
 }
 
 .chip--red {
@@ -904,7 +909,7 @@ button, input[type="submit"], input[type="button"], input[type="reset"],
     height: auto;
     text-indent: 0;
     background-image: none;
-    background-color: #109CF1;
+    background-color:  var(--accent-color);
     font-size: 0.9rem;
     text-align: center;
 }
@@ -980,7 +985,7 @@ table.formulize-subform-table td {
   display: inline-block;
   margin: 4px -10px 0;
   text-decoration: none;
-  color: #109CF1;
+  color:  var(--accent-color);
   background: #f1f4f8;
   padding: 0.5em 2em;
   border: 1px solid #C2CFE0;
@@ -999,17 +1004,17 @@ table.formulize-subform-table td {
   margin-right: 0;
 }
 .pill-tabs__item:hover {
-  background: #109CF1; /*#C2CFE0;*/
+  background:  var(--accent-color); /*#C2CFE0;*/
   color: #FFF;
   cursor: pointer;
   border: 1px solid #C2CFE0;
 }
 
 .pill-tabs__item--active {
-  background: white; /* #109CF1;*/
-  border: 1px solid #109CF1;
+  background: white; /*  var(--accent-color);*/
+  border: 1px solid  var(--accent-color);
   border-bottom: 1px solid white;
-  color: #109CF1; /*#FFF;*/
+  color:  var(--accent-color); /*#FFF;*/
 }
 
 @media print {
@@ -1092,7 +1097,7 @@ table.formulize-subform-table td {
 .form-label, .xoops-form-element-caption, .xoops-form-element-caption-required {
   font-size: 1rem;
   font-weight: 500;
-  color: #109CF1;
+  color:  var(--accent-color);
   display: block;
   line-height: 1.4;
   padding: 0.5rem 0;
@@ -1240,7 +1245,7 @@ table.outer textarea:focus,
 #formulize_modal input[type="date"]:focus,
 #formulize_modal input[type="password"]:focus {
   outline: 0;
-  border-color: #109CF1;
+  border-color:  var(--accent-color);
 }
 
 .form-input[readonly], .form-input[disabled],
@@ -1668,7 +1673,7 @@ div.subform-entry-container .ui-helper-reset {
 div.subform-entry-container .ui-state-default,
 div.subform-entry-container .ui-state-active,
 div.subform-entry-container .ui-widget-content {
-    border-color: #109CF1;
+    border-color:  var(--accent-color);
     background: none;
 }
 
@@ -1849,7 +1854,7 @@ input::-ms-fill-lower {
 input::-webkit-slider-thumb {
   box-sizing: border-box;
   box-shadow: 0px 4px 10px rgba(16, 156, 241, 0.24);
-  border: 7px solid #109CF1;
+  border: 7px solid  var(--accent-color);
   height: 30px;
   width: 30px;
   border-radius: 100px;
@@ -1870,7 +1875,7 @@ input::-webkit-slider-thumb {
 input::-moz-range-thumb {
   box-sizing: border-box;
   box-shadow: 0px 4px 10px rgba(16, 156, 241, 0.24);
-  border: 7px solid #109CF1;
+  border: 7px solid  var(--accent-color);
   height: 30px;
   width: 30px;
   border-radius: 100px;
@@ -1890,7 +1895,7 @@ input::-moz-range-thumb {
 input::-ms-thumb {
   box-sizing: border-box;
   box-shadow: 0px 4px 10px rgba(16, 156, 241, 0.24);
-  border: 7px solid #109CF1;
+  border: 7px solid  var(--accent-color);
   height: 30px;
   width: 30px;
   border-radius: 100px;
@@ -1909,7 +1914,7 @@ input::-ms-thumb {
 .rangeslider-thumb {
   box-sizing: border-box;
   box-shadow: 0px 4px 10px rgba(16, 156, 241, 0.24);
-  border: 7px solid #109CF1;
+  border: 7px solid  var(--accent-color);
   height: 30px;
   width: 30px;
   border-radius: 100px;
@@ -2936,7 +2941,7 @@ img {
 
 a.loe-edit-entry,
 a.de-edit-icon {
-    color: #1080FF;
+    color:  var(--button-color);
 }
 a.loe-edit-entry {
     font-size: 1.5rem;
@@ -3075,7 +3080,7 @@ input[name='pickdiffgroup'] {
 
 .list-of-entries .formulize_button {
     background-image: none !important;
-    background-color: #109CF1 !important;
+    background-color:  var(--button-color) !important;
     text-indent: 0 !important;
     text-shadow: none;
     height: auto;
@@ -3310,7 +3315,7 @@ table.outer input[type=submit]:hover, table.outer input[type=button]:hover {
 }
 
 table.outer input[type=submit], table.outer input[type=button] {
-  background-color: #109CF1;
+  background-color:  var(--button-color);
   box-shadow: 0px 4px 10px 0px rgba(16, 156, 241, 0.24);
 }
 @media print {
@@ -3336,7 +3341,7 @@ form[name='newcolform'] p,
 #saveoptions p {
     font-weight: bold;
     margin-bottom: 1em;
-    color: #109CF1;
+    color:  var(--accent-color);
 }
 
 table.popup,
