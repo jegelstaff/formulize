@@ -2911,6 +2911,9 @@ img {
     width: auto !important;
     max-width: 75px !important;
 }
+.formulize-grid select {
+	margin-top: 0.5em;
+}
 @media (min-width: 768px) {
     .formulize-grid {
         width: auto;
