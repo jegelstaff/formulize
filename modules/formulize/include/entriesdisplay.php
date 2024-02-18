@@ -3492,10 +3492,13 @@ function loadAdvanceView($fid, $advance_view) {
 			foreach($advance_view as $id=>$arr) {
 		   $columns .= $arr[0].',';
 		   $search .= $arr[1].',';
-		   if($arr[2] == "1"){
-		$sort = $arr[0];
-			$sortby = "SORT_ASC";
-		   }
+		   if($arr[2] == "ASC"){
+				$sort = $arr[0];
+				$sortby = "SORT_ASC";
+		   } elseif($arr[2] == "DESC") {
+				$sort = $arr[0];
+				$sortby = "SORT_DESC";
+			 }
 		}
 		//Remove the trailing ','
 		$columns = rtrim($columns, ",");

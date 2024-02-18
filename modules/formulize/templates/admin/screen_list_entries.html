@@ -12,7 +12,7 @@
 
 
 <div class="panel-content content">
-  
+
   <fieldset>
     <legend><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DISPLAY_ONLY_COLUMNS}></legend>
     <p><input type="button" class="formButton" name="addColumn" value="<{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_ADVANCE_VIEW_ADD_COLUMN}>"></p>
@@ -42,11 +42,17 @@
 		</select>
           </td>
 	      <td>
-		<{if $value.sort == 1}>
-		  <input type="radio" name="sort-by" value=<{$index}> checked></input>
+		<{if $value.sort == 'ASC' OR $value.sort == 1}>
+		  <input type="radio" name="sort-by" id="<{$index}>-ASC" value="<{$index}>-ASC" checked><label for="<{$index}>-ASC">A..Z</label></input>
 		<{else}>
-		  <input type="radio" name="sort-by" value=<{$index}>></input>
+		  <input type="radio" name="sort-by" id="<{$index}>-ASC" value="<{$index}>-ASC"><label for="<{$index}>-ASC">A..Z</label></input>
 		<{/if}>
+		<{if $value.sort == 'DESC'}>
+			<input type="radio" name="sort-by" id="<{$index}>-DESC" value="<{$index}>-DESC" checked><label for="<{$index}>-DESC">Z..A</label></input>
+		<{else}>
+			<input type="radio" name="sort-by" id="<{$index}>-DESC" value="<{$index}>-DESC"><label for="<{$index}>-DESC">Z..A</label></input>
+		<{/if}>
+
 	      </td>
 	      <td class='removeImage'>
 		<img class="removeCol" style="cursor: pointer;" onclick="removeColumn(<{$index}>)" src="../images/editdelete.gif"></img>
@@ -76,12 +82,12 @@
 	<{/if}>
     </table>
     <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_DESCRIPTION}></div>
-    
+
   </fieldset>
   <fieldset>
-    <legend><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_VIEW_DATA_TO_DISPLAY_HEADER}></legend>	
+    <legend><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_VIEW_DATA_TO_DISPLAY_HEADER}></legend>
 	<div class="form-item float-left half-width">
-	  
+
 	  <label for="screens-defaultview"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEW}></label>
 
 	  <p><input type="button" name="add_view" class="formButton" value="<{$smarty.const._AM_ELE_ADD_OPT_SUBMIT}> Default View"</p><br /><br />
@@ -101,12 +107,12 @@
 	  </div>
 
 	  <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_DEFAULTVIEW}></div>
-	</div>     
+	</div>
 	<div class="save-view-access">
 	<p><a href="<{$xoops_url}>/modules/formulize/master.php?fid=<{$content.fid}>&frid=<{$content.frid}>" target="_blank"><img src="../images/kedit.png"> <{$smarty.const._AM_FORMULIZE_SCREEN_LOE_EDIT_VIEW}></a></p>
 	<p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_EDIT_VIEW_DETAILS}></p>
 	</div>
-	
+
 	<div class="form-item clear-both">
         Fundamental Filters<br>
         <div id='fundamentalfilters'>
@@ -115,7 +121,7 @@
         </div>
         <div class='description'>These filters will be applied in addition to any other filter settings and searches on the page. They cannot be altered by the end user and they are never shown to the end user. You can have the same saved view as the default view for multiple screens, and then modify what the user sees through these filters. New entries created through this list will have their values set based on any 'Match all' filters that use the 'equals' operator. Note: if you create multiple 'one or more' filters, they will only work if they are on elements from the same form. Note also: dynamic references with { } are not supported.</div>
     </div>
-    
+
 	<div class="form-item clear-both">
 	  <label for="screens-usecurrentviewlist"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CURRENTVIEWLIST}></label>
 	  <input type="text" id="screens-usecurrentviewlist" name="screens-usecurrentviewlist" value="<{$content.usecurrentviewlist}>" size="20" maxlength="255"/>
@@ -128,9 +134,9 @@
 	  </select>
 	  <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_LIMITVIEWS}></div>
 	</div>
-    
-    
-    
+
+
+
     <div class="form-item">
       <label for="screens-useworkingmsg"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USEWORKING}></label>
 			<div class="form-radios">
@@ -169,7 +175,7 @@
 </form>
 
 <script type="text/javascript">
-  
+
   setInterval(function () {
     $.ajax({
       type:"POST",
@@ -187,7 +193,7 @@
       }
     });
   }, 8000);
-  
+
   $("[name=add_view]").click(function(){
     oldNumber = $(".default_view_group").length;
     newNumber = parseInt(oldNumber)+1;
@@ -204,23 +210,23 @@
     $("[name=add_view]").blur();
     setDisplay('savewarning','block');
     });
-  
+
   function removeDefView(number) {
     $('#view_remove_'+number).remove();
   }
-  
+
   function getFormColumns(number) {
     <{foreach from=$content.advanceviewoptions key=index item=value}>
-	  $("#cols-"+number).append($('<option>', { 
+	  $("#cols-"+number).append($('<option>', {
 	    value: "<{$index}>" }).text("<{$value|replace:'"':'\"'}>"));
     <{/foreach}>
   }
-  
+
   function addAdvanceViewRow(number) {
     appendContents1 = '<td><select id="cols-'+number+'" name="col-value['+number+']"></select></td>';
     appendContents2 = '<td><input type="text" name="search-value['+number+']"></input></td>';
     appendContents25 = '<td><select id="search-type-'+number+'" name="search-type['+number+']"><option label="Search Box" value="Box">Search Box</option><option label="Dropdown List" value="Filter">Dropdown List</option><option label="Checkboxes" value="MultiFilter">Checkboxes</option><option label="Date Range" value="DateRange">Date Range</option></select></td>';
-    appendContents3 = '<td><input type="radio" name="sort-by" value='+number+'></input></td>';
+    appendContents3 = '<td><input type="radio" name="sort-by" id="'+number+'-ASC" value="'+number+'-ASC"><label for="'+number+'-ASC">A..Z</label></input><input type="radio" name="sort-by" id="'+number+'-DESC" value="'+number+'-DESC"><label for="'+number+'-DESC">Z..A</label></input></td>';
     $(".advanceview:last").append('<tr class="advanceviewcol" name="'+number+'"></tr>');
     $(".advanceviewcol:last").append(appendContents1);
     $(".advanceviewcol:last").append(appendContents2);
@@ -228,29 +234,29 @@
     $(".advanceviewcol:last").append(appendContents3);
     $(".advanceviewcol:last").append("<td class='removeImage'></td>");
   }
-  
+
   $("[name=addColumn]").click(function (){
     number = $(".advanceviewcol:last").attr('name');
     number = parseInt(number) + 1;
     addAdvanceViewRow(number);
-    
+
     //Append the remove column
     appendContents4 = '<img class="removeCol" style="cursor: pointer;" onclick="removeColumn('+number+')" src="../images/editdelete.gif"></img>';
     $(".removeImage:last").append(appendContents4);
-    
+
     //Populate the columns
     getFormColumns(number);
-    
+
     //Update the number of rows
     rows = $("#numberOfRows").val();
     rows = parseInt(rows) + 1;
     $("#numberOfRows").val(rows);
-    
+
     //$("#numberOfRows").text($("#numberOfRows").val() + 1);
     $("[name=addColumn]").blur();
     setDisplay('savewarning','block');
   });
-  
+
   function removeColumn(id){
     firstNumber = $(".advanceviewcol:first").attr('name');
     lastNumber = $(".advanceviewcol:last").attr('name');
@@ -263,13 +269,13 @@
     }
     else {
       $("tr").remove("[name="+id+"]");
-      
+
       //Update the number of rows
       rows = $("#numberOfRows").val();
       rows = parseInt(rows) - 1;
       $("#numberOfRows").val(rows);
     }
-    
+
     setDisplay('savewarning','block');
   }
   $("div#fundamentalfilters > input#addcon").click(function () {
@@ -283,5 +289,5 @@
   $(".savebutton").click();
 	return false;
 });
-  
+
 </script>
