@@ -4534,7 +4534,7 @@ function get_display_screen_for_subform($subform_element_object) {
 
     if ($subform_element_object and is_a($subform_element_object, "formulizeformulize")) {
         $ele_value = $subform_element_object->getVar('ele_value');
-        if (isset($ele_value['display_screen'])) {
+        if (isset($ele_value['display_screen']) AND intval($ele_value['display_screen']) > 0) {
             // use selected screen
             $selected_screen_id = intval($ele_value['display_screen']);
         } else {
