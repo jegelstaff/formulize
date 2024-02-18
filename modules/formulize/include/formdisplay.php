@@ -2939,10 +2939,11 @@ function compileElements($fid, $form, $element_handler, $prevEntry, $entry, $go_
                 if(trim($helpText)) {
                     $gridElement->setDescription($helpText);
                 }
+								$gridElement->formulize_element = $i;
                 $form->addElement($gridElement);
                 unset($gridElement); // because addElement received values by reference, we need to destroy it here, so if it is recreated in a subsequent iteration, we don't end up overwriting elements we've already assigned. Ack! Ugly!
 			} else {
-				$form->insertBreakFormulize($gridContents, "head"); // head is the css class of the cell
+				$form->insertBreakFormulize($gridContents, "head", 'de_'.$fid.'_'.$entryForDEElements.'_'.$this_ele_id, $i->getVar('ele_handle')); // head is the css class of the cell
 			}
 		} elseif($ele_type == "ib" OR is_array($form_ele)) {
 			// if it's a break, handle it differently...$form_ele may be an array if it's a non-interactive element such as a grid
