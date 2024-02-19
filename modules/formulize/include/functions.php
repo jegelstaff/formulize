@@ -6836,10 +6836,12 @@ function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
 				line-height: 1.15;
 				margin: 0 0 10px 0;
 				padding: 0;
+				padding-top: 1em;
 				font-weight: bold;
 				color: #666;
 				background-color: inherit !important;
 				border: 0;
+				box-shadow: none;
 			}
 
 			.elements-checkbox-list {
