@@ -1,0 +1,19 @@
+name: e2e test suite
+
+on: [push]
+
+jobs:
+  docker-compose-up:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - name: Run Docker Compose
+      run: |
+        docker-compose up -d
+    - uses: saucelabs/sauce-connect-action@v2
+        with:
+          username: ${{ secrets.SAUCE_USERNAME }}
+          accessKey: ${{ secrets.SAUCE_ACCESS_KEY }}
+          tunnelName: github-action-tunnel
