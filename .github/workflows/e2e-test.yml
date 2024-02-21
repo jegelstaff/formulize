@@ -20,7 +20,7 @@ jobs:
         node-version: 18
     - name: Install SE interpreter
       run: |
-        npm install -g se-interpreter
+        npm install -g se-interpreter @playwright/test @types/node
     - name: Connect to saucelabs
       uses: saucelabs/sauce-connect-action@v2
       with:
@@ -37,8 +37,21 @@ jobs:
         host: localhost
         port: 3306
         timeout: 60
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v3
-    - name: Run e2e tests on selenium
+    - name: Install Playwright Browsers
       run: |
-        se-interpreter ci/travis/interpreter_config.json
+        cd ci
+        npx playwright install --with-deps
+    - name: Run Playwright tests
+      run: npx playwright test
+    - uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: playwright-report
+        path: playwright-report/
+        retention-days: 30
+
+        # - name: Setup tmate session
+    #   uses: mxschmitt/action-tmate@v3
+    # - name: Run e2e tests on selenium
+    #   run: |
+    #     se-interpreter ci/travis/interpreter_config.json
