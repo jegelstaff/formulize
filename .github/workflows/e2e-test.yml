@@ -24,17 +24,14 @@ jobs:
         port: 3306
         timeout: 60
     - name: Install dependencies
-      run: |
-        cd ci
-        npm ci
+      run: npm ci
+      working-directory: ci
     - name: Install Playwright Browsers
-      run: |
-        cd ci
-        npx playwright install --with-deps
+      run: npx playwright install --with-deps
+      working-directory: ci
     - name: Run Playwright tests
-      run: |
-        cd ci
-        npx playwright test
+      run: npx playwright test
+      working-directory: ci
     - uses: actions/upload-artifact@v3
       if: always()
       with:
