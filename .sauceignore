@@ -5,11 +5,3 @@
 !/node_modules
 !/ci
 !.sauce/config.yml
-
-# Since the whole '/cypress' folder is now included, this would also include any
-# subdirectories that potentially contain auto-generated test artifacts from
-# the local dev environment.
-# It'd be wasteful to include them in the payload, so let's ignore those subfolders.
-/cypress/videos/
-/cypress/results/
-/cypress/screenshots/
