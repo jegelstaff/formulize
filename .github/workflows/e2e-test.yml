@@ -18,6 +18,9 @@ jobs:
     - uses: actions/setup-node@v4
       with:
         node-version: 18
+    - name: Install e2e dependencies
+      run: |
+        npm ci
     - name: Install SE interpreter
       run: |
         npm install -g se-interpreter @playwright/test @types/node
@@ -26,8 +29,6 @@ jobs:
       with:
         username: ${{ secrets.SAUCE_USERNAME }}
         accessKey: ${{ secrets.SAUCE_ACCESS_KEY }}
-        tunnelName: ${{ github.GITHUB_RUN_ID }}
-        sePort: 4445
     - name: Run Docker Compose
       run: |
         docker-compose up -d
@@ -37,19 +38,8 @@ jobs:
         host: localhost
         port: 3306
         timeout: 60
-    - name: Install Playwright Browsers
-      run: |
-        cd ci
-        npx playwright install --with-deps
-    - name: Run Playwright tests
-      run: npx playwright test
-    - uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: playwright-report
-        path: playwright-report/
-        retention-days: 30
-
+    - name: Saucectl RUN
+      uses: saucelabs/saucectl-run-action@v4
         # - name: Setup tmate session
     #   uses: mxschmitt/action-tmate@v3
     # - name: Run e2e tests on selenium
