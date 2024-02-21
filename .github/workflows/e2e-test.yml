@@ -3,12 +3,7 @@ name: e2e test suite
 on: [push]
 
 env:
-  SAUCE_USERNAME: ${{secrets.SAUCE_USERNAME}}
-  SAUCE_ACCESS_KEY: ${{secrets.SAUCE_ACCESS_KEY}}
   GITHUB_TOKEN: ${{ github.token }}
-  SAUCE_TUNNEL_NAME: ${{ github.GITHUB_RUN_ID }}
-  GITHUB_REF_NAME: ${{ github.GITHUB_REF_NAME }}
-  GITHUB_SHA: ${{ github.GITHUB_SHA }}
 
 jobs:
   e2e-test-run:
@@ -24,6 +19,7 @@ jobs:
       with:
         username: ${{ secrets.SAUCE_USERNAME }}
         accessKey: ${{ secrets.SAUCE_ACCESS_KEY }}
+        tunnelName: ${{ github.GITHUB_RUN_ID }}
     - name: Run Docker Compose
       run: |
         docker-compose up -d
@@ -35,8 +31,7 @@ jobs:
         timeout: 60
     - name: Saucectl RUN
       uses: saucelabs/saucectl-run-action@v4
-        # - name: Setup tmate session
-    #   uses: mxschmitt/action-tmate@v3
-    # - name: Run e2e tests on selenium
-    #   run: |
-    #     se-interpreter ci/travis/interpreter_config.json
+      with:
+        sauce-username: ${{ secrets.SAUCE_USERNAME }}
+        sauce-access-key: ${{ secrets.SAUCE_ACCESS_KEY }}
+        tunnel-name: ${{ github.GITHUB_RUN_ID }}
