@@ -18,3 +18,7 @@ jobs:
     - name: Run Docker Compose
       run: |
         docker-compose up -d
+    - name: Saucectl RUN
+      uses: saucelabs/saucectl-run-action@v4
+      with:
+        working-directory: ci/selenium2-tests
