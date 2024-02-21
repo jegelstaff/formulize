@@ -137,6 +137,7 @@ class formulizeElementRenderer{
 					$entry = $this->formulize_getCachedEntryData($id_form, $entry_id);
 					$creation_datetime = display($entry, "creation_datetime");
 					$entryData = $entry; // alternate variable name for backwards compatibility
+					$ele_value[0] = removeOpeningPHPTag($ele_value[0]);
 					$evalResult = eval($ele_value[0]);
 					if($evalResult === false) {
 						$ele_value[0] = _formulize_ERROR_IN_LEFTRIGHT;
@@ -275,6 +276,7 @@ class formulizeElementRenderer{
 					$entry = $this->formulize_getCachedEntryData($id_form, $entry_id);
 					$creation_datetime = display($entry, "creation_datetime");
 					$entryData = $entry; // alternate variable name for backwards compatibility
+					$ele_value[0] = removeOpeningPHPTag($ele_value[0]);
 					$evalResult = eval($ele_value[0]);
 					if($evalResult === false) {
 						$ele_value[0] = _formulize_ERROR_IN_LEFTRIGHT;
