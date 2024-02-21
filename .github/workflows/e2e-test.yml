@@ -37,8 +37,8 @@ jobs:
         host: localhost
         port: 3306
         timeout: 60
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
     - name: Run e2e tests on selenium
       run: |
         se-interpreter ci/travis/interpreter_config.json
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v3
