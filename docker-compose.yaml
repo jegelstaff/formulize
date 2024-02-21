@@ -2,9 +2,7 @@ version: "3"
 
 services:
   web:
-    build:
-      context: ./docker/php
-      dockerfile: Dockerfile
+    image: "arvinsingla/formulize-web"
     restart: 'no'
     depends_on:
       - mariadb

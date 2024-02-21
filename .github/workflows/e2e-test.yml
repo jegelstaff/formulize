@@ -22,9 +22,6 @@ jobs:
     - name: Install e2e dependencies
       run: |
         npm ci
-    - name: Install SE interpreter
-      run: |
-        npm install -g se-interpreter @playwright/test @types/node
     - name: Connect to saucelabs
       uses: saucelabs/sauce-connect-action@v2
       with:
