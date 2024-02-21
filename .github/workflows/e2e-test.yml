@@ -19,11 +19,6 @@ jobs:
     - uses: actions/setup-node@v4
       with:
         node-version: 18
-    - name: Install e2e dependencies
-      run: |
-        cd ci
-        npm ci
-        cd ..
     - name: Connect to saucelabs
       uses: saucelabs/sauce-connect-action@v2
       with:
