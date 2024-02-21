@@ -26,12 +26,12 @@ jobs:
         host: localhost
         port: 3306
         timeout: 60
-    - name: Connect to saucelabs
-      uses: saucelabs/sauce-connect-action@v2
-      with:
-        username: ${{ secrets.SAUCE_USERNAME }}
-        accessKey: ${{ secrets.SAUCE_ACCESS_KEY }}
-        tunnelName: ${{ github.GITHUB_RUN_ID }}
+    # - name: Connect to saucelabs
+    #   uses: saucelabs/sauce-connect-action@v2
+    #   with:
+    #     username: ${{ secrets.SAUCE_USERNAME }}
+    #     accessKey: ${{ secrets.SAUCE_ACCESS_KEY }}
+    #     tunnelName: ${{ github.GITHUB_RUN_ID }}
     - name: Saucectl RUN
       uses: saucelabs/saucectl-run-action@v4
       with:
