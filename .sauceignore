@@ -2,6 +2,4 @@
 /*
 
 # Re-include files we selectively want as part of the payload by prefixing the lines with '!'.
-!/node_modules
 !/ci
-!.sauce/config.yml
