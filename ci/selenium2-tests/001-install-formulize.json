@@ -10,7 +10,7 @@
     },
     {
       "type": "store",
-      "text": "localhost",
+      "text": "localhost:8080",
       "variable": "test_domain"
     },
     {

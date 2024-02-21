@@ -5,6 +5,9 @@ on: [push]
 env:
   SAUCE_USERNAME: ${{secrets.SAUCE_USERNAME}}
   SAUCE_ACCESS_KEY: ${{secrets.SAUCE_ACCESS_KEY}}
+  SAUCE_TUNNEL_NAME: ${{ github.GITHUB_RUN_ID }}
+  GITHUB_REF_NAME: ${{ github.GITHUB_REF_NAME }}
+  GITHUB_SHA: ${{ github.GITHUB_SHA }}
 
 jobs:
   e2e-test-run:
@@ -12,16 +15,21 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 18
+    - name: Install SE interpreter
+      run: |
+        npm install -g se-interpreter
     - name: Connect to saucelabs
       uses: saucelabs/sauce-connect-action@v2
       with:
         username: ${{ secrets.SAUCE_USERNAME }}
         accessKey: ${{ secrets.SAUCE_ACCESS_KEY }}
-        tunnelName: github-action-tunnel
+        tunnelName: ${{ github.GITHUB_RUN_ID }}
     - name: Run Docker Compose
       run: |
         docker-compose up -d
-    - name: Saucectl RUN
-      uses: saucelabs/saucectl-run-action@v4
-      with:
-        working-directory: ci/selenium2-tests
+    - name: Run e2e tests on selenium
+      run: |
+        se-interpreter ci/travis/interpreter_config.json
