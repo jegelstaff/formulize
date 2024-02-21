@@ -5,6 +5,7 @@ on: [push]
 env:
   SAUCE_USERNAME: ${{secrets.SAUCE_USERNAME}}
   SAUCE_ACCESS_KEY: ${{secrets.SAUCE_ACCESS_KEY}}
+  GITHUB_TOKEN: ${{ github.token }}
   SAUCE_TUNNEL_NAME: ${{ github.GITHUB_RUN_ID }}
   GITHUB_REF_NAME: ${{ github.GITHUB_REF_NAME }}
   GITHUB_SHA: ${{ github.GITHUB_SHA }}
