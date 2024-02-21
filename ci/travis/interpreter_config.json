@@ -19,7 +19,7 @@
         }
       ],
       "scripts": [
-          "/var/www/ci/selenium2-tests/*"
+          "/var/www/html/ci/selenium2-tests/*"
       ]
     }
   ]
