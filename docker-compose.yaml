@@ -15,7 +15,7 @@ services:
     links:
       - mariadb
   mariadb:
-    image: "mariadb"
+    image: "mariadb:lts"
     restart: 'no'
     ports:
       - 3306:3306
