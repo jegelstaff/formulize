@@ -9,12 +9,14 @@ const admin_email = 'formulize@example.com';
 const admin_password = 'password';
 const short_wait = 543;
 
-test('Installer loads', async ({ page }) => {
-  await page.goto(`http://${test_domain}/install/index.php`);
+test.describe('Installer', () => {
+	test('Installer loads', async ({ page }) => {
+		await page.goto(`http://${test_domain}/install/index.php`);
 
-  // Expect a title "to contain" a substring.
-  await expect(page).toHaveTitle(/Formulize 7/);
-});
+		// Expect a title "to contain" a substring.
+		await expect(page).toHaveTitle(/Formulize 7/);
+	});
+})
 
 // (async () => {
 //   // Launch a browser
