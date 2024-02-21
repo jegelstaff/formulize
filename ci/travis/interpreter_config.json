@@ -6,7 +6,7 @@
         {
           "driverOptions": {
               "host": "localhost",
-              "port": 4445
+              "port": 8080
            },
           "browserOptions": {
               "browserName": "firefox",
