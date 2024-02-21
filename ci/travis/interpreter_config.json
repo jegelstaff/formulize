@@ -10,6 +10,8 @@
            },
           "browserOptions": {
               "browserName": "firefox",
+							"browserVersion": "latest",
+							"platformName": "macOS 10.13",
               "username": "${SAUCE_USERNAME}",
               "accessKey": "${SAUCE_ACCESS_KEY}",
               "tunnel-identifier": "${GITHUB_RUN_ID}",
