@@ -31,6 +31,14 @@ jobs:
     - name: Run Docker Compose
       run: |
         docker-compose up -d
+    - name: Wait for mysql
+      uses: smurfpandey/wait-for-it@master
+      with:
+        host: localhost
+        port: 3306
+        timeout: 60
     - name: Run e2e tests on selenium
       run: |
         se-interpreter ci/travis/interpreter_config.json
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
