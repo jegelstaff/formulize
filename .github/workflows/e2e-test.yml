@@ -32,7 +32,7 @@ jobs:
       run: |
         docker-compose up -d
     - name: Wait for mysql
-      uses: smurfpandey/wait-for-it
+      uses: smurfpandey/wait-for-it@main
       with:
         host: localhost
         port: 3306
