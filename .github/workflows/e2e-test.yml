@@ -9,11 +9,12 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
-    - name: Run Docker Compose
-      run: |
-        docker-compose up -d
-    - uses: saucelabs/sauce-connect-action@v2
-        with:
+    - name: Connect to saucelabs
+      uses: saucelabs/sauce-connect-action@v2
+      with:
           username: ${{ secrets.SAUCE_USERNAME }}
           accessKey: ${{ secrets.SAUCE_ACCESS_KEY }}
           tunnelName: github-action-tunnel
+    - name: Run Docker Compose
+      run: |
+        docker-compose up -d
