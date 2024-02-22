@@ -2,9 +2,7 @@ version: "3"
 
 services:
   web:
-    build:
-      context: ./docker/php
-      dockerfile: Dockerfile
+    image: "formulize/php-dev:latest"
     restart: 'no'
     depends_on:
       - mariadb
@@ -17,7 +15,7 @@ services:
     links:
       - mariadb
   mariadb:
-    image: "mariadb"
+    image: "mariadb:lts"
     restart: 'no'
     ports:
       - 3306:3306
