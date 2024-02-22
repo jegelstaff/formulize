@@ -3,9 +3,9 @@ name: Publish PHP Development Docker image
 on:
   push:
     branches:
-      - 'TASK/dockerhub-image'
-    # paths:
-    #   - 'docker/php/Dockerfile'
+      - 'master'
+    paths:
+      - 'docker/php/Dockerfile'
 
 jobs:
   deploy-dev-image:
