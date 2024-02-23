@@ -960,7 +960,7 @@ function formulize_generateJoinSQL($linkOrdinal, $linkcommonvalue, $linkselfids,
                 $newJoinText = " $mainAlias.`" . $joinHandles[$linkselfids[$linkOrdinal]] . "` = $subAlias.entry_id";
             }
         } else {
-            exit("Fatal Formulize Error: could not determine nature of linkage between linked selectbox(es)");
+            exit("Fatal Formulize Error: could not determine nature of linkage between linked selectbox(es). Main element: ".$joinHandles[$linkselfids[$linkOrdinal]].". Target element: ".$joinHandles[$linktargetids[$linkOrdinal]]);        
         }
     } else { // join by uid
       $newJoinText = " $mainAlias.creation_uid=$subAlias.creation_uid";
