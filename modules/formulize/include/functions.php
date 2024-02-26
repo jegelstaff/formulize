@@ -2599,14 +2599,12 @@ function formatLinks($matchtext, $handle, $textWidth, $entryBeingFormatted) {
     global $xoopsDB, $myts;
     static $cachedValues = array();
     static $cachedTypes = array();
-		static $cachedEleUIText = array();
     $matchtext = $myts->undoHtmlSpecialChars($matchtext);
     if (isMetaDataField($handle)) {
         return printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth);
     }
     if (!isset($cachedValues[$handle])) {
         $elementMetaData = formulize_getElementMetaData($handle, true);
-				$cachedEleUIText[$handle] = $elementMetaData['ele_uitextshow'] ? unserialize($elementMetaData['ele_uitext']) : array();
         $ele_value = unserialize($elementMetaData['ele_value']);
         $ele_type = $elementMetaData['ele_type'];
         if (!$ele_value) {
