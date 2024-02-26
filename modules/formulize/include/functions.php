@@ -2711,8 +2711,8 @@ function formatLinks($matchtext, $handle, $textWidth, $entryBeingFormatted) {
         return formulize_text_to_hyperlink($matchtext, $textWidth); // allow HTML codes in derived values
     } elseif($ele_type == "textarea" AND isset($ele_value['use_rich_text']) AND $ele_value['use_rich_text']) {
         return printSmart(strip_tags($matchtext), 100); // don't mess with rich text!
-    } elseif($ele_type == 'radio' OR $ele_type == 'checkbox') {
-        return trans(formulize_swapUIText($matchtext, $cachedEleUIText[$handle]));
+    } elseif($ele_type == 'radio') {
+        return trans($matchtext);
     } else { // regular element
         formulize_benchmark("done formatting, about to print");
         return _formatLinksRegularElement($matchtext, $textWidth, $ele_type, $handle, $entryBeingFormatted);
