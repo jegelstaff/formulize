@@ -300,7 +300,7 @@ if (!$rendered AND $uid) {
         include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
         // if it's a formulize page, reload to login screen
         if (strstr($currentURL, "/modules/formulize/")) {
-            header("Location: " . XOOPS_URL . "/modules/formulize/cat.php");
+            header("Location: " . XOOPS_URL . "/modules/formulize/application.php?id=all");
         } else {
             print "<p>Formulize could not display a screen for you.  Are you sure the specified screen exists?</p>";
         }
