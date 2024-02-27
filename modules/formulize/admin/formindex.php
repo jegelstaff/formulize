@@ -79,12 +79,12 @@ function formulize_DBPatchCheckSQL($sql, &$needsPatch) {
 
 // database patch logic for 4.0 and higher
 function patch40() {
-    
+
     $module_handler = xoops_gethandler('module');
     $formulizeModule = $module_handler->getByDirname("formulize");
     $metadata = $formulizeModule->getInfo();
     $versionNumber = $metadata['version'];
-    
+
     // CHECK THAT THEY ARE AT 3.1 LEVEL, IF NOT, LINK TO PATCH31
     // Check for ele_handle being 255 in formulize table
     global $xoopsDB;
@@ -172,7 +172,7 @@ function patch40() {
           INDEX i_uid (`uid`)
         ) ENGINE=InnoDB;";
         }
-        
+
         if (!in_array($xoopsDB->prefix("formulize_digest_data"), $existingTables)) {
             $sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_digest_data")."` (
                 `digest_id` int(11) unsigned NOT NULL auto_increment,
@@ -187,7 +187,7 @@ function patch40() {
                 INDEX i_fid (`fid`)
               ) ENGINE=InnoDB;";
         }
-        
+
         if (!in_array($xoopsDB->prefix("formulize_groupscope_settings"), $existingTables)) {
             $sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_groupscope_settings")."` (
                 `groupscope_id` int(11) NOT NULL auto_increment,
@@ -216,10 +216,10 @@ function patch40() {
                 INDEX i_maxuses (maxuses),
                 INDEX i_currentuses (currentuses)
             ) ENGINE=InnoDB;";
-        } 
-        
-        
-        
+        }
+
+
+
         if (!in_array($xoopsDB->prefix("formulize_group_filters"), $existingTables)) {
             $sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_group_filters")."` (
   `filterid` int(11) NOT NULL auto_increment,
@@ -358,7 +358,7 @@ function patch40() {
             INDEX i_sid (`sid`)
         ) ENGINE=InnoDB;";
         }
-        
+
         if (!in_array($xoopsDB->prefix("formulize_apikeys"), $existingTables)) {
             $sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_apikeys") . " (
                 `key_id` int(11) unsigned NOT NULL auto_increment,
@@ -370,7 +370,7 @@ function patch40() {
                 INDEX i_apikey (apikey),
                 INDEX i_expiry (expiry)
             ) ENGINE=InnoDB;";
-        }      
+        }
 
 
         if (!in_array($xoopsDB->prefix("formulize_passcodes"), $existingTables)) {
@@ -397,7 +397,7 @@ function patch40() {
                 INDEX i_sid (`sid`)
               ) ENGINE=InnoDB;";
         }
-        
+
         // if this is a standalone installation, then we want to make sure the session id field in the DB is large enough to store whatever session id we might be working with
         if (file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
             $sql['increase_session_id_size'] = "ALTER TABLE ".$xoopsDB->prefix("session")." CHANGE `sess_id` `sess_id` varchar(60) NOT NULL";
@@ -451,7 +451,7 @@ function patch40() {
         $sql['add_pubfilters'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_saved_views") . " ADD `sv_pubfilters` text";
         $sql['add_backdrop_group'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_resource_mapping") . " ADD external_id_string text NULL default NULL";
         $sql['add_backdrop_group_index'] = "ALTER TABLE ". $xoopsDB->prefix("formulize_resource_mapping") ." ADD INDEX i_external_id_string (external_id_string(10))";
-        $sql['add_advance_view_field'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " ADD `advanceview` text NOT NULL"; 
+        $sql['add_advance_view_field'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " ADD `advanceview` text NOT NULL";
 		$sql['defaultview_ele_type_text'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " CHANGE `defaultview` `defaultview` TEXT NOT NULL ";
         $sql['add_ele_uitextshow'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_uitextshow` tinyint(1) NOT NULL default 0";
         $sql['add_send_digests'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD send_digests tinyint(1) NOT NULL default 0";
@@ -488,6 +488,7 @@ function patch40() {
         $sql['sv_entriesperpage'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views") . " ADD `sv_entriesperpage` varchar(4) NOT NULL default ''";
         $sql['on_delete'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id") . " ADD `on_delete` text";
         $sql['viewentryscreen_templates'] = "ALTER TABLE ".$xoopsDB->prefix('formulize_screen_template') . " ADD `viewentryscreen` varchar(10) NOT NULL default ''";
+				$sql['remove_newslider'] = "UPDATE ".$xoopsDB->prefix("formulize")." SET ele_type = 'slider' WHERE ele_type = 'newslider'";
 
         $needToSetSaveAndLeave = true;
         $needToSetPrintableView = true;
@@ -582,7 +583,7 @@ function patch40() {
                     print "Multipage form screen UI controls already added. result OK<br>";
                 } elseif($key === "screen_theme") {
                     print "Theme setting for screens already added. result: OK<br>";
-                } elseif($key === "form_screen_displaytype") {    
+                } elseif($key === "form_screen_displaytype") {
                     print "Form screen element container display type already added. result: OK<br>";
                 } elseif($key === "form_screen_multipage_displayheading") {
                     print "Multipage screens displayheading already added. result: OK<br>";
@@ -613,13 +614,13 @@ function patch40() {
                 }
             }
         }
-        
+
         global $xoopsConfig;
         $themeSql = 'UPDATE '.$xoopsDB->prefix('formulize_screen').' SET theme = "'.$xoopsConfig['theme_set'].'" WHERE theme = ""';
         if(!$res = $xoopsDB->query($themeSql)) {
             exit("Error patching DB for Formulize $versionNumber. Could not update screens with default theme. SQL dump:<br>".$themeSql."<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
         }
-        
+
         $newConfigSQL = array();
         $sql = "SELECT * FROM ".$xoopsDB->prefix("config")." WHERE conf_name = 'auth_2fa'";
         if($res = $xoopsDB->query($sql)) {
@@ -697,7 +698,7 @@ function patch40() {
                 }
             }
         }
-        
+
         // ADD FONT SIZE OPTION TO PROFILE
         $sql = "SELECT * FROM ".$xoopsDB->prefix("profile_field")." WHERE field_name = 'fontsize'";
         if($res = $xoopsDB->query($sql)) {
@@ -722,7 +723,7 @@ function patch40() {
                 }
             }
         }
-        
+
         // if this is the first time we're adding the saveandleave and printable view options... set the values to the language constants
         if($needToSetSaveAndLeave) {
             $sql = "UPDATE ".$xoopsDB->prefix("formulize_screen_form"). " SET saveandleavebuttontext = '"._formulize_SAVE_AND_LEAVE."'";
@@ -732,8 +733,8 @@ function patch40() {
             $sql = "UPDATE ".$xoopsDB->prefix("formulize_screen_form"). " SET printableviewbuttontext = '"._formulize_PRINTVIEW."'";
             $xoopsDB->query($sql);
         }
-        
-        
+
+
         // change any non-serialized array defaultview settings for list of entries screens, into serialized arrays indicating the view for Registered Users (group 2)
         $sql1 = "UPDATE ".$xoopsDB->prefix("formulize_screen_listofentries")." SET defaultview = CONCAT('a:1:{i:2;i:',defaultview,';}') WHERE defaultview NOT LIKE '%{%' AND defaultview != 'b:0;' AND concat('',defaultview * 1) = defaultview"; //concat in where isolates numbers
         if(!$res = $xoopsDB->query($sql1)) {
@@ -909,9 +910,9 @@ function patch40() {
             print "Updating relationships with unified delete option.  result: OK<br>";
             }
         }
-        
+
         $screenpathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/";
-        
+
         // If current theme folder does not exists for templates, then create it and copy the default folder contents over to it.
         if(!file_exists($screenpathname)) {
             recurse_copy(XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/",$screenpathname);
@@ -946,7 +947,7 @@ function patch40() {
                                 if($additional_theme != $handleArray['theme']) {
                                     saveTemplate("// Placeholder because this older screen predates the use of the Open List Template", $handleArray['sid'], "openlisttemplate", $additional_theme);
                                     saveTemplate("// Placeholder because this older screen predates the use of the Close List Template", $handleArray['sid'], "closelisttemplate", $additional_theme);
-                                }    
+                                }
                             }
                         }
                     }
@@ -990,8 +991,8 @@ function patch40() {
 
         // Goes through all templates in screenpathname
         emptyTemplateFixer($screenpathname);
-        
-        $formToMultipageMap = array();        
+
+        $formToMultipageMap = array();
         if($needToMigrateFormScreensToMultipage) {
             // copy form screens to multipage screens
             // rename form screens to add (Legacy) to the end of the names/titles
@@ -1015,7 +1016,7 @@ function patch40() {
                     'reloadblank'
                 );
                 foreach($sameProperties as $property) {
-                    $multipageScreenObject->setVar($property, $formScreenObject->getVar($property));    
+                    $multipageScreenObject->setVar($property, $formScreenObject->getVar($property));
                 }
                 // for compatibility with the Anari theme, single column layout should be auto-auto, two column layout should be percentage width, and auto. Take the existing column 1 width in case of 2 column layout, unless it's auto and then set to 20%.
                 if($formScreenObject->getVar('displaycolumns')==1) {
@@ -1025,9 +1026,9 @@ function patch40() {
                     $multipageScreenObject->setVar('column1width', $newCol1Width);
                 }
                 $multipageScreenObject->setVar('column2width', 'auto');
-                
+
                 $multipageScreenObject->setVar('displayheading', $formScreenObject->getVar('displayheading'));
-                $multipageScreenObject->setVar('elementdefaults', serialize($formScreenObject->getVar('elementdefaults')));    
+                $multipageScreenObject->setVar('elementdefaults', serialize($formScreenObject->getVar('elementdefaults')));
                 $multipageScreenObject->setVar('type', 'multiPage');
                 $multipageScreenObject->setVar('buttontext', serialize(array(
                     'thankyoulinktext'=>'',
@@ -1053,9 +1054,9 @@ function patch40() {
                 $multipageScreenObject->setVar('pagetitles', serialize(array(0=>$formScreenObject->getVar('title'))));
                 $multipageScreenObject->setVar('conditions', serialize(array(0=>array())));
                 $multipageScreenObject->setVar('printall', 0);
-                $multipageScreenObject->setVar('paraentryform', 0); 
+                $multipageScreenObject->setVar('paraentryform', 0);
                 $multipageScreenObject->setVar('paraentryrelationship', 0);
-                $multipageScreenObject->setVar('navstyle', 1);	                
+                $multipageScreenObject->setVar('navstyle', 1);
                 $multipageScreenObject->setVar('showpagetitles', 0);
                 $multipageScreenObject->setVar('showpageindicator', 0);
                 $multipageScreenObject->setVar('showpageselector', 0);
@@ -1072,7 +1073,7 @@ function patch40() {
                 } else {
                     print "ERROR: could not create new version of form screen ".$fs->getVar('sid')."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.<br>";
                 }
-                
+
                 // copy to an additional theme(s) that may have been specified
                 if(isset($_GET['additional_themes'])) {
                     $skipTheme = $formScreenObject->getVar('theme');
@@ -1088,12 +1089,12 @@ function patch40() {
                             $multipageScreenObject->setVar('sid', $multiSid);
                             $multipageScreenObject->setVar('theme', $additional_theme);
                             if($multipage_screen_handler->insert($multipageScreenObject) == false) {
-                                print "ERROR: could not create new version of form screen ".$fs->getVar('sid')." for additional theme $additional_theme<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.<br>";        
+                                print "ERROR: could not create new version of form screen ".$fs->getVar('sid')." for additional theme $additional_theme<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.<br>";
                             }
                         }
                     }
                 }
-                    
+
                 unset($_POST['toptemplate']);
                 unset($_POST['elementtemplate1']);
                 unset($_POST['elementtemplate2']);
@@ -1104,11 +1105,11 @@ function patch40() {
                 if($form_screen_handler->insert($formScreenObject) == false) {
                     print "ERROR: could not update form screen ".$fs->getVar('sid')." with (Legacy) flag<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.<br>";
                 }
-                                
+
             }
-            
+
             if(!isset($_GET['skip_ref_updates'])) {
-            
+
                 // swap all subform element screen declarations
                 $criteria = new Criteria('ele_type', 'subform');
                 $element_handler = xoops_getmodulehandler('elements','formulize');
@@ -1123,7 +1124,7 @@ function patch40() {
                         }
                     }
                 }
-                
+
                 // swap all list of entries display screen declarations, including "default form" to actual sid
                 $criteria = new Criteria('type', 'listOfEntries');
                 $list_screen_handler = xoops_getmodulehandler('listOfEntriesScreen','formulize');
@@ -1149,11 +1150,11 @@ function patch40() {
                         }
                     }
                 }
-            
+
             }
-            
+
             print "<script>alert(\"Formulize 7 introduces an all new, modern and mobile friendly theme called 'Anari'. To use the new theme, go to System -> Site Configuration -> Preferences -> General Settings and change the Default Theme to 'Anari'.\");</script>";
-            
+
         }
 
         $sql = array();
@@ -1166,7 +1167,7 @@ function patch40() {
         foreach($sql as $thisSql) {
             $xoopsDB->query($thisSql);
         }
-        
+
         print "DB updates completed.  result: OK";
     }
 }
