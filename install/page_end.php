@@ -23,9 +23,6 @@ if (!defined( 'XOOPS_INSTALL' ) )	exit();
 $success = isset($_GET['success']) ? trim($_GET['success']) : false;
 if ($success) {
 	if (is_dir(ICMS_ROOT_PATH.'/install')) {
-		// @todo currently this area only runs when the user clicks on the house icon.
-		// This should be made more robust so the operation is completed without user intervention.
-		icms_core_Filesystem::writeFile('', 'install', 'lock', ICMS_ROOT_PATH);
 		header('Location: '.ICMS_URL.'/index.php');
 	}
 	$_SESSION = array();
@@ -84,9 +81,12 @@ foreach(explode(";\r",str_replace(array("\n","\n\r","\r\n"), "\r", $formulizeSta
 		if(!$formulizeResult = $dbm->query($sql)) {
 			$content = "<h3>Error:</h3><p>Some of the configuration settings were not saved properly in the database.  The website will still work, but it will behave more like a generic ImpressCMS+Formulize website, and not like a dedicated Formulize system.   Please send the following information to <a href=\"mailto:formulize@freeformsolutions.ca?subject=Formulize%20Standalone%20Install%20Error\">formulize@freeformsolutions.ca</a>:</p>
 			<p><pre>".$dbm->db->error()."</pre></p>".$content;
-		} else {
-        }
+		}
 	}
 }
+
+// write a lock file so the install folder is inaccessible (if not deleted automatically)
+icms_core_Filesystem::writeFile('', 'install', 'lock', ICMS_ROOT_PATH);
+
 // END OF MODIFIED CODE
 include 'install_tpl.php';
