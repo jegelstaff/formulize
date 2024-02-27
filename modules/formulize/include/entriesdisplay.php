@@ -1847,20 +1847,28 @@ function drawEntries($fid, $cols, $searches, $frid, $scope, $standalone, $curren
 	formulize_benchmark("We're done rendering list of entries!");
 }
 
-// this function outputs the html to view an entry, based on the value the user wants clickable, and the pre-determined view link code for the entry
-// $clickable_text is the clickable text/item. If empty, then the default link will be created, with the standard loe-edit-entry class
-// entry_id_or_dataset_record is an alternative ID that we should construct the link to display instead of the active entry - can be an entry id, or a single entry from the result of a getData call (ie: foreach($data as $entry)... the $entry is a valid thing to pass in here... we take the first entry found, so if there are multiple forms involved in the dataset, good luck.)
-// override_screen_id is the ID of the screen that the entry_id_or_dataset_record should be displayed in.  If not specified, then the current screen would be used.
-// Note: for the $entry_id_or_dataset_record, pass in 'proxy' to start a new proxy entry, 'single' to start a new entry without the "add multiple entries" behaviour, 'addnew' to start adding multiple new entries
+
+/**
+ * This function outputs the html to view an entry, based on the value the user wants clickable, and the pre-determined view link code for the entry
+ *
+ * Note: for the $entry_id_or_dataset_record, pass in 'proxy' to start a new proxy entry,
+ * 'single' to start a new entry without the "add multiple entries" behaviour,
+ * 'addnew' to start adding multiple new entries
+ *
+ * @param	string	$clickable_text is the clickable text/item. If empty, then the default link will be created, with the standard loe-edit-entry class
+ * @param	int|array	$entry_id_or_dataset_record is an alternative ID that we should construct the link to display instead of the active entry - can be an entry id, or a single entry from the result of a getData call (ie: foreach($data as $entry)... the $entry is a valid thing to pass in here... we take the first entry found, so if there are multiple forms involved in the dataset, good luck.)
+ * @param	int	$override_screen_id is the ID of the screen that the entry_id_or_dataset_record should be displayed in.  If not specified, then the current screen would be used.
+ * @return	string	The HTML markup for the view entry link that users can click to view/edit the entry
+ */
 function viewEntryLink($clickable_text="", $entry_id_or_dataset_record="", $override_screen_id="") {
-	$anchorMarkup = $GLOBALS['formulize_viewEntryLinkCode'] ? $GLOBALS['formulize_viewEntryLinkCode'] : '<a href="" onclick="goDetails();return false;"'; // use a shim with onclick since that's what we're lokoing for to do the replacement below
+	$anchorMarkup = $GLOBALS['formulize_viewEntryLinkCode'] ? $GLOBALS['formulize_viewEntryLinkCode'] : '<a href="" onclick="goDetails();return false;"'; // use a shim with onclick since that's what we're looking for to do the replacement below
 	if(!$anchorMarkup) { return ""; }
 	if($entry_id_or_dataset_record) {
 		// swap out the goDetails instruction for the new one based on entry_id_or_dataset_record and override_screen_id
 		$screenParam = $override_screen_id ? intval($override_screen_id) : "";
 		$onClickPos = strpos($anchorMarkup, 'onclick');
 		$semicolonPos = strpos($anchorMarkup, ';', $onClickPos);
-        $entry_id_or_dataset_record = processViewEntryLinkOverrideId($entry_id_or_dataset_record);
+    $entry_id_or_dataset_record = processViewEntryLinkOverrideId($entry_id_or_dataset_record);
 		$anchorMarkup = substr_replace($anchorMarkup, "onclick=\"javascript:goDetails('".$entry_id_or_dataset_record ."', '". $screenParam ."')", $onClickPos, ($semicolonPos-$onClickPos));
 	}
 	if(!$clickable_text) {
@@ -1871,10 +1879,18 @@ function viewEntryLink($clickable_text="", $entry_id_or_dataset_record="", $over
 	return $anchorMarkup;
 }
 
-// this function outputs a clickable button that will lead to the entry when clicked, just the same as viewEntryLink above
-// entry_id_or_dataset_record is an alternative ID that we should construct the link to display instead of the active entry - can be an entry id, or a single entry from the result of a getData call (ie: foreach($data as $entry)... the $entry is a valid thing to pass in here... we take the first entry found, so if there are multiple forms involved in the dataset, good luck.)
-// override_screen_id is the ID of the screen that the entry_id_or_dataset_record should be displayed in.  If not specified, then the current screen would be used.
-// Note: for the $entry_id_or_dataset_record, pass in 'proxy' to start a new proxy entry, 'single' to start a new entry without the "add multiple entries" behaviour, 'addnew' to start adding multiple new entries
+/**
+ * This function outputs a clickable button that will lead to the entry when clicked, just the same as viewEntryLink function does for a link
+ *
+ * Note: for the $entry_id_or_dataset_record, pass in 'proxy' to start a new proxy entry,
+ * 'single' to start a new entry without the "add multiple entries" behaviour,
+ * 'addnew' to start adding multiple new entries
+ *
+ * @param	string	$clickable_text is the clickable text/item. If empty, then the default link will be created, with the standard loe-edit-entry class
+ * @param	int|array	$entry_id_or_dataset_record is an alternative ID that we should construct the link to display instead of the active entry - can be an entry id, or a single entry from the result of a getData call (ie: foreach($data as $entry)... the $entry is a valid thing to pass in here... we take the first entry found, so if there are multiple forms involved in the dataset, good luck.)
+ * @param	int	$override_screen_id is the ID of the screen that the entry_id_or_dataset_record should be displayed in.  If not specified, then the current screen would be used.
+ * @return	string	The HTML markup for a button that users can click to view/edit the entry
+ */
 function viewEntryButton($clickable_text, $entry_id_or_dataset_record="", $override_screen_id="") {
 	if($entry_id_or_dataset_record) {
         $entry_id_or_dataset_record = processViewEntryLinkOverrideId($entry_id_or_dataset_record);
@@ -1886,6 +1902,11 @@ function viewEntryButton($clickable_text, $entry_id_or_dataset_record="", $overr
 	return "<input type=\"button\" name=\"formulize_veb\" value=\"$clickable_text\" onclick=\"javascript:goDetails('" . $entry_id_or_dataset_record . $screenParam ."');return false;\"></input>";
 }
 
+/**
+ * This function returns the entry id that should be used in a viewEntryLink or viewEntryButton, based on the passed in value
+ * @param int|array $overrideId is either the entry id number that should be viewed, or an entry record from a getData dataset. The first entry from the first form in the dataset will be used. Intended to happen in conjunction with the mainform in a dataset because there is a foreach traversing a dataset so each entry is being passed in separately, and the mainform record is the one we want to view.
+ * @return int The id number of the entry that should be viewed
+ */
 function processViewEntryLinkOverrideId($overrideId) {
     if(is_numeric($overrideId) OR $overrideId == 'new') {
         return $overrideId;
