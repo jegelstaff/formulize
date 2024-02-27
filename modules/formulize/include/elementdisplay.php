@@ -450,7 +450,11 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
     } elseif($thisOp == "NOT LIKE") {
       $evaluationCondition .= $compValue ? 'TRUE' : 'FALSE';
 		} elseif($thisOp == "IN") {
-			$evaluationCondition .= "in_array('".$compValue."', array('".implode("','",array_filter(explode(',',str_replace("'", "\'", $filterTerms[$i])), 'trim'))."'))";
+			$cleanTerms = array();
+			foreach(explode(',',$filterTerms[$i]) as $ft) {
+				$cleanTerms[] = str_replace("'", "\'", trim($ft, " \n\r\t\v\x00\"'"));
+			}
+			$evaluationCondition .= "in_array('".$compValue."', array('".implode("','",$cleanTerms)."'))";
 		} else {
 			$evaluationCondition .= "'".$compValue."' $thisOp '".addslashes($filterTerms[$i])."'";
 		}
