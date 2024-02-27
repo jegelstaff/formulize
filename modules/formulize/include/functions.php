@@ -5748,6 +5748,12 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
             $origlikebits = "%";
         }
         $quotes = "'";
+		} elseif (strstr(strtoupper($filterOps[$filterId]), "IN")) {
+				$likebits = '';
+				$quotes = '';
+				$filterTermParts = explode(',',$filterTerms[$filterId]);
+				$filterTerms[$filterId] = '("'.implode('","',array_filter($filterTermParts, 'trim')).'")';
+				$overrideReturnedOp = "IN";
     } else {
         $quotes = is_numeric($filterTerms[$filterId]) ? "" : "'";
         $filterOps[$filterId] = $filterOps[$filterId] == "=" ? "<=>" : $filterOps[$filterId];
@@ -5847,12 +5853,6 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
             } else {
 								// term is not a dynamic reference to an element...
 								$filterTermToUse = formulize_db_escape($filterTerms[$filterId]);
-								if($filterOps[$filterId] == 'IN') {
-									$likebits = '';
-									$quotes = '';
-									$filterTermParts = explode(',',str_replace("'", "''", $filterTermToUse));
-									$filterTermToUse = '("'.implode('","',$filterTermParts).'")';
-								}
 								$subQueryWhereClause = "ss.`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$filterTermToUse.$likebits.$quotes;
 								if($filterOps[$filterId] === "<=>") {
 									$targetSourceDataHandler = new formulizeDataHandler($targetSourceFid);
