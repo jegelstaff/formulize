@@ -6677,15 +6677,12 @@ function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
 						".$formObject->getVar('title')." <span id='arrow-up' aria-label='up arrow'>&and;</span><span id='arrow-down' aria-label='down arrow'>&or;</span>
 					</button>
 				";
-				$html .= "
-					<div
-						class='elements-checkbox-list'
-						id='id-change-columns-toggle-panel-".$thisFid."'
-						aria-labelledby='id-change-columns-toggle-header-".$thisFid."'
-					>
-						".$boxeshtml."
-					</div>
-				";
+				$html .="<fieldset class='elements-checkbox-fieldset'>";
+        $html .= "<legend class='elements-checkbox-legend'><a onclick='javascript:toggleCols($thisFid);return false;' style='cursor: pointer;'>".$formObject->getVar('title')." <span id='up_".$thisFid."' $upDisplay>&and;</span><span id='down_".$thisFid."' $downDisplay>&or;</span></a></legend>\n";
+        $html .= "<div class='elements-checkbox-list' id='cols_$thisFid' $hideform>\n";
+        $html .= $boxeshtml;
+        $html .= "</div>";
+        $html .= "</fieldset>";
     }
     $html .="</div>
 
@@ -6721,9 +6718,17 @@ function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
 				display: inline;
 			}
 
-        .elements-checkbox-list {
-            transition: all 1s ease 0.25s;
-        }
+			.elements-checkbox-list {
+				transition: all 1s ease 0.25s;
+			}
+			.elements-checkbox-fieldset {
+					border: 0;
+					margin: 0;
+					padding: 0;
+			}
+			.elements-checkbox-fieldset legend {
+				margin-bottom: 10px;
+			}
     </style>
 
     <script type='text/javascript'>

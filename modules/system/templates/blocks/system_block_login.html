@@ -3,9 +3,9 @@
   <br />
   <form style="margin-top: 0px;" action="<{$xoops_url}>/user.php" method="post">
     <p><{$block.lang_username}></p>
-    <div><input type="text" class="uname" name="uname" size="12" value="<{$block.unamevalue}>" maxlength="200" /><br /></div>
+    <div><input type="text" required class="uname" name="uname" size="12" value="<{$block.unamevalue}>" maxlength="200" aria-required="true" /><br /></div>
     <br /><p><{$block.lang_password}></p>
-    <div><input type="password" name="pass" size="12" maxlength="32" /><br /></div>
+    <div><input type="password" required name="pass" size="12" maxlength="32" aria-required="true" /><br /></div>
     <{if $block.rememberme }>
     <div><input type="checkbox" name="rememberme" value="On" /><{$block.lang_rememberme}><br /></div>
     <{/if}>
