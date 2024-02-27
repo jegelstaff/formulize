@@ -3957,7 +3957,7 @@ function saveSub(reload) {
             var formData = new FormData(jQuery('#formulize_modal')[0]);
             //var formData = subEntryDialog.children('form').serialize();
             jQuery.post({
-                url: '<?php print XOOPS_URL; ?>/modules/formulize/include/readelements.php',
+                url: '<?php print XOOPS_URL; ?>/modules/formulize/include/readelements.php?fid='+subEntryDialog.data('fid')+'&frid='+subEntryDialog.data('frid'),
                 data: formData,
                 cache: false,
                 contentType: false,
