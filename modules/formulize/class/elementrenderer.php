@@ -51,11 +51,11 @@ class formulizeElementRenderer{
         $wasDisabled = false; // yuck, see comment below when this is reassigned
 		if (strstr(getCurrentURL(),"printview.php")) {
 			$isDisabled = true; // disabled all elements if we're on the printable view
-		} 
+		}
 		global $xoopsUser, $xoopsModuleConfig, $separ, $myts;
 		$myts =& MyTextSanitizer::getInstance();
-		
-		
+
+
 		// $form_ele_id contains the ele_id of the current link select box, but we have to remove "ele_" from the front of it.
 		//print "form_ele_id: $form_ele_id<br>"; // debug code
 		if(strstr($form_ele_id, "de_")) { // display element uses a slightly different element name so it can be distinguished on subsequent page load from regular elements...THIS IS NOT TRUE/NECESSARY ANYMORE SINCE FORMULIZE 3, WHERE ALL ELEMENTS ARE DISPLAY ELEMENTS
@@ -65,8 +65,8 @@ class formulizeElementRenderer{
 			$true_ele_id = str_replace("ele_", "", $form_ele_id);
 			$displayElementInEffect = false;
 		}
-	
-		
+
+
 		// added July 6 2005.
 		if(!$xoopsModuleConfig['delimeter']) {
 			// assume that we're accessing a form from outside the Formulize module, therefore the Formulize delimiter setting is not available, so we have to query for it directly.
@@ -75,7 +75,7 @@ class formulizeElementRenderer{
 		} else {
 			$delimSetting = $xoopsModuleConfig['delimeter'];
 		}
-	
+
 		$customElementHasData = false;
 		$id_form = $this->_ele->getVar('id_form');
 		$ele_caption = $this->_ele->getVar('ele_caption', 'e');
@@ -87,16 +87,16 @@ class formulizeElementRenderer{
 
 
 		// call the text sanitizer, first try to convert HTML chars, and if there were no conversions, then do a textarea conversion to automatically make links clickable
-		$ele_caption = trans($ele_caption); 
+		$ele_caption = trans($ele_caption);
 		$htmlCaption = htmlspecialchars_decode($myts->undoHtmlSpecialChars($ele_caption)); // do twice, because we need to handle &amp;lt; and other stupid stuff...do first time through XOOPS myts just because it might be doing a couple extra things that are useful...can probably just use PHP's own filter twice, not too big a deal
 		if($htmlCaption == $ele_caption) {
         	$ele_caption = $myts->displayTarea($ele_caption);
 		} else {
 			$ele_caption = $htmlCaption;
 		}
-		
+
 		$ele_caption = $this->formulize_replaceCurlyBracketVariables($ele_caption, $entry_id, $id_form);
-		
+
 		// ele_desc added June 6 2006 -- jwe
 		$ele_desc = $this->_ele->getVar('ele_desc', "f"); // the f causes no stupid reformatting by the ICMS core to take place
 
@@ -114,14 +114,14 @@ class formulizeElementRenderer{
 				$previousEntryUI = $this->formulize_setupPreviousEntryUI($screen, $true_ele_id, $ele_type, $owner, $displayElementInEffect, $entry_id, $this->_ele->getVar('ele_handle'), $this->_ele->getVar('id_form'));
 			}
 		}
-		
+
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($id_form, true); // true includes all elements even if they're not displayed
-	
+
 		switch ($ele_type){
 			case 'derived':
 				if($entry_id != "new") {
-					$form_ele = new xoopsFormLabel($this->_ele->getVar('ele_caption'), $ele_value[5]); 
+					$form_ele = new xoopsFormLabel($this->_ele->getVar('ele_caption'), $ele_value[5]);
 					$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
 				} else {
 					$form_ele = new xoopsFormLabel($this->_ele->getVar('ele_caption'), _formulize_VALUE_WILL_BE_CALCULATED_AFTER_SAVE);
@@ -150,9 +150,9 @@ class formulizeElementRenderer{
 			case 'text':
 				$ele_value[2] = stripslashes($ele_value[2]);
 //        $ele_value[2] = $myts->displayTarea($ele_value[2]); // commented by jwe 12/14/04 so that info displayed for viewing in a form box does not contain HTML formatting
-				
+
 				$ele_value[2] = getTextboxDefault($ele_value[2], $id_form, $entry_id); // don't pass placeholder, because we want to get the actual value in this case...we'll swap it in and use as placeholder later
-				
+
 				//if placeholder value is set
 				if($ele_value[11] AND ($entry_id == 'new' OR $ele_value[2] === "")) { // always go straight to source for placeholder for new entries, or entries where there is no value
                     $rawEleValue = $this->_ele->getVar('ele_value');
@@ -161,7 +161,7 @@ class formulizeElementRenderer{
 				}
 
 				if (!strstr(getCurrentURL(),"printview.php")) { 				// nmc 2007.03.24 - added
-					
+
 					$form_ele = new XoopsFormText(
 					$ele_caption,
 					$form_ele_id,
@@ -169,16 +169,16 @@ class formulizeElementRenderer{
 					$ele_value[1],	//	max width
 					$ele_value[2]	  //	default value
 					);
-				} else {															// nmc 2007.03.24 - added 
-					$form_ele = new XoopsFormLabel ($ele_caption, formulize_numberFormat($ele_value[2], $this->_ele->getVar('ele_handle')));	// nmc 2007.03.24 - added 
+				} else {															// nmc 2007.03.24 - added
+					$form_ele = new XoopsFormLabel ($ele_caption, formulize_numberFormat($ele_value[2], $this->_ele->getVar('ele_handle')));	// nmc 2007.03.24 - added
 				}
 
 				//if placeholder value is set
 				if($ele_value[11]) {
 					$form_ele->setExtra("placeholder='".$placeholder."'");
 				}
-                
-				//if numbers-only option is set 
+
+				//if numbers-only option is set
 				if ($ele_value[3]) {
 					$form_ele->setExtra("class='numbers-only-textbox'");
 				}
@@ -212,7 +212,7 @@ class formulizeElementRenderer{
                     $form_ele->customValidationCode[] = "formulize_xhr_params[4] = leave;\n"; // will have been passed in to the main function and we need to preserve it after xhr is done
 					$form_ele->customValidationCode[] = "formulize_xhr_send('check_for_unique_value', formulize_xhr_params);\n";
                     //$form_ele->customValidationCode[] = "showSavingGraphic();\n";
-					$form_ele->customValidationCode[] = "return false;\n"; 
+					$form_ele->customValidationCode[] = "return false;\n";
 					$form_ele->customValidationCode[] = "}\n";
                     $form_ele->customValidationCode[] = "}\n";
 				} elseif($this->_ele->getVar('ele_req') AND !$isDisabled) {
@@ -229,7 +229,7 @@ class formulizeElementRenderer{
 				$ele_value[0] = stripslashes($ele_value[0]);
 //        $ele_value[0] = $myts->displayTarea($ele_value[0]); // commented by jwe 12/14/04 so that info displayed for viewing in a form box does not contain HTML formatting
 				$ele_value[0] = getTextboxDefault($ele_value[0], $id_form, $entry_id);
-				if (!strstr(getCurrentURL(),"printview.php") AND !$isDisabled) { 				// nmc 2007.03.24 - added 
+				if (!strstr(getCurrentURL(),"printview.php") AND !$isDisabled) { 				// nmc 2007.03.24 - added
 					if(isset($ele_value['use_rich_text']) AND $ele_value['use_rich_text']) {
 						include_once XOOPS_ROOT_PATH."/class/xoopsform/formeditor.php";
 						$form_ele = new XoopsFormEditor(
@@ -253,7 +253,7 @@ class formulizeElementRenderer{
                         }
 
 						$GLOBALS['formulize_CKEditors'][] = $form_ele_id.'_tarea';
-						
+
 					} else {
 					$form_ele = new XoopsFormTextArea(
 						$ele_caption,
@@ -263,8 +263,8 @@ class formulizeElementRenderer{
 						$ele_value[2]	  //	cols
 					);
 					}
-				} else {															// nmc 2007.03.24 - added 
-					$form_ele = new XoopsFormLabel ($ele_caption, str_replace("\n", "<br>", undoAllHTMLChars($ele_value[0], ENT_QUOTES)));	// nmc 2007.03.24 - added 
+				} else {															// nmc 2007.03.24 - added
+					$form_ele = new XoopsFormLabel ($ele_caption, str_replace("\n", "<br>", undoAllHTMLChars($ele_value[0], ENT_QUOTES)));	// nmc 2007.03.24 - added
 				}
 			break;
 
@@ -292,9 +292,9 @@ class formulizeElementRenderer{
 
 
 			case 'select':
-                
+
                 $element_handler = xoops_getmodulehandler('elements', 'formulize');
-                
+
 				if(is_string($ele_value[2]) and strstr($ele_value[2], "#*=:*")) // if we've got a link on our hands... -- jwe 7/29/04
 				{
 					// new process for handling links...May 10 2008...new datastructure for formulize 3.0
@@ -316,10 +316,10 @@ class formulizeElementRenderer{
 						$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 					}
 					$module_id = getFormulizeModId();
-					
+
                     $ele_value['formlink_useonlyusersentries'] = isset($ele_value['formlink_useonlyusersentries']) ? $ele_value['formlink_useonlyusersentries'] : 0;
                     $pgroupsfilter = prepareLinkedElementGroupFilter($sourceFid, $ele_value[3], $ele_value[4], $ele_value[6], $ele_value['formlink_useonlyusersentries']);
-					
+
 					$sourceFormObject = $form_handler->get($sourceFid);
 
 					list($conditionsfilter, $conditionsfilter_oom, $parentFormFrom) = buildConditionsFilterSQL($ele_value[5], $sourceFid, $entry_id, $owner, $formObject, "t1");
@@ -329,7 +329,7 @@ class formulizeElementRenderer{
 					if($ele_value[9]) {
 					 $t4_ele_value = $this->_ele->getVar('ele_value');
                      if($t4_ele_value[1]) { // allows multiple selections
-                                 
+
 						$restrictSQL = " AND (
 						NOT EXISTS (
 						SELECT 1 FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS t4 WHERE t4.`".$this->_ele->getVar('ele_handle')."` LIKE CONCAT( '%,', t1.`entry_id` , ',%' ) AND t4.entry_id != ".intval($entry_id);
@@ -342,8 +342,8 @@ class formulizeElementRenderer{
                                                     SELECT 1 FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS t4 WHERE t4.`".$this->_ele->getVar('ele_handle')."` = t1.`entry_id` AND t4.entry_id = ".intval($entry_id);
 
                                                 }
-						
-						
+
+
 						$restrictSQL .= $this->addEntryRestrictionSQL($ele_value[9], $id_form, $groups); // pass in the flag about restriction scope, and the form id, and the groups
 						$restrictSQL .= " ) OR EXISTS (
 						SELECT 1 FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS t4 WHERE t4.`".$this->_ele->getVar('ele_handle')."` LIKE CONCAT( '%,', t1.`entry_id` , ',%' ) AND t4.entry_id = ".intval($entry_id);
@@ -363,7 +363,7 @@ class formulizeElementRenderer{
                         $cachedSourceValuesAutocompleteLength = array();
                         unset($GLOBALS['formulize_unsetSelectboxCaches']);
                     }
-                    
+
 					// setup the sort order based on ele_value[12], which is an element id number
 					$sortOrder = $ele_value[15] == 2 ? " DESC" : "ASC";
 					if($ele_value[12]=="none" OR !$ele_value[12]) {
@@ -388,11 +388,11 @@ class formulizeElementRenderer{
 					}
 
 					// if there is a groups filter, then join to the group ownership table
-                    
+
                     list($sourceEntrySafetyNetStart, $sourceEntrySafetyNetEnd) = prepareLinkedElementSafetyNets($sourceEntryIds, $conditionsfilter, $conditionsfilter_oom);
 
                     $extra_clause = prepareLinkedElementExtraClause($pgroupsfilter, $parentFormFrom, $sourceEntrySafetyNetStart);
-                    
+
                     // if we're supposed to limit based on the values in an arbitrary other element, add those to the clause too
                     $directLimit = '';
                     if(isset($ele_value['optionsLimitByElement']) AND is_numeric($ele_value['optionsLimitByElement'])) {
@@ -421,11 +421,11 @@ class formulizeElementRenderer{
                     if($directLimit) {
                         $directLimit = ' AND t1.entry_id IN ('.implode(',',$directLimit).') ';
 					}
-                    
+
 					$sourceValuesQ = "SELECT t1.entry_id, ".$select_column." FROM ".$xoopsDB->prefix("formulize_".
 						$sourceFormObject->getVar('form_handle'))." AS t1".$extra_clause.
                         " $conditionsfilter $conditionsfilter_oom $restrictSQL $directLimit $sourceEntrySafetyNetEnd GROUP BY t1.entry_id $sortOrderClause , t1.entry_id ASC ";
-				
+
 					if(!$isDisabled) {
 						// set the default selections, based on the entry_ids that have been selected as the defaults, if applicable
 						$hasNoValues = count((array) $sourceEntryIds) == 0 ? true : false;
@@ -444,7 +444,7 @@ class formulizeElementRenderer{
 						$disabledHiddenValue = array();
 						$disabledOutputText = array();
 					}
-					
+
 					if(!isset($cachedSourceValuesQ[intval($ele_value['snapshot'])][$sourceValuesQ])) {
                         $linkedElementOptions = array();
 						$sourceElementObject = $element_handler->get($boxproperties[1]);
@@ -476,9 +476,9 @@ class formulizeElementRenderer{
                                 }
                             }
 						}
-						
+
 						// in case there are duplicate options, and there's a selected value that is a duplicate, then preserve the duplicate value rather than the first duplicate in the list
-						// do this by removing duplicate values from the list, other than the one that was selected 
+						// do this by removing duplicate values from the list, other than the one that was selected
 						// convoluted process preserves ordering of the array
 						if(count((array) $sourceEntryIds) > 0) {
 							foreach($sourceEntryIds as $sei) {
@@ -491,7 +491,7 @@ class formulizeElementRenderer{
 							}
 						}
                         $linkedElementOptions = array_unique($linkedElementOptions); // remove duplicates
-                        
+
 						$cachedSourceValuesQ[intval($ele_value['snapshot'])][$sourceValuesQ] = $linkedElementOptions;
 						/* ALTERED - 20100318 - freeform - jeff/julian - start */
 						if(!$isDisabled AND $ele_value[8] == 1) {
@@ -510,7 +510,7 @@ class formulizeElementRenderer{
 								"<?php\n\$$cachedLinkedOptionsFileName = ".var_export($the_values, true).";\n");
 							$cachedSourceValuesAutocompleteFile[intval($ele_value['snapshot'])][$sourceValuesQ] = $cachedLinkedOptionsFileName;
 							$cachedSourceValuesAutocompleteLength[intval($ele_value['snapshot'])][$sourceValuesQ] = $maxLength;
-						} 
+						}
 					}
 
                     $default_value = array();
@@ -539,7 +539,7 @@ class formulizeElementRenderer{
                         }
 					}
 
-					// rendering a non-autocomplete box 
+					// rendering a non-autocomplete box
 					if($ele_value[8] == 0) {
                         if(!$isDisabled) {
     						$form_ele->addOptionArray($cachedSourceValuesQ[intval($ele_value['snapshot'])][$sourceValuesQ]);
@@ -552,9 +552,9 @@ class formulizeElementRenderer{
 							}
 						}
 					}
-                    
+
                     $GLOBALS['formulize_lastRenderedElementOptions'] = $cachedSourceValuesQ[intval($ele_value['snapshot'])][$sourceValuesQ];
-                    
+
                     if($isDisabled) {
 						$form_ele = new XoopsFormLabel($ele_caption, implode(", ", $disabledOutputText));
 						$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
@@ -566,8 +566,8 @@ class formulizeElementRenderer{
 					        $form_ele->_size = $new_size;
 					}
 					/* ALTERED - 20100318 - freeform - jeff/julian - stop */
-					
-				} 
+
+				}
 				else // or if we don't have a link...
 				{
 					$selected = array();
@@ -580,7 +580,7 @@ class formulizeElementRenderer{
 					{
 						$options["none"] = _AM_FORMLINK_PICK;
 					}
-					
+
 					// set opt_count to 1 if the box is NOT a multiple selection box. -- jwe 7/26/04
 					if($ele_value[1])
 					{
@@ -620,7 +620,7 @@ class formulizeElementRenderer{
                                     $scopegroups = explode(",",$ele_value[3]);
                                     if(!in_array("all", $scopegroups)) {
                                         $groups = $scopegroups;
-                                    } else { // use all 
+                                    } else { // use all
                                         if(!$ele_value[4]) { // really use all (otherwise, we're just going with all user's groups, so existing value of $groups will be okay
                                             unset($groups);
                                             global $xoopsDB;
@@ -628,12 +628,12 @@ class formulizeElementRenderer{
                                             foreach($allgroupsq as $thisgid) {
                                                 $groups[] = $thisgid['groupid'];
                                             }
-                                        } 
+                                        }
                                     }
                                 }
-                                
+
                                 $namelist = gatherNames($groups, $nametype, $ele_value[6], $ele_value[5], $ele_value[4], $declaredUsersGroups);
-             
+
                                 $directLimitUserIds = false;
                                 if(isset($ele_value['optionsLimitByElement']) AND is_numeric($ele_value['optionsLimitByElement'])) {
                                     if($optionsLimitByElement_ElementObject = $element_handler->get($ele_value['optionsLimitByElement'])) {
@@ -651,7 +651,7 @@ class formulizeElementRenderer{
                                         }
                                     }
                                 }
-                                
+
                                 foreach($namelist as $auid=>$aname) {
                                     if($directLimitUserIds AND !in_array($auid, $directLimitUserIds)) { continue; }
                                     $options[$auid] = $aname;
@@ -671,11 +671,11 @@ class formulizeElementRenderer{
                             }
                         }
                     }
-	
+
 					$count = count((array) $options);
 					$size = $ele_value[0];
 					$final_size = ( $count < $size ) ? $count : $size;
-	
+
 					$form_ele1 = new XoopsFormSelect(
 						$ele_caption,
 						$form_ele_id,
@@ -683,16 +683,16 @@ class formulizeElementRenderer{
 						$final_size,	//	size
 						$ele_value[1]	  //	multiple
 					);
-	
+
 					$form_ele1->setExtra("onchange=\"javascript:formulizechanged=1;\" jquerytag='$form_ele_id'");
-	
+
 					// must check the options for uitext before adding to the element -- aug 25, 2007
 					foreach($options as $okey=>$ovalue) {
 						$options[$okey] = formulize_swapUIText($ovalue, $this->_ele->getVar('ele_uitext'));
 					}
 					$form_ele1->addOptionArray($options);
                     $GLOBALS['formulize_lastRenderedElementOptions'] = $options;
-                    
+
 					if($selected) {
 						if(is_array($selected)) {
 							$hiddenElementName = $ele_value[1] ? $form_ele1->getName()."[]" : $form_ele1->getName();
@@ -708,7 +708,7 @@ class formulizeElementRenderer{
 							$disabledHiddenValue[] = "<input type=hidden name=\"".$form_ele1->getName()."\" value=\"$selected\">";
 						}
 					}
-	
+
 					$renderedHoorvs = "";
 					if(count((array) $hiddenOutOfRangeValuesToWrite) > 0) {
 						foreach($hiddenOutOfRangeValuesToWrite as $hoorKey=>$hoorValue) {
@@ -717,7 +717,7 @@ class formulizeElementRenderer{
 							unset($thisHoorv);
 						}
 					}
-	
+
 					if($isDisabled) {
 						$disabledHiddenValues = implode("\n", $disabledHiddenValue); // glue the individual value elements together into a set of values
 						$renderedElement = implode(", ", $disabledOutputText);
@@ -743,10 +743,10 @@ class formulizeElementRenderer{
                             $defaultSelected = $selected;
                             $defaultSelectedUser = array();
                             foreach($selected as $thisSel) {
-                                $defaultSelectedUser[$thisSel] = $options[$thisSel];    
+                                $defaultSelectedUser[$thisSel] = $options[$thisSel];
                             }
                             natsort($defaultSelectedUser);
-                        } 
+                        }
                         $defaultSelected = !is_array($defaultSelected) ? array($defaultSelected) : $defaultSelected;
                         $defaultSelectedUser = !is_array($defaultSelectedUser) ? array($defaultSelectedUser) : $defaultSelectedUser;
 						$renderedComboBox = $this->formulize_renderQuickSelect($form_ele_id, $cachedLinkedOptionsFileName, $defaultSelected, $defaultSelectedUser, $maxLength, $validationOnly, $ele_value[1]);
@@ -755,15 +755,15 @@ class formulizeElementRenderer{
 					} else { // normal element
 						$renderedElement = $form_ele1->render();
 					}
-					
+
 					$form_ele = new XoopsFormLabel(
 						$ele_caption,
 						"<nobr>$renderedElement</nobr>\n$renderedHoorvs\n$disabledHiddenValues\n"
 					);
 					$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
-				
+
 				} // end of if we have a link on our hands. -- jwe 7/29/04
-				
+
 				// set required validation code
 				if($this->_ele->getVar('ele_req') AND !$isDisabled) {
 					$eltname = $form_ele_id;
@@ -817,7 +817,7 @@ class formulizeElementRenderer{
 				}
 				if($this->_ele->getVar('ele_delim') != "") {
 					$delimSetting = $this->_ele->getVar('ele_delim');
-				} 
+				}
 				$delimSetting =& $myts->undoHtmlSpecialChars($delimSetting);
 				if($delimSetting == "br") { $delimSetting = "<br />"; }
 				$hiddenOutOfRangeValuesToWrite = array();
@@ -901,7 +901,7 @@ class formulizeElementRenderer{
 				} else {
 					$renderedElement = $form_ele1->render();
                     if($this->_ele->getVar('ele_forcehidden')) {
-                        $renderedElement .= "\n$renderedHoorvs\n$disabledHiddenValues\n";    
+                        $renderedElement .= "\n$renderedHoorvs\n$disabledHiddenValues\n";
                     }
 				}
 				$form_ele = new XoopsFormLabel(
@@ -909,7 +909,7 @@ class formulizeElementRenderer{
 					$renderedElement
 				);
 				$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
-				
+
 				if($this->_ele->getVar('ele_req') AND !$isDisabled) {
 					$eltname = $form_ele_id;
 					$eltcaption = $ele_caption;
@@ -1012,7 +1012,7 @@ class formulizeElementRenderer{
 					$form_ele_id,
 					$ele_value[0]
 				);
-				
+
 				} // end of check to see if the default setting is for real
 			break;
 
@@ -1055,7 +1055,7 @@ class formulizeElementRenderer{
 			} else {
 				$elementCue = "";
 			}
-			
+
             // put in special validation logic, if the element has special validation logic
             // hard coded for dara to start with
             if(strstr(getCurrentURL(), 'dara.daniels') AND $true_ele_id == 88) {
@@ -1064,9 +1064,9 @@ class formulizeElementRenderer{
             } else {
                 $specialValidationLogicDisplay = "";
             }
-            
+
 			$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\"");
-            
+
 			// reuse caption, put two spaces between element and previous entry UI
 			$form_ele_new = new xoopsFormLabel($form_ele->getCaption(), $form_ele->render().$previousEntryUIRendered.$specialValidationLogicDisplay.$elementCue);
 			$form_ele_new->formulize_element = $this->_ele;
@@ -1140,7 +1140,7 @@ class formulizeElementRenderer{
 				} else {
                     $lookAhead = 1;
                 }
-				$bracketPos = $bracketPos + $lookAhead; 
+				$bracketPos = $bracketPos + $lookAhead;
             }
 		}
 		return $text;
@@ -1159,7 +1159,7 @@ class formulizeElementRenderer{
 	}
 
 	function formulize_renderQuickSelect($form_ele_id, $cachedLinkedOptionsFilename, $default_value='', $default_value_user='none', $maxLength=30, $validationOnly=false, $multiple = 0) {
-        
+
         if($multiple) {
             global $easiestml_lang;
             $selectedValues = $default_value_user;
@@ -1171,12 +1171,12 @@ class formulizeElementRenderer{
             $default_value_user = $default_value_user[key($default_value_user)];
             $multipleClass = '';
         }
-		
-        // put markup for autocomplete boxes here
-        
 
-        
-        $output .= "<div class=\"formulize_autocomplete\"><input type='text' class='formulize_autocomplete $multipleClass' name='${form_ele_id}_user' id = '${form_ele_id}_user' autocomplete='off' value='".str_replace("'", "&#039;", $default_value_user)."' size='$maxLength' /></div><img src='".XOOPS_URL."/modules/formulize/images/magnifying_glass.png' class='autocomplete-icon'>\n";
+        // put markup for autocomplete boxes here
+
+
+
+        $output .= "<div class=\"formulize_autocomplete\"><input type='text' class='formulize_autocomplete $multipleClass' name='${form_ele_id}_user' id = '${form_ele_id}_user' autocomplete='off' value='".str_replace("'", "&#039;", $default_value_user)."' size='$maxLength' aria-describedby='${form_ele_id}-help-text' /></div><img src='".XOOPS_URL."/modules/formulize/images/magnifying_glass.png' class='autocomplete-icon'>\n";
         $output .= "<div id='${form_ele_id}_defaults'>\n";
         if(!$multiple) {
             $output .= "<input type='hidden' name='${form_ele_id}' id = '${form_ele_id}' value='".$default_value[0]."' />\n";
@@ -1184,7 +1184,7 @@ class formulizeElementRenderer{
             $output .= "<input type='hidden' name='last_selected_${form_ele_id}' id = 'last_selected_${form_ele_id}' value='' />\n";
             foreach($default_value as $i=>$this_default_value) {
                 if($this_default_value OR $this_default_value === 0) {
-                    $output .= "<input type='hidden' name='${form_ele_id}[]' id = '${form_ele_id}_".$i."' target='".str_replace("'", "&#039;", $i)."' value='".str_replace("'", "&#039;", $this_default_value)."' />\n";                
+                    $output .= "<input type='hidden' name='${form_ele_id}[]' id = '${form_ele_id}_".$i."' target='".str_replace("'", "&#039;", $i)."' value='".str_replace("'", "&#039;", $this_default_value)."' />\n";
                 }
             }
         }
@@ -1198,7 +1198,7 @@ class formulizeElementRenderer{
             }
             $output .= "</div>\n";
         }
-        
+
         // jQuery code for make it work as autocomplete
         // need to wrap it in window.load because Chrome does unusual things with the DOM and makes it ready before it's populated with content!!  (so document.ready doesn't do the trick)
         // item 16 determines whether the list box allows new values to be entered
@@ -1208,7 +1208,7 @@ class formulizeElementRenderer{
         // setup the autocomplete, and make it pass the value of the selected item into the hidden element
         // note reference to master jQuery not jq3 in order to cause the change event to affect the normal scope of javascript in the page. Very funky!
         $output .= "<script type='text/javascript'>
-        
+
         function formulize_initializeAutocomplete".$form_ele_id."() {
             ";
             // if it's a single quickselect with an existing value, don't clear the initial value if the user just focuses and blurs
@@ -1240,7 +1240,7 @@ class formulizeElementRenderer{
                         var itemLabel = ui.item.label;
                         var itemLabelPrefix = itemLabel.substr(0, ".strlen(_formulize_NEW_VALUE).");
                         if(itemLabelPrefix == '"._formulize_NEW_VALUE."') {
-                            itemLabel = itemLabel.substr(".strlen(_formulize_NEW_VALUE).");   
+                            itemLabel = itemLabel.substr(".strlen(_formulize_NEW_VALUE).");
                         }
                         jQuery('#".$form_ele_id."_user').val(itemLabel);
                         setAutocompleteValue('".$form_ele_id."', ui.item.value, 0, ".$multiple.");
@@ -1272,8 +1272,8 @@ class formulizeElementRenderer{
                             if(isNaN(value)) {
                                 value = String(value).replace(/'/g,\"&#039;\");
                                 i = value;
-                            } else { 
-                            i = parseInt(jQuery('#".$form_ele_id."_defaults').children().last().attr('target')) + 1; 
+                            } else {
+                            i = parseInt(jQuery('#".$form_ele_id."_defaults').children().last().attr('target')) + 1;
                             }
                             jQuery('#".$form_ele_id."_defaults').append(\"<input type='hidden' name='".$form_ele_id."[]' id = '".$form_ele_id."_\"+i+\"' target='\"+i+\"' value='\"+value+\"' />\");
                             jQuery('#".$form_ele_id."_formulize_autocomplete_selections').append(\"<p class='auto_multi auto_multi_".$form_ele_id."' target='\"+value+\"'>\"+label+\"</p>\");
@@ -1286,12 +1286,12 @@ class formulizeElementRenderer{
                 $output .= "
             }).blur(function() {
                 if(".$form_ele_id."_clearbox == true || jQuery('#".$form_ele_id."_user').val() == '') {
-                    jQuery('#".$form_ele_id."_user').val('');   
+                    jQuery('#".$form_ele_id."_user').val('');
                     setAutocompleteValue('".$form_ele_id."', 'none', 0, ".$multiple.");
                 }
             });
         }
-        
+
         jQuery(window).load(formulize_initializeAutocomplete".$form_ele_id."());
         jQuery(document).ready(function() { checkForChrome(); });
 ";
@@ -1303,7 +1303,7 @@ if($multiple ){
             jQuery(this).remove();
             formulizechanged = 1;
         });
-        
+
     ";
 }
 
@@ -1318,12 +1318,12 @@ if($multiple ){
 			switch($type) {
 				case 'date':
 					if($timeval = $element->getValue()) {
-						if($timeval == _DATE_DEFAULT OR $timeval == '0000-00-00' OR !$timeval) { 
+						if($timeval == _DATE_DEFAULT OR $timeval == '0000-00-00' OR !$timeval) {
 							$hiddenValue = "";
 						} else {
 							$timeval = is_numeric($timeval) ? $timeval : strtotime($timeval);
 							$hiddenValue = date(_SHORTDATESTRING, $timeval);
-						} 
+						}
 					} else {
 						$hiddenValue = "";
 					}
@@ -1351,7 +1351,7 @@ if($multiple ){
 	// element_id is the ID of the element we're drawing (add ele_ to the front to make the javascript ID we need to know in order to set the value of the element to the one the user selects)
 	// type is the type of element, which affects how the javascript is written (textboxes aren't set the same as radio buttons, etc)
 	function formulize_setupPreviousEntryUI($screen, $element_id, $type, $owner, $de, $entry_id, $ele_handle, $fid) {
-		
+
 		// 1. need to get and cache the values of the entry for this screen
 		// 2. need to put the values into a dropdown list with an onchange event that populates the actual form element
 		// this should be cached in some other way, since every instance of the renderer will need to cache this.  If it were a GLOBAL or this whole thing were in some other function, that would work.
@@ -1373,13 +1373,13 @@ if($multiple ){
 				return "";
 			}
 		}
-		$entries = $cachedEntries[$screen->getVar('sid')]; 
-		
+		$entries = $cachedEntries[$screen->getVar('sid')];
+
 		// big assumption below is corresponding captions.  In future there will be more ad hoc ways of describing which elements align to which other ones.
 		// 1. figure out the corresponding element ID based on matching captions
 		// 2. grab the previous value from the $entry/entries
 		// 3. create the dropdown list with these values, including javascript
-		
+
 		$formHandler =& xoops_getmodulehandler('forms', 'formulize');
 		$currentForm = $formHandler->get($screen->getVar('fid'));
 		$previousForm = $formHandler->get($screen->getVar('paraentryform'));
@@ -1434,7 +1434,7 @@ if($multiple ){
 						$previousOptions[1] = $value;
 					}
 					break;
-					
+
 			}
 		}
 		if(!$prevOptionsExist) { return ""; }
@@ -1466,7 +1466,7 @@ function optOther($s, $id, $entry_id, $counter, $checkbox=false, $isDisabled=fal
     }*/
     // NOW, in Formulize 3, id_parts[3] will always be the element id. :-)
     $ele_id = $id_parts[3];
-    
+
     // gather the current value if there is one
     $other_text = "";
     if(is_numeric($entry_id)) {
@@ -1474,7 +1474,7 @@ function optOther($s, $id, $entry_id, $counter, $checkbox=false, $isDisabled=fal
         $other_text = $otherq[0]['other_text'];
     }
     if(strstr($_SERVER['PHP_SELF'], "formulize/printview.php") OR $isDisabled) {
-        return $other_text;			
+        return $other_text;
     }
     $s = explode('|', preg_replace('/[\{\}]/', '', $s));
     $len = !empty($s[1]) ? $s[1] : $xoopsModuleConfig['t_width'];
