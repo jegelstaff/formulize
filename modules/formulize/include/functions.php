@@ -5742,6 +5742,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
     if ($filterOps[$filterId] == "NOT") { $filterOps[$filterId] = "!="; }
     $likebits = "";
     $origlikebits = "";
+		$overrideReturnedOp = "";
     if (strstr(strtoupper($filterOps[$filterId]), "LIKE")) {
         if(!strstr(trim($filterTerms[$filterId]), '%')) {
             $likebits = "%";
@@ -5752,7 +5753,11 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 				$likebits = '';
 				$quotes = '';
 				$filterTermParts = explode(',',$filterTerms[$filterId]);
-				$filterTerms[$filterId] = '("'.implode('","',array_filter($filterTermParts, 'trim')).'")';
+				foreach($filterTermParts as $i=>$ftp) {
+					$filterTermParts[$i] = trim($ftp, " \n\r\t\v\x00\"'"); // trim any white space and single or double quotes the user might have put on the terms
+				}
+				// use @#.&%$ to stand in for single quote, because the filter term is escaped below, and we need to add single quotes back in later so they aren't mangled by the escaping
+				$filterTerms[$filterId] = "(@#.&%$".implode("@#.&%$,@#.&%$",$filterTermParts)."@#.&%$)";
 				$overrideReturnedOp = "IN";
     } else {
         $quotes = is_numeric($filterTerms[$filterId]) ? "" : "'";
@@ -5778,7 +5783,6 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
             $targetSourceFormObject = $form_handler->get($targetSourceFid); // get the form object based on that fid (we'll need the form handle later)
             $targetSourceHandle = $targetElementEleValueProperties[1]; // get the element handle in the source source form
             // now build a comparison value that contains a subquery on the source source form, instead of a literal match to the source form
-            $overrideReturnedOp = '';
             $subQueryOp = $filterOps[$filterId];
             if($filterOps[$filterId] == '!=' ) {
                 $subQueryOp = '<=>';
@@ -6011,6 +6015,8 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                 break;
         }
     }
+		// convert any single quote placeholders we made, if we had to construct them into the filter term (since they don't go through formulize_db_escape cleanly after being put into the filter term)
+		$conditionsFilterComparisonValue = str_replace('@#.&%$', "'", $conditionsFilterComparisonValue);
     return array($conditionsFilterComparisonValue, $curlyBracketFormFrom);
 }
 
