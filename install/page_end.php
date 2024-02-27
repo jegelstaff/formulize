@@ -20,10 +20,12 @@
 require_once 'common.inc.php';
 if (!defined( 'XOOPS_INSTALL' ) )	exit();
 
-$success = isset($_GET['success'])?trim($_GET['success']):false;
+$success = isset($_GET['success']) ? trim($_GET['success']) : false;
 if ($success) {
 	if (is_dir(ICMS_ROOT_PATH.'/install')) {
-		icms_core_Filesystem::deleteRecursive(ICMS_ROOT_PATH.'/install', true);
+		// @todo currently this area only runs when the user clicks on the house icon.
+		// This should be made more robust so the operation is completed without user intervention.
+		icms_core_Filesystem::writeFile('', 'install', 'lock', ICMS_ROOT_PATH);
 		header('Location: '.ICMS_URL.'/index.php');
 	}
 	$_SESSION = array();
