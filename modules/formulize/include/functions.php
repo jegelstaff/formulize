@@ -6540,30 +6540,20 @@ function formulize_makeOneToOneLinks($frid, $fid) {
                     $linkedElement1EleValue = $linkedElement1->getVar('ele_value');
                     $linkedElement1EleValueParts = strstr($linkedElement1EleValue[2], "#*=:*") ? explode("#*=:*", $linkedElement1EleValue[2]) : array();
                     if(count((array) $linkedElement1EleValueParts)>0 AND $linkedElement1EleValueParts[0] == $form2) {
-                            // element 1 is the linked selectbox, so get the value of entry id for what we just created in form 2, and put it in element 1
-                            $linkedValueToWrite = isset($GLOBALS['formulize_newEntryIds'][$form2][0]) ? $GLOBALS['formulize_newEntryIds'][$form2][0] : "";
-                            $linkedValueToWrite = (!$linkedValueToWrite AND isset($GLOBALS['formulize_allSubmittedEntryIds'][$form2][0])) ? $GLOBALS['formulize_allSubmittedEntryIds'][$form2][0] : $linkedValueToWrite; // or get the first entry ID that we wrote to the form, if no new entries were written to the form
-                            $linkedValueToWrite = (!$linkedValueToWrite AND $entryToWriteToForm2) ? $entryToWriteToForm2 : $linkedValueToWrite;
-												// if we have a candidate entry to write to in form 1...
-                        if($entryToWriteToForm1 AND
-													// it has no existing value yet, and there was no value written into form 1 on this pageload
-													(!$existingValueForKey1 AND
-														(!isset($_POST["de_".$form1."_new_".$key1]) OR $_POST["de_".$form1."_new_".$key1] === "")
-														AND (!isset($_POST["de_".$form1."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form1][0]."_".$key1]) OR $_POST["de_".$form1."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form1][0]."_".$key1] === "")
-													// OR if it has an existing value and there was either nothing written or a written value that was a newvalue from an autocomplete box that can write new values...
-													) OR ($existingValueForKey1 AND
-														(!isset($_POST["de_".$form1."_new_".$key1]) OR substr($_POST["de_".$form1."_new_".$key1], 0, 9) === "newvalue:")
-														AND (!isset($_POST["de_".$form1."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form1][0]."_".$key1]) OR substr($_POST["de_".$form1."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form1][0]."_".$key1], 0, 9) === "newvalue:")
-													)) {
+												// element 1 is the linked selectbox, so get the value of entry id for what we just created in form 2, and put it in element 1
+												$linkedValueToWrite = isset($GLOBALS['formulize_newEntryIds'][$form2][0]) ? $GLOBALS['formulize_newEntryIds'][$form2][0] : "";
+												$linkedValueToWrite = (!$linkedValueToWrite AND isset($GLOBALS['formulize_allSubmittedEntryIds'][$form2][0])) ? $GLOBALS['formulize_allSubmittedEntryIds'][$form2][0] : $linkedValueToWrite; // or get the first entry ID that we wrote to the form, if no new entries were written to the form
+												$linkedValueToWrite = (!$linkedValueToWrite AND $entryToWriteToForm2) ? $entryToWriteToForm2 : $linkedValueToWrite;
+												if($entryToWriteToForm1 AND !$existingValueForKey1 AND ((!isset($_POST["de_".$form1."_new_".$key1]) OR $_POST["de_".$form1."_new_".$key1] === "") AND (!isset($_POST["de_".$form1."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form1][0]."_".$key1]) OR $_POST["de_".$form1."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form1][0]."_".$key1] === ""))) {
                             $form1EntryId = formulize_writeEntry(array($key1=>$linkedValueToWrite), $entryToWriteToForm1);
                         } elseif(!$entryToWriteToForm1) {
                             $entryToWriteToForm1 = formulize_writeEntry(array($key1=>$linkedValueToWrite));
                         }
                     } else {
-                            // element 2 is the linked selectbox, so get the value of entry id for what we just created in form 1 and put it in element 2
-                            $linkedValueToWrite = isset($GLOBALS['formulize_newEntryIds'][$form1][0]) ? $GLOBALS['formulize_newEntryIds'][$form1][0] : "";
-                            $linkedValueToWrite = (!$linkedValueToWrite AND isset($GLOBALS['formulize_allSubmittedEntryIds'][$form1][0])) ? $GLOBALS['formulize_allSubmittedEntryIds'][$form1][0] : $linkedValueToWrite; // or get the first entry ID that we wrote to the form, if no new entries were written to the form
-                            $linkedValueToWrite = (!$linkedValueToWrite AND $entryToWriteToForm1) ? $entryToWriteToForm1 : $linkedValueToWrite;
+												// element 2 is the linked selectbox, so get the value of entry id for what we just created in form 1 and put it in element 2
+												$linkedValueToWrite = isset($GLOBALS['formulize_newEntryIds'][$form1][0]) ? $GLOBALS['formulize_newEntryIds'][$form1][0] : "";
+												$linkedValueToWrite = (!$linkedValueToWrite AND isset($GLOBALS['formulize_allSubmittedEntryIds'][$form1][0])) ? $GLOBALS['formulize_allSubmittedEntryIds'][$form1][0] : $linkedValueToWrite; // or get the first entry ID that we wrote to the form, if no new entries were written to the form
+												$linkedValueToWrite = (!$linkedValueToWrite AND $entryToWriteToForm1) ? $entryToWriteToForm1 : $linkedValueToWrite;
                         if($entryToWriteToForm2 AND !$existingValueForKey2 AND ((!isset($_POST["de_".$form2."_new_".$key2]) OR $_POST["de_".$form2."_new_".$key2] === "") AND (!isset($_POST["de_".$form2."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form2][0]."_".$key2]) OR $_POST["de_".$form2."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form2][0]."_".$key2] === ""))) {
                             $form2EntryId = formulize_writeEntry(array($key2=>$linkedValueToWrite), $entryToWriteToForm2);
                         } elseif(!$entryToWriteToForm2) {
