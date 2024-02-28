@@ -494,7 +494,7 @@ function _formulize_returnElement($ele, $formframe="") {
 		}
 	}
 	if(!$element) {
-		if(!$formulize_mgr) {
+		if(!isset($formulize_mgr)) {
 			$formulize_mgr =& xoops_getmodulehandler('elements', 'formulize');
 		}
 		if(is_numeric($ele)) {
