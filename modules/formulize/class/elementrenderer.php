@@ -1176,7 +1176,7 @@ class formulizeElementRenderer{
 
 
 
-        $output .= "<div class=\"formulize_autocomplete\"><input type='text' class='formulize_autocomplete $multipleClass' name='${form_ele_id}_user' id = '${form_ele_id}_user' autocomplete='off' value='".str_replace("'", "&#039;", $default_value_user)."' size='$maxLength' /></div><img src='".XOOPS_URL."/modules/formulize/images/magnifying_glass.png' class='autocomplete-icon'>\n";
+        $output .= "<div class=\"formulize_autocomplete\"><input type='text' class='formulize_autocomplete $multipleClass' name='${form_ele_id}_user' id = '${form_ele_id}_user' autocomplete='off' value='".str_replace("'", "&#039;", $default_value_user)."' size='$maxLength' aria-describedby='${form_ele_id}-help-text' /></div><img src='".XOOPS_URL."/modules/formulize/images/magnifying_glass.png' class='autocomplete-icon'>\n";
         $output .= "<div id='${form_ele_id}_defaults'>\n";
         if(!$multiple) {
             $output .= "<input type='hidden' name='${form_ele_id}' id = '${form_ele_id}' value='".$default_value[0]."' />\n";

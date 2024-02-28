@@ -179,7 +179,7 @@
   font-size: 15px; }
 
 .formulize-form-submit-button {
-    background-color: #008CC4 !important; 
+    background-color: #008CC4 !important;
     text-indent: 0;
     font-weight: normal;
     min-width: 185px;
@@ -192,8 +192,10 @@
 }
 
 .formulize-page-navigation {
-  display: inline-block;
-  margin: 1em 1em 1em 0;
+  display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	margin: 1em 1em 1em 0;
   padding: 0.6em;
   background-color: #f7f7f7;
   border-radius: 4px; }
@@ -532,7 +534,7 @@ td.head div.xoops-form-element-caption, td.head div.xoops-form-element-caption-r
 }
 
 @media print {
-    
+
   body {
     font-size: 10pt; }
 
@@ -606,7 +608,7 @@ td.head div.xoops-form-element-caption, td.head div.xoops-form-element-caption-r
 
   .formulize-element-edit-link {
     display: none; }
-    
+
 }
 
 .appcatspacer {
@@ -623,7 +625,7 @@ td.head div.xoops-form-element-caption, td.head div.xoops-form-element-caption-r
     text-decoration: line-through;
     color: red;
 }
-          
+
 .right-align-text {
     text-align: right;
 }
