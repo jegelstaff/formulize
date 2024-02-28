@@ -6665,26 +6665,28 @@ function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
             $text = (isset($column['ele_colhead']) AND $column['ele_colhead'] != "") ? printSmart(trans($column['ele_colhead']), 75) : printSmart(trans(strip_tags($column['ele_caption'])), 75);
             $boxeshtml .= "<input type='checkbox' name='popnewcols[]' id='popnewcols".$counter."' class='colbox' value=\"{$column['ele_handle']}\" $selected />&nbsp;&nbsp;&nbsp;<label for='popnewcols".$counter."'>$text</label><br />\n";
         }
-         $html .= "
-					<button
-						onclick='toggleCols($thisFid);return false;'
-						id='id-change-columns-toggle-header-".$thisFid."'
-						class='toggle-button-change-columns'
-						aria-expanded='true'
-						aria-controls='id-change-columns-toggle-panel-".$thisFid."'
-						data-accordion-header
-					>
-						".$formObject->getVar('title')." <span id='arrow-up' aria-label='up arrow'>&and;</span><span id='arrow-down' aria-label='down arrow'>&or;</span>
-					</button>
-				";
 				$html .= "
-					<div
-						class='elements-checkbox-list'
-						id='id-change-columns-toggle-panel-".$thisFid."'
-						aria-labelledby='id-change-columns-toggle-header-".$thisFid."'
-					>
-						".$boxeshtml."
-					</div>
+				  <fieldset class='elements-checkbox-fieldset'>
+				 		<legend class='elements-checkbox-legend'>
+							<button
+								onclick='toggleCols($thisFid);return false;'
+								id='id-change-columns-toggle-header-".$thisFid."'
+								class='toggle-button-change-columns'
+								aria-expanded='true'
+								aria-controls='id-change-columns-toggle-panel-".$thisFid."'
+								data-accordion-header
+							>
+								".$formObject->getVar('title')." <span id='arrow-up' aria-label='up arrow'>&and;</span><span id='arrow-down' aria-label='down arrow'>&or;</span>
+							</button>
+						</legend>
+						<div
+							class='elements-checkbox-list'
+							id='id-change-columns-toggle-panel-".$thisFid."'
+							aria-labelledby='id-change-columns-toggle-header-".$thisFid."'
+						>
+							".$boxeshtml."
+						</div>
+					</fieldset>
 				";
     }
     $html .="</div>

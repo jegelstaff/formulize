@@ -3131,8 +3131,8 @@ input[name='pickdiffgroup'] {
 }
 
 /* disabled for now */
-td.column a.lockcolumn,
-td.column a.header-info-link {
+.column a.lockcolumn,
+.column a.header-info-link {
     display: none;
 }
 
