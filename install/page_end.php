@@ -86,7 +86,7 @@ foreach(explode(";\r",str_replace(array("\n","\n\r","\r\n"), "\r", $formulizeSta
 }
 
 // write a lock file so the install folder is inaccessible (if not deleted automatically)
-icms_core_Filesystem::writeFile('', 'install', 'lock', ICMS_ROOT_PATH);
+file_put_contents(ICMS_ROOT_PATH . '/install.lock', '');
 
 // END OF MODIFIED CODE
 include 'install_tpl.php';
