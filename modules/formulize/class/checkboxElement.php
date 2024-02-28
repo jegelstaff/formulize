@@ -512,7 +512,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 
 		$form_ele = new XoopsFormLabel(
 			$caption,
-			$renderedElement
+			trans($renderedElement)
 		);
 		$ele_desc = $element->getVar('ele_desc', "f"); // the f causes no stupid reformatting by the ICMS core to take place
 		$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
@@ -616,7 +616,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 			$elementObject = $this->get($handle);
 			if($elementObject->getVar('ele_uitextshow')) {
 				foreach($values as $i=>$value) {
-					$values[$i] = formulize_swapUIText($value, unserialize($elementObject->getVar('ele_uitext')));
+					$values[$i] = formulize_swapUIText($value, $elementObject->getVar('ele_uitext'));
 				}
 			}
 			return $values;
