@@ -5002,6 +5002,7 @@ function formulize_conditionsCleanOps($op) {
  $ops['<='] = "<=";
  $ops['LIKE'] = "LIKE";
  $ops['NOT LIKE'] = "NOT LIKE";
+ $ops['IN'] = 'IN';
  if(isset($ops[$op])) {
     return $op;
  } else {
@@ -5024,6 +5025,7 @@ function formulize_createFilterUIMatch($newElementName,$formName,$filterName,$op
     $ops['<='] = "<=";
     $ops['LIKE'] = "LIKE";
     $ops['NOT LIKE'] = "NOT LIKE";
+		$ops['IN'] = 'IN';
     $op->addOptionArray($ops);
     $term = new xoopsFormText('', $newTermName, 10, 255);
     $term->setExtra(" class=\"condition_term\" ");
@@ -5588,12 +5590,23 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
     if ($filterOps[$filterId] == "NOT") { $filterOps[$filterId] = "!="; }
     $likebits = "";
     $origlikebits = "";
+		$overrideReturnedOp = "";
     if (strstr(strtoupper($filterOps[$filterId]), "LIKE")) {
         if(!strstr(trim($filterTerms[$filterId]), '%')) {
             $likebits = "%";
             $origlikebits = "%";
         }
         $quotes = "'";
+		} elseif (strstr(strtoupper($filterOps[$filterId]), "IN")) {
+				$likebits = '';
+				$quotes = '';
+				$filterTermParts = explode(',',$filterTerms[$filterId]);
+				foreach($filterTermParts as $i=>$ftp) {
+					$filterTermParts[$i] = trim(htmlspecialchars_decode($ftp, ENT_QUOTES), " \n\r\t\v\x00\"'"); // trim any white space and single or double quotes the user might have put on the terms
+				}
+				// use @#.&%$ to stand in for single quote, because the filter term is escaped below, and we need to add single quotes back in later so they aren't mangled by the escaping
+				$filterTerms[$filterId] = "(@#.&%$".implode("@#.&%$,@#.&%$",$filterTermParts)."@#.&%$)";
+				$overrideReturnedOp = "IN";
     } else {
         $quotes = is_numeric($filterTerms[$filterId]) ? "" : "'";
         $filterOps[$filterId] = $filterOps[$filterId] == "=" ? "<=>" : $filterOps[$filterId];
@@ -5618,7 +5631,6 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
             $targetSourceFormObject = $form_handler->get($targetSourceFid); // get the form object based on that fid (we'll need the form handle later)
             $targetSourceHandle = $targetElementEleValueProperties[1]; // get the element handle in the source source form
             // now build a comparison value that contains a subquery on the source source form, instead of a literal match to the source form
-            $overrideReturnedOp = '';
             $subQueryOp = $filterOps[$filterId];
             if($filterOps[$filterId] == '!=' ) {
                 $subQueryOp = '<=>';
@@ -5698,14 +5710,14 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 									$targetSourceDataHandler = new formulizeDataHandler($targetSourceFid);
 									$foundEntries = $targetSourceDataHandler->findAllEntriesWithValue($targetSourceHandle, $filterTermToUse, operator: '<=>');
 									if(is_numeric($filterTerms[$filterId]) AND ($foundEntries === false OR count($foundEntries) == 0)) {
-                                        // the  target is a linked element (already know that from above), and so it has a foreign key in the database, and if the filter term is numeric and the operator is equals then no subquery is necessary, do a direct comparison instead
-                                        // check first if the subquery would return values. If so, then we stick with that. Otherwise, toss the subquery and go with a straight comparison to the filter term on the assumption it is a foreign key.
+										// the  target is a linked element (already know that from above), and so it has a foreign key in the database, and if the filter term is numeric and the operator is equals then no subquery is necessary, do a direct comparison instead
+										// check first if the subquery would return values. If so, then we stick with that. Otherwise, toss the subquery and go with a straight comparison to the filter term on the assumption it is a foreign key.
 										$conditionsFilterComparisonValue = $filterTerms[$filterId];
 										unset($subQueryWhereClause);
 									} elseif(count($foundEntries)>1) {
-                                        // subquery will return more than one row, so the IN operator must be used when constructing the full statement, this gets assigned to the $filterOps[$filterId] below (which has been passed by reference)
-                                        $overrideReturnedOp = "IN";
-                                    }
+										// subquery will return more than one row, so the IN operator must be used when constructing the full statement, this gets assigned to the $filterOps[$filterId] below (which has been passed by reference)
+										$overrideReturnedOp = "IN";
+								  }
 								}
             }
             // if we didn't jump the gun and set the comparison value already above...
@@ -5851,6 +5863,8 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                 break;
         }
     }
+		// convert any single quote placeholders we made, if we had to construct them into the filter term (since they don't go through formulize_db_escape cleanly after being put into the filter term)
+		$conditionsFilterComparisonValue = str_replace('@#.&%$', "'", $conditionsFilterComparisonValue);
     return array($conditionsFilterComparisonValue, $curlyBracketFormFrom);
 }
 
