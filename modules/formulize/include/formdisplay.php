@@ -4279,13 +4279,6 @@ function callCheckCondition(name) {
                         if(typeof data === 'string') {
                             data = data.trim();
                         }
-                        if(typeof elements[key].newvalues !== 'undefined') {
-                            newvalues = elements[key].newvalues;
-                            for(k in newvalues) {
-                                jQuery(\"[name=\"+newvalues[k].name+\"]\").val(newvalues[k].value);
-							}
-						}
-						// should only empty if there is a change from the current state
                         if(data && data != '{NOCHANGE}' && (conditionalHTMLHasChanged(handle, data) || (window.document.getElementById('formulize-'+handle) !== null && window.document.getElementById('formulize-'+handle).style.display == 'none'))) {
 							jQuery('#formulize-'+handle).empty();
 							jQuery('#formulize-'+handle).append(data);
