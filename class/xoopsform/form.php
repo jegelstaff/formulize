@@ -22,7 +22,7 @@
  *
  * @package     kernel
  * @subpackage  form
- * @deprecated	Use icms_form_Base, instead
+ * deprecated	Use icms_form_Base, instead
  * @todo		Remove in version 1.4
  */
 abstract class XoopsForm extends icms_form_Base {

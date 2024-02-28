@@ -957,10 +957,10 @@ class formulizeElementRenderer{
                     $limit_future = (isset($ele_value["date_future_days"]) and $ele_value["date_future_days"] != "");
                     if ($limit_past or $limit_future) {
                         if($limit_past AND $pastSeedDate = getDateElementDefault($ele_value["date_past_days"], $entry_id)) {
-                            $form_ele->setExtra(" min-date='".date('Y-m-d', $pastSeedDate)."' ");
+                            $form_ele->setExtra(" min='".date('Y-m-d', $pastSeedDate)."' ");
                         }
                         if($limit_future AND $futureSeedDate = getDateElementDefault($ele_value["date_future_days"], $entry_id)) {
-                            $form_ele->setExtra(" max-date='".date('Y-m-d', $futureSeedDate)."' ");
+                            $form_ele->setExtra(" max='".date('Y-m-d', $futureSeedDate)."' ");
                         }
                         $form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;check_date_limits('$form_ele_id');\" onclick=\"javascript:check_date_limits('$form_ele_id');\" onblur=\"javascript:check_date_limits('$form_ele_id');\" jquerytag=\"$form_ele_id\" ");
                     } else {
@@ -1176,7 +1176,7 @@ class formulizeElementRenderer{
 
 
 
-        $output .= "<div class=\"formulize_autocomplete\"><input type='text' class='formulize_autocomplete $multipleClass' name='${form_ele_id}_user' id = '${form_ele_id}_user' autocomplete='off' value='".str_replace("'", "&#039;", $default_value_user)."' size='$maxLength' /></div><img src='".XOOPS_URL."/modules/formulize/images/magnifying_glass.png' class='autocomplete-icon'>\n";
+        $output .= "<div class=\"formulize_autocomplete\"><input type='text' class='formulize_autocomplete $multipleClass' name='${form_ele_id}_user' id = '${form_ele_id}_user' autocomplete='off' value='".str_replace("'", "&#039;", $default_value_user)."' size='$maxLength' aria-describedby='${form_ele_id}-help-text' /></div><img src='".XOOPS_URL."/modules/formulize/images/magnifying_glass.png' class='autocomplete-icon'>\n";
         $output .= "<div id='${form_ele_id}_defaults'>\n";
         if(!$multiple) {
             $output .= "<input type='hidden' name='${form_ele_id}' id = '${form_ele_id}' value='".$default_value[0]."' />\n";
@@ -1256,7 +1256,7 @@ class formulizeElementRenderer{
                     // if we allow new values and the first (and therefore only) response is a new value item, then mark that for saving right away without selection by user
                     $output .= ",
                     response: function(event, ui) {
-                        if(ui.content.length == 1 && ui.content[0].value.indexOf('newvalue:')>-1) {
+												if(ui.content.length == 1 && typeof ui.content[0].value === 'string' && ui.content[0].value.indexOf('newvalue:')>-1) {
                             setAutocompleteValue('".$form_ele_id."', ui.content[0].value, 0, ".$multiple.");
                             ".$form_ele_id."_clearbox = false;
                         }

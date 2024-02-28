@@ -754,6 +754,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	$settings['order'] = $_POST['order'];
 
 	//get all submitted search text
+	$searches = array();
 	foreach($_POST as $k=>$v) {
 		if(substr($k, 0, 7) == "search_" AND $v != "") {
 			$thiscol = substr($k, 7);
@@ -933,7 +934,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	print "<div id='hidden_quick_searches' style='display: none;'>\n";
 
 	foreach($formulize_buttonCodeArray['quickSearches'] as $handle=>$qsCode) {
-		if( (($searches[$handle] OR is_numeric($searches[$handle])) AND !strstr($listOfEntriesBufferContents, $qsCode['search']))
+		if( (isset($searches[$handle]) AND ($searches[$handle] OR is_numeric($searches[$handle])) AND !strstr($listOfEntriesBufferContents, $qsCode['search']))
             AND (!isset($qsCode['filter']) OR !strstr($listOfEntriesBufferContents, $qsCode['filter']))
             AND (!isset($qsCode['multiFilter']) OR !strstr($listOfEntriesBufferContents, $qsCode['multiFilter']))
             AND (!isset($qsCode['dateRange']) OR !strstr($listOfEntriesBufferContents, $qsCode['dateRange'])) ) {
@@ -1967,8 +1968,9 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
     if($handle == 'creation_datetime' OR $handle == 'mod_datetime' OR $elementObject = $element_handler->get($handle)) {
         $typeInfo = $elementObject ? $elementObject->getDataTypeInformation() : true;
         if($typeInfo == true OR $typeInfo['dataType'] == 'date') {
-            $startText = "";
-            $endText = "";
+						$search_text = parseUserAndToday($search_text);
+            $startText = $search_text ? strtotime($search_text) : '';
+            $endText = $startText;
             // split any search_text into start and end values
             if(strstr($search_text, "//")) {
                 $startEnd = explode("//",$search_text);
@@ -3490,6 +3492,8 @@ function loadReport($id, $fid, $frid) {
 function loadAdvanceView($fid, $advance_view) {
 	$sort = null;
 	$sortby = null;
+	$columns = '';
+	$search = '';
 	if($advance_view){
 			foreach($advance_view as $id=>$arr) {
 		   $columns .= $arr[0].',';
@@ -3684,7 +3688,7 @@ function processCustomButton($caid, $thisCustomAction, $entry_id="", $entry="") 
 
         // experimental... need all types of element values and actions, etc, to be worked out
         $useClickedText = false;
-        if($entry_id AND $thisCustomAction['appearinline'] == 1 AND $effectProperties['element'] AND $effectProperties['action'] AND $effectProperties['value']) {
+        if($entry_id AND $thisCustomAction['appearinline'] == 1 AND $thisCustomAction['applyto'] == 'inline' AND $effectProperties['element'] AND $effectProperties['action'] AND $effectProperties['value']) {
             $element_handler = xoops_getmodulehandler('elements', 'formulize');
             if($elementObject = $element_handler->get($effectProperties['element'])) {
                 $dataHandler = new formulizeDataHandler($elementObject->getVar('id_form'));
@@ -3762,6 +3766,7 @@ function processButtonValue($buttonValue, $entry_id) {
     $formulize_thisEntryId = $entry_id;
     $formulize_lvoverride = false;
     if(strstr($buttonValue, "\$value")) {
+			  $value = '';
         eval($buttonValue);
         $valueToWrite = $value;
     }
@@ -3826,7 +3831,7 @@ function processClickedCustomButton($clickedElements, $clickedValues, $clickedAc
 				$csEntries[$id] = $val;
 			}
 		} else {
-			// Default for 'new' and 'new_x' results in the same 'new' value being sent to writeElementValue -- this may have to change if the possible apply to values change as new options are added to the ui
+			// Default for 'new' and 'new_x' results in the same 'new' value being used
 			$caEntries[0] = 'new';
 			if($caInline) {
 				$csEntriesTemp = explode(",", htmlspecialchars(strip_tags($_POST['caentries'])));
@@ -4046,26 +4051,8 @@ function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fi
 
 	$regeneratePageNumbers = false;
 
-  /*
-	global $xoopsUser;
-	if($xoopsUser) {
-		if($xoopsUser->getVar('uid') == 1) {
-			print "<br>formulize cacheddata: ". $settings['formulize_cacheddata'];
-			print "<br>forcequery: $forcequery";
-			print "<br>lastentry: ".$_POST['lastentry'];
-			print "<br>deletion requests: ".$GLOBALS['formulize_deletionRequested'];
-			print "<br>writeElementValue: ".$GLOBALS['formulize_writeElementValueWasRun'];
-			print "<br>filter to compare: ".$filterToCompare;
-			print "<br>(different from) previous filter: ".$_POST['formulize_previous_filter'];
-			print "<br>flatscope: $flatscope";
-			print "<br>(different from: ". $_POST['formulize_previous_scope'];
-		}
-	}*/
-
-
-
 	// if something changed, then we need to redo the page numbers
-	if(!isset($_POST['lastentry']) AND (($query_string != $_POST['formulize_previous_querystring'] AND $query_string != "") OR $filterToCompare != $_POST['formulize_previous_filter'] OR $flatscope != $_POST['formulize_previous_scope'])) {
+	if(!isset($_POST['lastentry']) AND ($filterToCompare != $_POST['formulize_previous_filter'] OR $flatscope != $_POST['formulize_previous_scope'])) {
 			$regeneratePageNumbers = true;
 		}
 	$formulize_LOEPageSize = is_object($screen) ? $screen->getVar('entriesperpage') : 10;
@@ -4077,7 +4064,6 @@ function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fi
 	  $limitStart = 0;
 	  $limitSize = 0;
 	}
-	//print "limitStart: $limitStart<br>limitSize: $limitSize<br>";
 
 		$GLOBALS['formulize_getCountForPageNumbers'] = true; // flag used to trigger setting of the count of entries in the dataset
         $GLOBALS['formulize_setBaseQueryForCalcs'] = true; // flag used to trigger setting of the basequery for calculations
@@ -4134,12 +4120,12 @@ function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fi
 		print $GLOBALS['xoopsSecurity']->getTokenHTML();
 	}
 
+	$formulize_cachedDataId = null;
 	print "<input type=hidden name=formulize_cacheddata id=formulize_cacheddata value=\"$formulize_cachedDataId\">\n"; // set the cached data id that we might want to read on next page load
 	print "<input type=hidden name=formulize_previous_filter id=formulize_previous_filter value=\"" . htmlSpecialChars($filterToCompare) . "\">\n"; // save the filter to check for a change on next page load
 	print "<input type=hidden name=formulize_previous_scope id=formulize_previous_scope value=\"" . htmlSpecialChars($flatscope) . "\">\n"; // save the scope to check for a change on next page load
 	print "<input type=hidden name=formulize_previous_sort id=formulize_previous_sort value=\"$sort\">\n";
 	print "<input type=hidden name=formulize_previous_order id=formulize_previous_order value=\"$order\">\n";
-	print "<input type=hidden name=formulize_previous_querystring id=formulize_previous_querystring value=\"" . htmlSpecialChars($query_string). "\">\n";
 
 	$to_return[0] = $data;
 	$to_return[1] = $regeneratePageNumbers;

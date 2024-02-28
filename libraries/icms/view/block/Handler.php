@@ -493,7 +493,7 @@ class icms_view_block_Handler extends icms_ipf_Handler {
 	 * @param $visible   0: not visible 1: visible
 	 * @param $orderby   order of the blocks
 	 * @return 		array of block objects
-	 * @deprecated	Use getObjects() instead
+	 * deprecated	Use getObjects() instead
 	 * @todo		Remove in version 1.4
 	 */
 	public function getAllBlocksByGroup($groupid, $asobject = TRUE, $side = NULL, $visible = NULL, $orderby = "b.weight,b.bid", $isactive = 1) {

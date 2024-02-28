@@ -37,10 +37,12 @@ function submitForm(page, prevpage) {
 }
 
 function multipageSetHiddenFields(page, prevpage) {
+	<?php if($screen AND $screen->getVar('finishisdone')) { // user clicked to finish, there is no thanks page, so send them to the done destination ?>
   if(page == <?php print $thanksPage; ?>) {
-    window.document.formulize_mainform.ventry.value = ''; 
+    window.document.formulize_mainform.ventry.value = '';
     jQuery('form[name=formulize_mainform]').attr('action', '<?php print $done_dest; ?>');
   }
+	<?php } ?>
   window.document.formulize_mainform.formulize_currentPage.value = page<?php print $screen ? "+'-".$screen->getVar('sid')."'" : ""; ?>;
   window.document.formulize_mainform.formulize_prevPage.value = prevpage<?php print $screen ? "+'-".$screen->getVar('sid')."'" : ""; ?>;
   window.document.formulize_mainform.formulize_doneDest.value = '<?php print $settings['formulize_doneDest']; ?>';
@@ -72,7 +74,7 @@ jQuery('.navtab').click(function(){
 if($currentPage == $thanksPage) {
 
     // have not got into displayForm, so none of the navigation metadata we would normally rely on has been parsed and set yet :(
-    // need to deduce the form, entry, and page from 
+    // need to deduce the form, entry, and page from
 
     if(is_array($settings)) {
         print "<form name=calreturnform action=\"$done_dest\" method=post>\n";
@@ -109,7 +111,7 @@ if($currentPage == $thanksPage) {
     if($pagesSkipped) {
         print _formulize_DMULTI_SKIP . "</p><p>\n";
     }
-    
+
     if($button_text != "{NOBUTTON}") {
         print "<a href='$done_dest'";
         if(is_array($settings)) {
@@ -119,9 +121,9 @@ if($currentPage == $thanksPage) {
     }
     print "</center></p></div>";
         $thankYouNav = ob_get_clean();
-        
+
         $entry_id = $entry;
-        
+
 		if(is_array($thankstext)) {
             $thankstext[1] = undoAllHTMLChars($thankstext[1]);
 			if($thankstext[0] === "PHP"){
@@ -140,7 +142,7 @@ if($currentPage == $thanksPage) {
             }
         }
 
-} 
+}
 
 // display an HTML or PHP page if that's what this page is...
 if($currentPage != $thanksPage AND ($pages[$currentPage][0] === "HTML" OR $pages[$currentPage][0] === "PHP")) {
@@ -156,7 +158,7 @@ if($currentPage != $thanksPage AND ($pages[$currentPage][0] === "HTML" OR $pages
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
     ?>
 
-    
+
     <form name=formulize id=formulize_mainform action=<?php print getCurrentURL(); ?> method=post>
     <input type=hidden name=entry<?php print $fid; ?> id=entry<?php print $fid; ?> value=<?php print $entry ?>>
     <input type=hidden name=formulize_currentPage id=formulize_currentPage value="">

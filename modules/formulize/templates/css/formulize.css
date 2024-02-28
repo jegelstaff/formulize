@@ -192,8 +192,10 @@
 }
 
 .formulize-page-navigation {
-  display: inline-block;
-  margin: 1em 1em 1em 0;
+  display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	margin: 1em 1em 1em 0;
   padding: 0.6em;
   background-color: #f7f7f7;
   border-radius: 4px; }

@@ -58,7 +58,7 @@ function go($query, $keyfield="") {
 // DISPLAYS ON THE SCREEN THE CURRENT MEMORY USAGE OF THE SCRIPT FOR DEBUGGING PURPOSES
 function debug_memory($text) {
 	if(isset($_GET['debugOFF'])) {
-		print "<br>Memory Usage: ";	
+		print "<br>Memory Usage: ";
 		$mem_usage = memory_get_usage();
 		$mb_usage = round(($mem_usage/1000000), 2);
 		print "$mb_usage ($text)";
@@ -70,13 +70,14 @@ function debug_memory($text) {
 // This function makes a "uid" filter, not "creation_uid" so it will not work with the formulize data tables.
 function extract_makeUidFilter($users) {
 	$start = 1;
+	$uq = '';
 	foreach($users as $user) {
 		if($start) {
 			$uq = "uid=$user";
 			$start = 0;
 		} else {
 			$uq .= " OR uid=$user";
-		}			
+		}
 	}
 	return $uq;
 }
@@ -85,7 +86,7 @@ function extract_makeUidFilter($users) {
 // this function takes a value and a handle (field) and an entry id, and returns an array containing the item(s) that represent the value in a human readable way for use in a list of entries, dataset, etc
 // unless the handle is a metadata handle, and then it is returned flat, because there's no way it would ever have multiple values
 // in some cases, even a textbox field would come back with an array of values here, because an array of values could have been passed in, if for example the textbox field is on the many side of a one to many relationship
-function prepvalues($value, $field, $entry_id) { 
+function prepvalues($value, $field, $entry_id) {
 
   $original_value = $value;
   static $cachedPrepedValues = array();
@@ -110,7 +111,7 @@ function prepvalues($value, $field, $entry_id) {
 
   $elementArray = formulize_getElementMetaData($field, true);
   $type = $elementArray['ele_type'];
-	
+
 	// handle yes/no cases
 	if($type == "yn") { // if we've found one
 		if($value == "1") {
@@ -120,14 +121,15 @@ function prepvalues($value, $field, $entry_id) {
 		} else {
 			$value = "";
 		}
-        if(!isset($GLOBALS['formulize_doNotCacheDataSet'])) {
-        $cachedPrepedValues[$original_value][$field][$entry_id][$fk] = $value;
-        }
+		$value = array($value); // bottom level items in a getData array are supposed to be arrays. Display function will figure it out if there's only one value, and return that one alone.
+		if(!isset($GLOBALS['formulize_doNotCacheDataSet'])) {
+		 $cachedPrepedValues[$original_value][$field][$entry_id][$fk] = $value;
+		}
 		return $value;
 	}
 
   // decrypt encrypted values...pretty inefficient to do this here, one query in the DB per value to decrypt them....but we'd need proper select statements with field names specified in them, instead of *, in order to be able to swap in the AES DECRYPT at the time the data is retrieved in the master query
-	if($elementArray['ele_encrypt']) {		 
+	if($elementArray['ele_encrypt']) {
 		 $decryptSQL = "SELECT AES_DECRYPT('".formulize_db_escape($value)."', '".getAESPassword()."')";
 		 if($decryptResult = $xoopsDB->query($decryptSQL)) {
 					$decryptRow = $xoopsDB->fetchRow($decryptResult);
@@ -247,18 +249,16 @@ function prepvalues($value, $field, $entry_id) {
 
 	// Convert 'Other' options into the actual text the user typed
 	if(($type == "radio") AND preg_match('/\{OTHER\|+[0-9]+\}/', $value)) {
-		// convert ffcaption to regular and then query for id
-		$realcap = str_replace("`", "'", $ffcaption);
 		$newValueq = go("SELECT other_text FROM " . DBPRE . "formulize_other, " . DBPRE . "formulize WHERE " . DBPRE . "formulize_other.ele_id=" . DBPRE . "formulize.ele_id AND " . DBPRE . "formulize.ele_handle=\"" . formulize_db_escape($field) . "\" AND " . DBPRE . "formulize_other.id_req='".intval($entry_id)."' LIMIT 0,1");
 		//$value_other = _formulize_OPT_OTHER . $newValueq[0]['other_text'];
         // removing the "Other: " part...we just want to show what people actually typed...doesn't have to be flagged specifically as an "other" value
         $value_other = $newValueq[0]['other_text'];
-		$value = preg_replace('/\{OTHER\|+[0-9]+\}/', $value_other, $value); 
+		$value = preg_replace('/\{OTHER\|+[0-9]+\}/', $value_other, $value);
     } elseif($elementArray['ele_uitextshow']) {
         $value = formulize_swapUIText($value, unserialize($elementArray['ele_uitext']));
     }
-    
-    
+
+
 
       $valueToReturn = "";
 	  if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$type."Element.php")) {
@@ -276,7 +276,7 @@ function prepvalues($value, $field, $entry_id) {
         $valueToReturn = explode("*=+*:",$value);
       }
 
-    if(!isset($GLOBALS['formulize_doNotCacheDataSet'])) {  
+    if(!isset($GLOBALS['formulize_doNotCacheDataSet'])) {
     $cachedPrepedValues[$original_value][$field][$entry_id][$fk] = $valueToReturn;
     }
 	return $valueToReturn;
@@ -337,9 +337,6 @@ function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitS
 
     if ($isTableForm) {
         $result = dataExtractionTableForm($tableFormRow[0], $tableFormRow[1], $form, $filter, $andor, $limitStart, $limitSize, $sortField, $sortOrder, $resultOnly);
-    } elseif (substr($framework, 0, 3) == "db:") {
-        // deprecated...tableforms are preferred approach now for direct table access
-        $result = dataExtractionDB(substr($framework, 3), $filter, $andor, $scope, $dbTableUidField);
     } else {
         $result = dataExtraction($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $id_reqsOnly, $resultOnly, $filterElements);
     }
@@ -374,27 +371,31 @@ function getDataCached($framework, $form, $filter="", $andor="AND", $scope="", $
 
 function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived=false, $id_reqsOnly=false, $resultOnly=false, $filterElements=null) {
 	global $xoopsDB;
-	 
+
 	$limitStart = intval($limitStart);
 	$limitSize = intval($limitSize);
-	 
+
     // use alternate sorting field specified
     if($sortField AND !isMetaDataField($sortField)) {
         $element_handler = xoops_getmodulehandler('elements','formulize');
-        $sortElementObject = $element_handler->get($sortField);
-        if($sortElementObject->getVar('ele_sort')) {
-            $altSortElementObject = $element_handler->get($sortElementObject->getVar('ele_sort'));
-            $sortField = $altSortElementObject->getVar('ele_handle');
+        if($sortElementObject = $element_handler->get($sortField)) {
+            if($sortElementObject->getVar('ele_sort')) {
+                if($altSortElementObject = $element_handler->get($sortElementObject->getVar('ele_sort'))) {
+                    $sortField = $altSortElementObject->getVar('ele_handle');
+                }
+            }
+        } else {
+            $sortField = '';
         }
     }
-	 
+
 	$sortField = formulize_db_escape($sortField);
 	$sortOrder = formulize_db_escape($sortOrder);
 
 	if(isset($_GET['debug'])) { $time_start = microtime_float(); }
-	
+
 		if($scope == "uid=\"blankscope\"") { return array(); }
-	
+
 	$frid = "";
 	if(is_numeric($frame)) {
 		$frid = $frame;
@@ -406,14 +407,14 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 	if(is_numeric($form)) {
 		$fid = $form;
 	} else {
-		exit("The passed in value $form does not correspond to an existing form"); 
+		exit("The passed in value $form does not correspond to an existing form");
 	}
 
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
 	$formObject = $form_handler->get($fid);
-	
+
 	list($linkkeys, $linkisparent, $linkformids, $linktargetids, $linkselfids, $linkcommonvalue) = formulize_gatherLinkMetadata($frid, $fid, $mainFormOnly);
-	 
+
 	//print_r( $linkformids );
     if(isset($GLOBALS['formulize_setBaseQueryForCalcs']) OR isset($GLOBALS['formulize_returnAfterSettingBaseQuery'])) {
         $GLOBALS['formulize_linkformidsForCalcs'] = $linkformids;
@@ -421,14 +422,14 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 
 	// now that we have the full details from the framework, figure out the full SQL necessary to get the entire dataset
 	// This whole approach is predicated on being able to do reliable joins between the key fields of each form
-	
+
 	// Structure of the SQL should be...
 	// SELECT main.entry_id, main.creation_uid, main.mod_uid, main.creation_datetime, main.mod_datetime, main.handle1...main.handleN, f2.entry_id, f2.1..f2.n, etc FROM formulize_A AS main [join syntax] WHERE main.handle1 = "whatever" AND/OR f2.handle1 = "whatever"
 	// Join syntax:  if there are query terms on the f2 or subsequent forms, then use INNER JOIN formulize_B AS f2 ON main.1 LIKE CONCAT('%,', f2.entry_id, ',%') -- or no %, ,% if only one value is allowed
 	// If there are no query terms on the f2 or subsequent forms, then use LEFT JOIN
-	
+
 	// establish the join type and all that
-	
+
 	$joinText = "";
 	$linkSelect = "";
 	$exportOverrideQueries = array();
@@ -439,7 +440,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 	}
 
 	if(is_array($filter) OR (substr($filter, 0, 6) != "SELECT" AND substr($filter, 0, 6) != "INSERT")) { // if the filter is not itself a fully formed SQL statement...
-	
+
 		$config_handler = xoops_gethandler('config');
 		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 		if(trim($formulizeConfig['customScope'])!='' AND strstr($formulizeConfig['customScope'], "return \$scope;")) {
@@ -448,7 +449,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 				$scope = $customScope;
 			}
 		}
-	
+
 		// FIGURE OUT THE SCOPE (WHICH ENTRIES ARE INCLUDED BASED ON GROUPS ETC)
 		$scopeFilter = "";
 		if(is_array($scope)) { // assume any arrays are groupid arrays, and so make a valid scope string based on this.  Use the new entry owner table.
@@ -471,9 +472,9 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		}
 
 		// PARSE THE FILTER THAT HAS BEEN PASSED IN, INTO WHERE CLAUSE AND OTHER RELATED CLAUSES WE WILL NEED
-		formulize_getElementMetaData("", false, $fid); // initialize the element metadata for this form...serious performance gain from this 
+		formulize_getElementMetaData("", false, $fid); // initialize the element metadata for this form...serious performance gain from this
 		list($formFieldFilterMap, $whereClause, $orderByClause, $oneSideFilters, $otherPerGroupFilterJoins, $otherPerGroupFilterWhereClause) = formulize_parseFilter($filter, $andor, $linkformids, $fid, $frid);
-		 
+
 		// ***********************
 		// NOTE:  the oneSideFilters are divided into two sections, the AND filters and OR filters for a given form
 		// These will need to be constructed differently if we are ever to support OR filters that are spread across forms.
@@ -491,24 +492,23 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		//     }
 		//   }
 		// }
-	 
+
 		// NOTE: Oct 17 2011 -- since we are now splitting multiform queries into may different individual collections of entries, it may be possible to do what's suggested above more easily. However, we still need the full where clause at our disposal in the main query that gets the main form entry ids, or else we'll have an incorrect master list of entry ids to return.  :-(
-	 
+
 		// ***********************
-		 
+
+		$mainFormWhereClause = '';
 		if(isset($oneSideFilters[$fid])) {
 			foreach($oneSideFilters[$fid] as $thisOneSideFilter) {
 				$mainFormWhereClause .= " AND ( $thisOneSideFilter ) ";
 			}
-		} else {
-			$mainFormWhereClause = "";
 		}
 
 		$firstThreeCharsOfWhere = substr(strtolower(trim($whereClause)),0,3);
 		if($firstThreeCharsOfWhere != 'and' AND $whereClause) {
 			$whereClause = "AND $whereClause";
-		}     
-		   
+		}
+
 		// create the per-group filters, if any, that apply to this user...only available when all XOOPS is invoked, not available when extract.php is being direct included
 		global $xoopsDB;
 		$perGroupFilter = "";
@@ -522,8 +522,8 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 					$perGroupFiltersPerForms[$thisLinkFid] = $form_handler->getPerGroupFilterWhereClause($thisLinkFid, "f".$id);
 				}
 			}
-		}			 
-				 
+		}
+
 		// FIGURE OUT JOIN CLAUSES FOR ANY RELATED FORMS THAT ARE INVOLVED IN THIS QUERY
 		$linkSelect = "";
 		if($frid) {
@@ -536,7 +536,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			$joinText = ""; // not "new" variables persist (with .= operator)
 			$existsJoinText = "";
 			foreach($linkformids as $id=>$linkedFid) {
-			 
+
 				// ignore recursive connections if...
 				// 1. they are not 'parent' connections
 				// or 2. we are looking for a single entry in the main form, and it is not the same as an entry we just submitted
@@ -544,19 +544,19 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 				// Probably for the best? would there be some kind of silly looping going on there?
 				$singleEntryFilterValue = formulize_filterHasSingleEntry($filter);
 				if($linkedFid == $fid AND (
-					!$linkisparent[$id] 
+					!$linkisparent[$id]
 					OR (!isset($_POST['ventry']) AND $singleEntryFilterValue)
 					OR (isset($_POST['ventry']) AND $singleEntryFilterValue AND $_POST['ventry'] != $singleEntryFilterValue)
 					)) {
 					//print "Ignoring $linkedFid when fid is $fid and linkisparent: ".$linkisparent[$id].' - ventry: '.$_POST['ventry']." - filter: $filter<br>";
 					continue;
 				}
-					 
-					
-					
+
+
+
 				// validate that the join conditions are valid...either both must have a value, or neither must have a value (match on user id)...otherwise the join is not possible
-				if(($joinHandles[$linkselfids[$id]] AND $joinHandles[$linktargetids[$id]]) OR ($linkselfids[$id] == '' AND $linktargetids[$id] == '')) { 
-				   
+				if(($joinHandles[$linkselfids[$id]] AND $joinHandles[$linktargetids[$id]]) OR ($linkselfids[$id] == '' AND $linktargetids[$id] == '')) {
+
 					formulize_getElementMetaData("", false, $linkedFid); // initialize the element metadata for this form...serious performance gain from this
 					$linkSelectIndex[$linkedFid] = "f$id.entry_id AS f".$id."_entry_id, f$id.creation_uid AS f".$id."_creation_uid, f$id.mod_uid AS f".$id."_mod_uid, f$id.creation_datetime AS f".$id."_creation_datetime, f$id.mod_datetime AS f".$id."_mod_datetime, f$id.*";
 					$linkSelect .= ", f$id.entry_id AS f".$id."_entry_id, f$id.creation_uid AS f".$id."_creation_uid, f$id.mod_uid AS f".$id."_mod_uid, f$id.creation_datetime AS f".$id."_creation_datetime, f$id.mod_datetime AS f".$id."_mod_datetime, f$id.*";
@@ -565,13 +565,13 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 					$joinTextTableRef[$linkedFid] = DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$id ON ";
 					$joinText .= " $joinType JOIN " . DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$id ON"; // NOTE: we are aliasing the linked form tables to f$id where $id is the key of the position in the linked form metadata arrays where that form's info is stored
 					$newexistsJoinText = $existsJoinText ? " $andor " : "";
-					$newexistsJoinText .= " EXISTS(SELECT 1 FROM ". DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$id WHERE "; // set this up also so we have it available for one to many/many to one calculations that require it 
+					$newexistsJoinText .= " EXISTS(SELECT 1 FROM ". DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$id WHERE "; // set this up also so we have it available for one to many/many to one calculations that require it
 					$newJoinText = formulize_generateJoinSQL($id, $linkcommonvalue, $linkselfids, $linktargetids);
 					if(isset($perGroupFiltersPerForms[$linkedFid])) {
 						$newJoinText .= $perGroupFiltersPerForms[$linkedFid];
 					}
 					$joinTextIndex[$linkedFid] = $newJoinText;
-					
+
 					$joinText .= $newJoinText;
 					if(is_array($oneSideFilters[$linkedFid]) AND count($oneSideFilters[$linkedFid])>0) { // only setup the existsJoinText when there is a where clause that applies to this form...otherwise, we don't care, this form is not relevant to the query that the calculations will do (except maybe when the mainform is not the one-side form...but that's another story)
 						$existsJoinText .= $newexistsJoinText . $newJoinText;
@@ -584,15 +584,15 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 				}
 			}
 		}
-		   
+
 		// specify the join info for user table (depending whether there's a query on creator_email or not)
 		$userJoinType = $formFieldFilterMap['creator_email'] ? "INNER" : "LEFT";
 		$userJoinText = " $userJoinType JOIN " . DBPRE . "users AS usertable ON main.creation_uid=usertable.uid";
-		
-		// FIGURE OUT THE SORT CLAUSE   
+
+		// FIGURE OUT THE SORT CLAUSE
 		$sortIsOnMain = true;
 		if(!$orderByClause AND $sortField) {
-			   
+
 			if($sortField == "creation_uid" OR $sortField == "mod_uid" OR $sortField == "creation_datetime" OR $sortField == "mod_datetime" OR $sortField == "revision_id") {
 				$elementMetaData['id_form'] = $fid;
 			} elseif($sortField == "uid") {
@@ -611,7 +611,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 				$sortField = "entry_id";
 				$elementMetaData['id_form'] = $fid;
 			} else {
-				$elementMetaData = formulize_getElementMetaData($sortField, true); // need to get form that sort field is part of...               
+				$elementMetaData = formulize_getElementMetaData($sortField, true); // need to get form that sort field is part of...
 			}
 			$sortFid = $elementMetaData['id_form'];
 			if($sortFid == $fid) {
@@ -640,13 +640,13 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		} elseif(!$orderByClause) {
 			$orderByClause = "ORDER BY main.entry_id";
 		}
-				
+
 		debug_memory("Before retrieving mainresults");
 
-		// DO A PRELIMINARY QUERY TO COUNT THE NUMBER OF RESULTS IN THE DATASET, INDEPENDENT OF WHAT WE WILL QUERY TO GET THE ACTUAL DATA					
+		// DO A PRELIMINARY QUERY TO COUNT THE NUMBER OF RESULTS IN THE DATASET, INDEPENDENT OF WHAT WE WILL QUERY TO GET THE ACTUAL DATA
 		$revisionTableYesNo = (!$frid AND isset($GLOBALS['formulize_getDataFromRevisionsTable'])) ? "_revisions" : "";
 		$countMasterResults = "SELECT COUNT(main.entry_id) FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo." AS main ";
-		$countMasterResults .= "$userJoinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $mainFormWhereClause $scopeFilter $otherPerGroupFilterWhereClause "; 
+		$countMasterResults .= "$userJoinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $mainFormWhereClause $scopeFilter $otherPerGroupFilterWhereClause ";
 		$countMasterResults .= $existsJoinText ? " AND ($existsJoinText) " : "";
 		$countMasterResults .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
 		if(isset($GLOBALS['formulize_getCountForPageNumbers'])) {
@@ -658,13 +658,13 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 					return $countMasterResultsRow[0];
 				} else {
 					// if we're in a getData call from displayEntries, put the count in a special place for use in generating page numbers
-					$GLOBALS['formulize_countMasterResultsForPageNumbers'] = $countMasterResultsRow[0]; 
-				} 
+					$GLOBALS['formulize_countMasterResultsForPageNumbers'] = $countMasterResultsRow[0];
+				}
 			} else {
 				exit("Error: could not count master results.<br>".$xoopsDB->error()."<br>SQL:$countMasterResults<br>");
 			}
 			unset($GLOBALS['formulize_getCountForPageNumbers']);
-		}   
+		}
 		// now, if there's framework in effect, get the entry ids of the entries in the main form that match the criteria, so we can use a specific query for them instead of the order clause in the master query
 		$limitByEntryId = "";
 		$useAsSortSubQuery = "";
@@ -694,29 +694,25 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			}
 			$limitByEntryId .= ") ";
 			if(!$start) {
-				$limitClause = ""; // nullify the existing limitClause since we don't want to use it in the actual query 
+				$limitClause = ""; // nullify the existing limitClause since we don't want to use it in the actual query
 			} else {
 				$limitByEntryId = "";
 			}
 		}
-	  
+
 		$selectClause = "";
 		$sqlFilterElements = array();
 		$sqlFilterElementsIndex = array();
-		if( $filterElements ) { // THIS IS HIGHLY EXPERIMENTAL...BECAUSE THE PROCESSING OF DATASETS RELIES RIGHT NOW ON METADATA BEING PRESENT AT THE FRONT OF EACH SET OF FIELDS, THERE IS FURTHER WORK REQUIRED TO MAKE THIS FUNCTION WITH THE CODE THAT PROCESSES ENTRIES
-			//print_r( $filterElements );
-			//print_r( $linkformids );
+		if( $filterElements ) {
 			foreach($filterElements as $passedForm=>$passedElements) {
 				if($passedForm == $fid) {
 					$formAlias = "main";
 				} else {
 					$keys = array_keys( $linkformids, $passedForm );
-					//print_r( $keys );
 					$formAlias = "f" . $keys[0];
 				}
 				foreach($passedElements as $thisPassedElement) {
 					$fieldSelect = $formAlias . ".`" . formulize_db_escape($thisPassedElement) . "`";
-					$sqlFilterElements[] = $fieldSelect;
 					if($passedForm == $fid) {
 						$sqlFilterElementsIndex['main'][] = $fieldSelect;
 					} else {
@@ -725,27 +721,22 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 				}
 			}
 		}
-		
+
 		// SETUP THE MAIN SELECT STATEMENT
-		if( count((array)  $sqlFilterElements ) > 0 ) {
-			// update any linked form select statements to use only the fields that have been requested
-			if($linkSelect) {
-				foreach($sqlFilterElementsIndex as $key=>$fields) {
-					if($key == 'main') { continue; }
-					$keys = array_keys( $linkformids, $key );
-					$target = "f".$keys[0].".*";
-					$linkSelect = str_replace($target, implode(",", $fields), $linkSelect);
-					$linkSelectIndex[$key] = str_replace($target, implode(",", $fields), $linkSelectIndex[$key]);
-				}
-			}
-			$selectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, ".implode( ",", $sqlFilterElements );
-            $mainSelectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime ";
-            $firstTimeGetAllMainFields = implode( ",", $sqlFilterElementsIndex['main'] ).", ";
-        } else {
-            $selectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect";
-            $mainSelectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime "; // used when querying three or more forms with one-many relationships, see below
-            $firstTimeGetAllMainFields = " main.*, ";
+        // update any linked form select statements to use only the fields that have been requested
+        if($linkSelect) {
+            foreach($sqlFilterElementsIndex as $key=>$fields) {
+                if($key == 'main') { continue; }
+                $keys = array_keys( $linkformids, $key );
+                $target = "f".$keys[0].".*";
+                $linkSelect = str_replace($target, implode(",", $fields), $linkSelect);
+                $linkSelectIndex[$key] = str_replace($target, implode(",", $fields), $linkSelectIndex[$key]);
+            }
         }
+        $mainSelectFields = $sqlFilterElementsIndex['main'] ? implode( ",", $sqlFilterElementsIndex['main'] ) : "main.*"; // prepare for only the main form fields that have been requested
+        $mainSelectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime ";
+		$selectClause = "$mainSelectClause , $mainSelectFields $linkSelect";
+        $firstTimeGetAllMainFields = "$mainSelectFields , ";
 
 		// if this is being done for gathering calculations, and the calculation is requested on the one side of a one to many/many to one relationship, then we will need to use different SQL to avoid duplicate values being returned by the database
 		// note: when the main form is on the many side of the relationship, then we need to do something rather different...not sure what it is yet...the SQL as prepared is based on the calculation field and the main form being the one side (and so both are called main), but when field is on one side and main form is many side, then the aliases don't match, and scopefilter issues abound.
@@ -756,7 +747,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			$oneSideSQL .= " AND (";
 			$start = true;
 			foreach($oneSideFilters[$fid] as $thisOneSideFilter) {
-			   $oneSideSQL .= $start ? " ( $thisOneSideFilter ) " : " $andor ( $thisOneSideFilter ) "; 
+			   $oneSideSQL .= $start ? " ( $thisOneSideFilter ) " : " $andor ( $thisOneSideFilter ) ";
 			   $start = false;
 			}
 			$oneSideSQL .= ") ";
@@ -779,11 +770,11 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			// so let's build a temp table with the unique entry ids in the forms that we care about, and then query each linked form separately for its records, so that we end up processing as few result rows as possible
 			$masterQuerySQL = "INSERT INTO ".DBPRE."formulize_temp_extract_REPLACEWITHTIMESTAMP $masterQuerySQL ";
 			$masterQuerySQLForExport = "INSERT INTO ".DBPRE."formulize_temp_extract_REPLACEWITHTIMESTAMP $masterQuerySQLForExport ";
-		} else { 
+		} else {
 			$masterQuerySQL = "SELECT $selectClause, usertable.user_viewemail AS main_user_viewemail, usertable.email AS main_email $restOfTheSQL ";
 			$masterQuerySQLForExport = "SELECT $selectClause, usertable.user_viewemail AS main_user_viewemail, usertable.email AS main_email $restOfTheSQLForExport ";
 		}
-	 
+
         if(isset($GLOBALS['formulize_setBaseQueryForCalcs']) OR isset($GLOBALS['formulize_returnAfterSettingBaseQuery'])) {
             $GLOBALS['formulize_queryForCalcs'] = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo." AS main $userJoinText $joinText WHERE main.entry_id>0  $whereClause $scopeFilter ";
             $GLOBALS['formulize_queryForCalcs'] .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
@@ -796,36 +787,36 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
         if(isset($GLOBALS['formulize_setQueryForExport'])) {
             $GLOBALS['formulize_queryForExport'] = $masterQuerySQLForExport." -- SEPARATOR FOR EXPORT QUERIES -- ".$sortIsOnMainFlag; // "$selectClauseToUse FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause $limitClause";
         }
-	  
+
 	} else { // end of if the filter has a SELECT in it
 		if(strstr($filter," -- SEPARATOR FOR EXPORT QUERIES -- ")) {
 			$exportOverrideQueries = explode(" -- SEPARATOR FOR EXPORT QUERIES -- ",$filter);
 			$masterQuerySQL = $exportOverrideQueries[0];
 			$sortIsOnMain = $exportOverrideQueries[1];
 		} else {
-			$masterQuerySQL = $filter; // need to split this based on some separator, because export ends up passing in a series of statements     
+			$masterQuerySQL = $filter; // need to split this based on some separator, because export ends up passing in a series of statements
 		}
 	}
-  
+
 	// after the export query has been generated, then let's put the limit on:
 	$masterQuerySQL .= $limitClause;
-  
+
      /*global $xoopsUser;
      if($xoopsUser->getVar('uid') == 4613) {
           $queryTime = $afterQueryTime - $beforeQueryTime;
           print "Query time: " . $queryTime . "<br>";
      }*/
-     
+
      // Debug Code
-     
+
 //     $validIPs = array('70.29.87.51');
 
 //if(in_array($_SERVER['REMOTE_ADDR'], $validIPs)) {
-     
+
      //global $xoopsUser;
-     //if($xoopsUser->getVar('uid') == 4436 AND isset($GLOBALS['debuggingg'])) {
+     //if($xoopsUser->getVar('uid') == 19 ) {//AND isset($GLOBALS['debuggingg'])) {
      //     print "<br>Count query: $countMasterResults<br><br>";
-        //print "Master query: $masterQuerySQL<br>";
+     //   print "Master query: $masterQuerySQL<br>";
         //exit();
      //   print "Linkformids: ";
      //   print_r($linkformids);
@@ -891,7 +882,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		}
 	    $dropRes = $xoopsDB->queryF("DROP TABLE ".DBPRE."formulize_temp_extract_$timestamp");
         $resultData = array('results'=>$linkQueryRes, 'fid'=>$fid, 'frid'=>$frid, 'linkFids'=>$linkformids);
-    } else { 
+    } else {
         if($resultOnly !== 'bypass') {
             $masterQueryRes = $xoopsDB->query($masterQuerySQL);
         }
@@ -917,9 +908,9 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
     }
 
     formulize_benchmark("After query");
-     
-    return processGetDataResults($resultData); 
-     
+
+    return processGetDataResults($resultData);
+
 } // end of dataExtraction function
 
 // generate the actual blah = blah SQL for joining tables in a relationship
@@ -935,7 +926,7 @@ function formulize_generateJoinSQL($linkOrdinal, $linkcommonvalue, $linkselfids,
         $mainAlias = 'main';
         $subAlias = "f$linkOrdinal";
     }
-    
+
     $joinHandles = formulize_getJoinHandles(array(0=>$linkselfids, 1=>$linktargetids));
 
     if($linkcommonvalue[$linkOrdinal]) { // common value
@@ -966,12 +957,12 @@ function formulize_generateJoinSQL($linkOrdinal, $linkcommonvalue, $linkselfids,
                 $newJoinText = " $mainAlias.`" . $joinHandles[$linkselfids[$linkOrdinal]] . "` = $subAlias.entry_id";
             }
         } else {
-            exit("Fatal Formulize Error: could not determine nature of linkage between linked selectbox(es)");
+            exit("Fatal Formulize Error: could not determine nature of linkage between linked selectbox(es). Main element: ".$joinHandles[$linkselfids[$linkOrdinal]].". Target element: ".$joinHandles[$linktargetids[$linkOrdinal]]);
         }
     } else { // join by uid
       $newJoinText = " $mainAlias.creation_uid=$subAlias.creation_uid";
     }
-    
+
     return $newJoinText;
 }
 
@@ -1010,14 +1001,14 @@ function formulize_gatherLinkMetadata($frid, $fid, $mainFormOnly=false) {
         // GET THE LINK INFORMATION FOR THE CURRENT FRAMEWORK BASED ON THE REQUESTED FORM
         $linklist1 = go("SELECT fl_form2_id, fl_key1, fl_key2, fl_relationship, fl_unified_display, fl_common_value FROM " . DBPRE . "formulize_framework_links WHERE fl_frame_id = '$frid' AND fl_form1_id = '$fid'");
         $linklist2 = go("SELECT fl_form1_id, fl_key1, fl_key2, fl_relationship, fl_unified_display, fl_common_value FROM " . DBPRE . "formulize_framework_links WHERE fl_frame_id = '$frid' AND fl_form2_id = '$fid'");
-           
+
         // link list 1 is the list of form2s that the requested form links to
         // link list 2 is the list of form1s that the requested form links to
         // ie: the link list number denotes the position of the requested form in the pair
-             
+
         //	print "Frame: $frame ($frid)<br>";
         //	print "Form: $form ($fid)<br>";
-             
+
         // generate the list of key fields in the current form, so we can use the values in these fields to filter the linked forms. -- sept 27 2005
         $linkkeys1 = array();
         $linkisparent1 = array();
@@ -1046,7 +1037,7 @@ function formulize_gatherLinkMetadata($frid, $fid, $mainFormOnly=false) {
                 $linkcommonvalue1[] = $theselinks['fl_common_value'];
             }
         }
-        
+
         $linkkeys2 = array();
         $linkisparent2 = array();
         $linkformids2 = array();
@@ -1110,7 +1101,7 @@ function processGetDataResults($resultData) {
     $prevMainId = "";
 
     // set flags for whether the current user can view emails of users...
-	if(is_object($xoopsUser)) { 
+	if(is_object($xoopsUser)) {
 		$is_webmaster = in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups()) ? true : false;
         $gperm_handler = xoops_gethandler('groupperm');
 		$view_private_fields = $gperm_handler->checkRight("view_private_elements", $fid, $xoopsUser->getGroups(), getFormulizeModId());
@@ -1120,8 +1111,9 @@ function processGetDataResults($resultData) {
 		$is_webmaster = false;
 		$this_userid = 0;
 	}
-	  
-	foreach($queryRes as $queryResIndex => $thisRes) {     
+
+	$entryIdIndex = array(); // set to the entry ids once we're in the loops
+	foreach($queryRes as $queryResIndex => $thisRes) {
         // loop through the found data and create the dataset array in "getData" format
         $prevFieldNotMeta = true;
 	    while($masterQueryArray = $xoopsDB->fetchRow($thisRes)) {
@@ -1130,7 +1122,7 @@ function processGetDataResults($resultData) {
             $creatorUid = null;
 		    foreach($masterQueryArray as $resultColIndex=>$value) {
                 $field = $xoopsDB->getFieldName($thisRes, $resultColIndex); // must use fetchRow above and then get the field name this way, just in case a form joins to itself and the same field names get used in multiple points in the result set. fetchArray will return an associative array, in which the last items with the duplicate name will take precedence and overwrite the earlier items!
-                // ignore those plain fields, and metafields on non-main forms, since we can only work with the ones that are properly aliased to their respective tables.  More details....Must refer to metadata fields by aliases only!  since * is included in SQL syntax, fetch_assoc will return plain column names from all forms with the values from those columns.....Also want to ignore the email fields, since the fact they're prefixed with "main" can throwoff the calculation of which entry we're currently writing                
+                // ignore those plain fields, and metafields on non-main forms, since we can only work with the ones that are properly aliased to their respective tables.  More details....Must refer to metadata fields by aliases only!  since * is included in SQL syntax, fetch_assoc will return plain column names from all forms with the values from those columns.....Also want to ignore the email fields, since the fact they're prefixed with "main" can throwoff the calculation of which entry we're currently writing
                 if(
                    $field == "entry_id" OR
                    $field == "creation_uid" OR
@@ -1147,12 +1139,13 @@ function processGetDataResults($resultData) {
                         $creatorAllowsEmailViewing = $value;
                     }
                     // handle the setting of the user's e-mail if applicable...
+										// will be collected with mainform ($fid) data
                     if($field == 'main_email') {
-                        if($is_webmaster OR $view_private_fields OR $creatorAllowsEmailViewing OR $creatorUid == $this_userid) {
-                            $masterResults[$masterIndexer][getFormTitle($curFormId)][$entryIdIndex[$curFormAlias]]['creator_email'] = $value;
-                        } else {
-        					$masterResults[$masterIndexer][getFormTitle($curFormId)][$entryIdIndex[$curFormAlias]]['creator_email'] = "";
-        				}
+											if($is_webmaster OR $view_private_fields OR $creatorAllowsEmailViewing OR $creatorUid == $this_userid) {
+												$masterResults[$masterIndexer][getFormTitle($fid)][$entryIdIndex['main']]['creator_email'] = $value;
+											} else {
+												$masterResults[$masterIndexer][getFormTitle($fid)][$entryIdIndex['main']]['creator_email'] = "";
+											}
                     }
                     continue;
                 }
@@ -1186,7 +1179,7 @@ function processGetDataResults($resultData) {
                         $prevFieldNotMeta = false;
                         if($field == "main_creation_uid" OR $field == "main_mod_uid" OR $field == "main_creation_datetime" OR $field == "main_mod_datetime" OR $field == "main_entry_id") {
                             $elementHandle = $fieldNameParts[1] . "_" . $fieldNameParts[2];
-                        } 
+                        }
                     } else {
                         continue; // skip metadata fields for non main forms, but we've recorded the curformid and alias above
                     }
@@ -1196,21 +1189,21 @@ function processGetDataResults($resultData) {
                     $elementHandle = $field;
                 } else { // it's some other field...??
                     continue;
-                }               
+                }
                 // Check to see if this is a main entry that has already been catalogued, and if so, then skip it
                 if($curFormAlias == "main" AND isset($writtenMains[$entryIdIndex['main']])) {
                     continue;
-                } 
+                }
                 formulize_benchmark("processing ".$field.": $value");
                 //formulize_benchmark("preping value...");
-                $valueArray = prepvalues($value, $elementHandle, $entryIdIndex[$curFormAlias]); // note...metadata fields must not be in an array for compatibility with the 'display' function...not all values returned will actually be arrays, but if there are multiple values in a cell, then those will be arrays
+                $valueArray = prepvalues($value, $elementHandle, $entryIdIndex[$curFormAlias]); // note...metadata fields must not be in an array for compatibility with the 'display' function.
                 //formulize_benchmark("done preping value");
                 $masterResults[$masterIndexer][getFormTitle($curFormId)][$entryIdIndex[$curFormAlias]][$elementHandle] = $valueArray;
 		    } // end of foreach field loop within a record
 	    } // end of main while loop for all records
         unset($queryRes[$queryResIndex]);
 	} // end of foreach query result
-	  
+
     // potentially run through the derived value fields as long as we're not doing an export of data
     if(!isset($GLOBALS['formulize_doingExport']) OR $GLOBALS['formulize_doingExport'] !== true) {
         $derivedFieldMetadata = gatherDerivedValueFieldMetadata($fid, $linkformids);
@@ -1222,15 +1215,15 @@ function processGetDataResults($resultData) {
     }
     return $masterResults;
     }
-              
-					     
+
+
 function gatherDerivedValueFieldMetadata($fid, $linkformids) {
     // need to calculate the derived value metadata
      // 1. figure out which fields in the included forms have derived values
      // 2. setup the metadata for those fields, according to the order they appear
      // -- metadata should be: formhandle (title or framework formhandle), formula, handle (element handle or framework handle)
      // 3. call the derived value function from inside the main loop
-                
+
      $linkFormIdsFilter = "";
      $fid = intval($fid);
      $key = array_search($fid, $linkformids);
@@ -1241,7 +1234,7 @@ function gatherDerivedValueFieldMetadata($fid, $linkformids) {
      $linkFormIdsFilter = (is_array($linkformids) AND count($linkformids)>0) ? formulize_db_escape(" OR t1.id_form IN (".implode(",",$linkformids).") ") : "";
      $orderByClause = (is_array($linkformids) AND count($linkformids)>0) ? "ORDER BY FIND_IN_SET(t1.id_form, '".implode(",", $linkformids).",$fid'), t1.ele_order" : "ORDER BY t1.ele_order";
      $sql = "SELECT t1.ele_value, t2.desc_form, t1.ele_handle, t2.id_form FROM ".DBPRE."formulize as t1, ".DBPRE."formulize_id as t2 WHERE t1.ele_type='derived' AND (t1.id_form='$fid' $linkFormIdsFilter ) AND t1.id_form=t2.id_form $orderByClause";
-             
+
      $derivedFieldMetadata = array();
      global $xoopsDB;
      if($res = $xoopsDB->query($sql)) {
@@ -1255,14 +1248,14 @@ function gatherDerivedValueFieldMetadata($fid, $linkformids) {
                     $derivedFieldMetadata[$row[1]][$multipleIndexer[$row[1]]]['form_id'] = $row[3];
                     $multipleIndexer[$row[1]]++;
 			      }
-		    }               
+		    }
 				   } else {
           print "Error: could not check to see if there were derived value elements in one or more forms.  SQL:<br>$sql";
 		    }
-		    
+
     return $derivedFieldMetadata;
-	  }	  
-	  
+	  }
+
 
 // this function returns the form id when given the form name
 function formulize_getFormIdFromName($nameHandle) {
@@ -1279,15 +1272,15 @@ function formulize_getFormIdFromName($nameHandle) {
 function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
      global $xoopsDB;
      if($filtertemp == "") { return array(0=>array(), "", ""); }
-     
+
      $formFieldFilterMap = array();
      $whereClause = "";
      $orderByClause = "";
      $otherPerGroupFilterJoins = "";
      $otherPerGroupFilterWhereClause = "";
-     
+
      $oneSideFiltersTemp = array(); // we need to capture each filter individually, just in case we need to apply them individually to each part of the query for calculations.  Filters for calculations will not work right if the combination of filter terms is excessively complex, ie: includes OR'd terms across different forms in a framework, certain other complicated types of bracketing
-          
+
      // the passed in filter can have two parts at the highest level, a fundamental filter that is generated from the admin UI through a standard conditions set and is parsed into SQL directly
      // and the regular filters specified by users and the settings for the screen
      $fundamental_filters = array();
@@ -1304,7 +1297,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
      } else {
           $filter = $filtertemp;
      }
-     
+
      // add any anon passcodes to the fundamental filters
     foreach($_SESSION as $key=>$value) {
         if(strstr($key, 'formulize_passCode_')) {
@@ -1325,22 +1318,22 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
         }
     }
     }
-     
+
      $form_handler = xoops_getmodulehandler('forms', 'formulize');
-     
+
      global $myts;
      $numSeachExps = 0;
      foreach($filter as $filterParts) {
           // evaluate each search expression (collection of terms with a common boolean inbetween
           // Use the global andor setting between expressions
-          
+
           if($filterParts[1] == "") { continue; } // ignore filters that are empty...can happen if only OR filters are specified, and maybe at other times too
 
           if($numSeachExps > 0) {
                $whereClause .= $andor;
           }
           $whereClause .= "(";
-          
+
           $numIndivFilters = 0;
           foreach(explode("][", $filterParts[1]) as $indivFilter) {
 
@@ -1348,17 +1341,17 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                // Use the local andor setting ($filterParts[0]) between terms
 
                $ifParts = explode("/**/", $indivFilter);
-               
+
 							 // FINAL NOTE ABOUT SLASHES...Oct 19 2006...patch 22 corrects this slash/magic quote mess.  However, to ensure compatibility with existing Pageworks applications, we are continuing to strip out all slashes in the filterparts[1], the filter strings that are passed in, and then we apply HTML special chars to the filter so that it can match up with the contents of the DB.  Only challenge is that extract.php is meant to be standalone, but we have to refer to the text sanitizer class in XOOPS in order to do the HTML special chars thing correctly.
 
                $ifParts[1] = str_replace("\\", "", $ifParts[1]);
-                              
+
                // convert legacy metadata terms to new terms
                $ifParts[0] = $ifParts[0] == "uid" ? "creation_uid" : $ifParts[0];
                $ifParts[0] = $ifParts[0] == "proxyid" ? "mod_uid" : $ifParts[0];
                $ifParts[0] = $ifParts[0] == "creation_date" ? "creation_datetime" : $ifParts[0];
                $ifParts[0] = $ifParts[0] == "mod_date" ? "mod_datetime" : $ifParts[0];
-							 
+
 							 // set order by clause for newest operator -- assume only one newest operator per query!
 							 // does this need to be based on entry_id and not use $queryElement (which is based on ifParts[0]) ??
 							 if(strstr($ifParts[2], "newest")) {
@@ -1370,30 +1363,30 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
 										$orderByClause = " ORDER BY $queryElement DESC LIMIT 0," . substr($ifParts[2], 6);
 										continue;
 							 }
-               
+
                $newWhereClause = ""; // tracks just the current iteration of this loop, so we can capture this filter and add it to the record of filters for this form lower down
-               
+
                $operator = isset($ifParts[2]) ? $ifParts[2] : "LIKE";
                if(trim($operator) == "LIKE" OR trim($operator) == "NOT LIKE") {
                     if(strlen($ifParts[1]) > 1 AND (substr($ifParts[1], 0, 1) == "%" OR substr($ifParts[1], -1) == "%")) { // if the query term includes % at the front or back (or both), then we let that work as the "likebits" and don't put in any ourselves
-                         $likebits = "";                         
+                         $likebits = "";
                     } else {
-                         $likebits = "%";     
+                         $likebits = "%";
                     }
                     $operator = " ".$operator." ";
                } else {
                     $likebits = "";
                }
                $quotes = ((is_numeric($ifParts[1]) AND !strstr(trim(strtoupper($operator)), "LIKE")) OR strstr(strtoupper($operator), "NULL"))  ? "" : "'"; // don't put quotes around numeric queries, unless they're part of a LIKE query.  Don't use quotes on the special IS NULL query either
-               
+
                $formFieldFilterMap['creator_email'] = false; // can be set to true lower down, need to initalize it properly here
-               
+
                if(is_numeric($ifParts[0]) AND $ifParts[0] == $indivFilter) {
                     // if this is a numeric value, then we must treat it specially
                     $newWhereClause = "main.entry_id=" . $ifParts[0];
                     $mappedForm = $fid;
                } elseif($ifParts[0] == "creation_uid" OR $ifParts[0]  == "mod_uid" OR $ifParts[0]  == "creation_datetime" OR $ifParts[0]  == "mod_datetime") {
-                    // if this is a user id field, then treat it specially 
+                    // if this is a user id field, then treat it specially
                     if(($ifParts[0] == "creation_uid" OR $ifParts[0] == "mod_uid") AND !is_numeric($ifParts[1])) {
                          // subquery the user table for the username or full name
                          $ifParts[1] = "(SELECT uid FROM " . DBPRE . "users WHERE uname " . $operator . $quotes . $likebits . formulize_db_escape(htmlspecialchars_decode($ifParts[1], ENT_QUOTES)) . $likebits . $quotes . " OR name " . $operator . $quotes . $likebits . formulize_db_escape(htmlspecialchars_decode($ifParts[1], ENT_QUOTES)) . $likebits . $quotes . ")";
@@ -1407,7 +1400,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
 												 $ifParts[1] = formulize_db_escape($ifParts[1]);
                     } else { // need to put mysql_real_escape_string around $ifParts[1] only when it's a date field, since that escaping requirement has been handled already in the subquery for uid filters
                          $ifParts[1] = formulize_db_escape($ifParts[1]);
-												 
+
                     }
                     $newWhereClause = "main.".$ifParts[0]  . $operator . $quotes . $likebits . $ifParts[1] . $likebits . $quotes;
                     $mappedForm = $fid;
@@ -1424,11 +1417,11 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
 		    $newWhereClause = "main.revision_id" . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;
 		    $mappedForm = $fid;
                } else {
-                    
+
                     // do non-metadata queries
-                    
+
 										list($ifParts[0], $formFieldFilterMap, $mappedForm, $element_id, $elementPrefix, $queryElement) = prepareElementMetaData($frid, $fid, $linkfids, $ifParts[0], $formFieldFilterMap);
-                    
+
                     // set query term for yes/no questions
                     if($formFieldFilterMap[$mappedForm][$element_id]['isyn'] AND $ifParts[1] !== "") {
                          if(strstr(strtoupper(_formulize_TEMP_QYES), strtoupper($ifParts[1])) OR strtoupper($ifParts[1]) == "YES") { // since we're matching based on even a single character match between the query and the yes/no language constants, if the current language has the same letters or letter combinations in yes and no, then sometimes only Yes may be searched for
@@ -1439,9 +1432,9 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                               continue; // search term is not valid for the yes/no column
                          }
                     }
-                    
+
                     // build the where clause....
-                    
+
                     // handle 'other' boxes
                     // instead of doing a subquery, this could probably be redone similarly to creator_email and then we would have the "other" value in the raw query result, and then the process in prepValues would not need to requery the other table
                     if($formFieldFilterMap[$mappedForm][$element_id]['hasother']) {
@@ -1449,7 +1442,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                          $newWhereClause = "(($elementPrefix.entry_id = ANY $subquery)OR($queryElement " . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes."))"; // need to look in the other box and the main field, and return values that match in either case
                     // handle linked selectboxes
                     } elseif($sourceMeta = $formFieldFilterMap[$mappedForm][$element_id]['islinked']) {
-			 
+
                         // check if user is searching for blank values, and if so, then query this element directly, rather than looking in the source
                         // ALSO do this if the user is searching for a numeric value with an = operator
 						// Note that $ifParts[0] gets surrounded by `` when going through prepareElementMetaData (?!)
@@ -1458,13 +1451,13 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                         } else {
                             if(isset($GLOBALS['formulize_linkedNumericValueIsLiteral'][trim($ifParts[0],'`')])) {
 								unset($GLOBALS['formulize_linkedNumericValueIsLiteral'][trim($ifParts[0],'`')]);
-							}							
+							}
                              // need to check if an alternative value field has been defined for use in lists or data sets and search on that field *in addition* to the underlying data value
                              if(isset($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10])
                                 AND (
                                     (is_array($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10]) AND $formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10][0] != 'none')
                                 OR
-                                    (!is_array($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10]) AND $formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10] != "none") 
+                                    (!is_array($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10]) AND $formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10] != "none")
                                 )) {
                               list($altSearchColumn) = convertElementIdsToElementHandles(array($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10]), $sourceMeta[0]); // ele_value 10 is the alternate field to use for datasets and in lists
                               if(is_array($altSearchColumn) AND array_search('none', $altSearchColumn) !== false) {
@@ -1521,7 +1514,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                                $ele_value = unserialize($queryElementMetaData['ele_value']);
                                if ($formFieldFilterMap[$mappedForm][$element_id]['ele_type'] == 'checkbox' OR (($ele_value[0] > 1 OR $ele_value[8]) AND $ele_value[1])) { // if checkbox, or a selectbox where the element supports multiple selections [1], and number of rows is greater than 1 [0], or it is an autocomplete element [8]
                                     $newWhereClause = " EXISTS (SELECT 1 FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " AS source WHERE (
-                                    $queryElement = source.entry_id OR $queryElement LIKE CONCAT('%,',source.entry_id,',%') OR $queryElement LIKE CONCAT(source.entry_id,',%') OR $queryElement LIKE CONCAT('%,',source.entry_id) 
+                                    $queryElement = source.entry_id OR $queryElement LIKE CONCAT('%,',source.entry_id,',%') OR $queryElement LIKE CONCAT(source.entry_id,',%') OR $queryElement LIKE CONCAT('%,',source.entry_id)
                                     ) AND " . $search_column . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes . ")";
                                } else {
                                     $newWhereClause = " EXISTS (SELECT 1 FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " AS source WHERE $queryElement = source.entry_id AND " . $search_column . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes . ")";
@@ -1557,7 +1550,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                               }
                          } else {
                               $newWhereClause = "main.entry_id<0"; // no matches, so result set should be empty, so set a where clause that will return zero results
-                              
+
                          }
                     // regular whereclause
                     } else {
@@ -1603,7 +1596,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
 															break 2; // Break out of the foreach
 													}
 											default:
-													if(stristr($thisUIText, $searchTerm)) {
+													if($searchTerm AND stristr($thisUIText, $searchTerm) !== false) {
 															$searchTerm = $thisDBValue;
 															break 2; // Break out of the foreach
 													}
@@ -1613,7 +1606,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
 			}
 			 if($searchTerm === $ifParts[1]) {
 			      // no change, so let's escape it, otherwise the prepareLiteralTextForDB method should have returned a safe value
-			      $searchTerm = formulize_db_escape($ifParts[1]);	
+			      $searchTerm = formulize_db_escape($ifParts[1]);
 			 }
 			 if($searchTerm !== false) {
 			      if($searchTermToUse) { // set as an override value in certain cases above
@@ -1637,19 +1630,19 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                if($numIndivFilters > 0) {
                     $whereClause .= $filterParts[0]; // apply local andor setting
                }
-               
+
                $whereClause .= "(".$newWhereClause;
-               
+
                if(!isset($oneSideFiltersTemp[$mappedForm][strtolower(trim($filterParts[0]))][$numSeachExps])) {
                     $oneSideFiltersTemp[$mappedForm][strtolower(trim($filterParts[0]))][$numSeachExps] = " $newWhereClause ";   // don't add the local andor on the first term for a form
                } else {
                     $oneSideFiltersTemp[$mappedForm][strtolower(trim($filterParts[0]))][$numSeachExps] .= " ". $filterParts[0] . " $newWhereClause ";
                }
-               
+
                $whereClause .= ")";
                $numIndivFilters++;
           }
-          
+
 					if($whereClause == "(") { // if no contents for the whereclause where generated...make a fake contents (should only happen if the only filter term passed in is a newest operator)
 							 $whereClause .= "main.entry_id>0";
 					}
@@ -1667,8 +1660,9 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
             }
         }
     }
-     
-    if(count((array) $fundamental_filters)>0) {
+
+		$basicOneSideFilter = ''; // possibly this needs to be initialized inside a loop, so that it resets for each iteration?
+		if(count((array) $fundamental_filters)>0) {
         // parse the fundamental filters
         // apply to the whereClause
         // apply relevant terms to the oneSideFilters
@@ -1700,7 +1694,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
             }
         }
     }
-    
+
     $otherPerGroupFilterJoins = is_array($otherPerGroupFilterJoins) ? implode(" ", $otherPerGroupFilterJoins) : "";
     $otherPerGroupFilterWhereClause = is_array($otherPerGroupFilterWhereClause) ? implode(" ", $otherPerGroupFilterWhereClause) : "";
     return array(0=>$formFieldFilterMap, 1=>$whereClause, 2=>$orderByClause, 3=>$oneSideFilters, 4=>$otherPerGroupFilterJoins, 5=>$otherPerGroupFilterWhereClause);
@@ -1718,7 +1712,7 @@ function prepareElementMetaData($frid, $fid, $linkfids, $ifPartsZero, $formField
 		 } else { // no framework, element handle being used...so we have to derive the element id
 					$element_id = formulize_getIDFromElementHandle($ifPartsZero);
 		 }
-	 
+
 		 // identify the form that the element is associated with and put it in the map
 		 list($formFieldFilterMap, $mappedForm) = formulize_mapFormFieldFilter($element_id, $formFieldFilterMap);
 		 /*print "map: <br>";
@@ -1726,19 +1720,19 @@ function prepareElementMetaData($frid, $fid, $linkfids, $ifPartsZero, $formField
 		 print "<br>Mappedform: $mappedForm<br>";
 		 print "<br>fid: $fid";*/
 		 $elementPrefix = $mappedForm == $fid ? "main" : "f" . array_search($mappedForm, $linkfids);
-		 
+
 		 // check if its encrypted or not, and setup the proper field reference
 		 $queryElementMetaData = formulize_getElementMetaData($ifPartsZero, true);
-		 
+
 		 // add ` ` around ifParts[0]...
 		 $ifPartsZero = "`".$ifPartsZero."`";
-		 
+
 		 if($queryElementMetaData['ele_encrypt']) {
 					$queryElement = "AES_DECRYPT($elementPrefix.".$ifPartsZero.", '".getAESPassword()."')";
 		 } else {
 					$queryElement = "$elementPrefix." . $ifPartsZero;
 		 }
-		 
+
 		 // return in this order:  $ifParts[0], $formFieldFilterMap, $mappedForm, $element_id, $elementPrefix, $queryElement
 		 $to_return = array();
 		 $to_return[] = $ifPartsZero;
@@ -1748,7 +1742,7 @@ function prepareElementMetaData($frid, $fid, $linkfids, $ifPartsZero, $formField
 		 $to_return[] = $elementPrefix;
 		 $to_return[] = $queryElement;
 		 return $to_return;
-		 
+
 }
 
 // THIS FUNCTION TAKES AN ELEMENT AND COMPILES THE FORM, ELEMENT MAP, NECESSARY FOR KNOWING ALL WE NEED TO KNOW ABOUT THE ELEMENT
@@ -1787,7 +1781,7 @@ function formulize_mapFormFieldFilter($element_id, $formFieldFilterMap) {
           $foundForm = $array['id_form'];
 	  $formFieldFilterMap[$array['id_form']][$element_id]['ele_value'] = $ele_value; // just to be on the safe side, send the entire ele_value as well in case we need something from it -- but it will only be unserialized in the case of a linked element!
 	  $formFieldFilterMap[$array['id_form']][$element_id]['ele_type'] = $array['ele_type'];
-      $formFieldFilterMap[$array['id_form']][$element_id]['ele_uitext'] = unserialize($array['ele_uitext']); 
+      $formFieldFilterMap[$array['id_form']][$element_id]['ele_uitext'] = unserialize($array['ele_uitext']);
       $formFieldFilterMap[$array['id_form']][$element_id]['ele_uitextshow'] = $array['ele_uitextshow'];
      }
      return array(0=>$formFieldFilterMap, 1=>$foundForm);
@@ -1834,7 +1828,7 @@ function formulize_elementAllowsMultipleSelections($elementOrHandle, $isHandle=f
           $evqRow = formulize_getElementMetaData($elementOrHandle, $isHandle);
           if($evqRow['ele_type']=='checkbox') {
             $cachedElements[$elementOrHandle] = true;
-          } elseif($evqRow['ele_type']=='select') { 
+          } elseif($evqRow['ele_type']=='select') {
           $ele_value = unserialize($evqRow['ele_value']);
               $cachedElements[$elementOrHandle] = ($ele_value[1] == 1) ? true : false;
           } else {
@@ -1855,7 +1849,7 @@ function formulize_getJoinHandles($elementArrays) {
           foreach($elementArray as $element) {
                if(!isset($cachedJoinHandles[$element])) {
                     if($element == -1) {
-                        $cachedJoinHandles[$element] = 'entry_id';   
+                        $cachedJoinHandles[$element] = 'entry_id';
                     } else {
                         $metaData = formulize_getElementMetaData($element);
                         $cachedJoinHandles[$element] = $metaData['ele_handle'];
@@ -1906,9 +1900,9 @@ function formulize_getElementMetaData($elementOrHandle, $isHandle=false, $fid=0)
 // Odd results may occur when a derived column is inside a subform in a framework!
 // Derived values should always be in the mainform only?
 function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form_id) {
-    
+
     static $parsedFormulas = array();
-    
+
     static $debugMode;
     if($debugMode !== true AND $debugMode !== false) {
         $debugMode = false;
@@ -1919,7 +1913,7 @@ function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form
         $debugMode = $modulePrefUseToken = $formulizeConfig['debugDerivedValues'];
         $debugMode = $debugMode ? true : false; // will be a 1 or 0, we want to covert to boolean because of IF check up above
     }
-    
+
     // if there's nothing already in the DB, then derive it, unless we're being asked specifically to update the derived values, which happens during a save operation.  In that case, always do a derivation regardless of what's in the DB.
     if ($debugMode OR ((isset($GLOBALS['formulize_forceDerivedValueUpdate'])) AND !isset($GLOBALS['formulize_doingExport']))) {
     include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
@@ -2021,7 +2015,7 @@ function formulize_convertCapOrColHeadToHandle($frid, $fid, $term) {
      // first search the $fid, and then if we don't find anything, search the other forms in the $frid
      // check first for a match in the colhead field, then in the caption field
      // once a match is found return the handle
-    
+
 	global $xoopsDB; // just used to check if XOOPS is in effect or not (in which case extract.php is being included directly)
     static $results_array = array();
     static $framework_results = array();
@@ -2030,7 +2024,7 @@ function formulize_convertCapOrColHeadToHandle($frid, $fid, $term) {
     $term = trim($term, "\"");
 
     if($term == "") { return "{nonefound}"; }
-     
+
 	if(strstr($term, "\$formName")) { 		 // setup the name of the form and replace that value in the term, only when $xoopsDB is in effect, ie: full XOOPS stack
 		if(!isset($formNames[$fid])) {
 			$form_handler = xoops_getmodulehandler('forms', 'formulize');
@@ -2039,11 +2033,11 @@ function formulize_convertCapOrColHeadToHandle($frid, $fid, $term) {
 		}
 		$term = str_replace("\$formName", $formNames[$fid], $term);
 	}
-		 
+
     if($term == "uid" OR $term == "proxyid" OR $term == "creation_date" OR $term == "mod_date" OR $term == "creator_email" OR $term == "creation_uid" OR $term == "mod_uid" OR $term == "creation_datetime" OR $term == "mod_datetime") {
         return array($term, $fid);
     }
-     
+
     if(!$frid) {
         $formList[] = $fid; // mimic what the result of the framework query below would be...
     } elseif(isset($framework_results[$frid])) {
@@ -2075,64 +2069,13 @@ function formulize_convertCapOrColHeadToHandle($frid, $fid, $term) {
 		if($handle) {
 			$results_array[$form_id][$term][$frid] = array($handle, $form_id);
 			break;
-		}     
+		}
     }
     if(!$handle) {
 		$handle = "{nonefound}";
 		$form_id = 0;
     }
     return array($handle, $form_id);
-}
-
-
-// THIS FUNCTION QUERIES A TABLE IN THE DATABASE AND RETURNS THE RESULTS IN STANDARD getData FORMAT
-// Uses the standard filter syntax, and can use scope if a uidField name is specified
-// Filters cannot obviously use the standard metadata fields that are part of regular forms
-// At the time of writing (Nov 1 2005) supports single table queries only, no joins
-// SUPERSEDED BY THE "TABLEFORM" FEATURE
-function dataExtractionDB($table, $filter) {
-
-	global $xoopsDB;
-
-	// numeric filters are assumed to be queries on the primary key
-	// string filters are assumed to be WHERE clauses -- note the obvious security issues with that!
-	$describe_query = "DESCRIBE $table";
-	$res = $xoopsDB->query($describe_query);
-	if($res) {
-
-		while($array = $xoopsDB->fetchArray($res)) {
-			if($array['Key'] == "PRI") {
-				$primary_field = $array['Field'];
-				$break;
-			}
-		}
-	} else {
-		exit("Describe query failed for table $table");
-	}
-
-	if(is_numeric($filter)) {	
-		$where_clause = "WHERE `$primary_field`=$filter";
-	} elseif($filter) {
-		$where_clause = "WHERE $filter";	
-	} else {
-		$where_clause = "";
-	}
-
-	$sql = "SELECT * FROM $table $where_clause";
-	$res = $xoopsDB->query($sql);
-	if($res) {
-		$indexer = 0;
-		while($array = $xoopsDB->fetchArray($res)) {
-			foreach($array as $field=>$value) {
-				if(is_numeric($field)) { continue; }		
-				$masterresult[$indexer][$table][$array[$primary_field]][$field] = $value;
-			}
-			$indexer++;
-		}
-	} else {
-		exit("Database query failed: $sql");
-	}
-	return $masterresult;
 }
 
 // this function prepares the fields for include/exclusion if any, from the tableform query
@@ -2172,7 +2115,7 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter=false, $an
     }
 
     global $xoopsDB;
-     
+
     // 2. parse the filter
     // 3. construct the where clause based on the filter and andor
     // 4. do the query
@@ -2181,7 +2124,7 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter=false, $an
 
     $includeWhere = prepareFieldIncludeExclude($fields, 'include');
     $excludeWhere = prepareFieldIncludeExclude($excludeFields, 'exclude');
-    
+
     // setup a translation table for the formulize records of the fields, so we can use that lower down in several places
     $sql = "SELECT ele_id, ele_caption FROM ".DBPRE."formulize WHERE id_form=".$fid." $includeWhere $excludeWhere";
     $res = $xoopsDB->query($sql);
@@ -2199,13 +2142,13 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter=false, $an
          $elementsByField[$field]['id'] = $id;
          $elementsByField[$field]['caption'] = $caption;
     }
-   
+
     if(strstr($tablename, 'SELECT ')) { // preped query for export being passed back in, so run with it
         $sql = $tablename;
     } else {
-   
+
         $andor = $andor == "AND" ? "AND" : "OR";
-   
+
         // parse the filter
         $whereClause = "";
         if(is_array($filter)) { // array filters may never be used with tableforms, but whatever...
@@ -2216,20 +2159,13 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter=false, $an
                   if($whereClause != "") { // there's been a filter already
                        $whereClause .= " $andor ";
                   }
-                  $whereClause .= "(";
-                  foreach($thisFilter as $thisid=>$thispart) { // loop will only execute twice
-                       if($thisid == 0) {
-                            $localandor = $thispart;
-                            continue;
-                       }
-                       $whereClause .= parseTableFormFilter($thispart, $localandor, $elementsById);
-                  }
-                  $whereClause .= ")";
+									$localandor = $thisFilter[0];
+									$whereClause .= "(".parseTableFormFilter($thisFilter[1], $localandor, $elementsById).")";
              }
         } else {
              $whereClause = parseTableFormFilter($filter, $andor, $elementsById);
         }
-        
+
         // query for the data
         $whereClause = $whereClause ? "WHERE $whereClause" : "";
         $basesql = "SELECT * FROM $tablename $whereClause ";
@@ -2241,21 +2177,21 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter=false, $an
                        $sql .= " LIMIT $limitStart,$limitSize ";
             }
     }
-         
-    
+
+
     /*if($_SERVER['REMOTE_ADDR'] == '70.29.87.51') {
         print "<br>$sql<br>";
         exit();
     }*/
-    
+
     if($resultOnly AND $resultOnly === 'bypass') {
         $GLOBALS['formulize_queryForExport'] = "USETABLEFORM -- $sql -- $formname -- $fid";
         return true; // just prepare the query, nothing else
     }
-     
+
      formulize_benchmark('done with parsing and all that... '.$sql);
      $res = $xoopsDB->query($sql);
-     
+
 	 // figure out the PK field in the form, if any
 	 $sql = "SELECT COLUMN_NAME FROM `KEY_COLUMN_USAGE` WHERE `CONSTRAINT_NAME` = 'PRIMARY' AND `TABLE_NAME` = '".formulize_db_escape($tablename)."'";
 	 $pkField = '';
@@ -2265,8 +2201,8 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter=false, $an
 			$pkField = $pkRow[0];
 		}
 	 }
-	 
-	 
+
+
      $result = array();
      $indexer = 0;
      // result syntax is:
@@ -2274,25 +2210,25 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter=false, $an
      // package up data in the format we need it
      while($array = $xoopsDB->fetchArray($res)) {
           foreach($elementsByField as $field=>$fieldDetails) {
-				$pkValue = $pfField ? $array[$pkField] : $array[key($array)]; // use first field if no PK found above
+				$pkValue = $pkField ? $array[$pkField] : $array[key($array)]; // use first field if no PK found above
                $result[$indexer][$formname][$pkValue][$fieldDetails['id']][] = $array[$field];
           }
           $indexer++;
      }
-     
+
 		 // count master results
 		 $countSQL = str_replace("SELECT * FROM", "SELECT count(*) FROM", $basesql);
 		 $countRes = $xoopsDB->query($countSQL);
 		 $countRow = $xoopsDB->fetchRow($countRes);
 		 $GLOBALS['formulize_countMasterResults'] = $countRow[0];
 		 if(isset($GLOBALS['formulize_getCountForPageNumbers'])) {
-					$GLOBALS['formulize_countMasterResultsForPageNumbers'] = $countRow[0]; 
+					$GLOBALS['formulize_countMasterResultsForPageNumbers'] = $countRow[0];
 		      unset($GLOBALS['formulize_getCountForPageNumbers']);
-		 } 
-         
+		 }
+
      return $result;
-     
-     
+
+
 }
 
 // THIS FUNCTION READS A FILTER STRING AND PARSES IT UP FOR USE IN A "TABLEFORM" WHICH IS JUST A REFERENCE TO A PLAIN DATA TABLE
@@ -2326,7 +2262,7 @@ function getFormHandleFromEntry($entry, $handle) {
 			}
 		}
 	} else {
-		return "";// exit("Error: no form handle found for element handle '$handle'");        
+		return "";// exit("Error: no form handle found for element handle '$handle'");
 	}
 }
 
@@ -2338,7 +2274,7 @@ function getFormHandlesFromEntry($entry) {
 	return "";
 }
 
-// THIS FUNCTION IS USED AFTER THE MASTERRESULT HAS BEEN RETURNED.  THIS FUNCTION RETURNS THE VALUE OF THE CORRESPONDING ELEMENT HANDLE FOR THE GIVEN MASTER ENTRY ID.  
+// THIS FUNCTION IS USED AFTER THE MASTERRESULT HAS BEEN RETURNED.  THIS FUNCTION RETURNS THE VALUE OF THE CORRESPONDING ELEMENT HANDLE FOR THE GIVEN MASTER ENTRY ID.
 // Returns the value if there's only one, or an array if there are more than one
 // $entry is normally the master result MINUS the id, ie: it's everything after the initial ID key, so one complete entry from the master result array
 // if $id is specified, then $entry is assumed to be the entire result set, in which case the $id is used to isolate the specific entry in the set you want
@@ -2349,7 +2285,7 @@ function display($entry, $handle, $id=null, $localid="NULL") {
   if(is_numeric($id)) {
 		$entry = $entry[$id];
 	}
-	
+
   if(!$formhandle = getFormHandleFromEntry($entry, $handle)) { return ""; } // return nothing if handle is not part of entry
 
   $GLOBALS['formulize_mostRecentLocalId'] = array();
@@ -2362,11 +2298,11 @@ function display($entry, $handle, $id=null, $localid="NULL") {
 				}
 			} else { // the handle is for metadata, all other fields will be arrays in the dataset
 		    $GLOBALS['formulize_mostRecentLocalId'] = $lid;
-        return $elements[$handle];  
+        return $elements[$handle];
 			}
 		}
 	}
-  
+
 	if(count((array) $foundValues) == 1) {
     $GLOBALS['formulize_mostRecentLocalId'] = $GLOBALS['formulize_mostRecentLocalId'][0];
 		return $foundValues[0];
@@ -2393,7 +2329,7 @@ function makeList($string, $type="bulleted") {
 		$type = "ol>";
 	} else {
 		$type = "ul>";
-	} 
+	}
 	$listItems = explode("\r", $string);
 	if(count((array) $listItems)>1) {
 		$list = "<" . $type;
@@ -2422,6 +2358,7 @@ function makePara($string, $parasToReturn="NULL") {
 	if(count((array) $paras)>1) {
 		$ptr = explode(",", $parasToReturn);
 		$counter = 0;
+		$para = '';
 		foreach($paras as $item) {
 			if(trim($item) != "") { // exclude empty items, ie: this accounts for multiple "returns" at the end of a line
 				if(($parasToReturn == "NULL" AND !is_numeric($parasToReturn)) OR in_array($counter, $ptr)) { // only return paras requested, if specific paras were requested
@@ -2442,6 +2379,7 @@ function makeBR($string) {
 	$brs = explode("\r", $string);
 	if(count((array) $brs)>1) {
 		$start = 1;
+		$output = '';
 		foreach($brs as $br) {
 			if(trim($br) != "") { // exclude empty items, ie: this accounts for multiple "returns" at the end of a line
 				if($start) {
@@ -2465,7 +2403,7 @@ function displayPara($entry, $handle, $id="NULL", $parasToReturn="NULL") {
 	if(is_array($values)) {
 		foreach($values as $value) {
 			$para[] = makePara($value, $parasToReturn);
-		}	
+		}
 	} else {
 		$para = makePara($values, $parasToReturn);
 	}
@@ -2478,21 +2416,21 @@ function displayBR($entry, $handle, $id="NULL", $localid="NULL") {
 	if(is_array($values)) {
 		foreach($values as $value) {
 			$br[] = makeBR($value);
-		}	
+		}
 	} else {
 		$br = makeBR($values);
 	}
 	return $br;
 }
 
-// THIS FUNCTION returns an HTML formatted string that will display a bulleted or numbered list, based on each paragraph in a text area element 
+// THIS FUNCTION returns an HTML formatted string that will display a bulleted or numbered list, based on each paragraph in a text area element
 
 function displayList($entry, $handle, $type="bulleted", $id="NULL", $localid="NULL") {
 	$values = display($entry, $handle, $id, $localid);
 	if(is_array($values)) {
 		foreach($values as $value) {
 			$list[] = makeList($value, $type);
-		}	
+		}
 	} else {
 		$list = makeList($values, $type);
 	}
@@ -2507,18 +2445,18 @@ function displayList($entry, $handle, $type="bulleted", $id="NULL", $localid="NU
 function internalRecordIds($entry, $formhandle="", $id="NULL", $fidAsKeys = false) {
 	if(is_numeric($id)) {
 		$entry = $entry[$id];
-	}  
+	}
 	if(!$formhandle) {
 		$formhandle = getFormHandlesFromEntry($entry);
 	}
-	if(is_array($formhandle)) {        
+	if(is_array($formhandle)) {
         $element_handler = xoops_getmodulehandler('elements', 'formulize');
 		foreach($formhandle as $handle) {
             $handle = _parseInternalRecordIdsFormHandle($handle);
 			foreach($entry[$handle] as $id=>$localEntry) {
 				if($fidAsKeys) {
                     $offset = isset($localEntry['entry_id']) ? 5 : 0; // first five items will be the metadata fields if 'entry_id' is present, otherwise, take the first item from the array
-                    $localEntryElement = array_slice($localEntry, $offset, 1); 
+                    $localEntryElement = array_slice($localEntry, $offset, 1);
                     $localEntryElement = key($localEntryElement);
                     $elementObject = $element_handler->get($localEntryElement);
                     $fid = $elementObject->getVar('id_form');
@@ -2608,6 +2546,7 @@ function resultSortRelevance($data, $handleArray, $wordArray, $weight="") {
 	// 3. record total "hits" for each entry in an array
 	// 4. sort the array of hits and sort the dataset according to this array
 
+	$wordScores = array();
 	foreach($data as $id=>$entry) {
 		foreach($wordArray as $word) {
 			for($i=0;$i<count((array) $handleArray);$i++) {
@@ -2619,7 +2558,7 @@ function resultSortRelevance($data, $handleArray, $wordArray, $weight="") {
 	}
 
 	array_multisort($wordScores, SORT_DESC, SORT_NUMERIC, $data);
-	
+
 	return $data;
 }
 
@@ -2658,12 +2597,12 @@ if(!defined("_formulize_OPT_OTHER")) {
 			define("_formulize_TEMP_QYES", "Yes");
 			define("_formulize_TEMP_QNO", "No");
 			break;
-	} 
+	}
 }
 $config_handler =& xoops_gethandler('config');
-        
+
 $formulizeModuleConfig =& $config_handler->getConfigsByCat(0, getFormulizeModId()); // get the *Formulize* module config settings
-$GLOBALS['formulize_LOE_limit'] = $formulizeModuleConfig['LOE_limit'];       
+$GLOBALS['formulize_LOE_limit'] = $formulizeModuleConfig['LOE_limit'];
 
 
 function formulize_benchmark($text, $dumpLog = false) {
@@ -2671,7 +2610,7 @@ function formulize_benchmark($text, $dumpLog = false) {
 		 static $prevPageTime = 0;
 		 static $elapsedLog = array();
      if(isset($GLOBALS['startPageTime']) AND $xoopsUser) {
-          if($xoopsUser->getVar('uid') == 18310) {
+          if($xoopsUser->getVar('uid') == 19) {
                $currentPageTime = microtime_float();
 							 if(!$prevPageTime) {
 										$prevPageTime = $currentPageTime;
@@ -2687,7 +2626,7 @@ function formulize_benchmark($text, $dumpLog = false) {
 							  		print "Max elapsed time: ".$elapsedLog[count($elapsedLog)-1]."<br>\n";
 							  		print "Average elapsed time: ".round(array_sum($elapsedLog)/count($elapsedLog),4)."<br>\n";
 							  		$elapsedLog = array();
-							 }	
+							 }
 					}
      }
 }

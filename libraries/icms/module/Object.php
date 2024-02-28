@@ -307,7 +307,7 @@ class icms_module_Object extends icms_core_Object {
 
 	/**#@+
 	 * For backward compatibility only!
-	 * @deprecated Use $this->getVar('mid') instead
+	 * deprecated Use $this->getVar('mid') instead
 	 * @todo		Remove in version 1.4
 	 */
 	public function mid() {
@@ -316,7 +316,7 @@ class icms_module_Object extends icms_core_Object {
 	}
 	/**
 	 *
-	 * @deprecated	Use getVar('dirname') instead
+	 * deprecated	Use getVar('dirname') instead
 	 * @todo 		Remove in version 1.4
 	 */
 	public function dirname() {
@@ -325,7 +325,7 @@ class icms_module_Object extends icms_core_Object {
 	}
 	/**
 	 *
-	 * @deprecated	Use getVar('name') instead
+	 * deprecated	Use getVar('name') instead
 	 * @todo		Remove in version 1.4
 	 */
 	public function name() {
@@ -334,7 +334,7 @@ class icms_module_Object extends icms_core_Object {
 	}
 	/**
 	 *
-	 * @deprecated	Use the handler method instead
+	 * deprecated	Use the handler method instead
 	 * @todo		Remove in version 1.4
 	 * @param unknown_type $dirname
 	 */

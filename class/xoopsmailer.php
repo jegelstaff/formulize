@@ -15,7 +15,7 @@ icms_loadLanguageFile('core', 'mail');
 /**
  * Class for sending messages.
  *
- * @deprecated	use icms_messaging_Handler instead.
+ * deprecated	use icms_messaging_Handler instead.
  *
  */
 class XoopsMailer extends icms_messaging_Handler {

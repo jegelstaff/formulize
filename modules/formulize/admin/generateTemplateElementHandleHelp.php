@@ -11,6 +11,7 @@
   $thisFidObj = "";
   $allFidObjs = array();
   $elementOptionsFid = array();
+  $elementOptions = array();
   $listTemplateHelp = array();
   $class = "odd";
   foreach($allFids as $thisFid) {

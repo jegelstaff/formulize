@@ -67,7 +67,7 @@ class formulizeFramework extends XoopsObject {
 			if(!isset($frame_name_q[0])) {
 				$notAFramework = true;
 			}
-					
+
 		}
 		if($notAFramework) { list($frid, $fids, $name, $handles, $element_ids, $links, $formHandles) = $this->initializeNull(); }
 
@@ -86,7 +86,7 @@ class formulizeFramework extends XoopsObject {
 		$ret[] = 0; // frid
 		$ret[] = array(); //fids
 		$ret[] = ""; // name
-		$ret[] = array(); // handles 
+		$ret[] = array(); // handles
 		$ret[] = array(); // element_ids
 		$ret[] = array(); // links
 		$ret[] = array(); // formHandles
@@ -99,13 +99,13 @@ class formulizeFramework extends XoopsObject {
 	function whatSideIsHandleOn($key, $mainformFid) {
 		static $cachedHandles = array();
 		if(!isset($cachedHandles[$key])) {
-			
+
 			// 1. figure out the form of the $key that was passed
 			// 2. check the form1 and form2 properties of the links to see which side that form is on
 			$element_handler = xoops_getmodulehandler('elements', 'formulize');
 			$elementObject = $element_handler->get($key);
 			$targetFid = $elementObject->getVar('id_form');
-			
+
 			foreach($this->getVar('links') as $thisLink) {
 				if($thisLink->getVar('form1') == $targetFid) {
 					switch($thisLink->getVar('relationship')) {
@@ -238,14 +238,14 @@ class formulizeFrameworkLink extends XoopsObject {
         $formulize_mgr =& xoops_getmodulehandler('elements');
 
         // get a list of all the linked select boxes since we need to know if any fields in these two forms are the source for any links
-        $resgetlinksq = $xoopsDB->query("SELECT id_form, ele_caption, ele_id, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_type=\"select\" AND ele_value LIKE '%#*=:*%' ORDER BY id_form");
+        $resgetlinksq = $xoopsDB->query("SELECT id_form, ele_caption, ele_id, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_type=\"select\" AND ele_value LIKE '%#*=:*%' AND (id_form = ".intval($this->getVar('form1'))." OR id_form = ".intval($this->getVar('form2')).") ORDER BY id_form");
         while ($rowlinksq = $xoopsDB->fetchRow($resgetlinksq)) {
             $target_form_ids[] = $rowlinksq[0];
             $target_captions[] = $rowlinksq[1];
             $target_ele_ids[] = $rowlinksq[2];
 
             // returns an object containing all the details about the form
-            $elements =& $formulize_mgr->getObjects($criteria, $rowlinksq[0]);
+            $elements =& $formulize_mgr->getObjects(id_form: $rowlinksq[0]);
 
             // search for the elements where the link exists
             foreach ($elements as $e) {
@@ -409,14 +409,14 @@ class formulizeFrameworksHandler {
         //remove auto indexes
 		$selectsql = "SELECT fl_key1,fl_key2 FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_frame_id=".intval($framework->getVar('frid'));
 		$res = $xoopsDB->query($selectsql);
-		
+
 		if ( $res ) {
             while ( $row = $xoopsDB->fetchRow( $res ) ) {
                 $this->deleteIndex($row[0]);
                 $this->deleteIndex($row[1]);
             }
 		}
-		
+
 		$sql[] = "DELETE FROM ".$this->db->prefix("formulize_frameworks")." WHERE `frame_id` = ".intval($framework->getVar('frid'));
 		$sql[] = "DELETE FROM ".$this->db->prefix("formulize_framework_links")." WHERE `fl_frame_id` = ".intval($framework->getVar('frid'));
 		$success = true;
@@ -427,7 +427,7 @@ class formulizeFrameworksHandler {
 		}
 		return $success;
 	}
-    
+
 	function deleteIndex($elementID){
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
 		$elementObject = $element_handler->get(intval($elementID));

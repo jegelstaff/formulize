@@ -18,7 +18,7 @@ defined( 'ICMS_ROOT_PATH' ) or die();
 
 /**
  * Backward compatibility code, do not use this class directly
- * @deprecated	Use icms_core_Logger, instead
+ * deprecated	Use icms_core_Logger, instead
  * @todo		Remove in version 1.4
  */
 class XoopsErrorHandler extends icms_core_Logger {

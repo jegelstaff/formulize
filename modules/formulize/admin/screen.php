@@ -219,7 +219,8 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
         $advanceViewSelected[$index]["searchtype"] = $arr[3];
         $index++;
     }
-    
+  
+  // included file sets up $elementOptions and other variables relied upon below  
   include XOOPS_ROOT_PATH.'/modules/formulize/admin/generateTemplateElementHandleHelp.php';
   $templates['listtemplatehelp'] = $listTemplateHelp;
 

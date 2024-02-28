@@ -238,7 +238,7 @@ class icms_member_user_Object extends icms_core_Object {
 	 * alias for {@link getGroups()}
 	 * @see getGroups()
 	 * @return array array of groups
-	 * @deprecated	Use getGroups(), instead
+	 * deprecated	Use getGroups(), instead
 	 * @todo		Remove in version 1.4 - no occurrences in the core
 	 */
 	public function &groups() {

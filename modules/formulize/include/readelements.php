@@ -546,9 +546,8 @@ function writeUserProfile($data, $uid) {
 
 	global $xoopsUser, $xoopsConfig;
 	$config_handler =& xoops_gethandler('config');
-    $confType = defined('XOOPS_CONF_USER') ? XOOPS_CONF_USER : ICMS_CONF_USER;
-	$xoopsConfigUser =& $config_handler->getConfigsByCat($confType);
-
+  $xoopsConfigUser =& $config_handler->getConfigsByCat(2); // 2 is the user category
+  
 	include_once XOOPS_ROOT_PATH . "/language/" . $xoopsConfig['language'] . "/user.php";
 
 	$errors = array();

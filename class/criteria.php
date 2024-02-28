@@ -11,7 +11,7 @@
  * @author	http://www.xoops.org The XOOPS Project
  * @author	modified by UnderDog <underdog@impresscms.org>
  * @version	$Id: criteria.php 19118 2010-03-27 17:46:23Z skenow $
- * @deprecated
+ * deprecated
  * @todo	Remove completely in version 1.4
  */
 
@@ -37,7 +37,7 @@
  *
  * @author	    Kazumi Ono	<onokazu@xoops.org>
  * @copyright	copyright (c) 2000-2003 XOOPS.org
- * @deprecated	Use icms_db_criteria_Element, instead
+ * deprecated	Use icms_db_criteria_Element, instead
  * @todo		Remove in version 1.4
  */
 abstract class CriteriaElement extends icms_db_criteria_Element
@@ -54,7 +54,7 @@ abstract class CriteriaElement extends icms_db_criteria_Element
  *
  * @author	    Kazumi Ono	<onokazu@xoops.org>
  * @copyright	copyright (c) 2000-2003 XOOPS.org
- * @deprecated	Use icms_db_criteria_Compo, instead
+ * deprecated	Use icms_db_criteria_Compo, instead
  * @todo		Remove in version 1.4
  */
 class CriteriaCompo extends icms_db_criteria_Compo
@@ -75,7 +75,7 @@ class CriteriaCompo extends icms_db_criteria_Compo
  *
  * @author	    Kazumi Ono	<onokazu@xoops.org>
  * @copyright	copyright (c) 2000-2003 XOOPS.org
- * @deprecated	Use icms_db_criteria_Item, instead
+ * deprecated	Use icms_db_criteria_Item, instead
  * @todo		Remove in version 1.4
  */
 class Criteria extends icms_db_criteria_Item

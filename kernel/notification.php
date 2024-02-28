@@ -37,7 +37,7 @@ include_once XOOPS_ROOT_PATH . '/include/notification_functions.php';
  *
  * @author	    Michael van Dam	<mvandam@caltech.edu>
  * @copyright	copyright (c) 2000-2003 XOOPS.org
- * @deprecated	Use icms_data_notification_Object, instead
+ * deprecated	Use icms_data_notification_Object, instead
  * @todo		Remove in version 1.4
  */
 class XoopsNotification extends icms_data_notification_Object
@@ -68,7 +68,7 @@ class XoopsNotification extends icms_data_notification_Object
  *
  * @author	    Michael van Dam <mvandam@caltech.edu>
  * @copyright	copyright (c) 2000-2003 XOOPS.org
- * @deprecated	Use icms_data_notification_Handler, instead
+ * deprecated	Use icms_data_notification_Handler, instead
  * @todo		Remove in version 1.4
  */
 class XoopsNotificationHandler extends icms_data_notification_Handler {

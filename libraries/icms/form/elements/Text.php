@@ -110,6 +110,7 @@ class icms_form_elements_Text extends icms_form_Element {
 			. "' id='" . $this->getName()
 			. "' size='" . $this->getSize()
 			. "' maxlength='" . $this->getMaxlength()
+			. "' aria-describedby='" . $this->getName() . "-help-text"
 			. "' value='" . $this->getValue() . "'" . $this->getExtra()
 			. " />";
 	}

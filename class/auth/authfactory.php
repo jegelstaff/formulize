@@ -22,7 +22,7 @@
  * @subpackage  auth
  * @author	    Pierre-Eric MENUET	<pemphp@free.fr>
  * @copyright	copyright (c) 2000-2005 XOOPS.org
- * @deprecated	Use icms_auth_Factory, instead
+ * deprecated	Use icms_auth_Factory, instead
  * @todo		Remove in version 1.4
  */
 class XoopsAuthFactory extends icms_auth_Factory {

@@ -148,6 +148,7 @@ class icms_form_elements_Radio extends icms_form_Element {
 		foreach ($ele_options as $value => $name) {
 			$counter++;
 			$ret .= "<input type='radio' id='" . $ele_name."-".$counter . "' name='" . $ele_name . "' value='" . htmlspecialchars($value, ENT_QUOTES) . "'";
+			$ret .= " aria-describedby='" . $this->getName() . "-help-text'";
 			if ($value == $ele_value) {
 				$ret .= " checked='checked'";
 			}
