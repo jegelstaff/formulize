@@ -1685,7 +1685,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
         }
         foreach($conditionsfilter_oom as $form_id=>$theseFilters) {
             foreach($theseFilters as $thisFilter) {
-                $basicOneSideFilter .= isset($basicOneSideFilter) ? " or ( $thisFilter ) " : " ( $thisFilter ) ";
+                $basicOneSideFilter .= $basicOneSideFilter ? " or ( $thisFilter ) " : " ( $thisFilter ) ";
             }
             if(isset($oneSideFilters[$form_id]['or'])) {
                 $oneSideFilters[$form_id]['or'] .= " AND ( $basicOneSideFilter ) ";
