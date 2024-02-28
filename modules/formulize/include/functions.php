@@ -97,7 +97,6 @@ function getFormFramework($formframe, $mainform=0) {
     return $to_return;
 }
 
-
 // get the title of a form
 function getFormTitle($fid) {
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
@@ -107,7 +106,6 @@ function getFormTitle($fid) {
     }
 	return html_entity_decode($formObject->getVar('title'),ENT_QUOTES);
 }
-
 
 //this function returns the list of all the user's full names for all the users in the specified group(s)
 // $groups is an array of all the group ids that we should be considering
@@ -205,14 +203,12 @@ function gatherNames($groups, $nametype, $requireAllGroups=false, $filter=false,
     return $found_names;
 }
 
-
 //get the currentURL
 function getCurrentURL() {
     static $url = "";
     if ($url) {
         return $url;
     }
-
     $url_parts = parse_url(XOOPS_URL);
     $url = $url_parts['scheme'] . "://" . $_SERVER['HTTP_HOST'];
     $url = (isset($url_parts['port']) AND !strstr($_SERVER['HTTP_HOST'], ":")) ? $url . ":" . $url_parts['port'] : $url;
@@ -220,7 +216,6 @@ function getCurrentURL() {
     $url .= str_replace("&amp;", "&", htmlSpecialChars(strip_tags($_SERVER['REQUEST_URI'])));
     return $url;
 }
-
 
 // this function returns a human readable, comma separated list of group names, given a string of comma separated group ids
 function groupNameList($list, $obeyMemberOnlyFlag = true) {
@@ -249,7 +244,6 @@ function groupNameList($list, $obeyMemberOnlyFlag = true) {
     return $names;
 }
 
-
 // THIS FUNCTION RETURNS THE OWNER OF A GIVEN SAVED VIEW
 // only checks based on 2.0 saved view format, not 1.6 or earlier format
 function getSavedViewOwner($vid) {
@@ -264,7 +258,6 @@ function getSavedViewOwner($vid) {
     }
     return $cachedOwners[$vid];
 }
-
 
 // return an array of the reports the user is allowed to see
 function availReports($uid, $groups, $fid, $frid="0") {
@@ -525,31 +518,6 @@ function q($query, $keyfield="", $keyfieldOnly = false) {
     return $result;
 }
 
-
-
-// THIS FUNCTION RETURNS AN ARRAY OF THE CATEGORY NAMES WHERE THE CATEGORY IDS ARE THE KEYS -- added April 25/05
-function fetchCats() {
-    global $xoopsDB;
-    $result = q("SELECT cat_id, cat_name FROM " . $xoopsDB->prefix("formulize_menu_cats") . " ORDER BY cat_name");
-    foreach ($result as $acat) {
-        $cats[$acat['cat_id']] = $acat['cat_name'];
-    }
-    return $cats;
-}
-
-
-// THIS FUNCTION RETURNS THE CAT_ID OF THE CATEGORY WHERE A FORM IS FOUND (OR 0 IF THE FORM IS NOT FOUND)
-function getMenuCat($fid) {
-    global $xoopsDB;
-    $foundCat = q("SELECT cat_id FROM " . $xoopsDB->prefix("formulize_menu_cats") . " WHERE id_form_array LIKE \"%,$fid,%\"");
-    if (count((array) $foundCat)>0) {
-        return($foundCat[0]['cat_id']);
-    } else {
-        return 0;
-    }
-}
-
-
 // this function truncates a string to a certain number of characters
 function printSmart($value, $chars="35") {
     if($chars AND !strstr(getCurrentURL(), 'master.php?')) {
@@ -561,7 +529,6 @@ function printSmart($value, $chars="35") {
     }
     return $value;
 }
-
 
 // this function handles cutting up a string and is multibyte aware -- thanks to Fram!
 function cutString($string, $maxlen) {
@@ -765,20 +732,6 @@ function convertHeadersToIds($headers, $fid) {
 }
 
 
-// this function returns an array of the allowed categories, key being id and value being name, based on the allowedforms array
-function allowedCats($cats, $allowedForms) {
-    global $xoopsDB;
-    foreach ($cats as $catid=>$catname) {
-        $flatFormArray = q("SELECT id_form_array FROM " . $xoopsDB->prefix("formulize_menu_cats") . " WHERE cat_id='$catid'");
-        $formsInCat = explode(",", trim($flatFormArray[0]['id_form_array'], ","));
-        if (array_intersect($formsInCat, $allowedForms)) {
-            $allowedCats[$catid] = $catname;
-        }
-    }
-    return $allowedCats;
-}
-
-
 // this function returns the forms the user is allowed to view
 function allowedForms() {
     global $xoopsUser, $xoopsDB;
@@ -813,99 +766,6 @@ function allowedForms() {
     return $allowedForms;
 }
 
-
-// this function returns the name of a form when given the id (internal, not meant for public use)
-function fetchFormName($id) {
-    global $xoopsDB;
-    $title_q = q("SELECT desc_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form='$id'");
-    return trans($title_q[0]['desc_form']);
-}
-
-// this function returns the names of a form or forms when given an id or array of ids
-function fetchFormNames($ids) {
-    if (is_array($ids)) {
-        foreach ($ids as $id) {
-            $names[] = fetchFormName($id);
-        }
-        return $names;
-    } else {
-        $name = fetchFormName($ids);
-        return $name;
-    }
-}
-
-
-// this function returns the forms in a category, if given the category id and the allowedforms for the user
-function fetchFormsInCat($thisid, $allowedForms="") {
-    global $xoopsDB;
-
-    if (!is_array($allowedForms)) {
-        $allowedForms = allowedForms();
-    }
-
-    if ($thisid == 0) { // general category
-        // 1. foreach allowed form, check to see if it's in a cat
-        // 2. record each one in an array
-        // 3. make formsInCat equal the difference between found array and allowed forms
-        foreach ($allowedForms as $thisform) {
-            $found_q = q("SELECT * FROM " . $xoopsDB->prefix("formulize_menu_cats") . " WHERE id_form_array LIKE \"%,$thisform,%\"");
-            if (count((array) $found_q)>0) { $foundForms[] = $thisform; }
-        }
-        if (count((array) $foundForms) > 0 ) {
-            $formsInCat1 = array_diff($allowedForms, $foundForms);
-        } else {
-            $formsInCat1 = $allowedForms;
-        }
-    } else {
-        $flatFormArray = q("SELECT id_form_array FROM " . $xoopsDB->prefix("formulize_menu_cats") . " WHERE cat_id='$thisid'");
-        $formsInCat1 = explode(",", trim($flatFormArray[0]['id_form_array'], ","));
-    }
-
-    // exclude inactive forms, and sort
-    foreach ($formsInCat1 as $thisform) {
-        $status_q = q("SELECT menuid, position FROM " . $xoopsDB->prefix("formulize_menu") . " WHERE menuid='$thisform' AND status=1");
-        if (count((array) $status_q) > 0 AND in_array($thisform, $allowedForms)) {
-            // only include active forms that the user is allowed to see
-            $formpos[] = $status_q[0]['position'];
-            $formsInCat[] = $thisform;
-        }
-    }
-    array_multisort($formpos, $formsInCat);
-
-    return $formsInCat;
-}
-
-
-// THIS FUNCTION DRAWS IN THE ELEMENTS OF THE FORM MENU
-function drawMenu($thisid, $thiscat, $allowedForms, $id_form, $topwritten, $force_open) {
-    global $xoopsDB;
-
-    $formsInCat = fetchFormsInCat($thisid, $allowedForms);
-
-    // user is allowed to see at least one form in this category
-    if (count((array) $formsInCat)>0) {
-        $itemurl = XOOPS_URL."/modules/formulize/cat.php?cat=$thisid";
-        if ($topwritten != 1) {
-            $block = "<a class=\"menuTop\" href=\"$itemurl\">$thiscat</a>";
-            $topwritten = 1;
-        } else {
-            $block = "<a class=\"menuMain\" href=\"$itemurl\">$thiscat</a>";
-        }
-
-        // check to see if current cat is active (ie: has been clicked)
-        // if we're viewing this category or a form in this category, or this is the only category (force open)
-        if ($force_open OR (isset($_GET['cat']) AND $thisid == $_GET['cat']) OR in_array($id_form, $formsInCat)) {
-            foreach ($formsInCat as $thisform) {
-                // altered sept 8 to use IDs
-                $title = fetchFormNames($thisform);
-                //$urltitle = str_replace(" ", "%20", $title);
-                $suburl = XOOPS_URL."/modules/formulize/index.php?fid=$thisform";
-                $block .= "<a class=\"menuSub\" href='$suburl'>$title</a>";
-            }
-        }
-    }
-    return $block;
-}
 
 // THIS FUNCTION REMOVES ENTRIES FROM THE OTHER TABLE BASED ON AN IDREQ
 function deleteMaintenance($id_req, $fid) {
