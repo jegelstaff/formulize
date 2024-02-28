@@ -200,10 +200,14 @@ if(count((array) $formulize_elementData) > 0 ) { // do security check if it look
   $modulePrefUseToken = $formulizeConfig['useToken'];
 	$useToken = $screen ? $screen->getVar('useToken') : $modulePrefUseToken;
 	if(isset($GLOBALS['xoopsSecurity']) AND $useToken) { // avoid security check for versions of XOOPS that don't have that feature, or for when it's turned off
-		$GLOBALS['formulize_securityCheckPassed'] = true;
-		if (!$GLOBALS['xoopsSecurity']->check() AND (!strstr($cururl, "modules/wfdownloads") AND !strstr($cururl, "modules/smartdownload"))) { // skip the security check if we're in wfdownloads/smartdownloads since that module should already be handling the security checking
+		$GLOBALS['formulize_securityCheckPassed'] = false;
+		if ($GLOBALS['xoopsSecurity']->check()) {
+			$GLOBALS['formulize_securityCheckPassed'] = true;
+		} elseif($GLOBALS['xoopsSecurity']->validateToken($_POST["detoken_".$elementMetaData[1]."_".$elementMetaData[2]."_".$elementMetaData[3]], name: 'formulize_display_element_token')) {
+			$GLOBALS['formulize_securityCheckPassed'] = true;
+		}
+		if($GLOBALS['formulize_securityCheckPassed'] == false) {
 			print "<b>Error: the data you submitted could not be saved in the database.</b>";
-			$GLOBALS['formulize_securityCheckPassed'] = false;
 			return false;
 		}
 	}
@@ -542,8 +546,8 @@ function writeUserProfile($data, $uid) {
 
 	global $xoopsUser, $xoopsConfig;
 	$config_handler =& xoops_gethandler('config');
-	$xoopsConfigUser =& $config_handler->getConfigsByCat(2); // 2 is the user category
-
+  $xoopsConfigUser =& $config_handler->getConfigsByCat(2); // 2 is the user category
+  
 	include_once XOOPS_ROOT_PATH . "/language/" . $xoopsConfig['language'] . "/user.php";
 
 	$errors = array();

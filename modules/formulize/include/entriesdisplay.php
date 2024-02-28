@@ -3070,7 +3070,9 @@ function renderElement(handle,element_id,entryId,fid,check,deInstanceCounter) {
 			} else {
 			  nameToUse = "[name='de_"+fid+"_"+entryId+"_"+element_id+"']";
 			}
-			jQuery.post("<?php print XOOPS_URL; ?>/modules/formulize/include/readelements.php", jQuery(nameToUse+",[name='decue_"+fid+"_"+entryId+"_"+element_id+"']").serialize(), function(data) {
+			cueToUse = "[name='decue_"+fid+"_"+entryId+"_"+element_id+"']";
+			tokenToUse = "[name='detoken_"+fid+"_"+entryId+"_"+element_id+"']";
+			jQuery.post("<?php print XOOPS_URL; ?>/modules/formulize/include/readelements.php", jQuery(nameToUse+","+cueToUse+","+tokenToUse).serialize(), function(data) {
 				if(data) {
 				   alert(data);
 				} else {

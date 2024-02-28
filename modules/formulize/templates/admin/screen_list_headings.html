@@ -38,7 +38,7 @@
               <label for="0"><input type="radio" id="screens-usesearchcalcmsgs" name="screens-usesearchcalcmsgs"<{if $content.usesearchcalcmsgs eq 0 or $content.usesearchcalcmsgs eq 2}> checked="checked"<{/if}> value="0"/><{$smarty.const._NO}></label>
 		  </div>
       <div class="description"></div>
-    </div>                
+    </div>
     <div class="form-item">
       <label for="screens-usesearch"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USESEARCH}></label>
       <div class="form-radios">
@@ -57,7 +57,7 @@
 		  <div class="form-radios">
 			  <label for="0"><input type="radio" id="screens-usesearch" name="screens-usesearch"<{if $content.usesearch eq 0}> checked="checked"<{/if}> value="0"/><{$smarty.const._NO}></label>
 		  </div>
-          
+
       <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_USESEARCH}></div>
     </div>
     <div class="form-item">
@@ -121,7 +121,7 @@
 	      <label for="0"><input type="radio" id="screens-dedisplay" name="screens-dedisplay"<{if $content.dedisplay eq 0}> checked="checked"<{/if}> value="0"/>Display them all at once when the list loads</label>
       </div>
       <div class="form-radios">
-	      <label for="1"><input type="radio" id="screens-dedisplay" name="screens-dedisplay"<{if $content.dedisplay eq 1}> checked="checked"<{/if}> value="1"/>Display them when the user clicks an icon to activate them &mdash; if users click to activate, then you should turn OFF the security token in the <a href="../../system/admin.php?fct=preferences&op=showmod&mod=<{$adminPage.formulizeModId}>" target="_blank">Formulize Preferences</a></label>
+	      <label for="1"><input type="radio" id="screens-dedisplay" name="screens-dedisplay"<{if $content.dedisplay eq 1}> checked="checked"<{/if}> value="1"/>Display them when the user clicks an icon to activate them</label>
       </div>
       <div class="description"></div>
     </div>

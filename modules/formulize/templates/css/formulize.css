@@ -648,3 +648,11 @@ div[id^=cellcontents_1_] {
 div[id^=cellcontents_1_] label {
     white-space: nowrap;
 }
+
+.formulize-display-element-edit-icon {
+	float: left; margin-right: 5px; margin-bottom: 5px;
+}
+
+.formulize-display-element-contents {
+	padding-left: 2em;
+}

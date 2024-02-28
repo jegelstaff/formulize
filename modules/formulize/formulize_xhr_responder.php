@@ -138,8 +138,17 @@ switch($op) {
     break;
 
   case 'get_element_html':
+		/*
+		the GET param0 through param4 are:
+		1 - handle
+		2 - element_id
+		3 - entryId
+		4 - fid
+		5 - deInstanceCounter
+		*/
     include_once XOOPS_ROOT_PATH."/modules/formulize/include/elementdisplay.php";
     displayElement("", formulize_db_escape($_GET['param2']), intval($_GET['param3']));
+		print "<input type='hidden' name='detoken_".intval($_GET['param4']).'_'.intval($_GET['param3']).'_'.intval($_GET['param2'])."' value=".$GLOBALS['xoopsSecurity']->createToken(0, 'formulize_display_element_token').">";
     break;
 
   case 'get_element_value':
@@ -216,7 +225,7 @@ switch($op) {
         if($targetElement) {
           $data_handler = new formulizeDataHandler($onetoonefid);
           if($link->getVar('common')) {
-            $entryId = $data_handler->findFirstEntryWithValue($targetElement, $databaseReadyValue);  
+            $entryId = $data_handler->findFirstEntryWithValue($targetElement, $databaseReadyValue);
           } elseif($sourceElement==$passedElementId) {
             $entryId = $databaseReadyValue; // use entry id of the value selected in the conditional element that triggered this -- expected when the A form contains a link to the B form, and the B form values are supposed to come in when something is selected
           }
@@ -328,7 +337,7 @@ switch($op) {
 }
 
 function renderElement($elementObject, $entryId) {
-    
+
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
     // "" is framework, ie: not applicable
     $GLOBALS['formulize_asynchronousRendering'][$elementObject->getVar('ele_handle')] = true;

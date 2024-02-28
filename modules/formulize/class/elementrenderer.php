@@ -906,7 +906,7 @@ class formulizeElementRenderer{
 				}
 				$form_ele = new XoopsFormLabel(
 					$ele_caption,
-					$renderedElement
+					trans($renderedElement)
 				);
 				$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
 
