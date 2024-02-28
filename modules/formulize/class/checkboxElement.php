@@ -607,19 +607,21 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
     // $handle is the element handle for the field that we're retrieving this for
     // $entry_id is the entry id of the entry in the form that we're retrieving this for
     function prepareDataForDataset($value, $handle, $entry_id) {
-			global $xoopsDB;
-			$newValueq = go("SELECT other_text FROM " . $xoopsDB->prefix("formulize_other")." as o, " . $xoopsDB->prefix("formulize")." as f WHERE o.ele_id = f.ele_id AND f.ele_handle=\"" . formulize_db_escape($handle) . "\" AND o.id_req='".intval($entry_id)."' LIMIT 0,1");
-      // removing the "Other: " part...we just want to show what people actually typed...doesn't have to be flagged specifically as an "other" value
-      $value_other = $newValueq[0]['other_text'];
+		global $xoopsDB;
+		$newValueq = go("SELECT other_text FROM " . $xoopsDB->prefix("formulize_other")." as o, " . $xoopsDB->prefix("formulize")." as f WHERE o.ele_id = f.ele_id AND f.ele_handle=\"" . formulize_db_escape($handle) . "\" AND o.id_req='".intval($entry_id)."' LIMIT 0,1");
+		// removing the "Other: " part...we just want to show what people actually typed...doesn't have to be flagged specifically as an "other" value
+		if (!empty($newValueq)) {
+			$value_other = $newValueq[0]['other_text'];
 			$value = preg_replace('/\{OTHER\|+[0-9]+\}/', $value_other, $value);
-      $values = explode("*=+*:",$value);
-			$elementObject = $this->get($handle);
-			if($elementObject->getVar('ele_uitextshow')) {
-				foreach($values as $i=>$value) {
-					$values[$i] = formulize_swapUIText($value, $elementObject->getVar('ele_uitext'));
-				}
+		}
+		$values = explode("*=+*:",$value);
+		$elementObject = $this->get($handle);
+		if($elementObject->getVar('ele_uitextshow')) {
+			foreach($values as $i=>$value) {
+				$values[$i] = formulize_swapUIText($value, $elementObject->getVar('ele_uitext'));
 			}
-			return $values;
+		}
+		return $values;
     }
 
     // this method will take a text value that the user has specified at some point, and convert it to a value that will work for comparing with values in the database.  This is used primarily for preparing user submitted text values for saving in the database, or for comparing to values in the database, such as when users search for things.  The typical user submitted values would be coming from a condition form (ie: fieldX = [term the user typed in]) or other situation where the user types in a value that needs to interact with the database.
