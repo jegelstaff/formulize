@@ -6665,24 +6665,29 @@ function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
             $text = (isset($column['ele_colhead']) AND $column['ele_colhead'] != "") ? printSmart(trans($column['ele_colhead']), 75) : printSmart(trans(strip_tags($column['ele_caption'])), 75);
             $boxeshtml .= "<input type='checkbox' name='popnewcols[]' id='popnewcols".$counter."' class='colbox' value=\"{$column['ele_handle']}\" $selected />&nbsp;&nbsp;&nbsp;<label for='popnewcols".$counter."'>$text</label><br />\n";
         }
-         $html .= "
-					<button
-						onclick='toggleCols($thisFid);return false;'
-						id='id-change-columns-toggle-header-".$thisFid."'
-						class='toggle-button-change-columns'
-						aria-expanded='true'
-						aria-controls='id-change-columns-toggle-panel-".$thisFid."'
-						data-accordion-header
-					>
-						".$formObject->getVar('title')." <span id='arrow-up' aria-label='up arrow'>&and;</span><span id='arrow-down' aria-label='down arrow'>&or;</span>
-					</button>
+				$html .= "
+				  <fieldset class='elements-checkbox-fieldset'>
+				 		<legend class='elements-checkbox-legend'>
+							<button
+								onclick='toggleCols($thisFid);return false;'
+								id='id-change-columns-toggle-header-".$thisFid."'
+								class='toggle-button-change-columns'
+								aria-expanded='true'
+								aria-controls='id-change-columns-toggle-panel-".$thisFid."'
+								data-accordion-header
+							>
+								".$formObject->getVar('title')." <span id='arrow-up' aria-label='up arrow'>&and;</span><span id='arrow-down' aria-label='down arrow'>&or;</span>
+							</button>
+						</legend>
+						<div
+							class='elements-checkbox-list'
+							id='id-change-columns-toggle-panel-".$thisFid."'
+							aria-labelledby='id-change-columns-toggle-header-".$thisFid."'
+						>
+							".$boxeshtml."
+						</div>
+					</fieldset>
 				";
-				$html .="<fieldset class='elements-checkbox-fieldset'>";
-        $html .= "<legend class='elements-checkbox-legend'><a onclick='javascript:toggleCols($thisFid);return false;' style='cursor: pointer;'>".$formObject->getVar('title')." <span id='up_".$thisFid."' $upDisplay>&and;</span><span id='down_".$thisFid."' $downDisplay>&or;</span></a></legend>\n";
-        $html .= "<div class='elements-checkbox-list' id='cols_$thisFid' $hideform>\n";
-        $html .= $boxeshtml;
-        $html .= "</div>";
-        $html .= "</fieldset>";
     }
     $html .="</div>
 
@@ -6718,17 +6723,9 @@ function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
 				display: inline;
 			}
 
-			.elements-checkbox-list {
-				transition: all 1s ease 0.25s;
-			}
-			.elements-checkbox-fieldset {
-					border: 0;
-					margin: 0;
-					padding: 0;
-			}
-			.elements-checkbox-fieldset legend {
-				margin-bottom: 10px;
-			}
+        .elements-checkbox-list {
+            transition: all 1s ease 0.25s;
+        }
     </style>
 
     <script type='text/javascript'>
