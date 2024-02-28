@@ -186,11 +186,6 @@ switch($op) {
         $passedElementId = $keyParts[3];
         $passedElementObject = $element_handler->get($passedElementId);
         $handle = $passedElementObject->getVar('ele_handle');
-				// if the condition is triggered based on a new value in an autocomplete box, the entry is 'new' because it's not saved yet
-				// this is a change from previous code that processed the newvalue to write an entry, stored it in $sendBackValue
-				// and then passed back the written entry so the markup could be altered to reflect the entry id.
-				// That resulted in lots of empty entries in the source forms for linked autocomplete boxes
-				// the one to one linking logic can figure out the values that should match without this??
         if(is_string($v) && substr($v, 0, 9)=="newvalue:") {
 					$databaseReadyValue = 'new';
 				} else {
@@ -205,19 +200,18 @@ switch($op) {
         $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$passedEntryId][$handle] = $apiFormatValue;
       }
     }
-		// if there's a one to one key that changed, and a specific existing entry was selected, use that entrythe other form in the one to one pair was showing a specific entry,
-		// then we need to morph into the entry that matches the present choice just made in the one to one key field
-		// so go lookup the links and become that entry instead of the one that was on screen for the user up till now.
+		// Normally, the entryId we're rendering is the one displayed in the form at load time, elements are dependent on conditions, but always rendered as in that entry.
+		// In a one-to-one situation, if the relationship is based on a linked element, we need to render elements from the entry selected in the governing element
+		// If the relationship is common value then we need to try to determine which entry is connected to it, if any
 		if($onetoonekey) {
-			if($entryId == 'new') { // need to account for common values too? lookup the entry where the databaseReadyValue value is present?
-				$entryId = $databaseReadyValue;
-			} else {
-				// something not working about test cases here?!
+			if(oneToOneRelationshipLinkBasedOnCommonValue($onetoonefrid, $onetoonefids)) {
 				$onetooneentries = array($onetoonefid => array($onetooneentries[$onetoonefid][0]));
 				$onetoonefids = array($onetoonefid);
 				$checkForLinksResults = checkForLinks($onetoonefrid, $onetoonefids, $onetoonefid, $onetooneentries);
 				$entryId = $checkForLinksResults['entries'][$fid][0];
 				$entryId = $entryId ? $entryId : 'new';
+			} else {
+				$entryId = $databaseReadyValue;
 			}
 		}
 		// render the elements and package them in JSON

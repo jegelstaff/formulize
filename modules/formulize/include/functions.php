@@ -1030,10 +1030,10 @@ function checkForLinks($frid, $fids, $fid, $entries, $unified_display=false, $un
             // keep in mind, we only want to return a single value, since this is one to one? Not necessarily in these strange conditions of multiple value elements?
             // first, prepare any asynch provided values...
             if($candidateElement->canHaveMultipleValues OR $mainElement->canHaveMultipleValues) { // experimental!
-                $valueToCheckAgainst = isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($entries[$fid][0])][$mainHandle]) ? "'".formulize_db_escape($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($entries[$fid][0])][$mainHandle])."'" : "main.`".$mainHandle."`";
+                $valueToCheckAgainst = isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entries[$fid][0]][$mainHandle]) ? "'".formulize_db_escape($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entries[$fid][0]][$mainHandle])."'" : "main.`".$mainHandle."`";
                 $whereClauseExtra = strstr($valueToCheckAgainst, '`') ? " AND main.entry_id = ".intval($entries[$fid][0]) : ""; // if we don't have an explicit value, we need to specify the entry the query should use for matching
             } else {
-                $valueToCheckAgainst = isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($entries[$fid][0])][$mainHandle]) ? $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($entries[$fid][0])][$mainHandle] : "main.`".$mainHandle."` AND main.entry_id = ".intval($entries[$fid][0]);
+                $valueToCheckAgainst = isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entries[$fid][0]][$mainHandle]) ? $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entries[$fid][0]][$mainHandle] : "main.`".$mainHandle."` AND main.entry_id = ".intval($entries[$fid][0]);
             }
             if($candidateElement->canHaveMultipleValues AND $mainElement->canHaveMultipleValues == false) { // experimental!
                 $candidateEntry = q("SELECT candidate.entry_id FROM "
@@ -1073,9 +1073,9 @@ function checkForLinks($frid, $fids, $fid, $entries, $unified_display=false, $un
                 if (strstr($selfEleValue[2], "#*=:*")) {
                     foreach($entries[$fid] as $thisTargetEntry) {
                         // self is the linked selectbox, other is the source of the values
-                        if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($thisTargetEntry)][$selfElement->getVar('ele_handle')])) {
+                        if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$thisTargetEntry][$selfElement->getVar('ele_handle')])) {
                             // if an asynch request has set an override value, use that!
-                            $foundEntry = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($thisTargetEntry)][$selfElement->getVar('ele_handle')];
+                            $foundEntry = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$thisTargetEntry][$selfElement->getVar('ele_handle')];
                         } else {
                             // get the entry in the $one_fid['fid'] form (form with the self element), that has the intval($entries[$fid][0]) entry (the entry we are calling up already) as it's linked value
                             $data_handler = new formulizeDataHandler($one_fid['fid']);
@@ -1103,9 +1103,9 @@ function checkForLinks($frid, $fids, $fid, $entries, $unified_display=false, $un
                 } else {
                     // other is the linked selectbox, self is the source of the values
                     foreach($entries[$fid] as $thisTargetEntry) {
-                        if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($thisTargetEntry)][$otherElement->getVar('ele_handle')])) {
+                        if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$thisTargetEntry][$otherElement->getVar('ele_handle')])) {
                             // if an asynch request has set an override value, use that!
-                            $foundEntry = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($thisTargetEntry)][$otherElement->getVar('ele_handle')];
+                            $foundEntry = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$thisTargetEntry][$otherElement->getVar('ele_handle')];
                         } else {
                             // return the value of the $one_fid['keyother'] element in the $fid, in intval($entries[$fid][0]) entry
                             $data_handler = new formulizeDataHandler($fid);
@@ -8065,4 +8065,35 @@ function getDaylightSavingsAdjustment($userTimeZone, $compareTimeZone, $timestam
     }
     return $adjustment;
 
+}
+
+/**
+ * Returns true or false indicating if the forms are part of the relationship and are connected by common value
+ * @param int $frid The ID of the form relationship
+ * @param array $fids An array of the two form IDs that we're looking for in the relationship
+ * @return boolean Whether the forms are connected by common value in the specified relationship
+ */
+function oneToOneRelationshipLinkBasedOnCommonValue($frid, $fids) {
+	global $xoopsDB;
+	// remake fids so we're sure the keys are zero and one
+	$cleanFids = array();
+	foreach($fids as $fid) {
+		$cleanFids[] = intval($fid);
+	}
+	$frid = intval($frid);
+	$sql = "SELECT fl_id FROM ".$xoopsDB->prefix('formulize_framework_links')."
+		WHERE (
+			(fl_form1_id = {$cleanFids[0]} AND fl_form2_id = {$cleanFids[1]})
+			OR (fl_form1_id = {$cleanFids[1]} AND fl_form2_id = {$cleanFids[0]})
+		)
+		AND fl_frame_id = $frid
+		AND fl_relationship = 1
+		AND fl_common_value = 1
+		LIMIT 0,1";
+	if($res = $xoopsDB->query($sql)) {
+		if($row = $xoopsDB->fetchRow($res)) {
+			return true;
+		}
+	}
+	return false;
 }

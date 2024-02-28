@@ -239,8 +239,13 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
 							$keyselfElementObject = $element_handler->get($lookupElementId);
 							// if the keyself element is a linked element and it wrote a new value into the target form
 							if($keyselfElementObject->isLinked AND substr($_POST["de_{$lookupFid}_{$lookupEntryId}_{$lookupElementId}"], 0, 9) === 'newvalue:') {
-								// write the current data ($values) that we'll be saving next, into that entry which was just written in response to the 'newvalue' operation, instead of creating another new entry in this form
-								$currentEntry = $formulize_elementData[$lookupFid][$lookupEntryId][$lookupElementId];
+								if($linkData['common']) {
+									// write the value from the key element in the other form, as the value for the key element in this form
+									$values[$linkData['keyother']] = $formulize_elementData[$lookupFid][$lookupEntryId][$lookupElementId];
+								} else {
+									// write the current data ($values) that we'll be saving next, into that entry which was just written in response to the 'newvalue' operation, instead of creating another new entry in this form
+									$currentEntry = $formulize_elementData[$lookupFid][$lookupEntryId][$lookupElementId];
+								}
 								break; // go with the first one we found
 							}
 						}
