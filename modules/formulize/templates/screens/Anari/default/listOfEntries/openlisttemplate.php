@@ -94,7 +94,7 @@ function drawHeaderRow($headers, $checkBoxesShown, $viewEntryLinksShown, $column
 
 	// draw in a cell for the column with the selection checkboxes and view entry links
 	if($checkBoxesShown OR $viewEntryLinksShown) {
-		$cells[] = "<td class='head formulize-controls-head' id='celladdress_h$headingRowNumber"."_"."margin>&nbsp;</td>";
+		$cells[] = "<td class='head formulize-controls-head' id='celladdress_h$headingRowNumber"."_"."margin'>&nbsp;</td>";
 	}
 
 	// draw in a cell for the locked columns feature
