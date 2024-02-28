@@ -704,6 +704,7 @@ class formulizeAdvancedCalculationHandler {
 
   // this method grabs the output to screen and sticks a grouping label in front of it
   function captureGroupedOutput($activeGroupings, $output) {
+		$groupingLabel = '';
     foreach($activeGroupings as $thisGrouping) {
 	if(is_array($thisGrouping['metadata'])) {
 	    $label = $thisGrouping['metadata']['fltr_label'];
