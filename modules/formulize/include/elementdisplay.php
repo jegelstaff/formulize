@@ -452,7 +452,7 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 		} elseif($thisOp == "IN") {
 			$cleanTerms = array();
 			foreach(explode(',',$filterTerms[$i]) as $ft) {
-				$cleanTerms[] = str_replace("'", "\'", trim($ft, " \n\r\t\v\x00\"'"));
+				$cleanTerms[] = str_replace("'", "\'", trim(htmlspecialchars_decode($ft, ENT_QUOTES), " \n\r\t\v\x00\"'"));
 			}
 			$evaluationCondition .= "in_array('".$compValue."', array('".implode("','",$cleanTerms)."'))";
 		} else {

@@ -5754,7 +5754,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 				$quotes = '';
 				$filterTermParts = explode(',',$filterTerms[$filterId]);
 				foreach($filterTermParts as $i=>$ftp) {
-					$filterTermParts[$i] = trim($ftp, " \n\r\t\v\x00\"'"); // trim any white space and single or double quotes the user might have put on the terms
+					$filterTermParts[$i] = trim(htmlspecialchars_decode($ftp, ENT_QUOTES), " \n\r\t\v\x00\"'"); // trim any white space and single or double quotes the user might have put on the terms
 				}
 				// use @#.&%$ to stand in for single quote, because the filter term is escaped below, and we need to add single quotes back in later so they aren't mangled by the escaping
 				$filterTerms[$filterId] = "(@#.&%$".implode("@#.&%$,@#.&%$",$filterTermParts)."@#.&%$)";
