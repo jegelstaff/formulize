@@ -118,8 +118,8 @@ function patch40() {
      *
      * ====================================== */
 
-    $checkThisTable = 'formulize_id';
-	$checkThisField = 'on_delete';
+    $checkThisTable = 'formulize';
+	$checkThisField = 'ele_disabledconditions';
 	$checkThisProperty = '';
 	$checkPropertyForValue = '';
 
