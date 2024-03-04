@@ -25,6 +25,16 @@
       <input type="text" id="screens-donedest" name="screens-donedest" value="<{$content.donedest}>" size="50" maxlength="255"/>
 	  </div>
 	</fieldset>
+    
+    <fieldset>
+        <legend><{$smarty.const._AM_FORMULIZE_SCREEN_TEMPLATE_VIEWENTRYSCREEN}></legend>
+        <div class="form-item">
+            <select id="screens-viewentryscreen" name="screens-viewentryscreen" size="1">
+            <{html_options options=$content.viewentryscreenoptions selected=$content.viewentryscreen}>
+            </select>
+        </div>
+    </fieldset>
+    
 </div>
 
 </form>

@@ -163,49 +163,8 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $viewOptions += $viewOptionsC;
   unset($limitViewOptions['blank']);
   // get the available screens
-  $screen_handler = xoops_getmodulehandler('screen', 'formulize');
-  $criteria_object = new CriteriaCompo(new Criteria('type','multiPage'));
-  $criteria_object->add(new Criteria('type','form'), 'OR');
-  $criteria_object->add(new Criteria('type','template'), 'OR');
-  $viewentryscreenOptionsDB = $screen_handler->getObjects($criteria_object, $form_id);
-  $viewentryscreenOptions["none"] = _AM_FORMULIZE_SCREEN_LOE_VIEWENTRYSCREEN_DEFAULT;
-  foreach($viewentryscreenOptionsDB as $thisViewEntryScreenOption) {
-      $viewentryscreenOptions[$thisViewEntryScreenOption->getVar('sid')] = trans($formObj->getVar('title'))." &mdash; ".printSmart(trans($thisViewEntryScreenOption->getVar('title')), 100);
-  }
+  $viewentryscreenOptions = generateViewEntryScreenOptions($selectedFramework, $form_id);
   
-  // if a relationship is in effect, get the screens on the other forms
-  if($selectedFramework) {
-    $parsedFids = array($form_id=>$form_id);
-    if($frameworkObject = $frameworks[$selectedFramework]) {
-        if($links = $frameworkObject->getVar('links')) {
-            foreach($frameworkObject->getVar('links') as $linkObject) {
-                foreach(array($linkObject->getVar('form1'), $linkObject->getVar('form2')) as $candidateFid) {
-                    if(!isset($parsedFids[$candidateFid])) {
-                        $candidateFormObj = $form_handler->get($candidateFid);
-                        $viewentryscreenOptionsDB = $screen_handler->getObjects($criteria_object, $candidateFid);
-                        foreach($viewentryscreenOptionsDB as $thisViewEntryScreenOption) {
-                            $viewentryscreenOptions[$thisViewEntryScreenOption->getVar('sid')] = trans($candidateFormObj->getVar('title'))." &mdash; ".printSmart(trans($thisViewEntryScreenOption->getVar('title')), 100);
-                        }
-                        $parsedFids[$candidateFid] = $candidateFid;
-                    }
-                }
-            }
-        }
-    }
-  }
-  
-    // get all the pageworks page IDs and include them too with a special prefix that will be picked up when this screen is rendered, so we don't confuse "view entry screens" and "view entry pageworks pages" -- added by jwe April 16 2009
-    if (file_exists(XOOPS_ROOT_PATH."/modules/pageworks/index.php")) {
-        global $xoopsDB;
-        $pageworksSQL = "SELECT page_id, page_name, page_title FROM ".$xoopsDB->prefix("pageworks_pages")." ORDER BY page_name, page_title, page_id";
-        $pageworksResult = $xoopsDB->query($pageworksSQL);
-        while($pageworksArray = $xoopsDB->fetchArray($pageworksResult)) {
-            $pageworksName = $pageworksArray['page_name'] ? $pageworksArray['page_name'] : $pageworksArray['page_title'];
-            $viewentryscreenOptions["p".$pageworksArray['page_id']] = _AM_FORMULIZE_SCREEN_LOE_VIEWENTRYPAGEWORKS . " -- " . printSmart(trans($pageworksName), 85);
-        }
-    }
-    
-    
     $screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
     $screen = $screen_handler->get($screen_id);
     $adv = $screen->getVar('advanceview');
@@ -536,6 +495,9 @@ if ($screen_id != "new" && $settings['type'] == 'template') {
     $templates['donedest'] = $screen->getVar('donedest');
     $templates['savebuttontext'] = $screen->getVar('savebuttontext');
     $templates['donebuttontext'] = $screen->getVar('donebuttontext');
+    $templates['viewentryscreen'] = $screen->getVar('viewentryscreen');
+    $templates['viewentryscreenoptions'] = generateViewEntryScreenOptions($screen->getVar('frid'), $screen->getVar('fid'));
+    
 }
 
 if ($screen_id != "new" && $settings['type'] == 'calendar') {
@@ -724,3 +686,46 @@ $breadcrumbtrail[3]['url'] = "page=form&aid=$aid&fid=$form_id&tab=screens";
 $breadcrumbtrail[3]['text'] = $formName;
 $breadcrumbtrail[4]['text'] = $screenName;
 
+// gather the available screens for the specified form and all the others in the relationship
+// for use when selecting the view entry screen for list and template screens
+function generateViewEntryScreenOptions($relationship_id, $form_id) {
+    
+    $form_handler = xoops_getmodulehandler('forms', 'formulize');
+    $formObj = $form_handler->get($form_id);
+    
+    $screen_handler = xoops_getmodulehandler('screen', 'formulize');
+    $criteria_object = new CriteriaCompo(new Criteria('type','multiPage'));
+    $criteria_object->add(new Criteria('type','form'), 'OR');
+    $criteria_object->add(new Criteria('type','template'), 'OR');
+    $viewentryscreenOptionsDB = $screen_handler->getObjects($criteria_object, $form_id);
+    $viewentryscreenOptions["none"] = _AM_FORMULIZE_SCREEN_LOE_VIEWENTRYSCREEN_DEFAULT;
+    foreach($viewentryscreenOptionsDB as $thisViewEntryScreenOption) {
+        $viewentryscreenOptions[$thisViewEntryScreenOption->getVar('sid')] = trans($formObj->getVar('title'))." &mdash; ".printSmart(trans($thisViewEntryScreenOption->getVar('title')), 100);
+    }
+    
+    $relationshipHandler = xoops_getmodulehandler('frameworks', 'formulize');
+    $relationships = $relationshipHandler->getFrameworksByForm($form_id);
+    
+    // if a relationship is in effect, get the screens on the other forms
+    if($relationship_id) {
+        $parsedFids = array($form_id=>$form_id);
+        if($frameworkObject = $relationships[$relationship_id]) {
+            if($links = $frameworkObject->getVar('links')) {
+                foreach($frameworkObject->getVar('links') as $linkObject) {
+                    foreach(array($linkObject->getVar('form1'), $linkObject->getVar('form2')) as $candidateFid) {
+                        if(!isset($parsedFids[$candidateFid])) {
+                            $candidateFormObj = $form_handler->get($candidateFid);
+                            $viewentryscreenOptionsDB = $screen_handler->getObjects($criteria_object, $candidateFid);
+                            foreach($viewentryscreenOptionsDB as $thisViewEntryScreenOption) {
+                                $viewentryscreenOptions[$thisViewEntryScreenOption->getVar('sid')] = trans($candidateFormObj->getVar('title'))." &mdash; ".printSmart(trans($thisViewEntryScreenOption->getVar('title')), 100);
+                            }
+                            $parsedFids[$candidateFid] = $candidateFid;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    return $viewentryscreenOptions;
+}

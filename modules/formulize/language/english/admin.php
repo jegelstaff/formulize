@@ -821,6 +821,7 @@ define("_AM_FORMULIZE_SCREEN_TEMPLATE_SAVEBUTTONTEXT", "Text for the 'Save' butt
 define("_AM_FORMULIZE_SCREEN_TEMPLATE_DONEBUTTONTEXT", "Text for the 'Done' button: ");
 define("_AM_FORMULIZE_SCREEN_TEMPLATE_DONEDEST", "The URL that users should be directed to when leaving the page (Optional, Formulize will set this automatically when the page is displayed, based on where the user came from, and will return them to that page after. Form submissions are saved when leaving the page.)");
 define("_AM_FORMULIZE_SCREEN_TEMPLATE_HELP", "All variables defined in the custom code below will be available in the template by using <{\$variableName}>, and you can also use <{\$saveButton}> to position the a button that triggers saving of any form elements, and <{\$doneButton}> to position a button that triggers saving and will redirect the user to the done destination. Button text and the done destination can be set in the 'Options' tab.");
+define("_AM_FORMULIZE_SCREEN_TEMPLATE_VIEWENTRYSCREEN", "If you use the <i>viewEntryLink</i> or <i>viewEntryButton</i> functions, which screen should be used to display the entries?");
 
 define("_AM_FORMULIZE_EXPLODE_COLUMNS_ON_EXPORT", "How should values in this element be handled when exporting to spreadsheet?");
 define("_AM_FORMULIZE_EXPLODE_COLUMNS_ON_EXPORT_OFF", "Show as a comma separated list inside one cell");
