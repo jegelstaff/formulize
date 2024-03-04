@@ -5421,6 +5421,7 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
                     if(!in_array($bareFilterTerm,$curlyBracketForm->getVar('elementHandles'))
                         AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])
                         AND $bareFilterTerm != 'USER'
+												AND $bareFilterTerm != 'USER_ID'
                         AND $bareFilterTerm != 'USERID'
                         AND $bareFilterTerm != 'BLANK'
                         AND !strstr($filterTerms[$filterId], '{TODAY')) {
@@ -5429,6 +5430,7 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
                 } else {
                     // curlyBracketForm is dependent on the form the handle is referencing
                     if($bareFilterTerm != 'USER'
+											 AND $bareFilterTerm != 'USER_ID'
                        AND $bareFilterTerm != 'USERID'
                        AND $bareFilterTerm != 'BLANK'
                    AND !strstr($filterTerms[$filterId], '{TODAY')) {
@@ -5649,6 +5651,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                 $subQueryOp = '<=>';
                 $overrideReturnedOp = '!=';
             }
+						$filterTerms[$filterId] = parseUserAndToday($filterTerms[$filterId], $filterElementIds[$filterId]); // pass element so we can check if it is a userlist and compare {USER} based on id instead of name
             // if the filter term is dynamic, figure out the db and literal values for that element in the current entry/context
             if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") {
                 $quotes = '';
@@ -5755,6 +5758,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                 $conditionsFilterComparisonValue .= "  AND curlybracketform.`entry_id`=$curlyBracketEntryQuoted ";
             }
         } else {
+					// DO WE REALLY NEED TO LOOP THROUGH THEM ALL? WHY NOT JUST DO THE FILTERID TERM SINCE EVERYTHING ELSE IS KEYED OFF THAT??
             foreach ($filterTerms as $key => $value) {
                 $filterTerms[$key] = parseUserAndToday($value, $filterElementIds[$filterId]); // pass element so we can check if it is a userlist and compare {USER} based on id instead of name
                 $filterTerms[$key] = str_replace('{ID}',$curlyBracketEntry,$filterTerms[$key]);
@@ -5842,7 +5846,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                 }
                 $quotes = (is_numeric($plainLiteralValue) AND !$likebits) ? "" : "'";
                 $conditionsFilterComparisonValue .= '-->>ADDPLAINLITERAL<<--'.$quotes.$likebits.formulize_db_escape($plainLiteralValue).$likebits.$quotes;
-            }    
+            }
         } elseif ($curlyBracketEntry == "new") {
             $elementObject = $element_handler->get($bareFilterTerm);
             if (is_object($elementObject)) {
