@@ -578,7 +578,7 @@ class formulize_themeForm extends XoopsThemeForm {
                     $js = $validationJs;
 				}
 				if($checkConditionalRow) {
-					$fullJs .= "if(formulizechanged && window.document.getElementById('formulize-".$ele->getName()."').style.display != 'none') {\n".$js."\n}\n\n";
+					$fullJs .= "if(formulizechanged && jQuery('[name^=".$ele->getName()."]').length && window.document.getElementById('formulize-".$ele->getName()."').style.display != 'none') {\n".$js."\n}\n\n";
 				} else {
 					$fullJs .= "if(formulizechanged) {\n".$js."\n}\n\n";
 				}
@@ -1570,6 +1570,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
         // unless we're doing an embedded 'elements only form' -- unless we're doing that for displaying a subform entry specifically as its own thing (as part of a modal for example (and only example right now))
 		if(count((array) $formulize_governingElements)> 0 AND (!$formElementsOnly OR (isset($formulize_displayingSubform) AND $formulize_displayingSubform == true))) {
 			drawJavascriptForConditionalElements($GLOBALS['formulize_renderedElementHasConditions'], $formulize_governingElements, $formulize_oneToOneElements, $formulize_oneToOneMetaData);
+            print "<div id='conditionalHTMLCapture' class='used-to-assign-html-then-read-innerHTML-so-we-always-get-standardized-conversion-of-quotes-urlencoding-etc' style='display: none;'></div>";
 		}
 
         // need to always include, once, the subformelementid that is being displayed, regardless of whether there are more subs below this or not
@@ -3956,7 +3957,7 @@ function saveSub(reload) {
             var formData = new FormData(jQuery('#formulize_modal')[0]);
             //var formData = subEntryDialog.children('form').serialize();
             jQuery.post({
-                url: '<?php print XOOPS_URL; ?>/modules/formulize/include/readelements.php',
+                url: '<?php print XOOPS_URL; ?>/modules/formulize/include/readelements.php?fid='+subEntryDialog.data('fid')+'&frid='+subEntryDialog.data('frid'),
                 data: formData,
                 cache: false,
                 contentType: false,
@@ -4199,7 +4200,7 @@ jQuery(document).ready(function() {
 	}
 
     foreach(array_keys($conditionalElements) as $ce) {
-        $initCode .= "assignConditionalHTML('".$ce."', jQuery('#formulize-".$ce."').html());\n";
+        $initCode .= "assignConditionalHTML('".$ce."', window.document.getElementById('formulize-".$ce."').innerHTML.trim());\n";
 	}
 
     // setup the triggers, and option here to evaluate each condition once so the default values are taken into account just in case, and then setup the on change triggers
@@ -4243,70 +4244,111 @@ var conditionalCheckInProgress = 0;
 ".$initCode."
 
 function callCheckCondition(name) {
-    for(key in governedElements[name]) {
-        var handle = governedElements[name][key];
-			elementValuesForURL = getRelevantElementValues(relevantElements[handle]);
-        var handleParts = handle.split('_');
-        if(oneToOneElements[handle]['onetoonefrid'] && handleParts[1] != oneToOneElements[handle]['onetoonefid']) {
-				elementValuesForURL = elementValuesForURL + '&onetoonekey=1&onetoonefrid='+oneToOneElements[handle]['onetoonefrid']+'&onetoonefid='+oneToOneElements[handle]['onetoonefid']+'&onetooneentries='+oneToOneElements[handle]['onetooneentries']+'&onetoonefids='+oneToOneElements[handle]['onetoonefids'];
-			}
-			checkCondition(handle, conditionalHTML[handle], elementValuesForURL);
+	const checks = [];
+    const relevantElementSets = [];
+	for(key in governedElements[name]) {
+		var handle = governedElements[name][key];
+		elementValuesForURL = getRelevantElementValues(relevantElements[handle]);
+        if(elementValuesForURL in relevantElementSets == false) {
+            relevantElementSets[elementValuesForURL] = new Array();
+        }
+        relevantElementSets[elementValuesForURL].push(handle);
+    }
+    for(elementValuesForURL in relevantElementSets) {
+        checks.push(checkCondition(relevantElementSets[elementValuesForURL], elementValuesForURL));
+    }
+    var results = jQuery.when.apply(jQuery, checks);
+    results.done(function(){
+        // if only one operation sent, then results are flat and not in an array. Make an array to standardize what we're working with.
+        if(typeof arguments[0] === 'string') {
+            arguments[0] = new Array(arguments[0]);
 		}
-}
-
-function assignConditionalHTML(handle, html) {
-	conditionalHTML[handle] = html;
-}
-
-function checkCondition(handle, currentHTML, elementValuesForURL) {
-	partsArray = handle.split('_');
-    conditionalCheckInProgress = conditionalCheckInProgress + 1;
-	jQuery.post(\"".XOOPS_URL."/modules/formulize/formulize_xhr_responder.php?uid=".$uid."&op=get_element_row_html&elementId=\"+partsArray[3]+\"&entryId=\"+partsArray[2]+\"&fid=\"+partsArray[1]+elementValuesForURL, function(data) {
-		if(data) {
+        jQuery.each(arguments, function(index, responseData){
+            if(Array.isArray(responseData) === false || 0 in responseData === false) { return false; }
 			try {
-				results = JSON.parse(data);
-				// data is JSON, so will have extra instructions for us
-				data = results.data;
-                if(typeof results.newvalues !== 'undefined') {
-                    newvalues = results.newvalues;
-                    for(key in newvalues) {
-                        jQuery(\"[name=\"+newvalues[key].name+\"]\").val(newvalues[key].value);
-                    }
+                var result = JSON.parse(responseData[0]);
+            } catch (e) {
+                return false;
+			}
+            if(result) {
+                try {
+                    elements = result.elements;
+                    for(key in elements) {
+                        handle = elements[key].handle;
+                        data = elements[key].data;
+                        if(typeof data === 'string') {
+                            data = data.trim();
+                        }
+                        if(data && data != '{NOCHANGE}' && (conditionalHTMLHasChanged(handle, data) || (window.document.getElementById('formulize-'+handle) !== null && window.document.getElementById('formulize-'+handle).style.display == 'none'))) {
+							jQuery('#formulize-'+handle).empty();
+							jQuery('#formulize-'+handle).append(data);
+							// unless it is a hidden element, show the table row...
+                            if(parseInt(String(data).indexOf(\"input type='hidden'\"))!=0) {
+								if(window.document.getElementById('formulize-'+handle) !== null) {
+									window.document.getElementById('formulize-'+handle).style.display = null; // doesn't need real value, just needs to be not set to 'none'
+								}
+								ShowHideTableRow(handle,false,0,function() {}); // because the newly appended row will have full opacity so immediately make it transparent
+                                ShowHideTableRow(handle,true,1000,function() {});
+								if (typeof window['formulize_initializeAutocomplete'+handle] === 'function') {
+									window['formulize_initializeAutocomplete'+handle]();
+								}
+								if (typeof window['formulize_conditionalElementUpdate'+partsArray[3]] === 'function') {
+									window['formulize_conditionalElementUpdate'+partsArray[3]]();
+								}
+							}
+                        } else if( !data && window.document.getElementById('formulize-'+handle) !== null && window.document.getElementById('formulize-'+handle).style.display != 'none') {
+                            ShowHideTableRow(handle,false,1000,function() {
+								jQuery('#formulize-'+handle).empty();
+								window.document.getElementById('formulize-'+handle).style.display = 'none';
+							});
+						}
+                        if(data != '{NOCHANGE}') {
+                            assignConditionalHTML(handle, data);
+						}
+						conditionalCheckInProgress = conditionalCheckInProgress - 1;
+					}
+                } catch (e) {
+                    return false;
                 }
-		    } catch (e) {
-                // do nothing
             }
-			// should only empty if there is a change from the current state
-            if(data != '{NOCHANGE}' && (currentHTML != data || (window.document.getElementById('formulize-'+handle) !== null && window.document.getElementById('formulize-'+handle).style.display == 'none'))) {
-				jQuery('#formulize-'+handle).empty();
-				jQuery('#formulize-'+handle).append(data);
-                // unless it is a hidden element, show the table row...
-                if(parseInt(data.indexOf(\"input type='hidden'\"))!=0) {
-                    if(window.document.getElementById('formulize-'+handle) !== null) {
-                        window.document.getElementById('formulize-'+handle).style.display = null; // doesn't need real value, just needs to be not set to 'none'
-                    }
-                    ShowHideTableRow(handle,false,0,function() {}); // because the newly appended row will have full opacity so immediately make it transparent
-                    ShowHideTableRow(handle,true,1500,function() {});
-                    if (typeof window['formulize_initializeAutocomplete'+handle] === 'function') {
-                        window['formulize_initializeAutocomplete'+handle]();
-                    }
-                    if (typeof window['formulize_conditionalElementUpdate'+partsArray[3]] === 'function') {
-                        window['formulize_conditionalElementUpdate'+partsArray[3]]();
-                    }
-                }
-				assignConditionalHTML(handle, data);
-			}
-		} else {
-			if( window.document.getElementById('formulize-'+handle) !== null && window.document.getElementById('formulize-'+handle).style.display != 'none') {
-				ShowHideTableRow(handle,false,700,function() {
-					jQuery('#formulize-'+handle).empty();
-					window.document.getElementById('formulize-'+handle).style.display = 'none';
-					assignConditionalHTML(handle, data);
-				});
-			}
-		}
-		conditionalCheckInProgress = conditionalCheckInProgress - 1;
+		});
 	});
+}
+
+function captureDataAsInDOM(data) {
+    jQuery('#conditionalHTMLCapture').empty();
+    jQuery('#conditionalHTMLCapture').append(data);
+    return window.document.getElementById('conditionalHTMLCapture').innerHTML.trim();
+}
+
+function assignConditionalHTML(handle, data) {
+	conditionalHTML[handle] = captureDataAsInDOM(data);
+}
+
+function conditionalHTMLHasChanged(handle, data) {
+    return conditionalHTML[handle] != captureDataAsInDOM(data);
+}
+
+function checkCondition(relevantElementSet, elementValuesForURL) {
+    var oneToOneAdded = false;
+    var elementIds = '';
+    var entryIds = '';
+    var fids = '';
+    var elementIdsSep = '';
+    for(k in relevantElementSet) {
+        conditionalCheckInProgress = conditionalCheckInProgress + 1;
+        handle = relevantElementSet[k];
+		partsArray = handle.split('_');
+        elementIds = elementIds + elementIdsSep + partsArray[3];
+        entryId = partsArray[2]; // assuming all the same!
+        fid = partsArray[1]; // assuming all the same!
+        if(oneToOneAdded == false && oneToOneElements[handle]['onetoonefrid'] && partsArray[1] != oneToOneElements[handle]['onetoonefid']) {
+            elementValuesForURL = elementValuesForURL + '&onetoonekey=1&onetoonefrid='+oneToOneElements[handle]['onetoonefrid']+'&onetoonefid='+oneToOneElements[handle]['onetoonefid']+'&onetooneentries='+oneToOneElements[handle]['onetooneentries']+'&onetoonefids='+oneToOneElements[handle]['onetoonefids'];
+            oneToOneAdded = true;
+        }
+        elementIdsSep = ',';
+    }
+	return jQuery.post(\"".XOOPS_URL."/modules/formulize/formulize_xhr_responder.php?uid=".$uid."&op=get_element_row_html&elementId=\"+elementIds+\"&entryId=\"+entryId+\"&fid=\"+fid+elementValuesForURL);
 }
 
 function getRelevantElementValues(elements) {
