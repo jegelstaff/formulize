@@ -192,7 +192,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
             }
 
             // grab formlink scope options
-            $ele_value['formlink_scope'] = implode(",", $_POST['element_formlink_scope']);
+            $ele_value['formlink_scope'] = implode(",", (array)$_POST['element_formlink_scope']);
 
             // handle conditions
             // grab any conditions for this page too
