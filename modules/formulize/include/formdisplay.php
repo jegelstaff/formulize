@@ -4247,12 +4247,12 @@ function callCheckCondition(name) {
 	const checks = [];
     const relevantElementSets = [];
 	for(key in governedElements[name]) {
-		var handle = governedElements[name][key];
-		elementValuesForURL = getRelevantElementValues(relevantElements[handle]);
+		var markupHandle = governedElements[name][key];
+		elementValuesForURL = getRelevantElementValues(relevantElements[markupHandle]);
         if(elementValuesForURL in relevantElementSets == false) {
             relevantElementSets[elementValuesForURL] = new Array();
         }
-        relevantElementSets[elementValuesForURL].push(handle);
+        relevantElementSets[elementValuesForURL].push(markupHandle);
     }
     for(elementValuesForURL in relevantElementSets) {
         checks.push(checkCondition(relevantElementSets[elementValuesForURL], elementValuesForURL));
@@ -4274,8 +4274,8 @@ function callCheckCondition(name) {
                 try {
                     elements = result.elements;
                     for(key in elements) {
-                        handle = elements[key].handle;
-                        data = elements[key].data;
+                        var handle = elements[key].handle;
+                        var data = elements[key].data;
                         if(typeof data === 'string') {
                             data = data.trim();
                         }
@@ -4287,8 +4287,8 @@ function callCheckCondition(name) {
 								if(window.document.getElementById('formulize-'+handle) !== null) {
 									window.document.getElementById('formulize-'+handle).style.display = null; // doesn't need real value, just needs to be not set to 'none'
 								}
-								ShowHideTableRow(handle,false,0,function() {}); // because the newly appended row will have full opacity so immediately make it transparent
-                                ShowHideTableRow(handle,true,1000,function() {});
+								ShowHideTableRow(handle,false,0); // because the newly appended row will have full opacity so immediately make it transparent
+                                ShowHideTableRow(handle,true,1000);
 								if (typeof window['formulize_initializeAutocomplete'+handle] === 'function') {
 									window['formulize_initializeAutocomplete'+handle]();
 								}
@@ -4297,10 +4297,7 @@ function callCheckCondition(name) {
 								}
 							}
                         } else if( !data && window.document.getElementById('formulize-'+handle) !== null && window.document.getElementById('formulize-'+handle).style.display != 'none') {
-                            ShowHideTableRow(handle,false,1000,function() {
-								jQuery('#formulize-'+handle).empty();
-								window.document.getElementById('formulize-'+handle).style.display = 'none';
-							});
+                            ShowHideTableRow(handle,false,1000,true);
 						}
                         if(data != '{NOCHANGE}') {
                             assignConditionalHTML(handle, data);
@@ -4337,13 +4334,13 @@ function checkCondition(relevantElementSet, elementValuesForURL) {
     var elementIdsSep = '';
     for(k in relevantElementSet) {
         conditionalCheckInProgress = conditionalCheckInProgress + 1;
-        handle = relevantElementSet[k];
-		partsArray = handle.split('_');
+        var markupHandle = relevantElementSet[k];
+		partsArray = markupHandle.split('_');
         elementIds = elementIds + elementIdsSep + partsArray[3];
         entryId = partsArray[2]; // assuming all the same!
         fid = partsArray[1]; // assuming all the same!
-        if(oneToOneAdded == false && oneToOneElements[handle]['onetoonefrid'] && partsArray[1] != oneToOneElements[handle]['onetoonefid']) {
-            elementValuesForURL = elementValuesForURL + '&onetoonekey=1&onetoonefrid='+oneToOneElements[handle]['onetoonefrid']+'&onetoonefid='+oneToOneElements[handle]['onetoonefid']+'&onetooneentries='+oneToOneElements[handle]['onetooneentries']+'&onetoonefids='+oneToOneElements[handle]['onetoonefids'];
+        if(oneToOneAdded == false && oneToOneElements[markupHandle]['onetoonefrid'] && partsArray[1] != oneToOneElements[markupHandle]['onetoonefid']) {
+            elementValuesForURL = elementValuesForURL + '&onetoonekey=1&onetoonefrid='+oneToOneElements[markupHandle]['onetoonefrid']+'&onetoonefid='+oneToOneElements[markupHandle]['onetoonefid']+'&onetooneentries='+oneToOneElements[markupHandle]['onetooneentries']+'&onetoonefids='+oneToOneElements[markupHandle]['onetoonefids'];
             oneToOneAdded = true;
         }
         elementIdsSep = ',';
@@ -4393,7 +4390,7 @@ function getRelevantElementValues(elements) {
 }
 
 
-function ShowHideTableRow(handle, show, speed, callback)
+function ShowHideTableRow(handle, show, speed, empty = false)
 {
     var childCellsSelector = jQuery('#formulize-'+handle).children();
     var ubound = childCellsSelector.length - 1;
@@ -4402,8 +4399,8 @@ function ShowHideTableRow(handle, show, speed, callback)
     childCellsSelector.each(function(i)
     {
         // Only execute the callback on the last element.
-        if (ubound == i)
-            lastCallback = callback
+        if (ubound == i && empty)
+            lastCallback = function() { jQuery('#formulize-'+handle).empty(); window.document.getElementById('formulize-'+handle).style.display = 'none'; }
 
         if (show)
         {
