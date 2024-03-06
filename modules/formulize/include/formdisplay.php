@@ -4200,7 +4200,7 @@ jQuery(document).ready(function() {
 	}
 
     foreach(array_keys($conditionalElements) as $ce) {
-        $initCode .= "assignConditionalHTML('".$ce."', window.document.getElementById('formulize-".$ce."').innerHTML.trim());\n";
+        $initCode .= "assignConditionalHTML('".$ce."');\n";
 	}
 
     // setup the triggers, and option here to evaluate each condition once so the default values are taken into account just in case, and then setup the on change triggers
@@ -4313,17 +4313,23 @@ function callCheckCondition(name) {
 }
 
 function captureDataAsInDOM(data) {
-    jQuery('#conditionalHTMLCapture').empty();
-    jQuery('#conditionalHTMLCapture').append(data);
-    return window.document.getElementById('conditionalHTMLCapture').innerHTML.trim();
+	jQuery('#conditionalHTMLCapture').empty();
+	jQuery('#conditionalHTMLCapture').append(data);
+	return window.document.getElementById('conditionalHTMLCapture').innerHTML.trim();
 }
 
-function assignConditionalHTML(handle, data) {
-	conditionalHTML[handle] = captureDataAsInDOM(data);
+function assignConditionalHTML(handle, data = '') {
+	if(!data && jQuery('formulize-'+handle).length > 0) {
+		data = window.document.getElementById('formulize-'+handle).innerHTML.trim();
+	}
+	conditionalHTML[handle] = '';
+	if(data) {
+		conditionalHTML[handle] = captureDataAsInDOM(data);
+	}
 }
 
 function conditionalHTMLHasChanged(handle, data) {
-    return conditionalHTML[handle] != captureDataAsInDOM(data);
+  return conditionalHTML[handle] != captureDataAsInDOM(data);
 }
 
 function checkCondition(relevantElementSet, elementValuesForURL) {
