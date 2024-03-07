@@ -36,7 +36,7 @@
 if(isset($_POST['makepdf'])) {
     include "printviewpdf.php";
     return;
-} 
+}
 
 require_once "../../mainfile.php";
 include XOOPS_ROOT_PATH.'/header.php';
@@ -254,7 +254,7 @@ print "</HTML>";
                 $result = displayElement('', $element, $ventry);
                 $value = ob_get_clean();
                 if($result != 'not_allowed' AND $result != 'hidden') {
-                    $caption = displayCaption('', $element);
+                    $caption = $element->getVar('ele_caption');
                     if($elementObject->getVar('ele_type') == 'ib') {
                         $caption = $value;
                         $value = "";
@@ -265,6 +265,6 @@ print "</HTML>";
         }
         print "</tbody></table>";
     }
-    
-    
+
+
 }

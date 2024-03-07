@@ -2453,7 +2453,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
                                 $unsetDisabledFlag = !isset($GLOBALS['formulize_forceElementsDisabled']);
                                 $GLOBALS['formulize_forceElementsDisabled'] = true;
                             }
-							ob_start();
+							ob_start(function($string) { return $string; }); // set closure output buffer, so this element will never be catalogued as a conditional element. See catalogConditionalElement function for details.
 							// critical that we *don't* ask for displayElement to return the element object, since this way the validation logic is passed back through the global space also (ugh).  Otherwise, no validation logic possible for subforms.
 							$renderResult = displayElement($deFrid, $thisele, $sub_ent);
 							$col_two_temp = trim(ob_get_contents());
