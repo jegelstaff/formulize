@@ -2591,7 +2591,10 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
             $application_handler = xoops_getmodulehandler('applications', 'formulize');
             $apps = $application_handler->getApplicationsByForm($subform_id);
             $app = is_array($apps) ? $apps[0] : $apps;
-            $appId = $app->getVar('appid');
+						$appId = 0;
+						if($app) {
+            	$appId = $app->getVar('appid');
+						}
             $edit_link = "<a class=\"formulize-element-edit-link\" tabindex=\"-1\" href=\"" . XOOPS_URL .
                 "/modules/formulize/admin/ui.php?page=element&aid=$appId&ele_id=" .
                 $subform_element_object->getVar("ele_id") . "\" target=\"_blank\">edit element</a>";
