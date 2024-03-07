@@ -62,7 +62,7 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
         $entry = "new";
     }
 
-	$element = _formulize_returnElement($ele, $formframe);
+	$element = _formulize_returnElement($ele);
 	if(!is_object($element)) {
 		return "invalid_element";
 	}
@@ -136,7 +136,9 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
 	$elementFilterSettings = $element->getVar('ele_filtersettings');
 	if($allowed AND is_array($elementFilterSettings[0]) AND count((array) $elementFilterSettings[0]) > 0 AND (!$noSave OR $entry != 'new')) {
 		// cache the filterElements for this element, so we can build the right stuff with them later in javascript, to make dynamically appearing elements
-		$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName] = array_unique($elementFilterSettings[0]);
+		if(!$subformCreateEntry) {
+			catalogConditionalElement($renderedElementName, array_unique($elementFilterSettings[0]));
+		}
 		$allowed = checkElementConditions($elementFilterSettings, $form_id, $entry);
 	}
 
@@ -316,6 +318,23 @@ EOF;
 }
 
 /**
+ * Record an element and its filter conditions so we can reference them later when generating the JS for contitional elements
+ *
+ * Do not catalogue when there is a closure callback on the current output buffer, because that happens when we are rendering inline subform elements, which can never respond to conditions.
+ *
+ * @param $renderedElementName The markup handle for the element, ie: de_FID_ENTRYID_ELEMENTID
+ * @param $elementFilterSettings The conditions that apply to the display of the element
+ * @return Nothing
+ */
+function catalogConditionalElement($renderedElementName, $elementFilterSettings) {
+	$bufferingStatus = ob_get_status();
+	if($bufferingStatus['name'] != 'Closure::__invoke') {
+		$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName] = $elementFilterSettings;
+	}
+}
+
+
+/**
  *
  */
 function checkElementConditions($elementFilterSettings, $form_id, $entry) {
@@ -486,58 +505,18 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 }
 /* ALTERED - 20100316 - freeform - jeff/julian - stop */
 
-// THIS FUNCTION RETURNS THE CAPTION FOR AN ELEMENT
-// added June 25 2006 -- jwe
-function displayCaption($formframe="", $ele=0) {
-	$element = _formulize_returnElement($ele, $formframe);
-  if(!is_object($element)) {
-    return "invalid_element";
-  }
-	return $element->getVar('ele_caption');
-}
-
-// THIS FUNCTION RETURNS THE description FOR AN ELEMENT
-function displayDescription($formframe="", $ele=0) {
-	$element = _formulize_returnElement($ele, $formframe);
-  if(!is_object($element)) {
-    return "invalid_element";
-  }
-	return $element->getVar('ele_desc');
-}
-
 // this function takes an element object, or an element id number or handle (or framework handle with framework id, but that's deprecated)
-function _formulize_returnElement($ele, $formframe="") {
+function _formulize_returnElement($ele) {
   $element = "";
 	if(is_object($ele)) {
 		if(get_class($ele) == "formulizeformulize" OR is_subclass_of($ele, 'formulizeformulize')) {
 			$element = $ele;
 		} else {
-			return "invalid_element";
+			return false;
 		}
-	}
-	if(!$element) {
-		if(!$formulize_mgr) {
-			$formulize_mgr =& xoops_getmodulehandler('elements', 'formulize');
-		}
-		if(is_numeric($ele)) {
-			$element =& $formulize_mgr->get($ele);
-		} else {
-			$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
-			$frameworkObject = $framework_handler->get($formframe);
-			if(is_object($frameworkObject)) {
-				$frameworkElementIds = $frameworkObject->getVar('element_ids');
-				if(isset($frameworkElementIds[$ele])) {
-					$element_id = $frameworkElementIds[$ele];
-					$element =& $formulize_mgr->get($element_id);
-				}
-			}
-			if(!is_object($element)) {
-				$element =& $formulize_mgr->get($ele);
-			}
-		}
-		if(!is_object($element)) {
-			return "invalid_element";
-		}
+	} else {
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		$element = $element_handler->get($ele);
 	}
   return $element;
 }
@@ -560,7 +539,7 @@ function displayButton($text, $ele, $value, $entry="new", $append="replace", $bu
 
 	// 1. check for button or link
 	// 2. write out the element
-  $element = _formulize_returnElement($ele, $formframe);
+  $element = _formulize_returnElement($ele);
   if(!is_object($element)) {
     print "invalid_element";
   }
@@ -579,4 +558,38 @@ function displayButton($text, $ele, $value, $entry="new", $append="replace", $bu
 	} else {
 		exit("Error: invalid button or link option specified in a call to displayButton");
 	}
+}
+
+/** THIS FUNCTION RETURNS THE CAPTION FOR AN ELEMENT
+ *
+ * DEPRECATED! Use $elementObject->getVar('ele_caption')
+ *
+ * @param string|int $formframe - not used
+ * @param object|string|int $ele - an element object, or id, or handle
+ * @return string The caption for the element
+ */
+// added June 25 2006 -- jwe
+function displayCaption($formframe='', $ele=0) {
+	$element = _formulize_returnElement($ele);
+  if(!is_object($element)) {
+    return "invalid_element";
+  }
+	return $element->getVar('ele_caption');
+}
+
+/** THIS FUNCTION RETURNS THE DESCRIPTION FOR AN ELEMENT
+ *
+ * DEPRECATED! Use $elementObject->getVar('ele_desc')
+ *
+ * @param string|int $formframe - not used
+ * @param object|string|int $ele - an element object, or id, or handle
+ * @return string The description (help text) for the element
+ */
+// THIS FUNCTION RETURNS THE description FOR AN ELEMENT
+function displayDescription($formframe='', $ele=0) {
+	$element = _formulize_returnElement($ele);
+  if(!is_object($element)) {
+    return "invalid_element";
+  }
+	return $element->getVar('ele_desc');
 }
