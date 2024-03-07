@@ -512,7 +512,8 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 
 		$form_ele = new XoopsFormLabel(
 			$caption,
-			trans($renderedElement)
+			trans($renderedElement),
+			$markupName
 		);
 		$ele_desc = $element->getVar('ele_desc', "f"); // the f causes no stupid reformatting by the ICMS core to take place
 		$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));

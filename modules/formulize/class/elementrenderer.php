@@ -121,10 +121,10 @@ class formulizeElementRenderer{
 		switch ($ele_type){
 			case 'derived':
 				if($entry_id != "new") {
-					$form_ele = new xoopsFormLabel($this->_ele->getVar('ele_caption'), $ele_value[5]);
+					$form_ele = new xoopsFormLabel($this->_ele->getVar('ele_caption'), $ele_value[5], $form_ele_id);
 					$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
 				} else {
-					$form_ele = new xoopsFormLabel($this->_ele->getVar('ele_caption'), _formulize_VALUE_WILL_BE_CALCULATED_AFTER_SAVE);
+					$form_ele = new xoopsFormLabel($this->_ele->getVar('ele_caption'), _formulize_VALUE_WILL_BE_CALCULATED_AFTER_SAVE, $form_ele_id);
 					$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
 				}
 				break;
@@ -170,7 +170,7 @@ class formulizeElementRenderer{
 					$ele_value[2]	  //	default value
 					);
 				} else {															// nmc 2007.03.24 - added
-					$form_ele = new XoopsFormLabel ($ele_caption, formulize_numberFormat($ele_value[2], $this->_ele->getVar('ele_handle')));	// nmc 2007.03.24 - added
+					$form_ele = new XoopsFormLabel ($ele_caption, formulize_numberFormat($ele_value[2], $this->_ele->getVar('ele_handle')), $form_ele_id);	// nmc 2007.03.24 - added
 				}
 
 				//if placeholder value is set
@@ -264,7 +264,7 @@ class formulizeElementRenderer{
 					);
 					}
 				} else {															// nmc 2007.03.24 - added
-					$form_ele = new XoopsFormLabel ($ele_caption, str_replace("\n", "<br>", undoAllHTMLChars($ele_value[0], ENT_QUOTES)));	// nmc 2007.03.24 - added
+					$form_ele = new XoopsFormLabel ($ele_caption, str_replace("\n", "<br>", undoAllHTMLChars($ele_value[0], ENT_QUOTES)), $form_ele_id);	// nmc 2007.03.24 - added
 				}
 			break;
 
@@ -286,7 +286,7 @@ class formulizeElementRenderer{
 				$form_ele = new XoopsFormLabel(
 					$ele_caption,
 					$ele_value[0],
-                    $form_ele_id
+          $form_ele_id
 				);
 			break;
 
@@ -526,7 +526,7 @@ class formulizeElementRenderer{
                             $default_value_user[$dv] = count((array) $snapshotValues) > 0 ? $dv : $cachedSourceValuesQ[intval($ele_value['snapshot'])][$sourceValuesQ][$dv]; // take the literal or the reference, depending if we snapshot or not
                         }
 						$renderedComboBox = $this->formulize_renderQuickSelect($form_ele_id, $cachedSourceValuesAutocompleteFile[intval($ele_value['snapshot'])][$sourceValuesQ], $default_value, $default_value_user, $cachedSourceValuesAutocompleteLength[intval($ele_value['snapshot'])][$sourceValuesQ], $validationOnly, $ele_value[1]);
-						$form_ele = new xoopsFormLabel($ele_caption, $renderedComboBox);
+						$form_ele = new xoopsFormLabel($ele_caption, $renderedComboBox, $form_ele_id);
 						$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
                     // if we're rendering a disabled autocomplete box
 					} elseif($isDisabled AND $ele_value[8] == 1) {
@@ -556,7 +556,7 @@ class formulizeElementRenderer{
                     $GLOBALS['formulize_lastRenderedElementOptions'] = $cachedSourceValuesQ[intval($ele_value['snapshot'])][$sourceValuesQ];
 
                     if($isDisabled) {
-						$form_ele = new XoopsFormLabel($ele_caption, implode(", ", $disabledOutputText));
+						$form_ele = new XoopsFormLabel($ele_caption, implode(", ", $disabledOutputText), $form_ele_id);
 						$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
 					} elseif($ele_value[8] == 0) {
 						// this is a hack because the size attribute is private and only has a getSize and not a setSize, setting the size can only be done through the constructor
@@ -750,7 +750,7 @@ class formulizeElementRenderer{
                         $defaultSelected = !is_array($defaultSelected) ? array($defaultSelected) : $defaultSelected;
                         $defaultSelectedUser = !is_array($defaultSelectedUser) ? array($defaultSelectedUser) : $defaultSelectedUser;
 						$renderedComboBox = $this->formulize_renderQuickSelect($form_ele_id, $cachedLinkedOptionsFileName, $defaultSelected, $defaultSelectedUser, $maxLength, $validationOnly, $ele_value[1]);
-						$form_ele2 = new xoopsFormLabel($ele_caption, $renderedComboBox);
+						$form_ele2 = new xoopsFormLabel($ele_caption, $renderedComboBox, $form_ele_id);
 						$renderedElement = $form_ele2->render();
 					} else { // normal element
 						$renderedElement = $form_ele1->render();
@@ -758,7 +758,8 @@ class formulizeElementRenderer{
 
 					$form_ele = new XoopsFormLabel(
 						$ele_caption,
-						"<nobr>$renderedElement</nobr>\n$renderedHoorvs\n$disabledHiddenValues\n"
+						"<nobr>$renderedElement</nobr>\n$renderedHoorvs\n$disabledHiddenValues\n",
+						$form_ele_id
 					);
 					$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
 
@@ -906,7 +907,8 @@ class formulizeElementRenderer{
 				}
 				$form_ele = new XoopsFormLabel(
 					$ele_caption,
-					trans($renderedElement)
+					trans($renderedElement),
+					$form_ele_id
 				);
 				$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
 
@@ -1068,7 +1070,7 @@ class formulizeElementRenderer{
 			$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\"");
 
 			// reuse caption, put two spaces between element and previous entry UI
-			$form_ele_new = new xoopsFormLabel($form_ele->getCaption(), $form_ele->render().$previousEntryUIRendered.$specialValidationLogicDisplay.$elementCue);
+			$form_ele_new = new xoopsFormLabel($form_ele->getCaption(), $form_ele->render().$previousEntryUIRendered.$specialValidationLogicDisplay.$elementCue, $form_ele_id);
 			$form_ele_new->formulize_element = $this->_ele;
 			if($ele_desc != "") {
 				$ele_desc = html_entity_decode($ele_desc,ENT_QUOTES);
