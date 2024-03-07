@@ -2865,15 +2865,22 @@ function _findLinkedEntries($targetFormKeySelf, $targetFormFid, $valuesToLookFor
             $totalEntriesToReturn = array_unique(array_merge($entries_to_return, $totalEntriesToReturn));
         }
         if($selfEleValue[1]) {
-            $entries_to_return = $data_handler_target->findAllEntriesWithValue($targetFormKeySelf, '%*=+*:'.$valueToLookFor.'*=+*:%', $all_users, $all_groups, 'LIKE');
-            if($entries_to_return !== false) {
-                $totalEntriesToReturn = array_unique(array_merge($entries_to_return, $totalEntriesToReturn));
-            }
-            $entries_to_return = $data_handler_target->findAllEntriesWithValue($targetFormKeySelf, '%*=+*:'.$valueToLookFor, $all_users, $all_groups, 'LIKE');
-            if ($entries_to_return !== false) {
-                $totalEntriesToReturn = array_unique(array_merge($entries_to_return, $totalEntriesToReturn));
-            }
-        }
+            if($selfElement->isLinked AND $selfEleValue['snapshot'] == false) {
+                $entries_to_return = $data_handler_target->findAllEntriesWithValue($targetFormKeySelf, '%,'.$valueToLookFor.',%', $all_users, $all_groups, 'LIKE');
+                if($entries_to_return !== false) {
+                    $totalEntriesToReturn = array_unique(array_merge($entries_to_return, $totalEntriesToReturn));
+                }
+            } else {
+	            $entries_to_return = $data_handler_target->findAllEntriesWithValue($targetFormKeySelf, '%*=+*:'.$valueToLookFor.'*=+*:%', $all_users, $all_groups, 'LIKE');
+	            if($entries_to_return !== false) {
+	                $totalEntriesToReturn = array_unique(array_merge($entries_to_return, $totalEntriesToReturn));
+	            }
+	            $entries_to_return = $data_handler_target->findAllEntriesWithValue($targetFormKeySelf, '%*=+*:'.$valueToLookFor, $all_users, $all_groups, 'LIKE');
+	            if ($entries_to_return !== false) {
+	                $totalEntriesToReturn = array_unique(array_merge($entries_to_return, $totalEntriesToReturn));
+	            }
+	        }
+	    }
     }
     if (count((array) $totalEntriesToReturn) > 0 ) {
         return $totalEntriesToReturn;
