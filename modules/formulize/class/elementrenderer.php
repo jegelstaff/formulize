@@ -971,26 +971,6 @@ class formulizeElementRenderer{
                 }
 			break;
 
-
-			case 'sep':
-				//$ele_value[0] = $myts->displayTarea($ele_value[0]);
-				$ele_value[0] = $myts->xoopsCodeDecode($ele_value[0]);
-				$form_ele = new XoopsFormLabel(
-					$ele_caption,
-					$ele_value[0]
-				);
-			break;
-
-
-			case 'upload':
-				$form_ele = new XoopsFormFile (
-					$ele_caption,
-					$form_ele_id,
-					$ele_value[1]
-				);
-			break;
-
-
 			/*
 			 * Hack by F�lix<INBOX International>
 			 * Adding colorpicker form element
