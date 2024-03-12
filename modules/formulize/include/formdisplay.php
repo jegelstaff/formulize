@@ -3473,8 +3473,10 @@ initialize_formulize_xhr();
 var formulizechanged=0;
 var formulize_javascriptFileIncluded = new Array();
 var formulize_xhr_returned_check_for_unique_value = new Array();
-var XOOPS_URL = \"".XOOPS_URL."\";
-var XOOPS_UID = ".($xoopsUser ? $xoopsUser->getVar('uid') : 0).";
+const FORMULIZE = {
+	XOOPS_URL : \"".XOOPS_URL."\",
+	XOOPS_UID : ".($xoopsUser ? $xoopsUser->getVar('uid') : 0).",
+}
 ";
 $split = random_int(8, strlen(getCurrentURL())-2);
 print "var $actionPart1 = \"".str_replace('"', '%22', substr(getCurrentURL(), 0, $split))."\";\n";
@@ -4231,7 +4233,7 @@ function _drawJavascriptForConditionalElements($initCode) {
 	static $codeIncluded = false;
 
 	if(!$codeIncluded) {
-			$code = "<script type='text/javascript' src='".XOOPS_URL."/modules/formulize/include/conditional.js'></script>\n";
+			$code = "<script type='text/javascript' src='".XOOPS_URL."/modules/formulize/include/js/conditional.js'></script>\n";
 			$codeIncluded = true;
 	}
 	$code .= "<script type='text/javascript'>
