@@ -515,7 +515,7 @@ class formulizeDataHandler  {
 	 * @param string $operator Optional. A string indicating the operator to use when looking for the specified values, or an array of operators corresponding to the key value pairs we're looking for.
 	 * @param boolean $findFirstOnly Optional. A flag to indicate if only the first entry should be returned.
 	 * @param string $fieldsToReturn Optional. A field name or comma separated set of field names, or * which will be used in the SELECT clause. Defaults to entry_id.
-	 * @return array Returns the value of the specified field for the first entry found, or an array of all the field values if more than one requested, where the keys are the field names and values are the values. Returns an array of records if more than the first one is requested. Returns false if no entries were found or the query failed.
+	 * @return array Returns the value of the specified field for the first entry found, or an array of all the field values if more than one requested, where the keys are the field names and values are the values. Returns an array of records if more than the first one is requested, and in this case the array will use the entry ids as keys, as long as entry_id was a requested field. Returns null if nothing was found.  Returns false if the query failed.
 	 */
 	function findEntryOrEntriesWithAllValues($values, $operator = "=", $findFirstOnly = true, $fieldsToReturn = "entry_id") {
 		global $xoopsDB;
@@ -580,8 +580,8 @@ class formulizeDataHandler  {
 			}
 		}
 		if($findFirstOnly) {
-			if(count($rows)==0) { // nothing found
-				return false;
+			if(count($rows)==0 ) { // nothing found
+				return null;
 			}
 			$firstKey = array_key_first($rows);
 			if(!is_array($rows[$firstKey]) OR count($rows[$firstKey]) > 1) { // multiple fields found, or something goofy (not an array), return the whole thing
@@ -590,7 +590,7 @@ class formulizeDataHandler  {
 				return $rows[$firstKey][array_key_first($rows[$firstKey])];
 			}
 		} else {
-			return $rows ? $rows : false;
+			return $rows ? $rows : null;
 		}
 	}
 

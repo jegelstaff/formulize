@@ -19,7 +19,9 @@ __$fieldsToReturn__ - Optional. the fields to select out of the database. Defaul
 
 Returns the __first (earliest) entry id found__, or __an alternate field requested with _$fieldsToReturn_.__ If multiple fields were requested then it returns __an array of the values of the requested fields__, where the keys are the element handles requested.
 
-Returns __false__ if the query fails, or if the query finds no entries that match the values.
+Returns __null__ if no data is found.
+
+Returns __false__ if the query fails.
 
 ## Example
 

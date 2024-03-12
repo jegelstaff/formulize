@@ -19,7 +19,9 @@ __$fieldsToReturn__ - Optional. the fields to select out of the database. Defaul
 
 Returns __an array of results__, where each item in the array is one record, and each record contains an array where the keys are the field names requested (defaults to _entry_id_) and the values are the values from the database. If _entry_id_ was one of the fields returned, the keys for each record will be the entry ids, otherwise they are sequential from zero.
 
-Returns __false__ if the query fails, or if the query finds no entries that match the values.
+Returns __null__ if no data is found.
+
+Returns __false__ if the query fails.
 
 ## Example
 
