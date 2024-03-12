@@ -42,10 +42,15 @@
 		</select>
           </td>
 	      <td>
-		<{if $value.sort == 1}>
-		  <input type="radio" name="sort-by" value=<{$index}> checked></input>
+		<{if $value.sort == 'ASC' OR $value.sort == 1}>
+		  <input type="radio" name="sort-by" id="<{$index}>-ASC" value="<{$index}>-ASC" checked><label for="<{$index}>-ASC">A..Z</label></input>
 		<{else}>
-		  <input type="radio" name="sort-by" value=<{$index}>></input>
+		  <input type="radio" name="sort-by" id="<{$index}>-ASC" value="<{$index}>-ASC"><label for="<{$index}>-ASC">A..Z</label></input>
+		<{/if}>
+		<{if $value.sort == 'DESC'}>
+			<input type="radio" name="sort-by" id="<{$index}>-DESC" value="<{$index}>-DESC" checked><label for="<{$index}>-DESC">Z..A</label></input>
+		<{else}>
+			<input type="radio" name="sort-by" id="<{$index}>-DESC" value="<{$index}>-DESC"><label for="<{$index}>-DESC">Z..A</label></input>
 		<{/if}>
 	      </td>
 	      <td class='removeImage'>
@@ -220,7 +225,7 @@
     appendContents1 = '<td><select id="cols-'+number+'" name="col-value['+number+']"></select></td>';
     appendContents2 = '<td><input type="text" name="search-value['+number+']"></input></td>';
     appendContents25 = '<td><select id="search-type-'+number+'" name="search-type['+number+']"><option label="Search Box" value="Box">Search Box</option><option label="Dropdown List" value="Filter">Dropdown List</option><option label="Checkboxes" value="MultiFilter">Checkboxes</option><option label="Date Range" value="DateRange">Date Range</option></select></td>';
-    appendContents3 = '<td><input type="radio" name="sort-by" value='+number+'></input></td>';
+    appendContents3 = '<td><input type="radio" name="sort-by" id="'+number+'-ASC" value="'+number+'-ASC"><label for="'+number+'-ASC">A..Z</label></input><input type="radio" name="sort-by" id="'+number+'-DESC" value="'+number+'-DESC"><label for="'+number+'-DESC">Z..A</label></input></td>';
     $(".advanceview:last").append('<tr class="advanceviewcol" name="'+number+'"></tr>');
     $(".advanceviewcol:last").append(appendContents1);
     $(".advanceviewcol:last").append(appendContents2);
