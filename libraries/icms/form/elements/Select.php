@@ -173,6 +173,7 @@ class icms_form_elements_Select extends icms_form_Element {
 		$ele_value = $this->getValue();
 		$ele_options = $this->getOptions();
 		$ret = "<select size='" . $this->getSize() . "' " . $this->getExtra(); // extra space added by Freeform Solutions, Nov 15, 2012, to fix HTML validation
+		$ret .= " aria-describedby='" . $this->getName() . "-help-text'";
 		if ($this->isMultiple() != false) {
 			$ret .= " name='" . $ele_name . "[]' id='" . $ele_name . "' multiple='multiple'>\n"; // [] removed from ID by Freeform Solutions, Nov 15, 2012, to fix HTML validation and make javascript select by id work
 		} else {

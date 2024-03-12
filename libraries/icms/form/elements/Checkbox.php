@@ -161,6 +161,7 @@ class icms_form_elements_Checkbox extends icms_form_Element {
         static $absoluteCheckboxCounter = 1;
 		$ele_name = $this->getName();
 		$element_id = $ele_name;
+		$ele_name_plain = str_replace('[]', '', $ele_name);
 		if (1 == preg_match("/de_(\d+)_(?:new|\d+)_(\d+)/", $ele_name, $matches))
 			$element_id = "f".$matches[1]."-"."e".$matches[2];	// extract form_id and elemen_id, ignoring record id
 		$ret = "<div id='checkbox-group-".$element_id."_checkbox-num_".$absoluteCheckboxCounter."' class='grouped checkbox-group-".$element_id."'>";
@@ -177,6 +178,7 @@ class icms_form_elements_Checkbox extends icms_form_Element {
 			if (count($ele_value) > 0 && in_array($value, $ele_value)) {
 				$ret .= " checked='checked'";
 			}
+			$ret .= " aria-describedby='" . $ele_name_plain . "-help-text' ";
 			$ret .= $ele_extra." />$name</label></span>$ele_delimeter";
 		}
 		if (count($ele_options) > 1) {

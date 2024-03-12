@@ -97,7 +97,6 @@ function getFormFramework($formframe, $mainform=0) {
     return $to_return;
 }
 
-
 // get the title of a form
 function getFormTitle($fid) {
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
@@ -107,7 +106,6 @@ function getFormTitle($fid) {
     }
 	return html_entity_decode($formObject->getVar('title'),ENT_QUOTES);
 }
-
 
 //this function returns the list of all the user's full names for all the users in the specified group(s)
 // $groups is an array of all the group ids that we should be considering
@@ -205,14 +203,12 @@ function gatherNames($groups, $nametype, $requireAllGroups=false, $filter=false,
     return $found_names;
 }
 
-
 //get the currentURL
 function getCurrentURL() {
     static $url = "";
     if ($url) {
         return $url;
     }
-
     $url_parts = parse_url(XOOPS_URL);
     $url = $url_parts['scheme'] . "://" . $_SERVER['HTTP_HOST'];
     $url = (isset($url_parts['port']) AND !strstr($_SERVER['HTTP_HOST'], ":")) ? $url . ":" . $url_parts['port'] : $url;
@@ -220,7 +216,6 @@ function getCurrentURL() {
     $url .= str_replace("&amp;", "&", htmlSpecialChars(strip_tags($_SERVER['REQUEST_URI'])));
     return $url;
 }
-
 
 // this function returns a human readable, comma separated list of group names, given a string of comma separated group ids
 function groupNameList($list, $obeyMemberOnlyFlag = true) {
@@ -235,6 +230,7 @@ function groupNameList($list, $obeyMemberOnlyFlag = true) {
     }
 
     $start = 1;
+		$names = '';
     foreach ($grouplist as $gid) {
         if (!$obeyMemberOnlyFlag OR in_array($gid, $groups)) {
             $groupnames = q("SELECT name FROM " . $xoopsDB->prefix("groups") . " WHERE groupid='$gid'");
@@ -248,7 +244,6 @@ function groupNameList($list, $obeyMemberOnlyFlag = true) {
     }
     return $names;
 }
-
 
 // THIS FUNCTION RETURNS THE OWNER OF A GIVEN SAVED VIEW
 // only checks based on 2.0 saved view format, not 1.6 or earlier format
@@ -264,7 +259,6 @@ function getSavedViewOwner($vid) {
     }
     return $cachedOwners[$vid];
 }
-
 
 // return an array of the reports the user is allowed to see
 function availReports($uid, $groups, $fid, $frid="0") {
@@ -327,7 +321,7 @@ function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups=
     }
 
     if (!$gperm_handler) {
-        $gperm_handler =& xoops_gethandler('groupperm');
+        $gperm_handler = xoops_gethandler('groupperm');
     }
 
     $user_id = intval($user_id);
@@ -525,31 +519,6 @@ function q($query, $keyfield="", $keyfieldOnly = false) {
     return $result;
 }
 
-
-
-// THIS FUNCTION RETURNS AN ARRAY OF THE CATEGORY NAMES WHERE THE CATEGORY IDS ARE THE KEYS -- added April 25/05
-function fetchCats() {
-    global $xoopsDB;
-    $result = q("SELECT cat_id, cat_name FROM " . $xoopsDB->prefix("formulize_menu_cats") . " ORDER BY cat_name");
-    foreach ($result as $acat) {
-        $cats[$acat['cat_id']] = $acat['cat_name'];
-    }
-    return $cats;
-}
-
-
-// THIS FUNCTION RETURNS THE CAT_ID OF THE CATEGORY WHERE A FORM IS FOUND (OR 0 IF THE FORM IS NOT FOUND)
-function getMenuCat($fid) {
-    global $xoopsDB;
-    $foundCat = q("SELECT cat_id FROM " . $xoopsDB->prefix("formulize_menu_cats") . " WHERE id_form_array LIKE \"%,$fid,%\"");
-    if (count((array) $foundCat)>0) {
-        return($foundCat[0]['cat_id']);
-    } else {
-        return 0;
-    }
-}
-
-
 // this function truncates a string to a certain number of characters
 function printSmart($value, $chars="35") {
     if($chars AND !strstr(getCurrentURL(), 'master.php?')) {
@@ -561,7 +530,6 @@ function printSmart($value, $chars="35") {
     }
     return $value;
 }
-
 
 // this function handles cutting up a string and is multibyte aware -- thanks to Fram!
 function cutString($string, $maxlen) {
@@ -611,6 +579,7 @@ function getHeaderList ($fid, $needids=false, $convertIdsToElementHandles=false)
             if (!$needids) {
                 $start = 1;
                 $metaHeaderlist = array();
+								$where_clause = '';
                 foreach ($headerlist as $headerid=>$thisheaderid) {
                     if ($thisheaderid == "entry_id") {
                         $metaHeaderlist[] = _formulize_ENTRY_ID;
@@ -765,20 +734,6 @@ function convertHeadersToIds($headers, $fid) {
 }
 
 
-// this function returns an array of the allowed categories, key being id and value being name, based on the allowedforms array
-function allowedCats($cats, $allowedForms) {
-    global $xoopsDB;
-    foreach ($cats as $catid=>$catname) {
-        $flatFormArray = q("SELECT id_form_array FROM " . $xoopsDB->prefix("formulize_menu_cats") . " WHERE cat_id='$catid'");
-        $formsInCat = explode(",", trim($flatFormArray[0]['id_form_array'], ","));
-        if (array_intersect($formsInCat, $allowedForms)) {
-            $allowedCats[$catid] = $catname;
-        }
-    }
-    return $allowedCats;
-}
-
-
 // this function returns the forms the user is allowed to view
 function allowedForms() {
     global $xoopsUser, $xoopsDB;
@@ -813,99 +768,6 @@ function allowedForms() {
     return $allowedForms;
 }
 
-
-// this function returns the name of a form when given the id (internal, not meant for public use)
-function fetchFormName($id) {
-    global $xoopsDB;
-    $title_q = q("SELECT desc_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form='$id'");
-    return trans($title_q[0]['desc_form']);
-}
-
-// this function returns the names of a form or forms when given an id or array of ids
-function fetchFormNames($ids) {
-    if (is_array($ids)) {
-        foreach ($ids as $id) {
-            $names[] = fetchFormName($id);
-        }
-        return $names;
-    } else {
-        $name = fetchFormName($ids);
-        return $name;
-    }
-}
-
-
-// this function returns the forms in a category, if given the category id and the allowedforms for the user
-function fetchFormsInCat($thisid, $allowedForms="") {
-    global $xoopsDB;
-
-    if (!is_array($allowedForms)) {
-        $allowedForms = allowedForms();
-    }
-
-    if ($thisid == 0) { // general category
-        // 1. foreach allowed form, check to see if it's in a cat
-        // 2. record each one in an array
-        // 3. make formsInCat equal the difference between found array and allowed forms
-        foreach ($allowedForms as $thisform) {
-            $found_q = q("SELECT * FROM " . $xoopsDB->prefix("formulize_menu_cats") . " WHERE id_form_array LIKE \"%,$thisform,%\"");
-            if (count((array) $found_q)>0) { $foundForms[] = $thisform; }
-        }
-        if (count((array) $foundForms) > 0 ) {
-            $formsInCat1 = array_diff($allowedForms, $foundForms);
-        } else {
-            $formsInCat1 = $allowedForms;
-        }
-    } else {
-        $flatFormArray = q("SELECT id_form_array FROM " . $xoopsDB->prefix("formulize_menu_cats") . " WHERE cat_id='$thisid'");
-        $formsInCat1 = explode(",", trim($flatFormArray[0]['id_form_array'], ","));
-    }
-
-    // exclude inactive forms, and sort
-    foreach ($formsInCat1 as $thisform) {
-        $status_q = q("SELECT menuid, position FROM " . $xoopsDB->prefix("formulize_menu") . " WHERE menuid='$thisform' AND status=1");
-        if (count((array) $status_q) > 0 AND in_array($thisform, $allowedForms)) {
-            // only include active forms that the user is allowed to see
-            $formpos[] = $status_q[0]['position'];
-            $formsInCat[] = $thisform;
-        }
-    }
-    array_multisort($formpos, $formsInCat);
-
-    return $formsInCat;
-}
-
-
-// THIS FUNCTION DRAWS IN THE ELEMENTS OF THE FORM MENU
-function drawMenu($thisid, $thiscat, $allowedForms, $id_form, $topwritten, $force_open) {
-    global $xoopsDB;
-
-    $formsInCat = fetchFormsInCat($thisid, $allowedForms);
-
-    // user is allowed to see at least one form in this category
-    if (count((array) $formsInCat)>0) {
-        $itemurl = XOOPS_URL."/modules/formulize/cat.php?cat=$thisid";
-        if ($topwritten != 1) {
-            $block = "<a class=\"menuTop\" href=\"$itemurl\">$thiscat</a>";
-            $topwritten = 1;
-        } else {
-            $block = "<a class=\"menuMain\" href=\"$itemurl\">$thiscat</a>";
-        }
-
-        // check to see if current cat is active (ie: has been clicked)
-        // if we're viewing this category or a form in this category, or this is the only category (force open)
-        if ($force_open OR (isset($_GET['cat']) AND $thisid == $_GET['cat']) OR in_array($id_form, $formsInCat)) {
-            foreach ($formsInCat as $thisform) {
-                // altered sept 8 to use IDs
-                $title = fetchFormNames($thisform);
-                //$urltitle = str_replace(" ", "%20", $title);
-                $suburl = XOOPS_URL."/modules/formulize/index.php?fid=$thisform";
-                $block .= "<a class=\"menuSub\" href='$suburl'>$title</a>";
-            }
-        }
-    }
-    return $block;
-}
 
 // THIS FUNCTION REMOVES ENTRIES FROM THE OTHER TABLE BASED ON AN IDREQ
 function deleteMaintenance($id_req, $fid) {
@@ -952,13 +814,6 @@ function deleteEntry($id_req, $frid, $fid, $excludeFids=array()) {
         // if a framework is passed, then delete all sub entry items found in a unified display relationship with the base entry, in addition to the base entry itself.
         $fids[0] = $fid;
         $entries[$fid][0] = $id_req;
-        if (!$owner) {
-            $owner = getEntryOwner($id_req, $fid);
-        }
-        if (!$owner_groups) {
-            $data_handler = new formulizeDataHandler($fid);
-            $owner_groups = $data_handler->getEntryOwnerGroups($id_req);
-        }
 
         // check for entries in forms with a relationship to this one, where the unified_delete setting is enabled
         $unified_display = false;
@@ -1085,6 +940,8 @@ function checkForLinks($frid, $fids, $fid, $entries, $unified_display=false, $un
         $indexer++;
     }
 
+		$GLOBALS['formulize_checkForLinks_oneToOneMetaData'] = $one_to_one; // so we can check for this right after this function call, if necessary
+
     // get one-to-many links
     $indexer=0;
     $many_q1 = q("SELECT fl_form1_id, fl_key1, fl_key2, fl_common_value FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_form2_id = $fid AND fl_relationship = 3 AND fl_frame_id = $frid $unified_display $unified_delete");
@@ -1173,10 +1030,10 @@ function checkForLinks($frid, $fids, $fid, $entries, $unified_display=false, $un
             // keep in mind, we only want to return a single value, since this is one to one? Not necessarily in these strange conditions of multiple value elements?
             // first, prepare any asynch provided values...
             if($candidateElement->canHaveMultipleValues OR $mainElement->canHaveMultipleValues) { // experimental!
-                $valueToCheckAgainst = isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($entries[$fid][0])][$mainHandle]) ? "'".formulize_db_escape($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($entries[$fid][0])][$mainHandle])."'" : "main.`".$mainHandle."`";
+                $valueToCheckAgainst = isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entries[$fid][0]][$mainHandle]) ? "'".formulize_db_escape($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entries[$fid][0]][$mainHandle])."'" : "main.`".$mainHandle."`";
                 $whereClauseExtra = strstr($valueToCheckAgainst, '`') ? " AND main.entry_id = ".intval($entries[$fid][0]) : ""; // if we don't have an explicit value, we need to specify the entry the query should use for matching
             } else {
-                $valueToCheckAgainst = isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($entries[$fid][0])][$mainHandle]) ? $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($entries[$fid][0])][$mainHandle] : "main.`".$mainHandle."` AND main.entry_id = ".intval($entries[$fid][0]);
+                $valueToCheckAgainst = isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entries[$fid][0]][$mainHandle]) ? $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entries[$fid][0]][$mainHandle] : "main.`".$mainHandle."` AND main.entry_id = ".intval($entries[$fid][0]);
             }
             if($candidateElement->canHaveMultipleValues AND $mainElement->canHaveMultipleValues == false) { // experimental!
                 $candidateEntry = q("SELECT candidate.entry_id FROM "
@@ -1216,9 +1073,9 @@ function checkForLinks($frid, $fids, $fid, $entries, $unified_display=false, $un
                 if (strstr($selfEleValue[2], "#*=:*")) {
                     foreach($entries[$fid] as $thisTargetEntry) {
                         // self is the linked selectbox, other is the source of the values
-                        if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($thisTargetEntry)][$selfElement->getVar('ele_handle')])) {
+                        if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$thisTargetEntry][$selfElement->getVar('ele_handle')])) {
                             // if an asynch request has set an override value, use that!
-                            $foundEntry = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($thisTargetEntry)][$selfElement->getVar('ele_handle')];
+                            $foundEntry = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$thisTargetEntry][$selfElement->getVar('ele_handle')];
                         } else {
                             // get the entry in the $one_fid['fid'] form (form with the self element), that has the intval($entries[$fid][0]) entry (the entry we are calling up already) as it's linked value
                             $data_handler = new formulizeDataHandler($one_fid['fid']);
@@ -1246,9 +1103,9 @@ function checkForLinks($frid, $fids, $fid, $entries, $unified_display=false, $un
                 } else {
                     // other is the linked selectbox, self is the source of the values
                     foreach($entries[$fid] as $thisTargetEntry) {
-                        if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($thisTargetEntry)][$otherElement->getVar('ele_handle')])) {
+                        if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$thisTargetEntry][$otherElement->getVar('ele_handle')])) {
                             // if an asynch request has set an override value, use that!
-                            $foundEntry = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($thisTargetEntry)][$otherElement->getVar('ele_handle')];
+                            $foundEntry = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$thisTargetEntry][$otherElement->getVar('ele_handle')];
                         } else {
                             // return the value of the $one_fid['keyother'] element in the $fid, in intval($entries[$fid][0]) entry
                             $data_handler = new formulizeDataHandler($fid);
@@ -1399,7 +1256,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel, $template, $fid
 
     foreach ($headers as $header) {
         // ignore the metadata columns if they are selected, since we already handle them better above. as long as the user requested that they be included
-        if ($header == "" OR ($_POST['metachoice'] == 1 AND ($header == _formulized_ENTRY_ID OR $header == _formulize_DE_CALC_CREATOR OR $header == _formulize_DE_CALC_MODIFIER OR $header==_formulize_DE_CALC_CREATEDATE OR $header ==_formulize_DE_CALC_MODDATE))) {
+        if ($header == "" OR ($_POST['metachoice'] == 1 AND ($header == _formulize_ENTRY_ID OR $header == _formulize_DE_CALC_CREATOR OR $header == _formulize_DE_CALC_MODIFIER OR $header==_formulize_DE_CALC_CREATEDATE OR $header ==_formulize_DE_CALC_MODDATE))) {
             continue;
         }
         $header = str_replace("\"", "\"\"", $header);
@@ -1845,7 +1702,6 @@ function buildScope($currentView, $uid, $fid, $currentViewCanExpand = false) {
 // THIS FUNCTION IS ALSO AWARE OF THE XLANGUAGE MODULE IF THAT IS INSTALLED.
 // $lang is optional and will force the translation to be in a certain language
 function trans($string, $lang = null) {
-    $myts = MyTextSanitizer::getInstance();
     if (function_exists('easiestml')) {
         global $easiestml_lang;
         $easiestml_lang = isset($_GET['lang']) ? $_GET['lang'] : $easiestml_lang;   // this is required when linked with a Drupal install
@@ -1853,10 +1709,6 @@ function trans($string, $lang = null) {
         $easiestml_lang = $lang ? $lang : $easiestml_lang;
         $string = easiestml($string);
         $easiestml_lang = $original_easiestml_lang;
-    } elseif (function_exists('xlanguage_ml')) {
-        $string = xlanguage_ml($string);
-    } elseif (method_exists($myts, 'formatForML')) {
-        $string = $myts->formatForML($string);
     }
     return $string;
 }
@@ -1925,7 +1777,6 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
                         $GLOBALS['formulize_other'][$ele_id][$entry_id] = $otherValue;
                     }
                 }
-                $msg.= $myts->stripSlashesGPC($ele_value_key).'<br>';
                 $ele_value_key = $myts->htmlSpecialChars($ele_value_key);
                 $value = $ele_value_key;
             }
@@ -1991,6 +1842,7 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
                             } else {
                                 $newValue = $thisMapping['thisForm']; // literal mapping value instead of an element reference
                             }
+														$otherElementEleValue = $otherElementToWrite->getVar('ele_value');
                             if($otherElementToWrite->isLinked AND !$otherElementEleValue['snapshot'] AND !$valueToPrep AND $valueToPrep !== 0) {
                                 // if the field we're mapping to is linked, and we didn't find a value to prep in POST or GET, then we need to convert the literal value to the correct foreign key
                                 // UNLESS the two fields are both linked and pointing to the same source, then we can use the value we've got right now, which will be the foreign key
@@ -2010,10 +1862,7 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
                                         }
                                     }
                                 }
-                                $otherElementEleValue = $otherElementToWrite->getVar('ele_value');
-                                if($otherElementToWrite->isLinked) {
-                                    $linkProperties = explode("#*=:*", $otherElementEleValue[2]); // returns array, first key is form id we're linked to, second key is element we're linked to
-                                }
+                                $linkProperties = explode("#*=:*", $otherElementEleValue[2]); // returns array, first key is form id we're linked to, second key is element we're linked to
                                 // check what we're supposed to do...use the value we have, lookup the linktolink value, or lookup the value in the source of the other form, based on the value we have
                                 if($element->isLinked AND $linkProperties[0] == $thisFormMappingElementLinkProperties[0]) {
                                     // two fields are pointing to the same source, so use the value we have...redundant but captured here for readability
@@ -2037,9 +1886,9 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
                         // check if the new value plus all mappings, is actually new, and if so, write it. If we find something that matches, don't write it, use that entry id instead.
                         $dataHandler = new formulizeDataHandler($boxproperties[0]); // 0 key is the source fid
                         if(!$newEntryId = $dataHandler->findFirstEntryWithAllValues($dataArrayToWrite)) { // check if this value has been written already, if so, use that ID
-                            if($newEntryId = formulize_writeEntry($dataArrayToWrite)) {
-                            formulize_updateDerivedValues($newEntryId, $sourceFormObject->getVar('id_form'));
-                            }
+													if($newEntryId = formulize_writeEntry($dataArrayToWrite)) {
+														formulize_updateDerivedValues($newEntryId, $sourceFormObject->getVar('id_form'));
+													}
                         }
                         $newWrittenValues[] = $newEntryId;
                     }
@@ -2478,10 +2327,8 @@ function writeOtherValues($id_req, $fid, $subformBlankCounter=null) {
 // note that ele_value has different contents for textboxes and selectboxes
 function createFieldList($val, $textbox=false, $limitToForm=false, $name="", $firstValue="", $multi_select = false) {
     global $xoopsDB;
-    array($formids);
-    array($formnames);
-    array($totalcaptionlist);
-    array($totalvaluelist);
+    $totalcaptionlist = array();
+    $totalvaluelist = array();
     $captionlistindex = 0;
 
     if ($limitToForm) {
@@ -2750,6 +2597,7 @@ function getTextboxDefault($ele_value, $form_id, $entry_id, $placeholder="") {
     global $xoopsUser;
 
     if (strstr($ele_value, "\$default")) { // php default value
+			  $default = '';
         eval(stripslashes($ele_value));
         $ele_value = $default;
     }
@@ -3017,15 +2865,22 @@ function _findLinkedEntries($targetFormKeySelf, $targetFormFid, $valuesToLookFor
             $totalEntriesToReturn = array_unique(array_merge($entries_to_return, $totalEntriesToReturn));
         }
         if($selfEleValue[1]) {
-            $entries_to_return = $data_handler_target->findAllEntriesWithValue($targetFormKeySelf, '%*=+*:'.$valueToLookFor.'*=+*:%', $all_users, $all_groups, 'LIKE');
-            if($entries_to_return !== false) {
-                $totalEntriesToReturn = array_unique(array_merge($entries_to_return, $totalEntriesToReturn));
-            }
-            $entries_to_return = $data_handler_target->findAllEntriesWithValue($targetFormKeySelf, '%*=+*:'.$valueToLookFor, $all_users, $all_groups, 'LIKE');
-            if ($entries_to_return !== false) {
-                $totalEntriesToReturn = array_unique(array_merge($entries_to_return, $totalEntriesToReturn));
-            }
-        }
+            if($selfElement->isLinked AND $selfEleValue['snapshot'] == false) {
+                $entries_to_return = $data_handler_target->findAllEntriesWithValue($targetFormKeySelf, '%,'.$valueToLookFor.',%', $all_users, $all_groups, 'LIKE');
+                if($entries_to_return !== false) {
+                    $totalEntriesToReturn = array_unique(array_merge($entries_to_return, $totalEntriesToReturn));
+                }
+            } else {
+	            $entries_to_return = $data_handler_target->findAllEntriesWithValue($targetFormKeySelf, '%*=+*:'.$valueToLookFor.'*=+*:%', $all_users, $all_groups, 'LIKE');
+	            if($entries_to_return !== false) {
+	                $totalEntriesToReturn = array_unique(array_merge($entries_to_return, $totalEntriesToReturn));
+	            }
+	            $entries_to_return = $data_handler_target->findAllEntriesWithValue($targetFormKeySelf, '%*=+*:'.$valueToLookFor, $all_users, $all_groups, 'LIKE');
+	            if ($entries_to_return !== false) {
+	                $totalEntriesToReturn = array_unique(array_merge($entries_to_return, $totalEntriesToReturn));
+	            }
+	        }
+	    }
     }
     if (count((array) $totalEntriesToReturn) > 0 ) {
         return $totalEntriesToReturn;
@@ -3503,7 +3358,7 @@ function sendNotificationToEmail($email, $event, $tags, $overrideSubject="", $ov
 
 function formulize_getUsersByGroups($groups, $member_handler="") {
     if (!$member_handler) {
-        $member_handler =& xoops_gethandler('member');
+        $member_handler = xoops_gethandler('member');
     }
 
     $users = array();
@@ -3901,7 +3756,7 @@ function writeElementValue($formframe, $ele, $entry, $value, $append="replace", 
         $maxValueSQL = "SELECT MAX(`$fromField`) FROM " . $xoopsDB->prefix("formulize_".$elementFormObject->getVar('form_handle'));
         if ($maxValueRes = $xoopsDB->query($maxValueSQL)) {
             $maxValueArray = $xoopsDB->fetchArray($maxValueRes);
-            $value = $maxValueArray["MAX(`$fromfield`)"] + 1;
+            $value = $maxValueArray["MAX(`$fromField`)"] + 1;
         } else {
             exit("Error: could not determine max value to use for $value.  SQL:<br>$maxValueSQL<br>");
         }
@@ -4603,6 +4458,8 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
                 }
             }
 
+
+						$select_column = '';
             if(count($linked_columns)==1) {
                 $select_column = "distinct(t1.`".$linked_columns[0]."`)";
             } else {
@@ -5154,6 +5011,7 @@ function formulize_conditionsCleanOps($op) {
  $ops['<='] = "<=";
  $ops['LIKE'] = "LIKE";
  $ops['NOT LIKE'] = "NOT LIKE";
+ $ops['IN'] = 'IN';
  if(isset($ops[$op])) {
     return $op;
  } else {
@@ -5176,6 +5034,7 @@ function formulize_createFilterUIMatch($newElementName,$formName,$filterName,$op
     $ops['<='] = "<=";
     $ops['LIKE'] = "LIKE";
     $ops['NOT LIKE'] = "NOT LIKE";
+		$ops['IN'] = 'IN';
     $op->addOptionArray($ops);
     $term = new xoopsFormText('', $newTermName, 10, 255);
     $term->setExtra(" class=\"condition_term\" ");
@@ -5603,7 +5462,7 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
                 // target form and alias depends on which form the filter element handle belongs to
                 if($elementObject = $element_handler->get($filterElementIds[$filterId])) {
                     $targetFormObject = $form_handler->get($elementObject->getVar('id_form'), true); // true forces inclusion of all element types
-                    $targetAlias = $targetFormId[$filterElementFid];
+                    $targetAlias = $targetFormId[$elementObject->getVar('id_form')];
                 } elseif(isMetaDataField($filterElementIds[$filterId])) {
                     $targetFormObject = $form_handler->get(key($targetFormId), true); // true forces inclusion of all element types
                     $targetAlias = $targetFormId[key($targetFormId)];
@@ -5740,12 +5599,23 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
     if ($filterOps[$filterId] == "NOT") { $filterOps[$filterId] = "!="; }
     $likebits = "";
     $origlikebits = "";
+		$overrideReturnedOp = "";
     if (strstr(strtoupper($filterOps[$filterId]), "LIKE")) {
         if(!strstr(trim($filterTerms[$filterId]), '%')) {
             $likebits = "%";
             $origlikebits = "%";
         }
         $quotes = "'";
+		} elseif (strstr(strtoupper($filterOps[$filterId]), "IN")) {
+				$likebits = '';
+				$quotes = '';
+				$filterTermParts = explode(',',$filterTerms[$filterId]);
+				foreach($filterTermParts as $i=>$ftp) {
+					$filterTermParts[$i] = trim(htmlspecialchars_decode($ftp, ENT_QUOTES), " \n\r\t\v\x00\"'"); // trim any white space and single or double quotes the user might have put on the terms
+				}
+				// use @#.&%$ to stand in for single quote, because the filter term is escaped below, and we need to add single quotes back in later so they aren't mangled by the escaping
+				$filterTerms[$filterId] = "(@#.&%$".implode("@#.&%$,@#.&%$",$filterTermParts)."@#.&%$)";
+				$overrideReturnedOp = "IN";
     } else {
         $quotes = is_numeric($filterTerms[$filterId]) ? "" : "'";
         $filterOps[$filterId] = $filterOps[$filterId] == "=" ? "<=>" : $filterOps[$filterId];
@@ -5770,7 +5640,6 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
             $targetSourceFormObject = $form_handler->get($targetSourceFid); // get the form object based on that fid (we'll need the form handle later)
             $targetSourceHandle = $targetElementEleValueProperties[1]; // get the element handle in the source source form
             // now build a comparison value that contains a subquery on the source source form, instead of a literal match to the source form
-            $overrideReturnedOp = '';
             $subQueryOp = $filterOps[$filterId];
             if($filterOps[$filterId] == '!=' ) {
                 $subQueryOp = '<=>';
@@ -5850,14 +5719,14 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 									$targetSourceDataHandler = new formulizeDataHandler($targetSourceFid);
 									$foundEntries = $targetSourceDataHandler->findAllEntriesWithValue($targetSourceHandle, $filterTermToUse, operator: '<=>');
 									if(is_numeric($filterTerms[$filterId]) AND ($foundEntries === false OR count($foundEntries) == 0)) {
-                                        // the  target is a linked element (already know that from above), and so it has a foreign key in the database, and if the filter term is numeric and the operator is equals then no subquery is necessary, do a direct comparison instead
-                                        // check first if the subquery would return values. If so, then we stick with that. Otherwise, toss the subquery and go with a straight comparison to the filter term on the assumption it is a foreign key.
+										// the  target is a linked element (already know that from above), and so it has a foreign key in the database, and if the filter term is numeric and the operator is equals then no subquery is necessary, do a direct comparison instead
+										// check first if the subquery would return values. If so, then we stick with that. Otherwise, toss the subquery and go with a straight comparison to the filter term on the assumption it is a foreign key.
 										$conditionsFilterComparisonValue = $filterTerms[$filterId];
 										unset($subQueryWhereClause);
 									} elseif(count($foundEntries)>1) {
-                                        // subquery will return more than one row, so the IN operator must be used when constructing the full statement, this gets assigned to the $filterOps[$filterId] below (which has been passed by reference)
-                                        $overrideReturnedOp = "IN";
-                                    }
+										// subquery will return more than one row, so the IN operator must be used when constructing the full statement, this gets assigned to the $filterOps[$filterId] below (which has been passed by reference)
+										$overrideReturnedOp = "IN";
+								  }
 								}
             }
             // if we didn't jump the gun and set the comparison value already above...
@@ -6003,6 +5872,8 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                 break;
         }
     }
+		// convert any single quote placeholders we made, if we had to construct them into the filter term (since they don't go through formulize_db_escape cleanly after being put into the filter term)
+		$conditionsFilterComparisonValue = str_replace('@#.&%$', "'", $conditionsFilterComparisonValue);
     return array($conditionsFilterComparisonValue, $curlyBracketFormFrom);
 }
 
@@ -6158,7 +6029,7 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
         }
         $thisEntryId = isset($localIds[$valueId]) ? $localIds[$valueId] : $entryId;
         if ($counter == 1 AND $deDisplay AND $element_type != 'derived') {
-            $output .= '<div style="float: left; margin-right: 5px; margin-bottom: 5px;"><a class="de-edit-icon" href="" onclick="renderElement(\''.$handle.'\', '.$cachedElementIds[$handle].', '.$thisEntryId.', '.$fid.',0,'.$deInstanceCounter.');return false;"></a></div>';
+            $output .= '<div class="formulize-display-element-edit-icon"><a class="de-edit-icon" href="" onclick="renderElement(\''.$handle.'\', '.$cachedElementIds[$handle].', '.$thisEntryId.', '.$fid.',0,'.$deInstanceCounter.');return false;"></a></div><div class="formulize-display-element-contents">';
         }
         if ("date" == $element_type) {
             $time_value = strtotime($v);
@@ -6174,6 +6045,9 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
         }
         $counter++;
     }
+		if ($deDisplay AND $element_type != 'derived') {
+			$output .= '</div>';
+		}
         $output .= "</div>";
     return $output;
 }
@@ -6233,7 +6107,7 @@ function generateHiddenElements($elements, $entry, $screen) {
                         }
                         $hiddenElements[$thisElement->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entry.'_'.$thisElement->getVar('ele_id'), $defaultValue);
                     } else {
-                        $indexer++;
+                        $indexer = 1;
                         $ele_value = $thisElement->getVar('ele_value');
                         foreach ($ele_value[2] as $k=>$v) {
                             if ($v == 1) {
@@ -6673,20 +6547,20 @@ function formulize_makeOneToOneLinks($frid, $fid) {
                     $linkedElement1EleValue = $linkedElement1->getVar('ele_value');
                     $linkedElement1EleValueParts = strstr($linkedElement1EleValue[2], "#*=:*") ? explode("#*=:*", $linkedElement1EleValue[2]) : array();
                     if(count((array) $linkedElement1EleValueParts)>0 AND $linkedElement1EleValueParts[0] == $form2) {
-                            // element 1 is the linked selectbox, so get the value of entry id for what we just created in form 2, and put it in element 1
-                            $linkedValueToWrite = isset($GLOBALS['formulize_newEntryIds'][$form2][0]) ? $GLOBALS['formulize_newEntryIds'][$form2][0] : "";
-                            $linkedValueToWrite = (!$linkedValueToWrite AND isset($GLOBALS['formulize_allSubmittedEntryIds'][$form2][0])) ? $GLOBALS['formulize_allSubmittedEntryIds'][$form2][0] : $linkedValueToWrite; // or get the first entry ID that we wrote to the form, if no new entries were written to the form
-                            $linkedValueToWrite = (!$linkedValueToWrite AND $entryToWriteToForm2) ? $entryToWriteToForm2 : $linkedValueToWrite;
-                        if($entryToWriteToForm1 AND !$existingValueForKey1 AND ((!isset($_POST["de_".$form1."_new_".$key1]) OR $_POST["de_".$form1."_new_".$key1] === "") AND (!isset($_POST["de_".$form1."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form1][0]."_".$key1]) OR $_POST["de_".$form1."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form1][0]."_".$key1] === ""))) {
+												// element 1 is the linked selectbox, so get the value of entry id for what we just created in form 2, and put it in element 1
+												$linkedValueToWrite = isset($GLOBALS['formulize_newEntryIds'][$form2][0]) ? $GLOBALS['formulize_newEntryIds'][$form2][0] : "";
+												$linkedValueToWrite = (!$linkedValueToWrite AND isset($GLOBALS['formulize_allSubmittedEntryIds'][$form2][0])) ? $GLOBALS['formulize_allSubmittedEntryIds'][$form2][0] : $linkedValueToWrite; // or get the first entry ID that we wrote to the form, if no new entries were written to the form
+												$linkedValueToWrite = (!$linkedValueToWrite AND $entryToWriteToForm2) ? $entryToWriteToForm2 : $linkedValueToWrite;
+												if($entryToWriteToForm1 AND !$existingValueForKey1 AND ((!isset($_POST["de_".$form1."_new_".$key1]) OR $_POST["de_".$form1."_new_".$key1] === "") AND (!isset($_POST["de_".$form1."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form1][0]."_".$key1]) OR $_POST["de_".$form1."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form1][0]."_".$key1] === ""))) {
                             $form1EntryId = formulize_writeEntry(array($key1=>$linkedValueToWrite), $entryToWriteToForm1);
                         } elseif(!$entryToWriteToForm1) {
                             $entryToWriteToForm1 = formulize_writeEntry(array($key1=>$linkedValueToWrite));
                         }
                     } else {
-                            // element 2 is the linked selectbox, so get the value of entry id for what we just created in form 1 and put it in element 2
-                            $linkedValueToWrite = isset($GLOBALS['formulize_newEntryIds'][$form1][0]) ? $GLOBALS['formulize_newEntryIds'][$form1][0] : "";
-                            $linkedValueToWrite = (!$linkedValueToWrite AND isset($GLOBALS['formulize_allSubmittedEntryIds'][$form1][0])) ? $GLOBALS['formulize_allSubmittedEntryIds'][$form1][0] : $linkedValueToWrite; // or get the first entry ID that we wrote to the form, if no new entries were written to the form
-                            $linkedValueToWrite = (!$linkedValueToWrite AND $entryToWriteToForm1) ? $entryToWriteToForm1 : $linkedValueToWrite;
+												// element 2 is the linked selectbox, so get the value of entry id for what we just created in form 1 and put it in element 2
+												$linkedValueToWrite = isset($GLOBALS['formulize_newEntryIds'][$form1][0]) ? $GLOBALS['formulize_newEntryIds'][$form1][0] : "";
+												$linkedValueToWrite = (!$linkedValueToWrite AND isset($GLOBALS['formulize_allSubmittedEntryIds'][$form1][0])) ? $GLOBALS['formulize_allSubmittedEntryIds'][$form1][0] : $linkedValueToWrite; // or get the first entry ID that we wrote to the form, if no new entries were written to the form
+												$linkedValueToWrite = (!$linkedValueToWrite AND $entryToWriteToForm1) ? $entryToWriteToForm1 : $linkedValueToWrite;
                         if($entryToWriteToForm2 AND !$existingValueForKey2 AND ((!isset($_POST["de_".$form2."_new_".$key2]) OR $_POST["de_".$form2."_new_".$key2] === "") AND (!isset($_POST["de_".$form2."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form2][0]."_".$key2]) OR $_POST["de_".$form2."_".$GLOBALS['formulize_allSubmittedEntryIds'][$form2][0]."_".$key2] === ""))) {
                             $form2EntryId = formulize_writeEntry(array($key2=>$linkedValueToWrite), $entryToWriteToForm2);
                         } elseif(!$entryToWriteToForm2) {
@@ -6702,7 +6576,7 @@ function formulize_makeOneToOneLinks($frid, $fid) {
         }
         $oneToOneLinksMade[$frid][$fid] = array($form1s, $form2s, $form1EntryIds, $form2EntryIds);
     }
-    return $oneToOneLinksMake[$frid][$fid];
+    return $oneToOneLinksMade[$frid][$fid];
 }
 
 // THIS FUNCTION FIGURES OUT THE COMMON VALUE THAT WE SHOULD WRITE WHEN A FORM IN A ONE-TO-ONE RELATIONSHIP IS BEING DISPLAYED AFTER A NEW ENTRY HAS BEEN WRITTEN
@@ -6805,26 +6679,28 @@ function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
             $text = (isset($column['ele_colhead']) AND $column['ele_colhead'] != "") ? printSmart(trans($column['ele_colhead']), 75) : printSmart(trans(strip_tags($column['ele_caption'])), 75);
             $boxeshtml .= "<input type='checkbox' name='popnewcols[]' id='popnewcols".$counter."' class='colbox' value=\"{$column['ele_handle']}\" $selected />&nbsp;&nbsp;&nbsp;<label for='popnewcols".$counter."'>$text</label><br />\n";
         }
-         $html .= "
-					<button
-						onclick='toggleCols($thisFid);return false;'
-						id='id-change-columns-toggle-header-".$thisFid."'
-						class='toggle-button-change-columns'
-						aria-expanded='true'
-						aria-controls='id-change-columns-toggle-panel-".$thisFid."'
-						data-accordion-header
-					>
-						".$formObject->getVar('title')." <span id='arrow-up' aria-label='up arrow'>&and;</span><span id='arrow-down' aria-label='down arrow'>&or;</span>
-					</button>
-				";
 				$html .= "
-					<div
-						class='elements-checkbox-list'
-						id='id-change-columns-toggle-panel-".$thisFid."'
-						aria-labelledby='id-change-columns-toggle-header-".$thisFid."'
-					>
-						".$boxeshtml."
-					</div>
+				  <fieldset class='elements-checkbox-fieldset'>
+				 		<legend class='elements-checkbox-legend'>
+							<button
+								onclick='toggleCols($thisFid);return false;'
+								id='id-change-columns-toggle-header-".$thisFid."'
+								class='toggle-button-change-columns'
+								aria-expanded='true'
+								aria-controls='id-change-columns-toggle-panel-".$thisFid."'
+								data-accordion-header
+							>
+								".$formObject->getVar('title')." <span id='arrow-up' aria-label='up arrow'>&and;</span><span id='arrow-down' aria-label='down arrow'>&or;</span>
+							</button>
+						</legend>
+						<div
+							class='elements-checkbox-list'
+							id='id-change-columns-toggle-panel-".$thisFid."'
+							aria-labelledby='id-change-columns-toggle-header-".$thisFid."'
+						>
+							".$boxeshtml."
+						</div>
+					</fieldset>
 				";
     }
     $html .="</div>
@@ -6836,10 +6712,12 @@ function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
 				line-height: 1.15;
 				margin: 0 0 10px 0;
 				padding: 0;
+				padding-top: 1em;
 				font-weight: bold;
 				color: #666;
 				background-color: inherit !important;
 				border: 0;
+				box-shadow: none;
 			}
 
 			.elements-checkbox-list {
@@ -7011,6 +6889,7 @@ function getFilterValuesForEntry($subformConditions, $curlyBracketEntryid=null) 
         if($thisOp == "=" AND $subformConditions[3][$i] != "oom") {
             if($conditionElementObject = $element_handler->get($subformConditions[0][$i])) {
                 // check first for URL matches
+								$conditionElementFid = $conditionElementObject->getVar('id_form');
                 if(substr($subformConditions[2][$i],0,1) == "{" AND substr($subformConditions[2][$i],-1)=="}") {
                     $curlyBracketTerm = substr($subformConditions[2][$i],1,-1);
                     if(isset($_GET[$curlyBracketTerm]) AND ($_GET[$curlyBracketTerm] OR $_GET[$curlyBracketTerm] === 0)) {
@@ -7018,7 +6897,6 @@ function getFilterValuesForEntry($subformConditions, $curlyBracketEntryid=null) 
                         continue;
                     }
                 }
-                $conditionElementFid = $conditionElementObject->getVar('id_form');
                 // if $subformConditions[0][$i] (left side) is linked to form X
                 // and $subformConditions[2][$i] is a { } reference to an element in form X
                 // then we just want to use $curlyBracketEntryid as the value
@@ -7051,7 +6929,9 @@ function formulize_validatePHPCode($theCode) {
     if ($theCode = trim($theCode) AND function_exists("shell_exec")) {
         $tmpfname = tempnam(XOOPS_ROOT_PATH.'/cache', 'FZ');
         file_put_contents($tmpfname, trim($theCode));
+				// shell_exec seems to be available on some servers and not others, naturally. Turning off for now, need a more bulletproof solution to checking the content
         //$output = shell_exec('php -l "'.$tmpfname.'" 2>&1');
+				$output = '';
         unlink($tmpfname);
         if (false !== strpos($output, "PHP Parse error")) {
             // remove the second line because detail about the error is on the first line
@@ -8192,4 +8072,35 @@ function getDaylightSavingsAdjustment($userTimeZone, $compareTimeZone, $timestam
     }
     return $adjustment;
 
+}
+
+/**
+ * Returns true or false indicating if the forms are part of the relationship and are connected by common value
+ * @param int $frid The ID of the form relationship
+ * @param array $fids An array of the two form IDs that we're looking for in the relationship
+ * @return boolean Whether the forms are connected by common value in the specified relationship
+ */
+function oneToOneRelationshipLinkBasedOnCommonValue($frid, $fids) {
+	global $xoopsDB;
+	// remake fids so we're sure the keys are zero and one
+	$cleanFids = array();
+	foreach($fids as $fid) {
+		$cleanFids[] = intval($fid);
+	}
+	$frid = intval($frid);
+	$sql = "SELECT fl_id FROM ".$xoopsDB->prefix('formulize_framework_links')."
+		WHERE (
+			(fl_form1_id = {$cleanFids[0]} AND fl_form2_id = {$cleanFids[1]})
+			OR (fl_form1_id = {$cleanFids[1]} AND fl_form2_id = {$cleanFids[0]})
+		)
+		AND fl_frame_id = $frid
+		AND fl_relationship = 1
+		AND fl_common_value = 1
+		LIMIT 0,1";
+	if($res = $xoopsDB->query($sql)) {
+		if($row = $xoopsDB->fetchRow($res)) {
+			return true;
+		}
+	}
+	return false;
 }

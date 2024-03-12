@@ -89,6 +89,7 @@ class formulizeDataHandler  {
 			$start = true;
       		$formObject = $form_handler->get($this->fid);
 			$insertSQL = "INSERT INTO " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " SET ";
+			$originalEntryId = 0;
 			foreach($sourceDataArray as $field=>$value) {
 				if($field == "entry_id") {
 					$originalEntryId = $value;

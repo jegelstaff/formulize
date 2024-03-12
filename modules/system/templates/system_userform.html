@@ -4,10 +4,10 @@
 			<legend style="font-weight: bold; font-size: 150%;"><{$lang_login}></legend>
 <div id="icms_block_login_form">
 			<form action="user.php" method="post">
-		    	<div><{$lang_username}><input type="text" class="uname" name="uname" size="21" maxlength="255" value="<{$usercookie}>" />
+		    	<div><{$lang_username}><input type="text" required class="uname" name="uname" size="21" maxlength="255" value="<{$usercookie}>" aria-required="true" />
 		    	<br />
 			    <br /></div>
-		    	<div><{$lang_password}><input type="password" name="pass" size="21" maxlength="255" /><br /></div>
+		    	<div><{$lang_password}><input type="password" required name="pass" size="21" maxlength="255" aria-required="true" /><br /></div>
 			    <{if $rememberme }>
 			    	<div><input type="checkbox" name="rememberme" value="On" /><{$lang_rememberme}><br /></div>
 			    <{/if}>
@@ -15,7 +15,7 @@
 				<input type="hidden" id="tfacode" name="tfacode" value="" />
 				<input type="hidden" id="tfaremember" name="tfaremember" value="" />
 		    	<div><input type="hidden" name="xoops_redirect" value="<{$redirect_page}>"/>
-				
+
 			    <br />
 		    	<input type="submit" value="<{$lang_login}>" /></div>
 			</form>

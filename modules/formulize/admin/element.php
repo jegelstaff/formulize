@@ -203,8 +203,9 @@ if ($_GET['ele_id'] != "new") {
             $ele_value[4] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
             break;
         case "subform":
-            $ele_value[2] = 1;
+            $ele_value[2] = 0;
             $ele_value[3] = 1;
+						$ele_value[6] = 'subform';
             $ele_value['simple_add_one_button'] = 1;
             $ele_value['show_delete_button'] = 1;
             $ele_value['show_clone_button'] = 1;
@@ -319,7 +320,7 @@ if ($ele_type=='text') {
     $options['ele_value_yes'] = $ele_value['_YES'];
     $options['ele_value_no'] = $ele_value['_NO'];
 } elseif ($ele_type == "subform") {
-    
+
     if(!isset($ele_value['show_delete_button'])) {
         $ele_value['show_delete_button'] = 1;
     }
@@ -329,9 +330,9 @@ if ($ele_type=='text') {
     if(!isset($ele_value['FilterByElementStartState'])) {
         $ele_value['FilterByElementStartState'] = 0;
     }
-    
+
     $ele_value['enforceFilterChanges'] = isset($ele_value['enforceFilterChanges']) ? $ele_value['enforceFilterChanges'] : 1;
-    
+
     $ele_value[1] = explode(",",$ele_value[1]);
     if (is_string($ele_value['disabledelements'])) {
         $ele_value['disabledelements'] = explode(",",$ele_value['disabledelements']);
@@ -432,7 +433,7 @@ if ($ele_type=='text') {
 
     list($formlink, $selectedLinkElementId) = createFieldList($ele_value[2]);
     $options['linkedoptions'] = $formlink->render();
-    
+
     list($optionsLimitByElement, $limitByElementElementId) = createFieldList($ele_value['optionsLimitByElement'], false, false, "elements-ele_value[optionsLimitByElement]", _NONE);
     $options['optionsLimitByElement'] = $optionsLimitByElement->render();
     if($limitByElementElementId) {
@@ -441,7 +442,7 @@ if ($ele_type=='text') {
             $options['optionsLimitByElementFilter'] = formulize_createFilterUI($ele_value['optionsLimitByElementFilter'], "optionsLimitByElementFilter", $limitByElementElementObject->getVar('id_form'), "form-2");
         }
     }
-    
+
 
     // setup the list value and export value option lists, and the default sort order list, and the list of possible default values
     if ($options['islinked']) {
@@ -478,7 +479,7 @@ if ($ele_type=='text') {
             }
             $options['optionDefaultSelectionDefaults'] = $ele_value[13];
             $options['optionDefaultSelection'] = $allLinkedValues; // array with keys as entry ids and values as text
-            
+
             // handle additional linked source mapping options...
             list($thisFormFieldList, $thisFormFieldListSelected) = createFieldList('throwawayvalue', false, $fid, 'throwawayname', 'This Form');
             $options['mappingthisformoptions'] = $thisFormFieldList->getOptions();
@@ -680,7 +681,7 @@ function formulize_mergeUIText($values, $uitext) {
         // don't alter linked selectbox properties
         return $values;
     }
-    
+
     if (is_array($values)) {
         $newvalues = array();
         foreach($values as $key=>$value) {

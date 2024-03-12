@@ -439,15 +439,22 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 		} else {
 			$compValue = addslashes($compValue);
 		}
-        // in PHP 8 can't use empty strings for comparison in stristr because it will always give a false positive
+
+    // in PHP 8 can't use empty strings for comparison in stristr because it will always give a false positive
 		if($thisOp == "LIKE" AND addslashes($filterTerms[$i]) != '') {
 			$evaluationCondition .= "stristr('".$compValue."', '".addslashes($filterTerms[$i])."')";
 		} elseif($thisOp == "NOT LIKE" AND addslashes($filterTerms[$i]) != '') {
 			$evaluationCondition .= "!stristr('".$compValue."', '".addslashes($filterTerms[$i])."')";
-        } elseif($thisOp == "LIKE") {
-            $evaluationCondition .= $compValue ? 'FALSE' : 'TRUE';
-        } elseif($thisOp == "NOT LIKE") {
-            $evaluationCondition .= $compValue ? 'TRUE' : 'FALSE';
+    } elseif($thisOp == "LIKE") {
+      $evaluationCondition .= $compValue ? 'FALSE' : 'TRUE';
+    } elseif($thisOp == "NOT LIKE") {
+      $evaluationCondition .= $compValue ? 'TRUE' : 'FALSE';
+		} elseif($thisOp == "IN") {
+			$cleanTerms = array();
+			foreach(explode(',',$filterTerms[$i]) as $ft) {
+				$cleanTerms[] = str_replace("'", "\'", trim(htmlspecialchars_decode($ft, ENT_QUOTES), " \n\r\t\v\x00\"'"));
+			}
+			$evaluationCondition .= "in_array('".$compValue."', array('".implode("','",$cleanTerms)."'))";
 		} else {
 			$evaluationCondition .= "'".$compValue."' $thisOp '".addslashes($filterTerms[$i])."'";
 		}
