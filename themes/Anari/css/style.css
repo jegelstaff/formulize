@@ -168,7 +168,7 @@ table:first-child div.applinks h1 {
   top: 0;
   left: 0;
   transform: translateX(-338px);
-  z-index: 150;
+  z-index: 100;
   transition: transform 0.5s ease-in-out;
 }
 
@@ -645,6 +645,7 @@ table:first-child div.applinks h1 {
   height: 94vh;
   overflow: auto;
   margin-left: 1.5em;
+  margin-right: 1.5em;
   top: 1em;
   position: relative;
 }
@@ -1613,8 +1614,6 @@ div.formulize_autocomplete {
   display: block;
   width: 100%;
   height: 100%;
-  width: 2.5em;
-  height: 2.5em;
   line-height: 2.5em;
 }
 button.ui-dialog-titlebar-close {
@@ -3464,4 +3463,10 @@ form[name='metachoiceform'] td p {
 
 #dialog-tfalostaccount, #block_login_form input, #pwchange input {
     margin-top: 0.4em;
+}
+
+.block_login_form--username,
+.block_login_form--password,
+.block_login_form--submit {
+	margin-bottom: 20px;
 }
