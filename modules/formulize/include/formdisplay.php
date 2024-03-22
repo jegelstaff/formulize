@@ -2858,7 +2858,7 @@ function compileElements($fid, $form, $element_handler, $prevEntry, $entry, $go_
                             $output_timeelement_js = '';
                         }
 						if($js = $conditionalElementForValidiationCode->renderValidationJS()) {
-							$GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$conditionalElementForValidiationCode->getName()] = "if(window.document.getElementById('formulize-".$conditionalElementForValidiationCode->getName()."').style.display != 'none') {\n".$js."\n}\n";
+							$GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$conditionalElementForValidiationCode->getName()] = "if(jQuery('[name^=".$conditionalElementForValidiationCode->getName()."]').length && window.document.getElementById('formulize-".$conditionalElementForValidiationCode->getName()."').style.display != 'none') {\n".$js."\n}\n";
 						}
 						unset($conditionalElementForValidiationCode);
 						unset($conditionalValidationRenderer);
