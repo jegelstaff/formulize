@@ -19,21 +19,22 @@ if(typeof window.jQuery == 'undefined') {
     formulize_jQueryUIScript.src = 'https://code.jquery.com/ui/1.12.1/jquery-ui.min.js';
     formulize_jQueryUIScript.crossorigin = 'anonymous';
     dochead.appendChild(formulize_jQueryUIScript);
-    /*const formulize_styles = document.createElement('style');
-    var css = '@font-face { font-family: "formulize-icons"; src: url("'+formulize.url+'/modules/formulize/templates/css/formulize-icons/formulize-icons.eot"); src: url("'+formulize.url+'/modules/formulize/templates/css/formulize-icons/formulize-icons.eot?#iefix") format("embedded-opentype"), url("'+formulize.url+'/modules/formulize/templates/css/formulize-icons/formulize-icons.woff") format("woff"), url("'+formulize.url+'/modules/formulize/templates/css/formulize-icons/formulize-icons.ttf") format("truetype"), url("'+formulize.url+'/modules/formulize/templates/css/formulize-icons/formulize-icons.svg#formulize-icons") format("svg"); font-weight: normal; font-style: normal; }';
-    formulize_styles.appendChild(document.createTextNode(css));
-    dochead.appendChild(formulize_styles);*/
     const formulize_moduleCSS = document.createElement('link');
-    formulize_moduleCSS.rel = 'stylesheet'; 
+    formulize_moduleCSS.rel = 'stylesheet';
     formulize_moduleCSS.href = formulize.url+'/modules/formulize/templates/css/formulize.css';
     formulize_moduleCSS.type = 'text/css';
     dochead.appendChild(formulize_moduleCSS);
     const formulize_themeCSS = document.createElement('link');
-    formulize_themeCSS.rel = 'stylesheet'; 
+    formulize_themeCSS.rel = 'stylesheet';
     formulize_themeCSS.href = formulize.url+'/themes/Anari/css/style.css';
     formulize_themeCSS.type = 'text/css';
     dochead.appendChild(formulize_themeCSS);
-    
+		const poppinsFont = document.createElement('link');
+    poppinsFont.rel = 'stylesheet';
+    poppinsFont.href = 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap';
+    poppinsFont.type = 'text/css';
+    dochead.appendChild(poppinsFont);
+
 }
 
 var lastLoadedScreenId = 0;
@@ -61,7 +62,7 @@ function formulize_remoteRenderScreen(screen_id, dom_id, formData='') {
                             return true;
                         });
                         var formulize_pageShown = new CustomEvent('formulize_pageShown');
-                        window.dispatchEvent(formulize_pageShown);    
+                        window.dispatchEvent(formulize_pageShown);
                     });
                 });
             }
