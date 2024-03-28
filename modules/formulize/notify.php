@@ -43,7 +43,7 @@ if(!defined("XOOPS_MAINFILE_INCLUDED")) {
     include '../../mainfile.php';
     icms::$logger->disableLogger();
     if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotifications.txt")) {
-        
+
         // check if there's a sending operation going on, but ignore if the lock is really old
         if($lockTime = floatval(file_get_contents(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotificationsSending.lock"))) {
             if($startTime - $lockTime < $maxExec * 2) {
@@ -74,7 +74,7 @@ if(!defined("XOOPS_MAINFILE_INCLUDED")) {
         // read the queue
         $notData = formulize_readNotifications();
         $i = $start; // should always be zero by this point, since if we were going to start above zero, then we would have shrunk the file and reset counter
-        while(isset($notData[$i]) AND formulize_notifyStillTime($startTime, $maxExec)) { 
+        while(isset($notData[$i]) AND formulize_notifyStillTime($startTime, $maxExec)) {
             if(trim($notData[$i])) {
                 list(
                     $event,
@@ -90,18 +90,20 @@ if(!defined("XOOPS_MAINFILE_INCLUDED")) {
             }
             $i++;
             // save the next row number so we know where to pickup next time if we timeout or stop or whatever.
-            file_put_contents(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotificationsIndex.txt", "$i"); 
+            file_put_contents(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotificationsIndex.txt", "$i");
         }
-        
+
         // check if in fact we've sent everything that is now in the cache file, and if so, unlink the file...
         // someone else could have added to the cache while we were doing this sending operation.
         if(!isset($notData[$i])) {
             if(count(formulize_readNotifications()) <= $i) {
-                unlink(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotifications.txt");
+                rename(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotifications.txt",
+									XOOPS_ROOT_PATH."/modules/formulize/cache/queue_history/".date('Y-m-d H:i:s e')." formulizeNotifications.txt");
+								formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/cache/queue_history/",".txt",604800); // remove .txt files older than one week
                 file_put_contents(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotificationsIndex.txt", "0");
             }
         }
-        
+
         // remove the lock
         unlink(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotificationsSending.lock");
     }
@@ -121,11 +123,11 @@ function formulize_readNotifications() {
 // figure out if we have enough time left to send another message.
 // SAME IN DIGEST.PHP
 function formulize_notifyStillTime($startTime, $maxExec) {
-    
+
     static $prevTimes = array();
     static $durations = array();
     static $iteration = 0;
-    
+
     // if we've done this before, calculate the duration since the last time
     $curTime = microtime(TRUE);
     if($iteration) {
@@ -149,7 +151,7 @@ function formulize_notifyStillTime($startTime, $maxExec) {
 
 // send the notifications
 function formulize_notify($event, $extra_tags, $fid, $uids_to_notify, $mid, $omit_user, $subject="", $template="") {
-    
+
     $notification_handler = xoops_gethandler('notification');
     $module_handler = xoops_gethandler('module');
     $formulizeModule = $module_handler->getByDirname("formulize");
@@ -157,9 +159,9 @@ function formulize_notify($event, $extra_tags, $fid, $uids_to_notify, $mid, $omi
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($fid);
     $sendDigests = $formObject->getVar('send_digests');
-    
+
     if($subject OR $template) {
-    
+
         switch ($event) {
             case "new_entry":
                 $evid = 1;
@@ -206,12 +208,12 @@ function formulize_notify($event, $extra_tags, $fid, $uids_to_notify, $mid, $omi
         }
         $mailSubject = $not_config['event'][$evid]['mail_subject'];
         $mailTemplate = $not_config['event'][$evid]['mail_template'];
-        
+
     } else {
         $mailSubject = "";
         $mailTemplate = "";
     }
-    
+
     // IF WE'RE SENDING DIGESTS, THE STORE THE MESSAGE DATA ORGANIZED BY USER/EMAIL IN A NEW QUEUE, ELSE SEND THE NOTIFICATION
     if($sendDigests) {
         if (in_array(-1, $uids_to_notify)) {
@@ -238,14 +240,14 @@ function formulize_notify($event, $extra_tags, $fid, $uids_to_notify, $mid, $omi
             $notification_handler->triggerEvent("form", $fid, $event, $extra_tags, $uids_to_notify, $mid, $omit_user);
         }
     }
-        
+
     if($subject OR $template) {
         $not_config['event'][$evid]['mail_subject'] = $oldsubject;
         $not_config['event'][$evid]['mail_template'] = $oldtemp;
         unset($GLOBALS['formulize_notificationTemplateOverride']);
         unset($GLOBALS['formulize_notificationSubjectOverride']);
     }
-    
+
 }
 
 // save digestData to the database, so we can call it up later when everything is finished
