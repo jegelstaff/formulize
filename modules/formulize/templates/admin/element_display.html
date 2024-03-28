@@ -9,7 +9,8 @@
 <input type="hidden" name="formulize_admin_handler" value="element_display">
 <input type="hidden" name="formulize_admin_key" value="<{$content.ele_id}>">
 <input type="hidden" name="reload_element_pages" value="">
-<input type="hidden" class="conditionsdelete" name="conditionsdelete" value="">
+<input type="hidden" class="display-conditionsdelete" name="display-conditionsdelete" value="">
+<input type="hidden" class="disabled-conditionsdelete" name="disabled-conditionsdelete" value="">
 
 <!-- initialize checkboxTree plugin -->
 <script type="text/javascript">
@@ -26,9 +27,10 @@ $(document).ready(function() {
         initializeUnchecked: 'collapsed'
     });
 });
-</script>       
+</script>
 
 <div class="accordion-box">
+
 	<div class="form-item">
    	<fieldset>
       <legend><label for="elements_ele_display" class="question">Which groups should see this element?</label></legend>
@@ -42,9 +44,20 @@ $(document).ready(function() {
 			</select>
 		</fieldset>
 	</div>
+
+		<div class="form-item">
+			 <fieldset>
+				<legend><label for="elements_ele_filtersettings" class="question">Only Display When:</label></legend>
+				<div id="displayfilter">
+				<{$content.filtersettings}>
+				</div>
+			</fieldset>
+		</div>
+
 </div>
 
 <div class="accordion-box">
+
 	<div class="form-item">
    	<fieldset>
       <legend><label for="elements_ele_disabled" class="question">Disable this element for any groups?</label></legend>
@@ -61,7 +74,17 @@ $(document).ready(function() {
 			</div>
 		</fieldset>
 	</div>
-</div>
+
+		<div class="form-item">
+			 <fieldset>
+				<legend><label for="elements_ele_disabledconditions" class="question">Only Disable When:</label></legend>
+				<div id="disabledconditions">
+				<{$content.disabledconditions}>
+				</div>
+			</fieldset>
+		</div>
+
+	</div>
 
 <div class="accordion-box">
     <div class="form-item">
@@ -84,7 +107,7 @@ $(document).ready(function() {
 	            </ul>
 	            <{/if}>
 			<{/foreach}>
-        <{/foreach}>         
+        <{/foreach}>
 	</ul>
     </fieldset>
     </div>
@@ -109,20 +132,6 @@ $(document).ready(function() {
 </div>
 <{/if}>
 
-<div class="accordion-box-wide">
-	<div class="form-item">
-   	<fieldset>
-      <legend><label for="elements_ele_filtersettings" class="question">Only display the element in the form if the entry being edited meets these conditions:</label></legend>
-			<div id="displayfilter">
-			<{$content.filtersettings}>
-			</div>
-			<div class="description">
-				<p>When an entry is saved, these conditions will be checked and this element will be displayed or not displayed on the next page load.  This feature is most useful on multipage form screens, which save the entry between pages.</p>
-			</div>
-		</fieldset>
-	</div>
-</div>
-
 <div class="accordion-box">
 	<div class="form-item">
    	<fieldset>
@@ -146,14 +155,27 @@ $(document).ready(function() {
 
 <script type='text/javascript'>
 
-$("div#displayfilter > input#addcon").click(function () {
+$("div#displayfilter > input[name=addcon]").click(function () {
 	$("[name=reload_element_pages]").val(1);
   $(".savebutton").click();
 	return false;
 });
 
 $("div#displayfilter > a.conditionsdelete").click(function () {
-	$(".conditionsdelete").val($(this).attr('target'));
+	$(".display-conditionsdelete").val($(this).attr('target'));
+	$("[name=reload_element_pages]").val(1);
+  $(".savebutton").click();
+	return false;
+});
+
+$("div#disabledconditions > input[name=addcon]").click(function () {
+	$("[name=reload_element_pages]").val(1);
+  $(".savebutton").click();
+	return false;
+});
+
+$("div#disabledconditions > a.conditionsdelete").click(function () {
+	$(".disabled-conditionsdelete").val($(this).attr('target'));
 	$("[name=reload_element_pages]").val(1);
   $(".savebutton").click();
 	return false;

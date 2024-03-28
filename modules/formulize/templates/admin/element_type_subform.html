@@ -40,7 +40,7 @@
                 <label for="elements-ele_value[6]-no"><input type="radio" id="elements-ele_value[6]-no" name="elements-ele_value[6]" value="hideaddentries"<{if $content.ele_value[6] eq 'hideaddentries' OR $content.ele_value[6] eq ''}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_ADD_NONE}></label>
             </div>
         </div>
-        
+
         <div class="form-item">
             <p>Do not show the button if there are <input type='text' size=2 id='elements-ele_value[addButtonLimit]' name='elements-ele_value[addButtonLimit]' value='<{$content.ele_value.addButtonLimit}>' /> or more entries already.</p>
             <div class="description">Leave blank, or 0, to always show the button</div>
@@ -72,12 +72,12 @@
 		<div class="form-item">
 			<fieldset>
 				<legend><{$smarty.const._AM_ELE_SUBFORM_ELEMENT_LIST}></legend>
-				
+
 			<select name="elements_ele_value_1[]" size="10" multiple>
 				<{html_options options=$content.subformelements selected=$content.ele_value[1]}>
 			</select>
 			<div class="description"><{$smarty.const._AM_ELE_SUBFORM_ELEMENTS_DESC}></div>
-			
+
 			</fieldset>
 		</div>
 
@@ -97,7 +97,7 @@
                         <label for="elements-ele_value[2]-0"><input type="radio" id="elements-ele_value[2]-0" name="subform_start" value="empty"<{if $content.ele_value.subform_prepop_element == 0 AND $content.ele_value[2] == 0 }> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_START_EMPTY}></label>
                     </div>
                     <div class="form-radios">
-                        <input type="radio" id="subform_start_blanks" name="subform_start" value="blanks"<{if $content.ele_value.subform_prepop_element == 0 AND $content.ele_value[2] > 0}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_START_BLANKS1}> <input type="text" id="number_of_subform_blanks" name="number_of_subform_blanks" value="<{ $content.ele_value[2] }>" size="2" maxlength="2"/> <{$smarty.const._AM_ELE_SUBFORM_START_BLANKS2}> 
+                        <input type="radio" id="subform_start_blanks" name="subform_start" value="blanks"<{if $content.ele_value.subform_prepop_element == 0 AND $content.ele_value[2] > 0}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_START_BLANKS1}> <input type="text" id="number_of_subform_blanks" name="number_of_subform_blanks" value="<{ $content.ele_value[2] }>" size="2" maxlength="2"/> <{$smarty.const._AM_ELE_SUBFORM_START_BLANKS2}>
                     </div>
                     <div class="form-radios">
                         <input type="radio" id="subform_start_prepop" name="subform_start" value="prepop"<{if $content.ele_value.subform_prepop_element > 0 AND $content.ele_value[2] == 0 }> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_START_PREPOPULATE}> <select id="subform_start_prepop_element" name="subform_start_prepop_element" size=1><{html_options options=$content.subformelements selected=$content.ele_value.subform_prepop_element}></select>
@@ -128,7 +128,7 @@
                             <div class="description">Elements selected will be rendered as "read only" values, instead of as form elements.</div>
                         </div>
                     </div>
-			    
+
 			    </fieldset>
 			    </div>
 
@@ -154,7 +154,7 @@
     <input type='radio' name='elements-ele_value[SortingDirection]' <{if $content.ele_value.SortingDirection != 'DESC'}>checked<{/if}> value='ASC'>A...Z</input> &nbsp;&nbsp;&nbsp; <input type='radio' name='elements-ele_value[SortingDirection]' <{if $content.ele_value.SortingDirection == 'DESC'}>checked<{/if}> value='DESC'>Z...A</input></p>
 </fieldset>
 </div>
-    
+
 
 <div class="form-item">
 <fieldset>
@@ -178,20 +178,20 @@
         <p>If users can filter manually:<br>
         <label for='startstate-0'><input type='radio' checked id='startstate-0' name='elements-ele_value[FilterByElementStartState]' value=0> Start by showing no entries, user must filter to see entries</label><br>
         <label for='startstate-1'><input type='radio' id='startstate-1' name='elements-ele_value[FilterByElementStartState]' value=1> Start by showing entries normally, user can refine the list</label></p>
-    </div>            
+    </div>
     <div class="description">
         If you allow the user to filter based on a selected element, then no subform entries will appear until the user has typed something in the filter box. Then, only the matching entries will be shown. Filters you specify above will be applied in addition to the filter the user types.
     </div>
 	<{else}>
 		<p>You need to select a subform and save this element before you can choose conditions.</p>
     </div>
-    <{/if}>					
+    <{/if}>
 </fieldset>
 </div>
 
 
 
-    
+
 
 	<div class="form-item">
 		<fieldset>
@@ -220,17 +220,17 @@
 			}
 		});
 	});
-	
+
     $("#startstate-<{$content.ele_value.FilterByElementStartState}>").attr('checked',1);
-    
+
     $("#subform_start_prepop_element").change(function() {
        $("#subform_start_prepop").attr("checked", "checked");
     });
-    
+
     $("#number_of_subform_blanks").focus(function() {
        $("#subform_start_blanks").attr("checked", "checked");
     });
-    
+
 	$("div#filterdiv > a.conditionsdelete").click(function () {
 		$(".optionsconditionsdelete").val($(this).attr('target'));
 		$("[name=reload_option_page]").val(1);
@@ -238,7 +238,7 @@
 		return false;
 	});
 
-	$("div#filterdiv > input#addcon").click(function () {
+	$("div#filterdiv > input[name=addcon]").click(function () {
 		$("[name=reload_option_page]").val(1);
 	  $(".savebutton").click();
 		return false;
@@ -259,7 +259,7 @@
             });
         }
     }
-    
+
     function addElementToDisabledList(optionValue, prevOptionValue, i) {
         if(optionValue != 'null' && $("[name^=elements_ele_value_disabledelements] option[value="+optionValue+"]").length == 0) {
             if (i == 0) {
@@ -269,7 +269,7 @@
             }
         }
     }
-    
+
     $("[name^=elements_ele_value_1]").change(function() {
         var eles = String($(this).val()).split(',');
         for (i = 0; i < eles.length; i++) {
@@ -277,7 +277,7 @@
         }
         removeNonDisplayedElementsFromDisabledList();
     });
-    
+
     removeNonDisplayedElementsFromDisabledList()
-    
+
 </script>
