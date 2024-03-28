@@ -93,9 +93,9 @@ $formulizeConfig =& $config_handler->getConfigsByCat(0, $mid);
 // get the default menu link for the current user, and set the fid or sid based on it
 
 if( !$fid AND !$sid) {
-    include_once XOOPS_ROOT_PATH."/modules/formulize/class/applications.php";
-    $includeMenuURLs = true;
-	list($fid,$sid) = formulizeApplicationMenuLinksHandler::getDefaultScreenForUser($includeMenuURLs);
+	include_once XOOPS_ROOT_PATH."/modules/formulize/class/applications.php";
+	$includeMenuURLs = true;
+	list($fid,$sid,$url) = formulizeApplicationMenuLinksHandler::getDefaultScreenForUser($includeMenuURLs);
 }
 
 $screen_handler =& xoops_getmodulehandler('screen', 'formulize');
@@ -241,7 +241,7 @@ if ($screen) {
 // 3 displayForm
 
 if (!$rendered AND $uid) {
-    if (isset($frid) AND is_numeric($frid) AND isset($fid) AND is_numeric($fid)) {
+    if (isset($frid) AND is_numeric($frid) AND $frid AND isset($fid) AND is_numeric($fid) AND $fid) {
         // this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
         include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
         if (((!$singleentry AND $xoopsUser) OR $view_globalscope OR ($view_groupscope AND $singleentry != "group")) AND !$entry AND (!isset($_GET['iform']) OR $_GET['iform'] != "e") AND !isset($_GET['showform'])) { // if it's multientry and there's a xoopsUser, or the user has globalscope, or the user has groupscope and it's not a one-per-group form, and after all that, no entry has been requested, then show the list (note that anonymous users default to the form view...to provide them lists of their own entries....well you can't, but groupscope and globalscope will show them all entries by anons or by everyone) ..... unless there is an override in the URL that is meant to force the form itself to display .... iform is "interactive form", devised by Feratech.
@@ -254,7 +254,7 @@ if (!$rendered AND $uid) {
             // if it's a single and they don't have group or global scope, OR if an entry was specified in particular
             displayForm($frid, $entry, $fid, "", "{NOBUTTON}");
         }
-    } elseif (isset($fid) AND is_numeric($fid)) {
+    } elseif (isset($fid) AND is_numeric($fid) AND $fid) {
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
         $formObject = $form_handler->get($fid);
         $defaultFormScreen = $formObject->getVar('defaultform');
