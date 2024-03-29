@@ -5348,13 +5348,16 @@ function parseSubmittedConditions($filter_key, $delete_key) {
 }
 
 
-// this function will build a SQL ready string based on a conditions UI data array that gets passed in, plus parameters like the table it's supposed to look in
-// conditions is the set of data from the conditions UI (ie: what the user chose)
-// targetFormId is the id of the form that the conditions are supposed to apply to - if this is an array, then we're preparing conditions for an extract query, and the rest of the params don't matter
-// curlyBracketEntry is the id of the entry that we should be evaluating { } terms against.  "new" for a new entry that hasn't been saved.
-// userComparisonId is the id that should be used to compare {USER} to when $entry is not "new".  In some cases we may want to pass in the owner of the entry rather than the current user.  When entry is "new" then the current user is always used.
-// curlyBracketForm is either the id or the form object for the form that should be used as the source form for any { } terms, ie: if the term is = {handleX} then this param is the form that handleX would be part of
-// targetAlias is the alias used in SQL to refer to the table that the conditions should apply to.  This is optional in general, but required if the query you're building for uses an alias!
+/**
+ * This function will build a SQL-ready string, based on a data from a standard Formulize Conditions UI, plus parameters like the table it's supposed to look in
+ * @param array $conditions - the conditions as specified in the Formulize conditions UI, a multidimensional array, each condition is one element in the array, and each condition is made up of four elements itself: 0 - element id (the left side), 1 - operator, 2 - term (the right side), 3 - condition type (oom or all, 'match one or more' vs 'match all')
+ * @param int|array $targetFormId - the id number of the form where things are being looked up. Or an array, in which the keys are the form ids and the values are the aliases of the forms in the query being constructed. If an array, the first key-value pair refers to the main form.
+ * @param int|string $curlyBracketEntry - the id number of the entry from which curly bracket references to element handles should be resolved, or 'new' if we are working with a new record not saved yet
+ * @param int $userComparisonId - is the id that should be used to compare {USER} to when $entry is not "new".  In some cases we may want to pass in the owner of the entry rather than the current user.  When entry is "new" then the current user is always used.
+ * @param int|object $curlyBracketForm - either the id or the form object for the form that should be used as the source form for any { } terms, ie: if the term is = {handleX} then this param is the form that handleX would be part of
+ * @param string $targetAlias - the alias used in SQL to refer to the table that the conditions should apply to.  This is optional in general, but required if the query you're building for uses an alias!
+ * @return array - returns an array with three elements: 0 - the 'match all' SQL suitable for the WHERE clause, 1 - the 'match one or more' SQL suitable for the WHERE clause, 2 - the join clause necessary for including the form that { } references are pointing to
+ */
 function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry=null, $userComparisonId=null, $curlyBracketForm=null, $targetAlias="") {
 
     // if we've been sent an array for the target form, then we're preparing a query for the extraction layer
@@ -5384,8 +5387,6 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
         $filterOps = $conditions[1];
         $filterTerms = $conditions[2];
         $filterTypes = $conditions[3];
-        $start = true;
-        $start_oom = true;
         $targetFormObject = "";
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
         $element_handler = xoops_getmodulehandler('elements', 'formulize');
@@ -5421,6 +5422,7 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
                     if(!in_array($bareFilterTerm,$curlyBracketForm->getVar('elementHandles'))
                         AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])
                         AND $bareFilterTerm != 'USER'
+												AND $bareFilterTerm != 'USER_ID'
                         AND $bareFilterTerm != 'USERID'
                         AND $bareFilterTerm != 'BLANK'
                         AND !strstr($filterTerms[$filterId], '{TODAY')) {
@@ -5429,6 +5431,7 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
                 } else {
                     // curlyBracketForm is dependent on the form the handle is referencing
                     if($bareFilterTerm != 'USER'
+											 AND $bareFilterTerm != 'USER_ID'
                        AND $bareFilterTerm != 'USERID'
                        AND $bareFilterTerm != 'BLANK'
                    AND !strstr($filterTerms[$filterId], '{TODAY')) {
@@ -5576,7 +5579,11 @@ function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias,
     }
     $dbSource = isset($GLOBALS['formulize_DBSourceJoin'][$filterElementHandle]) ? "(".$GLOBALS['formulize_DBSourceJoin'][$filterElementHandle].")" : "$targetAlias`".$filterElementHandle."`";
     if(strstr($conditionsFilterComparisonValue,'-->>ADDPLAINLITERAL<<--')) {
-        $conditionsFilterComparisonValue = str_replace("-->>ADDPLAINLITERAL<<--", " OR $dbSource $filterOp ", $conditionsFilterComparisonValue);
+        $boolean = 'OR';
+        if($filterOp == '!=' OR $filterOp == 'NOT LIKE') {
+            $boolean = 'AND';
+        }
+        $conditionsFilterComparisonValue = str_replace("-->>ADDPLAINLITERAL<<--", " $boolean $dbSource $filterOp ", $conditionsFilterComparisonValue);
     }
     $thiscondition = "($dbSource ".$filterOp." ".$conditionsFilterComparisonValue.")";
     $condition .= $thiscondition;
@@ -5589,9 +5596,9 @@ function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias,
 // $filterTerms may be modified by this function
 function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filterElementIds, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler) {
 
-    global $xoopsUser, $xoopsDB, $nonLinkedCurlyBracketSelfReference;
+    global $xoopsDB, $nonLinkedCurlyBracketSelfReference;
     $curlyBracketEntryQuoted = $curlyBracketEntry == 'new' ? "'new'" : $curlyBracketEntry; // can't put text into the query without quotes!
-    $conditionsFilterComparisonValue = "";
+    $conditionsFilterComparisonValue = NULL;
     $curlyBracketFormFrom = "";
     $filterTerms[$filterId] = trim($filterTerms[$filterId]);
     $bareFilterTerm = substr($filterTerms[$filterId],1,-1);
@@ -5620,6 +5627,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
         $quotes = is_numeric($filterTerms[$filterId]) ? "" : "'";
         $filterOps[$filterId] = $filterOps[$filterId] == "=" ? "<=>" : $filterOps[$filterId];
     }
+
     if(!isset($filterElementIds[$filterId])) {
         print "Critical Error: You have a condition set that is relying on an deleted or renamed element: ".$filterElementIds[$filterId]." OR ".$filterId."<br>";
         print "The terms of the condition are: ";
@@ -5627,137 +5635,141 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
         print "The elements on the target form are:  ";
         print_r($filterElementIds);
         exit();
-    } else {
-        // check for whether the source element is a linked element, and if so, figure out the entry id of the record in the source of that linked selectbox which matches the filter term instead
-        // ie: left side is linked to something else
-        if(!isMetaDataField($filterElementIds[$filterId])) {
-            $targetElementObject = $element_handler->get($filterElementIds[$filterId]);
-            $targetElementEleValue = $targetElementObject->getVar('ele_value'); // get the properties of the source element
-        }
-        if (!isMetaDataField($filterElementIds[$filterId]) AND $targetElementObject->isLinked AND !$targetElementEleValue['snapshot']) {
-            $targetElementEleValueProperties = explode("#*=:*", $targetElementEleValue[2]); // split them up to get the properties of the linked selectbox that the source element is pointing at
-            $targetSourceFid = $targetElementEleValueProperties[0]; // get the Fid that the source element is point at (the source of the source)
-            $targetSourceFormObject = $form_handler->get($targetSourceFid); // get the form object based on that fid (we'll need the form handle later)
-            $targetSourceHandle = $targetElementEleValueProperties[1]; // get the element handle in the source source form
-            // now build a comparison value that contains a subquery on the source source form, instead of a literal match to the source form
-            $subQueryOp = $filterOps[$filterId];
-            if($filterOps[$filterId] == '!=' ) {
-                $subQueryOp = '<=>';
-                $overrideReturnedOp = '!=';
-            }
-            // if the filter term is dynamic, figure out the db and literal values for that element in the current entry/context
-            if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") {
-                $quotes = '';
-                if (isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
-                    $filterTermToUse = "'".formulize_db_escape($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])."'";
-                    $dbValueOfTerm = $filterTermToUse;
-                } else {
-                    $filterTermToUse = " curlybracketform.`".formulize_db_escape($bareFilterTerm)."` ";
-                    $curlyBracketFormFrom = $xoopsDB->prefix("formulize_".$curlyBracketForm->getVar('form_handle'))." AS curlybracketform "; // set as a single value, we're assuming all { } terms refer to the same form
-                    // get the actual DB value of the term in the curly bracket entry
-                    $dbValueOfTerm = prepareLiteralTextForDB($filterElementObject, $filterTerms[$filterId], $curlyBracketEntry, $userComparisonId);
-                }
-                // establish the literal (human readable) value
-                if (isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm])) {
-                    $literalTermToUse = "'".formulize_db_escape($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm])."'";
-                    $literalQuotes = "";
-                } elseif($curlyBracketEntry != 'new') {
-                    $preppedFormatValue = prepvalues($dbValueOfTerm, $bareFilterTerm, $curlyBracketEntry); // will be an array
-                    if(is_array($preppedFormatValue) AND count((array) $preppedFormatValue)==1) {
-                        $preppedFormatValue = $preppedFormatValue[0]; // take the single value if there's only one, same as display function does
-                    }
-                    $literalTermToUse = $preppedFormatValue;
-                    $literalQuotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
-                } else {
-                    // for new entries maybe we should get the defaults?
-                    $literalTermToUse = '';
-                }
-                // if there is a difference, setup an OR expression so we can catch both variations
-                if($literalTermToUse != $dbValueOfTerm) {
-                    $literalTermInSQL = "`$targetSourceHandle` ".$subQueryOp.$literalQuotes.$likebits.$literalTermToUse.$likebits.$literalQuotes;
-                    $specialCharsTerm = htmlspecialchars($literalTermToUse, ENT_QUOTES);
-                    if($specialCharsTerm != $literalTermToUse) {
-                        $literalTermInSQL .= " OR ".str_replace($literalTermToUse, $specialCharsTerm, $literalTermInSQL);
-                    }
-                    $subQueryWhereClause = "(ss.`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$filterTermToUse.$likebits.$quotes." OR ss.".$literalTermInSQL." )";
-                } else {
-                    $subQueryWhereClause = "ss.`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$filterTermToUse.$likebits.$quotes;
-                }
-                // figure out if the curlybracketform field is linked and pointing to the same source as the target element is pointing to
-                // because if it is, then we don't need to do a subquery later, we just compare directly to the $filterTermToUse
-                $curlyBracketElementObject = $element_handler->get($bareFilterTerm);
-                if ($curlyBracketElementObject->isLinked) {
-                    $curlyBracketTargetElementEleValue = $curlyBracketElementObject->getVar('ele_value');
-                    $curlyBracketTargetElementEleValueProperties = explode("#*=:*", $curlyBracketTargetElementEleValue[2]);
-                    $curlyBracketTargetSourceFid = $curlyBracketTargetElementEleValueProperties[0];
-                    if ($curlyBracketTargetSourceFid == $targetSourceFid) {
-                        $conditionsFilterComparisonValue = " CONCAT('$likebits',$filterTermToUse,'$likebits') "; // filterTermToUse will already have , , around it so we don't need them in the two concat'd parts before and after
-                    } elseif($targetSourceFid == $curlyBracketForm->getVar('id_form')) { // not quite the same source...this is when the curlybracket form is the source of the linked target element. Don't ask.
-                        // find entries where the filter term contains the entry id of any entry that contains the same linked reference to the common underlying source. Ack.
-                        $curlyBracketTargetSourceFormObject = $form_handler->get($curlyBracketTargetSourceFid);
-                        $conditionsFilterComparisonValue = " ( SELECT ss.entry_id FROM ".$xoopsDB->prefix('formulize_'.$curlyBracketForm->getVar('form_handle'))." AS ss
-                            WHERE ss.`".formulize_db_escape($bareFilterTerm)."` = (
-                                SELECT sss.`".formulize_db_escape($bareFilterTerm)."` FROM ".$xoopsDB->prefix('formulize_'.$curlyBracketForm->getVar('form_handle'))." AS sss WHERE sss.`entry_id` = $curlyBracketEntry
-                                ) ) ";
-                        $filterOps[$filterId] = " IN ";
-                    }
-                } elseif($targetSourceFid == $curlyBracketForm->getVar('id_form')) { // self reference to the same form, but with a non-linked element...need to do some funky stuff when parsing this into the ON clause of the join!
-                    $nonLinkedCurlyBracketSelfReference = true;
-                }
-                // curlybracket term found, but when it's not linked to the same source as the target, we have to work the likebits in as part of a concat, since our term is not a literal string anymore
-                if ($likebits) {
-                    $filterTermToUse = " CONCAT('$likebits',$filterTermToUse,'$likebits') ";
-                }
-                // then neuter these, so they don't screw up the building of the query...note the use of origlikebits so that the higher level part of the query retains that logic if the user asked for it
-                $quotes = "";
-                $likebits = "";
-            } else {
-								// term is not a dynamic reference to an element...
-								$filterTermToUse = formulize_db_escape($filterTerms[$filterId]);
-								$subQueryWhereClause = "ss.`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$filterTermToUse.$likebits.$quotes;
-								if($filterOps[$filterId] === "<=>") {
-									$targetSourceDataHandler = new formulizeDataHandler($targetSourceFid);
-									$foundEntries = $targetSourceDataHandler->findAllEntriesWithValue($targetSourceHandle, $filterTermToUse, operator: '<=>');
-									if(is_numeric($filterTerms[$filterId]) AND ($foundEntries === false OR count($foundEntries) == 0)) {
-										// the  target is a linked element (already know that from above), and so it has a foreign key in the database, and if the filter term is numeric and the operator is equals then no subquery is necessary, do a direct comparison instead
-										// check first if the subquery would return values. If so, then we stick with that. Otherwise, toss the subquery and go with a straight comparison to the filter term on the assumption it is a foreign key.
-										$conditionsFilterComparisonValue = $filterTerms[$filterId];
-										unset($subQueryWhereClause);
-									} elseif(count($foundEntries)>1) {
-										// subquery will return more than one row, so the IN operator must be used when constructing the full statement, this gets assigned to the $filterOps[$filterId] below (which has been passed by reference)
-										$overrideReturnedOp = "IN";
-								  }
-								}
-            }
-            // if we didn't jump the gun and set the comparison value already above...
-            if (!$conditionsFilterComparisonValue) {
-                if ($targetElementEleValue[1]) { // if the target allows multiple selections...
-                    $conditionsFilterComparisonValue = " CONCAT('$origlikebits,',(SELECT ss.entry_id FROM ".$xoopsDB->prefix("formulize_".$targetSourceFormObject->getVar('form_handle'))." AS ss WHERE ".$subQueryWhereClause."),',$origlikebits') ";
-                // for existing entries, or new entries with no dynamic reference, or new entries with an asynch value set
-                } elseif($curlyBracketEntry != 'new' OR (substr($filterTerms[$filterId],0,1) != "{" AND substr($filterTerms[$filterId],-1)!="}") OR isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
-                    // do a subquery against the source of the left side element...
-                    $conditionsFilterComparisonValue = " (SELECT ss.entry_id FROM " . $xoopsDB->prefix("formulize_" . $targetSourceFormObject->getVar('form_handle')) . " AS ss WHERE ".$subQueryWhereClause. ") ";
-                                // need to change the filterOp being used, so when this is inserted into the main query, we have a different op introducing the subquery
-                                if($filterOps[$filterId] == "LIKE" OR $filterOps[$filterId] == "NOT LIKE") {
-                                  $overrideReturnedOp = "IN";
-                                }
-                    $filterOps[$filterId] = $overrideReturnedOp ? $overrideReturnedOp : '<=>';
-                // for new entries with a dynamic reference and no asynch value set...
-                } else { // can't do a subquery into a curly bracket form for a 'new' value...return nothing
-                    return array("", "");
-                }
-            }
-            if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
-                $conditionsFilterComparisonValue .= "  AND curlybracketform.`entry_id`=$curlyBracketEntryQuoted ";
-            }
-        } else {
-            foreach ($filterTerms as $key => $value) {
-                $filterTerms[$key] = parseUserAndToday($value, $filterElementIds[$filterId]); // pass element so we can check if it is a userlist and compare {USER} based on id instead of name
-                $filterTerms[$key] = str_replace('{ID}',$curlyBracketEntry,$filterTerms[$key]);
-            }
-        }
-    }
+		}
 
+		$filterTerms[$filterId] = parseUserAndToday($filterTerms[$filterId], $filterElementIds[$filterId]); // pass element so we can check if it is a userlist and compare {USER} based on id instead of name
+		$filterTerms[$filterId] = str_replace('{ID}',$curlyBracketEntry,$filterTerms[$filterId]);
+
+		if(!isMetaDataField($filterElementIds[$filterId])) {
+				$targetElementObject = $element_handler->get($filterElementIds[$filterId]);
+				$targetElementEleValue = $targetElementObject->getVar('ele_value'); // get the properties of the source element
+		}
+
+		// *** OPTION 1: THE TARGET ELEMENT IS A LINKED FIELD, NON-SNAPSHOT...
+		// ie: left side is linked to something else
+		// check for whether the source element is a linked element, and if so, figure out the entry id of the record in the source of that linked selectbox which matches the filter term instead
+		if (!isMetaDataField($filterElementIds[$filterId]) AND $targetElementObject->isLinked AND !$targetElementEleValue['snapshot']) {
+				$targetElementEleValueProperties = explode("#*=:*", $targetElementEleValue[2]); // split them up to get the properties of the linked selectbox that the source element is pointing at
+				$targetSourceFid = $targetElementEleValueProperties[0]; // get the Fid that the source element is point at (the source of the source)
+				$targetSourceFormObject = $form_handler->get($targetSourceFid); // get the form object based on that fid (we'll need the form handle later)
+				$targetSourceHandle = $targetElementEleValueProperties[1]; // get the element handle in the source source form
+				// now build a comparison value that contains a subquery on the source source form, instead of a literal match to the source form
+				$subQueryOp = $filterOps[$filterId];
+				if($filterOps[$filterId] == '!=' ) {
+						$subQueryOp = '<=>';
+						$overrideReturnedOp = '!=';
+				}
+
+				// OPTION 1A: IF THE FILTER TERM IS DYNAMIC, FIGURE OUT THE DB AND LITERAL VALUES FOR THAT ELEMENT IN THE CURRENT ENTRY/CONTEXT
+				if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") {
+						$quotes = '';
+						if (isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
+								$filterTermToUse = "'".formulize_db_escape($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])."'";
+								$dbValueOfTerm = $filterTermToUse;
+						} else {
+								$filterTermToUse = " curlybracketform.`".formulize_db_escape($bareFilterTerm)."` ";
+								$curlyBracketFormFrom = $xoopsDB->prefix("formulize_".$curlyBracketForm->getVar('form_handle'))." AS curlybracketform "; // set as a single value, we're assuming all { } terms refer to the same form
+								// get the actual DB value of the term in the curly bracket entry
+								$dbValueOfTerm = prepareLiteralTextForDB($filterElementObject, $filterTerms[$filterId], $curlyBracketEntry, $userComparisonId);
+						}
+						// establish the literal (human readable) value
+						if (isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm])) {
+								$literalTermToUse = "'".formulize_db_escape($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm])."'";
+								$literalQuotes = "";
+						} elseif($curlyBracketEntry != 'new') {
+								$preppedFormatValue = prepvalues($dbValueOfTerm, $bareFilterTerm, $curlyBracketEntry); // will be an array
+								if(is_array($preppedFormatValue) AND count((array) $preppedFormatValue)==1) {
+										$preppedFormatValue = $preppedFormatValue[0]; // take the single value if there's only one, same as display function does
+								}
+								$literalTermToUse = $preppedFormatValue;
+								$literalQuotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
+						} else {
+								// for new entries maybe we should get the defaults?
+								$literalTermToUse = '';
+						}
+						// if there is a difference, setup an OR expression so we can catch both variations
+						if($literalTermToUse != $dbValueOfTerm) {
+								$literalTermInSQL = "`$targetSourceHandle` ".$subQueryOp.$literalQuotes.$likebits.$literalTermToUse.$likebits.$literalQuotes;
+								$specialCharsTerm = htmlspecialchars($literalTermToUse, ENT_QUOTES);
+								if($specialCharsTerm != $literalTermToUse) {
+										$literalTermInSQL .= " OR ".str_replace($literalTermToUse, $specialCharsTerm, $literalTermInSQL);
+								}
+								$subQueryWhereClause = "(ss.`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$filterTermToUse.$likebits.$quotes." OR ss.".$literalTermInSQL." )";
+						} else {
+								$subQueryWhereClause = "ss.`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$filterTermToUse.$likebits.$quotes;
+						}
+						// figure out if the curlybracketform field is linked and pointing to the same source as the target element is pointing to
+						// because if it is, then we don't need to do a subquery later, we just compare directly to the $filterTermToUse
+						$curlyBracketElementObject = $element_handler->get($bareFilterTerm);
+						if ($curlyBracketElementObject->isLinked) {
+								$curlyBracketTargetElementEleValue = $curlyBracketElementObject->getVar('ele_value');
+								$curlyBracketTargetElementEleValueProperties = explode("#*=:*", $curlyBracketTargetElementEleValue[2]);
+								$curlyBracketTargetSourceFid = $curlyBracketTargetElementEleValueProperties[0];
+								if ($curlyBracketTargetSourceFid == $targetSourceFid) {
+										$conditionsFilterComparisonValue = " CONCAT('$likebits',$filterTermToUse,'$likebits') "; // filterTermToUse will already have , , around it so we don't need them in the two concat'd parts before and after
+								} elseif($targetSourceFid == $curlyBracketForm->getVar('id_form')) { // not quite the same source...this is when the curlybracket form is the source of the linked target element. Don't ask.
+										// find entries where the filter term contains the entry id of any entry that contains the same linked reference to the common underlying source. Ack.
+										$conditionsFilterComparisonValue = " ( SELECT ss.entry_id FROM ".$xoopsDB->prefix('formulize_'.$curlyBracketForm->getVar('form_handle'))." AS ss
+												WHERE ss.`".formulize_db_escape($bareFilterTerm)."` = (
+														SELECT sss.`".formulize_db_escape($bareFilterTerm)."` FROM ".$xoopsDB->prefix('formulize_'.$curlyBracketForm->getVar('form_handle'))." AS sss WHERE sss.`entry_id` = $curlyBracketEntry
+														) ) ";
+										$filterOps[$filterId] = " IN ";
+								}
+						} elseif($targetSourceFid == $curlyBracketForm->getVar('id_form')) { // self reference to the same form, but with a non-linked element...need to do some funky stuff when parsing this into the ON clause of the join!
+								$nonLinkedCurlyBracketSelfReference = true;
+						}
+						// curlybracket term found, but when it's not linked to the same source as the target, we have to work the likebits in as part of a concat, since our term is not a literal string anymore
+						if ($likebits) {
+								$filterTermToUse = " CONCAT('$likebits',$filterTermToUse,'$likebits') ";
+						}
+						// then neuter these, so they don't screw up the building of the query...note the use of origlikebits so that the higher level part of the query retains that logic if the user asked for it
+						$quotes = "";
+						$likebits = "";
+
+				// OPTION 1B: THE TERM IS NOT A DYNAMIC REFERENCE TO AN ELEMENT...
+				} else {
+						$filterTermToUse = formulize_db_escape($filterTerms[$filterId]);
+						$subQueryWhereClause = "ss.`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$filterTermToUse.$likebits.$quotes;
+						if($filterOps[$filterId] === "<=>") {
+							$targetSourceDataHandler = new formulizeDataHandler($targetSourceFid);
+							$foundEntries = $targetSourceDataHandler->findAllEntriesWithValue($targetSourceHandle, $filterTermToUse, operator: '<=>');
+							if(is_numeric($filterTerms[$filterId]) AND ($foundEntries === false OR count($foundEntries) == 0)) {
+								// the  target is a linked element (already know that from above), and so it has a foreign key in the database, and if the filter term is numeric and the operator is equals then no subquery is necessary, do a direct comparison instead
+								// check first if the subquery would return values. If so, then we stick with that. Otherwise, toss the subquery and go with a straight comparison to the filter term on the assumption it is a foreign key.
+								$conditionsFilterComparisonValue = $filterTerms[$filterId];
+								unset($subQueryWhereClause);
+							} elseif(count($foundEntries)>1) {
+								// subquery will return more than one row, so the IN operator must be used when constructing the full statement, this gets assigned to the $filterOps[$filterId] below (which has been passed by reference)
+								$overrideReturnedOp = "IN";
+							}
+						}
+				}
+
+				// if we didn't jump the gun and set the comparison value already above...
+				if (!$conditionsFilterComparisonValue) {
+						if ($targetElementEleValue[1]) { // if the target allows multiple selections...
+								$conditionsFilterComparisonValue = " CONCAT('$origlikebits,',(SELECT ss.entry_id FROM ".$xoopsDB->prefix("formulize_".$targetSourceFormObject->getVar('form_handle'))." AS ss WHERE ".$subQueryWhereClause."),',$origlikebits') ";
+						// for existing entries, or new entries with no dynamic reference, or new entries with an asynch value set
+						} elseif($curlyBracketEntry != 'new' OR (substr($filterTerms[$filterId],0,1) != "{" AND substr($filterTerms[$filterId],-1)!="}") OR isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
+								// do a subquery against the source of the left side element...
+								$conditionsFilterComparisonValue = " (SELECT ss.entry_id FROM " . $xoopsDB->prefix("formulize_" . $targetSourceFormObject->getVar('form_handle')) . " AS ss WHERE ".$subQueryWhereClause. ") ";
+								// need to change the filterOp being used, so when this is inserted into the main query, we have a different op introducing the subquery
+								if($filterOps[$filterId] == "LIKE" OR $filterOps[$filterId] == "NOT LIKE") {
+									$overrideReturnedOp = "IN";
+								}
+								$filterOps[$filterId] = $overrideReturnedOp ? $overrideReturnedOp : '<=>';
+						// for new entries with a dynamic reference and no asynch value set...
+						} else { // can't do a subquery into a curly bracket form for a 'new' value...return nothing
+								return array("", "");
+						}
+				}
+				if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
+						$conditionsFilterComparisonValue .= "  AND curlybracketform.`entry_id`=$curlyBracketEntryQuoted ";
+				}
+		}
+
+		// *** OPTION 2: FILTER TERM IS {BLANK}
+		// Could override the determination related to linked target elements above??
     if ($filterTerms[$filterId]=="{BLANK}") {
       $conditionsFilterComparisonValue = 'NULL';
       $filterTerms[$filterId]="";
@@ -5768,49 +5780,88 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
       }
     }
 
-    $plainLiteralValue = "";
-	$literalToDBValue = "";
-    if ($filterOps[$filterId] == "<=>") {
+		$plainLiteralValue = "";
+		$literalToDBValue = "";
 
-        // if we're handling a dynamic reference to an element, and the thing we're comparing the dynamic reference to is not a linked element, then we're going to cover our bases and do an OR of both the DB and literal value
-        if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND (isMetaDataField($filterElementIds[$filterId]) OR !$targetElementObject->isLinked)) {
-			if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
+    // *** OPTION 3: DYNAMIC REFERENCE, NOT TO A LINKED ELEMENT...
+		if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND (isMetaDataField($filterElementIds[$filterId]) OR !$targetElementObject->isLinked)) {
+
+			// ASYNCHRONOUS VALUES ARE AVAILABLE... WORKOUT THE PLAIN LITERAL VALUE AND THE DB VERSION OF THE LITERAL VALUE
+			if (isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
 				// get the literal value based on the passed in database ready format
-                $literalToDBValue = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm];
-                // use the already declared API format value (determined when conditional elements are generated for example)
-                $plainLiteralValue = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm];
-                // if the $bareFilterTerm is a linked element that points to the element we're querying against, then switch to the value of that element as found in the entry with entry id matching the asynch literal DB value. Bewildering but works.
-                $curlyBracketElementObject = $element_handler->get($bareFilterTerm);
-                if ($curlyBracketElementObject->isLinked) {
-                    $curlyBracketTargetElementEleValue = $curlyBracketElementObject->getVar('ele_value');
-                    $curlyBracketTargetElementEleValueProperties = explode("#*=:*", $curlyBracketTargetElementEleValue[2]);
-                    $curlyBracketTargetElementLinkedSourceElementObject = $element_handler->get($curlyBracketTargetElementEleValueProperties[1]);
-                    if($curlyBracketTargetElementLinkedSourceElementObject AND $curlyBracketTargetElementLinkedSourceElementObject->getVar('ele_id') == $filterElementIds[$filterId] AND $curlyBracketTargetElementEleValue['snapshot'] != 1) {
-                        $dataHandler = new formulizeDataHandler($curlyBracketTargetElementEleValueProperties[0]);
-                        $literalToDBValue = $dataHandler->getElementValueInEntry($literalToDBValue, $filterElementIds[$filterId]);
-                    }
-                }
-			} elseif(!isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm])) {
-                // convert any literal terms (including {} references to linked selectboxes) into the actual DB value...based on current saved value
-                $literalToDBValue = prepareLiteralTextForDB($filterElementObject, $filterTerms[$filterId], $curlyBracketEntry, $userComparisonId); // prepends checkbox characters and converts yes/nos, {USER}, etc
-                $literalToDBValue = str_replace('{ID}',$curlyBracketEntry,$literalToDBValue);
-                // if no declared API format value, go look it up
-                if($curlyBracketEntry AND $curlyBracketEntry != 'new') {
-                $preppedFormatValue = prepvalues($literalToDBValue, substr($filterTerms[$filterId],1,-1), $curlyBracketEntry); // will be an array
-                if(is_array($preppedFormatValue) AND count((array) $preppedFormatValue)==1) {
-                    $preppedFormatValue = $preppedFormatValue[0]; // take the single value if there's only one, same as display function does
-                }
-                $plainLiteralValue = $preppedFormatValue;
-            } else {
-                    // for new entries get the defaults?? Needs testing
-                }
-            }
-            $plainLiteralValue = $plainLiteralValue != $literalToDBValue ? $plainLiteralValue : "";
-            $filterTerms[$filterId] = $literalToDBValue;
-        }
-    }
+				$literalToDBValue = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm];
+				// use the already declared API format value (determined when conditional elements are generated for example)
+				$plainLiteralValue = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm];
+				// if the $bareFilterTerm is a linked element that points to the element we're querying against, then switch to the value of that element as found in the entry with entry id matching the asynch literal DB value. Bewildering but works.
+				$curlyBracketElementObject = $element_handler->get($bareFilterTerm);
+				if ($curlyBracketElementObject->isLinked) {
+					$curlyBracketTargetElementEleValue = $curlyBracketElementObject->getVar('ele_value');
+					$curlyBracketTargetElementEleValueProperties = explode("#*=:*", $curlyBracketTargetElementEleValue[2]);
+					$curlyBracketTargetElementLinkedSourceElementObject = $element_handler->get($curlyBracketTargetElementEleValueProperties[1]);
+					if($curlyBracketTargetElementLinkedSourceElementObject AND $curlyBracketTargetElementLinkedSourceElementObject->getVar('ele_id') == $filterElementIds[$filterId] AND $curlyBracketTargetElementEleValue['snapshot'] != 1) {
+							$dataHandler = new formulizeDataHandler($curlyBracketTargetElementEleValueProperties[0]);
+							$literalToDBValue = $dataHandler->getElementValueInEntry($literalToDBValue, $filterElementIds[$filterId]);
+					}
+				}
 
-    if (!$conditionsFilterComparisonValue) {
+			// IF THERE'S NO ASYNCH DATA IN API FORMAT AVAILABLE, AND WE'RE USING THE MYSQL NULL SAFE OPERATOR, WORKOUT PLAIN LITERAL AND LITERAL TO DB BASED ON THE CURRENT SAVED VALUE IN DB
+			} elseif($filterOps[$filterId] == "<=>" AND !isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm])) {
+				// convert any literal terms (including {} references to linked selectboxes) into the actual DB value...based on current saved value
+				$literalToDBValue = prepareLiteralTextForDB($filterElementObject, $filterTerms[$filterId], $curlyBracketEntry, $userComparisonId); // prepends checkbox characters and converts yes/nos, {USER}, etc
+				$literalToDBValue = str_replace('{ID}',$curlyBracketEntry,$literalToDBValue);
+				// if no declared API format value, go look it up
+				if($curlyBracketEntry AND $curlyBracketEntry != 'new') {
+					$preppedFormatValue = prepvalues($literalToDBValue, substr($filterTerms[$filterId],1,-1), $curlyBracketEntry); // will be an array
+					if(is_array($preppedFormatValue) AND count((array) $preppedFormatValue)==1) {
+						$preppedFormatValue = $preppedFormatValue[0]; // take the single value if there's only one, same as display function does
+					}
+					$plainLiteralValue = $preppedFormatValue;
+				} else {
+					// for new entries get the defaults?? Needs testing
+				}
+
+			// OR FAILING ALL THAT, IF THE CONTEXT IS A NEW ENTRY...
+			} elseif ($curlyBracketEntry == "new") {
+				$elementObject = $element_handler->get($bareFilterTerm);
+				if (is_object($elementObject)) {
+					$default = $elementObject->getDefaultValues($curlyBracketEntry); // only works for text, textarea, and non-linked selectboxes! all other elements will return an empty array
+					$default = $default[0];
+					if(is_numeric($default)) {
+							$conditionsFilterComparisonValue = $default;
+					} elseif($default) {
+							$conditionsFilterComparisonValue ="'$likebits".$default."$likebits'";
+					} else {
+							$conditionsFilterComparisonValue = "";
+					}
+				} else {
+					$conditionsFilterComparisonValue = "";
+				}
+
+			// OTHERWISE, LAST CALL, NOT NEW ENTRY AND NO ASYNCH DATA AVAILABLE...
+			} else {
+				// set as a single value, use the declared curly bracket form, unless the term is from another form
+				// if the term is from another form, then something a little odd is going on...we don't have relationship data to go on at this point, so we will ignore the curly bracket filter at this point
+				if(in_array($bareFilterTerm, $curlyBracketForm->getVar('elementHandles'))) {
+					$curlyBracketFormFrom = $xoopsDB->prefix("formulize_".$curlyBracketForm->getVar('form_handle'))." AS curlybracketform ";
+					if ($likebits == "%") {
+							$conditionsFilterComparisonValue = " CONCAT('%',curlybracketform.`".$bareFilterTerm."`,'%') AND curlybracketform.`entry_id`=$curlyBracketEntryQuoted ";
+					} else {
+							$conditionsFilterComparisonValue = " curlybracketform.`".$bareFilterTerm."` AND curlybracketform.`entry_id`=$curlyBracketEntryQuoted ";
+					}
+				} else {
+					$filterOps[$filterId] = " != ";
+					$conditionsFilterComparisonValue = " 'lkjdaf9887asd09809KJA$@$%98SD7ASDLJASLD32' "; // GUARANTEED NOT TO MATCH ANYTHING, SO ALL OPTIONS WILL BE RETURNED, SINCE FILTERTERM DOES NOT BELONG TO THE CURLY BRACKET FORM, SO wtf (But can happen if the element filter is used to limit subform values that are being prepopulated!)
+				}
+			}
+		}
+
+		// SWAP IN THE PLAIN LITERAL AND LITERAL-TO-DB-VALUE IF APPLICABLE, REDETERMINE QUOTES
+		$plainLiteralValue = $plainLiteralValue != $literalToDBValue ? $plainLiteralValue : "";
+		$filterTerms[$filterId] = $literalToDBValue ? $literalToDBValue : $filterTerms[$filterId];
+		$quotes = is_numeric($filterTerms[$filterId]) ? "" : "'";
+
+		// *** OPTION 4: IF WE HAVEN'T SET IT ALREADY, FIGURE OUT THE COMPARISON VALUE (POSSIBLY BASED ON THE PLAIN LITERAL AND LITERAL-TO-DB DETERMINATIONS ABOVE)
+    if ($conditionsFilterComparisonValue === NULL) {
         $conditionsFilterComparisonValue = $quotes.$likebits.formulize_db_escape($filterTerms[$filterId]).$likebits.$quotes;
         if($plainLiteralValue) {
             $specialCharsTerm = htmlspecialchars($plainLiteralValue, ENT_QUOTES);
@@ -5823,44 +5874,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
         }
     }
 
-    // if it's a { } term, then assume it's a data handle for a field in the form where the element is being included
-    // do this only when the left side is NOT linked, so as an alternative to the handling of { } above when left side is linked
-    if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND (isMetaDataField($filterElementIds[$filterId]) OR !$targetElementObject->isLinked)) {
-        if (isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
-            $conditionsFilterComparisonValue = "'".$likebits.formulize_db_escape($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm]).$likebits."'";
-        } elseif ($curlyBracketEntry == "new") {
-            $elementObject = $element_handler->get($bareFilterTerm);
-            if (is_object($elementObject)) {
-                $default = $elementObject->getDefaultValues($curlyBracketEntry); // only works for text, textarea, and non-linked selectboxes! all other elements will return an empty array
-                $default = $default[0];
-                if(is_numeric($default)) {
-                    $conditionsFilterComparisonValue = $default;
-                } elseif($default) {
-                    $conditionsFilterComparisonValue ="'$likebits".$default."$likebits'";
-                } else {
-                    $conditionsFilterComparisonValue = "";
-                }
-            } else {
-                $conditionsFilterComparisonValue = "";
-            }
-        } else {
-            // set as a single value, use the declared curly bracket form, unless the term is from another form
-            // if the term is from another form, then something a little odd is going on...we don't have relationship data to go on at this point, so we will ignore the curly bracket filter at this point
-            if(in_array($bareFilterTerm, $curlyBracketForm->getVar('elementHandles'))) {
-                $curlyBracketFormFrom = $xoopsDB->prefix("formulize_".$curlyBracketForm->getVar('form_handle'))." AS curlybracketform ";
-                if ($likebits == "%") {
-                    $conditionsFilterComparisonValue = " CONCAT('%',curlybracketform.`".$bareFilterTerm."`,'%') AND curlybracketform.`entry_id`=$curlyBracketEntryQuoted ";
-                } else {
-                    $conditionsFilterComparisonValue = " curlybracketform.`".$bareFilterTerm."` AND curlybracketform.`entry_id`=$curlyBracketEntryQuoted ";
-                }
-            } else {
-                $filterOps[$filterId] = " != ";
-                $conditionsFilterComparisonValue = " 'lkjdaf9887asd09809KJA$@$%98SD7ASDLJASLD32' "; // GUARANTEED NOT TO MATCH ANYTHING, SO ALL OPTIONS WILL BE RETURNED, SINCE FILTERTERM DOES NOT BELONG TO THE CURLY BRACKET FORM, SO wtf (But can happen if the element filter is used to limit subform values that are being prepopulated!)
-            }
-        }
-    }
-
-    // expand = '' to include is null
+    // EXPAND EMPTY COMPARISON FILTERS TO INCLUDE IS NULL
     if($conditionsFilterComparisonValue == "''" OR $conditionsFilterComparisonValue == '""') {
         switch($filterOps[$filterId]) {
             case "<=>":
@@ -5872,9 +5886,11 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                 break;
         }
     }
+
 		// convert any single quote placeholders we made, if we had to construct them into the filter term (since they don't go through formulize_db_escape cleanly after being put into the filter term)
 		$conditionsFilterComparisonValue = str_replace('@#.&%$', "'", $conditionsFilterComparisonValue);
     return array($conditionsFilterComparisonValue, $curlyBracketFormFrom);
+
 }
 
 
