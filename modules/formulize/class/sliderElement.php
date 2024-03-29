@@ -58,7 +58,7 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
         return new formulizeSliderElement();
     }
 
-    // Gathers data to pass to the template 
+    // Gathers data to pass to the template
     // Excludes $ele_value and other properties that are part of the basic element class
     // Receives the element object
     // Returns array of data to the admin UI template
@@ -96,7 +96,7 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
 
     // Renders the element for display in a form
     // Caption is pre-prepared and passed in separately from the element object
-    // If element is disabled return a label with some version of the elements value 
+    // If element is disabled return a label with some version of the elements value
     // $ele_value contains options for this element
     // $caption is the prepared caption for the element
     // $markupName name of rendered element in the HTML
@@ -111,6 +111,7 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
         $slider_html .= "max=\"{$ele_value[1]}\" ";
         $slider_html .= "step=\"{$ele_value[2]}\" ";
         $slider_html .= "value=\"{$ele_value[3]}\" ";
+        $slider_html .= "aria-describedby=\"{$markupName}-help-text\" ";
         $slider_html .= "oninput=\"updateTextInput(value);formulizechanged=1;\">";
         $slider_html .= "</input>";
 
@@ -140,7 +141,7 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
     }
 
     // Returns any custom validation code (javascript) to validate this element
-    // 'myform' is a name enforced by convention to refer to the current form 
+    // 'myform' is a name enforced by convention to refer to the current form
     // adminCanMakeRequired/alwaysValidateInputs properties control usage
     function generateValidationCode($caption, $markupName, $element, $entry_id) {
     }
@@ -150,7 +151,7 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
     // $value is what the user submitted
     // $element is the element object
     function prepareDataForSaving($value, $element) {
-        return formulize_db_escape($value); 
+        return formulize_db_escape($value);
     }
 
     // Handle any final actions that have to happen after data has been saved
@@ -169,17 +170,17 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
     function prepareDataForDataset($value, $handle, $entry_id) {
         return $value;
     }
-    
+
         // this method will take a text value that the user has specified at some point, and convert it to a value that will work for comparing with values in the database.  This is used primarily for preparing user submitted text values for saving in the database, or for comparing to values in the database, such as when users search for things.  The typical user submitted values would be coming from a condition form (ie: fieldX = [term the user typed in]) or other situation where the user types in a value that needs to interact with the database.
     // it is only necessary to do special logic here if the values stored in the database do not match what users would be typing, ie: you're using coded numbers in the database, but displaying text on screen to users
     // this would be where a Yes value would be converted to a 1, for example, in the case of a yes/no element, since 1 is how yes is represented in the database for that element type
     // $partialMatch is used to indicate if we should search the values for partial string matches, like On matching Ontario.  This happens in the getData function when processing filter terms (ie: searches typed by users in a list of entries)
     // if $partialMatch is true, then an array may be returned, since there may be more than one matching value, otherwise a single value should be returned.
-    // if literal text that users type can be used as is to interact with the database, simply return the $value 
+    // if literal text that users type can be used as is to interact with the database, simply return the $value
     function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
         return $value;
     }
-    
+
     // this method will format a dataset value for display on screen when a list of entries is prepared
     // for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
     // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
@@ -187,7 +188,7 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
         $this->clickable = true; // make urls clickable
         $this->striphtml = true; // remove html tags as a security precaution
         $this->length = 100; // truncate to a maximum of 100 characters, and append ... on the end
-        
+
         return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
     }
 

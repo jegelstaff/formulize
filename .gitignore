@@ -13,4 +13,5 @@ themes/formulize_mobile_app/.sass-cache/
 formulize-docs/_site
 .DS_Store
 libraries/php-saml/settings.php
-
+_site
+install.lock

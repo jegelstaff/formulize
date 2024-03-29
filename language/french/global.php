@@ -40,14 +40,14 @@ define("_ADD","Ajouter");
 define("_REPLY","R&eacute;pondre");
 define("_DATE","Date");
 
-//fichier admin_functions.php  
+//fichier admin_functions.php
 define("_MAIN","Principal");
 define("_MANUAL","Manuel");
 define("_INFO","Info");
 define("_CPHOME","Administration");
 define("_YOURHOME","Accueil");
 
-//Fichier misc.php ( pop up qui est en ligne ?)      
+//Fichier misc.php ( pop up qui est en ligne ?)
 define("_WHOSONLINE","Actuellement en ligne");
 define('_GUESTS', 'Invit&eacute;s');
 define('_MEMBERS', 'Membres');
@@ -55,10 +55,10 @@ define("_ONLINEPHRASE","<b>%s</b> visiteurs en ligne");
 define("_ONLINEPHRASEX","dont <b>%s</b> sur <b>%s</b>");
 define("_CLOSE","Fermer");
 
-//Fichier module.textsanitizer.php  
+//Fichier module.textsanitizer.php
 define("_QUOTEC","Citation:");
 
-//Fichier admin.php 
+//Fichier admin.php
 define("_NOPERM","D&eacute;sol&eacute;, vous n'avez pas les droits pour acc&eacute;der &agrave; cette zone.");
 define("_NO","Non");
 define("_YES","Oui");
@@ -73,7 +73,7 @@ define("_RIGHT","Droite");
 define("_FORM_ENTER", "Merci d'entrer %s");
 //ce code  %s  represente le nom du fichier
 define("_MUSTWABLE","Le fichier %s doit &ecirc;tre accessible en &eacute;criture sur le serveur !");
-// Infos module 
+// Infos module
 define('_PREFERENCES', 'Pr&eacute;f&eacute;rences');
 define("_VERSION", "Version");
 define("_DESCRIPTION", "Description");
@@ -121,19 +121,19 @@ define('_NOCACHE', 'Pas de Cache');
 define('_CLONE', 'Cloner');
 define('_INVISIBLE', 'Invisible');
 
-//Fichier class/xoopsform/formmatchoption.php 
+//Fichier class/xoopsform/formmatchoption.php
 define("_STARTSWITH", "Commen&ccedil;ant par");
 define("_ENDSWITH", "Finissant par");
 define("_MATCHES", "Correspondant &agrave;");
 define("_CONTAINS", "Contenant");
 
-//Fichier commentform.php  
+//Fichier commentform.php
 define("_REGISTER","Enregistrement");
 
 //Fichier  xoopscodes.php
-define("_SIZE","TAILLE"); 
-define("_FONT","POLICE"); 
-define("_COLOR","COULEUR"); 
+define("_SIZE","TAILLE");
+define("_FONT","POLICE");
+define("_COLOR","COULEUR");
 define("_EXAMPLE","EXEMPLE");
 define("_ENTERURL","Entrez l'URL du lien que vous voulez ajouter:");
 define("_ENTERWEBTITLE","Entrez le titre du site web:");
@@ -254,7 +254,7 @@ define("_BLOCK", "Blocs");
 define("_WARNINGUPDATESYSTEM","F&eacute;licitations, votre site est a jour avec la derni&egrave;re version d'ImpressCMS ! <br />Il faut maintenant cliquer ici pour mettre &agrave; jour votre script syst&egrave;me.<br />mis &agrave; jour.");
 
 //  montre le site local de soutien dans le menu admin du site.
-define('_IMPRESSCMS_LOCAL_SUPPORT','http://www.impresscms.org'); 
+define('_IMPRESSCMS_LOCAL_SUPPORT','http://www.impresscms.org');
 define('_IMPRESSCMS_LOCAL_SUPPORT_TITLE','site de support');
 define("_ALLEFTCON","Entrer le texte qui doit &ecirc;tre align&eacute; sur le c�t&eacute; Gauche. ");
 define("_ALCENTERCON","Entrer le texte qui doit &ecirc;tre align&eacute; au Centre. ");
@@ -301,5 +301,7 @@ define("_US_CONFIRM_PASSWORD","Confirm Password: ");
 define("_US_PASSWORD_TOO_SHORT","The password must be at least %s characters long.");
 define("_US_LOGIN_WITH_NEW_PW","You can now login with your new password");
 define("_US_INVALID_CODE","Invalid Two Factor Authentication code");
+define("_US_RESET_PW_NO_EMAIL","Erreur : votre compte n'a pas d'adresse e-mail");
+define("_US_RESET_PW_CONTACT_ADMIN", "Contactez un administrateur pour réinitialiser votre email et votre mot de passe");
 
 include_once ICMS_ROOT_PATH.'/language/english/global.php'; // define any other constants that aren't included here for some reason

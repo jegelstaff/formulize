@@ -344,3 +344,5 @@ define("_US_CONFIRM_PASSWORD","Confirm Password: ");
 define("_US_PASSWORD_TOO_SHORT","The password must be at least %s characters long.");
 define("_US_LOGIN_WITH_NEW_PW","You can now login with your new password");
 define("_US_INVALID_CODE","Invalid Two Factor Authentication code");
+define("_US_RESET_PW_NO_EMAIL","Error: your account has no email address");
+define("_US_RESET_PW_CONTACT_ADMIN", "Contact an administrator to reset your email and password");

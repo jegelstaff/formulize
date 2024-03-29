@@ -108,12 +108,12 @@ class formulizeGoogleAddressElementHandler extends formulizeElementsHandler {
     // $entry_id is the ID number of the entry where this particular element comes from
     // $screen is the screen object that is in effect, if any (may be null)
     function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
-        
+
         $elementId = $element->getVar('ele_id');
-        
+
         // render code for each address autocomplete with uniquely named functions and variables, to avoid collisions, and avoid abstracting this code to be lots less readable
         $js .= '
-        
+
 <script>
 
     function handleAddress'.$elementId.'() {
@@ -140,15 +140,15 @@ class formulizeGoogleAddressElementHandler extends formulizeElementsHandler {
             });
         }
     }
-    
+
 </script>
 ';
-        
+
         static $librariesLoaded = false;
-        
+
         // only render the call to the underlying libraries once
         if(!$librariesLoaded) {
-            
+
             $js .= '
 <script>
     let autocomplete;
@@ -162,7 +162,7 @@ class formulizeGoogleAddressElementHandler extends formulizeElementsHandler {
         // Create the autocomplete object, restricting the search predictions to
         // geographical location types.
         jQuery(".formulizeGoogleAddressAutocomplete").each(function() {
-            
+
             var elementId = jQuery(this).attr("elementid");
             autocomplete[elementId] = new google.maps.places.Autocomplete(
                 jQuery(this).get(0),
@@ -174,7 +174,7 @@ class formulizeGoogleAddressElementHandler extends formulizeElementsHandler {
             // When the user selects an address from the drop-down, populate the
             // address fields in the form.
             autocomplete[elementId].addListener("place_changed", handleAddress'.$elementId.');
-            
+
 ';
 
         // if there is a place saved, set that as the initial value
@@ -195,22 +195,22 @@ class formulizeGoogleAddressElementHandler extends formulizeElementsHandler {
                     handleAddress".$elementId."(placeResult);
                 });
             });*/
-            
+
         }
-          
+
 $js.='
-        });        
-        
+        });
+
     }
 </script>
 ';
             $librariesLoaded = true;
         }
-        
-        $formElement = new xoopsFormLabel($caption, $js."<input elementid='".$elementId."' type='text' class='formulizeGoogleAddressAutocomplete' id='formulizeGoogleAddressAutoComplete".$elementId."' size=75 onFocus='geolocate".$elementId."()' onChange='javascript:formulizechanged=1;' />
+
+        $formElement = new xoopsFormLabel($caption, $js."<input elementid='".$elementId."' type='text' class='formulizeGoogleAddressAutocomplete' id='formulizeGoogleAddressAutoComplete".$elementId."' size=75 onFocus='geolocate".$elementId."()' onChange='javascript:formulizechanged=1;' aria-describedby='$markupName-help-text' />
             <input type='hidden' id='".$markupName."' name='".$markupName."' value='".str_replace("'", "&#039;",$ele_value['address'])."' />"
         );
-        
+
         return $formElement;
     }
 
@@ -218,7 +218,7 @@ $js.='
     // 'myform' is a name enforced by convention that refers to the form where this element resides
     // use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
     function generateValidationCode($caption, $markupName, $element, $entry_id) {
-        
+
     }
 
     // this method will read what the user submitted, and package it up however we want for insertion into the form's datatable
@@ -246,7 +246,7 @@ $js.='
     // $handle is the element handle for the field that we're retrieving this for
     // $entry_id is the entry id of the entry in the form that we're retrieving this for
     function prepareDataForDataset($value, $handle, $entry_id) {
-        return $this->readableAddress(array('address'=>$value)); 
+        return $this->readableAddress(array('address'=>$value));
     }
 
     // this method will take a text value that the user has specified at some point, and convert it to a value that will work for comparing with values in the database.  This is used primarily for preparing user submitted text values for saving in the database, or for comparing to values in the database, such as when users search for things.  The typical user submitted values would be coming from a condition form (ie: fieldX = [term the user typed in]) or other situation where the user types in a value that needs to interact with the database.
@@ -266,10 +266,10 @@ $js.='
         $this->clickable = true; // make urls clickable
         $this->striphtml = false; // remove html tags as a security precaution
         $this->length = 1000; // truncate to a maximum of 100 characters, and append ... on the end
-        
+
         return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
     }
-    
+
     // this method takes the ele_value array, that has had an address loaded into it, and gives back a readable version of the address JSON object
     function readableAddress($ele_value) {
         $readableAddress = '';

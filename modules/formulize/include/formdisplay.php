@@ -70,11 +70,13 @@ $GLOBALS['formulize_startHiddenElements'] = array();
 // NEED TO USE OUR OWN VERSION OF THE CLASS, TO GET ELEMENT NAMES IN THE TR TAGS FOR EACH ROW <-- that's how it started... now so much more
 class formulize_themeForm extends XoopsThemeForm {
 
+
     private $frid = 0;
     private $screen;
     private $modifyScreenLink;
     private $tokenName;
     private $tokenVal;
+
 
     // $screen is the screen being rendered, either a multipage or a single page form screen - multipage screen is passed through when rendering happens
     function __construct($title, $name, $action, $method = "post", $addtoken = false, $frid = 0, $screen = null) {
@@ -114,6 +116,8 @@ class formulize_themeForm extends XoopsThemeForm {
      */
     public function getTemplate($type) {
         $template = '';
+				global $xoopsUser;
+				$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
         if($this->getTitle() != 'formulizeAsynchElementRender' AND is_object($this->screen)) {
             $template = getTemplateToRender($type, $this->screen);
         } elseif(isset($_SESSION['formulizeScreenId'][$uid]) AND $sid = $_SESSION['formulizeScreenId'][$uid]) {
@@ -433,7 +437,7 @@ class formulize_themeForm extends XoopsThemeForm {
 
         $templateVariables = array();
         $templateVariables['renderedElement'] = trim($ele->render());
-        if(!$templateVariables['renderedElement']) { return ""; }
+        if(!$templateVariables['renderedElement'] AND !is_numeric($templateVariables['renderedElement'])) { return ""; }
 
 		static $show_element_edit_link = null;
 		global $formulize_drawnElements;
@@ -574,7 +578,7 @@ class formulize_themeForm extends XoopsThemeForm {
                     $js = $validationJs;
 				}
 				if($checkConditionalRow) {
-					$fullJs .= "if(formulizechanged && window.document.getElementById('formulize-".$ele->getName()."').style.display != 'none') {\n".$js."\n}\n\n";
+					$fullJs .= "if(formulizechanged && jQuery('[name^=".$ele->getName()."]').length && window.document.getElementById('formulize-".$ele->getName()."').style.display != 'none') {\n".$js."\n}\n\n";
 				} else {
 					$fullJs .= "if(formulizechanged) {\n".$js."\n}\n\n";
 				}
@@ -722,10 +726,10 @@ function getEntryValues($entry, $element_handler, $groups, $fid, $elements, $mid
 			$vqindexer++;
 		}
 
-		// build query for display groups and disabled
+		// build query for display groups
+		$gq = '';
 		foreach($groups as $thisgroup) {
 			$gq .= " OR ele_display LIKE '%,$thisgroup,%'";
-			//$dgq .= " AND ele_disabled NOT LIKE '%,$thisgroup,%'"; // not sure that this is necessary
 		}
 
 		// exclude private elements unless the user has view_private_elements permission, or update_entry permission on a one-entry-per group entry
@@ -737,7 +741,7 @@ function getEntryValues($entry, $element_handler, $groups, $fid, $elements, $mid
 			$private_filter = " AND ele_private=0";
 		}
 
-		$allowedquery = q("SELECT ele_caption, ele_disabled, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=$fid AND (ele_display='1' $gq) $private_filter"); // AND (ele_disabled != 1 $dgq)"); // not sure that filtering for disabled elements is necessary
+		$allowedquery = q("SELECT ele_caption, ele_disabled, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=$fid AND (ele_display='1' $gq) $private_filter");
 		$allowedDisabledStatus = array();
 		$allowedhandles = array();
 		foreach($allowedquery as $onecap) {
@@ -1194,9 +1198,11 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 	$config_handler =& xoops_gethandler('config');
 	$formulizeConfig = $config_handler->getConfigsByCat(0, $mid);
 	// remove the all done button if the config option says 'no', and we're on a single-entry form, or the function was called to look at an existing entry, or we're on an overridden Multi-entry form
-    $allDoneOverride = (!$formulizeConfig['all_done_singles'] AND !$profileForm AND (($single OR $overrideMulti OR $original_entry) AND !$_POST['target_sub'] AND !$_POST['goto_sfid'] AND !$_POST['deletesubsflag'] AND !$_POST['parent_form'])) ? true : false;
-    global $formulize_displayingMultipageScreen;
-    if((($formulize_displayingMultipageScreen === false AND $allDoneOverride)
+	$allDoneOverride = (!$formulizeConfig['all_done_singles'] AND !$profileForm AND (($single OR $overrideMulti OR $original_entry) AND !$_POST['target_sub'] AND !$_POST['goto_sfid'] AND !$_POST['deletesubsflag'] AND !$_POST['parent_form'])) ? true : false;
+  global $formulize_displayingMultipageScreen;
+
+	// if we're leaving the page now, draw the go back form and then activate it in js - super ugly!
+  if((($formulize_displayingMultipageScreen === false AND $allDoneOverride)
         OR (isset($_POST['save_and_leave']) AND $_POST['save_and_leave']))
         AND $_POST['form_submitted']) {
 		drawGoBackForm($go_back, $currentURL, $settings, $entry, $screen);
@@ -1210,17 +1216,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		if(!$allDoneOverride AND !$formulizeConfig['all_done_singles'] AND !$profileForm AND ($_POST['target_sub'] OR $_POST['goto_sfid'] OR $_POST['deletesubsflag'] OR $_POST['parent_form']) AND ($single OR $original_entry OR $overrideMulti)) {
 			$allDoneOverride = true;
 		}
-
-		/*if($uid==19) {
-		print "Forms: ";
-		print_r($fids);
-		print "<br>Entries: ";
-		print_r($entries);
-		print "<br>Subforms: ";
-		print_r($sub_fids);
-		print "<br>Subentries: ";
-		print_r($sub_entries); // debug block - ONLY VISIBLE TO USER 1 RIGHT NOW
-		} */
 
 		formulize_benchmark("Ready to start building form.");
 
@@ -1248,26 +1243,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			if(!$scheck = security_check($this_fid, $entries[$this_fid][0]) AND !$viewallforms) {
 				continue;
 			}
-
-            // if there is more than one form, try to make the 1-1 links
-            // and if we made any, then include the newly linked up entries
-            // in the index of entries that we're keeping track of
-            // makeOneToOneLinks will return the relevant ids, based on the links that were made when it was called earlier in readelements.php
-            if(count((array) $fids) > 1) {
-                list($form1s, $form2s, $form1EntryIds, $form2EntryIds) = formulize_makeOneToOneLinks($frid, $this_fid);
-                foreach($form1EntryIds as $i=>$form1EntryId) {
-                    // $form1EntryId set above, now set other values for this iteration based on the key
-                    $form2EntryId = $form2EntryIds[$i];
-                    $form1 = $form1s[$i];
-                    $form2 = $form2s[$i];
-						if($form1EntryId) {
-							$entries[$form1][0] = $form1EntryId;
-						}
-						if($form2EntryId) {
-							$entries[$form2][0] = $form2EntryId;
-						}
-					}
-				}
 
 				unset($prevEntry);
             // if there is an entry, then get the data for that entry
@@ -1405,7 +1380,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 
 			formulize_benchmark("Before Compile Elements.");
 			$form = compileElements($this_fid, $form, $element_handler, $prevEntry, $entries[$this_fid][0], $go_back,
-				$parentLinks[$this_fid], $owner_groups, $groups, $overrideValue, $elements_allowed, $profileForm,
+				$parentLinks[$this_fid], $groups, $overrideValue, $elements_allowed, $profileForm,
 				$frid, $mid, $sub_entries, $sub_fids, $member_handler, $gperm_handler, $title, $screen,
 				$printViewPages, $printViewPageTitles);
 			formulize_benchmark("After Compile Elements.");
@@ -1595,6 +1570,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
         // unless we're doing an embedded 'elements only form' -- unless we're doing that for displaying a subform entry specifically as its own thing (as part of a modal for example (and only example right now))
 		if(count((array) $formulize_governingElements)> 0 AND (!$formElementsOnly OR (isset($formulize_displayingSubform) AND $formulize_displayingSubform == true))) {
 			drawJavascriptForConditionalElements($GLOBALS['formulize_renderedElementHasConditions'], $formulize_governingElements, $formulize_oneToOneElements, $formulize_oneToOneMetaData);
+            print "<div id='conditionalHTMLCapture' class='used-to-assign-html-then-read-innerHTML-so-we-always-get-standardized-conversion-of-quotes-urlencoding-etc' style='display: none;'></div>";
 		}
 
         // need to always include, once, the subformelementid that is being displayed, regardless of whether there are more subs below this or not
@@ -1695,8 +1671,7 @@ function addProfileFields($form, $profileForm) {
 
 	global $xoopsUser, $xoopsConfig, $xoopsConfigUser;
 	$config_handler =& xoops_gethandler('config');
-    $confType = defined('XOOPS_CONF_USER') ? XOOPS_CONF_USER : ICMS_CONF_USER;
-	$xoopsConfigUser =& $config_handler->getConfigsByCat($confType);
+	$xoopsConfigUser =& $config_handler->getConfigsByCat(2); // 2 is the user category
 	$user_handler =& xoops_gethandler('user');
 	$thisUser = $user_handler->get($profileForm);
 
@@ -2616,7 +2591,10 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
             $application_handler = xoops_getmodulehandler('applications', 'formulize');
             $apps = $application_handler->getApplicationsByForm($subform_id);
             $app = is_array($apps) ? $apps[0] : $apps;
-            $appId = $app->getVar('appid');
+						$appId = 0;
+						if($app) {
+            	$appId = $app->getVar('appid');
+						}
             $edit_link = "<a class=\"formulize-element-edit-link\" tabindex=\"-1\" href=\"" . XOOPS_URL .
                 "/modules/formulize/admin/ui.php?page=element&aid=$appId&ele_id=" .
                 $subform_element_object->getVar("ele_id") . "\" target=\"_blank\">edit element</a>";
@@ -2635,7 +2613,7 @@ function drawRowSubformHeaders($headersToDraw, $headingDescriptions) {
     $col_two = "";
     foreach($headersToDraw as $i=>$thishead) {
         if($thishead) {
-            $headerHelpLink = $headingDescriptions[$i] ? "<a class='icon-help' href=\"#\" onclick=\"return false;\" alt=\"".strip_tags(htmlspecialchars($headingDescriptions[$x]))."\" title=\"".strip_tags(htmlspecialchars($headingDescriptions[$i]))."\"></a>" : "";
+            $headerHelpLink = $headingDescriptions[$i] ? "<a class='icon-help' href=\"#\" onclick=\"return false;\" alt=\"".strip_tags(htmlspecialchars($headingDescriptions[$i]))."\" title=\"".strip_tags(htmlspecialchars($headingDescriptions[$i]))."\"></a>" : "";
             $col_two .= "<th><p>$thishead $headerHelpLink</p></th>\n";
         }
     }
@@ -2716,7 +2694,7 @@ function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid,
 //this function takes a formid and compiles all the elements for that form
 //elements_allowed is NOT based off the display values.  It is based off of the elements that are specifically designated for the current displayForm function (used to display parts of forms at once)
 // $title is the title of a grid that is being displayed
-function compileElements($fid, $form, $element_handler, $prevEntry, $entry, $go_back, $parentLinks, $owner_groups, $groups, $overrideValue, $elements_allowed, $profileForm, $frid, $mid, $sub_entries, $sub_fids, $member_handler, $gperm_handler, $title, $screen=null, $printViewPages="", $printViewPageTitles="") {
+function compileElements($fid, $form, $element_handler, $prevEntry, $entry, $go_back, $parentLinks, $groups, $overrideValue, $elements_allowed, $profileForm, $frid, $mid, $sub_entries, $sub_fids, $member_handler, $gperm_handler, $title, $screen=null, $printViewPages=array(), $printViewPageTitles="") {
 
 	include_once XOOPS_ROOT_PATH.'/modules/formulize/include/elementdisplay.php';
 
@@ -2880,7 +2858,7 @@ function compileElements($fid, $form, $element_handler, $prevEntry, $entry, $go_
                             $output_timeelement_js = '';
                         }
 						if($js = $conditionalElementForValidiationCode->renderValidationJS()) {
-							$GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$conditionalElementForValidiationCode->getName()] = "if(window.document.getElementById('formulize-".$conditionalElementForValidiationCode->getName()."').style.display != 'none') {\n".$js."\n}\n";
+							$GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$conditionalElementForValidiationCode->getName()] = "if(jQuery('[name^=".$conditionalElementForValidiationCode->getName()."]').length && window.document.getElementById('formulize-".$conditionalElementForValidiationCode->getName()."').style.display != 'none') {\n".$js."\n}\n";
 						}
 						unset($conditionalElementForValidiationCode);
 						unset($conditionalValidationRenderer);
@@ -2917,7 +2895,7 @@ function compileElements($fid, $form, $element_handler, $prevEntry, $entry, $go_
                 // 2 is the number of default blanks, 3 is whether to show the view button or not, 4 is whether to use captions as headings or not, 5 is override owner of entry, $owner is mainform entry owner, 6 is hide the add button, 7 is the conditions settings for the subform element, 8 is the setting for showing just a row or the full form, 9 is text for the add entries button
                 $subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry, $customCaption, $customElements, $ele_value[2], $ele_value[3], $ele_value[4], $ele_value[5], $owner, $ele_value[6], $ele_value[7], $this_ele_id, $ele_value[8], $ele_value[9], $i);
 				if(isset($subUICols['single'])) {
-					$form->insertBreakFormulize($subUICols['single'], "even");
+					$form->insertBreakFormulize($subUICols['single'], "even", "de_{$fid}_{$entryForDEElements}_{$this_ele_id}", $i->getVar('ele_handle'));
 				} else {
 					$subLinkUI = new XoopsFormLabel($subUICols['c1'], $subUICols['c2']);
 					$form->addElement($subLinkUI);
@@ -2939,10 +2917,11 @@ function compileElements($fid, $form, $element_handler, $prevEntry, $entry, $go_
                 if(trim($helpText)) {
                     $gridElement->setDescription($helpText);
                 }
+								$gridElement->formulize_element = $i;
                 $form->addElement($gridElement);
                 unset($gridElement); // because addElement received values by reference, we need to destroy it here, so if it is recreated in a subsequent iteration, we don't end up overwriting elements we've already assigned. Ack! Ugly!
 			} else {
-				$form->insertBreakFormulize($gridContents, "head"); // head is the css class of the cell
+				$form->insertBreakFormulize($gridContents, "head", 'de_'.$fid.'_'.$entryForDEElements.'_'.$this_ele_id, $i->getVar('ele_handle')); // head is the css class of the cell
 			}
 		} elseif($ele_type == "ib" OR is_array($form_ele)) {
 			// if it's a break, handle it differently...$form_ele may be an array if it's a non-interactive element such as a grid
@@ -3981,7 +3960,7 @@ function saveSub(reload) {
             var formData = new FormData(jQuery('#formulize_modal')[0]);
             //var formData = subEntryDialog.children('form').serialize();
             jQuery.post({
-                url: '<?php print XOOPS_URL; ?>/modules/formulize/include/readelements.php',
+                url: '<?php print XOOPS_URL; ?>/modules/formulize/include/readelements.php?fid='+subEntryDialog.data('fid')+'&frid='+subEntryDialog.data('frid'),
                 data: formData,
                 cache: false,
                 contentType: false,
@@ -4224,7 +4203,7 @@ jQuery(document).ready(function() {
 	}
 
     foreach(array_keys($conditionalElements) as $ce) {
-        $initCode .= "assignConditionalHTML('".$ce."', jQuery('#formulize-".$ce."').html());\n";
+        $initCode .= "assignConditionalHTML('".$ce."');\n";
 	}
 
     // setup the triggers, and option here to evaluate each condition once so the default values are taken into account just in case, and then setup the on change triggers
@@ -4268,70 +4247,114 @@ var conditionalCheckInProgress = 0;
 ".$initCode."
 
 function callCheckCondition(name) {
-    for(key in governedElements[name]) {
-        var handle = governedElements[name][key];
-			elementValuesForURL = getRelevantElementValues(relevantElements[handle]);
-        var handleParts = handle.split('_');
-        if(oneToOneElements[handle]['onetoonefrid'] && handleParts[1] != oneToOneElements[handle]['onetoonefid']) {
-				elementValuesForURL = elementValuesForURL + '&onetoonekey=1&onetoonefrid='+oneToOneElements[handle]['onetoonefrid']+'&onetoonefid='+oneToOneElements[handle]['onetoonefid']+'&onetooneentries='+oneToOneElements[handle]['onetooneentries']+'&onetoonefids='+oneToOneElements[handle]['onetoonefids'];
-			}
-			checkCondition(handle, conditionalHTML[handle], elementValuesForURL);
+	const checks = [];
+    const relevantElementSets = [];
+	for(key in governedElements[name]) {
+		var markupHandle = governedElements[name][key];
+		elementValuesForURL = getRelevantElementValues(relevantElements[markupHandle]);
+        if(elementValuesForURL in relevantElementSets == false) {
+            relevantElementSets[elementValuesForURL] = new Array();
+        }
+        relevantElementSets[elementValuesForURL].push(markupHandle);
+    }
+    for(elementValuesForURL in relevantElementSets) {
+        checks.push(checkCondition(relevantElementSets[elementValuesForURL], elementValuesForURL));
+    }
+    var results = jQuery.when.apply(jQuery, checks);
+    results.done(function(){
+        // if only one operation sent, then results are flat and not in an array. Make an array to standardize what we're working with.
+        if(typeof arguments[0] === 'string') {
+            arguments[0] = new Array(arguments[0]);
 		}
-}
-
-function assignConditionalHTML(handle, html) {
-	conditionalHTML[handle] = html;
-}
-
-function checkCondition(handle, currentHTML, elementValuesForURL) {
-	partsArray = handle.split('_');
-    conditionalCheckInProgress = conditionalCheckInProgress + 1;
-	jQuery.post(\"".XOOPS_URL."/modules/formulize/formulize_xhr_responder.php?uid=".$uid."&op=get_element_row_html&elementId=\"+partsArray[3]+\"&entryId=\"+partsArray[2]+\"&fid=\"+partsArray[1]+elementValuesForURL, function(data) {
-		if(data) {
+        jQuery.each(arguments, function(index, responseData){
+            if(Array.isArray(responseData) === false || 0 in responseData === false) { return false; }
 			try {
-				results = JSON.parse(data);
-				// data is JSON, so will have extra instructions for us
-				data = results.data;
-                if(typeof results.newvalues !== 'undefined') {
-                    newvalues = results.newvalues;
-                    for(key in newvalues) {
-                        jQuery(\"[name=\"+newvalues[key].name+\"]\").val(newvalues[key].value);
-                    }
+                var result = JSON.parse(responseData[0]);
+            } catch (e) {
+                return false;
+			}
+            if(result) {
+                try {
+                    elements = result.elements;
+                    for(key in elements) {
+                        var handle = elements[key].handle;
+                        var data = elements[key].data;
+                        if(typeof data === 'string') {
+                            data = data.trim();
+                        }
+                        if(data && data != '{NOCHANGE}' && (conditionalHTMLHasChanged(handle, data) || (window.document.getElementById('formulize-'+handle) !== null && window.document.getElementById('formulize-'+handle).style.display == 'none'))) {
+							jQuery('#formulize-'+handle).empty();
+							jQuery('#formulize-'+handle).append(data);
+							// unless it is a hidden element, show the table row...
+                            if(parseInt(String(data).indexOf(\"input type='hidden'\"))!=0) {
+								if(window.document.getElementById('formulize-'+handle) !== null) {
+									window.document.getElementById('formulize-'+handle).style.display = null; // doesn't need real value, just needs to be not set to 'none'
+								}
+								ShowHideTableRow(handle,false,0); // because the newly appended row will have full opacity so immediately make it transparent
+                                ShowHideTableRow(handle,true,1000);
+								if (typeof window['formulize_initializeAutocomplete'+handle] === 'function') {
+									window['formulize_initializeAutocomplete'+handle]();
+								}
+								if (typeof window['formulize_conditionalElementUpdate'+partsArray[3]] === 'function') {
+									window['formulize_conditionalElementUpdate'+partsArray[3]]();
+								}
+							}
+                        } else if( !data && window.document.getElementById('formulize-'+handle) !== null && window.document.getElementById('formulize-'+handle).style.display != 'none') {
+                            ShowHideTableRow(handle,false,1000,true);
+						}
+                        if(data != '{NOCHANGE}') {
+                            assignConditionalHTML(handle, data);
+						}
+						conditionalCheckInProgress = conditionalCheckInProgress - 1;
+					}
+                } catch (e) {
+                    return false;
                 }
-		    } catch (e) {
-                // do nothing
             }
-			// should only empty if there is a change from the current state
-            if(data != '{NOCHANGE}' && (currentHTML != data || (window.document.getElementById('formulize-'+handle) !== null && window.document.getElementById('formulize-'+handle).style.display == 'none'))) {
-				jQuery('#formulize-'+handle).empty();
-				jQuery('#formulize-'+handle).append(data);
-                // unless it is a hidden element, show the table row...
-                if(parseInt(data.indexOf(\"input type='hidden'\"))!=0) {
-                    if(window.document.getElementById('formulize-'+handle) !== null) {
-                        window.document.getElementById('formulize-'+handle).style.display = null; // doesn't need real value, just needs to be not set to 'none'
-                    }
-                    ShowHideTableRow(handle,false,0,function() {}); // because the newly appended row will have full opacity so immediately make it transparent
-                    ShowHideTableRow(handle,true,1500,function() {});
-                    if (typeof window['formulize_initializeAutocomplete'+handle] === 'function') {
-                        window['formulize_initializeAutocomplete'+handle]();
-                    }
-                    if (typeof window['formulize_conditionalElementUpdate'+partsArray[3]] === 'function') {
-                        window['formulize_conditionalElementUpdate'+partsArray[3]]();
-                    }
-                }
-				assignConditionalHTML(handle, data);
-			}
-		} else {
-			if( window.document.getElementById('formulize-'+handle) !== null && window.document.getElementById('formulize-'+handle).style.display != 'none') {
-				ShowHideTableRow(handle,false,700,function() {
-					jQuery('#formulize-'+handle).empty();
-					window.document.getElementById('formulize-'+handle).style.display = 'none';
-					assignConditionalHTML(handle, data);
-				});
-			}
-		}
-		conditionalCheckInProgress = conditionalCheckInProgress - 1;
+		});
 	});
+}
+
+function captureDataAsInDOM(data) {
+	jQuery('#conditionalHTMLCapture').empty();
+	jQuery('#conditionalHTMLCapture').append(data);
+	return window.document.getElementById('conditionalHTMLCapture').innerHTML.trim();
+}
+
+function assignConditionalHTML(handle, data = '') {
+	if(!data && jQuery('formulize-'+handle).length > 0) {
+		data = window.document.getElementById('formulize-'+handle).innerHTML.trim();
+	}
+	conditionalHTML[handle] = '';
+	if(data) {
+		conditionalHTML[handle] = captureDataAsInDOM(data);
+	}
+}
+
+function conditionalHTMLHasChanged(handle, data) {
+  return conditionalHTML[handle] != captureDataAsInDOM(data);
+}
+
+function checkCondition(relevantElementSet, elementValuesForURL) {
+    var oneToOneAdded = false;
+    var elementIds = '';
+    var entryIds = '';
+    var fids = '';
+    var elementIdsSep = '';
+    for(k in relevantElementSet) {
+        conditionalCheckInProgress = conditionalCheckInProgress + 1;
+        var markupHandle = relevantElementSet[k];
+		partsArray = markupHandle.split('_');
+        elementIds = elementIds + elementIdsSep + partsArray[3];
+        entryId = partsArray[2]; // assuming all the same!
+        fid = partsArray[1]; // assuming all the same!
+        if(oneToOneAdded == false && oneToOneElements[markupHandle]['onetoonefrid'] && partsArray[1] != oneToOneElements[markupHandle]['onetoonefid']) {
+            elementValuesForURL = elementValuesForURL + '&onetoonekey=1&onetoonefrid='+oneToOneElements[markupHandle]['onetoonefrid']+'&onetoonefid='+oneToOneElements[markupHandle]['onetoonefid']+'&onetooneentries='+oneToOneElements[markupHandle]['onetooneentries']+'&onetoonefids='+oneToOneElements[markupHandle]['onetoonefids'];
+            oneToOneAdded = true;
+        }
+        elementIdsSep = ',';
+    }
+	return jQuery.post(\"".XOOPS_URL."/modules/formulize/formulize_xhr_responder.php?uid=".$uid."&op=get_element_row_html&elementId=\"+elementIds+\"&entryId=\"+entryId+\"&fid=\"+fid+elementValuesForURL);
 }
 
 function getRelevantElementValues(elements) {
@@ -4376,7 +4399,7 @@ function getRelevantElementValues(elements) {
 }
 
 
-function ShowHideTableRow(handle, show, speed, callback)
+function ShowHideTableRow(handle, show, speed, empty = false)
 {
     var childCellsSelector = jQuery('#formulize-'+handle).children();
     var ubound = childCellsSelector.length - 1;
@@ -4385,8 +4408,8 @@ function ShowHideTableRow(handle, show, speed, callback)
     childCellsSelector.each(function(i)
     {
         // Only execute the callback on the last element.
-        if (ubound == i)
-            lastCallback = callback
+        if (ubound == i && empty)
+            lastCallback = function() { jQuery('#formulize-'+handle).empty(); window.document.getElementById('formulize-'+handle).style.display = 'none'; }
 
         if (show)
         {
@@ -4533,7 +4556,7 @@ function get_display_screen_for_subform($subform_element_object) {
 
     if ($subform_element_object and is_a($subform_element_object, "formulizeformulize")) {
         $ele_value = $subform_element_object->getVar('ele_value');
-        if (isset($ele_value['display_screen'])) {
+        if (isset($ele_value['display_screen']) AND intval($ele_value['display_screen']) > 0) {
             // use selected screen
             $selected_screen_id = intval($ele_value['display_screen']);
         } else {

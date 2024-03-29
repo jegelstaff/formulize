@@ -69,8 +69,19 @@ switch($method) {
         $method = 'app';
         break;
     default:
-        $errorMessage .= sendCode(TFA_EMAIL, $uid); // will return errors
-        $method = 'email';
+				// verify that user has email address!
+				if($userObject->getVar('email')=='') {
+					print "
+<div style='padding: 2em;'>
+<h1>"._US_RESET_PW_NO_EMAIL."</h1>
+<p>"._US_RESET_PW_CONTACT_ADMIN."</p>
+</div>";
+					include 'footer.php';
+					exit();
+				} else {
+        	$errorMessage .= sendCode(TFA_EMAIL, $uid); // will return errors
+        	$method = 'email';
+				}
 }
 print "
 <div style='padding: 2em;'>

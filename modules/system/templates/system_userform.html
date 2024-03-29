@@ -1,39 +1,37 @@
-<div style="position: relative;">
-	<div>
-		<fieldset style="padding: 10px;">
-			<legend style="font-weight: bold; font-size: 150%;"><{$lang_login}></legend>
-<div id="icms_block_login_form">
-			<form action="user.php" method="post">
-		    	<div><{$lang_username}><input type="text" class="uname" name="uname" size="21" maxlength="255" value="<{$usercookie}>" />
-		    	<br />
-			    <br /></div>
-		    	<div><{$lang_password}><input type="password" name="pass" size="21" maxlength="255" /><br /></div>
-			    <{if $rememberme }>
-			    	<div><input type="checkbox" name="rememberme" value="On" /><{$lang_rememberme}><br /></div>
-			    <{/if}>
-			    <div><input type="hidden" name="op" value="login" /></div>
-				<input type="hidden" id="tfacode" name="tfacode" value="" />
-				<input type="hidden" id="tfaremember" name="tfaremember" value="" />
-		    	<div><input type="hidden" name="xoops_redirect" value="<{$redirect_page}>"/>
-				
-			    <br />
-		    	<input type="submit" value="<{$lang_login}>" /></div>
-			</form>
-			<{php}>include_once XOOPS_ROOT_PATH.'/include/2fa/manage.php';print tfaLoginJS('icms_block_login_form');<{/php}>
-  <{if $auth_openid}>
-<br />
-	  <div style="text-align: <{$smarty.const._GLOBAL_LEFT}>;"><a href="<{$auth_url}>"><{$lang_login_oid}></a></div>
-  <{/if}>
-<{if $auth_okta}>
-<br />
-	  <div style="text-align: <{$smarty.const._GLOBAL_LEFT}>;"><a href="<{$auth_okta}>"><{$lang_login_okta}></a></div>
-  <{/if}>
-</div>
-			<a name="lost"></a>
-			<{if $allow_registration }>
-				<div style="text-align: <{$smarty.const._GLOBAL_RIGHT}>;"><{$lang_notregister}><br /></div>
-			<{/if}>
-		</fieldset>
-	</div>
-</div>
+<fieldset id="icms_block_login_form">
+	<legend><{$lang_login}></legend>
+	<form action="user.php" method="post">
+		<div class="block_login_form--username">
+			<label class="form-label"><{$lang_username}></label>
+			<input type="text" required class="uname form-input" name="uname" maxlength="255" value="<{$usercookie}>" aria-required="true" />
+		</div>
+		<div class="block_login_form--password">
+			<label class="form-label"><{$lang_password}></label>
+			<input type="password" required class="form-input" name="pass" maxlength="255" aria-required="true" />
+		</div>
+		<{if $rememberme }>
+			<div class="block_login_form--remember">
+				<input type="checkbox" name="rememberme" value="On" /><{$lang_rememberme}>
+			</div>
+		<{/if}>
+		<input type="hidden" name="op" value="login" />
+		<input type="hidden" id="tfacode" name="tfacode" value="" />
+		<input type="hidden" id="tfaremember" name="tfaremember" value="" />
+		<input type="hidden" name="xoops_redirect" value="<{$redirect_page}>"/>
+		<div class="block_login_form--submit">
+			<input type="submit" class="btn" value="<{$lang_login}>" />
+		</div>
+	</form>
+	<{php}>include_once XOOPS_ROOT_PATH.'/include/2fa/manage.php';print tfaLoginJS('icms_block_login_form');<{/php}>
+	<{if $auth_openid}>
+		<div style="text-align: <{$smarty.const._GLOBAL_LEFT}>;"><a href="<{$auth_url}>"><{$lang_login_oid}></a></div>
+	<{/if}>
+	<{if $auth_okta}>
+		<div style="text-align: <{$smarty.const._GLOBAL_LEFT}>;"><a href="<{$auth_okta}>"><{$lang_login_okta}></a></div>
+	<{/if}>
+	<a name="lost"></a>
+	<{if $allow_registration }>
+		<div style="text-align: <{$smarty.const._GLOBAL_RIGHT}>;"><{$lang_notregister}><br /></div>
+	<{/if}>
+</fieldset>
 
