@@ -437,7 +437,7 @@ class formulize_themeForm extends XoopsThemeForm {
 
         $templateVariables = array();
         $templateVariables['renderedElement'] = trim($ele->render());
-        if(!$templateVariables['renderedElement']) { return ""; }
+        if(!$templateVariables['renderedElement'] AND !is_numeric($templateVariables['renderedElement'])) { return ""; }
 
 		static $show_element_edit_link = null;
 		global $formulize_drawnElements;
