@@ -2003,6 +2003,7 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
             $formula = implode("\n", $formulaLines);
         }
         $fileName = XOOPS_ROOT_PATH.'/modules/formulize/cache/Derived_value_formula_for_'.$thisMetaData['handle'].'_in_form_'.$thisMetaData['form_id']."_(fid_".$fid."_frid_".$frid."_fn_".$formulaNumber.").php";
+				$formula = removeOpeningPHPTag($formula);
         file_put_contents($fileName, "<?php
     function derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "�", ",", ")", "(", "[", "]"), "_", $formHandle)."_".$frid."_".$fid."_".$formulaNumber."(\$entry, \$form_id, \$entry_id, \$relationship_id) {
         $formula

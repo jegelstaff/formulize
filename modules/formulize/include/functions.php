@@ -2584,6 +2584,18 @@ function formulize_text_to_hyperlink($text, $textWidth) {
     return str_replace("<a ", "<a target='_blank' ", $text);
 }
 
+/**
+ * Strip <?php out of the beginning of a string if it is present (checks the first five chars)
+ * @param string $string The string you want to check and strip from
+ * @return string The string, potentially modified with <?php gone if it was found as the first five chars
+ */
+function removeOpeningPHPTag($string) {
+	$string = trim($string);
+	if(substr($string, 0, 5) == '<?php') {
+		$string = substr($string, 5);
+	}
+	return $string;
+}
 
 // THIS FUNCTION INTERPRETS A TEXTBOX'S DEFAULT VALUE AND RETURNS THE CORRECT STRING
 // Takes $ele_value[2] as the input (third position in ele_value array from element object)
@@ -2597,6 +2609,7 @@ function getTextboxDefault($ele_value, $form_id, $entry_id, $placeholder="") {
     global $xoopsUser;
 
     if (strstr($ele_value, "\$default")) { // php default value
+				$ele_value = removeOpeningPHPTag($ele_value);
 			  $default = '';
         eval(stripslashes($ele_value));
         $ele_value = $default;

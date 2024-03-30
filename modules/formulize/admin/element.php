@@ -164,6 +164,9 @@ if ($_GET['ele_id'] != "new") {
         if (!isset($ele_value[4])) {
             $ele_value[4] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
         }
+				if (!isset($ele_value[5]) OR $ele_value[5] == '') {
+					$ele_value[5] = "<?php\n";
+				}
     }
 
     $ele_uitext = $elementObject->getVar('ele_uitext');
@@ -201,6 +204,7 @@ if ($_GET['ele_id'] != "new") {
             $ele_value[2] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
             $ele_value[3] = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
             $ele_value[4] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
+						$ele_value[5] = "<?php\n";
             break;
         case "subform":
             $ele_value[2] = 0;
