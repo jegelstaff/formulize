@@ -617,18 +617,22 @@ function patch40() {
 				// 3. Textarea $ele_value[0] if they contain $default
 				// 4. ib $ele_value[0] if they contain $value
 				// 5. areamodif $ele_value[0] if they contain $value
+
+				// query for the elements...
 				$elementsNeedingOpeningPHPTagsSQL = "SELECT ele_id, ele_type, ele_value FROM ".$xoopsDB->prefix('formulize')." WHERE
 					(ele_type = 'derived')
 					OR (ele_type IN ('ib', 'areamodif') AND ele_value LIKE '%\$value%')
 					OR (ele_type IN ('text', 'textarea') AND ele_value LIKE '%\$default%') ";
 				if($res = $xoopsDB->query($elementsNeedingOpeningPHPTagsSQL)) {
+					// loop through the results...
 					while($record = $xoopsDB->fetchArray($res)) {
-						$eleValueKey = 0;
-						if($record['ele_type'] == 'text') {
-							$eleValueKey = 2;
-						}
+						// isolate the value we're targetting...
+						$eleValueKey = $record['ele_type'] == 'text' ? 2 : 0; // figure out which key we need to look in based on the element type (text is 2, everything else is 0)
 						$newEleValue = unserialize(($record['ele_value']));
+						$newEleValue[$eleValueKey] = trim($newEleValue[$eleValueKey]);
+						// is the value missing the opening php tag?
 						if(substr($newEleValue[$eleValueKey], 0, 5) != '<?php') {
+							// add the tag and update the database...
 							$newEleValue[$eleValueKey] = "<?php\n".$newEleValue[$eleValueKey];
 							$newEleValue = serialize($newEleValue);
 							$updateSQL = "UPDATE ".$xoopsDB->prefix('formulize')." SET ele_value = ".$xoopsDB->quoteString($newEleValue)." WHERE ele_id = ".$record['ele_id'];
@@ -642,6 +646,7 @@ function patch40() {
 				}
 
 				// Same operation, on the form procedures
+				// query for the procedures...
 				$formProceduresNeedingOpeningPHPTagsSQL = "SELECT id_form as fid, on_before_save, on_after_save, on_delete, custom_edit_check
 					FROM ".$xoopsDB->prefix('formulize_id')." WHERE
 					(on_before_save != '' AND on_before_save NOT LIKE '<?php%')
@@ -649,15 +654,20 @@ function patch40() {
 					OR (on_delete != '' AND on_delete NOT LIKE '<?php%')
 					OR (custom_edit_check != '' AND custom_edit_check NOT LIKE '<?php%') ";
 				if($res = $xoopsDB->query($formProceduresNeedingOpeningPHPTagsSQL)) {
+					// loop through the results...
 					while($record = $xoopsDB->fetchArray($res)) {
+						// for each record that was returned from the DB, make a list of all the events and then check each event...
 						$events = array('on_before_save', 'on_after_save', 'on_delete', 'custom_edit_check');
 						foreach($events as $i=>$event) {
+							$record[$event] = trim($record[$event]);
+							// if the event is missing the opening php tag, then let's make a SQL snippet containing the updated code we want to write to the DB
 							if($record[$event] AND substr($record[$event], 0, 5) != '<?php') {
 								$events[$i] = "$event = ".$xoopsDB->quoteString("<?php\n".$record[$event]);
-							} else {
+							} else { // otherwise, throw away this event, we won't be doing an update on it
 								unset($events[$i]);
 							}
 						}
+						// update the database with the new code for the relevant events
 						$updateProcSQL = "UPDATE ".$xoopsDB->prefix('formulize_id')." SET ".implode(', ',$events)." WHERE id_form = ".$record['fid'];
 						if(!$updateProcRes = $xoopsDB->query($updateProcSQL)) {
 							print "Notice: could not add opening PHP tag to the code in procedures for form ".$record['fid']." with the SQL:<br>".str_replace('<', '&lt;',$updateProcSQL)."<br>".$xoopsDB->error()."<br>This is not a critical error. You can add the tag yourself at the top of the code, if you want the editor to provide highlighting. For more information contact <a href=mailto:info@formulize.org>info@formulize.org</a>.<br>";

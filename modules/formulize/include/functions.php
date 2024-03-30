@@ -2590,6 +2590,7 @@ function formulize_text_to_hyperlink($text, $textWidth) {
  * @return string The string, potentially modified with <?php gone if it was found as the first five chars
  */
 function removeOpeningPHPTag($string) {
+	$string = trim($string);
 	if(substr($string, 0, 5) == '<?php') {
 		$string = substr($string, 5);
 	}
