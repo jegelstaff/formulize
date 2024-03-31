@@ -129,8 +129,9 @@ function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientatio
 		$gridContents[0] = $title;
 		$class = "even";
 		print "<table class='formulize-grid'>\n<tr>";
-		if ($actual_numrows > 0)
+		if ($actual_numrows > 1 OR preg_replace('/[\s]+/mu', '', $rowcaps[0]) != '') {
 			echo "<td class='head'></td>";
+		}
 	} else {
 		print "<table class='outer formulize-grid'>\n";
 		$class = "head";
@@ -139,9 +140,11 @@ function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientatio
 	}
 
 	// draw top row
+	$needToDrawCellsWhenHeadingAtSide = false;
 	foreach($colcaps as $thiscap) {
 		if($headingAtSide) {
-			print "<td class=head>$thiscap</td>\n";
+			$needToDrawCellsWhenHeadingAtSide = preg_replace('/[\s]+/mu', '', $thiscap) != '' ? true : $needToDrawCellsWhenHeadingAtSide;
+			$cellsWhenHeadingAtSide .= "<td class=head>$thiscap</td>\n";
 		} else {
 		  if($orientation == "vertical" AND $class=="even" AND !$headingAtSide) { // only alternate rows
 				$class = "odd";
@@ -151,6 +154,11 @@ function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientatio
 			print "<td class=$class>$thiscap</td>\n";	
 		}
 	}
+
+	if($needToDrawCellsWhenHeadingAtSide) {
+		print $cellsWhenHeadingAtSide;
+	}
+
 	if(is_array($finalCell)) { // draw blank header for last column if there is such a thing
 		print "<td class=head>&nbsp;</td>\n";
 	}
@@ -170,8 +178,9 @@ function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientatio
 		}
 		print "<tr>\n";
 		if($headingAtSide) {
-			if ($actual_numrows > 0)
+			if ($actual_numrows > 1 OR preg_replace('/[\s]+/mu', '', $thiscap) != '') {
 				print "<td class=\"head\">$thiscap</td>\n";
+			}
 		} else {
 			print "<td class=$class>$thiscap</td>\n";
 		}
