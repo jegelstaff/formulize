@@ -112,10 +112,10 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
         $slider_html .= "step=\"{$ele_value[2]}\" ";
         $slider_html .= "value=\"{$ele_value[3]}\" ";
         $slider_html .= "aria-describedby=\"{$markupName}-help-text\" ";
-        $slider_html .= "oninput=\"updateTextInput(value);formulizechanged=1;\">";
+        $slider_html .= "oninput=\"updateTextInput_{$markupName}(value);formulizechanged=1;\">";
         $slider_html .= "</input>";
 
-        $value_html = "<output id=\"rangeValue\" type=\"text\" size=\"2\"";
+        $value_html = "<output id=\"rangeValue_{$markupName}\" type=\"text\" size=\"3\"";
         $value_html.= "for=\"{$markupName}\"";
         $value_html .= ">{$ele_value[3]}<output>";
 
@@ -123,10 +123,10 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
         $form_slider = new XoopsFormLabel($caption, $slider_html);
 
         $update_script = "<script type=\"text/javascript\">";
-        $update_script .= "function updateTextInput(val) {";
-        $update_script .= "document.getElementById('rangeValue').value=val;}\n";
+        $update_script .= "function updateTextInput_{$markupName}(val) {";
+        $update_script .= "document.getElementById('rangeValue_{$markupName}').value=val;\n";
         $update_script .= "let event = new Event('change');\n";
-        $update_script .= "document.getElementById('{$markupName}').dispatchEvent(event);\n";
+        $update_script .= "document.getElementById('{$markupName}').dispatchEvent(event);}\n";
         $update_script .= "</script>";
 
         if($isDisabled) {
