@@ -4210,10 +4210,8 @@ jQuery(document).ready(function() {
         $initCode .= "assignConditionalHTML('".$ce."');\n";
 	}
 
-    // setup the triggers, and option here to evaluate each condition once so the default values are taken into account just in case, and then setup the on change triggers
-    // but the cached html and the returned html don't match initially, so the annimation plays for all elements even if they're already on screen, which is not cool, so turning this off for now, and html needs to be checked for differences
+    // setup the triggers
     foreach(array_keys($governingElements) as $ge) {
-        //$initCode .= "  callCheckCondition(jQuery('[name=\"".$ge."\"]').attr('name'));
         $initCode .= "  jQuery(document).on('change', '[name=\"".$ge."\"]', function() {
         callCheckCondition(jQuery(this).attr('name'));
     });\n";
