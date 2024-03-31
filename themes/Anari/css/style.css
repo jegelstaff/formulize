@@ -1757,7 +1757,7 @@ button.card__title {
   cursor: pointer;
 }
 
-#rangeValue {
+output[id^=rangeValue] {
   font-weight: bold;
   font-size: 125%;
 }
