@@ -85,7 +85,7 @@ function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientatio
 	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : '0';
 	$mid = getFormulizeModId();
 	$gperm_handler =& xoops_gethandler('groupperm');
-	$owner = getEntryOwner($entry, $fid); 
+	$owner = $entry == 'new' ? ($xoopsUser ? $xoopsUser->getVar('uid') : 0) : getEntryOwner($entry, $fid); 
 	$member_handler =& xoops_gethandler('member');
 	//$owner_groups = $owner ? $member_handler->getGroupsByUser($owner, FALSE) : array(0=>XOOPS_GROUP_ANONYMOUS);
 	$data_handler = new formulizeDataHandler($fid);

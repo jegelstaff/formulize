@@ -2706,22 +2706,102 @@ function compileElements($fid, $form, $element_handler, $prevEntry, $entry, $go_
 			// we are going to have to store some kind of flag/counter with the id number of the starting element in the table, and the number of times we need to ignore things
 			// we need to then listen for this up above and skip those elements as they come up.  This is why grids must come before their elements in the form definition
 
-			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/griddisplay.php";
-			list($grid_title, $grid_row_caps, $grid_col_caps, $grid_background, $grid_start, $grid_count) = compileGrid($ele_value, $title, $i);
-			$headingAtSide = ($ele_value[5] AND $grid_title) ? true : false; // if there is a value for ele_value[5], then the heading should be at the side, otherwise, grid spans form width as it's own chunk of HTML
-			$gridContents = displayGrid($fid, $entry, $grid_row_caps, $grid_col_caps, $grid_title, $grid_background, $grid_start, "", "", true, $screen, $headingAtSide);
-			if($headingAtSide) { // grid contents is the two bits for the xoopsformlabel when heading is at side, otherwise, it's just the contents for the break
-				$gridElement = new XoopsFormLabel($gridContents[0], $gridContents[1]);
-                $helpText = $i->getVar('ele_desc');
-                if(trim($helpText)) {
-                    $gridElement->setDescription($helpText);
+            // determine if the grid meets any conditions...
+            // *** THIS NEEDS TO BE SWAPPED OUT WITH THE UPDATED DISPLAY CONDITION LOGIC FROM THE DISABLED ELEMENT PULL REQUEST, ONCE THAT IS MERGED IN ***
+
+            $allowed = 1;
+            $elementFilterSettings = $i->getVar('ele_filtersettings');
+            if(is_array($elementFilterSettings[0]) AND count((array) $elementFilterSettings[0]) > 0) {
+                // cache the filterElements for this element, so we can build the right stuff with them later in javascript, to make dynamically appearing elements
+                $renderedElementName = "de_{$fid}_{$entryForDEElements}_{$this_ele_id}";
+                $GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName] = $elementFilterSettings[0];
+        
+                // need to check if there's a condition on this element that is met or not
+                static $cachedEntries = array();
+                if($entry != "new") {
+                    if(!isset($cachedEntries[$fid][$entry])) {
+                        $cachedEntries[$fid][$entry] = getData("", $fid, $entry, cacheKey: 'bypass'.microtime_float());
+                    }
+                    $entryData = $cachedEntries[$fid][$entry];
                 }
-								$gridElement->formulize_element = $i;
-                $form->addElement($gridElement);
-                unset($gridElement); // because addElement received values by reference, we need to destroy it here, so if it is recreated in a subsequent iteration, we don't end up overwriting elements we've already assigned. Ack! Ugly!
-			} else {
-				$form->insertBreakFormulize($gridContents, "head", 'de_'.$fid.'_'.$entryForDEElements.'_'.$this_ele_id, $i->getVar('ele_handle')); // head is the css class of the cell
-			}
+        
+                $filterElements = $elementFilterSettings[0];
+                $filterOps = $elementFilterSettings[1];
+                $filterTerms = $elementFilterSettings[2];
+                /* ALTERED - 20100316 - freeform - jeff/julian - start */
+                $filterTypes = $elementFilterSettings[3];
+        
+                // find the filter indexes for 'match all' and 'match one or more'
+                $filterElementsAll = array();
+                $filterElementsOOM = array();
+                for($xx=0;$xx<count((array) $filterTypes);$xx++) {
+                    if($filterTypes[$xx] == "all") {
+                        $filterElementsAll[] = $xx;
+                    } else {
+                        $filterElementsOOM[] = $xx;
+                    }
+                }
+                /* ALTERED - 20100316 - freeform - jeff/julian - stop */
+        
+                // setup evaluation condition as PHP and then eval it so we know if we should include this element or not
+                $evaluationCondition = "\$passedCondition = false;\n";
+                $evaluationCondition .= "if(";
+        
+                /* ALTERED - 20100316 - freeform - jeff/julian - start */
+                $evaluationConditionAND = buildEvaluationCondition("AND",$filterElementsAll,$filterElements,$filterOps,$filterTerms,$entry,$entryData);
+                $evaluationConditionOR = buildEvaluationCondition("OR",$filterElementsOOM,$filterElements,$filterOps,$filterTerms,$entry,$entryData);
+        
+                $evaluationCondition .= $evaluationConditionAND;
+                if( $evaluationConditionOR ) {
+                    if( $evaluationConditionAND ) {
+                        $evaluationCondition .= " AND (" . $evaluationConditionOR . ")";
+                        //$evaluationCondition .= " OR (" . $evaluationConditionOR . ")";
+                    } else {
+                        $evaluationCondition .= $evaluationConditionOR;
+                    }
+                }
+                /* ALTERED - 20100316 - freeform - jeff/julian - stop */
+        
+                $evaluationCondition .= ") {\n";
+                $evaluationCondition .= "  \$passedCondition = true;\n";
+                $evaluationCondition .= "}\n";
+        
+                //print( $evaluationCondition );
+        
+                eval($evaluationCondition);
+                if(!$passedCondition) {
+                    $allowed = 0;
+                }
+            }
+            // *** END OF WHAT NEEDS TO BE SWAPPED OUT ***
+
+            if($allowed) {
+
+                include_once XOOPS_ROOT_PATH . "/modules/formulize/include/griddisplay.php";
+                list($grid_title, $grid_row_caps, $grid_col_caps, $grid_background, $grid_start, $grid_count) = compileGrid($ele_value, $title, $i);
+                $headingAtSide = ($ele_value[5] AND $grid_title) ? true : false; // if there is a value for ele_value[5], then the heading should be at the side, otherwise, grid spans form width as it's own chunk of HTML
+                $gridContents = displayGrid($fid, $entry, $grid_row_caps, $grid_col_caps, $grid_title, $grid_background, $grid_start, "", "", true, $screen, $headingAtSide);
+                if($headingAtSide) { // grid contents is the two bits for the xoopsformlabel when heading is at side, otherwise, it's just the contents for the break
+                    $gridElement = new XoopsFormLabel($gridContents[0], $gridContents[1]);
+                    $helpText = $i->getVar('ele_desc');
+                    if(trim($helpText)) {
+                        $gridElement->setDescription($helpText);
+                    }
+                    $gridElement->formulize_element = $i;
+                    $form->addElement($gridElement);
+                    unset($gridElement); // because addElement received values by reference, we need to destroy it here, so if it is recreated in a subsequent iteration, we don't end up overwriting elements we've already assigned. Ack! Ugly!
+                } else {
+                    $form->insertBreakFormulize($gridContents, "head", 'de_'.$fid.'_'.$entryForDEElements.'_'.$this_ele_id, $i->getVar('ele_handle')); // head is the css class of the cell
+                }
+            } else {
+
+                // *** BORROWED FROM ABOVE FOR REGULAR ELEMENT RENDERING, SINCE WE NEED THE CONTAINER TO BE PUT INTO THE FORM!!
+
+                // need to add a flag element to the form, so that when rendered, we'll get a hidden container for the element, in case it is going to appear asynchronously later
+					$rowFlag = "{STARTHIDDEN}<<||>>de_".$fid."_".$entryForDEElements."_".$this_ele_id;
+					$form->addElement($rowFlag);
+
+            }
 		} elseif($ele_type == "ib" OR is_array($form_ele)) {
 			// if it's a break, handle it differently...$form_ele may be an array if it's a non-interactive element such as a grid
 				// final param is used as id name in the table row where this element exists, so we can interact with it for showing and hiding
