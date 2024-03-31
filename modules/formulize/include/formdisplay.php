@@ -2787,6 +2787,10 @@ function compileElements($fid, $form, $element_handler, $prevEntry, $entry, $go_
                     if(trim($helpText)) {
                         $gridElement->setDescription($helpText);
                     }
+                    // if any of the elements in the grid are required, mark as required so we get the asterisk
+                    if(gridHasRequiredElements($grid_start, $grid_count, $fid)) {
+                        $gridElement->setRequired();
+                    }
                     $gridElement->formulize_element = $i;
                     $form->addElement($gridElement);
                     unset($gridElement); // because addElement received values by reference, we need to destroy it here, so if it is recreated in a subsequent iteration, we don't end up overwriting elements we've already assigned. Ack! Ugly!

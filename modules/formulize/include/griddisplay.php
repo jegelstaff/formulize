@@ -281,6 +281,26 @@ function compileGrid($ele_value, $title, $element) {
 	return $toreturn;
 }
 
+/**
+ * This function checks elements from the start through the count, and returns true if any are required
+ * @param int $startID The starting element ID (could be some other legacy format too, yuck)
+ * @param int $grid_count The number of elements that will be included in the grid
+ * @param int $fid The form id number
+ * @return boolean Returns true if any of the elements to be included are required. Otherwise, false.
+ */
+function gridHasRequiredElements($startID, $grid_count, $fid) {
+	global $xoopsDB;
+	// figure out where we are supposed to start in the form
+	if(!is_numeric($startID) AND $startID !== "first") { 
+		$order_query = q("SELECT ele_order FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_req = 1 AND ele_caption = \"$startID\" AND id_form=\"$fid\" ORDER BY ele_order LIMIT 0,".intval($grid_count)); 
+	} elseif($startID === "first") { // get the ele_id of the element with the lowest weight
+		$order_query = q("SELECT ele_order FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_req = 1 AND id_form=\"$fid\" ORDER BY ele_order LIMIT 0,1"); 
+	} else {
+		$order_query = q("SELECT ele_order FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_req = 1 AND id_form=\"$fid\" AND ele_id =\"$startID\" ORDER BY ele_order LIMIT 0,".intval($grid_count)); 
+	}
+	return (count($order_query) > 0);
+}
+
 function nonNullGridRowCaps($var) {
     if(trim($var) != "") {
         return true;
