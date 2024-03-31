@@ -4318,7 +4318,7 @@ function callCheckCondition(name) {
 function captureDataAsInDOM(data) {
 	jQuery('#conditionalHTMLCapture').empty();
 	jQuery('#conditionalHTMLCapture').append(data);
-	var capturedHTML = window.document.getElementById('conditionalHTMLCapture').innerHTML.trim();
+	let capturedHTML = window.document.getElementById('conditionalHTMLCapture').innerHTML.trim();
 	jQuery('#conditionalHTMLCapture').empty();
 	return capturedHTML;
 }
