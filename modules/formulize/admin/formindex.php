@@ -490,7 +490,6 @@ function patch40() {
         $sql['on_delete'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id") . " ADD `on_delete` text";
         $sql['viewentryscreen_templates'] = "ALTER TABLE ".$xoopsDB->prefix('formulize_screen_template') . " ADD `viewentryscreen` varchar(10) NOT NULL default ''";
 				$sql['ele_disabledconditions'] = "ALTER TABLE ".$xoopsDB->prefix("formulize"). " ADD `ele_disabledconditions` text NOT NULL";
-				$sql['remove_newslider'] = "UPDATE ".$xoopsDB->prefix("formulize")." SET ele_type = 'slider' WHERE ele_type = 'newslider'";
 				$sql['update_module_name'] = "UPDATE ".$xoopsDB->prefix("modules")." SET name = 'Formulize' WHERE dirname = 'formulize' AND name = 'Forms'";
 				unlink(XOOPS_ROOT_PATH.'/cache/adminmenu_english.php');
 
