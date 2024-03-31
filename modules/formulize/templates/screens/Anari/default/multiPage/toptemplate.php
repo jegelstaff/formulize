@@ -2,6 +2,7 @@
 
 if($showTabs) {
     print "
+    <div>&nbsp;</div>
     <div id='pageNavTable' class='pill-tabs'>";
         if($saveAndLeave) {
             print "

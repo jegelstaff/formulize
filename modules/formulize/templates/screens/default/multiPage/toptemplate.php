@@ -2,6 +2,7 @@
 
 if($showTabs) {
     print "
+    <div>&nbsp;</div>
     <div id='pageNavTable' class='pill-tabs'>
         <a href='#' this-page='".($totalPages+1)."' class='icon-arrow-backward pill-tabs__item navtab'> $saveAndLeave</a>";
         foreach($pageTitles as $i=>$title) {

@@ -3,19 +3,6 @@
    License: none (public domain)
 */
 
-body {
-  font-family: Poppins, Helvetica, Verdana, sans-serif;
-  color: #323C47;
-  background: #F5F6F8;
-  line-height: 1.4;
-}
-
-:root {
-  --button-color: #0d7bbf;
-  --accent-color: #0d7bbf;
-}
-
-
 html, body, div, span, applet, object, iframe,
 h1, h2, h3, h4, h5, h6, p, blockquote, pre,
 a, abbr, acronym, address, big, cite, code,
@@ -38,8 +25,17 @@ time, mark, audio, video {
 }
 
 :root {
-  --button-color: #109CF1;
-  --accent-color: #109CF1;
+  --button-color: #0d7bbf;
+  --accent-color: #0d7bbf;
+  --text-color: #323C47;
+  --background-color: #F5F6F8;
+}
+
+body {
+  font-family: Poppins, Helvetica, Verdana, sans-serif;
+  color: var(--text-color);
+  background: var(--background-color);
+  line-height: 1.4;
 }
 
 input {
@@ -428,7 +424,7 @@ table:first-child div.applinks h1 {
   height: 30px;
   font: inherit;
   width: 100%;
-  color: #323C47;
+  color: var(--text-color);
   border: 0;
 }
 .site-header__search-input::placeholder {
@@ -1037,8 +1033,14 @@ table.formulize-subform-table td {
   }
 }
 
+#pageNavTable {
+  position: fixed;
+  margin-top: -2.05em;
+  background-color: var(--background-color);
+  width: 100%;
+}
+
 #pageNavTable.pill-tabs {
-    margin: 0;
     margin-left: 10px;
 }
 /*@media (max-width: 450px) {
@@ -1110,7 +1112,7 @@ table.formulize-subform-table td {
 }
 
 .form-label--inline {
-  color: #323C47;
+  color: var(--text-color);
   display: inline-block;
 }
 
@@ -1172,7 +1174,7 @@ table.outer textarea,
   background: transparent;
   font: inherit;
   font-size: 1rem;
-  color: #323C47;
+  color: var(--text-color);
   /*display: block;*/
   width: 100%;
   max-width: 300px;
@@ -1393,7 +1395,7 @@ table.outer select, .form-container select, #formulize_modal select {
     padding-left: 0.25em;
     width: 100%;
     max-width: 300px;
-    color: #323C47;
+    color: var(--text-color);
 }
 
 div.formulize_autocomplete {
@@ -1957,7 +1959,7 @@ input::-ms-thumb {
 
 .rating-lead-text {
   line-height: 1.6;
-  color: #323C47;
+  color: var(--text-color);
   padding: 30px 0 0;
 }
 @media (min-width: 768px) {
@@ -2199,7 +2201,7 @@ img {
 
 .page-heading {
   font-weight: 500;
-  color: #323C47;
+  color: var(--text-color);
   font-size: 1.3rem;
   margin: 1rem 0 1.5rem 0;
 }
@@ -2212,7 +2214,7 @@ img {
 
 .section-heading {
   font-weight: 500;
-  color: #323C47;
+  color: var(--text-color);
   font-size: 1.2rem;
   margin: 0;
   margin-bottom: 0.5rem;
@@ -2220,7 +2222,7 @@ img {
 
 .subsection-heading {
   font-weight: 500;
-  color: #323C47;
+  color: var(--text-color);
   font-size: 1rem;
   margin: 0;
   margin-bottom: 0.5rem;
@@ -3256,7 +3258,7 @@ table.outer th {
 }
 
 table.outer th {
-  color: #323C47;
+  color: var(--text-color);
   line-height: 1;
   font-weight: 500;
 }
