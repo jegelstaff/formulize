@@ -14,24 +14,12 @@ $previousPageButton $savePageButton $nextPageButton $pageIndicator $pageSelector
 
 <script type='text/javascript'>
 
-function getCurrentHeightOfTabs() {
-	return jQuery('#pageNavTable').innerHeight();
-}
-
-function getDefaultHeightOfTabs() {
-	return jQuery('#pageNavTable > a.navtab').outerHeight(true);
-}
-
-function getTabFontSize() {
-	return parseInt(jQuery('#pageNavTable').css('font-size'));
-}
-
 function setFormOffsetFromTabs() {
-	let currentHeight = getCurrentHeightOfTabs();
-	let defaultHeight = getDefaultHeightOfTabs();
+	let currentHeight = jQuery('#pageNavTable').innerHeight();
+	let defaultHeight = jQuery('#pageNavTable > a.navtab').outerHeight(true);
 	let offset = 0;
 	if(currentHeight > defaultHeight) {
-		let fontSize = getTabFontSize();
+		let fontSize = parseInt(jQuery('#pageNavTable').css('font-size'));
 		offset = Math.round((currentHeight - defaultHeight) / fontSize);
 	}
 	jQuery('#formulize_mainform > div.card').css('margin-top', offset+'em');
