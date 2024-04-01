@@ -80,7 +80,7 @@ if ($_GET['fid'] != "new") {
         $ele_id = $thisElement->getVar('ele_id');
         $ele_handle = $thisElement->getVar('ele_handle');
         $nameText = $colhead ? printSmart($colhead,55) : printSmart($elementCaption,55);
-        $elements[$i]['name'] = "$nameText - $cleanType - $ele_handle";
+        $elements[$i]['name'] = "<span style='font-size: 125%;'>$nameText</span><br>$cleanType - $ele_handle";
         $elements[$i]['content']['ele_id'] = $ele_id;
         $elements[$i]['content']['ele_handle'] = $ele_handle;
         $ele_type = $thisElement->getVar('ele_type');
