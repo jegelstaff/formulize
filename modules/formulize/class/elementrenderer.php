@@ -1115,7 +1115,11 @@ class formulizeElementRenderer{
 				$term = substr($text, $bracketPos+1, $endBracketPos-$bracketPos-1);
                 $elementObject = $element_handler->get($term);
                 if($elementObject) {
-                    $replacementTerm = display($entryData, $term, '', $entry_id);
+					if(isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry_id][$term])) {
+						$replacementTerm = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry_id][$term];
+					} else {
+                    	$replacementTerm = display($entryData, $term, '', $entry_id);
+					}
 					// get the uitext value if necessary
 					$replacementTerm = formulize_swapUIText($replacementTerm, $elementObject->getVar('ele_uitext'));
                     $replacementTerm = formulize_numberFormat($replacementTerm, $term);
