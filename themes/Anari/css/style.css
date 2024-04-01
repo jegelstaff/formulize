@@ -1041,7 +1041,7 @@ table.formulize-subform-table td {
 }
 
 #pageNavTable.pill-tabs {
-    margin-left: 10px;
+    padding-left: 10px;
 }
 /*@media (max-width: 450px) {
     #pageNavTable.pill-tabs {
