@@ -5646,6 +5646,10 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
     }
 
     if(!isset($filterElementIds[$filterId])) {
+				$bt = debug_backtrace();
+				foreach($bt as $thisBT) {
+					print $thisBT['file'] . ' - ' . $thisBT['function'] . ' - ' . $thisBT['line'].'<br>';
+				}
         print "Critical Error: You have a condition set that is relying on an deleted or renamed element: ".$filterElementIds[$filterId]." OR ".$filterId."<br>";
         print "The terms of the condition are: ";
         print_r($filterTerms);
