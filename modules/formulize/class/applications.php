@@ -141,12 +141,10 @@ global $xoopsDB;
         }
 
 		/**
-		 * Returns an array of the fid,sid of default menu links applicable to the current user, based on menu settings and permissions
-		 * @param boolean $includeMenuURLs indicates if URLs declared in the Formulize menu settings should be interpretted
-		 * @param boolean $followMenuURLs indicates if user should be redirected to any menu URLs that were found. Only has an effect if $includeMenuURLs is true
-		 * @return array An array containing the form id and screen id of any default menu link found
+		 * Returns an array of the fid,sid,url representing the default menu link for the current user
+		 * @return array An array containing the form id and screen id and url of any default menu link found
 		 */
-		static function getDefaultScreenForUser($includeMenuURLs=false, $followMenuURLs=true) {
+		static function getDefaultScreenForUser() {
 
 			global $xoopsUser, $xoopsDB;
 			static $cachedResults = array();
@@ -168,16 +166,11 @@ global $xoopsDB;
 				$sql .= ' LEFT JOIN '.$xoopsDB->prefix("formulize_menu_permissions").' AS perm ON links.menu_id = perm.menu_id ';
 				$sql .= ' WHERE  default_screen = 1'. $groupSQL . 'ORDER BY links.rank LIMIT 0,1';
 				$res = $xoopsDB->query ( $sql ) or die('SQL Error !<br />'.$sql.'<br />'.$xoopsDB->error());
-				$cachedResults[$cacheKey] = $res;
-			} else {
-				$res = $cachedResults[$cacheKey];
-			}
-			$url = '';
-			$fid = 0;
-			$sid = 0;
-			if ( $res ) {
+				$url = '';
+				$fid = 0;
+				$sid = 0;
 				if($row = $xoopsDB->fetchArray ( $res )) {
-					if($includeMenuURLs AND $row['url']) {
+					if($row['url']) {
 						if(substr($row['url'],0,1)=='/') {
 								$url = XOOPS_URL . $row['url'];
 						} elseif(!strstr($row['url'],'://')) {
@@ -186,10 +179,6 @@ global $xoopsDB;
 								$url = $row['url'];
 						}
 					}
-					if($url AND $followMenuURLs) {
-						header('Location: '.$url);
-						exit();
-					}
 					$screenID = $row['screen'];
 					if ( strpos($screenID,"fid=") !== false){
 						$fid = substr($screenID, strpos($screenID,"=")+1 );
@@ -197,12 +186,11 @@ global $xoopsDB;
 						$sid = substr($screenID, strpos($screenID,"=")+1 );
 					}
 				}
+				$cachedResults[$cacheKey] = array($fid,$sid,$url);
 			}
-			return array($fid,$sid,$url);
+			return $cachedResults[$cacheKey];
 		}
-
   }
-
 
 class formulizeApplication extends XoopsObject {
 

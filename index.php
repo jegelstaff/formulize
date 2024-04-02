@@ -40,7 +40,7 @@ if($icmsConfig['startpage'] == 'formulize') {
 	include_once XOOPS_ROOT_PATH."/modules/formulize/class/applications.php";
   $includeMenuURLs = true;
 	$followMenuURLs = false;
-	list($startFid,$startSid,$startURL) = formulizeApplicationMenuLinksHandler::getDefaultScreenForUser($includeMenuURLs, $followMenuURLs);
+	list($startFid,$startSid,$startURL) = formulizeApplicationMenuLinksHandler::getDefaultScreenForUser();
 	if(!$startFid AND !$startSid AND !$startURL) {
 		$icmsConfig['startpage'] = '--';
 	}
