@@ -206,7 +206,14 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
 			$target = (!$url OR strstr($url, XOOPS_URL)) ? "" : " target='_blank' ";
             $menuSubActive="";
             if(getCurrentURL() == XOOPS_URL.'/modules/formulize/index.php?'.$menulink->getVar("screen")
-                OR getCurrentURL() == $url) {
+                OR getCurrentURL() == $url
+								OR (getCurrentURL() == XOOPS_URL.'/modules/formulize/'
+									AND (
+										$menulink->getVar("screen") == 'sid='.$defaultSid
+										OR $menulink->getVar("screen") == 'fid='.$defaultFid
+									)
+								)
+							) {
                 $menuSubActive=" menuSubActive";
             }
             $text = $menulink->getVar("text");
