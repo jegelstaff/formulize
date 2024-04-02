@@ -4450,7 +4450,7 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
                 }
                 list($conditionsfilter, $conditionsfilter_oom, $parentFormFrom) = buildConditionsFilterSQL($element_value[5], $source_form_id, 'new', $fakeOwnerUid, $elementFormObject, "t1");
                 $sourceEntryIdsForFilters = array(); // filters never have any preselected values from the database
-                list($sourceEntrySafetyNetStart, $sourceEntrySafetyNetEnd) = prepareLinkedElementSafetyNets($sourceEntryIdsForFilters, $conditionsfilter, $conditionsfilter_oom);
+                list($sourceEntrySafetyNetStart, $sourceEntrySafetyNetEnd) = prepareLinkedElementSafetyNets($sourceEntryIdsForFilters);
                 $ele_value['formlink_useonlyusersentries'] = isset($ele_value['formlink_useonlyusersentries']) ? $ele_value['formlink_useonlyusersentries'] : 0;
                 $pgroupsfilter = prepareLinkedElementGroupFilter($source_form_id, $element_value[3], $element_value[4], $element_value[6], $ele_value['formlink_useonlyusersentries']);
                 $extra_clause = prepareLinkedElementExtraClause($pgroupsfilter, $parentFormFrom, $sourceEntrySafetyNetStart);

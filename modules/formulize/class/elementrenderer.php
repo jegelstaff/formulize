@@ -391,7 +391,7 @@ class formulizeElementRenderer{
 
 					// if there is a groups filter, then join to the group ownership table
 
-                    list($sourceEntrySafetyNetStart, $sourceEntrySafetyNetEnd) = prepareLinkedElementSafetyNets($sourceEntryIds, $conditionsfilter, $conditionsfilter_oom);
+                    list($sourceEntrySafetyNetStart, $sourceEntrySafetyNetEnd) = prepareLinkedElementSafetyNets($sourceEntryIds);
 
                     $extra_clause = prepareLinkedElementExtraClause($pgroupsfilter, $parentFormFrom, $sourceEntrySafetyNetStart);
 
