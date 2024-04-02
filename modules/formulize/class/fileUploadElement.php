@@ -105,7 +105,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
     function loadValue($value, $ele_value, $element) {
         $value = unserialize($value); // what we've got in the database is a serialized array, first key is filename, second key is flag for whether the filename is for real (might be an error message)
         $ele_value[3] = $value['name'] ? $value['name'] : null; // add additional keys to ele_value where we'll put the value that is coming from the database for user's to see, plus other flags and so on
-        $ele_value[4] = $this->getFileDisplayName(strval($value['name'])); 
+        $ele_value[4] = $this->getFileDisplayName(strval($value['name']));
         $ele_value[5] = $value['isfile'] ? $value['name'] : null;
         return $ele_value;
     }
@@ -403,7 +403,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
         $ele_value = $element->getVar('ele_value');
         $dotPos = strrpos($displayName, '.');
         $fileExtension = substr($displayName, $dotPos);
-        $imageTypes = array('.gif', '.jpg', '.png', '.jpeg');
+        $imageTypes = array('.gif', '.jpg', '.png', '.jpeg', '.webp');
         if(in_array($fileExtension, $imageTypes)) {
             $linkContents = "<img class='formulize-uploaded-image-thumbnail' src='$url' />";
         } else {
