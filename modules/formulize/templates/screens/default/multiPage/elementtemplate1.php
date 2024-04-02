@@ -7,7 +7,7 @@ if(trim($elementCaption) AND $elementCaption != '&nbsp;') {
 }
 
 if(trim($elementHelpText)) {
-	$elementHelpText = "<p class='form-help-text'>$elementHelpText</p>";
+	$elementHelpText = "<p id='".$elementName."-help-text' class='form-help-text'>$elementHelpText</p>";
 }
 
 print "

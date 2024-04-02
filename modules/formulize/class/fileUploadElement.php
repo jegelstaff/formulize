@@ -29,7 +29,7 @@
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 
 class formulizeFileUploadElement extends formulizeformulize {
-    
+
     var $needsDataType;
     var $overrideDataType;
     var $hasData;
@@ -45,24 +45,24 @@ class formulizeFileUploadElement extends formulizeformulize {
         $this->alwaysValidateInputs = true; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
         parent::__construct();
     }
-    
+
 }
 
 class formulizeFileUploadElementHandler extends formulizeElementsHandler {
-    
+
     var $db;
     var $clickable; // used in formatDataForList
     var $striphtml; // used in formatDataForList
     var $length; // used in formatDataForList
-    
+
     function __construct($db) {
         $this->db =& $db;
     }
-    
+
     function create() {
         return new formulizeFileUploadElement();
     }
-    
+
     // this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
     // it receives the element object and returns an array of data that will go to the admin UI template
     // when dealing with new elements, $element might be FALSE
@@ -81,7 +81,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
         }
         return array('maxfilesize'=>$ele_value[0],'extensions'=>$ele_value[1],'directlinkno'=>$directLinkNo,'directlinkyes'=>$directLinkYes);
     }
-    
+
     // this method would read back any data from the user after they click save in the admin UI, and save the data to the database, if it were something beyond what is handled in the basic element class
     // this is called as part of saving the options tab.  It receives a copy of the element object immediately prior to it being saved, so the element object will have all its properties set as they would be based on the user's changes in the names & settings tab, and in the options tab (the tabs are saved in order from left to right).
     // the exception is the special ele_value array, which is passed separately from the object (this will contain the values the user set in the Options tab)
@@ -96,7 +96,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
         $element->setVar('ele_value',$ele_value);
         return $changed;
     }
-    
+
     // this method reads the current state of an element based on the user's input, and the admin options, and sets ele_value to what it needs to be so we can render the element correctly
     // it must return $ele_value, with the correct value set in it, so that it will render as expected in the render method
     // $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
@@ -104,12 +104,12 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
     // $element is the element object
     function loadValue($value, $ele_value, $element) {
         $value = unserialize($value); // what we've got in the database is a serialized array, first key is filename, second key is flag for whether the filename is for real (might be an error message)
-        $ele_value[3] = $value['name']; // add additional keys to ele_value where we'll put the value that is coming from the database for user's to see, plus other flags and so on
-        $ele_value[4] = $this->getFileDisplayName($value['name']); 
-        $ele_value[5] = $value['isfile'];
-        return $ele_value; 
+        $ele_value[3] = $value['name'] ? $value['name'] : null; // add additional keys to ele_value where we'll put the value that is coming from the database for user's to see, plus other flags and so on
+        $ele_value[4] = $this->getFileDisplayName(strval($value['name'])); 
+        $ele_value[5] = $value['isfile'] ? $value['name'] : null;
+        return $ele_value;
     }
-    
+
     // this method renders the element for display in a form
     // the caption has been pre-prepared and passed in separately from the element object
     // if the element is disabled, then the method must take that into account and return a non-interactable label with some version of the element's value in it
@@ -137,9 +137,9 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
             } elseif($ele_value[3]) {
                 if(!$fileDeleteCode) { // only do this once per page load
                     $fileDeleteCode = "<script type='text/javascript'>
-                
+
                     var formulizeFile".$markupName."Exists = true;
-                
+
                     function warnAboutFileDelete(folderName, element_id, entry_id) {
                         var answer = confirm('" . _AM_UPLOAD_DELETE_WARN . "');
                         if(answer) {
@@ -150,25 +150,25 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
                             formulize_xhr_send('delete_uploaded_file', xhr_params);
                         }
                     }
-                    
+
                     function formulize_delete_successful(response) {
                         formulizechanged = 1;
                         response = eval('('+response+')');
                         window.document.getElementById('formulize_fileStatus_'+response.element_id+'_'+response.entry_id).innerHTML = '';
                         jQuery('#fileUploadUI_de_".$element->getVar('id_form')."_'+response.entry_id+'_'+response.element_id).show();
                         var fileExistsFlag = 'formulizeFilede_".$element->getVar('id_form')."_'+response.entry_id+'_'+response.element_id+'Exists = false';
-                        eval(fileExistsFlag) 
+                        eval(fileExistsFlag)
                     }
-                    
+
                     function formulize_delete_failed() {
                         alert('" . _AM_UPLOAD_DELETE_FAIL . "');
                     }
-                    
+
                     </script>";
-                    
+
                     $introToUploadBox .= $fileDeleteCode;
                 } elseif($element->getVar('ele_req')) { // just set the flag that tells the required element logic that the file is present
-                    $introToUploadBox .= "<script type='text/javascript'>              
+                    $introToUploadBox .= "<script type='text/javascript'>
                     var formulizeFile".$markupName."Exists = true;
                     </script>";
                 }
@@ -188,12 +188,12 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
             }
             $acceptExtensions = implode(',',$acceptExtensions);
             $acceptAttribute = $acceptExtensions ? 'accept="'.$acceptExtensions.'"' : '';
-            $introToUploadBox .= "<input type='hidden' name='MAX_FILE_SIZE' value='".($ele_value[0]*1048576)."' /><div id='fileUploadUI_".$markupName."' $displayUploadUI><input type='file' name='fileupload_".$markupName."' size=50 id='".$markupName."' onchange=\"javascript:formulizechanged=1;\" $acceptAttribute class='no-print' /><input type='hidden' id='$markupName' name='$markupName' value='$markupName' /></div>";
+            $introToUploadBox .= "<input type='hidden' name='MAX_FILE_SIZE' value='".($ele_value[0]*1048576)."' /><div id='fileUploadUI_".$markupName."' $displayUploadUI><input type='file' name='fileupload_".$markupName."' size=50 id='".$markupName."' onchange=\"javascript:formulizechanged=1;\" $acceptAttribute class='no-print' aria-describedby='$markupName-help-text' /><input type='hidden' id='$markupName' name='$markupName' value='$markupName' /></div>";
             $formElement = new xoopsFormLabel($caption, $introToUploadBox);
         }
         return $formElement;
     }
-    
+
     // this method returns any custom validation code (javascript) that should figure out how to validate this element
     // 'myform' is a name enforced by convention that refers to the form where this element resides
     // use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
@@ -220,17 +220,17 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
         }
         return $validationCode;
     }
-    
+
     // this method will read what the user submitted, and package it up however we want for insertion into the form's datatable
     // You can return {WRITEASNULL} to cause a null value to be saved in the database
     // $value is what the user submitted
     // $element is the element object
     function prepareDataForSaving($value, $element) {
-        
+
         // mimetype map - thanks to https://stackoverflow.com/questions/7519393/php-mime-types-list-of-mime-types-publically-available
         // file defines $mime_types_map, array of key=>value pairs that is extensions and mime types
-        include XOOPS_ROOT_PATH."/modules/formulize/include/mime_types_map.php";  
-        
+        include XOOPS_ROOT_PATH."/modules/formulize/include/mime_types_map.php";
+
         $fileKey = 'fileupload_'.$value;
         if($_FILES[$fileKey]['error'] == 0) {
             // get the extension for the uploaded file
@@ -247,7 +247,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
                     $deducedMimeType = mime_content_type($_FILES[$fileKey]['tmp_name']);
                     $browserMimeType = $_FILES[$fileKey]['type'];
                     $extensionMimeType = isset($mime_types_map[$extension]) ? $mime_types_map[$extension] : false;
-                    // if we accept all files, or this is a type that we don't have records for (at least it matched literal extension), or some of the mime type info is in agreement (if the extension type is a mismatch, maybe the browser type can redeem things?)  
+                    // if we accept all files, or this is a type that we don't have records for (at least it matched literal extension), or some of the mime type info is in agreement (if the extension type is a mismatch, maybe the browser type can redeem things?)
                     if(!$allowedExtensions
                         OR !$extensionMimeType
                         OR $extensionMimeType == $deducedMimeType
@@ -287,7 +287,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
                         }
                     } else {
                         $value = _AM_UPLOAD_LOST;
-                        print "<p><b>$value</b></p>";    
+                        print "<p><b>$value</b></p>";
                     }
                 } else {
                     $value = _AM_UPLOAD_NOLOCATION;
@@ -328,9 +328,9 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
         if(!is_array($value)) {
             return "{WRITEASNULL}";
         }
-        return serialize($value); 
+        return serialize($value);
     }
-    
+
     // this method will handle any final actions that have to happen after data has been saved
     // this is typically required for modifications to new entries, after the entry ID has been assigned, because before now, the entry ID will have been "new"
     // value is the value that was just saved
@@ -343,7 +343,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
         $elementObject = $element_handler->get($element_id);
         rename(XOOPS_ROOT_PATH."/uploads/formulize_".$elementObject->getVar('id_form')."_new_".$element_id,XOOPS_ROOT_PATH."/uploads/formulize_".$elementObject->getVar('id_form')."_".$entry_id."_".$element_id);
     }
-    
+
     // this method will prepare a raw data value from the database, to be included in a dataset when formulize generates a list of entries or the getData API call is made
     // in the standard elements, this particular step is where multivalue elements, like checkboxes, get converted from a string that comes out of the database, into an array, for example
     // $value is the raw value that has been found in the database
@@ -357,13 +357,13 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
         $GLOBALS['formulize_fileUploadElementDisplayName'][$entry_id][$handle] = $this->getFileDisplayName($name);
         return $url;
     }
-    
+
     // this method will take a text value that the user has specified at some point, and convert it to a value that will work for comparing with values in the database.  This is used primarily for preparing user submitted text values for saving in the database, or for comparing to values in the database.  The typical user submitted values would be coming from a condition form (ie: fieldX = [term the user typed in]) or other situation where the user types in a value that needs to interact with the database.
     // this would be where a Yes value would be converted to a 1, for example, in the case of a yes/no element, since 1 is how yes is represented in the database for that element type
     function prepareLiteralTextForDB($value, $element) {
         return $value;
     }
-    
+
     // this method will format a dataset value for display on screen when a list of entries is prepared
     // for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
     // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
@@ -376,7 +376,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
         $value = strstr($value, 'http') ? $this->createDownloadLink($this->get($handle), $value, $displayName) : $value; // we make the clickable links manually here, since we don't just want the URL part to become a link, we want to wrap the display name in a link to the URL
         return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
     }
-    
+
     // this method returns the URL for a file, not a href - or the text value that is in place of a file name, such as an error message
     // $element is the element object
     // $entry_id is the ID number of this entry
@@ -389,20 +389,20 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
             $ele_value = $element->getVar('ele_value');
             if($ele_value[2]) { // users can connect directly to file or not?
                 $fileName = rawurlencode($fileName);
-                return XOOPS_URL."/uploads/formulize_".$element->getVar('id_form')."_".$entry_id."_".$element->getVar('ele_id')."/$fileName";            
+                return XOOPS_URL."/uploads/formulize_".$element->getVar('id_form')."_".$entry_id."_".$element->getVar('ele_id')."/$fileName";
             } else {
                 return XOOPS_URL."/modules/formulize/download.php?element=".$element->getVar('ele_id')."&entry_id=$entry_id";
-            }    
+            }
         } else {
             return $fileName; // may be an error message or something like that
         }
     }
-    
+
     // this method is for the file upload element only.  It will return a href that links to the actual file.
     function createDownloadLink($element, $url, $displayName) {
         $ele_value = $element->getVar('ele_value');
         if($ele_value[2]) { // files we link to directly get a '_blank' target
-            return "<a href='".$url."' target='_blank'>".htmlspecialchars(strip_tags($displayName),ENT_QUOTES)."</a>";            
+            return "<a href='".$url."' target='_blank'>".htmlspecialchars(strip_tags($displayName),ENT_QUOTES)."</a>";
         } else {
             return "<a href='".$url."'>".htmlspecialchars(strip_tags($displayName),ENT_QUOTES)."</a>";
         }
@@ -410,11 +410,11 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
 
     // this method will return the displayName for a file (ie: remove the obscuring timestamp on the front, if any)
     function getFileDisplayName($fileName) {
-        $fileNameParts = explode("+---+",$fileName);
-        $displayName = isset($fileNameParts[1]) ? $fileNameParts[1] : $fileNameParts[0];
+			  $fileNameParts = explode("+---+",$fileName);
+				$displayName = isset($fileNameParts[1]) ? $fileNameParts[1] : $fileNameParts[0];
         return $displayName;
     }
-    
+
     // this method will write the extension and mimeType to a list for later review
     function logMissingMimeType($extension, $mimeType, $map) {
         if(!isset($map[$extension]) OR $map[$extension] != $mimeType) {

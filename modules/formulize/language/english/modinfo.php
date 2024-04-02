@@ -2,7 +2,7 @@
 // Module Info
 
 // The name of this module
-define("_MI_formulize_NAME","Forms");
+define("_MI_formulize_NAME","Formulize");
 
 // A brief description of this module
 define("_MI_formulize_DESC","For provisioning forms and analyzing data");
@@ -52,7 +52,7 @@ define("_MI_formulize_SINGLESDESC","This option is overriden by the settings in 
 
 define("_MI_formulize_LOE_limit", "What is the maximum number of entries that should be displayed in a list of entries, without confirmation from the user that they want to see all entries?");
 define("_MI_formulize_LOE_limit_DESC", "If a dataset is very large, displaying a list of entries screen can take a long time, several minutes even.  Use this preference to specify the maximum number of entries that your system should try to display at once.  If a dataset contains more entries than this limit, the user will be asked if they want to load the entire dataset or not.");
-       
+
 define("_MI_formulize_USETOKEN", "Use the security token system to validate form submissions?");
 define("_MI_formulize_USETOKENDESC", "By default, when a form is submitted, no data is saved unless Formulize can validate a unique token that was submitted with the form.  This is a partial defence against cross site scripting attacks, meant to ensure only people actually visiting your website can submit forms.  In some circumstances, depending on firewalls or other factors, the token cannot be validated even when it should be.  If this is happening to you repeatedly, you can turn off the token system for Formulize here.  <b>NOTE: you can override this global setting on a screen by screen basis.</b>");
 
@@ -67,13 +67,13 @@ define("_MI_formulize_NUMBER_SEP", "By default, what punctuation should be used 
 
 define("_MI_formulize_HEADING_HELP_LINK", "Should the help link ([?]) and lock icons appear at the top of each column in a list of entries?");
 define("_MI_formulize_HEADING_HELP_LINK_DESC", "The help link provides a popup window that shows details about the question in the form, such as the full text of the question, the choice of options if the question is a radio button, etc. The lock icon allows the user to keep a column visible on screen as they scroll to the right, like 'Freeze Panes' in Excel.");
-       
+
 define("_MI_formulize_USECACHE", "Use caching to speed up Procedures?");
 define("_MI_formulize_USECACHEDESC", "By default, caching is on.");
 
 define("_MI_formulize_DOWNLOADDEFAULT", "When users are exporting data, use a compatibility trick for some versions of Excel by default?");
 define("_MI_formulize_DOWNLOADDEFAULT_DESC", "When users export data, they can check a box on the download page that adds a special code to the file which is necessary to make accented characters appear properly in some versions of Microsoft Excel.  This option controls whether that checkbox is checked by default or not.  You should experiment with your installation to see if exports work best with or without this option turned on.");
-       
+
 define("_MI_formulize_LOGPROCEDURE", "Use logging to monitor Procedures and parameters?");
 define("_MI_formulize_LOGPROCEDUREDESC", "By default, logging is off.");
 

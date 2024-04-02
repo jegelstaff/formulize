@@ -161,7 +161,7 @@ class formulizeForm extends XoopsObject {
         $this->initVar("on_before_save", XOBJ_DTYPE_TXTAREA, $formq[0]['on_before_save']);
         $this->initVar("on_after_save", XOBJ_DTYPE_TXTAREA, $formq[0]['on_after_save']);
         $this->initVar("on_delete", XOBJ_DTYPE_TXTAREA, $formq[0]['on_delete']);
-        $this->initVar("custom_edit_check", XOBJ_DTYPE_TXTAREA, $formq[0]['custom_edit_check']);//
+        $this->initVar("custom_edit_check", XOBJ_DTYPE_TXTAREA, $formq[0]['custom_edit_check']);
         $this->initVar("note", XOBJ_DTYPE_TXTAREA, $formq[0]['note']);
         $this->initVar("send_digests", XOBJ_DTYPE_INT, $formq[0]['send_digests'], true);
     }
@@ -217,15 +217,9 @@ class formulizeForm extends XoopsObject {
         if ("on_delete" == $key) {
             $this->cache_on_delete_code();
         }
-
-        if ("custom_edit_check" == $key) { // Added for custom_edit_check var
+        if ("custom_edit_check" == $key) {
             $this->cache_custom_edit_check_code();
         }
-    }
-
-    protected function on_delete_function_name() {
-        // form ID is used so the function name is unique
-        return "form_".$this->id_form."_on_delete";
     }
 
     protected function on_before_save_function_name() {
@@ -238,10 +232,15 @@ class formulizeForm extends XoopsObject {
         return "form_".$this->id_form."_on_after_save";
     }
 
-    protected function on_delete_filename() {
-        // save the code in the icms cache folder (because it is known to be writeable)
-        return ICMS_CACHE_PATH."/{$this->on_delete_function_name}.php";
-    }
+		protected function on_delete_function_name() {
+			// form ID is used so the function name is unique
+			return "form_".$this->id_form."_on_delete";
+		}
+
+		protected function custom_edit_check_function_name() {
+			// form ID is used so the function name is unique
+			return "form_".$this->id_form."_custom_edit_check";
+		}
 
     protected function on_before_save_filename() {
         // save the code in the icms cache folder (because it is known to be writeable)
@@ -253,37 +252,41 @@ class formulizeForm extends XoopsObject {
         return ICMS_CACHE_PATH."/{$this->on_after_save_function_name}.php";
     }
 
-    private function cache_on_delete_code() {
-        if (strlen($this->on_delete) > 0) {
-            $on_delete_code = <<<EOF
-<?php
+    protected function on_delete_filename() {
+			// save the code in the icms cache folder (because it is known to be writeable)
+			return ICMS_CACHE_PATH."/{$this->on_delete_function_name}.php";
+		}
 
-function form_{$this->id_form}_on_delete(\$entry_id, \$formulize_element_values, \$form_id) {
-    foreach(\$formulize_element_values as \$formulize_element_key=>\$formulize_element_value) {
-        if(is_numeric(\$formulize_element_key)) {
-            \$formulize_element_key = 'elementId'.\$formulize_element_key;
-        }
-        \${\$formulize_element_key} = \$formulize_element_value;
-    }
+		protected function custom_edit_check_filename() {
+				// save the code in the icms cache folder (because it is known to be writeable)
+				return ICMS_CACHE_PATH."/{$this->custom_edit_check_function_name}.php";
+		}
 
-{$this->on_delete}
+		public function on_before_save() {
+				// this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
+				return $this->vars['on_before_save']['value'];
+		}
 
-    return get_defined_vars();  // this converts PHP variables back into an array
-}
+		public function on_after_save() {
+				// this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
+				return $this->vars['on_after_save']['value'];
+		}
 
-EOF;
-            // todo: there is a way to validate php files on disk, so do that and report any syntax errors
-            return (false !== file_put_contents($this->on_delete_filename, $on_delete_code));
-        } else {
-            if (file_exists($this->on_delete_filename)) {
-                unlink($this->on_delete_filename);
-            }
-            return true;
-        }
-    }
+		public function on_delete() {
+			// this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
+			return $this->vars['on_delete']['value'];
+		}
+
+		public function custom_edit_check() {
+				// this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
+				return $this->vars['custom_edit_check']['value'];
+		}
 
     private function cache_on_before_save_code() {
         if (strlen($this->on_before_save) > 0) {
+
+						$this->on_before_save = removeOpeningPHPTag($this->on_before_save);
+
             $on_before_save_code = <<<EOF
 <?php
 
@@ -314,6 +317,9 @@ EOF;
 
     private function cache_on_after_save_code() {
         if (strlen($this->on_after_save) > 0) {
+
+						$this->on_after_save = removeOpeningPHPTag($this->on_after_save);
+
             $on_after_save_code = <<<EOF
 <?php
 
@@ -340,17 +346,44 @@ EOF;
         }
     }
 
-    protected function custom_edit_check_function_name() {
-        // form ID is used so the function name is unique
-        return "form_".$this->id_form."_custom_edit_check";
-    }
+    private function cache_on_delete_code() {
+				if (strlen($this->on_delete) > 0) {
 
-    protected function custom_edit_check_filename() {
-        // save the code in the icms cache folder (because it is known to be writeable)
-        return ICMS_CACHE_PATH."/{$this->custom_edit_check_function_name}.php";
-    }
+						$this->on_delete = removeOpeningPHPTag($this->on_delete);
+
+						$on_delete_code = <<<EOF
+<?php
+
+function form_{$this->id_form}_on_delete(\$entry_id, \$formulize_element_values, \$form_id) {
+	foreach(\$formulize_element_values as \$formulize_element_key=>\$formulize_element_value) {
+			if(is_numeric(\$formulize_element_key)) {
+					\$formulize_element_key = 'elementId'.\$formulize_element_key;
+			}
+			\${\$formulize_element_key} = \$formulize_element_value;
+	}
+
+{$this->on_delete}
+
+	return get_defined_vars();  // this converts PHP variables back into an array
+}
+
+EOF;
+						// todo: there is a way to validate php files on disk, so do that and report any syntax errors
+						return (false !== file_put_contents($this->on_delete_filename, $on_delete_code));
+				} else {
+						if (file_exists($this->on_delete_filename)) {
+								unlink($this->on_delete_filename);
+						}
+						return true;
+				}
+		}
+
+
     private function cache_custom_edit_check_code() {
         if (strlen($this->custom_edit_check) > 0) {
+
+						$this->custom_edit_check = removeOpeningPHPTag($this->custom_edit_check);
+
             $custom_edit_check_code = <<<EOF
 <?php
 
@@ -368,61 +401,6 @@ EOF;
             }
             return true;
         }
-    }
-
-    public function on_delete() {
-        // this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
-        return $this->vars['on_delete']['value'];
-    }
-
-    public function on_before_save() {
-        // this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
-        return $this->vars['on_before_save']['value'];
-    }
-
-    public function on_after_save() {
-        // this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
-        return $this->vars['on_after_save']['value'];
-    }
-
-    public function custom_edit_check() {
-        // this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
-        return $this->vars['custom_edit_check']['value'];
-    }
-
-    public function onDeletePrep($entry_id) {
-        $existingValues = array();
-
-        // if there is any code to run before saving, store the contents of the deleted record
-        if (is_numeric($entry_id) AND $entry_id AND strlen($this->on_delete) > 0 and (file_exists($this->on_delete_filename) or $this->cache_on_delete_code())) {
-            // get all the values of fields from the existing entry
-            global $xoopsDB;
-            $sql = "SELECT * FROM ".$xoopsDB->prefix('formulize_'.$this->getVar('form_handle'))." WHERE entry_id = ".intval($entry_id);
-            if($res = $xoopsDB->query($sql)) {
-                foreach($xoopsDB->fetchArray($res) as $handle=>$value) {
-                    $existingValues[$handle] = $value;
-                }
-            }
-        }
-
-        $this->onDeleteExistingValues[$entry_id] = $existingValues;
-    }
-
-    public function onDelete($entry_id) {
-        $existingValues = $this->onDeleteExistingValues[$entry_id];
-				// if there is any code to run before saving, include it (write if necessary), and run the function
-				if (is_numeric($entry_id) AND $entry_id AND strlen($this->on_delete) > 0 and (file_exists($this->on_delete_filename) or $this->cache_on_delete_code())) {
-						include_once $this->on_delete_filename;
-        $existingValues = call_user_func($this->on_delete_function_name, $entry_id, $existingValues, $this->getVar('id_form'));
-        // if a numeric element handle had a value set, then by convention it needs the prefix elementId before the number so we can handle it here and make it a numeric array key again
-        foreach($existingValues as $key=>$value) {
-            if(substr($key, 0, 9)=='elementId') {
-                unset($existingValues[$key]);
-                $existingValues[str_replace('elementId','',$key)] = $value;
-            }
-        }
-				}
-        return $existingValues;
     }
 
     public function onBeforeSave($entry_id, $element_values) {
@@ -469,6 +447,41 @@ EOF;
             call_user_func($this->on_after_save_function_name, $entry_id, $this->getVar('id_form'), $element_values, $existing_values, ($originalEntryId == 'new'));
         }
     }
+
+    public function onDeletePrep($entry_id) {
+				$existingValues = array();
+
+				// if there is any code to run before saving, store the contents of the deleted record
+				if (is_numeric($entry_id) AND $entry_id AND strlen($this->on_delete) > 0 and (file_exists($this->on_delete_filename) or $this->cache_on_delete_code())) {
+						// get all the values of fields from the existing entry
+						global $xoopsDB;
+						$sql = "SELECT * FROM ".$xoopsDB->prefix('formulize_'.$this->getVar('form_handle'))." WHERE entry_id = ".intval($entry_id);
+						if($res = $xoopsDB->query($sql)) {
+								foreach($xoopsDB->fetchArray($res) as $handle=>$value) {
+										$existingValues[$handle] = $value;
+								}
+						}
+				}
+
+				$this->onDeleteExistingValues[$entry_id] = $existingValues;
+		}
+
+		public function onDelete($entry_id) {
+				$existingValues = $this->onDeleteExistingValues[$entry_id];
+				// if there is any code to run before saving, include it (write if necessary), and run the function
+				if (is_numeric($entry_id) AND $entry_id AND strlen($this->on_delete) > 0 and (file_exists($this->on_delete_filename) or $this->cache_on_delete_code())) {
+						include_once $this->on_delete_filename;
+				$existingValues = call_user_func($this->on_delete_function_name, $entry_id, $existingValues, $this->getVar('id_form'));
+				// if a numeric element handle had a value set, then by convention it needs the prefix elementId before the number so we can handle it here and make it a numeric array key again
+				foreach($existingValues as $key=>$value) {
+						if(substr($key, 0, 9)=='elementId') {
+								unset($existingValues[$key]);
+								$existingValues[str_replace('elementId','',$key)] = $value;
+						}
+				}
+				}
+				return $existingValues;
+		}
 
     public function customEditCheck($form_id, $entry_id, $user_id, $allow_editing) {
         // if there is any code to run to check if editing is allowed, include it (write if necessary), and run the function
@@ -726,7 +739,7 @@ class formulizeFormsHandler {
 			$element_order = $element_order + 5;
 			$element->setVar('ele_forcehidden', 0);
 			$element->setVar('ele_uitext', "");
-			$element->setVar('ele_value', array(0=>"", 1=>$xoopsModuleConfig['ta_rows'], 2=>$xoopsModuleConfig['ta_cols'], 3=>"")); // 0 is default, 1 is rows, 2 is cols, 3 is association to another element -- not sure the xoopsModuleConfig is actually being picked up
+			$element->setVar('ele_value', array(0=>"", 1=>5, 2=>35, 3=>"")); // 0 is default, 1 is rows, 2 is cols, 3 is association to another element
 			$element->setVar('id_form', $fid);
 			$element->setVar('ele_private', 0);
 			$element->setVar('ele_display', 1);
@@ -766,7 +779,7 @@ class formulizeFormsHandler {
 		$element_id_condition = $element_id ? " AND ele_id != " . intval($element_id) : "";
 		$sql = "SELECT count(ele_handle) FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_handle = '" . formulize_db_escape($handle) . "' $element_id_condition";
 		if(!$res = $xoopsDB->query($sql)) {
-			print "Error: could not verify uniqueness of handle '$handle' in form $fid";
+			print "Error: could not verify uniqueness of handle '$handle'";
 		} else {
 			$row = $xoopsDB->fetchRow($res);
 			if($row[0] == 0) { // zero rows found with that handle in this form
@@ -901,7 +914,7 @@ class formulizeFormsHandler {
 	// Note that this method will add in fields for the elements in the form, if invoked as part of the 3.0 patch process, or when cloning forms.
 	// if a map is provided, then we're cloning a form and the data types of the original elements will be preserved in the new form
 	// revisionsTable is a flag used to indicate if we're creating the revisions copy of the form table or not
-	function createDataTable($fid, $clonedForm=0, $map=false, $revisionsTable=false) {
+	function createDataTable($fid, $clonedForm=0, $map=array(), $revisionsTable=false) {
 		if(is_numeric($fid)) {
 			$formObject = $this->get($fid, true); // true forces all elements to be included, even ones that are not displayed right now
 		} elseif(!get_class($fid) == "formulizeForm") {
@@ -935,7 +948,7 @@ class formulizeFormsHandler {
 						// NOTE: THIS WILL FAIL IF/WHEN SOMEONE CREATE A CUSTOM ELEMENT TYPE THAT IS NOT A DATA-STORING ELEMENT!!
 						// WE WILL NEED TO GO GET THE ELEMENT OBJECT HERE, AND CHECK IF IT'S A DATA STORING ELEMENT TYPE OR NOT.  THIS IS A PROPERTY ON THE CUSTOM ELEMENT OBJECTS, SO NOT HARD, BUT A PAIN AND ADDS QUERIES TO THE PAGE.
 						if($elementTypes[$elementId] == "areamodif" OR $elementTypes[$elementId] == "ib" OR $elementTypes[$elementId] == "sep" OR $elementTypes[$elementId] == "grid" OR $elementTypes[$elementId] == "subform") { continue; } // do not attempt to create certain types of fields since they don't live in the db!
-						if($map !== false OR $revisionsTable) {
+						if(count($map)>0 OR $revisionsTable) {
 							// we're cloning with data, so base the new field's datatype on the original form's datatype for the corresponding field
 							if(!isset($dataTypeMap)) {
 								$dataTypeMap = array();
@@ -1346,10 +1359,14 @@ class formulizeFormsHandler {
 		$insert_sql .= ") VALUES (";
 		$start = 1;
 
+		$oldTitle = '';
 		foreach($getrow[0] as $field=>$value) {
 			if(is_null($value)) { continue; }
 			if($this->fieldShouldBeSkippedInCloning($field)) { continue; }
-			if($field == "desc_form") { $value = $newtitle; }
+			if($field == "desc_form") {
+				$oldTitle = $value;
+				$value = $newtitle;
+			}
 			if($field == "form_handle") {
 				$oldFormHandle = $value;
 				$value = "replace_with_handle_and_id";
@@ -1360,7 +1377,7 @@ class formulizeFormsHandler {
 		}
 		$insert_sql .= ")";
 		if(!$result = $this->db->query($insert_sql)) {
-			print "error duplicating form: '$title'<br>SQL: $insert_sql<br>".$xoopsDB->error();
+			print "error duplicating form: '$oldTitle'<br>SQL: $insert_sql<br>".$this->db->error();
 			return false;
 		}
 
@@ -1369,7 +1386,7 @@ class formulizeFormsHandler {
 		// replace formhandle of the new form
 		$replaceSQL = "UPDATE ". $this->db->prefix("formulize_id") . " SET form_handle='".formulize_db_escape($oldFormHandle."_".$newfid)."' WHERE form_handle=\"replace_with_handle_and_id\"";
 		if(!$result = $this->db->queryF($replaceSQL)) {
-		  print "error setting the form_handle for the new form.<br>".$xoopsDB->error();
+		  print "error setting the form_handle for the new form.<br>".$this->db->error();
 		  return false;
 		}
 
@@ -1413,7 +1430,7 @@ class formulizeFormsHandler {
 			}
 			$insert_sql .= ")";
 			if(!$result = $this->db->query($insert_sql)) {
-				print "error duplicating elements in form: '$title'<br>SQL: $insert_sql<br>".$xoopsDB->error();
+				print "error duplicating elements in form: '$oldTitle'<br>SQL: $insert_sql<br>".$this->db->error();
 				return false;
 			}
 			if($oldNewEleIdMap[$ele['ele_handle']] == "replace_with_ele_id") {
@@ -1424,13 +1441,13 @@ class formulizeFormsHandler {
 		// replace ele_id flags that need replacing
 		$replaceSQL = "UPDATE ". $this->db->prefix("formulize") . " SET ele_handle=CONCAT('".$oldFormHandle."_',ele_id) WHERE ele_handle=\"replace_with_ele_id\"";
 		if(!$result = $this->db->queryF($replaceSQL)) {
-		   print "error setting the ele_handle values for the new form.<br>".$xoopsDB->error();
+		   print "error setting the ele_handle values for the new form.<br>".$this->db->error();
 		   return false;
 		}
 
 	  // Need to create the new data table now -- July 1 2007
     if(!$tableCreationResult = $this->createDataTable($newfid, $fid, $oldNewEleIdMap)) {
-      print "Error: could not make the necessary new datatable for form " . $newfid . ".  Please delete the cloned form and report this error to <a href=\"mailto:info@formulize.org\">info@formulize.org</a>.<br>".$xoopsDB->error();
+      print "Error: could not make the necessary new datatable for form " . $newfid . ".  Please delete the cloned form and report this error to <a href=\"mailto:info@formulize.org\">info@formulize.org</a>.<br>".$this->db->error();
       return false;
     }
 

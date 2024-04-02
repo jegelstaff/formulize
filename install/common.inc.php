@@ -43,6 +43,12 @@ icms_Autoloader::setup();
 
 error_reporting( E_ALL );
 
+// Exit early if the system has already been installed
+if (file_exists(ICMS_ROOT_PATH.'/install.lock')) {
+	header('Location: /');
+	exit();
+}
+
 class XoopsInstallWizard {
 
 	var $pages = array();
@@ -258,3 +264,4 @@ if (!@is_array( $_SESSION['settings'] )) {
 }
 
 ?>
+

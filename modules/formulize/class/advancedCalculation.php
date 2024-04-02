@@ -64,7 +64,7 @@ while(\$array = \$xoopsDB->fetchBoth(\$res)) {
   \$field = \$array;
 {$calculation['calculate']}
 }
-\$totalNumberOfRecords = $xoopsDB->getRowsNum(\$res);
+\$totalNumberOfRecords = \$xoopsDB->getRowsNum(\$res);
 {$calculation['postCalculate']}
 EOD;
 
@@ -122,7 +122,7 @@ foreach(\$res as \$thisRes) {
 	  \$field = \$array;
 {$calculation['calculate']}
   }
-  \$totalNumberOfRecords += $xoopsDB->getRowsNum(\$thisRes);
+  \$totalNumberOfRecords += \$xoopsDB->getRowsNum(\$thisRes);
 }
 {$calculation['postCalculate']}
 EOD;
@@ -196,7 +196,7 @@ class formulizeAdvancedCalculationHandler {
 
   function delete($acid) {
     if(is_object($acid)) {
-			if(!get_class("formulizeAdvancedCalculation")) {
+			if(get_class($acid) != "formulizeAdvancedCalculation") {
 				return false;
 			}
 			$acid = $acid->getVar('acid');
@@ -438,7 +438,7 @@ class formulizeAdvancedCalculationHandler {
                     $this->createLogParam( $logid, $thisFilter['fltr_label'], $value[1] );
                   }
                 } else {
-                  if( $postOptions == $postValue ) {
+                  if( $postOptions == $option ) {
                     //print "<br>... " . $thisFilter['fltr_label'] . " = " . $option;
                     $this->createLogParam( $logid, $thisFilter['fltr_label'], $option );
                   }
@@ -704,6 +704,7 @@ class formulizeAdvancedCalculationHandler {
 
   // this method grabs the output to screen and sticks a grouping label in front of it
   function captureGroupedOutput($activeGroupings, $output) {
+		$groupingLabel = '';
     foreach($activeGroupings as $thisGrouping) {
 	if(is_array($thisGrouping['metadata'])) {
 	    $label = $thisGrouping['metadata']['fltr_label'];

@@ -143,6 +143,7 @@ class icms_form_elements_Password extends icms_form_Element {
 			. "' id='" . $ele_name
 			. "' size='" . $this->getSize()
 			. "' maxlength='" . $this->getMaxlength()
+			. "' aria-describedby='" . $this->getName() . "-help-text'"
 			. "' value='" . $this->getValue() . "'" . $this->getExtra() . " " . ($this->autoComplete ? "" : "autocomplete='off' ")
 			. "/>";
 	}

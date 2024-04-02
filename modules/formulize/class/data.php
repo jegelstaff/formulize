@@ -84,10 +84,12 @@ class formulizeDataHandler  {
 		}
 		$oldNewEntryIdMap = array();
 
+		$originalEntryId = '';
 		while($sourceDataArray = $xoopsDB->fetchArray($sourceDataRes)) {
 			$start = true;
       		$formObject = $form_handler->get($this->fid);
 			$insertSQL = "INSERT INTO " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " SET ";
+			$originalEntryId = 0;
 			foreach($sourceDataArray as $field=>$value) {
 				if($field == "entry_id") {
 					$originalEntryId = $value;
@@ -320,7 +322,7 @@ class formulizeDataHandler  {
 		global $xoopsDB;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($this->fid);
-		$sql = "SELECT creation_uid FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id IN (" . implode(",", array_filter($ids, 'is_numeric')) . ") $scopefilter";
+		$sql = "SELECT creation_uid FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id IN (" . implode(",", array_filter($ids, 'is_numeric')) . ") $scopeFilter";
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
 		}
@@ -417,7 +419,7 @@ class formulizeDataHandler  {
     }
 	function getFirstEntryForGroups($group_ids) {
 		if(!is_array($group_ids)) {
-			$group_ids = array(0=>intval($groupids));
+			$group_ids = array(0=>intval($group_ids));
 		}
 
 		global $xoopsDB;
@@ -486,59 +488,117 @@ class formulizeDataHandler  {
 		return $row[0];
 	}
 
-    // this function returns the entry ID of the first entry found in the form with all the specified values in the specified elements
-    // $values is a key value pair of element handles and values
-		// $operatior is a string, or an array with an operator to be used for each key value pair in the values array
-	function findFirstEntryWithAllValues($values, $operator="=") {
+/**
+	 * This function returns the requested field(s) found for the first entry in the form which matches all the specified values for the specified elements
+	 * @param array $values An array of key=>value pairs, where keys are the element ids or element handles, and the values are the things to look for
+	 * @param string $operator Optional. A string indicating the operator to use when looking for the specified values, or an array of operators corresponding to the key value pairs we're looking for.
+	 * @param string $fieldsToReturn Optional. A field name or comma separated set of field names, or * which will be used in the SELECT clause. Defaults to entry_id.
+	 * @return mixed Returns the value of the specified field for the first entry found, or an array of all the field values if more than one field is requested, where the keys are the field names and values are the values. Returns false if no entries were found or the query failed.
+	 */
+	function findFirstEntryWithAllValues($values, $operator="=", $fieldsToReturn = "entry_id") {
+		return $this->findEntryOrEntriesWithAllValues($values, $operator, true, $fieldsToReturn);
+	}
+
+	/**
+	 * This function returns the requested field(s) found for all the entries in the form which match all the specified values for the specified elements
+	 * @param array $values An array of key=>value pairs, where keys are the element ids or element handles, and the values are the things to look for
+	 * @param string $operator Optional. A string indicating the operator to use when looking for the specified values, or an array of operators corresponding to the key value pairs we're looking for.
+	 * @param string $fieldsToReturn Optional. A field name or comma separated set of field names, or * which will be used in the SELECT clause. Defaults to entry_id.
+	 * @return mixed Returns an array of all entries found, keyed by entry_id if that field is one of the requested fields. Each item in the array contains an array of the requested field values, where the keys are the field names and values are the values. Returns false if no entries were found or the query failed.
+	 */
+	function findAllEntriesWithAllValues($values, $operator="=", $fieldsToReturn = "entry_id") {
+		return $this->findEntryOrEntriesWithAllValues($values, $operator, false, $fieldsToReturn);
+	}
+
+	/**
+	 * This function returns the requested field(s) found for the first entry, or all entries, in the form which match all the specified values for the specified elements
+	 * @param array $values An array of key=>value pairs, where keys are the element ids or element handles, and the values are the things to look for
+	 * @param string $operator Optional. A string indicating the operator to use when looking for the specified values, or an array of operators corresponding to the key value pairs we're looking for.
+	 * @param boolean $findFirstOnly Optional. A flag to indicate if only the first entry should be returned.
+	 * @param string $fieldsToReturn Optional. A field name or comma separated set of field names, or * which will be used in the SELECT clause. Defaults to entry_id.
+	 * @return array Returns the value of the specified field for the first entry found, or an array of all the field values if more than one requested, where the keys are the field names and values are the values. Returns an array of records if more than the first one is requested, and in this case the array will use the entry ids as keys, as long as entry_id was a requested field. Returns null if nothing was found.  Returns false if the query failed.
+	 */
+	function findEntryOrEntriesWithAllValues($values, $operator = "=", $findFirstOnly = true, $fieldsToReturn = "entry_id") {
 		global $xoopsDB;
-        $form_handler = xoops_getmodulehandler('forms', 'formulize');
-        $formObject = $form_handler->get($this->fid);
-        $sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE ";
-        $valuesSQL = array();
-        foreach($values as $elementIdOrHandle=>$value) {
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($this->fid);
+		$findFirstEntryLimit = $findFirstOnly ? " LIMIT 0,1" : "";
+		$sql = "SELECT ".formulize_db_escape($fieldsToReturn)."  FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE ";
+		$valuesSQL = array();
 
-						$opp = is_array($operator) ? $operator[$elementIdOrHandle] : $operator;
+		$operatorKeyCounter = 0;
+		foreach($values as $elementIdOrHandle=>$value) {
 
-            if(!$element = _getElementObject($elementIdOrHandle)) {
-                continue;
-            }
-            $quotes = '"';
-            $likeBits = $opp == "LIKE" ? "%" : "";
-            $workingOp = $opp;
-            if($value === null) {
-                switch($opp) {
-                    case "!=":
-                        $value = " IS NOT NULL ";
-                        break;
-                    case "=":
-                    default:
-                        $value = " IS NULL ";
-                }
-                $workingOp = '';
-                $quotes = '';
-                $likeBits = '';
-            } else {
-                $value = formulize_db_escape($value);
-								if($opp == 'IN') {
-									$quotes = '';
-									$value = "($value)";
-								} else {
-                	$quotes = (is_numeric($value) AND !$likeBits) ? '' : $quotes;
-								}
-            }
-            $valuesSQL[] = "`". $element->getVar('ele_handle') . "` ".formulize_db_escape($workingOp)." ".$quotes.$likeBits.$value.$likeBits.$quotes;
-        }
-        $sql .= implode(' AND ', $valuesSQL)." ORDER BY entry_id LIMIT 0,1";
+				$opp = $operator;
+				if(is_array($operator)) {
+					if(isset($operator[$elementIdOrHandle])) {
+						$opp = $operator[$elementIdOrHandle];
+					} elseif(isset($operator[$operatorKeyCounter])) {
+						$opp = $operator[$operatorKeyCounter];
+					}
+					$operatorKeyCounter++;
+				}
+
+				if(!$element = _getElementObject($elementIdOrHandle)) {
+						continue;
+				}
+				$quotes = '"';
+				$likeBits = $opp == "LIKE" ? "%" : "";
+				$workingOp = $opp;
+				if($value === null) {
+						switch($opp) {
+								case "!=":
+										$value = " IS NOT NULL ";
+										break;
+								case "=":
+								default:
+										$value = " IS NULL ";
+						}
+						$workingOp = '';
+						$quotes = '';
+						$likeBits = '';
+				} else {
+						$value = formulize_db_escape($value);
+						if($opp == 'IN') {
+							$quotes = '';
+							$value = "($value)";
+						} else {
+							$quotes = (is_numeric($value) AND !$likeBits) ? '' : $quotes;
+						}
+				}
+				$valuesSQL[] = "`". $element->getVar('ele_handle') . "` ".formulize_db_escape($workingOp)." ".$quotes.$likeBits.$value.$likeBits.$quotes;
+		}
+		$sql .= implode(' AND ', $valuesSQL)." ORDER BY entry_id $findFirstEntryLimit";
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
 		}
-		$row = $xoopsDB->fetchRow($res);
-		return $row[0];
+		$rows = array();
+		while($row = $xoopsDB->fetchArray($res)) {
+			if(isset($row['entry_id'])) {
+				$rows[$row['entry_id']] = $row;
+			} else {
+				$rows[] = $row;
+			}
+		}
+		if($findFirstOnly) {
+			if(count($rows)==0 ) { // nothing found
+				return null;
+			}
+			$firstKey = array_key_first($rows);
+			if(!is_array($rows[$firstKey]) OR count($rows[$firstKey]) > 1) { // multiple fields found, or something goofy (not an array), return the whole thing
+				return $rows[$firstKey];
+			} else { // one field requested, return that single value
+				return $rows[$firstKey][array_key_first($rows[$firstKey])];
+			}
+		} else {
+			return $rows ? $rows : null;
+		}
 	}
 
 	// this function returns the entry ID of all entries found in the form with the specified value in the specified element
 	// use of $scope_uids should only be for when entries by the current user are searched for.  All other group based scopes should be done based on the scope_group_ids.
 	function findAllEntriesWithValue($element_id, $value, $scope_uids=array(), $scope_group_ids=array(), $operator="=") {
+
 		if(!$element = _getElementObject($element_id)) {
 			return false;
 		}

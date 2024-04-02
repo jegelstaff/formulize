@@ -118,6 +118,7 @@ function patch40() {
      *
      * ====================================== */
 
+
     $checkThisTable = 'formulize_screen_template';
 	$checkThisField = 'viewentryscreen';
 	$checkThisProperty = '';
@@ -488,7 +489,10 @@ function patch40() {
         $sql['sv_entriesperpage'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views") . " ADD `sv_entriesperpage` varchar(4) NOT NULL default ''";
         $sql['on_delete'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id") . " ADD `on_delete` text";
         $sql['viewentryscreen_templates'] = "ALTER TABLE ".$xoopsDB->prefix('formulize_screen_template') . " ADD `viewentryscreen` varchar(10) NOT NULL default ''";
+				$sql['ele_disabledconditions'] = "ALTER TABLE ".$xoopsDB->prefix("formulize"). " ADD `ele_disabledconditions` text NOT NULL";
 				$sql['remove_newslider'] = "UPDATE ".$xoopsDB->prefix("formulize")." SET ele_type = 'slider' WHERE ele_type = 'newslider'";
+				$sql['update_module_name'] = "UPDATE ".$xoopsDB->prefix("modules")." SET name = 'Formulize' WHERE dirname = 'formulize' AND name = 'Forms'";
+				unlink(XOOPS_ROOT_PATH.'/cache/adminmenu_english.php');
 
         $needToSetSaveAndLeave = true;
         $needToSetPrintableView = true;
@@ -604,6 +608,8 @@ function patch40() {
                     print "On Delete already added. result: OK<br>";
                 } elseif($key === "viewentryscreen_templates") {
                     print "View entry screen option for template screens already added. result: OK<br>";
+								} elseif($key === "ele_disabledconditions") {
+                    print "Disabled conditions already added. result: OK<br>";
                 } else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
@@ -614,6 +620,72 @@ function patch40() {
                 }
             }
         }
+
+				// add opening <?php tags to code snippets that don't have them
+				// 1. derived value formulas $ele_value[0]
+				// 2. Textbox $ele_value[2] if they contain $default
+				// 3. Textarea $ele_value[0] if they contain $default
+				// 4. ib $ele_value[0] if they contain $value
+				// 5. areamodif $ele_value[0] if they contain $value
+
+				// query for the elements...
+				$elementsNeedingOpeningPHPTagsSQL = "SELECT ele_id, ele_type, ele_value FROM ".$xoopsDB->prefix('formulize')." WHERE
+					(ele_type = 'derived')
+					OR (ele_type IN ('ib', 'areamodif') AND ele_value LIKE '%\$value%')
+					OR (ele_type IN ('text', 'textarea') AND ele_value LIKE '%\$default%') ";
+				if($res = $xoopsDB->query($elementsNeedingOpeningPHPTagsSQL)) {
+					// loop through the results...
+					while($record = $xoopsDB->fetchArray($res)) {
+						// isolate the value we're targetting...
+						$eleValueKey = $record['ele_type'] == 'text' ? 2 : 0; // figure out which key we need to look in based on the element type (text is 2, everything else is 0)
+						$newEleValue = unserialize(($record['ele_value']));
+						$newEleValue[$eleValueKey] = trim($newEleValue[$eleValueKey]);
+						// is the value missing the opening php tag?
+						if(substr($newEleValue[$eleValueKey], 0, 5) != '<?php') {
+							// add the tag and update the database...
+							$newEleValue[$eleValueKey] = "<?php\n".$newEleValue[$eleValueKey];
+							$newEleValue = serialize($newEleValue);
+							$updateSQL = "UPDATE ".$xoopsDB->prefix('formulize')." SET ele_value = ".$xoopsDB->quoteString($newEleValue)." WHERE ele_id = ".$record['ele_id'];
+							if(!$updateRes = $xoopsDB->query($updateSQL)) {
+								print "Notice: could not add opening PHP tag to the code in element ".$record['ele_id']." with the SQL:<br>".str_replace('<', '&lt;',$updateSQL)."<br>".$xoopsDB->error()."<br>This is not a critical error. You can add the tag yourself at the top of the code, if you want the editor to provide highlighting. For more information contact <a href=mailto:info@formulize.org>info@formulize.org</a>.<br>";
+							}
+						}
+					}
+				} else {
+					exit("Error detecting code snippets that need opening PHP tags. SQL dump:<br>".$elementsNeedingOpeningPHPTagsSQL."<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+				}
+
+				// Same operation, on the form procedures
+				// query for the procedures...
+				$formProceduresNeedingOpeningPHPTagsSQL = "SELECT id_form as fid, on_before_save, on_after_save, on_delete, custom_edit_check
+					FROM ".$xoopsDB->prefix('formulize_id')." WHERE
+					(on_before_save != '' AND on_before_save NOT LIKE '<?php%')
+					OR (on_after_save != '' AND on_after_save NOT LIKE '<?php%')
+					OR (on_delete != '' AND on_delete NOT LIKE '<?php%')
+					OR (custom_edit_check != '' AND custom_edit_check NOT LIKE '<?php%') ";
+				if($res = $xoopsDB->query($formProceduresNeedingOpeningPHPTagsSQL)) {
+					// loop through the results...
+					while($record = $xoopsDB->fetchArray($res)) {
+						// for each record that was returned from the DB, make a list of all the events and then check each event...
+						$events = array('on_before_save', 'on_after_save', 'on_delete', 'custom_edit_check');
+						foreach($events as $i=>$event) {
+							$record[$event] = trim($record[$event]);
+							// if the event is missing the opening php tag, then let's make a SQL snippet containing the updated code we want to write to the DB
+							if($record[$event] AND substr($record[$event], 0, 5) != '<?php') {
+								$events[$i] = "$event = ".$xoopsDB->quoteString("<?php\n".$record[$event]);
+							} else { // otherwise, throw away this event, we won't be doing an update on it
+								unset($events[$i]);
+							}
+						}
+						// update the database with the new code for the relevant events
+						$updateProcSQL = "UPDATE ".$xoopsDB->prefix('formulize_id')." SET ".implode(', ',$events)." WHERE id_form = ".$record['fid'];
+						if(!$updateProcRes = $xoopsDB->query($updateProcSQL)) {
+							print "Notice: could not add opening PHP tag to the code in procedures for form ".$record['fid']." with the SQL:<br>".str_replace('<', '&lt;',$updateProcSQL)."<br>".$xoopsDB->error()."<br>This is not a critical error. You can add the tag yourself at the top of the code, if you want the editor to provide highlighting. For more information contact <a href=mailto:info@formulize.org>info@formulize.org</a>.<br>";
+						}
+					}
+				} else {
+					exit("Error detecting procedures that need opening PHP tags. SQL dump:<br>".$formProceduresNeedingOpeningPHPTagsSQL."<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+				}
 
         global $xoopsConfig;
         $themeSql = 'UPDATE '.$xoopsDB->prefix('formulize_screen').' SET theme = "'.$xoopsConfig['theme_set'].'" WHERE theme = ""';

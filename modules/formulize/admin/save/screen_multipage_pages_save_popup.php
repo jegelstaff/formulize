@@ -61,70 +61,15 @@ foreach($screens as $k=>$v) {
 	if(substr($k, 0, 10) == "pagetitle_") {
 		$page_number = substr($k, 10);
 		$pagetitles[$page_number] = $v;
-		
-		// grab any conditions for this page too
-		// first delete any that we need to
-		$conditionsDeleteParts = explode("_", $_POST['conditionsdelete']);
-		$filter_key = 'pagefilter_'.$page_number;
-		if($_POST['conditionsdelete'] != "" AND $conditionsDeleteParts[1] == $page_number) { // key 1 will be the page number where the X was clicked
-		  // go through the passed filter settings starting from the one we need to remove, and shunt the rest down one space
-		  // need to do this in a loop, because unsetting and key-sorting will maintain the key associations of the remaining high values above the one that was deleted
-		  $originalCount = count((array) $_POST[$filter_key.'_elements']);
-		  for($i=$conditionsDeleteParts[2];$i<$originalCount;$i++) { // 2 is the X that was clicked for this page
-		    if($i>$conditionsDeleteParts[2]) {
-		      $_POST[$filter_key."_elements"][$i-1] = $_POST[$filter_key."_elements"][$i];
-		      $_POST[$filter_key."_ops"][$i-1] = $_POST[$filter_key."_ops"][$i];
-		      $_POST[$filter_key."_terms"][$i-1] = $_POST[$filter_key."_terms"][$i];
-		      $_POST[$filter_key."_types"][$i-1] = $_POST[$filter_key."_types"][$i];
-		    }
-		    if($i==$conditionsDeleteParts[2] OR $i+1 == $originalCount) {
-		      // first time through or last time through, unset things
-		      unset($_POST[$filter_key."_elements"][$i]);
-		      unset($_POST[$filter_key."_ops"][$i]);
-		      unset($_POST[$filter_key."_terms"][$i]);
-		      unset($_POST[$filter_key."_types"][$i]);
-			  }
-			}
-			$conditionsStateChanged = true;
-		}
-		$conditions[$page_number] = array();
-		// now package everything up into the conditions we need
-		if(count((array) $_POST['pagefilter_'.$page_number.'_terms']) > 0) {
-			foreach($_POST['pagefilter_'.$page_number.'_elements'] as $key=>$value) {
-				$conditions[$page_number][0][$key] = $value;
-			}
-			foreach($_POST['pagefilter_'.$page_number.'_ops'] as $key=>$value) {
-				$conditions[$page_number][1][$key] = $value;
-			}
-			foreach($_POST['pagefilter_'.$page_number.'_terms'] as $key=>$value) {
-				$conditions[$page_number][2][$key] = $value;
-			}
-			foreach($_POST['pagefilter_'.$page_number.'_types'] as $key=>$value) {
-				$conditions[$page_number][3][$key] = $value;
-			}
-		}
-		// grab newly submitted ones
-		if($_POST['new_pagefilter_'.$page_number.'_term'] !== "") {
-			$conditions[$page_number][0][] = $_POST['new_pagefilter_'.$page_number.'_element'];
-			$conditions[$page_number][1][] = $_POST['new_pagefilter_'.$page_number.'_op'];
-			$conditions[$page_number][2][] = $_POST['new_pagefilter_'.$page_number.'_term'];
-			$conditions[$page_number][3][] = "all";
-			$conditionsStateChanged = true;
-		}
-		if($_POST['new_pagefilter_'.$page_number.'_oom_term'] !== "") {
-			$conditions[$page_number][0][] = $_POST['new_pagefilter_'.$page_number.'_oom_element'];
-			$conditions[$page_number][1][] = $_POST['new_pagefilter_'.$page_number.'_oom_op'];
-			$conditions[$page_number][2][] = $_POST['new_pagefilter_'.$page_number.'_oom_term'];
-			$conditions[$page_number][3][] = "oom";
-			$conditionsStateChanged = true;
-		}
-		if(!isset($conditions[$page_number])) {
-			$conditions[$page_number] = array();
-		}
 
-  }elseif(substr($k, 0, 4) == "page") { // page must come last since those letters are common to the beginning of everything
+		// grab any conditions for this page too
+		$filter_key = 'pagefilter_'.$page_number;
+		list($conditions[$page_number], $pageConditionsStateChanged) = parseSubmittedConditions($filter_key, 'conditionsdelete', deleteTargetKey: 2, conditionsDeletePartsKeyOneMustMatch: $page_number);
+		$conditionsStateChanged = $pageConditionsStateChanged ? $pageConditionsStateChanged : $conditionsStateChanged; // if conditions changed on this page, then we need to set the overall flag. But don't set the overall flag to false just because nothing changed, since something might have changed on another page!
+
+  } elseif(substr($k, 0, 4) == "page") { // page must come last since those letters are common to the beginning of everything
 		$pages[substr($k, 4)] = unserialize($v); // arrays will have been serialized when they were put into processedValues
-	} 
+	}
 }
 
 $screen->setVar('pages',serialize($pages));

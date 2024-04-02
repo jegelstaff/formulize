@@ -115,7 +115,7 @@ class icms_module_Object extends icms_core_Object {
 	 * @param   string  $dirname    Directory Name
 	 * @param   boolean $verbose
 	 **/
-	public function loadInfoAsVar($dirname, $verbose = true) {
+	public function loadInfoAsVar($dirname, $verbose = false) {
 		if (!isset($this->modinfo)) {$this->loadInfo($dirname, $verbose);}
 		$this->setVar('name', $this->modinfo['name'], true);
 		$this->setVar('version', (int) (100 * ($this->modinfo['version'] + 0.001)), true);
@@ -232,7 +232,7 @@ class icms_module_Object extends icms_core_Object {
 	 * @param   bool    $verbose    Give an error on fail?
 	 * @return  bool   TRUE if success, FALSE if fail.
 	 */
-	public function loadInfo($dirname, $verbose = true) {
+	public function loadInfo($dirname, $verbose = false) {
 		global $icmsConfig;
 		icms_loadLanguageFile($dirname, 'modinfo');
 		if (file_exists(ICMS_ROOT_PATH . '/modules/' . $dirname . '/icms_version.php')) {

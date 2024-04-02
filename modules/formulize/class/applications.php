@@ -61,7 +61,7 @@ global $xoopsDB;
 
     }
 
-    class formulizeApplicationMenuLinksHandler  {
+  class formulizeApplicationMenuLinksHandler  {
 
         var $db;
         function __construct(&$db) {
@@ -140,54 +140,57 @@ global $xoopsDB;
             return $linksArray;
         }
 
-		// returns an array of the fid,sid applicable to the current user, based on menu settings and permissions
-		static function getDefaultScreenForUser($includeMenuURLs=false) {
+		/**
+		 * Returns an array of the fid,sid,url representing the default menu link for the current user
+		 * @return array An array containing the form id and screen id and url of any default menu link found
+		 */
+		static function getDefaultScreenForUser() {
 
-            global $xoopsUser, $xoopsDB;
-            $fid = null;
-            $sid = null;
-            $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
-            $groupSQL = "";
-            foreach($groups as $group) {
-                if(strlen($groupSQL) == 0){
-                    $groupSQL .= " AND ( perm.group_id=". $group . " ";
-                }else{
-                    $groupSQL .= " OR perm.group_id=". $group . " ";
-                }
-            }
-            $groupSQL .= ")";
-
-            $sql = 'SELECT links.screen, links.url FROM '.$xoopsDB->prefix("formulize_menu_links").' AS links ';
-            $sql .= ' LEFT JOIN '.$xoopsDB->prefix("formulize_menu_permissions").' AS perm ON links.menu_id = perm.menu_id ';
-            $sql .= ' WHERE  default_screen = 1'. $groupSQL . 'ORDER BY links.rank LIMIT 0,1';
-
-            $res = $xoopsDB->query ( $sql ) or die('SQL Error !<br />'.$sql.'<br />'.$xoopsDB->error());
-
-            if ( $res ) {
-                if($row = $xoopsDB->fetchArray ( $res )) {
-                    if($includeMenuURLs AND $row['url']) {
-                        if(substr($row['url'],0,1)=='/') {
-                            header('Location: ' . XOOPS_URL . $row['url']);
-                        } elseif(!strstr($row['url'],'://')) {
-                            header('Location: ' . 'http://' . $row['url']);
-                        } else {
-                            header('Location: ' . $row['url']);
-                        }
-                        exit();
-                    }
-                    $screenID = $row['screen'];
-                    if ( strpos($screenID,"fid=") !== false){
-                        $fid = substr($screenID, strpos($screenID,"=")+1 );
-                    } else {
-                        $sid = substr($screenID, strpos($screenID,"=")+1 );
-                    }
-                }
-            }
-            return array($fid,$sid);
-        }
-
-    }
-
+			global $xoopsUser, $xoopsDB;
+			static $cachedResults = array();
+			$fid = null;
+			$sid = null;
+			$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+			$cacheKey = serialize($groups);
+			if(!isset($cachedResults[$cacheKey])) {
+				$groupSQL = "";
+				foreach($groups as $group) {
+					if(strlen($groupSQL) == 0){
+							$groupSQL .= " AND ( perm.group_id=". $group . " ";
+					}else{
+							$groupSQL .= " OR perm.group_id=". $group . " ";
+					}
+				}
+				$groupSQL .= ")";
+				$sql = 'SELECT links.screen, links.url FROM '.$xoopsDB->prefix("formulize_menu_links").' AS links ';
+				$sql .= ' LEFT JOIN '.$xoopsDB->prefix("formulize_menu_permissions").' AS perm ON links.menu_id = perm.menu_id ';
+				$sql .= ' WHERE  default_screen = 1'. $groupSQL . 'ORDER BY links.rank LIMIT 0,1';
+				$res = $xoopsDB->query ( $sql ) or die('SQL Error !<br />'.$sql.'<br />'.$xoopsDB->error());
+				$url = '';
+				$fid = 0;
+				$sid = 0;
+				if($row = $xoopsDB->fetchArray ( $res )) {
+					if($row['url']) {
+						if(substr($row['url'],0,1)=='/') {
+								$url = XOOPS_URL . $row['url'];
+						} elseif(!strstr($row['url'],'://')) {
+								$url = 'http://' . $row['url'];
+						} else {
+								$url = $row['url'];
+						}
+					}
+					$screenID = $row['screen'];
+					if ( strpos($screenID,"fid=") !== false){
+						$fid = substr($screenID, strpos($screenID,"=")+1 );
+					} else {
+						$sid = substr($screenID, strpos($screenID,"=")+1 );
+					}
+				}
+				$cachedResults[$cacheKey] = array($fid,$sid,$url);
+			}
+			return $cachedResults[$cacheKey];
+		}
+  }
 
 class formulizeApplication extends XoopsObject {
 

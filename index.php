@@ -2,7 +2,7 @@
 /**
  * Site index aka home page.
  * redirects to installation, if ImpressCMS is not installed yet
- * 
+ *
  * @copyright	http://www.impresscms.org/ The ImpressCMS Project
  * @license		http://www.gnu.org/licenses/old-licenses/gpl-2.0.html GNU General Public License(GPL)
  * @package		core
@@ -26,13 +26,24 @@ if(isset($_SESSION['google_xoops_redirect'])) {
 
 // added failover to default startpage for the registered users group -- JULIAN EGELSTAFF Apr 3 2017
 $groups = @is_object(icms::$user) ? icms::$user->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
-if(($icmsConfig['startpage'][$group] == "" OR $icmsConfig['startpage'][$group] == "--") 
-AND in_array(XOOPS_GROUP_USERS, $groups) 
-AND $icmsConfig['startpage'][XOOPS_GROUP_USERS] != "" 
+if(($icmsConfig['startpage'][$group] == "" OR $icmsConfig['startpage'][$group] == "--")
+AND in_array(XOOPS_GROUP_USERS, $groups)
+AND $icmsConfig['startpage'][XOOPS_GROUP_USERS] != ""
 AND $icmsConfig['startpage'][XOOPS_GROUP_USERS] != "--") {
     $icmsConfig['startpage'] = $icmsConfig['startpage'][XOOPS_GROUP_USERS];
 } else {
     $icmsConfig['startpage'] = $icmsConfig['startpage'][$group];
+}
+
+// See if they actually have a Formulize start page declared. If not, nullify the startpage since we have no where to take them
+if($icmsConfig['startpage'] == 'formulize') {
+	include_once XOOPS_ROOT_PATH."/modules/formulize/class/applications.php";
+  $includeMenuURLs = true;
+	$followMenuURLs = false;
+	list($startFid,$startSid,$startURL) = formulizeApplicationMenuLinksHandler::getDefaultScreenForUser();
+	if(!$startFid AND !$startSid AND !$startURL) {
+		$icmsConfig['startpage'] = '--';
+	}
 }
 
 if (isset($icmsConfig['startpage']) && $icmsConfig['startpage'] != "" && $icmsConfig['startpage'] != "--") {
@@ -49,8 +60,8 @@ if (isset($icmsConfig['startpage']) && $icmsConfig['startpage'] != "" && $icmsCo
 			$xoopsOption['show_cblock'] = 1;
 			/** Included to start page rendering */
 			include "header.php";
-            global $xoopsTpl;
-            $xoopsTpl->assign('openClass', 'site-layout__sidebar--open');
+			global $xoopsTpl;
+			$xoopsTpl->assign('openClass', 'site-layout__sidebar--open');
 			/** Included to complete page rendering */
 			include "footer.php";
 		}

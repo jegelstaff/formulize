@@ -15,7 +15,7 @@ define("_MI_formulize_LOE_limit", "Quel est le nombre maximum d'entrées à affi
 define("_MI_formulize_LOE_limit_DESC", "Lorsqu'une sélection est très large, l'affichage de la liste des entrées peut être fastidieuse, et durer au delà de plusieurs minutes. Définissez le nombre maximum d'entrées à afficher d'un coup.  Si une sélection contient plus d'entrée que la limite, il sera demandé à l'utilisateur s'il veut tout afficher ou non.");
 define("_MI_formulize_LOGPROCEDURE", "Demander les identifiants pour surveiller Procédures et paramètres?");
 define("_MI_formulize_LOGPROCEDUREDESC", "Par défaut, la vérification des identifiants est désactivée.");
-define("_MI_formulize_NAME","Formulaire");
+define("_MI_formulize_NAME","Formulize");
 define("_MI_formulize_NOTIFY_DELENTRY", "Effacement d'entrée de formulaire");
 define("_MI_formulize_NOTIFY_DELENTRY_CAP", "Notifiez moi quand une entrée de formulaire est effacée");
 define("_MI_formulize_NOTIFY_DELENTRY_DESC", "Cette option de notification alerte les utilisateurs quand une entrée de formulaire est effacée");

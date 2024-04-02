@@ -40,7 +40,7 @@ global $xoopsDB;
 define('formulize_TABLE', $xoopsDB->prefix("formulize"));
 
 class formulizeformulize extends XoopsObject {
-	
+
 	var $isLinked;
 	var $needsDataType;
     var $overrideDataType;
@@ -51,7 +51,7 @@ class formulizeformulize extends XoopsObject {
     var $canHaveMultipleValues;
     var $hasMultipleOptions;
     var $isSystemElement; // only set to true in custom element class, if you want an element to exist in the form but be uneditable, uncreatable, undeletable by anyone. It is maintained in code.
-	
+
 	function __construct(){
         parent::__construct();
 	//	key, data_type, value, req, max, opt
@@ -72,17 +72,18 @@ class formulizeformulize extends XoopsObject {
 		$this->initVar("ele_delim", XOBJ_DTYPE_TXTBOX, NULL, true, 255);
 		$this->initVar("ele_forcehidden", XOBJ_DTYPE_INT);
 		$this->initVar("ele_private", XOBJ_DTYPE_INT);
- 		// changed - start - August 19 2005 - jpc 		
+ 		// changed - start - August 19 2005 - jpc
 		//$this->initVar("ele_display", XOBJ_DTYPE_INT);
 		$this->initVar("ele_display", XOBJ_DTYPE_TXTBOX);
 		// changed - end - August 19 2005 - jpc
 		$this->initVar("ele_disabled", XOBJ_DTYPE_TXTBOX); // added June 17 2007 by jwe
 		$this->initVar("ele_encrypt", XOBJ_DTYPE_INT); // added July 15 2009 by jwe
 		$this->initVar("ele_filtersettings", XOBJ_DTYPE_ARRAY);
+		$this->initVar("ele_disabledconditions", XOBJ_DTYPE_ARRAY);
 		$this->initVar("ele_use_default_when_blank", XOBJ_DTYPE_INT);
         $this->initVar("ele_exportoptions", XOBJ_DTYPE_ARRAY);
 	}
-	
+
 	//this method is used to to retreive the elements dataType and size
 	function getDataTypeInformation() {
 		$defaultType = "text";
@@ -107,26 +108,26 @@ class formulizeformulize extends XoopsObject {
 			$defaultType = $defaultTypeComplete;
 			$defaultTypeSize = '';
 		}
-		//define array and return type and size		
+		//define array and return type and size
 		return array("dataType" => $defaultType, "dataTypeSize" => $defaultTypeSize);
 
 	}
-    
+
     function createIndex(){
 		global $xoopsDB;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($this->getVar('id_form'));
-		
+
 		$defaultTypeInformation = $this->getDataTypeInformation();
 		$defaultType = $defaultTypeInformation['dataType'];
 		$defaultTypeSize = $defaultTypeInformation['dataTypeSize'];
-        
+
 		$index_fulltext = $defaultType == "text" ? "FULLTEXT" : "INDEX";
-		
+
 		$sql = "ALTER TABLE ".$xoopsDB->prefix("formulize_".formulize_db_escape($formObject->getVar('form_handle')))." ADD $index_fulltext `". formulize_db_escape($this->getVar('ele_handle')) ."` (`".formulize_db_escape($this->getVar('ele_handle'))."`)";
 		$res = $xoopsDB->query($sql);
 	}
-	
+
 	function deleteIndex($original_index_name){
 		global $xoopsDB;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
@@ -134,21 +135,21 @@ class formulizeformulize extends XoopsObject {
 		$sql = "DROP INDEX `".formulize_db_escape($original_index_name)."` ON ".$xoopsDB->prefix("formulize_".formulize_db_escape($formObject->getVar('form_handle')));
 		$res = $xoopsDB->query($sql);
 	}
-	
+
 	function has_index(){
 		global $xoopsDB;
 		$indexType = "";
-        
+
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($this->getVar('id_form'));
-        
-		//Complex check if 
+
+		//Complex check if
         $elementDataSQL = "SELECT stats.index_name FROM information_schema.statistics AS stats INNER JOIN (SELECT count( 1 ) AS amountCols, index_name FROM information_schema.statistics WHERE table_schema='".XOOPS_DB_NAME."' AND table_name = '".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."' GROUP BY index_name) AS amount ON amount.index_name = stats.index_name WHERE stats.table_schema='".XOOPS_DB_NAME."' AND stats.table_name = '".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."' AND stats.column_name = '".$this->getVar('ele_handle')."' AND amount.amountCols =1";
-		
+
 		$elementDataRes = $xoopsDB->queryF($elementDataSQL);
 		$elementDataArray = $xoopsDB->fetchArray($elementDataRes);
 		$indexType = $elementDataArray['index_name'];
-        
+
 		return $indexType;
 	}
 
@@ -170,9 +171,9 @@ class formulizeformulize extends XoopsObject {
         }
         parent::setVar($key, $value, $not_gpc);
     }
-    
+
     // returns an array of the default values (since there could be more than one in some element types)
-    // entry_id is the entry for which we're getting the default value, if any    
+    // entry_id is the entry for which we're getting the default value, if any
     public function getDefaultValues($entry_id='new') {
         $default = array();
         $ele_value = $this->getVar('ele_value');
@@ -197,7 +198,7 @@ class formulizeformulize extends XoopsObject {
         }
         return $default;
     }
-    
+
     // returns true if the option is one of the values the user can choose from in this element
     // returns false if the element does not have options
     function optionIsValid($option) {
@@ -213,7 +214,7 @@ class formulizeformulize extends XoopsObject {
         }
         return false;
     }
-    
+
 }
 
 class formulizeElementsHandler {
@@ -277,7 +278,7 @@ class formulizeElementsHandler {
         $ele_value = $element->getVar('ele_value');
         if($ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "select" OR $ele_type=="radio" OR $ele_type=="date" OR $ele_type=="colorpick" OR $ele_type=="yn" OR $ele_type=="derived") {
             $element->hasData = true;
-        } 
+        }
         if($ele_type=="select") {
             $element->hasMultipleOptions = true;
             if($ele_value[1] == 1) {
@@ -288,13 +289,13 @@ class formulizeElementsHandler {
             if(!is_array($ele_value[2])) {
                 $element->isLinked = strstr($ele_value[2], "#*=:*") ? true : false;
             }
-        } 
+        }
         if($ele_type == "radio") {
             $element->hasMultipleOptions = true;
         }
         return $element;
     }
-    
+
 	function insert(&$element, $force = false){
         if( get_class($element) != 'formulizeformulize' AND is_subclass_of($element, 'formulizeformulize') == false){
             return false;
@@ -310,9 +311,9 @@ class formulizeElementsHandler {
 				}
    		if( $element->isNew() || !$ele_id ) { // isNew is never set on the element object or parent??
 				$sql = sprintf("INSERT INTO %s (
-				id_form, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_sort, ele_req, ele_value, ele_uitext, ele_uitextshow, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private, ele_encrypt, ele_filtersettings, ele_use_default_when_blank, ele_exportoptions
+				id_form, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_sort, ele_req, ele_value, ele_uitext, ele_uitextshow, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private, ele_encrypt, ele_filtersettings, ele_disabledconditions, ele_use_default_when_blank, ele_exportoptions
 				) VALUES (
-				%u, %s, %s, %s, %s, %s, %u, %u, %u, %s, %s, %u, %s, %s, %s, %u, %u, %u, %s, %u, %s
+				%u, %s, %s, %s, %s, %s, %u, %u, %u, %s, %s, %u, %s, %s, %s, %u, %u, %u, %s, %s, %u, %s
 				)",
 				formulize_TABLE,
 				$id_form,
@@ -334,9 +335,10 @@ class formulizeElementsHandler {
 				$ele_private,
 				$ele_encrypt,
 				$this->db->quoteString($ele_filtersettings),
+				$this->db->quoteString($ele_disabledconditions),
 				$ele_use_default_when_blank,
                 $this->db->quoteString($ele_exportoptions)
-			);            
+			);
             // changed - end - August 19 2005 - jpc
 			}else{
             // changed - start - August 19 2005 - jpc
@@ -359,6 +361,7 @@ class formulizeElementsHandler {
 				ele_private = %u,
 				ele_encrypt = %u,
 				ele_filtersettings = %s,
+				ele_disabledconditions = %s,
 				ele_use_default_when_blank = %u,
                 ele_exportoptions = %s
 				WHERE ele_id = %u AND id_form = %u",
@@ -381,6 +384,7 @@ class formulizeElementsHandler {
 				$ele_private,
 				$ele_encrypt,
 				$this->db->quoteString($ele_filtersettings),
+				$this->db->quoteString($ele_disabledconditions),
 				$ele_use_default_when_blank,
                 $this->db->quoteString($ele_exportoptions),
 				$ele_id,
@@ -388,8 +392,8 @@ class formulizeElementsHandler {
 			);
             // changed - end - August 19 2005 - jpc
  		}
-		
-	
+
+
         if( false != $force ){
             $result = $this->db->queryF($sql);
         }else{
@@ -405,7 +409,7 @@ class formulizeElementsHandler {
 			$element->setVar('ele_id', $ele_id);
 			if(!$element->getVar('ele_handle')) { // set the handle same as the element id on new elements, as long as the handle wasn't actually passed in with the element
 				$element->setVar('ele_handle', $ele_id);
-				$this->insert($element); 
+				$this->insert($element);
 			}
 		}
 		if($ele_handle === "") {
@@ -413,15 +417,15 @@ class formulizeElementsHandler {
 			$ele_handle = $ele_id;
       while(!$uniqueCheck = $form_handler->isHandleUnique($ele_handle, $ele_id)) {
         $ele_handle = $ele_handle . "_copy";
-      }	    
-			$element->setVar('ele_handle', $ele_handle); 
+      }
+			$element->setVar('ele_handle', $ele_handle);
 			$this->insert($element);
 		}
 		return $ele_id;
 	}
-	
+
 	function delete(&$element, $force = false){
-		
+
 		if( strtolower(get_class($this)) != 'formulizeelementshandler') {
 			return false;
 		}
@@ -466,7 +470,7 @@ class formulizeElementsHandler {
         $idFormOperator = $id_form > 0 ? "=" : ">";
 		$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE id_form '.$idFormOperator.' '.intval($id_form);
 
-		if( isset($criteria)) { 
+		if( isset($criteria)) {
 			$sql .= $criteria->render() ? ' AND ('.$criteria->render().')' : '';
 			if( $criteria->getSort() != '' ){
 				$criteriaByClause = ' ORDER BY '.$criteria->getSort().' '.$criteria->getOrder();
@@ -500,17 +504,17 @@ class formulizeElementsHandler {
 			}elseif($id_as_key == "handle") {
 				$ret[$myrow['ele_handle']] =& $elements;
 			} else {
-				$ret[] =& $elements;	
+				$ret[] =& $elements;
 			}
 			unset($elements);
 		}
 		return $ret;
 	}
 
-	
+
     function getCount($criteria = null){
 		$sql = 'SELECT COUNT(*) FROM '.formulize_TABLE;
-		if( isset($criteria) ) { 
+		if( isset($criteria) ) {
 			$sql .= ' '.$criteria->renderWhere();
 		}
 		$result = $this->db->query($sql);
@@ -520,11 +524,11 @@ class formulizeElementsHandler {
 		list($count) = $xoopsDB->fetchRow($result);
 		return $count;
 	}
-    
+
     function deleteAll($criteria = null){
     	global $xoopsDB;
 		$sql = 'DELETE FROM '.formulize_TABLE;
-		if( isset($criteria) ) { 
+		if( isset($criteria) ) {
 			$sql .= ' '.$criteria->renderWhere();
 		}
 		if( !$result = $this->db->query($sql) ){
@@ -532,7 +536,7 @@ class formulizeElementsHandler {
 		}
 		return true;
 	}
-	
+
 	// this method returns the id number of the element with the next highest order, below the specified order, in the specified form
 	function getPreviousElement($order, $fid) {
 		global $xoopsDB;
@@ -544,7 +548,7 @@ class formulizeElementsHandler {
 			return false;
 		}
 	}
-	
+
 	// this method is used by custom elements, to do final output from the "local" formatDataForList method, so the custom element developer can simply set booleans there, and they will be enforced here
 	function formatDataForList($value, $handle="", $entry_id=0) {
 		global $myts;
@@ -560,13 +564,13 @@ class formulizeElementsHandler {
 		}
 		return $value;
 	}
-    
+
     // determine if the element is disabled for the specified user
     function isElementDisabledForUser($elementIdOrObject, $userIdOrObject=0) {
         if(is_object($elementIdOrObject)) {
             $elementObject = $elementIdOrObject;
         } else {
-            $elementObject = $this->get($elementIdOrObject);    
+            $elementObject = $this->get($elementIdOrObject);
         }
         $ele_disabled = $elementObject->getVar('ele_disabled');
         if($ele_disabled == 1) {
@@ -587,13 +591,13 @@ class formulizeElementsHandler {
 		}
         return false;
     }
-    
+
     // determine if the element is displayed for the specified user
     function isElementVisibleForUser($elementIdOrObject, $userIdOrObject=0) {
         if(is_object($elementIdOrObject)) {
             $elementObject = $elementIdOrObject;
         } else {
-            $elementObject = $this->get($elementIdOrObject);    
+            $elementObject = $this->get($elementIdOrObject);
         }
         $ele_display = $elementObject->getVar('ele_display');
         if($ele_display == 1) {
@@ -613,7 +617,7 @@ class formulizeElementsHandler {
 		}
         return false;
     }
-    
+
 }
 
 function optionIsValidForElement($option, $elementHandleOrId) {

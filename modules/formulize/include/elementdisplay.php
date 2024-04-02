@@ -62,7 +62,7 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
         $entry = "new";
     }
 
-	$element = _formulize_returnElement($ele, $formframe);
+	$element = _formulize_returnElement($ele);
 	if(!is_object($element)) {
 		return "invalid_element";
 	}
@@ -136,70 +136,16 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
 	$elementFilterSettings = $element->getVar('ele_filtersettings');
 	if($allowed AND is_array($elementFilterSettings[0]) AND count((array) $elementFilterSettings[0]) > 0 AND (!$noSave OR $entry != 'new')) {
 		// cache the filterElements for this element, so we can build the right stuff with them later in javascript, to make dynamically appearing elements
-		$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName] = $elementFilterSettings[0];
-
-		// need to check if there's a condition on this element that is met or not
-		static $cachedEntries = array();
-		if($entry != "new") {
-			if(!isset($cachedEntries[$form_id][$entry])) {
-				$cachedEntries[$form_id][$entry] = getData("", $form_id, $entry, cacheKey: 'bypass'.microtime_float());
-			}
-			$entryData = $cachedEntries[$form_id][$entry];
+		if(!$subformCreateEntry) {
+			catalogConditionalElement($renderedElementName, array_unique($elementFilterSettings[0]));
 		}
-
-		$filterElements = $elementFilterSettings[0];
-		$filterOps = $elementFilterSettings[1];
-		$filterTerms = $elementFilterSettings[2];
-		/* ALTERED - 20100316 - freeform - jeff/julian - start */
-		$filterTypes = $elementFilterSettings[3];
-
-		// find the filter indexes for 'match all' and 'match one or more'
-		$filterElementsAll = array();
-		$filterElementsOOM = array();
-		for($i=0;$i<count((array) $filterTypes);$i++) {
-			if($filterTypes[$i] == "all") {
-				$filterElementsAll[] = $i;
-			} else {
-				$filterElementsOOM[] = $i;
-			}
-		}
-		/* ALTERED - 20100316 - freeform - jeff/julian - stop */
-
-		// setup evaluation condition as PHP and then eval it so we know if we should include this element or not
-		$evaluationCondition = "\$passedCondition = false;\n";
-		$evaluationCondition .= "if(";
-
-		/* ALTERED - 20100316 - freeform - jeff/julian - start */
-		$evaluationConditionAND = buildEvaluationCondition("AND",$filterElementsAll,$filterElements,$filterOps,$filterTerms,$entry,$entryData);
-		$evaluationConditionOR = buildEvaluationCondition("OR",$filterElementsOOM,$filterElements,$filterOps,$filterTerms,$entry,$entryData);
-
-		$evaluationCondition .= $evaluationConditionAND;
-		if( $evaluationConditionOR ) {
-			if( $evaluationConditionAND ) {
-				$evaluationCondition .= " AND (" . $evaluationConditionOR . ")";
-				//$evaluationCondition .= " OR (" . $evaluationConditionOR . ")";
-			} else {
-				$evaluationCondition .= $evaluationConditionOR;
-			}
-		}
-		/* ALTERED - 20100316 - freeform - jeff/julian - stop */
-
-		$evaluationCondition .= ") {\n";
-		$evaluationCondition .= "  \$passedCondition = true;\n";
-		$evaluationCondition .= "}\n";
-
-		//print( $evaluationCondition );
-
-		eval($evaluationCondition);
-		if(!$passedCondition) {
-			$allowed = 0;
-		}
+		$allowed = checkElementConditions($elementFilterSettings, $form_id, $entry);
 	}
 
 	if($allowed) {
 
-        // clear prior entry locks for this user - will be based on the token used to lock the prior page load, which is passed through POST key 'formulize_entry_lock_token'
-        include_once XOOPS_ROOT_PATH.'/modules/formulize/formulize_deleteEntryLock.php';
+		// clear prior entry locks for this user - will be based on the token used to lock the prior page load, which is passed through POST key 'formulize_entry_lock_token'
+		include_once XOOPS_ROOT_PATH.'/modules/formulize/formulize_deleteEntryLock.php';
 
 		if($element->getVar('ele_type') == "subform") {
 			return array("", $isDisabled);
@@ -208,13 +154,24 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
 		if(isset($GLOBALS['formulize_forceElementsDisabled']) AND $GLOBALS['formulize_forceElementsDisabled'] == true) {
 			$isDisabled = true;
 		} else {
-            $isDisabled = $element_handler->isElementDisabledForUser($element, $xoopsUser) ? true : false;
+      $isDisabled = $element_handler->isElementDisabledForUser($element, $xoopsUser) ? true : false;
+			if($isDisabled) {
+				$disabledConditions = $element->getVar('ele_disabledconditions');
+				if(is_array($disabledConditions[0]) AND count((array) $disabledConditions[0]) > 0) {
+					$isDisabled = checkElementConditions($disabledConditions, $form_id, $entry);
+					// Also, catalogue the governing elements so that dynamic conditional behaviour will work.
+					// Only if it's not a new entry, because there's no point in having elements in a new entry, with no values yet, and then be disabling them. Need to enter some information first??? This is especially necessary if elements should disable after they're NOT blank, because dynamic re-rendering would then disable them before you had saved the value you entered! The NOT Blank condition will kick in on next page load when the entry is no longer 'new'.
+					if($entry != 'new' AND !$subformCreateEntry) {
+						catalogConditionalElement($renderedElementName, array_unique($disabledConditions[0]));
+					}
+				}
+			}
 		}
 
 		// Another check to see if this element is disabled, for the case where the user can view the form, but not edit it.
 		if (!$isDisabled AND !$noSave) {
-            // note that we're using the OPPOSITE of the permission because we want to know if the element should be disabled
-            $isDisabled = !formulizePermHandler::user_can_edit_entry($form_id, $user_id, $entry);
+			// note that we're using the OPPOSITE of the permission because we want to know if the element should be disabled
+			$isDisabled = !formulizePermHandler::user_can_edit_entry($form_id, $user_id, $entry);
 		}
 
 		// check whether the entry is locked, and if so, then the element will be disabled.  Set a message to say that elements were disabled due to entries being edited elsewhere (first time only).
@@ -352,6 +309,90 @@ EOF;
 	}
 }
 
+/**
+ * Record an element and its filter conditions so we can reference them later when generating the JS for contitional elements
+ *
+ * Do not catalogue when there is a closure callback on the current output buffer, because that happens when we are rendering inline subform elements, which can never respond to conditions.
+ *
+ * @param string $renderedElementName The markup handle for the element, ie: de_FID_ENTRYID_ELEMENTID
+ * @param array $governingElements The elements which control the conditions that apply to the rendered element
+ * @return Nothing
+ */
+function catalogConditionalElement($renderedElementName, $governingElements) {
+	$bufferingStatus = ob_get_status();
+	if($bufferingStatus['name'] != 'Closure::__invoke') {
+		if(!isset($GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName])) {
+			$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName] = $governingElements;
+		} else {
+			foreach($governingElements as $governingElement) {
+				if(!in_array($governingElement, $GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName])) {
+					$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName][] = $governingElement;
+				}
+			}
+		}
+	}
+}
+
+
+/**
+ *
+ */
+function checkElementConditions($elementFilterSettings, $form_id, $entry) {
+	// need to check if there's a condition on this element that is met or not
+	static $cachedEntries = array();
+	if($entry != "new") {
+		if(!isset($cachedEntries[$form_id][$entry])) {
+			$cachedEntries[$form_id][$entry] = getData("", $form_id, $entry, cacheKey: 'bypass'.microtime_float());
+		}
+		$entryData = $cachedEntries[$form_id][$entry];
+	}
+
+	$filterElements = $elementFilterSettings[0];
+	$filterOps = $elementFilterSettings[1];
+	$filterTerms = $elementFilterSettings[2];
+	$filterTypes = $elementFilterSettings[3];
+
+	// find the filter indexes for 'match all' and 'match one or more'
+	$filterElementsAll = array();
+	$filterElementsOOM = array();
+	for($i=0;$i<count((array) $filterTypes);$i++) {
+		if($filterTypes[$i] == "all") {
+			$filterElementsAll[] = $i;
+		} else {
+			$filterElementsOOM[] = $i;
+		}
+	}
+
+	// setup evaluation condition as PHP and then eval it so we know if we should include this element or not
+	$evaluationCondition = "\$passedCondition = false;\n";
+	$evaluationCondition .= "if(";
+
+	$evaluationConditionAND = buildEvaluationCondition("AND",$filterElementsAll,$filterElements,$filterOps,$filterTerms,$entry,$entryData);
+	$evaluationConditionOR = buildEvaluationCondition("OR",$filterElementsOOM,$filterElements,$filterOps,$filterTerms,$entry,$entryData);
+
+	$evaluationCondition .= $evaluationConditionAND;
+	if( $evaluationConditionOR ) {
+		if( $evaluationConditionAND ) {
+			$evaluationCondition .= " AND (" . $evaluationConditionOR . ")";
+		} else {
+			$evaluationCondition .= $evaluationConditionOR;
+		}
+	}
+
+	$evaluationCondition .= ") {\n";
+	$evaluationCondition .= "  \$passedCondition = true;\n";
+	$evaluationCondition .= "}\n";
+
+	eval($evaluationCondition);
+
+	$allowed = 1;
+	if(!$passedCondition) {
+		$allowed = 0;
+	}
+	return $allowed;
+}
+
+
 /* ALTERED - 20100316 - freeform - jeff/julian - start */
 // THIS SHOULD BE REFACTORED SO THAT ELEMENT DISPLAY CONDITIONS RUN OFF THE SAME SQL FILTER LOGIC AS EVERY OTHER INSTANCE OF A FILTER
 function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$filterTerms,$entry,$entryData) {
@@ -439,15 +480,22 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 		} else {
 			$compValue = addslashes($compValue);
 		}
-        // in PHP 8 can't use empty strings for comparison in stristr because it will always give a false positive
+
+    // in PHP 8 can't use empty strings for comparison in stristr because it will always give a false positive
 		if($thisOp == "LIKE" AND addslashes($filterTerms[$i]) != '') {
 			$evaluationCondition .= "stristr('".$compValue."', '".addslashes($filterTerms[$i])."')";
 		} elseif($thisOp == "NOT LIKE" AND addslashes($filterTerms[$i]) != '') {
 			$evaluationCondition .= "!stristr('".$compValue."', '".addslashes($filterTerms[$i])."')";
-        } elseif($thisOp == "LIKE") {
-            $evaluationCondition .= $compValue ? 'FALSE' : 'TRUE';
-        } elseif($thisOp == "NOT LIKE") {
-            $evaluationCondition .= $compValue ? 'TRUE' : 'FALSE';
+    } elseif($thisOp == "LIKE") {
+      $evaluationCondition .= $compValue ? 'FALSE' : 'TRUE';
+    } elseif($thisOp == "NOT LIKE") {
+      $evaluationCondition .= $compValue ? 'TRUE' : 'FALSE';
+		} elseif($thisOp == "IN") {
+			$cleanTerms = array();
+			foreach(explode(',',$filterTerms[$i]) as $ft) {
+				$cleanTerms[] = str_replace("'", "\'", trim(htmlspecialchars_decode($ft, ENT_QUOTES), " \n\r\t\v\x00\"'"));
+			}
+			$evaluationCondition .= "in_array('".$compValue."', array('".implode("','",$cleanTerms)."'))";
 		} else {
 			$evaluationCondition .= "'".$compValue."' $thisOp '".addslashes($filterTerms[$i])."'";
 		}
@@ -457,58 +505,18 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 }
 /* ALTERED - 20100316 - freeform - jeff/julian - stop */
 
-// THIS FUNCTION RETURNS THE CAPTION FOR AN ELEMENT
-// added June 25 2006 -- jwe
-function displayCaption($formframe="", $ele=0) {
-	$element = _formulize_returnElement($ele, $formframe);
-  if(!is_object($element)) {
-    return "invalid_element";
-  }
-	return $element->getVar('ele_caption');
-}
-
-// THIS FUNCTION RETURNS THE description FOR AN ELEMENT
-function displayDescription($formframe="", $ele=0) {
-	$element = _formulize_returnElement($ele, $formframe);
-  if(!is_object($element)) {
-    return "invalid_element";
-  }
-	return $element->getVar('ele_desc');
-}
-
 // this function takes an element object, or an element id number or handle (or framework handle with framework id, but that's deprecated)
-function _formulize_returnElement($ele, $formframe="") {
+function _formulize_returnElement($ele) {
   $element = "";
 	if(is_object($ele)) {
 		if(get_class($ele) == "formulizeformulize" OR is_subclass_of($ele, 'formulizeformulize')) {
 			$element = $ele;
 		} else {
-			return "invalid_element";
+			return false;
 		}
-	}
-	if(!$element) {
-		if(!$formulize_mgr) {
-			$formulize_mgr =& xoops_getmodulehandler('elements', 'formulize');
-		}
-		if(is_numeric($ele)) {
-			$element =& $formulize_mgr->get($ele);
-		} else {
-			$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
-			$frameworkObject = $framework_handler->get($formframe);
-			if(is_object($frameworkObject)) {
-				$frameworkElementIds = $frameworkObject->getVar('element_ids');
-				if(isset($frameworkElementIds[$ele])) {
-					$element_id = $frameworkElementIds[$ele];
-					$element =& $formulize_mgr->get($element_id);
-				}
-			}
-			if(!is_object($element)) {
-				$element =& $formulize_mgr->get($ele);
-			}
-		}
-		if(!is_object($element)) {
-			return "invalid_element";
-		}
+	} else {
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		$element = $element_handler->get($ele);
 	}
   return $element;
 }
@@ -531,7 +539,7 @@ function displayButton($text, $ele, $value, $entry="new", $append="replace", $bu
 
 	// 1. check for button or link
 	// 2. write out the element
-  $element = _formulize_returnElement($ele, $formframe);
+  $element = _formulize_returnElement($ele);
   if(!is_object($element)) {
     print "invalid_element";
   }
@@ -550,4 +558,38 @@ function displayButton($text, $ele, $value, $entry="new", $append="replace", $bu
 	} else {
 		exit("Error: invalid button or link option specified in a call to displayButton");
 	}
+}
+
+/** THIS FUNCTION RETURNS THE CAPTION FOR AN ELEMENT
+ *
+ * DEPRECATED! Use $elementObject->getVar('ele_caption')
+ *
+ * @param string|int $formframe - not used
+ * @param object|string|int $ele - an element object, or id, or handle
+ * @return string The caption for the element
+ */
+// added June 25 2006 -- jwe
+function displayCaption($formframe='', $ele=0) {
+	$element = _formulize_returnElement($ele);
+  if(!is_object($element)) {
+    return "invalid_element";
+  }
+	return $element->getVar('ele_caption');
+}
+
+/** THIS FUNCTION RETURNS THE DESCRIPTION FOR AN ELEMENT
+ *
+ * DEPRECATED! Use $elementObject->getVar('ele_desc')
+ *
+ * @param string|int $formframe - not used
+ * @param object|string|int $ele - an element object, or id, or handle
+ * @return string The description (help text) for the element
+ */
+// THIS FUNCTION RETURNS THE description FOR AN ELEMENT
+function displayDescription($formframe='', $ele=0) {
+	$element = _formulize_returnElement($ele);
+  if(!is_object($element)) {
+    return "invalid_element";
+  }
+	return $element->getVar('ele_desc');
 }
