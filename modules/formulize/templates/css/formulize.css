@@ -656,3 +656,9 @@ div[id^=cellcontents_1_] label {
 .formulize-display-element-contents {
 	padding-left: 2em;
 }
+
+.formulize-uploaded-image-thumbnail {
+  max-width: 200px;
+  display: inline;
+  border: 1px solid black;
+}

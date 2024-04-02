@@ -401,10 +401,18 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
     // this method is for the file upload element only.  It will return a href that links to the actual file.
     function createDownloadLink($element, $url, $displayName) {
         $ele_value = $element->getVar('ele_value');
-        if($ele_value[2]) { // files we link to directly get a '_blank' target
-            return "<a href='".$url."' target='_blank'>".htmlspecialchars(strip_tags($displayName),ENT_QUOTES)."</a>";
+        $dotPos = strrpos($displayName, '.');
+        $fileExtension = substr($displayName, $dotPos);
+        $imageTypes = array('.gif', '.jpg', '.png', '.jpeg');
+        if(in_array($fileExtension, $imageTypes)) {
+            $linkContents = "<img class='formulize-uploaded-image-thumbnail' src='$url' />";
         } else {
-            return "<a href='".$url."'>".htmlspecialchars(strip_tags($displayName),ENT_QUOTES)."</a>";
+            $linkContents = htmlspecialchars(strip_tags($displayName),ENT_QUOTES);
+        }
+        if($ele_value[2]) { // files we link to directly get a '_blank' target
+            return "<a href='".$url."' target='_blank'>".$linkContents."</a>";
+        } else {
+            return "<a href='".$url."'>".$linkContents."</a>";
         }
     }
 
