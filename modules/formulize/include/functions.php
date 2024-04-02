@@ -5377,6 +5377,10 @@ function parseSubmittedConditions($filter_key, $delete_key, $deleteTargetKey = 1
  */
 function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry=null, $userComparisonId=null, $curlyBracketForm=null, $targetAlias="") {
 
+		if(!is_array($conditions) OR empty($conditions)) {
+			return;
+		}
+
     // if we've been sent an array for the target form, then we're preparing a query for the extraction layer
     // in this case all the dynamic references are dependent on the particular record being evaluated by the database during the query
     // so lots of things are done differently from when we're just looking things up relative to a single known entry
@@ -5397,138 +5401,138 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
     $curlyBracketFormFrom = "";
     $curlyBracketFormconditionsfilter = "";
     $curlyBracketFormconditionsfilter_oom = "";
-    if (is_array($conditions)) {
-        $targetFormIdForConversion = $extractionQuery ? key($targetFormId) : $targetFormId;
-        $filterElementHandles = convertElementIdsToElementHandles($conditions[0], $targetFormIdForConversion);
-        $filterElementIds = $conditions[0];
-        $filterOps = $conditions[1];
-        $filterTerms = $conditions[2];
-        $filterTypes = $conditions[3];
-        $targetFormObject = "";
-        $form_handler = xoops_getmodulehandler('forms', 'formulize');
-        $element_handler = xoops_getmodulehandler('elements', 'formulize');
-        for ($filterId = 0;$filterId<count((array) $filterElementHandles);$filterId++) {
 
-            $filterOps[$filterId] = $filterOps[$filterId] == 'NOT' ? '!=' : $filterOps[$filterId]; // convert NOT to != to avoid syntax error
-            // if this filter term is a { } term that matches a $_GET value, then let's use that instead
-            if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") {
-                $bracketlessFilterTerm = substr($filterTerms[$filterId],1,-1);
-                if (isset($_GET[$bracketlessFilterTerm])) {
-                    $filterTerms[$filterId] = formulize_db_escape($_GET[$bracketlessFilterTerm]);
-                }
-            }
+		$targetFormIdForConversion = $extractionQuery ? key($targetFormId) : $targetFormId;
+		$filterElementHandles = convertElementIdsToElementHandles($conditions[0], $targetFormIdForConversion);
+		$filterElementIds = $conditions[0];
+		$filterOps = $conditions[1];
+		$filterTerms = $conditions[2];
+		$filterTypes = $conditions[3];
+		$targetFormObject = "";
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		for ($filterId = 0;$filterId<count((array) $filterElementHandles);$filterId++) {
 
-            // convert the $filterElementId to a real id, since it's possible it could find its way in here as a handle...a legacy issue sort of
-            if (!is_numeric($filterElementIds[$filterId])) {
-                $elementObject = $element_handler->get($filterElementIds[$filterId]);
-                if (is_object($elementObject)) {
-                    $filterElementIds[$filterId] = $elementObject->getVar('ele_id');
-                }
-            }
+				$filterOps[$filterId] = $filterOps[$filterId] == 'NOT' ? '!=' : $filterOps[$filterId]; // convert NOT to != to avoid syntax error
+				// if this filter term is a { } term that matches a $_GET value, then let's use that instead
+				if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") {
+						$bracketlessFilterTerm = substr($filterTerms[$filterId],1,-1);
+						if (isset($_GET[$bracketlessFilterTerm])) {
+								$filterTerms[$filterId] = formulize_db_escape($_GET[$bracketlessFilterTerm]);
+						}
+				}
 
-            // if the filter is a { } filter, then deduce the curlybraketform if necessary, or verify that it is a valid handle in the curlyBraketForm if one was declared explicitly,
-            // otherwise ignore this term since it is not valid
-            // this can happen if you have an element that is used in different places in an application, and it is filtered by one value in one place, and another value in another place, but not both at the same time
-            // Allow terms if there is an asynchronous match waiting to be made - used for prepop subforms sometimes
-            if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") {
-                $bareFilterTerm = substr($filterTerms[$filterId],1,-1);
-                if (!$extractionQuery) {
-                    if(is_numeric($curlyBracketForm)) { // curlyBracketForm could be passed in as an id, in which case we need to unpack it and validate the handle once
-                        $curlyBracketForm = $form_handler->get($curlyBracketForm);
-                    }
-                    if(!in_array($bareFilterTerm,$curlyBracketForm->getVar('elementHandles'))
-                        AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])
-                        AND $bareFilterTerm != 'USER'
-												AND $bareFilterTerm != 'USER_ID'
-                        AND $bareFilterTerm != 'USERID'
-                        AND $bareFilterTerm != 'BLANK'
-                        AND !strstr($filterTerms[$filterId], '{TODAY')) {
-                        continue;
-                    }
-                } else {
-                    // curlyBracketForm is dependent on the form the handle is referencing
-                    if($bareFilterTerm != 'USER'
-											 AND $bareFilterTerm != 'USER_ID'
-                       AND $bareFilterTerm != 'USERID'
-                       AND $bareFilterTerm != 'BLANK'
-                   AND !strstr($filterTerms[$filterId], '{TODAY')) {
-                        if($filterTermElement = $element_handler->get($bareFilterTerm)) {
-                            $curlyBracketForm = $form_handler->get($filterTermElement->getVar('id_form'));
-                            // AND FOR NOW, WE DON'T SUPPORT { } DYNAMIC TERMS ON EXTRACTION QUERIES...WHAT WOULD THAT EVEN MEAN...we could possibly do this, it would require a lot of further complications in the SQL
-                            continue;
-                        } elseif(isset($_POST[$bareFilterTerm]) OR isset($_GET[$bareFilterTerm])) {
-                            // term is a URL or POST reference, so grab that
-                            $curlyBracketForm = $form_handler->get(key($targetFormId));
-                            $filterTerms[$filterId] = isset($_POST[$bareFilterTerm]) ? $_POST[$bareFilterTerm] : $_GET[$bareFilterTerm];
-                            $bareFilterTerm = $filterTerms[$filterId];
-                        } else {
-                            // don't know what the term is!
-                            global $xoopsUser;
-                            if($xoopsUser AND in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
-                                print "Error: { } term could not be resolved. Were you expecting it to be in the URL?";
-                            }
-                            return;
-                        }
-                    } else {
-                        // { } term is not a handle reference, or a URL reference, it's one of our reserved keywords, so use the main form (first key in the fid-alias array map that was passed in)
-                        reset($targetFormId);
-                        $curlyBracketForm = $form_handler->get(key($targetFormId));
-                    }
-                }
-            }
-            if(!$extractionQuery AND !$targetFormObject) { // setup the targetFormObject once, based on the passed in targetFormId
-                $targetFormObject = $form_handler->get($targetFormId, true); // true forces inclusion of all element types
-            } elseif($extractionQuery) {
-                // target form and alias depends on which form the filter element handle belongs to
-                if($elementObject = $element_handler->get($filterElementIds[$filterId])) {
-                    $targetFormObject = $form_handler->get($elementObject->getVar('id_form'), true); // true forces inclusion of all element types
-                    $targetAlias = $targetFormId[$elementObject->getVar('id_form')];
-                } elseif(isMetaDataField($filterElementIds[$filterId])) {
-                    $targetFormObject = $form_handler->get(key($targetFormId), true); // true forces inclusion of all element types
-                    $targetAlias = $targetFormId[key($targetFormId)];
-                } else {
-                    print 'ERROR: could not gather element information for "'.strip_tags(htmlspecialchars($filterElementIds[$filterId])).'" when creating a SQL filter.';
-                    continue;
-                }
-            }
-            $targetAlias .= ($targetAlias AND substr($targetAlias, -1) != '.') ? "." : ""; // add a period to the end of the alias, if there is an alias and if it doesn't have a dot, so it will work in the sql statement
+				// convert the $filterElementId to a real id, since it's possible it could find its way in here as a handle...a legacy issue sort of
+				if (!is_numeric($filterElementIds[$filterId])) {
+						$elementObject = $element_handler->get($filterElementIds[$filterId]);
+						if (is_object($elementObject)) {
+								$filterElementIds[$filterId] = $elementObject->getVar('ele_id');
+						}
+				}
 
-            list($conditionsFilterComparisonValue, $thisCurlyBracketFormFrom) =  _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterElementIds, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler);
+				// if the filter is a { } filter, then deduce the curlybraketform if necessary, or verify that it is a valid handle in the curlyBraketForm if one was declared explicitly,
+				// otherwise ignore this term since it is not valid
+				// this can happen if you have an element that is used in different places in an application, and it is filtered by one value in one place, and another value in another place, but not both at the same time
+				// Allow terms if there is an asynchronous match waiting to be made - used for prepop subforms sometimes
+				if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") {
+						$bareFilterTerm = substr($filterTerms[$filterId],1,-1);
+						if (!$extractionQuery) {
+								if(is_numeric($curlyBracketForm)) { // curlyBracketForm could be passed in as an id, in which case we need to unpack it and validate the handle once
+										$curlyBracketForm = $form_handler->get($curlyBracketForm);
+								}
+								if(!in_array($bareFilterTerm,$curlyBracketForm->getVar('elementHandles'))
+										AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])
+										AND $bareFilterTerm != 'USER'
+										AND $bareFilterTerm != 'USER_ID'
+										AND $bareFilterTerm != 'USERID'
+										AND $bareFilterTerm != 'BLANK'
+										AND !strstr($filterTerms[$filterId], '{TODAY')) {
+										continue;
+								}
+						} else {
+								// curlyBracketForm is dependent on the form the handle is referencing
+								if($bareFilterTerm != 'USER'
+										AND $bareFilterTerm != 'USER_ID'
+										AND $bareFilterTerm != 'USERID'
+										AND $bareFilterTerm != 'BLANK'
+								AND !strstr($filterTerms[$filterId], '{TODAY')) {
+										if($filterTermElement = $element_handler->get($bareFilterTerm)) {
+												$curlyBracketForm = $form_handler->get($filterTermElement->getVar('id_form'));
+												// AND FOR NOW, WE DON'T SUPPORT { } DYNAMIC TERMS ON EXTRACTION QUERIES...WHAT WOULD THAT EVEN MEAN...we could possibly do this, it would require a lot of further complications in the SQL
+												continue;
+										} elseif(isset($_POST[$bareFilterTerm]) OR isset($_GET[$bareFilterTerm])) {
+												// term is a URL or POST reference, so grab that
+												$curlyBracketForm = $form_handler->get(key($targetFormId));
+												$filterTerms[$filterId] = isset($_POST[$bareFilterTerm]) ? $_POST[$bareFilterTerm] : $_GET[$bareFilterTerm];
+												$bareFilterTerm = $filterTerms[$filterId];
+										} else {
+												// don't know what the term is!
+												global $xoopsUser;
+												if($xoopsUser AND in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
+														print "Error: { } term could not be resolved. Were you expecting it to be in the URL?";
+												}
+												return;
+										}
+								} else {
+										// { } term is not a handle reference, or a URL reference, it's one of our reserved keywords, so use the main form (first key in the fid-alias array map that was passed in)
+										reset($targetFormId);
+										$curlyBracketForm = $form_handler->get(key($targetFormId));
+								}
+						}
+				}
+				if(!$extractionQuery AND !$targetFormObject) { // setup the targetFormObject once, based on the passed in targetFormId
+						$targetFormObject = $form_handler->get($targetFormId, true); // true forces inclusion of all element types
+				} elseif($extractionQuery) {
+						// target form and alias depends on which form the filter element handle belongs to
+						if($elementObject = $element_handler->get($filterElementIds[$filterId])) {
+								$targetFormObject = $form_handler->get($elementObject->getVar('id_form'), true); // true forces inclusion of all element types
+								$targetAlias = $targetFormId[$elementObject->getVar('id_form')];
+						} elseif(isMetaDataField($filterElementIds[$filterId])) {
+								$targetFormObject = $form_handler->get(key($targetFormId), true); // true forces inclusion of all element types
+								$targetAlias = $targetFormId[key($targetFormId)];
+						} else {
+								print 'ERROR: could not gather element information for "'.strip_tags(htmlspecialchars($filterElementIds[$filterId])).'" when creating a SQL filter.';
+								continue;
+						}
+				}
+				$targetAlias .= ($targetAlias AND substr($targetAlias, -1) != '.') ? "." : ""; // add a period to the end of the alias, if there is an alias and if it doesn't have a dot, so it will work in the sql statement
 
-            // regular conditions
-            if ($filterTypes[$filterId] != "oom" AND !strstr($conditionsFilterComparisonValue, "curlybracketform")) {
-                $needIntroBoolean = true;
-                list($conditionsfilter, $thiscondition) = _appendToCondition($conditionsfilter, "AND", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
-                if($thiscondition) {
-                    $conditionsfilterArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
-                }
-            // regular oom conditions
-            } elseif(!strstr($conditionsFilterComparisonValue, "curlybracketform")) {
-                $needIntroBoolean = true;
-                list($conditionsfilter_oom, $thiscondition) = _appendToCondition($conditionsfilter_oom, "OR", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
-                if($thiscondition) {
-                    $conditionsfilter_oomArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
-                }
-            // curlybracketform conditions
-            } elseif($filterTypes[$filterId] != "oom") {
-                $needIntroBoolean = false;
-                list($curlyBracketFormconditionsfilter, $thiscondition) = _appendToCondition($curlyBracketFormconditionsfilter, "AND", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
-                if($thiscondition) {
-                    $conditionsfilterArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
-                }
-            // curlybracketform oom conditions
-            } else {
-                $needIntroBoolean = false;
-                list($curlyBracketFormconditionsfilter_oom, $thiscondition) = _appendToCondition($curlyBracketFormconditionsfilter_oom, "OR", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
-                if($thiscondition) {
-                    $conditionsfilter_oomArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
-                }
-            }
+				list($conditionsFilterComparisonValue, $thisCurlyBracketFormFrom) =  _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterElementIds, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler);
 
-            $curlyBracketFormFrom = $thisCurlyBracketFormFrom ? $thisCurlyBracketFormFrom : $curlyBracketFormFrom; // if something was returned, use it, otherwise, stick with what we've got -- NOTE THIS MEANS YOU CAN'T HAVE DIVERGENT CURLY BRACKET REFERENCES??!!
+				// regular conditions
+				if ($filterTypes[$filterId] != "oom" AND !strstr($conditionsFilterComparisonValue, "curlybracketform")) {
+						$needIntroBoolean = true;
+						list($conditionsfilter, $thiscondition) = _appendToCondition($conditionsfilter, "AND", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
+						if($thiscondition) {
+								$conditionsfilterArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
+						}
+				// regular oom conditions
+				} elseif(!strstr($conditionsFilterComparisonValue, "curlybracketform")) {
+						$needIntroBoolean = true;
+						list($conditionsfilter_oom, $thiscondition) = _appendToCondition($conditionsfilter_oom, "OR", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
+						if($thiscondition) {
+								$conditionsfilter_oomArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
+						}
+				// curlybracketform conditions
+				} elseif($filterTypes[$filterId] != "oom") {
+						$needIntroBoolean = false;
+						list($curlyBracketFormconditionsfilter, $thiscondition) = _appendToCondition($curlyBracketFormconditionsfilter, "AND", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
+						if($thiscondition) {
+								$conditionsfilterArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
+						}
+				// curlybracketform oom conditions
+				} else {
+						$needIntroBoolean = false;
+						list($curlyBracketFormconditionsfilter_oom, $thiscondition) = _appendToCondition($curlyBracketFormconditionsfilter_oom, "OR", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
+						if($thiscondition) {
+								$conditionsfilter_oomArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
+						}
+				}
 
-        }
-    }
+				$curlyBracketFormFrom = $thisCurlyBracketFormFrom ? $thisCurlyBracketFormFrom : $curlyBracketFormFrom; // if something was returned, use it, otherwise, stick with what we've got -- NOTE THIS MEANS YOU CAN'T HAVE DIVERGENT CURLY BRACKET REFERENCES??!!
+
+		}
+
 
     $curlyBracketFormconditionsfilter_oom_WHERE = '';
     if($curlyBracketFormFrom) {
