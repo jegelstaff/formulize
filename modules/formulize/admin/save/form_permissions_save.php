@@ -52,20 +52,20 @@ global $xoopsDB;
 
 // check to see if we're dealing with a grouplist save or deletion
 if($_POST['grouplistname']) {
- 
+
   $groupListId = intval($_POST['grouplistid']);
   $groupListGroups = formulize_db_escape(implode(",",$_POST['groups']));
   $name = formulize_db_escape($_POST['grouplistname']);
-  // are we inserting or updating? 
+  // are we inserting or updating?
   $newList = $groupListId == 0 ? true : false;
   if(!$newList) {
-	  // Get exisitng name to see if we update, or create new.	
+	  // Get exisitng name to see if we update, or create new.
 	  $result = $xoopsDB->query("SELECT gl_name FROM ".$xoopsDB->prefix("group_lists")." WHERE gl_id='".intval($groupListId)."'");
 	  if($xoopsDB->getRowsNum($result) > 0) {
-      $entry = $xoopsDB->fetchArray($result); 
-      if($entry['gl_name'] != $name) { 
+      $entry = $xoopsDB->fetchArray($result);
+      if($entry['gl_name'] != $name) {
 				$newList = true;
-			}				  
+			}
 	  }
 	}
   if($newList) {
@@ -75,7 +75,7 @@ if($_POST['grouplistname']) {
     $grouplist_query = "UPDATE ". $xoopsDB->prefix("group_lists") . " SET gl_groups = '" . $groupListGroups . "', gl_name = '".$name."' WHERE gl_id='" . $groupListId . "'";
   }
   if(!$grouplist_result = $xoopsDB->query($grouplist_query)) {
-    print "Error: could not add a group list ".$xoopsDB->error(); 
+    print "Error: could not add a group list ".$xoopsDB->error();
   }
 }
 
@@ -127,48 +127,11 @@ foreach($group_list as $group_id) {
 
   // handle the per-group-filter-settings
   $filter_key = $form_id."_".$group_id."_filter";
-  
-  if($_POST["new_".$filter_key."_term"] != "") {
-    $_POST[$filter_key."_elements"][] = $_POST["new_".$filter_key."_element"];
-    $_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_op"];
-    $_POST[$filter_key."_terms"][] = $_POST["new_".$filter_key."_term"];
-    $_POST[$filter_key."_types"][] = "all";
-  }
-  if($_POST["new_".$filter_key."_oom_term"] != "") {
-    $_POST[$filter_key."_elements"][] = $_POST["new_".$filter_key."_oom_element"];
-    $_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_oom_op"];
-    $_POST[$filter_key."_terms"][] = $_POST["new_".$filter_key."_oom_term"];
-    $_POST[$filter_key."_types"][] = "oom";
-  }
-  $conditionsDeleteParts = explode("_", $_POST['conditionsdelete']);
-  if($_POST['conditionsdelete'] != "" AND $conditionsDeleteParts[1] == $group_id) { // key 1 will be the group id where the X was clicked
-    // go through the passed filter settings starting from the one we need to remove, and shunt the rest down one space
-    // need to do this in a loop, because unsetting and key-sorting will maintain the key associations of the remaining high values above the one that was deleted
-    $originalCount = count((array) $_POST[$filter_key."_elements"]);
-    for($i=$conditionsDeleteParts[3];$i<$originalCount;$i++) { // 3 is the X that was clicked for this group
-      if($i>$conditionsDeleteParts[3]) {
-        $_POST[$filter_key."_elements"][$i-1] = $_POST[$filter_key."_elements"][$i];
-        $_POST[$filter_key."_ops"][$i-1] = $_POST[$filter_key."_ops"][$i];
-        $_POST[$filter_key."_terms"][$i-1] = $_POST[$filter_key."_terms"][$i];
-        $_POST[$filter_key."_types"][$i-1] = $_POST[$filter_key."_types"][$i];
-      }
-      if($i==$conditionsDeleteParts[3] OR $i+1 == $originalCount) {
-        // first time through or last time through, unset the first elements
-        unset($_POST[$filter_key."_elements"][$i]);
-        unset($_POST[$filter_key."_ops"][$i]);
-        unset($_POST[$filter_key."_terms"][$i]);
-        unset($_POST[$filter_key."_types"][$i]);
-      }
-    }
-  }
-  if(!is_array($_POST[$filter_key."_elements"]) OR count((array) $_POST[$filter_key."_elements"]) == 0) {
+	list($filterSettings[$group_id], $reloadFlag) = parseSubmittedConditions($filter_key, 'conditionsdelete', deleteTargetKey: 3, conditionsDeletePartsKeyOneMustMatch: $group_id); // reloadFlag is not used on this page, for some reason (reload is set/flagged through other means?)
+	if(!isset($filterSettings[$group_id][0]) OR !is_array($filterSettings[$group_id][0]) OR count($filterSettings[$group_id][0]) == 0) {
     $groupsToClear[] = $group_id;
-  } else {
-    $filterSettings[$group_id][0] = $_POST[$filter_key."_elements"];
-    $filterSettings[$group_id][1] = $_POST[$filter_key."_ops"];
-    $filterSettings[$group_id][2] = $_POST[$filter_key."_terms"];
-    $filterSettings[$group_id][3] = $_POST[$filter_key."_types"];
-  }
+	}
+
 }
 
 // now update the per group filters
@@ -181,4 +144,4 @@ if(count((array) $filterSettings)>0) {
 
 if($_POST['reload'] OR $_POST['loadthislist']) {
   print "/* eval */ window.document.getElementById('form-".intval($_POST['form_number'])."').submit();";
-} 
+}

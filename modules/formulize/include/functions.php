@@ -5298,66 +5298,70 @@ function removeNotApplicableRequireds($type, $req=0) {
 }
 
 
-// used to handle filter conditions being saved in the admin UI
-// returns $processedValues with the conditions values properly structured
-// $filter_key is the name of this conditions UI's values in POST
-// $delete_key is the name of the flag that is sent in POST when the user clicks an X to delete a condition
-function parseSubmittedConditions($filter_key, $delete_key) {
+/**
+ * Used to handle filter conditions being saved in the admin UI
+ * @param string $filter_key - The prefix used in the values in POST that we want to read, ie: if in POST we have displayCondition_elements, and displayCondition_ops then the key is displayCondition
+ * @param string $delete_key - The key in POST for a delete signal sent from the admin UI
+ * @param int $deleteTargetKey - Optional. The key we care about for isolating which conditions to delete, as found in the array created by exploding the delete_key in POST on the _ character.
+ * @param int $conditionsDeletePartsKeyOneMustMatch - Optional value that is meant to isolate only certain conditions to be deleted. The delete key's value will have _ in it, and exploding on _ gives an array, and the 1 key (second position) must match this value. Used by the permissions saving to delete conditions only from the appropriate group's permissions.
+ * @return array Returns an array with two elements. The first is an array of the elements, ops, terms and types properly organized for saving into the database. The second is a flag to indicate if a reload is necessary for the user to see cleanly what has changed.
+ */
+function parseSubmittedConditions($filter_key, $delete_key, $deleteTargetKey = 1, $conditionsDeletePartsKeyOneMustMatch = false) {
 
-    if(!isset($_POST[$filter_key."_elements"]) AND !isset($_POST["new_".$filter_key."_term"]) AND !isset($_POST["new_".$filter_key."_oom_term"])) {
-        return "";
-    }
-    if ($_POST["new_".$filter_key."_term"] != "") {
-        $_POST[$filter_key."_elements"][] = $_POST["new_".$filter_key."_element"];
-        $_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_op"];
-        $_POST[$filter_key."_terms"][] = $_POST["new_".$filter_key."_term"];
-        $_POST[$filter_key."_types"][] = "all";
-        $_POST['reload_option_page'] = true;
-    }
-    if ($_POST["new_".$filter_key."_oom_term"] != "") {
-        $_POST[$filter_key."_elements"][] = $_POST["new_".$filter_key."_oom_element"];
-        $_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_oom_op"];
-        $_POST[$filter_key."_terms"][] = $_POST["new_".$filter_key."_oom_term"];
-        $_POST[$filter_key."_types"][] = "oom";
-        $_POST['reload_option_page'] = true;
-    }
+	if(!isset($_POST[$filter_key."_elements"]) AND !isset($_POST["new_".$filter_key."_term"]) AND !isset($_POST["new_".$filter_key."_oom_term"])) {
+		return "";
+	}
 
-    // then remove any that we need to
-    $conditionsDeleteParts = explode("_", $_POST[$delete_key]);
-    $deleteTarget = $conditionsDeleteParts[1];
-    if ($_POST[$delete_key]) {
-        // go through the passed filter settings starting from the one we need to remove, and shunt the rest down one space
-        // need to do this in a loop, because unsetting and key-sorting will maintain the key associations of the remaining high values above the one that was deleted
-        $originalCount = count((array) $_POST[$filter_key."_elements"]);
-        for ($i = $deleteTarget; $i < $originalCount; $i++) { // 2 is the X that was clicked for this page
-            if ($i>$deleteTarget) {
-                $_POST[$filter_key."_elements"][$i-1] = $_POST[$filter_key."_elements"][$i];
-                $_POST[$filter_key."_ops"][$i-1] = $_POST[$filter_key."_ops"][$i];
-                $_POST[$filter_key."_terms"][$i-1] = $_POST[$filter_key."_terms"][$i];
-                $_POST[$filter_key."_types"][$i-1] = $_POST[$filter_key."_types"][$i];
-            }
-            if ($i==$deleteTarget OR $i+1 == $originalCount) {
-                // first time through or last time through, unset things
-                unset($_POST[$filter_key."_elements"][$i]);
-                unset($_POST[$filter_key."_ops"][$i]);
-                unset($_POST[$filter_key."_terms"][$i]);
-                unset($_POST[$filter_key."_types"][$i]);
-            }
-        }
-        $_POST['reload_option_page'] = true;
-    }
+	$reloadFlag = false;
+	if ($_POST["new_".$filter_key."_term"] != "") {
+		$_POST[$filter_key."_elements"][] = $_POST["new_".$filter_key."_element"];
+		$_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_op"];
+		$_POST[$filter_key."_terms"][] = $_POST["new_".$filter_key."_term"];
+		$_POST[$filter_key."_types"][] = "all";
+		$reloadFlag = true;
+	}
+	if ($_POST["new_".$filter_key."_oom_term"] != "") {
+		$_POST[$filter_key."_elements"][] = $_POST["new_".$filter_key."_oom_element"];
+		$_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_oom_op"];
+		$_POST[$filter_key."_terms"][] = $_POST["new_".$filter_key."_oom_term"];
+		$_POST[$filter_key."_types"][] = "oom";
+		$reloadFlag = true;
+	}
 
-    if (count((array) $_POST[$filter_key."_elements"]) > 0){
-        $returnValues = array();
-        $returnValues[0] = $_POST[$filter_key."_elements"];
-        $returnValues[1] = $_POST[$filter_key."_ops"];
-        $returnValues[2] = $_POST[$filter_key."_terms"];
-        $returnValues[3] = $_POST[$filter_key."_types"];
-    } else {
-        $returnValues = "";
-    }
+	// then remove any that we need to
+	$conditionsDeleteParts = explode("_", $_POST[$delete_key]);
+	if ($_POST[$delete_key] AND ($conditionsDeletePartsKeyOneMustMatch === false OR $conditionsDeletePartsKeyOneMustMatch == $conditionsDeleteParts[1])) {
+		$deleteTarget = $conditionsDeleteParts[$deleteTargetKey];
+		// go through the passed filter settings starting from the one we need to remove, and shunt the rest down one space
+		// need to do this in a loop, because unsetting and key-sorting will maintain the key associations of the remaining high values above the one that was deleted
+		$originalCount = count((array) $_POST[$filter_key."_elements"]);
+		for ($i = $deleteTarget; $i < $originalCount; $i++) { // 2 is the X that was clicked for this page
+			if ($i>$deleteTarget) {
+				$_POST[$filter_key."_elements"][$i-1] = $_POST[$filter_key."_elements"][$i];
+				$_POST[$filter_key."_ops"][$i-1] = $_POST[$filter_key."_ops"][$i];
+				$_POST[$filter_key."_terms"][$i-1] = $_POST[$filter_key."_terms"][$i];
+				$_POST[$filter_key."_types"][$i-1] = $_POST[$filter_key."_types"][$i];
+			}
+			if ($i==$deleteTarget OR $i+1 == $originalCount) {
+				// first time through or last time through, unset things
+				unset($_POST[$filter_key."_elements"][$i]);
+				unset($_POST[$filter_key."_ops"][$i]);
+				unset($_POST[$filter_key."_terms"][$i]);
+				unset($_POST[$filter_key."_types"][$i]);
+			}
+		}
+		$reloadFlag = true;
+	}
 
-    return $returnValues;
+	$returnValues = array();
+	if (count((array) $_POST[$filter_key."_elements"]) > 0){
+		$returnValues[0] = $_POST[$filter_key."_elements"];
+		$returnValues[1] = $_POST[$filter_key."_ops"];
+		$returnValues[2] = $_POST[$filter_key."_terms"];
+		$returnValues[3] = $_POST[$filter_key."_types"];
+	}
+
+	return array($returnValues, $reloadFlag);
 }
 
 

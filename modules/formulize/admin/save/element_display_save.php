@@ -59,66 +59,12 @@ if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
   return;
 }
 
-$filter_keys = array('display'=>'elementfilter', 'disabled'=>'disabledconditions');
-foreach($filter_keys as $fk=>$filter_key) {
-
-	// grab any conditions for this page too
-	// add new ones to what was passed from before
-	if($_POST["new_".$filter_key."_term"] != "") {
-		$_POST[$filter_key."_elements"][] = $_POST["new_".$filter_key."_element"];
-		$_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_op"];
-		$_POST[$filter_key."_terms"][] = $_POST["new_".$filter_key."_term"];
-		$_POST[$filter_key."_types"][] = "all";
-		$_POST['reload_element_pages'] = 1; // reload page so user sees new terms with proper UI
-	}
-	if($_POST["new_".$filter_key."_oom_term"] != "") {
-		$_POST[$filter_key."_elements"][] = $_POST["new_".$filter_key."_oom_element"];
-		$_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_oom_op"];
-		$_POST[$filter_key."_terms"][] = $_POST["new_".$filter_key."_oom_term"];
-		$_POST[$filter_key."_types"][] = "oom";
-		$_POST['reload_element_pages'] = 1; // reload page so user sees new terms with proper UI
-	}
-
-	// then remove any that we need to
-	$conditionsDeleteParts = explode("_", $_POST[$fk.'-conditionsdelete']);
-	$deleteTarget = $conditionsDeleteParts[1];
-	if($_POST[$fk.'-conditionsdelete']) {
-		// go through the passed filter settings starting from the one we need to remove, and shunt the rest down one space
-		// need to do this in a loop, because unsetting and key-sorting will maintain the key associations of the remaining high values above the one that was deleted
-		$originalCount = count((array) $_POST[$filter_key."_elements"]);
-		for($i=$deleteTarget;$i<$originalCount;$i++) { // 2 is the X that was clicked for this page
-			if($i>$deleteTarget) {
-				$_POST[$filter_key."_elements"][$i-1] = $_POST[$filter_key."_elements"][$i];
-				$_POST[$filter_key."_ops"][$i-1] = $_POST[$filter_key."_ops"][$i];
-				$_POST[$filter_key."_terms"][$i-1] = $_POST[$filter_key."_terms"][$i];
-				$_POST[$filter_key."_types"][$i-1] = $_POST[$filter_key."_types"][$i];
-			}
-			if($i==$deleteTarget OR $i+1 == $originalCount) {
-				// first time through or last time through, unset things
-				unset($_POST[$filter_key."_elements"][$i]);
-				unset($_POST[$filter_key."_ops"][$i]);
-				unset($_POST[$filter_key."_terms"][$i]);
-				unset($_POST[$filter_key."_types"][$i]);
-			}
-		}
-	}
-}
-$elementFilterSettings = array();
-$elementFilterSettings[0] = $_POST["elementfilter_elements"];
-$elementFilterSettings[1] = $_POST["elementfilter_ops"];
-$elementFilterSettings[2] = $_POST["elementfilter_terms"];
-$elementFilterSettings[3] = $_POST["elementfilter_types"];
-
-$element->setVar('ele_filtersettings',$elementFilterSettings); // do not need to serialize this when assigning, since the elements class calls cleanvars from the xoopsobject on all properties prior to insertion, and that intelligently serializes properties that have been declared as arrays
-
-$disabledConditions = array();
-$disabledConditions[0] = $_POST["disabledconditions_elements"];
-$disabledConditions[1] = $_POST["disabledconditions_ops"];
-$disabledConditions[2] = $_POST["disabledconditions_terms"];
-$disabledConditions[3] = $_POST["disabledconditions_types"];
-
-$element->setVar('ele_disabledconditions',$disabledConditions); // do not need to serialize this when assigning, since the elements class calls cleanvars from the xoopsobject on all properties prior to insertion, and that intelligently serializes properties that have been declared as arrays
-
+// do not need to serialize this when assigning, since the elements class calls cleanvars from the xoopsobject on all properties prior to insertion, and that intelligently serializes properties that have been declared as arrays
+list($parsedFilterSettings, $filterSettingsChanged) = parseSubmittedConditions('elementfilter', 'display-conditionsdelete');
+list($parsedDisabledConditions, $disabledConditionsChanged) = parseSubmittedConditions('disabledconditions', 'disabled-conditionsdelete');
+$_POST['reload_element_pages'] = ($filterSettingsChanged OR $disabledConditionsChanged) ? true : false;
+$element->setVar('ele_filtersettings', $parsedFilterSettings);
+$element->setVar('ele_disabledconditions', $parsedDisabledConditions);
 
 // check that the checkboxes have no values, and if so, set them to "" in the processedValues array
 if(!isset($_POST['elements-ele_forcehidden'])) {
