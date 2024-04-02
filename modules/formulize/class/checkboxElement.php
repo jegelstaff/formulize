@@ -162,96 +162,45 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
     // You can modify the element object in this function and since it is an object, and passed by reference by default, then your changes will be saved when the element is saved.
     // You should return a flag to indicate if any changes were made, so that the page can be reloaded for the user, and they can see the changes you've made here.
     function adminSave($element, $ele_value) {
-        $changed = false;
+			$changed = false;
 
-        if(is_object($element) AND is_subclass_of($element, 'formulizeformulize')) {
+			if(is_object($element) AND is_subclass_of($element, 'formulizeformulize')) {
 
-			$ele_value = array(
-                EV_MULTIPLE_LIST_COLUMNS=>$ele_value[EV_MULTIPLE_LIST_COLUMNS],
-                EV_MULTIPLE_FORM_COLUMNS=>$ele_value[EV_MULTIPLE_FORM_COLUMNS],
-                EV_MULTIPLE_SPREADSHEET_COLUMNS=>$ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS],
-                12=>$ele_value[12],
-                15=>$ele_value[15],
-                'checkbox_scopelimit'=>$ele_value['checkbox_scopelimit'],
-                'checkbox_formlink_anyorall'=>$ele_value['checkbox_formlink_anyorall']
-            ); // initialize with the values that we don't need to parse/adjust
+				$ele_value = array(
+					EV_MULTIPLE_LIST_COLUMNS=>$ele_value[EV_MULTIPLE_LIST_COLUMNS],
+					EV_MULTIPLE_FORM_COLUMNS=>$ele_value[EV_MULTIPLE_FORM_COLUMNS],
+					EV_MULTIPLE_SPREADSHEET_COLUMNS=>$ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS],
+					12=>$ele_value[12],
+					15=>$ele_value[15],
+					'checkbox_scopelimit'=>$ele_value['checkbox_scopelimit'],
+					'checkbox_formlink_anyorall'=>$ele_value['checkbox_formlink_anyorall']
+				); // initialize with the values that we don't need to parse/adjust
 
-            if(isset($_POST['formlink']) AND $_POST['formlink'] != "none") {
-                global $xoopsDB;
-                $sql_link = "SELECT ele_caption, id_form, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = " . intval($_POST['formlink']);
-                $res_link = $xoopsDB->query($sql_link);
-                $array_link = $xoopsDB->fetchArray($res_link);
-                $ele_value[2] = $array_link['id_form'] . "#*=:*" . $array_link['ele_handle'];
-            } else {
-			list($_POST['ele_value'], $ele_uitext) = formulize_extractUIText($_POST['ele_value']);
-			foreach($_POST['ele_value'] as $id=>$text) {
-				if($text !== "") {
-					$ele_value[2][$text] = isset($_POST['defaultoption'][$id]) ? 1 : 0;
-            }
-        }
-            }
+				if(isset($_POST['formlink']) AND $_POST['formlink'] != "none") {
+					global $xoopsDB;
+					$sql_link = "SELECT ele_caption, id_form, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = " . intval($_POST['formlink']);
+					$res_link = $xoopsDB->query($sql_link);
+					$array_link = $xoopsDB->fetchArray($res_link);
+					$ele_value[2] = $array_link['id_form'] . "#*=:*" . $array_link['ele_handle'];
+				} else {
+					list($_POST['ele_value'], $ele_uitext) = formulize_extractUIText($_POST['ele_value']);
+					foreach($_POST['ele_value'] as $id=>$text) {
+						if($text !== "") {
+							$ele_value[2][$text] = isset($_POST['defaultoption'][$id]) ? 1 : 0;
+						}
+					}
+				}
 
-            // grab formlink scope options
-            $ele_value['formlink_scope'] = implode(",", (array)$_POST['element_formlink_scope']);
+				// grab formlink scope options
+				$ele_value['formlink_scope'] = implode(",", (array)$_POST['element_formlink_scope']);
 
-            // handle conditions
-            // grab any conditions for this page too
-            // add new ones to what was passed from before
-            // need to send "changed" so the screen will redraw since the filter options have changed and need to be regenerated/updated
-            $filter_key = 'formlinkfilter';
-            if($_POST["new_".$filter_key."_term"] != "") {
-                $_POST[$filter_key."_elements"][] = $_POST["new_".$filter_key."_element"];
-                $_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_op"];
-                $_POST[$filter_key."_terms"][] = $_POST["new_".$filter_key."_term"];
-                $_POST[$filter_key."_types"][] = "all";
-                $changed = true;
-            }
-            if($_POST["new_".$filter_key."_oom_term"] != "") {
-                $_POST[$filter_key."_elements"][] = $_POST["new_".$filter_key."_oom_element"];
-                $_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_oom_op"];
-                $_POST[$filter_key."_terms"][] = $_POST["new_".$filter_key."_oom_term"];
-                $_POST[$filter_key."_types"][] = "oom";
-                $changed = true;
-            }
-            // then remove any that we need to
+				$filter_key = 'formlinkfilter';
+				list($ele_value[5], $changed) = parseSubmittedConditions($filter_key, 'optionsconditionsdelete');
 
-            $conditionsDeleteParts = explode("_", $_POST['optionsconditionsdelete']);
-            $deleteTarget = $conditionsDeleteParts[1];
-            if($_POST['optionsconditionsdelete']) {
-                // go through the passed filter settings starting from the one we need to remove, and shunt the rest down one space
-                // need to do this in a loop, because unsetting and key-sorting will maintain the key associations of the remaining high values above the one that was deleted
-                $originalCount = count((array) $_POST[$filter_key."_elements"]);
-                for($i=$deleteTarget;$i<$originalCount;$i++) { // 2 is the X that was clicked for this page
-                    if($i>$deleteTarget) {
-                        $_POST[$filter_key."_elements"][$i-1] = $_POST[$filter_key."_elements"][$i];
-                        $_POST[$filter_key."_ops"][$i-1] = $_POST[$filter_key."_ops"][$i];
-                        $_POST[$filter_key."_terms"][$i-1] = $_POST[$filter_key."_terms"][$i];
-                        $_POST[$filter_key."_types"][$i-1] = $_POST[$filter_key."_types"][$i];
-                    }
-                    if($i==$deleteTarget OR $i+1 == $originalCount) {
-                        // first time through or last time through, unset things
-                        unset($_POST[$filter_key."_elements"][$i]);
-                        unset($_POST[$filter_key."_ops"][$i]);
-                        unset($_POST[$filter_key."_terms"][$i]);
-                        unset($_POST[$filter_key."_types"][$i]);
-                    }
-                }
-                $changed = true;
-            }
-            if(count((array) $_POST[$filter_key."_elements"]) > 0){
-                $ele_value[5][0] = $_POST[$filter_key."_elements"];
-                $ele_value[5][1] = $_POST[$filter_key."_ops"];
-                $ele_value[5][2] = $_POST[$filter_key."_terms"];
-                $ele_value[5][3] = $_POST[$filter_key."_types"];
-            } else {
-                $ele_value[5] = "";
-            }
-
-			$element->setVar('ele_value', $ele_value);
-			$element->setVar('ele_uitext', $ele_uitext);
-
-        }
-        return $changed;
+				$element->setVar('ele_value', $ele_value);
+				$element->setVar('ele_uitext', $ele_uitext);
+			}
+			return $changed;
     }
 
     // this method reads the current state of an element based on the user's input, and the admin options, and sets ele_value to what it needs to be so we can render the element correctly

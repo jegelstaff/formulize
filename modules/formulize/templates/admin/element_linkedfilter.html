@@ -19,7 +19,7 @@
 		$("#filterdiv").empty();
 		$("#filterdiv").append('<p><input type="button" class="formButton" name="refreshfilter" onclick="refreshfilterjq()" value="Save changes to update filter options"></p>');
     });
- 
+
     function refreshfilterjq() {
         $("[name=reload_option_page]").val(1);
         $(".savebutton").click();
@@ -31,7 +31,7 @@
         $("#filterdiv").empty();
         $("#filterdiv").append('<p>The options are not linked.</p>');
 	});
-    
+
     $("div#filterdiv > a.conditionsdelete").click(function () {
 		$(".optionsconditionsdelete").val($(this).attr('target'));
 		$("[name=reload_option_page]").val(1);
@@ -40,11 +40,11 @@
 	});
 
 
-	$("div#filterdiv > input#addcon").click(function () {
+	$("div#filterdiv > input[name=addcon]").click(function () {
 		$("[name=reload_option_page]").val(1);
 	  $(".savebutton").click();
 		return false;
 	});
-    
+
 
 </script>

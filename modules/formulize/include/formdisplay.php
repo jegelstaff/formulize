@@ -1555,7 +1555,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                         $entryToLoop = 'new';
                     }
                     foreach($GLOBALS['formulize_renderedElementsForForm'][$thisFid][$entryToLoop] as $renderedMarkupName => $thisElement) {
-                            $GLOBALS['formulize_renderedElementHasConditions'][$renderedMarkupName] = $thisElement;
+                            $GLOBALS['formulize_renderedElementHasConditions'][$renderedMarkupName] = $thisElement; // super ugly and kludgy, normally an array would be set here, but from this point forward, it's actually only the keys of this array that matter, so setting a single value is okay. Yuck. :(
 					        $governingElements2 = _compileGoverningElements($entries, $keyElementObject, $renderedMarkupName, true); // last true marks it as one to one compiling, when matching entry ids between governed and governing elements doesn't matter
                             foreach($governingElements2 as $key=>$value) {
                                     $formulize_oneToOneElements[$key] = true;
@@ -1569,7 +1569,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
         // if there are elements we need to pay attention to, draw the necessary javascript code
         // unless we're doing an embedded 'elements only form' -- unless we're doing that for displaying a subform entry specifically as its own thing (as part of a modal for example (and only example right now))
 		if(count((array) $formulize_governingElements)> 0 AND (!$formElementsOnly OR (isset($formulize_displayingSubform) AND $formulize_displayingSubform == true))) {
-			drawJavascriptForConditionalElements($GLOBALS['formulize_renderedElementHasConditions'], $formulize_governingElements, $formulize_oneToOneElements, $formulize_oneToOneMetaData);
+			drawJavascriptForConditionalElements(array_keys($GLOBALS['formulize_renderedElementHasConditions']), $formulize_governingElements, $formulize_oneToOneElements, $formulize_oneToOneMetaData);
             print "<div id='conditionalHTMLCapture' class='used-to-assign-html-then-read-innerHTML-so-we-always-get-standardized-conversion-of-quotes-urlencoding-etc' style='display: none;'></div>";
 		}
 
@@ -4166,16 +4166,13 @@ function removeTags(html) {
 
 // THIS FUNCTION ACTUALLY DRAWS IN THE NECESSARY JAVASCRIPT FOR ALL ELEMENTS FOR WHICH ITS PROPERTIES ARE DEPENDENT ON ANOTHER ELEMENT
 // PRIMARILY THIS APPLIES TO CONDITIONAL ELEMENTS, BUT ALSO USED IN ONE-TO-ONE RELATIONSHIPS
-// NOTE THAT THROUGHOUT THIS CODE, HANDLE MEANS THE RENDERED MARKUP NAME!!  This should totally be refactored, ala XP
-// conditionalElements is array with keys that are the DOM ids of the elements that have conditions. Values can just be boolean true (though are typically some part of the element condition settings)
-// governingElements is array with keys that are the DOM ids of the elements that govern other elements, and the values are arrays of the elements being governed (each of which is listed in the conditionalElements array also)
+// conditionalElements is array of the elements (DOM ids, ie: de_fid_entryId_elementId) of the elements that have conditions.
+// governingElements is array with keys that are the DOM ids of the elements that govern other elements, and the values are arrays of the elements being governed
 function drawJavascriptForConditionalElements($conditionalElements, $governingElements, $oneToOneElements, $oneToOneMetaData=false) {
 
     $initCode = "
 jQuery(document).ready(function() {
-
-	// preload the current state of the HTML for any conditional elements that are currently displayed, so we can compare against what we get back when their conditions change
-	var conditionalElements = new Array('".implode("', '",array_keys($conditionalElements))."');
+	var conditionalElements = new Array('".implode("', '",$conditionalElements)."');
 	";
 	$topKey = 0;
 	$relevantElementArray = array();
@@ -4202,7 +4199,8 @@ jQuery(document).ready(function() {
 		$topKey++;
 	}
 
-    foreach(array_keys($conditionalElements) as $ce) {
+    foreach($conditionalElements as $ce) {
+				// preload the current state of the HTML for any conditional elements that are currently displayed, so we can compare against what we get back when their conditions change
         $initCode .= "assignConditionalHTML('".$ce."');\n";
 	}
 

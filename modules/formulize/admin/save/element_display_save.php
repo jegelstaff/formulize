@@ -59,51 +59,12 @@ if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
   return;
 }
 
-// grab any conditions for this page too
-// add new ones to what was passed from before
-if($_POST["new_elementfilter_term"] != "") {
-  $_POST["elementfilter_elements"][] = $_POST["new_elementfilter_element"];
-  $_POST["elementfilter_ops"][] = $_POST["new_elementfilter_op"];
-  $_POST["elementfilter_terms"][] = $_POST["new_elementfilter_term"];
-  $_POST["elementfilter_types"][] = "all";
-}
-if($_POST["new_elementfilter_oom_term"] != "") {
-  $_POST["elementfilter_elements"][] = $_POST["new_elementfilter_oom_element"];
-  $_POST["elementfilter_ops"][] = $_POST["new_elementfilter_oom_op"];
-  $_POST["elementfilter_terms"][] = $_POST["new_elementfilter_oom_term"];
-  $_POST["elementfilter_types"][] = "oom";
-}
-// then remove any that we need to
-$filter_key = 'elementfilter';
-$conditionsDeleteParts = explode("_", $_POST['conditionsdelete']);
-$deleteTarget = $conditionsDeleteParts[1];
-if($_POST['conditionsdelete']) { 
-  // go through the passed filter settings starting from the one we need to remove, and shunt the rest down one space
-  // need to do this in a loop, because unsetting and key-sorting will maintain the key associations of the remaining high values above the one that was deleted
-  $originalCount = count((array) $_POST[$filter_key."_elements"]);
-  for($i=$deleteTarget;$i<$originalCount;$i++) { // 2 is the X that was clicked for this page
-    if($i>$deleteTarget) {
-      $_POST[$filter_key."_elements"][$i-1] = $_POST[$filter_key."_elements"][$i];
-      $_POST[$filter_key."_ops"][$i-1] = $_POST[$filter_key."_ops"][$i];
-      $_POST[$filter_key."_terms"][$i-1] = $_POST[$filter_key."_terms"][$i];
-      $_POST[$filter_key."_types"][$i-1] = $_POST[$filter_key."_types"][$i];
-    }
-    if($i==$deleteTarget OR $i+1 == $originalCount) {
-      // first time through or last time through, unset things
-      unset($_POST[$filter_key."_elements"][$i]);
-      unset($_POST[$filter_key."_ops"][$i]);
-      unset($_POST[$filter_key."_terms"][$i]);
-      unset($_POST[$filter_key."_types"][$i]);
-    }
-  }	
-}
-$elementFilterSettings = array();
-$elementFilterSettings[0] = $_POST["elementfilter_elements"];
-$elementFilterSettings[1] = $_POST["elementfilter_ops"];
-$elementFilterSettings[2] = $_POST["elementfilter_terms"];
-$elementFilterSettings[3] = $_POST["elementfilter_types"];
-	
-$element->setVar('ele_filtersettings',$elementFilterSettings); // do not need to serialize this when assigning, since the elements class calls cleanvars from the xoopsobject on all properties prior to insertion, and that intelligently serializes properties that have been declared as arrays
+// do not need to serialize this when assigning, since the elements class calls cleanvars from the xoopsobject on all properties prior to insertion, and that intelligently serializes properties that have been declared as arrays
+list($parsedFilterSettings, $filterSettingsChanged) = parseSubmittedConditions('elementfilter', 'display-conditionsdelete');
+list($parsedDisabledConditions, $disabledConditionsChanged) = parseSubmittedConditions('disabledconditions', 'disabled-conditionsdelete');
+$_POST['reload_element_pages'] = ($filterSettingsChanged OR $disabledConditionsChanged) ? true : false;
+$element->setVar('ele_filtersettings', $parsedFilterSettings);
+$element->setVar('ele_disabledconditions', $parsedDisabledConditions);
 
 // check that the checkboxes have no values, and if so, set them to "" in the processedValues array
 if(!isset($_POST['elements-ele_forcehidden'])) {
@@ -117,18 +78,18 @@ foreach($processedValues['elements'] as $property=>$value) {
 }
 
 if($_POST['elements_ele_display'][0] == "all") {
-	$display = 1;        
+	$display = 1;
 } else if($_POST['elements_ele_display'][0] == "none") {
-	$display = 0;        
+	$display = 0;
 } else {
 	$display = "," . implode(",", $_POST['elements_ele_display']) . ",";
 }
 $element->setVar('ele_display', $display);
 
 if($_POST['elements_ele_disabled'][0] == "none") {
-	$disabled = 0;        
+	$disabled = 0;
 } else if($_POST['elements_ele_disabled'][0] == "all"){
-  $disabled = 1;        
+  $disabled = 1;
 } else {
   $disabled = "," . implode(",", $_POST['elements_ele_disabled']) . ",";
 }
@@ -174,7 +135,7 @@ foreach ($all_multi_screens as $i => $screen_array) {
         $element_exists_in_treeview = false;
         foreach ($raw_pages as $k => $raw_pair) {
           $screen_page = explode("-", $raw_pair);
-            
+
           if ($screen_id == $screen_page[0] && $page_index == $screen_page[1]) {
             $element_exists_in_treeview = true;
           }
@@ -211,12 +172,12 @@ foreach ($all_multi_screens as $i => $screen_array) {
           }
         }
       }
-    }   
+    }
   }
-  $screen->setVar('pages',serialize($existing_pages)); 
+  $screen->setVar('pages',serialize($existing_pages));
   if(!$screen_handler->insert($screen)) {
       print "Error: could not save the screen properly: ".$xoopsDB->error();
-  }      
+  }
 }
 
 // Saving element existence in screen(s)
@@ -250,19 +211,19 @@ foreach ($all_screens as $key => $screen) {
       }
 
       // if resulting array is empty, then send an empty quotation as data to setVar
-      if (empty($screen_elements)){ 
+      if (empty($screen_elements)){
         $screen_stream->setVar('formelements', "");
       } else {
         $save_element = serialize($screen_elements);
-        $screen_stream->setVar('formelements', $save_element);         
+        $screen_stream->setVar('formelements', $save_element);
       }
     }
   }
-  
+
   if(!$screen_handler->insert($screen_stream)) {
     print "Error: could not save the screen properly: ".$xoopsDB->error();
-  }  
-} 
+  }
+}
 
 if(!$ele_id = $element_handler->insert($element)) {
   print "Error: could not save the display settings for element: ".$xoopsDB->error();

@@ -240,60 +240,9 @@ if($ele_type == "select") {
   }
   $processedValues['elements']['ele_value'][3] = implode(",", $_POST['element_formlink_scope']);
 
-  // handle conditions
-  // grab any conditions for this page too
-  // add new ones to what was passed from before
-
-  $filter_key = 'formlinkfilter';
-  if($_POST["new_".$filter_key."_term"] != "") {
-    $_POST[$filter_key."_elements"][] = $_POST["new_".$filter_key."_element"];
-    $_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_op"];
-    $_POST[$filter_key."_terms"][] = $_POST["new_".$filter_key."_term"];
-    $_POST[$filter_key."_types"][] = "all";
-    $_POST['reload_option_page'] = true;
-  }
-  if($_POST["new_".$filter_key."_oom_term"] != "") {
-    $_POST[$filter_key."_elements"][] = $_POST["new_".$filter_key."_oom_element"];
-    $_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_oom_op"];
-    $_POST[$filter_key."_terms"][] = $_POST["new_".$filter_key."_oom_term"];
-    $_POST[$filter_key."_types"][] = "oom";
-    $_POST['reload_option_page'] = true;
-  }
-  // then remove any that we need to
-  if(isset($_POST['optionsconditionsdelete']) AND $_POST['optionsconditionsdelete']) {
-  $conditionsDeleteParts = explode("_", $_POST['optionsconditionsdelete']);
-    $deleteTarget = intval($conditionsDeleteParts[1]);
-    // go through the passed filter settings starting from the one we need to remove, and shunt the rest down one space
-    // need to do this in a loop, because unsetting and key-sorting will maintain the key associations of the remaining high values above the one that was deleted
-    $originalCount = count((array) $_POST[$filter_key."_elements"]);
-    for($i=$deleteTarget;$i<$originalCount;$i++) {
-      if($i>$deleteTarget) {
-        $_POST[$filter_key."_elements"][$i-1] = $_POST[$filter_key."_elements"][$i];
-        $_POST[$filter_key."_ops"][$i-1] = $_POST[$filter_key."_ops"][$i];
-        $_POST[$filter_key."_terms"][$i-1] = $_POST[$filter_key."_terms"][$i];
-        $_POST[$filter_key."_types"][$i-1] = $_POST[$filter_key."_types"][$i];
-      }
-      if($i==$deleteTarget OR $i+1 == $originalCount) {
-        // first time through or last time through, unset things
-        unset($_POST[$filter_key."_elements"][$i]);
-        unset($_POST[$filter_key."_ops"][$i]);
-        unset($_POST[$filter_key."_terms"][$i]);
-        unset($_POST[$filter_key."_types"][$i]);
-      }
-    }
-    $_POST['reload_option_page'] = true;
-  }
-  if(count((array) $_POST[$filter_key."_elements"]) > 0){
-    $processedValues['elements']['ele_value'][5][0] = $_POST[$filter_key."_elements"];
-    $processedValues['elements']['ele_value'][5][1] = $_POST[$filter_key."_ops"];
-    $processedValues['elements']['ele_value'][5][2] = $_POST[$filter_key."_terms"];
-    $processedValues['elements']['ele_value'][5][3] = $_POST[$filter_key."_types"];
-  } else {
-    $processedValues['elements']['ele_value'][5] = "";
-  }
-
-  $processedValues['elements']['ele_value']['optionsLimitByElementFilter'] = parseSubmittedConditions('optionsLimitByElementFilter', 'optionsLimitByElementFilterDelete'); // post key, delete key, processedValues, ele_value key for conditions
-
+	list($processedValues['elements']['ele_value'][5], $formLinkFilterChanged) = parseSubmittedConditions('formlinkfilter', 'optionsconditionsdelete');
+  list($processedValues['elements']['ele_value']['optionsLimitByElementFilter'], $optionsLimitChanged) = parseSubmittedConditions('optionsLimitByElementFilter', 'optionsLimitByElementFilterDelete');
+	$_POST['reload_option_page'] = ($formLinkFilterChanged OR $optionsLimitChanged) ? true : false;
 
   /**newly added for autocomplete box to make sure when {USERNAMES} and {FULLNAMES} are selected, system will not allow new entries to be added
     *ele_value[8] ==1 will make sure it's an autocomplete box

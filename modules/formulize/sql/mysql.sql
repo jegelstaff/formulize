@@ -398,6 +398,7 @@ CREATE TABLE formulize (
   ele_display text NOT NULL,
   ele_disabled text NOT NULL,
   ele_filtersettings text NOT NULL,
+	ele_disabledconditions text NOT NULL,
   ele_forcehidden tinyint(1) NOT NULL default '0',
   ele_private tinyint(1) NOT NULL default '0',
   ele_use_default_when_blank tinyint(1) NOT NULL default '0',

@@ -136,70 +136,14 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
 	$elementFilterSettings = $element->getVar('ele_filtersettings');
 	if($allowed AND is_array($elementFilterSettings[0]) AND count((array) $elementFilterSettings[0]) > 0 AND (!$noSave OR $entry != 'new')) {
 		// cache the filterElements for this element, so we can build the right stuff with them later in javascript, to make dynamically appearing elements
-		$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName] = $elementFilterSettings[0];
-
-		// need to check if there's a condition on this element that is met or not
-		static $cachedEntries = array();
-		if($entry != "new") {
-			if(!isset($cachedEntries[$form_id][$entry])) {
-				$cachedEntries[$form_id][$entry] = getData("", $form_id, $entry, cacheKey: 'bypass'.microtime_float());
-			}
-			$entryData = $cachedEntries[$form_id][$entry];
-		}
-
-		$filterElements = $elementFilterSettings[0];
-		$filterOps = $elementFilterSettings[1];
-		$filterTerms = $elementFilterSettings[2];
-		/* ALTERED - 20100316 - freeform - jeff/julian - start */
-		$filterTypes = $elementFilterSettings[3];
-
-		// find the filter indexes for 'match all' and 'match one or more'
-		$filterElementsAll = array();
-		$filterElementsOOM = array();
-		for($i=0;$i<count((array) $filterTypes);$i++) {
-			if($filterTypes[$i] == "all") {
-				$filterElementsAll[] = $i;
-			} else {
-				$filterElementsOOM[] = $i;
-			}
-		}
-		/* ALTERED - 20100316 - freeform - jeff/julian - stop */
-
-		// setup evaluation condition as PHP and then eval it so we know if we should include this element or not
-		$evaluationCondition = "\$passedCondition = false;\n";
-		$evaluationCondition .= "if(";
-
-		/* ALTERED - 20100316 - freeform - jeff/julian - start */
-		$evaluationConditionAND = buildEvaluationCondition("AND",$filterElementsAll,$filterElements,$filterOps,$filterTerms,$entry,$entryData);
-		$evaluationConditionOR = buildEvaluationCondition("OR",$filterElementsOOM,$filterElements,$filterOps,$filterTerms,$entry,$entryData);
-
-		$evaluationCondition .= $evaluationConditionAND;
-		if( $evaluationConditionOR ) {
-			if( $evaluationConditionAND ) {
-				$evaluationCondition .= " AND (" . $evaluationConditionOR . ")";
-				//$evaluationCondition .= " OR (" . $evaluationConditionOR . ")";
-			} else {
-				$evaluationCondition .= $evaluationConditionOR;
-			}
-		}
-		/* ALTERED - 20100316 - freeform - jeff/julian - stop */
-
-		$evaluationCondition .= ") {\n";
-		$evaluationCondition .= "  \$passedCondition = true;\n";
-		$evaluationCondition .= "}\n";
-
-		//print( $evaluationCondition );
-
-		eval($evaluationCondition);
-		if(!$passedCondition) {
-			$allowed = 0;
-		}
+		$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName] = array_unique($elementFilterSettings[0]);
+		$allowed = checkElementConditions($elementFilterSettings, $form_id, $entry);
 	}
 
 	if($allowed) {
 
-        // clear prior entry locks for this user - will be based on the token used to lock the prior page load, which is passed through POST key 'formulize_entry_lock_token'
-        include_once XOOPS_ROOT_PATH.'/modules/formulize/formulize_deleteEntryLock.php';
+		// clear prior entry locks for this user - will be based on the token used to lock the prior page load, which is passed through POST key 'formulize_entry_lock_token'
+		include_once XOOPS_ROOT_PATH.'/modules/formulize/formulize_deleteEntryLock.php';
 
 		if($element->getVar('ele_type') == "subform") {
 			return array("", $isDisabled);
@@ -208,13 +152,32 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
 		if(isset($GLOBALS['formulize_forceElementsDisabled']) AND $GLOBALS['formulize_forceElementsDisabled'] == true) {
 			$isDisabled = true;
 		} else {
-            $isDisabled = $element_handler->isElementDisabledForUser($element, $xoopsUser) ? true : false;
+      $isDisabled = $element_handler->isElementDisabledForUser($element, $xoopsUser) ? true : false;
+			if($isDisabled) {
+				$disabledConditions = $element->getVar('ele_disabledconditions');
+				if(is_array($disabledConditions[0]) AND count((array) $disabledConditions[0]) > 0) {
+					$isDisabled = checkElementConditions($disabledConditions, $form_id, $entry);
+					// Also, catalogue the governing elements so that dynamic conditional behaviour will work.
+					// Only if it's not a new entry, because there's no point in having elements in a new entry, with no values yet, and then be disabling them. Need to enter some information first??? This is especially necessary if elements should disable after they're NOT blank, because dynamic re-rendering would then disable them before you had saved the value you entered! The NOT Blank condition will kick in on next page load when the entry is no longer 'new'.
+					if($entry != 'new') {
+						if(!isset($GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName])) {
+							$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName] = $disabledConditions[0];
+						} else {
+							foreach($disabledConditions[0] as $governingElementForDisabledCondition) {
+								if(!in_array($governingElementForDisabledCondition, $GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName])) {
+									$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName][] = $governingElementForDisabledCondition;
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 
 		// Another check to see if this element is disabled, for the case where the user can view the form, but not edit it.
 		if (!$isDisabled AND !$noSave) {
-            // note that we're using the OPPOSITE of the permission because we want to know if the element should be disabled
-            $isDisabled = !formulizePermHandler::user_can_edit_entry($form_id, $user_id, $entry);
+			// note that we're using the OPPOSITE of the permission because we want to know if the element should be disabled
+			$isDisabled = !formulizePermHandler::user_can_edit_entry($form_id, $user_id, $entry);
 		}
 
 		// check whether the entry is locked, and if so, then the element will be disabled.  Set a message to say that elements were disabled due to entries being edited elsewhere (first time only).
@@ -351,6 +314,65 @@ EOF;
 		return "not_allowed";
 	}
 }
+
+/**
+ *
+ */
+function checkElementConditions($elementFilterSettings, $form_id, $entry) {
+	// need to check if there's a condition on this element that is met or not
+	static $cachedEntries = array();
+	if($entry != "new") {
+		if(!isset($cachedEntries[$form_id][$entry])) {
+			$cachedEntries[$form_id][$entry] = getData("", $form_id, $entry, cacheKey: 'bypass'.microtime_float());
+		}
+		$entryData = $cachedEntries[$form_id][$entry];
+	}
+
+	$filterElements = $elementFilterSettings[0];
+	$filterOps = $elementFilterSettings[1];
+	$filterTerms = $elementFilterSettings[2];
+	$filterTypes = $elementFilterSettings[3];
+
+	// find the filter indexes for 'match all' and 'match one or more'
+	$filterElementsAll = array();
+	$filterElementsOOM = array();
+	for($i=0;$i<count((array) $filterTypes);$i++) {
+		if($filterTypes[$i] == "all") {
+			$filterElementsAll[] = $i;
+		} else {
+			$filterElementsOOM[] = $i;
+		}
+	}
+
+	// setup evaluation condition as PHP and then eval it so we know if we should include this element or not
+	$evaluationCondition = "\$passedCondition = false;\n";
+	$evaluationCondition .= "if(";
+
+	$evaluationConditionAND = buildEvaluationCondition("AND",$filterElementsAll,$filterElements,$filterOps,$filterTerms,$entry,$entryData);
+	$evaluationConditionOR = buildEvaluationCondition("OR",$filterElementsOOM,$filterElements,$filterOps,$filterTerms,$entry,$entryData);
+
+	$evaluationCondition .= $evaluationConditionAND;
+	if( $evaluationConditionOR ) {
+		if( $evaluationConditionAND ) {
+			$evaluationCondition .= " AND (" . $evaluationConditionOR . ")";
+		} else {
+			$evaluationCondition .= $evaluationConditionOR;
+		}
+	}
+
+	$evaluationCondition .= ") {\n";
+	$evaluationCondition .= "  \$passedCondition = true;\n";
+	$evaluationCondition .= "}\n";
+
+	eval($evaluationCondition);
+
+	$allowed = 1;
+	if(!$passedCondition) {
+		$allowed = 0;
+	}
+	return $allowed;
+}
+
 
 /* ALTERED - 20100316 - freeform - jeff/julian - start */
 // THIS SHOULD BE REFACTORED SO THAT ELEMENT DISPLAY CONDITIONS RUN OFF THE SAME SQL FILTER LOGIC AS EVERY OTHER INSTANCE OF A FILTER

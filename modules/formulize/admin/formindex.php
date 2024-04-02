@@ -118,8 +118,8 @@ function patch40() {
      *
      * ====================================== */
 
-    $checkThisTable = 'formulize_id';
-	$checkThisField = 'on_delete';
+    $checkThisTable = 'formulize';
+	$checkThisField = 'ele_disabledconditions';
 	$checkThisProperty = '';
 	$checkPropertyForValue = '';
 
@@ -486,6 +486,7 @@ function patch40() {
         $sql['element_sort'] = "ALTER TABLE ".$xoopsDB->prefix("formulize") . " ADD `ele_sort` smallint(2) NULL default NULL";
         $sql['sv_entriesperpage'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views") . " ADD `sv_entriesperpage` varchar(4) NOT NULL default ''";
         $sql['on_delete'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id") . " ADD `on_delete` text";
+				$sql['ele_disabledconditions'] = "ALTER TABLE ".$xoopsDB->prefix("formulize"). " ADD `ele_disabledconditions` text NOT NULL";
 				$sql['remove_newslider'] = "UPDATE ".$xoopsDB->prefix("formulize")." SET ele_type = 'slider' WHERE ele_type = 'newslider'";
 				$sql['update_module_name'] = "UPDATE ".$xoopsDB->prefix("modules")." SET name = 'Formulize' WHERE dirname = 'formulize' AND name = 'Forms'";
 				unlink(XOOPS_ROOT_PATH.'/cache/adminmenu_english.php');
@@ -602,6 +603,8 @@ function patch40() {
                     print "Entries per page already added. result: OK<br>";
                 } elseif($key === "on_delete") {
                     print "On Delete already added. result: OK<br>";
+								} elseif($key === "ele_disabledconditions") {
+                    print "Disabled conditions already added. result: OK<br>";
                 } else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
