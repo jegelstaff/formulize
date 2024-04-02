@@ -23,11 +23,11 @@
 function block_formulizeMENU_show() {
         global $xoopsDB, $xoopsUser, $xoopsModule, $myts;
 		    $myts =& MyTextSanitizer::getInstance();
-			
+
 		if(!defined('_AM_NOFORMS_AVAIL')) {
 				include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/main.php';
 		}
-			
+
 
         $block = array();
         $groups = array();
@@ -47,19 +47,19 @@ function block_formulizeMENU_show() {
 	$allApplications = $application_handler->getAllApplications();
 	$menuTexts = array();
 	$i = 0;
-    
+
         foreach($allApplications as $thisApplication) {
-        
+
         		$links = $thisApplication->getVar('links');
-        
+
         		if(count((array) $links) > 0){
-            
+
             			$menuTexts[$i]['application'] = $thisApplication;
-            
+
             			$menuTexts[$i]['links'] = $links;
-            
+
             			$i++;
-            
+
             		}
  	}
 	$links = $application_handler->getMenuLinksForApp(0);
@@ -78,16 +78,16 @@ function block_formulizeMENU_show() {
                 $block['content'] .= $content;
                 $menuData[] = $data;
 	}
-	
+
   $block['content'] .= "</td></tr></table>";
-  
+
   $module_handler = xoops_gethandler('module');
   $config_handler = xoops_gethandler('config');
   $formulizeModule = $module_handler->getByDirname("formulize");
   $formulizeConfig = $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
   if($formulizeConfig['f7MenuTemplate']) {
     $block['content'] = $menuData;
-  } 
+  }
 
   return $block;
 
@@ -100,35 +100,35 @@ function getMenuTextsForForms($forms, $form_handler) {
 								if($menuText = $thisFormObject->getVar('menutext')) {
 												$menuTexts[$thisFormObject->getVar('id_form')] = html_entity_decode($menuText, ENT_QUOTES) == "Use the form's title" ? $thisFormObject->getVar('title') : $menuText;
 								}
-								
+
 				}
 				return $menuTexts;
 }
 
 function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
-        
+
         $data = array();
-        
+
         if($application == 0) {
-            
+
             $aid = 0;
-            
+
             $name = _AM_CATGENERAL;
-            
+
             $forms = $form_handler->getFormsByApplication(0,true); // true forces ids, not objects, to be returned
-            
+
         } else {
             $aid = intval($application->getVar('appid'));
-                
+
             $name = printSmart($application->getVar('name'), 200);
-                
+
             $forms = $application->getVar('forms');
-                
+
         }
         static $topwritten = false;
-        
+
         $itemurl = XOOPS_URL."/modules/formulize/application.php?id=$aid";
-        
+
         $menuActive = '';
         if(
            $forceOpen
@@ -154,21 +154,21 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
          }
 
         $data = array('url'=>$itemurl, 'title'=>$name, 'active'=>($menuActive ? 1 : 0));
-        
+
         $isThisSubMenu = false;
-        
+
 		include_once XOOPS_ROOT_PATH."/modules/formulize/class/applications.php";
-		list($defaultFid,$defaultSid) = formulizeApplicationMenuLinksHandler::getDefaultScreenForUser();
-		
+		list($defaultFid,$defaultSid,$defaultURL) = formulizeApplicationMenuLinksHandler::getDefaultScreenForUser();
+
         $getMenuId = isset($_GET['menuid']) ? $_GET['menuid'] : null;
         $getSid = isset($_GET['sid']) ? $_GET['sid'] : null;
         $getFid = isset($_GET['fid']) ? $_GET['fid'] : null;
 
 
         foreach($menulinks as $menulink) {
-		
+
             $url = buildMenuLinkURL($menulink);
-        
+
             if($menulink->getVar("menu_id") == $getMenuId
 				OR $menulink->getVar("screen") == 'sid='.$getSid
 				OR $menulink->getVar("screen") == 'fid='.$getFid
@@ -179,13 +179,13 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
 				OR $menulink->getVar("screen") == 'fid='.$defaultFid
 				))
 				){
-                
+
                 $isThisSubMenu = true;
-    
+
             }
-            
-        }        
-		
+
+        }
+
         if(
            $forceOpen
            OR (
@@ -199,20 +199,27 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
                )
            OR $isThisSubMenu
         ) { // if we're viewing this application or a form in this application, or this is the being forced open (only application)...
-        
+
 		foreach($menulinks as $menulink) {
 		    $url = buildMenuLinkURL($menulink);
             $suburl = $url ? $url : XOOPS_URL."/modules/formulize/index.php?".$menulink->getVar("screen");
 			$target = (!$url OR strstr($url, XOOPS_URL)) ? "" : " target='_blank' ";
             $menuSubActive="";
             if(getCurrentURL() == XOOPS_URL.'/modules/formulize/index.php?'.$menulink->getVar("screen")
-                OR getCurrentURL() == $url) {
+                OR getCurrentURL() == $url
+								OR (getCurrentURL() == XOOPS_URL.'/modules/formulize/'
+									AND (
+										$menulink->getVar("screen") == 'sid='.$defaultSid
+										OR $menulink->getVar("screen") == 'fid='.$defaultFid
+									)
+								)
+							) {
                 $menuSubActive=" menuSubActive";
             }
             $text = $menulink->getVar("text");
 			$block .= "<a class=\"menuSub$menuSubActive\" $target href='$suburl'>".$text."</a>";
             $data['subs'][] = array('url'=>$suburl, 'title'=>$text, 'active'=>($menuSubActive ? 1 : 0));
-		}	
+		}
 	}
 	return array($block, $data);
 }
