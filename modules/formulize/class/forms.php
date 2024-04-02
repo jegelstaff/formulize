@@ -1240,11 +1240,11 @@ class formulizeFormsHandler {
 		$perGroupFilter = "";
 		while($filters = $xoopsDB->fetchArray($getFiltersRes)) {
 			$filterSettings = unserialize($filters['filter']);
+			if(empty($filterSettings)) { continue; }
 			// filterSettings[0] will be the elements
 			// filterSettings[1] will be the ops
 			// filterSettings[2] will be the terms
-			/* ALTERED - 20100317 - freeform - jeff/julian - start */
-			// filterSettings[3] will be the types
+			// filterSettings[3] will be the types /* ALTERED - 20100317 - freeform - jeff/julian - start */
 
 			// find the filter indexes for 'match all' and 'match one or more'
 			$filterAll = array();
@@ -1268,19 +1268,15 @@ class formulizeFormsHandler {
 			if( $perGroupFilterOR ) {
 				if( $perGroupFilterAND ) {
 					$perGroupFilter .= " AND (" . $perGroupFilterOR . ")";
-					//$perGroupFilter .= " OR (" . $perGroupFilterOR . ")";
 				} else {
 					$perGroupFilter .= $perGroupFilterOR;
 				}
 			}
-			/* ALTERED - 20100317 - freeform - jeff/julian - stop */
 		}
 
 		if($perGroupFilter) {
 			$perGroupFilter .= ") ";
 		}
-
-		//print( $perGroupFilter );
 
 		return $perGroupFilter;
 	}
