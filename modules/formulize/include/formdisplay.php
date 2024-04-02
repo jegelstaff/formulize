@@ -3473,7 +3473,7 @@ initialize_formulize_xhr();
 var formulizechanged=0;
 var formulize_javascriptFileIncluded = new Array();
 var formulize_xhr_returned_check_for_unique_value = new Array();
-const FORMULIZE = {
+var FORMULIZE = {
 	XOOPS_URL : \"".XOOPS_URL."\",
 	XOOPS_UID : ".($xoopsUser ? $xoopsUser->getVar('uid') : 0).",
 }
