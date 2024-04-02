@@ -2453,7 +2453,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
                                 $unsetDisabledFlag = !isset($GLOBALS['formulize_forceElementsDisabled']);
                                 $GLOBALS['formulize_forceElementsDisabled'] = true;
                             }
-							ob_start();
+							ob_start(function($string) { return $string; }); // set closure output buffer, so this element will never be catalogued as a conditional element. See catalogConditionalElement function for details.
 							// critical that we *don't* ask for displayElement to return the element object, since this way the validation logic is passed back through the global space also (ugh).  Otherwise, no validation logic possible for subforms.
 							$renderResult = displayElement($deFrid, $thisele, $sub_ent);
 							$col_two_temp = trim(ob_get_contents());
@@ -3468,12 +3468,18 @@ print "
 	})(jQuery);
 ";
 
-print " initialize_formulize_xhr();\n";
-print " var formulizechanged=0;\n";
-print " var formulize_javascriptFileIncluded = new Array();\n";
-print " var formulize_xhr_returned_check_for_unique_value = new Array();\n";
+print "
+initialize_formulize_xhr();
+var formulizechanged=0;
+var formulize_javascriptFileIncluded = new Array();
+var formulize_xhr_returned_check_for_unique_value = new Array();
+var FORMULIZE = {
+	XOOPS_URL : \"".XOOPS_URL."\",
+	XOOPS_UID : ".($xoopsUser ? $xoopsUser->getVar('uid') : 0).",
+}
+";
 $split = random_int(8, strlen(getCurrentURL())-2);
-print " var $actionPart1 = \"".str_replace('"', '%22', substr(getCurrentURL(), 0, $split))."\";\n";
+print "var $actionPart1 = \"".str_replace('"', '%22', substr(getCurrentURL(), 0, $split))."\";\n";
 
 if(isset($GLOBALS['formulize_fckEditors'])) {
 	print "function FCKeditor_OnComplete( editorInstance ) { \n";
@@ -4224,222 +4230,17 @@ jQuery(document).ready(function() {
 // or if the boiler plate has already been rendered, then it just outputs the initialization code
 function _drawJavascriptForConditionalElements($initCode) {
 
-global $xoopsUser;
-$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+	static $codeIncluded = false;
 
-static $codeRendered = false;
-
-if(!$codeRendered) {
-
-    $code = "
-<script type='text/javascript'>
-
-// need to be global!
-var conditionalHTML = new Array();
-var governedElements = new Array();
-var relevantElements = new Array();
-var oneToOneElements = new Array();
-
-var conditionalCheckInProgress = 0;
-
-".$initCode."
-
-function callCheckCondition(name) {
-	const checks = [];
-    const relevantElementSets = [];
-	for(key in governedElements[name]) {
-		var markupHandle = governedElements[name][key];
-		elementValuesForURL = getRelevantElementValues(relevantElements[markupHandle]);
-        if(elementValuesForURL in relevantElementSets == false) {
-            relevantElementSets[elementValuesForURL] = new Array();
-        }
-        relevantElementSets[elementValuesForURL].push(markupHandle);
-    }
-    for(elementValuesForURL in relevantElementSets) {
-        checks.push(checkCondition(relevantElementSets[elementValuesForURL], elementValuesForURL));
-    }
-    var results = jQuery.when.apply(jQuery, checks);
-    results.done(function(){
-        // if only one operation sent, then results are flat and not in an array. Make an array to standardize what we're working with.
-        if(typeof arguments[0] === 'string') {
-            arguments[0] = new Array(arguments[0]);
-		}
-        jQuery.each(arguments, function(index, responseData){
-            if(Array.isArray(responseData) === false || 0 in responseData === false) { return false; }
-			try {
-                var result = JSON.parse(responseData[0]);
-            } catch (e) {
-                return false;
-			}
-            if(result) {
-                try {
-                    elements = result.elements;
-                    for(key in elements) {
-                        var handle = elements[key].handle;
-                        var data = elements[key].data;
-                        if(typeof data === 'string') {
-                            data = data.trim();
-                        }
-                        if(data && data != '{NOCHANGE}' && (conditionalHTMLHasChanged(handle, data) || (window.document.getElementById('formulize-'+handle) !== null && window.document.getElementById('formulize-'+handle).style.display == 'none'))) {
-							jQuery('#formulize-'+handle).empty();
-							jQuery('#formulize-'+handle).append(data);
-							// unless it is a hidden element, show the table row...
-                            if(parseInt(String(data).indexOf(\"input type='hidden'\"))!=0) {
-								if(window.document.getElementById('formulize-'+handle) !== null) {
-									window.document.getElementById('formulize-'+handle).style.display = null; // doesn't need real value, just needs to be not set to 'none'
-								}
-								ShowHideTableRow(handle,false,0); // because the newly appended row will have full opacity so immediately make it transparent
-                                ShowHideTableRow(handle,true,1000);
-								if (typeof window['formulize_initializeAutocomplete'+handle] === 'function') {
-									window['formulize_initializeAutocomplete'+handle]();
-								}
-								if (typeof window['formulize_conditionalElementUpdate'+partsArray[3]] === 'function') {
-									window['formulize_conditionalElementUpdate'+partsArray[3]]();
-								}
-							}
-                        } else if( !data && window.document.getElementById('formulize-'+handle) !== null && window.document.getElementById('formulize-'+handle).style.display != 'none') {
-                            ShowHideTableRow(handle,false,1000,true);
-						}
-                        if(data != '{NOCHANGE}') {
-                            assignConditionalHTML(handle, data);
-						}
-						conditionalCheckInProgress = conditionalCheckInProgress - 1;
-					}
-                } catch (e) {
-                    return false;
-                }
-            }
-		});
-	});
-}
-
-function captureDataAsInDOM(data) {
-	jQuery('#conditionalHTMLCapture').empty();
-	jQuery('#conditionalHTMLCapture').append(data);
-	let capturedHTML = window.document.getElementById('conditionalHTMLCapture').innerHTML.trim();
-	jQuery('#conditionalHTMLCapture').empty();
-	return capturedHTML;
-}
-
-function assignConditionalHTML(handle, data = '') {
-	if(!data && jQuery('formulize-'+handle).length > 0) {
-		data = window.document.getElementById('formulize-'+handle).innerHTML.trim();
+	if(!$codeIncluded) {
+			$code = "<script type='text/javascript' src='".XOOPS_URL."/modules/formulize/include/js/conditional.js'></script>\n";
+			$codeIncluded = true;
 	}
-	conditionalHTML[handle] = '';
-	if(data) {
-		conditionalHTML[handle] = captureDataAsInDOM(data);
-	}
-}
-
-function conditionalHTMLHasChanged(handle, data) {
-  return conditionalHTML[handle] != captureDataAsInDOM(data);
-}
-
-function checkCondition(relevantElementSet, elementValuesForURL) {
-    var oneToOneAdded = false;
-    var elementIds = '';
-    var entryIds = '';
-    var fids = '';
-    var elementIdsSep = '';
-    for(k in relevantElementSet) {
-        conditionalCheckInProgress = conditionalCheckInProgress + 1;
-        var markupHandle = relevantElementSet[k];
-		partsArray = markupHandle.split('_');
-        elementIds = elementIds + elementIdsSep + partsArray[3];
-        entryId = partsArray[2]; // assuming all the same!
-        fid = partsArray[1]; // assuming all the same!
-        if(oneToOneAdded == false && oneToOneElements[markupHandle]['onetoonefrid'] && partsArray[1] != oneToOneElements[markupHandle]['onetoonefid']) {
-            elementValuesForURL = elementValuesForURL + '&onetoonekey=1&onetoonefrid='+oneToOneElements[markupHandle]['onetoonefrid']+'&onetoonefid='+oneToOneElements[markupHandle]['onetoonefid']+'&onetooneentries='+oneToOneElements[markupHandle]['onetooneentries']+'&onetoonefids='+oneToOneElements[markupHandle]['onetoonefids'];
-            oneToOneAdded = true;
-        }
-        elementIdsSep = ',';
-    }
-	return jQuery.post(\"".XOOPS_URL."/modules/formulize/formulize_xhr_responder.php?uid=".$uid."&op=get_element_row_html&elementId=\"+elementIds+\"&entryId=\"+entryId+\"&fid=\"+fid+elementValuesForURL);
-}
-
-function getRelevantElementValues(elements) {
-	var ret = '';
-	for(key in elements) {
-		var handle = elements[key];
-		if(handle.indexOf('[]')!=-1) { // grab multiple value elements from a different tag
-			nameToUse = '[jquerytag='+handle.substring(0, handle.length-2)+']';
-		} else {
-			nameToUse = '[name='+handle+']';
-		}
-        if(jQuery('#subentry-dialog '+nameToUse).length > 0) {
-            nameToUse = '#subentry-dialog '+nameToUse;
-        }
-        if(jQuery(nameToUse).length > 0) {
-		elementType = jQuery(nameToUse).attr('type');
-		if(elementType == 'radio') {
-			formulize_selectedItems = jQuery(nameToUse+':checked').val();
-		} else if(elementType == 'checkbox') {
-			formulize_selectedItems = new Array();
-			jQuery(nameToUse).map(function() { // need to check each one individually, because val isn't working right?!
-				if(jQuery(this).attr('checked')) {
-					foundval = jQuery(this).attr('value');
-					formulize_selectedItems.push(foundval);
-				} else {
-					formulize_selectedItems.push('');
-				}
-			});
-		} else {
-			formulize_selectedItems = jQuery(nameToUse).val();
-		}
-		if(jQuery.isArray(formulize_selectedItems)) {
-			for(key in formulize_selectedItems) {
-				ret = ret + '&'+handle+'='+encodeURIComponent(formulize_selectedItems[key]);
-			}
-		} else {
-			ret = ret + '&'+handle+'='+encodeURIComponent(formulize_selectedItems);
-		}
-        }
-	}
-	return ret;
-}
-
-
-function ShowHideTableRow(handle, show, speed, empty = false)
-{
-    var childCellsSelector = jQuery('#formulize-'+handle).children();
-    var ubound = childCellsSelector.length - 1;
-    var lastCallback = null;
-
-    childCellsSelector.each(function(i)
-    {
-        // Only execute the callback on the last element.
-        if (ubound == i && empty)
-            lastCallback = function() { jQuery('#formulize-'+handle).empty(); window.document.getElementById('formulize-'+handle).style.display = 'none'; }
-
-        if (show)
-        {
-            if(ubound == i) {
-                if(typeof initializeCKEditor === 'function') { initializeCKEditor(handle+'_tarea'); }
-            }
-            jQuery(this).fadeIn(speed, lastCallback);
-        }
-        else
-        {
-            jQuery(this).fadeOut(speed, lastCallback);
-        }
-    });
-}
-
-
-
-
-</script>
-";
-        $codeRendered = true;
-    } else {
-        $code = "
-<script type='text/javascript'>
+	$code .= "<script type='text/javascript'>
 $initCode
-</script>
-";
-    }
+</script>\n";
 
-    return $code;
+	return $code;
 
 }
 
