@@ -156,13 +156,20 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
 			if($isDisabled) {
 				$disabledConditions = $element->getVar('ele_disabledconditions');
 				if(is_array($disabledConditions[0]) AND count((array) $disabledConditions[0]) > 0) {
-					// If it's not a new entry, do dynamic checks for the disable conditions being met, if the element doesn't have display conditions already
-					// Need to do this in a more complicated way if an element has BOTH display conditions and disabled conditions! Right now, display conditions take precedence (and disabled conditions would be checked when the element is displayed, but would not be rechecked after that as long as the element is still displayed). The reason this is tricky and hasn't been done yet is because the conditional logic has never had to deal with the possibility of two different sets of governing elements for the same element, so not sure it almost certainly needs some refactoring, and that's outside the scope of the initial requirements for this feature. JWE 2024-02-11.
-					// Need to not do this for new entries, because there's no point in having elements in a new entry, with no values yet, and then be disabling them. Need to enter some information first??? This is fundamentally necessary if elements should disable after they're NOT blank, because dynamic re-rendering would eliminate the ability to fill them in the first time!
-					if($entry != 'new' AND !isset($GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName])) {
-						$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName] = $disabledConditions[0];
-					}
 					$isDisabled = checkElementConditions($disabledConditions, $form_id, $entry);
+					// Also, catalogue the governing elements so that dynamic conditional behaviour will work.
+					// Only if it's not a new entry, because there's no point in having elements in a new entry, with no values yet, and then be disabling them. Need to enter some information first??? This is especially necessary if elements should disable after they're NOT blank, because dynamic re-rendering would then disable them before you had saved the value you entered! The NOT Blank condition will kick in on next page load when the entry is no longer 'new'.
+					if($entry != 'new') {
+						if(!isset($GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName])) {
+							$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName] = $disabledConditions[0];
+						} else {
+							foreach($disabledConditions as $governingElementForDisabledCondition) {
+								if(!in_array($governingElementForDisabledCondition, $GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName])) {
+									$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName][] = $governingElementForDisabledCondition;
+								}
+							}
+						}
+					}
 				}
 			}
 		}
