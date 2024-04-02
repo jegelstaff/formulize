@@ -118,8 +118,9 @@ function patch40() {
      *
      * ====================================== */
 
-    $checkThisTable = 'formulize';
-	$checkThisField = 'ele_disabledconditions';
+
+    $checkThisTable = 'formulize_screen_template';
+	$checkThisField = 'viewentryscreen';
 	$checkThisProperty = '';
 	$checkPropertyForValue = '';
 
@@ -352,6 +353,7 @@ function patch40() {
             donedest varchar(255) NOT NULL default '',
             savebuttontext varchar(255) NOT NULL default '',
             donebuttontext varchar(255) NOT NULL default '',
+            viewentryscreen varchar(10) NOT NULL default '',
             template text NOT NULL,
             PRIMARY KEY (`templateid`),
             INDEX i_sid (`sid`)
@@ -486,6 +488,7 @@ function patch40() {
         $sql['element_sort'] = "ALTER TABLE ".$xoopsDB->prefix("formulize") . " ADD `ele_sort` smallint(2) NULL default NULL";
         $sql['sv_entriesperpage'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views") . " ADD `sv_entriesperpage` varchar(4) NOT NULL default ''";
         $sql['on_delete'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id") . " ADD `on_delete` text";
+        $sql['viewentryscreen_templates'] = "ALTER TABLE ".$xoopsDB->prefix('formulize_screen_template') . " ADD `viewentryscreen` varchar(10) NOT NULL default ''";
 				$sql['ele_disabledconditions'] = "ALTER TABLE ".$xoopsDB->prefix("formulize"). " ADD `ele_disabledconditions` text NOT NULL";
 				$sql['remove_newslider'] = "UPDATE ".$xoopsDB->prefix("formulize")." SET ele_type = 'slider' WHERE ele_type = 'newslider'";
 				$sql['update_module_name'] = "UPDATE ".$xoopsDB->prefix("modules")." SET name = 'Formulize' WHERE dirname = 'formulize' AND name = 'Forms'";
@@ -603,6 +606,8 @@ function patch40() {
                     print "Entries per page already added. result: OK<br>";
                 } elseif($key === "on_delete") {
                     print "On Delete already added. result: OK<br>";
+                } elseif($key === "viewentryscreen_templates") {
+                    print "View entry screen option for template screens already added. result: OK<br>";
 								} elseif($key === "ele_disabledconditions") {
                     print "Disabled conditions already added. result: OK<br>";
                 } else {

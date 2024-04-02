@@ -48,6 +48,7 @@ class formulizeTemplateScreen extends formulizeScreen {
         $this->initVar("donebuttontext", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
         $this->initVar("donedest", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
         $this->initVar("template", XOBJ_DTYPE_TXTAREA);
+        $this->initVar("viewentryscreen", XOBJ_DTYPE_TXTBOX, NULL, false, 10);
     }
 }
 
@@ -83,11 +84,11 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
         $screen->assignVar('sid', $sid);
 
         if (!$update) {
-            $sql = sprintf("INSERT INTO %s (sid, custom_code, template, donedest, savebuttontext, donebuttontext) VALUES (%u, %s, %s, %s, %s, %s)", $this->db->prefix('formulize_screen_template'),
-                $screen->getVar('sid'), $this->db->quoteString(formulize_db_escape($screen->getVar('custom_code'))), $this->db->quoteString(formulize_db_escape($screen->getVar('template'))), $this->db->quoteString(formulize_db_escape($screen->getVar('donedest'))), $this->db->quoteString(formulize_db_escape($screen->getVar('savebuttontext'))), $this->db->quoteString(formulize_db_escape($screen->getVar('donebuttontext'))));
+            $sql = sprintf("INSERT INTO %s (sid, custom_code, template, donedest, savebuttontext, donebuttontext, viewentryscreen) VALUES (%u, %s, %s, %s, %s, %s, %s)", $this->db->prefix('formulize_screen_template'),
+                $screen->getVar('sid'), $this->db->quoteString(formulize_db_escape($screen->getVar('custom_code'))), $this->db->quoteString(formulize_db_escape($screen->getVar('template'))), $this->db->quoteString(formulize_db_escape($screen->getVar('donedest'))), $this->db->quoteString(formulize_db_escape($screen->getVar('savebuttontext'))), $this->db->quoteString(formulize_db_escape($screen->getVar('donebuttontext'))), $this->db->quoteString(formulize_db_escape($screen->getVar('viewentryscreen'))));
         } else {
-            $sql = sprintf("UPDATE %s SET custom_code = %s, template = %s, donedest = %s, savebuttontext = %s, donebuttontext = %s WHERE sid = %u", $this->db->prefix('formulize_screen_template'),
-                $this->db->quoteString(formulize_db_escape($screen->getVar('custom_code'))), $this->db->quoteString(formulize_db_escape($screen->getVar('template'))), $this->db->quoteString(formulize_db_escape($screen->getVar('donedest'))), $this->db->quoteString(formulize_db_escape($screen->getVar('savebuttontext'))), $this->db->quoteString(formulize_db_escape($screen->getVar('donebuttontext'))), $sid);
+            $sql = sprintf("UPDATE %s SET custom_code = %s, template = %s, donedest = %s, savebuttontext = %s, donebuttontext = %s, viewentryscreen = %s WHERE sid = %u", $this->db->prefix('formulize_screen_template'),
+                $this->db->quoteString(formulize_db_escape($screen->getVar('custom_code'))), $this->db->quoteString(formulize_db_escape($screen->getVar('template'))), $this->db->quoteString(formulize_db_escape($screen->getVar('donedest'))), $this->db->quoteString(formulize_db_escape($screen->getVar('savebuttontext'))), $this->db->quoteString(formulize_db_escape($screen->getVar('donebuttontext'))), $this->db->quoteString(formulize_db_escape($screen->getVar('viewentryscreen'))), $sid);
         }
         $result = $this->db->query($sql);
         if (!$result) {
@@ -130,16 +131,16 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
 
 
     function render($screen, $entry_id, $settings = "") {
-        
+
         if(!security_check($screen->getVar('fid'), $entry_id)) {
             print "<p>You do not have permission to view this entry in the form</p>";
             return;
         }
-        
+
         $previouslyRenderingScreen = $GLOBALS['formulize_screenCurrentlyRendering'] ? $GLOBALS['formulize_screenCurrentlyRendering'] : null;
-        
+
         // SOME STANDARDS FOR HOW TO HANDLE 'SAVE' AND 'SAVE AND LEAVE' BUTTONS AND THE DONE DEST NEED TO BE DEVISED FOR TEMPLATE SCREENS!!
-        
+
         global $xoTheme;
         if($xoTheme) {
             $xoTheme->addStylesheet(self::FORMULIZE_CSS_FILE);
@@ -150,14 +151,14 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
         $template_filename = $this->template_filename($screen);
 
         $GLOBALS['formulize_screenCurrentlyRendering'] = $screen;
-        
+
         if (file_exists($custom_code_filename) and file_exists($template_filename)) {
             $vars = $this->run_template_php_code($screen, $custom_code_filename, $entry_id, $settings);
             global $xoopsTpl;
             foreach ($vars as $key => $value) {
                 $xoopsTpl->assign($key, $value);
             }
-            
+
             // if the php code is not calling displayForm of some kind, then include necessary javascript
             $codeContents = file_get_contents($custom_code_filename);
             if(!strstr($codeContents,' displayForm(') AND !strstr($codeContents,' displayFormPages(') AND !strstr($codeContents,'->render(') AND (strstr($codeContents,"\$saveButton") OR strstr($codeContents,"\$doneButton"))) {
@@ -168,21 +169,65 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
                     <script>function xoopsFormValidate_formulize_mainform(leave, myform){return true;}</script>
                     <style> #savingmessage { display: none !important; } </style>".
                     drawJavascript().
-                    "<div id='formulizeform' style='display: none;'><form id='formulize_mainform' name='formulize_mainform' action='$doneDestination' method='post'>".                    
+                    "<div id='formulizeform' style='display: none;'><form id='formulize_mainform' name='formulize_mainform' action='$doneDestination' method='post'>".
                     writeHiddenSettings($settings, null, array($screen->getVar('fid')=>array($entry_id)), array(), $screen).
                     "</form></div>
-                ";    
+                ";
             }
-            
-            $xoopsTpl->display("file:".$template_filename);
-            // we need to put other code in here to persist $settings if any!!
+            // if the designer is sending the user into an entry, then we need various apparatus in the page to make this work
+            if(strstr($codeContents,"viewEntryLink(") OR strstr($codeContents,"viewEntryButton(")) {
+
+                // handle a click for an entry... hand off to the screen
+                if(isset($_POST['ventry']) AND $_POST['ventry']) {
+
+									// figure out the viewentryscreen
+									$viewentryscreen = (isset($_POST['overridescreen']) AND is_numeric($_POST['overridescreen'])) ? $_POST['overridescreen'] : $screen->getVar('viewentryscreen');
+									if($viewentryscreen == "none") {
+											$form_handler = xoops_getmodulehandler('forms', 'formulize');
+											$formObj = $form_handler->get($screen->getVar('fid'));
+											$viewentryscreen = $formObj->getVar('defaultform');
+									}
+									if(!$viewentryscreen OR !is_numeric($viewentryscreen)) {
+											exit("Error: could not determine the screen to use for displaying the form. Check if there is a default screen set for the form '".$formObj->getVar('title'));
+									}
+
+									$screenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+									$screenObject = $screenHandler->get($viewentryscreen);
+									if($_POST['ventry'] == 'single') { // new entry, so entry is blank/new
+											$_POST['ventry'] = '';
+											$screenObject->setVar('reloadblank', 0); // reload the entry they save
+									}
+									$screenHandler->render($screenObject, $_POST['ventry'], array());
+
+                // otherwise, wrap the template screen in the necessary apparatus
+                } else {
+                    // setup the a basic form, with required hidden elements so that viewEntryLink etc will work
+                    // have to include loadreport because the list of entries screen js which we reuse here, requires that in the dom :(
+                    print "<form name='controls' method='post'>
+                        <input type='hidden' name='ventry' value=''>
+                        <input type='hidden' name='overridescreen' value=''>
+                        <input type='hidden' name='loadreport' value=''>";
+                    $xoopsTpl->display("file:".$template_filename);
+                    print "</form>";
+                    // pretty hacky! include the js for lists, so that the viewEntryLink etc will work
+                    // can mimic add buttons by calling addNew('single') in js or addNew() for multiple entry
+                    include_once XOOPS_ROOT_PATH.'/modules/formulize/include/entriesdisplay.php';
+                    interfaceJavascript('',$screen->getVar('fid'), null, null, null, null);
+                }
+
+            // no viewEntryLink etc in the template, so away we go like normal, just the template
+            } else {
+                $xoopsTpl->display("file:".$template_filename);
+            }
+
+            // determine proper admin link
             $applications_handler = xoops_getmodulehandler('applications', 'formulize');
-			$apps = $applications_handler->getApplicationsByForm($screen->getVar('fid'));
-			if(is_array($apps) AND count($apps)>0) {
-				$firstAppId = $apps[key($apps)]->getVar('appid');
-			} else {
-				$firstAppId = 0;
-			}
+						$apps = $applications_handler->getApplicationsByForm($screen->getVar('fid'));
+						if(is_array($apps) AND count($apps)>0) {
+							$firstAppId = $apps[key($apps)]->getVar('appid');
+						} else {
+							$firstAppId = 0;
+						}
             $url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&sid=".$screen->getVar('sid')."&fid=".$screen->getVar('fid')."&aid=".$firstAppId;
             $xoopsTpl->assign('modifyScreenUrl', $url);
         } else {
@@ -193,7 +238,7 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
 
 
     function run_template_php_code($screen, $code_filename, $entry_id, $settings) {
-        
+
         $saveButton = '<input type="button" class="formButton" name="submitx" id="submitx" onclick="javascript:validateAndSubmit();" value="'.htmlspecialchars(strip_tags($screen->getVar('savebuttontext'))).'">';
         $doneButton = '<input type="button" class="formButton" name="submit_save_and_leave" id="submit_save_and_leave" value="'.htmlspecialchars(strip_tags($screen->getVar('donebuttontext'))).'" onclick="javascript:validateAndSubmit(\'leave\');">';
         $doneDest = $screen->getVar('donedest');
@@ -202,18 +247,18 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
         } elseif(!strstr($doneDest, XOOPS_URL)) {
             $doneDest = XOOPS_URL."$doneDest";
         }
-        
+
         // make this a configuration option on the Templates tab!!!
         if (!empty($entry_id)) {
             $templateScreenData = getData('', $screen->getVar('fid'), $entry_id);
             $form_handler = xoops_getmodulehandler('forms', 'formulize');
             $formObject = $form_handler->get($screen->getVar('fid'));
             foreach($formObject->getVar('elementHandles') as $thisHandle) {
-                $$thisHandle = display($templateScreenData[0], $thisHandle);    
+                $$thisHandle = display($templateScreenData[0], $thisHandle);
             }
             $entry = $templateScreenData[0];
         }
-        
+
         include_once($code_filename);
         return get_defined_vars();
     }

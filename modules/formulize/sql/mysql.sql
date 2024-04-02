@@ -456,6 +456,7 @@ CREATE TABLE formulize_screen_template (
   donedest varchar(255) NOT NULL default '',
   savebuttontext varchar(255) NOT NULL default '',
   donebuttontext varchar(255) NOT NULL default '',
+  viewentryscreen varchar(10) NOT NULL default '',
   template text NOT NULL,
   PRIMARY KEY (`templateid`),
   INDEX i_sid (`sid`)
