@@ -161,16 +161,8 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
 					$isDisabled = checkElementConditions($disabledConditions, $form_id, $entry);
 					// Also, catalogue the governing elements so that dynamic conditional behaviour will work.
 					// Only if it's not a new entry, because there's no point in having elements in a new entry, with no values yet, and then be disabling them. Need to enter some information first??? This is especially necessary if elements should disable after they're NOT blank, because dynamic re-rendering would then disable them before you had saved the value you entered! The NOT Blank condition will kick in on next page load when the entry is no longer 'new'.
-					if($entry != 'new') {
-						if(!isset($GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName])) {
-							$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName] = $disabledConditions[0];
-						} else {
-							foreach($disabledConditions[0] as $governingElementForDisabledCondition) {
-								if(!in_array($governingElementForDisabledCondition, $GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName])) {
-									$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName][] = $governingElementForDisabledCondition;
-								}
-							}
-						}
+					if($entry != 'new' AND !$subformCreateEntry) {
+						catalogConditionalElement($renderedElementName, array_unique($disabledConditions[0]));
 					}
 				}
 			}
@@ -322,14 +314,22 @@ EOF;
  *
  * Do not catalogue when there is a closure callback on the current output buffer, because that happens when we are rendering inline subform elements, which can never respond to conditions.
  *
- * @param $renderedElementName The markup handle for the element, ie: de_FID_ENTRYID_ELEMENTID
- * @param $elementFilterSettings The conditions that apply to the display of the element
+ * @param string $renderedElementName The markup handle for the element, ie: de_FID_ENTRYID_ELEMENTID
+ * @param array $governingElements The elements which control the conditions that apply to the rendered element
  * @return Nothing
  */
-function catalogConditionalElement($renderedElementName, $elementFilterSettings) {
+function catalogConditionalElement($renderedElementName, $governingElements) {
 	$bufferingStatus = ob_get_status();
 	if($bufferingStatus['name'] != 'Closure::__invoke') {
-		$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName] = $elementFilterSettings;
+		if(!isset($GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName])) {
+			$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName] = $governingElements;
+		} else {
+			foreach($governingElements as $governingElement) {
+				if(!in_array($governingElement, $GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName])) {
+					$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName][] = $governingElement;
+				}
+			}
+		}
 	}
 }
 
