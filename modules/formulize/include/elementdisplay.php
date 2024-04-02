@@ -136,7 +136,7 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
 	$elementFilterSettings = $element->getVar('ele_filtersettings');
 	if($allowed AND is_array($elementFilterSettings[0]) AND count((array) $elementFilterSettings[0]) > 0 AND (!$noSave OR $entry != 'new')) {
 		// cache the filterElements for this element, so we can build the right stuff with them later in javascript, to make dynamically appearing elements
-		$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName] = $elementFilterSettings[0];
+		$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName] = array_unique($elementFilterSettings[0]);
 		$allowed = checkElementConditions($elementFilterSettings, $form_id, $entry);
 	}
 
@@ -163,7 +163,7 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
 						if(!isset($GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName])) {
 							$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName] = $disabledConditions[0];
 						} else {
-							foreach($disabledConditions as $governingElementForDisabledCondition) {
+							foreach($disabledConditions[0] as $governingElementForDisabledCondition) {
 								if(!in_array($governingElementForDisabledCondition, $GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName])) {
 									$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName][] = $governingElementForDisabledCondition;
 								}
