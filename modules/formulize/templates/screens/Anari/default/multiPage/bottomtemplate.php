@@ -6,8 +6,6 @@ print "
 </div>
 </div>
 
-<hr>
-
 <div id='multipage-controls'>
 $previousPageButton $savePageButton $nextPageButton $pageIndicator $pageSelector
 </div>
