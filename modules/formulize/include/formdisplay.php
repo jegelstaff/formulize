@@ -2034,7 +2034,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
 
 	if($_POST['target_sub'] AND $_POST['target_sub'] == $subform_id AND $_POST['target_sub_instance'] == $subformElementId.$subformInstance) { // important we only do this on the run through for that particular sub form (hence target_sub == sfid), and also only for the specific instance of this subform on the page too, since not all entries may apply to all subform instances any longer with conditions in effect now
-        list($sub_entry_new,$sub_entry_written,$filterValues) = formulize_subformSave_writeNewEntry($element_to_write, $value_to_write, $fid, $frid, $_POST['target_sub'], $entry, $subformConditions, $overrideOwnerOfNewEntries, $mainFormOwner, $_POST['numsubents']);
+        list($sub_entry_new,$sub_entry_written) = formulize_subformSave_writeNewEntry($element_to_write, $value_to_write, $fid, $frid, $_POST['target_sub'], $entry, $subformConditions, $overrideOwnerOfNewEntries, $mainFormOwner, $_POST['numsubents']);
         if(is_array($sub_entry_written)) {
             global $formulize_subFidsWithNewEntries, $formulize_subformElementsWithNewEntries, $formulize_newSubformEntries;
             $formulize_subFidsWithNewEntries[] = $_POST['target_sub'];
@@ -2089,15 +2089,14 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
         $optionElementObject = $element_handler->get($subform_element_object->ele_value['subform_prepop_element']);
 
         // gather filter choices first...
-        if(!isset($filterValues)) {
-            if(is_array($subformConditions)) {
-    			$filterValues = getFilterValuesForEntry($subformConditions, $entry);
-                $filterValues = $filterValues[key($filterValues)]; // subform element conditions are always on one form only so we just take the first set of values found (filterValues are grouped by form id)
-            } else {
-                $filterValues = array();
-            }
-        }
-        // gather all the choices for the prepop element, taking into account if the filter choice for this subform instance alters the options for the prepop element
+				if(is_array($subformConditions)) {
+						$filterValues = getFilterValuesForEntry($subformConditions, $entry);
+						$filterValues = $filterValues[key($filterValues)]; // subform element conditions are always on one form only so we just take the first set of values found (filterValues are grouped by form id)
+				} else {
+						$filterValues = array();
+				}
+
+				// gather all the choices for the prepop element, taking into account if the filter choice for this subform instance alters the options for the prepop element
         // render the element, then read the options from the rendered element
         // this will NOT work for autocomplete boxes!
         // call displayElement, this should set the GLOBALS value that we can then check to see what options have been created for this element
