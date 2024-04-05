@@ -663,12 +663,6 @@ div[id^=cellcontents_1_] label {
   border: 1px solid black;
 }
 
-.formulize-uploaded-image-thumbnail {
-  max-width: 200px;
-  display: inline;
-  border: 1px solid black;
-}
-
 table.formulize-grid td.head {
   padding-bottom: 0.5em;
 }
