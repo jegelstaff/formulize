@@ -896,6 +896,14 @@ button, input[type="submit"], input[type="button"], input[type="reset"],
     margin-top: 1em;
     margin-bottom: 2em;
 }
+@media (min-width: 768px) {
+	#multipage-controls {
+		position: sticky;
+		bottom: 2em;
+		margin-left: 1em;
+	}
+}
+
 @media (max-width: 550px) {
     #multipage-controls {
         justify-content: center;
