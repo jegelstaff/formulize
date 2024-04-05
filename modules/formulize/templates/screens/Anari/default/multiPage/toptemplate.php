@@ -2,7 +2,6 @@
 
 if($showTabs) {
     print "
-    <div>&nbsp;</div>
     <div id='pageNavTable' class='pill-tabs'>";
         if($saveAndLeave) {
             print "
@@ -27,7 +26,7 @@ print "
                 <h3 class='card__title'>".$formTitle."</h3>
             </div>";
         }
-        
+
         print "
         <div class='card__body'>
             <div class='form-container'>

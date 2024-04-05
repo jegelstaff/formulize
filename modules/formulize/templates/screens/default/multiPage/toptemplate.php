@@ -2,7 +2,6 @@
 
 if($showTabs) {
     print "
-    <div>&nbsp;</div>
     <div id='pageNavTable' class='pill-tabs'>
         <a href='#' this-page='".($totalPages+1)."' class='icon-arrow-backward pill-tabs__item navtab'> $saveAndLeave</a>";
         foreach($pageTitles as $i=>$title) {
@@ -11,7 +10,7 @@ if($showTabs) {
             print "
             <a href='#' class='pill-tabs__item navtab $activeClass' $thisPage>$title</a>";
         }
-        
+
         print"
     </div>";
 }
@@ -25,7 +24,7 @@ print "
                 <h3 class='card__title'>".$formTitle."</h3>
             </div>";
         }
-        
+
         print "
         <div class='card__body'>
             <div class='form-container'>

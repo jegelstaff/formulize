@@ -1034,8 +1034,9 @@ table.formulize-subform-table td {
 }
 
 #pageNavTable {
-  position: fixed;
-  margin-top: -2.05em;
+  position: sticky;
+	top: 0;
+  margin: 0;
   background-color: var(--background-color);
   width: 100%;
 }
