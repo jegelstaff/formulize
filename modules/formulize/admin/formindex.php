@@ -474,6 +474,8 @@ function patch40() {
         $sql['form_screen_printableview'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_form"). " ADD `printableviewbuttontext` varchar(255) NOT NULL default ''";
         $sql['rm_ext_id_null'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_resource_mapping") . " CHANGE `external_id` `external_id` INT(11) NULL DEFAULT NULL";
         $sql['sliderfix'] = "UPDATE " . $xoopsDB->prefix("formulize") . " SET ele_type = 'slider' WHERE ele_type = 'newslider'";
+				if(file_exists(XOOPS_ROOT_PATH.'/modules/formulize/class/newsliderElement.php')) { unlink(XOOPS_ROOT_PATH.'/modules/formulize/class/newsliderElement.php'); }
+				if(file_exists(XOOPS_ROOT_PATH.'/modules/formulize/templates/admin/element_type_newslider.html')) { unlink(XOOPS_ROOT_PATH.'/modules/formulize/templates/admin/element_type_newslider.html'); }
         $sql['buttontexttext'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_multipage") . " CHANGE `buttontext` `buttontext` TEXT NULL DEFAULT NULL";
         $sql['form_screen_multipage_showpagetitles'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_multipage") . " ADD `showpagetitles` tinyint(1) NOT NULL";
         $sql['form_screen_multipage_showpageselector'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_multipage") . " ADD `showpageselector` tinyint(1) NOT NULL";
