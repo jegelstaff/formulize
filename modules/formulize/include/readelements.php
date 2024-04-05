@@ -101,7 +101,6 @@ if(!$element_handler) {
 	$element_handler = xoops_getmodulehandler('elements', 'formulize');
 }
 
-$formulize_up = array(); // container for user profile info
 $formulize_elementData = array(); // this array has multiple dimensions, in this order:  form id, entry id, element id.  "new" means a nea entry.  Multiple new entries will be recorded as new1, new2, etc
 $formulize_subformBlankCues = array();
 // loop through POST and catalogue everything that we need to do something with
@@ -158,15 +157,7 @@ foreach($_POST as $k=>$v) {
 			$formulize_elementData[$elementMetaData[1]][$elementMetaData[2]][$elementMetaData[3]] = "{WRITEASNULL}"; // no value returned for this element that was included (cue was found) so we write it as blank to the db
 		}
 
-	} elseif(substr($k, 0, 12) == "userprofile_") {
-		$formulize_up[substr($k, 12)] = $v;
 	}
-}
-
-// write all the user profile info
-if(count((array) $formulize_up)>0) {
-	  $formulize_up['uid'] = $GLOBALS['userprofile_uid'];
-		writeUserProfile($formulize_up, $uid);
 }
 
 // figure out proxy user situation
@@ -552,105 +543,4 @@ function updateOwnerForFormEntry($updateOwnerFid, $updateOwnerNewOwnerId, $updat
 		print "<b>Error: could not update the entry ownership information.  Please report this to the webmaster right away, including which entry you were trying to update.</b>";
 	}
 	$data_handler_for_owner_updating->updateCaches($updateOwnerEntryId);
-}
-
-
-// THIS FUNCTION TAKES THE DATA PASSED BACK FROM THE USERPROFILE PART OF A FORM AND SAVES IT AS PART OF THE XOOPS USER PROFILE
-function writeUserProfile($data, $uid) {
-
-	// following code largely borrowed from edituser.php
-	// values we receive:
-	// name
-	// email
-	// viewemail
-	// timezone_offset
-	// password
-	// vpass
-	// attachsig
-	// user_sig
-	// umode
-	// uorder
-	// notify_method
-	// notify_mode
-
-	global $xoopsUser, $xoopsConfig;
-	$config_handler =& xoops_gethandler('config');
-  $xoopsConfigUser =& $config_handler->getConfigsByCat(2); // 2 is the user category
-
-	include_once XOOPS_ROOT_PATH . "/language/" . $xoopsConfig['language'] . "/user.php";
-
-	$errors = array();
-    if (!empty($data['uid'])) {
-        $uid = intval($data['uid']);
-    }
-
-    if (empty($uid)) {
-	redirect_header(XOOPS_URL,3,_US_NOEDITRIGHT);
-        exit();
-    } elseif(is_object($xoopsUser)) {
-			if($xoopsUser->getVar('uid') != $uid) {
-				redirect_header(XOOPS_URL,3,_US_NOEDITRIGHT);
-				exit();
-			}
-    }
-
-    $myts =& MyTextSanitizer::getInstance();
-    if ($xoopsConfigUser['allow_chgmail'] == 1) {
-        $email = '';
-        if (!empty($data['email'])) {
-            $email = $myts->stripSlashesGPC(trim($data['email']));
-        }
-        if ($email == '' || !checkEmail($email)) {
-            $errors[] = _US_INVALIDMAIL;
-        }
-    }
-    $password = '';
-    $vpass = '';
-    if (!empty($data['password'])) {
-     	  $password = $myts->stripSlashesGPC(trim($data['password']));
-    }
-    if ($password != '') {
-     	  if (strlen($password) < $xoopsConfigUser['minpass']) {
-           	$errors[] = sprintf(_US_PWDTOOSHORT,$xoopsConfigUser['minpass']);
-        }
-        if (!empty($data['vpass'])) {
-     	      $vpass = $myts->stripSlashesGPC(trim($data['vpass']));
-        }
-     	  if ($password != $vpass) {
-            $errors[] = _US_PASSNOTSAME;
-     	  }
-    }
-    if (count((array) $errors) > 0) {
-        echo '<div>';
-        foreach ($errors as $er) {
-            echo '<span style="color: #ff0000; font-weight: bold;">'.$er.'</span><br />';
-        }
-        echo '</div><br />';
-    } else {
-        $member_handler =& xoops_gethandler('member');
-        $edituser =& $member_handler->getUser($uid);
-        $edituser->setVar('name', $data['name']);
-        if ($xoopsConfigUser['allow_chgmail'] == 1) {
-            $edituser->setVar('email', $email, true);
-        }
-        $user_viewemail = (!empty($data['user_viewemail'])) ? 1 : 0;
-        $edituser->setVar('user_viewemail', $user_viewemail);
-        if ($password != '') {
-            $edituser->setVar('pass', md5($password), true);
-        }
-        $edituser->setVar('timezone_offset', $data['timezone_offset']);
-        $attachsig = !empty($data['attachsig']) ? 1 : 0;
-	  $edituser->setVar('attachsig', $attachsig);
-        $edituser->setVar('user_sig', xoops_substr($data['user_sig'], 0, 255));
-        $edituser->setVar('uorder', $data['uorder']);
-        $edituser->setVar('umode', $data['umode']);
-        $edituser->setVar('notify_method', $data['notify_method']);
-        $edituser->setVar('notify_mode', $data['notify_mode']);
-
-        if (!$member_handler->insertUser($edituser)) {
-            echo $edituser->getHtmlErrors();
-						exit();
-        }
-    }
-
 }
