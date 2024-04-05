@@ -7767,9 +7767,13 @@ function writeEntryDefaults($target_fid,$target_entry,$excludeHandles = array())
 
 }
 
-// THIS NEEDS TO BE ADDED AS A METHOD IN THE CUSTOM ELEMENTS CLASS!
-// returns an array of element id/default value pairs
-// valid for a specific entry
+/**
+ * Gets the default values for elements in an entry, usually a new entry, but some element types can have defaults that depend on data already saved in other elements in an entry
+ * Such as when a multipage form as elements on page 2 that have default values determined by answers on page 1
+ * @param int $target_fid - The form id for which we're getting default values
+ * @param int|string $target_entry - The entry id for which we're getting default values, or 'new' for new entries not yet saved. Only used in cases of element types where the default might depend on the entry.
+ * @return array Returns an array of element id/default value pairs
+ */
 function getEntryDefaults($target_fid,$target_entry) {
 
   static $cachedDefaults = array();
@@ -7790,13 +7794,14 @@ function getEntryDefaults($target_fid,$target_entry) {
   $criteria->add(new Criteria('ele_type', 'checkbox'), 'OR');
   $criteria->add(new Criteria('ele_type', 'yn'), 'OR');
   $criteria->add(new Criteria('ele_type', 'select'), 'OR');
+	$criteria->add(new Criteria('ele_type', 'slider'), 'OR');
   $elementsForDefaults = $element_handler->getObjects($criteria,$target_fid); // get all the text or textarea elements in the form
 
   foreach($elementsForDefaults as $thisDefaultEle) {
-    // need to write in any default values for any text boxes or text areas that are in the subform.  Perhaps other elements could be included too, but that would take too much work right now. (March 9 2009)
     $defaultTextToWrite = "";
     $ele_value_for_default = $thisDefaultEle->getVar('ele_value');
-    switch($thisDefaultEle->getVar('ele_type')) {
+		$ele_type = $thisDefaultEle->getVar('ele_type');
+    switch($ele_type) {
       case "text":
         $defaultTextToWrite = getTextboxDefault($ele_value_for_default[2], $target_fid, $target_entry, $ele_value_for_default[11]); // position 2 is default value for text boxes
         break;
@@ -7855,6 +7860,14 @@ function getEntryDefaults($target_fid,$target_entry) {
                 }
             }
         }
+				break;
+			default:
+				if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+					$elementTypeHandler = xoops_getmodulehandler($ele_type."Element", "formulize");
+					if(method_exists($elementTypeHandler, 'getDefaultValue')) {
+						$defaultTextToWrite = $elementTypeHandler->getDefaultValue($thisDefaultEle);
+					}
+				}
     }
     if($defaultTextToWrite === "" OR $defaultTextToWrite === false OR $defaultTextToWrite === null) { continue; }
     $defaultValueMap[$thisDefaultEle->getVar('ele_id')] = $defaultTextToWrite;
