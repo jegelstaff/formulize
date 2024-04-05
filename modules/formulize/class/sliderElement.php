@@ -36,10 +36,10 @@ class formulizeSliderElement extends formulizeformulize {
     function __construct() {
         $this->name = "Range Slider";
         $this->hasData = true;
-        $this->needsDataType = false; //should always take integer
-        $this->overrideDataType = 'integer';
+        $this->needsDataType = false; // should always take integer
+        $this->overrideDataType = 'int';
         $this->adminCanMakeRequired = true;
-        $this->alwaysValideInputs = false; //no validation required
+        $this->alwaysValidateInputs = false; // only validate when the admin says it's a required element
         parent::__construct();
     }
 }
@@ -88,6 +88,19 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
         return $changed;
     }
 
+		/**
+		 * Returns the default value for this element, for a new entry in the specified form, or for a specific entry if one is specified.
+		 * Some elements might have defaults that depend on the values of other elements in the entry.
+		 * This method may replace the use of loadValue in the future
+		 * @param $element The element object
+		 * @param $entry_id The entry id that should be used as the context for the default value. Defaults to 'new'.
+		 * @return mixed The default value
+		 */
+		function getDefaultValue($element, $entry_id = 'new') {
+			$ele_value = $element->getVar('ele_value');
+			return intval($ele_value[3]);
+		}
+
     // Reads current state of element, updates ele_value to a renderable state
     function loadValue($value, $ele_value, $element) {
         $ele_value[3] = $value;
@@ -112,10 +125,10 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
         $slider_html .= "step=\"{$ele_value[2]}\" ";
         $slider_html .= "value=\"{$ele_value[3]}\" ";
         $slider_html .= "aria-describedby=\"{$markupName}-help-text\" ";
-        $slider_html .= "oninput=\"updateTextInput(value);formulizechanged=1;\">";
+        $slider_html .= "oninput=\"updateTextInput_{$markupName}(value);formulizechanged=1;\">";
         $slider_html .= "</input>";
 
-        $value_html = "<br><output id=\"rangeValue\" type=\"text\" size=\"2\"";
+        $value_html = "<output id=\"rangeValue_{$markupName}\" type=\"text\" size=\"3\"";
         $value_html.= "for=\"{$markupName}\"";
         $value_html .= ">{$ele_value[3]}<output>";
 
@@ -123,9 +136,10 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
         $form_slider = new XoopsFormLabel($caption, $slider_html);
 
         $update_script = "<script type=\"text/javascript\">";
-        $update_script .= "function updateTextInput(val) {";
-        $update_script .= "document.getElementById('rangeValue').value=val;}\n";
-        $update_script .= "document.getElementById('rangeValue').value=document.getElementById('{$markupName}').value;\n";
+        $update_script .= "function updateTextInput_{$markupName}(val) {";
+        $update_script .= "document.getElementById('rangeValue_{$markupName}').value=val;\n";
+        $update_script .= "let event = new Event('change');\n";
+        $update_script .= "document.getElementById('{$markupName}').dispatchEvent(event);}\n";
         $update_script .= "</script>";
 
         if($isDisabled) {

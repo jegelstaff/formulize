@@ -1191,20 +1191,23 @@ table.outer textarea,
     .form-input,
     table.outer input[type="text"],
     table.outer input[type="date"],
-    table.outer input[type="range"],
     table.outer input[type="password"],
     table.outer textarea,
     .form-container textarea,
     .form-container input[type="text"],
     .form-container input[type="date"],
-    .form-container input[type="range"],
     .form-container input[type="password"],
     #formulize_modal textarea,
     #formulize_modal input[type="text"],
     #formulize_modal input[type="date"],
-    #formulize_modal input[type="range"],
     #formulize_modal input[type="password"] {
         max-width: 700px;
+    }
+
+    table.outer input[type="range"],
+    .form-container input[type="range"],
+    #formulize_modal input[type="range"] {
+      max-width: 673px;
     }
 }
 
@@ -1427,9 +1430,12 @@ div.formulize_autocomplete {
     .form-container .col2 select,
     #formulize_modal .col2 select,
     .col2 input[type="text"],
-    .col2 textarea,
-    .col2 input[type="range"] {
+    .col2 textarea {
         min-width: 700px;
+    }
+
+    .col2 input[type="range"] {
+      min-width: 673px;
     }
     /*.formulize_autocomplete input.formulize_autocomplete_multiple {
         width: 81%;
@@ -1749,6 +1755,11 @@ button.card__title {
 
 [data-toggle] {
   cursor: pointer;
+}
+
+output[id^=rangeValue] {
+  font-weight: bold;
+  font-size: 125%;
 }
 
 .rangeslider {
