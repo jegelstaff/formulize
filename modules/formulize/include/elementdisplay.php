@@ -479,25 +479,30 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 			$compValue = implode(",",$compValue);
 		} else {
 			$compValue = addslashes($compValue);
+			$compValueQuoted = is_numeric($compValue) ? $compValue : "'".$compValue."'";
 		}
 
+		$rawFilterTerms = $filterTerms[$i];
+		$filterTermToUse = addslashes($filterTerms[$i]);
+
     // in PHP 8 can't use empty strings for comparison in stristr because it will always give a false positive
-		if($thisOp == "LIKE" AND addslashes($filterTerms[$i]) != '') {
-			$evaluationCondition .= "stristr('".$compValue."', '".addslashes($filterTerms[$i])."')";
-		} elseif($thisOp == "NOT LIKE" AND addslashes($filterTerms[$i]) != '') {
-			$evaluationCondition .= "!stristr('".$compValue."', '".addslashes($filterTerms[$i])."')";
+		if($thisOp == "LIKE" AND $filterTermToUse != '') {
+			$evaluationCondition .= "stristr('".$compValue."', '".$filterTermToUse."')";
+		} elseif($thisOp == "NOT LIKE" AND $filterTermToUse != '') {
+			$evaluationCondition .= "!stristr('".$compValue."', '".$filterTermToUse."')";
     } elseif($thisOp == "LIKE") {
       $evaluationCondition .= $compValue ? 'FALSE' : 'TRUE';
     } elseif($thisOp == "NOT LIKE") {
       $evaluationCondition .= $compValue ? 'TRUE' : 'FALSE';
 		} elseif($thisOp == "IN") {
 			$cleanTerms = array();
-			foreach(explode(',',$filterTerms[$i]) as $ft) {
+			foreach(explode(',',$rawFilterTerms) as $ft) {
 				$cleanTerms[] = str_replace("'", "\'", trim(htmlspecialchars_decode($ft, ENT_QUOTES), " \n\r\t\v\x00\"'"));
 			}
-			$evaluationCondition .= "in_array('".$compValue."', array('".implode("','",$cleanTerms)."'))";
+			$evaluationCondition .= "in_array(".$compValueQuoted.", array('".implode("','",$cleanTerms)."'))";
 		} else {
-			$evaluationCondition .= "'".$compValue."' $thisOp '".addslashes($filterTerms[$i])."'";
+			$filterTermToUse = is_numeric($filterTermToUse) ? $filterTermToUse : "'".$filterTermToUse."'";
+			$evaluationCondition .= "$compValueQuoted $thisOp $filterTermToUse";
 		}
 	}
 
