@@ -36,10 +36,10 @@ class formulizeSliderElement extends formulizeformulize {
     function __construct() {
         $this->name = "Range Slider";
         $this->hasData = true;
-        $this->needsDataType = false; //should always take integer
-        $this->overrideDataType = 'integer';
+        $this->needsDataType = false; // should always take integer
+        $this->overrideDataType = 'int';
         $this->adminCanMakeRequired = true;
-        $this->alwaysValideInputs = false; //no validation required
+        $this->alwaysValidateInputs = false; // only validate when the admin says it's a required element
         parent::__construct();
     }
 }
@@ -87,6 +87,19 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
         $element->setVar('ele_value', $ele_value);
         return $changed;
     }
+
+		/**
+		 * Returns the default value for this element, for a new entry in the specified form, or for a specific entry if one is specified.
+		 * Some elements might have defaults that depend on the values of other elements in the entry.
+		 * This method may replace the use of loadValue in the future
+		 * @param $element The element object
+		 * @param $entry_id The entry id that should be used as the context for the default value. Defaults to 'new'.
+		 * @return mixed The default value
+		 */
+		function getDefaultValue($element, $entry_id = 'new') {
+			$ele_value = $element->getVar('ele_value');
+			return intval($ele_value[3]);
+		}
 
     // Reads current state of element, updates ele_value to a renderable state
     function loadValue($value, $ele_value, $element) {
