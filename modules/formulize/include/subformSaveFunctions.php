@@ -26,7 +26,7 @@ function formulize_subformSave_determineElementToWrite($frid, $fid, $entry, $tar
 		$value_source_form = $elementq[0]['fl_form1_id'];
         $alt_element_to_write = isset($elementq[1]['fl_key2']) ? $elementq[1]['fl_key2'] : '';
 	}
-    
+
     // in case we need it for writing later...figure out the matching value in the main form, if any...
     if($elementq[0]['fl_common_value']) {
         // grab the value from the parent element -- assume that it is a textbox of some kind!
@@ -38,11 +38,11 @@ function formulize_subformSave_determineElementToWrite($frid, $fid, $entry, $tar
             $value_to_write = $data_handler->getElementValueInEntry($entry, $value_source);
         }
     } else {
-        $value_to_write = $entry; 
+        $value_to_write = $entry;
     }
-    
-    
-    
+
+
+
     return array($elementq, $element_to_write, $value_to_write, $value_source, $value_source_form, $alt_element_to_write);
 }
 
@@ -65,16 +65,31 @@ function formulize_subformSave_writeNewEntry($element_to_write, $value_to_write,
         $subformSubEntryMap = array(); // initialize as array
     }
     if($element_to_write != 0) {
-        
-        $sub_entry_new = "";
-    
+				$sub_entry_new = "";
+				// need to also enforce any equals conditions that are on the subform element, if any, and assign those values to the entries
+				$valuesToWrite = array();
+				if(is_array($subformConditions)) {
+						$valuesToWrite = getFilterValuesForEntry($subformConditions, $entry);
+						$valuesToWrite = count($valuesToWrite) > 0 ? $valuesToWrite[key($valuesToWrite)] : $valuesToWrite; // subform element conditions are always on one form only so we just take the first set of values found (filterValues returned are grouped by form id)
+				}
+				// if necessary, convert the element_to_write to match the format of the filterValues (id or element handle), since everything in the values array that is written must be described in the same way, for now. We should be smarter about this and support writing data with mixed element specifiers. Requires extensive refactoring in writeEntry method of data handler class.
+				if(!empty($valuesToWrite) AND is_numeric($element_to_write) != is_numeric(key($valuesToWrite))) {
+					$element_handler = xoops_getmodulehandler('elements', 'formulize');
+					$elementToWriteObject = $element_handler->get($element_to_write);
+					if(is_numeric($element_to_write)) { // id specifier needs to switch to handle
+						$element_to_write = $elementToWriteObject->getVar('ele_handle');
+					} else { // handle specifier needs to switch to id
+						$element_to_write = $elementToWriteObject->getVar('ele_id');
+					}
+				}
+				$valuesToWrite[$element_to_write] = $value_to_write;
         for($i=0;$i<$numSubEnts;$i++) { // actually goahead and create the requested number of new sub entries...start with the key field, and then do all textboxes with defaults too...
             if($overrideOwnerOfNewEntries) {
               $creation_user_touse = $mainFormOwner;
             } else {
               $creation_user_touse = "";
             }
-            $subEntWritten = writeElementValue($target_sub, $element_to_write, "new", $value_to_write, $creation_user_touse, "", true); // Last param is override that allows direct writing to linked selectboxes if we have prepped the value first!
+						$subEntWritten = formulize_writeEntry($valuesToWrite,'new', proxyUser: $creation_user_touse);
             $sub_entry_written[] = $subEntWritten;
             $subformSubEntryMap[$target_sub][] = array('parent'=>$entry, 'self'=>$subEntWritten);
         }
@@ -82,32 +97,16 @@ function formulize_subformSave_writeNewEntry($element_to_write, $value_to_write,
         $sub_entry_new = "new"; // this happens in uid-link situations?
         $sub_entry_written = "";
     }
-
-    // need to also enforce any equals conditions that are on the subform element, if any, and assign those values to the entries that were just added
-    // and write default values, and trigger on before/after save (could calling writeEntry alone handle the defaults??)
     // also, enforce any derived values on the subform entry itself
-    $filterValues = array();
-    if(is_array($subformConditions)) {
-        $filterValues = getFilterValuesForEntry($subformConditions, $entry);
-        $filterValues = count($filterValues) > 0 ? $filterValues[key($filterValues)] : $filterValues; // subform element conditions are always on one form only so we just take the first set of values found (filterValues are grouped by form id)
-    }
-    $data_handler = new formulizeDataHandler($target_sub);
+		// and take another pass at defaults
     foreach($sub_entry_written as $thisSubEntry) {
-        if(isset($filterValues) AND count((array) $filterValues)>0) {
-            formulize_writeEntry($filterValues,$thisSubEntry);	
-        } else {
-            // if we didn't have to otherwise trigger normal writing operation...
-            // pass empty values just to trigger on before save, and potentially on after save if the on before save changes anything. Such a hack!!
-            $data_handler->writeEntry($thisSubEntry, array()); 
-        }
-        // need to parse/write the defaults one more time, because some defaults are dependent on other defaults
-        // this is kind of awkward! the writing of defaults should proceed in order like derived values and then later can be dependent on previous
-        writeEntryDefaults($target_sub,$thisSubEntry,array_keys($filterValues)); 
+        // need to parse/write the defaults one more time, because some defaults may be dependent on other defaults -- dates mostly/only? -- problem is that when defaults are set in the normal writing of new entries, they don't take into account the default values of other elements. Should they? Kind of super awkward when there might be on before save happening after the default value is determined. Doing a second pass is really the only way??
+        writeEntryDefaults($target_sub,$thisSubEntry,array_keys($valuesToWrite));
         if($frid) {
             formulize_updateDerivedValues($entry,$mainFormFid,$frid);
         } else {
             formulize_updateDerivedValues($thisSubEntry,$target_sub);
         }
     }
-    return array($sub_entry_new,$sub_entry_written,$filterValues);
+    return array($sub_entry_new,$sub_entry_written);
 }
