@@ -79,8 +79,8 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
 	}
 
 	global $xoopsUser;
-    if(!$groups) {
-        // groups might be passed in, which covers the case of the registration form and getting the groups from the registration code
+  if(!$groups) {
+    // groups might be passed in, which covers the case of the registration form and getting the groups from the registration code
     $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
   }
 	$user_id = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
@@ -181,7 +181,7 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
 
 		$lockFileName = "entry_".$entry."_in_form_".$form_id."_is_locked_for_editing";
 		// if we haven't found a lock for this entry, check if there is one...(as long as it's not an entry that we locked ourselves on this page load)
-        // only care about the existence of a lock if there's an editable element in play
+    // only care about the existence of a lock if there's an editable element in play
 		if(!$isDisabled AND $entry != "new" AND $entry > 0
            AND !isset($lockedEntries[$form_id][$entry])
            AND !isset($entriesThatHaveBeenLockedThisPageLoad[$form_id][$entry])
@@ -257,52 +257,25 @@ EOF;
 
 		if(!$renderElement) {
 			return array(0=>$form_ele, 1=>$isDisabled);
-		} else {
-			if($element->getVar('ele_type') == "ib") {
-				print $form_ele[0];
+		} elseif($element->getVar('ele_type') == "ib") {
+			print $form_ele[0];
+			return "rendered";
+		} elseif(is_object($form_ele)) {
+			print $form_ele->render();
+			if(!empty($form_ele->customValidationCode) AND !$isDisabled) {
+				$GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$form_ele->getName()] = $form_ele->renderValidationJS();
+			} elseif($element->getVar('ele_req') AND ($element->getVar('ele_type') == "text" OR $element->getVar('ele_type') == "textarea") AND !$isDisabled) {
+				$eltname    = $form_ele->getName();
+				$eltcaption = $form_ele->getCaption();
+				$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
+				$eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
+				$GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$eltname] = "if ( myform.".$eltname.".value == \"\" ) { window.alert(\"".$eltmsg."\"); myform.".$eltname.".focus(); return false; }";
+			}
+			if($isDisabled) {
+				return "rendered-disabled";
+			} else {
 				return "rendered";
-			} elseif(is_object($form_ele)) {
-					print $form_ele->render();
-				          if(!empty($form_ele->customValidationCode) AND !$isDisabled) {
-				            $GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$form_ele->getName()] = $form_ele->renderValidationJS();
-				          } elseif($element->getVar('ele_req') AND ($element->getVar('ele_type') == "text" OR $element->getVar('ele_type') == "textarea") AND !$isDisabled) {
-				            $eltname    = $form_ele->getName();
-				            $eltcaption = $form_ele->getCaption();
-				            $eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
-				            $eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
-				            $GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$eltname] = "if ( myform.".$eltname.".value == \"\" ) { window.alert(\"".$eltmsg."\"); myform.".$eltname.".focus(); return false; }";
-				          }
-					if($isDisabled) {
-						return "rendered-disabled";
-					} else {
-						return "rendered";
-					}
 			}
-		}
-
-
-	// or, even if the user is not supposed to see the element, put in a hidden element with its default value (only on new entries for elements with the forcehidden flag on)
-	// NOTE: YOU CANNOT HAVE DEFAULT VALUES ON A LINKED FIELD CURRENTLY
-	// So, no handling of linked values is included here.
-	} elseif($forcehidden = $element->getVar('ele_forcehidden') AND $entry=="new" AND !$noSave) {
-		// hiddenElements keys will be the element ids
-		$hiddenElements = generateHiddenElements(array($element), $entry, $screen);
-		$thisHiddenElement = isset($hiddenElements[$element->getVar('ele_id')]) ? $hiddenElements[$element->getVar('ele_id')] : "";
-		if(!$renderElement) {
-			return array("hidden", $isDisabled, $thisHiddenElement); // if the element is hidden, then return an array, but with hidden as the first key, so that logic that was not expecting an element back, will still function as is.  This is a backwards compatibility thing.  For hidden elements, the element is in the third key, if in fact you need it/are looking for it in the user land code...note that in the case of checkboxes, the elements returned will be in an array
-		} else {
-			$cueElement = new xoopsFormHidden("decue_".$fid."_".$entry."_".$element_id, 1);
-			print $cueElement->render();
-			if(is_array($thisHiddenElement)) { // could happen for checkboxes
-				foreach($thisHiddenElement as $thisIndividualHiddenElement) {
-					if(is_object($thisIndividualHiddenElement)) {
-						print $thisIndividualHiddenElement->render()."\n";
-					}
-				}
-			} elseif(is_object($thisHiddenElement)) {
-				print $thisHiddenElement->render()."\n";
-			}
-			return "hidden";
 		}
 	} else {
 		return "not_allowed";

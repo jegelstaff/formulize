@@ -2786,31 +2786,7 @@ function compileElements($fid, $form, $element_handler, $prevEntry, $entry, $go_
 
 	formulize_benchmark("Done looping elements.");
 
-    // find any hidden elements in the form, that aren't available to the user in this rendering of the form...
-	unset($criteria);
-	$notAllowedCriteria = new CriteriaCompo();
-	$notAllowedCriteria->add(new Criteria('ele_forcehidden', 1));
-    foreach($elementsAvailableToUser as $availElementId=>$boolean) {
-        $notAllowedCriteria->add(new Criteria('ele_id', $availElementId, '!='));
-    }
-	$notAllowedCriteria->setSort('ele_order');
-	$notAllowedCriteria->setOrder('ASC');
-	$notAllowedElements =& $element_handler->getObjects($notAllowedCriteria,$fid);
 
-	$hiddenElements = generateHiddenElements($notAllowedElements, $entryForDEElements, $screen); // in functions.php, keys in returned array will be the element ids
-
-	foreach($hiddenElements as $element_id=>$thisHiddenElement) {
-		$form->addElement(new xoopsFormHidden("decue_".$fid."_".$entryForDEElements."_".$element_id, 1));
-		if(is_array($thisHiddenElement)) { // could happen for checkboxes
-			foreach($thisHiddenElement as $thisIndividualHiddenElement) {
-				$form->addElement($thisIndividualHiddenElement);
-                unset($thisIndividualHiddenElement);
-			}
-		} else {
-			$form->addElement($thisHiddenElement);
-		}
-		unset($thisHiddenElement); // some odd reference thing going on here...$thisHiddenElement is being added by reference or something like that, so that when $thisHiddenElement changes in the next run through, every previous element that was created by adding it is updated to point to the next element.  So if you unset at the end of the loop, it forces each element to be added as you would expect.
-	}
 
 
 	if($entry AND !is_a($form, 'formulize_elementsOnlyForm')) {

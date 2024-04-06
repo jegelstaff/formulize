@@ -67,9 +67,6 @@ $element->setVar('ele_filtersettings', $parsedFilterSettings);
 $element->setVar('ele_disabledconditions', $parsedDisabledConditions);
 
 // check that the checkboxes have no values, and if so, set them to "" in the processedValues array
-if(!isset($_POST['elements-ele_forcehidden'])) {
-    $processedValues['elements']['ele_forcehidden'] = "";
-}
 if(!isset($_POST['elements-ele_private'])) {
     $processedValues['elements']['ele_private'] = "";
 }
