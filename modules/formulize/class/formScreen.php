@@ -57,7 +57,7 @@ class formulizeFormScreen extends formulizeScreen {
     $this->initVar("column2width", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
     $this->initVar("displayType", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
 	}
-    
+
     function elementIsPartOfScreen($elementObjectOrId) {
         if(!$element = _getElementObject($elementObjectOrId)) {
             return false;
@@ -67,7 +67,7 @@ class formulizeFormScreen extends formulizeScreen {
         }
         return false;
     }
-    
+
     // return the displayType setting, unless there is no element container template, then use table-row which matches the default templates
     // not used (yet?)
     function getDisplayType() {
@@ -77,9 +77,9 @@ class formulizeFormScreen extends formulizeScreen {
             return 'table-row';
         }
     }
-    
 
-    
+
+
 }
 
 class formulizeFormScreenHandler extends formulizeScreenHandler {
@@ -111,7 +111,7 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 	    $screen->setVar('dosmiley', 0);
 	    $screen->setVar('doimage', 0);
 	    $screen->setVar('dobr', 0);
-		// note: conditions is not written to the DB yet, since we're not gathering that info from the UI	
+		// note: conditions is not written to the DB yet, since we're not gathering that info from the UI
 		if (!$update) {
             $sql = sprintf("INSERT INTO %s (sid, donedest, savebuttontext, saveandleavebuttontext, printableviewbuttontext, alldonebuttontext, displayheading, reloadblank, formelements, elementdefaults, displaycolumns, column1width, column2width, displayType)
                 VALUES (%u, %s, %s, %s, %s, %s, %u, %u, %s, %s, %u, %s, %s, %s)",
@@ -124,7 +124,7 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
                 $this->db->quoteString($screen->getVar('alldonebuttontext')),
                 $screen->getVar('displayheading'),
                 $screen->getVar('reloadblank'),
-                $this->db->quoteString(serialize($screen->getVar('formelements'))), 
+                $this->db->quoteString(serialize($screen->getVar('formelements'))),
                 $this->db->quoteString(serialize($screen->getVar('elementdefaults'))),
                 $screen->getVar('displaycolumns'),
                 $this->db->quoteString($screen->getVar('column1width')),
@@ -154,7 +154,7 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
             print "Error: could not save the screen properly: ".$this->db->error()." for query: $sql";
             return false;
         }
-        
+
         $success1 = true;
         if(isset($_POST['toptemplate'])) {
             $success1 = $this->writeTemplateToFile(trim($_POST['toptemplate']), 'toptemplate', $screen);
@@ -183,7 +183,7 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
         if (!$success1 || !$success2 || !$success3 || !$success4 || !$success5 || !$success6) {
             return false;
         }
-        
+
         return $sid;
 	}
 
@@ -225,7 +225,7 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
         $saveandleavebuttontext = $saveandleavebuttontext ? $saveandleavebuttontext : "{NOBUTTON}";
 		$alldonebuttontext = $alldonebuttontext ? $alldonebuttontext : "{NOBUTTON}";
         $printableviewbuttontext = $printableviewbuttontext ? $printableviewbuttontext : "{NOBUTTON}";
-        
+
 		$displayheading = $screen->getVar('displayheading');
 		$displayheading = $displayheading ? "" : "all"; // if displayheading is off, then need to pass the "all" keyword to supress all the headers
 		$displayheading = $elements_only ? "formElementsOnly" : $displayheading;
@@ -235,7 +235,7 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 		// if it's one entry per user, and we have requested reload blank, then override multi is 1, otherwise 0
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($screen->getVar('fid'));
-		if($formObject->getVar('single')=="off" AND $reloadblank) { 
+		if($formObject->getVar('single')=="off" AND $reloadblank) {
 			$overrideMulti = 0;
 		} elseif($formObject->getVar('single')=="off" AND !$reloadblank) {
 			$overrideMulti = 1;
@@ -249,7 +249,7 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
         $GLOBALS['formulize_screenCurrentlyRendering'] = $screen;
 		displayForm($formframe, $entry, $mainform, $donedest, array(0=>$alldonebuttontext, 1=>$savebuttontext, 2=>$saveandleavebuttontext, 3=>$printableviewbuttontext),
-            $settings, $displayheading, "", $overrideMulti, "", 0, 0, 0, $screen);
+            $settings, $displayheading, "", $overrideMulti, "", 0, 0, $screen);
         $GLOBALS['formulize_screenCurrentlyRendering'] = $previouslyRenderingScreen;
 	}
 
