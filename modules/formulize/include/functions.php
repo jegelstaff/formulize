@@ -316,6 +316,11 @@ function availReports($uid, $groups, $fid, $frid="0") {
 // security check to see if a form is allowed for the user:
 function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups="", $mid="", $gperm_handler="") {
 
+		static $cachedSecurityChecks = array();
+		if(isset($cachedSecurityChecks[$form_id][$entry_id])) {
+			return $cachedSecurityChecks[$form_id][$entry_id];
+		}
+
     if (!$mid) { // if no mid specified, set it
         $mid = getFormulizeModId();
     }
@@ -344,27 +349,26 @@ function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups=
     }
 
     if (!$gperm_handler->checkRight("view_form", $form_id, $groups, $mid)) {
+				$cachedSecurityChecks[$form_id][$entry_id] = false;
         return false;
     }
 
     if ($entry_id == "proxy" AND !$gperm_handler->checkRight("add_proxy_entries", $form_id, $groups, $mid)) {
+				$cachedSecurityChecks[$form_id][$entry_id] = false;
         return false;
     }
 
     if ($entry_id == "new" AND !$gperm_handler->checkRight("add_own_entry", $form_id, $groups, $mid)) {
+				$cachedSecurityChecks[$form_id][$entry_id] = false;
         return false;
-    }
-
-    if($entry_id == "new" OR $entry_id == "proxy") {
-        $entry_id = ""; // if this is a new entry, then we don't do the check below to look for permissions on a specific entry, since there isn't one yet!
     }
 
     // do security check on entry in form -- note: based on the initial entry passed, does not consider entries in one-to-one linked forms which are assumed to be allowed for the user if the main entry is.
     // allow user to see own entry
     // any entry if they have view_globalscope
     // other users in the appropriate group if they have view_groupscope
-    // --report overrides need to be added in here for display of entries in reports
-    if ($entry_id) {
+    // --report overrides added in here for display of entries in reports
+    if ($entry_id AND $entry_id != "new" AND $entry_id != "proxy") {
         $view_globalscope = $gperm_handler->checkRight("view_globalscope", $form_id, $groups, $mid);
         if (!$view_globalscope) {
 
@@ -393,8 +397,10 @@ function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups=
                         $candidateEntries[] = intval($_COOKIE['entryid_'.$form_id]);
                     }
                     if(in_array($entry_id, $candidateEntries)) {
+												$cachedSecurityChecks[$form_id][$entry_id] = true;
                         return true;
                     }
+										$cachedSecurityChecks[$form_id][$entry_id] = false;
                     return false;
                 }
             } elseif ($owner != $user_id) {
@@ -427,15 +433,18 @@ function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups=
                         if (array_intersect($pubbedgroups, $groups)) {
                             // user has been published an unlocked view for which the scope is all
                             if ($thisview['sv_currentview'] == "all") {
+																$cachedSecurityChecks[$form_id][$entry_id] = true;
                                 return true;
                             }
                             // what about groupscope in the view?  is that accounted for below, or should we check against "group"??
                             $viewgroups = explode(",", $thisview['sv_currentview']);
                             if (array_intersect($data_handler->getEntryOwnerGroups($entry_id), $viewgroups)) {
+																$cachedSecurityChecks[$form_id][$entry_id] = true;
                                 return true;
                             }
                         }
                     }
+										$cachedSecurityChecks[$form_id][$entry_id] = false;
                     return false;
                 }
             }
@@ -448,15 +457,18 @@ function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups=
             global $xoopsDB;
             $checkSQL = "SELECT count(entry_id) FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." WHERE entry_id = $entry_id $perGroupFilter";
             if (!$checkRes = $xoopsDB->query($checkSQL)) {
+								$cachedSecurityChecks[$form_id][$entry_id] = false;
                 return false;
             }
             $countRow = $xoopsDB->fetchRow($checkRes);
             if ($countRow[0] != 1) {
+								$cachedSecurityChecks[$form_id][$entry_id] = false;
                 return false;
             }
         }
     }
 
+		$cachedSecurityChecks[$form_id][$entry_id] = true;
     return true;
 }
 
@@ -2199,7 +2211,16 @@ function getElementValue($entry, $element_id, $fid) {
 
 
 // this function checks for singleentry status and returns the appropriate entry in the form if there is one
-function getSingle($fid, $uid, $groups, $member_handler, $gperm_handler, $mid) {
+function getSingle($fid, $uid, $groups, $member_handler=null, $gperm_handler=null, $mid=null) {
+		if(!$member_handler) {
+			$member_handler = xoops_gethandler('member');
+		}
+		if(!$gperm_handler) {
+			$gperm_handler = xoops_gethandler('groupperm');
+		}
+		if(!$mid) {
+			$mid = getFormulizeModId();
+		}
     global $xoopsDB, $xoopsUser;
     // determine single/multi status
     $smq = q("SELECT singleentry FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form=$fid");

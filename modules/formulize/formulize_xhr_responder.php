@@ -315,141 +315,47 @@ switch($op) {
 
 function renderElement($elementObject, $entryId) {
 
-    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
-    // "" is framework, ie: not applicable
-    $GLOBALS['formulize_asynchronousRendering'][$elementObject->getVar('ele_handle')] = true;
-    $deReturnValue = displayElement("", $elementObject, $entryId, false, null, null, false); // false, null, null, false means it's not a noSave element, no screen, no prevEntry data passed in, and do not render the element on screen
-    unset($GLOBALS['formulize_asynchronousRendering']);
-    if(is_array($deReturnValue)) {
-        if($deReturnValue[0] == 'hidden') {
-            if(is_object($deReturnValue[2])) {
-                return $deReturnValue[2]->render();
-            }
-        } else {
-            $form_ele = $deReturnValue[0];
-            if($elementObject->getVar('ele_req') AND is_object($form_ele)) {
-                $form_ele->setRequired();
-            }
-            $isDisabled = $deReturnValue[1];
-            require_once XOOPS_ROOT_PATH."/modules/formulize/include/formdisplay.php"; // need the formulize_themeForm
-            $form = new formulize_themeForm('formulizeAsynchElementRender','',''); // prepare empty form object just for rendering element
-            if($elementObject->getVar('ele_type') == "ib") {// if it's a break, handle it differently...
-                $entryForDEElements = (is_numeric($entryId) AND $entryId) ? $entryId : 'new';
-                $form->insertBreakFormulize("<div class=\"formulize-text-for-display\">" . trans(stripslashes($form_ele[0])) . "</div>", $form_ele[1], 'de_'.$elementObject->getVar('id_form').'_'.$entryForDEElements.'_'.$elementObject->getVar('ele_id'), $elementObject->getVar("ele_handle"));
-                $hidden = '';
-                $html = '';
-                list($html, $hidden) = $form->_drawElements($form->getElements(), $html, $hidden);
-            } elseif($elementObject->getVar('ele_type') == "grid") {
+	$GLOBALS['formulize_asynchronousRendering'][$elementObject->getVar('ele_handle')] = true;
+	$deReturnValue = displayElement("", $elementObject, $entryId, false, null, null, false); // false, null, null, false means it's not a noSave element, no screen, no prevEntry data passed in, and do not render the element on screen
+	unset($GLOBALS['formulize_asynchronousRendering']);
 
-              // *** MASSIVE HACK TO GET GRIDS WORKING CONDITIONALLY... NEEDS TOTAL CLEANING UP 
+	// element is allowed, so prep some stuff for rendering...
+	if(is_array($deReturnValue)) {
+		$form_ele = $deReturnValue[0];
+		if($elementObject->getVar('ele_req') AND is_object($form_ele)) {
+				$form_ele->setRequired();
+		}
+		$isDisabled = $deReturnValue[1];
+		$elementContents = $form_ele;
 
-              // determine if the grid meets any conditions...
-            // *** THIS NEEDS TO BE SWAPPED OUT WITH THE UPDATED DISPLAY CONDITION LOGIC FROM THE DISABLED ELEMENT PULL REQUEST, ONCE THAT IS MERGED IN ***
+		// prepare empty form object just for rendering element
+		$form = new formulize_themeForm('formulizeAsynchElementRender','','');
 
-            $allowed = 1;
-            $elementFilterSettings = $elementObject->getVar('ele_filtersettings');
-            if(is_array($elementFilterSettings[0]) AND count((array) $elementFilterSettings[0]) > 0) {
-                // cache the filterElements for this element, so we can build the right stuff with them later in javascript, to make dynamically appearing elements
-                $renderedElementName = 'de_'.$elementObject->getVar('id_form').'_'.$entryForDEElements.'_'.$elementObject->getVar('ele_id');
-                $GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName] = $elementFilterSettings[0];
-        
-                // need to check if there's a condition on this element that is met or not
-                static $cachedEntries = array();
-                if($entryId != "new") {
-                    if(!isset($cachedEntries[$elementObject->getVar('id_form')][$entryId])) {
-                        $cachedEntries[$elementObject->getVar('id_form')][$entryId] = getData("", $elementObject->getVar('id_form'), $entryId, cacheKey: 'bypass'.microtime_float());
-                    }
-                    $entryData = $cachedEntries[$elementObject->getVar('id_form')][$entryId];
-                }
-        
-                $filterElements = $elementFilterSettings[0];
-                $filterOps = $elementFilterSettings[1];
-                $filterTerms = $elementFilterSettings[2];
-                /* ALTERED - 20100316 - freeform - jeff/julian - start */
-                $filterTypes = $elementFilterSettings[3];
-        
-                // find the filter indexes for 'match all' and 'match one or more'
-                $filterElementsAll = array();
-                $filterElementsOOM = array();
-                for($xx=0;$xx<count((array) $filterTypes);$xx++) {
-                    if($filterTypes[$xx] == "all") {
-                        $filterElementsAll[] = $xx;
-                    } else {
-                        $filterElementsOOM[] = $xx;
-                    }
-                }
-                /* ALTERED - 20100316 - freeform - jeff/julian - stop */
-        
-                // setup evaluation condition as PHP and then eval it so we know if we should include this element or not
-                $evaluationCondition = "\$passedCondition = false;\n";
-                $evaluationCondition .= "if(";
-        
-                /* ALTERED - 20100316 - freeform - jeff/julian - start */
-                $evaluationConditionAND = buildEvaluationCondition("AND",$filterElementsAll,$filterElements,$filterOps,$filterTerms,$entryId,$entryData);
-                $evaluationConditionOR = buildEvaluationCondition("OR",$filterElementsOOM,$filterElements,$filterOps,$filterTerms,$entryId,$entryData);
-        
-                $evaluationCondition .= $evaluationConditionAND;
-                if( $evaluationConditionOR ) {
-                    if( $evaluationConditionAND ) {
-                        $evaluationCondition .= " AND (" . $evaluationConditionOR . ")";
-                        //$evaluationCondition .= " OR (" . $evaluationConditionOR . ")";
-                    } else {
-                        $evaluationCondition .= $evaluationConditionOR;
-                    }
-                }
-                /* ALTERED - 20100316 - freeform - jeff/julian - stop */
-        
-                $evaluationCondition .= ") {\n";
-                $evaluationCondition .= "  \$passedCondition = true;\n";
-                $evaluationCondition .= "}\n";
-        
-        
-                eval($evaluationCondition);
-                if(!$passedCondition) {
-                    $allowed = 0;
-                }
-            }
-            // *** END OF WHAT NEEDS TO BE SWAPPED OUT ***
+		// figure out what we've got on our hands to render
+		$breakClass = 'head';
+		$entryForDEElements = (is_numeric($entryId) AND $entryId) ? $entryId : 'new';
+		if($elementObject->getVar('ele_type') == "ib") {
+			$elementContents = "<div class=\"formulize-text-for-display\">" . trans(stripslashes($form_ele[0])) . "</div>";
+			$breakClass = $form_ele[1];
+		} elseif($elementObject->getVar('ele_type') == "grid") {
+			$elementContents = renderGrid($elementObject, $entryForDEElements); // won't take into account the existing entry's saved values or the screen config when rendering the consituent elements, but probably doesn't matter.
+		}
 
-            if($allowed) {
+		// render the element
+		if(is_object($elementContents)) {
+			$html = $form->_drawElementElementHTML($elementContents);
+		} else {
+			$form->insertBreakFormulize($elementContents, $breakClass, 'de_'.$elementObject->getVar('id_form').'_'.$entryForDEElements.'_'.$elementObject->getVar('ele_id'), $elementObject->getVar("ele_handle"));
+			$hidden = '';
+			$html = '';
+			list($html, $hidden) = $form->_drawElements($form->getElements(), $html, $hidden);
+		}
 
-                include_once XOOPS_ROOT_PATH . "/modules/formulize/include/griddisplay.php";
-                $ele_value = $elementObject->getVar('ele_value');
-                $form = new formulize_themeForm('formulizeAsynchElementRender','',''); // prepare empty form object just for rendering element
-                list($grid_title, $grid_row_caps, $grid_col_caps, $grid_background, $grid_start, $grid_count) = compileGrid($ele_value, $elementObject->getVar('ele_caption'), $elementObject);
-                $headingAtSide = ($ele_value[5] AND $grid_title) ? true : false; // if there is a value for ele_value[5], then the heading should be at the side, otherwise, grid spans form width as it's own chunk of HTML
-                $gridContents = displayGrid($elementObject->getVar('id_form'), $entryId, $grid_row_caps, $grid_col_caps, $grid_title, $grid_background, $grid_start, "", "", true, $screen, $headingAtSide);
-                if($headingAtSide) { // grid contents is the two bits for the xoopsformlabel when heading is at side, otherwise, it's just the contents for the break
-                    $gridElement = new XoopsFormLabel($gridContents[0], $gridContents[1]);
-                    $helpText = $elementObject->getVar('ele_desc');
-                    if(trim($helpText)) {
-                        $gridElement->setDescription($helpText);
-                    }
-                    // if any of the elements in the grid are required, mark as required so we get the asterisk
-                    if(gridHasRequiredElements($grid_start, $grid_count, $elementObject->getVar('id_form'))) {
-                      $gridElement->setRequired();
-                    }
-                    $gridElement->formulize_element = $elementObject;
-                    $form->addElement($gridElement);
-                    unset($gridElement); // because addElement received values by reference, we need to destroy it here, so if it is recreated in a subsequent iteration, we don't end up overwriting elements we've already assigned. Ack! Ugly!
-                } else {
-                    $form->insertBreakFormulize($gridContents, "head", 'de_'.$elementObject->getVar('id_form').'_'.$entryForDEElements.'_'.$elementObject->getVar('ele_id'), $elementObject->getVar('ele_handle')); // head is the css class of the cell
-                }
-                $hidden = '';
-                $html = '';
-                list($html, $hidden) = $form->_drawElements($form->getElements(), $html, $hidden);
-            } 
-
-              // *** END OF MASSIVE HACK
-
-            } else {
-              $html = $form->_drawElementElementHTML($form_ele);
-            }
-            if($html) {
-                $html = trans($html);
-                return $html;
-            }
-        }
-    }
-    return false;
+		// return the html, or nothing
+		if($html) {
+			$html = trans($html);
+			return $html;
+		}
+	}
+	return false;
 }

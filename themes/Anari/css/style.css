@@ -2957,11 +2957,6 @@ img {
     }
 }
 
-.formulize-grid td {
-    padding-right: 1em;
-    vertical-align: top;
-}
-
 a.loe-edit-entry,
 a.de-edit-icon {
     color:  var(--button-color);

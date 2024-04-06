@@ -226,6 +226,21 @@ if(!$ele_id = $element_handler->insert($element)) {
   print "Error: could not save the display settings for element: ".$xoopsDB->error();
 }
 
+// if this is a grid element with display conditions, set the display conditions for the contained elements
+if($element->getVar('ele_type')=='grid' AND !empty($parsedFilterSettings)) {
+	$ele_value = $element->getVar('ele_value');
+	$gridCount = count(explode(",", $ele_value[1])) * count(explode(",", $ele_value[2]));
+	include_once XOOPS_ROOT_PATH.'/modules/formulize/include/griddisplay.php';
+	foreach(elementsInGrid($ele_value[4], $element->getVar('id_form'), $gridCount) as $gridElementId) {
+		$gridElementObject = $element_handler->get($gridElementId);
+		$gridElementObject->setVar('ele_filtersettings', $parsedFilterSettings);
+		if(!$element_handler->insert($gridElementObject)) {
+			$elementLabel = $gridElementObject->getVar('ele_colhead') ? $gridElementObject->getVar('ele_colhead') : $gridElementObject->getVar('ele_caption');
+			print "Error: could not apply grid display settings to the element ".$elementLabel."\n";
+		}
+	}
+}
+
 if($_POST['reload_element_pages']) {
   print "/* evalnow */ if(redirect=='') { redirect = 'reloadWithScrollPosition();'; }";
 }
