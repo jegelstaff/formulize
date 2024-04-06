@@ -84,7 +84,7 @@ function captureDataAsInDOM(data) {
 }
 
 function assignConditionalHTML(handle, data = '') {
-	if(!data && jQuery('formulize-'+handle).length > 0) {
+	if(!data && jQuery('#formulize-'+handle).length > 0) {
 		data = window.document.getElementById('formulize-'+handle).innerHTML.trim();
 	}
 	conditionalHTML[handle] = '';
