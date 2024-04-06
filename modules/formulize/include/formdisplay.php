@@ -2830,7 +2830,7 @@ function compileElements($fid, $form, $element_handler, $prevEntry, $entry, $go_
 // $groups is deprecated and not used in this function any longer
 // $owner_groups is used when dealing with a usernames or fullnames selectbox
 // $element is the element object representing the element we're loading the previously saved value for
-function loadValue($prevEntry, $element, $ele_value, $owner_groups, $groups, $entry_id, $profileForm="") {
+function loadValue($prevEntry, $element, $ele_value, $owner_groups, $groups, $entry_id) {
 
 	global $myts;
 	/*
