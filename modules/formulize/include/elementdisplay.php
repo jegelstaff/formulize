@@ -245,31 +245,6 @@ EOF;
 					}
 			}
 		}
-
-
-	// or, even if the user is not supposed to see the element, put in a hidden element with its default value (only on new entries for elements with the forcehidden flag on)
-	// NOTE: YOU CANNOT HAVE DEFAULT VALUES ON A LINKED FIELD CURRENTLY
-	// So, no handling of linked values is included here.
-	} elseif($forcehidden = $element->getVar('ele_forcehidden') AND $entry=="new" AND !$noSave) {
-		// hiddenElements keys will be the element ids
-		$hiddenElements = generateHiddenElements(array($element), $entry, $screen);
-		$thisHiddenElement = isset($hiddenElements[$element->getVar('ele_id')]) ? $hiddenElements[$element->getVar('ele_id')] : "";
-		if(!$renderElement) {
-			return array("hidden", $isDisabled, $thisHiddenElement); // if the element is hidden, then return an array, but with hidden as the first key, so that logic that was not expecting an element back, will still function as is.  This is a backwards compatibility thing.  For hidden elements, the element is in the third key, if in fact you need it/are looking for it in the user land code...note that in the case of checkboxes, the elements returned will be in an array
-		} else {
-			$cueElement = new xoopsFormHidden("decue_".$fid."_".$entry."_".$element_id, 1);
-			print $cueElement->render();
-			if(is_array($thisHiddenElement)) { // could happen for checkboxes
-				foreach($thisHiddenElement as $thisIndividualHiddenElement) {
-					if(is_object($thisIndividualHiddenElement)) {
-						print $thisIndividualHiddenElement->render()."\n";
-					}
-				}
-			} elseif(is_object($thisHiddenElement)) {
-				print $thisHiddenElement->render()."\n";
-			}
-			return "hidden";
-		}
 	} else {
 		return "not_allowed";
 	}
