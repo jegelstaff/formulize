@@ -218,8 +218,7 @@ EOF;
 
 		if(!$renderElement) {
 			return array(0=>$form_ele, 1=>$isDisabled);
-		} else {
-			if($element->getVar('ele_type') == "ib") {
+		} elseif($element->getVar('ele_type') == "ib") {
 				print $form_ele[0];
 				return "rendered";
 			} elseif(is_object($form_ele)) {
@@ -244,7 +243,6 @@ EOF;
 						return "rendered";
 					}
 			}
-		}
 	} else {
 		return "not_allowed";
 	}
