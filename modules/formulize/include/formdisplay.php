@@ -1442,7 +1442,8 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                 $form->addElement (new XoopsFormHidden ('goto_sfid', ''));
             }
 
-            // DRAW IN THE SPECIAL UI FOR A SUBFORM LINK (ONE TO MANY)
+						// on the master.php page, draw in the subforms "raw"
+						if(strstr(getCurrentURL(), 'modules/formulize/master.php')) {
 			foreach($sub_fids as $subform_id) {
 				// only draw in the subform UI if the subform hasn't been drawn in previously, courtesy of a subform element in the form.
 				// Subform elements are recommended since they provide 1. specific placement, 2. custom captions, 3. direct choice of form elements to include
@@ -1454,12 +1455,12 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 				if(isset($subUICols['single'])) {
 					$form->insertBreakFormulize($subUICols['single'], "even");
 				} else {
-					$subLinkUI = new XoopsFormLabel($subUICols['c1'], $subUICols['c2']);
+									$subLinkUI = new XoopsFormLabel($subUICols['c1'], $subUICols['c2']); // no third param (name) since there's no element to construct it with
 					$form->addElement($subLinkUI);
+								}
 				}
 			}
 		}
-
 
 		// draw in proxy box if necessary (only if they have permission and only on new entries, not on edits)
 		if(!strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
@@ -1496,11 +1497,10 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                 $form->addElement (new XoopsFormHidden ('clonesubsflag', 0));
 			}
 
-			drawJavascript($nosave); // must be called after compileElements!
+			drawJavascript($nosave); // must be called after compileElements, for entry locking to work, and probably other things!
             $form->addElement(new xoopsFormHidden('save_and_leave', 0));
 		// lastly, put in a hidden element, that will tell us what the first, primary form was that we were working with on this form submission
 		$form->addElement (new XoopsFormHidden ('primaryfid', $fids[0]));
-
 		}
 
 		global $formulize_governingElements;
@@ -2599,11 +2599,8 @@ function compileElements($fid, $form, $element_handler, $prevEntry, $entry, $go_
 
 		// check if we're at the start of a page, when doing a printable view of all pages (only situation when printViewPageTitles and printViewPages will be present), and if we are, then put in a break for the page titles
 		if($printViewPages) {
-			if(!$currentPrintViewPage) {
 				$currentPrintViewPage = 1;
-			}
-			while((!isset($printViewPages[$currentPrintViewPage]) OR !in_array($this_ele_id, $printViewPages[$currentPrintViewPage]))
-                AND $currentPrintViewPage <= count((array) $printViewPages)) {
+			while((!isset($printViewPages[$currentPrintViewPage]) OR !in_array($this_ele_id, $printViewPages[$currentPrintViewPage]) ) AND $currentPrintViewPage <= count((array) $printViewPages)) {
 				$currentPrintViewPage++;
 			}
 			if(isset($printViewPages[$currentPrintViewPage]) AND $this_ele_id == $printViewPages[$currentPrintViewPage][0]) {
@@ -2621,45 +2618,6 @@ function compileElements($fid, $form, $element_handler, $prevEntry, $entry, $go_
 		$owner = getEntryOwner($entry, $fid);
 		$ele_type = $i->getVar('ele_type');
 		$ele_value = $i->getVar('ele_value');
-
-
-		if($go_back['form']) { // if there's a parent form...
-			// check here to see if we need to initialize the value of a linked selectbox when it is the key field for a subform
-			// although this is setup as a loop through all found parentLinks, only the last one will be used, since ele_value[2] is overwritten each time.
-			// assumption is there will only be one parent link for this form
-			for($z=0;$z<count((array) $parentLinks['source']);$z++) {
-				if($this_ele_id == $parentLinks['self'][$z]) { // this is the element
-                    $goBackEntries = strstr($go_back['entry'], ',') ? explode(',',$go_back['entry']) : array($go_back['entry']);
-                    $lastKey = count((array) $goBackEntries)-1;
-					$ele_value[2] = intval($goBackEntries[$lastKey]); // needs to gather the correct value off the stack
-				}
-			}
-		} elseif($overrideValue){ // used to force a default setting in a form element, other than the normal default
-			if(!is_array($overrideValue)) { //convert a string to an array so that strings don't screw up logic below (which is designed for arrays)
-				$temp = $overrideValue;
-				unset($overrideValue);
-				$overrideValue[0] = $temp;
-			}
-			// currently only operative for select boxes
-			switch($ele_type) {
-				case "select":
-					foreach($overrideValue as $ov) {
-						if(array_key_exists($ov, $ele_value[2])) {
-							$ele_value[2][$ov] = 1;
-						}
-					}
-					break;
-				case "date":
-                	// debug
-                	//var_dump($overrideValue);
-					foreach($overrideValue as $ov) {
-                        if(preg_match ("/([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})/", $ov, $regs)) {
-							$ele_value[0] = $ov;
-						}
-					}
-					break;
-			}
-		}
 
 		if($ele_type != "subform" AND $ele_type != 'grid') {
 			// "" is framework, ie: not applicable
@@ -2801,7 +2759,7 @@ function compileElements($fid, $form, $element_handler, $prevEntry, $entry, $go_
 		foreach($GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']] as $thisValidation) { // grab all the validation code we stored in the elementdisplay.php file and attach it to this element
             $catalogueKey = md5(trim($thisValidation));
             if(!isset($fullJsCatalogue[$catalogueKey])) {
-                if(count((array) $GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']])> 1) {
+				if(count((array) $GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']]) > 1) {
                     $fullJsCatalogue[$catalogueKey] = true; // add this to the catalogue of stuff we've handled the validation js for, but only if there is more than one element in this set. If there is only one element, then logging it here and now will prevent it from being handled later. Multiple elements will have their validation codes merged into the single 'validation' element that we're adding at this time, so we log their individual code into the catalogue so we don't mistakenly render multiple copies of the code. But when the single element and this validation element will be identical in their code, then we must not catalogue it until later when it is actually being rendered.
                 }
 			foreach(explode("\n", $thisValidation) as $thisValidationLine) {
