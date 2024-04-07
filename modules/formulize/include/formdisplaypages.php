@@ -393,7 +393,7 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
         if(count((array) $elements_allowed)==0) {
             print "Error: there are no form elements specified for page number $currentPage. Please contact the webmaster.";
         } else {
-            displayForm($forminfo, $entry, $mainform, "", $buttonArray, $settings, $titleOverride, $overrideValue, $overrideMulti, "", 0, 0, $printall, $screen); // nmc 2007.03.24 - added empty params & '$printall'
+            displayForm($forminfo, $entry, $mainform, "", $buttonArray, $settings, $titleOverride, $overrideValue, $overrideMulti, "", 0, $printall, $screen); // nmc 2007.03.24 - added empty params & '$printall'
         }
 
     }

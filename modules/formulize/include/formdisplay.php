@@ -767,7 +767,7 @@ function getEntryValues($entry, $element_handler, $groups, $fid, $elements, $mid
 
 
 function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button_text="", $settings=array(), $titleOverride="", $overrideValue="",
-    $overrideMulti="", $overrideSubMulti="", $viewallforms=0, $profileForm=0, $printall=0, $screen=null)
+    $overrideMulti="", $overrideSubMulti="", $viewallforms=0, $printall=0, $screen=null)
 {
     include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
     include_once XOOPS_ROOT_PATH.'/modules/formulize/include/extract.php';
@@ -976,14 +976,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 
 	$member_handler =& xoops_gethandler('member');
 	$gperm_handler = &xoops_gethandler('groupperm');
-	if($profileForm === "new") {
-		 // spoof the $groups array based on the settings for the regcode that has been validated by register.php
-		$reggroupsq = q("SELECT reg_codes_groups FROM " . XOOPS_DB_PREFIX . "_reg_codes WHERE reg_codes_code=\"" . $GLOBALS['regcode'] . "\"");
-		$groups = explode("&8(%$", $reggroupsq[0]['reg_codes_groups']);
-		if($groups[0] === "") { unset($groups); } // if a code has no groups associated with it, then kill the null value that will be in position 0 in the groups array.
-		$groups[] = XOOPS_GROUP_USERS;
-		$groups[] = XOOPS_GROUP_ANONYMOUS;
-	}
 
 	$single_result = getSingle($fid, $uid, $groups, $member_handler, $gperm_handler, $mid);
 	$single = $single_result['flag'];
@@ -1021,7 +1013,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 	$owner = ($anon_override_entry AND $uid) ? $uid : getEntryOwner($entry, $fid); // if we're pulling a cookie value and there is a valid UID in effect, then assume this user owns the entry, otherwise, figure out who does own the entry
 	$owner_groups = $data_handler->getEntryOwnerGroups($entry);
 
-	if($single AND !$entry AND !$overrideMulti AND $profileForm !== "new") { // only adjust the active entry if we're not already looking at an entry, and there is no overrideMulti which can be used to display a new blank form even on a single entry form -- useful for when multiple anonymous users need to be able to enter information in a form that is "one per user" for registered users. -- the pressence of a cookie on the hard drive of a user will override other settings
+	if($single AND !$entry AND !$overrideMulti) { // only adjust the active entry if we're not already looking at an entry, and there is no overrideMulti which can be used to display a new blank form even on a single entry form -- useful for when multiple anonymous users need to be able to enter information in a form that is "one per user" for registered users. -- the pressence of a cookie on the hard drive of a user will override other settings
 		$entry = $single_result['entry'];
 		$owner = getEntryOwner($entry, $fid);
 		unset($owner_groups);
@@ -1037,7 +1029,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
     // Possibly more than that since we leap off to render subforms in different places too. But the main ugly part is all this stuff that sets and overrides and overrides the fid and entry
     if(isset($_POST['goto_sfid']) AND is_numeric($_POST['goto_sfid']) AND $_POST['goto_sfid'] > 0) {
     } else {
-        if(!$scheck = security_check($fid, $entry, $uid, $owner, $groups) AND !$viewallforms AND !$profileForm) {
+        if(!$scheck = security_check($fid, $entry, $uid, $owner, $groups) AND !$viewallforms) {
             print "<p>" . _NO_PERM . "</p>";
             return;
         }
@@ -1079,7 +1071,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 	$add_own_entry = $gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid);
 	$add_proxy_entries = $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid);
 
-	if ($_POST['form_submitted'] and $profileForm !== "new" and formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
+	if ($_POST['form_submitted'] AND formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
 		$info_received_msg = "1"; // flag for display of info received message
 		if(!isset($GLOBALS['formulize_readElementsWasRun'])) {
 			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
@@ -1198,7 +1190,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 	$config_handler =& xoops_gethandler('config');
 	$formulizeConfig = $config_handler->getConfigsByCat(0, $mid);
 	// remove the all done button if the config option says 'no', and we're on a single-entry form, or the function was called to look at an existing entry, or we're on an overridden Multi-entry form
-	$allDoneOverride = (!$formulizeConfig['all_done_singles'] AND !$profileForm AND (($single OR $overrideMulti OR $original_entry) AND !$_POST['target_sub'] AND !$_POST['goto_sfid'] AND !$_POST['deletesubsflag'] AND !$_POST['parent_form'])) ? true : false;
+	$allDoneOverride = (!$formulizeConfig['all_done_singles'] AND (($single OR $overrideMulti OR $original_entry) AND !$_POST['target_sub'] AND !$_POST['goto_sfid'] AND !$_POST['deletesubsflag'] AND !$_POST['parent_form'])) ? true : false;
   global $formulize_displayingMultipageScreen;
 
 	// if we're leaving the page now, draw the go back form and then activate it in js - super ugly!
@@ -1213,7 +1205,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		// only do all this stuff below, the normal form displaying stuff, if we are not leaving this page now due to the all done button being overridden
 
 		// we cannot have the back logic above invoked when dealing with a subform, but if the override is supposed to be in place, then we need to invoke it
-		if(!$allDoneOverride AND !$formulizeConfig['all_done_singles'] AND !$profileForm AND ($_POST['target_sub'] OR $_POST['goto_sfid'] OR $_POST['deletesubsflag'] OR $_POST['parent_form']) AND ($single OR $original_entry OR $overrideMulti)) {
+		if(!$allDoneOverride AND !$formulizeConfig['all_done_singles'] AND ($_POST['target_sub'] OR $_POST['goto_sfid'] OR $_POST['deletesubsflag'] OR $_POST['parent_form']) AND ($single OR $original_entry OR $overrideMulti)) {
 			$allDoneOverride = true;
 		}
 
@@ -1288,7 +1280,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 
                 $breakHTML = "";
 
-                if(!$profileForm AND $titleOverride != "all") {
+                if($titleOverride != "all") {
                     // build the break HTML and then add the break to the form
                     if(!strstr($currentURL, "printview.php")) {
                         $breakHTML .= "<center class=\"no-print\">";
@@ -1480,7 +1472,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 
 		// draw in the submitbutton if necessary
 		if (!$formElementsOnly) {
-			$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $entry, $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, $allDoneOverride, $printall, $screen);
+			$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $entry, $fids, $formframe, $mainform, $entry, $elements_allowed, $allDoneOverride, $printall, $screen);
     	}
 
 		if(!$formElementsOnly) {
@@ -1658,7 +1650,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 }
 
 // add the submit button to a form
-function addSubmitButton($form, $subButtonText, $go_back, $currentURL, $button_text, $settings, $entry, $fids, $formframe, $mainform, $cur_entry, $profileForm, $elements_allowed="", $allDoneOverride=false, $printall=0, $screen=null) { //nmc 2007.03.24 - added $printall
+function addSubmitButton($form, $subButtonText, $go_back, $currentURL, $button_text, $settings, $entry, $fids, $formframe, $mainform, $cur_entry, $elements_allowed="", $allDoneOverride=false, $printall=0, $screen=null) { //nmc 2007.03.24 - added $printall
 
     global $xoopsUser;
     $fid = $fids[key($fids)]; // get first element in array, might not be keyed as 0 :(
@@ -1701,7 +1693,7 @@ function addSubmitButton($form, $subButtonText, $go_back, $currentURL, $button_t
         // formulize_displayingMultipageScreen is set in formdisplaypages to indicate we're displaying a multipage form
         global $formulize_displayingMultipageScreen;
         // do not use printable button for profile forms
-        if(!$profileForm AND $pv_text_temp != "{NOBUTTON}") {
+        if($pv_text_temp != "{NOBUTTON}") {
 
             $newcurrentURL= XOOPS_URL . "/modules/formulize/printview.php";
             print "<form name='printview' action='".$newcurrentURL."' method=post target=_blank>\n";
@@ -2838,7 +2830,7 @@ function compileElements($fid, $form, $element_handler, $prevEntry, $entry, $go_
 // $groups is deprecated and not used in this function any longer
 // $owner_groups is used when dealing with a usernames or fullnames selectbox
 // $element is the element object representing the element we're loading the previously saved value for
-function loadValue($prevEntry, $element, $ele_value, $owner_groups, $groups, $entry_id, $profileForm="") {
+function loadValue($prevEntry, $element, $ele_value, $owner_groups, $groups, $entry_id) {
 
 	global $myts;
 	/*
@@ -2860,21 +2852,6 @@ function loadValue($prevEntry, $element, $ele_value, $owner_groups, $groups, $en
 			// if we're handling a new profile form, check to see if the user has filled in the form already and use that value if necessary
 			// This logic could be of general use in handling posted requests, except for it's inability to handle 'other' boxes.  An update may pay off in terms of speed of reloading the page.
 			$value = "";
-			if($profileForm === "new") {
-				$dataFromUser = "";
-				foreach($_POST as $k=>$v) {
-					if( preg_match('/de_/', $k)){
-						$n = explode("_", $k);
-						if($n[3] == $ele_id) { // found the element in $_POST;
-							$dataFromUser = prepDataForWrite($element, $v);
-							break;
-						}
-					}
-				}
-				if($dataFromUser) {
-					$value = $dataFromUser;
-				}
-			}
 
 			// no value detected in form submission of this element...
 			if(!$value) {
@@ -3057,16 +3034,9 @@ function loadValue($prevEntry, $element, $ele_value, $owner_groups, $groups, $en
 						$customTypeHandler = xoops_getmodulehandler($type."Element", 'formulize');
 						return $customTypeHandler->loadValue($value, $ele_value, $element);
 					}
-			} // end switch
-
-			/*print_r($ele_value);
-			print "<br>"; //debug block
-			*/
-
+			}
 			return $ele_value;
 }
-
-
 
 // THIS FUNCTION FORMATS THE DATETIME INFO FOR DISPLAY CLEANLY AT THE TOP OF THE FORM
 // $dt should be a representation of a timestamp in the server timezone
