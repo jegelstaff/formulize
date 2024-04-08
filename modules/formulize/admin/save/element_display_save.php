@@ -226,8 +226,8 @@ if(!$ele_id = $element_handler->insert($element)) {
   print "Error: could not save the display settings for element: ".$xoopsDB->error();
 }
 
-// if this is a grid element with display conditions, set the display conditions for the contained elements
-if($element->getVar('ele_type')=='grid' AND !empty($parsedFilterSettings)) {
+// if this is a grid element, set the display conditions for the contained elements
+if($element->getVar('ele_type')=='grid') {
 	$ele_value = $element->getVar('ele_value');
 	$gridCount = count(explode(",", $ele_value[1])) * count(explode(",", $ele_value[2]));
 	include_once XOOPS_ROOT_PATH.'/modules/formulize/include/griddisplay.php';
