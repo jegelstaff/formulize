@@ -2529,7 +2529,7 @@ function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid,
 function compileElements($fid, $form, $prevEntry, $entry_id, $groups, $elements_allowed, $frid, $sub_entries, $sub_fids, $screen=null, $printViewPages=array(), $printViewPageTitles="") {
 
 	global $xoopsDB, $xoopsUser;
-	$entryForDEElements = is_numeric($entry_id) ? $entry_id : "new"; // if there is no entry, ie: a new entry, then $entry_id is "" so when writing the entry value into decue_ and other elements that go out to the HTML form, we need to use the keyword "new"
+	$entry_id = is_numeric($entry_id) ? $entry_id : "new"; // if there is no entry, ie: a new entry, then $entry_id is "" so when writing the entry value into decue_ and other elements that go out to the HTML form, we need to use the keyword "new"
 	$element_handler = xoops_getmodulehandler('elements', 'formulize');
 	$mid = getFormulizeModId();
 
@@ -2587,7 +2587,7 @@ function compileElements($fid, $form, $prevEntry, $entry_id, $groups, $elements_
 			$this_ele_id = $elementObject->getVar('ele_id'); // get the element ID number
 		}
 
-		$renderedElementMarkupName = "de_{$fid}_{$entryForDEElements}_{$this_ele_id}";
+		$renderedElementMarkupName = "de_{$fid}_{$entry_id}_{$this_ele_id}";
 
 		// check if this element is included in a grid, and if so, skip it
 		if(isset($GLOBALS['elementsInGridsAndTheirContainers'][$this_ele_id])) {
