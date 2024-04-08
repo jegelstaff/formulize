@@ -195,8 +195,8 @@ function displayGrid($fid, $entry_id="", $rowcaps, $colcaps, $title="", $orienta
 				}
 				if(is_object($form_ele)) {
 					$renderSuccess = true;
+					catalogueGridElement($elementInGridId, $entry_id, $elementId, $form_ele, $prevEntry, $screen);
 					print $form_ele->render();
-					catalogueGridElement($elementInGridId, $entry_id, $elementId, $prevEntry, $screen);
 				}
 				$ele_index++;
 			}
@@ -236,14 +236,15 @@ function displayGrid($fid, $entry_id="", $rowcaps, $colcaps, $title="", $orienta
 
 /**
  * Catalogue an element as belonging to a certain grid, and generate any necessary validation javascript for picking up later
- * @param $elementId The id number of the element that we're cataloguing, that appears inside a grid
- * @param $entry_id The id number of the entry the grid is being rendered in, or 'new' for entries that haven't been saved yet.
- * @param $containerElementMarkupName The identifier as used in the DOM for the grid that contains this element
+ * @param int $elementId The id number of the element that we're cataloguing, that appears inside a grid
+ * @param int $entry_id The id number of the entry the grid is being rendered in, or 'new' for entries that haven't been saved yet.
+ * @param string $containerElementMarkupName The identifier as used in the DOM for the grid that contains this element
+ * @param object $formObjectPreppedForRender The object ready for adding to the form object that will be rendered (ie: xoopsFormLabel, xoopsFormText, etc)
  * @param array $prevEntry Optional. The canonical values in this entry which should be taken into account when rendering grid elements. Generated in formdisplay.php or elementdisplay.php.
  * @param object $screen Optional. The screen that the grid is being rendered in, if any
  * @return Nothing
  */
-function catalogueGridElement($elementId, $entry_id, $containingGridElementIdOrObject, $prevEntry = array(), $screen = null) {
+function catalogueGridElement($elementId, $entry_id, $containingGridElementIdOrObject, $formObjectPreppedForRender, $prevEntry = array(), $screen = null) {
 	$element_handler = xoops_getmodulehandler('elements', 'formulize');
 	$gridElementObject = is_a($containingGridElementIdOrObject, 'formulizeformulize') ? $containingGridElementIdOrObject : $element_handler->get($containingGridElementIdOrObject);
 	$elementInGridObject = $element_handler->get($elementId);
@@ -252,10 +253,27 @@ function catalogueGridElement($elementId, $entry_id, $containingGridElementIdOrO
 	$containerElementMarkupName = "de_{$fid}_{$entry_id}_{$gridElementObject->getVar('ele_id')}";
 	$GLOBALS['elementsInGridsAndTheirContainers'][$elementId] = $containerElementMarkupName;
 	$gridDisplayConditions = $gridElementObject->getVar('ele_filtersettings');
+	// setup validation javascript with conditional structure, if the containing grid has display conditions
 	if(is_array($gridDisplayConditions[0]) AND count($gridDisplayConditions[0]) > 0 ) {
 		catalogConditionalElement($elementInGridMarkupName, array_unique($gridDisplayConditions[0]));
-		makePlaceholderForConditionalElement($elementInGridObject, $entry_id, $elementInGridMarkupName, $prevEntry, $screen); // don't actually put the placeholder into the form being compiled, because the containing grid is all we need. Just need to do book keeping for JS.
+		makePlaceholderForConditionalElement($elementInGridObject, $entry_id, $prevEntry, $screen); // don't actually put the placeholder into the form being compiled, because the containing grid is all we need. Just need to do book keeping for JS.
 		removeFromConditionalCatalogue($elementInGridMarkupName); // only need to be in for generating the JS, otherwise, we don't want them here so that they don't add unnecessary complexity to the conditional event processing JS, since it's their container that matters for events.
+	// or setup validation JS from the object we just rendered
+	} elseif(is_object($formObjectPreppedForRender)) {
+		if($js = $formObjectPreppedForRender->renderValidationJS()) {
+			$GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$elementInGridMarkupName] = $js;
+		}
+	// or if there isn't an object just rendered, then do a disembodied render
+	} else {
+		list($js, $markupName) = validationJSFromDisembodiedElementRender($elementInGridObject, $entry_id, $prevEntry, $screen);
+		if($js) {
+			$GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$elementInGridMarkupName] = $js;
+		}
+	}
+	// catalogue the containing grid as conditional, if this element has disabled conditions, so that the grid will re-render if the disabled conditions for this element change
+	$elementInGridDisabledConditions = $elementInGridObject->getVar('ele_disabledconditions');
+	if(is_array($elementInGridDisabledConditions[0]) AND count($elementInGridDisabledConditions[0]) > 0 ) {
+		catalogConditionalElement($containerElementMarkupName, array_unique($elementInGridDisabledConditions[0]));
 	}
 }
 

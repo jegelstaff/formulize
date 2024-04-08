@@ -2615,7 +2615,8 @@ function compileElements($fid, $form, $prevEntry, $entry_id, $groups, $elements_
 		if($ele_type == "subform" ) {
 			$thissfid = $ele_value[0];
 			if(!$thissfid) { continue; } // can't display non-specified subforms!
-			if(elementIsAllowedForUserInEntry($elementObject, $entry_id, $groups, false, $renderedElementMarkupName, false)) {
+			list($allowed, $isDisabled) = elementIsAllowedForUserInEntry($elementObject, $entry_id, $groups, false, $renderedElementMarkupName, false);
+			if($allowed) {
 				$customCaption = $elementObject->getVar('ele_caption');
 				$customElements = $ele_value[1] ? explode(",", $ele_value[1]) : "";
 				if(isset($GLOBALS['formulize_inlineSubformFrid'])) {
@@ -2635,21 +2636,22 @@ function compileElements($fid, $form, $prevEntry, $entry_id, $groups, $elements_
 
 		// Option 2: grid element...
 		} elseif($ele_type == "grid") {
-			if(elementIsAllowedForUserInEntry($elementObject, $entry_id, $groups, false, $renderedElementMarkupName, false)) {
+			list($allowed, $isDisabled) = elementIsAllowedForUserInEntry($elementObject, $entry_id, $groups, false, $renderedElementMarkupName, false);
+			if($allowed) {
 				$renderedGrid = renderGrid($elementObject, $entry_id, $prevEntry, $screen);
 				if(is_object($renderedGrid)) {
 					$form->addElement($renderedGrid);
 					unset($renderedGrid); // because addElement receives values by reference, we need to destroy it here, so if it is recreated in a subsequent iteration, we don't end up overwriting elements we've already assigned. Ack! Ugly!
-                    } else {
+        } else {
 					$form->insertBreakFormulize($renderedGrid, "head", $renderedElementMarkupName, $elementObject->getVar('ele_handle')); // head is the css class of the cell
 				}
-                    } else {
+      } else {
 				// A hidden grid. We need to catalogue the grid elements, and if they have conditions we need to put them in the conditional catalogue as well and make placeholders for them (which handles any validation JS generation)
 				$gridCount = count(explode(",", $ele_value[1])) * count(explode(",", $ele_value[2]));
 				foreach(elementsInGrid($ele_value[4], $fid, $gridCount) as $thisGridElementId) {
-					catalogueGridElement($thisGridElementId, $entry_id, $elementObject, $prevEntry, $screen); // renderedElementMarkupName is the containing grid
+					catalogueGridElement($thisGridElementId, $entry_id, $elementObject, null, $prevEntry, $screen); // renderedElementMarkupName is the containing grid
 				}
-        if($placeholderElement = makePlaceholderForConditionalElement($elementObject, $entry_id, $renderedElementMarkupName, $prevEntry, $screen)) {
+        if($placeholderElement = makePlaceholderForConditionalElement($elementObject, $entry_id, $prevEntry, $screen)) {
 					$form->addElement($placeholderElement);
 					unset($placeholderElement); // because addElement receives values by reference, we need to destroy it here, so if it is recreated in a subsequent iteration, we don't end up overwriting elements we've already assigned. Ack! Ugly!
 				}
@@ -2668,7 +2670,7 @@ function compileElements($fid, $form, $prevEntry, $entry_id, $groups, $elements_
 
 			// Option 3a: the element is not allowed (did not pass the 'elementIsAllowedForUserInEntry' check inside displayElement, when that happens displayElement returns 'not_allowed')
 			if($form_ele == "not_allowed") {
-				if($placeholderElement = makePlaceholderForConditionalElement($elementObject, $entry_id, $renderedElementMarkupName, $prevEntry, $screen)) {
+				if($placeholderElement = makePlaceholderForConditionalElement($elementObject, $entry_id, $prevEntry, $screen)) {
 					$form->addElement($placeholderElement);
 					unset($placeholderElement); // because addElement receives values by reference, we need to destroy it here, so if it is recreated in a subsequent iteration, we don't end up overwriting elements we've already assigned. Ack! Ugly!
 				}
@@ -2680,10 +2682,10 @@ function compileElements($fid, $form, $prevEntry, $entry_id, $groups, $elements_
 
 			// Option 3c: regular element
 		} else {
-				$req = !$isDisabled ? intval($elementObject->getVar('ele_req')) : 0;
+			$req = !$isDisabled ? intval($elementObject->getVar('ele_req')) : 0;
 			$form->addElement($form_ele, $req);
-				unset($form_ele); // apparently necessary for compatibility with PHP 4.4.0 -- suggested by retspoox, sept 25, 2005 -- because addElement receives values by reference, we need to destroy it here, so if it is recreated in a subsequent iteration, we don't end up overwriting elements we've already assigned. Ack! Ugly!
-			}
+			unset($form_ele); // apparently necessary for compatibility with PHP 4.4.0 -- suggested by retspoox, sept 25, 2005 -- because addElement receives values by reference, we need to destroy it here, so if it is recreated in a subsequent iteration, we don't end up overwriting elements we've already assigned. Ack! Ugly!
+		}
 
 			$GLOBALS['formulize_sub_fids'] = $sub_fids; // set here for reference, just in case??
 		}
@@ -2709,17 +2711,23 @@ function compileElements($fid, $form, $prevEntry, $entry_id, $groups, $elements_
 	// Related, see the 'formuilze_elementsOnlyForm' check below, where we add things to the catalogue to retrieve later
 	if(isset($GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']])) {
 		$formulizeHiddenValidation = new XoopsFormHidden('validation', 1);
-        global $fullJsCatalogue;
-		foreach($GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']] as $thisValidation) { // grab all the validation code we stored in the elementdisplay.php file and attach it to this element
-            $catalogueKey = md5(trim($thisValidation));
-            if(!isset($fullJsCatalogue[$catalogueKey])) {
-				if(count((array) $GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']]) > 1) {
-                    $fullJsCatalogue[$catalogueKey] = true; // add this to the catalogue of stuff we've handled the validation js for, but only if there is more than one element in this set. If there is only one element, then logging it here and now will prevent it from being handled later. Multiple elements will have their validation codes merged into the single 'validation' element that we're adding at this time, so we log their individual code into the catalogue so we don't mistakenly render multiple copies of the code. But when the single element and this validation element will be identical in their code, then we must not catalogue it until later when it is actually being rendered.
-                }
-			foreach(explode("\n", $thisValidation) as $thisValidationLine) {
-				$formulizeHiddenValidation->customValidationCode[] = $thisValidationLine;
+		// There is a catalogue of all the JS we've encountered. We keep track of this so that we only output each snippet of JS once.
+		// The catalogue is made of the hashes of the JS
+    global $fullJsCatalogue;
+		foreach($GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']] as $thisValidation) { // grab all the validation code we have stored and attach it to this element
+			if(trim($thisValidation) != "") {
+				$catalogueKey = md5(trim($thisValidation));
+				if(!isset($fullJsCatalogue[$catalogueKey])) {
+					// add this key to the catalogue (the hash of the js), but only if there is more than one snippet that we're working with.
+					// If there is only one snippet that we're working with, then this hidden validation element, and that element will have exactly the same hash, and that will interfere with the rendering of the validation JS when we're consulting the catalogue later. See the rendering of JS in the formulize form class.
+					if(count((array) $GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']]) > 1) {
+						$fullJsCatalogue[$catalogueKey] = true;
+					}
+					foreach(explode("\n", $thisValidation) as $thisValidationLine) {
+						$formulizeHiddenValidation->customValidationCode[] = $thisValidationLine;
+					}
+				}
 			}
-		}
 		}
 		$form->addElement($formulizeHiddenValidation);
 	}
@@ -2744,29 +2752,20 @@ function compileElements($fid, $form, $prevEntry, $entry_id, $groups, $elements_
  * Also record any validation javascript that goes with this element, so we can pick that up when rendering the form
  * @param object $elementObject The formulize element object we're concerned about
  * @param int|string $entry_id The entry id in which the element is being rendered, or 'new' for a new element not yet saved.
- * @param string $renderedElementMarkupName The name used in the markup to identify this element: de_X_Y_Z where X is form id, Y is entry id, Z is element id
  * @param array $prevEntry Optional. The values from the database for the elements in this entry.
  * @param object $screen Optional. The screen in which the element is being rendered. Possibly used in rare cases to determine exactly what js to generate.
  * @return string Returns a string, which should be added to the form object being worked on so that a placeholder for this element is rendered into the form. If the element is not in the conditional element catalogue, the string is empty.
  */
-function makePlaceholderForConditionalElement($elementObject, $entry_id, $renderedElementMarkupName, $prevEntry = array(), $screen = null) {
+function makePlaceholderForConditionalElement($elementObject, $entry_id, $prevEntry = array(), $screen = null) {
 	$placeholder = "";
+	$renderedElementMarkupName = "de_{$elementObject->getVar('id_form')}_{$entry_id}_{$elementObject->getVar('ele_id')}";
 	if(isset($GLOBALS['formulize_renderedElementHasConditions'][$renderedElementMarkupName])) {
 		$placeholder = "{STARTHIDDEN}<<||>>".$renderedElementMarkupName;
-		// get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
-		$ele_value = $elementObject->getVar('ele_value');
-		if($prevEntry) {
-			$data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
-			$ele_value = loadValue($prevEntry, $elementObject, $ele_value, $data_handler->getEntryOwnerGroups($entry_id), $entry_id);
-		}
 		if(!isset($GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$renderedElementMarkupName])) {
-		// get the validation code for this element, wrap it in a check for the table row being visible, and assign that to the global array that contains validation javascript that we need to add to the form
-		$conditionalValidationRenderer = new formulizeElementRenderer($elementObject);
-		if($conditionalElementForValidiationCode = $conditionalValidationRenderer->constructElement($renderedElementMarkupName, $ele_value, $entry_id, false, $screen, true)) { // last flag is "validation only" so the rendered knows things won't actually be output
-			if(is_object($conditionalElementForValidiationCode) AND $js = $conditionalElementForValidiationCode->renderValidationJS()) {
-				$containerId = isset($GLOBALS['elementsInGridsAndTheirContainers'][$elementObject->getVar('ele_id')]) ? $GLOBALS['elementsInGridsAndTheirContainers'][$elementObject->getVar('ele_id')] : $conditionalElementForValidiationCode->getName();
-					$GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$renderedElementMarkupName] = "if(jQuery('[name^=".$conditionalElementForValidiationCode->getName()."]').length && window.document.getElementById('formulize-".$containerId."').style.display != 'none') {\n".$js."\n}\n";
-				}
+			list($js, $markupName) = validationJSFromDisembodiedElementRender($elementObject, $entry_id, $prevEntry, $screen);
+			if($js) {
+				$containerId = isset($GLOBALS['elementsInGridsAndTheirContainers'][$elementObject->getVar('ele_id')]) ? $GLOBALS['elementsInGridsAndTheirContainers'][$elementObject->getVar('ele_id')] : $markupName;
+				$GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$renderedElementMarkupName] = "if(jQuery('[name^=".$markupName."]').length && window.document.getElementById('formulize-".$containerId."').style.display != 'none') {\n".$js."\n}\n";
 			}
 		}
 		// if this is a time element, and we generated the universal time element handling js on this 'fake' rendering, then get rid of it since this element is not visible yet
@@ -2776,6 +2775,32 @@ function makePlaceholderForConditionalElement($elementObject, $entry_id, $render
 		}
 	}
 	return $placeholder;
+}
+
+/**
+ * Generate the validation JS for an element, by going through the rendering process and then extracting just the JS from the xoops form element object returned
+ * @param object $elementObject The formulize element object we're concerned about
+ * @param int|string $entry_id The entry id in which the element is being rendered, or 'new' for a new element not yet saved.
+ * @param array $prevEntry Optional. The values from the database for the elements in this entry.
+ * @param object $screen Optional. The screen in which the element is being rendered. Possibly used in rare cases to determine exactly what js to generate.
+ * @return array Returns an array of the JS generated and the markup name of the element. If no , if any, or an empty string
+ */
+function validationJSFromDisembodiedElementRender($elementObject, $entry_id, $prevEntry, $screen) {
+	$renderedElementMarkupName = "de_{$elementObject->getVar('id_form')}_{$entry_id}_{$elementObject->getVar('ele_id')}";
+	$ele_value = $elementObject->getVar('ele_value');
+	// get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
+	if($prevEntry) {
+		$dataHandler = new formulizeDataHandler($fid);
+		$ele_value = loadValue($prevEntry, $elementObject, $ele_value, $dataHandler->getEntryOwnerGroups($entry_id), $entry_id);
+	}
+	// get the validation code for this element, wrap it in a check for the table row being visible, and assign that to the global array that contains validation javascript that we need to add to the form
+	$jsValidationRenderer = new formulizeElementRenderer($elementObject);
+	if($jsValidiationCodeElement = $jsValidationRenderer->constructElement($renderedElementMarkupName, $ele_value, $entry_id, false, $screen, true)) { // last flag is "validation only" so the rendered knows things won't actually be output
+		if(is_object($jsValidiationCodeElement) AND $js = $jsValidiationCodeElement->renderValidationJS()) {
+			return array($js, $jsValidiationCodeElement->getName());
+		}
+	}
+	return false;
 }
 
 // $owner_groups is used when dealing with a usernames or fullnames selectbox
