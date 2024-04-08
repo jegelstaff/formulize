@@ -73,8 +73,8 @@
             <select id="search-type-0" name="search-type[0]"><option label="Search Box" value="Box">Search Box</option><option label="Dropdown List" value="Filter">Dropdown List</option><option label="Checkboxes" value="MultiFilter">Checkboxes</option><option label="Date Range" value="DateRange">Date Range</option></select>
           </td>
 	      <td>
-		<input type="radio" name="sort-by" value=0></input>
-	      </td>
+				  <input type="radio" name="sort-by" id="0-ASC" value="0-ASC"><label for="0-ASC">A..Z</label></input><input type="radio" name="sort-by" id="0-DESC" value="0-DESC"><label for="0-DESC">Z..A</label></input>
+		    </td>
 	      <td></td>
 	    </tr>
 	    <input type="hidden" id="numberOfRows" name="rows" value=<{if $content.advanceview|is_array}><{$content.advanceview|@count}><{/if}>></input>
