@@ -662,3 +662,13 @@ div[id^=cellcontents_1_] label {
   display: inline;
   border: 1px solid black;
 }
+
+table.formulize-grid td.head {
+  padding-bottom: 0.5em;
+}
+
+.formulize-grid td {
+	padding-right: 1em;
+	vertical-align: bottom;
+}
+

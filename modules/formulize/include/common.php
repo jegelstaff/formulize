@@ -50,6 +50,7 @@ include_once formulize_ROOT_PATH.'include/entriesdisplay.php';
 include_once formulize_ROOT_PATH.'include/graphdisplay.php';
 include_once formulize_ROOT_PATH.'include/calendardisplay.php';
 include_once formulize_ROOT_PATH.'include/elementdisplay.php';
+include_once formulize_ROOT_PATH.'include/griddisplay.php';
 include_once formulize_ROOT_PATH.'include/extract.php';
 include_once formulize_ROOT_PATH.'include/customCodeForApplications.php';
 

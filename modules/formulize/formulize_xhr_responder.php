@@ -315,38 +315,47 @@ switch($op) {
 
 function renderElement($elementObject, $entryId) {
 
-    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
-    // "" is framework, ie: not applicable
-    $GLOBALS['formulize_asynchronousRendering'][$elementObject->getVar('ele_handle')] = true;
-    $deReturnValue = displayElement("", $elementObject, $entryId, false, null, null, false); // false, null, null, false means it's not a noSave element, no screen, no prevEntry data passed in, and do not render the element on screen
-    unset($GLOBALS['formulize_asynchronousRendering']);
-    if(is_array($deReturnValue)) {
-        if($deReturnValue[0] == 'hidden') {
-            if(is_object($deReturnValue[2])) {
-                return $deReturnValue[2]->render();
-            }
-        } else {
-            $form_ele = $deReturnValue[0];
-            if($elementObject->getVar('ele_req') AND is_object($form_ele)) {
-                $form_ele->setRequired();
-            }
-            $isDisabled = $deReturnValue[1];
-            require_once XOOPS_ROOT_PATH."/modules/formulize/include/formdisplay.php"; // need the formulize_themeForm
-            $form = new formulize_themeForm('formulizeAsynchElementRender','',''); // prepare empty form object just for rendering element
-            if($elementObject->getVar('ele_type') == "ib") {// if it's a break, handle it differently...
-                $entryForDEElements = (is_numeric($entryId) AND $entryId) ? $entryId : 'new';
-                $form->insertBreakFormulize("<div class=\"formulize-text-for-display\">" . trans(stripslashes($form_ele[0])) . "</div>", $form_ele[1], 'de_'.$elementObject->getVar('id_form').'_'.$entryForDEElements.'_'.$elementObject->getVar('ele_id'), $elementObject->getVar("ele_handle"));
-                $hidden = '';
-                $html = '';
-                list($html, $hidden) = $form->_drawElements($form->getElements(), $html, $hidden);
-            } else {
-              $html = $form->_drawElementElementHTML($form_ele);
-            }
-            if($html) {
-                $html = trans($html);
-                return $html;
-            }
-        }
-    }
-    return false;
+	$GLOBALS['formulize_asynchronousRendering'][$elementObject->getVar('ele_handle')] = true;
+	$deReturnValue = displayElement("", $elementObject, $entryId, false, null, null, false); // false, null, null, false means it's not a noSave element, no screen, no prevEntry data passed in, and do not render the element on screen
+	unset($GLOBALS['formulize_asynchronousRendering']);
+
+	// element is allowed, so prep some stuff for rendering...
+	if(is_array($deReturnValue)) {
+		$form_ele = $deReturnValue[0];
+		if($elementObject->getVar('ele_req') AND is_object($form_ele)) {
+				$form_ele->setRequired();
+		}
+		$isDisabled = $deReturnValue[1];
+		$elementContents = $form_ele;
+
+		// prepare empty form object just for rendering element
+		$form = new formulize_themeForm('formulizeAsynchElementRender','','');
+
+		// figure out what we've got on our hands to render
+		$breakClass = 'head';
+		$entryForDEElements = (is_numeric($entryId) AND $entryId) ? $entryId : 'new';
+		if($elementObject->getVar('ele_type') == "ib") {
+			$elementContents = "<div class=\"formulize-text-for-display\">" . trans(stripslashes($form_ele[0])) . "</div>";
+			$breakClass = $form_ele[1];
+		} elseif($elementObject->getVar('ele_type') == "grid") {
+			$elementContents = renderGrid($elementObject, $entryForDEElements); // won't take into account the existing entry's saved values or the screen config when rendering the consituent elements, but probably doesn't matter.
+		}
+
+		// render the element
+		if(is_object($elementContents)) {
+			$html = $form->_drawElementElementHTML($elementContents);
+		} else {
+			$form->insertBreakFormulize($elementContents, $breakClass, 'de_'.$elementObject->getVar('id_form').'_'.$entryForDEElements.'_'.$elementObject->getVar('ele_id'), $elementObject->getVar("ele_handle"));
+			$hidden = '';
+			$html = '';
+			list($html, $hidden) = $form->_drawElements($form->getElements(), $html, $hidden);
+		}
+
+		// return the html, or nothing
+		if($html) {
+			$html = trans($html);
+			return $html;
+		}
+	}
+	return false;
 }

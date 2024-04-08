@@ -320,6 +320,10 @@ class formulize_themeForm extends XoopsThemeForm {
             $column2Width = str_replace(';','',$columnData[2]);
             $startHidden = false;
 
+			$containerOpen = '';
+			$containerContents = '';
+			$containerClose = '';
+
 			if (!is_object($ele)) {// just plain add stuff if it's a literal string...
 				if(strstr($ele, "<<||>>")) {
 					$ele = explode("<<||>>", $ele);
@@ -384,7 +388,6 @@ class formulize_themeForm extends XoopsThemeForm {
                         $templateVariables['spacerNeeded'] = true;
                 }
 
-                // render the element including containers, unless this is an asynch render (for conditional elements?) in which case we just want the element itself
                 $template = $this->getTemplate('elementcontainero');
                 $containerOpen = $this->processTemplate($template, $templateVariables);
 
@@ -393,12 +396,6 @@ class formulize_themeForm extends XoopsThemeForm {
 
                 $template = $this->getTemplate('elementcontainerc');
                 $containerClose = $this->processTemplate($template, $templateVariables);
-
-                if($this->getTitle() != 'formulizeAsynchElementRender') {
-                    $ret .= $containerOpen.$containerContents.$containerClose;
-                } else {
-                    $ret .= $containerContents;
-                }
 
 			} elseif ( !$ele->isHidden() ) {
                 $template = $this->getTemplate('elementcontainero');
@@ -412,10 +409,10 @@ class formulize_themeForm extends XoopsThemeForm {
                     'colSpan'=>'',
                     'startHidden'=>$startHidden
                 );
-                $ret .= $this->processTemplate($template, $templateVariables);
-				$ret .= $this->_drawElementElementHTML($ele);
+                $containerOpen = $this->processTemplate($template, $templateVariables);
+								$containerContents = $this->_drawElementElementHTML($ele);
                 $template = $this->getTemplate('elementcontainerc', $templateVariables);
-                $ret .= $this->processTemplate($template);
+                $containerClose = $this->processTemplate($template);
 			} else {
                 // catch security token fields, render empty and set some js in validation method to fill in the token on focus
                 if(is_a($ele, 'icms_form_elements_Hiddentoken')) {
@@ -425,6 +422,14 @@ class formulize_themeForm extends XoopsThemeForm {
                 }
 				$hidden .= $ele->render();
 			}
+
+			// render the element including containers, unless this is an asynch render (for conditional elements?) in which case we just want the element itself
+			if($this->getTitle() != 'formulizeAsynchElementRender') {
+				$ret .= $containerOpen.$containerContents.$containerClose;
+			} else {
+				$ret .= $containerContents;
+			}
+
 		}
 		return array($ret, $hidden);
 	}
@@ -804,11 +809,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 
 	global $xoopsDB, $xoopsUser, $myts, $formulize_subFidsWithNewEntries;
     $formulize_subFidsWithNewEntries = is_array($formulize_subFidsWithNewEntries) ? $formulize_subFidsWithNewEntries : array(); // initialize to an array
-
-	global $sfidsDrawn;
-	if(!is_array($sfidsDrawn)) {
-		$sfidsDrawn = array();
-	}
 
     $uid = $xoopsUser ? $xoopsUser->getVar('uid') : '0';
 	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
@@ -1368,10 +1368,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			}
 
 			formulize_benchmark("Before Compile Elements.");
-			$form = compileElements($this_fid, $form, $element_handler, $prevEntry, $entries[$this_fid][0], $go_back,
-				$parentLinks[$this_fid], $groups, $overrideValue, $elements_allowed, $profileForm,
-				$frid, $mid, $sub_entries, $sub_fids, $member_handler, $gperm_handler, $title, $screen,
-				$printViewPages, $printViewPageTitles);
+			$form = compileElements($this_fid, $form, $prevEntry, $entries[$this_fid][0], $groups, $elements_allowed, $frid, $sub_entries, $sub_fids, $screen, $printViewPages, $printViewPageTitles);
 			formulize_benchmark("After Compile Elements.");
 		}	// end of for each fids
 
@@ -1405,7 +1402,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                             unset($_POST['formulize_currentPage']); // want to make sure we land on page 1
 							$GLOBALS['formulize_subformInstance'] = 100; // reset the subform instance counter since we're throwing away this page rendering!
                             $GLOBALS['formulize_unsetSelectboxCaches'] = true; // totally horrible hack to get around the fact that subforms don't figure out there is a new entry to display until we get here. They should do this without having to render the elements first! We have to basically undo any caching of selectbox options that happened when we were fake rendering the page just to figure out what new entry had been created.
-                            $GLOBALS['output_datepicker_defaults'] = ''; // nevermind any datepicker defaults that have been output because we're never going to render this pass at the form! Ugly!
                             $newSubEntryScreen_handler->render($subScreenObject, $newSubEntry, $settings);
                             unset($GLOBALS['formulize_unsetSelectboxCaches']);
                             return;
@@ -1442,22 +1438,17 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                 $form->addElement (new XoopsFormHidden ('goto_sfid', ''));
             }
 
-						// on the master.php page, draw in the subforms "raw"
-						if(strstr(getCurrentURL(), 'modules/formulize/master.php')) {
+      // on the master.php page, draw in the subforms "raw"
+			if(strstr(getCurrentURL(), 'modules/formulize/master.php')) {
 			foreach($sub_fids as $subform_id) {
-				// only draw in the subform UI if the subform hasn't been drawn in previously, courtesy of a subform element in the form.
-				// Subform elements are recommended since they provide 1. specific placement, 2. custom captions, 3. direct choice of form elements to include
-				if(in_array($subform_id, $sfidsDrawn) OR $elements_allowed OR (!$scheck = security_check($subform_id, "", $uid, $owner, $groups, $mid, $gperm_handler) AND !$viewallforms)) { // no entry passed so this will simply check whether they have permission for the form or not
-					continue;
-				}
 				$subUICols = drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry);
 				unset($subLinkUI);
 				if(isset($subUICols['single'])) {
 					$form->insertBreakFormulize($subUICols['single'], "even");
 				} else {
-									$subLinkUI = new XoopsFormLabel($subUICols['c1'], $subUICols['c2']); // no third param (name) since there's no element to construct it with
+						$subLinkUI = new XoopsFormLabel($subUICols['c1'], $subUICols['c2']); // no third param (name) since there's no element to construct it with
 					$form->addElement($subLinkUI);
-								}
+					}
 				}
 			}
 		}
@@ -2535,15 +2526,12 @@ function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid,
 //this function takes a formid and compiles all the elements for that form
 //elements_allowed is NOT based off the display values.  It is based off of the elements that are specifically designated for the current displayForm function (used to display parts of forms at once)
 // $title is the title of a grid that is being displayed
-function compileElements($fid, $form, $element_handler, $prevEntry, $entry, $go_back, $parentLinks, $groups, $overrideValue, $elements_allowed, $profileForm, $frid, $mid, $sub_entries, $sub_fids, $member_handler, $gperm_handler, $title, $screen=null, $printViewPages=array(), $printViewPageTitles="") {
-
-	include_once XOOPS_ROOT_PATH.'/modules/formulize/include/elementdisplay.php';
-
-	$entryForDEElements = is_numeric($entry) ? $entry : "new"; // if there is no entry, ie: a new entry, then $entry is "" so when writing the entry value into decue_ and other elements that go out to the HTML form, we need to use the keyword "new"
+function compileElements($fid, $form, $prevEntry, $entry_id, $groups, $elements_allowed, $frid, $sub_entries, $sub_fids, $screen=null, $printViewPages=array(), $printViewPageTitles="") {
 
 	global $xoopsDB, $xoopsUser;
-
-    $elementsAvailableToUser = array();
+	$entryForDEElements = is_numeric($entry_id) ? $entry_id : "new"; // if there is no entry, ie: a new entry, then $entry_id is "" so when writing the entry value into decue_ and other elements that go out to the HTML form, we need to use the keyword "new"
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
+	$mid = getFormulizeModId();
 
 	// set criteria for matching on display
 	// set the basics that everything has to match
@@ -2568,10 +2556,9 @@ function compileElements($fid, $form, $element_handler, $prevEntry, $entry, $go_
     }
 	$criteria->setSort('ele_order');
 	$criteria->setOrder('ASC');
-	$elements =& $element_handler->getObjects($criteria,$fid,true); // true makes the keys of the returned array be the element ids
-	$count = 0;
-	global $gridCounter;
-	$gridCounter = array();
+	$elements = $element_handler->getObjects($criteria,$fid,true); // true makes the keys of the returned array be the element ids
+
+	$GLOBALS['elementsInGridsAndTheirContainers'] = array();
 
 	formulize_benchmark("Ready to loop elements.");
 
@@ -2584,17 +2571,28 @@ function compileElements($fid, $form, $element_handler, $prevEntry, $entry, $go_
 		$element_order_array = $elements_allowed;
 	}
 
+	$uid = is_object($xoopsUser) ? $xoopsUser->getVar('uid') : 0;
+	$owner = getEntryOwner($entry_id, $fid);
+
 	foreach($element_order_array as $thisElement) {
 		if(is_numeric($thisElement)) { // if we're doing the order based on passed in element ids...
 			if(isset($elements[$thisElement])) {
-				$i = $elements[$thisElement]; // set the element object for this iteration of the loop
+				$elementObject = $elements[$thisElement]; // set the element object for this iteration of the loop
 			} else {
 				continue; // do not try to render elements that don't exist in the form!! (they might have been deleted from a multipage definition, or who knows what)
 			}
 			$this_ele_id = $thisElement; // set the element ID number
 		} else { // else...we're just looping through the elements directly from the DB
-			$i = $thisElement; // set the element object
-			$this_ele_id = $i->getVar('ele_id'); // get the element ID number
+			$elementObject = $thisElement; // set the element object
+			$this_ele_id = $elementObject->getVar('ele_id'); // get the element ID number
+		}
+
+		$renderedElementMarkupName = "de_{$fid}_{$entryForDEElements}_{$this_ele_id}";
+
+		// check if this element is included in a grid, and if so, skip it
+		if(isset($GLOBALS['elementsInGridsAndTheirContainers'][$this_ele_id])) {
+			unset($GLOBALS['elementsInGridsAndTheirContainers'][$this_ele_id]);
+			continue;
 		}
 
 		// check if we're at the start of a page, when doing a printable view of all pages (only situation when printViewPageTitles and printViewPages will be present), and if we are, then put in a break for the page titles
@@ -2608,164 +2606,128 @@ function compileElements($fid, $form, $element_handler, $prevEntry, $entry, $go_
 			}
 		}
 
-		// check if this element is included in a grid, and if so, skip it
-		if(isset($gridCounter[$this_ele_id])) {
-            unset($gridCounter[$this_ele_id]);
-			continue;
-		}
+		$ele_type = $elementObject->getVar('ele_type');
+		$ele_value = $elementObject->getVar('ele_value');
 
-		$uid = is_object($xoopsUser) ? $xoopsUser->getVar('uid') : 0;
-		$owner = getEntryOwner($entry, $fid);
-		$ele_type = $i->getVar('ele_type');
-		$ele_value = $i->getVar('ele_value');
+		$GLOBALS['sub_entries'] = $sub_entries; // set here for reference, just in case??
 
-		if($ele_type != "subform" AND $ele_type != 'grid') {
-			// "" is framework, ie: not applicable
-			// $i is element object
-			// $entry is entry_id
-			// false is "nosave" param...only used to force element to not be picked up by readelements.php after saving
-			// $screen is the screen object
-			// false means don't print it out to screen, return it here
-			$GLOBALS['formulize_sub_fids'] = $sub_fids; // set here so we can pick it up in the render method of elements, if necessary (only necessary for subforms?);
-			$deReturnValue = displayElement("", $i, $entry, false, $screen, $prevEntry, false, $profileForm, $groups);
-			if(is_array($deReturnValue)) {
-				$form_ele = $deReturnValue[0];
-				$isDisabled = $deReturnValue[1];
-			} else {
-				$form_ele = $deReturnValue;
-				$isDisabled = false;
-			}
-            $elementsAvailableToUser[$this_ele_id] = true;
-			if(($form_ele == "not_allowed" OR $form_ele == "hidden")) {
-				if(isset($GLOBALS['formulize_renderedElementHasConditions']["de_".$fid."_".$entryForDEElements."_".$this_ele_id])) {
-					// need to add a flag element to the form, so that when rendered, we'll get a hidden container for the element, in case it is going to appear asynchronously later
-					$rowFlag = "{STARTHIDDEN}<<||>>de_".$fid."_".$entryForDEElements."_".$this_ele_id;
-					// need to also get the validation code for this element, wrap it in a check for the table row being visible, and assign that to the global array that contains all the validation javascript that we need to add to the form
-					// following code follows the pattern set in elementdisplay.php for actually creating rendered element objects
-					if($ele_type != "ib") {
-						$conditionalValidationRenderer = new formulizeElementRenderer($i);
-						if($prevEntry OR $profileForm === "new") {
-							$data_handler = new formulizeDataHandler($i->getVar('id_form'));
-							$ele_value = loadValue($prevEntry, $i, $ele_value, $data_handler->getEntryOwnerGroups($entry), $groups, $entry, $profileForm); // get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
-						}
-						$conditionalElementForValidiationCode = $conditionalValidationRenderer->constructElement("de_".$fid."_".$entryForDEElements."_".$this_ele_id, $ele_value, $entry, $isDisabled, $screen, true); // last flag is "validation only" so the rendered knows things won't actually be output
-                        global $output_datepicker_defaults, $output_timeelement_js;
-                        if($output_datepicker_defaults == "de_".$fid."_".$entryForDEElements."_".$this_ele_id) {
-                            $output_datepicker_defaults = '';
-                        }
-                        if($output_timeelement_js == "de_".$fid."_".$entryForDEElements."_".$this_ele_id) {
-                            $output_timeelement_js = '';
-                        }
-						if($js = $conditionalElementForValidiationCode->renderValidationJS()) {
-							$GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$conditionalElementForValidiationCode->getName()] = "if(jQuery('[name^=".$conditionalElementForValidiationCode->getName()."]').length && window.document.getElementById('formulize-".$conditionalElementForValidiationCode->getName()."').style.display != 'none') {\n".$js."\n}\n";
-						}
-						unset($conditionalElementForValidiationCode);
-						unset($conditionalValidationRenderer);
-					}
-					$form->addElement($rowFlag);
-                    // since it was treated as a conditional element, and the user might interact with it, then we don't consider it a not-available-to-user element
-                    unset($elementsAvailableToUser[$this_ele_id]);
-				}
-				continue;
-			}
-		}
-
-		$req = !$isDisabled ? intval($i->getVar('ele_req')) : 0;
-		$GLOBALS['sub_entries'] = $sub_entries;
+		// Option 1: subform element...
 		if($ele_type == "subform" ) {
 			$thissfid = $ele_value[0];
 			if(!$thissfid) { continue; } // can't display non-specified subforms!
-			$deReturnValue = displayElement("", $i, $entry, false, $screen, $prevEntry, false, $profileForm, $groups); // do this just to evaluate any conditions...it won't actually render anything, but will return "" for the first key in the array, if the element is allowed
-			if(is_array($deReturnValue)) {
-				$form_ele = $deReturnValue[0];
-				$isDisabled = $deReturnValue[1];
-			} else {
-				$form_ele = $deReturnValue;
-				$isDisabled = false;
-			}
-			if($passed = security_check($thissfid) AND $form_ele == "") {
-				$GLOBALS['sfidsDrawn'][] = $thissfid;
-				$customCaption = $i->getVar('ele_caption');
+			list($allowed, $isDisabled) = elementIsAllowedForUserInEntry($elementObject, $entry_id, $groups, false, $renderedElementMarkupName, false);
+			if($allowed) {
+				$customCaption = $elementObject->getVar('ele_caption');
 				$customElements = $ele_value[1] ? explode(",", $ele_value[1]) : "";
 				if(isset($GLOBALS['formulize_inlineSubformFrid'])) {
-					$newLinkResults = checkForLinks($GLOBALS['formulize_inlineSubformFrid'], array($fid), $fid, array($fid=>array($entry)), true); // final true means only include entries from unified display linkages
+					$newLinkResults = checkForLinks($GLOBALS['formulize_inlineSubformFrid'], array($fid), $fid, array($fid=>array($entry_id)), true); // final true means only include entries from unified display linkages
 					$sub_entries = $newLinkResults['sub_entries'];
 				}
                 // 2 is the number of default blanks, 3 is whether to show the view button or not, 4 is whether to use captions as headings or not, 5 is override owner of entry, $owner is mainform entry owner, 6 is hide the add button, 7 is the conditions settings for the subform element, 8 is the setting for showing just a row or the full form, 9 is text for the add entries button
-                $subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry, $customCaption, $customElements, $ele_value[2], $ele_value[3], $ele_value[4], $ele_value[5], $owner, $ele_value[6], $ele_value[7], $this_ele_id, $ele_value[8], $ele_value[9], $i);
+        $subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry_id, $customCaption, $customElements, $ele_value[2], $ele_value[3], $ele_value[4], $ele_value[5], $owner, $ele_value[6], $ele_value[7], $this_ele_id, $ele_value[8], $ele_value[9], $elementObject);
 				if(isset($subUICols['single'])) {
-					$form->insertBreakFormulize($subUICols['single'], "even", "de_{$fid}_{$entryForDEElements}_{$this_ele_id}", $i->getVar('ele_handle'));
+					$form->insertBreakFormulize($subUICols['single'], "even", $renderedElementMarkupName, $elementObject->getVar('ele_handle'));
 				} else {
-					$subLinkUI = new XoopsFormLabel($subUICols['c1'], $subUICols['c2']);
+					$subLinkUI = new XoopsFormLabel($subUICols['c1'], $subUICols['c2'], $renderedElementMarkupName);
 					$form->addElement($subLinkUI);
+					unset($subLinkUI); // because addElement receives values by reference, we need to destroy it here, so if it is recreated in a subsequent iteration, we don't end up overwriting elements we've already assigned. Ack! Ugly!
 				}
-				unset($subLinkUI);
 			}
+
+		// Option 2: grid element...
 		} elseif($ele_type == "grid") {
-
-			// we are going to have to store some kind of flag/counter with the id number of the starting element in the table, and the number of times we need to ignore things
-			// we need to then listen for this up above and skip those elements as they come up.  This is why grids must come before their elements in the form definition
-
-			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/griddisplay.php";
-			list($grid_title, $grid_row_caps, $grid_col_caps, $grid_background, $grid_start, $grid_count) = compileGrid($ele_value, $title, $i);
-			$headingAtSide = ($ele_value[5] AND $grid_title) ? true : false; // if there is a value for ele_value[5], then the heading should be at the side, otherwise, grid spans form width as it's own chunk of HTML
-			$gridContents = displayGrid($fid, $entry, $grid_row_caps, $grid_col_caps, $grid_title, $grid_background, $grid_start, "", "", true, $screen, $headingAtSide);
-			if($headingAtSide) { // grid contents is the two bits for the xoopsformlabel when heading is at side, otherwise, it's just the contents for the break
-				$gridElement = new XoopsFormLabel($gridContents[0], $gridContents[1]);
-                $helpText = $i->getVar('ele_desc');
-                if(trim($helpText)) {
-                    $gridElement->setDescription($helpText);
-                }
-								$gridElement->formulize_element = $i;
-                $form->addElement($gridElement);
-                unset($gridElement); // because addElement received values by reference, we need to destroy it here, so if it is recreated in a subsequent iteration, we don't end up overwriting elements we've already assigned. Ack! Ugly!
-			} else {
-				$form->insertBreakFormulize($gridContents, "head", 'de_'.$fid.'_'.$entryForDEElements.'_'.$this_ele_id, $i->getVar('ele_handle')); // head is the css class of the cell
+			list($allowed, $isDisabled) = elementIsAllowedForUserInEntry($elementObject, $entry_id, $groups, false, $renderedElementMarkupName, false);
+			if($allowed) {
+				$renderedGrid = renderGrid($elementObject, $entry_id, $prevEntry, $screen);
+				if(is_object($renderedGrid)) {
+					$form->addElement($renderedGrid);
+					unset($renderedGrid); // because addElement receives values by reference, we need to destroy it here, so if it is recreated in a subsequent iteration, we don't end up overwriting elements we've already assigned. Ack! Ugly!
+        } else {
+					$form->insertBreakFormulize($renderedGrid, "head", $renderedElementMarkupName, $elementObject->getVar('ele_handle')); // head is the css class of the cell
+				}
+      } else {
+				// A hidden grid. We need to catalogue the grid elements, and if they have conditions we need to put them in the conditional catalogue as well and make placeholders for them (which handles any validation JS generation)
+				$gridCount = count(explode(",", $ele_value[1])) * count(explode(",", $ele_value[2]));
+				foreach(elementsInGrid($ele_value[4], $fid, $gridCount) as $thisGridElementId) {
+					catalogueGridElement($thisGridElementId, $entry_id, $elementObject, null, $prevEntry, $screen); // renderedElementMarkupName is the containing grid
+				}
+        if($placeholderElement = makePlaceholderForConditionalElement($elementObject, $entry_id, $prevEntry, $screen)) {
+					$form->addElement($placeholderElement);
+					unset($placeholderElement); // because addElement receives values by reference, we need to destroy it here, so if it is recreated in a subsequent iteration, we don't end up overwriting elements we've already assigned. Ack! Ugly!
+				}
 			}
+
+		// Option 3: Not a subform, not a grid, try the standard approach with the displayElement function, see what happens...
+                } else {
+			$deReturnValue = displayElement("", $elementObject, $entry_id, false, $screen, $prevEntry, false, $groups);
+			if(is_array($deReturnValue)) {
+				$form_ele = $deReturnValue[0];
+				$isDisabled = $deReturnValue[1];
+            } else {
+				$form_ele = $deReturnValue;
+				$isDisabled = false;
+			}
+
+			// Option 3a: the element is not allowed (did not pass the 'elementIsAllowedForUserInEntry' check inside displayElement, when that happens displayElement returns 'not_allowed')
+			if($form_ele == "not_allowed") {
+				if($placeholderElement = makePlaceholderForConditionalElement($elementObject, $entry_id, $prevEntry, $screen)) {
+					$form->addElement($placeholderElement);
+					unset($placeholderElement); // because addElement receives values by reference, we need to destroy it here, so if it is recreated in a subsequent iteration, we don't end up overwriting elements we've already assigned. Ack! Ugly!
+				}
+
+			// Option 3b: element is a "text for display (two columns)"
+			// or some other type of 'pass the markup' element...
 		} elseif($ele_type == "ib" OR is_array($form_ele)) {
-			// if it's a break, handle it differently...$form_ele may be an array if it's a non-interactive element such as a grid
-				// final param is used as id name in the table row where this element exists, so we can interact with it for showing and hiding
-			$form->insertBreakFormulize("<div class=\"formulize-text-for-display\">" . trans(stripslashes($form_ele[0])) . "</div>", $form_ele[1], 'de_'.$fid.'_'.$entryForDEElements.'_'.$this_ele_id, $i->getVar("ele_handle"));
+				$form->insertBreakFormulize("<div class=\"formulize-text-for-display\">" . trans(stripslashes($form_ele[0])) . "</div>", $form_ele[1], $renderedElementMarkupName, $elementObject->getVar("ele_handle"));
+
+			// Option 3c: regular element
 		} else {
+			$req = !$isDisabled ? intval($elementObject->getVar('ele_req')) : 0;
 			$form->addElement($form_ele, $req);
+			unset($form_ele); // apparently necessary for compatibility with PHP 4.4.0 -- suggested by retspoox, sept 25, 2005 -- because addElement receives values by reference, we need to destroy it here, so if it is recreated in a subsequent iteration, we don't end up overwriting elements we've already assigned. Ack! Ugly!
 		}
-		$count++;
-		unset($hidden);
-		unset($form_ele); // apparently necessary for compatibility with PHP 4.4.0 -- suggested by retspoox, sept 25, 2005
+
+			$GLOBALS['formulize_sub_fids'] = $sub_fids; // set here for reference, just in case??
+		}
+
 	}
 
 	formulize_benchmark("Done looping elements.");
 
-
-
-
-	if($entry AND !is_a($form, 'formulize_elementsOnlyForm')) {
+  if($entry_id AND !is_a($form, 'formulize_elementsOnlyForm')) {
         // two hidden fields encode the main entry id, the first difficult-to-use format is a legacy thing
         // the 'lastentry' format is more sensible, but is only available when there was a real entry, not 'new' (also a legacy convention)
-		$form->addElement (new XoopsFormHidden ('entry'.$fid, $entry));
-        if(is_numeric($entry)) {
-            $form->addElement (new XoopsFormHidden ('lastentry', $entry));
+		$form->addElement (new XoopsFormHidden ('entry'.$fid, $entry_id));
+    if(is_numeric($entry_id)) {
+      $form->addElement (new XoopsFormHidden ('lastentry', $entry_id));
         }
 	}
-	if($_POST['parent_form']) { // if we just came back from a parent form, then if they click save, we DO NOT want an override condition, even though we are now technically editing an entry that was previously saved when we went to the subform in the first place.  So the override logic looks for this hidden value as an exception.
+	if($_POST['parent_form']) { // if we just came back from a parent form, then set this flag so we'll know on the next pageload... legacy but has one key use?
 		$form->addElement (new XoopsFormHidden ('back_from_sub', 1));
 	}
 
-
-	// add a hidden element to carry all the validation javascript that might be associated with elements rendered with elementdisplay.php...only relevant for elements rendered inside subforms or grids...the validation code comes straight from the element, doesn't have a check around it for the conditional table row id, like the custom form classes at the top of the file use, since those elements won't render as hidden and show/hide in the same way
+	// Add a hidden element to carry all the validation javascript that might be associated with elements rendered with elementdisplay.php, but not added to the main form themselves for whatever reason
+	// This is a very complex, but necessary part of the form setup, because of the multiple times that displayForm might be called, multiple parts of forms that are rendered, as inline subforms, as all kinds of things, and we need to capture all the validation JS from everywhere, and ensure it is executed at the right level, as part of the normal page submission
+	// Related, see the 'formuilze_elementsOnlyForm' check below, where we add things to the catalogue to retrieve later
 	if(isset($GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']])) {
 		$formulizeHiddenValidation = new XoopsFormHidden('validation', 1);
-        global $fullJsCatalogue;
-		foreach($GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']] as $thisValidation) { // grab all the validation code we stored in the elementdisplay.php file and attach it to this element
-            $catalogueKey = md5(trim($thisValidation));
-            if(!isset($fullJsCatalogue[$catalogueKey])) {
-				if(count((array) $GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']]) > 1) {
-                    $fullJsCatalogue[$catalogueKey] = true; // add this to the catalogue of stuff we've handled the validation js for, but only if there is more than one element in this set. If there is only one element, then logging it here and now will prevent it from being handled later. Multiple elements will have their validation codes merged into the single 'validation' element that we're adding at this time, so we log their individual code into the catalogue so we don't mistakenly render multiple copies of the code. But when the single element and this validation element will be identical in their code, then we must not catalogue it until later when it is actually being rendered.
-                }
-			foreach(explode("\n", $thisValidation) as $thisValidationLine) {
-				$formulizeHiddenValidation->customValidationCode[] = $thisValidationLine;
+		// There is a catalogue of all the JS we've encountered. We keep track of this so that we only output each snippet of JS once.
+		// The catalogue is made of the hashes of the JS
+    global $fullJsCatalogue;
+		foreach($GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']] as $thisValidation) { // grab all the validation code we have stored and attach it to this element
+			if(trim($thisValidation) != "") {
+				$catalogueKey = md5(trim($thisValidation));
+				if(!isset($fullJsCatalogue[$catalogueKey])) {
+					// add this key to the catalogue (the hash of the js), but only if there is more than one snippet that we're working with.
+					// If there is only one snippet that we're working with, then this hidden validation element, and that element will have exactly the same hash, and that will interfere with the rendering of the validation JS when we're consulting the catalogue later. See the rendering of JS in the formulize form class.
+					if(count((array) $GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']]) > 1) {
+						$fullJsCatalogue[$catalogueKey] = true;
+					}
+					foreach(explode("\n", $thisValidation) as $thisValidationLine) {
+						$formulizeHiddenValidation->customValidationCode[] = $thisValidationLine;
+					}
+				}
 			}
-		}
 		}
 		$form->addElement($formulizeHiddenValidation);
 	}
@@ -2785,10 +2747,65 @@ function compileElements($fid, $form, $element_handler, $prevEntry, $entry, $go_
 
 }
 
-// $groups is deprecated and not used in this function any longer
+/**
+ * If an element was put into the conditional element catalogue, then make a placeholder element for it, in case it will show up later when the user does something in the form
+ * Also record any validation javascript that goes with this element, so we can pick that up when rendering the form
+ * @param object $elementObject The formulize element object we're concerned about
+ * @param int|string $entry_id The entry id in which the element is being rendered, or 'new' for a new element not yet saved.
+ * @param array $prevEntry Optional. The values from the database for the elements in this entry.
+ * @param object $screen Optional. The screen in which the element is being rendered. Possibly used in rare cases to determine exactly what js to generate.
+ * @return string Returns a string, which should be added to the form object being worked on so that a placeholder for this element is rendered into the form. If the element is not in the conditional element catalogue, the string is empty.
+ */
+function makePlaceholderForConditionalElement($elementObject, $entry_id, $prevEntry = array(), $screen = null) {
+	$placeholder = "";
+	$renderedElementMarkupName = "de_{$elementObject->getVar('id_form')}_{$entry_id}_{$elementObject->getVar('ele_id')}";
+	if(isset($GLOBALS['formulize_renderedElementHasConditions'][$renderedElementMarkupName])) {
+		$placeholder = "{STARTHIDDEN}<<||>>".$renderedElementMarkupName;
+		if(!isset($GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$renderedElementMarkupName])) {
+			list($js, $markupName) = validationJSFromDisembodiedElementRender($elementObject, $entry_id, $prevEntry, $screen);
+			if($js) {
+				$containerId = isset($GLOBALS['elementsInGridsAndTheirContainers'][$elementObject->getVar('ele_id')]) ? $GLOBALS['elementsInGridsAndTheirContainers'][$elementObject->getVar('ele_id')] : $markupName;
+				$GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$renderedElementMarkupName] = "if(jQuery('[name^=".$markupName."]').length && window.document.getElementById('formulize-".$containerId."').style.display != 'none') {\n".$js."\n}\n";
+			}
+		}
+		// if this is a time element, and we generated the universal time element handling js on this 'fake' rendering, then get rid of it since this element is not visible yet
+		global $output_timeelement_js;
+		if($output_timeelement_js == $renderedElementMarkupName) {
+				$output_timeelement_js = '';
+		}
+	}
+	return $placeholder;
+}
+
+/**
+ * Generate the validation JS for an element, by going through the rendering process and then extracting just the JS from the xoops form element object returned
+ * @param object $elementObject The formulize element object we're concerned about
+ * @param int|string $entry_id The entry id in which the element is being rendered, or 'new' for a new element not yet saved.
+ * @param array $prevEntry Optional. The values from the database for the elements in this entry.
+ * @param object $screen Optional. The screen in which the element is being rendered. Possibly used in rare cases to determine exactly what js to generate.
+ * @return array Returns an array of the JS generated and the markup name of the element. If no , if any, or an empty string
+ */
+function validationJSFromDisembodiedElementRender($elementObject, $entry_id, $prevEntry, $screen) {
+	$renderedElementMarkupName = "de_{$elementObject->getVar('id_form')}_{$entry_id}_{$elementObject->getVar('ele_id')}";
+	$ele_value = $elementObject->getVar('ele_value');
+	// get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
+	if($prevEntry) {
+		$dataHandler = new formulizeDataHandler($fid);
+		$ele_value = loadValue($prevEntry, $elementObject, $ele_value, $dataHandler->getEntryOwnerGroups($entry_id), $entry_id);
+	}
+	// get the validation code for this element, wrap it in a check for the table row being visible, and assign that to the global array that contains validation javascript that we need to add to the form
+	$jsValidationRenderer = new formulizeElementRenderer($elementObject);
+	if($jsValidiationCodeElement = $jsValidationRenderer->constructElement($renderedElementMarkupName, $ele_value, $entry_id, false, $screen, true)) { // last flag is "validation only" so the rendered knows things won't actually be output
+		if(is_object($jsValidiationCodeElement) AND $js = $jsValidiationCodeElement->renderValidationJS()) {
+			return array($js, $jsValidiationCodeElement->getName());
+		}
+	}
+	return false;
+}
+
 // $owner_groups is used when dealing with a usernames or fullnames selectbox
 // $element is the element object representing the element we're loading the previously saved value for
-function loadValue($prevEntry, $element, $ele_value, $owner_groups, $groups, $entry_id) {
+function loadValue($prevEntry, $element, $ele_value, $owner_groups, $entry_id) {
 
 	global $myts;
 	/*

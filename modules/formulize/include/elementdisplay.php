@@ -42,7 +42,7 @@ $GLOBALS['formulize_renderedElementHasConditions'] = array();
 
 // $groups is optional and can be passed in to override getting the user's groups.  This is necessary for the registration form to work with custom displayed elements
 // $noSave is used to specify a different name for the element, so we can get back an HTML element that we will use in a different context than a normal form
-function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $screen=null, $prevEntry=null, $renderElement=true, $profileForm = null, $groups="") {
+function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $screen=null, $prevEntry=null, $renderElement=true, $groups="") {
 
 	static $cachedPrevEntries = array();
 	static $lockedEntries = array(); // keep track of the entries we have determined are locked
@@ -72,75 +72,32 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
 	$deprefix = $noSave ? "denosave_" : "de_";
 	$deprefix = $subformCreateEntry ? "desubform".$subformEntryIndex."x".$subformElementId."_" : $deprefix; // need to pass in an entry index so that all fields in the same element can be collected
 	if($noSave AND !is_bool($noSave)) {
-		$renderedElementName = $noSave; // if we've passed a specific string with $noSave, then we want to use that to override the name of the element, because the developer wants to pick up that form value later after submission
+		$renderedElementMarkupName = $noSave; // if we've passed a specific string with $noSave, then we want to use that to override the name of the element, because the developer wants to pick up that form value later after submission
 		$noSave = true;
 	} else {
-		$renderedElementName = $deprefix.$form_id.'_'.$entry.'_'.$element->getVar('ele_id');
+		$renderedElementMarkupName = $deprefix.$form_id.'_'.$entry.'_'.$element->getVar('ele_id');
 	}
 
 	global $xoopsUser;
-  if(!$groups) {
-    // groups might be passed in, which covers the case of the registration form and getting the groups from the registration code
+	$mid = getFormulizeModId();
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
+    if(!$groups) {
+        // groups might be passed in, which covers the case of the registration form and getting the groups from the registration code
     $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
   }
 	$user_id = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 	$username = $xoopsUser ? $xoopsUser->getVar('uname') : "unknown user";
-	static $cachedEntryOwners = array();
-	if(!isset($cachedEntryOwners[$form_id][$entry])) {
-		$cachedEntryOwners[$form_id][$entry] = getEntryOwner($entry, $form_id);
-	}
-	$owner = $cachedEntryOwners[$form_id][$entry];
-	$mid = getFormulizeModId();
 
-	static $cachedViewPrivate = array();
-	static $cachedUpdateOwnEntry = array();
+	$owner = getEntryOwner($entry, $form_id);
+
 	$gperm_handler = xoops_gethandler('groupperm');
-    $groupsKey = serialize($groups);
-	if(!isset($cachedViewPrivate[$form_id][$groupsKey]) AND !$noSave) {
-		$cachedViewPrivate[$form_id][$groupsKey] = $gperm_handler->checkRight("view_private_elements", $form_id, $groups, $mid);
-		$cachedUpdateOwnEntry[$form_id][$groupsKey] = $gperm_handler->checkRight("update_own_entry", $form_id, $groups, $mid);
-	}
-	$view_private_elements = $noSave ? 1 : $cachedViewPrivate[$form_id][$groupsKey];
-	$update_own_entry = $noSave ? 1 : $cachedUpdateOwnEntry[$form_id][$groupsKey];
+	$userHasPermissionToIgnoreEntryLock = $gperm_handler->checkRight("ignore_editing_lock", $form_id, $groups, $mid);
+	$update_own_entry = $noSave ? 1 : $gperm_handler->checkRight("update_own_entry", $form_id, $groups, $mid);
 
-	// check if the user is normally able to view this element or not, by checking their groups against the display groups -- added Nov 7 2005
-	// messed up.  Private should not override the display settings.  And the $entry should be checked against the security check first to determine whether the user should even see this entry in the first place.
-	$display = $element->getVar('ele_display');
-	$private = $element->getVar('ele_private');
-	$member_handler = xoops_gethandler('member');
-    $element_handler = xoops_getmodulehandler('elements', 'formulize');
-	$single_result = getSingle($form_id, $user_id, $groups, $member_handler, $gperm_handler, $mid);
+	$single_result = getSingle($form_id, $user_id, $groups);
 	$groupEntryWithUpdateRights = ($single_result['flag'] == "group" AND $update_own_entry AND $entry == $single_result['entry']) ? true : false;
 
-	// need to test whether the display setting should be checked first?!  Order of checks here looks wrong.  JWE Nov 25 2010
-	if($private AND $user_id != $owner AND !$groupEntryWithUpdateRights AND $entry != "new") {
-		$allowed = $view_private_elements ? 1 : 0;
-	} elseif(strstr($display, ",")) {
-		$display_groups = explode(",", $display);
-		$allowed = array_intersect($groups, $display_groups) ? 1 : 0;
-	} elseif($display == 1) {
-		$allowed = 1;
-	} else {
-		$allowed = 0;
-	}
-
-	if($prevEntry==null) { // preferable to pass in prevEntry!
-		$prevEntry = getEntryValues($entry, "", $groups, $form_id, "", $mid, $user_id, $owner, $groupEntryWithUpdateRights);
-	}
-
-	// record the list of elements that are allowed in principle for a form (regardless of conditional status)
-	if($allowed) {
-		$GLOBALS['formulize_renderedElementsForForm'][$form_id][$entry][$renderedElementName] = $element->getVar('ele_handle');
-	}
-
-	$elementFilterSettings = $element->getVar('ele_filtersettings');
-	if($allowed AND is_array($elementFilterSettings[0]) AND count((array) $elementFilterSettings[0]) > 0 AND (!$noSave OR $entry != 'new')) {
-		// cache the filterElements for this element, so we can build the right stuff with them later in javascript, to make dynamically appearing elements
-		if(!$subformCreateEntry) {
-			catalogConditionalElement($renderedElementName, array_unique($elementFilterSettings[0]));
-		}
-		$allowed = checkElementConditions($elementFilterSettings, $form_id, $entry);
-	}
+	list($allowed, $isDisabled) = elementIsAllowedForUserInEntry($element, $entry, $groups, $noSave, $renderedElementMarkupName, $subformCreateEntry);
 
 	if($allowed) {
 
@@ -149,23 +106,6 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
 
 		if($element->getVar('ele_type') == "subform") {
 			return array("", $isDisabled);
-		}
-
-		if(isset($GLOBALS['formulize_forceElementsDisabled']) AND $GLOBALS['formulize_forceElementsDisabled'] == true) {
-			$isDisabled = true;
-		} else {
-      $isDisabled = $element_handler->isElementDisabledForUser($element, $xoopsUser) ? true : false;
-			if($isDisabled) {
-				$disabledConditions = $element->getVar('ele_disabledconditions');
-				if(is_array($disabledConditions[0]) AND count((array) $disabledConditions[0]) > 0) {
-					$isDisabled = checkElementConditions($disabledConditions, $form_id, $entry);
-					// Also, catalogue the governing elements so that dynamic conditional behaviour will work.
-					// Only if it's not a new entry, because there's no point in having elements in a new entry, with no values yet, and then be disabling them. Need to enter some information first??? This is especially necessary if elements should disable after they're NOT blank, because dynamic re-rendering would then disable them before you had saved the value you entered! The NOT Blank condition will kick in on next page load when the entry is no longer 'new'.
-					if($entry != 'new' AND !$subformCreateEntry) {
-						catalogConditionalElement($renderedElementName, array_unique($disabledConditions[0]));
-					}
-				}
-			}
 		}
 
 		// Another check to see if this element is disabled, for the case where the user can view the form, but not edit it.
@@ -188,7 +128,7 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
            AND $element->hasData AND $element->getVar('ele_type') != 'derived'
            AND !strstr(getCurrentURL(),"printview.php")
            AND file_exists(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName")
-           AND !$gperm_handler->checkRight("ignore_editing_lock", $form_id, $groups, $mid)) {
+           AND !$userHasPermissionToIgnoreEntryLock) {
 			formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/temp/", "_is_locked_for_editing", ini_get("session.gc_maxlifetime")); // clean up expired locks
             if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName")) {
 				list($lockUid, $lockUsername) = explode(",", file_get_contents(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName"));
@@ -212,17 +152,21 @@ EOF;
 			$isDisabled = true;
 		}
 
+		if($prevEntry==null) { // preferable to pass in prevEntry!
+			$prevEntry = getEntryValues($entry, "", $groups, $form_id, "", $mid, $user_id, $owner, $groupEntryWithUpdateRights);
+		}
+
 		$renderer = new formulizeElementRenderer($element);
 		$ele_value = $element->getVar('ele_value');
 		$ele_type = $element->getVar('ele_type');
 		if(($prevEntry OR $profileForm === "new") AND $ele_type != 'subform' AND $ele_type != 'grid') {
 			$data_handler = new formulizeDataHandler($form_id);
-			$ele_value = loadValue($prevEntry, $element, $ele_value, $data_handler->getEntryOwnerGroups($entry), $groups, $entry, $profileForm); // get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
+			$ele_value = loadValue($prevEntry, $element, $ele_value, $data_handler->getEntryOwnerGroups($entry), $entry); // get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
 		}
 
 		//formulize_benchmark("About to render element ".$element->getVar('ele_caption').".");
 
-		$form_ele =& $renderer->constructElement($renderedElementName, $ele_value, $entry, $isDisabled, $screen);
+		$form_ele =& $renderer->constructElement($renderedElementMarkupName, $ele_value, $entry, $isDisabled, $screen);
 		if(strstr($_SERVER['PHP_SELF'], "formulize/printview.php") AND is_object($form_ele)) {
 			$form_ele->setDescription('');
 		}
@@ -258,28 +202,133 @@ EOF;
 		if(!$renderElement) {
 			return array(0=>$form_ele, 1=>$isDisabled);
 		} elseif($element->getVar('ele_type') == "ib") {
-			print $form_ele[0];
-			return "rendered";
-		} elseif(is_object($form_ele)) {
-			print $form_ele->render();
-			if(!empty($form_ele->customValidationCode) AND !$isDisabled) {
-				$GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$form_ele->getName()] = $form_ele->renderValidationJS();
-			} elseif($element->getVar('ele_req') AND ($element->getVar('ele_type') == "text" OR $element->getVar('ele_type') == "textarea") AND !$isDisabled) {
-				$eltname    = $form_ele->getName();
-				$eltcaption = $form_ele->getCaption();
-				$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
-				$eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
-				$GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$eltname] = "if ( myform.".$eltname.".value == \"\" ) { window.alert(\"".$eltmsg."\"); myform.".$eltname.".focus(); return false; }";
-			}
-			if($isDisabled) {
-				return "rendered-disabled";
-			} else {
+				print $form_ele[0];
 				return "rendered";
+			} elseif(is_object($form_ele)) {
+					print $form_ele->render();
+				// NOTE: ASSIGNING THE VALIDATION JS HERE WILL INTERFERE WITH STANDARD FORM COMPILING THE MAIN FORM IN FORMULIZE
+				// Standard Formulize should always NOT be rendering the elements and they would be returned above in an array
+				// And then handling the cataloguing of conditional elements, and the JS for rendered elements, etc, would proceed as normal.
+				// HOWEVER, when rendering things that are 'disembodied' from the main form, such as subform row elements, this is actually the only way to get their validation code into the system?
+				// Subform rows could be refactored along the line of grid elements, to more rigorously handle the generation of elements and their validation js
+				          if(!empty($form_ele->customValidationCode) AND !$isDisabled) {
+										if($js = $form_ele->renderValidationJS()) {
+											$GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$renderedElementMarkupName] = $js;
+										}
+				          } elseif($element->getVar('ele_req') AND ($element->getVar('ele_type') == "text" OR $element->getVar('ele_type') == "textarea") AND !$isDisabled) {
+				            $eltname    = $form_ele->getName();
+				            $eltcaption = $form_ele->getCaption();
+				            $eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
+				            $eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
+										$GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$renderedElementMarkupName] = "if ( myform.".$eltname.".value == \"\" ) { window.alert(\"".$eltmsg."\"); myform.".$eltname.".focus(); return false; }";
+				          }
+					if($isDisabled) {
+						return "rendered-disabled";
+					} else {
+						return "rendered";
+					}
 			}
-		}
 	} else {
 		return "not_allowed";
 	}
+}
+
+/**
+ * Determines whether a user is allowed to see an element.
+ * Does various book keeping and record keeping related to rendering entries as well, such as cataloguing whether the element has conditions and what it's governing elements are.
+ * @param object $elementObject The formuilze element object
+ * @param int|string $entry_id The entry id of the entry being considered, or 'new' for a new entry not yet saved.
+ * @param array $groups Optional. By default, the groups of the active user are checked. If provided, this array of group ids will be used instead.
+ * @param boolean $noSave Optional. A flag to indicate if the element is being generated out of context of a form, in which case the user's permissions are not relevant, only group memberships.
+ * @param string $renderedElementMarkupName. Optional. The markup handle for the element, ie: de_FID_ENTRYID_ELEMENTID
+ * @param boolean $subformCreateEntry. Optional. A flag to indicate if we're creating elements for fake new subform entries or not. Such elements never have conditions attached to them.
+ * @return array Returns an array of booleans, first is whether the element is allowed for the user, second is whether the element is disabled.
+ */
+function elementIsAllowedForUserInEntry($elementObject, $entry_id, $groups = array(), $noSave = false, $renderedElementMarkupName = null, $subformCreateEntry = false) {
+
+	// basic security check...
+	$form_id = $elementObject->getVar('id_form');
+	if(security_check($form_id, $entry_id) == false)	{
+		return false;
+	}
+
+	// setup variables
+	global $xoopsUser;
+	$user_id = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+	if(empty($groups)) {
+		$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+	}
+	$mid = getFormulizeModId();
+	$owner = getEntryOwner($entry_id, $form_id);
+	if(!$renderedElementMarkupName) {
+		$renderedElementMarkupName = 'de_'.$form_id.'_'.$entry_id.'_'.$elementObject->getVar('ele_id');
+	}
+
+	// gather permissions...
+	static $cachedViewPrivate = array();
+	static $cachedUpdateOwnEntry = array();
+	$groupsKey = serialize($groups);
+	if(!isset($cachedViewPrivate[$form_id][$groupsKey]) AND !$noSave) {
+		$gperm_handler = xoops_gethandler('groupperm');
+		$cachedViewPrivate[$form_id][$groupsKey] = $gperm_handler->checkRight("view_private_elements", $form_id, $groups, $mid);
+		$cachedUpdateOwnEntry[$form_id][$groupsKey] = $gperm_handler->checkRight("update_own_entry", $form_id, $groups, $mid);
+	}
+	$view_private_elements = $noSave ? 1 : $cachedViewPrivate[$form_id][$groupsKey];
+	$update_own_entry = $noSave ? 1 : $cachedUpdateOwnEntry[$form_id][$groupsKey];
+	$single_result = getSingle($form_id, $user_id, $groups);
+	$groupEntryWithUpdateRights = ($single_result['flag'] == "group" AND $update_own_entry AND $entry_id == $single_result['entry']) ? true : false;
+
+	$display = $elementObject->getVar('ele_display');
+	$private = $elementObject->getVar('ele_private');
+
+	$allowed = 0;
+	if(strstr($display, ",")) {
+		$display_groups = explode(",", $display);
+		$allowed = array_intersect($groups, $display_groups) ? 1 : 0;
+	} elseif($display == 1) {
+		$allowed = 1;
+	}
+
+	if($allowed AND $private AND $user_id != $owner AND !$groupEntryWithUpdateRights AND $entry_id != "new") {
+		$allowed = $view_private_elements ? 1 : 0;
+	}
+
+	// record the list of elements that are allowed in principle for a form (regardless of conditional status)
+	if($allowed) {
+		$GLOBALS['formulize_renderedElementsForForm'][$form_id][$entry_id][$renderedElementMarkupName] = $elementObject->getVar('ele_handle');
+	}
+
+	$elementFilterSettings = $elementObject->getVar('ele_filtersettings');
+	if($allowed AND is_array($elementFilterSettings[0]) AND count((array) $elementFilterSettings[0]) > 0 AND (!$noSave OR $entry_id != 'new')) {
+		// cache the filterElements for this element, so we can build the right stuff with them later in javascript, to make dynamically appearing elements
+		if(!$subformCreateEntry) {
+			catalogConditionalElement($renderedElementMarkupName, array_unique($elementFilterSettings[0]));
+		}
+		$allowed = checkElementConditions($elementFilterSettings, $form_id, $entry_id);
+	}
+
+	$isDisabled = false;
+	if(isset($GLOBALS['formulize_forceElementsDisabled']) AND $GLOBALS['formulize_forceElementsDisabled'] == true) {
+		$isDisabled = true;
+	} else {
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		$isDisabled = $element_handler->isElementDisabledForUser($elementObject, $xoopsUser) ? true : false;
+		if($isDisabled) {
+			$disabledConditions = $elementObject->getVar('ele_disabledconditions');
+			if(is_array($disabledConditions[0]) AND count((array) $disabledConditions[0]) > 0) {
+				$isDisabled = checkElementConditions($disabledConditions, $form_id, $entry_id);
+				// Also, catalogue the governing elements so that dynamic conditional behaviour will work.
+				// Only if it's not a new entry, because there's no point in having elements in a new entry, with no values yet, and then be disabling them. Need to enter some information first??? This is especially necessary if elements should disable after they're NOT blank, because dynamic re-rendering would then disable them before you had saved the value you entered! The NOT Blank condition will kick in on next page load when the entry is no longer 'new'.
+				if($entry_id != 'new' AND !$subformCreateEntry) {
+					catalogConditionalElement($renderedElementMarkupName, array_unique($disabledConditions[0]));
+				}
+			}
+		}
+	}
+
+	$allowed = $allowed ? true : false;
+	$isDisabled = $isDisabled ? true : false;
+	return array($allowed, $isDisabled);
 }
 
 /**
@@ -287,25 +336,35 @@ EOF;
  *
  * Do not catalogue when there is a closure callback on the current output buffer, because that happens when we are rendering inline subform elements, which can never respond to conditions.
  *
- * @param string $renderedElementName The markup handle for the element, ie: de_FID_ENTRYID_ELEMENTID
+ * @param string $renderedElementMarkupName The markup handle for the element, ie: de_FID_ENTRYID_ELEMENTID
  * @param array $governingElements The elements which control the conditions that apply to the rendered element
  * @return Nothing
  */
-function catalogConditionalElement($renderedElementName, $governingElements) {
+function catalogConditionalElement($renderedElementMarkupName, $governingElements) {
 	$bufferingStatus = ob_get_status();
 	if($bufferingStatus['name'] != 'Closure::__invoke') {
-		if(!isset($GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName])) {
-			$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName] = $governingElements;
+		if(!isset($GLOBALS['formulize_renderedElementHasConditions'][$renderedElementMarkupName])) {
+			$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementMarkupName] = $governingElements;
 		} else {
 			foreach($governingElements as $governingElement) {
-				if(!in_array($governingElement, $GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName])) {
-					$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName][] = $governingElement;
+				if(!in_array($governingElement, $GLOBALS['formulize_renderedElementHasConditions'][$renderedElementMarkupName])) {
+					$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementMarkupName][] = $governingElement;
 				}
 			}
 		}
 	}
 }
 
+/**
+ * Remove an element from the conditional element catalogue. This would typically be because you don't want it included in the conditional event handling JS.
+ * @param string $renderedElementMarkupName The markup handle for the element, ie: de_FID_ENTRYID_ELEMENTID
+ * @return Nothing
+ */
+function removeFromConditionalCatalogue($renderedElementMarkupName) {
+	if(isset($GLOBALS['formulize_renderedElementHasConditions'][$renderedElementMarkupName])) {
+		unset($GLOBALS['formulize_renderedElementHasConditions'][$renderedElementMarkupName]);
+	}
+}
 
 /**
  *
