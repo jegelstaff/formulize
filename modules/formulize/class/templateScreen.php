@@ -137,7 +137,7 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
             return;
         }
 
-        $previouslyRenderingScreen = $GLOBALS['formulize_screenCurrentlyRendering'] ? $GLOBALS['formulize_screenCurrentlyRendering'] : null;
+        $previouslyRenderingScreen = (isset($GLOBALS['formulize_screenCurrentlyRendering']) AND $GLOBALS['formulize_screenCurrentlyRendering']) ? $GLOBALS['formulize_screenCurrentlyRendering'] : null;
 
         // SOME STANDARDS FOR HOW TO HANDLE 'SAVE' AND 'SAVE AND LEAVE' BUTTONS AND THE DONE DEST NEED TO BE DEVISED FOR TEMPLATE SCREENS!!
 

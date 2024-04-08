@@ -64,7 +64,7 @@ class formulizeCalendarScreenDataset extends xoopsObject {
         $this->initVar("clicktemplate", XOBJ_DTYPE_TXTAREA);
         $this->initVar("datehandle", XOBJ_DTYPE_TXTBOX, NULL, false, 100);
     }
-    
+
 }
 
 
@@ -98,7 +98,7 @@ class formulizeCalendarScreenHandler extends formulizeScreenHandler {
 	    $screen->setVar('dosmiley', 0);
 	    $screen->setVar('doimage', 0);
 	    $screen->setVar('dobr', 0);
-		
+
 		if (!$update) {
             $sql = sprintf("INSERT INTO %s (sid,
                 caltype,
@@ -124,7 +124,7 @@ class formulizeCalendarScreenHandler extends formulizeScreenHandler {
             print "Error: could not save the screen properly: ".$this->db->error()." for query: $sql";
             return false;
         }
-        
+
         $success1 = true;
         if(isset($_POST['screens-toptemplate'])) {
             $success1 = $this->writeTemplateToFile(trim($_POST['screens-toptemplate']), 'toptemplate', $screen);
@@ -133,11 +133,11 @@ class formulizeCalendarScreenHandler extends formulizeScreenHandler {
         if(isset($_POST['screens-bottomtemplate'])) {
             $success2 = $this->writeTemplateToFile(trim($_POST['screens-bottomtemplate']), 'bottomtemplate', $screen);
         }
-        
+
         if (!$success1 || !$success2) {
             return false;
         }
-        
+
         return $sid;
 	}
 
@@ -166,8 +166,8 @@ class formulizeCalendarScreenHandler extends formulizeScreenHandler {
     // $settings is used internally to pass list of entries settings back and forth to editing screens
     function render($screen) {
 
-        $previouslyRenderingScreen = $GLOBALS['formulize_screenCurrentlyRendering'];
-    
+			$previouslyRenderingScreen = (isset($GLOBALS['formulize_screenCurrentlyRendering']) AND $GLOBALS['formulize_screenCurrentlyRendering']) ? $GLOBALS['formulize_screenCurrentlyRendering'] : null;
+
         $formframes = array();
         $mainforms = array();
         $dateHandles = array();
@@ -175,7 +175,7 @@ class formulizeCalendarScreenHandler extends formulizeScreenHandler {
         $scopes = array();
         $hidden = null;
         $type = $screen->getVar('caltype'); // needs to be made editable in UI!! ****************
-    
+
         foreach($screen->getVar('datasets') as $i=>$dataset) {
             $formframes[$i] = $dataset->getVar('frid') ? $dataset->getVar('frid') : ($screen->getVar('frid') ? $screen->getVar('frid') : $screen->getVar('fid'));
             $mainforms[$i] = $dataset->getVar('fid') ? $dataset->getVar('fid') : ($screen->getVar('frid') ? $screen->getVar('fid') : '');
@@ -190,21 +190,21 @@ class formulizeCalendarScreenHandler extends formulizeScreenHandler {
 
         include_once XOOPS_ROOT_PATH.'/modules/formulize/include/calendardisplay.php';
         include_once XOOPS_ROOT_PATH.'/modules/formulize/include/entriesdisplay.php';
-        
+
         global $xoopsConfig;
         $theme = $xoopsConfig['theme_set'];
-        
+
         ob_start();
         eval(substr(file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/templates/screens/'.$theme.'/'.$screen->getVar('sid').'/toptemplate.php'), 5));
         $toptemplate = ob_get_clean();
         ob_start();
         eval(substr(file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/templates/screens/'.$theme.'/'.$screen->getVar('sid').'/bottomtemplate.php'), 5));
         $bottomtemplate = ob_get_clean();
-     
+
         $GLOBALS['formulize_screenCurrentlyRendering'] = $screen;
         displayCalendar($formframes, $mainforms, $viewHandles, $dateHandles, $filters, $clickTemplates, $scopes, $hidden, 'month', $toptemplate, $bottomtemplate, $viewentryscreens, $useaddicons, $usedeleteicons, $textcolors);
         $GLOBALS['formulize_screenCurrentlyRendering'] = $previouslyRenderingScreen;
-        
+
 	}
 
 	    // THIS METHOD CLONES A FORM_SCREEN

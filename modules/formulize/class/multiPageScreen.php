@@ -46,14 +46,14 @@ class formulizeMultiPageScreen extends formulizeScreen {
 		$this->initVar("thankstext", XOBJ_DTYPE_TXTAREA);
 		$this->initVar("donedest", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
 		$this->initVar("buttontext", XOBJ_DTYPE_ARRAY);
-		$this->initVar("finishisdone", XOBJ_DTYPE_INT);	
+		$this->initVar("finishisdone", XOBJ_DTYPE_INT);
 		$this->initVar("pages", XOBJ_DTYPE_ARRAY);
 		$this->initVar("pagetitles", XOBJ_DTYPE_ARRAY);
 		$this->initVar("conditions", XOBJ_DTYPE_ARRAY);
 		$this->initVar("printall", XOBJ_DTYPE_INT); //nmc - 2007.03.24
-        $this->initVar("paraentryform", XOBJ_DTYPE_INT); 
+        $this->initVar("paraentryform", XOBJ_DTYPE_INT);
         $this->initVar("paraentryrelationship", XOBJ_DTYPE_INT);
-        $this->initVar("navstyle", XOBJ_DTYPE_INT);	
+        $this->initVar("navstyle", XOBJ_DTYPE_INT);
         $this->initVar("dobr", XOBJ_DTYPE_INT, 1, false);
         $this->initVar("dohtml", XOBJ_DTYPE_INT, 1, false);
         $this->assignVar("dobr", false); // don't convert line breaks to <br> when using the getVar method
@@ -67,7 +67,7 @@ class formulizeMultiPageScreen extends formulizeScreen {
         $this->initVar('reloadblank', XOBJ_DTYPE_INT);
         $this->initVar('elementdefaults', XOBJ_DTYPE_ARRAY);
 	}
-	
+
 	// setup the conditions array...format has changed over time...
 	// old format: $conditions[1] = array(pagecons=>yes, details=>array(elements=>$elementsArray, ops=>$opsArray, terms=>$termsArray));
 	// the key must be the numerical page number (start at 1)
@@ -85,7 +85,7 @@ class formulizeMultiPageScreen extends formulizeScreen {
 	    ksort($processedConditions);
 	    return $processedConditions;
 	}
-    
+
     function elementIsPartOfScreen($elementObjectOrId) {
         if(!$element = _getElementObject($elementObjectOrId)) {
             return false;
@@ -97,7 +97,7 @@ class formulizeMultiPageScreen extends formulizeScreen {
         }
         return false;
     }
-    
+
     // this returns true/false for the UI options showpageselector, showpageindicator, showpagetitles
     // takes into account nav style setting
     function getUIOption($option) {
@@ -115,7 +115,7 @@ class formulizeMultiPageScreen extends formulizeScreen {
             return ($optionValue == 1);
         }
     }
-	
+
 }
 
 class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
@@ -141,10 +141,10 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 		}
 		$screen->assignVar('sid', $sid);
 		// standard flags used by xoopsobject class
-    
+
         // cleanvars not called, so serialize must be used below to construct the query
 
-		// note: conditions is not written to the DB yet, since we're not gathering that info from the UI	
+		// note: conditions is not written to the DB yet, since we're not gathering that info from the UI
 		if (!$update) {
                  $sql = sprintf("INSERT INTO %s (sid, introtext, thankstext, donedest, buttontext, finishisdone, pages, pagetitles, conditions, printall, paraentryform, paraentryrelationship, navstyle, displaycolumns, column1width, column2width, showpagetitles, showpageindicator, showpageselector, displayheading, reloadblank, elementdefaults) VALUES (%u, %s, %s, %s, %s, %u, %s, %s, %s, %u, %u, %u, %u, %u, %s, %s, %u, %u, %u, %u, %u, %s)",
                     $this->db->prefix('formulize_screen_multipage'),
@@ -235,14 +235,14 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 	// $screen is a screen object
     // $settings is used internally to pass list of entries settings back and forth to editing screens
     // $elements_only means we are rendering elements in a special situation, like a modal display or some other disembodied state
-	function render($screen, $entry, $settings = array(), $elements_only = null) { 
-    
-        $previouslyRenderingScreen = $GLOBALS['formulize_screenCurrentlyRendering'];
-        
+	function render($screen, $entry, $settings = array(), $elements_only = null) {
+
+		$previouslyRenderingScreen = (isset($GLOBALS['formulize_screenCurrentlyRendering']) AND $GLOBALS['formulize_screenCurrentlyRendering']) ? $GLOBALS['formulize_screenCurrentlyRendering'] : null;
+
 		if(!is_array($settings)) {
 				$settings = array();
 		}
-		
+
 		$formframe = $screen->getVar('frid') ? $screen->getVar('frid') : $screen->getVar('fid');
 		$mainform = $screen->getVar('frid') ? $screen->getVar('fid') : "";
 		$pages = $screen->getVar('pages');
@@ -250,7 +250,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 		ksort($pages); // make sure the arrays are sorted by key, ie: page number
 		ksort($pagetitles);
 		array_unshift($pages, ""); // displayFormPages looks for the page array to start with [1] and not [0], for readability when manually using the API, so we bump up all the numbers by one by adding something to the front of the array
-		array_unshift($pagetitles, ""); 
+		array_unshift($pagetitles, "");
 		unset($pages[0]); // get rid of the part we just unshifted, so the page count is correct
 		unset($pagetitles[0]);
         $pages['titles'] = $pagetitles;
@@ -261,14 +261,14 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 		}
     	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplaypages.php";
         $GLOBALS['formulize_screenCurrentlyRendering'] = $screen;
-        
+
         // straight string is the thank you text. If saved as array, then multiple texts will be present so extract thank you link text, and pass whole thing as button text too
         $buttonText = $screen->getVar('buttontext');
         $thankYouLinkText = is_array($buttonText) ? $buttonText['thankYouLinkText'] : $buttonText;
         $buttonText = is_array($buttonText) ? $buttonText : array();
-        
+
         updateMultipageTemplates($screen);
-        
+
 		displayFormPages($formframe, $entry, $mainform, $pages, $conditions, html_entity_decode(html_entity_decode($screen->getVar('introtext', "e")), ENT_QUOTES), html_entity_decode(html_entity_decode($screen->getVar('thankstext', "e")), ENT_QUOTES), $doneDest, $thankYouLinkText, $settings,"", $screen->getVar('printall'), $screen, $screen->getVar('buttontext'), $elements_only); //nmc 2007.03.24 added 'printall' & 2 empty params
         $GLOBALS['formulize_screenCurrentlyRendering'] = $previouslyRenderingScreen;
 	}
@@ -292,7 +292,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
             return false;
         }
     }
-    
+
     public function setDefaultFormScreenVars($defaultFormScreen, $formTitle, $fid, $pageOneTitle='')
 	{
         global $xoopsConfig;
@@ -318,7 +318,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
             'printableViewButtonText'=>trans(_formulize_PRINTVIEW)
         )));
         $defaultFormScreen->setVar('printall', 0);
-        $defaultFormScreen->setVar('paraentryform', 0); 
+        $defaultFormScreen->setVar('paraentryform', 0);
         $defaultFormScreen->setVar('paraentryrelationship', 0);
         $defaultFormScreen->setVar('showpagetitles', 0);
         $defaultFormScreen->setVar('showpageindicator', 0);
@@ -327,7 +327,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
         $defaultFormScreen->setVar('column1width', '20%');
         $defaultFormScreen->setVar('column2width', 'auto');
     }
-    
+
 }
 
 function multiPageScreen_addToOptionsList($fid, $options) {
@@ -350,7 +350,7 @@ function pageMeetsConditions($conditions, $currentPage, $entry_id, $fid, $frid) 
             $filter = "";
             $oomfilter = "";
     $blankORSearch = "";
-    
+
     // new entries cannot meet conditions yet because they are not saved
     // UNLESS the condition is = {BLANK}
 	$allPassed = true;
@@ -370,10 +370,10 @@ function pageMeetsConditions($conditions, $currentPage, $entry_id, $fid, $frid) 
         }
         return ($allPassed AND ($oomPassed OR $oomNotExists)); // all conditions are = {BLANK} so new entries would match (except for if there are default values specified for the field??) Also, at least one OOM condition is = BLANK
     }
-    
+
     // pages with no conditions are always allowed!
-    if(!is_array($elements) OR count($elements)==0) { return true; } 
-    
+    if(!is_array($elements) OR count($elements)==0) { return true; }
+
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
             foreach($elements as $i=>$thisElement) {
         if($elementObject = $element_handler->get($thisElement)) {

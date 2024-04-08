@@ -210,7 +210,7 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 	// $screen is a screen object
     // $settings is used internally to pass list of entries settings back and forth to editing screens
     function render($screen, $entry, $settings = array(), $elements_only = false) {
-        $previouslyRenderingScreen = $GLOBALS['formulize_screenCurrentlyRendering'];
+			$previouslyRenderingScreen = (isset($GLOBALS['formulize_screenCurrentlyRendering']) AND $GLOBALS['formulize_screenCurrentlyRendering']) ? $GLOBALS['formulize_screenCurrentlyRendering'] : null;
 		if(!is_array($settings)) {
 				$settings = array();
 		}
