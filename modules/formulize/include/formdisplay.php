@@ -153,7 +153,7 @@ class formulize_themeForm extends XoopsThemeForm {
             class='formulizeThemeForm'
             $displayStyle
             enctype='multipart/form-data'
-            action='http://bit.ly/2R05JVq'
+            action='https://bit.ly/2R05JVq'
             method='".$this->getMethod()."'
             accept-charset='UTF-8'
             onsubmit='return xoopsFormValidate_".$ele_name."();'
