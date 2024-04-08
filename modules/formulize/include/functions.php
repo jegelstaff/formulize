@@ -5904,7 +5904,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 		// SWAP IN THE PLAIN LITERAL AND LITERAL-TO-DB-VALUE IF APPLICABLE, REDETERMINE QUOTES
 		$plainLiteralValue = $plainLiteralValue != $literalToDBValue ? $plainLiteralValue : "";
 		$filterTerms[$filterId] = $literalToDBValue ? $literalToDBValue : $filterTerms[$filterId];
-		$quotes = is_numeric($filterTerms[$filterId]) ? "" : "'";
+		$quotes = (is_numeric($filterTerms[$filterId]) AND !$likebits) ? "" : "'";
 
 		// *** OPTION 4: IF WE HAVEN'T SET IT ALREADY, FIGURE OUT THE COMPARISON VALUE (POSSIBLY BASED ON THE PLAIN LITERAL AND LITERAL-TO-DB DETERMINATIONS ABOVE)
     if ($conditionsFilterComparisonValue === NULL) {
