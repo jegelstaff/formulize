@@ -6025,7 +6025,7 @@ function formulize_javascriptForRemovingEntryLocks($unload=false) {
         $token = getEntryLockSecurityToken();
         $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
         formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/temp/", ".token");
-        if(count($entriesThatHaveBeenLockedThisPageLoad)>0) {
+        if(count((array)$entriesThatHaveBeenLockedThisPageLoad)>0) {
             file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/temp/'.$token.$uid.'.token', serialize($entriesThatHaveBeenLockedThisPageLoad));
         }
         // write a value that we can check later as an antiCSRF token. Cannot validate through the built in token system since it relies on session which will be borked if the user logs out. So we write a file instead.
