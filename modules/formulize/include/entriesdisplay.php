@@ -3320,7 +3320,7 @@ function addNew(flag) {
 	} else {
 		window.document.controls.ventry.value = 'addnew';
 	}
-	window.document.controls.submit();
+	submitControls();
 }
 
 function goDetails(viewentry, screen) {
@@ -3328,7 +3328,7 @@ function goDetails(viewentry, screen) {
 	if(screen>0) {
 		window.document.controls.overridescreen.value = screen;
 	}
-	window.document.controls.submit();
+	submitControls();
 }
 
 function cancelCalcs() {
@@ -3407,7 +3407,15 @@ function showLoading() {
 		}
 	?>
 	window.document.controls.ventry.value = '';
-	window.document.controls.submit();
+	submitControls();
+}
+
+function submitControls() {
+    if (window.formulize_remoteSubmitList) {
+        window.formulize_remoteSubmitList();
+    } else {
+        window.document.controls.submit();
+    }
 }
 
 function showLoadingReset() {
