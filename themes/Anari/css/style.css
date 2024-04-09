@@ -503,13 +503,13 @@ table:first-child div.applinks h1 {
 }
 
 .site-branding__logo {
-  height: 30px;
+  height: 40px;
   display: flex;
   align-items: center;
 }
 
 .site-branding__logo a{
-  height: 30px;
+  height: 40px;
 }
 
 .site-branding__logo-image {
