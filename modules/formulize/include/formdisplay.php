@@ -1550,7 +1550,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
         // unless we're doing an embedded 'elements only form' -- unless we're doing that for displaying a subform entry specifically as its own thing (as part of a modal for example (and only example right now))
 		if(count((array) $formulize_governingElements)> 0 AND (!$formElementsOnly OR (isset($formulize_displayingSubform) AND $formulize_displayingSubform == true))) {
 			drawJavascriptForConditionalElements(array_keys($GLOBALS['formulize_renderedElementHasConditions']), $formulize_governingElements, $formulize_oneToOneElements, $formulize_oneToOneMetaData);
-            print "<div id='conditionalHTMLCapture' class='used-to-assign-html-then-read-innerHTML-so-we-always-get-standardized-conversion-of-quotes-urlencoding-etc' style='display: none;'></div>";
 		}
 
         // need to always include, once, the subformelementid that is being displayed, regardless of whether there are more subs below this or not
@@ -4001,7 +4000,10 @@ function _drawJavascriptForConditionalElements($initCode) {
 	static $codeIncluded = false;
 
 	if(!$codeIncluded) {
-			$code = "<script type='text/javascript' src='".XOOPS_URL."/modules/formulize/include/js/conditional.js'></script>\n";
+			$code = "
+				<script type='text/javascript' src='".XOOPS_URL."/modules/formulize/include/js/conditional.js'></script>\n
+				<div id='conditionalHTMLCapture' class='used-to-assign-html-then-read-innerHTML-so-we-always-get-standardized-conversion-of-quotes-urlencoding-etc' style='display: none;'></div>\n
+			";
 			$codeIncluded = true;
 	}
 	$code .= "<script type='text/javascript'>
@@ -4011,7 +4013,6 @@ $initCode
 	return $code;
 
 }
-
 
 function compileGoverningElementsForConditionalElements($conditionalElements, $entries, $sub_entries) {
 
