@@ -85,7 +85,7 @@ if($_POST['formulize_admin_key'] == "new") {
 }
 
 if($element->isSystemElement) {
-	return;
+	exit();
 }
 
 $element->setVar('ele_order', figureOutOrder($_POST['orderpref'], $element->getVar('ele_order'), $fid));
