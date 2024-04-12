@@ -337,7 +337,7 @@ function elementIsAllowedForUserInEntry($elementObject, $entry_id, $groups = arr
  * Do not catalogue when there is a closure callback on the current output buffer, because that happens when we are rendering inline subform elements, which can never respond to conditions.
  *
  * @param string $renderedElementMarkupName The markup handle for the element, ie: de_FID_ENTRYID_ELEMENTID
- * @param array $governingElements The elements which control the conditions that apply to the rendered element
+ * @param array $governingElements An array of element handles, of the elements which control the conditions that apply to the rendered element
  * @return Nothing
  */
 function catalogConditionalElement($renderedElementMarkupName, $governingElements) {
