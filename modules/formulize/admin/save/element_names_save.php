@@ -69,9 +69,6 @@ $ele_type = $_POST['element_type'];
 $element_handler = xoops_getmodulehandler('elements','formulize');
 if($_POST['formulize_admin_key'] == "new") {
   $element = $element_handler->create();
-  if($element->isSystemElement) {
-    return;
-  }
   $fid = intval($_POST['formulize_form_id']);
   $element->setVar('id_form', $fid);
   $element->setVar('ele_type', $ele_type);
@@ -85,6 +82,10 @@ if($_POST['formulize_admin_key'] == "new") {
   $element = $element_handler->get(intval($_POST['formulize_admin_key']));
   $fid = $element->getVar('id_form');
   $original_handle = $element->getVar('ele_handle');
+}
+
+if($element->isSystemElement) {
+	return;
 }
 
 $element->setVar('ele_order', figureOutOrder($_POST['orderpref'], $element->getVar('ele_order'), $fid));
@@ -127,7 +128,7 @@ if(!$ele_id = $element_handler->insert($element)) {
   print "Error: could not save the element: ".$xoopsDB->error();
 }
 
-if($original_handle) { 
+if($original_handle) {
 	if($ele_handle != $original_handle) {
         // rewrite references in other elements to this handle (linked selectboxes)
         $ele_handle_len = strlen($ele_handle) + 5 + strlen($fid);
@@ -174,6 +175,6 @@ if($_POST['reload_names_page'] OR $isNew) {
   if($isNew) {
     $url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=element&fid=$fid&aid=".intval($_POST['aid'])."&ele_id=$ele_id";
     $ele_id_to_send = $ele_id;
-  } 
+  }
   print "/* evalnow */ ele_id = $ele_id_to_send; redirect = \"reloadWithScrollPosition('$url');\";";
 }

@@ -71,6 +71,9 @@ if(!$ele_id = intval($_GET['ele_id'])) { // on new element saves, new ele_id can
   }
 }
 $element = $element_handler->get($ele_id);
+if($element->isSystemElement) {
+	return;
+}
 $ele_type = $element->getVar('ele_type');
 $fid = $element->getVar('id_form');
 
