@@ -66,7 +66,7 @@ if(security_check($fid, $entry_id, $uid)) {
         if (file_exists($filePath)) {
             header('Content-Description: File Transfer');
             header('Content-Type: '.$fileInfo['type']);
-            header('Content-Disposition: attachment; filename='.$element_handler->getFileDisplayName($fileInfo['name']));
+            header('Content-Disposition: attachment; filename="'.$element_handler->getFileDisplayName($fileInfo['name']).'"');
             header('Content-Transfer-Encoding: binary');
             header('Expires: 0');
             header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
