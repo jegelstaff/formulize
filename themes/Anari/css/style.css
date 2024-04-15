@@ -1206,7 +1206,9 @@ table.outer textarea,
     #formulize_modal textarea,
     #formulize_modal input[type="text"],
     #formulize_modal input[type="date"],
-    #formulize_modal input[type="password"] {
+    #formulize_modal input[type="password"],
+		.form-help-text,
+		.ck-editor {
         max-width: 700px;
     }
 
