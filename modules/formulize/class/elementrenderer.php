@@ -1162,15 +1162,15 @@ class formulizeElementRenderer{
 
 
 
-        $output .= "<div class=\"formulize_autocomplete\"><input type='text' class='formulize_autocomplete $multipleClass' name='${form_ele_id}_user' id = '${form_ele_id}_user' autocomplete='off' value='".str_replace("'", "&#039;", $default_value_user)."' size='$maxLength' aria-describedby='${form_ele_id}-help-text' /></div><img src='".XOOPS_URL."/modules/formulize/images/magnifying_glass.png' class='autocomplete-icon'>\n";
-        $output .= "<div id='${form_ele_id}_defaults'>\n";
+        $output .= "<div class=\"formulize_autocomplete\"><input type='text' class='formulize_autocomplete $multipleClass' name='{$renderedElementMarkupName}_user' id = '{$renderedElementMarkupName}_user' autocomplete='off' value='".str_replace("'", "&#039;", $default_value_user)."' size='$maxLength' aria-describedby='{$renderedElementMarkupName}-help-text' /></div><img src='".XOOPS_URL."/modules/formulize/images/magnifying_glass.png' class='autocomplete-icon'>\n";
+        $output .= "<div id='{$renderedElementMarkupName}_defaults'>\n";
         if(!$multiple) {
-            $output .= "<input type='hidden' name='${form_ele_id}' id = '${form_ele_id}' value='".$default_value[0]."' />\n";
+            $output .= "<input type='hidden' name='{$renderedElementMarkupName}' id = '{$renderedElementMarkupName}' value='".$default_value[0]."' />\n";
         } else {
-            $output .= "<input type='hidden' name='last_selected_${form_ele_id}' id = 'last_selected_${form_ele_id}' value='' />\n";
+            $output .= "<input type='hidden' name='last_selected_{$renderedElementMarkupName}' id = 'last_selected_{$renderedElementMarkupName}' value='' />\n";
             foreach($default_value as $i=>$this_default_value) {
                 if($this_default_value OR $this_default_value === 0) {
-                    $output .= "<input type='hidden' name='${form_ele_id}[]' id = '${form_ele_id}_".$i."' target='".str_replace("'", "&#039;", $i)."' value='".str_replace("'", "&#039;", $this_default_value)."' />\n";
+                    $output .= "<input type='hidden' name='{$renderedElementMarkupName}[]' id = '{$renderedElementMarkupName}_".$i."' target='".str_replace("'", "&#039;", $i)."' value='".str_replace("'", "&#039;", $this_default_value)."' />\n";
                 }
             }
         }
