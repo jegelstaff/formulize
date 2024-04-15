@@ -65,7 +65,7 @@
 
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
 
-function displayGrid($fid, $entry_id="", $rowcaps, $colcaps, $title="", $orientation="horizontal", $startID="first", $finalCell="", $finalRow="", $calledInternal=false, $screen=null, $headingAtSide="", $elementId=0, $prevEntry = array()) {
+function displayGrid($fid, $entry_id, $rowcaps, $colcaps, $title="", $orientation="horizontal", $startID="first", $finalCell="", $finalRow="", $calledInternal=false, $screen=null, $headingAtSide="", $elementId=0, $prevEntry = array()) {
 
 	global $xoopsUser;
 	$numcols = count((array) $colcaps);
