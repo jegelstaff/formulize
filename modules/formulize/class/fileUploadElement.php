@@ -405,7 +405,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
         $fileExtension = substr($displayName, $dotPos);
         $imageTypes = array('.gif', '.jpg', '.png', '.jpeg', '.webp');
         if(in_array($fileExtension, $imageTypes)) {
-            $linkContents = "<img class='formulize-uploaded-image-thumbnail' src='$url' />";
+            $linkContents = $this->createImageTag($url, $displayName);
         } else {
             $linkContents = htmlspecialchars(strip_tags($displayName),ENT_QUOTES);
         }
@@ -435,5 +435,71 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
             }
         }
     }
+
+		/**
+		 * Create an HTML img tag with the src set as the url for the image
+		 *
+		 * @param string $url The URL used to access the image.
+		 * @param string $displayName Optional. The name of the file/image, for use in the title attribute.
+		 * @param string $class Optional. The class to assign to the img tag. Defaults to 'formulize-uploaded-image-thumbnail'
+		 * @return string Returns the HTML img tag referring to the image
+		 */
+		function createImageTag($url, $displayName='', $class='formulize-uploaded-image-thumbnail') {
+			return "<img class='".htmlspecialchars(strip_tags($class), ENT_QUOTES)."' title='".htmlspecialchars(strip_tags($displayName),ENT_QUOTES)."' src='$url' />";
+		}
+
 }
+
+/**
+ * Take the value of a file upload element, and return an image tag if applicable
+ *
+ * @param array $entryOrDataset The record from a dataset, or the entire dataset, as returned from getData
+ * @param string $elementHandle The element handle of the file upload element we're working with
+ * @param int $dataSetKey Optional. The key in the dataset array of the entry record we want to work with. Required if $entryOrDataset is the entire dataset.
+ * @param int $localId Optional. The ordinal id of the instance of the element handle we want to work with. Only required if there are multiple entries represented in this dataset record which all include data attached to this element handle, ie: if the handle is on the many side of a one to many connection in the dataset.
+ * @return string Returns the an HTML img tag referring to the file if the file is an image, or returns the url for the file otherwise. If the file upload failed, this will return the error message from when the upload failed.
+ */
+function displayFileImage($entryOrDataset, $elementHandle, $dataSetKey=null, $localId='NULL') {
+	$displayName = "";
+	$url = display($entryOrDataset, $elementHandle, $dataSetKey, $localId);
+	$element_handler = xoops_getmodulehandler('fileUploadElement', 'formulize');
+	// extract the element id and entry id from the url
+	if(strstr($url, XOOPS_URL."/modules/formulize/download.php?element=")) {
+		$urlParts = explode('?', $url);
+		$urlParams = explode('&', $urlParts[1]);
+		$elementIdParamParts = explode('=',$urlParams[0]);
+		$entryIdParamParts = explode('=',$urlParams[1]);
+		$elementId = $elementIdParamParts[1];
+		$entryId = $entryIdParamParts[1];
+	} else {
+		$metaData = str_replace(XOOPS_URL."/uploads/formulize_", "", $url);
+		$metaData = explode('/', $metaData);
+		$metaDataParts = explode('_',$metaData[0]);
+		$elementId = $metaDataParts[2];
+		$entryId = $metaDataParts[1];
+	}
+	// lookup the name
+	if($elementObject = $element_handler->get($elementId)) {
+		$dataHandler = new formulizeDataHandler($elementObject->getVar('id_form'));
+		$value = $dataHandler->getElementValueInEntry($entryId, $elementId);
+		$value = unserialize($value);
+		$name = isset($value['name']) ? $value['name'] : '';
+		$displayName = $element_handler->getFileDisplayName($name);
+	}
+	// return the URL if we don't have a valid name
+	if(!$displayName) {
+		return $url;
+	}
+	// check if this file is an image, and if not then return the url
+	$dotPos = strrpos($displayName, '.');
+  $fileExtension = substr($displayName, $dotPos);
+	$imageTypes = array('.gif', '.jpg', '.png', '.jpeg', '.webp');
+	if(!in_array($fileExtension, $imageTypes)) {
+		return $url;
+	}
+	// make an image tag for this file and return that
+	return $element_handler->createImageTag($url, $displayName);
+}
+
+
 
