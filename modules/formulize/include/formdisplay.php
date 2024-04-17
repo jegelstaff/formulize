@@ -674,6 +674,22 @@ function getEntryValues($entry, $element_handler, $groups, $fid, $elements, $mid
 		return "";
 	}
 
+	// add in any elements contained in any grids that are being displayed
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
+	foreach($elements as $thisElement) {
+		if($thisElementObject = $element_handler->get($thisElement)) {
+			if($thisElementObject->getVar('ele_type') == 'grid') {
+				$thisElementEleValue = $thisElementObject->getVar('ele_value');
+				$gridCount = count(explode(",", $thisElementEleValue[1])) * count(explode(",", $thisElementEleValue[2]));
+				foreach(elementsInGrid($thisElementEleValue[4], $fid, $gridCount) as $thisGridElementId) {
+					if(!in_array($thisGridElementId, $elements)) {
+						$elements[] = $thisGridElementId;
+					}
+				}
+			}
+		}
+	}
+
 	static $cachedEntryValues = array();
 	$serializedElements = serialize($elements);
 	if(!isset($cachedEntryValues[$fid][$entry][$serializedElements])) {
