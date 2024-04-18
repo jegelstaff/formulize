@@ -563,6 +563,7 @@ table:first-child div.applinks h1 {
   min-width: 20px;
   margin-right: 20px;
   color: #334D6E;
+	margin-top: 0.7em;
 }
 
 #burger-and-logo {
