@@ -22,6 +22,8 @@ Key things to know when running Formulize locally in Docker:
 3. The __database name__ is _formulize_
 4. The __database username and password__ are _user_ and _password_
 
+Also, if you running Docker in Windows, copy or rename the file: /docker/maraidb/conf.d/lower_case_table_names.cnf.windows to: /docker/maraidb/conf.d/lower_case_table_names.cnf (ie: remove the .windows part on the end).
+
 ## You have three choices when running a local installation of Formulize in Docker:
 
 1. Run the monastery branch, which skips the installer.
