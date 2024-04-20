@@ -1867,10 +1867,10 @@ function viewEntryLink($clickable_text="", $entry_id_or_dataset_record="", $over
 	if($entry_id_or_dataset_record) {
 		// swap out the goDetails instruction for the new one based on entry_id_or_dataset_record and override_screen_id
     $entry_id_or_dataset_record = processViewEntryLinkOverrideId($entry_id_or_dataset_record);
-		if($vePos = strpos($anchorMarkup, '&ve=')) {
+		$veIntro = strstr($anchorMarkup, '&ve=') ? '&' : '?';
+		if($vePos = strpos($anchorMarkup, $veIntro.'ve=')) {
 			$veQuotePos = strpos($anchorMarkup, "'", $vePos);
-			$veValue = substr($anchorMarkup, $vePos, $veQuotePos-$vePos);
-			$anchorMarkup = substr_replace($anchorMarkup, "&ve=".$entry_id_or_dataset_record, $vePos, ($veQuotePos-$vePos));
+			$anchorMarkup = substr_replace($anchorMarkup, $veIntro.'ve='.$entry_id_or_dataset_record, $vePos, ($veQuotePos-$vePos));
 		}
 		$screenParam = $override_screen_id ? intval($override_screen_id) : "";
 		$onClickPos = strpos($anchorMarkup, 'onclick');
