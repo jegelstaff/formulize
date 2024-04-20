@@ -1866,10 +1866,15 @@ function viewEntryLink($clickable_text="", $entry_id_or_dataset_record="", $over
 	if(!$anchorMarkup) { return ""; }
 	if($entry_id_or_dataset_record) {
 		// swap out the goDetails instruction for the new one based on entry_id_or_dataset_record and override_screen_id
+    $entry_id_or_dataset_record = processViewEntryLinkOverrideId($entry_id_or_dataset_record);
+		$veIntro = strstr($anchorMarkup, '&ve=') ? '&' : '?';
+		if($vePos = strpos($anchorMarkup, $veIntro.'ve=')) {
+			$veQuotePos = strpos($anchorMarkup, "'", $vePos);
+			$anchorMarkup = substr_replace($anchorMarkup, $veIntro.'ve='.$entry_id_or_dataset_record, $vePos, ($veQuotePos-$vePos));
+		}
 		$screenParam = $override_screen_id ? intval($override_screen_id) : "";
 		$onClickPos = strpos($anchorMarkup, 'onclick');
 		$semicolonPos = strpos($anchorMarkup, ';', $onClickPos);
-    $entry_id_or_dataset_record = processViewEntryLinkOverrideId($entry_id_or_dataset_record);
 		$anchorMarkup = substr_replace($anchorMarkup, "onclick=\"javascript:goDetails('".$entry_id_or_dataset_record ."', '". $screenParam ."')", $onClickPos, ($semicolonPos-$onClickPos));
 	}
 	if(!$clickable_text) {
