@@ -4,18 +4,27 @@
 		<div class="form-radios">
 			<input type="radio" id="yes" name="linked_yesno" value="1"<{if $content.islinked eq 1}> checked="checked"<{/if}>/>Use the values that people have entered in this form element: <{$content.linkedoptions}>
 		</div>
-        
-        <div class="form-radios" id="snapshot-values" style="<{if $content.islinked neq 1}>display: none; <{/if}>padding: 1em;">
+
+        <div class="form-radios" id="snapshot-values" style="<{if $content.islinked neq 1}>display: none; <{/if}>padding-top: 1em; padding-left: 2em;">
             <input type="radio" id="snapshot-0" name="elements-ele_value[snapshot]" value=0 checked> When people select a value, save a reference to the source (so when the source changes, the values people have entered here will change too).<br>
             <input type="radio" id="snapshot-1" name="elements-ele_value[snapshot]" value=1> When people select a value, save a snapshot of the value (so it will stay as-is regardless of changes to the source).
         </div>
-        
+				<div id="form-radios" style="<{if $content.islinked neq 1}>display: none; <{/if}>padding-bottom: 1em; padding-top: 1em; padding-left: 2em;">
+					<p>If this element is linked to its own form, can the current entry be selected?<br>
+					<input type="radio" id="selfreference-0" name="elements-ele_value[selfreference]" value=0 checked><label for="selfreference-0"> No</label>&nbsp;&nbsp;&nbsp;<input type="radio" id="selfreference-1" name="elements-ele_value[selfreference]" value=1><label for="selfreference-1"> Yes</label></p>
+					<div class="description">
+						<p>For example, imagine an Activity Log that contains a linked list of all the activities in the log. When you're editing an entry, should the list contain the activity you're editing or not?</p>
+					</div>
+				</div>
+
+				<{if $content.islinked eq 1}><hr><br><{/if}>
+
 		<div class="form-radios">
 			<input type="radio" id="no" name="linked_yesno" value="0"<{if $content.islinked eq 0}> checked="checked"<{/if}>/>Use the options specified below:
 		</div>
-		<{include file="db:admin/element_optionlist.html"}>	
-		
+		<{include file="db:admin/element_optionlist.html"}>
+
 	</div>
 
 
-	
+

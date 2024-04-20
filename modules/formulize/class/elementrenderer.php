@@ -352,14 +352,12 @@ class formulizeElementRenderer{
 
                     static $cachedSourceValuesQ = array();
                     static $cachedSourceValuesAutocompleteFile = array();
-                    static $cachedSourceValuesAutocompleteLength = array();
                     // horrible hack to handle cases where new subform entries are created and we need to flush values that would have been generated when we were fake making the page before we knew a new subform entry is what we were really aiming for. See comment where global is instantiated.
                     // all comes from not having proper controller in charge of what we should be displaying. Ugh.
                     if(isset($GLOBALS['formulize_unsetSelectboxCaches'])) {
                         //formulize_benchmark('unsetting caches!');
                         $cachedSourceValuesQ = array();
                         $cachedSourceValuesAutocompleteFile = array();
-                        $cachedSourceValuesAutocompleteLength = array();
                         unset($GLOBALS['formulize_unsetSelectboxCaches']);
                     }
 
@@ -421,9 +419,12 @@ class formulizeElementRenderer{
                         $directLimit = ' AND t1.entry_id IN ('.implode(',',$directLimit).') ';
 					}
 
+					$selfReferenceExclusion = generateSelfReferenceExclusionSQL($entry_id, $id_form, $sourceFid, $ele_value, 't1');
+
+					// $extra_clause will always include WHERE !!
 					$sourceValuesQ = "SELECT t1.entry_id, ".$select_column." FROM ".$xoopsDB->prefix("formulize_".
 						$sourceFormObject->getVar('form_handle'))." AS t1".$extra_clause.
-                        " $conditionsfilter $conditionsfilter_oom $restrictSQL $directLimit $sourceEntrySafetyNetEnd GROUP BY t1.entry_id $sortOrderClause , t1.entry_id ASC ";
+                        " $conditionsfilter $conditionsfilter_oom $restrictSQL $directLimit $selfReferenceExclusion $sourceEntrySafetyNetEnd GROUP BY t1.entry_id $sortOrderClause , t1.entry_id ASC ";
 
 					if(!$isDisabled) {
 						// set the default selections, based on the entry_ids that have been selected as the defaults, if applicable
@@ -497,18 +498,14 @@ class formulizeElementRenderer{
 							// write the possible values to a cached file so we can look them up easily when we need them, don't want to actually send them to the browser, since it could be huge, but don't want to replicate all the logic that has already gathered the values for us, each time there's an ajax request
 							$cachedLinkedOptionsFileName = "formulize_linkedOptions_".str_replace(".","",microtime(true));
 							formulize_scandirAndClean(XOOPS_ROOT_PATH."/cache/", "formulize_linkedOptions_");
-							$maxLength = 10;
 							$the_values = array();
 							asort($linkedElementOptions);
 							foreach($linkedElementOptions as $id=>$text) {
 								$the_values[$id] = undoAllHTMLChars(trans($text));
-								$thisTextLength = strlen($text);
-								$maxLength = $thisTextLength > $maxLength ? $thisTextLength : $maxLength;
 							}
 							file_put_contents(XOOPS_ROOT_PATH."/cache/$cachedLinkedOptionsFileName",
 								"<?php\n\$$cachedLinkedOptionsFileName = ".var_export($the_values, true).";\n");
 							$cachedSourceValuesAutocompleteFile[intval($ele_value['snapshot'])][$sourceValuesQ] = $cachedLinkedOptionsFileName;
-							$cachedSourceValuesAutocompleteLength[intval($ele_value['snapshot'])][$sourceValuesQ] = $maxLength;
 						}
 					}
 
@@ -524,7 +521,7 @@ class formulizeElementRenderer{
                         foreach($default_value as $dv) {
                             $default_value_user[$dv] = count((array) $snapshotValues) > 0 ? $dv : $cachedSourceValuesQ[intval($ele_value['snapshot'])][$sourceValuesQ][$dv]; // take the literal or the reference, depending if we snapshot or not
                         }
-						$renderedComboBox = $this->formulize_renderQuickSelect($renderedElementMarkupName, $cachedSourceValuesAutocompleteFile[intval($ele_value['snapshot'])][$sourceValuesQ], $default_value, $default_value_user, $cachedSourceValuesAutocompleteLength[intval($ele_value['snapshot'])][$sourceValuesQ], $validationOnly, $ele_value[1]);
+						$renderedComboBox = $this->formulize_renderQuickSelect($renderedElementMarkupName, $cachedSourceValuesAutocompleteFile[intval($ele_value['snapshot'])][$sourceValuesQ], $default_value, $default_value_user, $ele_value[1]);
 						$form_ele = new xoopsFormLabel($ele_caption, $renderedComboBox, $renderedElementMarkupName);
 						$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
                     // if we're rendering a disabled autocomplete box
@@ -727,12 +724,9 @@ class formulizeElementRenderer{
 						//but don't want to replicate all the logic that has already gathered the values for us, each time there's an ajax request
 						$cachedLinkedOptionsFileName = "formulize_Options_".str_replace(".","",microtime(true));
 						formulize_scandirAndClean(XOOPS_ROOT_PATH."/cache/", "formulize_Options_");
-						$maxLength = 10;
 						$the_values = array();
 						foreach($options as $id => $text) {
 							$the_values[$id] = undoAllHTMLChars(trans($text));
-							$thisTextLength = strlen($the_values[$id]);
-							$maxLength = ($thisTextLength > $maxLength) ? $thisTextLength : $maxLength;
 						}
 						file_put_contents(XOOPS_ROOT_PATH."/cache/$cachedLinkedOptionsFileName",
 							"<?php\n\$$cachedLinkedOptionsFileName = ".var_export($the_values, true).";\n");
@@ -748,7 +742,7 @@ class formulizeElementRenderer{
                         }
                         $defaultSelected = !is_array($defaultSelected) ? array($defaultSelected) : $defaultSelected;
                         $defaultSelectedUser = !is_array($defaultSelectedUser) ? array($defaultSelectedUser) : $defaultSelectedUser;
-						$renderedComboBox = $this->formulize_renderQuickSelect($renderedElementMarkupName, $cachedLinkedOptionsFileName, $defaultSelected, $defaultSelectedUser, $maxLength, $validationOnly, $ele_value[1]);
+						$renderedComboBox = $this->formulize_renderQuickSelect($renderedElementMarkupName, $cachedLinkedOptionsFileName, $defaultSelected, $defaultSelectedUser, $ele_value[1]);
 						$form_ele2 = new xoopsFormLabel($ele_caption, $renderedComboBox, $renderedElementMarkupName);
 						$renderedElement = $form_ele2->render();
 					} else { // normal element
@@ -1144,7 +1138,7 @@ class formulizeElementRenderer{
 		return $cachedEntryData[$id_form][$entry_id][0];
 	}
 
-	function formulize_renderQuickSelect($renderedElementMarkupName, $cachedLinkedOptionsFilename, $default_value='', $default_value_user='none', $maxLength=30, $validationOnly=false, $multiple = 0) {
+	function formulize_renderQuickSelect($renderedElementMarkupName, $cachedLinkedOptionsFilename, $default_value, $default_value_user, $multiple = 0) {
 
         if($multiple) {
             global $easiestml_lang;
@@ -1162,15 +1156,15 @@ class formulizeElementRenderer{
 
 
 
-        $output .= "<div class=\"formulize_autocomplete\"><input type='text' class='formulize_autocomplete $multipleClass' name='{$renderedElementMarkupName}_user' id = '{$renderedElementMarkupName}_user' autocomplete='off' value='".str_replace("'", "&#039;", $default_value_user)."' size='$maxLength' aria-describedby='{$renderedElementMarkupName}-help-text' /></div><img src='".XOOPS_URL."/modules/formulize/images/magnifying_glass.png' class='autocomplete-icon'>\n";
-        $output .= "<div id='{$renderedElementMarkupName}_defaults'>\n";
+        $output = "<div class=\"formulize_autocomplete\"><input type='text' class='formulize_autocomplete $multipleClass' name='".$renderedElementMarkupName."_user' id = '".$renderedElementMarkupName."_user' autocomplete='off' value='".str_replace("'", "&#039;", $default_value_user)."' aria-describedby='".$renderedElementMarkupName."-help-text' /></div><img src='".XOOPS_URL."/modules/formulize/images/magnifying_glass.png' class='autocomplete-icon'>\n";
+        $output .= "<div id='".$renderedElementMarkupName."_defaults'>\n";
         if(!$multiple) {
-            $output .= "<input type='hidden' name='{$renderedElementMarkupName}' id = '{$renderedElementMarkupName}' value='".$default_value[0]."' />\n";
+            $output .= "<input type='hidden' name='".$renderedElementMarkupName."' id = '".$renderedElementMarkupName."' value='".$default_value[0]."' />\n";
         } else {
-            $output .= "<input type='hidden' name='last_selected_{$renderedElementMarkupName}' id = 'last_selected_{$renderedElementMarkupName}' value='' />\n";
+            $output .= "<input type='hidden' name='last_selected_".$renderedElementMarkupName."' id = 'last_selected_".$renderedElementMarkupName."' value='' />\n";
             foreach($default_value as $i=>$this_default_value) {
                 if($this_default_value OR $this_default_value === 0) {
-                    $output .= "<input type='hidden' name='{$renderedElementMarkupName}[]' id = '{$renderedElementMarkupName}_".$i."' target='".str_replace("'", "&#039;", $i)."' value='".str_replace("'", "&#039;", $this_default_value)."' />\n";
+                    $output .= "<input type='hidden' name='".$renderedElementMarkupName."[]' jquerytag='".$renderedElementMarkupName."' id='".$renderedElementMarkupName."_".$i."' target='".str_replace("'", "&#039;", $i)."' value='".str_replace("'", "&#039;", $this_default_value)."' />\n";
                 }
             }
         }
@@ -1206,7 +1200,11 @@ class formulizeElementRenderer{
             }
             $output .= "
             jQuery('#".$renderedElementMarkupName."_user').autocomplete({
-                source: '".XOOPS_URL."/modules/formulize/include/formulize_quickselect.php?cache=".$cachedLinkedOptionsFilename."&allow_new_values=".$allow_new_values."',
+								source: function(request, response) {
+									var excludeCurrentSelection = jQuery('input[name=\"".$renderedElementMarkupName."[]\"]').map(function () { return $(this).val(); }).get().join(',');
+									jQuery.get('".XOOPS_URL."/modules/formulize/include/formulize_quickselect.php?cache=".$cachedLinkedOptionsFilename."&allow_new_values=".$allow_new_values."&term='+encodeURIComponent(request.term)+'&current='+encodeURIComponent(excludeCurrentSelection), function(data) {
+										response(eval(data));
+									})},
                 minLength: 1,
                 delay: 0,
                 select: function(event, ui) {
@@ -1259,13 +1257,13 @@ class formulizeElementRenderer{
                                 value = String(value).replace(/'/g,\"&#039;\");
                                 i = value;
                             } else {
-                            i = parseInt(jQuery('#".$renderedElementMarkupName."_defaults').children().last().attr('target')) + 1;
+                            		i = parseInt(jQuery('#".$renderedElementMarkupName."_defaults').children().last().attr('target')) + 1;
                             }
-                            jQuery('#".$renderedElementMarkupName."_defaults').append(\"<input type='hidden' name='".$renderedElementMarkupName."[]' id = '".$renderedElementMarkupName."_\"+i+\"' target='\"+i+\"' value='\"+value+\"' />\");
+                            jQuery('#".$renderedElementMarkupName."_defaults').append(\"<input type='hidden' name='".$renderedElementMarkupName."[]' jquerytag='".$renderedElementMarkupName."' id='".$renderedElementMarkupName."_\"+i+\"' target='\"+i+\"' value='\"+value+\"' />\");
                             jQuery('#".$renderedElementMarkupName."_formulize_autocomplete_selections').append(\"<p class='auto_multi auto_multi_".$renderedElementMarkupName."' target='\"+value+\"'>\"+label+\"</p>\");
                             jQuery('#".$renderedElementMarkupName."_user').val('');
-                            formulizechanged = 1;
                             jQuery('#last_selected_".$renderedElementMarkupName."').val('');
+														triggerChangeOnMultiValueAutocomplete('".$renderedElementMarkupName."');
                         }
                     }";
                 }
@@ -1285,11 +1283,8 @@ class formulizeElementRenderer{
 if($multiple ){
     $output.= "
         jQuery('#".$renderedElementMarkupName."_formulize_autocomplete_selections').on('click', '.auto_multi_".$renderedElementMarkupName."', function() {
-            jQuery('#".$renderedElementMarkupName."_defaults input[value=\"'+jQuery(this).attr('target')+'\"]').remove();
-            jQuery(this).remove();
-            formulizechanged = 1;
+						removeFromMultiValueAutocomplete(jQuery(this).attr('target'), '".$renderedElementMarkupName."');
         });
-
     ";
 }
 
