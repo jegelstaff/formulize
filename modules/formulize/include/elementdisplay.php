@@ -502,7 +502,7 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 			$compValue = display($entryData[0], $filterElements[$i]);
 		}
 		if(is_array($compValue)) {
-			if($thisOp == "=") {
+			if($thisOp == "==") {
 				$thisOp = "LIKE";
 			}
 			if($thisOp == "!=") {
@@ -511,8 +511,8 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 			$compValue = implode(",",$compValue);
 		} else {
 			$compValue = addslashes($compValue);
-			$compValueQuoted = is_numeric($compValue) ? $compValue : "'".$compValue."'";
 		}
+		$compValueQuoted = is_numeric($compValue) ? $compValue : "'".$compValue."'";
 
 		$rawFilterTerms = $filterTerms[$i];
 		$filterTermToUse = addslashes($filterTerms[$i]);
