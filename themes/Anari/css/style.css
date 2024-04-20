@@ -3196,6 +3196,12 @@ input[name='pickdiffgroup'] {
     width: auto;
 }
 
+#listofentries div.main-cell-div > span {
+	display: block;
+	padding-bottom: 0.3em;
+}
+
+
 .list-of-entries table.outer td.formulize-controls {
     border-bottom: 1px dotted #d1d1df;
     left: 0px;
@@ -3287,11 +3293,11 @@ table.outer th {
 }
 
 table.outer td {
-  padding: 24px;
+  padding: 1.2em;
 }
 @media print {
   table.outer td {
-    padding: 20px 0;
+    padding: 1em 0;
   }
 }
 

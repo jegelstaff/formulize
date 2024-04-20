@@ -2452,7 +2452,7 @@ function findMatchingIdReq($element, $fid, $value) {
 // THIS FUNCTION OUTPUTS THE TEXT THAT GOES ON THE SCREEN IN THE LIST OF ENTRIES TABLE
 // It intelligently outputs links if the text should be a link (because of textbox associations, or linked selectboxes)
 // $handle is the data handle for the element
-function formatLinks($matchtext, $handle, $textWidth, $entryBeingFormatted) {
+function formatLinks($matchtext, $handle, $textWidth, $entryBeingFormatted, $fid) {
 
     if(!$textWidth) {
         $textWidth = 35;
@@ -2532,33 +2532,37 @@ function formatLinks($matchtext, $handle, $textWidth, $entryBeingFormatted) {
             return printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth);
         }
         static $cachedQueryResults = array();
+				static $multiValueCounter = array();
+				if(!isset($multiValueCounter[$entryBeingFormatted])) {
+					$multiValueCounter[$entryBeingFormatted] = 0;
+				} else {
+					$multiValueCounter[$entryBeingFormatted]++;
+				}
         if (isset($cachedQueryResults[$boxproperties[0]][$boxproperties[1]][$entryBeingFormatted][$handle])) {
             $id_req = $cachedQueryResults[$boxproperties[0]][$boxproperties[1]][$entryBeingFormatted][$handle];
         } else {
             // get the targetEntry by checking in the entry we're processing, for the actual value recorded in the DB for the entry id we're pointing to
             if($ele_value['snapshot']) {
-                // lookup the first item that matches the saved text, in the source form... only get the first value when there are multiple, as per the logic below for non-snapshotted elements, but we should probably smartly get them all and build links properly in multiselect cases
-                $id_req = findMatchingIdReq($boxproperties[1], $boxproperties[0], $matchtext);
+							// lookup the first item that matches the saved text, in the source form... only get the first value when there are multiple, as per the logic below for non-snapshotted elements, but we should probably smartly get them all and build links properly in multiselect cases
+							$id_req = findMatchingIdReq($boxproperties[1], $boxproperties[0], $matchtext);
+							$cachedQueryResults[$boxproperties[0]][$boxproperties[1]][$entryBeingFormatted][$handle] = $id_req;
             } else {
-            $elementHandle = $handle;
-            if (is_array($elementHandle)) {
-                $elementHandle = $elementHandle[0];
+							$elementHandle = $handle;
+							if (is_array($elementHandle)) {
+									$elementHandle = $elementHandle[0];
+							}
+							$element_handler = xoops_getmodulehandler('elements', 'formulize');
+							$currentElementObject = $element_handler->get($elementHandle);
+							$currentFormId = $currentElementObject->getVar('id_form');
+							$data_handler = new formulizeDataHandler($currentFormId);
+							$id_req_list = explode(",", trim($data_handler->getElementValueInEntry($entryBeingFormatted, $elementHandle), ","));
+							$id_req_list = array_values(array_filter($id_req_list, fn($item) => ($item !== 0 AND $item !== "0")));
+							$id_req = $id_req_list[$multiValueCounter[$entryBeingFormatted]];
             }
-                $element_handler = xoops_getmodulehandler('elements', 'formulize');
-                $currentElementObject = $element_handler->get($elementHandle);
-            $currentFormId = $currentElementObject->getVar('id_form');
-            $data_handler = new formulizeDataHandler($currentFormId);
-            $matchEntryList = explode(",", trim($data_handler->getElementValueInEntry($entryBeingFormatted, $elementHandle), ","));
-                $id_req = $matchEntryList[0]; // should be smarter than this, can't we write each piece of text as a link to its own entry id?
-            }
-            $cachedQueryResults[$boxproperties[0]][$boxproperties[1]][$entryBeingFormatted][$handle] = $id_req;
+
         }
-        if ($id_req) {
-            return "<a href='" . XOOPS_URL . "/modules/formulize/index.php?fid=$target_fid&ve=$id_req' target='_blank'>" . printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth) . "</a>";
-        } else {
-            // no id_req found
-            return printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth);
-        }
+				$clickableText = printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth);
+				return prepareLinkToEntry($clickableText, $id_req, $target_fid, $fid);
     } elseif ($ele_type =='select' AND (isset($ele_value[2]['{USERNAMES}']) OR isset($ele_value[2]['{FULLNAMES}'])) AND $ele_value[7] == 1) {
         $nametype = isset($ele_value[2]['{USERNAMES}']) ? "uname" : "name";
         static $cachedUidResults = array();
@@ -2585,6 +2589,16 @@ function formatLinks($matchtext, $handle, $textWidth, $entryBeingFormatted) {
     }
 }
 
+function prepareLinkToEntry($clickableText, $id_req, $target_fid, $fid) {
+	// if this goes to the same form as the one we're displaying, use viewEntryLink to make the link so the user keeps their place -- it's equivalent to drilling into an entry in the list
+	if($id_req AND $fid == $target_fid) {
+		return viewEntryLink($clickableText,$id_req);
+	} elseif ($id_req) { // otherwise, make a link to a new window/tab
+		return "<a href='" . XOOPS_URL . "/modules/formulize/index.php?fid=$target_fid&ve=$id_req' target='_blank'>" . $clickableText . "</a>";
+	} else { // no id_req (entry) found
+		return $clickableText;
+	}
+}
 
 // this function simply handles the operations for formatLinks when a plain element has been identified (not a linked selectbox, associated textbox, etc, etc)
 function _formatLinksRegularElement($matchtext, $textWidth, $ele_type, $handle, $entryBeingFormatted) {
@@ -6049,13 +6063,13 @@ function formulize_javascriptForRemovingEntryLocks($unload=false) {
 // we're kind of hacking this...assuming textWidth will be 200 in cases where we don't have it passed in.  With more acrobatics we could get the real text width as specified in the screen, but for columns that are rendered as elements, this is probably an OK compromise
 // deDisplay is a flag to control whether the icon for switching an element to editable mode should be present or not
 // localIds is an array of ids that will match the order of the values in the array...used to get the id for a subform entry that is being displayed in the list
-// $fid is used only in the event of a mod_datetime or creation_datetime or creator_email field being drawn
 // $deInstanceCounter is used for addressing editable elements in the list
 function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200, $localIds=array(), $fid=0, $row=0, $column=0, $deInstanceCounter=false) {
     $output = "<div class='main-cell-div' id='cellcontents_".$row."_".$column."'>";
     if (!is_array($value)) {
         $value = array($value);
     }
+
     if (!is_array($localIds)) {
         $localIds = array($localIds);
     }
