@@ -3172,12 +3172,15 @@ input[name='pickdiffgroup'] {
 /* scrolling headers for LOE */
 
 .list-of-entries-container table.outer td[id^=celladdress_h1_],
-.list-of-entries-container table.outer td[id^=celladdress_1_] {
+.list-of-entries-container table.outer td[id^=celladdress_1_],
+.list-of-entries-container table.outer th[id^=celladdress_h1_],
+.list-of-entries-container table.outer th[id^=celladdress_1_] {
     position: sticky;
     background-color: white;
     z-index: 1;
 }
-.list-of-entries-container table.outer td[id^=celladdress_h1_] {
+.list-of-entries-container table.outer td[id^=celladdress_h1_],
+.list-of-entries-container table.outer th[id^=celladdress_h1_] {
     top: 0px;
     padding-top: 0;
 }
