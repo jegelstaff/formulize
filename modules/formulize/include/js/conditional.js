@@ -126,34 +126,40 @@ function getRelevantElementValues(elements) {
 		} else {
 			nameToUse = '[name='+handle+']';
 		}
-        if(jQuery('#subentry-dialog '+nameToUse).length > 0) {
-            nameToUse = '#subentry-dialog '+nameToUse;
-        }
-        if(jQuery(nameToUse).length > 0) {
-		elementType = jQuery(nameToUse).attr('type');
-		if(elementType == 'radio') {
-			formulize_selectedItems = jQuery(nameToUse+':checked').val();
-		} else if(elementType == 'checkbox') {
-			formulize_selectedItems = new Array();
-			jQuery(nameToUse).map(function() { // need to check each one individually, because val isn't working right?!
-				if(jQuery(this).attr('checked')) {
+		if(jQuery('#subentry-dialog '+nameToUse).length > 0) {
+				nameToUse = '#subentry-dialog '+nameToUse;
+		}
+		if(jQuery(nameToUse).length > 0) {
+			elementType = jQuery(nameToUse).attr('type');
+			if(elementType == 'radio') {
+				formulize_selectedItems = jQuery(nameToUse+':checked').val();
+			} else if(elementType == 'checkbox') {
+				formulize_selectedItems = new Array();
+				jQuery(nameToUse).map(function() {
+					if(jQuery(this).attr('checked')) {
+						foundval = jQuery(this).attr('value');
+						formulize_selectedItems.push(foundval);
+					} else {
+						formulize_selectedItems.push('');
+					}
+				});
+			} else if(handle.indexOf('[]')!=-1 && elementType == 'hidden') { // multi select auto complete
+				formulize_selectedItems = new Array();
+				jQuery(nameToUse).map(function() {
 					foundval = jQuery(this).attr('value');
 					formulize_selectedItems.push(foundval);
-				} else {
-					formulize_selectedItems.push('');
-				}
-			});
-		} else {
-			formulize_selectedItems = jQuery(nameToUse).val();
-		}
-		if(jQuery.isArray(formulize_selectedItems)) {
-			for(key in formulize_selectedItems) {
-				ret = ret + '&'+handle+'='+encodeURIComponent(formulize_selectedItems[key]);
+				});
+			} else {
+				formulize_selectedItems = jQuery(nameToUse).val();
 			}
-		} else {
-			ret = ret + '&'+handle+'='+encodeURIComponent(formulize_selectedItems);
-		}
-        }
+			if(jQuery.isArray(formulize_selectedItems)) {
+				for(key in formulize_selectedItems) {
+					ret = ret + '&'+handle+'='+encodeURIComponent(formulize_selectedItems[key]);
+				}
+			} else {
+				ret = ret + '&'+handle+'='+encodeURIComponent(formulize_selectedItems);
+			}
+    }
 	}
 	return ret;
 }

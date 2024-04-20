@@ -141,21 +141,20 @@
 
 	<div class="form-item">
 	  <fieldset>
-		  <legend>Are there restrictions on how many times each option can be picked?</legend>
+		  <legend>Restrictions on options</legend>
 	        <div class="form-radios">
-            <label for="elements-ele_value[9]-0"><input type="radio" id="elements-ele_value[9]-0" name="elements-ele_value[9]" value="0" <{if $content.ele_value[9] eq 0}>checked<{/if}>/>No</label>
+            <label for="elements-ele_value[9]-0"><input type="radio" id="elements-ele_value[9]-0" name="elements-ele_value[9]" value="0" <{if $content.ele_value[9] eq 0}>checked<{/if}>/>No restrictions</label>
 	        </div>
 	        <div class="form-radios">
-		        <label for="elements-ele_value[9]-1"><input type="radio" id="elements-ele_value[9]-1" name="elements-ele_value[9]" value="1" <{if $content.ele_value[9] eq 1}>checked<{/if}>/>Each option can only be chosen once</label>
+						<label for="elements-ele_value[9]-2"><input type="radio" id="elements-ele_value[9]-2" name="elements-ele_value[9]" value="2" <{if $content.ele_value[9] eq 2}>checked<{/if}>/>Once someone has selected the option, <b>they cannot select it again</b> in any other entry.</label>
 	        </div>
 	        <div class="form-radios">
-            <label for="elements-ele_value[9]-2"><input type="radio" id="elements-ele_value[9]-2" name="elements-ele_value[9]" value="2" <{if $content.ele_value[9] eq 2}>checked<{/if}>/>Each option can only be chosen once, per user</label>
+            <label for="elements-ele_value[9]-3"><input type="radio" id="elements-ele_value[9]-3" name="elements-ele_value[9]" value="3" <{if $content.ele_value[9] eq 3}>checked<{/if}>/>Once someone has selected the option, <b>no one in their group can select it again</b> in any other entry.</label>
 	        </div>
 	        <div class="form-radios">
-            <label for="elements-ele_value[9]-3"><input type="radio" id="elements-ele_value[9]-3" name="elements-ele_value[9]" value="3" <{if $content.ele_value[9] eq 3}>checked<{/if}>/>Each option can only be chosen once, per group</label>
+						<label for="elements-ele_value[9]-1"><input type="radio" id="elements-ele_value[9]-1" name="elements-ele_value[9]" value="1" <{if $content.ele_value[9] eq 1}>checked<{/if}>/>Once someone has selected the option, <b>no one else can select it again</b> in any other entry.</label>
 	        </div>
-			  <div class="description">
-			  </div>
+					<br>
 	  </fieldset>
 	</div>
 
@@ -264,6 +263,7 @@
 	});
 
     $("#snapshot-<{$content.ele_value.snapshot}>").attr('checked',1);
+		$("#selfreference-<{$content.ele_value.selfreference}>").attr('checked',1);
 
     <{if $content.ele_id != 'new'}>
     var snapshotWarning = true;

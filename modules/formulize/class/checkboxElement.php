@@ -328,10 +328,12 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
             list($sourceEntrySafetyNetStart, $sourceEntrySafetyNetEnd) = prepareLinkedElementSafetyNets($sourceEntryIds);
             $extra_clause = prepareLinkedElementExtraClause($groupLimitClause, $parentFormFrom, $sourceEntrySafetyNetStart);
 
+						$selfReferenceExclusion = generateSelfReferenceExclusionSQL($entry_id, $element->getVar('id_form'), $sourceFid, $ele_value, 't1');
+
             global $xoopsDB;
             // missing $restrictSQL that linked selectboxes use, otherwise same features as linked selectboxes?
             $sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." AS t1
-                $extra_clause $conditionsfilter $conditionsfilter_oom $sourceEntrySafetyNetEnd GROUP BY t1.entry_id $sortOrderClause";
+                $extra_clause $conditionsfilter $conditionsfilter_oom $selfReferenceExclusion $sourceEntrySafetyNetEnd GROUP BY t1.entry_id $sortOrderClause";
 
             if($sourceValuesRes = $xoopsDB->query($sourceValuesQ)) {
                 // rewrite the values and ui text based on the data coming out of the database

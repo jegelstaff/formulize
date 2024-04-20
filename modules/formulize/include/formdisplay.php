@@ -3939,17 +3939,33 @@ function removeTags(html) {
     print "
     function setAutocompleteValue(elementId, value, change, multiple) {
         if(multiple) {
-            var targetElementId = 'last_selected_'+elementId;
+          var targetElementId = 'last_selected_'+elementId;
         } else {
-            var targetElementId = elementId;
+          var targetElementId = elementId;
         }
-        if(change) {
-            jQuery('#'+targetElementId).val(value).trigger('change');
-        } else {
-            jQuery('#'+targetElementId).val(value);
+				jQuery('#'+targetElementId).val(value);
+        if(change && !multiple) {
+         	jQuery('#'+elementId).trigger('change');
         }
         formulizechanged=1;
     }
+
+		function removeFromMultiValueAutocomplete(value, elementId) {
+			jQuery('#'+elementId+'_defaults input[value=\"'+value+'\"]').remove();
+			jQuery('.auto_multi_'+elementId).remove();
+			triggerChangeOnMultiValueAutocomplete(elementId);
+		}
+
+		function triggerChangeOnMultiValueAutocomplete(elementId) {
+			var triggerElements = jQuery('[name=\"'+elementId+'[]\"]');
+			if(triggerElements.length == 0) {
+				jQuery('#'+elementId+'_defaults').append(\"<input type='hidden' name='\"+elementId+\"[]' jquerytag='\"+elementId+\"' id='\"+elementId+\"_0509' value='' />\");
+			}
+			jQuery('[name=\"'+elementId+'[]\"]').first().trigger('change');
+			jQuery('#'+elementId+'_0509').remove();
+			formulizechanged=1;
+		}
+
     ";
     print "</script>\n";
     $drawnJavascript = true;

@@ -8013,3 +8013,21 @@ function oneToOneRelationshipLinkBasedOnCommonValue($frid, $fids) {
 	}
 	return false;
 }
+
+/**
+ * Generate a SQL snippet that will exclude the specified entry, if the SQL is being generated to select from the form the entry belongs to, and if we're doing this under the auspices of a linked element that does not allow self-reference
+ *
+ * @param int $entry_id The id of the entry we're excluding
+ * @param int $fid The id of the form to which the entry belongs
+ * @param int $sourceFid The id of a form the intended SQL is selecting from
+ * @param array $ele_value The ele_value settings for the element, ie: the settings from the Options in the admin UI
+ * @param string $tableAlias Optional. The alias of the table we're selecting from in the SQL query. Defaults to t1.
+ * @return string The SQL generated or an empty string if no exclusion required
+ */
+function generateSelfReferenceExclusionSQL($entry_id, $fid, $sourceFid, $ele_value, $tableAlias='t1') {
+	$selfReferenceExclusion = "";
+	if(is_numeric($entry_id) AND $fid == $sourceFid AND (!isset($ele_value['selfreference']) OR $ele_value['selfreference'] != 1)) {
+		$selfReferenceExclusion = " AND ($tableAlias.entry_id != $entry_id) ";
+	}
+	return $selfReferenceExclusion;
+}

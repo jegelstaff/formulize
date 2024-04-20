@@ -3,7 +3,7 @@
 	<{include file="db:admin/element_linkedoptionlist.html"}>
 
     <{include file="db:admin/element_options_delimiter_choice.html"}>
-    
+
        <div class="form-item">
     <fieldset>
 		<legend>If the options are linked -- or are {FULLNAMES} or {USERNAMES}</legend>
@@ -40,19 +40,20 @@
             </div>
         </fieldset>
 	</fieldset>
-</div>  
-    
+</div>
+
   <{include file="db:admin/element_linkedfilter.html"}>
-  
+
   <{include file="db:admin/element_linkedsortoptions.html"}>
-    
+
   <{include file="db:admin/alternate_fields_for_linked_elements.html"}>
-  
+
 </div>
 
 <script>
 $("#snapshot-<{$content.ele_value.snapshot}>").attr('checked',1);
-    
+$("#selfreference-<{$content.ele_value.selfreference}>").attr('checked',1);
+
     $('input[name="linked_yesno"]').change(function() {
         if($('input[name="linked_yesno"]:checked').val() == 1) {
             $('#snapshot-values').show(200);

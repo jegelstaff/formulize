@@ -2,6 +2,7 @@
 
 $cache = strstr($_GET['cache'], ".") ? "" : $_GET['cache']; // don't allow inclusion of badly formed cache filenames, could be hacking attempt
 $term = $_GET['term'];
+$currentlySelectedIds = explode(',', $_GET['current']);
 $found = array();
 
 if(file_exists("../../../cache/".$cache)) {
@@ -14,8 +15,8 @@ if (isset($$cache)) {
     // the array variable has the same name as the cache file
     $match_existing_value = false;
     foreach ($$cache as $id => $text) {
-        if (stristr($text, $term)) {
-            if ($term == $text) {
+        if (!in_array($id, $currentlySelectedIds) AND stristr($text, $term)) {
+				    if ($term == $text) {
                 // found a value that matches an existing value
                 $match_existing_value = true;
             }
@@ -45,7 +46,7 @@ if (isset($$cache)) {
 
 if (0 == count((array) $found)) {
     include_once "../../../mainfile.php";
-    icms::$logger->disableLogger();    
+    icms::$logger->disableLogger();
     while(ob_get_level()) {
         ob_end_clean();
     }
