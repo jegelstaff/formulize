@@ -6097,7 +6097,7 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
     $fid = $cachedFormIds[$handle];
     $element_type = $cached_object_type[$handle];
     foreach ($value as $valueId=>$v) {
-        $elstyle = 'style="width: 100%;text-align: ';
+        $elstyle = 'style="text-align: ';
         if (is_numeric($v)) {
             $elstyle .= 'right;"'; // and if there is a width that pushes the right edge over then it looks nice, sort of, but more formatting controls on table and whitespace between cells, etc... is necessary
         } else {
@@ -6114,11 +6114,8 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
             $dateStringFormat = ($handle == "mod_datetime" OR $handle == "creation_datetime") ? _MEDIUMDATESTRING : _SHORTDATESTRING; // constants set in /language/english/global.php
             $v = (false === $time_value) ? "" : date($dateStringFormat, ($time_value)+$offset);
         }
-        $output .= '<span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $handle, $textWidth, $thisEntryId)), $handle);
+        $output .= '<span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $handle, $textWidth, $thisEntryId, $fid)), $handle);
         $output .= '</span>';
-        if ($counter<$countOfValue) {
-            $output .= "<br>";
-        }
         $counter++;
     }
 		if ($deDisplay AND $element_type != 'derived') {
