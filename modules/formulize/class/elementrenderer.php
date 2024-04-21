@@ -391,13 +391,11 @@ class formulizeElementRenderer{
 					// if we're supposed to limit based on the values in an arbitrary other element, add those to the clause too
 					$directLimit = '';
 					$dbValue = '';
-					$asynchDirectLimitOverride = '';
 					if(isset($ele_value['optionsLimitByElement']) AND is_numeric($ele_value['optionsLimitByElement'])) {
 						if($optionsLimitByElement_ElementObject = $element_handler->get($ele_value['optionsLimitByElement'])) {
 							$dbValue = '';
 							if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$optionsLimitByElement_ElementObject->getVar('ele_handle')])) {
 								$dbValue = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$optionsLimitByElement_ElementObject->getVar('ele_handle')];
-								$asynchDirectLimitOverride = ' OR t1.entry_id IN ('.implode(',',convertEntryIdsFromDBToArray($dbValue)).') ';
 							} else {
 								list($optionsLimitFilter, $optionsLimitFilter_oom, $optionsLimitFilter_parentFormFrom) = buildConditionsFilterSQL($ele_value['optionsLimitByElementFilter'], $optionsLimitByElement_ElementObject->getVar('id_form'), $entry_id, $owner, $formObject, "olf");
 								$optionsLimitFilterFormObject = $form_handler->get($optionsLimitByElement_ElementObject->getVar('id_form'));
@@ -431,7 +429,6 @@ class formulizeElementRenderer{
 						$directLimit
 						$selfReferenceExclusion
 						$sourceEntrySafetyNetEnd
-						$asynchDirectLimitOverride
 						GROUP BY t1.entry_id $sortOrderClause, t1.entry_id ASC ";
 
 					if(!$isDisabled) {
