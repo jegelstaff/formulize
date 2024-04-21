@@ -2533,6 +2533,7 @@ function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid,
 				$proxylist->setValue('nochange');
 			}
 			$proxylist->setClass("no-print");
+			$proxylist->setExtra(" onchange='javascript:formulizechanged=1' ");
 			$form->addElement($proxylist);
 			return $form;
 }
