@@ -672,3 +672,8 @@ table.formulize-grid td.head {
 	vertical-align: bottom;
 }
 
+#listofentries div.main-cell-div > span,
+#listofentries div.formulize-display-element-contents > span {
+	display: block;
+	padding-bottom: 0.3em;
+}
