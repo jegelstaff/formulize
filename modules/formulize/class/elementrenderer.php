@@ -384,47 +384,52 @@ class formulizeElementRenderer{
 					    $select_column = "t1.`{$linked_columns}`";	// in this case, it's just one linked column
 					}
 
-					// if there is a groups filter, then join to the group ownership table
+					list($sourceEntrySafetyNetStart, $sourceEntrySafetyNetEnd) = prepareLinkedElementSafetyNets($sourceEntryIds);
 
-                    list($sourceEntrySafetyNetStart, $sourceEntrySafetyNetEnd) = prepareLinkedElementSafetyNets($sourceEntryIds);
+					$extra_clause = prepareLinkedElementExtraClause($pgroupsfilter, $parentFormFrom, $sourceEntrySafetyNetStart);
 
-                    $extra_clause = prepareLinkedElementExtraClause($pgroupsfilter, $parentFormFrom, $sourceEntrySafetyNetStart);
-
-                    // if we're supposed to limit based on the values in an arbitrary other element, add those to the clause too
-                    $directLimit = '';
-                    if(isset($ele_value['optionsLimitByElement']) AND is_numeric($ele_value['optionsLimitByElement'])) {
-                        if($optionsLimitByElement_ElementObject = $element_handler->get($ele_value['optionsLimitByElement'])) {
-                            list($optionsLimitFilter, $optionsLimitFilter_oom, $optionsLimitFilter_parentFormFrom) = buildConditionsFilterSQL($ele_value['optionsLimitByElementFilter'], $optionsLimitByElement_ElementObject->getVar('id_form'), $entry_id, $owner, $formObject, "olf");
-                            $optionsLimitFilterFormObject = $form_handler->get($optionsLimitByElement_ElementObject->getVar('id_form'));
-                            $sql = "SELECT ".$optionsLimitByElement_ElementObject->getVar('ele_handle')." FROM ".$xoopsDB->prefix('formulize_'.$optionsLimitFilterFormObject->getVar('form_handle'))." as olf $optionsLimitFilter_parentFormFrom WHERE 1 $optionsLimitFilter $optionsLimitFilter_oom";
-                            if($res = $xoopsDB->query($sql)) {
-                                if($xoopsDB->getRowsNum($res)==1) {
-                                    $row = $xoopsDB->fetchRow($res);
-                                    // isolate the values selected in this entry, and then use those as an entry id filter
-                                    if(strstr($row[0], '*=+*:')) {
-                                        $directLimit = explode("*=+*:",trim($row[0], "*=+*:"));
-                                        foreach($directLimit as $v) {
-                                            $directLimit[] = intval($v);
-                        }
-                                    } elseif(strstr($row[0], ',') AND is_numeric(str_replace(',','',$row[0]))) { // if it has commas, but if you remove them then it's numbers...
-                                        $directLimit = explode(",",trim($row[0], ","));
-					} else {
-                                        $directLimit = array(intval($row[0]));
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if($directLimit) {
-                        $directLimit = ' AND t1.entry_id IN ('.implode(',',$directLimit).') ';
+					// if we're supposed to limit based on the values in an arbitrary other element, add those to the clause too
+					$directLimit = '';
+					$dbValue = '';
+					if(isset($ele_value['optionsLimitByElement']) AND is_numeric($ele_value['optionsLimitByElement'])) {
+						if($optionsLimitByElement_ElementObject = $element_handler->get($ele_value['optionsLimitByElement'])) {
+							$dbValue = '';
+							if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$optionsLimitByElement_ElementObject->getVar('ele_handle')])) {
+								$dbValue = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$optionsLimitByElement_ElementObject->getVar('ele_handle')];
+							} else {
+								list($optionsLimitFilter, $optionsLimitFilter_oom, $optionsLimitFilter_parentFormFrom) = buildConditionsFilterSQL($ele_value['optionsLimitByElementFilter'], $optionsLimitByElement_ElementObject->getVar('id_form'), $entry_id, $owner, $formObject, "olf");
+								$optionsLimitFilterFormObject = $form_handler->get($optionsLimitByElement_ElementObject->getVar('id_form'));
+								$sql = "SELECT ".$optionsLimitByElement_ElementObject->getVar('ele_handle')." FROM ".$xoopsDB->prefix('formulize_'.$optionsLimitFilterFormObject->getVar('form_handle'))." as olf $optionsLimitFilter_parentFormFrom WHERE 1 $optionsLimitFilter $optionsLimitFilter_oom";
+								if($res = $xoopsDB->query($sql)) {
+									if($xoopsDB->getRowsNum($res)==1) {
+										$row = $xoopsDB->fetchRow($res);
+										$dbValue = $row[0];
+									}
+								}
+							}
+							$directLimit = convertEntryIdsFromDBToArray($dbValue);
+						}
+					}
+					if($directLimit) {
+						$directLimit = ' AND t1.entry_id IN ('.implode(',',$directLimit).') ';
 					}
 
 					$selfReferenceExclusion = generateSelfReferenceExclusionSQL($entry_id, $id_form, $sourceFid, $ele_value, 't1');
 
-					// $extra_clause will always include WHERE !!
-					$sourceValuesQ = "SELECT t1.entry_id, ".$select_column." FROM ".$xoopsDB->prefix("formulize_".
-						$sourceFormObject->getVar('form_handle'))." AS t1".$extra_clause.
-                        " $conditionsfilter $conditionsfilter_oom $restrictSQL $directLimit $selfReferenceExclusion $sourceEntrySafetyNetEnd GROUP BY t1.entry_id $sortOrderClause , t1.entry_id ASC ";
+					// $extra_clause will always include WHERE, must come first
+					// all "AND" clauses come after that, through to $sourceEntrySafetyNetEnd
+					// $sourceEntrySafetyNetEnd concludes the "AND" clauses, and starts the "OR" clauses, which must always come last
+					// all clauses must be self contained, which means in ( ) if they have multiple parts, and must be introduced with AND if in the first section, or OR if in the last section (after $sourceEntrySafetyNetEnd)
+					$sourceValuesQ = "SELECT t1.entry_id, $select_column
+						FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." AS t1
+						$extra_clause
+						$conditionsfilter
+						$conditionsfilter_oom
+						$restrictSQL
+						$directLimit
+						$selfReferenceExclusion
+						$sourceEntrySafetyNetEnd
+						GROUP BY t1.entry_id $sortOrderClause, t1.entry_id ASC ";
 
 					if(!$isDisabled) {
 						// set the default selections, based on the entry_ids that have been selected as the defaults, if applicable
@@ -446,43 +451,35 @@ class formulizeElementRenderer{
 					}
 
 					if(!isset($cachedSourceValuesQ[intval($ele_value['snapshot'])][$sourceValuesQ])) {
-                        $linkedElementOptions = array();
-						$sourceElementObject = $element_handler->get($boxproperties[1]);
-						if($sourceElementObject->isLinked) {
-							// need to jump one more level back to get value that this value is pointing at
-							$sourceEleValue = $sourceElementObject->getVar('ele_value');
-							$originalSource = explode("#*=:*", $sourceEleValue[2]);
-							include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
-							$data_handler = new formulizeDataHandler($originalSource[0]);
-						}
+
+            $linkedElementOptions = array();
 						$reslinkedvaluesq = $xoopsDB->query($sourceValuesQ);
 						if($reslinkedvaluesq) {
 							$linked_column_count = count((array) $linked_columns);
 							while($rowlinkedvaluesq = $xoopsDB->fetchRow($reslinkedvaluesq)) {
 								$linked_column_values = array();
 								foreach (range(1, $linked_column_count) as $linked_column_index) {
-                                    $linked_value = '';
+                  $linked_value = '';
 									if ($rowlinkedvaluesq[$linked_column_index] !== "") {
-                                        $linked_value = prepvalues($rowlinkedvaluesq[$linked_column_index], $linked_columns[$linked_column_index - 1], $rowlinkedvaluesq[0]);
-                                        $linked_value = $linked_value[0];
+										$linked_value = prepvalues($rowlinkedvaluesq[$linked_column_index], $linked_columns[$linked_column_index - 1], $rowlinkedvaluesq[0]);
+										$linked_value = $linked_value[0];
 									}
-                                    if($linked_value != '' OR is_numeric($linked_value)) {
-                                        $linked_column_values[] = $linked_value;
-                                    }
+                  if($linked_value != '' OR is_numeric($linked_value)) {
+                  	$linked_column_values[] = $linked_value;
+                  }
 								}
-                                if(count((array) $linked_column_values)>0) {
-                                    $leoIndex = $ele_value['snapshot'] ? implode(" | ", $linked_column_values) : $rowlinkedvaluesq[0];
-                                    $linkedElementOptions[$leoIndex] = implode(" | ", $linked_column_values);
-                                }
-                            }
+                if(count((array) $linked_column_values)>0) {
+									$leoIndex = $ele_value['snapshot'] ? implode(" | ", $linked_column_values) : $rowlinkedvaluesq[0];
+									$linkedElementOptions[$leoIndex] = implode(" | ", $linked_column_values);
+                }
+              }
 						}
-
 						// in case there are duplicate options, and there's a selected value that is a duplicate, then preserve the duplicate value rather than the first duplicate in the list
 						// do this by removing duplicate values from the list, other than the one that was selected
 						// convoluted process preserves ordering of the array
 						if(count((array) $sourceEntryIds) > 0) {
 							foreach($sourceEntryIds as $sei) {
-                                $targetKeys = array_keys($linkedElementOptions, $linkedElementOptions[$sei]);
+                $targetKeys = array_keys($linkedElementOptions, $linkedElementOptions[$sei]);
 								foreach($targetKeys as $tk) {
 									if($sei != $tk) {
 										unset($linkedElementOptions[$tk]);
@@ -490,9 +487,9 @@ class formulizeElementRenderer{
 								}
 							}
 						}
-                        $linkedElementOptions = array_unique($linkedElementOptions); // remove duplicates
-
+						$linkedElementOptions = array_unique($linkedElementOptions); // remove duplicates
 						$cachedSourceValuesQ[intval($ele_value['snapshot'])][$sourceValuesQ] = $linkedElementOptions;
+
 						/* ALTERED - 20100318 - freeform - jeff/julian - start */
 						if(!$isDisabled AND $ele_value[8] == 1) {
 							// write the possible values to a cached file so we can look them up easily when we need them, don't want to actually send them to the browser, since it could be huge, but don't want to replicate all the logic that has already gathered the values for us, each time there's an ajax request
@@ -509,30 +506,31 @@ class formulizeElementRenderer{
 						}
 					}
 
-                    $default_value = array();
+          $default_value = array();
 					if(count((array) $sourceEntryIds) > 0) {
 						$default_value = $sourceEntryIds;
 						//$default_value_user = $cachedSourceValuesQ[intval($ele_value['snapshot'])][$sourceValuesQ][$boxproperties[2]];
 					} elseif(count((array) $snapshotValues) > 0) {
-                        $default_value = $snapshotValues;
+          	$default_value = $snapshotValues;
 					}
 					// if we're rendering an autocomplete box
 					if(!$isDisabled AND $ele_value[8] == 1) {
-                        foreach($default_value as $dv) {
-                            $default_value_user[$dv] = count((array) $snapshotValues) > 0 ? $dv : $cachedSourceValuesQ[intval($ele_value['snapshot'])][$sourceValuesQ][$dv]; // take the literal or the reference, depending if we snapshot or not
-                        }
+						foreach($default_value as $dv) {
+							$default_value_user[$dv] = count((array) $snapshotValues) > 0 ? $dv : $cachedSourceValuesQ[intval($ele_value['snapshot'])][$sourceValuesQ][$dv]; // take the literal or the reference, depending if we snapshot or not
+						}
 						$renderedComboBox = $this->formulize_renderQuickSelect($renderedElementMarkupName, $cachedSourceValuesAutocompleteFile[intval($ele_value['snapshot'])][$sourceValuesQ], $default_value, $default_value_user, $ele_value[1]);
 						$form_ele = new xoopsFormLabel($ele_caption, $renderedComboBox, $renderedElementMarkupName);
 						$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
-                    // if we're rendering a disabled autocomplete box
+
+          // if we're rendering a disabled autocomplete box
 					} elseif($isDisabled AND $ele_value[8] == 1) {
-                        if($ele_value['snapshot'] == 1) {
-                                $disabledOutputText = $snapshotValues;
-                        } else {
-                            foreach($default_value as $dv) {
-                                $disabledOutputText[] = $cachedSourceValuesQ[intval($ele_value['snapshot'])][$sourceValuesQ][$dv];
-                            }
-                        }
+						if($ele_value['snapshot'] == 1) {
+							$disabledOutputText = $snapshotValues;
+						} else {
+							foreach($default_value as $dv) {
+								$disabledOutputText[] = $cachedSourceValuesQ[intval($ele_value['snapshot'])][$sourceValuesQ][$dv];
+							}
+						}
 					}
 
 					// rendering a non-autocomplete box
@@ -1077,7 +1075,7 @@ class formulizeElementRenderer{
 	// groups is the list of groups we're using as the membership scope in this case (probably the user's groups, but might not be)
 	function addEntryRestrictionSQL($uniquenessFlag, $id_form, $groups) {
 		$sql = "";
-		global $xoopsUser;
+		global $xoopsUser, $xoopsDB;
 		switch($uniquenessFlag) {
 			case 2:
 				$sql .= " AND t4.`creation_uid` = ";
@@ -1473,4 +1471,25 @@ function optOther($s, $id, $entry_id, $counter, $checkbox=false, $isDisabled=fal
         $box->setExtra("onchange=\"javascript:formulizechanged=1;\" onkeydown=\"javascript:if(this.value != ''){this.form." . $id . "[$counter].checked = true;}\"");
     }
     return $box->render();
+}
+
+/**
+ * Convert some raw value from a user entered record in the database, into an array of entry ids
+ *
+ * @param string $dbValue The raw value being converted
+ * @return array An array of the entry ids represented in the string
+ */
+function convertEntryIdsFromDBToArray($dbValue) {
+	// isolate the values selected in this entry, and then use those as an entry id filter
+	if(strstr($dbValue, '*=+*:')) {
+		$directLimit = explode("*=+*:",trim($dbValue, "*=+*:"));
+		foreach($directLimit as $v) {
+			$directLimit[] = intval($v);
+		}
+	} elseif(strstr($dbValue, ',') AND is_numeric(str_replace(',','',$dbValue))) { // if it has commas, but if you remove them then it's numbers...
+		$directLimit = explode(",",trim($dbValue, ","));
+	} else {
+		$directLimit = array(intval($dbValue));
+	}
+	return $directLimit;
 }
