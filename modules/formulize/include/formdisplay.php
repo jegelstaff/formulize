@@ -3952,7 +3952,7 @@ function removeTags(html) {
 
 		function removeFromMultiValueAutocomplete(value, elementId) {
 			jQuery('#'+elementId+'_defaults input[value=\"'+value+'\"]').remove();
-			jQuery('.auto_multi_'+elementId).remove();
+			jQuery('.auto_multi_'+elementId+'[target=\"'+value+'\"]').remove();
 			triggerChangeOnMultiValueAutocomplete(elementId);
 		}
 
