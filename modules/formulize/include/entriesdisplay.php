@@ -3046,6 +3046,8 @@ $output
 // this function includes the javascript necessary make the interface operate properly
 // note the mandatory clearing of the ventry value upon loading of the page.  Necessary to make the back button work right (otherwise ventry setting is retained from the previous loading of the page and the form is displayed after the next submission of the controls form)
 function interfaceJavascript($fid, $frid, $currentview, $useWorking, $useXhr, $lockedColumns) {
+
+	print "<script type='text/javascript' src='".XOOPS_URL."/modules/formulize/include/js/autocomplete.js'></script>";
 ?>
 <script type='text/javascript'>
 
