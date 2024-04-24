@@ -3146,6 +3146,7 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
             $form->addElement (new XoopsFormHidden ('originalReloadBlank', $screen->getVar('reloadblank')));
         }
         $form->addElement (new XoopsFormHidden ('formulize_entry_lock_token', getEntryLockSecurityToken()));
+				$form->addElement (new XoopsFormHidden ('formulize_entriesPerPage', intval($_POST['formulize_entriesPerPage'])));
 		return $form;
 	} else { // write as HTML
 		print "<input type=hidden name=sort value='" . $sort . "'>";
@@ -3203,6 +3204,7 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
             print "<input type=hidden name=originalReloadBlank value='" . $screen->getVar('reloadblank') . "'>";
         }
         print "<input type='hidden' name='formulize_entry_lock_token' value='".getEntryLockSecurityToken()."'>";
+				print "<input type='hidden' name='formulize_entriesPerPage' value='".intval($_POST['formulize_entriesPerPage'])."'>";
 	}
 }
 
