@@ -103,7 +103,9 @@ function displayGrid($fid, $entry_id, $rowcaps, $colcaps, $title="", $orientatio
 	$single = $single_result['flag'];
 	if($single AND !$entry_id) { $entry_id = $single_result['entry']; }
 	if(!$entry_id) { $entry_id = "new"; }
-	$element_ids_query = elementsInGrid($startID, $fid); // returns all possible candidate elements, actual elements determined in loop below
+	$ele_value = $elementObject->getVar('ele_value');
+	$gridCount = count(explode(",", $ele_value[1])) * count(explode(",", $ele_value[2]));
+	$element_ids_query = elementsInGrid($startID, $fid, $gridCount); // returns all possible candidate elements, actual elements determined in loop below
 
 	// initialize form
 	if(!$calledInternal) {
@@ -181,27 +183,23 @@ function displayGrid($fid, $entry_id, $rowcaps, $colcaps, $title="", $orientatio
 				$class = "even";
 			}
 			print "<td class=$class>\n";
-			// display the element starting with the initial one.  Keep trying to display something until we're successful (displaying the element might fail if the user does not have permission to view (based on which groups are allowed to view this element)
-			$renderSuccess = false;
-			while(!$renderSuccess AND isset($element_ids_query[$ele_index])) {
-				$elementInGridId = $element_ids_query[$ele_index];
-				$deReturnValue = displayElement("", $elementInGridId, $entry_id, false, $screen, $prevEntry, false);
-				if(is_array($deReturnValue)) {
-					$form_ele = $deReturnValue[0];
-					$isDisabled = $deReturnValue[1];
-				} else {
-					$form_ele = $deReturnValue;
-					$isDisabled = false;
-				}
-				if(is_object($form_ele)) {
-					$renderSuccess = true;
-					catalogueGridElement($elementInGridId, $entry_id, $elementId, $form_ele, $prevEntry, $screen);
-					print $form_ele->render();
-				}
-				$ele_index++;
+			$elementInGridId = $element_ids_query[$ele_index];
+			$deReturnValue = displayElement("", $elementInGridId, $entry_id, false, $screen, $prevEntry, false);
+			if(is_array($deReturnValue)) {
+				$form_ele = $deReturnValue[0];
+				$isDisabled = $deReturnValue[1];
+			} else {
+				$form_ele = $deReturnValue;
+				$isDisabled = false;
 			}
-			if(!$renderSuccess) { print "&nbsp;"; }
+			if(is_object($form_ele)) {
+				print $form_ele->render();
+			} else {
+			  print "&nbsp;";
+			}
 			print "</td>\n";
+			catalogueGridElement($elementInGridId, $entry_id, $elementObject, $form_ele, $prevEntry, $screen);
+			$ele_index++;
 		}
 		if(is_array($finalCell)) { // draw final cell values if they exist
 			if($orientation == "vertical") {
@@ -383,8 +381,8 @@ function elementsInGrid($startID, $fid, $gridCount = 0, $requiredOnly = false) {
 		}
 		$starting_order = $order_query[0]['ele_order'];
 		$required = $requiredOnly ? "ele_req = 1 AND" : "";
-		$limit = $gridCount ? " LIMIT 0,".intval($gridCount) : "";
-		$element_ids_result = q("SELECT ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE $required ele_order >= '$starting_order' AND id_form='$fid' AND ele_type != 'subform' ORDER BY ele_order $limit", 'ele_id', true);
+		$limitCondition = $gridCount ? " AND ele_order < ".intval($starting_order) + intval($gridCount) : "";
+		$element_ids_result = q("SELECT ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE $required ele_order >= '$starting_order' $limitCondition AND id_form='$fid' AND ele_type != 'subform' ORDER BY ele_order", 'ele_id', true);
 		$cachedGridElements[$fid][$startID][$gridCount][$requiredOnly] = $element_ids_result;
 	}
 	return $cachedGridElements[$fid][$startID][$gridCount][$requiredOnly];
