@@ -99,8 +99,8 @@ define("_AM_FORMUL","Forms");
 
 //added by jwe - 7/28/04
 define("_AM_FORM_TITLE", "Form Access Permissions"); // not used
-define("_AM_FORM_CURPERM", "Current Permission:"); 
-define("_AM_FORM_CURPERMLINKS", "Current Linked Selectbox:"); 
+define("_AM_FORM_CURPERM", "Current Permission:");
+define("_AM_FORM_CURPERMLINKS", "Current Linked Selectbox:");
 define("_AM_FORM_PERMVIEW", "View");
 define("_AM_FORM_PERMADD", "Add/Update");
 define("_AM_FORM_PERMADMIN", "Admin");
@@ -129,7 +129,7 @@ define("_AM_FRAME_AVAILFORMS1", "Form One:");
 define("_AM_FRAME_AVAILFORMS2", "Form Two:");
 define("_AM_FRAME_DELETE", "Delete an Existing Framework:");
 define("_AM_FRAME_SUBFORM_OF", "Make it a subform of:");
-define("_AM_FRAME_NOPARENTS", "No Forms in Framework"); 
+define("_AM_FRAME_NOPARENTS", "No Forms in Framework");
 define("_AM_FRAME_TYPENEWFORMNAME", "Type a short name here");
 define("_AM_FRAME_NEWFORMBUTTON", "Add Forms!");
 define("_AM_FRAME_NOKEY", "none specified!");
@@ -397,7 +397,7 @@ define("_formulize_DB_EXPORT_TO_EXCEL", "Use compatibility mode for some version
 define("_formulize_DB_EXPORT_NULL_OPTION", "Use this value in place of all NULL values: ");
 define("_formulize_EXPORT_FILENAME_TEXT", "Exported_data_from");
 
-       
+
 define("_formulize_DE_EXPORT_CALCS", "Export Calcs");
 define("_formulize_DE_SAVE", "Save view");
 define("_formulize_DE_DELETE", "Delete view");
@@ -444,7 +444,7 @@ define("_formulize_DE_CALCSUB", "Add Calculation(s) to list");
 define("_formulize_DE_CALC_CALCS", "Calculations to perform on the column(s):");
 define("_formulize_DE_CALCGO", "Perform Requested Calculations");
 define("_formulize_DE_REQDCALCS", "Requested Calculations:");
-define("_formulize_DE_CALCALL", "Include blanks/zeros"); 
+define("_formulize_DE_CALCALL", "Include blanks/zeros");
 define("_formulize_DE_CALCNOBLANKS", "Exclude blanks/zeros");
 define("_formulize_DE_CALCONLYBLANKS", "Include only blanks/zeros");
 define("_formulize_DE_CALCJUSTNOBLANKS", "Exclude blanks");
@@ -592,7 +592,7 @@ define("_formulize_USERNAME_HELP3", " characters long)");
 define("_formulize_PASSWORD_HELP1", " characters long)");
 
 // "Other" for checkboxes and radio buttons:
-define("_formulize_OPT_OTHERWORD", "Other"); 
+define("_formulize_OPT_OTHERWORD", "Other");
 define("_formulize_OPT_OTHER", _formulize_OPT_OTHERWORD.": ");
 
 // Notifications
@@ -700,11 +700,11 @@ define("_AM_FORMULIZE_LOE_TOTAL", "Showing entries %d to %d of %d");
 define("_formulize_DE_LOE_LIMIT_REACHED1", "There are");
 define("_formulize_DE_LOE_LIMIT_REACHED2", "entries in the list.  It would take a long time to retrieve them.  You can use search terms to limit the number of entries, or");
 define("_formulize_DE_LOE_LIMIT_REACHED3", "you can click here to have the system retrieve all the entries.");
-       
+
 define("_formulize_OUTOFRANGE_DATA","Keep this other value found in the database: ");
 
 define("_AM_FORMULIZE_PREVIOUS_OPTION", "Use a previous answer:");
-define("_formulize_VALUE_WILL_BE_CALCULATED_AFTER_SAVE","This value will be calculated after the data is saved");
+define("_formulize_VALUE_WILL_BE_CALCULATED_AFTER_SAVE","This will be determined after the form is saved");
 
 define("_formulize_QSF_DefaultText", "Any");
 define("_formulize_QDR_to", "to");
