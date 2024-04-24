@@ -631,7 +631,12 @@ table:first-child div.applinks h1 {
 .main-content {
   margin-top: 25px;
   overflow: auto;
-  height: 102%;
+  height: 81.5vh;
+}
+@media (min-width: 768px) {
+	.main-content {
+		height: 91vh;
+	}
 }
 @media print {
     .main-content {
