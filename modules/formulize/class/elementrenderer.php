@@ -96,6 +96,7 @@ class formulizeElementRenderer{
 
 		// ele_desc added June 6 2006 -- jwe
 		$ele_desc = $this->_ele->getVar('ele_desc', "f"); // the f causes no stupid reformatting by the ICMS core to take place
+		$helpText = $this->formulize_replaceCurlyBracketVariables(html_entity_decode($ele_desc,ENT_QUOTES), $entry_id, $id_form, $renderedElementMarkupName);
 
 		// determine the entry owner
 		if($entry_id != "new") {
@@ -119,11 +120,10 @@ class formulizeElementRenderer{
 			case 'derived':
 				if($entry_id != "new") {
 					$form_ele = new xoopsFormLabel($this->_ele->getVar('ele_caption'), $ele_value[5], $renderedElementMarkupName);
-					$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
 				} else {
 					$form_ele = new xoopsFormLabel($this->_ele->getVar('ele_caption'), _formulize_VALUE_WILL_BE_CALCULATED_AFTER_SAVE, $renderedElementMarkupName);
-					$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
 				}
+				$form_ele->setDescription($helpText);
 				break;
 
 
@@ -314,7 +314,6 @@ class formulizeElementRenderer{
 					} else {
 						$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 					}
-					$module_id = getFormulizeModId();
 
                     $ele_value['formlink_useonlyusersentries'] = isset($ele_value['formlink_useonlyusersentries']) ? $ele_value['formlink_useonlyusersentries'] : 0;
                     $pgroupsfilter = prepareLinkedElementGroupFilter($sourceFid, $ele_value[3], $ele_value[4], $ele_value[6], $ele_value['formlink_useonlyusersentries']);
@@ -520,7 +519,7 @@ class formulizeElementRenderer{
 						}
 						$renderedComboBox = $this->formulize_renderQuickSelect($renderedElementMarkupName, $cachedSourceValuesAutocompleteFile[intval($ele_value['snapshot'])][$sourceValuesQ], $default_value, $default_value_user, $ele_value[1]);
 						$form_ele = new xoopsFormLabel($ele_caption, $renderedComboBox, $renderedElementMarkupName);
-						$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
+						$form_ele->setDescription($helpText);
 
           // if we're rendering a disabled autocomplete box
 					} elseif($isDisabled AND $ele_value[8] == 1) {
@@ -551,7 +550,7 @@ class formulizeElementRenderer{
 
                     if($isDisabled) {
 						$form_ele = new XoopsFormLabel($ele_caption, implode(", ", $disabledOutputText), $renderedElementMarkupName);
-						$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
+						$form_ele->setDescription($helpText);
 					} elseif($ele_value[8] == 0) {
 						// this is a hack because the size attribute is private and only has a getSize and not a setSize, setting the size can only be done through the constructor
 					        $count = count((array)  $form_ele->getOptions() );
@@ -752,7 +751,7 @@ class formulizeElementRenderer{
 						"<nobr>$renderedElement</nobr>\n$renderedHoorvs\n$disabledHiddenValues\n",
 						$renderedElementMarkupName
 					);
-					$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
+					$form_ele->setDescription($helpText);
 
 				} // end of if we have a link on our hands. -- jwe 7/29/04
 
@@ -901,7 +900,7 @@ class formulizeElementRenderer{
 					trans($renderedElement),
 					$renderedElementMarkupName
 				);
-				$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
+				$form_ele->setDescription($helpText);
 
 				if($this->_ele->getVar('ele_req') AND !$isDisabled) {
 					$eltname = $renderedElementMarkupName;
@@ -1003,7 +1002,7 @@ class formulizeElementRenderer{
     					if(!$isDisabled AND ($this->_ele->getVar('ele_req') OR $this->_ele->alwaysValidateInputs) AND $this->_ele->hasData) { // if it's not disabled, and either a declared required element according to the webmaster, or the element type itself always forces validation...
     						$form_ele->customValidationCode = $elementTypeHandler->generateValidationCode($ele_caption, $renderedElementMarkupName, $this->_ele, $entry_id);
     					}
-    					$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
+    					$form_ele->setDescription($helpText);
                         $wasDisabled = $isDisabled; // Ack!! see spaghetti code comments with $wasDisabled elsewhere
     					$isDisabled = false; // the render method must handle providing a disabled output, so as far as the rest of the logic here goes, the element is not disabled but should be rendered as is
     					$baseCustomElementObject = $elementTypeHandler->create();
@@ -1046,6 +1045,7 @@ class formulizeElementRenderer{
 			if($ele_desc != "") {
 				$ele_desc = html_entity_decode($ele_desc,ENT_QUOTES);
 				$ele_desc = $myts->makeClickable($ele_desc);
+				$ele_desc = $this->formulize_replaceCurlyBracketVariables($ele_desc, $entry_id, $this->_ele->getVar('id_form'), $renderedElementMarkupName);
 				$form_ele_new->setDescription($ele_desc);
 			}
 			$form_ele_new->setName($renderedElementMarkupName); // need to set this as the name, in case it is required and then the name will be picked up by any "required" checks that get done and used in the required validation javascript for textboxes
@@ -1092,34 +1092,36 @@ class formulizeElementRenderer{
 	}
 
   // replace { } terms with data handle values from the current entry, if any exist
-	function formulize_replaceCurlyBracketVariables($text, $entry_id, $id_form, $renderedElementMarkupName) {
+	function formulize_replaceCurlyBracketVariables($text, $entry_id, $id_form, $renderedElementMarkupName='') {
 		if(strstr($text, "}") AND strstr($text, "{")) {
 			$entryData = $this->formulize_getCachedEntryData($id_form, $entry_id);
-            $element_handler = xoops_getmodulehandler('elements', 'formulize');
+      $element_handler = xoops_getmodulehandler('elements', 'formulize');
 			$bracketPos = 0;
 			$start = true; // flag used to force the loop to execute, even if the 0th position has the {
 			while($bracketPos <= strlen($text) AND $bracketPos = strpos($text, "{", $bracketPos) OR $start == true) {
 				$start = false;
-                $endBracketPos = strpos($text, "}", $bracketPos+1);
+        $endBracketPos = strpos($text, "}", $bracketPos+1);
 				$term = substr($text, $bracketPos+1, $endBracketPos-$bracketPos-1);
-                $elementObject = $element_handler->get($term);
-                if($elementObject) {
-									catalogConditionalElement($renderedElementMarkupName,array($elementObject->getVar('ele_handle')));
+				$elementObject = $element_handler->get($term);
+				if($elementObject) {
 					if(isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry_id][$term])) {
 						$replacementTerm = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry_id][$term];
 					} else {
-                    	$replacementTerm = display($entryData, $term, '', $entry_id);
+           	$replacementTerm = display($entryData, $term, '', $entry_id);
 					}
 					// get the uitext value if necessary
 					$replacementTerm = formulize_swapUIText($replacementTerm, $elementObject->getVar('ele_uitext'));
-                    $replacementTerm = formulize_numberFormat($replacementTerm, $term);
-                    $text = str_replace("{".$term."}",$replacementTerm,$text);
-                    $lookAhead = strlen($replacementTerm); // move ahead the length of what we replaced
+					$replacementTerm = formulize_numberFormat($replacementTerm, $term);
+					$text = str_replace("{".$term."}",$replacementTerm,$text);
+					$lookAhead = strlen($replacementTerm); // move ahead the length of what we replaced
+					if($renderedElementMarkupName) {
+						catalogConditionalElement($renderedElementMarkupName,array($elementObject->getVar('ele_handle')));
+					}
 				} else {
-                    $lookAhead = 1;
-                }
+					$lookAhead = 1;
+				}
 				$bracketPos = $bracketPos + $lookAhead;
-            }
+			}
 		}
 		return $text;
 	}
