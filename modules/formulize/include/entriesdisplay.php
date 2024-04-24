@@ -2794,7 +2794,7 @@ function calcValuePlusText($value, $handle, $col, $calc, $groupingValue) {
 	}
   }
   $uitexts = $element->getVar('ele_uitext');
-  $value = isset($uitexts[$value]) ? $uitexts[$value] : $value;
+  $value = formulize_swapUIText($value, $uitexts);
   if(substr($value, 0, 6)=="{OTHER") { $value = _formulize_OPT_OTHER; }
   if($element->getVar('ele_type')=='yn') {
 	if($value == "1") {
