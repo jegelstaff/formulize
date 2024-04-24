@@ -1618,6 +1618,7 @@ class formulizeFormsHandler {
 		  	$screens[$sid]['pages'] = $screenData->getVar('pages');
 		  	$screens[$sid]['pagetitles'] = $screenData->getVar('pagetitles');
             // find the pages that contain all elements in this form, and add 'new' as an element on that page, so the page will be selected when creating new elements
+						ksort($screens[$sid]['pages']);
             foreach($screens[$sid]['pages'] as $i=>$page) {
                 foreach($formObject->getVar('elements') as $ele_id) { // check for all elements (but ignore 'display to no group' elements which are not included in the object by default)
                     if(!in_array($ele_id, $page)) {
