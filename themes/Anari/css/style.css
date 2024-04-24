@@ -947,6 +947,11 @@ input[type=checkbox] {
   transform: scale(1.25);
 }
 
+div.form-row input[type=checkbox],
+div.form-row input[type=radio] {
+	margin-bottom: 0.3em;
+}
+
 table.formulize-subform-table {
     /*width: 100%;*/
 }
