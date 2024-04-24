@@ -467,7 +467,9 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 			$markupName
 		);
 		$ele_desc = $element->getVar('ele_desc', "f"); // the f causes no stupid reformatting by the ICMS core to take place
-		$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
+		$elementRenderer = new formulizeElementRenderer($element);
+		$helpText = $elementRenderer->formulize_replaceCurlyBracketVariables(html_entity_decode($ele_desc,ENT_QUOTES), $entry_id, $element->getVar('id_form'), $markupName);
+		$form_ele->setDescription($helpText);
 
 		return $form_ele;
     }

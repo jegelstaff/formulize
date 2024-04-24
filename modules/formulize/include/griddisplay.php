@@ -65,7 +65,7 @@
 
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
 
-function displayGrid($fid, $entry_id, $rowcaps, $colcaps, $title="", $orientation="horizontal", $startID="first", $finalCell="", $finalRow="", $calledInternal=false, $screen=null, $headingAtSide="", $elementId=0, $prevEntry = array()) {
+function displayGrid($fid, $entry_id, $rowcaps, $colcaps, $title="", $orientation="horizontal", $startID="first", $finalCell="", $finalRow="", $calledInternal=false, $screen=null, $headingAtSide="", $elementObject=null, $prevEntry = array()) {
 
 	global $xoopsUser;
 	$numcols = count((array) $colcaps);
@@ -133,7 +133,9 @@ function displayGrid($fid, $entry_id, $rowcaps, $colcaps, $title="", $orientatio
 	// draw top row
 	$needToDrawCellsWhenHeadingAtSide = false;
 	$cellsWhenHeadingAtSide = '';
+$elementRenderer = new formulizeElementRenderer($elementObject);
 	foreach($colcaps as $thiscap) {
+$thiscap = $elementRenderer->formulize_replaceCurlyBracketVariables($thiscap, $entry_id, $elementObject->getVar('id_form'));
 		if($headingAtSide) {
 			$needToDrawCellsWhenHeadingAtSide = preg_replace('/[\s]+/mu', '', $thiscap) != '' ? true : $needToDrawCellsWhenHeadingAtSide;
 			$cellsWhenHeadingAtSide .= "<td class=head>$thiscap</td>\n";
@@ -161,6 +163,8 @@ function displayGrid($fid, $entry_id, $rowcaps, $colcaps, $title="", $orientatio
 	$row_index = 0;
 	$ele_index = 0;
 	foreach($rowcaps as $thiscap) {
+		// convert any { } terms in the cap
+		$thiscap = $elementRenderer->formulize_replaceCurlyBracketVariables($thiscap, $entry_id, $elementObject->getVar('id_form'));
 		if($orientation == "horizontal" AND $class=="even") {
 			$class = "odd";
 		} elseif($orientation == "horizontal") {
@@ -337,14 +341,16 @@ function compileGrid($element) {
 function renderGrid($elementObject, $entry_id = 'new', $prevEntry = null, $screen = null) {
 	$ele_value = $elementObject->getVar('ele_value');
 	$fid = $elementObject->getVar('id_form');
-	$renderedElementName = "de_".$fid."_".$entry_id."_".$elementObject->getVar('ele_id');
+	$renderedElementMarkupName = "de_".$fid."_".$entry_id."_".$elementObject->getVar('ele_id');
 	list($grid_title, $grid_row_caps, $grid_col_caps, $grid_background, $grid_start, $grid_count) = compileGrid($elementObject);
 	$headingAtSide = ($ele_value[5] AND $grid_title) ? true : false; // if there is a value for ele_value[5], then the heading should be at the side, otherwise, grid spans form width as it's own chunk of HTML
-	$gridContents = displayGrid($fid, $entry_id, $grid_row_caps, $grid_col_caps, $grid_title, $grid_background, $grid_start, "", "", true, $screen, $headingAtSide, $elementObject->getVar('ele_id'), $prevEntry); // also sets the $GLOBALS['elementsInGridsAndTheirContainers'] which references the elements that were rendered into the grid
+	$gridContents = displayGrid($fid, $entry_id, $grid_row_caps, $grid_col_caps, $grid_title, $grid_background, $grid_start, "", "", true, $screen, $headingAtSide, $elementObject, $prevEntry); // also sets the $GLOBALS['elementsInGridsAndTheirContainers'] which references the elements that were rendered into the grid
 	if($headingAtSide) { // grid contents is the two bits for the xoopsformlabel when heading is at side, otherwise, it's just the contents for the break
-		$gridElement = new XoopsFormLabel($gridContents[0], $gridContents[1], $renderedElementName);
+		$gridElement = new XoopsFormLabel($gridContents[0], $gridContents[1], $renderedElementMarkupName);
 		$helpText = $elementObject->getVar('ele_desc');
 		if(trim($helpText)) {
+$elementRenderer = new formulizeElementRenderer($elementObject);
+			$helpText = $elementRenderer->formulize_replaceCurlyBracketVariables($helpText, $entry_id, $elementObject->getVar('id_form'), $renderedElementMarkupName);
 			$gridElement->setDescription($helpText);
 		}
 		// if any of the elements in the grid are required, mark as required so we get the asterisk
