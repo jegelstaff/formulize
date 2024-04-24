@@ -440,7 +440,7 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
                                                 // last option causes strict matching by type
                                                 $foundit = false;
                                                 foreach ($options as $thisoption=>$default_value) {
-                                                
+
                                                     if (trim($item_value) == trim(trans($thisoption))) {
                                                         $foundit = true;
                                                         break;
@@ -619,6 +619,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
         $form_proxyid = $xoopsUser->getVar('uid');
     }
 
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
     $form_handler = xoops_getmodulehandler('forms','formulize');
     $formObject = $form_handler->get($importSet[4]);
     $data_handler = new formulizeDataHandler($importSet[4]);
@@ -640,7 +641,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
             $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." WRITE";
             // include the revisions table if necessary
             if($formObject->getVar('store_revisions') AND $form_handler->revisionsTableExists($formObject->getVar('id_form'))) {
-                $lockSQL .= ", ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."_revisions WRITE";    
+                $lockSQL .= ", ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."_revisions WRITE";
             }
     } else {
             $lockSQL = "LOCK TABLES " . $xoopsDB->prefix("formulize_".$importSet[8]) . " WRITE, ".
@@ -654,7 +655,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
             $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." WRITE";
             // include the revisions table if necessary
             if($formObject->getVar('store_revisions') AND $form_handler->revisionsTableExists($formObject->getVar('id_form'))) {
-                $lockSQL .= ", ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."_revisions WRITE";    
+                $lockSQL .= ", ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."_revisions WRITE";
             }
     }
     $xoopsDB->query($lockSQL);
@@ -724,9 +725,9 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
 
                 if ($importSet[6][$link] != -1) {
                     $element = $importSet[5][0][$importSet[6][$link]];
-                    
+
                     $id_form = $importSet[4];
-                    
+
                     if ($link == ($links-1)) {
                         // remove some really odd line endings if present, only happens when dealing with legacy outputs of really old/odd systems
                         $row_value = str_replace(chr(19).chr(16), "", $row[$link]);
@@ -736,10 +737,10 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
 
                     if ($row_value != "") {
                         switch($element["ele_type"]) {
-                            
+
                             case "derived":
                                 break; // ignore derived values for importing
-                            
+
                             case "select":
                             $ele_value = unserialize($element["ele_value"]);
                             if ($importSet[5][1][$link] AND !strstr($row_value, ",")
@@ -757,7 +758,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
                                     if($ele_value['snapshot']) {
                                         $row_value = '';
                                         if(count((array) $items)>1) {
-                                            $row_value .= '*=+*:';  
+                                            $row_value .= '*=+*:';
                                         }
                                         $row_value .= implode('*=+*:',$items);
                                     } else {
@@ -977,7 +978,11 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
 
                         // record the values for inserting as part of this record
                         // prior to 3.0 we did not do the htmlspecialchars conversion if this was a linked selectbox...don't think that's a necessary exception in 3.0 with new data structure
-                        $fieldValues[$element['ele_handle']] = $myts->htmlSpecialChars($row_value);
+
+												$elementObject = $element_handler->get($element['ele_handle']);
+												if($elementObject->hasData) {
+                        	$fieldValues[$element['ele_handle']] = $myts->htmlSpecialChars($row_value);
+												}
 
                     } // end of if there's a value in the current column
                 } elseif (isset($importSet[7]['usethisentryid']) AND $link == $importSet[7]['usethisentryid']) {
@@ -988,10 +993,10 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
 
             // now that we've recorded all the values, do the actual updating/inserting of this record
             if ($this_id_req) {
-                
+
                 // first, record a revisions if necessary
                 formulize_updateRevisionData($formObject, $this_id_req, true);
-                
+
                 // updating an entry
                 $form_uid = $this_uid;
                 $updateSQL = "UPDATE " . $xoopsDB->prefix("formulize_".$importSet[8])." SET ";
@@ -1084,7 +1089,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
     }
     // fid is $importSet[4] ?!!
     $GLOBALS['formulize_snapshotRevisions'][$importSet[4]] = formulize_getCurrentRevisions($importSet[4], $entriesMap);
-    
+
     if(isset($_POST['updatederived']) AND $_POST['updatederived']) {
     // update derived values based on the form only
         $ele_types = $formObject->getVar('elementTypes');
@@ -1097,12 +1102,12 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
     }
         }
     }
-    
+
     if(isset($_POST['sendnotifications']) AND $_POST['sendnotifications']) {
     // send notifications
     foreach($notEntriesList as $notEvent=>$notDetails) {
         foreach($notDetails as $notFid=>$notEntries) {
-            $notEntries = array_unique($notEntries); 
+            $notEntries = array_unique($notEntries);
             sendNotifications($notFid, $notEvent, $notEntries);
         }
     }
