@@ -631,7 +631,7 @@ table:first-child div.applinks h1 {
 .main-content {
   margin-top: 25px;
   overflow: auto;
-  height: 91vh;
+  height: 102%;
 }
 @media print {
     .main-content {
@@ -1063,6 +1063,7 @@ table.formulize-subform-table td {
   background-color: var(--background-color);
   width: 100%;
   padding-left: 10px;
+	z-index: 10;
 }
 
 .form-heading {
