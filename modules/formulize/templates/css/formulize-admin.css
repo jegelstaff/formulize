@@ -1555,7 +1555,7 @@ form label {
   padding: 0 4px 0 0; }
 
 form fieldset fieldset {
-  /*  border: none; 
+  /*  border: none;
     margin: 3px 0 0 0;
       padding: 0;*/ }
 
@@ -1709,4 +1709,8 @@ p.useroptions input[type="text"] {
     display: inline-block;
     top: 0.6em !important;
     transform: scale(175%);
+}
+
+.sorthandle {
+	cursor:move;
 }

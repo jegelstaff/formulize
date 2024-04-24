@@ -28,7 +28,7 @@
 	<{if $content.advanceview|is_array AND $content.advanceview|@count > 0}>
 	  <{foreach from=$content.advanceview key=index item=value}>
 	    <tr class="advanceviewcol" name="<{$index}>">
-	      <td>
+	      <td><span class='sorthandle'>&equiv;</span>
 		<select id="cols-<{$index}>" name="col-value[<{$index}>]" size="1">
 		  <{html_options options=$content.advanceviewoptions selected=$value.column}>
 		</select>
@@ -61,7 +61,7 @@
 	  <input type="hidden" id="numberOfRows" name="rows" value=<{if $content.advanceview|is_array}><{$content.advanceview|@count}><{/if}>></input>
 	<{else}>
 	    <tr class="advanceviewcol" name="0">
-	      <td>
+	      <td><span class='sorthandle'>&equiv;</span>
 		<select id="cols-0" name="col-value[0]" size="1">
 		  <{html_options options=$content.advanceviewoptions}>
 		</select>
@@ -222,7 +222,7 @@
   }
 
   function addAdvanceViewRow(number) {
-    appendContents1 = '<td><select id="cols-'+number+'" name="col-value['+number+']"></select></td>';
+    appendContents1 = '<td><span class="sorthandle">&equiv;</span> <select id="cols-'+number+'" name="col-value['+number+']"></select></td>';
     appendContents2 = '<td><input type="text" name="search-value['+number+']"></input></td>';
     appendContents25 = '<td><select id="search-type-'+number+'" name="search-type['+number+']"><option label="Search Box" value="Box">Search Box</option><option label="Dropdown List" value="Filter">Dropdown List</option><option label="Checkboxes" value="MultiFilter">Checkboxes</option><option label="Date Range" value="DateRange">Date Range</option></select></td>';
     appendContents3 = '<td><input type="radio" name="sort-by" id="'+number+'-ASC" value="'+number+'-ASC"><label for="'+number+'-ASC">A..Z</label></input><input type="radio" name="sort-by" id="'+number+'-DESC" value="'+number+'-DESC"><label for="'+number+'-DESC">Z..A</label></input></td>';
@@ -287,6 +287,35 @@
 	$("[name=reload_list_screen_page]").val(1);
   $(".savebutton").click();
 	return false;
+});
+
+let resortCounter = 0;
+$(document).ready(function() {
+	$('table.advanceview').sortable({
+		cursor: "move",
+		axis: "y",
+		items: ".advanceviewcol",
+		stop: function() {
+			resortCounter = 0;
+			$('table.advanceview tr.advanceviewcol').each(function() {
+					$(this).attr('name',resortCounter);
+					$(this).find('select[id^=cols-]').attr('name', 'col-value['+resortCounter+']');
+					$(this).find('select[id^=cols-]').attr('id', 'cols-'+resortCounter);
+					$(this).find('input[name^=search-value]').attr('name', 'search-value['+resortCounter+']');
+					$(this).find('select[id^=search-type]').attr('id', 'search-type['+resortCounter+']');
+					$(this).find('select[name^=search-type]').attr('name', 'search-type['+resortCounter+']');
+					$(this).find('input[id$=-ASC]').attr('id', resortCounter+'-ASC');
+					$(this).find('input[id$=-ASC]').attr('value', resortCounter+'-ASC');
+					$(this).find('label[for$=-ASC]').attr('for', resortCounter+'-ASC');
+					$(this).find('input[id$=-DESC]').attr('id', resortCounter+'-DESC');
+					$(this).find('input[id$=-DESC]').attr('value', resortCounter+'-DESC');
+					$(this).find('label[for$=-DESC]').attr('for', resortCounter+'-DESC');
+					$(this).find('img.removeCol').attr('onClick', 'removeColumn('+resortCounter+')');
+					resortCounter++;
+			});
+			setDisplay('savewarning','block');
+		}
+	});
 });
 
 </script>
