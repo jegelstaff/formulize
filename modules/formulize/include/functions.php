@@ -4416,23 +4416,28 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
             $filter .= $multi ? " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' value='none' $checked onclick=\"jQuery('#".$id."_hiddenMulti').val('none');jQuery('.$id').each(function() { jQuery(this).removeAttr('checked') }); jQuery('#apply-button-".$id."').show(200);\">&nbsp;$defaultText</label><br/>\n" :"<option value=\"none\">".$defaultText."</option>\n";
         }
 
-        $element_value = $elementObject->getVar('ele_value');
+        $ele_value = $elementObject->getVar('ele_value');
         $ele_uitext = $elementObject->getVar('ele_uitext');
         switch ($elementObject->getVar('ele_type')) {
             case "select":
-                $options = $element_value[2];
+                $options = $ele_value[2];
                 break;
             case "checkbox":
                 $checkboxHandler = xoops_getmodulehandler("checkboxElement", "formulize");
-                $element_value = $checkboxHandler->backwardsCompatibility($element_value);
-                $options = $element_value[2];
+                $ele_value = $checkboxHandler->backwardsCompatibility($ele_value);
+                $options = $ele_value[2];
                 break;
             case "radio":
-                $options = $element_value;
+                $options = $ele_value;
                 break;
             default:
                 $options = array();
         }
+				foreach($options as $checkThisKey=>$checkThisValue) {
+					if(strstr($checkThisKey, "{OTHER|")) {
+						unset($options[$checkThisKey]);
+					}
+				}
 
         $useValue = ""; // flag to indicate if the value should be used for the label that users see, otherwise we use the key
 
@@ -4472,22 +4477,26 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
                 global $xoopsUser;
                 $fakeOwnerUid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
                 // remove any dynamic filters pointing to form elements since we're rendering without entry context
-                foreach($element_value[5][2] as $i=>$conditionTerm) {
+                foreach($ele_value[5][2] as $i=>$conditionTerm) {
                     if(substr($conditionTerm, 0, 1)=="{" AND substr($conditionTerm, -1)=="}") {
                         $termToCheck = substr($conditionTerm, 1, -1);
                         if(!isset($_GET[$termToCheck]) AND !isset($_POST[$termToCheck])) {
-                            unset($element_value[5][0][$i]);
-                            unset($element_value[5][1][$i]);
-                            unset($element_value[5][2][$i]);
-                            unset($element_value[5][3][$i]);
+                            unset($ele_value[5][0][$i]);
+                            unset($ele_value[5][1][$i]);
+                            unset($ele_value[5][2][$i]);
+                            unset($ele_value[5][3][$i]);
                         }
                     }
                 }
-                list($conditionsfilter, $conditionsfilter_oom, $parentFormFrom) = buildConditionsFilterSQL($element_value[5], $source_form_id, 'new', $fakeOwnerUid, $elementFormObject, "t1");
+                list($conditionsfilter, $conditionsfilter_oom, $parentFormFrom) = buildConditionsFilterSQL($ele_value[5], $source_form_id, 'new', $fakeOwnerUid, $elementFormObject, "t1");
                 $sourceEntryIdsForFilters = array(); // filters never have any preselected values from the database
                 list($sourceEntrySafetyNetStart, $sourceEntrySafetyNetEnd) = prepareLinkedElementSafetyNets($sourceEntryIdsForFilters);
                 $ele_value['formlink_useonlyusersentries'] = isset($ele_value['formlink_useonlyusersentries']) ? $ele_value['formlink_useonlyusersentries'] : 0;
-                $pgroupsfilter = prepareLinkedElementGroupFilter($source_form_id, $element_value[3], $element_value[4], $element_value[6], $ele_value['formlink_useonlyusersentries']);
+								if($elementObject->getVar('ele_type')=='select') {
+                	$pgroupsfilter = prepareLinkedElementGroupFilter($source_form_id, $ele_value[3], $ele_value[4], $ele_value[6], $ele_value['formlink_useonlyusersentries']);
+								} else {
+									$pgroupsfilter = prepareLinkedElementGroupFilter($source_form_id, $ele_value['formlink_scope'], $ele_value['checkbox_scopelimit'], $ele_value['checkbox_formlink_anyorall'], $ele_value['formlink_useonlyusersentries']);
+								}
                 $extra_clause = prepareLinkedElementExtraClause($pgroupsfilter, $parentFormFrom, $sourceEntrySafetyNetStart);
                 $limitConditionWhere = substr($limitConditionWhere, 7); // cut off the WHERE in this clause, because the extra_clause already intros it
             }
@@ -4496,11 +4505,11 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
 
             // if no extra elements are selected for display as a form element, then display the linked element
             $linked_columns = array($boxproperties[1]);
-            if (is_array($element_value[EV_MULTIPLE_FORM_COLUMNS]) AND count((array) $element_value[EV_MULTIPLE_FORM_COLUMNS]) > 0 AND $element_value[EV_MULTIPLE_FORM_COLUMNS][0] != 'none') {
+            if (is_array($ele_value[EV_MULTIPLE_FORM_COLUMNS]) AND count((array) $ele_value[EV_MULTIPLE_FORM_COLUMNS]) > 0 AND $ele_value[EV_MULTIPLE_FORM_COLUMNS][0] != 'none') {
                 if($sourceElementObject = $element_handler->get($source_element_handle)) {
                     $form_handler = xoops_getmodulehandler('forms', 'formulize');
                     $sourceFormObject = $form_handler->get($sourceElementObject->getVar('id_form'));
-                    $linked_columns = convertElementIdsToElementHandles($element_value[EV_MULTIPLE_FORM_COLUMNS], $sourceFormObject->getVar('id_form'));
+                    $linked_columns = convertElementIdsToElementHandles($ele_value[EV_MULTIPLE_FORM_COLUMNS], $sourceFormObject->getVar('id_form'));
                     // remove empty entries, which can happen if the "use the linked field selected above" option is selected
                     $linked_columns = array_filter($linked_columns);
                 }
@@ -4597,13 +4606,13 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
             if (key($options) === "{FULLNAMES}") { $nametype = "name"; }
             if (key($options) === "{USERNAMES}") { $nametype = "uname"; }
             $pgroups = array();
-            if ($element_value[3]) {
-                $scopegroups = explode(",",$element_value[3]);
+            if ($ele_value[3]) {
+                $scopegroups = explode(",",$ele_value[3]);
                 global $xoopsUser;
                 $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
                 if (!in_array("all", $scopegroups)) {
                     // limit by users's groups
-                    if ($element_value[4]) {
+                    if ($ele_value[4]) {
                         // loop so we can get rid of reg users group simply
                         foreach ($groups as $gid) {
                             if ($gid == XOOPS_GROUP_USERS) { continue; }
@@ -4623,7 +4632,7 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
                     }
                 } else {
                     // really use all (otherwise, we're just going will all user's groups, so existing value of $groups will be okay
-                    if (!$element_value[4]) {
+                    if (!$ele_value[4]) {
                         unset($groups);
                         global $xoopsDB;
                         $allgroupsq = q("SELECT groupid FROM " . $xoopsDB->prefix("groups") . " WHERE groupid != " . XOOPS_GROUP_USERS);
