@@ -10,16 +10,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
     - uses: actions/setup-node@v4
       with:
         node-version: 18
     - name: Set file/directory permissions
       run: |
-        chmod 777 trust uploads modules templates_c cache mainfile.php
-    - name: Set write permission to the formulize directory
-      run: |
-        chmod 777 ~/work/formulize/formulize
+        chmod 777 trust uploads modules templates_c cache mainfile.php ~/work/formulize/formulize
     - name: Run Docker Compose up
       run: |
         docker-compose up -d
