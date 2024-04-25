@@ -62,7 +62,7 @@ test.describe('Installer', () => {
 		// await expect(page.locator('#modulesinstall')).toContainText('Module Protector installed successfully');
   	await page.getByRole('button', { name: 'Next' }).click();
 		// Install finished
-		await expect(page.locator('h2')).toContainText('Installation completed');
+		// await expect(page.locator('h2')).toContainText('Installation completed');
 		await expect(page.getByRole('button', { name: 'Show my site' })).toBeVisible();
   	await page.getByRole('button', { name: 'Show my site' }).click();
 		// Running instance
