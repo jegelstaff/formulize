@@ -664,6 +664,12 @@ div.list-of-entries .card__body {
 .scrollbox {
     height: 92%;
     width: 93vw;
+		margin-bottom: 2em;
+}
+@media(min-width: 768px) {
+	.scrollbox {
+		margin-bottom: 0;
+	}
 }
 
 #savingmessage {
@@ -2943,6 +2949,7 @@ img {
    text-decoration: none;
    display: inline-block;
    font-size: 1.2rem;
+	 margin-right: 1em;
 }
 
 .formulize-grid {
@@ -3151,6 +3158,9 @@ input[name='pickdiffgroup'] {
         line-height: 2.5em;
     }
 }
+.formulize-page-navigation {
+	border: 1px solid var(--light-border-color);
+}
 
 #firstbox::placeholder {
     font-size: 0.9rem;
@@ -3195,9 +3205,6 @@ input[name='pickdiffgroup'] {
     top: 0px;
     padding-top: 0;
 }
-.list-of-entries-container table.outer td[id^=celladdress_1_] {
-    top: 4.1em;
-}
 
 /* quickSearchFilters lining up right with search boxes */
 .list-of-entries-container table.outer td[id^=celladdress_1_] select {
@@ -3226,6 +3233,9 @@ table.outer {
   box-shadow: 6px 0px 10px 0px rgba(51, 77, 110, 0.08);
   margin-bottom: 30px;
 }
+div.scrollbox table.outer {
+	margin-bottom: 0;
+}
 
 .list-of-entries-container table.outer {
     border-collapse: separate;
@@ -3240,15 +3250,17 @@ table.outer {
     display: none;
 }
 
-#formulize-list-of-entries-footer {
-    display: flex;
-    justify-content: space-between;
+@media (min-width: 768px) {
+	#formulize-list-of-entries-footer {
+		display: flex;
+		justify-content: space-between;
     align-items: center;
+	}
 }
 #formulize-list-of-entries-footer div {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
 }
 
 @media (max-width: 450px) {

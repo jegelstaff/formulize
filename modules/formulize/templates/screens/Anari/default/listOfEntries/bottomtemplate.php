@@ -73,34 +73,6 @@ function setScrollDisplay(element) {
 	}
 }
 
-function setSearchRowTop() {
-    var headingHeight = jQuery('th[id=celladdress_h1_0]').innerHeight();
-    var topValue = headingHeight+1;
-    jQuery('td[id^=celladdress_1_]').css('top',topValue+'px');
-}
-
-var toggleSearchesOnFirst = <?php print $toggleSearchesOnFirst; ?>;
-function toggleSearches() {
-	if(jQuery('#cellcontents_1_0').css('display') == 'none' || toggleSearchesOnFirst) {
-		// style searches open
-		jQuery('td[id^="celladdress_1_"]').css('padding','24px');
-        jQuery('td[id^="celladdress_1_"]').css('padding-left','0.3em');
-		jQuery('.search-toggle-link').css('transform', 'rotate(180deg)');
-
-	} else {
-		// style searches closed
-		jQuery('td[id^="celladdress_1_"]').css('padding','0.3em');
-		jQuery('td[id^="celladdress_1_"]').css('padding-top','0');
-		jQuery('.search-toggle-link').css('transform', 'none');
-	}
-	// toggle on/off except if they should remain open at first
-	if(!toggleSearchesOnFirst) {
-		jQuery('div[id^="cellcontents_1_"]').toggle();
-		jQuery('#celladdress_1_margin .header-info-link').toggle();
-	}
-	toggleSearchesOnFirst = false;
-}
-
 jQuery(window).load(function() {
 
 	jQuery('.lockcolumn').live("click", function() {
@@ -145,10 +117,10 @@ jQuery(window).load(function() {
 		setScrollDisplay(jQuery(window));
 	});
 
-    if(jQuery('.search-toggle-link').length) {
-		toggleSearches();
+  if(jQuery('.search-toggle-link').length) {
+		toggleSearches(true);
 		jQuery('#celladdress_1_margin').css('max-width', '20px');
-		jQuery('td[id^="celladdress_1_"]').css('transition', 'padding 0.5s');
+		jQuery('td[id^="celladdress_1_"]').css('transition', 'opacity 1s', 'ease-in');
 		jQuery('#celladdress_1_margin').parent().click(function (event) {
 			if(event.target.id.includes('celladdress_1_')) {
 				toggleSearches();
@@ -158,17 +130,56 @@ jQuery(window).load(function() {
 
 });
 
+var toggleSearchesOnFirst = <?php print $toggleSearchesOnFirst; ?>;
+function toggleSearches(closeSearchesImmediately=false) {
+	if(jQuery('#cellcontents_1_0').css('display') == 'none' || toggleSearchesOnFirst) {
+		// style searches open
+		jQuery('td[id^="celladdress_1_"]').css('padding','24px');
+    jQuery('td[id^="celladdress_1_"]').css('padding-left','0.3em');
+		jQuery('td[id^="celladdress_1_"]:not(#celladdress_1_margin)').css('opacity', 1);
+		jQuery('.search-toggle-link').css('transform', 'rotate(180deg)');
+		jQuery('.list-of-entries table.outer td:not(.head)').css('border-top', '0');
+		jQuery('.list-of-entries table.outer td.formulize-controls').css('border-top', '0');
+		if(!toggleSearchesOnFirst) {
+			jQuery('div[id^="cellcontents_1_"]').toggle();
+			jQuery('#celladdress_1_margin .header-info-link').toggle();
+		}
+	} else {
+		// style searches closed
+		jQuery('td[id^="celladdress_1_"]:not(#celladdress_1_margin)').css('opacity', 0);
+		jQuery('.list-of-entries table.outer td:not(.head)').css('border-top', '1px solid #d1d1df');
+		jQuery('.list-of-entries table.outer td.formulize-controls').css('border-top', '1px solid #d1d1df');
+		if(closeSearchesImmediately) {
+			closeSearches();
+		} else {
+			setTimeout(function() {
+				closeSearches();
+			}, 750);
+		}
+	}
+	toggleSearchesOnFirst = false;
+}
+function closeSearches() {
+	jQuery('.search-toggle-link').css('transform', 'none');
+	jQuery('td[id^="celladdress_1_"]').css('padding','0.3em');
+	jQuery('td[id^="celladdress_1_"]').css('padding-top','0');
+	jQuery('div[id^="cellcontents_1_"]').toggle();
+	jQuery('#celladdress_1_margin .header-info-link').toggle();
+}
+
 jQuery(window).scroll(function () {
     jQuery('.floating-column').css('margin-top', ((window.pageYOffset)*-1));
 });
 
-jQuery(document).ready(function() {
-    setSearchRowTop();
-    setTimeout(setSearchRowTop,500);
+var tryingToSetSearchRowTop = null;
+jQuery(window).on('load', function() {
+	tryingToSetSearchRowTop = setInterval(setSearchRowTop, 200);
 });
-
-jQuery(window).resize(function () {
-    setSearchRowTop();
-});
+function setSearchRowTop() {
+    var headingHeight = jQuery('th[id=celladdress_h1_0]').innerHeight();
+		if(headingHeight > 0) { clearInterval(tryingToSetSearchRowTop); }
+    var topValue = headingHeight+1;
+    jQuery('td[id^=celladdress_1_]').css('top',topValue+'px');
+}
 
 </script>
