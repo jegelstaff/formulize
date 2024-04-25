@@ -17,7 +17,10 @@ jobs:
     - name: Set file/directory permissions
       run: |
         chmod 777 trust uploads modules templates_c cache mainfile.php
-    - name: Run Docker Compose
+    - name: Run Docker Compose down
+      run: |
+        docker-compose down -v
+    - name: Run Docker Compose up
       run: |
         docker-compose -f docker-compose.ci.yaml up -d
     - name: Wait for mysql
