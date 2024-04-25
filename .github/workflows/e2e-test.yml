@@ -34,12 +34,6 @@ jobs:
         | sudo tee /etc/apt/sources.list.d/ngrok.list \
         && sudo apt update \
         && sudo apt install ngrok
-    - name: ngrok token association
-      run: |
-        ngrok config add-authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
-    - name: Start ngrok
-      run: |
-        ngrok http 8080
     # - name: Connect to saucelabs
     #   uses: saucelabs/sauce-connect-action@v2
     #   with:
@@ -67,5 +61,5 @@ jobs:
     #     name: playwright-report
     #     path: tests/e2e/test-report/
     #     retention-days: 30
-    # - name: Setup tmate session
-    #   uses: mxschmitt/action-tmate@v3
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
