@@ -15,3 +15,6 @@ formulize-docs/_site
 libraries/php-saml/settings.php
 _site
 install.lock
+tests/e2e/test-results
+tests/e2e/test-report
+tests/e2e/node_modules
