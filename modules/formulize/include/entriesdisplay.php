@@ -62,6 +62,10 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	formulize_benchmark("start of drawing list");
 
+	/**
+	 * STAGE 1 - SETUP THINGS WE NEED, DO BASIC BOOKKEEPING
+	 */
+
 	global $xoopsDB, $xoopsUser;
 
 	// Set some required variables
@@ -82,9 +86,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	if((($_POST['delconfirmed'] OR $_POST['cloneconfirmed'] OR $_POST['delviewid_formulize'] OR $_POST['saveid_formulize'] OR is_numeric($_POST['caid']))) AND !$formulize_LOESecurityPassed) {
 		$module_handler =& xoops_gethandler('module');
 		$config_handler =& xoops_gethandler('config');
-	$formulizeModule =& $module_handler->getByDirname("formulize");
-	$formulizeConfig =& $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
-	$modulePrefUseToken = $formulizeConfig['useToken'];
+		$formulizeModule =& $module_handler->getByDirname("formulize");
+		$formulizeConfig =& $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
+		$modulePrefUseToken = $formulizeConfig['useToken'];
 		$useToken = $screen ? $screen->getVar('useToken') : $modulePrefUseToken;
 		if(isset($GLOBALS['xoopsSecurity']) AND $useToken) {
 			$formulize_LOESecurityPassed = $GLOBALS['xoopsSecurity']->check();
@@ -95,7 +99,6 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	// check for all necessary permissions
 	$add_own_entry = $gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid);
-	$delete_own_reports = $gperm_handler->checkRight("delete_own_reports", $fid, $groups, $mid);
 	$delete_other_reports = $gperm_handler->checkRight("delete_other_reports", $fid, $groups, $mid);
 	$update_other_reports = $gperm_handler->checkRight("update_other_reports", $fid, $groups, $mid);
 	$update_own_reports = $gperm_handler->checkRight("update_own_reports", $fid, $groups, $mid);
@@ -104,12 +107,19 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	$screen_handler = xoops_getmodulehandler('screen', 'formulize');
 
-	$settings = array(); // $settings will be filled up with various variables and passed to some other functions as an "easy" way of including all those values
+	// $settings will be filled up with various variables and passed to some other functions as an "easy" way of including all those values
+	$settings = array();
 	$currentURL = getCurrentURL();
 	$displaytitle = getFormTitle($fid);
-
-	// get default info and info passed to page....
-
+	$settings['title'] = $displaytitle;
+	$settings['currentURL'] = $currentURL;
+	// get export options
+	if($_POST['xport']) {
+		$settings['xport'] = $_POST['xport'];
+		if($_POST['xport'] == "custom") {
+			$settings['xport_cust'] = $_POST['xport_cust'];
+		}
+	}
 	// clear any default search text that has been passed (because the user didn't actually search for anything)
 	foreach($_POST as $k=>$v) {
 		if(substr($k, 0, 7) == "search_" AND $v==_formulize_DE_SEARCH_HELP) {
@@ -117,6 +127,10 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			break; // assume this is only sent once, since the help text only appears in the first column
 		}
 	}
+
+	/**
+	 * STAGE 2 - DELETE ENTRIES IF REQUESTED
+	 */
 
 	// check for deletion request (set by 'delete selected' button)
 	if ($_POST['delconfirmed'] AND $formulize_LOESecurityPassed) {
@@ -136,6 +150,10 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		}
 	}
 
+	/**
+	 * STAGE 3 - CLONE ENTRIES IF REQUESTED
+	 */
+
 	// check for cloning request and if present then clone entries
 	if($_POST['cloneconfirmed'] AND $formulize_LOESecurityPassed AND $add_own_entry) {
 		foreach($_POST as $k=>$v) {
@@ -145,6 +163,10 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			}
 		}
 	}
+
+	/**
+	 * STAGE 4 - DELETE VIEWS IF REQUESTED, AND RESET THE VIEW IF NECESSARY/REQUESTED
+	 */
 
 	// handle deletion of view...reset currentView
 	if($_POST['delview'] AND $formulize_LOESecurityPassed) {
@@ -182,6 +204,10 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		$_POST['currentview'] = $resetview;
 	}
 
+	/**
+	 * STAGE 5 - SAVE THE VIEW IF REQUESTED
+	 */
+
 	// handle saving of the view if that has been requested
 	// only do this if there's a saveid_formulize and they passed the security check, and any one of these:  they can update other reports, or this is a "new" view, or this is not a new view, and it belongs to them and they have update own reports permission
 	if($_POST['saveid_formulize'] AND $formulize_LOESecurityPassed AND ($update_other_reports OR ((is_numeric($_POST['saveid_formulize']) AND ($update_own_reports AND $xoopsUser->getVar('uid') == getSavedViewOwner($_POST['saveid_formulize']))) OR $_POST['saveid_formulize'] == "new"))) {
@@ -194,7 +220,6 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		// report is either newid or newname if newid is "new"
 		// newscope goes to $_POST['currentview']
 		//$_POST['oldcols'] -- from page
-		//$_POST['asearch'] -- from page
 		//$_POST['calc_cols'] -- from page
 		//$_POST['calc_calcs'] -- from page
 		//$_POST['calc_blanks'] -- from page
@@ -245,9 +270,6 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		$qsearches = implode("&*=%4#", $allquicksearches);
 
 		$savename = formulize_db_escape($savename);
-		$savesearches = formulize_db_escape($_POST['asearch']);
-		//print $_POST['asearch'] . "<br>";
-		//print "$savesearches<br>";
 		$qsearches = formulize_db_escape($qsearches);
 
 		if($frid) {
@@ -279,7 +301,6 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 					"sv_lockcontrols, " .
 					"sv_hidelist, " .
 					"sv_hidecalc, " .
-					"sv_asearch, " .
 					"sv_sort, " .
 					"sv_order, " .
 					"sv_oldcols, " .
@@ -304,7 +325,6 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 					"\"".formulize_db_escape($_POST['savelock'])		."\", ".
 					intval($_POST['hlist'])                             .", ".
 					intval($_POST['hcalc'])			                    .", ".
-					"\"".formulize_db_escape($savesearches)				."\", ".
 					"\"".formulize_db_escape($_POST['sort'])			."\", ".
 					"\"".formulize_db_escape($_POST['order'])			."\", ".
 					"\"".formulize_db_escape($_POST['oldcols'])			."\", ".
@@ -330,7 +350,6 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 					"sv_lockcontrols 	= \"".formulize_db_escape($_POST['savelock'])		."\", ".
 					"sv_hidelist 		= ".intval($_POST['hlist'])                         .", ".
 					"sv_hidecalc 		= ".intval($_POST['hcalc']) 			            .", ".
-					"sv_asearch 		= \"".formulize_db_escape($savesearches) 			."\", ".
 					"sv_sort 			= \"".formulize_db_escape($_POST['sort']) 			."\", ".
 					"sv_order 			= \"".formulize_db_escape($_POST['order']) 			."\", ".
 					"sv_oldcols 		= \"".formulize_db_escape($_POST['oldcols']) 		."\", ".
@@ -371,6 +390,10 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		}
 	}
 
+	/**
+	 * STAGE 6 - FIGURE OUT WHICH VIEW WE NEED TO LOAD, IF ANY. BESIDES WHAT WE DETERMINE HERE, $_POST['currentview'] COULD CONTAIN A VIEW THAT WE NEED TO LOAD LATER.
+	 */
+
 	$currentView = "";
 	if($screen) {
 		$loadview = is_numeric($loadview) ? $loadview : $screen->getVar('defaultview'); // flag the screen default for loading if no specific view has been requested
@@ -403,6 +426,10 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		$currentView = "mine";
 	}
 
+	/**
+	 * STAGE 7 - LOAD A VIEW IF REQUESTED / NECESSARY
+	 */
+
 	// no report/saved view to be loaded, and we're not on a subsequent page load that is sending back a declared currentview, or the user clicked the reset button
 	// therefore, an advanceview if any could be loaded after all the other setup has been done
 	if(!$_POST['currentview'] OR $_POST['userClickedReset']) {
@@ -410,31 +437,6 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	} else {
 		$couldLoadAdvanceView = false;
 	}
-
-	// debug block to show key settings being passed back to the page
-
-	/*if($uid == 19511) {
-	print "delview: " . $_POST['delview'] . "<br>";
-	print "advscope: " . $_POST['advscope'] . "<br>";
-	print "asearch: " . $_POST['asearch'] . "<br>";
-	print "Hidelist: " . $_POST['hlist'] . "<br>";
-	print "Hidecalc: " . $_POST['hcalc'] . "<br>";
-	print "Lock Controls: " . $_POST['lockcontrols'] . "<br>";
-	print "Sort: " . $_POST['sort'] . "<br>";
-	print "Order: " . $_POST['order'] . "<br>";
-	print	"Cols: " . $_POST['oldcols'] . "<br>";
-	print "Curview: " . $_POST['currentview'] . "<br>";
-	print "Calculation columns: " . $_POST['calc_cols'] . "<br>";
-	print "Calculation calcs: " . $_POST['calc_calcs'] . "<br>";
-	print "Calculation blanks: " . $_POST['calc_blanks'] . "<br>";
-	print "Calculation grouping: " . $_POST['calc_grouping'] . "<br>";
-	foreach($_POST as $k=>$v) {
-		if(substr($k, 0, 7) == "search_" AND $v != "") {
-			print "$k: $v<br>";
-		}
-	}
-	}*/
-
 
 	// set flag to indicate whether we let the user's scope setting expand beyond their normal permission level (happens when unlocked published views are in effect)
 	$currentViewCanExpand = false;
@@ -451,7 +453,6 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			list(
 				$_loaded_currentview,
 				$_loaded_oldcols,
-				$_POST['asearch'],
 				$_loaded_calc_cols,
 				$_loaded_calc_calcs,
 				$_loaded_calc_blanks,
@@ -468,67 +469,64 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				$_loaded_sv_use_features,
 				$_loaded_searches_are_fundamental) = loadReport(substr($_POST['currentview'], 1), $fid, $frid);
 
-				// if no features specified, use all features -- default behaviour
-				if(!$_loaded_sv_use_features) {
-					$_loaded_sv_use_features = 'scope,cols,searches,sort,calcs,epp';
-				}
-				$features_loaded_from_saved_view = explode(',',$_loaded_sv_use_features);
+			// if no features specified, use all features -- default behaviour
+			if(!$_loaded_sv_use_features) {
+				$_loaded_sv_use_features = 'scope,cols,searches,sort,calcs,epp';
+			}
+			$features_loaded_from_saved_view = explode(',',$_loaded_sv_use_features);
 
-				// don't layer in the advance view, unless the view we're loading is short on features. Advance views (start up settings for LOE) don't have scope or epp or calculation options currently. If or when they are added, this condition will need to be adjusted.
-				if($couldLoadAdvanceView AND in_array('cols', $features_loaded_from_saved_view) AND in_array('searches', $features_loaded_from_saved_view) AND in_array('sort', $features_loaded_from_saved_view)) {
-					$couldLoadAdvanceView = false;
-				}
+			// don't layer in the advance view, unless the view we're loading is short on features. Advance views (start up settings for LOE) don't have scope or epp or calculation options currently. If or when they are added, this condition will need to be adjusted.
+			if($couldLoadAdvanceView AND in_array('cols', $features_loaded_from_saved_view) AND in_array('searches', $features_loaded_from_saved_view) AND in_array('sort', $features_loaded_from_saved_view)) {
+				$couldLoadAdvanceView = false;
+			}
 
-				$quicksearches = "";
-				$columnKeyForQuickSearches = "";
-				foreach(explode(',', $_loaded_sv_use_features) as $thisFeature) {
-					switch($thisFeature) {
-						case 'scope':
-							$_POST['currentview'] = $_loaded_currentview;
-							break;
-						case 'cols':
-							$_POST['oldcols'] = $_loaded_oldcols;
-							break;
-						case 'searches':
-							$columnKeyForQuickSearches = $_loaded_oldcols;
-							$quicksearches = $_loaded_quicksearches;
-							$_POST['global_search'] = $_loaded_global_search;
-							break;
-						case 'sort':
-							$_POST['sort'] = $_loaded_sort;
-							$_POST['order'] = $_loaded_order;
-							break;
-						case 'calcs':
-							$_POST['calc_cols'] = $_loaded_calc_cols;
-							$_POST['calc_calcs'] = $_loaded_calc_calcs;
-							$_POST['calc_blanks'] = $_loaded_calc_blanks;
-							$_POST['calc_grouping'] = $_loaded_calc_grouping;
-							$savedViewHList = $_loaded_savedViewHList;
-							$savedViewHCalc =  $_loaded_savedViewHCalc;
-							break;
-						case 'epp':
-							$_POST['formulize_entriesPerPage'] = $_loaded_formulize_entriesPerPage;
-							break;
-					}
-				}
-				// if we didn't load in a scope from the saved view, then we have to set it up now (it is only setup above if no saved view will be loaded... spaghetti! But unfortunately this 'controller' at the top of the displayEntries function is among the oldest and fiddliest parts of the code (circa 2005))
-				if(!in_array('scope',$features_loaded_from_saved_view)) {
-					if(isset($_POST['prev_currentview']) AND $_POST['prev_currentview']) {
-						$_POST['currentview'] = $_POST['prev_currentview'];
-					} else {
-						if($view_globalscope) {
-							$_POST['currentview'] = "all";
-						} elseif($view_groupscope) {
-							$_POST['currentview'] = "group";
-						} else {
-							$_POST['currentview'] = "mine";
+			$quicksearches = "";
+			$columnKeyForQuickSearches = "";
+			foreach(explode(',', $_loaded_sv_use_features) as $thisFeature) {
+				switch($thisFeature) {
+					case 'scope':
+						$_POST['currentview'] = $_loaded_currentview;
+						break;
+					case 'cols':
+						$_POST['oldcols'] = $_loaded_oldcols;
+						break;
+					case 'searches':
+						$columnKeyForQuickSearches = $_loaded_oldcols;
+						$quicksearches = $_loaded_quicksearches;
+						$_POST['global_search'] = $_loaded_global_search;
+						break;
+					case 'sort':
+						$_POST['sort'] = $_loaded_sort;
+						$_POST['order'] = $_loaded_order;
+						break;
+					case 'calcs':
+						$_POST['calc_cols'] = $_loaded_calc_cols;
+						$_POST['calc_calcs'] = $_loaded_calc_calcs;
+						$_POST['calc_blanks'] = $_loaded_calc_blanks;
+						$_POST['calc_grouping'] = $_loaded_calc_grouping;
+						if(!isset($_POST['formulize_preserveListCalcPage']) AND !isset($_GET['formulize_preserveListCalcPage'])) {
+							$_POST['hlist'] = $_loaded_savedViewHList;
+							$_POST['hcalc'] =  $_loaded_savedViewHCalc;
 						}
+						break;
+					case 'epp':
+						$_POST['formulize_entriesPerPage'] = $_loaded_formulize_entriesPerPage;
+						break;
+				}
+			}
+			// if we didn't load in a scope from the saved view, then we have to set it up now (it is only setup above if no saved view will be loaded... spaghetti! But unfortunately this 'controller' at the top of the displayEntries function is among the oldest and fiddliest parts of the code (circa 2005))
+			if(!in_array('scope',$features_loaded_from_saved_view)) {
+				if(isset($_POST['prev_currentview']) AND $_POST['prev_currentview']) {
+					$_POST['currentview'] = $_POST['prev_currentview'];
+				} else {
+					if($view_globalscope) {
+						$_POST['currentview'] = "all";
+					} elseif($view_groupscope) {
+						$_POST['currentview'] = "group";
+					} else {
+						$_POST['currentview'] = "mine";
 					}
 				}
-
-				if(!isset($_POST['formulize_preserveListCalcPage']) AND !isset($_GET['formulize_preserveListCalcPage'])) {
-				$_POST['hlist'] = $savedViewHList;
-				$_POST['hcalc'] = $savedViewHCalc;
 			}
 
 			$actualColsToDisplay = explode(",", $_POST['oldcols']); // might have been loaded, or might be passed from prev page, doesn't matter, this is what we're actually going to display
@@ -586,7 +584,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			// a saved view was requested as the current view, but we don't want to load the entire thing....this means that we just want to use the view to generate the scope, we don't want to load all settings.  So we have to load the view, but discard everything but the view's currentview value
 			// if we were supposed to load the whole thing, loadreport would have been set in post and the above code would have kicked in
 			$loadedViewSettings = loadReport(substr($_POST['currentview'], 1), $fid, $frid);
-			$currentView = $loadedViewSettings[0];
+			$currentView = $loadedViewSettings[LR_CURRENTVIEW];
 		} else {
 			$currentView = $_POST['currentview'];
 		}
@@ -594,7 +592,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		$currentView = $loadview;
 	}
 
-	$pubfilters = strlen($_POST['pubfilters']) > 0 ? explode(",", $_POST['pubfilters']) : array();
+	/**
+	 * STAGE 8 - LAYER IN ANY 'ADVANCE VIEW' (DEFAULT COLS, SEARCHES, SORT OPTIONS FROM A LOE SCREEN)
+	 */
 
 	// if we did not load a full report/saved view, then load an advanceview if any is specified and the current page load is appropriate for it (see above for couldLoadAdvanceView))
 	if($screen AND count((array) $screen->getVar('advanceview')) > 0 AND $couldLoadAdvanceView) {
@@ -628,7 +628,11 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		}
 	}
 
-    // get columns for this form/framework or use columns sent from interface
+	/**
+	 * STAGE 9 - HAVING FIGURED OUT AND LOADED THE VIEW, ETC, DETERMINE THE COLUMNS WE WILL ACTUALLY PRESENT TO THE USER
+	 */
+
+  // get columns for this form/framework or use columns sent from interface
 	// ele_handles for a form, handles for a framework, includes handles of all unified display forms
 	if($_POST['oldcols']) {
 		$showcols = explode(",", $_POST['oldcols']);
@@ -636,34 +640,19 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		$showcols = getDefaultCols($fid, $frid);
 	}
 
-	if($_POST['newcols']) {
+	if($_POST['newcols']) { // if new columns were requested by the user
 		$temp_showcols = $_POST['newcols'];
 		$showcols = explode(",", $temp_showcols);
 	}
 
 	$showcols = removeNotAllowedCols($fid, $frid, $showcols, $groups); // converts old format metadata fields to new ones too if necessary
 
-	// Create settings array to pass to form page or to other functions
-
-	$settings['title'] = $displaytitle;
-
-	// get export options
-	if($_POST['xport']) {
-		$settings['xport'] = $_POST['xport'];
-		if($_POST['xport'] == "custom") {
-			$settings['xport_cust'] = $_POST['xport_cust'];
-		}
-	}
-
+	/**
+	 * STAGE 9 - DETERMINE THE SCOPE WE SHOULD USE FOR THIS PAGELOAD, AND THE VIEWS AVAILABLE TO THE USER. ENFORCE FUNDAMENTAL SEARCHES FROM THE LAST LOADED VIEW IF IT HAD ANY.
+	 */
 	list($scope, $currentView) = buildScope($currentView, $uid, $fid, $currentViewCanExpand);
-	// generate the available views
-
-	// pubstart used to indicate to the delete button where the list of published views begins in the current view drop down (since you cannot delete published views)
-	list($settings['viewoptions'], $settings['pubstart'], $settings['endstandard'], $settings['pickgroups'], $settings['loadviewname'], $settings['curviewid'], $settings['publishedviewnames']) = generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $view_groupscope, $view_globalscope, $_POST['curviewid'], $loadOnlyView, $screen, $_POST['lastloaded']);
-
-	// this param only used in case of loading of reports via passing in the report id or name through $loadview
+	list($settings['viewoptions'], $settings['pubstart'], $settings['endstandard'], $settings['pickgroups'], $settings['loadviewname'], $settings['curviewid'], $settings['publishedviewnames']) = generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $view_groupscope, $view_globalscope, $_POST['curviewid'], $loadOnlyView, $screen, $_POST['lastloaded']); // pubstart used to indicate to the delete button where the list of published views begins in the current view drop down (since you cannot delete published views)
 	if($_POST['loadviewname']) { $settings['loadviewname'] = $_POST['loadviewname']; }
-
 	// if a view was loaded, then update the lastloaded value, otherwise preserve the previous value
 	if($settings['curviewid']) {
 		$settings['lastloaded'] = $settings['curviewid'];
@@ -671,6 +660,12 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		$settings['lastloaded'] = $_POST['lastloaded'];
 		$screen = enforceSearchesAsFundamentalFilters($_POST['lastloaded'], $screen);
 	}
+
+	/**
+	 * STAGE 10 - TIDY UP SEARCHES BASED ON THE ACTUAL SEARCHES / COLUMNS WE'RE SHOWING, NOW THAT WE KNOW ALL THE DETAILS OF WHAT WE'RE SHOWING THE USER
+	 */
+
+	$pubfilters = strlen($_POST['pubfilters']) > 0 ? explode(",", $_POST['pubfilters']) : array();
 
 	// clear quick searches for any columns not included now
 	// also, convert any { } terms to literal values for users who can't update other reports, if the last loaded report doesn't belong to them (they're presumably just report consumers, so they don't need to preserve the abstract terms)
@@ -724,10 +719,12 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		}
 	}
 
+	/**
+	 * STAGE 11 - CATALOGUE SETTINGS, FIGURE OUT IF THE CONTROLS ARE LOCKED (OLD FEATURE)
+	 */
+
 	$settings['pubfilters'] = $pubfilters;
 	$settings['currentview'] = $currentView;
-
-	$settings['currentURL'] = $currentURL;
 
 	// no need for both these values now, since framework handles are deprecated
 	$settings['columns'] = $showcols;
@@ -780,32 +777,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		$settings['lockcontrols'] = "";
 	}
 
-	$settings['asearch'] = $_POST['asearch'];
-	if($_POST['asearch']) {
-		$as_array = explode("/,%^&2", $_POST['asearch']);
-		foreach($as_array as $k=>$one_as) {
-			$settings['as_' . $k] = $one_as;
-		}
-	}
-
 	$settings['oldcols'] = implode(",", $showcols);
 
-	// if there's a bunch of go_back info, and no entry, then we should not show list, we need to display something else entirely
-	if(isset($_POST['go_back_form']) AND $_POST['go_back_form'] AND isset($_POST['go_back_entry']) AND $_POST['go_back_entry'] AND (!isset($_POST['ventry']) OR !$_POST['ventry'])) {
-        $_POST['ventry'] = setupParentFormValuesInPostAndReturnEntryId();
-        $settings['ventry'] = $_POST['ventry'];
-	} elseif(isset($_POST['formulize_originalVentry']) AND is_numeric($_POST['formulize_originalVentry'])) {
-		$settings['ventry'] = $_POST['formulize_originalVentry'];
-	} else {
-        // if the user has requested a ve in the URL, set it now as if they clicked on a link to go into an entry
-        if((!isset($_POST['ventry']) OR !$_POST['ventry']) AND
-            isset($_GET['ve']) AND is_numeric($_GET['ve']) AND $_GET['ve'] > 0) {
-            $_POST['ventry'] = $_GET['ve'];
-        }
-		$settings['ventry'] = $_POST['ventry'];
-	}
-
-	// get sort and order options
 	$settings['sort'] = $_POST['sort'];
 	$settings['order'] = $_POST['order'];
 
@@ -845,7 +818,10 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	// gather id of the cached data, if any. Used by the procedure system (advanced calculations).
 	$settings['formulize_cacheddata'] = strip_tags($_POST['formulize_cacheddata']);
 
-	// process a clicked custom button
+	/**
+	 * STAGE 12 - PROCESS CUSTOM BUTTON CLICKS
+	 */
+
 	// must do this before gathering the data, because it might alter the data!
 	$messageText = "";
 	if(isset($_POST['caid']) AND $screen AND $formulize_LOESecurityPassed) {
@@ -856,7 +832,25 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		}
 	}
 
-	// user clicked on a view this entry link
+	/**
+	 * STAGE 13 - JUMP TO DISPLAYING AN ENTRY IF REQUIRED, EITHER ONE THE USER CLICKED ON IN THE LIST, OR ONE THEY'RE GOING BACK TO IF THEY'RE ALREADY A FEW LEVELS DEEP IN SOME FORM SCREENS. PROBABLY HAVE TO DO THIS LATE IN THE PROCESS BECAUSE WE PASS THE DEDUCED SETTINGS TO THE FORM, SO IT CAN PROPGATE THEM BACK TO THE LIST.
+	 */
+
+	// if there's a bunch of go_back info, and no entry, then we should not show list, we need to display something else entirely
+	if(isset($_POST['go_back_form']) AND $_POST['go_back_form'] AND isset($_POST['go_back_entry']) AND $_POST['go_back_entry'] AND (!isset($_POST['ventry']) OR !$_POST['ventry'])) {
+		$_POST['ventry'] = setupParentFormValuesInPostAndReturnEntryId();
+		$settings['ventry'] = $_POST['ventry'];
+	} elseif(isset($_POST['formulize_originalVentry']) AND is_numeric($_POST['formulize_originalVentry'])) {
+		$settings['ventry'] = $_POST['formulize_originalVentry'];
+	} else {
+		// if the user has requested a ve in the URL, set it now as if they clicked on a link to go into an entry
+		if((!isset($_POST['ventry']) OR !$_POST['ventry']) AND
+				isset($_GET['ve']) AND is_numeric($_GET['ve']) AND $_GET['ve'] > 0) {
+				$_POST['ventry'] = $_GET['ve'];
+		}
+		$settings['ventry'] = $_POST['ventry'];
+	}
+
 	// figure out which screen to show, and abort drawing a list of entries
 	if($_POST['ventry']) {
 
@@ -882,12 +876,12 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				}
 				$viewEntryScreen_handler = xoops_getmodulehandler($viewEntryScreenObject->getVar('type').'Screen', 'formulize');
 				$displayScreen = $viewEntryScreen_handler->get($viewEntryScreenObject->getVar('sid'));
-                // RELOAD BLANK DOESN'T MEAN ANYTHING YET FOR MULTIPAGE SCREENS?
-                if($_POST['ventry'] != "single") {
-                    $displayScreen->setVar('reloadblank', 1); // if the user clicked the add multiple button, then specifically override that screen setting so they can make multiple entries
-                } else {
-                    $displayScreen->setVar('reloadblank', 0); // otherwise, if they did click the single button, make sure the form reloads with their entry
-                }
+				// RELOAD BLANK DOESN'T MEAN ANYTHING YET FOR MULTIPAGE SCREENS?
+				if($_POST['ventry'] != "single") {
+						$displayScreen->setVar('reloadblank', 1); // if the user clicked the add multiple button, then specifically override that screen setting so they can make multiple entries
+				} else {
+						$displayScreen->setVar('reloadblank', 0); // otherwise, if they did click the single button, make sure the form reloads with their entry
+				}
 				// NEED TO PROPAGATE ANY ANON PASSCODE FOR THE CURRENT SCREEN, INTO THE SESSION BUT ASSIGNED TO THE NEW SCREEN, SO IT WILL BE SAVED PROPERLY WHEN THE FORM IS SUBMITTED THROUGH THAT SCREEN, IF APPLICABLE
 				// THIS IS SAFE TO DO, BECAUSE IF THE PASSCODE IS NOT VALID FOR THE OTHER SCREEN, IT WILL FAIL VALIDATION WHEN THE USER GOES TO THAT SCREEN DIRECTLY. WE'RE NOT GIVING THEM A FREE PASS TO SOMETHING THEY SHOULDN'T OTHERWISE SEE.
 				if(isset($_SESSION['formulize_passCode_'.$screen->getVar('sid')])) {
@@ -896,38 +890,41 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				if(!$_POST['overridescreen'] AND $displayScreen->getVar('fid') != $fid) {
 					// display screen is for another form in the active relationship, so figure out what all the entries are, and display the first entry in the set that's for the form this screen is based on
 					$dataSetEntries = checkForLinks($frid, array($fid), $fid, array($fid=>array($this_ent))); // returns array of the forms and entries in the dataset
-                    if(in_array($displayScreen->getVar('fid'),$dataSetEntries['fids'])) {
-                        $this_ent = $dataSetEntries['entries'][$displayScreen->getVar('fid')][0]; // first entry for the screen's form, in this dataset - see formdisplay.php for more detailed example of usage of checkforlinks
-                    } elseif(in_array($displayScreen->getVar('fid'),$dataSetEntries['sub_fids'])) {
-                        exit('Error: cannot yet determine the correct subform entry to display in the alternate form display screen specified in the list\'s settings.');
-                    }
+					if(in_array($displayScreen->getVar('fid'),$dataSetEntries['fids'])) {
+							$this_ent = $dataSetEntries['entries'][$displayScreen->getVar('fid')][0]; // first entry for the screen's form, in this dataset - see formdisplay.php for more detailed example of usage of checkforlinks
+					} elseif(in_array($displayScreen->getVar('fid'),$dataSetEntries['sub_fids'])) {
+							exit('Error: cannot yet determine the correct subform entry to display in the alternate form display screen specified in the list\'s settings.');
+					}
 				}
 				$viewEntryScreen_handler->render($displayScreen, $this_ent, $settings);
 				global $renderedFormulizeScreen; // picked up at the end of initialize.php so we set the right info in the template when the whole page is rendered
 				$renderedFormulizeScreen = $displayScreen;
 				return;
 			}
-        }
-        // if we're still here, then load up a plain non-screen version of the form
-        if($_POST['ventry'] != "single") {
-            if($frid) {
-                displayForm($frid, $this_ent, $fid, $currentURL, "", $settings, "", "", "", "", $viewallforms); // "" is the done text
-                return;
-            } else {
-                displayForm($fid, $this_ent, "", $currentURL, "", $settings, "", "", "", "", $viewallforms); // "" is the done text
-                return;
-            }
-        } else { // if a single entry was requested for a form that can have multiple entries, then specifically override the multiple entry UI (which causes a blank form to appear on save)
-            if($frid) {
-                displayForm($frid, $this_ent, $fid, $currentURL, "", $settings, "", "", "1", "", $viewallforms); // "" is the done text
-                return;
-            } else {
-                displayForm($fid, $this_ent, "", $currentURL, "", $settings, "", "", "1", "", $viewallforms); // "" is the done text
-                return;
-            }
-        }
-
+		}
+		// if we're still here, then load up a plain non-screen version of the form
+		if($_POST['ventry'] != "single") {
+			if($frid) {
+				displayForm($frid, $this_ent, $fid, $currentURL, "", $settings, "", "", "", "", $viewallforms); // "" is the done text
+				return;
+			} else {
+				displayForm($fid, $this_ent, "", $currentURL, "", $settings, "", "", "", "", $viewallforms); // "" is the done text
+				return;
+			}
+		} else { // if a single entry was requested for a form that can have multiple entries, then specifically override the multiple entry UI (which causes a blank form to appear on save)
+			if($frid) {
+				displayForm($frid, $this_ent, $fid, $currentURL, "", $settings, "", "", "1", "", $viewallforms); // "" is the done text
+				return;
+			} else {
+				displayForm($fid, $this_ent, "", $currentURL, "", $settings, "", "", "1", "", $viewallforms); // "" is the done text
+				return;
+			}
+		}
 	}
+
+	/**
+	 * STAGE 14 - GATHER THE STUFF WE'RE GOING TO SHOW, EITHER A DATASET OR CALCULATIONS, SINCE THE USER HASN'T JUMPED INTO A FORM -- NOTE THAT formulize_gatherDataSet STARTS OUTPUTING MARKUP! UGH.
+	 */
 
 	// user is still here, so go get the data and start building the page...
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
@@ -946,6 +943,10 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		$cResults = performCalcs($ccols, $ccalcs, $cblanks, $cgrouping, $frid, $fid);
 	}
 	//formulize_benchmark("after performing calcs");
+
+	/**
+	 * STAGE 15 - DRAW THE PAGE, PREPARE ALL THE INTERACTIVE COMPONENTS, MOSTLY IN THE drawInterface FUNCTION (which renders the top template), AND THEN RENDER THE REST OF THE PAGE INCLUDING EACH ENTRY IN THE DATASET IF WE'RE SHOWING DATA.
+	 */
 
 	//formulize_benchmark("after generating calcs/before creating pagenav");
 	list($formulize_LOEPageNav, $formulize_LOEEntryCount, $entriesPerPageSelector) = formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers);
@@ -982,24 +983,24 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	// check for any searches that were not used, and output them in a hidden div, so their values are not lost
 	// this was an old way of enforcing fundamental filters which are better done on the admin side as part of screen settings
 	// or done as part of scope permissions for the user's group(s).
-    // Have to do this by text analysis and not looking for variable name, because variable names might not be present if dynamically generated
-    // NOTE: if one is playing games in the template and doing string manipulation of the quick searches, then they will be broken because this code will not pick up their presence
-    // RECOMMENDATION: users should put original search code into an html comment
-    // we could extract the name attribute and do a regular expression match with the opening input tag and the name, or something like that (or select tag, etc) but way way more complex
+	// Have to do this by text analysis and not looking for variable name, because variable names might not be present if dynamically generated
+	// NOTE: if one is playing games in the template and doing string manipulation of the quick searches, then they will be broken because this code will not pick up their presence
+	// RECOMMENDATION: users should put original search code into an html comment
+	// we could extract the name attribute and do a regular expression match with the opening input tag and the name, or something like that (or select tag, etc) but way way more complex
 
 	print "<div id='hidden_quick_searches' style='display: none;'>\n";
 
 	foreach($formulize_buttonCodeArray['quickSearches'] as $handle=>$qsCode) {
 		if( (isset($searches[$handle]) AND ($searches[$handle] OR is_numeric($searches[$handle])) AND !strstr($listOfEntriesBufferContents, $qsCode['search']))
-            AND (!isset($qsCode['filter']) OR !strstr($listOfEntriesBufferContents, $qsCode['filter']))
-            AND (!isset($qsCode['multiFilter']) OR !strstr($listOfEntriesBufferContents, $qsCode['multiFilter']))
-            AND (!isset($qsCode['dateRange']) OR !strstr($listOfEntriesBufferContents, $qsCode['dateRange'])) ) {
-            foreach(array('search', 'filter', 'multiFilter', 'dateRange') as $searchType) {
-                if(isset($qsCode[$searchType])) {
-                    print $qsCode[$searchType]."\n";
-                    break;
-                }
-            }
+			AND (!isset($qsCode['filter']) OR !strstr($listOfEntriesBufferContents, $qsCode['filter']))
+			AND (!isset($qsCode['multiFilter']) OR !strstr($listOfEntriesBufferContents, $qsCode['multiFilter']))
+			AND (!isset($qsCode['dateRange']) OR !strstr($listOfEntriesBufferContents, $qsCode['dateRange'])) ) {
+			foreach(array('search', 'filter', 'multiFilter', 'dateRange') as $searchType) {
+					if(isset($qsCode[$searchType])) {
+							print $qsCode[$searchType]."\n";
+							break;
+					}
+			}
 		}
 	}
 	print "</div>\n";
@@ -1035,10 +1036,10 @@ function enforceSearchesAsFundamentalFilters($savedViewIndentifier, $screen) {
 		$savedViewId = substr($savedViewIndentifier, 1);
 		if(is_numeric($savedViewId)) {
 			$savedViewSettings = loadReport($savedViewId, $screen->getVar('fid'), $screen->getVar('frid'));
-			if($savedViewSettings[17]) {
+			if($savedViewSettings[LR_SEARCHES_ARE_FUNDAMENTAL]) {
 				$mockFundamentalFilters = array();
-				$searches = explode("&*=%4#", $savedViewSettings[12]);
-				$cols = explode(",", $savedViewSettings[1]);
+				$searches = explode("&*=%4#", $savedViewSettings[LR_SEARCHES]);
+				$cols = explode(",", $savedViewSettings[LR_COLS]);
 				foreach($cols as $i=>$col) {
 					$col = str_replace("hiddencolumn_", "", $col); // use all columns, whether hidden or not
 					// check for starting and ending ! ! and put them back at the end if necessary
@@ -1406,13 +1407,9 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$buttonCodeArray['lockControlsWarning'] = "<input type=hidden name=curviewid id=curviewid value=$curviewid>"._formulize_DE_WARNLOCK;
 
 
-	// print current view list even if the text is blank, it will be a hidden value in this case
-    $screenOrScreenType = $screen ? $screen : 'listOfEntries';
-	if(!strstr(getTemplateToRender('toptemplate', $screenOrScreenType), 'currentViewList') AND
-		 !strstr(getTemplateToRender('bottomtemplate', $screenOrScreenType), 'currentViewList') AND
-		 !strstr(getTemplateToRender('openlisttemplate', $screenOrScreenType), 'currentViewList') AND
-		 !strstr(getTemplateToRender('closelisttemplate', $screenOrScreenType), 'currentViewList')
-		 ) {
+	// print current view if the screen is not providing a UI element to the user
+  $screenOrScreenType = $screen ? $screen : 'listOfEntries';
+	if(!screenUsesSearchStringWithHandle($screenOrScreenType, 'currentViewList')) {
 		print "<input type=hidden name=currentview id=currentview value=\"$currentview\"></input>\n";
 	}
 
@@ -1555,7 +1552,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 }
 
 // check for a handle being used in a quickSearch variable anywhere in relevant templates
-function screenUsesSearchStringWithHandle($screenOrScreenType, $searchString, $handle) {
+function screenUsesSearchStringWithHandle($screenOrScreenType, $searchString, $handle="") {
     $searchString = !is_array($searchString) ? array($searchString) : $searchString;
     foreach($searchString as $thisSearchString) {
         if(
@@ -3521,7 +3518,6 @@ function showList() {
 }
 
 function killSearch() {
-	window.document.controls.asearch.value = '';
 	window.document.controls.ventry.value = '';
 	showLoading();
 }
@@ -3659,24 +3655,31 @@ function loadReport($id, $fid, $frid) {
 	print "Error: could not load the specified saved view: '".strip_tags(htmlspecialchars($id))."'";
 	return false;
   }
+
+	if(!defined('LR_CURRENTVIEW')) {
+		define('LR_CURRENTVIEW', 0);
+		define('LR_COLS', 1);
+		define('LR_SEARCHES', 11);
+		define('LR_SEARCHES_ARE_FUNDAMENTAL', 16);
+	}
+
 	$to_return[0] = $thisview[0]['sv_currentview'];
 	$to_return[1] = $thisview[0]['sv_oldcols'];
-	$to_return[2] = $thisview[0]['sv_asearch'];
-	$to_return[3] = $thisview[0]['sv_calc_cols'];
-	$to_return[4] = $thisview[0]['sv_calc_calcs'];
-	$to_return[5] = $thisview[0]['sv_calc_blanks'];
-	$to_return[6] = $thisview[0]['sv_calc_grouping'];
-	$to_return[7] = $thisview[0]['sv_sort'];
-	$to_return[8] = $thisview[0]['sv_order'];
-	$to_return[9] = $thisview[0]['sv_hidelist'];
-	$to_return[10] = $thisview[0]['sv_hidecalc'];
-	$to_return[11] = $thisview[0]['sv_lockcontrols'];
-	$to_return[12] = $thisview[0]['sv_quicksearches'];
-	$to_return[13] = $thisview[0]['sv_global_search'];
-	$to_return[14] = $thisview[0]['sv_pubfilters'];
-  $to_return[15] = $thisview[0]['sv_entriesperpage'];
-	$to_return[16] = $thisview[0]['sv_use_features'];
-	$to_return[17] = $thisview[0]['sv_searches_are_fundamental'];
+	$to_return[2] = $thisview[0]['sv_calc_cols'];
+	$to_return[3] = $thisview[0]['sv_calc_calcs'];
+	$to_return[4] = $thisview[0]['sv_calc_blanks'];
+	$to_return[5] = $thisview[0]['sv_calc_grouping'];
+	$to_return[6] = $thisview[0]['sv_sort'];
+	$to_return[7] = $thisview[0]['sv_order'];
+	$to_return[8] = $thisview[0]['sv_hidelist'];
+	$to_return[9] = $thisview[0]['sv_hidecalc'];
+	$to_return[10] = $thisview[0]['sv_lockcontrols'];
+	$to_return[11] = $thisview[0]['sv_quicksearches'];
+	$to_return[12] = $thisview[0]['sv_global_search'];
+	$to_return[13] = $thisview[0]['sv_pubfilters'];
+  $to_return[14] = $thisview[0]['sv_entriesperpage'];
+	$to_return[15] = $thisview[0]['sv_use_features'];
+	$to_return[16] = $thisview[0]['sv_searches_are_fundamental'];
 	return $to_return;
 }
 
