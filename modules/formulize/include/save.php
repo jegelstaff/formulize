@@ -379,7 +379,7 @@ if($pubflag) {
 		$lastpub = q("SELECT sv_pubgroups, sv_lockcontrols, sv_use_features, sv_searches_are_fundamental FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id = '" . substr($viewselection, 1) . "'");
 		$lastpubgroups = explode(",", $lastpub[0]['sv_pubgroups']);
 		$features_list = explode(",", $lastpub[0]['sv_use_features']);
-		$features_list = $features_list ? $features_list : explode(',','scope,cols,searches,sort,calcs,epp');
+		$features_list = $features_list[0] ? $features_list : explode(',','scope,cols,searches,sort,calcs,epp');
 		$searches_are_fundamental = intval($lastpub[0]['sv_searches_are_fundamental']);
 		$currentlock = $lastpub[0]['sv_lockcontrols'];
 	} else {

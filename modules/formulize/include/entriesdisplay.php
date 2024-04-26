@@ -468,10 +468,14 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				$_loaded_sv_use_features,
 				$_loaded_searches_are_fundamental) = loadReport(substr($_POST['currentview'], 1), $fid, $frid);
 
+				// if no features specified, use all features -- default behaviour
+				if(!$_loaded_sv_use_features) {
+					$_loaded_sv_use_features = 'scope,cols,searches,sort,calcs,epp';
+				}
 				$features_loaded_from_saved_view = explode(',',$_loaded_sv_use_features);
 
 				// don't layer in the advance view, unless the view we're loading is short on features. Advance views (start up settings for LOE) don't have scope or epp or calculation options currently. If or when they are added, this condition will need to be adjusted.
-				if($couldLoadAdvanceView AND strstr($_loaded_sv_use_features, 'cols') AND strstr($_loaded_sv_use_features, 'searches') AND strstr($_loaded_sv_use_features, 'sort')) {
+				if($couldLoadAdvanceView AND in_array('cols', $features_loaded_from_saved_view) AND in_array('searches', $features_loaded_from_saved_view) AND in_array('sort', $features_loaded_from_saved_view)) {
 					$couldLoadAdvanceView = false;
 				}
 
