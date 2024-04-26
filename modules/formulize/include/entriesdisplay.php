@@ -491,7 +491,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 						$_POST['oldcols'] = $_loaded_oldcols;
 						break;
 					case 'searches':
-						$columnKeyForQuickSearches = $_loaded_oldcols;
+						$columnKeyForQuickSearches = $_loaded_oldcols; // cols and searches arrays are parallel in the saved view data
 						$quicksearches = $_loaded_quicksearches;
 						$_POST['global_search'] = $_loaded_global_search;
 						break;
@@ -530,20 +530,18 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			}
 
 			$actualColsToDisplay = explode(",", $_POST['oldcols']); // might have been loaded, or might be passed from prev page, doesn't matter, this is what we're actually going to display
-			if($_loaded_searches_are_fundamental) {
+			if($_loaded_searches_are_fundamental AND in_array('searches', $features_loaded_from_saved_view)) {
 				$screen = enforceSearchesAsFundamentalFilters($loadedView, $screen);
-			} else {
+			} elseif(in_array('searches', $features_loaded_from_saved_view)){
 				// explode quicksearches into the search_ values
 				$allqsearches = explode("&*=%4#", $quicksearches);
-				$colsforsearches = explode(",", $columnKeyForQuickSearches);
-				if(count($allqsearches)>0) {
-					killQuickSearches();
-					for($i=0;$i<count((array) $allqsearches);$i++) {
-						$fullColsForSearchesVal = $colsforsearches[$i];
-						$noHiddenColumnColsForSearchesVal = str_replace("hiddencolumn_", "", $colsforsearches[$i]); // some columns will have had an extra flag prepended to the name if they're not supposed to be shown to the user. Yuck!
-						if($allqsearches[$i] != "" AND (in_array($fullColsForSearchesVal, $actualColsToDisplay) OR in_array($noHiddenColumnColsForSearchesVal, $actualColsToDisplay))) {
-							$_POST["search_".$noHiddenColumnColsForSearchesVal] = $allqsearches[$i]; // need to not use the hiddencolumn indicator
-						}
+				$colsforsearches = explode(",", $columnKeyForQuickSearches); // cols and searches arrays are parallel in the saved view data
+				killQuickSearches();
+				for($i=0;$i<count((array) $allqsearches);$i++) {
+					$fullColsForSearchesVal = $colsforsearches[$i];
+					$noHiddenColumnColsForSearchesVal = str_replace("hiddencolumn_", "", $colsforsearches[$i]); // some columns will have had an extra flag prepended to the name if they're not supposed to be shown to the user. Yuck!
+					if($allqsearches[$i] != "" AND (in_array($fullColsForSearchesVal, $actualColsToDisplay) OR in_array($noHiddenColumnColsForSearchesVal, $actualColsToDisplay))) { // if the search is on a column we're actually going to display...
+						$_POST["search_".$noHiddenColumnColsForSearchesVal] = $allqsearches[$i]; // need to not use the hiddencolumn indicator
 					}
 				}
 			}
