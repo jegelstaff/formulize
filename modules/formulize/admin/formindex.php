@@ -471,6 +471,7 @@ function patch40() {
 				$sql['screenTableIndex3'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD INDEX i_frid (`frid`)";
 				unlink(XOOPS_ROOT_PATH.'/cache/adminmenu_english.php');
 				$sql['sv_use_features'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " ADD `sv_use_features` varchar(255) NULL default NULL";
+				$sql['searches_are_fundamental'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " ADD `sv_searches_are_fundamental` tinyint(1) NULL default NULL";
 
         $needToSetSaveAndLeave = true;
         $needToSetPrintableView = true;
@@ -590,6 +591,8 @@ function patch40() {
                     print "Disabled conditions already added. result: OK<br>";
 								} elseif($key === "sv_use_features") {
 										print "'Use which features' option already added to saved views. result: OK<br>";
+								} elseif($key === "searches_are_fundamental") {
+									print "'Searches-are-fundamental' option already added to saved views. result: OK<br>";
 								} elseif($key === "rewriteruleAddress") {
 										print "RewriteRule address already added. result: OK<br>";
 								} elseif(strstr($key, 'screenTableIndex')) {

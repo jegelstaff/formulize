@@ -139,6 +139,12 @@ if($pubflag) {
 	}
 	window.opener.document.controls.sv_use_features.value = sv_use_features;
 
+	for (var i=0; i < formObj.searches_are_fundamental.length; i++) {
+		if (formObj.searches_are_fundamental[i].checked) {
+			var searchesAreFundamental = formObj.searches_are_fundamental[i].value;
+		}
+	}
+	window.opener.document.controls.searches_are_fundamental.value = searchesAreFundamental;
 	window.opener.document.controls.savegroups.value = pubgroups;
 	window.opener.document.controls.savelock.value = locksetting;
 <?php
@@ -370,10 +376,11 @@ if($pubflag) {
 			$currentlock = 0;
 		}
 	} elseif($viewselection AND $viewselection != "new" AND $viewselection != "x1" AND $viewselection != "x2") { // new view
-		$lastpub = q("SELECT sv_pubgroups, sv_lockcontrols, sv_use_features FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id = '" . substr($viewselection, 1) . "'");
+		$lastpub = q("SELECT sv_pubgroups, sv_lockcontrols, sv_use_features, sv_searches_are_fundamental FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id = '" . substr($viewselection, 1) . "'");
 		$lastpubgroups = explode(",", $lastpub[0]['sv_pubgroups']);
 		$features_list = explode(",", $lastpub[0]['sv_use_features']);
 		$features_list = $features_list ? $features_list : explode(',','scope,cols,searches,sort,calcs,epp');
+		$searches_are_fundamental = intval($lastpub[0]['sv_searches_are_fundamental']);
 		$currentlock = $lastpub[0]['sv_lockcontrols'];
 	} else {
 		$lastpubgroups[0] = "donotpub";
@@ -411,6 +418,13 @@ if($pubflag) {
 		'epp'=>_formulize_DE_SAVE_UF_EPP,
 	));
 	$saveform->addElement($sv_use_features);
+
+	$searches_are_fundamental_question = new XoopsFormRadio(_formulize_DE_SAVE_SEARCHES_FUNDAMENTAL, 'searches_are_fundamental', $searches_are_fundamental, '<br>');
+	$searches_are_fundamental_question->addOptionArray(array(
+		0=>_formulize_DE_SAVE_SEARCHES_NOT_FUNDAMENTAL,
+		1=>_formulize_DE_SAVE_SEARCHES_ARE_FUNDAMENTAL
+	));
+	$saveform->addElement($searches_are_fundamental_question);
 
     // get the pubfilters for the viewselection
     $pubfilters = q("SELECT sv_pubfilters FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id = '" . substr($viewselection, 1) . "'");

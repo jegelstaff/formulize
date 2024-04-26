@@ -291,8 +291,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 					"sv_quicksearches, " .
 					"sv_global_search, " .
 					"sv_pubfilters, " .
-          "sv_entriesperpage" .
-					"sv_use_features" .
+          "sv_entriesperpage, " .
+					"sv_use_features, " .
+					"sv_searches_are_fundamental" .
 				") VALUES (" .
 					"\"".formulize_db_escape($savename)					."\", ".
 					"\"".formulize_db_escape($savegroups)				."\", ".
@@ -316,10 +317,10 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 					"\"".formulize_db_escape($_POST['global_search'])	."\", ".
 					"\"".formulize_db_escape($_POST['pubfilters'])      ."\", ".
           "\"".((isset($_POST['formulize_entriesPerPage']) AND $_POST['formulize_entriesPerPage'] !== "") ? intval($_POST['formulize_entriesPerPage']) : ""). "\", ".
-					"\"".formulize_db_escape($_POST['sv_use_features'])      ."\" ". // NOTE WHEN SAVING A LIMITED SET OF FEATURES AND SEARCHES ARE INCLUDED BUT COLUMNS ARE NOT, THE SEARCHES ARE OUT OF ORDER BECAUSE THEY ARE SAVED IN AN ARRAY ASSUMED TO BE PARALLEL TO THE COLUMNS. THIS DATA STRUCTURE NEEDS TO BE REJIGGED AND A DB PATCH NEEDS TO BE PREPARED.
+					"\"".formulize_db_escape($_POST['sv_use_features'])      ."\", ".
+					intval($_POST['searches_are_fundamental']).
 				")";
 		} else {
-			// print "UPDATE " . $xoopsDB->prefix("formulize_saved_views") . " SET sv_pubgroups=\"$savegroups\", sv_mod_uid=\"$uid\", sv_lockcontrols=\"{$_POST['savelock']}\", sv_hidelist=\"{$_POST['hlist']}\", sv_hidecalc=\"{$_POST['hcalc']}\", sv_asearch=\"$savesearches\", sv_sort=\"{$_POST['sort']}\", sv_order=\"{$_POST['order']}\", sv_oldcols=\"{$_POST['oldcols']}\", sv_currentview=\"{$_POST['savescope']}\", sv_calc_cols=\"{$_POST['calc_cols']}\", sv_calc_calcs=\"{$_POST['calc_calcs']}\", sv_calc_blanks=\"{$_POST['calc_blanks']}\", sv_calc_grouping=\"{$_POST['calc_grouping']}\", sv_quicksearches=\"$qsearches\" WHERE sv_id = \"" . substr($saveid_formulize, 1) . "\"";
 			$savesql =
 				"UPDATE " . $xoopsDB->prefix("formulize_saved_views") .
 				" SET " .
@@ -342,7 +343,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 					"sv_global_search   = \"".formulize_db_escape($_POST['global_search'])	."\", ".
 					"sv_pubfilters      = \"".formulize_db_escape($_POST['pubfilters'])	    ."\", ".
           "sv_entriesperpage  = \"".((isset($_POST['formulize_entriesPerPage']) AND $_POST['formulize_entriesPerPage'] !== "") ? intval($_POST['formulize_entriesPerPage']) : "")."\", ".
-					"sv_use_features      = \"".formulize_db_escape($_POST['sv_use_features'])	    ."\" ".
+					"sv_use_features      = \"".formulize_db_escape($_POST['sv_use_features'])	    ."\", ".
+					"sv_searches_are_fundamental = ".intval($_POST['searches_are_fundamental']).
 				" WHERE " .
 					"sv_id = \"" . substr($saveid_formulize, 1) . "\"";
 		}
@@ -403,7 +405,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	// no report/saved view to be loaded, and we're not on a subsequent page load that is sending back a declared currentview, or the user clicked the reset button
 	// therefore, an advanceview if any could be loaded after all the other setup has been done
-	if(!$_POST['loadreport'] AND (!$_POST['currentview'] OR $_POST['userClickedReset'])) {
+	if(!$_POST['currentview'] OR $_POST['userClickedReset']) {
 		$couldLoadAdvanceView = true;
 	} else {
 		$couldLoadAdvanceView = false;
@@ -438,20 +440,14 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	$currentViewCanExpand = false;
 
 	$_loaded_sv_use_features = '';
+	$features_loaded_from_saved_view = array();
 	// handling change in view, and loading reports/saved views if necessary
 	if($_POST['loadreport']) {
 
 		if(is_numeric(substr($_POST['currentview'], 1))) { // saved or published view
 			$loadedView = $_POST['currentview'];
 			$settings['loadedview'] = $loadedView;
-			// kill the quicksearches, unless we've found a special flag that will cause them to be preserved
-			if(!isset($_POST['formulize_preserveQuickSearches']) AND !isset($_GET['formulize_preserveQuickSearches'])) {
-				foreach($_POST as $k=>$v) {
-					if(substr($k, 0, 7) == "search_" AND $v != "") {
-						unset($_POST[$k]);
-					}
-				}
-			}
+
 			list(
 				$_loaded_currentview,
 				$_loaded_oldcols,
@@ -469,11 +465,19 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				$_loaded_global_search,
         $_POST['pubfilters'],
         $_loaded_formulize_entriesPerPage,
-				$_loaded_sv_use_features) = loadReport(substr($_POST['currentview'], 1), $fid, $frid);
+				$_loaded_sv_use_features,
+				$_loaded_searches_are_fundamental) = loadReport(substr($_POST['currentview'], 1), $fid, $frid);
+
+				$features_loaded_from_saved_view = explode(',',$_loaded_sv_use_features);
+
+				// don't layer in the advance view, unless the view we're loading is short on features. Advance views (start up settings for LOE) don't have scope or epp or calculation options currently. If or when they are added, this condition will need to be adjusted.
+				if($couldLoadAdvanceView AND strstr($_loaded_sv_use_features, 'cols') AND strstr($_loaded_sv_use_features, 'searches') AND strstr($_loaded_sv_use_features, 'sort')) {
+					$couldLoadAdvanceView = false;
+				}
 
 				$quicksearches = "";
+				$columnKeyForQuickSearches = "";
 				foreach(explode(',', $_loaded_sv_use_features) as $thisFeature) {
-					$couldLoadAdvanceView = true; // advance view can layer in on top of this stuff
 					switch($thisFeature) {
 						case 'scope':
 							$_POST['currentview'] = $_loaded_currentview;
@@ -482,6 +486,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 							$_POST['oldcols'] = $_loaded_oldcols;
 							break;
 						case 'searches':
+							$columnKeyForQuickSearches = $_loaded_oldcols;
 							$quicksearches = $_loaded_quicksearches;
 							$_POST['global_search'] = $_loaded_global_search;
 							break;
@@ -503,13 +508,17 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 					}
 				}
 				// if we didn't load in a scope from the saved view, then we have to set it up now (it is only setup above if no saved view will be loaded... spaghetti! But unfortunately this 'controller' at the top of the displayEntries function is among the oldest and fiddliest parts of the code (circa 2005))
-				if(!is_numeric(substr((string)$_POST['currentview'],0,1))) {
-					if($view_globalscope) {
-						$_POST['currentview'] = "all";
-					} elseif($view_groupscope) {
-						$_POST['currentview'] = "group";
+				if(!in_array('scope',$features_loaded_from_saved_view)) {
+					if(isset($_POST['prev_currentview']) AND $_POST['prev_currentview']) {
+						$_POST['currentview'] = $_POST['prev_currentview'];
 					} else {
-						$_POST['currentview'] = "mine";
+						if($view_globalscope) {
+							$_POST['currentview'] = "all";
+						} elseif($view_groupscope) {
+							$_POST['currentview'] = "group";
+						} else {
+							$_POST['currentview'] = "mine";
+						}
 					}
 				}
 
@@ -518,22 +527,31 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				$_POST['hcalc'] = $savedViewHCalc;
 			}
 
-			// NEED TO RESPECT A NEW OPTION TO TREAT THE QUICKSEARCHES COMING OUT OF THE SAVED VIEW AS FUNDAMENTAL FILTERS INSTEAD OF NORMAL SEARCHES
-			// THEY CAN BE ADDED TO THE SCREEN OBJECT, THE FUNDAMENTAL_FILTERS PROPERTY, WHICH IS AN ARRAY OF FILTER CONDITIONS
-
-			// explode quicksearches into the search_ values
-			$allqsearches = explode("&*=%4#", $quicksearches);
-			$colsforsearches = explode(",", $_POST['oldcols']);
-			for($i=0;$i<count((array) $allqsearches);$i++) {
-				if($allqsearches[$i] != "") {
-					$_POST["search_" . str_replace("hiddencolumn_", "", $colsforsearches[$i])] = $allqsearches[$i]; // need to remove the hiddencolumn indicator if it is present
-					if(strstr($colsforsearches[$i], "hiddencolumn_")) {
-						unset($colsforsearches[$i]); // remove columns that were added to the column list just so we would know the name of the hidden searches
+			$actualColsToDisplay = explode(",", $_POST['oldcols']); // might have been loaded, or might be passed from prev page, doesn't matter, this is what we're actually going to display
+			if($_loaded_searches_are_fundamental) {
+				$screen = enforceSearchesAsFundamentalFilters($loadedView, $screen);
+			} else {
+				// explode quicksearches into the search_ values
+				$allqsearches = explode("&*=%4#", $quicksearches);
+				$colsforsearches = explode(",", $columnKeyForQuickSearches);
+				if(count($allqsearches)>0) {
+					killQuickSearches();
+					for($i=0;$i<count((array) $allqsearches);$i++) {
+						$fullColsForSearchesVal = $colsforsearches[$i];
+						$noHiddenColumnColsForSearchesVal = str_replace("hiddencolumn_", "", $colsforsearches[$i]); // some columns will have had an extra flag prepended to the name if they're not supposed to be shown to the user. Yuck!
+						if($allqsearches[$i] != "" AND (in_array($fullColsForSearchesVal, $actualColsToDisplay) OR in_array($noHiddenColumnColsForSearchesVal, $actualColsToDisplay))) {
+							$_POST["search_".$noHiddenColumnColsForSearchesVal] = $allqsearches[$i]; // need to not use the hiddencolumn indicator
+						}
 					}
 				}
 			}
-			$_POST['oldcols'] = implode(",",$colsforsearches); // need to reconstruct this in case any columns were removed because of persistent searches on a hidden column
-
+			// remove any columns that are meant to be hidden -- do this separately from processing searches, because the columns shown and the columns with searches in the view may in fact be different! This is because the view might not load in the columns, so we would use the columns from prev page load instead.
+			foreach($actualColsToDisplay as $i=>$thisActualColumn) {
+				if(strstr($thisActualColumn, "hiddencolumn_")) {
+					unset($actualColsToDisplay[$i]);
+				}
+			}
+			$_POST['oldcols'] = implode(",",$actualColsToDisplay); // need to reconstruct this in case any columns were removed because of persistent searches on a hidden column
 		}
 
 		$currentView = $_POST['currentview'];
@@ -577,43 +595,33 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	// if we did not load a full report/saved view, then load an advanceview if any is specified and the current page load is appropriate for it (see above for couldLoadAdvanceView))
 	if($screen AND count((array) $screen->getVar('advanceview')) > 0 AND $couldLoadAdvanceView) {
 
-		$features_loaded_from_saved_view = explode(',',$_loaded_sv_use_features);
-
-		// kill the quicksearches, unless we've found a special flag that will cause them to be preserved
-		if(!isset($_POST['formulize_preserveQuickSearches']) AND !isset($_GET['formulize_preserveQuickSearches']) AND !in_array('searches', $features_loaded_from_saved_view)) {
-			foreach($_POST as $k=>$v) {
-				if(substr($k, 0, 7) == "search_" AND $v != "") {
-					unset($_POST[$k]);
-				}
-			}
-		}
-
 		$quicksearches = "";
+		$columnKeyForQuickSearches = "";
 		list($_av_oldcols,
 			 $_av_sort,
 			 $_av_order,
 			 $_av_quicksearches) = loadAdvanceView($fid, $screen->getVar('advanceview'));
 
-		if(!in_array('cols', $features_loaded_from_saved_view)) {
+		if(!in_array('cols', $features_loaded_from_saved_view) AND $_av_oldcols) {
 			$_POST['oldcols'] = $_av_oldcols;
 		}
-		if(!in_array('searches', $features_loaded_from_saved_view)) {
+		if(!in_array('searches', $features_loaded_from_saved_view) AND $_av_quicksearches) {
+			killQuickSearches();
+			$columnKeyForQuickSearches = $_av_oldcols;
 			$quicksearches = $_av_quicksearches;
+			// explode quicksearches into the search_ values
+			$allqsearches = explode(",", $quicksearches);
+			$colsforsearches = explode(",", $columnKeyForQuickSearches);
+			for($i=0;$i<count((array) $allqsearches);$i++) {
+				if($allqsearches[$i] != "") {
+					$_POST["search_" . $colsforsearches[$i]] = $allqsearches[$i];
+				}
+			}
 		}
-		if(!in_array('sort', $features_loaded_from_saved_view)) {
+		if(!in_array('sort', $features_loaded_from_saved_view) AND $_av_sort) {
 			$_POST['sort'] = $_av_sort;
 			$_POST['order'] = $_av_order;
 		}
-
-		// explode quicksearches into the search_ values
-		$allqsearches = explode(",", $quicksearches);
-		$colsforsearches = explode(",", $_POST['oldcols']);
-		for($i=0;$i<count((array) $allqsearches);$i++) {
-			if($allqsearches[$i] != "") {
-				$_POST["search_" . $colsforsearches[$i]] = $allqsearches[$i];
-			}
-		}
-		$_POST['oldcols'] = implode(",",$colsforsearches);
 	}
 
     // get columns for this form/framework or use columns sent from interface
@@ -657,12 +665,13 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		$settings['lastloaded'] = $settings['curviewid'];
 	} else {
 		$settings['lastloaded'] = $_POST['lastloaded'];
+		$screen = enforceSearchesAsFundamentalFilters($_POST['lastloaded'], $screen);
 	}
 
 	// clear quick searches for any columns not included now
 	// also, convert any { } terms to literal values for users who can't update other reports, if the last loaded report doesn't belong to them (they're presumably just report consumers, so they don't need to preserve the abstract terms)
 	$hiddenQuickSearches = array(); // array used to indicate quick searches that should be present even if the column is not displayed to the user
-    $activeViewId = substr($settings['lastloaded'], 1); // will have a p in front of the number, to show it's a published view (or an s, but that's unlikely to ever happen in this case)
+  $activeViewId = substr($settings['lastloaded'], 1); // will have a p in front of the number, to show it's a published view (or an s, but that's unlikely to ever happen in this case)
 	$ownerOfLastLoadedViewData = q("SELECT sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id=".intval($activeViewId));
 	$ownerOfLastLoadedView = $ownerOfLastLoadedViewData[0]['sv_owner_uid'];
 	foreach($_POST as $k=>$v) {
@@ -683,28 +692,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			$v = substr($v, 1, -1);
 		}
 
-		$operatorToPutBack = "";
-		if(is_string($v) AND substr($v, 0, 1) == '=') {
-			$operatorToPutBack = '=';
-		}
-		if(is_string($v) AND substr($v, 0, 1) == '>') {
-			$operatorToPutBack = '>';
-		}
-		if(is_string($v) AND substr($v, 0, 1) == '<') {
-			$operatorToPutBack = '<';
-		}
-		if(is_string($v) AND substr($v, 0, 1) == '!') {
-			$operatorToPutBack = '!';
-		}
-		if(is_string($v) AND substr($v, 0, 2) == '!=') {
-			$operatorToPutBack = '!=';
-		}
-		if(is_string($v) AND substr($v, 0, 2) == '<=') {
-			$operatorToPutBack = '<=';
-		}
-		if(is_string($v) AND substr($v, 0, 2) == '>=') {
-			$operatorToPutBack = '>=';
-		}
+		$operatorToPutBack = extractOperatorFromString($v);
 
 		// if this is not a report/view that was created by the user, and they don't have update permission, then convert any { } terms to literals
 		// remove any { } terms that don't have a passed in value (so they appear as "" to users)
@@ -1016,6 +1004,79 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	print "</div>\n"; // end of the listofentries div, started in gatherdataset
 
+}
+
+/**
+ * Kill the quicksearches. Sometimes we're resetting things. Unless there's a flag at formulize_preserveQuickSearches in POST.
+ */
+function killQuickSearches() {
+	if(!isset($_POST['formulize_preserveQuickSearches']) AND !isset($_GET['formulize_preserveQuickSearches'])) {
+		foreach($_POST as $k=>$v) {
+			if(substr($k, 0, 7) == "search_" AND $v != "") {
+				unset($_POST[$k]);
+			}
+		}
+	}
+}
+
+/**
+ * Get the searches in a saved view and apply them to the screen object as fundamental filters
+ *
+ * @param string $savedViewIndentifier The identifier of the view. Will be a string starting with 's' and then numbers representing the saved view id number
+ * @param object $screen The screen the searches are being applied to
+ * @return object The screen with the searches added to it as fundamental filters
+ */
+function enforceSearchesAsFundamentalFilters($savedViewIndentifier, $screen) {
+	if($screen) {
+		$savedViewId = substr($savedViewIndentifier, 1);
+		if(is_numeric($savedViewId)) {
+			$savedViewSettings = loadReport($savedViewId, $screen->getVar('fid'), $screen->getVar('frid'));
+			if($savedViewSettings[17]) {
+				$mockFundamentalFilters = array();
+				$searches = explode("&*=%4#", $savedViewSettings[12]);
+				$cols = explode(",", $savedViewSettings[1]);
+				foreach($cols as $i=>$col) {
+					$col = str_replace("hiddencolumn_", "", $col); // use all columns, whether hidden or not
+					// check for starting and ending ! ! and put them back at the end if necessary
+					$searchArray = standardizeUserTypedSearchTerms($searches[$i], $col);
+					foreach($searchArray as $searchTerm) {
+						if(is_string($searchTerm)) {
+							if(substr($searchTerm, 0, 1) == "!" AND substr($searchTerm, -1) == "!") {
+								$searchTerm = substr($searchTerm, 1, -1);
+							}
+							$oomAll = 'all';
+							if(substr($searchTerm, 0, 2) == "OR") {
+								$oomAll = 'oom';
+								$searchTerm = substr($searchTerm, 2);
+							}
+							$operator = extractOperatorFromString($searchTerm);
+							$searchTerm = substr($searchTerm, strlen($operator));
+							if(!$operator) {
+								$operator = "LIKE";
+							} elseif($operator == "!") {
+								$operator = "NOT LIKE";
+							} elseif($operator == "!=") {
+								$operator = "NOT";
+							}
+							$mockFundamentalFilters[0][] = $col;
+							$mockFundamentalFilters[1][] = $operator;
+							$mockFundamentalFilters[2][] = $searchTerm;
+							$mockFundamentalFilters[3][] = $oomAll;
+						}
+					}
+				}
+				$fundamentalFilters = $screen->getVar('fundamental_filters');
+				if(is_array($fundamentalFilters) AND isset($fundamentalFilters[0]) AND is_array($fundamentalFilters[0]) AND count($fundamentalFilters[0]) > 0) {
+					$mockFundamentalFilters[0] = array_merge($fundamentalFilters[0], $mockFundamentalFilters[0]);
+					$mockFundamentalFilters[1] = array_merge($fundamentalFilters[1], $mockFundamentalFilters[1]);
+					$mockFundamentalFilters[2] = array_merge($fundamentalFilters[2], $mockFundamentalFilters[2]);
+					$mockFundamentalFilters[3] = array_merge($fundamentalFilters[3], $mockFundamentalFilters[3]);
+				}
+				$screen->setVar('fundamental_filters', serialize($mockFundamentalFilters));
+			}
+		}
+	}
+	return $screen;
 }
 
 // return the available current view settings based on the user's permissions
@@ -1423,6 +1484,9 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	print "<input type=hidden name=saveviewoptions id=saveviewoptions value=\"\"></input>\n";
 	print "<input type=hidden name=sv_use_features id=sv_use_features value=\"\"></input>\n";
 
+	// track the previous currentview in case we load a saved view that doesn't include scope, and we need to revert to scope of prior page load
+	print "<input type=hidden name=prev_currentview id=prev_currentview value=\"$currentview\"></input>\n";
+
 	// setup HTML to receive custom button values -- javascript function sets these based on which button is clicked
 	print "<input type=hidden name=caid id=caid value=\"\"></input>\n";
 	print "<input type=hidden name=caentries id=caentries value=\"\"></input>\n";
@@ -1458,6 +1522,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	print "<input type=hidden name=savegroups id=savegroups value=\"\"></input>\n";
 	print "<input type=hidden name=savelock id=savelock value=\"\"></input>\n";
 	print "<input type=hidden name=savescope id=savescope value=\"\"></input>\n";
+	print "<input type=hidden name=searches_are_fundamental id=searches_are_fundamental value=\"\"></input>\n";
 
 	// forcequery value, perpetuates from pageload to pageload
 	print "<input type=hidden name=forcequery id=forcequery value=\"" .intval($_POST['forcequery']) . "\"></input>\n";
@@ -3607,6 +3672,7 @@ function loadReport($id, $fid, $frid) {
 	$to_return[14] = $thisview[0]['sv_pubfilters'];
   $to_return[15] = $thisview[0]['sv_entriesperpage'];
 	$to_return[16] = $thisview[0]['sv_use_features'];
+	$to_return[17] = $thisview[0]['sv_searches_are_fundamental'];
 	return $to_return;
 }
 
