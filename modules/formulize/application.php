@@ -84,6 +84,11 @@ if($soloLink AND $soloLink != 'start') {
     exit();
 
 }
+// no links in the entire menu, boot the user to the homepage. Anons will be able to login there.
+if(count($allAppData)==0) {
+	header("location: ".XOOPS_URL);
+	exit();
+}
 
 // retrieve the xoops_version info
 $module_handler = xoops_gethandler('module');

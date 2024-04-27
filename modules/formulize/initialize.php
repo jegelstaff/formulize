@@ -307,6 +307,10 @@ if (!$rendered AND $uid) {
             print "<p>Formulize could not display a screen for you.  Are you sure the specified screen exists?</p>";
         }
     }
+} elseif(!$rendered) {
+	// boot the user to the homepage. Anons will be able to login there.
+	header("location: ".XOOPS_URL);
+	exit();
 }
 
 // renderedFormulizeScreen is a global, and might be altered by entriesdisplay.php if it sends the user off to a different screen (like a form screen instead of the list)
