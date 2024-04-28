@@ -85,7 +85,8 @@ if($soloLink AND $soloLink != 'start') {
 
 }
 // no links in the entire menu, boot the user to the homepage. Anons will be able to login there.
-if(count($allAppData)==0) {
+global $xoopsUser;
+if(count($allAppData)==0 AND !$xoopsUser) {
 	header("location: ".XOOPS_URL);
 	exit();
 }

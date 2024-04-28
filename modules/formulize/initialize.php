@@ -307,7 +307,7 @@ if (!$rendered AND $uid) {
             print "<p>Formulize could not display a screen for you.  Are you sure the specified screen exists?</p>";
         }
     }
-} elseif(!$rendered) {
+} elseif(!$rendered AND !$xoopsUser) {
 	// boot the user to the homepage. Anons will be able to login there.
 	header("location: ".XOOPS_URL);
 	exit();
