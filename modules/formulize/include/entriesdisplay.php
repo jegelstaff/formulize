@@ -1287,7 +1287,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		print "<input type=hidden name=currentview id=currentview value=\"$currentview\"></input>\n";
 	}
 
-	$filterTypes = array('\$quickDateRange', '\$quickFilter', '\$quickMultiFilter');
+	$filterTypes = array('\$quickDateRange', '\$quickFilter', '\$quickMultiFilter', '\$quickSearchFilter_', '\$quickSearchMultiFilter_', '\$quickSearchDateRange_');
 	$screenOrScreenType = $screen ? $screen : 'listOfEntries';
 	$filterHandles = extractHandles($filterTypes, getTemplateToRender('toptemplate', $screenOrScreenType));
 	$filterHandles = array_merge($filterHandles, extractHandles($filterTypes, getTemplateToRender('listtemplate', $screenOrScreenType)));
