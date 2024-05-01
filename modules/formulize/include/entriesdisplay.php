@@ -1747,7 +1747,8 @@ function drawEntries($fid, $cols, $searches, $frid, $scope, $standalone, $curren
                                                 $displayElementObject = $element_handler->get($entryHandle);
                                                 if(formulizePermHandler::user_can_edit_entry($displayElementObject->getVar('id_form'), $uid, $internalID)) {
                                                     if($deThisIntId) { print "\n<br />\n"; } // could be a subform so we'd display multiple values
-                                                    if($deDisplay) {
+													list($allowed, $isDisabled) = elementIsAllowedForUserInEntry($displayElementObject, $internalID);
+                                                    if($deDisplay AND !$isDisabled) {
                                                         if($multiValueBRNeeded) { print "\n<br />\n"; } // in the case of multiple values, split them based on this
                                                         print '<div id="deDiv_'.$colhandle.'_'.$internalID.'_'.$deInstanceCounter.'">';
                                                         print getHTMLForList($values, $colhandle, $internalID, $deDisplay, $textWidth, $internalID, $fid, $cellRowAddress, $i, $deInstanceCounter); // $internalID passed in in place of $currentColumnLocalId because we are manually looping through the data to get to the lowest level, so we can be sure of the local id that is in use, and it won't be an array, etc (unless we're showing a checkbox element??? or something else with multiple values??? - probably doesn't matter because the entry id is the same for all values of a single element that allows multiple selection)
