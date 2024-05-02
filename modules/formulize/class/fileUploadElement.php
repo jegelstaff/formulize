@@ -401,10 +401,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
     // this method is for the file upload element only.  It will return a href that links to the actual file.
     function createDownloadLink($element, $url, $displayName) {
         $ele_value = $element->getVar('ele_value');
-        $dotPos = strrpos($displayName, '.');
-        $fileExtension = substr($displayName, $dotPos);
-        $imageTypes = array('.gif', '.jpg', '.png', '.jpeg', '.webp');
-        if(in_array($fileExtension, $imageTypes)) {
+        if(fileNameHasImageExtension($displayName)) {
             $linkContents = $this->createImageTag($url, $displayName);
         } else {
             $linkContents = htmlspecialchars(strip_tags($displayName),ENT_QUOTES);
@@ -486,19 +483,24 @@ function displayFileImage($entryOrDataset, $elementHandle, $dataSetKey=null, $lo
 		$name = isset($value['name']) ? $value['name'] : '';
 		$displayName = $element_handler->getFileDisplayName($name);
 	}
-	// return the URL if we don't have a valid name
-	if(!$displayName) {
-		return $url;
+	if(fileNameHasImageExtension($displayName)) {
+        return $element_handler->createImageTag($url, $displayName);
 	}
-	// check if this file is an image, and if not then return the url
-	$dotPos = strrpos($displayName, '.');
-  $fileExtension = substr($displayName, $dotPos);
-	$imageTypes = array('.gif', '.jpg', '.png', '.jpeg', '.webp');
-	if(!in_array($fileExtension, $imageTypes)) {
-		return $url;
-	}
-	// make an image tag for this file and return that
-	return $element_handler->createImageTag($url, $displayName);
+    return $url;
+}
+
+/**
+ * Check if a filename has one of various common image file type extensions.
+ * 
+ * @param string $displayName The name of the file
+ * @return boolean Return true or false depending if the file has a matching extension. If there is no displayName, return false.
+ */
+function fileNameHasImageExtension($displayName) {
+    if(!$displayName) { return false; }
+    $dotPos = strrpos($displayName, '.');
+    $fileExtension = substr($displayName, $dotPos);
+    $imageTypes = array('.gif', '.jpg', '.png', '.jpeg', '.webp');
+    return in_array(strtolower($fileExtension), $imageTypes);
 }
 
 
