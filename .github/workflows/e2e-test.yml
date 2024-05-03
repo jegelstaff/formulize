@@ -6,7 +6,26 @@ env:
   GITHUB_TOKEN: ${{ github.token }}
 
 jobs:
+  check_commit:
+    runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.check.outputs.skip }}
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - name: Check commit message
+      id: check
+      run: |
+        MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})
+        if [[ "$MESSAGE" == *"[SKIP TEST]"* ]]; then
+          echo "Commit message contains [SKIP TEST]. Skipping tests."
+          echo "::set-output name=skip::true"
+        else
+          echo "::set-output name=skip::false"
+        fi
   e2e-test-run:
+    needs: check_commit
+    if: needs.check_commit.outputs.skip == 'false'
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
