@@ -1,6 +1,9 @@
 name: e2e test suite
 
-on: [push]
+on:
+  push:
+    branches:
+      - master
 
 env:
   GITHUB_TOKEN: ${{ github.token }}
