@@ -8,6 +8,10 @@ Core formulize e2e test are located in the `/tests/e2e/formulize-core` directory
 
 When writing your own tests for your site/application place them in an appropriately named directory inside `/tests/e2e`.
 
+### Running tests in CI
+
+e2e tests are automatically run in CI with a merge to the master branch as specifed in the `.github/workflows/e2e-test.yml` file. If you are performing a small merge to master and don't want the tests to execute then add `[SKIP TEST]` to your commit message.
+
 ### Running core tests locally
 
 #### Requirements
