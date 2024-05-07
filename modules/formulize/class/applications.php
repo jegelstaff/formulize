@@ -367,10 +367,6 @@ class formulizeApplicationsHandler {
         $sql = "UPDATE ".$this->db->prefix("formulize_applications") . " SET `name` = ".$this->db->quoteString($name).", `description` = ".$this->db->quoteString($description).", `custom_code` = ".$this->db->quoteString($custom_code)." WHERE appid = ".intval($appid);
     }
 
-    //after executing insertion or updating, we put file in the following path with custom_code
-    $filename=XOOPS_ROOT_PATH."/modules/formulize/custom_code/application_custom_code_".$appid.".php";
-    file_put_contents($filename,$custom_code);
-
     if( false != $force ){
         $result = $this->db->queryF($sql);
     }else{

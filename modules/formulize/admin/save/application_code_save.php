@@ -11,11 +11,5 @@ if(!isset($processedValues)) {
     return;
 }
 
-$application_handler = xoops_getmodulehandler('applications', 'formulize');
-$appObject = $application_handler->get($_POST['formulize_admin_key']);
-
-foreach($processedValues['applications'] as $property=>$value) {
-    $appObject->setVar($property, $value);
-}
-
-$application_handler->insert($appObject);
+$filename=XOOPS_ROOT_PATH."/modules/formulize/custom_code/application_custom_code_".intval($_POST['formulize_admin_key']).".php";
+file_put_contents($filename,$processedValues['applications']['custom_code']);
