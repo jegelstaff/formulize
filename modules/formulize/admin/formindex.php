@@ -49,17 +49,6 @@ if (!isset($_GET['op']) AND !defined('_FORMULIZE_UI_PHP_INCLUDED')){
 include_once XOOPS_ROOT_PATH."/modules/formulize/class/forms.php"; // form class
 include_once XOOPS_ROOT_PATH."/modules/formulize/include/extract.php";
 include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
-include_once XOOPS_ROOT_PATH.'/class/xoopsform/grouppermform.php'; // Classe permissions
-$module_id = $xoopsModule->getVar('mid'); // recupere le numero id du module
-
-$n = 0;
-$m = 0;
-include_once XOOPS_ROOT_PATH."/class/xoopstree.php";
-include_once XOOPS_ROOT_PATH."/class/xoopslists.php";
-include_once XOOPS_ROOT_PATH."/include/xoopscodes.php";
-include_once XOOPS_ROOT_PATH."/class/module.errorhandler.php";
-$myts =& MyTextSanitizer::getInstance();
-$eh = new ErrorHandler;
 
 // this functions runs the SQL and returns false if it failed, also outputs error message to screen
 // returns the result object of the query if it was successful
@@ -80,28 +69,6 @@ function formulize_DBPatchCheckSQL($sql, &$needsPatch) {
 // database patch logic for 4.0 and higher
 function patch40() {
 
-    $module_handler = xoops_gethandler('module');
-    $formulizeModule = $module_handler->getByDirname("formulize");
-    $metadata = $formulizeModule->getInfo();
-    $versionNumber = $metadata['version'];
-
-    // CHECK THAT THEY ARE AT 3.1 LEVEL, IF NOT, LINK TO PATCH31
-    // Check for ele_handle being 255 in formulize table
-    global $xoopsDB;
-    // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
-    $fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize") ." LIKE 'ele_handle'";
-    if (!$fieldStateRes = $xoopsDB->queryF($fieldStateSQL)) {
-        print "Error: could not determine if your Formulize database structure is up to date.  Please contact <a href=\"mailto:info@formulize.org\">info@formulize.org</a> for assistance.<br>\n";
-        return false;
-    }
-    $fieldStateData = $xoopsDB->fetchArray($fieldStateRes);
-    $dataType = $fieldStateData['Type'];
-    if ($dataType != "varchar(255)") {
-        print "<h1>Your database schema is out of date.  You must run \"patch31\" before running the current patch.</h1>\n";
-        print "<p><a href=\"" . XOOPS_URL . "/modules/formulize/admin/formindex.php?op=patch31\">Click here to run \"patch31\".</a></p>\n";
-        return;
-    }
-
     /* ======================================
      * We must check here for the latest change, so we can tell the user whether they need to update or not!!
      * We set needsPatch = false, and the alter to true if a patch is necessary
@@ -114,18 +81,23 @@ function patch40() {
      *
      * IN ADDITION TO THE UPDATE HERE, THE mysql.sql FILE MUST BE UPDATED WITH THE REQUIRED CHANGES SO NEW INSTALLATIONS ARE UP TO DATE
      *
-     * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY
-     *
-     * ====================================== */
-
+     * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
     $checkThisTable = 'formulize_screen_template';
-	$checkThisField = 'viewentryscreen';
-	$checkThisProperty = '';
-	$checkPropertyForValue = '';
+		$checkThisField = 'viewentryscreen';
+		$checkThisProperty = '';
+		$checkPropertyForValue = '';
+
+		/*
+		* ====================================== */
+
+		global $xoopsDB;
+    $module_handler = xoops_gethandler('module');
+    $formulizeModule = $module_handler->getByDirname("formulize");
+    $metadata = $formulizeModule->getInfo();
+    $versionNumber = $metadata['version'];
 
     $needsPatch = false;
-
     $tableCheckSql = "SELECT 1 FROM information_schema.tables WHERE table_schema = '".SDATA_DB_NAME."' AND table_name = '".$xoopsDB->prefix(formulize_db_escape($checkThisTable)) ."'";
     $tableCheckRes = formulize_DBPatchCheckSQL($tableCheckSql, $needsPatch); // may modify needsPatch!
     if ($tableCheckRes AND !$needsPatch AND $checkThisField) { // table was found, and we're looking for a field in it
@@ -686,6 +658,41 @@ function patch40() {
 					}
 				} else {
 					exit("Error detecting procedures that need opening PHP tags. SQL dump:<br>".$formProceduresNeedingOpeningPHPTagsSQL."<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+				}
+
+				// Same operation on the custom button effects
+				$customButtonsNeedingOpeningPHPTagsSQL = "SELECT `sid`, `customactions` FROM ".$xoopsDB->prefix('formulize_screen_listofentries')." WHERE customactions LIKE '%\"custom_code\";%' OR customactions LIKE '%\"custom_html\";%'";
+				if($res = $xoopsDB->query($customButtonsNeedingOpeningPHPTagsSQL)) {
+					// loop through the results...
+					while($record = $xoopsDB->fetchArray($res)) {
+						// for each record that was returned from the DB, decode the button stuff and check if the custom_html or custom_code has an opening tag
+						$customActions = unserialize($record['customactions']);
+						foreach($customActions as $actionId=>$actionSettings) {
+							foreach($actionSettings as $effectId=>$effectSettings) {
+								if(!is_numeric($effectId)) { continue; } // ugly, effects are all numeric keys, other keys at same level are strings for other metadata
+								switch($actionSettings['applyto']) {
+									case 'custom_html':
+										if(substr($effectSettings['html'], 0, 5) != '<?php') {
+											$customActions[$actionId][$effectId]['html'] = "<?php\n".$effectSettings['html']; // assign update to the source array
+										}
+										break;
+									case 'custom_code':
+										if(substr($effectSettings['code'], 0, 5) != '<?php') {
+											$customActions[$actionId][$effectId]['code'] = "<?php\n".$effectSettings['code']; // assign update to the source array
+										}
+										break;
+								}
+							}
+						}
+						$customActions = serialize($customActions);
+						// update the database with the new code for the relevant custom buttons
+						$updateCustomButtonsSQL = "UPDATE ".$xoopsDB->prefix('formulize_screen_listofentries')." SET `customactions` = ".$xoopsDB->quoteString($customActions)." WHERE sid = ".$record['sid'];
+						if(!$updateProcRes = $xoopsDB->query($updateCustomButtonsSQL)) {
+							print "Notice: could not add opening PHP tag to the code in the custom buttons on screen ".$record['sid']." with the SQL:<br>".str_replace('<', '&lt;',$updateCustomButtonsSQL)."<br>".$xoopsDB->error()."<br>This is not a critical error. You can add the tag yourself at the top of the code, if you want the editor to provide highlighting. For more information contact <a href=mailto:info@formulize.org>info@formulize.org</a>.<br>";
+						}
+					}
+				} else {
+					exit("Error detecting custom buttons that need opening PHP tags. SQL dump:<br>".$customButtonsNeedingOpeningPHPTagsSQL."<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
 				}
 
         global $xoopsConfig;
