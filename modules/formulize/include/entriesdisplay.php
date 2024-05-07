@@ -4208,7 +4208,7 @@ function formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers) {
     }
 
 	$numberPerPage = is_object($screen) ? $screen->getVar('entriesperpage') : 10;
-    $numberPerPage = (isset($_POST['formulize_entriesPerPage']) AND $_POST['formulize_entriesPerPage'] !== "") ? intval($_POST['formulize_entriesPerPage']) : $numberPerPage;
+    $numberPerPage = (isset($_POST['formulize_entriesPerPage']) AND intval($_POST['formulize_entriesPerPage']) > 0) ? intval($_POST['formulize_entriesPerPage']) : $numberPerPage;
 
 	// regenerate essentially causes the user to jump back to page 0 because something about the dataset has fundamentally changed (like a new search term or something)
 	$currentPage = (isset($_POST['formulize_LOEPageStart']) AND !$regeneratePageNumbers) ? intval($_POST['formulize_LOEPageStart']) : 0;
