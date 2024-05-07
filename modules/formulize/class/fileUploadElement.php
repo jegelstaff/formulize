@@ -457,7 +457,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
 			$data_handler = new formulizeDataHandler($fid);
       $fileInfo = $data_handler->getElementValueInEntry($entry_id, $element_id);
       $fileInfo = unserialize($fileInfo);
-			//if(fileNameHasImageExtension($fileInfo['name'])) {
+			if(fileNameHasImageExtension($fileInfo['name'])) {
 				$dotPos = strrpos($fileInfo['name'], '.');
 				$fileExtension = strtolower(substr($fileInfo['name'], $dotPos+1));
 				$thumbFileName = substr_replace($fileInfo['name'], ".thumb.$fileExtension", $dotPos);
@@ -511,7 +511,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
 					}
 				}
 				$url = $thumbUrl;
-			//}
+			}
 			return $url;
 		}
 
