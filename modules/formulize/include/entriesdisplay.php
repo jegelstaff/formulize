@@ -3215,7 +3215,7 @@ function confirmDel() {
 
 function confirmClone() {
 	var clonenumber = prompt("<?php print _formulize_DE_CLONE_PROMPT; ?>", "1");
-	if(eval(clonenumber) > 0) {
+	if(parseInt(clonenumber) > 0) {
 		window.document.controls.cloneconfirmed.value = clonenumber;
 		window.document.controls.ventry.value = '';
 		window.document.controls.forcequery.value = 1;
