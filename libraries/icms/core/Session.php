@@ -41,20 +41,18 @@ class icms_core_Session {
 		// ADDED CODE BY FREEFORM SOLUTIONS, SUPPORTING INTEGRATION WITH OTHER SYSTEMS
 		// If this is a page load by another system, and we're being included, then we establish the user session based on the user id of the user in effect in the other system
 		// This approach assumes correspondence between the user ids.
-		
-        $externalUid = 0;
-        $xoops_userid = 0;
-        
-        include_once ICMS_ROOT_PATH . '/include/functions.php';
-        
-        // Also listens for a code from Google in the URL
-        //if google user logged in and redirected to this page
+    $externalUid = 0;
+    $xoops_userid = 0;
+
+    include_once ICMS_ROOT_PATH . '/include/functions.php';
+
+    // Also listens for a code from Google in the URL
+    //if google user logged in and redirected to this page
 		if (isset($_GET['code']) AND $client = setupAuthentication()) {
-               
-            //Get a google client object and send Client Request for email
-            $objOAuthService = new Google_Service_Oauth2($client);
-        
-            //Authenticate code from Google OAuth Flow
+      //Get a google client object and send Client Request for email
+      $objOAuthService = new Google_Service_Oauth2($client);
+
+      //Authenticate code from Google OAuth Flow
 			if(isset($_GET['code']) && isset($_GET['newcode'])){
 				//for the create new user pathway to this session init call
 				$userData["email"] = $_SESSION['email'];
@@ -66,75 +64,75 @@ class icms_core_Session {
 				$userData = $objOAuthService->userinfo->get();
 			}
 
-            // start up the integration API
-            include_once XOOPS_ROOT_PATH."/integration_api.php";
-            Formulize::init();
-            
-            // we need to now try and get an the resource mapping of the user if it exists
-            if(isset($userData["email"]) AND $userData["email"] AND $internalUid = Formulize::getXoopsResourceID(Formulize::USER_RESOURCE, $userData["email"])) {
-            	 $externalUid = $userData["email"];
-            } elseif(isset($userData["email"]) AND $userData["email"]) { 
-                // No existing user - going to redirect to the create new user page
-                $_SESSION['email'] = $userData["email"];
-                $_SESSION['resouceMapKey'] = $userData["email"];
-                $_SESSION['name'] = $userData["name"];
-                $_SESSION['newuser'] = $_GET['code']; //add the google code to session and url and check this on the other end to make sure that they are equal
-                $url = XOOPS_URL."/new_user.php?newuser=".$_GET['code'];
-                header("Location: ".$url);
-                exit;
-            }
-        }
-        
-        if(isset($_POST['SAMLResponse'])) {
-            require_once XOOPS_ROOT_PATH.'/libraries/php-saml/_toolkit_loader.php';
-            $auth = new OneLogin_Saml2_Auth();
-            $auth->processResponse();
-            $errors = $auth->getErrors();
-            if (!empty($errors)) {
-                // might want to uncomment output if you're debugging
-                //echo '<p>', implode(', ', $errors), '</p>';
-                //exit();
-            }
-            if($auth->isAuthenticated()) {
-                // start up the integration API
-                include_once XOOPS_ROOT_PATH."/integration_api.php";
-                Formulize::init();
-                if($internalUid = Formulize::getXoopsResourceID(Formulize::USER_RESOURCE, $auth->getNameId())) {
-                    $externalUid = $auth->getNameId();
-                } else {
-                    // check if there is a group specified in the SAML response?
-                    $samlGroups = array();
-                    if($uid = $newFormulizeUser->insertAndMapUser(array_keys($samlGroups))) {
-                        header("Location: ".XOOPS_URL);
-                        exit();
-                    } else {
-                        // No existing user, no group, need to send to new user page to gather token...
-                        $_SESSION['resouceMapKey'] = $auth->getNameId();
-                        $samlAttributes = $auth->getAttributes();
-                        $_SESSION['name'] = $samlAttributes['firstName'][0].' '.$samlAttributes['lastName'][0]; //<<<<-MUST CONVERT TO SAML ATTRIBUTE FIRST NAME LAST NAME
-                        $_SESSION['newuser'] = bin2hex(random_bytes(32)); // add a key to the session and URL and check this on the other end to make sure that they are equal
-                        $url = XOOPS_URL."/new_user.php?newuser=".$_SESSION['newuser'];
-                        header("Location: ".$url);
-                        exit;
-                    }
-                }
-            }
-        }
+			// start up the integration API
+			include_once XOOPS_ROOT_PATH."/integration_api.php";
+			Formulize::init();
 
-        // if the email passed by the validated OAuth request, that later passed authentication with Brightspace, matches an existing account, log that person in
-        // Brightspace / LTI integration does not use the resource mapping table and the integration API because there may be multiple different integrations with a site, it is not designed to have a single integration with a single Formulize instance.
-        if(isset($_SESSION['brightspaceUserId']) AND $_SESSION['brightspaceUserId'] AND isset($_SESSION['ext_d2l_orgdefinedid'])) {
-            // lookup user who matches canonical id from brightspace
-            include XOOPS_ROOT_PATH.'/libraries/brightspace/finduser.php';
-            $xoops_userid = lookupBrightspaceUser($_SESSION['ext_d2l_orgdefinedid']);
-            if(!$xoops_userid) {
-                $externalUid = 0;
+			// we need to now try and get an the resource mapping of the user if it exists
+			if(isset($userData["email"]) AND $userData["email"] AND $internalUid = Formulize::getXoopsResourceID(Formulize::USER_RESOURCE, $userData["email"])) {
+				$externalUid = $userData["email"];
+			} elseif(isset($userData["email"]) AND $userData["email"]) {
+				// No existing user - going to redirect to the create new user page
+				$_SESSION['email'] = $userData["email"];
+				$_SESSION['resouceMapKey'] = $userData["email"];
+				$_SESSION['name'] = $userData["name"];
+				$_SESSION['newuser'] = $_GET['code']; //add the google code to session and url and check this on the other end to make sure that they are equal
+				$url = XOOPS_URL."/new_user.php?newuser=".$_GET['code'];
+				header("Location: ".$url);
+				exit;
+			}
+    }
+
+		if(isset($_POST['SAMLResponse'])) {
+				require_once XOOPS_ROOT_PATH.'/libraries/php-saml/_toolkit_loader.php';
+				$auth = new OneLogin_Saml2_Auth();
+				$auth->processResponse();
+				$errors = $auth->getErrors();
+				if (!empty($errors)) {
+						// might want to uncomment output if you're debugging
+						//echo '<p>', implode(', ', $errors), '</p>';
+						//exit();
+				}
+				if($auth->isAuthenticated()) {
+						// start up the integration API
+						include_once XOOPS_ROOT_PATH."/integration_api.php";
+						Formulize::init();
+						if($internalUid = Formulize::getXoopsResourceID(Formulize::USER_RESOURCE, $auth->getNameId())) {
+								$externalUid = $auth->getNameId();
+						} else {
+								// check if there is a group specified in the SAML response?
+								$samlGroups = array();
+								if($uid = $newFormulizeUser->insertAndMapUser(array_keys($samlGroups))) {
+										header("Location: ".XOOPS_URL);
+										exit();
+								} else {
+										// No existing user, no group, need to send to new user page to gather token...
+										$_SESSION['resouceMapKey'] = $auth->getNameId();
+										$samlAttributes = $auth->getAttributes();
+										$_SESSION['name'] = $samlAttributes['firstName'][0].' '.$samlAttributes['lastName'][0]; //<<<<-MUST CONVERT TO SAML ATTRIBUTE FIRST NAME LAST NAME
+										$_SESSION['newuser'] = bin2hex(random_bytes(32)); // add a key to the session and URL and check this on the other end to make sure that they are equal
+										$url = XOOPS_URL."/new_user.php?newuser=".$_SESSION['newuser'];
+										header("Location: ".$url);
+										exit;
+								}
+						}
+				}
+		}
+
+		// if the email passed by the validated OAuth request, that later passed authentication with Brightspace, matches an existing account, log that person in
+		// Brightspace / LTI integration does not use the resource mapping table and the integration API because there may be multiple different integrations with a site, it is not designed to have a single integration with a single Formulize instance.
+		if(isset($_SESSION['brightspaceUserId']) AND $_SESSION['brightspaceUserId'] AND isset($_SESSION['ext_d2l_orgdefinedid'])) {
+			// lookup user who matches canonical id from brightspace
+			include XOOPS_ROOT_PATH.'/libraries/brightspace/finduser.php';
+			$xoops_userid = lookupBrightspaceUser($_SESSION['ext_d2l_orgdefinedid']);
+			if(!$xoops_userid) {
+				$externalUid = 0;
 				$cookie_time = time() - 10000;
 				$instance->update_cookie(session_id(), $cookie_time);
 				$instance->destroy(session_id());
 				unset($_SESSION['xoopsUserId']);
-            }
-        }
+			}
+		}
 
 		if (isset($GLOBALS['formulizeHostSystemUserId'])) {
 			if ($GLOBALS['formulizeHostSystemUserId']) {
@@ -147,19 +145,18 @@ class icms_core_Session {
 				unset($_SESSION['xoopsUserId']);
 			}
 		}
-        
-        // if we're coming back from new_user.php after having made an account, we need to pick it up here
-        if(isset($_SESSION['resouceMapKey']) AND $_SESSION['resouceMapKey']) {
-            $externalUid = $_SESSION['resouceMapKey'];
-        }
+
+		// if we're coming back from new_user.php after having made an account, we need to pick it up here
+		if(isset($_SESSION['resouceMapKey']) AND $_SESSION['resouceMapKey']) {
+				$externalUid = $_SESSION['resouceMapKey'];
+		}
 
 		if ($externalUid) {
-            $xoops_userid = Formulize::getXoopsResourceID(Formulize::USER_RESOURCE, $externalUid);
-        }
-        
-        if($xoops_userid) {
-			
-		    $icms_user = icms::handler('icms_member')->getUser($xoops_userid);
+      $xoops_userid = Formulize::getXoopsResourceID(Formulize::USER_RESOURCE, $externalUid);
+    }
+
+    if($xoops_userid) {
+	    $icms_user = icms::handler('icms_member')->getUser($xoops_userid);
 
 			if (is_object($icms_user)) {
 				// set a few things in $_SESSION, similar to what include/checklogin.php does, and make a cookie and a database entry
@@ -189,6 +186,8 @@ class icms_core_Session {
 		}
 
 		// If there's no xoopsUserId set in the $_SESSION yet, and there's an ICMS session cookie present, then let's make one last attempt to load the session (could be because we're embedded in a system that doesn't have a parallel user table like what is used above)
+		// essentially, if session_start failed (which would happen if another system already started it) then we're trying again.
+		// Possibly, we should be appending the existing $_SESSION data somehow?? Don't want to clobber session data from host system??
 		$icms_session_name = ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '') ? $icmsConfig['session_name'] : session_name();
 		if (!isset($_SESSION['xoopsUserId']) && isset($_COOKIE[$icms_session_name])) {
 			if ($icms_session_data = $instance->read($_COOKIE[$icms_session_name])) {
@@ -208,14 +207,14 @@ class icms_core_Session {
 				if ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '') {
 					// we need to secure cookie when using SSL
 					$secure = substr(ICMS_URL, 0, 5) == 'https' ? 1 : 0;
-                    $arr_cookie_options = array (
-                        'expires' => 0,
-                        'path' => '/',
-                        'domain' => '',
-                        'secure' => ($secure ? true : false),     
-                        'httponly' => true,    
-                        'samesite' => 'None' // None || Lax  || Strict
-                        );
+					$arr_cookie_options = array (
+						'expires' => 0,
+						'path' => '/',
+						'domain' => '',
+						'secure' => ($secure ? true : false),
+						'httponly' => true,
+						'samesite' => 'None' // None || Lax  || Strict
+						);
 					setcookie($icmsConfig['session_name'], session_id(), $arr_cookie_options);
 				}
 				$icms_user->setGroups($_SESSION['xoopsUserGroups']); // ALTERED BY FREEFORM SOLUTIONS TO AVOID NAMING CONFLICT WITH GLOBAL USER OBJECT FROM EXTERNAL SYSTEMS
@@ -224,8 +223,8 @@ class icms_core_Session {
 				}
 			}
 		} else { // set anon session cookie - necessary for preserving state in LTI systems...some browsers set one by default anyway, but it won't be secure and Samesite=None
-            $instance->update_cookie();
-        }
+      $instance->update_cookie();
+    }
 		return $instance;
 	}
 
@@ -308,7 +307,7 @@ class icms_core_Session {
 	/**
 	 * Read a session from the database
 	 * @param	string  &sess_id    ID of the session
-	 * @return	array   Session data
+	 * @return	string   Session data
 	 */
 	public function read($sess_id) {
 		return self::readSession($sess_id);
@@ -390,11 +389,11 @@ class icms_core_Session {
 				? $icmsConfig['session_name'] : session_name();
 		$session_id = empty($sess_id) ? session_id() : $sess_id;
         $arr_cookie_options = array (
-            'expires' => 0, 
+            'expires' => 0,
             'path' => '/',
             'domain' => '',
-            'secure' => ($secure ? true : false),     
-            'httponly' => true,    
+            'secure' => ($secure ? true : false),
+            'httponly' => true,
             'samesite' => 'None' // None || Lax  || Strict
             );
         setcookie($session_name, $session_id, $arr_cookie_options);
@@ -496,15 +495,15 @@ class icms_core_Session {
         if(intval($icmsConfig['session_expire']) > 0) {
             @ini_set('session.gc_maxlifetime', intval($icmsConfig['session_expire']) * 60);
         }
-        
+
 		if ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '') {
 			session_name($icmsConfig['session_name']);
 		} else {
 			session_name('ICMSSESSION');
 		}
-        
+
 		session_start();
-        
+
 		self::removeExpiredCustomSession('xoopsUserId');
 		icms_Event::trigger('icms_core_Session', 'sessionStart', $this);
 		return true;
@@ -557,66 +556,74 @@ class icms_core_Session {
 	/**
 	 * Read a session from the database
 	 * @param	string  &sess_id    ID of the session
-	 * @return	array   Session data
+	 * @return	string   Session data
 	 * MODIFIED TO LOCK THE READING OF THE SESSION IF A PRIOR REQUEST FOR SAME USER IS STILL ACTIVE
 	 * THIS IS TO PRESERVE THE INTEGRITY OF $_SESSION
 	 * IF MULTIPLE REQUESTS (PROBABLY AJAX REQUESTS) ARRIVE CLOSE TOGETHER, ONE COULD START BEFORE THE PREVIOUS IS FINISHED AND SO THEY WOULD BOTH GET THE SAME $_SESSION.
 	 * HOWEVER THIS IS BAD IF THE SUBSEQUENT REQUEST DEPENDS ON VALUES WRITTEN TO THE SESSION DATA DURING THE PRIOR REQUEST.
 	 * THIS IS ESPECIALLY RELEVANT WITH REGARD TO THE ANTI-CSRF TOKENS WHICH ARE STORED IN THE SESSION
 	 * When the session is loaded, sess_updated is set to 1. When session is written back at end of request, current time stamp replaces the 1
-	 * If when we load a session, sess_updated is 1, we try once a second for up to 10 seconds to load it again
+	 * If when we load a session, sess_updated is 1, we try again for up to 10 seconds to load it again
 	 * If we don't get it after 10 seconds, we go with whatever we have in the DB at that time and write a note to the error log.
 	 */
 	private function readSession($sess_id) {
-        $ticks = 0;
-        while($ticks<11) {
-            $ticks++;
-            $sql = sprintf('SELECT sess_data, sess_ip, sess_updated FROM %s WHERE sess_id = %s',
-                icms::$xoopsDB->prefix('session'), icms::$xoopsDB->quoteString($sess_id));
-            if (false != $result = icms::$xoopsDB->query($sql)) {
-                if (list($sess_data, $sess_ip, $sess_updated) = icms::$xoopsDB->fetchRow($result)) {
-					static $sessionLoaded = false;
-                    // tried 10 times, still locked, go with what we got
-                    if($ticks == 10 AND $sess_updated == 1) {
-                        error_log('Formulize Standalone Error: After 10 seconds the session data was still locked by a prior request, so we\'re going with the current state of the session data anyway!
-                            URI: '.str_replace("&amp;", "&", htmlSpecialChars(strip_tags($_SERVER['REQUEST_URI']))));
-                    // session data locked, and we haven't already loaded a session in this PHP instantiation, wait a second and try again
-                    } elseif($sess_updated==1 AND !$sessionLoaded) {
-                        sleep(1);
-                        continue;
-                    // got the session data, so mark updated time as "1" to indicate a request is in progress, and carry on.
-                    } else {
-                        $sql = sprintf('UPDATE %s SET sess_updated = 1 WHERE sess_id = %s',icms::$xoopsDB->prefix('session'),icms::$xoopsDB->quoteString($sess_id));
-                        icms::$xoopsDB->queryF($sql);
+
+		static $cachedSessionIds = array();
+		if(isset($cachedSessionIds[$sess_id])) { return $cachedSessionIds[$sess_id]; }
+
+		$ticks = 0;
+		$sess_data = '';
+		$sess_updated = 0;
+		static $sessionLoaded = false; // track within this session, whether we have ever loaded a session
+		while($ticks<30) {
+			$ticks++;
+			$sql = sprintf('SELECT sess_data, sess_ip, sess_updated FROM %s WHERE sess_id = %s', icms::$xoopsDB->prefix('session'), icms::$xoopsDB->quoteString($sess_id));
+			if (false != $result = icms::$xoopsDB->query($sql)) {
+				if (icms::$xoopsDB->getRowsNum($result) > 0 AND list($sess_data, $sess_ip, $sess_updated) = icms::$xoopsDB->fetchRow($result)) {
+					// session data locked, and we haven't already loaded a session in this PHP instantiation, wait 1/3rd of a second and try again
+					if($sess_updated==1 AND !$sessionLoaded) {
+						usleep(333333);
+						continue; // continue while loop -- only circumstance in which we continue loop
+					// got the session data, so mark updated time as "1" to indicate a request is in progress, and carry on.
+					} else {
 						$sessionLoaded = true;
-                    }
-                    if ($this->ipv6securityLevel > 1 && icms_core_DataFilter::checkVar($sess_ip, 'ip', 'ipv6')) {
-                        /**
-                         * also cover IPv6 localhost string
-                         */
-                        if ($_SERVER['REMOTE_ADDR'] == "::1") {
-                            $pos = 3;
-                        } else {
-                            $pos = strpos($sess_ip, ":", $this->ipv6securityLevel - 1);
-                        }
-    
-                        if (strncmp($sess_ip, $_SERVER['REMOTE_ADDR'], $pos)) {
-                            $sess_data = '';
-                            $this->destroySession($sess_id);
-                        }
-                    } elseif ($this->securityLevel > 1 && icms_core_DataFilter::checkVar($sess_ip, 'ip', 'ipv4')) {
-                        $pos = strpos($sess_ip, ".", $this->securityLevel - 1);
-    
-                        if (strncmp($sess_ip, $_SERVER['REMOTE_ADDR'], $pos)) {
-                            $sess_data = '';
-                            $this->destroySession($sess_id);
-                        }
-                    }
-                    return $sess_data;
-                }
-            }
-        }
-		return '';
+						if($sess_data AND $sess_updated != 1) {
+							$sql = sprintf('UPDATE %s SET sess_updated = 1 WHERE sess_id = %s',icms::$xoopsDB->prefix('session'),icms::$xoopsDB->quoteString($sess_id));
+							icms::$xoopsDB->queryF($sql);
+						}
+						break; // session found
+					}
+				} else { // no row returned from DB, so session does not exist
+					break;
+				}
+			} else { // query not valid
+				break;
+			}
+		}
+		// tried for ten seconds, still locked, go with what we got, write an error log note about this
+		if($ticks >= 30 AND $sess_updated == 1) {
+			$sessionLoaded = true;
+			error_log('Formulize Standalone Error: After 10 seconds the session data was still locked by a prior request, so we\'re going with the current state of the session data anyway! URI: '.str_replace("&amp;", "&", htmlSpecialChars(strip_tags($_SERVER['REQUEST_URI']))));
+		}
+		if($sess_data) {
+			// validate the IP and check that it's consistent with the previous
+			$pos = 0;
+			if ($this->ipv6securityLevel > 1 && icms_core_DataFilter::checkVar($sess_ip, 'ip', 'ipv6')) {
+				$pos = 3; // for IPv6 localhost
+				if ($_SERVER['REMOTE_ADDR'] != "::1") { // or if not localhost...
+						$pos = strpos($sess_ip, ":", $this->ipv6securityLevel - 1);
+				}
+			} elseif ($this->securityLevel > 1 && icms_core_DataFilter::checkVar($sess_ip, 'ip', 'ipv4')) {
+					$pos = strpos($sess_ip, ".", $this->securityLevel - 1);
+			}
+			if ($pos AND strncmp($sess_ip, $_SERVER['REMOTE_ADDR'], $pos)!=0) { // if not consistent then kill the session
+				$sess_data = '';
+				$this->destroySession($sess_id);
+			}
+		}
+		$sess_data = !is_string($sess_data) ? '' : $sess_data; // must return a string!
+		if($sess_data) { $cachedSessionIds[$sess_id] = $sess_data; }
+    return $sess_data;
 	}
 
 	/**
@@ -628,7 +635,6 @@ class icms_core_Session {
 	private function writeSession($sess_id, $sess_data) {
 		$sess_id = icms::$xoopsDB->quoteString($sess_id);
 		$sess_data = icms::$xoopsDB->quoteString($sess_data);
-
 		$sql = sprintf(
 			"UPDATE %s SET sess_updated = '%u', sess_data = %s WHERE sess_id = %s",
 			icms::$xoopsDB->prefix('session'), time(), $sess_data, $sess_id

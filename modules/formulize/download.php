@@ -30,6 +30,7 @@
 // and if they have access to the entry and element, then it queues up a download for the user
 
 include "../../mainfile.php";
+session_write_close(); // nothing that happens will affect the session, so let's close early to play nice with other concurrent requests
 
 $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
