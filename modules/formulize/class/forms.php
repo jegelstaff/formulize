@@ -264,22 +264,30 @@ class formulizeForm extends XoopsObject {
 
 		public function on_before_save() {
 				// this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
-				return $this->vars['on_before_save']['value'];
+				$value = $this->vars['on_before_save']['value'];
+				$value = $value ? $value : "<?php\n";
+				return $value;
 		}
 
 		public function on_after_save() {
 				// this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
-				return $this->vars['on_after_save']['value'];
+				$value = $this->vars['on_after_save']['value'];
+				$value = $value ? $value : "<?php\n";
+				return $value;
 		}
 
 		public function on_delete() {
 			// this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
-			return $this->vars['on_delete']['value'];
+			$value = $this->vars['on_delete']['value'];
+			$value = $value ? $value : "<?php\n";
+			return $value;
 		}
 
 		public function custom_edit_check() {
 				// this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
-				return $this->vars['custom_edit_check']['value'];
+				$value = $this->vars['custom_edit_check']['value'];
+				$value = $value ? $value : "<?php\n";
+				return $value;
 		}
 
     private function cache_on_before_save_code() {
@@ -670,6 +678,11 @@ class formulizeFormsHandler {
 						$singleToWrite = "group";
 						break;
 				}
+
+				$on_before_save = trim($on_before_save) != "<?php" ? $on_before_save : "";
+				$on_after_save = trim($on_after_save) != "<?php" ? $on_after_save : "";
+				$on_delete = trim($on_delete) != "<?php" ? $on_beforeon_delete_save : "";
+				$custom_edit_check = trim($custom_edit_check) != "<?php" ? $custom_edit_check : "";
 
                 if($formObject->isNew() || empty($id_form)) {
                     $sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`desc_form`, `singleentry`, `tableform`, ".

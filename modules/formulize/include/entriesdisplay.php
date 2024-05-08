@@ -3779,7 +3779,7 @@ function processCustomButton($caid, $thisCustomAction, $entry_id="", $entry="") 
 		foreach($caHTML as $key=>$thisHTML) {
 			if(!isset($cachedCAHTML[$key])) {
                 ob_start();
-                eval($thisHTML);
+                eval(removeOpeningPHPTag($thisHTML));
  				$cachedCAHTML[$key] = ob_get_clean();
 			}
 			$allHTML .= $cachedCAHTML[$key];
@@ -3818,7 +3818,7 @@ function processButtonValue($buttonValue, $entry_id) {
     $formulize_lvoverride = false;
     if(strstr($buttonValue, "\$value")) {
 			  $value = '';
-        eval($buttonValue);
+        eval(removeOpeningPHPTag($buttonValue));
         $valueToWrite = $value;
     }
     $GLOBALS['formulize_lvoverride'] = $formulize_lvoverride; // kludgy way to pass it back when we might need to listen for it in writeElementValue!
@@ -3859,7 +3859,7 @@ function processClickedCustomButton($clickedElements, $clickedValues, $clickedAc
 		foreach($caPHP as $thisCustomCode) {
 			foreach($clickedEntries as $formulize_thisEntryId) {
 				$GLOBALS['formulize_thisEntryId'] = $formulize_thisEntryId;
-				eval($thisCustomCode);
+				eval(removeOpeningPHPTag($thisCustomCode));
 			}
 		}
 	} else {
