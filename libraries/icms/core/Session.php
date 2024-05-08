@@ -615,7 +615,7 @@ class icms_core_Session {
 			} elseif ($this->securityLevel > 1 && icms_core_DataFilter::checkVar($sess_ip, 'ip', 'ipv4')) {
 					$pos = strpos($sess_ip, ".", $this->securityLevel - 1);
 			}
-			if (strncmp($sess_ip, $_SERVER['REMOTE_ADDR'], $pos)) { // if not consistent then kill the session
+			if (strncmp($sess_ip, $_SERVER['REMOTE_ADDR'], $pos)!=0) { // if not consistent then kill the session
 				$sess_data = '';
 				$this->destroySession($sess_id);
 			}
