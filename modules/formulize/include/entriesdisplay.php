@@ -1757,7 +1757,9 @@ function drawEntries($fid, $cols, $searches, $frid, $scope, $standalone, $curren
                                                     } else {
                                                         if($deThisIntId) { print "\n<br />\n"; } // extra break to separate multiple form elements in the same cell, for readability/usability
                                                         // NEEDS DEBUG - ELEMENTS NOT DISPLAYING
-                                                        displayElement("", $colhandle, $internalID);
+																												$colHandleElementObject = $element_handler->get($colhandle);
+																												$colHandleElementObject = overrideSeparatorToLineBreak($colHandleElementObject);
+                                                        displayElement("", $colHandleElementObject, $internalID);
                                                     }
                                                     $deThisIntId = true;
                                                     $multiValueBRNeeded = true;
