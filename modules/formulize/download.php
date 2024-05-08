@@ -64,15 +64,30 @@ if(security_check($fid, $entry_id, $uid)) {
         $fileInfo = $data_handler->getElementValueInEntry($entry_id, $elementObject);
         $fileInfo = unserialize($fileInfo);
         $filePath = XOOPS_ROOT_PATH."/uploads/formulize_".$fid."_".$entry_id."_".$element_id."/".$fileInfo['name'];
+        if(isset($_GET['size']) AND $_GET['size'] == 'thumb') {
+            $dotPos = strrpos($filePath, '.');
+            $fileExtension = strtolower(substr($filePath, $dotPos+1));
+            $thumbFilePath = substr_replace($filePath, ".thumb.$fileExtension", $dotPos);
+            if(file_exists($thumbFilePath)) {
+                $filePath = $thumbFilePath;
+            }
+        }
+        $fileDisplayName = $element_handler->getFileDisplayName($fileInfo['name']);
         if (file_exists($filePath)) {
-            header('Content-Description: File Transfer');
             header('Content-Type: '.$fileInfo['type']);
-            header('Content-Disposition: attachment; filename="'.$element_handler->getFileDisplayName($fileInfo['name']).'"');
+            if(fileNameHasImageExtension($fileDisplayName)) {
+                header('Content-Disposition: filename="'.$fileDisplayName.'"');
+                header('Cache-Control: max-age=3600');
+                header('Pragma: public');
+            } else {
+                header('Content-Description: File Transfer');
+                header('Content-Disposition: attachment; filename="'.$fileDisplayName.'"');
             header('Content-Transfer-Encoding: binary');
+                header('Content-Length: ' . $fileInfo['size']);
             header('Expires: 0');
             header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
             header('Pragma: public');
-            header('Content-Length: ' . $fileInfo['size']);
+            }
             readfile($filePath);
             exit;
         } else {

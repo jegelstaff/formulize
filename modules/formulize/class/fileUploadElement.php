@@ -434,7 +434,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
     }
 
 		/**
-		 * Create an HTML img tag with the src set as the url for the image
+		 * Create an HTML img tag with the src set as the url for the image. Creates a thumbnail version of the image if one does not exist already.
 		 *
 		 * @param string $url The URL used to access the image.
 		 * @param string $displayName Optional. The name of the file/image, for use in the title attribute.
@@ -442,9 +442,107 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
 		 * @return string Returns the HTML img tag referring to the image
 		 */
 		function createImageTag($url, $displayName='', $class='formulize-uploaded-image-thumbnail') {
+			$url = $this->getThumbnailUrl($url, $displayName);
 			return "<img class='".htmlspecialchars(strip_tags($class), ENT_QUOTES)."' title='".htmlspecialchars(strip_tags($displayName),ENT_QUOTES)."' src='$url' />";
 		}
 
+		/**
+		 * Return the URL for the thumbnail version of an image, and create the thumbnail if necessary
+		 *
+		 * @param string $url The URL used to access the image.
+		 * @return string The URL of the thumbnail version of the image. Or the URL passed in if the URL is not for an image.
+		 */
+		function getThumbnailUrl($url) {
+			list($entry_id, $element_id, $fid) = $this->extractEntryIdAndElementIdFromUrl($url);
+			$data_handler = new formulizeDataHandler($fid);
+      $fileInfo = $data_handler->getElementValueInEntry($entry_id, $element_id);
+      $fileInfo = unserialize($fileInfo);
+			if(fileNameHasImageExtension($fileInfo['name'])) {
+				$dotPos = strrpos($fileInfo['name'], '.');
+				$fileExtension = strtolower(substr($fileInfo['name'], $dotPos+1));
+				$thumbFileName = substr_replace($fileInfo['name'], ".thumb.$fileExtension", $dotPos);
+				$path = XOOPS_ROOT_PATH."/uploads/formulize_".$fid."_".$entry_id."_".$element_id."/".$fileInfo['name'];
+				$thumbPath = XOOPS_ROOT_PATH."/uploads/formulize_".$fid."_".$entry_id."_".$element_id."/".$thumbFileName;
+				if(strstr($url, XOOPS_URL."/modules/formulize/download.php?element=")) {
+					$thumbUrl = $url . "&size=thumb";
+				} else {
+					$thumbUrl = str_replace($fileInfo['name'], $thumbFileName, $url);
+				}
+				if(!file_exists($thumbPath)) {
+					$image = null;
+					switch($fileExtension) {
+						case 'gif':
+							$image = imagecreatefromgif($path);
+							break;
+						case 'png':
+							$image = imagecreatefrompng($path);
+							break;
+						case 'webp':
+							$image = imagecreatefromwebp($path);
+							break;
+						case 'jpg':
+						case 'jpeg':
+							$image = imagecreatefromjpeg($path);
+							break;
+					}
+					$exif = exif_read_data($path);
+					if ($image AND $exif AND isset($exif['Orientation']))	{
+						$orientation = $exif['Orientation'];
+						if ($orientation == 6 OR $orientation == 5) { $image = imagerotate($image, 270, 0); }
+						if ($orientation == 3 OR $orientation == 4) { $image = imagerotate($image, 180, 0); }
+						if ($orientation == 8 OR $orientation == 7) { $image = imagerotate($image, 90, 0); }
+						if ($orientation == 5 OR $orientation == 4 OR $orientation == 7) { imageflip($image, IMG_FLIP_HORIZONTAL); }
+					}
+					$image = imagescale($image, 200);
+					switch($fileExtension) {
+						case 'gif':
+							imagegif($image, $thumbPath);
+							break;
+						case 'png':
+							imagepng($image, $thumbPath);
+							break;
+						case 'webp':
+							imagewebp($image, $thumbPath);
+							break;
+						case 'jpg':
+						case 'jpeg':
+							imagejpeg($image, $thumbPath);
+							break;
+					}
+				}
+				$url = $thumbUrl;
+			}
+			return $url;
+		}
+
+		/**
+		 * Get the entryId and elementId and form Id from the URL for an image. Parsing depends on the kind of URL
+		 *
+		 * @param string $url The URL used to access the image.
+		 * @return array An array of the entry Id and element Id and form Id
+		 */
+		function extractEntryIdAndElementIdFromUrl($url) {
+			if(strstr($url, XOOPS_URL."/modules/formulize/download.php?element=")) {
+				$urlParts = explode('?', $url);
+				$urlParams = explode('&', $urlParts[1]);
+				$elementIdParamParts = explode('=',$urlParams[0]);
+				$entryIdParamParts = explode('=',$urlParams[1]);
+				$elementId = $elementIdParamParts[1];
+				$entryId = $entryIdParamParts[1];
+			} else {
+				$metaData = str_replace(XOOPS_URL."/uploads/formulize_", "", $url);
+				$metaData = explode('/', $metaData);
+				$metaDataParts = explode('_',$metaData[0]);
+				$elementId = $metaDataParts[2];
+				$entryId = $metaDataParts[1];
+			}
+			$element_handler = xoops_getmodulehandler('elements', 'formulize');
+			$fid = 0;
+			if($elementObject = $element_handler->get($elementId)) {
+				$fid = $elementObject->getVar('id_form');
+			}
+			return array($entryId, $elementId, $fid);
+		}
 }
 
 /**
@@ -460,21 +558,7 @@ function displayFileImage($entryOrDataset, $elementHandle, $dataSetKey=null, $lo
 	$displayName = "";
 	$url = display($entryOrDataset, $elementHandle, $dataSetKey, $localId);
 	$element_handler = xoops_getmodulehandler('fileUploadElement', 'formulize');
-	// extract the element id and entry id from the url
-	if(strstr($url, XOOPS_URL."/modules/formulize/download.php?element=")) {
-		$urlParts = explode('?', $url);
-		$urlParams = explode('&', $urlParts[1]);
-		$elementIdParamParts = explode('=',$urlParams[0]);
-		$entryIdParamParts = explode('=',$urlParams[1]);
-		$elementId = $elementIdParamParts[1];
-		$entryId = $entryIdParamParts[1];
-	} else {
-		$metaData = str_replace(XOOPS_URL."/uploads/formulize_", "", $url);
-		$metaData = explode('/', $metaData);
-		$metaDataParts = explode('_',$metaData[0]);
-		$elementId = $metaDataParts[2];
-		$entryId = $metaDataParts[1];
-	}
+	list($entryId, $elementId, $fid) = $element_handler->extractEntryIdAndElementIdFromUrl($url);
 	// lookup the name
 	if($elementObject = $element_handler->get($elementId)) {
 		$dataHandler = new formulizeDataHandler($elementObject->getVar('id_form'));
@@ -484,14 +568,14 @@ function displayFileImage($entryOrDataset, $elementHandle, $dataSetKey=null, $lo
 		$displayName = $element_handler->getFileDisplayName($name);
 	}
 	if(fileNameHasImageExtension($displayName)) {
-        return $element_handler->createImageTag($url, $displayName);
+    return $element_handler->createImageTag($url, $displayName);
 	}
-    return $url;
+  return $url;
 }
 
 /**
  * Check if a filename has one of various common image file type extensions.
- * 
+ *
  * @param string $displayName The name of the file
  * @return boolean Return true or false depending if the file has a matching extension. If there is no displayName, return false.
  */
