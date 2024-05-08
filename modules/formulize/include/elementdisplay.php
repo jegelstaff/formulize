@@ -67,6 +67,11 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
 		return "invalid_element";
 	}
 
+	// if rendering an inline element in a list of entries, because the user clicked the edit icon on the element...
+	if(isset($_GET['op']) AND $_GET['op'] == 'get_element_html' AND strstr(getCurrentURL(), 'formulize_xhr_responder.php')) {
+		$element = overrideSeparatorToLineBreak($element);
+	}
+
     $form_id = $element->getVar('id_form');
 
 	$deprefix = $noSave ? "denosave_" : "de_";
@@ -329,6 +334,20 @@ function elementIsAllowedForUserInEntry($elementObject, $entry_id, $groups = arr
 	$allowed = $allowed ? true : false;
 	$isDisabled = $isDisabled ? true : false;
 	return array($allowed, $isDisabled);
+}
+
+/**
+ * If this element has a separator setting (checkbox or radio), set to line break.
+ * @param object $elementObject The element that we are working with
+ * @param object The modified element with the alternate separator setting
+ */
+function overrideSeparatorToLineBreak($elementObject) {
+	$ele_delim = $elementObject->getVar('ele_delim');
+	if($ele_delim AND $ele_delim != 'br') {
+		$ele_delim = 'br';
+		$elementObject->setVar('ele_delim', $ele_delim);
+	}
+	return $elementObject;
 }
 
 /**

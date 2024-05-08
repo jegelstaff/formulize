@@ -139,6 +139,7 @@ switch($op) {
 
   case 'get_element_html':
 		/*
+		Renders elements for display inside lists of entries, because the user clicked the icon
 		the GET param0 through param4 are:
 		1 - handle
 		2 - element_id
