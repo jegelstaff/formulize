@@ -3,7 +3,7 @@ name: Publish PHP Development Docker image
 on:
   push:
     branches:
-      - 'FEATURE/docker-arm-support'
+      - 'master'
     paths:
       - 'docker/php/Dockerfile'
       - '.github/workflows/build-docker-dev-image.yaml'
