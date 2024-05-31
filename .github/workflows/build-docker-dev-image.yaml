@@ -3,9 +3,10 @@ name: Publish PHP Development Docker image
 on:
   push:
     branches:
-      - 'master'
+      - 'FEATURE/docker-arm-support'
     paths:
       - 'docker/php/Dockerfile'
+      - '.github/workflows/build-docker-dev-image.yaml'
 
 jobs:
   deploy-dev-image:
@@ -26,5 +27,6 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./docker/php
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: formulize/php-dev:latest
