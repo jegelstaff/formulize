@@ -285,10 +285,8 @@ function prepvalues($value, $field, $entry_id) {
 	return $valueToReturn;
 }
 
-function microtime_float()
-{
-   list($usec, $sec) = explode(" ", microtime());
-   return ((float)$usec + (float)$sec);
+function microtime_float() {
+   return microtime(true);
 }
 
 function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitStart="", $limitSize="", $sortField="",
@@ -395,7 +393,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 	$sortField = formulize_db_escape($sortField);
 	$sortOrder = formulize_db_escape($sortOrder);
 
-	if(isset($_GET['debug'])) { $time_start = microtime_float(); }
+	if(isset($_GET['debug'])) { $time_start = microtime(true); }
 
 		if($scope == "uid=\"blankscope\"") { return array(); }
 
@@ -2628,7 +2626,7 @@ function formulize_benchmark($text, $dumpLog = false) {
 		 static $elapsedLog = array();
      if(isset($GLOBALS['startPageTime']) AND $xoopsUser) {
           if($xoopsUser->getVar('uid') == 19) {
-               $currentPageTime = microtime_float();
+               $currentPageTime = microtime(true);
 							 if(!$prevPageTime) {
 										$prevPageTime = $currentPageTime;
 							 }

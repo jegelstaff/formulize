@@ -393,7 +393,7 @@ function checkElementConditions($elementFilterSettings, $form_id, $entry) {
 	static $cachedEntries = array();
 	if($entry != "new") {
 		if(!isset($cachedEntries[$form_id][$entry])) {
-			$cachedEntries[$form_id][$entry] = getData("", $form_id, $entry, cacheKey: 'bypass'.microtime_float());
+			$cachedEntries[$form_id][$entry] = getData("", $form_id, $entry, cacheKey: 'bypass'.microtime(true));
 		}
 		$entryData = $cachedEntries[$form_id][$entry];
 	}
