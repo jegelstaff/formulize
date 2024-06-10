@@ -953,6 +953,33 @@ $modversion['config'][] = array(
 	'default' => '0',
 );
 
+$modversion['config'][] = array(
+	'name' => 'useOldCustomButtonEffectWriting',
+	'title' => '_MI_formulize_USEOLDCUSTOMBUTTONEFFECTWRITING',
+	'description' => '_MI_formulize_USEOLDCUSTOMBUTTONEFFECTWRITINGDESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => '0',
+);
+
+$modversion['config'][] = array(
+	'name' => 'formulizeLogFileLocation',
+	'title' => '_MI_formulize_FORMULIZELOGFILELOCATION',
+	'description' => '_MI_formulize_FORMULIZELOGFILELOCATIONDESC',
+	'formtype' => 'textbox',
+	'valuetype' => 'text',
+	'default' => '../formulize_log_files',
+);
+
+$modversion['config'][] = array(
+	'name' => 'formulizeLogFileStorageDuration',
+	'title' => '_MI_formulize_FORMULIZELOGFILESTORAGEDURATION',
+	'description' => '_MI_formulize_FORMULIZELOGFILESTORAGEDURATIONDESC',
+	'formtype' => 'textbox',
+	'valuetype' => 'int',
+	'default' => '168',
+);
+
 $modversion['blocks'][1] = array(
 	'file' => "mymenu.php",
 	'name' => _MI_formulizeMENU_BNAME,
