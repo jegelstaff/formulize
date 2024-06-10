@@ -968,7 +968,7 @@ $modversion['config'][] = array(
 	'description' => '_MI_formulize_FORMULIZELOGFILELOCATIONDESC',
 	'formtype' => 'textbox',
 	'valuetype' => 'text',
-	'default' => '../formulize_log_files',
+	'default' => XOOPS_ROOT_PATH.'/logs',
 );
 
 $modversion['config'][] = array(
