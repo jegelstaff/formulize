@@ -3063,6 +3063,18 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
     }
     $processedNotifications[$fid][$event][$serializedEntries] = true;
 
+		global $xoopsDB, $xoopsUser, $xoopsConfig, $renderedFormulizeScreen;
+
+		foreach($entries as $entry_id) {
+			writeToFormulizeLog(array(
+				'formulize_event'=>str_replace('_','-',$event),
+				'user_id'=>($xoopsUser ? $xoopsUser->getVar('uid') : 0),
+				'form_id'=>$fid,
+				'screen_id'=>(is_object($renderedFormulizeScreen) ? $renderedFormulizeScreen->getVar('sid') : 0),
+				'entry_id'=>$entry_id
+			));
+		}
+
     // 1. Get all conditions attached to this fid for this event
     // 1b. determine what users have view_globalscope on the form, and what groups that the current user is a member of have view_groupscope on the form
     // 2. foreach entry, do the following
@@ -3081,8 +3093,6 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
     // 16. change the modinfo for this event so the custom template/subject is used
     // 17. determine the users subscribed and subscribe the necessary others with a oncethendelete mode
     // 18. trigger the notification
-
-    global $xoopsDB, $xoopsUser, $xoopsConfig;
 
     $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 
@@ -3559,6 +3569,15 @@ function compileNotUsers2($uids_conditions, $uids_complete, $fid, $event, $mid) 
 // turn on the preference in the module to use the cron feature
 function formulize_processNotification($event, $extra_tags, $fid, $uids_to_notify, $mid, $omit_user, $subject="", $template="") {
 
+	writeToFormulizeLog(array(
+		'formulize_event'=>'processing-notification-for-'.str_replace('_','-',$event),
+		'uids_to_notify'=>implode(', ', (array) $uids_to_notify),
+		'formulize_notification_emails_if_uid_is_zero'=>$GLOBALS['formulize_notification_email'],
+		'subject'=>$subject,
+		'template'=>$template,
+		'tags'=>implode(', ', (array) $extra_tags)
+	));
+
 	$config_handler = xoops_gethandler('config');
     $formulizeConfig = $config_handler->getConfigsByCat(0, $mid);
     $notifyByCron = $formulizeConfig['notifyByCron'];
@@ -3932,10 +3951,13 @@ function writeElementValue($formframe, $ele, $entry, $value, $append="replace", 
 }
 
 
-// THIS FUNCTION READS ALL THE FILES IN A DIRECTORY AND DELETES OLD ONES
-// use the filter param to include only files containing a certain string in their names
-// this function deletes old files, older than the $timeWindow specified, in seconds
-// Returns an array of the files it did find
+/**
+ * This function reads all the files in a directory and deletes old ones
+ * @param string $dir The directory to look in
+ * @param string $filter Optional. A string that the filenames must contain. Non-matching files will be excluded. By default all files are included.
+ * @param int $timeWindow Optional. The number of seconds old a file must be to be included. Older files will be deleted. Default is 21600 (6 hours).
+ * @return array An array of the files found
+ **/
 function formulize_scandirAndClean($dir, $filter="", $timeWindow=21600) {
     // filter must be present
     if (!$filter) {
@@ -4358,7 +4380,7 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
     'ele_id' = the id of the element to pay attention to for the limit condition
     'term' = the term used to build the condition
     'operator' = the operator used to build the condition
-    */
+ */
 
     // limits are very similar to subfilters in their effect, but subfilters are meant for situations where one filter influences another filter
     // subfilters are kind of like dynamic limits, where the limit condition is not specified until the parent filter is chosen.
@@ -8075,4 +8097,48 @@ function generateSelfReferenceExclusionSQL($entry_id, $fid, $sourceFid, $ele_val
 		$selfReferenceExclusion = " AND ($tableAlias.entry_id != $entry_id) ";
 	}
 	return $selfReferenceExclusion;
+}
+
+/**
+ * Record information in a log file. One log file per day. Log file location is a Formulize preference. Log file storage duration is a Formulize preference.
+ *
+ * @param array $data Key-Value pairs that should be written to the log entry
+ * @return int|boolean Returns the number of bytes written to the file, or false on failure
+ */
+function writeToFormulizeLog($data) {
+
+	// initialize the configuration settings
+	static $formulizeConfig = false;
+	static $formulizeLogFileLocation = XOOPS_ROOT_PATH.'/logs';
+	static $formulizeLogFileStorageDuration = 168;
+	static $logFilesCleanedUp = false;
+	if(!$formulizeConfig) {
+		$config_handler = xoops_gethandler('config');
+		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+		$formulizeLogFileLocation = $formulizeConfig['formulizeLogFileLocation'];
+		$formulizeLogFileStorageDuration = $formulizeConfig['formulizeLogFileStorageDuration'];
+	}
+
+	// check if log file location is valid
+	if(!$formulizeLogFileLocation OR !is_dir($formulizeLogFileLocation)) { return false; }
+
+	// cleanup old log files (last param requires seconds) -- only once per page load
+	if(!$logFilesCleanedUp) {
+		formulize_scandirAndClean($formulizeLogFileLocation, 'formulize_log_', $formulizeLogFileStorageDuration * 60 * 60);
+		$logFilesCleanedUp = true;
+	}
+
+	// prepend certain metadata to the data we're logging
+	// UNIQUE ID is only available if the server has mod_unique_id turned on
+	$data = array(
+		'microtime' => microtime(true),
+		'request_id' => (isset($_SERVER['UNIQUE_ID']) ? $_SERVER['UNIQUE_ID'] : 'mod_unique_id is not enabled'),
+		'session_id' => session_id()
+		) + $data;
+
+	// write the new log entry (to a new file if necessary, files are named with the current date based on server timezone)
+	// write operation is self contained in file_put_contents and closes the file, so it's available for other concurrent requests to write to after
+	$logFileName = 'formulize_log_'.date('Y-m-d').'.log';
+	return file_put_contents($formulizeLogFileLocation.'/'.$logFileName, json_encode($data, JSON_NUMERIC_CHECK), FILE_APPEND | LOCK_EX);
+
 }

@@ -184,9 +184,11 @@ if (!$loadThisView) {
 }
 
 if ($screen) {
+
+		$renderedFormulizeScreen = $screen;
     // this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
-    $renderedFormulizeScreen = $screen;
+
 
     // validate any passcode for anon users that has been saved in session, or require one from users first before anything else
     if($uid == 0 AND $screen->getVar('anonNeedsPasscode')) {
@@ -213,19 +215,19 @@ if ($screen) {
     }
 
     if($screenAllowedForUser) {
-    if($screen->getVar('type') == "listOfEntries" AND ((isset($_GET['iform']) AND $_GET['iform'] == "e") OR isset($_GET['showform']))) { // form itself specifically requested, so force it to load here instead of a list
-        if($screen->getVar('frid')) {
-            include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
-            displayForm($screen->getVar('frid'), "", $screen->getVar('fid'), "", "{NOBUTTON}");
-        } else {
-            include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
-            displayForm($screen->getVar('fid'), "", "", "", "{NOBUTTON}");
-        }
-    } elseif($screen->getVar('type') == 'calendar') {
-        $screen_handler->render($screen);
-    } else {
-        $screen_handler->render($screen, $entry, $loadThisView);
-    }
+			if($screen->getVar('type') == "listOfEntries" AND ((isset($_GET['iform']) AND $_GET['iform'] == "e") OR isset($_GET['showform']))) { // form itself specifically requested, so force it to load here instead of a list
+					if($screen->getVar('frid')) {
+							include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
+							displayForm($screen->getVar('frid'), "", $screen->getVar('fid'), "", "{NOBUTTON}");
+					} else {
+							include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
+							displayForm($screen->getVar('fid'), "", "", "", "{NOBUTTON}");
+					}
+			} elseif($screen->getVar('type') == 'calendar') {
+					$screen_handler->render($screen);
+			} else {
+					$screen_handler->render($screen, $entry, $loadThisView);
+			}
     } else {
         $_SESSION['formulize_passcodeFailed'] = true;
         print "<p>"._formulize_NO_PERM."</p>";

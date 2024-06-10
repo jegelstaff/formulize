@@ -4078,6 +4078,8 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 // THIS FUNCTION HANDLES GATHERING A DATASET FOR DISPLAY IN THE LIST
 function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fid, $scope, $screen=null, $currentURL="", $forcequery = 0) {
 
+	global $xoopsUser;
+
 	if (!is_array($searches))
 		$searches = array();
 
@@ -4117,6 +4119,19 @@ function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fi
 	  $limitStart = 0;
 	  $limitSize = 0;
 	}
+
+	writeToFormulizeLog(array(
+		'formulize_event'=>'gathering-data-for-list-of-entries',
+		'user_id'=>($xoopsUser ? $xoopsUser->getVar('uid') : 0),
+		'form_id'=>$fid,
+		'screen_id'=>(is_object($screen) ? $screen->getVar('sid') : 0),
+		'searches'=>json_encode($searches, JSON_NUMERIC_CHECK),
+		'sort'=>$sort,
+		'order'=>$order,
+		'scope'=>$scope,
+		'limit_start'=>$limitStart,
+		'page_size'=>$formulize_LOEPageSize
+	));
 
 		$GLOBALS['formulize_getCountForPageNumbers'] = true; // flag used to trigger setting of the count of entries in the dataset
         $GLOBALS['formulize_setBaseQueryForCalcs'] = true; // flag used to trigger setting of the basequery for calculations

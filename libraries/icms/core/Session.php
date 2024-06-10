@@ -225,6 +225,12 @@ class icms_core_Session {
 		} else { // set anon session cookie - necessary for preserving state in LTI systems...some browsers set one by default anyway, but it won't be secure and Samesite=None
       $instance->update_cookie();
     }
+
+		include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
+		writeToFormulizeLog(array(
+			'session_loaded_for_user_id'=>intval($_SESSION['xoopsUserId'])
+		));
+
 		return $instance;
 	}
 

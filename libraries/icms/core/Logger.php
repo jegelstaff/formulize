@@ -178,6 +178,13 @@ class icms_core_Logger {
 	public function handleError($errno, $errstr, $errfile, $errline) {
         if (defined("ICMS_ERROR_LOG_SEVERITY") and $errno <= ICMS_ERROR_LOG_SEVERITY) {
             error_log("icms_core_Logger::handleError($errno, $errstr, $errfile, $errline);");
+						include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
+						writeToFormulizeLog(array(
+							'PHP-error-number' => $errno,
+							'PHP-error-string' => $errstr,
+							'PHP-error-file' => $errfile,
+							'PHP-error-errline' => $errline
+						));
         }
 
 		$errstr = $this->sanitizePath($errstr);
