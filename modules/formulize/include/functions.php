@@ -2632,33 +2632,48 @@ function removeOpeningPHPTag($string) {
 	return $string;
 }
 
-// THIS FUNCTION INTERPRETS A TEXTBOX'S DEFAULT VALUE AND RETURNS THE CORRECT STRING
-// Takes $ele_value[2] as the input (third position in ele_value array from element object)
-// $form_id and $entry_id are passed in so they can be accessible within the eval'd code if necessary
-function getTextboxDefault($ele_value, $form_id, $entry_id, $placeholder="") {
+/**
+ * Interpret the default value for a textbox or textarea, return the actual string we should use
+ * @param mixed $elementIdentifier The id number, handle, or object representing the element we're working with
+ * @param int|string $entry_id The entry id number of the entry that we're working with. Possibly referenced by eval'd code.
+ * @return mixed The default value that should be used for this element
+ */
+function getTextboxDefault($elementIdentifier, $entry_id) {
 
-    if($placeholder) { // default value is placeholder text, not actual default value. only possible for textboxes, not textareas
-        return "";
-    }
+		if(!$elementObject = _getElementObject($elementIdentifier)) {
+			return "";
+		}
+		$ele_value = $elementObject->getVar('ele_value');
+		if($elementObject->getVar('ele_type') == 'text') {
+			// if a textbox default is meant as a placeholder, return no default value
+			if($ele_value[11]) {
+				return "";
+			} else {
+				$defaultValue = $ele_value[2];
+			}
+		} else {
+			$defaultValue = $ele_value[0];
+		}
 
     global $xoopsUser;
+		$form_id = $elementObject->getVar('id_form'); // possibly referenced by eval'd code
 
-    if (strstr($ele_value, "\$default")) { // php default value
-				$ele_value = removeOpeningPHPTag($ele_value);
+    if (strstr($defaultValue, "\$default")) { // php default value
+				$defaultValue = removeOpeningPHPTag($defaultValue);
 			  $default = '';
-        eval(stripslashes($ele_value));
-        $ele_value = $default;
+        eval(stripslashes($defaultValue));
+        $defaultValue = $default;
     }
 
     $foundTerms = array();
     $position = 0;
     $foundBracket = true;
     while ($foundBracket) {
-        $position = strpos($ele_value, "{", $position);
+        $position = strpos($defaultValue, "{", $position);
         if ($position !== false) {
-            $closePos = strpos($ele_value, "}", $position);
+            $closePos = strpos($defaultValue, "}", $position);
             if ($closePos) {
-                $foundTerms[] = substr($ele_value, $position+1, $closePos-$position-1);
+                $foundTerms[] = substr($defaultValue, $position+1, $closePos-$position-1);
             }
             $position++;
         } else {
@@ -2683,7 +2698,7 @@ function getTextboxDefault($ele_value, $form_id, $entry_id, $placeholder="") {
             $replacementValue = "{ID}";
         }
         if (strtolower($thisTerm) == "sequence") {
-            $replacementValue = "{SEQUENCE}";
+					$replacementValue = "{SEQUENCE}";
         }
         if (!$xoopsUser AND !$replacementValue) {
             $replacementValue = "";
@@ -2708,9 +2723,9 @@ function getTextboxDefault($ele_value, $form_id, $entry_id, $placeholder="") {
             }
         }
         if(!$replacementValue) { continue; }
-        $ele_value = str_replace("{".$searchTerm."}", $replacementValue, $ele_value);
+        $defaultValue = str_replace("{".$searchTerm."}", $replacementValue, $defaultValue);
     }
-    return $ele_value;
+    return $defaultValue;
 }
 
 
@@ -7678,10 +7693,8 @@ function getEntryDefaults($target_fid,$target_entry) {
 		$ele_type = $thisDefaultEle->getVar('ele_type');
     switch($ele_type) {
       case "text":
-        $defaultTextToWrite = getTextboxDefault($ele_value_for_default[2], $target_fid, $target_entry, $ele_value_for_default[11]); // position 2 is default value for text boxes
-        break;
       case "textarea":
-        $defaultTextToWrite = getTextboxDefault($ele_value_for_default[0], $target_fid, $target_entry); // position 0 is default value for text boxes
+        $defaultTextToWrite = getTextboxDefault($thisDefaultEle, $target_entry);
         break;
       case "date":
         $defaultTextToWrite = getDateElementDefault($ele_value_for_default[0], $target_entry);

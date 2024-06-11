@@ -1007,7 +1007,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
                         $updateSQL .= ", ";
                     }
                     $start = false;
-                    $fieldValue = $data_handler->formatValueForQuery($elementHandle, trim($fieldValue));
+                    $fieldValue = $data_handler->formatValueForQuery($elementHandle, trim($fieldValue), $this_id_req);
                     $updateSQL .= "`$elementHandle` = $fieldValue";
                 }
                 $updateSQL .= ", mod_datetime=NOW(), mod_uid=$form_proxyid WHERE entry_id=".intval($this_id_req);
@@ -1026,7 +1026,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride) {
                 $element_handler = xoops_getmodulehandler('elements', 'formulize');
                 foreach ($fieldValues as $elementHandle=>$fieldValue) {
                     $fields .= ", `".$elementHandle."`";
-                    $values .= ", ".$data_handler->formatValueForQuery($elementHandle, trim($fieldValue));
+                    $values .= ", ".$data_handler->formatValueForQuery($elementHandle, trim($fieldValue), 'new');
                     $elementObject = $element_handler->get($elementHandle);
                     if ($elementObject->getVar('ele_desc')=="Primary Key") {
                         $newEntryId = $fieldValue;
