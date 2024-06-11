@@ -1064,18 +1064,20 @@ class formulizeDataHandler  {
       $this->updateCaches($entry_to_return);
     } else {
 			$entry_to_return = $xoopsDB->getInsertId();
-			// if we wrote any {ID} values to the DB that should become the entry id number of the record, update them now to match the actual entry_id
-			if($writePrimaryKeyToElements = array_keys($element_values, "{ID}", true)) {
-				$pkSQL = "UPDATE ". $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) .  " SET `".implode("` = entry_id, `", $writePrimaryKeyToElements)."` = entry_id WHERE entry_id = $entry_to_return";
-				if($forceUpdate) {
-					if(!$res = $xoopsDB->queryF($sql)) {
-						exit("Error: could not record entry id value for {ID} requested in element(s) ".implode(", ",$writePrimaryKeyToElements).". This was the query that failed:<br>$pkSQL<br>Query was forced and still failed so the SQL is probably bad.<br>".$xoopsDB->error());
-					}
-				} elseif(!$res = $xoopsDB->query($sql)) {
-					exit("Error: could not record entry id value for {ID} requested in element(s) ".implode(", ",$writePrimaryKeyToElements).". This was the query that failed:<br>$pkSQL<br>".$xoopsDB->error());
+		}
+
+		// if we wrote any {ID} values to the DB that should become the entry id number of the record, update them now to match the actual entry_id
+		if($writePrimaryKeyToElements = array_keys($element_values, "'{ID}'", true)) {
+			$pkSQL = "UPDATE ". $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) .  " SET ".implode(" = entry_id, ", $writePrimaryKeyToElements)." = entry_id WHERE entry_id = $entry_to_return";
+			if($forceUpdate) {
+				if(!$res = $xoopsDB->queryF($pkSQL)) {
+					exit("Error: could not record entry id value for {ID} requested in element(s) ".implode(", ",$writePrimaryKeyToElements).". This was the query that failed:<br>$pkSQL<br>Query was forced and still failed so the SQL is probably bad.<br>".$xoopsDB->error());
 				}
+			} elseif(!$res = $xoopsDB->query($pkSQL)) {
+				exit("Error: could not record entry id value for {ID} requested in element(s) ".implode(", ",$writePrimaryKeyToElements).". This was the query that failed:<br>$pkSQL<br>".$xoopsDB->error());
 			}
 		}
+
 
 		// remove any entry-editing lock that may be in place for this record, since it was just saved successfully...a new lock can now be placed on the entry the next time any element from the form, for this entry, is rendered.
 		if($entry_id != "new") {
@@ -1153,7 +1155,12 @@ class formulizeDataHandler  {
 			if ("{WRITEASNULL}" === $value or null === $value) {
 				return "NULL";
 			} elseif("{SEQUENCE}" === $value) {
-				return "(MAX($field) + 1)";
+				global $xoopsDB;
+				$element_handler = xoops_getmodulehandler('elements','formulize');
+				$form_handler = xoops_getmodulehandler('forms','formulize');
+				$elementObject = $element_handler->get(trim($field, "`"));
+				$formObject = $form_handler->get($elementObject->getVar('id_form'));
+				return "(SELECT CASE WHEN MAX(seqquerytable.$field) > 0 THEN (MAX(seqquerytable.$field) + 1) ELSE 1 END FROM ".$xoopsDB->prefix('formulize_'.$formObject->getVar('form_handle'))." as seqquerytable)";
 			} elseif("{ID}" === $value AND is_numeric($entry_id)) {
 				return intval($entry_id);
 			} else {

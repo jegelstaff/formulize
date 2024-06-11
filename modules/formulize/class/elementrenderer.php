@@ -149,7 +149,7 @@ class formulizeElementRenderer{
 				$ele_value[2] = stripslashes($ele_value[2]);
 //        $ele_value[2] = $myts->displayTarea($ele_value[2]); // commented by jwe 12/14/04 so that info displayed for viewing in a form box does not contain HTML formatting
 
-				$ele_value[2] = getTextboxDefault($this->_ele, $entry_id);
+				$ele_value[2] = interpretTextboxValue($this->_ele, $entry_id, $ele_value[2]);
 
 				//if placeholder value is set
 				if($ele_value[11] AND ($entry_id == 'new' OR $ele_value[2] === "")) { // always go straight to source for placeholder for new entries, or entries where there is no value
@@ -226,7 +226,7 @@ class formulizeElementRenderer{
 			case 'textarea':
 				$ele_value[0] = stripslashes($ele_value[0]);
 //        $ele_value[0] = $myts->displayTarea($ele_value[0]); // commented by jwe 12/14/04 so that info displayed for viewing in a form box does not contain HTML formatting
-				$ele_value[0] = getTextboxDefault($this->_ele, $entry_id);
+				$ele_value[0] = interpretTextboxValue($this->_ele, $entry_id, $ele_value[0]);
 				if (!strstr(getCurrentURL(),"printview.php") AND !$isDisabled) { 				// nmc 2007.03.24 - added
 					if(isset($ele_value['use_rich_text']) AND $ele_value['use_rich_text']) {
 						include_once XOOPS_ROOT_PATH."/class/xoopsform/formeditor.php";

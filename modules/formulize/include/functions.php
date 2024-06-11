@@ -2633,26 +2633,31 @@ function removeOpeningPHPTag($string) {
 }
 
 /**
- * Interpret the default value for a textbox or textarea, return the actual string we should use
+ * Interpret the value for a textbox or textarea, return the actual string we should display
  * @param mixed $elementIdentifier The id number, handle, or object representing the element we're working with
  * @param int|string $entry_id The entry id number of the entry that we're working with. Possibly referenced by eval'd code.
+ * @param mixed Optional. The current value of the element in the entry. More efficient to pass this in if known.
  * @return mixed The default value that should be used for this element
  */
-function getTextboxDefault($elementIdentifier, $entry_id) {
+function interpretTextboxValue($elementIdentifier, $entry_id, $currentValue = null) {
 
 		if(!$elementObject = _getElementObject($elementIdentifier)) {
 			return "";
 		}
 		$ele_value = $elementObject->getVar('ele_value');
-		if($elementObject->getVar('ele_type') == 'text') {
-			// if a textbox default is meant as a placeholder, return no default value
-			if($ele_value[11]) {
-				return "";
+		if($currentValue === null) {
+			if($elementObject->getVar('ele_type') == 'text') {
+				// if a textbox default is meant as a placeholder, return no default value
+				if($ele_value[11]) {
+					return "";
+				} else {
+					$defaultValue = $ele_value[2];
+				}
 			} else {
-				$defaultValue = $ele_value[2];
+				$defaultValue = $ele_value[0];
 			}
 		} else {
-			$defaultValue = $ele_value[0];
+			$defaultValue = $currentValue;
 		}
 
     global $xoopsUser;
@@ -7694,7 +7699,7 @@ function getEntryDefaults($target_fid,$target_entry) {
     switch($ele_type) {
       case "text":
       case "textarea":
-        $defaultTextToWrite = getTextboxDefault($thisDefaultEle, $target_entry);
+        $defaultTextToWrite = interpretTextboxValue($thisDefaultEle, $target_entry);
         break;
       case "date":
         $defaultTextToWrite = getDateElementDefault($ele_value_for_default[0], $target_entry);

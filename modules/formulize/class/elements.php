@@ -190,7 +190,7 @@ class formulizeformulize extends XoopsObject {
                 break;
             case 'text':
             case 'textarea':
-               	$default[] = getTextboxDefault($this, $entry_id);
+               	$default[] = interpretTextboxValue($this, $entry_id);
                 break;
             default: // other element types need to be implemented! And a new method needs to be added to custom classes???
         }
