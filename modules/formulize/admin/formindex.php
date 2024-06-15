@@ -371,6 +371,17 @@ function patch40() {
               ) ENGINE=InnoDB;";
         }
 
+				if (!in_array($xoopsDB->prefix("formulize_rewriterule_addresses"), $existingTables)) {
+            $sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_rewriterule_addresses"). " (
+							`rewrite_address_id` int(11) unsigned NOT NULL auto_increment,
+							`sid` int(11) unsigned NULL DEFAULT NULL,
+							`address` varchar(255) NULL DEFAULT NULL,
+							PRIMARY KEY (`rewrite_address_id`),
+							INDEX i_sid (`sid`),
+							FULLTEXT i_address (`address`)
+						) ENGINE=InnoDB;";
+				}
+
         // if this is a standalone installation, then we want to make sure the session id field in the DB is large enough to store whatever session id we might be working with
         if (file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
             $sql['increase_session_id_size'] = "ALTER TABLE ".$xoopsDB->prefix("session")." CHANGE `sess_id` `sess_id` varchar(60) NOT NULL";
@@ -465,6 +476,7 @@ function patch40() {
         $sql['viewentryscreen_templates'] = "ALTER TABLE ".$xoopsDB->prefix('formulize_screen_template') . " ADD `viewentryscreen` varchar(10) NOT NULL default ''";
 				$sql['ele_disabledconditions'] = "ALTER TABLE ".$xoopsDB->prefix("formulize"). " ADD `ele_disabledconditions` text NOT NULL";
 				$sql['update_module_name'] = "UPDATE ".$xoopsDB->prefix("modules")." SET name = 'Formulize' WHERE dirname = 'formulize' AND name = 'Forms'";
+				$sql['rewriterule_address'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD `rewriterule_address` varchar(255) NULL default NULL";
 				unlink(XOOPS_ROOT_PATH.'/cache/adminmenu_english.php');
 
         $needToSetSaveAndLeave = true;
@@ -583,7 +595,9 @@ function patch40() {
                     print "View entry screen option for template screens already added. result: OK<br>";
 								} elseif($key === "ele_disabledconditions") {
                     print "Disabled conditions already added. result: OK<br>";
-                } else {
+								} elseif($key === "rewriterule_address") {
+										print "RewriteRule address already added. result: OK<br>";
+								} else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
             } elseif($key === "on_delete") {

@@ -1,3 +1,12 @@
+CREATE TABLE `formulize_rewriterule_addresses` (
+	`rewrite_address_id` int(11) unsigned NOT NULL auto_increment,
+	`sid` int(11) unsigned NULL DEFAULT NULL,
+	`address` varchar(255) NULL DEFAULT NULL,
+	PRIMARY KEY (`rewrite_address_id`),
+	INDEX i_sid (`sid`),
+	FULLTEXT i_address (`address`)
+) ENGINE=InnoDB;
+
 CREATE TABLE `tfa_codes` (
   `code_id` int(11) unsigned NOT NULL auto_increment,
   `uid` int(11) unsigned DEFAULT NULL,
@@ -77,7 +86,7 @@ CREATE TABLE `formulize_menu_links` (
     PRIMARY KEY (`menu_id`),
     INDEX i_menus_appid (appid)
 ) ENGINE=InnoDB;
-    
+
 CREATE TABLE `formulize_menu_permissions` (
     `permission_id` int(11) unsigned NOT NULL auto_increment,
     `menu_id` int(11) unsigned NOT NULL,
@@ -114,7 +123,7 @@ CREATE TABLE `formulize_advanced_calculations` (
   `fltr_grptitles` text NOT NULL,
   PRIMARY KEY  (`acid`),
   KEY `i_fid` (`fid`)
-) ENGINE=InnoDB; 
+) ENGINE=InnoDB;
 
 CREATE TABLE `formulize_applications` (
   `appid` int(11) NOT NULL auto_increment,
@@ -165,9 +174,9 @@ CREATE TABLE `formulize_screen_listofentries` (
   `useaddmultiple` varchar(255) NOT NULL default '',
   `useaddproxy` varchar(255) NOT NULL default '',
   `usecurrentviewlist` varchar(255) NOT NULL default '',
-  `limitviews` text NOT NULL, 
+  `limitviews` text NOT NULL,
   `defaultview` text NOT NULL,
-  `advanceview` text NOT NULL, 
+  `advanceview` text NOT NULL,
   `usechangecols` varchar(255) NOT NULL default '',
   `usecalcs` varchar(255) NOT NULL default '',
   `useadvcalcs` varchar(255) NOT NULL default '',
@@ -184,8 +193,8 @@ CREATE TABLE `formulize_screen_listofentries` (
   `usesave` varchar(255) NOT NULL default '',
   `usedeleteview` varchar(255) NOT NULL default '',
   `useheadings` tinyint(1) NOT NULL,
-  `usesearch` tinyint(1) NOT NULL, 
-  `usecheckboxes` tinyint(1) NOT NULL, 
+  `usesearch` tinyint(1) NOT NULL,
+  `usecheckboxes` tinyint(1) NOT NULL,
   `useviewentrylinks` tinyint(1) NOT NULL,
   `usescrollbox` tinyint(1) NOT NULL,
   `usesearchcalcmsgs` tinyint(1) NOT NULL,
@@ -195,7 +204,7 @@ CREATE TABLE `formulize_screen_listofentries` (
   `desavetext` varchar(255) NOT NULL default '',
   `columnwidth` int(1) NOT NULL,
   `textwidth` int(1) NOT NULL,
-  `customactions` text NOT NULL, 
+  `customactions` text NOT NULL,
   `entriesperpage` int(1) NOT NULL,
   `viewentryscreen` varchar(10) NOT NULL DEFAULT '',
   `fundamental_filters` text NOT NULL,
@@ -260,6 +269,7 @@ CREATE TABLE `formulize_screen` (
   `useToken` tinyint(1) NOT NULL,
   `anonNeedsPasscode` tinyint(1) NOT NULL,
   `theme` varchar(101) NOT NULL default '',
+	`rewriterule_address` varchar(255) NULL default NULL
   PRIMARY KEY  (`sid`)
 ) ENGINE=InnoDB;
 
@@ -403,7 +413,7 @@ CREATE TABLE formulize (
   ele_private tinyint(1) NOT NULL default '0',
   ele_use_default_when_blank tinyint(1) NOT NULL default '0',
   ele_exportoptions text NOT NULL,
-  PRIMARY KEY  (`ele_id`),  
+  PRIMARY KEY  (`ele_id`),
   KEY `ele_order` (`ele_order`),
   KEY `ele_display` ( `ele_display` ( 255 ) )
 ) ENGINE=InnoDB;

@@ -8176,3 +8176,25 @@ function writeToFormulizeLog($data) {
 	}
 	return file_put_contents($activeLogFile, json_encode($data, JSON_NUMERIC_CHECK)."\n", FILE_APPEND | LOCK_EX);
 }
+
+/**
+ * Check for a write rule value having been passed to the url, and if found then update $_GET and the $_SERVER['REQUEST_URI'] to match
+ */
+function formulize_handleHtaccessRewriteRule() {
+	if(count($_GET) == 1 AND isset($_GET['formulizeRewriteRuleAddress'])) {
+		global $xoopsDB;
+		$sql = 'SELECT sid FROM '.$xoopsDB->prefix('formulize_rewriterule_addresses').' WHERE address = "'.formulize_db_escape($_GET['formulizeRewriteRuleAddress']).'" LIMIT 0,1';
+		if($res = $xoopsDB->query($sql)) {
+			if($row = $xoopsDB->fetchRow($res)) {
+				if($row[0]) {
+					unset($_GET['formulizeRewriteRuleAddress']);
+					unset($_REQUEST['formulizeRewriteRuleAddress']);
+					$_GET['sid'] = $row[0];
+					$_REQUEST['sid'] = $row[0];
+					$_SERVER['REQUEST_URI'] = "index.php?sid=".$row[0];
+					$_SERVER['QUERY_STRING'] = "sid=".$row[0];
+				}
+			}
+		}
+	}
+}
