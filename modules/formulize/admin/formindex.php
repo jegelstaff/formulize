@@ -83,8 +83,8 @@ function patch40() {
      *
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
-    $checkThisTable = 'formulize_screen_template';
-		$checkThisField = 'viewentryscreen';
+    $checkThisTable = 'formulize_rewriterule_addresses';
+		$checkThisField = '';
 		$checkThisProperty = '';
 		$checkPropertyForValue = '';
 
