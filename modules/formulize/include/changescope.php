@@ -34,7 +34,7 @@
 
 // 1. draw box of available groups
 // 2. send selection back to parent window (after building string to do so, commas at beginning and end and in between group ids)
-// 3. 
+// 3.
 
 function scopeJavascript() {
 ?>
@@ -64,7 +64,7 @@ function updateScope(formObj) {
 		alert("<?php print _formulize_DE_NOGROUPSPICKED; ?>");
 	}
 
-	
+
 }
 -->
 </script>
@@ -98,7 +98,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 	$gperm_handler = &xoops_gethandler('groupperm');
 	$member_handler =& xoops_gethandler('member');
 	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
-	$uid = $xoopsUser->getVar('uid');
+	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 	$curscope = $_GET['scope'];
 
 	if(!$scheck = security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler)) {
@@ -165,7 +165,7 @@ $themecss = xoops_getcss();
 print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$themecss\" />\n";
 
 print "</head>\n";
-print "<body style=\"background: white; margin-top:20px;\"><center>"; 
+print "<body style=\"background: white; margin-top:20px;\"><center>";
 print "<table style=\"width: 100%;\"><tr><td style=\"width: 5%;\"></td><td style=\"width: 90%;\">";
 $advscope = new xoopsThemeForm(_formulize_DE_PICKASCOPE, 'advscope', XOOPS_URL."/modules/formulize/include/advscope.php?fid=$fid&frid=$frid");
 
