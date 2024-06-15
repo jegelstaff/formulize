@@ -47,7 +47,7 @@ class formulizeScreen extends xoopsObject {
 		$this->initVar('useToken', XOBJ_DTYPE_INT);
     $this->initVar('anonNeedsPasscode', XOBJ_DTYPE_INT);
     $this->initVar('theme', XOBJ_DTYPE_TXTBOX, '', true, 100);
-		$this->initVar('rewriteruleAddress', XOBJ_DTYPE_TXTBOX, '', true, 255);
+		$this->initVar('rewriteruleAddress', XOBJ_DTYPE_TXTBOX, '', false, 255);
 	}
 
     static function normalize_values($key, $value) {
