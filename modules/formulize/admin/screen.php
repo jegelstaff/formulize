@@ -490,8 +490,8 @@ if ($screen_id != "new" && $settings['type'] == 'form') {
 
 if ($screen_id != "new" && $settings['type'] == 'template') {
     $screen = $screen_handler->get($screen_id);
-    $templates['custom_code'] = $screen_handler->getCustomCode($screen, $screen->getVar('theme')); // admin UI so load based on current theme set in the admin UI for this screen
-    $templates['template'] = $screen_handler->getTemplateHtml($screen, $screen->getVar('theme')); // admin UI so load based on current theme set in the admin UI for this screen
+    $templates['custom_code'] = str_replace("&", "&amp;", $screen_handler->getCustomCode($screen, $screen->getVar('theme'))); // admin UI so load based on current theme set in the admin UI for this screen
+    $templates['template'] = str_replace("&", "&amp;", $screen_handler->getTemplateHtml($screen, $screen->getVar('theme'))); // admin UI so load based on current theme set in the admin UI for this screen
     $templates['donedest'] = $screen->getVar('donedest');
     $templates['savebuttontext'] = $screen->getVar('savebuttontext');
     $templates['donebuttontext'] = $screen->getVar('donebuttontext');
