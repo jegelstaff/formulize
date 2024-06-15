@@ -476,7 +476,7 @@ function patch40() {
         $sql['viewentryscreen_templates'] = "ALTER TABLE ".$xoopsDB->prefix('formulize_screen_template') . " ADD `viewentryscreen` varchar(10) NOT NULL default ''";
 				$sql['ele_disabledconditions'] = "ALTER TABLE ".$xoopsDB->prefix("formulize"). " ADD `ele_disabledconditions` text NOT NULL";
 				$sql['update_module_name'] = "UPDATE ".$xoopsDB->prefix("modules")." SET name = 'Formulize' WHERE dirname = 'formulize' AND name = 'Forms'";
-				$sql['rewriterule_address'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD `rewriterule_address` varchar(255) NULL default NULL";
+				$sql['rewriteruleAddress'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD `rewriteruleAddress` varchar(255) NULL default NULL";
 				unlink(XOOPS_ROOT_PATH.'/cache/adminmenu_english.php');
 
         $needToSetSaveAndLeave = true;
@@ -595,7 +595,7 @@ function patch40() {
                     print "View entry screen option for template screens already added. result: OK<br>";
 								} elseif($key === "ele_disabledconditions") {
                     print "Disabled conditions already added. result: OK<br>";
-								} elseif($key === "rewriterule_address") {
+								} elseif($key === "rewriteruleAddress") {
 										print "RewriteRule address already added. result: OK<br>";
 								} else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
