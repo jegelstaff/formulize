@@ -70,7 +70,7 @@ global $xoopsConfig;
 
 if($isNew) {
   $screen = $screen_handler->create();
-  $screen->setVar('theme', $xoopsConfig['theme_set']);  
+  $screen->setVar('theme', $xoopsConfig['theme_set']);
   if($screens['type'] == 'multiPage') {
     $screen_handler->setDefaultFormScreenVars($screen, $screens['title'], $fid, $screens['title']);
   } else if($screens['type'] == 'listOfEntries') {
@@ -97,11 +97,12 @@ if($isNew) {
   $screen = $screen_handler->get($sid);
 }
 
-$screen->setVar('title',$screens['title']);  
+$screen->setVar('title',$screens['title']);
 $screen->setVar('fid',$fid);
 $screen->setVar('type',$screens['type']);
 $screen->setVar('useToken',$screens['useToken']);
 $screen->setVar('anonNeedsPasscode',$screens['anonNeedsPasscode']);
+$screen->setVar('rewriteruleAddress',$screens['rewriteruleAddress']);
 
 if(!$sid = $screen_handler->insert($screen)) {
   print "Error: could not save the screen properly: ".$xoopsDB->error();
@@ -130,7 +131,7 @@ if($_POST['make_new_passcode']) {
 
 
 if($isNew) {
-  
+
   // write out the necessary templates...
   if($screens['type'] == "multiPage") {
     $screen_handler->writeTemplateToFile("", 'toptemplate', $screen);
