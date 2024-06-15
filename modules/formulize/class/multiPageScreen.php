@@ -326,6 +326,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
         $defaultFormScreen->setVar('displaycolumns', 2);
         $defaultFormScreen->setVar('column1width', '20%');
         $defaultFormScreen->setVar('column2width', 'auto');
+				$defaultFormScreen->setVar('anonNeedsPasscode', 1);
     }
 
 }
