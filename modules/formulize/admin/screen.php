@@ -68,6 +68,7 @@ if ($screen_id == "new") {
     $settings['frid'] = $screen->getVar('frid');
     $settings['useToken'] = $screen->getVar('useToken');
     $settings['anonNeedsPasscode'] = $screen->getVar('anonNeedsPasscode');
+		$settings['rewriteruleAddress'] = $screen->getVar('rewriteruleAddress');
 
     if ($settings['type'] == 'listOfEntries') {
         $screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
@@ -128,7 +129,7 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $templates['openlisttemplate'] = str_replace("&", "&amp;", $screen->getTemplate('openlisttemplate', $screen->getVar('theme')));
   $templates['closelisttemplate'] = str_replace("&", "&amp;", $screen->getTemplate('closelisttemplate', $screen->getVar('theme')));
   $templates['usingTemplates'] = ($templates['toptemplate'] OR $templates['bottomtemplate'] OR $templates['listtemplate'] OR $templates['openlisttemplate'] OR $templates['closelisttemplate']);
-  
+
   // view data
   // gather all the available views
   // setup an option list of all views, as well as one just for the currently selected Framework setting
@@ -164,11 +165,11 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   unset($limitViewOptions['blank']);
   // get the available screens
   $viewentryscreenOptions = generateViewEntryScreenOptions($selectedFramework, $form_id);
-  
+
     $screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
     $screen = $screen_handler->get($screen_id);
     $adv = $screen->getVar('advanceview');
-    
+
     $advanceViewSelected = array();
     $index = 0;
     foreach($adv as $id=>$arr) {
@@ -178,8 +179,8 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
         $advanceViewSelected[$index]["searchtype"] = $arr[3];
         $index++;
     }
-  
-  // included file sets up $elementOptions and other variables relied upon below  
+
+  // included file sets up $elementOptions and other variables relied upon below
   include XOOPS_ROOT_PATH.'/modules/formulize/admin/generateTemplateElementHandleHelp.php';
   $templates['listtemplatehelp'] = $listTemplateHelp;
 
@@ -206,7 +207,7 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $entries['viewentryscreenoptions'] = $viewentryscreenOptions;
   $entries['viewentryscreen'] = $screen->getVar('viewentryscreen');
   $entries['frid'] = $settings['frid'];
-  
+
   // add fundamental filter conditions... cannot have _ in the DOM element name (second param)
   $entries['fundamentalfilters'] = formulize_createFilterUI($screen->getVar('fundamental_filters'), "fundamentalfilters", $screen->getVar('fid'), "form-3", $screen->getVar('frid'));
 
@@ -382,11 +383,11 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
     $templates['elementcontainero'] = str_replace("&", "&amp;", $screen->getTemplate('elementcontainero', $screen->getVar('theme')));
     $templates['elementcontainerc'] = str_replace("&", "&amp;", $screen->getTemplate('elementcontainerc', $screen->getVar('theme')));
     $templates['usingTemplates'] = ($templates['toptemplate'] OR $templates['bottomtemplate'] OR $templates['elementtemplate1'] OR $templates['elementtemplate2'] OR $templates['elementcontainero'] OR $templates['elementcontainerc']);
-    
+
     // pages data
     $multipagePages = array();
     $multipagePages['pages'] = $pages;
-    
+
     $element_list = multiPageScreen_addToOptionsList($form_id, array());
     $frid = $screen->getVar("frid");
     if ($frid) {
@@ -401,12 +402,12 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
     }
     $multipageOptions['element_list'] = $element_list;
     $multipageOptions['elementdefaults'] = $screen->getVar('elementdefaults');
-    
-    
+
+
 }
 
 if ($screen_id != "new" && $settings['type'] == 'form') {
-    
+
     if (!function_exists("multiPageScreen_addToOptionsList")) {
         function multiPageScreen_addToOptionsList($form_id, $options) {
             $formObject = new formulizeForm($form_id, true); // true causes all elements, even ones now shown to any user, to be included
@@ -447,7 +448,7 @@ if ($screen_id != "new" && $settings['type'] == 'form') {
     $options['formelements'] = $screen->getVar('formelements');
     $options['elementdefaults'] = $screen->getVar('elementdefaults');
     $options['element_list'] = $element_list;
-    
+
     $containerOptions = array(
         'inline',
         'block',
@@ -474,10 +475,10 @@ if ($screen_id != "new" && $settings['type'] == 'form') {
         'inherit'
     );
     $templates['displayOptions'] = array_combine(array_values($containerOptions), $containerOptions);
-    
+
     $templates['displayType'] = $screen->getVar('displayType');
     $templates['displayType'] = $templates['displayType'] ? $templates['displayType'] : 'block';
-    
+
     $templates['toptemplate'] =  str_replace("&", "&amp;", $screen->getTemplate('toptemplate', $screen->getVar('theme')));
     $templates['bottomtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('bottomtemplate', $screen->getVar('theme')));
     $templates['elementtemplate1'] = str_replace("&", "&amp;", $screen->getTemplate('elementtemplate1', $screen->getVar('theme')));
@@ -497,7 +498,7 @@ if ($screen_id != "new" && $settings['type'] == 'template') {
     $templates['donebuttontext'] = $screen->getVar('donebuttontext');
     $templates['viewentryscreen'] = $screen->getVar('viewentryscreen');
     $templates['viewentryscreenoptions'] = generateViewEntryScreenOptions($screen->getVar('frid'), $screen->getVar('fid'));
-    
+
 }
 
 if ($screen_id != "new" && $settings['type'] == 'calendar') {
@@ -537,7 +538,7 @@ $themeFolder = $screen ? $screen->getVar('theme') : $xoopsConfig['theme_set'];
 $themeDefaultPath = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$themeFolder."/default/".$settings['type']."/";
 $templates['seedtemplates'] = $themeDefaultPath;
 if(!file_exists($themeDefaultPath)) {
-    $templates['seedtemplates'] = str_replace($themeFolder.'/default', 'default', $themeDefaultPath);    
+    $templates['seedtemplates'] = str_replace($themeFolder.'/default', 'default', $themeDefaultPath);
 }
 
 // common values should be assigned to all tabs
@@ -583,7 +584,7 @@ if ($screen_id != "new" && $settings['type'] == 'form') {
         'template'  => "db:admin/screen_form_templates.html",
         'content'   => $templates + $common
     );
-    
+
 }
 
 if ($screen_id != "new" && $settings['type'] == 'multiPage') {
@@ -664,7 +665,7 @@ if ($screen_id != "new" && $settings['type'] == 'calendar') {
         'template'  => "db:admin/screen_calendar_data.html",
         'content'   => $data + $common
     );
-    
+
     $adminPage['tabs'][] = array(
         'name'      => _AM_CAL_SCREEN_TEMPLATES,
         'template'  => "db:admin/screen_calendar_templates.html",
@@ -689,10 +690,10 @@ $breadcrumbtrail[4]['text'] = $screenName;
 // gather the available screens for the specified form and all the others in the relationship
 // for use when selecting the view entry screen for list and template screens
 function generateViewEntryScreenOptions($relationship_id, $form_id) {
-    
+
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObj = $form_handler->get($form_id);
-    
+
     $screen_handler = xoops_getmodulehandler('screen', 'formulize');
     $criteria_object = new CriteriaCompo(new Criteria('type','multiPage'));
     $criteria_object->add(new Criteria('type','form'), 'OR');
@@ -702,10 +703,10 @@ function generateViewEntryScreenOptions($relationship_id, $form_id) {
     foreach($viewentryscreenOptionsDB as $thisViewEntryScreenOption) {
         $viewentryscreenOptions[$thisViewEntryScreenOption->getVar('sid')] = trans($formObj->getVar('title'))." &mdash; ".printSmart(trans($thisViewEntryScreenOption->getVar('title')), 100);
     }
-    
+
     $relationshipHandler = xoops_getmodulehandler('frameworks', 'formulize');
     $relationships = $relationshipHandler->getFrameworksByForm($form_id);
-    
+
     // if a relationship is in effect, get the screens on the other forms
     if($relationship_id) {
         $parsedFids = array($form_id=>$form_id);
@@ -726,6 +727,6 @@ function generateViewEntryScreenOptions($relationship_id, $form_id) {
             }
         }
     }
-    
+
     return $viewentryscreenOptions;
 }
