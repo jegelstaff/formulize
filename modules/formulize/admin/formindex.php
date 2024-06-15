@@ -1249,7 +1249,7 @@ function patch40() {
         }
 
 				// check for ele_forcehidden elements, and flag them to the user
-				$sql = "SELECT f.desc_form, e.ele_caption, e.ele_colhead FROM ".$xoopsDB->prefix("formulize")." AS e LEFT JOIN ".$xoopsDB->prefix("formulize_id")." AS f ON f.id_form = e.id_form WHERE e.ele_forcehidden = 1 ORDER BY f.desc_form, e.ele_colhead, e.ele_caption";
+				$sql = "SELECT f.desc_form, e.ele_caption, e.ele_colhead FROM ".$xoopsDB->prefix("formulize")." AS e LEFT JOIN ".$xoopsDB->prefix("formulize_id")." AS f ON f.id_form = e.id_form WHERE e.ele_forcehidden = 1 AND e.ele_type != 'anonPasscode' ORDER BY f.desc_form, e.ele_colhead, e.ele_caption";
 				$res = $xoopsDB->query($sql);
 				$forceHiddenElements = "";
 				$formTitle = "";

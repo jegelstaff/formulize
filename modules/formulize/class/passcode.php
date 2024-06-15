@@ -71,11 +71,11 @@ class formulizePassCodeHandler {
 	}
 
     function generatePasscode() {
-        
+
         if(!function_exists('bcadd')) {
             return '';
         }
-        
+
         require XOOPS_ROOT_PATH.'/modules/formulize/libraries/GenPhrase/Loader.php';
         $loader = new GenPhrase\Loader();
         $loader->register();
@@ -83,7 +83,7 @@ class formulizePassCodeHandler {
         // Generate a passphrase using english words and (at least) 50 bits of entropy.
         return $gen->generate();
     }
-    
+
     function validatePasscode($code, $sid) {
         global $xoopsDB;
         $code = formulize_db_escape($code);
@@ -100,27 +100,27 @@ class formulizePassCodeHandler {
             return false;
         }
     }
-    
+
     function cleanupExpiredPasscodes() {
         global $xoopsDB;
         $date = date('Y-m-d');
         $sql = 'DELETE FROM '.$xoopsDB->prefix('formulize_passcodes').' WHERE expiry <= "'.$date.'" AND expiry IS NOT NULL';
         $xoopsDB->queryF($sql);
     }
-    
+
 	function getOtherScreenPasscodes($sid) {
         return self::getPasscodes($sid, '!=');
     }
-    
+
     function getThisScreenPasscodes($sid) {
         return self::getPasscodes($sid, '=');
     }
-    
+
     // returns an array of passcodes matching what is passed. In each array/passcode, the fields are keyed as - passcode, notes, expiry, id
     function getPasscode($passcode) {
         return self::getPasscodes(0,"",$passcode);
     }
-    
+
     function getPasscodes($sid=0, $op="",$passcode="") {
         global $xoopsDB;
         $screenWhere = '';
@@ -145,17 +145,17 @@ class formulizePassCodeHandler {
         }
         return $passcodes;
 	}
-	
+
     function copyPasscodeToScreen($id, $sid) {
         global $xoopsDB;
         $id = intval($id);
         $sid = intval($sid);
-        $sql = 'SELECT passcode, notes, expiry FROM '.$xoopsDB->prefix('formulize_passcodes').' WHERE passcode_id = '.$id;        
+        $sql = 'SELECT passcode, notes, expiry FROM '.$xoopsDB->prefix('formulize_passcodes').' WHERE passcode_id = '.$id;
         $res = $xoopsDB->query($sql);
         $data = $xoopsDB->fetchArray($res);
         return self::insert($data['passcode'], $data['notes'], $sid, $data['expiry']);
     }
-    
+
 	function insert($code, $notes, $sid, $expiry='') {
         global $xoopsDB;
         $sid = intval($sid);
@@ -170,7 +170,7 @@ class formulizePassCodeHandler {
         self::createPasscodeElement($sid);
         return true;
 	}
-    
+
     function updatePasscode($oldCode, $newCode, $sid) {
         global $xoopsDB;
         $sid = intval($sid);
@@ -183,7 +183,7 @@ class formulizePassCodeHandler {
         }
         return true;
     }
-    
+
 
     // add a system level passcode element to the form visible to registered users, if one does not exist already
     function createPasscodeElement($sid) {
@@ -209,14 +209,14 @@ class formulizePassCodeHandler {
         $element->setVar('ele_encrypt', 0);
         $element->setVar('ele_handle', 'anon_passcode_'.$fid);
         $element->setVar('ele_caption', 'Anonymous User Passcode');
-        $element->setVar('ele_forcehidden', 1);
+        $element->setVar('ele_forcehidden', 0);
         $elementId = $element_handler->insert($element);
         // pass id so element object gets recreated inside other method, and then it will pick up all the properties from the custom class
         if(!$insertResult = $form_handler->insertElementField($elementId, $element->overrideDataType)) {
 			exit("Error: could not add the new element to the data table in the database.");
 		}
     }
-    
+
     function updateExpiry($id, $expiry) {
         global $xoopsDB;
         $id = intval($id);
@@ -228,7 +228,7 @@ class formulizePassCodeHandler {
         }
         return true;
     }
-    
+
 	function delete($id) {
         global $xoopsDB;
         $id = intval($id);
@@ -239,5 +239,5 @@ class formulizePassCodeHandler {
 		}
 		return true;
 	}
-    
+
 }
