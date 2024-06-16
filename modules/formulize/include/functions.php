@@ -8205,7 +8205,7 @@ function formulize_handleHtaccessRewriteRule() {
 					}
 					$_GET['sid'] = $sid;
 					$_REQUEST['sid'] = $sid;
-					$_SERVER['REQUEST_URI'] = "index.php?$queryString";
+					$_SERVER['REQUEST_URI'] = "/modules/formulize/index.php?$queryString";
 					$_SERVER['QUERY_STRING'] = $queryString;
 				}
 			}
