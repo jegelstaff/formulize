@@ -83,8 +83,8 @@ function patch40() {
      *
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
-    $checkThisTable = 'formulize_rewriterule_addresses';
-		$checkThisField = '';
+    $checkThisTable = 'formulize_screen';
+		$checkThisField = 'rewriteruleAddress';
 		$checkThisProperty = '';
 		$checkPropertyForValue = '';
 
@@ -371,17 +371,6 @@ function patch40() {
               ) ENGINE=InnoDB;";
         }
 
-				if (!in_array($xoopsDB->prefix("formulize_rewriterule_addresses"), $existingTables)) {
-            $sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_rewriterule_addresses"). " (
-							`rewrite_address_id` int(11) unsigned NOT NULL auto_increment,
-							`sid` int(11) unsigned NULL DEFAULT NULL,
-							`address` varchar(255) NULL DEFAULT NULL,
-							PRIMARY KEY (`rewrite_address_id`),
-							INDEX i_sid (`sid`),
-							FULLTEXT i_address (`address`)
-						) ENGINE=InnoDB;";
-				}
-
         // if this is a standalone installation, then we want to make sure the session id field in the DB is large enough to store whatever session id we might be working with
         if (file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
             $sql['increase_session_id_size'] = "ALTER TABLE ".$xoopsDB->prefix("session")." CHANGE `sess_id` `sess_id` varchar(60) NOT NULL";
@@ -477,6 +466,9 @@ function patch40() {
 				$sql['ele_disabledconditions'] = "ALTER TABLE ".$xoopsDB->prefix("formulize"). " ADD `ele_disabledconditions` text NOT NULL";
 				$sql['update_module_name'] = "UPDATE ".$xoopsDB->prefix("modules")." SET name = 'Formulize' WHERE dirname = 'formulize' AND name = 'Forms'";
 				$sql['rewriteruleAddress'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD `rewriteruleAddress` varchar(255) NULL default NULL";
+				$sql['screenTableIndex1'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD FULLTEXT i_rewrite (`rewriteruleAddress`)";
+				$sql['screenTableIndex2'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD INDEX i_fid (`fid`)";
+				$sql['screenTableIndex3'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD INDEX i_frid (`frid`)";
 				unlink(XOOPS_ROOT_PATH.'/cache/adminmenu_english.php');
 
         $needToSetSaveAndLeave = true;
@@ -597,7 +589,9 @@ function patch40() {
                     print "Disabled conditions already added. result: OK<br>";
 								} elseif($key === "rewriteruleAddress") {
 										print "RewriteRule address already added. result: OK<br>";
-								} else {
+								} elseif(strstr($key, 'screenTableIndex')) {
+										print "Screen table index already added. result: OK<br>";
+								}else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
             } elseif($key === "on_delete") {

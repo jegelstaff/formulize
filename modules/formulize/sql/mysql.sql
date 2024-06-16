@@ -1,12 +1,3 @@
-CREATE TABLE `formulize_rewriterule_addresses` (
-	`rewrite_address_id` int(11) unsigned NOT NULL auto_increment,
-	`sid` int(11) unsigned NULL DEFAULT NULL,
-	`address` varchar(255) NULL DEFAULT NULL,
-	PRIMARY KEY (`rewrite_address_id`),
-	INDEX i_sid (`sid`),
-	FULLTEXT i_address (`address`)
-) ENGINE=InnoDB;
-
 CREATE TABLE `tfa_codes` (
   `code_id` int(11) unsigned NOT NULL auto_increment,
   `uid` int(11) unsigned DEFAULT NULL,
@@ -269,8 +260,12 @@ CREATE TABLE `formulize_screen` (
   `useToken` tinyint(1) NOT NULL,
   `anonNeedsPasscode` tinyint(1) NOT NULL,
   `theme` varchar(101) NOT NULL default '',
-	`rewriterule_address` varchar(255) NULL default NULL
+	`rewriteruleAddress` varchar(255) NULL default NULL,
+	FULLTEXT i_rewrite (`rewriteruleAddress`),
+	INDEX i_fid (`fid`),
+	INDEX i_frid (`frid`),
   PRIMARY KEY  (`sid`)
+
 ) ENGINE=InnoDB;
 
 CREATE TABLE formulize_valid_imports (

@@ -8181,20 +8181,36 @@ function writeToFormulizeLog($data) {
  * Check for a write rule value having been passed to the url, and if found then update $_GET and the $_SERVER['REQUEST_URI'] to match
  */
 function formulize_handleHtaccessRewriteRule() {
-	if(count($_GET) == 1 AND isset($_GET['formulizeRewriteRuleAddress'])) {
+	if(isset($_GET['formulizeRewriteRuleAddress']) AND $_GET['formulizeRewriteRuleAddress']) {
 		global $xoopsDB;
-		$sql = 'SELECT sid FROM '.$xoopsDB->prefix('formulize_rewriterule_addresses').' WHERE address = "'.formulize_db_escape($_GET['formulizeRewriteRuleAddress']).'" LIMIT 0,1';
+		$sql = 'SELECT sid FROM '.$xoopsDB->prefix('formulize_screen').' WHERE MATCH(address) AGAINST("'.formulize_db_escape($_GET['formulizeRewriteRuleAddress']).'") LIMIT 0,1';
+		$addressFound = false;
 		if($res = $xoopsDB->query($sql)) {
 			if($row = $xoopsDB->fetchRow($res)) {
 				if($row[0]) {
-					unset($_GET['formulizeRewriteRuleAddress']);
-					unset($_REQUEST['formulizeRewriteRuleAddress']);
-					$_GET['sid'] = $row[0];
-					$_REQUEST['sid'] = $row[0];
-					$_SERVER['REQUEST_URI'] = "index.php?sid=".$row[0];
-					$_SERVER['QUERY_STRING'] = "sid=".$row[0];
+					$addressFound = true;
+					$ve = intval($_GET['ve']);
+					$sid = $row[0];
+					foreach($_GET as $k=>$v) {
+						unset($_REQUEST[$k]);
+						unset($_GET[$k]);
+					}
+					$queryString = "sid=$sid";
+					if($ve) {
+						$queryString .= $ve ? "&ve=$ve" : "";
+						$_GET['ve'] = $ve;
+						$_REQUEST['ve'] = $ve;
+					}
+					$_GET['sid'] = $sid;
+					$_REQUEST['sid'] = $sid;
+					$_SERVER['REQUEST_URI'] = "index.php?$queryString";
+					$_SERVER['QUERY_STRING'] = $queryString;
 				}
 			}
+		}
+		if(!$addressFound) {
+			http_response_code(404);
+			exit();
 		}
 	}
 }
