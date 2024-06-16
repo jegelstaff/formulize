@@ -50,7 +50,6 @@ include_once XOOPS_ROOT_PATH . '/modules/formulize/include/extract.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/customCodeForApplications.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/usersGroupsPerms.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/data.php';
-
 //Add the language constants
 global $xoopsConfig;
 if (file_exists(XOOPS_ROOT_PATH . "/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
@@ -60,3 +59,5 @@ if (file_exists(XOOPS_ROOT_PATH . "/modules/formulize/language/".$xoopsConfig['l
     include_once XOOPS_ROOT_PATH . "/modules/formulize/language/english/main.php";
     include_once XOOPS_ROOT_PATH . "/modules/formulize/language/english/admin.php";
 }
+
+formulize_handleHtaccessRewriteRule();

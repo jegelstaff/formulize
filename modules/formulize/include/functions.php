@@ -8183,13 +8183,15 @@ function writeToFormulizeLog($data) {
 function formulize_handleHtaccessRewriteRule() {
 	if(isset($_GET['formulizeRewriteRuleAddress']) AND $_GET['formulizeRewriteRuleAddress']) {
 		global $xoopsDB;
-		$sql = 'SELECT sid FROM '.$xoopsDB->prefix('formulize_screen').' WHERE MATCH(address) AGAINST("'.formulize_db_escape($_GET['formulizeRewriteRuleAddress']).'") LIMIT 0,1';
+		$addressData = explode('/', trim($_GET['formulizeRewriteRuleAddress'], '/'));
+		$address = $addressData[0];
+		$ve = isset($addressData[1]) ? $addressData[1] : null;
+		$sql = 'SELECT sid FROM '.$xoopsDB->prefix('formulize_screen').' WHERE MATCH(`rewriteruleAddress`) AGAINST("'.formulize_db_escape($address).'") LIMIT 0,1';
 		$addressFound = false;
 		if($res = $xoopsDB->query($sql)) {
 			if($row = $xoopsDB->fetchRow($res)) {
 				if($row[0]) {
 					$addressFound = true;
-					$ve = intval($_GET['ve']);
 					$sid = $row[0];
 					foreach($_GET as $k=>$v) {
 						unset($_REQUEST[$k]);

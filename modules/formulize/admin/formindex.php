@@ -130,12 +130,12 @@ function patch40() {
         $testsql = "SHOW TABLES";
         $resultst = $xoopsDB->query($testsql);
         while($table = $xoopsDB->fetchRow($resultst)) {
-            $existingTables[] = $table[0];
+            $existingTables[] = strtolower($table[0]);
         }
 
         $sql = array();
 
-        if (!in_array($xoopsDB->prefix("tfa_codes"), $existingTables)) {
+        if (!in_array(strtolower($xoopsDB->prefix("tfa_codes")), $existingTables)) {
                 $sql[] = "CREATE TABLE `".$xoopsDB->prefix("tfa_codes")."` (
           `code_id` int(11) unsigned NOT NULL auto_increment,
           `uid` int(11) unsigned DEFAULT NULL,
@@ -146,7 +146,7 @@ function patch40() {
         ) ENGINE=InnoDB;";
         }
 
-        if (!in_array($xoopsDB->prefix("formulize_digest_data"), $existingTables)) {
+        if (!in_array(strtolower($xoopsDB->prefix("formulize_digest_data")), $existingTables)) {
             $sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_digest_data")."` (
                 `digest_id` int(11) unsigned NOT NULL auto_increment,
                 `email` varchar(255) DEFAULT NULL,
@@ -161,7 +161,7 @@ function patch40() {
               ) ENGINE=InnoDB;";
         }
 
-        if (!in_array($xoopsDB->prefix("formulize_groupscope_settings"), $existingTables)) {
+        if (!in_array(strtolower($xoopsDB->prefix("formulize_groupscope_settings")), $existingTables)) {
             $sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_groupscope_settings")."` (
                 `groupscope_id` int(11) NOT NULL auto_increment,
                 `groupid` int(11) NOT NULL default 0,
@@ -174,7 +174,7 @@ function patch40() {
               ) ENGINE=InnoDB;";
         }
 
-        if (!in_array($xoopsDB->prefix("formulize_tokens"), $existingTables)) {
+        if (!in_array(strtolower($xoopsDB->prefix("formulize_tokens")), $existingTables)) {
             $sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_tokens") . " (
                 `key_id` int(11) unsigned NOT NULL auto_increment,
                 `groups` varchar(255) NOT NULL default '',
@@ -193,7 +193,7 @@ function patch40() {
 
 
 
-        if (!in_array($xoopsDB->prefix("formulize_group_filters"), $existingTables)) {
+        if (!in_array(strtolower($xoopsDB->prefix("formulize_group_filters")), $existingTables)) {
             $sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_group_filters")."` (
   `filterid` int(11) NOT NULL auto_increment,
   `fid` int(11) NOT NULL default 0,
@@ -205,7 +205,7 @@ function patch40() {
 ) ENGINE=InnoDB;";
         }
 
-        if (!in_array($xoopsDB->prefix("formulize_applications"), $existingTables)) {
+        if (!in_array(strtolower($xoopsDB->prefix("formulize_applications")), $existingTables)) {
             $sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_applications")."` (
   `appid` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL default '',
@@ -214,7 +214,7 @@ function patch40() {
 ) ENGINE=InnoDB;";
         }
 
-        if (!in_array($xoopsDB->prefix("formulize_application_form_link"), $existingTables)) {
+        if (!in_array(strtolower($xoopsDB->prefix("formulize_application_form_link")), $existingTables)) {
             $sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_application_form_link")."` (
   `linkid` int(11) NOT NULL auto_increment,
   `appid` int(11) NOT NULL default 0,
@@ -225,7 +225,7 @@ function patch40() {
 ) ENGINE=InnoDB;";
         }
 
-        if (!in_array($xoopsDB->prefix("formulize_screen_form"), $existingTables)) {
+        if (!in_array(strtolower($xoopsDB->prefix("formulize_screen_form")), $existingTables)) {
             $sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_screen_form")."` (
   `formid` int(11) NOT NULL auto_increment,
   `sid` int(11) NOT NULL default 0,
@@ -247,7 +247,7 @@ function patch40() {
 ) ENGINE=InnoDB;";
         }
 
-        if (!in_array($xoopsDB->prefix("formulize_advanced_calculations"), $existingTables)) {
+        if (!in_array(strtolower($xoopsDB->prefix("formulize_advanced_calculations")), $existingTables)) {
             $sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_advanced_calculations")."` (
   `acid` int(11) NOT NULL auto_increment,
   `fid` int(11) NOT NULL default '0',
@@ -264,7 +264,7 @@ function patch40() {
 ) ENGINE=InnoDB;";
         }
 
-        if (!in_array($xoopsDB->prefix("formulize_procedure_logs"), $existingTables)) {
+        if (!in_array(strtolower($xoopsDB->prefix("formulize_procedure_logs")), $existingTables)) {
             $sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_procedure_logs")."` (
   `proc_log_id` int(11) unsigned NOT NULL auto_increment,
   `proc_id` int(11) NOT NULL,
@@ -276,7 +276,7 @@ function patch40() {
 ) ENGINE=InnoDB;";
         }
 
-        if (!in_array($xoopsDB->prefix("formulize_procedure_logs_params"), $existingTables)) {
+        if (!in_array(strtolower($xoopsDB->prefix("formulize_procedure_logs_params")), $existingTables)) {
             $sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_procedure_logs_params")."` (
   `proc_log_param_id` int(11) unsigned NOT NULL auto_increment,
   `proc_log_id` int(11) unsigned NOT NULL,
@@ -288,7 +288,7 @@ function patch40() {
         }
 
 
-        if (!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
+        if (!in_array(strtolower($xoopsDB->prefix("formulize_resource_mapping")), $existingTables)) {
             $sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_resource_mapping")."` (
     mapping_id int(11) NOT NULL auto_increment,
     internal_id int(11) NOT NULL,
@@ -304,7 +304,7 @@ function patch40() {
 ) ENGINE=InnoDB;";
         }
 
-        if (!in_array($xoopsDB->prefix("formulize_deletion_logs"), $existingTables)) {
+        if (!in_array(strtolower($xoopsDB->prefix("formulize_deletion_logs")), $existingTables)) {
             $sql[] = "CREATE TABLE ".$xoopsDB->prefix("formulize_deletion_logs")." (
                   del_log_id int(11) unsigned NOT NULL auto_increment,
                   form_id int(11) NOT NULL,
@@ -317,7 +317,7 @@ function patch40() {
         ) ENGINE=InnoDB;";
         }
 
-        if (!in_array($xoopsDB->prefix("formulize_screen_template"), $existingTables)) {
+        if (!in_array(strtolower($xoopsDB->prefix("formulize_screen_template")), $existingTables)) {
             $sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_screen_template") . " (
             templateid int(11) NOT NULL auto_increment,
             sid int(11) NOT NULL default 0,
@@ -332,7 +332,7 @@ function patch40() {
         ) ENGINE=InnoDB;";
         }
 
-        if (!in_array($xoopsDB->prefix("formulize_apikeys"), $existingTables)) {
+        if (!in_array(strtolower($xoopsDB->prefix("formulize_apikeys")), $existingTables)) {
             $sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_apikeys") . " (
                 `key_id` int(11) unsigned NOT NULL auto_increment,
                 `uid` int(11) NOT NULL default '0',
@@ -346,7 +346,7 @@ function patch40() {
         }
 
 
-        if (!in_array($xoopsDB->prefix("formulize_passcodes"), $existingTables)) {
+        if (!in_array(strtolower($xoopsDB->prefix("formulize_passcodes")), $existingTables)) {
             $sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_passcodes") . " (
                 `passcode_id` int(11) unsigned NOT NULL auto_increment,
                 `passcode` text default null,
@@ -360,7 +360,7 @@ function patch40() {
             ) ENGINE=InnoDB;";
         }
 
-        if (!in_array($xoopsDB->prefix("formulize_screen_calendar"), $existingTables)) {
+        if (!in_array(strtolower($xoopsDB->prefix("formulize_screen_calendar")), $existingTables)) {
             $sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_screen_calendar"). " (
                 `calendar_id` int(11) unsigned NOT NULL auto_increment,
                 `sid` int(11) DEFAULT NULL,
@@ -834,7 +834,7 @@ function patch40() {
         }
 
         // if there is a framework handles table present, then we need to check for a few things to ensure the integrity of code and our ability to disambiguate inputs to the API
-        if (in_array($xoopsDB->prefix("formulize_framework_elements"), $existingTables)) {
+        if (in_array(strtolower($xoopsDB->prefix("formulize_framework_elements")), $existingTables)) {
             // need to change rules...framework handles must now be globally unique, so we can disambiguate them from each other when we are passed just a framework handle
             $uniqueSQL = "SELECT elements.ele_caption, elements.ele_id, elements.ele_handle, handles.fe_handle, handles.fe_frame_id FROM ".$xoopsDB->prefix("formulize")." as elements, ".$xoopsDB->prefix("formulize_framework_elements")." as handles WHERE EXISTS (SELECT 1 FROM ".$xoopsDB->prefix("formulize_framework_elements")." as checkhandles WHERE handles.fe_handle = checkhandles.fe_handle AND handles.fe_element_id != checkhandles.fe_element_id) AND handles.fe_element_id = elements.ele_id AND handles.fe_handle != \"\" ORDER BY handles.fe_handle";
             $uniqueRes = $xoopsDB->query($uniqueSQL);
@@ -907,7 +907,7 @@ function patch40() {
         }
 
         //create new menus table
-        if (!in_array($xoopsDB->prefix("formulize_menu_links"), $existingTables)) {
+        if (!in_array(strtolower($xoopsDB->prefix("formulize_menu_links")), $existingTables)) {
             $menusql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_menu_links")."` (
             `menu_id` int(11) unsigned NOT NULL auto_increment,
             `appid` int(11) unsigned NOT NULL,

@@ -40,9 +40,17 @@
 
 	<fieldset>
 		<legend>URLs for this screen</legend>
-		<p>To give people access to this screen, send them to this URL:</p>
-		<blockquote><{$xoops_url}>/modules/formulize/index.php?sid=<{$content.sid}></blockquote>
-		<p>Set an alternate URL for accessing this screen: <input type='text' name='screens-rewriteruleAddress' value='<{$content.rewriteruleAddress}>'</p>
+		<p>The default URL for this screen: <a href="<{$xoops_url}>/modules/formulize/index.php?sid=<{$content.sid}>" target="_blank"><{$xoops_url}>/modules/formulize/index.php?sid=<{$content.sid}></a></p>
+		<p>Set an alternate URL for accessing this screen: <{$xoops_url}>/<input type='text' name='screens-rewriteruleAddress' value='<{$content.rewriteruleAddress}>'</p>
+		<div class="description">For alternate URLs to work, you will need to add code similar to this, to the .htaccess file at the root of your website:
+			<blockquote class="code"><span style="font-style: normal">
+			RewriteEngine On<br>
+			RewriteCond %{REQUEST_FILENAME} !-f<br>
+			RewriteCond %{REQUEST_FILENAME} !-d<br>
+			RewriteCond %{REQUEST_FILENAME} !-l<br>
+			RewriteRule ^(.*)$ /modules/formulize/index.php?formulizeRewriteRuleAddress=$1 [L]<br>
+			</span></blockquote>
+		</div>
 	</fieldset>
 
 	<fieldset>
@@ -53,23 +61,13 @@ $formulize_screen_id = <{$content.sid}>;<br/>
 include "<{$smarty.const.XOOPS_ROOT_PATH}>/modules/formulize/index.php";</blockquote>
 	</fieldset>
 
-  <!--<fieldset>
-	  <legend>Menu</legend>
-
-    <div class="form-item">
-	    <label for="imenu"><input type="radio" id="imenu" name="menu" value="imenu"/>Use iMenu</label>
-	    <label for="internal"><input type="radio" id="internal" name="menu" value="internal"/>Use internal menu</label>
-	    <div class="description">Choose whether you will use XOOPS iMenu for assigning menu items or the internal menu.</div>
-	  </div>
-  </fieldset>-->
-
   <fieldset>
 	  <legend>Should this screen use an anti-CSRF security token</legend>
 
 	  <div class="form-item">
 	    <label for="screens-useToken-yes"><input type="radio" id="screens-useToken-yes" name="screens-useToken" value="1"<{if $content.useToken eq 1}> checked<{/if}>/>Yes</label>
 	    <label for="screens-useToken-no"><input type="radio" id="screens-useToken-no" name="screens-useToken" value="0"<{if $content.useToken eq 0}> checked<{/if}>/>No</label>
-	    <div class="description">The security token is a defense against cross-site request forgery attacks. However, it can cause problems if you are using an advanced Ajax-based UI in a List of Entries screen, and possibly other screen types.</div>
+	    <div class="description">The security token is a defense against cross-site request forgery attacks.</div>
 	  </div>
   </fieldset>
 
