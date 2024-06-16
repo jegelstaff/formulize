@@ -8183,8 +8183,8 @@ function writeToFormulizeLog($data) {
  */
 function formulize_handleHtaccessRewriteRule() {
 	if(isset($_GET['formulizeRewriteRuleAddress']) AND $_GET['formulizeRewriteRuleAddress']) {
-		global $$formulizeCanonicalURI;
-		$$formulizeCanonicalURI = '';
+		global $formulizeCanonicalURI;
+		$formulizeCanonicalURI = '';
 		$trimedFormulizeRewriteRuleAddress = trim($_GET['formulizeRewriteRuleAddress'], '/');
 		$addressData = explode('/', $trimedFormulizeRewriteRuleAddress);
 		$address = $addressData[0];
@@ -8204,7 +8204,7 @@ function formulize_handleHtaccessRewriteRule() {
 			$_REQUEST['sid'] = $sid;
 			$formulizeCanonicalURI = "/modules/formulize/index.php?$queryString";
 		}
-		if(!$$formulizeCanonicalURI) {
+		if(!$formulizeCanonicalURI) {
 			http_response_code(404);
 			exit();
 		}
