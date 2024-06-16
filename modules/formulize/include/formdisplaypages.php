@@ -258,7 +258,7 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 
 	$nextPage = $currentPage+1;
 
-		global $formulizeCanonicalURL;
+		global $formulizeCanonicalURI;
     if(!$done_dest) {
         // check for a dd in get and use that as a screen id
         if(isset($_GET['dd']) AND is_numeric($_GET['dd'])) {
@@ -294,8 +294,8 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 				}
 		}
 		// if there was an alternate URL used to access the page, and a ve was specified, scale back to remove the ve from the done_dest
-		global $formulizeCanonicalURL;
-		if($done_dest AND $formulizeCanonicalURL AND $_GET['ve']) {
+		global $formulizeCanonicalURI;
+		if($done_dest AND $formulizeCanonicalURI AND $_GET['ve']) {
 			$trimmedDoneDest = trim($done_dest, '/'); // take off last slash if any
 			$trailingSlash = $trimmedDoneDest === $done_dest ? '' : '/'; // if there was a slash on the end, remember this for later
 			$doneDestParts = explode('/', $trimmedDoneDest); // split on slashes

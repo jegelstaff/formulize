@@ -1686,8 +1686,8 @@ function drawEntries($fid, $cols, $searches, $frid, $scope, $standalone, $curren
 						}
 
 						$viewEntryLinkCode = "<a href='" . trim($currentURL, '/');
-						global $formulizeCanonicalURL;
-						if($formulizeCanonicalURL) {
+						global $formulizeCanonicalURI;
+						if($formulizeCanonicalURI) {
 							$viewEntryLinkCode .= '/'.$entry_id.'/';
 						} else {
 							if(strstr($currentURL, "?")) { // if params are already part of the URL...
