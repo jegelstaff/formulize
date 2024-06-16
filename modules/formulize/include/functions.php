@@ -8179,16 +8179,16 @@ function writeToFormulizeLog($data) {
 
 /**
  * Check for a rewrite rule value having been passed to the url, and if found then update $_GET and the $_SERVER['REQUEST_URI'] to match.
- * If a rewrite rule was found, the alternate URL will be set in the global variable $formulizeRewriteRuleActive
+ * If a rewrite rule was found, the canonical Formulize URL for the page will be set in the global variable $formulizeCanonicalURL
  */
 function formulize_handleHtaccessRewriteRule() {
 	if(isset($_GET['formulizeRewriteRuleAddress']) AND $_GET['formulizeRewriteRuleAddress']) {
-		global $formulizeRewriteRuleActive;
-		$formulizeRewriteRuleActive = false;
+		global $formulizeCanonicalURL;
+		$formulizeCanonicalURL = '';
 		$trimedFormulizeRewriteRuleAddress = trim($_GET['formulizeRewriteRuleAddress'], '/');
 		$addressData = explode('/', $trimedFormulizeRewriteRuleAddress);
 		$address = $addressData[0];
-		$ve = isset($addressData[1]) ? $addressData[1] : null;
+		$ve = isset($addressData[1]) ? intval($addressData[1]) : null;
 		if($sid = formulize_getSidFromRewriteAddress($address)) {
 			foreach($_GET as $k=>$v) {
 				unset($_REQUEST[$k]);
@@ -8202,11 +8202,9 @@ function formulize_handleHtaccessRewriteRule() {
 			}
 			$_GET['sid'] = $sid;
 			$_REQUEST['sid'] = $sid;
-			$_SERVER['REQUEST_URI'] = "/$trimedFormulizeRewriteRuleAddress/";
-			$_SERVER['QUERY_STRING'] = $queryString;
-			$formulizeRewriteRuleActive = "/$trimedFormulizeRewriteRuleAddress/";
+			$formulizeCanonicalURL = "/modules/formulize/index.php?$queryString";
 		}
-		if(!$formulizeRewriteRuleActive) {
+		if(!$formulizeCanonicalURL) {
 			http_response_code(404);
 			exit();
 		}
@@ -8215,19 +8213,25 @@ function formulize_handleHtaccessRewriteRule() {
 
 /**
  * Get the screen id for a given alternate URL address
- * @param string $address Optional. The alternate URL address to lookup. If none specified, the $_SERVER['REQUEST_URI'] will be used.
- * @return int|bool Returns the screen ID, or false if there is no match
+ * @param string $address Optional. The alternate URL address to lookup. If none specified, reuse the first one we were passed.
+ * @return int|bool Returns the screen ID, or false if there is no match, or nothing to match with.
  */
 function formulize_getSidFromRewriteAddress($address="") {
 	global $xoopsDB;
-	if(!$address) {
-		$address = $_SERVER['REQUEST_URI'];
+	static $originalAddress = '';
+	if(!$originalAddress) {
+		$originalAddress = $address;
 	}
-	$sql = 'SELECT sid FROM '.$xoopsDB->prefix('formulize_screen').' WHERE MATCH(`rewriteruleAddress`) AGAINST("'.formulize_db_escape($address).'") LIMIT 0,1';
-	if($res = $xoopsDB->query($sql)) {
-		if($row = $xoopsDB->fetchRow($res)) {
-			if($row[0]) {
-				return $row[0];
+	if(!$address) {
+		$address = $originalAddress;
+	}
+	if($address) {
+		$sql = 'SELECT sid FROM '.$xoopsDB->prefix('formulize_screen').' WHERE MATCH(`rewriteruleAddress`) AGAINST("'.formulize_db_escape($address).'") LIMIT 0,1';
+		if($res = $xoopsDB->query($sql)) {
+			if($row = $xoopsDB->fetchRow($res)) {
+				if($row[0]) {
+					return $row[0];
+				}
 			}
 		}
 	}

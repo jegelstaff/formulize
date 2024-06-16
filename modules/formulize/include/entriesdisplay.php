@@ -1685,13 +1685,19 @@ function drawEntries($fid, $cols, $searches, $frid, $scope, $standalone, $curren
 							$selectionCheckbox = "<input type=checkbox title='" . _formulize_DE_DELBOXDESC . "' class='formulize_selection_checkbox' name='delete_" . $entry_id . "' id='delete_" . $entry_id . "' value='delete_" . $entry_id . "'>";
 						}
 
-						$viewEntryLinkCode = "<a href='" . $currentURL;
-						if(strstr($currentURL, "?")) { // if params are already part of the URL...
-							$viewEntryLinkCode .= "&";
+						$viewEntryLinkCode = "<a href='" . trim($currentURL, '/');
+						global $formulizeCanonicalURL;
+						if($formulizeCanonicalURL) {
+							$viewEntryLinkCode .= '/'.$entry_id.'/';
 						} else {
-							$viewEntryLinkCode .= "?";
+							if(strstr($currentURL, "?")) { // if params are already part of the URL...
+								$viewEntryLinkCode .= "&";
+							} else {
+								$viewEntryLinkCode .= "?";
+							}
+							$viewEntryLinkCode .= "ve=" . $entry_id;
 						}
-						$viewEntryLinkCode .= "ve=" . $entry_id . "' onclick=\"javascript:goDetails('" . $entry_id . "');return false;\"";
+						$viewEntryLinkCode .= "' onclick=\"javascript:goDetails('" . $entry_id . "');return false;\"";
 						// put into global scope so the function 'viewEntryLink' can pick it up
 						$GLOBALS['formulize_viewEntryLinkCode'] = $viewEntryLinkCode;
 
