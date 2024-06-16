@@ -1504,7 +1504,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                 $form->addElement (new XoopsFormHidden ('clonesubsflag', 0));
 			}
 
-			drawJavascript($nosave); // must be called after compileElements, for entry locking to work, and probably other things!
+			drawJavascript($nosave, $entry); // must be called after compileElements, for entry locking to work, and probably other things!
             $form->addElement(new xoopsFormHidden('save_and_leave', 0));
 		// lastly, put in a hidden element, that will tell us what the first, primary form was that we were working with on this form submission
 		$form->addElement (new XoopsFormHidden ('primaryfid', $fids[0]));
@@ -3211,7 +3211,7 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 
 // draw in javascript for this form that is relevant to subforms
 // $nosave indicates that the user cannot save this entry, so we shouldn't check for formulizechanged
-function drawJavascript($nosave=false) {
+function drawJavascript($nosave=false, $entry=null) {
 
 global $xoopsUser, $xoopsConfig, $actionFunctionName;
 
@@ -3359,7 +3359,7 @@ print $codeToIncludejQueryWhenNecessary;
 
 // a bit hacky... check the intval of the currentPage and the prevPage, prevPage may be (always is?) "page number hyphen screen id number"
 // so if someone jumps from one screen to another but lands on same ordinal page, this will be true, but really it's false because they're different screens
-if(isset($_POST['yposition']) AND
+if($entry != 'new' AND isset($_POST['yposition']) AND
    intval($_POST['yposition'])>0 AND
    (!isset($_POST['formulize_currentPage']) OR intval($_POST['formulize_currentPage']) == intval($_POST['formulize_prevPage']))
    ) {
