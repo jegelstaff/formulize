@@ -107,7 +107,7 @@ function getMenuTextsForForms($forms, $form_handler) {
 
 function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
 
-	global $formulizeCanonicalURI;
+	global $formulizeCanonicalURI, $xoopsUser;
 	$data = array();
 	if($application == 0) {
 		$aid = 0;
@@ -188,18 +188,32 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
 	) { // if we're viewing this application or a form in this application, or this is the being forced open (only application)...
 
 		$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+		$gperm_handler = xoops_gethandler('groupperm');
+		$mid = getFormulizeModId();
+		$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 		foreach($menulinks as $menulink) {
-			$menuLinkScreen = null;
-			$rewriteruleAddress = null;
 			$sid = strstr($menulink->getVar("screen"), 'sid=') ? intval(str_replace('sid=', '', $menulink->getVar("screen"))) : 0;
 			$fid = strstr($menulink->getVar("screen"), 'fid=') ? intval(str_replace('fid=', '', $menulink->getVar("screen"))) : 0;
 			if($url = buildMenuLinkURL($menulink)) {
 				$suburl = $url;
+				$rewriteruleAddress = null;
 			} else {
 				if($sid) {
-					$menuLinkScreen = $screen_handler->get($sid);
-					$rewriteruleAddress = $menuLinkScreen->getVar('rewriteruleAddress');
+					$menuLinkScreenId = $sid;
 				}
+				if($fid) {
+					$menulinkFormObject = $form_handler->get($fid);
+					$singleEntry = $menulinkFormObject->getVar('single');
+					$view_globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid);
+					$view_groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid);
+					if((!$singleEntry AND $xoopsUser) OR $view_globalscope OR ($view_groupscope AND $singleEntry != "group")) {
+						$menuLinkScreenId = $menulinkFormObject->getVar('defaultlist');
+					} else {
+						$menuLinkScreenId = $menulinkFormObject->getVar('defaultform');
+					}
+				}
+				$menuLinkScreen = $menuLinkScreenId ? $screen_handler->get($menuLinkScreenId) : null;
+				$rewriteruleAddress = $menuLinkScreen ? $menuLinkScreen->getVar('rewriteruleAddress') : null;
 				if($rewriteruleAddress) {
 					$suburl = XOOPS_URL ."/".$rewriteruleAddress;
 				} else {
@@ -209,7 +223,7 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
 			$target = (!$url OR strstr($url, XOOPS_URL)) ? "" : " target='_blank' ";
 			$menuSubActive="";
 			if(getCurrentURL() == XOOPS_URL.'/modules/formulize/index.php?'.$menulink->getVar("screen")
-				OR ($menuLinkScreen AND trim(getCurrentURL(), '/') == trim(XOOPS_URL.'/'.$menuLinkScreen->getVar('rewriteruleAddress'), '/'))
+				OR ($rewriteruleAddress AND trim(getCurrentURL(), '/') == trim(XOOPS_URL.'/'.$rewriteruleAddress, '/'))
 				OR getCurrentURL() == $url
 				OR trim(XOOPS_URL.'/'.$formulizeCanonicalURI, '/') == trim($url, '/')
 				OR (getCurrentURL() == XOOPS_URL.'/modules/formulize/'
