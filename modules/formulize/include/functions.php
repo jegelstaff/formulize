@@ -8178,42 +8178,58 @@ function writeToFormulizeLog($data) {
 }
 
 /**
- * Check for a write rule value having been passed to the url, and if found then update $_GET and the $_SERVER['REQUEST_URI'] to match
+ * Check for a rewrite rule value having been passed to the url, and if found then update $_GET and the $_SERVER['REQUEST_URI'] to match.
+ * If a rewrite rule was found, the alternate URL will be set in the global variable $formulizeRewriteRuleActive
  */
 function formulize_handleHtaccessRewriteRule() {
 	if(isset($_GET['formulizeRewriteRuleAddress']) AND $_GET['formulizeRewriteRuleAddress']) {
-		global $xoopsDB;
+		global $formulizeRewriteRuleActive;
+		$formulizeRewriteRuleActive = false;
 		$trimedFormulizeRewriteRuleAddress = trim($_GET['formulizeRewriteRuleAddress'], '/');
 		$addressData = explode('/', $trimedFormulizeRewriteRuleAddress);
 		$address = $addressData[0];
 		$ve = isset($addressData[1]) ? $addressData[1] : null;
-		$sql = 'SELECT sid FROM '.$xoopsDB->prefix('formulize_screen').' WHERE MATCH(`rewriteruleAddress`) AGAINST("'.formulize_db_escape($address).'") LIMIT 0,1';
-		$addressFound = false;
-		if($res = $xoopsDB->query($sql)) {
-			if($row = $xoopsDB->fetchRow($res)) {
-				if($row[0]) {
-					$addressFound = true;
-					$sid = $row[0];
-					foreach($_GET as $k=>$v) {
-						unset($_REQUEST[$k]);
-						unset($_GET[$k]);
-					}
-					$queryString = "sid=$sid";
-					if($ve) {
-						$queryString .= $ve ? "&ve=$ve" : "";
-						$_GET['ve'] = $ve;
-						$_REQUEST['ve'] = $ve;
-					}
-					$_GET['sid'] = $sid;
-					$_REQUEST['sid'] = $sid;
-					$_SERVER['REQUEST_URI'] = "/$trimedFormulizeRewriteRuleAddress/";
-					$_SERVER['QUERY_STRING'] = $queryString;
-				}
+		if($sid = formulize_getSidFromRewriteAddress($address)) {
+			foreach($_GET as $k=>$v) {
+				unset($_REQUEST[$k]);
+				unset($_GET[$k]);
 			}
+			$queryString = "sid=$sid";
+			if($ve) {
+				$queryString .= $ve ? "&ve=$ve" : "";
+				$_GET['ve'] = $ve;
+				$_REQUEST['ve'] = $ve;
+			}
+			$_GET['sid'] = $sid;
+			$_REQUEST['sid'] = $sid;
+			$_SERVER['REQUEST_URI'] = "/$trimedFormulizeRewriteRuleAddress/";
+			$_SERVER['QUERY_STRING'] = $queryString;
+			$formulizeRewriteRuleActive = "/$trimedFormulizeRewriteRuleAddress/";
 		}
-		if(!$addressFound) {
+		if(!$formulizeRewriteRuleActive) {
 			http_response_code(404);
 			exit();
 		}
 	}
+}
+
+/**
+ * Get the screen id for a given alternate URL address
+ * @param string $address Optional. The alternate URL address to lookup. If none specified, the $_SERVER['REQUEST_URI'] will be used.
+ * @return int|bool Returns the screen ID, or false if there is no match
+ */
+function formulize_getSidFromRewriteAddress($address="") {
+	global $xoopsDB;
+	if(!$address) {
+		$address = $_SERVER['REQUEST_URI'];
+	}
+	$sql = 'SELECT sid FROM '.$xoopsDB->prefix('formulize_screen').' WHERE MATCH(`rewriteruleAddress`) AGAINST("'.formulize_db_escape($address).'") LIMIT 0,1';
+	if($res = $xoopsDB->query($sql)) {
+		if($row = $xoopsDB->fetchRow($res)) {
+			if($row[0]) {
+				return $row[0];
+			}
+		}
+	}
+	return false;
 }
