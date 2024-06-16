@@ -8183,7 +8183,8 @@ function writeToFormulizeLog($data) {
 function formulize_handleHtaccessRewriteRule() {
 	if(isset($_GET['formulizeRewriteRuleAddress']) AND $_GET['formulizeRewriteRuleAddress']) {
 		global $xoopsDB;
-		$addressData = explode('/', trim($_GET['formulizeRewriteRuleAddress'], '/'));
+		$trimedFormulizeRewriteRuleAddress = trim($_GET['formulizeRewriteRuleAddress'], '/');
+		$addressData = explode('/', $trimedFormulizeRewriteRuleAddress);
 		$address = $addressData[0];
 		$ve = isset($addressData[1]) ? $addressData[1] : null;
 		$sql = 'SELECT sid FROM '.$xoopsDB->prefix('formulize_screen').' WHERE MATCH(`rewriteruleAddress`) AGAINST("'.formulize_db_escape($address).'") LIMIT 0,1';
@@ -8205,7 +8206,7 @@ function formulize_handleHtaccessRewriteRule() {
 					}
 					$_GET['sid'] = $sid;
 					$_REQUEST['sid'] = $sid;
-					$_SERVER['REQUEST_URI'] = "/$addressData/";
+					$_SERVER['REQUEST_URI'] = "/$trimedFormulizeRewriteRuleAddress/";
 					$_SERVER['QUERY_STRING'] = $queryString;
 				}
 			}
