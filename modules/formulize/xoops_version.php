@@ -953,6 +953,33 @@ $modversion['config'][] = array(
 	'default' => '0',
 );
 
+$modversion['config'][] = array(
+	'name' => 'formulizeLoggingOnOff',
+	'title' => '_MI_formulize_FORMULIZELOGGINGONOFF',
+	'description' => '_MI_formulize_FORMULIZELOGGINGONOFFDESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 0,
+);
+
+$modversion['config'][] = array(
+	'name' => 'formulizeLogFileLocation',
+	'title' => '_MI_formulize_FORMULIZELOGFILELOCATION',
+	'description' => '_MI_formulize_FORMULIZELOGFILELOCATIONDESC',
+	'formtype' => 'textbox',
+	'valuetype' => 'text',
+	'default' => XOOPS_ROOT_PATH.'/logs',
+);
+
+$modversion['config'][] = array(
+	'name' => 'formulizeLogFileStorageDurationHours',
+	'title' => '_MI_formulize_formulizeLogFileStorageDurationHours',
+	'description' => '_MI_formulize_formulizeLogFileStorageDurationHoursDESC',
+	'formtype' => 'textbox',
+	'valuetype' => 'int',
+	'default' => '168',
+);
+
 $modversion['blocks'][1] = array(
 	'file' => "mymenu.php",
 	'name' => _MI_formulizeMENU_BNAME,

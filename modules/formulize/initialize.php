@@ -184,9 +184,11 @@ if (!$loadThisView) {
 }
 
 if ($screen) {
+
+		$renderedFormulizeScreen = $screen;
     // this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
-    $renderedFormulizeScreen = $screen;
+
 
     // validate any passcode for anon users that has been saved in session, or require one from users first before anything else
     if($uid == 0 AND $screen->getVar('anonNeedsPasscode')) {
@@ -213,19 +215,27 @@ if ($screen) {
     }
 
     if($screenAllowedForUser) {
-    if($screen->getVar('type') == "listOfEntries" AND ((isset($_GET['iform']) AND $_GET['iform'] == "e") OR isset($_GET['showform']))) { // form itself specifically requested, so force it to load here instead of a list
-        if($screen->getVar('frid')) {
-            include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
-            displayForm($screen->getVar('frid'), "", $screen->getVar('fid'), "", "{NOBUTTON}");
-        } else {
-            include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
-            displayForm($screen->getVar('fid'), "", "", "", "{NOBUTTON}");
-        }
-    } elseif($screen->getVar('type') == 'calendar') {
-        $screen_handler->render($screen);
-    } else {
-        $screen_handler->render($screen, $entry, $loadThisView);
-    }
+
+			writeToFormulizeLog(array(
+				'formulize_event' => 'attempting-screen-rendering',
+				'user_id' => ($xoopsUser ? $xoopsUser->getVar('uid') : 0),
+				'form_id' => $screen->getVar('fid'),
+				'screen_id' => $screen->getVar('sid')
+			));
+
+			if($screen->getVar('type') == "listOfEntries" AND ((isset($_GET['iform']) AND $_GET['iform'] == "e") OR isset($_GET['showform']))) { // form itself specifically requested, so force it to load here instead of a list
+					if($screen->getVar('frid')) {
+							include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
+							displayForm($screen->getVar('frid'), "", $screen->getVar('fid'), "", "{NOBUTTON}");
+					} else {
+							include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
+							displayForm($screen->getVar('fid'), "", "", "", "{NOBUTTON}");
+					}
+			} elseif($screen->getVar('type') == 'calendar') {
+					$screen_handler->render($screen);
+			} else {
+					$screen_handler->render($screen, $entry, $loadThisView);
+			}
     } else {
         $_SESSION['formulize_passcodeFailed'] = true;
         print "<p>"._formulize_NO_PERM."</p>";
@@ -246,6 +256,13 @@ if ($screen) {
 
 if (!$rendered AND $uid) {
     if (isset($fid) AND is_numeric($fid) AND $fid) {
+
+			writeToFormulizeLog(array(
+				'formulize_event' => 'attempting-raw-rendering',
+				'user_id' => ($xoopsUser ? $xoopsUser->getVar('uid') : 0),
+				'form_id' => intval($fid)
+			));
+
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
         $formObject = $form_handler->get($fid);
         $defaultFormScreen = $formObject->getVar('defaultform');
@@ -326,4 +343,10 @@ if ($renderedFormulizeScreen AND is_object($xoopsTpl)) {
 // go back to the previous rendering flag, in case this operation was nested inside something else
 $GLOBALS['formulize_thisRendering'] = $prevRendering[$thisRendering];
 
+writeToFormulizeLog(array(
+	'formulize_event' => 'completed-page-rendering',
+	'user_id' => ($xoopsUser ? $xoopsUser->getVar('uid') : 0),
+	'form_id' => ($rendered ? $screen->getVar('fid') : intval($fid)),
+	'screen_id' => ($rendered ? $screen->getVar('sid') : '')
+));
 

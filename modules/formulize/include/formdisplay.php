@@ -1577,6 +1577,14 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
             $idForForm = "id=\"formulizeform\""; // only use the master id when rendering a "normal" form, the master one on the page, not when rendering disembodied elements only forms!
         }
 
+				writeToFormulizeLog(array(
+					'formulize_event'=>'rendering-form',
+					'user_id'=>($xoopsUser ? $xoopsUser->getVar('uid') : 0),
+					'form_id'=>$fid,
+					'screen_id'=>(is_object($screen) ? $screen->getVar('sid') : 0),
+					'entry_id'=>$entry
+				));
+
 		print "<div $idForForm>".$form->render()."</div><!-- end of formulizeform -->"; // note, security token is included in the form by the xoops themeform render method, that's why there's no explicity references to the token in the compiling/generation of the main form object
 
         // floating save button

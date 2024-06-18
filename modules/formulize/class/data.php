@@ -1066,6 +1066,13 @@ class formulizeDataHandler  {
 			$entry_to_return = $xoopsDB->getInsertId();
 		}
 
+		writeToFormulizeLog(array(
+			'formulize_event' => 'saving-data',
+			'user_id'=>($xoopsUser ? $xoopsUser->getVar('uid') : 0),
+			'form_id' => $this->fid,
+			'entry_id' => $entry_to_return
+		));
+
 		// if we wrote any {ID} values to the DB that should become the entry id number of the record, update them now to match the actual entry_id
 		if($writePrimaryKeyToElements = array_keys($element_values, "'{ID}'", true)) {
 			$pkSQL = "UPDATE ". $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) .  " SET ".implode(" = entry_id, ", $writePrimaryKeyToElements)." = entry_id WHERE entry_id = $entry_to_return";

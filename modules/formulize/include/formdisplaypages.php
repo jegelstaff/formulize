@@ -392,9 +392,17 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
         }
 
         if(count((array) $elements_allowed)==0) {
-            print "Error: there are no form elements specified for page number $currentPage. Please contact the webmaster.";
+          print "Error: there are no form elements specified for page number $currentPage. Please contact the webmaster.";
         } else {
-            displayForm($forminfo, $entry, $mainform, "", $buttonArray, $settings, $titleOverride, $overrideValue, $overrideMulti, "", 0, $printall, $screen); // nmc 2007.03.24 - added empty params & '$printall'
+					writeToFormulizeLog(array(
+						'formulize_event'=>'rendering-form-screen-page',
+						'user_id'=>($xoopsUser ? $xoopsUser->getVar('uid') : 0),
+						'form_id'=>$fid,
+						'screen_id'=>(is_object($screen) ? $screen->getVar('sid') : 0),
+						'entry_id'=>$entry,
+						'form_screen_page_number'=>$currentPage
+					));
+          displayForm($forminfo, $entry, $mainform, "", $buttonArray, $settings, $titleOverride, $overrideValue, $overrideMulti, "", 0, $printall, $screen); // nmc 2007.03.24 - added empty params & '$printall'
         }
 
     }
