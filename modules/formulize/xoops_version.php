@@ -954,15 +954,6 @@ $modversion['config'][] = array(
 );
 
 $modversion['config'][] = array(
-	'name' => 'useOldCustomButtonEffectWriting',
-	'title' => '_MI_formulize_USEOLDCUSTOMBUTTONEFFECTWRITING',
-	'description' => '_MI_formulize_USEOLDCUSTOMBUTTONEFFECTWRITINGDESC',
-	'formtype' => 'yesno',
-	'valuetype' => 'int',
-	'default' => '0',
-);
-
-$modversion['config'][] = array(
 	'name' => 'formulizeLoggingOnOff',
 	'title' => '_MI_formulize_FORMULIZELOGGINGONOFF',
 	'description' => '_MI_formulize_FORMULIZELOGGINGONOFFDESC',
