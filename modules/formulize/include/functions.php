@@ -2632,33 +2632,60 @@ function removeOpeningPHPTag($string) {
 	return $string;
 }
 
-// THIS FUNCTION INTERPRETS A TEXTBOX'S DEFAULT VALUE AND RETURNS THE CORRECT STRING
-// Takes $ele_value[2] as the input (third position in ele_value array from element object)
-// $form_id and $entry_id are passed in so they can be accessible within the eval'd code if necessary
-function getTextboxDefault($ele_value, $form_id, $entry_id, $placeholder="") {
+/**
+ * Interpret the value for a textbox or textarea, return the actual string we should display
+ * @param mixed $elementIdentifier The id number, handle, or object representing the element we're working with
+ * @param int|string $entry_id The entry id number of the entry that we're working with, or 'new' for new entries not yet saved. Possibly referenced by eval'd code.
+ * @param mixed $currentValue Optional. The current value of the element in the entry. More efficient to pass this in if known. If set to the string USEDEFAULTVALUEINSTEADOFCURRENTVALUE then the default value will be used instead of the current value. This is necessary when determining defaults for newly created subform entries, since they have an entry id in the database already.
+ * @return mixed The default value that should be used for this element
+ */
+function interpretTextboxValue($elementIdentifier, $entry_id, $currentValue = null) {
 
-    if($placeholder) { // default value is placeholder text, not actual default value. only possible for textboxes, not textareas
-        return "";
-    }
+		if(!$elementObject = _getElementObject($elementIdentifier)) {
+			return "";
+		}
+		$ele_value = $elementObject->getVar('ele_value');
+		// try to figure out the current value, if one wasn't passed in
+		if($currentValue === null AND $entry_id AND is_numeric($entry_id)) {
+			$dataHandler = new formulizeDataHandler($elementObject->getVar('id_form'));
+			$currentValue = $dataHandler->getElementValueInEntry($entry_id, $elementObject);
+		}
+		if(($currentValue === null OR $currentValue == '')
+				AND ($entry_id == 'new' OR $elementObject->getVar('ele_use_default_when_blank'))
+			) {
+			if($elementObject->getVar('ele_type') == 'text') {
+				// if a textbox default is meant as a placeholder, return no default value
+				if($ele_value[11]) {
+					return "";
+				} else {
+					$textboxValue = $ele_value[2];
+				}
+			} else {
+				$textboxValue = $ele_value[0];
+			}
+		} else {
+			$textboxValue = $currentValue;
+		}
 
     global $xoopsUser;
+		$form_id = $elementObject->getVar('id_form'); // possibly referenced by eval'd code
 
-    if (strstr($ele_value, "\$default")) { // php default value
-				$ele_value = removeOpeningPHPTag($ele_value);
+    if (strstr($textboxValue, "\$default")) { // php default value
+				$textboxValue = removeOpeningPHPTag($textboxValue);
 			  $default = '';
-        eval(stripslashes($ele_value));
-        $ele_value = $default;
+        eval(stripslashes($textboxValue));
+        $textboxValue = $default;
     }
 
     $foundTerms = array();
     $position = 0;
     $foundBracket = true;
     while ($foundBracket) {
-        $position = strpos($ele_value, "{", $position);
+        $position = strpos($textboxValue, "{", $position);
         if ($position !== false) {
-            $closePos = strpos($ele_value, "}", $position);
+            $closePos = strpos($textboxValue, "}", $position);
             if ($closePos) {
-                $foundTerms[] = substr($ele_value, $position+1, $closePos-$position-1);
+                $foundTerms[] = substr($textboxValue, $position+1, $closePos-$position-1);
             }
             $position++;
         } else {
@@ -2683,7 +2710,7 @@ function getTextboxDefault($ele_value, $form_id, $entry_id, $placeholder="") {
             $replacementValue = "{ID}";
         }
         if (strtolower($thisTerm) == "sequence") {
-            $replacementValue = "{SEQUENCE}";
+					$replacementValue = "{SEQUENCE}";
         }
         if (!$xoopsUser AND !$replacementValue) {
             $replacementValue = "";
@@ -2708,34 +2735,34 @@ function getTextboxDefault($ele_value, $form_id, $entry_id, $placeholder="") {
             }
         }
         if(!$replacementValue) { continue; }
-        $ele_value = str_replace("{".$searchTerm."}", $replacementValue, $ele_value);
+        $textboxValue = str_replace("{".$searchTerm."}", $replacementValue, $textboxValue);
     }
-    return $ele_value;
+    return $textboxValue;
 }
 
 
 function getDateElementDefault($default_hint, $entry_id = false) {
     if($default_hint == "0000-00-00") {
-        $offset = formulize_getUserUTCOffsetSecs(); // user offset from UTC
-        return time() + $offset;
+			$offset = formulize_getUserUTCOffsetSecs(); // user offset from UTC
+			return time() + $offset;
     } elseif(preg_replace("/[^A-Z{}]/", "", $default_hint) === "{TODAY}") {
-        $number = str_replace('+', '', preg_replace("/[^0-9+-]/", "", $default_hint));
-        $seedTime = mktime(date("H"), date("i"), date("s"), date("m"), (date("d") + intval($number)), date("Y")); // will be based on UTC
-        $offset = formulize_getUserUTCOffsetSecs(timestamp: $seedTime); // user offset from UTC
-        return $seedTime + $offset;
+			$number = str_replace('+', '', preg_replace("/[^0-9+-]/", "", $default_hint));
+			$seedTime = mktime(date("H"), date("i"), date("s"), date("m"), (date("d") + intval($number)), date("Y")); // will be based on UTC
+			$offset = formulize_getUserUTCOffsetSecs(timestamp: $seedTime); // user offset from UTC
+			return $seedTime + $offset;
     } elseif(substr($default_hint, 0, 1) == '{' AND substr($default_hint, -1) == '}') {
-		$element_handler = xoops_getmodulehandler('elements', 'formulize');
-		$element_handle = substr($default_hint, 1, -1);
-		$default_hint = '';
-		if($elementObject = $element_handler->get($element_handle)) {
-			if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$element_handle])) {
-				$default_hint = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$element_handle];
-			} elseif($entry_id AND $entry_id != 'new') {
-				$dataHandler = new formulizeDataHandler($elementObject->getVar('id_form'));
-				$default_hint = $dataHandler->getElementValueInEntry($entry_id, $element_handle);
+			$element_handler = xoops_getmodulehandler('elements', 'formulize');
+			$element_handle = substr($default_hint, 1, -1);
+			$default_hint = '';
+			if($elementObject = $element_handler->get($element_handle)) {
+				if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$element_handle])) {
+					$default_hint = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$element_handle];
+				} elseif($entry_id AND $entry_id != 'new') {
+					$dataHandler = new formulizeDataHandler($elementObject->getVar('id_form'));
+					$default_hint = $dataHandler->getElementValueInEntry($entry_id, $element_handle);
+				}
 			}
 		}
-	}
     return $default_hint ? strtotime($default_hint) : "";
 }
 
@@ -7629,7 +7656,7 @@ function export_prepColumns($columns,$include_metadata=0) {
 // used for setting values that are supposed to exist by default in newly created subform entries
 function writeEntryDefaults($target_fid,$target_entry,$excludeHandles = array()) {
 
-  $defaultValueMap = getEntryDefaults($target_fid,$target_entry);
+  $defaultValueMap = getEntryDefaults($target_fid, $target_entry);
   $defaultElementHandles = convertElementIdsToElementHandles(array_keys($defaultValueMap));
 
   $i = 0;
@@ -7678,10 +7705,8 @@ function getEntryDefaults($target_fid,$target_entry) {
 		$ele_type = $thisDefaultEle->getVar('ele_type');
     switch($ele_type) {
       case "text":
-        $defaultTextToWrite = getTextboxDefault($ele_value_for_default[2], $target_fid, $target_entry, $ele_value_for_default[11]); // position 2 is default value for text boxes
-        break;
       case "textarea":
-        $defaultTextToWrite = getTextboxDefault($ele_value_for_default[0], $target_fid, $target_entry); // position 0 is default value for text boxes
+        $defaultTextToWrite = interpretTextboxValue($thisDefaultEle, $target_entry);
         break;
       case "date":
         $defaultTextToWrite = getDateElementDefault($ele_value_for_default[0], $target_entry);

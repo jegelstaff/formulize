@@ -190,9 +190,7 @@ class formulizeformulize extends XoopsObject {
                 break;
             case 'text':
             case 'textarea':
-                $defaultKey = $ele_type == "text" ? 2 : 0; // default key is in different places for different types of elements
-                $placeholder = $ele_type == "text" ? $ele_value[11] : "";
-                $default[] = getTextboxDefault($ele_value[$defaultKey], $this->getVar('id_form'), $entry_id, $placeholder);
+               	$default[] = interpretTextboxValue($this, $entry_id);
                 break;
             default: // other element types need to be implemented! And a new method needs to be added to custom classes???
         }

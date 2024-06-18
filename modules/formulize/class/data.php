@@ -165,15 +165,15 @@ class formulizeDataHandler  {
 	}
 
 	// this function makes a copy of an entry in one form
-	function cloneEntry($entry, $callback = null, $targetEntry = "new") {
-		if(!is_numeric($entry)) {
+	function cloneEntry($entry_id, $callback = null, $targetEntry = "new") {
+		if(!is_numeric($entry_id)) {
 			return false;
 		}
 
 		global $xoopsDB;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($this->fid);
-		$sql = "SELECT * FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = $entry";
+		$sql = "SELECT * FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = $entry_id";
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
 		}
@@ -296,7 +296,7 @@ class formulizeDataHandler  {
 	// returns an array with keys 0 through 3, corresponding to creation datetime, mod datetime, creation uid, mod uid
 	// intended to be called like this:
 	// $data_handler = new formulizeDataHandler($fid);
-    // list($creation_datetime, $mod_datetime, $creation_uid, $mod_uid) = $data_handler->getEntryMeta($entry);
+    // list($creation_datetime, $mod_datetime, $creation_uid, $mod_uid) = $data_handler->getEntryMeta($entry_id);
 	// if $updateCache is set, then the data should be queried for fresh, and cache reupdated
 	function getEntryMeta($id, $updateCache = false) {
 		static $cachedEntryMeta = array();
@@ -639,8 +639,8 @@ class formulizeDataHandler  {
 		global $xoopsDB;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($this->fid);
-		foreach($entries as $i=>$entry) {
-            $entries[$i] = intval($entry); // ensure we're not getting any funny business passed in to the DB
+		foreach($entries as $i=>$entry_id) {
+            $entries[$i] = intval($entry_id); // ensure we're not getting any funny business passed in to the DB
         }
         if(!isset($cachedValues[$handle][serialize($entries)])) {
             $sql = "SELECT `$handle`, `entry_id` FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')). " WHERE entry_id IN (".implode(',',array_filter($entries, 'is_numeric')).")";
@@ -870,11 +870,15 @@ class formulizeDataHandler  {
 
 	}
 
-	// This function writes a set of values to an entry
-	// $values will be an array of element ids and prepared values, or handles and prepared values.  Array must use all ids as keys or all handles as keys!
-	// $proxyUser is optional and if present will override the current xoopsuser uid as the creation user
-	// $update_metadata is a flag to allow us to skip updating the modification user and time.  Introduced for when we update derived values and the mod user and time should not change.
-	function writeEntry($entry, $values, $proxyUser=false, $forceUpdate=false, $update_metadata=true) {
+	/**
+	 * Write a set of values to an entry in a form's data table
+	 * @param int|string $entry_id The entry that we are writing to, or 'new' for a new entry
+	 * @param array $values An array of key-value pairs, where the keys are the element handles or element ids of the fields we are writing to, and the values are the values we are writing. The array must use all ids or all handles as the keys. Cannot mix and match!
+	 * @param boolean|int $proxyUser Optional. The user id of the user who is to be recorded as creating this entry, or false if the currently active user should be used
+	 * @param boolean $forceUpdate Optional. True/false to indicate if the query should be written even on a GET request. Defaults to false (so data is only written on POST requests)
+	 * @param boolean $update_metadata Optional. True/false to indicate if the metadata of the entry should be updated (is set to false when updating derived values for example).
+	 */
+	function writeEntry($entry_id, $values, $proxyUser=false, $forceUpdate=false, $update_metadata=true) {
 
 		global $xoopsDB, $xoopsUser, $formulize_existingValues;
 		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
@@ -882,7 +886,7 @@ class formulizeDataHandler  {
 		$formObject = $form_handler->get($this->fid);
 		$creation_uid = is_numeric($proxyUser) ? intval($proxyUser) : intval($uid);
 		static $cachedMaps = array();
-        static $cachedDataTypeMaps = array();
+    static $cachedDataTypeMaps = array();
 		$mapIDs = true; // assume we're mapping elements based on their IDs, because the values array is based on ids as keys
 		foreach(array_keys($values) as $thisKey) { // check the values array keys
 			if(!is_numeric($thisKey)) { // if we find a non numeric key, then we must map based on handles instead
@@ -891,7 +895,7 @@ class formulizeDataHandler  {
 			}
 		}
 
-        $encrypt_element_handles = array(); // array of element handles which should be encrypted
+    $encrypt_element_handles = array(); // array of element handles which should be encrypted
 
 		// get handle/id equivalents directly from database in one query, since we'll need them later
 		// much more efficient to do it this way than query for all the element objects, for instance.
@@ -910,191 +914,143 @@ class formulizeDataHandler  {
 						$handleElementMap[$handleElementMapArray['ele_handle']] = $handleElementMapArray['ele_handle'];
 						break;
 				}
-                if ($handleElementMapArray['ele_encrypt']) {
-                    // if this element should be encrypted in the database, save its handle into the encrypted element handle array
-                    $encrypt_element_handles[] = $handleElementMapArray['ele_handle'];
-                }
+				if ($handleElementMapArray['ele_encrypt']) {
+						// if this element should be encrypted in the database, save its handle into the encrypted element handle array
+						$encrypt_element_handles[] = $handleElementMapArray['ele_handle'];
+				}
 			}
 			$cachedMaps[$this->fid][$mapIDs] = $handleElementMap;
-
-            // also, gather once all the data types for the fid in question
-            $cachedDataTypeMaps[$this->fid] = $this->gatherDataTypes(); // cannot write this directly to the object property, do that below, because statics live in this method and ARE SHARED ACROSS ALL OBJECTS. Properties are unique to the object, so we must instantiate this as a static, same as the element maps, then assign to the property below.
+			// also, gather once all the data types for the fid in question
+			$cachedDataTypeMaps[$this->fid] = $this->gatherDataTypes(); // cannot write this directly to the object property, do that below, because statics live in this method and ARE SHARED ACROSS ALL OBJECTS. Properties are unique to the object, so we must instantiate this as a static, same as the element maps, then assign to the property below.
+		}
+    if(count((array) $this->dataTypeMap)==0) {
+      $this->dataTypeMap = $cachedDataTypeMaps[$this->fid]; // now assign the value of the property, based on the cached static array
 		}
 		if(!isset($handleElementMap)) {
 			$handleElementMap = $cachedMaps[$this->fid][$mapIDs];
 		}
-        if(count((array) $this->dataTypeMap)==0) {
-            $this->dataTypeMap = $cachedDataTypeMaps[$this->fid]; // now assign the value of the property, based on the cached static array
+
+		// convert the value array keys from IDs to handles if necessary
+		if($mapIDs) {
+			$element_values = array();
+			foreach ($values as $key => $value) {
+				$element_values[$handleElementMap[$key]] = $value;
+			}
+		} else {
+			$element_values = $values;
 		}
 
-		// check for presence of ID or SEQUENCE and look up the values we'll need to write
-		$lockIsOn = false;
-		$idElements = array_keys($values, "{ID}");
-		$seqElements = array_keys($values, "{SEQUENCE}");
-		foreach($idElements as $idKey=>$thisIdElement) { // on some versions of PHP, you cannot use the third boolean param with array_keys and get a strict match, so we do a double check on what we found this way to enforce strict matching
-			if($values[$thisIdElement] !== "{ID}") {
-				unset($idElements[$idKey]);
-			}
-		}
-		foreach($seqElements as $seqKey=>$thisSeqElement) {
-			if($values[$thisSeqElement] !== "{SEQUENCE}") {
-				unset($seqElements[$seqKey]);
+    // if it is a "new" entry, set default values
+		if(!is_numeric($entry_id) AND $entry_id == "new") {
+			$defaultValueMap = getEntryDefaults($this->fid, $entry_id);
+			foreach($defaultValueMap as $defaultValueElementId=>$defaultValueToWrite) {
+				if($defaultValueElementId) {
+					// setup things to be able to lookup the handle of the element in the map
+					$element_valuesKey = $handleElementMap[$defaultValueElementId];
+					if(!$mapIDs) {
+						$handles = convertElementIdsToElementHandles(array($defaultValueElementId));
+						$element_valuesKey = $handleElementMap[$handles[0]];
+					}
+					// if the element is not a value that we received, then let's use the default value
+					if(!isset($element_values[$element_valuesKey])) {
+						$element_values[$element_valuesKey] = $defaultValueToWrite;
+					}
+				}
 			}
 		}
 
-		if(count((array) $idElements)>0 OR count((array) $seqElements)>0) {
-			$lockIsOn = true;
-			$xoopsDB->query("LOCK TABLES ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." WRITE"); // need to lock table since there are multiple operations required on it for this one write transaction
-			if(count((array) $idElements)>0) {
-				if($entry == "new") {
-					$idMaxSQL = "SELECT AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA = '".XOOPS_DB_NAME."' AND TABLE_NAME = '".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."'";
-					if($idMaxRes = $xoopsDB->query($idMaxSQL)) {
-						$idMaxValue = $xoopsDB->fetchArray($idMaxRes);
-						foreach($idElements as $key) {
-							$values[$key] = $idMaxValue['AUTO_INCREMENT'];
+		// call a hook which can modify the values before saving. If it returns false, then return null up the chain.
+		list($element_values, $existing_values) = $formObject->onBeforeSave($entry_id, $element_values);
+		if ($element_values === false) { return null; }
+
+		// ensure the hook has not created any invalid element handles because that would cause the sql query to fail
+		// note that array_flip means the map will be using the handles as keys, and so the intersect will exclude any values that are not valid handles for the form.
+		$element_values = array_intersect_key($element_values, array_flip($handleElementMap));
+
+    $clean_element_values = $element_values; // save a clean copy of the original values before the escaping for writing to DB, so we can use these later in "on after save"
+
+		// don't write things that are unchanged from their current state in the database
+		foreach($element_values as $evHandle=>$thisElementValue) {
+			$thisElementValue = $thisElementValue === "{WRITEASNULL}" ? NULL : $thisElementValue;
+			if(array_key_exists($evHandle, $existing_values) AND $existing_values[$evHandle] === $thisElementValue) {
+				unset($element_values[$evHandle]);
+			}
+		}
+
+		if(isset($GLOBALS['formulize_overrideProxyUser'])) {
+      $creation_uid = intval($GLOBALS['formulize_overrideProxyUser']);
+    }
+
+		// no values to save, which may be caused by the onBeforeSave() handler deleting all of the values, or nothing has changed from the state in the database, so return null up the chain.
+    if (0 == count((array) $element_values)) {
+      return null;
+    }
+
+		// cache in memory a copy of the existing values, for reference elsewhere, such as sending notifications
+		// also cache newly saved/written values
+		if($entry_id != 'new') {
+			if(!isset($formulize_existingValues[$this->fid][$entry_id]['before_save'])) {
+				// grab the first set of previous values we find, representing the state before the first writing during this page load
+				// multiple writings can happen because of derived values and save handlers and so on
+				$formulize_existingValues[$this->fid][$entry_id]['before_save'] = $existing_values;
+			}
+			$formulize_existingValues[$this->fid][$entry_id]['after_save'] = $clean_element_values;
+		}
+
+		// escape field names and values before writing to database
+		$aes_password = getAESPassword();
+		foreach ($element_values as $key => $value) {
+			$encrypt_this = in_array($key, $encrypt_element_handles);
+			unset($element_values[$key]);   // since field name is not escaped, remove from array
+			$key = "`".formulize_db_escape($key)."`";                // escape field name
+			$element_values[$key] = $this->formatValueForQuery($key, $value, $entry_id);
+			if ($encrypt_this) {
+				// this element should be encrypted. note that the actual value is quoted and escapted already
+				$element_values[$key] = "AES_ENCRYPT({$element_values[$key]}, '$aes_password')";
+			}
+		}
+
+		// setup various metadata values...
+		if ($update_metadata or "new" == $entry_id) {
+			// update entry metadata
+			$element_values["`mod_datetime`"]   = "NOW()";
+			$element_values["`mod_uid`"]        = intval($uid);
+		}
+
+		// prepare query to write a new record
+		if ($entry_id == "new") {
+			// set metadata for new record
+			$element_values["`creation_datetime`"]  = "NOW()";
+			$element_values["`creation_uid`"]       = intval($creation_uid);
+			if($uid==0) {
+				foreach($_SESSION as $sessionVariable=>$value) {
+					if(substr($sessionVariable, 0, 19) == 'formulize_passCode_' AND is_numeric(str_replace('formulize_passCode_', '', $sessionVariable))) {
+						$sid = str_replace('formulize_passCode_', '', $sessionVariable);
+						$screen_handler = xoops_getmodulehandler('screen','formulize');
+						$screenObject = $screen_handler->get($sid);
+						$passcodeFid = $screenObject->getVar('fid');
+						if(in_array('anon_passcode_'.$passcodeFid, $handleElementMap)) { // passcode field exists in this data table, so we need to write the passcode to the entry
+							$element_values['anon_passcode_'.$passcodeFid] = $this->formatValueForQuery('anon_passcode_'.$sid, $value, $entry_id);
 						}
-					} else {
-						exit("Error: could not determine max value to use for {ID} elements.  SQL:<br>$idMaxSQL<br>");
-					}
-				} else {
-					foreach($idElements as $key) {
-						$values[$key] = $entry;
 					}
 				}
 			}
-			if(count((array) $seqElements)>0) {
-				foreach($seqElements as $seqElement) {
-					$maxSQL = "SELECT MAX(`".$handleElementMap[$seqElement]."`) FROM ". $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'));
-					if($maxRes = $xoopsDB->query($maxSQL)) {
-						$maxValue = $xoopsDB->fetchArray($maxRes);
-						$values[$seqElement] = $maxValue["MAX(`".$handleElementMap[$seqElement]."`)"] + 1;
-					} else {
-						exit("Error: count not determine max value for use in element $seqElement.  SQL:<br>$maxSQL<br>");
-					}
+			$sql = "INSERT INTO ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." (".implode(", ", array_keys($element_values)).") VALUES (".implode(", ", array_values($element_values)).")";
+			$entry_to_return = "";
+
+		// prepare query to update existing record
+    } else {
+			if (!function_exists("make_sql_set_values")) {
+				function make_sql_set_values($field, $value) {
+						return "$field = $value";
 				}
 			}
+      $sql_set_values = array_map("make_sql_set_values", array_keys($element_values), array_values($element_values));
+			$sql = "UPDATE " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) .  " SET ".implode(", ", $sql_set_values)." WHERE entry_id = ".intval($entry_id);
+			$entry_to_return = intval($entry_id);
 		}
 
-        // convert the value array keys from IDs to handles
-        $element_values = array();
-        foreach ($values as $key => $value) {
-            $element_values[$handleElementMap[$key]] = $value;
-        }
-
-        // if it is a "new" entry, set default values
-        if(!is_numeric($entry) AND $entry == "new") {
-            $defaultValueMap = getEntryDefaults($this->fid, $entry);
-            foreach($defaultValueMap as $defaultValueElementId=>$defaultValueToWrite) {
-                if($defaultValueElementId) {
-                    $hemKey = $defaultValueElementId;
-                    if(!$mapIDs) {
-                        $handles = convertElementIdsToElementHandles(array($defaultValueElementId));
-                        $hemKey = $handles[0];
-                    }
-                    if(!isset($element_values[$handleElementMap[$hemKey]])) {
-                        $element_values[$handleElementMap[$hemKey]] = $defaultValueToWrite;
-                    }
-                }
-            }
-        }
-
-        // call a hook which can modify the values before saving
-        list($element_values, $existing_values) = $formObject->onBeforeSave($entry, $element_values);
-
-				if ($element_values === false) { return null; }
-
-        // ensure the hook has not created any invalid element handles because that would cause the sql query to fail
-        // note that array_flip means both arrays use element handles as keys. values from the second array are ignored in the intersect
-        $element_values = array_intersect_key($element_values, array_flip($handleElementMap));
-
-        $clean_element_values = $element_values; // save a clean copy of the original values before the escaping for writing to DB, so we can use these later in "on after save"
-
-        foreach($element_values as $evHandle=>$thisElementValue) {
-            $thisElementValue = $thisElementValue === "{WRITEASNULL}" ? NULL : $thisElementValue;
-            if(array_key_exists($evHandle, $existing_values) AND $existing_values[$evHandle] === $thisElementValue) {
-                unset($element_values[$evHandle]); // don't write things that are unchanged from their current state in the database
-            }
-        }
-
-        if(isset($GLOBALS['formulize_overrideProxyUser'])) {
-            $creation_uid = intval($GLOBALS['formulize_overrideProxyUser']);
-        }
-
-        if (0 == count((array) $element_values)) {
-            // no values to save, which is probably caused by the onBeforeSave() handler deleting all of the values
-            return null;
-        }
-
-        // cache in memory a copy of the existing values, for reference elsewhere, such as sending notifications
-        // also cache newly saved/written values
-        if($entry != 'new') {
-            if(!isset($formulize_existingValues[$this->fid][$entry]['before_save'])) {
-                // grab the first set of previous values we find, representing the state before the first writing during this page load
-                // multiple writings can happen because of derived values and save handlers and so on
-                $formulize_existingValues[$this->fid][$entry]['before_save'] = $existing_values;
-            }
-            $formulize_existingValues[$this->fid][$entry]['after_save'] = $clean_element_values;
-        }
-
-        // escape field names and values before writing to database
-        $aes_password = getAESPassword();
-        foreach ($element_values as $key => $value) {
-            $encrypt_this = in_array($key, $encrypt_element_handles);
-            unset($element_values[$key]);   // since field name is not escaped, remove from array
-            $key = "`".formulize_db_escape($key)."`";                // escape field name
-            $element_values[$key] = $this->formatValueForQuery($key, $value);
-
-            if ($encrypt_this) {
-                // this element should be encrypted. note that the actual value is quoted and escapted already
-                $element_values[$key] = "AES_ENCRYPT({$element_values[$key]}, '$aes_password')";
-            }
-        }
-
-        if ($update_metadata or "new" == $entry) {
-            // update entry metadata
-            $element_values["`mod_datetime`"]   = "NOW()";
-            $element_values["`mod_uid`"]        = intval($uid);
-        }
-
-        // do the actual writing now that we have prepared all the info we need
-        if ($entry == "new") {
-            // set metadata for new record
-            $element_values["`creation_datetime`"]  = "NOW()";
-            $element_values["`creation_uid`"]       = intval($creation_uid);
-            if($uid==0) {
-                foreach($_SESSION as $sessionVariable=>$value) {
-                    if(substr($sessionVariable, 0, 19) == 'formulize_passCode_' AND is_numeric(str_replace('formulize_passCode_', '', $sessionVariable))) {
-
-                        $sid = str_replace('formulize_passCode_', '', $sessionVariable);
-                        $screen_handler = xoops_getmodulehandler('screen','formulize');
-                        $screenObject = $screen_handler->get($sid);
-                        $passcodeFid = $screenObject->getVar('fid');
-                        if(in_array('anon_passcode_'.$passcodeFid, $handleElementMap)) { // passcode field exists in this data table, so we need to write the passcode to the entry
-                            $element_values['anon_passcode_'.$passcodeFid] = $this->formatValueForQuery('anon_passcode_'.$sid, $value);
-                        }
-                    }
-                }
-            }
-
-            // write sql statement to insert new entry
-            $sql = "INSERT INTO ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." (".
-                implode(", ", array_keys($element_values)).") VALUES (".implode(", ", array_values($element_values)).")";
-            $entry_to_return = "";
-        } else {
-            if (!function_exists("make_sql_set_values")) {
-                function make_sql_set_values($field, $value) {
-                    return "$field = $value";
-                }
-            }
-            $sql_set_values = array_map("make_sql_set_values", array_keys($element_values), array_values($element_values));
-
-            // write sql statement to update entry
-            $sql = "UPDATE " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) .  " SET ".implode(", ", $sql_set_values).
-                " WHERE entry_id = ".intval($entry);
-            $entry_to_return = intval($entry);
-        }
-
-        formulize_updateRevisionData($formObject, $entry_to_return, $forceUpdate);
+    formulize_updateRevisionData($formObject, $entry_to_return, $forceUpdate);
 
 		if($forceUpdate) {
 			if(!$res = $xoopsDB->queryF($sql)) {
@@ -1103,23 +1059,35 @@ class formulizeDataHandler  {
 		} elseif(!$res = $xoopsDB->query($sql)) {
 			exit("Error: your data could not be saved in the database.  This was the query that failed:<br>$sql<br>".$xoopsDB->error());
 		}
-		$lastWrittenId = $xoopsDB->getInsertId();
-		if($lockIsOn) {
-            $xoopsDB->query("UNLOCK TABLES");
-        }
-		if($entry_to_return) {
-            $this->updateCaches($entry_to_return);
-        }
 
-		// remove any entry-editing lock that may be in place for this record, since it was just saved successfully...a new lock can now be placed on the entry the next time any element from the form, for this entry, is rendered.
-		if($entry != "new") {
-            $lock_file_name = XOOPS_ROOT_PATH."/modules/formulize/temp/entry_".intval($entry)."_in_form_".$formObject->getVar('id_form')."_is_locked_for_editing";
-            if (file_exists($lock_file_name))
-                unlink($lock_file_name);
+		if($entry_to_return) {
+      $this->updateCaches($entry_to_return);
+    } else {
+			$entry_to_return = $xoopsDB->getInsertId();
 		}
 
-        $entry_to_return = $entry_to_return ? $entry_to_return : $lastWrittenId;
-        $formObject->onAfterSave($entry_to_return, $clean_element_values, $existing_values, $entry); // last param, original entry id, will be 'new' if new save
+		// if we wrote any {ID} values to the DB that should become the entry id number of the record, update them now to match the actual entry_id
+		if($writePrimaryKeyToElements = array_keys($element_values, "'{ID}'", true)) {
+			$pkSQL = "UPDATE ". $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) .  " SET ".implode(" = entry_id, ", $writePrimaryKeyToElements)." = entry_id WHERE entry_id = $entry_to_return";
+			if($forceUpdate) {
+				if(!$res = $xoopsDB->queryF($pkSQL)) {
+					exit("Error: could not record entry id value for {ID} requested in element(s) ".implode(", ",$writePrimaryKeyToElements).". This was the query that failed:<br>$pkSQL<br>Query was forced and still failed so the SQL is probably bad.<br>".$xoopsDB->error());
+				}
+			} elseif(!$res = $xoopsDB->query($pkSQL)) {
+				exit("Error: could not record entry id value for {ID} requested in element(s) ".implode(", ",$writePrimaryKeyToElements).". This was the query that failed:<br>$pkSQL<br>".$xoopsDB->error());
+			}
+		}
+
+
+		// remove any entry-editing lock that may be in place for this record, since it was just saved successfully...a new lock can now be placed on the entry the next time any element from the form, for this entry, is rendered.
+		if($entry_id != "new") {
+      $lock_file_name = XOOPS_ROOT_PATH."/modules/formulize/temp/entry_".intval($entry_id)."_in_form_".$formObject->getVar('id_form')."_is_locked_for_editing";
+      if (file_exists($lock_file_name)) {
+        unlink($lock_file_name);
+			}
+		}
+
+		$formObject->onAfterSave($entry_to_return, $clean_element_values, $existing_values, $entry_id); // last param, original entry id, will be 'new' if new save
 
 		return $entry_to_return;
 	}
@@ -1172,23 +1140,42 @@ class formulizeDataHandler  {
         return $dataTypeMap;
     }
 
-    // format a given value for inclusion in a DB insert or update query, based on the data type of the element, and the numeric or strig value of the data
-    function formatValueForQuery($field, $value) {
-        if ("{WRITEASNULL}" === $value or null === $value) {
-            return "NULL";
-        } else {
-            // if this element has a numeric type in the DB, no quotes
-            if($this->dataTypeIsNumeric($field)) {
-                if(is_numeric($value)) {
-                    return formulize_db_escape($value);
-                } else { // non numeric values cannot be written to a numeric field, so NULL them
-                    return "NULL";
-                }
-            } elseif($this->dataTypeIsDate($field) AND (!$value OR $value == _DATE_DEFAULT OR $value == '0000-00-00')) {
-                return "NULL";
-            }
-        }
-        return "'".formulize_db_escape($value)."'";
+
+		/**
+		 * Format a given value for inclusion in a DB insert or update query, based on the data type of the element, and the numeric or string value of the data
+		 *
+		 * Also handle special cases of { } terms that we know how to handle
+		 *
+		 * @param string $field The name of the field in the database (element handle).
+		 * @param mixed $value The value we're going to try and insert into the DB for the given field
+		 * @param mixed $entry_id Optional. The entry id of the record we're inserting this data to, or 'new' to represent a new entry
+		 * @return string A valid string for using in a SQL query to insert/update the value of the field in the database
+		 */
+    function formatValueForQuery($field, $value, $entry_id = null) {
+			if ("{WRITEASNULL}" === $value or null === $value) {
+				return "NULL";
+			} elseif("{SEQUENCE}" === $value) {
+				global $xoopsDB;
+				$element_handler = xoops_getmodulehandler('elements','formulize');
+				$form_handler = xoops_getmodulehandler('forms','formulize');
+				$elementObject = $element_handler->get(trim($field, "`"));
+				$formObject = $form_handler->get($elementObject->getVar('id_form'));
+				return "(SELECT CASE WHEN MAX(seqquerytable.$field) > 0 THEN (MAX(seqquerytable.$field) + 1) ELSE 1 END FROM ".$xoopsDB->prefix('formulize_'.$formObject->getVar('form_handle'))." as seqquerytable)";
+			} elseif("{ID}" === $value AND is_numeric($entry_id)) {
+				return intval($entry_id);
+			} else {
+				// if this element has a numeric type in the DB, no quotes
+				if($this->dataTypeIsNumeric($field)) {
+					if(is_numeric($value)) {
+							return formulize_db_escape($value);
+					} else { // non numeric values cannot be written to a numeric field, so NULL them
+							return "NULL";
+					}
+				} elseif($this->dataTypeIsDate($field) AND (!$value OR $value == _DATE_DEFAULT OR $value == '0000-00-00')) {
+					return "NULL";
+				}
+			}
+			return "'".formulize_db_escape($value)."'";
     }
 
 	// this function updates relevant caches after data has been updated in the database
