@@ -8114,7 +8114,7 @@ function writeToFormulizeLog($data) {
 	static $formulizeLogFileStorageDurationHours = 168;
 	static $logFilesCleanedUp = false;
 	static $phpUniqueId = '';
-	$phpUniqueId = $phpUniqueId ? $phpUniqueId : uniqid('php_request_id', true);
+	$phpUniqueId = $phpUniqueId ? $phpUniqueId : uniqid('', true);
 	if(!$formulizeConfig) {
 		$config_handler = xoops_gethandler('config');
 		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());

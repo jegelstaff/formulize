@@ -75,6 +75,7 @@ $formulizeStandaloneQueries = str_replace("REPLACE_WITH_FORMULIZE_MODULE_ID", $f
 $formulizeStandaloneQueries = str_replace("REPLACE_WITH_PROTECTOR_MODULE_ID", $protectorModuleId, $formulizeStandaloneQueries);
 $formulizeStandaloneQueries = str_replace("REPLACE_WITH_TIMEZONE", $offset, $formulizeStandaloneQueries);
 $formulizeStandaloneQueries = str_replace("REPLACE_WITH_YEAR", $year, $formulizeStandaloneQueries);
+$formulizeStandaloneQueries = str_replace("REPLACE_WITH_XOOPS_ROOT_PATH", XOOPS_ROOT_PATH, $formulizeStandaloneQueries);
 
 foreach(explode(";\r",str_replace(array("\n","\n\r","\r\n"), "\r", $formulizeStandaloneQueries)) as $sql) { // convert all kinds of line breaks to \r and then split on semicolon-linebreak to get individual queries
 	if($sql) {
