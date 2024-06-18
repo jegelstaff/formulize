@@ -486,28 +486,30 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
 							break;
 					}
 					$exif = exif_read_data($path);
-					if ($image AND $exif AND isset($exif['Orientation']))	{
-						$orientation = $exif['Orientation'];
-						if ($orientation == 6 OR $orientation == 5) { $image = imagerotate($image, 270, 0); }
-						if ($orientation == 3 OR $orientation == 4) { $image = imagerotate($image, 180, 0); }
-						if ($orientation == 8 OR $orientation == 7) { $image = imagerotate($image, 90, 0); }
-						if ($orientation == 5 OR $orientation == 4 OR $orientation == 7) { imageflip($image, IMG_FLIP_HORIZONTAL); }
-					}
-					$image = imagescale($image, 200);
-					switch($fileExtension) {
-						case 'gif':
-							imagegif($image, $thumbPath);
-							break;
-						case 'png':
-							imagepng($image, $thumbPath);
-							break;
-						case 'webp':
-							imagewebp($image, $thumbPath);
-							break;
-						case 'jpg':
-						case 'jpeg':
-							imagejpeg($image, $thumbPath);
-							break;
+					if ($image) {
+						if($exif AND isset($exif['Orientation']))	{
+							$orientation = $exif['Orientation'];
+							if ($orientation == 6 OR $orientation == 5) { $image = imagerotate($image, 270, 0); }
+							if ($orientation == 3 OR $orientation == 4) { $image = imagerotate($image, 180, 0); }
+							if ($orientation == 8 OR $orientation == 7) { $image = imagerotate($image, 90, 0); }
+							if ($orientation == 5 OR $orientation == 4 OR $orientation == 7) { imageflip($image, IMG_FLIP_HORIZONTAL); }
+						}
+						$image = imagescale($image, 200);
+						switch($fileExtension) {
+							case 'gif':
+								imagegif($image, $thumbPath);
+								break;
+							case 'png':
+								imagepng($image, $thumbPath);
+								break;
+							case 'webp':
+								imagewebp($image, $thumbPath);
+								break;
+							case 'jpg':
+							case 'jpeg':
+								imagejpeg($image, $thumbPath);
+								break;
+						}
 					}
 				}
 				$url = $thumbUrl;
