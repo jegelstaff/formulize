@@ -2635,8 +2635,8 @@ function removeOpeningPHPTag($string) {
 /**
  * Interpret the value for a textbox or textarea, return the actual string we should display
  * @param mixed $elementIdentifier The id number, handle, or object representing the element we're working with
- * @param int|string $entry_id The entry id number of the entry that we're working with. Possibly referenced by eval'd code.
- * @param mixed Optional. The current value of the element in the entry. More efficient to pass this in if known.
+ * @param int|string $entry_id The entry id number of the entry that we're working with, or 'new' for new entries not yet saved. Possibly referenced by eval'd code.
+ * @param mixed $currentValue Optional. The current value of the element in the entry. More efficient to pass this in if known. If set to the string USEDEFAULTVALUEINSTEADOFCURRENTVALUE then the default value will be used instead of the current value. This is necessary when determining defaults for newly created subform entries, since they have an entry id in the database already.
  * @return mixed The default value that should be used for this element
  */
 function interpretTextboxValue($elementIdentifier, $entry_id, $currentValue = null) {
@@ -2645,40 +2645,47 @@ function interpretTextboxValue($elementIdentifier, $entry_id, $currentValue = nu
 			return "";
 		}
 		$ele_value = $elementObject->getVar('ele_value');
-		if($currentValue === null) {
+		// try to figure out the current value, if one wasn't passed in
+		if($currentValue === null AND $entry_id AND is_numeric($entry_id)) {
+			$dataHandler = new formulizeDataHandler($elementObject->getVar('id_form'));
+			$currentValue = $dataHandler->getElementValueInEntry($entry_id, $elementObject);
+		}
+		if(($currentValue === null OR $currentValue == '')
+				AND ($entry_id == 'new' OR $elementObject->getVar('ele_use_default_when_blank'))
+			) {
 			if($elementObject->getVar('ele_type') == 'text') {
 				// if a textbox default is meant as a placeholder, return no default value
 				if($ele_value[11]) {
 					return "";
 				} else {
-					$defaultValue = $ele_value[2];
+					$textboxValue = $ele_value[2];
 				}
 			} else {
-				$defaultValue = $ele_value[0];
+				$textboxValue = $ele_value[0];
 			}
 		} else {
-			$defaultValue = $currentValue;
+			$textboxValue = $currentValue;
 		}
 
     global $xoopsUser;
 		$form_id = $elementObject->getVar('id_form'); // possibly referenced by eval'd code
 
-    if (strstr($defaultValue, "\$default")) { // php default value
-				$defaultValue = removeOpeningPHPTag($defaultValue);
+    if (strstr($textboxValue, "\$default")) { // php default value
+				$textboxValue = removeOpeningPHPTag($textboxValue);
 			  $default = '';
-        eval(stripslashes($defaultValue));
-        $defaultValue = $default;
+        eval(stripslashes($textboxValue));
+        $textboxValue = $default;
     }
 
     $foundTerms = array();
     $position = 0;
     $foundBracket = true;
     while ($foundBracket) {
-        $position = strpos($defaultValue, "{", $position);
+        $position = strpos($textboxValue, "{", $position);
         if ($position !== false) {
-            $closePos = strpos($defaultValue, "}", $position);
+            $closePos = strpos($textboxValue, "}", $position);
             if ($closePos) {
-                $foundTerms[] = substr($defaultValue, $position+1, $closePos-$position-1);
+                $foundTerms[] = substr($textboxValue, $position+1, $closePos-$position-1);
             }
             $position++;
         } else {
@@ -2728,34 +2735,34 @@ function interpretTextboxValue($elementIdentifier, $entry_id, $currentValue = nu
             }
         }
         if(!$replacementValue) { continue; }
-        $defaultValue = str_replace("{".$searchTerm."}", $replacementValue, $defaultValue);
+        $textboxValue = str_replace("{".$searchTerm."}", $replacementValue, $textboxValue);
     }
-    return $defaultValue;
+    return $textboxValue;
 }
 
 
 function getDateElementDefault($default_hint, $entry_id = false) {
     if($default_hint == "0000-00-00") {
-        $offset = formulize_getUserUTCOffsetSecs(); // user offset from UTC
-        return time() + $offset;
+			$offset = formulize_getUserUTCOffsetSecs(); // user offset from UTC
+			return time() + $offset;
     } elseif(preg_replace("/[^A-Z{}]/", "", $default_hint) === "{TODAY}") {
-        $number = str_replace('+', '', preg_replace("/[^0-9+-]/", "", $default_hint));
-        $seedTime = mktime(date("H"), date("i"), date("s"), date("m"), (date("d") + intval($number)), date("Y")); // will be based on UTC
-        $offset = formulize_getUserUTCOffsetSecs(timestamp: $seedTime); // user offset from UTC
-        return $seedTime + $offset;
+			$number = str_replace('+', '', preg_replace("/[^0-9+-]/", "", $default_hint));
+			$seedTime = mktime(date("H"), date("i"), date("s"), date("m"), (date("d") + intval($number)), date("Y")); // will be based on UTC
+			$offset = formulize_getUserUTCOffsetSecs(timestamp: $seedTime); // user offset from UTC
+			return $seedTime + $offset;
     } elseif(substr($default_hint, 0, 1) == '{' AND substr($default_hint, -1) == '}') {
-		$element_handler = xoops_getmodulehandler('elements', 'formulize');
-		$element_handle = substr($default_hint, 1, -1);
-		$default_hint = '';
-		if($elementObject = $element_handler->get($element_handle)) {
-			if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$element_handle])) {
-				$default_hint = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$element_handle];
-			} elseif($entry_id AND $entry_id != 'new') {
-				$dataHandler = new formulizeDataHandler($elementObject->getVar('id_form'));
-				$default_hint = $dataHandler->getElementValueInEntry($entry_id, $element_handle);
+			$element_handler = xoops_getmodulehandler('elements', 'formulize');
+			$element_handle = substr($default_hint, 1, -1);
+			$default_hint = '';
+			if($elementObject = $element_handler->get($element_handle)) {
+				if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$element_handle])) {
+					$default_hint = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$element_handle];
+				} elseif($entry_id AND $entry_id != 'new') {
+					$dataHandler = new formulizeDataHandler($elementObject->getVar('id_form'));
+					$default_hint = $dataHandler->getElementValueInEntry($entry_id, $element_handle);
+				}
 			}
 		}
-	}
     return $default_hint ? strtotime($default_hint) : "";
 }
 
@@ -7649,7 +7656,7 @@ function export_prepColumns($columns,$include_metadata=0) {
 // used for setting values that are supposed to exist by default in newly created subform entries
 function writeEntryDefaults($target_fid,$target_entry,$excludeHandles = array()) {
 
-  $defaultValueMap = getEntryDefaults($target_fid,$target_entry);
+  $defaultValueMap = getEntryDefaults($target_fid, $target_entry);
   $defaultElementHandles = convertElementIdsToElementHandles(array_keys($defaultValueMap));
 
   $i = 0;
