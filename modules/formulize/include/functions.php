@@ -8114,6 +8114,7 @@ function writeToFormulizeLog($data) {
 	static $formulizeLogFileStorageDurationHours = 168;
 	static $logFilesCleanedUp = false;
 	static $phpUniqueId = '';
+	static $todayLogFileExists = null;
 	$phpUniqueId = $phpUniqueId ? $phpUniqueId : uniqid('', true);
 	if(!$formulizeConfig) {
 		$config_handler = xoops_gethandler('config');
@@ -8166,10 +8167,12 @@ function writeToFormulizeLog($data) {
 	$todayLogFile = $formulizeLogFileLocation.'/'.'formulize_log_'.date('Y-m-d').'.log';
 	$yesterdayLogFile = $formulizeLogFileLocation.'/'.'formulize_log_'.date('Y-m-d', strtotime('-1 day')).'.log';
 	$activeLogFile = $formulizeLogFileLocation.'/'.'formulize_log_active.log';
-	if(!file_exists($todayLogFile)) {
-		file_put_contents($todayLogFile, '', LOCK_EX);
-		if(file_exists($activeLogFile)) {
-			rename($activeLogFile, $yesterdayLogFile);
+	$todayLogFileExists = $todayLogFileExists === null ? file_exists($todayLogFile) : $todayLogFileExists;
+	if(!$todayLogFileExists) {
+		$madeNewDayLog = file_put_contents($todayLogFile, '', LOCK_EX);
+		$updatedYesterdayLog = rename($activeLogFile, $yesterdayLogFile);
+		if($madeNewDayLog === false OR $updatedYesterdayLog === false) {
+			return false;
 		}
 	}
 	return file_put_contents($activeLogFile, json_encode($data, JSON_NUMERIC_CHECK)."\n", FILE_APPEND | LOCK_EX);
