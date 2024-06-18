@@ -8169,11 +8169,8 @@ function writeToFormulizeLog($data) {
 	$activeLogFile = $formulizeLogFileLocation.'/'.'formulize_log_active.log';
 	$todayLogFileExists = $todayLogFileExists === null ? file_exists($todayLogFile) : $todayLogFileExists;
 	if(!$todayLogFileExists) {
-		$madeNewDayLog = file_put_contents($todayLogFile, '', LOCK_EX);
-		$updatedYesterdayLog = rename($activeLogFile, $yesterdayLogFile);
-		if($madeNewDayLog === false OR $updatedYesterdayLog === false) {
-			return false;
-		}
+		file_put_contents($todayLogFile, '', LOCK_EX);
+		rename($activeLogFile, $yesterdayLogFile);
 	}
 	return file_put_contents($activeLogFile, json_encode($data, JSON_NUMERIC_CHECK)."\n", FILE_APPEND | LOCK_EX);
 }
