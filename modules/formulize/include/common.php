@@ -33,31 +33,26 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-if( !defined("formulize_URL") ){
-	define("formulize_URL", XOOPS_URL."/modules/formulize/");
+if(!defined('FORMULIZE_COMMON_INCLUDED')) {
+	define('FORMULIZE_COMMON_INCLUDED', 1);
 }
-if( !defined("formulize_ROOT_PATH") ){
-	define("formulize_ROOT_PATH", XOOPS_ROOT_PATH."/modules/formulize/");
-}
-include_once XOOPS_ROOT_PATH."/class/xoopsformloader.php";
-$formulize_mgr =& xoops_getmodulehandler('elements', 'formulize');
-include_once formulize_ROOT_PATH.'class/elementrenderer.php';
-
-include_once formulize_ROOT_PATH.'include/constants.php';
-include_once formulize_ROOT_PATH.'include/functions.php';
-include_once formulize_ROOT_PATH.'include/formdisplay.php';
-include_once formulize_ROOT_PATH.'include/entriesdisplay.php';
-include_once formulize_ROOT_PATH.'include/graphdisplay.php';
-include_once formulize_ROOT_PATH.'include/calendardisplay.php';
-include_once formulize_ROOT_PATH.'include/elementdisplay.php';
-include_once formulize_ROOT_PATH.'include/griddisplay.php';
-include_once formulize_ROOT_PATH.'include/extract.php';
-include_once formulize_ROOT_PATH.'include/customCodeForApplications.php';
-
-include_once formulize_ROOT_PATH.'class/usersGroupsPerms.php';
-include_once formulize_ROOT_PATH.'class/data.php';
+include_once XOOPS_ROOT_PATH . '/class/xoopsformloader.php';
+include_once XOOPS_ROOT_PATH . '/modules/formulize/class/elementrenderer.php';
+include_once XOOPS_ROOT_PATH . '/modules/formulize/include/constants.php';
+include_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions.php';
+include_once XOOPS_ROOT_PATH . '/modules/formulize/include/formdisplay.php';
+include_once XOOPS_ROOT_PATH . '/modules/formulize/include/entriesdisplay.php';
+include_once XOOPS_ROOT_PATH . '/modules/formulize/include/graphdisplay.php';
+include_once XOOPS_ROOT_PATH . '/modules/formulize/include/calendardisplay.php';
+include_once XOOPS_ROOT_PATH . '/modules/formulize/include/elementdisplay.php';
+include_once XOOPS_ROOT_PATH . '/modules/formulize/include/griddisplay.php';
+include_once XOOPS_ROOT_PATH . '/modules/formulize/include/extract.php';
+include_once XOOPS_ROOT_PATH . '/modules/formulize/include/customCodeForApplications.php';
+include_once XOOPS_ROOT_PATH . '/modules/formulize/class/usersGroupsPerms.php';
+include_once XOOPS_ROOT_PATH . '/modules/formulize/class/data.php';
 
 //Add the language constants
+global $xoopsConfig;
 if (file_exists(XOOPS_ROOT_PATH . "/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
     include_once XOOPS_ROOT_PATH . "/modules/formulize/language/".$xoopsConfig['language']."/main.php";
     include_once XOOPS_ROOT_PATH . "/modules/formulize/language/".$xoopsConfig['language']."/admin.php";
