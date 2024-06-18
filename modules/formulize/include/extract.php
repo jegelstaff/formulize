@@ -1931,7 +1931,7 @@ function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form
                 if(!$primary_entry_id) { continue; } // datasets can contain empty values for subforms, etc, when no entries exist. We must not process phantom non-existent entries.
                 $dataToWrite = array();
                 foreach ($metadata[$formHandle] as $formulaNumber => $thisMetaData) {
-                    $functionName = "derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "�", ",", ")", "(", "[", "]"), "_", $formHandle)."_".$relationship_id."_".$form_id."_".$formulaNumber;
+                    $functionName = "derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "�", ",", ")", "(", "[", "]"), "_", trans($formHandle, 'en'))."_".$relationship_id."_".$form_id."_".$formulaNumber;
                     // want to turn off the derived value update flag for the actual processing of a value, since the function might have a getData call in it!!
                     $resetDerivedValueFlag = false;
                     if (isset($GLOBALS['formulize_forceDerivedValueUpdate'])) {
@@ -2000,10 +2000,10 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
             }
             $formula = implode("\n", $formulaLines);
         }
-        $fileName = XOOPS_ROOT_PATH.'/modules/formulize/cache/Derived_value_formula_for_'.$thisMetaData['handle'].'_in_form_'.$thisMetaData['form_id']."_(fid_".$fid."_frid_".$frid."_fn_".$formulaNumber.").php";
+        $fileName = XOOPS_ROOT_PATH.'/modules/formulize/cache/Derived_value_formula_for_'.trans($thisMetaData['handle'], 'en').'_in_form_'.$thisMetaData['form_id']."_(fid_".$fid."_frid_".$frid."_fn_".$formulaNumber.").php";
 				$formula = removeOpeningPHPTag($formula);
         file_put_contents($fileName, "<?php
-    function derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "�", ",", ")", "(", "[", "]"), "_", $formHandle)."_".$frid."_".$fid."_".$formulaNumber."(\$entry, \$form_id, \$entry_id, \$relationship_id) {
+    function derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "�", ",", ")", "(", "[", "]"), "_", trans($formHandle, 'en'))."_".$frid."_".$fid."_".$formulaNumber."(\$entry, \$form_id, \$entry_id, \$relationship_id) {
         $formula
         return \$value;
     }\r\n");
