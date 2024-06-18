@@ -946,14 +946,14 @@ class formulizeDataHandler  {
 			foreach($defaultValueMap as $defaultValueElementId=>$defaultValueToWrite) {
 				if($defaultValueElementId) {
 					// setup things to be able to lookup the handle of the element in the map
-					$hemKey = $defaultValueElementId;
+					$element_valuesKey = $handleElementMap[$defaultValueElementId];
 					if(!$mapIDs) {
 						$handles = convertElementIdsToElementHandles(array($defaultValueElementId));
-						$hemKey = $handles[0];
+						$element_valuesKey = $handleElementMap[$handles[0]];
 					}
 					// if the element is not a value that we received, then let's use the default value
-					if(!isset($element_values[$handleElementMap[$hemKey]])) {
-						$element_values[$handleElementMap[$hemKey]] = $defaultValueToWrite;
+					if(!isset($element_values[$element_valuesKey])) {
+						$element_values[$element_valuesKey] = $defaultValueToWrite;
 					}
 				}
 			}
