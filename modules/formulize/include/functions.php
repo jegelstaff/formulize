@@ -8113,7 +8113,8 @@ function writeToFormulizeLog($data) {
 	static $formulizeLogFileLocation = XOOPS_ROOT_PATH.'/logs';
 	static $formulizeLogFileStorageDurationHours = 168;
 	static $logFilesCleanedUp = false;
-	static $phpUniqueId = uniqid('php_request_id', true);
+	static $phpUniqueId = '';
+	$phpUniqueId = $phpUniqueId ? $phpUniqueId : uniqid('php_request_id', true);
 	if(!$formulizeConfig) {
 		$config_handler = xoops_gethandler('config');
 		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
