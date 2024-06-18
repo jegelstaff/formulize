@@ -8109,37 +8109,61 @@ function writeToFormulizeLog($data) {
 
 	// initialize the configuration settings
 	static $formulizeConfig = false;
+	static $formulizeLoggingOnOff = false;
 	static $formulizeLogFileLocation = XOOPS_ROOT_PATH.'/logs';
-	static $formulizeLogFileStorageDuration = 168;
+	static $formulizeLogFileStorageDurationHours = 168;
 	static $logFilesCleanedUp = false;
+	static $phpUniqueId = uniqid('php_request_id', true);
 	if(!$formulizeConfig) {
 		$config_handler = xoops_gethandler('config');
 		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+		$formulizeLoggingOnOff = $formulizeConfig['formulizeLoggingOnOff'];
 		$formulizeLogFileLocation = $formulizeConfig['formulizeLogFileLocation'];
-		$formulizeLogFileStorageDuration = $formulizeConfig['formulizeLogFileStorageDuration'];
+		$formulizeLogFileStorageDurationHours = $formulizeConfig['formulizeLogFileStorageDurationHours'];
 	}
 
-	// check if log file location is valid
-	if(!$formulizeLogFileLocation OR !is_dir($formulizeLogFileLocation)) { return false; }
+	// check if logging is on and log file location is valid
+	if(!$formulizeLoggingOnOff OR !$formulizeLogFileLocation OR !is_dir($formulizeLogFileLocation)) { return false; }
 
 	// cleanup old log files (last param requires seconds) -- only once per page load
 	if(!$logFilesCleanedUp) {
-		formulize_scandirAndClean($formulizeLogFileLocation, 'formulize_log_', $formulizeLogFileStorageDuration * 60 * 60);
+		formulize_scandirAndClean($formulizeLogFileLocation, 'formulize_log_', $formulizeLogFileStorageDurationHours * 60 * 60);
 		$logFilesCleanedUp = true;
 	}
 
-	// prepend certain metadata to the data we're logging
 	// UNIQUE ID is only available if the server has mod_unique_id turned on
+	// All log lines have standard format, but values are dependent on the event that wrote to the log
 	$data = array(
 		'microtime' => microtime(true),
-		'request_id' => (isset($_SERVER['UNIQUE_ID']) ? $_SERVER['UNIQUE_ID'] : 'mod_unique_id is not enabled'),
-		'session_id' => session_id()
-		) + $data;
+		'request_id' => (isset($_SERVER['UNIQUE_ID']) ? $_SERVER['UNIQUE_ID'] : $phpUniqueId),
+		'session_id' => session_id(),
+		'formulize_event' => (isset($data['formulize_event']) ? $data['formulize_event'] : ''),
+		'user_id' => (isset($data['user_id']) ? $data['user_id'] : ''),
+		'form_id' => (isset($data['form_id']) ? $data['form_id'] : ''),
+		'screen_id' => (isset($data['screen_id']) ? $data['screen_id'] : ''),
+		'entry_id' => (isset($data['entry_id']) ? $data['entry_id'] : ''),
+		'form_screen_page_number' => (isset($data['form_screen_page_number']) ? $data['form_screen_page_number'] : ''),
+		'searches' => (isset($data['searches']) ? $data['searches'] : ''),
+		'sort' => (isset($data['sort']) ? $data['sort'] : ''),
+		'order' => (isset($data['order']) ? $data['order'] : ''),
+		'scope' => (isset($data['scope']) ? $data['scope'] : ''),
+		'limit_start' => (isset($data['limit_start']) ? $data['limit_start'] : ''),
+		'page_size' => (isset($data['page_size']) ? $data['page_size'] : ''),
+		'uids_to_notify' => (isset($data['uids_to_notify']) ? $data['uids_to_notify'] : ''),
+		'formulize_notification_emails_if_uid_is_zero' => (isset($data['formulize_notification_emails_if_uid_is_zero']) ? $data['formulize_notification_emails_if_uid_is_zero'] : ''),
+		'subject' => (isset($data['subject']) ? $data['subject'] : ''),
+		'template' => (isset($data['template']) ? $data['template'] : ''),
+		'tags' => (isset($data['tags']) ? $data['tags'] : ''),
+		'PHP_error_number' => (isset($data['PHP_error_number']) ? $data['PHP_error_number'] : ''),
+		'PHP_error_string' => (isset($data['PHP_error_string']) ? $data['PHP_error_string'] : ''),
+		'PHP_error_file' => (isset($data['PHP_error_file']) ? $data['PHP_error_file'] : ''),
+		'PHP_error_errline' => (isset($data['PHP_error_errline']) ? $data['PHP_error_errline'] : '')
+	);
 
 	// write the new log entry (to a new file if necessary, active file has generic name, archived files are named with the current date based on server timezone)
 	// write operation is self contained in file_put_contents and closes the file, so it's available for other concurrent requests to write to after
 	$logFileName = 'formulize_log_'.date('Y-m-d').'.log';
-	$activeLogFileName = 'formulize_log_today.log';
+	$activeLogFileName = 'formulize_log_active.log';
 	if(file_put_contents($formulizeLogFileLocation.'/'.$logFileName, json_encode($data, JSON_NUMERIC_CHECK)."\n", FILE_APPEND | LOCK_EX)) {
 		return copy($formulizeLogFileLocation.'/'.$logFileName, $formulizeLogFileLocation.'/'.$activeLogFileName);
 	}

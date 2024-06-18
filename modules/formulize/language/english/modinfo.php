@@ -98,10 +98,12 @@ define("_MI_formulize_F7MENUTEMPLATEDESC", "If you have upgraded from an older v
 define("_MI_formulize_USEOLDCUSTOMBUTTONEFFECTWRITING", "Use the old method of writing effects for custom buttons");
 define("_MI_formulize_USEOLDCUSTOMBUTTONEFFECTWRITINGDESC", "This should always be \"No\" unless this is an older installation that already has custom buttons that are dependent on the old method, which was based on the declaring human readable values, instead of the database values for elements.");
 
+define("_MI_formulize_FORMULIZELOGGINGONOFF", "Record Formulize activity in a log file");
+define("_MI_formulize_FORMULIZELOGGINGONOFFDESC", "If you are recording logs, you can specify the location to store them below, and the duration of logs to keep. Logs will contain information about user activity in JSON format and can be ingested by Grafana or other tools.");
 define("_MI_formulize_FORMULIZELOGFILELOCATION", "Location to store Formulize log files");
 define("_MI_formulize_FORMULIZELOGFILELOCATIONDESC", "Formulize generates log files that contain the history of user actions, such as logging in and saving data. You can specify the full path to the folder where the log files are stored. You can turn off logging by specifying an empty or non-existent path.");
-define("_MI_formulize_FORMULIZELOGFILESTORAGEDURATION", "How long should Formulize log files be kept (in hours)");
-define("_MI_formulize_FORMULIZELOGFILESTORAGEDURATIONDESC", "After this many hours, the log files will be deleted from the server.");
+define("_MI_formulize_formulizeLogFileStorageDurationHours", "How long should Formulize log files be kept (in hours)");
+define("_MI_formulize_formulizeLogFileStorageDurationHoursDESC", "After this many hours, the log files will be deleted from the server.");
 
 // The name of this module
 define("_MI_formulizeMENU_NAME","MyMenu");

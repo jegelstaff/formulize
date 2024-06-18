@@ -228,7 +228,8 @@ class icms_core_Session {
 
 		include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
 		writeToFormulizeLog(array(
-			'session_loaded_for_user_id'=>intval($_SESSION['xoopsUserId'])
+			'formulize_event'=>'session-loaded-for-user',
+			'user_id'=>intval($_SESSION['xoopsUserId'])
 		));
 
 		return $instance;

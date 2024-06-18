@@ -963,6 +963,15 @@ $modversion['config'][] = array(
 );
 
 $modversion['config'][] = array(
+	'name' => 'formulizeLoggingOnOff',
+	'title' => '_MI_formulize_FORMULIZELOGGINGONOFF',
+	'description' => '_MI_formulize_FORMULIZELOGGINGONOFFDESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 0,
+);
+
+$modversion['config'][] = array(
 	'name' => 'formulizeLogFileLocation',
 	'title' => '_MI_formulize_FORMULIZELOGFILELOCATION',
 	'description' => '_MI_formulize_FORMULIZELOGFILELOCATIONDESC',
@@ -972,9 +981,9 @@ $modversion['config'][] = array(
 );
 
 $modversion['config'][] = array(
-	'name' => 'formulizeLogFileStorageDuration',
-	'title' => '_MI_formulize_FORMULIZELOGFILESTORAGEDURATION',
-	'description' => '_MI_formulize_FORMULIZELOGFILESTORAGEDURATIONDESC',
+	'name' => 'formulizeLogFileStorageDurationHours',
+	'title' => '_MI_formulize_formulizeLogFileStorageDurationHours',
+	'description' => '_MI_formulize_formulizeLogFileStorageDurationHoursDESC',
 	'formtype' => 'textbox',
 	'valuetype' => 'int',
 	'default' => '168',

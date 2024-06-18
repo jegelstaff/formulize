@@ -180,10 +180,11 @@ class icms_core_Logger {
             error_log("icms_core_Logger::handleError($errno, $errstr, $errfile, $errline);");
 						include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
 						writeToFormulizeLog(array(
-							'PHP-error-number' => $errno,
-							'PHP-error-string' => $errstr,
-							'PHP-error-file' => $errfile,
-							'PHP-error-errline' => $errline
+							'formulize_event' => 'php-error',
+							'PHP_error_number' => $errno,
+							'PHP_error_string' => $errstr,
+							'PHP_error_file' => $errfile,
+							'PHP_error_errline' => $errline
 						));
         }
 

@@ -215,6 +215,14 @@ if ($screen) {
     }
 
     if($screenAllowedForUser) {
+
+			writeToFormulizeLog(array(
+				'formulize_event' => 'attempting-screen-rendering',
+				'user_id' => ($xoopsUser ? $xoopsUser->getVar('uid') : 0),
+				'form_id' => $screen->getVar('fid'),
+				'screen_id' => $screen->getVar('sid')
+			));
+
 			if($screen->getVar('type') == "listOfEntries" AND ((isset($_GET['iform']) AND $_GET['iform'] == "e") OR isset($_GET['showform']))) { // form itself specifically requested, so force it to load here instead of a list
 					if($screen->getVar('frid')) {
 							include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
@@ -248,6 +256,13 @@ if ($screen) {
 
 if (!$rendered AND $uid) {
     if (isset($fid) AND is_numeric($fid) AND $fid) {
+
+			writeToFormulizeLog(array(
+				'formulize_event' => 'attempting-raw-rendering',
+				'user_id' => ($xoopsUser ? $xoopsUser->getVar('uid') : 0),
+				'form_id' => intval($fid)
+			));
+
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
         $formObject = $form_handler->get($fid);
         $defaultFormScreen = $formObject->getVar('defaultform');
@@ -328,4 +343,10 @@ if ($renderedFormulizeScreen AND is_object($xoopsTpl)) {
 // go back to the previous rendering flag, in case this operation was nested inside something else
 $GLOBALS['formulize_thisRendering'] = $prevRendering[$thisRendering];
 
+writeToFormulizeLog(array(
+	'formulize_event' => 'completed-page-rendering',
+	'user_id' => ($xoopsUser ? $xoopsUser->getVar('uid') : 0),
+	'form_id' => ($rendered ? $screen->getVar('fid') : intval($fid)),
+	'screen_id' => ($rendered ? $screen->getVar('sid') : '')
+));
 
