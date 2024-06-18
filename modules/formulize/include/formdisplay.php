@@ -3463,7 +3463,7 @@ function validateAndSubmit(leave) {
 
     var formulize_numbersonly_found= false;
     jQuery(".numbers-only-textbox").each(function() {
-        if(jQuery(this).val().match(/[a-z]/i) !== null) {
+        if(jQuery(this).val().match(/[a-z]/i) !== null && jQuery(this).val() != '{ID}' && jQuery(this).val() != '{SEQUENCE}') {
             var answer = confirm ("You have entered "+jQuery(this).val()+" in a box that is supposed to have numbers only.  The letters will be removed if you save.  Is this OK?" );
             if (!answer){
                 jQuery(this).focus();
