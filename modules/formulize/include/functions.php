@@ -8163,10 +8163,14 @@ function writeToFormulizeLog($data) {
 
 	// write the new log entry (to a new file if necessary, active file has generic name, archived files are named with the current date based on server timezone)
 	// write operation is self contained in file_put_contents and closes the file, so it's available for other concurrent requests to write to after
-	$logFileName = 'formulize_log_'.date('Y-m-d').'.log';
-	$activeLogFileName = 'formulize_log_active.log';
-	if(file_put_contents($formulizeLogFileLocation.'/'.$logFileName, json_encode($data, JSON_NUMERIC_CHECK)."\n", FILE_APPEND | LOCK_EX)) {
-		return copy($formulizeLogFileLocation.'/'.$logFileName, $formulizeLogFileLocation.'/'.$activeLogFileName);
+	$todayLogFile = $formulizeLogFileLocation.'/'.'formulize_log_'.date('Y-m-d').'.log';
+	$yesterdayLogFile = $formulizeLogFileLocation.'/'.'formulize_log_'.date('Y-m-d', strtotime('-1 day')).'.log';
+	$activeLogFile = $formulizeLogFileLocation.'/'.'formulize_log_active.log';
+	if(!file_exists($todayLogFile)) {
+		file_put_contents($todayLogFile, '', LOCK_EX);
+		if(file_exists($activeLogFile)) {
+			rename($activeLogFile, $yesterdayLogFile);
+		}
 	}
-	return false;
+	return file_put_contents($activeLogFile, json_encode($data, JSON_NUMERIC_CHECK)."\n", FILE_APPEND | LOCK_EX);
 }
