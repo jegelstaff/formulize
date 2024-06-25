@@ -3968,10 +3968,11 @@ function formulize_scandirAndClean($dir, $filter="", $timeWindow=21600) {
     $targetTime = $currentTime - $timeWindow;
     $foundFiles = array();
 
+		$dir = rtrim($dir, '/');
     foreach (scandir($dir) as $fileName) {
         if (strstr($fileName, $filter)) {
-            if (filemtime($dir.$fileName) < $targetTime) {
-                unlink($dir.$fileName);
+            if (filemtime($dir.'/'.$fileName) < $targetTime) {
+                unlink($dir.'/'.$fileName);
             } else {
                 $foundFiles[] = $fileName;
             }
