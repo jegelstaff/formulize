@@ -102,7 +102,7 @@ $screen->setVar('fid',$fid);
 $screen->setVar('type',$screens['type']);
 $screen->setVar('useToken',$screens['useToken']);
 $screen->setVar('anonNeedsPasscode',$screens['anonNeedsPasscode']);
-$screen->setVar('rewriteruleAddress',$screens['rewriteruleAddress']);
+$screen->setVar('rewriteruleAddress',formulizeForm::sanitize_handle_name(str_replace(" ", "_", $screens['rewriteruleAddress'])));
 
 if(!$sid = $screen_handler->insert($screen)) {
   print "Error: could not save the screen properly: ".$xoopsDB->error();
