@@ -105,6 +105,9 @@ define("_MI_formulize_FORMULIZELOGFILELOCATIONDESC", "Formulize generates log fi
 define("_MI_formulize_formulizeLogFileStorageDurationHours", "Logging: How long should Formulize log files be kept (in hours)");
 define("_MI_formulize_formulizeLogFileStorageDurationHoursDESC", "After this many hours, the log files will be deleted from the server.");
 
+define("_MI_formulize_rewriteRulesEnabled", "Enable alternate URLs for screens");
+define("_MI_formulize_rewriteRulesEnabledDESC", "When this is enabled, you can specify alternate, clean URLs for accessing screens, instead of the default /modules/formulize/index.php?sid=1 style URLs.");
+
 // The name of this module
 define("_MI_formulizeMENU_NAME","MyMenu");
 

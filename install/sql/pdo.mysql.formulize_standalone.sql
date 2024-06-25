@@ -353,6 +353,7 @@ INSERT INTO `REPLACE_WITH_PREFIX_config` (`conf_id`, `conf_modid`, `conf_catid`,
 (392, REPLACE_WITH_FORMULIZE_MODULE_ID, 0, 'formulizeLoggingOnOff', '_MI_formulize_FORMULIZELOGGINGONOFF', '0', '_MI_formulize_FORMULIZELOGGINGONOFFDESC', 'yesno', 'int', 26),
 (393, REPLACE_WITH_FORMULIZE_MODULE_ID, 0, 'formulizeLogFileLocation', '_MI_formulize_FORMULIZELOGFILELOCATION', 'REPLACE_WITH_XOOPS_ROOT_PATH/logs', '_MI_formulize_FORMULIZELOGFILELOCATIONDESC', 'textbox', 'text', 27),
 (394, REPLACE_WITH_FORMULIZE_MODULE_ID, 0, 'formulizeLogFileStorageDurationHours', '_MI_formulize_formulizeLogFileStorageDurationHours', '168', '_MI_formulize_formulizeLogFileStorageDurationHoursDESC', 'textbox', 'int', 28),
+(395, REPLACE_WITH_FORMULIZE_MODULE_ID, 0, 'rewriteRulesEnabled', '_MI_formulize_rewriteRulesEnabled', '0', '_MI_formulize_rewriteRulesEnabledDESC', 'yesno', 'int', 29),
 (274, REPLACE_WITH_FORMULIZE_MODULE_ID, 0, 'notification_enabled', '_NOT_CONFIG_ENABLE', '3', '_NOT_CONFIG_ENABLEDSC', 'select', 'int', 29),
 (275, REPLACE_WITH_FORMULIZE_MODULE_ID, 0, 'notification_events', '_NOT_CONFIG_EVENTS', 'a:3:{i:0;s:14:"form-new_entry";i:1;s:17:"form-update_entry";i:2;s:17:"form-delete_entry";}', '_NOT_CONFIG_EVENTSDSC', 'select_multi', 'array', 30);
 
