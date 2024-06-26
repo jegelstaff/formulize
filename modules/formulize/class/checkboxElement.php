@@ -197,6 +197,13 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 				$filter_key = 'formlinkfilter';
 				list($ele_value[5], $changed) = parseSubmittedConditions($filter_key, 'optionsconditionsdelete');
 
+				if(isset($_POST['changeuservalues']) AND $_POST['changeuservalues']==1) {
+					$data_handler = new formulizeDataHandler($element->getVar('id_form'));
+					if(!$changeResult = $data_handler->changeUserSubmittedValues($element, $ele_value[2])) {
+						print "Error updating user submitted values for the options in element ".$element->getVar('ele_id');
+					}
+				}
+
 				$element->setVar('ele_value', $ele_value);
 				$element->setVar('ele_uitext', $ele_uitext);
 			}
