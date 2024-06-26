@@ -45,10 +45,13 @@ class XoopsFormText extends icms_form_elements_Text
 	 * @param	int		$size	    Size
 	 * @param	int		$maxlength	Maximum length of text
 	 * @param	string  $value      Initial text
+ 	 * @param	bool	$autocomplete	Whether to use autocomplete functionality in browser. Seems to have no effect in render method.
+	 * @param	mixed	$number	Whether to treat it as a number when rendering (essentially boolean, but could be 1/0)
+
 	 */
-	function __construct($caption, $name, $size, $maxlength, $value = '', $autocomplete = false)
+	function __construct($caption, $name, $size, $maxlength, $value = '', $autocomplete = false, $number = false)
 	{
-		parent::__construct($caption, $name, $size, $maxlength, $value, $autocomplete);
+		parent::__construct($caption, $name, $size, $maxlength, $value, $autocomplete, $number);
 		$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_Text', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 }

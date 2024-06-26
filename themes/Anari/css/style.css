@@ -969,6 +969,7 @@ table.formulize-subform-table {
 
 table.formulize-subform-table input[type=text],
 table.formulize-subform-table input[type=range],
+table.formulize-subform-table input[type=number],
 table.formulize-subform-table textarea {
     min-width: 200px;
     max-width: 200px;
@@ -988,7 +989,8 @@ div.subform_button_controls input[type="button"],
 
 }
 
-div.subform_button_controls input[type="text"] {
+div.subform_button_controls input[type="text"],
+div.subform_button_controls input[type="number"] {
     margin-left: 1em;
     width: 2em;
 }
@@ -1183,15 +1185,18 @@ table.formulize-subform-table td {
 
 .form-input,
 table.outer input[type="text"],
+table.outer input[type="number"],
 table.outer input[type="date"],
 table.outer input[type="password"],
 table.outer textarea,
 .form-container textarea,
 .form-container input[type="text"],
+.form-container input[type="number"],
 .form-container input[type="date"],
 .form-container input[type="password"],
 #formulize_modal textarea,
 #formulize_modal input[type="text"],
+#formulize_modal input[type="number"],
 #formulize_modal input[type="date"],
 #formulize_modal input[type="password"] {
   border-radius: 0;
@@ -1214,15 +1219,18 @@ table.outer textarea,
 @media (min-width: 768px) {
     .form-input,
     table.outer input[type="text"],
+		table.outer input[type="number"],
     table.outer input[type="date"],
     table.outer input[type="password"],
     table.outer textarea,
     .form-container textarea,
     .form-container input[type="text"],
+		.form-container input[type="number"],
     .form-container input[type="date"],
     .form-container input[type="password"],
     #formulize_modal textarea,
     #formulize_modal input[type="text"],
+		#formulize_modal input[type="number"],
     #formulize_modal input[type="date"],
     #formulize_modal input[type="password"],
 		.form-help-text,
@@ -1240,15 +1248,18 @@ table.outer textarea,
 @media print {
     .form-input,
     table.outer input[type="text"],
+		table.outer input[type="number"],
     table.outer input[type="date"],
     table.outer input[type="password"],
     table.outer textarea,
     .form-container textarea,
     .form-container input[type="text"],
+		.form-container input[type="number"],
     .form-container input[type="date"],
     .form-container input[type="password"],
     #formulize_modal textarea,
     #formulize_modal input[type="text"],
+		#formulize_modal input[type="number"],
     #formulize_modal input[type="date"],
     #formulize_modal input[type="password"] {
     font-size: inherit;
@@ -1256,30 +1267,36 @@ table.outer textarea,
 }
 .form-input::placeholder,
 table.outer input[type="text"]::placeholder,
+table.outer input[type="number"]::placeholder,
 table.outer input[type="date"]::placeholder,
 table.outer input[type="password"]::placeholder,
 table.outer textarea::placeholder,
 .form-container textarea::placeholder,
 .form-container input[type="text"]::placeholder,
+.form-container input[type="number"]::placeholder,
 .form-container input[type="date"]::placeholder,
 .form-container input[type="password"]::placeholder,
 #formulize_modal textarea::placeholder,
 #formulize_modal input[type="text"]::placeholder,
+#formulize_modal input[type="number"]::placeholder,
 #formulize_modal input[type="date"]::placeholder,
 #formulize_modal input[type="password"]::placeholder {
   color: var(--light-border-color);
 }
 .form-input:focus,
 table.outer input[type="text"]:focus,
+table.outer input[type="number"]:focus,
 table.outer input[type="date"]:focus,
 table.outer input[type="password"]:focus,
 table.outer textarea:focus,
 .form-container textarea:focus,
 .form-container input[type="text"]:focus,
+.form-container input[type="number"]:focus,
 .form-container input[type="date"]:focus,
 .form-container input[type="password"]:focus,
 #formulize_modal textarea:focus,
 #formulize_modal input[type="text"]:focus,
+#formulize_modal input[type="number"]:focus,
 #formulize_modal input[type="date"]:focus,
 #formulize_modal input[type="password"]:focus {
   outline: 0;
@@ -1288,27 +1305,33 @@ table.outer textarea:focus,
 
 .form-input[readonly], .form-input[disabled],
 table.outer input[type="text"][readonly],
+table.outer input[type="number"][readonly],
 table.outer input[type="date"][readonly],
 table.outer input[type="password"][readonly],
 table.outer textarea[readonly],
 .form-container textarea[readonly],
 .form-container input[type="text"][readonly],
+.form-container input[type="number"][readonly],
 .form-container input[type="date"][readonly],
 .form-container input[type="password"][readonly],
 #formulize_modal textarea[readonly],
 #formulize_modal input[type="text"][readonly],
+#formulize_modal input[type="number"][readonly],
 #formulize_modal input[type="date"][readonly],
 #formulize_modal input[type="password"][readonly],
 table.outer input[type="text"][disabled],
+table.outer input[type="number"][disabled],
 table.outer input[type="date"][disabled],
 table.outer input[type="password"][disabled],
 table.outer textarea[disabled],
 .form-container textarea[disabled],
 .form-container input[type="text"][disabled],
+.form-container input[type="number"][disabled],
 .form-container input[type="date"][disabled],
 .form-container input[type="password"][disabled],
 #formulize_modal textarea[disabled],
 #formulize_modal input[type="text"][disabled],
+#formulize_modal input[type="number"][disabled],
 #formulize_modal input[type="date"][disabled],
 #formulize_modal input[type="password"][disabled] {
   border-color: transparent;
@@ -1316,15 +1339,18 @@ table.outer textarea[disabled],
 
 .form-input[disabled],
 table.outer input[type="text"][disabled],
+table.outer input[type="number"][disabled],
 table.outer input[type="date"][disabled],
 table.outer input[type="password"][disabled],
 table.outer textarea[disabled],
 .form-container textarea[disabled],
 .form-container input[type="text"][disabled],
+.form-container input[type="number"][disabled],
 .form-container input[type="date"][disabled],
 .form-container input[type="password"][disabled],
 #formulize_modal textarea[disabled],
 #formulize_modal input[type="text"][disabled],
+#formulize_modal input[type="number"][disabled],
 #formulize_modal input[type="date"][disabled],
 #formulize_modal input[type="password"][disabled] {
   color: #818E9B;
@@ -1332,15 +1358,18 @@ table.outer textarea[disabled],
 @media print {
     .form-input[disabled],
     table.outer input[type="text"][disabled],
+		table.outer input[type="number"][disabled],
     table.outer input[type="date"][disabled],
     table.outer input[type="password"][disabled],
     table.outer textarea[disabled],
     .form-container textarea[disabled],
     .form-container input[type="text"][disabled],
+		.form-container input[type="number"][disabled],
     .form-container input[type="date"][disabled],
     .form-container input[type="password"][disabled],
     #formulize_modal textarea[disabled],
     #formulize_modal input[type="text"][disabled],
+		#formulize_modal input[type="number"][disabled],
     #formulize_modal input[type="date"][disabled],
     #formulize_modal input[type="password"][disabled]{
     background: #fff;
@@ -1456,6 +1485,7 @@ div.formulize_autocomplete {
     .form-container .col2 select,
     #formulize_modal .col2 select,
     .col2 input[type="text"],
+		.col2 input[type="number"],
     .col2 textarea {
         min-width: 700px;
     }
