@@ -8176,3 +8176,75 @@ function writeToFormulizeLog($data) {
 	}
 	return file_put_contents($activeLogFile, json_encode($data, JSON_NUMERIC_CHECK)."\n", FILE_APPEND | LOCK_EX);
 }
+
+/**
+ * Check for a rewrite rule value having been passed to the url, and if found then update $_GET and the $_SERVER['REQUEST_URI'] to match.
+ * If a rewrite rule was found, the canonical Formulize URL for the page will be set in the global variable $formulizeCanonicalURI
+ */
+function formulize_handleHtaccessRewriteRule() {
+	if(isset($_GET['formulizeRewriteRuleAddress']) AND $_GET['formulizeRewriteRuleAddress']) {
+		global $formulizeCanonicalURI;
+		$formulizeCanonicalURI = '';
+		$trimedFormulizeRewriteRuleAddress = trim($_GET['formulizeRewriteRuleAddress'], '/');
+		$addressData = explode('/', $trimedFormulizeRewriteRuleAddress);
+		$address = $addressData[0];
+		$ve = isset($addressData[1]) ? intval($addressData[1]) : null;
+		if($sid = formulize_getSidFromRewriteAddress($address)) {
+			foreach($_GET as $k=>$v) {
+				unset($_REQUEST[$k]);
+				unset($_GET[$k]);
+			}
+			$queryString = "sid=$sid";
+			if($ve) {
+				$queryString .= $ve ? "&ve=$ve" : "";
+				$_GET['ve'] = $ve;
+				$_REQUEST['ve'] = $ve;
+			}
+			$_GET['sid'] = $sid;
+			$_REQUEST['sid'] = $sid;
+			$formulizeCanonicalURI = "/modules/formulize/index.php?$queryString";
+		}
+		if(!$formulizeCanonicalURI) {
+			http_response_code(404);
+			exit();
+		}
+	}
+}
+
+/**
+ * Get the screen id for a given alternate URL address
+ * @param string $address Optional. The alternate URL address to lookup. If none specified, reuse the first one we were passed.
+ * @return int|bool Returns the screen ID, or false if there is no match, or nothing to match with.
+ */
+function formulize_getSidFromRewriteAddress($address="") {
+	global $xoopsDB;
+	static $originalAddress = '';
+	if(!$originalAddress) {
+		$originalAddress = $address;
+	}
+	if(!$address) {
+		$address = $originalAddress;
+	}
+	if($address) {
+
+		// check if it's our special check-if-this-is-enabled address, and if so, output 1 and exit
+		if($address == "formulize-check-if-alternate-urls-are-properly-enabled-please") {
+			icms::$logger->disableLogger();
+			while(ob_get_level()) {
+					ob_end_clean();
+			}
+			print 1;
+			exit();
+		}
+
+		$sql = 'SELECT sid FROM '.$xoopsDB->prefix('formulize_screen').' WHERE MATCH(`rewriteruleAddress`) AGAINST("'.formulize_db_escape($address).'") LIMIT 0,1';
+		if($res = $xoopsDB->query($sql)) {
+			if($row = $xoopsDB->fetchRow($res)) {
+				if($row[0]) {
+					return $row[0];
+				}
+			}
+		}
+	}
+	return false;
+}

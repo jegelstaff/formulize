@@ -104,6 +104,27 @@ class icms_config_Item_Handler extends icms_core_ObjectHandler {
 		if (!$config->cleanVars()) {
 			return false;
 		}
+		/**
+		 * MAJOR HACK TO VERIFY IF FORMULIZE REWRITE URL SETTING IS CAPABLE OF BEING ENABLED
+		 */
+		if($config->getVar('conf_name') == 'formulizeRewriteRulesEnabled'
+			AND $config->getVar('conf_value') == 1
+			AND function_exists('curl_version')) {
+			$curl = curl_init();
+			curl_setopt($curl, CURLOPT_URL, XOOPS_URL.'/formulize-check-if-alternate-urls-are-properly-enabled-please'); // will resolve based on DNS available to server, so Docker gets confused by localhost!
+			curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+    	curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+    	curl_setopt($curl, CURLINFO_HEADER_OUT, true);
+			$response = curl_exec($curl);
+			curl_close($curl);
+			if($response != 1) {
+				$config->setVar('conf_value', 0);
+				$config->cleanVars();
+			}
+		}
+		/**
+		 * END OF MAJOR HACK
+		 */
 		foreach ( $config->cleanVars as $k => $v) {
 			${$k} = $v;
 		}

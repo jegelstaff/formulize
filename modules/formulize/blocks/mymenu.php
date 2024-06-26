@@ -107,118 +107,136 @@ function getMenuTextsForForms($forms, $form_handler) {
 
 function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
 
-        $data = array();
+	global $formulizeCanonicalURI, $xoopsUser;
+	$data = array();
+	if($application == 0) {
+		$aid = 0;
+		$name = _AM_CATGENERAL;
+		$forms = $form_handler->getFormsByApplication(0,true); // true forces ids, not objects, to be returned
+	} else {
+		$aid = intval($application->getVar('appid'));
+		$name = printSmart($application->getVar('name'), 200);
+		$forms = $application->getVar('forms');
+	}
+	static $topwritten = false;
 
-        if($application == 0) {
+	$itemurl = XOOPS_URL."/modules/formulize/application.php?id=$aid";
 
-            $aid = 0;
-
-            $name = _AM_CATGENERAL;
-
-            $forms = $form_handler->getFormsByApplication(0,true); // true forces ids, not objects, to be returned
-
-        } else {
-            $aid = intval($application->getVar('appid'));
-
-            $name = printSmart($application->getVar('name'), 200);
-
-            $forms = $application->getVar('forms');
-
-        }
-        static $topwritten = false;
-
-        $itemurl = XOOPS_URL."/modules/formulize/application.php?id=$aid";
-
-        $menuActive = '';
-        if(
-           $forceOpen
-           OR (
-               isset($_GET['id'])
-               AND strstr(getCurrentURL(), "/modules/formulize/application.php")
-               AND $aid == $_GET['id']
-               )
-           OR (
-               strstr(getCurrentURL(), "/modules/formulize/index.php?fid=")
-               AND in_array($getFid, $forms)
-               )
-            ){
-          $menuActive=' menuActive';
-        }
+	$menuActive = '';
+	if($forceOpen
+		OR (
+			isset($_GET['id'])
+			AND strstr(getCurrentURL(), "/modules/formulize/application.php")
+			AND $aid == $_GET['id']
+			)
+		OR (
+			strstr(getCurrentURL(), "/modules/formulize/index.php?fid=")
+			AND in_array($getFid, $forms)
+			)
+		){
+			$menuActive=' menuActive';
+	}
 
 
-        if (!$topwritten) {
-            $block = "<a class=\"menuTop$menuActive\" href=\"$itemurl\">$name</a>";
-            $topwritten = 1;
-         } else {
-             $block = "<a class=\"menuMain$menuActive\" href=\"$itemurl\">$name</a>";
-         }
+	if (!$topwritten) {
+			$block = "<a class=\"menuTop$menuActive\" href=\"$itemurl\">$name</a>";
+			$topwritten = 1;
+		} else {
+				$block = "<a class=\"menuMain$menuActive\" href=\"$itemurl\">$name</a>";
+		}
 
-        $data = array('url'=>$itemurl, 'title'=>$name, 'active'=>($menuActive ? 1 : 0));
+	$data = array('url'=>$itemurl, 'title'=>$name, 'active'=>($menuActive ? 1 : 0));
 
-        $isThisSubMenu = false;
+	$isThisSubMenu = false;
 
-		include_once XOOPS_ROOT_PATH."/modules/formulize/class/applications.php";
-		list($defaultFid,$defaultSid,$defaultURL) = formulizeApplicationMenuLinksHandler::getDefaultScreenForUser();
+	include_once XOOPS_ROOT_PATH."/modules/formulize/class/applications.php";
+	list($defaultFid,$defaultSid,$defaultURL) = formulizeApplicationMenuLinksHandler::getDefaultScreenForUser();
 
-        $getMenuId = isset($_GET['menuid']) ? $_GET['menuid'] : null;
-        $getSid = isset($_GET['sid']) ? $_GET['sid'] : null;
-        $getFid = isset($_GET['fid']) ? $_GET['fid'] : null;
+	$getMenuId = isset($_GET['menuid']) ? $_GET['menuid'] : null;
+	$getSid = isset($_GET['sid']) ? $_GET['sid'] : null;
+	$getFid = isset($_GET['fid']) ? $_GET['fid'] : null;
 
-
-        foreach($menulinks as $menulink) {
-
-            $url = buildMenuLinkURL($menulink);
-
-            if($menulink->getVar("menu_id") == $getMenuId
-				OR $menulink->getVar("screen") == 'sid='.$getSid
-				OR $menulink->getVar("screen") == 'fid='.$getFid
-                OR getCurrentURL() == $url
-				OR (
+	foreach($menulinks as $menulink) {
+		$url = buildMenuLinkURL($menulink);
+		if($menulink->getVar("menu_id") == $getMenuId
+			OR $menulink->getVar("screen") == 'sid='.$getSid
+			OR $menulink->getVar("screen") == 'fid='.$getFid
+			OR getCurrentURL() == $url
+			OR trim(XOOPS_URL.'/'.$formulizeCanonicalURI, '/') == trim($url, '/')
+			OR (
 				getCurrentURL() == XOOPS_URL.'/modules/formulize/' AND (
-				$menulink->getVar("screen") == 'sid='.$defaultSid
-				OR $menulink->getVar("screen") == 'fid='.$defaultFid
+					$menulink->getVar("screen") == 'sid='.$defaultSid
+					OR $menulink->getVar("screen") == 'fid='.$defaultFid
 				))
-				){
+			){
+				$isThisSubMenu = true;
+		}
+	}
 
-                $isThisSubMenu = true;
+	if(
+		$forceOpen
+		OR (
+			isset($_GET['id'])
+			AND strstr(getCurrentURL(), "/modules/formulize/application.php")
+			AND $aid == $_GET['id']
+			)
+		OR (
+			strstr(getCurrentURL(), "/modules/formulize/index.php?fid=")
+			AND in_array($getFid, $forms)
+			)
+		OR $isThisSubMenu
+	) { // if we're viewing this application or a form in this application, or this is the being forced open (only application)...
 
-            }
-
-        }
-
-        if(
-           $forceOpen
-           OR (
-               isset($_GET['id'])
-               AND strstr(getCurrentURL(), "/modules/formulize/application.php")
-               AND $aid == $_GET['id']
-               )
-           OR (
-               strstr(getCurrentURL(), "/modules/formulize/index.php?fid=")
-               AND in_array($getFid, $forms)
-               )
-           OR $isThisSubMenu
-        ) { // if we're viewing this application or a form in this application, or this is the being forced open (only application)...
-
+		$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+		$gperm_handler = xoops_gethandler('groupperm');
+		$mid = getFormulizeModId();
+		$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 		foreach($menulinks as $menulink) {
-		    $url = buildMenuLinkURL($menulink);
-            $suburl = $url ? $url : XOOPS_URL."/modules/formulize/index.php?".$menulink->getVar("screen");
+			$sid = strstr($menulink->getVar("screen"), 'sid=') ? intval(str_replace('sid=', '', $menulink->getVar("screen"))) : 0;
+			$fid = strstr($menulink->getVar("screen"), 'fid=') ? intval(str_replace('fid=', '', $menulink->getVar("screen"))) : 0;
+			if($url = buildMenuLinkURL($menulink)) {
+				$suburl = $url;
+				$rewriteruleAddress = null;
+			} else {
+				if($sid) {
+					$menuLinkScreenId = $sid;
+				}
+				if($fid) {
+					$menulinkFormObject = $form_handler->get($fid);
+					$singleEntry = $menulinkFormObject->getVar('single');
+					$view_globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid);
+					$view_groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid);
+					if((!$singleEntry AND $xoopsUser) OR $view_globalscope OR ($view_groupscope AND $singleEntry != "group")) {
+						$menuLinkScreenId = $menulinkFormObject->getVar('defaultlist');
+					} else {
+						$menuLinkScreenId = $menulinkFormObject->getVar('defaultform');
+					}
+				}
+				$menuLinkScreen = $menuLinkScreenId ? $screen_handler->get($menuLinkScreenId) : null;
+				$rewriteruleAddress = $menuLinkScreen ? $menuLinkScreen->getVar('rewriteruleAddress') : null;
+				if($rewriteruleAddress) {
+					$suburl = XOOPS_URL ."/".$rewriteruleAddress;
+				} else {
+					$suburl = XOOPS_URL."/modules/formulize/index.php?".$menulink->getVar("screen");
+				}
+			}
 			$target = (!$url OR strstr($url, XOOPS_URL)) ? "" : " target='_blank' ";
-            $menuSubActive="";
-            if(getCurrentURL() == XOOPS_URL.'/modules/formulize/index.php?'.$menulink->getVar("screen")
-                OR getCurrentURL() == $url
-								OR (getCurrentURL() == XOOPS_URL.'/modules/formulize/'
-									AND (
-										$menulink->getVar("screen") == 'sid='.$defaultSid
-										OR $menulink->getVar("screen") == 'fid='.$defaultFid
-									)
-								)
-							) {
-                $menuSubActive=" menuSubActive";
-            }
-            $text = $menulink->getVar("text");
+			$menuSubActive="";
+			if(getCurrentURL() == XOOPS_URL.'/modules/formulize/index.php?'.$menulink->getVar("screen")
+				OR ($rewriteruleAddress AND trim(getCurrentURL(), '/') == trim(XOOPS_URL.'/'.$rewriteruleAddress, '/'))
+				OR getCurrentURL() == $url
+				OR trim(XOOPS_URL.'/'.$formulizeCanonicalURI, '/') == trim($url, '/')
+				OR (getCurrentURL() == XOOPS_URL.'/modules/formulize/'
+					AND (
+						$menulink->getVar("screen") == 'sid='.$defaultSid
+						OR $menulink->getVar("screen") == 'fid='.$defaultFid
+					))
+				){
+				$menuSubActive=" menuSubActive";
+			}
+			$text = $menulink->getVar("text");
 			$block .= "<a class=\"menuSub$menuSubActive\" $target href='$suburl'>".$text."</a>";
-            $data['subs'][] = array('url'=>$suburl, 'title'=>$text, 'active'=>($menuSubActive ? 1 : 0));
+			$data['subs'][] = array('url'=>$suburl, 'title'=>$text, 'active'=>($menuSubActive ? 1 : 0));
 		}
 	}
 	return array($block, $data);

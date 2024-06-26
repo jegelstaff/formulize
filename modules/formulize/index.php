@@ -53,6 +53,9 @@ if(!isset($formulize_screen_id) OR !is_numeric($formulize_screen_id)) {
 }
 
 include_once XOOPS_ROOT_PATH.'/header.php';
+
+include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
+
 global $xoTheme;
 if($xoTheme) {
 

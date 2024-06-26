@@ -12,7 +12,7 @@
 <input type="hidden" id="delete_passcode" name="delete_passcode" value="">
 <input type="hidden" id="make_new_passcode" name="make_new_passcode" value="">
 <input type="hidden" id="add_existing_passcode" name="add_existing_passcode" value="">
-    
+
 
 
 <div class="panel-content content">
@@ -25,7 +25,7 @@
 	  </div>
 	  <div class="form-item">
 		  <label for="screens-type">What kind of screen is this:</label>
-			
+
 	    <select id="screens-type" size="1" name="screens-type"<{if $content.sid neq 'new'}> disabled<{/if}>>
 		    <option value="listOfEntries"<{if $content.type eq 'listOfEntries'}> selected="selected"<{/if}>>List</option>
 		    <option value="multiPage"<{if $content.type eq 'multiPage'}> selected="selected"<{/if}>>Form</option>
@@ -39,11 +39,11 @@
   </fieldset>
 
 	<fieldset>
-		<legend>URL for this screen</legend>
-		<p>To give people access to this screen, send them to this URL:</p>
-		<blockquote><{$xoops_url}>/modules/formulize/index.php?sid=<{$content.sid}></blockquote>
+		<legend>URLs for this screen</legend>
+		<p>The default URL for this screen: <a href="<{$xoops_url}>/modules/formulize/index.php?sid=<{$content.sid}>" target="_blank"><{$xoops_url}>/modules/formulize/index.php?sid=<{$content.sid}></a></p>
+		<{if $content.alternateURLsOn eq 1}><p>Set an alternate URL for accessing this screen: <{$xoops_url}>/<input type='text' name='screens-rewriteruleAddress' value='<{$content.rewriteruleAddress}>'</p><{/if}>
 	</fieldset>
-	
+
 	<fieldset>
 		<legend>PHP code for including this screen anywhere</legend>
 		<p>You can embed this screen in any PHP application or web page that is running on the same web server.<br />Use this snippet of PHP code to include it:</p>
@@ -52,23 +52,13 @@ $formulize_screen_id = <{$content.sid}>;<br/>
 include "<{$smarty.const.XOOPS_ROOT_PATH}>/modules/formulize/index.php";</blockquote>
 	</fieldset>
 
-  <!--<fieldset>
-	  <legend>Menu</legend>
-
-    <div class="form-item">
-	    <label for="imenu"><input type="radio" id="imenu" name="menu" value="imenu"/>Use iMenu</label>
-	    <label for="internal"><input type="radio" id="internal" name="menu" value="internal"/>Use internal menu</label>
-	    <div class="description">Choose whether you will use XOOPS iMenu for assigning menu items or the internal menu.</div>
-	  </div>
-  </fieldset>-->
-
   <fieldset>
 	  <legend>Should this screen use an anti-CSRF security token</legend>
 
 	  <div class="form-item">
 	    <label for="screens-useToken-yes"><input type="radio" id="screens-useToken-yes" name="screens-useToken" value="1"<{if $content.useToken eq 1}> checked<{/if}>/>Yes</label>
 	    <label for="screens-useToken-no"><input type="radio" id="screens-useToken-no" name="screens-useToken" value="0"<{if $content.useToken eq 0}> checked<{/if}>/>No</label>
-	    <div class="description">The security token is a defense against cross-site request forgery attacks. However, it can cause problems if you are using an advanced Ajax-based UI in a List of Entries screen, and possibly other screen types.</div>
+	    <div class="description">The security token is a defense against cross-site request forgery attacks.</div>
 	  </div>
   </fieldset>
 
@@ -89,7 +79,7 @@ include "<{$smarty.const.XOOPS_ROOT_PATH}>/modules/formulize/index.php";</blockq
                 <td><input type="radio" name="passcode_status_<{$passcode.id}>" value=1>Active<br />
                 <input type="radio" name="passcode_status_<{$passcode.id}>" value=0>Expired</td><td>&mdash;</td>
                 <td>Auto-expire on: <input type="text" value="<{$passcode.expiry}>" name="passcode_expiry_<{$passcode.id}>" size=10 class="passcode_expiry" /></td><td>&mdash;</td>
-                <td><a href='' class='delete_passcode' passcodeId='<{$passcode.id}>'>delete</a></td></tr>    
+                <td><a href='' class='delete_passcode' passcodeId='<{$passcode.id}>'>delete</a></td></tr>
         <{/foreach}>
         </table>
         <p>Add a passcode from another screen: <select name="existing_passcode" size=1>
@@ -123,11 +113,11 @@ include "<{$smarty.const.XOOPS_ROOT_PATH}>/modules/formulize/index.php";</blockq
        return false;
     });
     $('#add_existing_passcode_button').click(function() {
-        $('#add_existing_passcode').val(1); 
+        $('#add_existing_passcode').val(1);
         $(".savebutton").click();
     });
     $('#make_new_passcode_button').click(function() {
-        $('#make_new_passcode').val(1); 
+        $('#make_new_passcode').val(1);
         $(".savebutton").click();
     });
     $('input[name="screens-anonNeedsPasscode"]').click(function() {
@@ -137,8 +127,8 @@ include "<{$smarty.const.XOOPS_ROOT_PATH}>/modules/formulize/index.php";</blockq
             $('#codelist').hide();
        }
     });
-    
-    
+
+
 </script>
 
 <style>
