@@ -41,16 +41,7 @@
 	<fieldset>
 		<legend>URLs for this screen</legend>
 		<p>The default URL for this screen: <a href="<{$xoops_url}>/modules/formulize/index.php?sid=<{$content.sid}>" target="_blank"><{$xoops_url}>/modules/formulize/index.php?sid=<{$content.sid}></a></p>
-		<p>Set an alternate URL for accessing this screen: <{$xoops_url}>/<input type='text' name='screens-rewriteruleAddress' value='<{$content.rewriteruleAddress}>'</p>
-		<div class="description">For alternate URLs to work, you will need to add code similar to this, to the .htaccess file at the root of your website:
-			<blockquote class="code"><span style="font-style: normal">
-			RewriteEngine On<br>
-			RewriteCond %{REQUEST_FILENAME} !-f<br>
-			RewriteCond %{REQUEST_FILENAME} !-d<br>
-			RewriteCond %{REQUEST_FILENAME} !-l<br>
-			RewriteRule ^(.*)$ /modules/formulize/index.php?formulizeRewriteRuleAddress=$1 [L]<br>
-			</span></blockquote>
-		</div>
+		<{if $content.alternateURLsOn eq 1}><p>Set an alternate URL for accessing this screen: <{$xoops_url}>/<input type='text' name='screens-rewriteruleAddress' value='<{$content.rewriteruleAddress}>'</p><{/if}>
 	</fieldset>
 
 	<fieldset>

@@ -329,7 +329,6 @@ INSERT INTO `REPLACE_WITH_PREFIX_config` (`conf_id`, `conf_modid`, `conf_catid`,
 (343, REPLACE_WITH_FORMULIZE_MODULE_ID, 0, 'ta_cols', '_MI_formulize_TAREA_COLS', '35', '', 'textbox', 'int', 3);
 INSERT INTO `REPLACE_WITH_PREFIX_config` (`conf_id`, `conf_modid`, `conf_catid`, `conf_name`, `conf_title`, `conf_value`, `conf_desc`, `conf_formtype`, `conf_valuetype`, `conf_order`) VALUES
 (344, REPLACE_WITH_FORMULIZE_MODULE_ID, 0, 'delimeter', '_MI_formulize_DELIMETER', 'br', '', 'select', 'text', 4),
-(345, REPLACE_WITH_FORMULIZE_MODULE_ID, 0, 'profileForm', '_MI_formulize_PROFILEFORM', '0', '', 'select', 'int', 5),
 (346, REPLACE_WITH_FORMULIZE_MODULE_ID, 0, 'all_done_singles', '_MI_formulize_ALL_DONE_SINGLES', '1', '_MI_formulize_SINGLESDESC', 'yesno', 'int', 6),
 (347, REPLACE_WITH_FORMULIZE_MODULE_ID, 0, 'LOE_limit', '_MI_formulize_LOE_limit', '5000', '_MI_formulize_LOE_limit_DESC', 'textbox', 'int', 7),
 (348, REPLACE_WITH_FORMULIZE_MODULE_ID, 0, 'useToken', '_MI_formulize_USETOKEN', '1', '_MI_formulize_USETOKENDESC', 'yesno', 'int', 8),
@@ -354,8 +353,8 @@ INSERT INTO `REPLACE_WITH_PREFIX_config` (`conf_id`, `conf_modid`, `conf_catid`,
 (393, REPLACE_WITH_FORMULIZE_MODULE_ID, 0, 'formulizeLogFileLocation', '_MI_formulize_FORMULIZELOGFILELOCATION', 'REPLACE_WITH_XOOPS_ROOT_PATH/logs', '_MI_formulize_FORMULIZELOGFILELOCATIONDESC', 'textbox', 'text', 27),
 (394, REPLACE_WITH_FORMULIZE_MODULE_ID, 0, 'formulizeLogFileStorageDurationHours', '_MI_formulize_formulizeLogFileStorageDurationHours', '168', '_MI_formulize_formulizeLogFileStorageDurationHoursDESC', 'textbox', 'int', 28),
 (395, REPLACE_WITH_FORMULIZE_MODULE_ID, 0, 'rewriteRulesEnabled', '_MI_formulize_rewriteRulesEnabled', '0', '_MI_formulize_rewriteRulesEnabledDESC', 'yesno', 'int', 29),
-(274, REPLACE_WITH_FORMULIZE_MODULE_ID, 0, 'notification_enabled', '_NOT_CONFIG_ENABLE', '3', '_NOT_CONFIG_ENABLEDSC', 'select', 'int', 29),
-(275, REPLACE_WITH_FORMULIZE_MODULE_ID, 0, 'notification_events', '_NOT_CONFIG_EVENTS', 'a:3:{i:0;s:14:"form-new_entry";i:1;s:17:"form-update_entry";i:2;s:17:"form-delete_entry";}', '_NOT_CONFIG_EVENTSDSC', 'select_multi', 'array', 30);
+(274, REPLACE_WITH_FORMULIZE_MODULE_ID, 0, 'notification_enabled', '_NOT_CONFIG_ENABLE', '3', '_NOT_CONFIG_ENABLEDSC', 'select', 'int', 30),
+(275, REPLACE_WITH_FORMULIZE_MODULE_ID, 0, 'notification_events', '_NOT_CONFIG_EVENTS', 'a:3:{i:0;s:14:"form-new_entry";i:1;s:17:"form-update_entry";i:2;s:17:"form-delete_entry";}', '_NOT_CONFIG_EVENTSDSC', 'select_multi', 'array', 31);
 
 TRUNCATE `REPLACE_WITH_PREFIX_group_permission`;
 

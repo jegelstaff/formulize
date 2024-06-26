@@ -8226,6 +8226,17 @@ function formulize_getSidFromRewriteAddress($address="") {
 		$address = $originalAddress;
 	}
 	if($address) {
+
+		// check if it's our special check-if-this-is-enabled address, and if so, output 1 and exit
+		if($address == "formulize-check-if-alternate-urls-are-properly-enabled-please") {
+			icms::$logger->disableLogger();
+			while(ob_get_level()) {
+					ob_end_clean();
+			}
+			print 1;
+			exit();
+		}
+
 		$sql = 'SELECT sid FROM '.$xoopsDB->prefix('formulize_screen').' WHERE MATCH(`rewriteruleAddress`) AGAINST("'.formulize_db_escape($address).'") LIMIT 0,1';
 		if($res = $xoopsDB->query($sql)) {
 			if($row = $xoopsDB->fetchRow($res)) {

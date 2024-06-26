@@ -981,7 +981,7 @@ $modversion['config'][] = array(
 );
 
 $modversion['config'][] = array(
-	'name' => 'rewriteRulesEnabled',
+	'name' => 'formulizeRewriteRulesEnabled',
 	'title' => '_MI_formulize_rewriteRulesEnabled',
 	'description' => '_MI_formulize_rewriteRulesEnabledDESC',
 	'formtype' => 'yesno',

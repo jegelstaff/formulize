@@ -46,12 +46,11 @@ $settings['existingPasscodes'] = $passcode_handler->getOtherScreenPasscodes($scr
 $settings['newPasscode'] = $passcode_handler->generatePasscode();
 $settings['passcodes'] = $passcode_handler->getThisScreenPasscodes($screen_id);
 
-
+$config_handler = $config_handler = xoops_gethandler('config');
+$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 if ($screen_id == "new") {
     $settings['type'] = 'listOfEntries';
     $settings['frid'] = 0;
-    $config_handler = $config_handler = xoops_gethandler('config');
-    $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
     $settings['useToken'] = $formulizeConfig['useToken'];
     $settings['anonNeedsPasscode'] = 1;
     $screenName = "New screen";
@@ -69,6 +68,7 @@ if ($screen_id == "new") {
     $settings['useToken'] = $screen->getVar('useToken');
     $settings['anonNeedsPasscode'] = $screen->getVar('anonNeedsPasscode');
 		$settings['rewriteruleAddress'] = $screen->getVar('rewriteruleAddress');
+		$settings['alternateURLsOn'] = $formulizeConfig['formulizeRewriteRulesEnabled'];
 
     if ($settings['type'] == 'listOfEntries') {
         $screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');

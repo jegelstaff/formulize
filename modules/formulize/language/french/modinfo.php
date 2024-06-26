@@ -73,3 +73,23 @@ define("_MI_formulize_FORMULIZELOGFILELOCATION", "Location to store Formulize lo
 define("_MI_formulize_FORMULIZELOGFILELOCATIONDESC", "Formulize generates log files that contain the history of user actions, such as logging in and saving data. You can specify the full path to the folder where the log files are stored. Logging will not function if the path is empty or not valid.");
 define("_MI_formulize_formulizeLogFileStorageDurationHours", "How long should Formulize log files be kept (in hours)");
 define("_MI_formulize_formulizeLogFileStorageDurationHoursDESC", "After this many hours, the log files will be deleted from the server.");
+
+$rewriteRuleInstructions = '';
+if(isset($GLOBALS['config'])) {
+	global $config;
+	foreach($config as $thisConfig) {
+		if(is_object($thisConfig) AND $thisConfig->getVar('conf_name') == 'formulizeRewriteRulesEnabled' AND $thisConfig->getVar('conf_value') == 0) {
+			$rewriteRuleInstructions = "<br><br>For alternate URLs to work, you will need to add code similar to this, to the .htaccess file at the root of your website:
+			<blockquote style=\"font-weight: normal; font-family: monospace; white-space: nowrap;\">
+			RewriteEngine On<br>
+			RewriteCond %{REQUEST_FILENAME} !-f<br>
+			RewriteCond %{REQUEST_FILENAME} !-d<br>
+			RewriteCond %{REQUEST_FILENAME} !-l<br>
+			RewriteRule ^(.*)$ /modules/formulize/index.php?formulizeRewriteRuleAddress=$1 [L]<br>
+			</blockquote><i>If you enabled this option, but these instructions are still here, and the option is off again, then your server is not yet properly configured for alternate URLs.</i>";
+			break;
+		}
+	}
+}
+define("_MI_formulize_rewriteRulesEnabled", "Enable alternate URLs for screens".$rewriteRuleInstructions);
+define("_MI_formulize_rewriteRulesEnabledDESC", "When this is enabled, you can specify alternate, clean URLs for accessing screens, instead of the default /modules/formulize/index.php?sid=1 style URLs.");
