@@ -1272,7 +1272,7 @@ class formulizeDataHandler  {
 	// element_id_or_handle is the element we're working with, cannot pass in object!
 	// this function must be called prior to the new values actually being inserted to the element in the DB, since this function retrieves the current options for the element from the db in order to make a comparison
 	function changeUserSubmittedValues($element_id_or_handle, $newValues) {
-		if(!$element = _getElementObject($element_id_or_handle)) {
+		if(!$element = _getElementObject($element_id_or_handle) AND (!is_array($newValues) OR empty($newValues))) {
 			return false;
 		}
 
@@ -1281,10 +1281,10 @@ class formulizeDataHandler  {
 		$ele_type = $element->getVar('ele_type');
 		$ele_value = $element->getVar('ele_value');
 		switch($ele_type) {
-			case "check":
 			case "radio":
 				$oldValues = array_keys($ele_value);
 				break;
+			case "checkbox":
 			case "select":
 				$oldValues = array_keys($ele_value[2]);
 				// special check...if this is a linked selectbox or a fullnames/usernames selectbox, then fail
@@ -1293,7 +1293,7 @@ class formulizeDataHandler  {
 				}
 				break;
 		}
-		$prefix = ($ele_type == "check" OR ($ele_type == "select" AND $ele_value[1])) ? "#*=:*" : ""; // multiple selection possible? if so, setup prefix
+		$prefix = ($ele_type == "checkbox" OR ($ele_type == "select" AND $ele_value[1])) ? "*=+*:" : ""; // multiple selection possible? if so, setup prefix
 		$newValues = array_keys($newValues);
 		global $xoopsDB;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
@@ -1336,7 +1336,6 @@ class formulizeDataHandler  {
 		}
 		if(count((array) $updateSql) > 0) { // if we have some SQL generated, then run it.
 			foreach($updateSql as $thisSql) {
-				//print $thisSql."<br>";
 				if(!$res = $xoopsDB->query($thisSql)) {
 					return false;
 				}

@@ -276,18 +276,20 @@ if($ele_type == "select") {
 if(isset($_POST['changeuservalues']) AND $_POST['changeuservalues']==1) {
   include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
   $data_handler = new formulizeDataHandler($fid);
+	$newValues = array();
   switch($ele_type) {
     case "radio":
-    case "check":
       $newValues = $processedValues['elements']['ele_value'];
       break;
     case "select":
       $newValues = $processedValues['elements']['ele_value'][2];
       break;
   }
-  if(!$changeResult = $data_handler->changeUserSubmittedValues($ele_id, $newValues)) {
-    print "Error updating user submitted values for the options in element $ele_id";
-  }
+	if(!empty($newValues)) {
+  	if(!$changeResult = $data_handler->changeUserSubmittedValues($ele_id, $newValues)) {
+    	print "Error updating user submitted values for the options in element $ele_id";
+  	}
+	}
 }
 
 
