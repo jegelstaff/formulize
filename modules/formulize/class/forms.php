@@ -591,11 +591,11 @@ class formulizeFormsHandler {
 		global $xoopsDB;
 		$allFidsQuery = "SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " ORDER BY desc_form";
 		$allFidsRes = $xoopsDB->query($allFidsQuery);
-		$foundFids = array();
+		$foundFormObjects = array();
 		while($allFidsArray = $xoopsDB->fetchArray($allFidsRes)) {
-			$foundFids[] = $this->get($allFidsArray['id_form'],$includeAllElements);
+			$foundFormObjects[] = $this->get($allFidsArray['id_form'],$includeAllElements);
 		}
-		return $foundFids;
+		return $foundFormObjects;
 	}
 
 	// accepts a framework object or frid

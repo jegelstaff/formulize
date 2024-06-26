@@ -3578,7 +3578,8 @@ function formulize_processNotification($event, $extra_tags, $fid, $uids_to_notif
 		'tags'=>implode(', ', (array) $extra_tags)
 	));
 
-	$config_handler = xoops_gethandler('config');
+		$config_handler = xoops_gethandler('config');
+		$mid = $mid ? $mid : getFormulizeModId();
     $formulizeConfig = $config_handler->getConfigsByCat(0, $mid);
     $notifyByCron = $formulizeConfig['notifyByCron'];
 
