@@ -5817,7 +5817,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 						}
 						// establish the literal (human readable) value
 						if (isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm])) {
-								$literalTermToUse = "'".formulize_db_escape($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm])."'";
+								$literalTermToUse = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm];
 						} elseif($curlyBracketEntry != 'new') {
 								$preppedFormatValue = prepvalues($dbValueOfTerm, $bareFilterTerm, $curlyBracketEntry); // will be an array
 								if(is_array($preppedFormatValue) AND count((array) $preppedFormatValue)==1) {
@@ -5836,6 +5836,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 							}
 							$subQueryWhereClause = "(".$subQueryWhereClause; // add opening bracket to enclose ORs
 							foreach($literalTermToUse as $thisLiteralTermToUse) {
+								$thisLiteralTermToUse = formulize_db_escape($thisLiteralTermToUse);
 								$literalQuotes = (is_numeric($thisLiteralTermToUse) AND !$likebits) ? "" : "'";
 								$literalTermInSQL = "`$targetSourceHandle` ".$subQueryOp.$literalQuotes.$likebits.$thisLiteralTermToUse.$likebits.$literalQuotes;
 								$specialCharsTerm = htmlspecialchars($thisLiteralTermToUse, ENT_QUOTES);
