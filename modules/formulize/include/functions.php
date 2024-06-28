@@ -5701,7 +5701,30 @@ function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias,
         }
         $conditionsFilterComparisonValue = str_replace("-->>ADDPLAINLITERAL<<--", " $boolean $dbSource $filterOp ", $conditionsFilterComparisonValue);
     }
-    $thiscondition = "($dbSource ".$filterOp." ".$conditionsFilterComparisonValue.")";
+
+		$thiscondition = "($dbSource ".$filterOp." ".$conditionsFilterComparisonValue.")";
+		// possibly we need to flip the order around the LIKE operator,
+		// if the dbSource field is a single value field, and the filter comparison value is a reference to an element that is a multi value field
+		// this is a concession to the fact that it's conceptually difficult to know which side of the operator has which kind of values when specifying a comparison in the UI. Trying to help the user when things are messy.
+		if(($filterOp == "LIKE" OR $filterOp == "NOT LIKE")
+			AND $fieldPos = strpos($conditionsFilterComparisonValue, 'curlybracketform.`')
+			AND $andPos = strpos($conditionsFilterComparisonValue, 'AND curlybracketform.`entry_id`')
+			AND !isset($GLOBALS['formulize_DBSourceJoin'][$filterElementHandle])) {
+			$element_handler = xoops_getmodulehandler('elements', 'formulize');
+			$filterElementObject = $element_handler->get($filterElementHandle);
+			if($filterElementObject AND $filterElementObject->isLinked AND $filterElementObject->canHaveMultipleValues == false) {
+				// extract the field from the comparison value
+				$closingTickPos = strpos($conditionsFilterComparisonValue, "`", $fieldPos+18);
+				$lengthOfFieldName = $closingTickPos - ($fieldPos+18);
+				$comparisonField = substr($conditionsFilterComparisonValue, $fieldPos+18, $lengthOfFieldName);
+				$comparisonElementObject = $element_handler->get(trim(str_replace("curlybracketform.", "", $comparisonField), "`"));
+				if($comparisonElementObject AND $comparisonElementObject->canHaveMultipleValues == true) {
+					$entryIdLimit = substr($conditionsFilterComparisonValue, $andPos);
+					$thiscondition = "( curlybracketform.`$comparisonField` $filterOp CONCAT('%,', $dbSource, ',%') $entryIdLimit)";
+				}
+			}
+		}
+
     $condition .= $thiscondition;
     return array($condition, $thiscondition);
 }
@@ -5795,28 +5818,33 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 						// establish the literal (human readable) value
 						if (isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm])) {
 								$literalTermToUse = "'".formulize_db_escape($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm])."'";
-								$literalQuotes = "";
 						} elseif($curlyBracketEntry != 'new') {
 								$preppedFormatValue = prepvalues($dbValueOfTerm, $bareFilterTerm, $curlyBracketEntry); // will be an array
 								if(is_array($preppedFormatValue) AND count((array) $preppedFormatValue)==1) {
 										$preppedFormatValue = $preppedFormatValue[0]; // take the single value if there's only one, same as display function does
 								}
 								$literalTermToUse = $preppedFormatValue;
-								$literalQuotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
 						} else {
 								// for new entries maybe we should get the defaults?
 								$literalTermToUse = '';
 						}
-						// if there is a difference, setup an OR expression so we can catch both variations
+						$subQueryWhereClause = "ss.`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$filterTermToUse.$likebits.$quotes;
 						if($literalTermToUse != $dbValueOfTerm) {
-								$literalTermInSQL = "`$targetSourceHandle` ".$subQueryOp.$literalQuotes.$likebits.$literalTermToUse.$likebits.$literalQuotes;
-								$specialCharsTerm = htmlspecialchars($literalTermToUse, ENT_QUOTES);
-								if($specialCharsTerm != $literalTermToUse) {
-										$literalTermInSQL .= " OR ".str_replace($literalTermToUse, $specialCharsTerm, $literalTermInSQL);
+							// if there is a difference between the literal and DB term, setup an OR expression so we can catch both/all variations
+							if(!is_array($literalTermToUse)) {
+								$literalTermToUse = array($literalTermToUse);
+							}
+							$subQueryWhereClause = "(".$subQueryWhereClause; // add opening bracket to enclose ORs
+							foreach($literalTermToUse as $thisLiteralTermToUse) {
+								$literalQuotes = (is_numeric($thisLiteralTermToUse) AND !$likebits) ? "" : "'";
+								$literalTermInSQL = "`$targetSourceHandle` ".$subQueryOp.$literalQuotes.$likebits.$thisLiteralTermToUse.$likebits.$literalQuotes;
+								$specialCharsTerm = htmlspecialchars($thisLiteralTermToUse, ENT_QUOTES);
+								if($specialCharsTerm != $thisLiteralTermToUse) {
+										$literalTermInSQL .= " OR ".str_replace($thisLiteralTermToUse, $specialCharsTerm, $literalTermInSQL);
 								}
-								$subQueryWhereClause = "(ss.`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$filterTermToUse.$likebits.$quotes." OR ss.".$literalTermInSQL." )";
-						} else {
-								$subQueryWhereClause = "ss.`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$filterTermToUse.$likebits.$quotes;
+								$subQueryWhereClause .= " OR ss.".$literalTermInSQL;
+							}
+							$subQueryWhereClause .= ")"; // close bracket
 						}
 						// figure out if the curlybracketform field is linked and pointing to the same source as the target element is pointing to
 						// because if it is, then we don't need to do a subquery later, we just compare directly to the $filterTermToUse
