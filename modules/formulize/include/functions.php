@@ -5597,28 +5597,28 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
 				// regular conditions
 				if ($filterTypes[$filterId] != "oom" AND !strstr($conditionsFilterComparisonValue, "curlybracketform")) {
 						$needIntroBoolean = true;
-						list($conditionsfilter, $thiscondition) = _appendToCondition($conditionsfilter, "AND", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
+						list($conditionsfilter, $thiscondition) = _appendToCondition($conditionsfilter, "AND", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue, $filterTerms[$filterId]);
 						if($thiscondition) {
 								$conditionsfilterArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
 						}
 				// regular oom conditions
 				} elseif(!strstr($conditionsFilterComparisonValue, "curlybracketform")) {
 						$needIntroBoolean = true;
-						list($conditionsfilter_oom, $thiscondition) = _appendToCondition($conditionsfilter_oom, "OR", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
+						list($conditionsfilter_oom, $thiscondition) = _appendToCondition($conditionsfilter_oom, "OR", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue, $filterTerms[$filterId]);
 						if($thiscondition) {
 								$conditionsfilter_oomArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
 						}
 				// curlybracketform conditions
 				} elseif($filterTypes[$filterId] != "oom") {
 						$needIntroBoolean = false;
-						list($curlyBracketFormconditionsfilter, $thiscondition) = _appendToCondition($curlyBracketFormconditionsfilter, "AND", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
+						list($curlyBracketFormconditionsfilter, $thiscondition) = _appendToCondition($curlyBracketFormconditionsfilter, "AND", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue, $filterTerms[$filterId]);
 						if($thiscondition) {
 								$conditionsfilterArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
 						}
 				// curlybracketform oom conditions
 				} else {
 						$needIntroBoolean = false;
-						list($curlyBracketFormconditionsfilter_oom, $thiscondition) = _appendToCondition($curlyBracketFormconditionsfilter_oom, "OR", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
+						list($curlyBracketFormconditionsfilter_oom, $thiscondition) = _appendToCondition($curlyBracketFormconditionsfilter_oom, "OR", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue, $filterTerms[$filterId]);
 						if($thiscondition) {
 								$conditionsfilter_oomArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
 						}
@@ -5678,7 +5678,7 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
 }
 
 // append a given value onto a given condition
-function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias, $filterElementHandle, $filterOp, $conditionsFilterComparisonValue) {
+function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias, $filterElementHandle, $filterOp, $conditionsFilterComparisonValue, $filterTerm) {
 
     if(!$conditionsFilterComparisonValue
        AND $conditionsFilterComparisonValue !== 0
@@ -5707,24 +5707,25 @@ function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias,
 		// if the dbSource field is a single value field, and the filter comparison value is a reference to an element that is a multi value field
 		// this is a concession to the fact that it's conceptually difficult to know which side of the operator has which kind of values when specifying a comparison in the UI. Trying to help the user when things are messy.
 		if(($filterOp == "LIKE" OR $filterOp == "NOT LIKE")
-			AND $fieldPos = strpos($conditionsFilterComparisonValue, 'curlybracketform.`')
-			AND $andPos = strpos($conditionsFilterComparisonValue, 'AND curlybracketform.`entry_id`')
-			AND !isset($GLOBALS['formulize_DBSourceJoin'][$filterElementHandle])) {
+			AND !isset($GLOBALS['formulize_DBSourceJoin'][$filterElementHandle])
+			AND substr($filterTerm,0,1) == "{"
+			AND substr($filterTerm,-1)=="}") {
 			$element_handler = xoops_getmodulehandler('elements', 'formulize');
 			$filterElementObject = $element_handler->get($filterElementHandle);
-			if($filterElementObject AND $filterElementObject->isLinked AND $filterElementObject->canHaveMultipleValues == false) {
-				// extract the field from the comparison value
-				$closingTickPos = strpos($conditionsFilterComparisonValue, "`", $fieldPos+18);
-				$lengthOfFieldName = $closingTickPos - ($fieldPos+18);
-				$comparisonField = substr($conditionsFilterComparisonValue, $fieldPos+18, $lengthOfFieldName);
-				$comparisonElementObject = $element_handler->get(trim(str_replace("curlybracketform.", "", $comparisonField), "`"));
-				if($comparisonElementObject AND $comparisonElementObject->canHaveMultipleValues == true) {
-					$entryIdLimit = substr($conditionsFilterComparisonValue, $andPos);
-					$thiscondition = "( curlybracketform.`$comparisonField` $filterOp CONCAT('%,', $dbSource, ',%') $entryIdLimit)";
-				}
+			$termElementObject = $element_handler->get(substr($filterTerm,1,-1));
+			if($filterElementObject AND $termElementObject
+				AND $filterElementObject->isLinked
+				AND $filterElementObject->canHaveMultipleValues == false
+				AND $termElementObject->canHaveMultipleValues == true) {
+					if($andPos = strpos($conditionsFilterComparisonValue, 'AND curlybracketform.`entry_id`')) {
+						$entryIdLimit = substr($conditionsFilterComparisonValue, $andPos);
+						$thiscondition = "( curlybracketform.`".substr($filterTerm,1,-1)."` $filterOp CONCAT('%,', $dbSource, ',%') $entryIdLimit)";
+					} elseif($termElementObject->isLinked) { // going off an asynch value passed in by conditional element? Flip LIKE to IN if the term we're comparing to is linked (because the asynch values will be valid numbers for an IN comparison)
+						$thisConditionParts = explode($filterOp, substr($thiscondition, 1, -1));
+						$thiscondition = "(" . $thisConditionParts[0] . " ". str_replace("LIKE", "IN", $filterOp) ." ". str_replace(",','%')", ")", str_replace("CONCAT('%',',", "(", $thisConditionParts[1])) . ")";
+					}
 			}
 		}
-
     $condition .= $thiscondition;
     return array($condition, $thiscondition);
 }
