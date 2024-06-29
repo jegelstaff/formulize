@@ -5597,28 +5597,28 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
 				// regular conditions
 				if ($filterTypes[$filterId] != "oom" AND !strstr($conditionsFilterComparisonValue, "curlybracketform")) {
 						$needIntroBoolean = true;
-						list($conditionsfilter, $thiscondition) = _appendToCondition($conditionsfilter, "AND", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
+						list($conditionsfilter, $thiscondition) = _appendToCondition($conditionsfilter, "AND", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue, $filterTerms[$filterId]);
 						if($thiscondition) {
 								$conditionsfilterArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
 						}
 				// regular oom conditions
 				} elseif(!strstr($conditionsFilterComparisonValue, "curlybracketform")) {
 						$needIntroBoolean = true;
-						list($conditionsfilter_oom, $thiscondition) = _appendToCondition($conditionsfilter_oom, "OR", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
+						list($conditionsfilter_oom, $thiscondition) = _appendToCondition($conditionsfilter_oom, "OR", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue, $filterTerms[$filterId]);
 						if($thiscondition) {
 								$conditionsfilter_oomArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
 						}
 				// curlybracketform conditions
 				} elseif($filterTypes[$filterId] != "oom") {
 						$needIntroBoolean = false;
-						list($curlyBracketFormconditionsfilter, $thiscondition) = _appendToCondition($curlyBracketFormconditionsfilter, "AND", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
+						list($curlyBracketFormconditionsfilter, $thiscondition) = _appendToCondition($curlyBracketFormconditionsfilter, "AND", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue, $filterTerms[$filterId]);
 						if($thiscondition) {
 								$conditionsfilterArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
 						}
 				// curlybracketform oom conditions
 				} else {
 						$needIntroBoolean = false;
-						list($curlyBracketFormconditionsfilter_oom, $thiscondition) = _appendToCondition($curlyBracketFormconditionsfilter_oom, "OR", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue);
+						list($curlyBracketFormconditionsfilter_oom, $thiscondition) = _appendToCondition($curlyBracketFormconditionsfilter_oom, "OR", $needIntroBoolean, $targetAlias, $filterElementHandles[$filterId], $filterOps[$filterId], $conditionsFilterComparisonValue, $filterTerms[$filterId]);
 						if($thiscondition) {
 								$conditionsfilter_oomArray[$targetFormObject->getVar('id_form')][] = $thiscondition;
 						}
@@ -5678,7 +5678,7 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
 }
 
 // append a given value onto a given condition
-function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias, $filterElementHandle, $filterOp, $conditionsFilterComparisonValue) {
+function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias, $filterElementHandle, $filterOp, $conditionsFilterComparisonValue, $filterTerm) {
 
     if(!$conditionsFilterComparisonValue
        AND $conditionsFilterComparisonValue !== 0
@@ -5701,7 +5701,31 @@ function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias,
         }
         $conditionsFilterComparisonValue = str_replace("-->>ADDPLAINLITERAL<<--", " $boolean $dbSource $filterOp ", $conditionsFilterComparisonValue);
     }
-    $thiscondition = "($dbSource ".$filterOp." ".$conditionsFilterComparisonValue.")";
+
+		$thiscondition = "($dbSource ".$filterOp." ".$conditionsFilterComparisonValue.")";
+		// possibly we need to flip the order around the LIKE operator,
+		// if the dbSource field is a single value field, and the filter comparison value is a reference to an element that is a multi value field
+		// this is a concession to the fact that it's conceptually difficult to know which side of the operator has which kind of values when specifying a comparison in the UI. Trying to help the user when things are messy.
+		if(($filterOp == "LIKE" OR $filterOp == "NOT LIKE")
+			AND !isset($GLOBALS['formulize_DBSourceJoin'][$filterElementHandle])
+			AND substr($filterTerm,0,1) == "{"
+			AND substr($filterTerm,-1)=="}") {
+			$element_handler = xoops_getmodulehandler('elements', 'formulize');
+			$filterElementObject = $element_handler->get($filterElementHandle);
+			$termElementObject = $element_handler->get(substr($filterTerm,1,-1));
+			if($filterElementObject AND $termElementObject
+				AND $filterElementObject->isLinked
+				AND $filterElementObject->canHaveMultipleValues == false
+				AND $termElementObject->canHaveMultipleValues == true) {
+					if($andPos = strpos($conditionsFilterComparisonValue, 'AND curlybracketform.`entry_id`')) {
+						$entryIdLimit = substr($conditionsFilterComparisonValue, $andPos);
+						$thiscondition = "( curlybracketform.`".substr($filterTerm,1,-1)."` $filterOp CONCAT('%,', $dbSource, ',%') $entryIdLimit)";
+					} elseif($termElementObject->isLinked) { // going off an asynch value passed in by conditional element? Flip LIKE to IN if the term we're comparing to is linked (because the asynch values will be valid numbers for an IN comparison)
+						$thisConditionParts = explode($filterOp, substr($thiscondition, 1, -1));
+						$thiscondition = "(" . $thisConditionParts[0] . " ". str_replace("LIKE", "IN", $filterOp) ." ". str_replace(",','%')", ")", str_replace("CONCAT('%',',", "(", $thisConditionParts[1])) . ")";
+					}
+			}
+		}
     $condition .= $thiscondition;
     return array($condition, $thiscondition);
 }
@@ -5794,29 +5818,35 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 						}
 						// establish the literal (human readable) value
 						if (isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm])) {
-								$literalTermToUse = "'".formulize_db_escape($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm])."'";
-								$literalQuotes = "";
+								$literalTermToUse = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm];
 						} elseif($curlyBracketEntry != 'new') {
 								$preppedFormatValue = prepvalues($dbValueOfTerm, $bareFilterTerm, $curlyBracketEntry); // will be an array
 								if(is_array($preppedFormatValue) AND count((array) $preppedFormatValue)==1) {
 										$preppedFormatValue = $preppedFormatValue[0]; // take the single value if there's only one, same as display function does
 								}
 								$literalTermToUse = $preppedFormatValue;
-								$literalQuotes = (is_numeric($literalTermToUse) AND !$likebits) ? "" : "'";
 						} else {
 								// for new entries maybe we should get the defaults?
 								$literalTermToUse = '';
 						}
-						// if there is a difference, setup an OR expression so we can catch both variations
+						$subQueryWhereClause = "ss.`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$filterTermToUse.$likebits.$quotes;
 						if($literalTermToUse != $dbValueOfTerm) {
-								$literalTermInSQL = "`$targetSourceHandle` ".$subQueryOp.$literalQuotes.$likebits.$literalTermToUse.$likebits.$literalQuotes;
-								$specialCharsTerm = htmlspecialchars($literalTermToUse, ENT_QUOTES);
-								if($specialCharsTerm != $literalTermToUse) {
-										$literalTermInSQL .= " OR ".str_replace($literalTermToUse, $specialCharsTerm, $literalTermInSQL);
+							// if there is a difference between the literal and DB term, setup an OR expression so we can catch both/all variations
+							if(!is_array($literalTermToUse)) {
+								$literalTermToUse = array($literalTermToUse);
+							}
+							$subQueryWhereClause = "(".$subQueryWhereClause; // add opening bracket to enclose ORs
+							foreach($literalTermToUse as $thisLiteralTermToUse) {
+								$thisLiteralTermToUse = formulize_db_escape($thisLiteralTermToUse);
+								$literalQuotes = (is_numeric($thisLiteralTermToUse) AND !$likebits) ? "" : "'";
+								$literalTermInSQL = "`$targetSourceHandle` ".$subQueryOp.$literalQuotes.$likebits.$thisLiteralTermToUse.$likebits.$literalQuotes;
+								$specialCharsTerm = htmlspecialchars($thisLiteralTermToUse, ENT_QUOTES);
+								if($specialCharsTerm != $thisLiteralTermToUse) {
+										$literalTermInSQL .= " OR ".str_replace($thisLiteralTermToUse, $specialCharsTerm, $literalTermInSQL);
 								}
-								$subQueryWhereClause = "(ss.`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$filterTermToUse.$likebits.$quotes." OR ss.".$literalTermInSQL." )";
-						} else {
-								$subQueryWhereClause = "ss.`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$filterTermToUse.$likebits.$quotes;
+								$subQueryWhereClause .= " OR ss.".$literalTermInSQL;
+							}
+							$subQueryWhereClause .= ")"; // close bracket
 						}
 						// figure out if the curlybracketform field is linked and pointing to the same source as the target element is pointing to
 						// because if it is, then we don't need to do a subquery later, we just compare directly to the $filterTermToUse
