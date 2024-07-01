@@ -157,6 +157,11 @@ function formulize_notify($event, $extra_tags, $fid, $uids_to_notify, $mid, $omi
     $formulizeModule = $module_handler->getByDirname("formulize");
     $not_config = $formulizeModule->getInfo('notification');
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
+		if(!$fid) {
+			$allFormObjects = $form_handler->getAllForms();
+			$firstFormObject = $allFormObjects[0];
+			$fid = $firstFormObject->getVar('id_form');
+		}
     $formObject = $form_handler->get($fid);
     $sendDigests = $formObject->getVar('send_digests');
 
