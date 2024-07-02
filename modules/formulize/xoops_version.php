@@ -31,7 +31,7 @@
 
 $modversion = array(
 	'name' => _MI_formulize_NAME,
-	'version' => "7.3",
+	'version' => "8.0-alpha",
 	'description' => _MI_formulize_DESC,
 	'author' => "The Formulize Project - formulize.org",
 	'credits' => "",
