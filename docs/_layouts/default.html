@@ -57,7 +57,7 @@
             for(i in pathParts) {
                 crumbPath = crumbPath + pathParts[i] + '/';
                 if(!startCrumbsNextTime) {
-                    if(pathParts[i] == 'localhost:4000' || pathParts[i] == 'www.formulize.org') {
+                    if(pathParts[i] == 'localhost:4000' || pathParts[i] == 'www.formulize.org' || pathParts[i] == 'formulize.org') {
                         startCrumbsNextTime = true;
                         homePath = crumbPath;
                     }
