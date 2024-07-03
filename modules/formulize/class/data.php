@@ -1084,7 +1084,7 @@ class formulizeDataHandler  {
       if (file_exists($lock_file_name)) {
         unlink($lock_file_name);
 			}
-			// cache copies of what the state of the date was before and after save, for reference elsewhere (ie: when processing notifications)
+			// cache copies of what the state of the data was before and after save, for reference elsewhere (ie: when processing notifications)
 			if(!isset($formulize_existingValues[$this->fid][$entry_id]['before_save'])) {
 				// cache the existing values only on first run through, because we might end up here again a few times because of derived values and save handlers and so on
 				$formulize_existingValues[$this->fid][$entry_id]['before_save'] = $existing_values;
