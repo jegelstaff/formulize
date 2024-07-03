@@ -1,4 +1,7 @@
+title: formulize.org
+logo: /assets/img/logo.png
+description: Forms, workflows, and reporting. 100% free and open source.
 markdown: kramdown
 baseurl: /
-url: http://www.formulize.org/
+url: https://formulize.org/
 permalink: /:title/
