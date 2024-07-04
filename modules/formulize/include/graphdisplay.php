@@ -34,7 +34,9 @@
 include_once '../../../mainfile.php';
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
 
-function displayGraph($type, $data, $dataElements, $xElements, $yElements, $labelTexts, $lines=null, $timeUnit='day', $timeFormat='M j', $timeUnitCount=1, $minValue=null, $maxValue=null, $showAllTooltips = true) {
+function displayGraph($type, $data, $dataElements, $xElements, $yElements, $labels=null, $timeUnit='day', $timeFormat='M j', $timeUnitCount=1, $minValue=null, $maxValue=null, $showAllTooltips = true) {
+
+	$jsTimeFormat = convertPHPTimeFormatToJSTimeFormat($timeFormat);
 
 	switch (strtolower($type)) {
 		case 'line':
@@ -63,14 +65,14 @@ function displayGraph($type, $data, $dataElements, $xElements, $yElements, $labe
 			$minMaxYAxes = implode(",", $minMaxYAxes);
 			$minMaxYAxes .= $minMaxYAxes ? ",\n" : "";
 
-			if($lines) {
-				$lines = is_array($lines) ? $lines : array($lines);
+			if($labels) {
+				$labels = is_array($labels) ? $labels : array($labels);
 			}
 			$drawLines = array();
-			if(is_array($lines)) {
-				foreach($lines as $line) {
-					$start = $line['value'] ? $line['value'] : 0;
-					$label = $line['label'] ? $line['label'] : '';
+			if(is_array($labels)) {
+				foreach($labels as $label) {
+					$start = $label['value'] ? $label['value'] : 0;
+					$label = $label['label'] ? $label['label'] : '';
 					$drawLines[] = "drawLine(".$start.", \"".$label."\");";
 				}
 			}
@@ -135,8 +137,8 @@ function displayGraph($type, $data, $dataElements, $xElements, $yElements, $labe
 							timeUnit: "<?php print $timeUnit; ?>",
 							count: <?php print $timeUnitCount; ?>
 						},
-						renderer: am5xy.AxisRendererX.new(root, {
-						}),
+						tooltipDateFormat: "<?php print $jsTimeFormat; ?>",
+						renderer: am5xy.AxisRendererX.new(root, {}),
 						tooltip: am5.Tooltip.new(root, {})
 					})
 				);
@@ -156,27 +158,38 @@ function displayGraph($type, $data, $dataElements, $xElements, $yElements, $labe
 
 			$yElements = is_array($yElements) ? $yElements : array($yElements);
 
-			$labelKey = 0;
 			foreach($yElements as $title=>$yElement) {
 
-				$labelText = is_array($labelTexts) ? $labelTexts[$labelKey] : $labelTexts;
-				$labelText = str_replace("\n", '\n', $labelText);
-				$labelKey++;
-
 				?>
+
+				var fillOpacity = 0.2;
+
 				// Add series
 				// https://www.amcharts.com/docs/v5/charts/xy-chart/series/
 				var series = chart.series.push(am5xy.LineSeries.new(root, {
 					name: "<?php print $title; ?>",
 					xAxis: xAxis,
 					yAxis: yAxis,
-					valueYField: "<?php print $yElement; ?>",
+					valueYField: "<?php print $yElement['data']; ?>",
 					valueXField: "millisecondTimestamp",
-					legendValueText: "<?php print $labelText; ?>",
+					legendValueText: "<?php print str_replace("\n", '\n', $yElement['labelText']); ?>",
 					tooltip: am5.Tooltip.new(root, {
-						labelText: "<?php print $labelText; ?>"
+						labelText: "<?php print str_replace("\n", '\n', $yElement['labelText']); ?>"
 					})
 				}));
+
+				series.strokes.template.setAll({
+					strokeWidth: 2
+				});
+
+				series.filledRanges = [];
+
+				<?php if(!empty($yElement['highlightAbove'])) {
+					$highlightAbove = is_array($yElement['highlightAbove']) ? $yElement['highlightAbove'] : array($yElement['highlightAbove']);
+					foreach($highlightAbove as $thisHighlightAbove) {
+						print "highlightData(series, $thisHighlightAbove);\n";
+					}
+				} ?>
 
 				series.data.setAll(data);
 				series.appear(1000);
@@ -210,34 +223,52 @@ function displayGraph($type, $data, $dataElements, $xElements, $yElements, $labe
 				});
 			}
 
+			function highlightData(series, value) {
+
+				var rangeDataItem = yAxis.makeDataItem({
+					value: value,
+					endValue: value * 10000000
+				});
+
+				series.filledRanges.push(series.createAxisRange(rangeDataItem));
+				series.filledRanges[series.filledRanges.length-1].fills.template.setAll({
+					fillOpacity: fillOpacity,
+					visible: true
+				});
+
+				fillOpacity = fillOpacity + 0.1;
+
+			}
+
 			<?php print $drawLines; ?>
 
 			// Add legend
 			// https://www.amcharts.com/docs/v5/charts/xy-chart/legend-xy-series/
 			var legend = chart.rightAxesContainer.children.push(am5.Legend.new(root, {
 				width: 200,
-				paddingLeft: 15,
 				height: am5.percent(100),
+				paddingLeft: 15,
 				clickTarget: "none"
 			}));
 
 			// When legend item container is hovered, dim all the series except the hovered one
 			legend.itemContainers.template.events.on("pointerover", function(e) {
-			var itemContainer = e.target;
+				var itemContainer = e.target;
 
-			// As series list is data of a legend, dataContext is series
-			var series = itemContainer.dataItem.dataContext;
+				// As series list is data of a legend, dataContext is series
+				var series = itemContainer.dataItem.dataContext;
 
-			chart.series.each(function(chartSeries) {
-				if (chartSeries != series) {
-					chartSeries.strokes.template.setAll({
-						strokeOpacity: 0.15,
-						stroke: am5.color(0x000000)
-					});
-				} else {
-					chartSeries.strokes.template.setAll({
-						strokeWidth: 3
-					});
+				chart.series.each(function(chartSeries) {
+					if (chartSeries != series) {
+						chartSeries.strokes.template.setAll({
+							strokeOpacity: 0.15,
+							stroke: am5.color(0x000000)
+						});
+						chartSeries.filledRanges.forEach((range) => {
+							range.fills.template.setAll({
+								visible: false,
+							})
+						});
 					}
 				})
 			})
@@ -250,8 +281,12 @@ function displayGraph($type, $data, $dataElements, $xElements, $yElements, $labe
 				chart.series.each(function(chartSeries) {
 					chartSeries.strokes.template.setAll({
 						strokeOpacity: 1,
-						strokeWidth: 1,
 						stroke: chartSeries.get("fill")
+					});
+					chartSeries.filledRanges.forEach((range) => {
+						range.fills.template.setAll({
+							visible: true
+						})
 					});
 				});
 			})
@@ -276,4 +311,17 @@ function displayGraph($type, $data, $dataElements, $xElements, $yElements, $labe
 			<?php
 			break;
 		}
+}
+
+
+function convertPHPTimeFormatToJSTimeFormat($formatString) {
+	$replacements = array(
+		'M' => 'MMM',
+		'j' => 'd',
+		// needs to be completed!!!
+	);
+	foreach($replacements as $php=>$js) {
+		$formatString = str_replace($php, $js, $formatString);
+	}
+	return $formatString;
 }
