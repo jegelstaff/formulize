@@ -195,11 +195,18 @@ class icms_messaging_Handler {
 		// TODO: X_SIGNATURE, X_DISCLAIMER ?? - these are probably best
 		//  done as includes if mail templates ever get this sophisticated
 
-		// replace tags with actual values
+		// replace tags with actual values, and add attachments if that is requested
 		foreach ($this->assignedTags as $k => $v) {
-			$this->body = str_replace("{" . $k . "}", $v, $this->body);
-			$this->subject = str_replace("{" . $k . "}", $v, $this->subject);
+			if(substr($k, 0, 11) == "ATTACHFILE-") {
+				$fileName = substr($k, 11, strlen($k));
+				$filePath = $v;
+				$this->multimailer->addAttachment($filePath, $fileName);
+			} else {
+				$this->body = str_replace("{" . $k . "}", preg_replace("/&amp;/i", '&', $v), $this->body);
+				$this->subject = str_replace("{" . $k . "}", preg_replace("/&amp;/i", '&', $v), $this->subject);
+			}
 		}
+
 		$this->body = str_replace("\r\n", "\n", $this->body);
 		$this->body = str_replace("\r", "\n", $this->body);
 		$this->body = str_replace("\n", $this->LE, $this->body);
