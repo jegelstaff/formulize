@@ -120,7 +120,7 @@ class icms_data_notification_Handler extends icms_core_ObjectHandler {
 		}
 
 		$sql = sprintf("DELETE FROM %s WHERE not_id = '%u'", $this->db->prefix('xoopsnotifications'), (int)$notification->getVar('not_id'));
-		if (!$result = $this->db->query($sql)) {
+		if (!$result = $this->db->queryF($sql)) {
 			return false;
 		}
 		return true;
