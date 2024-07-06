@@ -45,8 +45,9 @@ class formulizeScreen extends xoopsObject {
 		$this->initVar('frid', XOBJ_DTYPE_INT, '', true);
 		$this->initVar('type', XOBJ_DTYPE_TXTBOX, '', true, 100);
 		$this->initVar('useToken', XOBJ_DTYPE_INT);
-        $this->initVar('anonNeedsPasscode', XOBJ_DTYPE_INT);
-        $this->initVar('theme', XOBJ_DTYPE_TXTBOX, '', true, 100);
+    $this->initVar('anonNeedsPasscode', XOBJ_DTYPE_INT);
+    $this->initVar('theme', XOBJ_DTYPE_TXTBOX, '', true, 100);
+		$this->initVar('rewriteruleAddress', XOBJ_DTYPE_TXTBOX, '', false, 255);
 	}
 
     static function normalize_values($key, $value) {
@@ -88,12 +89,12 @@ class formulizeScreen extends xoopsObject {
         }
         return $this->$name;
     }
-    
+
     // get the default template for this screen, either for theme or site wide
 	function getDefaultTemplate($templateName, $theme="") {
 		return getDefaultTemplate($templateName, $this->getVar('type'), $theme);
 	}
-	
+
     // get a custom template specified by admin user for this screen
     function getTemplate($templateName, $theme="") {
         if(!$theme) {
@@ -179,7 +180,7 @@ class formulizeScreenHandler {
         } else {
             if (intval($fid) > 0) {
                 $sql .= " WHERE fid=" . intval($fid);
-                
+
                 if ($appid > 0) {
                 	$sql .= " AND EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.appid=" . $appid . " AND linktable.fid=screentable.fid)";
                 } else if ($appid === 0) {
@@ -258,9 +259,9 @@ class formulizeScreenHandler {
             ${$k} = $v;
         }
         if (!$sid) {
-            $sql = sprintf("INSERT INTO %s (title, fid, frid, type, useToken, anonNeedsPasscode, theme) VALUES (%s, %u, %u, %s, %u, %u, %s)", $this->db->prefix('formulize_screen'), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $anonNeedsPasscode, $this->db->quoteString($theme));
+            $sql = sprintf("INSERT INTO %s (title, fid, frid, type, useToken, anonNeedsPasscode, theme, rewriteruleAddress) VALUES (%s, %u, %u, %s, %u, %u, %s, %s)", $this->db->prefix('formulize_screen'), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $anonNeedsPasscode, $this->db->quoteString($theme), $this->db->quoteString($rewriteruleAddress));
         } else {
-            $sql = sprintf("UPDATE %s SET title = %s, fid = %u, frid = %u, type = %s, useToken = %u, anonNeedsPasscode = %u, theme = %s WHERE sid = %u", $this->db->prefix('formulize_screen'), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $anonNeedsPasscode, $this->db->quoteString($theme), $sid);
+            $sql = sprintf("UPDATE %s SET title = %s, fid = %u, frid = %u, type = %s, useToken = %u, anonNeedsPasscode = %u, theme = %s, rewriteruleAddress = %s WHERE sid = %u", $this->db->prefix('formulize_screen'), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $anonNeedsPasscode, $this->db->quoteString($theme), $this->db->quoteString($rewriteruleAddress), $sid);
         }
         $result = $this->db->query($sql);
         if (!$result) {
@@ -379,7 +380,7 @@ function getDefaultTemplate($templateName, $type, $theme="") {
 			$systemDefaultPath = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$type."/".$templateName.".php";
 			if (file_exists($systemDefaultPath)) {
 				$template = file_get_contents($systemDefaultPath);
-			} 
+			}
 		}
 		$cachedDefaultTemplates[$theme][$type][$templateName] = $template;
 	}

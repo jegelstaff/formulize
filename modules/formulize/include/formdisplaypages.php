@@ -258,6 +258,7 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 
 	$nextPage = $currentPage+1;
 
+		global $formulizeCanonicalURI;
     if(!$done_dest) {
         // check for a dd in get and use that as a screen id
         if(isset($_GET['dd']) AND is_numeric($_GET['dd'])) {
@@ -265,21 +266,43 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
         } else {
             $done_dest = getCurrentURL();
             // check if the done destination is for this specific form screen that we're rendering, if so, switch done destination to the default list for the form if any
-            if($screen AND strstr($done_dest, 'sid='.$screen->getVar('sid'))) {
+						$alternateURLForSid = $screen->getVar('rewriteruleAddress');
+						$doneDestHasSid = strstr($done_dest, 'sid='.$screen->getVar('sid'));
+						$doneDestHasSid = $doneDestHasSid ? $doneDestHasSid : strstr($done_dest, $alternateURLForSid);
+            if($screen AND $doneDestHasSid) {
                 $form_handler = xoops_getmodulehandler('forms', 'formulize');
                 $formObject = $form_handler->get($screen->getVar('fid'));
                 if($defaultListScreenId = $formObject->getVar('defaultlist')) {
-                    $done_dest = XOOPS_URL.'/modules/formulize/index.php?sid='.$defaultListScreenId;
+										$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+										if($defaultListScreenObject = $screen_handler->get($defaultListScreenId)) {
+											if($rewriteruleAddress = $defaultListScreenObject->getVar('rewriteruleAddress')) {
+												$done_dest = XOOPS_URL.'/'.$rewriteruleAddress;
+											} else {
+                    		$done_dest = XOOPS_URL.'/modules/formulize/index.php?sid='.$defaultListScreenId;
+											}
+										}
                 }
             }
         }
     }
+
 		// strip out any ve portion of a done destination, so we don't end up forcing the user back to this entry after they're done
 		$veTarget = strstr($done_dest, '&ve=') ? '&ve=' : '?ve=';
 		if($done_dest AND $vepos = strpos($done_dest, $veTarget)) {
 				if(is_numeric(substr($done_dest, $vepos+4))) {
 						$done_dest = substr($done_dest, 0, $vepos);
 				}
+		}
+		// if there was an alternate URL used to access the page, and a ve was specified, scale back to remove the ve from the done_dest
+		global $formulizeCanonicalURI;
+		if($done_dest AND $formulizeCanonicalURI AND $_GET['ve']) {
+			$trimmedDoneDest = trim($done_dest, '/'); // take off last slash if any
+			$trailingSlash = $trimmedDoneDest === $done_dest ? '' : '/'; // if there was a slash on the end, remember this for later
+			$doneDestParts = explode('/', $trimmedDoneDest); // split on slashes
+			if(intval($doneDestParts[count($doneDestParts)-1]) === intval($_GET['ve'])) { // make sure this is the ve we're talking about
+				unset($doneDestParts[count($doneDestParts)-1]); // remove the last value, which will be the ve number
+				$done_dest = implode('/', $doneDestParts).$trailingSlash; // put back together, with trailing slash if necessary
+			}
 		}
 
 	$done_dest = substr($done_dest,0,4) == "http" ? $done_dest : "http://".$done_dest;

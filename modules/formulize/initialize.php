@@ -47,16 +47,7 @@ $GLOBALS['formulize_displayingMultipageScreen'] = false; // later, will be set t
 
 global $xoopsDB, $myts, $xoopsUser, $xoopsModule, $xoopsTpl, $xoopsConfig, $renderedFormulizeScreen;
 
-// load the formulize language constants if they haven't been loaded already
-if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
-    include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php";
-} else {
-    include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/main.php";
-}
-
-include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
-
-$thisRendering = microtime(); // setup a flag that is common to this instance of rendering a formulize page
+$thisRendering = microtime(true); // setup a flag that is common to this instance of rendering a formulize page
 if(!isset($prevRendering)) {
     $prevRendering = array();
 }

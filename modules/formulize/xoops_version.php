@@ -31,7 +31,7 @@
 
 $modversion = array(
 	'name' => _MI_formulize_NAME,
-	'version' => "7.3",
+	'version' => "8.0-alpha",
 	'description' => _MI_formulize_DESC,
 	'author' => "The Formulize Project - formulize.org",
 	'credits' => "",
@@ -978,6 +978,15 @@ $modversion['config'][] = array(
 	'formtype' => 'textbox',
 	'valuetype' => 'int',
 	'default' => '168',
+);
+
+$modversion['config'][] = array(
+	'name' => 'formulizeRewriteRulesEnabled',
+	'title' => '_MI_formulize_rewriteRulesEnabled',
+	'description' => '_MI_formulize_rewriteRulesEnabledDESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 0,
 );
 
 $modversion['blocks'][1] = array(

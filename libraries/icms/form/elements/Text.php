@@ -46,6 +46,12 @@ class icms_form_elements_Text extends icms_form_Element {
 	public $autocomplete = false;
 
 	/**
+	 * Treat it as a number or text field when rendering.
+	 * @var 		boolean
+	 */
+	public $numberOrText = false;
+
+	/**
 	 * Constructor
 	 *
 	 * @param	string	$caption	Caption
@@ -53,14 +59,17 @@ class icms_form_elements_Text extends icms_form_Element {
 	 * @param	int		$size	    Size
 	 * @param	int		$maxlength	Maximum length of text
 	 * @param	string  $value      Initial text
+	 * @param	bool	$autocomplete	Whether to use autocomplete functionality in browser. Seems to have no effect in render method.
+	 * @param	mixed	$number	Whether to treat it as a number-only box (essentially a boolean, but 1/0 might be passed in)
 	 */
-	public function __construct($caption, $name, $size, $maxlength, $value = '', $autocomplete = false) {
+	public function __construct($caption, $name, $size, $maxlength, $value = '', $autocomplete = false, $number = false) {
 		$this->setCaption($caption);
 		$this->setName($name);
 		$this->_size = (int) $size;
 		$this->_maxlength = (int) $maxlength;
 		$this->setValue($value);
-		$this->autoComplete = !empty($autocomplete);
+		$this->autocomplete = !empty($autocomplete);
+		$this->numberOrText = ($number ? 'number' : 'text');
 	}
 
 	/**
@@ -79,6 +88,15 @@ class icms_form_elements_Text extends icms_form_Element {
 	 */
 	public function getMaxlength() {
 		return $this->_maxlength;
+	}
+
+	/**
+	 * Get numbers or text
+	 *
+	 * @return	int
+	 */
+	public function getNumberOrText() {
+		return $this->numberOrText;
 	}
 
 	/**
@@ -106,7 +124,8 @@ class icms_form_elements_Text extends icms_form_Element {
 	 * @return	string  HTML
 	 */
 	public function render() {
-		return "<input type='text' name='" . $this->getName()
+		$numberOrText = $this->getNumberOrText();
+		return "<input type='$numberOrText' name='" . $this->getName()
 			. "' id='" . $this->getName()
 			. "' size='" . $this->getSize()
 			. "' maxlength='" . $this->getMaxlength()

@@ -107,7 +107,7 @@ class formulizeEmailElementHandler extends formulizeElementsHandler {
         if($isDisabled) {
             $formElement = new xoopsFormLabel($caption, $ele_value);
         } else {
-            $formElement = new xoopsFormText($caption, $markupName, 50, 255, $ele_value); // caption, markup name, size, maxlength, default value, according to the xoops form class
+            $formElement = new xoopsFormText($caption, $markupName, 20, 255, $ele_value); // caption, markup name, size, maxlength, default value, according to the xoops form class
         }
         return $formElement;
     }

@@ -165,7 +165,9 @@ class formulizeElementRenderer{
 					$renderedElementMarkupName,
 					$ele_value[0],	//	box width
 					$ele_value[1],	//	max width
-					$ele_value[2]	  //	default value
+					$ele_value[2],	  //	default value
+					false,	// autocomplete in browser
+					$ele_value[3]	// numbers only
 					);
 				} else {															// nmc 2007.03.24 - added
 					$form_ele = new XoopsFormLabel ($ele_caption, formulize_numberFormat($ele_value[2], $this->_ele->getVar('ele_handle')), $renderedElementMarkupName);	// nmc 2007.03.24 - added
