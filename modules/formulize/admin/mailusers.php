@@ -10,6 +10,8 @@ if(!$xoopsUser OR !in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
 if(isset($_POST['body']) AND
     $_POST['body'] AND $_POST['subject'] AND $_POST['groups']) {
 
+		$mailStatus = '';
+
 		// Setup the users we're going to send to
 		$uids_to_notify = array();
 		if(!isset($_POST['include']) OR $_POST['include'] == 'all') {
@@ -67,7 +69,7 @@ if(isset($_POST['body']) AND
     }
 		$extra_tags = array();
 		if($attachment AND !$attachmentSuccess) {
-			print "<p><b>$attachmentStatus</b></p>";
+			$mailStatus .= "<p><b>$attachmentStatus</b></p>";
 		} elseif($attachment) {
 			$extra_tags['ATTACHFILE-'.$_FILES['attachment']['name']] = XOOPS_ROOT_PATH."/modules/formulize/temp/".$_FILES['attachment']['name'];
 		}
@@ -87,7 +89,7 @@ if(isset($_POST['body']) AND
 			$template = 'tempmailbody.tpl';
 			formulize_processNotification($event, $extra_tags, $fid, $uids_to_notify, $mid, $omit_user, $subject, $template);
 
-			print "<p><b>Handled mail for ".count($uids_to_notify)." users.</b></p>";
+			$mailStatus .= "<p><b>Handled mail for ".count($uids_to_notify)." users.</b></p>";
 		}
 }
 
