@@ -3259,7 +3259,8 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
         }
 
         // intersect all possible uids with the ones valid for this condition, and handle subscribing necessary users
-        $uids_real = compileNotUsers2($uids_conditions, $uids_complete, $fid, $event, $mid);
+				$uids_real = array_intersect(array_unique($uids_conditions), $uids_complete);
+        subscribeUidsToEvent($uids_real, $fid, $event);
         // cannot bug out (return) if $uids_real is empty, since there are still the custom conditions to evaluate below
 
         // get form object so the title can be used in notification messages
@@ -3342,7 +3343,8 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
             if (isset($GLOBALS['formulize_notification_email'])) {
                 $uids_complete[] = -1; // if we are notifying an arbitrary e-mail address, then this uid will have been added to the uids_conditions array, so let's add it to the complete array, so that our notification doesn't get ignored as being "out of scope" based on uids
             }
-            $uids_cust_real = compileNotUsers2($uids_cust_con, $uids_complete, $fid, $event, $mid);
+						$uids_cust_real = array_intersect(array_unique($uids_cust_con), $uids_complete);
+						subscribeUidsToEvent($uids_cust_real, $fid, $event);
             if (count((array) $uids_cust_real) > 0) {
                 formulize_processNotification($event, $extra_tags, $fid, $uids_cust_real, $mid, $omit_user, $thiscon['not_cons_subject'], $thiscon['not_cons_template']);
             }
@@ -3543,26 +3545,41 @@ function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $rei
     return array(0=>$uids_conditions, 1=>$omit_user);
 }
 
+/**
+ * Subscribe users to an event on a form, so events will trigger for them later (original model of xoops notifications was for users to self-subscribe, so we have to do this for them)
+ * @param array $uidsToSubscribe An array of user ids that should be subscribed to the event
+ * @param int $fid The form id of the form with the event we're subscribing them to
+ * @param string $event The kind of event we're subscribing them to (as specified in xoops_version.php)
+ * @return boolean Returns false if invalid data is passed to it, otherwise true
+ */
+function subscribeUidsToEvent($uidsToSubscribe, $fid, $event) {
 
-function compileNotUsers2($uids_conditions, $uids_complete, $fid, $event, $mid) {
-    global $xoopsDB;
-    $notification_handler = xoops_gethandler('notification');
-    $uids_conditions = array_unique($uids_conditions);
-    $uids_real = array_intersect($uids_conditions, $uids_complete);
-    // figure out who is not subscribed to the event, and subscribe them once
-    $subd_uids = q("SELECT not_uid FROM " . $xoopsDB->prefix("xoopsnotifications") . " WHERE not_event=\"".formulize_db_escape($event)."\" AND not_category=\"form\" AND not_modid=$mid AND not_itemid=$fid");
-    $uids_subd = array();
-    foreach ($subd_uids as $thisuid) {
-        $uids_subd[] = $thisuid['not_uid'];
-    }
-    $uids_not_subd = array_diff($uids_real, $uids_subd);
-    foreach ($uids_not_subd as $thisuid) {
-        if ($thisuid <= 0) {
-            continue;
-        }
-        $notification_handler->subscribe("form", $fid, $event, XOOPS_NOTIFICATION_MODE_SENDONCETHENDELETE, $mid, $thisuid);
-    }
-    return $uids_real;
+	if(!$fid OR !$event OR empty($uidsToSubscribe)) {
+		return false;
+	}
+	global $xoopsDB;
+	$mid = getFormulizeModId();
+	$notification_handler = xoops_gethandler('notification');
+
+	$uidsSubscribed = array();
+	$uidsSubdSQL = "SELECT not_uid FROM " . $xoopsDB->prefix("xoopsnotifications") . " WHERE not_event=\"".formulize_db_escape($event)."\" AND not_category=\"form\" AND not_modid=$mid AND not_itemid=$fid";
+	if($res = $xoopsDB->query($uidsSubdSQL)) {
+		while($row = $xoopsDB->fetchArray($res)) {
+			$uid = $row['not_uid'];
+			if($uid > 0) {
+				$uidsSubscribed[] = $uid;
+			}
+		}
+	}
+
+	$uidsToSubscribe = array_diff($uidsToSubscribe, $uidsSubscribed);
+	foreach($uidsToSubscribe as $uid) {
+		if($uid > 0) {
+			$notification_handler->subscribe("form", $fid, $event, XOOPS_NOTIFICATION_MODE_SENDONCETHENDELETE, $mid, $uid);
+		}
+	}
+
+	return true;
 }
 
 /**
@@ -3594,6 +3611,14 @@ function formulize_processNotification($event, $extra_tags, $fid, $uids_to_notif
 		$mid = $mid ? $mid : getFormulizeModId();
     $formulizeConfig = $config_handler->getConfigsByCat(0, $mid);
     $notifyByCron = $formulizeConfig['notifyByCron'];
+
+		if(!$fid) {
+			$form_handler = xoops_getmodulehandler('forms', 'formulize');
+			$allFormObjects = $form_handler->getAllForms();
+			$firstFormObject = $allFormObjects[0];
+			$fid = $firstFormObject->getVar('id_form');
+			subscribeUidsToEvent($uids_to_notify, $fid, $event);
+		}
 
     // template gets .tpl added on end when the notification system runs, so trip out any .tpl that might be in there now just in case
     $template = str_replace('.tpl', '', $template);
