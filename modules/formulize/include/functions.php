@@ -3565,9 +3565,21 @@ function compileNotUsers2($uids_conditions, $uids_complete, $fid, $event, $mid) 
     return $uids_real;
 }
 
-// send notifications, or cache notifications so they can be triggered by a cron job later
-// turn on the preference in the module to use the cron feature
-function formulize_processNotification($event, $extra_tags, $fid, $uids_to_notify, $mid, $omit_user, $subject="", $template="") {
+/**
+ * Send notifications, or cache notifications so they can be triggered by a cron job later
+ * Turn on the preference in the module to use the cron feature
+ *
+ * @param string $event The kind of event being processed, either 'new_entry' or 'update_entry' or 'delete_entry'. Controls the default subject/template used in the notification.
+ * @param array $extra_tags An array of values to swap into the notification where there are { } terms. Keys are the terms, values are what gets swapped in.
+ * @param int $fid The form that we're processing the notification about. Can be null if we're not sending a notification about a form, just sending generic mail.
+ * @param array $uids_to_notify An array of the user ids that should receive the notification. Can include the value -1 to indicate that mail is being sent to an arbitrary email address, in which case the email address must be set in the global variable $GLOBALS['formulize_notification_email']
+ * @param int $mid Optional. The Formulize module ID. Will be determined if not passed in.
+ * @param int $omit_user Optional. A flag to indicate if the current session's user should be excluded from the notification (ie: so people aren't notified of things they do themselves)
+ * @param string $subject Optional. A subject for the notification message, if something besides the default should be used.
+ * @param string $template Optional. The name of the template file, which must be located in modules/formulize/language/english/mail_template (if english is the active language)
+ * @return nothing
+ */
+function formulize_processNotification($event, $extra_tags, $fid, $uids_to_notify, $mid=null, $omit_user=0, $subject="", $template="") {
 
 	writeToFormulizeLog(array(
 		'formulize_event'=>'processing-notification-for-'.str_replace('_','-',$event),

@@ -10,7 +10,7 @@ if(!$xoopsUser OR !in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
 if(isset($_POST['body']) AND
     $_POST['body'] AND $_POST['subject'] AND $_POST['groups']) {
 
-		// Setup the users we're goint to send to
+		// Setup the users we're going to send to
 		$uids_to_notify = array();
 		if(!isset($_POST['include']) OR $_POST['include'] == 'all') {
 			foreach($_POST['groups'] as $group_id) {
@@ -30,6 +30,7 @@ if(isset($_POST['body']) AND
 				$uids_to_notify = array_intersect($uids_to_notify, $groupUsers); // retain previous values only if they are present in this group
 			}
 		}
+		$uids_to_notify = array_unique($uids_to_notify);
 
 		// process any attachment
     $attachment = $_FILES['attachment']['error'] == UPLOAD_ERR_NO_FILE ? false : true;
@@ -78,7 +79,7 @@ if(isset($_POST['body']) AND
 
 			$event = 'new_entry'; // doesn't matter since we're sending direct mail with its own subject and template
 			$extra_tags = $extra_tags;
-			$fid = null;
+			$fid = null; // when null, will use the first form in the DB to determine the available notification events, which will match the 'new_entry' event above
 			$uids_to_notify = array_unique($uids_to_notify);
 			$mid = getFormulizeModId();
 			$omit_user = 0;
