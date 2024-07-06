@@ -986,17 +986,6 @@ class formulizeDataHandler  {
       return null;
     }
 
-		// cache in memory a copy of the existing values, for reference elsewhere, such as sending notifications
-		// also cache newly saved/written values
-		if($entry_id != 'new') {
-			if(!isset($formulize_existingValues[$this->fid][$entry_id]['before_save'])) {
-				// grab the first set of previous values we find, representing the state before the first writing during this page load
-				// multiple writings can happen because of derived values and save handlers and so on
-				$formulize_existingValues[$this->fid][$entry_id]['before_save'] = $existing_values;
-			}
-			$formulize_existingValues[$this->fid][$entry_id]['after_save'] = $clean_element_values;
-		}
-
 		// escape field names and values before writing to database
 		$aes_password = getAESPassword();
 		foreach ($element_values as $key => $value) {
@@ -1083,15 +1072,24 @@ class formulizeDataHandler  {
 			} elseif(!$res = $xoopsDB->query($pkSQL)) {
 				exit("Error: could not record entry id value for {ID} requested in element(s) ".implode(", ",$writePrimaryKeyToElements).". This was the query that failed:<br>$pkSQL<br>".$xoopsDB->error());
 			}
+			// update the officially recorded value that was saved since we've just done a last minute swap (otherwise the officially saved value would be {ID} which isn't correct now)
+			foreach($writePrimaryKeyToElements as $wpkElementHandle) {
+				$clean_element_values[$wpkElementHandle] = $entry_to_return;
+			}
 		}
 
-
-		// remove any entry-editing lock that may be in place for this record, since it was just saved successfully...a new lock can now be placed on the entry the next time any element from the form, for this entry, is rendered.
 		if($entry_id != "new") {
+			// remove any entry-editing lock that may be in place for this record, since it was just saved successfully...a new lock can now be placed on the entry the next time any element from the form, for this entry, is rendered.
       $lock_file_name = XOOPS_ROOT_PATH."/modules/formulize/temp/entry_".intval($entry_id)."_in_form_".$formObject->getVar('id_form')."_is_locked_for_editing";
       if (file_exists($lock_file_name)) {
         unlink($lock_file_name);
 			}
+			// cache copies of what the state of the data was before and after save, for reference elsewhere (ie: when processing notifications)
+			if(!isset($formulize_existingValues[$this->fid][$entry_id]['before_save'])) {
+				// cache the existing values only on first run through, because we might end up here again a few times because of derived values and save handlers and so on
+				$formulize_existingValues[$this->fid][$entry_id]['before_save'] = $existing_values;
+			}
+			$formulize_existingValues[$this->fid][$entry_id]['after_save'] = $clean_element_values;
 		}
 
 		$formObject->onAfterSave($entry_to_return, $clean_element_values, $existing_values, $entry_id); // last param, original entry id, will be 'new' if new save
