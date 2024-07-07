@@ -8273,6 +8273,10 @@ function formulize_handleHtaccessRewriteRule() {
 			$formulizeCanonicalURI = "/modules/formulize/index.php?$queryString";
 		}
 		if(!$formulizeCanonicalURI) {
+			icms::$logger->disableLogger();
+			while(ob_get_level()) {
+					ob_end_clean();
+			}
 			http_response_code(404);
 			exit();
 		}
@@ -8305,7 +8309,7 @@ function formulize_getSidFromRewriteAddress($address="") {
 			exit();
 		}
 
-		$sql = 'SELECT sid FROM '.$xoopsDB->prefix('formulize_screen').' WHERE MATCH(`rewriteruleAddress`) AGAINST("'.formulize_db_escape($address).'") LIMIT 0,1';
+		$sql = 'SELECT sid FROM '.$xoopsDB->prefix('formulize_screen').' WHERE MATCH(`rewriteruleAddress`) AGAINST("'.formulize_db_escape($address).'") AND `rewriteruleAddress` = "'.formulize_db_escape($address).'" LIMIT 0,1';
 		if($res = $xoopsDB->query($sql)) {
 			if($row = $xoopsDB->fetchRow($res)) {
 				if($row[0]) {

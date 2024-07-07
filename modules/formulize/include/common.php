@@ -55,9 +55,11 @@ global $xoopsConfig;
 if (file_exists(XOOPS_ROOT_PATH . "/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
     include_once XOOPS_ROOT_PATH . "/modules/formulize/language/".$xoopsConfig['language']."/main.php";
     include_once XOOPS_ROOT_PATH . "/modules/formulize/language/".$xoopsConfig['language']."/admin.php";
+		include_once XOOPS_ROOT_PATH . "/language/".$xoopsConfig['language']."/global.php";
 } else {
     include_once XOOPS_ROOT_PATH . "/modules/formulize/language/english/main.php";
     include_once XOOPS_ROOT_PATH . "/modules/formulize/language/english/admin.php";
+		include_once XOOPS_ROOT_PATH . "/language/english/global.php";
 }
 
 formulize_handleHtaccessRewriteRule();
