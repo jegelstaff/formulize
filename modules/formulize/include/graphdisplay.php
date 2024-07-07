@@ -34,19 +34,25 @@
 include_once '../../../mainfile.php';
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
 
-function displayGraph($type, $data, $dataElements, $xElements, $yElements, $labels=null, $timeUnit='day', $timeFormat='M j', $timeUnitCount=1, $minValue=null, $maxValue=null, $showAllTooltips = true) {
+function displayGraph($type, $data, $dataElements, $yElements, $xAxisType='time', $timeElement = null, $timeUnit='day', $timeFormat='M j', $timeUnitCount=1, $labels=null, $minValue=null, $maxValue=null, $showAllTooltips = true, $smoothedLine = false) {
 
 	$jsTimeFormat = convertPHPTimeFormatToJSTimeFormat($timeFormat);
 
 	switch (strtolower($type)) {
 		case 'line':
+			$lineType = $smoothedLine ? 'SmoothedXLineSeries' : 'LineSeries';
 			$x = 1;
 			$dataValues = array();
 			$dataSet = array();
+			$xAxisType = ($xAxisType == 'time' AND $timeElement) ? 'time' : 'ordinal';
 			foreach($data as $dataPoint) {
-				$time = display($dataPoint, $xElements);
-				$millisecondTimestamp = strtotime($time)*1000;
-				$readableTime = date($timeFormat, strtotime($time));
+				$time = $xAxisType == 'time' ? display($dataPoint, $timeElement) : null;
+				$millisecondTimestamp = 0;
+				$readableTime = null;
+				if($time) {
+					$millisecondTimestamp = strtotime($time)*1000;
+					$readableTime = date($timeFormat, strtotime($time));
+				}
 				foreach($dataElements as $dataElement) {
 					$dataValues[] = "$dataElement: ".display($dataPoint, $dataElement);
 				}
@@ -132,6 +138,9 @@ function displayGraph($type, $data, $dataElements, $xElements, $yElements, $labe
 				// Create axes
 				// https://www.amcharts.com/docs/v5/charts/xy-chart/axes/
 				var xAxis = chart.xAxes.push(
+					<?php
+					switch($xAxisType) {
+					case 'time': ?>
 					am5xy.DateAxis.new(root, {
 						baseInterval: {
 							timeUnit: "<?php print $timeUnit; ?>",
@@ -141,8 +150,17 @@ function displayGraph($type, $data, $dataElements, $xElements, $yElements, $labe
 						renderer: am5xy.AxisRendererX.new(root, {}),
 						tooltip: am5.Tooltip.new(root, {})
 					})
+					<?php
+					break;
+					case 'ordinal':
+					default: ?>
+					am5xy.ValueAxis.new(root, {
+						renderer: am5xy.AxisRendererX.new(root, {}),
+						tooltip: am5.Tooltip.new(root, {})
+					})
+					<?php
+					} ?>
 				);
-
 
 				var yAxis = chart.yAxes.push(
 					am5xy.ValueAxis.new(root, {
@@ -166,12 +184,12 @@ function displayGraph($type, $data, $dataElements, $xElements, $yElements, $labe
 
 				// Add series
 				// https://www.amcharts.com/docs/v5/charts/xy-chart/series/
-				var series = chart.series.push(am5xy.LineSeries.new(root, {
+				var series = chart.series.push(am5xy.<?php print $lineType; ?>.new(root, {
 					name: "<?php print $title; ?>",
 					xAxis: xAxis,
 					yAxis: yAxis,
 					valueYField: "<?php print $yElement['data']; ?>",
-					valueXField: "millisecondTimestamp",
+					valueXField: "<?php print $xAxisType == 'time' ? 'millisecondTimestamp' : 'x'; ?>",
 					legendValueText: "<?php print str_replace("\n", '\n', $yElement['labelText']); ?>",
 					tooltip: am5.Tooltip.new(root, {
 						labelText: "<?php print str_replace("\n", '\n', $yElement['labelText']); ?>"
