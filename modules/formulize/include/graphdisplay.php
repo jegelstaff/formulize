@@ -338,9 +338,153 @@ function displayGraph($type, $data, $dataElements, $yElements, $xAxisType='time'
 
 			<?php
 			break;
+
+		case 'radar':
+
+			?>
+
+			<script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+			<script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+			<script src="https://cdn.amcharts.com/lib/5/radar.js"></script>
+			<script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+			<script src="https://cdn.amcharts.com/lib/5/locales/en_CA.js"></script>
+			<script src="https://cdn.amcharts.com/lib/5/fonts/notosans-sc.js"></script>
+
+			<style>
+			#chartdiv {
+			width: 100%;
+			height: 500px;
+			}
+			</style>
+
+			<!-- Chart code -->
+			<script>
+			am5.ready(function() {
+
+			// Create root element
+			// https://www.amcharts.com/docs/v5/getting-started/#Root_element
+			var root = am5.Root.new("chartdiv");
+
+
+			// Set themes
+			// https://www.amcharts.com/docs/v5/concepts/themes/
+			root.setThemes([
+				am5themes_Animated.new(root)
+			]);
+
+
+			// Create chart
+			// https://www.amcharts.com/docs/v5/charts/radar-chart/
+			var chart = root.container.children.push(am5radar.RadarChart.new(root, {
+				panX: false,
+				panY: false,
+				wheelX: false,
+				wheelY: false,
+			}));
+
+			// Add cursor
+			// https://www.amcharts.com/docs/v5/charts/radar-chart/#Cursor
+			var cursor = chart.set("cursor", am5radar.RadarCursor.new(root, {
+				behavior: "zoomX"
+			}));
+			cursor.lineY.set("visible", false);
+
+			// Create axes and their renderers
+			// https://www.amcharts.com/docs/v5/charts/radar-chart/#Adding_axes
+			var xRenderer = am5radar.AxisRendererCircular.new(root, {});
+			xRenderer.labels.template.setAll({
+				radius: 10
+			});
+
+			var xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
+				maxDeviation: 0,
+				categoryField: "country",
+				renderer: xRenderer,
+				tooltip: am5.Tooltip.new(root, {})
+			}));
+
+			var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+				renderer: am5radar.AxisRendererRadial.new(root, {})
+			}));
+
+
+			// Create series
+			// https://www.amcharts.com/docs/v5/charts/radar-chart/#Adding_series
+			var series = chart.series.push(am5radar.RadarLineSeries.new(root, {
+				name: "Series",
+				xAxis: xAxis,
+				yAxis: yAxis,
+				valueYField: "litres",
+				categoryXField: "country",
+				tooltip:am5.Tooltip.new(root, {
+					labelText:"{valueY}"
+				})
+			}));
+
+			series.strokes.template.setAll({
+				strokeWidth: 2
+			});
+
+			series.bullets.push(function () {
+				return am5.Bullet.new(root, {
+					sprite: am5.Circle.new(root, {
+						radius: 5,
+						fill: series.get("fill")
+					})
+				});
+			});
+
+
+			// Set data
+			// https://www.amcharts.com/docs/v5/charts/radar-chart/#Setting_data
+			var data = [{
+				"country": "Lithuania",
+				"litres": 501
+			}, {
+				"country": "Czechia",
+				"litres": 301
+			}, {
+				"country": "Ireland",
+				"litres": 266
+			}, {
+				"country": "Germany",
+				"litres": 165
+			}, {
+				"country": "Australia",
+				"litres": 139
+			}, {
+				"country": "Austria",
+				"litres": 336
+			}, {
+				"country": "UK",
+				"litres": 290
+			}, {
+				"country": "Belgium",
+				"litres": 325
+			}, {
+				"country": "The Netherlands",
+				"litres": 40
+			}];
+			series.data.setAll(data);
+			xAxis.data.setAll(data);
+
+
+			// Animate chart and series in
+			// https://www.amcharts.com/docs/v5/concepts/animations/#Initial_animation
+			series.appear(1000);
+			chart.appear(1000, 100);
+
+			}); // end am5.ready()
+			</script>
+
+			<!-- HTML -->
+			<div id="chartdiv"></div>
+
+
+			<?php
+			break;
 		}
 }
-
 
 function convertPHPTimeFormatToJSTimeFormat($formatString) {
 	$replacements = array(
