@@ -34,7 +34,7 @@
 include_once '../../../mainfile.php';
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
 
-function displayGraph($type, $data, $dataElements, $yElements, $xAxisType='time', $timeElement = null, $timeUnit='day', $timeFormat='M j', $timeUnitCount=1, $labels=null, $minValue=null, $maxValue=null, $showAllTooltips = true, $smoothedLine = false) {
+function displayGraph($type, $data, $dataElements, $yElements, $xAxisType='time', $timeElement = null, $timeUnit='day', $timeFormat='M j', $timeUnitCount=1, $labels=null, $minValue=null, $maxValue=null, $showTooltips = 'all', $smoothedLine = false, $showCursor = true) {
 
 	$jsTimeFormat = convertPHPTimeFormatToJSTimeFormat($timeFormat);
 
@@ -84,15 +84,14 @@ function displayGraph($type, $data, $dataElements, $yElements, $xAxisType='time'
 			}
 			$drawLines = implode("\n", $drawLines);
 
-			$showAllTooltips = $showAllTooltips ? '' : "maxTooltipDistance: 0,";
+			$showTooltips = $showTooltips === 'all' ? '' : ($showTooltips ? "maxTooltipDistance: 0," : false);
 
 			?>
 
 			<script src="https://cdn.amcharts.com/lib/5/index.js"></script>
 			<script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
 			<script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
-			<script src="https://cdn.amcharts.com/lib/5/locales/de_DE.js"></script>
-			<script src="https://cdn.amcharts.com/lib/5/geodata/germanyLow.js"></script>
+			<script src="https://cdn.amcharts.com/lib/5/locales/en_CA.js"></script>
 			<script src="https://cdn.amcharts.com/lib/5/fonts/notosans-sc.js"></script>
 
 			<style>
@@ -124,16 +123,20 @@ function displayGraph($type, $data, $dataElements, $yElements, $xAxisType='time'
 					wheelX: "panX",
 					wheelY: "zoomX",
 					pinchZoomX: true,
-					<?php print $showAllTooltips; ?>
+					<?php if($showTooltips) { print $showTooltips; } ?>
 					paddingLeft: 0
 				}));
 
+				<?php
+				if($showCursor) { ?>
 				// Add cursor
 				// https://www.amcharts.com/docs/v5/charts/xy-chart/cursor/
 				var cursor = chart.set("cursor", am5xy.XYCursor.new(root, {
 					behavior: "none"
 				}));
 				cursor.lineY.set("visible", false);
+				<?php
+				} ?>
 
 				// Create axes
 				// https://www.amcharts.com/docs/v5/charts/xy-chart/axes/
@@ -146,9 +149,12 @@ function displayGraph($type, $data, $dataElements, $yElements, $xAxisType='time'
 							timeUnit: "<?php print $timeUnit; ?>",
 							count: <?php print $timeUnitCount; ?>
 						},
-						tooltipDateFormat: "<?php print $jsTimeFormat; ?>",
-						renderer: am5xy.AxisRendererX.new(root, {}),
-						tooltip: am5.Tooltip.new(root, {})
+						<?php if($showTooltips !== false) { print "
+						tooltipDateFormat: \"$jsTimeFormat\",
+						tooltip: am5.Tooltip.new(root, {}),
+						"; } ?>
+						renderer: am5xy.AxisRendererX.new(root, {})
+
 					})
 					<?php
 					break;
@@ -156,7 +162,9 @@ function displayGraph($type, $data, $dataElements, $yElements, $xAxisType='time'
 					default: ?>
 					am5xy.ValueAxis.new(root, {
 						renderer: am5xy.AxisRendererX.new(root, {}),
+						<?php if($showTooltips !== false) { print "
 						tooltip: am5.Tooltip.new(root, {})
+						"; } ?>
 					})
 					<?php
 					} ?>
@@ -169,7 +177,7 @@ function displayGraph($type, $data, $dataElements, $yElements, $xAxisType='time'
 					})
 				);
 
-				// Set data
+			// Set data
 			data = <?php print $dataSet; ?>;
 
 			<?php
@@ -191,9 +199,11 @@ function displayGraph($type, $data, $dataElements, $yElements, $xAxisType='time'
 					valueYField: "<?php print $yElement['data']; ?>",
 					valueXField: "<?php print $xAxisType == 'time' ? 'millisecondTimestamp' : 'x'; ?>",
 					legendValueText: "<?php print str_replace("\n", '\n', $yElement['labelText']); ?>",
+					<?php if($showTooltips !== false) { print "
 					tooltip: am5.Tooltip.new(root, {
-						labelText: "<?php print str_replace("\n", '\n', $yElement['labelText']); ?>"
+						labelText: \"".str_replace("\n", '\n', $yElement['labelText'])."\"
 					})
+					"; } ?>
 				}));
 
 				series.strokes.template.setAll({
