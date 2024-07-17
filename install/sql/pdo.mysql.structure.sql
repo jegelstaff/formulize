@@ -408,7 +408,7 @@ CREATE TABLE newblocks (
   bcachetime int(10) unsigned NOT NULL default '0',
   last_modified int(10) unsigned NOT NULL default '0',
   PRIMARY KEY  (bid),
-  KEY mid (mid),
+  INDEX( `mid`),
   KEY visible (visible),
   KEY isactive_visible_mid (isactive,visible,mid),
   KEY mid_funcnum (mid,func_num)
@@ -699,7 +699,7 @@ CREATE TABLE icms_data_urllink (
   url varchar(255) NOT NULL,
   target varchar(6) NOT NULL,
   PRIMARY KEY (urllinkid),
-  KEY mid (mid)
+  INDEX( `mid`)
 );
 
 #
@@ -713,5 +713,5 @@ CREATE TABLE icms_data_file (
   description varchar(255) NOT NULL,
   url varchar(255) NOT NULL,
   PRIMARY KEY (fileid),
-  KEY mid (mid)
+  INDEX( `mid`)
 );
