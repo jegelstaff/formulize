@@ -194,6 +194,7 @@ function displayGraph($type, $data, $dataElements, $yElements, $xAxisType='time'
 				// https://www.amcharts.com/docs/v5/charts/xy-chart/series/
 				var series = chart.series.push(am5xy.<?php print $lineType; ?>.new(root, {
 					name: "<?php print $title; ?>",
+					connect: false,
 					xAxis: xAxis,
 					yAxis: yAxis,
 					valueYField: "<?php print $yElement['data']; ?>",
