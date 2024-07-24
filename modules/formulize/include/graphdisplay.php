@@ -42,7 +42,6 @@ function displayGraph($type, $data, $dataElements, $yElements, $xAxisType='time'
 		case 'line':
 			$lineType = $smoothedLine ? 'SmoothedXLineSeries' : 'LineSeries';
 			$x = 1;
-			$dataValues = array();
 			$dataSet = array();
 			$xAxisType = ($xAxisType == 'time' AND $timeElement) ? 'time' : 'ordinal';
 			foreach($data as $dataPoint) {
@@ -53,6 +52,7 @@ function displayGraph($type, $data, $dataElements, $yElements, $xAxisType='time'
 					$millisecondTimestamp = strtotime($time)*1000;
 					$readableTime = date($timeFormat, strtotime($time));
 				}
+				$dataValues = array();
 				foreach($dataElements as $dataElement) {
 					$dataValues[] = "$dataElement: ".display($dataPoint, $dataElement);
 				}
