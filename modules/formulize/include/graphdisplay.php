@@ -271,6 +271,7 @@ function displayGraph($type, $data, $dataElements, $yElements, $xAxisType='time'
 
 			<?php print $drawLines; ?>
 
+			<?php if(userHasMobileClient() == false) { ?>
 			// Add legend
 			// https://www.amcharts.com/docs/v5/charts/xy-chart/legend-xy-series/
 			var legend = chart.rightAxesContainer.children.push(am5.Legend.new(root, {
@@ -328,6 +329,8 @@ function displayGraph($type, $data, $dataElements, $yElements, $xAxisType='time'
 
 			// It's is important to set legend data after all the events are set on template, otherwise events won't be copied
 			legend.data.setAll(chart.series.values);
+
+			<?php } // end of if the user has a mobile client ?>
 
 			chart.appear(1000, 100);
 
