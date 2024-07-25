@@ -256,7 +256,9 @@ function displayGraph($type, $data, $dataElements, $yElements, $xAxisType='time'
 
 				var rangeDataItem = yAxis.makeDataItem({
 					value: value,
-					endValue: value * 10000000
+				});
+				yAxis.onPrivate("max", (max) => {
+   				rangeDataItem.set("endValue", max * 2);
 				});
 
 				series.filledRanges.push(series.createAxisRange(rangeDataItem));
