@@ -44,19 +44,29 @@ function displayGraph($type, $data, $dataElements, $yElements, $xAxisType='time'
 			$x = 1;
 			$dataSet = array();
 			$xAxisType = ($xAxisType == 'time' AND $timeElement) ? 'time' : 'ordinal';
-			foreach($data as $dataPoint) {
+			$nextExpectedTime = null;
+			$nextActualTime = null;
+			foreach($data as $i=>$dataPoint) {
 				$time = $xAxisType == 'time' ? display($dataPoint, $timeElement) : null;
 				$millisecondTimestamp = 0;
 				$readableTime = null;
 				if($time) {
 					$millisecondTimestamp = strtotime($time)*1000;
 					$readableTime = date($timeFormat, strtotime($time));
+					// if this point follows a gap, treat it as a bullet
+					$showBullet = ($nextExpectedTime AND $readableTime != $nextExpectedTime) ? 'showBullets: true, ' : '';
+					$nextExpectedTime = date($timeFormat, strtotime($time." +$timeUnitCount $timeUnit"));
+					$nextActualTime = isset($data[$i+1]) ? date($timeFormat, strtotime(display($data[$i+1], $timeElement))) : '';
+					// if this point is the start of a consecutive series, don't treat it as a bullet
+					if($showBullet AND $nextExpectedTime == $nextActualTime) {
+						$showBullet = '';
+					}
 				}
 				$dataValues = array();
 				foreach($dataElements as $dataElement) {
 					$dataValues[] = "$dataElement: ".display($dataPoint, $dataElement);
 				}
-				$dataSet[] = "{x: $x, ".implode(", ", $dataValues).", time: '$readableTime', millisecondTimestamp: $millisecondTimestamp}";
+				$dataSet[] = "{x: $x, ".$showBullet.implode(", ", $dataValues).", time: '$readableTime', millisecondTimestamp: $millisecondTimestamp}";
 				$x++;
 			}
 			$dataSet = "[".implode(',', $dataSet)."]";
@@ -219,6 +229,17 @@ function displayGraph($type, $data, $dataElements, $yElements, $xAxisType='time'
 						print "highlightData(series, $thisHighlightAbove);\n";
 					}
 				} ?>
+
+				series.bullets.push(function(root, series, dataItem) {
+					if (dataItem.dataContext.showBullets == true) {
+						return am5.Bullet.new(root, {
+							sprite: am5.Circle.new(root, {
+								radius: 4,
+								fill: series.get("fill")
+							})
+						});
+					}
+				});
 
 				series.data.setAll(data);
 				series.appear(1000);
