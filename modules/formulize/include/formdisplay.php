@@ -3522,7 +3522,11 @@ if(!$nosave) { // need to check for add or update permissions on the current use
         if (leave=='leave') {
             jQuery('#save_and_leave').val(1);
         }
-        window.document.formulize_mainform.submit();
+        if (window.formulize_remoteSubmitForm) {
+            window.formulize_remoteSubmitForm();
+        } else {
+            window.document.formulize_mainform.submit();
+        }
     } else {
         hideSavingGraphic();
     }
@@ -3583,6 +3587,9 @@ function formulize_javascriptForAfterRemovingLocks(action) {
 	if(action == 'submitGoParent') {
 			window.document.go_parent.submit();
 	} else if(action == 'rewritePage') {
+		if (window.formulize_remoteSubmitForm) {
+            window.formulize_remoteSubmitForm();
+        } else {
 		var formAction = jQuery('form[name=formulize_mainform]').attr('action');
 		var formData = jQuery('form[name=formulize_mainform]').serialize();
 		jQuery.ajax({
@@ -3597,6 +3604,7 @@ function formulize_javascriptForAfterRemovingLocks(action) {
 			}
 		});
 	}
+}
 }
 
 <?php
