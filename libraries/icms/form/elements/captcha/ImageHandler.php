@@ -297,7 +297,7 @@ class icms_form_elements_captcha_ImageHandler {
 			// write text to image
 			$Angle = mt_rand(10, 30);
 			if (($i % 2)) {
-				$Angle = mt_rand(-10, -30);
+				$Angle = mt_rand(-30, -10);
 			}
 
 			// select random font size
