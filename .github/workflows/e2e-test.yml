@@ -41,7 +41,7 @@ jobs:
         chmod 777 trust uploads modules templates_c cache mainfile.php ~/work/formulize/formulize
     - name: Run Docker Compose up
       run: |
-        docker-compose up -d
+        docker compose up -d
     - name: Wait for mysql
       uses: smurfpandey/wait-for-it@main
       with:
