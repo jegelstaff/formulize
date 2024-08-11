@@ -2307,7 +2307,7 @@ function display($entry, $handle, $id=null, $localid="NULL") {
 
 	if(count((array) $foundValues) == 1) {
     $GLOBALS['formulize_mostRecentLocalId'] = $GLOBALS['formulize_mostRecentLocalId'][0];
-		return $foundValues[0];
+		return htmlspecialchars_decode($foundValues[0]);
 	} else {
 		return $foundValues;
 	}
@@ -2345,7 +2345,7 @@ function makeList($string, $type="bulleted") {
 	} else {
 		$type = "ul>";
 	}
-	$listItems = explode("\r", $string);
+	$listItems = is_array($string) ? $string : explode("\r", $string);
 	if(count((array) $listItems)>1) {
 		$list = "<" . $type;
 		foreach($listItems as $item) {
@@ -2363,6 +2363,7 @@ function makeList($string, $type="bulleted") {
 // this function actually formats a string into a series of HTML paragraphs
 
 function makePara($string, $parasToReturn="NULL") {
+	$string = is_array($string) ? implode("\n\r", $string) : $string;
 	if(strstr($string, "\n\r")) {
 		$paras = explode("\n\r", $string);
 	} elseif(strstr($string, "\n")) {
@@ -2391,6 +2392,7 @@ function makePara($string, $parasToReturn="NULL") {
 // this function actually formats a string into a series of BR separated items
 
 function makeBR($string) {
+	$string = is_array($string) ? implode("\r", $string) : $string;
 	$brs = explode("\r", $string);
 	if(count((array) $brs)>1) {
 		$start = 1;
