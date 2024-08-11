@@ -32,6 +32,12 @@
 include "../../mainfile.php";
 session_write_close(); // nothing that happens will affect the session, so let's close early to play nice with other concurrent requests
 
+icms::$logger->disableLogger();
+
+while(ob_get_level()) {
+    ob_end_clean();
+}
+
 $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 
