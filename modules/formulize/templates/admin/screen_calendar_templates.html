@@ -20,16 +20,7 @@
                 <textarea id="screens-toptemplate"  name="screens-toptemplate" class="code-textarea" rows="20"/>
 <{$content.toptemplate}></textarea>
                 <br />
-                <p><a class="formulize-open-close-link" open-text="View element handles" close-text="Hide element handles" linked-block-id="#formulize-open-close-section">View element handles</a></p>
-                <div id="formulize-open-close-section" style="display:none;">
-                    <br />
-                    <table>
-                        <tr><th>Form element</th><th>handle</th></tr>
-                        <{foreach from=$content.caltemplatehelp item=row}>
-                            <{$row}>
-                        <{/foreach}>
-                    </table>
-                </div>
+                <{include file=db:admin/variable_template_help.html variables=$content.variabletemplatehelp}>
             </fieldset>
         </div>
 
