@@ -2307,7 +2307,7 @@ function display($entry, $handle, $id=null, $localid="NULL") {
 
 	if(count((array) $foundValues) == 1) {
     $GLOBALS['formulize_mostRecentLocalId'] = $GLOBALS['formulize_mostRecentLocalId'][0];
-		return htmlspecialchars_decode($foundValues[0]);
+		return htmlspecialchars_decode($foundValues[0], ENT_QUOTES);
 	} else {
 		return $foundValues;
 	}
