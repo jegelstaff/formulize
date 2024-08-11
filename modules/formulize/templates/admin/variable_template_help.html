@@ -1,0 +1,15 @@
+<{counter name=vhc assign=variableHelpCounter}>
+<a name="elementhandles"></a>
+<p><a class="formulize-open-close-link" open-text="View Available Variables" close-text="Hide Available Variables" linked-block-id="#formulize-open-close-section-<{$variableHelpCounter}>">View Available Variables</a></p>
+<div id="formulize-open-close-section-<{$variableHelpCounter}>" style="display:none;">
+		<br />
+		<table>
+				<{foreach from=$variables item=vars key=form}>
+						<tr><th colspan=2><{$form}></th></tr>
+						<tr><th>Form element</th><th>handle</th></tr>
+						<{foreach from=$vars item=row}>
+							<{$row}>
+						<{/foreach}>
+				<{/foreach}>
+		</table>
+</div>

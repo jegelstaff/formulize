@@ -182,7 +182,7 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
 
   // included file sets up $elementOptions and other variables relied upon below
   include XOOPS_ROOT_PATH.'/modules/formulize/admin/generateTemplateElementHandleHelp.php';
-  $templates['listtemplatehelp'] = $listTemplateHelp;
+  $templates['variabletemplatehelp'] = $listTemplateHelp;
 
   $entries = array();
   $entries['advanceviewoptions'] = array(0=>_AM_ELE_SELECT_NONE)+array(
@@ -251,6 +251,7 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   // custom button data
   $custom = array();
   $applyToOptions = array('inline'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_INLINE, 'selected'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_SELECTED, 'all'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_ALL, 'new'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEW, 'new_per_selected'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEWPERSELECTED);
+	// $allFids set in generateTemplateElementHandleHelp.php included above. Yuck.
   if (count((array) $allFids) > 1) {
     foreach ($allFids as $i=>$thisFid) {
       if ($thisFid == $form_id) { continue; } // don't treat the current form as if it's an 'other' form
@@ -499,6 +500,14 @@ if ($screen_id != "new" && $settings['type'] == 'template') {
     $templates['viewentryscreen'] = $screen->getVar('viewentryscreen');
     $templates['viewentryscreenoptions'] = generateViewEntryScreenOptions($screen->getVar('frid'), $screen->getVar('fid'));
 
+		$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
+		$frameworks = $framework_handler->getFrameworksByForm($form_id);
+		$selectedFramework = $settings['frid'];
+
+		// included file sets up $elementOptions and other variables relied upon below
+		include XOOPS_ROOT_PATH.'/modules/formulize/admin/generateTemplateElementHandleHelp.php';
+		$templates['variabletemplatehelp'] = $listTemplateHelp;
+
 }
 
 if ($screen_id != "new" && $settings['type'] == 'calendar') {
@@ -529,7 +538,7 @@ if ($screen_id != "new" && $settings['type'] == 'calendar') {
         $frameworkObject = false;
     }
     include XOOPS_ROOT_PATH.'/modules/formulize/admin/generateTemplateElementHandleHelp.php';
-    $templates['caltemplatehelp'] = $listTemplateHelp;
+    $templates['variabletemplatehelp'] = $listTemplateHelp;
 }
 
 $templates['themes'] = icms_view_theme_Factory::getThemesList();

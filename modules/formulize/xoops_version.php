@@ -713,7 +713,9 @@ $modversion['templates'][] = array(
 $modversion['templates'][] = array(
 	'file' => 'admin/managepermissions.html',
 	'description' => '');
-
+	$modversion['templates'][] = array(
+		'file' => 'admin/variable_template_help.html',
+		'description' => '');
 
 //	Module Configs
 // $xoopsModuleConfig['t_width']

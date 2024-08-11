@@ -3,7 +3,9 @@
 
 //set options for all elements in entire framework
   //also, collect the handles from a framework if any, and prep the list of possible handles/ids for the list template
-  if ($selectedFramework and isset($frameworks[$selectedFramework])) {
+	if(isset($allFidsToUse)) {
+		$allFids = $allFidsToUse;
+  } elseif ($selectedFramework and isset($frameworks[$selectedFramework])) {
       $allFids = $frameworks[$selectedFramework]->getVar('fids');
   } else {
       $allFids = array(0=>$form_id);
@@ -22,12 +24,12 @@
       $thisFidCaptions = $thisFidObj->getVar('elementCaptions');
       $thisFidColheads = $thisFidObj->getVar('elementColheads');
       $thisFidHandles = $thisFidObj->getVar('elementHandles');
-      foreach($thisFidElements as $i => $thisFidElement) {
-        $elementHeading = $thisFidColheads[$i] ? $thisFidColheads[$i] : $thisFidCaptions[$i];
-        $elementOptions[$thisFidHandles[$i]] = printSmart(trans(strip_tags($elementHeading)), 75);
+      foreach($thisFidElements as $zz => $thisFidElement) {
+        $elementHeading = $thisFidColheads[$zz] ? $thisFidColheads[$zz] : $thisFidCaptions[$zz];
+        $elementOptions[$thisFidHandles[$zz]] = printSmart(trans(strip_tags($elementHeading)), 75);
         // for passing to custom button logic, so we know all the element options for each form in framework
         $elementOptionsFid[$thisFid][$thisFidElement] = printSmart(trans(strip_tags($elementHeading)), 75);
         $class = $class == "even" ? "odd" : "even";
-        $listTemplateHelp[] = "<tr><td class=$class><nobr><b>" . printSmart(trans(strip_tags($elementHeading)), 75) . "</b></nobr></td><td class=$class><nobr>".$thisFidHandles[$i]."</nobr></td></tr>";
+        $listTemplateHelp[$thisFidObj->title][] = "<tr><td class=$class><nobr><b>" . printSmart(trans(strip_tags($elementHeading)), 75) . "</b></nobr></td><td class=$class><nobr>".$thisFidHandles[$zz]."</nobr></td></tr>";
       }
   }

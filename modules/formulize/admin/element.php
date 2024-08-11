@@ -296,18 +296,11 @@ if ($ele_type=='text') {
     $formlink = createFieldList($ele_value[3], true);
     $options['formlink'] = $formlink->render();
 } else if ($ele_type=='derived') {
-    $derivedOptions = array();
-    $allColList = getAllColList($fid);
-    foreach($allColList[$fid] as $thisCol) {
-        if ($thisCol['ele_colhead'] != "") {
-            $derivedOptions[trans($thisCol['ele_colhead'])] = printSmart(trans($thisCol['ele_colhead']));
-        } else {
-            $derivedOptions[trans(strip_tags($thisCol['ele_caption']))] = printSmart(trans(strip_tags($thisCol['ele_caption'])));
-        }
-    }
-    $listOfElements = new XoopsFormSelect("", 'listofelementsoptions');
-    $listOfElements->addOptionArray($derivedOptions);
-    $options['listofelementsoptions'] = $listOfElements->render();
+
+		$form_id = $fid;
+		$selectedFramework = 0;
+		include XOOPS_ROOT_PATH.'/modules/formulize/admin/generateTemplateElementHandleHelp.php';
+		$options['variabletemplatehelp'] = $listTemplateHelp;
 
     //new relationship dropdown
     $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');

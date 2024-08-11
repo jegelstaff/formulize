@@ -237,7 +237,7 @@ if ($_GET['fid'] != "new") {
         $criteria->add(new Criteria('gperm_modid', getFormulizeModId()));
         $perms = $gperm_handler->getObjects($criteria, true);
         if($groupObject = $member_handler->getGroup($thisGroup)) {
-            
+
         $groupperms[$i]['name'] = $groupObject->getVar('name');
         $groupperms[$i]['id'] = $groupObject->getVar('groupid');
         foreach($perms as $perm) {
@@ -551,6 +551,11 @@ if ($fid != "new") {
     $advanced_calculations = array();
     $advanced_calculation_handler = xoops_getmodulehandler('advancedCalculation', 'formulize');
     $advanced_calculations['advanced_calculations'] = $advanced_calculation_handler->getList($fid);
+
+		$form_id = $fid;
+		$selectedFramework = 0;
+		include XOOPS_ROOT_PATH.'/modules/formulize/admin/generateTemplateElementHandleHelp.php';
+		$advanced_calculations['variabletemplatehelp'] = $listTemplateHelp;
 
     if (!$tableform AND !$newtableform) {
         $adminPage['tabs'][$i]['name'] = "Elements";

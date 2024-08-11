@@ -226,6 +226,10 @@ $common['pageNav'] = $pageNav;
 $common['aid'] = $aid;
 $common['name'] = $appName;
 
+$allFidsToUse = array_keys($formsInApp);
+include XOOPS_ROOT_PATH.'/modules/formulize/admin/generateTemplateElementHandleHelp.php';
+$variableHelp['variabletemplatehelp'] = $listTemplateHelp;
+
 // adminPage tabs sections must contain a name, template and content key
 // content is the data the is available in the tab as $content.foo
 // any declared sub key of $content, such as 'forms' will be assigned to accordions
@@ -272,7 +276,7 @@ if (is_object($appObject)){
     $i++;
     $adminPage['tabs'][$i]['name'] = "Code";
     $adminPage['tabs'][$i]['template'] = "db:admin/application_code.html";
-    $adminPage['tabs'][$i]['content'] = $common;
+    $adminPage['tabs'][$i]['content'] = $variableHelp + $common;
     $adminPage['tabs'][$i]['content']['custom_code'] = $appObject->getVar("custom_code");
 }
 
