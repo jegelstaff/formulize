@@ -565,7 +565,7 @@ $adminPage['tabs'][1] = array(
 );
 
 
-if ($screen_id != "new" AND $settings['type'] != 'template') {
+if ($screen_id != "new") {
     $adminPage['tabs'][] = array(
         'name' => _AM_APP_RELATIONSHIPS,
         'template' => "db:admin/screen_relationships.html",
