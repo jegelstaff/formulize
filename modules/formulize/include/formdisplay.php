@@ -2831,18 +2831,10 @@ function validationJSFromDisembodiedElementRender($elementObject, $entry_id, $pr
 // $element is the element object representing the element we're loading the previously saved value for
 function loadValue($prevEntry, $element, $ele_value, $owner_groups, $entry_id) {
 
-	global $myts;
-	/*
-	 * Hack by F�lix <INBOX Solutions> for sedonde
-	 * myts == NULL
-	 */
-	if(!$myts){
-		$myts =& MyTextSanitizer::getInstance();
-	}
-	/*
-	 * Hack by F�lix <INBOX Solutions> for sedonde
-	 * myts == NULL
-	 */
+			global $myts;
+			if(!$myts){
+				$myts =& MyTextSanitizer::getInstance();
+			}
 			$type = $element->getVar('ele_type');
 			// going direct from the DB since if multi-language is active, getVar will translate the caption
 			//$caption = $element->getVar('ele_caption');
@@ -2898,12 +2890,6 @@ function loadValue($prevEntry, $element, $ele_value, $owner_groups, $entry_id) {
 				case "derived":
 					$ele_value[5] = $value;	// there is not a number 5 position in ele_value for derived values...we add the value to print in this position so we don't mess up any other information that might need to be carried around
 					break;
-
-
-                case "text":
-                    $ele_value[2] = $value;
-                    $ele_value[2] = str_replace("'", "&#039;", $ele_value[2]);
-                    break;
 
 
                 case "textarea":

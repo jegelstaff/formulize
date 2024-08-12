@@ -145,85 +145,6 @@ class formulizeElementRenderer{
 				$ele_value[0] = $this->formulize_replaceCurlyBracketVariables($ele_value[0], $entry_id, $id_form, $renderedElementMarkupName);
 				$form_ele = $ele_value; // an array, item 0 is the contents of the break, item 1 is the class of the table cell (for when the form is table rendered)
 				break;
-			case 'text':
-				$ele_value[2] = stripslashes($ele_value[2]);
-//        $ele_value[2] = $myts->displayTarea($ele_value[2]); // commented by jwe 12/14/04 so that info displayed for viewing in a form box does not contain HTML formatting
-
-				$ele_value[2] = interpretTextboxValue($this->_ele, $entry_id, $ele_value[2]);
-
-				//if placeholder value is set
-				if($ele_value[11] AND ($entry_id == 'new' OR $ele_value[2] === "")) { // always go straight to source for placeholder for new entries, or entries where there is no value
-                    $rawEleValue = $this->_ele->getVar('ele_value');
-					$placeholder = $rawEleValue[2];
-					$ele_value[2] = "";
-				}
-
-				if (!strstr(getCurrentURL(),"printview.php")) { 				// nmc 2007.03.24 - added
-
-					$form_ele = new XoopsFormText(
-					$ele_caption,
-					$renderedElementMarkupName,
-					$ele_value[0],	//	box width
-					$ele_value[1],	//	max width
-					$ele_value[2],	  //	default value
-					false,	// autocomplete in browser
-					$ele_value[3]	// numbers only
-					);
-				} else {															// nmc 2007.03.24 - added
-					$form_ele = new XoopsFormLabel ($ele_caption, formulize_numberFormat($ele_value[2], $this->_ele->getVar('ele_handle')), $renderedElementMarkupName);	// nmc 2007.03.24 - added
-				}
-
-				//if placeholder value is set
-				if($ele_value[11]) {
-					$form_ele->setExtra("placeholder='".$placeholder."'");
-				}
-
-				//if numbers-only option is set
-				if ($ele_value[3]) {
-					$form_ele->setExtra("class='numbers-only-textbox'");
-				}
-
-				// if required unique option is set, create validation javascript that will ask the database if the value is unique or not
-				if($ele_value[9]) {
-					$eltname = $renderedElementMarkupName;
-					$eltcaption = $ele_caption;
-					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
-					$eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
-					$eltmsgUnique = empty($eltcaption) ? sprintf( _formulize_REQUIRED_UNIQUE, $eltname ) : sprintf( _formulize_REQUIRED_UNIQUE, $eltcaption );
-					if($this->_ele->getVar('ele_req')) { // need to manually handle required setting, since only one validation routine can run for an element, so we need to include required checking in this unique checking routine, if the user selected required too
-						$form_ele->customValidationCode[] = "\nif ( myform.{$eltname}.value == '' ) {\n";
-						$form_ele->customValidationCode[] = "window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n";
-						$form_ele->customValidationCode[] = "}\n";
-					}
-                    $form_ele->customValidationCode[] = "if ( myform.{$eltname}.value != '' ) {\n";
-                    $form_ele->customValidationCode[] = "if(\"{$eltname}\" in formulize_xhr_returned_check_for_unique_value && formulize_xhr_returned_check_for_unique_value[\"{$eltname}\"] != 'notreturned') {\n"; // a value has already been returned from xhr, so let's check that out...
-					$form_ele->customValidationCode[] = "if(\"{$eltname}\" in formulize_xhr_returned_check_for_unique_value && formulize_xhr_returned_check_for_unique_value[\"{$eltname}\"] != 'valuenotfound') {\n"; // request has come back, form has been resubmitted, but the check turned up postive, ie: value is not unique, so we have to halt submission , and reset the check for unique flag so we can check again when the user has typed again and is ready to submit
-					$form_ele->customValidationCode[] = "window.alert(\"{$eltmsgUnique}\");\n";
-                    $form_ele->customValidationCode[] = "hideSavingGraphic();\n";
-					$form_ele->customValidationCode[] = "delete formulize_xhr_returned_check_for_unique_value.{$eltname};\n"; // unset this key
-					$form_ele->customValidationCode[] = "myform.{$eltname}.focus();\n return false;\n";
-					$form_ele->customValidationCode[] = "}\n";
-					$form_ele->customValidationCode[] = "} else {\n";	 // do not submit the form, just send off the request, which will trigger a resubmission after setting the returned flag above to true so that we won't send again on resubmission
-					$form_ele->customValidationCode[] = "\nvar formulize_xhr_params = []\n";
-					$form_ele->customValidationCode[] = "formulize_xhr_params[0] = myform.{$eltname}.value;\n";
-					$form_ele->customValidationCode[] = "formulize_xhr_params[1] = ".$this->_ele->getVar('ele_id').";\n";
-					$xhr_entry_to_send = is_numeric($entry_id) ? $entry_id : "'".$entry_id."'";
-					$form_ele->customValidationCode[] = "formulize_xhr_params[2] = ".$xhr_entry_to_send.";\n";
-                    $form_ele->customValidationCode[] = "formulize_xhr_params[4] = leave;\n"; // will have been passed in to the main function and we need to preserve it after xhr is done
-					$form_ele->customValidationCode[] = "formulize_xhr_send('check_for_unique_value', formulize_xhr_params);\n";
-                    //$form_ele->customValidationCode[] = "showSavingGraphic();\n";
-					$form_ele->customValidationCode[] = "return false;\n";
-					$form_ele->customValidationCode[] = "}\n";
-                    $form_ele->customValidationCode[] = "}\n";
-				} elseif($this->_ele->getVar('ele_req') AND !$isDisabled) {
-					$eltname = $renderedElementMarkupName;
-					$eltcaption = $ele_caption;
-					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
-					$eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
-					$form_ele->customValidationCode[] = "if (myform.{$eltname}.value == \"\") { window.alert(\"{$eltmsg}\"); myform.{$eltname}.focus(); return false; }";
-				}
-            break;
-
 
 			case 'textarea':
 				$ele_value[0] = stripslashes($ele_value[0]);
@@ -1001,16 +922,16 @@ class formulizeElementRenderer{
 					$form_ele = $elementTypeHandler->render($ele_value, $ele_caption, $renderedElementMarkupName, $isDisabled, $this->_ele, $entry_id, $screen, $owner); // $ele_value as passed in here, $caption, name that we use for the element in the markup, flag for whether it's disabled or not, element object, entry id number that this element belongs to, $screen is the screen object that was passed in, if any
 					// if form_ele is an array, then we want to treat it the same as an "insertbreak" element, ie: it's not a real form element object
 					if(is_object($form_ele)) {
-    					if(!$isDisabled AND ($this->_ele->getVar('ele_req') OR $this->_ele->alwaysValidateInputs) AND $this->_ele->hasData) { // if it's not disabled, and either a declared required element according to the webmaster, or the element type itself always forces validation...
-    						$form_ele->customValidationCode = $elementTypeHandler->generateValidationCode($ele_caption, $renderedElementMarkupName, $this->_ele, $entry_id);
-    					}
-    					$form_ele->setDescription($helpText);
-                        $wasDisabled = $isDisabled; // Ack!! see spaghetti code comments with $wasDisabled elsewhere
-    					$isDisabled = false; // the render method must handle providing a disabled output, so as far as the rest of the logic here goes, the element is not disabled but should be rendered as is
-    					$baseCustomElementObject = $elementTypeHandler->create();
-    					if($baseCustomElementObject->hasData) {
-    						$customElementHasData = true;
-    					}
+						if(!$isDisabled AND ($this->_ele->getVar('ele_req') OR $this->_ele->alwaysValidateInputs) AND $this->_ele->hasData) { // if it's not disabled, and either a declared required element according to the webmaster, or the element type itself always forces validation...
+							$form_ele->customValidationCode = $elementTypeHandler->generateValidationCode($ele_caption, $renderedElementMarkupName, $this->_ele, $entry_id);
+						}
+						$form_ele->setDescription($helpText);
+						$wasDisabled = $isDisabled; // Ack!! see spaghetti code comments with $wasDisabled elsewhere
+						$isDisabled = false; // the render method must handle providing a disabled output, so as far as the rest of the logic here goes, the element is not disabled but should be rendered as is
+						$baseCustomElementObject = $elementTypeHandler->create();
+						if($baseCustomElementObject->hasData) {
+							$customElementHasData = true;
+						}
 					}
 				} else {
 					return false;
