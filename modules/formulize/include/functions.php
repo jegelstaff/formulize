@@ -1752,17 +1752,6 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
     $ele_value = $element->getVar('ele_value');
     $ele_id = $element->getVar('ele_id');
     switch ($ele_type) {
-        case 'text':
-        // if $ele_value[3] is 1 (default is 0) then treat this as a numerical field
-        if ($ele_value[3] AND $ele != "{ID}" AND $ele != "{SEQUENCE}") {
-            $value = preg_replace ('/[^0-9.-]+/', '', $ele);
-        } else {
-            $value = $ele;
-        }
-        $value = $myts->htmlSpecialChars($value);
-        $value = (!is_numeric($value) AND $value == "") ? "{WRITEASNULL}" : $value;
-        break;
-
 
         case 'textarea':
         $value = $ele;
@@ -2604,7 +2593,7 @@ function prepareLinkToEntry($clickableText, $id_req, $target_fid, $fid) {
 function _formatLinksRegularElement($matchtext, $textWidth, $ele_type, $handle, $entryBeingFormatted) {
     if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
         $elementTypeHandler = xoops_getmodulehandler($ele_type."Element", "formulize");
-        $matchtext = $elementTypeHandler->formatDataForList($matchtext, $handle, $entryBeingFormatted);
+        $matchtext = $elementTypeHandler->formatDataForList($matchtext, $handle, $entryBeingFormatted, $textWidth);
         return $matchtext;
     } else {
         global $myts;
@@ -5410,7 +5399,6 @@ function formulize_addProcedureChoicesToPost($choices) {
 // returns false if the element cannot be required, otherwise returns the current required setting of the element
 function removeNotApplicableRequireds($type, $req=0) {
     switch ($type) {
-        case "text":
         case "textarea":
         case "select":
         case "radio":

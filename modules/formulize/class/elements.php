@@ -548,22 +548,24 @@ class formulizeElementsHandler {
 	}
 
 	// this method is used by custom elements, to do final output from the "local" formatDataForList method, so the custom element developer can simply set booleans there, and they will be enforced here
-	function formatDataForList($value, $handle="", $entry_id=0) {
+	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
 		global $myts;
-		if($this->length == 0) {
+		if(!$this->length AND $this->length !== 0 AND $this->length !== '0') {
 			$this->length = 35;
 		}
 		if($this->striphtml !== false) { // want to do this all the time, no matter what, unless the user specifically turns it off, because it's a security precaution
 			$value = $myts->htmlSpecialChars($value, ENT_QUOTES);
 		}
-		$value = printSmart(trans($value),$this->length);
+		if($this->length > 0) {
+			$value = printSmart(trans($value),$this->length);
+		}
 		if($this->clickable) {
 			$value = $myts->makeClickable($value);
 		}
 		return $value;
 	}
 
-    // determine if the element is disabled for the specified user
+	    // determine if the element is disabled for the specified user
     function isElementDisabledForUser($elementIdOrObject, $userIdOrObject=0) {
         if(is_object($elementIdOrObject)) {
             $elementObject = $elementIdOrObject;

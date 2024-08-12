@@ -1,7 +1,4 @@
 <?php
-
-#Grab this file from Modules > Formulize > Class
-
 ###############################################################################
 ##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
 ##                    Copyright (c) 2011 Freeform Solutions                  ##
@@ -34,22 +31,25 @@
 // There is a corresponding admin template for this element type in the templates/admin folder
 
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
+require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
-class formulizePhoneElement extends formulizeformulize {
+class formulizeTextboxElement extends formulizeformulize {
 
     function __construct() {
-        $this->name = "Phone Number";
+        $this->name = "Textbox";
         $this->hasData = true; // set to false if this is a non-data element, like the subform or the grid
-        $this->needsDataType = false; // set to false if you're going force a specific datatype for this element using the overrideDataType
-        $this->overrideDataType = "varchar(255)"; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
+        $this->needsDataType = true; // set to false if you're going force a specific datatype for this element using the overrideDataType
+        $this->overrideDataType = ""; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
         $this->adminCanMakeRequired = true; // set to true if the webmaster should be able to toggle this element as required/not required
         $this->alwaysValidateInputs = true; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
+        $this->canHaveMultipleValues = false;
+        $this->hasMultipleOptions = false;
         parent::__construct();
     }
 
 }
 
-class formulizePhoneElementHandler extends formulizeElementsHandler {
+class formulizeTextboxElementHandler extends formulizeElementsHandler {
 
     var $db;
     var $clickable; // used in formatDataForList
@@ -61,16 +61,29 @@ class formulizePhoneElementHandler extends formulizeElementsHandler {
     }
 
     function create() {
-        return new formulizePhoneElement();
+        return new formulizeTextboxElement();
     }
 
     // this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
     // it receives the element object and returns an array of data that will go to the admin UI template
     // when dealing with new elements, $element might be FALSE
     function adminPrepare($element) {
-        $ele_value = $element ? $element->getVar('ele_value') : array();
-        $format = $ele_value['format'] ? $ele_value['format'] : 'XXX-XXX-XXXX';
-        return array('format'=>$format);
+			$dataToSendToTemplate = array();
+			if(is_object($element) AND is_subclass_of($element, 'formulizeformulize')) { // existing element
+				$formlink = createFieldList($ele_value[4], true);
+				$dataToSendToTemplate['formlink'] = $formlink->render();
+				$dataToSendToTemplate['ele_value'] = $element->getVar('ele_value');
+			} else { // new element
+				$ele_value[0] = $xoopsModuleConfig['t_width'];
+				$ele_value[1] = $xoopsModuleConfig['t_max'];
+				$ele_value[3] = 0;
+				$ele_value[5] = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0;
+				$ele_value[6] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
+				$ele_value[7] = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
+				$ele_value[8] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
+				$dataToSendToTemplate['ele_value'] = $ele_value;
+			}
+      return $dataToSendToTemplate;
     }
 
     // this method would read back any data from the user after they click save in the admin UI, and save the data to the database, if it were something beyond what is handled in the basic element class
@@ -79,7 +92,12 @@ class formulizePhoneElementHandler extends formulizeElementsHandler {
     // You can modify the element object in this function and since it is an object, and passed by reference by default, then your changes will be saved when the element is saved.
     // You should return a flag to indicate if any changes were made, so that the page can be reloaded for the user, and they can see the changes you've made here.
     function adminSave($element, $ele_value) {
-        $element->setVar('ele_value', $ele_value);
+			$changed = false;
+			if(is_object($element) AND is_subclass_of($element, 'formulizeformulize')) {
+				$ele_value[4] = $_POST['formlink'];
+				$element->setVar('ele_value', $ele_value);
+			}
+			return $changed;
     }
 
     // this method reads the current state of an element based on the user's input, and the admin options, and sets ele_value to what it needs to be so we can render the element correctly
@@ -88,8 +106,9 @@ class formulizePhoneElementHandler extends formulizeElementsHandler {
     // $ele_value will contain the options set for this element (based on the admin UI choices set by the user, possibly altered in the adminSave method)
     // $element is the element object
     function loadValue($value, $ele_value, $element) {
-        $ele_value['number'] = $value;
-        return $ele_value;
+			$ele_value[2] = $value;
+			$ele_value[2] = str_replace("'", "&#039;", $ele_value[2]);
+			return $ele_value;
     }
 
     // this method renders the element for display in a form
@@ -102,62 +121,97 @@ class formulizePhoneElementHandler extends formulizeElementsHandler {
     // $element is the element object
     // $entry_id is the ID number of the entry where this particular element comes from
     // $screen is the screen object that is in effect, if any (may be null)
-    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
-        // dummy element is rendered as a textboxes, with the values set by the user in the admin side smushed together as the default value for the textbox
-        if($isDisabled) {
-            $formElement = new xoopsFormLabel($caption, $ele_value['number']);
-        } else {
-            $formElement = new xoopsFormText($caption, $markupName, 15, 255, $ele_value['number']); // caption, markup name, size, maxlength, default value, according to the xoops form class
-            $formElement->setExtra('placeholder="'.$ele_value['format'].'"');
-        }
-        return $formElement;
+    // $renderAsHiddenDefault is a flag to control what happens when we render as a hidden element for users who can't normally access the element -- typically we would set the default value inside a hidden element, or the current value if for some reason an entry is passed
+    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen=false, $owner=null, $renderAsHiddenDefault = false) {
+
+			$ele_value[2] = stripslashes($ele_value[2]);
+			$ele_value[2] = interpretTextboxValue($element, $entry_id, $ele_value[2]);
+			//if placeholder value is set
+			if($ele_value[11] AND ($entry_id == 'new' OR $ele_value[2] === "")) { // always go straight to source for placeholder for new entries, or entries where there is no value
+        $rawEleValue = $element->getVar('ele_value');
+				$placeholder = $rawEleValue[2];
+				$ele_value[2] = "";
+			}
+			if (!strstr(getCurrentURL(),"printview.php")) {
+				$form_ele = new XoopsFormText(
+				$caption,
+				$markupName,
+				$ele_value[0],	//	box width
+				$ele_value[1],	//	max width
+				$ele_value[2],	//	value
+				false,					// autocomplete in browser
+				$ele_value[3]		// numbers only
+				);
+			} else {
+				$form_ele = new XoopsFormLabel ($caption, formulize_numberFormat($ele_value[2], $element->getVar('ele_handle')), $markupName);
+			}
+			//if placeholder value is set
+			if($ele_value[11]) {
+				$form_ele->setExtra("placeholder='".$placeholder."'");
+			}
+			//if numbers-only option is set
+			if ($ele_value[3]) {
+				$form_ele->setExtra("class='numbers-only-textbox'");
+			}
+			return $form_ele;
     }
 
     // this method returns any custom validation code (javascript) that should figure out how to validate this element
     // 'myform' is a name enforced by convention that refers to the form where this element resides
     // use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
-    function generateValidationCode($caption, $markupName, $element, $entry_id) {
-        $ele_req = $element->getVar('ele_req');
-        $ele_value = $element->getVar('ele_value');
-        $validationCode = array();
-
-        if($ele_req){
-          $validationCode[] = "if(myform.{$markupName}.value =='') {\n alert('Please enter a phone number.'); \n myform.{$markupName}.focus();\n return false;\n }";
-        }
-
-        // validate for length of numbers
-        $numberOfXs = substr_count($ele_value['format'], 'X');
-        $validationCode[] = "if(myform.{$markupName}.value.replace(/[^0-9]/g,\"\").length != $numberOfXs && myform.{$markupName}.value.replace(/[^0-9]/g,\"\").length > 0) {\n alert('Please enter a phone number with $numberOfXs digits, ie: ".$ele_value['format']."'); \n myform.{$markupName}.focus();\n return false;\n }";
-
-        return $validationCode;
+    function generateValidationCode($caption, $markupName, $element, $entry_id=false) {
+			$validationCode = array();
+			$ele_value = $element->getVar('ele_value');
+			$eltname = $markupName;
+			$eltcaption = $caption;
+			$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
+			$eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
+			if($element->getVar('ele_req')) { // need to manually handle required setting, since only one validation routine can run for an element, so we need to include required checking in this unique checking routine, if the user selected required too
+				$validationCode[] = "\nif ( myform.{$eltname}.value == '' ) {\n";
+				$validationCode[] = "window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n";
+				$validationCode[] = "}\n";
+			}
+			if($ele_value[9]) {
+				$eltmsgUnique = empty($eltcaption) ? sprintf( _formulize_REQUIRED_UNIQUE, $eltname ) : sprintf( _formulize_REQUIRED_UNIQUE, $eltcaption );
+				$validationCode[] = "if ( myform.{$eltname}.value != '' ) {\n";
+				$validationCode[] = "if(\"{$eltname}\" in formulize_xhr_returned_check_for_unique_value && formulize_xhr_returned_check_for_unique_value[\"{$eltname}\"] != 'notreturned') {\n"; // a value has already been returned from xhr, so let's check that out...
+				$validationCode[] = "if(\"{$eltname}\" in formulize_xhr_returned_check_for_unique_value && formulize_xhr_returned_check_for_unique_value[\"{$eltname}\"] != 'valuenotfound') {\n"; // request has come back, form has been resubmitted, but the check turned up postive, ie: value is not unique, so we have to halt submission , and reset the check for unique flag so we can check again when the user has typed again and is ready to submit
+				$validationCode[] = "window.alert(\"{$eltmsgUnique}\");\n";
+				$validationCode[] = "hideSavingGraphic();\n";
+				$validationCode[] = "delete formulize_xhr_returned_check_for_unique_value.{$eltname};\n"; // unset this key
+				$validationCode[] = "myform.{$eltname}.focus();\n return false;\n";
+				$validationCode[] = "}\n";
+				$validationCode[] = "} else {\n";	 // do not submit the form, just send off the request, which will trigger a resubmission after setting the returned flag above to true so that we won't send again on resubmission
+				$validationCode[] = "\nvar formulize_xhr_params = []\n";
+				$validationCode[] = "formulize_xhr_params[0] = myform.{$eltname}.value;\n";
+				$validationCode[] = "formulize_xhr_params[1] = ".$element->getVar('ele_id').";\n";
+				$xhr_entry_to_send = is_numeric($entry_id) ? $entry_id : "'".$entry_id."'";
+				$validationCode[] = "formulize_xhr_params[2] = ".$xhr_entry_to_send.";\n";
+				$validationCode[] = "formulize_xhr_params[4] = leave;\n"; // will have been passed in to the main function and we need to preserve it after xhr is done
+				$validationCode[] = "formulize_xhr_send('check_for_unique_value', formulize_xhr_params);\n";
+				//$validationCode[] = "showSavingGraphic();\n";
+				$validationCode[] = "return false;\n";
+				$validationCode[] = "}\n";
+				$validationCode[] = "}\n";
+			}
+		  return $validationCode;
     }
 
     // this method will read what the user submitted, and package it up however we want for insertion into the form's datatable
     // You can return {WRITEASNULL} to cause a null value to be saved in the database
     // $value is what the user submitted
     // $element is the element object
-	// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
-    // $subformBlankCounter is the instance of a blank subform entry we are saving. Multiple blank subform values can be saved on a given pageload and the counter differentiates the set of data belonging to each one prior to them being saved and getting an entry id of their own.
-    function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
-        $formatPos = 0;
-        $valuePos = 0;
-        $ele_value = $element->getVar('ele_value');
-        $format = $ele_value['format'];
-        $value = preg_replace ('/[^0-9]+/', '', $value);
-        $number = '';
-        while($formatPos < strlen($format)) {
-            $formatChar = substr($format, $formatPos, 1);
-            $formatPos++;
-            if($formatChar != 'X') {
-                $number .= $formatChar;
-            } else {
-                $valueChar = substr($value, $valuePos, 1);
-                $valuePos++;
-                $number .= $valueChar;
-            }
-        }
-
-        return $number;
+		// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
+    function prepareDataForSaving($value, $element, $entry_id=null) {
+			$ele_value = $element->getVar('ele_value');
+			// if $ele_value[3] is 1 (default is 0) then treat this as a numerical field
+			if ($ele_value[3] AND $value != "{ID}" AND $value != "{SEQUENCE}") {
+					$value = preg_replace ('/[^0-9.-]+/', '', $value);
+			}
+			global $myts;
+			$value = $myts->htmlSpecialChars($value);
+			$value = (!is_numeric($value) AND $value == "") ? "{WRITEASNULL}" : $value;
+      return $value;
     }
 
     // this method will handle any final actions that have to happen after data has been saved
@@ -175,7 +229,7 @@ class formulizePhoneElementHandler extends formulizeElementsHandler {
     // $handle is the element handle for the field that we're retrieving this for
     // $entry_id is the entry id of the entry in the form that we're retrieving this for
     function prepareDataForDataset($value, $handle, $entry_id) {
-        return $value; // we're not making any modifications for this element type
+			return $value;
     }
 
     // this method will take a text value that the user has specified at some point, and convert it to a value that will work for comparing with values in the database.  This is used primarily for preparing user submitted text values for saving in the database, or for comparing to values in the database, such as when users search for things.  The typical user submitted values would be coming from a condition form (ie: fieldX = [term the user typed in]) or other situation where the user types in a value that needs to interact with the database.
@@ -185,6 +239,7 @@ class formulizePhoneElementHandler extends formulizeElementsHandler {
     // if $partialMatch is true, then an array may be returned, since there may be more than one matching value, otherwise a single value should be returned.
     // if literal text that users type can be used as is to interact with the database, simply return the $value
     function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
+        // this needs to be refactored to take into account what is happening in the function of the same name in the modules/formulize/include/functions.php file!
         return $value;
     }
 
@@ -192,11 +247,10 @@ class formulizePhoneElementHandler extends formulizeElementsHandler {
     // for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
     // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
     function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
-        $this->clickable = true; // make urls clickable
-        $this->striphtml = false; // remove html tags as a security precaution
-        $this->length = 1000; // truncate to a maximum of 100 characters, and append ... on the end
-
-        return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
+        $this->clickable = true;
+        $this->striphtml = true;
+        $this->length = $textWidth;
+        return parent::formatDataForList(trans($value)); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
     }
 
 }
