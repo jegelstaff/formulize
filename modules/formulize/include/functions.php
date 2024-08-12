@@ -2481,7 +2481,7 @@ function formatLinks($matchtext, $handle, $textWidth, $entryBeingFormatted, $fid
     }
     formulize_benchmark("got element info");
     // dealing with a textbox where an associated element has been set
-    if (($ele_value[4] > 0 AND $ele_type=='text') OR ($ele_value[3] > 0 AND $ele_type=='textarea')) {
+    if ((intval($ele_value[4]) > 0 AND $ele_type=='text') OR (intval($ele_value[3]) > 0 AND $ele_type=='textarea')) {
         $formulize_mgr = xoops_getmodulehandler('elements', 'formulize');
         if ($ele_type == 'text') {
             $target_element = $formulize_mgr->get($ele_value[4]);

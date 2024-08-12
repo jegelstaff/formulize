@@ -33,7 +33,7 @@
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
-class formulizeTextboxElement extends formulizeformulize {
+class formulizeTextElement extends formulizeformulize {
 
     function __construct() {
         $this->name = "Textbox";
@@ -49,7 +49,7 @@ class formulizeTextboxElement extends formulizeformulize {
 
 }
 
-class formulizeTextboxElementHandler extends formulizeElementsHandler {
+class formulizeTextElementHandler extends formulizeElementsHandler {
 
     var $db;
     var $clickable; // used in formatDataForList
@@ -61,7 +61,7 @@ class formulizeTextboxElementHandler extends formulizeElementsHandler {
     }
 
     function create() {
-        return new formulizeTextboxElement();
+        return new formulizeTextElement();
     }
 
     // this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
@@ -70,10 +70,12 @@ class formulizeTextboxElementHandler extends formulizeElementsHandler {
     function adminPrepare($element) {
 			$dataToSendToTemplate = array();
 			if(is_object($element) AND is_subclass_of($element, 'formulizeformulize')) { // existing element
+				$ele_value = $element->getVar('ele_value');
 				$formlink = createFieldList($ele_value[4], true);
 				$dataToSendToTemplate['formlink'] = $formlink->render();
 				$dataToSendToTemplate['ele_value'] = $element->getVar('ele_value');
 			} else { // new element
+				global $xoopsModuleConfig;
 				$ele_value[0] = $xoopsModuleConfig['t_width'];
 				$ele_value[1] = $xoopsModuleConfig['t_max'];
 				$ele_value[3] = 0;

@@ -2011,6 +2011,7 @@ function &icms_getModuleHandler($name = null, $module_dir = null, $module_basena
 		}
 	}
 	if (!isset($handlers[$module_dir][$name]) && !$optional) {
+		debug_print_backtrace();
 		trigger_error(sprintf(_CORE_MODULEHANDLER_NOTAVAILABLE, $module_dir, $name), E_USER_ERROR);
 	}
 	if (isset($handlers[$module_dir][$name])) {return $handlers[$module_dir][$name];}
