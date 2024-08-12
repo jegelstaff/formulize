@@ -262,8 +262,18 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
 						$form_handler = xoops_getmodulehandler('forms', 'formulize');
 						foreach($formIds as $thisFid) {
             	$formObject = $form_handler->get($thisFid);
+							$elementTypes = $formObject->getVar('elementTypes');
+							$internalRecordIds = internalRecordIds($templateScreenData[0], $thisFid);
 							foreach($formObject->getVar('elementHandles') as $i=>$thisHandle) {
 								$$thisHandle = display($templateScreenData[0], $thisHandle);
+								// if we've got a single value from the mainform, or a one to one form, or a single entry in a subform, format it for display as if in a list
+								if(count($internalRecordIds) == 1) {
+									$elementHandlerType = $elementTypes[$i]."Element";
+									if(!isset($$elementHandlerType)) {
+										$$elementHandlerType = xoops_getmodulehandler($elementHandlerType, 'formulize');
+									}
+									$$thisHandle = $$elementHandlerType->formatDataForList($$thisHandle, $thisHandle, $internalRecordIds[0], 0);
+								}
 							}
 						}
             $entry = $templateScreenData[0];
