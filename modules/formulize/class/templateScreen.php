@@ -269,10 +269,12 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
 								// if we've got a single value from the mainform, or a one to one form, or a single entry in a subform, format it for display as if in a list
 								if(count($internalRecordIds) == 1) {
 									$elementHandlerType = $elementTypes[$i]."Element";
-									if(!isset($$elementHandlerType)) {
+									if(!isset($$elementHandlerType) AND file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$elementHandlerType.".php")) {
 										$$elementHandlerType = xoops_getmodulehandler($elementHandlerType, 'formulize');
 									}
-									$$thisHandle = $$elementHandlerType->formatDataForList($$thisHandle, $thisHandle, $internalRecordIds[0], 0);
+									if(isset($$elementHandlerType)) {
+										$$thisHandle = $$elementHandlerType->formatDataForList($$thisHandle, $thisHandle, $internalRecordIds[0], 0);
+									}
 								}
 							}
 						}
