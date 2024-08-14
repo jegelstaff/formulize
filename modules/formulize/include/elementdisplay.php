@@ -251,6 +251,10 @@ EOF;
  */
 function elementIsAllowedForUserInEntry($elementObject, $entry_id, $groups = array(), $noSave = false, $renderedElementMarkupName = null, $subformCreateEntry = false) {
 
+	if($_SERVER['SCRIPT_NAME'] == '/modules/formulize/admin/fakeform.php') {
+		return array(true, false);
+	}
+
 	// basic security check...
 	$form_id = $elementObject->getVar('id_form');
 	if(security_check($form_id, $entry_id) == false)	{

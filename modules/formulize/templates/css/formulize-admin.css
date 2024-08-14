@@ -1714,3 +1714,42 @@ p.useroptions input[type="text"] {
 .sorthandle {
 	cursor:move;
 }
+
+div#element-mgmt-ui div.accordion-box-wide {
+	float: none;
+}
+
+div#element-mgmt-ui {
+	display: flex;
+	justify-content: space-between;
+	flex-direction: row;
+}
+
+div#element-mgmt-ui div#fakeform-container {
+	width: 100%;
+}
+
+div#element-mgmt-ui-left {
+	display: flex;
+	justify-content: space-between;
+	flex-direction: row;
+}
+div#element-mgmt-ui .ui-accordion {
+	width: 520px;
+}
+
+#fakeform {
+	margin-left: 1em;
+	width: 98%;
+	height: 850px;
+	overflow: auto;
+}
+
+#element-toolbox {
+	margin-right: 1em;
+	width: 475px;
+}
+
+#element-toolbox p.tool {
+	padding-left: 0.5em;
+}

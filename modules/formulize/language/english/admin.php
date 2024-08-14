@@ -64,7 +64,7 @@ define("_AM_ELE_CLICKTOADD","Click an element name to add it");
 define("_AM_ELE_CLICKDRAGANDDROP","Click and drag the elements to re-order them");
 define("_AM_ELE_MLTEXT", "Multi-line text box");
 define("_AM_ELE_DROPDORLIST", "(Dropdown box or List box)");
-define("_AM_ELE_SELECTEXPLAIN","Select box (dropdowns and list boxes)");
+define("_AM_ELE_SELECTEXPLAIN","Dropdowns, autocompletes, list boxes (HTML &lt;select>)");
 define("_AM_ELE_DATEBOX","Date box");
 define("_AM_ELE_SUBFORMEXPLAIN", "Subform (another form with a relationship to this one)");
 define("_AM_ELE_LINKSELECTEDABOVE", "Use the linked field selected above");
@@ -193,13 +193,13 @@ define("_FORM_LOCK", "Prevent anyone from editing this form again");
 define("_AM_CONFIRM_LOCK", "If you lockdown this form, then no one, not even you, will be able to make any changes to the form or its elements.  Are you sure you want to lockdown this form?");
 define("_formulize_FORMLOCK", "This form has now been locked.  No further changes to this form will be possible.");
 define("_formulize_FORMLOCK_FAILED", "There was an error and Formulize could not lock this form.");
-define("_FORM_NUM_ENTRIES_ANON_HELP", "<b>About Anonymous Users:</b> Formulize determines entry ownership based on a user's id number, and all Anonymous Users are viewed as \"User Number 0\".  Therefore, \"One entry per user\" does not really work for anonymous users in most cases, since everyone who is not logged in will share the same entry, because they all share the same id number, 0.<br><br>Also, \"More than one entry per user\" will behave differently for Anonymous Users, since all the entries created by anyone who isn't logged in, will all belong to \"user 0\", so everyone who is not logged in, will be treated as the same person.<br><br>Formulize is designed primarily for use in a website with a strict set of usernames and groups of users, but there are ways around these issues, in some cases using the API.  Contact <a href=\"mailto:info@formulize.org\">info@formulize.org</a> for more information.");  
+define("_FORM_NUM_ENTRIES_ANON_HELP", "<b>About Anonymous Users:</b> Formulize determines entry ownership based on a user's id number, and all Anonymous Users are viewed as \"User Number 0\".  Therefore, \"One entry per user\" does not really work for anonymous users in most cases, since everyone who is not logged in will share the same entry, because they all share the same id number, 0.<br><br>Also, \"More than one entry per user\" will behave differently for Anonymous Users, since all the entries created by anyone who isn't logged in, will all belong to \"user 0\", so everyone who is not logged in, will be treated as the same person.<br><br>Formulize is designed primarily for use in a website with a strict set of usernames and groups of users, but there are ways around these issues, in some cases using the API.  Contact <a href=\"mailto:info@formulize.org\">info@formulize.org</a> for more information.");
 
 define("_AM_FORCE_GROUPSCOPE_HELP", "If view_groupscope is selected, you can pick specific groups it should apply to.  If none are selected, then when a list of entries is shown to a user, groupscope will apply to the groups they are a member of, which also have view_form permission.");
 define("_AM_FORCE_GROUPSCOPE_INTRO", "Use specific groups for groupscope?");
 
 define("_AM_PER_GROUP_FILTER_INTRO", "Filter the entries this group can see in this form?");
-       
+
 define("_AM_SAVE","Save");
 define("_AM_COPIED","%s copy");
 define("_AM_DBUPDATED","Database Updated Successfully!");
@@ -240,8 +240,8 @@ define("_AM_ELE_TEXT","Text box");
 define("_AM_ELE_TEXT_DESC","{NAME} will print full name;<br />{UNAME} will print user name;<br />{EMAIL} will print user email;<br />{ID} will cause the entry ID number of the entry to be inserted into the textbox, when the entry is first saved.<br />{SEQUENCE} will cause the values in the box to be a series of consecutive numbers.<br />PHP Code (ending with the line '&#36;default = &#36;something;') will be interpreted to generate the default value.");
 define("_AM_ELE_TEXT_DESC2","<br />PHP Code is the only situation where more than one line of this box will be read.  In your PHP code, you can use \$form_id to get the ID number of the form, and \$entry_id to get the ID number of the particular entry that the user is editing.");
 define("_AM_ELE_TAREA","Text area");
-define("_AM_ELE_MODIF","Text for display (left and right cells)");
-define("_AM_ELE_MODIF_ONE","Text for display (spanning both cells)");
+define("_AM_ELE_MODIF","Separate text on left and right sides");
+define("_AM_ELE_MODIF_ONE","Single text spanning the form");
 define("_AM_ELE_INSERTBREAK","HTML content for this line:");
 define("_AM_ELE_IB_DESC","The caption will not display.  Only the text in this box will appear on screen, in a single row spanning both columns of the form.");
 define("_AM_ELE_IB_CLASS","CSS class for the row:");
@@ -341,9 +341,9 @@ define("_AM_ELE_FORMLINK_SCOPEFILTER_ALL", "No filter in effect (select this to 
 define("_AM_ELE_FORMLINK_SCOPEFILTER_CON", "Filter the options based on this/these conditions:");
 define("_AM_ELE_FORMLINK_SCOPEFILTER_ADDCON", "Add another condition");
 define("_AM_ELE_FORMLINK_SCOPEFILTER_REFRESHHINT", "(If the first list here is empty, click the 'Add another condition' button to refresh it.)");
-       
-       
-  
+
+
+
 
 // subforms
 define("_AM_ELE_SUBFORM_FORM", "Which form do you want to include as a subform?");
