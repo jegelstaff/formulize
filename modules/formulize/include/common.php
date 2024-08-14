@@ -50,6 +50,7 @@ include_once XOOPS_ROOT_PATH . '/modules/formulize/include/extract.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/customCodeForApplications.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/usersGroupsPerms.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/data.php';
+include_once XOOPS_ROOT_PATH . '/modules/formulize/class/screen.php';
 //Add the language constants
 global $xoopsConfig;
 if (file_exists(XOOPS_ROOT_PATH . "/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {

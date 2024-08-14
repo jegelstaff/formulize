@@ -282,6 +282,8 @@ class formulize_themeForm extends XoopsThemeForm {
             }
             $column2width = $this->screen->getVar('column2width') ? $this->screen->getVar('column2width') : 'auto';
             $columns = array($columns, $column1width, $column2width);
+        } elseif($_SERVER['SCRIPT_NAME'] == '/modules/formulize/admin/fakeform.php') {
+						$columns = array(2, '20%', 'auto');
         } else {
             $columns = array(1, 'auto', 'auto');
         }
