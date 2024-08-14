@@ -3849,7 +3849,7 @@ function processClickedCustomButton($clickedElements, $clickedValues, $clickedAc
 		$gatheredSelectedEntries = true;
 	}
 
-	if($clickedApplyTo == "custom_code") {
+	if($clickedApplyTo == "custom_code" OR $clickedApplyTo == "custom_code_once") {
 		$clickedEntries = array();
 		if(isset($_POST['caentries'])) { // if this button was an inline button
 			if($_POST['caentries'] != "") {
@@ -3865,8 +3865,13 @@ function processClickedCustomButton($clickedElements, $clickedValues, $clickedAc
 			$clickedEntries = $GLOBALS['formulize_selectedEntries'];
 		}
 		foreach($caPHP as $thisCustomCode) {
-			foreach($clickedEntries as $formulize_thisEntryId) {
-				$GLOBALS['formulize_thisEntryId'] = $formulize_thisEntryId;
+			if($clickedApplyTo == "custom_code") {
+				foreach($clickedEntries as $formulize_thisEntryId) {
+					$GLOBALS['formulize_thisEntryId'] = $formulize_thisEntryId;
+					eval(removeOpeningPHPTag($thisCustomCode));
+				}
+			} elseif($clickedApplyTo == "custom_code_once") { 
+				$GLOBALS['formulize_entryIds'] = $clickedEntries;
 				eval(removeOpeningPHPTag($thisCustomCode));
 			}
 		}
