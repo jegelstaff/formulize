@@ -2460,6 +2460,7 @@ function displayList($entry, $handle, $type="bulleted", $id="NULL", $localid="NU
 // $formhandle values can be: the title of the form, or the id number of the form
 // If formhandle is an array, then $ids becomes a two dimensional array:  $ids[$formhandle][] = $id
 function internalRecordIds($entry, $formhandle="", $id="NULL", $fidAsKeys = false) {
+	$ids = array();
 	if(is_numeric($id)) {
 		$entry = $entry[$id];
 	}
