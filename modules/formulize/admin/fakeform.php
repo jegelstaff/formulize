@@ -20,9 +20,9 @@ $actionFunctionName = 'noaction';
 print '
 <!DOCTYPE html>
 <html>
-<link rel="stylesheet" type="text/css" media="all" href="http://localhost:8080/themes/Anari/css/style.css?v=1.5" />
+<link rel="stylesheet" type="text/css" media="all" href="'.XOOPS_URL.'/themes/Anari/css/style.css?v=1.5" />
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-<script type="text/javascript" src="http://localhost:8080/libraries/jquery/jquery-migrate-1.2.1.min.js"></script>
+<script type="text/javascript" src="'.XOOPS_URL.'/libraries/jquery/jquery-migrate-1.2.1.min.js"></script>
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 <script>
