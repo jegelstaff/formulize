@@ -260,6 +260,7 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
     }
   }
   $applyToOptions['custom_code'] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_CUSTOM_CODE;
+	$applyToOptions['custom_code_once'] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_CUSTOM_CODE_ONCE;
   $applyToOptions['custom_html'] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_CUSTOM_HTML;
   $custom['applytoOptions'] = $applyToOptions;
   if (is_array($screen->getVar('customactions'))) {
@@ -272,6 +273,8 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
         if (is_numeric($key)) { // effects have numeric keys
           if ($buttonData['applyto'] == 'custom_code') {
             $custom['custombuttons'][$buttonId]['content'][$key]['description'] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_CUSTOM_CODE_DESC;
+					} elseif($buttonData['applyto'] == 'custom_code_once') {
+            $custom['custombuttons'][$buttonId]['content'][$key]['description'] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_CUSTOM_CODE_ONCE_DESC;
           } elseif ($buttonData['applyto'] == 'custom_html') {
             $custom['custombuttons'][$buttonId]['content'][$key]['description'] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_CUSTOM_HTML_DESC;
           } else {

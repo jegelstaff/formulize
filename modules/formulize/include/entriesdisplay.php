@@ -3849,24 +3849,30 @@ function processClickedCustomButton($clickedElements, $clickedValues, $clickedAc
 		$gatheredSelectedEntries = true;
 	}
 
-	if($clickedApplyTo == "custom_code") {
-		$clickedEntries = array();
+	if($clickedApplyTo == "custom_code" OR $clickedApplyTo == "custom_code_once") {
+		$formulize_entryIds = array(); // The entries the button will affect
 		if(isset($_POST['caentries'])) { // if this button was an inline button
 			if($_POST['caentries'] != "") {
 				$caEntriesTemp = explode(",", htmlspecialchars(strip_tags($_POST['caentries'])));
 				foreach($caEntriesTemp as $id=>$val) {
-					$clickedEntries[] = $val;
+					$formulize_entryIds[] = intval($val);
 				}
 			}
 		}
-		if(count((array) $clickedEntries) == 0 AND count((array) $GLOBALS['formulize_selectedEntries']) == 0) {
-			$clickedEntries[] = "";
-		} elseif(count((array) $clickedEntries) == 0) { // if this is not an inline button and there are selected entries, use them (inline buttons override selected checkboxes in this case for now)
-			$clickedEntries = $GLOBALS['formulize_selectedEntries'];
+		if(count((array) $formulize_entryIds) == 0 AND count((array) $GLOBALS['formulize_selectedEntries']) == 0) {
+			$formulize_entryIds[] = "";
+		} elseif(count((array) $formulize_entryIds) == 0) { // if this is not an inline button and there are selected entries, use them (inline buttons override selected checkboxes in this case for now)
+			$formulize_entryIds = array_map('intval', $GLOBALS['formulize_selectedEntries']);
 		}
 		foreach($caPHP as $thisCustomCode) {
-			foreach($clickedEntries as $formulize_thisEntryId) {
-				$GLOBALS['formulize_thisEntryId'] = $formulize_thisEntryId;
+			if($clickedApplyTo == "custom_code") {
+				foreach($formulize_entryIds as $formulize_thisEntryId) {
+					$GLOBALS['formulize_thisEntryId'] = $formulize_thisEntryId;
+					eval(removeOpeningPHPTag($thisCustomCode));
+				}
+			} elseif($clickedApplyTo == "custom_code_once") {
+				// Assign values to the global scope for legacy reasons
+				$GLOBALS['formulize_entryIds'] = $formulize_entryIds;
 				eval(removeOpeningPHPTag($thisCustomCode));
 			}
 		}
