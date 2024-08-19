@@ -330,7 +330,9 @@ if ($renderedFormulizeScreen AND is_object($xoopsTpl)) {
     $xoopsTpl->assign('xoops_pagetitle', $title);
     $xoopsTpl->assign('icms_pagetitle', $title);
 }
-
+if(is_object($xoopsTpl)) {
+	$xoopsTpl->assign('formulize_customCodeForApplications', (isset($GLOBALS['formulize_customCodeForApplications']) ? $formulize_customCodeForApplications : ''));
+}
 // go back to the previous rendering flag, in case this operation was nested inside something else
 $GLOBALS['formulize_thisRendering'] = $prevRendering[$thisRendering];
 
