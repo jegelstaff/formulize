@@ -22,7 +22,7 @@
     <meta name="author" content="<{$icms_meta_author}>" />
     <meta name="copyright" content="<{$icms_meta_copyright}>" />
     <meta name="generator" content="Formulize" />
-  
+
     <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1">
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
@@ -38,7 +38,7 @@
     <link rel="stylesheet" type="text/css" media="all" href="<{$icms_imageurl}><{if $icms_rtl}>rtl/<{/if}>css/style.css?v=1.5" />
 
     <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
-    
+
 </head>
 
 <body id="<{$icms_dirname}>" class="<{$icms_langcode}><{if $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}>" style='display: none; overflow: hidden;'>
@@ -50,7 +50,7 @@ if($xoopsUser) {
     $profile_handler = xoops_getmodulehandler('profile', 'profile');
     $profile = $profile_handler->get($xoopsUser->getVar('uid'));
     if($fontsize = $profile->getVar('fontsize')) {
-        print "<style>html { font-size: ".$fontsize."; }</style>";    
+        print "<style>html { font-size: ".$fontsize."; }</style>";
     }
 }
 <{/php}>
@@ -100,13 +100,13 @@ if($xoopsUser) {
         </div>
 
         <!-- MENU -->
-        
+
         <{if $xoBlocks.canvas_left}>
             <{includeq file="$theme_name/blockszone.html" blocks=$xoBlocks.canvas_left
                 zoneClass='xo-canvas-column' zoneId='xo-canvas-leftcolumn'
             }>
         <{/if}>
-        
+
 
       </div>
     </div>
@@ -131,7 +131,7 @@ if($xoopsUser) {
                   <a href='<{$icms_url}>'><img class="site-branding__logo-image" src="<{$icms_imageurl}>images/logo.png" alt="Logo image"></a>
                 </div>
             </div>
-            
+
 
             <!-- Actions (top right) -->
             <div class="site-header__actions">
@@ -166,20 +166,20 @@ if($xoopsUser) {
     </div>
   </div>
 
-  
+
   <script src="<{$icms_imageurl}>js/script.js"></script>
-  
+
   <script type='text/javascript'>
     jQuery(document).ready(function() {
         jQuery(window).load(function() {
             jQuery('body').show(200, function() {
                 var formulize_pageShown = new CustomEvent('formulize_pageShown');
-                window.dispatchEvent(formulize_pageShown);    
+                window.dispatchEvent(formulize_pageShown);
             });
         });
     });
   </script>
-  
+
     <{ if $masquerade_username }>
         <div id="formulize-masquerade-block">
             Masquerading as <b><{$masquerade_username}></b>
@@ -192,7 +192,10 @@ if($xoopsUser) {
         </div>
         <div style="clear:both;"></div>
     <{ /if }>
-  
+
+	<{if $formulize_customCodeForApplications}>
+		<{$formulize_customCodeForApplications}>
+	<{/if}>
 </body>
 
 </html>
