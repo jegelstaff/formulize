@@ -3855,14 +3855,14 @@ function processClickedCustomButton($clickedElements, $clickedValues, $clickedAc
 			if($_POST['caentries'] != "") {
 				$caEntriesTemp = explode(",", htmlspecialchars(strip_tags($_POST['caentries'])));
 				foreach($caEntriesTemp as $id=>$val) {
-					$formulize_entryIds[] = $val;
+					$formulize_entryIds[] = intval($val);
 				}
 			}
 		}
 		if(count((array) $formulize_entryIds) == 0 AND count((array) $GLOBALS['formulize_selectedEntries']) == 0) {
 			$formulize_entryIds[] = "";
 		} elseif(count((array) $formulize_entryIds) == 0) { // if this is not an inline button and there are selected entries, use them (inline buttons override selected checkboxes in this case for now)
-			$formulize_entryIds = $GLOBALS['formulize_selectedEntries'];
+			$formulize_entryIds = array_map('intval', $GLOBALS['formulize_selectedEntries']);
 		}
 		foreach($caPHP as $thisCustomCode) {
 			if($clickedApplyTo == "custom_code") {
