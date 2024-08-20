@@ -22,9 +22,16 @@ $member_handler = xoops_gethandler('member');
 // check if the account id is at least valid...
 $sql = 'SELECT uid, login_name FROM '.$xoopsDB->prefix('users').' WHERE login_name = "'.formulize_db_escape($_GET['a']).'" OR email = "'.formulize_db_escape($_GET['a']).'"';
 $res = $xoopsDB->query($sql);
-if($xoopsDB->getRowsNum($res)!=1) { // if account identifier does not identify one account
-    redirect_header(XOOPS_URL, 5, _US_NO_ACCOUNT);
-    exit();
+$rowsFound = $xoopsDB->getRowsNum($res);
+if($rowsFound != 1 ) { // if account identifier does not identify one account
+	include "header.php";
+	if($rowsFound == 0) {
+    print "<h2>".trans("[en]There is no account with that username or email address.[/en][fr]Il n'y a pas de compte avec ce nom d'utilisateur/trice ou cette adresse e-mail.[/fr]")."</h2>";
+	} elseif($rowsFound > 1) {
+		print "<h2>".trans("[en]There is more than one account with that username or email address. Please contact a webmaster for help.[/en][fr]Il y a plus d'un compte avec ce nom d'utilisateur/trice ou cette adresse e-mail. Contactez un webmaster pour obtenir de l'aide, s'il vous plaît.[/fr]")."</h2>";
+	}
+	include "footer.php";
+	exit();
 }
 
 $row = $xoopsDB->fetchArray($res);
