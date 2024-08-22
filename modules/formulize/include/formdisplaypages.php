@@ -268,7 +268,7 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
             // check if the done destination is for this specific form screen that we're rendering, if so, switch done destination to the default list for the form if any
 						$alternateURLForSid = $screen->getVar('rewriteruleAddress');
 						$doneDestHasSid = strstr($done_dest, 'sid='.$screen->getVar('sid'));
-						$doneDestHasSid = $doneDestHasSid ? $doneDestHasSid : strstr($done_dest, $alternateURLForSid);
+						$doneDestHasSid = $doneDestHasSid ? $doneDestHasSid : ($alternateURLForSid AND strstr($done_dest, $alternateURLForSid));
             if($screen AND $doneDestHasSid) {
                 $form_handler = xoops_getmodulehandler('forms', 'formulize');
                 $formObject = $form_handler->get($screen->getVar('fid'));
