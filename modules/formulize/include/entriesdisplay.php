@@ -543,7 +543,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				$actualColsToDisplay = explode(",", $_av_oldcols);
 			} else {
 				// go with the defaults, which is the fallback below if there are no cols otherwise
-				$actualColsToDisplay = implode(",", getDefaultCols($fid, $frid));
+				$actualColsToDisplay = getDefaultCols($fid, $frid);
 			}
 			if($_loaded_searches_are_fundamental AND in_array('searches', $features_loaded_from_saved_view)) {
 				$screen = enforceSearchesAsFundamentalFilters($loadedView, $screen);
@@ -654,8 +654,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}
 
 	if($_POST['newcols']) { // if new columns were requested by the user
-		$temp_showcols = $_POST['newcols'];
-		$showcols = explode(",", $temp_showcols);
+		$showcols = explode(",", $_POST['newcols']);
 	}
 
 	$showcols = removeNotAllowedCols($fid, $frid, $showcols, $groups); // converts old format metadata fields to new ones too if necessary
