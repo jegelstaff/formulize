@@ -964,7 +964,7 @@ class formulizeFormsHandler {
 						// NOTE: THIS WILL FAIL IF/WHEN SOMEONE CREATE A CUSTOM ELEMENT TYPE THAT IS NOT A DATA-STORING ELEMENT!!
 						// WE WILL NEED TO GO GET THE ELEMENT OBJECT HERE, AND CHECK IF IT'S A DATA STORING ELEMENT TYPE OR NOT.  THIS IS A PROPERTY ON THE CUSTOM ELEMENT OBJECTS, SO NOT HARD, BUT A PAIN AND ADDS QUERIES TO THE PAGE.
 						if($elementTypes[$elementId] == "areamodif" OR $elementTypes[$elementId] == "ib" OR $elementTypes[$elementId] == "sep" OR $elementTypes[$elementId] == "grid" OR $elementTypes[$elementId] == "subform") { continue; } // do not attempt to create certain types of fields since they don't live in the db!
-						if(count($map)>0 OR $revisionsTable) {
+						if(count((array)$map)>0 OR $revisionsTable) {
 							// we're cloning with data, so base the new field's datatype on the original form's datatype for the corresponding field
 							if(!isset($dataTypeMap)) {
 								$dataTypeMap = array();
@@ -984,7 +984,7 @@ class formulizeFormsHandler {
 								$newTableSQL .= "`$thisHandle` $type_with_default,";
 								// for cloned forms, we have to look up the handle name in the map that was passed in, since element handles will have changed in the cloning process
 							} else {
-								$type_with_default = ("text" == $dataTypeMap[array_search($thisHandle, $map)] ? "text" : $dataTypeMap[array_search($thisHandle, $map)]." NULL default NULL");
+								$type_with_default = ("text" == $dataTypeMap[array_search($thisHandle, (array)$map)] ? "text" : $dataTypeMap[array_search($thisHandle, (array)$map)]." NULL default NULL");
 								$newTableSQL .= "`$thisHandle` $type_with_default,";
 							}
 						} else {
@@ -1477,7 +1477,7 @@ class formulizeFormsHandler {
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
 	$clonedFormObject = $form_handler->get($newfid);
 	if ($clonedFormObject->getVar('store_revisions')) {
-		if (!$tableCreationResult = $this->createDataTable($newfid, 0, false, true)) {
+		if (!$tableCreationResult = $this->createDataTable($newfid, 0, array(), true)) {
 			print "Error: could not create revisions table for form $newfid. ".
 				"Please delete the cloned form and report this error to ".
 				"<a href=\"mailto:info@formulize.org\">info@formulize.org</a>.<br>".$xoopsDB->error();

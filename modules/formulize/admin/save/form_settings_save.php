@@ -135,7 +135,7 @@ if($_POST['formulize_admin_key'] == "new") {
     $selectedAdminGroupIdsForMenu[] = intval($thisGroupId);
     $gperm_handler->addRight('edit_form', $fid, intval($thisGroupId), getFormulizeModId());
   }
-  
+
 } else if( $old_form_handle && $formObject->getVar( "form_handle" ) != $old_form_handle ) {
   //print "rename from $old_form_handle to " . $formObject->getVar( "form_handle" );
   if(!$renameResult = $form_handler->renameDataTable($old_form_handle, $formObject->getVar( "form_handle" ), $formObject)) {
@@ -196,8 +196,8 @@ if(isset($_POST['forms-tableform'])) {
 
 // if the revision history flag was on, then create the revisions history table, if it doesn't exist already
 if(isset($_POST['forms-store_revisions']) AND $_POST['forms-store_revisions'] AND !$form_handler->revisionsTableExists($formObject)) {
-  if(!$form_handler->createDataTable($fid, 0, false, true)) { // 0 is the id of a form we're cloning, false is the map of old elements to new elements when cloning so n/a here, true is the flag for making a revisions table
-    print "Error: could not create the revision history table for the form";  
+  if(!$form_handler->createDataTable($fid, 0, array(), true)) { // 0 is the id of a form we're cloning, array() is the map of old elements to new elements when cloning so n/a here, true is the flag for making a revisions table
+    print "Error: could not create the revision history table for the form";
   }
 }
 
