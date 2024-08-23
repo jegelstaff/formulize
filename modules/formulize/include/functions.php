@@ -5855,7 +5855,11 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 								// for new entries maybe we should get the defaults?
 								$literalTermToUse = '';
 						}
-						$subQueryWhereClause = "ss.`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$filterTermToUse.$likebits.$quotes;
+						if($likebits) {
+							$subQueryWhereClause = "ss.`$targetSourceHandle` $subQueryOp CONCAT('$likebits',$filterTermToUse,'$likebits')";
+						} else {
+							$subQueryWhereClause = "ss.`$targetSourceHandle` $subQueryOp $filterTermToUse";
+						}
 						if($literalTermToUse != $dbValueOfTerm) {
 							// if there is a difference between the literal and DB term, setup an OR expression so we can catch both/all variations
 							if(!is_array($literalTermToUse)) {
@@ -5894,12 +5898,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 						} elseif($targetSourceFid == $curlyBracketForm->getVar('id_form')) { // self reference to the same form, but with a non-linked element...need to do some funky stuff when parsing this into the ON clause of the join!
 								$nonLinkedCurlyBracketSelfReference = true;
 						}
-						// curlybracket term found, but when it's not linked to the same source as the target, we have to work the likebits in as part of a concat, since our term is not a literal string anymore
-						if ($likebits) {
-								$filterTermToUse = " CONCAT('$likebits',$filterTermToUse,'$likebits') ";
-						}
 						// then neuter these, so they don't screw up the building of the query...note the use of origlikebits so that the higher level part of the query retains that logic if the user asked for it
-						$quotes = "";
 						$likebits = "";
 
 				// OPTION 1B: THE TERM IS NOT A DYNAMIC REFERENCE TO AN ELEMENT...
