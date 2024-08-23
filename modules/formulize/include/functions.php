@@ -3707,6 +3707,11 @@ function getHeaders($cols, $colsIsElementHandles = true) {
 function getDefaultCols($fid, $frid="") {
 	global $xoopsDB, $xoopsUser;
 
+    static $cachedDefaultCols = array();
+    if(isset($cachedDefaultCols[$fid][$frid])) {
+        return $cachedDefaultCols[$fid][$frid];
+    }
+
 	if($frid) { // expand the headerlist to include the other forms
 		$fids[0] = $fid;
 		$check_results = checkForLinks($frid, $fids, $fid, "");
@@ -3731,11 +3736,13 @@ function getDefaultCols($fid, $frid="") {
 			}
 		}
 
+        $cachedDefaultCols[$fid][$frid] = $ele_handles;
 		return $ele_handles;
 
 	} else {
 		$ele_handles = getHeaderList($fid, true, true); // third param causes element handles to be returned instead of IDs
-		return $ele_handles;
+		$cachedDefaultCols[$fid][$frid] = $ele_handles;
+        return $ele_handles;
 	}
 
 }

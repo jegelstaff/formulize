@@ -432,7 +432,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	// no report/saved view to be loaded, and we're not on a subsequent page load that is sending back a declared currentview, or the user clicked the reset button
 	// therefore, an advanceview if any could be loaded after all the other setup has been done
-	if(!$_POST['currentview'] OR $_POST['userClickedReset']) {
+	if($screen AND count((array) $screen->getVar('advanceview')) > 0 AND ($_POST['loadreport'] OR $_POST['userClickedReset'])) {
 		$couldLoadAdvanceView = true;
 	} else {
 		$couldLoadAdvanceView = false;
@@ -464,8 +464,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				$_POST['lockcontrols'],
 				$_loaded_quicksearches,
 				$_loaded_global_search,
-        $_POST['pubfilters'],
-        $_loaded_formulize_entriesPerPage,
+        		$_POST['pubfilters'],
+        		$_loaded_formulize_entriesPerPage,
 				$_loaded_sv_use_features,
 				$_loaded_searches_are_fundamental) = loadReport(substr($_POST['currentview'], 1), $fid, $frid);
 
@@ -478,6 +478,12 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			// don't layer in the advance view, unless the view we're loading is short on features. Advance views (start up settings for LOE) don't have scope or epp or calculation options currently. If or when they are added, this condition will need to be adjusted.
 			if($couldLoadAdvanceView AND in_array('cols', $features_loaded_from_saved_view) AND in_array('searches', $features_loaded_from_saved_view) AND in_array('sort', $features_loaded_from_saved_view)) {
 				$couldLoadAdvanceView = false;
+			// else, read the advanceViewInfo, because we may need the cols to parse the searches from the loaded view, if the loaded view doesn't use cols but there is an advance view!
+			} elseif($couldLoadAdvanceView) {
+				list($_av_oldcols,
+					$_av_sort,
+					$_av_order,
+					$_av_quicksearches) = loadAdvanceView($fid, $screen->getVar('advanceview'));
 			}
 
 			$quicksearches = "";
@@ -529,7 +535,16 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				}
 			}
 
-			$actualColsToDisplay = explode(",", $_POST['oldcols']); // might have been loaded, or might be passed from prev page, doesn't matter, this is what we're actually going to display
+			if($_POST['oldcols']) {
+				// might have been loaded, or might be passed from prev page, doesn't matter, this is what we're actually going to display
+				$actualColsToDisplay = explode(",", $_POST['oldcols']);
+			} elseif($couldLoadAdvanceView AND !in_array('cols', $features_loaded_from_saved_view) AND $_av_oldcols) {
+				// if there are no columns, but we're going to load some in from the advanceview, then use that as the "actual cols to display" instead! Yuck.
+				$actualColsToDisplay = explode(",", $_av_oldcols);
+			} else {
+				// go with the defaults, which is the fallback below if there are no cols otherwise
+				$actualColsToDisplay = implode(",", getDefaultCols($fid, $frid));
+			}
 			if($_loaded_searches_are_fundamental AND in_array('searches', $features_loaded_from_saved_view)) {
 				$screen = enforceSearchesAsFundamentalFilters($loadedView, $screen);
 			} elseif(in_array('searches', $features_loaded_from_saved_view)){
@@ -595,14 +610,14 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	 */
 
 	// if we did not load a full report/saved view, then load an advanceview if any is specified and the current page load is appropriate for it (see above for couldLoadAdvanceView))
-	if($screen AND count((array) $screen->getVar('advanceview')) > 0 AND $couldLoadAdvanceView) {
+	if($couldLoadAdvanceView) {
 
 		$quicksearches = "";
 		$columnKeyForQuickSearches = "";
 		list($_av_oldcols,
-			 $_av_sort,
-			 $_av_order,
-			 $_av_quicksearches) = loadAdvanceView($fid, $screen->getVar('advanceview'));
+			$_av_sort,
+			$_av_order,
+			$_av_quicksearches) = loadAdvanceView($fid, $screen->getVar('advanceview'));
 
 		if(!in_array('cols', $features_loaded_from_saved_view) AND $_av_oldcols) {
 			$_POST['oldcols'] = $_av_oldcols;
@@ -668,7 +683,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	// clear quick searches for any columns not included now
 	// also, convert any { } terms to literal values for users who can't update other reports, if the last loaded report doesn't belong to them (they're presumably just report consumers, so they don't need to preserve the abstract terms)
 	$hiddenQuickSearches = array(); // array used to indicate quick searches that should be present even if the column is not displayed to the user
-  $activeViewId = substr($settings['lastloaded'], 1); // will have a p in front of the number, to show it's a published view (or an s, but that's unlikely to ever happen in this case)
+  	$activeViewId = substr($settings['lastloaded'], 1); // will have a p in front of the number, to show it's a published view (or an s, but that's unlikely to ever happen in this case)
 	$ownerOfLastLoadedViewData = q("SELECT sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id=".intval($activeViewId));
 	$ownerOfLastLoadedView = $ownerOfLastLoadedViewData[0]['sv_owner_uid'];
 	foreach($_POST as $k=>$v) {
