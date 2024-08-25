@@ -382,20 +382,21 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
     // $entry_id is the ID number of this entry
     // $value is the serialized raw value from the database for this particular entry
     function createFileURL($element, $entry_id, $value) {
-        $value = unserialize($value);
-        $fileName = isset($value['name']) ? $value['name'] : '';
-        $isFile = isset($value['isfile']) ? $value['isfile'] : '';
-        if($isFile) {
-            $ele_value = $element->getVar('ele_value');
-            if($ele_value[2]) { // users can connect directly to file or not?
-                $fileName = rawurlencode($fileName);
-                return XOOPS_URL."/uploads/formulize_".$element->getVar('id_form')."_".$entry_id."_".$element->getVar('ele_id')."/$fileName";
-            } else {
-                return XOOPS_URL."/modules/formulize/download.php?element=".$element->getVar('ele_id')."&entry_id=$entry_id";
-            }
-        } else {
-            return $fileName; // may be an error message or something like that
-        }
+			$value = unserialize($value);
+			$fileName = isset($value['name']) ? $value['name'] : '';
+			$isFile = isset($value['isfile']) ? $value['isfile'] : '';
+			if($isFile) {
+				$ele_value = $element->getVar('ele_value');
+				$basePath = "/uploads/formulize_".$element->getVar('id_form')."_".$entry_id."_".$element->getVar('ele_id')."/";
+				if($ele_value[2]) { // users can connect directly to file or not?
+					return XOOPS_URL.$basePath.rawurlencode($fileName);
+				} else {
+					$fileModTime = fileatime(XOOPS_ROOT_PATH.$basePath.$fileName); // add mod time to change the URL so we don't serve an old file because of browser caching
+					return XOOPS_URL."/modules/formulize/download.php?element=".$element->getVar('ele_id')."&entry_id=$entry_id&m=$fileModTime";
+				}
+			} else {
+				return $fileName; // may be an error message or something like that
+			}
     }
 
     // this method is for the file upload element only.  It will return a href that links to the actual file.
