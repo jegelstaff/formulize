@@ -77,6 +77,12 @@ if(!empty($icmsConfig['theme_set_allowed'])) {
     }
 }
 
+// if the admin theme is different from the default theme, and the user is a webmaster, then switch to the admin theme
+if($icmsUser AND in_array(XOOPS_GROUP_ADMIN, $icmsUser->getGroups()) AND $icmsConfig['theme_set'] != $icmsConfig['theme_admin_set']) {
+	$icmsConfig['theme_set'] = $icmsConfig['theme_admin_set'];
+	$_SESSION['xoopsUserTheme'] = $icmsConfig['theme_admin_set'];
+}
+
 if ($icmsConfig['closesite'] == 1) {
 	include ICMS_INCLUDE_PATH . '/site-closed.php';
 }
