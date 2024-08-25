@@ -131,6 +131,13 @@ switch($op) {
     $fileInfo = unserialize($fileInfo);
     $filePath = XOOPS_ROOT_PATH."/uploads/$folderName/".$fileInfo['name'];
     if (!file_exists($filePath) or unlink($filePath)) {
+				// erase any thumbnail associated with the file
+				$dotPos = strrpos($filePath, '.');
+				$fileExtension = strtolower(substr($filePath, $dotPos+1));
+				$thumbFilePath = substr_replace($filePath, ".thumb.$fileExtension", $dotPos);
+				if(file_exists($thumbFilePath)) {
+					unlink($thumbFilePath);
+				}
         // erase the recorded values for this file in the database, false is proxy user, true is force update (on a GET request)
         $data_handler->writeEntry($entry_id, array($elementObject->getVar('ele_handle')=>''), false, true);
         print json_encode(array("element_id"=>$element_id, "entry_id"=>$entry_id));
