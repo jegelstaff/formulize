@@ -95,17 +95,7 @@ class formulizeAnonPasscodeElementHandler extends formulizeElementsHandler {
     // $element is the element object
     // $entry_id is the ID number of the entry where this particular element comes from
     // $screen is the screen object that is in effect, if any (may be null)
-    // $renderAsHiddenDefault is a flag to control what happens when we render as a hidden element for users who can't normally access the element -- typically we would set the default value inside a hidden element, or the current value if for some reason an entry is passed
-    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner, $renderAsHiddenDefault = false) {
-        global $xoopsUser;
-        // WHAT IS GOING ON HERE? DO WE NEED TO PASS A HIDDEN VALUE BACK TO EMBED THE CODE IN THE ENTRY???
-        if($renderAsHiddenDefault OR ($screen AND !$xoopsUser AND (!$entry_id OR $entry_id == 'new'))) {
-            //return new xoopsFormHidden($markupName, $screen->getVar('sid'));
-        }
-        if($xoopsUser) {
-            $ele_value = $ele_value ? $ele_value : '&mdash;';
-            //return new xoopsFormLabel($caption, $ele_value);
-        }
+    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
     }
 
     // this method returns any custom validation code (javascript) that should figure out how to validate this element
@@ -118,7 +108,7 @@ class formulizeAnonPasscodeElementHandler extends formulizeElementsHandler {
     // You can return {WRITEASNULL} to cause a null value to be saved in the database
     // $value is what the user submitted
     // $element is the element object
-	// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
+		// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
     // $subformBlankCounter is the instance of a blank subform entry we are saving. Multiple blank subform values can be saved on a given pageload and the counter differentiates the set of data belonging to each one prior to them being saved and getting an entry id of their own.
     function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
         if($value) {

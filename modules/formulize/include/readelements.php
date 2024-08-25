@@ -149,9 +149,9 @@ foreach($_POST as $k=>$v) {
 		// store values according to form, entry and element ID
 		// prep them all for writing
 		$elementMetaData = explode("_", $k);
-        $elementObject = $element_handler->get($elementMetaData[3]);
+      $elementObject = $element_handler->get($elementMetaData[3]);
 		if(isset($_POST["de_".$elementMetaData[1]."_".$elementMetaData[2]."_".$elementMetaData[3]])) {
-            $v = prepDataForWrite($elementObject, $_POST["de_".$elementMetaData[1]."_".$elementMetaData[2]."_".$elementMetaData[3]], $elementMetaData[2]);
+      $v = prepDataForWrite($elementObject, $_POST["de_".$elementMetaData[1]."_".$elementMetaData[2]."_".$elementMetaData[3]], $elementMetaData[2]);
 			$formulize_elementData[$elementMetaData[1]][$elementMetaData[2]][$elementMetaData[3]] = $v;
 		} elseif(is_numeric($elementMetaData[1]) AND $elementObject->getVar('ele_type') != 'anonPasscode') {
 			$formulize_elementData[$elementMetaData[1]][$elementMetaData[2]][$elementMetaData[3]] = "{WRITEASNULL}"; // no value returned for this element that was included (cue was found) so we write it as blank to the db

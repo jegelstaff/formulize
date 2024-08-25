@@ -141,8 +141,7 @@ class formulizeDummyElementHandler extends formulizeElementsHandler {
     // $entry_id is the ID number of the entry where this particular element comes from
     // $screen is the screen object that is in effect, if any (may be null)
     // $owner is the user id of the owner of the entry
-    // $renderAsHiddenDefault is a flag to control what happens when we render as a hidden element for users who can't normally access the element -- typically we would set the default value inside a hidden element, or the current value if for some reason an entry is passed
-    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner, $renderAsHiddenDefault = false) {
+    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
         // dummy element is rendered as a textboxes, with the values set by the user in the admin side smushed together as the default value for the textbox
         if($isDisabled) {
             $formElement = new xoopsFormLabel($caption, $ele_value[0] . $ele_value[1]);

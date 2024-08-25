@@ -300,8 +300,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
     // $element is the element object
     // $entry_id is the ID number of the entry where this particular element comes from
     // $screen is the screen object that is in effect, if any (may be null)
-    // $renderAsHiddenDefault is a flag to control what happens when we render as a hidden element for users who can't normally access the element -- typically we would set the default value inside a hidden element, or the current value if for some reason an entry is passed
-    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen=false, $owner=null, $renderAsHiddenDefault = false) {
+    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen=false, $owner=null) {
 
 		$ele_value = $this->backwardsCompatibility($ele_value);
 
@@ -360,8 +359,6 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 		global $myts;
 		$selected = array();
 		$options = array();
-		$disabledHiddenValue = array();
-		$disabledHiddenValues = "";
 		$disabledOutputText = array();
 		$opt_count = 1;
 
@@ -372,7 +369,6 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 			$options[$valueToUse] = $key;
 			if( $value > 0 ){
 				$selected[] = $valueToUse;
-				$disabledHiddenValue[] = "<input type=hidden name=\"".$markupName."[]\" value=\"$opt_count\">";
 			}
 			$opt_count++;
 		}
@@ -459,13 +455,9 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 		}
 
         if($isDisabled) {
-			$disabledHiddenValues = implode("\n", $disabledHiddenValue); // glue the individual value elements together into a set of values
 			$renderedElement = implode(", ", $disabledOutputText);
         } else {
 			$renderedElement = $form_ele1->render();
-            if($renderAsHiddenDefault) {
-                $renderedElement .= "\n$renderedHoorvs\n$disabledHiddenValues\n";
-            }
         }
 
 		$form_ele = new XoopsFormLabel(

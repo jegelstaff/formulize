@@ -96,7 +96,7 @@ class formulizeElementRenderer{
 
 		// ele_desc added June 6 2006 -- jwe
 		$ele_desc = $this->_ele->getVar('ele_desc', "f"); // the f causes no stupid reformatting by the ICMS core to take place
-		$helpText = $this->formulize_replaceCurlyBracketVariables(html_entity_decode($ele_desc,ENT_QUOTES), $entry_id, $id_form, $renderedElementMarkupName);
+		$helpText = $ele_desc != "" ? $this->formulize_replaceCurlyBracketVariables($myts->makeClickable(html_entity_decode($ele_desc,ENT_QUOTES)), $entry_id, $id_form, $renderedElementMarkupName) : "";
 
 		// determine the entry owner
 		if($entry_id != "new") {
@@ -938,39 +938,39 @@ class formulizeElementRenderer{
 				}
 			break;
 		} // end element-type case
+
+		// if element is object, with data, not disabled, let's get it ready for rendering
+		// by rendering everything now, and sticking it in a clean "label" element
 		if(is_object($form_ele) AND !$isDisabled AND $this->_ele->hasData) {
-			if($previousEntryUI) {
-				$previousEntryUIRendered = "&nbsp;&nbsp;" . $previousEntryUI->render();
-			} else {
-				$previousEntryUIRendered = "";
-			}
-			// $ele_type is the type value...only put in a cue for certain kinds of elements, and definitely not for blank subforms
-			if(substr($renderedElementMarkupName, 0, 9) != "desubform" AND !$isDisabled AND !$wasDisabled AND ($ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "select" OR $ele_type=="radio" OR $ele_type=="date" OR $ele_type=="colorpick" OR $ele_type=="yn" OR $customElementHasData)) {
+
+			// put in cue if element has data we should be handling on save
+			$elementCue = "";
+			if(substr($renderedElementMarkupName, 0, 9) != "desubform"
+				AND !$isDisabled
+				AND !$wasDisabled
+				AND ($ele_type == "textarea"
+					OR $ele_type == "select"
+					OR $ele_type=="radio"
+					OR $ele_type=="date"
+					OR $ele_type=="colorpick"
+					OR $ele_type=="yn"
+					OR $customElementHasData)) {
 				$elementCue = "\n<input type=\"hidden\" id=\"decue_".trim($renderedElementMarkupName,"de_")."\" name=\"decue_".trim($renderedElementMarkupName,"de_")."\" value=1>\n";
-			} else {
-				$elementCue = "";
 			}
 
-            // put in special validation logic, if the element has special validation logic
-            // hard coded for dara to start with
-            if(strstr(getCurrentURL(), 'dara.daniels') AND $true_ele_id == 88) {
-                $GLOBALS['formulize_specialValidationLogicHook'][$renderedElementMarkupName] = $true_ele_id;
-                $specialValidationLogicDisplay = "&nbsp;&nbsp;<span id='va_".trim($renderedElementMarkupName,"de_")."'></span>";
-            } else {
-                $specialValidationLogicDisplay = "";
-            }
+			// put in special validation logic, if the element has special validation logic
+			// hard coded for dara to start with
+			$specialValidationLogicDisplay = "";
+			if(strstr(getCurrentURL(), 'dara.daniels') AND $true_ele_id == 88) {
+					$GLOBALS['formulize_specialValidationLogicHook'][$renderedElementMarkupName] = $true_ele_id;
+					$specialValidationLogicDisplay = "&nbsp;&nbsp;<span id='va_".trim($renderedElementMarkupName,"de_")."'></span>";
+			}
+
+			$previousEntryUIRendered = $previousEntryUI ? "&nbsp;&nbsp;" . $previousEntryUI->render() : "";
 
 			$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\"");
-
-			// reuse caption, put two spaces between element and previous entry UI
 			$form_ele_new = new xoopsFormLabel($form_ele->getCaption(), $form_ele->render().$previousEntryUIRendered.$specialValidationLogicDisplay.$elementCue, $renderedElementMarkupName);
-			$form_ele_new->formulize_element = $this->_ele;
-			if($ele_desc != "") {
-				$ele_desc = html_entity_decode($ele_desc,ENT_QUOTES);
-				$ele_desc = $myts->makeClickable($ele_desc);
-				$ele_desc = $this->formulize_replaceCurlyBracketVariables($ele_desc, $entry_id, $this->_ele->getVar('id_form'), $renderedElementMarkupName);
-				$form_ele_new->setDescription($ele_desc);
-			}
+
 			$form_ele_new->setName($renderedElementMarkupName); // need to set this as the name, in case it is required and then the name will be picked up by any "required" checks that get done and used in the required validation javascript for textboxes
 			if(!empty($form_ele->customValidationCode)) {
 				$form_ele_new->customValidationCode = $form_ele->customValidationCode;
@@ -978,17 +978,25 @@ class formulizeElementRenderer{
 			if($form_ele->isRequired()) {
 				$form_ele_new->setRequired();
 			}
-			return $form_ele_new;
-		} elseif(is_object($form_ele) AND $isDisabled AND $this->_ele->hasData) { // element is disabled
-			$form_ele = $this->formulize_disableElement($form_ele, $ele_type, $ele_desc);
-            $form_ele->formulize_element = $this->_ele;
-			return $form_ele;
-		} else { // form ele is not an object...and/or has no data.  Happens for IBs and for non-interactive elements, like grids.
-            if(is_object($form_ele)) {
-                $form_ele->formulize_element = $this->_ele;
-            }
+
+		// else if element is an old "classic" element (no custom class) and is disabled (elements with custom class are not disabled at this point because their render method must handle disabling and so the disabled flag is off on those by now)
+		} elseif(is_object($form_ele) AND $isDisabled AND $this->_ele->hasData) {
+			$form_ele_new = $this->formulize_disableElement($form_ele, $this->_ele->getVar('ele_type'));
+
+		// else form_ele is not an object...and/or has no data.  Happens for IBs and for non-interactive elements, like grids.
+		} else {
+			if(is_object($form_ele)) {
+					$form_ele->formulize_element = $this->_ele;
+			}
 			return $form_ele;
 		}
+
+		// if we haven't returned yet, element was an object with data, so do final prep of the element and return it
+		$form_ele_new->formulize_element = $this->_ele;
+		if($helpText) {
+			$form_ele_new->setDescription($helpText);
+		}
+		return $form_ele_new;
 	}
 
 
@@ -1216,9 +1224,9 @@ if($multiple ){
 		return $output;
 	}
 
-  // creates a hidden version of the element so that it can pass its value back, but not be available to the user
-	function formulize_disableElement($element, $type, $ele_desc) {
-		if($type == "text" OR $type == "textarea" OR $type == "date" OR $type == "colorpick") {
+
+	function formulize_disableElement($element, $type) {
+		if($type == "textarea" OR $type == "date" OR $type == "colorpick") {
 			switch($type) {
 				case 'date':
 					if($timeval = $element->getValue()) {
@@ -1234,15 +1242,14 @@ if($multiple ){
 					break;
 				default:
 					// should work for all elements, since non-textbox type elements where the value would not be passed straight back, are handled differently at the time they are constructed
-                    $hiddenValue = $element->getValue();
+          $hiddenValue = $element->getValue();
 			}
 			if(is_array($hiddenValue)) { // not sure when/if this would ever happen
 				$newElement = new xoopsFormLabel($element->getCaption(), implode(", ", $hiddenValue));
 			} else {
 				$newElement = new xoopsFormLabel($element->getCaption(), $hiddenValue);
 			}
-            $newElement->setName($element->getName());
-			$newElement->setDescription(undoAllHTMLChars($ele_desc));
+      $newElement->setName($element->getName());
 			return $newElement;
 		} else {
 			return $element;
