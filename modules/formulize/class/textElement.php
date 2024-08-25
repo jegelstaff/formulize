@@ -123,8 +123,7 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
     // $element is the element object
     // $entry_id is the ID number of the entry where this particular element comes from
     // $screen is the screen object that is in effect, if any (may be null)
-    // $renderAsHiddenDefault is a flag to control what happens when we render as a hidden element for users who can't normally access the element -- typically we would set the default value inside a hidden element, or the current value if for some reason an entry is passed
-    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen=false, $owner=null, $renderAsHiddenDefault = false) {
+    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen=false, $owner=null) {
 
 			$ele_value[2] = stripslashes($ele_value[2]);
 			$ele_value[2] = interpretTextboxValue($element, $entry_id, $ele_value[2]);
@@ -134,26 +133,26 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 				$placeholder = $rawEleValue[2];
 				$ele_value[2] = "";
 			}
-			if (!strstr(getCurrentURL(),"printview.php")) {
+			if (!strstr(getCurrentURL(),"printview.php") AND !$isDisabled) {
 				$form_ele = new XoopsFormText(
-				$caption,
-				$markupName,
-				$ele_value[0],	//	box width
-				$ele_value[1],	//	max width
-				$ele_value[2],	//	value
-				false,					// autocomplete in browser
-				$ele_value[3]		// numbers only
+					$caption,
+					$markupName,
+					$ele_value[0],	//	box width
+					$ele_value[1],	//	max width
+					$ele_value[2],	//	value
+					false,					// autocomplete in browser
+					$ele_value[3]		// numbers only
 				);
+				//if placeholder value is set
+				if($ele_value[11]) {
+					$form_ele->setExtra("placeholder='".$placeholder."'");
+				}
+				//if numbers-only option is set
+				if ($ele_value[3]) {
+					$form_ele->setExtra("class='numbers-only-textbox'");
+				}
 			} else {
 				$form_ele = new XoopsFormLabel ($caption, formulize_numberFormat($ele_value[2], $element->getVar('ele_handle')), $markupName);
-			}
-			//if placeholder value is set
-			if($ele_value[11]) {
-				$form_ele->setExtra("placeholder='".$placeholder."'");
-			}
-			//if numbers-only option is set
-			if ($ele_value[3]) {
-				$form_ele->setExtra("class='numbers-only-textbox'");
 			}
 			return $form_ele;
     }
