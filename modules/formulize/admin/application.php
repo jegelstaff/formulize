@@ -113,6 +113,7 @@ $options['listsofscreenoptions'] = $forms;
 
 $screen_handler = xoops_getmodulehandler('screen', 'formulize');
 $gperm_handler = xoops_gethandler('groupperm');
+$formsInApp = array();
 global $xoopsUser;
 foreach($formObjects as $thisFormObject) {
     if (!$gperm_handler->checkRight("edit_form", $thisFormObject->getVar('id_form'), $xoopsUser->getGroups(), getFormulizeModId())) {
