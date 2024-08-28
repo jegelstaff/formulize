@@ -2417,41 +2417,20 @@ function makeBR($string) {
 
 function displayPara($entry, $handle, $id="NULL", $parasToReturn="NULL") {
 	$values = display($entry, $handle, $id);
-	if(is_array($values)) {
-		foreach($values as $value) {
-			$para[] = makePara($value, $parasToReturn);
-		}
-	} else {
-		$para = makePara($values, $parasToReturn);
-	}
-	return $para;
+	return makePara($values, $parasToReturn);
 }
 
 // this function returns the contents of a text are with a BR between each line
 function displayBR($entry, $handle, $id="NULL", $localid="NULL") {
 	$values = display($entry, $handle, $id, $localid);
-	if(is_array($values)) {
-		foreach($values as $value) {
-			$br[] = makeBR($value);
-		}
-	} else {
-		$br = makeBR($values);
-	}
-	return $br;
+	return makeBR($values);
 }
 
 // THIS FUNCTION returns an HTML formatted string that will display a bulleted or numbered list, based on each paragraph in a text area element
 
 function displayList($entry, $handle, $type="bulleted", $id="NULL", $localid="NULL") {
 	$values = display($entry, $handle, $id, $localid);
-	if(is_array($values)) {
-		foreach($values as $value) {
-			$list[] = makeList($value, $type);
-		}
-	} else {
-		$list = makeList($values, $type);
-	}
-	return $list;
+	return makeList($values, $type);
 }
 
 // THIS FUNCTION RETURNS AN ARRAY OF ALL THE INTERNAL IDS ASSOCIATED WITH THE ENTRIES OF A PARTICULAR FORM
