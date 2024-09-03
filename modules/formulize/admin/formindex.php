@@ -83,8 +83,8 @@ function patch40() {
      *
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
-    $checkThisTable = 'formulize_screen';
-		$checkThisField = 'rewriteruleAddress';
+    $checkThisTable = 'formulize_saved_views';
+		$checkThisField = 'sv_use_features';
 		$checkThisProperty = '';
 		$checkPropertyForValue = '';
 
@@ -470,6 +470,8 @@ function patch40() {
 				$sql['screenTableIndex2'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD INDEX i_fid (`fid`)";
 				$sql['screenTableIndex3'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD INDEX i_frid (`frid`)";
 				unlink(XOOPS_ROOT_PATH.'/cache/adminmenu_english.php');
+				$sql['sv_use_features'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " ADD `sv_use_features` varchar(255) NULL default NULL";
+				$sql['searches_are_fundamental'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " ADD `sv_searches_are_fundamental` tinyint(1) NULL default NULL";
 
         $needToSetSaveAndLeave = true;
         $needToSetPrintableView = true;
@@ -587,6 +589,10 @@ function patch40() {
                     print "View entry screen option for template screens already added. result: OK<br>";
 								} elseif($key === "ele_disabledconditions") {
                     print "Disabled conditions already added. result: OK<br>";
+								} elseif($key === "sv_use_features") {
+										print "'Use which features' option already added to saved views. result: OK<br>";
+								} elseif($key === "searches_are_fundamental") {
+									print "'Searches-are-fundamental' option already added to saved views. result: OK<br>";
 								} elseif($key === "rewriteruleAddress") {
 										print "RewriteRule address already added. result: OK<br>";
 								} elseif(strstr($key, 'screenTableIndex')) {

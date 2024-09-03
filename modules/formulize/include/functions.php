@@ -3707,6 +3707,11 @@ function getHeaders($cols, $colsIsElementHandles = true) {
 function getDefaultCols($fid, $frid="") {
 	global $xoopsDB, $xoopsUser;
 
+    static $cachedDefaultCols = array();
+    if(isset($cachedDefaultCols[$fid][$frid])) {
+        return $cachedDefaultCols[$fid][$frid];
+    }
+
 	if($frid) { // expand the headerlist to include the other forms
 		$fids[0] = $fid;
 		$check_results = checkForLinks($frid, $fids, $fid, "");
@@ -3731,11 +3736,13 @@ function getDefaultCols($fid, $frid="") {
 			}
 		}
 
+        $cachedDefaultCols[$fid][$frid] = $ele_handles;
 		return $ele_handles;
 
 	} else {
 		$ele_handles = getHeaderList($fid, true, true); // third param causes element handles to be returned instead of IDs
-		return $ele_handles;
+		$cachedDefaultCols[$fid][$frid] = $ele_handles;
+        return $ele_handles;
 	}
 
 }
@@ -7074,29 +7081,7 @@ function convertDynamicFilterTerms($term) {
         $term = substr($term, 1, -1);
     }
 
-    $operatorToPutBack = "";
-    if(substr($term, 0, 1) == '=') {
-        $operatorToPutBack = '=';
-    }
-    if(substr($term, 0, 1) == '>') {
-        $operatorToPutBack = '>';
-    }
-    if(substr($term, 0, 1) == '<') {
-        $operatorToPutBack = '<';
-    }
-    if(substr($term, 0, 1) == '!') {
-        $operatorToPutBack = '!';
-    }
-    if(substr($term, 0, 2) == '!=') {
-        $operatorToPutBack = '!=';
-    }
-    if(substr($term, 0, 2) == '<=') {
-        $operatorToPutBack = '<=';
-    }
-    if(substr($term, 0, 2) == '>=') {
-        $operatorToPutBack = '>=';
-    }
-
+		$operatorToPutBack = extractOperatorFromString($term);
     $valueToCheck = str_replace($operatorToPutBack, '', $term);
 
     if(substr($valueToCheck, 0, 1) == "{" AND substr($valueToCheck, -1) == "}") {
@@ -7117,6 +7102,78 @@ function convertDynamicFilterTerms($term) {
     return $term;
 }
 
+/**
+ * Take what users have typed into a search box, and standardize it into an array of classic search terms.
+ * Users can type all kinds of things, including "between date1 and date2" and also "X OR Y" etc
+ * They can also separate multiple terms with // such as "apples//oranges" which means apples and oranges (which would only match a multi value field)
+ * But if they type "ORapples//ORoranges" then that means the same as "apples OR oranges"
+ * We take all that stuff and turn it into an array of search terms that can then be parsed into a filter for a getData query, or whatever else we might need
+ *
+ * @param string $searchString The string we are parsing
+ * @param mixed $elementIdentifier An element object, id number, or handle. Represents the element that this search string is searching against.
+ * @return array $searchArray An array of all search terms deduced from the string, even if only one.
+ */
+function standardizeUserTypedSearchTerms($searchString, $elementIdentifier) {
+
+	$searchString = parseBetweenDatesSyntaxInSearchStrings($searchString);
+	$searchString = convertDynamicFilterTerms($searchString);
+	return splitUpSearchStringIntoSearchTerms($searchString, $elementIdentifier);
+}
+
+/**
+ * Take a search string and turn it into an array of constituent search terms by splitting on // and OR and AND
+ *
+ * @param string $searchString The string we are parsing
+ * @return array An array of the constituent search terms found in the string, even if only one
+ */
+function splitUpSearchStringIntoSearchTerms($searchString, $elementIdentifier) {
+
+	$elementObject = _getElementObject($elementIdentifier);
+	$ele_uitext = $elementObject->getVar('ele_uitext');
+
+	if($searchString === "") { return array(); }
+	$searchArray = array();
+	$intermediateArray = explode("//", trim($searchString, "//")); // ignore trailing // because that will just cause an unnecessary blank search
+	foreach($intermediateArray as $one_search) {
+		// if $one_search contains both OR and AND, just add it as-is; we don't support this kind of nesting
+		if (strpos($one_search, " OR ") !== FALSE AND strpos($one_search, " AND ") !== FALSE) {
+			$searchArray[] = formulize_swapDBText($one_search, $ele_uitext);
+
+		// split on OR and add all split results, prepended with OR
+		}	else if (strpos($one_search, " OR ") !== FALSE) {
+			foreach(explode(" OR ", $one_search) as $or_term) {
+					$searchArray[] = "OR" . formulize_swapDBText($or_term, $ele_uitext);
+			}
+
+		// split on AND and add all split results
+		} else if (strpos($one_search, " AND ") !== FALSE) {
+			foreach(explode(" AND ", $one_search) as $and_term) {
+				$searchArray[] = formulize_swapDBText($and_term, $ele_uitext);
+			}
+
+		// otherwise just add to the array
+		}	else {
+			$searchArray[] = formulize_swapDBText($one_search, $ele_uitext);;
+		}
+	}
+	return $searchArray;
+}
+
+
+/**
+ * Convert "between 2001-01-01 and 2002-02-02" to a normal date filter with two dates
+ *
+ * @param string $searchString The string we are parsing
+ * @return string The results of our parsing, same as input if nothing matched the regex
+ */
+function parseBetweenDatesSyntaxInSearchStrings($searchString) {
+	$count = preg_match("/^[bB][eE][tT][wW][eE][eE][nN] ([\d]{1,4}[-][\d]{1,2}[-][\d]{1,4}) [aA][nN][dD] ([\d]{1,4}[-][\d]{1,2}[-][\d]{1,4})\$/", $searchString, $matches);
+	if ($count > 0) {
+		$searchString = ">={$matches[1]}//<={$matches[2]}";
+	}
+	return $searchString;
+}
+
 // this function takes an array of element handle=>search term pairs, and converts them into a filter string valid for using in a getData call
 function formulize_parseSearchesIntoFilter($searches) {
 
@@ -7126,46 +7183,11 @@ function formulize_parseSearchesIntoFilter($searches) {
 	$ORstart = 1;
 	$ORfilter = "";
 	$individualORSearches = array();
-    $element_handler = xoops_getmodulehandler('elements','formulize');
+  $element_handler = xoops_getmodulehandler('elements','formulize');
 	global $xoopsUser, $xoopsConfig;
 	foreach($searches as $key => $master_one_search) { // $key is the element handle
 
-		// convert "between 2001-01-01 and 2002-02-02" to a normal date filter with two dates
-		$count = preg_match("/^[bB][eE][tT][wW][eE][eE][nN] ([\d]{1,4}[-][\d]{1,2}[-][\d]{1,4}) [aA][nN][dD] ([\d]{1,4}[-][\d]{1,2}[-][\d]{1,4})\$/", $master_one_search, $matches);
-		if ($count > 0) {
-			$master_one_search = ">={$matches[1]}//<={$matches[2]}";
-		}
-
-        $master_one_search = convertDynamicFilterTerms($master_one_search);
-        if($master_one_search === "") { continue; }
-
-		// split search based on new split string
-		$intermediateArray = explode("//", trim($master_one_search, "//")); // ignore trailing // because that will just cause an unnecessary blank search
-
-		$searchArray = array();
-
-		foreach($intermediateArray as $one_search) {
-			// if $one_search contains both OR and AND, just add it as-is; we don't support this kind of nesting
-			if (strpos($one_search, " OR ") !== FALSE AND strpos($one_search, " AND ") !== FALSE) {
-				$searchArray[] = $one_search;
-			}
-			// split on OR and add all split results, prepended with OR
-			else if (strpos($one_search, " OR ") !== FALSE) {
-				foreach(explode(" OR ", $one_search) as $or_term) {
-						$searchArray[] = "OR" . $or_term;
-				}
-			}
-			// split on AND and add all split results
-			else if (strpos($one_search, " AND ") !== FALSE) {
-				foreach(explode(" AND ", $one_search) as $and_term) {
-					$searchArray[] = $and_term;
-				}
-			}
-			// otherwise just add to the array
-			else {
-				$searchArray[] = $one_search;
-			}
-		}
+		$searchArray = standardizeUserTypedSearchTerms($master_one_search, $key);
 
 		foreach($searchArray as $one_search) {
             // used for trapping the {BLANK} keywords into their own space so they don't interfere with each other, or other filters
@@ -7338,9 +7360,7 @@ function formulize_parseSearchesIntoFilter($searches) {
 
 		}
 	}
-	//print $filter;
 	// if there's a set of options that have been OR'd, then we need to construction a more complex filter
-
 	if($ORfilter OR count((array) $individualORSearches)>0) {
 		$filterIndex = 0;
         if($filter) {
@@ -7361,9 +7381,7 @@ function formulize_parseSearchesIntoFilter($searches) {
 		}
 		$filter = $arrayFilter;
 	}
-
-    return $filter;
-
+  return $filter;
 }
 
 
@@ -8306,4 +8324,22 @@ function formulize_getSidFromRewriteAddress($address="") {
 		}
 	}
 	return false;
+}
+
+/**
+ * Return the operator found at the start of a string, if any
+ * @param string $string The string we are looking at
+ * @return string The operator found. Return empty string if there is no operator. Returns false if the string is not a string.
+ */
+function extractOperatorFromString($string) {
+	if(!is_string($string)) { return false; }
+	$firstTwo = substr($string, 0, 2);
+	if($firstTwo == '!=' OR $firstTwo == '<=' OR $firstTwo == '>=') {
+		return $firstTwo;
+	}
+	$firstOne = substr($string, 0, 1);
+	if($firstOne == '=' OR $firstOne == '>' OR $firstOne == '<' OR $firstOne == '!') {
+		return $firstOne;
+	}
+	return '';
 }
