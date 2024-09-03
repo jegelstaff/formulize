@@ -26,7 +26,7 @@
       $thisFidHandles = $thisFidObj->getVar('elementHandles');
       foreach($thisFidElements as $zz => $thisFidElement) {
         $elementHeading = $thisFidColheads[$zz] ? $thisFidColheads[$zz] : $thisFidCaptions[$zz];
-        $elementOptions[$thisFidHandles[$zz]] = printSmart(trans(strip_tags($elementHeading)), 75);
+        $elementOptions[$thisFidHandles[$zz]] = printSmart(trans(strip_tags($thisFidObj->title.': '.$elementHeading)), 125);
         // for passing to custom button logic, so we know all the element options for each form in framework
         $elementOptionsFid[$thisFid][$thisFidElement] = printSmart(trans(strip_tags($elementHeading)), 75);
         $class = $class == "even" ? "odd" : "even";
