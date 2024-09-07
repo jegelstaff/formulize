@@ -3882,6 +3882,12 @@ function check_date_limits(element_id) {
 }
 
 <?php
+// replace the history and URL with a more canonical URL that is human readable, if alternate URLs are in effect
+// NEED MORE PARAMS/CONTEXT SETUP FOR THIS TO WORK!!
+// NEED TO CONSIDER 'NEW' ENTRIES TOO
+/*if($code = updateAlternateURLIdentifierCode($screen, $entry_id)) {
+    print "\n$code\n";
+}*/
 
     if(isset($GLOBALS['formulize_specialValidationLogicHook'])) {
         ?>

@@ -41,9 +41,11 @@
 	<fieldset>
 		<legend>URLs for this screen</legend>
 		<p>The default URL for this screen: <a href="<{$xoops_url}>/modules/formulize/index.php?sid=<{$content.sid}>" target="_blank"><{$xoops_url}>/modules/formulize/index.php?sid=<{$content.sid}></a></p>
-		<{if $content.alternateURLsOn eq 1}><p>Set an alternate URL for accessing this screen: <{$xoops_url}>/<input type='text' name='screens-rewriteruleAddress' value='<{$content.rewriteruleAddress}>'</p><{/if}>
+		<{if $content.alternateURLsOn eq 1}><p>Set an alternate URL for accessing this screen: <{$xoops_url}>/<input type='text' name='screens-rewriteruleAddress' value='<{$content.rewriteruleAddress}>'</p>
+        <p>With an alternate URL, identify entries based on their value in this element: <{html_options name='screens-rewriteruleElement' options=$content.rewriteruleElements selected=$content.rewriteruleElement}></p>
+        <{/if}>
 	</fieldset>
-
+ 
 	<fieldset>
 		<legend>PHP code for including this screen anywhere</legend>
 		<p>You can embed this screen in any PHP application or web page that is running on the same web server.<br />Use this snippet of PHP code to include it:</p>

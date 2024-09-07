@@ -31,6 +31,7 @@
 
 include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 
+$form_handler = xoops_getmodulehandler('forms', 'formulize');
 $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
 $screen_id = $_GET['sid'];
 // screen settings data
@@ -67,8 +68,18 @@ if ($screen_id == "new") {
     $settings['frid'] = $screen->getVar('frid');
     $settings['useToken'] = $screen->getVar('useToken');
     $settings['anonNeedsPasscode'] = $screen->getVar('anonNeedsPasscode');
-		$settings['rewriteruleAddress'] = $screen->getVar('rewriteruleAddress');
-		$settings['alternateURLsOn'] = $formulizeConfig['formulizeRewriteRulesEnabled'];
+	$settings['alternateURLsOn'] = $formulizeConfig['formulizeRewriteRulesEnabled'];
+    if($settings['alternateURLsOn']) {
+        $settings['rewriteruleAddress'] = $screen->getVar('rewriteruleAddress');
+        $settings['rewriteruleElement'] = $screen->getVar('rewriteruleElement');
+        $formObject = $form_handler->get($form_id);
+        $elementColheads = $formObject->getVar('elementColheads');
+        $settings['rewriteruleElements'][0] = 'Entry ID';
+        foreach($formObject->getVar('elementCaptions') as $elementId=>$elementLabel) {
+            $elementLabel = $elementColheads[$elementId] ? $elementColheads[$elementId] : $elementLabel;
+            $settings['rewriteruleElements'][$elementId] = $elementLabel;
+        }
+    }
 
     if ($settings['type'] == 'listOfEntries') {
         $screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
@@ -98,7 +109,6 @@ if (!$aid) {
 }
 
 if ($form_id != "new") {
-    $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($form_id);
     $formName = $formObject->getVar('title');
     $singleentry = $formObject->getVar('single');
