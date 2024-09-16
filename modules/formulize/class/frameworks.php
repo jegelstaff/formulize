@@ -330,7 +330,7 @@ class formulizeFrameworkLink extends XoopsObject {
 
     protected function _findlink($target_form, $source_form, $target_form_ids, $source_form_ids) {
         $truehits = array();
-        $hits = array_keys($target_form_ids, $target_form);
+        $hits = array_keys((array)$target_form_ids, $target_form);
         foreach ($hits as $hit) {
             if ($source_form_ids[$hit] == $source_form) {
                 $truehits[] = $hit;
