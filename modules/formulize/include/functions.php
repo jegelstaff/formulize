@@ -8261,17 +8261,35 @@ function formulize_handleHtaccessRewriteRule() {
 		$trimedFormulizeRewriteRuleAddress = trim($_GET['formulizeRewriteRuleAddress'], '/');
 		$addressData = explode('/', $trimedFormulizeRewriteRuleAddress);
 		$address = $addressData[0];
-		$ve = isset($addressData[1]) ? intval($addressData[1]) : null;
+		$entryIdentifier = isset($addressData[1]) ? $addressData[1] : null;
 		if($sid = formulize_getSidFromRewriteAddress($address)) {
 			foreach($_GET as $k=>$v) {
 				unset($_REQUEST[$k]);
 				unset($_GET[$k]);
 			}
 			$queryString = "sid=$sid";
-			if($ve) {
-				$queryString .= $ve ? "&ve=$ve" : "";
-				$_GET['ve'] = $ve;
-				$_REQUEST['ve'] = $ve;
+			if($entryIdentifier) {
+                $ve = intval($entryIdentifier);
+                $screen_handler = xoops_getmodulehandler('screen', 'formulize');
+                if($screenObject = $screen_handler->get($sid)) {
+                    if($rewriteruleElement = $screenObject->getVar('rewriteruleElement')) {
+                        $element_handler = xoops_getmodulehandler('elements', 'formulize');
+                        $rewriteruleElementObject = $element_handler->get($rewriteruleElement);
+                        $ele_type = $rewriteruleElementObject->getVar('ele_type');
+                        if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+                            $element_handler = xoops_getmodulehandler($ele_type."Element", 'formulize');
+                            $rewriteruleElementObject = $element_handler->get($rewriteruleElement);
+                        }
+                        $searchValue = $element_handler->prepareLiteralTextForDB(urldecode($entryIdentifier), $rewriteruleElementObject);
+                        $dataHandler = new formulizeDataHandler($screenObject->getVar('fid'));
+                        $ve = $dataHandler->findFirstEntryWithValue($rewriteruleElementObject, $searchValue);
+                    }
+                }
+                if($ve) {
+                    $queryString .= "&ve=$ve";
+                    $_GET['ve'] = $ve;
+                    $_REQUEST['ve'] = $ve;
+                }
 			}
 			$_GET['sid'] = $sid;
 			$_REQUEST['sid'] = $sid;
@@ -8342,4 +8360,28 @@ function extractOperatorFromString($string) {
 		return $firstOne;
 	}
 	return '';
+}
+
+/**
+ * Create a js history api snippet to update the URL if there are rewrite rules in effect
+ * @param object $screen The screen object being displayed
+ * @param int|string $entry_id The entry id being displayed, or 'new' when a blank form is displayed yet to be saved
+ * @return string The code snippet generated, or and empty string if there is no snippet
+ */
+function updateAlternateURLIdentifierCode($screen, $entry_id) {
+    $code = '';
+    if($screen AND $entry_id AND $rewriteruleAddress = $screen->getVar('rewriteruleAddress') AND strpos(trim(str_replace(XOOPS_URL, '', getCurrentURL()), '/'), '/') === false) {
+        $entryIdentifier = $entry_id;
+        if($rewriteruleElement = $screen->getVar('rewriteruleElement')) {
+            $element_handler = xoops_getmodulehandler('elements', 'formulize');
+            $rewriteruleElementObject = $element_handler->get($rewriteruleElement);
+            $dataHandler = new formulizeDataHandler($screen->getVar('fid'));
+            $dbValue = $dataHandler->getElementValueInEntry($entry_id, $rewriteruleElementObject);
+            $preppedValue = prepvalues($dbValue, $rewriteruleElementObject->getVar('ele_handle'), $entry_id); // will be array sometimes. Ugh!
+            $preppedValue = is_array($preppedValue) ? $preppedValue[0] : $preppedValue;
+            $entryIdentifier = urlencode($preppedValue);
+        }
+        $code = "window.history.replaceState(null, '', '".trim(getCurrentURL(), '/')."/".$entryIdentifier."/');";
+    }
+    return $code;
 }

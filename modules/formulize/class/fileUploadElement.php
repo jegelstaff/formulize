@@ -360,7 +360,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
 
     // this method will take a text value that the user has specified at some point, and convert it to a value that will work for comparing with values in the database.  This is used primarily for preparing user submitted text values for saving in the database, or for comparing to values in the database.  The typical user submitted values would be coming from a condition form (ie: fieldX = [term the user typed in]) or other situation where the user types in a value that needs to interact with the database.
     // this would be where a Yes value would be converted to a 1, for example, in the case of a yes/no element, since 1 is how yes is represented in the database for that element type
-    function prepareLiteralTextForDB($value, $element) {
+    function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
         return $value;
     }
 

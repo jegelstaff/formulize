@@ -618,6 +618,9 @@ class formulizeElementsHandler {
         return false;
     }
 
+	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
+		return $value;
+	}
 }
 
 function optionIsValidForElement($option, $elementHandleOrId) {

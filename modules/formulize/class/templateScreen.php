@@ -218,6 +218,9 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
             // no viewEntryLink etc in the template, so away we go like normal, just the template
             } else {
                 $xoopsTpl->display("file:".$template_filename);
+                if($code = updateAlternateURLIdentifierCode($screen, $entry_id)) {
+                    print "\n<script>\n$code\n</script>\n";
+                }
             }
 
             // determine proper admin link

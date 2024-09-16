@@ -1832,7 +1832,11 @@ function drawEntries($fid, $cols, $searches, $frid, $scope, $standalone, $curren
 						$viewEntryLinkCode = "<a href='" . trim($currentURL, '/');
 						global $formulizeCanonicalURI;
 						if($formulizeCanonicalURI) {
-							$viewEntryLinkCode .= '/'.$entry_id.'/';
+							$entryIdentifier = $entry_id;
+							if($rewriteruleElement = $element_handler->get($screen->getVar('rewriteruleElement'))) {
+								$entryIdentifier = urlencode(display($entry, $rewriteruleElement->getVar('ele_handle')));
+							}
+							$viewEntryLinkCode .= '/'.$entryIdentifier.'/';
 						} else {
 							if(strstr($currentURL, "?")) { // if params are already part of the URL...
 								$viewEntryLinkCode .= "&";

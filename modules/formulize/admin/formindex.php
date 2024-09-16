@@ -83,8 +83,8 @@ function patch40() {
      *
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
-    $checkThisTable = 'formulize_saved_views';
-		$checkThisField = 'sv_use_features';
+    $checkThisTable = 'formulize_screen';
+		$checkThisField = 'rewriteruleElement';
 		$checkThisProperty = '';
 		$checkPropertyForValue = '';
 
@@ -466,6 +466,7 @@ function patch40() {
 				$sql['ele_disabledconditions'] = "ALTER TABLE ".$xoopsDB->prefix("formulize"). " ADD `ele_disabledconditions` text NOT NULL";
 				$sql['update_module_name'] = "UPDATE ".$xoopsDB->prefix("modules")." SET name = 'Formulize' WHERE dirname = 'formulize' AND name = 'Forms'";
 				$sql['rewriteruleAddress'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD `rewriteruleAddress` varchar(255) NULL default NULL";
+                $sql['rewriteruleElement'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD `rewriteruleElement` smallint(5) unsigned NOT NULL default 0";
 				$sql['screenTableIndex1'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD FULLTEXT i_rewrite (`rewriteruleAddress`)";
 				$sql['screenTableIndex2'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD INDEX i_fid (`fid`)";
 				$sql['screenTableIndex3'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD INDEX i_frid (`frid`)";
@@ -587,17 +588,19 @@ function patch40() {
                     print "On Delete already added. result: OK<br>";
                 } elseif($key === "viewentryscreen_templates") {
                     print "View entry screen option for template screens already added. result: OK<br>";
-								} elseif($key === "ele_disabledconditions") {
+				} elseif($key === "ele_disabledconditions") {
                     print "Disabled conditions already added. result: OK<br>";
 								} elseif($key === "sv_use_features") {
 										print "'Use which features' option already added to saved views. result: OK<br>";
 								} elseif($key === "searches_are_fundamental") {
 									print "'Searches-are-fundamental' option already added to saved views. result: OK<br>";
-								} elseif($key === "rewriteruleAddress") {
-										print "RewriteRule address already added. result: OK<br>";
-								} elseif(strstr($key, 'screenTableIndex')) {
-										print "Screen table index already added. result: OK<br>";
-								}else {
+				} elseif($key === "rewriteruleAddress") {
+                    print "RewriteRule address already added. result: OK<br>";
+                } elseif($key === "rewriteruleElement") {
+                    print "RewriteRule element already added. result: OK<br>";
+                } elseif(strstr($key, 'screenTableIndex')) {
+                    print "Screen table index already added. result: OK<br>";
+            }else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
             } elseif($key === "on_delete") {
