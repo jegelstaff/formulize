@@ -43,6 +43,15 @@ if($icmsConfig['startpage'] == 'formulize') {
 	list($startFid,$startSid,$startURL) = formulizeApplicationMenuLinksHandler::getDefaultScreenForUser();
 	if(!$xoopsUser AND !$startFid AND !$startSid AND !$startURL) {
 		$icmsConfig['startpage'] = '--';
+	} elseif($startSid) {
+		// start pages with rewrite URLs only work when the Formulize start page system points directly to a screen, not a fid. We're not going to do all the interpretation here to figure out the valid screen for the fid and user, that's what half of modules/formulize/initialize.php is for.
+		$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+		if($screenObject = $screen_handler->get($startSid)) {
+			if($screenObject->getVar('rewriteruleAddress')) {
+				header('Location: '.ICMS_URL.'/'.urlencode(strip_tags($screenObject->getVar('rewriteruleAddress'))));
+				exit();
+			}
+		}
 	}
 }
 
