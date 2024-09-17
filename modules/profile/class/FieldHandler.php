@@ -84,7 +84,14 @@ class mod_profile_FieldHandler extends icms_ipf_Handler {
 			$criteria = new icms_db_criteria_Item('fieldid', 0, '!=');
 			$criteria->setSort('field_weight');
 			$fieldObjs = $this->getObjects($criteria);
-			foreach (array_keys($fieldObjs) as $i) $fields[$fieldObjs[$i]->getVar('field_name')] = $fieldObjs[$i];
+			foreach (array_keys($fieldObjs) as $i) {
+				// default the timezone field to the default tz in the system prefs!
+				if($fieldObjs[$i]->getVar('fieldid') == 19 AND $fieldObjs[$i]->getVar('field_default') == '') {
+					global $icmsConfig;
+					$fieldObjs[$i]->setVar('field_default', $icmsConfig['default_TZ']);
+				}
+				$fields[$fieldObjs[$i]->getVar('field_name')] = $fieldObjs[$i];
+			}
 		}
 		return $fields;
 	}
