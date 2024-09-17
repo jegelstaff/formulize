@@ -20,7 +20,7 @@
       unset($thisFidObj);
       $thisFidObj = $form_handler->get($thisFid, true); // true causes all elements to be included, even if they're not visible
       $allFidObjs[$thisFid] = $thisFidObj; // for use later on
-      $thisFidElements = $thisFidObj->getVar('elements');
+      $thisFidElements = $thisFidObj->getVar('elementsWithData');
       $thisFidCaptions = $thisFidObj->getVar('elementCaptions');
       $thisFidColheads = $thisFidObj->getVar('elementColheads');
       $thisFidHandles = $thisFidObj->getVar('elementHandles');

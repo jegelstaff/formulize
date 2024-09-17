@@ -274,7 +274,7 @@ class formulizeElementsHandler {
         $element->canHaveMultipleValues = is_bool($element->canHaveMultipleValues) ? $element->canHaveMultipleValues : false;
         $ele_type = $element->getVar('ele_type');
         $ele_value = $element->getVar('ele_value');
-        if($ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "select" OR $ele_type=="radio" OR $ele_type=="date" OR $ele_type=="colorpick" OR $ele_type=="yn" OR $ele_type=="derived") {
+        if($ele_type == "textarea" OR $ele_type == "select" OR $ele_type=="radio" OR $ele_type=="date" OR $ele_type=="colorpick" OR $ele_type=="yn" OR $ele_type=="derived") {
             $element->hasData = true;
         }
         if($ele_type=="select") {

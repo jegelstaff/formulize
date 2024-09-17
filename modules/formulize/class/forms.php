@@ -71,6 +71,7 @@ class formulizeForm extends XoopsObject {
 				$formq[0]['store_revisions'] = 0;
 				$single = "";
 				$elements = array();
+				$elementsWithData = array();
 				$elementCaptions = array();
 				$elementColheads = array();
 				$elementHandles = array();
@@ -84,10 +85,20 @@ class formulizeForm extends XoopsObject {
                 $formq[0]['send_digests'] = 0;
 			} else {
 				// gather element ids for this form
+				$encryptedElements = array();
+				$elementTypesWithData = array();
+				$element_handler = xoops_getmodulehandler('elements', 'formulize');
 				$displayFilter = $includeAllElements ? "" : "AND ele_display != \"0\"";
 				$elementsq = q("SELECT ele_id, ele_caption, ele_colhead, ele_handle, ele_type, ele_encrypt FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=$id_form $displayFilter ORDER BY ele_order ASC");
-				$encryptedElements = array();
 				foreach($elementsq as $row=>$value) {
+					if(!isset($elementTypesWithData[$value['ele_type']])) {
+						// instantiate element object for this element, and check if it has data. Only once per type, to avoid duplication, keep it as fast as possible.
+						$elementObject = $element_handler->get($value['ele_id']);
+						$elementTypesWithData[$value['ele_type']] = $elementObject->hasData ? true : false;
+					}
+					if($elementTypesWithData[$value['ele_type']]) {
+						$elementsWithData[$value['ele_id']] = $value['ele_id'];
+					}
 					$elements[$value['ele_id']] = $value['ele_id'];
 					$elementCaptions[$value['ele_id']] = $value['ele_caption'];
 					$elementColheads[$value['ele_id']] = $value['ele_colhead'];
@@ -142,6 +153,7 @@ class formulizeForm extends XoopsObject {
 		$this->initVar("tableform", XOBJ_DTYPE_TXTBOX, $formq[0]['tableform'], true, 255);
 		$this->initVar("single", XOBJ_DTYPE_TXTBOX, $single, false, 5);
 		$this->initVar("elements", XOBJ_DTYPE_ARRAY, serialize($elements));
+		$this->initVar("elementsWithData", XOBJ_DTYPE_ARRAY, serialize($elementsWithData));
 		$this->initVar("elementCaptions", XOBJ_DTYPE_ARRAY, serialize($elementCaptions));
 		$this->initVar("elementColheads", XOBJ_DTYPE_ARRAY, serialize($elementColheads));
 		$this->initVar("elementHandles", XOBJ_DTYPE_ARRAY, serialize($elementHandles));
