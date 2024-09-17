@@ -38,7 +38,7 @@ $form_handler = xoops_getmodulehandler('forms','formulize');
 $formObject = $form_handler->get($fid);
 
 // Check if the form is locked down
-if($formObject->getVar('lockedform')) {
+if(!$formObject OR $formObject->getVar('lockedform')) {
   return;
 }
 
@@ -91,7 +91,7 @@ foreach($elements as $element) {
   foreach($processedElements[$ele_id] as $property=>$value) {
     $element->setVar($property,$value);
   }
-	
+
 	// if there was no display property sent, and there was no custom flag sent, then blank the display settings
 	if(!isset($processedElements[$ele_id]['ele_display']) AND !isset($_POST['customDisplayFlag'][$ele_id])) {
 		$element->setVar('ele_display',0);
@@ -119,7 +119,7 @@ if($_POST['convertelement']) {
 		$element->setVar('ele_type', "textarea");
     if( !$element_handler->insert($element)) {
 			print "Error: could not complete conversion of the element";
-		} 
+		}
 	} elseif($ele_type=="textarea") {
 		$ele_value = $element->getVar('ele_value');
 		$new_ele_value[0] = $ele_value[2]; // cols become width
@@ -131,9 +131,22 @@ if($_POST['convertelement']) {
 		$element->setVar('ele_type', "text");
 		if( !$element_handler->insert($element)) {
 			print "Error: could not complete conversion of the element";
-		} 
+		}
 	} elseif($ele_type=="radio") {
-		$element->setVar('ele_type', "checkbox"); // just need to change type, ele_value format is the same
+		$element->setVar('ele_type', "checkbox");
+		$ele_value = array(
+			5 => null,
+			2 => $element->getVar('ele_value'),
+			10 => null,
+			11 => null,
+			12 => null,
+			15 => '1',
+			17 => null,
+			'checkbox_scopelimit' => '0',
+			'checkbox_formlink_anyorall' => '0',
+			'formlink_scope' => 'all'
+		);
+		$element->setVar('ele_value', $ele_value);
 		if( !$element_handler->insert($element)) {
 			print "Error: could not complete conversion of the element";
 		} else {
@@ -141,10 +154,12 @@ if($_POST['convertelement']) {
 			$data_handler = new formulizeDataHandler($element->getVar('id_form'));
 			if(!$data_handler->convertRadioDataToCheckbox($element)) {
 				print "Error: ". _AM_ELE_CHECKBOX_DATA_NOT_READY;
-			} 
+			}
 		}
 	} elseif($ele_type=="checkbox") {
-		$element->setVar('ele_type', "radio");  // just need to change type, ele_value format is the same
+		$element->setVar('ele_type', "radio");
+		$ele_value = $element->getVar('ele_value');
+		$element->setVar('ele_value', $ele_value[2]);
 		if( !$element_handler->insert($element)) {
 			print "Error: could not complete conversion of the element";
 		} else {
@@ -152,7 +167,7 @@ if($_POST['convertelement']) {
 			$data_handler = new formulizeDataHandler($element->getVar('id_form'));
 			if(!$data_handler->convertCheckboxDataToRadio($element)) {
 				print "Error: "._AM_ELE_RADIO_DATA_NOT_READY;
-			} 
+			}
 		}
   } elseif($ele_type=="select") {
     $element->setVar('ele_type', 'checkbox');
@@ -184,7 +199,7 @@ if($_POST['deleteelement']) {
   $ele_type = $element->getVar('ele_type');
 	$element_handler->delete($element);
   if($ele_type != "areamodif" AND $ele_type != "ib" AND $ele_type != "sep" AND $ele_type != "subform" AND $ele_type != "grid") {
-    $element_handler->deleteData($element); //added aug 14 2005 by jwe  
+    $element_handler->deleteData($element); //added aug 14 2005 by jwe
     }
   }
 }
@@ -211,15 +226,14 @@ if($_POST['cloneelement']) {
   $thisElementObject->setVar('ele_handle',$oldHandle.'_'.$ele_id);
   $element_handler->insert($thisElementObject);
   $ele_type = $thisElementObject->getVar('ele_type');
-  $databaseElement = ($ele_type == "areamodif" OR $ele_type == "ib" OR $ele_type == "sep" OR $ele_type == "subform" OR $ele_type == "grid" OR (property_exists($thisElementObject,'hasData') AND $thisElementObject->hasData == false) ) ? false : true;
-  if($databaseElement) {
-  $fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_" . $thisElementObject->getVar('form_handle')) ." LIKE '$oldHandle'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
-  	if(!$fieldStateRes = $xoopsDB->query($fieldStateSQL)) {
-		$dataType = "text";
-	} else {
-		$fieldStateData = $xoopsDB->fetchArray($fieldStateRes);
-		$dataType = $fieldStateData['Type'];
-	}
+  if($thisElementObject->hasData) {
+  	$fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) ." LIKE '$oldHandle'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
+		if(!$fieldStateRes = $xoopsDB->query($fieldStateSQL)) {
+			$dataType = "text";
+		} else {
+			$fieldStateData = $xoopsDB->fetchArray($fieldStateRes);
+			$dataType = $fieldStateData['Type'];
+		}
     $form_handler->insertElementField($thisElementObject, $dataType);
   }
   print "/* eval */ window.location = '".XOOPS_URL."/modules/formulize/admin/ui.php?page=element&ele_id=$ele_id&aid=".intval($_POST['aid'])."';";
