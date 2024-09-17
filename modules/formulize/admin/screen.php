@@ -30,6 +30,7 @@
 // this file gets all the data about applications, so we can display the Settings/forms/relationships tabs for applications
 
 include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
+include_once XOOPS_ROOT_PATH."/modules/formulize/class/multiPageScreen.php";
 
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
 $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
@@ -422,19 +423,7 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
 
 if ($screen_id != "new" && $settings['type'] == 'form') {
 
-    if (!function_exists("multiPageScreen_addToOptionsList")) {
-        function multiPageScreen_addToOptionsList($form_id, $options) {
-            $formObject = new formulizeForm($form_id, true); // true causes all elements, even ones now shown to any user, to be included
-            $elements = $formObject->getVar('elements');
-            $elementCaptions = $formObject->getVar('elementCaptions');
-            $elementColheads = $formObject->getVar('elementColheads');
-            foreach($elementCaptions as $key=>$elementCaption) {
-                $options[$elements[$key]] = trans(strip_tags($elementColheads[$key])) ? printSmart(trans(strip_tags($elementColheads[$key]))) : printSmart(trans(strip_tags($elementCaption))); // need to pull out potential HTML tags from the caption/colhead
-            }
-            return $options;
-        }
-    }
-    $element_list = multiPageScreen_addToOptionsList($form_id, array());
+	$element_list = multiPageScreen_addToOptionsList($form_id, array());
     $frid = $screen->getVar("frid");
     if ($frid) {
         $framework_handler =& xoops_getModuleHandler('frameworks');
