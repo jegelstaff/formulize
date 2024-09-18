@@ -96,9 +96,9 @@ global $xoopsDB;
             if ($result = $this->db->query($sql)) {
 
                 while($resultArray = $this->db->fetchArray($result)) {
-                    $newLinks = new formulizeApplicationMenuLink();
-                    $newLinks->assignVars($resultArray);
-                    array_push($linksArray, $newLinks);
+                    $link = new formulizeApplicationMenuLink();
+                    $link->assignVars($resultArray);
+                    $linksArray[$link->getVar('menu_id')] = $link;
                 }
             }
 

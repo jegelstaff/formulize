@@ -39,22 +39,27 @@
     $setOfMenuItems = $_POST['menu_items'];
 
     $menuLinkAdded = false;
-    foreach($setOfMenuItems as $menuitems) {
+		$menuLinkHandler = xoops_getmodulehandler('applicationMenuLinks', 'formulize');
+		$menuLinkObjects = $menuLinkHandler->get($appid, 'all');
 
-    if(strlen($menuitems) > 0){
-    	$linkValues = explode("::",$menuitems);
-	    if($linkValues[2] != 'url') {
-				$linkValues[3] = '';
-				$menuitems = implode("::", $linkValues);
-	    }
-			if($linkValues[0] == "null"){
-				$application_handler->insertMenuLink($appid, $menuitems);
-				$_POST['reload_settings'] = 1;
-				$menuLinkAdded = true;
-			}	else {
-				$application_handler->updateMenuLink($appid, $menuitems);
+    foreach($setOfMenuItems as $menuitems) {
+			if(strlen($menuitems) > 0){
+				$linkValues = explode("::",$menuitems);
+				if($linkValues[2] != 'url') {
+					$linkValues[3] = '';
+					$menuitems = implode("::", $linkValues);
+				}
+				if($linkValues[0] == "null"){
+					$application_handler->insertMenuLink($appid, $menuitems);
+					$_POST['reload_settings'] = 1;
+					$menuLinkAdded = true;
+				}	else {
+					$application_handler->updateMenuLink($appid, $menuitems);
+					if($menuLinkObjects[$linkValues[0]]->getVar('link_text') != $linkValues[1]) {
+						$_POST['reload_settings'] = 1;
+					}
+				}
 			}
-    }
     }
 
 		// Sort update of menu links
