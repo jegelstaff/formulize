@@ -686,7 +686,7 @@ class formulizeElementRenderer{
 					$eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
 					if($ele_value[8] == 1) {// Has been edited in order to not allow the user to submit a form when "No match found" or "Choose an Option" is selected from the quickselect box.
                         if($ele_value[1]) {
-                            $form_ele->customValidationCode[] = "\nif ( typeof myform.{$eltname}_0 === undefined ) {\n window.alert(\"{$eltmsg}\");\n myform.{$eltname}_user.focus();\n return false;\n }\n";
+                            $form_ele->customValidationCode[] = "\nif ( window.document.getElementsByName('{$eltname}[]').length == 0 ) {\n window.alert(\"{$eltmsg}\");\n myform.{$eltname}_user.focus();\n return false;\n }\n";
                         } else {
 						$form_ele->customValidationCode[] = "\nif ( myform.{$eltname}.value == '' || myform.{$eltname}.value == 'none'  ) {\n window.alert(\"{$eltmsg}\");\n myform.{$eltname}_user.focus();\n return false;\n }\n";
                         }
