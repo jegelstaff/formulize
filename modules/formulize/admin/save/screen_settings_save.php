@@ -91,7 +91,7 @@ if($isNew) {
       $screen->setVar('donedest', "");
   } else if($screens['type'] == 'calendar') {
       $screen->setVar('caltype', 'month');
-      $screen->setVar('datasets', array());
+      $screen->setVar('datasets', serialize(array()));  // need to serialize things that have the array datatype, when they are manually generated here by us!
   }
 } else {
   $screen = $screen_handler->get($sid);

@@ -9,28 +9,36 @@
     <input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
 
     <div class="panel-content content">
-        <p><b>Showing templates for use with this theme:</b> <{html_options name=screens-theme options=$content.themes selected=$content.selectedTheme}></p>
-        <p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_TOPTEMPLATE3}></p>
-        <p><{$smarty.const._AM_FORMULIZE_SCREEN_CAL_DESC_TOPTEMPLATE}></p>
-        <p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_TOPTEMPLATE2}></p>
-        <br />
-        <div class="form-item">
-            <fieldset>
-                <legend>Top Template</legend>
-                <textarea id="screens-toptemplate"  name="screens-toptemplate" class="code-textarea" rows="20"/>
-<{$content.toptemplate}></textarea>
-                <br />
-                <{include file=db:admin/variable_template_help.html variables=$content.variabletemplatehelp}>
-            </fieldset>
-        </div>
 
-        <div class="form-item">
-            <fieldset>
-            <legend>Bottom Template</legend>
-                <textarea id="screens-bottomtemplate" name="screens-bottomtemplate" class="code-textarea" rows="20"/>
+			<p><b>Showing templates for use with this theme:</b> <{html_options name='screens-theme' options=$content.themes selected=$content.selectedTheme}></p>
+			<p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_TOPTEMPLATE3}></p>
+
+	<{if !$content.usingTemplates}>
+					<p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_SEEDTEMPLATES1}><{$content.seedtemplates}><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_SEEDTEMPLATES2}></p><br /><p><input type="button" value="<{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_SEEDTEMPLATES3}>" id="seedtemplates"></p><br />
+			<{/if}>
+
+			<{if $content.usingTemplates}>
+
+			<div class="form-item">
+				<fieldset>
+						<legend>Top Template</legend>
+						<textarea id="screens-toptemplate"  name="screens-toptemplate" class="code-textarea" rows="20"/>
+<{$content.toptemplate}></textarea>
+						<br />
+						<{include file=db:admin/variable_template_help.html variables=$content.variabletemplatehelp}>
+				</fieldset>
+		</div>
+
+		<div class="form-item">
+				<fieldset>
+				<legend>Bottom Template</legend>
+						<textarea id="screens-bottomtemplate" name="screens-bottomtemplate" class="code-textarea" rows="20"/>
 <{$content.bottomtemplate}></textarea>
-            </fieldset>
-        </div>
+				</fieldset>
+		</div>
+
+	<{/if}>
+
 
     </div>
 </form>

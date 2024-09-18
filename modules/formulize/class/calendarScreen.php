@@ -80,7 +80,7 @@ class formulizeCalendarScreenHandler extends formulizeScreenHandler {
 		}
 		return $instance;
 	}
-	function create() {
+	function &create() {
 		return new formulizeCalendarScreen();
 	}
 
@@ -202,6 +202,7 @@ class formulizeCalendarScreenHandler extends formulizeScreenHandler {
         $bottomtemplate = ob_get_clean();
 
         $GLOBALS['formulize_screenCurrentlyRendering'] = $screen;
+				$viewHandles = $dateHandles; // need some way of specifying which handle to use, currently missing from the UI!
         displayCalendar($formframes, $mainforms, $viewHandles, $dateHandles, $filters, $clickTemplates, $scopes, $hidden, 'month', $toptemplate, $bottomtemplate, $viewentryscreens, $useaddicons, $usedeleteicons, $textcolors);
         $GLOBALS['formulize_screenCurrentlyRendering'] = $previouslyRenderingScreen;
 
