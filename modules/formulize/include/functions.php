@@ -5492,6 +5492,48 @@ function parseSubmittedConditions($filter_key, $delete_key, $deleteTargetKey = 1
 	return array($returnValues, $reloadFlag);
 }
 
+/**
+ * Check for { } filter conditions, which are not in GET params, and which are valid element handles for the declared form, and catalogue them as condition triggers for the specified element.
+ * @param string $renderedElementMarkupName The markup handle for the element that would be dependent on a change in the dynamic filter value, ie: de_FID_ENTRYID_ELEMENTID
+ * @param array $conditions A standard array of filter conditions, four keys, for element op term all/oom, and each is itself and array of the items (match based on key to get a set)
+ * @param int|string|object $sourceForm A form id, form handle, or form object, representing the form in which any { } terms should be found
+ * @return boolean Returns false if the inputs are not valid conditions or not a valid source form, returns true otherwise.
+ */
+function catalogDynamicFilterConditionElements($renderedElementMarkupName, $conditions, $sourceForm) {
+	// validate conditions
+	if(!is_array($conditions) OR !isset($conditions[2])) {
+		return false;
+	}
+	$filterTerms = $conditions[2];
+	if(!is_array($filterTerms)) {
+		return false;
+	}
+	// validate form
+	if(!is_object($sourceForm) OR !is_a($sourceForm, 'formulizeForm')) {
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		if(is_numeric($sourceForm)) {
+			$sourceForm = $form_handler->get($sourceForm);
+		} else {
+			$sourceForm = $form_handler->getByHandle($sourceForm);
+		}
+		if(!$sourceForm) {
+			return false;
+		}
+	}
+	$elementHandles = array();
+	foreach($filterTerms as $term) {
+		if (substr($term,0,1) == "{" AND substr($term,-1)=="}") {
+			$bracketlessTerm = substr($term,1,-1);
+			if(!isset($_GET[$bracketlessTerm]) AND in_array($bracketlessTerm,$sourceForm->getVar('elementHandles'))) {
+				$elementHandles[] = $bracketlessTerm;
+			}
+		}
+	}
+	if($elementHandles) {
+		catalogConditionalElement($renderedElementMarkupName, $elementHandles);
+	}
+	return true;
+}
 
 /**
  * This function will build a SQL-ready string, based on a data from a standard Formulize Conditions UI, plus parameters like the table it's supposed to look in

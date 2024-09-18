@@ -244,6 +244,7 @@ class formulizeElementRenderer{
 					$sourceFormObject = $form_handler->get($sourceFid);
 
 					list($conditionsfilter, $conditionsfilter_oom, $parentFormFrom) = buildConditionsFilterSQL($ele_value[5], $sourceFid, $entry_id, $owner, $formObject, "t1");
+					catalogDynamicFilterConditionElements($renderedElementMarkupName, $ele_value[5], $formObject);
 
 					// if there is a restriction in effect, then add some SQL to reject options that have already been selected ??
 					$restrictSQL = "";
@@ -320,6 +321,7 @@ class formulizeElementRenderer{
 								$dbValue = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$optionsLimitByElement_ElementObject->getVar('ele_handle')];
 							} else {
 								list($optionsLimitFilter, $optionsLimitFilter_oom, $optionsLimitFilter_parentFormFrom) = buildConditionsFilterSQL($ele_value['optionsLimitByElementFilter'], $optionsLimitByElement_ElementObject->getVar('id_form'), $entry_id, $owner, $formObject, "olf");
+								catalogDynamicFilterConditionElements($renderedElementMarkupName, $ele_value['optionsLimitByElementFilter'], $formObject);
 								$optionsLimitFilterFormObject = $form_handler->get($optionsLimitByElement_ElementObject->getVar('id_form'));
 								$sql = "SELECT ".$optionsLimitByElement_ElementObject->getVar('ele_handle')." FROM ".$xoopsDB->prefix('formulize_'.$optionsLimitFilterFormObject->getVar('form_handle'))." as olf $optionsLimitFilter_parentFormFrom WHERE 1 $optionsLimitFilter $optionsLimitFilter_oom";
 								if($res = $xoopsDB->query($sql)) {
@@ -554,6 +556,7 @@ class formulizeElementRenderer{
                                 if(isset($ele_value['optionsLimitByElement']) AND is_numeric($ele_value['optionsLimitByElement'])) {
                                     if($optionsLimitByElement_ElementObject = $element_handler->get($ele_value['optionsLimitByElement'])) {
                                         list($optionsLimitFilter, $optionsLimitFilter_oom, $optionsLimitFilter_parentFormFrom) = buildConditionsFilterSQL($ele_value['optionsLimitByElementFilter'], $optionsLimitByElement_ElementObject->getVar('id_form'), $entry_id, $owner, $formObject, "olf");
+																				catalogDynamicFilterConditionElements($renderedElementMarkupName, $ele_value['optionsLimitByElementFilter'], $formObject);
                                         $optionsLimitFilterFormObject = $form_handler->get($optionsLimitByElement_ElementObject->getVar('id_form'));
                                         $sql = "SELECT ".$optionsLimitByElement_ElementObject->getVar('ele_handle')." FROM ".$xoopsDB->prefix('formulize_'.$optionsLimitFilterFormObject->getVar('form_handle'))." as olf $optionsLimitFilter_parentFormFrom WHERE 1 $optionsLimitFilter $optionsLimitFilter_oom";
                                         if($res = $xoopsDB->query($sql)) {
@@ -685,11 +688,11 @@ class formulizeElementRenderer{
 					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
 					$eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
 					if($ele_value[8] == 1) {// Has been edited in order to not allow the user to submit a form when "No match found" or "Choose an Option" is selected from the quickselect box.
-                        if($ele_value[1]) {
-                            $form_ele->customValidationCode[] = "\nif ( window.document.getElementsByName('{$eltname}[]').length == 0 ) {\n window.alert(\"{$eltmsg}\");\n myform.{$eltname}_user.focus();\n return false;\n }\n";
-                        } else {
-						$form_ele->customValidationCode[] = "\nif ( myform.{$eltname}.value == '' || myform.{$eltname}.value == 'none'  ) {\n window.alert(\"{$eltmsg}\");\n myform.{$eltname}_user.focus();\n return false;\n }\n";
-                        }
+						if($ele_value[1]) {
+							$form_ele->customValidationCode[] = "\nif ( window.document.getElementsByName('{$eltname}[]').length == 0 ) {\n window.alert(\"{$eltmsg}\");\n myform.{$eltname}_user.focus();\n return false;\n }\n";
+						} else {
+							$form_ele->customValidationCode[] = "\nif ( myform.{$eltname}.value == '' || myform.{$eltname}.value == 'none'  ) {\n window.alert(\"{$eltmsg}\");\n myform.{$eltname}_user.focus();\n return false;\n }\n";
+            }
 					} elseif($ele_value[0] == 1) {
 						$form_ele->customValidationCode[] = "\nif ( myform.{$eltname}.options[0].selected && myform.{$eltname}.options[0].value == 'none') {\n window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n }\n";
 					} elseif($ele_value[0] > 1) {
