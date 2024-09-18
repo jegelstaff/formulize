@@ -350,7 +350,12 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
 
     // Writes a template.html file in /modules/formulize/templates/screens/default/$sid/template.html
     function write_template_to_file($content, $screen, $theme="") {
-        return $this->write_to_file($content, $screen, "/template.html", $theme);
+			if($this->write_to_file($content, $screen, "/template.html", $theme)) {
+				// update cached copy
+				include XOOPS_ROOT_PATH.'/header.php';
+				global $xoopsTpl;
+				return $xoopsTpl->touch("file:".$this->template_filename($screen));
+			}
     }
 
     function write_to_file($content, $screen, $name, $theme="") {
