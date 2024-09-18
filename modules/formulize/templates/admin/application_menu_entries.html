@@ -6,15 +6,15 @@
         <input type="hidden" id="deletemenuitem" name="deletemenuitem" value="">
         <input type="hidden" name="menuorder" value="">
 	<input type="hidden" name="tabnumber" value=<{$number}>>
-		
-                            
-                            
+
+
+
         <div class="accordion-box">
             <div class="form-item">
-            
-                <h2> Add links to the menu</h2> 
-                
-                <fieldset>		
+
+                <h2> Add links to the menu</h2>
+
+                <fieldset>
                     <div>
 			<h3>Text for this link:</h3>
 			<input type="text" id="addmenutext" name="addmenutext">
@@ -34,46 +34,46 @@
                     <h3>Show this link to these groups:</h3>
                     <select name="addgroups" id="addgroups" size=10 multiple style="overflow-y: scroll;">
                         <{foreach from=$content.groups item=group}>
-                            <option value=<{$group.id}><{$group.selected}>><{$group.name}></option>                 
+                            <option value=<{$group.id}><{$group.selected}>><{$group.name}></option>
                         <{/foreach}>
                     </select>
 		    </div>
-                    <div id="defaultScreenSection"> 
-			<h3>Send these groups to this link right after they login:</h3>                        
+                    <div id="defaultScreenSection">
+			<h3>Send these groups to this link right after they login:</h3>
 			<select name="defaultScreenGroups" id="addDefaultScreenGroups" size=10 multiple style="overflow-y: scroll;">
 			    <{foreach from=$content.groups item=group}>
-				<option value=<{$group.id}><{$group.selected}>><{$group.name}></option>                 
+				<option value=<{$group.id}><{$group.selected}>><{$group.name}></option>
 			    <{/foreach}>
 			</select>
                     </div>
 			<div class="description">
 			<p>This only takes effect if Formulize is also set as the default start page for a group, under <a href='<{$xoops_url}>/modules/system/admin.php?fct=preferences&op=show&confcat_id=1' target='_blank'>General Settings</a></p>
 			</div>
-                   
+
                 </fieldset>
-                
-                <button class="menuButton" id="addMenuItem" type="button" >Add Menu Item</button>				
-                
-            </div>		
+
+                <button class="menuButton" id="addMenuItem" type="button" >Add Menu Item</button>
+
+            </div>
         </div>
-                
-        <div class="accordion-box">			
+
+        <div class="accordion-box">
             <h2> Manage the links in the menu</h2>
             <p>Click and drag the links to re-order them</p><br/>
-            <div id="sortable-list">        
-                <{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/application_menu_entries_sections.html" sections=$content.links}>
-            </div>                                                    
+            <div id="sortable-list">
+                <{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/application_menu_entries_sections.html" sections=$content.links closeAccordion=1}>
+            </div>
         </div>
     </form>
-    
+
     <div style="clear: both"></div>
-    
+
 </div> <!--// end content -->
 <script type="text/javascript">
     var formID = "";
     var formRelationID = "1";
-    
-    // added Oct 2013 
+
+    // added Oct 2013
     $(".deletemenulink").click(function () {
         var answer = confirm("Do you want to delete the menu link '"+$(this).attr('menuname')+"'?");
         if(answer) {
@@ -82,7 +82,7 @@
         }
         return false;
     });
-    
+
 	jQuery("#addurl").hide();
         jQuery("#listofscreenoptions select").change(function(){
             if(jQuery(this).val() == 'url') {
@@ -91,15 +91,15 @@
                 jQuery("#addurl").fadeOut();
             }
         });
-    
+
     // modified Oct 2013
     $("#addMenuItem").click(function (){
         $(".savebutton").click();
     });
-  
+
     $(".savebutton").click(function () {
         $("[name=menuorder]").val($("#accordion-<{$number}>").sortable('serialize'));
-	
+
 
 	var menuText = $("#addmenutext").val().trim();
 	if(menuText) {
@@ -112,7 +112,7 @@
 		value += "::"+menuText+ "::" + screen + "::" + url + "::"+groupids+"::"+default_screen+"::"+note;
 	        addHiddenMenuItem(value);
 	}
-	
+
 	$(".menuEntriesSection").each(function() {
 		var sectionNumber = $(this).attr('menuentry');
 		var menuID = $(this).attr('menuid');
@@ -123,16 +123,16 @@
 		var default_screen= $("#defaultScreenGroups"+sectionNumber).val();
 		var note=$("#addnote"+sectionNumber).val()
 		var value = menuID;
-		
-		value += "::"+menuText+ "::" + screen + "::" + url + "::"+groupids+"::"+default_screen+"::"+note;                                                                               
+
+		value += "::"+menuText+ "::" + screen + "::" + url + "::"+groupids+"::"+default_screen+"::"+note;
 		addHiddenMenuItem(value);
 	});
     });
- 
+
     $("#accordion-<{$number}>").bind( "sortupdate", function(event, ui) {
         setDisplay('savewarning','block');
     });
-                            
+
     function addHiddenMenuItem(value) {
 	$('<input>').attr({
 		type: 'hidden',
@@ -140,7 +140,7 @@
 		value: value
 	}).appendTo('#form-<{$number}>');
     }
-    
-    
-    
+
+
+
     </script>
