@@ -943,7 +943,7 @@ $modversion['config'][] = array(
 	'description' => '_MI_formulize_F7MENUTEMPLATEDESC',
 	'formtype' => 'yesno',
 	'valuetype' => 'int',
-	'default' => '0',
+	'default' => '1',
 );
 
 $modversion['config'][] = array(
