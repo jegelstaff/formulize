@@ -851,6 +851,15 @@ $modversion['config'][] = array(
 );
 
 $modversion['config'][] = array(
+	'name' =>'show_empty_elements_when_read_only',
+	'title' => '_MI_formulize_SHOW_EMPTY_ELEMENTS_WHEN_READ_ONLY',
+	'description' => '_MI_formulize_SHOW_EMPTY_ELEMENTS_WHEN_READ_ONLY_DESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 0,
+);
+
+$modversion['config'][] = array(
 	'name' =>'heading_help_link',
 	'title' => '_MI_formulize_HEADING_HELP_LINK',
 	'description' => '_MI_formulize_HEADING_HELP_LINK_DESC',
