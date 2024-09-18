@@ -1322,7 +1322,17 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	if($screen) {
 		if($add_own_entry) {
 			$screenButtonText['addButton'] = !$lockcontrols ? $screen->getVar('useaddupdate') : "";
-			$screenButtonText['addMultiButton'] = !$lockcontrols ? $screen->getVar('useaddmultiple') : "";
+			// determine number of pages on the view entry screen, if multiple pages then no Add Multi button because UX doesn't work in that case
+			$viewEntryScreenNumberOfPages = 0;
+			$viewEntryScreen = determineViewEntryScreen($screen, $fid);
+			$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+			$viewEntryScreenObject = $screen_handler->get($viewEntryScreen);
+			if($viewEntryScreenObject->getVar('type') == 'multiPage') {
+				$multiPageScreen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+				$viewEntryScreenObject = $multiPageScreen_handler->get($viewEntryScreen);
+				$viewEntryScreenNumberOfPages = count($viewEntryScreenObject->getVar('pages'));
+			}
+			$screenButtonText['addMultiButton'] = (!$lockcontrols AND $viewEntryScreenNumberOfPages < 2)  ? $screen->getVar('useaddmultiple') : "";
 		} else {
 			$screenButtonText['addButton'] = "";
 			$screenButtonText['addMultiButton'] = "";
