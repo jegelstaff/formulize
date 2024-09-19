@@ -15,19 +15,28 @@ jQuery(document).ready(function() {
         }
         hidden_section.toggle();
     });
-    
+
 });
 
-function fz_check_php_code(custom_code, block_name, icms_url, icms_userid) {
+async function fz_check_php_code(custom_code, block_name) {
+	let validateCode = new Promise(function(resolve, reject) {
     jQuery.ajax({
         type: "POST",
-        url: icms_url+"/modules/formulize/formulize_xhr_responder.php?uid="+icms_userid+"&op=validate_php_code",
+        url: window.icms_url+"/modules/formulize/formulize_xhr_responder.php?uid="+window.icms_userid+"&op=validate_php_code",
         data: {the_code: custom_code},
         success: function(result) {
             if (result.length > 0) {
-                alert("The "+block_name+" has an error:\n\n"+result+".");
-            }
-        },
-        async: false
+              resolve("The "+block_name+" has an error:\n\n"+result+".");
+            } else {
+							resolve('');
+						}
+        	},
+				error: function() {
+					reject('The validation request to the server failed.');
+				}
     });
+	});
+	return validateCode.then(result => {
+		return result;
+	});
 }

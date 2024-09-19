@@ -35,7 +35,7 @@ define('_FORMULIZE_UI_PHP_INCLUDED', 1);
 // include necessary Formulize files/functions
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
-global $xoopsTpl, $xoopsDB;
+global $xoopsTpl, $xoopsDB, $xoopsUser;
 
 // check that each screen has a valid relationship setting
 $sql = "SELECT * FROM ".$xoopsDB->prefix('formulize_screen')." as s WHERE NOT EXISTS(SELECT 1 FROM ".$xoopsDB->prefix('formulize_framework_links')." as l WHERE s.frid = l.fl_frame_id AND (s.fid = l.fl_form1_id OR s.fid = l.fl_form2_id)) AND s.frid != 0";
@@ -93,7 +93,7 @@ if(isset($_POST['seedtemplates']) AND $_POST['seedtemplates'] AND isset($_GET['s
     $screen = $screen_handler->get($_GET['sid']);
     $themeDefaultPath = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$screen->getVar('theme')."/default/".$screen->getVar('type')."/";
     if(!file_exists($themeDefaultPath)) {
-        $themeDefaultPath = str_replace($screen->getVar('theme'), '', $themeDefaultPath);    
+        $themeDefaultPath = str_replace($screen->getVar('theme'), '', $themeDefaultPath);
     }
     if(!file_exists($themeDefaultPath)) {
         exit('Error: could not locate a valid default template path for "'.$screen->getVar('type').'" screens.');
@@ -189,6 +189,8 @@ if(SDATA_DB_PREFIX == 'selenium') {
     $xoopsTpl->assign('allowFloatingSave', '');
 }
 
+$xoopsTpl->assign('XOOPS_URL', XOOPS_URL);
+$xoopsTpl->assign('UID', $xoopsUser->getVar('uid'));
 $xoopsTpl->display("db:admin/ui.html");
 
 xoops_cp_footer();

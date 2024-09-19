@@ -17,7 +17,7 @@ $(document).ready(function() {
 	//Select all anchor tag with rel set to tooltip
 	$('a[rel=tooltip]').mouseover(function(e) {
 		//Grab the title attribute's value and assign it to a variable
-		var tip = $(this).attr('title');		
+		var tip = $(this).attr('title');
 		//Remove the title attribute's to avoid the native tooltip from the browser
 		$(this).attr('title','');
 		//Append the tooltip template and its value
@@ -48,7 +48,7 @@ $(document).ready(function() {
 <script type="text/javascript">
 $(document).ready(function() {
 	var offset = $('#admin_toolbar').offset();
-	
+
 	  $(window).scroll(function () {
 		var scrollTop = $(window).scrollTop();
 		if (offset && offset.top<scrollTop <{$allowFloatingSave}>) {
@@ -59,12 +59,12 @@ $(document).ready(function() {
 		  $('#admin_toolbar').removeClass('ui-corner-all');
 		};
 	  });
-	  
+
 	});
 </script>
 <!-- end jquery -->
 
-<!--[if IE 6]> 
+<!--[if IE 6]>
 	<link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/templates/css/ie6.css" />
 <![endif]-->
 
@@ -113,7 +113,7 @@ $(document).ready(function() {
     <{/foreach}>
 </p>
 <{/if}>
-    
+
 <!-- modified by Freeform Solutions, S.Gray, April 11, 2011 -->
 <{if $adminPage.needsave}>
 <div id="admin_toolbar">
@@ -121,7 +121,7 @@ $(document).ready(function() {
 <{if $adminPage.isSaveLocked}>
 	READ ONLY
 <{else}>
-    <input type="button" class="savebutton" id="save" value="<{$smarty.const._AM_HOME_SAVECHANGES}>"/>    
+    <input type="button" class="savebutton" id="save" value="<{$smarty.const._AM_HOME_SAVECHANGES}>"/>
 <{/if}>
 </div>
 <div id="savewarning" class="ui-corner-all"><{$smarty.const._AM_HOME_WARNING_UNSAVED}></div>
@@ -130,25 +130,27 @@ $(document).ready(function() {
 <{/if}>
 
 <{if $adminPage.template}>
-<{include file=$adminPage.template}>  
+<{include file=$adminPage.template}>
 <{/if}>
 
-<{if $adminPage.tabs}>  
+<{if $adminPage.tabs}>
 <{include file="db:admin/ui-tabs.html" tabs=$adminPage.tabs}>
 <{/if}>
- 
+
 <p class="versionnumber">Version <{$version}></p>
 
 </div><!-- End admin-ui -->
 
 <script type="text/javascript">
 
+	var icms_url = '<{$XOOPS_URL}>';
+	var icms_userid = <{$UID}>;
   var saveCounter = 0;
   var saveTarget = 0;
   var redirect = "";
   var newhandle = "";
   var formdata = new Array();
-  
+
   $("input").change(function() {
     setDisplay('savewarning','block');
     });
@@ -165,12 +167,36 @@ $(document).ready(function() {
     });
 
   $(".savebutton").click(function() {
-    if(validateRequired()) {
+		<{php}>
+		// if user wants it, and server can validate code, validate code blocks, which will then validateRequired, etc
+		global $xoopsModuleConfig;
+		if ($xoopsModuleConfig['validateCode'] AND isEnabled('shell_exec')) {
+			print "\t\t$('.admin-ui').fadeTo(1, 0.5, function() { validateCode(); });\n";
+		} else {
+			print "\t\tif(validateRequired()) { runSaveEvent(); }\n";
+		}
+		<{/php}>
+	});
+
+	async function validateCode() {
+		let codeBlocks = [];
+		let error = '';
+		$(".canValidate").each(function() {
+			codeBlocks.push({ code: $(this).val(), title: $(this).prevAll('legend').first().text() });
+		});
+		for (let i = 0; i < codeBlocks.length; i++) {
+			error = await fz_check_php_code(codeBlocks[i].code, codeBlocks[i].title);
+			if(error) { break };
+		}
+		if(error) {
+			alert(error);
+			$('.admin-ui').fadeTo(1, 1);
+		} else if(validateRequired()) {
       runSaveEvent();
     }
-  });
+	}
 
-  function runSaveEvent() {
+	function runSaveEvent() {
     $(".admin-ui").fadeTo(1,0.5);
     var formulize_formlist = $(".formulize-admin-form");
     saveCounter = 0;
@@ -184,10 +210,10 @@ $(document).ready(function() {
       }
     }
     if(saveTarget > 0) {
-      sendFormData(formdata[0]); // send the first form's data 
+      sendFormData(formdata[0]); // send the first form's data
     }
   }
-  
+
   function sendFormData(thisformdata, ele_id) {
     if(!ele_id) { ele_id = 0 }
     $.post("save.php?ele_id="+ele_id, $(thisformdata).serialize(), function(data) {
@@ -217,14 +243,14 @@ $(document).ready(function() {
       }
     });
   }
-  
+
   function reloadWithScrollPosition(url) {
     if(url) {
       $("[name=scrollposition]").attr('action', url);
     }
     window.document.scrollposition.scrollx.value = $(window).scrollTop();
     var tabs_selected = "";
-    <{if $adminPage.tabs}> 
+    <{if $adminPage.tabs}>
     tabs_selected = $("#tabs").tabs("option","selected");
     window.document.scrollposition.tabs_selected.value = tabs_selected;
     tabs_selected = tabs_selected+1;
@@ -251,7 +277,7 @@ $(document).ready(function() {
   $().ajaxError(function () {
     alert("There was an error when saving your data.  Please try again.");
   });
-  
+
   $(window).load(function () {
     $(window).scrollTop(<{$scrollx}>);
   });
@@ -286,24 +312,24 @@ $(document).ready(function() {
             enterMode: "keep",
             tabMode: "shift",
             lineWrapping: true,
-            onChange: function(instance) { 
+            onChange: function(instance) {
                 setDisplay('savewarning','block');
                 instance.save(); // Call this to update the textarea value for the ajax post
             }
         });
     })
   );
-  
+
     // change the themes, only possible when no changes to screen settings yet. Change theme property of screen and reload page.
     $("[name='screens-theme']").change(function() {
         window.document.scrollposition.themeswitch.value  = $(this).val();
         reloadWithScrollPosition();
     });
-    
+
     // seed the templates, only possible when no custom templates yet exist for a screen.
     $("#seedtemplates").click(function() {
         window.document.scrollposition.seedtemplates.value = 1;
         reloadWithScrollPosition();
     });
-  
+
 </script>
