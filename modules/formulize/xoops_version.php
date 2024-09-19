@@ -1000,6 +1000,15 @@ $modversion['config'][] = array(
 	'default' => 0,
 );
 
+$modversion['config'][] = array(
+	'name' => 'validateCode',
+	'title' => '_MI_formulize_VALIDATECODE',
+	'description' => '_MI_formulize_VALIDATECODE_DESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 1,
+);
+
 $modversion['blocks'][1] = array(
 	'file' => "mymenu.php",
 	'name' => _MI_formulizeMENU_BNAME,
