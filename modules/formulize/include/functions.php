@@ -6992,18 +6992,30 @@ function getFilterValuesForEntry($subformConditions, $curlyBracketEntryid=null) 
     return $filterValues;
 }
 
-// unclear if this successfully parses!
+/**
+ * Check if a given function is available in PHP
+ * Thanks to Bishop. https://stackoverflow.com/questions/21581560/php-how-to-know-if-server-allows-shell-exec
+ * @param string func The name of the function you're checking
+ * @return boolean Returns true or false
+ */
+function isEnabled($func) {
+	return is_callable($func) && false === stripos(ini_get('disable_functions'), $func);
+}
+
+/**
+ * Look for syntax errors in a given snippet of PHP code
+ * @param string theCode The code that you're checking
+ * @return string An empty string if no errors, or details about the error found
+ */
 function formulize_validatePHPCode($theCode) {
     while(ob_get_level()) {
         ob_end_clean();
     }
-    if ($theCode = trim($theCode) AND function_exists("shell_exec")) {
+    if (isEnabled('shell_exec') AND $theCode = trim($theCode)) {
         $tmpfname = tempnam(XOOPS_ROOT_PATH.'/cache', 'FZ');
         file_put_contents($tmpfname, trim($theCode));
-				// shell_exec seems to be available on some servers and not others, naturally. Turning off for now, need a more bulletproof solution to checking the content
-        //$output = shell_exec('php -l "'.$tmpfname.'" 2>&1');
-				$output = '';
-        unlink($tmpfname);
+        $output = shell_exec('php -l "'.$tmpfname.'" 2>&1');
+       	unlink($tmpfname);
         if (false !== strpos($output, "PHP Parse error")) {
             // remove the second line because detail about the error is on the first line
             $output = str_replace("\nErrors parsing {$tmpfname}\n", "", $output);
