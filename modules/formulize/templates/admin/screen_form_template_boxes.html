@@ -1,7 +1,7 @@
 <div class="form-item">
             <fieldset>
                 <legend>Top Template</legend>
-                <textarea id="toptemplate"  name="toptemplate" class="code-textarea" rows="20"/>
+                <textarea id="toptemplate"  name="toptemplate" class="code-textarea canValidate" rows="20"/>
 <{$content.toptemplate}></textarea>
             </fieldset>
         </div>
@@ -11,17 +11,17 @@
         <div class="form-item">
             <fieldset>
             <legend>Element Container Template (opening)</legend>
-                <textarea id="elementcontainero" name="elementcontainero" class="code-textarea" rows="5"/>
+                <textarea id="elementcontainero" name="elementcontainero" class="code-textarea canValidate" rows="5"/>
 <{$content.elementcontainero}></textarea>
             </fieldset>
         </div>
         <div class='description'>All form elements are contained inside other markup with a consistent id. Use the variable $elementContainerId for the id, ie: "&lt;div id='$elementContainerId' ..."<br>This id is used by the conditional element logic to show and hide elements. Conditional elements won't work unless you use this id.<br>You can use a table row, a div, even a series of divs or whatever you want. You just have to make sure the HTML works seamlessly between the top, container, element, and bottom templates, and the $elementContainerId is used on the parent item in the DOM that contains the form elements.</div>
         <br />
-        
+
         <div class="form-item">
             <fieldset>
             <legend>Element Template (two columns)</legend>
-                <textarea id="elementtemplate2" name="elementtemplate2" class="code-textarea" rows="20"/>
+                <textarea id="elementtemplate2" name="elementtemplate2" class="code-textarea canValidate" rows="20"/>
 <{$content.elementtemplate2}></textarea>
             </fieldset>
         </div>
@@ -41,22 +41,22 @@
         <div class="form-item">
             <fieldset>
             <legend>Element Template (one column)</legend>
-                <textarea id="elementtemplate1" name="elementtemplate1" class="code-textarea" rows="20"/>
+                <textarea id="elementtemplate1" name="elementtemplate1" class="code-textarea canValidate" rows="20"/>
 <{$content.elementtemplate1}></textarea>
             </fieldset>
         </div>
         <div class='description'>The element template is used to render each element in the form.<br>The one column version is used when the one column option is selected on the Options tab, and is intended for situations where you want captions and the form elements in a single column vertically. This is usually a good layout for mobile devices.</div>
         <br />
-        
+
         <div class="form-item">
             <fieldset>
             <legend>Element Container Template (closing)</legend>
-                <textarea id="elementcontainerc" name="elementcontainerc" class="code-textarea" rows="5"/>
+                <textarea id="elementcontainerc" name="elementcontainerc" class="code-textarea canValidate" rows="5"/>
 <{$content.elementcontainerc}></textarea>
             </fieldset>
         </div>
         <div class='description'>The element container (closing) ends the element container started above.<br>If you opened a table row above and show each element in a table cell, you would need to use a &lt;/tr> here, for example.</div>
-        
+
         <!--
             displayType not actually used yet. Might be relevant in more complex themes? The js for displaying conditional elements simply sets the display property in css to null, and the browser figures out what is appropriate, but that's sort of a hack and might not work in all cases.
             <div class="form-item">
@@ -67,11 +67,11 @@
         </div>
         <div class='description'>When conditional elements are shown, the CSS display setting is set to this value.</div>-->
         <br />
-        
+
         <div class="form-item">
             <fieldset>
                 <legend>Bottom Template</legend>
-                <textarea id="bottomtemplate"  name="bottomtemplate" class="code-textarea" rows="20"/>
+                <textarea id="bottomtemplate"  name="bottomtemplate" class="code-textarea canValidate" rows="20"/>
 <{$content.bottomtemplate}></textarea>
             </fieldset>
         </div>
