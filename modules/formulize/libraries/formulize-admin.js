@@ -27,7 +27,7 @@ function fz_check_php_code(custom_code) {
         success: function(result) {
 							resolve({
 								valid: result.length > 0 ? false : true,
-								result: result
+								result
 							})
         	},
 				error: function() {
