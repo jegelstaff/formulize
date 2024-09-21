@@ -1995,18 +1995,28 @@ function &icms_getModuleHandler($name = null, $module_dir = null, $module_basena
 			if($module_dir != 'system') {
 				$hnd_file = ICMS_ROOT_PATH . "/modules/{$module_dir}/class/{$name}.php";
 				$hnd_file2 = ICMS_ROOT_PATH . "/modules/{$module_dir}/class/{$name}Handler.php";
+				$hnd_file3 = ICMS_ROOT_PATH . "/modules/{$module_dir}/class/".ucfirst($name)."Handler.php";
 			} else {
 				$hnd_file = ICMS_ROOT_PATH . "/modules/{$module_dir}/admin/{$name}/class/{$name}.php";
 				$hnd_file2 = '';
+				$hnd_file3 = '';
 			}
 			if (file_exists($hnd_file)) {include_once $hnd_file;}
 			if (file_exists($hnd_file2)) {include_once $hnd_file2;}
+			if (file_exists($hnd_file3)) {include_once $hnd_file3;}
 			if (class_exists($class)) {
 				$handlers[$module_dir][$name] = new $class(icms::$xoopsDB);
+				// correct any supreme strangeness from first invocation via legacy instantiation functions??
+				$altHandledObjectClassFile = ICMS_ROOT_PATH . "/modules/{$module_dir}/class/".ucfirst($name).".php";
+				if(file_exists($altHandledObjectClassFile)) { include_once $altHandledObjectClassFile; }
+				if($handlers[$module_dir][$name]->className == ucfirst($module_dir).ucfirst($name)) {
+					$handlers[$module_dir][$name]->className = 'mod_' . $module_dir . '_' . ucfirst($name);
+				}
 			}
 			$class = ucfirst(strtolower($module_basename)) . ucfirst($name) . 'Handler';
 			if (class_exists($class)) {
 				$handlers[$module_dir][$name] = new $class(icms::$xoopsDB);
+        $handlers[$module_dir][$name]->className = ucfirst(strtolower($module_basename)) . ucfirst($name);
 			}
 		}
 	}
