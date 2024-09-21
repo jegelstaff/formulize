@@ -178,7 +178,7 @@ $(document).ready(function() {
 		<{/php}>
 	});
 
-	let validBlocks = []
+	let checkedBlocks = []
 	async function validateCode() {
 		let codeBlocks = []
 		let error = ''
@@ -187,13 +187,33 @@ $(document).ready(function() {
 			codeBlocks.push({ code: $(this).val(), title: $(this).prevAll('legend').first().text() })
 		});
 		for (let i = 0; i < codeBlocks.length; i++) {
-			if(codeBlocks[i].code && (typeof validBlocks[i] === 'undefined' || codeBlocks[i].code != validBlocks[i].code)) {
-				error = await fz_check_php_code(codeBlocks[i].code)
-				if(error.valid === false) {
-					errorMsg = `The ${codeBlocks[i].title} has an error:\n\n${error.result}`
+			if(codeBlocks[i].code && codeBlocks[i].code.trim() != '<?php') {
+				if(typeof checkedBlocks[i] === 'undefined' || (codeBlocks[i].code != checkedBlocks[i].code)) {
+					error = await fz_check_php_code(codeBlocks[i].code)
+					if(error.valid === false) {
+						errorMsg = `The ${codeBlocks[i].title} has an error:\n\n${error.result}`
+						checkedBlocks[i] = {
+							code: codeBlocks[i].code,
+							valid: false,
+							error: errorMsg
+						}
+						break
+					} else {
+						checkedBlocks[i] = {
+							code: codeBlocks[i].code,
+							valid: true,
+							error: ''
+						}
+					}
+				} else if(checkedBlocks[i].valid === false) {
+					errorMsg = checkedBlocks[i].error
 					break
-				} else {
-					validBlocks[i] = { code: codeBlocks[i].code }
+				}
+			} else {
+				checkedBlocks[i] = {
+					code: codeBlocks[i].code,
+					valid: true,
+					error: ''
 				}
 			}
 		}
