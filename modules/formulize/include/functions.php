@@ -898,7 +898,7 @@ function makeUidFilter($users) {
 // returns the fids and entries passed to it, plus any others in a framework relationship
 // $entries is optional, and if left out this will only return the linked forms
 // final param is a flag to control whether only unified display relationships are returned or all relationships
-function checkForLinks($frid, $fids, $fid, $entries, $unified_display=false, $unified_delete=false)
+function checkForLinks($frid, $fids, $fid, $entries=null, $unified_display=false, $unified_delete=false)
 {
 
     if(!$frid) {
@@ -5052,6 +5052,12 @@ function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceE
         return false;
     }
 
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$sourceFormObject = $form_handler->get($formWithSourceElements);
+		if(!$sourceFormObject) {
+			return false;
+		}
+
     // set all the elements that we want to show the user
     $cols = "";
     if ($groups) {
@@ -5063,12 +5069,13 @@ function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceE
     $options = array('creation_uid'=>_formulize_DE_CALC_CREATOR, 'creation_datetime'=>_formulize_DE_CALC_CREATEDATE, 'mod_uid'=>_formulize_DE_CALC_MODIFIER, 'mod_datetime'=>_formulize_DE_CALC_MODDATE);
     if (is_array($cols)) {
         // setup the options array for form elements
-        foreach ($cols as $f=>$vs) {
+        foreach ($cols as $fid=>$vs) {
             foreach ($vs as $row=>$values) {
+								$thisFidObj = $form_handler->get($fid);
                 if ($values['ele_colhead'] != "") {
-                    $options[$values['ele_handle']] = printSmart(trans($values['ele_colhead']), 40);
+                    $options[$values['ele_handle']] = printSmart(trans(strip_tags($thisFidObj->title.': '.$values['ele_colhead'])), 125);
                 } else {
-                    $options[$values['ele_handle']] = printSmart(trans(strip_tags($values['ele_caption'])), 40);
+                    $options[$values['ele_handle']] = printSmart(trans(strip_tags($thisFidObj->title.': '.$values['ele_caption'])), 125);
                 }
             }
         }
@@ -5193,6 +5200,12 @@ function getExistingFilter($filterSettings, $filterName, $formWithSourceElements
         return false;
     }
 
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$sourceFormObject = $form_handler->get($formWithSourceElements);
+		if(!$sourceFormObject) {
+			return false;
+		}
+
     // set all the elements that we want to show the user
     $cols = "";
     if ($groups) {
@@ -5204,13 +5217,14 @@ function getExistingFilter($filterSettings, $filterName, $formWithSourceElements
     $options = array('creation_uid'=>_formulize_DE_CALC_CREATOR, 'creation_datetime'=>_formulize_DE_CALC_CREATEDATE, 'mod_uid'=>_formulize_DE_CALC_MODIFIER, 'mod_datetime'=>_formulize_DE_CALC_MODDATE);
     if (is_array($cols)) {
         // setup the options array for form elements
-        foreach ($cols as $f=>$vs) {
+        foreach ($cols as $fid=>$vs) {
             foreach ($vs as $row=>$values) {
-                if ($values['ele_colhead'] != "") {
-                    $options[$values['ele_handle']] = printSmart(trans($values['ele_colhead']), 40);
-                } else {
-                    $options[$values['ele_handle']] = printSmart(trans(strip_tags($values['ele_caption'])), 40);
-                }
+							$thisFidObj = $form_handler->get($fid);
+							if ($values['ele_colhead'] != "") {
+									$options[$values['ele_handle']] = printSmart(trans(strip_tags($thisFidObj->title.': '.$values['ele_colhead'])), 125);
+							} else {
+									$options[$values['ele_handle']] = printSmart(trans(strip_tags($thisFidObj->title.': '.$values['ele_caption'])), 125);
+							}
             }
         }
     }
