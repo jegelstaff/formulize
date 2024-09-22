@@ -1550,7 +1550,7 @@ function getMetaData($entry, $member_handler, $fid="", $useOldCode=false) {
 // $fid is required, $frid is optional
 // $groups is the grouplist of the current user.  It is optional.  If present it will limit the columns returned to the ones where display is 1 or the display includes that group
 function getAllColList($fid, $frid="", $groups="", $includeBreaks=false) {
-    global $xoopsDB, $xoopsUser;
+    global $xoopsUser;
     $gperm_handler = xoops_gethandler('groupperm');
     $mid = getFormulizeModId();
 
@@ -1584,30 +1584,40 @@ function getAllColList($fid, $frid="", $groups="", $includeBreaks=false) {
         exit("Error:  list of columns requested without specifying a form or a framework.");
     }
 
+		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
+
     // generate the $allcols list
     if ($frid) {
         $fids[0] = $fid;
         $check_results = checkForLinks($frid, $fids, $fid, "");
         $fids = $check_results['fids'];
         $sub_fids = $check_results['sub_fids'];
-        $uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
+				// do the passed in fid first, append rest of relationship after
+				$cols = addToColsList(array(), $fid, $uid, $groups, $mid, $gperm_handler, $gq, $pq, $incbreaks);
         foreach ($fids as $this_fid) {
-            if (security_check($this_fid, "", $uid, "", $groups, $mid, $gperm_handler)) {
-                $c = q("SELECT ele_id, ele_caption, ele_colhead, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$this_fid' $gq $pq $incbreaks AND ele_type != \"subform\" AND ele_type != \"grid\" ORDER BY ele_order");
-                $cols[$this_fid] = $c;
-            }
+						if($this_fid != $fid) {
+							$cols = addToColsList($cols, $this_fid, $uid, $groups, $mid, $gperm_handler, $gq, $pq, $incbreaks);
+						}
         }
         foreach ($sub_fids as $this_fid) {
-            if (security_check($this_fid, "", $uid, "", $groups, $mid, $gperm_handler)) {
-                $c = q("SELECT ele_id, ele_caption, ele_colhead, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$this_fid' $gq $pq $incbreaks AND ele_type != \"subform\" AND ele_type != \"grid\" ORDER BY ele_order");
-                $cols[$this_fid] = $c;
-            }
+					if($this_fid != $fid) {
+						$cols = addToColsList($cols, $this_fid, $uid, $groups, $mid, $gperm_handler, $gq, $pq, $incbreaks);
+					}
         }
     } else {
-        $cols[$fid] = q("SELECT ele_id, ele_caption, ele_colhead, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$fid' $gq $pq $incbreaks AND ele_type != \"subform\" AND ele_type != \"grid\" ORDER BY ele_order");
+			$cols = addToColsList(array(), $fid, $uid, $groups, $mid, $gperm_handler, $gq, $pq, $incbreaks);
     }
-
     return $cols;
+}
+
+function addToColsList($cols, $fid, $uid, $groups, $mid, $gperm_handler, $gq, $pq, $incbreaks) {
+	if(!is_array($cols)) { return array(); }
+	if (security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler)) {
+		global $xoopsDB;
+		$c = q("SELECT ele_id, ele_caption, ele_colhead, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$fid' $gq $pq $incbreaks AND ele_type != \"subform\" AND ele_type != \"grid\" ORDER BY ele_order");
+		$cols[$fid] = $c;
+	}
+	return $cols;
 }
 
 // THIS FUNCTION TAKES A ID FROM THE CALCULATIONS RESULT AND RETURNS THE TEXT TO PUT ON THE SCREEN THAT CORRESPONDS TO IT
