@@ -328,7 +328,6 @@ define("_AM_ELE_TYPE_NUMBER","Nombres uniquement");
 define("_AM_ELE_TYPE_STRING","N'importe quoi");
 define("_AM_ELE_UPLOAD","Joindre un fichier");
 define("_AM_ELE_YN","Simple bouton radio oui/non");
-define("_AM_FORM","Formulaire : ");
 define("_AM_FORMLINK_NONE", "aucun lien -- options courante en action");
 define("_AM_FORMLINK_NONE_TEXTBOX", "Pas d'association effective");
 define("_AM_FORMULIZE_ADD_NEW_SCREEN_OF_TYPE", "Ajouter un nouveau Screen de ce type:");

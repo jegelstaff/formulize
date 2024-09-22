@@ -54,7 +54,7 @@ function icms_cp_header(){
 	$icmsAdminTpl->assign('xoops_url', ICMS_URL);
 	$icmsAdminTpl->assign('icms_sitename', $icmsConfig['sitename']);
 
-	if ( @$xoopsOption['template_main'] ) {
+	if ( isset($xoopsOption['template_main']) AND $xoopsOption['template_main']) {
 		if ( false === strpos( $xoopsOption['template_main'], ':' ) ) {
 			$xoopsOption['template_main'] = 'db:' . $xoopsOption['template_main'];
 		}
@@ -69,7 +69,7 @@ function icms_cp_header(){
 		$xoopsThemeFactory->defaultTheme = $icmsConfig['theme_admin_set'];
 
 	$icmsTheme = $xoTheme =& $xoopsThemeFactory->createInstance(array(
-		'contentTemplate'	=> @$xoopsOption['template_main'],
+		'contentTemplate'	=> (isset($xoopsOption['template_main']) AND $xoopsOption['template_main']) ? $xoopsOption['template_main'] : '',
 		'canvasTemplate'	=> 'theme' . (( file_exists(ICMS_THEME_PATH . '/' . $icmsConfig['theme_admin_set'] . '/theme_admin.html')
 			|| file_exists(ICMS_MODULES_PATH . '/system/themes/' . $icmsConfig['theme_admin_set'] . '/theme_admin.html') ) ?'_admin':'') . '.html',
 		'plugins' 			=> array('icms_view_PageBuilder'),

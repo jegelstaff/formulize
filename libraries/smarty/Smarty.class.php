@@ -636,7 +636,7 @@ class Smarty
             }
         } else {
             if ($tpl_var != '' && isset($value)) {
-                if(!@is_array($this->_tpl_vars[$tpl_var])) {
+                if(!isset($this->_tpl_vars[$tpl_var]) OR !is_array($this->_tpl_vars[$tpl_var])) {
                     settype($this->_tpl_vars[$tpl_var],'array');
                 }
                 if($merge && is_array($value)) {
@@ -1144,7 +1144,7 @@ class Smarty
                     $this->debugging = true;
                 }
             } else {
-                $this->debugging = (bool)($this->request_use_auto_globals ? @$_COOKIE['SMARTY_DEBUG'] : @$GLOBALS['HTTP_COOKIE_VARS']['SMARTY_DEBUG']);
+                $this->debugging = (bool)($this->request_use_auto_globals ? ((isset($_COOKIE['SMARTY_DEBUG']) AND $_COOKIE['SMARTY_DEBUG']) ? $_COOKIE['SMARTY_DEBUG'] : '') : @$GLOBALS['HTTP_COOKIE_VARS']['SMARTY_DEBUG']);
             }
         }
 

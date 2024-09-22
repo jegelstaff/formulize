@@ -36,8 +36,8 @@ define("_MI_formulize_TEXT_MAX","Default maximum length of text boxes");
 define("_MI_formulize_TAREA_ROWS","Default rows of text areas");
 define("_MI_formulize_TAREA_COLS","Default columns of text areas");
 define("_MI_formulize_DELIMETER","Default delimiter for check boxes and radio buttons");
-define("_MI_formulize_DELIMETER_SPACE","White space");
-define("_MI_formulize_DELIMETER_BR","Line break");
+if(!defined("_MI_formulize_DELIMETER_SPACE")) { define("_MI_formulize_DELIMETER_SPACE","White space"); }
+if(!defined("_MI_formulize_DELIMETER_BR")) { define("_MI_formulize_DELIMETER_BR","Line break"); }
 define("_MI_formulize_SEND_METHOD","Send method");
 define("_MI_formulize_SEND_METHOD_DESC","Note: Form submitted by anonymous users cannot be sent by using private message.");
 define("_MI_formulize_SEND_METHOD_MAIL","Email");

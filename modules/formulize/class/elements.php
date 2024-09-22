@@ -541,7 +541,7 @@ class formulizeElementsHandler {
 		$sql = "SELECT ele_id FROM ".$xoopsDB->prefix("formulize")." WHERE ele_order < $order AND id_form = $fid ORDER BY ele_order DESC LIMIT 0,1";
 		if($result = $xoopsDB->query($sql)) {
 			$array = $xoopsDB->fetchArray($result);
-			return $array['ele_id'];
+			return isset($array['ele_id']) ? $array['ele_id'] : 0;
 		} else {
 			return false;
 		}

@@ -36,7 +36,7 @@
 		<{$icms_module_header}>
 
 <!-- Sheet Css -->
-	<link rel="stylesheet" type="text/css" media="all" href="<{$icms_url}>/modules/system/style<{if $icms_rtl}>_rtl<{/if}>.css" />
+	<link rel="stylesheet" type="text/css" media="all" href="<{$icms_url}>/modules/system/style<{if isset($icms_rtl) AND $icms_rtl}>_rtl<{/if}>.css" />
 	<link rel="stylesheet" type="text/css" media="all" title="Style sheet" href="<{$icms_imageurl}>admin/style_admin.css" />
 
 </head>
@@ -49,7 +49,7 @@
 <{elseif $xoBlocks.canvas_right_admin}>
 <{assign var=columns_layout value='rightcolumn-layout'}>
 <{/if}>
-<div id="xo-canvas"<{if $columns_layout}> class="<{$columns_layout}>"<{/if}>>
+<div id="xo-canvas"<{if isset($columns_layout) AND $columns_layout}> class="<{$columns_layout}>"<{/if}>>
 	<!-- Header -->
 
 <{* <div id="logoHead">
@@ -86,14 +86,14 @@
 	        <ul>
 		      <{foreach item=sub from=$item.menu}>
                 <{if $item.id == 'cphome'}>
-		          <li><a href="<{if $sub.absolute==1}><{$sub.link}><{else}><{$icms_url}>/modules/<{$sub.dir}>/<{$sub.link}><{/if}>" style="background-image: url(<{if $sub.small!=''}><{$sub.small}><{else}><{$icms_url}>/modules/system/images/imagesarrow1.gif<{/if}>);"><{$sub.title}></a></li>
+		          <li><a href="<{if $sub.absolute==1}><{$sub.link}><{else}><{$icms_url}>/modules/<{$sub.dir}>/<{$sub.link}><{/if}>" style="background-image: url(<{if isset($subitem.small) AND $sub.small!=''}><{$sub.small}><{else}><{$icms_url}>/modules/system/images/imagesarrow1.gif<{/if}>);"><{$sub.title}></a></li>
                 <{elseif $item.id == 'opsystem'}>
                   <li><a href="<{if $sub.absolute==1}><{$sub.link}><{else}><{$icms_url}>/modules/<{$sub.dir}>/<{$sub.link}><{/if}>"><{$sub.title}></a>
-                    <{if $sub.hassubs}>
+                    <{if isset($sub.hassubs) AND $sub.hassubs}>
                       <ul>
                         <{foreach item=subitem from=$sub.subs}>
-                          <li><a href="<{$subitem.link}>" style="background-image: url(<{if $subitem.small!=''}><{$icms_url}>/modules/system/<{$subitem.small}><{else}><{$icms_url}>/modules/system/images/imagesarrow1.gif<{/if}>);"><{$subitem.title}></a>
-                            <{if $subitem.hassubs}>
+                          <li><a href="<{$subitem.link}>" style="background-image: url(<{if isset($subitem.small) AND $subitem.small!=''}><{$icms_url}>/modules/system/<{$subitem.small}><{else}><{$icms_url}>/modules/system/images/imagesarrow1.gif<{/if}>);"><{$subitem.title}></a>
+                            <{if isset($subitem.hassubs) AND $subitem.hassubs}>
                               <ul>
                                 <{foreach item=subsubitem from=$subitem.subs}>
                                   <li><a href="<{$subsubitem.link}>"><{$subsubitem.title}></a></li>
@@ -106,8 +106,8 @@
                     <{/if}>
                   </li>
                 <{elseif $item.id == 'modules'}>
-		          <li><a href="<{if $sub.absolute==1}><{$sub.link}><{else}><{$icms_url}>/modules/<{$sub.dir}>/<{$sub.link}><{/if}>" style="background-image: url(<{if $sub.small!=''}><{$sub.small}><{else}><{$icms_url}>/modules/system/images/modulesitem.png<{/if}>);"><{$sub.title}></a>
-    		      <{if $sub.hassubs}>
+		          <li><a href="<{if $sub.absolute==1}><{$sub.link}><{else}><{$icms_url}>/modules/<{$sub.dir}>/<{$sub.link}><{/if}>" style="background-image: url(<{if isset($subitem.small) AND $sub.small!=''}><{$sub.small}><{else}><{$icms_url}>/modules/system/images/modulesitem.png<{/if}>);"><{$sub.title}></a>
+    		      <{if isset($sub.hassubs) AND $sub.hassubs}>
 	    	        <ul>
 		              <{foreach item=subitem from=$sub.subs}>
 		                <li><a href="<{$subitem.link}>"><{$subitem.title}></a></li>
@@ -116,7 +116,7 @@
 		          <{/if}>
 		          </li>
                 <{elseif $item.id == 'news' && $show_impresscms_menu}>
-    		      <li><a rel="external" href="<{if $sub.absolute==1}><{$sub.link}><{else}><{$icms_url}>/modules/<{$sub.dir}>/<{$sub.link}><{/if}>" style="background-image: url(<{if $sub.small!=''}><{$sub.small}><{/if}>);"><{$sub.title}></a></li>
+    		      <li><a rel="external" href="<{if $sub.absolute==1}><{$sub.link}><{else}><{$icms_url}>/modules/<{$sub.dir}>/<{$sub.link}><{/if}>" style="background-image: url(<{if isset($subitem.small) AND $sub.small!=''}><{$sub.small}><{/if}>);"><{$sub.title}></a></li>
                 <{/if}>
 		      <{/foreach}>
 		    </ul>
@@ -137,7 +137,7 @@
 	<{foreach item=op from=$mod_options}>
 	  <a href="<{$op.link}>" title="<{$op.title}>">
         <{if $op.title == $lang_prefs && $moddir!='system'}>
-          <img src="<{$icms_url}>/modules/system/images/prefs.png" alt="<{$lang_preferences}>" />
+          <img src="<{$icms_url}>/modules/system/images/prefs.png" alt="<{if isset($lang_preferences)}><{$lang_preferences}><{/if}>" />
         <{else}>
           <img src="<{if $op.icon==''}><{$icms_url}>/images/icon_options.png<{else}><{$modpath}>/<{$op.icon}><{/if}>" alt="<{$op.title}>" />
         <{/if}>
@@ -163,7 +163,7 @@
 	<div id="xo-canvas-content">
 		<div id="xo-canvas-columns">
 			<!-- Left column -->
-				<{if $icms_rtl}>
+				<{if isset($icms_rtl) AND $icms_rtl}>
 			<{if $xoBlocks.canvas_right_admin}>
 			<{includeq file="$theme_name/admin/blockszone.html" blocks=$xoBlocks.canvas_right_admin
 				zoneClass='xo-canvas-column' zoneId='xo-canvas-rightcolumn'
@@ -200,7 +200,7 @@
 				<{/if}>
 			</div>
 			<!-- Right column -->
-				<{if $icms_rtl}>
+				<{if isset($icms_rtl) AND $icms_rtl}>
 			<{if $xoBlocks.canvas_left_admin}>
 			<{includeq file="$theme_name/admin/blockszone.html" blocks=$xoBlocks.canvas_left_admin
 				zoneClass='xo-canvas-column' zoneId='xo-canvas-leftcolumn'
@@ -218,7 +218,7 @@
 </div>
 	<!-- Footer -->
 	<div id="xo-footer">
-	<{* <div id="banner" style="margin-left: auto; margin-right: auto;"><{$icms_banner}> 
+	<{* <div id="banner" style="margin-left: auto; margin-right: auto;"><{$icms_banner}>
 	<br /> *}>
 	<{$icms_footadm}>
 	</div>

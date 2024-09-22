@@ -105,6 +105,7 @@ if(isset($_POST['seedtemplates']) AND $_POST['seedtemplates'] AND isset($_GET['s
 // create the contents that we want to display for the currently selected page
 // the included php files create the values for $adminPage that are used for this page
 $adminPage = array();
+$adminPage['show_user_view'] = ''; // will be set for screens when preparing their admin page, so user can jump to the actual screen to see it in action
 $active_page = isset($_GET['page']) ? $_GET['page'] : "home";
 switch($active_page) {
     case "application":

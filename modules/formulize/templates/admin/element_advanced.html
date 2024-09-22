@@ -21,7 +21,7 @@
 </div>
 <{/if}>
 
-<{if $content.ele_encrypt_show}>  
+<{if $content.ele_encrypt_show}>
 <div class="accordion-box">
 <div class="form-item">
 		<fieldset>
@@ -36,7 +36,7 @@
 </div>
 </div>
 <{/if}>
-<{if $content.ele_index_show}>  
+<{if $content.ele_index_show}>
 <div class="accordion-box">
 <div class="form-item">
 		<fieldset>
@@ -51,8 +51,8 @@
 </div>
 </div>
 <{/if}>
- 
-<{if $content.ele_req_on}>		
+
+<{if $content.ele_req_on}>
 <div class="accordion-box">
 	<div class="form-item">
    	<fieldset>
@@ -66,8 +66,8 @@
 	</div>
 </div>
 <{/if}>
- 
-<{if $content.hasMultipleOptions}>
+
+<{if isset($content.hasMultipleOptions) AND $content.hasMultipleOptions}>
 <div class="accordion-box">
 	<div class="form-item">
    	<fieldset>
@@ -79,9 +79,9 @@
             <{$smarty.const._AM_FORMULIZE_EXPORTOPTIONS_DOESNOTEHAVEVALUE}><input type='text' id='exportoptions_doesnothavevalue' name='exportoptions_doesnothavevalue' value='<{$content.exportoptions_doesnothavevalue}>' size=10></p>
 		</fieldset>
 	</div>
-</div>    
+</div>
 <{/if}>
- 
+
 </form>
 
 <div style="clear: both;"></div>

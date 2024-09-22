@@ -205,7 +205,6 @@ define("_AM_COPIED","%s copy");
 define("_AM_DBUPDATED","Database Updated Successfully!");
 define("_AM_ELE_CREATE","Create form elements");
 define("_AM_ELE_EDIT","Edit form element: %s");
-define("_AM_FORM","Form : ");
 define("_AM_REQ","Results of the form module : ");
 define("_AM_SEPAR",'{SEPAR}');
 define("_AM_ELE_FORM","Form elements");
@@ -303,7 +302,6 @@ define("_AM_ELE_OPT_CHANGEUSERVALUES", "When saving changes to these options, al
 define("_AM_ELE_SELECTED","Selected");
 define("_AM_ELE_CHECKED","Checked");
 define("_AM_ELE_MULTIPLE","Allow multiple selections");
-define("_AM_ELE_TYPE","Display the break up in");
 define("_AM_ELE_GRAS","Gras");
 define("_AM_ELE_RGE","Red");
 define("_AM_ELE_CTRE","Center");
@@ -313,7 +311,6 @@ define("_AM_ELE_BLEU","Blue");
 define("_AM_ELE_FICH",'File');
 define("_AM_ELE_TAILLEFICH","Max size on the file");
 define("_AM_ELE_PDS","poids");
-define("_AM_ELE_TYPE",'Allowed types');
 define("_AM_ELE_DELIM_CHOICE",'Delimiter between each option');
 define("_MI_formulize_DELIMETER_SPACE","White space");
 define("_MI_formulize_DELIMETER_BR","Line break");
@@ -368,10 +365,10 @@ define("_AM_ELE_SUBFORM_START_EMPTY", "Show nothing. The user can add the entrie
 define("_AM_ELE_SUBFORM_START_BLANKS1", "Show");
 define("_AM_ELE_SUBFORM_START_BLANKS2", "blank entries");
 define("_AM_ELE_SUBFORM_START_PREPOPULATE", "Create one entry per option in this form element: ");
-define("_AM_ELE_SUBFORM_START_HELP", "<b>If showing more than one blank row</b>: do not use file upload elements in your subform.  File upload elements only work effectively with one blank subform row at a time.<br /><b>'Create one entry per option' example</b>: your subform has radio buttons called 'Fruit' and the options are Apples, Pears and Bananas. If you select this option, then three subform entries will be created when the page loads, one with Apples selected as the fruit, one with Pears and one with Bananas. This feature will NOT work with linked autocomplete boxes!");define("_AM_ELE_SUBFORM_UITYPE_ROW", "Display each subform entry as a row with only the elements selected below showing");
+define("_AM_ELE_SUBFORM_START_HELP", "<b>If showing more than one blank row</b>: do not use file upload elements in your subform.  File upload elements only work effectively with one blank subform row at a time.<br /><b>'Create one entry per option' example</b>: your subform has radio buttons called 'Fruit' and the options are Apples, Pears and Bananas. If you select this option, then three subform entries will be created when the page loads, one with Apples selected as the fruit, one with Pears and one with Bananas. This feature will NOT work with linked autocomplete boxes!");
+define("_AM_ELE_SUBFORM_UITYPE_ROW", "Display each subform entry as a row with only the elements selected below showing");
 define("_AM_ELE_SUBFORM_BLANKS", "How many blank spaces should be shown for this subform when the page first loads?");
 define("_AM_ELE_SUBFORM_BLANKS_HELP", "If you put an exclamation mark after the number (ie: 1!), then blank entries will show up whenever the form loads, as long as no subform entries have been saved yet.<br>Note: if you have more than one blank space, do not use file upload elements in your subform.  File upload elements only work effectively with one blank subform row at a time.");
-define("_AM_ELE_SUBFORM_UITYPE_ROW", "Display each subform entry as a row with only the elements selected below showing");
 define("_AM_ELE_SUBFORM_UITYPE_FORM", "Display each subform entry using the full form, inside a collapsable area that the user can open and close");
 define("_AM_ELE_SUBFORM_ADD_NONE", "No");
 define("_AM_ELE_SUBFORM_ADD_SUBFORM", "Yes, only if the user can add entries in the subform");
@@ -480,7 +477,6 @@ define("_AM_MENUEDIT", "Edit");
 define("_AM_MENUDEL", "Delete");
 define("_AM_MENUCATLIST", "Categories:");
 define("_AM_CATSHORT", "Category");
-define("_AM_CATGENERAL", "General Forms");
 
 define("_AM_CANCEL", "Cancel");
 

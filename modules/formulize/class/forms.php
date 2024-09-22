@@ -45,44 +45,12 @@ class formulizeForm extends XoopsObject {
 		global $xoopsDB;
 
 		if(!is_numeric($id_form)) {
-			// set empty defaults
-			$id_form = "";
-			$lockedform = "";
-			$formq[0]['desc_form'] = "";
-			$formq[0]['store_revisions'] = 0;
-			$single = "";
-			$elements = array();
-			$elementCaptions = array();
-			$elementColheads = array();
-			$elementHandles = array();
-			$elementTypes = array();
-			$encryptedElements = array();
-			$headerlist = array();
-			$defaultform = "";
-            $defaultlist = "";
+			include XOOPS_ROOT_PATH.'/modules/formulize/class/formSetEmptyDefaults.php';
 		} else {
 			$formq = q("SELECT * FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form=$id_form");
 			if(!isset($formq[0])) {
 				unset($formq);
-				$id_form = "";
-				$lockedform = "";
-				$formq[0]['desc_form'] = "";
-				$formq[0]['tableform'] = "";
-				$formq[0]['store_revisions'] = 0;
-				$single = "";
-				$elements = array();
-				$elementsWithData = array();
-				$elementCaptions = array();
-				$elementColheads = array();
-				$elementHandles = array();
-				$elementTypes = array();
-				$encryptedElements = array();
-				$headerlist = array();
-			  $defaultform = "";
-			  $defaultlist = "";
-				$formq[0]['menutext'] = "";
-				$formq[0]['form_handle'] = "";
-                $formq[0]['send_digests'] = 0;
+				include XOOPS_ROOT_PATH.'/modules/formulize/class/formSetEmptyDefaults.php';
 			} else {
 				// gather element ids for this form
 				$encryptedElements = array();
@@ -131,7 +99,7 @@ class formulizeForm extends XoopsObject {
 			}
 
 			// gather the view information
-            list($views, $viewNames, $viewFrids, $viewPublished) = self::getFormViews($id_form);
+      list($views, $viewNames, $viewFrids, $viewPublished) = self::getFormViews($id_form);
 
 
 			// setup the filter settings
@@ -164,18 +132,18 @@ class formulizeForm extends XoopsObject {
 		$this->initVar("viewFrids", XOBJ_DTYPE_ARRAY, serialize($viewFrids));
 		$this->initVar("viewPublished", XOBJ_DTYPE_ARRAY, serialize($viewPublished));
 		$this->initVar("filterSettings", XOBJ_DTYPE_ARRAY, serialize($filterSettings));
-        $this->initVar("headerlist", XOBJ_DTYPE_TXTAREA, $headerlist);
-        $this->initVar("defaultform", XOBJ_DTYPE_INT, $defaultform, true);
-        $this->initVar("defaultlist", XOBJ_DTYPE_INT, $defaultlist, true);
-        $this->initVar("menutext", XOBJ_DTYPE_TXTBOX, $formq[0]['menutext'], false, 255);
-        $this->initVar("form_handle", XOBJ_DTYPE_TXTBOX, $formq[0]['form_handle'], false, 255);
-        $this->initVar("store_revisions", XOBJ_DTYPE_INT, $formq[0]['store_revisions'], true);
-        $this->initVar("on_before_save", XOBJ_DTYPE_TXTAREA, $formq[0]['on_before_save']);
-        $this->initVar("on_after_save", XOBJ_DTYPE_TXTAREA, $formq[0]['on_after_save']);
-        $this->initVar("on_delete", XOBJ_DTYPE_TXTAREA, $formq[0]['on_delete']);
-        $this->initVar("custom_edit_check", XOBJ_DTYPE_TXTAREA, $formq[0]['custom_edit_check']);
-        $this->initVar("note", XOBJ_DTYPE_TXTAREA, $formq[0]['note']);
-        $this->initVar("send_digests", XOBJ_DTYPE_INT, $formq[0]['send_digests'], true);
+		$this->initVar("headerlist", XOBJ_DTYPE_TXTAREA, $headerlist);
+		$this->initVar("defaultform", XOBJ_DTYPE_INT, $defaultform, true);
+		$this->initVar("defaultlist", XOBJ_DTYPE_INT, $defaultlist, true);
+		$this->initVar("menutext", XOBJ_DTYPE_TXTBOX, $formq[0]['menutext'], false, 255);
+		$this->initVar("form_handle", XOBJ_DTYPE_TXTBOX, $formq[0]['form_handle'], false, 255);
+		$this->initVar("store_revisions", XOBJ_DTYPE_INT, $formq[0]['store_revisions'], true);
+		$this->initVar("on_before_save", XOBJ_DTYPE_TXTAREA, $formq[0]['on_before_save']);
+		$this->initVar("on_after_save", XOBJ_DTYPE_TXTAREA, $formq[0]['on_after_save']);
+		$this->initVar("on_delete", XOBJ_DTYPE_TXTAREA, $formq[0]['on_delete']);
+		$this->initVar("custom_edit_check", XOBJ_DTYPE_TXTAREA, $formq[0]['custom_edit_check']);
+		$this->initVar("note", XOBJ_DTYPE_TXTAREA, $formq[0]['note']);
+		$this->initVar("send_digests", XOBJ_DTYPE_INT, $formq[0]['send_digests'], true);
     }
 
     /* Get the views for the supplied form id

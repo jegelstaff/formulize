@@ -80,6 +80,7 @@ if ($_GET['ele_id'] != "new") {
     $ele_value = $elementObject->getVar('ele_value');
     $ele_use_default_when_blank = intval($elementObject->getVar('ele_use_default_when_blank'));
     $ele_delim = $elementObject->getVar('ele_delim');
+		$ele_delim_custom_value = '';
     if ($ele_delim != "br" AND $ele_delim != "space" AND $ele_delim != "") {
         $ele_delim_custom_value = $ele_delim;
         $ele_delim = "custom";
@@ -99,20 +100,28 @@ if ($_GET['ele_id'] != "new") {
         foreach(explode(",",trim($ele_display,",")) as $displayGroup) {
             $display['ele_display'][$displayGroup] = " selected";
         }
+				$display['ele_display']['all'] = "";
+				$display['ele_display']['none'] = "";
     } elseif ($ele_display == 1) {
         $display['ele_display']['all'] = " selected";
+				$display['ele_display']['none'] = "";
     } elseif ($ele_display == 0) {
         $display['ele_display']['none'] = " selected";
+				$display['ele_display']['all'] = "";
     }
     $ele_disabled = $elementObject->getVar('ele_disabled');
     if (strstr($ele_disabled,",")) {
         foreach(explode(",",trim($ele_disabled,",")) as $displayGroup) {
             $display['ele_disabled'][$displayGroup] = " selected";
         }
+				$display['ele_disabled']['all'] = "";
+				$display['ele_disabled']['none'] = "";
     } elseif ($ele_disabled == 1) {
         $display['ele_disabled']['all'] = " selected";
+				$display['ele_disabled']['none'] = "";
     } elseif ($ele_disabled == 0) {
         $display['ele_disabled']['none'] = " selected";
+				$display['ele_disabled']['all'] = "";
     }
 
     $ele_filtersettings = $elementObject->getVar('ele_filtersettings');
@@ -138,42 +147,6 @@ if ($_GET['ele_id'] != "new") {
         $advanced['ele_index_show'] = true;
         $advanced['original_handle'] = $elementObject->getVar('ele_handle');
     }
-
-    if ($type == "text") { // set values for text number options, in case they haven't been set yet for this element
-        if (!isset($ele_value[5])) {
-            $ele_value[5] = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0;
-        }
-        if (!isset($ele_value[6])) {
-            $ele_value[6] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
-        }
-        if (!isset($ele_value[10])) {
-            $ele_value[10] = isset($formulizeConfig['number_suffix']) ? $formulizeConfig['number_suffix'] : '';
-        }
-        if (!isset($ele_value[7])) {
-            $ele_value[7] = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
-        }
-        if (!isset($ele_value[8])) {
-            $ele_value[8] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
-        }
-    }
-    if ($type=="derived") {
-        if (!isset($ele_value[1])) {
-            $ele_value[1] = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0;
-        }
-        if (!isset($ele_value[2])) {
-            $ele_value[2] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
-        }
-        if (!isset($ele_value[3])) {
-            $ele_value[3] = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
-        }
-        if (!isset($ele_value[4])) {
-            $ele_value[4] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
-        }
-				if (!isset($ele_value[5]) OR $ele_value[5] == '') {
-					$ele_value[5] = "<?php\n";
-				}
-    }
-
     $ele_uitext = $elementObject->getVar('ele_uitext');
     $ele_uitextshow = $elementObject->getVar('ele_uitextshow');
 } else {
@@ -440,18 +413,21 @@ if ($ele_type=='textarea') {
         $linkedSourceFid = $linkedMetaDataParts[0];
         if ($linkedSourceFid) {
             // list of elements to display when showing this element in a list
+						$ele_value[EV_MULTIPLE_LIST_COLUMNS] = isset($ele_value[EV_MULTIPLE_LIST_COLUMNS]) ? $ele_value[EV_MULTIPLE_LIST_COLUMNS] : 'none';
             list($listValue, $selectedListValue) = createFieldList($ele_value[EV_MULTIPLE_LIST_COLUMNS], false, $linkedSourceFid,
                 "elements-ele_value[".EV_MULTIPLE_LIST_COLUMNS."]", _AM_ELE_LINKSELECTEDABOVE, true);
             $listValue->setValue($ele_value[EV_MULTIPLE_LIST_COLUMNS]); // mark the current selections in the form element
             $options['listValue'] = $listValue->render();
 
             // list of elements to display when showing this element as an html form element (in form or list screens)
+						$ele_value[EV_MULTIPLE_FORM_COLUMNS] = isset($ele_value[EV_MULTIPLE_FORM_COLUMNS]) ? $ele_value[EV_MULTIPLE_FORM_COLUMNS] : 'none';
             list($displayElements, $selectedListValue) = createFieldList($ele_value[EV_MULTIPLE_FORM_COLUMNS], false, $linkedSourceFid,
                 "elements-ele_value[".EV_MULTIPLE_FORM_COLUMNS."]", _AM_ELE_LINKSELECTEDABOVE, true);
             $displayElements->setValue($ele_value[EV_MULTIPLE_FORM_COLUMNS]); // mark the current selections in the form element
             $options['displayElements'] = $displayElements->render();
 
             // list of elements to export to spreadsheet
+						$ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS] = isset($ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS]) ? $ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS] : 'none';
             list($exportValue, $selectedExportValue) = createFieldList($ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS], false, $linkedSourceFid,
                 "elements-ele_value[".EV_MULTIPLE_SPREADSHEET_COLUMNS."]", _AM_ELE_VALUEINLIST, true);
             $exportValue->setValue($ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS]); // mark the current selections in the form element
@@ -464,8 +440,10 @@ if ($ele_type=='textarea') {
             include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
             $linkedDataHandler = new formulizeDataHandler($linkedSourceFid);
             $allLinkedValues = $linkedDataHandler->findAllValuesForField($linkedMetaDataParts[1], "ASC");
-            if (!is_array($ele_value[13])) {
-                $ele_value[13] = array($ele_value[13]);
+            if (!isset($ele_value[13])) {
+							$ele_value[13] = array();
+						} elseif(!is_array($ele_value[13])) {
+              $ele_value[13] = array($ele_value[13]);
             }
             $options['optionDefaultSelectionDefaults'] = $ele_value[13];
             $options['optionDefaultSelection'] = $allLinkedValues; // array with keys as entry ids and values as text

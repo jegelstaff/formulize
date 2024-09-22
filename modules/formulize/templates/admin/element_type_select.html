@@ -105,7 +105,7 @@
             <fieldset>
                 <div class="form-select" id="optionsLimitByElementFilterDiv">
                     Further limit the options to values that are selected in this other element: <{$content.optionsLimitByElement}><br /><br />
-                    <{if $content.optionsLimitByElementFilter}>
+                    <{if isset($content.optionsLimitByElementFilter) AND $content.optionsLimitByElementFilter}>
                     <{$content.optionsLimitByElementFilter}><br />
                     <div class="description">Use the filter options to isolate a specific entry in the other form. Dynamic { } references are possible for referring to the values of elements in this form.</div>
                     <{else}>

@@ -3,9 +3,9 @@
 * --------------------------------------------------------------------
 *      Portuguese Translation by Paulo Sergio de Araujo alias Gopala
 *                     gopala at harekrishna dot org dot br
-*    http://www.x-trad.org the XOOPS Official Brazilian Translate Site            
-* Translation version 3.0 by GibaPhp - http://br.impresscms.org   
-* -------------------------------------------------------------------- 
+*    http://www.x-trad.org the XOOPS Official Brazilian Translate Site
+* Translation version 3.0 by GibaPhp - http://br.impresscms.org
+* --------------------------------------------------------------------
 */
 // Admin
 define("_FORM_RENAME_TEXT", "Renomear este formulário"); //GibaPhp 3.0
@@ -98,7 +98,6 @@ define("_AM_ELE_ADD_OPT_SUBMIT","Adicionar");
 define("_AM_ELE_SELECTED","Selecionado");
 define("_AM_ELE_CHECKED","Marcado");
 define("_AM_ELE_MULTIPLE","Permitir seleções múltiplas");
-define("_AM_ELE_TYPE","Exibir a separação interna");
 define("_AM_ELE_GRAS","Verde");
 define("_AM_ELE_RGE","Vermelho");
 define("_AM_ELE_CTRE","Centro");
@@ -108,7 +107,6 @@ define("_AM_ELE_BLEU","Azul");
 define("_AM_ELE_FICH",'Arquivo');
 define("_AM_ELE_TAILLEFICH","Tamanho máximo do arquivo");
 define("_AM_ELE_PDS","Unidade");
-define("_AM_ELE_TYPE",'Tipos permitidos');
 define("_AM_ELE_DELIM_CHOICE",'Delimitador entre cada opção');
 define("_MI_formulize_DELIMETER_SPACE","Espaço em branco");
 define("_MI_formulize_DELIMETER_BR","Quebra de linha");
@@ -136,9 +134,9 @@ define("_AM_ELE_FORMLINK_SCOPEFILTER_ALL", "Nenhum filtro em vigor (para selecio
 define("_AM_ELE_FORMLINK_SCOPEFILTER_CON", "Filtrar as opções baseadas neste/nestas condições:"); //GibaPhp 3.0
 define("_AM_ELE_FORMLINK_SCOPEFILTER_ADDCON", "Adicionar outra condição"); //GibaPhp 3.0
 define("_AM_ELE_FORMLINK_SCOPEFILTER_REFRESHHINT", "(Se a primeira lista aqui está vazia, clique no link 'Adicionar outra condição' para atualizar isto.)"); //GibaPhp 3.0
-       
-       
-  
+
+
+
 
 // subforms
 define("_AM_ELE_SUBFORM_FORM", "Qual formulário você quer incluir como um subformulário?");

@@ -145,7 +145,7 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
 				$block = "<a class=\"menuMain$menuActive\" href=\"$itemurl\">$name</a>";
 		}
 
-	$data = array('url'=>$itemurl, 'title'=>$name, 'active'=>($menuActive ? 1 : 0));
+	$data = array('url'=>$itemurl, 'title'=>$name, 'active'=>($menuActive ? 1 : 0), 'target'=>'', 'icon'=>'');
 
 	$isThisSubMenu = false;
 
@@ -236,7 +236,7 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
 			}
 			$text = $menulink->getVar("text");
 			$block .= "<a class=\"menuSub$menuSubActive\" $target href='$suburl'>".$text."</a>";
-			$data['subs'][] = array('url'=>$suburl, 'title'=>$text, 'active'=>($menuSubActive ? 1 : 0));
+			$data['subs'][] = array('url'=>$suburl, 'title'=>$text, 'active'=>($menuSubActive ? 1 : 0), 'target'=>$target);
 		}
 	}
 	return array($block, $data);

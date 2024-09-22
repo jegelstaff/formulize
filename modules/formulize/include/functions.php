@@ -5098,7 +5098,7 @@ function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceE
     $oldTypesName = $filterName."_types";
 
     // unpack existing conditions
-    if (is_array($filterSettings)) {
+    if (is_array($filterSettings AND !empty($filterSettings))) {
         ${$oldElementsName} = $filterSettings[0];
         ${$oldOpsName} = $filterSettings[1];
         ${$oldTermsName} = $filterSettings[2];
@@ -5126,7 +5126,7 @@ function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceE
     $newTermNameOOM = "new_".$filterName."_oom_term";
 
     // make hidden elements for all the old conditions we found
-    if (is_array(${$oldElementsName})) {
+    if (isset(${$oldElementsName}) AND is_array(${$oldElementsName})) {
         $i=0;
         foreach (${$oldElementsName} as $x=>$thisOldElementsName) {
             // need to add [$i] to the generation of the hidden values here, so the hidden condition keys equal the flag on the deletion X
