@@ -6,9 +6,10 @@
 	if(isset($allFidsToUse)) {
 		$allFids = $allFidsToUse;
   } elseif ($selectedFramework and isset($frameworks[$selectedFramework])) {
-      $allFids = $frameworks[$selectedFramework]->getVar('fids');
+		$linkedForms = checkForLinks($selectedFramework, array($form_id), $form_id);
+		$allFids = $linkedForms['fids'] + $linkedForms['sub_fids'];
   } else {
-      $allFids = array(0=>$form_id);
+    $allFids = array(0=>$form_id);
   }
   $thisFidObj = "";
   $allFidObjs = array();
