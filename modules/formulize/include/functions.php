@@ -4759,6 +4759,9 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
             $labeloption = $useValue ? $option_value : $option;
             $labeloption = str_replace('NOQSFEQUALS','',$labeloption); // When the special flag is being used to override equals operator for searches, we must not show the flag! Super kludgey, but it's such a nested exception, hard to make generalized and only takes a couple lines to handle like this
             $labeloption = formulize_swapUIText($labeloption, $ele_uitext);
+						if($labeloption === '') {
+							continue;
+						}
             if (is_array($defaultValue)) {
                 if($multi) {
                     $checked = "";
