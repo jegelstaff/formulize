@@ -331,16 +331,52 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 
 }
 
-function multiPageScreen_addToOptionsList($fid, $options, $frid) {
-		$formObject = new formulizeForm($fid);
-		$elements = $formObject->getVar('elements');
-		$elementCaptions = $formObject->getVar('elementCaptions');
-    $elementColheads = $formObject->getVar('elementColheads');
-    foreach($elementCaptions as $key=>$elementCaption) {
-      $elementLabel = $elementColheads[$key] ? $elementColheads[$key] : $elementCaption;
-			$options[$elements[$key]] = $frid ? printSmart(trans(strip_tags($formObject->title.': '.$elementLabel)), 125) : printSmart(trans(strip_tags($elementLabel)), 40); // need to pull out potential HTML tags from the caption/colhead
+/**
+ * Generates an array, keys are element ids, values are the element colhead or caption, for all the elements available in a dataset that should be shown in multipage form screen admin UI (based on the relationship id if any)
+ * Originally created March 20 2008 - refactored Sep 22 2024 (!)
+ * @param int fid The form id of the mainform
+ * @param int frid Optional. The relationship id if any
+ * @return array Returns the array of compiled elements
+ */
+function multiPageScreen_addToOptionsList($fid, $frid) {
+		// setup elements for the passed in fid
+		$options = multiPageScreen_addToOptionsListByFid($fid, $frid);
+		if($frid) {
+			// figure out which forms in the relationship we care about, and append them to the array
+			$framework_handler =& xoops_getModuleHandler('frameworks', 'formulize');
+			$frameworkObject = $framework_handler->get($frid);
+			foreach($frameworkObject->getVar("links") as $thisLinkObject) {
+					if ($thisLinkObject->getVar("unifiedDisplay") AND (( $thisLinkObject->getVar("relationship") == 1 AND ($thisLinkObject->getVar("form1") == $fid OR $thisLinkObject->getVar("form2") == $fid))
+						OR ($thisLinkObject->getVar("relationship") == 2 AND $thisLinkObject->getVar("form1") != $fid AND $thisLinkObject->getVar("form2") == $fid)
+						OR ($thisLinkObject->getVar("relationship") == 3 AND $thisLinkObject->getVar("form2") != $fid AND $thisLinkObject->getVar("form1") == $fid)
+							)) {
+								$thisFid = $thisLinkObject->getVar("form1") == $fid ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
+								$options = multiPageScreen_addToOptionsListByFid($thisFid, $frid, $options); // append to the array
+					}
+			}
 		}
 		return $options;
+}
+
+/**
+ * Generates an array, or appends to a passed in array, of all the elements in the given form. Keys are element ids, values are the element colhead or caption. Used by multiPageScreen_addToOptionsList.
+ * @param int fid The form for which we're gather elements
+ * @param int frid Optional. A relationship ID indicating if we should prepend the form titles to the values in the array for readability.
+ * @param array options Optional. An array that we should append to.
+ * @return array The array of the elements that we generated, or that was passed in and appended to
+ */
+function multiPageScreen_addToOptionsListByFid($fid, $frid=0, $options=array()) {
+	if(!is_array($options)) { return array(); }
+	if($formObject = new formulizeForm($fid)) {
+		$elements = $formObject->getVar('elements');
+		$elementCaptions = $formObject->getVar('elementCaptions');
+		$elementColheads = $formObject->getVar('elementColheads');
+		foreach($elementCaptions as $key=>$elementCaption) {
+			$elementLabel = $elementColheads[$key] ? $elementColheads[$key] : $elementCaption;
+			$options[$elements[$key]] = $frid ? printSmart(trans(strip_tags($formObject->title.': '.$elementLabel)), 125) : printSmart(trans(strip_tags($elementLabel)), 40); // need to pull out potential HTML tags from the caption/colhead
+		}
+	}
+	return $options;
 }
 
 function pageMeetsConditions($conditions, $currentPage, $entry_id, $fid, $frid) {
