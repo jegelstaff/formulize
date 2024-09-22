@@ -130,9 +130,9 @@ define("_AM_ELE_FORMLINK_SCOPEFILTER_ALL", "No filter in effect (select this to 
 define("_AM_ELE_FORMLINK_SCOPEFILTER_CON", "Filter the options based on this/these conditions:");
 define("_AM_ELE_FORMLINK_SCOPEFILTER_ADDCON", "Add another condition");
 define("_AM_ELE_FORMLINK_SCOPEFILTER_REFRESHHINT", "(If the first list here is empty, click the 'Add another condition' button to refresh it.)");
-       
-       
-  
+
+
+
 
 // subforms
 define("_AM_ELE_SUBFORM_FORM", "Which form do you want to include as a subform?");
@@ -378,7 +378,7 @@ define("_AM_FORMULIZE_SCREEN_LOE_UCHDEFAULT", "Yes, show the checkboxes based on
 define("_AM_FORMULIZE_SCREEN_LOE_UCHALL", "Yes, show the checkboxes on all entries<br>");
 define("_AM_FORMULIZE_SCREEN_LOE_UCHNONE", "No, do not show the checkboxes");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_USECHECKBOXES", "If you use a custom List Item Template, this option will control whether the <i>\$selectionCheckbox</i> variable is set for each row in the list.");
-define("_AM_FORMULIZE_SCREEN_LOE_USEVIEWENTRYLINKS", "Should the 'magnifying glass links' appear to the left of each entry, so users can click through to the full details?");
+define("_AM_FORMULIZE_SCREEN_LOE_USEVIEWENTRYLINKS", "Should the icon to click through to the full entry details appear to the left of each entry?");
 define("_AM_FORMULIZE_SCREEN_LOE_HIDDENCOLUMNS", "Select any columns where you would like the current value from each entry to be included in the list as a hidden form element.");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_HIDDENCOLUMNS", "This option is useful if you need some text on the screen to be sent back in <i>\$_POST</i> as part of the next page load.  You can use <i>gatherHiddenValue('</i>handle<i>');</i> in a custom button access the values you receive.  Any columns you choose will still be displayed normally in the list, in addition to having the hidden form elements created.");
 define("_AM_FORMULIZE_SCREEN_LOE_DECOLUMNS", "Select any columns where you would like the data displayed as a form element, rather than as text:");

@@ -533,7 +533,7 @@ define("_AM_FORMULIZE_SCREEN_LOE_USEHEADINGS", "Est ce que l'en-tête doit appar
 define("_AM_FORMULIZE_SCREEN_LOE_USESCROLLBOX", "Est ce que la liste des entrées doit être contenue dans une boite déroulante?");
 define("_AM_FORMULIZE_SCREEN_LOE_USESEARCH", "Est ce que le champ de recherche rapide doit apparaitre en haut de chaque colonne?");
 define("_AM_FORMULIZE_SCREEN_LOE_USESEARCHCALCMSGS", "Should the 'Advanced Search' or 'Calculations' status messages appear at the top of the list?");
-define("_AM_FORMULIZE_SCREEN_LOE_USEVIEWENTRYLINKS", "Should the 'magnifying glass links' appear to the left of each entry, so users can click through to the full details?");
+define("_AM_FORMULIZE_SCREEN_LOE_USEVIEWENTRYLINKS", "Should the icon to click through to the full entry details appear to the left of each entry?");
 define("_AM_FORMULIZE_SCREEN_LOE_USEWORKING", "Est ce que le message 'Working' doit apparaitre lorsque la page recharge?");
 define("_AM_FORMULIZE_SCREEN_LOE_VIEWENTRYPAGEWORKS", "Page des pageworks");
 define("_AM_FORMULIZE_SCREEN_LOE_VIEWENTRYSCREEN", "Quel écran par défaut doit être montré aux utilisateurs lorsqu'ils souhaitent rentrer une nouvelle entrée?");
