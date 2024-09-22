@@ -477,7 +477,7 @@ class formulizeFrameworksHandler {
             $frid = $framework->getVar('frid');
             if (isset($relationshipIndices[$frid])) { continue; }
 
-            $relationships[$i]['name'] = $framework->getVar('name');
+            $relationships[$i]['name'] = $framework->getVar('name') . ' (id: '.$framework->getVar('frid').')';
             $relationships[$i]['content']['frid'] = $frid;
 
             $frameworkLinks = $framework->getVar('links');
