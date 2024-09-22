@@ -28,7 +28,7 @@
         <div class="form-item">
             <fieldset>
             <legend>Custom code</legend>
-                <textarea id="screens-custom_code" name="screens-custom_code" class="code-textarea" rows="20"/>
+                <textarea id="screens-custom_code" name="screens-custom_code" class="code-textarea canValidate" rows="20"/>
 <{$content.custom_code}></textarea>
 								<br />
                 <{include file=db:admin/variable_template_help.html variables=$content.variabletemplatehelp}>
@@ -37,10 +37,4 @@
 
     </div>
 </form>
-<script>
-jQuery(document).ready(function() {
-    jQuery(".savebutton").click(function() {
-        fz_check_php_code(jQuery("#screens-custom_code").val(), "Template Code", "<{$icms_url}>", <{$icms_userid}>);
-    });
-});
-</script>
+

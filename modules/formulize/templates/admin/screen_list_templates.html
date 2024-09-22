@@ -32,7 +32,7 @@
         <div class="form-item">
             <fieldset>
                 <legend>Top Template</legend>
-                <textarea id="screens-toptemplate"  name="screens-toptemplate" class="code-textarea" rows="20"/>
+                <textarea id="screens-toptemplate"  name="screens-toptemplate" class="code-textarea canValidate" rows="20"/>
 <{$content.toptemplate}></textarea>
             </fieldset>
         </div>
@@ -40,7 +40,7 @@
         <div class="form-item">
             <fieldset>
                 <legend>Open List Template</legend>
-                <textarea id="screens-openlisttemplate"  name="screens-openlisttemplate" class="code-textarea" rows="20"/>
+                <textarea id="screens-openlisttemplate"  name="screens-openlisttemplate" class="code-textarea canValidate" rows="20"/>
 <{$content.openlisttemplate}></textarea>
             </fieldset>
         </div>
@@ -48,7 +48,7 @@
         <div class="form-item">
             <fieldset>
                 <legend>List Item Template</legend>
-                <textarea id="screens-listtemplate" name="screens-listtemplate" class="code-textarea" rows="20"/>
+                <textarea id="screens-listtemplate" name="screens-listtemplate" class="code-textarea canValidate" rows="20"/>
 <{$content.listtemplate}></textarea>
                 <br />
                 <{include file=db:admin/variable_template_help.html variables=$content.variabletemplatehelp}>
@@ -58,7 +58,7 @@
         <div class="form-item">
             <fieldset>
                 <legend>Close List Template</legend>
-                <textarea id="screens-closelisttemplate"  name="screens-closelisttemplate" class="code-textarea" rows="20"/>
+                <textarea id="screens-closelisttemplate"  name="screens-closelisttemplate" class="code-textarea canValidate" rows="20"/>
 <{$content.closelisttemplate}></textarea>
             </fieldset>
         </div>
@@ -66,7 +66,7 @@
         <div class="form-item">
             <fieldset>
             <legend>Bottom Template</legend>
-                <textarea id="screens-bottomtemplate" name="screens-bottomtemplate" class="code-textarea" rows="20"/>
+                <textarea id="screens-bottomtemplate" name="screens-bottomtemplate" class="code-textarea canValidate" rows="20"/>
 <{$content.bottomtemplate}></textarea>
             </fieldset>
         </div>
@@ -75,14 +75,4 @@
 
     </div>
 </form>
-<script>
-jQuery(document).ready(function() {
-    jQuery(".savebutton").click(function() {
-        fz_check_php_code(jQuery("#screens-toptemplate").val(), "Top template", "<{$icms_url}>", <{$icms_userid}>);
-        fz_check_php_code(jQuery("#screens-listtemplate").val(), "List Item template", "<{$icms_url}>", <{$icms_userid}>);
-        fz_check_php_code(jQuery("#screens-bottomtemplate").val(), "Bottom template", "<{$icms_url}>", <{$icms_userid}>);
-        fz_check_php_code(jQuery("#screens-openlisttemplate").val(), "Open List template", "<{$icms_url}>", <{$icms_userid}>);
-        fz_check_php_code(jQuery("#screens-closelisttemplate").val(), "Close List template", "<{$icms_url}>", <{$icms_userid}>);
-    });
-});
-</script>
+
