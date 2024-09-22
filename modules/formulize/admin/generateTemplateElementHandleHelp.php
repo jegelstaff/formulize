@@ -7,7 +7,7 @@
 		$allFids = $allFidsToUse;
   } elseif ($selectedFramework and isset($frameworks[$selectedFramework])) {
 		$linkedForms = checkForLinks($selectedFramework, array($form_id), $form_id);
-		$allFids = $linkedForms['fids'] + $linkedForms['sub_fids'];
+		$allFids = array_merge($linkedForms['fids'], $linkedForms['sub_fids']);
   } else {
     $allFids = array(0=>$form_id);
   }
@@ -27,7 +27,7 @@
       $thisFidHandles = $thisFidObj->getVar('elementHandles');
       foreach($thisFidElements as $zz => $thisFidElement) {
         $elementHeading = $thisFidColheads[$zz] ? $thisFidColheads[$zz] : $thisFidCaptions[$zz];
-        $elementOptions[$thisFidHandles[$zz]] = printSmart(trans(strip_tags($thisFidObj->title.': '.$elementHeading)), 125);
+        $elementOptions[$thisFidHandles[$zz]] = (isset($allFidsToUse) OR $selectedFramework) ? printSmart(trans(strip_tags($thisFidObj->title.': '.$elementHeading)), 125) : printSmart(trans(strip_tags($elementHeading)), 40);
         // for passing to custom button logic, so we know all the element options for each form in framework
         $elementOptionsFid[$thisFid][$thisFidElement] = printSmart(trans(strip_tags($elementHeading)), 75);
         $class = $class == "even" ? "odd" : "even";

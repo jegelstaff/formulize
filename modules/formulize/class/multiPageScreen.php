@@ -331,13 +331,14 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 
 }
 
-function multiPageScreen_addToOptionsList($fid, $options) {
+function multiPageScreen_addToOptionsList($fid, $options, $frid) {
 		$formObject = new formulizeForm($fid);
 		$elements = $formObject->getVar('elements');
 		$elementCaptions = $formObject->getVar('elementCaptions');
     $elementColheads = $formObject->getVar('elementColheads');
     foreach($elementCaptions as $key=>$elementCaption) {
-      $options[$elements[$key]] = trans(strip_tags($elementColheads[$key])) ? printSmart(trans(strip_tags($elementColheads[$key]))) : printSmart(trans(strip_tags($elementCaption))); // need to pull out potential HTML tags from the caption/colhead
+      $elementLabel = $elementColheads[$key] ? $elementColheads[$key] : $elementCaption;
+			$options[$elements[$key]] = $frid ? printSmart(trans(strip_tags($formObject->title.': '.$elementLabel)), 125) : printSmart(trans(strip_tags($elementLabel)), 40); // need to pull out potential HTML tags from the caption/colhead
 		}
 		return $options;
 }

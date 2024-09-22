@@ -59,22 +59,22 @@ if (!is_object($screen)) {
 
 // setup all the elements in this form for use in the listboxes
 include_once XOOPS_ROOT_PATH . "/modules/formulize/class/forms.php";
+$frid = $screen->getVar("frid");
 $fid = $screen->getVar('fid');
-$options = multiPageScreen_addToOptionsList($fid, array());
+$options = multiPageScreen_addToOptionsList($fid, array(), $frid);
 
 // add in elements from other forms in the framework, by looping through each link in the framework and checking if it is a display as one, one-to-one link
 // added March 20 2008, by jwe
-$frid = $screen->getVar("frid");
 if ($frid) {
     $framework_handler =& xoops_getModuleHandler('frameworks', 'formulize');
     $frameworkObject = $framework_handler->get($frid);
     foreach($frameworkObject->getVar("links") as $thisLinkObject) {
-        if ($thisLinkObject->getVar("unifiedDisplay") AND ( $thisLinkObject->getVar("relationship") == 1 OR
-                    ($thisLinkObject->getVar("relationship") == 2 AND $thisLinkObject->getVar("form1") != $form_id)
-                    OR ($thisLinkObject->getVar("relationship") == 3 AND $thisLinkObject->getVar("form2") != $form_id)
-                     )) {
+        if ($thisLinkObject->getVar("unifiedDisplay") AND (( $thisLinkObject->getVar("relationship") == 1 AND ($thisLinkObject->getVar("form1") == $fid OR $thisLinkObject->getVar("form2") == $fid))
+					OR ($thisLinkObject->getVar("relationship") == 2 AND $thisLinkObject->getVar("form1") != $fid AND $thisLinkObject->getVar("form2") == $fid)
+					OR ($thisLinkObject->getVar("relationship") == 3 AND $thisLinkObject->getVar("form2") != $fid AND $thisLinkObject->getVar("form1") == $fid)
+						)) {
             $thisFid = $thisLinkObject->getVar("form1") == $fid ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
-            $options = multiPageScreen_addToOptionsList($thisFid, $options);
+            $options = multiPageScreen_addToOptionsList($thisFid, $options, $frid);
         }
     }
 }
