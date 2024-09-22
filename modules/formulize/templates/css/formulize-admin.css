@@ -1545,7 +1545,8 @@ li.user_perms_li_li {
   padding: 0; }
 
 form div.form-item {
-  margin: 0 0 0em 0; }
+  margin: 0 0 0em 0;
+}
 
 form div.form-item > fieldset {
   border-radius: 5px; }
@@ -1752,4 +1753,9 @@ div#element-mgmt-ui .ui-accordion {
 
 #element-toolbox p.tool {
 	padding-left: 0.5em;
+}
+
+form.formulize-admin-form input[type=text] {
+	margin-bottom: 0;
+	margin-top: 0;
 }

@@ -648,7 +648,7 @@ define("_AM_FORMULIZE_SCREEN_LOE_NOPUBDVIEWS", "There are no published views for
 define("_AM_FORMULIZE_SCREEN_LOE_NOVIEWSAVAIL", "There are no views available");
 define("_AM_FORMULIZE_SCREEN_LOE_USEWORKING", "Should the 'Working' message appear when the page is reloading?");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_USEWORKING", "If the user is likely to click the back button in your interface, turning off this message may improve usability.");
-define("_AM_FORMULIZE_SCREEN_LOE_USESCROLLBOX", "Should the list of entries be contained inside a scrolling box? (Deprecated &mdash; No effect in Formulize 7)");
+define("_AM_FORMULIZE_SCREEN_LOE_USESCROLLBOX", "Should the list of entries be contained inside a scrolling box? (Deprecated &mdash; No effect in Formulize 7+)");
 define("_AM_FORMULIZE_SCREEN_LOE_USESEARCHCALCMSGS", "Should the Modify/Cancel/View Entries buttons appear at the top of the list when 'Calculations' are active?");
 define("_AM_FORMULIZE_SCREEN_LOE_USEHEADINGS", "Should headings appear at the top of each column?");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_USEHEADINGS", "Without headings at the top of columns, no one will be able to sort the entries in the view.");

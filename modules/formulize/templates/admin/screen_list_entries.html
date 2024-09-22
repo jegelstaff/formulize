@@ -87,7 +87,7 @@
     <legend><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_VIEW_DATA_TO_DISPLAY_HEADER}></legend>
 	<div class="form-item float-left half-width">
 
-	  <h2><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEW}></h2>
+	  <h3><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEW}></h3>
 
 	  <p><input type="button" name="add_view" class="formButton" value="<{$smarty.const._AM_ELE_ADD_OPT_SUBMIT}> Default View"</p><br /><br />
 
@@ -113,7 +113,8 @@
 	</div>
 
 	<div class="form-item clear-both">
-        <h2>Fundamental Filters</h2>
+		<br><hr>
+        <h3>Fundamental Filters</h3>
         <div id='fundamentalfilters'>
             <br>
             <{$content.fundamentalfilters}>
@@ -122,20 +123,37 @@
     </div>
 
 	<div class="form-item clear-both">
-	  <label for="screens-usecurrentviewlist"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CURRENTVIEWLIST}></label>
+		<br><hr>
+	  <label for="screens-usecurrentviewlist"><h3><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CURRENTVIEWLIST}></h3></label><br>
 	  <input type="text" id="screens-usecurrentviewlist" name="screens-usecurrentviewlist" value="<{$content.usecurrentviewlist}>" size="20" maxlength="255"/>
 	  <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_LEAVEBLANK_LIST}></div>
 	</div>
+	<br>
 	<div class="form-item">
-	  <label for="screens-limitviews"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_LIMITVIEWS}></label>
+	  <label for="screens-limitviews"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_LIMITVIEWS}></label><br>
 	  <select id="screens-limitviews[]" name="screens-limitviews[]" size="8" multiple>
 		<{html_options options=$content.limitviewoptions selected=$content.limitviews}>
 	  </select>
 	  <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_LIMITVIEWS}></div>
 	</div>
 
+	<br><hr><br>
+	<div class="form-item">
+		<label for="screens-viewentryscreen"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_VIEWENTRYSCREEN}></label>
+		<select id="screens-viewentryscreen" name="screens-viewentryscreen" size="1">
+			<{html_options options=$content.viewentryscreenoptions selected=$content.viewentryscreen}>
+		</select>
+		<div class="description"></div>
+	</div>
 
+	<br><hr><br>
+    <div class="form-item">
+      <label for="screens-entriesperpage"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_ENTRIESPERPAGE}></label>
+      <input type="text" id="screens-entriesperpage" name="screens-entriesperpage" value="<{$content.entriesperpage}>" size="4" maxlength="4"/>
+      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_ENTRIESPERPAGE}></div>
+    </div>
 
+	<br><hr><br>
     <div class="form-item">
       <label for="screens-useworkingmsg"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USEWORKING}></label>
 			<div class="form-radios">
@@ -146,6 +164,8 @@
 		  </div>
       <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_USEWORKING}></div>
     </div>
+
+	<br><hr><br>
     <div class="form-item">
       <label for="screens-usescrollbox"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USESCROLLBOX}></label>
 						<div class="form-radios">
@@ -156,18 +176,7 @@
 		  </div>
       <div class="description"></div>
     </div>
-    <div class="form-item">
-      <label for="screens-entriesperpage"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_ENTRIESPERPAGE}></label>
-      <input type="text" id="screens-entriesperpage" name="screens-entriesperpage" value="<{$content.entriesperpage}>" size="4" maxlength="4"/>
-      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_ENTRIESPERPAGE}></div>
-    </div>
-	<div class="form-item">
-      <label for="screens-viewentryscreen"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_VIEWENTRYSCREEN}></label>
-	    <select id="screens-viewentryscreen" name="screens-viewentryscreen" size="1">
-        <{html_options options=$content.viewentryscreenoptions selected=$content.viewentryscreen}>
-	    </select>
-      <div class="description"></div>
-    </div>
+
   </fieldset>
 </div>
 

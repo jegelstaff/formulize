@@ -10,7 +10,7 @@
 
 
 <div class="panel-content content">
-	<p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CONFIG_SECTION2}></p>
+	<p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CONFIG_SECTION2}></p><br>
   <fieldset>
     <legend>Options for the headings and interface elements of the list</legend>
 
@@ -24,11 +24,13 @@
 		  </div>
       <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_USEHEADINGS}></div>
     </div>
+		<br><hr><br>
     <div class="form-item">
       <label for="screens-repeatheaders"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_REPEATHEADERS}></label>
       <input type="text" id="screens-repeatheaders" name="screens-repeatheaders" value="<{$content.repeatheaders}>" size="2" maxlength="2"/>
       <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_REPEATHEADERS}></div>
     </div>
+		<br><hr><br>
     <div class="form-item">
       <label for="screens-usesearchcalcmsgs"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USESEARCHCALCMSGS}></label>
 		  <div class="form-radios">
@@ -39,6 +41,7 @@
 		  </div>
       <div class="description"></div>
     </div>
+		<br><hr><br>
     <div class="form-item">
       <label for="screens-usesearch"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USESEARCH}></label>
       <div class="form-radios">
@@ -57,19 +60,21 @@
 		  <div class="form-radios">
 			  <label for="0"><input type="radio" id="screens-usesearch" name="screens-usesearch"<{if $content.usesearch eq 0}> checked="checked"<{/if}> value="0"/><{$smarty.const._NO}></label>
 		  </div>
-
       <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_USESEARCH}></div>
     </div>
+		<br><hr><br>
     <div class="form-item">
       <label for="screens-columnwidth"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_COLUMNWIDTH}></label>
       <input type="text" id="screens-columnwidth" name="screens-columnwidth" value="<{$content.columnwidth}>" size="3" maxlength="3"/>
       <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_COLUMNWIDTH}></div>
     </div>
+		<br><hr><br>
     <div class="form-item">
       <label for="screens-textwidth"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_TEXTWIDTH}></label>
       <input type="text" id="screens-textwidth" name="screens-textwidth" value="<{$content.textwidth}>" size="3" maxlength="3"/>
       <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_TEXTWIDTH}></div>
     </div>
+		<br><hr><br>
     <div class="form-item">
       <label for="screens-usecheckboxes"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USECHECKBOXES}></label>
 		  <div class="form-radios">
@@ -83,6 +88,7 @@
 		  </div>
       <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_USECHECKBOXES}></div>
     </div>
+		<br><hr><br>
     <div class="form-item">
       <label for="screens-useviewentrylinks"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USEVIEWENTRYLINKS}></label>
       <div class="form-radios">
@@ -93,13 +99,6 @@
 		  </div>
       <div class="description"></div>
     </div>
-    <div class="form-item">
-      <label for="screens-hiddencolumns"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_HIDDENCOLUMNS}></label>
-	    <select id="screens-hiddencolumns[]" name="screens-hiddencolumns[]" size="10" multiple>
-        <{html_options options=$content.elementoptions selected=$content.hiddencolumns}>
-	    </select>
-      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_HIDDENCOLUMNS}></div>
-    </div>
   </fieldset>
 </div>
 
@@ -108,7 +107,7 @@
     <legend>Options for columns where you would like the data displayed as a form element</legend>
 
    <div class="form-item">
-      <label for="screens-decolumns"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DECOLUMNS}></label>
+      <label for="screens-decolumns"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DECOLUMNS}></label><br>
       <select id="screens-decolumns[]" name="screens-decolumns[]" size="10" multiple>
         <{html_options options=$content.elementoptions selected=$content.decolumns}>
       </select>
@@ -132,6 +131,19 @@
       <div class="description"></div>
     </div>
   </fieldset>
+</div>
+
+<div class="panel-content content">
+  <fieldset>
+		<legend><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_HIDDENCOLUMNS}></legend>
+		<div class="form-item">
+			<label for="screens-hiddencolumns"></label><br>
+			<select id="screens-hiddencolumns[]" name="screens-hiddencolumns[]" size="10" multiple>
+				<{html_options options=$content.elementoptions selected=$content.hiddencolumns}>
+			</select>
+			<div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_HIDDENCOLUMNS}></div>
+		</div>
+	</fieldset>
 </div>
 
 </form>
