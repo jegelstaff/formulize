@@ -5101,7 +5101,7 @@ function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceE
     $oldTypesName = $filterName."_types";
 
     // unpack existing conditions
-    if (is_array($filterSettings AND !empty($filterSettings))) {
+    if (is_array($filterSettings) AND !empty($filterSettings)) {
         ${$oldElementsName} = $filterSettings[0];
         ${$oldOpsName} = $filterSettings[1];
         ${$oldTermsName} = $filterSettings[2];
