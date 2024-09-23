@@ -27,7 +27,7 @@ jQuery(document).ready(function() {
 
     // focus on first element
     jQuery('#formulizeform input, #formulizeform select, #formulizeform textarea, .form-container input, .form-container select, .form-container textarea').first().focus();
-    
+
     // make radio buttons respond to keyboard entry
     jQuery('#formulizeform input[type="radio"], .form-container input[type="radio"]').keypress(function(e) {
         var key = String.fromCharCode(e.keyCode).toLowerCase();
@@ -40,10 +40,10 @@ jQuery(document).ready(function() {
     });
 
     // make radio buttons uncheckable
-    jQuery("input[type=radio]").each(function() {
+    jQuery("#formulizeform input[type=radio]").each(function() {
         jQuery(this).data('checkedstatus', jQuery(this).prop("checked"));
     });
-    jQuery("input[type=radio]").click(function () {
+    jQuery("#formulizeform input[type=radio]").click(function () {
         if (jQuery(this).data('checkedstatus')) {
             // if unchecking, trigger change event
             jQuery(this).prop("checked", false).change();
@@ -52,7 +52,7 @@ jQuery(document).ready(function() {
             jQuery(this).prop("checked", true);
             jQuery(this).data('checkedstatus', true);
         }
-        jQuery(this).siblings('input[type="radio"]').data('checkedstatus', false);
+        jQuery(this).siblings('#formulizeform input[type="radio"]').data('checkedstatus', false);
     });
-    
+
 });

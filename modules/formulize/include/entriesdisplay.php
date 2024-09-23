@@ -4141,6 +4141,33 @@ function gatherHiddenValue($handle) {
 	}
 }
 
+function gatherHiddenValues($handle) {
+	global $formulize_entryIds;
+	$returnValues = array();
+	if (count($formulize_entryIds) == 1 && isset($formulize_entryIds[0]) && $formulize_entryIds[0] == "") {
+		return $returnValues;
+	}
+	foreach ($formulize_entryIds as $entryId) {
+		if (isset($_POST["hiddencolumn_" . $entryId . "_" . $handle])) {
+			$returnValue = explode('=]-!', $_POST["hiddencolumn_" . $entryId . "_" . $handle]);
+			if ($returnValue === false) {
+				$returnValues[$entryId] = false;
+			} elseif (count((array) $returnValue) == 1) {
+				$returnValues[$entryId] = htmlspecialchars(strip_tags($returnValue[0]));
+			} else {
+				$cleanValues = array();
+				foreach ($returnValue as $thisValue) {
+					$cleanValues[] = htmlspecialchars(strip_tags($thisValue));
+				}
+				$returnValues[$entryId] = $cleanValues;
+			}
+		} else {
+			$returnValues[$entryId] = false;
+		}
+	}
+	return $returnValues;
+}
+
 // THIS FUNCTION GENERATES HTML FOR ANY BUTTONS THAT ARE REQUESTED
 function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $doNotForceSingle, $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $advcalc_acid, $screen) {
   static $importExportCleanupDone = false;
