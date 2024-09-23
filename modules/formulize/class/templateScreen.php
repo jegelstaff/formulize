@@ -275,7 +275,7 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
 									if(!isset($$elementHandlerType) AND file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$elementHandlerType.".php")) {
 										$$elementHandlerType = xoops_getmodulehandler($elementHandlerType, 'formulize');
 									}
-									if(isset($$elementHandlerType)) {
+									if(!is_array($$thisHandle) AND isset($$elementHandlerType)) {
 										$$thisHandle = $$elementHandlerType->formatDataForList($$thisHandle, $thisHandle, $internalRecordIds[0], 0);
 									}
 								}
