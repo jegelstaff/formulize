@@ -154,7 +154,6 @@ class formulizeGoogleAddressElementHandler extends formulizeElementsHandler {
     let autocomplete;
     autocomplete = new Array();
 </script>
-<script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
 <script src="https://maps.googleapis.com/maps/api/js?key='.$ele_value['apikey'].'&callback=initAutocomplete&libraries=places&v=weekly" defer></script>
 
 <script>
