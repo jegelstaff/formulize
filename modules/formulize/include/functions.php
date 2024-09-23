@@ -7205,12 +7205,15 @@ function standardizeUserTypedSearchTerms($searchString, $elementIdentifier) {
  * Take a search string and turn it into an array of constituent search terms by splitting on // and OR and AND
  *
  * @param string $searchString The string we are parsing
+ * @param mixed $elementIdentifier An element object, id number, or handle. Represents the element that this search string is searching against.
  * @return array An array of the constituent search terms found in the string, even if only one
  */
 function splitUpSearchStringIntoSearchTerms($searchString, $elementIdentifier) {
 
-	$elementObject = _getElementObject($elementIdentifier);
-	$ele_uitext = $elementObject->getVar('ele_uitext');
+	$ele_uitext = array();
+	if($elementObject = _getElementObject($elementIdentifier)) {
+		$ele_uitext = $elementObject->getVar('ele_uitext');
+	}
 
 	if($searchString === "") { return array(); }
 	$searchArray = array();
