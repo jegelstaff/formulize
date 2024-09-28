@@ -143,7 +143,7 @@ foreach($formObjects as $thisFormObject) {
 }
 
 
-$allRelationships = array();
+$allRelationships = array($framework_handler->get(-1)); // start with primary relationship
 foreach($formObjects as $thisForm) {
     $allRelationships = array_merge($allRelationships, $framework_handler->getFrameworksByForm($thisForm->getVar('id_form'))); // returns array of objects
     if ($aid) {

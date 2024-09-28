@@ -464,7 +464,7 @@ class formulizeFrameworksHandler {
 		static $cachedResults = array();
 		if(isset($cachedResults[$fid])) { return $cachedResults[$fid]; }
 		$ret = array();
-		$sql = 'SELECT DISTINCT(fl_frame_id) FROM '.$this->db->prefix("formulize_framework_links").' WHERE fl_form1_id='.intval($fid).' OR fl_form2_id='.intval($fid);
+		$sql = 'SELECT DISTINCT(fl_frame_id) FROM '.$this->db->prefix("formulize_framework_links").' WHERE fl_frame_id > 0 AND (fl_form1_id='.intval($fid).' OR fl_form2_id='.intval($fid).') ORDER BY fl_frame_id ASC';
 
 		$result = $this->db->query($sql);
 
