@@ -96,8 +96,8 @@ function addlink($form1_id, $form2_id, $relationship_id) {
 
     // write the link to the links table
     $writelink = "INSERT INTO " . $xoopsDB->prefix("formulize_framework_links") .
-        " (fl_frame_id, fl_form1_id, fl_form2_id, fl_key1, fl_key2, fl_relationship, fl_unified_display, fl_unified_delete, fl_common_value)".
-        " VALUES ('$relationship_id', '$form1_id', '$form2_id', 0, 0, 1, 1, 0, 0)";
+        " (fl_frame_id, fl_form1_id, fl_form2_id, fl_key1, fl_key2, fl_relationship, fl_unified_delete, fl_common_value)".
+        " VALUES ('$relationship_id', '$form1_id', '$form2_id', 0, 0, 1, 0, 0)";
     if(!$res = $xoopsDB->query($writelink)) {
         print "Error: could not write link of $form1_id and $form2_id to the links table for framework $relationship_id";
         $success = false;
@@ -134,14 +134,12 @@ function updateframe($relationship_id) {
     global $processedValues;
 
     // update the frame with the settings specified on the main modframe page
-    $links = array();
     $unified_delete = array();  // track the delete checkboxes that are saved on, so we know which ones to to save as off
 		$one2one_conditional = array();
 		$one2one_bookkeeping = array();
     foreach($processedValues['relationships'] as $key => $value) {
         if(substr($key, 0, 3) == "rel") {
             $fl_id = substr($key, 3);
-            $links[$fl_id] = '';
             $unified_delete[$fl_id] = '';
 						$one2one_conditional[$fl_id] = '';
 						$one2one_bookkeeping[$fl_id] = '';
@@ -150,14 +148,7 @@ function updateframe($relationship_id) {
 
         if(substr($key, 0, 8) == "linkages") {
             $fl_id = substr($key, 8);
-            $links[$fl_id] = '';
             updatelinks($fl_id, $value);
-        }
-
-        if(substr($key, 0, 7) == "display") {
-            $fl_id = substr($key, 7);
-            $links[$fl_id] = '*';
-            updatedisplays($fl_id, $value);
         }
 
         if(substr($key, 0, 6) == "delete") {
@@ -185,13 +176,6 @@ function updateframe($relationship_id) {
             if(!$relationship_handler->insert($relationship)) {
                 print "Error: could not update name of the relationship.";
             }
-        }
-    }
-
-    // for checkboxes that have not been checked, reset to nothing
-    foreach ($links as $key => $value) {
-        if (!$value == '*') {
-            updatedisplays($key, 0);
         }
     }
 
@@ -291,20 +275,11 @@ function sourceHandleForElement($element) {
     return $sourceHandle;
 }
 
-function updatedisplays($fl_id, $value) {
-    global $xoopsDB;
-    $sql = "UPDATE " . $xoopsDB->prefix("formulize_framework_links") . " SET fl_unified_display='$value' WHERE fl_id='$fl_id'";
-    if(!$res = $xoopsDB->query($sql)) {
-        print "Error: could not update unified display setting for framework link $fl_id";
-    }
-}
-
-
 function updatedeletes($fl_id, $value) {
     global $xoopsDB;
     $sql = "UPDATE " . $xoopsDB->prefix("formulize_framework_links") . " SET fl_unified_delete='$value' WHERE fl_id='$fl_id'";
     if(!$res = $xoopsDB->query($sql)) {
-        print "Error: could not update unified display setting for framework link $fl_id";
+        print "Error: could not update unified delete setting for framework link $fl_id";
     }
 }
 

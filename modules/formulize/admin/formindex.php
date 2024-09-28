@@ -1558,7 +1558,8 @@ function patch40() {
 					$linkForms = array();
 					$primaryRelationshipError = false;
 
-					$sql = "INSERT INTO ".$xoopsDB->prefix('formulize_frameworks')." (`frame_id`, `frame_name`) VALUES (-1, 'Primary Relationship')";
+					$sql = "INSERT INTO ".$xoopsDB->prefix('formulize_frameworks')." (`frame_id`, `frame_name`) VALUES (-1, 'Primary Relationship');
+                        UPDATE ".$xoopsDB->prefix('formulize_frameworks_links')." SET fl_unified_display = 1";
 					if(!$res = $xoopsDB->query($sql)) {
 						$primaryRelationshipError = 'Could not create relationship entry';
 					}
