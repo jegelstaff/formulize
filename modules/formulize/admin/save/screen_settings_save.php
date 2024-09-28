@@ -74,6 +74,7 @@ if($isNew) {
   } else if($screens['type'] == 'listOfEntries') {
     $screen_handler->setDefaultListScreenVars($screen, 'none', $screens['title'], $fid);
   } else if($screens['type'] == 'form') {
+      $screen->setVar('frid', -1);
       $screen->setVar('displayheading', 1);
       $screen->setVar('reloadblank', 0);
       $screen->setVar('savebuttontext', _formulize_SAVE);
@@ -82,12 +83,14 @@ if($isNew) {
       $screen->setVar('savebuttontext', _formulize_SAVE);
       $screen->setVar('alldonebuttontext', _formulize_DONE);
   } else if ($screens['type'] == 'template') {
+      $screen->setVar('frid', -1);
       $screen->setVar('custom_code', "");
       $screen->setVar('template', "");
       $screen->setVar('savebuttontext', _formulize_SAVE);
       $screen->setVar('donebuttontext', _formulize_SAVE_AND_LEAVE);
       $screen->setVar('donedest', "");
   } else if($screens['type'] == 'calendar') {
+      $screen->setVar('frid', -1);
       $screen->setVar('caltype', 'month');
       $screen->setVar('datasets', serialize(array()));  // need to serialize things that have the array datatype, when they are manually generated here by us!
   }

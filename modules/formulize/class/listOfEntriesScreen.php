@@ -385,11 +385,11 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
         $defaultListScreen->setVar('usedeleteview', _formulize_DE_DELETE);
         $defaultListScreen->setVar('title', $formTitle);
         $defaultListScreen->setVar('fid', $fid);
-        $defaultListScreen->setVar('frid', 0);
+        $defaultListScreen->setVar('frid', -1);
         $defaultListScreen->setVar('type', 'listOfEntries');
         $defaultListScreen->setVar('useToken', 1);
         $defaultListScreen->setVar('theme', $xoopsConfig['theme_set']);
-				$defaultListScreen->setVar('anonNeedsPasscode', 1);
+		$defaultListScreen->setVar('anonNeedsPasscode', 1);
     }
 }
 
