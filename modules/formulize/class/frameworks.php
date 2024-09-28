@@ -168,7 +168,6 @@ class formulizeFrameworkLink extends XoopsObject {
 			$key2 = "";
 			$common = "";
 			$relationship = "";
-			$unified_display = "";
 			$one2one_conditional = 1;
 			$one2one_bookkeeping = 1;
 		} else {
@@ -183,7 +182,6 @@ class formulizeFrameworkLink extends XoopsObject {
 				$key2 = "";
 				$common = "";
 				$relationship = "";
-				$unified_display = "";
 				$unified_delete = "";
 				$one2one_conditional = 1;
 				$one2one_bookkeeping = 1;
@@ -196,7 +194,6 @@ class formulizeFrameworkLink extends XoopsObject {
 				$key2 = $link_q[0]['fl_key2'];
 				$common = $link_q[0]['fl_common_value'];
 				$relationship = $link_q[0]['fl_relationship'];
-				$unified_display = $link_q[0]['fl_unified_display'];
 				$unified_delete = $link_q[0]['fl_unified_delete'];
 				$one2one_conditional = $link_q[0]['fl_one2one_conditional'];
 				$one2one_bookkeeping = $link_q[0]['fl_one2one_bookkeeping'];
@@ -213,7 +210,7 @@ class formulizeFrameworkLink extends XoopsObject {
 		$this->initVar("key2", XOBJ_DTYPE_INT, $key2, true);
 		$this->initVar("common", XOBJ_DTYPE_INT, $common, true);
 		$this->initVar("relationship", XOBJ_DTYPE_INT, $relationship, true);
-		$this->initVar("unifiedDisplay", XOBJ_DTYPE_INT, $unified_display, true);
+		$this->initVar("unifiedDisplay", XOBJ_DTYPE_INT, 1, true);
 		$this->initVar("unified_delete", XOBJ_DTYPE_INT, $unified_delete, true);
 		$this->initVar("one2one_conditional", XOBJ_DTYPE_INT, $one2one_conditional, true);
 		$this->initVar("one2one_bookkeeping", XOBJ_DTYPE_INT, $one2one_bookkeeping, true);
