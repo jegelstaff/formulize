@@ -1606,10 +1606,12 @@ function patch40() {
 					}
 
 					$linkForms = array_unique($linkForms);
-					$sql = "UPDATE ".$xoopsDB->prefix('formulize_screen')." SET `frid` = -1 WHERE `frid` = 0 AND `fid` IN (".implode(', ', $linkForms).")";
-					if(!$primaryRelationshipError AND !$res = $xoopsDB->query($sql)) {
-						$primaryRelationshipError = 'Could not update existing screens to use Primary Relationship';
-					}
+                    if(!empty($linkForms)) {
+                        $sql = "UPDATE ".$xoopsDB->prefix('formulize_screen')." SET `frid` = -1 WHERE `frid` = 0 AND `fid` IN (".implode(', ', $linkForms).")";
+                        if(!$primaryRelationshipError AND !$res = $xoopsDB->query($sql)) {
+                            $primaryRelationshipError = 'Could not update existing screens to use Primary Relationship';
+                        }
+                    }
 
 					if($primaryRelationshipError) {
 						print "ERROR: There was a problem when setting up the Primary Relationship:<br>$primaryRelationshipError<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.<br>";
