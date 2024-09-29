@@ -58,10 +58,13 @@ function createPrimaryRelationship() {
 	$linkForms = array();
 	$primaryRelationshipError = false;
 
-	$sql = "INSERT INTO ".$xoopsDB->prefix('formulize_frameworks')." (`frame_id`, `frame_name`) VALUES (-1, 'Primary Relationship');
-    UPDATE ".$xoopsDB->prefix('formulize_framework_links')." SET fl_unified_display = 1";
+	$sql = "INSERT INTO ".$xoopsDB->prefix('formulize_frameworks')." (`frame_id`, `frame_name`) VALUES (-1, 'Primary Relationship')";
 	if(!$res = $xoopsDB->queryF($sql)) {
 		$primaryRelationshipError = 'Could not create relationship entry';
+	}
+	$sql = "UPDATE ".$xoopsDB->prefix('formulize_framework_links')." SET fl_unified_display = 1";
+	if(!$res = $xoopsDB->queryF($sql)) {
+		$primaryRelationshipError = 'Could not set all links to unified display';
 	}
 
 	$sql = "SELECT * FROM ".$xoopsDB->prefix('formulize_framework_links');
