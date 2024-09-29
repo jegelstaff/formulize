@@ -70,9 +70,9 @@ if($isNew) {
   $screen = $screen_handler->create();
   $screen->setVar('theme', $xoopsConfig['theme_set']);
   if($screens['type'] == 'multiPage') {
-    $screen_handler->setDefaultFormScreenVars($screen, $screens['title'], $fid, $screens['title']);
+    $screen_handler->setDefaultFormScreenVars($screen, $formObject);
   } else if($screens['type'] == 'listOfEntries') {
-    $screen_handler->setDefaultListScreenVars($screen, 'none', $screens['title'], $fid);
+    $screen_handler->setDefaultListScreenVars($screen, 'none', $formObject);
   } else if($screens['type'] == 'form') {
       $screen->setVar('frid', -1);
       $screen->setVar('displayheading', 1);

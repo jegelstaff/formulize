@@ -343,8 +343,7 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
         $GLOBALS['formulize_screenCurrentlyRendering'] = $previouslyRenderingScreen;
     }
 
-    public function setDefaultListScreenVars($defaultListScreen, $defaultFormScreenId, $formTitle, $fid)
-    {
+    public function setDefaultListScreenVars($defaultListScreen, $defaultFormScreenId, $formObject) {
         global $xoopsConfig;
         // View
         $defaultListScreen->setVar('defaultview', serialize(array(XOOPS_GROUP_USERS => FORMULIZE_QUERY_SCOPE_GLOBAL)));
@@ -365,8 +364,8 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
         $defaultListScreen->setVar('useviewentrylinks', 1);
         $defaultListScreen->setVar('desavetext', _formulize_SAVE);
         // Buttons
-        $defaultListScreen->setVar('useaddupdate', _formulize_DE_ADDENTRY);
-        $defaultListScreen->setVar('useaddmultiple', _formulize_DE_ADD_MULTIPLE_ENTRY);
+			$defaultListScreen->setVar('useaddupdate', ($formObject->getVar('singular') ? sprintf(_formulize_DE_ADDSINGULAR, $formObject->getVar('singular')) : _formulize_DE_ADDENTRY));
+			$defaultListScreen->setVar('useaddmultiple', ($formObject->getVar('plural') ? sprintf(_formulize_DE_ADD_PLURAL_ENTRY, $formObject->getVar('plural')) : _formulize_DE_ADD_MULTIPLE_ENTRY));
         $defaultListScreen->setVar('useaddproxy', _formulize_DE_PROXYENTRY);
         $defaultListScreen->setVar('useexport', _formulize_DE_EXPORT);
         $defaultListScreen->setVar('useimport', _formulize_DE_IMPORT);
@@ -383,7 +382,7 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
         $defaultListScreen->setVar('usereset', _formulize_DE_RESETVIEW);
         $defaultListScreen->setVar('usesave', _formulize_DE_SAVE);
         $defaultListScreen->setVar('usedeleteview', _formulize_DE_DELETE);
-        $defaultListScreen->setVar('title', $formTitle);
+			$defaultListScreen->setVar('title', $formObject->getPlural().' List');
         $defaultListScreen->setVar('fid', $fid);
         $defaultListScreen->setVar('frid', -1);
         $defaultListScreen->setVar('type', 'listOfEntries');
