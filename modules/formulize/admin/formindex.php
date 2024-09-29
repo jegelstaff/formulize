@@ -66,25 +66,6 @@ function formulize_DBPatchCheckSQL($sql, &$needsPatch) {
     return $needsPatchRes;
 }
 
-/**
- * Checks if there's a Primary Relationship defined in this Formulize instance
- * @return boolean Returns true or false depending if a Primary Relationship exists or not
- */
-function primaryRelationshipExists() {
-	global $xoopsDB;
-	static $result = null;
-	if($result === null) {
-		$result = false;
-		$sql = "SELECT * FROM ".$xoopsDB->prefix('formulize_frameworks'). " WHERE frame_id = -1";
-		if($res = $xoopsDB->query($sql)) {
-			if($xoopsDB->getRowsNum($res) > 0) {
-				$result = true;
-			}
-		}
-	}
-	return $result;
-}
-
 // database patch logic for 4.0 and higher
 function patch40() {
 
@@ -1547,132 +1528,13 @@ function patch40() {
 				}
 
 				if(primaryRelationshipExists() === false) {
-					// Create a relationship with id -1 and call it Primary Relationship
-					// Add all existing links from all existing relationships, to this relationship
-					// Add extra links to this relationship that represent every linked element connection in the database, which was not in an existing relationship
-					// For the extra links, the linked element form will be on Many form, the target form will be the One form
-
-					// Set the Primary Relationship as the relationship in effect on all screens that are 'Form Only' right now
-
-					global $linkForms;
-					$linkForms = array();
-					$primaryRelationshipError = false;
-
-					$sql = "INSERT INTO ".$xoopsDB->prefix('formulize_frameworks')." (`frame_id`, `frame_name`) VALUES (-1, 'Primary Relationship');
-                        UPDATE ".$xoopsDB->prefix('formulize_frameworks_links')." SET fl_unified_display = 1";
-					if(!$res = $xoopsDB->query($sql)) {
-						$primaryRelationshipError = 'Could not create relationship entry';
-					}
-
-					$sql = "SELECT * FROM ".$xoopsDB->prefix('formulize_framework_links');
-					if(!$primaryRelationshipError AND !$res = $xoopsDB->query($sql)) {
-						$primaryRelationshipError = 'Could not check existing links';
-					}
-
-					while(!$primaryRelationshipError AND $row = $xoopsDB->fetchArray($res)) {
-						$f1 = $row['fl_form1_id'];
-						$f2 = $row['fl_form2_id'];
-						$k1 = $row['fl_key1'];
-						$k2 = $row['fl_key2'];
-						$rel = $row['fl_relationship'];
-						$cv = $row['fl_common_value'];
-						if($k1 AND $k2) { // 0,0 indicates a "user who made the entries" relationship. Ancient and never used??
-							$primaryRelationshipError = insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2);
-						}
-					}
-
-					$sql = "SELECT id_form, ele_id, ele_value FROM ".$xoopsDB->prefix('formulize')." WHERE ele_type IN ('select', 'checkbox') AND ele_value LIKE '%#*=:*%'";
-					if(!$primaryRelationshipError AND !$res = $xoopsDB->query($sql)) {
-						$primaryRelationshipError = 'Could not collate list of existing linked elements';
-					}
-
-					while(!$primaryRelationshipError AND $row = $xoopsDB->fetchArray($res)) {
-						$f2 = $row['id_form'];
-						$k2 = $row['ele_id'];
-						$ele_value = unserialize($row['ele_value']);
-						$boxproperties = explode("#*=:*", $ele_value[2]);
-						$sourceElementHandle = $boxproperties[1];
-						$sourceFormLookup = "SELECT id_form, ele_id FROM ".$xoopsDB->prefix('formulize')." WHERE ele_handle = '".formulize_db_escape($sourceElementHandle)."'";
-						if(!$sourceFormLookupResult = $xoopsDB->query($sourceFormLookup)) {
-							$primaryRelationshipError = "Could not lookup source details of linked form element with this SQL:<br>$sourceFormLookup";
-						}
-						if(!$primaryRelationshipError) {
-							$sourceFormLookupRow = $xoopsDB->fetchArray($sourceFormLookupResult);
-							$f1 = $sourceFormLookupRow['id_form'];
-							$k1 = $sourceFormLookupRow['ele_id'];
-							$rel = 2;
-							$cv = 0;
-							$primaryRelationshipError = insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2);
-						}
-					}
-
-					$linkForms = array_unique($linkForms);
-                    if(!empty($linkForms)) {
-                        $sql = "UPDATE ".$xoopsDB->prefix('formulize_screen')." SET `frid` = -1 WHERE `frid` = 0 AND `fid` IN (".implode(', ', $linkForms).")";
-                        if(!$primaryRelationshipError AND !$res = $xoopsDB->query($sql)) {
-                            $primaryRelationshipError = 'Could not update existing screens to use Primary Relationship';
-                        }
-                    }
-
-					if($primaryRelationshipError) {
+					if($primaryRelationshipError = createPrimaryRelationship()) {
 						print "ERROR: There was a problem when setting up the Primary Relationship:<br>$primaryRelationshipError<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.<br>";
 					}
-
 				}
 
         print "DB updates completed.  result: OK";
     	}
-}
-
-// returns the mirror relationship type:
-// 1 -> 1
-// 2 -> 3
-// 3 -> 2
-function mirrorRelationship($relationship) {
-	switch($relationship) {
-		case 1:
-			return 1;
-		case 2:
-			return 3;
-		case 3:
-			return 2;
-	}
-}
-
-function insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2) {
-	static $linkPairs = array();
-	$primaryRelationshipError = '';
-	$mrel = mirrorRelationship($rel);
-	if(!isset($linkPairs[$cv][$rel][$k1][$k2]) AND !isset($linkPairs[$cv][$mrel][$k2][$k1])) {
-		global $xoopsDB, $linkForms;
-		$linkPairs[$cv][$rel][$k1][$k2] = true;
-		$linkForms[] = $f1;
-		$linkForms[] = $f2;
-		$sql = "INSERT INTO ".$xoopsDB->prefix('formulize_framework_links').
-			"(`fl_frame_id`,
-			`fl_form1_id`,
-			`fl_form2_id`,
-			`fl_key1`,
-			`fl_key2`,
-			`fl_relationship`,
-			`fl_unified_display`,
-			`fl_unified_delete`,
-			`fl_common_value`)
-			VALUES
-			(-1,
-			$f1,
-			$f2,
-			$k1,
-			$k2,
-			$rel,
-			1,
-			0,
-			$cv)";
-		if(!$xoopsDB->query($sql)) {
-			$primaryRelationshipError = "Could not insert an existing link into the Primary Relationship with this SQL:<br>$sql";
-		}
-	}
-	return $primaryRelationshipError;
 }
 
 // Fixes the format if the template is empty

@@ -62,6 +62,7 @@ if (typeof jQuery.ui == 'undefined') {
 ";
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/primary_relationship_functions.php";
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/writeToFormulizeLog.php';
 
 function getFormFramework($formframe, $mainform=0) {
