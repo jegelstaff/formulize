@@ -457,11 +457,12 @@ class formulizeFrameworksHandler {
 		return false;
 	}
 
-	function getFrameworksByForm($fid) {
+	function getFrameworksByForm($fid, $includePrimaryRelationship=false) {
 		static $cachedResults = array();
 		if(isset($cachedResults[$fid])) { return $cachedResults[$fid]; }
 		$ret = array();
-		$sql = 'SELECT DISTINCT(fl_frame_id) FROM '.$this->db->prefix("formulize_framework_links").' WHERE fl_frame_id > 0 AND (fl_form1_id='.intval($fid).' OR fl_form2_id='.intval($fid).') ORDER BY fl_frame_id ASC';
+		$includePrimaryRelationship = $includePrimaryRelationship ? "" : "fl_frame_id > 0 AND";
+		$sql = 'SELECT DISTINCT(fl_frame_id) FROM '.$this->db->prefix("formulize_framework_links")." WHERE $includePrimaryRelationship (fl_form1_id=".intval($fid).' OR fl_form2_id='.intval($fid).') ORDER BY fl_frame_id ASC';
 
 		$result = $this->db->query($sql);
 
@@ -474,44 +475,69 @@ class formulizeFrameworksHandler {
 		return $ret;
 	}
 
+	/**
+	 * Get the links in a relationship, and return them in an ordered array, grouped by form
+	 * @param object relationship The relationship we're getting links from
+	 * @return array An array of the links in the form, ordered by form, normalized into one to many and one to one for each form (many to one switched around)
+	 */
+	function getLinksGroupedByForm($relationship) {
+		$normalizedLinks = array();
+		if(!is_a($relationship, 'formulizeFramework')) {
+			return $normalizedLinks;
+		}
+		$relationshipLinks = $relationship->getVar('links');
+		foreach($relationshipLinks as $link) {
+			switch($link->getVar('relationship')) {
+				case 3:
+					$normalizedLinks[$link->getVar('form2')][] = array(
+						'form1' => $link->getVar('form2'),
+						'form2' => $link->getVar('form1'),
+						'type' => 3
+					);
+					break;
+				default:
+					$normalizedLinks[$link->getVar('form1')][] = array(
+						'form1' => $link->getVar('form1'),
+						'form2' => $link->getVar('form2'),
+						'type' => $link->getVar('relationship')
+					);
+			}
+		}
+		ksort($normalizedLinks);
+		return $normalizedLinks;
+	}
+
     function formatFrameworksAsRelationships($frameworks) {
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
         $relationships = array();
         $relationshipIndices = array();
         $i = 1;
         foreach($frameworks as $framework) {
             $frid = $framework->getVar('frid');
             if (isset($relationshipIndices[$frid])) { continue; }
-
-            $relationships[$i]['name'] = $framework->getVar('name') . ' (id: '.$framework->getVar('frid').')';
-            $relationships[$i]['content']['frid'] = $frid;
-
-            $frameworkLinks = $framework->getVar('links');
-
-            $li = 1;
-            $links = array();
-            foreach($frameworkLinks as $link) {
-                $links[$li]['form1'] = printSmart(getFormTitle($link->getVar('form1')));
-                $links[$li]['form2'] = printSmart(getFormTitle($link->getVar('form2')));
-
-                switch($link->getVar('relationship')) {
-                    case 1:
-                        $relationship = _AM_FRAME_ONETOONE;
-                        break;
-                    case 2:
-                        $relationship = _AM_FRAME_ONETOMANY;
-                        break;
-                    case 3:
-                        $relationship = _AM_FRAME_MANYTOONE;
-                        break;
-                }
-                $links[$li]['relationship'] = printSmart($relationship);
-                $li++;
+			$frameworkLinks = $this->getLinksGroupedByForm($framework);
+			$links = array();
+            foreach($frameworkLinks as $fid=>$fidLinks) {
+				foreach($fidLinks as $link) {
+					$form1Object = $form_handler->get($link['form1']);
+					$form2Object = $form_handler->get($link['form2']);
+					$form1Text = $form1Object->getSingular();
+					$form2Text = $link['type'] == 1 ? $form2Object->getSingular() : $form2Object->getPlural();
+					$connectionText = $link['type'] == 1 ? _AM_FRAME_ONE : _AM_FRAME_MANY;
+					$links[] = array(
+						'each'=>ucfirst(_AM_FRAME_EACH),
+						'form1'=>$form1Text,
+						'has'=>_AM_FRAME_HAS.' '.$connectionText,
+						'form2'=>$form2Text
+					);
+				}
             }
+			$relationships[$i]['name'] = $framework->getVar('name') . ' (id: '.$framework->getVar('frid').')';
+            $relationships[$i]['content']['frid'] = $frid;
             $relationships[$i]['content']['links'] = $links;
             $relationshipIndices[$frid] = true;
             $i++;
         }
-
         return $relationships;
     }
 }

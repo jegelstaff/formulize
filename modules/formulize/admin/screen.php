@@ -119,11 +119,16 @@ if ($form_id != "new") {
 
 $elements = array();
 
-$frameworks = $framework_handler->getFrameworksByForm($form_id);
+$frameworks = array($framework_handler->get(-1)); // start with primary relationship
+$includePrimaryRelationship = true;
+$relationshipsIncludingThisForm = $framework_handler->getFrameworksByForm($form_id, $includePrimaryRelationship);
+$frameworks = array_merge($frameworks, $relationshipsIncludingThisForm); // merge with primary relationship, in case the form is not in the primary relationship - we need it as the default option regardless
 $relationships = $framework_handler->formatFrameworksAsRelationships($frameworks);
+$relationshipsIncludingThisForm = $framework_handler->formatFrameworksAsRelationships($relationshipsIncludingThisForm);
 
 $relationshipSettings = array(
   'relationships' => $relationships,
+  'relationshipsIncludingThisForm' => $relationshipsIncludingThisForm,
   'type' => $settings['type']
 );
 

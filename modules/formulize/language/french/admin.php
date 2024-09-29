@@ -612,4 +612,7 @@ define("_formulize_CAPTION_MATCH", "La légende que vous avez saisie et déjà u
 define("_formulize_CAPTION_QUOTES", "La légende ne peut contenir de quote. Ces derniers ont été enlevés.");
 define("_formulize_CAPTION_SLASH", "La ne peut contenir d'anti slash. Ces derniers ont été enlevés.");
 
+define("_AM_FORMULIZE_FORM_SCREEN_TITLE", "Formulaire - %s");
+define("_AM_FORMULIZE_LIST_SCREEN_TITLE", "Liste - %s");
+
 include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/admin.php'; // just to catch whatever constants might be missing
