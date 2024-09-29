@@ -83,9 +83,8 @@ function patch40() {
      *
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
-
-    $checkThisTable = 'formulize_framework_links';
-		$checkThisField = 'fl_one2one_conditional';
+    $checkThisTable = 'formulize_id';
+		$checkThisField = 'plural';
 		$checkThisProperty = '';
 		$checkPropertyForValue = '';
 
@@ -477,13 +476,16 @@ function patch40() {
         $sql['screenTableIndex1'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD FULLTEXT i_rewrite (`rewriteruleAddress`)";
         $sql['screenTableIndex2'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD INDEX i_fid (`fid`)";
         $sql['screenTableIndex3'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD INDEX i_frid (`frid`)";
-        unlink(XOOPS_ROOT_PATH.'/cache/adminmenu_english.php');
         $sql['sv_use_features'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " ADD `sv_use_features` varchar(255) NULL default NULL";
         $sql['searches_are_fundamental'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " ADD `sv_searches_are_fundamental` tinyint(1) NULL default NULL";
         $sql['add_screen_handle'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen")." ADD `screen_handle` text NOT NULL default ''";
         $sql['add_screen_handle_index'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen")." ADD FULLTEXT i_screen_handle (`screen_handle`)";
 				$sql['add_one2one_conditional'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_framework_links")." ADD fl_one2one_conditional smallint(5) NULL default 1";
 				$sql['add_one2one_bookkeeping'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_framework_links")." ADD fl_one2one_bookkeeping smallint(5) NULL default 1";
+				$sql['singular'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `singular` varchar(255) NULL default ''";
+				$sql['plural'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `plural` varchar(255) NULL default ''";
+
+				unlink(XOOPS_ROOT_PATH.'/cache/adminmenu_english.php');
 
         $needToSetSaveAndLeave = true;
         $needToSetPrintableView = true;
@@ -609,7 +611,9 @@ function patch40() {
                   	print "One-to-one link conditional flag already added. result: OK<br>";
 								} elseif($key === "add_one2one_bookkeeping") {
                     print "One-to-one link bookkeeping flag already added. result: OK<br>";
-                }else {
+    						} elseif($key === "singular" OR $key === "plural") {
+                    print "Singluar/Plural form names already added. result: OK<br>";
+            }else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
             } elseif($key === "on_delete") {
