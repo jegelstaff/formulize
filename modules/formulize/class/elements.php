@@ -56,6 +56,7 @@ class formulizeElement extends FormulizeObject {
         parent::__construct();
 	//	key, data_type, value, req, max, opt
 		$this->initVar("id_form", XOBJ_DTYPE_INT, NULL, false);
+		$this->initVar("fid", XOBJ_DTYPE_INT, NULL, false);
 		$this->initVar("ele_id", XOBJ_DTYPE_INT, NULL, false);
 		$this->initVar("ele_type", XOBJ_DTYPE_TXTBOX, NULL, true, 100);
 		$this->initVar("ele_caption", XOBJ_DTYPE_TXTAREA);
@@ -308,6 +309,7 @@ class formulizeElementsHandler {
         $element->isLinked = false;
         $element->hasMultipleOptions = is_bool($element->hasMultipleOptions) ? $element->hasMultipleOptions : false;
         $element->canHaveMultipleValues = is_bool($element->canHaveMultipleValues) ? $element->canHaveMultipleValues : false;
+				$element->setVar('fid', $element->getVar('id_form'));
         $ele_type = $element->getVar('ele_type');
         $ele_value = $element->getVar('ele_value');
         if($ele_type == "textarea" OR $ele_type == "select" OR $ele_type=="radio" OR $ele_type=="date" OR $ele_type=="colorpick" OR $ele_type=="yn" OR $ele_type=="derived") {

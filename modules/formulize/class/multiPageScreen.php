@@ -357,7 +357,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
         $defaultFormScreen->setVar('displayheading', 0);
 		$defaultFormScreen->setVar('reloadblank', 0);
         $defaultFormScreen->setVar('finishisdone', 1);
-		$defaultFormScreen->setVar('fid', $fid);
+		$defaultFormScreen->setVar('fid', $formObject->getVar('fid'));
 		$defaultFormScreen->setVar('frid', -1);
 		$defaultFormScreen->setVar('type', 'multiPage');
 		$defaultFormScreen->setVar('useToken', 1);
