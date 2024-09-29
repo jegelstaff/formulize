@@ -920,11 +920,14 @@ a.tooltip:before {
   color: #59a7d4; }
 
 a.tooltip > span {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	z-index: 10;
   display: none; }
 
 a.tooltip:hover {
-  background: transparent;
-  background-color: transparent; }
+  background: transparent !important;
+  background-color: transparent;
+	}
 
 a.tooltip:hover > span {
   position: absolute;
@@ -1769,4 +1772,22 @@ div.flex-box {
 
 .pit-contents {
 	width: 440px;
+#form-names-flex {
+	display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+	margin-left: 1em;
+	border-left: 1px solid black;
+	margin-bottom: 1em;
+}
+
+#form-names-flex div.spacer-line {
+	border-bottom: 1px solid black;
+	display: inline-block;
+	padding-right: 1em;
+}
+
+#form-names-flex div.spacer {
+	display: inline-block;
+	padding-right: 1em;
 }

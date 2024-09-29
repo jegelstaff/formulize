@@ -13,46 +13,51 @@
 <input type="hidden" name="application_url_id" value="<{$content.aid}>">
 <input type="hidden" id="reload_settings" name="reload_settings" value="<{if $content.fid == 'new'}>1<{/if}>">
 
-	<div class="accordion-box">
+
 		<div class="form-item required">
         	<fieldset>
-                <legend><label for="forms-title" class="question"><{$smarty.const._AM_SETTINGS_FORM_TITLE_QUESTION}></label></legend>
-                <p><{$smarty.const._AM_SETTINGS_FORM_TITLE}><input type="text" id="forms-title" name="forms-title" class="required_formulize_element" value="<{$content.name}>" onkeyup="fillHandle()" /></p>
-
+                <legend>Form Name and Labels</legend>
+								<p><label for="forms-title" class="question"><{$smarty.const._AM_SETTINGS_FORM_TITLE}></label>
+								<input type="text" id="forms-title" name="forms-title" class="required_formulize_element" value="<{$content.name}>" <{if $content.name == ""}>placeholder="<{$smarty.const._AM_APP_NEWFORM}>"<{/if}> onkeyup="fillHandle()" /><a class="tooltip"><span><{$smarty.const._AM_SETTINGS_FORM_TITLE_EXPLAIN}></span></a></p>
+								<div id="form-names-flex">
+									<div class='spacer-line'></div>
+									<p><label for="forms-singular" class="question"><{$smarty.const._AM_SETTINGS_FORM_SINGULAR}></label>
+									<input type="text" id="forms-singular" name="forms-singular" value="<{$content.singular}>" <{if $content.name == ""}>placeholder="<{$smarty.const._AM_APP_NEWSINGULAR}>"<{/if}>/><a claSs="tooltip"><span><{$smarty.const._AM_SETTINGS_FORM_SINGULAR_EXPLAIN}></span></a></p>
+									<div class='spacer'></div>
+									<p><label for="forms-plural" class="question"><{$smarty.const._AM_SETTINGS_FORM_PLURAL}></label>
+									<input type="text" id="forms-plural" name="forms-plural" value="<{$content.plural}>" <{if $content.name == ""}>placeholder="<{$smarty.const._AM_APP_NEWPLURAL}>"<{/if}>/><a class="tooltip"><span><{$smarty.const._AM_SETTINGS_FORM_PLURAL_EXPLAIN}></span></a></p>
+									<div class='spacer'></div>
+									<P><label for="forms-form_handle" class="question"><{$smarty.const._AM_SETTINGS_FORM_HANDLE}></label>
+									<input type="text" name="forms-form_handle" value="<{$content.form_handle}>" ><a class="tooltip"><span><{$smarty.const._AM_SETTINGS_FORM_HANDLE_EXPLAIN}></span></a></P>
+								</div>
             </fieldset>
 		</div>
-	</div>
 
-  <div class="accordion-box">
-	  <div class="form-item">
-     	<fieldset>
-        <legend><label for="forms-form_handle" class="question"><{$smarty.const._AM_SETTINGS_FORM_HANDLE}></label></legend>
-			  <input type="text" name="forms-form_handle" value="<{$content.form_handle}>" >
-              <a class="tooltip"><span><{$smarty.const._AM_SETTINGS_FORM_HANDLE_EXPLAIN}></span></a>
-		  </fieldset>
-	  </div>
-  </div>
-
-	<div class="accordion-box">
 		<div class="form-item">
 			<fieldset>
-				<legend><label class="question">Note</label></legend>
-				<textarea id="forms-note" name="forms-note"><{$content.note}></textarea>
+					<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_APP_PART}></label></legend>
+					<{if $content.applications|is_array AND $content.applications|@count > 0}>
+					<select name="apps[]" id="apps" size=10 multiple>
+							<{foreach from=$content.applications item=application}>
+									<option value=<{$application.appid}><{$application.selected}>><{$application.text}></option>
+							<{/foreach}>
+					</select>
+					<{/if}>
+					<p><label><{$smarty.const._AM_SETTINGS_FORM_APPNEW}></label>
+					<div class="form-radios radio-inline">
+							<label for="yes"><input type="radio" id="new-app-yes" name="new_app_yes_no" value="yes"/><{$smarty.const._AM_YES}></label>
+					</div>
+					<div class="form-radios radio-inline">
+							<label for="yes"><input type="radio" id="new-app-no" name="new_app_yes_no" value="no" checked/><{$smarty.const._AM_NO}></label>
+					</div>
+					<br /><br />
+					<div class="form-item" id="new-application-box" style="display: none;">
+					<label class="question">What is the name of the new application?</label>
+					<input type="text" id="applications-name" name="applications-name" value="" />
 			</fieldset>
 		</div>
-	</div>
 
-	<div class="accordion-box">
-		<div class="form-item required">
-        	<fieldset>
-                <legend><label for="forms-title" class="question"><{$smarty.const._AM_EOG_Repair}>
-                </label>
-                </legend><input type="button" id="fix_entries" value="Repair Ownership table">
-             </fieldset>
-		</div>
-	</div>
 		<{if $content.istableform == true && $content.fid == "new"}>
-		<div class="accordion-box">
 			<div class="form-item">
 				<fieldset>
                     <legend><label for="database_table" class="question"><{$smarty.const._AM_SETTINGS_FORM_DATABASE}></label></legend>
@@ -62,12 +67,9 @@
                     </div>
                 </fieldset>
 			</div>
-		</div>
-		<div style="clear: both;"></div>
 		<{/if}>
 
 		<{if $content.istableform == false}>
-		<div class="accordion-box">
 			<div class="form-item">
         	<fieldset>
 				<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ALLOWED}></label></legend>
@@ -83,39 +85,6 @@
 				</div>
              </fieldset>
 		</div>
-	</div>
-	<div style="clear: both;"></div>
-
-		<{if $content.fid == "new"}>
-			<div class="accordion-box">
-			<div class="form-item">
-			<fieldset>
-				<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_DEFAULT_GROUP_PERM}></label></legend>
-				<select name="groups_can_edit[]" multiple size=8>
-				<{html_options options=$content.groupsCanEditOptions selected=$content.groupsCanEditDefaults}>
-				</select>
-			</fieldset>
-			</div>
-			</div>
-			<div style="clear: both;"></div>
-		<{/if}>
-
-		<{if $content.fid != "new" AND $content.elementheadings|is_array AND $content.elementheadings|@count}>
-		<div class="accordion-box">
-			<div class="form-item">
-				<fieldset>
-									<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_SHOWING_LIST}></label></legend>
-									<select name=headerlist[] size=10 multiple class="form-multiple-select">
-											<{foreach from=$content.elementheadings item=element}>
-											<option value=<{$element.ele_id}><{$element.selected}>><{$element.text}></option>
-											<{/foreach}>
-									</select>
-							</fieldset>
-			</div>
-		</div>
-		<{/if}>
-
-		<div class="accordion-box">
 			<div class="form-item">
 				<fieldset>
 					<legend><label class="question">Do you want to keep a revision history of all the changes people make to entries in this form?</label></legend>
@@ -130,10 +99,8 @@
 					</div>
 				</fieldset>
 			</div>
-		</div>
 
-        <div class="accordion-box">
-			<div class="form-item">
+  		<div class="form-item">
 				<fieldset>
 					<legend><label class="question">Do you want to send notification e-mails for activity in this form once a day as a digest?</label></legend>
 					<div class="form-radios">
@@ -147,45 +114,51 @@
 					</div>
 				</fieldset>
 			</div>
-		</div>
-
 
 	<{/if}>
 
-	<{if $content.applications|is_array AND $content.applications|@count > 0}>
-	<div class="accordion-box">
-		<div class="form-item">
-			<fieldset>
-                <legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_APP_PART}></label></legend>
-                <select name="apps[]" id="apps" size=10 multiple>
-                    <{foreach from=$content.applications item=application}>
-                        <option value=<{$application.appid}><{$application.selected}>><{$application.text}></option>
-                    <{/foreach}>
-                </select>
-            </fieldset>
-		</div>
+	<{if $content.fid == "new"}>
+	<div class="form-item">
+	<fieldset>
+		<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_DEFAULT_GROUP_PERM}></label></legend>
+		<select name="groups_can_edit[]" multiple size=8>
+		<{html_options options=$content.groupsCanEditOptions selected=$content.groupsCanEditDefaults}>
+		</select>
+	</fieldset>
+	</div>
+<{else if $content.istableform == false}>
+	<div class="form-item">
+		<fieldset>
+					<legend><label for="forms-title" class="question"><{$smarty.const._AM_EOG_Repair}>
+					</label>
+					</legend><input type="button" id="fix_entries" value="Repair Ownership table">
+			 </fieldset>
+	</div>
+	<{if $content.fid != "new" AND $content.elementheadings|is_array AND $content.elementheadings|@count}>
+	<div class="form-item">
+		<fieldset>
+							<legend><{$smarty.const._AM_SETTINGS_FORM_SHOWING_LIST_TITLE}></legend>
+							<p><{$smarty.const._AM_SETTINGS_FORM_SHOWING_LIST}></p><br>
+							<select name=headerlist[] size=10 multiple class="form-multiple-select">
+									<{foreach from=$content.elementheadings item=element}>
+									<option value=<{$element.ele_id}><{$element.selected}>><{$element.text}></option>
+									<{/foreach}>
+							</select>
+					</fieldset>
 	</div>
 	<{/if}>
-	<div class="accordion-box">
-		<div class="form-item">
-			<fieldset>
-                <legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_APPNEW}></label></legend>
-                <div class="form-radios radio-inline">
-                    <label for="yes"><input type="radio" id="new-app-yes" name="new_app_yes_no" value="yes"/><{$smarty.const._AM_YES}></label>
-                </div>
-                <div class="form-radios radio-inline">
-                    <label for="yes"><input type="radio" id="new-app-no" name="new_app_yes_no" value="no" checked/><{$smarty.const._AM_NO}></label>
-                </div>
-								<br /><br />
-								<div class="form-item" id="new-application-box" style="display: none;">
-			          <label class="question">What is the name of the new application?</label>
-                <input type="text" id="applications-name" name="applications-name" value="" />
-							</div>
-            </fieldset>
-		</div>
-	</div>
+<{/if}>
+
+<div class="form-item">
+	<fieldset>
+		<legend><label class="question">Notes</label></legend>
+		<textarea id="forms-note" name="forms-note"><{$content.note}></textarea>
+	</fieldset>
+</div>
 
 </form>
+<!-- Thanks to https://github.com/plurals/pluralize/ !! -->
+<script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/pluralize.js"></script>
 <script type="text/javascript">
   $("#<{$content.singleentry}>").attr('checked', true);
   $("#store_revisions-<{$content.store_revisions}>").attr('checked', true);
@@ -214,13 +187,21 @@
 
 	});
 	function fillHandle(){
-		//this function will be called when they are typing title to update handle
+		var str=$("[name=forms-title]").val();
 		if ("<{$content.fid}>" == "new") {
-			var str=$("[name=forms-title]").val();
-			str=str.toLowerCase().replace(new RegExp("[^a-z0-9]","gm"),"_");
-			str=str.replace(new RegExp("_{2,}","gm"),"_").substring(0,20);
-			$("[name=forms-form_handle]").val(str);
+			handle=str.toLowerCase().replace(new RegExp("[^a-z0-9]","gm"),"_");
+			handle=handle.replace(new RegExp("_{2,}","gm"),"_").substring(0,20);
+			$("[name=forms-form_handle]").val(handle);
 		}
+		if(pluralize.isPlural(str)) {
+			var singular=pluralize.singular(str);
+			var plural=str;
+		} else {
+			var singular=str;
+			var plural=pluralize.plural(str);
+		}
+		$("[name=forms-singular]").val(singular);
+		$("[name=forms-plural]").val(plural);
 	}
 	$('#fix_entries').click(function(){
 		$.ajax({
