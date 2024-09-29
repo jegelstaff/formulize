@@ -726,7 +726,7 @@ class formulizeFormsHandler {
                 }
 
 				if( !$result ){
-					print "Error: this form could not be saved in the database.  SQL: $sql<br>".$xoopsDB->error();
+					print "Error: this form could not be saved in the database.  SQL: $sql<br>".$this->db->error();
 					return false;
 				}
 				if( empty($id_form) ){
