@@ -193,12 +193,17 @@
 			handle=handle.replace(new RegExp("_{2,}","gm"),"_").substring(0,20);
 			$("[name=forms-form_handle]").val(handle);
 		}
+		const suffixes = ["form", "data"];
+		var formSuffix = suffixes.includes(str.substr(-4, 4).toLowerCase()) ? str.substr(-5, 5) : ''; // if/when suffixes aren't all four chars, this needs to change!
+		if(formSuffix) {
+			str = str.substr(0, str.length - 5);
+		}
 		if(pluralize.isPlural(str)) {
-			var singular=pluralize.singular(str);
-			var plural=str;
+			var singular=pluralize.singular(str)
+			var plural=str 
 		} else {
-			var singular=str;
-			var plural=pluralize.plural(str);
+			var singular=str
+			var plural=pluralize.plural(str)
 		}
 		$("[name=forms-singular]").val(singular);
 		$("[name=forms-plural]").val(plural);
