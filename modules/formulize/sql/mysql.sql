@@ -364,6 +364,8 @@ CREATE TABLE formulize_framework_links (
 CREATE TABLE formulize_id (
   id_form smallint(5) NOT NULL auto_increment,
   desc_form varchar(255) NOT NULL default '',
+	singular varchar(255) NULL default '',
+	plural varchar(255) NULL default '',
   singleentry varchar(5) default NULL,
   headerlist text,
   tableform varchar(255) default NULL,
