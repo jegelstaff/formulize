@@ -165,7 +165,7 @@ class formulizeForm extends FormulizeObject {
 	 */
 	function getPlural() {
 		return $this->getVar('plural') ? $this->getVar('plural') : $this->getVar('title');
-    }
+	}
 
     /* Get the views for the supplied form id
 	*  This function also gets invoked by an ajax call from screen_list_entries.html to reload all available views on the dropdown menu.
