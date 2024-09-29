@@ -45,6 +45,13 @@ if($res = $xoopsDB->query($sql)) {
     }
 }
 
+// make the primary relationship if it doesn't exist already
+if(primaryRelationshipExists() === false) {
+	if($error = createPrimaryRelationship()) {
+		print "<p>$error</p>";
+	}
+}
+
 // If saveLock is turned on, exit
 /*if(saveLock) {
 		exit();
