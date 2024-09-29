@@ -482,6 +482,10 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 	$formObject = $form_handler->get($fid);
 
 	list($linkkeys, $linkisparent, $linkformids, $linktargetids, $linkselfids, $linkcommonvalue) = formulize_gatherLinkMetadata($frid, $fid, $mainFormOnly);
+    // if there are no links from the mainform to others in the active relationship, then don't bother with the relationship
+    if(empty($linkkeys)) {
+        $frid = "";
+    }
 
 	//print_r( $linkformids );
 	if (isset($GLOBALS['formulize_setBaseQueryForCalcs']) OR isset($GLOBALS['formulize_returnAfterSettingBaseQuery'])) {
