@@ -118,6 +118,8 @@ class formulizeForm extends FormulizeObject {
 		$this->initVar("id_form", XOBJ_DTYPE_INT, $formq[0]['id_form'], true);
 		$this->initVar("lockedform", XOBJ_DTYPE_INT, $formq[0]['lockedform'], true);
 		$this->initVar("title", XOBJ_DTYPE_TXTBOX, $formq[0]['desc_form'], true, 255);
+		$this->initVar("singular", XOBJ_DTYPE_TXTBOX, $formq[0]['singular'], true, 255);
+		$this->initVar("plural", XOBJ_DTYPE_TXTBOX, $formq[0]['plural'], true, 255);
 		$this->initVar("tableform", XOBJ_DTYPE_TXTBOX, $formq[0]['tableform'], true, 255);
 		$this->initVar("single", XOBJ_DTYPE_TXTBOX, $single, false, 5);
 		$this->initVar("elements", XOBJ_DTYPE_ARRAY, serialize($elements));
@@ -144,6 +146,24 @@ class formulizeForm extends FormulizeObject {
 		$this->initVar("custom_edit_check", XOBJ_DTYPE_TXTAREA, $this->getVar('custom_edit_check'));
 		$this->initVar("note", XOBJ_DTYPE_TXTAREA, $formq[0]['note']);
 		$this->initVar("send_digests", XOBJ_DTYPE_INT, $formq[0]['send_digests'], true);
+    }
+
+	/**
+	 * Return the singular language term for the form
+	 * Useful for backwards compatibility
+	 * @return string The value of singular for the form, or the title if there isn't a singular value
+	 */
+	function getSingular() {
+		return $this->getVar('singular') ? $this->getVar('singular') : $this->getVar('title');
+	}
+
+	/**
+	 * Return the plural language term for the form
+	 * Useful for backwards compatibility
+	 * @return string The value of plural for the form, or the title if there isn't a plural value
+	 */
+	function getPlural() {
+		return $this->getVar('plural') ? $this->getVar('plural') : $this->getVar('title');
     }
 
     /* Get the views for the supplied form id
@@ -672,15 +692,20 @@ class formulizeFormsHandler {
 				}
 
                 if($formObject->isNew() || empty($id_form)) {
-                    $sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`desc_form`, `singleentry`, `tableform`, ".
+                    $sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`desc_form`, `singular`, `plural`, `singleentry`, `tableform`, ".
                         "`defaultform`, `defaultlist`, `menutext`, `form_handle`, `store_revisions`, `note`, `send_digests`) VALUES (".
-                        $this->db->quoteString($title).", ".$this->db->quoteString($singleToWrite).", ".
+                        $this->db->quoteString($title).", ".
+                        $this->db->quoteString($singular).", ".
+                        $this->db->quoteString($plural).", ".
+												$this->db->quoteString($singleToWrite).", ".
                         $this->db->quoteString($tableform).", ".intval($defaultform).", ".intval($defaultlist).
                         ", ".$this->db->quoteString($menutext).", ".$this->db->quoteString($form_handle).", ".
                         intval($store_revisions).", ".$this->db->quoteString($note).", ".intval($send_digests).")";
                 } else {
                     $sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET".
                         " `desc_form` = ".$this->db->quoteString($title).
+												", `singular` = ".$this->db->quoteString($singular).
+												", `plural` = ".$this->db->quoteString($plural).
                         ", `singleentry` = ".$this->db->quoteString($singleToWrite).
                         ", `headerlist` = ".$this->db->quoteString($headerlist).
                         ", `defaultform` = ".intval($defaultform).
@@ -1509,9 +1534,9 @@ class formulizeFormsHandler {
 
 		$this->setPermissionsForClonedForm($fid, $newfid);
 
-		// create and insert new defaultlist screen and defaultform screen using $newfid and $newtitle
-		$defaultFormScreenId = $this->formScreenForClonedForm($newtitle, $newfid);
-		$defaultListScreenId = $this->listScreenForClonedForm($defaultFormScreenId, $newtitle, $newfid);
+		// create and insert new defaultlist screen and defaultform screen
+		$defaultFormScreenId = $this->formScreenForClonedForm($clonedFormObject);
+		$defaultListScreenId = $this->listScreenForClonedForm($defaultFormScreenId, $clonedFormObject);
 		$clonedFormObject->setVar('defaultform', $defaultFormScreenId);
 		$clonedFormObject->setVar('defaultlist', $defaultListScreenId);
 		if(!$form_handler->insert($clonedFormObject)) {
@@ -1535,11 +1560,11 @@ class formulizeFormsHandler {
 	 * @param $newfid
 	 * @return mixed
 	 */
-	public function formScreenForClonedForm($newtitle, $newfid)
+	public function formScreenForClonedForm($formObject)
 	{
 		$formScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 		$defaultFormScreen = $formScreenHandler->create();
-		$formScreenHandler->setDefaultFormScreenVars($defaultFormScreen, $newtitle.' Form', $newfid, $newtitle);
+		$formScreenHandler->setDefaultFormScreenVars($defaultFormScreen, $formObject);
 		if(!$defaultFormScreenId = $formScreenHandler->insert($defaultFormScreen)) {
 			print "Error: could not create default form screen";
 			return $defaultFormScreenId;
@@ -1553,11 +1578,11 @@ class formulizeFormsHandler {
 	 * @param $newfid
 	 * @return mixed
 	 */
-	public function listScreenForClonedForm($defaultFormScreenId, $newtitle, $newfid)
+	public function listScreenForClonedForm($defaultFormScreenId, $formObject)
 	{
 		$listScreenHandler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
 		$screen = $listScreenHandler->create();
-		$listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $newtitle.' List', $newfid);
+		$listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $formObject);
 
 		if(!$defaultListScreenId = $listScreenHandler->insert($screen)) {
 			print "Error: could not create default list screen";
