@@ -218,7 +218,9 @@ define("_formulize_DB_EXPORT_TO_EXCEL", "Télécharger pour ouvrir avec Microsof
 define("_formulize_DB_EXPORT_NULL_OPTION", "Use this value in place of all NULL values: ");
 define("_formulize_DE_ACTIONS", "Actions: ");
 define("_formulize_DE_ADD_MULTIPLE_ENTRY", "Ajouter plusieurs entrées");
+define("_formulize_DE_ADD_PLURAL_ENTRY", "Ajouter plusieurs entrées");
 define("_formulize_DE_ADDENTRY", "Ajouter une entrée");
+define("_formulize_DE_ADDSINGULAR", "Ajouter une entrée");
 define("_formulize_DE_ADVCALCS", "Procedures");
 define("_formulize_DE_ADVSCOPE", "Advanced scope");
 define("_formulize_DE_ADVSEARCH", "Recherche avancée");
