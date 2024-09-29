@@ -423,6 +423,7 @@ if ($_GET['fid'] != "new") {
     $menutext = _AM_APP_USETITLE;
     $form_handle = "";
     $store_revisions = 0;
+		$send_digests = 0;
     if ($_GET['aid']) {
         $formApplications = array(intval($_GET['aid']));
     }
