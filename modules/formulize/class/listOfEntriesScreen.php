@@ -383,7 +383,7 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
         $defaultListScreen->setVar('usesave', _formulize_DE_SAVE);
         $defaultListScreen->setVar('usedeleteview', _formulize_DE_DELETE);
 			$defaultListScreen->setVar('title', $formObject->getPlural().' List');
-        $defaultListScreen->setVar('fid', $fid);
+			$defaultListScreen->setVar('fid', $formObject->getVar('fid'));
         $defaultListScreen->setVar('frid', -1);
         $defaultListScreen->setVar('type', 'listOfEntries');
         $defaultListScreen->setVar('useToken', 1);
