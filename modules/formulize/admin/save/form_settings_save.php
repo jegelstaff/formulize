@@ -100,6 +100,7 @@ if(!$form_handler->insert($formObject)) {
 }
 
 $fid = $formObject->getVar('id_form');
+$formObject->setVar('fid', $fid);
 if($_POST['formulize_admin_key'] == "new") {
 
   if(!$tableCreateRes = $form_handler->createDataTable($fid)) {
