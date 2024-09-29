@@ -293,7 +293,8 @@ $(document).ready(function() {
     var requiredok = true;
     $(".required_formulize_element").each(function () {
       if(($(this).val().length) == 0) {
-        requiredok = false;
+        requiredok = false
+				$('.admin-ui').fadeTo(1, 1)
       }
     });
     return requiredok;
