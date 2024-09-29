@@ -844,3 +844,6 @@ define("_AM_FORMULIZE_EXPLODE_COLUMNS_ON_EXPORT_OFF", "Show as a comma separated
 define("_AM_FORMULIZE_EXPLODE_COLUMNS_ON_EXPORT_ON", "Show one column per option in this element, and use the following values in the cells:");
 define("_AM_FORMULIZE_EXPORTOPTIONS_HASVALUE", "Value to show if an option is selected:");
 define("_AM_FORMULIZE_EXPORTOPTIONS_DOESNOTEHAVEVALUE", "Value to show if an option is NOT selected:");
+
+define("_AM_FORMULIZE_FORM_SCREEN_TITLE", "%s Form");
+define("_AM_FORMULIZE_LIST_SCREEN_TITLE", "%s List");

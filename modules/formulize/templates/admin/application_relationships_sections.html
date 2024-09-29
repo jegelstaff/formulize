@@ -2,10 +2,18 @@
 <{if $sectionContent.frid > 0}><p></p><a href="ui.php?page=relationship&frid=<{$sectionContent.frid}>&aid=<{$content.aid}>&fid=<{$content.fid}>&sid=<{$content.sid}>"><img src="../images/kedit.png"> Configure this relationship</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="deleterelationship" target="<{$sectionContent.frid}>" href=""><img src="../images/editdelete.gif">&nbsp;&nbsp;Delete this relationship</a></p><{/if}>
 </div>
 <div class="panel-content content">
-	<p><b>Links between forms in this relationship:</b></p>
-  <ul>
+    <{assign var=prevOne value=''}>
 	  <{foreach from=$sectionContent.links key=linkNumber item=link}>
-      <li><{$link.form1}> + <{$link.form2}> - <{$link.relationship}></li>
+      <{if $prevOne && $prevOne != $link.form1}>
+        </p>
+      <{/if}>
+      <{if $prevOne != $link.form1}>
+        <p><{$link.each}> <em><{$link.form1}></em>...
+        <{assign var=prevOne value=$link.form1}>
+      <{/if}>
+      <br>&nbsp;&nbsp;&nbsp;<{$link.has}> <em><{$link.form2}></em>
   	<{/foreach}>
-  </ul>
+    <{if $prevOne}>
+      </p>
+    <{/if}>
 </div>
