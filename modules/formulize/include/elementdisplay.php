@@ -456,18 +456,27 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
     // convert the internal database representation to the displayed value, if this element has uitext that we're supposed to use
     // translate yes/no choices for yes/no elements if French is active language
     global $xoopsConfig;
-        foreach ($filterElements as $key => $element) {
-        $element_metadata = formulize_getElementMetaData($element, true);
-        if($element_metadata['ele_uitextshow'] AND isset($element_metadata['ele_uitext'])) {
-            $filterTerms[$key] = formulize_swapUIText($filterTerms[$key], unserialize($element_metadata['ele_uitext']));
-        }
-        if($element_metadata['ele_type'] == 'yn' AND ($filterTerms[$key] == 'Yes' OR $filterTerms[$key] == 'No') AND $xoopsConfig['language'] == 'french') {
-            $filterTerms[$key] = $filterTerms[$key] == 'Yes' ? 'Oui' : $filterTerms[$key];
-            $filterTerms[$key] = $filterTerms[$key] == 'No' ? 'Non' : $filterTerms[$key];
-    }
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+
+    foreach ($filterElements as $key => $element) {
+			// make sure that the filterElements array is using handles, as originally designed and required by code below
+			if($filterElementObject = $element_handler->get($element)) {
+				$filterElements[$key] = $filterElementObject->getVar('ele_handle');
+			} else {
+				print "Formulize Error: a display or disabled condition for a form element, is referencing a non existent element in another form. Probably the element was deleted?<br>";
+				return false;
+			}
+			$element_metadata = formulize_getElementMetaData($element, !is_numeric($element));
+			if($element_metadata['ele_uitextshow'] AND isset($element_metadata['ele_uitext'])) {
+				$filterTerms[$key] = formulize_swapUIText($filterTerms[$key], unserialize($element_metadata['ele_uitext']));
+			}
+			if($element_metadata['ele_type'] == 'yn' AND ($filterTerms[$key] == 'Yes' OR $filterTerms[$key] == 'No') AND $xoopsConfig['language'] == 'french') {
+				$filterTerms[$key] = $filterTerms[$key] == 'Yes' ? 'Oui' : $filterTerms[$key];
+				$filterTerms[$key] = $filterTerms[$key] == 'No' ? 'Non' : $filterTerms[$key];
+    	}
     }
 
-    $element_handler = xoops_getmodulehandler('elements', 'formulize');
+
 	for($io=0;$io<count((array) $indexes);$io++) {
 		$i = $indexes[$io];
 		if(!($evaluationCondition == "")) {

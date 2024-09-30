@@ -4239,6 +4239,26 @@ function _getElementObject($element) {
     }
 }
 
+/**
+ * Takes an array of element references, and converts any element handles in it to the corresponding ID
+ * Inefficient! Should be used sparingly.
+ * @param array handles An array of element ids or handles, can be mixed
+ * @return array Returns the array with any numeric IDs converted to handles, or the passed in value if handles was not an array
+ */
+function convertElementHandlesToElementIds($handles) {
+	if(is_array($handles)) {
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		foreach($handles as $i=>$handle) {
+			if(!is_numeric($handle)) {
+				if($elementObject = $element_handler->get($handle)) {
+					$handles[$i] = $elementObject->getVar('ele_id');
+				}
+			}
+		}
+	}
+	return $handles;
+}
+
 // still in use but could/should be refactored
 function convertElementIdsToElementHandles($ids, $fid=false) {
     $elementsToFrameworks = false;
@@ -5086,9 +5106,9 @@ function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceE
             foreach ($vs as $row=>$values) {
 								$thisFidObj = $form_handler->get($fid);
                 if ($values['ele_colhead'] != "") {
-                    $options[$values['ele_handle']] = $frid ? printSmart(trans(strip_tags($thisFidObj->title.': '.$values['ele_colhead'])), 125) : printSmart(trans(strip_tags($values['ele_colhead'])), 40);
+                    $options[$values['ele_id']] = $frid ? printSmart(trans(strip_tags($thisFidObj->title.': '.$values['ele_colhead'])), 125) : printSmart(trans(strip_tags($values['ele_colhead'])), 40);
                 } else {
-                    $options[$values['ele_handle']] = $frid ? printSmart(trans(strip_tags($thisFidObj->title.': '.$values['ele_caption'])), 125) : printSmart(trans(strip_tags($values['ele_caption'])), 40);
+                    $options[$values['ele_id']] = $frid ? printSmart(trans(strip_tags($thisFidObj->title.': '.$values['ele_caption'])), 125) : printSmart(trans(strip_tags($values['ele_caption'])), 40);
                 }
             }
         }
@@ -5102,18 +5122,18 @@ function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceE
 
     // unpack existing conditions
     if (is_array($filterSettings) AND !empty($filterSettings)) {
-        ${$oldElementsName} = $filterSettings[0];
-        ${$oldOpsName} = $filterSettings[1];
-        ${$oldTermsName} = $filterSettings[2];
-        if (isset($filterSettings[3])) {
-            ${$oldTypesName} = $filterSettings[3];
-        } else {
-            if (is_array($filterSettings[0])) {
-                foreach ($filterSettings[0] as $i => $thisFilterSettingsZero) {
-                    ${$oldTypesName}[$i] = $defaultTypeIfNoFilterTypeGiven;
-                }
-            }
-        }
+			${$oldElementsName} = convertElementHandlesToElementIds($filterSettings[0]);
+			${$oldOpsName} = $filterSettings[1];
+			${$oldTermsName} = $filterSettings[2];
+			if (isset($filterSettings[3])) {
+					${$oldTypesName} = $filterSettings[3];
+			} else {
+					if (is_array($filterSettings[0])) {
+							foreach ($filterSettings[0] as $i => $thisFilterSettingsZero) {
+									${$oldTypesName}[$i] = $defaultTypeIfNoFilterTypeGiven;
+							}
+					}
+			}
     }
 
     // setup needed variables for the all or oom ui
@@ -5234,9 +5254,9 @@ function getExistingFilter($filterSettings, $filterName, $formWithSourceElements
             foreach ($vs as $row=>$values) {
 							$thisFidObj = $form_handler->get($fid);
 							if ($values['ele_colhead'] != "") {
-								$options[$values['ele_handle']] = $frid ? printSmart(trans(strip_tags($thisFidObj->title.': '.$values['ele_colhead'])), 125) : printSmart(trans(strip_tags($values['ele_colhead'])), 40);
+								$options[$values['ele_id']] = $frid ? printSmart(trans(strip_tags($thisFidObj->title.': '.$values['ele_colhead'])), 125) : printSmart(trans(strip_tags($values['ele_colhead'])), 40);
 							} else {
-								$options[$values['ele_handle']] = $frid ? printSmart(trans(strip_tags($thisFidObj->title.': '.$values['ele_caption'])), 125) : printSmart(trans(strip_tags($values['ele_caption'])), 40);
+								$options[$values['ele_id']] = $frid ? printSmart(trans(strip_tags($thisFidObj->title.': '.$values['ele_caption'])), 125) : printSmart(trans(strip_tags($values['ele_caption'])), 40);
 							}
             }
         }
@@ -5250,18 +5270,18 @@ function getExistingFilter($filterSettings, $filterName, $formWithSourceElements
 
     // unpack existing conditions
     if (is_array($filterSettings)) {
-        ${$oldElementsName} = $filterSettings[0];
-        ${$oldOpsName} = $filterSettings[1];
-        ${$oldTermsName} = $filterSettings[2];
-        if (isset($filterSettings[3])) {
-            ${$oldTypesName} = $filterSettings[3];
-        } else {
-            if (is_array($filterSettings[0])) {
-                foreach ($filterSettings[0] as $i => $thisFilterSettingsZero) {
-                    ${$oldTypesName}[$i] = $defaultTypeIfNoFilterTypeGiven;
-                }
-            }
-        }
+			${$oldElementsName} = convertElementHandlesToElementIds($filterSettings[0]);
+			${$oldOpsName} = $filterSettings[1];
+			${$oldTermsName} = $filterSettings[2];
+			if (isset($filterSettings[3])) {
+					${$oldTypesName} = $filterSettings[3];
+			} else {
+					if (is_array($filterSettings[0])) {
+							foreach ($filterSettings[0] as $i => $thisFilterSettingsZero) {
+									${$oldTypesName}[$i] = $defaultTypeIfNoFilterTypeGiven;
+							}
+					}
+			}
     }
 
     // setup needed variables for the all or oom
@@ -5294,6 +5314,71 @@ function getExistingFilter($filterSettings, $filterName, $formWithSourceElements
     return $existingConditions;
 }
 
+/**
+ * Used to handle filter conditions being saved in the admin UI
+ * @param string $filter_key - The prefix used in the values in POST that we want to read, ie: if in POST we have displayCondition_elements, and displayCondition_ops then the key is displayCondition
+ * @param string $delete_key - The key in POST for a delete signal sent from the admin UI
+ * @param int $deleteTargetKey - Optional. The key we care about for isolating which conditions to delete, as found in the array created by exploding the delete_key in POST on the _ character.
+ * @param int $conditionsDeletePartsKeyOneMustMatch - Optional value that is meant to isolate only certain conditions to be deleted. The delete key's value will have _ in it, and exploding on _ gives an array, and the 1 key (second position) must match this value. Used by the permissions saving to delete conditions only from the appropriate group's permissions.
+ * @return array Returns an array with two elements. The first is an array of the elements, ops, terms and types properly organized for saving into the database. The second is a flag to indicate if a reload is necessary for the user to see cleanly what has changed.
+ */
+function parseSubmittedConditions($filter_key, $delete_key, $deleteTargetKey = 1, $conditionsDeletePartsKeyOneMustMatch = false) {
+
+	if(!isset($_POST[$filter_key."_elements"]) AND !isset($_POST["new_".$filter_key."_term"]) AND !isset($_POST["new_".$filter_key."_oom_term"])) {
+		return "";
+	}
+
+	$reloadFlag = false;
+	if ($_POST["new_".$filter_key."_term"] != "") {
+		$_POST[$filter_key."_elements"][] = $_POST["new_".$filter_key."_element"];
+		$_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_op"];
+		$_POST[$filter_key."_terms"][] = $_POST["new_".$filter_key."_term"];
+		$_POST[$filter_key."_types"][] = "all";
+		$reloadFlag = true;
+	}
+	if ($_POST["new_".$filter_key."_oom_term"] != "") {
+		$_POST[$filter_key."_elements"][] = $_POST["new_".$filter_key."_oom_element"];
+		$_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_oom_op"];
+		$_POST[$filter_key."_terms"][] = $_POST["new_".$filter_key."_oom_term"];
+		$_POST[$filter_key."_types"][] = "oom";
+		$reloadFlag = true;
+	}
+
+	// then remove any that we need to
+	$conditionsDeleteParts = explode("_", $_POST[$delete_key]);
+	if ($_POST[$delete_key] AND ($conditionsDeletePartsKeyOneMustMatch === false OR $conditionsDeletePartsKeyOneMustMatch == $conditionsDeleteParts[1])) {
+		$deleteTarget = $conditionsDeleteParts[$deleteTargetKey];
+		// go through the passed filter settings starting from the one we need to remove, and shunt the rest down one space
+		// need to do this in a loop, because unsetting and key-sorting will maintain the key associations of the remaining high values above the one that was deleted
+		$originalCount = count((array) $_POST[$filter_key."_elements"]);
+		for ($i = $deleteTarget; $i < $originalCount; $i++) { // 2 is the X that was clicked for this page
+			if ($i>$deleteTarget) {
+				$_POST[$filter_key."_elements"][$i-1] = $_POST[$filter_key."_elements"][$i];
+				$_POST[$filter_key."_ops"][$i-1] = $_POST[$filter_key."_ops"][$i];
+				$_POST[$filter_key."_terms"][$i-1] = $_POST[$filter_key."_terms"][$i];
+				$_POST[$filter_key."_types"][$i-1] = $_POST[$filter_key."_types"][$i];
+			}
+			if ($i==$deleteTarget OR $i+1 == $originalCount) {
+				// first time through or last time through, unset things
+				unset($_POST[$filter_key."_elements"][$i]);
+				unset($_POST[$filter_key."_ops"][$i]);
+				unset($_POST[$filter_key."_terms"][$i]);
+				unset($_POST[$filter_key."_types"][$i]);
+			}
+		}
+		$reloadFlag = true;
+	}
+
+	$returnValues = array();
+	if (count((array) $_POST[$filter_key."_elements"]) > 0){
+		$returnValues[0] = $_POST[$filter_key."_elements"];
+		$returnValues[1] = $_POST[$filter_key."_ops"];
+		$returnValues[2] = $_POST[$filter_key."_terms"];
+		$returnValues[3] = $_POST[$filter_key."_types"];
+	}
+
+	return array($returnValues, $reloadFlag);
+}
 
 // this function gets the password for the encryption/decryption process
 // want to has the db pass since we don't want any SQL logging processes to include the db pass as plaintext
@@ -5450,73 +5535,6 @@ function removeNotApplicableRequireds($type, $req=0) {
         }
     }
     return false;
-}
-
-
-/**
- * Used to handle filter conditions being saved in the admin UI
- * @param string $filter_key - The prefix used in the values in POST that we want to read, ie: if in POST we have displayCondition_elements, and displayCondition_ops then the key is displayCondition
- * @param string $delete_key - The key in POST for a delete signal sent from the admin UI
- * @param int $deleteTargetKey - Optional. The key we care about for isolating which conditions to delete, as found in the array created by exploding the delete_key in POST on the _ character.
- * @param int $conditionsDeletePartsKeyOneMustMatch - Optional value that is meant to isolate only certain conditions to be deleted. The delete key's value will have _ in it, and exploding on _ gives an array, and the 1 key (second position) must match this value. Used by the permissions saving to delete conditions only from the appropriate group's permissions.
- * @return array Returns an array with two elements. The first is an array of the elements, ops, terms and types properly organized for saving into the database. The second is a flag to indicate if a reload is necessary for the user to see cleanly what has changed.
- */
-function parseSubmittedConditions($filter_key, $delete_key, $deleteTargetKey = 1, $conditionsDeletePartsKeyOneMustMatch = false) {
-
-	if(!isset($_POST[$filter_key."_elements"]) AND !isset($_POST["new_".$filter_key."_term"]) AND !isset($_POST["new_".$filter_key."_oom_term"])) {
-		return "";
-	}
-
-	$reloadFlag = false;
-	if ($_POST["new_".$filter_key."_term"] != "") {
-		$_POST[$filter_key."_elements"][] = $_POST["new_".$filter_key."_element"];
-		$_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_op"];
-		$_POST[$filter_key."_terms"][] = $_POST["new_".$filter_key."_term"];
-		$_POST[$filter_key."_types"][] = "all";
-		$reloadFlag = true;
-	}
-	if ($_POST["new_".$filter_key."_oom_term"] != "") {
-		$_POST[$filter_key."_elements"][] = $_POST["new_".$filter_key."_oom_element"];
-		$_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_oom_op"];
-		$_POST[$filter_key."_terms"][] = $_POST["new_".$filter_key."_oom_term"];
-		$_POST[$filter_key."_types"][] = "oom";
-		$reloadFlag = true;
-	}
-
-	// then remove any that we need to
-	$conditionsDeleteParts = explode("_", $_POST[$delete_key]);
-	if ($_POST[$delete_key] AND ($conditionsDeletePartsKeyOneMustMatch === false OR $conditionsDeletePartsKeyOneMustMatch == $conditionsDeleteParts[1])) {
-		$deleteTarget = $conditionsDeleteParts[$deleteTargetKey];
-		// go through the passed filter settings starting from the one we need to remove, and shunt the rest down one space
-		// need to do this in a loop, because unsetting and key-sorting will maintain the key associations of the remaining high values above the one that was deleted
-		$originalCount = count((array) $_POST[$filter_key."_elements"]);
-		for ($i = $deleteTarget; $i < $originalCount; $i++) { // 2 is the X that was clicked for this page
-			if ($i>$deleteTarget) {
-				$_POST[$filter_key."_elements"][$i-1] = $_POST[$filter_key."_elements"][$i];
-				$_POST[$filter_key."_ops"][$i-1] = $_POST[$filter_key."_ops"][$i];
-				$_POST[$filter_key."_terms"][$i-1] = $_POST[$filter_key."_terms"][$i];
-				$_POST[$filter_key."_types"][$i-1] = $_POST[$filter_key."_types"][$i];
-			}
-			if ($i==$deleteTarget OR $i+1 == $originalCount) {
-				// first time through or last time through, unset things
-				unset($_POST[$filter_key."_elements"][$i]);
-				unset($_POST[$filter_key."_ops"][$i]);
-				unset($_POST[$filter_key."_terms"][$i]);
-				unset($_POST[$filter_key."_types"][$i]);
-			}
-		}
-		$reloadFlag = true;
-	}
-
-	$returnValues = array();
-	if (count((array) $_POST[$filter_key."_elements"]) > 0){
-		$returnValues[0] = $_POST[$filter_key."_elements"];
-		$returnValues[1] = $_POST[$filter_key."_ops"];
-		$returnValues[2] = $_POST[$filter_key."_terms"];
-		$returnValues[3] = $_POST[$filter_key."_types"];
-	}
-
-	return array($returnValues, $reloadFlag);
 }
 
 /**
