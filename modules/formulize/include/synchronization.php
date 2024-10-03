@@ -339,7 +339,7 @@
         return $syncGroupsInCommonLists;
     }
 
-    //syncDataTablesList function gets the default tables for export and add the user selected forms
+    // syncDataTablesList function gets the default tables for export and add the user selected forms
     // and returns the complete list of tables to be exported
     function syncDataTablesList($formsSelected) {
         // get the default tables we need for export
@@ -515,7 +515,11 @@
     function extractTemplateFiles($archivePath){
         global $successfulImport;
         extractFolder($archivePath, "screens", XOOPS_ROOT_PATH . "/modules/formulize/templates/");
+<<<<<<< HEAD
         extractFolder($archivePath, "code", XOOPS_ROOT_PATH . "/modules/formulize/");
+=======
+        extractFolder($archivePath, "custom_code", XOOPS_ROOT_PATH . "/modules/formulize/");
+>>>>>>> 2e87b8c30 (First pass at change detection from JSON config files.)
 
         return array( "success" => $successfulImport);
     }

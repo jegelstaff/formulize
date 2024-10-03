@@ -144,6 +144,9 @@ switch($active_page) {
     case "managepermissions":
         include "managepermissions.php";
         break;
+		case "config-sync":
+				include "config-sync.php";
+				break;
     default:
     case "home":
         include "home.php";
