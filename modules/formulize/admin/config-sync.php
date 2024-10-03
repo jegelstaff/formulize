@@ -10,7 +10,7 @@ ini_set('memory_limit', '1024M');
 ini_set('max_execution_time', '600');
 ini_set('display_errors', 1);
 
-include_once '../include/configSync.php';
+include_once '../include/formulizeConfigSync.php';
 
 // $sync = array();
 
@@ -32,11 +32,16 @@ $configSync = new FormulizeConfigSync('/config');
 $differences = $configSync->compareConfigurations();
 
 // Review changes
-// foreach ($differences['log'] as $logEntry) {
-//     echo $logEntry . "\n";
-// }
+foreach ($differences['log'] as $logEntry) {
+    echo $logEntry . "\n";
+}
 
-print_r($differences);
+echo "<pre>";
+print_r($differences['changes']);
+echo "</pre>";
+
+
+// print_r($differences);
 
 // populate the checkboxes for export
 // $sync[2]['content']['checkboxes'] = createCheckboxInfo();
