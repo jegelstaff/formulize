@@ -20,7 +20,7 @@ interface icms_db_IConnection {
 	/**
 	 * Public contructor
 	 */
-	public function __construct( $dsn, $user, $pwd, $options = array() );
+	public function __construct( string $dsn, ?string $username = null, ?string $password = null, ?array $options = null );
 
 	/**
 	 * Set the value of a database connection attribute.
@@ -28,13 +28,13 @@ interface icms_db_IConnection {
 	 * @param mixed $value
 	 * @return bool
 	 */
-	public function setAttribute( $attribute, $value );
+	public function setAttribute( int $attribute, mixed $value );
 	/**
 	 * Return the value of a database connection attribute.
 	 * @param int $attribute
 	 * @return mixed
 	 */
-	public function getAttribute( $attribute );
+	public function getAttribute( int $attribute );
 
 	/**
 	 * Last error as an SQLSTATE, a five characters alphanumeric identifier.
@@ -53,7 +53,7 @@ interface icms_db_IConnection {
 	 * @param int $type
 	 * @return string
 	 */
-	public function quote( $string, $type = PDO::PARAM_STR );
+	public function quote( string $string, int $type = PDO::PARAM_STR );
 	public function escape( $string );
 	/**
 	 * Places identifier quotes around the input string
@@ -84,24 +84,24 @@ interface icms_db_IConnection {
 	 * @param array $options
 	 * @return icms_db_Statement
 	 */
-	public function prepare( $sql, $options = array() );
+	public function prepare( string $query, array $options = [] );
 	/**
 	 * Executes an SQL statement and returns the number of affected rows.
 	 * @param string $sql
 	 * @return int
 	 */
-	public function exec( $sql );
+	public function exec( string $sql );
 	/**
 	 * Executes an SQL statement and returns a result set as a IStatement object.
 	 * @param string $sql
 	 * @return icms_db_Statement
 	 */
-	public function query();
+	public function query(string $query, ?int $fetchMode = null, ...$fetchModeArgs);
 	/**
 	 * Returns the ID of the last inserted row or the last value from a sequence object.
 	 * @param string $name
 	 * @return string
 	 */
-	public function lastInsertId( $name = null );
+	public function lastInsertId( ?string $name = null );
 
 }

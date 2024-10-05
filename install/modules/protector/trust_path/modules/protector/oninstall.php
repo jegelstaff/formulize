@@ -29,12 +29,11 @@ function protector_oninstall_base( $module , $mydirname )
 	if( file_exists( $sql_file_path ) ) {
 		$ret[] = "SQL file found at <b>".htmlspecialchars($sql_file_path)."</b>.<br /> Creating tables...";
 
-		$sqlutil = new icms_db_legacy_mysql_Utility();
 		$sql_query = trim( file_get_contents( $sql_file_path ) ) ;
-		$sqlutil->splitMySqlFile( $pieces , $sql_query ) ;
+		icms_db_legacy_mysql_Utility::splitMySqlFile( $pieces , $sql_query ) ;
 		$created_tables = array() ;
 		foreach( $pieces as $piece ) {
-			$prefixed_query = $sqlutil->prefixQuery( $piece , $prefix_mod ) ;
+			$prefixed_query = icms_db_legacy_mysql_Utility::prefixQuery( $piece , $prefix_mod ) ;
 			if( ! $prefixed_query ) {
 				$ret[] = "Invalid SQL <b>".htmlspecialchars($piece)."</b><br />";
 				return false ;

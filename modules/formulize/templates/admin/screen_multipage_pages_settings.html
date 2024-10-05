@@ -15,14 +15,14 @@
 		  <div class="description"></div>
 	  </div>
 	  <div class="form-item">
-		  <label for="screens-page<{$pageIndex}>">Form elements to display on page <{$pageNumber}></label>
+		  <label for="screens-page<{$pageIndex}>">Form elements to display on page <{$pageNumber}></label><br>
 	    <select id="screens-page<{$pageIndex}>" name="screens-page<{$pageIndex}>[]" size="10" multiple>
         <{html_options options=$options selected=$pageElements}>
 	    </select>
 		  <div class="description"></div>
 	  </div>
 	</div>
-		
+
 	<div class="accordion-box">
 				<p>What conditions are there on the display of this page?</p>
 				<{$pageConditions}>
@@ -34,16 +34,16 @@
 </div>
 
 <script type="text/javascript">
-	
+
 	// If saveLock is turned on, do not display save button to user, instead display "READ ONLY"
 	$( document ).ready(function() {
 		<{if $content.isSaveLocked}>
 			document.getElementById('savebuttonpopup').style.visibility = 'hidden';
 			document.getElementById('popupsavebutton').innerHTML = "READ ONLY";
 		<{/if}>
-		
+
 	});
-	
+
   $("input").change(function() {
     window.document.getElementById('popupsavewarning').style.display = 'block';
     });
@@ -90,12 +90,12 @@ $(".conditionsdelete").click(function () {
 					}
 				}
 				window.document.getElementById('popupsavewarning').style.display = 'none';
-				
+
 			});
     }
     $(".savebuttonpopup").blur();
   });
-		
+
 	function reloadPopup() {
 		$("#dialog-page-settings-content").load('<{$smarty.const.XOOPS_URL}>/modules/formulize/admin/screen_multipage_pages_settings.php?page=<{$pageIndex}>&sid=<{$sid}>');
 	}

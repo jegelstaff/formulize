@@ -9,7 +9,7 @@
  * @version		SVN: $Id: admin.php 22256 2011-08-18 14:47:09Z phoenyx $
  */
 
-define('ICMS_IN_ADMIN', 1);
+if(!defined('ICMS_IN_ADMIN')) { define('ICMS_IN_ADMIN', 1); }
 
 include_once '../../include/functions.php';
 if (!empty($_POST)) foreach ($_POST as $k => $v) ${$k} = StopXSS($v);
@@ -69,8 +69,8 @@ if ($admintest != 0) {
 			unset($modversion);
 			if ($category > 0) {
 				$groups =& icms::$user->getGroups();
-				if (in_array(XOOPS_GROUP_ADMIN, $groups) 
-					|| FALSE !== $sysperm_handler->checkRight('system_admin', $category, $groups, $icmsModule->getVar('mid'))) 
+				if (in_array(XOOPS_GROUP_ADMIN, $groups)
+					|| FALSE !== $sysperm_handler->checkRight('system_admin', $category, $groups, $icmsModule->getVar('mid')))
 					{
 					if (file_exists(ICMS_ROOT_PATH . '/modules/system/admin/' . $fct . '/main.php')) {
 						include_once ICMS_ROOT_PATH . '/modules/system/admin/' . $fct . '/main.php';

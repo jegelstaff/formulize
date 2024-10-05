@@ -43,18 +43,11 @@ $GLOBALS['formulize_asynchronousFormDataInAPIFormat'] = array();
 
 $GLOBALS['formulize_subformInstance'] = 100;
 
+$GLOBALS['formulize_displayingMultipageScreen'] = false; // later, will be set to the screen id if we're displaying a multipage screen, or just true if we're displaying a multipage form without a screen specified
+
 global $xoopsDB, $myts, $xoopsUser, $xoopsModule, $xoopsTpl, $xoopsConfig, $renderedFormulizeScreen;
 
-// load the formulize language constants if they haven't been loaded already
-if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
-    include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php";
-} else {
-    include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/main.php";
-}
-
-include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
-
-$thisRendering = microtime(); // setup a flag that is common to this instance of rendering a formulize page
+$thisRendering = microtime(true); // setup a flag that is common to this instance of rendering a formulize page
 if(!isset($prevRendering)) {
     $prevRendering = array();
 }
@@ -91,8 +84,13 @@ $formulizeConfig =& $config_handler->getConfigsByCat(0, $mid);
 // get the default menu link for the current user, and set the fid or sid based on it
 
 if( !$fid AND !$sid) {
-    include_once XOOPS_ROOT_PATH."/modules/formulize/class/applications.php";
-	list($fid,$sid) = formulizeApplicationMenuLinksHandler::getDefaultScreenForUser();
+	include_once XOOPS_ROOT_PATH."/modules/formulize/class/applications.php";
+	$includeMenuURLs = true;
+	list($fid,$sid,$defaultMenuLinkUrl) = formulizeApplicationMenuLinksHandler::getDefaultScreenForUser();
+	if($defaultMenuLinkUrl) {
+		header('Location: '.$defaultMenuLinkUrl);
+		exit();
+	}
 }
 
 $screen_handler =& xoops_getmodulehandler('screen', 'formulize');
@@ -124,7 +122,8 @@ $title = $myts->displayTarea($desc_form);
 $currentURL = getCurrentURL();
 if($fid AND !$view_form = $gperm_handler->checkRight("view_form", $fid, $groups, $mid)) {
     if(strstr($currentURL, "/modules/formulize/")) { // if it's a formulize page, reload to login screen
-        redirect_header(XOOPS_URL . "/user.php?op=nopermission&xoops_redirect=$currentURL", 3, _formulize_NO_PERMISSION);
+        $nopermission = $xoopsUser ? "op=nopermission&" : ""; // no permission flag will bump the user to the All Applications page since they don't have perm for this page. If no user, they will be prompted for login.
+        redirect_header(XOOPS_URL . "/user.php?".$nopermission."xoops_redirect=".urlencode($currentURL), 3, _formulize_NO_PERMISSION, false);
     } else { // if formulize is just being included elsewhere, then simply show error and end script
         global $user;
         if(isset($GLOBALS['formulizeHostSystemUserId']) AND is_object($user) AND is_array($user->roles) AND !$xoopsUser) {
@@ -138,20 +137,6 @@ if($fid AND !$view_form = $gperm_handler->checkRight("view_form", $fid, $groups,
         return;
     }
 }
-
-/*get the aid and include custom_code if exists
- *
- *Added By Jinfu Jan 2015
- */
-$application_handler = xoops_getmodulehandler('applications','formulize');
-$apps = $application_handler->getAllApplications();
-
-foreach($apps as $appObject){
-    $aid=$appObject->getVar('appid');
-    if(file_exists(XOOPS_ROOT_PATH.'/modules/formulize/custom_code/application_custom_code_'.$aid.'.php'))
-        include_once(XOOPS_ROOT_PATH.'/modules/formulize/custom_code/application_custom_code_'.$aid.'.php');
-}
-
 
 // IF A SCREEN IS REQUESTED, GET DETAILS FOR THAT SCREEN AND CALL THE NECESSARY DISPLAY FUNCTION
 $rendered = false;
@@ -173,10 +158,6 @@ if($sid) {
     }
 }
 
-// check for $xoopsUser added by skenow.  Forces anons to only see the form itself and never the list of entries view.
-// Really, we should build in better permission/configuration control so that more precise
-// control over anon behaviour is possible
-
 // gather $_GET['ve'] (viewentry), or prefer a global value that has been set
 if(isset($formulize_entry_id) AND is_numeric($formulize_entry_id)) {
   $entry = $formulize_entry_id;
@@ -194,24 +175,68 @@ if (!$loadThisView) {
 }
 
 if ($screen) {
+
+		$renderedFormulizeScreen = $screen;
     // this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
-    $renderedFormulizeScreen = $screen;
-    if($screen->getVar('type') == "listOfEntries" AND ((isset($_GET['iform']) AND $_GET['iform'] == "e") OR isset($_GET['showform']))) { // form itself specifically requested, so force it to load here instead of a list
-        if($screen->getVar('frid')) {
-            include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
-            displayForm($screen->getVar('frid'), "", $screen->getVar('fid'), "", "{NOBUTTON}");
-        } else {
-            include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
-            displayForm($screen->getVar('fid'), "", "", "", "{NOBUTTON}");
+
+
+    // validate any passcode for anon users that has been saved in session, or require one from users first before anything else
+    if($uid == 0 AND $screen->getVar('anonNeedsPasscode')) {
+        $screenAllowedForUser = false;
+        $passCodeHandler = xoops_getmodulehandler('passcode', 'formulize');
+        $passCode = isset($_SESSION['formulize_passCode_'.$screen->getVar('sid')]) ? $_SESSION['formulize_passCode_'.$screen->getVar('sid')] : '';
+        // if no passcode in session and if we have not received a user's submitted passcode...
+        if (!$passCode AND (!isset($_POST['passcode']) OR isset($_SESSION['formulize_passcodeFailed']))) {
+            unset($_SESSION['formulize_passcodeFailed']);
+            $xoopsTpl->display("db:passcode.html");
+            return;
+        // if no passcode but we have received a user's submitted passcode then process it...
+        } elseif(!$passCode) {
+            $passCode = $_POST['passcode'];
+        }
+        // if a passcode has been determined, validate it...
+        if($passCode) {
+            $passCode_handler = xoops_getmodulehandler('passcode', 'formulize');
+            $screenAllowedForUser = $passCode_handler->validatePasscode($passCode, $screen->getVar('sid'));
         }
     } else {
-        $screen_handler->render($screen, $entry, $loadThisView);
+        // group based permission for other non-anon users will go here
+        $screenAllowedForUser = true;
+    }
+
+    if($screenAllowedForUser) {
+
+			writeToFormulizeLog(array(
+				'formulize_event' => 'attempting-screen-rendering',
+				'user_id' => ($xoopsUser ? $xoopsUser->getVar('uid') : 0),
+				'form_id' => $screen->getVar('fid'),
+				'screen_id' => $screen->getVar('sid')
+			));
+
+			if($screen->getVar('type') == "listOfEntries" AND ((isset($_GET['iform']) AND $_GET['iform'] == "e") OR isset($_GET['showform']))) { // form itself specifically requested, so force it to load here instead of a list
+					if($screen->getVar('frid')) {
+							include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
+							displayForm($screen->getVar('frid'), "", $screen->getVar('fid'), "", "{NOBUTTON}");
+					} else {
+							include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
+							displayForm($screen->getVar('fid'), "", "", "", "{NOBUTTON}");
+					}
+			} elseif($screen->getVar('type') == 'calendar') {
+					$screen_handler->render($screen);
+			} else {
+					$screen_handler->render($screen, $entry, $loadThisView);
+			}
+    } else {
+        $_SESSION['formulize_passcodeFailed'] = true;
+        print "<p>"._formulize_NO_PERM."</p>";
     }
     $rendered = true;
 }
 
 // IF NO SCREEN IS REQUESTED (or none rendered successfully, ie: a bad screen id was passed), THEN USE THE DEFAULT DISPLAY LOGIC TO DETERMINE WHAT TO SHOW THE USER
+
+// Only allowed for logged in users! Too many security holes if we allow anons all the different ways of getting to forms. They must go through a screen.
 
 // new logic to handle invoking new interface (2005)
 // 1. determine if the form is a single or multi
@@ -220,21 +245,15 @@ if ($screen) {
 // 2.5 if yes->displayEntries, if no...
 // 3 displayForm
 
-if (!$rendered) {
-    if (isset($frid) AND is_numeric($frid) AND isset($fid) AND is_numeric($fid)) {
-        // this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
-        include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
-        if (((!$singleentry AND $xoopsUser) OR $view_globalscope OR ($view_groupscope AND $singleentry != "group")) AND !$entry AND (!isset($_GET['iform']) OR $_GET['iform'] != "e") AND !isset($_GET['showform'])) { // if it's multientry and there's a xoopsUser, or the user has globalscope, or the user has groupscope and it's not a one-per-group form, and after all that, no entry has been requested, then show the list (note that anonymous users default to the form view...to provide them lists of their own entries....well you can't, but groupscope and globalscope will show them all entries by anons or by everyone) ..... unless there is an override in the URL that is meant to force the form itself to display .... iform is "interactive form", devised by Feratech.
-            include_once XOOPS_ROOT_PATH . "/modules/formulize/include/entriesdisplay.php";
-            // if it's a multi, or if a single and they have group or global scope
-            displayEntries($frid, $fid);
-        } else {
-            // otherwise, show the form
-            include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
-            // if it's a single and they don't have group or global scope, OR if an entry was specified in particular
-            displayForm($frid, $entry, $fid, "", "{NOBUTTON}");
-        }
-    } elseif (isset($fid) AND is_numeric($fid)) {
+if (!$rendered AND $uid) {
+    if (isset($fid) AND is_numeric($fid) AND $fid) {
+
+			writeToFormulizeLog(array(
+				'formulize_event' => 'attempting-raw-rendering',
+				'user_id' => ($xoopsUser ? $xoopsUser->getVar('uid') : 0),
+				'form_id' => intval($fid)
+			));
+
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
         $formObject = $form_handler->get($fid);
         $defaultFormScreen = $formObject->getVar('defaultform');
@@ -249,12 +268,17 @@ if (!$rendered) {
                 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
                 $renderedFormulizeScreen = $finalscreenObject;
                 $finalscreen_handler->render($finalscreenObject, $entry, $loadThisView);
+						// no screen to show, go with the basics...
             } else {
-                // this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
-                include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
-                include_once XOOPS_ROOT_PATH . "/modules/formulize/include/entriesdisplay.php";
-                // if it's a multi, or if a single and they have group or global scope
-                displayEntries($fid);
+								if (isset($frid) AND is_numeric($frid) AND $frid) {
+										// this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
+										include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
+										displayEntries($frid, $fid);
+								} else {
+                		// this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
+                		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
+									  displayEntries($fid);
+								}
             }
         } else {
             // otherwise, show the form
@@ -267,12 +291,18 @@ if (!$rendered) {
                 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
                 $renderedFormulizeScreen = $finalscreenObject;
                 $finalscreen_handler->render($finalscreenObject, $entry);
+						// no screen to show, go with the basics...
             } else {
-                // this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
-                include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
-                include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
-                displayForm($fid, $entry, "", "", "{NOBUTTON}"); // if it's a single and they don't have group or global scope, OR if an entry was specified in particular
-            }
+								if (isset($frid) AND is_numeric($frid) AND $frid) {
+										// this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
+										include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
+										displayForm($frid, $entry, $fid, "", "{NOBUTTON}");
+								} else {
+										// this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
+										include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
+										displayForm($fid, $entry, "", "", "{NOBUTTON}"); // if it's a single and they don't have group or global scope, OR if an entry was specified in particular
+								}
+						}
         }
     } else {
         // if no form is specified, then show the General Forms category
@@ -280,11 +310,15 @@ if (!$rendered) {
         include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
         // if it's a formulize page, reload to login screen
         if (strstr($currentURL, "/modules/formulize/")) {
-            header("Location: " . XOOPS_URL . "/modules/formulize/cat.php");
+            header("Location: " . XOOPS_URL . "/modules/formulize/application.php?id=all");
         } else {
             print "<p>Formulize could not display a screen for you.  Are you sure the specified screen exists?</p>";
         }
     }
+} elseif(!$rendered AND !$xoopsUser) {
+	// boot the user to the homepage. Anons will be able to login there.
+	header("location: ".XOOPS_URL);
+	exit();
 }
 
 // renderedFormulizeScreen is a global, and might be altered by entriesdisplay.php if it sends the user off to a different screen (like a form screen instead of the list)
@@ -296,8 +330,16 @@ if ($renderedFormulizeScreen AND is_object($xoopsTpl)) {
     $xoopsTpl->assign('xoops_pagetitle', $title);
     $xoopsTpl->assign('icms_pagetitle', $title);
 }
-
+if(is_object($xoopsTpl)) {
+	$xoopsTpl->assign('formulize_customCodeForApplications', (isset($GLOBALS['formulize_customCodeForApplications']) ? $formulize_customCodeForApplications : ''));
+}
 // go back to the previous rendering flag, in case this operation was nested inside something else
 $GLOBALS['formulize_thisRendering'] = $prevRendering[$thisRendering];
 
+writeToFormulizeLog(array(
+	'formulize_event' => 'completed-page-rendering',
+	'user_id' => ($xoopsUser ? $xoopsUser->getVar('uid') : 0),
+	'form_id' => ($rendered ? $screen->getVar('fid') : intval($fid)),
+	'screen_id' => ($rendered ? $screen->getVar('sid') : '')
+));
 

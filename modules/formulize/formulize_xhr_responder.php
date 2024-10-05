@@ -35,14 +35,29 @@
 // this file listens for incoming formulize_xhr messages, and responds accordingly
 
 require_once "../../mainfile.php"; // initialize the xoops stack so we have access to the user object, etc if necessary
-ob_end_clean(); // stop all buffering of output (ie: related to the error logging, and/or xLangauge?)
-include_once "../../header.php";
-include_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
+icms::$logger->disableLogger();
+
+while(ob_get_level()) {
+    ob_end_clean();
+}
 
 // check that the user who sent this request is the same user we have a session for now, if not, bail
-$sentUid = $_GET['uid'];
+$sentUid = intval($_GET['uid']);
+
 if(($xoopsUser AND $sentUid != $xoopsUser->getVar('uid')) OR (!$xoopsUser AND $sentUid !== 0)) {
   exit();
+}
+
+include_once "../../header.php";
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
+include XOOPS_ROOT_PATH .'/modules/formulize/include/customCodeForApplications.php';
+
+global $xoopsConfig;
+// load the formulize language constants if they haven't been loaded already
+if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
+    include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php";
+} else {
+    include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/main.php";
 }
 
 $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'] = array();
@@ -71,6 +86,7 @@ switch($op) {
     $value = $_GET['param1'];
     $element = $_GET['param2'];
     $entry = $_GET['param3'];
+    $leave = $_GET['param4'];
 
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
     $elementObject = $element_handler->get($element);
@@ -79,12 +95,12 @@ switch($op) {
       $data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
       $entry_id = $data_handler->findFirstEntryWithValue($element, $value);
       if(is_numeric($entry_id) AND $entry_id != $entry) {
-        print 'valuefound';
+        print json_encode(array('val'=>'valuefound', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
       } else {
-        print 'valuenotfound';
+        print json_encode(array('val'=>'valuenotfound', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
       }
     } else {
-      print 'invalidelement';
+      print json_encode(array('val'=>'invalidelement', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
     }
     break;
 
@@ -115,6 +131,13 @@ switch($op) {
     $fileInfo = unserialize($fileInfo);
     $filePath = XOOPS_ROOT_PATH."/uploads/$folderName/".$fileInfo['name'];
     if (!file_exists($filePath) or unlink($filePath)) {
+				// erase any thumbnail associated with the file
+				$dotPos = strrpos($filePath, '.');
+				$fileExtension = strtolower(substr($filePath, $dotPos+1));
+				$thumbFilePath = substr_replace($filePath, ".thumb.$fileExtension", $dotPos);
+				if(file_exists($thumbFilePath)) {
+					unlink($thumbFilePath);
+				}
         // erase the recorded values for this file in the database, false is proxy user, true is force update (on a GET request)
         $data_handler->writeEntry($entry_id, array($elementObject->getVar('ele_handle')=>''), false, true);
         print json_encode(array("element_id"=>$element_id, "entry_id"=>$entry_id));
@@ -122,13 +145,25 @@ switch($op) {
     break;
 
   case 'get_element_html':
+		/*
+		Renders elements for display inside lists of entries, because the user clicked the icon
+		the GET param0 through param4 are:
+		1 - handle
+		2 - element_id
+		3 - entryId
+		4 - fid
+		5 - deInstanceCounter
+		*/
     include_once XOOPS_ROOT_PATH."/modules/formulize/include/elementdisplay.php";
     displayElement("", formulize_db_escape($_GET['param2']), intval($_GET['param3']));
+		print "<input type='hidden' name='detoken_".intval($_GET['param4']).'_'.intval($_GET['param3']).'_'.intval($_GET['param2'])."' value=".$GLOBALS['xoopsSecurity']->createToken(0, 'formulize_display_element_token').">";
     break;
 
   case 'get_element_value':
     $handle = $_GET['param1'];
     $entryId = intval($_GET['param3']);
+    $fid = intval($_GET['param4']);
+    $deInstanceCounter = intval($_GET['param5']);
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
     include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
@@ -137,7 +172,7 @@ switch($op) {
     $data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
     $dbValue = $data_handler->getElementValueInEntry($entryId,$handle);
     $preppedValue = prepvalues($dbValue,$handle,$entryId);
-    print getHTMLForList($preppedValue,$handle,$entryId,1);// 1 is a flag to include the icon for switching to an editable element
+    print getHTMLForList($preppedValue,$handle,$entryId,1,0,array(),$fid,0,0,$deInstanceCounter);// 1 is a flag to include the icon for switching to an editable element,two zeros are row and column, which ought to be passed in but we would need them to roundtrip through the whole xhr process?!
     break;
 
   case 'get_element_row_html':
@@ -154,97 +189,57 @@ switch($op) {
             ${$k} = $v;
         }
       } elseif(substr($k, 0, 3) == 'de_') {
-        $keyParts = explode("_", $k); // ANY KEY PASSED THAT IS THE NAME OF A DE_ ELEMENT IN MARKUP, WILL GET UNPACKED AS A VALUE THAT CAN BE SUBBED IN WHEN DOING LOOKUPS LATER ON.
+        $keyParts = explode("_", $k); // ANY KEY PASSED THAT IS THE NAME OF A DE_ ELEMENT IN MARKUP, WILL GET UNPACKED AS A VALUE THAT CAN BE SUBBED IN WHEN DOING LOOKUPS LATER ON. This is because these elements are the elements that might determine how the conditionally rendered element behaves; it might be sensitive to these values.
         $passedEntryId = $keyParts[2];
         $passedElementId = $keyParts[3];
         $passedElementObject = $element_handler->get($passedElementId);
         $handle = $passedElementObject->getVar('ele_handle');
-        $databaseReadyValue = prepDataForWrite($passedElementObject, $v);
-        $databaseReadyValue = $databaseReadyValue === "{WRITEASNULL}" ? NULL : $databaseReadyValue;
-            if(substr($v, 0, 9)=="newvalue:") { $sendBackValue[$k] = $databaseReadyValue; }
+        if(is_string($v) && substr($v, 0, 9)=="newvalue:") {
+					$databaseReadyValue = 'new';
+				} else {
+					$databaseReadyValue = prepDataForWrite($passedElementObject, $v, $entryId);
+					$databaseReadyValue = $databaseReadyValue === "{WRITEASNULL}" ? NULL : $databaseReadyValue;
+				}
         $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$passedEntryId][$handle] = $databaseReadyValue;
         $apiFormatValue = prepvalues($databaseReadyValue, $handle, $passedEntryId); // will be an array
-        if(is_array($apiFormatValue) AND count($apiFormatValue)==1) {
+        if(is_array($apiFormatValue) AND count((array) $apiFormatValue)==1) {
           $apiFormatValue = $apiFormatValue[0]; // take the single value if there's only one, same as display function does
         }
         $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$passedEntryId][$handle] = $apiFormatValue;
       }
     }
-    $elementObject = $element_handler->get($elementId);
-    $html = "";
-    if($onetoonekey AND $entryId != 'new') {
-      // the onetoonekey is what changed, not a regular conditional element, so in that case, we need to re-determine the entryId that we should be displaying
-      // rebuild entries and fids so it only has the main form entry in it, since we want to get the correct other one-to-one entries back
-      $onetooneentries = array($onetoonefid => array($onetooneentries[$onetoonefid][0]));
-      $onetoonefids = array($onetoonefid);
-      $checkForLinksResults = checkForLinks($onetoonefrid, $onetoonefids, $onetoonefid, $onetooneentries);
-      $entryId = $checkForLinksResults['entries'][$elementObject->getVar('id_form')][0];
-      $entryId = $entryId ? $entryId : 0;
-    } elseif($onetoonekey) {
-      // we're supposed to pull in an entry based solely on the value in the conditional element...
-      // what we need is the element in the dependent one to one form that is linked to the main form
-      include_once XOOPS_ROOT_PATH . "/modules/formulize/class/frameworks.php";
-      include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
-      $relationship = new formulizeFramework($onetoonefrid);
-      $targetElement = false;
-      foreach($relationship->getVar('links') as $link) {
-        if($link->getVar('form1')==$onetoonefid AND $link->getVar('form2')==$fid AND $link->getVar('relationship')==1) {
-          $sourceElement = $link->getVar('key1');
-          $targetElement = $link->getVar('key2');
-        } elseif($link->getVar('form2')==$onetoonefid AND $link->getVar('form1')==$fid AND $link->getVar('relationship')==1) {
-          $sourceElement = $link->getVar('key2');
-          $targetElement = $link->getVar('key1');
-        }
-        if($targetElement) {
-          $data_handler = new formulizeDataHandler($onetoonefid);
-          if($link->getVar('common')) {
-            $entryId = $data_handler->findFirstEntryWithValue($targetElement, $databaseReadyValue);  
-          } elseif($sourceElement==$passedElementId) {
-            $entryId = $databaseReadyValue;
-          }
-          break;
-        }
+		// Normally, the entryId we're rendering is the one displayed in the form at load time, elements are dependent on conditions, but always rendered as in that entry.
+		// In a one-to-one situation, if the relationship is based on a linked element, we need to render elements from the entry selected in the governing element
+		// If the relationship is common value then we need to try to determine which entry is connected to it, if any
+		if($onetoonekey) {
+			if(oneToOneRelationshipLinkBasedOnCommonValue($onetoonefrid, $onetoonefids)) {
+				$onetooneentries = array($onetoonefid => array($onetooneentries[$onetoonefid][0]));
+				$onetoonefids = array($onetoonefid);
+				$checkForLinksResults = checkForLinks($onetoonefrid, $onetoonefids, $onetoonefid, $onetooneentries);
+				$entryId = $checkForLinksResults['entries'][$fid][0];
+				$entryId = $entryId ? $entryId : 'new';
+			} else {
+				$entryId = $databaseReadyValue;
+			}
+		}
+		// render the elements and package them in JSON
+    $jsonSep = '';
+    $json = '{ "elements" : [';
+    foreach(explode(',',$elementId) as $thisElementId) {
+      $elementObject = $element_handler->get($thisElementId);
+			$html = "";
+      $json .= $jsonSep.'{ "handle" : '.json_encode('de_'.$_GET['fid'].'_'.$_GET['entryId'].'_'.$thisElementId);
+      if(security_check($fid, $entryId)) {
+        $html = renderElement($elementObject, $entryId);
+        $json .= ', "data" : '.json_encode($html);
+      } else {
+       	$json .= ', "data" : '.json_encode('{NOCHANGE}');
       }
+      $json .= '}';
+      $jsonSep = ', '; // set the separator now in case there are more elements to process
     }
-    if(security_check($fid, $entryId)) {
-      // "" is framework, ie: not applicable
-      $deReturnValue = displayElement("", $elementObject, $entryId, false, null, null, false); // false, null, null, false means it's not a noSave element, no screen, no prevEntry data passed in, and do not render the element on screen
-      if(is_array($deReturnValue)) {
-        $form_ele = $deReturnValue[0];
-        $isDisabled = $deReturnValue[1];
-
-        $label_class = " formulize-label-".$elementObject->getVar("ele_handle");
-        $input_class = " formulize-input-".$elementObject->getVar("ele_handle");
-
-        // rendered HTML code below is taken from the formulize classes at the top of include/formdisplay.php
-        if($elementObject->getVar('ele_type') == "ib") {// if it's a break, handle it differently...
-          $class = ($form_ele[1] != '') ? " class='".$form_ele[1]."'" : '';
-          if ($form_ele[0]) {
-            $html = "<td colspan='2' $class><div style=\"font-weight: normal;\">" . trans(stripslashes($form_ele[0])) . "</div></td>";
-          } else {
-            $html = "<td colspan='2' $class>&nbsp;</td>";
-          }
-        } else {
-          require_once XOOPS_ROOT_PATH."/modules/formulize/include/formdisplay.php"; // need the formulize_themeForm
-		  $html = formulize_themeForm::_drawElementElementHTML($form_ele);
-        }
-        if(count($sendBackValue)>0) {
-          // if we wrote any new values in autocomplete boxes, pass them back so we can alter their values in markup so new entries are not created again!
-          print '{ "data" : '.json_encode($html).', "newvalues" : [';
-          $start = true;
-          foreach($sendBackValue as $key=>$value) {
-            if(!$start) {
-                print ', ';
-            }
-            print '{ "name" : "'.$key.'" , "value" : '.json_encode($value).' }';
-            $start = false;
-          }
-          print "] }";
-        } else {
-            print $html;
-        }
-      }
-    }
+    $json .= ']}';
+    print $json;
     break;
 
 
@@ -252,28 +247,45 @@ switch($op) {
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
     $formID = $_GET['fid'];
     $formRelationID = $_GET['frid'];
+    $entryID = isset($_GET['entryId']) ? intval($_GET['entryId']) : "";
     $limitStart = $_GET['limitstart'];
+    $limitSize = $_GET['limitsize'] ? intval($_GET['limitsize']) : 50;
     $GLOBALS['formulize_forceDerivedValueUpdate'] = true;
     ob_start();
-    $data = getData($formRelationID, $formID,"","AND","",$limitStart,250);
+    $data = getData($formRelationID, $formID, $entryID, "AND","",$limitStart,$limitSize);
     ob_clean(); // this catches any errors or other output because it would stop the update from running
     $GLOBALS['formulize_forceDerivedValueUpdate'] = false;
-    print count($data); // return the number of entries found. when this reaches 0, the client will know to stop calling
+    if(isset($_GET['returnElements'])) {
+        // instead of returning the count of data that we found, generate the derived value elements of the main form and return those
+        $derivedValueMarkup = array();
+        $form_handler = xoops_getModuleHandler('forms', 'formulize');
+        $element_handler = xoops_getModuleHandler('elements', 'formulize');
+        $formObject = $form_handler->get($formID);
+        foreach($formObject->getVar('elementTypes') as $elementId=>$elementType) {
+            $elementObject = $element_handler->get($elementId);
+            $ele_value = $elementObject->getVar('ele_value');
+            // if it's derived, or it's text for display and the text for display has dynamic references, then render it and send it back
+            if($elementType == 'derived' OR (
+                (
+                    $elementType == 'areamodif' OR $elementType == 'ib') AND (
+                       strstr($ele_value[0], "\$value=") OR strstr($ele_value[0], "\$value =") OR (strstr($ele_value[0], "{") AND strstr($ele_value[0], "}"))
+                    )
+                )
+            ) {
+                if($html = renderElement($elementObject, $entryID)) {
+                    $derivedValueMarkup[$elementId] = $html;
+                }
+            }
+        }
+        print json_encode($derivedValueMarkup);
+    } else {
+        print count((array) $data); // return the number of entries found. when this reaches 0, the client will know to stop calling, in the case where this is called by admin UI to update all entries after derived value formulas are changed
+    }
     break;
 
 
     case "validate_php_code":
-    if (function_exists("shell_exec")) {
-        $tmpfname = tempnam(sys_get_temp_dir(), 'FZ');
-        file_put_contents($tmpfname, trim($_POST["the_code"]));
-        $output = shell_exec('php -l "'.$tmpfname.'" 2>&1');
-        unlink($tmpfname);
-        if (false !== strpos($output, "PHP Parse error")) {
-            // remove the second line because detail about the error is on the first line
-            $output = str_replace("\nErrors parsing {$tmpfname}\n", "", $output);
-            echo str_replace("PHP Parse error:  s", "S", str_replace(" in $tmpfname", "", $output));
-        }
-    }
+        echo formulize_validatePHPCode($_POST["the_code"]);
     break;
 
 
@@ -287,21 +299,71 @@ switch($op) {
 
     list($views, $viewNames, $viewFrids, $viewPublished) = $formulizeForm->getFormViews($_POST['form_id']);
     $frameworks = $framework_handler->getFrameworksByForm($_POST['form_id']);
-    for ($i = 0; $i <= count($viewNames); $i++) {
+    $sendNames = array();
+    foreach($viewNames as $i=>$viewName) {
         if(!$viewPublished[$i]) {
             continue;
         }
         if($viewFrids[$i]) {
-            $viewNames[$i] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_IN_FRAME . $frameworks[$viewFrids[$i]]->getVar('name') . ")";
+            $sendNames[$views[$i]] = $viewName." (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_IN_FRAME . $frameworks[$viewFrids[$i]]->getVar('name') . ")";
         } else {
-            $viewNames[$i] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_NO_FRAME . ")";
+            $sendNames[$views[$i]] = $viewName." (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_NO_FRAME . ")";
         }
     }
-
-    $array = array_map(null, $views, $viewNames);
+    asort($sendNames);
+    // make an array where each value is an array made up of the values from the passed arrays, ie: the key from each entry in sendNames, and the value
+    // necessary because of how the iteration happens on the receiving end
+    $array = array_map(null, array_keys($sendNames), $sendNames);
 
     echo json_encode($array);
     break;
 
 
+}
+
+function renderElement($elementObject, $entryId) {
+
+	$GLOBALS['formulize_asynchronousRendering'][$elementObject->getVar('ele_handle')] = true;
+	$deReturnValue = displayElement("", $elementObject, $entryId, false, null, null, false); // false, null, null, false means it's not a noSave element, no screen, no prevEntry data passed in, and do not render the element on screen
+	unset($GLOBALS['formulize_asynchronousRendering']);
+
+	// element is allowed, so prep some stuff for rendering...
+	if(is_array($deReturnValue)) {
+		$form_ele = $deReturnValue[0];
+		if($elementObject->getVar('ele_req') AND is_object($form_ele)) {
+				$form_ele->setRequired();
+		}
+		$isDisabled = $deReturnValue[1];
+		$elementContents = $form_ele;
+
+		// prepare empty form object just for rendering element
+		$form = new formulize_themeForm('formulizeAsynchElementRender','','');
+
+		// figure out what we've got on our hands to render
+		$breakClass = 'head';
+		$entryForDEElements = (is_numeric($entryId) AND $entryId) ? $entryId : 'new';
+		if($elementObject->getVar('ele_type') == "ib") {
+			$elementContents = "<div class=\"formulize-text-for-display\">" . trans(stripslashes($form_ele[0])) . "</div>";
+			$breakClass = $form_ele[1];
+		} elseif($elementObject->getVar('ele_type') == "grid") {
+			$elementContents = renderGrid($elementObject, $entryForDEElements); // won't take into account the existing entry's saved values or the screen config when rendering the consituent elements, but probably doesn't matter.
+		}
+
+		// render the element
+		if(is_object($elementContents)) {
+			$html = $form->_drawElementElementHTML($elementContents);
+		} else {
+			$form->insertBreakFormulize($elementContents, $breakClass, 'de_'.$elementObject->getVar('id_form').'_'.$entryForDEElements.'_'.$elementObject->getVar('ele_id'), $elementObject->getVar("ele_handle"));
+			$hidden = '';
+			$html = '';
+			list($html, $hidden) = $form->_drawElements($form->getElements(), $html, $hidden);
+		}
+
+		// return the html, or nothing
+		if($html) {
+			$html = trans($html);
+			return $html;
+		}
+	}
+	return false;
 }

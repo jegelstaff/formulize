@@ -163,7 +163,7 @@ class SystemBlocksadmin extends icms_view_block_Object {
 	 * Overrides parent method 
 	 * @see htdocs/libraries/icms/ipf/icms_ipf_Object::getAdminViewItemLink()
 	 */
-	public function getAdminViewItemLink() {
+	public function getAdminViewItemLink($onlyUrl = false) {
 		$rtn = $this->getVar('title');
 		return $rtn;
 	}
@@ -288,7 +288,7 @@ class SystemBlocksadminHandler extends icms_view_block_Handler {
 	}
 
 	public function getModulesArray($full = FALSE) {
-		if (!count($this->modules_name)) {
+		if (!count((array) $this->modules_name)) {
 			$icms_module_handler = icms::handler('icms_module');
 			$installed_modules =& $icms_module_handler->getObjects();
 			$this->modules_name[0]['name'] = _NONE;

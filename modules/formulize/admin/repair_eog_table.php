@@ -30,7 +30,10 @@
 // This file receives ajax form submissions from the new admin UI
 
 include_once "../../../mainfile.php";
-ob_end_clean(); // in some cases ther appear to be two buffers active?!  So we must try to end twice.
+icms::$logger->disableLogger();
+while(ob_get_level()) {
+    ob_end_clean();
+}
 global $xoopsUser, $xoopsDB;
 if (!$xoopsUser) {
     print "Error: you are not logged in";
@@ -50,18 +53,6 @@ if (!$gperm_handler->checkRight($permissionToCheck, $itemToCheck, $groups, $modu
     return;
 }
 
-//check to see if there are entries in the form which 
-//do not appear in the entry_owner_groups table. If so, it finds the 
-// owner/creator of the entry and calls setEntryOwnerGroups() which inserts the
-//first, get the form ids and handles.  
-$missingEntries=q("SELECT main.entry_id,main.creation_uid From " . $xoopsDB->prefix("formulize_".formulize_db_escape($_POST['form_handle'])) . " as main WHERE NOT EXISTS(
-SELECT 1 FROM " . $xoopsDB->prefix("formulize_entry_owner_groups") . " as eog WHERE eog.fid=".intval($_POST['form_id'])." and eog.entry_id=main.entry_id )");
-//now we got the missing entries in the form and the users who created them.    
-$data_handler = new formulizeDataHandler(intval($_POST['form_id']));
-foreach ($missingEntries as $entry){
-    if (!$groupResult = $data_handler->setEntryOwnerGroups($entry['creation_uid'],$entry['entry_id'])) {
-            print "ERROR: failed to write the entry ownership information to the database.<br>";
-    }
+if($missingEntries = repairEOGTable($_POST['form_id'])) {
+    echo "found and fixed ". count((array) $missingEntries) . " ownership problems in your form";
 }
-
-echo "found and fixed ". count($missingEntries) . " ownership problems in your form";

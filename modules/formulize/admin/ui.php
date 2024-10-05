@@ -35,7 +35,15 @@ define('_FORMULIZE_UI_PHP_INCLUDED', 1);
 // include necessary Formulize files/functions
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
-global $xoopsTpl;
+global $xoopsTpl, $xoopsDB, $xoopsUser;
+
+// check that each screen has a valid relationship setting
+$sql = "SELECT * FROM ".$xoopsDB->prefix('formulize_screen')." as s WHERE NOT EXISTS(SELECT 1 FROM ".$xoopsDB->prefix('formulize_framework_links')." as l WHERE s.frid = l.fl_frame_id AND (s.fid = l.fl_form1_id OR s.fid = l.fl_form2_id)) AND s.frid != 0";
+if($res = $xoopsDB->query($sql)) {
+    while($array = $xoopsDB->fetchArray($res)) {
+        print 'ERROR: screen '.$array['sid'].' on form '.$array['fid'].' has an invalid relationship set (relationship '.$array['frid'].'). That form does not exist in that relationship. You must correct this or else the screen will not work properly. If the screen shows no relationship selected, then just resave the screen to fix this error.';
+    }
+}
 
 // If saveLock is turned on, exit
 /*if(saveLock) {
@@ -71,9 +79,33 @@ if (!isset($xoopsTpl)) {
 // sets up a template variable with the results of the op, called opResults
 include_once "op.php";
 
+// switch the theme for the screen if that's requested
+if(isset($_POST['themeswitch']) AND $_POST['themeswitch'] AND isset($_GET['sid'])) {
+    $screen_handler = xoops_getmodulehandler('screen', 'formulize');
+    $screen = $screen_handler->get($_GET['sid']);
+    $screen->setVar('theme', $_POST['themeswitch']);
+    $screen_handler->insert($screen);
+}
+
+// create a set of templates for the screen if that's what the user requested
+if(isset($_POST['seedtemplates']) AND $_POST['seedtemplates'] AND isset($_GET['sid'])) {
+    $screen_handler = xoops_getmodulehandler('screen', 'formulize');
+    $screen = $screen_handler->get($_GET['sid']);
+    $themeDefaultPath = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$screen->getVar('theme')."/default/".$screen->getVar('type')."/";
+    if(!file_exists($themeDefaultPath)) {
+        $themeDefaultPath = str_replace($screen->getVar('theme'), '', $themeDefaultPath);
+    }
+    if(!file_exists($themeDefaultPath)) {
+        exit('Error: could not locate a valid default template path for "'.$screen->getVar('type').'" screens.');
+    }
+    recurse_copy($themeDefaultPath, XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$screen->getVar('theme')."/".$screen->getVar('sid')."/");
+}
+
+
 // create the contents that we want to display for the currently selected page
 // the included php files create the values for $adminPage that are used for this page
 $adminPage = array();
+$adminPage['show_user_view'] = ''; // will be set for screens when preparing their admin page, so user can jump to the actual screen to see it in action
 $active_page = isset($_GET['page']) ? $_GET['page'] : "home";
 switch($active_page) {
     case "application":
@@ -105,6 +137,12 @@ switch($active_page) {
         break;
     case "managetokens":
         include "managetokens.php";
+        break;
+    case "mailusers":
+        include "mailusers.php";
+        break;
+    case "managepermissions":
+        include "managepermissions.php";
         break;
     default:
     case "home":
@@ -152,6 +190,8 @@ if(SDATA_DB_PREFIX == 'selenium') {
     $xoopsTpl->assign('allowFloatingSave', '');
 }
 
+$xoopsTpl->assign('XOOPS_URL', XOOPS_URL);
+$xoopsTpl->assign('UID', $xoopsUser->getVar('uid'));
 $xoopsTpl->display("db:admin/ui.html");
 
 xoops_cp_footer();

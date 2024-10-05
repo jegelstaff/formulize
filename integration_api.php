@@ -14,54 +14,15 @@ class Formulize {
 	private static $default_mapping_active = 1;
 
 	/**
-	 * Intialize the Formulize environment
+	 * Initialize the Formulize environment
 	 */
 	static function init() {
-		static $init_done = false;
-		if ($init_done)
-			return; // only need to do it once
-
 		if (self::$db == null) {
 			include_once('mainfile.php');
 			self::$db = $GLOBALS['xoopsDB'];
 			self::$db->allowWebChanges = true;
+            require_once('modules/formulize/include/functions.php');
 		}
-		if($init_done) {
-			// This is very hacky and is a response to the fact that the bootstrap process calls
-			// the method that determines the resource mapping for the active user.
-			// That method call cannot lead to functions.php being included, because the overall bootstrap
-			// is not yet complete, so including it now might result in the wrong language file being loaded!
-			require_once('modules/formulize/include/functions.php');
-		}
-		$init_done = true;
-
-	}
-
-	/**
-	 * Create the resource mapping table if it does not exist
-	 */
-	static function create_resource_mapping_table() {
-		self::init();
-		$mapping_table = self::$db->prefix(self::$mapping_table);
-		$sql = <<<EOF
-CREATE TABLE IF NOT EXISTS $mapping_table (
- mapping_id int(11) NOT NULL auto_increment,
- internal_id int(11) NOT NULL,
- external_id int(11) NOT NULL,
- resource_type int(4) NOT NULL,
- mapping_active tinyint(1) NOT NULL,
- PRIMARY KEY (mapping_id),
- INDEX i_internal_id (internal_id),
- INDEX i_external_id (external_id),
- INDEX i_resource_type (resource_type)
-) ENGINE=MyISAM;
-EOF;
-		self::$db->queryF($sql);
-
-		// alter the length of the session id
-		$sql = "ALTER TABLE ".self::$db->prefix("session")." CHANGE `sess_id` `sess_id` varchar(60) NOT NULL";
-		$mapping_table = self::$db->prefix(self::$mapping_table);
-		self::$db->queryF($sql);
 	}
 
 	/**
@@ -547,7 +508,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
 	 * @return            boolean the query success value
 	 *  @author Kristen Newbury Feb 21 2018
 	 */
-public static function updateResourceMapping($external_id_old, $external_id_new) {
+    public static function updateResourceMapping($external_id_old, $external_id_new) {
 		self::init();
         if(!$external_id_old||!$external_id_new) { return null; }
 		$mapping_table = self::$db->prefix(self::$mapping_table);
@@ -670,4 +631,79 @@ class FormulizeUser extends FormulizeObject {
 			$this->timezone_offset = $GLOBALS['xoopsConfig']['default_TZ'];
 		}
 	}
+    
+    function insertAndMapUser($groups) {
+        
+        global $icmsConfigUser;
+        
+        $login_name = $this->login_name;
+        //parse the space out of the name
+        $login_name = str_replace(' ', '', $login_name);
+        $uname = $this->uname;
+        $email = $this->email;
+        //make a random but fake password here since we anticipate the user to only need google login, unless they change it later
+        $pass = bin2hex(random_bytes(32));
+        $vpass =  $pass;
+        $timezone_offset =  $this->timezone_offset;
+        $member_handler = icms::handler('icms_member');
+        $user_handler = icms::handler('icms_member_user');
+        //perform a check for if the password and verified one seem ok
+        $stop = $user_handler->userCheck($login_name, $uname, $email, $pass, $vpass);
+        if (empty($stop)) {
+            //setup password info
+            $icmspass = new icms_core_Password();
+            $salt = $icmspass->createSalt();
+            $enc_type = $icmsConfigUser['enc_type'];
+            $pass1 = $icmspass->encryptPass($pass, $salt, $enc_type);
+                        
+            $newuser = $member_handler->createUser();
+            //attempt to create the user
+            $newuser->setVar('login_name', $login_name, TRUE);
+            $newuser->setVar('uname', $uname, TRUE);
+            $newuser->setVar('email', $email, TRUE);
+            $newuser->setVar('name', '', TRUE);
+            $newuser->setVar('timezone_offset', $timezone_offset, TRUE);
+            $newuser->setVar('user_avatar', 'blank.gif', TRUE);
+            $newuser->setVar( 'theme', 'impresstheme', TRUE);
+            $newuser->setVar('level', 1, TRUE);
+            $newuser->setVar('pass', $pass1, TRUE);
+            $newuser->setVar('salt', $salt, TRUE);
+            $newuser->setVar('enc_type', $enc_type, TRUE);
+            
+            if ($member_handler->insertUser($newuser)) {
+                //assign the user basic registered users group at the very least, and maybe other groups if those were selected
+                $newid = (int) $newuser->getVar('uid');
+                if (!$member_handler->addUserToGroup(XOOPS_GROUP_USERS, $newid)) {
+                    echo _US_REGISTERNG;
+                    include XOOPS_ROOT_PATH.'/footer.php';
+                    exit();
+                }
+                //see if there are other groups to add the user to
+                foreach($groups as $groupid) {
+                    //check in case there were no groups at all stored
+                    if($groupid != ""){
+                        $member_handler->addUserToGroup(intval($groupid), $newid);
+                    }
+                }
+                Formulize::init();
+                if(Formulize::createResourceMapping(Formulize::USER_RESOURCE, $_SESSION['resouceMapKey'], $newid)){
+                    $location = isset($_GET['newuser']) ? XOOPS_URL."/?code=".$_GET['newuser']."&newcode=".$_GET['newuser'] : "";
+                    if($location) {
+                        header("Location: ".$location);
+                        exit();
+                    } else {
+                        return $newid;
+                    }
+                } else {
+                    $icmsConfigUser["stop_error"] = "Error: could not create resource mapping for new user. Please notify a webmaster about this error. You will not be able to login with this account until this error is resolved.";
+                }
+            } else {
+                $icmsConfigUser["stop_error"] = "Error: could not add new user to the database. Please notify a webmaster about this error. You will not be able to login with this account until this error is resolved.";
+            }
+        } else {
+            $icmsConfigUser["stop_error"] = explode("<br />", $stop);
+        }
+        return false;
+    }
+    
 }

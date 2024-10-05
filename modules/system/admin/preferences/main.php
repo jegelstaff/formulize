@@ -520,6 +520,7 @@ switch ($op) {
 		$lang_updated = FALSE;
 		$encryption_updated = FALSE;
 		$purifier_style_updated = FALSE;
+		$tfa_updated = FALSE;
 		$saved_config_items = array();
 		if ($count > 0) {
 			for ($i = 0; $i < $count; $i++) {
@@ -529,6 +530,39 @@ switch ($op) {
 				icms::$preload->triggerEvent('savingSystemAdminPreferencesItem', array((int) $config->getVar('conf_catid'), $config->getVar('conf_name'), $config->getVar('conf_value')));
 
 				if (is_array($new_value) || $new_value != $config->getVar('conf_value')) {
+					
+					// if 2FA changed -- added by Julian Egelstaff Mar 4 2021
+					if(!$tfa_updated && $config->getVar('conf_catid') == ICMS_CONF_AUTH && $config->getVar('conf_name') == 'auth_2fa') {
+						// if turned on, make profile fields visible
+						// if turned off, make profile fields invisible -- remove in all cases first, to ensure DB is clean (don't want to add two copies if one already exists)
+						$gperm_handler = xoops_gethandler('groupperm');
+						$module_handler = xoops_gethandler('module');
+						$profileModule = $module_handler->getByDirname("profile");
+						$field_handler = xoops_getmodulehandler('field', 'profile');
+						$criteria = new Criteria('field_name', '2famethod');
+						$tfaMethodField = $field_handler->getObjects($criteria);
+						$tfaMethodField = $tfaMethodField[0];
+						$criteria = new Criteria('field_name', '2faphone');
+						$tfaPhoneField = $field_handler->getObjects($criteria);
+						$tfaPhoneField = $tfaPhoneField[0];
+						$criteria1 = new CriteriaCompo();
+						$criteria1->add(new Criteria('gperm_itemid', $tfaMethodField->getVar('fieldid')), 'OR');
+						$criteria1->add(new Criteria('gperm_itemid', $tfaPhoneField->getVar('fieldid')), 'OR');
+						$criteria2 = new CriteriaCompo();
+						$criteria2->add(new Criteria('gperm_modid', $profileModule->getVar('mid')), 'AND');
+						$criteria2->add($criteria1, 'AND');
+						if($perms = $gperm_handler->getObjects($criteria2)) {
+							foreach($perms as $perm) {
+								$gperm_handler->delete($perm);
+							}
+						}
+						if(${$config->getVar('conf_name')}==1) {
+							$gperm_handler->addRight('profile_edit', $tfaMethodField->getVar('fieldid'), 2, $profileModule->getVar('mid'));
+							$gperm_handler->addRight('profile_edit', $tfaPhoneField->getVar('fieldid'), 2, $profileModule->getVar('mid'));
+						}
+						$tfa_updated = TRUE;
+					}
+					
 					// if language has been changed
 					if (!$lang_updated && $config->getVar('conf_catid') == ICMS_CONF && $config->getVar('conf_name') == 'language') {
 						$icmsConfig['language'] = ${$config->getVar('conf_name')};

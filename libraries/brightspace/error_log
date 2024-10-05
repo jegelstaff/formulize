@@ -1,0 +1,112 @@
+[02-Mar-2022 14:47:49 UTC] PHP Fatal error:  Uncaught Error: Call to a member function createUrlForAuthenticationFromHostSpec() on null in /home/esatfutureworx/public_html/libraries/brightspace/index.php:108
+Stack trace:
+#0 {main}
+  thrown in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 108
+[02-Mar-2022 14:48:37 UTC] PHP Fatal error:  Uncaught Error: Call to a member function createUrlForAuthenticationFromHostSpec() on null in /home/esatfutureworx/public_html/libraries/brightspace/index.php:108
+Stack trace:
+#0 {main}
+  thrown in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 108
+[02-Mar-2022 14:51:37 UTC] PHP Fatal error:  Uncaught Error: Call to a member function createUrlForAuthenticationFromHostSpec() on null in /home/esatfutureworx/public_html/libraries/brightspace/index.php:111
+Stack trace:
+#0 {main}
+  thrown in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 111
+[02-Mar-2022 14:53:20 UTC] PHP Fatal error:  Uncaught Error: Call to a member function Scheme() on null in /home/esatfutureworx/public_html/libraries/brightspace/libsrc/D2LAppContext.php:51
+Stack trace:
+#0 /home/esatfutureworx/public_html/libraries/brightspace/index.php(111): D2LAppContext->createUrlForAuthenticationFromHostSpec(NULL, NULL)
+#1 {main}
+  thrown in /home/esatfutureworx/public_html/libraries/brightspace/libsrc/D2LAppContext.php on line 51
+[02-Mar-2022 15:03:23 UTC] PHP Warning:  Use of undefined constant XOOPS_ROOT_PATH - assumed 'XOOPS_ROOT_PATH' (this will throw an Error in a future version of PHP) in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 7
+[02-Mar-2022 15:03:23 UTC] PHP Warning:  require_once(XOOPS_ROOT_PATH/libraries/brightspace/OAuth1p0.php): failed to open stream: No such file or directory in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 7
+[02-Mar-2022 15:03:23 UTC] PHP Fatal error:  require_once(): Failed opening required 'XOOPS_ROOT_PATH/libraries/brightspace/OAuth1p0.php' (include_path='.:/opt/cpanel/ea-php73/root/usr/share/pear') in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 7
+[02-Mar-2022 15:04:20 UTC] PHP Warning:  Use of undefined constant XOOPS_ROOT_PATH - assumed 'XOOPS_ROOT_PATH' (this will throw an Error in a future version of PHP) in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 7
+[02-Mar-2022 15:04:20 UTC] PHP Warning:  require_once(XOOPS_ROOT_PATH/libraries/brightspace/OAuth1p0.php): failed to open stream: No such file or directory in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 7
+[02-Mar-2022 15:04:20 UTC] PHP Fatal error:  require_once(): Failed opening required 'XOOPS_ROOT_PATH/libraries/brightspace/OAuth1p0.php' (include_path='.:/opt/cpanel/ea-php73/root/usr/share/pear') in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 7
+[02-Mar-2022 15:06:29 UTC] PHP Warning:  require_once(./libraries/brightspace/OAuth1p0.php): failed to open stream: No such file or directory in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 7
+[02-Mar-2022 15:06:29 UTC] PHP Fatal error:  require_once(): Failed opening required './libraries/brightspace/OAuth1p0.php' (include_path='.:/opt/cpanel/ea-php73/root/usr/share/pear') in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 7
+[02-Mar-2022 15:07:04 UTC] PHP Warning:  require_once(./libraries/brightspace/OAuth1p0.php): failed to open stream: No such file or directory in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 7
+[02-Mar-2022 15:07:05 UTC] PHP Fatal error:  require_once(): Failed opening required './libraries/brightspace/OAuth1p0.php' (include_path='.:/opt/cpanel/ea-php73/root/usr/share/pear') in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 7
+[02-Mar-2022 15:08:17 UTC] PHP Notice:  Undefined index: launch_presentation_return_url in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 71
+[02-Mar-2022 15:08:17 UTC] PHP Notice:  Undefined index: query in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 74
+[02-Mar-2022 15:08:17 UTC] PHP Notice:  Undefined index: port in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 78
+[02-Mar-2022 15:08:17 UTC] PHP Notice:  Undefined index: launch_presentation_return_url in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 83
+[02-Mar-2022 15:08:17 UTC] PHP Notice:  Undefined index: ou in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 88
+[02-Mar-2022 15:08:17 UTC] PHP Notice:  Undefined index: parentNode in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 89
+[02-Mar-2022 15:08:17 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /home/esatfutureworx/public_html/libraries/brightspace/index.php:71) in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 105
+[02-Mar-2022 15:09:03 UTC] PHP Notice:  Undefined index: launch_presentation_return_url in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 71
+[02-Mar-2022 15:09:03 UTC] PHP Notice:  Undefined index: query in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 74
+[02-Mar-2022 15:09:03 UTC] PHP Notice:  Undefined index: port in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 78
+[02-Mar-2022 15:09:03 UTC] PHP Notice:  Undefined index: launch_presentation_return_url in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 83
+[02-Mar-2022 15:09:03 UTC] PHP Notice:  Undefined index: ou in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 88
+[02-Mar-2022 15:09:03 UTC] PHP Notice:  Undefined index: parentNode in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 89
+[02-Mar-2022 15:14:53 UTC] PHP Notice:  Undefined index: launch_presentation_return_url in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 71
+[02-Mar-2022 15:14:53 UTC] PHP Notice:  Undefined index: query in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 74
+[02-Mar-2022 15:14:53 UTC] PHP Notice:  Undefined index: port in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 78
+[02-Mar-2022 15:14:53 UTC] PHP Notice:  Undefined index: launch_presentation_return_url in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 83
+[02-Mar-2022 15:14:53 UTC] PHP Notice:  Undefined index: ou in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 88
+[02-Mar-2022 15:14:53 UTC] PHP Notice:  Undefined index: parentNode in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 89
+[02-Mar-2022 15:18:17 UTC] PHP Notice:  Undefined index: launch_presentation_return_url in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 71
+[02-Mar-2022 15:18:17 UTC] PHP Notice:  Undefined index: query in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 74
+[02-Mar-2022 15:18:17 UTC] PHP Notice:  Undefined index: port in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 78
+[02-Mar-2022 15:18:17 UTC] PHP Notice:  Undefined index: launch_presentation_return_url in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 83
+[02-Mar-2022 15:18:17 UTC] PHP Notice:  Undefined index: ou in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 88
+[02-Mar-2022 15:18:17 UTC] PHP Notice:  Undefined index: parentNode in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 89
+[02-Mar-2022 15:18:17 UTC] PHP Fatal error:  Uncaught Error: Cannot access private property D2LUserContext::$_appId in /home/esatfutureworx/public_html/libraries/brightspace/index.php:105
+Stack trace:
+#0 {main}
+  thrown in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 105
+[02-Mar-2022 15:18:49 UTC] PHP Notice:  Undefined index: launch_presentation_return_url in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 71
+[02-Mar-2022 15:18:49 UTC] PHP Notice:  Undefined index: query in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 74
+[02-Mar-2022 15:18:49 UTC] PHP Notice:  Undefined index: port in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 78
+[02-Mar-2022 15:18:49 UTC] PHP Notice:  Undefined index: launch_presentation_return_url in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 83
+[02-Mar-2022 15:18:49 UTC] PHP Notice:  Undefined index: ou in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 88
+[02-Mar-2022 15:18:49 UTC] PHP Notice:  Undefined index: parentNode in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 89
+[02-Mar-2022 15:18:49 UTC] PHP Fatal error:  Uncaught Error: Cannot access private property D2LUserContext::$_appId in /home/esatfutureworx/public_html/libraries/brightspace/index.php:105
+Stack trace:
+#0 {main}
+  thrown in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 105
+[02-Mar-2022 15:19:03 UTC] PHP Notice:  Undefined index: launch_presentation_return_url in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 71
+[02-Mar-2022 15:19:03 UTC] PHP Notice:  Undefined index: query in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 74
+[02-Mar-2022 15:19:03 UTC] PHP Notice:  Undefined index: port in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 78
+[02-Mar-2022 15:19:03 UTC] PHP Notice:  Undefined index: launch_presentation_return_url in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 83
+[02-Mar-2022 15:19:03 UTC] PHP Notice:  Undefined index: ou in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 88
+[02-Mar-2022 15:19:03 UTC] PHP Notice:  Undefined index: parentNode in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 89
+[02-Mar-2022 15:19:03 UTC] PHP Fatal error:  Uncaught Error: Cannot access private property D2LUserContext::$_appId in /home/esatfutureworx/public_html/libraries/brightspace/index.php:105
+Stack trace:
+#0 {main}
+  thrown in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 105
+[02-Mar-2022 15:21:44 UTC] PHP Notice:  Undefined index: launch_presentation_return_url in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 71
+[02-Mar-2022 15:21:44 UTC] PHP Notice:  Undefined index: query in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 74
+[02-Mar-2022 15:21:44 UTC] PHP Notice:  Undefined index: port in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 78
+[02-Mar-2022 15:21:44 UTC] PHP Notice:  Undefined index: launch_presentation_return_url in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 83
+[02-Mar-2022 15:21:44 UTC] PHP Notice:  Undefined index: ou in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 88
+[02-Mar-2022 15:21:44 UTC] PHP Notice:  Undefined index: parentNode in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 89
+[02-Mar-2022 15:22:25 UTC] PHP Notice:  Undefined index: launch_presentation_return_url in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 71
+[02-Mar-2022 15:22:25 UTC] PHP Notice:  Undefined index: query in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 74
+[02-Mar-2022 15:22:25 UTC] PHP Notice:  Undefined index: port in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 78
+[02-Mar-2022 15:22:25 UTC] PHP Notice:  Undefined index: launch_presentation_return_url in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 83
+[02-Mar-2022 15:22:25 UTC] PHP Notice:  Undefined index: ou in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 88
+[02-Mar-2022 15:22:25 UTC] PHP Notice:  Undefined index: parentNode in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 89
+[02-Mar-2022 15:23:21 UTC] PHP Notice:  Undefined index: launch_presentation_return_url in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 71
+[02-Mar-2022 15:23:21 UTC] PHP Notice:  Undefined index: query in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 74
+[02-Mar-2022 15:23:21 UTC] PHP Notice:  Undefined index: port in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 78
+[02-Mar-2022 15:23:21 UTC] PHP Notice:  Undefined index: launch_presentation_return_url in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 83
+[02-Mar-2022 15:23:21 UTC] PHP Notice:  Undefined index: ou in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 88
+[02-Mar-2022 15:23:21 UTC] PHP Notice:  Undefined index: parentNode in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 89
+[02-Mar-2022 15:24:24 UTC] PHP Notice:  Undefined index: launch_presentation_return_url in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 71
+[02-Mar-2022 15:24:24 UTC] PHP Notice:  Undefined index: query in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 74
+[02-Mar-2022 15:24:24 UTC] PHP Notice:  Undefined index: port in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 78
+[02-Mar-2022 15:24:24 UTC] PHP Notice:  Undefined index: launch_presentation_return_url in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 83
+[02-Mar-2022 15:24:24 UTC] PHP Notice:  Undefined index: ou in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 88
+[02-Mar-2022 15:24:24 UTC] PHP Notice:  Undefined index: parentNode in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 89
+[02-Mar-2022 15:25:12 UTC] PHP Notice:  Undefined index: launch_presentation_return_url in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 71
+[02-Mar-2022 15:25:12 UTC] PHP Notice:  Undefined index: query in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 74
+[02-Mar-2022 15:25:12 UTC] PHP Notice:  Undefined index: port in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 78
+[02-Mar-2022 15:25:12 UTC] PHP Notice:  Undefined index: launch_presentation_return_url in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 83
+[02-Mar-2022 15:25:12 UTC] PHP Notice:  Undefined index: ou in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 88
+[02-Mar-2022 15:25:12 UTC] PHP Notice:  Undefined index: parentNode in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 89
+[02-Mar-2022 15:25:53 UTC] PHP Notice:  Undefined index: launch_presentation_return_url in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 71
+[02-Mar-2022 15:25:53 UTC] PHP Notice:  Undefined index: query in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 74
+[02-Mar-2022 15:25:53 UTC] PHP Notice:  Undefined index: port in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 78
+[02-Mar-2022 15:25:53 UTC] PHP Notice:  Undefined index: launch_presentation_return_url in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 83
+[02-Mar-2022 15:25:53 UTC] PHP Notice:  Undefined index: ou in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 88
+[02-Mar-2022 15:25:53 UTC] PHP Notice:  Undefined index: parentNode in /home/esatfutureworx/public_html/libraries/brightspace/index.php on line 89

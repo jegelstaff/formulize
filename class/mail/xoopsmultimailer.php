@@ -20,7 +20,7 @@ if (!defined("ICMS_ROOT_PATH")) {
 /**
  * Mailer Class.
  *
- * @deprecated	Use icms_messaging_EmailHandler, instead
+ * deprecated	Use icms_messaging_EmailHandler, instead
  * @todo		Remove in version 1.4
  * @author		Jochen Buennagel	<job@buennagel.com>
  * @copyright	(c) 2000-2003 The Xoops Project - www.xoops.org

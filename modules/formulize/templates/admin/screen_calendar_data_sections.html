@@ -1,0 +1,27 @@
+
+    <p><a name="deldata" href="" target="<{$sectionContent.index}>"><img src="../images/editdelete.gif"> Delete this dataset</a></p>
+		<p>Properties for this dataset:</p>
+        
+        <p>Scope <select name='scopes[]'>
+        <option value='mine' <{if $sectionContent.scope == 'mine'}>selected<{/if}>>The user's own entries</option>
+        <option value='group' <{if $sectionContent.scope == 'group'}>selected<{/if}>>The user's groups' entries</option>
+        <option value='all' <{if $sectionContent.scope == 'all'}>selected<{/if}>>All entries</option>
+        </select></p>
+        
+        <p>The element handle with the date <input type='text' name='datehandles[]' value='<{$sectionContent.datehandle}>' /></p>
+        
+        <p>The viewentryscreen <input type='text' name='viewentryscreens[]' value='<{$sectionContent.viewentryscreen}>' /></p>
+        
+        <p>The text color (not implemented yet) <input type='text' name='textcolors[]' value='<{$sectionContent.textcolor}>' /></p>
+        
+        <p>Use add icons? <input type='radio' name='useaddicons[]' value=1 <{if $sectionContent.useaddicons == 1}>checked<{/if}>>Yes <input type='radio' name='useaddicons[]' value=0 <{if $sectionContent.useaddicons == 0}>checked<{/if}>>No'</p>
+        <p>Use delete icons? <input type='radio' name='usedeleteicons[]' value=1 <{if $sectionContent.usedeleteicons == 1}>checked<{/if}>>Yes <input type='radio' name='usedeleteicons[]' value=0 <{if $sectionContent.usedeleteicons == 0}>checked<{/if}>>No'</p>
+        
+        <p>Template for how to summarize each entry in the calendar
+        <textarea name='clicktemplates[]'><{$sectionContent.clicktemplate}></textarea></p>
+        
+        <p>Optional - alternate form Id <input type='text' name='fids[]' value='<{$sectionContent.fid}>' /></p>
+        <p>Optional - alternate relationship Id <input type='text' name='frids[]' value='<{$sectionContent.frid}>' /></p>
+        
+        
+        

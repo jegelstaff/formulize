@@ -16,3 +16,10 @@
 include_once '../../../include/cp_header.php';
 include_once ICMS_ROOT_PATH.'/modules/'.basename(dirname(dirname(__FILE__))).'/include/common.php';
 include_once PROFILE_ROOT_PATH."include/requirements.php";
+
+global $icmsConfig;
+if (file_exists(ICMS_ROOT_PATH."/modules/profile/language/".$icmsConfig['language']."/modinfo.php")) {
+    include_once ICMS_ROOT_PATH."/modules/profile/language/".$icmsConfig['language']."/modinfo.php";
+} else {
+    include_once ICMS_ROOT_PATH."/modules/profile/language/english/modinfo.php";
+}

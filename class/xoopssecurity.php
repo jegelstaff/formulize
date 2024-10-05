@@ -46,7 +46,7 @@ class IcmsSecurity extends	icms_core_Security {
  * @since		XOOPS
  * @author		The XOOPS Project Community <http://www.xoops.org>
  *
- * @deprecated	Use icms_core_Security instead
+ * deprecated	Use icms_core_Security instead
  * @todo		Remove this in version 1.4
  */
 class XoopsSecurity extends icms_core_Security {

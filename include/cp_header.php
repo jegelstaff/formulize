@@ -9,7 +9,7 @@
  * @version		SVN: $Id: cp_header.php 20763 2011-02-05 17:26:34Z skenow $
  */
 // Make sure the kernel launches the module in admin mode and checks the correct permissions
-define('ICMS_IN_ADMIN', 1);
+if(!defined('ICMS_IN_ADMIN')) { define('ICMS_IN_ADMIN', 1); }
 
 /* if mainfile.php is loaded before this file, the icms::$module will not be loaded properly,
  * causing a fatal error when trying to access any property or method of $icmsModule,

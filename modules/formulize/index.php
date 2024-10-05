@@ -41,31 +41,39 @@
 
 /*require_once "../../mainfile.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-$GLOBALS['startPageTime'] = microtime_float();*/
+$GLOBALS['startPageTime'] = microtime(true);*/
 
 if(!isset($formulize_masterUIOverride)) {
     $formulize_masterUIOverride = false;
 }
 
-if(isset($formulize_screen_id)) {
-    if(is_numeric($formulize_screen_id)) {
-        include XOOPS_ROOT_PATH.'/header.php';
-        global $xoTheme;
-        if($xoTheme) {
-            $xoTheme->addStylesheet("/modules/formulize/templates/css/formulize.css");
-            $xoTheme->addScript("/modules/formulize/libraries/formulize.js");
-        }
-        include 'initialize.php';
-    }
-} else {
+// a declared screen means mainfile must already have been included. developer must do this elsewhere when declaring screen.
+if(!isset($formulize_screen_id) OR !is_numeric($formulize_screen_id)) {
     require_once "../../mainfile.php";
-    include XOOPS_ROOT_PATH.'/header.php';
-    global $xoTheme;
-    if($xoTheme) {
-        $xoTheme->addStylesheet("/modules/formulize/templates/css/formulize.css");
-        $xoTheme->addScript("/modules/formulize/libraries/formulize.js");
-    }
-    include 'initialize.php';
+}
 
+include_once XOOPS_ROOT_PATH.'/header.php';
+
+include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
+
+global $xoTheme;
+if($xoTheme) {
+
+    // retrieve the xoops_version info
+    $module_handler = xoops_gethandler('module');
+    $formulizeModule = $module_handler->getByDirname("formulize");
+    $metadata = $formulizeModule->getInfo();
+
+    $xoTheme->addStylesheet("/modules/formulize/templates/css/formulize.css?v=".$metadata['version']);
+    $xoTheme->addScript("/modules/formulize/libraries/formulize.js");
+    $xoTheme->addStylesheet("/modules/formulize/libraries/jquery/timeentry/jquery.timeentry.css");
+    $xoTheme->addScript("modules/formulize/libraries/jquery/timeentry/jquery.plugin.min.js");
+    $xoTheme->addScript("modules/formulize/libraries/jquery/timeentry/jquery.timeentry.js");
+    $xoTheme->addScript("modules/formulize/libraries/jquery/timeentry/jquery.mousewheel.js");
+}
+include 'initialize.php';
+
+// a declared screen means the page rendering is being included elsewhere, at the point where the screen id is included, so don't call footer otherwise we will output the entire page template, not just the body contents
+if(!isset($formulize_screen_id) OR !is_numeric($formulize_screen_id)) {
     include XOOPS_ROOT_PATH.'/footer.php';
 }

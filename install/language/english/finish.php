@@ -4,7 +4,7 @@
 $content .=
 "<h3>Formulize Support</h3>
 <ul class=\"diags\">
-<li><a href='http://www.freeformsolutions.ca/formulize/' target='_blank'>The Formulize Homepage</a> where you can get documentation and post in the support forums</li>
+<li><a href='https://www.formulize.org/' target='_blank'>The Formulize Homepage</a> where you can get documentation and connect with developers and other users</li>
 </ul>
 <h3>ImpressCMS Support</h3>
 <ul class=\"diags\">

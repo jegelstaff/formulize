@@ -11,6 +11,10 @@ ini_set('max_execution_time', '600');
  
 include_once '../include/synchronization.php';
 
+if(!class_exists('ZipArchive')) {
+    print 'ERROR: Synchronization is not possible, because the server cannot create or read .zip files. Add the zip extension to PHP and restart the web server.';
+}
+
 $sync = array();
 
 $sync[1]['name'] = "Import Database for Synchronization";
@@ -100,7 +104,13 @@ else if(isset($_POST['import']) OR isset($_GET['partial'])) {
         deleteDir($csvPath); // clean up temp folder and CSV files
         header("Location: ui.php?page=sync-import"); // redirect to sync import review changes
     } elseif($dbResult["success"] == true) {
-        header("Location: ui.php?page=synchronize&partial=".urlencode($csvPath)); // redirect to continue import
+        $groupsMatch = ((isset($_POST['groupsMatch']) AND $_POST['groupsMatch'] == 2) OR (isset($_GET['groupsMatch']) AND $_GET['groupsMatch'] == 2)) ? 2 : 1;
+        header("Location: ui.php?page=synchronize&partial=".urlencode($csvPath)."&groupsMatch=$groupsMatch"); // redirect to continue import
+        // alternatively, process all in one page load, but could be prohibitive in a large database due to timeouts!
+        /*while($dbResult["partial"] != false) {
+            $dbResult = csvToDB($csvPath);
+        }
+        exit();*/
     } else {
         $sync[1]['content']['error'] = "import_err";
     }

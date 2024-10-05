@@ -31,21 +31,35 @@
 
 include_once "../../../mainfile.php";
 
+icms::$logger->disableLogger();
+while(ob_get_level()) {
+    ob_end_clean();
+}
+
 $module_handler = xoops_gethandler('module');
 $config_handler = xoops_gethandler('config');
+
 $formulizeModule = $module_handler->getByDirname("formulize");
 $formulizeConfig = $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
 if ($formulizeConfig['isSaveLocked']){
   exit();
 }
 
-ob_end_clean();
-ob_end_clean(); // in some cases ther appear to be two buffers active?!  So we must try to end twice.
-global $xoopsUser;
+global $xoopsUser, $xoopsConfig;
 if (!$xoopsUser) {
     print "Error: you are not logged in";
     return;
 }
+
+// load the formulize language constants if they haven't been loaded already
+if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
+    include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php";
+    include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/admin.php";
+} else {
+    include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/main.php";
+    include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/admin.php";
+}
+
 $gperm_handler = xoops_gethandler('groupperm');
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 $groups = $xoopsUser->getGroups();
@@ -66,7 +80,6 @@ foreach($_POST as $k=>$v) {
         continue;
     }
     list($class, $property) = explode("-", $k);
-    $v = recursive_stripslashes($v);
     if (is_array($v) AND $class != "elements") {
         // elements class is written using cleanVars so arrays are serialized automagically
         $v = serialize($v);

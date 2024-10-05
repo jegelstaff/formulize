@@ -64,10 +64,8 @@ function xoDiagIfWritable( $path) {
 }
 
 function phpVersionCheck() {
-    if (version_compare( phpversion(), '5.7', '>=')) {
+    if (version_compare( phpversion(), '8.0', '>=')) {
         return 1;
-    } elseif (version_compare( phpversion(), '5.6', '>=')) {
-        return 0;
     } else {
         return -1;
     }

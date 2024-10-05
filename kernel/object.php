@@ -11,7 +11,7 @@
  * @author	http://www.xoops.org The XOOPS Project
  * @author	modified by UnderDog <underdog@impresscms.org>
  * @version	$Id: object.php 19419 2010-06-13 22:52:12Z skenow $
- * @deprecated	Moving to new architecture
+ * deprecated	Moving to new architecture
  * @todo		Remove in version 1.4
  */
 
@@ -26,7 +26,7 @@
  * @author Kazumi Ono (AKA onokazu)
  * @copyright copyright &copy; 2000 XOOPS.org
  * @package kernel
- * @deprecated	Use icms_core_Object, instead
+ * deprecated	Use icms_core_Object, instead
  * @todo		Remove in version 1.4
  **/
 class XoopsObject extends icms_core_Object
@@ -48,7 +48,7 @@ class XoopsObject extends icms_core_Object
  *
  * @author  Kazumi Ono <onokazu@xoops.org>
  * @copyright copyright &copy; 2000 The XOOPS Project
- * @deprecated	Use icms_core_ObjectHandler, instead
+ * deprecated	Use icms_core_ObjectHandler, instead
  * @todo		Remove in version 1.4
  */
 abstract class XoopsObjectHandler extends icms_core_ObjectHandler

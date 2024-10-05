@@ -78,4 +78,5 @@ define('_CAL_Dey','Day');
 define('_CAL_Bah','Bahman');
 define('_CAL_Esf','Esfand');
 define("_CAL_NUMS_ARRAY", "'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'"); // des valeurs numériques peuvent être différentes dans différentes langues
-?>
+
+include_once XOOPS_ROOT_PATH.'/language/english/calendar.php';

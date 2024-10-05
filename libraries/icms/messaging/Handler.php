@@ -142,6 +142,10 @@ class icms_messaging_Handler {
 	public function useMail() {
 		$this->isMail = true;
 	}
+    
+    public function isHTML() {
+        $this->multimailer->isHTML();
+    }
 
 	public function usePM() {
 		$this->isPM = true;
@@ -162,7 +166,9 @@ class icms_messaging_Handler {
 				}
 				return false;
 			}
-			$this->setBody(fread($fd, filesize($path)));
+            if(filesize($path) > 0) {
+                $this->setBody(fread($fd, filesize($path)));
+            } 
 		}
 
 		// for sending mail only
@@ -189,11 +195,18 @@ class icms_messaging_Handler {
 		// TODO: X_SIGNATURE, X_DISCLAIMER ?? - these are probably best
 		//  done as includes if mail templates ever get this sophisticated
 
-		// replace tags with actual values
+		// replace tags with actual values, and add attachments if that is requested
 		foreach ($this->assignedTags as $k => $v) {
-			$this->body = str_replace("{" . $k . "}", $v, $this->body);
-			$this->subject = str_replace("{" . $k . "}", $v, $this->subject);
+			if(substr($k, 0, 11) == "ATTACHFILE-") {
+				$fileName = substr($k, 11, strlen($k));
+				$filePath = $v;
+				$this->multimailer->addAttachment($filePath, $fileName);
+			} else {
+				$this->body = str_replace("{" . $k . "}", preg_replace("/&amp;/i", '&', $v), $this->body);
+				$this->subject = str_replace("{" . $k . "}", preg_replace("/&amp;/i", '&', $v), $this->subject);
+			}
 		}
+
 		$this->body = str_replace("\r\n", "\n", $this->body);
 		$this->body = str_replace("\r", "\n", $this->body);
 		$this->body = str_replace("\n", $this->LE, $this->body);
@@ -304,6 +317,17 @@ class icms_messaging_Handler {
 		return TRUE;
 	}
 
+    // ADDED BY JULIAN EGELSTAFF AUG 12 2020 TO HANDLE ATTACHMENTS
+    // Exposes the addAttachment method on the private multimailer property (which goes back to the underlying PHPMailer class)
+    public function addAttachment($path,
+        $name = '',
+        $encoding = 'base64',
+        $type = '',
+        $disposition = 'attachment'
+        ) {
+        $this->multimailer->addAttachment($path, $name, $encoding, $type, $disposition);
+    }
+    
 	public function getErrors($ashtml = true) {
 		if (!$ashtml) {
 			return $this->errors;

@@ -1,7 +1,7 @@
 <script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/jquery/jquery-1.4.2.min.js"></script>
 <script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/jquery/jquery-ui-1.8.2.custom.min.js"></script>
 <script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/codemirror/codemirror-compressed.js"></script>
-<script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/formulize.js"></script>
+<script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/formulize-admin.js?v=2"></script>
 <script type="text/javascript" src="<{$xoops_url}>/modules/formulize/selenium_debug.js"></script>
 
 <link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/libraries/jquery/css/start/jquery-ui-1.8.2.custom.css">
@@ -17,7 +17,7 @@ $(document).ready(function() {
 	//Select all anchor tag with rel set to tooltip
 	$('a[rel=tooltip]').mouseover(function(e) {
 		//Grab the title attribute's value and assign it to a variable
-		var tip = $(this).attr('title');		
+		var tip = $(this).attr('title');
 		//Remove the title attribute's to avoid the native tooltip from the browser
 		$(this).attr('title','');
 		//Append the tooltip template and its value
@@ -48,7 +48,7 @@ $(document).ready(function() {
 <script type="text/javascript">
 $(document).ready(function() {
 	var offset = $('#admin_toolbar').offset();
-	
+
 	  $(window).scroll(function () {
 		var scrollTop = $(window).scrollTop();
 		if (offset && offset.top<scrollTop <{$allowFloatingSave}>) {
@@ -59,12 +59,12 @@ $(document).ready(function() {
 		  $('#admin_toolbar').removeClass('ui-corner-all');
 		};
 	  });
-	  
+
 	});
 </script>
 <!-- end jquery -->
 
-<!--[if IE 6]> 
+<!--[if IE 6]>
 	<link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/templates/css/ie6.css" />
 <![endif]-->
 
@@ -79,6 +79,8 @@ $(document).ready(function() {
   <input type="hidden" name="scrollx" value="">
   <input type="hidden" name="tabs_selected" value="">
   <input type="hidden" name="accordion_active" value="">
+  <input type="hidden" name="themeswitch" value="">
+  <input type="hidden" name="seedtemplates" value="">
 </form>
 
 <{if $adminPage.show_user_view}>
@@ -90,9 +92,6 @@ $(document).ready(function() {
 
 <{if $adminPage.pagetitle}>
   <h1><{$adminPage.pagetitle}> <span class="smallhead"><{$adminPage.pagesubtitle}></span></h1>
-  <{if $lasturl}>
-    <p><a href="ui.php?<{$lasturl}>"><{$smarty.const._AM_HOME_GOBACKTO}><i><{$lasttext}></i></a></p>
-  <{/if}>
 <{/if}>
 
 <{if $breadcrumbtrail}>
@@ -100,7 +99,7 @@ $(document).ready(function() {
     <{counter start=0 assign=crumbcount print=false}>
     <{foreach from=$breadcrumbtrail item=crumb}>
         <{if $crumbcount}> &raquo; <{/if}>
-        <{if $crumb.url}>
+        <{if isset($crumb.url) AND $crumb.url}>
             <a href="ui.php?<{$crumb.url}>" class="breadcrumb-<{$crumbcount}>"><{$crumb.text}></a>
             <{assign var='lasturl' value=$crumb.url}>
             <{assign var='lasttext' value=$crumb.text}>
@@ -111,7 +110,7 @@ $(document).ready(function() {
     <{/foreach}>
 </p>
 <{/if}>
-    
+
 <!-- modified by Freeform Solutions, S.Gray, April 11, 2011 -->
 <{if $adminPage.needsave}>
 <div id="admin_toolbar">
@@ -119,7 +118,7 @@ $(document).ready(function() {
 <{if $adminPage.isSaveLocked}>
 	READ ONLY
 <{else}>
-    <input type="button" class="savebutton" id="save" value="<{$smarty.const._AM_HOME_SAVECHANGES}>"/>    
+    <input type="button" class="savebutton" id="save" value="<{$smarty.const._AM_HOME_SAVECHANGES}>"/>
 <{/if}>
 </div>
 <div id="savewarning" class="ui-corner-all"><{$smarty.const._AM_HOME_WARNING_UNSAVED}></div>
@@ -127,26 +126,28 @@ $(document).ready(function() {
 </div><!-- /admin_toolbar -->
 <{/if}>
 
-<{if $adminPage.template}>
-<{include file=$adminPage.template}>  
+<{if isset($adminPage.template) AND $adminPage.template}>
+<{include file=$adminPage.template}>
 <{/if}>
 
-<{if $adminPage.tabs}>  
+<{if $adminPage.tabs}>
 <{include file="db:admin/ui-tabs.html" tabs=$adminPage.tabs}>
 <{/if}>
-  
+
 <p class="versionnumber">Version <{$version}></p>
 
 </div><!-- End admin-ui -->
 
 <script type="text/javascript">
 
+	var icms_url = '<{$XOOPS_URL}>';
+	var icms_userid = <{$UID}>;
   var saveCounter = 0;
   var saveTarget = 0;
   var redirect = "";
   var newhandle = "";
   var formdata = new Array();
-  
+
   $("input").change(function() {
     setDisplay('savewarning','block');
     });
@@ -154,19 +155,74 @@ $(document).ready(function() {
     setDisplay('savewarning','block');
     });
   $("select").change(function() {
-    setDisplay('savewarning','block');
+        if ($(this).attr('name') != 'screens-theme') { // switching themes is a special event, and can only be done when there's been no changes to the settings yet
+            setDisplay('savewarning','block');
+        }
     });
   $("textarea").keydown(function() {
     setDisplay('savewarning','block');
     });
 
   $(".savebutton").click(function() {
-    if(validateRequired()) {
-      runSaveEvent();
-    }
-  });
+		<{php}>
+		// if user wants it, and server can validate code, validate code blocks, which will then validateRequired, etc
+		global $xoopsModuleConfig;
+		if ($xoopsModuleConfig['validateCode'] AND isEnabled('shell_exec')) {
+			print "\t\t$('.admin-ui').fadeTo(1, 0.5, function() { validateCode(); });\n";
+		} else {
+			print "\t\tif(validateRequired()) { runSaveEvent(); }\n";
+		}
+		<{/php}>
+	});
 
-  function runSaveEvent() {
+	let checkedBlocks = []
+	async function validateCode() {
+		let codeBlocks = []
+		let error = ''
+		let errorMsg = ''
+		$(".canValidate").each(function() {
+			codeBlocks.push({ code: $(this).val(), title: $(this).prevAll('legend').first().text() })
+		});
+		for (let i = 0; i < codeBlocks.length; i++) {
+			if(codeBlocks[i].code && codeBlocks[i].code.trim() != '<?php') {
+				if(typeof checkedBlocks[i] === 'undefined' || (codeBlocks[i].code != checkedBlocks[i].code)) {
+					error = await fz_check_php_code(codeBlocks[i].code)
+					if(error.valid === false) {
+						errorMsg = `The ${codeBlocks[i].title} has an error:\n\n${error.result}`
+						checkedBlocks[i] = {
+							code: codeBlocks[i].code,
+							valid: false,
+							error: errorMsg
+						}
+						break
+					} else {
+						checkedBlocks[i] = {
+							code: codeBlocks[i].code,
+							valid: true,
+							error: ''
+						}
+					}
+				} else if(checkedBlocks[i].valid === false) {
+					errorMsg = checkedBlocks[i].error
+					break
+				}
+			} else {
+				checkedBlocks[i] = {
+					code: codeBlocks[i].code,
+					valid: true,
+					error: ''
+				}
+			}
+		}
+		if(errorMsg) {
+			alert(errorMsg)
+			$('.admin-ui').fadeTo(1, 1)
+		} else if(validateRequired()) {
+      runSaveEvent()
+    }
+	}
+
+	function runSaveEvent() {
     $(".admin-ui").fadeTo(1,0.5);
     var formulize_formlist = $(".formulize-admin-form");
     saveCounter = 0;
@@ -180,10 +236,10 @@ $(document).ready(function() {
       }
     }
     if(saveTarget > 0) {
-      sendFormData(formdata[0]); // send the first form's data 
+      sendFormData(formdata[0]); // send the first form's data
     }
   }
-  
+
   function sendFormData(thisformdata, ele_id) {
     if(!ele_id) { ele_id = 0 }
     $.post("save.php?ele_id="+ele_id, $(thisformdata).serialize(), function(data) {
@@ -213,14 +269,14 @@ $(document).ready(function() {
       }
     });
   }
-  
+
   function reloadWithScrollPosition(url) {
     if(url) {
       $("[name=scrollposition]").attr('action', url);
     }
     window.document.scrollposition.scrollx.value = $(window).scrollTop();
     var tabs_selected = "";
-    <{if $adminPage.tabs}> 
+    <{if $adminPage.tabs}>
     tabs_selected = $("#tabs").tabs("option","selected");
     window.document.scrollposition.tabs_selected.value = tabs_selected;
     tabs_selected = tabs_selected+1;
@@ -247,7 +303,7 @@ $(document).ready(function() {
   $().ajaxError(function () {
     alert("There was an error when saving your data.  Please try again.");
   });
-  
+
   $(window).load(function () {
     $(window).scrollTop(<{$scrollx}>);
   });
@@ -256,6 +312,15 @@ $(document).ready(function() {
     var element = window.document.getElementById( elementId );
     if( element ) {
       element.style.display = styleDisplay;
+    }
+    if (elementId == 'savewarning') {
+        if (styleDisplay == 'block') {
+            // disable theme switching
+            $("[name='screens-theme']").attr('disabled', true);
+        } else {
+            // enable theme switching
+            $("[name='screens-theme']").attr('disabled', false);
+        }
     }
   }
 
@@ -273,12 +338,24 @@ $(document).ready(function() {
             enterMode: "keep",
             tabMode: "shift",
             lineWrapping: true,
-            onChange: function(instance) { 
+            onChange: function(instance) {
                 setDisplay('savewarning','block');
                 instance.save(); // Call this to update the textarea value for the ajax post
             }
         });
     })
   );
-  
+
+    // change the themes, only possible when no changes to screen settings yet. Change theme property of screen and reload page.
+    $("[name='screens-theme']").change(function() {
+        window.document.scrollposition.themeswitch.value  = $(this).val();
+        reloadWithScrollPosition();
+    });
+
+    // seed the templates, only possible when no custom templates yet exist for a screen.
+    $("#seedtemplates").click(function() {
+        window.document.scrollposition.seedtemplates.value = 1;
+        reloadWithScrollPosition();
+    });
+
 </script>

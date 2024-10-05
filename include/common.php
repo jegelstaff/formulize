@@ -12,11 +12,6 @@
 /** make sure mainfile is included, for security and functionality */
 defined("XOOPS_MAINFILE_INCLUDED") or die();
 
-/** @todo This funtion has been deprecated in PHP 5.3.0 - need to adjust in 1.4 ~skenow */
-if (get_magic_quotes_runtime()) {
-    @set_magic_quotes_runtime(0);
-}
-
 // -- Include common functions and constants file
 require_once ICMS_ROOT_PATH . "/include/constants.php";
 include_once ICMS_INCLUDE_PATH . "/functions.php";
@@ -69,15 +64,23 @@ if (isset($xoopsOption['pagetype']) && FALSE === strpos($xoopsOption['pagetype']
 
 defined("XOOPS_USE_MULTIBYTES") or define("XOOPS_USE_MULTIBYTES", 0);
 
-if (!empty($_POST['xoops_theme_select']) && in_array($_POST['xoops_theme_select'], $icmsConfig['theme_set_allowed'])) {
-	$icmsConfig['theme_set'] = $_POST['xoops_theme_select'];
-	$_SESSION['xoopsUserTheme'] = $_POST['xoops_theme_select'];
-} elseif (!empty($_POST['theme_select']) && in_array($_POST['theme_select'], $icmsConfig['theme_set_allowed'])) {
-	$icmsConfig['theme_set'] = $_POST['theme_select'];
-	$_SESSION['xoopsUserTheme'] = $_POST['theme_select'];
-} elseif (!empty($_SESSION['xoopsUserTheme'])
-		&& in_array($_SESSION['xoopsUserTheme'], $icmsConfig['theme_set_allowed'])) {
-	$icmsConfig['theme_set'] = $_SESSION['xoopsUserTheme'];
+if(!empty($icmsConfig['theme_set_allowed'])) {
+    if (!empty($_POST['xoops_theme_select']) && in_array($_POST['xoops_theme_select'], $icmsConfig['theme_set_allowed'])) {
+        $icmsConfig['theme_set'] = $_POST['xoops_theme_select'];
+        $_SESSION['xoopsUserTheme'] = $_POST['xoops_theme_select'];
+    } elseif (!empty($_POST['theme_select']) && in_array($_POST['theme_select'], $icmsConfig['theme_set_allowed'])) {
+        $icmsConfig['theme_set'] = $_POST['theme_select'];
+        $_SESSION['xoopsUserTheme'] = $_POST['theme_select'];
+    } elseif (!empty($_SESSION['xoopsUserTheme'])
+            && in_array($_SESSION['xoopsUserTheme'], $icmsConfig['theme_set_allowed'])) {
+        $icmsConfig['theme_set'] = $_SESSION['xoopsUserTheme'];
+    }
+}
+
+// if the admin theme is different from the default theme, and the user is a webmaster, then switch to the admin theme
+if($icmsUser AND in_array(XOOPS_GROUP_ADMIN, $icmsUser->getGroups()) AND $icmsConfig['theme_set'] != $icmsConfig['theme_admin_set']) {
+	$icmsConfig['theme_set'] = $icmsConfig['theme_admin_set'];
+	$_SESSION['xoopsUserTheme'] = $icmsConfig['theme_admin_set'];
 }
 
 if ($icmsConfig['closesite'] == 1) {

@@ -87,18 +87,18 @@ ob_start();
 <div class="dbconn_line"><label for="adminname"><?php echo ADMIN_DISPLAY_LABEL; ?></label>
 <div class="clear">&nbsp;</div>
 <input type="text" name="adminname" id="adminname" maxlength="25"
-	value="<?php echo htmlspecialchars( $vars['adminname'], ENT_QUOTES ); ?>" />
+	value="<?php echo $vars ? htmlspecialchars( $vars['adminname'], ENT_QUOTES ) : ''; ?>" />
 </div>
 <div class="dbconn_line"><label for="adminlogin_name"><?php echo ADMIN_LOGIN_LABEL; ?></label>
 <div class="clear">&nbsp;</div>
 <input class="adminlogin_name" type="text" name="adminlogin_name"
 	id="adminlogin_name" maxlength="25"
-	value="<?php echo htmlspecialchars( $vars['adminlogin_name'], ENT_QUOTES ); ?>" />
+	value="<?php echo $vars ? htmlspecialchars( $vars['adminlogin_name'], ENT_QUOTES ) : ''; ?>" />
 </div>
 <div class="dbconn_line"><label for="adminmail"><?php echo ADMIN_EMAIL_LABEL; ?></label>
 <div class="clear">&nbsp;</div>
 <input type="text" name="adminmail" id="adminmail" maxlength="255"
-	value="<?php echo htmlspecialchars( $vars['adminmail'], ENT_QUOTES ); ?>" />
+	value="<?php echo $vars ? htmlspecialchars( $vars['adminmail'], ENT_QUOTES ) : ''; ?>" />
 </div>
 <div class="dbconn_line"><label for="adminpass"><?php echo ADMIN_PASS_LABEL; ?></label>
 <div class="clear">&nbsp;</div>

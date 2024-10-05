@@ -149,12 +149,12 @@ button:focus, input[type='submit']:focus, input[type='button']:focus, input[type
     @include border-radius(1em);
     opacity: 0.0;
 }
-td.even:hover .formulize-element-edit-link, td.odd:hover .formulize-element-edit-link {
+td.even:hover .formulize-element-edit-link, td.odd:hover .formulize-element-edit-link, td.head:hover .formulize-element-edit-link {
     -webkit-transition: opacity 400ms linear;
     transition: opacity 400ms linear;
     opacity: 0.3;
 }
-td.even .formulize-element-edit-link:hover, td.odd .formulize-element-edit-link:hover {
+td.even .formulize-element-edit-link:hover, td.odd .formulize-element-edit-link:hover, td.head:hover .formulize-element-edit-link:hover {
     -webkit-transition: opacity 400ms linear;
     transition: opacity 400ms linear;
     opacity: 1.0;
@@ -217,6 +217,7 @@ a.loe-edit-entry {
 }
 
 .loe-edit-entry:before{
+    color: $colorTableLink;
     content: "\f10d";   // icon-edit
 }
 
@@ -227,7 +228,7 @@ a.loe-edit-entry:hover {
 
 td.formulize-controls {
     white-space: nowrap;    // keeps checkbox and edit link side-by-side instead of awkwardly stacking
-    width: 40px;
+    width: 1%;
 }
 
 .xoops-form-element-help {
@@ -250,6 +251,18 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
 
 #pageNavTable, #pageNavTableBottom {
     margin: 1em 0;
+}
+
+.formulize_autocomplete_search_label {
+    font-weight: bold;
+}
+
+td.head div.xoops-form-element-caption {
+    font-weight: bold;
+}
+
+#formulizeform td.head {
+    font-weight: normal;
 }
 
 @media print {
@@ -333,4 +346,23 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
 
 .appcatspacer {
     width: 25%;
+}
+
+.auto_multi {
+    margin: 0.2em;
+    display: table-row;
+}
+
+.auto_multi:hover {
+    cursor: pointer;
+    text-decoration: line-through;
+    color: red;
+}
+
+.right-align-text {
+    text-align: right;
+}
+
+.formulize-spacer-column {
+    width: auto;
 }

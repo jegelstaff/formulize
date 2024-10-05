@@ -30,18 +30,23 @@
 // this file gets all the data about a particular page of a screen, so it can be edited
 
 require_once "../../../mainfile.php";
+include_once("admin_header.php");
 
 include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 include_once XOOPS_ROOT_PATH."/class/xoopsformloader.php";
 
 // setup a smarty object that we can use for templating our own pages
 
+global $icmsConfig;
 require_once XOOPS_ROOT_PATH.'/class/template.php';
 require_once XOOPS_ROOT_PATH.'/class/theme.php';
 require_once XOOPS_ROOT_PATH.'/class/theme_blocks.php';
-$xoopsThemeFactory = new xos_opal_ThemeFactory();
+$xoopsThemeFactory = new icms_view_theme_Factory();
+$xoopsThemeFactory->allowedThemes = $icmsConfig['theme_set_allowed'];
+$xoopsThemeFactory->defaultTheme = $icmsConfig['theme_set'];
 $xoTheme =& $xoopsThemeFactory->createInstance();
 $xoopsTpl =& $xoTheme->template;
+
 
 $pageIndex = intval($_GET['page']);
 $sid = intval($_GET['sid']);
@@ -54,22 +59,9 @@ if (!is_object($screen)) {
 
 // setup all the elements in this form for use in the listboxes
 include_once XOOPS_ROOT_PATH . "/modules/formulize/class/forms.php";
-$fid = $screen->getVar('fid');
-$options = multiPageScreen_addToOptionsList($fid, array());
-
-// add in elements from other forms in the framework, by looping through each link in the framework and checking if it is a display as one, one-to-one link
-// added March 20 2008, by jwe
 $frid = $screen->getVar("frid");
-if ($frid) {
-    $framework_handler =& xoops_getModuleHandler('frameworks', 'formulize');
-    $frameworkObject = $framework_handler->get($frid);
-    foreach($frameworkObject->getVar("links") as $thisLinkObject) {
-        if ($thisLinkObject->getVar("unifiedDisplay") AND $thisLinkObject->getVar("relationship") == 1) {
-            $thisFid = $thisLinkObject->getVar("form1") == $fid ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
-            $options = multiPageScreen_addToOptionsList($thisFid, $options);
-        }
-    }
-}
+$fid = $screen->getVar('fid');
+$options = multiPageScreen_addToOptionsList($fid, $frid);
 
 // get page titles
 $pageTitles = $screen->getVar("pagetitles");
@@ -79,7 +71,7 @@ $conditions = $screen->getVar("conditions");
 $pageTitle = $pageTitles[$pageIndex];
 $pageNumber = $pageIndex+1;
 $pageElements = $elements[$pageIndex];
-$filterSettingsToSend = count($conditions[$pageIndex] > 0) ? $conditions[$pageIndex] : "";
+$filterSettingsToSend = (is_array($conditions) AND isset($conditions[$pageIndex]) AND count($conditions[$pageIndex]) > 0) ? $conditions[$pageIndex] : "";
 if (isset($filterSettingsToSend['details'])) { // if this is in the old format (pre-version 4, these conditions used a non-standard syntax), convert it!
     $newFilterSettingsToSend = array();
     $newFilterSettingsToSend[0] = $filterSettingsToSend['details']['elements'];
@@ -87,7 +79,7 @@ if (isset($filterSettingsToSend['details'])) { // if this is in the old format (
     $newFilterSettingsToSend[2] = $filterSettingsToSend['details']['terms'];
     $filterSettingsToSend = $newFilterSettingsToSend;
 }
-$pageConditions = formulize_createFilterUI($filterSettingsToSend, "pagefilter_".$pageIndex, $screen->getVar('fid'), "popupform");
+$pageConditions = formulize_createFilterUI($filterSettingsToSend, "pagefilter_".$pageIndex, $screen->getVar('fid'), "popupform", $frid);
 
 // make isSaveLocked preference available to template
 $content['isSaveLocked'] = sendSaveLockPrefToTemplate();

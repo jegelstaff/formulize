@@ -14,20 +14,38 @@
 
 <div class="panel-content content">
 
-    <h2>Before Saving</h2>
-    <p>This special procedure runs before an entry is saved. Values are available as PHP variables using the element handle name. The ID of the current entry (or 'new') is available as $entry_id. On multi-page forms, only the elements which appear on the current page are available, however creating PHP variables for other elements will cause them to be saved.</p><br />
-    <textarea id="forms-on_before_save" name="forms-on_before_save" class="code-textarea"><{$content.form_object->on_before_save}>
-</textarea><{* closing tag on a new line so the textarea has a blank line at the bottom *}>
+    <fieldset>
+			<legend>Before Saving</legend>
+    	<p>This special procedure runs before an entry is saved. Values that are about to be saved are available as PHP variables using the element handle name. The current values in the database (prior to this save) are available as $currentValues['handle_name'], so you can check if something is about to change. The ID of the current entry (or 'new') is available as $entry_id. If you return <i>false</i> then the save operation will not proceed.</p><br />
+    	<textarea id="forms-on_before_save" name="forms-on_before_save" class="code-textarea canValidate"><{$content.form_object->on_before_save}>
+			</textarea><{* closing tag on a new line so the textarea has a blank line at the bottom *}>
+			<{include file=db:admin/variable_template_help.html variables=$content.variabletemplatehelp}>
+		</fieldset>
 
-    <h2>After Saving</h2>
-    <p>This special procedure runs after an entry is saved. The ID of the saved entry is available as $entry_id.</p><br />
-    <textarea id="forms-on_after_save" name="forms-on_after_save" class="code-textarea"><{$content.form_object->on_after_save}>
-</textarea><{* closing tag on a new line so the textarea has a blank line at the bottom *}>
+    <fieldset>
+			<legend>After Saving</legend>
+			<p>This special procedure runs after an entry is saved. Values are available as PHP variables using the element handle name. The prior values are available as $currentValues['handle_name'], so you can check if something has actually changed. The ID of the entry is available as $entry_id. This will be the new ID if the entry was newly saved. A variable \$newEntry is available and will be true or false, depending if this is the first time the entry was saved or not.</p><br />
+			<textarea id="forms-on_after_save" name="forms-on_after_save" class="code-textarea canValidate"><{$content.form_object->on_after_save}>
+			</textarea><{* closing tag on a new line so the textarea has a blank line at the bottom *}>
+			<{include file=db:admin/variable_template_help.html variables=$content.variabletemplatehelp}>
+		</fieldset>
 
-    <h2>Enable / Disable Entry Editing</h2>
-    <p>This special procedure allows for a custom condition to be set to decide whether a user can edit an entry or not. Variables will be available in the code: $entry_id can be used to identify an entry, $user_id for identifying the logged in user, $form_id to indicate the form, and $allow_editing (true or false) to determine if the user can make changes or not. Do not include a return value after the code: the value of $allow_editing will be returned. </p><br />
-    <textarea id="forms-custom_edit_check" name="forms-custom_edit_check" class="code-textarea"><{$content.form_object->custom_edit_check}>
-</textarea><{* closing tag on a new line so the textarea has a blank line at the bottom *}>
+    <fieldset>
+			<legend>On Delete</legend>
+			<p>This special procedure runs when an entry is deleted. The ID of the entry is available as $entry_id. The values that were in the database, prior to this deletion, are available as PHP variables using the element handle name.</p><br />
+			<textarea id="forms-on_delete" name="forms-on_delete" class="code-textarea canValidate"><{$content.form_object->on_delete}>
+			</textarea><{* closing tag on a new line so the textarea has a blank line at the bottom *}>
+			<{include file=db:admin/variable_template_help.html variables=$content.variabletemplatehelp}>
+		</fieldset>
+
+    <fieldset>
+			<legend>Enable / Disable Entry Editing</legend>
+			<p>This special procedure allows for a custom condition to be set to decide whether a user can edit an entry or not. Variables will be available in the code: $entry_id can be used to identify an entry, $user_id for identifying the logged in user, $form_id to indicate the form, and $allow_editing (true or false) to determine if the user can make changes or not. Do not include a return value after the code: the value of $allow_editing will be returned. </p><br />
+			<textarea id="forms-custom_edit_check" name="forms-custom_edit_check" class="code-textarea canValidate"><{$content.form_object->custom_edit_check}>
+			</textarea><{* closing tag on a new line so the textarea has a blank line at the bottom *}>
+			<a name="elementhandles"></a>
+			<{include file=db:admin/variable_template_help.html variables=$content.variabletemplatehelp}>
+		</fieldset>
 
     <p><i>Procedures</i> <{$smarty.const._AM_CALC_EXPLAIN}></p>
 
@@ -82,11 +100,4 @@ $(".cloneadvanced_calculation").click(function() {
 	return false;
 })
 
-jQuery(document).ready(function() {
-    jQuery(".savebutton").click(function() {
-        fz_check_php_code(jQuery("#forms-on_before_save").val(), "Before Save", "<{$icms_url}>", <{$icms_userid}>);
-        fz_check_php_code(jQuery("#forms-on_after_save").val(), "After Save", "<{$icms_url}>", <{$icms_userid}>);
-        fz_check_php_code(jQuery("#forms-custom_edit_check").val(), "Disable Entry Editing", "<{$icms_url}>", <{$icms_userid}>);
-    });
-});
 </script>

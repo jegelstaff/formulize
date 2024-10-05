@@ -41,6 +41,7 @@ define("_MB_SYSTEM_PRIVPOLICY", "Privacy Policy");
 define("_MB_SYSTEM_OPENID_LOGIN", "Login with Google");
 define("_MB_SYSTEM_OPENID_URL", "Your OpenID URL:");
 define("_MB_SYSTEM_OPENID_NORMAL_LOGIN", "Go back to normal login");
+define("_MB_SYSTEM_OKTA_LOGIN", "Login with Okta");
 define("_MB_SYSTEM_TOTAL_USERS", "Total Users");
 define("_MB_SYSTEM_ACT_USERS", "Active Users");
 define("_MB_SYSTEM_INACT_USERS", "Inactive Users");

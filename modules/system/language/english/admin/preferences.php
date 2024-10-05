@@ -36,7 +36,7 @@ define("_MD_AM_USEMYSESSDSC","Select yes to customise session related values.");
 define("_MD_AM_SESSNAME","Session name");
 define("_MD_AM_SESSNAMEDSC","The name of session (Valid only when 'use custom session' is enabled)");
 define("_MD_AM_SESSEXPIRE","Session expiration");
-define("_MD_AM_SESSEXPIREDSC","Maximum duration of session idle time in minutes (Valid only when 'use custom session' is enabled. Works only when you are using PHP4.2.0 or later.)");
+define("_MD_AM_SESSEXPIREDSC","Maximum duration of session idle time in minutes.");
 define("_MD_AM_BANNERS","Activate banner ads?");
 define("_MD_AM_MYIP","Your IP address");
 define("_MD_AM_MYIPDSC","This IP will not count as an impression for banners");
@@ -408,9 +408,22 @@ define("_MD_AM_LASTCHARS_DESC","How many characters should be displayed at the e
 define("_MD_AM_SIGMAXLENGTH","Maximum amount of characters in users signatures?");
 define("_MD_AM_SIGMAXLENGTHDSC","Here you can choose the length of your users signatures.<br /> any character longer than this amount will be ignored.<br /><i>Be careful, long signatures can often break the design...</i>");
 define("_MD_AM_AUTHOPENID","Enable Google authentication");
-define("_MD_AM_AUTHOPENIDDSC","Select Yes to enable Google authentication. This will allow users to login on the site using their gmail account information.");
+define("_MD_AM_AUTHOPENIDDSC","Select Yes to enable Google authentication. This will allow users to login on the site using their Google account information. You must setup a Google API Key and related settings for your domain, through Google's control panels. Those credentials must then be placed in a file called 'client_secrets.json' in your Trust Path.");
+define("_MD_AM_GOOGLEONLY","Use only Google authentication");
+define("_MD_AM_GOOGLEONLYDSC","Select Yes to turn off regular authentication and require users to login with a Google account.");
 define("_MD_AM_USE_GOOGLE_ANA"," Enable Google Analytics?");
 define("_MD_AM_USE_GOOGLE_ANA_DESC","");
+
+define("_MD_AM_AUTH2FA","Use Two-Factor Authentication");
+define("_MD_AM_AUTH2FADESC","Turn this on to give users a choice in their user profile of two-factor authentication methods");
+
+define("_MD_AM_AUTH2FAGROUPS","Groups that must use Two-Factor Authentication");
+define("_MD_AM_AUTH2FAGROUPSDESC","If two-factor authentication is turned on, then users in the groups selected here must use two-factor authentication to login to the site.");
+
+define("_MD_AM_AUTHOKTA","Use SP-initiated Okta SAML authentication");
+define("_MD_AM_AUTHOKTADESC","If your site uses Okta as an authentication service, enter the SSO URL in this box. Only SP-initiated SAML authentication is supported. You must place a completed 'settings.php' file in the /libraries/php-saml/ directory.");
+
+
 
 // added in 1.1.2
 define("_MD_AM_UNABLEENCCLOSED","Database Update Failed, You can't change password encryption whilst the site is closed");

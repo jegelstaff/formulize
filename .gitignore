@@ -2,9 +2,7 @@ cache/
 docs/_site/
 modules/protector/
 modules/formulize/temp/
-modules/formulize/templates/screens/default/
 modules/formulize/templates/css/.sass-cache/
-modules/iMenu/
 templates_c/
 trust_*/
 uploads/profile/
@@ -14,4 +12,10 @@ themes/formulize_mobile_app/.sass-cache/
 *.db
 formulize-docs/_site
 .DS_Store
-mainfile.php
+libraries/php-saml/settings.php
+_site
+install.lock
+tests/e2e/test-results
+tests/e2e/test-report
+tests/e2e/node_modules
+

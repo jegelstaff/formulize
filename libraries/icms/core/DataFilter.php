@@ -96,8 +96,9 @@ class icms_core_DataFilter {
 	* @return   string
 	*/
 	static public function htmlSpecialChars($text) {
+        $charset = defined('_CHARSET') ? _CHARSET : 'utf-8';
 		return preg_replace(array("/&amp;/i", "/&nbsp;/i"), array('&', '&amp;nbsp;'),
-			@htmlspecialchars($text, ENT_QUOTES, _CHARSET));
+			@htmlspecialchars($text, ENT_QUOTES, $charset));
 	}
 
 	/**
@@ -128,10 +129,7 @@ class icms_core_DataFilter {
 	 * @return  string
 	 */
 	static public function addSlashes($text) {
-		if (!get_magic_quotes_gpc()) {
-			$text = addslashes($text);
-		}
-		return $text;
+		return addslashes($text);
 	}
 
 	/**
@@ -143,9 +141,6 @@ class icms_core_DataFilter {
 	 * @return   string
 	 */
 	static public function stripSlashesGPC($text) {
-		if (get_magic_quotes_gpc()) {
-			$text = stripslashes($text);
-		}
 		return $text;
 	}
 
@@ -250,7 +245,7 @@ class icms_core_DataFilter {
 	 * @param $options2
 	 */
 	static public function checkVar($data, $type, $options1 = '', $options2 = '') {
-		if (!$data || !$type) return false;
+		if ((!$data && !is_numeric($data)) || !$type) return false; // allow zeros through
 
 		$valid_types = array('url', 'email', 'ip', 'str', 'int', 'special', 'html', 'text');
 		if (!in_array($type, $valid_types)) {
@@ -985,7 +980,7 @@ class icms_core_DataFilter {
 					break;
 
 					case "host":
-						$valid = filter_var($data, FILTER_VALIDATE_URL, FILTER_FLAG_HOST_REQUIRED);
+						$valid = filter_var($data, FILTER_VALIDATE_URL);
 					break;
 
 					case "path":

@@ -132,7 +132,6 @@ class mod_profile_Field extends icms_ipf_Object {
 				break;
 			case "timezone":
 				$element = new icms_form_elements_select_Timezone($caption, $name, $value);
-				$element->setExtra("style='width: 280px;'");
 				break;
 			case "rank":
 				$element = new icms_form_elements_Select($caption, $name, $value);
@@ -370,7 +369,7 @@ class mod_profile_Field extends icms_ipf_Object {
 	public function getCatid() {
 		$icmsPersistableRegistry = icms_ipf_registry_Handler::getInstance();
 		$category = $icmsPersistableRegistry->getSingleObject('category', $this->getVar('catid'), basename(dirname(dirname(__FILE__))));
-		return $category->getVar('cat_title');
+		return $category ? $category->getVar('cat_title') : false;
 	}
 
 	/**

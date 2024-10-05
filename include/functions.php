@@ -117,7 +117,7 @@ function icms_error_msg($msg, $title='', $render = true){
  *
  * @param string $msg
  * @param string $title
- * @deprecated	Use icms_coreMessage::error, instead
+ * deprecated	Use icms_coreMessage::error, instead
  * @todo		Remove in version 1.4 - all occurrences have been removed from the core
  */
 function xoops_error($msg, $title=''){
@@ -141,7 +141,7 @@ function icms_warning_msg($msg, $title='', $render = false){
 
 /**
  * Backwards Compatibility Function
- * @deprecated use icms_core_Message::warning instead
+ * deprecated use icms_core_Message::warning instead
  * @see icms_core_Message::warning
  * @todo Remove in version 1.4 - all occurrences have been removed from the core
  * @param string $msg
@@ -397,6 +397,11 @@ function xoops_getbanner() {
  */
 function redirect_header($url, $time = 3, $message = '', $addredirect = true, $allowExternalLink = false)
 {
+
+    if(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+        exit(); // do not do redirects for ajax requests
+    }
+
 	global $icmsConfig, $icmsConfigPersona;
 	if(preg_match("/[\\0-\\31]|about:|script:/i", $url))
 	{
@@ -1575,7 +1580,6 @@ function icms_escapeValue($value, $quotes = true)
 {
 	if(is_string($value))
 	{
-		if(get_magic_quotes_gpc) {$value = stripslashes($value);}
 		$value = icms::$xoopsDB->escape($value);
 		if($quotes) {$value = '"'.$value.'"';}
 	}
@@ -1990,17 +1994,34 @@ function &icms_getModuleHandler($name = null, $module_dir = null, $module_basena
 		} else {
 			if($module_dir != 'system') {
 				$hnd_file = ICMS_ROOT_PATH . "/modules/{$module_dir}/class/{$name}.php";
+				$hnd_file2 = ICMS_ROOT_PATH . "/modules/{$module_dir}/class/{$name}Handler.php";
+				$hnd_file3 = ICMS_ROOT_PATH . "/modules/{$module_dir}/class/".ucfirst($name)."Handler.php";
 			} else {
 				$hnd_file = ICMS_ROOT_PATH . "/modules/{$module_dir}/admin/{$name}/class/{$name}.php";
+				$hnd_file2 = '';
+				$hnd_file3 = '';
 			}
 			if (file_exists($hnd_file)) {include_once $hnd_file;}
+			if (file_exists($hnd_file2)) {include_once $hnd_file2;}
+			if (file_exists($hnd_file3)) {include_once $hnd_file3;}
+			if (class_exists($class)) {
+				$handlers[$module_dir][$name] = new $class(icms::$xoopsDB);
+				// correct any supreme strangeness from first invocation via legacy instantiation functions??
+				$altHandledObjectClassFile = ICMS_ROOT_PATH . "/modules/{$module_dir}/class/".ucfirst($name).".php";
+				if(file_exists($altHandledObjectClassFile)) { include_once $altHandledObjectClassFile; }
+				if($handlers[$module_dir][$name]->className == ucfirst($module_dir).ucfirst($name)) {
+					$handlers[$module_dir][$name]->className = 'mod_' . $module_dir . '_' . ucfirst($name);
+				}
+			}
 			$class = ucfirst(strtolower($module_basename)) . ucfirst($name) . 'Handler';
 			if (class_exists($class)) {
 				$handlers[$module_dir][$name] = new $class(icms::$xoopsDB);
+        $handlers[$module_dir][$name]->className = ucfirst(strtolower($module_basename)) . ucfirst($name);
 			}
 		}
 	}
 	if (!isset($handlers[$module_dir][$name]) && !$optional) {
+		debug_print_backtrace();
 		trigger_error(sprintf(_CORE_MODULEHANDLER_NOTAVAILABLE, $module_dir, $name), E_USER_ERROR);
 	}
 	if (isset($handlers[$module_dir][$name])) {return $handlers[$module_dir][$name];}
@@ -2015,7 +2036,7 @@ function &icms_getModuleHandler($name = null, $module_dir = null, $module_basena
  * @param	string  $name  The name of the module
  * @param	string	$module_dir		The module directory where to get the module class
  * @return	object  $inst	The reference to the generated object
- * @deprecated Use icms_getmodulehandler instead
+ * deprecated Use icms_getmodulehandler instead
  * @todo Remove this function in version 1.4
  */
 function &xoops_getmodulehandler($name = null, $module_dir = null, $optional = false)
@@ -2237,7 +2258,7 @@ function icms_random_str($numchar){
 	$letras = "a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,x,w,y,z,1,2,3,4,5,6,7,8,9,0";
 	$array = explode(",", $letras);
 	shuffle($array);
-	$senha = implode($array, "");
+	$senha = implode("", $array);
 	return substr($senha, 0, $numchar);
 }
 
@@ -2410,7 +2431,7 @@ function icms_unlinkRecursive($dir, $deleteRootToo=true){
  */
 function icms_PasswordMeter(){
 	global $xoTheme, $icmsConfigUser;
-	$xoTheme->addScript(ICMS_URL.'/libraries/jquery/jquery.js', array('type' => 'text/javascript'));
+	//$xoTheme->addScript(ICMS_URL.'/libraries/jquery/jquery.js', array('type' => 'text/javascript')); // Avoid conflict with jquery which is included in base page template as part of standard header
 	$xoTheme->addScript(ICMS_URL.'/libraries/jquery/password_strength_plugin.js', array('type' => 'text/javascript'));
 	$xoTheme->addScript('', array('type' => ''), '
 				$(document).ready( function() {
@@ -2712,9 +2733,12 @@ function icms_need_do_br($moduleName=false) {
  * @return url that google will redirect to after authentication
  */
 
-function authenticationURL() {
-    $client = setupAuthentication();
-    $authUrl = $client->createAuthUrl();
+function authenticationURL($needAuth) {
+	$authUrl = '';
+    if($needAuth AND $client = setupAuthentication()) {
+	    $client->setPrompt('select_account');
+	    $authUrl = $client->createAuthUrl();
+	}
     return $authUrl;
 }
 
@@ -2727,26 +2751,32 @@ function authenticationURL() {
 
 function setupAuthentication() {
 	//Google API PHP Library includes
-	require_once XOOPS_ROOT_PATH.'/libraries/googleapiclient/autoload.php';
+	require_once XOOPS_ROOT_PATH.'/libraries/googleapiclient/vendor/autoload.php';
 	//redirect uri for when google authentication is done and it comes back to formulize
 	$redirect_uri = XOOPS_URL;
-	
+    if(isset($_GET['xoops_redirect'])) {
+        $_SESSION['google_xoops_redirect'] = $_GET['xoops_redirect'];
+    }
+
 	//Create Client Request to access Google API
 	$client = new Google_Client();
-	
+
+    $client->setAccessType ("offline");
+
 	$auth_creds = XOOPS_TRUST_PATH.'/client_secrets.json';
 	if (file_exists($auth_creds)) {
 		//set credentials for Auth
 		$client->setAuthConfig($auth_creds);
 	}else{
-		//TODO fix so that if ther is no client secrets file then probably redirect to instructions on how to get that
-		print 'Google client_secrets.json file not found in this directory:  '.XOOPS_TRUST_PATH;
+		error_log('Google client_secrets.json file not found in this directory:  '.XOOPS_TRUST_PATH);
+        return false;
 	}
 
 	$client->setRedirectUri($redirect_uri);
 
 	//want to request email info for username later on
 	$client->setScopes('email');
+    $client->addScope('https://www.googleapis.com/auth/drive');
 	$client->addScope('profile');
 
 	//Send Client Request

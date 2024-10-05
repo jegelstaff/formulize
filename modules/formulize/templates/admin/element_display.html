@@ -9,7 +9,8 @@
 <input type="hidden" name="formulize_admin_handler" value="element_display">
 <input type="hidden" name="formulize_admin_key" value="<{$content.ele_id}>">
 <input type="hidden" name="reload_element_pages" value="">
-<input type="hidden" class="conditionsdelete" name="conditionsdelete" value="">
+<input type="hidden" class="display-conditionsdelete" name="display-conditionsdelete" value="">
+<input type="hidden" class="disabled-conditionsdelete" name="disabled-conditionsdelete" value="">
 
 <!-- initialize checkboxTree plugin -->
 <script type="text/javascript">
@@ -26,9 +27,10 @@ $(document).ready(function() {
         initializeUnchecked: 'collapsed'
     });
 });
-</script>       
+</script>
 
 <div class="accordion-box">
+
 	<div class="form-item">
    	<fieldset>
       <legend><label for="elements_ele_display" class="question">Which groups should see this element?</label></legend>
@@ -37,14 +39,25 @@ $(document).ready(function() {
 				<option value="none"<{$content.ele_display.none}>>No groups</option>
 				<{foreach from=$content.groups item=group}>
 				<{assign var=groupid value=$group.id}>
-        <option value=<{$groupid}><{$content.ele_display.$groupid}>><{$group.name}></option>
+        <option value=<{$groupid}><{if isset($content.ele_display.$groupid)}><{$content.ele_display.$groupid}><{/if}>><{$group.name}></option>
         <{/foreach}>
 			</select>
 		</fieldset>
 	</div>
+
+		<div class="form-item">
+			 <fieldset>
+				<legend><label for="elements_ele_filtersettings" class="question">Only display to these groups when:</label></legend>
+				<div id="displayfilter">
+				<{$content.filtersettings}>
+				</div>
+			</fieldset>
+		</div>
+
 </div>
 
 <div class="accordion-box">
+
 	<div class="form-item">
    	<fieldset>
       <legend><label for="elements_ele_disabled" class="question">Disable this element for any groups?</label></legend>
@@ -53,7 +66,7 @@ $(document).ready(function() {
 				<option value="all"<{$content.ele_disabled.all}>>Disable for all groups</option>
 				<{foreach from=$content.groups item=group}>
 				<{assign var=groupid value=$group.id}>
-        <option value=<{$groupid}><{$content.ele_disabled.$groupid}>><{$group.name}></option>
+        <option value=<{$groupid}><{if isset($content.ele_disabled.$groupid)}><{$content.ele_disabled.$groupid}><{/if}>><{$group.name}></option>
         <{/foreach}>
 			</select>
 			<div class="description">
@@ -61,45 +74,24 @@ $(document).ready(function() {
 			</div>
 		</fieldset>
 	</div>
-</div>
 
-<div class="accordion-box">
-    <div class="form-item">
-    <fieldset>
-	<legend>Regular Form Screens to display to</legend>
-	<div class="form-item">
-		<label for="elements_form_screens">Which form screens should element display on?</label>
-		<select id="elements_form_screens" name="elements_form_screens[]" size="8" multiple>
-		<{foreach from=$content.form_screens item=form_screen}>
-		<{assign var=formscreenid value=$form_screen.sid}>
-        <option value=<{$formscreenid}><{$content.ele_form_screens.$formscreenid}>><{$form_screen.title}></option>
-        <{/foreach}>
-		</select>
-    </div>
-    </fieldset>
-    </div>
-</div>
+		<div class="form-item">
+			 <fieldset>
+				<legend><label for="elements_ele_disabledconditions" class="question">Only disable for these groups when:</label></legend>
+				<div id="disabledconditions">
+				<{$content.disabledconditions}>
+				</div>
+			</fieldset>
+		</div>
 
-<div class="accordion-box-wide">
-	<div class="form-item">
-   	<fieldset>
-      <legend><label for="elements_ele_filtersettings" class="question">Only display the element in the form if the entry being edited meets these conditions:</label></legend>
-			<div id="displayfilter">
-			<{$content.filtersettings}>
-			</div>
-			<div class="description">
-				<p>When an entry is saved, these conditions will be checked and this element will be displayed or not displayed on the next page load.  This feature is most useful on multipage form screens, which save the entry between pages.</p>
-			</div>
-		</fieldset>
 	</div>
-</div>
 
 <div class="accordion-box">
     <div class="form-item">
     <fieldset>
-	<legend>Multi-Page Form Screens to display to</legend>
+	<legend>Form Screens to display this element on</legend>
     <ul id="multi-screen-tree">
-		<label for="multi_page_screens">Which pages of the screens should element display on?</label>
+		<label for="multi_page_screens">Select the pages where the element will appear</label>
 		<{foreach from=$content.multi_form_screens item=form_screen}>
 			<{assign var=formscreenid value=$form_screen.sid}>
 			<{assign var=formscreenpages value=$form_screen.pages}>
@@ -115,21 +107,36 @@ $(document).ready(function() {
 	            </ul>
 	            <{/if}>
 			<{/foreach}>
-        <{/foreach}>         
+        <{/foreach}>
 	</ul>
     </fieldset>
     </div>
 </div>
 
+<{if $content.form_screens|is_array AND $content.form_screens|@count AND $content.ele_form_screens|is_array AND $content.ele_form_screens|@count}>
+<div class="accordion-box">
+    <div class="form-item">
+    <fieldset>
+	<legend>Legacy Form Screens to display on</legend>
+	<div class="form-item">
+		<label for="elements_form_screens">On which legacy form screens should this element appear?</label>
+		<select id="elements_form_screens" name="elements_form_screens[]" size="8" multiple>
+		<{foreach from=$content.form_screens item=form_screen}>
+		<{assign var=formscreenid value=$form_screen.sid}>
+        <option value=<{$formscreenid}><{$content.ele_form_screens.$formscreenid}>><{$form_screen.title}></option>
+        <{/foreach}>
+		</select>
+    </div>
+    </fieldset>
+    </div>
+</div>
+<{/if}>
+
 <div class="accordion-box">
 	<div class="form-item">
    	<fieldset>
       <legend><label class="question">Additional display options:</label></legend>
-			<input type="checkbox" name="elements-ele_forcehidden" value="1"<{$content.ele_forcehidden}>> If this element is not displayed to a user, still save its value when the form is submitted.
-			<div class="description">
-				This can be useful for setting default values in a form, for elements the user should not interact with.
-			</div>
-			<br /><input type="checkbox" name="elements-ele_private" value="1"<{$content.ele_private}>> Only display this element to users who have permission to "view private elements".
+			<input type="checkbox" name="elements-ele_private" value="1"<{$content.ele_private}>> Only display this element to users who have permission to "view private elements".
 			<div class="description">
 				This can be useful for hiding information like phone numbers and other personal details from most other users.
 			</div>
@@ -144,14 +151,27 @@ $(document).ready(function() {
 
 <script type='text/javascript'>
 
-$("div#displayfilter > input#addcon").click(function () {
+$("div#displayfilter > input[name=addcon]").click(function () {
 	$("[name=reload_element_pages]").val(1);
   $(".savebutton").click();
 	return false;
 });
 
 $("div#displayfilter > a.conditionsdelete").click(function () {
-	$(".conditionsdelete").val($(this).attr('target'));
+	$(".display-conditionsdelete").val($(this).attr('target'));
+	$("[name=reload_element_pages]").val(1);
+  $(".savebutton").click();
+	return false;
+});
+
+$("div#disabledconditions > input[name=addcon]").click(function () {
+	$("[name=reload_element_pages]").val(1);
+  $(".savebutton").click();
+	return false;
+});
+
+$("div#disabledconditions > a.conditionsdelete").click(function () {
+	$(".disabled-conditionsdelete").val($(this).attr('target'));
 	$("[name=reload_element_pages]").val(1);
   $(".savebutton").click();
 	return false;

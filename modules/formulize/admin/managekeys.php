@@ -23,19 +23,29 @@ if(isset($_POST['uid']) AND isset($_POST['save'])) {
 }
 
 $member_handler = xoops_gethandler('member');
-$users = $member_handler->getUsers();
-$userList = array();
-foreach($users as $user) {
-    $userList[$user->getVar('uid')] = $user->getVar('name') ? $user->getVar('name') : $user->getVar('uname');
-}
 
 // gather all keys and send to screen
 $allKeys = array();
 foreach($apiKeyHandler->get() as $key) {
-    $allKeys[] = array('user'=>$userList[$key->getVar('uid')],'key'=>$key->getVar('key'),'expiry'=>$key->getVar('expiry'));
+    $userObject = $member_handler->getUser($key->getVar('uid'));
+    $uid = $userObject ? $userObject->getVar('login_name') : 0;
+    $allKeys[] = array('user'=>$uid,'key'=>$key->getVar('key'),'expiry'=>$key->getVar('expiry'));
 }
 
-$adminPage['uids'] = $userList;
+// if user has searched for a username, find the matches...
+$foundUsers = array();
+if($_POST['usersearch']) {
+    $criteria = new CriteriaCompo(new Criteria('email', $_POST['usersearch']));
+    $criteria->add(new Criteria('login_name', $_POST['usersearch']), 'OR');
+    $criteria->add(new Criteria('uname', $_POST['usersearch']), 'OR');
+    $criteria->add(new Criteria('name', $_POST['usersearch']), 'OR');
+    $users = $member_handler->getUsers($criteria);
+    foreach($users as $user) {
+        $foundUsers[$user->getVar('uid')] = $user->getVar('name') ? $user->getVar('name') : $user->getVar('uname');
+    }
+    $adminPage['uids'] = $foundUsers;
+}
+
 $adminPage['keys'] = $allKeys;
 $adminPage['template'] = "db:admin/managekeys.html";
 

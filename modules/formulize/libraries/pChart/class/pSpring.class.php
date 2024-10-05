@@ -108,7 +108,7 @@
      foreach($this->Data as $Key => $Settings)
       {
        if ( isset($Settings["Connections"]) )
-        { $this->Data[$Key]["FreeZone"] = count($Settings["Connections"])*10 + 20; }
+        { $this->Data[$Key]["FreeZone"] = count((array) $Settings["Connections"])*10 + 20; }
        else
         { $this->Data[$Key]["FreeZone"] = 20; }
       }
@@ -311,7 +311,7 @@
      /* Get the max number of connections */
      $MaxConnections = 0;
      foreach($this->Data as $Key => $Settings)
-      { if ( isset($Settings["Connections"]) ) { if ( $MaxConnections < count($Settings["Connections"] ) ) { $MaxConnections = count($Settings["Connections"]); } } }
+      { if ( isset($Settings["Connections"]) ) { if ( $MaxConnections < count((array) $Settings["Connections"] ) ) { $MaxConnections = count((array) $Settings["Connections"]); } } }
 
      if ( $Algorithm == ALGORITHM_WEIGHTED )
       {
@@ -321,7 +321,7 @@
          if ( $Settings["Type"] == NODE_TYPE_FREE )
           {
            if ( isset($Settings["Connections"]) )
-            { $Connections = count($Settings["Connections"]); }
+            { $Connections = count((array) $Settings["Connections"]); }
            else
             { $Connections = 0; }
 
@@ -339,7 +339,7 @@
        foreach($this->Data as $Key => $Settings)
         {
          if ( isset($Settings["Connections"]) )
-          $this->Data[$Key]["Weight"] = count($Settings["Connections"]);
+          $this->Data[$Key]["Weight"] = count((array) $Settings["Connections"]);
          else
           $this->Data[$Key]["Weight"] = 0;
         }
@@ -353,7 +353,7 @@
            if ( $Settings["Type"] == NODE_TYPE_FREE )
             {
              if ( isset($Settings["Connections"]) )
-              { $Connections = count($Settings["Connections"]); }
+              { $Connections = count((array) $Settings["Connections"]); }
              else
               { $Connections = 0; }
 
@@ -401,7 +401,7 @@
            if ( $Settings["Type"] == NODE_TYPE_FREE )
             {
              if ( isset($Settings["Connections"]) )
-              { $Connections = count($Settings["Connections"]); }
+              { $Connections = count((array) $Settings["Connections"]); }
              else
               { $Connections = 0; }
 

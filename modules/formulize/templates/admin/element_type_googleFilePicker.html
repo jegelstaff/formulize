@@ -1,0 +1,42 @@
+<div class="panel-content content">
+  <fieldset>
+    <legend>API Key</legend>
+    <div class="form-item">
+	    <input id="elements-ele_value[apikey]" name="elements-ele_value[apikey]" type="text" value="<{$content.apikey}>"></input>
+    </div>
+  </fieldset>
+    <fieldset>
+    <legend>OAuth 2.0 Client ID</legend>
+    <div class="form-item">
+	    <input id="elements-ele_value[clientid]" name="elements-ele_value[clientid]" type="text" value="<{$content.clientid}>"></input>
+    </div>
+  </fieldset>
+  <fieldset>
+    <legend>Project Number (under IAM & Admin > Settings)</legend>
+    <div class="form-item">
+	    <input id="elements-ele_value[projectnumber]" name="elements-ele_value[projectnumber]" type="text" value="<{$content.projectnumber}>"></input>
+    </div>
+  </fieldset>
+  <fieldset>
+    <legend>Folders</legend>
+    <div class="form-item">
+        <label for="elements-ele_value[includeGoogleDrive]"><input class='includeGoogleDrive' id="elements-ele_value[includeGoogleDrive]" name="elements-ele_value[includeGoogleDrive]" type="checkbox" value="1" <{if $content.includeGoogleDrive == 1}>checked<{/if}> /> Allow access to 'Google Drive'</label> &mdash; Default folder: <input id="elements-ele_value[googleDriveDefaultFolder]" name="elements-ele_value[googleDriveDefaultFolder]" type="text" size=50 maxlength=255 value="<{$content.googleDriveDefaultFolder}>" /><br>
+        <label for="elements-ele_value[includeSharedDrives]"><input class='includeSharedDrives' id="elements-ele_value[includeSharedDrives]" name="elements-ele_value[includeSharedDrives]" type="checkbox" value="1" <{if $content.includeSharedDrives == 1}>checked<{/if}> /> Allow access to 'Shared Drives'</label> &mdash; Default folder: <input id="elements-ele_value[sharedDrivesDefaultFolder]" name="elements-ele_value[sharedDrivesDefaultFolder]" type="text" size=50 maxlength=255 value="<{$content.sharedDrivesDefaultFolder}>" onfocus="jQuery('.includeSharedDrives').attr('checked', 'checked');" />
+    </div>
+  </fieldset>
+  <fieldset>
+    <legend>Mime Types (comma separated list, leave blank to include all types)</legend>
+    <div class="form-item">
+	    <input id="elements-ele_value[mimetypes]" name="elements-ele_value[mimetypes]" type="text" value="<{$content.mimetypes}>"></input>
+    </div>
+  </fieldset>
+  <fieldset>
+    <legend>Options</legend>
+    <div class="form-item">
+        <label for="elements-ele_value[multiselect]-0"><input id="elements-ele_value[multiselect]-0" name="elements-ele_value[multiselect]" type="radio" value="0" <{if $content.multiselect != 1}>checked<{/if}> /> Allow only one file to be selected</label><br>
+        <label for="elements-ele_value[multiselect]-1"><input id="elements-ele_value[multiselect]-1" name="elements-ele_value[multiselect]" type="radio" value="1" <{if $content.multiselect == 1}>checked<{/if}> /> Allow multiple files to be selected</label><br><br>
+	    <label for="elements-ele_value[upload]"><input id="elements-ele_value[upload]" name="elements-ele_value[upload]" type="checkbox" value="1" <{if $content.upload == 1}>checked<{/if}> /> Allow files to be uploaded</label>        
+    </div>
+  </fieldset>
+    <div class="description">If you use Google to login to this website, then use the API Key and Client ID and Project Number from the same Google project you use to handle the authentication. IMPORTANT: make sure to enable to Google Picker API for that project too!</div>
+</div>

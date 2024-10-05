@@ -20,7 +20,7 @@ if (!defined("PROFILE_ADMIN_URL"))	define("PROFILE_ADMIN_URL", PROFILE_URL.'admi
 
 // Include the common language file of the module
 icms_loadLanguageFile(basename(dirname(dirname(__FILE__))), 'common');
+icms_loadLanguageFile(basename(dirname(dirname(__FILE__))), 'modinfo');
 
 // Find if the user is admin of the module and make this info available throughout the module
 $profile_isAdmin = icms_userIsAdmin(PROFILE_DIRNAME);
-?>

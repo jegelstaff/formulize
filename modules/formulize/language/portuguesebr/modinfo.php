@@ -3,14 +3,14 @@
 * --------------------------------------------------------------------
 *      Portuguese Translation by Paulo Sergio de Araujo alias Gopala
 *                     gopala at harekrishna dot org dot br
-*    http://www.x-trad.org the XOOPS Official Brazilian Translate Site            
-* Translation version 3.0 by GibaPhp - http://br.impresscms.org   
-* -------------------------------------------------------------------- 
+*    http://www.x-trad.org the XOOPS Official Brazilian Translate Site
+* Translation version 3.0 by GibaPhp - http://br.impresscms.org
+* --------------------------------------------------------------------
 */
 // Module Info
 
 // The name of this module
-define("_MI_formulize_NAME","Formulários");
+define("_MI_formulize_NAME","Formulize");
 
 // A brief description of this module
 define("_MI_formulize_DESC","Para geração de formulários e análise de dados");
@@ -60,10 +60,10 @@ define("_MI_formulize_SINGLESDESC","O botão 'Sair sem Salvar' é usado para sai
 
 define("_MI_formulize_LOE_limit", "Qual é o número máximo de participações que deverá ser mostrada em uma lista de digitações, sem que seja  necessário a confirmação do usuário para ver todas estas digitações?"); //GibaPhp 3.0
 define("_MI_formulize_LOE_limit_DESC", "Se o seu banco de dados é muito grande, no momento em que uma lista com as informações for mostrada, pode demorar muito tempo, até vários minutos. Utilize esta preferência para especificar o número máximo de informações que o sistema deve tentar mostrar de uma vez. Se o seu banco de dados contém mais informações do que esse limite, o usuário será questionado sobre a necessidade para o carregamento de todo o conjunto de dados ou não."); //GibaPhp 3.0
-       
+
 define("_MI_formulize_USETOKEN", "Utilize o sistema de token de segurança para validar os formulários de envio?"); //GibaPhp 3.0
 define("_MI_formulize_USETOKENDESC", "Por padrão, quando um formulário é enviado, não há dados salvos a menos que o Formulize possa validar um único símbolo que foi apresentado com o formulário. Esta é uma defesa parcial contra ataques cross site scripting, isto significa que podemos garantir que as pessoas realmente possam visitar o site e digitar informações nos formulários. Em algumas circunstâncias, dependendo do tipo de firewalls ou outros fatores, o token não poderá ser validado, mesmo quando ele deveria ser. Se isto está acontecendo com você repetidamente, você pode desligar o sistema de token do Formulize aqui."); //GibaPhp 3.0
-       
+
 
 // The name of this module
 define("_MI_formulizeMENU_NAME","Meus Formulários");

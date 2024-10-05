@@ -61,14 +61,22 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 // ie: formframes[2] and viewHandles[2]...that's the form or framework used for dataset 2, and the handle for the element in that dataset which should be displayed on the calendar.
 // Note about scopes: scopes must be converted to the format described for the $scope param for the getData function
 
-function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles, $filters, $viewPrefixes, $scopes, $hidden, $type="month", $start="", $multiPageData="") {
+function displayCalendar($formframes, $mainforms, $viewHandles, $dateHandles, $filters, $viewPrefixes, $scopes, $hidden, $type, $toptemplate, $bottomtemplate, $viewentryscreens, $useaddicons, $usedeleteicons, $textcolors, $start="", $multiPageData="") {
+    
+    // hack to handle the switching of dateHandles...
+    if($_POST['datetype']=='due') {
+        $dateHandles[0] = 'contacts_last_due_date';
+    }
+    
+    $type = $type ? $type : 'month';
+    
     global $xoopsDB, $xoopsUser;
 
     global $xoopsTpl;
 
     // Set some required variables
     $mid = getFormulizeModId();
-    for($i=0;$i<count($formframes);$i++) {
+    for($i=0;$i<count((array) $formframes);$i++) {
         unset($fid);
         unset($frid);
         if($mainforms[$i]) {
@@ -122,6 +130,18 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
         } else {
             $this_ent = $_POST['ventry'];
         }
+        
+        // CAN'T ACTUALLY DISTINGUISH BETWEEN DATASET CLICKS RIGHT NOW, FOR GOING TO DIFFERENT VIEWENTRYSCREENS!
+        if($viewentryscreens[0]) {
+            $screen_handler = xoops_getmodulehandler('screen', 'formulize');
+            if($screen = $screen_handler->get($viewentryscreens[0])) { // get the full screen object
+                $screen_handler = xoops_getmodulehandler($screen->getVar('type').'Screen', 'formulize');
+                $screen = $screen_handler->get($viewentryscreens[0]); // re-get because types have more stuff...there's a better way to do this!
+                $screen_handler->render($screen, $this_ent);
+                return;
+            }
+        }
+        
         if($_POST['calfrid']) {
             if(isset($multiPageData[$_POST['calfid']])) {
                 if(is_numeric($multiPageData[$_POST['calfid']])) { // numeric value indicates a screen id
@@ -163,7 +183,7 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
     // 2. do the extraction (filter by calview)
 
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-    for($i=0;$i<count($fids);$i++) {
+    for($i=0;$i<count((array) $fids);$i++) {
         $scope="";
         if($scopes[$i]) {
             list($scope, $throwAwayCurrentView) = buildScope($scopes[$i], $uid, $fids[$i]);
@@ -209,7 +229,8 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
     // need to do something a little more complex for adding a new entry, since we have to know for which fid/frid pair the add operation is being requested.
     // probably best to leave out adding for now and leave it as a future feature.  It can always be custom added within a pageworks page if necessary for a particular calendar
 
-    $rights = $gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid);
+    // no differential support for add rights on subsequent datasets??
+    $rights = $useaddicons[0] AND $gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid);
 
     // information to pass to the template
     global $calendarData;
@@ -292,7 +313,7 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
         $xoopsTpl->assign('nextMonth', ((($dateMonth + 1) > 12) ? ($dateYear + 1) . "-01" : $dateYear . "-" . ((($dateMonth + 1) < 10) ? "0" . ($dateMonth + 1) : ($dateMonth + 1))));
 
         $monthSelector = array();
-        $numberOfMonths = count($arrayMonthNames);
+        $numberOfMonths = count((array) $arrayMonthNames);
         for($intMonth = 0; $intMonth < $numberOfMonths; $intMonth++) {
             $monthName = $arrayMonthNames[$intMonth];
             $monthSelector[((($intMonth + 1) < 10) ? "0" . ($intMonth + 1) : ($intMonth + 1))] = $monthName;
@@ -309,18 +330,15 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
     }
 
     // process data set(s)
-    for($i=0;$i<count($data);$i++) {
+    $element_handler = xoops_getmodulehandler('elements', 'formulize');
+    for($i=0;$i<count((array) $data);$i++) {
         foreach($data[$i] as $id=>$entry) {
-                if(!$frids[$i]) {
-                if(is_array($viewHandles[$i])) {
-                    $formhandle = getFormHandleFromEntry($entry, $viewHandles[$i][0]);
-                } else {
-                    $formhandle = getFormHandleFromEntry($entry, $viewHandles[$i]);
-                }
+            if(is_array($viewHandles[$i])) {
+                $elementObject = $element_handler->get($viewHandles[$i][0]);
             } else {
-                $formhandle = $mainforms[$i];
+                $elementObject = $element_handler->get($viewHandles[$i]);
             }
-            $ids = internalRecordIds($entry, $formhandle);
+            $ids = internalRecordIds($entry, $elementObject->getVar('id_form')); 
 
             if(is_array($viewHandles[$i])) {
                 $needsep = 0;
@@ -347,7 +365,7 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
             $calendarDataItem[1] = $frids[$i];
             $calendarDataItem[2] = $fids[$i];
             $calendarDataItem[3] = $textToDisplay;
-            $calendarDataItem[4] = ($i == 0 and formulizePermHandler::user_can_delete_entry($fids[$i], display($entry, "uid"), $ids[0]));
+            $calendarDataItem[4] = $usedeleteicons[$i] AND ($i == 0 and formulizePermHandler::user_can_delete_entry($fids[$i], display($entry, "uid"), $ids[0])); // only active for the first dataset??
 
             if($type == "month"
                 || $type == "mini_month"
@@ -410,6 +428,9 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
 
     $xoopsTpl->assign('delete', _formulize_DELETE);
     $xoopsTpl->assign('delconf', _formulize_DELCONF);
+    
+    $xoopsTpl->assign('toptemplate', $toptemplate);
+    $xoopsTpl->assign('bottomtemplate', $bottomtemplate);
 
     // force template to be drawn
     $xoopsTpl->display("db:calendar_" . $type . ".html");

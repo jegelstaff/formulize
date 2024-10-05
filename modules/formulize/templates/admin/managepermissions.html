@@ -1,0 +1,40 @@
+<div class="panel-content content">
+
+    <h2>Copy Group Permissions</h2>
+    <p>You can copy permissions from one group to another group or groups.</p>
+    <br>
+    <hr>
+    <br>
+    <form id='managepermissions' name='managepermissions' method='post'>
+    <p>Copy permissions from which group?
+    <select id="managepermissions-source" name="managepermissions-source" size="1">
+        <{foreach from=$adminPage.groups key=id item=name}>
+            <option label="<{$name}>" value="<{$id}>"><{$name}></option>           
+        <{/foreach}>
+    </select>
+    </p>
+    <p>Copy permissions to which group(s)?</p>
+    <{foreach from=$adminPage.groups key=id item=name}>
+        <input id='<{$id}>' name='<{$id}>' type="checkbox" value="<{$name}>">
+        <label for='<{$id}>'><{$name}></label>
+        <br>
+    <{/foreach}>
+    <br>
+    <input type='radio' name='formulize-or-all' value='all-perms' id='all-perms' checked='checked'> <label for='all-perms'>Copy all permissions system wide</label><br>
+    <input type='radio' name='formulize-or-all' value='formulize-perms' id='formulize-perms'> <label for='formulize-perms'>Copy only Formulize permissions</label>
+    <br><br>
+    <input type='submit' name='save' value='Copy' onclick='return confirmCopy();'>
+    </form>
+    <p>Note: if you have multiple sets of groups, they should follow this type of naming convention: Toronto Volunteers, Toronto Managers; Ottawa Volunteers, Ottawa Managers. ie: the set name first, and then the group type last. If you don't follow this convention, then group level visibility settings (where one group see entries created by another group) won't necessarily copy over correctly. Check your permissions after copying to make sure they're right!</p>
+</div>
+
+<script>
+function confirmCopy() {
+    var sourceGroupName = jQuery('#managepermissions-source option:selected').text();
+    var targetGroupNames = "";
+    jQuery('input[type="checkbox"]:checked').each(function() {
+        targetGroupNames += "\n"+this.value;
+    });
+    return confirm("Are you sure you want to copy the permissions from "+sourceGroupName+" to the group(s):\n"+targetGroupNames+"\n\nThis will REMOVE all permissions for the target group(s) and REPLACE them with the permissions from the source group.");    
+}
+</script>

@@ -48,14 +48,15 @@ else {
             $formattedChanges[] = $section;
         }
         $syncimport['content']['elements'] = $formattedChanges;
-    }
-    else {
+    } else {
         // failed to load cached catalog comparison data
         $syncimport['content']['catalog_error'] = true;
         error_log(print_r($syncimport['content'], true));
 
     }
 }
+
+
 
 $adminPage['syncimport'] = $syncimport;
 $adminPage['template'] = "db:admin/sync_import.html";

@@ -128,7 +128,7 @@
 						The popup texts for the spinner image areas. */
 		regionalOptions: { // Available regional settings, indexed by language/country code
 			'': { // Default regional settings - English/US
-				show24Hours: false,
+				show24Hours: true,
 				separator: ':',
 				ampmPrefix: '',
 				ampmNames: ['AM', 'PM'],
@@ -755,7 +755,7 @@
 			var specified = (fields !== null && fields !== undefined);
 			if (!specified) {
 				var now = this._determineTime(inst.options.defaultTime, inst) || new Date();
-				fields = [now.getHours(), now.getMinutes(), now.getSeconds()];
+				fields = [now.getHours(), '00', now.getSeconds()];
 			}
 			var reset = false;
 			for (var i = 0; i < inst.options.timeSteps.length; i++) {

@@ -45,7 +45,7 @@
     },
     {
       "type": "get",
-      "url": "http://${test_domain}/"
+      "url": "http://${test_domain}/modules/formulize/application.php?id=all"
     },
     {
       "type": "setElementText",
@@ -131,12 +131,13 @@
       }
     },
     {
-      "type": "waitForTextPresent",
-      "text": "Elements"
-    },
-    {
-      "type": "pause",
-      "waitTime": "543"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -184,8 +185,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1543"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -233,8 +239,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1543"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -275,14 +286,6 @@
       "text": "project"
     },
     {
-      "type": "setElementText",
-      "locator": {
-        "type": "name",
-        "value": "forms-note"
-      },
-      "text": "this is the note text"
-    },
-    {
       "type": "clickElement",
       "locator": {
         "type": "css selector",
@@ -290,8 +293,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1543"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -335,8 +343,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1543"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -416,8 +429,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1543"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -529,8 +547,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1543"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -584,35 +607,18 @@
     {
       "type": "clickElement",
       "locator": {
-        "type": "link text",
-        "value": "Options"
-      }
-    },
-    {
-      "type": "setElementSelected",
-      "locator": {
-        "type": "id",
-        "value": "validate-past-dates"
-      }
-    },
-    {
-      "type": "setElementText",
-      "locator": {
-        "type": "id",
-        "value": "date_past_days"
-      },
-      "text": "50"
-    },
-    {
-      "type": "clickElement",
-      "locator": {
         "type": "css selector",
         "value": "input.savebutton"
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1543"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -651,35 +657,18 @@
     {
       "type": "clickElement",
       "locator": {
-        "type": "link text",
-        "value": "Options"
-      }
-    },
-    {
-      "type": "setElementSelected",
-      "locator": {
-        "type": "id",
-        "value": "validate-past-dates"
-      }
-    },
-    {
-      "type": "setElementText",
-      "locator": {
-        "type": "id",
-        "value": "date_past_days"
-      },
-      "text": "0"
-    },
-    {
-      "type": "clickElement",
-      "locator": {
         "type": "css selector",
         "value": "input.savebutton"
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1543"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -727,8 +716,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1543"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -783,8 +777,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1543"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -832,8 +831,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1543"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -881,8 +885,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1543"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -930,8 +939,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1543"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -979,8 +993,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1543"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -1130,8 +1149,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1543"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -1372,8 +1396,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1543"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -1441,7 +1470,7 @@
       "type": "setElementSelected",
       "locator": {
         "type": "xpath",
-        "value": "//form[@id='form-2']/div/div[2]/fieldset/div[1]/select//option[.='Project: Project Name']"
+        "value": "//form[@id='form-2']/div/div[2]/fieldset/div[1]/select//option[4]"
       }
     },
     {
@@ -1452,8 +1481,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1543"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -1529,7 +1563,7 @@
       "type": "setElementSelected",
       "locator": {
         "type": "xpath",
-        "value": "//form[@id='form-2']/div/div[2]/fieldset/div[1]/select//option[.='People: Name']"
+        "value": "//form[@id='form-2']/div/div[2]/fieldset/div[1]/select//option[3]"
       }
     },
     {
@@ -1540,8 +1574,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1543"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -1549,10 +1588,6 @@
         "type": "css selector",
         "value": ".breadcrumb-1"
       }
-    },
-    {
-      "type": "verifyTextPresent",
-      "text": "Create a new form"
     }
   ],
   "data": {

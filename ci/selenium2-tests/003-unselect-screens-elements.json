@@ -48,10 +48,6 @@
       }
     },
     {
-      "type": "waitForTextPresent",
-      "text": "Manage your applications"
-    },
-    {
       "type": "clickElement",
       "locator": {
         "type": "link text",
@@ -59,23 +55,11 @@
       }
     },
     {
-      "type": "waitForTextPresent",
-      "text": "Regular 'Client'"
-    },
-    {
-      "type": "pause",
-      "waitTime": "543"
-    },
-    {
       "type": "clickElement",
       "locator": {
-        "type": "xpath",
-        "value": "//div[@id='tabs-3']/div[1]/table/tbody/tr[3]/td[2]/a"
+        "type": "link text",
+        "value": "Regular 'Client'"
       }
-    },
-    {
-      "type": "waitForTextPresent",
-      "text": "Settings for the Screen: Regular 'Client'"
     },
     {
       "type": "clickElement",
@@ -88,14 +72,7 @@
       "type": "setElementNotSelected",
       "locator": {
         "type": "xpath",
-        "value": "//form[@id='form-3']/div/div/select/option[@label='Client Name']"
-      }
-    },
-    {
-      "type": "setElementNotSelected",
-      "locator": {
-        "type": "xpath",
-        "value": "//form[@id='form-3']/div/div/select/option[@label='City']"
+        "value": "//form[@id='form-2']/div/div/select/option[@label='City']"
       }
     },
     {
@@ -106,9 +83,13 @@
       }
     },
     {
-      "type": "waitForTextPresent",
-      "negated": true,
-      "text": "You have unsaved changes!"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -127,8 +108,8 @@
     {
       "type": "clickElement",
       "locator": {
-        "type": "xpath",
-        "value": "//div[@id='tabs-3']/div[1]/table/tbody/tr[5]/td[2]/a"
+        "type": "link text",
+        "value": "Regular 'Project'"
       }
     },
     {
@@ -142,7 +123,7 @@
       "type": "setElementNotSelected",
       "locator": {
         "type": "xpath",
-        "value": "//form[@id='form-3']/div/div/select/option[@label='Client']"
+        "value": "//form[@id='form-2']/div/div/select/option[@label='Client']"
       }
     },
     {
@@ -153,9 +134,13 @@
       }
     },
     {
-      "type": "waitForTextPresent",
-      "negated": true,
-      "text": "You have unsaved changes!"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -174,8 +159,8 @@
     {
       "type": "clickElement",
       "locator": {
-        "type": "xpath",
-        "value": "//div[@id='tabs-3']/div[1]/table/tbody/tr[7]/td[2]/a"
+        "type": "link text",
+        "value": "Regular 'People'"
       }
     },
     {
@@ -189,7 +174,7 @@
       "type": "setElementNotSelected",
       "locator": {
         "type": "xpath",
-        "value": "//form[@id='form-3']/div/div/select/option[@label='Email']"
+        "value": "//form[@id='form-2']/div/div/select/option[@label='Email']"
       }
     },
     {
@@ -200,9 +185,13 @@
       }
     },
     {
-      "type": "waitForTextPresent",
-      "negated": true,
-      "text": "You have unsaved changes!"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -221,8 +210,8 @@
     {
       "type": "clickElement",
       "locator": {
-        "type": "xpath",
-        "value": "//div[@id='tabs-3']/div[1]/table/tbody/tr[9]/td[2]/a"
+        "type": "link text",
+        "value": "Regular 'Stories'"
       }
     },
     {
@@ -236,7 +225,7 @@
       "type": "setElementNotSelected",
       "locator": {
         "type": "xpath",
-        "value": "//form[@id='form-3']/div/div/select/option[@label='Status']"
+        "value": "//form[@id='form-2']/div/div/select/option[@label='Status']"
       }
     },
     {
@@ -247,9 +236,13 @@
       }
     },
     {
-      "type": "waitForTextPresent",
-      "negated": true,
-      "text": "You have unsaved changes!"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     }
   ],
   "data": {

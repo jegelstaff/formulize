@@ -328,5 +328,5 @@ include 'footer.php';
 function sortList($a, $b) {
 	$a = strtolower($a['title']);
 	$b = strtolower($b['title']);
-	return ($a == $b) ? 0 : ($a < $b) ? -1 : +1;
+	return ($a == $b) ? 0 : (($a < $b) ? -1 : +1);
 }

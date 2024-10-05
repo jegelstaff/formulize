@@ -276,7 +276,7 @@ switch ($op) {
 			redirect_header("admin.php?fct=groups&amp;op=adminMain", 3, implode('<br />', icms::$security->getErrors()));
 		}
 		$member_handler = icms::handler('icms_member');
-		$size = count($uids);
+		$size = count((array)$uids);
 		for ($i = 0; $i < $size; $i++) {
 			$member_handler->addUserToGroup($groupid, $uids[$i]);
 		}

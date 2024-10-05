@@ -86,7 +86,7 @@ foreach($allFormObjects as $thisFormObject) {
         $forms['sid='.$screen->getVar('sid')] = "&nbsp;&nbsp;   ". $screen->getVar('title');
     }
 }
-$forms['url'] = "An external URL";
+$forms['url'] = "A URL";
 
 
 // get list of group ids that have no default screen set
@@ -113,6 +113,7 @@ $options['listsofscreenoptions'] = $forms;
 
 $screen_handler = xoops_getmodulehandler('screen', 'formulize');
 $gperm_handler = xoops_gethandler('groupperm');
+$formsInApp = array();
 global $xoopsUser;
 foreach($formObjects as $thisFormObject) {
     if (!$gperm_handler->checkRight("edit_form", $thisFormObject->getVar('id_form'), $xoopsUser->getGroups(), getFormulizeModId())) {
@@ -178,7 +179,7 @@ if ($screen_sort_order == "DESC") {
 }
 
 $screen_page = $screen_page < 1 ? 1 : $screen_page;
-$resultNum = count($screen_handler->getObjects(null, null, $aid, $screen_sort, $screen_sort_order));
+$resultNum = count((array) $screen_handler->getObjects(null, null, $aid, $screen_sort, $screen_sort_order));
 $pageNumbers = ceil($resultNum / $screen_limit);
 
 $pageNav = "";
@@ -218,13 +219,17 @@ if($pageNumbers > 1) {
 		$pageNav .= "<a href=\"?page=application&aid=". $aid ."&tab=screens&sort=". $screen_sort ."&order=". $screen_sort_order ."&nav=". ($screen_page + 1) ."\" class=\"page-navigation-next\">"._AM_FORMULIZE_LOE_NEXT."</a>";
 	}
 	$pageNav .= "</div><span class=\"page-navigation-total\">".
-			sprintf(_AM_FORMULIZE_LOE_TOTAL, $resultNum)."</span></p>\n";
+			"Total entries: ".$resultNum."</span></p>\n";
 }
 
 $common['pageNav'] = $pageNav;
 
 $common['aid'] = $aid;
 $common['name'] = $appName;
+
+$allFidsToUse = array_keys($formsInApp);
+include XOOPS_ROOT_PATH.'/modules/formulize/admin/generateTemplateElementHandleHelp.php';
+$variableHelp['variabletemplatehelp'] = $listTemplateHelp;
 
 // adminPage tabs sections must contain a name, template and content key
 // content is the data the is available in the tab as $content.foo
@@ -272,7 +277,7 @@ if (is_object($appObject)){
     $i++;
     $adminPage['tabs'][$i]['name'] = "Code";
     $adminPage['tabs'][$i]['template'] = "db:admin/application_code.html";
-    $adminPage['tabs'][$i]['content'] = $common;
+    $adminPage['tabs'][$i]['content'] = $variableHelp + $common;
     $adminPage['tabs'][$i]['content']['custom_code'] = $appObject->getVar("custom_code");
 }
 

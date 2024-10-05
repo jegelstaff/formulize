@@ -21,7 +21,7 @@
  * @package     kernel
  * @author	    Kazumi Ono	<onokazu@xoops.org>
  * @copyright	copyright (c) 2000-2003 XOOPS.org
- * @deprecated	Use icms_core_SessionHandler, instead
+ * deprecated	Use icms_core_SessionHandler, instead
  * @todo		Remove in version 1.4
  */
 class XoopsSessionHandler extends icms_core_SessionHandler

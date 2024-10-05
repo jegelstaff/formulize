@@ -15,7 +15,7 @@ define("_MI_formulize_LOE_limit", "Quel est le nombre maximum d'entrées à affi
 define("_MI_formulize_LOE_limit_DESC", "Lorsqu'une sélection est très large, l'affichage de la liste des entrées peut être fastidieuse, et durer au delà de plusieurs minutes. Définissez le nombre maximum d'entrées à afficher d'un coup.  Si une sélection contient plus d'entrée que la limite, il sera demandé à l'utilisateur s'il veut tout afficher ou non.");
 define("_MI_formulize_LOGPROCEDURE", "Demander les identifiants pour surveiller Procédures et paramètres?");
 define("_MI_formulize_LOGPROCEDUREDESC", "Par défaut, la vérification des identifiants est désactivée.");
-define("_MI_formulize_NAME","Formulaire");
+define("_MI_formulize_NAME","Formulize");
 define("_MI_formulize_NOTIFY_DELENTRY", "Effacement d'entrée de formulaire");
 define("_MI_formulize_NOTIFY_DELENTRY_CAP", "Notifiez moi quand une entrée de formulaire est effacée");
 define("_MI_formulize_NOTIFY_DELENTRY_DESC", "Cette option de notification alerte les utilisateurs quand une entrée de formulaire est effacée");
@@ -56,3 +56,46 @@ define("_MI_formulize_USETOKENDESC", "Par défaut, lors d'une soumission, aucune
 define("_MI_formulizeMENU_BNAME","Menu des Formulaires");
 define("_MI_formulizeMENU_DESC","Montre un menu individuel configurable dans un bloc");
 define("_MI_formulizeMENU_NAME","Mon Menu");
+
+define("_MI_formulize_EXPORTINTROCHAR","Prefix strings in .csv files with a character to smooth importing and appearance in Excel and Google?");
+define("_MI_formulize_EXPORTINTROCHARDESC","Excel and Google Sheets try to be helpful and automatically interpret certain values when opening .csv files. This can damage your data. To force non-numeric values to be read as-is, Formulize can prefix them with certain characters that will trigger them to be read as plain strings by Excel and Google. However, this can cause havoc in other programs if you need plain .csv data. The default behaviour suits opening downloaded files in Excel, and using the IMPORTDATA function in Google Sheets to gather data via a makecsv.php reference.");
+define("_MI_formulize_EIC_BASIC", "Prefix strings with a TAB character (for Excel), unless makecsv.php is generating the file, then use an apostrophe (for Google Sheets)");
+define("_MI_formulize_EIC_ALWAYSAPOS", "Always prefix strings with an apostrophe (for Google Sheets)");
+define("_MI_formulize_EIC_ALWAYSTAB", "Always prefix strings with a TAB (for Excel)");
+define("_MI_formulize_EIC_PLAIN", "Never prefix strings (for programs that need clean, raw data)");
+
+define("_MI_formulize_USEOLDCUSTOMBUTTONEFFECTWRITING", "Use the old method of writing effects for custom buttons");
+define("_MI_formulize_USEOLDCUSTOMBUTTONEFFECTWRITINGDESC", "This should always be \"No\" unless this is an older installation that already has custom buttons that are dependent on the old method, which was based on the declaring human readable values, instead of the database values for elements.");
+
+define("_MI_formulize_FORMULIZELOGGINGONOFF", "Record Formulize activity in a log file");
+define("_MI_formulize_FORMULIZELOGGINGONOFFDESC", "If you are recording logs, you can specify the location to store them below, and the duration of logs to keep. Logs will contain information about user activity in JSON format and can be ingested by Grafana or other tools.");
+define("_MI_formulize_FORMULIZELOGFILELOCATION", "Location to store Formulize log files");
+define("_MI_formulize_FORMULIZELOGFILELOCATIONDESC", "Formulize generates log files that contain the history of user actions, such as logging in and saving data. You can specify the full path to the folder where the log files are stored. Logging will not function if the path is empty or not valid.");
+define("_MI_formulize_formulizeLogFileStorageDurationHours", "How long should Formulize log files be kept (in hours)");
+define("_MI_formulize_formulizeLogFileStorageDurationHoursDESC", "After this many hours, the log files will be deleted from the server.");
+
+$rewriteRuleInstructions = '';
+if(isset($GLOBALS['config'])) {
+	global $config;
+	foreach($config as $thisConfig) {
+		if(is_object($thisConfig) AND $thisConfig->getVar('conf_name') == 'formulizeRewriteRulesEnabled' AND $thisConfig->getVar('conf_value') == 0) {
+			$rewriteRuleInstructions = "<br><br>For alternate URLs to work, you will need to add code similar to this, to the .htaccess file at the root of your website:
+			<blockquote style=\"font-weight: normal; font-family: monospace; white-space: nowrap;\">
+			RewriteEngine On<br>
+			RewriteCond %{REQUEST_FILENAME} !-f<br>
+			RewriteCond %{REQUEST_FILENAME} !-d<br>
+			RewriteCond %{REQUEST_FILENAME} !-l<br>
+			RewriteRule ^(.*)$ /modules/formulize/index.php?formulizeRewriteRuleAddress=$1 [L]<br>
+			</blockquote><i>If you enabled this option, but these instructions are still here, and the option is off again, then your server is not yet properly configured for alternate URLs.</i>";
+			break;
+		}
+	}
+}
+define("_MI_formulize_rewriteRulesEnabled", "Enable alternate URLs for screens".$rewriteRuleInstructions);
+define("_MI_formulize_rewriteRulesEnabledDESC", "When this is enabled, you can specify alternate, clean URLs for accessing screens, instead of the default /modules/formulize/index.php?sid=1 style URLs.");
+
+define('_MI_formulize_SHOW_EMPTY_ELEMENTS_WHEN_READ_ONLY', "Show empty form elements when displaying forms in read-only mode");
+define('_MI_formulize_SHOW_EMPTY_ELEMENTS_WHEN_READ_ONLY_DESC', "When form elements are rendered in read-only mode, and there is no value to display, the element is skipped by default and not shown. If you want to show all elements even empty ones when users cannot edit the entry, turn this setting on.");
+
+define('_MI_formulize_VALIDATECODE', 'Check code blocks for syntax errors?');
+define('_MI_formulize_VALIDATECODE_DESC', 'When this is turned on, then Formulize will check most places where you can enter PHP code, to make sure the code has no syntax errors. This can be time consuming and if you are an experienced developer you may prefer to turn it off. This setting will have no effect if the shell_exec command is not available to PHP on your server.');

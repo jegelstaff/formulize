@@ -38,7 +38,7 @@ class PathStuffController {
 
 	var $permErrors = array();
 
-	function PathStuffController() {
+	function __construct() {
 		if (isset( $_SESSION['settings']['ROOT_PATH'] )) {
 			$this->xoopsRootPath = $_SESSION['settings']['ROOT_PATH'];
 		} else {

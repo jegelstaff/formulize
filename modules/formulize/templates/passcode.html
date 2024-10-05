@@ -1,0 +1,10 @@
+ <form method="post" id="passcode_form">
+    <h1><{$smarty.const._PASSWORD}></h1>
+    <p><input type="text" name="passcode" id="passcode" value="" width=50/><br /><br /></p>
+    <p><input type="submit" class="formulize_button" id="formulize_addButton" value="<{$smarty.const._SUBMIT}>" /></p>
+ </form>
+ <script>
+    $(document).ready(function() {
+        $('#passcode').focus();  
+    });
+ </script>

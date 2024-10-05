@@ -53,7 +53,7 @@ class icms_form_Theme extends icms_form_Base {
 				. "' method='" . $this->getMethod()
 				. "' onsubmit='return xoopsFormValidate_" . $ele_name . "();'" . $this->getExtra() . ">
 			<div class='xo-theme-form'>
-			<table width='100%' class='outer' cellspacing='1'>
+			<table width='100%' class='outer' cellspacing='1' role='presentation'>
 			<tr><th colspan='2'>" . $this->getTitle() . "</th></tr>
 		";
 		$hidden = '';

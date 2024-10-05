@@ -46,7 +46,7 @@ class XoopsFormSelectCountry extends icms_form_elements_select_Country {
 	 *                              Legal are all 2-letter country codes (in capitals).
 	 * @param	int		$size	    Number or rows. "1" makes a drop-down-list
 	 */
-	function XoopsFormSelectCountry($caption, $name, $value = null, $size = 1)
+	function __construct($caption, $name, $value = null, $size = 1)
 	{
 		parent::__construct($caption, $name, $value, $size);
 		$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_select_Country', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));

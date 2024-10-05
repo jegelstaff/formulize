@@ -35,6 +35,7 @@ $name_userid = 'uid' . ( @$_REQUEST['multiple'] ? "[]" : "" );
 $name_username = 'uname' . ( @$_REQUEST['multiple'] ? "[]" : "" );
 
 icms_loadLanguageFile('core', 'findusers');
+icms_loadLanguageFile('profile', 'admin');
 
 $rank_handler = icms_getModuleHandler("userrank", "system");
 $user_handler = icms::handler("icms_member");
@@ -44,7 +45,7 @@ foreach ($unsets as $var) {
 }
 
 $items_match = array(
-				"uname"		=> _MA_USER_UNAME,
+				"uname"		=> _AM_SPROFILE_UNAME,
 				"name"		=> _MA_USER_REALNAME,
 				"email"		=> _MA_USER_EMAIL,
 				"user_icq"	=> _MA_USER_ICQ,
@@ -148,7 +149,7 @@ if (empty($_POST["user_submit"])) {
 		}
 
 		$sort_select = new icms_form_elements_Select(_MA_USER_SORT, "user_sort", @$_POST["user_sort"]);
-		$sort_select->addOptionArray(array("uname"=>_MA_USER_UNAME, "last_login"=>_MA_USER_LASTLOGIN, "user_regdate"=>_MA_USER_REGDATE, "posts"=>_MA_USER_POSTS));
+		$sort_select->addOptionArray(array("uname"=>_AM_SPROFILE_UNAME, "last_login"=>_MA_USER_LASTLOGIN, "user_regdate"=>_MA_USER_REGDATE, "posts"=>_MA_USER_POSTS));
 		$order_select = new icms_form_elements_Select(_MA_USER_ORDER, "user_order", @$_POST["user_order"]);
 		$order_select->addOptionArray(array("ASC"=>_MA_USER_ASC,"DESC"=>_MA_USER_DESC));
 
@@ -402,7 +403,7 @@ if (empty($_POST["user_submit"])) {
 				echo "<input type='checkbox' name='memberslist_checkall' id='memberslist_checkall' onclick='xoopsCheckAll(\"{$name_form}\", \"memberslist_checkall\");' />";
 			}
 			echo "</th>
-			<th align='center'>"._MA_USER_UNAME."</th>
+			<th align='center'>"._AM_SPROFILE_UNAME."</th>
 			<th align='center'>"._MA_USER_REALNAME."</th>
 			<th align='center'>"._MA_USER_REGDATE."</th>
 			<th align='center'>"._MA_USER_LASTLOGIN."</th>
@@ -410,6 +411,9 @@ if (empty($_POST["user_submit"])) {
 			</tr>";
 			$ucount = 0;
 			foreach (array_keys($foundusers) as $j) {
+                if(is_numeric($foundusers[$j])) {
+                    $foundusers[$j] = $user_handler->getUser($foundusers[$j]);
+                }
 				if ($ucount % 2 == 0) {
 					$class = 'even';
 				} else {

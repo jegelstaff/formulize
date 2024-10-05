@@ -1132,7 +1132,6 @@ function icms_module_update($dirname) {
 									$tplfile_new->setVar('tpl_module', $dirname);
 									$tplfile_new->setVar('tpl_refid', (int) $fblock['bid']);
 									$tplfile_new->setVar('tpl_tplset', 'default');
-									$tplfile_new->setVar('tpl_file', $blocks[$i]['template'], TRUE);
 									$tplfile_new->setVar('tpl_type', 'block');
 								}
 								else {
@@ -1140,6 +1139,7 @@ function icms_module_update($dirname) {
 								}
 								$tplfile_new->setVar('tpl_source', $content, TRUE);
 								$tplfile_new->setVar('tpl_desc', $blocks[$i]['description'], TRUE);
+                                $tplfile_new->setVar('tpl_file', $blocks[$i]['template'], TRUE);
 								$tplfile_new->setVar('tpl_lastmodified', time());
 								$tplfile_new->setVar('tpl_lastimported', 0);
 								if (!$tplfile_handler->insert($tplfile_new)) {

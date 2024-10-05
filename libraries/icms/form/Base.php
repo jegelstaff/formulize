@@ -108,7 +108,7 @@ abstract class icms_form_Base {
 	 *
 	 * @param	bool    $encode To sanitizer the text?
 	 * @return	string
-	 * @deprecated The "name" attribute is not strict HTML
+	 * deprecated The "name" attribute is not strict HTML
 	 */
 	public function getName($encode = true) {
 		return $encode ? htmlspecialchars($this->_name, ENT_QUOTES, _CHARSET) : $this->_name;

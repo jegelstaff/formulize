@@ -61,6 +61,7 @@ if ($_GET['fid'] != "new") {
     $form_handle = $formObject->getVar('form_handle');
     $store_revisions = $formObject->getVar('store_revisions');
     $note = $formObject->getVar('note');
+    $send_digests = $formObject->getVar('send_digests');
 
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
     $elementObjects = $element_handler->getObjects(null, $fid);
@@ -72,13 +73,14 @@ if ($_GET['fid'] != "new") {
     // Name will be the heading of the section, content is data used in the template for each section
     $i = 1;
     foreach($elementObjects as $thisElement) {
+        if($thisElement->isSystemElement) { continue; }
         $elementCaption = strip_tags($thisElement->getVar('ele_caption'));
         $colhead = strip_tags($thisElement->getVar('ele_colhead'));
         $cleanType = convertTypeToText($thisElement->getVar('ele_type'), $thisElement->getVar('ele_value'));
         $ele_id = $thisElement->getVar('ele_id');
         $ele_handle = $thisElement->getVar('ele_handle');
         $nameText = $colhead ? printSmart($colhead,55) : printSmart($elementCaption,55);
-        $elements[$i]['name'] = "$nameText - $cleanType - $ele_handle";
+        $elements[$i]['name'] = "<span style='font-size: 125%;'>$nameText</span><br>$cleanType - $ele_handle";
         $elements[$i]['content']['ele_id'] = $ele_id;
         $elements[$i]['content']['ele_handle'] = $ele_handle;
         $ele_type = $thisElement->getVar('ele_type');
@@ -234,7 +236,8 @@ if ($_GET['fid'] != "new") {
         $criteria->add(new Criteria('gperm_itemid', $fid));
         $criteria->add(new Criteria('gperm_modid', getFormulizeModId()));
         $perms = $gperm_handler->getObjects($criteria, true);
-        $groupObject = $member_handler->getGroup($thisGroup);
+        if($groupObject = $member_handler->getGroup($thisGroup)) {
+
         $groupperms[$i]['name'] = $groupObject->getVar('name');
         $groupperms[$i]['id'] = $groupObject->getVar('groupid');
         foreach($perms as $perm) {
@@ -252,10 +255,11 @@ if ($_GET['fid'] != "new") {
         // per-group-filters
         $filterSettingsToSend = isset($filterSettings[$thisGroup]) ? $filterSettings[$thisGroup] : "";
         $htmlFormId = $tableform ? "form-2" : "form-3"; // the form id will vary depending on the tabs, and tableforms have no elements tab
-        $groupperms[$i]['groupfilter'] = formulize_createFilterUI($filterSettingsToSend, $fid."_".$thisGroup."_filter", $fid, $htmlFormId, "oom");
+        $groupperms[$i]['groupfilter'] = formulize_createFilterUI($filterSettingsToSend, $fid."_".$thisGroup."_filter", $fid, $htmlFormId, 0, "oom");
         $groupperms[$i]['existingFilter'] = getExistingFilter($filterSettingsToSend, $fid."_".$thisGroup."_filter", $fid, $htmlFormId, "oom");
         $groupperms[$i]['hasgroupfilter'] = $filterSettingsToSend ? " checked" : "";
         $i++;
+        }
         unset($criteria);
     }
 
@@ -422,6 +426,10 @@ if ($_GET['fid'] != "new") {
         $formApplications = array(intval($_GET['aid']));
     }
     $groupsCanEditDefaults = $xoopsUser->getGroups();
+    $regUserGroupKey = array_search(2, $groupsCanEditDefaults);
+    if(count((array) $groupsCanEditDefaults)>1 AND $regUserGroupKey !== false) {
+        unset($groupsCanEditDefaults[$regUserGroupKey]); // don't give edit_form perm to registered users group unless it is the only group the user is a member of
+    }
     $member_handler = xoops_gethandler('member');
     $allGroups = $member_handler->getGroups();
     foreach($allGroups as $thisGroup) {
@@ -439,10 +447,12 @@ foreach($classFiles as $thisFile) {
         $customType = substr($thisFile, 0, strpos($thisFile, "Element.php"));
         $customElementHandler = xoops_getmodulehandler($customType."Element", "formulize");
         $customElementObject = $customElementHandler->create();
+        if(!$customElementObject->isSystemElement) {
         $customElements[$i]['type'] = $customType;
         $customElements[$i]['name'] = $customElementObject->name;
         $i++;
     }
+}
 }
 
 
@@ -474,14 +484,12 @@ $permissions['hello'] = "Hello Permission World";
 // need to get screen data so this can be populated properly
 $screens = array();
 $screen_handler = xoops_getmodulehandler('screen', 'formulize');
-$criteria_object = new CriteriaCompo(new Criteria('type','multiPage'));
-$criteria_object->add(new Criteria('type','form'), 'OR');
-$mulitPageAndFormScreens = $screen_handler->getObjects($criteria_object,$fid);
+$criteria_object = new Criteria('type','multiPage');
+$multiPageFormScreens = $screen_handler->getObjects($criteria_object,$fid);
 $i = 1;
-foreach($mulitPageAndFormScreens as $screen) {
+foreach($multiPageFormScreens as $screen) {
     $screens['screens'][$i]['sid'] = $screen->getVar('sid');
     $screens['screens'][$i]['title'] = $screen->getVar('title');
-    $screens['screens'][$i]['type'] = $screen->getVar('type');
     $i++;
 }
 $listOfEntriesScreens = $screen_handler->getObjects(new Criteria('type','listOfEntries'),$fid);
@@ -498,11 +506,27 @@ foreach($templateScreens as $screen) {
     $screens['template'][$i]['title'] = $screen->getVar('title');
     $i++;
 }
+$calendarScreens = $screen_handler->getObjects(new Criteria('type','calendar'),$fid);
+$i=1;
+foreach($calendarScreens as $screen) {
+    $screens['calendar'][$i]['sid'] = $screen->getVar('sid');
+    $screens['calendar'][$i]['title'] = $screen->getVar('title');
+    $i++;
+}
+$criteria_object = new Criteria('type','form');
+$legacyFormScreens = $screen_handler->getObjects($criteria_object,$fid);
+$i = 1;
+foreach($legacyFormScreens as $screen) {
+    $screens['legacy'][$i]['sid'] = $screen->getVar('sid');
+    $screens['legacy'][$i]['title'] = $screen->getVar('title');
+    $i++;
+}
 
 $settings = array();
 $settings['singleentry'] = $singleentry;
 $settings['menutext'] = $menutext;
 $settings['form_handle'] = $form_handle;
+$settings['send_digests'] = $send_digests;
 $settings['store_revisions'] = $store_revisions;
 $settings['istableform'] = ($tableform OR $newtableform) ? true : false;
 if (isset($groupsCanEditOptions)) {
@@ -528,6 +552,11 @@ if ($fid != "new") {
     $advanced_calculation_handler = xoops_getmodulehandler('advancedCalculation', 'formulize');
     $advanced_calculations['advanced_calculations'] = $advanced_calculation_handler->getList($fid);
 
+		$form_id = $fid;
+		$selectedFramework = 0;
+		include XOOPS_ROOT_PATH.'/modules/formulize/admin/generateTemplateElementHandleHelp.php';
+		$advanced_calculations['variabletemplatehelp'] = $listTemplateHelp;
+
     if (!$tableform AND !$newtableform) {
         $adminPage['tabs'][$i]['name'] = "Elements";
         $adminPage['tabs'][$i]['template'] = "db:admin/form_elements.html";
@@ -535,7 +564,7 @@ if ($fid != "new") {
         if (isset($elements)) {
             $adminPage['tabs'][$i]['content']['elements'] = $elements;
         }
-        if (count($customElements)>0) {
+        if (count((array) $customElements)>0) {
             $adminPage['tabs'][$i]['content']['customElements'] = $customElements;
         }
         $i++;

@@ -115,7 +115,7 @@ class icms_module_Object extends icms_core_Object {
 	 * @param   string  $dirname    Directory Name
 	 * @param   boolean $verbose
 	 **/
-	public function loadInfoAsVar($dirname, $verbose = true) {
+	public function loadInfoAsVar($dirname, $verbose = false) {
 		if (!isset($this->modinfo)) {$this->loadInfo($dirname, $verbose);}
 		$this->setVar('name', $this->modinfo['name'], true);
 		$this->setVar('version', (int) (100 * ($this->modinfo['version'] + 0.001)), true);
@@ -232,7 +232,7 @@ class icms_module_Object extends icms_core_Object {
 	 * @param   bool    $verbose    Give an error on fail?
 	 * @return  bool   TRUE if success, FALSE if fail.
 	 */
-	public function loadInfo($dirname, $verbose = true) {
+	public function loadInfo($dirname, $verbose = false) {
 		global $icmsConfig;
 		icms_loadLanguageFile($dirname, 'modinfo');
 		if (file_exists(ICMS_ROOT_PATH . '/modules/' . $dirname . '/icms_version.php')) {
@@ -299,7 +299,7 @@ class icms_module_Object extends icms_core_Object {
 				'headermenucount' => count($this->getAdminHeaderMenu()),
 				'submenus' => $submenus,
 				'currentsub' => $currentsub,
-				'submenuscount' => count($submenus)
+				'submenuscount' => count((array) $submenus)
 			)
 		);
 		$tpl->display(ICMS_ROOT_PATH . '/modules/system/templates/admin/system_adm_modulemenu.html');
@@ -307,7 +307,7 @@ class icms_module_Object extends icms_core_Object {
 
 	/**#@+
 	 * For backward compatibility only!
-	 * @deprecated Use $this->getVar('mid') instead
+	 * deprecated Use $this->getVar('mid') instead
 	 * @todo		Remove in version 1.4
 	 */
 	public function mid() {
@@ -316,7 +316,7 @@ class icms_module_Object extends icms_core_Object {
 	}
 	/**
 	 *
-	 * @deprecated	Use getVar('dirname') instead
+	 * deprecated	Use getVar('dirname') instead
 	 * @todo 		Remove in version 1.4
 	 */
 	public function dirname() {
@@ -325,7 +325,7 @@ class icms_module_Object extends icms_core_Object {
 	}
 	/**
 	 *
-	 * @deprecated	Use getVar('name') instead
+	 * deprecated	Use getVar('name') instead
 	 * @todo		Remove in version 1.4
 	 */
 	public function name() {
@@ -334,7 +334,7 @@ class icms_module_Object extends icms_core_Object {
 	}
 	/**
 	 *
-	 * @deprecated	Use the handler method instead
+	 * deprecated	Use the handler method instead
 	 * @todo		Remove in version 1.4
 	 * @param unknown_type $dirname
 	 */

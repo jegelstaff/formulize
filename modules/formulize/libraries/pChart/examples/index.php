@@ -97,7 +97,7 @@
   $ID = 1; if ( isset($Tree["z_root"]) ) { $ID = 2; }
   foreach($Tree as $Key => $Elements)
    {
-    if ( $ID == count($Tree) ) { $Icon = "dash-explorer-last.png"; $SubIcon = "dash-explorer-blank.png"; } else { $Icon = "dash-explorer.png"; $SubIcon = "dash-explorer-noleaf.png"; }
+    if ( $ID == count((array) $Tree) ) { $Icon = "dash-explorer-last.png"; $SubIcon = "dash-explorer-blank.png"; } else { $Icon = "dash-explorer.png"; $SubIcon = "dash-explorer-noleaf.png"; }
     if ( $Key != "z_root" )
      {
       echo "<table  noborder cellpadding=0 cellspacing=0>\r\n";
@@ -114,7 +114,7 @@
         $FileName      = $Element["FileName"];
         $FileShortName = $Element["FileShortName"];
 
-        if ( $SubKey == count($Elements)-1 ) { $Icon = "dash-explorer-last.png"; } else { $Icon = "dash-explorer.png"; }
+        if ( $SubKey == count((array) $Elements)-1 ) { $Icon = "dash-explorer-last.png"; } else { $Icon = "dash-explorer.png"; }
 
         echo " <tr valign=middle>\r\n";
         echo "  <td><img src='resources/".$SubIcon."' width=16 height=20 alt=''/></td>\r\n";

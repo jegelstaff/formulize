@@ -4,7 +4,7 @@ define("_formulize_FORM_TITLE", "Contact us by filling out this form.");
 define("_AM_CATGENERAL", "General Forms");
 define("_AM_NOFORMS_AVAIL", "There are no forms currently available.");
 //define("_formulize_MSG_SUBJECT", $xoopsConfig['sitename'].' - Contact Us Form');
-define("_formulize_MSG_SUBJECT", '['.$xoopsConfig['sitename'].'] -');
+define("_formulize_MSG_SUBJECT", (isset($xoopsConfig['sitename']) ? '['.$xoopsConfig['sitename'].'] -' : ''));
 define("_formulize_MSG_FORM", ' Form: ');
 //next two added by jwe 7/23/04
 define("_formulize_INFO_RECEIVED", "Your information has been received.");
@@ -99,8 +99,8 @@ define("_AM_FORMUL","Forms");
 
 //added by jwe - 7/28/04
 define("_AM_FORM_TITLE", "Form Access Permissions"); // not used
-define("_AM_FORM_CURPERM", "Current Permission:"); 
-define("_AM_FORM_CURPERMLINKS", "Current Linked Selectbox:"); 
+define("_AM_FORM_CURPERM", "Current Permission:");
+define("_AM_FORM_CURPERMLINKS", "Current Linked Selectbox:");
 define("_AM_FORM_PERMVIEW", "View");
 define("_AM_FORM_PERMADD", "Add/Update");
 define("_AM_FORM_PERMADMIN", "Admin");
@@ -129,7 +129,7 @@ define("_AM_FRAME_AVAILFORMS1", "Form One:");
 define("_AM_FRAME_AVAILFORMS2", "Form Two:");
 define("_AM_FRAME_DELETE", "Delete an Existing Framework:");
 define("_AM_FRAME_SUBFORM_OF", "Make it a subform of:");
-define("_AM_FRAME_NOPARENTS", "No Forms in Framework"); 
+define("_AM_FRAME_NOPARENTS", "No Forms in Framework");
 define("_AM_FRAME_TYPENEWFORMNAME", "Type a short name here");
 define("_AM_FRAME_NEWFORMBUTTON", "Add Forms!");
 define("_AM_FRAME_NOKEY", "none specified!");
@@ -158,8 +158,8 @@ define("_AM_FRAME_ELEMENT_CAPTIONS", "Captions");
 define("_AM_FRAME_ELEMENT_HANDLES", "Handles");
 define("_AM_FRAME_HANDLESHELP", "Use this page to specify <i>Handles</i> for this form and its elements.  Handles are short names that can be used to refer to this form and its elements from outside the Formulize module.");
 
-define("_AM_SELECT_PROXY", "Is this info submitted on behalf of someone else?");
-define("_AM_SELECT_UPDATE_OWNER", "Change owner/creator of this entry?");
+define("_AM_SELECT_PROXY", "Set entry owner");
+define("_AM_SELECT_UPDATE_OWNER", "Change entry owner");
 define("_AM_SELECT_UPDATE_NOCHANGE", "Current owner: ");
 
 define("_FORM_EXP_CREE","File has been exported with success");
@@ -265,7 +265,7 @@ define("_formulize_exfile", "exported_data_");
 define("_formulize_DLTEXT", "<b>Right-click on the link below and select <i>Save</i>.</b> (Ctrl-click on a Mac.)  Once the file is on your computer, you will be able to open it in a spreadsheet program.  If the fields do not align properly when you open the file, try exporting with a different delimiter.");
 define("_formulize_DLHEADER", "Your file is ready for download.");
 
-define("_formulize_PICKAPROXY", "No Proxy User Selected");
+define("_formulize_PICKAPROXY", "Current logged-in user");
 define("_formulize_PROXYFLAG", "(Proxy)");
 
 define("_formulize_DELBUTTON", "Delete");
@@ -313,7 +313,8 @@ define("_formulize_SUBFORM_SIMPLE_BUTTON", "Display a simple button for adding o
 define("_formulize_SUBFORM_SIMPLE_LABEL", "What text should appear on the button?");
 define("_formulize_SUBFORM_MULTIPLE_BUTTON", "Display a button with a text box for choosing the number of entries to add");
 define("_formulize_SUBFORM_MULTIPLE_LABEL", "What text should be used to describe each entry? ie: Add x Entries, Add x Participants, etc.");
-define("_formulize_DELETE_CHECKED", "Delete checked items");
+define("_formulize_DELETE_CHECKED", "Delete");
+define("_formulize_CLONE_CHECKED", "Clone");
 define("_formulize_ADD_HELP", "Add an entry in this section by clicking the <i>Add</i> button.");
 define("_formulize_ADD_HELP2", "See an entire entry by clicking the <i>View</i> button.");
 define("_formulize_ADD_HELP3", "Update an entry by changing the values on the right.");
@@ -323,6 +324,7 @@ define("_formulize_SUBFORM_FILTER_GO","Go");
 define("_formulize_SUBFORM_FILTER_SEARCH","Search for: ");
 define("_AM_ELE_SUBFORM_NEWENTRY_LABEL", "New entry");
 define("_formulize_SAVE", "Save");
+define("_formulize_SAVE_AND_GOBACK", "Save and Go Back");
 define("_formulize_SAVE_AND_LEAVE", "Save and Leave");
 define("_formulize_DONE", "Leave Page");
 define("_formulize_CONFIRMNOSAVE", "You have not saved your changes!  Is that OK?  Click 'Cancel' to return to the form and then click 'Save' to save your changes.");
@@ -333,11 +335,11 @@ define("_formulize_INFO_DONE1", "Click the <i>");
 define("_formulize_INFO_DONE2", "</i> button if you are finished.");
 define("_formulize_INFO_CONTINUE1", "You can update your information below.");
 define("_formulize_INFO_CONTINUE2", "You can make another entry by filling in the form again.");
-define("_formulize_INFO_SAVEBUTTON", "Click the <i>" . _formulize_SAVE . "</i> button to save your changes.<br />Click the "._formulize_SAVE_AND_LEAVE.
-    " button to save your changes and leave the page.");
+define("_formulize_INFO_SAVEBUTTON", "Click the <i>" . _formulize_SAVE . "</i> button to save your changes.");
 define("_formulize_INFO_SAVE1", "Click the <i>");
-define("_formulize_INFO_SAVE2", "</i> button to save your changes.<br />Click the "._formulize_SAVE_AND_LEAVE.
-    " button if you are finished and want to save your changes.");
+define("_formulize_INFO_SAVE2", "</i> button to save your changes.");
+define("_formulize_INFO_SAVEANDLEAVE1", "Click the <i>");
+define("_formulize_INFO_SAVEANDLEAVE2", "</i> button if you want to save your changes and leave this page.");
 define("_formulize_INFO_NOSAVE", "You can review this entry, but you <i>cannot save changes</i>.");
 define("_formulize_INFO_MAKENEW", "You can make a new entry by filling in the form below.");
 
@@ -350,7 +352,7 @@ define("_formulize_PRINTALLVIEW", "Printable View - All Pages"); // nmc 2007.03.
 
 // constants related to the new display entries functions...
 
-define("_formulize_DE_CURRENT_VIEW", "Current View: ");
+define("_formulize_DE_CURRENT_VIEW", "Showing: ");
 define("_formulize_DE_FILLINFORM", "Fill In This Form: ");
 define("_formulize_DE_ACTIONS", "Actions: ");
 define("_formulize_DE_NODATAFOUND", "No entries were found in the current view that match the current search terms.");
@@ -358,8 +360,10 @@ define("_formulize_DE_STANDARD_VIEWS", "STANDARD VIEWS:");
 define("_formulize_DE_NO_STANDARD_VIEWS", "No standard views available");
 define("_formulize_DE_SAVED_VIEWS", "YOUR SAVED VIEWS:");
 define("_formulize_DE_PUB_VIEWS", "PUBLISHED VIEWS:");
-define("_formulize_DE_SEARCH_HELP", "Type search terms here");
+define("_formulize_DE_SEARCH_HELP", "Search here");
+define("_formulize_GLOBAL_SEARCH", "Search:");
 define("_formulize_DE_SEARCH_POP_HELP", "Click here for info about the search terms");
+define("_formulize_DE_TOGGLE_SEARCHES", "Click to open the search interface");
 define("_formulize_DE_WARNLOCK", "<p>The view that you have selected is set to <i>lock the controls</i>.  This means that you cannot change the columns, do calculations, do advanced searches, or export data.</p><p>You can perform sorting and basic searches using the controls at the top of each column.</p>");
 define("_formulize_DE_MINE", "Entries by me");
 define("_formulize_DE_GROUP", "Entries by all users in my group(s)");
@@ -367,6 +371,8 @@ define("_formulize_DE_ALL", "Entries by all users in all groups");
 define("_formulize_DE_GO", "Apply search terms");
 define("_formulize_DE_MODIFYSCREEN", "Configure this Screen");
 define("_formulize_DE_CHANGECOLS", "Change columns");
+define("_formulize_DE_CLEAR_ALL", "Clear all selected columns");
+define("_formulize_DE_RESET_COLS", "Reset to the initially selected columns");
 define("_formulize_DE_PICKNEWCOLS", "Pick different columns to view");
 define("_formulize_DE_AVAILCOLS", "Available columns:");
 define("_formulize_DE_SHOWALLCOLS", "Click to show/hide more columns");
@@ -388,9 +394,10 @@ define("_formulize_DE_EXPORT_MAKEFILE", "Start data file download");
 define("_formulize_DE_EXPORT_SHOW_ADVANCED", "Show advanced options");
 define("_formulize_DE_EXPORT_HIDE_ADVANCED", "Hide advanced options");
 define("_formulize_DB_EXPORT_TO_EXCEL", "Use compatibility mode for some versions of Microsoft Excel (helps with accented characters in some cases)");
+define("_formulize_DB_EXPORT_NULL_OPTION", "Use this value in place of all NULL values: ");
 define("_formulize_EXPORT_FILENAME_TEXT", "Exported_data_from");
 
-       
+
 define("_formulize_DE_EXPORT_CALCS", "Export Calcs");
 define("_formulize_DE_SAVE", "Save view");
 define("_formulize_DE_DELETE", "Delete view");
@@ -437,7 +444,7 @@ define("_formulize_DE_CALCSUB", "Add Calculation(s) to list");
 define("_formulize_DE_CALC_CALCS", "Calculations to perform on the column(s):");
 define("_formulize_DE_CALCGO", "Perform Requested Calculations");
 define("_formulize_DE_REQDCALCS", "Requested Calculations:");
-define("_formulize_DE_CALCALL", "Include blanks/zeros"); 
+define("_formulize_DE_CALCALL", "Include blanks/zeros");
 define("_formulize_DE_CALCNOBLANKS", "Exclude blanks/zeros");
 define("_formulize_DE_CALCONLYBLANKS", "Include only blanks/zeros");
 define("_formulize_DE_CALCJUSTNOBLANKS", "Exclude blanks");
@@ -494,23 +501,6 @@ define("_formulize_DE_PER_TOTALENTRIES", "entries");
 define("_formulize_DE_PER_RESPONSESPERENTRY", "response(s) / entry");
 define("_formulize_DE_DATAHEADING", "List of Entries");
 
-//ADVANCED SEARCH:
-define("_formulize_DE_BUILDQUERY", "Build your query");
-define("_formulize_DE_AS_DEPRECATED", "The \"Advanced Search\" feature is not recommended any more.  Searches you do here will not be reflected in any calculations.  Searches you do here are applied to each page of results after the page has been built, so some pages will have less than the normal number of entries.  Some pages may have no entries left after the search is done.  This can be very confusing.<br><br><a href=\"".XOOPS_URL."/modules/formulize/docs/search_help.xhtml\">Read about the many different kinds of searches you can do using the \"Quicksearch\" boxes at the top of each column.</a>");
-define("_formulize_DE_AS_FIELD", "To search this field(s):");
-define("_formulize_DE_AS_MULTI_AND", "use AND between multiple fields");
-define("_formulize_DE_AS_MULTI_OR", "use OR between multiple fields");
-define("_formulize_DE_AS_OPTERM", "Use this operator and term:");
-define("_formulize_DE_AS_ADD", "Add this search to the query");
-define("_formulize_DE_AS_ADDOTHER", "Other items you can add:");
-define("_formulize_DE_AS_REMOVE", "Remove last item from the query");
-define("_formulize_DE_ADVSEARCH", "Advanced search");
-define("_formulize_DE_ADVSEARCH_ERROR", "There was a \"parse error\" in the advanced search query you specified.  Most often, this is caused by not having an AND or an OR in between two search terms.  Another common cause is not having ( ) arranged correctly, or not having an equal number of opening and closing ones.");
-define("_formulize_DE_SEARCHGO", "Perform Requested Query");
-define("_formulize_DE_AS_QUERYSOFAR", "Requested Query So Far:");
-define("_formulize_DE_CANCELASEARCH", "Cancel this search");
-define("_formulize_DE_MOD_ADVSEARCH", "Modify search");
-
 //CHANGE SCOPE:
 define("_formulize_DE_ADVSCOPE", "Advanced scope");
 define("_formulize_DE_PICKASCOPE", "Choose the groups to use for the scope");
@@ -543,14 +533,24 @@ define("_formulize_DE_SAVE_SCOPE3_SELF", "Everyone in all groups (no limit)");
 define("_formulize_DE_SAVE_SCOPE4_SELF", "Everyone in: ");
 define("_formulize_DE_SAVE_NOSPECIFICS", "[no specific groups picked]");
 define("_formulize_DE_SAVE_PUBGROUPS", "Publish this view to these groups");
-define("_formulize_DE_SAVE_PUBFILTERS", "Use these elements as filters");
+define("_formulize_DE_SAVE_PUBFILTERS", "Make these elements available as filters");
 define("_formulize_DE_SAVE_PUBFILTERS_DESC", "Normally, the visible columns are available as filters/search boxes. If you are making a screen where you want alternative columns to be used, select them here.");
 define("_formulize_DE_SAVE_NOPUB", "[Do not publish this view]");
 define("_formulize_DE_SAVE_LOCKCONTROLS", "Lock the controls?");
 define("_formulize_DE_SAVE_LOCKCONTROLS_HELP1", "<span style=\"font-weight: bold;\">About locking the controls:</span>");
 define("_formulize_DE_SAVE_LOCKCONTROLS_HELP2", "<span style=\"font-weight: normal;\">Certain actions, such as advanced searches, calculations and changing columns, can reveal more information to the viewer than what is presented by default.  When the controls are locked, and this view is selected by viewers who don't otherwise have access to these entries, then all actions that can reveal more information are turned off.  Locking the controls has no effect on viewers who can normally view all the details by themselves.</span>");
+define("_formulize_DE_SAVE_USE_FEATURES", "Which features of the list should be saved?");
+define("_formulize_DE_SAVE_UF_SCOPE", "Scope (entries from which groups)");
+define("_formulize_DE_SAVE_UF_COLS", "Columns");
+define("_formulize_DE_SAVE_UF_SEARCHES", "Searches");
+define("_formulize_DE_SAVE_UF_SORT", "Sorting Order");
+define("_formulize_DE_SAVE_UF_CALCS", "Caclulations");
+define("_formulize_DE_SAVE_UF_EPP", "Entries per page");
 define("_formulize_DE_SAVE_BUTTON", "Save the current view settings with these options");
 define("_formulize_DE_SAVE_NEWPROMPT", "Please type a name for this view:");
+define("_formulize_DE_SAVE_SEARCHES_FUNDAMENTAL", "Should the user be able to alter the saved searches?");
+define("_formulize_DE_SAVE_SEARCHES_NOT_FUNDAMENTAL", "Yes. This is the normal behaviour.");
+define("_formulize_DE_SAVE_SEARCHES_ARE_FUNDAMENTAL", "No. Treat the searches like fundamental filters.");
 
 //IMPORT
 define("_formulize_DE_IMPORTDATA", "Import Entries");
@@ -602,7 +602,8 @@ define("_formulize_USERNAME_HELP3", " characters long)");
 define("_formulize_PASSWORD_HELP1", " characters long)");
 
 // "Other" for checkboxes and radio buttons:
-define("_formulize_OPT_OTHER", "Other: ");
+define("_formulize_OPT_OTHERWORD", "Other");
+define("_formulize_OPT_OTHER", _formulize_OPT_OTHERWORD.": ");
 
 // Notifications
 define("_formulize_DE_NOTBUTTON", "Notifications");
@@ -622,6 +623,7 @@ define("_formulize_DE_SETNOT_NOELEMENTOPTIONS", "No user lists in this form");
 define("_formulize_DE_SETNOT_WHO_LINKCREATOR", "the user who created the selected item(s) in this element: ");
 define("_formulize_DE_SETNOT_NOLINKCREATOROPTIONS", "No linked elements in this form");
 define("_formulize_DE_SETNOT_WHO_GROUP", "users in this group: ");
+define("_formulize_DE_SETNOT_WHO_ARBITRARY", "these email addresses: ");
 define("_formulize_DE_SETNOT_FOR", "Send this notification for:");
 define("_formulize_DE_SETNOT_FOR_ALL", "all entries");
 define("_formulize_DE_SETNOT_FOR_CON", "only entries that meet these conditions:");
@@ -637,9 +639,10 @@ define("_formulize_DE_NOT_CONTEXTIF", " only if ");
 define("_formluize_DE_NOT_CONTEXTAND", ", and ");
 define("_formulize_DE_NOT_TEMPTEXT", "Use this custom template file: ");
 define("_formulize_DE_NOT_SUBJTEXT", "Use this custom subject line: ");
+define("_formulize_DE_NOT_DIGEST_SUBJECT", "Notification Digest");
 
 // multi-page forms
-define("_formulize_DMULTI_THANKS", "<h1>You're done!</h1><p>Thanks for taking the time to fill in that form.  We really appreciate it.</p>");
+define("_formulize_DMULTI_THANKS", "<h1>You're done!</h1><p>Thanks for taking the time to fill in that form.  We really appreciate it.</p>{thankYouNav}");
 define("_formulize_DMULTI_NEXT", "Save and Continue");
 define("_formulize_DMULTI_PREV", "Save and Go Back");
 define("_formulize_DMULTI_SAVE", "Save and Finish");
@@ -660,6 +663,8 @@ define("_formulize_DE_IMPORT_STEP3", "Step 3: upload the modified file");
 define("_formulize_DE_IMPORT_FILE", "Select the file you modified and upload it.");
 define("_formulize_DE_IMPORT_GO", "Upload");
 define("_formulize_DE_IMPORT_VALIDATEDATA", "Automatically validate the structure and data in the .csv file before actually importing (highly recommended!)");
+define("_formulize_DE_IMPORT_UPDATEDERIVED", "Automatically updated derived values in the form");
+define("_formulize_DE_IMPORT_SENDNOTIFICATIONS", "Automatically send notifications to users based on the imported data");
 define("_formulize_DE_IMPORT_INSTRUCTIONS", "<p><b>Open the file you downloaded in a spreadsheet program, like Excel, and modify it</b> so it contains the data you want to upload.  You don't have to do this right now, you can modify the file and come back later to upload it.</p>
 
 <p>When you save the file, <b>make sure you save it in .csv format.</b>  If you save it in a different format, like .xls, then the import process won't work!</p>");
@@ -700,16 +705,16 @@ define("_AM_FORMULIZE_LOE_LASTPAGE", "Last >>");
 define("_AM_FORMULIZE_LOE_ONPAGE", "Page");
 define("_AM_FORMULIZE_LOE_PREVIOUS", "Previous");
 define("_AM_FORMULIZE_LOE_NEXT", "Next");
-define("_AM_FORMULIZE_LOE_TOTAL", "Total Entries: %d");
+define("_AM_FORMULIZE_LOE_TOTAL", "Showing entries %d to %d of %d");
 
 define("_formulize_DE_LOE_LIMIT_REACHED1", "There are");
 define("_formulize_DE_LOE_LIMIT_REACHED2", "entries in the list.  It would take a long time to retrieve them.  You can use search terms to limit the number of entries, or");
 define("_formulize_DE_LOE_LIMIT_REACHED3", "you can click here to have the system retrieve all the entries.");
-       
+
 define("_formulize_OUTOFRANGE_DATA","Keep this other value found in the database: ");
 
 define("_AM_FORMULIZE_PREVIOUS_OPTION", "Use a previous answer:");
-define("_formulize_VALUE_WILL_BE_CALCULATED_AFTER_SAVE","This value will be calculated after the data is saved");
+define("_formulize_VALUE_WILL_BE_CALCULATED_AFTER_SAVE","This will be determined after the form is saved");
 
 define("_formulize_QSF_DefaultText", "Any");
 define("_formulize_QDR_to", "to");
@@ -729,6 +734,7 @@ define("_formulize_GENERIC_FILTER_MATCH_ONEORMORE", "Match one or more of these:
 define("_formulize_REQUIRED_UNIQUE", "The value you entered for '%s' has been entered already.  You must type a unique value for that question.");
 
 define("_formulize_NO_MATCH_FOUND", "No match found");
+define("_formulize_NEW_VALUE", "New Value: ");
 
 define("_formulize_ENTRY_IS_LOCKED", "Some or all of the data on this page has been opened by '%s', therefore it is locked and you cannot make any changes to it.  Wait for the other person to save the data, or get a webmaster to save it (webmasters can override locks like this).");
 
@@ -737,19 +743,27 @@ define("_AM_UPLOAD", "Upload a file:");
 define("_AM_UPLOAD_DELETE", "  Delete this file");
 define("_AM_UPLOAD_DELETE_FAIL", "There was an error deleting the file, please reload the form and try again.");
 define("_AM_UPLOAD_DELETE_WARN", "Do you really want to delete this file?");
-define("_AM_UPLOAD_LOST", "Your file was uploaded, but could not be moved to a permanent location on the server.  Please try again.  If this happens again, please inform the webmaster about this error..");
+define("_AM_UPLOAD_LOST", "Your file was uploaded, but could not be moved to a permanent location on the server. Please try again. If this happens again, please inform the webmaster about this error.");
 define("_AM_UPLOAD_MOD", "Replace this with a new file:");
-define("_AM_UPLOAD_NOLOCATION", "Your file was uploaded, but the location where we need to save it on the server does not exist.  Please inform the webmaster about this error.");
+define("_AM_UPLOAD_NOLOCATION", "Your file was uploaded, but the location where we need to save it on the server does not exist. Please inform the webmaster about this error.");
 define("_AM_UPLOAD_ERROR_MIMETYPES", "The type of file you uploaded is not allowed for '");
-define("_AM_UPLOAD_ERR_INI_SIZE", "Your file is larger than the maximum size allowed by the webserver (in php.ini).");
+define("_AM_UPLOAD_ERR_INI_SIZE", "Your file is larger than the maximum size allowed by the web server.");
 define("_AM_UPLOAD_ERR_FORM_SIZE", "Your file is larger than the maximum size allowed for '");
 define("_AM_UPLOAD_ERR_PARTIAL", "The file was only partially uploaded.  Please try again.");
-define("_AM_UPLOAD_ERR_NO_TMP_DIR", "There is no temporary folder on the server to save your file in.  Please inform the webmaster about this error.");
-define("_AM_UPLOAD_ERR_CANT_WRITE", "Your file was uploaded, but could not be saved on the web server, maybe because the hard drive is full.  Please inform the webmaster about this error.");
+define("_AM_UPLOAD_ERR_NO_TMP_DIR", "There is no temporary folder on the server to save your file in. Please inform the webmaster about this error.");
+define("_AM_UPLOAD_ERR_CANT_WRITE", "Your file was uploaded, but could not be saved on the web server, maybe because the hard drive is full. Please inform the webmaster about this error.");
 define("_AM_UPLOAD_ERR_EXTENSION", "The web server rejected your file (a PHP extension stopped it from being uploaded).");
 /* End Upload element translation by François */
+
+define("_AM_GOOGLEFILE_SELECT", "Select");
+define("_AM_GOOGLEFILE_DELETE_WARN", "Are you sure you want to remove");
+define("_AM_GOOGLEFILE_REQUIRED", "You must select a file for");
+
 
 define("_formulize_CLOSE_FORM_ELEMENT", "You need to close the form element that is open first before you edit this one");
 
 define("_formulize_ENTRY_ID", "Entry ID");
+
+define("_formulize_FROM", "From:");
+define("_formulize_TO", "To:");
 

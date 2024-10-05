@@ -39,6 +39,7 @@ class Smarty_Compiler extends Smarty {
      * @access private
      */
     var $_folded_blocks         =   array();    // keeps folded template blocks
+    var $_folded_block_index    =   0;          // added for PHP 8 by Julian Egelstaff
     var $_current_file          =   null;       // the current template being compiled
     var $_current_line_no       =   1;          // line number for error messages
     var $_capture_stack         =   array();    // keeps track of nested capture buffers
@@ -239,6 +240,7 @@ class Smarty_Compiler extends Smarty {
         $this->_current_line_no = 1;
         $ldq = preg_quote($this->left_delimiter, '~');
         $rdq = preg_quote($this->right_delimiter, '~');
+        $this->_folded_block_index = 0; // added by Julian Egelstaff for PHP 8
 
         // run template source through prefilter functions
         if (count($this->_plugins['prefilter']) > 0) {
@@ -262,13 +264,13 @@ class Smarty_Compiler extends Smarty {
         reset($this->_folded_blocks);
 
         /* replace special blocks by "{php}" */
-        $source_content = preg_replace_callback($search, create_function ('$matches', "return '"
-                                       . $this->_quote_replace($this->left_delimiter) . 'php'
-                                       . "' . str_repeat(\"\n\", substr_count('\$matches[1]', \"\n\")) .'"
-                                       . $this->_quote_replace($this->right_delimiter)
-                                       . "';")
+        $source_content = preg_replace_callback($search, function($matches) { /*print '<pre>'; var_dump($matches); print '</pre>'; */
+                                                return 
+                                       $this->_quote_replace($this->left_delimiter) . 'php'
+                                       . str_repeat("\n", substr_count($matches[1], "\n"))
+                                       . $this->_quote_replace($this->right_delimiter); }
                                        , $source_content);
-
+        
         /* Gather all template tags. */
         preg_match_all("~{$ldq}\s*(.*?)\s*{$rdq}~s", $source_content, $_match);
         $template_tags = $_match[1];
@@ -307,11 +309,13 @@ class Smarty_Compiler extends Smarty {
         
         /* Compile the template tags into PHP code. */
         $compiled_tags = array();
-        for ($i = 0, $for_max = count($template_tags); $i < $for_max; $i++) {
+        //for ($i = 0, $for_max = count($template_tags); $i < $for_max; $i++) {
+        for ($i = 0; $i < count($template_tags); $i++) {
             $this->_current_line_no += substr_count($text_blocks[$i], "\n");
             $compiled_tags[] = $this->_compile_tag($template_tags[$i]);
             $this->_current_line_no += substr_count($template_tags[$i], "\n");
         }
+        
         if (count($this->_tag_stack)>0) {
             list($_open_tag, $_line_no) = end($this->_tag_stack);
             $this->_syntax_error("unclosed tag \{$_open_tag} (opened line $_line_no).", E_USER_ERROR, __FILE__, __LINE__);
@@ -348,10 +352,14 @@ class Smarty_Compiler extends Smarty {
                 }
             }
         }
+        
+        
         $compiled_content = '';
         
-        $tag_guard = '%%%SMARTYOTG' . md5(uniqid(rand(), true)) . '%%%';
         
+        
+        $tag_guard = '%%%SMARTYOTG' . md5(uniqid(rand(), true)) . '%%%';
+    
         /* Interleave the compiled contents and text blocks to get the final result. */
         for ($i = 0, $for_max = count($compiled_tags); $i < $for_max; $i++) {
             if ($compiled_tags[$i] == '') {
@@ -364,8 +372,10 @@ class Smarty_Compiler extends Smarty {
             
             $compiled_content .= $text_blocks[$i] . $compiled_tags[$i];
         }
+        
         $compiled_content .= str_replace('<?', $tag_guard, $text_blocks[$i]);
 
+        
         // escape php tags created by interleaving
         $compiled_content = str_replace('<?', "<?php echo '<?' ?>\n", $compiled_content);
         $compiled_content = preg_replace("~(?<!')language\s*=\s*[\"\']?\s*php\s*[\"\']?~", "<?php echo 'language=php' ?>\n", $compiled_content);
@@ -556,7 +566,9 @@ class Smarty_Compiler extends Smarty {
 
             case 'php':
                 /* handle folded tags replaced by {php} */
-                list(, $block) = each($this->_folded_blocks);
+                // changed from using key() to $this->_folded_block_index by Julian Egelstaff for PHP 8
+                $block = $this->_folded_blocks[$this->_folded_block_index];
+                $this->_folded_block_index = $this->_folded_block_index + 1;
                 $this->_current_line_no += substr_count($block[0], "\n");
                 /* the number of matched elements in the regexp in _compile_file()
                    determins the type of folded tag that was found */

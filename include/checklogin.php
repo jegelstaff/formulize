@@ -19,33 +19,28 @@ if (!defined('ICMS_ROOT_PATH')) {
 icms_loadLanguageFile('core', 'user');
 $uname = !isset($_POST['uname']) ? '' : trim($_POST['uname']);
 $pass = !isset($_POST['pass']) ? '' : trim($_POST['pass']);
-/**
- * Commented out for OpenID , we need to change it to make a better validation if OpenID is used
- */
-/*if ($uname == '' || $pass == '') {
- redirect_header(ICMS_URL.'/user.php', 1, _US_INCORRECTLOGIN);
- exit();
- }*/
+
 $member_handler = icms::handler('icms_member');
 
 icms_loadLanguageFile('core', 'auth');
 $icmsAuth =& icms_auth_Factory::getAuthConnection(icms_core_DataFilter::addSlashes($uname));
 
-// uname&email hack GIJ
-$uname4sql = addslashes(icms_core_DataFilter::stripSlashesGPC($uname));
-$pass4sql = addslashes(icms_core_DataFilter::stripSlashesGPC($pass));
-/*if (strstr( $uname , '@' )) {
- // check by email if uname includes '@'
- $criteria = new icms_db_criteria_Compo(new icms_db_criteria_Item('email', $uname4sql ));
- $criteria->add(new icms_db_criteria_Item('pass', $pass4sql));
- $user_handler = icms::handler('icms_member_user');
- $users =& $user_handler->getObjects($criteria, false);
- if (empty( $users ) || count( $users ) != 1 ) $user = false ;
- else $user = $users[0] ;
- unset( $users ) ;
- } */
 if (empty($user) || !is_object($user)) {
-	$user =& $icmsAuth->authenticate($uname4sql, $pass4sql);
+	$user =& $icmsAuth->authenticate($uname, $pass);
+	if($user) { // 2FA added by Julian Egelstaff March 5 2021
+		include_once XOOPS_ROOT_PATH.'/include/2fa/manage.php';
+		if($method = user2FAMethod($user) AND userRemembersDevice($user) == false) {
+            $uidToCheck = $user->getVar('uid');
+			if(validateCode($_POST['tfacode'], $uidToCheck) == false) {
+				unset($user);
+			} elseif($_POST['tfaremember']) {
+				rememberDevice($user);
+			}
+            global $xoopsDB;
+			$sql = 'DELETE FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($uidToCheck).' AND method != '.TFA_APP;
+			$xoopsDB->queryF($sql);
+		}
+	}
 }
 // end of uname&email hack GIJ
 
@@ -112,7 +107,7 @@ if (false != $user) {
 		$parsed = parse_url(ICMS_URL);
 		$url = isset($parsed['scheme']) ? $parsed['scheme'] . '://' : 'http://';
 		$url .= $_SERVER['HTTP_HOST'];
-		if (isset($parsed['port'])) {
+		if (!strstr(str_replace('://','',$url),':') AND isset($parsed['port'])) {
 			$url .= ':' . $parsed['port'];
 		}
 		if (@$parsed['path']) {
@@ -157,11 +152,12 @@ if (false != $user) {
 
 	redirect_header($url, 1, sprintf(_US_LOGGINGU, $user->getVar('uname')), false);
 } elseif (empty($_POST['xoops_redirect'])) {
-	redirect_header(ICMS_URL . '/user.php', 5, $icmsAuth->getHtmlErrors());
+	redirect_header(ICMS_URL, 5, _US_INCORRECTLOGIN);
 } else {
+    $xr = trim($_POST['xoops_redirect']);
+    $redirURL = ($xr AND $xr != '/') ? '/?xoops_redirect='.urlencode(trim($_POST['xoops_redirect'])) : '';
 	redirect_header(
-		ICMS_URL . '/user.php?xoops_redirect='
-		. urlencode(trim($_POST['xoops_redirect'])), 5, $icmsAuth->getHtmlErrors(), false
+		ICMS_URL . $redirURL, 5, _US_INCORRECTLOGIN, false
 	);
 }
 exit();

@@ -39,4 +39,3 @@ define('SDATA_DB_PREFIX', '');
 // This salt will be appended to passwords in the icms_encryptPass() function.
 // Do NOT change this once your site is Live, doing so will invalidate everyones Password.
 define('SDATA_DB_SALT', '');
-?>

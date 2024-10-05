@@ -73,12 +73,14 @@ if ($_GET['ele_id'] != "new") {
     if (!$defaultOrder) {
         $firstElementOrder = " selected";
     }
+    $defaultSort = $elementObject->getVar('ele_sort');
     $colhead = $elementObject->getVar('ele_colhead');
     $caption = $elementObject->getVar('ele_caption', "f"); // the f causes no stupid reformatting by the ICMS core to take place, like making clickable links, etc
     $ele_type = $elementObject->getVar('ele_type');
     $ele_value = $elementObject->getVar('ele_value');
     $ele_use_default_when_blank = intval($elementObject->getVar('ele_use_default_when_blank'));
     $ele_delim = $elementObject->getVar('ele_delim');
+		$ele_delim_custom_value = '';
     if ($ele_delim != "br" AND $ele_delim != "space" AND $ele_delim != "") {
         $ele_delim_custom_value = $ele_delim;
         $ele_delim = "custom";
@@ -98,25 +100,38 @@ if ($_GET['ele_id'] != "new") {
         foreach(explode(",",trim($ele_display,",")) as $displayGroup) {
             $display['ele_display'][$displayGroup] = " selected";
         }
+				$display['ele_display']['all'] = "";
+				$display['ele_display']['none'] = "";
     } elseif ($ele_display == 1) {
         $display['ele_display']['all'] = " selected";
+				$display['ele_display']['none'] = "";
     } elseif ($ele_display == 0) {
         $display['ele_display']['none'] = " selected";
+				$display['ele_display']['all'] = "";
     }
     $ele_disabled = $elementObject->getVar('ele_disabled');
     if (strstr($ele_disabled,",")) {
         foreach(explode(",",trim($ele_disabled,",")) as $displayGroup) {
             $display['ele_disabled'][$displayGroup] = " selected";
         }
+				$display['ele_disabled']['all'] = "";
+				$display['ele_disabled']['none'] = "";
     } elseif ($ele_disabled == 1) {
         $display['ele_disabled']['all'] = " selected";
+				$display['ele_disabled']['none'] = "";
     } elseif ($ele_disabled == 0) {
         $display['ele_disabled']['none'] = " selected";
+				$display['ele_disabled']['all'] = "";
     }
 
     $ele_filtersettings = $elementObject->getVar('ele_filtersettings');
-    $filterSettingsToSend = count($ele_filtersettings > 0) ? $ele_filtersettings : "";
+    $filterSettingsToSend = (count((array) $ele_filtersettings) > 0) ? $ele_filtersettings : "";
     $display['filtersettings'] = formulize_createFilterUI($filterSettingsToSend, "elementfilter", $fid, "form-3");
+
+    $ele_disabledconditions = $elementObject->getVar('ele_disabledconditions');
+    $disabledConditionsToSend = (count((array) $ele_disabledconditions) > 0) ? $ele_disabledconditions : "";
+    $display['disabledconditions'] = formulize_createFilterUI($ele_disabledconditions, "disabledconditions", $fid, "form-3");
+
     $display['ele_forcehidden'] = $elementObject->getVar('ele_forcehidden') ? " checked" : "";
     $display['ele_private'] = $elementObject->getVar('ele_private') ? " checked" : "";
     $ele_encrypt = $elementObject->getVar('ele_encrypt');
@@ -132,62 +147,23 @@ if ($_GET['ele_id'] != "new") {
         $advanced['ele_index_show'] = true;
         $advanced['original_handle'] = $elementObject->getVar('ele_handle');
     }
-
-    if ($type == "text") { // set values for text number options, in case they haven't been set yet for this element
-        if (!isset($ele_value[5])) {
-            $ele_value[5] = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0;
-        }
-        if (!isset($ele_value[6])) {
-            $ele_value[6] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
-        }
-        if (!isset($ele_value[10])) {
-            $ele_value[10] = isset($formulizeConfig['number_suffix']) ? $formulizeConfig['number_suffix'] : '';
-        }
-        if (!isset($ele_value[7])) {
-            $ele_value[7] = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
-        }
-        if (!isset($ele_value[8])) {
-            $ele_value[8] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
-        }
-    }
-    if ($type=="derived") {
-        if (!isset($ele_value[1])) {
-            $ele_value[1] = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0;
-        }
-        if (!isset($ele_value[2])) {
-            $ele_value[2] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
-        }
-        if (!isset($ele_value[3])) {
-            $ele_value[3] = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
-        }
-        if (!isset($ele_value[4])) {
-            $ele_value[4] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
-        }
-    }
-
     $ele_uitext = $elementObject->getVar('ele_uitext');
+    $ele_uitextshow = $elementObject->getVar('ele_uitextshow');
 } else {
     $fid = intval($_GET['fid']);
     $elementName = "New element";
     $defaultOrder = "bottom";
+    $defaultSort = "";
     $elementObject = false;
     $names['ele_caption'] = $elementName;
     $ele_type = $_GET['type'];
     $ele_value = array();
     $ele_delim = "br";
     $ele_uitext = "";
+    $ele_uitextshow = 0;
     $ele_use_default_when_blank = 0;
     global $xoopsModuleConfig;
     switch($ele_type) {
-        case("text"):
-            $ele_value[0] = $xoopsModuleConfig['t_width'];
-            $ele_value[1] = $xoopsModuleConfig['t_max'];
-            $ele_value[3] = 0;
-            $ele_value[5] = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0;
-            $ele_value[6] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
-            $ele_value[7] = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
-            $ele_value[8] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
-            break;
         case("textarea"):
             $ele_value[1] = $xoopsModuleConfig['ta_rows'];
             $ele_value[2] = $xoopsModuleConfig['ta_cols'];
@@ -197,11 +173,15 @@ if ($_GET['ele_id'] != "new") {
             $ele_value[2] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
             $ele_value[3] = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
             $ele_value[4] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
+						$ele_value[0] = "<?php\n";
             break;
         case "subform":
-            $ele_value[2] = 1;
+            $ele_value[2] = 0;
             $ele_value[3] = 1;
-        $ele_value['simple_add_one_button'] = 1;
+						$ele_value[6] = 'subform';
+            $ele_value['simple_add_one_button'] = 1;
+            $ele_value['show_delete_button'] = 1;
+            $ele_value['show_clone_button'] = 1;
             break;
         case "grid":
             $ele_value[3] = "horizontal";
@@ -239,6 +219,7 @@ $formName = printSmart($formObject->getVar('title'), 30);
 $formHandle=printSmart($formObject->getVar('form_handle'), 30);
 
 // package up the elements into a list for ordering purposes
+// also, the sort options
 $orderOptions = array();
 $ele_colheads = $formObject->getVar('elementColheads');
 $ele_captions = $formObject->getVar('elementCaptions');
@@ -246,11 +227,14 @@ foreach($formObject->getVar('elements') as $elementId) {
     $elementTextToDisplay = $ele_colheads[$elementId] ? printSmart($ele_colheads[$elementId]) : printSmart($ele_captions[$elementId]);
     if ($ele_id != $elementId) {
         $orderOptions[$elementId] = "After: ".$elementTextToDisplay;
+        $sortOptions[$elementId] = "Sort by value of: ".$elementTextToDisplay;
     }
 }
 $names['orderoptions'] = $orderOptions;
 $names['defaultorder'] = $defaultOrder;
 $names['firstelementorder'] = $firstElementOrder;
+$names['sortoptions'] = $sortOptions;
+$names['defaultsort'] = $defaultSort;
 
 // common values should be assigned to all tabs
 $common['name'] = '';
@@ -265,28 +249,19 @@ $options = array();
 $options['ele_delim'] = $ele_delim;
 $options['ele_delim_custom_value'] = $ele_delim_custom_value;
 $options['ele_uitext'] = $ele_uitext;
+$options['ele_uitextshow'] = $ele_uitextshow;
 $options['typetemplate'] = "db:admin/element_type_".$ele_type.".html";
 
 // setup various special things per element, including ele_value
-if ($ele_type=='text') {
-    $formlink = createFieldList($ele_value[4], true);
-    $options['formlink'] = $formlink->render();
-} else if ($ele_type=='textarea') {
+if ($ele_type=='textarea') {
     $formlink = createFieldList($ele_value[3], true);
     $options['formlink'] = $formlink->render();
 } else if ($ele_type=='derived') {
-    $derivedOptions = array();
-    $allColList = getAllColList($fid);
-    foreach($allColList[$fid] as $thisCol) {
-        if ($thisCol['ele_colhead'] != "") {
-            $derivedOptions[trans($thisCol['ele_colhead'])] = printSmart(trans($thisCol['ele_colhead']));
-        } else {
-            $derivedOptions[trans(strip_tags($thisCol['ele_caption']))] = printSmart(trans(strip_tags($thisCol['ele_caption'])));
-        }
-    }
-    $listOfElements = new XoopsFormSelect("", 'listofelementsoptions');
-    $listOfElements->addOptionArray($derivedOptions);
-    $options['listofelementsoptions'] = $listOfElements->render();
+
+		$form_id = $fid;
+		$selectedFramework = 0;
+		include XOOPS_ROOT_PATH.'/modules/formulize/admin/generateTemplateElementHandleHelp.php';
+		$options['variabletemplatehelp'] = $listTemplateHelp;
 
     //new relationship dropdown
     $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
@@ -308,7 +283,23 @@ if ($ele_type=='text') {
     $options['ele_value_yes'] = $ele_value['_YES'];
     $options['ele_value_no'] = $ele_value['_NO'];
 } elseif ($ele_type == "subform") {
+
+    if(!isset($ele_value['show_delete_button'])) {
+        $ele_value['show_delete_button'] = 1;
+    }
+    if(!isset($ele_value['show_clone_button'])) {
+        $ele_value['show_clone_button'] = 1;
+    }
+    if(!isset($ele_value['FilterByElementStartState'])) {
+        $ele_value['FilterByElementStartState'] = 0;
+    }
+
+    $ele_value['enforceFilterChanges'] = isset($ele_value['enforceFilterChanges']) ? $ele_value['enforceFilterChanges'] : 1;
+
     $ele_value[1] = explode(",",$ele_value[1]);
+    if (is_string($ele_value['disabledelements'])) {
+        $ele_value['disabledelements'] = explode(",",$ele_value['disabledelements']);
+    }
     global $xoopsDB;
     $validForms1 = q("SELECT t1.fl_form1_id, t2.desc_form FROM " . $xoopsDB->prefix("formulize_framework_links") . " AS t1, " . $xoopsDB->prefix("formulize_id") . " AS t2 WHERE t1.fl_form2_id=" . intval($fid) . " AND t1.fl_unified_display=1 AND t1.fl_relationship != 1 AND t1.fl_form1_id=t2.id_form");
     $validForms2 = q("SELECT t1.fl_form2_id, t2.desc_form FROM " . $xoopsDB->prefix("formulize_framework_links") . " AS t1, " . $xoopsDB->prefix("formulize_id") . " AS t2 WHERE t1.fl_form1_id=" . intval($fid) . " AND t1.fl_unified_display=1 AND t1.fl_relationship != 1 AND t1.fl_form2_id=t2.id_form");
@@ -329,17 +320,17 @@ if ($ele_type=='text') {
             }
         }
     }
-    if (count($validForms) == 0) {
+    if (count((array) $validForms) == 0) {
         $validForms['none'] = _AM_ELE_SUBFORM_NONE;
     }
     $options['subforms'] = $validForms;
     if ($caughtfirst) {
         $formtouse = $ele_value[0] ? $ele_value[0] : $firstform; // use the user's selection, unless there isn't one, then use the first form found
-        $elementsq = q("SELECT ele_caption, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=" . intval($formtouse) . " AND ele_type != \"areamodif\" AND ele_type != \"grid\" AND ele_type != \"ib\" AND ele_type != \"subform\" ORDER BY ele_order");
+        $elementsq = q("SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=" . intval($formtouse) . " AND ele_type != \"grid\" AND ele_type != \"ib\" AND ele_type != \"subform\" ORDER BY ele_order");
         $options['subformUserFilterElements'][0] = _formulize_NONE;
         foreach($elementsq as $oneele) {
-            $options['subformelements'][$oneele['ele_id']] = printSmart($oneele['ele_caption']);
-            $options['subformUserFilterElements'][$oneele['ele_id']] = printSmart($oneele['ele_caption']);
+            $options['subformelements'][$oneele['ele_id']] = $oneele['ele_colhead'] ? $oneele['ele_colhead'] : printSmart($oneele['ele_caption']);
+            $options['subformUserFilterElements'][$oneele['ele_id']] = $oneele['ele_colhead'] ? $oneele['ele_colhead'] : printSmart($oneele['ele_caption']);
         }
     } else {
         $options['subformelements'][0] = "";
@@ -348,10 +339,10 @@ if ($ele_type=='text') {
 
     // compile a list of data-entry screens for this form
     $options['subform_screens'] = array();
-    $screen_options = q("SELECT sid, title FROM ".$xoopsDB->prefix("formulize_screen")." WHERE fid=".intval($formtouse)." and type='form'");
+    $screen_options = q("SELECT sid, title, type FROM ".$xoopsDB->prefix("formulize_screen")." WHERE fid=".intval($formtouse)." and (type='form' OR type='multiPage')");
     $options['subform_screens'][0] = "(Use Default Screen)";
     foreach($screen_options as $screen_option) {
-            $options['subform_screens'][$screen_option["sid"]] = $screen_option["title"];
+        $options['subform_screens'][$screen_option["sid"]] = $screen_option["title"];
     }
 
     // setup the UI for the subform conditions filter
@@ -360,7 +351,7 @@ if ($ele_type=='text') {
     $options['background'] = $ele_value[3];
     $options['heading'] = $ele_value[0];
     $options['sideortop'] = $ele_value[5] == 1 ? "side" : "above";
-    $grid_elements_criteria = new Criteria();
+    $grid_elements_criteria = new Criteria('');
     $grid_elements_criteria->setSort('ele_order');
     $grid_elements_criteria->setOrder('ASC');
     $grid_elements = $element_handler->getObjects($grid_elements_criteria, $fid);
@@ -371,12 +362,17 @@ if ($ele_type=='text') {
 
 } elseif ($ele_type=="radio") {
     $ele_value = formulize_mergeUIText($ele_value, $ele_uitext);
-    $options['useroptions'] = $ele_value;
+    $newEleValueForRadios = array();
+    foreach($ele_value as $k=>$v) {
+        $newEleValueForRadios[str_replace('&', '&amp;', $k)] = $v;
+    }
+    $options['useroptions'] = $newEleValueForRadios;
 
 } elseif ($ele_type=="select") {
     if ($ele_id == "new") {
         $options['listordd'] = 0;
         $options['multiple'] = 0;
+        $options['multiple_auto'] = 0;
         $ele_value[0] = 6;
         $options['islinked'] = 0;
         $options['formlink_scope'] = array(0=>'all');
@@ -384,11 +380,12 @@ if ($ele_type=='text') {
         $options['listordd'] = $ele_value[0] == 1 ? 0 : 1;
         $options['listordd'] = $ele_value[8] == 1 ? 2 : $options['listordd'];
         $options['multiple'] = $ele_value[1];
+        $options['multiple_auto'] = $ele_value[1];
         if (!is_array($ele_value[2])) {
             $options['islinked'] = 1;
         } else {
             $options['islinked'] = 0;
-            if (is_array($ele_uitext) AND count($ele_uitext) > 0) {
+            if (is_array($ele_uitext) AND count((array) $ele_uitext) > 0) {
                 $ele_value[2] = formulize_mergeUIText($ele_value[2], $ele_uitext);
             }
             $options['useroptions'] = $ele_value[2];
@@ -400,24 +397,37 @@ if ($ele_type=='text') {
     list($formlink, $selectedLinkElementId) = createFieldList($ele_value[2]);
     $options['linkedoptions'] = $formlink->render();
 
+    list($optionsLimitByElement, $limitByElementElementId) = createFieldList($ele_value['optionsLimitByElement'], false, false, "elements-ele_value[optionsLimitByElement]", _NONE);
+    $options['optionsLimitByElement'] = $optionsLimitByElement->render();
+    if($limitByElementElementId) {
+        $limitByElementElementObject = $element_handler->get($limitByElementElementId);
+        if($limitByElementElementObject) {
+            $options['optionsLimitByElementFilter'] = formulize_createFilterUI($ele_value['optionsLimitByElementFilter'], "optionsLimitByElementFilter", $limitByElementElementObject->getVar('id_form'), "form-2");
+        }
+    }
+
+
     // setup the list value and export value option lists, and the default sort order list, and the list of possible default values
     if ($options['islinked']) {
         $linkedMetaDataParts = explode("#*=:*", $ele_value[2]);
         $linkedSourceFid = $linkedMetaDataParts[0];
         if ($linkedSourceFid) {
             // list of elements to display when showing this element in a list
+						$ele_value[EV_MULTIPLE_LIST_COLUMNS] = isset($ele_value[EV_MULTIPLE_LIST_COLUMNS]) ? $ele_value[EV_MULTIPLE_LIST_COLUMNS] : 'none';
             list($listValue, $selectedListValue) = createFieldList($ele_value[EV_MULTIPLE_LIST_COLUMNS], false, $linkedSourceFid,
                 "elements-ele_value[".EV_MULTIPLE_LIST_COLUMNS."]", _AM_ELE_LINKSELECTEDABOVE, true);
             $listValue->setValue($ele_value[EV_MULTIPLE_LIST_COLUMNS]); // mark the current selections in the form element
             $options['listValue'] = $listValue->render();
 
             // list of elements to display when showing this element as an html form element (in form or list screens)
+						$ele_value[EV_MULTIPLE_FORM_COLUMNS] = isset($ele_value[EV_MULTIPLE_FORM_COLUMNS]) ? $ele_value[EV_MULTIPLE_FORM_COLUMNS] : 'none';
             list($displayElements, $selectedListValue) = createFieldList($ele_value[EV_MULTIPLE_FORM_COLUMNS], false, $linkedSourceFid,
                 "elements-ele_value[".EV_MULTIPLE_FORM_COLUMNS."]", _AM_ELE_LINKSELECTEDABOVE, true);
             $displayElements->setValue($ele_value[EV_MULTIPLE_FORM_COLUMNS]); // mark the current selections in the form element
             $options['displayElements'] = $displayElements->render();
 
             // list of elements to export to spreadsheet
+						$ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS] = isset($ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS]) ? $ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS] : 'none';
             list($exportValue, $selectedExportValue) = createFieldList($ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS], false, $linkedSourceFid,
                 "elements-ele_value[".EV_MULTIPLE_SPREADSHEET_COLUMNS."]", _AM_ELE_VALUEINLIST, true);
             $exportValue->setValue($ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS]); // mark the current selections in the form element
@@ -430,11 +440,21 @@ if ($ele_type=='text') {
             include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
             $linkedDataHandler = new formulizeDataHandler($linkedSourceFid);
             $allLinkedValues = $linkedDataHandler->findAllValuesForField($linkedMetaDataParts[1], "ASC");
-            if (!is_array($ele_value[13])) {
-                $ele_value[13] = array($ele_value[13]);
+            if (!isset($ele_value[13])) {
+							$ele_value[13] = array();
+						} elseif(!is_array($ele_value[13])) {
+              $ele_value[13] = array($ele_value[13]);
             }
             $options['optionDefaultSelectionDefaults'] = $ele_value[13];
             $options['optionDefaultSelection'] = $allLinkedValues; // array with keys as entry ids and values as text
+
+            // handle additional linked source mapping options...
+            list($thisFormFieldList, $thisFormFieldListSelected) = createFieldList('throwawayvalue', false, $fid, 'throwawayname', 'This Form');
+            $options['mappingthisformoptions'] = $thisFormFieldList->getOptions();
+            list($sourceFormFieldList, $sourceFormFieldListSelected) = createFieldList('throwawayvalue', false, $linkedSourceFid, 'throwawayname', 'Source Form');
+            $options['mappingsourceformoptions'] = $sourceFormFieldList->getOptions();
+            $options['linkedSourceMappings'] = $ele_value['linkedSourceMappings'];
+
         }
     }
     if (!$options['islinked'] OR !$linkedSourceFid) {
@@ -472,7 +492,23 @@ if ($ele_type=='text') {
     $options['ib_style_options']['head'] = "head";
     $options['ib_style_options']['form-heading'] = "form-heading";
 }
+
+
+if(!isset($ele_value['snapshot'])) {
+    $ele_value['snapshot'] = 0;
+}
+
 $options['ele_value'] = $ele_value;
+
+if($elementObject->hasMultipleOptions AND !$elementObject->isLinked) {
+    $advanced['hasMultipleOptions'] = true;
+    $exportOptions = $elementObject->getVar('ele_exportoptions');
+    $advanced['exportoptions_onoff'] = (is_array($exportOptions) AND count((array) $exportOptions) > 0) ? 1 : 0;
+    $advanced['exportoptions_hasvalue'] = $exportOptions['indicators']['hasValue'];
+    $advanced['exportoptions_doesnothavevalue'] = $exportOptions['indicators']['doesNotHaveValue'];
+} else {
+    $advanced['exportoptions_onoff'] = 0;
+}
 
 // if this is a custom element, then get any additional values that we need to send to the template
 $customValues = array();
@@ -492,7 +528,7 @@ $adminPage['tabs'][$tabindex]['content'] = $names+$common;
 if ($ele_type!='colorpick') {
     $adminPage['tabs'][++$tabindex]['name'] = "Options";
     $adminPage['tabs'][$tabindex]['template'] = "db:admin/element_options.html";
-    if (count($customValues)>0) {
+    if (count((array) $customValues)>0) {
     $adminPage['tabs'][$tabindex]['content'] = $customValues + $options + $common;
     } else {
     $adminPage['tabs'][$tabindex]['content'] = $options + $common;
@@ -504,7 +540,7 @@ $adminPage['tabs'][$tabindex]['template'] = "db:admin/element_display.html";
 $adminPage['tabs'][$tabindex]['content'] = $display + $common;
 $formScreenHandler = xoops_getmodulehandler('formScreen', 'formulize');
 $adminPage['tabs'][$tabindex]['content']['form_screens'] = $formScreenHandler->getScreensForElement($common['fid']);
-$adminPage['tabs'][$tabindex]['content']['multi_form_screens'] = $formScreenHandler->getMultiScreens($common['fid']);
+$adminPage['tabs'][$tabindex]['content']['multi_form_screens'] = $form_handler->getMultiScreens($common['fid']);
 // for new elements, pre-select all of the "filled up" screens
 if ($ele_id == "new") {
     $adminPage['tabs'][$tabindex]['content']['ele_form_screens'] = $formScreenHandler->getSelectedScreensForNewElement();
@@ -550,7 +586,7 @@ function createDataTypeUI($ele_type, $element,$id_form,$ele_encrypt) {
         $customTypeNeedsUI = $customTypeObject->needsDataType;
     }
 
-    if (($ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "select" OR $ele_type == "radio" OR $ele_type == "checkbox" OR $ele_type == "derived" OR $customTypeNeedsUI) AND !$ele_encrypt) {
+    if (($ele_type == "textarea" OR $ele_type == "select" OR $ele_type == "radio" OR $ele_type == "derived" OR $customTypeNeedsUI) AND !$ele_encrypt) {
         if ($element) {
             $defaultTypeInformation = $element->getDataTypeInformation();
             $defaultType = $defaultTypeInformation['dataType'];
@@ -586,7 +622,11 @@ function createDataTypeUI($ele_type, $element,$id_form,$ele_encrypt) {
         $charTypeSize = new XoopsFormText('', 'element_datatype_charsize', 3, 3, $charTypeSizeDefault);
         $charTypeSize->setExtra(" style=\"width: 3em;\" ");
         $charType->addOption('char', _AM_FORM_DATATYPE_CHAR1.$charTypeSize->render()._AM_FORM_DATATYPE_CHAR2);
-        if ($defaultType != "text" AND $defaultType != "int" AND $defaultType != "decimal" AND $defaultType != "varchar" AND $defaultType != "char") {
+        $dateType = new XoopsFormRadio('', 'element_datatype', $defaultType);
+        $dateType->addOption('date', _AM_FORM_DATATYPE_DATE);
+        $dateTimeType = new XoopsFormRadio('', 'element_datatype', $defaultType);
+        $dateTimeType->addOption('datetime', _AM_FORM_DATATYPE_DATETIME);
+        if ($defaultType != "text" AND $defaultType != "int" AND $defaultType != "decimal" AND $defaultType != "varchar" AND $defaultType != "char" AND $defaultType != "date") {
             $otherType = new XoopsFormRadio('', 'element_datatype', $defaultType);
             $otherType->addOption($defaultType, _AM_FORM_DATATYPE_OTHER.$defaultType);
             $dataTypeTray->addElement($otherType);
@@ -596,6 +636,8 @@ function createDataTypeUI($ele_type, $element,$id_form,$ele_encrypt) {
         $dataTypeTray->addElement($decimalType);
         $dataTypeTray->addElement($varcharType);
         $dataTypeTray->addElement($charType);
+        $dataTypeTray->addElement($dateType);
+        $dataTypeTray->addElement($dateTimeType);
         $renderedUI .= $dataTypeTray->render();
     }
     return $renderedUI;
@@ -607,7 +649,7 @@ function formulize_mergeUIText($values, $uitext) {
         // don't alter linked selectbox properties
         return $values;
     }
-    
+
     if (is_array($values)) {
         $newvalues = array();
         foreach($values as $key=>$value) {
@@ -631,7 +673,7 @@ function has_index($element,$id_form) {
     $formObject = $form_handler->get($id_form);
 
     //Complex check if
-    $elementDataSQL = "SELECT stats.index_name FROM information_schema.statistics AS stats INNER JOIN (SELECT count( 1 ) AS amountCols, index_name FROM information_schema.statistics WHERE table_name = '".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."' GROUP BY index_name) AS amount ON amount.index_name = stats.index_name WHERE stats.table_name = '".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."' AND stats.column_name = '".$element->getVar('ele_handle')."' AND amount.amountCols =1";
+    $elementDataSQL = "SELECT stats.index_name FROM information_schema.statistics AS stats INNER JOIN (SELECT count( 1 ) AS amountCols, index_name FROM information_schema.statistics WHERE table_schema = '".SDATA_DB_NAME."' AND table_name = '".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."' GROUP BY index_name) AS amount ON amount.index_name = stats.index_name WHERE stats.table_name = '".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."' AND stats.column_name = '".$element->getVar('ele_handle')."' AND amount.amountCols =1";
 
     // Simple sql with no check that it is not a multi column index
     //$elementDataSQL = "SHOW  INDEX  FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." WHERE Column_Name = '".$element->getVar('ele_handle')."'";

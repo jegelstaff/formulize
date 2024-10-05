@@ -14,7 +14,7 @@
 		});
 		$("#accordion-<{$number}>").accordion({
 			autoHeight: false, // no fixed height for sections
-			collapsible: true, // sections can be collapsed 
+			collapsible: true, // sections can be collapsed
 			active: <{$accordion_active}>,
 			header: "> div > h3"
 		}).sortable({
@@ -24,7 +24,9 @@
 				stop = true;
 			}
 		});
-		$("#accordion-<{$number}>").accordion("activate" , 0);
+		<{if !$closeAccordion}>
+		$("#accordion-<{$number}>").accordion("activate" , <{if $openAccordionOrdinal}><{$openAccordionOrdinal}><{else}>0<{/if}>);
+		<{/if}>
 	});
 
 </script>
@@ -34,11 +36,9 @@
 	<div id="drawer-<{$number}>-<{$sectionNumber}>">
         <h3><a href="#"><span class="accordion-name"><{$section.name}></span></a></h3>
 		<div class="accordion-content content">
-
 			<{if $section.header}>
 			<div style="position: absolute; top: 10px; right: 10px;">
 				<{$section.header}>
-				<!-- call to create the sidebars... -->
 			</div>
 			<{/if}>
 			<{include file=$sectionTemplate sectionContent=$section.content}>
@@ -46,7 +46,6 @@
 			<{if $sidebars == true}>
 			<{include file="db:admin/home_sections2_sidebars.html"}>
 			<{/if}>
-
 		</div>
 	</div>
 	<{/foreach}>

@@ -69,15 +69,15 @@ $(document).ready(function() {
             lastChecked = this;
             return;
         }
-    
+
         if(e.shiftKey) {
             var start = $chkboxes.index(this);
             var end = $chkboxes.index(lastChecked);
-    
+
             $chkboxes.slice(Math.min(start,end), Math.max(start,end)+ 1).prop('checked', lastChecked.checked);
-    
+
         }
-    
+
         lastChecked = this;
     });
 });
@@ -141,17 +141,22 @@ changeColJavascript();
 
 print "</head>";
 print "<body style=\"background: white; margin-top:20px;\"><center>";
-print "<table style=\"width: 100%;\"><tr><td style=\"width: 5%;\"></td><td style=\"width: 90%;\">";
+print "<table style=\"width: 100%;\" role=\"presentation\"><tr><td style=\"width: 5%;\"></td><td style=\"width: 90%;\">";
 print "<form name=newcolform action=\"" . XOOPS_URL . "\" method=post>\n";
 
-print "<table class=outer><tr><th colspan=2>" . _formulize_DE_PICKNEWCOLS . "</th></tr>";
-print "<tr><td class=head>" . _formulize_DE_AVAILCOLS . "</td><td class=even>";
+print "<table class='outer popup' role='presentation'><tr><th colspan=2>" . _formulize_DE_PICKNEWCOLS . "</th></tr>";
+print "<tr><td class=head><br>
+<input type=button name=newcolbutton value=\"" . _formulize_DE_CHANGECOLS . "\" onclick=\"javascript:updateCols(this.form);\"></input>
+<br><br><hr><br>
+<input type='button' name='clearall' style='cursor: pointer;' value='". _formulize_DE_CLEAR_ALL."'
+onclick=\"var boxes = document.getElementsByClassName('colbox');for(var i=0;i<boxes.length;i++){boxes[i].checked = false;}\" />
+<br><br>
+<input type='reset' name='reset' style='cursor: pointer;' value='". _formulize_DE_RESET_COLS."' /></td><td class=even style='width: 75%;'>";
 
-print generateTidyElementList($cols, $selectedCols);
+print generateTidyElementList($fid, $cols, $selectedCols);
 
 print "</td></tr>\n";
 
-print "<tr><td class=head></td><td class=even><input type=button name=newcolbutton value=\"" . _formulize_DE_CHANGECOLS . "\" onclick=\"javascript:updateCols(this.form);\"></input></td></tr>\n";
 print "</table>\n</form>";
 print "</td><td style=\"width: 5%;\"></td></tr></table>\n";
 print "</center></body>\n";

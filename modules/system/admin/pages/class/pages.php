@@ -59,7 +59,7 @@ class SystemPages extends icms_data_page_Object {
 	 * Retrieve title of the symlink
 	 * @return	string
 	 */
-	public function getAdminViewItemLink() {
+	public function getAdminViewItemLink($onlyUrl=false) {
 		$rtn = $this->getVar('page_title');
 		return $rtn;
 	}
@@ -68,7 +68,7 @@ class SystemPages extends icms_data_page_Object {
 	 * Build a link to the page represented by the symlink, if available
 	 * @return	string
 	 */
-	public function getViewItemLink() {
+	public function getViewItemLink($onlyUrl=false, $withimage=true, $userSide=false) {
 		$url = (substr($this->getVar('page_url', 'e'), 0, 7) == 'http://')
 			? $this->getVar('page_url', 'e')
 			: ICMS_URL . '/' . $this->getVar('page_url', 'e');
@@ -113,7 +113,7 @@ class SystemPagesHandler extends icms_data_page_Handler {
 	 * @return	array
 	 */
 	public function getModulesArray($full = FALSE) {
-		if (!count($this->modules_name)) {
+		if (!count((array) $this->modules_name)) {
 			$icms_module_handler = icms::handler('icms_module');
 			$installed_modules =& $icms_module_handler->getObjects();
 			foreach ($installed_modules as $module) {

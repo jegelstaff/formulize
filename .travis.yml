@@ -11,7 +11,7 @@ sudo: required
 dist: trusty
 
 php:
-    - 7.0
+    - 7.4
 
 addons:
   sauce_connect: true
@@ -30,7 +30,7 @@ before_install:
   - sudo add-apt-repository -y ppa:ondrej/php
   # Install PHP 7.0
   - sudo apt-get update
-  - sudo apt-get install -y --force-yes php7.0-mysql php7.0 libapache2-mod-php7.0 php7.0-fpm php7.0-gd php7.0-xml
+  - sudo apt-get install -y --force-yes php7.4-mysql php7.4 libapache2-mod-php7.4 php7.4-fpm php7.4-gd php7.4-xml
   # Copy our virtual host template to sites-enabled overwriting the default site conf
   - sudo cp ci/travis/defaultsite.tpl /etc/apache2/sites-available/000-default.conf
   # Enable mod rewrite module
@@ -42,7 +42,7 @@ before_install:
   # Restart apache
   - sudo service apache2 restart
   # Restart PHP
-  - sudo service php7.0-fpm restart
+  - sudo service php7.4-fpm restart
   # copy Formulize to the web root
   - cd ..
   - sudo cp -R formulize/* /var/www 

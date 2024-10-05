@@ -216,4 +216,3 @@ if(!$advanced_calculation_handler->insert($advCalcObject)) {
 if($op == "addfltr_grp" OR $op=="delfltr_grp" OR $op=="clonefltr_grp" OR $_POST['reload_advance_calculation_fltr_grps'] OR $has_blank_options) {
 	print "/* eval */ reloadWithScrollPosition();";
 }
-?>

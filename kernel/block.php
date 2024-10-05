@@ -1,7 +1,7 @@
 <?php
 defined('ICMS_ROOT_PATH') or die('ImpressCMS root path not defined');
 /**
- * @deprecated	Use icms_view_block_Object, instead
+ * deprecated	Use icms_view_block_Object, instead
  * @todo		Remove in version 1.4
  *
  */
@@ -13,7 +13,7 @@ class XoopsBlock extends icms_view_block_Object {
 	}
 }
 /**
- * @deprecated	Use icms_view_block_Handler, instead
+ * deprecated	Use icms_view_block_Handler, instead
  * @todo		Remove in version 1.4
  *
  */

@@ -44,7 +44,7 @@ switch($op) {
 		$form->display();
 		echo "<br />\n";
 		$user_count = $member_handler->getUserCount(new icms_db_criteria_Item('level', '-1'));
-			if(count($user_count)>1){
+			if(count((array) $user_count)>1){
 				$form = new icms_form_Theme(_AM_PROFILE_REMOVEDUSERS, 'form', 'user.php');
 				$form->addElement(new icms_form_elements_select_User(_AM_PROFILE_SELECTUSER, 'id', false, false, false, false, true, true));
 				$form->addElement(new icms_form_elements_Hidden('op', 'editordeleteormasquerade'));
@@ -158,12 +158,15 @@ switch($op) {
 		if (count($errors) == 0) {
 			if ($member_handler->insertUser($user)) {
 
-				//update the user mapping table in case the email was used as an external id (needed for google login)
-				include_once XOOPS_ROOT_PATH."/integration_api.php";
-				Formulize::init();
-				if(!Formulize::updateResourceMapping($oldemail, $email)){
-					$_SESSION['redirect_message'] = 'Could not fully update email. <br>Consult webmaster if this seems to compromise Login with Google functionality.';
-				}
+                global $icmsConfigAuth;
+                if($icmsConfigAuth['auth_openid']) {
+                    //update the user mapping table in case the email was used as an external id (needed for google login)
+                    include_once XOOPS_ROOT_PATH."/integration_api.php";
+                    Formulize::init();
+                    if(!Formulize::updateResourceMapping($oldemail, $email)){
+                        $_SESSION['redirect_message'] = 'Could not fully update email. <br>Consult webmaster if this seems to compromise Login with Google functionality.';
+                    }
+                }
 
 				$profile->setVar('profileid', $user->getVar('uid'));
 				$profile_handler->insert($profile);

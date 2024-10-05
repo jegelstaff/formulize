@@ -1,0 +1,79 @@
+name: e2e test suite
+
+on:
+  push:
+    branches:
+      - master
+
+env:
+  GITHUB_TOKEN: ${{ github.token }}
+
+jobs:
+  check_commit:
+    runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.check.outputs.skip }}
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - name: Check commit message
+      id: check
+      run: |
+        MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})
+        if [[ "$MESSAGE" == *"[SKIP TEST]"* ]]; then
+          echo "Commit message contains [SKIP TEST]. We will skip running test."
+          echo "::set-output name=skip::true"
+        else
+          echo "::set-output name=skip::false"
+        fi
+  e2e-test-run:
+    needs: check_commit
+    if: needs.check_commit.outputs.skip == 'false'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 18
+    - name: Set file/directory permissions
+      run: |
+        chmod 777 trust uploads modules templates_c cache mainfile.php ~/work/formulize/formulize
+    - name: Run Docker Compose up
+      run: |
+        docker compose up -d
+    - name: Wait for mysql
+      uses: smurfpandey/wait-for-it@main
+      with:
+        host: localhost
+        port: 3306
+        timeout: 60
+    # - name: Connect to saucelabs
+    #   uses: saucelabs/sauce-connect-action@v2
+    #   with:
+    #     username: ${{ secrets.SAUCE_USERNAME }}
+    #     accessKey: ${{ secrets.SAUCE_ACCESS_KEY }}
+    #     tunnelName: ${{ github.run_id }}
+    # - name: Saucectl RUN
+    #   uses: saucelabs/saucectl-run-action@v4
+    #   with:
+    #     sauce-username: ${{ secrets.SAUCE_USERNAME }}
+    #     sauce-access-key: ${{ secrets.SAUCE_ACCESS_KEY }}
+    #     tunnel-name: ${{ github.run_id }}
+    - name: Install dependencies
+      run: npm ci
+      working-directory: tests/e2e
+    - name: Install Playwright Browsers
+      run: npx playwright install --with-deps
+      working-directory: tests/e2e
+    - name: Run Playwright tests
+      run: npx playwright test
+      working-directory: tests/e2e
+    - uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}
+      with:
+        name: playwright-report
+        path: tests/e2e/test-report/
+        retention-days: 30
+    # - name: Setup tmate session
+    #   uses: mxschmitt/action-tmate@v3

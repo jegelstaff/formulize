@@ -43,19 +43,8 @@ if (isset($_GET['op'])) {
         // patch ops are only in formindex.php, must be called by going to that URL with the patch op in the URL as a param
         case "patch40":
         case "patchDB";
+        default:
             patch40();
-            break;
-        case "patch31":
-            patch31();
-            break;
-        case "patch22convertdata":
-            patch22convertdata();
-            break;
-        case "patch30datastructure":
-            patch30DataStructure();
-            break;
-        case "patchEmptyFormScreens":
-            patchEmptyFormScreens();
             break;
     }
 } else {

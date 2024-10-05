@@ -212,7 +212,7 @@
 
 #formulize_form td.formulize-controls {
   white-space: nowrap;
-  width: 40px; }
+  width: 1%; }
 
 .icms_checkboxoption {
   display: block; }

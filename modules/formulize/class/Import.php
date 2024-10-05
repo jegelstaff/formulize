@@ -1006,7 +1006,7 @@ function Create_table($Insert)
 `mod_uid` int(7) DEFAULT '0',";
 	$s2=" PRIMARY KEY (`entry_id`),
 	KEY `i_creation_uid` (`creation_uid`)
-	) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=23 ;";
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=23 ;";
 	foreach ($AllHandles1 as $k=> $column)
 	{
 		if ($k!=0){

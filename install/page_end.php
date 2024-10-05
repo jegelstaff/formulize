@@ -20,10 +20,9 @@
 require_once 'common.inc.php';
 if (!defined( 'XOOPS_INSTALL' ) )	exit();
 
-$success = isset($_GET['success'])?trim($_GET['success']):false;
+$success = isset($_GET['success']) ? trim($_GET['success']) : false;
 if ($success) {
 	if (is_dir(ICMS_ROOT_PATH.'/install')) {
-		icms_core_Filesystem::deleteRecursive(ICMS_ROOT_PATH.'/install', true);
 		header('Location: '.ICMS_URL.'/index.php');
 	}
 	$_SESSION = array();
@@ -63,24 +62,32 @@ $contentModule = $module_handler->getByDirname('content');
 $contentModuleId = $contentModule->getVar('mid');
 $profileModule = $module_handler->getByDirname('profile');
 $profileModuleId = $profileModule->getVar('mid');
+$protectorModule = $module_handler->getByDirname('protector');
+$protectorModuleId = $profileModule->getVar('mid');
+$timezone = new DateTimeZone(date_default_timezone_get());
+$testDate = new DateTime("December 31 1969", $timezone);
+$offset = $timezone->getOffset($testDate)/60/60;
+$year = date("Y");
 
 $formulizeStandaloneQueries = str_replace("REPLACE_WITH_PROFILE_MODULE_ID", $profileModuleId, $formulizeStandaloneQueries);
 $formulizeStandaloneQueries = str_replace("REPLACE_WITH_CONTENT_MODULE_ID", $contentModuleId, $formulizeStandaloneQueries);
 $formulizeStandaloneQueries = str_replace("REPLACE_WITH_FORMULIZE_MODULE_ID", $formulizeModuleId, $formulizeStandaloneQueries);
-
-
-$vars = & $_SESSION ['settings'];
-$link = @mysqli_connect ( $vars ['DB_HOST'], $vars ['DB_USER'], $vars ['DB_PASS'], true );
+$formulizeStandaloneQueries = str_replace("REPLACE_WITH_PROTECTOR_MODULE_ID", $protectorModuleId, $formulizeStandaloneQueries);
+$formulizeStandaloneQueries = str_replace("REPLACE_WITH_TIMEZONE", $offset, $formulizeStandaloneQueries);
+$formulizeStandaloneQueries = str_replace("REPLACE_WITH_YEAR", $year, $formulizeStandaloneQueries);
+$formulizeStandaloneQueries = str_replace("REPLACE_WITH_XOOPS_ROOT_PATH", XOOPS_ROOT_PATH, $formulizeStandaloneQueries);
 
 foreach(explode(";\r",str_replace(array("\n","\n\r","\r\n"), "\r", $formulizeStandaloneQueries)) as $sql) { // convert all kinds of line breaks to \r and then split on semicolon-linebreak to get individual queries
 	if($sql) {
 		if(!$formulizeResult = $dbm->query($sql)) {
 			$content = "<h3>Error:</h3><p>Some of the configuration settings were not saved properly in the database.  The website will still work, but it will behave more like a generic ImpressCMS+Formulize website, and not like a dedicated Formulize system.   Please send the following information to <a href=\"mailto:formulize@freeformsolutions.ca?subject=Formulize%20Standalone%20Install%20Error\">formulize@freeformsolutions.ca</a>:</p>
-			<p><pre>".mysqli_error($link)."</pre></p>".$content;
-		} 
+			<p><pre>".$dbm->db->error()."</pre></p>".$content;
+		}
 	}
 }
-// END OF MODIFIED CODE
 
+// write a lock file so the install folder is inaccessible (if not deleted automatically)
+file_put_contents(ICMS_ROOT_PATH . '/install.lock', '');
+
+// END OF MODIFIED CODE
 include 'install_tpl.php';
-?>

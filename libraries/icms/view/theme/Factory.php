@@ -44,12 +44,12 @@ class icms_view_theme_Factory {
 		// Grab the theme folder from request vars if present
 		if (@empty($options['folderName'])) {
 			// xoops_theme_select still exists to keep compatibilitie ...
-			if (($req = @$_REQUEST['xoops_theme_select']) && $this->isThemeAllowed($req)) {
+			if (isset($_REQUEST['xoops_theme_select']) && $req = $_REQUEST['xoops_theme_select'] && $this->isThemeAllowed($req)) {
 				$options['folderName'] = $req;
 				if (isset($_SESSION) && $this->allowUserSelection) {
 					$_SESSION[$this->xoBundleIdentifier]['defaultTheme'] = $req;
 				}
-			} elseif (($req = @$_REQUEST['theme_select']) && $this->isThemeAllowed($req)) {
+			} elseif (isset($_REQUEST['theme_select']) && $req = $_REQUEST['theme_select'] && $this->isThemeAllowed($req)) {
 				$options['folderName'] = $req;
 				if (isset($_SESSION) && $this->allowUserSelection) {
 					$_SESSION[$this->xoBundleIdentifier]['defaultTheme'] = $req;

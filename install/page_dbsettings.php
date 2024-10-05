@@ -196,7 +196,7 @@ if ($_SERVER ['REQUEST_METHOD'] == 'POST' && ! empty ( $vars ['DB_NAME'] )) {
 
 if (@empty ( $vars ['DB_NAME'] )) {
 	// Fill with default values
-	$vars = array_merge ( $vars, array ('DB_NAME' => '', 'DB_CHARSET' => 'utf8', 'DB_COLLATION' => '', 'DB_PREFIX' => 'i' . substr ( md5 ( time () ), 0, 8 ), 'DB_SALT' => icms_core_Password::createSalt() ) );
+	$vars = array_merge ( $vars, array ('DB_NAME' => '', 'DB_CHARSET' => 'utf8mb4', 'DB_COLLATION' => '', 'DB_PREFIX' => 'i' . substr ( md5 ( time () ), 0, 8 ), 'DB_SALT' => icms_core_Password::createSalt() ) );
 }
 
 function xoFormField($name, $value, $label, $maxlength, $help = '') {

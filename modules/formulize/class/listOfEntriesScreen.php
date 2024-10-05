@@ -69,7 +69,7 @@ class formulizeListOfEntriesScreen extends formulizeScreen {
         $this->initVar("usesave", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
         $this->initVar("usedeleteview", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
         $this->initVar("useheadings", XOBJ_DTYPE_INT);
-        $this->initVar("usesearch", XOBJ_DTYPE_INT);
+        $this->initVar("usesearch", XOBJ_DTYPE_INT); // 0 is off, 1 is on, 2 is on but hidden by default
         $this->initVar("usecheckboxes", XOBJ_DTYPE_INT); // 0 is default, 1 is all, 2 is none
         $this->initVar("useviewentrylinks", XOBJ_DTYPE_INT);
         $this->initVar("usescrollbox", XOBJ_DTYPE_INT);
@@ -94,12 +94,11 @@ class formulizeListOfEntriesScreen extends formulizeScreen {
         // array[actionid][effectid][element] -- element to alter
         // array[actionid][effectid][action] -- type of action
         // array[actionid][effectid][value] -- value to use in action -- need to support pulling a value from $_POST, or gathering a value from an entry (which only works if inline is selected, we use the display function to put that value into the displayButton call at the time the button is drawn in that row) so that needs an element specifier UI, or we allow custom PHP to define the value
-        $this->initVar("toptemplate", XOBJ_DTYPE_TXTAREA);
-        $this->initVar("listtemplate", XOBJ_DTYPE_TXTAREA);
-        $this->initVar("bottomtemplate", XOBJ_DTYPE_TXTAREA);
         $this->initVar("entriesperpage", XOBJ_DTYPE_INT);
         $this->initVar("viewentryscreen", XOBJ_DTYPE_TXTBOX, NULL, false, 10);
+        $this->initVar("fundamental_filters", XOBJ_DTYPE_ARRAY);
     }
+
 }
 
 
@@ -124,7 +123,7 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
 
 
     function insert($screen) {
-        $update = ($screen->getVar('sid') == 0) ? false : true;
+        $update = !$screen->getVar('sid') ? false : true;
         if (!$sid = parent::insert($screen)) { // write the basic info to the db, handle cleaning vars and all that jazz.  Object passed by reference, so updates will have affected it in the other method.
             return false;
         }
@@ -167,12 +166,10 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
                 columnwidth,
                 textwidth,
                 customactions,
-                toptemplate,
-                listtemplate,
-                bottomtemplate,
                 entriesperpage,
                 viewentryscreen,
-                dedisplay) VALUES (%u,
+                dedisplay,
+                fundamental_filters) VALUES (%u,
                 %u,
                 %u,
                 %s,
@@ -209,12 +206,10 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
                 %u,
                 %u,
                 %s,
-                %s,
-                %s,
-                %s,
                 %u,
                 %s,
-                %u)",
+                %u,
+                %s)",
                 $this->db->prefix('formulize_screen_listofentries'),
                 $screen->getVar('sid'),
                 $screen->getVar('useworkingmsg'),
@@ -252,14 +247,13 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
                 $this->db->quoteString($screen->getVar('desavetext')),
                 $screen->getVar('columnwidth'), $screen->getVar('textwidth'),
                 $this->db->quoteString(serialize($screen->getVar('customactions'))),
-                $this->db->quoteString($screen->getVar('toptemplate')),
-                $this->db->quoteString($screen->getVar('listtemplate')),
-                $this->db->quoteString($screen->getVar('bottomtemplate')),
                 $screen->getVar('entriesperpage'),
                 $this->db->quoteString($screen->getVar('viewentryscreen')),
-                $screen->getVar('dedisplay'));
+                $screen->getVar('dedisplay'),
+                $this->db->quoteString(serialize($screen->getVar('fundamental_filters')))
+                );
         } else {
-            $sql = sprintf("UPDATE %s SET useworkingmsg = %u, repeatheaders = %u, useaddupdate = %s, useaddmultiple = %s, useaddproxy = %s, usecurrentviewlist = %s, limitviews = %s, defaultview = %s, advanceview = %s, usechangecols = %s, usecalcs = %s, useadvcalcs = %s, useadvsearch = %s, useexport = %s, useexportcalcs = %s, useimport = %s, useclone = %s, usedelete = %s, useselectall = %s, useclearall = %s, usenotifications = %s, usereset = %s, usesave = %s, usedeleteview = %s, useheadings = %u, usesearch = %u, usecheckboxes = %u, useviewentrylinks = %u, usescrollbox = %u, usesearchcalcmsgs = %u, hiddencolumns = %s, decolumns = %s, desavetext = %s, columnwidth = %u, textwidth = %u, customactions = %s, toptemplate = %s, listtemplate = %s, bottomtemplate = %s, entriesperpage = %u, viewentryscreen = %s, dedisplay = %u WHERE sid = %u", $this->db->prefix('formulize_screen_listofentries'), $screen->getVar('useworkingmsg'), $screen->getVar('repeatheaders'), $this->db->quoteString($screen->getVar('useaddupdate')), $this->db->quoteString($screen->getVar('useaddmultiple')), $this->db->quoteString($screen->getVar('useaddproxy')), $this->db->quoteString($screen->getVar('usecurrentviewlist')), $this->db->quoteString(serialize($screen->getVar('limitviews'))), $this->db->quoteString(serialize($screen->getVar('defaultview'))), $this->db->quoteString(serialize($screen->getVar('advanceview'))), $this->db->quoteString($screen->getVar('usechangecols')), $this->db->quoteString($screen->getVar('usecalcs')), $this->db->quoteString($screen->getVar('useadvcalcs')), $this->db->quoteString($screen->getVar('useadvsearch')), $this->db->quoteString($screen->getVar('useexport')), $this->db->quoteString($screen->getVar('useexportcalcs')), $this->db->quoteString($screen->getVar('useimport')), $this->db->quoteString($screen->getVar('useclone')), $this->db->quoteString($screen->getVar('usedelete')), $this->db->quoteString($screen->getVar('useselectall')), $this->db->quoteString($screen->getVar('useclearall')), $this->db->quoteString($screen->getVar('usenotifications')), $this->db->quoteString($screen->getVar('usereset')), $this->db->quoteString($screen->getVar('usesave')), $this->db->quoteString($screen->getVar('usedeleteview')), $screen->getVar('useheadings'), $screen->getVar('usesearch'), $screen->getVar('usecheckboxes'), $screen->getVar('useviewentrylinks'), $screen->getVar('usescrollbox'), $screen->getVar('usesearchcalcmsgs'), $this->db->quoteString(serialize($screen->getVar('hiddencolumns'))), $this->db->quoteString(serialize($screen->getVar('decolumns'))), $this->db->quoteString($screen->getVar('desavetext')), $screen->getVar('columnwidth'), $screen->getVar('textwidth'), $this->db->quoteString(serialize($screen->getVar('customactions'))), $this->db->quoteString($screen->getVar('toptemplate')), $this->db->quoteString($screen->getVar('listtemplate')), $this->db->quoteString($screen->getVar('bottomtemplate')), $screen->getVar('entriesperpage'), $this->db->quoteString($screen->getVar('viewentryscreen')), $screen->getVar('dedisplay'), $screen->getVar('sid'));
+            $sql = sprintf("UPDATE %s SET useworkingmsg = %u, repeatheaders = %u, useaddupdate = %s, useaddmultiple = %s, useaddproxy = %s, usecurrentviewlist = %s, limitviews = %s, defaultview = %s, advanceview = %s, usechangecols = %s, usecalcs = %s, useadvcalcs = %s, useadvsearch = %s, useexport = %s, useexportcalcs = %s, useimport = %s, useclone = %s, usedelete = %s, useselectall = %s, useclearall = %s, usenotifications = %s, usereset = %s, usesave = %s, usedeleteview = %s, useheadings = %u, usesearch = %u, usecheckboxes = %u, useviewentrylinks = %u, usescrollbox = %u, usesearchcalcmsgs = %u, hiddencolumns = %s, decolumns = %s, desavetext = %s, columnwidth = %u, textwidth = %u, customactions = %s, entriesperpage = %u, viewentryscreen = %s, dedisplay = %u, fundamental_filters = %s WHERE sid = %u", $this->db->prefix('formulize_screen_listofentries'), $screen->getVar('useworkingmsg'), $screen->getVar('repeatheaders'), $this->db->quoteString($screen->getVar('useaddupdate')), $this->db->quoteString($screen->getVar('useaddmultiple')), $this->db->quoteString($screen->getVar('useaddproxy')), $this->db->quoteString($screen->getVar('usecurrentviewlist')), $this->db->quoteString(serialize($screen->getVar('limitviews'))), $this->db->quoteString(serialize($screen->getVar('defaultview'))), $this->db->quoteString(serialize($screen->getVar('advanceview'))), $this->db->quoteString($screen->getVar('usechangecols')), $this->db->quoteString($screen->getVar('usecalcs')), $this->db->quoteString($screen->getVar('useadvcalcs')), $this->db->quoteString($screen->getVar('useadvsearch')), $this->db->quoteString($screen->getVar('useexport')), $this->db->quoteString($screen->getVar('useexportcalcs')), $this->db->quoteString($screen->getVar('useimport')), $this->db->quoteString($screen->getVar('useclone')), $this->db->quoteString($screen->getVar('usedelete')), $this->db->quoteString($screen->getVar('useselectall')), $this->db->quoteString($screen->getVar('useclearall')), $this->db->quoteString($screen->getVar('usenotifications')), $this->db->quoteString($screen->getVar('usereset')), $this->db->quoteString($screen->getVar('usesave')), $this->db->quoteString($screen->getVar('usedeleteview')), $screen->getVar('useheadings'), $screen->getVar('usesearch'), $screen->getVar('usecheckboxes'), $screen->getVar('useviewentrylinks'), $screen->getVar('usescrollbox'), $screen->getVar('usesearchcalcmsgs'), $this->db->quoteString(serialize($screen->getVar('hiddencolumns'))), $this->db->quoteString(serialize($screen->getVar('decolumns'))), $this->db->quoteString($screen->getVar('desavetext')), $screen->getVar('columnwidth'), $screen->getVar('textwidth'), $this->db->quoteString(serialize($screen->getVar('customactions'))), $screen->getVar('entriesperpage'), $this->db->quoteString($screen->getVar('viewentryscreen')), $screen->getVar('dedisplay'), $this->db->quoteString(serialize($screen->getVar('fundamental_filters'))), $screen->getVar('sid'));
         }
         $result = $this->db->query($sql);
         if (!$result) {
@@ -278,8 +272,16 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
         if(isset($_POST['screens-listtemplate'])) {
             $success3 = $this->writeTemplateToFile(trim($_POST['screens-listtemplate']), 'listtemplate', $screen);
         }
+        $success4 = true;
+        if(isset($_POST['screens-openlisttemplate'])) {
+            $success4 = $this->writeTemplateToFile(trim($_POST['screens-openlisttemplate']), 'openlisttemplate', $screen);
+        }
+        $success5 = true;
+        if(isset($_POST['screens-closelisttemplate'])) {
+            $success5 = $this->writeTemplateToFile(trim($_POST['screens-closelisttemplate']), 'closelisttemplate', $screen);
+        }
 
-        if (!$success1 || !$success2 || !$success3) {
+        if (!$success1 || !$success2 || !$success3 || !$success4 || !$success5) {
             return false;
         }
 
@@ -332,16 +334,20 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
     // $screen is a screen object
     // since the number of params for the render method can vary from screen type to screen type, this should take a single array that we unpack in the method, so the number of params is common to all types, ie: one array
     function render($screen, $entry, $loadThisView) {
+			$previouslyRenderingScreen = (isset($GLOBALS['formulize_screenCurrentlyRendering']) AND $GLOBALS['formulize_screenCurrentlyRendering']) ? $GLOBALS['formulize_screenCurrentlyRendering'] : null;
         $formframe = $screen->getVar('frid') ? $screen->getVar('frid') : $screen->getVar('fid');
         $mainform = $screen->getVar('frid') ? $screen->getVar('fid') : "";
         include_once XOOPS_ROOT_PATH . "/modules/formulize/include/entriesdisplay.php";
+        $GLOBALS['formulize_screenCurrentlyRendering'] = $screen;
         displayEntries($formframe, $mainform, $loadThisView, 0, 0, $screen);
+        $GLOBALS['formulize_screenCurrentlyRendering'] = $previouslyRenderingScreen;
     }
 
-    public function setDefaultListScreenVars($defaultListScreen, $defaultFormScreenId, $title, $fid)
+    public function setDefaultListScreenVars($defaultListScreen, $defaultFormScreenId, $formTitle, $fid)
     {
+        global $xoopsConfig;
         // View
-        $defaultListScreen->setVar('defaultview', 'all');
+        $defaultListScreen->setVar('defaultview', serialize(array(XOOPS_GROUP_USERS => FORMULIZE_QUERY_SCOPE_GLOBAL)));
         $defaultListScreen->setVar('usecurrentviewlist', _formulize_DE_CURRENT_VIEW);
         $defaultListScreen->setVar('limitviews', serialize(array(0 => 'allviews')));
         $defaultListScreen->setVar('useworkingmsg', 1);
@@ -350,7 +356,7 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
         $defaultListScreen->setVar('viewentryscreen', $defaultFormScreenId);
         // Headings
         $defaultListScreen->setVar('useheadings', 1);
-        $defaultListScreen->setVar('repeatheaders', 5);
+        $defaultListScreen->setVar('repeatheaders', 0);
         $defaultListScreen->setVar('usesearchcalcmsgs', 1);
         $defaultListScreen->setVar('usesearch', 1);
         $defaultListScreen->setVar('columnwidth', 0);
@@ -377,11 +383,13 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
         $defaultListScreen->setVar('usereset', _formulize_DE_RESETVIEW);
         $defaultListScreen->setVar('usesave', _formulize_DE_SAVE);
         $defaultListScreen->setVar('usedeleteview', _formulize_DE_DELETE);
-        $defaultListScreen->setVar('title', "Entries in '$title'");
+        $defaultListScreen->setVar('title', $formTitle);
         $defaultListScreen->setVar('fid', $fid);
         $defaultListScreen->setVar('frid', 0);
         $defaultListScreen->setVar('type', 'listOfEntries');
         $defaultListScreen->setVar('useToken', 1);
+        $defaultListScreen->setVar('theme', $xoopsConfig['theme_set']);
+				$defaultListScreen->setVar('anonNeedsPasscode', 1);
     }
 }
 
@@ -399,126 +407,3 @@ function addElementLOE($element, $table) {
 }
 
 
-// THIS FUNCTION SETS UP THE UI FOR A CUSTOM BUTTON, BASED ON THE CUSTOM ACTION ARRAY SENT
-// fids is an array of all forms currently used on the screen.  First form is mainform.
-// elementOptions is an array of arrays of all the elements in each form in the framework.  The fid is the top level key.
-function addCustomButton($caid, $thisCustomAction, $allFids, $allFidObjs, $elementOptions, $fid) {
-
-    // set defaults to the current action, if there is one, or the empty defaults if this is a new action
-    $headerText = $thisCustomAction ? _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON . " &mdash; " . $thisCustomAction['handle'] : _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_NEW;
-    $deleteButtonButton = new xoopsFormButton('', 'deleteButton'.$caid, _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_DELETE, 'submit');
-    $headerText .= "&nbsp;&nbsp&nbsp;" . $deleteButtonButton->render();
-    $handleDefault = $thisCustomAction ? $thisCustomAction['handle'] : "";
-    $textDefault = $thisCustomAction ? $thisCustomAction['buttontext'] : "";
-    $messageTextDefault = $thisCustomAction ? $thisCustomAction['messagetext'] : "";
-    $appearInlineDefault = $thisCustomAction ? $thisCustomAction['appearinline'] : 0;
-    $applyToDefault = $thisCustomAction ? $thisCustomAction['applyto'] : "inline";
-
-    $caTable = "<tr><td><table class=\"outer\" width=100% cellspacing=1 style=\"background: white;\">\n";
-    $caTable .= "<tr><th colspan=2>$headerText</th></tr>\n";
-
-    $caHandle = new xoopsFormText(_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_HANDLE, 'handle_'.$caid, 20, 255, $handleDefault);
-    $caTable = addElementLOE($caHandle, $caTable);
-    $caText = new xoopsFormText(_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_BUTTONTEXT, 'buttontext_'.$caid, 20, 255, $textDefault);
-    $caTable = addElementLOE($caText, $caTable);
-    $caMessageText = new xoopsFormText(_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_MESSAGETEXT, 'messagetext_'.$caid, 20, 255, $messageTextDefault);
-    $caTable = addElementLOE($caMessageText, $caTable);
-    $caAppearInline = new xoopsFormRadioYN(_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_INLINE, 'appearinline_'.$caid, $appearInlineDefault);
-    $caAppearInline->setDescription(_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_INLINE_DESC);
-    $caTable = addElementLOE($caAppearInline, $caTable);
-    $caApplyTo = new xoopsFormSelect(_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO, 'applyto_'.$caid, $applyToDefault);
-    // pay attention to allFids and if there is more than one form, then we include the option to have this apply to a new entry in the other forms (one option for each of the others)
-    $applyToOptions = array('inline'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_INLINE, 'selected'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_SELECTED, 'all'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_ALL, 'new'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEW, 'new_per_selected'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEWPERSELECTED);
-    if(count($allFids) > 1) {
-        foreach ($allFids as $i=>$thisFid) {
-            if($thisFid == $fid) { continue; } // don't treat the current form as if it's an 'other' form
-            $applyToOptions['new_'.$thisFid] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEW_OTHER . printSmart($allFidObjs[$thisFid]->getVar('title'), 20) . "'";
-            $applyToOptions['new_per_selected_'.$thisFid] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEW_OTHER . printSmart($allFidObjs[$thisFid]->getVar('title'), 20) . _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEWPERSELECTED_OTHER;
-        }
-    }
-    $applyToOptions['custom_code'] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_CUSTOM_CODE;
-    $applyToOptions['custom_html'] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_CUSTOM_HTML;
-    $caApplyTo->addOptionArray($applyToOptions);
-    $caTable = addElementLOE($caApplyTo, $caTable);
-    $caNewEffectButton = new xoopsFormButton('', 'addCustomButtonEffect'.$caid, _AM_FORMULIZE_SCREEN_LOE_ADDCUSTOMBUTTON_EFFECT, 'submit'); // note, no _ in name so we don't roll this up into the array stored in the DB
-    $caTable .= "<tr><td class=\"head\">&nbsp;</td><td class=\"even\">" . $caNewEffectButton->render() . "</td></tr>\n";
-    $effectid = 0;
-    $effectTable = "";
-    foreach($thisCustomAction as $effectid=>$effectProperties) {
-        if(!is_numeric($effectid)) { continue; } // ignore the handle, messagetext, etc.
-        if(!isset($_POST['deleteButton'.$caid.'Effect'.$effectid])) {
-            $effectTable .= addCustomButtonEffect($caid, $effectid, $thisCustomAction, $allFids, $elementOptions, $applyToDefault, $fid);
-        }
-    }
-    if($effectid) { // may possibly used in the future to determine special events in the case that an action button has effects already.  ie: reload the page so that effects are updated based on changes to the base settings for a button.
-        print "<input type=\"hidden\" name=\"existingeffect\"".$caid."\" value=1></input>\n";
-    }
-    if(isset($_POST['addCustomButtonEffect'.$caid])) {
-        $effectid = $effectTable != "" ? $effectid+1 : 0; // if there's effects already, increment, otherwise start at 0.  Cannot do same as above when custom button ui is called, since the non-numeric keys of the array will be looped through immediately above, resulting in applyto being considered the current $effectid
-        $effectTable .= addCustomButtonEffect($caid, $effectid, "", $allFids, $elementOptions, $applyToDefault, $fid);
-    }
-    $caTable .= $effectTable;
-    $caTable .= "</table></td></tr>\n";
-    return $caTable;
-}
-
-
-// THIS FUNCTION SETS UP THE UI FOR A CUSTOM BUTTON's EFFECT, BASED ON THE CUSTOM ACTION ARRAY SENT
-function addCustomButtonEffect($caid, $effectid, $thisCustomAction, $allFids, $elementOptions, $applyToDefault, $fid) {
-    // set defaults to the current effect, if there is one, or the empty defaults if this is a new effect
-    $effectNumber = $effectid+1;
-    $headerText = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT . " $effectNumber<br /><br />";
-    if($_POST['applyto_'.$caid] == 'custom_code' OR $applyToDefault == 'custom_code') {
-        $headerText .= _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_CUSTOM_CODE_DESC;
-    } elseif($_POST['applyto_'.$caid] == 'custom_html' OR $applyToDefault == 'custom_html') {
-        $headerText .= _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_CUSTOM_HTML_DESC;
-    } else {
-        $headerText .= _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_DESC;
-    }
-
-    $deleteEffectButton = new xoopsFormButton('', 'deleteButton'.$caid.'Effect'.$effectid, _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_DELETE, 'submit');
-    $headerText .= "<br /><br />" . $deleteEffectButton->render();
-    $elementDefault = $thisCustomAction ? $thisCustomAction[$effectid]['element'] : "";
-    $actionDefault = $thisCustomAction ? $thisCustomAction[$effectid]['action'] : "";
-    $valueDefault = $thisCustomAction ? $thisCustomAction[$effectid]['value'] : "";
-    $codeDefault = $thisCustomAction ? $thisCustomAction[$effectid]['code'] : "";
-    $htmlDefault = $thisCustomAction ? $thisCustomAction[$effectid]['html'] : "";
-
-    $effectTable = "<tr><td class=\"head\">$headerText</td><td><table class=\"outer\" width=\"100%\" cellspacing=1 style=\"background: white;\">\n";
-
-    if((isset($_POST['applyto_'.$caid]) AND $_POST['applyto_'.$caid] == 'custom_code') OR $applyToDefault == 'custom_code') {
-        $code = new xoopsFormTextArea('', 'code_'.$caid.'_'.$effectid, $codeDefault, 13, 60);
-            $code->setExtra("wrap=off");
-        $effectTable .= "\n<td class=\"even\">" . $code->render() . "</td>";
-    } elseif((isset($_POST['applyto_'.$caid]) AND $_POST['applyto_'.$caid] == 'custom_html') OR $applyToDefault == 'custom_html') {
-        $html = new xoopsFormTextArea('', 'html_'.$caid.'_'.$effectid, $htmlDefault, 13, 60);
-        $html->setExtra("wrap=off");
-        $effectTable .= "\n<td class=\"even\">" . $html->render() . "</td>";
-    } else {
-        $element = new xoopsFormSelect(_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ELEMENT, 'element_'.$caid.'_'.$effectid, $elementDefault);
-        // if this is supposed to create a new entry in another form, then figure out which form was chosen and set that as the fid key to use to generate the right options
-        // check for new per selected first, since that contains new_
-        if(isset($_POST['applyto_'.$caid]) AND substr($_POST['applyto_'.$caid], 0, 17) == "new_per_selected_") {
-            $thisEffectFid = substr($_POST['applyto_'.$caid], 17);
-        } elseif(isset($_POST['applyto_'.$caid]) AND substr($_POST['applyto_'.$caid], 0, 4) == "new_") {
-            $thisEffectFid = substr($_POST['applyto_'.$caid], 4);
-        } elseif(strstr($applyToDefault, "new_per_selected_")) {
-            $thisEffectFid = substr($applyToDefault, 17);
-        } elseif(strstr($applyToDefault, "new_")) {
-            $thisEffectFid = substr($applyToDefault, 4);
-        } else {
-            $thisEffectFid = $fid;
-        }
-        $element->addOptionArray($elementOptions[$thisEffectFid]);
-        $effectTable = addElementLOE($element, $effectTable);
-        $action = new xoopsFormSelect(_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION, 'action_'.$caid.'_'.$effectid, $actionDefault);
-        $action->addOptionArray(array('replace'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REPLACE, 'remove'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REMOVE, 'append'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_APPEND));
-        $effectTable = addElementLOE($action, $effectTable);
-        $value = new xoopsFormTextArea(_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_VALUE, 'value_'.$caid.'_'.$effectid, $valueDefault, 5, 30);
-        $effectTable = addElementLOE($value, $effectTable);
-    }
-
-    $effectTable .= "</table></td></tr>";
-
-    return $effectTable;
-}

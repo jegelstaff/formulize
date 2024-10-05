@@ -68,14 +68,14 @@ class icms_core_Security {
 		if ($timeout == 0) {
 			$timeout = $GLOBALS['icmsConfig']['session_expire'] * 60; //session_expire is in minutes, we need seconds
 		}
-		$token_id = md5(uniqid(rand(), true));
+		$token_id = hash('sha256',(uniqid(rand(), true)));
 		// save token data on the server
 		if (!isset($_SESSION[$name . '_SESSION'])) {
 			$_SESSION[$name . '_SESSION'] = array();
 		}
 		$token_data = array('id' => $token_id, 'expire' => time() + (int) ($timeout));
 		array_push($_SESSION[$name . '_SESSION'], $token_data);
-		return md5($token_id.$_SERVER['HTTP_USER_AGENT'].XOOPS_DB_PREFIX);
+		return hash('sha256',($token_id.$_SERVER['HTTP_USER_AGENT'].XOOPS_DB_PREFIX));
 	}
 
 	/**
@@ -96,10 +96,10 @@ class icms_core_Security {
 		$validFound = false;
 		$token_data =& $_SESSION[$name . '_SESSION'];
 		foreach (array_keys($token_data) as $i) {
-			if ($token === md5($token_data[$i]['id'].$_SERVER['HTTP_USER_AGENT'].XOOPS_DB_PREFIX)) {
+			if ($token === hash('sha256',($token_data[$i]['id'].$_SERVER['HTTP_USER_AGENT'].XOOPS_DB_PREFIX))) {
 				if ($this->filterToken($token_data[$i])) {
-					if ($clearIfValid) {
-						// token should be valid once, so clear it once validated
+					if ($clearIfValid AND (empty($_SERVER['HTTP_X_REQUESTED_WITH']) OR strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) != 'xmlhttprequest')) {
+						// token should be valid once, so clear it once validated -- but ignore ajax requests, reset tokens only on full page loads
 						unset($token_data[$i]);
 					}
 					icms::$logger->addExtra(_CORE_TOKENVALID, _CORE_TOKENISVALID);
@@ -146,7 +146,7 @@ class icms_core_Security {
 	 * @return void
 	 **/
 	public function garbageCollection($name = _CORE_TOKEN) {
-		if (isset($_SESSION[$name . '_SESSION']) && count($_SESSION[$name . '_SESSION']) > 0) {
+		if (isset($_SESSION[$name . '_SESSION']) && count($_SESSION[$name . '_SESSION']) > 0 AND (empty($_SERVER['HTTP_X_REQUESTED_WITH']) OR strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) != 'xmlhttprequest')) {
 			$_SESSION[$name . '_SESSION'] = array_filter($_SESSION[$name . '_SESSION'], array($this, 'filterToken'));
 		}
 	}

@@ -25,7 +25,7 @@ if (!defined('ICMS_ROOT_PATH')) {
  *
  * @author	    Kazumi Ono	<onokazu@xoops.org>
  * @copyright	copyright (c) 2000-2003 XOOPS.org
- * @deprecated	Use icms_form_elements_select_Group
+ * deprecated	Use icms_form_elements_select_Group
  * @todo		Remove in version 1.4 - all instances have been removed from the core
  */
 class XoopsFormSelectGroup extends icms_form_elements_select_Group
@@ -41,7 +41,7 @@ class XoopsFormSelectGroup extends icms_form_elements_select_Group
 	 * @param	int		$size	        Number or rows. "1" makes a drop-down-list.
 	 * @param	bool    $multiple       Allow multiple selections?
 	 */
-	function XoopsFormSelectGroup($caption, $name, $include_anon = false, $value = null, $size = 1, $multiple = false)
+	function __construct($caption, $name, $include_anon = false, $value = null, $size = 1, $multiple = false)
 	{
 		parent::__construct($caption, $name, $include_anon, $value, $size, $multiple);
 		$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_select_Group', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));

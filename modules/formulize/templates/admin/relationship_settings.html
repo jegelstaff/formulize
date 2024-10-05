@@ -62,7 +62,7 @@ function checkForCommon(Obj, form1, form2, lid) {
     <input type=submit class=formbutton name=addlink value='<{$smarty.const._AM_FRAME_NEWFORMBUTTON}>'>
 
 
-    <{if count($content.relationship->links) lt 1}>
+    <{if count((array) $content.relationship->links) lt 1}>
         <h2><{$smarty.const._AM_FRAME_NOFORMS}></h2>
     <{else}>
         <input type=hidden name=relationships-common1choice value="">

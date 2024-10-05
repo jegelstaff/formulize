@@ -26,7 +26,7 @@ require_once ICMS_ROOT_PATH . '/kernel/group.php';
  * @author  Kazumi Ono <onokazu@xoops.org>
  * @copyright copyright (c) 2000-2003 XOOPS.org
  * @package kernel
- * @deprecated	Use icms_member_Handler, instead
+ * deprecated	Use icms_member_Handler, instead
  * @todo		Remove in version 1.4
  *
  */

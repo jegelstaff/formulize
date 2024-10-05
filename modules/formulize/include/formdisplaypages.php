@@ -31,7 +31,7 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-//THIS FILE HANDLES THE DISPLAY OF FORMS AS MULTIPLE PAGES.  
+//THIS FILE HANDLES THE DISPLAY OF FORMS AS MULTIPLE PAGES.
 
 global $xoopsConfig;
 // load the formulize language constants if they haven't been loaded already
@@ -44,10 +44,59 @@ global $xoopsConfig;
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
 
-function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditions="", $introtext="", $thankstext="", $done_dest="", $button_text="", $settings="", $overrideValue="", $printall=0, $screen=null, $saveAndContinueButtonText=null) { // nmc 2007.03.24 - added 'printall'
-	
-	formulize_benchmark("Start of displayFormPages.");
-	
+function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="", $introtext="", $thankstext="", $done_dest="", $button_text=array(), $settings=array(), $overrideValue="", $printall=0, $screen=null, $saveAndContinueButtonText=null, $elements_only = false) { // nmc 2007.03.24 - added 'printall'
+
+    formulize_benchmark("Start of displayFormPages.");
+
+    global $xoopsUser;
+    if(!isset($_POST['parent_entry']) AND !isset($_POST['parent_form']) AND !isset($_POST['parent_page']) AND !isset($_POST['parent_subformElementId'])
+       AND isset($_POST['go_back_form']) AND $_POST['go_back_form'] AND isset($_POST['go_back_entry']) AND $_POST['go_back_entry'] AND (!isset($_POST['ventry']) OR !$_POST['ventry'])) {
+        $entry = setupParentFormValuesInPostAndReturnEntryId();
+    }
+
+    // instantiate multipage screen handler just because we might need some functions from that file (plain functions, not methods on the class, because they're not necessarily related to handling a screen, and we might not even have a screen in effect)
+    $multiPageScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+    $element_handler = xoops_getmodulehandler('elements','formulize');
+
+    // pickup a declared page that we're going back onto...will/might include screen id after a hyphen
+    if(isset($_POST['parent_page'])) {
+        $parent_page = strstr($_POST['parent_page'], ',') ? explode(',',$_POST['parent_page']) : array($_POST['parent_page']);
+        $lastKey = count((array) $parent_page)-1;
+        $_POST['formulize_currentPage'] = $parent_page[$lastKey];
+    }
+
+    // attach the target screen id to the currentPage value, if we have been directed to a sub from the previous page request
+    // currentPage will have been reset to 1 in javascript prior to this submission. Now we need to add the screen ID, based on the subform element id, which we will have from the submission
+    if(isset($_POST['goto_subformElementId']) AND $_POST['goto_subformElementId'] AND isset($_POST['formulize_currentPage']) AND $_POST['formulize_currentPage'] == 1) {
+        if($gotoSubformElementObject = $element_handler->get($_POST['goto_subformElementId'])) {
+            if($subformScreenIdToAppend = get_display_screen_for_subform($gotoSubformElementObject)) {
+                $_POST['formulize_currentPage'] .= '-'.$subformScreenIdToAppend;
+            }
+        }
+    }
+
+    $currentPageScreen = 0;
+    // reset $_POST['formulize_currentPage'] which is referred to many places to get the official page we're on
+    if(isset($_POST['formulize_currentPage']) AND strstr($_POST['formulize_currentPage'],'-')) {
+        $cpParts = explode('-',$_POST['formulize_currentPage']);
+        $_POST['formulize_currentPage'] = $cpParts[0];
+        $currentPageScreen = $cpParts[1];
+    }
+    // set prevPage, last page that the user was on, not necessarily the previous page numerically
+    $prevPage = 1;
+    if(isset($_POST['formulize_prevPage']) AND strstr($_POST['formulize_prevPage'],'-')) {
+        $cpParts = explode('-',$_POST['formulize_prevPage']);
+        $prevPage = $cpParts[0];
+        $prevScreen = $cpParts[1];
+    } elseif(isset($_POST['formulize_prevPage'])) {
+        $prevPage = intval($_POST['formulize_prevPage']);
+    }
+    if($screen AND isset($prevScreen) AND $screen->getVar('sid') != $prevScreen) {
+        $prevPageThisScreen = 1;
+    } else {
+        $prevPageThisScreen = $prevPage;
+    }
+
 	// extract the optional page titles from the $pages array for use in the jump to box
 	// NOTE: pageTitles array must start with key 1, not 0.  Page 1 is the first page of the form
 	$pageTitles = array();
@@ -55,82 +104,115 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 		$pageTitles = $pages['titles'];
 		unset($pages['titles']);
 	}
-	
+
+    // $overrideMulti probably doesn't even need to be set, but for legacy compatibility, we'll keep this in for now
+    // removing the entry value is the critical thing, so a new entry is displayed
+    $overrideMulti = 0;
+    $removeEntryValue = false;
+
+    if(count((array) $pages) == 1 AND $screen) {
+        $reloadblank = isset($_POST['originalReloadBlank']) ? $_POST['originalReloadBlank'] : $screen->getVar('reloadblank');
+        // figure out the form's properties...
+        // if it's more than one entry per user, and we have requested reload blank, then override multi is 0, otherwise 1
+        // if it's one entry per user, and we have requested reload blank, then override multi is 1, otherwise 0
+        $form_handler = xoops_getmodulehandler('forms', 'formulize');
+        $formObject = $form_handler->get($screen->getVar('fid'));
+        if($formObject->getVar('single')=="off" AND $reloadblank) {
+            $removeEntryValue = true;
+            $overrideMulti = 0;
+        } elseif($formObject->getVar('single')=="off" AND !$reloadblank) {
+            $overrideMulti = 1;
+        } elseif(($formObject->getVar('single')=="group" OR $formObject->getVar('single')=="user") AND $reloadblank) {
+            $overrideMulti = 1;
+        } elseif(($formObject->getVar('single')=="group" OR $formObject->getVar('single')=="user") AND !$reloadblank) {
+            $overrideMulti = 0;
+        } else {
+            $overrideMulti = 0;
+        }
+    }
+
 	if(!$saveAndContinueButtonText AND isset($_POST['formulize_saveAndContinueButtonText'])) { $saveAndContinueButtonText = unserialize($_POST['formulize_saveAndContinueButtonText']); }
-	if(!$done_dest AND $_POST['formulize_doneDest']) { $done_dest = $_POST['formulize_doneDest']; }
+	if(!$done_dest AND $_POST['formulize_doneDest']) { $done_dest = $_POST['formulize_doneDest']; } // probably won't ever have these things in post if they're not defined, since the posted values are originally based on what is passed in to this function??
 	if(!$button_text AND $_POST['formulize_buttonText']) { $button_text = $_POST['formulize_buttonText']; }
-	
-	
+
+    $button_text = $button_text ? $button_text : _formulize_DMULTI_ALLDONE;
+
+    $settings['formulize_doneDest'] = $done_dest;
+    $settings['formulize_buttonText'] = $button_text;
+
 	list($fid, $frid) = getFormFramework($formframe, $mainform);
-	
-	$thankstext = $thankstext ? $thankstext : _formulize_DMULTI_THANKS; 
+
+	$thankstext = $thankstext ? $thankstext : _formulize_DMULTI_THANKS;
 	$introtext = $introtext ? $introtext : "";
-	
+
 	global $xoopsUser;
-	
+
 	$mid = getFormulizeModId();
 	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 	$gperm_handler =& xoops_gethandler('groupperm');
 	$member_handler =& xoops_gethandler('member');
 	$single_result = getSingle($fid, $uid, $groups, $member_handler, $gperm_handler, $mid);
-	
+
 	// if this function was called without an entry specified, then assume the identity of the entry we're editing (unless this is a new save, in which case no entry has been made yet)
 	// no handling of cookies here, so anonymous multi-page surveys will not benefit from that feature
 	// this emphasizes how we need to standardize a lot of these interfaces with a real class system
 	if(!$entry AND $_POST['entry'.$fid]) {
-		$entry = $_POST['entry'.$fid];
+		$entry = intval($_POST['entry'.$fid]);
+    } elseif(!$entry AND $_POST['form_'.$fid.'_rendered_entry']) {
+        $entry = intval($_POST['form_'.$fid.'_rendered_entry'][0]);
 	} elseif(!$entry) { // or check getSingle to see what the real entry is
 		$entry = $single_result['flag'] ? $single_result['entry'] : 0;
 	}
-	
+
 	// formulize_newEntryIds is set when saving data
-	if((!$entry OR $entry == 'new') AND isset($GLOBALS['formulize_newEntryIds'][$fid])) {
+	if((!$entry OR $entry == 'new') AND isset($GLOBALS['formulize_newEntryIds'][$fid]) AND !$removeEntryValue) {
 		$entry = $GLOBALS['formulize_newEntryIds'][$fid][0];
 	} elseif(!$entry) {
         $entry = 'new';
 	}
-	
+
 	$owner = getEntryOwner($entry, $fid);
-	
-	$prevPage = isset($_POST['formulize_prevPage']) ? $_POST['formulize_prevPage'] : 1; // last page that the user was on, not necessarily the previous page numerically
-	$currentPage = isset($_POST['formulize_currentPage']) ? $_POST['formulize_currentPage'] : 1;
-	$thanksPage = count($pages) + 1;
-	
+
+    if($currentPageScreen) {
+        if($screen AND $currentPageScreen == $screen->getVar('sid')) {
+            $currentPage = $_POST['formulize_currentPage'];
+        } else {
+            $currentPage = 1;
+        }
+    } else {
+        $currentPage = (!$elements_only AND isset($_POST['formulize_currentPage'])) ? $_POST['formulize_currentPage'] : 1;
+    }
+	$thanksPage = count((array) $pages) + 1;
+
 	// debug control:
 	$currentPage = (isset($_GET['debugpage']) AND is_numeric($_GET['debugpage'])) ? $_GET['debugpage'] : $currentPage;
-	
+
     $usersCanSave = formulizePermHandler::user_can_edit_entry($fid, $uid, $entry);
-	
+
 	if($pages[$prevPage][0] !== "HTML" AND $pages[$prevPage][0] !== "PHP") { // remember prevPage is the last page the user was on, not the previous page numerically
-		
-		if(isset($_POST['form_submitted']) AND $usersCanSave) {
-	
-			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formread.php";
+
+		if(isset($_POST['form_submitted']) AND $usersCanSave) { // if something was maybe saved, we might need to assume the identify of the entry just saved, so see if we can figure that out
+
 			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
-			include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
-	
-			//$owner_groups =& $member_handler->getGroupsByUser($owner, FALSE);
-			$data_handler = new formulizeDataHandler($fid);
-			$owner_groups = $data_handler->getEntryOwnerGroups($entry);		
-	
+
 			$entries[$fid][0] = $entry;
-	
-			if($frid) { 
-				$linkResults = checkForLinks($frid, array(0=>$fid), $fid, $entries); 
+
+			if($frid) {
+				$linkResults = checkForLinks($frid, array(0=>$fid), $fid, $entries);
 				unset($entries);
 				$entries = $linkResults['entries'];
+			} else {
+                $entries = $GLOBALS['formulize_allSubmittedEntryIds']; // set in readelements.php
 			}
-	
-			$entries = $GLOBALS['formulize_allWrittenEntryIds']; // set in readelements.php
-	
-	
+
 			// if there has been no specific entry specified yet, then assume the identity of the entry that was just saved -- assumption is it will be a new save
 			// from this point forward in time, this is the only entry that should be involved, since the 'entry'.$fid condition above will put this value into $entry even if this function was called with a blank entry value
 			if(!$entry) {
 				$entry = $entries[$fid][0];
 			}
-			
+
+            unset($_POST['form_submitted']);
 		}
 	}
 
@@ -142,107 +224,13 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	// check to see if there are conditions on this page, and if so are they met
 	// if the conditions are not met, move on to the next page and repeat the condition check
 	// conditions only checked once there is an entry!
-	$pagesSkipped = false;
-	if(is_array($conditions) AND $entry != 'new') {
+ 	$pagesSkipped = false;
+	if(is_array($conditions) AND !empty($conditions) AND (!$currentPageScreen OR ($screen AND $currentPageScreen == $screen->getVar('sid')))) {
 		$conditionsMet = false;
-		while(!$conditionsMet) {
-			if(isset($conditions[$currentPage]) AND count($conditions[$currentPage][0])>0) { // conditions on the current page
-				$thesecons = $conditions[$currentPage];
-				$elements = $thesecons[0];
-				$ops = $thesecons[1];
-				$terms = $thesecons[2];
-				$types = $thesecons[3]; // indicates if the term is part of a must or may set, ie: boolean and or or
-				$filter = "";
-				$oomfilter = "";
-				$blankORSearch = "";
-				foreach($elements as $i=>$thisElement) {
-					if($ops[$i] == "NOT") { $ops[$i] = "!="; }
-					if($terms[$i] == "{BLANK}") { // NOTE...USE OF BLANKS WON'T WORK CLEANLY IN ALL CASES DEPENDING WHAT OTHER TERMS HAVE BEEN SPECIFIED!!
-						if($ops[$i] == "!=" OR $ops[$i] == "NOT LIKE") {
-							if($types[$i] != "oom") {
-								// add to the main filter, ie: entry id = 1 AND x=5 AND y IS NOT "" AND y IS NOT NULL
-								if(!$filter) {
-									$filter = $entry."][".$elements[$i]."/**//**/!=][".$elements[$i]."/**//**/IS NOT NULL";
-								} else {
-									$filter .= "][".$elements[$i]."/**//**/!=][".$elements[$i]."/**//**/IS NOT NULL";
-								}
-							} else {
-								// Add to the OOM filter, ie: entry id = 1 AND (x=5 OR y IS NOT "" OR y IS NOT NULL)
-								if(!$oomfilter) {
-									$oomfilter = $elements[$i]."/**//**/=][".$elements[$i]."/**//**/IS NULL";
-								} else {
-									$oomfilter .= "][".$elements[$i]."/**//**/=][".$elements[$i]."/**//**/IS NULL";
-								}
-							}
-						} else {
-							if($types[$i] != "oom") {
-								// add to its own OR filter, since we MUST match this condition, but we don't care if it's "" OR NULL
-								// ie: entry id = 1 AND (x=5 OR y=10) AND (z = "" OR z IS NULL)
-								if(!$blankORSearch) {
-									$blankORSearch = $elements[$i]."/**//**/=][".$elements[$i]."/**//**/IS NULL";
-								} else {
-									$blankORSearch .= "][".$elements[$i]."/**//**/=][".$elements[$i]."/**//**/IS NULL";
-								}
-							} else {
-								// it's part of the oom filters anyway, so we put it there, because we don't care if it's null or "" or neither
-								if(!$oomfilter) {
-									$oomfilter = $elements[$i]."/**//**/=][".$elements[$i]."/**//**/IS NULL";
-								} else {
-									$oomfilter .= "][".$elements[$i]."/**//**/=][".$elements[$i]."/**//**/IS NULL";
-								}
-							}
-						}
-					} elseif($types[$i] == "oom") {
-						if(!$oomfilter) {
-							$oomfilter = $elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
-						} else {
-							$oomfilter .= "][".$elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
-						}
-					} else {
-						if(!$filter) {
-							$filter = $entry."][".$elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
-						} else {
-							$filter .= "][".$elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
-						}
-					}
-				}
-				if($oomfilter AND $filter) {
-					$finalFilter = array();
-					$finalFilter[0][0] = "AND";
-					$finalFilter[0][1] = $filter;
-					$finalFilter[1][0] = "OR";
-					$finalFilter[1][1] = $oomfilter;
-					if($blankORSearch) {
-						$finalFilter[2][0] = "OR";
-						$finalFilter[2][1] = $blankORSearch;
-					}
-				} elseif($oomfilter) {
-					// need to add the $entry as a separate filter from the oom, so the entry and oom get an AND in between them
-					$finalFilter = array();
-					$finalFilter[0][0] = "AND";
-					$finalFilter[0][1] = $entry;
-					$finalFilter[1][0] = "OR";
-					$finalFilter[1][1] = $oomfilter;
-					if($blankORSearch) {
-						$finalFilter[2][0] = "OR";
-						$finalFilter[2][1] = $blankORSearch;
-					}
-				} else {
-					if($blankORSearch) {
-						$finalFilter[0][0] = "AND";
-						$finalFilter[0][1] = $filter ? $filter : $entry;
-						$finalFilter[1][0] = "OR";
-						$finalFilter[1][1] = $blankORSearch;
-					} else {
-						$finalFilter = $filter;
-					}
-				}
-				$masterBoolean = "AND";
-
-				include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-				$data = getData($frid, $fid, $finalFilter, $masterBoolean, "", "", "", "", "", false, 0, false, "", false, true);
-				if(!$data) { 
-					if($prevPage <= $currentPage) {
+		while(!$conditionsMet AND $currentPage > 0) {
+			if(isset($conditions[$currentPage][0]) AND count((array) $conditions[$currentPage][0])>0) { // conditions on the current page
+				if(pageMeetsConditions($conditions, $currentPage, $entry, $fid, $frid) == false) {
+					if($prevPageThisScreen <= $currentPage) {
 						$currentPage++;
 					} else {
 						$currentPage--;
@@ -257,369 +245,242 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 			}
 		}
 	}
-	
+
+    if(!$currentPage) {
+        $currentPage = $thanksPage;
+    }
+
 	if($currentPage > 1) {
 	  $previousPage = $currentPage-1; // previous page numerically
 	} else {
 	  $previousPage = "none";
 	}
-	
+
 	$nextPage = $currentPage+1;
-	
-	$done_dest = $done_dest ? $done_dest : getCurrentURL();
-	$done_dest = substr($done_dest,0,4) == "http" ? $done_dest : "http://".$done_dest;
-	
-	// Set up the javascript that we need for the form-submit functionality to work
-	// note that validateAndSubmit calls the form validation function again, but obviously it will pass if it passed here.  The validation needs to be called prior to setting the pages, or else you can end up on the wrong page after clicking an ADD button in a subform when you've missed a required field.
-	// savedPage and savedPrevPage are used to pick up the page and prevpage only when a two step validation, such as checking for uniqueness, returns and calls validateAndSubmit again
-	?>
-	
-	<script type='text/javascript'>
-	var savedPage;
-	var savedPrevPage;
-	function submitForm(page, prevpage) {
-		var validate = xoopsFormValidate_formulize();
-		if(validate) {
-			savedPage = 0;
-			savedPrevPage = 0;
-			multipageSetHiddenFields(page, prevpage);
-			if (formulizechanged) {
-        validateAndSubmit();
-      } else {
-        jQuery("#formulizeform").animate({opacity:0.4}, 200, "linear");
-        jQuery("input[name^='decue_']").remove();
-        // 'rewritePage' will trigger the page to change after the locks have been removed
-        removeEntryLocks('rewritePage');
-      }
-    } else {
-			savedPage = page;
-			savedPrevPage = prevpage;
-		}
-  }
 
-	function multipageSetHiddenFields(page, prevpage) {
-		<?php
-			// neuter the ventry which is the key thing that keeps us on the form page,
-			//  if in fact we just came from a list screen of some kind.
-			// need to use an unusual selector, because something about selecting by id wasn't working,
-			//  apparently may be related to setting actions on forms with certain versions of jQuery?
-			print "
-			if(page == $thanksPage) {
-				window.document.formulize.ventry.value = '';
-				jQuery('form[name=formulize]').attr('action', '$done_dest');
-      }
-";?>
-      window.document.formulize.formulize_currentPage.value = page;
-      window.document.formulize.formulize_prevPage.value = prevpage;
-      window.document.formulize.formulize_doneDest.value = '<?php print $done_dest; ?>';
-      window.document.formulize.formulize_buttonText.value = '<?php print $button_text; ?>';
-	}
-
-	function pageJump(options, prevpage) {
-		for (var i=0; i < options.length; i++) {
-			if (options[i].selected) {
-				submitForm(options[i].value, prevpage);
-				return false;
-			}
-		}
-	}
-	
-	</script><noscript>
-	<h1>You do not have javascript enabled in your web browser.  This form will not work with your web browser.  Please contact the webmaster for assistance.</h1>
-	</noscript>
-	<?php
-		
-	if($currentPage == $thanksPage) {
-	
-        if($screen AND $screen->getVar('finishisdone')) {
-            print "<script type='text/javascript'>location = '$done_dest';</script>";
-            return; // if we've ended up on the thanks page via conditions (last page was not shown) then we should just bail if there is not supposed to be a thanks page
+		global $formulizeCanonicalURI;
+    if(!$done_dest) {
+        // check for a dd in get and use that as a screen id
+        if(isset($_GET['dd']) AND is_numeric($_GET['dd'])) {
+            $done_dest = XOOPS_URL.'/modules/formulize/index.php?sid='.$_GET['dd'];
+        } else {
+            $done_dest = getCurrentURL();
+            // check if the done destination is for this specific form screen that we're rendering, if so, switch done destination to the default list for the form if any
+						$alternateURLForSid = $screen->getVar('rewriteruleAddress');
+						$doneDestHasSid = strstr($done_dest, 'sid='.$screen->getVar('sid'));
+						$doneDestHasSid = $doneDestHasSid ? $doneDestHasSid : ($alternateURLForSid AND strstr($done_dest, $alternateURLForSid));
+            if($screen AND $doneDestHasSid) {
+                $form_handler = xoops_getmodulehandler('forms', 'formulize');
+                $formObject = $form_handler->get($screen->getVar('fid'));
+                if($defaultListScreenId = $formObject->getVar('defaultlist')) {
+										$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+										if($defaultListScreenObject = $screen_handler->get($defaultListScreenId)) {
+											if($rewriteruleAddress = $defaultListScreenObject->getVar('rewriteruleAddress')) {
+												$done_dest = XOOPS_URL.'/'.$rewriteruleAddress;
+											} else {
+                    		$done_dest = XOOPS_URL.'/modules/formulize/index.php?sid='.$defaultListScreenId;
+											}
+										}
+                }
+            }
         }
-    
-		if(is_array($thankstext)) { 
-			if($thankstext[0] === "PHP") {
-				eval($thankstext[1]);
-			} else {
-				print $thankstext[1];
+    }
+
+		// strip out any ve portion of a done destination, so we don't end up forcing the user back to this entry after they're done
+		$veTarget = strstr($done_dest, '&ve=') ? '&ve=' : '?ve=';
+		if($done_dest AND $vepos = strpos($done_dest, $veTarget)) {
+				if(is_numeric(substr($done_dest, $vepos+4))) {
+						$done_dest = substr($done_dest, 0, $vepos);
+				}
+		}
+		// if there was an alternate URL used to access the page, and a ve was specified, scale back to remove the ve from the done_dest
+		global $formulizeCanonicalURI;
+		if($done_dest AND $formulizeCanonicalURI AND $_GET['ve']) {
+			$trimmedDoneDest = trim($done_dest, '/'); // take off last slash if any
+			$trailingSlash = $trimmedDoneDest === $done_dest ? '' : '/'; // if there was a slash on the end, remember this for later
+			$doneDestParts = explode('/', $trimmedDoneDest); // split on slashes
+			if(intval($doneDestParts[count($doneDestParts)-1]) === intval($_GET['ve'])) { // make sure this is the ve we're talking about
+				unset($doneDestParts[count($doneDestParts)-1]); // remove the last value, which will be the ve number
+				$done_dest = implode('/', $doneDestParts).$trailingSlash; // put back together, with trailing slash if necessary
 			}
-		} else { // HTML
-			print html_entity_decode($thankstext);
 		}
-		print "<br><hr><br><div id=\"thankYouNavigation\"><p><center>\n";
-		if($pagesSkipped) {
-			print _formulize_DMULTI_SKIP . "</p><p>\n";
-		}
-		$button_text = $button_text ? $button_text : _formulize_DMULTI_ALLDONE;
-		if($button_text != "{NOBUTTON}") {
-			print "<a href='$done_dest'";
-			if(is_array($settings)) {
-				print " onclick=\"javascript:window.document.calreturnform.submit();return false;\"";
-			}
-			print ">" . $button_text . "</a>\n";
-		}
-		print "</center></p></div>";
-	
-		if(is_array($settings)) {
-			print "<form name=calreturnform action=\"$done_dest\" method=post>\n";
-			writeHiddenSettings($settings);
-			print "</form>";
-		}
-	
-	
-	} 
-	
-	if($currentPage == 1 AND $pages[1][0] !== "HTML" AND $pages[1][0] !== "PHP" AND !$_POST['goto_sfid']) { // only show intro text on first page if there's actually a form there
-	  print html_entity_decode(html_entity_decode($introtext));
-	}
-	
-	unset($_POST['form_submitted']);
-	
-	
-	
-	
-	
-	// display an HTML or PHP page if that's what this page is...
-	if($currentPage != $thanksPage AND ($pages[$currentPage][0] === "HTML" OR $pages[$currentPage][0] === "PHP")) {
-		// PHP
-		if($pages[$currentPage][0] === "PHP") {
-			eval($pages[$currentPage][1]);
-		// HTML
-		} else {
-			print $pages[$currentPage][1];
-		}
-	
-		// put in the form that passes the entry, page we're going to and page we were on
-		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
-		?>
-	
-		
-		<form name=formulize id=formulize action=<?php print getCurrentURL(); ?> method=post>
-		<input type=hidden name=entry<?php print $fid; ?> id=entry<?php print $fid; ?> value=<?php print $entry ?>>
-		<input type=hidden name=formulize_currentPage id=formulize_currentPage value="">
-		<input type=hidden name=formulize_prevPage id=formulize_prevPage value="">
-		writeHiddenSettings($settings);
-		</form>
-	
-		<script type="text/javascript">
-			function validateAndSubmit() {
-				window.document.formulize.submit();
-			}
-		</script>
-	
-		<?php
-	
-	}
-	
+
+	$done_dest = substr($done_dest,0,4) == "http" ? $done_dest : "http://".$done_dest;
+
 	// display a form if that's what this page is...
 	if($currentPage != $thanksPage AND $pages[$currentPage][0] !== "HTML" AND $pages[$currentPage][0] !== "PHP") {
-	
-		$buttonArray = array(0=>"{NOBUTTON}", 1=>"{NOBUTTON}");
+
+        if($currentPage == 1 AND $pages[1][0] !== "HTML" AND $pages[1][0] !== "PHP" AND !$_POST['goto_sfid']) { // only show intro text on first page if there's actually a form there
+            print undoAllHTMLChars($introtext);
+        }
+
 		foreach($pages[$currentPage] as $element) {
-		  $elements_allowed[] = $element;
-	  }
+            $elements_allowed[] = $element;
+	    }
 		$forminfo['elements'] = $elements_allowed;
 		$forminfo['formframe'] = $formframe;
-		$titleOverride = isset($pageTitles[$currentPage]) ? trans($pageTitles[$currentPage]) : "all"; // we can pass in any text value as the titleOverride, and it will have the same effect as "all", but the alternate text will be used as the title for the form
-	
-		$GLOBALS['nosubforms'] = true; // subforms cannot have a view button on multipage forms, since moving to a sub causes total confusion of which entry and fid you are looking at
-	
-		$settings['formulize_currentPage'] = $currentPage;
-		$settings['formulize_prevPage'] = $currentPage; // now that we're done everything else, we can send the current page as the previous page when initializing the form.  Javascript will set the true value prior to submission.
-	
+        $settings['formulize_currentPage'] = $currentPage;
+		$settings['formulize_prevPage'] = $prevPage;
+        $settings['formulize_prevScreen'] = $prevScreen;
+
+        $titleOverride = $elements_only ? 'formElementsOnly' : 'all';
+
 		formulize_benchmark("Before drawing nav.");
-	
-		$previousButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['previousButtonText'])) ? $saveAndContinueButtonText['previousButtonText'] : _formulize_DMULTI_PREV;
-		if($usersCanSave AND $nextPage==$thanksPage) {
-		    $nextButtonText = (is_array($saveAndContinueButtonText) AND $saveAndContinueButtonText['saveButtonText']) ? $saveAndContinueButtonText['saveButtonText'] :  _formulize_DMULTI_SAVE;
-		} else {
-		    $nextButtonText = (is_array($saveAndContinueButtonText) AND $saveAndContinueButtonText['nextButtonText']) ? $saveAndContinueButtonText['nextButtonText'] : _formulize_DMULTI_NEXT;
-		}
-		$previousPageButton = generatePrevNextButtonMarkup("prev", $previousButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
-		$nextPageButton = generatePrevNextButtonMarkup("next", $nextButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
-		$savePageButton = generatePrevNextButtonMarkup("save", _formulize_SAVE, $usersCanSave, $nextPage, $previousPage, $thanksPage);
-		$totalPages = count($pages);
-		$skippedPageMessage = $pagesSkipped ? _formulize_DMULTI_SKIP : "";
-		$pageSelectionList = pageSelectionList($currentPage, $totalPages, $pageTitles, "above");   // calling for the 'above' drawPageNav 
 
-        // setting up the basic templateVars for all templates
-        $templateVariables = array('previousPageButton' => $previousPageButton, 'nextPageButton' => $nextPageButton, 'savePageButton' => $savePageButton,
-            'totalPages' => $totalPages, 'currentPage' => $currentPage, 'skippedPageMessage' => $skippedPageMessage,
-            'pageSelectionList'=>$pageSelectionList, 'pageTitles' => $pageTitles, 'entry_id'=>$entry, 'form_id'=>$fid, 'owner'=>$owner);
+        if(!$elements_only) {
 
-		print "<form name=\"pageNavOptions_above\" id=\"pageNavOptions_above\">\n";
-		if($screen AND $toptemplate = $screen->getTemplate('toptemplate')) {
-		    formulize_renderTemplate('toptemplate', $templateVariables, $screen->getVar('sid'));
-		} else {
-		    drawPageNav($usersCanSave, $currentPage, $totalPages, "above", $nextPageButton, $previousPageButton, $skippedPageMessage, $pageSelectionList);
-		}
-		print "</form>";
-		
-		formulize_benchmark("After drawing nav/before displayForm.");
-		
-	    // need to check for the existence of an elementtemplate property in the screen, like we did with the top and bottom templates
-	    // if there's an eleemnt template, then do this loop, otherwise, do the displayForm call like normal
-	    if ($screen AND $elementtemplate = $screen->getTemplate('elementtemplate')) {  // Code added by Julian 2012-09-04 and Gordon Woodmansey 2012-09-05 to render the elementtemplate
-		    if(!security_check($fid, $entry)) {
-			exit();
-		    }
-		    // start the form manually...
-		    $formObjectForRequiredJS = new formulize_themeForm('form object for required js', 'formulize', getCurrentURL(), "post", true);
-		    $element_handler = xoops_getmodulehandler('elements', 'formulize');
-		    print "<div id='formulizeform'><form id='formulize' name='formulize' action='".getCurrentURL()."' method='post' onsubmit='return xoopsFormValidate_formulize();' enctype='multipart/form-data'>";
-		    foreach ($elements_allowed as $thisElement) {   // entry is a recordid, $thisElement is the element id
-			    // to get the conditional logic to be captured, we should buffer the drawing of the displayElement, and then output that later, because when displayElement does NOT return an object, then we get conditional logic -- subform rendering does it this way
-			    unset($form_ele); // previously set elements may linger when added to the form object, due to assignment of objects by reference or something odd like that...legacy of old code in the form class I think
-			    $deReturnValue = displayElement("", $thisElement, $entry, false, $screen, null, false);
-			    if (is_array($deReturnValue)) {
-				    $form_ele = $deReturnValue[0];
-				    $isDisabled = $deReturnValue[1];
-				    if(isset($deReturnValue[2])) {
-					$hiddenElements = $deReturnValue[2];
-				    }
-			    } else {
-				    $form_ele = $deReturnValue;
-				    $isDisabled = false;
-			    }
-			    if ($form_ele == "not_allowed") {
-				continue;
-			    } elseif($form_ele == "hidden") {
-				$cueEntryValue = $entry ? $entry : "new";
-				$cueElement = new xoopsFormHidden("decue_".$fid."_".$cueEntryValue."_".$thisElement, 1);
-				print $cueElement->render();
-				if(is_array($hiddenElements)) {
-					foreach($hiddenElements as $thisHiddenElement) {
-						if($is_object($thisHiddenElement)) {
-							print $thisHiddenElement->render()."\n";
-						}
-					}
-				} elseif(is_object($hiddenElements)) {
-					print $hiddenElements->render()."\n";
-				}
-				continue;
-			    } else {
-				$thisElementObject = $element_handler->get($thisElement);
-				$req = !$isDisabled ? intval($thisElementObject->getVar('ele_req')) : 0; 
-				$formObjectForRequiredJS->addElement($form_ele, $req);
-				$elementMarkup = $form_ele->render();
-				$elementCaption = displayCaption("", $thisElement);
-				$elementDescription = displayDescription("", $thisElement);
-				$templateVariables['elementObjectForRendering'] = $form_ele;
-				$templateVariables['elementCaption'] = $elementCaption;  // here we can assume that the $previousPageButton etc has not be changed before rendering 
-			        $templateVariables['elementMarkup'] = $elementMarkup;
-			        $templateVariables['elementDescription'] = $elementDescription;
-			        $templateVariables['element_id'] = $thisElement;
-				formulize_renderTemplate('elementtemplate', $templateVariables, $screen->getVar('sid'));
-			        
-			    }
-		    }
-		    // now we also need to add in some bits that are necessary for the form submission logic to work...borrowed from parts of formdisplay.php mostly...this should be put together into a more distinct rendering system for forms, so we can call the pieces as needed
-		    print "<input type=hidden name=formulize_currentPage value='".$settings['formulize_currentPage']."'>";
-		    print "<input type=hidden name=formulize_prevPage value='".$settings['formulize_prevPage']."'>";
-		    print "<input type=hidden name=formulize_doneDest value='".$settings['formulize_doneDest']."'>";
-		    print "<input type=hidden name=formulize_buttonText value='".$settings['formulize_buttonText']."'>";
-		    print "<input type=hidden name=ventry value='".$settings['ventry']."'>";
-		    print $GLOBALS['xoopsSecurity']->getTokenHTML();
-		    if($entry) {
-			    print "<input type=hidden name=entry".$fid." value=".intval($entry).">"; // need this to persist the entry that the user is 
-		    }
-		    print "</form></div>";
-		    print "<div id=savingmessage style=\"display: none; position: absolute; width: 100%; right: 0px; text-align: center; padding-top: 50px;\">\n";
-		    if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/images/saving-".$xoopsConfig['language'].".gif") ) {
-			    print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/saving-" . $xoopsConfig['language'] . ".gif\">\n";
-		    } else {
-			    print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/saving-english.gif\">\n";
-		    }
-		    print "</div>\n";
-		    drawJavascript();
-		    // need to create the form object, and add all the rendered elements to it, and then we'll have working required elements if we render the validation logic for the form
-		    print $formObjectForRequiredJS->renderValidationJS(true, true); // with tags, true, skip the extra js that checks for the formulize theme form divs around the elements so that conditional animation works, true
-		    // print "<script type=\"text/javascript\">function xoopsFormValidate_formulize(){return true;}</script>"; // shim for the validation javascript that is created by the xoopsThemeForms, and which our saving logic currently references...saving won't work without this...we should actually render the proper validation logic at some point, but not today.
-	    } else {
-            displayForm($forminfo, $entry, $mainform, "", $buttonArray, $settings, $titleOverride, $overrideValue, "", "", 0, 0, $printall, $screen); // nmc 2007.03.24 - added empty params & '$printall'
-	    }
-	    
-		formulize_benchmark("After displayForm.");
+            global $formulize_displayingMultipageScreen;
+            $formulize_displayingMultipageScreen = $screen ? array('sid'=>$screen->getVar('sid')) : array('sid'=>false);
+
+            $showPageTitles = ($screen AND $screen->getUIOption('showpagetitles')) ? true : false;
+            $titleOverride = (isset($pageTitles[$currentPage]) AND $showPageTitles) ? trans($pageTitles[$currentPage]) : "all"; // we can pass in any text value as the titleOverride, and it will have the same effect as "all", but the alternate text will be used as the title for the form
+
+            if(!is_array($saveAndContinueButtonText)) {
+                $saveAndContinueButtonText = array();
+                $saveAndContinueButtonText['prevButtonText'] = trans(_formulize_DMULTI_PREV);
+                $saveAndContinueButtonText['leaveButtonText'] = trans(_formulize_SAVE_AND_LEAVE);
+                $saveAndContinueButtonText['saveButtonText'] = trans(_formulize_SAVE);
+                $saveAndContinueButtonText['finishButtonText'] =  trans(_formulize_DMULTI_SAVE);
+                $saveAndContinueButtonText['nextButtonText'] = trans(_formulize_DMULTI_NEXT);
+                $saveAndContinueButtonText['printableViewButtonText'] = trans(_formulize_PRINTVIEW);
+            }
+
+            if($currentPage != 1) {
+                // previousButtonText used to be valid... backwards compatibility
+                $previousButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['previousButtonText'])) ? $saveAndContinueButtonText['previousButtonText'] : '';
+                $previousButtonText = (!$previousButtonText AND is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['prevButtonText'])) ? $saveAndContinueButtonText['prevButtonText'] : '';
+            } else {
+                $previousButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['leaveButtonText'])) ? $saveAndContinueButtonText['leaveButtonText'] : '';
+            }
+            $saveButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['saveButtonText'])) ? $saveAndContinueButtonText['saveButtonText'] : '';
+            if($usersCanSave AND $nextPage==$thanksPage) {
+                $nextButtonText = (is_array($saveAndContinueButtonText) AND $saveAndContinueButtonText['finishButtonText']) ? $saveAndContinueButtonText['finishButtonText'] :  '';
+            } else {
+                $nextButtonText = (is_array($saveAndContinueButtonText) AND $saveAndContinueButtonText['nextButtonText']) ? $saveAndContinueButtonText['nextButtonText'] : '';
+            }
+            $previousPageButton = generatePrevNextButtonMarkup("prev", $previousButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
+            $nextPageButton = generatePrevNextButtonMarkup("next", $nextButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
+            $savePageButton = generatePrevNextButtonMarkup("save", $saveButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
+            $totalPages = count((array) $pages);
+            $skippedPageMessage = $pagesSkipped ? _formulize_DMULTI_SKIP : "";
+            $pageSelectionList = pageSelectionList($currentPage, $totalPages, $pageTitles, "below", $conditions, $entry, $fid, $frid); // pageSelector can only show up once on the page, and we draw it with 'below' as the designation, since by default it shows up in the bottom templates. Used to be two versions, above and below, which allowed two copies of this to be functional in the page. Different names were required by the JS, which could be refactored to not need that. But expecting only one per page is valid and simpler for now.
+
+            $pageIndicator = $screen->getUIOption("showpageindicator") ? "<div id='page-indicator'>"._formulize_DMULTI_PAGE." $currentPage "._formulize_DMULTI_OF." $totalPages</div>" : "";
+            $pageSelector = $screen->getUIOption("showpageselector") ? "<div id='page-selector'>"._formulize_DMULTI_JUMPTO."&nbsp;&nbsp;$pageSelectionList<div>" : "";
+
+            // setting up the basic templateVars for all templates
+            $templateVariables = array(
+                // navstyle - 0 is buttons, 1 is tabs, 2 is tabs and buttons, 3 is nothing at all
+                'previousPageButton' => (($screen->getVar('navstyle') == 1 OR $screen->getVar('navstyle') == 3) ? "" : $previousPageButton),
+                'nextPageButton' => (($screen->getVar('navstyle') == 1 OR $screen->getVar('navstyle') == 3) ? "" : $nextPageButton),
+                'savePageButton' => $savePageButton,
+                'totalPages' => $totalPages,
+                'currentPage' => $currentPage,
+                'skippedPageMessage' => $skippedPageMessage,
+                'pageSelectionList' => $pageSelectionList,
+                'pageTitles' => $pageTitles,
+                'entry_id' => $entry,
+                'form_id' => $fid,
+                'owner' => $owner,
+                'saveAndLeaveText' => $saveAndContinueButtonText['leaveButtonText'],
+                'saveAndGoBackText' => $saveAndContinueButtonText['prevButtonText'],
+                'pageIndicator' => $pageIndicator,
+                'pageSelector' => $pageSelector,
+                'usersCanSave' => $usersCanSave,
+                'showpageindicator' => $screen->getUIOption("showpageindicator"),
+                'showpageselector' => $screen->getUIOption("showpageselector"),
+                'showTabs' => (($screen->getVar('navstyle') == 1 OR $screen->getVar('navstyle') == 2) ? true : false)
+                );
+
+            $templatePageTitles = array();
+            unset($templateVariables['pageTitles'][0]);
+            foreach($templateVariables['pageTitles'] as $i=>$title) {
+                if(pageMeetsConditions($conditions, $i, $entry, $fid, $frid)) {
+                    $templatePageTitles[$i] = $title;
+                }
+            }
+            $templateVariables['pageTitles'] = $templatePageTitles;
+            $templateVariables['aboveBelow'] = 'above';
+
+            global $formulize_displayingSubform;
+            if($formulize_displayingSubform) {
+                $templateVariables['saveAndLeave'] = $templateVariables['saveAndGoBackText'] ? trans($templateVariables['saveAndGoBackText']) : trans(_formulize_SAVE_AND_GOBACK);
+            } else {
+                $templateVariables['saveAndLeave'] = $templateVariables['saveAndLeaveText'] ? trans($templateVariables['saveAndLeaveText']) : trans(_formulize_SAVE_AND_LEAVE);
+            }
+
+            $printableViewButonText = $saveAndContinueButtonText['printableViewButtonText'] ? $saveAndContinueButtonText['printableViewButtonText'] : "{NOBUTTON}";
+            $buttonArray = array(0=>"{NOBUTTON}", 1=>"{NOBUTTON}", 2=>"{NOBUTTON}", 3=>$printableViewButonText);
+            $GLOBALS['formulize_displayingMultipageScreen']['templateVariables'] = $templateVariables;
+        }
+
+        if(count((array) $elements_allowed)==0) {
+          print "Error: there are no form elements specified for page number $currentPage. Please contact the webmaster.";
+        } else {
+					writeToFormulizeLog(array(
+						'formulize_event'=>'rendering-form-screen-page',
+						'user_id'=>($xoopsUser ? $xoopsUser->getVar('uid') : 0),
+						'form_id'=>$fid,
+						'screen_id'=>(is_object($screen) ? $screen->getVar('sid') : 0),
+						'entry_id'=>$entry,
+						'form_screen_page_number'=>$currentPage
+					));
+          displayForm($forminfo, $entry, $mainform, "", $buttonArray, $settings, $titleOverride, $overrideValue, $overrideMulti, "", 0, $printall, $screen); // nmc 2007.03.24 - added empty params & '$printall'
+        }
+
     }
 
-    if($currentPage != $thanksPage AND !$_POST['goto_sfid']) {
-	    // have to get the new value for $pageSelection list if the user requires it on the users view.
-	    $pageSelectionList = pageSelectionList($currentPage, $totalPages, $pageTitles, "below");
-	    print "<form name=\"pageNavOptions_below\" id=\"pageNavOptions_below\">\n";
-	    if ($screen AND $bottomtemplate = $screen->getTemplate('bottomtemplate')) { 
-		    $templateVariables['pageSelectionList'] = $pageSelectionList; // assign the new pageSelectionList, since it was redone for the bottom section
-		    formulize_renderTemplate('bottomtemplate', $templateVariables, $screen->getVar('sid'));
-	    } else {
-		    drawPageNav($usersCanSave, $currentPage, $totalPages, "below", $nextPageButton, $previousPageButton, $skippedPageMessage, $pageSelectionList);
-	    }
-	    print "</form>";
-    }
+	if(!$elements_only AND !isset($GLOBALS['formulize_inlineSubformFrid']) AND !strstr(getCurrentURL(), 'subformdisplay-elementsonly.php')) {
+		include_once XOOPS_ROOT_PATH.'/modules/formulize/include/multipage_boilerplate.php';
+	}
+
     formulize_benchmark("End of displayFormPages.");
 } // end of the function!
 
-
-function drawPageNav($usersCanSave="", $currentPage="", $totalPages, $aboveBelow, $nextPageButton, $previousPageButton,
-    $skippedPageMessage, $pageSelectionList)
-{
-    global $xoopsTpl;
-    $xoopsTpl->assign("usersCanSave", $usersCanSave);
-    $xoopsTpl->assign("currentPage", $currentPage);
-    $xoopsTpl->assign("totalPages", $totalPages);
-    $xoopsTpl->assign("aboveBelow", $aboveBelow);
-    if($aboveBelow == 'below') {
-        $xoopsTpl->assign("bottom", 'Bottom');
-    } else {
-        $xoopsTpl->assign("bottom", '');
-    }
-    $xoopsTpl->assign("nextPageButton", $nextPageButton);
-    $xoopsTpl->assign("previousPageButton", $previousPageButton);
-    $xoopsTpl->assign("skippedPageMessage", $skippedPageMessage);
-    $xoopsTpl->assign("pageSelectionList", $pageSelectionList);
-    $xoopsTpl->assign("_formulize_DMULTI_PAGE", _formulize_DMULTI_PAGE);
-    $xoopsTpl->assign("_formulize_DMULTI_OF", _formulize_DMULTI_OF);
-    $xoopsTpl->assign("_formulize_DMULTI_JUMPTO", _formulize_DMULTI_JUMPTO);
-    $xoopsTpl->display("file:".XOOPS_ROOT_PATH."/modules/formulize/templates/multipage-navigation.html");
-}
-
 // THIS FUNCTION GENERATES THE MARKUP FOR THE PREVIOUS AND NEXT BUTTONS
 function generatePrevNextButtonMarkup($buttonType, $buttonText, $usersCanSave, $nextPage, $previousPage, $thanksPage) {
+
+    if(!$buttonText OR ($buttonType == 'save' AND !$usersCanSave)) { return ''; }
+
+    $buttonText = trans($buttonText);
     $buttonMarkup = "";
-    
+
     switch($buttonType) {
-	case 'next':
-		$buttonJavascriptAndExtraCode = "onclick=\"javascript:submitForm($nextPage, ".($previousPage+1).");return false;\"";
-		break;
-	case 'prev':
-		$buttonJavascriptAndExtraCode = "onclick=\"javascript:submitForm($previousPage, ".($previousPage+1).");return false;\"";	
-		break;
-	case 'save':
-		$buttonJavascriptAndExtraCode = "onclick=\"javascript:submitForm(".($previousPage+1).", ".($previousPage+1).");return false;\"";
+        case 'next':
+            $buttonJavascriptAndExtraCode = "onclick=\"javascript:submitForm($nextPage, ".(intval($previousPage)+1).");return false;\"";
+            break;
+        case 'prev':
+            $buttonJavascriptAndExtraCode = "onclick=\"javascript:submitForm($previousPage, ".(intval($previousPage)+1).");return false;\"";
+            break;
+        case 'save':
+            $buttonJavascriptAndExtraCode = "onclick=\"javascript:submitForm(".(intval($previousPage)+1).", ".(intval($previousPage)+1).");return false;\"";
     }
-    
+
     if($buttonType == "next" OR $buttonType == "save") {
-        if(!$usersCanSave AND $nextPage==$thanksPage) {
-            $buttonJavascriptAndExtraCode = "disabled=true";
-        }
         $buttonMarkup = "<input type=button name='$buttonType' id='$buttonType' class='formulize-form-submit-button' value='" . $buttonText . "' $buttonJavascriptAndExtraCode>\n";
     } elseif($buttonType == "prev") {
         if($previousPage == "none") {
             $buttonJavascriptAndExtraCode = "onclick=\"javascript:submitForm($thanksPage, 1);return false;\"";
         }
-        $buttonMarkup = "<input type=button name=prev id=prev class='formulize-form-submit-button' value='" . $buttonText . "' $buttonJavascriptAndExtraCode>\n";
+        $buttonMarkup = "<input type=button name='prev' id='prev' class='formulize-form-submit-button' value='" . $buttonText . "' $buttonJavascriptAndExtraCode>\n";
     }
     return $buttonMarkup;
 }
 
 
-function pageSelectionList($currentPage, $countPages, $pageTitles, $aboveBelow) {
+function pageSelectionList($currentPage, $countPages, $pageTitles, $aboveBelow, $conditions, $entry_id, $fid, $frid) {
 
 	static $pageSelectionList = array();
-	
-	if(isset($pageSelectionList[$aboveBelow])) {
-		return $pageSelectionList[$aboveBelow];
+
+    $cacheKey = md5(serialize(func_get_args()));
+
+	if(isset($pageSelectionList[$cacheKey])) {
+		return $pageSelectionList[$cacheKey];
 	}
 
-	$pageSelectionList[$aboveBelow] .= "<select name=\"pageselectionlist_$aboveBelow\" id=\"pageselectionlist_$aboveBelow\" size=\"1\" onchange=\"javascript:pageJump(this.form.pageselectionlist_$aboveBelow.options, $currentPage);\">\n";
+	$pageSelectionList[$cacheKey] .= "<select name=\"pageselectionlist_$aboveBelow\" id=\"pageselectionlist_$aboveBelow\" size=\"1\" onchange=\"javascript:pageJump(this.form.pageselectionlist_$aboveBelow.options, $currentPage);\">\n";
 	for($page=1;$page<=$countPages;$page++) {
+        if(pageMeetsConditions($conditions, $page, $entry_id, $fid, $frid)) {
 		if(isset($pageTitle[$page]) AND strstr($pageTitles[$page], "[")) {
 			$title = " &mdash; " . trans($pageTitles[$page]); // translation can be expensive, so only do it if we have to (regular expression matching is not pretty)
 		} elseif(isset($pageTitles[$page])) {
@@ -627,10 +488,11 @@ function pageSelectionList($currentPage, $countPages, $pageTitles, $aboveBelow) 
 		} else {
 			$title = "";
 		}
-		$pageSelectionList[$aboveBelow] .= "<option value=$page";
-		$pageSelectionList[$aboveBelow] .= $page == $currentPage ? " selected=true>" : ">";
-		$pageSelectionList[$aboveBelow] .= $page . $title . "</option>\n";
+		$pageSelectionList[$cacheKey] .= "<option value=$page";
+		$pageSelectionList[$cacheKey] .= $page == $currentPage ? " selected=true>" : ">";
+		$pageSelectionList[$cacheKey] .= $page . $title . "</option>\n";
 	}
-	$pageSelectionList[$aboveBelow] .= "</select>";
-	return $pageSelectionList[$aboveBelow];
+	}
+	$pageSelectionList[$cacheKey] .= "</select>";
+	return $pageSelectionList[$cacheKey];
 }

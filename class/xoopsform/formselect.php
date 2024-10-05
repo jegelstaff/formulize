@@ -26,14 +26,14 @@ if (!defined('ICMS_ROOT_PATH')) {
  *
  * @author	    Kazumi Ono	<onokazu@xoops.org>
  * @copyright	copyright (c) 2000-2003 XOOPS.org
- * @deprecated	Use icms_form_element_Select instead
+ * deprecated	Use icms_form_element_Select instead
  * @todo		Remove in version 1.4
  */
 class XoopsFormSelect extends icms_form_elements_Select {
 
 	private $_deprecated;
 
-	function XoopsFormSelect($caption, $name, $value = null, $size = 1, $multiple = false){
+	function __construct($caption, $name, $value = null, $size = 1, $multiple = false){
 		parent::__construct($caption, $name, $value, $size, $multiple);
 		$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_Select', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}

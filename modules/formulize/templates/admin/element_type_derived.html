@@ -5,9 +5,9 @@
 		    <legend><{$smarty.const._AM_ELE_DERIVED_CAP}></legend>
 	      <textarea id="elements-ele_value" name="elements-ele_value[0]" class="code-textarea" rows="5" cols="35"><{$content.ele_value[0]}></textarea>
 	      <div class="description">
-          <p><{$content.listofelementsoptions}> <input type=button name=addele value="<{$smarty.const._AM_ELE_DERIVED_ADD}>"></p>
           <p><{$smarty.const._AM_ELE_DERIVED_DESC}></p>
-        </div>
+				</div>
+				<{include file=db:admin/variable_template_help.html variables=$content.variabletemplatehelp}>
 	    </fieldset>
     </div>
 
@@ -46,13 +46,13 @@
 		    <div class="form-item">
 			    <label for="elements-ele_value[4]"><{$smarty.const._AM_ELE_NUMBER_OPTS_SEP}></label><input type="text" id="elements-ele_value[4]" name="elements-ele_value[4]" value="<{$content.ele_value.4}>" size="5" maxlength="255"/>
 		    </div>
-		    
+
 		    <div class="description">
 			    <{$smarty.const._AM_ELE_NUMBER_OPTS_DESC}>
 		    </div>
 	    </fieldset>
     </div>
-  
+
 </div>
 
 
@@ -68,7 +68,7 @@
 		caret: function (start, end) {
 			var elem = this[0];
 
-			if (elem) {							
+			if (elem) {
 				// get caret range
 				if (typeof start == "undefined") {
 					if (elem.selectionStart) {
@@ -145,14 +145,18 @@ $("[name=updateder]").click(function () {
 });
 
 function updateDerivedValues(fid,frid,limitStart){
-    $.get("<{$xoops_url}>/modules/formulize/formulize_xhr_responder.php?uid=<{$content.uid}>&op=update_derived_value&fid="+fid+"&frid="+frid+"&limitstart="+limitStart, function(data){
-            if(data > 0){
+    $.post("<{$xoops_url}>/modules/formulize/formulize_xhr_responder.php?uid=<{$content.uid}>&op=update_derived_value&fid="+fid+"&frid="+frid+"&limitstart="+limitStart, function(data){
+            if(!isNaN(data) && data > 0){
                 limitStart += parseInt(data);
                 updateDerivedValues(fid,frid,limitStart);
             }else{
                 $("[name=updateder_Info]").hide();
                 $("[name=updateder_controls]").show();
+                if (isNaN(data)) {
+                    alert(data);
+                } else {
                 $("#derivedfinished").show();
+                }
             }
         });
     }

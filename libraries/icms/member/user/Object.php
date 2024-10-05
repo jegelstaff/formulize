@@ -23,7 +23,7 @@ class icms_member_user_Object extends icms_core_Object {
 	 * Array of groups that user belongs to
 	 * @var array
 	 */
-	private $_groups = array();
+	public $_groups = array();
 	/**
 	 * @var bool is the user admin?
 	 */
@@ -69,7 +69,7 @@ class icms_member_user_Object extends icms_core_Object {
 		$this->initVar('umode', XOBJ_DTYPE_OTHER, null, false);
 		$this->initVar('uorder', XOBJ_DTYPE_INT, 1, false);
 		// RMV-NOTIFY
-		$this->initVar('notify_method', XOBJ_DTYPE_OTHER, 1, false);
+		$this->initVar('notify_method', XOBJ_DTYPE_OTHER, 2, false);
 		$this->initVar('notify_mode', XOBJ_DTYPE_OTHER, 0, false);
 		$this->initVar('user_occ', XOBJ_DTYPE_TXTBOX, null, false, 100);
 		$this->initVar('bio', XOBJ_DTYPE_TXTAREA, null, false, null);
@@ -238,7 +238,7 @@ class icms_member_user_Object extends icms_core_Object {
 	 * alias for {@link getGroups()}
 	 * @see getGroups()
 	 * @return array array of groups
-	 * @deprecated	Use getGroups(), instead
+	 * deprecated	Use getGroups(), instead
 	 * @todo		Remove in version 1.4 - no occurrences in the core
 	 */
 	public function &groups() {

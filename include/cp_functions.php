@@ -54,7 +54,7 @@ function icms_cp_header(){
 	$icmsAdminTpl->assign('xoops_url', ICMS_URL);
 	$icmsAdminTpl->assign('icms_sitename', $icmsConfig['sitename']);
 
-	if ( @$xoopsOption['template_main'] ) {
+	if ( isset($xoopsOption['template_main']) AND $xoopsOption['template_main']) {
 		if ( false === strpos( $xoopsOption['template_main'], ':' ) ) {
 			$xoopsOption['template_main'] = 'db:' . $xoopsOption['template_main'];
 		}
@@ -69,7 +69,7 @@ function icms_cp_header(){
 		$xoopsThemeFactory->defaultTheme = $icmsConfig['theme_admin_set'];
 
 	$icmsTheme = $xoTheme =& $xoopsThemeFactory->createInstance(array(
-		'contentTemplate'	=> @$xoopsOption['template_main'],
+		'contentTemplate'	=> (isset($xoopsOption['template_main']) AND $xoopsOption['template_main']) ? $xoopsOption['template_main'] : '',
 		'canvasTemplate'	=> 'theme' . (( file_exists(ICMS_THEME_PATH . '/' . $icmsConfig['theme_admin_set'] . '/theme_admin.html')
 			|| file_exists(ICMS_MODULES_PATH . '/system/themes/' . $icmsConfig['theme_admin_set'] . '/theme_admin.html') ) ?'_admin':'') . '.html',
 		'plugins' 			=> array('icms_view_PageBuilder'),
@@ -374,7 +374,7 @@ if (! empty( $_SESSION['redirect_message'] )) {
  *
  * @since XOOPS
  * @version $Id: cp_functions.php 22632 2011-09-10 12:19:31Z phoenyx $
- * @deprecated use icms_cp_header instead
+ * deprecated use icms_cp_header instead
  * @todo		Remove in version 1.4 -  - all occurrences in the core have been removed
  *
  * @author The Xoops Project <http://www.xoops.org>
@@ -425,7 +425,7 @@ function icms_cp_footer() {
  * Backwards compatibility function
  *
  * @version $Id: cp_functions.php 22632 2011-09-10 12:19:31Z phoenyx $
- * @deprecated use icms_cp_footer instead
+ * deprecated use icms_cp_footer instead
  * @todo remove in 1.4 - all occurrences in the core have been removed
  *
  * @author The XOOPS Project <http://www.xoops.org>
@@ -705,7 +705,7 @@ function impresscms_get_adminmenu() {
 function impresscms_sort_adminmenu_modules($a, $b) {
 	$a = strtolower($a->getVar("name"));
 	$b = strtolower($b->getVar("name"));
-	return ($a == $b) ? 0 : ($a < $b) ? -1 : +1;
+	return ($a == $b) ? 0 : (($a < $b) ? -1 : +1);
 }
 
 /**

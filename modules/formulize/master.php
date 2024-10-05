@@ -38,6 +38,10 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
 $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+if(!$uid) {
+    print "Error: only logged in users can access master.php";
+    exit();
+}
 $mid = getFormulizeModId();
 $gperm_handler = xoops_gethandler('groupperm');
 if($gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {

@@ -31,6 +31,7 @@
 
     <!-- Sheet Css -->
     <link rel="stylesheet" type="text/css" media="all" href="<{$icms_imageurl}><{if isset($icms_rtl) and $icms_rtl}>rtl/<{/if}>style.css" />
+
 </head>
 
 <body id="<{$icms_dirname}>" class="<{$icms_langcode}><{if isset($formulize_screen_id) and $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}>">
@@ -145,5 +146,9 @@
             <div style="clear:both;"></div>
         <{ /if }>
     </div>
+
+	<{if $formulize_customCodeForApplications}>
+		<{$formulize_customCodeForApplications}>
+	<{/if}>
 </body>
 </html>

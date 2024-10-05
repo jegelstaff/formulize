@@ -14,7 +14,7 @@ icms::$logger->startTime('ICMS output init');
 global $xoopsOption, $icmsConfig, $icmsModule;
 $xoopsOption['theme_use_smarty'] = 1;
 
-if (@$xoopsOption['template_main']) {
+if (isset($xoopsOption['template_main']) AND $xoopsOption['template_main']) {
 	if (FALSE === strpos($xoopsOption['template_main'], ':')) {
 		$xoopsOption['template_main'] = 'db:' . $xoopsOption['template_main'];
 	}
@@ -26,7 +26,7 @@ $xoopsThemeFactory->defaultTheme = $icmsConfig['theme_set'];
 /**
  * @var icms_view_theme_Object
  */
-$icmsTheme = $xoTheme =& $xoopsThemeFactory->createInstance(array('contentTemplate' => @$xoopsOption['template_main'],));
+$icmsTheme = $xoTheme =& $xoopsThemeFactory->createInstance(array('contentTemplate' => (isset($xoopsOption['template_main']) ? $xoopsOption['template_main'] : ''),));
 $GLOBALS['icmsTheme'] = $icmsTheme;
 $GLOBALS['xoTheme'] = $xoTheme;
 $xoopsTpl = $icmsTpl =& $xoTheme->template;
@@ -83,11 +83,11 @@ if (!empty($icmsConfigPlugins['sanitizer_plugins'])) {
 	}
 }
 
-$xoTheme->addScript(ICMS_LIBRARIES_URL . '/jquery/jquery.js', array('type' => 'text/javascript'));
+$xoTheme->addScript('https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js', array('type' => 'text/javascript'));
 $xoTheme->addScript(ICMS_LIBRARIES_URL . '/jquery/jquery-migrate-1.2.1.min.js', array('type' => 'text/javascript'));
-$xoTheme->addScript(ICMS_LIBRARIES_URL . '/jquery/ui/ui.min.js', array('type' => 'text/javascript'));
+$xoTheme->addScript('https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js', array('type' => 'text/javascript'));
 $xoTheme->addScript(ICMS_URL . '/libraries/jquery/helptip.js', array( 'type' => 'text/javascript'));
-$xoTheme->addStylesheet(ICMS_LIBRARIES_URL . '/jquery/ui/css/ui-smoothness/ui.css', array('media' => 'screen'));
+$xoTheme->addStylesheet('https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css', array('media' => 'screen'));
 $xoTheme->addStylesheet(ICMS_LIBRARIES_URL . '/jquery/jgrowl'
 	. (( defined('_ADM_USE_RTL') && _ADM_USE_RTL )?'_rtl':'') . '.css', array('media' => 'screen'));
 if (! empty( $_SESSION['redirect_message'])) {

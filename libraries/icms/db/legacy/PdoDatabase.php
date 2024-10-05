@@ -1,5 +1,12 @@
 <?php
 
+global $icmsConfig;
+if(is_array($icmsConfig) AND isset($icmsConfig['language']) AND file_exists(XOOPS_ROOT_PATH.'/language/'.$icmsConfig['language'].'/core.php')) {
+    require_once XOOPS_ROOT_PATH.'/language/'.$icmsConfig['language'].'/core.php';
+} elseif(file_exists(XOOPS_ROOT_PATH.'/language/english/core.php')) {
+    require_once XOOPS_ROOT_PATH.'/language/english/core.php';
+}
+
 class icms_db_legacy_PdoDatabase extends icms_db_legacy_Database {
 	/**
 	 * The PDO connection that performs operations behind the scenes
@@ -15,6 +22,30 @@ class icms_db_legacy_PdoDatabase extends icms_db_legacy_Database {
 	public function __construct( $connection, $allowWebChanges = false ) {
 		parent::__construct($connection, $allowWebChanges);
 		$this->pdo = $connection;
+        if($res = $this->query('SELECT @@character_set_database, @@collation_database')) {
+            $collation = $this->fetchRow($res);
+            if(strstr($collation[0], 'utf8mb4') AND strstr($collation[1], 'utf8mb4')) {
+                $this->query('SET NAMES utf8mb4');
+            }
+        }
+        $getModes = 'SELECT @@SESSION.sql_mode';
+        $modesSet = false;
+        if($res = $this->query($getModes)) {
+            $modes = $this->fetchRow($res);
+            $modes = $modes[0]; // only one result
+            $modesSet = true;
+            if(strstr($modes, 'STRICT_')) {
+                $modes = explode(',', str_replace(array('STRICT_TRANS_TABLES', 'STRICT_ALL_TABLES'), '', $modes)); // remove strict options
+                $modes = array_filter($modes); // remove blanks, possibly caused by commas after removed modes
+                $setModes = "SET SESSION sql_mode = '".implode(',',$modes)."'";
+                if(!$res = $this->queryF($setModes)) {
+                    $modesSet = false;
+                }
+            }
+        }
+        if(!$modesSet) {
+            exit('Error: the database mode could not be set for proper operation of Formulize. Please notify a webmaster immediately. Thank you.');            
+        }
 	}
 	public function connect($selectdb = true) {
 		return true;
@@ -109,6 +140,25 @@ class icms_db_legacy_PdoDatabase extends icms_db_legacy_Database {
 			return true;
 		}
 	}
+    
+    public function queryFromFile($file) {
+        if (false !== ($fp = fopen($file, 'r'))) {
+			$sql_queries = trim(fread($fp, filesize($file)));
+            $pieces = array();
+			icms_db_legacy_mysql_Utility::splitMySqlFile($pieces, $sql_queries);
+			foreach ($pieces as $query) {
+				// [0] contains the prefixed query
+				// [4] contains unprefixed table name
+				$prefixed_query = $sqlutil->prefixQuery(trim($query), $this->prefix());
+				if ($prefixed_query != false) {
+					$this->query($prefixed_query[0]);
+				}
+			}
+			return true;
+		}
+		return false;
+    }
+    
 
 }
 

@@ -133,11 +133,11 @@ class icms_auth_Ldap extends icms_auth_Object {
 	 * @param string $uname UserName
 	 * @return userDN or false
 	 */
-	public function getUserDN($uname) {
+	public function getUserDN($uname, $bound=false) {
 		$userDN = false;
 		if (!$this->ldap_loginname_asdn) {
 			// Bind with the manager
-			if (!ldap_bind($this->_ds, $this->ldap_manager_dn, stripslashes($this->ldap_manager_pass))) {
+			if (!$bound AND !ldap_bind($this->_ds, $this->ldap_manager_dn, stripslashes($this->ldap_manager_pass))) {
 				$this->setErrors(ldap_errno($this->_ds), ldap_err2str(ldap_errno($this->_ds)) . '(' . $this->ldap_manager_dn . ')');
 				return false;
 			}

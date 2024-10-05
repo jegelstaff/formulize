@@ -90,6 +90,7 @@ class db_manager {
 							$this->s_tables['insert'][$table]++;
 						}
 					} else {
+						print $this->db->error().'<br>With SQL:<br>'.$prefixed_query[0].'<br><br>';
 						if (! isset($this->f_tables['insert'][$table])) {
 							$this->f_tables['insert'][$table] = 1;
 						} else {

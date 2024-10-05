@@ -103,6 +103,7 @@ class icms_form_elements_Textarea extends icms_form_Element {
 			. "' id='" . $this->getName() . '_tarea'
 			. "' rows='" . $this->getRows()
 			. "' cols='" . $this->getCols()
+			. "' aria-describedby='" . $this->getName() . "-help-text"
 			. "'" . $this->getExtra() . ">"
 			. $this->getValue()
 			. "</textarea>";

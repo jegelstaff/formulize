@@ -1,0 +1,277 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<{$icms_langcode}>">
+<head>
+    <!-- Center block custom positioning -->
+    <{* Center blocks display order
+        valid values are:  lrc (left right / center) lcr (left center right) clr (center / left right)
+    *}>
+    <{assign var=theme_top_order value=lrc}>
+    <{assign var=theme_bottom_order value=lcr}>
+
+    <!-- Theme name -->
+    <{assign var=theme_name value=$xoTheme->folderName}>
+
+    <!-- Title and meta -->
+    <title><{if $icms_pagetitle !=''}><{$icms_pagetitle}> : <{/if}><{$icms_sitename}></title>
+    <meta http-equiv="content-type" content="text/html; charset=<{$icms_charset}>" />
+    <meta name="robots" content="<{$icms_meta_robots}>" />
+    <meta name="keywords" content="<{$icms_meta_keywords}>" />
+    <meta name="description" content="<{$icms_meta_description}>" />
+    <meta name="rating" content="<{$icms_meta_rating}>" />
+    <meta name="author" content="<{$icms_meta_author}>" />
+    <meta name="copyright" content="<{$icms_meta_copyright}>" />
+    <meta name="generator" content="ImpressCMS" />
+
+    <!-- Module Header -->
+    <{$icms_module_header}>
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" type="image/ico" href="<{xoImgUrl icons/favicon.ico}>" />
+    <link rel="icon" type="image/png" href="<{xoImgUrl icons/icon.png}>" />
+
+    <{php}>
+        global $xoopsUser;
+        $aadmin = ($xoopsUser AND in_array($xoopsUser->getVar('uid'), array(3,4,8,6,9,17,43,49))) ? '_aadmin' : '';
+    <{/php}>
+
+    <!-- Sheet Css -->
+    <link rel="stylesheet" type="text/css" media="all" href="<{$icms_imageurl}><{if isset($icms_rtl) and $icms_rtl}>rtl/<{/if}>style<{php}>print $aadmin;<{/php}>.css" />
+    <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans|Varela+Round|Roboto&display=swap" rel="stylesheet">
+    <!-- BUlma.io Css
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.0/css/bulma.min.css">
+-->
+
+    <script type="text/javascript">
+        <{php}>
+        global $xoopsUser;
+        include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
+        if($xoopsUser AND !strstr(getCurrentURL(), '/application.php')) {
+            print "var menuPosition = -180;";
+            $menuPosition = -180;
+        } else {
+            print "var menuPosition = 0;";
+            $menuPosition = 0;
+        }
+        <{/php}>
+        jQuery(document).ready(function() {
+
+            if (menuPosition == 0) {
+                jQuery('#actua-burger-icon').addClass('change');
+                jQuery('#xo-page').css('width', '100%');
+            } else {
+                jQuery('#xo-page').css('width', 'calc(100% + 180px)');
+            }
+
+            jQuery('#formulizeform input, #formulizeform select, #formulizeform textarea').first().focus();
+            jQuery('#formulizeform input[type="radio"]').keypress(function(e) {
+                var key = String.fromCharCode(e.keyCode).toLowerCase();
+                jQuery('input[name="'+jQuery(this).attr('name')+'"]').each(function() {
+                    checkText = jQuery('label[for='+jQuery(this).attr('id')+']').text();
+                    if(key == checkText || key == checkText.charAt(0).toLowerCase()) {
+                        jQuery(this).prop('checked', true).focus().trigger('change');
+                    }
+                })
+            });
+
+            // make radio buttons uncheckable
+            jQuery("input[type=radio]").each(function() {
+                jQuery(this).data('checkedstatus', jQuery(this).prop("checked"));
+            });
+            jQuery("input[type=radio]").click(function () {
+                if (jQuery(this).data('checkedstatus')) {
+                    jQuery(this).prop("checked", false).change();
+                    jQuery(this).data('checkedstatus', false);
+                } else {
+                    jQuery(this).prop("checked", true).change();
+                    jQuery(this).data('checkedstatus', true);
+                }
+                jQuery(this).siblings('input[type="radio"]').data('checkedstatus', false);
+            });
+
+
+            jQuery('#actua-burger-icon').click(function() {
+                if (menuPosition == 0) {
+                    menuPosition = -180;
+                    pageWidth = 180;
+                } else {
+                    menuPosition = 0;
+                    pageWidth = -180
+                }
+                jQuery('#xo-canvas-leftcolumn').animate({ left: menuPosition}, { queue: false} );
+                jQuery('#xo-page').animate({ left: menuPosition}, { queue: false} );
+                jQuery('#xo-page').animate({ width: (jQuery('#xo-page').width()+pageWidth)+'px'}, { queue: false} );
+                return false;
+            });
+
+        });
+
+
+    </script>
+
+    <style>
+        #xo-page {
+            position: relative;
+            left: <{php}>print $menuPosition;<{/php}>px;
+            top: -2em;
+        }
+
+        #xo-canvas-leftcolumn {
+            position: relative;
+            left: <{php}>print $menuPosition;<{/php}>px;
+            top: -2em;
+        }
+
+        #actua-burger {
+            margin: 0px;
+            position: relative;
+            min-height: 4em;
+
+        }
+        #actua-burger img {
+            width: 4em;
+        }
+
+    </style>
+
+</head>
+
+<body id="<{$icms_dirname}>" class="<{$icms_langcode}><{if isset($formulize_screen_id) and $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}>">
+    <{includeq file="$theme_name/session-timeout-warning.html"}>
+    <{if $xoBlocks.canvas_left and $xoBlocks.canvas_right}>
+    <{assign var=columns_layout value='threecolumns-layout'}>
+    <{elseif $xoBlocks.canvas_left}>
+    <{assign var=columns_layout value='leftcolumn-layout'}>
+    <{elseif $xoBlocks.canvas_right}>
+    <{assign var=columns_layout value='rightcolumn-layout'}>
+    <{/if}>
+    <div id="xo-canvas"<{if $columns_layout}> class="<{$columns_layout}>"<{/if}>>
+        <!-- Header -->
+        <div id="xo-header">
+            <div id="xo-headerlogo"><a href="<{$xoops_url}>/" title=""><img src="<{$icms_imageurl}>img/logo.png" alt="<{$icms_sitename}>" /></a></div>
+            <div id="xo-headerbanner">
+                <!-- Header menu (optional) -->
+                <div id="xo-globalnav">
+                    <a href="<{$icms_url}>" title="<{$icms_sitename}>"><{$smarty.const.THEME_HOME}></a>
+                    <{if $xoops_isadmin}>
+                        <a href="<{$icms_url}>/modules/formulize/admin/ui.php" title="admin">Admin</a>
+                        <{if isset($formulize_screen_id) and $formulize_screen_id}>
+                            <a href="<{$icms_url}>/modules/formulize/admin/ui.php?page=screen&sid=<{$formulize_screen_id}>" title="edit screen" target="_blank">Edit Screen</a>
+                        <{/if}>
+                    <{/if}>
+                    <{php}>
+                        global $xoopsUser;
+                        if($xoopsUser) {
+                    <{/php}>
+                    <a href="<{$icms_url}>/edituser.php" title="Edit Account">Edit Account</a>
+                    <a href="<{$icms_url}>/viewpmsg.php" title="Inbox">Inbox</a>
+                    <a href="<{$icms_url}>/user.php?op=logout" title="Logout">Logout</a>
+                    <{php}>
+                        }
+                    <{/php}>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div id="xo-canvas-content">
+
+                <div id="actua-burger" class="no-print" >
+                <{php}>
+                    global $xoopsUser;
+                    if($xoopsUser) {
+                <{/php}>
+                <a id='actua-burger-icon' href='' onclick="myFunction(this)"><div>
+                <div class="bar1"></div>
+                <div class="bar2"></div>
+                <div class="bar3"></div>
+                </div></a>
+                <script>
+                  function myFunction(x) {
+                    x.classList.toggle("change");
+                }
+                </script>
+
+                <{php}>
+                    }
+                <{/php}>
+                </div>
+
+
+            <div id="xo-canvas-columns">
+
+                <!-- Left column -->
+                <{if isset($icms_rtl) and $icms_rtl}>
+                    <{if $xoBlocks.canvas_right}>
+                    <{includeq file="$theme_name/blockszone.html" blocks=$xoBlocks.canvas_right
+                        zoneClass='xo-canvas-column' zoneId='xo-canvas-rightcolumn'
+                    }>
+                    <{/if}>
+                <{else}>
+                    <{if $xoBlocks.canvas_left}>
+                        <{includeq file="$theme_name/blockszone.html" blocks=$xoBlocks.canvas_left
+                            zoneClass='xo-canvas-column' zoneId='xo-canvas-leftcolumn'
+                        }>
+                    <{/if}>
+                <{/if}>
+                <!-- Center column / page -->
+                <div id="xo-page">
+                    <!-- Top blocks -->
+                    <{if $xoBlocks.page_topleft or $xoBlocks.page_topcenter or $xoBlocks.page_topright}>
+                        <div class="xo-blockszone xo-<{$theme_top_order}>pageblocks" id="xo-page-topblocks">
+                            <{includeq file="$theme_name/centerblocks.html" topbottom=top lcr=$theme_top_order|substr:0:1}>
+                            <{includeq file="$theme_name/centerblocks.html" topbottom=top lcr=$theme_top_order|substr:1:1}>
+                            <{includeq file="$theme_name/centerblocks.html" topbottom=top lcr=$theme_top_order|substr:2:1}>
+                        </div>
+                    <{/if}>
+                    <!-- Module content -->
+                    <{if $icms_contents}>
+                        <div id="xo-content"><{$icms_contents}></div>
+                    <{/if}>
+                    <!-- Bottom blocks -->
+                    <{if $xoBlocks.page_bottomleft or $xoBlocks.page_bottomcenter or $xoBlocks.page_bottomright}>
+                        <div class="xo-blockszone xo-<{$theme_bottom_order}>pageblocks" id="xo-page-bottomblocks">
+                            <{includeq file="$theme_name/centerblocks.html" topbottom=bottom lcr=$theme_bottom_order|substr:0:1}>
+                            <{includeq file="$theme_name/centerblocks.html" topbottom=bottom lcr=$theme_bottom_order|substr:1:1}>
+                            <{includeq file="$theme_name/centerblocks.html" topbottom=bottom lcr=$theme_bottom_order|substr:2:1}>
+                        </div>
+                    <{/if}>
+                </div>
+                <!-- Right column -->
+                <{if isset($icms_rtl) and $icms_rtl}>
+                    <{if $xoBlocks.canvas_left}>
+                        <{includeq file="$theme_name/blockszone.html" blocks=$xoBlocks.canvas_left
+                            zoneClass='xo-canvas-column' zoneId='xo-canvas-leftcolumn'
+                        }>
+                    <{/if}>
+                <{else}>
+                    <{if $xoBlocks.canvas_right}>
+                        <{includeq file="$theme_name/blockszone.html" blocks=$xoBlocks.canvas_right
+                            zoneClass='xo-canvas-column' zoneId='xo-canvas-rightcolumn'
+                        }>
+                    <{/if}>
+                <{/if}>
+                </div>
+            </div>
+            <div id="footer-padding">&nbsp;</div>
+        </div>
+    </div>
+
+    <div id="xo-footer">
+        <{$icms_footer}>
+        <{ if $masquerade_username }>
+            <div id="formulize-masquerade-block">
+                Masquerading as <b><{$masquerade_username}></b>
+                <form method="post" action="<{$smarty.const.XOOPS_URL}>/modules/formulize/">
+                    <input type="hidden" name="revert" value="1" />
+                    <input type="hidden" name="op" value="masquerade" />
+                    <input type="hidden" name="masquerade_end" value="1" />
+                    <input type="submit" name="confirm_submit" value="Revert" />
+                </form>
+            </div>
+            <div style="clear:both;"></div>
+        <{ /if }>
+    </div>
+</body>
+</html>

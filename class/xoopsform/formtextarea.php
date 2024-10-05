@@ -22,7 +22,7 @@ if (!defined('ICMS_ROOT_PATH')) {
  *
  * @author	Kazumi Ono	<onokazu@xoops.org>
  * @copyright	copyright (c) 2000-2003 XOOPS.org
- * @deprecated	Use icms_form_elements_Textarea
+ * deprecated	Use icms_form_elements_Textarea
  * @todo		Remove in version 1.4 - all instances have been removed from the core
  */
 class XoopsFormTextArea extends icms_form_elements_Textarea {
@@ -37,7 +37,7 @@ class XoopsFormTextArea extends icms_form_elements_Textarea {
 	 * @param	int     $rows       number of rows
 	 * @param	int     $cols       number of columns
 	 */
-	function XoopsFormTextArea($caption, $name, $value = "", $rows = 5, $cols = 50) {
+	function __construct($caption, $name, $value = "", $rows = 5, $cols = 50) {
 		parent::__construct($caption, $name, $value, $rows, $cols);
 		$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_Textarea', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}

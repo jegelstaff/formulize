@@ -1,12 +1,12 @@
 <{if $sectionContent.type == "import"}>
     <h3>Select Archive to Synchronize with Current System</h3>
     <form name="import" method="POST" enctype="multipart/form-data">
-        <p>The following action will allow a previously exported system to be imported
-        to the current system. A validation step will appear allowing you to select which elements of
-        of the current system you would like to override.<br/>
+        <p>Import settings from another system. You will see a list of changes for approval before synchronizing.<br/>
         Please select the zip folder to be imported:</p>
-        <input type="file" name="fileToUpload" id="fileToUpload">
-        <input type="submit" name="import" value="Synchronize!">
+        <p><input type="file" name="fileToUpload" id="fileToUpload"></p>
+        <p><input type="radio" name="groupsMatch" value=1 id="gm1" checked=checked><label for="gm1"> The groups in this system should match the other system exactly</label> <br>
+        <input type="radio" name="groupsMatch" id="gm2" value=2><label for="gm2"> The groups in this system are different, or partially different, from the other system</label></p>
+        <p><input type="submit" name="import" value="Synchronize!"></p>
     </form>
     <div style="padding:5px;">
         <{if $sectionContent.error == "import_err"}>
@@ -24,8 +24,6 @@
 <{if $sectionContent.type == "export"}>
     <h3>Export Current System</h3>
     <form name="export" method="POST">
-        <p>The following actions will allow the current system's information to be saved
-            to a zip folder for importing to another system.</p>
         <p>Select the user data you would like to include in the export<br/>
             <{html_checkboxes name='forms' options=$sectionContent.checkboxes separator='<br />'}>
         </p>

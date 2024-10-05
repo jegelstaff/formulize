@@ -5,6 +5,10 @@ permalink: developers/version_control/testing/creating_tests/
 
 # Creating Selenium 2 Tests with Selenium Builder
 
+**This is a nice idea, but we don't actively maintain any Selenium 2 tests currently**
+
+**If we were making Selenium tests, the Selenium IDE extension for Firefox is recommended**
+
 We use run Selenium 2 tests on [Sauce Labs](http://www.saucelabs.com) as part of our [continuous integration platform](../../../ci).  This page describes how to use [Selenium Builder](http://www.saucelabs.com/builder) to create tests in [Firefox](http://www.mozilla.org/firefox).
 
 ## Current Tests
@@ -31,13 +35,13 @@ If you do not configure your local installation to behave this way, then you wil
 If you are checking to see that your test works in the Travis CI and Sauce Labs system, you can uncomment this line of the **.travis.yml** file:
 
     # - mysql formulize < ci/formulize_test_db.sql
-    
+
 That will cause the Travis CI system to prepopulate the database, as if all the current tests had already run. This way you can run just your own new test to make sure it works.
 
 To cause the system to run only your new test, you need to modify this line in the **ci/travis/interpreter_config.json** file:
 
     "ci/selenium2-tests/*"
-    
+
 Replace the * with the name of your new test.
 
 ### Recording
@@ -92,7 +96,7 @@ Then the domain variable would be used like this to open the page:
       "url": "http://${test_domain}/index.php"
     },
 
-You may wish to simply copy and paste the top portion of an existing script into your own to handle the site login steps. 
+You may wish to simply copy and paste the top portion of an existing script into your own to handle the site login steps.
 
 Since variables can store arbitrary text, and the test scripts cannot contain comments, variables may be used as a way to insert comments.
 

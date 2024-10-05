@@ -2,18 +2,18 @@
 <div class="optionlist">
 <p><input type="button" class="formButton" name="addoption" value="<{$smarty.const._AM_ELE_ADD_OPT_SUBMIT}> 1"></p>
 
-<{if $content.useroptions|@count > 0}>
+<{if isset($content.useroptions) AND $content.useroptions|is_array AND $content.useroptions|@count > 0}>
   <{foreach from=$content.useroptions key=text item=checked name=optionsloop}>
     <p class="useroptions" name="<{$smarty.foreach.optionsloop.index}>">
     <{if $content.type == "radio"}><input type="radio" name="defaultoption" value=<{$smarty.foreach.optionsloop.index}> <{if $checked}>checked<{/if}>></input>
     <{else}><input type="checkbox" name="defaultoption[<{$smarty.foreach.optionsloop.index}>]" value=<{$smarty.foreach.optionsloop.index}> <{if $checked}>checked<{/if}>></input>
-    <{/if}>&nbsp;&nbsp;<input type="text" name="ele_value[<{$smarty.foreach.optionsloop.index}>]" value="<{$text}>" onchange="checkForNames()"></input></p>
+    <{/if}>&nbsp;&nbsp;<input type="text" name="ele_value[<{$smarty.foreach.optionsloop.index}>]" value="<{$text}>" onchange="checkForNames()"></input> <span class='sorthandle'>&equiv;</span></p>
   <{/foreach}>
 <{else}>
   <p class="useroptions" name="0">
   <{if $content.type == "radio"}><input type="radio" name="defaultoption" value=0></input>
   <{else}><input type="checkbox" name="defaultoption[0]" value=0></input>
-  <{/if}>&nbsp;&nbsp;<input type="text" name="ele_value[0]" onchange="checkForNames()"></input></p>
+  <{/if}>&nbsp;&nbsp;<input type="text" name="ele_value[0]" onchange="checkForNames()"></input> <span class='sorthandle'>&equiv;</span></p>
 <{/if}>
 </div>
 
@@ -28,6 +28,17 @@
   <{if $content.type == "select"}><p><{$smarty.const._AM_ELE_OPT_DESC}><{$smarty.const._AM_ELE_OPT_DESC1}></p><{/if}>
   <p><{$smarty.const._AM_ELE_OPT_UITEXT}></p>
 </div>
+<hr style='margin-top: 1em; border: 0px; border-top: 1px dashed black; height: 1px;'>
+<div>
+    <p>If you are using the pipe character to store alternative values in the database:<br />
+    <label for="showalt"><input type="radio" id="showalt" name="elements-ele_uitextshow" value=0>Show the alternative values in lists of entries (and use them in the API)</label><br />
+    <label for="showuitext"><input type="radio" id="showuitext" name="elements-ele_uitextshow" value=1>Show the same values the user sees in the form, in the list of entries (and use them in the API)</label>
+    </p>
+</div>
+
+<div class="description">
+  <p>The second option is for use only in cases where you need an alternative value in the database for some third party integration, but a different value shown throughout Formulize. Regardless of your choice, if you use alternative values in the database then searches will only work when you search for those alternative values (because they are what is actually stored in the database).</p>
+</div>
 
 </fieldset>
 </div>
@@ -41,7 +52,7 @@
 </fieldset>
 
 <script type="text/javascript">
-  
+
   $("[name=addoption]").click(function (){
     number = $(".useroptions:last").attr('name');
     number = parseInt(number) + 1;
@@ -49,8 +60,9 @@
     appendContents2 = '<input type="text" name="ele_value['+number+']"></input>';
     $(".optionlist").append('<p class="useroptions" name="'+number+'"></p>');
     $(".useroptions:last").append(appendContents1);
-    $(".useroptions:last").append('&nbsp;&nbsp;');
+    $(".useroptions:last").append(' &nbsp;&nbsp;');
     $(".useroptions:last").append(appendContents2);
+		$(".useroptions:last").append(" <span class='sorthandle'>&equiv;</span>");
     $("[name=addoption]").blur();
     setDisplay('savewarning','block');
     $("#no").attr('checked',1);
@@ -62,10 +74,10 @@
     $("[name=cleardef]").blur();
   });
   <{/if}>
-  
+
   <{if $content.type eq "select"}>
   checkForNames();
-  
+
   function checkForNames() {
     if ($("[name=ele_value[0]]").val() == "{USERNAMES}" || $("[name=ele_value[0]]").val() == "{FULLNAMES}"){
       disableForAutocomplete();
@@ -79,11 +91,35 @@
     $("input[name=elements-ele_value[16]]:eq(0)").attr("checked","checked");
     $("[name=addoption]").attr("disabled","disabled");
   }
-  
+
   function enableForAutocomplete(){
     $("input[name=elements-ele_value[16]]:eq(1)").attr("disabled",0);
     $("[name=addoption]").attr("disabled",0);
   }
   <{/if}>
+
+	let resortCounter = 0;
+  $(document).ready(function() {
+    if (<{$content.ele_uitextshow}> == 1) {
+      $("#showuitext").attr('checked',1);
+    } else {
+      $("#showalt").attr('checked',1);
+    }
+		$('div.optionlist').sortable({
+			cursor: "move",
+			axis: "y",
+			items: ".useroptions",
+			stop: function() {
+				resortCounter = 0;
+				$('div.optionlist p.useroptions').each(function() {
+						$(this).attr('name',resortCounter);
+						$(this).children('input[type=radio]').first().attr('value',resortCounter);
+						$(this).children('input[type=text]').first().attr('name','ele_value['+resortCounter+']');
+						resortCounter++;
+				});
+				setDisplay('savewarning','block');
+			}
+		});
+  });
 
 </script>

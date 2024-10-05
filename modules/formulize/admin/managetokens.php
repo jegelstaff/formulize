@@ -38,10 +38,8 @@ if(isset($_POST['save'])) {
 
     foreach($groupList as $group) {
         $id = $group['groupid'];
-        if(isset($_POST[$id ])){
-            
-            $groups = $groups ." " .$id;
-
+        if(isset($_POST[$id])){
+            $groups = $groups ." " .intval($id);
         }
     }
     $tokenHandler->insert($groups,intval($_POST['expiry']), intval($_POST['tokenlength']), intval($_POST['maxuses']));
@@ -56,7 +54,9 @@ foreach($tokenHandler->get() as $key) {
     foreach($tokenGroups as $groupid) {
           $allKeyGroups  =  $allKeyGroups  ." " . $groupList[$groupid]['name'];
     }
-    $allKeys[] = array('group'=>$allKeyGroups,'key'=>$key->getVar('key'),'expiry'=>$key->getVar('expiry'), 'usesleft'=>($key->getVar('maxuses')-$key->getVar('currentuses')));
+    $usesText = $key->getVar('currentuses') == 1 ? 'use' : 'uses';
+    $usesLeft = $key->getVar('maxuses') > 0 ? ($key->getVar('maxuses')-$key->getVar('currentuses')) : "Unlimited (".$key->getVar('currentuses')." $usesText so far)";
+    $allKeys[] = array('group'=>$allKeyGroups,'key'=>$key->getVar('key'),'expiry'=>$key->getVar('expiry'), 'usesleft'=>$usesLeft);
 }
 
 $adminPage['groups'] = $groupList;

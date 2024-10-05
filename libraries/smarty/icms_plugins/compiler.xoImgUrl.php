@@ -38,6 +38,3 @@ function smarty_compiler_xoImgUrl( $argStr, &$smarty ) {
 	return "\necho '" . addslashes( $xoops->url( $path ) ) . "';";
 
 } 
-
-
-?>

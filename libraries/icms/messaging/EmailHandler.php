@@ -13,7 +13,9 @@
 /**
  * load the base class
  */
-require_once ICMS_LIBRARIES_PATH . '/phpmailer/class.phpmailer.php';
+
+require_once ICMS_LIBRARIES_PATH . '/phpmailer/PHPMailer.php';
+require_once ICMS_LIBRARIES_PATH . '/phpmailer/SMTP.php';
 
 /**
  * Mailer Class.
@@ -22,7 +24,7 @@ require_once ICMS_LIBRARIES_PATH . '/phpmailer/class.phpmailer.php';
  * @package		Core
  * @subpackage	Mail
  */
-class icms_messaging_EmailHandler extends PHPMailer {
+class icms_messaging_EmailHandler extends PHPMailer\PHPMailer\PHPMailer {
 
 	/**
 	 * "from" address

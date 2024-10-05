@@ -9,30 +9,32 @@
     <input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
 
     <div class="panel-content content">
+        <p><b>Showing templates for use with this theme:</b> <{html_options name=screens-theme options=$content.themes selected=$content.selectedTheme}></p>
+        <p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_TOPTEMPLATE3}></p>
         <p><{$smarty.const._AM_FORMULIZE_SCREEN_TEMPLATE_DESC_TEMPLATE}></p><br />
         <div class="form-item">
             <fieldset>
                 <legend>Template</legend>
                 <textarea id="screens-template"  name="screens-template" class="code-textarea" rows="20"/>
 <{$content.template}></textarea>
+								<br />
+                <{include file=db:admin/variable_template_help.html variables=$content.variabletemplatehelp}>
             </fieldset>
         </div>
+        <div class='description'><{$smarty.const._AM_FORMULIZE_SCREEN_TEMPLATE_HELP}></div>
+        <br />
 
         <p><{$smarty.const._AM_FORMULIZE_SCREEN_TEMPLATE_DESC_CUSTOM_CODE}></p><br />
         <div class="form-item">
             <fieldset>
             <legend>Custom code</legend>
-                <textarea id="screens-custom_code" name="screens-custom_code" class="code-textarea" rows="20"/>
+                <textarea id="screens-custom_code" name="screens-custom_code" class="code-textarea canValidate" rows="20"/>
 <{$content.custom_code}></textarea>
+								<br />
+                <{include file=db:admin/variable_template_help.html variables=$content.variabletemplatehelp}>
             </fieldset>
         </div>
 
     </div>
 </form>
-<script>
-jQuery(document).ready(function() {
-    jQuery(".savebutton").click(function() {
-        fz_check_php_code(jQuery("#screens-custom_code").val(), "Template Code", "<{$icms_url}>", <{$icms_userid}>);
-    });
-});
-</script>
+

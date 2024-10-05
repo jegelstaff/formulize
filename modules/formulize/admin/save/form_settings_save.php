@@ -61,7 +61,7 @@ if(($_POST['new_app_yes_no'] == "yes" AND $_POST['applications-name'])) {
 }
 
 // get all the existing applcations that this form object was assigned to
-if(isset($_POST['apps']) AND count($_POST['apps']) > 0) {
+if(isset($_POST['apps']) AND count((array) $_POST['apps']) > 0) {
   $selectedAppObjects = $application_handler->get($_POST['apps']);
 }
 
@@ -72,6 +72,15 @@ $processedValues['forms']['headerlist'] = (isset($_POST['headerlist']) and is_ar
 // form_handle cannot have any period, strip all of the periods out
 $form_handle_from_ui = $processedValues['forms']['form_handle'];
 $corrected_form_handle = formulizeForm::sanitize_handle_name($form_handle_from_ui);
+if (strlen($corrected_form_handle)) {
+    $uniqueCheckCounter = 0;
+    $thisFormId = $fid ? $fid : "";
+    while (!$uniqueCheck = $form_handler->isFormHandleUnique($corrected_form_handle, $thisFormId)) {
+        $corrected_form_handle = str_replace('_'.$uniqueCheckCounter,'',$corrected_form_handle);
+        $uniqueCheckCounter++;
+        $corrected_form_handle = $corrected_form_handle . "_".$uniqueCheckCounter;
+    }
+}
 if($corrected_form_handle != $form_handle_from_ui) {
   $formulize_altered_form_handle = true;
   $processedValues['forms']['form_handle'] = $corrected_form_handle;
@@ -99,17 +108,16 @@ if($_POST['formulize_admin_key'] == "new") {
   global $xoopsDB;
 
   // create the default screens for this form
-  $formScreenHandler = xoops_getmodulehandler('formScreen', 'formulize');
-  $defaultFormScreen = $formScreenHandler->create();
-  $formScreenHandler->setDefaultFormScreenVars($defaultFormScreen, $formObject->getVar('title'), $fid);
+  $multiPageScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+  $defaultFormScreen = $multiPageScreenHandler->create();
+  $multiPageScreenHandler->setDefaultFormScreenVars($defaultFormScreen, $formObject->getVar('title').' Form', $fid, $formObject->getVar('title')); // defaultFormScreen object "passed by reference by default" (or more precisely, the pointer to the object is passed by value, since that's "object variables" are)
 
-
-  if(!$defaultFormScreenId = $formScreenHandler->insert($defaultFormScreen)) {
+  if(!$defaultFormScreenId = $multiPageScreenHandler->insert($defaultFormScreen)) {
     print "Error: could not create default form screen";
   }
   $listScreenHandler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
     $screen = $listScreenHandler->create();
-    $listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $formObject->getVar('title'), $fid);
+    $listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $formObject->getVar('title').' List', $fid);
 
   if(!$defaultListScreenId = $listScreenHandler->insert($screen)) {
     print "Error: could not create default list screen";
@@ -122,13 +130,15 @@ if($_POST['formulize_admin_key'] == "new") {
   }
   // add edit permissions for the selected groups
   $gperm_handler = xoops_gethandler('groupperm');
+  $selectedAdminGroupIdsForMenu = array();
   foreach($_POST['groups_can_edit'] as $thisGroupId) {
+    $selectedAdminGroupIdsForMenu[] = intval($thisGroupId);
     $gperm_handler->addRight('edit_form', $fid, intval($thisGroupId), getFormulizeModId());
   }
-  
+
 } else if( $old_form_handle && $formObject->getVar( "form_handle" ) != $old_form_handle ) {
   //print "rename from $old_form_handle to " . $formObject->getVar( "form_handle" );
-  if(!$renameResult = $form_handler->renameDataTable($old_form_handle, $formObject->getVar( "form_handle" ))) {
+  if(!$renameResult = $form_handler->renameDataTable($old_form_handle, $formObject->getVar( "form_handle" ), $formObject)) {
    exit("Error: could not rename the data table in the database.");
   }
 }
@@ -186,8 +196,8 @@ if(isset($_POST['forms-tableform'])) {
 
 // if the revision history flag was on, then create the revisions history table, if it doesn't exist already
 if(isset($_POST['forms-store_revisions']) AND $_POST['forms-store_revisions'] AND !$form_handler->revisionsTableExists($formObject)) {
-  if(!$form_handler->createDataTable($fid, 0, false, true)) { // 0 is the id of a form we're cloning, false is the map of old elements to new elements when cloning so n/a here, true is the flag for making a revisions table
-    print "Error: could not create the revision history table for the form";  
+  if(!$form_handler->createDataTable($fid, 0, array(), true)) { // 0 is the id of a form we're cloning, array() is the map of old elements to new elements when cloning so n/a here, true is the flag for making a revisions table
+    print "Error: could not create the revision history table for the form";
   }
 }
 
@@ -200,8 +210,7 @@ if((isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1) OR $for
   }
   print "/* eval */ ";
   if($formulize_altered_form_handle) {
-    print " alert('Some characters, such as punctuation, were removed from the form handle because they ".
-      "are not allowed in the database table names or PHP variables.');\n";
+    print " alert('The Form Handle was changed for uniqueness, or because some characters, such as punctuation, are not allowed in the database table names or PHP variables.');\n";
   }
   print " reloadWithScrollPosition('".XOOPS_URL ."/modules/formulize/admin/ui.php?page=form&aid=$appidToUse&fid=$fid');";
 }
@@ -214,7 +223,7 @@ if((isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1) OR $for
 // Auto menu link creation
 // The link is shown to to Webmaster and registered users only (1,2 in $menuitems)
 if($_POST['formulize_admin_key'] == "new") {
-  $menuitems = "null::" . formulize_db_escape($formObject->getVar('title')) . "::fid=" . formulize_db_escape($fid) . "::::1,2::null";
+  $menuitems = "null::" . formulize_db_escape($formObject->getVar('title')) . "::fid=" . formulize_db_escape($fid) . "::::".implode(',',$selectedAdminGroupIdsForMenu)."::null";
   if(!empty($selectedAppIds)) {
     foreach($selectedAppIds as $appid) {
       $application_handler->insertMenuLink(formulize_db_escape($appid), $menuitems);

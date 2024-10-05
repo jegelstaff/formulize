@@ -47,7 +47,7 @@ if ($mode == 'popup') {
 }
 
 if (empty( $mode )) {
-	$ret .= "\n<div id=\"xo-logger-output\">\n<div id='xo-logger-tabs'>\n";
+	$ret .= "\n<div id=\"xo-logger-output\" class=\"no-print\">\n<div id='xo-logger-tabs' class=\"no-print\">\n";
 	$ret .= "<a href='javascript:xoSetLoggerView(\"none\")'>" . _NONE . "</a> | \n";
 	$ret .= "<a href='javascript:xoSetLoggerView(\"\")'>" . _ALL . "</a> | \n";
 	$count = count( $this->errors );

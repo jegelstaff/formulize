@@ -23,13 +23,39 @@ class SyncCompareCatalog {
      *      ]
      * }
      */
+    private $syncOnlyGroupsInCommon = false;
     private $changes = array();
+    private $changeDetails = array(); // Only set on first processing after initial upload, not present in cache.
+    private $groupsToSync = array(); // group catalog that is based on the ids and names from the SOURCE system. Only set on first processing after initial upload, not present in cache.
     public $doneFilePaths = array();
 
     function __construct() {
         // open a connection to the database
         $this->db = new \PDO('mysql'.':host='.XOOPS_DB_HOST.';dbname='.XOOPS_DB_NAME, XOOPS_DB_USER, XOOPS_DB_PASS);
         $this->db->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+
+        $this->syncOnlyGroupsInCommon = (isset($_POST['groupsMatch']) AND $_POST['groupsMatch'] == 2) ? true : false; // only set first time through!
+        $this->syncOnlyGroupsInCommon = (isset($_GET['groupsMatch']) AND $_GET['groupsMatch'] == 2) ? true : $this->syncOnlyGroupsInCommon; // set subsequent times!
+
+        $getModes = 'SELECT @@SESSION.sql_mode';
+        $modesSet = false;
+        if($res = $this->db->query($getModes)) {
+            $modes = $res->fetch( PDO::FETCH_NUM );
+            $modes = $modes[0]; // only one result
+            $modesSet = true;
+            if(strstr($modes, 'STRICT_')) {
+                $modes = explode(',', str_replace(array('STRICT_TRANS_TABLES', 'STRICT_ALL_TABLES'), '', $modes)); // remove strict options
+                $modes = array_filter($modes); // remove blanks, possibly caused by commas after removed modes
+                $setModes = "SET SESSION sql_mode = '".implode(',',$modes)."'";
+                if(!$res = $this->db->query($setModes)) {
+                    $modesSet = false;
+                }
+            }
+        }
+        if(!$modesSet) {
+            exit('Error: the database mode could not be set for proper operation of Formulize. Please notify a webmaster immediately. Thank you.');
+        }
+
 
         // pull metadata from xoops_version file
         $module_handler = xoops_gethandler('module');
@@ -45,18 +71,37 @@ class SyncCompareCatalog {
 
     // === PUBLIC FUNCTIONS ===
 
+		/**
+		 * Setup an array of columns and their data types as key value pairs
+		 *
+		 * @param string $tableName The unprefixed name of the table in the database
+		 * @return array An array of the columns in the table and their datatypes, as key value pairs
+		 */
+		public function getDataTypeMap($tableName) {
+			$dataTypeMap = array();
+			$dataTypeSQL = "SELECT information_schema.columns.data_type, information_schema.columns.column_name FROM information_schema.columns WHERE information_schema.columns.table_schema = '".SDATA_DB_NAME."' AND information_schema.columns.table_name = '".prefixTable($tableName)."'";
+			if($dataTypeRes = $this->db->query($dataTypeSQL)) {
+				while($dataTypeRow = $dataTypeRes->fetch( PDO::FETCH_NUM )) {
+					$dataTypeMap[$dataTypeRow[1]] = $dataTypeRow[0];
+				}
+			}
+			return $dataTypeMap;
+		}
+
     public function addRecord($tableName, $record, $fields) {
-        
+
         // there should be one record value for each field string
-        if (count($record) != count($fields)) {
+        if (count((array) $record) != count((array) $fields)) {
             throw new Exception("compare(...) requires record and fields to have the same number of values");
         }
 
-        // if the table doesn't exist, cause error exception
         if (!$this->tableExists($tableName)) {
             $this->addTableChange($tableName, $fields, $record);
         }
         else {
+
+						$dataTypeMap = $this->getDataTypeMap($tableName);
+
             $result = $this->getRecord($tableName, $record, $fields);
             $recordExists = $result->rowCount() > 0;
 
@@ -66,10 +111,10 @@ class SyncCompareCatalog {
                 static $debugOn;
                 $debugOn = true;
                 print "<pre>";
-                
+
                 print "Fields: \n\r";
                 print_r($fields);
-                
+
                 print "source record number $counter:\n\r";
                 print_r($record);
                 if($recordExists) {
@@ -85,36 +130,80 @@ class SyncCompareCatalog {
             } else {
                 $debugOn = false;
             }*/
-            
+
+            // for groupsInCommon synchronization...
+            // no new entries in groups
             if (!$recordExists) {
+
                 $this->addRecChange("insert", $tableName, $fields, $record);
                 /*if($debugOn) {
                     print "INSERTING RECORD<BR>";
                 }*/
-            
+
             // if the record exists, compare the data values, add any update statement to $compareResults
             // Except for entry_owner_groups, we don't update records there, since if we found an entry, then it already exists, no need to update. Only inserts need to be made (or deletions???)
             } elseif($tableName != "formulize_entry_owner_groups") {
+
                 //if(!$debugOn) {
                 $dbRecord = $result->fetchAll();
                 $dbRecord = $dbRecord[0];
                 //}
 
                 // compare each record field for changes
-                for ($i = 0; $i < count($record); $i++) {
-                    $field = $fields[$i];
-                    $value = $record[$i];
-                    $dbValue = $dbRecord[$field];
-                    if ($dbValue != $value) {
-                        /*if($debugOn) {
-                            print "NO MATCH ON FIELD: $field [$dbValue : $value]-- UPDATING RECORD<BR>";
-                        }*/
-                    $this->addRecChange("update", $tableName, $fields, $record);
-                        break;
-                    }
+                $changeFound = false;
+                $newRecord = array();
+                for ($i = 0; $i < count((array) $record); $i++) {
+									$field = $fields[$i];
+									$value = $this->cleanEncoding($record[$i]);
+									$dbValue = $this->cleanEncoding($dbRecord[$field]);
+									if ($dbValue != $value) {
+
+										// since PHP 8, strings are no longer == 0 so we have to check separately for that, if the field is an integer field
+										// because if there is an empty string as the value being imported, that's OK, it will turn into a zero or effectively a zero
+										if(in_array(strtolower($dataTypeMap[$field]), array('int', 'integer', 'tinyint', 'smallint', 'mediumint', 'bigint'))
+											AND (($dbValue == 0 AND $value == "") OR ($dbValue == "" AND $value == 0))) {
+											continue;
+										}
+
+										if(!$changeFound) {
+												// first time, add record to the change list
+												// newRecord will be packed up into a field=>value array
+												$newRecord = $this->addRecChange("update", $tableName, $fields, $record, $field, $dbValue);
+												if($newRecord === false) {
+														// change did not pass verification in the method,
+														// therefore we're bailing on this record
+														continue;
+												}
+												$changeFound = true;
+										}
+
+										/*if($debugOn) {
+												print "NO MATCH ON FIELD: $field [$dbValue : $value]-- UPDATING RECORD<BR>";
+										}*/
+										if($newRecord) {
+												$this->addChangeDetail($tableName, $newRecord, $field, $dbValue, $newRecord[$field]);
+										}
+									}
+                }
+
+                // for groupsInCommon synchronization...
+                // make a list of groups that we will import data for -- groups table happens to be the first one we parse, and must be so (this is because the canonical list of tables is seeded with the groups table to begin with before others are added)
+                // it's the groups where the entries are identical already
+                if($tableName == "groups" AND $this->syncOnlyGroupsInCommon AND !$changeFound) {
+                    $this->groupsToSync[$record[array_search('groupid',$fields)]] = $record[array_search('name', $fields)];
                 }
             }
         }
+    }
+
+    private function cleanEncoding($text) {
+        // absurd encoding detection required to know if we should explicitly force UTF-8, which is necessary in case there are Microsoft Smart Quotes and/or accented characters, etc.
+        // Because Windows 1252 contains ISO-8859-1, we can convert from Windows 1252 safely. Detection will often incorrectly detect ISO, but all we really care about is that it's one of these and not already UTF-8 for example.
+        // When mb_detect_encoding is not in strict mode (last param, default is false), it will return the closest matching encoding, and never be FALSE, so we can always expect one of the declared encodings as the result
+        if(mb_detect_encoding($text,'UTF-8,Windows-1252,ISO-8859-1') != 'UTF-8') {
+            $text = mb_convert_encoding($text,'UTF-8','Windows-1252'); // from windows to utf-8
+        }
+        return $text;
     }
 
     public function getChanges() {
@@ -139,7 +228,10 @@ class SyncCompareCatalog {
 
             foreach ($tableInfo["updates"] as $rec) {
                 $metadata = $this->getRecMetadata($tableName, "update", $rec);
+                list($fields, $changes) = $this->getRecDetails($tableName, $rec);
                 $descrs[$tableName]["updates"][] = implode(" / ", $metadata);
+                $descrs[$tableName]["fields"][] = $fields;
+                $descrs[$tableName]["changes"][] = $changes;
             }
 
             foreach ($tableInfo["deletes"] as $rec) {
@@ -153,6 +245,13 @@ class SyncCompareCatalog {
     public function cacheChanges() {
         $sessVarName = "sync-changes-" .  session_id() . ".cache";
         cacheVar($this->changes, $sessVarName);
+        $this->cacheDetails();
+        $this->cacheGroupsToSync();
+    }
+
+    public function cacheDetails() {
+        $sessVarName = "sync-change-details-" .  session_id() . ".cache";
+        cacheVar($this->changeDetails, $sessVarName);
     }
 
     public function cacheFilePath($filePath) {
@@ -160,21 +259,32 @@ class SyncCompareCatalog {
         $this->doneFilePaths[] = $filePath;
         cacheVar($this->doneFilePaths, $sessVarName);
     }
-    
+
+    public function cacheGroupsToSync() {
+        $sessVarName = "sync-groups-to-sync-" .  session_id() . ".cache";
+        cacheVar($this->groupsToSync, $sessVarName);
+    }
+
     public function loadCachedChanges() {
         // TODO - if loaded changes was successful but an empty array then this returns false
         //           and a "no import data" error is displayed on UI...
         $sessVarName = "sync-changes-" .  session_id() . ".cache";
         $sessVarNameFilePaths = "sync-filepaths-" .  session_id() . ".cache";
+        $sessVarNameDetails = "sync-change-details-" .  session_id() . ".cache";
+        $sessVarNameGTS = "sync-groups-to-sync-" .  session_id() . ".cache";
         $this->changes = loadCachedVar($sessVarName);
+        $this->changeDetails = loadCachedVar($sessVarNameDetails);
         $this->doneFilePaths = loadCachedVar($sessVarNameFilePaths);
+        $this->groupsToSync = loadCachedVar($sessVarNameGTS);
+        $this->groupsToSync = is_array($this->groupsToSync) ? $this->groupsToSync : array(); // doesn't come out of cache right sometimes?
         return $this->changes ? true : false;
-    
+
     }
 
-    public function clearCachedChanges() {
+    public static function clearCachedChanges() {
         unlink(XOOPS_ROOT_PATH.'/modules/formulize/cache/'."sync-changes-" .  session_id() . ".cache");
         unlink(XOOPS_ROOT_PATH.'/modules/formulize/cache/'."sync-filepaths-" .  session_id() . ".cache");
+        unlink(XOOPS_ROOT_PATH.'/modules/formulize/cache/'."sync-changes-" .  session_id() . ".cache");
     }
 
     public function commitChanges($onlyThisTableName = false) {
@@ -185,17 +295,20 @@ class SyncCompareCatalog {
 
         foreach ($this->changes as $tableName => $tableData) {
             if(!isset($processedTables[$tableName]) AND (!$onlyThisTableName OR $tableName == $onlyThisTableName)) {
-            $fields = $tableData["fields"];
-                foreach ($tableData["inserts"] as $rec) {
-                    ($this->commitInsert($tableName, $rec, $fields)) ? $numSuccess++ : $numFail++;
-                }
+                $fields = $tableData["fields"];
+                $this->db->query("SET NAMES utf8mb4"); // necessary for real utf8 multibyte with accents, SET NAMES forces server to understand requests, as well as send data, according to this charset
                 foreach ($tableData["updates"] as $rec) {
                     ($this->commitUpdate($tableName, $rec)) ? $numSuccess++ : $numFail++;
                 }
+                foreach ($tableData["inserts"] as $rec) {
+                    ($this->commitInsert($tableName, $rec, $fields)) ? $numSuccess++ : $numFail++;
+                }
+                //print "<BR>FINISHED WITH $tableName<br>";
                     $processedTables[$tableName] = true;
                     if($tableName == $onlyThisTableName) {
                         break;
                 }
+
             }
         }
 
@@ -214,13 +327,24 @@ class SyncCompareCatalog {
         $this->addRecChange("insert", $tableName, $fields, $record);
     }
 
-    private function addRecChange($type, $tableName, $fields, $record) {
+    private function addRecChange($type, $tableName, $fields, $record, $field='', $dbValue = null) {
         if ($type !== "insert" && $type !== "update" && $type !== "delete") {
             throw new Exception("SyncCompareCatalog::addRecChange() only supports 'insert'/'update' change types.");
         }
 
-        // convert record to associative array
+        // convert record to associative array (which implicitly handles encoding too)
         $data = $this->convertRec($record, $fields);
+
+        // if we're only doing groups in common, check if this record should be used
+        if($this->syncOnlyGroupsInCommon) {
+            $data = $this->dataFailsGroupsInCommon($data, $tableName);
+						// If the data failed the groupsInCommon check, then boolean true will have been returned
+						// In that case, return false up the food chain since the data failed the check
+						// Also bail if we were sent here because of a particular field, and after the groups in common check, there would be in fact no change in the value of the field
+            if($data === true OR ($dbValue !== null AND $field AND $data[$field] == $dbValue)) {
+							return false;
+						}
+        }
 
         // simple modification of change type for indexing into the $changes table data structure
         $typeArrayName = $type.'s';
@@ -234,6 +358,97 @@ class SyncCompareCatalog {
         // now add record to the correct list
         $changeTypeList = &$this->changes[$tableName][$typeArrayName];
         array_push($changeTypeList, $data);
+
+        return $data;
+    }
+
+    private function addChangeDetail($tableName, $data, $field, $dbValue, $sourceValue) {
+        $key = sha1(serialize($data));
+        $this->changeDetails[$tableName][$key][$field]['db'] = $dbValue;
+        $this->changeDetails[$tableName][$key][$field]['sourceValue'] = $sourceValue;
+    }
+
+    private function dataFailsGroupsInCommon($data, $tableName) {
+        $syncGroupsInCommonLists = syncGroupsInCommonLists();
+        // if there are no groups to sync set, everything passes (at least groups 1, 2, 3 will be in common if we're synching groups in common)
+        if(count($this->groupsToSync) == 0) {
+            return $data;
+        }
+        // if the table is not a table being synched, skip it
+        if(in_array($tableName, $syncGroupsInCommonLists['group_tables'])) {
+            return true; // true, data fails
+        }
+        // if a group id field is a reference to a group id that we're not synching, skip the record
+        if(isset($syncGroupsInCommonLists['group_id_fields'][$tableName])) {
+            foreach($syncGroupsInCommonLists['group_id_fields'][$tableName] as $groupFieldName) {
+                if(!isset($this->groupsToSync[$data[$groupFieldName]])) {
+                    return true; // true, data fails
+                }
+            }
+        }
+        // if a group id key is embedded in a field, we should strip it. Yuck!
+        // need to try and detect what method of extraction of id we need to perform
+        if(isset($syncGroupsInCommonLists['group_id_embedded'][$tableName])) {
+            foreach($syncGroupsInCommonLists['group_id_embedded'][$tableName] as $groupFieldName) {
+                // possible situations... comma separated list of groupids, which might have trailing and preceeding commas, or not
+                // a serialized array, which has a numeric key, and for each of those a 'groups' key which is probably an array of group ids, but must be unserialized if it's not an array and then after unserialization it will be an array of group ids
+                // a serialized array, which has a key 3, or a key formlink_scope, which is a comma separated group id list, and does not have trailing commas or preceeding commas
+                $usRecord = unserialize($data[$groupFieldName]);
+                if(is_array($usRecord)) {
+                    if(isset($usRecord[0]) AND is_array($usRecord[0]) AND isset($usRecord[0]['groups']) AND isset($usRecord[0]['buttontext']) AND isset($usRecord[0]['applyto'])) {
+                        foreach($usRecord as $i=>$customActionMetadata) {
+                            if(!is_array($usRecord[$i]['groups'])) {
+                                $usRecord[$i]['groups'] = unserialize($usRecord[$i]['groups']);
+                            }
+                            /*print "customactions groups switch: ";
+                            print_r($usRecord[$i]['groups']);
+                            print "<br>";*/
+                            $usRecord[$i]['groups'] = array_intersect($usRecord[$i]['groups'], array_keys($this->groupsToSync));
+                            /*print_r($usRecord[$i]['groups']);
+                            print "<br>";*/
+                        }
+                    } elseif(isset($data['ele_type']) AND $data['ele_type'] == 'select' AND isset($usRecord[3]) AND is_string($usRecord[3]) AND preg_replace("/[^,0-9]/", "", $usRecord[3]) === $usRecord[3]) {
+                        /*print "selectbox $groupFieldName switch: ";
+                        print $usRecord[3];
+                        print "<br>";*/
+                        $usRecord[3] = $this->stripGroupsFromCommaList($usRecord[3]);
+                        /*print $usRecord[3];
+                        print "<br>";*/
+                    } elseif(isset($data['ele_type']) AND $data['ele_type'] == 'checkbox' AND isset($usRecord['formlink_scope']) AND is_string($usRecord['formlink_scope']) AND preg_replace("/[^,0-9]/", "", $usRecord['formlink_scope']) === $usRecord['formlink_scope']) {
+                        /*print "checkbox $groupFieldName switch: ";
+                        print $usRecord['formlink_scope'];
+                        print "<br>";*/
+                        $usRecord['formlink_scope'] = $this->stripGroupsFromCommaList($usRecord['formlink_scope']);
+                        /*print $usRecord['formlink_scope'];
+                        print "<br>";*/
+                    }
+                    $data[$groupFieldName] = serialize($usRecord);
+                } elseif(is_string($data[$groupFieldName]) AND strstr($data[$groupFieldName],',') !== false AND preg_replace("/[^,0-9]/", "", $data[$groupFieldName]) === $data[$groupFieldName]) {
+                    /*print "checkbox $groupFieldName switch: ";
+                    print $data[$groupFieldName];
+                    print "<br>";*/
+                    $data[$groupFieldName] = $this->stripGroupsFromCommaList($data[$groupFieldName]);
+                    /*print $data[$groupFieldName];
+                    print "<br>";*/
+                }
+            }
+        }
+        return $data; // record passes, possibly with modifications based on group_id_embedded
+    }
+
+    private function stripGroupsFromCommaList($commaSeparatedList) {
+        if(!is_string($commaSeparatedList) OR count($this->groupsToSync)==0) { return $commaSeparatedList; }
+        $trailingPreceeding = (substr($commaSeparatedList, 0, 1) == ',' AND substr($commaSeparatedList, -1) == ',') ? true : false;
+        if($trailingPreceeding) {
+            $commaSeparatedList = trim($commaSeparatedList,',');
+        }
+        $commaSeparatedList = explode(',',$commaSeparatedList);
+        $commaSeparatedList = array_intersect($commaSeparatedList, array_keys($this->groupsToSync));
+        $commaSeparatedList = implode(',',$commaSeparatedList);
+        if($trailingPreceeding) {
+            $commaSeparatedList = ','.$commaSeparatedList.',';
+        }
+        return $commaSeparatedList;
     }
 
     private function tableExists($tableName) {
@@ -252,14 +467,14 @@ class SyncCompareCatalog {
             $primaryField = $this->getPrimaryField($tableName);
             $recPrimaryValue = $record[array_search($primaryField, $fields)];
             $recPrimaryValue = is_numeric($recPrimaryValue) ? $recPrimaryValue : '"'.formulize_db_escape($recPrimaryValue).'"';
-            $result = $this->db->query('SELECT * FROM '.prefixTable($tableName).' WHERE '.$primaryField.' = '.$recPrimaryValue.';');    
+            $result = $this->db->query('SELECT * FROM '.prefixTable($tableName).' WHERE '.$primaryField.' = '.$recPrimaryValue.';');
         }
         return $result;
     }
 
     private function getPrimaryField($tableName) {
         $result = $this->db->query('SHOW COLUMNS FROM '.prefixTable($tableName).' WHERE `Key` = "PRI"')->fetchAll();
-        if (count($result) > 1) {
+        if (count((array) $result) > 1) {
             throw new Exception("Synchronization compare for table ".$tableName." returns multiple primary key fields");
         }
         return $result[0]['Field'];
@@ -267,12 +482,24 @@ class SyncCompareCatalog {
 
     private function convertRec($record, $fields) {
         $result = array();
-        for ($i = 0; $i < count($record); $i++) {
+        for ($i = 0; $i < count((array) $record); $i++) {
             $key = $fields[$i];
-            $val = $record[$i];
+            $val = $this->cleanEncoding($record[$i]);
             $result[$key] = $val;
         }
         return $result;
+    }
+
+    private function getRecDetails($tableName, $record) {
+        $fields = array();
+        $changes = array();
+        $record = sha1(serialize($record));
+        foreach($this->changeDetails[$tableName][$record] as $field=>$values) {
+            $fields[] = $field;
+            $changes[$field]['sourceValue'] = $this->tidyArrayForPrint($values['sourceValue']);
+            $changes[$field]['db'] = $this->tidyArrayForPrint($values['db']);
+        }
+        return array($fields, $changes);
     }
 
     private function getRecMetadata($tableName, $type, $record) {
@@ -286,7 +513,7 @@ class SyncCompareCatalog {
 
         $tableMetaInfo = $tableMetadata[$tableName];
 
-            $metadata = $this->getRecMetadataFromChanges($tableName, $tableMetaInfo, $record);
+        $metadata = $this->getRecMetadataFromChanges($tableName, $tableMetaInfo, $record);
 
         return $metadata;
     }
@@ -303,16 +530,16 @@ class SyncCompareCatalog {
         }
 
         // for joined table fields check the changes list, then fallback to DB
-        if (isset($tableMetaInfo["joins"]) AND count($tableMetaInfo["joins"]) > 0) {
+        if (isset($tableMetaInfo["joins"]) AND count((array) $tableMetaInfo["joins"]) > 0) {
             foreach ($tableMetaInfo["joins"] as $joinTableInfo) {
-                
+
                 $joinTableName = $joinTableInfo["join_table"];
                 $joinTableKey = $joinTableInfo["join_field"][1];
                 $joinTableField = $joinTableInfo["field"];
                 $recTableKey = $joinTableInfo["join_field"][0];
                 $recTableKeyVal = $record[$recTableKey];
 
-                $changesTable = $this->changes["_".$joinTableName];
+                $changesTable = $this->changes[$joinTableName];
                 $fieldValue = false;
                 if ($changesTable) {
                     foreach ($changesTable["inserts"] as $rec) {
@@ -359,16 +586,17 @@ class SyncCompareCatalog {
             if(is_numeric($value)) {
                 $sql .= $value.", ";
             } else {
-                $sql .= '"'.formulize_db_escape($value).'", ';    
+                $sql .= '"'.formulize_db_escape($value).'", ';
             }
-            
+
         }
         $sql = substr($sql, 0, -2); // remove the unnecessary trailing ', '
         $sql .= ');'; //close values brackets
 
         //file_put_contents(XOOPS_ROOT_PATH."/modules/formulize/temp/importSQL.sql", $sql."\n\r", FILE_APPEND);
+        //return true;
         $result = $this->db->query($sql);
-        
+
         // creation operations depend on the metadata being inserted into the db already!
         if($tableName == "formulize_id") {
             $this->commitCreateTable($record['id_form']);
@@ -376,9 +604,10 @@ class SyncCompareCatalog {
         if($tableName == "formulize") {
             $this->commitCreateField($record['ele_id']);
         }
-        
+
         // returns success/failure of query based on number of affected rows
         return $result->rowCount() == 1;
+
     }
 
     // update an existing record in the database
@@ -400,7 +629,7 @@ class SyncCompareCatalog {
             $form_handler = xoops_getmodulehandler('forms','formulize');
             $curForm = $form_handler->get($record['id_form']);
             if($record['form_handle'] != $curForm->getVar('form_handle')) {
-                $this->commitUpdateTable($curForm->getVar('form_handle'), $record['form_handle']);
+                $this->commitUpdateTable($curForm->getVar('form_handle'), $record['form_handle'], $curForm);
             }
         }
 
@@ -425,9 +654,11 @@ class SyncCompareCatalog {
         }
 
         //file_put_contents(XOOPS_ROOT_PATH."/modules/formulize/temp/importSQL.sql", $sql."\n\r", FILE_APPEND);
+        //return true;
         $result = $this->db->query($sql);
         // returns success/failure of query based on number of affected rows
         return $result->rowCount() == 1;
+
     }
 
     // use the forms class to create a new form data table in the database
@@ -442,13 +673,13 @@ class SyncCompareCatalog {
         }
         return $createdTables[$fid];
     }
-    
+
     // add fields to existing datatables
     private function commitCreateField($element) {
         $formHandler = xoops_getmodulehandler('forms', 'formulize');
         return $formHandler->insertElementField($element, false); // we'll specify no datatype and end up with a 'text' field
     }
-    
+
     // remove fields on existing datatables
     private function commitDeleteField($element) {
         $formHandler = xoops_getmodulehandler('forms', 'formulize');
@@ -456,18 +687,43 @@ class SyncCompareCatalog {
     }
 
     // rename a table
-    private function commitUpdateTable($oldName, $newName) {
+    private function commitUpdateTable($oldName, $newName, $formObject) {
         $formHandler = xoops_getmodulehandler('forms', 'formulize');
-        return $formHandler->renameDataTable($oldName, $newName);
+        return $formHandler->renameDataTable($oldName, $newName, $formObject);
     }
-    
+
     // rename/update a field
     private function commitUpdateField($element, $oldName, $dataType=false, $newName="") {
         $formHandler = xoops_getmodulehandler('forms', 'formulize');
-        return updateField($element, $oldName, $dataType, $newName);    
+        return $formHandler->updateField($element, $oldName, $dataType, $newName);
     }
-    
-    
+
+    private function tidyArrayForPrint($array) {
+        $usValue = null;
+        if(!is_array($array)) {
+            $usValue = unserialize($array);
+        }
+        $tidyValue = is_array($usValue) ? $usValue : $array;
+        $tidyValue = $this->recursivePrintSmart($tidyValue);
+        $tidyValue = is_array($tidyValue) ? json_encode($tidyValue, JSON_PRETTY_PRINT) : $tidyValue;
+				$tidyValue = str_replace("<", '&lt;', $tidyValue);
+				$tidyValue = str_replace('"', "''", $tidyValue);
+				$tidyValue = str_replace("'", "&#039;", $tidyValue);
+        $tidyValue = str_replace("\n", '\n', $tidyValue);
+				$tidyValue = str_replace("\r", '', $tidyValue);
+        return $tidyValue;
+    }
+
+    private function recursivePrintSmart($value) {
+        if(!is_array($value)) {
+            return printSmart(removeLanguageTags($this->cleanEncoding($value)), 200);
+        } else {
+            foreach($value as $k=>$v) {
+                $value[$k] = $this->recursivePrintSmart($v);
+            }
+            return $value;
+        }
+    }
 }
 
 function prefixTable($tableName) {
@@ -496,3 +752,18 @@ function loadCachedVar($varname) {
     }
     return unserialize($fileStr);
 }
+
+function removeLanguageTags($string) {
+    if(defined('EASIESTML_LANGS')) {
+        global $icmsConfigMultilang;
+        $easiestml_langnames = explode(',', $icmsConfigMultilang['ml_names']);
+        $easiestml_langs = explode(',', EASIESTML_LANGS);
+        foreach($easiestml_langs as $i=>$langCode) {
+            $string = str_replace("[$langCode]", "[".$easiestml_langnames[$i]."]",$string);
+            $string = str_replace("[/$langCode]", "[/".$easiestml_langnames[$i]."]",$string);
+        }
+    }
+    return $string;
+}
+
+

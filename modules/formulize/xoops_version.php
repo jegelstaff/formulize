@@ -31,9 +31,9 @@
 
 $modversion = array(
 	'name' => _MI_formulize_NAME,
-	'version' => "5.1",
+	'version' => "8.0-beta",
 	'description' => _MI_formulize_DESC,
-	'author' => "Freeform Solutions",
+	'author' => "The Formulize Project - formulize.org",
 	'credits' => "",
 	'help' => "",
 	'license' => "GPL",
@@ -53,7 +53,6 @@ $modversion['tables'] = array(
 	"formulize_menu_links",
 	"formulize_menu_permissions",
 	"formulize_resource_mapping",
-	"formulize_reports",
 	"formulize_frameworks",
 	"formulize_framework_forms",
 	"formulize_framework_elements",
@@ -68,6 +67,7 @@ $modversion['tables'] = array(
 	"formulize_screen_multipage",
 	"formulize_screen_listofentries",
 	"formulize_screen_template",
+    "formulize_screen_calendar",
 	"formulize_entry_owner_groups",
 	"formulize_application_form_link",
 	"formulize_applications",
@@ -80,6 +80,9 @@ $modversion['tables'] = array(
 	"formulize_deletion_logs",
     "formulize_apikeys",
 	"formulize_tokens",
+    "formulize_digest_data",
+    "formulize_passcodes",
+    "tfa_codes"
 );
 
 $modversion['formulize_exportable_tables'] = array(
@@ -88,7 +91,6 @@ $modversion['formulize_exportable_tables'] = array(
 	"formulize_menu",
 	"formulize_menu_links",
 	"formulize_menu_permissions",
-	"formulize_reports",
 	"formulize_frameworks",
 	"formulize_framework_forms",
 	"formulize_framework_elements",
@@ -100,6 +102,7 @@ $modversion['formulize_exportable_tables'] = array(
 	"formulize_screen_multipage",
 	"formulize_screen_listofentries",
 	"formulize_screen_template",
+    "formulize_screen_calendar",
     "formulize_entry_owner_groups",
 	"formulize_application_form_link",
 	"formulize_applications",
@@ -108,9 +111,38 @@ $modversion['formulize_exportable_tables'] = array(
 	"formulize_group_filters",
 	"formulize_groupscope_settings",
     "formulize_apikeys",
-	 "formulize_tokens",
+    "formulize_tokens",
+    "formulize_passcodes"
 );
 
+// tables that we skip when only dealing with groups in common
+// formulize_tokens is presumed to be managed independently in different site instances with different groups
+$modversion['formulize_group_tables'] = array(
+    "groups",
+    "group_lists",
+    "formulize_tokens"
+);
+
+// fields that indicate a critical group that the record in the table is about
+// so we would not sync records related to this group when only syncing groups in common
+$modversion['formulize_group_id_fields'] = array(
+    "group_permission" => array('groupid'),
+    "formulize_entry_owner_groups" => array('groupid'),
+    "formulize_groupscope_settings" => array('groupid', 'view_groupid'),
+    "formulize_group_filters" => array('groupid'),
+    "formulize_notification_conditions" => array('not_cons_groupid'),
+    "formulize_menu_permissions" => array('group_id')
+);
+
+// fields that are foreign keys to groups, but the record in the table is not about the group
+// so we would sync changes in this record, except for the group-related info, when we're only syncing groups in common
+// PROBLEM IS THERE ARE DIFFERENT METHODS FOR UNEARTHING THE DAMNED GROUP ID!
+// REPURPOSE THE MANAGEPERMISSIONS LOGIC FOR GETTING AT THE VALUES??
+$modversion['formulize_group_id_embedded'] = array(
+    "formulize"=>array("ele_value","ele_display","ele_disabled"),
+    "formulize_screen_listofentries"=>array("customactions"),
+    "formulize_saved_views"=>array("sv_pubgroups")
+);
 
 /*
  * Table metadata general structure
@@ -160,8 +192,6 @@ $modversion['table_metadata'] = array(
 			)
         ),
     ),
-    "formulize_resource_mapping" => array(),
-    "formulize_reports" => array(),
     "formulize_frameworks" => array(
         "fields" => array("frame_name"),
         "joins" => array()
@@ -279,6 +309,16 @@ $modversion['table_metadata'] = array(
             )
         )
     ),
+    "formulize_screen_calendar" => array(
+        "fields" => array(),
+        "joins" => array(
+            array(
+                "join_table" => "formulize_screen",
+                "join_field" => array("sid", "sid"),
+                "field" => "title"
+            )
+        )
+    ),
     "formulize_advanced_calculations" => array(
         "fields" => array("name"),
         "joins" => array()
@@ -356,6 +396,10 @@ $modversion['table_metadata'] = array(
     ),
     "formulize_tokens" => array(
         "fields" => array("groups","tokenkey"),
+        "joins" => array()
+    ),
+    "formulize_passcodes" => array(
+        "fields" => array("passcode", "screen"),
         "joins" => array()
     )
 );
@@ -562,6 +606,9 @@ $modversion['templates'][] = array(
 	'file' => 'admin/screen_multipage_templates.html',
 	'description' => '');
 $modversion['templates'][] = array(
+    'file' => 'admin/screen_template_options.html',
+    'description' => '');
+$modversion['templates'][] = array(
     'file' => 'admin/screen_template_templates.html',
     'description' => '');
 $modversion['templates'][] = array(
@@ -616,7 +663,61 @@ $modversion['templates'][] = array(
 	'file' => 'admin/managekeys.html',
 	'description' => '');
 $modversion['templates'][] = array(
-	'file' => 'admin/home2.html',
+	'file' => 'admin/managetokens.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/element_options_delimiter_choice.html',
+    'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/screen_calendar_data_sections.html',
+    'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/screen_calendar_data.html',
+    'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/screen_calendar_templates.html',
+    'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'passcode.html',
+    'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/multipage_navigation2-above.html',
+    'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/multipage_navigation2-below.html',
+    'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/multipage_navigation3-above.html',
+    'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/multipage_navigation3-below.html',
+    'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/alternate_fields_for_linked_elements.html',
+    'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/screen_form_templates.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/screen_form_template_boxes.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'blocks/menu.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'blocks/menu_controller.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/mailusers.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/managepermissions.html',
+	'description' => '');
+$modversion['templates'][] = array(
+		'file' => 'admin/variable_template_help.html',
+		'description' => '');
+$modversion['templates'][] = array(
+		'file' => 'admin/home2.html',
 	'description' => '');
 $modversion['templates'][] = array(
 	'file' => 'admin/home_sections2.html',
@@ -624,11 +725,7 @@ $modversion['templates'][] = array(
 $modversion['templates'][] = array(
     'file' => 'admin/home_sections2_sidebars.html',
     'description' => '');
-/*
-$modversion['templates'][] = array(
-	'file' => 'admin/managetokens.html',
-	'description' => '');*/
-    
+
 //	Module Configs
 // $xoopsModuleConfig['t_width']
 $modversion['config'][1] = array(
@@ -670,7 +767,6 @@ $modversion['config'][] = array(
 	'default' => '35',
 );
 
-// $xoopsModuleConfig['delimeter']
 $modversion['config'][] = array(
 	'name' => 'delimeter',
 	'title' => '_MI_formulize_DELIMETER',
@@ -679,26 +775,6 @@ $modversion['config'][] = array(
 	'valuetype' => 'text',
 	'default' => 'br',
 	'options' => array(_MI_formulize_DELIMETER_BR=>'br', _MI_formulize_DELIMETER_SPACE=>'space'),
-);
-
-// get all the available forms and populate the options array
-// this is not permission controlled yet -- should make use of the edit_form permission perhaps
-global $xoopsDB;
-$getFormsSQL = "SELECT id_form, desc_form FROM " . $xoopsDB->prefix("formulize_id");
-$resFormsSQL = $xoopsDB->query($getFormsSQL);
-$pformoptions["-------------"] = 0;
-while($resArray = $xoopsDB->fetchArray($resFormsSQL)) {
-	$pformoptions[$resArray['desc_form']] = $resArray['id_form'];
-}
-// $xoopsModuleConfig['profileForm']
-$modversion['config'][] = array(
-	'name' => 'profileForm',
-	'title' => '_MI_formulize_PROFILEFORM',
-	'description' => '',
-	'formtype' => 'select',
-	'valuetype' => 'int',
-	'default' => '0',
-	'options' => $pformoptions,
 );
 
 $modversion['config'][] = array(
@@ -710,7 +786,6 @@ $modversion['config'][] = array(
 	'default' => 1,
 );
 
-// $xoopsModuleConfig['LOE_limit']
 $modversion['config'][] = array(
 	'name' => 'LOE_limit',
 	'title' => '_MI_formulize_LOE_limit',
@@ -720,7 +795,6 @@ $modversion['config'][] = array(
 	'default' => '5000',
 );
 
-// $xoopsModuleConfig['useToken']
 $modversion['config'][] = array(
 	'name' => 'useToken',
 	'title' => '_MI_formulize_USETOKEN',
@@ -737,10 +811,9 @@ $modversion['config'][] = array(
 	'description' => '_MI_formulize_ISSAVELOCKEDDESC',
 	'formtype' => 'yesno',
 	'valuetype' => 'int',
-	'default' => 0, // no is the default
+	'default' => 0
 );
 
-// number formatting options
 $modversion['config'][] = array(
 	'name' =>'number_decimals',
 	'title' => '_MI_formulize_NUMBER_DECIMALS',
@@ -787,6 +860,15 @@ $modversion['config'][] = array(
 );
 
 $modversion['config'][] = array(
+	'name' =>'show_empty_elements_when_read_only',
+	'title' => '_MI_formulize_SHOW_EMPTY_ELEMENTS_WHEN_READ_ONLY',
+	'description' => '_MI_formulize_SHOW_EMPTY_ELEMENTS_WHEN_READ_ONLY_DESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 0,
+);
+
+$modversion['config'][] = array(
 	'name' =>'heading_help_link',
 	'title' => '_MI_formulize_HEADING_HELP_LINK',
 	'description' => '_MI_formulize_HEADING_HELP_LINK_DESC',
@@ -795,7 +877,6 @@ $modversion['config'][] = array(
 	'default' => 1,
 );
 
-// control if caching is on or off
 $modversion['config'][] = array(
 	'name' => 'useCache',
 	'title' => '_MI_formulize_USECACHE',
@@ -842,6 +923,30 @@ $modversion['config'][] = array(
 );
 
 $modversion['config'][] = array(
+	'name' => 'customScope',
+	'title' => '_MI_formulize_CUSTOMSCOPE',
+	'description' => '_MI_formulize_CUSTOMSCOPEDESC',
+	'formtype' => 'textarea',
+	'valuetype' => 'text',
+	'default' => '',
+);
+
+$modversion['config'][] = array(
+	'name' => 'exportIntroChar',
+	'title' => '_MI_formulize_EXPORTINTROCHAR',
+	'description' => '_MI_formulize_EXPORTINTROCHARDESC',
+	'formtype' => 'select',
+	'valuetype' => 'int',
+	'default' => '1',
+    'options' => array(
+      _MI_formulize_EIC_BASIC=>1,
+      _MI_formulize_EIC_ALWAYSAPOS=>2,
+      _MI_formulize_EIC_ALWAYSTAB=>3,
+      _MI_formulize_EIC_PLAIN=>4
+        )
+);
+
+$modversion['config'][] = array(
 	'name' => 'notifyByCron',
 	'title' => '_MI_formulize_NOTIFYBYCRON',
 	'description' => '_MI_formulize_NOTIFYBYCRONDESC',
@@ -851,21 +956,74 @@ $modversion['config'][] = array(
 );
 
 $modversion['config'][] = array(
-	'name' => 'customScope',
-	'title' => '_MI_formulize_CUSTOMSCOPE',
-	'description' => '_MI_formulize_CUSTOMSCOPEDESC ',
-	'formtype' => 'textarea',
-	'valuetype' => 'text',
-	'default' => '',
+	'name' => 'f7MenuTemplate',
+	'title' => '_MI_formulize_F7MENUTEMPLATE',
+	'description' => '_MI_formulize_F7MENUTEMPLATEDESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => '1',
 );
 
+$modversion['config'][] = array(
+	'name' => 'useOldCustomButtonEffectWriting',
+	'title' => '_MI_formulize_USEOLDCUSTOMBUTTONEFFECTWRITING',
+	'description' => '_MI_formulize_USEOLDCUSTOMBUTTONEFFECTWRITINGDESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => '0',
+);
 
-//bloc
+$modversion['config'][] = array(
+	'name' => 'formulizeLoggingOnOff',
+	'title' => '_MI_formulize_FORMULIZELOGGINGONOFF',
+	'description' => '_MI_formulize_FORMULIZELOGGINGONOFFDESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 0,
+);
+
+$modversion['config'][] = array(
+	'name' => 'formulizeLogFileLocation',
+	'title' => '_MI_formulize_FORMULIZELOGFILELOCATION',
+	'description' => '_MI_formulize_FORMULIZELOGFILELOCATIONDESC',
+	'formtype' => 'textbox',
+	'valuetype' => 'text',
+	'default' => XOOPS_ROOT_PATH.'/logs',
+);
+
+$modversion['config'][] = array(
+	'name' => 'formulizeLogFileStorageDurationHours',
+	'title' => '_MI_formulize_formulizeLogFileStorageDurationHours',
+	'description' => '_MI_formulize_formulizeLogFileStorageDurationHoursDESC',
+	'formtype' => 'textbox',
+	'valuetype' => 'int',
+	'default' => '168',
+);
+
+$modversion['config'][] = array(
+	'name' => 'formulizeRewriteRulesEnabled',
+	'title' => '_MI_formulize_rewriteRulesEnabled',
+	'description' => '_MI_formulize_rewriteRulesEnabledDESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 0,
+);
+
+$modversion['config'][] = array(
+	'name' => 'validateCode',
+	'title' => '_MI_formulize_VALIDATECODE',
+	'description' => '_MI_formulize_VALIDATECODE_DESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 1,
+);
+
 $modversion['blocks'][1] = array(
 	'file' => "mymenu.php",
 	'name' => _MI_formulizeMENU_BNAME,
-	'description' => "Zeigt individuelles Menu an",
-	'show_func' => "block_formulizeMENU_show");
+	'description' => "",
+	'show_func' => "block_formulizeMENU_show",
+    'template' => 'menu_controller.html');
 
 // Notifications -- added by jwe 10/10/04, removed for 2.0, reinstated for 2.2 with improved options
 $modversion['hasNotification'] = 1;

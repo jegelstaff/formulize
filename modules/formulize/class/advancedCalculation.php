@@ -57,14 +57,14 @@ class formulizeAdvancedCalculation extends xoopsObject {
     $code = <<<EOD
 \$totalNumberOfRecords = 0;
 \$sql = "{$calculation['sql']}";
-\$res = \$xoopsDB->queryF(\$sql);
+\$res = empty(\$sql) ? array() : \$xoopsDB->queryF(\$sql);
 {$calculation['preCalculate']}
 while(\$array = \$xoopsDB->fetchBoth(\$res)) {
   \$row = \$array;
   \$field = \$array;
 {$calculation['calculate']}
 }
-\$totalNumberOfRecords = $xoopsDB->getRowsNum(\$res);
+\$totalNumberOfRecords = \$xoopsDB->getRowsNum(\$res);
 {$calculation['postCalculate']}
 EOD;
 
@@ -122,7 +122,7 @@ foreach(\$res as \$thisRes) {
 	  \$field = \$array;
 {$calculation['calculate']}
   }
-  \$totalNumberOfRecords += $xoopsDB->getRowsNum(\$thisRes);
+  \$totalNumberOfRecords += \$xoopsDB->getRowsNum(\$thisRes);
 }
 {$calculation['postCalculate']}
 EOD;
@@ -137,11 +137,11 @@ class formulizeAdvancedCalculationHandler {
   	function __construct(&$db) {
 		$this->db =& $db;
 	}
-  
+
   function &create() {
 		return new formulizeAdvancedCalculation();
 	}
-  
+
   function get($id) {
     static $cachedResults = array();
     if(!isset($cachedResults[$id])) {
@@ -157,7 +157,7 @@ class formulizeAdvancedCalculationHandler {
     }
     return $cachedResults[$id];
   }
-  
+
   function insert(&$advCalcObject, $force=false) {
 		if( get_class($advCalcObject) != 'formulizeAdvancedCalculation'){
         return false;
@@ -176,7 +176,7 @@ class formulizeAdvancedCalculationHandler {
     } else {
       $sql = "UPDATE ".$this->db->prefix("formulize_advanced_calculations") . " SET `fid` = ".$fid.", `name` = ".$this->db->quoteString($name).", `description` = ".$this->db->quoteString($description).", `input` = ".$this->db->quoteString($input).", `output` = ".$this->db->quoteString($output).", `steps` = ".$this->db->quoteString($steps).", `steptitles` = ".$this->db->quoteString($steptitles).", `fltr_grps` = ".$this->db->quoteString($fltr_grps).", `fltr_grptitles` = ".$this->db->quoteString($fltr_grptitles)." WHERE acid = ".intval($acid);
     }
-    
+
     if( false != $force ){
         $result = $this->db->queryF($sql);
     }else{
@@ -184,7 +184,7 @@ class formulizeAdvancedCalculationHandler {
     }
 
     if( !$result ){
-      print "Error: this advanced calculation could not be saved in the database.  SQL: $sql<br>".$xoopsDB->error();
+      print "Error: this advanced calculation could not be saved in the database.  SQL: $sql<br>".$this->db->error();
       return false;
     }
 
@@ -193,10 +193,10 @@ class formulizeAdvancedCalculationHandler {
     }
     return $acid;
 	}
-  
+
   function delete($acid) {
     if(is_object($acid)) {
-			if(!get_class("formulizeAdvancedCalculation")) {
+			if(get_class($acid) != "formulizeAdvancedCalculation") {
 				return false;
 			}
 			$acid = $acid->getVar('acid');
@@ -211,8 +211,8 @@ class formulizeAdvancedCalculationHandler {
       $isError = true;
     }
     return $isError ? false : true;
-  } 
-  
+  }
+
   function cloneProcedure($acid) {
     global $xoopsDB;
     $sql = "INSERT INTO ".$xoopsDB->prefix("formulize_advanced_calculations")." (fid, name, description, input, output, steps, steptitles, fltr_grps, fltr_grptitles ) SELECT fid, CONCAT(name,' - copy'), description, input, output, steps, steptitles, fltr_grps, fltr_grptitles FROM ".$xoopsDB->prefix("formulize_advanced_calculations")." WHERE acid=".intval($acid);
@@ -246,7 +246,7 @@ class formulizeAdvancedCalculationHandler {
     $result = $this->db->queryF($sql);
 
     if( !$result ){
-      print "Error: this advanced calculation log could not be saved in the database.  SQL: $sql<br>".$xoopsDB->error();
+      print "Error: this advanced calculation log could not be saved in the database.  SQL: $sql<br>".$this->db->error();
       return false;
     }
 
@@ -258,7 +258,7 @@ class formulizeAdvancedCalculationHandler {
     $result = $this->db->queryF($sql);
 
     if( !$result ){
-      print "Error: this advanced calculation log item could not be saved in the database.  SQL: $sql<br>".$xoopsDB->error();
+      print "Error: this advanced calculation log item could not be saved in the database.  SQL: $sql<br>".$this->db->error();
       return false;
     }
 
@@ -292,7 +292,7 @@ class formulizeAdvancedCalculationHandler {
     $fileName = XOOPS_ROOT_PATH."/modules/formulize/cache/formulize_advancedCalculation_procid_".intval($acid)."_groupids_".implode("_",$userGroups)."_".$key.".php";
     return $fileName;
   }
-  
+
   function getCachedResult($fileName, $debugFlag) {
     if($debugFlag) {
 	return false;
@@ -312,7 +312,7 @@ class formulizeAdvancedCalculationHandler {
     }
     if(in_array(XOOPS_GROUP_ADMIN, $groups)) {
 	return false;
-    }    
+    }
     if( file_exists( $fileName ) AND !isset($_GET['formulize_bypassCachedResults']) ) {
       // cached version found
       $cachedVersion = unserialize( file_get_contents( $fileName ) );
@@ -336,7 +336,7 @@ class formulizeAdvancedCalculationHandler {
     $formulizeConfig =& $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
     $modulePrefUseCache = $formulizeConfig['useCache'];
     $modulePrefLogProcedure = $formulizeConfig['logProcedure'];
-    
+
     // check to see if there is already a cached version of the request
     $fileName = "";
     $cachedVersion = false;
@@ -367,7 +367,7 @@ class formulizeAdvancedCalculationHandler {
         if( $thisGrouping['type']['kind'] == 3 ) {    // Checkboxes
           // if more then one is selected then do the grouping, else just do the grouping
           //print isset($_POST[$acid."_groupingchoices"][$index])." AND ".array_key_exists( $acid . "_" .$thisGrouping['handle'], $_POST )." AND ".is_array( $_POST[$acid . "_" .$thisGrouping['handle']] )." AND ".count( $_POST[$acid . "_" .$thisGrouping['handle']] );
-          if( isset($_POST[$acid."_groupingchoices"][$index]) AND ( (is_array( $_POST[$acid . "_" .$thisGrouping['handle']] ) AND count( $_POST[$acid . "_" .$thisGrouping['handle']] ) != 1 ) OR !is_array($_POST[$acid . "_" .$thisGrouping['handle']]) ) )  {
+          if( isset($_POST[$acid."_groupingchoices"][$index]) AND ( (is_array( $_POST[$acid . "_" .$thisGrouping['handle']] ) AND count((array)  $_POST[$acid . "_" .$thisGrouping['handle']] ) != 1 ) OR !is_array($_POST[$acid . "_" .$thisGrouping['handle']]) ) )  {
 	    $savedGroupingFilterValue[$thisGrouping['handle']] = $_POST[$acid . "_" .$thisGrouping['handle']]; // save this value so we can use it again after
 	    $groups[] = $index;
           }
@@ -380,15 +380,15 @@ class formulizeAdvancedCalculationHandler {
         }
       }
     }
-    
+
     // set a flag for age range grouping if the user has requested it
     if(isset($_POST['ocandsAgeGrouping']) AND $_POST['ocandsAgeGrouping'] == "ocandsAgeGrouping") {
 	$savedGroupingFilterValue['minAge'] = $_POST[$acid . "_minAge"]; // save this value so we can use it again after
 	$savedGroupingFilterValue['maxAge'] = $_POST[$acid . "_maxAge"]; // save this value so we can use it again after
 	$groups[] = $_POST['ocandsAgeGrouping'];
     }
-        
-    
+
+
     // re-order grouping if specified by the user
     if(isset($_POST['sortedGroupings'])) {
       parse_str( $_POST['sortedGroupings'], $sortedGroupings );
@@ -432,13 +432,13 @@ class formulizeAdvancedCalculationHandler {
               foreach( $options as $optionKey => $optionValue ) {
                 $option = $options[$optionKey];
                 $value = explode( "|", $option );
-                if( count( $value ) == 2 ) {
+                if( count((array)  $value ) == 2 ) {
                   if( $postOptions == $value[0] ) {
                     //print "<br>... " . $thisFilter['fltr_label'] . " = " . $value[1];
                     $this->createLogParam( $logid, $thisFilter['fltr_label'], $value[1] );
                   }
                 } else {
-                  if( $postOptions == $postValue ) {
+                  if( $postOptions == $option ) {
                     //print "<br>... " . $thisFilter['fltr_label'] . " = " . $option;
                     $this->createLogParam( $logid, $thisFilter['fltr_label'], $option );
                   }
@@ -452,7 +452,7 @@ class formulizeAdvancedCalculationHandler {
               foreach( $postOptions as $postKey => $postValue ) {
                 $option = $options[$postKey];
                 $value = explode( "|", $option );
-                if( count( $value ) == 2 ) {
+                if( count((array)  $value ) == 2 ) {
                   //print "<br>... " . $thisFilter['fltr_label'] . "[] = " . $value[1];
                   $this->createLogParam( $logid, $thisFilter['fltr_label'] . "[]", $value[1] );
                 } else {
@@ -499,7 +499,7 @@ class formulizeAdvancedCalculationHandler {
     // setup the processing environment
     $stack = array();
     $level = -1;
-    if( count( $groups ) > 0 ) {
+    if( count((array)  $groups ) > 0 ) {
       $hasGroups = true;
       array_push( $stack, array( -1, null, & $groupCombinations, null ) );
     } else {
@@ -513,7 +513,7 @@ class formulizeAdvancedCalculationHandler {
     $activeGroupings = array(); // will contain the metadata for the filter/grouping option, plus the "value" which is the value we're filtering on.  In the case of checkbox filters, because they are set differently based on the item position in the options array, the "value" may be different from the value pulled off the stack.
 
     // process the stack
-    while( count( $stack ) > 0 ) {
+    while( count((array)  $stack ) > 0 ) {
       // get the next item to process from the stack
       $item = null; // just to make sure there's nothing left over from the previous iteration
       $item = array_pop( $stack );
@@ -545,14 +545,14 @@ class formulizeAdvancedCalculationHandler {
 
 	  // if it's a checkbox filter, than we need to use $item[1] as the additional key in the post array, and 1 is simply the flag value
 	  } elseif($filtersAndGroupings[$groups[$item[0]]]['type']['kind'] == 3) {
-	    
+
 	    $_POST[$acid."_".$filtersAndGroupings[$groups[$item[0]]]['handle']] = array($item[1] => 1);
 	    // figure out what the correct value is for the active groupings...it should be the value used in SQL, not the item[1] which will be the key position in the checkbox options array
 	    $activeOption = $filtersAndGroupings[$groups[$item[0]]]['type']['options'][$item[1]];
 	    if(strstr($activeOption, "|")) {
 		$activeOptionParts = explode("|", $activeOption);
 		$activeOption = $activeOptionParts[0];
-	    } 
+	    }
 	    $activeGroupings[$groups[$item[0]]] = array('metadata'=>$filtersAndGroupings[$groups[$item[0]]], 'value'=>$activeOption);
 	    $activeGroupings[$groups[$item[0]]]['metadata']['title'] = $filtersAndGroupingsTitles[$groups[$item[0]]];
 	  } else {
@@ -560,10 +560,10 @@ class formulizeAdvancedCalculationHandler {
 	    $activeGroupings[$groups[$item[0]]] = array('metadata'=>$filtersAndGroupings[$groups[$item[0]]], 'value'=>$item[1]);
 	    $activeGroupings[$groups[$item[0]]]['metadata']['title'] = $filtersAndGroupingsTitles[$groups[$item[0]]];
 	  }
-	  
+
 
           // if the last level has been reached, then we need to calculate
-          if( $item[0] == count( $groups ) - 1 ) {
+          if( $item[0] == count((array)  $groups ) - 1 ) {
             $doCalc = true;
           }
 
@@ -572,7 +572,7 @@ class formulizeAdvancedCalculationHandler {
         }
 
         // put the children items on the stack for processing
-        if( $item[0] != count( $groups ) - 1 ) {
+        if( $item[0] != count((array)  $groups ) - 1 ) {
           foreach( $item[2] as $key => & $value ) {
             array_push( $stack, array( $item[0] + 1, $key, & $value, & $item[2] ) );
           }
@@ -582,7 +582,7 @@ class formulizeAdvancedCalculationHandler {
       }
 
       if( $doCalc ) {
-	
+
 	$steps = $advCalcObject->getVar('steps');
 	$steptitles = $advCalcObject->getVar('steptitles');
 	$user_defined_input = $advCalcObject->vars['input']['value'];
@@ -623,12 +623,12 @@ class formulizeAdvancedCalculationHandler {
 		$GLOBALS['formulize_procedureTimerOn'] = true;
 		$user_defined_input = str_replace("timerOn();","",$user_defined_input);
 	    }
-    
-	    reportProceduresTime("Start of Procedure");    
+
+	    reportProceduresTime("Start of Procedure");
 	    eval($user_defined_input);
-	    
+
 	    reportProceduresTime("Finished processing the input instructions");
-    
+
 	    foreach( $steps as $stepKey => $step ) {
 	      if( strpos( $step['sql'], '{foreach' ) > 0 ) {
 #error_log("genForeach");
@@ -644,20 +644,20 @@ class formulizeAdvancedCalculationHandler {
 #        error_log("line ".$linecounter.": ".$lines[$linecounter]);
 #}
 	      eval($code);
-	      reportProceduresTime("Finished processing step '".$steptitles[$stepKey]."'", $totalNumberOfRecords);  
+	      reportProceduresTime("Finished processing step '".$steptitles[$stepKey]."'", $totalNumberOfRecords);
 	    }
-    
+
 	    eval($user_defined_output);
-	    
+
 	    reportProceduresTime("Finished processing the output instructions");
-	    
+
 	    $calculationResult = isset($procOutput) ? $procOutput : ""; // procOutput is a conventional name for a variable that can be set in the procedure's own code, and we'll grab it as the result if it's set.
 	    $output = ob_get_clean();
 	    if($localFileName) {
 		file_put_contents($localFileName, serialize(array($calculationResult, $output)));
 	    }
     	}
-	
+
 	// collect data/output from this calculation
 	$calculationTextTemp = $hasGroups ? $this->captureGroupedOutput($activeGroupings, $output) : $output; // $this->captureGroupedOutput($filtersAndGroupings, $groups, $item) : ob_get_clean(); // besides any variable output, we'll grab whatever would have gone to screen, and return that as "text".  In the case of grouped results, we need to put a label before the text so we know what grouping results we're talking about.
 	$calculationText = $calculationTextTemp . $calculationText; // since we do things in reverse order of how they're setup in the UI for the users, then we build the output text backwards too.
@@ -679,14 +679,14 @@ class formulizeAdvancedCalculationHandler {
     $this->destroyTables();
 
     if($hasGroups) {
-	if(count($savedGroupingFilterValue)>0) {
+	if(count((array) $savedGroupingFilterValue)>0) {
             $calculationResult = serialize($groupCombinations); // now that all groups have been processed, then we need to use the original groupCombinations array, where the individual results were assigned by reference, as the result that we're going to send back.
             $calculationResult = unserialize($calculationResult); // this is the stupid thing we have to do if checkbox selections are involved, since there's some deep reference involving POST, which screws up the results when we reset it to the user's original choice.  So we cannot assign the value here in a normal way, we have to munge the reference that is in place by converting the array to a string!!
 	} else {
 	    $calculationResult = $groupCombinations;
 	}
     }
-    
+
     // reset any checkbox filter values to what the user selected for them (while processing, we will have set these values to something else if there is grouping going on)
     // NEED TO DO THIS LAST BECAUSE THERE'S SOME PASS BY REFERENCE STRANGENESS GOING ON THAT AFFECTS groupCombinations! See comment above about serialize/unserialize when getting groupcombinations
     foreach($savedGroupingFilterValue as $handle=>$value) {
@@ -699,11 +699,12 @@ class formulizeAdvancedCalculationHandler {
     }
 
     return $output;
-    
+
   }
 
   // this method grabs the output to screen and sticks a grouping label in front of it
   function captureGroupedOutput($activeGroupings, $output) {
+		$groupingLabel = '';
     foreach($activeGroupings as $thisGrouping) {
 	if(is_array($thisGrouping['metadata'])) {
 	    $label = $thisGrouping['metadata']['fltr_label'];
@@ -738,13 +739,13 @@ class formulizeAdvancedCalculationHandler {
     }
     return $cachedValues[$serializedFilterData][$dataValue];
   }
-  
-  
+
+
 
   function groupBy( $acid, $filtersAndGroupings, $groups, $level = 0 ) {
     $groupCombinations = array();
 
-    $groupsCount = count( $groups );
+    $groupsCount = count((array)  $groups );
 
     $group = $groups[ $level ];
     if($group == "year" OR $group == "quarter") {
@@ -756,7 +757,7 @@ class formulizeAdvancedCalculationHandler {
     }
 
     //print str_repeat( ' ', $level * 2 ) . '> ' . $fltr_grp['handle'] . "\n";
-    
+
     if($fltr_grp == "ocandsDateGrouping") { // always guaranteed to be the final level
 
 	// since this is always going to be the bottom level, throw error if we're not
@@ -803,12 +804,12 @@ class formulizeAdvancedCalculationHandler {
 		$groupCombinations[$thisAgeGroup] = array();
 	      }
 	    }
-	}	
+	}
 
     } elseif( $fltr_grp['type']['kind'] == 2 AND $_POST[ $acid."_".$fltr_grp['handle'] ] == '' AND $_POST[ $acid."_".$fltr_grp['handle'] ] !== 0 ) { // Select
       foreach( $fltr_grp['type']['options'] as $option ) {
         $value = explode( "|", $option );
-        if( count( $value ) == 2 ) {
+        if( count((array)  $value ) == 2 ) {
           $key = $value[0];
         } else {
           $key = $option;
@@ -827,11 +828,11 @@ class formulizeAdvancedCalculationHandler {
         }
       }
     } else if( $fltr_grp['type']['kind'] == 3) { // Checkboxes
-	
+
 	/*array_key_exists( $acid . "_" .$fltr_grp['handle'], $_POST )
 	AND */
 
-      if(is_array( $_POST[$acid . "_" .$fltr_grp['handle']] ) AND count( $_POST[$acid . "_" .$fltr_grp['handle']] ) > 1) {
+      if(is_array( $_POST[$acid . "_" .$fltr_grp['handle']] ) AND count((array)  $_POST[$acid . "_" .$fltr_grp['handle']] ) > 1) {
 	$selected_grps = $_POST[$acid . "_" .$fltr_grp['handle']];
       } else {
 	$selected_grps = false;
@@ -914,13 +915,13 @@ class formulizeAdvancedCalculationHandler {
 		if($quarter == 0) { // first calendar quarter is considered fourth quarter of previous year
 		    $quarter = 4;
 		    $year--;
-		} 
+		}
 	    }
 	    return "Q$quarter $year";
 	    break;
     }
   }
-  
+
   // this function advances to the start date of the next quarter or year
   function nextOcandsDate($date, $groupType) {
     switch($groupType) {
@@ -969,7 +970,7 @@ class formulizeAdvancedCalculationHandler {
     }
     return $dates[$startEnd];
   }
-  
+
   // this function returns the calendar year in which the passed in month-day occurs for the given year and offset (if offset is fiscal, then year will increase for Jan and March dates)
   function getCalendarYearForThisQuarterDate($yearMonth, $year, $offset) {
     if($offset == "fiscal") {
@@ -980,7 +981,7 @@ class formulizeAdvancedCalculationHandler {
     }
     return $year;
   }
-  
+
   // this function removes temp tables created by the createProceduresTable on this pageload
   function destroyTables() {
     global $xoopsDB;
@@ -1002,9 +1003,9 @@ class formulizeAdvancedCalculationHandler {
     include_once XOOPS_ROOT_PATH.'/class/xoopsform/formhidden.php'; //dependency
     include_once XOOPS_ROOT_PATH.'/class/xoopsform/formtextdateselect.php';
     include_once XOOPS_ROOT_PATH.'/class/xoopsform/formselect.php';
-    
+
     $hideLabel = false;
-    
+
 
     // load the advanced calculation (procedure)
     $acObject = $this->get($acid);
@@ -1028,7 +1029,7 @@ class formulizeAdvancedCalculationHandler {
     $kind = $fltr_grp["type"]["kind"];
     $form = $fltr_grp["form"];
 
-    $elementUnderlyingField = $form ? "element".$form : "no-underlying-element"; 
+    $elementUnderlyingField = $form ? "element".$form : "no-underlying-element";
 
     if( $kind == 1 ) {
       // first param is caption, we can skip that because the front end person will embed this somewhere with a caption of their own attached
@@ -1050,7 +1051,7 @@ class formulizeAdvancedCalculationHandler {
 	$form_ele = new XoopsFormTextDateSelect("", $elementName, 15, $dateValue);
 	$form_ele->setExtra(' class="'. $elementUnderlyingField . '" ');
       }
-      $selected = date("Y-m-d", $dateValue);
+      $selected = date("Y-m-d", (int)$dateValue);
       // special catch for dates without a year, which is valid for OCANDS multi year groupings with only quarters specified
       if($selected == "1969-12-31" AND (strstr($elementName, "_startDate") OR strstr($elementName, "_endDate")) AND $selected != $_POST[$elementName] AND $selected != $_GET[$elementName]) {
 	$selected = $_POST[$elementName];
@@ -1080,7 +1081,7 @@ class formulizeAdvancedCalculationHandler {
       $options[""] = "Choose an option...";
       foreach( $definedOptions as $definedOption ) {
         $value = explode( "|", $definedOption );
-        if( count( $value ) == 2 ) {
+        if( count((array)  $value ) == 2 ) {
           $options[$value[0]] = $value[1];
           if( $selectedValue == $value[0] ) {
             $selected = trim($value[1]);
@@ -1109,7 +1110,7 @@ class formulizeAdvancedCalculationHandler {
           $checked = '';
         }
         $option_value = explode( "|", $definedOption );
-        if( count( $option_value ) == 2 ) {
+        if( count((array)  $option_value ) == 2 ) {
           $tmp_html .= '<input type="checkbox" id="' . $elementArrayName . '" class="'. $elementUnderlyingField . ' ' . $elementName . '" name="' . $elementArrayName . '" value="1"' . $checked . '>';
           $tmp_html .= $option_value[1] . "<br>";
           if( $value == 1 ) {
@@ -1124,7 +1125,7 @@ class formulizeAdvancedCalculationHandler {
         }
         $index++;
       }
-      if( count( $selected ) == 0 ) {
+      if( count((array)  $selected ) == 0 ) {
         $selected = "All";
       }
     } else if($kind == 4) { // textbox
@@ -1160,11 +1161,11 @@ class formulizeAdvancedCalculationHandler {
   function _getFilterOptionsCheckboxStatus($fltr_grp, $index, $elementName) {
     $value = 0; // default to nothing selected, unless we pick up something below...
     if(isset($_POST[$elementName][$index])) { // if selections for this filter were sent from the form...
-        $value = $_POST[$elementName][$index];    
+        $value = $_POST[$elementName][$index];
     } elseif(isset($_GET[$elementName][$index])) { // or if they were set in the URL...
         $value = $_GET[$elementName][$index];
-    } elseif(count($_POST)==0 AND !isset($_GET[$elementName])) { // if no form submission at all and nothing set in the URL, gather defaults
-        $value = in_array($index, $fltr_grp["type"]["defaults"]);
+    } elseif(count((array) $_POST)==0 AND !isset($_GET[$elementName])) { // if no form submission at all and nothing set in the URL, gather defaults
+        $value = in_array($index, (array)$fltr_grp["type"]["defaults"]);
     }
     return $value;
   }
@@ -1196,19 +1197,19 @@ class formulizeAdvancedCalculationHandler {
     if($fltr_grp["type"]["kind"] == 3) {
       $index = 0;
       $numberChecked = 0;
-      while($index <= count($fltr_grp["type"]["options"]) AND $numberChecked < 2) {
+      while($index <= count((array) $fltr_grp["type"]["options"]) AND $numberChecked < 2) {
 	if($this->_getFilterOptionsCheckboxStatus($fltr_grp, $index, $acid . "_" . $fltr_grp["handle"])) {
 	    $numberChecked++;
 	}
 	$index++;
       }
     }
-    if( array_key_exists( $fltr_grp_index, $value ) OR $numberChecked >= 2 ) {
+    if( array_key_exists( $fltr_grp_index, (array)$value ) OR $numberChecked >= 2 ) {
       $checked = ' CHECKED';
     } else {
       $checked = '';
     }
-    $elementUnderlyingField = $fltr_grp["form"] ? "element".$fltr_grp["form"] : "no-underlying-element"; 
+    $elementUnderlyingField = $fltr_grp["form"] ? "element".$fltr_grp["form"] : "no-underlying-element";
     $html = '<input type="checkbox" id="' . $elementArrayName . '" class="'. $elementUnderlyingField . ' ' .  $elementName . '_'.$fltr_grp_index.'" name="' . $elementArrayName . '" value="' . $fltr_grp_index . '"' . $checked . '>';
 
     // for checkboxes, add some jquery so we can autoselect the grouping option if the user selects more than one choice
@@ -1226,7 +1227,7 @@ jQuery(document).ready(function() {
     });
 });
 
-</script>\n\n    
+</script>\n\n
 ";
 	$html .= $jQuery;
     }
@@ -1265,7 +1266,7 @@ jQuery(document).ready(function() {
 
     return array( "filters"=>$_filters, "groupings"=>$_groupings );
   }
-  
+
   function filterExists($acid,$name) {
     static $cachedExists = array();
     if(!isset($cachedExists[$acid][$name])) {
@@ -1281,7 +1282,7 @@ jQuery(document).ready(function() {
     }
     return $cachedExists[$acid][$name];
   }
-  
+
   function setFilterVariables($filtersAndGroupings, $acid) {
   // need to construct user defined filter variables so they can be picked up in the evals below as required
     // 1. check this procedure to see what the filter options are
@@ -1316,12 +1317,12 @@ jQuery(document).ready(function() {
 		$options = array();
 		foreach($_POST[$postName] as $index=>$flag) {
 		    $optionValue = explode( "|", $thisFilter["type"]["options"][$index] );
-		    if( count( $optionValue ) == 2 ) {
+		    if( count((array)  $optionValue ) == 2 ) {
 			$optionValue = $optionValue[0];
 		    }
 		    $options[] = is_numeric($optionValue) ? $optionValue : "'".formulize_db_escape($optionValue)."'";
 		}
-		if(count($options) > 0) {
+		if(count((array) $options) > 0) {
 		    $filterValue .= implode(", ",$options);
 		    if($thisFilter['form'] AND is_numeric($thisFilter['form'])) {
 			$filterValue .= ")";
@@ -1351,10 +1352,10 @@ jQuery(document).ready(function() {
     }*/
     return $packedFormFilters;
   }
-  
+
 }
 
-// THIS FUNCTION RETURNS THE NECESSARY SQL, INSIDE ' AND ( ) ' TO 
+// THIS FUNCTION RETURNS THE NECESSARY SQL, INSIDE ' AND ( ) ' TO
 function groupScopeFilter($handle, $alias="") {
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->getByHandle($handle);
@@ -1370,14 +1371,14 @@ function groupScopeFilter($handle, $alias="") {
 	}
         $scopeFilter = " EXISTS(SELECT 1 FROM ".$xoopsDB->prefix("formulize_entry_owner_groups")." AS scope WHERE (scope.entry_id=".$alias."entry_id AND scope.fid=".intval($fid).") AND (scope.groupid = ".implode(" OR scope.groupid = ", $groups).")) ";
     }
-    return $scopeFilter; 
+    return $scopeFilter;
 }
 
 //This function displays the processing time since the last time it was called, with a label for the current unit that was just completed
 //Optionally, a number can be passed representing the number of event/items/actions/loop iterations that have happened since the last time this was called, which will cause an average time to be displayed as well as elapsed time
 function reportProceduresTime($label, $averageOverThisNumber=0) {
     if(!isset($GLOBALS['formulize_procedureTimerOn'])) { return; }
-    static $time; 
+    static $time;
     static $totalTime;
     if(!$time) {
 	$time = round(microtime(true),8);
@@ -1390,7 +1391,7 @@ function reportProceduresTime($label, $averageOverThisNumber=0) {
 	$totalTime += $elapsedTime;
 	$time = $currentTime;
     }
-    if($averageOverThisNumber) {
+    if($averageOverThisNumber AND is_numeric($averageOverThisNumber)) {
 	$averageTime = round($elapsedTime / $averageOverThisNumber,8);;
     } else {
 	$averageTime = 0;
@@ -1401,7 +1402,7 @@ function reportProceduresTime($label, $averageOverThisNumber=0) {
 	print "$averageTime -- average time for each of $averageOverThisNumber operations since last report<br>";
     }
     print "$totalTime -- total time since start<br>";
-   
+
 }
 
 //This function takes an array and makes a table in the database for it
@@ -1443,7 +1444,7 @@ function createProceduresTable($array, $permTableName = "") {
 	$fieldList[]  = $fieldName;
     }
     $sql .= implode(",", $indexList);
-    $sql .= ") ENGINE=MyISAM;";
+    $sql .= ") ENGINE=InnoDB;";
     global $xoopsDB;
    //print "$sql<br>";
     if(!$res = $xoopsDB->queryF($sql)) {
@@ -1475,7 +1476,7 @@ function createProceduresTable($array, $permTableName = "") {
 		    $values[$index][$fieldName] = $thisValue;
 		    $index++;
 		}
-		$thisDataMultipleCount = count($values);
+		$thisDataMultipleCount = count((array) $values);
 		$thisDataMultipleField = $fieldName;
 	    } else {
 		$values[0][$fieldName] = $fieldData[$fieldName];
@@ -1490,7 +1491,7 @@ function createProceduresTable($array, $permTableName = "") {
 		}
 	    }
 	}
-	
+
 	$recordStart = true;
 	foreach($values as $record=>$data) {
 	    $sql .= $recordStart ? "" : ", ";
@@ -1510,7 +1511,7 @@ function createProceduresTable($array, $permTableName = "") {
     if(!$res = $xoopsDB->queryF($sql)) {
 	print "Error: could not insert values into the table for the Procedure.<br>".$xoopsDB->error()."<br>$sql";
     }
-    
+
     return $tablename;
 }
 

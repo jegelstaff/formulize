@@ -95,7 +95,7 @@ $icms_images_setname = 'crystal';
 define('ICMS_IMAGES_SET_URL', ICMS_IMAGES_URL . '/' . $icms_images_setname);
 
 /**#@+
- * @deprecated - for backward compatibility
+ * deprecated - for backward compatibility
  */
 define('XOOPS_INCLUDE_PATH', ICMS_INCLUDE_PATH);
 define('XOOPS_INCLUDE_URL', ICMS_INCLUDE_URL);
