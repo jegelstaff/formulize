@@ -1,0 +1,348 @@
+<div class="panel-content content">
+	<!--<{debug}>-->
+<div style="float: right;">
+	<p style="text-align: right;"><a href="../../system/admin.php?fct=preferences&op=showmod&mod=<{$adminPage.formulizeModId}>"><img src="../images/kedit.png"> <{$smarty.const._AM_HOME_PREF}></a></p>
+	<p style="text-align: right;"><a  href="ui.php?page=synchronize">Synchronize With Another System</a></p>
+    <p style="text-align: right;"><a href="ui.php?page=managekeys">Manage API keys</a></p>
+</div>
+<p>&nbsp;</p><p><a href="ui.php?page=form&tab=settings&fid=new"><img src="../images/filenew2.png"> <{$smarty.const._AM_HOME_NEWFORM}></a>&nbsp&nbsp&nbsp;&nbsp;&nbsp&nbsp&nbsp;&nbsp;<a href="ui.php?page=form&tab=settings&fid=new&tableform=true"><img src="../images/filenew3.gif"> Create a new reference to a datatable</a>
+	
+<form class="formulize-admin-form">	
+	<!-- Seperate file -->
+	<div class="sidebar">
+		<p>Options</p>
+		<a class = "sidebar-item" href="http://localhost/uc/formulize/modules/formulize/admin/ui.php?page=application&amp;aid=0&amp;tab=forms" style="background-color: #eeeeee"><i class="icon-form"></i>Forms</a>
+
+		<a class = "sidebar-item" href="http://localhost/uc/formulize/modules/formulize/admin/ui.php?page=application&amp;aid=0&amp;tab=screens"><i class="icon-screen"></i>Screens</a>
+
+		<a class = "sidebar-item" href="http://localhost/uc/formulize/modules/formulize/admin/ui.php?page=application&amp;aid=0&amp;tab=relationships"><i class="icon-connection"></i>Relationships</a>
+
+		<a class = "sidebar-item" href="http://localhost/uc/formulize/modules/formulize/admin/ui.php?page=application&amp;aid=0&amp;tab=menu%20entries"><i class="icon-menu"></i>Menu Entries</a>
+
+		<a class = "sidebar-item" href="http://localhost/uc/formulize/modules/formulize/admin/ui.php?page=export&amp;aid=0"><i class="icon-download"></i>Export (beta!)</a>
+
+		<a class = "sidebar-item"  href="http://localhost/uc/formulize/modules/formulize/admin/ui.php?page=form&amp;aid=0&amp;tab=settings&amp;fid=new"><i class="icon-add"></i>Add a Form</a><i class="icon-settings"></i>
+
+		<p>Forms</p>
+		
+<{if count($adminPage.apps[1].content) == 0}>
+<p>No forms</p>
+<{/if}>
+	<form action="">
+      <input type="text" placeholder="Search forms.." name="search">
+      <button type="submit"><i class="icon-view" style="background: transparent"></i></button>
+    </form>
+	<{foreach from=$adminPage.apps[1].content.forms item=form}>
+		<div class="sidebar-item">
+			<a href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=elements">
+				<i class="icon-form"></i><{$form.form->title}></a>
+			<i class="icon-help actionIcon" onclick="openInfoBar()"></i>
+			</div>
+  <{/foreach}>
+	  </div>
+			
+<div id="sideWithInfo" class="sideBarInfo">
+	<a href="javascript:void(0)" class="close" onclick="closeInfoBar()">&times</a>
+	<div style="border-bottom: 5px solid">
+		<b>
+			<p>Form's Name.</p>
+		</b> <!-- Name Block-->
+	</div>
+
+	<div style="border-bottom: 3px solid">
+		<!--Data Stats-->
+		<p>ID: ###</p>
+		<p>Elements: ###</p>
+		<p>Entries: ###</p>
+		<p>Last Updated: ###</p>
+		<p>Owner: ###</p>
+	</div>
+
+	<div style="border-bottom: 3px solid">
+		<!--Action Menu (it links to stuff)-->
+		<a href="#">Configure</a>
+		<span style="cursor:pointer" onclick="openViewPopUp()"><a href="#">View</a></span>
+
+		<span style="cursor:pointer" onclick="openClonePopUp()"><a href="#">Clone</a></span>
+
+		<a href="#">Lock Down</a>
+
+		<span style="cursor:pointer" onclick="openDeletePopUp()"><a href="#">Delete</a></span>
+
+
+		<span style="cursor:pointer" onclick="openScreensPopUp()"><a href="#">Screens</a></span>
+
+	</div>
+
+	<div style="border-bottom: 3px solid">
+		<!--Relations Menu (if there are any)-->
+		<p>One-to-One:<p>
+				<ul>
+					<il><a href="#">BBB</a></il> <!-- Just showing that there will be a link to the form -->
+				</ul>
+
+				<p>One-to-Many:</p>
+	</div>
+
+</div>
+
+
+<div id="page-overlay" onclick="closeInfoBar()"></div>
+
+<script type="text/javascript">
+	$(".deleteformlink").click(function() {
+		answer = confirm("<{$smarty.const._AM_HOME_CONFIRMDELETEFORM}>");
+		if (answer) {
+			$("[name=deleteform]").val($(this).attr('target'));
+			runSaveEvent();
+		}
+		return false;
+	});
+
+	$(".deleteapplink").click(function() {
+		answer = confirm("<{$smarty.const._AM_HOME_CONFIRMDELETEAPP}>");
+		if (answer) {
+			$("[name=deleteapp]").val($(this).attr('target'));
+			runSaveEvent();
+		}
+		return false;
+	});
+
+	$(".cloneform").click(function() {
+		$("[name=cloneform]").val($(this).attr('target'));
+		runSaveEvent();
+		return false;
+	});
+
+	$(".cloneformdata").click(function() {
+		$("[name=cloneformdata]").val($(this).attr('target'));
+		runSaveEvent();
+		return false;
+	});
+
+	$(".lockdown").click(function() {
+		answer = confirm("<{$smarty.const._AM_HOME_CONFIRMLOCKDOWN}>");
+		if (answer) {
+			$("[name=lockdown]").val($(this).attr('target'));
+			runSaveEvent();
+		}
+		return false;
+	});
+			function closeInfoBar() {
+			document.getElementById("page-overlay").style.visibility = "hidden";
+			document.getElementById("sideWithInfo").style.width = "0";
+			//			closePops();
+		}
+
+
+		function openInfoBar() {
+			document.getElementById("page-overlay").style.visibility = "visible";
+			document.getElementById("sideWithInfo").style.width = "250px";
+			
+		}
+function showForm(formname){
+    window.history.pushState('page2', 'Title', '/page2.php');
+    return false;
+}
+</script>
+<style>
+	.sidebar {
+		left: 0;
+		bottom: 0;
+		top: 200px;
+		overflow-y: scroll;
+		overflow-x: auto;
+		width: 200px;
+		background-color: #fdfdfd;
+		border: 1px solid #ddd;
+		border-radius: 6px;
+		padding: 10px;
+		position: fixed;
+		padding-bottom: 75px;
+		text-decoration: none;
+		color: dimgrey;
+		font-family: Arial;
+		font-size: 12px;
+		font-weight: bold;
+	}
+
+	.sidebar-item {
+		display: block;
+		padding: 8px;
+		margin-left: 4px;
+		text-decoration: none;
+		color: dimgrey;
+		font-family: Arial;
+		font-size: 14px;
+		font-weight: bold;
+	}
+
+	.sidebar-item: hover {
+		display: block;
+		padding: 8px;
+		margin-left: 4px;
+		text-decoration: none;
+	}
+
+	.sidebar a,
+	.sidebar-item a {
+		font-family: Arial;
+		font-size: 14px;
+		font-weight: bold;
+		color: dimgrey;
+	}
+
+	.sidebar-item i {
+		padding-right: 8px;
+	}
+
+	.sidebar p {
+		padding: 10px;
+		padding-left: 2px;
+	}
+
+	a.sidebar-item:hover,
+	div.sidebar-item:hover {
+		border-radius: 5px;
+		background-color: #efefef;
+		color: #3391c7;
+		/*default highlight*/
+	}
+
+	.actionIcon {
+		color: dimgrey;
+		position: relative;
+		display: none;
+		vertical-align: middle;
+		float: right;
+		list-style: none;
+	}
+
+	div.sidebar-item:hover .actionIcon{
+		display:inline-block;
+		cursor:pointer;
+	}
+	
+	.actionIcon:hover {
+		color: #3391c7;
+		/*default highlight*/
+	}
+
+	.panel-content {
+		margin-left: 230px;
+	}
+
+	/*SAMS*/
+	.sideBarIcons {
+		height: 100%;
+		width: 200px;
+		position: fixed;
+		top: 0;
+		left: 0;
+		background-color: white;
+		overflow-x: hidden;
+		padding-top: 60px;
+		font-family: Arial;
+		overflow: auto;
+		border-right: 2px solid black;
+	}
+
+	.sideBarIcons a {
+		padding: 10px 10px 10px 20px;
+		font-size: 24px;
+		color: rgba(242, 251, 248, 0.99);
+		display: block;
+		transition: 0.3s;
+	}
+
+	.sideBarIcons a:hover {
+		color: lightgreen;
+	}
+
+	.sideBarInfo {
+		height: 100%;
+		width: 0;
+		position: fixed;
+		z-index: 1;
+		top: 0;
+		right: 0;
+		background-color: white;
+		overflow-x: hidden;
+		transition: 0.5s;
+		padding-top: 60px;
+		font-family: Arial;
+		overflow: auto;
+		border-left: 2px solid black;
+	}
+
+	.sideBarInfo a {
+		padding: 10px 10px 10px 20px;
+		font-size: 24px;
+		color: lightskyblue;
+		display: block;
+		transition: 0.3s;
+	}
+
+	.sideBarInfo p {
+		padding: 10px 10px 10px 20px;
+		font-size: 24px;
+		color: lightskyblue;
+		display: block;
+		transition: 0.3s;
+	}
+
+	.sideBarInfo a:hover {
+		color: lightgreen;
+	}
+
+	.sideBarInfo .close {
+		position: absolute;
+		top: 0;
+		left: 10px;
+		margin-right: 20px;
+		color: black;
+	}
+
+	.imgToText {
+		position: relative;
+		width: 100%;
+		z-index: -1;
+	}
+
+	.initBase {
+		position: absolute;
+		top: 0;
+		left: 16px;
+		width: 100%;
+	}
+
+	.popup {
+		display: none;
+		z-index: 10000;
+		background-color: white;
+		width: 25%;
+		height: 25%;
+		margin: 15% auto;
+	}
+
+	.popBox {
+		background-color: white;
+		padding: 15px;
+		border: 2px solid black;
+	}
+
+	.popBox .close {
+		float: right;
+		font-weight: bold;
+	}
+
+	#page-overlay {
+		background: rgba(0, 0, 0, 0.35);
+		position: fixed;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		left: 0;
+		visibility: hidden;
+	}
+</style>

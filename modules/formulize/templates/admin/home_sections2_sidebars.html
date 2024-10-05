@@ -1,0 +1,431 @@
+
+<style>
+    .sideBarIcons {
+        height: 1000px;
+        width: 250px;
+        position: static;
+        alignment: left;
+        top: 0;
+        left: 0;
+        overflow: auto;
+        background-color: whitesmoke;
+        overflow-x: hidden;
+        padding-top: 60px;
+        font-family: Arial;
+        border:2px solid black;
+    }
+
+    .sideBarIcons a {
+        padding: 10px 10px 10px 20px;
+        alignment: center;
+        font-size: 24px;
+        color: lightblue;
+        display: block;
+        transition: 0.3s;
+    }
+
+    .sideBarIcons a:hover {
+        color: lightgreen;
+    }
+
+
+    .sideBarInfo{
+        height: 100%;
+        width: 0;
+        position: static;
+        z-index: 1;
+        top: 0;
+        right: 0;
+        overflow: auto;
+        float: right;
+        alignment: top;
+        background-color: whitesmoke;
+        transition: 0.5s;
+        font-family: Arial;
+        border:2px solid black;
+    }
+
+    .sideBarInfo a {
+        padding: 10px 10px 10px 20px;
+        font-size: 24px;
+        color: lightskyblue;
+        display: block;
+        transition: 0.3s;
+    }
+
+    .sideBarInfo p {
+        padding: 10px 10px 10px 20px;
+        font-size: 24px;
+        color: lightskyblue;
+        display: block;
+        transition: 0.3s;
+    }
+
+    .sideBarInfo a:hover {
+        color: lightgreen;
+    }
+
+    .sideBarInfo .close {
+        position: static;
+        top: 0;
+        left: 10px;
+        margin-right: 20px;
+        color: black;
+    }
+    .dropArea{
+        width: 1500px;
+        height: 600px;
+
+    }
+    .imgToText{
+        position: relative;
+        width: 100%;
+        z-index: -1;
+    }
+    .initBase {
+        position: absolute;
+        top: 0;
+        left: 16px;
+        width: 100%;
+    }
+
+    .popup {
+        display: none;
+        z-index: 10000;
+        background-color: white;
+        width: 25%;
+        height: 25%;
+        margin: 15% auto;
+    }
+
+    .popBox {
+        background-color: white;
+        padding: 15px;
+        border: 2px solid black;
+    }
+
+    .popBox .close {
+        float: right;
+        font-weight: bold;
+    }
+
+
+</style>
+
+<div style = "display: flex;">
+    <div id = "sideWithIcons" class = "sideBarIcons" >
+
+        <!-- <a href = "javascript:void(0)" class = "close" onclick = "closeBars()" >&times</a> -->
+        <{if count($adminPage.apps[1].content) == 0}>
+        <p>No forms</p>
+        <{/if}>
+        <{foreach from=$adminPage.apps[1].content.forms item=form}>
+        <div class="sidebar-item">
+            <span style ="cursor:pointer" onclick="openInfoBar()"><a href="#"><i class="icon-form"></i><{$form.form->title}></a></span>
+        </div>
+        <{/foreach}>
+    </div>
+
+
+    <div class = "dropArea">
+        <center><span onclick="openRelBar()"><a href = "#">Real Relation... (click here)</a></span></center>
+    </div>
+    <div id = "sideWithInfo" class = "sideBarInfo" >
+        <a href = "javascript:void(0)" class = "close" onclick = "closeInfoBar()" >&times</a>
+        <div style="border-bottom: 5px solid" >
+            <b><p><{$form.form->title}></p></b> <!-- Name Block-->
+        </div>
+
+        <div style="border-bottom: 3px solid" > <!--Data Stats-->
+            <p>ID: <{$form.fid}></p>
+            <p>Elements: <{$form.form->elementHandles|@count}></p>
+            <p>Entries: <{$form.form->entry_count}></p>
+            <!-- <p>Last Updated: ###</p>
+            <p>Owner: ###</p> -->
+        </div>
+
+        <div style="border-bottom: 3px solid" > <!--Action Menu (it links to stuff)-->
+            <a href ="#">Configure</a>
+            <span style ="cursor:pointer" onclick="openViewPopUp()"><a href ="#">View</a></span>
+
+            <span style ="cursor:pointer" onclick="openClonePopUp()"><a href ="#">Clone</a></span>
+
+            <a href ="#">Lock Down</a>
+
+            <span style ="cursor:pointer" onclick="openDeletePopUp()"><a href ="#">Delete</a></span>
+
+
+            <span style ="cursor:pointer" onclick="openScreensPopUp()"><a href ="#">Screens</a></span>
+
+        </div>
+    </div>
+
+    <div id = "sideWithRelations" class = "sideBarInfo" >
+        <a href = "javascript:void(0)" class = "close" onclick = "closeRealBar()" >&times</a>
+        <div style="border-bottom: 5px solid" >
+            <b><p>Relation's Name.</p></b> <!-- Name Block-->
+        </div>
+
+        <div style="border-bottom: 3px solid" > <!--Members, in order added-->
+            <span style ="cursor:pointer" onclick="openInfoBar()"><a href="##">AAA</a></span>
+            <span style ="cursor:pointer" onclick="openInfoBar()"><a href="##">CCC</a></span>
+            <span style ="cursor:pointer" onclick="openInfoBar()"> <a href="##">BBB</a></span>
+
+        </div>
+
+        <div style="border-bottom: 3px solid" > <!--Action Menu (it links to stuff)-->
+            <span style ="cursor:pointer" onclick="openPickerLinkPopUp()"><a href ="#">Edit links between forms...</a></span>
+            <span style ="cursor:pointer" onclick="openPickerRealPopUp()"><a href ="#">Edit relation type between forms...</a></span>
+        </div>
+
+        <div style="border-bottom: 3px solid" >
+            <a href ="#"></a>
+            <a href ="#"></a>
+        </div>
+
+    </div>
+
+    <div style="clear:both; font-size:1px;"></div>
+</div>
+
+
+
+
+
+
+
+<!-- popup divs -->
+<div id="popFormLinkPicker" class="popup">
+    <div class="popBox">
+        <a href = "javascript:void(0)" class = "close" onclick = "closePops()" >&times;</a>
+        <p>Select the forms you would like to edit...</p>
+        <table>
+            <tr>
+                <th>
+                    <select id = "f1L">
+                        <option value="f1_AAA">AAA</option>
+                        <option value="f1_BBB">BBB</option>
+                        <option value="f1_CCC">CCC</option>
+                    </select>
+                </th>
+                <th>
+
+                </th>
+                <th>
+                    <select id = "f2L">
+                        <option value="f2_AAA">AAA</option>
+                        <option value="f2_BBB">BBB</option>
+                        <option value="f2_CCC">CCC</option>
+                    </select>
+                </th>
+            </tr>
+        </table>
+        <span style ="cursor:pointer" onclick="openLinkEditPopUps()"><botton>Continue...</botton></span>
+    </div>
+</div>
+
+<div id="popFormRealPicker" class="popup">
+    <div class="popBox">
+        <a href = "javascript:void(0)" class = "close" onclick = "closePops()" >&times;</a>
+        <p>Select the forms you would like to edit...</p>
+        <table>
+            <tr>
+                <th>
+                    <select id = "f1R">
+                        <option value="f1_AAA">AAA</option>
+                        <option value="f1_BBB">BBB</option>
+                        <option value="f1_CCC">CCC</option>
+                    </select>
+                </th>
+                <th>
+
+                </th>
+                <th>
+                    <select id = "f2R">
+                        <option value="f2_AAA">AAA</option>
+                        <option value="f2_BBB">BBB</option>
+                        <option value="f2_CCC">CCC</option>
+                    </select>
+                </th>
+            </tr>
+        </table>
+        <span style ="cursor:pointer" onclick="openRealEditPopUps()"><botton>Continue...</botton></span>
+    </div>
+</div>
+
+<div id="popELinks" class="popup">
+    <div class="popBox">
+        <a href = "javascript:void(0)" class = "close" onclick = "closePops()" >&times;</a>
+        <p>Between the forms '$f1' and '$f2' ?</p>
+        <table>
+            <tr>
+                <th>
+                    <select>
+                        <option value="IDs">User ID</option>
+                        <option value="Common">Common value</option>
+                        <option value="Linked">Linked elements...</option>
+                    </select>
+                </th>
+                <th>
+
+                </th>
+                <th>
+                    <botton>Save changes</botton>
+                </th>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div id="popEReals" class="popup">
+    <div class="popBox">
+        <a href = "javascript:void(0)" class = "close" onclick = "closePops()" >&times;</a>
+        <p>Between the forms '$f1' and '$f2' change the relationship to...</p>
+        <table>
+            <tr>
+                <th>
+                    <select>
+                        <option value="Ono">Ono to One</option>
+                        <option value="Many">One to Many</option>
+                    </select>
+                </th>
+                <th>
+
+                </th>
+                <th>
+                    <botton>Save changes</botton>
+                </th>
+            </tr>
+        </table>
+    </div>
+</div>
+
+
+<!-- the code for the pop ups-->
+
+<div id="popView" class="popup">
+    <div class="popBox">
+        <a href = "javascript:void(0)" class = "close" onclick = "closePops()" >&times;</a>
+        <p>How would you like to view this form?</p>
+        <a href="#"> Default</a>
+        <a href="#"> All Screens</a>
+    </div>
+</div>
+
+<div id="popClone" class="popup">
+    <div class="popBox">
+        <a href = "javascript:void(0)" class = "close" onclick = "closePops()" >&times;</a>
+        <p>Clone this form with the data?</p>
+        <a href="#"> Yes</a>
+        <a href="#"> No</a>
+    </div>
+</div>
+
+<div id="popDelete" class="popup">
+    <div class="popBox">
+        <a href = "javascript:void(0)" class = "close" onclick = "closePops()" >&times;</a>
+        <p>Are you sure you want to delete form "Form Name Here"?</p>
+        <a href="#"> Yes</a>
+        <a href="#"> No</a>
+    </div>
+</div>
+
+<div id="popScreens" class="popup">
+    <div class="popBox">
+        <a href = "javascript:void(0)" class = "close" onclick = "closePops()" >&times;</a>
+        <p>What screen would you like to view?</p>
+        <a href="#"> Regular</a>
+        <a href="#"> Entries in "Form Name"</a>
+        <a href="#"> More screens...</a>
+
+    </div>
+</div>
+
+
+<!-- scripts for the sidebars and the pop ups -->
+<script>
+    /* function openBar() {
+         document.getElementById("sideWithIcons").style.width = "250px";
+     }
+
+     function closeBars() {
+         document.getElementById("sideWithInfo").style.width = "0";
+     }*/
+
+    function closeInfoBar() {
+        document.getElementById("sideWithInfo").style.width = "0";
+        closePops();
+    }
+
+    function closeRealBar() {
+        document.getElementById("sideWithRelations").style.width = "0";
+        closePops();
+    }
+
+    function openInfoBar() {
+        document.getElementById("sideWithRelations").style.width = "0";
+        document.getElementById("sideWithInfo").style.width = "300px";
+    }
+
+    function openRelBar() {
+        document.getElementById("sideWithInfo").style.width = "0";
+        document.getElementById("sideWithRelations").style.width = "250px";
+        document.getElementById("sideWithInfo").style.width = "0px";
+    }
+
+    function openViewPopUp(){
+        closePops();
+        document.getElementById('popView').style.display = "block";
+    }
+
+    function openDeletePopUp(){
+        closePops();
+        document.getElementById('popDelete').style.display = "block";
+    }
+
+    function openClonePopUp(){
+        closePops();
+        document.getElementById('popClone').style.display = "block";
+    }
+
+    function openScreensPopUp(){
+        closePops();
+        document.getElementById('popScreens').style.display = "block";
+    }
+
+    function closePops(){
+        //forms menus
+        document.getElementById('popView').style.display = "none";
+        document.getElementById('popDelete').style.display = "none";
+        document.getElementById('popClone').style.display = "none";
+        document.getElementById('popScreens').style.display = "none";
+
+        //relation menus
+        document.getElementById('popEReals').style.display = "none";
+        document.getElementById('popELinks').style.display = "none";
+        document.getElementById('popFormRealPicker').style.display = "none";
+        document.getElementById('popFormLinkPicker').style.display = "none";
+    }
+
+    function openPickerLinkPopUp(){
+        closePops();
+        document.getElementById('popFormLinkPicker').style.display = "block";
+    }
+
+    function openPickerRealPopUp(){
+        closePops();
+        document.getElementById("popFormRealPicker").style.display = "block";
+    }
+
+    function openRealEditPopUps(){
+        closePops();
+        document.getElementById("popEReals").style.display = "block";
+    }
+
+    function openLinkEditPopUps(){
+        closePops();
+        document.getElementById("popELinks").style.display = "block";
+    }
+
+
+</script>

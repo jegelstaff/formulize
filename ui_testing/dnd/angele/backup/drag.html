@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<link href="https://code.jquery.com/ui/1.10.4/themes/ui-lightness/jquery-ui.css" rel="stylesheet">
+	<script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+	<script src="https://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+
+	<!--temporary: for icons-->
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+
+	<script src="js/jsfile.js"></script>
+
+	<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+
+<div id="xo-header">
+	<div id="xo-headerlogo"><a href="http://localhost/uc/formulize/" title=""><img src="http://localhost/uc/formulize/themes/formulize_standalone/img/logo.png" alt="Formulize Standalone"></a></div>
+</div>
+<!-- The sidebar -->
+<div class="sidebar">
+	<h3>Current Application</h3>
+	<p onclick="openInfoBar()" style="cursor:pointer">Application settings (todo)</p>
+	<h3>Forms</h3>
+
+	<div style="display: block; margin-left: 0px;">
+		<div class="form-default form-draggable addable">
+			<i class="fas fa-file-alt"></i>
+			<span style="
+		flex-grow: 1;">Form1</span>
+			<button class="btn" onclick="openInfoBar()"><i class="fas fa-cog"></i></button>
+		</div>
+		<div class="form-default form-draggable addable">
+			<i class="fas fa-file-alt"></i>
+			<span style="
+		flex-grow: 1;">Form2</span>
+			<button class="btn" onclick="openInfoBar()"><i class="fas fa-cog"></i></button>
+		</div>
+		<div class="form-default form-draggable addable">
+			<i class="fas fa-file-alt"></i>
+			<span style="
+		flex-grow: 1;">Form3</span>
+			<button class="btn" onclick="openInfoBar()"><i class="fas fa-cog"></i></button>
+		</div>
+	</div>
+
+</div>
+
+<div class="column" style="margin-left: 240px; margin-top: 10px">
+	<div class="form main">
+		<p style="font-weight: bold;">Relationships</p>
+		<p style="font-size: 10px;">Drag a form from the side menu to begin a new relationship</p>
+		<div class="form-layout">
+
+			<div class="form-sortable ui-draggable ui-sortable" style="vertical-align: top;">
+				<div style="display: block; margin-left: 0px;">
+					<div class="form-default" tabindex="0">
+
+						<span style="
+		flex-grow: 1; font-size: 18px;">Form1 + Form2</span>
+						<div class="relationship-type" style="border-radius: 20px; padding: 3px 16px 3px 16px; display:inline-flex; justify-content: space-around;" >
+							2
+						</div>
+						<button class="btn" onclick="openInfoBar()"><i class="fas fa-cog"></i></button>
+					</div>
+				</div>
+
+				<div class="form-root" style="opacity: 1">
+					Links between forms in this relationship:
+					<div style="display: block; margin-left: 0px;">
+						<div class="form-default"  tabindex="0">
+							<i class="fas fa-file-alt"></i>
+							<span style="
+		flex-grow: 1;">Form1 + Form2</span>
+							<div class="relationship-type">
+								1 : N
+							</div>
+							<button class="btn" onclick="openInfoBar()"><i class="fas fa-cog"></i></button>
+						</div>
+					</div>
+					<div style="display: block; margin-left: 0px;">
+						<div class="form-default" tabindex="0">
+							<i class="fas fa-file-alt"></i>
+							<span style="
+		flex-grow: 1;">Form1 + Form3</span>
+							<div class="relationship-type">
+								1 : 1
+							</div>
+							<button class="btn" onclick="openInfoBar()"><i class="fas fa-cog"></i></button>
+						</div>
+					</div>
+				</div>
+				<div style="display: block;">
+					<p style="font-size: 10px;">{ondrag} Drag a form onto one of the following</p>
+					<div class="relationship-container">
+						<div class="relationship-type one-one">
+							1 : 1</div>
+						<div class="relationship-type one-n">
+							1 : N</div>
+						<div class="relationship-type n-one">
+							N : 1</div>
+					</div>
+				</div>
+			</div>
+
+
+			<div class="form-sortable" id="addbutton" style="display: block;">
+				{ondrag}Drag a form here to create a new relationship
+				<div class="relationship-container">
+					<div class="relationship-type one-one">
+						1 : 1</div>
+					<div class="relationship-type one-n">
+						1 : N</div>
+					<div class="relationship-type n-one">
+						N : 1</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<!--
+<div id="popup" class="modal">
+  <div class="popup-content">
+    <span class="close">&times;</span>
+    <p>Type of relationship:</p>
+    <span id="relationshiptype"></span>
+  </div>
+</div>-->
+
+
+</html>
+<style>
+	/*-9 color presets: color:var(--primary-form)*/
+	:root {
+		--primary-form: #fcfcfc;
+		--form-highlight: #f7f7f7;
+		--form-active: #efefef;
+		--form-text: #7c8289;
+		--form-text-highlight: #595d65;
+	}
+
+	body {
+		color: var(--primaryform);
+	}
+
+	i {
+		padding-left: 10px;
+		padding-right: 10px;
+	}
+
+	.form-default {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		padding: 4px;
+	}
+
+	.btn {
+		background-color: transparent;
+		border: none;
+		color: var(--form-text);
+		cursor: pointer;
+		outline-style: none;
+	}
+
+	.btn>i {
+		padding: 2px;
+	}
+
+	.btn:hover {
+		color: var(--form-text-highlight);
+	}
+
+	.btn:active>i {
+		padding-top: 2px;
+	}
+	
+	.form-default {
+		font-weight: 600;
+		border-radius: 6px;
+		margin: 2px;
+	}
+
+	.form-default:hover {
+		color: var(--form-text-highlight);
+		background-color: var(--form-highlight);
+	}
+
+	.form-default:focus {
+		background-color: var(--form-active);
+		color: var(--form-text-highlight);
+		border: none;
+		outline-style: none;
+	}
+
+	.form-default:hover>.btn,
+	.form-default:focus>.btn {
+		visibility: visible;
+	}
+
+	.form-default>.btn {
+		visibility: hidden;
+	}
+
+	.relationship-type {
+		margin-left: 10px;
+		text-align: center;
+		cursor: pointer;
+		display: inline;
+		padding: 3px 8px 3px 8px;
+		border-radius: 3px;
+		border-radius: 3px;
+		border: 1px solid;
+		background-color: white;
+	}
+
+	.one-one,
+	.one-n,
+	.n-one{
+		margin: 6px;
+		width: 100px;
+		text-align: center;
+		border: 1px dashed var(--form-text);
+	}
+
+	.relationship-type:hover {
+		background-color: aliceblue;
+	}
+
+	.relationship-container {
+		display: flex;
+		flex-grow: 1;
+		justify-content: space-around;
+		align-items: stretch;
+	}
+
+	/*temp - do with jquery +make other items light on hover*/
+	.relationship-container:hover>.one-one {
+		height: 100px;
+	}
+</style>
