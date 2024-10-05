@@ -7,7 +7,7 @@
 		$allFids = $allFidsToUse;
   } elseif ($selectedFramework and isset($frameworks[$selectedFramework])) {
 		$linkedForms = checkForLinks($selectedFramework, array($form_id), $form_id);
-		$allFids = array_merge($linkedForms['fids'], $linkedForms['sub_fids']);
+		$allFids = array_merge($linkedForms['fids'], (array) $linkedForms['sub_fids']);
   } else {
     $allFids = array(0=>$form_id);
   }
