@@ -83,8 +83,8 @@ function patch40() {
      *
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
-    $checkThisTable = 'formulize_screen';
-		$checkThisField = 'rewriteruleElement';
+    $checkThisTable = 'formulize_id';
+		$checkThisField = 'plural';
 		$checkThisProperty = '';
 		$checkPropertyForValue = '';
 
@@ -111,7 +111,7 @@ function patch40() {
         }
     }
 
-    if (!$needsPatch AND (!isset($_GET['op']) OR ($_GET['op'] != 'patch40' AND $_GET['op'] != 'patchDB'))) {
+    if (!$needsPatch AND primaryRelationshipExists() AND (!isset($_GET['op']) OR ($_GET['op'] != 'patch40' AND $_GET['op'] != 'patchDB'))) {
         return;
     }
 
@@ -425,7 +425,7 @@ function patch40() {
         $sql['add_backdrop_group'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_resource_mapping") . " ADD external_id_string text NULL default NULL";
         $sql['add_backdrop_group_index'] = "ALTER TABLE ". $xoopsDB->prefix("formulize_resource_mapping") ." ADD INDEX i_external_id_string (external_id_string(10))";
         $sql['add_advance_view_field'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " ADD `advanceview` text NOT NULL";
-		$sql['defaultview_ele_type_text'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " CHANGE `defaultview` `defaultview` TEXT NOT NULL ";
+				$sql['defaultview_ele_type_text'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " CHANGE `defaultview` `defaultview` TEXT NOT NULL ";
         $sql['add_ele_uitextshow'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_uitextshow` tinyint(1) NOT NULL default 0";
         $sql['add_send_digests'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD send_digests tinyint(1) NOT NULL default 0";
         $sql['add_template_donedest'] = "ALTER TABLE ". $xoopsDB->prefix("formulize_screen_template") . " ADD `donedest` varchar(255) NOT NULL default ''";
@@ -473,6 +473,8 @@ function patch40() {
 				unlink(XOOPS_ROOT_PATH.'/cache/adminmenu_english.php');
 				$sql['sv_use_features'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " ADD `sv_use_features` varchar(255) NULL default NULL";
 				$sql['searches_are_fundamental'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " ADD `sv_searches_are_fundamental` tinyint(1) NULL default NULL";
+				$sql['singular'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `singular` varchar(255) NULL default ''";
+				$sql['plural'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `plural` varchar(255) NULL default ''";
 
         $needToSetSaveAndLeave = true;
         $needToSetPrintableView = true;
@@ -600,6 +602,8 @@ function patch40() {
                     print "RewriteRule element already added. result: OK<br>";
                 } elseif(strstr($key, 'screenTableIndex')) {
                     print "Screen table index already added. result: OK<br>";
+								} elseif($key === "singular" OR $key === "plural") {
+                    print "Singluar/Plural form names already added. result: OK<br>";
             }else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
@@ -1283,8 +1287,14 @@ function patch40() {
 					print "<script>alert(\" Some of your form elements have the 'force hidden' setting turned on. They are listed at the end of this message. \\n\\n The 'force hidden' setting caused hidden versions of elements to be included in forms, when the user did not have permission to view them. This setting is now deprecated and non-functional. You should verify that the affected forms are working properly for all users. \\n\\n In the highly unlikely event that something is not working, please contact info@formulize.org for assistance. \\n\\n You can turn off this warning in the database, by setting the value of 'ele_forcehidden' in the 'formulize' table to 0 for all these elements: \\n\\n $forceHiddenElements \");</script>";
 				}
 
+				if(primaryRelationshipExists() === false) {
+					if($primaryRelationshipError = createPrimaryRelationship()) {
+						print "ERROR: There was a problem when setting up the Primary Relationship:<br>$primaryRelationshipError<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.<br>";
+					}
+				}
+
         print "DB updates completed.  result: OK";
-    }
+    	}
 }
 
 // Fixes the format if the template is empty
