@@ -18,22 +18,20 @@ $configSync = new FormulizeConfigSync('/config');
 //Compare configurations
 $diff = $configSync->compareConfigurations();
 
+echo "<pre>";
+$export = $configSync->exportConfiguration('asdf');
+echo "</pre>";
+
 $adminPage['template'] = "db:admin/config-sync.html";
 $adminPage['changes'] = $diff['changes'];
 $adminPage['log'] = $diff['log'];
-
-print("<pre>");
-print_r($diff['changes']);
-print("</pre>");
+$adminPage['export'] = $export;
 
 // Review changes
 // foreach ($differences['log'] as $logEntry) {
 //     echo $logEntry . "\n";
 // }
 
-// echo "<pre>";
-// print_r($differences['changes']);
-// echo "</pre>";
 
 // populate the checkboxes for export
 // $sync[2]['content']['checkboxes'] = createCheckboxInfo();
