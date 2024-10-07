@@ -1,81 +1,120 @@
 <?php
 
-class FormulizeConfigSyncElementValueProcessor {
-    private $typeHandlers = [];
+class FormulizeConfigSyncElementValueProcessor
+{
+	private $elementMapping = [];
+	private $textElementMapping = [
+		'width' => 0,
+		'maxlength' => 1,
+		'default' => 2,
+		'regex' => 11,
+		'regexdescription' => 3,
+		'regexerror' => 5,
+		'regexplaceholders' => 6,
+		'regexmods' => 10,
+		'decimal_places' => 7,
+		'thousands_sep' => 8,
+		'numbertype' => 4,
+	];
+	private $checkboxElementMapping = [
+		'options' => 2,
+	];
+	private $selectElementMapping = [
+		'options' => 2,
+	];
 
-    public function __construct() {
-			$this->initializeTypeHandlers();
-    }
+	public function __construct()
+	{
+		$this->initializeElementMapping();
+	}
+	/**
+	 * Initialize element mapping
+	 */
+	private function initializeElementMapping()
+	{
+		$this->elementMapping = [
+			'text' => $this->textElementMapping,
+			'checkbox' => $this->checkboxElementMapping,
+			'select' => $this->selectElementMapping,
+		];
+	}
 
-    private function initializeTypeHandlers() {
-        $this->typeHandlers = [
-            'text' => [$this, 'handleTextElement'],
-            'textarea' => [$this, 'handleTextareaElement'],
-            'select' => [$this, 'handleSelectElement'],
-            'checkbox' => [$this, 'handleCheckboxElement'],
-            'radio' => [$this, 'handleRadioElement'],
-            'date' => [$this, 'handleDateElement'],
-            // Add more element types as needed
-        ];
-    }
+	/**
+	 * Process the value of an element based on its type from JSON to DB format
+	 *
+	 * @param string $eleType
+	 * @param array $jsonValue
+	 * @param string $dbValue
+	 * @return array
+	 */
+	public function processElementValueForImport($eleType, $jsonValue)
+	{
+		// If we don't have a specifc handler for this element type, return the dbArray as is
+		if (!array_key_exists($eleType, $this->elementMapping)) {
+			return $jsonValue;
+		}
+		return $this->importElement($jsonValue, $this->elementMapping[$eleType]);
+	}
 
-    public function processElementValue($eleType, $jsonValue, $dbValue) {
-        if (!isset($this->typeHandlers[$eleType])) {
-            throw new \Exception("Unsupported element type: $eleType");
-        }
+	/**
+	 * Convert an element from JSON to DB format
+	 *
+	 * @param array $jsonValue
+	 * @param string $dbValue
+	 * @return array
+	 */
+	private function importElement($jsonValue, $mapping)
+	{
+		$importArray = [];
 
-        return call_user_func($this->typeHandlers[$eleType], $jsonValue, $dbValue);
-    }
+		foreach ($jsonValue as $jsonKey => $jsonValue) {
+			if (array_key_exists($jsonKey, $mapping)) {
+				$importArray[$mapping[$jsonKey]] = $jsonValue;
+			} else {
+				$importArray[$jsonKey] = $jsonValue;
+			}
+		}
 
-    private function handleTextElement($jsonValue, $dbValue) {
-        $dbArray = unserialize($dbValue);
-        $differences = [];
+		return $importArray;
+	}
 
-        $mapping = [
-            'width' => 0,
-            'maxlength' => 1,
-            'default' => 2,
-            'regex' => 11,
-            'regexdescription' => 3,
-            'regexerror' => 5,
-            'regexplaceholders' => 6,
-            'regexmods' => 10,
-            'decimal_places' => 7,
-            'thousands_sep' => 8,
-            'numbertype' => 4,
-        ];
+	/**
+	 * Process the value of an element based on its type from DB to JSON format
+	 *
+	 * @param string $eleType
+	 * @param array $jsonValue
+	 * @param array $dbArray
+	 * @return array
+	 */
+	public function processElementValueForExport(string $eleType, array $dbArray)
+	{
+		// If we don't have a specifc handler for this element type, return the dbArray as is
+		if (!array_key_exists($eleType, $this->elementMapping)) {
+			return $dbArray;
+		}
+		return $this->exportElement($dbArray, $this->elementMapping[$eleType]);
+	}
 
-        foreach ($mapping as $jsonKey => $dbKey) {
-            if (isset($jsonValue[$jsonKey]) && (!isset($dbArray[$dbKey]) || $jsonValue[$jsonKey] != $dbArray[$dbKey])) {
-                $differences[$jsonKey] = [
-                    'json_value' => $jsonValue[$jsonKey],
-                    'db_value' => $dbArray[$dbKey] ?? null
-                ];
-            }
-        }
+	/**
+	 * Convert an element from DB to JSON format
+	 *
+	 * @param array $dbArray
+	 * @return array
+	 */
+	private function exportElement(array $dbArray, $mapping)
+	{
+		$exportArray = [];
 
-        return $differences;
-    }
+		$flippedMapping = array_flip($mapping);
 
-    private function handleTextareaElement($jsonValue, $dbValue) {
-        // Implementation similar to handleTextElement, with textarea-specific fields
-    }
+		foreach ($dbArray as $dbKey => $dbValue) {
+			if (array_key_exists($dbKey, $flippedMapping)) {
+				$exportArray[$flippedMapping[$dbKey]] = $dbValue;
+			} else {
+				$exportArray[$dbKey] = $dbValue;
+			}
+		}
 
-    private function handleSelectElement($jsonValue, $dbValue) {
-        // Handle select element specifics, including options
-    }
-
-    private function handleCheckboxElement($jsonValue, $dbValue) {
-        // Handle checkbox element specifics
-    }
-
-    private function handleRadioElement($jsonValue, $dbValue) {
-        // Handle radio element specifics
-    }
-
-    private function handleDateElement($jsonValue, $dbValue) {
-        // Handle date element specifics
-    }
-
-    // Add more handler methods for other element types
+		return $exportArray;
+	}
 }
