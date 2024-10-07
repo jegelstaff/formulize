@@ -1,7 +1,108 @@
 <div class="panel-content content">
-
 	<h2>Configuration Synchronization</h2>
 
-	<p>Hello World</p>
+	<div class="config-changes">
+			<{if count($adminPage.changes) == 0}>
+					<p>No changes detected.</p>
+			<{else}>
+							<table class="changes-table">
+									<thead>
+											<tr>
+													<th>Type</th>
+													<th>Operation</th>
+													<th>Identifier</th>
+													<th>Details</th>
+											</tr>
+									</thead>
+									<tbody>
+										<{foreach from=$adminPage.changes item=change}>
+													<tr class="change-row <{$change.operation}>">
+															<td><{$change.type|capitalize}></td>
+															<td><{$change.operation|capitalize}></td>
+															<td>
+																	<{if $change.type == 'forms'}>
+																			<{$change.data.form_handle}>
+																	<{elseif $change.type == 'elements'}>
+																			<{$change.data.ele_handle}>
+																	<{elseif $change.type == 'relationships'}>
+																			<{$change.data.rel_handle}>
+																	<{/if}>
+															</td>
+															<td>
+																	<{if $change.operation == 'create'}>
+																		Found in the configuration file but not the Database
+																	<{elseif $change.operation == 'update'}>
+																		<ul class="change-details">
+																				<{foreach from=$change.differences key=field item=diff}>
+																						<li>
+																								<strong><{$field}>:</strong>
+																								<{if $field == 'ele_value' && is_array($diff)}>
+																										<ul>
+																												<{foreach from=$diff key=subField item=subDiff}>
+																														<li>
+																																<strong><{$subField}>:</strong>
+																																<ul>
+																																	<li>Config: <{if isset($subDiff.json_value)}><{$subDiff.json_value}><{else}>(not set)<{/if}></li>
+																																	<li>Database: <{if isset($subDiff.db_value)}><{$subDiff.db_value}><{else}>(not set)<{/if}></li>
+																																</ul>
+																														</li>
+																												<{/foreach}>
+																										</ul>
+																								<{else}>
+																										<ul>
+																											<li>Config: <{if $diff.json_value !== false && !empty($diff.json_value)}><{$diff.json_value}><{else}>(not set)<{/if}></li>
+																											<li>Database: <{if $diff.db_value !== false && !empty($diff.db_value)}><{$diff.db_value}><{else}>(not set)<{/if}></li>
+																										</ul>
+																								<{/if}>
+																						</li>
+																				<{/foreach}>
+																		</ul>
+																	<{elseif $change.operation == 'delete'}>
+																		Found in the Database but not in the configuration file
+																	<{/if}>
+															</td>
+													</tr>
+													<{/foreach}>
+									</tbody>
+							</table>
+			<{/if}>
+	</div>
 
 </div>
+
+<style>
+	.config-changes {
+			font-family: Arial, sans-serif;
+			max-width: 800px;
+			margin: 0 auto;
+	}
+	.changes-table {
+			width: 100%;
+			border-collapse: collapse;
+			margin-bottom: 20px;
+	}
+	.changes-table th, .changes-table td {
+			border: 1px solid #ddd;
+			padding: 8px;
+			text-align: left;
+	}
+	.changes-table th {
+			background-color: #f2f2f2;
+	}
+	.change-row.create {
+			background-color: #e6ffe6;
+	}
+	.change-row.update {
+			background-color: #e6f3ff;
+	}
+	.change-row.delete {
+			background-color: #ffe6e6;
+	}
+	.change-details {
+			list-style-type: none;
+			padding-left: 0;
+	}
+	.change-details li {
+			margin-bottom: 5px;
+	}
+</style>

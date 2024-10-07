@@ -10,17 +10,23 @@ class FormulizeConfigSync {
 	private $diffLog = [];
 
 	private $configFiles = [
-		'forms' => 'forms.json',
-		// 'relationships' => 'relationships.json',
-		// 'global_settings' => 'global_settings.json'
+		'forms' => 'forms.json'
 	];
 
+	/**
+	 * Constructor
+	 * @param string $configPath
+	 */
 	public function __construct(string $configPath) {
 		$this->configPath = rtrim($configPath, '/');
 		$this->elementValueProcessor = new FormulizeConfigSyncElementValueProcessor();
 		$this->initializeDatabase();
 	}
 
+	/**
+	 * Initialize the database connection
+	 * @return void
+	 */
 	private function initializeDatabase() {
 		try {
 			$this->db = new \PDO(
@@ -35,6 +41,10 @@ class FormulizeConfigSync {
 		}
 	}
 
+	/**
+	 * Compare configurations from JSON files with the database
+	 * @return array
+	 */
 	public function compareConfigurations(): array {
 		$this->changes = [];
 		$this->diffLog = [];
@@ -45,15 +55,10 @@ class FormulizeConfigSync {
 				continue;
 			}
 
+			// @todo additional cases for future expansion
 			switch ($type) {
 				case 'forms':
 					$this->compareFormsConfig($jsonConfig);
-					break;
-				case 'relationships':
-					$this->compareRelationshipsConfig($jsonConfig);
-					break;
-				case 'global_settings':
-					$this->compareGlobalSettings($jsonConfig);
 					break;
 			}
 		}
@@ -64,6 +69,11 @@ class FormulizeConfigSync {
 		];
 	}
 
+	/**
+	 * Load a JSON configuration file
+	 * @param string $filename
+	 * @return array
+	 */
 	private function loadJsonConfig(string $filename): array {
 		$filepath = XOOPS_ROOT_PATH . '/modules/formulize/' . $this->configPath . '/' . $filename;
 		if (!file_exists($filepath)) {
@@ -81,6 +91,11 @@ class FormulizeConfigSync {
 		return $config;
 	}
 
+	/**
+	 * Compare form configurations from JSON with the database
+	 * @param array $jsonConfig
+	 * @return void
+	 */
 	private function compareFormsConfig(array $jsonConfig): void {
 		$dbForms = $this->loadDatabaseConfig('formulize_id');
 		$dbElements = $this->loadDatabaseConfig('formulize');
@@ -107,12 +122,24 @@ class FormulizeConfigSync {
 		}
 	}
 
+	/**
+	 * Strip key from an array
+	 * @param array $configArray
+	 * @param string $key
+	 * @return array
+	 */
 	private function stripArrayKey(array $configArray, string $key): array {
 		$strippedConfigArray = $configArray;
 		unset($strippedConfigArray[$key]);
 		return $strippedConfigArray;
 	}
 
+	/**
+	 * Compare a form configuration from JSON with the database
+	 * @param array $formConfig
+	 * @param array $dbForms
+	 * @return void
+	 */
 	private function compareForm(array $formConfig, array $dbForms): void {
 		$dbForm = $this->findInArray($dbForms, 'form_handle', $formConfig['form_handle']);
 		$strippedFormConfig = $this->stripArrayKey($formConfig, 'elements');
@@ -128,6 +155,13 @@ class FormulizeConfigSync {
 		}
 	}
 
+	/**
+	 * Compare elements for a form
+	 * @param array $elements
+	 * @param array $dbElements
+	 * @param string $formHandle
+	 * @return void
+	 */
 	private function compareElements(array $elements, array $dbElements, string $formHandle): void {
 		// Find only the DB elements that belong to the current form
 		// Currently this is done via ID because the elements array does not contain the form_handle
@@ -167,43 +201,11 @@ class FormulizeConfigSync {
 		}
 	}
 
-	private function compareRelationshipsConfig(array $jsonConfig): void {
-		$dbRelationships = $this->loadDatabaseConfig('formulize_relationships');
-
-		foreach ($jsonConfig['relationships'] as $relationshipConfig) {
-			$dbRelationship = $this->findInArray($dbRelationships, 'rel_handle', $relationshipConfig['rel_handle']);
-
-			if (!$dbRelationship) {
-				$this->addChange('relationships', 'create', $relationshipConfig);
-			} else {
-				$differences = $this->compareFields($relationshipConfig, $dbRelationship);
-				if (!empty($differences)) {
-					$this->addChange('relationships', 'update', $relationshipConfig, $differences);
-				}
-			}
-		}
-
-		// Check for relationships in DB that are not in JSON
-		foreach ($dbRelationships as $dbRelationship) {
-			$found = false;
-			foreach ($jsonConfig['relationships'] as $relationshipConfig) {
-				if ($relationshipConfig['rel_handle'] === $dbRelationship['rel_handle']) {
-					$found = true;
-					break;
-				}
-			}
-			if (!$found) {
-				$this->addChange('relationships', 'delete', $dbRelationship);
-			}
-		}
-	}
-
-	private function compareGlobalSettings(array $jsonConfig): void {
-		// Implementation depends on how global settings are stored in the database
-		// This is a placeholder for the actual implementation
-		$this->diffLog[] = "Global settings comparison not implemented yet.";
-	}
-
+	/**
+	 * Load configuration data from a database table
+	 * @param string $table
+	 * @return array
+	 */
 	private function loadDatabaseConfig(string $table): array {
 		$table = $this->prefixTable($table);
 		$stmt = $this->db->prepare("SELECT * FROM {$table}");
@@ -220,6 +222,13 @@ class FormulizeConfigSync {
 		return null;
 	}
 
+	/**
+	 * General field comparison
+	 * @param array $config
+	 * @param array $dbItem
+	 * @param array $excludeFields
+	 * @return array
+	 */
 	private function compareFields(array $config, array $dbItem, array $excludeFields = []): array {
 		$differences = [];
 		foreach ($config as $field => $value) {
@@ -238,6 +247,12 @@ class FormulizeConfigSync {
 		return $differences;
 	}
 
+	/**
+	 * Compare element fields
+	 * @param array $jsonElement
+	 * @param array $dbElement
+	 * @return array
+	 */
 	private function compareElementFields(array $jsonElement, array $dbElement): array {
 		$differences = [];
 
@@ -262,6 +277,11 @@ class FormulizeConfigSync {
 		return $differences;
 }
 
+	/**
+	 * Normalize a value for comparison
+	 * @param mixed $value
+	 * @return mixed
+	 */
 	private function normalizeValue($value) {
     if (is_string($value) && unserialize($value) !== false) {
 			$unserialized = unserialize($value);
@@ -277,6 +297,11 @@ class FormulizeConfigSync {
     return (string) $value;
 	}
 
+	/**
+	 * Prepare an element for database storage
+	 * @param array $element
+	 * @return array
+	 */
 	private function prepareElementForDb(array $element): array {
     $preparedElement = $element;
     foreach ($preparedElement as $key => $value) {
@@ -287,6 +312,14 @@ class FormulizeConfigSync {
     return $preparedElement;
 	}
 
+	/**
+	 * Add a change to the list of changes
+	 * @param string $type
+	 * @param string $operation
+	 * @param array $data
+	 * @param array $differences
+	 * @return void
+	 */
 	private function addChange(string $type, string $operation, array $data, array $differences = []): void {
 		$this->changes[] = [
 			'type' => $type,
@@ -305,6 +338,10 @@ class FormulizeConfigSync {
 		);
 	}
 
+	/**
+	 * Apply changes to the database
+	 * @return array
+	 */
 	public function applyChanges(): array {
 		$results = ['success' => [], 'failure' => []];
 
@@ -329,6 +366,11 @@ class FormulizeConfigSync {
 		return $results;
 	}
 
+	/**
+	 * Apply a single change to the database
+	 * @param array $change
+	 * @return void
+	 */
 	private function applyChange(array $change): void {
 		$table = $this->getTableForType($change['type']);
 		$primaryKey = $this->getPrimaryKeyForType($change['type']);
@@ -346,32 +388,44 @@ class FormulizeConfigSync {
 		}
 	}
 
+	/**
+	 * Get the database table name for a configuration type
+	 * @param string $type
+	 * @return string
+	 */
 	private function getTableForType(string $type): string {
 		switch ($type) {
 			case 'forms':
 				return 'formulize_id';
 			case 'elements':
 				return 'formulize';
-			case 'relationships':
-				return 'formulize_relationships';
 			default:
 				throw new \Exception("Unknown configuration type: {$type}");
 		}
 	}
 
+	/**
+	 * Get the primary key field for a configuration type
+	 * @param string $type
+	 * @return string
+	 */
 	private function getPrimaryKeyForType(string $type): string {
 		switch ($type) {
 			case 'forms':
 				return 'id_form';
 			case 'elements':
 				return 'ele_id';
-			case 'relationships':
-				return 'rel_id';
 			default:
 				throw new \Exception("Unknown configuration type: {$type}");
 		}
 	}
 
+	/**
+	 * Insert a record into a database table
+	 * @param string $table
+	 * @param array $data
+	 * @return void
+	 */
 	private function insertRecord(string $table, array $data): void {
 		$fields = array_keys($data);
 		$placeholders = array_fill(0, count($fields), '?');
@@ -387,6 +441,13 @@ class FormulizeConfigSync {
 		$stmt->execute(array_values($data));
 	}
 
+	/**
+	 * Update a record in a database table
+	 * @param string $table
+	 * @param array $data
+	 * @param string $primaryKey
+	 * @return void
+	 */
 	private function updateRecord(string $table, array $data, string $primaryKey): void {
 		$fields = array_keys($data);
 		$sets = array_map(function ($field) {
@@ -407,6 +468,13 @@ class FormulizeConfigSync {
 		$stmt->execute($values);
 	}
 
+	/**
+	 * Delete a record from a database table
+	 * @param string $table
+	 * @param array $data
+	 * @param string $primaryKey
+	 * @return void
+	 */
 	private function deleteRecord(string $table, array $data, string $primaryKey): void {
 		$sql = sprintf(
 			"DELETE FROM %s WHERE %s = ?",
@@ -418,6 +486,11 @@ class FormulizeConfigSync {
 		$stmt->execute([$data[$primaryKey]]);
 	}
 
+	/**
+	 * Prefix a table name with the XOOPS database prefix
+	 * @param string $table
+	 * @return string
+	 */
 	private function prefixTable(string $table): string {
 		return XOOPS_DB_PREFIX . '_' . trim($table, '_');
 	}
