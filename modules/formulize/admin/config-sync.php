@@ -18,14 +18,18 @@ $configSync = new FormulizeConfigSync('/config');
 //Compare configurations
 $diff = $configSync->compareConfigurations();
 
-echo "<pre>";
-$export = $configSync->exportConfiguration('asdf');
-echo "</pre>";
-
 $adminPage['template'] = "db:admin/config-sync.html";
 $adminPage['changes'] = $diff['changes'];
 $adminPage['log'] = $diff['log'];
 $adminPage['export'] = $export;
+
+if (isset($_POST['export'])) {
+	$export = $configSync->exportConfiguration();
+	header('Content-Type: application/json');
+	header('Content-Disposition: attachment; filename="forms.json"');
+	echo $export;
+	exit();
+}
 
 // Review changes
 // foreach ($differences['log'] as $logEntry) {
