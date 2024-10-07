@@ -548,10 +548,9 @@ class FormulizeConfigSync
 	/**
 	 * Export current database configuration to a forms.json file
 	 *
-	 * @param string $outputPath Path where the forms.json file will be saved
-	 * @return string True if export was successful, false otherwise
+	 * @return string A JSON string of the exported configuration
 	 */
-	public function exportConfiguration(string $outputPath): bool
+	public function exportConfiguration(): string
 	{
 		try {
 			$forms = $this->exportForms();
@@ -566,14 +565,10 @@ class FormulizeConfigSync
 				]
 			];
 
-			$jsonContent = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-			// file_put_contents($outputPath, $jsonContent);
-
-			print_r($jsonContent);
-			return $jsonContent;
+			return json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 		} catch (\Exception $e) {
 			error_log("Error exporting configuration: " . $e->getMessage());
-			return false;
+			return '';
 		}
 	}
 
