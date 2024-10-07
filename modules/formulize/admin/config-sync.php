@@ -1,47 +1,39 @@
 <?php
 /**
- * Helps create the page for synchronizing these two systems (DBs)
- * User: Vanessa Synesael
- * Date: 2016-01-16
+ * Configuration as code synchronization
  */
 
-// exporting the entire DB can take a lot of memory and time!!
+// Operations may require additional memory and time to perform
 ini_set('memory_limit', '1024M');
 ini_set('max_execution_time', '600');
 ini_set('display_errors', 1);
 
 include_once '../include/formulizeConfigSync.php';
 
-// $sync = array();
-
-// $sync[1]['name'] = "Configuration Synchronization";
-// $sync[1]['content']['type'] = "import";
-// $sync[1]['content']['error'] = "none";
-// $sync[1]['content']['complete'] = 0;
-
-// $adminPage['sync'] = $sync;
-$adminPage['template'] = "db:admin/config-sync.html";
-
 $breadcrumbtrail[1]['url'] = "page=home";
 $breadcrumbtrail[1]['text'] = "Home";
 $breadcrumbtrail[2]['text'] = "Configuration Synchronization";
 
 $configSync = new FormulizeConfigSync('/config');
+//Compare configurations
+$diff = $configSync->compareConfigurations();
 
-// Compare configurations
-$differences = $configSync->compareConfigurations();
+$adminPage['template'] = "db:admin/config-sync.html";
+$adminPage['changes'] = $diff['changes'];
+$adminPage['log'] = $diff['log'];
+
+print("<pre>");
+print_r($diff['changes']);
+print("</pre>");
 
 // Review changes
-foreach ($differences['log'] as $logEntry) {
-    echo $logEntry . "\n";
-}
+// foreach ($differences['log'] as $logEntry) {
+//     echo $logEntry . "\n";
+// }
 
-echo "<pre>";
-print_r($differences['changes']);
-echo "</pre>";
-
-
-// print_r($differences);
+// echo "<pre>";
+// print_r($differences['changes']);
+// echo "</pre>";
 
 // populate the checkboxes for export
 // $sync[2]['content']['checkboxes'] = createCheckboxInfo();
