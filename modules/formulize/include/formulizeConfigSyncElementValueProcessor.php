@@ -20,7 +20,33 @@ class FormulizeConfigSyncElementValueProcessor
 		'options' => 2,
 	];
 	private $selectElementMapping = [
+		'number_of_rows' => 0,
+		'multiple_selections' => 1,
 		'options' => 2,
+		'groups' => 3,
+		'limit_to_user_groups' => 4,
+		'filter_conditions' => 5,
+		'limit_to_groups_the_current_user_is_a_member_of' => 6,
+		'clickable' => 7,
+		'autocomplete' => 8,
+		'selection_limit' => 9,
+		'list_supplied_values_element_id' => 10,
+		'export_supplied_values_element_id' => 11,
+		'sort_values_element_id' => 12,
+		'default_value_entry_id' => 13,
+		'show_default_text_when_no_values' => 14
+	];
+	private $textareaMapping = [
+		'default_text' => 0,
+		'rows' => 1,
+		'columns' => 2
+	];
+	private $ynradioMapping = [
+		'yes' => '_YES',
+		'no' => '_NO',
+	];
+	private $dateMapping = [
+		'default' => 0
 	];
 
 	public function __construct()
@@ -34,8 +60,12 @@ class FormulizeConfigSyncElementValueProcessor
 	{
 		$this->elementMapping = [
 			'text' => $this->textElementMapping,
+			'textarea' => $this->textareaMapping,
 			'checkbox' => $this->checkboxElementMapping,
+			'radio' => $this->checkboxElementMapping,
+			'yn' => $this->ynradioMapping,
 			'select' => $this->selectElementMapping,
+			'date' => $this->dateMapping,
 		];
 	}
 
