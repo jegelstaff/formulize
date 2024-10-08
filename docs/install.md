@@ -13,11 +13,12 @@ permalink: install/
    - /templates_c
    - /uploads
    - /modules/formulize/cache
-   - /modules/formulize/custom_code
+   - /modules/formulize/code
    - /modules/formuilze/export
    - /modules/formulize/temp
    - /modules/formulize/templates/screens (and all subs)
    - /modules/formulize/upload
 5. Open a web browser and go to your site.
-   - If you're installing fresh, go to your webroot and the installer will appear.
-   - If you're upgrading, login as the webmaster, and go to the admin page for Formulize. You will be prompted to update the database.
+   - _If you're installing fresh_, go to your webroot and the installer will appear.
+   - _If you're upgrading_, login as the webmaster, and go to the admin page for Formulize. You will be prompted to update the database.
+	 - _If you're upgrading_, click on the 'Modules' heading in the menu (the heading, not the Formulize link in the menu). The module list will appear. Click the circular arrows on the right side of the Formulize row to update templates and configuration settings.

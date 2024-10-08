@@ -11,5 +11,5 @@ if(!isset($processedValues)) {
     return;
 }
 
-$filename=XOOPS_ROOT_PATH."/modules/formulize/custom_code/application_custom_code_".intval($_POST['formulize_admin_key']).".php";
+$filename=XOOPS_ROOT_PATH."/modules/formulize/code/application_custom_code_".intval($_POST['formulize_admin_key']).".php";
 file_put_contents($filename,$processedValues['applications']['custom_code']);

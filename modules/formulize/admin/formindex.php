@@ -419,7 +419,6 @@ function patch40() {
         $sql['add_form_note'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `note` text";
         $sql['add_use_default_when_blank'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_use_default_when_blank` tinyint(1) NOT NULL default '0'";
         $sql['add_global_search_to_saved_view'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_saved_views") . " ADD `sv_global_search` text";
-        $sql['add_application_code'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_applications") . " ADD `custom_code` mediumtext";
         $sql['add_note_to_menu_links']="ALTER TABLE ".$xoopsDB->prefix("formulize_menu_links")." ADD `note` text";
         $sql['add_pubfilters'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_saved_views") . " ADD `sv_pubfilters` text";
         $sql['add_backdrop_group'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_resource_mapping") . " ADD external_id_string text NULL default NULL";
@@ -519,8 +518,6 @@ function patch40() {
                     print "use default when blank already added.  result: OK<br>";
                 } elseif ($key === "add_global_search_to_saved_view") {
                     print "global search saved view already added.  result: OK<br>";
-                } elseif ($key === "add_application_code") {
-                    print "application custom_code field added.  result: OK<br>";
                 } elseif ($key === "add_note_to_menu_links") {
                     print "note already added for menu links.  result: OK<br>";
                 } elseif (strstr($key, 'drop_from_formulize_id_')) {
@@ -1281,6 +1278,14 @@ function patch40() {
 				}
 				if($forceHiddenElements) {
 					print "<script>alert(\" Some of your form elements have the 'force hidden' setting turned on. They are listed at the end of this message. \\n\\n The 'force hidden' setting caused hidden versions of elements to be included in forms, when the user did not have permission to view them. This setting is now deprecated and non-functional. You should verify that the affected forms are working properly for all users. \\n\\n In the highly unlikely event that something is not working, please contact info@formulize.org for assistance. \\n\\n You can turn off this warning in the database, by setting the value of 'ele_forcehidden' in the 'formulize' table to 0 for all these elements: \\n\\n $forceHiddenElements \");</script>";
+				}
+
+				// setup code folder with all the userland code, if necessary
+				if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/custom_code")) {
+					// rename custom_code to code
+					rename(XOOPS_ROOT_PATH."/modules/formulize/custom_code", XOOPS_ROOT_PATH."/modules/formulize/code");
+					// convert all DB code to files in the code folder
+
 				}
 
         print "DB updates completed.  result: OK";
