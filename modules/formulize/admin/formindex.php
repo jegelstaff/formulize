@@ -1285,7 +1285,25 @@ function patch40() {
 					// rename custom_code to code
 					rename(XOOPS_ROOT_PATH."/modules/formulize/custom_code", XOOPS_ROOT_PATH."/modules/formulize/code");
 					// convert all DB code to files in the code folder
-
+					/**
+					 * formulize_id table:
+					 * - custom_edit_check
+					 * - on_before_save
+					 * - on_after_save
+					 * - on_delete
+					 * formulize table:
+					 * - ele_value:
+					 * - areammodif: key 0 if/when $value= or $value = is present
+					 * - derived: key 0
+					 * - ib: key 0 if/when $value= or $value = is present
+					 * - text: key 2 if/when $default= or $default = is present
+					 * - textarea: key 0 if/when $default= or $default = is present
+					 * formulize_screen_listofentries:
+					 * - customactions
+					 * - following keys in the array need converting...
+					 * $buttonData[$buttonId][$effectCounter]['code']
+					 * $buttonData[$buttonId][$effectCounter]['html']
+					 */
 				}
 
         print "DB updates completed.  result: OK";
