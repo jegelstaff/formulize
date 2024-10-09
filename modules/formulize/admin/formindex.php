@@ -1304,7 +1304,53 @@ function patch40() {
 					 * $buttonData[$buttonId][$effectCounter]['code']
 					 * $buttonData[$buttonId][$effectCounter]['html']
 					 */
-				}
+
+                     $elementsWithCodeSQL = "SELECT ele_id, ele_type, ele_value FROM ".$xoopsDB->prefix('formulize')." WHERE
+                     (ele_type = 'derived')
+                     OR (ele_type IN ('ib', 'areamodif') AND ele_value LIKE '%\$value%')
+                     OR (ele_type IN ('text', 'textarea') AND ele_value LIKE '%\$default%') ";
+                     if($res = $xoopsDB->query($elementsWithCodeSQL)) {
+                        // loop through the results...
+                        while($record = $xoopsDB->fetchArray($res)) {
+                            $eleValueKey = $record['ele_type'] == 'text' ? 2 : 0;
+                            $ele_value = unserialize($record['ele_value']);
+                            $code = $ele_value[$eleValueKey];
+
+                        }
+                    }
+
+
+
+ /*
+
+
+                     $customButtonsNeedingOpeningPHPTagsSQL = "SELECT `sid`, `customactions` FROM ".$xoopsDB->prefix('formulize_screen_listofentries')." WHERE customactions LIKE '%\"custom_code\";%' OR customactions LIKE '%\"custom_html\";%'";
+                 if($res = $xoopsDB->query($customButtonsNeedingOpeningPHPTagsSQL)) {
+                     // loop through the results...
+                     while($record = $xoopsDB->fetchArray($res)) {
+                         // for each record that was returned from the DB, decode the button stuff and check if the custom_html or custom_code has an opening tag
+                         $customActions = unserialize($record['customactions']);
+                         foreach($customActions as $actionId=>$actionSettings) {
+                             foreach($actionSettings as $effectId=>$effectSettings) {
+                                 if(!is_numeric($effectId)) { continue; } // ugly, effects are all numeric keys, other keys at same level are strings for other metadata
+                                 switch($actionSettings['applyto']) {
+                                     case 'custom_html':
+                                         if(substr($effectSettings['html'], 0, 5) != '<?php') {
+                                             $customActions[$actionId][$effectId]['html'] = "<?php\n".$effectSettings['html']; // assign update to the source array
+                                         }
+                                         break;
+                                     case 'custom_code':
+                                         if(substr($effectSettings['code'], 0, 5) != '<?php') {
+                                             $customActions[$actionId][$effectId]['code'] = "<?php\n".$effectSettings['code']; // assign update to the source array
+                                         }
+                                         break;
+                                 }
+                             }
+                         }
+                 */
+
+
+                }
 
         print "DB updates completed.  result: OK";
     }
