@@ -413,9 +413,6 @@ function patch40() {
         $sql['add_store_revisions'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `store_revisions` tinyint(1) NOT NULL default '0'";
         $sql['add_finishisdone'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_multipage") . " ADD `finishisdone` tinyint(1) NOT NULL default 0";
         $sql['add_formelements'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_form") . " ADD `formelements` text";
-        $sql['add_on_before_save'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `on_before_save` text";
-        $sql['add_on_after_save'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `on_after_save` text";
-        $sql['add_custom_edit_check'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `custom_edit_check` text";
         $sql['add_form_note'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `note` text";
         $sql['add_use_default_when_blank'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_use_default_when_blank` tinyint(1) NOT NULL default '0'";
         $sql['add_global_search_to_saved_view'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_saved_views") . " ADD `sv_global_search` text";
@@ -460,7 +457,6 @@ function patch40() {
         $sql['screen_theme_change'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " CHANGE `theme` `theme` varchar(101) NOT NULL default ''";
         $sql['element_sort'] = "ALTER TABLE ".$xoopsDB->prefix("formulize") . " ADD `ele_sort` smallint(2) NULL default NULL";
         $sql['sv_entriesperpage'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views") . " ADD `sv_entriesperpage` varchar(4) NOT NULL default ''";
-        $sql['on_delete'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id") . " ADD `on_delete` text";
         $sql['viewentryscreen_templates'] = "ALTER TABLE ".$xoopsDB->prefix('formulize_screen_template') . " ADD `viewentryscreen` varchar(10) NOT NULL default ''";
 				$sql['ele_disabledconditions'] = "ALTER TABLE ".$xoopsDB->prefix("formulize"). " ADD `ele_disabledconditions` text NOT NULL";
 				$sql['update_module_name'] = "UPDATE ".$xoopsDB->prefix("modules")." SET name = 'Formulize' WHERE dirname = 'formulize' AND name = 'Forms'";
@@ -506,12 +502,6 @@ function patch40() {
                     print "finishisdone for multipage forms already added.  result: OK<br>";
                 } elseif ($key === "add_formelements") {
                     print "formelements field already added for single page screens.  result: OK<br>";
-                } elseif ($key === "add_on_before_save") {
-                    print "on_before_save field already added.  result: OK<br>";
-                } elseif ($key === "add_on_after_save") {
-                    print "on_after_save field already added.  result: OK<br>";
-                } elseif ($key === "add_custom_edit_check") {
-                    print "custom_edit_check field already added.  result: OK<br>";
                 } elseif ($key === "add_form_note") {
                     print "form note field already added.  result: OK<br>";
                 } elseif ($key === "add_use_default_when_blank") {
@@ -581,8 +571,6 @@ function patch40() {
                     print "Element sorting order already added. result: OK<br>";
                 } elseif($key === "sv_entriesperpage") {
                     print "Entries per page already added. result: OK<br>";
-                } elseif($key === "on_delete") {
-                    print "On Delete already added. result: OK<br>";
                 } elseif($key === "viewentryscreen_templates") {
                     print "View entry screen option for template screens already added. result: OK<br>";
 				} elseif($key === "ele_disabledconditions") {
@@ -608,105 +596,198 @@ function patch40() {
             }
         }
 
-				// add opening <?php tags to code snippets that don't have them
+				// add opening <?php tags to code snippets that don't have them... only if we haven't yet moved custom_code to a renamed code folder!
 				// 1. derived value formulas $ele_value[0]
 				// 2. Textbox $ele_value[2] if they contain $default
 				// 3. Textarea $ele_value[0] if they contain $default
 				// 4. ib $ele_value[0] if they contain $value
 				// 5. areamodif $ele_value[0] if they contain $value
 
-				// query for the elements...
-				$elementsNeedingOpeningPHPTagsSQL = "SELECT ele_id, ele_type, ele_value FROM ".$xoopsDB->prefix('formulize')." WHERE
-					(ele_type = 'derived')
-					OR (ele_type IN ('ib', 'areamodif') AND ele_value LIKE '%\$value%')
-					OR (ele_type IN ('text', 'textarea') AND ele_value LIKE '%\$default%') ";
-				if($res = $xoopsDB->query($elementsNeedingOpeningPHPTagsSQL)) {
-					// loop through the results...
-					while($record = $xoopsDB->fetchArray($res)) {
-						// isolate the value we're targetting...
-						$eleValueKey = $record['ele_type'] == 'text' ? 2 : 0; // figure out which key we need to look in based on the element type (text is 2, everything else is 0)
-						$newEleValue = unserialize(($record['ele_value']));
-						$newEleValue[$eleValueKey] = trim($newEleValue[$eleValueKey]);
-						// is the value missing the opening php tag?
-						if(substr($newEleValue[$eleValueKey], 0, 5) != '<?php') {
-							// add the tag and update the database...
-							$newEleValue[$eleValueKey] = "<?php\n".$newEleValue[$eleValueKey];
-							$newEleValue = serialize($newEleValue);
-							$updateSQL = "UPDATE ".$xoopsDB->prefix('formulize')." SET ele_value = ".$xoopsDB->quoteString($newEleValue)." WHERE ele_id = ".$record['ele_id'];
-							if(!$updateRes = $xoopsDB->query($updateSQL)) {
-								print "Notice: could not add opening PHP tag to the code in element ".$record['ele_id']." with the SQL:<br>".str_replace('<', '&lt;',$updateSQL)."<br>".$xoopsDB->error()."<br>This is not a critical error. You can add the tag yourself at the top of the code, if you want the editor to provide highlighting. For more information contact <a href=mailto:info@formulize.org>info@formulize.org</a>.<br>";
-							}
-						}
-					}
-				} else {
-					exit("Error detecting code snippets that need opening PHP tags. SQL dump:<br>".$elementsNeedingOpeningPHPTagsSQL."<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
-				}
+				if(!file_exists(XOOPS_ROOT_PATH."/modules/formulize/code")) {
 
-				// Same operation, on the form procedures
-				// query for the procedures...
-				$formProceduresNeedingOpeningPHPTagsSQL = "SELECT id_form as fid, on_before_save, on_after_save, on_delete, custom_edit_check
-					FROM ".$xoopsDB->prefix('formulize_id')." WHERE
-					(on_before_save != '' AND on_before_save NOT LIKE '<?php%')
-					OR (on_after_save != '' AND on_after_save NOT LIKE '<?php%')
-					OR (on_delete != '' AND on_delete NOT LIKE '<?php%')
-					OR (custom_edit_check != '' AND custom_edit_check NOT LIKE '<?php%') ";
-				if($res = $xoopsDB->query($formProceduresNeedingOpeningPHPTagsSQL)) {
-					// loop through the results...
-					while($record = $xoopsDB->fetchArray($res)) {
-						// for each record that was returned from the DB, make a list of all the events and then check each event...
-						$events = array('on_before_save', 'on_after_save', 'on_delete', 'custom_edit_check');
-						foreach($events as $i=>$event) {
-							$record[$event] = trim($record[$event]);
-							// if the event is missing the opening php tag, then let's make a SQL snippet containing the updated code we want to write to the DB
-							if($record[$event] AND substr($record[$event], 0, 5) != '<?php') {
-								$events[$i] = "$event = ".$xoopsDB->quoteString("<?php\n".$record[$event]);
-							} else { // otherwise, throw away this event, we won't be doing an update on it
-								unset($events[$i]);
-							}
-						}
-						// update the database with the new code for the relevant events
-						$updateProcSQL = "UPDATE ".$xoopsDB->prefix('formulize_id')." SET ".implode(', ',$events)." WHERE id_form = ".$record['fid'];
-						if(!$updateProcRes = $xoopsDB->query($updateProcSQL)) {
-							print "Notice: could not add opening PHP tag to the code in procedures for form ".$record['fid']." with the SQL:<br>".str_replace('<', '&lt;',$updateProcSQL)."<br>".$xoopsDB->error()."<br>This is not a critical error. You can add the tag yourself at the top of the code, if you want the editor to provide highlighting. For more information contact <a href=mailto:info@formulize.org>info@formulize.org</a>.<br>";
-						}
-					}
-				} else {
-					exit("Error detecting procedures that need opening PHP tags. SQL dump:<br>".$formProceduresNeedingOpeningPHPTagsSQL."<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
-				}
-
-				// Same operation on the custom button effects
-				$customButtonsNeedingOpeningPHPTagsSQL = "SELECT `sid`, `customactions` FROM ".$xoopsDB->prefix('formulize_screen_listofentries')." WHERE customactions LIKE '%\"custom_code\";%' OR customactions LIKE '%\"custom_html\";%'";
-				if($res = $xoopsDB->query($customButtonsNeedingOpeningPHPTagsSQL)) {
-					// loop through the results...
-					while($record = $xoopsDB->fetchArray($res)) {
-						// for each record that was returned from the DB, decode the button stuff and check if the custom_html or custom_code has an opening tag
-						$customActions = unserialize($record['customactions']);
-						foreach($customActions as $actionId=>$actionSettings) {
-							foreach($actionSettings as $effectId=>$effectSettings) {
-								if(!is_numeric($effectId)) { continue; } // ugly, effects are all numeric keys, other keys at same level are strings for other metadata
-								switch($actionSettings['applyto']) {
-									case 'custom_html':
-										if(substr($effectSettings['html'], 0, 5) != '<?php') {
-											$customActions[$actionId][$effectId]['html'] = "<?php\n".$effectSettings['html']; // assign update to the source array
-										}
-										break;
-									case 'custom_code':
-										if(substr($effectSettings['code'], 0, 5) != '<?php') {
-											$customActions[$actionId][$effectId]['code'] = "<?php\n".$effectSettings['code']; // assign update to the source array
-										}
-										break;
+					// query for the elements...
+					$elementsNeedingOpeningPHPTagsSQL = "SELECT ele_id, ele_type, ele_value FROM ".$xoopsDB->prefix('formulize')." WHERE
+						(ele_type = 'derived')
+						OR (ele_type IN ('ib', 'areamodif') AND ele_value LIKE '%\$value%')
+						OR (ele_type IN ('text', 'textarea') AND ele_value LIKE '%\$default%') ";
+					if($res = $xoopsDB->query($elementsNeedingOpeningPHPTagsSQL)) {
+						// loop through the results...
+						while($record = $xoopsDB->fetchArray($res)) {
+							// isolate the value we're targetting...
+							$eleValueKey = $record['ele_type'] == 'text' ? 2 : 0; // figure out which key we need to look in based on the element type (text is 2, everything else is 0)
+							$newEleValue = unserialize(($record['ele_value']));
+							$newEleValue[$eleValueKey] = trim($newEleValue[$eleValueKey]);
+							// is the value missing the opening php tag?
+							if(substr($newEleValue[$eleValueKey], 0, 5) != '<?php') {
+								// add the tag and update the database...
+								$newEleValue[$eleValueKey] = "<?php\n".$newEleValue[$eleValueKey];
+								$newEleValue = serialize($newEleValue);
+								$updateSQL = "UPDATE ".$xoopsDB->prefix('formulize')." SET ele_value = ".$xoopsDB->quoteString($newEleValue)." WHERE ele_id = ".$record['ele_id'];
+								if(!$updateRes = $xoopsDB->query($updateSQL)) {
+									print "Notice: could not add opening PHP tag to the code in element ".$record['ele_id']." with the SQL:<br>".str_replace('<', '&lt;',$updateSQL)."<br>".$xoopsDB->error()."<br>This is not a critical error. You can add the tag yourself at the top of the code, if you want the editor to provide highlighting. For more information contact <a href=mailto:info@formulize.org>info@formulize.org</a>.<br>";
 								}
 							}
 						}
-						$customActions = serialize($customActions);
-						// update the database with the new code for the relevant custom buttons
-						$updateCustomButtonsSQL = "UPDATE ".$xoopsDB->prefix('formulize_screen_listofentries')." SET `customactions` = ".$xoopsDB->quoteString($customActions)." WHERE sid = ".$record['sid'];
-						if(!$updateProcRes = $xoopsDB->query($updateCustomButtonsSQL)) {
-							print "Notice: could not add opening PHP tag to the code in the custom buttons on screen ".$record['sid']." with the SQL:<br>".str_replace('<', '&lt;',$updateCustomButtonsSQL)."<br>".$xoopsDB->error()."<br>This is not a critical error. You can add the tag yourself at the top of the code, if you want the editor to provide highlighting. For more information contact <a href=mailto:info@formulize.org>info@formulize.org</a>.<br>";
-						}
+					} else {
+						exit("Error detecting code snippets that need opening PHP tags. SQL dump:<br>".$elementsNeedingOpeningPHPTagsSQL."<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
 					}
-				} else {
-					exit("Error detecting custom buttons that need opening PHP tags. SQL dump:<br>".$customButtonsNeedingOpeningPHPTagsSQL."<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+
+					// Same operation, on the form procedures
+					// query for the procedures...
+					$formProceduresNeedingOpeningPHPTagsSQL = "SELECT id_form as fid, on_before_save, on_after_save, on_delete, custom_edit_check
+						FROM ".$xoopsDB->prefix('formulize_id')." WHERE
+						(on_before_save != '' AND on_before_save NOT LIKE '<?php%')
+						OR (on_after_save != '' AND on_after_save NOT LIKE '<?php%')
+						OR (on_delete != '' AND on_delete NOT LIKE '<?php%')
+						OR (custom_edit_check != '' AND custom_edit_check NOT LIKE '<?php%') ";
+					if($res = $xoopsDB->query($formProceduresNeedingOpeningPHPTagsSQL)) {
+						// loop through the results...
+						while($record = $xoopsDB->fetchArray($res)) {
+							// for each record that was returned from the DB, make a list of all the events and then check each event...
+							$events = array('on_before_save', 'on_after_save', 'on_delete', 'custom_edit_check');
+							foreach($events as $i=>$event) {
+								$record[$event] = trim($record[$event]);
+								// if the event is missing the opening php tag, then let's make a SQL snippet containing the updated code we want to write to the DB
+								if($record[$event] AND substr($record[$event], 0, 5) != '<?php') {
+									$events[$i] = "$event = ".$xoopsDB->quoteString("<?php\n".$record[$event]);
+								} else { // otherwise, throw away this event, we won't be doing an update on it
+									unset($events[$i]);
+								}
+							}
+							// update the database with the new code for the relevant events
+							$updateProcSQL = "UPDATE ".$xoopsDB->prefix('formulize_id')." SET ".implode(', ',$events)." WHERE id_form = ".$record['fid'];
+							if(!$updateProcRes = $xoopsDB->query($updateProcSQL)) {
+								print "Notice: could not add opening PHP tag to the code in procedures for form ".$record['fid']." with the SQL:<br>".str_replace('<', '&lt;',$updateProcSQL)."<br>".$xoopsDB->error()."<br>This is not a critical error. You can add the tag yourself at the top of the code, if you want the editor to provide highlighting. For more information contact <a href=mailto:info@formulize.org>info@formulize.org</a>.<br>";
+							}
+						}
+					} else {
+						exit("Error detecting procedures that need opening PHP tags. SQL dump:<br>".$formProceduresNeedingOpeningPHPTagsSQL."<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+					}
+
+					// Same operation on the custom button effects
+					$customButtonsNeedingOpeningPHPTagsSQL = "SELECT `sid`, `customactions` FROM ".$xoopsDB->prefix('formulize_screen_listofentries')." WHERE customactions LIKE '%\"custom_code\";%' OR customactions LIKE '%\"custom_html\";%'";
+					if($res = $xoopsDB->query($customButtonsNeedingOpeningPHPTagsSQL)) {
+						// loop through the results...
+						while($record = $xoopsDB->fetchArray($res)) {
+							// for each record that was returned from the DB, decode the button stuff and check if the custom_html or custom_code has an opening tag
+							$customActions = unserialize($record['customactions']);
+							foreach($customActions as $actionId=>$actionSettings) {
+								foreach($actionSettings as $effectId=>$effectSettings) {
+									if(!is_numeric($effectId)) { continue; } // ugly, effects are all numeric keys, other keys at same level are strings for other metadata
+									switch($actionSettings['applyto']) {
+										case 'custom_html':
+											if(substr($effectSettings['html'], 0, 5) != '<?php') {
+												$customActions[$actionId][$effectId]['html'] = "<?php\n".$effectSettings['html']; // assign update to the source array
+											}
+											break;
+										case 'custom_code':
+											if(substr($effectSettings['code'], 0, 5) != '<?php') {
+												$customActions[$actionId][$effectId]['code'] = "<?php\n".$effectSettings['code']; // assign update to the source array
+											}
+											break;
+									}
+								}
+							}
+							$customActions = serialize($customActions);
+							// update the database with the new code for the relevant custom buttons
+							$updateCustomButtonsSQL = "UPDATE ".$xoopsDB->prefix('formulize_screen_listofentries')." SET `customactions` = ".$xoopsDB->quoteString($customActions)." WHERE sid = ".$record['sid'];
+							if(!$updateProcRes = $xoopsDB->query($updateCustomButtonsSQL)) {
+								print "Notice: could not add opening PHP tag to the code in the custom buttons on screen ".$record['sid']." with the SQL:<br>".str_replace('<', '&lt;',$updateCustomButtonsSQL)."<br>".$xoopsDB->error()."<br>This is not a critical error. You can add the tag yourself at the top of the code, if you want the editor to provide highlighting. For more information contact <a href=mailto:info@formulize.org>info@formulize.org</a>.<br>";
+							}
+						}
+					} else {
+						exit("Error detecting custom buttons that need opening PHP tags. SQL dump:<br>".$customButtonsNeedingOpeningPHPTagsSQL."<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+					}
+				}
+
+				// setup code folder with all the userland code, if necessary
+				if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/custom_code")) {
+					// rename custom_code to code
+					rename(XOOPS_ROOT_PATH."/modules/formulize/custom_code", XOOPS_ROOT_PATH."/modules/formulize/code");
+					// convert all DB code to files in the code folder
+					/**
+					 * formulize_id table:
+					 * - custom_edit_check
+					 * - on_before_save
+					 * - on_after_save
+					 * - on_delete
+					 * formulize table:
+					 * - ele_value:
+					 * - areammodif: key 0 if/when $value= or $value = is present
+					 * - derived: key 0
+					 * - ib: key 0 if/when $value= or $value = is present
+					 * - text: key 2 if/when $default= or $default = is present
+					 * - textarea: key 0 if/when $default= or $default = is present
+					 * formulize_screen_listofentries:
+					 * - customactions
+					 * - following keys in the array need converting...
+					 * $buttonData[$buttonId][$effectCounter]['code']
+					 * $buttonData[$buttonId][$effectCounter]['html']
+					 */
+
+					$elementsWithCodeSQL = "SELECT ele_id, ele_type, ele_value FROM ".$xoopsDB->prefix('formulize')." WHERE
+						(ele_type = 'derived')
+						OR (ele_type IN ('ib', 'areamodif') AND ele_value LIKE '%\$value%')
+						OR (ele_type IN ('text', 'textarea') AND ele_value LIKE '%\$default%') ";
+					if($res = $xoopsDB->query($elementsWithCodeSQL)) {
+						// loop through the results...
+						while($record = $xoopsDB->fetchArray($res)) {
+								$eleValueKey = $record['ele_type'] == 'text' ? 2 : 0;
+								$ele_value = unserialize($record['ele_value']);
+								$code = $ele_value[$eleValueKey];
+								$filename = $record['ele_type'].'_'.$record['ele_id'].'.php';
+								file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename, $code);
+						}
+					} else {
+						exit("Error detecting code snippets in elements for converting to files. SQL dump:<br>".$elementsWithCodeSQL."<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+					}
+
+					$formProceduresSQL = "SELECT id_form as fid, on_before_save, on_after_save, on_delete, custom_edit_check
+						FROM ".$xoopsDB->prefix('formulize_id')." WHERE	on_before_save != '' OR on_after_save != ''	OR on_delete != '' OR custom_edit_check != ''";
+					if($res = $xoopsDB->query($formProceduresSQL)) {
+						// loop through the results...
+						while($record = $xoopsDB->fetchArray($res)) {
+							// for each record that was returned from the DB, make a list of all the events and then check each event...
+							$events = array('on_before_save', 'on_after_save', 'on_delete', 'custom_edit_check');
+							foreach($events as $i=>$event) {
+								$record[$event] = trim($record[$event]);
+								if($record[$event]) {
+									$code = $record[$event];
+									$filename = $event.'_'.$record['fid'].'.php';
+									file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename, $code);
+								}
+							}
+						}
+					} else {
+						exit("Error detecting procedures to convert to files. SQL dump:<br>".$formProceduresSQL."<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+					}
+
+					$customButtonCodeSQL = "SELECT `sid`, `customactions` FROM ".$xoopsDB->prefix('formulize_screen_listofentries')." WHERE customactions LIKE '%\"custom_code\";%' OR customactions LIKE '%\"custom_html\";%'";
+					if($res = $xoopsDB->query($customButtonCodeSQL)) {
+						// loop through the results...
+						while($record = $xoopsDB->fetchArray($res)) {
+							// for each record that was returned from the DB, decode the button stuff
+							$customActions = unserialize($record['customactions']);
+							foreach($customActions as $actionId=>$actionSettings) {
+								foreach($actionSettings as $effectId=>$effectSettings) {
+									if(!is_numeric($effectId)) { continue; } // ugly, effects are all numeric keys, other keys at same level are strings for other metadata
+									switch($actionSettings['applyto']) {
+										case 'custom_html':
+											$code = $effectSettings['html'];
+											break;
+										case 'custom_code':
+											$code = $effectSettings['code'];
+											break;
+									}
+									$filename = $actionSettings['applyto'].'_'.$effectId.'_'.$actionId.'_'.$record['sid'];
+									file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename, $code);
+								}
+							}
+						}
+					} else {
+						exit("Error detecting custom buttons with code to convert to files. SQL dump:<br>".$customButtonCodeSQL."<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+					}
+
 				}
 
         global $xoopsConfig;
@@ -1279,78 +1360,6 @@ function patch40() {
 				if($forceHiddenElements) {
 					print "<script>alert(\" Some of your form elements have the 'force hidden' setting turned on. They are listed at the end of this message. \\n\\n The 'force hidden' setting caused hidden versions of elements to be included in forms, when the user did not have permission to view them. This setting is now deprecated and non-functional. You should verify that the affected forms are working properly for all users. \\n\\n In the highly unlikely event that something is not working, please contact info@formulize.org for assistance. \\n\\n You can turn off this warning in the database, by setting the value of 'ele_forcehidden' in the 'formulize' table to 0 for all these elements: \\n\\n $forceHiddenElements \");</script>";
 				}
-
-				// setup code folder with all the userland code, if necessary
-				if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/custom_code")) {
-					// rename custom_code to code
-					rename(XOOPS_ROOT_PATH."/modules/formulize/custom_code", XOOPS_ROOT_PATH."/modules/formulize/code");
-					// convert all DB code to files in the code folder
-					/**
-					 * formulize_id table:
-					 * - custom_edit_check
-					 * - on_before_save
-					 * - on_after_save
-					 * - on_delete
-					 * formulize table:
-					 * - ele_value:
-					 * - areammodif: key 0 if/when $value= or $value = is present
-					 * - derived: key 0
-					 * - ib: key 0 if/when $value= or $value = is present
-					 * - text: key 2 if/when $default= or $default = is present
-					 * - textarea: key 0 if/when $default= or $default = is present
-					 * formulize_screen_listofentries:
-					 * - customactions
-					 * - following keys in the array need converting...
-					 * $buttonData[$buttonId][$effectCounter]['code']
-					 * $buttonData[$buttonId][$effectCounter]['html']
-					 */
-
-                     $elementsWithCodeSQL = "SELECT ele_id, ele_type, ele_value FROM ".$xoopsDB->prefix('formulize')." WHERE
-                     (ele_type = 'derived')
-                     OR (ele_type IN ('ib', 'areamodif') AND ele_value LIKE '%\$value%')
-                     OR (ele_type IN ('text', 'textarea') AND ele_value LIKE '%\$default%') ";
-                     if($res = $xoopsDB->query($elementsWithCodeSQL)) {
-                        // loop through the results...
-                        while($record = $xoopsDB->fetchArray($res)) {
-                            $eleValueKey = $record['ele_type'] == 'text' ? 2 : 0;
-                            $ele_value = unserialize($record['ele_value']);
-                            $code = $ele_value[$eleValueKey];
-
-                        }
-                    }
-
-
-
- /*
-
-
-                     $customButtonsNeedingOpeningPHPTagsSQL = "SELECT `sid`, `customactions` FROM ".$xoopsDB->prefix('formulize_screen_listofentries')." WHERE customactions LIKE '%\"custom_code\";%' OR customactions LIKE '%\"custom_html\";%'";
-                 if($res = $xoopsDB->query($customButtonsNeedingOpeningPHPTagsSQL)) {
-                     // loop through the results...
-                     while($record = $xoopsDB->fetchArray($res)) {
-                         // for each record that was returned from the DB, decode the button stuff and check if the custom_html or custom_code has an opening tag
-                         $customActions = unserialize($record['customactions']);
-                         foreach($customActions as $actionId=>$actionSettings) {
-                             foreach($actionSettings as $effectId=>$effectSettings) {
-                                 if(!is_numeric($effectId)) { continue; } // ugly, effects are all numeric keys, other keys at same level are strings for other metadata
-                                 switch($actionSettings['applyto']) {
-                                     case 'custom_html':
-                                         if(substr($effectSettings['html'], 0, 5) != '<?php') {
-                                             $customActions[$actionId][$effectId]['html'] = "<?php\n".$effectSettings['html']; // assign update to the source array
-                                         }
-                                         break;
-                                     case 'custom_code':
-                                         if(substr($effectSettings['code'], 0, 5) != '<?php') {
-                                             $customActions[$actionId][$effectId]['code'] = "<?php\n".$effectSettings['code']; // assign update to the source array
-                                         }
-                                         break;
-                                 }
-                             }
-                         }
-                 */
-
-
-                }
 
         print "DB updates completed.  result: OK";
     }

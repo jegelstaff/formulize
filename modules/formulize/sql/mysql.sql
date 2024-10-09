@@ -377,10 +377,6 @@ CREATE TABLE formulize_id (
   menutext varchar(255) default NULL,
   form_handle varchar(255) NOT NULL default '',
   store_revisions tinyint(1) NOT NULL default '0',
-  on_before_save text,
-  on_after_save text,
-  on_delete text,
-  custom_edit_check text,
   note text,
   send_digests tinyint(1) NOT NULL default 0,
   PRIMARY KEY  (`id_form`)

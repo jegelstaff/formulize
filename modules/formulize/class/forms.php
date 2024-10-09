@@ -138,10 +138,10 @@ class formulizeForm extends XoopsObject {
 		$this->initVar("menutext", XOBJ_DTYPE_TXTBOX, $formq[0]['menutext'], false, 255);
 		$this->initVar("form_handle", XOBJ_DTYPE_TXTBOX, $formq[0]['form_handle'], false, 255);
 		$this->initVar("store_revisions", XOBJ_DTYPE_INT, $formq[0]['store_revisions'], true);
-		$this->initVar("on_before_save", XOBJ_DTYPE_TXTAREA, $formq[0]['on_before_save']);
-		$this->initVar("on_after_save", XOBJ_DTYPE_TXTAREA, $formq[0]['on_after_save']);
-		$this->initVar("on_delete", XOBJ_DTYPE_TXTAREA, $formq[0]['on_delete']);
-		$this->initVar("custom_edit_check", XOBJ_DTYPE_TXTAREA, $formq[0]['custom_edit_check']);
+		$this->initVar("on_before_save", XOBJ_DTYPE_TXTAREA, $this->getVar('on_before_save'));
+		$this->initVar("on_after_save", XOBJ_DTYPE_TXTAREA, $this->getVar('on_after_save'));
+		$this->initVar("on_delete", XOBJ_DTYPE_TXTAREA, $this->getVar('on_delete'));
+		$this->initVar("custom_edit_check", XOBJ_DTYPE_TXTAREA, $this->getVar('custom_edit_check'));
 		$this->initVar("note", XOBJ_DTYPE_TXTAREA, $formq[0]['note']);
 		$this->initVar("send_digests", XOBJ_DTYPE_INT, $formq[0]['send_digests'], true);
     }
@@ -519,12 +519,24 @@ EOF;
     }
 
     public function getVar($key, $format = 's') {
-        $return_value = parent::getVar($key, $format);
-        if (XOBJ_DTYPE_ARRAY == $this->vars[$key]['data_type'] && !is_array($return_value)) {
-            // now it's an array
-            $return_value = array();
-        }
-        return $return_value;
+			if($fid = $this->getVar('id_form') AND
+				($key == 'on_before_save'
+				OR $key == 'on_after_save'
+				OR $key == 'on_delete'
+				OR $key == 'custom_edit_check')) {
+				$filename=XOOPS_ROOT_PATH."/modules/formulize/code/".$key."_".$fid.".php";
+				$contents = '';
+				if(file_exists($filename)) {
+					$contents = file_get_contents($filename);
+				}
+				return $contents;
+			}
+			$return_value = parent::getVar($key, $format);
+			if (XOBJ_DTYPE_ARRAY == $this->vars[$key]['data_type'] && !is_array($return_value)) {
+					// now it's an array
+					$return_value = array();
+			}
+			return $return_value;
     }
 }
 
@@ -662,21 +674,13 @@ class formulizeFormsHandler {
 						break;
 				}
 
-				$on_before_save = trim($on_before_save) != "<?php" ? $on_before_save : "";
-				$on_after_save = trim($on_after_save) != "<?php" ? $on_after_save : "";
-				$on_delete = trim($on_delete) != "<?php" ? $on_beforeon_delete_save : "";
-				$custom_edit_check = trim($custom_edit_check) != "<?php" ? $custom_edit_check : "";
-
                 if($formObject->isNew() || empty($id_form)) {
                     $sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`desc_form`, `singleentry`, `tableform`, ".
-                        "`defaultform`, `defaultlist`, `menutext`, `form_handle`, `store_revisions`, `on_before_save`, ".
-                        "`on_after_save`, `on_delete`, `custom_edit_check`, `note`, `send_digests`) VALUES (".
+                        "`defaultform`, `defaultlist`, `menutext`, `form_handle`, `store_revisions`, `note`, `send_digests`) VALUES (".
                         $this->db->quoteString($title).", ".$this->db->quoteString($singleToWrite).", ".
                         $this->db->quoteString($tableform).", ".intval($defaultform).", ".intval($defaultlist).
                         ", ".$this->db->quoteString($menutext).", ".$this->db->quoteString($form_handle).", ".
-                        intval($store_revisions).", ".$this->db->quoteString($on_before_save).", ".
-                        $this->db->quoteString($on_after_save).", ".$this->db->quoteString($on_delete).", ".$this->db->quoteString($custom_edit_check).
-                        ", ".$this->db->quoteString($note).", ".intval($send_digests).")";
+                        intval($store_revisions).", ".$this->db->quoteString($note).", ".intval($send_digests).")";
                 } else {
                     $sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET".
                         " `desc_form` = ".$this->db->quoteString($title).
@@ -687,10 +691,6 @@ class formulizeFormsHandler {
                         ", `menutext` = ".$this->db->quoteString($menutext).
                         ", `form_handle` = ".$this->db->quoteString($form_handle).
                         ", `store_revisions` = ".intval($store_revisions).
-                        ", `on_before_save` = ".$this->db->quoteString($on_before_save).
-                        ", `on_after_save` = ".$this->db->quoteString($on_after_save).
-                        ", `on_delete` = ".$this->db->quoteString($on_delete).
-                        ", `custom_edit_check` = ".$this->db->quoteString($custom_edit_check).
                         ", `note` = ".$this->db->quoteString($note).
                         ", `send_digests` = ".intval($send_digests).
                         " WHERE id_form = ".intval($id_form);
@@ -715,6 +715,16 @@ class formulizeFormsHandler {
 					$formObject->setVar('form_handle', $id_form);
 					$this->insert($formObject, $force);
 				}
+
+				$on_before_save = trim($on_before_save) != "<?php" ? $on_before_save : "";
+				$on_after_save = trim($on_after_save) != "<?php" ? $on_after_save : "";
+				$on_delete = trim($on_delete) != "<?php" ? $on_beforeon_delete_save : "";
+				$custom_edit_check = trim($custom_edit_check) != "<?php" ? $custom_edit_check : "";
+
+				formulize_writeCodeToFile('on_before_save_'.$id_form, $on_before_save);
+				formulize_writeCodeToFile('on_after_save_'.$id_form, $on_after_save);
+				formulize_writeCodeToFile('on_delete_'.$id_form, $on_delete);
+				formulize_writeCodeToFile('custom_edit_check_'.$id_form, $custom_edit_check);
 
 				return $id_form;
 
