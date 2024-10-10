@@ -34,6 +34,10 @@ class FormulizeConfigSync
 	private function initializeDatabase()
 	{
 		try {
+			// @todo we should probably be usign the $xoopsDB object
+			// But it's an older version of PDO which means that many
+			// of the newer features we're using here will need to be
+			// refactored. For now, we'll just use a new PDO object.
 			$this->db = new \PDO(
 				'mysql:host=' . XOOPS_DB_HOST . ';dbname=' . XOOPS_DB_NAME,
 				XOOPS_DB_USER,
@@ -436,20 +440,21 @@ class FormulizeConfigSync
 						$results['failure'][] = ['change' => $change, 'error' => $e->getMessage()];
 					}
 				}
-		}
+			}
+
+			// For new forms create their data tables
+			$form_handler = xoops_getmodulehandler('forms','formulize');
+			foreach ($newFormIds as $formHandle => $formId) {
+				$form_handler->createDataTable($formId);
+			}
+			foreach ($deleteFormIds as $formHandle => $formId) {
+				$form_handler->dropDataTable($formId);
+			}
+
 			$this->db->commit();
 		} catch (\Exception $e) {
 			$this->db->rollBack();
 			throw new \Exception("Failed to apply changes: " . $e->getMessage());
-		}
-
-		// For new forms create their data tables
-		$form_handler = xoops_getmodulehandler('forms','formulize');
-		foreach ($newFormIds as $formHandle => $formId) {
-			$form_handler->createDataTable($formId);
-		}
-		foreach ($deleteFormIds as $formHandle => $formId) {
-			$form_handler->dropDataTable($formId);
 		}
 
 		return $results;
