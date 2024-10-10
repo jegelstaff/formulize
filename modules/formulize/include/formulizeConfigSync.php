@@ -413,9 +413,18 @@ class FormulizeConfigSync
 			foreach ($this->changes as $change) {
 				if ($change['type'] === 'elements') {
 					try {
-						// Update id_form if it's a new form
+						// If we're creating a new element from a new form update the id_form field
 						if ($change['operation'] === 'create' && isset($newFormIds[$change['data']['form_handle']])) {
 							$change['data']['id_form'] = $newFormIds[$change['data']['form_handle']];
+						}
+						// If we're creating a new element from an existing form, update the id_form field
+						if ($change['operation'] === 'create' && !isset($newFormIds[$change['data']['form_handle']])) {
+							$formDBEntry = $this->loadDatabaseConfig('formulize_id', "form_handle = '{$change['data']['form_handle']}'");
+							if (!empty($formDBEntry)) {
+								$change['data']['id_form'] = $formDBEntry[0]['id_form'];
+							} else {
+								throw new \Exception("Form handle '{$change['data']['form_handle']}' not found in database.");
+							}
 						}
 						$this->applyChange($change);
 						$results['success'][] = $change;
