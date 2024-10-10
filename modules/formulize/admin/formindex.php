@@ -83,8 +83,8 @@ function patch40() {
      *
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
-    $checkThisTable = 'formulize_screen';
-		$checkThisField = 'rewriteruleElement';
+    $checkThisTable = 'formulize';
+		$checkThisField = 'form_handle';
 		$checkThisProperty = '';
 		$checkPropertyForValue = '';
 
@@ -425,7 +425,7 @@ function patch40() {
         $sql['add_backdrop_group'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_resource_mapping") . " ADD external_id_string text NULL default NULL";
         $sql['add_backdrop_group_index'] = "ALTER TABLE ". $xoopsDB->prefix("formulize_resource_mapping") ." ADD INDEX i_external_id_string (external_id_string(10))";
         $sql['add_advance_view_field'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " ADD `advanceview` text NOT NULL";
-		$sql['defaultview_ele_type_text'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " CHANGE `defaultview` `defaultview` TEXT NOT NULL ";
+				$sql['defaultview_ele_type_text'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " CHANGE `defaultview` `defaultview` TEXT NOT NULL ";
         $sql['add_ele_uitextshow'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_uitextshow` tinyint(1) NOT NULL default 0";
         $sql['add_send_digests'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD send_digests tinyint(1) NOT NULL default 0";
         $sql['add_template_donedest'] = "ALTER TABLE ". $xoopsDB->prefix("formulize_screen_template") . " ADD `donedest` varchar(255) NOT NULL default ''";
@@ -466,13 +466,14 @@ function patch40() {
 				$sql['ele_disabledconditions'] = "ALTER TABLE ".$xoopsDB->prefix("formulize"). " ADD `ele_disabledconditions` text NOT NULL";
 				$sql['update_module_name'] = "UPDATE ".$xoopsDB->prefix("modules")." SET name = 'Formulize' WHERE dirname = 'formulize' AND name = 'Forms'";
 				$sql['rewriteruleAddress'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD `rewriteruleAddress` varchar(255) NULL default NULL";
-                $sql['rewriteruleElement'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD `rewriteruleElement` smallint(5) unsigned NOT NULL default 0";
+				$sql['rewriteruleElement'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD `rewriteruleElement` smallint(5) unsigned NOT NULL default 0";
 				$sql['screenTableIndex1'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD FULLTEXT i_rewrite (`rewriteruleAddress`)";
 				$sql['screenTableIndex2'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD INDEX i_fid (`fid`)";
 				$sql['screenTableIndex3'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD INDEX i_frid (`frid`)";
 				unlink(XOOPS_ROOT_PATH.'/cache/adminmenu_english.php');
 				$sql['sv_use_features'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " ADD `sv_use_features` varchar(255) NULL default NULL";
 				$sql['searches_are_fundamental'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " ADD `sv_searches_are_fundamental` tinyint(1) NULL default NULL";
+				$sql['add_form_handle_to_element'] = "ALTER TABLE ".$xoopsDB->prefix("formulize") . " ADD `form_handle` varchar(255) NOT NULL default ''";
 
         $needToSetSaveAndLeave = true;
         $needToSetPrintableView = true;
@@ -588,19 +589,21 @@ function patch40() {
                     print "On Delete already added. result: OK<br>";
                 } elseif($key === "viewentryscreen_templates") {
                     print "View entry screen option for template screens already added. result: OK<br>";
-				} elseif($key === "ele_disabledconditions") {
+								} elseif($key === "ele_disabledconditions") {
                     print "Disabled conditions already added. result: OK<br>";
 								} elseif($key === "sv_use_features") {
 										print "'Use which features' option already added to saved views. result: OK<br>";
 								} elseif($key === "searches_are_fundamental") {
 									print "'Searches-are-fundamental' option already added to saved views. result: OK<br>";
-				} elseif($key === "rewriteruleAddress") {
+								} elseif($key === "rewriteruleAddress") {
                     print "RewriteRule address already added. result: OK<br>";
                 } elseif($key === "rewriteruleElement") {
                     print "RewriteRule element already added. result: OK<br>";
                 } elseif(strstr($key, 'screenTableIndex')) {
                     print "Screen table index already added. result: OK<br>";
-            }else {
+								} elseif($key === "add_form_handle_to_element") {
+										print "Form handle already added to elements. result: OK<br>";
+            		} else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
             } elseif($key === "on_delete") {

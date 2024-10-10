@@ -9,6 +9,7 @@ class FormulizeConfigSync
 	private $elementValueProcessor;
 	private $changes = [];
 	private $diffLog = [];
+	private $errorLog = [];
 
 	private $configFiles = [
 		'forms' => 'forms.json'
@@ -54,6 +55,7 @@ class FormulizeConfigSync
 	{
 		$this->changes = [];
 		$this->diffLog = [];
+		$this->errorLog = [];
 
 		foreach ($this->configFiles as $type => $filename) {
 			$jsonConfig = $this->loadJsonConfig($filename);
@@ -71,7 +73,8 @@ class FormulizeConfigSync
 
 		return [
 			'changes' => $this->changes,
-			'log' => $this->diffLog
+			'log' => $this->diffLog,
+			'errors' => $this->errorLog
 		];
 	}
 
@@ -85,7 +88,7 @@ class FormulizeConfigSync
 	{
 		$filepath = XOOPS_ROOT_PATH . '/modules/formulize/' . $this->configPath . '/' . $filename;
 		if (!file_exists($filepath)) {
-			$this->diffLog[] = "Warning: Configuration file not found: {$filepath}";
+			$this->errorLog[] = "Warning: Configuration file not found: {$filepath}";
 			return [];
 		}
 
@@ -112,7 +115,7 @@ class FormulizeConfigSync
 		foreach ($jsonConfig['forms'] as $formConfig) {
 			$this->compareForm($formConfig, $dbForms);
 			if (isset($formConfig['elements'])) {
-				$this->compareElements($formConfig['elements'], $formConfig['id_form']);
+				$this->compareElements($formConfig['elements'], $formConfig['form_handle']);
 			}
 		}
 
@@ -177,11 +180,11 @@ class FormulizeConfigSync
 	 */
 	private function compareElements(array $elements, string $formHandle): void
 	{
-		$dbElements = $this->loadDatabaseConfig('formulize', "id_form = $formHandle");
+		$dbElements = $this->loadDatabaseConfig('formulize', "form_handle = '$formHandle'");
 
 		foreach ($elements as $element) {
 			$dbElement = $this->findInArray($dbElements, 'ele_handle', $element['ele_handle']);
-			$preparedElement = $this->prepareElementForDb($element);
+			$preparedElement = $this->prepareElementForDb($element, $formHandle);
 
 			if (!$dbElement) {
 				$this->addChange('elements', 'create', $preparedElement);
@@ -333,12 +336,17 @@ class FormulizeConfigSync
 	 * @param array $element
 	 * @return array
 	 */
-	private function prepareElementForDb(array $element): array
+	private function prepareElementForDb(array $element, $formHandle): array
 	{
 		$preparedElement = $element;
+		$preparedElement['form_handle'] = $formHandle;
 		foreach ($preparedElement as $key => $value) {
 			if (is_object($value) || is_array($value)) {
-				$preparedElement[$key] = serialize($value);
+				if ($key == 'ele_value') {
+					$preparedElement[$key] = serialize($this->elementValueProcessor->processElementValueForImport($element['ele_type'], $value));
+				} else {
+					$preparedElement[$key] = serialize($value);
+				}
 			}
 		}
 		return $preparedElement;
@@ -380,18 +388,42 @@ class FormulizeConfigSync
 	public function applyChanges(): array
 	{
 		$results = ['success' => [], 'failure' => []];
+		$newFormIds = [];
 
 		try {
 			$this->db->beginTransaction();
 
+			// First, apply all form changes
 			foreach ($this->changes as $change) {
-				try {
-					$this->applyChange($change);
-					$results['success'][] = $change;
-				} catch (\Exception $e) {
-					$results['failure'][] = ['change' => $change, 'error' => $e->getMessage()];
+				if ($change['type'] === 'forms') {
+					try {
+						$newId = $this->applyChange($change);
+						if ($change['operation'] === 'create') {
+							// Write the new id to our array so we can update element id_form field
+							$newFormIds[$change['data']['form_handle']] = $newId;
+						}
+						$results['success'][] = $change;
+					} catch (\Exception $e) {
+						$results['failure'][] = ['change' => $change, 'error' => $e->getMessage()];
+					}
 				}
 			}
+
+			// Then, apply all element changes
+			foreach ($this->changes as $change) {
+				if ($change['type'] === 'elements') {
+					try {
+						// Update id_form if it's a new form
+						if ($change['operation'] === 'create' && isset($newFormIds[$change['data']['form_handle']])) {
+							$change['data']['id_form'] = $newFormIds[$change['data']['form_handle']];
+						}
+						$this->applyChange($change);
+						$results['success'][] = $change;
+					} catch (\Exception $e) {
+						$results['failure'][] = ['change' => $change, 'error' => $e->getMessage()];
+					}
+				}
+		}
 
 			$this->db->commit();
 		} catch (\Exception $e) {
@@ -408,14 +440,14 @@ class FormulizeConfigSync
 	 * @param array $change
 	 * @return void
 	 */
-	private function applyChange(array $change): void
+	private function applyChange(array $change): ?int
 	{
 		$table = $this->getTableForType($change['type']);
 		$primaryKey = $this->getPrimaryKeyForType($change['type']);
 
 		switch ($change['operation']) {
 			case 'create':
-				$this->insertRecord($table, $change['data']);
+				return $this->insertRecord($table, $change['data']);
 				break;
 			case 'update':
 				$this->updateRecord($table, $change['data'], $primaryKey);
@@ -424,6 +456,8 @@ class FormulizeConfigSync
 				$this->deleteRecord($table, $change['data'], $primaryKey);
 				break;
 		}
+
+		return null;
 	}
 
 	/**
@@ -454,9 +488,9 @@ class FormulizeConfigSync
 	{
 		switch ($type) {
 			case 'forms':
-				return 'id_form';
+				return 'form_handle';
 			case 'elements':
-				return 'ele_id';
+				return 'ele_handle';
 			default:
 				throw new \Exception("Unknown configuration type: {$type}");
 		}
@@ -469,7 +503,7 @@ class FormulizeConfigSync
 	 * @param array $data
 	 * @return void
 	 */
-	private function insertRecord(string $table, array $data): void
+	private function insertRecord(string $table, array $data): int
 	{
 		$fields = array_keys($data);
 		$placeholders = array_fill(0, count($fields), '?');
@@ -483,6 +517,8 @@ class FormulizeConfigSync
 
 		$stmt = $this->db->prepare($sql);
 		$stmt->execute(array_values($data));
+
+		return (int) $this->db->lastInsertId();
 	}
 
 	/**
@@ -584,7 +620,7 @@ class FormulizeConfigSync
 
 		foreach ($formRows as $formRow) {
 			$form = $this->prepareFormForExport($formRow);
-			$form['elements'] = $this->exportElementsForForm($form['id_form']);
+			$form['elements'] = $this->exportElementsForForm($form['form_handle']);
 			$forms[] = $form;
 		}
 
@@ -606,20 +642,21 @@ class FormulizeConfigSync
 				$preparedForm[$field] = $value;
 			}
 		}
-
+		// Remove not needed fields
+		unset($preparedForm['id_form']);
 		return $preparedForm;
 	}
 
 	/**
 	 * Export elements for a specific form
 	 *
-	 * @param int $formId Form ID
+	 * @param string $formHandle unique string handle for the form
 	 * @return array Array of element configurations
 	 */
-	private function exportElementsForForm(int $formId): array
+	private function exportElementsForForm(string $formHandle): array
 	{
 		$elements = [];
-		$elementRows = $this->loadDatabaseConfig('formulize', "id_form = $formId ORDER BY ele_order");
+		$elementRows = $this->loadDatabaseConfig('formulize', "form_handle = '$formHandle' ORDER BY ele_order");
 
 		foreach ($elementRows as $elementRow) {
 			$elements[] = $this->prepareElementForExport($elementRow);
@@ -650,6 +687,10 @@ class FormulizeConfigSync
 				$preparedElement[$field] = $value;
 			}
 		}
+		// Remove not needed fields
+		unset($preparedElement['id_form']);
+		unset($preparedElement['ele_id']);
+		unset($preparedElement['form_handle']);
 		return $preparedElement;
 	}
 }
