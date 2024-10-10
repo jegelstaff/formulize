@@ -389,6 +389,7 @@ class FormulizeConfigSync
 	{
 		$results = ['success' => [], 'failure' => []];
 		$newFormIds = [];
+		$deleteFormIds = [];
 
 		try {
 			$this->db->beginTransaction();
@@ -401,6 +402,9 @@ class FormulizeConfigSync
 						if ($change['operation'] === 'create') {
 							// Write the new id to our array so we can update element id_form field
 							$newFormIds[$change['data']['form_handle']] = $newId;
+						}
+						if ($change['operation'] === 'delete') {
+							$deleteFormIds[$change['data']['form_handle']] = $change['data']['id_form'];
 						}
 						$results['success'][] = $change;
 					} catch (\Exception $e) {
@@ -433,11 +437,19 @@ class FormulizeConfigSync
 					}
 				}
 		}
-
 			$this->db->commit();
 		} catch (\Exception $e) {
 			$this->db->rollBack();
 			throw new \Exception("Failed to apply changes: " . $e->getMessage());
+		}
+
+		// For new forms create their data tables
+		$form_handler = xoops_getmodulehandler('forms','formulize');
+		foreach ($newFormIds as $formHandle => $formId) {
+			$form_handler->createDataTable($formId);
+		}
+		foreach ($deleteFormIds as $formHandle => $formId) {
+			$form_handler->dropDataTable($formId);
 		}
 
 		return $results;
