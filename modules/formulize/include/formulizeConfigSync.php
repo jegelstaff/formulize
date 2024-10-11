@@ -392,8 +392,9 @@ class FormulizeConfigSync
 	public function applyChanges(): array
 	{
 		$results = ['success' => [], 'failure' => []];
-		$newFormIds = [];
-		$deleteFormIds = [];
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$createFormIds = [];
+		$createElementIds = [];
 
 		try {
 			$this->db->beginTransaction();
@@ -402,13 +403,15 @@ class FormulizeConfigSync
 			foreach ($this->changes as $change) {
 				if ($change['type'] === 'forms') {
 					try {
-						$newId = $this->applyChange($change);
+						$newFormId = $this->applyChange($change);
 						if ($change['operation'] === 'create') {
 							// Write the new id to our array so we can update element id_form field
-							$newFormIds[$change['data']['form_handle']] = $newId;
+							$createFormIds[$change['data']['form_handle']] = $newFormId;
 						}
 						if ($change['operation'] === 'delete') {
-							$deleteFormIds[$change['data']['form_handle']] = $change['data']['id_form'];
+							// Unfortunatley these opperations need to occur before the transaction
+							// is committed because the form will no longer exist so this method will fail
+							$form_handler->dropDataTable($change['data']['id_form']);
 						}
 						$results['success'][] = $change;
 					} catch (\Exception $e) {
@@ -421,37 +424,48 @@ class FormulizeConfigSync
 			foreach ($this->changes as $change) {
 				if ($change['type'] === 'elements') {
 					try {
+						$formId = null;
 						// If we're creating a new element from a new form update the id_form field
-						if ($change['operation'] === 'create' && isset($newFormIds[$change['data']['form_handle']])) {
-							$change['data']['id_form'] = $newFormIds[$change['data']['form_handle']];
+						if ($change['operation'] === 'create' && isset($createFormIds[$change['data']['form_handle']])) {
+							$formId = $createFormIds[$change['data']['form_handle']];
 						}
 						// If we're creating a new element from an existing form, update the id_form field
-						if ($change['operation'] === 'create' && !isset($newFormIds[$change['data']['form_handle']])) {
-							$formDBEntry = $this->loadDatabaseConfig('formulize_id', "form_handle = '{$change['data']['form_handle']}'");
+						if ($change['operation'] === 'create' && !isset($createFormIds[$change['data']['form_handle']])) {
+							$formId = $form_handler->getByHandle($change['data']['form_handle']);
 							if (!empty($formDBEntry)) {
-								$change['data']['id_form'] = $formDBEntry[0]['id_form'];
+								$formId = $formDBEntry[0]['id_form'];
 							} else {
 								throw new \Exception("Form handle '{$change['data']['form_handle']}' not found in database.");
 							}
+							$createElementIds[$change['data']['ele_id']] = $change['data']['ele_type'];
+						}
+						// If we're deleting an element from an existing form remove the elements data column
+						if ($change['operation'] === 'delete' && !isset($deleteFormIds[$change['data']['form_handle']])) {
+							// Unfortunatley these opperations need to occur before the transaction
+							// is committed because the element will no longer exist so this method will fail
+							$form_handler->deleteElementField($change['data']['ele_id']);
+						}
+						if ($formId) {
+							$change['data']['id_form'] = $formId;
 						}
 						$this->applyChange($change);
+
 						$results['success'][] = $change;
 					} catch (\Exception $e) {
 						$results['failure'][] = ['change' => $change, 'error' => $e->getMessage()];
 					}
 				}
 			}
+			$this->db->commit();
 
 			// For new forms create their data tables
-			$form_handler = xoops_getmodulehandler('forms','formulize');
-			foreach ($newFormIds as $formHandle => $formId) {
+			foreach ($createFormIds as $formHandle => $formId) {
 				$form_handler->createDataTable($formId);
 			}
-			foreach ($deleteFormIds as $formHandle => $formId) {
-				$form_handler->dropDataTable($formId);
+			// For new elements create their data columns
+			foreach ($createElementIds as $elementId => $elementType) {
+				$form_handler->insertElementField($elementId, $elementType);
 			}
-
-			$this->db->commit();
 		} catch (\Exception $e) {
 			$this->db->rollBack();
 			throw new \Exception("Failed to apply changes: " . $e->getMessage());
