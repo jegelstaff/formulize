@@ -779,7 +779,7 @@ function patch40() {
 											$code = $effectSettings['code'];
 											break;
 									}
-									$filename = $actionSettings['applyto'].'_'.$effectId.'_'.$actionId.'_'.$record['sid'];
+									$filename = $actionSettings['applyto'].'_'.$effectId.'_'.$actionId.'_'.$record['sid'].'.php';
 									file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename, $code);
 								}
 							}

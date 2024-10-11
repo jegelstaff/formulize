@@ -8474,8 +8474,15 @@ function updateAlternateURLIdentifierCode($screen, $entry_id) {
  * Writes code to a file in the modules/formulize/code folder
  * @param string filename The name of the file we're writing to
  * @param string code The contents to write to the file
- * @return boolean True/False depending how the writing operation went
+ * @return boolean True/False depending how the writing operation went. If code is empty then returns true. If filename is empty, return false
  */
 function formulize_writeCodeToFile($filename, $code) {
-	return file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename, $code);
+	if(!$filename) {
+		return false;
+	}
+	$result = true;
+	if($code) {
+		$result = file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename, $code);
+	}
+	return $result;
 }

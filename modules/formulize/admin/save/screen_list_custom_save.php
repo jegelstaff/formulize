@@ -87,15 +87,19 @@ foreach($_POST as $k=>$v) {
     $buttonData[$buttonId]['applyto'] = $_POST['applyto_'.$buttonId];
     $buttonData[$buttonId]['groups'] = $_POST['groups_'.$buttonId];
     if(isset($_POST['code_'.$buttonId])) {
-      foreach($_POST['code_'.$buttonId] as $effectId=>$code) { 
+      foreach($_POST['code_'.$buttonId] as $effectId=>$code) {
         if((string)$effectId === (string)$removeEffect[1] AND (string)$buttonId === (string)$removeEffect[0]) { continue; }
-        $buttonData[$buttonId][$effectId]['code'] = $code;    
+        $buttonData[$buttonId][$effectId]['code'] = "";
+				$filename = "custom_code_".$effectId."_".$buttonId."_".$sid.".php";
+				formulize_writeCodeToFile($filename, $code);
       }
     }
     if(isset($_POST['html_'.$buttonId])) {
       foreach($_POST['html_'.$buttonId] as $effectId=>$html) {
         if((string)$effectId === (string)$removeEffect[1] AND (string)$buttonId === (string)$removeEffect[0]) { continue; }
-        $buttonData[$buttonId][$effectId]['html'] = $html;    
+        $buttonData[$buttonId][$effectId]['html'] = "";
+				$filename = "custom_html_".$effectId."_".$buttonId."_".$sid.".php";
+				formulize_writeCodeToFile($filename, $html);
       }
     }
     if(isset($_POST['element_'.$buttonId])) {
@@ -123,11 +127,11 @@ if($_POST['neweffect']!=="") {
     }
   }
   if($buttonData[$buttonId]['applyto'] == "custom_code") {
-    $buttonData[$buttonId][$effectCounter]['code'] = "";  
+    $buttonData[$buttonId][$effectCounter]['code'] = "";
   } elseif($buttonData[$buttonId]['applyto'] == "custom_html") {
     $buttonData[$buttonId][$effectCounter]['html'] = "";
   } else {
-    $buttonData[$buttonId][$effectCounter]['element'] = "";  
+    $buttonData[$buttonId][$effectCounter]['element'] = "";
   }
 }
 
