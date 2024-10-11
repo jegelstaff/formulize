@@ -47,6 +47,31 @@ class formulizeTextElement extends formulizeformulize {
         parent::__construct();
     }
 
+		// write code to a file
+		public function setVar($key, $value, $not_gpc = false) {
+			if($key == 'ele_value' AND strstr($value, "\$default")) {
+				$filename = 'text_'.$this->getVar('ele_id').'.php';
+				$valueToWrite = is_array($value) ? $value : unserialize($value);
+				formulize_writeCodeToFile($filename, $valueToWrite[2]);
+				$valueToWrite[2] = '';
+				if(is_array($value)) {
+					$value = $valueToWrite;
+				} else {
+					$value = serialize($valueToWrite);
+				}
+			}
+			parent::setVar($key, $value, $not_gpc = false);
+		}
+
+		// read code from a file
+		public function getVar($key, $format = 's') {
+			$value = parent::getVar($key, $format);
+			if($key == 'ele_value' AND is_array($value) AND $value[2] === '') {
+				$filename ='text_'.$this->getVar('ele_id').'.php';
+				$value[2] = strval(file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename));
+			}
+			return $value;
+		}
 }
 
 class formulizeTextElementHandler extends formulizeElementsHandler {
