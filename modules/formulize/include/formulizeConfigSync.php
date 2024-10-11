@@ -17,7 +17,6 @@ class FormulizeConfigSync
 
 	/**
 	 * Constructor
-	 *
 	 * @param string $configPath
 	 */
 	public function __construct(string $configPath)
@@ -51,44 +50,11 @@ class FormulizeConfigSync
 	}
 
 	/**
-	 * Compare configurations from JSON files with the database
-	 *
-	 * @return array
-	 */
-	public function compareConfigurations(): array
-	{
-		$this->changes = [];
-		$this->diffLog = [];
-		$this->errorLog = [];
-
-		foreach ($this->configFiles as $type => $filename) {
-			$jsonConfig = $this->loadJsonConfig($filename);
-			if (!$jsonConfig) {
-				continue;
-			}
-
-			// @todo additional cases for future expansion
-			switch ($type) {
-				case 'forms':
-					$this->compareFormsConfig($jsonConfig);
-					break;
-			}
-		}
-
-		return [
-			'changes' => $this->changes,
-			'log' => $this->diffLog,
-			'errors' => $this->errorLog
-		];
-	}
-
-	/**
-	 * Load a JSON configuration file
-	 *
+	 * Load a configuration file
 	 * @param string $filename
-	 * @return array
+	 * @return array Array of configuration data
 	 */
-	private function loadJsonConfig(string $filename): array
+	private function loadConfigFile(string $filename): array
 	{
 		$filepath = XOOPS_ROOT_PATH . '/modules/formulize/' . $this->configPath . '/' . $filename;
 		if (!file_exists($filepath)) {
@@ -106,27 +72,76 @@ class FormulizeConfigSync
 		return $config;
 	}
 
-	/**
-	 * Compare form configurations from JSON with the database
-	 *
-	 * @param array $jsonConfig
-	 * @return void
+		/**
+	 * Load configuration data from a database table
+	 * @param string $table
+	 * @return array
 	 */
-	private function compareFormsConfig(array $jsonConfig): void
+	private function loadDatabaseConfig(string $table, string $where = ''): array
 	{
-		$dbForms = $this->loadDatabaseConfig('formulize_id');
+		$table = $this->prefixTable($table);
+		$sql = "SELECT * FROM {$table}";
+		if ($where) {
+			$sql .= " WHERE $where";
+		}
+		$stmt = $this->db->prepare($sql);
+		$stmt->execute();
+		return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+	}
 
-		foreach ($jsonConfig['forms'] as $formConfig) {
-			$this->compareForm($formConfig, $dbForms);
-			if (isset($formConfig['elements'])) {
-				$this->compareElements($formConfig['elements'], $formConfig['form_handle']);
+	/**
+	 * Initiate the comparision between a config file and the database
+	 * @return array Array of changes, log, and errors
+	 */
+	public function compareConfigurations(): array
+	{
+		$this->changes = [];
+		$this->diffLog = [];
+		$this->errorLog = [];
+
+		foreach ($this->configFiles as $type => $filename) {
+			$config = $this->loadConfigFile($filename);
+			if (!$config) {
+				continue;
+			}
+
+			// @todo additional cases for future expansion
+			switch ($type) {
+				case 'forms':
+					$this->compareForms($config);
+					break;
 			}
 		}
 
-		// Check for forms in DB that are not in JSON
+		return [
+			'changes' => $this->changes,
+			'log' => $this->diffLog,
+			'errors' => $this->errorLog
+		];
+	}
+
+
+	/**
+	 * Compare configuration against the database for all forms
+	 * @param array $config
+	 * @return void
+	 */
+	private function compareForms(array $config): void
+	{
+		$dbForms = $this->loadDatabaseConfig('formulize_id');
+
+		foreach ($config['forms'] as $configForm) {
+			$dbForm = $this->findInArray($dbForms, 'form_handle', $configForm['form_handle']);
+			$this->compareForm($configForm, $dbForm);
+			if (isset($configForm['elements'])) {
+				$this->compareElements($configForm['elements'], $configForm['form_handle']);
+			}
+		}
+
+		// Check for forms in DB that are not in Config
 		foreach ($dbForms as $dbForm) {
 			$found = false;
-			foreach ($jsonConfig['forms'] as $formConfig) {
+			foreach ($config['forms'] as $formConfig) {
 				if ($formConfig['form_handle'] === $dbForm['form_handle']) {
 					$found = true;
 					break;
@@ -139,30 +154,14 @@ class FormulizeConfigSync
 	}
 
 	/**
-	 * Strip key from an array
-	 *
-	 * @param array $configArray
-	 * @param string $key
-	 * @return array
-	 */
-	private function stripArrayKey(array $configArray, string $key): array
-	{
-		$strippedConfigArray = $configArray;
-		unset($strippedConfigArray[$key]);
-		return $strippedConfigArray;
-	}
-
-	/**
-	 * Compare a form configuration from JSON with the database
-	 *
+	 * Compare an individual form configuration against the database values
 	 * @param array $formConfig
 	 * @param array $dbForms
 	 * @return void
 	 */
-	private function compareForm(array $formConfig, array $dbForms): void
+	private function compareForm(array $configForm, array $dbForm): void
 	{
-		$dbForm = $this->findInArray($dbForms, 'form_handle', $formConfig['form_handle']);
-		$strippedFormConfig = $this->stripArrayKey($formConfig, 'elements');
+		$strippedFormConfig = $this->stripArrayKey($configForm, 'elements');
 
 		if (!$dbForm) {
 			$this->addChange('forms', 'create', $strippedFormConfig);
@@ -177,16 +176,15 @@ class FormulizeConfigSync
 
 	/**
 	 * Compare elements for a form
-	 *
-	 * @param array $elements
+	 * @param array $configElements
 	 * @param string $formHandle
 	 * @return void
 	 */
-	private function compareElements(array $elements, string $formHandle): void
+	private function compareElements(array $configElements, string $formHandle): void
 	{
 		$dbElements = $this->loadDatabaseConfig('formulize', "form_handle = '$formHandle'");
 
-		foreach ($elements as $element) {
+		foreach ($configElements as $element) {
 			$dbElement = $this->findInArray($dbElements, 'ele_handle', $element['ele_handle']);
 			$preparedElement = $this->prepareElementForDb($element, $formHandle);
 
@@ -204,7 +202,7 @@ class FormulizeConfigSync
 		// Check for elements in DB that are not in JSON
 		foreach ($dbElements as $dbElement) {
 			$found = false;
-			foreach ($elements as $element) {
+			foreach ($configElements as $element) {
 				if ($element['ele_handle'] === $dbElement['ele_handle']) {
 					$found = true;
 					break;
@@ -214,24 +212,6 @@ class FormulizeConfigSync
 				$this->addChange('elements', 'delete', $dbElement);
 			}
 		}
-	}
-
-	/**
-	 * Load configuration data from a database table
-	 *
-	 * @param string $table
-	 * @return array
-	 */
-	private function loadDatabaseConfig(string $table, string $where = ''): array
-	{
-		$table = $this->prefixTable($table);
-		$sql = "SELECT * FROM {$table}";
-		if ($where) {
-			$sql .= " WHERE $where";
-		}
-		$stmt = $this->db->prepare($sql);
-		$stmt->execute();
-		return $stmt->fetchAll(\PDO::FETCH_ASSOC);
 	}
 
 	private function findInArray(array $array, string $key, $value)
@@ -245,17 +225,17 @@ class FormulizeConfigSync
 	}
 
 	/**
-	 * General field comparison
+	 * Generic field comparison
 	 *
-	 * @param array $config
-	 * @param array $dbItem
+	 * @param array $configObject Config object
+	 * @param array $dbObject Database object
 	 * @param array $excludeFields
 	 * @return array
 	 */
-	private function compareFields(array $jsonObject, array $dbObject, array $excludeFields = []): array
+	private function compareFields(array $configObject, array $dbObject, array $excludeFields = []): array
 	{
 		$differences = [];
-		foreach ($jsonObject as $field => $value) {
+		foreach ($configObject as $field => $value) {
 			if (in_array($field, $excludeFields)) {
 				continue;
 			}
@@ -272,28 +252,28 @@ class FormulizeConfigSync
 	}
 
 	/**
-	 * Compare a JSON and DB element and return the differences
+	 * Compare a Config and DB element and return the differences
 	 *
-	 * @param array $jsonElement
-	 * @param array $dbElement
+	 * @param array $configElement Config element configuration
+	 * @param array $dbElement Database element configuration
 	 * @return array
 	 */
-	private function compareElementFields(array $jsonElement, array $dbElement): array
+	private function compareElementFields(array $configElement, array $dbElement): array
 	{
 		$differences = [];
 
-		foreach ($jsonElement as $field => $value) {
+		foreach ($configElement as $field => $value) {
 			$eleValueDiff = [];
 			if ($field === 'ele_value') {
-				$convertedJsonEleValue = $this->elementValueProcessor->processElementValueForImport(
-					$jsonElement['ele_type'],
+				$convertedConfigEleValue = $this->elementValueProcessor->processElementValueForImport(
+					$configElement['ele_type'],
 					$value
 				);
 				$dbEleValue = $dbElement['ele_value'] !== "" ? unserialize($dbElement['ele_value']) : [];
-				foreach($convertedJsonEleValue as $key => $val) {
+				foreach($convertedConfigEleValue as $key => $val) {
 					if (!array_key_exists($key, $dbEleValue) || $val !== $dbEleValue[$key]) {
 						$eleValueDiff[$key] = [
-							'json_value' => $val,
+							'config_value' => $val,
 							'db_value' => $dbEleValue[$key] ?? null
 						];
 					}
@@ -303,35 +283,13 @@ class FormulizeConfigSync
 				}
 			} elseif (!array_key_exists($field, $dbElement) || $this->normalizeValue($value) !== $this->normalizeValue($dbElement[$field])) {
 				$differences[$field] = [
-					'json_value' => $value,
+					'config_value' => $value,
 					'db_value' => $dbElement[$field] ?? null
 				];
 			}
 		}
 
 		return $differences;
-	}
-
-	/**
-	 * Normalize a value for comparison
-	 *
-	 * @param mixed $value
-	 * @return mixed
-	 */
-	private function normalizeValue($value)
-	{
-		if (is_string($value) && unserialize($value) !== false) {
-			$unserialized = unserialize($value);
-			ksort($unserialized);
-			return $unserialized;
-		}
-		if (is_array($value)) {
-			return array_values($value);
-		}
-		if (is_bool($value)) {
-			return (int) $value;
-		}
-		return (string) $value;
 	}
 
 	/**
@@ -504,42 +462,6 @@ class FormulizeConfigSync
 	}
 
 	/**
-	 * Get the database table name for a configuration type
-	 *
-	 * @param string $type
-	 * @return string
-	 */
-	private function getTableForType(string $type): string
-	{
-		switch ($type) {
-			case 'forms':
-				return 'formulize_id';
-			case 'elements':
-				return 'formulize';
-			default:
-				throw new \Exception("Unknown configuration type: {$type}");
-		}
-	}
-
-	/**
-	 * Get the primary key field for a configuration type
-	 *
-	 * @param string $type
-	 * @return string
-	 */
-	private function getPrimaryKeyForType(string $type): string
-	{
-		switch ($type) {
-			case 'forms':
-				return 'form_handle';
-			case 'elements':
-				return 'ele_handle';
-			default:
-				throw new \Exception("Unknown configuration type: {$type}");
-		}
-	}
-
-	/**
 	 * Insert a record into a database table
 	 *
 	 * @param string $table
@@ -625,7 +547,7 @@ class FormulizeConfigSync
 	}
 
 	/**
-	 * Export current database configuration to a forms.json file
+	 * Export current database configuration to a JSON string
 	 *
 	 * @return string A JSON string of the exported configuration
 	 */
@@ -674,7 +596,7 @@ class FormulizeConfigSync
 	 * Prepare a form row for export
 	 *
 	 * @param array $formRow Raw form data from database
-	 * @return array Prepared form data for JSON
+	 * @return array Prepared form data for export
 	 */
 	private function prepareFormForExport(array $formRow): array
 	{
@@ -712,7 +634,7 @@ class FormulizeConfigSync
 	 * Prepare an element row for export
 	 *
 	 * @param array $elementRow Raw element data from database
-	 * @return array Prepared element data for JSON
+	 * @return array Prepared element data for export
 	 */
 	private function prepareElementForExport(array $elementRow): array
 	{
@@ -736,4 +658,77 @@ class FormulizeConfigSync
 		unset($preparedElement['form_handle']);
 		return $preparedElement;
 	}
+
+	/**
+	 * Normalize a value for comparison
+	 *
+	 * @param mixed $value
+	 * @return mixed
+	 */
+	private function normalizeValue($value)
+	{
+		if (is_string($value) && unserialize($value) !== false) {
+			$unserialized = unserialize($value);
+			ksort($unserialized);
+			return $unserialized;
+		}
+		if (is_array($value)) {
+			return array_values($value);
+		}
+		if (is_bool($value)) {
+			return (int) $value;
+		}
+		return (string) $value;
+	}
+
+	/**
+	 * Strip key from an array
+	 * @param array $configArray
+	 * @param string $key
+	 * @return array
+	 */
+	private function stripArrayKey(array $configArray, string $key): array
+	{
+		$strippedConfigArray = $configArray;
+		unset($strippedConfigArray[$key]);
+		return $strippedConfigArray;
+	}
+
+
+	/**
+	 * Get the database table name for a configuration type
+	 *
+	 * @param string $type
+	 * @return string
+	 */
+	private function getTableForType(string $type): string
+	{
+		switch ($type) {
+			case 'forms':
+				return 'formulize_id';
+			case 'elements':
+				return 'formulize';
+			default:
+				throw new \Exception("Unknown configuration type: {$type}");
+		}
+	}
+
+	/**
+	 * Get the primary key field for a configuration type
+	 *
+	 * @param string $type
+	 * @return string
+	 */
+	private function getPrimaryKeyForType(string $type): string
+	{
+		switch ($type) {
+			case 'forms':
+				return 'form_handle';
+			case 'elements':
+				return 'ele_handle';
+			default:
+				throw new \Exception("Unknown configuration type: {$type}");
+		}
+	}
+
 }

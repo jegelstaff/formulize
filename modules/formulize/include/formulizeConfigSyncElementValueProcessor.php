@@ -70,38 +70,38 @@ class FormulizeConfigSyncElementValueProcessor
 	}
 
 	/**
-	 * Process the value of an element based on its type from JSON to DB format
+	 * Process the value of an element based on its type from Config to DB format
 	 *
 	 * @param string $eleType
-	 * @param array $jsonValue
+	 * @param array $configValue
 	 * @param string $dbValue
 	 * @return array
 	 */
-	public function processElementValueForImport($eleType, $jsonValue)
+	public function processElementValueForImport($eleType, $configValue)
 	{
 		// If we don't have a specifc handler for this element type, return the dbArray as is
 		if (!array_key_exists($eleType, $this->elementMapping)) {
-			return $jsonValue;
+			return $configValue;
 		}
-		return $this->importElement($jsonValue, $this->elementMapping[$eleType]);
+		return $this->importElement($configValue, $this->elementMapping[$eleType]);
 	}
 
 	/**
-	 * Convert an element from JSON to DB format
+	 * Convert an element from Config to DB format
 	 *
-	 * @param array $jsonValue
+	 * @param array $configValue
 	 * @param string $dbValue
 	 * @return array
 	 */
-	private function importElement($jsonValue, $mapping)
+	private function importElement($configValue, $mapping)
 	{
 		$importArray = [];
 
-		foreach ($jsonValue as $jsonKey => $jsonValue) {
-			if (array_key_exists($jsonKey, $mapping)) {
-				$importArray[$mapping[$jsonKey]] = $jsonValue;
+		foreach ($configValue as $configKey => $configValue) {
+			if (array_key_exists($configKey, $mapping)) {
+				$importArray[$mapping[$configKey]] = $configValue;
 			} else {
-				$importArray[$jsonKey] = $jsonValue;
+				$importArray[$configKey] = $configValue;
 			}
 		}
 
@@ -109,10 +109,10 @@ class FormulizeConfigSyncElementValueProcessor
 	}
 
 	/**
-	 * Process the value of an element based on its type from DB to JSON format
+	 * Process the value of an element based on its type from DB to Config format
 	 *
 	 * @param string $eleType
-	 * @param array $jsonValue
+	 * @param array $configValue
 	 * @param array $dbArray
 	 * @return array
 	 */
@@ -126,7 +126,7 @@ class FormulizeConfigSyncElementValueProcessor
 	}
 
 	/**
-	 * Convert an element from DB to JSON format
+	 * Convert an element from DB to Config format
 	 *
 	 * @param array $dbArray
 	 * @return array
