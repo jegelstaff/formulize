@@ -42,7 +42,7 @@
 																														<li>
 																																<strong><{$subField}>:</strong>
 																																<ul>
-																																	<li>Config: <{if isset($subDiff.json_value)}><{$subDiff.json_value}><{else}>(not set)<{/if}></li>
+																																	<li>Config: <{if isset($subDiff.config_value)}><{$subDiff.config_value}><{else}>(not set)<{/if}></li>
 																																	<li>Database: <{if isset($subDiff.db_value)}><{$subDiff.db_value}><{else}>(not set)<{/if}></li>
 																																</ul>
 																														</li>
@@ -50,7 +50,7 @@
 																										</ul>
 																								<{else}>
 																										<ul>
-																											<li>Config: <{if $diff.json_value !== false && !empty($diff.json_value)}><{$diff.json_value}><{else}>(not set)<{/if}></li>
+																											<li>Config: <{if $diff.config_value !== false && !empty($diff.config_value)}><{$diff.config_value}><{else}>(not set)<{/if}></li>
 																											<li>Database: <{if $diff.db_value !== false && !empty($diff.db_value)}><{$diff.db_value}><{else}>(not set)<{/if}></li>
 																										</ul>
 																								<{/if}>
