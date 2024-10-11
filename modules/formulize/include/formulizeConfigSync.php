@@ -399,7 +399,7 @@ class FormulizeConfigSync
 		try {
 			$this->db->beginTransaction();
 
-			// First, apply all form changes
+			// Apply all form changes
 			foreach ($this->changes as $change) {
 				if ($change['type'] === 'forms') {
 					try {
@@ -420,7 +420,7 @@ class FormulizeConfigSync
 				}
 			}
 
-			// Then, apply all element changes
+			// Apply all element changes
 			foreach ($this->changes as $change) {
 				if ($change['type'] === 'elements') {
 					try {
@@ -431,13 +431,11 @@ class FormulizeConfigSync
 						}
 						// If we're creating a new element from an existing form, update the id_form field
 						if ($change['operation'] === 'create' && !isset($createFormIds[$change['data']['form_handle']])) {
-							$formId = $form_handler->getByHandle($change['data']['form_handle']);
-							if (!empty($formDBEntry)) {
-								$formId = $formDBEntry[0]['id_form'];
-							} else {
+							$form = $form_handler->getByHandle($change['data']['form_handle']);
+							$formId = $form->getVar('id_form');
+							if (!$formId) {
 								throw new \Exception("Form handle '{$change['data']['form_handle']}' not found in database.");
 							}
-							$createElementIds[$change['data']['ele_id']] = $change['data']['ele_type'];
 						}
 						// If we're deleting an element from an existing form remove the elements data column
 						if ($change['operation'] === 'delete' && !isset($deleteFormIds[$change['data']['form_handle']])) {
@@ -448,7 +446,12 @@ class FormulizeConfigSync
 						if ($formId) {
 							$change['data']['id_form'] = $formId;
 						}
-						$this->applyChange($change);
+						$newElementId = $this->applyChange($change);
+
+						// If we're creatinga  new element from an existin form set ensure the elements data column is created
+						if ($newElementId && $change['operation'] === 'create' && !isset($createFormIds[$change['data']['form_handle']])) {
+							$createElementIds[$newElementId] = $change['data']['ele_type'];
+						}
 
 						$results['success'][] = $change;
 					} catch (\Exception $e) {
