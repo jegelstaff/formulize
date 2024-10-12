@@ -52,7 +52,7 @@ Also, if you running Docker in Windows, copy or rename the file: /docker/maraidb
 3. Delete any files you may have in the _docker/mariadb/data/_ folder, other than the .gitignore file. (These files will be the database from the last time you ran the monastery branch in Docker. You may want to save a back up of these files.)
 4. Download a dump of the entire database from the live website. Make sure it includes commands to create the tables. Make sure it is using the UTF-8 character set. Make sure it ends with a .sql extension.
 5. Place the database dump in the _docker/mariadb/seed/_ folder. Delete any other .sql file that already exists there.
-6. Open up the file _trust/8ff851a18bdbd4c79f859830a94089b0.php_ and change the value of SDATA_DB_PREFIX and SDATA_DB_SALT to match the values sepecified in the trust path file from the live site. Note that the filename will be a different random set of characters on your live site.
+6. Open up the file _trust/e039c9b9cb48ffecfbfd223af293d984.php_ and change the value of SDATA_DB_PREFIX and SDATA_DB_SALT to match the values sepecified in the trust path file from the live site. Note that the filename will be a different random set of characters on your live site.
 7. If your site uses any custom files or has made changes to core Formulize files, you need to download/recreate those files and changes in the repository.
 8. Start the Formulize Docker containers.
 9. Navigate to [http://localhost:8080](http://localhost:8080) and login with any username or password from the live site.

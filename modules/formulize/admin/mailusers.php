@@ -85,7 +85,7 @@ if(isset($_POST['body']) AND
 			$uids_to_notify = array_unique($uids_to_notify);
 			$mid = getFormulizeModId();
 			$omit_user = 0;
-			$subject = htmlspecialchars(strip_tags($_POST['subject']), ENT_QUOTES);
+			$subject = strip_tags($_POST['subject']);
 			$template = 'tempmailbody.tpl';
 			formulize_processNotification($event, $extra_tags, $fid, $uids_to_notify, $mid, $omit_user, $subject, $template);
 

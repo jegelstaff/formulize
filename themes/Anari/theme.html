@@ -145,6 +145,8 @@ if($xoopsUser) {
                   <{if $xoops_isuser}>
                   <a class="user-actions__link" href="<{$icms_url}>/edituser.php" title="Edit Account">Edit Account</a>
                   <a class="user-actions__link" href="<{$icms_url}>/user.php?op=logout" title="Logout">Logout</a>
+                  <{else}>
+                  <a class="user-actions__link" href="<{$icms_url}>/user.php" title="Login">Login</a>
                   <{/if}>
 
               </div>
