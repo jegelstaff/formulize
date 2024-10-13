@@ -91,6 +91,8 @@ print "
 
 <script>
 
+".checkForChrome()."
+
 jQuery(document).ready(function() {
 	jQuery('div.form-row').on('hover', function() {
 		jQuery('#element-edit-controls').css('top', jQuery(this).position().top + parseInt(jQuery(this).css('margin-top')) + 'px');
