@@ -169,38 +169,36 @@ class formulizeformulize extends XoopsObject {
         if ("ele_handle" == $key) {
             $value = self::sanitize_handle_name($value);
         }
-				$ele_type = $this->getVar('ele_type');
-				if($key == 'ele_value'
-					AND (
-						($ele_type == 'derived')
-						OR (($ele_type == 'ib' OR $ele_type == 'areamodif') AND strstr($value, "\$value"))
-						OR ($ele_type == 'textarea' AND strstr($value, "\$default"))
-					)) {
-						$filename = $ele_type.'_'.$this->getVar('ele_id').'.php';
-						$valueToWrite = is_array($value) ? $value : unserialize($value);
-						formulize_writeCodeToFile($filename, $valueToWrite[0]);
-						$valueToWrite[0] = '';
-						if(is_array($value)) {
-							$value = $valueToWrite;
-						} else {
-							$value = serialize($valueToWrite);
-						}
-				}
+		$ele_type = $this->getVar('ele_type');
+		if($key == 'ele_value') {
+			$valueToWrite = is_array($value) ? $value : unserialize($value);
+			if($ele_type == 'derived'
+				OR (($ele_type == 'ib' OR $ele_type == 'areamodif') AND strstr((string)$valueToWrite[0], "\$value"))
+				OR ($ele_type == 'textarea' AND strstr((string)$valueToWrite[0], "\$default"))
+				) {
+				$filename = $ele_type.'_'.$this->getVar('ele_id').'.php';
+				formulize_writeCodeToFile($filename, $valueToWrite[0]);
+				$valueToWrite[0] = '';
+				$value = is_array($value) ? $valueToWrite : serialize($valueToWrite);
+			}
+		}
         parent::setVar($key, $value, $not_gpc);
     }
 
 		public function getVar($key, $format = 's') {
+			$format = $key == "ele_value" ? "f" : $format;
 			$value = parent::getVar($key, $format);
 			if($key == 'ele_value') {
+				$format = 'f';
 				$ele_type = $this->getVar('ele_type');
 				if(($ele_type == 'derived'
 					OR $ele_type == 'ib'
 					OR $ele_type == 'areamodif'
 					OR $ele_type == 'textarea')
-					AND is_array($value)
-					AND $value[0] === '') {
+					AND is_array($value)) {
 						$filename = $ele_type.'_'.$this->getVar('ele_id').'.php';
-						$value[0] = strval(file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename));
+						$fileValue = strval(file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename));
+						$value[0] = $fileValue ? $fileValue : $value[0];
 				}
 			}
 			return $value;

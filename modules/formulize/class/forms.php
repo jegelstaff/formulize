@@ -519,15 +519,16 @@ EOF;
     }
 
     public function getVar($key, $format = 's') {
-			if($fid = $this->getVar('id_form') AND
-				($key == 'on_before_save'
-				OR $key == 'on_after_save'
-				OR $key == 'on_delete'
-				OR $key == 'custom_edit_check')) {
-				$filename=XOOPS_ROOT_PATH."/modules/formulize/code/".$key."_".$fid.".php";
+			if($key == 'on_before_save'
+			  OR $key == 'on_after_save'
+			  OR $key == 'on_delete'
+			  OR $key == 'custom_edit_check') {
 				$contents = '';
-				if(file_exists($filename)) {
+				if($fid = $this->getVar('id_form')) {
+				  $filename=XOOPS_ROOT_PATH."/modules/formulize/code/".$key."_".$fid.".php";
+				  if(file_exists($filename)) {
 					$contents = file_get_contents($filename);
+				  }
 				}
 				return $contents;
 			}

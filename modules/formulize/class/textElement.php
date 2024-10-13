@@ -49,15 +49,13 @@ class formulizeTextElement extends formulizeformulize {
 
 		// write code to a file
 		public function setVar($key, $value, $not_gpc = false) {
-			if($key == 'ele_value' AND strstr($value, "\$default")) {
-				$filename = 'text_'.$this->getVar('ele_id').'.php';
+			if($key == 'ele_value') {
 				$valueToWrite = is_array($value) ? $value : unserialize($value);
-				formulize_writeCodeToFile($filename, $valueToWrite[2]);
-				$valueToWrite[2] = '';
-				if(is_array($value)) {
-					$value = $valueToWrite;
-				} else {
-					$value = serialize($valueToWrite);
+				if(strstr((string)$valueToWrite[2], "\$default")) {
+					$filename = 'text_'.$this->getVar('ele_id').'.php';
+					formulize_writeCodeToFile($filename, $valueToWrite[2]);
+					$valueToWrite[2] = '';
+					$value = is_array($value) ? $valueToWrite : serialize($valueToWrite);
 				}
 			}
 			parent::setVar($key, $value, $not_gpc = false);
@@ -65,10 +63,12 @@ class formulizeTextElement extends formulizeformulize {
 
 		// read code from a file
 		public function getVar($key, $format = 's') {
+			$format = $key == "ele_value" ? "f" : $format;
 			$value = parent::getVar($key, $format);
-			if($key == 'ele_value' AND is_array($value) AND $value[2] === '') {
+			if($key == 'ele_value' AND is_array($value)) {
 				$filename ='text_'.$this->getVar('ele_id').'.php';
-				$value[2] = strval(file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename));
+				$fileValue = strval(file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename));
+				$value[2] = $fileValue ? $fileValue : $value[2];
 			}
 			return $value;
 		}
