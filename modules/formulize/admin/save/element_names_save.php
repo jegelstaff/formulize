@@ -140,7 +140,7 @@ if($original_handle) {
 		// rewrite references in derived values code
 		foreach((array)scandir(XOOPS_ROOT_PATH.'/modules/formulize/code/') as $file) {
 			if(strstr($file, 'derived_') !== false) {
-				$code = file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/code'.$file);
+				$code = file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file);
 				$encapsulatingCharacter1 = '"';
 				$encapsulatingCharacter2 = '"';
 				$newCode = str_replace($encapsulatingCharacter1.$original_handle.$encapsulatingCharacter2, $encapsulatingCharacter1.$ele_handle.$encapsulatingCharacter2, $code);
