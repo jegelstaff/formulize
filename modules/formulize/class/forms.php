@@ -664,7 +664,7 @@ class formulizeFormsHandler {
 
 				$on_before_save = trim($on_before_save) != "<?php" ? $on_before_save : "";
 				$on_after_save = trim($on_after_save) != "<?php" ? $on_after_save : "";
-				$on_delete = trim($on_delete) != "<?php" ? $on_beforeon_delete_save : "";
+				$on_delete = trim($on_delete) != "<?php" ? $on_delete : "";
 				$custom_edit_check = trim($custom_edit_check) != "<?php" ? $custom_edit_check : "";
 
                 if($formObject->isNew() || empty($id_form)) {
