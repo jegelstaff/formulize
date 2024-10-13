@@ -771,6 +771,7 @@ function patch40() {
 							foreach($customActions as $actionId=>$actionSettings) {
 								foreach($actionSettings as $effectId=>$effectSettings) {
 									if(!is_numeric($effectId)) { continue; } // ugly, effects are all numeric keys, other keys at same level are strings for other metadata
+                                    $code = '';
 									switch($actionSettings['applyto']) {
 										case 'custom_html':
 											$code = $effectSettings['html'];
@@ -779,8 +780,10 @@ function patch40() {
 											$code = $effectSettings['code'];
 											break;
 									}
-									$filename = $actionSettings['applyto'].'_'.$effectId.'_'.$actionId.'_'.$record['sid'].'.php';
-									file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename, $code);
+                                    if($code) {
+									    $filename = $actionSettings['applyto'].'_'.$effectId.'_'.$actionId.'_'.$record['sid'].'.php';
+									    file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename, $code);
+                                    }
 								}
 							}
 						}
