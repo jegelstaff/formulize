@@ -603,7 +603,7 @@ function patch40() {
 				// 4. ib $ele_value[0] if they contain $value
 				// 5. areamodif $ele_value[0] if they contain $value
 
-				if(!file_exists(XOOPS_ROOT_PATH."/modules/formulize/code")) {
+				if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/custom_code")) {
 
 					// query for the elements...
 					$elementsNeedingOpeningPHPTagsSQL = "SELECT ele_id, ele_type, ele_value FROM ".$xoopsDB->prefix('formulize')." WHERE
@@ -698,12 +698,25 @@ function patch40() {
 					} else {
 						exit("Error detecting custom buttons that need opening PHP tags. SQL dump:<br>".$customButtonsNeedingOpeningPHPTagsSQL."<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
 					}
-				}
 
-				// setup code folder with all the userland code, if necessary
-				if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/custom_code")) {
-					// rename custom_code to code
-					rename(XOOPS_ROOT_PATH."/modules/formulize/custom_code", XOOPS_ROOT_PATH."/modules/formulize/code");
+                    // copy the contents of custom_code to code
+                    // then renmove custom_code
+                    $files = scandir(XOOPS_ROOT_PATH.'/modules/formulize/custom_code');
+                    foreach ($files as $file) {
+                        if ($file !== '.' && $file !== '..') {
+                            $sourceFile = XOOPS_ROOT_PATH.'/modules/formulize/custom_code/'.$file;
+                            $destinationFile = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file;
+                            $moveResult = rename($sourceFile, $destinationFile);
+                            if(!$moveResult) {
+                                exit("Error: could not move $file from the custom_code folder to the code folder. Is the code folder writable?<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+                            }
+                        }
+                    }
+                    if(rmdir(XOOPS_ROOT_PATH."/modules/formulize/custom_code") === false) {
+                        exit("Error: could not remove the custom_code folder.<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+                    }
+
+                    // transplant all userland code to the code folder, if necessary
 					// convert all DB code to files in the code folder
 					/**
 					 * formulize_id table:
