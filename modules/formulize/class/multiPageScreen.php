@@ -415,6 +415,7 @@ function pageMeetsConditions($conditions, $currentPage, $entry_id, $fid, $frid) 
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
             foreach($elements as $i=>$thisElement) {
         if($elementObject = $element_handler->get($thisElement)) {
+					$elements[$i] = $elementObject->getVar('ele_handle'); // safety net for when the elements array is a set of element ids! Code is designed and filter conditions below designed, to work with element handles
         $searchTerm = formulize_swapDBText(trans($terms[$i]),$elementObject->getVar('ele_uitext'));
         if($ops[$i] == "NOT") { $ops[$i] = "!="; }
         if($terms[$i] == "{BLANK}") { // NOTE...USE OF BLANKS WON'T WORK CLEANLY IN ALL CASES DEPENDING WHAT OTHER TERMS HAVE BEEN SPECIFIED!!

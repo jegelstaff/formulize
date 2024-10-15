@@ -1215,12 +1215,13 @@ class formulizeFormsHandler {
 			return "";
 		}
 
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+
 		global $xoopsUser;
 		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 		if(!is_array($groupids)) {
 			$groupids = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 		}
-
 
 		if($formAlias) {
 			$formAlias .= "."; // add a period at the end of the alias so it will work with the field names in the query
@@ -1246,6 +1247,13 @@ class formulizeFormsHandler {
 			$filterAll = array();
 			$filterOOM = array();
 			for($i=0;$i<count((array) $filterSettings[3]);$i++) {
+				// ensure filterSettings[0] is an array of element handles! (will be stored as IDs but we need the handles for lower code to work)
+				if($elementObject = $element_handler->get($filterSettings[0][$i])) {
+					$filterSettings[0][$i] = $elementObject->getVar('ele_handle');
+				} else {
+					print "Formulize Error: a per-group permission filter on form $fid is referencing an element that does not exist. Was it renamed or deleted?<br>";
+					return "";
+				}
 				if($filterSettings[3][$i] == "all") {
 					$filterAll[] = $i;
 				} else {
