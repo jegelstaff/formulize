@@ -111,7 +111,7 @@ function patch40() {
         }
     }
 
-    if (!$needsPatch AND (!isset($_GET['op']) OR ($_GET['op'] != 'patch40' AND $_GET['op'] != 'patchDB'))) {
+    if (!$needsPatch AND !file_exists(XOOPS_ROOT_PATH.'/modules/formulize/custom_code') AND (!isset($_GET['op']) OR ($_GET['op'] != 'patch40' AND $_GET['op'] != 'patchDB'))) {
         return;
     }
 
