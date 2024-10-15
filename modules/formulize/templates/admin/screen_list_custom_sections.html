@@ -52,10 +52,10 @@
 				<p><a class="removeeffectbutton" href="" target="<{$sectionContent.id}>_<{$id}>"><img src="../images/editdelete.gif"> Remove this effect</a></p>
 				<{if $sectionContent.applyto == 'custom_code' OR $sectionContent.applyto == 'custom_code_once'}>
 				<textarea name="code_<{$sectionContent.id}>[<{$id}>]" class="code-textarea canValidate" rows=8><{if $effect.code == ''}><?php
-<{else}><{$effect.code}><{/if}></textarea>
+<{else}><{$effect.code|htmlspecialchars}><{/if}></textarea>
 				<{elseif $sectionContent.applyto == 'custom_html'}>
 				<textarea name="html_<{$sectionContent.id}>[<{$id}>]" class="code-textarea" rows=8><{if $effect.html == ''}><?php
-<{else}><{$effect.html}><{/if}></textarea>
+<{else}><{$effect.html|htmlspecialchars}><{/if}></textarea>
 				<{else}>
 				<label><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ELEMENT}></label>
 				<select name="element_<{$sectionContent.id}>[<{$id}>]" size=1>

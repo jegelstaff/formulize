@@ -326,7 +326,7 @@ $(document).ready(function() {
 
   $(document).ready(
     $('.code-textarea').each(function() {
-        if (this.type !== 'textarea' || SELENIUM_DEBUG == 'ON') {
+        if (this.type !== 'textarea') {
             return true; // continue
         }
         CodeMirror.fromTextArea(this, {

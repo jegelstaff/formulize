@@ -840,7 +840,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	if(isset($_POST['caid']) AND $screen AND $formulize_LOESecurityPassed) {
 		$customButtonDetails = $screen->getVar('customactions');
 		if(is_numeric($_POST['caid']) AND isset($customButtonDetails[$_POST['caid']])) {
-			list($caCode, $caElements, $caActions, $caValues, $caMessageText, $caApplyTo, $caPHP, $caInline) = processCustomButton($_POST['caid'], $customButtonDetails[$_POST['caid']]); // just processing to get the info so we can process the click.  Actual output of this button happens lower down
+			list($caCode, $caElements, $caActions, $caValues, $caMessageText, $caApplyTo, $caPHP, $caInline) = processCustomButton($_POST['caid'], $customButtonDetails[$_POST['caid']], $screen->getVar('sid')); // just processing to get the info so we can process the click.  Actual output of this button happens lower down
 			$messageText = processClickedCustomButton($caElements, $caValues, $caActions, $caMessageText, $caApplyTo, $caPHP, $caInline, $screen);
 		}
 	}
@@ -1631,7 +1631,7 @@ function drawEntries($fid, $cols, $searches, $frid, $scope, $standalone, $curren
 		$useSearchCalcMsgs = $screen->getVar('usesearchcalcmsgs');
 		foreach($screen->getVar('customactions') as $caid=>$thisCustomAction) {
 			if($thisCustomAction['appearinline'] == 1) {
-				list($caCode) = processCustomButton($caid, $thisCustomAction);
+				list($caCode) = processCustomButton($caid, $thisCustomAction, $screen->getVar('sid'));
 				if($caCode) {
 					$inlineButtons[$caid] = $thisCustomAction;
 				}
@@ -1958,7 +1958,7 @@ function drawEntries($fid, $cols, $searches, $frid, $scope, $standalone, $curren
 					// handle inline custom buttons
 					$templateVariables['customButtons'] = array();
 					foreach($inlineButtons as $caid=>$thisCustomAction) {
-						list($caCode) = processCustomButton($caid, $thisCustomAction, $entry_id, $entry); // only bother with the code, since we already processed any clicked button above
+						list($caCode) = processCustomButton($caid, $thisCustomAction, $screen->getVar('sid'), $entry_id, $entry); // only bother with the code, since we already processed any clicked button above
 						if($caCode) {
 							$templateVariables[$thisCustomAction['handle']] = $caCode;
 							$templateVariables['customButtons'][$thisCustomAction['handle']] = $caCode; // assign the button code that was returned
@@ -3824,7 +3824,7 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 		foreach($screen->getVar('customactions') as $caid=>$thisCustomAction) {
 			if($thisCustomAction['appearinline']) { continue; } // ignore buttons that are meant to appear inline
 			$atLeastOneCustomButton = true;
-			list($caCode) = processCustomButton($caid, $thisCustomAction);
+			list($caCode) = processCustomButton($caid, $thisCustomAction, $screen->getVar('sid'));
 			if($caCode) {
 				${$thisCustomAction['handle']} = $caCode; // assign the button code that was returned
 			}
@@ -3878,9 +3878,10 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 // THIS FUNCTION PROCESSES THE REQUESTED BUTTONS AND GENERATES HTML PLUS SENDS BACK INFO ABOUT THAT BUTTON
 // $caid is the id of this button,
 // $thisCustomAction is all the settings for this button,
+// $sid is the screen id
 // $entry_id is the entry ID that should be altered when this button is clicked.  Only sent for inline buttons.  Looks like it is only ever a single ID of the main entry of the line where the button was clicked?
 // $entry is the getData result package for this entry. Only sent from inline buttons, so that any PHP/HTML to be rendered inline has access to all the values of the current entry
-function processCustomButton($caid, $thisCustomAction, $entry_id="", $entry="") {
+function processCustomButton($caid, $thisCustomAction, $sid, $entry_id="", $entry="") {
 
 	global $xoopsUser;
 	$userGroups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
@@ -3907,9 +3908,19 @@ function processCustomButton($caid, $thisCustomAction, $entry_id="", $entry="") 
 		$caElements[] = $effectProperties['element'];
 		$caActions[] = $effectProperties['action'];
 		$caValues[] = $effectProperties['value'];
-		$caPHP[] = isset($effectProperties['code']) ? $effectProperties['code'] : "";
-		$caHTML[$caid.'...'.$effectid.'...'.$entry_id] = isset($effectProperties['html']) ? $effectProperties['html'] : "";
-		$isHTML = isset($effectProperties['html']) ? true : $isHTML;
+		if(isset($effectProperties['code'])) {
+			$filename = "custom_code_".$effectid."_".$caid."_".$sid.".php";
+			$caPHP[] = strval(file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename));
+		} else {
+			$caPHP[] = "";
+		}
+		if(isset($effectProperties['html'])) {
+			$filename = "custom_html_".$effectid."_".$caid."_".$sid.".php";
+			$caHTML[$caid.'...'.$effectid.'...'.$entry_id] = strval(file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename));
+			$isHTML = true;
+		} else {
+			$caHTML[$caid.'...'.$effectid.'...'.$entry_id] = "";
+		}
 
         // experimental... need all types of element values and actions, etc, to be worked out
         $useClickedText = false;

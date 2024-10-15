@@ -2821,7 +2821,7 @@ function makePlaceholderForConditionalElement($elementObject, $entry_id, $prevEn
  * @param int|string $entry_id The entry id in which the element is being rendered, or 'new' for a new element not yet saved.
  * @param array $prevEntry Optional. The values from the database for the elements in this entry.
  * @param object $screen Optional. The screen in which the element is being rendered. Possibly used in rare cases to determine exactly what js to generate.
- * @return array Returns an array of the JS generated and the markup name of the element. If no , if any, or an empty string
+ * @return array Returns an array of the JS generated and the markup name of the element. If no validation JS or the element could not be rendered, then returns false.
  */
 function validationJSFromDisembodiedElementRender($elementObject, $entry_id, $prevEntry, $screen) {
 	$renderedElementMarkupName = "de_{$elementObject->getVar('id_form')}_{$entry_id}_{$elementObject->getVar('ele_id')}";

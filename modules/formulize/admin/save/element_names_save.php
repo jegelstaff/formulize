@@ -130,42 +130,43 @@ if(!$ele_id = $element_handler->insert($element)) {
 
 if($original_handle) {
 	if($ele_handle != $original_handle) {
-        // rewrite references in other elements to this handle (linked selectboxes)
-        $ele_handle_len = strlen($ele_handle) + 5 + strlen($fid);
-        $orig_handle_len = strlen($original_handle) + 5 + strlen($fid);
-        $lsbHandleFormDefSQL = "UPDATE " . $xoopsDB->prefix("formulize") . " SET ele_value = REPLACE(ele_value, 's:$orig_handle_len:\"$fid#*=:*$original_handle', 's:$ele_handle_len:\"$fid#*=:*$ele_handle') WHERE ele_value LIKE '%$fid#*=:*$original_handle%'"; // must include the cap lengths or else the unserialization of this info won't work right later, since ele_value is a serialized array!
+		// rewrite references in other elements to this handle (linked selectboxes)
+		$ele_handle_len = strlen($ele_handle) + 5 + strlen($fid);
+		$orig_handle_len = strlen($original_handle) + 5 + strlen($fid);
+		$lsbHandleFormDefSQL = "UPDATE " . $xoopsDB->prefix("formulize") . " SET ele_value = REPLACE(ele_value, 's:$orig_handle_len:\"$fid#*=:*$original_handle', 's:$ele_handle_len:\"$fid#*=:*$ele_handle') WHERE ele_value LIKE '%$fid#*=:*$original_handle%'"; // must include the cap lengths or else the unserialization of this info won't work right later, since ele_value is a serialized array!
 		if(!$res = $xoopsDB->query($lsbHandleFormDefSQL)) {
 			print "Error:  update of linked selectbox element definitions failed.";
 		}
-        // rewrite references in text for display and derived values
-        $selectElementsSQL = "SELECT ele_id, ele_value, ele_type FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_value LIKE '%".$original_handle."%' AND (ele_type = 'derived' OR ele_type = 'areamodif' OR ele_type = 'ib')";
-        if($res = $xoopsDB->query($selectElementsSQL)) {
-            while($row = $xoopsDB->fetchRow($res)) {
-                $thisEleId = $row[0];
-                $thisEleValue = $row[1];
-                $thisEleType = $row[2];
-                $encapsulatingCharacter1 = '';
-                $encapsulatingCharacter2 = '';
-                switch($ele_type) {
-                    case 'areamodif':
-                    case 'ib':
-                        $encapsulatingCharacter1 = '{';
-                        $encapsulatingCharacter2 = '}';
-                        break;
-                    case 'derived':
-                        $encapsulatingCharacter1 = '"';
-                        $encapsulatingCharacter2 = '"';
-                        break;
-                }
-                $thisEleValue = unserialize($thisEleValue);
-                $eleValueZero = $thisEleValue[0];
-                $eleValueZero = str_replace($encapsulatingCharacter1.$original_handle.$encapsulatingCharacter2, $encapsulatingCharacter1.$ele_handle.$encapsulatingCharacter2, $eleValueZero);
-                $thisEleValue[0] = $eleValueZero;
-                $thisEleValue = serialize($thisEleValue);
-                $updateSQL = "UPDATE " . $xoopsDB->prefix("formulize") . " SET ele_value = \"".formulize_db_escape($thisEleValue)."\" WHERE ele_id = $thisEleId";
-                $xoopsDB->query($updateSQL);
-            }
-        }
+		// rewrite references in derived values code
+		foreach((array)scandir(XOOPS_ROOT_PATH.'/modules/formulize/code/') as $file) {
+			if(strstr($file, 'derived_') !== false) {
+				$code = file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file);
+				$encapsulatingCharacter1 = '"';
+				$encapsulatingCharacter2 = '"';
+				$newCode = str_replace($encapsulatingCharacter1.$original_handle.$encapsulatingCharacter2, $encapsulatingCharacter1.$ele_handle.$encapsulatingCharacter2, $code);
+				if($newCode != $code) {
+					formulize_writeCodeToFile($file, $newCode);
+				}
+			}
+		}
+		// rewrite references in text for display
+		$selectElementsSQL = "SELECT ele_id, ele_value FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_value LIKE '%".$original_handle."%' AND (ele_type = 'areamodif' OR ele_type = 'ib')";
+		if($res = $xoopsDB->query($selectElementsSQL)) {
+				while($row = $xoopsDB->fetchRow($res)) {
+						$thisEleId = $row[0];
+						$thisEleValue = $row[1];
+						$encapsulatingCharacter1 = '{';
+						$encapsulatingCharacter2 = '}';
+						$thisEleValue = unserialize($thisEleValue);
+						$eleValueZero = $thisEleValue[0];
+						$eleValueZero = str_replace($encapsulatingCharacter1.$original_handle.$encapsulatingCharacter2, $encapsulatingCharacter1.$ele_handle.$encapsulatingCharacter2, $eleValueZero);
+						$thisEleValue[0] = $eleValueZero;
+						$thisEleValue = serialize($thisEleValue);
+						$updateSQL = "UPDATE " . $xoopsDB->prefix("formulize") . " SET ele_value = \"".formulize_db_escape($thisEleValue)."\" WHERE ele_id = $thisEleId";
+						$xoopsDB->query($updateSQL);
+				}
+		}
+
 	}
 }
 
