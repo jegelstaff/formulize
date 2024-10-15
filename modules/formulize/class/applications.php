@@ -217,10 +217,12 @@ class formulizeApplication extends XoopsObject {
 
 		function getVar($key, $format = 's') {
 			if($key == 'custom_code' AND $appid = $this->getVar('appid')) {
-				$filename=XOOPS_ROOT_PATH."/modules/formulize/custom_code/application_custom_code_".$appid.".php";
+				$filename=XOOPS_ROOT_PATH."/modules/formulize/code/application_custom_code_".$appid.".php";
+				$contents = '';
 				if(file_exists($filename)) {
-					return file_get_contents($filename);
+					$contents = file_get_contents($filename);
 				}
+				return $contents;
 			}
 			return parent::getVar($key, $format);
 		}
@@ -362,9 +364,9 @@ class formulizeApplicationsHandler {
       ${$k} = $v;
     }
     if($appObject->isNew() || empty($appid)) {
-        $sql = "INSERT INTO ".$this->db->prefix("formulize_applications") . " (`name`, `description`, `custom_code`) VALUES (".$this->db->quoteString($name).", ".$this->db->quoteString($description).",".$this->db->quoteString($custom_code).")";
+        $sql = "INSERT INTO ".$this->db->prefix("formulize_applications") . " (`name`, `description`) VALUES (".$this->db->quoteString($name).", ".$this->db->quoteString($description).")";
     } else {
-        $sql = "UPDATE ".$this->db->prefix("formulize_applications") . " SET `name` = ".$this->db->quoteString($name).", `description` = ".$this->db->quoteString($description).", `custom_code` = ".$this->db->quoteString($custom_code)." WHERE appid = ".intval($appid);
+        $sql = "UPDATE ".$this->db->prefix("formulize_applications") . " SET `name` = ".$this->db->quoteString($name).", `description` = ".$this->db->quoteString($description)." WHERE appid = ".intval($appid);
     }
 
     if( false != $force ){
