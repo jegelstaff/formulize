@@ -127,6 +127,14 @@ function patch40() {
         // PATCH LOGIC GOES HERE
         print "<h2>Patch Results:</h2>";
 
+        // clear out the contents of the templates_c folder, just in case (some templates here are not Formulize templates, and updating the Formulize module is not sufficient to refresh them)
+        $templateFiles = scandir(XOOPS_ROOT_PATH.'/templates_c');
+        foreach($templateFiles as $templateFile) {
+            if($templateFile !== '.' AND $templateFile !== '..' AND $templateFile !== 'index.html') {
+                unlink(XOOPS_ROOT_PATH.'/templates_c/'.$templateFile);
+            } 
+        }       
+
         $testsql = "SHOW TABLES";
         $resultst = $xoopsDB->query($testsql);
         while($table = $xoopsDB->fetchRow($resultst)) {
