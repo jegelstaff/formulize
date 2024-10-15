@@ -260,9 +260,9 @@ class formulizeScreenHandler {
             ${$k} = $v;
         }
         if (!$sid) {
-            $sql = sprintf("INSERT INTO %s (title, fid, frid, type, useToken, anonNeedsPasscode, theme, rewriteruleAddress, rewriteruleElement) VALUES (%s, %u, %u, %s, %u, %u, %s, %s, %u)", $this->db->prefix('formulize_screen'), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $anonNeedsPasscode, $this->db->quoteString($theme), $this->db->quoteString($rewriteruleAddress), $rewriteruleElement);
+            $sql = sprintf("INSERT INTO %s (title, fid, frid, type, useToken, anonNeedsPasscode, theme, rewriteruleAddress, rewriteruleElement) VALUES (%s, %u, %d, %s, %u, %u, %s, %s, %u)", $this->db->prefix('formulize_screen'), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $anonNeedsPasscode, $this->db->quoteString($theme), $this->db->quoteString($rewriteruleAddress), $rewriteruleElement);
         } else {
-            $sql = sprintf("UPDATE %s SET title = %s, fid = %u, frid = %u, type = %s, useToken = %u, anonNeedsPasscode = %u, theme = %s, rewriteruleAddress = %s, rewriteruleElement = %u WHERE sid = %u", $this->db->prefix('formulize_screen'), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $anonNeedsPasscode, $this->db->quoteString($theme), $this->db->quoteString($rewriteruleAddress), $rewriteruleElement, $sid);
+            $sql = sprintf("UPDATE %s SET title = %s, fid = %u, frid = %d, type = %s, useToken = %u, anonNeedsPasscode = %u, theme = %s, rewriteruleAddress = %s, rewriteruleElement = %u WHERE sid = %u", $this->db->prefix('formulize_screen'), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $anonNeedsPasscode, $this->db->quoteString($theme), $this->db->quoteString($rewriteruleAddress), $rewriteruleElement, $sid);
         }
         $result = $this->db->query($sql);
         if (!$result) {
