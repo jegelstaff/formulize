@@ -400,7 +400,6 @@ CREATE TABLE formulize (
   ele_private tinyint(1) NOT NULL default '0',
   ele_use_default_when_blank tinyint(1) NOT NULL default '0',
   ele_exportoptions text NOT NULL,
-  form_handle varchar(255) NOT NULL default '',
   PRIMARY KEY  (`ele_id`),
   KEY `ele_order` (`ele_order`),
   KEY `ele_display` ( `ele_display` ( 255 ) )
