@@ -388,7 +388,7 @@ class formulizeElementsHandler {
 				ele_filtersettings = %s,
 				ele_disabledconditions = %s,
 				ele_use_default_when_blank = %u,
-				ele_exportoptions = %s,
+				ele_exportoptions = %s
 				WHERE ele_id = %u AND id_form = %u",
 				formulize_TABLE,
 				$this->db->quoteString($ele_type),
