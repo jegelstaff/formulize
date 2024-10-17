@@ -128,13 +128,30 @@ class FormulizeConfigSync
 	 */
 	private function compareForms(array $config): void
 	{
+		// Load all forms from the database
 		$dbForms = $this->loadDatabaseConfig('formulize_id');
-
 		foreach ($config['forms'] as $configForm) {
+			// Find the corresponding DB form and compare to the configuration
 			$dbForm = $this->findInArray($dbForms, 'form_handle', $configForm['form_handle']);
-			$this->compareForm($configForm, $dbForm);
+
+			$strippedFormConfig = $this->stripArrayKey($configForm, 'elements');
+
+			if (!$dbForm) {
+				$this->addChange('forms', 'create', $strippedFormConfig);
+			} else {
+				$differences = $this->compareFields($strippedFormConfig, $dbForm);
+				if (!empty($differences)) {
+					$this->addChange('forms', 'update', $configForm, $differences);
+				}
+			}
+
 			if (isset($configForm['elements'])) {
-				$this->compareElements($configForm['elements'], $configForm['form_handle']);
+				if ($dbForm) {
+					$dbElements = $this->loadDatabaseConfig('formulize', "id_form = {$dbForm['id_form']}");
+					$this->compareElements($configForm['elements'], $dbElements, $configForm['form_handle']);
+				} else {
+					$this->compareElements($configForm['elements'], [], $configForm['form_handle']);
+				}
 			}
 		}
 
@@ -154,42 +171,19 @@ class FormulizeConfigSync
 	}
 
 	/**
-	 * Compare an individual form configuration against the database values
-	 * @param array $formConfig
-	 * @param array $dbForms
-	 * @return void
-	 */
-	private function compareForm(array $configForm, array $dbForm): void
-	{
-		$strippedFormConfig = $this->stripArrayKey($configForm, 'elements');
-
-		if (!$dbForm) {
-			$this->addChange('forms', 'create', $strippedFormConfig);
-			return;
-		}
-
-		$differences = $this->compareFields($strippedFormConfig, $dbForm);
-		if (!empty($differences)) {
-			$this->addChange('forms', 'update', $strippedFormConfig, $differences);
-		}
-	}
-
-	/**
 	 * Compare elements for a form
 	 * @param array $configElements
 	 * @param string $formHandle
 	 * @return void
 	 */
-	private function compareElements(array $configElements, string $formHandle): void
+	private function compareElements(array $configElements, array $dbElements, string $formHandle): void
 	{
-		$dbElements = $this->loadDatabaseConfig('formulize', "form_handle = '$formHandle'");
-
 		foreach ($configElements as $element) {
 			$dbElement = $this->findInArray($dbElements, 'ele_handle', $element['ele_handle']);
-			$preparedElement = $this->prepareElementForDb($element, $formHandle);
+			$preparedElement = $this->prepareElementForDb($element);
 
 			if (!$dbElement) {
-				$this->addChange('elements', 'create', $preparedElement);
+				$this->addChange('elements', 'create', $preparedElement, [], ['form_handle' => $formHandle]);
 				continue;
 			}
 
@@ -209,7 +203,7 @@ class FormulizeConfigSync
 				}
 			}
 			if (!$found) {
-				$this->addChange('elements', 'delete', $dbElement);
+				$this->addChange('elements', 'delete', $dbElement, [], ['form_handle' => $formHandle]);
 			}
 		}
 	}
@@ -298,10 +292,9 @@ class FormulizeConfigSync
 	 * @param array $element
 	 * @return array
 	 */
-	private function prepareElementForDb(array $element, $formHandle): array
+	private function prepareElementForDb(array $element): array
 	{
 		$preparedElement = $element;
-		$preparedElement['form_handle'] = $formHandle;
 		foreach ($preparedElement as $key => $value) {
 			if (is_object($value) || is_array($value)) {
 				if ($key == 'ele_value') {
@@ -323,13 +316,14 @@ class FormulizeConfigSync
 	 * @param array $differences
 	 * @return void
 	 */
-	private function addChange(string $type, string $operation, array $data, array $differences = []): void
+	private function addChange(string $type, string $operation, array $data, array $differences = [], array $metadata = []): void
 	{
 		$this->changes[] = [
 			'type' => $type,
 			'operation' => $operation,
 			'data' => $data,
-			'differences' => $differences
+			'differences' => $differences,
+			'metadata' => $metadata
 		];
 
 		// $identifierField = $type === 'forms' ? 'form_handle' : ($type === 'elements' ? 'ele_handle' : 'rel_handle');
@@ -384,19 +378,19 @@ class FormulizeConfigSync
 					try {
 						$formId = null;
 						// If we're creating a new element from a new form update the id_form field
-						if ($change['operation'] === 'create' && isset($createFormIds[$change['data']['form_handle']])) {
-							$formId = $createFormIds[$change['data']['form_handle']];
+						if ($change['operation'] === 'create' && isset($createFormIds[$change['metadata']['form_handle']])) {
+							$formId = $createFormIds[$change['metadata']['form_handle']];
 						}
 						// If we're creating a new element from an existing form, update the id_form field
-						if ($change['operation'] === 'create' && !isset($createFormIds[$change['data']['form_handle']])) {
-							$form = $form_handler->getByHandle($change['data']['form_handle']);
+						if ($change['operation'] === 'create' && !isset($createFormIds[$change['metadata']['form_handle']])) {
+							$form = $form_handler->getByHandle($change['metadata']['form_handle']);
 							$formId = $form->getVar('id_form');
 							if (!$formId) {
-								throw new \Exception("Form handle '{$change['data']['form_handle']}' not found in database.");
+								throw new \Exception("Form handle '{$change['metadata']['form_handle']}' not found in database.");
 							}
 						}
 						// If we're deleting an element from an existing form remove the elements data column
-						if ($change['operation'] === 'delete' && !isset($deleteFormIds[$change['data']['form_handle']])) {
+						if ($change['operation'] === 'delete' && !isset($deleteFormIds[$change['metadata']['form_handle']])) {
 							// Unfortunatley these opperations need to occur before the transaction
 							// is committed because the element will no longer exist so this method will fail
 							$form_handler->deleteElementField($change['data']['ele_id']);
@@ -406,8 +400,8 @@ class FormulizeConfigSync
 						}
 						$newElementId = $this->applyChange($change);
 
-						// If we're creatinga  new element from an existin form set ensure the elements data column is created
-						if ($newElementId && $change['operation'] === 'create' && !isset($createFormIds[$change['data']['form_handle']])) {
+						// If we're creating a new element on an existing form ensure the elements data column is created
+						if ($newElementId && $change['operation'] === 'create' && !isset($createFormIds[$change['metadata']['form_handle']])) {
 							$createElementIds[$newElementId] = $change['data']['ele_type'];
 						}
 
