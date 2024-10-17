@@ -93,8 +93,6 @@ $element->setVar('ele_sort', $_POST['sortpref']);
 
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
 $formObject = $form_handler->get($fid);
-$form_handle = $formObject->getVar('form_handle');
-$element->setVar('form_handle', $form_handle);
 if($formObject->getVar('lockedform')) {
   return;
 }

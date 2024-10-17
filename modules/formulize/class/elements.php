@@ -82,7 +82,6 @@ class formulizeformulize extends XoopsObject {
 		$this->initVar("ele_disabledconditions", XOBJ_DTYPE_ARRAY);
 		$this->initVar("ele_use_default_when_blank", XOBJ_DTYPE_INT);
     $this->initVar("ele_exportoptions", XOBJ_DTYPE_ARRAY);
-		$this->initVar("form_handle", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
 	}
 
 	//this method is used to to retreive the elements dataType and size
@@ -342,9 +341,9 @@ class formulizeElementsHandler {
 				}
    		if( $element->isNew() || !$ele_id ) { // isNew is never set on the element object or parent??
 				$sql = sprintf("INSERT INTO %s (
-				id_form, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_sort, ele_req, ele_value, ele_uitext, ele_uitextshow, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private, ele_encrypt, ele_filtersettings, ele_disabledconditions, ele_use_default_when_blank, ele_exportoptions, form_handle
+				id_form, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_sort, ele_req, ele_value, ele_uitext, ele_uitextshow, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private, ele_encrypt, ele_filtersettings, ele_disabledconditions, ele_use_default_when_blank, ele_exportoptions
 				) VALUES (
-				%u, %s, %s, %s, %s, %s, %u, %u, %u, %s, %s, %u, %s, %s, %s, %u, %u, %u, %s, %s, %u, %s, %s
+				%u, %s, %s, %s, %s, %s, %u, %u, %u, %s, %s, %u, %s, %s, %s, %u, %u, %u, %s, %s, %u, %s
 				)",
 				formulize_TABLE,
 				$id_form,
@@ -369,7 +368,6 @@ class formulizeElementsHandler {
 				$this->db->quoteString($ele_disabledconditions),
 				$ele_use_default_when_blank,
         $this->db->quoteString($ele_exportoptions),
-				$this->db->quoteString($form_handle),
 			);
 				// changed - end - August 19 2005 - jpc
 			}else{
@@ -396,7 +394,6 @@ class formulizeElementsHandler {
 				ele_disabledconditions = %s,
 				ele_use_default_when_blank = %u,
 				ele_exportoptions = %s,
-				form_handle = %s
 				WHERE ele_id = %u AND id_form = %u",
 				formulize_TABLE,
 				$this->db->quoteString($ele_type),
@@ -420,7 +417,6 @@ class formulizeElementsHandler {
 				$this->db->quoteString($ele_disabledconditions),
 				$ele_use_default_when_blank,
 				$this->db->quoteString($ele_exportoptions),
-				$this->db->quoteString($form_handle),
 				$ele_id,
 				$id_form,
 			);

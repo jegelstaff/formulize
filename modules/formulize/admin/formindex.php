@@ -83,8 +83,8 @@ function patch40() {
      *
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
-    $checkThisTable = 'formulize';
-		$checkThisField = 'form_handle';
+    $checkThisTable = 'formulize_screen';
+		$checkThisField = 'rewriteruleElement';
 		$checkThisProperty = '';
 		$checkPropertyForValue = '';
 
@@ -132,8 +132,8 @@ function patch40() {
         foreach($templateFiles as $templateFile) {
             if($templateFile !== '.' AND $templateFile !== '..' AND $templateFile !== 'index.html') {
                 unlink(XOOPS_ROOT_PATH.'/templates_c/'.$templateFile);
-            } 
-        }       
+            }
+        }
 
         $testsql = "SHOW TABLES";
         $resultst = $xoopsDB->query($testsql);
@@ -476,7 +476,6 @@ function patch40() {
 				unlink(XOOPS_ROOT_PATH.'/cache/adminmenu_english.php');
 				$sql['sv_use_features'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " ADD `sv_use_features` varchar(255) NULL default NULL";
 				$sql['searches_are_fundamental'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " ADD `sv_searches_are_fundamental` tinyint(1) NULL default NULL";
-				$sql['add_form_handle_to_element'] = "ALTER TABLE ".$xoopsDB->prefix("formulize") . " ADD `form_handle` varchar(255) NOT NULL default ''";
 
         $needToSetSaveAndLeave = true;
         $needToSetPrintableView = true;
@@ -594,8 +593,6 @@ function patch40() {
                     print "RewriteRule element already added. result: OK<br>";
                 } elseif(strstr($key, 'screenTableIndex')) {
                     print "Screen table index already added. result: OK<br>";
-								} elseif($key === "add_form_handle_to_element") {
-										print "Form handle already added to elements. result: OK<br>";
             		} else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
