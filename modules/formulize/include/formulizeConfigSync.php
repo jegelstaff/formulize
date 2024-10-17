@@ -1,0 +1,740 @@
+<?php
+
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formulizeConfigSyncElementValueProcessor.php";
+
+class FormulizeConfigSync
+{
+	private $db;
+	private $configPath;
+	private $elementValueProcessor;
+	private $formHandler;
+	private $changes = [];
+	private $diffLog = [];
+	private $errorLog = [];
+
+	private $configFiles = [
+		'forms' => 'forms.json'
+	];
+
+	/**
+	 * Constructor
+	 * @param string $configPath
+	 */
+	public function __construct(string $configPath)
+	{
+		$this->configPath = rtrim($configPath, '/');
+		$this->formHandler = xoops_getmodulehandler('forms', 'formulize');
+		$this->elementValueProcessor = new FormulizeConfigSyncElementValueProcessor();
+		$this->initializeDatabase();
+	}
+
+	/**
+	 * Initialize the database connection
+	 * @return void
+	 */
+	private function initializeDatabase()
+	{
+		try {
+			// @todo we should probably be usign the $xoopsDB object
+			// But it's an older version of PDO which means that many
+			// of the newer features we're using here will need to be
+			// refactored. For now, we'll just use a new PDO object.
+			$this->db = new \PDO(
+				'mysql:host=' . XOOPS_DB_HOST . ';dbname=' . XOOPS_DB_NAME,
+				XOOPS_DB_USER,
+				XOOPS_DB_PASS
+			);
+			$this->db->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+			$this->db->query("SET NAMES utf8mb4");
+		} catch (\PDOException $e) {
+			throw new \Exception("Database connection failed: " . $e->getMessage());
+		}
+	}
+
+	/**
+	 * Load a configuration file
+	 * @param string $filename
+	 * @return array Array of configuration data
+	 */
+	private function loadConfigFile(string $filename): array
+	{
+		$filepath = XOOPS_ROOT_PATH . '/modules/formulize/' . $this->configPath . '/' . $filename;
+		if (!file_exists($filepath)) {
+			$this->errorLog[] = "Warning: Configuration file not found: {$filepath}";
+			return [];
+		}
+
+		$content = file_get_contents($filepath);
+		$config = json_decode($content, true);
+
+		if (json_last_error() !== JSON_ERROR_NONE) {
+			throw new \Exception("Invalid JSON in {$filename}: " . json_last_error_msg());
+		}
+
+		return $config;
+	}
+
+		/**
+	 * Load configuration data from a database table
+	 * @param string $table
+	 * @return array
+	 */
+	private function loadDatabaseConfig(string $table, string $where = ''): array
+	{
+		$table = $this->prefixTable($table);
+		$sql = "SELECT * FROM {$table}";
+		if ($where) {
+			$sql .= " WHERE $where";
+		}
+		$stmt = $this->db->prepare($sql);
+		$stmt->execute();
+		return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+	}
+
+	/**
+	 * Initiate the comparision between a config file and the database
+	 * @return array Array of changes, log, and errors
+	 */
+	public function compareConfigurations(): array
+	{
+		$this->changes = [];
+		$this->diffLog = [];
+		$this->errorLog = [];
+
+		foreach ($this->configFiles as $type => $filename) {
+			$config = $this->loadConfigFile($filename);
+			if (!$config) {
+				continue;
+			}
+
+			// @todo additional cases for future expansion
+			switch ($type) {
+				case 'forms':
+					$this->compareForms($config);
+					break;
+			}
+		}
+
+		return [
+			'changes' => $this->changes,
+			'log' => $this->diffLog,
+			'errors' => $this->errorLog
+		];
+	}
+
+
+	/**
+	 * Compare configuration against the database for all forms
+	 * @param array $config
+	 * @return void
+	 */
+	private function compareForms(array $config): void
+	{
+		// Load all forms from the database
+		$dbForms = $this->loadDatabaseConfig('formulize_id');
+		foreach ($config['forms'] as $configForm) {
+			// Find the corresponding DB form and compare to the configuration
+			$dbForm = $this->findInArray($dbForms, 'form_handle', $configForm['form_handle']);
+
+			$strippedFormConfig = $this->stripArrayKey($configForm, 'elements');
+
+			if (!$dbForm) {
+				$this->addChange('forms', 'create', $strippedFormConfig);
+			} else {
+				$differences = $this->compareFields($strippedFormConfig, $dbForm);
+				if (!empty($differences)) {
+					$this->addChange('forms', 'update', $configForm, $differences);
+				}
+			}
+
+			if (isset($configForm['elements'])) {
+				if ($dbForm) {
+					$dbElements = $this->loadDatabaseConfig('formulize', "id_form = {$dbForm['id_form']}");
+					$this->compareElements($configForm['elements'], $dbElements, $configForm['form_handle']);
+				} else {
+					$this->compareElements($configForm['elements'], [], $configForm['form_handle']);
+				}
+			}
+		}
+
+		// Check for forms in DB that are not in Config
+		foreach ($dbForms as $dbForm) {
+			$found = false;
+			foreach ($config['forms'] as $formConfig) {
+				if ($formConfig['form_handle'] === $dbForm['form_handle']) {
+					$found = true;
+					break;
+				}
+			}
+			if (!$found) {
+				$this->addChange('forms', 'delete', $dbForm);
+			}
+		}
+	}
+
+	/**
+	 * Compare elements for a form
+	 * @param array $configElements
+	 * @param string $formHandle
+	 * @return void
+	 */
+	private function compareElements(array $configElements, array $dbElements, string $formHandle): void
+	{
+		foreach ($configElements as $element) {
+			$dbElement = $this->findInArray($dbElements, 'ele_handle', $element['ele_handle']);
+			$preparedElement = $this->prepareElementForDb($element);
+
+			if (!$dbElement) {
+				$metadata = [
+					'form_handle' => $formHandle,
+					'data_type' => $element['data_type']
+				];
+				$this->addChange('elements', 'create', $preparedElement, [], $metadata);
+				continue;
+			}
+
+			$differences = $this->compareElementFields($preparedElement, $dbElement);
+			if (!empty($differences)) {
+				$this->addChange('elements', 'update', $preparedElement, $differences);
+			}
+		}
+
+		// Check for elements in DB that are not in JSON
+		foreach ($dbElements as $dbElement) {
+			$found = false;
+			foreach ($configElements as $element) {
+				if ($element['ele_handle'] === $dbElement['ele_handle']) {
+					$found = true;
+					break;
+				}
+			}
+			if (!$found) {
+				$this->addChange('elements', 'delete', $dbElement, [], ['form_handle' => $formHandle]);
+			}
+		}
+	}
+
+	private function findInArray(array $array, string $key, $value)
+	{
+		foreach ($array as $item) {
+			if ($item[$key] === $value) {
+				return $item;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Generic field comparison
+	 *
+	 * @param array $configObject Config object
+	 * @param array $dbObject Database object
+	 * @param array $excludeFields
+	 * @return array
+	 */
+	private function compareFields(array $configObject, array $dbObject, array $excludeFields = []): array
+	{
+		$differences = [];
+		foreach ($configObject as $field => $value) {
+			if (in_array($field, $excludeFields)) {
+				continue;
+			}
+			$normalizedJSONValue = $this->normalizeValue($value);
+			$normalizedDBValue = $this->normalizeValue($dbObject[$field]);
+			if ($normalizedJSONValue !== $normalizedDBValue) {
+				$differences[$field] = [
+					'config_value' => $normalizedJSONValue,
+					'db_value' => $normalizedDBValue
+				];
+			}
+		}
+		return $differences;
+	}
+
+	/**
+	 * Compare a Config and DB element and return the differences
+	 *
+	 * @param array $configElement Config element configuration
+	 * @param array $dbElement Database element configuration
+	 * @return array
+	 */
+	private function compareElementFields(array $configElement, array $dbElement): array
+	{
+		$differences = [];
+
+		foreach ($configElement as $field => $value) {
+			$eleValueDiff = [];
+			// ele_value fields are processed differently because they are serialized
+			if ($field === 'ele_value') {
+				$convertedConfigEleValue = $this->elementValueProcessor->processElementValueForImport(
+					$configElement['ele_type'],
+					$value
+				);
+				$dbEleValue = $dbElement['ele_value'] !== "" ? unserialize($dbElement['ele_value']) : [];
+				foreach($convertedConfigEleValue as $key => $val) {
+					if (!array_key_exists($key, $dbEleValue) || $val !== $dbEleValue[$key]) {
+						$eleValueDiff[$key] = [
+							'config_value' => $val,
+							'db_value' => $dbEleValue[$key] ?? null
+						];
+					}
+				}
+				if (!empty($eleValueDiff)) {
+					$differences['ele_value'] = $eleValueDiff;
+				}
+			} elseif (!array_key_exists($field, $dbElement) || $this->normalizeValue($value) !== $this->normalizeValue($dbElement[$field])) {
+				$differences[$field] = [
+					'config_value' => $value,
+					'db_value' => $dbElement[$field] ?? null
+				];
+			}
+		}
+
+		return $differences;
+	}
+
+	/**
+	 * Prepare an element for database storage
+	 *
+	 * @param array $element
+	 * @return array
+	 */
+	private function prepareElementForDb(array $element): array
+	{
+		$preparedElement = $element;
+		foreach ($preparedElement as $key => $value) {
+			if (is_object($value) || is_array($value)) {
+				if ($key == 'ele_value') {
+					$preparedElement[$key] = serialize($this->elementValueProcessor->processElementValueForImport($element['ele_type'], $value));
+				} else {
+					$preparedElement[$key] = serialize($value);
+				}
+			}
+		}
+		// Remove the data_type field
+		unset($preparedElement['data_type']);
+		return $preparedElement;
+	}
+
+	/**
+	 * Add a change to the list of changes
+	 *
+	 * @param string $type
+	 * @param string $operation
+	 * @param array $data
+	 * @param array $differences
+	 * @return void
+	 */
+	private function addChange(string $type, string $operation, array $data, array $differences = [], array $metadata = []): void
+	{
+		$this->changes[] = [
+			'type' => $type,
+			'operation' => $operation,
+			'data' => $data,
+			'differences' => $differences,
+			'metadata' => $metadata
+		];
+
+		// $identifierField = $type === 'forms' ? 'form_handle' : ($type === 'elements' ? 'ele_handle' : 'rel_handle');
+		$this->diffLog[] = sprintf(
+			"%s: %s %s '%s'",
+			ucfirst($operation),
+			$type,
+			$data,
+			$differences
+		);
+	}
+
+	/**
+	 * Apply changes to the database
+	 *
+	 * @return array
+	 */
+	public function applyChanges(): array
+	{
+		$results = ['success' => [], 'failure' => []];
+		$createFormIds = [];
+		$createElementIds = [];
+
+		try {
+			$this->db->beginTransaction();
+
+			// Apply all form changes
+			foreach ($this->changes as $change) {
+				if ($change['type'] === 'forms') {
+					try {
+						$newFormId = $this->applyChange($change);
+						if ($change['operation'] === 'create') {
+							// Write the new id to our array so we can update element id_form field
+							$createFormIds[$change['data']['form_handle']] = $newFormId;
+						}
+						if ($change['operation'] === 'delete') {
+							// Unfortunatley these opperations need to occur before the transaction
+							// is committed because the form will no longer exist so this method will fail
+							$this->formHandler->dropDataTable($change['data']['id_form']);
+						}
+						$results['success'][] = $change;
+					} catch (\Exception $e) {
+						$results['failure'][] = ['change' => $change, 'error' => $e->getMessage()];
+					}
+				}
+			}
+
+			// Apply all element changes
+			foreach ($this->changes as $change) {
+				if ($change['type'] === 'elements') {
+					try {
+						$formId = null;
+						// If we're creating a new element from a new form update the id_form field
+						if ($change['operation'] === 'create' && isset($createFormIds[$change['metadata']['form_handle']])) {
+							$formId = $createFormIds[$change['metadata']['form_handle']];
+						}
+						// If we're creating a new element from an existing form, update the id_form field
+						if ($change['operation'] === 'create' && !isset($createFormIds[$change['metadata']['form_handle']])) {
+							$form = $this->formHandler->getByHandle($change['metadata']['form_handle']);
+							$formId = $form->getVar('id_form');
+							if (!$formId) {
+								throw new \Exception("Form handle '{$change['metadata']['form_handle']}' not found in database.");
+							}
+						}
+						// If we're deleting an element from an existing form remove the elements data column
+						if ($change['operation'] === 'delete' && !isset($deleteFormIds[$change['metadata']['form_handle']])) {
+							// Unfortunatley these opperations need to occur before the transaction
+							// is committed because the element will no longer exist so this method will fail
+							$this->formHandler->deleteElementField($change['data']['ele_id']);
+						}
+						if ($formId) {
+							$change['data']['id_form'] = $formId;
+						}
+						$newElementId = $this->applyChange($change);
+
+						// If we're creating a new element on an existing form ensure the elements data column is created
+						if ($newElementId && $change['operation'] === 'create' && !isset($createFormIds[$change['metadata']['form_handle']])) {
+							$createElementIds[$newElementId] = $change['metadata']['data_type'];
+						}
+
+						$results['success'][] = $change;
+					} catch (\Exception $e) {
+						$results['failure'][] = ['change' => $change, 'error' => $e->getMessage()];
+					}
+				}
+			}
+			$this->db->commit();
+
+			// For new forms create their data tables
+			foreach ($createFormIds as $formHandle => $formId) {
+				$this->formHandler->createDataTable($formId);
+			}
+			// For new elements create their data columns
+			foreach ($createElementIds as $elementId => $elementType) {
+				$this->formHandler->insertElementField($elementId, $elementType);
+			}
+		} catch (\Exception $e) {
+			$this->db->rollBack();
+			throw new \Exception("Failed to apply changes: " . $e->getMessage());
+		}
+
+		return $results;
+	}
+
+	/**
+	 * Apply a single change to the database
+	 *
+	 * @param array $change
+	 * @return void
+	 */
+	private function applyChange(array $change): ?int
+	{
+		$table = $this->getTableForType($change['type']);
+		$primaryKey = $this->getPrimaryKeyForType($change['type']);
+
+		switch ($change['operation']) {
+			case 'create':
+				return $this->insertRecord($table, $change['data']);
+				break;
+			case 'update':
+				$this->updateRecord($table, $change['data'], $primaryKey);
+				break;
+			case 'delete':
+				$this->deleteRecord($table, $change['data'], $primaryKey);
+				break;
+		}
+
+		return null;
+	}
+
+	/**
+	 * Insert a record into a database table
+	 *
+	 * @param string $table
+	 * @param array $data
+	 * @return void
+	 */
+	private function insertRecord(string $table, array $data): int
+	{
+		$fields = array_keys($data);
+		$placeholders = array_fill(0, count($fields), '?');
+
+		$sql = sprintf(
+			"INSERT INTO %s (%s) VALUES (%s)",
+			$this->prefixTable($table),
+			'`' . implode('`, `', $fields) . '`',
+			implode(', ', $placeholders)
+		);
+
+		$stmt = $this->db->prepare($sql);
+		$stmt->execute(array_values($data));
+
+		return (int) $this->db->lastInsertId();
+	}
+
+	/**
+	 * Update a record in a database table
+	 *
+	 * @param string $table
+	 * @param array $data
+	 * @param string $primaryKey
+	 * @return void
+	 */
+	private function updateRecord(string $table, array $data, string $primaryKey): void
+	{
+		$fields = array_keys($data);
+		$sets = array_map(function ($field) {
+			return "`{$field}` = ?";
+		}, $fields);
+
+		$sql = sprintf(
+			"UPDATE %s SET %s WHERE %s = ?",
+			$this->prefixTable($table),
+			implode(', ', $sets),
+			$primaryKey
+		);
+
+		$values = array_values($data);
+		$values[] = $data[$primaryKey];
+
+		$stmt = $this->db->prepare($sql);
+		$stmt->execute($values);
+	}
+
+	/**
+	 * Delete a record from a database table
+	 *
+	 * @param string $table
+	 * @param array $data
+	 * @param string $primaryKey
+	 * @return void
+	 */
+	private function deleteRecord(string $table, array $data, string $primaryKey): void
+	{
+		$sql = sprintf(
+			"DELETE FROM %s WHERE %s = ?",
+			$this->prefixTable($table),
+			$primaryKey
+		);
+
+		$stmt = $this->db->prepare($sql);
+		$stmt->execute([$data[$primaryKey]]);
+	}
+
+	/**
+	 * Prefix a table name with the XOOPS database prefix
+	 *
+	 * @param string $table
+	 * @return string
+	 */
+	private function prefixTable(string $table): string
+	{
+		return XOOPS_DB_PREFIX . '_' . trim($table, '_');
+	}
+
+	/**
+	 * Export current database configuration to a JSON string
+	 *
+	 * @return string A JSON string of the exported configuration
+	 */
+	public function exportConfiguration(): string
+	{
+		try {
+			$forms = $this->exportForms();
+			$config = [
+				'version' => '1.0',
+				'lastUpdated' => date('Y-m-d H:i:s'),
+				'forms' => $forms,
+				'metadata' => [
+					'generated_by' => 'FormulizeConfigSync',
+					'environment' => XOOPS_DB_NAME, // Assuming XOOPS_DB_NAME is defined
+					'export_date' => date('Y-m-d H:i:s')
+				]
+			];
+
+			return json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+		} catch (\Exception $e) {
+			error_log("Error exporting configuration: " . $e->getMessage());
+			return '';
+		}
+	}
+
+	/**
+	 * Export forms and their elements
+	 *
+	 * @return array Array of form configurations
+	 */
+	private function exportForms(): array
+	{
+		$forms = [];
+		$formRows = $this->loadDatabaseConfig('formulize_id');
+
+		foreach ($formRows as $formRow) {
+			$form = $this->prepareFormForExport($formRow);
+			$form['elements'] = $this->exportElementsForForm($formRow['id_form']);
+			$forms[] = $form;
+		}
+
+		return $forms;
+	}
+
+	/**
+	 * Prepare a form row for export
+	 *
+	 * @param array $formRow Raw form data from database
+	 * @return array Prepared form data for export
+	 */
+	private function prepareFormForExport(array $formRow): array
+	{
+		$preparedForm = [];
+		$excludedFields = ['on_before_save', 'on_after_save', 'on_delete', 'custom_edit_check'];
+		foreach ($formRow as $field => $value) {
+			if (!in_array($field, $excludedFields)) {
+				$preparedForm[$field] = $value;
+			}
+		}
+		// Remove not needed fields
+		unset($preparedForm['id_form']);
+		return $preparedForm;
+	}
+
+	/**
+	 * Export elements for a specific form
+	 *
+	 * @param int $formId unique form identifier from the database
+	 * @return array Array of element configurations
+	 */
+	private function exportElementsForForm(int $formId): array
+	{
+
+		$dataHandler = new formulizeDataHandler($formId);
+		$dataTypes = $dataHandler->gatherDataTypes();
+		$elements = [];
+		$elementRows = $this->loadDatabaseConfig('formulize', "id_form = '$formId' ORDER BY ele_order");
+
+		foreach ($elementRows as $elementRow) {
+			$elements[] = $this->prepareElementForExport($elementRow, $dataTypes);
+		}
+
+		return $elements;
+	}
+
+	/**
+	 * Prepare an element row for export
+	 *
+	 * @param array $elementRow Raw element data from database
+	 * @return array Prepared element data for export
+	 */
+	private function prepareElementForExport(array $elementRow, array $dataTypes): array
+	{
+		$serializeFields = ['ele_value', 'ele_filtersettings', 'ele_disabledconditions', 'ele_exportoptions'];
+		$preparedElement = [];
+		foreach ($elementRow as $field => $value) {
+			if (in_array($field, $serializeFields)) {
+				$unserialized = $value !== "" ? @unserialize($value) : [];
+				if ($field == 'ele_value') {
+					$preparedElement[$field] = $this->elementValueProcessor->processElementValueForExport($elementRow['ele_type'], $unserialized);
+				} else {
+					$preparedElement[$field] = $unserialized;
+				}
+			} else {
+				$preparedElement[$field] = $value;
+			}
+		}
+		$preparedElement['data_type'] = $dataTypes[$elementRow['ele_handle']] ?? 'text';
+		// Remove not needed fields
+		unset($preparedElement['id_form']);
+		unset($preparedElement['ele_id']);
+		unset($preparedElement['form_handle']);
+		return $preparedElement;
+	}
+
+	/**
+	 * Normalize a value for comparison
+	 *
+	 * @param mixed $value
+	 * @return mixed
+	 */
+	private function normalizeValue($value)
+	{
+		if (is_string($value) && unserialize($value) !== false) {
+			$unserialized = unserialize($value);
+			ksort($unserialized);
+			return $unserialized;
+		}
+		if (is_array($value)) {
+			return array_values($value);
+		}
+		if (is_bool($value)) {
+			return (int) $value;
+		}
+		return (string) $value;
+	}
+
+	/**
+	 * Strip key from an array
+	 * @param array $configArray
+	 * @param string $key
+	 * @return array
+	 */
+	private function stripArrayKey(array $configArray, string $key): array
+	{
+		$strippedConfigArray = $configArray;
+		unset($strippedConfigArray[$key]);
+		return $strippedConfigArray;
+	}
+
+
+	/**
+	 * Get the database table name for a configuration type
+	 *
+	 * @param string $type
+	 * @return string
+	 */
+	private function getTableForType(string $type): string
+	{
+		switch ($type) {
+			case 'forms':
+				return 'formulize_id';
+			case 'elements':
+				return 'formulize';
+			default:
+				throw new \Exception("Unknown configuration type: {$type}");
+		}
+	}
+
+	/**
+	 * Get the primary key field for a configuration type
+	 *
+	 * @param string $type
+	 * @return string
+	 */
+	private function getPrimaryKeyForType(string $type): string
+	{
+		switch ($type) {
+			case 'forms':
+				return 'form_handle';
+			case 'elements':
+				return 'ele_handle';
+			default:
+				throw new \Exception("Unknown configuration type: {$type}");
+		}
+	}
+
+}
