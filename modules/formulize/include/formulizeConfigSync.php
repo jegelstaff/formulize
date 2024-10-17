@@ -7,6 +7,7 @@ class FormulizeConfigSync
 	private $db;
 	private $configPath;
 	private $elementValueProcessor;
+	private $formHandler;
 	private $changes = [];
 	private $diffLog = [];
 	private $errorLog = [];
@@ -22,6 +23,7 @@ class FormulizeConfigSync
 	public function __construct(string $configPath)
 	{
 		$this->configPath = rtrim($configPath, '/');
+		$this->formHandler = xoops_getmodulehandler('forms', 'formulize');
 		$this->elementValueProcessor = new FormulizeConfigSyncElementValueProcessor();
 		$this->initializeDatabase();
 	}
@@ -183,11 +185,15 @@ class FormulizeConfigSync
 			$preparedElement = $this->prepareElementForDb($element);
 
 			if (!$dbElement) {
-				$this->addChange('elements', 'create', $preparedElement, [], ['form_handle' => $formHandle]);
+				$metadata = [
+					'form_handle' => $formHandle,
+					'data_type' => $element['data_type']
+				];
+				$this->addChange('elements', 'create', $preparedElement, [], $metadata);
 				continue;
 			}
 
-			$differences = $this->compareElementFields($element, $dbElement);
+			$differences = $this->compareElementFields($preparedElement, $dbElement);
 			if (!empty($differences)) {
 				$this->addChange('elements', 'update', $preparedElement, $differences);
 			}
@@ -258,6 +264,7 @@ class FormulizeConfigSync
 
 		foreach ($configElement as $field => $value) {
 			$eleValueDiff = [];
+			// ele_value fields are processed differently because they are serialized
 			if ($field === 'ele_value') {
 				$convertedConfigEleValue = $this->elementValueProcessor->processElementValueForImport(
 					$configElement['ele_type'],
@@ -304,6 +311,8 @@ class FormulizeConfigSync
 				}
 			}
 		}
+		// Remove the data_type field
+		unset($preparedElement['data_type']);
 		return $preparedElement;
 	}
 
@@ -344,7 +353,6 @@ class FormulizeConfigSync
 	public function applyChanges(): array
 	{
 		$results = ['success' => [], 'failure' => []];
-		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$createFormIds = [];
 		$createElementIds = [];
 
@@ -363,7 +371,7 @@ class FormulizeConfigSync
 						if ($change['operation'] === 'delete') {
 							// Unfortunatley these opperations need to occur before the transaction
 							// is committed because the form will no longer exist so this method will fail
-							$form_handler->dropDataTable($change['data']['id_form']);
+							$this->formHandler->dropDataTable($change['data']['id_form']);
 						}
 						$results['success'][] = $change;
 					} catch (\Exception $e) {
@@ -383,7 +391,7 @@ class FormulizeConfigSync
 						}
 						// If we're creating a new element from an existing form, update the id_form field
 						if ($change['operation'] === 'create' && !isset($createFormIds[$change['metadata']['form_handle']])) {
-							$form = $form_handler->getByHandle($change['metadata']['form_handle']);
+							$form = $this->formHandler->getByHandle($change['metadata']['form_handle']);
 							$formId = $form->getVar('id_form');
 							if (!$formId) {
 								throw new \Exception("Form handle '{$change['metadata']['form_handle']}' not found in database.");
@@ -393,7 +401,7 @@ class FormulizeConfigSync
 						if ($change['operation'] === 'delete' && !isset($deleteFormIds[$change['metadata']['form_handle']])) {
 							// Unfortunatley these opperations need to occur before the transaction
 							// is committed because the element will no longer exist so this method will fail
-							$form_handler->deleteElementField($change['data']['ele_id']);
+							$this->formHandler->deleteElementField($change['data']['ele_id']);
 						}
 						if ($formId) {
 							$change['data']['id_form'] = $formId;
@@ -402,7 +410,7 @@ class FormulizeConfigSync
 
 						// If we're creating a new element on an existing form ensure the elements data column is created
 						if ($newElementId && $change['operation'] === 'create' && !isset($createFormIds[$change['metadata']['form_handle']])) {
-							$createElementIds[$newElementId] = $change['data']['ele_type'];
+							$createElementIds[$newElementId] = $change['metadata']['data_type'];
 						}
 
 						$results['success'][] = $change;
@@ -415,11 +423,11 @@ class FormulizeConfigSync
 
 			// For new forms create their data tables
 			foreach ($createFormIds as $formHandle => $formId) {
-				$form_handler->createDataTable($formId);
+				$this->formHandler->createDataTable($formId);
 			}
 			// For new elements create their data columns
 			foreach ($createElementIds as $elementId => $elementType) {
-				$form_handler->insertElementField($elementId, $elementType);
+				$this->formHandler->insertElementField($elementId, $elementType);
 			}
 		} catch (\Exception $e) {
 			$this->db->rollBack();
@@ -579,7 +587,7 @@ class FormulizeConfigSync
 
 		foreach ($formRows as $formRow) {
 			$form = $this->prepareFormForExport($formRow);
-			$form['elements'] = $this->exportElementsForForm($form['form_handle']);
+			$form['elements'] = $this->exportElementsForForm($formRow['id_form']);
 			$forms[] = $form;
 		}
 
@@ -609,16 +617,19 @@ class FormulizeConfigSync
 	/**
 	 * Export elements for a specific form
 	 *
-	 * @param string $formHandle unique string handle for the form
+	 * @param int $formId unique form identifier from the database
 	 * @return array Array of element configurations
 	 */
-	private function exportElementsForForm(string $formHandle): array
+	private function exportElementsForForm(int $formId): array
 	{
+
+		$dataHandler = new formulizeDataHandler($formId);
+		$dataTypes = $dataHandler->gatherDataTypes();
 		$elements = [];
-		$elementRows = $this->loadDatabaseConfig('formulize', "form_handle = '$formHandle' ORDER BY ele_order");
+		$elementRows = $this->loadDatabaseConfig('formulize', "id_form = '$formId' ORDER BY ele_order");
 
 		foreach ($elementRows as $elementRow) {
-			$elements[] = $this->prepareElementForExport($elementRow);
+			$elements[] = $this->prepareElementForExport($elementRow, $dataTypes);
 		}
 
 		return $elements;
@@ -630,7 +641,7 @@ class FormulizeConfigSync
 	 * @param array $elementRow Raw element data from database
 	 * @return array Prepared element data for export
 	 */
-	private function prepareElementForExport(array $elementRow): array
+	private function prepareElementForExport(array $elementRow, array $dataTypes): array
 	{
 		$serializeFields = ['ele_value', 'ele_filtersettings', 'ele_disabledconditions', 'ele_exportoptions'];
 		$preparedElement = [];
@@ -646,6 +657,7 @@ class FormulizeConfigSync
 				$preparedElement[$field] = $value;
 			}
 		}
+		$preparedElement['data_type'] = $dataTypes[$elementRow['ele_handle']] ?? 'text';
 		// Remove not needed fields
 		unset($preparedElement['id_form']);
 		unset($preparedElement['ele_id']);
