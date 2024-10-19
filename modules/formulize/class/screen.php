@@ -148,24 +148,6 @@ class formulizeScreen extends FormulizeObject {
         return true;
     }
 
-	// check to see if a handle is unique within a form
-	function isScreenHandleUnique($handle, $screen_id="") {
-		$handle = self::sanitize_handle_name($handle);
-		global $xoopsDB;
-		$screen_id_condition = $screen_id ? " AND sid != " . intval($screen_id) : "";
-		$sql = "SELECT count(screen_handle) FROM " . $xoopsDB->prefix("formulize_screen") . " WHERE screen_handle = '" . formulize_db_escape($handle) . "' $screen_id_condition";
-		if(!$res = $xoopsDB->query($sql)) {
-			print "Error: could not verify uniqueness of handle '$handle'";
-		} else {
-			$row = $xoopsDB->fetchRow($res);
-			if($row[0] == 0) { // zero rows found with that handle in this form
-				return true;
-			} else {
-				return false;
-			}
-		}
-	}
-
 }
 
 
@@ -185,7 +167,26 @@ class formulizeScreenHandler {
 		return new formulizeScreen();
 	}
 
-    // returns an array of screen objects
+
+	// check to see if a handle is unique within a form
+	function isScreenHandleUnique($handle, $screen_id="") {
+		$handle = formulizeScreen::sanitize_handle_name($handle);
+		global $xoopsDB;
+		$screen_id_condition = $screen_id ? " AND sid != " . intval($screen_id) : "";
+		$sql = "SELECT count(screen_handle) FROM " . $xoopsDB->prefix("formulize_screen") . " WHERE screen_handle = '" . formulize_db_escape($handle) . "' $screen_id_condition";
+		if(!$res = $xoopsDB->query($sql)) {
+			print "Error: could not verify uniqueness of handle '$handle'";
+		} else {
+			$row = $xoopsDB->fetchRow($res);
+			if($row[0] == 0) { // zero rows found with that handle in this form
+				return true;
+			} else {
+				return false;
+			}
+		}
+	}
+
+	// returns an array of screen objects
     function &getObjects($criteria = null, $fid = 0, $appid = -1, $sort = null, $order = null, $paged = false, $offset = -1, $limit = 20) {
         $sql = "SELECT * FROM " . $this->db->prefix("formulize_screen") . " AS screentable";
         if(is_object($criteria)) {
