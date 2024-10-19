@@ -35,7 +35,7 @@
 include_once XOOPS_ROOT_PATH.'/kernel/object.php';
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
-class formulizeForm extends XoopsObject {
+class formulizeForm extends FormulizeObject {
 
     private array $onDeleteExistingValues;
 
@@ -170,11 +170,6 @@ class formulizeForm extends XoopsObject {
 		}
 		return array($views, $viewNames, $viewFrids, $viewPublished);
 	}
-
-    static function sanitize_handle_name($handle_name) {
-        // strip non-alphanumeric characters from form and element handles
-        return preg_replace("/[^a-zA-Z0-9_-]+/", "", $handle_name);
-    }
 
     public function assignVar($key, $value) {
         if ("form_handle" == $key) {
@@ -777,8 +772,8 @@ class formulizeFormsHandler {
 	}
 
 	// check to see if a handle is unique within a form
-	function isHandleUnique($handle, $element_id="") {
-        $handle = formulizeForm::sanitize_handle_name($handle);
+	function isElementHandleUnique($handle, $element_id="") {
+        $handle = self::sanitize_handle_name($handle);
 		if(isMetaDataField($handle)){
 			return false; // don't allow reserved words that will be used in the main data extraction queries
 		}
@@ -799,7 +794,7 @@ class formulizeFormsHandler {
 
     	// check to see if a handle is unique (but exclude the given form if any from the query)
 	function isFormHandleUnique($handle, $form_id=null) {
-        $handle = formulizeForm::sanitize_handle_name($handle);
+        $handle = self::sanitize_handle_name($handle);
 		global $xoopsDB;
         $form_id_condition = $form_id ? " AND id_form != " . intval($form_id) : "";
 		$sql = "SELECT count(form_handle) FROM " . $xoopsDB->prefix("formulize_id") . " WHERE form_handle = '" . formulize_db_escape($handle)."' $form_id_condition";
@@ -1423,7 +1418,7 @@ class formulizeFormsHandler {
 					} else {
 						$firstUniqueCheck = true;
 						$value .= "_cloned";
-						while(!$uniqueCheck = $this->isHandleUnique($value)) {
+						while(!$uniqueCheck = $this->isElementHandleUnique($value)) {
 							if($firstUniqueCheck) {
 								$value = $value . "_".$newfid;
 								$firstUniqueCheck = false;

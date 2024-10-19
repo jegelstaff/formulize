@@ -39,7 +39,7 @@ require_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 global $xoopsDB;
 define('formulize_TABLE', $xoopsDB->prefix("formulize"));
 
-class formulizeformulize extends XoopsObject {
+class formulizeElement extends FormulizeObject {
 
 	var $isLinked;
 	var $needsDataType;
@@ -153,11 +153,6 @@ class formulizeformulize extends XoopsObject {
 		return $indexType;
 	}
 
-    static function sanitize_handle_name($handle_name) {
-        // strip non-alphanumeric characters from form and element handles
-        return preg_replace("/[^a-zA-Z0-9_-]+/", "", $handle_name);
-    }
-
     public function assignVar($key, $value) {
         if ("ele_handle" == $key) {
             $value = self::sanitize_handle_name($value);
@@ -260,7 +255,7 @@ class formulizeElementsHandler {
 		return $instance;
 	}
 	function create() {
-		return new formulizeformulize();
+		return new formulizeElement();
 	}
 
 	function get($id){
@@ -290,7 +285,7 @@ class formulizeElementsHandler {
 				$customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
 				$element = $customTypeHandler->create();
 			} else {
-				$element = new formulizeformulize();
+				$element = new formulizeElement();
 			}
 			$element->assignVars($array);
             $element = $this->_setElementProperties($element);
@@ -327,7 +322,7 @@ class formulizeElementsHandler {
     }
 
 	function insert(&$element, $force = false){
-        if( get_class($element) != 'formulizeformulize' AND is_subclass_of($element, 'formulizeformulize') == false){
+        if( get_class($element) != 'formulizeElement' AND is_subclass_of($element, 'formulizeElement') == false){
             return false;
         }
         if( !$element->isDirty() ){
@@ -445,7 +440,7 @@ class formulizeElementsHandler {
 		if($ele_handle === "") {
 			$form_handler =& xoops_getmodulehandler('forms', 'formulize');
 			$ele_handle = $ele_id;
-      while(!$uniqueCheck = $form_handler->isHandleUnique($ele_handle, $ele_id)) {
+      while(!$uniqueCheck = $form_handler->isElementHandleUnique($ele_handle, $ele_id)) {
         $ele_handle = $ele_handle . "_copy";
       }
 			$element->setVar('ele_handle', $ele_handle);
@@ -525,7 +520,7 @@ class formulizeElementsHandler {
 				$customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
 				$elements = $customTypeHandler->create();
 			} else {
-				$elements = new formulizeformulize();
+				$elements = new formulizeElement();
 			}
 			$elements->assignVars($myrow);
             $elements = $this->_setElementProperties($elements);

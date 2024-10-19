@@ -35,7 +35,7 @@ if (!defined("XOOPS_ROOT_PATH")) {
 }
 
 require_once XOOPS_ROOT_PATH.'/kernel/object.php';
-class formulizeScreen extends xoopsObject {
+class formulizeScreen extends FormulizeObject {
 
 	function __construct() {
         parent::__construct();
@@ -147,6 +147,25 @@ class formulizeScreen extends xoopsObject {
 
         return true;
     }
+
+	// check to see if a handle is unique within a form
+	function isScreenHandleUnique($handle, $screen_id="") {
+		$handle = self::sanitize_handle_name($handle);
+		global $xoopsDB;
+		$screen_id_condition = $screen_id ? " AND sid != " . intval($screen_id) : "";
+		$sql = "SELECT count(screen_handle) FROM " . $xoopsDB->prefix("formulize_screen") . " WHERE screen_handle = '" . formulize_db_escape($handle) . "' $screen_id_condition";
+		if(!$res = $xoopsDB->query($sql)) {
+			print "Error: could not verify uniqueness of handle '$handle'";
+		} else {
+			$row = $xoopsDB->fetchRow($res);
+			if($row[0] == 0) { // zero rows found with that handle in this form
+				return true;
+			} else {
+				return false;
+			}
+		}
+	}
+
 }
 
 

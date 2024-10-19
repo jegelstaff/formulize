@@ -32,7 +32,7 @@
 
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 
-class formulizeDummyElement extends formulizeformulize {
+class formulizeDummyElement extends formulizeElement {
 
     function __construct() {
         $this->name = "The Dummy Element";
@@ -68,7 +68,7 @@ class formulizeDummyElementHandler extends formulizeElementsHandler {
     // when dealing with new elements, $element might be FALSE
     function adminPrepare($element) {
         $dataToSendToTemplate = array();
-        if(is_object($element) AND is_subclass_of($element, 'formulizeformulize')) {
+        if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
             $ele_value = $element->getVar('ele_value');
             if($ele_value[0] == "foo") {
                 $dataToSendToTemplate['first'] = "First value is 'foo'!"; // key is referenced in the template
@@ -88,7 +88,7 @@ class formulizeDummyElementHandler extends formulizeElementsHandler {
     // $ele_value will be only the values parsed out of the Options tab on the element's admin page, which follow the naming convention elements-ele_value -- other values that should be in ele_value will need to be parsed here from $_POST or elsewhere
     function adminSave($element, $ele_value) {
         $changed = false;
-        if(is_object($element) AND is_subclass_of($element, 'formulizeformulize')) {
+        if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
             $ele_desc = $element->getVar('ele_desc');
             $new_desc = "The default value for this element will be: " . $ele_value[0] . $ele_value[1];
             if($ele_desc != $new_desc) {

@@ -28,7 +28,7 @@
 
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php";
 
-class formulizeProvinceListElement extends formulizeformulize {
+class formulizeProvinceListElement extends formulizeElement {
 
     var $needsDataType;
     var $overrideDataType;

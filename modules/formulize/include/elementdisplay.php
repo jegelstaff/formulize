@@ -578,7 +578,7 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 function _formulize_returnElement($ele) {
   $element = "";
 	if(is_object($ele)) {
-		if(get_class($ele) == "formulizeformulize" OR is_subclass_of($ele, 'formulizeformulize')) {
+		if(get_class($ele) == "formulizeElement" OR is_subclass_of($ele, 'formulizeElement')) {
 			$element = $ele;
 		} else {
 			return false;
