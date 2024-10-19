@@ -466,16 +466,18 @@ function patch40() {
         $sql['element_sort'] = "ALTER TABLE ".$xoopsDB->prefix("formulize") . " ADD `ele_sort` smallint(2) NULL default NULL";
         $sql['sv_entriesperpage'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views") . " ADD `sv_entriesperpage` varchar(4) NOT NULL default ''";
         $sql['viewentryscreen_templates'] = "ALTER TABLE ".$xoopsDB->prefix('formulize_screen_template') . " ADD `viewentryscreen` varchar(10) NOT NULL default ''";
-				$sql['ele_disabledconditions'] = "ALTER TABLE ".$xoopsDB->prefix("formulize"). " ADD `ele_disabledconditions` text NOT NULL";
-				$sql['update_module_name'] = "UPDATE ".$xoopsDB->prefix("modules")." SET name = 'Formulize' WHERE dirname = 'formulize' AND name = 'Forms'";
-				$sql['rewriteruleAddress'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD `rewriteruleAddress` varchar(255) NULL default NULL";
-                $sql['rewriteruleElement'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD `rewriteruleElement` smallint(5) unsigned NOT NULL default 0";
-				$sql['screenTableIndex1'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD FULLTEXT i_rewrite (`rewriteruleAddress`)";
-				$sql['screenTableIndex2'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD INDEX i_fid (`fid`)";
-				$sql['screenTableIndex3'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD INDEX i_frid (`frid`)";
-				unlink(XOOPS_ROOT_PATH.'/cache/adminmenu_english.php');
-				$sql['sv_use_features'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " ADD `sv_use_features` varchar(255) NULL default NULL";
-				$sql['searches_are_fundamental'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " ADD `sv_searches_are_fundamental` tinyint(1) NULL default NULL";
+        $sql['ele_disabledconditions'] = "ALTER TABLE ".$xoopsDB->prefix("formulize"). " ADD `ele_disabledconditions` text NOT NULL";
+        $sql['update_module_name'] = "UPDATE ".$xoopsDB->prefix("modules")." SET name = 'Formulize' WHERE dirname = 'formulize' AND name = 'Forms'";
+        $sql['rewriteruleAddress'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD `rewriteruleAddress` varchar(255) NULL default NULL";
+        $sql['rewriteruleElement'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD `rewriteruleElement` smallint(5) unsigned NOT NULL default 0";
+        $sql['screenTableIndex1'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD FULLTEXT i_rewrite (`rewriteruleAddress`)";
+        $sql['screenTableIndex2'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD INDEX i_fid (`fid`)";
+        $sql['screenTableIndex3'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD INDEX i_frid (`frid`)";
+        unlink(XOOPS_ROOT_PATH.'/cache/adminmenu_english.php');
+        $sql['sv_use_features'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " ADD `sv_use_features` varchar(255) NULL default NULL";
+        $sql['searches_are_fundamental'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " ADD `sv_searches_are_fundamental` tinyint(1) NULL default NULL";
+        $sql['add_screen_handle'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen")." ADD `screen_handle` NOT NULL text default ''";
+        $sql['add_screen_handle_index'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen")." ADD FULLTEXT i_screen_handle (`screen_handle`)";
 
         $needToSetSaveAndLeave = true;
         $needToSetPrintableView = true;
@@ -583,17 +585,21 @@ function patch40() {
                     print "View entry screen option for template screens already added. result: OK<br>";
 				} elseif($key === "ele_disabledconditions") {
                     print "Disabled conditions already added. result: OK<br>";
-								} elseif($key === "sv_use_features") {
-										print "'Use which features' option already added to saved views. result: OK<br>";
-								} elseif($key === "searches_are_fundamental") {
-									print "'Searches-are-fundamental' option already added to saved views. result: OK<br>";
+                } elseif($key === "sv_use_features") {
+                    print "'Use which features' option already added to saved views. result: OK<br>";
+                } elseif($key === "searches_are_fundamental") {
+                    print "'Searches-are-fundamental' option already added to saved views. result: OK<br>";
 				} elseif($key === "rewriteruleAddress") {
                     print "RewriteRule address already added. result: OK<br>";
                 } elseif($key === "rewriteruleElement") {
                     print "RewriteRule element already added. result: OK<br>";
                 } elseif(strstr($key, 'screenTableIndex')) {
                     print "Screen table index already added. result: OK<br>";
-            }else {
+                } elseif($key === "add_screen_handle") {
+                    print "Screen handles already added. result: OK<br>";
+                } elseif($key === "add_screen_handle_index") {
+                    print "Screen handle index already added. result: OK<br>";
+                }else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
             } elseif($key === "on_delete") {
@@ -881,7 +887,7 @@ function patch40() {
                         break;
                 }
             }
-				}
+        }
 
         global $xoopsConfig;
         $themeSql = 'UPDATE '.$xoopsDB->prefix('formulize_screen').' SET theme = "'.$xoopsConfig['theme_set'].'" WHERE theme = ""';

@@ -252,6 +252,7 @@ CREATE TABLE `formulize_screen_form` (
 
 CREATE TABLE `formulize_screen` (
   `sid` int(11) NOT NULL auto_increment,
+  `screen_handle` NOT NULL text default '',
   `title` varchar(255) NOT NULL default '',
   `fid` int(11) NOT NULL default 0,
   `frid` int(11) NOT NULL default 0,
@@ -264,6 +265,7 @@ CREATE TABLE `formulize_screen` (
 	FULLTEXT i_rewrite (`rewriteruleAddress`),
 	INDEX i_fid (`fid`),
 	INDEX i_frid (`frid`),
+  FULLTEXT i_screen_handle (`screen_handle`),
   PRIMARY KEY  (`sid`)
 
 ) ENGINE=InnoDB;
