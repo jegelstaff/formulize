@@ -186,6 +186,20 @@ class formulizeScreenHandler {
 		}
 	}
 
+	function makeHandleUnique($handle, $sid) {
+		$firstUniqueCheck = true;
+		$handle = formulizeScreen::sanitize_handle_name($handle);
+		while (!$uniqueCheck = $this->isScreenHandleUnique($handle, $sid)) {
+			if ($firstUniqueCheck AND $sid) {
+				$handle = $handle . "_".$sid;
+				$firstUniqueCheck = false;
+			} else {
+				$handle = $handle . "_copy";
+			}
+		}
+		return $handle;
+	}
+
 	// returns an array of screen objects
     function &getObjects($criteria = null, $fid = 0, $appid = -1, $sort = null, $order = null, $paged = false, $offset = -1, $limit = 20) {
         $sql = "SELECT * FROM " . $this->db->prefix("formulize_screen") . " AS screentable";

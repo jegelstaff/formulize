@@ -34,7 +34,6 @@ if(!isset($processedValues)) {
   return;
 }
 
-
 $aid = intval($_POST['aid']);
 $sid = $_POST['formulize_admin_key'];
 $fid = intval($_POST['formulize_admin_fid']);
@@ -48,7 +47,6 @@ if($formObject->getVar('lockedform')) {
 if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
   return;
 }
-
 
 $screens = $processedValues['screens'];
 
@@ -97,7 +95,16 @@ if($isNew) {
   $screen = $screen_handler->get($sid);
 }
 
+if (!strlen($screens['screenHandle']) AND $sid) {
+	$screens['screenHandle'] = $sid;
+}
+$screens['screenHandle'] = $screen_handler->makeHandleUnique($screens['screenHandle'], ($sid ? $sid : ""));
+if ($screens['screenHandle'] != $processedValues['screens']['screenHandle']) {
+	$_POST['reload_names_page'] = 1;
+}
+
 $screen->setVar('title',$screens['title']);
+$screen->setVar('screenHandle',$screens['screenHandle']);
 $screen->setVar('fid',$fid);
 $screen->setVar('type',$screens['type']);
 $screen->setVar('useToken',$screens['useToken']);
@@ -107,6 +114,14 @@ $screen->setVar('rewriteruleElement', intval($screens['rewriteruleElement']));
 
 if(!$sid = $screen_handler->insert($screen)) {
   print "Error: could not save the screen properly: ".$xoopsDB->error();
+}
+
+// replace blank handle with screen id, must be done after insert in case we're dealing with new screen
+if($screens['screenHandle'] == '') {
+	$screen->setVar('screenHandle', $screen_handler->makeHandleUnique($sid, $sid));
+	if(!$sid = $screen_handler->insert($screen)) {
+		print "Error: could not update new screen with screen id: ".$xoopsDB->error();
+	}
 }
 
 $reloadNow = false;
