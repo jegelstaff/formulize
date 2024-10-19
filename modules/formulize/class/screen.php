@@ -220,19 +220,19 @@ class formulizeScreenHandler {
 
 	function get($sid_or_screen_handle) {
 		if (is_numeric($sid_or_screen_handle)) {
-			$sql = 'SELECT * FROM '.$this->db->prefix('formulize_screen').' WHERE sid='.$sid_or_screen_handle;
-        } else {
-            $sql = 'SELECT * FROM '.$this->db->prefix('formulize_screen').' WHERE screen_handle="'.formulize_db_escape($sid_or_screen_handle).'"';
-        }
-        if (!$result = $this->db->query($sql)) {
-            return false;
-        }
-        $numrows = $this->db->getRowsNum($result);
-        if ($numrows == 1) {
-            $screen = new formulizeScreen();
-            $screen->assignVars($this->db->fetchArray($result));
-            return $screen;
-        }
+			$sql = 'SELECT * FROM '.$this->db->prefix('formulize_screen').' WHERE sid='.intval($sid_or_screen_handle);
+		} else {
+				$sql = 'SELECT * FROM '.$this->db->prefix('formulize_screen').' WHERE screen_handle="'.formulize_db_escape($sid_or_screen_handle).'"';
+		}
+		if (!$result = $this->db->query($sql)) {
+				return false;
+		}
+		$numrows = $this->db->getRowsNum($result);
+		if ($numrows == 1) {
+				$screen = new formulizeScreen();
+				$screen->assignVars($this->db->fetchArray($result));
+				return $screen;
+		}
 		return false;
 	}
 
