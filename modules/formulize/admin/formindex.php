@@ -814,6 +814,75 @@ function patch40() {
 
 				}
 
+        // convert any code files to use handles instead of id numbers (which was the original implementation, as used in the patch code above)
+        $codeFiles = scandir(XOOPS_ROOT_PATH.'/modules/formulize/code');
+        foreach($codeFiles as $file) {
+            if($file !== '.' AND $file !== '..' AND $file !== 'index.html') {
+                /**
+                 * Names are in the formats:
+                 * derived_[element_id]
+                 * areamodif_[element_id]
+                 * ib_[element_id]
+                 * text_[element_id]
+                 * textarea_[element_id]
+                 * on_before_save_[form_id]
+                 * on_after_save_[form_id]
+                 * on_delete_[form_id]
+                 * custom_edit_check_[form_id]
+                 * custom_html_[effect_id - likely 1 in all cases]_[button_id - also called caid in code elsewhere]_[screen_id]
+                 * custom_code_[effect_id - likely 1 in all cases]_[button_id - also called caid in code elsewhere]_[screen_id]
+                 * 
+                 * We will change element_id to element handle
+                 * We will change form_id to form handle
+                 * We will change button_id to the button handle, and screen_id to a newly created screen handle
+                 * 
+                 */
+                $fileNameParts = explode('_', $file);
+                $fileType = $fileNameParts[0];
+                switch($fileType) {
+                    case "derived":
+                    case "areamodif":
+                    case "ib":
+                    case "text":
+                    case "textarea":
+                        $element_handler = xoops_getmodulehandler('elements','formulize');
+                        $element_id = $fileNameParts[1];
+                        if(is_numeric($element_id)) {
+                            $elementObject = $element_handler->get($element_id);
+                            $elementHandle = $elementObject->getVar('ele_handle');
+                            rename(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file, XOOPS_ROOT_PATH.'/modules/formulize/code/'.$fileType.'_'.$elementHandle.'.php');
+                        }
+                        break;
+                    case "on_before_save":
+                    case "on_after_save":
+                    case "on_delete":
+                    case "custom_edit_check":
+                        $form_handler = xoops_getmodulehandler('forms','formulize');
+                        $form_id = $fileNameParts[1];
+                        if(is_numeric($form_id)) {
+                            $formObject = $form_handler->get($form_id);
+                            $formHandle = $formObject->getVar('form_handle');
+                            rename(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file, XOOPS_ROOT_PATH.'/modules/formulize/code/'.$fileType.'_'.$formHandle.'.php');
+                        }
+                        break;
+                    case "custom_html":
+                    case "custom_code":
+                        $screen_handler = xoops_getmodulehandler('listOfEntriesScreen','formulize');
+                        $screen_id = $fileNameParts[3];
+                        $button_id = $fileNameParts[2];
+                        $effect_id = $fileNameParts[1];
+                        if(is_numeric($screen_id)) {
+                            $screenObject = $screen_handler->get($screen_id);
+                            $screenHandle = $screenObject->getVar('screen_handle');
+                            $customActions = $screenObject->getVar('customactions');
+                            $buttonHandle = $customActions[$button_id]['handle'];
+                            rename(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file, XOOPS_ROOT_PATH.'/modules/formulize/code/'.$fileType.'_'.$effect_id.'_'.$buttonHandle.'_'.$screenHandle.'.php');
+                        }
+                        break;
+                }
+            }
+				}
+
         global $xoopsConfig;
         $themeSql = 'UPDATE '.$xoopsDB->prefix('formulize_screen').' SET theme = "'.$xoopsConfig['theme_set'].'" WHERE theme = ""';
         if(!$res = $xoopsDB->query($themeSql)) {
