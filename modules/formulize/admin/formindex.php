@@ -132,8 +132,8 @@ function patch40() {
         foreach($templateFiles as $templateFile) {
             if($templateFile !== '.' AND $templateFile !== '..' AND $templateFile !== 'index.html') {
                 unlink(XOOPS_ROOT_PATH.'/templates_c/'.$templateFile);
-            } 
-        }       
+            }
+        }
 
         $testsql = "SHOW TABLES";
         $resultst = $xoopsDB->query($testsql);
@@ -607,7 +607,20 @@ function patch40() {
                 if(!$xoopsDB->query("UPDATE ".$xoopsDB->prefix('config')." SET conf_value = 1 WHERE conf_name = 'useOldCustomButtonEffectWriting'")) {
                     print "Error setting preference for old custom button writing method<br>";
                 }
-            }
+            } elseif($key === "add_screen_handle") {
+							// screen handles successfully added, so this one time and one time only, never again (since handles will not be added again, sql will fail and this else won't kick in)
+							// set the initial screen handles, based on the titles
+							$screenHandleData = "SELECT `sid`, `title` FROM ".$xoopsDB->prefix('formulize_screen');
+							if($res = $xoopsDB->query($screenHandleData)) {
+								$screen_handler = xoops_getmodulehandler('listOfEntriesScreen','formulize');
+								while($row = $xoopsDB->fetchRow($res)) {
+									$screenHandle = $screen_handler->makeHandleUnique($row[1], $row[0]);
+									if(!$xoopsDB->query("UPDATE ".$xoopsDB->prefix('formulize_screen')." SET screen_handle = \"".formulize_db_escape($screenHandle)."\" WHERE sid = ".intval($row[0]))) {
+										print "Error: could not set the initial handle for screen ".intval($row[0]).", '".$row[1]."'. This may not be critical, unless you have custom buttons with PHP code. You should manually set a handle for the screen. Contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
+									}
+								}
+							}
+						}
         }
 
 				// add opening <?php tags to code snippets that don't have them... only if we haven't yet moved custom_code to a renamed code folder!
@@ -807,10 +820,10 @@ function patch40() {
 											$code = $effectSettings['code'];
 											break;
 									}
-                                    if($code) {
+                  if($code) {
 									    $filename = $actionSettings['applyto'].'_'.$effectId.'_'.$actionId.'_'.$record['sid'].'.php';
 									    file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename, $code);
-                                    }
+                  }
 								}
 							}
 						}
@@ -837,11 +850,11 @@ function patch40() {
                  * custom_edit_check_[form_id]
                  * custom_html_[effect_id - likely 1 in all cases]_[button_id - also called caid in code elsewhere]_[screen_id]
                  * custom_code_[effect_id - likely 1 in all cases]_[button_id - also called caid in code elsewhere]_[screen_id]
-                 * 
+                 *
                  * We will change element_id to element handle
                  * We will change form_id to form handle
                  * We will change button_id to the button handle, and screen_id to a newly created screen handle
-                 * 
+                 *
                  */
                 $fileNameParts = explode('_', $file);
                 $fileType = $fileNameParts[0];
