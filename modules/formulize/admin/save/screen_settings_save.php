@@ -103,7 +103,7 @@ if ($screens['screen_handle'] != $processedValues['screens']['screen_handle']) {
 	$_POST['reload_names_page'] = 1;
 }
 
-$updateCustomButtonCodeFiles = ($screen->getVar('screen_handle') === $screens['screen_handle']) ? false : $screen->getVar('screen_handle');
+$originalScreenHandle = $screen->getVar('screen_handle');
 
 $screen->setVar('title',$screens['title']);
 $screen->setVar('screen_handle',$screens['screen_handle']);
@@ -126,15 +126,14 @@ if($screens['screen_handle'] == '') {
 	}
 }
 
-if($updateCustomButtonCodeFiles) {
+if($originalScreenHandle !== $screen->getVar('screen_handle')) {
 	$currentCustomActionData = $screen->getVar('customactions');
 	foreach($currentCustomActionData as $buttonId=>$buttonData) {
 		foreach($buttonData as $key=>$value) {
 			if(is_numeric($key) AND is_array($value) AND (isset($value['code']) OR isset($value['html']))) {
 				$effectId = $key;
 				$buttonHandle = $buttonData['handle'];
-				$screen_handle = $updateCustomButtonCodeFiles; // set above when we determine if this whole bit is required
-				rename(XOOPS_ROOT_PATH."/modules/formulize/code/custom_code_".$effectId."_".$buttonHandle."_".$screen_handle.".php", XOOPS_ROOT_PATH."/modules/formulize/code/custom_code_".$effectId."_".$buttonHandle."_".$screen->getVar('screen_handle').".php");
+				rename(XOOPS_ROOT_PATH."/modules/formulize/code/custom_code_".$effectId."_".$buttonHandle."_".$originalScreenHandle.".php", XOOPS_ROOT_PATH."/modules/formulize/code/custom_code_".$effectId."_".$buttonHandle."_".$screen->getVar('screen_handle').".php");
 			}
 		}
 	}
