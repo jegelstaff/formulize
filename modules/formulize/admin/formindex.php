@@ -84,7 +84,7 @@ function patch40() {
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
     $checkThisTable = 'formulize_screen';
-		$checkThisField = 'rewriteruleElement';
+		$checkThisField = 'screen_handle';
 		$checkThisProperty = '';
 		$checkPropertyForValue = '';
 
