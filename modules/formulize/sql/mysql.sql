@@ -252,7 +252,7 @@ CREATE TABLE `formulize_screen_form` (
 
 CREATE TABLE `formulize_screen` (
   `sid` int(11) NOT NULL auto_increment,
-  `screen_handle` NOT NULL text default '',
+  `screen_handle` text NOT NULL default '',
   `title` varchar(255) NOT NULL default '',
   `fid` int(11) NOT NULL default 0,
   `frid` int(11) NOT NULL default 0,

@@ -476,7 +476,7 @@ function patch40() {
         unlink(XOOPS_ROOT_PATH.'/cache/adminmenu_english.php');
         $sql['sv_use_features'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " ADD `sv_use_features` varchar(255) NULL default NULL";
         $sql['searches_are_fundamental'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " ADD `sv_searches_are_fundamental` tinyint(1) NULL default NULL";
-        $sql['add_screen_handle'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen")." ADD `screen_handle` NOT NULL text default ''";
+        $sql['add_screen_handle'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen")." ADD `screen_handle` text NOT NULL default ''";
         $sql['add_screen_handle_index'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen")." ADD FULLTEXT i_screen_handle (`screen_handle`)";
 
         $needToSetSaveAndLeave = true;
