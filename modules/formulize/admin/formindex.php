@@ -614,7 +614,7 @@ function patch40() {
 							if($res = $xoopsDB->query($screenHandleData)) {
 								$screen_handler = xoops_getmodulehandler('listOfEntriesScreen','formulize');
 								while($row = $xoopsDB->fetchRow($res)) {
-									$screen_handle = $screen_handler->makeHandleUnique($row[1], $row[0]);
+									$screen_handle = $screen_handler->makeHandleUnique(strtolower($row[1]), $row[0]);
 									if(!$xoopsDB->query("UPDATE ".$xoopsDB->prefix('formulize_screen')." SET screen_handle = \"".formulize_db_escape($screen_handle)."\" WHERE sid = ".intval($row[0]))) {
 										print "Error: could not set the initial handle for screen ".intval($row[0]).", '".$row[1]."'. This may not be critical, unless you have custom buttons with PHP code. You should manually set a handle for the screen. Contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
 									}
