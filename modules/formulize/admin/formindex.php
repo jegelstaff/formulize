@@ -765,7 +765,7 @@ function patch40() {
 					 * $buttonData[$buttonId][$effectCounter]['html']
 					 */
 
-					$elementsWithCodeSQL = "SELECT ele_id, ele_type, ele_value FROM ".$xoopsDB->prefix('formulize')." WHERE
+					$elementsWithCodeSQL = "SELECT ele_handle, ele_type, ele_value FROM ".$xoopsDB->prefix('formulize')." WHERE
 						(ele_type = 'derived')
 						OR (ele_type IN ('ib', 'areamodif') AND ele_value LIKE '%\$value%')
 						OR (ele_type IN ('text', 'textarea') AND ele_value LIKE '%\$default%') ";
@@ -775,14 +775,14 @@ function patch40() {
 								$eleValueKey = $record['ele_type'] == 'text' ? 2 : 0;
 								$ele_value = unserialize($record['ele_value']);
 								$code = $ele_value[$eleValueKey];
-								$filename = $record['ele_type'].'_'.$record['ele_id'].'.php';
+								$filename = $record['ele_type'].'_'.$record['ele_handle'].'.php';
 								file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename, $code);
 						}
 					} else {
 						exit("Error detecting code snippets in elements for converting to files. SQL dump:<br>".$elementsWithCodeSQL."<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
 					}
 
-					$formProceduresSQL = "SELECT id_form as fid, on_before_save, on_after_save, on_delete, custom_edit_check
+					$formProceduresSQL = "SELECT form_handle, on_before_save, on_after_save, on_delete, custom_edit_check
 						FROM ".$xoopsDB->prefix('formulize_id')." WHERE	on_before_save != '' OR on_after_save != ''	OR on_delete != '' OR custom_edit_check != ''";
 					if($res = $xoopsDB->query($formProceduresSQL)) {
 						// loop through the results...
@@ -793,7 +793,7 @@ function patch40() {
 								$record[$event] = trim($record[$event]);
 								if($record[$event]) {
 									$code = $record[$event];
-									$filename = $event.'_'.$record['fid'].'.php';
+									$filename = $event.'_'.$record['form_handle'].'.php';
 									file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename, $code);
 								}
 							}
@@ -802,7 +802,7 @@ function patch40() {
 						exit("Error detecting procedures to convert to files. SQL dump:<br>".$formProceduresSQL."<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
 					}
 
-					$customButtonCodeSQL = "SELECT `sid`, `customactions` FROM ".$xoopsDB->prefix('formulize_screen_listofentries')." WHERE customactions LIKE '%\"custom_code\";%' OR customactions LIKE '%\"custom_html\";%'";
+					$customButtonCodeSQL = "SELECT `screen_handle`, `customactions` FROM ".$xoopsDB->prefix('formulize_screen_listofentries')." WHERE customactions LIKE '%\"custom_code\";%' OR customactions LIKE '%\"custom_html\";%'";
 					if($res = $xoopsDB->query($customButtonCodeSQL)) {
 						// loop through the results...
 						while($record = $xoopsDB->fetchArray($res)) {
@@ -821,7 +821,7 @@ function patch40() {
 											break;
 									}
                   if($code) {
-									    $filename = $actionSettings['applyto'].'_'.$effectId.'_'.$actionId.'_'.$record['sid'].'.php';
+									    $filename = $actionSettings['applyto'].'_'.$effectId.'_'.$actionId.'_'.$record['screen_handle'].'.php';
 									    file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename, $code);
                   }
 								}
@@ -833,7 +833,7 @@ function patch40() {
 
 				}
 
-        // convert any code files to use handles instead of id numbers (which was the original implementation, as used in the patch code above)
+        // convert any code files to use handles instead of id numbers (which was the original implementation in the patch code above, since updated to use handles instead of ids)
         $codeFiles = scandir(XOOPS_ROOT_PATH.'/modules/formulize/code');
         foreach($codeFiles as $file) {
             if($file !== '.' AND $file !== '..' AND $file !== 'index.html') {
