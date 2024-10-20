@@ -89,10 +89,10 @@ foreach($_POST as $k=>$v) {
       foreach($_POST['code_'.$buttonId] as $effectId=>$code) {
         if((string)$effectId === (string)$removeEffect[1] AND (string)$buttonId === (string)$removeEffect[0]) { continue; }
         $buttonData[$buttonId][$effectId]['code'] = "";
-				$filename = "custom_code_".$effectId."_".$buttonData[$buttonId]['handle']."_".$screen->getVar('screenHandle').".php";
+				$filename = "custom_code_".$effectId."_".$buttonData[$buttonId]['handle']."_".$screen->getVar('screen_handle').".php";
 				if(formulize_writeCodeToFile($filename, $code)) {
 					if(isset($currentCustomActionData[$buttonId]['handle']) AND $buttonData[$buttonId]['handle'] != $currentCustomActionData[$buttonId]['handle']) {
-						unlink(XOOPS_ROOT_PATH."/modules/formulize/code/custom_code_".$effectId."_".$currentCustomActionData[$buttonId]['handle']."_".$screen->getVar('screenHandle').".php");
+						unlink(XOOPS_ROOT_PATH."/modules/formulize/code/custom_code_".$effectId."_".$currentCustomActionData[$buttonId]['handle']."_".$screen->getVar('screen_handle').".php");
 					}
 				}
       }
@@ -101,10 +101,10 @@ foreach($_POST as $k=>$v) {
       foreach($_POST['html_'.$buttonId] as $effectId=>$html) {
         if((string)$effectId === (string)$removeEffect[1] AND (string)$buttonId === (string)$removeEffect[0]) { continue; }
         $buttonData[$buttonId][$effectId]['html'] = "";
-				$filename = "custom_html_".$effectId."_".$buttonData[$buttonId]['handle']."_".$screen->getVar('screenHandle').".php";
+				$filename = "custom_html_".$effectId."_".$buttonData[$buttonId]['handle']."_".$screen->getVar('screen_handle').".php";
 				if(formulize_writeCodeToFile($filename, $html)) {
 					if(isset($currentCustomActionData[$buttonId]['handle']) AND $buttonData[$buttonId]['handle'] != $currentCustomActionData[$buttonId]['handle']) {
-						unlink(XOOPS_ROOT_PATH."/modules/formulize/code/custom_html_".$effectId."_".$currentCustomActionData[$buttonId]['handle']."_".$screen->getVar('screenHandle').".php");
+						unlink(XOOPS_ROOT_PATH."/modules/formulize/code/custom_html_".$effectId."_".$currentCustomActionData[$buttonId]['handle']."_".$screen->getVar('screen_handle').".php");
 					}
 				}
       }

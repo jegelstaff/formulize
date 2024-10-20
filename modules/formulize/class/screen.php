@@ -40,7 +40,7 @@ class formulizeScreen extends FormulizeObject {
 	function __construct() {
         parent::__construct();
 		$this->initVar('sid', XOBJ_DTYPE_INT, '', true);
-        $this->initVar('screenHandle', XOBJ_DTYPE_TXTBOX, '', 255);
+        $this->initVar('screen_handle', XOBJ_DTYPE_TXTBOX, '', 255);
 		$this->initVar('title', XOBJ_DTYPE_TXTBOX, '', true, 255);
 		$this->initVar('fid', XOBJ_DTYPE_INT, '', true);
 		$this->initVar('frid', XOBJ_DTYPE_INT, '', true);
@@ -295,9 +295,9 @@ class formulizeScreenHandler {
             ${$k} = $v;
         }
         if (!$sid) {
-            $sql = sprintf("INSERT INTO %s (screen_handle, title, fid, frid, type, useToken, anonNeedsPasscode, theme, rewriteruleAddress, rewriteruleElement) VALUES (%s, %s, %u, %u, %s, %u, %u, %s, %s, %u)", $this->db->prefix('formulize_screen'), $this->db->quoteString($screenHandle), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $anonNeedsPasscode, $this->db->quoteString($theme), $this->db->quoteString($rewriteruleAddress), $rewriteruleElement);
+            $sql = sprintf("INSERT INTO %s (screen_handle, title, fid, frid, type, useToken, anonNeedsPasscode, theme, rewriteruleAddress, rewriteruleElement) VALUES (%s, %s, %u, %u, %s, %u, %u, %s, %s, %u)", $this->db->prefix('formulize_screen'), $this->db->quoteString($screen_handle), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $anonNeedsPasscode, $this->db->quoteString($theme), $this->db->quoteString($rewriteruleAddress), $rewriteruleElement);
         } else {
-            $sql = sprintf("UPDATE %s SET screen_handle = %s, title = %s, fid = %u, frid = %u, type = %s, useToken = %u, anonNeedsPasscode = %u, theme = %s, rewriteruleAddress = %s, rewriteruleElement = %u WHERE sid = %u", $this->db->prefix('formulize_screen'), $this->db->quoteString($screenHandle), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $anonNeedsPasscode, $this->db->quoteString($theme), $this->db->quoteString($rewriteruleAddress), $rewriteruleElement, $sid);
+            $sql = sprintf("UPDATE %s SET screen_handle = %s, title = %s, fid = %u, frid = %u, type = %s, useToken = %u, anonNeedsPasscode = %u, theme = %s, rewriteruleAddress = %s, rewriteruleElement = %u WHERE sid = %u", $this->db->prefix('formulize_screen'), $this->db->quoteString($screen_handle), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $anonNeedsPasscode, $this->db->quoteString($theme), $this->db->quoteString($rewriteruleAddress), $rewriteruleElement, $sid);
         }
         $result = $this->db->query($sql);
         if (!$result) {

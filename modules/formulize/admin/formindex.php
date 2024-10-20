@@ -614,8 +614,8 @@ function patch40() {
 							if($res = $xoopsDB->query($screenHandleData)) {
 								$screen_handler = xoops_getmodulehandler('listOfEntriesScreen','formulize');
 								while($row = $xoopsDB->fetchRow($res)) {
-									$screenHandle = $screen_handler->makeHandleUnique($row[1], $row[0]);
-									if(!$xoopsDB->query("UPDATE ".$xoopsDB->prefix('formulize_screen')." SET screen_handle = \"".formulize_db_escape($screenHandle)."\" WHERE sid = ".intval($row[0]))) {
+									$screen_handle = $screen_handler->makeHandleUnique($row[1], $row[0]);
+									if(!$xoopsDB->query("UPDATE ".$xoopsDB->prefix('formulize_screen')." SET screen_handle = \"".formulize_db_escape($screen_handle)."\" WHERE sid = ".intval($row[0]))) {
 										print "Error: could not set the initial handle for screen ".intval($row[0]).", '".$row[1]."'. This may not be critical, unless you have custom buttons with PHP code. You should manually set a handle for the screen. Contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
 									}
 								}
@@ -892,10 +892,10 @@ function patch40() {
                         $effect_id = $fileNameParts[1];
                         if(is_numeric($screen_id)) {
                             $screenObject = $screen_handler->get($screen_id);
-                            $screenHandle = $screenObject->getVar('screen_handle');
+                            $screen_handle = $screenObject->getVar('screen_handle');
                             $customActions = $screenObject->getVar('customactions');
                             $buttonHandle = $customActions[$button_id]['handle'];
-                            rename(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file, XOOPS_ROOT_PATH.'/modules/formulize/code/'.$fileType.'_'.$effect_id.'_'.$buttonHandle.'_'.$screenHandle.'.php');
+                            rename(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file, XOOPS_ROOT_PATH.'/modules/formulize/code/'.$fileType.'_'.$effect_id.'_'.$buttonHandle.'_'.$screen_handle.'.php');
                         }
                         break;
                 }

@@ -56,7 +56,7 @@ if ($screen_id == "new") {
     $settings['useToken'] = $formulizeConfig['useToken'];
     $settings['anonNeedsPasscode'] = 1;
     $screenName = "New screen";
-		$screenHandle = "";
+		$screen_handle = "";
 } else {
     $screen_handler = xoops_getmodulehandler('screen', 'formulize');
     $screen = $screen_handler->get($screen_id);
@@ -97,7 +97,7 @@ if ($screen_id == "new") {
     $screen = $screen_handler->get($screen_id);
 
     $screenName = $screen->getVar('title');
-		$screenHandle = $screen->getVar('screenHandle');
+		$screen_handle = $screen->getVar('screen_handle');
     $form_id = $screen->form_id();
 
     $adminPage["template"] = "ABC, mellonfarmers!";
@@ -528,7 +528,7 @@ $common['sid'] = $screen_id;
 $common['fid'] = $form_id;
 $common['aid'] = $aid;
 $common['uid'] = $xoopsUser->getVar('uid');
-$common['screenHandle'] = $screenHandle;
+$common['screen_handle'] = $screen_handle;
 
 // generate a group list for use with the custom buttons
 $sql = "SELECT name, groupid FROM ".$xoopsDB->prefix("groups")." ORDER BY groupid";

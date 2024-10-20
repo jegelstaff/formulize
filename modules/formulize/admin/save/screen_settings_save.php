@@ -95,16 +95,16 @@ if($isNew) {
   $screen = $screen_handler->get($sid);
 }
 
-if (!strlen($screens['screenHandle']) AND $sid) {
-	$screens['screenHandle'] = $sid;
+if (!strlen($screens['screen_handle']) AND $sid) {
+	$screens['screen_handle'] = $sid;
 }
-$screens['screenHandle'] = $screen_handler->makeHandleUnique($screens['screenHandle'], ($sid ? $sid : ""));
-if ($screens['screenHandle'] != $processedValues['screens']['screenHandle']) {
+$screens['screen_handle'] = $screen_handler->makeHandleUnique($screens['screen_handle'], ($sid ? $sid : ""));
+if ($screens['screen_handle'] != $processedValues['screens']['screen_handle']) {
 	$_POST['reload_names_page'] = 1;
 }
 
 $screen->setVar('title',$screens['title']);
-$screen->setVar('screenHandle',$screens['screenHandle']);
+$screen->setVar('screen_handle',$screens['screen_handle']);
 $screen->setVar('fid',$fid);
 $screen->setVar('type',$screens['type']);
 $screen->setVar('useToken',$screens['useToken']);
@@ -117,8 +117,8 @@ if(!$sid = $screen_handler->insert($screen)) {
 }
 
 // replace blank handle with screen id, must be done after insert in case we're dealing with new screen
-if($screens['screenHandle'] == '') {
-	$screen->setVar('screenHandle', $screen_handler->makeHandleUnique($sid, $sid));
+if($screens['screen_handle'] == '') {
+	$screen->setVar('screen_handle', $screen_handler->makeHandleUnique($sid, $sid));
 	if(!$sid = $screen_handler->insert($screen)) {
 		print "Error: could not update new screen with screen id: ".$xoopsDB->error();
 	}

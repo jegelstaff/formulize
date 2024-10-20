@@ -22,8 +22,8 @@
 	  <div class="form-item">
 		  <label for="screens-title">Name of the screen:</label>
 		  <input type="text" id="screens-title" name="screens-title" value="<{$content.title}>" onkeyup="fillHandle()"/>
-			<label for="screens-screenHandle">Handle for the screen:</label>
-			<input type="text" id="screens-screenHandle" name="screens-screenHandle" value="<{$content.screenHandle}>"/>
+			<label for="screens-screen_handle">Handle for the screen:</label>
+			<input type="text" id="screens-screen_handle" name="screens-screen_handle" value="<{$content.screen_handle}>"/>
 			<div class="description">Handles are a way to refer to the screen in any code you write.</div>
 	  </div>
 	  <div class="form-item">
@@ -138,7 +138,7 @@ include "<{$smarty.const.XOOPS_ROOT_PATH}>/modules/formulize/index.php";</blockq
 				var str=$("[name=screems-title]").val();
 				str=str.toLowerCase().replace(new RegExp("[^a-z0-9]","gm"),"_");
 				str=str.replace(new RegExp("_{2,}","gm"),"_").substring(0,20);
-				$("[name=screens-screenHandle]").val(str);
+				$("[name=screens-screen_handle]").val(str);
 			}
 		}
 
