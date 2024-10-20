@@ -856,48 +856,47 @@ function patch40() {
                  * We will change button_id to the button handle, and screen_id to a newly created screen handle
                  *
                  */
-                $fileNameParts = explode('_', $file);
-                $fileType = $fileNameParts[0];
-                switch($fileType) {
-                    case "derived":
-                    case "areamodif":
-                    case "ib":
-                    case "text":
-                    case "textarea":
-                        $element_handler = xoops_getmodulehandler('elements','formulize');
-                        $element_id = $fileNameParts[1];
-                        if(is_numeric($element_id)) {
-                            $elementObject = $element_handler->get($element_id);
-                            $elementHandle = $elementObject->getVar('ele_handle');
-                            rename(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file, XOOPS_ROOT_PATH.'/modules/formulize/code/'.$fileType.'_'.$elementHandle.'.php');
-                        }
-                        break;
-                    case "on_before_save":
-                    case "on_after_save":
-                    case "on_delete":
-                    case "custom_edit_check":
-                        $form_handler = xoops_getmodulehandler('forms','formulize');
-                        $form_id = $fileNameParts[1];
-                        if(is_numeric($form_id)) {
-                            $formObject = $form_handler->get($form_id);
-                            $formHandle = $formObject->getVar('form_handle');
-                            rename(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file, XOOPS_ROOT_PATH.'/modules/formulize/code/'.$fileType.'_'.$formHandle.'.php');
-                        }
-                        break;
-                    case "custom_html":
-                    case "custom_code":
-                        $screen_handler = xoops_getmodulehandler('listOfEntriesScreen','formulize');
-                        $screen_id = $fileNameParts[3];
-                        $button_id = $fileNameParts[2];
-                        $effect_id = $fileNameParts[1];
-                        if(is_numeric($screen_id)) {
-                            $screenObject = $screen_handler->get($screen_id);
-                            $screen_handle = $screenObject->getVar('screen_handle');
-                            $customActions = $screenObject->getVar('customactions');
-                            $buttonHandle = $customActions[$button_id]['handle'];
-                            rename(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file, XOOPS_ROOT_PATH.'/modules/formulize/code/'.$fileType.'_'.$effect_id.'_'.$buttonHandle.'_'.$screen_handle.'.php');
-                        }
-                        break;
+                $fileNameParts = explode('_', substr($file, 0, -4));
+                $firstPart = $fileNameParts[0];
+                $secondPart = $fileNameParts[1];
+                $thirdPart = $fileNameParts[2];
+                if($firstPart == "derived" 
+                  OR $firstPart == "areamodif" 
+                  OR $firstPart == "ib" 
+                  OR $firstPart == "text" 
+                  OR $firstPart == "textarea") {
+                    $element_handler = xoops_getmodulehandler('elements','formulize');
+                    $element_id = $fileNameParts[1];
+                    if(is_numeric($element_id)) {
+                        $elementObject = $element_handler->get($element_id);
+                        $elementHandle = $elementObject->getVar('ele_handle');
+                        rename(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file, XOOPS_ROOT_PATH.'/modules/formulize/code/'.$firstPart.'_'.$elementHandle.'.php');
+                    }
+                } elseif($firstPart.'_'.$secondPart.'_'.$thirdPart == "on_before_save" 
+                  OR $firstPart.'_'.$secondPart.'_'.$thirdPart == "on_after_save" 
+                  OR $firstPart.'_'.$secondPart == "on_delete"
+                  OR $firstPart.'_'.$secondPart.'_'.$thirdPart == "custom_edit_check") {
+                    $form_handler = xoops_getmodulehandler('forms','formulize');
+                    $form_id = $fileNameParts[count($fileNameParts)-1];
+                    if(is_numeric($form_id)) {
+                        $fileType = $firstPart.'_'.$secondPart == "on_delete" ? "on_delete" : $firstPart.'_'.$secondPart.'_'.$thirdPart;
+                        $formObject = $form_handler->get($form_id);
+                        $formHandle = $formObject->getVar('form_handle');
+                        rename(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file, XOOPS_ROOT_PATH.'/modules/formulize/code/'.$fileType.'_'.$formHandle.'.php');
+                    }
+                } elseif($firstPart.'_'.$secondPart == "custom_html"
+                  OR $firstPart.'_'.$secondPart == "custom_code") {
+                    $screen_handler = xoops_getmodulehandler('listOfEntriesScreen','formulize');
+                    $screen_id = $fileNameParts[4];
+                    $button_id = $fileNameParts[3];
+                    $effect_id = $fileNameParts[2];
+                    if(count($fileNameParts) == is_numeric($screen_id) AND is_numeric($button_id) AND is_numeric($effect_id)) {
+                        $screenObject = $screen_handler->get($screen_id);
+                        $screen_handle = $screenObject->getVar('screen_handle');
+                        $customActions = $screenObject->getVar('customactions');
+                        $buttonHandle = $customActions[$button_id]['handle'];
+                        rename(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file, XOOPS_ROOT_PATH.'/modules/formulize/code/'.$firstPart.'_'.$secondPart.'_'.$effect_id.'_'.$buttonHandle.'_'.$screen_handle.'.php');
+                    }
                 }
             }
         }
