@@ -166,7 +166,15 @@ if($original_handle) {
 						$xoopsDB->query($updateSQL);
 				}
 		}
-
+		// update element code file names
+		$elementTypes = array('ib', 'areamodif', 'text', 'textarea', 'derived');
+		foreach($elementTypes as $type) {
+			$oldFileName = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$type.'_'.$original_handle.'.php';
+			$newFileName = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$type.'_'.$ele_handle.'.php';
+			if(file_exists($oldFileName)) {
+				rename($oldFileName, $newFileName);
+			}
+		}
 	}
 }
 
