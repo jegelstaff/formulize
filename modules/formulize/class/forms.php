@@ -718,10 +718,10 @@ class formulizeFormsHandler {
 				$on_delete = trim($on_delete) != "<?php" ? $on_delete : "";
 				$custom_edit_check = trim($custom_edit_check) != "<?php" ? $custom_edit_check : "";
 
-				formulize_writeCodeToFile('on_before_save_'.$id_form.'.php', $on_before_save);
-				formulize_writeCodeToFile('on_after_save_'.$id_form.'.php', $on_after_save);
-				formulize_writeCodeToFile('on_delete_'.$id_form.'.php', $on_delete);
-				formulize_writeCodeToFile('custom_edit_check_'.$id_form.'.php', $custom_edit_check);
+				formulize_writeCodeToFile('on_before_save_'.formulizeForm::sanitize_handle_name($form_handle).'.php', $on_before_save);
+				formulize_writeCodeToFile('on_after_save_'.formulizeForm::sanitize_handle_name($form_handle).'.php', $on_after_save);
+				formulize_writeCodeToFile('on_delete_'.formulizeForm::sanitize_handle_name($form_handle).'.php', $on_delete);
+				formulize_writeCodeToFile('custom_edit_check_'.formulizeForm::sanitize_handle_name($form_handle).'.php', $custom_edit_check);
 
 				return $id_form;
 

@@ -52,7 +52,7 @@ class formulizeTextElement extends formulizeElement {
 			if($key == 'ele_value') {
 				$valueToWrite = is_array($value) ? $value : unserialize($value);
 				if(strstr((string)$valueToWrite[2], "\$default")) {
-					$filename = 'text_'.$this->getVar('ele_id').'.php';
+					$filename = 'text_'.$this->getVar('ele_handle').'.php';
 					formulize_writeCodeToFile($filename, $valueToWrite[2]);
 					$valueToWrite[2] = '';
 					$value = is_array($value) ? $valueToWrite : serialize($valueToWrite);

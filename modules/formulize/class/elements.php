@@ -171,7 +171,7 @@ class formulizeElement extends FormulizeObject {
 				OR (($ele_type == 'ib' OR $ele_type == 'areamodif') AND strstr((string)$valueToWrite[0], "\$value"))
 				OR ($ele_type == 'textarea' AND strstr((string)$valueToWrite[0], "\$default"))
 				) {
-				$filename = $ele_type.'_'.$this->getVar('ele_id').'.php';
+				$filename = $ele_type.'_'.$this->getVar('ele_handle').'.php';
 				formulize_writeCodeToFile($filename, $valueToWrite[0]);
 				$valueToWrite[0] = '';
 				$value = is_array($value) ? $valueToWrite : serialize($valueToWrite);
