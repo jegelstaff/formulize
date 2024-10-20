@@ -33,7 +33,7 @@
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
-class formulizeTextElement extends formulizeformulize {
+class formulizeTextElement extends formulizeElement {
 
     function __construct() {
         $this->name = "Textbox";
@@ -52,7 +52,7 @@ class formulizeTextElement extends formulizeformulize {
 			if($key == 'ele_value') {
 				$valueToWrite = is_array($value) ? $value : unserialize($value);
 				if(strstr((string)$valueToWrite[2], "\$default")) {
-					$filename = 'text_'.$this->getVar('ele_id').'.php';
+					$filename = 'text_'.$this->getVar('ele_handle').'.php';
 					formulize_writeCodeToFile($filename, $valueToWrite[2]);
 					$valueToWrite[2] = '';
 					$value = is_array($value) ? $valueToWrite : serialize($valueToWrite);
@@ -66,7 +66,7 @@ class formulizeTextElement extends formulizeformulize {
 			$format = $key == "ele_value" ? "f" : $format;
 			$value = parent::getVar($key, $format);
 			if($key == 'ele_value' AND is_array($value)) {
-				$filename ='text_'.$this->getVar('ele_id').'.php';
+				$filename ='text_'.$this->getVar('ele_handle').'.php';
 				$fileValue = strval(file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename));
 				$value[2] = $fileValue ? $fileValue : $value[2];
 			}
@@ -94,7 +94,7 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
     // when dealing with new elements, $element might be FALSE
     function adminPrepare($element) {
 			$dataToSendToTemplate = array();
-			if(is_object($element) AND is_subclass_of($element, 'formulizeformulize')) { // existing element
+			if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) { // existing element
 				$ele_value = $element->getVar('ele_value');
 				$formlink = createFieldList($ele_value[4], true);
 				$dataToSendToTemplate['formlink'] = $formlink->render();
@@ -120,7 +120,7 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
     // You should return a flag to indicate if any changes were made, so that the page can be reloaded for the user, and they can see the changes you've made here.
     function adminSave($element, $ele_value) {
 			$changed = false;
-			if(is_object($element) AND is_subclass_of($element, 'formulizeformulize')) {
+			if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
 				$ele_value[4] = $_POST['formlink'];
 				$element->setVar('ele_value', $ele_value);
 			}

@@ -32,7 +32,7 @@
 
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 
-class formulizeTimeElement extends formulizeformulize {
+class formulizeTimeElement extends formulizeElement {
 
     function __construct() {
         $this->name = "Time Selector";
@@ -66,7 +66,7 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
     // when dealing with new elements, $element might be FALSE
     function adminPrepare($element) {
         $dataToSendToTemplate = array();
-        if(is_object($element) AND is_subclass_of($element, 'formulizeformulize')) {
+        if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
             // no options for the time element yet, many would be possible, there's lot of config for the jquery plugin
         }
         return $dataToSendToTemplate;
@@ -79,7 +79,7 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
     // You should return a flag to indicate if any changes were made, so that the page can be reloaded for the user, and they can see the changes you've made here.
     function adminSave($element, $ele_value) {
         $changed = false;
-        if(is_object($element) AND is_subclass_of($element, 'formulizeformulize')) {
+        if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
             // no options yet, so nothing to save
         }
         return $changed;

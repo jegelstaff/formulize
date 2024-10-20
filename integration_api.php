@@ -568,36 +568,9 @@ document.addEventListener('DOMContentLoaded', function(event) {
 }
 
 /**
- * Formulize objects extend this class so that their
- * instance fields can be manipulated.
- */
-class FormulizeObject {
-
-	/**
-	 * Get the value of a field in this FormulizeUser
-	 * @param   key     String      The name of the field to be retrieved
-	 * @return      [AnyType] The requested property
-	 */
-	function get($key) {
-		if(!isset($this->{$key}) && $this->{$key} != null) throw new Exception('FormulizeObject - Attempted to get an invalid object field: ' . $key);
-		return $this->{$key};
-	}
-
-	/**
-	 * Set the value of a field in this FormulizeUser
-	 * @param   key     String      The name of the field to be retrieved
-	 * @param   key     Object      The value to be stored in this field
-	 */
-	function set($key, $value) {
-		if(!isset($this->{$key})) throw new Exception('FormulizeObject - Attempted to set an invalid object field: ' . $key);
-		$this->{$key} = $value;
-	}
-}
-
-/**
  * Formulize User Object
  */
-class FormulizeUser extends FormulizeObject {
+class FormulizeUser {
 
 	protected $uid = -1;
 	protected $uname = '';
@@ -632,6 +605,26 @@ class FormulizeUser extends FormulizeObject {
 		}
 	}
     
+	/**
+	 * Get the value of a field in this FormulizeUser
+	 * @param   key     String      The name of the field to be retrieved
+	 * @return      [AnyType] The requested property
+	 */
+	function get($key) {
+		if(!isset($this->{$key}) && $this->{$key} != null) throw new Exception('FormulizeUser - Attempted to get an invalid object field: ' . $key);
+		return $this->{$key};
+	}
+
+	/**
+	 * Set the value of a field in this FormulizeUser
+	 * @param   key     String      The name of the field to be retrieved
+	 * @param   key     Object      The value to be stored in this field
+	 */
+	function set($key, $value) {
+		if(!isset($this->{$key})) throw new Exception('FormulizeUser - Attempted to set an invalid object field: ' . $key);
+		$this->{$key} = $value;
+	}
+
     function insertAndMapUser($groups) {
         
         global $icmsConfigUser;

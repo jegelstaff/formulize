@@ -248,7 +248,7 @@ $thiscap = $elementRenderer->formulize_replaceCurlyBracketVariables($thiscap, $e
  */
 function catalogueGridElement($elementId, $entry_id, $containingGridElementIdOrObject, $formObjectPreppedForRender, $prevEntry = array(), $screen = null) {
 	$element_handler = xoops_getmodulehandler('elements', 'formulize');
-	$gridElementObject = is_a($containingGridElementIdOrObject, 'formulizeformulize') ? $containingGridElementIdOrObject : $element_handler->get($containingGridElementIdOrObject);
+	$gridElementObject = is_a($containingGridElementIdOrObject, 'formulizeElement') ? $containingGridElementIdOrObject : $element_handler->get($containingGridElementIdOrObject);
 	$elementInGridObject = $element_handler->get($elementId);
 	$fid = $elementInGridObject->getVar('id_form');
 	$elementInGridMarkupName = "de_{$fid}_{$entry_id}_{$elementId}";

@@ -104,10 +104,10 @@ if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
 $isNew = $_POST['formulize_admin_key'] == "new" ? true : false;
 foreach ($processedValues['elements'] as $property => $element_handle_name) {
     if ($property == "ele_handle") {
-        $element_handle_name = formulizeForm::sanitize_handle_name($element_handle_name);
+        $element_handle_name = formulizeElement::sanitize_handle_name($element_handle_name);
         if (strlen($element_handle_name)) {
             $firstUniqueCheck = true;
-            while (!$uniqueCheck = $form_handler->isHandleUnique($element_handle_name, $ele_id)) {
+            while (!$uniqueCheck = $form_handler->isElementHandleUnique($element_handle_name, $ele_id)) {
                 if ($firstUniqueCheck) {
                     $element_handle_name = $element_handle_name . "_".$fid;
                     $firstUniqueCheck = false;
@@ -166,7 +166,15 @@ if($original_handle) {
 						$xoopsDB->query($updateSQL);
 				}
 		}
-
+		// update element code file names
+		$elementTypes = array('ib', 'areamodif', 'text', 'textarea', 'derived');
+		foreach($elementTypes as $type) {
+			$oldFileName = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$type.'_'.$original_handle.'.php';
+			$newFileName = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$type.'_'.$ele_handle.'.php';
+			if(file_exists($oldFileName)) {
+				rename($oldFileName, $newFileName);
+			}
+		}
 	}
 }
 

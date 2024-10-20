@@ -32,7 +32,7 @@
 
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 
-class formulizeGoogleFilePickerElement extends formulizeformulize {
+class formulizeGoogleFilePickerElement extends formulizeElement {
 
     function __construct() {
         $this->name = "Google File Picker";
@@ -68,7 +68,7 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
     // when dealing with new elements, $element might be FALSE
     function adminPrepare($element) {
         $ele_value = array();
-        if(is_object($element) AND is_subclass_of($element, 'formulizeformulize')) {
+        if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
             $ele_value = $element->getVar('ele_value');
         }
         return $ele_value;

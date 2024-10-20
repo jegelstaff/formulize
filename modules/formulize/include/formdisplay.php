@@ -4125,7 +4125,7 @@ function _compileGoverningLinkedSelectBoxSourceConditionElements($handle) {
 function get_display_screen_for_subform($subform_element_object) {
     $selected_screen_id = null;
 
-    if ($subform_element_object and is_a($subform_element_object, "formulizeformulize")) {
+    if ($subform_element_object and is_a($subform_element_object, "formulizeElement")) {
         $ele_value = $subform_element_object->getVar('ele_value');
         if (isset($ele_value['display_screen']) AND intval($ele_value['display_screen']) > 0) {
             // use selected screen
