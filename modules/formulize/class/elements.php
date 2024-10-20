@@ -191,7 +191,7 @@ class formulizeElement extends FormulizeObject {
 					OR $ele_type == 'areamodif'
 					OR $ele_type == 'textarea')
 					AND is_array($value)) {
-						$filename = $ele_type.'_'.$this->getVar('ele_id').'.php';
+						$filename = $ele_type.'_'.$this->getVar('ele_handle').'.php';
 						$fileValue = strval(file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename));
 						$value[0] = $fileValue ? $fileValue : $value[0];
 				}

@@ -1234,7 +1234,7 @@ function gatherDerivedValueFieldMetadata($fid, $linkformids) {
      }
      $linkFormIdsFilter = (is_array($linkformids) AND count($linkformids)>0) ? formulize_db_escape(" OR t1.id_form IN (".implode(",",$linkformids).") ") : "";
      $orderByClause = (is_array($linkformids) AND count($linkformids)>0) ? "ORDER BY FIND_IN_SET(t1.id_form, '".implode(",", $linkformids).",$fid'), t1.ele_order" : "ORDER BY t1.ele_order";
-     $sql = "SELECT t1.ele_value, t2.desc_form, t1.ele_handle, t2.id_form, t1.ele_id FROM ".DBPRE."formulize as t1, ".DBPRE."formulize_id as t2 WHERE t1.ele_type='derived' AND (t1.id_form='$fid' $linkFormIdsFilter ) AND t1.id_form=t2.id_form $orderByClause";
+     $sql = "SELECT t1.ele_value, t2.desc_form, t1.ele_handle, t2.id_form FROM ".DBPRE."formulize as t1, ".DBPRE."formulize_id as t2 WHERE t1.ele_type='derived' AND (t1.id_form='$fid' $linkFormIdsFilter ) AND t1.id_form=t2.id_form $orderByClause";
 
      $derivedFieldMetadata = array();
      global $xoopsDB;
@@ -1243,7 +1243,7 @@ function gatherDerivedValueFieldMetadata($fid, $linkformids) {
                $multipleIndexer = array();
                while($row = $xoopsDB->fetchRow($res)) {
                     $ele_value = unserialize($row[0]); // derived fields have ele_value as an array with only one element (that was done to future proof the data model, so we could add other things to ele_value if necessary)
-										$filePath = XOOPS_ROOT_PATH.'/modules/formulize/code/derived_'.$row[4].'.php';
+										$filePath = XOOPS_ROOT_PATH.'/modules/formulize/code/derived_'.$row[2].'.php';
 										if(file_exists($filePath)) {
 											$ele_value[0] = file_get_contents($filePath);
 										}

@@ -519,10 +519,11 @@ EOF;
 			  OR $key == 'on_delete'
 			  OR $key == 'custom_edit_check') {
 				$contents = '';
-				if($fid = $this->getVar('id_form')) {
-				  $filename=XOOPS_ROOT_PATH."/modules/formulize/code/".$key."_".$fid.".php";
+				if(is_numeric($this->getVar('fid'))) {
+					$form_handle = $this->getVar('form_handle');
+				  $filename=XOOPS_ROOT_PATH."/modules/formulize/code/".$key."_".$form_handle.".php";
 				  if(file_exists($filename)) {
-					$contents = file_get_contents($filename);
+						$contents = file_get_contents($filename);
 				  }
 				}
 				return $contents;

@@ -3895,6 +3895,9 @@ function processCustomButton($caid, $thisCustomAction, $sid, $entry_id="", $entr
 		}
 	}
 
+	$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+	$screenObject = $screen_handler->get($sid);
+
 	static $nameIdAddOn = 0; // used to give inline buttons unique names and ids
 
 	$caElements = array();
@@ -3909,13 +3912,13 @@ function processCustomButton($caid, $thisCustomAction, $sid, $entry_id="", $entr
 		$caActions[] = $effectProperties['action'];
 		$caValues[] = $effectProperties['value'];
 		if(isset($effectProperties['code'])) {
-			$filename = "custom_code_".$effectid."_".$caid."_".$sid.".php";
+			$filename = "custom_code_".$effectid."_".$thisCustomAction['handle']."_".$screenObject->getVar('screen_handle').".php";
 			$caPHP[] = strval(file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename));
 		} else {
 			$caPHP[] = "";
 		}
 		if(isset($effectProperties['html'])) {
-			$filename = "custom_html_".$effectid."_".$caid."_".$sid.".php";
+			$filename = "custom_html_".$effectid."_".$thisCustomAction['handle']."_".$screenObject->getVar('screen_handle').".php";
 			$caHTML[$caid.'...'.$effectid.'...'.$entry_id] = strval(file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename));
 			$isHTML = true;
 		} else {
