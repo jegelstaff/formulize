@@ -71,6 +71,7 @@ if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mi
 // watch out for effects hat are supposed to be deleted...don't save them
 $deleteButton = $_POST['deletebutton'];
 $removeEffect = $_POST['removeeffect'] ? explode("_", $_POST['removeeffect']) : array("","");
+$currentCustomActionData = $screen->getVar('customactions');
 
 // read all the button info that was submitted, pack it up and assign it to the screen object
 foreach($_POST as $k=>$v) {
