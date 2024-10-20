@@ -729,6 +729,7 @@ function patch40() {
                     // copy the contents of custom_code to code
                     // then renmove custom_code
                     $files = scandir(XOOPS_ROOT_PATH.'/modules/formulize/custom_code');
+										mkdir(XOOPS_ROOT_PATH.'/modules/formulize/code');
                     foreach ($files as $file) {
                         if ($file !== '.' && $file !== '..') {
                             $sourceFile = XOOPS_ROOT_PATH.'/modules/formulize/custom_code/'.$file;
@@ -802,7 +803,11 @@ function patch40() {
 						exit("Error detecting procedures to convert to files. SQL dump:<br>".$formProceduresSQL."<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
 					}
 
-					$customButtonCodeSQL = "SELECT `screen_handle`, `customactions` FROM ".$xoopsDB->prefix('formulize_screen_listofentries')." WHERE customactions LIKE '%\"custom_code\";%' OR customactions LIKE '%\"custom_html\";%'";
+					$customButtonCodeSQL = "SELECT s.`screen_handle`, l.`customactions`
+						FROM ".$xoopsDB->prefix('formulize_screen_listofentries')." AS l
+						LEFT JOIN ".$xoopsDB->prefix('formulize_screen')." AS s
+						ON l.sid = s.sid
+						WHERE l.customactions LIKE '%\"custom_code\";%' OR customactions LIKE '%\"custom_html\";%'";
 					if($res = $xoopsDB->query($customButtonCodeSQL)) {
 						// loop through the results...
 						while($record = $xoopsDB->fetchArray($res)) {
