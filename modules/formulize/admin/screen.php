@@ -56,6 +56,7 @@ if ($screen_id == "new") {
     $settings['useToken'] = $formulizeConfig['useToken'];
     $settings['anonNeedsPasscode'] = 1;
     $screenName = "New screen";
+		$screen_handle = "";
 } else {
     $screen_handler = xoops_getmodulehandler('screen', 'formulize');
     $screen = $screen_handler->get($screen_id);
@@ -96,6 +97,7 @@ if ($screen_id == "new") {
     $screen = $screen_handler->get($screen_id);
 
     $screenName = $screen->getVar('title');
+		$screen_handle = $screen->getVar('screen_handle');
     $form_id = $screen->form_id();
 
     $adminPage["template"] = "ABC, mellonfarmers!";
@@ -283,15 +285,15 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
       foreach($buttonData as $key=>$value) {
         if (is_numeric($key)) { // effects have numeric keys
           if ($buttonData['applyto'] == 'custom_code') {
-						$filename = "custom_code_".$key."_".$buttonId."_".$screen_id.".php";
+						$filename = "custom_code_".$key."_".$buttonData['handle']."_".$screen_handle.".php";
 						$custom['custombuttons'][$buttonId]['content'][$key]['code'] = file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename);
             $custom['custombuttons'][$buttonId]['content'][$key]['description'] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_CUSTOM_CODE_DESC;
 					} elseif($buttonData['applyto'] == 'custom_code_once') {
-						$filename = "custom_code_".$key."_".$buttonId."_".$screen_id.".php";
+						$filename = "custom_code_".$key."_".$buttonData['handle']."_".$screen_handle.".php";
 						$custom['custombuttons'][$buttonId]['content'][$key]['code'] = file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename);
             $custom['custombuttons'][$buttonId]['content'][$key]['description'] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_CUSTOM_CODE_ONCE_DESC;
           } elseif ($buttonData['applyto'] == 'custom_html') {
-						$filename = "custom_html_".$key."_".$buttonId."_".$screen_id.".php";
+						$filename = "custom_html_".$key."_".$buttonData['handle']."_".$screen_handle.".php";
 						$custom['custombuttons'][$buttonId]['content'][$key]['html'] = file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename);
             $custom['custombuttons'][$buttonId]['content'][$key]['description'] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_CUSTOM_HTML_DESC;
           } else {
@@ -526,6 +528,7 @@ $common['sid'] = $screen_id;
 $common['fid'] = $form_id;
 $common['aid'] = $aid;
 $common['uid'] = $xoopsUser->getVar('uid');
+$common['screen_handle'] = $screen_handle;
 
 // generate a group list for use with the custom buttons
 $sql = "SELECT name, groupid FROM ".$xoopsDB->prefix("groups")." ORDER BY groupid";

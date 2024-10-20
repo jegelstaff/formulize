@@ -84,7 +84,7 @@ function patch40() {
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
     $checkThisTable = 'formulize_screen';
-		$checkThisField = 'rewriteruleElement';
+		$checkThisField = 'screen_handle';
 		$checkThisProperty = '';
 		$checkPropertyForValue = '';
 
@@ -132,8 +132,8 @@ function patch40() {
         foreach($templateFiles as $templateFile) {
             if($templateFile !== '.' AND $templateFile !== '..' AND $templateFile !== 'index.html') {
                 unlink(XOOPS_ROOT_PATH.'/templates_c/'.$templateFile);
-            } 
-        }       
+            }
+        }
 
         $testsql = "SHOW TABLES";
         $resultst = $xoopsDB->query($testsql);
@@ -466,16 +466,18 @@ function patch40() {
         $sql['element_sort'] = "ALTER TABLE ".$xoopsDB->prefix("formulize") . " ADD `ele_sort` smallint(2) NULL default NULL";
         $sql['sv_entriesperpage'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views") . " ADD `sv_entriesperpage` varchar(4) NOT NULL default ''";
         $sql['viewentryscreen_templates'] = "ALTER TABLE ".$xoopsDB->prefix('formulize_screen_template') . " ADD `viewentryscreen` varchar(10) NOT NULL default ''";
-				$sql['ele_disabledconditions'] = "ALTER TABLE ".$xoopsDB->prefix("formulize"). " ADD `ele_disabledconditions` text NOT NULL";
-				$sql['update_module_name'] = "UPDATE ".$xoopsDB->prefix("modules")." SET name = 'Formulize' WHERE dirname = 'formulize' AND name = 'Forms'";
-				$sql['rewriteruleAddress'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD `rewriteruleAddress` varchar(255) NULL default NULL";
-                $sql['rewriteruleElement'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD `rewriteruleElement` smallint(5) unsigned NOT NULL default 0";
-				$sql['screenTableIndex1'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD FULLTEXT i_rewrite (`rewriteruleAddress`)";
-				$sql['screenTableIndex2'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD INDEX i_fid (`fid`)";
-				$sql['screenTableIndex3'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD INDEX i_frid (`frid`)";
-				unlink(XOOPS_ROOT_PATH.'/cache/adminmenu_english.php');
-				$sql['sv_use_features'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " ADD `sv_use_features` varchar(255) NULL default NULL";
-				$sql['searches_are_fundamental'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " ADD `sv_searches_are_fundamental` tinyint(1) NULL default NULL";
+        $sql['ele_disabledconditions'] = "ALTER TABLE ".$xoopsDB->prefix("formulize"). " ADD `ele_disabledconditions` text NOT NULL";
+        $sql['update_module_name'] = "UPDATE ".$xoopsDB->prefix("modules")." SET name = 'Formulize' WHERE dirname = 'formulize' AND name = 'Forms'";
+        $sql['rewriteruleAddress'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD `rewriteruleAddress` varchar(255) NULL default NULL";
+        $sql['rewriteruleElement'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD `rewriteruleElement` smallint(5) unsigned NOT NULL default 0";
+        $sql['screenTableIndex1'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD FULLTEXT i_rewrite (`rewriteruleAddress`)";
+        $sql['screenTableIndex2'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD INDEX i_fid (`fid`)";
+        $sql['screenTableIndex3'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD INDEX i_frid (`frid`)";
+        unlink(XOOPS_ROOT_PATH.'/cache/adminmenu_english.php');
+        $sql['sv_use_features'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " ADD `sv_use_features` varchar(255) NULL default NULL";
+        $sql['searches_are_fundamental'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " ADD `sv_searches_are_fundamental` tinyint(1) NULL default NULL";
+        $sql['add_screen_handle'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen")." ADD `screen_handle` text NOT NULL default ''";
+        $sql['add_screen_handle_index'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen")." ADD FULLTEXT i_screen_handle (`screen_handle`)";
 
         $needToSetSaveAndLeave = true;
         $needToSetPrintableView = true;
@@ -583,17 +585,21 @@ function patch40() {
                     print "View entry screen option for template screens already added. result: OK<br>";
 				} elseif($key === "ele_disabledconditions") {
                     print "Disabled conditions already added. result: OK<br>";
-								} elseif($key === "sv_use_features") {
-										print "'Use which features' option already added to saved views. result: OK<br>";
-								} elseif($key === "searches_are_fundamental") {
-									print "'Searches-are-fundamental' option already added to saved views. result: OK<br>";
+                } elseif($key === "sv_use_features") {
+                    print "'Use which features' option already added to saved views. result: OK<br>";
+                } elseif($key === "searches_are_fundamental") {
+                    print "'Searches-are-fundamental' option already added to saved views. result: OK<br>";
 				} elseif($key === "rewriteruleAddress") {
                     print "RewriteRule address already added. result: OK<br>";
                 } elseif($key === "rewriteruleElement") {
                     print "RewriteRule element already added. result: OK<br>";
                 } elseif(strstr($key, 'screenTableIndex')) {
                     print "Screen table index already added. result: OK<br>";
-            }else {
+                } elseif($key === "add_screen_handle") {
+                    print "Screen handles already added. result: OK<br>";
+                } elseif($key === "add_screen_handle_index") {
+                    print "Screen handle index already added. result: OK<br>";
+                }else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
             } elseif($key === "on_delete") {
@@ -601,7 +607,20 @@ function patch40() {
                 if(!$xoopsDB->query("UPDATE ".$xoopsDB->prefix('config')." SET conf_value = 1 WHERE conf_name = 'useOldCustomButtonEffectWriting'")) {
                     print "Error setting preference for old custom button writing method<br>";
                 }
-            }
+            } elseif($key === "add_screen_handle") {
+							// screen handles successfully added, so this one time and one time only, never again (since handles will not be added again, sql will fail and this else won't kick in)
+							// set the initial screen handles, based on the titles
+							$screenHandleData = "SELECT `sid`, `title` FROM ".$xoopsDB->prefix('formulize_screen');
+							if($res = $xoopsDB->query($screenHandleData)) {
+								$screen_handler = xoops_getmodulehandler('listOfEntriesScreen','formulize');
+								while($row = $xoopsDB->fetchRow($res)) {
+									$screen_handle = $screen_handler->makeHandleUnique(strtolower($row[1]), $row[0]);
+									if(!$xoopsDB->query("UPDATE ".$xoopsDB->prefix('formulize_screen')." SET screen_handle = \"".formulize_db_escape($screen_handle)."\" WHERE sid = ".intval($row[0]))) {
+										print "Error: could not set the initial handle for screen ".intval($row[0]).", '".$row[1]."'. This may not be critical, unless you have custom buttons with PHP code. You should manually set a handle for the screen. Contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
+									}
+								}
+							}
+						}
         }
 
 				// add opening <?php tags to code snippets that don't have them... only if we haven't yet moved custom_code to a renamed code folder!
@@ -746,7 +765,7 @@ function patch40() {
 					 * $buttonData[$buttonId][$effectCounter]['html']
 					 */
 
-					$elementsWithCodeSQL = "SELECT ele_id, ele_type, ele_value FROM ".$xoopsDB->prefix('formulize')." WHERE
+					$elementsWithCodeSQL = "SELECT ele_handle, ele_type, ele_value FROM ".$xoopsDB->prefix('formulize')." WHERE
 						(ele_type = 'derived')
 						OR (ele_type IN ('ib', 'areamodif') AND ele_value LIKE '%\$value%')
 						OR (ele_type IN ('text', 'textarea') AND ele_value LIKE '%\$default%') ";
@@ -756,14 +775,14 @@ function patch40() {
 								$eleValueKey = $record['ele_type'] == 'text' ? 2 : 0;
 								$ele_value = unserialize($record['ele_value']);
 								$code = $ele_value[$eleValueKey];
-								$filename = $record['ele_type'].'_'.$record['ele_id'].'.php';
+								$filename = $record['ele_type'].'_'.$record['ele_handle'].'.php';
 								file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename, $code);
 						}
 					} else {
 						exit("Error detecting code snippets in elements for converting to files. SQL dump:<br>".$elementsWithCodeSQL."<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
 					}
 
-					$formProceduresSQL = "SELECT id_form as fid, on_before_save, on_after_save, on_delete, custom_edit_check
+					$formProceduresSQL = "SELECT form_handle, on_before_save, on_after_save, on_delete, custom_edit_check
 						FROM ".$xoopsDB->prefix('formulize_id')." WHERE	on_before_save != '' OR on_after_save != ''	OR on_delete != '' OR custom_edit_check != ''";
 					if($res = $xoopsDB->query($formProceduresSQL)) {
 						// loop through the results...
@@ -774,7 +793,7 @@ function patch40() {
 								$record[$event] = trim($record[$event]);
 								if($record[$event]) {
 									$code = $record[$event];
-									$filename = $event.'_'.$record['fid'].'.php';
+									$filename = $event.'_'.$record['form_handle'].'.php';
 									file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename, $code);
 								}
 							}
@@ -783,7 +802,7 @@ function patch40() {
 						exit("Error detecting procedures to convert to files. SQL dump:<br>".$formProceduresSQL."<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
 					}
 
-					$customButtonCodeSQL = "SELECT `sid`, `customactions` FROM ".$xoopsDB->prefix('formulize_screen_listofentries')." WHERE customactions LIKE '%\"custom_code\";%' OR customactions LIKE '%\"custom_html\";%'";
+					$customButtonCodeSQL = "SELECT `screen_handle`, `customactions` FROM ".$xoopsDB->prefix('formulize_screen_listofentries')." WHERE customactions LIKE '%\"custom_code\";%' OR customactions LIKE '%\"custom_html\";%'";
 					if($res = $xoopsDB->query($customButtonCodeSQL)) {
 						// loop through the results...
 						while($record = $xoopsDB->fetchArray($res)) {
@@ -801,10 +820,10 @@ function patch40() {
 											$code = $effectSettings['code'];
 											break;
 									}
-                                    if($code) {
-									    $filename = $actionSettings['applyto'].'_'.$effectId.'_'.$actionId.'_'.$record['sid'].'.php';
+                  if($code) {
+									    $filename = $actionSettings['applyto'].'_'.$effectId.'_'.$actionId.'_'.$record['screen_handle'].'.php';
 									    file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename, $code);
-                                    }
+                  }
 								}
 							}
 						}
@@ -813,6 +832,74 @@ function patch40() {
 					}
 
 				}
+
+        // convert any code files to use handles instead of id numbers (which was the original implementation in the patch code above, since updated to use handles instead of ids)
+        $codeFiles = scandir(XOOPS_ROOT_PATH.'/modules/formulize/code');
+        foreach($codeFiles as $file) {
+            if($file !== '.' AND $file !== '..' AND $file !== 'index.html') {
+                /**
+                 * Names are in the formats:
+                 * derived_[element_id]
+                 * areamodif_[element_id]
+                 * ib_[element_id]
+                 * text_[element_id]
+                 * textarea_[element_id]
+                 * on_before_save_[form_id]
+                 * on_after_save_[form_id]
+                 * on_delete_[form_id]
+                 * custom_edit_check_[form_id]
+                 * custom_html_[effect_id - likely 1 in all cases]_[button_id - also called caid in code elsewhere]_[screen_id]
+                 * custom_code_[effect_id - likely 1 in all cases]_[button_id - also called caid in code elsewhere]_[screen_id]
+                 *
+                 * We will change element_id to element handle
+                 * We will change form_id to form handle
+                 * We will change button_id to the button handle, and screen_id to a newly created screen handle
+                 *
+                 */
+                $fileNameParts = explode('_', substr($file, 0, -4));
+                $firstPart = $fileNameParts[0];
+                $secondPart = $fileNameParts[1];
+                $thirdPart = $fileNameParts[2];
+                if($firstPart == "derived" 
+                  OR $firstPart == "areamodif" 
+                  OR $firstPart == "ib" 
+                  OR $firstPart == "text" 
+                  OR $firstPart == "textarea") {
+                    $element_handler = xoops_getmodulehandler('elements','formulize');
+                    $element_id = $fileNameParts[1];
+                    if(is_numeric($element_id)) {
+                        $elementObject = $element_handler->get($element_id);
+                        $elementHandle = $elementObject->getVar('ele_handle');
+                        rename(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file, XOOPS_ROOT_PATH.'/modules/formulize/code/'.$firstPart.'_'.$elementHandle.'.php');
+                    }
+                } elseif($firstPart.'_'.$secondPart.'_'.$thirdPart == "on_before_save" 
+                  OR $firstPart.'_'.$secondPart.'_'.$thirdPart == "on_after_save" 
+                  OR $firstPart.'_'.$secondPart == "on_delete"
+                  OR $firstPart.'_'.$secondPart.'_'.$thirdPart == "custom_edit_check") {
+                    $form_handler = xoops_getmodulehandler('forms','formulize');
+                    $form_id = $fileNameParts[count($fileNameParts)-1];
+                    if(is_numeric($form_id)) {
+                        $fileType = $firstPart.'_'.$secondPart == "on_delete" ? "on_delete" : $firstPart.'_'.$secondPart.'_'.$thirdPart;
+                        $formObject = $form_handler->get($form_id);
+                        $formHandle = $formObject->getVar('form_handle');
+                        rename(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file, XOOPS_ROOT_PATH.'/modules/formulize/code/'.$fileType.'_'.$formHandle.'.php');
+                    }
+                } elseif($firstPart.'_'.$secondPart == "custom_html"
+                  OR $firstPart.'_'.$secondPart == "custom_code") {
+                    $screen_handler = xoops_getmodulehandler('listOfEntriesScreen','formulize');
+                    $screen_id = $fileNameParts[4];
+                    $button_id = $fileNameParts[3];
+                    $effect_id = $fileNameParts[2];
+                    if(count($fileNameParts) == is_numeric($screen_id) AND is_numeric($button_id) AND is_numeric($effect_id)) {
+                        $screenObject = $screen_handler->get($screen_id);
+                        $screen_handle = $screenObject->getVar('screen_handle');
+                        $customActions = $screenObject->getVar('customactions');
+                        $buttonHandle = $customActions[$button_id]['handle'];
+                        rename(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file, XOOPS_ROOT_PATH.'/modules/formulize/code/'.$firstPart.'_'.$secondPart.'_'.$effect_id.'_'.$buttonHandle.'_'.$screen_handle.'.php');
+                    }
+                }
+            }
+        }
 
         global $xoopsConfig;
         $themeSql = 'UPDATE '.$xoopsDB->prefix('formulize_screen').' SET theme = "'.$xoopsConfig['theme_set'].'" WHERE theme = ""';

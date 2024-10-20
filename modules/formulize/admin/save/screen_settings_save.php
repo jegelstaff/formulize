@@ -34,7 +34,6 @@ if(!isset($processedValues)) {
   return;
 }
 
-
 $aid = intval($_POST['aid']);
 $sid = $_POST['formulize_admin_key'];
 $fid = intval($_POST['formulize_admin_fid']);
@@ -48,7 +47,6 @@ if($formObject->getVar('lockedform')) {
 if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
   return;
 }
-
 
 $screens = $processedValues['screens'];
 
@@ -97,16 +95,49 @@ if($isNew) {
   $screen = $screen_handler->get($sid);
 }
 
+if (!strlen($screens['screen_handle']) AND $sid) {
+	$screens['screen_handle'] = $sid;
+}
+$screens['screen_handle'] = $screen_handler->makeHandleUnique($screens['screen_handle'], ($sid ? $sid : ""));
+if ($screens['screen_handle'] != $processedValues['screens']['screen_handle']) {
+	$_POST['reload_names_page'] = 1;
+}
+
+$originalScreenHandle = $screen->getVar('screen_handle');
+
 $screen->setVar('title',$screens['title']);
+$screen->setVar('screen_handle',$screens['screen_handle']);
 $screen->setVar('fid',$fid);
 $screen->setVar('type',$screens['type']);
 $screen->setVar('useToken',$screens['useToken']);
 $screen->setVar('anonNeedsPasscode',$screens['anonNeedsPasscode']);
-$screen->setVar('rewriteruleAddress',formulizeForm::sanitize_handle_name(str_replace(" ", "_", $screens['rewriteruleAddress'])));
+$screen->setVar('rewriteruleAddress',formulizeScreen::sanitize_handle_name($screens['rewriteruleAddress']));
 $screen->setVar('rewriteruleElement', intval($screens['rewriteruleElement']));
 
 if(!$sid = $screen_handler->insert($screen)) {
   print "Error: could not save the screen properly: ".$xoopsDB->error();
+}
+
+// replace blank handle with screen id, must be done after insert in case we're dealing with new screen
+if($screens['screen_handle'] == '') {
+	$screen->setVar('screen_handle', $screen_handler->makeHandleUnique($sid, $sid));
+	if(!$sid = $screen_handler->insert($screen)) {
+		print "Error: could not update new screen with screen id: ".$xoopsDB->error();
+	}
+}
+
+if($originalScreenHandle !== $screen->getVar('screen_handle')) {
+	$currentCustomActionData = $screen->getVar('customactions');
+	foreach($currentCustomActionData as $buttonId=>$buttonData) {
+		foreach($buttonData as $key=>$value) {
+			if(is_numeric($key) AND is_array($value) AND (isset($value['code']) OR isset($value['html']))) {
+				$effectId = $key;
+				$buttonHandle = $buttonData['handle'];
+        $codeType = isset($value['code']) ? 'custom_code' : 'custom_html';
+				rename(XOOPS_ROOT_PATH."/modules/formulize/code/".$codeType."_".$effectId."_".$buttonHandle."_".$originalScreenHandle.".php", XOOPS_ROOT_PATH."/modules/formulize/code/".$codeType."_".$effectId."_".$buttonHandle."_".$screen->getVar('screen_handle').".php");
+			}
+		}
+	}
 }
 
 $reloadNow = false;

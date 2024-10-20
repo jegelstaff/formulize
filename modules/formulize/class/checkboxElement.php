@@ -33,7 +33,7 @@
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
-class formulizeCheckboxElement extends formulizeformulize {
+class formulizeCheckboxElement extends formulizeElement {
 
     function __construct() {
         $this->name = "Checkboxes";
@@ -81,7 +81,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
     // when dealing with new elements, $element might be FALSE
     function adminPrepare($element) {
         $dataToSendToTemplate = array();
-        if(is_object($element) AND is_subclass_of($element, 'formulizeformulize')) {
+        if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
 			$ele_value = $this->backwardsCompatibility($element->getVar('ele_value'));
             if(is_array($ele_value[2])) { // an array will be a set of hard coded options
                 $ele_value[2] = formulize_mergeUIText($ele_value[2], $element->getVar('ele_uitext'));
@@ -164,7 +164,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
     function adminSave($element, $ele_value) {
 			$changed = false;
 
-			if(is_object($element) AND is_subclass_of($element, 'formulizeformulize')) {
+			if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
 
 				$ele_value = array(
 					EV_MULTIPLE_LIST_COLUMNS=>$ele_value[EV_MULTIPLE_LIST_COLUMNS],

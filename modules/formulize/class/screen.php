@@ -35,18 +35,19 @@ if (!defined("XOOPS_ROOT_PATH")) {
 }
 
 require_once XOOPS_ROOT_PATH.'/kernel/object.php';
-class formulizeScreen extends xoopsObject {
+class formulizeScreen extends FormulizeObject {
 
 	function __construct() {
         parent::__construct();
 		$this->initVar('sid', XOBJ_DTYPE_INT, '', true);
+        $this->initVar('screen_handle', XOBJ_DTYPE_TXTBOX, '', 255);
 		$this->initVar('title', XOBJ_DTYPE_TXTBOX, '', true, 255);
 		$this->initVar('fid', XOBJ_DTYPE_INT, '', true);
 		$this->initVar('frid', XOBJ_DTYPE_INT, '', true);
 		$this->initVar('type', XOBJ_DTYPE_TXTBOX, '', true, 100);
 		$this->initVar('useToken', XOBJ_DTYPE_INT);
-    $this->initVar('anonNeedsPasscode', XOBJ_DTYPE_INT);
-    $this->initVar('theme', XOBJ_DTYPE_TXTBOX, '', true, 100);
+        $this->initVar('anonNeedsPasscode', XOBJ_DTYPE_INT);
+        $this->initVar('theme', XOBJ_DTYPE_TXTBOX, '', true, 100);
 		$this->initVar('rewriteruleAddress', XOBJ_DTYPE_TXTBOX, '', false, 255);
         $this->initVar('rewriteruleElement', XOBJ_DTYPE_INT, '', true);
 	}
@@ -146,6 +147,7 @@ class formulizeScreen extends xoopsObject {
 
         return true;
     }
+
 }
 
 
@@ -165,7 +167,40 @@ class formulizeScreenHandler {
 		return new formulizeScreen();
 	}
 
-    // returns an array of screen objects
+
+	// check to see if a handle is unique within a form
+	function isScreenHandleUnique($handle, $screen_id="") {
+		$handle = formulizeScreen::sanitize_handle_name($handle);
+		global $xoopsDB;
+		$screen_id_condition = $screen_id ? " AND sid != " . intval($screen_id) : "";
+		$sql = "SELECT count(screen_handle) FROM " . $xoopsDB->prefix("formulize_screen") . " WHERE screen_handle = '" . formulize_db_escape($handle) . "' $screen_id_condition";
+		if(!$res = $xoopsDB->query($sql)) {
+			print "Error: could not verify uniqueness of handle '$handle'";
+		} else {
+			$row = $xoopsDB->fetchRow($res);
+			if($row[0] == 0) { // zero rows found with that handle in this form
+				return true;
+			} else {
+				return false;
+			}
+		}
+	}
+
+	function makeHandleUnique($handle, $sid) {
+		$firstUniqueCheck = true;
+		$handle = formulizeScreen::sanitize_handle_name($handle);
+		while (!$uniqueCheck = $this->isScreenHandleUnique($handle, $sid)) {
+			if ($firstUniqueCheck AND $sid) {
+				$handle = $handle . "_".$sid;
+				$firstUniqueCheck = false;
+			} else {
+				$handle = $handle . "_copy";
+			}
+		}
+		return $handle;
+	}
+
+	// returns an array of screen objects
     function &getObjects($criteria = null, $fid = 0, $appid = -1, $sort = null, $order = null, $paged = false, $offset = -1, $limit = 20) {
         $sql = "SELECT * FROM " . $this->db->prefix("formulize_screen") . " AS screentable";
         if(is_object($criteria)) {
@@ -217,22 +252,22 @@ class formulizeScreenHandler {
         return $screens;
     }
 
-	function get($sid) {
-		$sid = intval($sid);
-		if ($sid > 0) {
-			$sql = 'SELECT * FROM '.$this->db->prefix('formulize_screen').' WHERE sid='.$sid;
-			if (!$result = $this->db->query($sql)) {
+	function get($sid_or_screen_handle) {
+		if (is_numeric($sid_or_screen_handle)) {
+			$sql = 'SELECT * FROM '.$this->db->prefix('formulize_screen').' WHERE sid='.intval($sid_or_screen_handle);
+		} else {
+				$sql = 'SELECT * FROM '.$this->db->prefix('formulize_screen').' WHERE screen_handle="'.formulize_db_escape($sid_or_screen_handle).'"';
+		}
+		if (!$result = $this->db->query($sql)) {
 				return false;
-			}
-			$numrows = $this->db->getRowsNum($result);
-			if ($numrows == 1) {
+		}
+		$numrows = $this->db->getRowsNum($result);
+		if ($numrows == 1) {
 				$screen = new formulizeScreen();
 				$screen->assignVars($this->db->fetchArray($result));
 				return $screen;
-			}
 		}
 		return false;
-
 	}
 
 
@@ -260,9 +295,9 @@ class formulizeScreenHandler {
             ${$k} = $v;
         }
         if (!$sid) {
-            $sql = sprintf("INSERT INTO %s (title, fid, frid, type, useToken, anonNeedsPasscode, theme, rewriteruleAddress, rewriteruleElement) VALUES (%s, %u, %u, %s, %u, %u, %s, %s, %u)", $this->db->prefix('formulize_screen'), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $anonNeedsPasscode, $this->db->quoteString($theme), $this->db->quoteString($rewriteruleAddress), $rewriteruleElement);
+            $sql = sprintf("INSERT INTO %s (screen_handle, title, fid, frid, type, useToken, anonNeedsPasscode, theme, rewriteruleAddress, rewriteruleElement) VALUES (%s, %s, %u, %u, %s, %u, %u, %s, %s, %u)", $this->db->prefix('formulize_screen'), $this->db->quoteString($screen_handle), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $anonNeedsPasscode, $this->db->quoteString($theme), $this->db->quoteString($rewriteruleAddress), $rewriteruleElement);
         } else {
-            $sql = sprintf("UPDATE %s SET title = %s, fid = %u, frid = %u, type = %s, useToken = %u, anonNeedsPasscode = %u, theme = %s, rewriteruleAddress = %s, rewriteruleElement = %u WHERE sid = %u", $this->db->prefix('formulize_screen'), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $anonNeedsPasscode, $this->db->quoteString($theme), $this->db->quoteString($rewriteruleAddress), $rewriteruleElement, $sid);
+            $sql = sprintf("UPDATE %s SET screen_handle = %s, title = %s, fid = %u, frid = %u, type = %s, useToken = %u, anonNeedsPasscode = %u, theme = %s, rewriteruleAddress = %s, rewriteruleElement = %u WHERE sid = %u", $this->db->prefix('formulize_screen'), $this->db->quoteString($screen_handle), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $anonNeedsPasscode, $this->db->quoteString($theme), $this->db->quoteString($rewriteruleAddress), $rewriteruleElement, $sid);
         }
         $result = $this->db->query($sql);
         if (!$result) {

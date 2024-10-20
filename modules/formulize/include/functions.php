@@ -4223,7 +4223,7 @@ function synchSubformBlankDefaults() {
 function _getElementObject($element) {
     if (is_object($element)) {
         // the silly historical name of the element class
-        if (get_class($element) != "formulizeformulize" AND is_subclass_of($element, 'formulizeformulize') == false) {
+        if (get_class($element) != "formulizeElement" AND is_subclass_of($element, 'formulizeElement') == false) {
             return false;
         } else {
             return $element;
@@ -4455,7 +4455,7 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
     $multiIdCounter = 1;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
-    $elementObject = (is_object($element_identifier) AND is_a($element_identifier, 'formulizeformulize')) ? $element_identifier : $element_handler->get($element_identifier);
+    $elementObject = (is_object($element_identifier) AND is_a($element_identifier, 'formulizeElement')) ? $element_identifier : $element_handler->get($element_identifier);
 
     $ORSETOperator = $elementObject->canHaveMultipleValues ? '' : '='; // if the element supports multiple values, which are crammed into the same cell in the DB, then no equals operator... if the options are inclusive of one another, ie: active and inactive, then this isn't going to work cleanly!
 

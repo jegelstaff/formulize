@@ -35,7 +35,7 @@
 
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 
-class formulizePhoneElement extends formulizeformulize {
+class formulizePhoneElement extends formulizeElement {
 
     function __construct() {
         $this->name = "Phone Number";

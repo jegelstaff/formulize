@@ -71,7 +71,7 @@ if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mi
 // watch out for effects hat are supposed to be deleted...don't save them
 $deleteButton = $_POST['deletebutton'];
 $removeEffect = $_POST['removeeffect'] ? explode("_", $_POST['removeeffect']) : array("","");
-
+$currentCustomActionData = $screen->getVar('customactions');
 
 // read all the button info that was submitted, pack it up and assign it to the screen object
 foreach($_POST as $k=>$v) {
@@ -79,7 +79,7 @@ foreach($_POST as $k=>$v) {
     // found a button, grab all its info
     $buttonId = substr($k, 7);
     if((string)$buttonId === (string)$deleteButton) { continue; }
-    $buttonData[$buttonId]['handle'] = $v;
+    $buttonData[$buttonId]['handle'] = formulizeScreen::sanitize_handle_name($v);
     $buttonData[$buttonId]['buttontext'] = $_POST['buttontext_'.$buttonId];
     $buttonData[$buttonId]['messagetext'] = $_POST['messagetext_'.$buttonId];
     $buttonData[$buttonId]['popuptext'] = $_POST['popuptext_'.$buttonId];
@@ -90,16 +90,24 @@ foreach($_POST as $k=>$v) {
       foreach($_POST['code_'.$buttonId] as $effectId=>$code) {
         if((string)$effectId === (string)$removeEffect[1] AND (string)$buttonId === (string)$removeEffect[0]) { continue; }
         $buttonData[$buttonId][$effectId]['code'] = "";
-				$filename = "custom_code_".$effectId."_".$buttonId."_".$sid.".php";
-				formulize_writeCodeToFile($filename, $code);
+				$filename = "custom_code_".$effectId."_".$buttonData[$buttonId]['handle']."_".$screen->getVar('screen_handle').".php";
+				if(formulize_writeCodeToFile($filename, $code)) {
+					if(isset($currentCustomActionData[$buttonId]['handle']) AND $buttonData[$buttonId]['handle'] != $currentCustomActionData[$buttonId]['handle']) {
+						unlink(XOOPS_ROOT_PATH."/modules/formulize/code/custom_code_".$effectId."_".$currentCustomActionData[$buttonId]['handle']."_".$screen->getVar('screen_handle').".php");
+					}
+				}
       }
     }
     if(isset($_POST['html_'.$buttonId])) {
       foreach($_POST['html_'.$buttonId] as $effectId=>$html) {
         if((string)$effectId === (string)$removeEffect[1] AND (string)$buttonId === (string)$removeEffect[0]) { continue; }
         $buttonData[$buttonId][$effectId]['html'] = "";
-				$filename = "custom_html_".$effectId."_".$buttonId."_".$sid.".php";
-				formulize_writeCodeToFile($filename, $html);
+				$filename = "custom_html_".$effectId."_".$buttonData[$buttonId]['handle']."_".$screen->getVar('screen_handle').".php";
+				if(formulize_writeCodeToFile($filename, $html)) {
+					if(isset($currentCustomActionData[$buttonId]['handle']) AND $buttonData[$buttonId]['handle'] != $currentCustomActionData[$buttonId]['handle']) {
+						unlink(XOOPS_ROOT_PATH."/modules/formulize/code/custom_html_".$effectId."_".$currentCustomActionData[$buttonId]['handle']."_".$screen->getVar('screen_handle').".php");
+					}
+				}
       }
     }
     if(isset($_POST['element_'.$buttonId])) {

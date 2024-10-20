@@ -35,7 +35,7 @@
 include_once XOOPS_ROOT_PATH.'/kernel/object.php';
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
-class formulizeForm extends XoopsObject {
+class formulizeForm extends FormulizeObject {
 
     private array $onDeleteExistingValues;
 
@@ -170,11 +170,6 @@ class formulizeForm extends XoopsObject {
 		}
 		return array($views, $viewNames, $viewFrids, $viewPublished);
 	}
-
-    static function sanitize_handle_name($handle_name) {
-        // strip non-alphanumeric characters from form and element handles
-        return preg_replace("/[^a-zA-Z0-9_-]+/", "", $handle_name);
-    }
 
     public function assignVar($key, $value) {
         if ("form_handle" == $key) {
@@ -524,10 +519,11 @@ EOF;
 			  OR $key == 'on_delete'
 			  OR $key == 'custom_edit_check') {
 				$contents = '';
-				if($fid = $this->getVar('id_form')) {
-				  $filename=XOOPS_ROOT_PATH."/modules/formulize/code/".$key."_".$fid.".php";
+				if(is_numeric($this->getVar('fid'))) {
+					$form_handle = $this->getVar('form_handle');
+				  $filename=XOOPS_ROOT_PATH."/modules/formulize/code/".$key."_".$form_handle.".php";
 				  if(file_exists($filename)) {
-					$contents = file_get_contents($filename);
+						$contents = file_get_contents($filename);
 				  }
 				}
 				return $contents;
@@ -722,10 +718,10 @@ class formulizeFormsHandler {
 				$on_delete = trim($on_delete) != "<?php" ? $on_delete : "";
 				$custom_edit_check = trim($custom_edit_check) != "<?php" ? $custom_edit_check : "";
 
-				formulize_writeCodeToFile('on_before_save_'.$id_form.'.php', $on_before_save);
-				formulize_writeCodeToFile('on_after_save_'.$id_form.'.php', $on_after_save);
-				formulize_writeCodeToFile('on_delete_'.$id_form.'.php', $on_delete);
-				formulize_writeCodeToFile('custom_edit_check_'.$id_form.'.php', $custom_edit_check);
+				formulize_writeCodeToFile('on_before_save_'.formulizeForm::sanitize_handle_name($form_handle).'.php', $on_before_save);
+				formulize_writeCodeToFile('on_after_save_'.formulizeForm::sanitize_handle_name($form_handle).'.php', $on_after_save);
+				formulize_writeCodeToFile('on_delete_'.formulizeForm::sanitize_handle_name($form_handle).'.php', $on_delete);
+				formulize_writeCodeToFile('custom_edit_check_'.formulizeForm::sanitize_handle_name($form_handle).'.php', $custom_edit_check);
 
 				return $id_form;
 
@@ -777,8 +773,8 @@ class formulizeFormsHandler {
 	}
 
 	// check to see if a handle is unique within a form
-	function isHandleUnique($handle, $element_id="") {
-        $handle = formulizeForm::sanitize_handle_name($handle);
+	function isElementHandleUnique($handle, $element_id="") {
+        $handle = formulizeElement::sanitize_handle_name($handle);
 		if(isMetaDataField($handle)){
 			return false; // don't allow reserved words that will be used in the main data extraction queries
 		}
@@ -1423,7 +1419,7 @@ class formulizeFormsHandler {
 					} else {
 						$firstUniqueCheck = true;
 						$value .= "_cloned";
-						while(!$uniqueCheck = $this->isHandleUnique($value)) {
+						while(!$uniqueCheck = $this->isElementHandleUnique($value)) {
 							if($firstUniqueCheck) {
 								$value = $value . "_".$newfid;
 								$firstUniqueCheck = false;
