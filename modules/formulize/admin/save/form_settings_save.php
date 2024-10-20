@@ -141,6 +141,15 @@ if($_POST['formulize_admin_key'] == "new") {
   if(!$renameResult = $form_handler->renameDataTable($old_form_handle, $formObject->getVar( "form_handle" ), $formObject)) {
    exit("Error: could not rename the data table in the database.");
   }
+	// update code files with this form handle
+	$events = array('on_before_save', 'on_after_save', 'on_delete', 'custom_edit_check');
+	foreach($events as $event) {
+		$oldFileName = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$event.'_'.$old_form_handle.'.php';
+		$newFileName = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$event.'_'.$formObject->getVar( "form_handle" ).'.php';
+		if(file_exists($oldFileName)) {
+			rename($oldFileName, $newFileName);
+		}
+	}
 }
 
 $selectedAppIds = array();
