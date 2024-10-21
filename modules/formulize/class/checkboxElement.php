@@ -176,13 +176,31 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 					'checkbox_formlink_anyorall'=>$ele_value['checkbox_formlink_anyorall']
 				); // initialize with the values that we don't need to parse/adjust
 
-				if(isset($_POST['formlink']) AND $_POST['formlink'] != "none") {
+                if(isset($_POST['formlink']) AND $_POST['formlink'] != "none") {
 					global $xoopsDB;
 					$sql_link = "SELECT ele_caption, id_form, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = " . intval($_POST['formlink']);
 					$res_link = $xoopsDB->query($sql_link);
 					$array_link = $xoopsDB->fetchArray($res_link);
 					$ele_value[2] = $array_link['id_form'] . "#*=:*" . $array_link['ele_handle'];
+                    // ensure there is a primary relationship link representing this connection / update existing connection
+                    // Get existing linked settings, if any
+                    $currentLinkedFormId = 0;
+                    $currentLinkedElementId = 0;
+                    $currentEleValue = $element->getVar('ele_value');
+                    if($element->isLinked) {
+                        $currentEleValue2Parts = explode('#*=:*', $currentEleValue);
+                        $currentLinkedFormId = $currentEleValue2Parts[0];
+                        $currentLinkedElementId = $currentEleValue2Parts[1];
+                    }
+                    updateLinkedElementConnectionsInRelationships($element->getVar('fid'), $element->getVar('ele_id'), $array_link['id_form'], $_POST['formlink'], $currentLinkedFormId, $currentLinkedElementId);
 				} else {
+                    // a user requests to unlink the element and it is currently linked...
+                    $form_handler = xoops_getmodulehandler('forms', 'formulize');
+                    if ($_POST['formlink'] == "none" AND $element->isLinked){
+                        $form_handler->updateField($element, $element->getVar("ele_handle"), "text");
+                        // remove any primary relationship link representing this connection
+                        deleteLinkedElementConnectionsInRelationships($element->getVar('fid'), $element->getVar('ele_id'));
+                    }
 					list($_POST['ele_value'], $ele_uitext) = formulize_extractUIText($_POST['ele_value']);
 					foreach($_POST['ele_value'] as $id=>$text) {
 						if($text !== "") {
