@@ -62,6 +62,7 @@ if (typeof jQuery.ui == 'undefined') {
 ";
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/primary_relationship_functions.php";
 
 function getFormFramework($formframe, $mainform=0) {
     static $cachedToReturn = array();
@@ -937,6 +938,7 @@ function checkForLinks($frid, $fids, $fid, $entries=null, $unified_display=false
     $one_to_one = array();
     $many_to_one = array();
     $one_to_many = array();
+    $sub_fids = array();
     foreach ($one_q1 as $res1) {
         $one_to_one[$indexer]['fid'] = $res1['fl_form1_id'];
         $one_to_one[$indexer]['keyself'] = $res1['fl_key1'];
