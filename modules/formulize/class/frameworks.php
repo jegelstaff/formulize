@@ -541,3 +541,72 @@ class formulizeFrameworksHandler {
         return $relationships;
     }
 }
+
+/**
+ * 
+ */
+function updateLinkedElementConnectionsInRelationships($fid, $elementId, $targetFid, $targetElementId, $currentTargetFid, $currentTargetElementId) {
+	global $xoopsDB;
+	$fid = intval($fid);
+	$elementId = intval($elementId);
+	$targetFid = intval($targetFid);
+	$targetElementId = intval($targetElementId);
+	$currentTargetFid = intval($currentTargetFid);
+	$currentTargetElementId = intval($currentTargetElementId);
+	// updating existing link...
+	if($currentTargetFid AND $currentTargetElementId) {
+		// if there's been a change to the target of this link...
+		if($currentTargetFid != $targetFid OR $currentTargetElementId != $targetElementId) {
+			$sql1 = "UPDATE ".$xoopsDB->prefix('formulize_framework_links')."
+				SET fl_form1_id = $targetFid, 
+				fl_key1 = $targetElementId
+				WHERE fl_common_value = 0
+				AND fl_relationship = 2
+				AND fl_form1_id = $currentTargetFid
+				AND fl_form2_id = $fid
+				AND fl_key1 = $currentTargetElementId
+				AND fl_key2 = $elementId";
+			$sql2 = "UPDATE ".$xoopsDB->prefix('formulize_framework_links')."
+				SET fl_form2_id = $targetFid, 
+				fl_key2 = $targetElementId
+				WHERE fl_common_value = 0
+				AND fl_relationship = 3
+				AND fl_form2_id = $currentTargetFid
+				AND fl_form1_id = $fid
+				AND fl_key2 = $currentTargetElementId
+				AND fl_key1 = $elementId";
+			$xoopsDB->query($sql1);
+			$xoopsDB->query($sql2);
+		}
+	// adding a link to primary relationship (element not currently linked)
+	} else {
+		$sql = "INSERT INTO ".$xoopsDB->prefix('formulize_framework_links')."
+			(`fl_frame_id`, 
+			`fl_form1_id`, 
+			`fl_form2_id`, 
+			`fl_key1`, 
+			`fl_key2`, 
+			`fl_common_value`, 
+			`fl_relationship`, 
+			`fl_unified_display`, 
+			`fl_unified_delete`)
+			VALUES
+			(-1, 
+			$targetFid, 
+			$fid, 
+			$targetElementId, 
+			$elementId, 
+			0, 
+			2, 
+			1, 
+			0)";
+		$xoopsDB->query($sql);
+	}
+}
+
+/**
+ * 
+ */
+function deleteLinkedElementConnectionsInRelationships($fid, $elementId) {
+
+}
