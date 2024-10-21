@@ -8,6 +8,7 @@ class FormulizeConfigSync
 	private $configPath;
 	private $elementValueProcessor;
 	private $formHandler;
+	private $elementHandler;
 	private $changes = [];
 	private $diffLog = [];
 	private $errorLog = [];
@@ -24,6 +25,7 @@ class FormulizeConfigSync
 	{
 		$this->configPath = rtrim($configPath, '/');
 		$this->formHandler = xoops_getmodulehandler('forms', 'formulize');
+		$this->elementHandler = xoops_getmodulehandler('elements', 'formulize');
 		$this->elementValueProcessor = new FormulizeConfigSyncElementValueProcessor();
 		$this->initializeDatabase();
 	}
@@ -58,7 +60,7 @@ class FormulizeConfigSync
 	 */
 	private function loadConfigFile(string $filename): array
 	{
-		$filepath = XOOPS_ROOT_PATH . '/modules/formulize/' . $this->configPath . '/' . $filename;
+		$filepath = XOOPS_ROOT_PATH . '/modules/formulize' . $this->configPath . '/' . $filename;
 		if (!file_exists($filepath)) {
 			$this->errorLog[] = "Warning: Configuration file not found: {$filepath}";
 			return [];
@@ -74,7 +76,7 @@ class FormulizeConfigSync
 		return $config;
 	}
 
-		/**
+	/**
 	 * Load configuration data from a database table
 	 * @param string $table
 	 * @return array
@@ -139,11 +141,11 @@ class FormulizeConfigSync
 			$strippedFormConfig = $this->stripArrayKey($configForm, 'elements');
 
 			if (!$dbForm) {
-				$this->addChange('forms', 'create', $strippedFormConfig);
+				$this->addChange('forms', 'create', $strippedFormConfig['form_handle'], $strippedFormConfig);
 			} else {
 				$differences = $this->compareFields($strippedFormConfig, $dbForm);
 				if (!empty($differences)) {
-					$this->addChange('forms', 'update', $configForm, $differences);
+					$this->addChange('forms', 'update', $strippedFormConfig['form_handle'], $strippedFormConfig, $differences);
 				}
 			}
 
@@ -167,15 +169,19 @@ class FormulizeConfigSync
 				}
 			}
 			if (!$found) {
-				$this->addChange('forms', 'delete', $dbForm);
+				$this->addChange('forms', 'delete', $dbForm['form_handle'], $dbForm);
+				$dbElements = $this->loadDatabaseConfig('formulize', "id_form = {$dbForm['id_form']}");
+				$this->compareElements([], $dbElements, $dbForm['form_handle']);
 			}
 		}
 	}
 
 	/**
-	 * Compare elements for a form
-	 * @param array $configElements
-	 * @param string $formHandle
+	 * Compare elements of a form
+	 * @param array $configElements elements from the configuration
+	 * @param array $dbElements elements from the database
+	 * @param string $formHandle handle of the form
+	 * @param bool $formExistsInDb
 	 * @return void
 	 */
 	private function compareElements(array $configElements, array $dbElements, string $formHandle): void
@@ -189,13 +195,13 @@ class FormulizeConfigSync
 					'form_handle' => $formHandle,
 					'data_type' => $element['data_type']
 				];
-				$this->addChange('elements', 'create', $preparedElement, [], $metadata);
+				$this->addChange('elements', 'create', $preparedElement['ele_handle'], $preparedElement, [], $metadata);
 				continue;
 			}
 
 			$differences = $this->compareElementFields($preparedElement, $dbElement);
 			if (!empty($differences)) {
-				$this->addChange('elements', 'update', $preparedElement, $differences);
+				$this->addChange('elements', 'update', $preparedElement['ele_handle'], $preparedElement, $differences);
 			}
 		}
 
@@ -209,7 +215,7 @@ class FormulizeConfigSync
 				}
 			}
 			if (!$found) {
-				$this->addChange('elements', 'delete', $dbElement, [], ['form_handle' => $formHandle]);
+				$this->addChange('elements', 'delete', $dbElement['ele_handle'], $dbElement, [], ['form_handle' => $formHandle]);
 			}
 		}
 	}
@@ -271,7 +277,7 @@ class FormulizeConfigSync
 					$value
 				);
 				$dbEleValue = $dbElement['ele_value'] !== "" ? unserialize($dbElement['ele_value']) : [];
-				foreach($convertedConfigEleValue as $key => $val) {
+				foreach ($convertedConfigEleValue as $key => $val) {
 					if (!array_key_exists($key, $dbEleValue) || $val !== $dbEleValue[$key]) {
 						$eleValueDiff[$key] = [
 							'config_value' => $val,
@@ -325,11 +331,18 @@ class FormulizeConfigSync
 	 * @param array $differences
 	 * @return void
 	 */
-	private function addChange(string $type, string $operation, array $data, array $differences = [], array $metadata = []): void
-	{
+	private function addChange(
+		string $type,
+		string $operation,
+		string $id,
+		array $data,
+		array $differences = [],
+		array $metadata = []
+	): void {
 		$this->changes[] = [
 			'type' => $type,
 			'operation' => $operation,
+			'id' => $id,
 			'data' => $data,
 			'differences' => $differences,
 			'metadata' => $metadata
@@ -350,117 +363,124 @@ class FormulizeConfigSync
 	 *
 	 * @return array
 	 */
-	public function applyChanges(): array
+	public function applyChanges(array $changeIds): array
 	{
 		$results = ['success' => [], 'failure' => []];
-		$createFormIds = [];
-		$createElementIds = [];
+		$changes = [];
 
-		try {
-			$this->db->beginTransaction();
-
-			// Apply all form changes
+		if (empty($changeIds)) {
+			$changes = $this->changes;
+		} else {
 			foreach ($this->changes as $change) {
-				if ($change['type'] === 'forms') {
-					try {
-						$newFormId = $this->applyChange($change);
-						if ($change['operation'] === 'create') {
-							// Write the new id to our array so we can update element id_form field
-							$createFormIds[$change['data']['form_handle']] = $newFormId;
-						}
-						if ($change['operation'] === 'delete') {
-							// Unfortunatley these opperations need to occur before the transaction
-							// is committed because the form will no longer exist so this method will fail
-							$this->formHandler->dropDataTable($change['data']['id_form']);
-						}
-						$results['success'][] = $change;
-					} catch (\Exception $e) {
-						$results['failure'][] = ['change' => $change, 'error' => $e->getMessage()];
-					}
+				if (in_array($change['id'], $changeIds)) {
+					$changes[] = $change;
 				}
 			}
-
-			// Apply all element changes
-			foreach ($this->changes as $change) {
-				if ($change['type'] === 'elements') {
-					try {
-						$formId = null;
-						// If we're creating a new element from a new form update the id_form field
-						if ($change['operation'] === 'create' && isset($createFormIds[$change['metadata']['form_handle']])) {
-							$formId = $createFormIds[$change['metadata']['form_handle']];
-						}
-						// If we're creating a new element from an existing form, update the id_form field
-						if ($change['operation'] === 'create' && !isset($createFormIds[$change['metadata']['form_handle']])) {
-							$form = $this->formHandler->getByHandle($change['metadata']['form_handle']);
-							$formId = $form->getVar('id_form');
-							if (!$formId) {
-								throw new \Exception("Form handle '{$change['metadata']['form_handle']}' not found in database.");
-							}
-						}
-						// If we're deleting an element from an existing form remove the elements data column
-						if ($change['operation'] === 'delete' && !isset($deleteFormIds[$change['metadata']['form_handle']])) {
-							// Unfortunatley these opperations need to occur before the transaction
-							// is committed because the element will no longer exist so this method will fail
-							$this->formHandler->deleteElementField($change['data']['ele_id']);
-						}
-						if ($formId) {
-							$change['data']['id_form'] = $formId;
-						}
-						$newElementId = $this->applyChange($change);
-
-						// If we're creating a new element on an existing form ensure the elements data column is created
-						if ($newElementId && $change['operation'] === 'create' && !isset($createFormIds[$change['metadata']['form_handle']])) {
-							$createElementIds[$newElementId] = $change['metadata']['data_type'];
-						}
-
-						$results['success'][] = $change;
-					} catch (\Exception $e) {
-						$results['failure'][] = ['change' => $change, 'error' => $e->getMessage()];
-					}
+		}
+		// Apply all form changes
+		foreach ($changes as $change) {
+			if ($change['type'] === 'forms') {
+				try {
+					$this->applyFormChange($change);
+					$results['success'][] = $change;
+				} catch (\Exception $e) {
+					$results['failure'][] = ['error' => $e->getMessage(), 'change' => $change];
 				}
 			}
-			$this->db->commit();
+		}
 
-			// For new forms create their data tables
-			foreach ($createFormIds as $formHandle => $formId) {
-				$this->formHandler->createDataTable($formId);
+		// Apply all element changes
+		foreach ($changes as $change) {
+			if ($change['type'] === 'elements') {
+				try {
+					$this->applyElementChange($change);
+					$results['success'][] = $change;
+				} catch (\Exception $e) {
+					$results['failure'][] = ['error' => $e->getMessage(), 'change' => $change];
+				}
 			}
-			// For new elements create their data columns
-			foreach ($createElementIds as $elementId => $elementType) {
-				$this->formHandler->insertElementField($elementId, $elementType);
-			}
-		} catch (\Exception $e) {
-			$this->db->rollBack();
-			throw new \Exception("Failed to apply changes: " . $e->getMessage());
 		}
 
 		return $results;
 	}
 
-	/**
-	 * Apply a single change to the database
-	 *
-	 * @param array $change
-	 * @return void
-	 */
-	private function applyChange(array $change): ?int
+	private function applyFormChange(array $change): void
 	{
 		$table = $this->getTableForType($change['type']);
 		$primaryKey = $this->getPrimaryKeyForType($change['type']);
 
 		switch ($change['operation']) {
 			case 'create':
-				return $this->insertRecord($table, $change['data']);
+				// Insert form record
+				$formId = $this->insertRecord($table, $change['data']);
+				// Create data table
+				$this->formHandler->createDataTable($formId);
+				$formObject = $this->formHandler->get($formId);
+				// create the default form screen for this form
+				$multiPageScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+				$defaultFormScreen = $multiPageScreenHandler->create();
+				$multiPageScreenHandler->setDefaultFormScreenVars($defaultFormScreen, $formObject->getVar('title') . ' Form', $formId, $formObject->getVar('title'));
+				$defaultFormScreenId = $multiPageScreenHandler->insert($defaultFormScreen);
+				// create the default list screen for this form
+				$listScreenHandler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
+				$screen = $listScreenHandler->create();
+				$listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $formObject->getVar('title') . ' List', $formId);
+				$defaultListScreenId = $listScreenHandler->insert($screen);
+				// Assign default screens to the form
+				$formObject->setVar('defaultform', $defaultFormScreenId);
+				$formObject->setVar('defaultlist', $defaultListScreenId);
+				$this->formHandler->insert($formObject);
 				break;
+
 			case 'update':
 				$this->updateRecord($table, $change['data'], $primaryKey);
 				break;
+
 			case 'delete':
-				$this->deleteRecord($table, $change['data'], $primaryKey);
+				$form = $this->formHandler->getByHandle($change['data']['form_handle']);
+				if ($form) {
+					$this->formHandler->delete($form);
+				}
+				break;
+		}
+		return;
+	}
+
+	private function applyElementChange(array $change): void
+	{
+		$table = $this->getTableForType($change['type']);
+		$primaryKey = $this->getPrimaryKeyForType($change['type']);
+
+		switch ($change['operation']) {
+			case 'create':
+				$formHandle = $change['metadata']['form_handle'];
+				$form = $this->formHandler->getByHandle($formHandle);
+				if (!$form) {
+					throw new \Exception("Form handle $formHandle not found");
+				} else {
+					$formId = $form->getVar('id_form');
+					$change['data']['id_form'] = $formId;
+					$elementId = $this->insertRecord($table, $change['data']);
+					$elementType = $change['metadata']['data_type'];
+					$this->formHandler->insertElementField($elementId, $elementType);
+				}
+				break;
+
+			case 'update':
+				$this->updateRecord($table, $change['data'], $primaryKey);
+				break;
+
+			case 'delete':
+				$elementId = $change['data']['ele_id'];
+				$element = $this->elementHandler->get($elementId);
+				if ($element) {
+					$this->elementHandler->delete($element);
+					$this->formHandler->deleteElementField($elementId);
+				}
 				break;
 		}
 
-		return null;
+		return;
 	}
 
 	/**
@@ -736,5 +756,4 @@ class FormulizeConfigSync
 				throw new \Exception("Unknown configuration type: {$type}");
 		}
 	}
-
 }
