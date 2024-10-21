@@ -89,8 +89,7 @@ if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
 }
 
 if($ele_type == "textarea" AND $_POST['formlink'] != "none") {
-  $ele_value_key = $ele_type == "text" ? 4 : 3; // two types keep this info in diff key
-  $processedValues['elements']['ele_value'][$ele_value_key] = $_POST['formlink'];
+  $processedValues['elements']['ele_value'][3] = $_POST['formlink'];
 }
 
 if($_POST['element_delimit']) {
