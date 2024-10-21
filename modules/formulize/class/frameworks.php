@@ -543,70 +543,100 @@ class formulizeFrameworksHandler {
 }
 
 /**
- * 
+ * Insert/Update relationship links between two forms/form elements. Only operates on one-to-many (2) and many-to-one (3) connections,
+ * that are not common value. When passed a form/element id pair, and a source for the link (the element the options are being drawn from),
+ * this function will create the link in the primary relationship if no link exists yet, or if it will update all links for the form/element id
+ * pair and any previously connected source that may have been updated to the new source.
+ * @param int fid The form id where the linked element exists
+ * @param int elementId The element id of the linked element
+ * @param int sourceFid The form id of the source element from which options are gathered for the linked element
+ * @param int sourceElementId The element id of the source element from which options are gathered for the linked element
+ * @param int currentSourceFid The form id of the source element that the linked element is pointing to prior to this update
+ * @param int currentSourceElementId The element id of the source element that the linked element is point to prior to this update
+ * @return boolean Returns true or false indicating if the update operation succeeded
  */
-function updateLinkedElementConnectionsInRelationships($fid, $elementId, $targetFid, $targetElementId, $currentTargetFid, $currentTargetElementId) {
+function updateLinkedElementConnectionsInRelationships($fid, $elementId, $sourceFid, $sourceElementId, $currentSourceFid, $currentSourceElementId) {
 	global $xoopsDB;
 	$fid = intval($fid);
 	$elementId = intval($elementId);
-	$targetFid = intval($targetFid);
-	$targetElementId = intval($targetElementId);
-	$currentTargetFid = intval($currentTargetFid);
-	$currentTargetElementId = intval($currentTargetElementId);
+	$sourceFid = intval($sourceFid);
+	$sourceElementId = intval($sourceElementId);
+	$currentSourceFid = intval($currentSourceFid);
+	$currentSourceElementId = intval($currentSourceElementId);
 	// updating existing link...
-	if($currentTargetFid AND $currentTargetElementId) {
-		// if there's been a change to the target of this link...
-		if($currentTargetFid != $targetFid OR $currentTargetElementId != $targetElementId) {
+	if($currentSourceFid AND $currentSourceElementId) {
+		// if there's been a change to the source of this link...
+		if($currentSourceFid != $sourceFid OR $currentSourceElementId != $sourceElementId) {
 			$sql1 = "UPDATE ".$xoopsDB->prefix('formulize_framework_links')."
-				SET fl_form1_id = $targetFid, 
-				fl_key1 = $targetElementId
+				SET fl_form1_id = $sourceFid,
+				fl_key1 = $sourceElementId
 				WHERE fl_common_value = 0
 				AND fl_relationship = 2
-				AND fl_form1_id = $currentTargetFid
+				AND fl_form1_id = $currentSourceFid
 				AND fl_form2_id = $fid
-				AND fl_key1 = $currentTargetElementId
+				AND fl_key1 = $currentSourceElementId
 				AND fl_key2 = $elementId";
 			$sql2 = "UPDATE ".$xoopsDB->prefix('formulize_framework_links')."
-				SET fl_form2_id = $targetFid, 
-				fl_key2 = $targetElementId
+				SET fl_form2_id = $sourceFid,
+				fl_key2 = $sourceElementId
 				WHERE fl_common_value = 0
 				AND fl_relationship = 3
-				AND fl_form2_id = $currentTargetFid
+				AND fl_form2_id = $currentSourceFid
 				AND fl_form1_id = $fid
-				AND fl_key2 = $currentTargetElementId
+				AND fl_key2 = $currentSourceElementId
 				AND fl_key1 = $elementId";
-			$xoopsDB->query($sql1);
-			$xoopsDB->query($sql2);
+			$result1 = $xoopsDB->query($sql1);
+			$result2 = $xoopsDB->query($sql2);
 		}
 	// adding a link to primary relationship (element not currently linked)
 	} else {
+		$result1 = true;
 		$sql = "INSERT INTO ".$xoopsDB->prefix('formulize_framework_links')."
-			(`fl_frame_id`, 
-			`fl_form1_id`, 
-			`fl_form2_id`, 
-			`fl_key1`, 
-			`fl_key2`, 
-			`fl_common_value`, 
-			`fl_relationship`, 
-			`fl_unified_display`, 
+			(`fl_frame_id`,
+			`fl_form1_id`,
+			`fl_form2_id`,
+			`fl_key1`,
+			`fl_key2`,
+			`fl_common_value`,
+			`fl_relationship`,
+			`fl_unified_display`,
 			`fl_unified_delete`)
 			VALUES
-			(-1, 
-			$targetFid, 
-			$fid, 
-			$targetElementId, 
-			$elementId, 
-			0, 
-			2, 
-			1, 
+			(-1,
+			$sourceFid,
+			$fid,
+			$sourceElementId,
+			$elementId,
+			0,
+			2,
+			1,
 			0)";
-		$xoopsDB->query($sql);
+		$result2 = $xoopsDB->query($sql);
 	}
+	return ($result1 AND $result2) ? true : false;
 }
 
 /**
- * 
+ * Delete all links involving the specified linked element, so long as they are one-to-many (2) or many-to-one (3) connections,
+ * that are not common value. Intended to be called when an element is no longer linked, or an element is deleted.
+ * @param int fid The form id where the linked element exists
+ * @param int elementId The element id of the linked element
+ * @return boolean Returns true or false indicating if the update operation succeeded
  */
 function deleteLinkedElementConnectionsInRelationships($fid, $elementId) {
-
+	global $xoopsDB;
+	$fid = intval($fid);
+	$elementId = intval($elementId);
+	$sql = "DELETE FROM ".$xoopsDB->prefix('formulize_framework_links')."
+		WHERE fl_common_value = 0
+		AND ((
+				fl_relationship = 2
+				AND fl_form2_id = $fid
+				AND fl_key2 = $elementId)
+			) OR (
+				AND fl_relationship = 3
+				AND fl_form1_id = $fid
+				AND fl_key1 = $elementId
+		))";
+	return $xoopsDB->query($sql);
 }
