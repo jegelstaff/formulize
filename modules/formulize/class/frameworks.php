@@ -617,26 +617,22 @@ function updateLinkedElementConnectionsInRelationships($fid, $elementId, $source
 }
 
 /**
- * Delete all links involving the specified linked element, so long as they are one-to-many (2) or many-to-one (3) connections,
- * that are not common value. Intended to be called when an element is no longer linked, or an element is deleted.
+ * Delete all links involving the specified element. Intended to be called when an element is no longer linked, or an element is deleted.
  * @param int fid The form id where the linked element exists
  * @param int elementId The element id of the linked element
  * @return boolean Returns true or false indicating if the update operation succeeded
  */
-function deleteLinkedElementConnectionsInRelationships($fid, $elementId) {
+function deleteElementConnectionsInRelationships($fid, $elementId) {
 	global $xoopsDB;
 	$fid = intval($fid);
 	$elementId = intval($elementId);
 	$sql = "DELETE FROM ".$xoopsDB->prefix('formulize_framework_links')."
-		WHERE fl_common_value = 0
-		AND ((
-				fl_relationship = 2
-				AND fl_form2_id = $fid
-				AND fl_key2 = $elementId)
-			) OR (
-				AND fl_relationship = 3
-				AND fl_form1_id = $fid
-				AND fl_key1 = $elementId
-		))";
+		WHERE (
+			AND fl_form2_id = $fid
+			AND fl_key2 = $elementId)
+		) OR (
+			AND fl_form1_id = $fid
+			AND fl_key1 = $elementId
+		)";
 	return $xoopsDB->query($sql);
 }

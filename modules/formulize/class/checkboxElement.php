@@ -199,7 +199,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
                     if ($_POST['formlink'] == "none" AND $element->isLinked){
                         $form_handler->updateField($element, $element->getVar("ele_handle"), "text");
                         // remove any primary relationship link representing this connection
-                        deleteLinkedElementConnectionsInRelationships($element->getVar('fid'), $element->getVar('ele_id'));
+                        deleteElementConnectionsInRelationships($element->getVar('fid'), $element->getVar('ele_id'));
                     }
 					list($_POST['ele_value'], $ele_uitext) = formulize_extractUIText($_POST['ele_value']);
 					foreach($_POST['ele_value'] as $id=>$text) {

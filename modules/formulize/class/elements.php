@@ -460,28 +460,16 @@ class formulizeElementsHandler {
 		return $ele_id;
 	}
 
-	function delete(&$element, $force = false){
-
-		if( strtolower(get_class($this)) != 'formulizeelementshandler') {
-			return false;
-		}
-
+	function delete($element, $force = false){
 		global $xoopsDB;
-
 		$sql = "DELETE FROM ".formulize_TABLE." WHERE ele_id=".$element->getVar("ele_id")."";
-        if( false != $force ){
-            $result = $this->db->queryF($sql);
-        }else{
-            $result = $this->db->query($sql);
-        }
-		// delete from frameworks table too -- added July 27 2006
-		$sql = "DELETE FROM ". $xoopsDB->prefix('formulize_framework_elements') . " WHERE fe_element_id=".$element->getVar("ele_id");
-	        if( false != $force ){
-      	      $result = $this->db->queryF($sql);
-	        }else{
-      	      $result = $this->db->query($sql);
-	        }
-		return true;
+		if( false != $force ){
+			$result1 = $this->db->queryF($sql);
+		}else{
+			$result1 = $this->db->query($sql);
+		}
+		$result2 = deleteElementConnectionsInRelationships($element->getVar('fid'), $element->getVar('ele_id'));
+		return ($result1 AND $result2) ? true : false;
 	}
 
 	// this function added by jwe Aug 14 2005 -- deletes the data associated with a particular element in a particular form
