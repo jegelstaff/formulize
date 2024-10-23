@@ -3,7 +3,7 @@
     <fieldset>
         <legend><{$smarty.const._AM_ELE_SUBFORM_FORM}></legend>
         <select id="element-subform" name="elements-ele_value[0]" size="1">
-        <{html_options options=$content.subforms selected=$content.ele_value[0]}>
+        <{html_options options=$content.allforms selected=$content.ele_value[0]}>
         </select>
         <div class="description">
             <{$smarty.const._AM_ELE_SUBFORM_DESC}>
@@ -212,19 +212,35 @@
 
 <script type="text/javascript">
 
+	let validForms = []
+	<{foreach key=validForm item=formTitle from=$content.subforms}>
+	<{if $validForm != 'new'}>
+	validForms.push(<{$validForm}>)
+	<{/if}>
+	<{/foreach}>
+
 	$("#element-subform").change(function() {
 		subfid = $("#element-subform").val();
-		$.get("<{$xoops_url}>/modules/formulize/formulize_xhr_responder.php?uid=<{$content.uid}>&op=get_element_option_list&fid="+subfid, function(data) {
-			results = eval('('+data+')');
-			if(results) {
-				$("[name=elements_ele_value_1[]]").empty();
-				for( var i in results.options) {
-					if(typeof(results.options[i]) == "object") {
-						$("[name=elements_ele_value_1[]]").append("<option value='"+results.options[i].id+"'>"+results.options[i].value+"</value>");
+		if(subfid == 'new') {
+			alert('adding new form');
+		} else {
+			$.get("<{$xoops_url}>/modules/formulize/formulize_xhr_responder.php?uid=<{$content.uid}>&op=get_element_option_list&fid="+subfid, function(data) {
+				results = eval('('+data+')');
+				if(results) {
+					$("[name=elements_ele_value_1[]]").empty();
+					$("[name=elements_ele_value_disabledelements[]]").empty();
+					for( var i in results.options) {
+						if(typeof(results.options[i]) == "object") {
+							$("[name=elements_ele_value_1[]]").append("<option value='"+results.options[i].id+"'>"+results.options[i].value+"</value>");
+							$("[name=elements_ele_value_disabledelements[]]").append("<option value='"+results.options[i].id+"'>"+results.options[i].value+"</value>");
+						}
 					}
 				}
+			});
+			if(validForms.includes(parseInt(subfid))===false) {
+
 			}
-		});
+		}
 	});
 
     $("#startstate-<{$content.ele_value.FilterByElementStartState}>").attr('checked',1);

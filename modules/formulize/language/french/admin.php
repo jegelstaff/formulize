@@ -313,6 +313,7 @@ define("_AM_ELE_SUBFORM_IFFORM", "Screen for displaying each entry:");
 define("_AM_ELE_SUBFORM_SCREEN", "Which screen should be used to display each entry?");
 define("_AM_ELE_SUBFORM_SCREEN_HELP", "The screen will be used for subform entries displayed as a form, or for displaying the entry in a row when its view button is clicked.");
 define("_AM_ELE_SUBFORM_NONE", "Pas de sous formulaires valides - définissez d'abord un inter-relation");
+define("_AM_ELE_SUBFORM_NEW", "Ajouter un formulaire nouveau");
 define("_AM_ELE_SUBFORM_REFRESH", "Refresh elements list to match selected form");
 define("_AM_ELE_SUBFORM_VIEW", "Montrer les boutons<i>Voir</i> a coté de chaque entrée du sous formulaire?");
 define("_AM_ELE_SUBFORM_VIEW_DESC", "The <i>View</i> buttons let users click through to the complete entry in the subform.  This may be useful when only some elements in the subform are visible in the main interface.");
