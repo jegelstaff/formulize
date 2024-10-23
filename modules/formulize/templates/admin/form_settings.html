@@ -70,6 +70,19 @@
 		<{/if}>
 
 		<{if $content.istableform == false}>
+		<div class="form-item">
+			<fieldset>
+				<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_PI}></label></legend>
+				<select name="pi" size=1>
+					<option value=""><{$smarty.const._AM_SETTINGS_FORM_PI_NONE}></option>
+					<{html_options options=$content.pioptions selected=$content.defaultpi}>
+				</select>
+				<div class="description">
+					<p><{$smarty.const._AM_SETTINGS_FORM_PI_DESC}></p>
+				</div>
+			</fieldset>
+		</div>
+
 			<div class="form-item">
         	<fieldset>
 				<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ALLOWED}></label></legend>
@@ -198,12 +211,12 @@
 		if(formSuffix) {
 			str = str.substr(0, str.length - 5);
 		}
-		if(pluralize.isPlural(str)) {
-			var singular=pluralize.singular(str)
-			var plural=str 
-		} else {
+		if(pluralize.isSingular(str)) {
 			var singular=str
 			var plural=pluralize.plural(str)
+		} else {
+			var singular=pluralize.singular(str)
+			var plural=str
 		}
 		$("[name=forms-singular]").val(singular);
 		$("[name=forms-plural]").val(plural);

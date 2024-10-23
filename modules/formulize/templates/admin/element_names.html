@@ -88,6 +88,19 @@
 </div>
 <{/if}>
 
+<div class="accordion-box">
+	<div class="form-item">
+   	<fieldset>
+      <legend><label for="principalidentifier" class="question">Is this element the principal identifier for entries in this form?</label></legend>
+			<p><label for='piyes'><input id='piyes' type="radio" name="principalidentifier" value=1<{$content.principalidentifier_on}>> Yes</label></p>
+			<p><label for='pino'><input id='pino' type="radio" name="principalidentifier" value=0<{$content.principalidentifier_off}>> No</label></p>
+			<div class="description">
+				<p>ie: Is this the official name of the entry? Do you distinguish one entry from another by the value of this element?<br><br>A form can only have one principal identifier. Setting this to <b>Yes</b> will set all other elements in the form to <b>No</b>.</p>
+			</div>
+		</fieldset>
+	</div>
+</div>
+
 </form>
 <div style="clear: both;"></div>
 </div> <!--// end content -->
