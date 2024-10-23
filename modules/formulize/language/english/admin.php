@@ -111,6 +111,9 @@ define("_AM_SETTINGS_FORM_SHOWING_LIST","If a List Screen has no columns specifi
 define("_AM_SETTINGS_FORM_APP_PART","Which applications is this form part of?");
 define("_AM_SETTINGS_FORM_APPNEW","Create a new application for this form to be part of?");
 define("_AM_SETTINGS_FORM_DEFAULT_GROUP_PERM","Which groups of users should have permission to alter this form's settings?");
+define("_AM_SETTINGS_FORM_PI","Which element in the form is the principal identifier?");
+define("_AM_SETTINGS_FORM_PI_NONE","No principal identifer");
+define("_AM_SETTINGS_FORM_PI_DESC","The principal identifer is the thing that you use to tell the entries apart, usually a name or id number, etc.");
 
 define("_AM_CAL_SCREEN_TEMPLATES","Templates");
 define("_AM_CAL_SCREEN_DATA","Datasets");
@@ -357,6 +360,7 @@ define("_AM_ELE_SUBFORM_SCREEN", "Which screen should be used to display each en
 define("_AM_ELE_SUBFORM_SCREEN_HELP", "The screen will be used for subform entries displayed as a form, or for displaying the entry in a row when its view button is clicked.");
 define("_AM_ELE_SUBFORM", "Subform (from a form framework)");
 define("_AM_ELE_SUBFORM_DESC", "When you display the current form as part of a framework, the subform interface can be included in the form.  The subform interface allows users to create and modify entries in a related subform without leaving the main form.  The list here shows all the possible subforms from all frameworks that this form is part of.");
+define("_AM_ELE_SUBFORM_NEW", "Add a new form");
 define("_AM_ELE_SUBFORM_NONE", "No subforms available - define a framework first");
 define("_AM_ELE_SUBFORM_ELEMENTS", "Element options");
 define("_AM_ELE_SUBFORM_ELEMENT_LIST", "Choose the elements to show in the row, or to use as the heading if you're showing the full form");
