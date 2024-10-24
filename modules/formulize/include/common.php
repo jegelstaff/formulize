@@ -38,6 +38,7 @@ if(!defined('FORMULIZE_COMMON_INCLUDED')) {
 }
 include_once XOOPS_ROOT_PATH . '/class/xoopsformloader.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/formulize.php';
+include_once XOOPS_ROOT_PATH . '/modules/formulize/class/frameworks.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/elementrenderer.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/constants.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions.php';
@@ -52,6 +53,7 @@ include_once XOOPS_ROOT_PATH . '/modules/formulize/include/customCodeForApplicat
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/usersGroupsPerms.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/data.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/screen.php';
+
 //Add the language constants
 global $xoopsConfig;
 if (file_exists(XOOPS_ROOT_PATH . "/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
