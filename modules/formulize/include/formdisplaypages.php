@@ -478,7 +478,7 @@ function pageSelectionList($currentPage, $countPages, $pageTitles, $aboveBelow, 
 		return $pageSelectionList[$cacheKey];
 	}
 
-	$pageSelectionList[$cacheKey] .= "<select name=\"pageselectionlist_$aboveBelow\" id=\"pageselectionlist_$aboveBelow\" size=\"1\" onchange=\"javascript:pageJump(this.form.pageselectionlist_$aboveBelow.options, $currentPage);\">\n";
+	$pageSelectionList[$cacheKey] = "<select name=\"pageselectionlist_$aboveBelow\" id=\"pageselectionlist_$aboveBelow\" size=\"1\" onchange=\"javascript:pageJump(this.form.pageselectionlist_$aboveBelow.options, $currentPage);\">\n";
 	for($page=1;$page<=$countPages;$page++) {
         if(pageMeetsConditions($conditions, $page, $entry_id, $fid, $frid)) {
 		if(isset($pageTitle[$page]) AND strstr($pageTitles[$page], "[")) {
