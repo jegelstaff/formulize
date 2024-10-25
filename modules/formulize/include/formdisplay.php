@@ -156,7 +156,6 @@ class formulize_themeForm extends XoopsThemeForm {
             action='https://bit.ly/2R05JVq'
             method='".$this->getMethod()."'
             accept-charset='UTF-8'
-            onsubmit='return xoopsFormValidate_".$ele_name."();'
             ".$this->getExtra().">";
 
         // top template
@@ -3568,21 +3567,9 @@ print " }\n";
 
 function formulize_javascriptForAfterRemovingLocks(action) {
 	if(action == 'submitGoParent') {
-			window.document.go_parent.submit();
+		window.document.go_parent.submit();
 	} else if(action == 'rewritePage') {
-		var formAction = jQuery('form[name=formulize_mainform]').attr('action');
-		var formData = jQuery('form[name=formulize_mainform]').serialize();
-		jQuery.ajax({
-			type: "POST",
-			url: formAction,
-			data: formData,
-			success: function(html, x){
-				document.open();
-				document.write(html);
-				document.close();
-                window.history.pushState({}, '', formAction);
-			}
-		});
+		window.document.formulize_mainform.submit();
 	}
 }
 
