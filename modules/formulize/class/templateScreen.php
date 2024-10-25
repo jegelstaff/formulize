@@ -152,6 +152,8 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
 
         $GLOBALS['formulize_screenCurrentlyRendering'] = $screen;
 
+				print "<div class='formulize-template-screen-contents ck-content'>"; // wrap it in a div so it can be targetted, and include ck-content so right text editor stuff formats as expected
+
         if (file_exists($custom_code_filename) and file_exists($template_filename)) {
             $vars = $this->run_template_php_code($screen, $custom_code_filename, $entry_id, $settings);
             global $xoopsTpl;
@@ -222,6 +224,7 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
                     print "\n<script>\n$code\n</script>\n";
                 }
             }
+						print "</div>"; // close template screen div
 
             // determine proper admin link
             $applications_handler = xoops_getmodulehandler('applications', 'formulize');

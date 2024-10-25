@@ -53,6 +53,15 @@ body {
   line-height: 1;
 }
 
+h4 {
+	font-size: 0.8rem;
+	text-transform: uppercase;
+}
+
+h3 {
+	font-size: 1.1rem;
+}
+
 h2 {
     font-size: 1.2rem;
 }
@@ -81,6 +90,13 @@ div.ck-content i {
 
 div.ck-toolbar button {
     box-shadow: none;
+}
+
+div.ck-content blockquote {
+	padding-right: 1.5em;
+	padding-left: 1.5em;
+	font-style: italic;
+	border-left: 5px solid #ccc
 }
 
 blockquote, q {
@@ -2220,8 +2236,22 @@ img, svg {
   margin: 0;
 }
 
-strong {
+b,
+strong,
+.text--bold
+.text--strong {
   font-weight: 500;
+}
+
+i,
+em,
+.text--italic {
+	font-style: italic;
+}
+
+u,
+.text--underline {
+	text-decoration: underline;
 }
 
 img {
