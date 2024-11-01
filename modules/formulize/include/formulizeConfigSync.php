@@ -132,6 +132,7 @@ class FormulizeConfigSync
 	 */
 	private function compareForms(array $config): void
 	{
+		$formExcludedFields = ['defaultform', 'defaultlist'];
 		// Load all forms from the database
 		$dbForms = $this->loadDatabaseConfig('formulize_id');
 		foreach ($config['forms'] as $configForm) {
@@ -143,7 +144,7 @@ class FormulizeConfigSync
 			if (!$dbForm) {
 				$this->addChange('forms', 'create', $strippedFormConfig['form_handle'], $strippedFormConfig);
 			} else {
-				$differences = $this->compareFields($strippedFormConfig, $dbForm);
+				$differences = $this->compareFields($strippedFormConfig, $dbForm, $formExcludedFields);
 				if (!empty($differences)) {
 					$this->addChange('forms', 'update', $strippedFormConfig['form_handle'], $strippedFormConfig, $differences);
 				}
@@ -411,6 +412,11 @@ class FormulizeConfigSync
 
 		switch ($change['operation']) {
 			case 'create':
+				// Ensure the form does not exist
+				$existingForm = $this->formHandler->getByHandle($change['data']['form_handle']);
+				if ($existingForm) {
+					throw new \Exception("Form handle {$change['data']['form_handle']} already exists");
+				}
 				// Insert form record
 				$formId = $this->insertRecord($table, $change['data']);
 				// Create data table
@@ -433,6 +439,11 @@ class FormulizeConfigSync
 				break;
 
 			case 'update':
+				// Ensure the fom exists
+				$existingForm = $this->formHandler->getByHandle($change['data']['form_handle']);
+				if (!$existingForm) {
+					throw new \Exception("Form handle {$change['data']['form_handle']} does not exist");
+				}
 				$this->updateRecord($table, $change['data'], $primaryKey);
 				break;
 
@@ -453,6 +464,11 @@ class FormulizeConfigSync
 
 		switch ($change['operation']) {
 			case 'create':
+				// Ensure the element does not exist
+				$existingElement = $this->elementHandler->get($change['data']['ele_handle']);
+				if ($existingElement) {
+					throw new \Exception("Element handle {$change['data']['ele_handle']} already exists");
+				}
 				$formHandle = $change['metadata']['form_handle'];
 				$form = $this->formHandler->getByHandle($formHandle);
 				if (!$form) {
@@ -467,6 +483,11 @@ class FormulizeConfigSync
 				break;
 
 			case 'update':
+				// Ensure the element exists
+				$existingElement = $this->elementHandler->get($change['data']['ele_handle']);
+				if (!$existingElement) {
+					throw new \Exception("Element handle {$change['data']['ele_handle']} does not exists");
+				}
 				$this->updateRecord($table, $change['data'], $primaryKey);
 				break;
 
@@ -623,7 +644,7 @@ class FormulizeConfigSync
 	private function prepareFormForExport(array $formRow): array
 	{
 		$preparedForm = [];
-		$excludedFields = ['on_before_save', 'on_after_save', 'on_delete', 'custom_edit_check'];
+		$excludedFields = ['on_before_save', 'on_after_save', 'on_delete', 'custom_edit_check', 'defaultform', 'defaultlist'];
 		foreach ($formRow as $field => $value) {
 			if (!in_array($field, $excludedFields)) {
 				$preparedForm[$field] = $value;
