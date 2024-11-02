@@ -210,7 +210,7 @@ function importCsvValidate(&$importSet, $regfid, $validateOverride=false) {
         return true;
     }
     $elementHandler = xoops_getmodulehandler('elements', 'formulize');
-    global $errors, $xoopsDB;
+    global $errors, $xoopsDB, $fid, $xoopsUser;
 
     $output = "** <b>Validating</b><br><b>Csv</b>: " . $importSet[0][0] . "<br>" .
         "<b>Form</b>: <i>name</i>: " . $importSet[2] .
@@ -669,6 +669,7 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
     $other_values = array();
     $usersMap = array();
     $entriesMap = array();
+		$newEntriesMap = array();
     $notEntriesList = array();
     while (!feof($importSet[1])) {
         $row = fgetcsv($importSet[1], 99999);
