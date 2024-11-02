@@ -1409,7 +1409,8 @@ function prepareCellForSpreadsheetExport($column, $entry) {
             case 1:
             default:
                 // Google wants a ' and Excel wants a tab...assume makecsv is going to be imported into Google, and otherwise we're downloading for Excel - default preference for handling strings in csv's, so they import without being mangled. Setting for no intro char may be useful when exporting to other programs that suck in raw data.
-                $exportIntroChar = strstr(getCurrentURL(),'makecsv') ? "'" : "\t";
+								// Exception: if makecsv is called from the import.php popup, because we need to use it there to make a simple spreadsheet, that will probably be edited on a desktop with Excel
+                $exportIntroChar = (strstr(getCurrentURL(),'makecsv') AND !strstr($_SERVER['HTTP_REFERER'], '/modules/formulize/include/import.php')) ? "'" : "\t";
         }
     }
 
