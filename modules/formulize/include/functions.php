@@ -1228,7 +1228,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel, $template, $fid
             $lineStarted = true;
         } else {
             if ($template == "update") {
-                $csvfile = "\"" . _formulize_DE_IMPORT_IDREQCOL . "\"$fd\"" . _formulize_DE_CALC_CREATOR . "\"";
+                $csvfile = "\"" . _formulize_ENTRY_ID . "\"$fd\"" . _formulize_DE_CALC_CREATOR . "\"";
                 $lineStarted = true;
             } else {
                 $csvfile = "\"" . _formulize_DE_CALC_CREATOR . "\"";
@@ -1358,8 +1358,15 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel, $template, $fid
     // grab and output any secondary data for the last entry, if there was any
     $csvfile = prepExportSecondaryData($csvfile, $cols, $fd, $secondaryData);
 
-    $tempfold = microtime(true);
-    $exfilename = _formulize_DE_XF . $tempfold . $fxt;
+		$form_handler = xoops_getmodulehandler('forms','formulize');
+    $formObject = $form_handler->get($fid);
+    if (is_object($formObject)) {
+        $formTitle = "'".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "?", ",", ")", "(", "[", "]"), "_", trans(undoAllHTMLChars($formObject->getVar('title'))))."'";
+    } else {
+        $formTitle = "a_form";
+    }
+
+    $exfilename = _formulize_EXPORT_FILENAME_TEXT."_".$formTitle."_".date("M_j_Y_Hi").".csv";
 
     // open the output file for writing
     $wpath = XOOPS_ROOT_PATH. SPREADSHEET_EXPORT_FOLDER . "$exfilename";
@@ -1369,15 +1376,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel, $template, $fid
     fclose($exportfile);
 
     // garbage collection. delete files older than 6 hours
-    formulize_scandirAndClean(XOOPS_ROOT_PATH . SPREADSHEET_EXPORT_FOLDER, _formulize_DE_XF);
-
-    // write id_reqs and tempfold to the DB if we're making an update template
-    if ($template == "update") {
-        $sql = "INSERT INTO " . $xoopsDB->prefix("formulize_valid_imports") . " (file, id_reqs) VALUES (\"$tempfold\", \"" . serialize($id_req) . "\")";
-        if (!$res = $xoopsDB->queryF($sql)) {
-            exit("Error: could not write import information to the database.  SQL: $sql<br>".$xoopsDB->error());
-        }
-    }
+    formulize_scandirAndClean(XOOPS_ROOT_PATH . SPREADSHEET_EXPORT_FOLDER, _formulize_EXPORT_FILENAME_TEXT);
 
     return XOOPS_URL . SPREADSHEET_EXPORT_FOLDER . "$exfilename";
 }
@@ -1410,7 +1409,8 @@ function prepareCellForSpreadsheetExport($column, $entry) {
             case 1:
             default:
                 // Google wants a ' and Excel wants a tab...assume makecsv is going to be imported into Google, and otherwise we're downloading for Excel - default preference for handling strings in csv's, so they import without being mangled. Setting for no intro char may be useful when exporting to other programs that suck in raw data.
-                $exportIntroChar = strstr(getCurrentURL(),'makecsv') ? "'" : "\t";
+								// Exception: if makecsv is called from the import.php popup, because we need to use it there to make a simple spreadsheet, that will probably be edited on a desktop with Excel
+                $exportIntroChar = (strstr(getCurrentURL(),'makecsv') AND !strstr($_SERVER['HTTP_REFERER'], '/modules/formulize/include/import.php')) ? "'" : "\t";
         }
     }
 

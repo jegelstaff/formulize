@@ -1,5 +1,6 @@
 <?php
 // Module main
+define("_formulize_ENTRY_ID", "Entry ID");
 define("_formulize_FORM_TITLE", "Contact us by filling out this form.");
 define("_AM_CATGENERAL", "General Forms");
 define("_AM_NOFORMS_AVAIL", "There are no forms currently available.");
@@ -657,36 +658,37 @@ define("_formulize_DMULTI_YOUAREON", "You are on:");
 // import
 define("_formulize_DE_IMPORT", "Import Data");
 define("_formulize_DE_IMPORT_RESULTS", "Results...");
-define("_formulize_DE_IMPORT_STEP1", "Step 1: download a blank template file or a file with data");
-define("_formulize_DE_IMPORT_STEP2", "Step 2: modify the file you downloaded");
-define("_formulize_DE_IMPORT_STEP3", "Step 3: upload the modified file");
-define("_formulize_DE_IMPORT_FILE", "Select the file you modified and upload it.");
+define("_formulize_DE_IMPORT_STEP1", "Download Spreadsheets:");
+define("_formulize_DE_IMPORT_STEP3", "Tips");
+define("_formulize_DE_IMPORT_STEP2", "Upload a spreadsheet with data to import:");
 define("_formulize_DE_IMPORT_GO", "Upload");
 define("_formulize_DE_IMPORT_VALIDATEDATA", "Automatically validate the structure and data in the .csv file before actually importing (highly recommended!)");
 define("_formulize_DE_IMPORT_UPDATEDERIVED", "Automatically updated derived values in the form");
 define("_formulize_DE_IMPORT_SENDNOTIFICATIONS", "Automatically send notifications to users based on the imported data");
+define("_formulize_DE_IMPORT_IDENTIFIER_COLUMN", "This column uniquely identifies each entry in the spreadsheet:");
+define("_formulize_DE_IMPORT_USEPKASID", "Advanced option: the value of the unique identifier column is also the internal entry id");
 define("_formulize_DE_IMPORT_INSTRUCTIONS", "<p><b>Open the file you downloaded in a spreadsheet program, like Excel, and modify it</b> so it contains the data you want to upload.  You don't have to do this right now, you can modify the file and come back later to upload it.</p>
 
-<p>When you save the file, <b>make sure you save it in .csv format.</b>  If you save it in a different format, like .xls, then the import process won't work!</p>");
+<p>When you save the file, <b>make sure you save it in .csv format.</b>  If you save it in a different format, like .xls, then the import process won't work!</p>
+
+<p><b>You can only import data to the main form</b>, not any subforms or other connected forms. To import data to a connected form, you need to use a screen that is based on that form. You should import data to the primary form first, so that when you import data into other forms, they can link to the entries you have already imported. ie: Import the 'Countries' data first, then import the 'Cities.' That way, if the City form contains a link to its Country entry, the Country data will already be in place.</p>
+");
 
 define("_formulize_DE_IMPORT_INSTNEWPROFILE","<p><b>If you are creating new entries in the user profile form,</b> you must include a unique username, a full name, a password, a unique e-mail address and a valid registration code for each entry.  A new user account will be created for each entry, based on the information you provide.</p>");
 
-define("_formulize_DE_IMPORT_INSTUPDATE", "<p><b>If you are updating existing entries, do not change or remove the '_1148849956' part of the file name!</b>  Do not add any other '_' characters either.  Also, <b>do not alter the ID numbers</b> in each row of the file.  All that information uniquely identifies the entries associated with each row.</p>
+define("_formulize_DE_IMPORT_INSTUPDATE", "<p>To update existing entries, <b>make sure you leave the values in the '"._formulize_ENTRY_ID."' column unchanged</b>, because that is how Formulize can tell which entry you are editing. You can also choose to use a different column to identify the entries, as long as it has a unique value for every entry (such as a student number, employee number, etc).</p>
 
-<p><b>Every row in the spreadsheet (after the headings) represents one entry in the form.</b>  So if you want to import three entries, then you need to have three rows of data in the spreadsheet. The order of the rows does not matter. If you are updating entries and you delete rows from the spreadsheet, that <i>will not</i> delete those entries from the database.</p>
+<p><b>Every row in the spreadsheet (after the headings) represents one entry in the form.</b>  So if you want to import three entries, then you need to have three rows of data in the spreadsheet. The order of the rows does not matter. If you download a spreadsheet with all your data, and you delete rows from the spreadsheet and then upload it, that <i>will not</i> delete those entries from the database. That will simply update the entries that you did include in the spreadsheet.</p>
 
 <p><b>If a question has a choice of answers,</b> the information in your spreadsheet must match exactly with the options in the form. This includes spelling, capitalization and spacing.  Some questions in some forms allow you to select more than one answer; for instance, a series of checkboxes.  <b>To include multiple answers in your spreadsheet,</b> each answer must be in the same cell with a line break between them.  In Excel, press ALT-Enter after each answer to add a line break.</p>");
 
 define("_formulize_DE_IMPORT_NEWENTRYID", "Use this entry id");
-define("_formulize_DE_IMPORT_INSTNEW", "<p><b>If you are creating new entries,</b> then the column called \"" . _formulize_DE_CALC_CREATOR . "\" can have the username or full name of the person who should be recorded as the entry's creator.  If you leave that column blank, then you will be recorded as the creator.  If you are updating existing entries, then this column is ignored.</p><p><b>If you are creating new entries,</b> and you want to override the primary key that the database gives to each entry, then you can include a column called \"" . _formulize_DE_IMPORT_NEWENTRYID . "\" and put the entry ids you want to use in that column.  If you don't understand what this means, then simply don't add this column to your spreadsheet.</p>");
+define("_formulize_DE_IMPORT_INSTNEW", "<p><b>If you are creating new entries,</b> then the column called '" . _formulize_DE_CALC_CREATOR . "' can have the username or full name of the person who should be recorded as the entry's creator.  If you leave that column blank, then you will be recorded as the creator.  If you are updating existing entries, then this column is ignored.</p>");
 
 define("_formulize_DE_IMPORT_BACK", "Go Back");
-define("_formulize_DE_IMPORT_EITHEROR", "You can either add new entries to a form, or update existing entries.  You <b>cannot</b> do both at once.");
 define("_formulize_DE_IMPORT_OR", "OR");
-define("_formulize_DE_IMPORT_BLANK", "If you want to add new entries to this form...");
-define("_formulize_DE_IMPORT_BLANK2", "Right-click here and save the necessary template.");
-define("_formulize_DE_IMPORT_DATATEMP", "If you want to update entries in this form...");
-define("_formulize_DE_IMPORT_DATATEMP2", "Click here to get a template with your entries in it.");
+define("_formulize_DE_IMPORT_BLANK2", "Blank for making new entries");
+define("_formulize_DE_IMPORT_DATATEMP2", "With data for editing entries");
 define("_formulize_DE_IMPORT_DATATEMP3", "Templates always include all columns regardless of what columns are currently selected.  Templates only include the rows (entries) that are currently visible.  To include all entries, turn off all searches and other filters.");
 define("_formulize_DE_IMPORT_DATATEMP4", "After you have downloaded the template, and made your changes,");
 define("_formulize_DE_IMPORT_DATATEMP5", "go back to the import page and upload your template.");
@@ -761,8 +763,6 @@ define("_AM_GOOGLEFILE_REQUIRED", "You must select a file for");
 
 
 define("_formulize_CLOSE_FORM_ELEMENT", "You need to close the form element that is open first before you edit this one");
-
-define("_formulize_ENTRY_ID", "Entry ID");
 
 define("_formulize_FROM", "From:");
 define("_formulize_TO", "To:");
