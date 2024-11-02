@@ -1358,8 +1358,15 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel, $template, $fid
     // grab and output any secondary data for the last entry, if there was any
     $csvfile = prepExportSecondaryData($csvfile, $cols, $fd, $secondaryData);
 
-    $tempfold = microtime(true);
-    $exfilename = _formulize_DE_XF . $tempfold . $fxt;
+		$form_handler = xoops_getmodulehandler('forms','formulize');
+    $formObject = $form_handler->get($fid);
+    if (is_object($formObject)) {
+        $formTitle = "'".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "?", ",", ")", "(", "[", "]"), "_", trans(undoAllHTMLChars($formObject->getVar('title'))))."'";
+    } else {
+        $formTitle = "a_form";
+    }
+
+    $exfilename = _formulize_EXPORT_FILENAME_TEXT."_".$formTitle."_".date("M_j_Y_Hi").".csv";
 
     // open the output file for writing
     $wpath = XOOPS_ROOT_PATH. SPREADSHEET_EXPORT_FOLDER . "$exfilename";
