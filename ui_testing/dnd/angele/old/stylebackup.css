@@ -1,0 +1,102 @@
+body {
+    min-width: 520px;
+}
+
+.column {
+    border: 0.5px dotted #7a7a7a;
+    float: left;
+    padding: 10px;
+    margin: 18px;
+}
+
+.form-toggle {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    margin-top: -8px;
+}
+
+.form {
+    margin: 0 1em 1em 0;
+    padding: 0.3em;
+    color: #999999;
+}
+
+.form-layout,
+.form-draggable {
+    max-width: 250px;
+    border: 1px solid #cacaca;
+    -webkit-touch-callout: none;
+    /* iOS Safari */
+    -webkit-user-select: none;
+    /* Safari */
+    -khtml-user-select: none;
+    /* Konqueror HTML */
+    -moz-user-select: none;
+    /* Firefox */
+    -ms-user-select: none;
+    /* Internet Explorer/Edge */
+    user-select: none;
+    background-color: #fcfcfc;
+    box-shadow: 0 0 0.5px 0.5px rgba(0, 0, 0, 0.05);
+    display: inline-block;
+    vertical-align: middle;
+    font-family: Arial;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 3px 3px 3px 3px;
+    margin: 4px;
+    text-decoration: none;
+}
+.form-draggable {
+    padding: 3px 8px 3px 8px;
+	height: 36px;
+	line-height: 38px;
+}
+
+.form-content {
+    padding-top: em;
+    color: #999999;
+    display: table-cell;
+    align-content: flex-start;
+    border: 1px solid rgba(0, 0, 0, 0);
+}
+
+.form-draggable:hover {
+    box-shadow: 0 1px 2px 1px rgba(0, 0, 0, 0.1);
+    background-color: #f4f4f4;
+	cursor:grab;
+}
+
+
+.form-draggable-helper {
+    box-shadow: 0 1px 2px 1px rgba(0, 0, 0, 0);
+    background-color: #fcfcfc;	
+    transform: rotate(3deg);
+    -moz-transform: rotate(3deg);
+    -webkit-transform: rotate(3deg);
+	cursor: grabbing;
+}
+
+.form-focus {
+    border: 1px dotted blue;	
+    background-color: rgba(0, 0, 0, 0.01);
+}
+
+.form-draggable > img {
+    width: 28px;
+    height: auto; 
+	padding-right: 8px;
+	padding-bottom: 4px;
+	vertical-align: middle
+}
+
+.highlight {
+    display: inline-block;
+    vertical-align: middle;
+    position: relative;
+    border: 1px dotted #cacaca;
+	min-height: 28px;
+	min-width: 48px;
+    background-color: #cacaca;
+}

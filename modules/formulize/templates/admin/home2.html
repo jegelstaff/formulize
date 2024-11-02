@@ -1,0 +1,63 @@
+<div class="panel-content content">
+	<div style="float: right;">
+		<p style="text-align: right;"><a href="../../system/admin.php?fct=preferences&op=showmod&mod=<{$adminPage.formulizeModId}>"><img src="../images/kedit.png"> <{$smarty.const._AM_HOME_PREF}></a></p>
+		<p style="text-align: right;"><a  href="ui.php?page=synchronize">Synchronize With Another System</a></p>
+		<p style="text-align: right;"><a href="ui.php?page=managekeys">Manage API keys</a></p>
+		<p style="text-align: right;"><a href="ui.php?page=managetokens">Manage Tokens</a></p>
+	</div>
+	<p>&nbsp;</p><p><a href="ui.php?page=form&tab=settings&fid=new"><img src="../images/filenew2.png"> <{$smarty.const._AM_HOME_NEWFORM}></a>&nbsp&nbsp&nbsp;&nbsp;&nbsp&nbsp&nbsp;&nbsp;<a href="ui.php?page=form&tab=settings&fid=new&tableform=true"><img src="../images/filenew3.gif"> Create a new reference to a datatable</a></p>
+	<h2><{$smarty.const._AM_HOME_MANAGEAPP}></h2>
+	<form class="formulize-admin-form">
+		<{php}>print $GLOBALS['xoopsSecurity']->getTokenHTML()<{/php}>
+		<input type="hidden" name="formulize_admin_handler" value="home">
+		<input type="hidden" name="deleteform" value="">
+		<input type="hidden" name="deleteapp" value="">
+		<input type="hidden" name="cloneform" value="">
+		<input type="hidden" name="cloneformdata" value="">
+		<input type="hidden" name="lockdown" value="">
+		<{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/home_sections2.html" sections=$adminPage.apps sidebars=true}>
+	</form>
+</div>
+
+<script type="text/javascript">
+
+    $(".deleteformlink").click(function () {
+        answer = confirm("<{$smarty.const._AM_HOME_CONFIRMDELETEFORM}>");
+        if(answer) {
+            $("[name=deleteform]").val($(this).attr('target'));
+            runSaveEvent();
+        }
+        return false;
+    });
+
+    $(".deleteapplink").click(function () {
+        answer = confirm("<{$smarty.const._AM_HOME_CONFIRMDELETEAPP}>");
+        if(answer) {
+            $("[name=deleteapp]").val($(this).attr('target'));
+            runSaveEvent();
+        }
+        return false;
+    });
+
+    $(".cloneform").click(function () {
+        $("[name=cloneform]").val($(this).attr('target'));
+        runSaveEvent();
+        return false;
+    });
+
+    $(".cloneformdata").click(function () {
+        $("[name=cloneformdata]").val($(this).attr('target'));
+        runSaveEvent();
+        return false;
+    });
+
+    $(".lockdown").click(function () {
+        answer = confirm("<{$smarty.const._AM_HOME_CONFIRMLOCKDOWN}>");
+        if(answer) {
+            $("[name=lockdown]").val($(this).attr('target'));
+            runSaveEvent();
+        }
+        return false;
+    });
+
+</script>

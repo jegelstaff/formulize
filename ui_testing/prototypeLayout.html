@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <style>
+        .sideBarIcons {
+            height: 100%;
+            width: 200px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: white;
+            overflow-x: hidden;
+            padding-top: 60px;
+            font-family: Arial;
+            overflow: auto;
+            border-right:2px solid black;
+        }
+
+        .sideBarIcons a {
+            padding: 10px 10px 10px 20px;
+            font-size: 24px;
+            color: rgba(242, 251, 248, 0.99);
+            display: block;
+            transition: 0.3s;
+        }
+
+        .sideBarIcons a:hover {
+            color: lightgreen;
+        }
+
+
+        .sideBarInfo{
+            height: 100%;
+            width: 0;
+            position: fixed;
+            z-index: 1;
+            top: 0;
+            right: 0;
+            background-color: white;
+            overflow-x: hidden;
+            transition: 0.5s;
+            padding-top: 60px;
+            font-family: Arial;
+            overflow: auto;
+            border-left:2px solid black;
+        }
+
+        .sideBarInfo a {
+            padding: 10px 10px 10px 20px;
+            font-size: 24px;
+            color: lightskyblue;
+            display: block;
+            transition: 0.3s;
+        }
+
+        .sideBarInfo p {
+            padding: 10px 10px 10px 20px;
+            font-size: 24px;
+            color: lightskyblue;
+            display: block;
+            transition: 0.3s;
+        }
+
+        .sideBarInfo a:hover {
+            color: lightgreen;
+        }
+
+        .sideBarInfo .close {
+            position: absolute;
+            top: 0;
+            left: 10px;
+            margin-right: 20px;
+            color: black;
+        }
+
+        .imgToText{
+            position: relative;
+            width: 100%;
+            z-index: -1;
+        }
+        .initBase {
+            position: absolute;
+            top: 0;
+            left: 16px;
+            width: 100%;
+        }
+
+        .popup {
+            display: none;
+            z-index: 10000;
+            background-color: white;
+            width: 25%;
+            height: 25%;
+            margin: 15% auto;
+        }
+
+        .popBox {
+            background-color: white;
+            padding: 15px;
+            border: 2px solid black;
+        }
+
+        .popBox .close {
+            float: right;
+            font-weight: bold;
+        }
+
+
+    </style>
+
+</head>
+
+<body>
+
+<div id = "sideWithIcons" class = "sideBarIcons" >
+
+   <!-- <a href = "javascript:void(0)" class = "close" onclick = "closeBars()" >&times</a> -->
+    <span style ="cursor:pointer" onclick="openInfoBar()"><a href = "#"><div class = "imgToText">
+            <img src="base_icon.png" width = "98" height="98">
+            <h3 class = "initBase"> AAA </h3>
+        </div></a></span>
+
+</div>
+
+<div id = "sideWithInfo" class = "sideBarInfo" >
+    <a href = "javascript:void(0)" class = "close" onclick = "closeInfoBar()" >&times</a>
+    <div style="border-bottom: 5px solid" >
+        <b><p>Form's Name.</p></b> <!-- Name Block-->
+    </div>
+
+    <div style="border-bottom: 3px solid" > <!--Data Stats-->
+        <p>ID: ###</p>
+        <p>Elements: ###</p>
+        <p>Entries: ###</p>
+        <p>Last Updated: ###</p>
+        <p>Owner: ###</p>
+    </div>
+
+    <div style="border-bottom: 3px solid" > <!--Action Menu (it links to stuff)-->
+        <a href ="#">Configure</a>
+        <span style ="cursor:pointer" onclick="openViewPopUp()"><a href ="#">View</a></span>
+
+        <span style ="cursor:pointer" onclick="openClonePopUp()"><a href ="#">Clone</a></span>
+
+        <a href ="#">Lock Down</a>
+
+        <span style ="cursor:pointer" onclick="openDeletePopUp()"><a href ="#">Delete</a></span>
+
+
+        <span style ="cursor:pointer" onclick="openScreensPopUp()"><a href ="#">Screens</a></span>
+
+    </div>
+
+    <div style="border-bottom: 3px solid" > <!--Relations Menu (if there are any)-->
+        <p>One-to-One:<p>
+        <ul>
+            <il><a href = "#" >BBB</a></il> <!-- Just showing that there will be a link to the form -->
+        </ul>
+
+        <p>One-to-Many:</p>
+    </div>
+
+
+</div>
+
+<!--<span style ="cursor:pointer" onclick="openBar()"> Open! </span> -->
+
+<!-- the code for the pop ups-->
+
+<div id="popView" class="popup">
+    <div class="popBox">
+        <a href = "javascript:void(0)" class = "close" onclick = "closePops()" >&times;</a>
+        <p>How would you like to view this form?</p>
+        <a href="#"> Default</a>
+        <a href="#"> All Screens</a>
+    </div>
+</div>
+
+<div id="popClone" class="popup">
+    <div class="popBox">
+        <a href = "javascript:void(0)" class = "close" onclick = "closePops()" >&times;</a>
+        <p>Clone this form with the data?</p>
+        <a href="#"> Yes</a>
+        <a href="#"> No</a>
+    </div>
+</div>
+
+<div id="popDelete" class="popup">
+    <div class="popBox">
+        <a href = "javascript:void(0)" class = "close" onclick = "closePops()" >&times;</a>
+        <p>Are you sure you want to delete form "Form Name Here"?</p>
+        <a href="#"> Yes</a>
+        <a href="#"> No</a>
+    </div>
+</div>
+
+<div id="popScreens" class="popup">
+    <div class="popBox">
+        <a href = "javascript:void(0)" class = "close" onclick = "closePops()" >&times;</a>
+        <p>What screen would you like to view?</p>
+        <a href="#"> Regular</a>
+        <a href="#"> Entries in "Form Name"</a>
+        <a href="#"> More screens...</a>
+
+    </div>
+</div>
+
+
+<!-- scripts for the sidebars and the pop ups -->
+<script>
+   /* function openBar() {
+        document.getElementById("sideWithIcons").style.width = "250px";
+    }
+
+    function closeBars() {
+        document.getElementById("sideWithInfo").style.width = "0";
+    }*/
+
+    function closeInfoBar() {
+        document.getElementById("sideWithInfo").style.width = "0";
+        closePops();
+        document.body.style.backgroundColor = "white";
+        document.getElementById("sideBarIcons").style.backgroundColor = "white";
+    }
+
+
+    function openInfoBar() {
+        document.getElementById("sideWithInfo").style.width = "250px";
+        document.body.style.backgroundColor = "rgba(0,0,0,0.4)";
+        document.getElementById("sideBarIcons").style.backgroundColor = "rgba(0,0,0,0.4)";
+    }
+
+
+    function openViewPopUp(){
+        closePops();
+        document.getElementById('popView').style.display = "block";
+        document.getElementById("sideBarInfo").style.backgroundColor = "rgba(0,0,0,0.4)";
+        document.getElementById("sideBarIcons").style.backgroundColor = "rgba(0,0,0,0.4)";
+    }
+
+    function openDeletePopUp(){
+        closePops();
+        document.getElementById('popDelete').style.display = "block";
+        document.getElementById("sideBarInfo").style.backgroundColor = "rgba(0,0,0,0.4)";
+        document.getElementById("sideBarIcons").style.backgroundColor = "rgba(0,0,0,0.4)";
+    }
+
+    function openClonePopUp(){
+        closePops();
+        document.getElementById('popClone').style.display = "block";
+        document.getElementById("sideBarInfo").style.backgroundColor = "rgba(0,0,0,0.4)";
+        document.getElementById("sideBarIcons").style.backgroundColor = "rgba(0,0,0,0.4)";
+    }
+
+    function openScreensPopUp(){
+        closePops();
+        document.getElementById('popScreens').style.display = "block";
+    }
+
+    function closePops(){
+        document.getElementById('popView').style.display = "none";
+        document.getElementById('popDelete').style.display = "none";
+        document.getElementById('popClone').style.display = "none";
+        document.getElementById('popScreens').style.display = "none";
+    }
+
+</script>
+
+</body>
+</html>

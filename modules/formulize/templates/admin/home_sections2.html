@@ -1,0 +1,16 @@
+<{if $sectionContent.aid == 0}>
+<div class="description homepage-description"><p><{$smarty.const._AM_HOME_APP_DESC}></p></div>
+<{else}>
+<div class="description homepage-description"><p><{$sectionContent.description}></p></div>
+<{/if}>
+
+<{if count($sectionContent.forms) == 0}>
+<p>No forms.</p>
+<{else}>
+<h2>There are forms</h2>
+<!-- this needs to change for each relationship, not form... -->
+    <{foreach from=$sectionContent.forms item=form}>
+
+    <{/foreach}>
+
+<{/if}>

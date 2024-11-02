@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<link href="https://code.jquery.com/ui/1.10.4/themes/ui-lightness/jquery-ui.css" rel="stylesheet">
+	<script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+	<script src="https://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+
+
+	<script src="js/jsfile.js"></script>
+
+	<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+
+<div id="xo-header">
+	<div id="xo-headerlogo"><a href="http://localhost/uc/formulize/" title=""><img src="http://localhost/uc/formulize/themes/formulize_standalone/img/logo.png" alt="Formulize Standalone"></a></div>
+	<div id="xo-headerbanner">
+		<!-- Header menu (optional) -->
+		<div id="xo-globalnav">
+			<a href="http://localhost/uc/formulize" title="Formulize Standalone">Home</a>
+			<a href="http://localhost/uc/formulize/modules/formulize/admin/ui.php" title="admin">Admin</a>
+			<a href="http://localhost/uc/formulize/edituser.php" title="Edit Account">Edit Account</a>
+			<a href="http://localhost/uc/formulize/viewpmsg.php" title="Inbox">Inbox</a>
+			<a href="http://localhost/uc/formulize/user.php?op=logout" title="Logout">Logout</a>
+		</div>
+	</div>
+</div>
+<!-- The sidebar -->
+<div class="sidebar" style="top:100px">	
+	<h3>Current Application</h3>
+	<p onclick="openInfoBar()" style="cursor:pointer">Application settings (todo)</p>
+	<h3>Forms</h3>
+	<div class="form-draggable addable" >
+		<img src="../base_icon.png" width="98" height="98">
+		Form1
+	</div>
+	<div class="form-draggable addable" onclick="openInfoBar()">
+		<img src="../base_icon.png" width="98" height="98">Form2</div>
+	<div class="form-draggable addable">
+		<img src="../base_icon.png" width="98" height="98">Form3</div>
+
+</div>
+
+
+<div class="column" style="margin-left: 240px; margin-top: 10px">
+	<div class="form main">
+		<div class="form-layout">
+<<<<<<< HEAD
+			<p style="text-align: center">Current relationship</p>
+			<div style ="border-style: solid;">
+				<div class="form-sortable ui-draggable ui-sortable" style="vertical-align: top;">
+					<img src="../base_icon.png"> Form1 + Form2
+
+					<button class="button" onclick="openInfoBar()">></button>
+				<div class="relationship-container">
+				<p>One to one</p>
+					<div class="form-content oneone" style="width:100vw;"></div>
+				<p>One to many</p>
+					<div class="form-content onemany" style="width:100vw;"></div>
+				</div>
+=======
+			<p style="text-align: center">One-to-one</p>
+			<div class="form-content oneone" id="droppable">
+				<div class="form-sortable ui-draggable ui-sortable" style="">
+					<img src="../base_icon.png"> Form1 + Form2
+				
+		<button class="button" onclick="openInfoBar()">></button>
+				</div>
+			</div>
+			<div id="addbutton">
+				+ Add new relationship
+			</div>
+		</div>
+				<div class="form-layout">
+			<p style="text-align: center">One to many</p>
+			<div class="form-content onemany" id="droppable">
+				<div class="form-sortable ui-draggable ui-sortable" style="">
+					<img src="../base_icon.png"> Form1 + Form2
+				
+		<button class="button" onclick="openInfoBar()">></button>
+				</div>
+			</div>
+			<div id="addbutton">
+				+ Add new relationship
+			</div>
+		</div>
+				<div class="form-layout">
+			<p style="text-align: center">Many to many</p>
+			<div class="form-content manymany" id="droppable">
+				<div class="form-sortable ui-draggable ui-sortable" style="">
+					<img src="../base_icon.png"> Form1 + Form2
+				
+		<button class="button" onclick="openInfoBar()">></button>
+>>>>>>> c3e2d19f2a044d094544f288a7976c7fb6b0c1e7
+				</div>
+			</div>
+			<div id="addbutton">
+				+ Add new relationship
+			</div>
+		</div>
+	</div>
+</div>
+	
+<div id="popup" class="modal">
+  <div class="popup-content">
+    <span class="close">&times;</span>
+    <p>Type of relationship:</p>
+    <span id="relationshiptype"></span>
+  </div>
+</div>
+
+<div id="sideWithInfo" class="sideBarInfo">
+	<a href="javascript:void(0)" class="close" onclick="closeInfoBar()">&times</a>
+	<div style="border-bottom: 5px solid">
+		<b>
+			<p>Relationship Name:</p>
+			<p><input type="text" id="fname" name="fname" placeholder="form1 + form2"></p>			
+			<p>Add a pair of forms to this Relationship</p>
+			<span><p>Form1 <select>
+  <option value="form2">form2</option>
+  <option value="form3">form3</option>
+				</select><button type="button">Add Forms!</button></p>
+			<p>Forms in this relationship</p>
+			<p>{list of forms if available}</p>
+			
+		</b> <!-- Name Block-->
+	</div>
+
+	<div style="border-bottom: 3px solid">
+		<!--Action Menu (it links to stuff)-->
+		<a href="#">Configure this relationship</a>
+		<span style="cursor:pointer" onclick="openDeletePopUp()"><a href="#">Delete Relationship</a></span>
+
+	</div>
+
+	<script>
+		function closeInfoBar() {
+
+
+			document.getElementById("page-overlay").style.visibility = "hidden";
+			document.getElementById("sideWithInfo").style.width = "0";
+			//			closePops();
+		}
+
+
+		function openInfoBar() {
+			document.getElementById("page-overlay").style.visibility = "visible";
+			document.getElementById("sideWithInfo").style.width = "250px";
+		}
+	</script>
+
+</div>
+
+
+<div id="page-overlay" onclick="closeInfoBar()"></div>
+
+</html>

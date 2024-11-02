@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        .sideBarIcons {
+            height: 100%;
+            width: 0;
+            position: fixed;
+            z-index: 1;
+            top: 0;
+            left: 0;
+            background-color: white;
+            overflow-x: hidden;
+            transition: 0.5s;
+            padding-top: 60px;
+            font-family: Arial;
+        }
+
+        .sideBarIcons a {
+            padding: 10px 10px 10px 20px;
+            font-size: 24px;
+            color: rgba(242, 251, 248, 0.99);
+            display: block;
+            transition: 0.3s;
+        }
+
+        .sideBarIcons a:hover {
+            color: lightgreen;
+        }
+
+        .sideBarIcons .close {
+            position: absolute;
+            top: 0;
+            right: 30px;
+            margin-left: 20px;
+            color: black;
+        }
+
+
+
+        .sideBarInfo{
+            height: 100%;
+            width: 0;
+            position: fixed;
+            z-index: 1;
+            top: 0;
+            right: 0;
+            background-color: white;
+            overflow-x: hidden;
+            transition: 0.5s;
+            padding-top: 60px;
+            font-family: Arial;
+        }
+
+        .sideBarInfo a {
+            padding: 10px 10px 10px 20px;
+            font-size: 24px;
+            color: lightskyblue;
+            display: block;
+            transition: 0.3s;
+        }
+
+        .sideBarInfo p {
+            padding: 10px 10px 10px 20px;
+            font-size: 24px;
+            color: lightskyblue;
+            display: block;
+            transition: 0.3s;
+        }
+
+        .sideBarInfo a:hover {
+            color: lightgreen;
+        }
+
+        .sideBarInfo .close {
+            position: absolute;
+            top: 0;
+            left: 10px;
+            margin-right: 20px;
+            color: black;
+        }
+
+        .imgToText{
+            position: relative;
+            width: 100%;
+            z-index: -1;
+        }
+        .initBase {
+            position: absolute;
+            top: 0;
+            left: 16px;
+            width: 100%;
+        }
+    </style>
+
+</head>
+
+<body>
+
+<div id = "sideWithIcons" class = "sideBarIcons" >
+
+        <a href = "javascript:void(0)" class = "close" onclick = "closeBars()" >&times</a>
+
+    <span style ="cursor:pointer" onclick="openInfoBar()"><a href = "#"><div class = "imgToText">
+            <img src="base_icon.png" width = "98" height="98">
+            <h3 class = "initBase"> AAA </h3>
+        </div></a></span>
+
+</div>
+
+<div id = "sideWithInfo" class = "sideBarInfo" >
+    <a href = "javascript:void(0)" class = "close" onclick = "closeInfoBar()" >&times</a>
+    <div style="border-bottom: 5px solid" >
+        <b><p>Form's Name.</p></b> <!-- Name Block-->
+    </div>
+    <div style="border-bottom: 3px solid" > <!--Data Stats-->
+        <p>ID: ###</p>
+        <p>Elements: ###</p>
+        <p>Entries: ###</p>
+        <p>Last Updated: ###</p>
+        <p>ID: ###</p>
+    </div>
+    <div style="border-bottom: 3px solid" > <!--Action Menu (it links to stuff)-->
+        <a href ="#">Configure</a>
+        <a href ="#">View</a>
+        <a href ="#">Clone</a>
+        <a href ="#">Lock Down</a>
+        <a href ="#">Delete</a>
+        <a href ="#">Screens</a>
+    </div>
+
+    <div style="border-bottom: 3px solid" > <!--Relations Menu (if there are any)-->
+        <p>One-to-One:<p>
+        <ul><a href = "#" >BBB</a></ul>
+        <p>One-to-Many:</p>>
+    </div>
+
+
+</div>
+
+<span style ="cursor:pointer" onclick="openBar()"> Open! </span>
+
+<script>
+    function openBar() {
+        document.getElementById("sideWithIcons").style.width = "250px";
+        document.body.style.backgroundColor = "rgba(0,0,0,0.4)";
+    }
+
+    function closeBars() {
+        document.getElementById("sideWithIcons").style.width = "0";
+        document.getElementById("sideWithInfo").style.width = "0";
+        document.body.style.backgroundColor = "white";
+    }
+
+    function closeInfoBar() {
+        document.getElementById("sideWithInfo").style.width = "0";
+    }
+
+
+    function openInfoBar() {
+        document.getElementById("sideWithInfo").style.width = "250px";
+
+    }
+
+</script>
+
+</body>
+
+</html>
