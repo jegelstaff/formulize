@@ -1228,7 +1228,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel, $template, $fid
             $lineStarted = true;
         } else {
             if ($template == "update") {
-                $csvfile = "\"" . _formulize_DE_IMPORT_IDREQCOL . "\"$fd\"" . _formulize_DE_CALC_CREATOR . "\"";
+                $csvfile = "\"" . _formulize_ENTRY_ID . "\"$fd\"" . _formulize_DE_CALC_CREATOR . "\"";
                 $lineStarted = true;
             } else {
                 $csvfile = "\"" . _formulize_DE_CALC_CREATOR . "\"";
@@ -1369,15 +1369,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel, $template, $fid
     fclose($exportfile);
 
     // garbage collection. delete files older than 6 hours
-    formulize_scandirAndClean(XOOPS_ROOT_PATH . SPREADSHEET_EXPORT_FOLDER, _formulize_DE_XF);
-
-    // write id_reqs and tempfold to the DB if we're making an update template
-    if ($template == "update") {
-        $sql = "INSERT INTO " . $xoopsDB->prefix("formulize_valid_imports") . " (file, id_reqs) VALUES (\"$tempfold\", \"" . serialize($id_req) . "\")";
-        if (!$res = $xoopsDB->queryF($sql)) {
-            exit("Error: could not write import information to the database.  SQL: $sql<br>".$xoopsDB->error());
-        }
-    }
+    formulize_scandirAndClean(XOOPS_ROOT_PATH . SPREADSHEET_EXPORT_FOLDER, _formulize_EXPORT_FILENAME_TEXT);
 
     return XOOPS_URL . SPREADSHEET_EXPORT_FOLDER . "$exfilename";
 }

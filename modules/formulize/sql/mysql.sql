@@ -270,14 +270,6 @@ CREATE TABLE `formulize_screen` (
 
 ) ENGINE=InnoDB;
 
-CREATE TABLE formulize_valid_imports (
-  import_id smallint(5) NOT NULL auto_increment,
-  file varchar(255) NOT NULL default '',
-  id_reqs text NOT NULL,
-  fid int(5),
-  PRIMARY KEY (`import_id`)
-) ENGINE=InnoDB;
-
 CREATE TABLE formulize_notification_conditions (
   not_cons_id smallint(5) NOT NULL auto_increment,
   not_cons_fid smallint(5) NOT NULL default 0,

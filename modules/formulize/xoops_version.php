@@ -67,7 +67,7 @@ $modversion['tables'] = array(
 	"formulize_screen_multipage",
 	"formulize_screen_listofentries",
 	"formulize_screen_template",
-    "formulize_screen_calendar",
+  "formulize_screen_calendar",
 	"formulize_entry_owner_groups",
 	"formulize_application_form_link",
 	"formulize_applications",
@@ -78,11 +78,11 @@ $modversion['tables'] = array(
 	"formulize_procedure_logs",
 	"formulize_procedure_logs_params",
 	"formulize_deletion_logs",
-    "formulize_apikeys",
+  "formulize_apikeys",
 	"formulize_tokens",
-    "formulize_digest_data",
-    "formulize_passcodes",
-    "tfa_codes"
+  "formulize_digest_data",
+  "formulize_passcodes",
+  "tfa_codes"
 );
 
 $modversion['formulize_exportable_tables'] = array(
@@ -238,7 +238,6 @@ $modversion['table_metadata'] = array(
             )
         )
     ),
-    "formulize_valid_imports" => array(),
     "formulize_screen" => array(
         "fields" => array("title", "type"),
         "joins" => array(
