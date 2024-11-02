@@ -47,27 +47,27 @@ function importCsv($csv_name, $regfid, $validateOverride, $pkColumn=false) {
 
     importCsvSetup($importSet, $pkColumn);
 
-        if (IMPORT_DEBUG) {
-            importCsvDebug($importSet);
-        }
+		if (IMPORT_DEBUG) {
+				importCsvDebug($importSet);
+		}
 
 		if (importCsvValidate($importSet, $regfid, $validateOverride)) {
 				importCsvProcess($importSet, $regfid, $validateOverride, $pkColumn);
 
-            echo "<script type=\"text/javascript\">\n";
-            echo "window.opener.document.controls.forcequery.value = 1;\n";
-            echo "window.opener.showLoading();\n";
-            echo "</script>\n";
-        } else {
-            echo "<br><b>csv not imported!</b>";
-            if (!empty($errors)) {
-                echo "<ol>";
-                foreach ($errors as $error) {
-                    echo $error;
-                }
-                echo "</ol>";
-            }
-        }
+				echo "<script type=\"text/javascript\">\n";
+				echo "window.opener.document.controls.forcequery.value = 1;\n";
+				echo "window.opener.showLoading();\n";
+				echo "</script>\n";
+		} else {
+				echo "<br><b>csv not imported!</b>";
+				if (!empty($errors)) {
+						echo "<ol>";
+						foreach ($errors as $error) {
+								echo $error;
+						}
+						echo "</ol>";
+				}
+		}
 
     echo "<b>** Finished</b><br><br>";
 
@@ -128,32 +128,32 @@ function importCsvSetup(&$importSet, $pkColumn=false) {
                 $cell = $importSet[3][$column];
 
             // need to record location of: _formulize_DE_CALC_CREATOR plus five user profile metadata fields, if they are necessary
-                // if we're dealing with a blank template...
-                if ($cell == _formulize_DE_CALC_CREATOR) {
-                    $importSet[7]['creator'] = $column;
-                }
-                if ($cell == _formulize_DE_IMPORT_USERNAME) {
-                    $importSet[7]['username'] = $column;
-                }
-                if ($cell == _formulize_DE_IMPORT_FULLNAME) {
-                    $importSet[7]['fullname'] = $column;
-                }
-                if ($cell == _formulize_DE_IMPORT_PASSWORD) {
-                    $importSet[7]['password'] = $column;
-                }
-                if ($cell == _formulize_DE_IMPORT_EMAIL) {
-                    $importSet[7]['email'] = $column;
-                }
-                if ($cell == _formulize_DE_IMPORT_REGCODE) {
-                    $importSet[7]['regcode'] = $column;
-                }
-                if ($cell == _formulize_DE_IMPORT_NEWENTRYID) {
-                    // columns with this exact heading will have this entry id used
-                    $importSet[7]['usethisentryid'] = $column;
-                }
+            // if we're dealing with a blank template...
+						if ($cell == _formulize_DE_CALC_CREATOR) {
+								$importSet[7]['creator'] = $column;
+						}
+						if ($cell == _formulize_DE_IMPORT_USERNAME) {
+								$importSet[7]['username'] = $column;
+						}
+						if ($cell == _formulize_DE_IMPORT_FULLNAME) {
+								$importSet[7]['fullname'] = $column;
+						}
+						if ($cell == _formulize_DE_IMPORT_PASSWORD) {
+								$importSet[7]['password'] = $column;
+						}
+						if ($cell == _formulize_DE_IMPORT_EMAIL) {
+								$importSet[7]['email'] = $column;
+						}
+						if ($cell == _formulize_DE_IMPORT_REGCODE) {
+								$importSet[7]['regcode'] = $column;
+						}
+						if ($cell == _formulize_DE_IMPORT_NEWENTRYID) {
+								// columns with this exact heading will have this entry id used
+								$importSet[7]['usethisentryid'] = $column;
+						}
 						if ($cell == $pkColumn) {
-                    $importSet[7]['idreqs'] = $column;
-                }
+								$importSet[7]['idreqs'] = $column;
+						}
 
             $mapIndex = -1;
 
@@ -169,6 +169,7 @@ function importCsvSetup(&$importSet, $pkColumn=false) {
                         // links?
                         switch($form_elementsq[$element]["ele_type"]) {
                             case "select":
+														case "checkbox":
                                 $ele_value = unserialize($form_elementsq[$element]["ele_value"]);
                                 $options = $ele_value[2];
 
@@ -212,9 +213,9 @@ function importCsvValidate(&$importSet, $regfid, $validateOverride=false) {
     $elementHandler = xoops_getmodulehandler('elements', 'formulize');
     global $errors, $xoopsDB, $fid, $xoopsUser;
 
-    $output = "** <b>Validating</b><br><b>Csv</b>: " . $importSet[0][0] . "<br>" .
-        "<b>Form</b>: <i>name</i>: " . $importSet[2] .
-        ", <i>id</i>: " . $importSet[4] . "<br><ol>";
+    $output = "** <b>Validating</b><br><b>From csv file</b>: " . $importSet[0][0] . "<br>" .
+        "<b>Into form</b>: " . $importSet[2] .
+        " (id " . $importSet[4] . ")<br><ol>";
 
     $links = count((array) $importSet[6]);
     $GLOBALS['formulize_ignoreColumnsOnImport'] = array();
@@ -435,11 +436,11 @@ function importCsvValidate(&$importSet, $regfid, $validateOverride=false) {
                                     if ($ele_value[1]) {
                                         // Multiple options
                                         $options = $ele_value[2];
+																				$uiTexts = unserialize($element["ele_uitext"]);
                                         $items = explode("\n", $cell_value);
                                         foreach ($items as $item) {
                                             $item_value = trim($item);
-
-                                            if (!in_array($item_value, (array)$options, true)) {
+																						if (!in_array($item_value, (array)$options, true) AND !in_array($item_value, (array)$uiTexts, true)) {
                                                 // last option causes strict matching by type
                                                 $foundit = false;
                                                 foreach ($options as $thisoption=>$default_value) {
@@ -464,7 +465,8 @@ function importCsvValidate(&$importSet, $regfid, $validateOverride=false) {
                                     } else {
                                         // Single option
                                         $options = $ele_value[2];
-                                        if (!in_array($cell_value, (array)$options, true)) {
+																				$uiTexts = unserialize($element["ele_uitext"]);
+                                        if (!in_array(trim($cell_value), (array)$options, true) AND !in_array(trim($cell_value), (array)$uiTexts, true)) {
                                             // last option causes strict matching by type
                                             // then do a check against the translated options
                                             foreach ($options as $thisoption=>$default_value) {
@@ -488,41 +490,78 @@ function importCsvValidate(&$importSet, $regfid, $validateOverride=false) {
 
 
                             case "checkbox":
-                            $options = unserialize($element["ele_value"]);
-                            $options = $options[2];
-                            if(strstr($cell_value, "\n")) {
-                            $items = explode("\n", $cell_value);
-                            } else {
-                                $items = explode(",", $cell_value);
-                            }
-                            foreach ($items as $item) {
-                                $item_value = trim($item);
-                                if (!in_array($item_value, (array)$options, true)) {
-                                    // last option causes strict matching by type
-                                    $foundit = false;
-                                    $hasother = false;
-                                    foreach ($options as $thisoption=>$default_value) {
-                                        if (trim($item_value) == trim(trans($thisoption))) {
-                                            $foundit = true;
-                                        }
-                                        if (preg_match('/\{OTHER\|+[0-9]+\}/', $thisoption)) {
-                                            $hasother = true;
-                                        }
-                                    }
-                                    if (!$foundit AND !$hasother) {
-                                        $keys_output = implode(', ', array_keys((array)$options));
-                                        $errors[] = "<li>line " . $rowCount .
-                                            ", column " . $importSet[3][$link] .
-                                            ",<br> <b>found</b>: " . $item_value .
-                                            ", <b>was expecting</b>: { " . $keys_output . " }</li>";
-                                    }
-                                }
-                            }
+
+															$ele_value = unserialize($element["ele_value"]);
+														if (isset($importSet[5][1][$link]) AND !strstr($cell_value, ",") AND (!is_numeric($cell_value) OR $cell_value < 10000000))
+														{
+																// Linked element, but allow entries with commas to pass through unvalidated, and also allow through numeric values with no commas, if they are really big (assumption is big numbers are some kind of special entry_id reference, as in the case of UofT)
+																$linkElement = $importSet[5][1][$link];
+
+																if (!$ele_value['snapshot']) {
+																		$items = explode("\n", $cell_value);
+																		list($all_valid_options, $all_valid_options_ids) = getElementOptions($linkElement[2]['ele_handle'], $linkElement[2]['id_form']);
+																		foreach ($items as $item)
+																		{
+																				$item_value = trim($item);
+
+																				if (!in_array($item_value, $all_valid_options)) {
+																						$foundit = false;
+																						foreach ($all_valid_options as $thisoption) {
+																								if (trim($item_value) == stripslashes(trim(trans($thisoption)))) { // stripslashes is necessary only because the data contains slashes in the database (which it should not, so this should be removed when that is fixed)
+																										$foundit = true;
+																										break;
+																								}
+																						}
+																						if (!$foundit) {
+																								$some_options = array_slice($all_valid_options, 0, 20);
+																								$errors[] = "<li>line " . $rowCount .
+																										", column " . $importSet[3][$link] .
+																										",<br> <b>found</b>: " . $item_value .
+																										", <b>was expecting values such as</b>: " .
+																										stripslashes(implode(", ", $some_options)) . "</li>";
+																						}
+																				}
+																		}
+																}
+														} else {
+															$options = unserialize($element["ele_value"]);
+															$uiTexts = unserialize($element["ele_uitext"]);
+															$options = $options[2];
+															if(strstr($cell_value, "\n")) {
+															$items = explode("\n", $cell_value);
+															} else {
+																	$items = explode(",", $cell_value);
+															}
+															foreach ($items as $item) {
+																	$item_value = trim($item);
+			                            if (!in_array($item_value, (array)$options, true) AND !in_array($item_value, (array)$uiTexts, true)) {
+																			// last option causes strict matching by type
+																			$foundit = false;
+																			$hasother = false;
+																			foreach ($options as $thisoption=>$default_value) {
+																					if (trim($item_value) == trim(trans($thisoption))) {
+																							$foundit = true;
+																					}
+																					if (preg_match('/\{OTHER\|+[0-9]+\}/', $thisoption)) {
+																							$hasother = true;
+																					}
+																			}
+																			if (!$foundit AND !$hasother) {
+																					$keys_output = implode(', ', array_keys((array)$options));
+																					$errors[] = "<li>line " . $rowCount .
+																							", column " . $importSet[3][$link] .
+																							",<br> <b>found</b>: " . $item_value .
+																							", <b>was expecting</b>: { " . $keys_output . " }</li>";
+																			}
+																	}
+															}
+														}
                             break;
 
                             case "radio":
                             $options = unserialize($element["ele_value"]);
-                            if (!in_array($cell_value, (array)$options, true)) {
+														$uiTexts = unserialize($element["ele_uitext"]);
+                            if (!in_array(trim($cell_value), (array)$options, true) AND !in_array(trim($cell_value), (array)$uiTexts, true)) {
                                 // last option causes strict matching by type
                                 // then do a check against the translated options
                                 $foundit = false;
@@ -679,11 +718,11 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
             $this_id_req = "";
             if(isset($importSet[7]['idreqs'])) {
 							if(!$pkColumn OR $pkColumn == _formulize_ENTRY_ID OR (isset($_POST['usePkColumnAsEntryId']) AND $_POST['usePkColumnAsEntryId'])) {
-                $this_id_req = $row[$importSet[7]['idreqs']];
+								$this_id_req = $row[$importSet[7]['idreqs']];
 							} elseif($pkColumn) {
 								$this_id_req = getImportEntryIdFromPkColumnValue($row[$importSet[7]['idreqs']], $importSet[5][0][$importSet[6][$importSet[7]['idreqs']]]);
 							}
-            }
+						}
 
             $links = count((array) $importSet[6]);
             for ($link = 0; $link < $links; $link++) {
@@ -858,13 +897,16 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
                                     // Multiple options
                                     $element_value = "";
                                     $options = $ele_value[2];
+																		$uiTexts = unserialize($element["ele_uitext"]);
                                     $items = explode("\n", $row_value);
                                     foreach ($items as $item) {
                                         $item_value = trim($item);
-                                        if (!in_array($item_value, (array)$options, true)) {
+																				if(in_array($item_value, (array)$uiTexts, true)) {
+																					$item_value = array_search($item_value, $uiTexts, true);
+																				} elseif (!in_array($item_value, (array)$options, true)) {
                                             // last option causes strict matching by type
                                             foreach ($options as $thisoption=>$default_value) {
-                                                if (trim($item_value) == trim(trans($thisoption))) {
+                                                if ($item_value == trim(trans($thisoption))) {
                                                     $item_value = $thisoption;
                                                     break;
                                                 }
@@ -876,14 +918,17 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
                                 } else {
                                     // Single option
                                     $options = $ele_value[2];
-                                    if (!in_array($row_value, (array)$options, true)) {
-                                        // last option causes strict matching by type
-                                        foreach ($options as $thisoption=>$default_value) {
-                                            if (trim($row_value) == trim(trans($thisoption))) {
-                                                $row_value = $thisoption;
-                                                break;
-                                            }
-                                        }
+																		$uiTexts = unserialize($element["ele_uitext"]);
+																		if(in_array(trim($row_value), (array)$uiTexts, true)) {
+																			$row_value = array_search(trim($row_value), $uiTexts, true);
+																		} elseif (!in_array(trim($row_value), (array)$options, true)) {
+																			// last option causes strict matching by type
+																			foreach ($options as $thisoption=>$default_value) {
+																					if (trim($row_value) == trim(trans($thisoption))) {
+																							$row_value = $thisoption;
+																							break;
+																					}
+																			}
                                     }
                                 }
                             } elseif (strstr($row_value, ",") OR (is_numeric($row_value) AND $row_value > 10000000)) {
@@ -899,51 +944,94 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
 
 
                             case "checkbox":
-                            $options = unserialize($element["ele_value"]);
-                            $element_value = "";
-                            $options = $options[2];
-                            if(strstr($row_value, "\n")) {
-                                $items = explode("\n", $row_value);
-                            } else {
-                                $items = explode(",", $row_value);
-                            }
-                            foreach ($items as $item) {
-                                $item_value = trim($item);
-                                if (!in_array($item_value, (array)$options, true)) {
-                                    // last option causes strict matching by type
-                                    $foundit = false;
-                                    $hasother = false;
-                                    foreach ($options as $thisoption=>$default_value) {
-                                        if (trim($item_value) == trim(trans($thisoption))) {
-                                            $item_value = $thisoption;
-                                            $foundit = true;
-                                        }
-                                        if (preg_match('/\{OTHER\|+[0-9]+\}/', $thisoption)) {
-                                            $hasother = $thisoption;
-                                        }
-                                        if($foundit AND $hasother) { break; } // no need to keep looking for stuff
-                                    }
-                                    if ($foundit) {
-                                        $element_value .= "*=+*:" . $item_value;
-                                    } elseif ($hasother) {
-                                        $other_values[] = "INSERT INTO " . $xoopsDB->prefix("formulize_other") . " (id_req, ele_id, other_text) VALUES (\"$max_id_req\", \"" . $element["ele_id"] . "\", \"" . $myts->htmlSpecialChars(trim($item_value)) . "\")";
-                                        $element_value .= "*=+*:" . $hasother;
-                                    } elseif (!$validateOverride) {
-                                        print "ERROR: INVALID TEXT FOUND FOR A CHECKBOX ITEM -- $item_value -- IN ROW:<BR>";
-                                        print_r($row);
-                                        print "<br><br>";
-                                    }
-                                } else {
-                                    $element_value .= "*=+*:" . $item_value;
-                                }
-                            }
-                            $row_value = $element_value;
+															$ele_value = unserialize($element["ele_value"]);
+															if ($importSet[5][1][$link] AND !strstr($row_value, ",")
+																	AND (!is_numeric($row_value) OR $row_value < 10000000))
+															{
+																	// Linked element
+																	$linkElement = $importSet[5][1][$link];
+																	$ele_value = unserialize($element["ele_value"]);
+																	list($all_valid_options, $all_valid_options_ids) = getElementOptions($linkElement[2]['ele_handle'], $linkElement[2]['id_form']);
+																	if (!$ele_value['snapshot']) {
+																			// Multiple options
+																			$element_value = $linkElement[0] . "#*=:*" .
+																			$linkElement[1] . "#*=:*";
+																			$items = explode("\n", $row_value);
+																			if($ele_value['snapshot']) {
+																					$row_value = '';
+																					if(count((array) $items)>1) {
+																							$row_value .= '*=+*:';
+																					}
+																					$row_value .= implode('*=+*:',$items);
+																			} else {
+																				$row_value = ",";
+																				foreach ($items as $item) {
+																						$item_value = trim($item);
+																						if ($optionIndex = array_search($item_value, $all_valid_options)) {
+																								$ele_id = $all_valid_options_ids[$optionIndex];
+																						} else {
+																								foreach ($all_valid_options as $optionIndex=>$thisoption) {
+																										if (trim($item_value) == trim(trans($thisoption))) {
+																												$item_value = $thisoption;
+																												$ele_id = $all_valid_options_ids[$optionIndex];
+																												break;
+																										}
+																								}
+																						}
+																						$row_value .= $ele_id . ",";
+																				}
+																			}
+																	}
+																} else {
+																	$options = unserialize($element["ele_value"]);
+																	$uiTexts = unserialize($element["ele_uitext"]);
+																	$element_value = "";
+																	$options = $options[2];
+																	if(strstr($row_value, "\n")) {
+																			$items = explode("\n", $row_value);
+																	} else {
+																			$items = explode(",", $row_value);
+																	}
+																	foreach ($items as $item) {
+																			$item_value = trim($item);
+																			if (!in_array($item_value, (array)$options, true)) {
+																					// last option causes strict matching by type
+																					$foundit = false;
+																					$hasother = false;
+																					foreach ($options as $thisoption=>$default_value) {
+																							if ($item_value == trim(trans($thisoption))) {
+																									$item_value = $thisoption;
+																									$foundit = true;
+																							}
+																							if (preg_match('/\{OTHER\|+[0-9]+\}/', $thisoption)) {
+																									$hasother = $thisoption;
+																							}
+																							if($foundit AND $hasother) { break; } // no need to keep looking for stuff
+																					}
+																					if ($foundit) {
+																							$element_value .= "*=+*:" . $item_value;
+																					} elseif(in_array($item_value, (array)$uiTexts, true)) {
+																							$element_value .= "*=+*:" . array_search($item_value, $uiTexts, true);
+																					} elseif ($hasother) {
+																							$other_values[] = "INSERT INTO " . $xoopsDB->prefix("formulize_other") . " (id_req, ele_id, other_text) VALUES (\"$max_id_req\", \"" . $element["ele_id"] . "\", \"" . $myts->htmlSpecialChars(trim($item_value)) . "\")";
+																							$element_value .= "*=+*:" . $hasother;
+																					} elseif (!$validateOverride) {
+																							print "ERROR: INVALID TEXT FOUND FOR A CHECKBOX ITEM -- $item_value -- IN ROW:<BR>";
+																							print_r($row);
+																							print "<br><br>";
+																					}
+																			} else {
+																					$element_value .= "*=+*:" . $item_value;
+																			}
+																	}
+																	$row_value = $element_value;
+																}
                             break;
 
-
-                            case "radio":
+														case "radio":
                             $options = unserialize($element["ele_value"]);
-                            if (!in_array($row_value, (array)$options, true)) {
+														$uiTexts = unserialize($element["ele_uitext"]);
+														if (!in_array(trim($row_value), (array)$options, true)) {
                                 // last option causes strict matching by type
                                 $foundit = false;
                                 $hasother = false;
@@ -957,7 +1045,9 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
                                         $hasother = $thisoption;
                                     }
                                 }
-                                if (!$foundit AND $hasother) {
+																if(!$foundit AND in_array(trim($row_value), (array)$uiTexts, true)) {
+																	$row_value = array_search(trim($row_value), $uiTexts, true);
+																} elseif (!$foundit AND $hasother) {
                                     $other_values[] = "INSERT INTO " . $xoopsDB->prefix("formulize_other") . " (id_req, ele_id, other_text) VALUES (\"$max_id_req\", \"" . $element["ele_id"] . "\", \"" . $myts->htmlSpecialChars(trim($row_value)) . "\")";
                                     $row_value = $hasother;
                                 } elseif (!$foundit AND !$validateOverride) {
