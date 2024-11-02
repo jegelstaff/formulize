@@ -1156,23 +1156,34 @@ function getElementOptions($ele_handle, $fid) {
 }
 
 
-// THERE IS A BUG HERE WHICH CAUSES IT NOT TO COME UP WITH THE RIGHT ID WHEN PASSED A FULL NAME???
 function getUserID($stringName) {
     global $xoopsDB, $xoopsUser;
 
-    $sql = "SELECT uid FROM " . $xoopsDB->prefix("users") .
-        " WHERE uname='" . formulize_db_escape(str_replace("'","&#039;",$stringName)) . "'";
+		// if no valid name passed in, return current user's id
+		if(!$stringName OR (!is_numeric($stringName) AND trim($stringName) == "")) {
+			return $xoopsUser->getVar('uid');
+		}
 
+		// if passed a number, return that
+		if (is_numeric($stringName)) {
+			return $stringName;
+		}
+
+		// try to look up user by full name
+    $sql = "SELECT uid FROM " . $xoopsDB->prefix("users") .
+        " WHERE uname='" . formulize_db_escape($stringName) . "'";
     $result = $xoopsDB->query($sql);
     if ($xoopsDB->getRowsNum($result) > 0) {
         $item = $xoopsDB->fetchArray($result);
         if (@$item["uid"]) {
             return $item["uid"];
         }
+
+		// try to lookup by login name
     } else {
         // or, if no username match found, get the first matching full name -- added June 29, 2006
         $sql = "SELECT uid FROM " . $xoopsDB->prefix("users") .
-        " WHERE name='" . formulize_db_escape($stringName) . "'";
+        " WHERE login_name='" . formulize_db_escape($stringName) . "'";
 
         if ($result = $xoopsDB->query($sql)) {
             $item = $xoopsDB->fetchArray($result);
@@ -1182,11 +1193,7 @@ function getUserID($stringName) {
         }
     }
 
-    if (is_numeric($stringName)) {
-        return $stringName;
-    }
-
-    // instead of returning 0, return the current user's ID -- added June 29, 2006
+    // instead of returning nothing, return the current user's ID -- added June 29, 2006
     return $xoopsUser->getVar('uid');
 }
 
