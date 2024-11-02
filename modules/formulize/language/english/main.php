@@ -669,7 +669,10 @@ define("_formulize_DE_IMPORT_IDENTIFIER_COLUMN", "This column uniquely identifie
 define("_formulize_DE_IMPORT_USEPKASID", "Advanced option: the value of the unique identifier column is also the internal entry id");
 define("_formulize_DE_IMPORT_INSTRUCTIONS", "<p><b>Open the file you downloaded in a spreadsheet program, like Excel, and modify it</b> so it contains the data you want to upload.  You don't have to do this right now, you can modify the file and come back later to upload it.</p>
 
-<p>When you save the file, <b>make sure you save it in .csv format.</b>  If you save it in a different format, like .xls, then the import process won't work!</p>");
+<p>When you save the file, <b>make sure you save it in .csv format.</b>  If you save it in a different format, like .xls, then the import process won't work!</p>
+
+<p><b>You can only import data to the main form</b>, not any subforms or other connected forms. To import data to a connected form, you need to use a screen that is based on that form. You should import data to the primary form first, so that when you import data into other forms, they can link to the entries you have already imported. ie: Import the 'Countries' data first, then import the 'Cities.' That way, if the City form contains a link to its Country entry, the Country data will already be in place.</p>
+");
 
 define("_formulize_DE_IMPORT_INSTNEWPROFILE","<p><b>If you are creating new entries in the user profile form,</b> you must include a unique username, a full name, a password, a unique e-mail address and a valid registration code for each entry.  A new user account will be created for each entry, based on the information you provide.</p>");
 
