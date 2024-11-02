@@ -1343,7 +1343,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 			$screenButtonText['addProxyButton'] = "";
 		}
 		$screenButtonText['exportButton'] = !$lockcontrols ? $screen->getVar('useexport') : "";
-		$screenButtonText['importButton'] = ($import_data = $gperm_handler->checkRight("import_data", $fid, $groups, $mid) AND !$frid) ? $screen->getVar('useimport') : "";
+		$screenButtonText['importButton'] = $import_data = $gperm_handler->checkRight("import_data", $fid, $groups, $mid) ? $screen->getVar('useimport') : "";
 		$screenButtonText['notifButton'] = $screen->getVar('usenotifications');
 		$screenButtonText['currentViewList'] = $screen->getVar('usecurrentviewlist');
 		$screenButtonText['saveButton'] = !$lockcontrols ? $screen->getVar('desavetext') : "";
