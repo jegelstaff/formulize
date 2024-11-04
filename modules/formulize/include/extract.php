@@ -531,7 +531,6 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			$joinHandles = formulize_getJoinHandles(array(0=>$linkselfids, 1=>$linktargetids)); // get the element handles for these elements, since we need those to properly construct the join clauses
 			$newJoinText = ""; // "new" variables initilized in each loop
 			$joinTextIndex = array();
-			$joinTextTableRef = array();
 			$linkSelectIndex = array();
 			$newexistsJoinText = "";
 			$joinText = ""; // not "new" variables persist (with .= operator)
@@ -557,13 +556,11 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 
 				// validate that the join conditions are valid...either both must have a value, or neither must have a value (match on user id)...otherwise the join is not possible
 				if(($joinHandles[$linkselfids[$id]] AND $joinHandles[$linktargetids[$id]]) OR ($linkselfids[$id] == '' AND $linktargetids[$id] == '')) {
-
 					formulize_getElementMetaData("", false, $linkedFid); // initialize the element metadata for this form...serious performance gain from this
 					$linkSelectIndex[$linkedFid] = "f$id.entry_id AS f".$id."_entry_id, f$id.creation_uid AS f".$id."_creation_uid, f$id.mod_uid AS f".$id."_mod_uid, f$id.creation_datetime AS f".$id."_creation_datetime, f$id.mod_datetime AS f".$id."_mod_datetime, f$id.*";
 					$linkSelect .= ", f$id.entry_id AS f".$id."_entry_id, f$id.creation_uid AS f".$id."_creation_uid, f$id.mod_uid AS f".$id."_mod_uid, f$id.creation_datetime AS f".$id."_creation_datetime, f$id.mod_datetime AS f".$id."_mod_datetime, f$id.*";
 					$joinType = isset($formFieldFilterMap[$linkedFid]) ? "INNER" : "LEFT";
 					$linkedFormObject = $form_handler->get($linkedFid);
-					$joinTextTableRef[$linkedFid] = DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$id ON ";
 					$joinText .= " $joinType JOIN " . DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$id ON"; // NOTE: we are aliasing the linked form tables to f$id where $id is the key of the position in the linked form metadata arrays where that form's info is stored
 					$newexistsJoinText = $existsJoinText ? " $andor " : "";
 					$newexistsJoinText .= " EXISTS(SELECT 1 FROM ". DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$id WHERE "; // set this up also so we have it available for one to many/many to one calculations that require it
@@ -571,8 +568,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 					if(isset($perGroupFiltersPerForms[$linkedFid])) {
 						$newJoinText .= $perGroupFiltersPerForms[$linkedFid];
 					}
-					$joinTextIndex[$linkedFid] = $newJoinText;
-
+					$joinTextIndex["f".$id] = $newJoinText;
 					$joinText .= $newJoinText;
 					if(is_array($oneSideFilters[$linkedFid]) AND count($oneSideFilters[$linkedFid])>0) { // only setup the existsJoinText when there is a where clause that applies to this form...otherwise, we don't care, this form is not relevant to the query that the calculations will do (except maybe when the mainform is not the one-side form...but that's another story)
 						$existsJoinText .= $newexistsJoinText . $newJoinText;
@@ -675,10 +671,11 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			if(!$sortIsOnMain) {
 				$sortFieldMetaData = formulize_getElementMetaData($sortField, true);
 				$sortFormObject = $form_handler->get($sortFid);
+
 				if($sortFieldMetaData['ele_encrypt']) {
-					$useAsSortSubQuery = "(SELECT max(AES_DECRYPT(`$sortField`, '".getAESPassword()."')) as subsort FROM ".DBPRE."formulize_" . $sortFormObject->getVar('form_handle') . " as $sortFidAlias WHERE ".$joinTextIndex[$sortFid]. " ORDER BY subsort $sortOrder) as usethissort";
+					$useAsSortSubQuery = "(SELECT max(AES_DECRYPT(`$sortField`, '".getAESPassword()."')) as subsort FROM ".DBPRE."formulize_" . $sortFormObject->getVar('form_handle') . " as $sortFidAlias WHERE ".$joinTextIndex[$sortFidAlias]. " ORDER BY subsort $sortOrder) as usethissort";
 				} else {
-					$useAsSortSubQuery = "(SELECT max(`$sortField`) as subsort FROM ".DBPRE."formulize_" . $sortFormObject->getVar('form_handle') . " as $sortFidAlias WHERE ".$joinTextIndex[$sortFid]. " ORDER BY subsort $sortOrder) as usethissort";
+					$useAsSortSubQuery = "(SELECT max(`$sortField`) as subsort FROM ".DBPRE."formulize_" . $sortFormObject->getVar('form_handle') . " as $sortFidAlias WHERE ".$joinTextIndex[$sortFidAlias]. " ORDER BY subsort $sortOrder) as usethissort";
 				}
 				$entryIdQuery = str_replace("SELECT main.entry_id as main_entry_id ", "SELECT $useAsSortSubQuery, main.entry_id as main_entry_id ", $entryIdQuery); // sorts as text which will screw up number fields
 				$thisOrderByClause = " ORDER BY usethissort $sortOrder ";
@@ -852,12 +849,13 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		} else {
 		    // FURTHER OPTIMIZATIONS ARE POSSIBLE HERE...WE COULD NOT INCLUDE THE MAIN FORM AGAIN IN ALL THE SELECTS, THAT WOULD IMPROVE THE PROCESSING TIME A BIT, BUT WE WOULD HAVE TO CAREFULLY REFACTOR MORE OF THE LOOPING CODE BELOW THAT PARSES THE ENTRIES, BECAUSE RIGHT NOW IT'S ASSUMING THE FULL MAIN ENTRY IS PRESENT.  AT LEAST THE MAIN ENTRY ID WOULD NEED TO STILL BE USED, SINCE WE USE THAT TO SYNCH UP ALL THE ENTRIES FROM THE OTHER FORMS.
 		    foreach($linkformids as $linkId=>$thisLinkFid) {
+					$linkedFormObject = $form_handler->get($thisLinkFid);
                 $linkQuery = "SELECT $mainSelectClause , $firstTimeGetAllMainFields "
                     .$linkSelectIndex[$thisLinkFid].
                     ", usertable.user_viewemail AS main_user_viewemail, usertable.email AS main_email FROM "
                     .DBPRE."formulize_" . $formObject->getVar('form_handle') . " AS main
                     LEFT JOIN " . DBPRE . "users AS usertable ON main.creation_uid=usertable.uid
-                    LEFT JOIN ".$joinTextTableRef[$thisLinkFid] . $joinTextIndex[$thisLinkFid]."
+                    LEFT JOIN " . DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$linkId ON " . $joinTextIndex["f".$linkId]."
                     INNER JOIN ".DBPRE."formulize_temp_extract_REPLACEWITHTIMESTAMP as sort_and_limit_table ON main.entry_id = sort_and_limit_table.entry_id ";
                 if (isset($oneSideFilters[$thisLinkFid]) and is_array($oneSideFilters[$thisLinkFid])) {
                     $start = true;
@@ -1011,6 +1009,7 @@ function formulize_gatherLinkMetadata($frid, $fid, $mainFormOnly=false) {
         //	print "Form: $form ($fid)<br>";
 
         // generate the list of key fields in the current form, so we can use the values in these fields to filter the linked forms. -- sept 27 2005
+				$foundLinks = array();
         $linkkeys1 = array();
         $linkisparent1 = array();
         $linkformids1 = array();
@@ -1019,17 +1018,21 @@ function formulize_gatherLinkMetadata($frid, $fid, $mainFormOnly=false) {
         $linkcommonvalue1 = array();
         if(count((array) $linklist1) > 0) {
             foreach($linklist1 as $theselinks) {
-                $linkformids1[] = $theselinks['fl_form2_id'];
                 if($theselinks['fl_key1'] != 0) {
+										if(isset($foundLinks[$theselinks['fl_key1']][$theselinks['fl_key2']])) { continue; }
                     $handleforlink = $theselinks['fl_key1'] == -1 ? 'entry_id' : formulize_getElementHandleFromID($theselinks['fl_key1']);
                     $linkkeys1[] = $handleforlink;
                     $linktargetids1[] = $theselinks['fl_key2'];
                     $linkselfids1[] = $theselinks['fl_key1'];
+										$foundLinks[$theselinks['fl_key1']][$theselinks['fl_key2']] = true;
                 } else {
+										if(isset($foundLinks[$theselinks['fl_key1']][""])) { continue; }
                     $linkkeys1[] = "";
                     $linktargetids1[] = "";
                     $linkselfids1[] = $theselinks['fl_key1'];
+										$foundLinks[$theselinks['fl_key1']][""] = true;
                 }
+								$linkformids1[] = $theselinks['fl_form2_id'];
                 if($theselinks['fl_relationship'] == 2) { // 2 is one to many relationship...this does not appear to be referenced anywhere in the extraction layer!
                     $linkisparent1[] = 1;
                 } else {
@@ -1047,17 +1050,21 @@ function formulize_gatherLinkMetadata($frid, $fid, $mainFormOnly=false) {
         $linkcommonvalue2 = array();
         if(count((array) $linklist2) > 0) {
             foreach($linklist2 as $theselinks) {
-                $linkformids2[] = $theselinks['fl_form1_id'];
                 if($theselinks['fl_key2'] != 0) {
+										if(isset($foundLinks[$theselinks['fl_key2']][$theselinks['fl_key1']])) { continue; }
                     $handleforlink = $theselinks['fl_key2'] == -1 ? 'entry_id' : formulize_getElementHandleFromID($theselinks['fl_key2']);
                     $linkkeys2[] = $handleforlink;
                     $linktargetids2[] = $theselinks['fl_key1'];
                     $linkselfids2[] = $theselinks['fl_key2'];
+										$foundLinks[$theselinks['fl_key2']][$theselinks['fl_key1']] = true;
                 } else {
+										if(isset($foundLinks[$theselinks['fl_key2']][""])) { continue; }
                     $linkkeys2[] = "";
                     $linktargetids2[] = "";
                     $linkselfids2[] = $theselinks['fl_key2'];
+										$foundLinks[$theselinks['fl_key2']][""] = true;
                 }
+								$linkformids2[] = $theselinks['fl_form1_id'];
                 if($theselinks['fl_relationship'] == 3) { // 3 is many to one relationship...this does not appear to be referenced anywhere in the extraction layer!
                     $linkisparent2[] = 1;
                 } else {
@@ -1880,7 +1887,7 @@ function formulize_getElementMetaData($elementOrHandle, $isHandle=false, $fid=0)
         } else {
             $whereClause = $isHandle ? "ele_handle = '".formulize_db_escape($elementOrHandle)."'" : "ele_id = ".intval($elementOrHandle);
         }
-        $elementValueQ = "SELECT ele_value, ele_type, ele_id, ele_handle, id_form, ele_uitext, ele_uitextshow, ele_caption, ele_colhead, ele_encrypt, ele_exportoptions FROM " . DBPRE . "formulize WHERE $whereClause";
+          $elementValueQ = "SELECT ele_value, ele_type, ele_id, ele_handle, id_form, ele_uitext, ele_uitextshow, ele_caption, ele_colhead, ele_encrypt, ele_exportoptions FROM " . DBPRE . "formulize WHERE $whereClause";
         $evqRes = $xoopsDB->query($elementValueQ);
         if($xoopsDB->getRowsNum($evqRes)>0) {
             while($evqRow = $xoopsDB->fetchArray($evqRes)) {
