@@ -1,0 +1,16 @@
+
+<div class="panel-content content">
+  <fieldset>
+    <legend><{$smarty.const._AM_ELE_DURATION_SHOW_UNITS}>:</legend>
+			<input type="checkbox" name="show_days" value="1" <{if $content.ele_value.show_days}>checked<{/if}>> <{$smarty.const._formulize_DAYS}>
+			<input type="checkbox" name="show_hours" value="1" <{if $content.ele_value.show_hours}>checked<{/if}>> <{$smarty.const._formulize_HOURS}>
+			<input type="checkbox" name="show_minutes" value="1" <{if $content.ele_value.show_minutes}>checked<{/if}>><{$smarty.const._formulize_MINUTES}>
+	</fieldset>
+</div>
+<div class="panel-content content">
+  <fieldset>
+    <legend><{$smarty.const._AM_ELE_DURATION_LIMITS}>:</legend>
+			<{$smarty.const._AM_ELE_DURATION_LIMITS_MIN}>: <input type="text" name="min_minutes" value="<{$content.ele_value.min_minutes}>" size="10"><br/>
+			<{$smarty.const._AM_ELE_DURATION_LIMITS_MAX}>: <input type="text" name="max_minutes" value="<{$content.ele_value.max_minutes}>" size="10"> (0 = <{$smarty.const._AM_ELE_DURATION_LIMITS_NOMAX}>)
+</fieldset>
+</div>
