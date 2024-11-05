@@ -48,6 +48,12 @@ class FormulizeConfigSyncElementValueProcessor
 	private $dateMapping = [
 		'default' => 0
 	];
+	private $sliderMapping = [
+		'minValue' => 0,
+		'maxValue' => 1,
+		'stepSize' => 2,
+		'defaultValue' => 3,
+	];
 
 	public function __construct()
 	{
@@ -66,6 +72,7 @@ class FormulizeConfigSyncElementValueProcessor
 			'yn' => $this->ynradioMapping,
 			'select' => $this->selectElementMapping,
 			'date' => $this->dateMapping,
+			'slider' => $this->sliderMapping,
 		];
 	}
 
@@ -83,6 +90,7 @@ class FormulizeConfigSyncElementValueProcessor
 		if (!array_key_exists($eleType, $this->elementMapping)) {
 			return $configValue;
 		}
+
 		return $this->importElement($configValue, $this->elementMapping[$eleType]);
 	}
 

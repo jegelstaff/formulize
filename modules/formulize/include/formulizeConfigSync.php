@@ -190,6 +190,7 @@ class FormulizeConfigSync
 		foreach ($configElements as $element) {
 			$dbElement = $this->findInArray($dbElements, 'ele_handle', $element['ele_handle']);
 			$preparedElement = $this->prepareElementForDb($element);
+			$metadata = [];
 
 			if (!$dbElement) {
 				$metadata = [
@@ -198,11 +199,19 @@ class FormulizeConfigSync
 				];
 				$this->addChange('elements', 'create', $preparedElement['ele_handle'], $preparedElement, [], $metadata);
 				continue;
+			} else {
+				$formulizeDbElement = $this->elementHandler->get($dbElement['ele_handle']);
+				$formulizeDbElementDataType = $formulizeDbElement->getDataTypeInformation();
+				if ($formulizeDbElementDataType['dataType'] !== $element['data_type']) {
+					$metadata = [
+						'data_type' => $element['data_type']
+					];
+				}
 			}
-
-			$differences = $this->compareElementFields($preparedElement, $dbElement);
+			// Compare the element fields
+			$differences = $this->compareElementFields($preparedElement, $dbElement, $element['data_type'], $formulizeDbElementDataType['dataType']);
 			if (!empty($differences)) {
-				$this->addChange('elements', 'update', $preparedElement['ele_handle'], $preparedElement, $differences);
+				$this->addChange('elements', 'update', $preparedElement['ele_handle'], $preparedElement, $differences, $metadata);
 			}
 		}
 
@@ -265,7 +274,7 @@ class FormulizeConfigSync
 	 * @param array $dbElement Database element configuration
 	 * @return array
 	 */
-	private function compareElementFields(array $configElement, array $dbElement): array
+	private function compareElementFields(array $configElement, array $dbElement, string $configDataType = NULL, string $dbDataType = NULL): array
 	{
 		$differences = [];
 
@@ -273,10 +282,7 @@ class FormulizeConfigSync
 			$eleValueDiff = [];
 			// ele_value fields are processed differently because they are serialized
 			if ($field === 'ele_value') {
-				$convertedConfigEleValue = $this->elementValueProcessor->processElementValueForImport(
-					$configElement['ele_type'],
-					$value
-				);
+				$convertedConfigEleValue = $value !== "" ? unserialize($value) : [];
 				$dbEleValue = $dbElement['ele_value'] !== "" ? unserialize($dbElement['ele_value']) : [];
 				foreach ($convertedConfigEleValue as $key => $val) {
 					if (!array_key_exists($key, $dbEleValue) || $val !== $dbEleValue[$key]) {
@@ -295,6 +301,13 @@ class FormulizeConfigSync
 					'db_value' => $dbElement[$field] ?? null
 				];
 			}
+		}
+
+		if ($configDataType !== $dbDataType) {
+			$differences['data_type'] = [
+				'config_value' => $configDataType,
+				'db_value' => $dbDataType
+			];
 		}
 
 		return $differences;
@@ -489,6 +502,10 @@ class FormulizeConfigSync
 					throw new \Exception("Element handle {$change['data']['ele_handle']} does not exists");
 				}
 				$this->updateRecord($table, $change['data'], $primaryKey);
+				// Apply data type changes to the element
+				if ($change['metadata']['data_type']) {
+					$this->formHandler->updateField($existingElement, $change['data']['ele_handle'], $change['metadata']['data_type']);
+				}
 				break;
 
 			case 'delete':
