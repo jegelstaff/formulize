@@ -1257,7 +1257,7 @@ class formulizeFormsHandler {
 				// ensure filterSettings[0] is an array of element handles! (will be stored as IDs but we need the handles for lower code to work)
 				if(!isMetaDataField($filterSettings[0][$i]) AND $elementObject = $element_handler->get($filterSettings[0][$i])) {
 					$filterSettings[0][$i] = $elementObject->getVar('ele_handle');
-				} else {
+				} elseif(!isMetaDataField($filterSettings[0][$i])) {
 					print "Formulize Error: a per-group permission filter on form $fid is referencing an element that does not exist. Was it renamed or deleted?<br>";
 					exit(); // can't invoke intended per-group permissions, must fail out rather than risk showing data user should not have access to :(
 				}
