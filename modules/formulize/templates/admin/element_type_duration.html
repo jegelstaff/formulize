@@ -10,7 +10,7 @@
 <div class="panel-content content">
   <fieldset>
     <legend><{$smarty.const._AM_ELE_DURATION_LIMITS}>:</legend>
-			<{$smarty.const._AM_ELE_DURATION_LIMITS_MIN}>: <input type="text" name="min_minutes" value="<{$content.ele_value.min_minutes}>" size="10"><br/>
-			<{$smarty.const._AM_ELE_DURATION_LIMITS_MAX}>: <input type="text" name="max_minutes" value="<{$content.ele_value.max_minutes}>" size="10"> (0 = <{$smarty.const._AM_ELE_DURATION_LIMITS_NOMAX}>)
+			<{$smarty.const._AM_ELE_DURATION_LIMITS_MIN}>: <input type="number" min="0" name="min_minutes" value="<{$content.ele_value.min_minutes}>" size="10"><br/>
+			<{$smarty.const._AM_ELE_DURATION_LIMITS_MAX}>: <input type="number" min="0" name="max_minutes" value="<{$content.ele_value.max_minutes}>" size="10"> (0 = <{$smarty.const._AM_ELE_DURATION_LIMITS_NOMAX}>)
 </fieldset>
 </div>

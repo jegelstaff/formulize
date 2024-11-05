@@ -69,7 +69,7 @@ class formulizeDurationElementHandler extends formulizeElementsHandler
 	// Save admin UI data
 	function adminSave($element, $ele_value)
 	{
-		if (is_object($element) && is_subclass_of($element, 'formulizeformulize')) {
+		if (is_object($element) && is_subclass_of($element, 'formulizeelement')) {
 			// Save which units to show
 			$ele_value['show_days'] = isset($_POST['show_days']) ? 1 : 0;
 			$ele_value['show_hours'] = isset($_POST['show_hours']) ? 1 : 0;
@@ -83,6 +83,8 @@ class formulizeDurationElementHandler extends formulizeElementsHandler
 			$ele_value['size'] = intval($_POST['size']);
 
 			$element->setVar('ele_value', $ele_value);
+
+			return true;
 		}
 		return false;
 	}
@@ -168,7 +170,7 @@ class formulizeDurationElementHandler extends formulizeElementsHandler
 			if ($ele_value['show_' . $unit]) {
 				$value = isset($ele_value['values'][$unit]) ? $ele_value['values'][$unit] : '';
 				${"input_$unit"} = new XoopsFormText(
-					ucfirst($unit),
+					ucfirst($unit).":",
 					$unitMarkupName,
 					$ele_value['size'],
 					5,
@@ -176,7 +178,8 @@ class formulizeDurationElementHandler extends formulizeElementsHandler
 					false,
 					true
 				);
-				${"input_$unit"}->setExtra("class='numbers-only-textbox'");
+				${"input_$unit"}->setExtra("min='0'");
+				${"input_$unit"}->setExtra("class='formulize-duration-element-input numbers-only-textbox'");
 				${"input_$unit"}->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$unitMarkupName\" ");
 				$container->addElement(${"input_$unit"});
 			}
