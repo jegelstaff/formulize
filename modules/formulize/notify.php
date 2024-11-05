@@ -156,63 +156,66 @@ function formulize_notify($event, $extra_tags, $fid, $uids_to_notify, $mid, $omi
     $module_handler = xoops_gethandler('module');
     $formulizeModule = $module_handler->getByDirname("formulize");
     $not_config = $formulizeModule->getInfo('notification');
+		$config_handler = xoops_gethandler('config');
+		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($fid);
     $sendDigests = $formObject->getVar('send_digests');
 
-    if($subject OR $template) {
+		switch ($event) {
+				case "new_entry":
+						$evid = 1;
+						break;
+				case "update_entry":
+						$evid = 2;
+						// validate any revision data we might have, and only proceed if there's a difference
+						$differenceFound = false;
+						foreach($extra_tags as $key=>$value) {
+								if(substr($key, 0, 8)=="ELEMENT_") {
+										if(isset($extra_tags['REVISION_'.$key])) {
+												$revisionsOn = true;
+												if($extra_tags['REVISION_'.$key] != $value) {
+														$differenceFound = true;
+														break;
+												}
+										} else {
+												$revisionsOn = false;
+												break;
+										}
+								}
+						}
+						if($revisionsOn AND !$differenceFound) {
+								return;
+						}
+						break;
+				case "delete_entry":
+						$evid = 3;
+						break;
+		}
 
-        switch ($event) {
-            case "new_entry":
-                $evid = 1;
-                break;
-            case "update_entry":
-                $evid = 2;
-                // validate any revision data we might have, and only proceed if there's a difference
-                $differenceFound = false;
-                foreach($extra_tags as $key=>$value) {
-                    if(substr($key, 0, 8)=="ELEMENT_") {
-                        if(isset($extra_tags['REVISION_'.$key])) {
-                            $revisionsOn = true;
-                            if($extra_tags['REVISION_'.$key] != $value) {
-                                $differenceFound = true;
-                                break;
-                            }
-                        } else {
-                            $revisionsOn = false;
-                            break;
-                        }
-                    }
-                }
-                if($revisionsOn AND !$differenceFound) {
-                    return;
-                }
-                break;
-            case "delete_entry":
-                $evid = 3;
-                break;
-        }
-        $oldsubject = $not_config['event'][$evid]['mail_subject'];
-        $oldtemp = $not_config['event'][$evid]['mail_template'];
-        // rewrite the notification with the subject and template we want, then reset
-        $GLOBALS['formulize_notificationTemplateOverride'] = $template == "" ? $not_config['event'][$evid]['mail_template'] : $template;
-        $GLOBALS['formulize_notificationSubjectOverride'] = $subject == "" ? $not_config['event'][$evid]['mail_subject'] : trans($subject);
-        $not_config['event'][$evid]['mail_template'] = $template == "" ? $not_config['event'][$evid]['mail_template'] : $template;
-        $not_config['event'][$evid]['mail_subject'] = $subject == "" ? $not_config['event'][$evid]['mail_subject'] : trans($subject);
-        // loop through the variables and do replacements in the subject, if any
-        if (strstr($not_config['event'][$evid]['mail_subject'], "{ELEMENT")) {
-            foreach ($extra_tags as $tag=>$value) {
-                $not_config['event'][$evid]['mail_subject'] = str_replace("{".$tag."}",$value, $not_config['event'][$evid]['mail_subject']);
-                $GLOBALS['formulize_notificationSubjectOverride'] = str_replace("{".$tag."}",$value, $GLOBALS['formulize_notificationSubjectOverride']);
-            }
-        }
-        $mailSubject = $not_config['event'][$evid]['mail_subject'];
-        $mailTemplate = $not_config['event'][$evid]['mail_template'];
+		$GLOBALS['formulize_notificationSubjectOverride'] = $subject == "" ? $not_config['event'][$evid]['mail_subject'] : trans($subject);
+		$GLOBALS['formulize_notificationTemplateOverride'] = $template == "" ? $not_config['event'][$evid]['mail_template'] : $template;
+		// loop through the variables and do replacements in the subject, if any
+		$newSubject = $GLOBALS['formulize_notificationSubjectOverride'];
+		if (strstr($newSubject, "{ELEMENT")) {
+				foreach ($extra_tags as $tag=>$value) {
+						$newSubject = str_replace("{".$tag."}",$value, $newSubject);
+				}
+		}
+		$GLOBALS['formulize_notificationSubjectOverride'] = $newSubject;
+		$mailSubject = $GLOBALS['formulize_notificationSubjectOverride'];
+		$mailTemplate = $GLOBALS['formulize_notificationTemplateOverride'];
 
-    } else {
-        $mailSubject = "";
-        $mailTemplate = "";
-    }
+		// if we're NOT sending via cron job, then override the built in notification subject / template (since a plain XOOPS/ICMS install would need this to handle any customizations)
+		// But in a cron job, a mixed set of messages would all use the first override so we can't do that (because override reset don't work? see below). Ergo cron users must be on
+		// Formulize "standalone core" in order for custom subject/templates to work, because the mail system picks up the globals in that case which is foolproof vs. mucking with the
+		// notification event properties. Argh!
+		if($formulizeConfig['notifyByCron']) {
+			$originalSubject = $not_config['event'][$evid]['mail_subject'];
+			$originalTemplate = $not_config['event'][$evid]['mail_template'];
+			$not_config['event'][$evid]['mail_subject'] = $mailSubject;
+			$not_config['event'][$evid]['mail_template'] = $mailTemplate;
+		}
 
     // IF WE'RE SENDING DIGESTS, THE STORE THE MESSAGE DATA ORGANIZED BY USER/EMAIL IN A NEW QUEUE, ELSE SEND THE NOTIFICATION
     if($sendDigests) {
@@ -241,12 +244,14 @@ function formulize_notify($event, $extra_tags, $fid, $uids_to_notify, $mid, $omi
         }
     }
 
-    if($subject OR $template) {
-        $not_config['event'][$evid]['mail_subject'] = $oldsubject;
-        $not_config['event'][$evid]['mail_template'] = $oldtemp;
-        unset($GLOBALS['formulize_notificationTemplateOverride']);
-        unset($GLOBALS['formulize_notificationSubjectOverride']);
-    }
+    unset($GLOBALS['formulize_notificationTemplateOverride']);
+    unset($GLOBALS['formulize_notificationSubjectOverride']);
+		// attempt to revert any overrides to notification event settings... but this doesn't seem to work because of deeply baked in pass by reference bs??!!
+		// so for single notifications, no problem, but multiple cron notifications at once, we can't do this because the failure to properly revert will break subject/template on subsequent mixed message queues
+		if($formulizeConfig['notifyByCron']) {
+			$not_config['event'][$evid]['mail_subject'] = $originalSubject;
+			$not_config['event'][$evid]['mail_template'] = $originalTemplate;
+		}
 
 }
 
