@@ -459,21 +459,23 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
 
     foreach ($filterElements as $key => $element) {
-			// make sure that the filterElements array is using handles, as originally designed and required by code below
-			if($filterElementObject = $element_handler->get($element)) {
-				$filterElements[$key] = $filterElementObject->getVar('ele_handle');
-			} else {
-				print "Formulize Error: a display or disabled condition for a form element, is referencing a non existent element in another form. Probably the element was deleted?<br>";
-				return false;
+			if(!isMetaDataField($element)) {
+				// make sure that the filterElements array is using handles, as originally designed and required by code below
+				if($filterElementObject = $element_handler->get($element)) {
+					$filterElements[$key] = $filterElementObject->getVar('ele_handle');
+				} else {
+					print "Formulize Error: a display or disabled condition for a form element, is referencing a non existent element in another form. Probably the element was deleted?<br>";
+					return false;
+				}
+				$element_metadata = formulize_getElementMetaData($element, !is_numeric($element));
+				if($element_metadata['ele_uitextshow'] AND isset($element_metadata['ele_uitext'])) {
+					$filterTerms[$key] = formulize_swapUIText($filterTerms[$key], unserialize($element_metadata['ele_uitext']));
+				}
+				if($element_metadata['ele_type'] == 'yn' AND ($filterTerms[$key] == 'Yes' OR $filterTerms[$key] == 'No') AND $xoopsConfig['language'] == 'french') {
+					$filterTerms[$key] = $filterTerms[$key] == 'Yes' ? 'Oui' : $filterTerms[$key];
+					$filterTerms[$key] = $filterTerms[$key] == 'No' ? 'Non' : $filterTerms[$key];
+				}
 			}
-			$element_metadata = formulize_getElementMetaData($element, !is_numeric($element));
-			if($element_metadata['ele_uitextshow'] AND isset($element_metadata['ele_uitext'])) {
-				$filterTerms[$key] = formulize_swapUIText($filterTerms[$key], unserialize($element_metadata['ele_uitext']));
-			}
-			if($element_metadata['ele_type'] == 'yn' AND ($filterTerms[$key] == 'Yes' OR $filterTerms[$key] == 'No') AND $xoopsConfig['language'] == 'french') {
-				$filterTerms[$key] = $filterTerms[$key] == 'Yes' ? 'Oui' : $filterTerms[$key];
-				$filterTerms[$key] = $filterTerms[$key] == 'No' ? 'Non' : $filterTerms[$key];
-    	}
     }
 
 
