@@ -826,7 +826,7 @@ function patch40() {
 											break;
 									}
                   if($code) {
-									    $filename = $actionSettings['applyto'].'_'.$effectId.'_'.$actionId.'_'.$record['screen_handle'].'.php';
+									    $filename = $actionSettings['applyto'].'_'.$effectId.'_'.$actionSettings['handle'].'_'.$record['screen_handle'].'.php';
 									    file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename, $code);
                   }
 								}
@@ -865,10 +865,10 @@ function patch40() {
                 $firstPart = $fileNameParts[0];
                 $secondPart = $fileNameParts[1];
                 $thirdPart = $fileNameParts[2];
-                if($firstPart == "derived" 
-                  OR $firstPart == "areamodif" 
-                  OR $firstPart == "ib" 
-                  OR $firstPart == "text" 
+                if($firstPart == "derived"
+                  OR $firstPart == "areamodif"
+                  OR $firstPart == "ib"
+                  OR $firstPart == "text"
                   OR $firstPart == "textarea") {
                     $element_handler = xoops_getmodulehandler('elements','formulize');
                     $element_id = $fileNameParts[1];
@@ -877,8 +877,8 @@ function patch40() {
                         $elementHandle = $elementObject->getVar('ele_handle');
                         rename(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file, XOOPS_ROOT_PATH.'/modules/formulize/code/'.$firstPart.'_'.$elementHandle.'.php');
                     }
-                } elseif($firstPart.'_'.$secondPart.'_'.$thirdPart == "on_before_save" 
-                  OR $firstPart.'_'.$secondPart.'_'.$thirdPart == "on_after_save" 
+                } elseif($firstPart.'_'.$secondPart.'_'.$thirdPart == "on_before_save"
+                  OR $firstPart.'_'.$secondPart.'_'.$thirdPart == "on_after_save"
                   OR $firstPart.'_'.$secondPart == "on_delete"
                   OR $firstPart.'_'.$secondPart.'_'.$thirdPart == "custom_edit_check") {
                     $form_handler = xoops_getmodulehandler('forms','formulize');
@@ -891,17 +891,19 @@ function patch40() {
                     }
                 } elseif($firstPart.'_'.$secondPart == "custom_html"
                   OR $firstPart.'_'.$secondPart == "custom_code") {
+										$effect_id = $fileNameParts[2];
+										$button_id = $fileNameParts[3]; // might be text! might include underscore!
+										$screen_id = str_replace($firstPart.'_'.$secondPart.'_'.$effect_id.'_'.$button_id.'_', '', $file); // hopefully remove everything up to the screen identifier, but might not work if the button id is a handle with underscores!
+										$screen_id = substr($screen_id, 0, -4); // cut off .php
                     $screen_handler = xoops_getmodulehandler('listOfEntriesScreen','formulize');
-                    $screen_id = $fileNameParts[4];
-                    $button_id = $fileNameParts[3];
-                    $effect_id = $fileNameParts[2];
-                    if(count($fileNameParts) == is_numeric($screen_id) AND is_numeric($button_id) AND is_numeric($effect_id)) {
-                        $screenObject = $screen_handler->get($screen_id);
-                        $screen_handle = $screenObject->getVar('screen_handle');
-                        $customActions = $screenObject->getVar('customactions');
-                        $buttonHandle = $customActions[$button_id]['handle'];
-                        rename(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file, XOOPS_ROOT_PATH.'/modules/formulize/code/'.$firstPart.'_'.$secondPart.'_'.$effect_id.'_'.$buttonHandle.'_'.$screen_handle.'.php');
-                    }
+                    if($screenObject = $screen_handler->get($screen_id)) {
+                    	$screen_handle = $screenObject->getVar('screen_handle');
+                    	$customActions = $screenObject->getVar('customactions');
+                    	$buttonHandle = $customActions[$button_id]['handle'];
+											if($file != $firstPart.'_'.$secondPart.'_'.$effect_id.'_'.$buttonHandle.'_'.$screen_handle.'.php') {
+                      	rename(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file, XOOPS_ROOT_PATH.'/modules/formulize/code/'.$firstPart.'_'.$secondPart.'_'.$effect_id.'_'.$buttonHandle.'_'.$screen_handle.'.php');
+                    	}
+										}
                 }
             }
         }
