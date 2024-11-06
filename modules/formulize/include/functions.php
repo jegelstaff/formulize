@@ -4249,7 +4249,7 @@ function convertElementHandlesToElementIds($handles) {
 	if(is_array($handles)) {
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
 		foreach($handles as $i=>$handle) {
-			if(!is_numeric($handle)) {
+			if(!is_numeric($handle) AND !isMetaDataField($handle)) {
 				if($elementObject = $element_handler->get($handle)) {
 					$handles[$i] = $elementObject->getVar('ele_id');
 				}
