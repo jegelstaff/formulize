@@ -64,15 +64,15 @@ class formulizeElement extends FormulizeObject {
 		$this->initVar("ele_colhead", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
 		$this->initVar("ele_handle", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
 		$this->initVar("ele_order", XOBJ_DTYPE_INT);
-		$this->initVar("ele_sort", XOBJ_DTYPE_INT);
+        $this->initVar("ele_sort", XOBJ_DTYPE_INT);
 		$this->initVar("ele_req", XOBJ_DTYPE_INT);
 		$this->initVar("ele_value", XOBJ_DTYPE_ARRAY);
 		$this->initVar("ele_uitext", XOBJ_DTYPE_ARRAY); // used for having an alternative text to display on screen, versus the actual value recorded in the database, for radio buttons, checkboxes and selectboxes
-		$this->initVar("ele_uitextshow", XOBJ_DTYPE_INT);
+        $this->initVar("ele_uitextshow", XOBJ_DTYPE_INT);
 		$this->initVar("ele_delim", XOBJ_DTYPE_TXTBOX, NULL, true, 255);
 		$this->initVar("ele_forcehidden", XOBJ_DTYPE_INT);
 		$this->initVar("ele_private", XOBJ_DTYPE_INT);
-		// changed - start - August 19 2005 - jpc
+ 		// changed - start - August 19 2005 - jpc
 		//$this->initVar("ele_display", XOBJ_DTYPE_INT);
 		$this->initVar("ele_display", XOBJ_DTYPE_TXTBOX);
 		// changed - end - August 19 2005 - jpc
@@ -81,7 +81,7 @@ class formulizeElement extends FormulizeObject {
 		$this->initVar("ele_filtersettings", XOBJ_DTYPE_ARRAY);
 		$this->initVar("ele_disabledconditions", XOBJ_DTYPE_ARRAY);
 		$this->initVar("ele_use_default_when_blank", XOBJ_DTYPE_INT);
-    $this->initVar("ele_exportoptions", XOBJ_DTYPE_ARRAY);
+        $this->initVar("ele_exportoptions", XOBJ_DTYPE_ARRAY);
 	}
 
 	//this method is used to to retreive the elements dataType and size
@@ -348,11 +348,11 @@ class formulizeElementsHandler {
 				$this->db->quoteString($ele_colhead),
 				$this->db->quoteString($ele_handle),
 				$ele_order,
-				$ele_sort,
+                $ele_sort,
 				$ele_req,
 				$this->db->quoteString($ele_value),
 				$this->db->quoteString($ele_uitext),
-				$ele_uitextshow,
+                $ele_uitextshow,
 				$this->db->quoteString($ele_delim),
 				$this->db->quoteString($ele_display),
 				$this->db->quoteString($ele_disabled),
@@ -362,23 +362,23 @@ class formulizeElementsHandler {
 				$this->db->quoteString($ele_filtersettings),
 				$this->db->quoteString($ele_disabledconditions),
 				$ele_use_default_when_blank,
-        $this->db->quoteString($ele_exportoptions),
+                $this->db->quoteString($ele_exportoptions)
 			);
-				// changed - end - August 19 2005 - jpc
+            // changed - end - August 19 2005 - jpc
 			}else{
-				// changed - start - August 19 2005 - jpc
-				$sql = sprintf("UPDATE %s SET
+            // changed - start - August 19 2005 - jpc
+            $sql = sprintf("UPDATE %s SET
 				ele_type = %s,
 				ele_caption = %s,
 				ele_desc = %s,
 				ele_colhead = %s,
 				ele_handle = %s,
 				ele_order = %u,
-				ele_sort = %u,
+                ele_sort = %u,
 				ele_req = %u,
 				ele_value = %s,
 				ele_uitext = %s,
-				ele_uitextshow = %u,
+                ele_uitextshow = %u,
 				ele_delim = %s,
 				ele_display = %s,
 				ele_disabled = %s,
@@ -388,7 +388,7 @@ class formulizeElementsHandler {
 				ele_filtersettings = %s,
 				ele_disabledconditions = %s,
 				ele_use_default_when_blank = %u,
-				ele_exportoptions = %s
+                ele_exportoptions = %s
 				WHERE ele_id = %u AND id_form = %u",
 				formulize_TABLE,
 				$this->db->quoteString($ele_type),
@@ -397,11 +397,11 @@ class formulizeElementsHandler {
 				$this->db->quoteString($ele_colhead),
 				$this->db->quoteString($ele_handle),
 				$ele_order,
-				$ele_sort,
+                $ele_sort,
 				$ele_req,
 				$this->db->quoteString($ele_value),
 				$this->db->quoteString($ele_uitext),
-				$ele_uitextshow,
+                $ele_uitextshow,
 				$this->db->quoteString($ele_delim),
 				$this->db->quoteString($ele_display),
 				$this->db->quoteString($ele_disabled),
@@ -411,9 +411,9 @@ class formulizeElementsHandler {
 				$this->db->quoteString($ele_filtersettings),
 				$this->db->quoteString($ele_disabledconditions),
 				$ele_use_default_when_blank,
-				$this->db->quoteString($ele_exportoptions),
+                $this->db->quoteString($ele_exportoptions),
 				$ele_id,
-				$id_form,
+				$id_form
 			);
             // changed - end - August 19 2005 - jpc
  		}

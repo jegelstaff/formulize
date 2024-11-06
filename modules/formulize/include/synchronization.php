@@ -339,7 +339,7 @@
         return $syncGroupsInCommonLists;
     }
 
-    // syncDataTablesList function gets the default tables for export and add the user selected forms
+    //syncDataTablesList function gets the default tables for export and add the user selected forms
     // and returns the complete list of tables to be exported
     function syncDataTablesList($formsSelected) {
         // get the default tables we need for export
