@@ -240,9 +240,6 @@ define("_formulize_REPORTSAVING", "Save this query as one of your reports:");
 define("_formulize_SAVEREPORTBUTTON", "Save");
 define("_formulize_REPORTNAME", "Report Name:");
 define("_formulize_ANDORTITLE", "Interfield AND/OR Setting:");
-define("_formulize_DAYS", "Days");
-define("_formulize_HOURS", "Hours");
-define("_formulize_MINUTES", "Minutes");
 
 define("_formulize_SHOWCALCONLY", "Show Calculations Only (no list of entries)");
 
