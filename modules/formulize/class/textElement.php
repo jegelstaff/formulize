@@ -108,6 +108,7 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 				$ele_value[6] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
 				$ele_value[7] = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
 				$ele_value[8] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
+				$ele_value[12] = 1; // Default trim option to enabled
 				$dataToSendToTemplate['ele_value'] = $ele_value;
 			}
       return $dataToSendToTemplate;
@@ -230,6 +231,10 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 		// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
     function prepareDataForSaving($value, $element, $entry_id=null) {
 			$ele_value = $element->getVar('ele_value');
+			// Trim the value if the option is set
+			if ($ele_value[12]) {
+				$value = trim($value);
+			}
 			// if $ele_value[3] is 1 (default is 0) then treat this as a numerical field
 			if ($ele_value[3] AND $value != "{ID}" AND $value != "{SEQUENCE}") {
 					$value = preg_replace ('/[^0-9.-]+/', '', $value);

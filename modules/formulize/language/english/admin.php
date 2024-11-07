@@ -271,6 +271,8 @@ define("_AM_ELE_DERIVED_NUMBER_OPTS","If this formula produces a number ...");
 
 // require unique option for textboxes
 define("_AM_ELE_REQUIREUNIQUE", "Users must enter a unique value into this box (no duplicates allowed)");
+// trim input for textboxes
+define("_AM_ELE_TRIMINPUT", "Remove spaces from before and after the user's text");
 
 // added - start - August 227 2005 - jpc
 define("_AM_ELE_TYPE","What should people type in this box?");
