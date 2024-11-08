@@ -232,7 +232,7 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
     function prepareDataForSaving($value, $element, $entry_id=null) {
 			$ele_value = $element->getVar('ele_value');
 			// Trim the value if the option is set
-			if ($ele_value[12]) {
+			if (isset($ele_value[12]) && $ele_value[12]) {
 				$value = trim($value);
 			}
 			// if $ele_value[3] is 1 (default is 0) then treat this as a numerical field
