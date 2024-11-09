@@ -65,7 +65,7 @@ function writeToFormulizeLog($data) {
 	if(!$formulizeLoggingOnOff OR !$formulizeLogFileLocation OR !is_dir($formulizeLogFileLocation)) { return false; }
 
 	// cleanup old log files (last param requires seconds) -- only once per page load
-	if(!$logFilesCleanedUp) {
+	if(!$logFilesCleanedUp AND function_exists('formulize_scandirAndClean')) {
 		formulize_scandirAndClean($formulizeLogFileLocation, 'formulize_log_', $formulizeLogFileStorageDurationHours * 60 * 60);
 		$logFilesCleanedUp = true;
 	}
