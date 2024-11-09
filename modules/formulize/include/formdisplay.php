@@ -3207,7 +3207,7 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 // $nosave indicates that the user cannot save this entry, so we shouldn't check for formulizechanged
 function drawJavascript($nosave=false, $entryId=null, $screen=null) {
 
-global $xoopsUser, $xoopsConfig, $actionFunctionName;
+global $xoopsUser, $xoopsConfig, $actionFunctionName, $formulizeRemoveEntryIdentifier;
 
 static $drawnJavascript = false;
 if($drawnJavascript) {
@@ -3248,9 +3248,9 @@ print "
 	    };
 	  });
 	})(jQuery);
-";
 
-print "
+$formulizeRemoveEntryIdentifier
+
 initialize_formulize_xhr();
 var formulizechanged=0;
 var formulize_javascriptFileIncluded = new Array();
