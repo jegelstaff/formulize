@@ -8304,21 +8304,10 @@ function formulize_handleHtaccessRewriteRule() {
 				$ve = intval($entryIdentifier);
 				$screen_handler = xoops_getmodulehandler('screen', 'formulize');
 				if($screenObject = $screen_handler->get($sid)) {
-						if($rewriteruleElement = $screenObject->getVar('rewriteruleElement')) {
-								$element_handler = xoops_getmodulehandler('elements', 'formulize');
-								$rewriteruleElementObject = $element_handler->get($rewriteruleElement);
-								$ele_type = $rewriteruleElementObject->getVar('ele_type');
-								if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
-										$element_handler = xoops_getmodulehandler($ele_type."Element", 'formulize');
-										$rewriteruleElementObject = $element_handler->get($rewriteruleElement);
-								}
-								$searchValue = $element_handler->prepareLiteralTextForDB(urldecode($entryIdentifier), $rewriteruleElementObject);
-								$dataHandler = new formulizeDataHandler($screenObject->getVar('fid'));
-								$ve = $dataHandler->findFirstEntryWithValue($rewriteruleElementObject, $searchValue);
-						}
+					$ve = formulize_getEntryIdFromRewriteruleElement($screenObject, $entryIdentifier);
 				}
 				if($ve AND (!$screenObject OR security_check($screenObject->getVar('fid'), $ve))) {
-						$queryString .= "&ve=$ve";
+					$queryString = "sid=$sid&ve=$ve";
 						$_GET['ve'] = $ve;
 						$_REQUEST['ve'] = $ve;
 				} else {
@@ -8326,6 +8315,9 @@ function formulize_handleHtaccessRewriteRule() {
 					$formulizeRemoveEntryIdentifier = "window.history.replaceState(null, '', '".XOOPS_URL."/$address/');";
 					// seed the current URL with the correct address
 					getCurrentURL($address);
+					// redetermine the sid, since there is in fact no valid identifier so maybe we want a list-ish screen instead?
+					$sid = formulize_getSidFromRewriteAddress($address);
+					$queryString = "sid=$sid";
 				}
 			}
 			$_GET['sid'] = $sid;
@@ -8341,6 +8333,36 @@ function formulize_handleHtaccessRewriteRule() {
 			exit();
 		}
 	}
+}
+
+/**
+ * Determine the entry ID that matches a given rewrite rule entry identifier, for the given screen
+ * @param mixed screenObjectOrIdentifier The screen object, or an identifier
+ * @param string entryIdentifier The identifier from the clean URL
+ * @return int The entry ID found, or zero if none found
+ */
+function formulize_getEntryIdFromRewriteruleElement($screenObjectOrIdentifier, $entryIdentifier) {
+	$entryId = $entryIdentifier;
+	$screenObject = $screenObjectOrIdentifier;
+	if(!is_object($screenObject) OR !is_a($screenObject, 'formulizeScreen')) {
+		$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+		$screenObject = $screen_handler->get($screenObjectOrIdentifier);
+	}
+	if($screenObject AND $entryIdentifier AND $rewriteruleElement = $screenObject->getVar('rewriteruleElement')) {
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		if($rewriteruleElementObject = $element_handler->get($rewriteruleElement)) {
+			$ele_type = $rewriteruleElementObject->getVar('ele_type');
+			// re-get the element handler based on the specific type, because it will have the proper prepareLiteralTextForDB logic in it (generic handler has nothing specific)
+			if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+					$element_handler = xoops_getmodulehandler($ele_type."Element", 'formulize');
+					$rewriteruleElementObject = $element_handler->get($rewriteruleElement);
+			}
+			$searchValue = $element_handler->prepareLiteralTextForDB(urldecode($entryIdentifier), $rewriteruleElementObject);
+			$dataHandler = new formulizeDataHandler($screenObject->getVar('fid'));
+			$entryId = $dataHandler->findFirstEntryWithValue($rewriteruleElementObject, $searchValue);
+		}
+	}
+	return intval($entryId);
 }
 
 /**
@@ -8498,7 +8520,9 @@ function stripEntryFromDoneDestination($done_dest) {
 		$trimmedDoneDest = trim($done_dest, '/'); // take off last slash if any
 		$trailingSlash = $trimmedDoneDest === $done_dest ? '' : '/'; // if there was a slash on the end, remember this for later
 		$doneDestParts = explode('/', $trimmedDoneDest); // split on slashes
-		if(intval($doneDestParts[count($doneDestParts)-1]) === intval($_GET['ve'])) { // make sure this is the ve we're talking about
+		$entryIdentifier = $doneDestParts[count($doneDestParts)-1];
+		$entryId = formulize_getEntryIdFromRewriteruleElement($_GET['sid'], $entryIdentifier);
+		if($entryId === intval($_GET['ve'])) { // make sure this is the ve we're talking about
 			unset($doneDestParts[count($doneDestParts)-1]); // remove the last value, which will be the ve number
 			$done_dest = implode('/', $doneDestParts).$trailingSlash; // put back together, with trailing slash if necessary
 		}
