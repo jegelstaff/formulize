@@ -24,7 +24,7 @@
 
     <fieldset>
 			<legend>After Saving</legend>
-			<p>This special procedure runs after an entry is saved. Values are available as PHP variables using the element handle name. The prior values are available as $currentValues['handle_name'], so you can check if something has actually changed. The ID of the entry is available as $entry_id. This will be the new ID if the entry was newly saved. A variable \$newEntry is available and will be true or false, depending if this is the first time the entry was saved or not.</p><br />
+			<p>This special procedure runs after an entry is saved. Values are available as PHP variables using the element handle name. The prior values are available as $currentValues['handle_name'], so you can check if something has actually changed. The ID of the entry is available as <i>$entry_id</i>. This will be the new ID if the entry was newly saved. A variable <i>$newEntry</i> is available and will be true or false, depending if this is the first time the entry was saved or not.</p><br />
 			<textarea id="forms-on_after_save" name="forms-on_after_save" class="code-textarea canValidate"><{$content.form_object->on_after_save|htmlspecialchars}>
 			</textarea><{* closing tag on a new line so the textarea has a blank line at the bottom *}>
 			<{include file=db:admin/variable_template_help.html variables=$content.variabletemplatehelp}>
