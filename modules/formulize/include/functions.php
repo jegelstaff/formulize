@@ -8359,7 +8359,9 @@ function writeToFormulizeLog($data) {
 function formulize_handleHtaccessRewriteRule() {
 	if(isset($_GET['formulizeRewriteRuleAddress']) AND $_GET['formulizeRewriteRuleAddress']) {
 		global $formulizeCanonicalURI;
+		global $formulizeRemoveEntryIdentifier;
 		$formulizeCanonicalURI = '';
+		$formulizeRemoveEntryIdentifier = false;
 		$trimedFormulizeRewriteRuleAddress = trim($_GET['formulizeRewriteRuleAddress'], '/');
 		$addressData = explode('/', $trimedFormulizeRewriteRuleAddress);
 		$address = $addressData[0];
@@ -8371,27 +8373,29 @@ function formulize_handleHtaccessRewriteRule() {
 			}
 			$queryString = "sid=$sid";
 			if($entryIdentifier) {
-                $ve = intval($entryIdentifier);
-                $screen_handler = xoops_getmodulehandler('screen', 'formulize');
-                if($screenObject = $screen_handler->get($sid)) {
-                    if($rewriteruleElement = $screenObject->getVar('rewriteruleElement')) {
-                        $element_handler = xoops_getmodulehandler('elements', 'formulize');
-                        $rewriteruleElementObject = $element_handler->get($rewriteruleElement);
-                        $ele_type = $rewriteruleElementObject->getVar('ele_type');
-                        if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
-                            $element_handler = xoops_getmodulehandler($ele_type."Element", 'formulize');
-                            $rewriteruleElementObject = $element_handler->get($rewriteruleElement);
-                        }
-                        $searchValue = $element_handler->prepareLiteralTextForDB(urldecode($entryIdentifier), $rewriteruleElementObject);
-                        $dataHandler = new formulizeDataHandler($screenObject->getVar('fid'));
-                        $ve = $dataHandler->findFirstEntryWithValue($rewriteruleElementObject, $searchValue);
-                    }
-                }
-                if($ve) {
-                    $queryString .= "&ve=$ve";
-                    $_GET['ve'] = $ve;
-                    $_REQUEST['ve'] = $ve;
-                }
+				$ve = intval($entryIdentifier);
+				$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+				if($screenObject = $screen_handler->get($sid)) {
+						if($rewriteruleElement = $screenObject->getVar('rewriteruleElement')) {
+								$element_handler = xoops_getmodulehandler('elements', 'formulize');
+								$rewriteruleElementObject = $element_handler->get($rewriteruleElement);
+								$ele_type = $rewriteruleElementObject->getVar('ele_type');
+								if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+										$element_handler = xoops_getmodulehandler($ele_type."Element", 'formulize');
+										$rewriteruleElementObject = $element_handler->get($rewriteruleElement);
+								}
+								$searchValue = $element_handler->prepareLiteralTextForDB(urldecode($entryIdentifier), $rewriteruleElementObject);
+								$dataHandler = new formulizeDataHandler($screenObject->getVar('fid'));
+								$ve = $dataHandler->findFirstEntryWithValue($rewriteruleElementObject, $searchValue);
+						}
+				}
+				if($ve AND (!$screenObject OR security_check($screenObject->getVar('fid'), $ve))) {
+						$queryString .= "&ve=$ve";
+						$_GET['ve'] = $ve;
+						$_REQUEST['ve'] = $ve;
+				} else {
+					$formulizeRemoveEntryIdentifier = "window.history.replaceState(null, '', '".XOOPS_URL."/$address/');"; // when we get to JS later, we'll need to alter the URL to remove the invalid identifier
+				}
 			}
 			$_GET['sid'] = $sid;
 			$_REQUEST['sid'] = $sid;
@@ -8503,4 +8507,65 @@ function formulize_writeCodeToFile($filename, $code) {
 		$result = file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename, $code);
 	}
 	return $result;
+}
+
+/**
+ * Deduce the correct done destination for a screen from the current URL.
+ * If the done destination is for this specific screen that we're rendering,
+ * switch done destination to the default list for the form if any.
+ * @param object screen The screen that we're rendering
+ * @return string The done destination to use
+ */
+function determineDoneDestinationFromURL($screen = false) {
+	$done_dest = getCurrentURL();
+	$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+	if(!$screen AND isset($_GET['sid'])) {
+		$screen = $screen_handler->get(intval($_GET['sid']));
+	}
+	$alternateURLForSid = $screen ? $screen->getVar('rewriteruleAddress') : false;
+	$doneDestHasSid = $screen ? strstr($done_dest, 'sid='.$screen->getVar('sid')) : false;
+	$doneDestHasSid = $doneDestHasSid ? $doneDestHasSid : ($alternateURLForSid AND strstr($done_dest, $alternateURLForSid));
+	if($screen AND $doneDestHasSid) {
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($screen->getVar('fid'));
+		if($defaultListScreenId = $formObject->getVar('defaultlist')) {
+			if($defaultListScreenObject = $screen_handler->get($defaultListScreenId)) {
+				if($rewriteruleAddress = $defaultListScreenObject->getVar('rewriteruleAddress')) {
+					$done_dest = XOOPS_URL.'/'.$rewriteruleAddress;
+				} else {
+					$done_dest = XOOPS_URL.'/modules/formulize/index.php?sid='.$defaultListScreenId;
+				}
+			}
+		}
+	}
+	return $done_dest;
+}
+
+/**
+ * Clean up a done destination for a screen, so it does not contain an entry reference.
+ * Avoids the user ending up in a loop where the done action takes them back to the same page.
+ * Works for standard and clean URLs
+ * @param string done_dest The address the user is meant to return to
+ * @return string The cleaned done destination with entry reference stripped
+ */
+function stripEntryFromDoneDestination($done_dest) {
+	// strip out any ve portion of a done destination, so we don't end up forcing the user back to this entry after they're done
+	$veTarget = strstr($done_dest, '&ve=') ? '&ve=' : '?ve=';
+	if($done_dest AND $vepos = strpos($done_dest, $veTarget)) {
+			if(is_numeric(substr($done_dest, $vepos+4))) {
+					$done_dest = substr($done_dest, 0, $vepos);
+			}
+	}
+	// if there was an alternate URL used to access the page, and a ve was specified, scale back to remove the ve from the done_dest
+	global $formulizeCanonicalURI;
+	if($done_dest AND $formulizeCanonicalURI AND $_GET['ve']) {
+		$trimmedDoneDest = trim($done_dest, '/'); // take off last slash if any
+		$trailingSlash = $trimmedDoneDest === $done_dest ? '' : '/'; // if there was a slash on the end, remember this for later
+		$doneDestParts = explode('/', $trimmedDoneDest); // split on slashes
+		if(intval($doneDestParts[count($doneDestParts)-1]) === intval($_GET['ve'])) { // make sure this is the ve we're talking about
+			unset($doneDestParts[count($doneDestParts)-1]); // remove the last value, which will be the ve number
+			$done_dest = implode('/', $doneDestParts).$trailingSlash; // put back together, with trailing slash if necessary
+		}
+	}
+	return $done_dest;
 }

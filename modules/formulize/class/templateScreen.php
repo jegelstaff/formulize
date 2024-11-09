@@ -133,8 +133,17 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
     function render($screen, $entry_id, $settings = "") {
 
         if(!security_check($screen->getVar('fid'), $entry_id)) {
-            print "<p>You do not have permission to view this entry in the form</p>";
-            return;
+					if(!$done_dest = $screen->getVar('donedest')) {
+						$done_dest = determineDoneDestinationFromURL($screen);
+					}
+					$done_dest = stripEntryFromDoneDestination($done_dest);
+					$done_dest = substr($done_dest,0,4) == "http" ? $done_dest : "http://".$done_dest;
+					icms::$logger->disableLogger();
+					while(ob_get_level()) {
+							ob_end_clean();
+					}
+					print "<script>window.location = \"$done_dest\";</script>";
+					exit();
         }
 
         $previouslyRenderingScreen = (isset($GLOBALS['formulize_screenCurrentlyRendering']) AND $GLOBALS['formulize_screenCurrentlyRendering']) ? $GLOBALS['formulize_screenCurrentlyRendering'] : null;
