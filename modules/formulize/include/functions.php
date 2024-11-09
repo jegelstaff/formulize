@@ -203,17 +203,20 @@ function gatherNames($groups, $nametype, $requireAllGroups=false, $filter=false,
     return $found_names;
 }
 
-//get the currentURL
-function getCurrentURL() {
+/**
+ * Deduce the current URL, including full query string, etc. Caches the first instance found. Resets cache if a rewriteruleAddress is specified
+ * @param string $rewriteruleAddress If passed in, this value will be used instead of the URI. Intended to seed the current URL in cases where we need to modify the canonical URL because it is using rewrite rules and pointing to an invalid identifier.
+ * @return string The current URL, from cache if already determined and no rewriteruleAddress was specified
+ */
+function getCurrentURL($rewriteruleAddress='') {
     static $url = "";
-    if ($url) {
-        return $url;
-    }
-    $url_parts = parse_url(XOOPS_URL);
-    $url = $url_parts['scheme'] . "://" . $_SERVER['HTTP_HOST'];
-    $url = (isset($url_parts['port']) AND !strstr($_SERVER['HTTP_HOST'], ":")) ? $url . ":" . $url_parts['port'] : $url;
-    // strip html tags, convert special chars to htmlchar equivalents, then convert back ampersand htmlchars to regular ampersands, so the URL doesn't bust on certain servers
-    $url .= str_replace("&amp;", "&", htmlSpecialChars(strip_tags($_SERVER['REQUEST_URI'])));
+    if (!$url OR $rewriteruleAddress) {
+			$url_parts = parse_url(XOOPS_URL);
+			$url = $url_parts['scheme'] . "://" . $_SERVER['HTTP_HOST'];
+			$url = (isset($url_parts['port']) AND !strstr($_SERVER['HTTP_HOST'], ":")) ? $url . ":" . $url_parts['port'] : $url;
+			// strip html tags, convert special chars to htmlchar equivalents, then convert back ampersand htmlchars to regular ampersands, so the URL doesn't bust on certain servers
+			$url .= $rewriteruleAddress ? "/$rewriteruleAddress/" : str_replace("&amp;", "&", htmlSpecialChars(strip_tags($_SERVER['REQUEST_URI'])));
+		}
     return $url;
 }
 
@@ -8394,7 +8397,10 @@ function formulize_handleHtaccessRewriteRule() {
 						$_GET['ve'] = $ve;
 						$_REQUEST['ve'] = $ve;
 				} else {
-					$formulizeRemoveEntryIdentifier = "window.history.replaceState(null, '', '".XOOPS_URL."/$address/');"; // when we get to JS later, we'll need to alter the URL to remove the invalid identifier
+					// when we get to JS later, we'll need to alter the URL to remove the invalid identifier
+					$formulizeRemoveEntryIdentifier = "window.history.replaceState(null, '', '".XOOPS_URL."/$address/');";
+					// see the current URL with the correct address
+					getCurrentURL($address);
 				}
 			}
 			$_GET['sid'] = $sid;
