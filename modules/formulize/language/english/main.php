@@ -718,10 +718,11 @@ define("_formulize_OUTOFRANGE_DATA","Keep this other value found in the database
 define("_AM_FORMULIZE_PREVIOUS_OPTION", "Use a previous answer:");
 define("_formulize_VALUE_WILL_BE_CALCULATED_AFTER_SAVE","This will be determined after the form is saved");
 
-define("_formulize_QSF_DefaultText", "Any");
+define("_formulize_QSF_DefaultText", "Show all");
 define("_formulize_QDR_to", "to");
 define("_formulize_QDR_go", "Go");
 define("_formulize_BLANK_KEYWORD", "{BLANK}");
+define("_SHOW_BLANKS", "Show Blanks");
 
 define("_formulize_ERROR_IN_LEFTRIGHT", "There appears to be an error in the PHP code that generates the text for this space.  Please notify the webmaster.");
 

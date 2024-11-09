@@ -546,7 +546,7 @@ define("_formulize_PUBLISHCALCONLY", "enlever en totalité la liste des entrées
 define("_formulize_PUBLISHINGOPTIONS", "Options de publication :");
 define("_formulize_PUBLISHNOVE", "enlever 'Visualiser cette entrée' des liens du rapport (aussi les utilisateurs ne pourront plus voir les détails de chaque entrée).");
 define("_formulize_PUBLISHREPORT", "Publier ce rapport à l'intention des autres utilisateurs.");
-define("_formulize_QSF_DefaultText", "Tout");
+define("_formulize_QSF_DefaultText", "Afficher toutes");
 define("_formulize_QUERYCONTROLS", "Contrôles des requêtes");
 define("_formulize_RELENTRIES", "Related Entries:");
 define("_formulize_REPORT_OFF", "Désactiver le mode rapport");
@@ -624,5 +624,7 @@ define("_formulize_DE_IMPORT_SENDNOTIFICATIONS", "Automatically send notificatio
 
 define("_formulize_FROM", "De :");
 define("_formulize_TO", "À :");
+
+define("_SHOW_BLANKS", "Afficher les blancs");
 
 include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/main.php';

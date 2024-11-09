@@ -4515,7 +4515,7 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
                     $checked = strstr($_POST[$id], $checkboxOption) ? "checked" : "";
                     $selected = $_POST[$id] === 'qsf_0_{BLANK}' ? "selected" : "";
                 }
-                $filter .= $multi ? " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='ORSET$multiCounter={BLANK}//' $checked onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'".$checkboxOption."'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('".$checkboxOption."', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\">&nbsp;{BLANK}</label><br/>\n" : "<option value=\"qsf_".$counter."_{BLANK}\" $selected>{BLANK}</option>\n";
+                $filter .= $multi ? " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='ORSET$multiCounter={BLANK}//' $checked onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'".$checkboxOption."'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('".$checkboxOption."', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\">&nbsp;"._SHOW_BLANKS."</label><br/>\n" : "<option value=\"qsf_".$counter."_{BLANK}\" $selected>"._SHOW_BLANKS."</option>\n";
             }
         } else {
             // not a filter for core use on list of entries screen, so if multi, set default text to "Any", otherwise use the "Choose an option" default, unless the user has specified something
@@ -4645,7 +4645,16 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
                 $select_column = trim($select_column, ",");
             }
 
-            if ($dataResult = $xoopsDB->query("SELECT $select_column, t1.entry_id FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." as t1 $limitConditionTable $extra_clause $conditionsfilter $conditionsfilter_oom $limitConditionWhere ORDER BY t1.`$source_element_handle`")) {
+						// setup the sort order based on ele_value[12], which is an element id number
+						$sortOrder = $ele_value[15] == 2 ? " DESC" : "ASC";
+						if($ele_value[12]=="none" OR !$ele_value[12]) {
+							$sortOrderClause = " ORDER BY t1.`$source_element_handle` $sortOrder";
+						} else {
+							list($sortHandle) = convertElementIdsToElementHandles(array($ele_value[12]), $sourceFormObject->getVar('id_form'));
+							$sortOrderClause = " ORDER BY t1.`$sortHandle` $sortOrder";
+						}
+
+            if ($dataResult = $xoopsDB->query("SELECT $select_column, t1.entry_id FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." as t1 $limitConditionTable $extra_clause $conditionsfilter $conditionsfilter_oom $limitConditionWhere $sortOrderClause")) {
                 $useValue = 'entryid';
                 if(count($linked_columns)>1) {
                     $linked_column_count = count((array) $linked_columns);
