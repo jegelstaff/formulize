@@ -8294,7 +8294,7 @@ function formulize_handleHtaccessRewriteRule() {
 		$addressData = explode('/', $trimedFormulizeRewriteRuleAddress);
 		$address = $addressData[0];
 		$entryIdentifier = isset($addressData[1]) ? $addressData[1] : null;
-		if($sid = formulize_getSidFromRewriteAddress($address)) {
+		if($sid = formulize_getSidFromRewriteAddress($address, $entryIdentifier)) {
 			foreach($_GET as $k=>$v) {
 				unset($_REQUEST[$k]);
 				unset($_GET[$k]);
@@ -8368,9 +8368,10 @@ function formulize_getEntryIdFromRewriteruleElement($screenObjectOrIdentifier, $
 /**
  * Get the screen id for a given alternate URL address
  * @param string $address Optional. The alternate URL address to lookup. If none specified, reuse the first one we were passed.
+ * @param string $entryIdentifier Optional. An entry identifier gathered from the URL. Could be invalid! Used as a flag to indicate if we should be gathering a list-ish screen or not.
  * @return int|bool Returns the screen ID, or false if there is no match, or nothing to match with.
  */
-function formulize_getSidFromRewriteAddress($address="") {
+function formulize_getSidFromRewriteAddress($address="", $entryIdentifier="") {
 	global $xoopsDB;
 	static $originalAddress = '';
 	if(!$originalAddress) {
@@ -8394,10 +8395,19 @@ function formulize_getSidFromRewriteAddress($address="") {
 		$sql = 'SELECT sid, type FROM '.$xoopsDB->prefix('formulize_screen').' WHERE MATCH(`rewriteruleAddress`) AGAINST("'.formulize_db_escape($address).'") AND `rewriteruleAddress` = "'.formulize_db_escape($address).'"';
 		if($res = $xoopsDB->query($sql)) {
 			$candidateScreen = 0;
+			$rowsFound = $xoopsDB->getRowsNum($res);
+			if($rowsFound == 1 AND $record = $xoopsDB->fetchArray($res)) {
+				$candidateScreen = $record['sid'] ? $record['sid'] : $candidateScreen;
+			} elseif($rowsFound > 1) {
 			while($record = $xoopsDB->fetchArray($res)) {
 				if($record['sid']) {
-					// take the first one we've found, or if more than one and a later one is a list-ish screen, let's do that instead
-					$candidateScreen = (!$candidateScreen OR $record['type'] == 'listOfEntries' OR $record['type'] == 'calendar') ? $record['sid'] : $candidateScreen;
+						$candidateScreen = $record['sid'];
+						// stop looking if we've found the right type based on whether an entry is being displayed
+						if((!$entryIdentifier AND ($record['type'] == 'listOfEntries' OR $record['type'] == 'calendar' OR $record['type'] == 'graph'))
+							OR ($entryIdentifier AND $record['type'] != 'listOfEntries' AND $record['type'] != 'calendar' AND $record['type'] != 'graph')) {
+							break;
+						}
+					}
 				}
 			}
 			if($candidateScreen) {
