@@ -8308,8 +8308,8 @@ function formulize_handleHtaccessRewriteRule() {
 				}
 				if($ve AND (!$screenObject OR security_check($screenObject->getVar('fid'), $ve))) {
 					$queryString = "sid=$sid&ve=$ve";
-						$_GET['ve'] = $ve;
-						$_REQUEST['ve'] = $ve;
+					$_GET['ve'] = $ve;
+					$_REQUEST['ve'] = $ve;
 				} else {
 					// when we get to JS later, we'll need to alter the URL to remove the invalid identifier
 					$formulizeRemoveEntryIdentifier = "window.history.replaceState(null, '', '".XOOPS_URL."/$address/');";
@@ -8399,8 +8399,8 @@ function formulize_getSidFromRewriteAddress($address="", $entryIdentifier="") {
 			if($rowsFound == 1 AND $record = $xoopsDB->fetchArray($res)) {
 				$candidateScreen = $record['sid'] ? $record['sid'] : $candidateScreen;
 			} elseif($rowsFound > 1) {
-			while($record = $xoopsDB->fetchArray($res)) {
-				if($record['sid']) {
+				while($record = $xoopsDB->fetchArray($res)) {
+					if($record['sid']) {
 						$candidateScreen = $record['sid'];
 						// stop looking if we've found the right type based on whether an entry is being displayed
 						if((!$entryIdentifier AND ($record['type'] == 'listOfEntries' OR $record['type'] == 'calendar' OR $record['type'] == 'graph'))
@@ -8446,17 +8446,17 @@ function updateAlternateURLIdentifierCode($screen, $entry_id) {
     $code = '';
 		$entry_id = intval($entry_id);
     if($screen AND $entry_id AND $rewriteruleAddress = $screen->getVar('rewriteruleAddress') AND strpos(trim(str_replace(XOOPS_URL, '', getCurrentURL()), '/'), '/') === false) {
-        $entryIdentifier = $entry_id;
-        if($rewriteruleElement = $screen->getVar('rewriteruleElement')) {
-            $element_handler = xoops_getmodulehandler('elements', 'formulize');
-            $rewriteruleElementObject = $element_handler->get($rewriteruleElement);
-            $dataHandler = new formulizeDataHandler($screen->getVar('fid'));
-            $dbValue = $dataHandler->getElementValueInEntry($entry_id, $rewriteruleElementObject);
-            $preppedValue = prepvalues($dbValue, $rewriteruleElementObject->getVar('ele_handle'), $entry_id); // will be array sometimes. Ugh!
-            $preppedValue = is_array($preppedValue) ? $preppedValue[0] : $preppedValue;
-            $entryIdentifier = urlencode($preppedValue);
-        }
-        $code = "window.history.replaceState(null, '', '".trim(getCurrentURL(), '/')."/".$entryIdentifier."/');";
+			$entryIdentifier = $entry_id;
+			if($rewriteruleElement = $screen->getVar('rewriteruleElement')) {
+				$element_handler = xoops_getmodulehandler('elements', 'formulize');
+				$rewriteruleElementObject = $element_handler->get($rewriteruleElement);
+				$dataHandler = new formulizeDataHandler($screen->getVar('fid'));
+				$dbValue = $dataHandler->getElementValueInEntry($entry_id, $rewriteruleElementObject);
+				$preppedValue = prepvalues($dbValue, $rewriteruleElementObject->getVar('ele_handle'), $entry_id); // will be array sometimes. Ugh!
+				$preppedValue = is_array($preppedValue) ? $preppedValue[0] : $preppedValue;
+				$entryIdentifier = urlencode($preppedValue);
+			}
+			$code = "window.history.replaceState(null, '', '".trim(getCurrentURL(), '/')."/".$entryIdentifier."/');";
     }
     return $code;
 }
@@ -8495,14 +8495,21 @@ function determineDoneDestinationFromURL($screen = false) {
 	$doneDestHasSid = $screen ? strstr($done_dest, 'sid='.$screen->getVar('sid')) : false;
 	$doneDestHasSid = $doneDestHasSid ? $doneDestHasSid : ($alternateURLForSid AND strstr($done_dest, $alternateURLForSid));
 	if($screen AND $doneDestHasSid) {
-		$form_handler = xoops_getmodulehandler('forms', 'formulize');
-		$formObject = $form_handler->get($screen->getVar('fid'));
-		if($defaultListScreenId = $formObject->getVar('defaultlist')) {
-			if($defaultListScreenObject = $screen_handler->get($defaultListScreenId)) {
-				if($rewriteruleAddress = $defaultListScreenObject->getVar('rewriteruleAddress')) {
-					$done_dest = XOOPS_URL.'/'.$rewriteruleAddress;
-				} else {
-					$done_dest = XOOPS_URL.'/modules/formulize/index.php?sid='.$defaultListScreenId;
+		// if this rewrite address is associated with another screen, go there... (will prefer lists when no entry identifier passed to this function, so almost certainly an alternate screen id will be of a list screen)
+		$doneScreenId = formulize_getSidFromRewriteAddress($alternateURLForSid);
+		if($doneScreenId AND $screen->getVar('sid') != $doneScreenId) {
+			$done_dest = XOOPS_URL.'/'.$alternateURLForSid;
+		} else {
+			$form_handler = xoops_getmodulehandler('forms', 'formulize');
+			if($formObject = $form_handler->get($screen->getVar('fid'))) {
+				if($defaultListScreenId = $formObject->getVar('defaultlist')) {
+					if($defaultListScreenObject = $screen_handler->get($defaultListScreenId)) {
+						if($rewriteruleAddress = $defaultListScreenObject->getVar('rewriteruleAddress')) {
+							$done_dest = XOOPS_URL.'/'.$rewriteruleAddress;
+						} else {
+							$done_dest = XOOPS_URL.'/modules/formulize/index.php?sid='.$defaultListScreenId;
+						}
+					}
 				}
 			}
 		}
