@@ -62,6 +62,7 @@ if (typeof jQuery.ui == 'undefined') {
 ";
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
+include_once XOOPS_ROOT_PATH.'/modules/formulize/include/writeToFormulizeLog.php';
 
 function getFormFramework($formframe, $mainform=0) {
     static $cachedToReturn = array();
@@ -203,17 +204,20 @@ function gatherNames($groups, $nametype, $requireAllGroups=false, $filter=false,
     return $found_names;
 }
 
-//get the currentURL
-function getCurrentURL() {
+/**
+ * Deduce the current URL, including full query string, etc. Caches the first instance found. Resets cache if a rewriteruleAddress is specified
+ * @param string $rewriteruleAddress If passed in, this value will be used instead of the URI. Intended to seed the current URL in cases where we need to modify the canonical URL because it is using rewrite rules and pointing to an invalid identifier.
+ * @return string The current URL, from cache if already determined and no rewriteruleAddress was specified
+ */
+function getCurrentURL($rewriteruleAddress='') {
     static $url = "";
-    if ($url) {
-        return $url;
-    }
-    $url_parts = parse_url(XOOPS_URL);
-    $url = $url_parts['scheme'] . "://" . $_SERVER['HTTP_HOST'];
-    $url = (isset($url_parts['port']) AND !strstr($_SERVER['HTTP_HOST'], ":")) ? $url . ":" . $url_parts['port'] : $url;
-    // strip html tags, convert special chars to htmlchar equivalents, then convert back ampersand htmlchars to regular ampersands, so the URL doesn't bust on certain servers
-    $url .= str_replace("&amp;", "&", htmlSpecialChars(strip_tags($_SERVER['REQUEST_URI'])));
+    if (!$url OR $rewriteruleAddress) {
+			$url_parts = parse_url(XOOPS_URL);
+			$url = $url_parts['scheme'] . "://" . $_SERVER['HTTP_HOST'];
+			$url = (isset($url_parts['port']) AND !strstr($_SERVER['HTTP_HOST'], ":")) ? $url . ":" . $url_parts['port'] : $url;
+			// strip html tags, convert special chars to htmlchar equivalents, then convert back ampersand htmlchars to regular ampersands, so the URL doesn't bust on certain servers
+			$url .= $rewriteruleAddress ? "/$rewriteruleAddress/" : str_replace("&amp;", "&", htmlSpecialChars(strip_tags($_SERVER['REQUEST_URI'])));
+		}
     return $url;
 }
 
@@ -8277,121 +8281,44 @@ function generateSelfReferenceExclusionSQL($entry_id, $fid, $sourceFid, $ele_val
 }
 
 /**
- * Record information in a log file. One log file per day. Log file location is a Formulize preference. Log file storage duration is a Formulize preference.
- *
- * @param array $data Key-Value pairs that should be written to the log entry
- * @return int|boolean Returns the number of bytes written to the file, or false on failure
- */
-function writeToFormulizeLog($data) {
-
-	// initialize the configuration settings
-	static $formulizeConfig = false;
-	static $formulizeLoggingOnOff = false;
-	static $formulizeLogFileLocation = XOOPS_ROOT_PATH.'/logs';
-	static $formulizeLogFileStorageDurationHours = 168;
-	static $logFilesCleanedUp = false;
-	static $phpUniqueId = '';
-	static $todayLogFileExists = null;
-	$phpUniqueId = $phpUniqueId ? $phpUniqueId : uniqid('', true);
-	if(!$formulizeConfig) {
-		$config_handler = xoops_gethandler('config');
-		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-		$formulizeLoggingOnOff = $formulizeConfig['formulizeLoggingOnOff'];
-		$formulizeLogFileLocation = $formulizeConfig['formulizeLogFileLocation'];
-		$formulizeLogFileStorageDurationHours = $formulizeConfig['formulizeLogFileStorageDurationHours'];
-	}
-
-	// check if logging is on and log file location is valid
-	if(!$formulizeLoggingOnOff OR !$formulizeLogFileLocation OR !is_dir($formulizeLogFileLocation)) { return false; }
-
-	// cleanup old log files (last param requires seconds) -- only once per page load
-	if(!$logFilesCleanedUp) {
-		formulize_scandirAndClean($formulizeLogFileLocation, 'formulize_log_', $formulizeLogFileStorageDurationHours * 60 * 60);
-		$logFilesCleanedUp = true;
-	}
-
-	// UNIQUE ID is only available if the server has mod_unique_id turned on
-	// All log lines have standard format, but values are dependent on the event that wrote to the log
-	$data = array(
-		'microtime' => microtime(true),
-		'request_id' => (isset($_SERVER['UNIQUE_ID']) ? $_SERVER['UNIQUE_ID'] : $phpUniqueId),
-		'session_id' => session_id(),
-		'formulize_event' => (isset($data['formulize_event']) ? $data['formulize_event'] : ''),
-		'user_id' => (isset($data['user_id']) ? $data['user_id'] : ''),
-		'form_id' => (isset($data['form_id']) ? $data['form_id'] : ''),
-		'screen_id' => (isset($data['screen_id']) ? $data['screen_id'] : ''),
-		'entry_id' => (isset($data['entry_id']) ? $data['entry_id'] : ''),
-		'form_screen_page_number' => (isset($data['form_screen_page_number']) ? $data['form_screen_page_number'] : ''),
-		'searches' => (isset($data['searches']) ? $data['searches'] : ''),
-		'sort' => (isset($data['sort']) ? $data['sort'] : ''),
-		'order' => (isset($data['order']) ? $data['order'] : ''),
-		'scope' => (isset($data['scope']) ? $data['scope'] : ''),
-		'limit_start' => (isset($data['limit_start']) ? $data['limit_start'] : ''),
-		'page_size' => (isset($data['page_size']) ? $data['page_size'] : ''),
-		'uids_to_notify' => (isset($data['uids_to_notify']) ? $data['uids_to_notify'] : ''),
-		'formulize_notification_emails_if_uid_is_zero' => (isset($data['formulize_notification_emails_if_uid_is_zero']) ? $data['formulize_notification_emails_if_uid_is_zero'] : ''),
-		'subject' => (isset($data['subject']) ? $data['subject'] : ''),
-		'template' => (isset($data['template']) ? $data['template'] : ''),
-		'tags' => (isset($data['tags']) ? $data['tags'] : ''),
-		'PHP_error_number' => (isset($data['PHP_error_number']) ? $data['PHP_error_number'] : ''),
-		'PHP_error_string' => (isset($data['PHP_error_string']) ? $data['PHP_error_string'] : ''),
-		'PHP_error_file' => (isset($data['PHP_error_file']) ? $data['PHP_error_file'] : ''),
-		'PHP_error_errline' => (isset($data['PHP_error_errline']) ? $data['PHP_error_errline'] : '')
-	);
-
-	// write the new log entry (to a new file if necessary, active file has generic name, archived files are named with the current date based on server timezone)
-	// write operation is self contained in file_put_contents and closes the file, so it's available for other concurrent requests to write to after
-	$todayLogFile = $formulizeLogFileLocation.'/'.'formulize_log_'.date('Y-m-d').'.log';
-	$yesterdayLogFile = $formulizeLogFileLocation.'/'.'formulize_log_'.date('Y-m-d', strtotime('-1 day')).'.log';
-	$activeLogFile = $formulizeLogFileLocation.'/'.'formulize_log_active.log';
-	$todayLogFileExists = $todayLogFileExists === null ? file_exists($todayLogFile) : $todayLogFileExists;
-	if(!$todayLogFileExists) {
-		file_put_contents($todayLogFile, '', LOCK_EX);
-		rename($activeLogFile, $yesterdayLogFile);
-	}
-	return file_put_contents($activeLogFile, json_encode($data, JSON_NUMERIC_CHECK)."\n", FILE_APPEND | LOCK_EX);
-}
-
-/**
  * Check for a rewrite rule value having been passed to the url, and if found then update $_GET and the $_SERVER['REQUEST_URI'] to match.
  * If a rewrite rule was found, the canonical Formulize URL for the page will be set in the global variable $formulizeCanonicalURI
  */
 function formulize_handleHtaccessRewriteRule() {
 	if(isset($_GET['formulizeRewriteRuleAddress']) AND $_GET['formulizeRewriteRuleAddress']) {
 		global $formulizeCanonicalURI;
+		global $formulizeRemoveEntryIdentifier;
 		$formulizeCanonicalURI = '';
+		$formulizeRemoveEntryIdentifier = false;
 		$trimedFormulizeRewriteRuleAddress = trim($_GET['formulizeRewriteRuleAddress'], '/');
 		$addressData = explode('/', $trimedFormulizeRewriteRuleAddress);
 		$address = $addressData[0];
 		$entryIdentifier = isset($addressData[1]) ? $addressData[1] : null;
-		if($sid = formulize_getSidFromRewriteAddress($address)) {
+		if($sid = formulize_getSidFromRewriteAddress($address, $entryIdentifier)) {
 			foreach($_GET as $k=>$v) {
 				unset($_REQUEST[$k]);
 				unset($_GET[$k]);
 			}
 			$queryString = "sid=$sid";
 			if($entryIdentifier) {
-                $ve = intval($entryIdentifier);
-                $screen_handler = xoops_getmodulehandler('screen', 'formulize');
-                if($screenObject = $screen_handler->get($sid)) {
-                    if($rewriteruleElement = $screenObject->getVar('rewriteruleElement')) {
-                        $element_handler = xoops_getmodulehandler('elements', 'formulize');
-                        $rewriteruleElementObject = $element_handler->get($rewriteruleElement);
-                        $ele_type = $rewriteruleElementObject->getVar('ele_type');
-                        if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
-                            $element_handler = xoops_getmodulehandler($ele_type."Element", 'formulize');
-                            $rewriteruleElementObject = $element_handler->get($rewriteruleElement);
-                        }
-                        $searchValue = $element_handler->prepareLiteralTextForDB(urldecode($entryIdentifier), $rewriteruleElementObject);
-                        $dataHandler = new formulizeDataHandler($screenObject->getVar('fid'));
-                        $ve = $dataHandler->findFirstEntryWithValue($rewriteruleElementObject, $searchValue);
-                    }
-                }
-                if($ve) {
-                    $queryString .= "&ve=$ve";
-                    $_GET['ve'] = $ve;
-                    $_REQUEST['ve'] = $ve;
-                }
+				$ve = intval($entryIdentifier);
+				$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+				if($screenObject = $screen_handler->get($sid)) {
+					$ve = formulize_getEntryIdFromRewriteruleElement($screenObject, $entryIdentifier);
+				}
+				if($ve AND (!$screenObject OR security_check($screenObject->getVar('fid'), $ve))) {
+					$queryString = "sid=$sid&ve=$ve";
+					$_GET['ve'] = $ve;
+					$_REQUEST['ve'] = $ve;
+				} else {
+					// when we get to JS later, we'll need to alter the URL to remove the invalid identifier
+					$formulizeRemoveEntryIdentifier = "window.history.replaceState(null, '', '".XOOPS_URL."/$address/');";
+					// seed the current URL with the correct address
+					getCurrentURL($address);
+					// redetermine the sid, since there is in fact no valid identifier so maybe we want a list-ish screen instead?
+					$sid = formulize_getSidFromRewriteAddress($address);
+					$queryString = "sid=$sid";
+				}
 			}
 			$_GET['sid'] = $sid;
 			$_REQUEST['sid'] = $sid;
@@ -8409,11 +8336,42 @@ function formulize_handleHtaccessRewriteRule() {
 }
 
 /**
+ * Determine the entry ID that matches a given rewrite rule entry identifier, for the given screen
+ * @param mixed screenObjectOrIdentifier The screen object, or an identifier
+ * @param string entryIdentifier The identifier from the clean URL
+ * @return int The entry ID found, or zero if none found
+ */
+function formulize_getEntryIdFromRewriteruleElement($screenObjectOrIdentifier, $entryIdentifier) {
+	$entryId = $entryIdentifier;
+	$screenObject = $screenObjectOrIdentifier;
+	if(!is_object($screenObject) OR !is_a($screenObject, 'formulizeScreen')) {
+		$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+		$screenObject = $screen_handler->get($screenObjectOrIdentifier);
+	}
+	if($screenObject AND $entryIdentifier AND $rewriteruleElement = $screenObject->getVar('rewriteruleElement')) {
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		if($rewriteruleElementObject = $element_handler->get($rewriteruleElement)) {
+			$ele_type = $rewriteruleElementObject->getVar('ele_type');
+			// re-get the element handler based on the specific type, because it will have the proper prepareLiteralTextForDB logic in it (generic handler has nothing specific)
+			if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+					$element_handler = xoops_getmodulehandler($ele_type."Element", 'formulize');
+					$rewriteruleElementObject = $element_handler->get($rewriteruleElement);
+			}
+			$searchValue = $element_handler->prepareLiteralTextForDB(urldecode($entryIdentifier), $rewriteruleElementObject);
+			$dataHandler = new formulizeDataHandler($screenObject->getVar('fid'));
+			$entryId = $dataHandler->findFirstEntryWithValue($rewriteruleElementObject, $searchValue);
+		}
+	}
+	return intval($entryId);
+}
+
+/**
  * Get the screen id for a given alternate URL address
  * @param string $address Optional. The alternate URL address to lookup. If none specified, reuse the first one we were passed.
+ * @param string $entryIdentifier Optional. An entry identifier gathered from the URL. Could be invalid! Used as a flag to indicate if we should be gathering a list-ish screen or not.
  * @return int|bool Returns the screen ID, or false if there is no match, or nothing to match with.
  */
-function formulize_getSidFromRewriteAddress($address="") {
+function formulize_getSidFromRewriteAddress($address="", $entryIdentifier="") {
 	global $xoopsDB;
 	static $originalAddress = '';
 	if(!$originalAddress) {
@@ -8434,12 +8392,26 @@ function formulize_getSidFromRewriteAddress($address="") {
 			exit();
 		}
 
-		$sql = 'SELECT sid FROM '.$xoopsDB->prefix('formulize_screen').' WHERE MATCH(`rewriteruleAddress`) AGAINST("'.formulize_db_escape($address).'") AND `rewriteruleAddress` = "'.formulize_db_escape($address).'" LIMIT 0,1';
+		$sql = 'SELECT sid, type FROM '.$xoopsDB->prefix('formulize_screen').' WHERE MATCH(`rewriteruleAddress`) AGAINST("'.formulize_db_escape($address).'") AND `rewriteruleAddress` = "'.formulize_db_escape($address).'"';
 		if($res = $xoopsDB->query($sql)) {
-			if($row = $xoopsDB->fetchRow($res)) {
-				if($row[0]) {
-					return $row[0];
+			$candidateScreen = 0;
+			$rowsFound = $xoopsDB->getRowsNum($res);
+			if($rowsFound == 1 AND $record = $xoopsDB->fetchArray($res)) {
+				$candidateScreen = $record['sid'] ? $record['sid'] : $candidateScreen;
+			} elseif($rowsFound > 1) {
+				while($record = $xoopsDB->fetchArray($res)) {
+					if($record['sid']) {
+						$candidateScreen = $record['sid'];
+						// stop looking if we've found the right type based on whether an entry is being displayed
+						if((!$entryIdentifier AND ($record['type'] == 'listOfEntries' OR $record['type'] == 'calendar' OR $record['type'] == 'graph'))
+							OR ($entryIdentifier AND $record['type'] != 'listOfEntries' AND $record['type'] != 'calendar' AND $record['type'] != 'graph')) {
+							break;
+						}
+					}
 				}
+			}
+			if($candidateScreen) {
+				return $candidateScreen;
 			}
 		}
 	}
@@ -8472,18 +8444,19 @@ function extractOperatorFromString($string) {
  */
 function updateAlternateURLIdentifierCode($screen, $entry_id) {
     $code = '';
+		$entry_id = intval($entry_id);
     if($screen AND $entry_id AND $rewriteruleAddress = $screen->getVar('rewriteruleAddress') AND strpos(trim(str_replace(XOOPS_URL, '', getCurrentURL()), '/'), '/') === false) {
-        $entryIdentifier = $entry_id;
-        if($rewriteruleElement = $screen->getVar('rewriteruleElement')) {
-            $element_handler = xoops_getmodulehandler('elements', 'formulize');
-            $rewriteruleElementObject = $element_handler->get($rewriteruleElement);
-            $dataHandler = new formulizeDataHandler($screen->getVar('fid'));
-            $dbValue = $dataHandler->getElementValueInEntry($entry_id, $rewriteruleElementObject);
-            $preppedValue = prepvalues($dbValue, $rewriteruleElementObject->getVar('ele_handle'), $entry_id); // will be array sometimes. Ugh!
-            $preppedValue = is_array($preppedValue) ? $preppedValue[0] : $preppedValue;
-            $entryIdentifier = urlencode($preppedValue);
-        }
-        $code = "window.history.replaceState(null, '', '".trim(getCurrentURL(), '/')."/".$entryIdentifier."/');";
+			$entryIdentifier = $entry_id;
+			if($rewriteruleElement = $screen->getVar('rewriteruleElement')) {
+				$element_handler = xoops_getmodulehandler('elements', 'formulize');
+				$rewriteruleElementObject = $element_handler->get($rewriteruleElement);
+				$dataHandler = new formulizeDataHandler($screen->getVar('fid'));
+				$dbValue = $dataHandler->getElementValueInEntry($entry_id, $rewriteruleElementObject);
+				$preppedValue = prepvalues($dbValue, $rewriteruleElementObject->getVar('ele_handle'), $entry_id); // will be array sometimes. Ugh!
+				$preppedValue = is_array($preppedValue) ? $preppedValue[0] : $preppedValue;
+				$entryIdentifier = urlencode($preppedValue);
+			}
+			$code = "window.history.replaceState(null, '', '".trim(getCurrentURL(), '/')."/".$entryIdentifier."/');";
     }
     return $code;
 }
@@ -8503,4 +8476,74 @@ function formulize_writeCodeToFile($filename, $code) {
 		$result = file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename, $code);
 	}
 	return $result;
+}
+
+/**
+ * Deduce the correct done destination for a screen from the current URL.
+ * If the done destination is for this specific screen that we're rendering,
+ * switch done destination to the default list for the form if any.
+ * @param object screen The screen that we're rendering
+ * @return string The done destination to use
+ */
+function determineDoneDestinationFromURL($screen = false) {
+	$done_dest = getCurrentURL();
+	$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+	if(!$screen AND isset($_GET['sid'])) {
+		$screen = $screen_handler->get(intval($_GET['sid']));
+	}
+	$alternateURLForSid = $screen ? $screen->getVar('rewriteruleAddress') : false;
+	$doneDestHasSid = $screen ? strstr($done_dest, 'sid='.$screen->getVar('sid')) : false;
+	$doneDestHasSid = $doneDestHasSid ? $doneDestHasSid : ($alternateURLForSid AND strstr($done_dest, $alternateURLForSid));
+	if($screen AND $doneDestHasSid) {
+		// if this rewrite address is associated with another screen, go there... (will prefer lists when no entry identifier passed to this function, so almost certainly an alternate screen id will be of a list screen)
+		$doneScreenId = formulize_getSidFromRewriteAddress($alternateURLForSid);
+		if($doneScreenId AND $screen->getVar('sid') != $doneScreenId) {
+			$done_dest = XOOPS_URL.'/'.$alternateURLForSid;
+		} else {
+			$form_handler = xoops_getmodulehandler('forms', 'formulize');
+			if($formObject = $form_handler->get($screen->getVar('fid'))) {
+				if($defaultListScreenId = $formObject->getVar('defaultlist')) {
+					if($defaultListScreenObject = $screen_handler->get($defaultListScreenId)) {
+						if($rewriteruleAddress = $defaultListScreenObject->getVar('rewriteruleAddress')) {
+							$done_dest = XOOPS_URL.'/'.$rewriteruleAddress;
+						} else {
+							$done_dest = XOOPS_URL.'/modules/formulize/index.php?sid='.$defaultListScreenId;
+						}
+					}
+				}
+			}
+		}
+	}
+	return $done_dest;
+}
+
+/**
+ * Clean up a done destination for a screen, so it does not contain an entry reference.
+ * Avoids the user ending up in a loop where the done action takes them back to the same page.
+ * Works for standard and clean URLs
+ * @param string done_dest The address the user is meant to return to
+ * @return string The cleaned done destination with entry reference stripped
+ */
+function stripEntryFromDoneDestination($done_dest) {
+	// strip out any ve portion of a done destination, so we don't end up forcing the user back to this entry after they're done
+	$veTarget = strstr($done_dest, '&ve=') ? '&ve=' : '?ve=';
+	if($done_dest AND $vepos = strpos($done_dest, $veTarget)) {
+			if(is_numeric(substr($done_dest, $vepos+4))) {
+					$done_dest = substr($done_dest, 0, $vepos);
+			}
+	}
+	// if there was an alternate URL used to access the page, and a ve was specified, scale back to remove the ve from the done_dest
+	global $formulizeCanonicalURI;
+	if($done_dest AND $formulizeCanonicalURI AND $_GET['ve']) {
+		$trimmedDoneDest = trim($done_dest, '/'); // take off last slash if any
+		$trailingSlash = $trimmedDoneDest === $done_dest ? '' : '/'; // if there was a slash on the end, remember this for later
+		$doneDestParts = explode('/', $trimmedDoneDest); // split on slashes
+		$entryIdentifier = $doneDestParts[count($doneDestParts)-1];
+		$entryId = formulize_getEntryIdFromRewriteruleElement($_GET['sid'], $entryIdentifier);
+		if($entryId === intval($_GET['ve'])) { // make sure this is the ve we're talking about
+			unset($doneDestParts[count($doneDestParts)-1]); // remove the last value, which will be the ve number
+			$done_dest = implode('/', $doneDestParts).$trailingSlash; // put back together, with trailing slash if necessary
+		}
+	}
+	return $done_dest;
 }

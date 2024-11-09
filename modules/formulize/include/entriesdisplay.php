@@ -3215,6 +3215,11 @@ $output
 function interfaceJavascript($fid, $frid, $currentview, $useWorking, $useXhr, $lockedColumns) {
 
 	print "<script type='text/javascript' src='".XOOPS_URL."/modules/formulize/include/js/autocomplete.js'></script>";
+
+	global $formulizeRemoveEntryIdentifier;
+	if($formulizeRemoveEntryIdentifier) {
+		print "<script>$formulizeRemoveEntryIdentifier</script>";
+	}
 ?>
 <script type='text/javascript'>
 
