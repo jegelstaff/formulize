@@ -8438,12 +8438,17 @@ function formulize_getSidFromRewriteAddress($address="") {
 			exit();
 		}
 
-		$sql = 'SELECT sid FROM '.$xoopsDB->prefix('formulize_screen').' WHERE MATCH(`rewriteruleAddress`) AGAINST("'.formulize_db_escape($address).'") AND `rewriteruleAddress` = "'.formulize_db_escape($address).'" LIMIT 0,1';
+		$sql = 'SELECT sid, type FROM '.$xoopsDB->prefix('formulize_screen').' WHERE MATCH(`rewriteruleAddress`) AGAINST("'.formulize_db_escape($address).'") AND `rewriteruleAddress` = "'.formulize_db_escape($address).'"';
 		if($res = $xoopsDB->query($sql)) {
-			if($row = $xoopsDB->fetchRow($res)) {
-				if($row[0]) {
-					return $row[0];
+			$candidateScreen = 0;
+			while($record = $xoopsDB->fetchArray($res)) {
+				if($record['sid']) {
+					// take the first one we've found, or if more than one and a later one is a list-ish screen, let's do that instead
+					$candidateScreen = (!$candidateScreen OR $record['type'] == 'listOfEntries' OR $record['type'] == 'calendar') ? $record['sid'] : $candidateScreen;
 				}
+			}
+			if($candidateScreen) {
+				return $candidateScreen;
 			}
 		}
 	}
