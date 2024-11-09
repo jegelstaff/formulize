@@ -8399,7 +8399,7 @@ function formulize_handleHtaccessRewriteRule() {
 				} else {
 					// when we get to JS later, we'll need to alter the URL to remove the invalid identifier
 					$formulizeRemoveEntryIdentifier = "window.history.replaceState(null, '', '".XOOPS_URL."/$address/');";
-					// see the current URL with the correct address
+					// seed the current URL with the correct address
 					getCurrentURL($address);
 				}
 			}
