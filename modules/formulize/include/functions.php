@@ -8434,6 +8434,7 @@ function extractOperatorFromString($string) {
  */
 function updateAlternateURLIdentifierCode($screen, $entry_id) {
     $code = '';
+		$entry_id = intval($entry_id);
     if($screen AND $entry_id AND $rewriteruleAddress = $screen->getVar('rewriteruleAddress') AND strpos(trim(str_replace(XOOPS_URL, '', getCurrentURL()), '/'), '/') === false) {
         $entryIdentifier = $entry_id;
         if($rewriteruleElement = $screen->getVar('rewriteruleElement')) {
