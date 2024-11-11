@@ -243,6 +243,9 @@ define("_formulize_ANDORTITLE", "Interfield AND/OR Setting:");
 define("_formulize_DAYS", "Days");
 define("_formulize_HOURS", "Hours");
 define("_formulize_MINUTES", "Minutes");
+define("_formulize_DAY", "Day");
+define("_formulize_HOUR", "Hour");
+define("_formulize_MINUTE", "Minute");
 
 define("_formulize_SHOWCALCONLY", "Show Calculations Only (no list of entries)");
 

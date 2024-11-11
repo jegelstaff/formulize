@@ -21,20 +21,30 @@ class formulizeDurationElement extends formulizeElement
 
 class formulizeDurationElementHandler extends formulizeElementsHandler
 {
-
 	var $db;
-
-	function __construct($db)
-	{
-		$this->db = &$db;
-	}
-
 	// Conversion factors to minutes
 	private $timeUnits = array(
 		'days' => 1440,
 		'hours' => 60,
 		'minutes' => 1
 	);
+
+	private $displayUnitSingular = array(
+		'days' => _formulize_DAY,
+		'hours' => _formulize_HOUR,
+		'minutes' => _formulize_MINUTE
+	);
+
+	private $displayUnitPlural = array(
+		'days' => _formulize_DAYS,
+		'hours' => _formulize_HOURS,
+		'minutes' => _formulize_MINUTES
+	);
+
+	function __construct($db)
+	{
+		$this->db = &$db;
+	}
 
 	function create()
 	{
@@ -46,7 +56,7 @@ class formulizeDurationElementHandler extends formulizeElementsHandler
 	{
 		$dataToSendToTemplate = array();
 
-		if (is_object($element) && is_subclass_of($element, 'formulizeelement')) {
+		if (is_object($element) && is_subclass_of($element, 'formulizeElement')) {
 			// Existing element
 			$ele_value = $element->getVar('ele_value');
 			$dataToSendToTemplate['ele_value'] = $ele_value;
@@ -69,7 +79,7 @@ class formulizeDurationElementHandler extends formulizeElementsHandler
 	// Save admin UI data
 	function adminSave($element, $ele_value)
 	{
-		if (is_object($element) && is_subclass_of($element, 'formulizeelement')) {
+		if (is_object($element) && is_subclass_of($element, 'formulizeElement')) {
 			// Save which units to show
 			$ele_value['show_days'] = isset($_POST['show_days']) ? 1 : 0;
 			$ele_value['show_hours'] = isset($_POST['show_hours']) ? 1 : 0;
@@ -83,8 +93,6 @@ class formulizeDurationElementHandler extends formulizeElementsHandler
 			$ele_value['size'] = intval($_POST['size']);
 
 			$element->setVar('ele_value', $ele_value);
-
-			return true;
 		}
 		return false;
 	}
@@ -117,8 +125,45 @@ class formulizeDurationElementHandler extends formulizeElementsHandler
 		return $totalMinutes > 0 ? $totalMinutes : NULL;
 	}
 
+	function afterSavingLogic($value, $element_id, $entry_id) {
+	}
+
 	function prepareDataForDataset($value, $handle, $entry_id) {
 		return $value;
+	}
+
+	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
+		$pattern = '/(\d+)d|(\d+)h|(\d+)m/';
+		preg_match_all($pattern, $value, $matches);
+
+		$days = 0;
+		$hours = 0;
+		$minutes = 0;
+
+		foreach ($matches[1] as $value) {
+			if ($value) {
+				$days = (int) $value * $this->timeUnits['days'];
+				break;
+			}
+		}
+
+		foreach ($matches[2] as $value) {
+			if ($value) {
+				$hours = (int) $value * $this->timeUnits['hours'];
+				break;
+			}
+		}
+
+		foreach ($matches[3] as $value) {
+			if ($value) {
+				$minutes = (int) $value * $this->timeUnits['minutes'];
+				break;
+			}
+		}
+
+		$total = $days + $hours + $minutes;
+
+		return $total == 0 ? false : $total;
 	}
 
 	// Convert stored minutes back to time units for display
@@ -170,7 +215,7 @@ class formulizeDurationElementHandler extends formulizeElementsHandler
 			if ($ele_value['show_' . $unit]) {
 				$value = isset($ele_value['values'][$unit]) ? $ele_value['values'][$unit] : '';
 				${"input_$unit"} = new XoopsFormText(
-					ucfirst($unit).":",
+					$this->displayUnitPlural[$unit].":",
 					$unitMarkupName,
 					$ele_value['size'],
 					5,
@@ -179,7 +224,7 @@ class formulizeDurationElementHandler extends formulizeElementsHandler
 					true
 				);
 				${"input_$unit"}->setExtra("min='0'");
-				${"input_$unit"}->setExtra("class='formulize-duration-element-input numbers-only-textbox'");
+				${"input_$unit"}->setExtra("class='formulize-duration-element-input'");
 				${"input_$unit"}->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$unitMarkupName\" ");
 				$container->addElement(${"input_$unit"});
 			}
@@ -257,7 +302,8 @@ class formulizeDurationElementHandler extends formulizeElementsHandler
 		foreach ($this->timeUnits as $unit => $multiplier) {
 			$amount = floor($remaining / $multiplier);
 			if ($amount > 0) {
-				$output[] = $amount . " " . $unit;
+				$diplayUnit = $amount == 1 ? $this->displayUnitSingular[$unit] : $this->displayUnitPlural[$unit];
+				$output[] = $amount . " " . $diplayUnit;
 			}
 			$remaining -= ($amount * $multiplier);
 		}
