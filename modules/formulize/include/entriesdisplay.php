@@ -1711,7 +1711,7 @@ function drawEntries($fid, $cols, $searches, $frid, $scope, $standalone, $curren
 	} elseif(file_exists(XOOPS_ROOT_PATH."/modules/formulize/docs/search_help_"._LANGCODE.".xhtml")) {
 		$search_help_filepath = XOOPS_URL."/modules/formulize/docs/search_help_"._LANGCODE.".xhtml";
 	} else {
-		$search_help_filepath = XOOPS_URL."/modules/formulize/docs/search_help.xhtml";
+		$search_help_filepath = XOOPS_URL."/modules/formulize/docs/search_help.html";
 	}
 	$searchHelp = "<a href='' class='header-info-link' onclick=\"javascript:showPop('".$search_help_filepath."'); return false;\" title='"._formulize_DE_SEARCH_POP_HELP."'></a>";
     $toggleSearches = "<a href='' class='search-toggle-link' onclick=\"javascript:toggleSearches(); return false;\" title='"._formulize_DE_TOGGLE_SEARCHES."'>
