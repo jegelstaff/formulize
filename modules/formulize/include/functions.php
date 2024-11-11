@@ -7017,12 +7017,14 @@ function getFilterValuesForEntry($subformConditions, $curlyBracketEntryid=null) 
     foreach($subformConditions[1] as $i=>$thisOp) {
         if($thisOp == "=" AND $subformConditions[3][$i] != "oom") {
             if($conditionElementObject = $element_handler->get($subformConditions[0][$i])) {
+								$subformConditionElementHandle = convertElementIdsToElementHandles(array($subformConditions[0][$i]));
+								$subformConditionElementHandle = $subformConditionElementHandle[0];
                 // check first for URL matches
 								$conditionElementFid = $conditionElementObject->getVar('id_form');
                 if(substr($subformConditions[2][$i],0,1) == "{" AND substr($subformConditions[2][$i],-1)=="}") {
                     $curlyBracketTerm = substr($subformConditions[2][$i],1,-1);
                     if(isset($_GET[$curlyBracketTerm]) AND ($_GET[$curlyBracketTerm] OR $_GET[$curlyBracketTerm] === 0)) {
-                        $filterValues[$conditionElementFid][$subformConditions[0][$i]] = strip_tags(htmlspecialchars($_GET[$curlyBracketTerm], ENT_QUOTES));
+                        $filterValues[$conditionElementFid][$subformConditionElementHandle] = strip_tags(htmlspecialchars($_GET[$curlyBracketTerm], ENT_QUOTES));
                         continue;
                     }
                 }
@@ -7036,13 +7038,13 @@ function getFilterValuesForEntry($subformConditions, $curlyBracketEntryid=null) 
                     $sourceFid = $linkProperties[0];
                     if($dynamicElement = $element_handler->get($curlyBracketTerm)) {
                         if($dynamicElement->getVar('id_form') == $sourceFid) {
-                            $filterValues[$conditionElementFid][$subformConditions[0][$i]] = $curlyBracketEntryid;
+                            $filterValues[$conditionElementFid][$subformConditionElementHandle] = $curlyBracketEntryid;
                             continue;
                         }
                     }
                 }
                 if(!isset($filterValues[$conditionElementFid][$subformConditions[0][$i]])) {
-                    $filterValues[$conditionElementFid][$subformConditions[0][$i]] = prepareLiteralTextForDB($conditionElementObject, $subformConditions[2][$i], $curlyBracketEntryid);
+                    $filterValues[$conditionElementFid][$subformConditionElementHandle] = prepareLiteralTextForDB($conditionElementObject, $subformConditions[2][$i], $curlyBracketEntryid);
                 }
             }
         }
