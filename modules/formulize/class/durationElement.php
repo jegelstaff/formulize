@@ -247,6 +247,14 @@ class formulizeDurationElementHandler extends formulizeElementsHandler
 		$validationCode = array();
 		$ele_value = $element->getVar('ele_value');
 
+		// First input name for focus on validation failure
+		foreach ($this->timeUnits as $unit => $multiplier) {
+			if ($ele_value['show_' . $unit]) {
+				$firstInputName = $markupName . '[' . $unit . ']';
+				break;
+			}
+		}
+
 		// Basic required validation if element is required
 		if ($element->getVar('ele_req')) {
 			$validationCode[] = "var hasValue = false;\n";
@@ -256,7 +264,8 @@ class formulizeDurationElementHandler extends formulizeElementsHandler
 				}
 			}
 			$validationCode[] = "if(!hasValue) {\n";
-			$validationCode[] = "    window.alert('Please enter a duration.');\n";
+			$validationCode[] = "    window.alert('Please enter a value for ${caption}.');\n";
+			$validationCode[] = "    myform['{$firstInputName}'].focus();\n";
 			$validationCode[] = "    return false;\n";
 			$validationCode[] = "}\n";
 		}
@@ -273,14 +282,16 @@ class formulizeDurationElementHandler extends formulizeElementsHandler
 
 		if ($ele_value['min_minutes'] > 0) {
 			$validationCode[] = "if(totalMinutes < {$ele_value['min_minutes']}) {\n";
-			$validationCode[] = "    window.alert('Duration must be at least {$ele_value['min_minutes']} minutes.');\n";
+			$validationCode[] = "    window.alert('${caption} must be at least {$ele_value['min_minutes']} minutes.');\n";
+			$validationCode[] = "    myform['{$firstInputName}'].focus();\n";
 			$validationCode[] = "    return false;\n";
 			$validationCode[] = "}\n";
 		}
 
 		if ($ele_value['max_minutes'] > 0) {
 			$validationCode[] = "if(totalMinutes > {$ele_value['max_minutes']}) {\n";
-			$validationCode[] = "    window.alert('Duration must not exceed {$ele_value['max_minutes']} minutes.');\n";
+			$validationCode[] = "    window.alert('${caption} must not exceed {$ele_value['max_minutes']} minutes.');\n";
+			$validationCode[] = "    myform['{$firstInputName}'].focus();\n";
 			$validationCode[] = "    return false;\n";
 			$validationCode[] = "}\n";
 		}
