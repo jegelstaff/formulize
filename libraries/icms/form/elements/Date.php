@@ -57,14 +57,12 @@ class icms_form_elements_Date extends icms_form_elements_Text {
 	 */
 	public function render() {
 		$ele_name = $this->getName();
-		// ALTERED BY FREEFORM SOLUTIONS FOR THE DATE DEFAULT CHANGES IN FORMULIZE STANDALONE
 		if($this->getValue(false) !== _DATE_DEFAULT) {
-			$ele_value = date(_SHORTDATESTRING, $this->getValue(false));
+			$ele_value = date("Y-m-d", $this->getValue(false));
 		} else {
 			$ele_value = $this->getValue(false);
 		}
-
-		$result = "<input type='date' name='".$ele_name."' id='".$ele_name."' class=\"icms-date-box\" size='".$this->getSize()."' maxlength='".$this->getMaxlength()."' value='".$ele_value."'".$this->getExtra()." aria-describedby='".$ele_name."-help-text' />";
+		$result = "<input type='date' name='".$ele_name."' id='".$ele_name."' class=\"icms-date-box\" size='".$this->getSize()."' maxlength='".$this->getMaxlength()."' value='".$ele_value."' ".$this->getExtra()." aria-describedby='".$ele_name."-help-text' />";
         return $result;
     }
 }
