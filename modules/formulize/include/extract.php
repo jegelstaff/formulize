@@ -931,10 +931,15 @@ function formulize_generateJoinSQL($linkOrdinal, $linkcommonvalue, $linkselfids,
     if($linkcommonvalue[$linkOrdinal]) { // common value
         $newJoinText = " $mainAlias.`" . $joinHandles[$linkselfids[$linkOrdinal]] . "`=$subAlias.`" . $joinHandles[$linktargetids[$linkOrdinal]]."`";
     } elseif($linktargetids[$linkOrdinal]) { // linked selectbox
-        $main_ele_value = formulize_isLinkedSelectBox($linkselfids[$linkOrdinal]);
-        $target_ele_value = formulize_isLinkedSelectBox($linktargetids[$linkOrdinal]);
-        $mainBoxProperties = explode("#*=:*", $main_ele_value[2]);
-        $targetBoxProperties = explode("#*=:*", $target_ele_value[2]);
+				// set some values to use for figuring out the comparison of things in a sec...
+				$mainBoxProperties = array('','');
+				$targetBoxProperties = array('','');
+        if($main_ele_value = formulize_isLinkedSelectBox($linkselfids[$linkOrdinal])) {
+					$mainBoxProperties = explode("#*=:*", $main_ele_value[2]);
+				}
+        if($target_ele_value = formulize_isLinkedSelectBox($linktargetids[$linkOrdinal])) {
+					$targetBoxProperties = explode("#*=:*", $target_ele_value[2]);
+				}
         // if the target is the link, or they're both links and the target is pointing to the main
         if(($target_ele_value AND !$main_ele_value)
            OR ($target_ele_value AND $main_ele_value AND $targetBoxProperties[1] == $joinHandles[$linkselfids[$linkOrdinal]])) {
@@ -971,7 +976,9 @@ function formulize_filterHasSingleEntry($filter) {
 	// filter strings can have multiple comparisons separated by ][
 	// a single number as the comparison value, means isolate that entry, and that's what we're looking for in this function
 	if(!is_array($filter)) {
-		$filter = array(0=>'AND', 1=>$filter);
+		$filter = array(0=>array(
+			0=>'AND', 1=>$filter)
+		);
 	}
 	foreach($filter as $thisFilter) {
 		$filterDetails = $thisFilter[1];
@@ -1823,13 +1830,18 @@ function formulize_getElementHandleFromID($element_id) {
 // returns the ele_value array for this element if it is linked
 // does not return the link if the values are snapshotted
 function formulize_isLinkedSelectBox($elementOrHandle, $isHandle=false) {
-     static $cachedElements = array();
-     if(!isset($cachedElements[$elementOrHandle])) {
-          $evqRow = formulize_getElementMetaData($elementOrHandle, $isHandle);
-          $cachedElements[$elementOrHandle] = strstr($evqRow['ele_value'], "#*=:*") ? unserialize($evqRow['ele_value']) : false;
-          $cachedElements[$elementOrHandle] = ($cachedElements[$elementOrHandle] AND !$cachedElements[$elementOrHandle]['snapshot']) ? $cachedElements[$elementOrHandle] : false;
-     }
-     return $cachedElements[$elementOrHandle];
+	static $cachedElements = array();
+	if(!isset($cachedElements[$elementOrHandle])) {
+		$cachedElements[$elementOrHandle] = false; // default to false
+		$evqRow = formulize_getElementMetaData($elementOrHandle, $isHandle);
+		if(strstr($evqRow['ele_value'], "#*=:*")) {
+			$ele_value = unserialize($evqRow['ele_value']);
+			if(!isset($ele_value['snapshot']) OR !$ele_value['snapshot']) {
+				$cachedElements[$elementOrHandle] = $ele_value; // linked element that is not a snapshot, yay!
+			}
+		}
+	}
+	return $cachedElements[$elementOrHandle];
 }
 
 // This function returns true or false depending on whether an element is a multiselect selectbox or checkboxes

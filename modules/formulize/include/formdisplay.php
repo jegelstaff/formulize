@@ -3950,7 +3950,7 @@ jQuery(document).ready(function() {
 			$initCode .= "relevantElements['".$thisGovernedElement."'][$topKey] = '".$thisGoverningElement."';\n";
 			$initCode .= "governedElements['".$thisGoverningElement."'][$innerKey] = '".$thisGovernedElement."';\n";
 			$initCode .= "oneToOneElements['".$thisGovernedElement."'][$topKey] = ";
-			if($oneToOneElements[$thisGoverningElement] == true) {
+			if(isset($oneToOneElements[$thisGoverningElement]) AND $oneToOneElements[$thisGoverningElement] == true) {
 				$initCode .= "true;\n";
 				foreach($oneToOneMetaData[$thisGoverningElement] as $key=>$value) {
 						$initCode .= "oneToOneElements['".$thisGovernedElement."']['$key'] = '$value';\n";
