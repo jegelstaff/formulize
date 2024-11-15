@@ -650,7 +650,7 @@ class formulizeFormsHandler {
 			}
 		} else {
 			// no application specified, so get forms that do not belong to an application
-			$sql = "SELECT id_form FROM ".$this->db->prefix("formulize_id")." as formtable WHERE NOT EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.fid=formtable.id_form) ORDER BY formtable.desc_form";
+			$sql = "SELECT id_form FROM ".$this->db->prefix("formulize_id")." as formtable WHERE NOT EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.fid=formtable.id_form AND linktable.appid > 0) ORDER BY formtable.desc_form";
 			if($res = $this->db->query($sql)) {
 				while($array = $this->db->fetchArray($res)) {
 					if($returnIds) {

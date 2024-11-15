@@ -84,12 +84,12 @@ function patch40() {
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
     $checkThisTable = 'formulize_id';
-		$checkThisField = 'plural';
-		$checkThisProperty = '';
-		$checkPropertyForValue = '';
+    $checkThisField = 'top';
+    $checkThisProperty = '';
+    $checkPropertyForValue = '';
 
-		/*
-		* ====================================== */
+    /*
+    * ====================================== */
 
 		global $xoopsDB;
     $module_handler = xoops_gethandler('module');
@@ -230,6 +230,8 @@ function patch40() {
   `linkid` int(11) NOT NULL auto_increment,
   `appid` int(11) NOT NULL default 0,
   `fid` int(11) NOT NULL default 0,
+  `top` varchar(255) NOT NULL default '',
+  `left` varchar(255) NOT NULL default '',
   PRIMARY KEY (`linkid`),
   INDEX i_fid (`fid`),
   INDEX i_appid (`appid`)
@@ -484,6 +486,8 @@ function patch40() {
 				$sql['add_one2one_bookkeeping'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_framework_links")." ADD fl_one2one_bookkeeping smallint(5) NULL default 1";
 				$sql['singular'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `singular` varchar(255) NULL default ''";
 				$sql['plural'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `plural` varchar(255) NULL default ''";
+        $sql['add_form_top'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `top` varchar(255) NOT NULL default ''";
+        $sql['add_form_left'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `left` varchar(255) NOT NULL default ''";
 
 				unlink(XOOPS_ROOT_PATH.'/cache/adminmenu_english.php');
 
@@ -613,7 +617,9 @@ function patch40() {
                     print "One-to-one link bookkeeping flag already added. result: OK<br>";
     						} elseif($key === "singular" OR $key === "plural") {
                     print "Singluar/Plural form names already added. result: OK<br>";
-            }else {
+                } elseif($key === "add_form_top" OR $key === "add_form_left") {
+                    print "Form top/left admin positions already added. result: OK<br>";
+                }else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
             } elseif($key === "on_delete") {
