@@ -37,6 +37,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
 function displayGraph($type, $data, $dataElements, $yElements, $xAxisType='time', $timeElement = null, $timeUnit='day', $timeFormat='M j', $timeUnitCount=1, $labels=null, $minValue=null, $maxValue=null, $showTooltips = 'all', $smoothedLine = false, $showCursor = true) {
 
 	$jsTimeFormat = convertPHPTimeFormatToJSTimeFormat($timeFormat);
+	$xAxisStart = 0;
 
 	switch (strtolower($type)) {
 		case 'line':
@@ -46,6 +47,8 @@ function displayGraph($type, $data, $dataElements, $yElements, $xAxisType='time'
 			$xAxisType = ($xAxisType == 'time' AND $timeElement) ? 'time' : 'ordinal';
 			$nextExpectedTime = null;
 			$nextActualTime = null;
+			$firstTime = null;
+			$lastTime = null;
 			foreach($data as $i=>$dataPoint) {
 				$time = $xAxisType == 'time' ? display($dataPoint, $timeElement) : null;
 				$millisecondTimestamp = 0;
@@ -61,6 +64,8 @@ function displayGraph($type, $data, $dataElements, $yElements, $xAxisType='time'
 					if($showBullet AND $nextExpectedTime == $nextActualTime) {
 						$showBullet = '';
 					}
+					$firstTime = !$firstTime ? $millisecondTimestamp : $firstTime;
+					$lastTime = $millisecondTimestamp;
 				}
 				$dataValues = array();
 				foreach($dataElements as $dataElement) {
@@ -70,6 +75,42 @@ function displayGraph($type, $data, $dataElements, $yElements, $xAxisType='time'
 				$x++;
 			}
 			$dataSet = "[".implode(',', $dataSet)."]";
+
+			// set the zoom level, applied to xAxis and scollbar
+			if($xAxisType == 'time') {
+				$millisecondDuration = $lastTime - $firstTime;
+				switch($timeUnit) {
+					case "millisecond": // default to 100 milliseconds (10th of a second)
+						$xAxisStart = 1 - (100 / $millisecondDuration);
+						break;
+					case "second": // default to 10 seconds
+						$xAxisStart = 1 - (10 / ($millisecondDuration / 1000));
+						break;
+					case "minute": // default to 10 minutes
+						$xAxisStart = 1 - (10 / ($millisecondDuration / 1000 / 60));
+						break;
+					case "hour": // default to 10 hours
+						$xAxisStart = 1 - (10 / ($millisecondDuration / 1000 / 60 / 60));
+						break;
+					case "day": // default to 14 days
+						$xAxisStart = 1 - (14 / ($millisecondDuration / 1000 / 60 / 60 / 24));
+						break;
+					case "week": // default to 12 weeks
+						$xAxisStart = 1 - (12 / ($millisecondDuration / 1000 / 60 / 60 / 24 / 7));
+						break;
+					case "month": // default to 12 months
+						$xAxisStart = 1 - (12 / ($millisecondDuration / 1000 / 60 / 60 / 24 / 30));
+						break;
+					case "year": // default to 10 years
+						$xAxisStart = 1 - (10 / ($millisecondDuration / 1000 / 60 / 60 / 24 / 365));
+						break;
+				}
+			} else {
+				// default to 30 items
+				$xAxisStart = 1 - (30 / count($data));
+			}
+			$xAxisStart = $xAxisStart > 1 ? 1 : $xAxisStart;
+			$xAxisStart = $xAxisStart < 0 ? 0 : $xAxisStart;
 
 			$minMaxYAxes = array();
 			if($minValue !== null) {
@@ -155,6 +196,7 @@ function displayGraph($type, $data, $dataElements, $yElements, $xAxisType='time'
 					switch($xAxisType) {
 					case 'time': ?>
 					am5xy.DateAxis.new(root, {
+						start: <?php print $xAxisStart; ?>,
 						baseInterval: {
 							timeUnit: "<?php print $timeUnit; ?>",
 							count: <?php print $timeUnitCount; ?>
@@ -251,6 +293,7 @@ function displayGraph($type, $data, $dataElements, $yElements, $xAxisType='time'
 			// Add scrollbar
 			// https://www.amcharts.com/docs/v5/charts/xy-chart/scrollbars/
 			chart.set("scrollbarX", am5.Scrollbar.new(root, {
+				start: <?php print $xAxisStart; ?>,
 				orientation: "horizontal"
 			}));
 
