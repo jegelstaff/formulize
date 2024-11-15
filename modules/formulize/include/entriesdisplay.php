@@ -2180,15 +2180,21 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
     if($handle == 'creation_datetime' OR $handle == 'mod_datetime' OR $elementObject = $element_handler->get($handle)) {
         $typeInfo = $elementObject ? $elementObject->getDataTypeInformation() : true;
         if($typeInfo == true OR $typeInfo['dataType'] == 'date') {
-						$search_text = parseUserAndToday($search_text);
-            $startText = $search_text ? strtotime($search_text) : '';
-            $endText = $startText;
-            // split any search_text into start and end values
-            if(strstr($search_text, "//")) {
-                $startEnd = explode("//",$search_text);
-                $startText = isset($startEnd[0]) ? strtotime(parseUserAndToday(substr(htmlspecialchars_decode($startEnd[0]), 2))) : "";
-                $endText = isset($startEnd[1]) ? strtotime(parseUserAndToday(substr(htmlspecialchars_decode($startEnd[1]), 2))) : "";
-            }
+						$search_text = htmlspecialchars_decode($search_text);
+						$search_text_parts = explode('//', $search_text);
+						if(count($search_text_parts) == 2) {
+							$startText = $search_text_parts[0] ? strtotime(parseUserAndToday(substr($search_text_parts[0], 2))) : "";
+              $endText = $search_text_parts[1] ? strtotime(parseUserAndToday(substr($search_text_parts[1], 2))) : "";
+						} elseif(substr($search_text, 0, 2) == '>=') { // we only have start text
+							$startText = strtotime(parseUserAndToday(substr($search_text, 2)));
+              $endText = "";
+						} elseif(substr($search_text, 0, 2) == '<=') { // we only have end text
+							$startText = "";
+              $endText = strtotime(parseUserAndToday(substr($search_text, 2)));
+						} else { // we have some plain initial text
+							$startText = $search_text ? strtotime(parseUserAndToday($search_text)) : "";
+							$endText = $startText;
+						}
             include_once XOOPS_ROOT_PATH . "/class/xoopsformloader.php";
             $startDateElement = new XoopsFormTextDateSelect ('', 'formulize_daterange_sta_'.$handle, 15, $startText);
             $endDateElement = new XoopsFormTextDateSelect ('', 'formulize_daterange_end_'.$handle, 15, $endText);
@@ -2214,7 +2220,10 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
                     var handle = id.substr(24);
                     var start = $('#formulize_daterange_sta_'+handle).val();
                     var end = $('#formulize_daterange_end_'+handle).val();
-                    $('#formulize_hidden_daterange_'+handle).val('>='+start+'//'+'<='+end);
+										start = start ? '>='+start : '';
+										end = end ? '<='+end : '';
+										var connector = (start && end) ? '//' : '';
+                    $('#formulize_hidden_daterange_'+handle).val(start+connector+end);
                     $('#formulize_daterange_button_'+handle).show(200);
                 });
                 $(\"[id^='formulize_daterange_sta_']\").change(function() {
@@ -2222,10 +2231,13 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
                     var handle = id.substr(24);
                     var start = $('#formulize_daterange_sta_'+handle).val();
                     var end = $('#formulize_daterange_end_'+handle).val();
+										start = start ? '>='+start : '';
+										end = end ? '<='+end : '';
+										var connector = (start && end) ? '//' : '';
                     if((end == '' || end == '"._DATE_DEFAULT."') && start) {
                         $('#formulize_daterange_end_'+handle).val(start);
                         end = start;
-                        $('#formulize_hidden_daterange_'+handle).val('>='+start+'//'+'<='+end);
+                        $('#formulize_hidden_daterange_'+handle).val(start+connector+end);
                         $('#formulize_daterange_button_'+handle).show(200);
                     }
                 });
