@@ -2231,15 +2231,15 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
                     var handle = id.substr(24);
                     var start = $('#formulize_daterange_sta_'+handle).val();
                     var end = $('#formulize_daterange_end_'+handle).val();
-										start = start ? '>='+start : '';
-										end = end ? '<='+end : '';
-										var connector = (start && end) ? '//' : '';
-                    if((end == '' || end == '"._DATE_DEFAULT."') && start) {
-                        $('#formulize_daterange_end_'+handle).val(start);
-                        end = start;
-                        $('#formulize_hidden_daterange_'+handle).val(start+connector+end);
-                        $('#formulize_daterange_button_'+handle).show(200);
-                    }
+										if((end == '' || end == '"._DATE_DEFAULT."') && start) {
+                    	$('#formulize_daterange_end_'+handle).val(start);
+											end = start;
+											start = '>='+start;
+											end = '<='+end;
+											var connector = '//';
+                      $('#formulize_hidden_daterange_'+handle).val(start+connector+end);
+                      $('#formulize_daterange_button_'+handle).show(200);
+										}
                 });
                 </script>";
             }
