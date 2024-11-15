@@ -75,6 +75,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	$member_handler =& xoops_gethandler('member');
 	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
+	$couldLoadAdvanceView = false; // default to not loading the 'advance view' (screen settings for cols, searches, etc) -- but turn this on when initially loading views, in case they are just partial views and we need to layer in missing features
 
 	if(!$scheck = security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler)) {
 		print "<p>" . _NO_PERM . "</p>";
@@ -409,6 +410,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	// set currentView to group if they have groupscope permission (overridden below by value sent from form)
 	// override with loadview if that is specified
 
+	$subsequentPageloadAfterInitialLoading = isset($_POST['currentview']) ? true : false;
 	if($loadview AND ((!$_POST['currentview'] AND $_POST['advscope'] == "") OR $_POST['userClickedReset'])) {
 		if(is_numeric($loadview)) { // new view id
 			$loadview = "p" . $loadview;
@@ -433,10 +435,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	// no report/saved view to be loaded, and we're not on a subsequent page load that is sending back a declared currentview, or the user clicked the reset button
 	// therefore, an advanceview if any could be loaded after all the other setup has been done
 
-	if($screen AND count((array) $screen->getVar('advanceview')) > 0 AND (empty($_POST) OR $_POST['loadreport'] OR $_POST['userClickedReset'])) {
+	if($screen AND count((array) $screen->getVar('advanceview')) > 0 AND (empty($_POST) OR !$subsequentPageloadAfterInitialLoading OR $_POST['userClickedReset'])) {
 		$couldLoadAdvanceView = true;
-	} else {
-		$couldLoadAdvanceView = false;
 	}
 
 	// set flag to indicate whether we let the user's scope setting expand beyond their normal permission level (happens when unlocked published views are in effect)
