@@ -87,4 +87,15 @@ if(isset($_POST['lockdown']) AND $_POST['lockdown'] > 0 AND $gperm_handler->chec
 		print "Error: this form is locked!";
 	}
 }
-?>
+
+$application_handler = xoops_getmodulehandler('applications', 'formulize');
+$adminLayoutTopAndLeftForForms = $application_handler->getAdminLayoutTopAndLeftForForms($_POST['formulize_admin_key']);
+$positions = array();
+foreach($_POST['formTop'] as $fid=>$topValue) {
+	$leftValue = $_POST['formLeft'][$fid];
+	if($adminLayoutTopAndLeftForForms[$fid]['top'] != $topValue OR $adminLayoutTopAndLeftForForms[$fid]['left'] != $leftValue) {
+		$positions[$fid]['top'] = $topValue;
+		$positions[$fid]['left'] = $leftValue;
+	}
+}
+$application_handler->setAdminLayoutTopAndLeftForForm($_POST['formulize_admin_key'], $positions);

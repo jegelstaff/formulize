@@ -287,9 +287,9 @@ class formulizeApplicationsHandler {
         }
       }
       if($fid > 0) {
-        $sql = 'SELECT * FROM '.$xoopsDB->prefix("formulize_applications").' as t1, '.$xoopsDB->prefix("formulize_application_form_link").' as t2 WHERE t1.appid = t2.appid AND t2.fid = '.$fid.' ORDER BY t1.name';
+        $sql = 'SELECT * FROM '.$xoopsDB->prefix("formulize_applications").' as t1, '.$xoopsDB->prefix("formulize_application_form_link").' as t2 WHERE t1.appid = t2.appid AND t2.fid = '.$fid.' AND t2.appid > 0 ORDER BY t1.name';
       } else {
-        $sql = 'SELECT * FROM '.$xoopsDB->prefix("formulize_applications").' ORDER BY name';
+        $sql = 'SELECT * FROM '.$xoopsDB->prefix("formulize_applications").' WHERE appid > 0 ORDER BY name';
       }
     }
 
@@ -611,6 +611,38 @@ class formulizeApplicationsHandler {
             exit("Error checking default screen. SQL dump:\n" . $checksql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
         }
     }
+
+  /**
+   * Fetch the top and left values for the admin layout of the forms in the given application
+   * @param int aid The application id of the application we're working with. Zero for 'forms with no application'.
+   * @return array Returns a multidimensional array, first level key is the form id, second level has two keys, top and left, for the top and left css values (ie: 345.677px). Or an empty array if the application id is not valid.
+   */
+  function getAdminLayoutTopAndLeftForForms($aid) {
+    global $xoopsDB;
+    $positions = array();
+    $aid = intval($aid);
+    if($aid) {
+      $sql = 'SELECT `fid`, `top`, `left` FROM '.$xoopsDB->prefix('formulize_application_form_link').' WHERE appid = '.$aid;
+      if($res = $xoopsDB->query($sql)) {
+        while($row = $xoopsDB->fetchRow($res)) {
+          $positions[$row[0]]['top'] = $row[1];
+          $positions[$row[0]]['left'] = $row[2];
+        }
+      }
+    }
+    return $positions;
+  }
+
+  /**
+   * Set the top and left values for the forms in the given application
+   * @param int aid The application id of the application we're working with. Zero for 'forms with no application'.
+   * @param array positions A multidimensional array of the positions for the forms. Top level key is the form id, second level keys are top and left, for the top and left css values (ie: 345.677px)
+   * @return boolean True or false depending on the result of the query
+   */
+  function setAdminLayoutTopAndLeftForForm($aid, $positions) {
+    
+  }
+
 }
 
 
