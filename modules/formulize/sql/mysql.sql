@@ -127,6 +127,8 @@ CREATE TABLE `formulize_application_form_link` (
   `linkid` int(11) NOT NULL auto_increment,
   `appid` int(11) NOT NULL default 0,
   `fid` int(11) NOT NULL default 0,
+  `top` varchar(255) NOT NULL default '',
+  `left` varchar(255) NOT NULL default '', 
   PRIMARY KEY (`linkid`),
   INDEX i_fid (`fid`),
   INDEX i_appid (`appid`)

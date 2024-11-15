@@ -113,6 +113,7 @@ $options['listsofscreenoptions'] = $forms;
 
 $screen_handler = xoops_getmodulehandler('screen', 'formulize');
 $gperm_handler = xoops_gethandler('groupperm');
+$adminLayoutTopAndLeftForForms = $application_handler->getAdminLayoutTopAndLeftForForms($aid);
 $formsInApp = array();
 global $xoopsUser;
 foreach($formObjects as $thisFormObject) {
@@ -140,6 +141,8 @@ foreach($formObjects as $thisFormObject) {
     $formsInApp[$thisFormObject->getVar('id_form')]['defaultlistscreenname'] = $defaultListName;
     $formsInApp[$thisFormObject->getVar('id_form')]['lockedform'] = $thisFormObject->getVar('lockedform');
     $formsInApp[$thisFormObject->getVar('id_form')]['istableform'] = $thisFormObject->getVar('tableform');
+    $formsInApp[$thisFormObject->getVar('id_form')]['top'] = (isset($adminLayoutTopAndLeftForForms[$thisFormObject->getVar('id_form')]['top']) AND $adminLayoutTopAndLeftForForms[$thisFormObject->getVar('id_form')]['top']) ? $adminLayoutTopAndLeftForForms[$thisFormObject->getVar('id_form')]['top']: '0px';
+    $formsInApp[$thisFormObject->getVar('id_form')]['left'] = (isset($adminLayoutTopAndLeftForForms[$thisFormObject->getVar('id_form')]['left']) AND $adminLayoutTopAndLeftForForms[$thisFormObject->getVar('id_form')]['left']) ? $adminLayoutTopAndLeftForForms[$thisFormObject->getVar('id_form')]['left']: '0px';
 }
 
 
@@ -280,6 +283,12 @@ if (is_object($appObject)){
     $adminPage['tabs'][$i]['content'] = $variableHelp + $common;
     $adminPage['tabs'][$i]['content']['custom_code'] = $appObject->getVar("custom_code");
 }
+
+$i++;
+$adminPage['tabs'][$i]['name'] = "Forms II";
+$adminPage['tabs'][$i]['template'] = "db:admin/application_forms_ii.html";
+$adminPage['tabs'][$i]['content'] = $common;
+$adminPage['tabs'][$i]['content']['forms'] = $formsInApp;
 
 $adminPage['pagetitle'] = _AM_APP_APPLICATION.$appName;
 $adminPage['needsave'] = true;
