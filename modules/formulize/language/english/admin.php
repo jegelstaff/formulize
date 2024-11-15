@@ -409,6 +409,14 @@ define("_AM_ELE_DERIVED_UPDATE_DESC", "This may take a while depending on how ma
 define("_AM_ELE_SELECT_NONE","No element selected");
 define("_AM_ELE_CONFIRM_DELETE","Are you sure you want to delete this form element? All data anyone has ever entered into this form element will be deleted as well.");
 
+// Duration
+define("_AM_ELE_DURATION", "Duration");
+define("_AM_ELE_DURATION_SHOW_UNITS", "Show units");
+define("_AM_ELE_DURATION_LIMITS", "Duration limits");
+define("_AM_ELE_DURATION_LIMITS_MIN", "Minimum duration (in minutes)");
+define("_AM_ELE_DURATION_LIMITS_MAX", "Maximum duration (in minutes)");
+define("_AM_ELE_DURATION_LIMITS_NOMAX", "no maximum");
+
 define("_AM_TITLE","Menu administration");
 define("_AM_ID","ID");
 define("_AM_POS","Position");
