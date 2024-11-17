@@ -71,7 +71,7 @@ class icms_config_option_Handler extends icms_core_ObjectHandler {
 	 * @param	object  &$confoption    reference to a {@link icms_config_option_Object}
 	 * @return	bool    TRUE if successfull.
 	 */
-	public function insert(&$confoption) {
+	public function insert(&$confoption, $force=false) {
 		/* As of PHP5.3.0, is_a() is no longer deprecated, no need to replace it */
 		if (!is_a($confoption, 'icms_config_option_Object')) {
 			return false;
@@ -106,8 +106,14 @@ class icms_config_option_Handler extends icms_core_ObjectHandler {
 			(int) ($confop_id)
 			);
 		}
-		if (!$result = $this->db->query($sql)) {
-			return false;
+		if($force) {
+			if (!$result = $this->db->queryF($sql)) {
+				return false;
+			}
+		} else {
+			if (!$result = $this->db->query($sql)) {
+				return false;
+			}
 		}
 		if (empty($confop_id)) {
 			$confop_id = $this->db->getInsertId();
@@ -122,7 +128,7 @@ class icms_config_option_Handler extends icms_core_ObjectHandler {
 	 * @param	object  &$confoption    reference to a {@link icms_config_option_Object}
 	 * @return	bool    TRUE if successful
 	 */
-	public function delete(&$confoption) {
+	public function delete(&$confoption, $force=false) {
 		/* As of PHP5.3.0, is_a() is no longer deprecated, no need to replace it */
 		if (!is_a($confoption, 'icms_config_option_Object')) {
 			return false;
@@ -132,8 +138,14 @@ class icms_config_option_Handler extends icms_core_ObjectHandler {
 			$this->db->prefix('configoption'),
 			(int) ($confoption->getVar('confop_id'))
 			);
-		if (!$result = $this->db->query($sql)) {
-			return false;
+		if($force) {
+			if (!$result = $this->db->queryF($sql)) {
+				return false;
+			}
+		} else {
+			if (!$result = $this->db->query($sql)) {
+				return false;
+			}
 		}
 		return true;
 	}

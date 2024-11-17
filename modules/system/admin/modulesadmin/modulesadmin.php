@@ -1016,7 +1016,7 @@ function icms_module_update($dirname) {
 		}
 	}
 
-	if (!$module_handler->insert($module)) {
+	if (!$module_handler->insert($module, true)) {
 		$msgs[] = sprintf('<p>' . _MD_AM_UPDATE_FAIL . '</p>', $module->getVar('name'));
 	} else {
 		$newmid = $module->getVar('mid');
@@ -1031,7 +1031,7 @@ function icms_module_update($dirname) {
 			// delete template file entry in db
 			$dcount = count($deltpl);
 			for ($i = 0; $i < $dcount; $i++) {
-				if (!$tplfile_handler->delete($deltpl[$i])) {
+				if (!$tplfile_handler->delete($deltpl[$i], true)) {
 					$delng[] = $deltpl[$i]->getVar('tpl_file');
 				}
 			}
@@ -1058,7 +1058,7 @@ function icms_module_update($dirname) {
 					$tplfile->setVar('tpl_tplset', 'default');
 					$tplfile->setVar('tpl_file', $tpl['file'], TRUE);
 					$tplfile->setVar('tpl_desc', $tpl['description'], TRUE);
-					if (!$tplfile_handler->insert($tplfile)) {
+					if (!$tplfile_handler->insert($tplfile, true)) {
 						$msgs[] = sprintf('&nbsp;&nbsp;<span style="color:#ff0000;">'
 						. _MD_AM_TEMPLATE_INSERT_FAIL . '</span>', '<strong>' . $tpl['file'] . '</strong>');
 					} else {
@@ -1118,7 +1118,7 @@ function icms_module_update($dirname) {
 							. "', content='', template='" . $template
 							. "', last_modified=" . time()
 							. " WHERE bid='". (int) $fblock['bid'] . "'";
-						$result = icms::$xoopsDB->query($sql);
+						$result = icms::$xoopsDB->queryF($sql);
 						if (!$result) {
 							$msgs[] = sprintf('&nbsp;&nbsp;' . _MD_AM_UPDATE_FAIL, $fblock['name']);
 						} else {
@@ -1142,7 +1142,7 @@ function icms_module_update($dirname) {
                                 $tplfile_new->setVar('tpl_file', $blocks[$i]['template'], TRUE);
 								$tplfile_new->setVar('tpl_lastmodified', time());
 								$tplfile_new->setVar('tpl_lastimported', 0);
-								if (!$tplfile_handler->insert($tplfile_new)) {
+								if (!$tplfile_handler->insert($tplfile_new, true)) {
 									$msgs[] = sprintf('&nbsp;&nbsp;<span style="color:#ff0000;">'
 										. _MD_AM_TEMPLATE_UPDATE_FAIL . '</span>', '<strong>' . $blocks[$i]['template'] . '</strong>');
 								} else {
@@ -1167,7 +1167,7 @@ function icms_module_update($dirname) {
 						$sql = "INSERT INTO " . icms::$xoopsDB->prefix("newblocks")
 							. " (bid, mid, func_num, options, name, title, content, side, weight, visible, block_type, c_type, isactive, dirname, func_file, show_func, edit_func, template, bcachetime, last_modified) VALUES ('"
 							. (int) $newbid . "', '". (int) $module->getVar('mid') . "', '". (int) $i . "', '" . addslashes($options) . "', '" . $block_name . "', '" . $block_name . "', '', '1', '0', '0', 'M', 'H', '1', '" . addslashes($dirname) . "', '" . addslashes($blocks[$i]['file']) . "', '" . addslashes($blocks[$i]['show_func']) . "', '" . addslashes($editfunc) . "', '" . $template . "', '0', '" . time() . "')";
-						$result = icms::$xoopsDB->query($sql);
+						$result = icms::$xoopsDB->queryF($sql);
 						if (!$result) {
 							$msgs[] = sprintf('&nbsp;&nbsp;' .  _MD_AM_CREATE_FAIL, $blocks[$i]['name']);
 							echo $sql;
@@ -1183,7 +1183,7 @@ function icms_module_update($dirname) {
 								$bperm->setVar('gperm_itemid', (int) $newbid);
 								$bperm->setVar('gperm_name', 'block_read');
 								$bperm->setVar('gperm_modid', 1);
-								if (!$gperm_handler->insert($bperm)) {
+								if (!$gperm_handler->insert($bperm, true)) {
 									$msgs[] = sprintf('&nbsp;&nbsp;<span style="color:#ff0000;">' . _MD_AM_BLOCK_ACCESS_FAIL . '</span>',
 										'<strong>' . $newbid . '</strong>',
 										'<strong>' . $mygroup . '</strong>');
@@ -1205,7 +1205,7 @@ function icms_module_update($dirname) {
 								$tplfile->setVar('tpl_lastimported', 0);
 								$tplfile->setVar('tpl_lastmodified', time());
 								$tplfile->setVar('tpl_desc', $blocks[$i]['description'], TRUE);
-								if (!$tplfile_handler->insert($tplfile)) {
+								if (!$tplfile_handler->insert($tplfile, true)) {
 									$msgs[] = sprintf('&nbsp;&nbsp;<span style="color:#ff0000;">' . _MD_AM_TEMPLATE_INSERT_FAIL . '</span>',
 										'<strong>' . $blocks[$i]['template'] . '</strong>');
 								} else {
@@ -1228,7 +1228,7 @@ function icms_module_update($dirname) {
 							$sql = "INSERT INTO " . icms::$xoopsDB->prefix('block_module_link')
 								. " (block_id, module_id, page_id) VALUES ('"
 								. (int) $newbid . "', '0', '1')";
-							icms::$xoopsDB->query($sql);
+							icms::$xoopsDB->queryF($sql);
 						}
 					}
 				}
@@ -1239,7 +1239,7 @@ function icms_module_update($dirname) {
 			foreach ($block_arr as $block) {
 				if (!in_array($block->getVar('show_func'), $showfuncs) || !in_array($block->getVar('func_file'), $funcfiles)) {
 					$sql = sprintf("DELETE FROM %s WHERE bid = '%u'", icms::$xoopsDB->prefix('newblocks'), (int) $block->getVar('bid'));
-					if (!icms::$xoopsDB->query($sql)) {
+					if (!icms::$xoopsDB->queryF($sql)) {
 						$msgs[] = sprintf('&nbsp;&nbsp;<span style="color:#ff0000;">' . _MD_AM_BLOCK_DELETE_FAIL . '</span>',
 							'<strong>' . $block->getVar('name') . '</strong>',
 							'<strong>' . $block->getVar('bid') . '</strong>');
@@ -1252,7 +1252,7 @@ function icms_module_update($dirname) {
 							if (is_array($tplfiles)) {
 								$btcount = count($tplfiles);
 								for ($k = 0; $k < $btcount; $k++) {
-									if (!$tplfile_handler->delete($tplfiles[$k])) {
+									if (!$tplfile_handler->delete($tplfiles[$k], true)) {
 										$msgs[] = sprintf('&nbsp;&nbsp;<span style="color:#ff0000;">' . _MD_AM_BLOCK_TMPLT_DELETE_FAILED . '</span>',
 											'<strong>' . $tplfiles[$k]->getVar('tpl_file') . '</strong>',
 											'<strong>' . $tplfiles[$k]->getVar('tpl_id') . '</strong>');
@@ -1277,7 +1277,7 @@ function icms_module_update($dirname) {
 		if ($confcount > 0) {
 			$msgs[] = _MD_AM_CONFIGOPTION_DELETED;
 			for ($i = 0; $i < $confcount; $i++) {
-				if (!$config_handler->deleteConfig($configs[$i])) {
+				if (!$config_handler->deleteConfig($configs[$i], true)) {
 					$msgs[] = sprintf('&nbsp;&nbsp;<span style="color:#ff0000;">' . _MD_AM_CONFIGOPTION_DELETE_FAIL . '</span>',
 						'<strong>' . $configs[$i]->getvar('conf_id') . '</strong>');
 					// save the name of config failed to delete for later use
@@ -1439,7 +1439,7 @@ function icms_module_update($dirname) {
 						}
 					}
 					$order++;
-					if (FALSE !== $config_handler->insertConfig($confobj)) {
+					if (FALSE !== $config_handler->insertConfig($confobj, true)) {
 						$msgs[] = sprintf('&nbsp;&nbsp;' . _MD_AM_CONFIG_ADDED, '<strong>' . $config['name'] . '</strong>. ')
 						. $confop_msgs;
 					} else {

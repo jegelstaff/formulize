@@ -103,7 +103,7 @@ class icms_view_template_file_Handler extends icms_core_ObjectHandler {
 	 * @param object $tplfile {@link icms_view_template_file_Object} object of the template file to load
 	 * @return bool TRUE on success, FALSE if fail
 	 **/
-	public function insert(&$tplfile) {
+	public function insert(&$tplfile, $force=false) {
 		/* As of PHP5.3.0, is_a() is no longer deprecated */
 		if (!is_a($tplfile, 'icms_view_template_file_Object')) {
 			return false;
@@ -133,8 +133,15 @@ class icms_view_template_file_Handler extends icms_core_ObjectHandler {
 				(int) $tpl_lastimported,
 				$this->db->quoteString($tpl_type)
 			);
-			if (!$result = $this->db->query($sql)) {
-				return false;
+
+			if($force) {
+				if (!$result = $this->db->queryF($sql)) {
+					return false;
+				}
+			} else {
+				if (!$result = $this->db->query($sql)) {
+					return false;
+				}
 			}
 			if (empty($tpl_id)) {
 				$tpl_id = $this->db->getInsertId();
@@ -146,11 +153,20 @@ class icms_view_template_file_Handler extends icms_core_ObjectHandler {
 					(int) $tpl_id,
 					$this->db->quoteString($tpl_source)
 				);
-				if (!$result = $this->db->query($sql)) {
-					$this->db->query(sprintf("DELETE FROM %s WHERE tpl_id = '%u'",
-						$this->db->prefix('tplfile'), (int) $tpl_id)
-					);
-					return false;
+				if($force) {
+					if (!$result = $this->db->queryF($sql)) {
+						$this->db->queryF(sprintf("DELETE FROM %s WHERE tpl_id = '%u'",
+							$this->db->prefix('tplfile'), (int) $tpl_id)
+						);
+						return false;
+					}
+				} else {
+					if (!$result = $this->db->query($sql)) {
+						$this->db->query(sprintf("DELETE FROM %s WHERE tpl_id = '%u'",
+							$this->db->prefix('tplfile'), (int) $tpl_id)
+						);
+						return false;
+					}
 				}
 			}
 			$tplfile->assignVar('tpl_id', $tpl_id);
@@ -165,8 +181,14 @@ class icms_view_template_file_Handler extends icms_core_ObjectHandler {
 				(int) $tpl_lastmodified,
 				(int) $tpl_id
 			);
-			if (!$result = $this->db->query($sql)) {
-				return false;
+			if($force) {
+				if (!$result = $this->db->queryF($sql)) {
+					return false;
+				}
+			} else {
+				if (!$result = $this->db->query($sql)) {
+					return false;
+				}
 			}
 			if (isset($tpl_source) && $tpl_source != '') {
 				$sql = sprintf("UPDATE %s SET tpl_source = %s WHERE tpl_id = '%u'",
@@ -174,8 +196,14 @@ class icms_view_template_file_Handler extends icms_core_ObjectHandler {
 					$this->db->quoteString($tpl_source),
 					(int) $tpl_id
 				);
-				if (!$result = $this->db->query($sql)) {
-					return false;
+				if($force) {
+					if (!$result = $this->db->queryF($sql)) {
+						return false;
+					}
+				} else {
+					if (!$result = $this->db->query($sql)) {
+						return false;
+					}
 				}
 			}
 		}
@@ -223,15 +251,21 @@ class icms_view_template_file_Handler extends icms_core_ObjectHandler {
 	 * @param object $tplfile {@link icms_view_template_file_Object} object of the template file to load
 	 * @return bool TRUE on success, FALSE if fail
 	 **/
-	public function delete(&$tplfile) {
+	public function delete(&$tplfile, $force=false) {
 		/* As of PHP5.3.0, is_a() is no longer deprecated */
 		if (!is_a($tplfile, 'icms_view_template_file_Object')) {
 			return false;
 		}
 		$id = (int) ($tplfile->getVar('tpl_id'));
 		$sql = sprintf("DELETE FROM %s WHERE tpl_id = '%u'", $this->db->prefix('tplfile'), $id);
-		if (!$result = $this->db->query($sql)) {
-			return false;
+		if($force) {
+			if (!$result = $this->db->queryF($sql)) {
+				return false;
+			}
+		} else {
+			if (!$result = $this->db->query($sql)) {
+				return false;
+			}
 		}
 		$sql = sprintf("DELETE FROM %s WHERE tpl_id = '%u'", $this->db->prefix('tplsource'), $id);
 		$this->db->query($sql);

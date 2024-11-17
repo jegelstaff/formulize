@@ -6391,12 +6391,12 @@ function convertSelectBoxToSingle($table, $column) {
     $sql1 = "UPDATE `$table` SET `$column`=SUBSTRING_INDEX (TRIM(BOTH ',' FROM `$column`), ',', 1) WHERE `$column` LIKE ',%,'";
     $sql2 = "ALTER TABLE `$table` CHANGE `$column` `$column` BIGINT NULL DEFAULT NULL";
 
-    if (!$result1 = $xoopsDB->query($sql1)) {
+    if (!$result1 = $xoopsDB->queryF($sql1)) {
         print "<br>$sql1<br>";
         return false;
     }
 
-    if (!$result2 = $xoopsDB->query($sql2)) {
+    if (!$result2 = $xoopsDB->queryF($sql2)) {
         print "<br>$sql2<br>";
         return false;
     }
