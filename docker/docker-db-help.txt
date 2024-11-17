@@ -1,5 +1,5 @@
 IF YOUR DEVELOPMENT ENVIRONMENT IS WINDOWS
-You should rename or copy the file: /docker/maraidb/conf.d/lower_case_table_names.cnf.windows to: /docker/maraidb/conf.d/lower_case_table_names.cnf (ie: remove the .windows part on the end).
+You should rename or copy the file: /docker/maraidb/conf.d/lower_case_table_names.cnf.windows to: /docker/maraidb/conf.d/lower_case_table_names.cnf (ie: remove the .windows part on the end). Then make the file 'read-only' (it will be ignored by MariaDB if it is world writable).
 
 This file will ensure that when MariaDB starts, it properly handles case sensitivity in your table names, and can handle identifiers in SQL dumps from a case sensitive production environment, like Linux. Note that any SQL produced locally, from phpMyAdmin for example, will be generated with lowercase identifiers, because internally MariaDB will be storing identifiers in lowercase on Windows. If the corresponding identifiers on the production environment include uppercase characters, you will run into issues when running SQL from your local environment in your production environment. This can be avoided by correcting any identifiers in the SQL before running it in production, to ensure it matches the case used on the production environment.
 
