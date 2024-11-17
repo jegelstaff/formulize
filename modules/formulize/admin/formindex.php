@@ -136,7 +136,7 @@ function patch40() {
         }
 
         $testsql = "SHOW TABLES";
-        $resultst = $xoopsDB->query($testsql);
+        $resultst = $xoopsDB->queryF($testsql);
         while($table = $xoopsDB->fetchRow($resultst)) {
             $existingTables[] = strtolower($table[0]);
         }
@@ -385,9 +385,9 @@ function patch40() {
         }
 
         $googleOnlySql = 'SELECT * FROM '.$xoopsDB->prefix('config').' WHERE conf_name = "auth_googleonly"';
-        if($googleOnlyRes = $xoopsDB->query($googleOnlySql) AND $xoopsDB->getRowsNum($googleOnlyRes)===0) {
+        if($googleOnlyRes = $xoopsDB->queryF($googleOnlySql) AND $xoopsDB->getRowsNum($googleOnlyRes)===0) {
             $googleOnlySql = 'INSERT INTO '.$xoopsDB->prefix('config').' (conf_modid, conf_catid, conf_name, conf_title, conf_value, conf_desc, conf_formtype, conf_valuetype, conf_order) VALUES (0, 7, "auth_googleonly", "_MD_AM_GOOGLEONLY", 0, "_MD_AM_GOOGLEONLYDSC", "yesno", "int", 1)';
-            if(!$googleOnlyRes = $xoopsDB->query($googleOnlySql)) {
+            if(!$googleOnlyRes = $xoopsDB->queryF($googleOnlySql)) {
                 print 'ERROR: could not add Google Only authentication option, using this SQL:<br>'.$googleOnlySql.'<BR>'.$xoopsDB->error().'<BR>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.';
             }
         }
@@ -483,7 +483,7 @@ function patch40() {
         $needToSetPrintableView = true;
         $needToMigrateFormScreensToMultipage = true;
         foreach($sql as $key=>$thissql) {
-            if (!$result = $xoopsDB->query($thissql)) {
+            if (!$result = $xoopsDB->queryF($thissql)) {
                 if ($key === "add_encrypt") {
                     print "ele_encrypt field already added.  result: OK<br>";
                 } elseif ($key === "add_lockedform") {
@@ -604,18 +604,18 @@ function patch40() {
                 }
             } elseif($key === "on_delete") {
                 // on delete successfully added, and so this one time and one time only, never in the future (and since on delete was added now, it will never be added again) set the config option for custom button effects to Yes
-                if(!$xoopsDB->query("UPDATE ".$xoopsDB->prefix('config')." SET conf_value = 1 WHERE conf_name = 'useOldCustomButtonEffectWriting'")) {
+                if(!$xoopsDB->queryF("UPDATE ".$xoopsDB->prefix('config')." SET conf_value = 1 WHERE conf_name = 'useOldCustomButtonEffectWriting'")) {
                     print "Error setting preference for old custom button writing method<br>";
                 }
             } elseif($key === "add_screen_handle") {
 							// screen handles successfully added, so this one time and one time only, never again (since handles will not be added again, sql will fail and this else won't kick in)
 							// set the initial screen handles, based on the titles
 							$screenHandleData = "SELECT `sid`, `title` FROM ".$xoopsDB->prefix('formulize_screen');
-							if($res = $xoopsDB->query($screenHandleData)) {
+							if($res = $xoopsDB->queryF($screenHandleData)) {
 								$screen_handler = xoops_getmodulehandler('listOfEntriesScreen','formulize');
 								while($row = $xoopsDB->fetchRow($res)) {
 									$screen_handle = $screen_handler->makeHandleUnique(strtolower($row[1]), $row[0]);
-									if(!$xoopsDB->query("UPDATE ".$xoopsDB->prefix('formulize_screen')." SET screen_handle = \"".formulize_db_escape($screen_handle)."\" WHERE sid = ".intval($row[0]))) {
+									if(!$xoopsDB->queryF("UPDATE ".$xoopsDB->prefix('formulize_screen')." SET screen_handle = \"".formulize_db_escape($screen_handle)."\" WHERE sid = ".intval($row[0]))) {
 										print "Error: could not set the initial handle for screen ".intval($row[0]).", '".$row[1]."'. This may not be critical, unless you have custom buttons with PHP code. You should manually set a handle for the screen. Contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
 									}
 								}
@@ -637,7 +637,7 @@ function patch40() {
 						(ele_type = 'derived')
 						OR (ele_type IN ('ib', 'areamodif') AND ele_value LIKE '%\$value%')
 						OR (ele_type IN ('text', 'textarea') AND ele_value LIKE '%\$default%') ";
-					if($res = $xoopsDB->query($elementsNeedingOpeningPHPTagsSQL)) {
+					if($res = $xoopsDB->queryF($elementsNeedingOpeningPHPTagsSQL)) {
 						// loop through the results...
 						while($record = $xoopsDB->fetchArray($res)) {
 							// isolate the value we're targetting...
@@ -650,7 +650,7 @@ function patch40() {
 								$newEleValue[$eleValueKey] = "<?php\n".$newEleValue[$eleValueKey];
 								$newEleValue = serialize($newEleValue);
 								$updateSQL = "UPDATE ".$xoopsDB->prefix('formulize')." SET ele_value = ".$xoopsDB->quoteString($newEleValue)." WHERE ele_id = ".$record['ele_id'];
-								if(!$updateRes = $xoopsDB->query($updateSQL)) {
+								if(!$updateRes = $xoopsDB->queryF($updateSQL)) {
 									print "Notice: could not add opening PHP tag to the code in element ".$record['ele_id']." with the SQL:<br>".str_replace('<', '&lt;',$updateSQL)."<br>".$xoopsDB->error()."<br>This is not a critical error. You can add the tag yourself at the top of the code, if you want the editor to provide highlighting. For more information contact <a href=mailto:info@formulize.org>info@formulize.org</a>.<br>";
 								}
 							}
@@ -667,7 +667,7 @@ function patch40() {
 						OR (on_after_save != '' AND on_after_save NOT LIKE '<?php%')
 						OR (on_delete != '' AND on_delete NOT LIKE '<?php%')
 						OR (custom_edit_check != '' AND custom_edit_check NOT LIKE '<?php%') ";
-					if($res = $xoopsDB->query($formProceduresNeedingOpeningPHPTagsSQL)) {
+					if($res = $xoopsDB->queryF($formProceduresNeedingOpeningPHPTagsSQL)) {
 						// loop through the results...
 						while($record = $xoopsDB->fetchArray($res)) {
 							// for each record that was returned from the DB, make a list of all the events and then check each event...
@@ -683,7 +683,7 @@ function patch40() {
 							}
 							// update the database with the new code for the relevant events
 							$updateProcSQL = "UPDATE ".$xoopsDB->prefix('formulize_id')." SET ".implode(', ',$events)." WHERE id_form = ".$record['fid'];
-							if(!$updateProcRes = $xoopsDB->query($updateProcSQL)) {
+							if(!$updateProcRes = $xoopsDB->queryF($updateProcSQL)) {
 								print "Notice: could not add opening PHP tag to the code in procedures for form ".$record['fid']." with the SQL:<br>".str_replace('<', '&lt;',$updateProcSQL)."<br>".$xoopsDB->error()."<br>This is not a critical error. You can add the tag yourself at the top of the code, if you want the editor to provide highlighting. For more information contact <a href=mailto:info@formulize.org>info@formulize.org</a>.<br>";
 							}
 						}
@@ -693,7 +693,7 @@ function patch40() {
 
 					// Same operation on the custom button effects
 					$customButtonsNeedingOpeningPHPTagsSQL = "SELECT `sid`, `customactions` FROM ".$xoopsDB->prefix('formulize_screen_listofentries')." WHERE customactions LIKE '%\"custom_code\";%' OR customactions LIKE '%\"custom_html\";%'";
-					if($res = $xoopsDB->query($customButtonsNeedingOpeningPHPTagsSQL)) {
+					if($res = $xoopsDB->queryF($customButtonsNeedingOpeningPHPTagsSQL)) {
 						// loop through the results...
 						while($record = $xoopsDB->fetchArray($res)) {
 							// for each record that was returned from the DB, decode the button stuff and check if the custom_html or custom_code has an opening tag
@@ -718,7 +718,7 @@ function patch40() {
 							$customActions = serialize($customActions);
 							// update the database with the new code for the relevant custom buttons
 							$updateCustomButtonsSQL = "UPDATE ".$xoopsDB->prefix('formulize_screen_listofentries')." SET `customactions` = ".$xoopsDB->quoteString($customActions)." WHERE sid = ".$record['sid'];
-							if(!$updateProcRes = $xoopsDB->query($updateCustomButtonsSQL)) {
+							if(!$updateProcRes = $xoopsDB->queryF($updateCustomButtonsSQL)) {
 								print "Notice: could not add opening PHP tag to the code in the custom buttons on screen ".$record['sid']." with the SQL:<br>".str_replace('<', '&lt;',$updateCustomButtonsSQL)."<br>".$xoopsDB->error()."<br>This is not a critical error. You can add the tag yourself at the top of the code, if you want the editor to provide highlighting. For more information contact <a href=mailto:info@formulize.org>info@formulize.org</a>.<br>";
 							}
 						}
@@ -770,7 +770,7 @@ function patch40() {
 						(ele_type = 'derived')
 						OR (ele_type IN ('ib', 'areamodif') AND ele_value LIKE '%\$value%')
 						OR (ele_type IN ('text', 'textarea') AND ele_value LIKE '%\$default%') ";
-					if($res = $xoopsDB->query($elementsWithCodeSQL)) {
+					if($res = $xoopsDB->queryF($elementsWithCodeSQL)) {
 						// loop through the results...
 						while($record = $xoopsDB->fetchArray($res)) {
 								$eleValueKey = $record['ele_type'] == 'text' ? 2 : 0;
@@ -785,7 +785,7 @@ function patch40() {
 
 					$formProceduresSQL = "SELECT form_handle, on_before_save, on_after_save, on_delete, custom_edit_check
 						FROM ".$xoopsDB->prefix('formulize_id')." WHERE	on_before_save != '' OR on_after_save != ''	OR on_delete != '' OR custom_edit_check != ''";
-					if($res = $xoopsDB->query($formProceduresSQL)) {
+					if($res = $xoopsDB->queryF($formProceduresSQL)) {
 						// loop through the results...
 						while($record = $xoopsDB->fetchArray($res)) {
 							// for each record that was returned from the DB, make a list of all the events and then check each event...
@@ -808,7 +808,7 @@ function patch40() {
 						LEFT JOIN ".$xoopsDB->prefix('formulize_screen')." AS s
 						ON l.sid = s.sid
 						WHERE l.customactions LIKE '%\"custom_code\";%' OR customactions LIKE '%\"custom_html\";%'";
-					if($res = $xoopsDB->query($customButtonCodeSQL)) {
+					if($res = $xoopsDB->queryF($customButtonCodeSQL)) {
 						// loop through the results...
 						while($record = $xoopsDB->fetchArray($res)) {
 							// for each record that was returned from the DB, decode the button stuff
@@ -910,47 +910,47 @@ function patch40() {
 
         global $xoopsConfig;
         $themeSql = 'UPDATE '.$xoopsDB->prefix('formulize_screen').' SET theme = "'.$xoopsConfig['theme_set'].'" WHERE theme = ""';
-        if(!$res = $xoopsDB->query($themeSql)) {
+        if(!$res = $xoopsDB->queryF($themeSql)) {
             exit("Error patching DB for Formulize $versionNumber. Could not update screens with default theme. SQL dump:<br>".$themeSql."<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
         }
 
         $newConfigSQL = array();
         $sql = "SELECT * FROM ".$xoopsDB->prefix("config")." WHERE conf_name = 'auth_2fa'";
-        if($res = $xoopsDB->query($sql)) {
+        if($res = $xoopsDB->queryF($sql)) {
             if($xoopsDB->getRowsNum($res)==0) {
                 $newConfigSQL[] = "INSERT INTO ".$xoopsDB->prefix("config")." (`conf_modid`, `conf_catid`, `conf_name`, `conf_title`, `conf_value`, `conf_desc`, `conf_formtype`, `conf_valuetype`, `conf_order`) VALUES (0, 7, 'auth_2fa', '_MD_AM_AUTH2FA', '0', '_MD_AM_AUTH2FADESC', 'yesno', 'int', 1)";
                 $newConfigSQL[] = "INSERT INTO ".$xoopsDB->prefix("config")." (`conf_modid`, `conf_catid`, `conf_name`, `conf_title`, `conf_value`, `conf_desc`, `conf_formtype`, `conf_valuetype`, `conf_order`) VALUES (0, 7, 'auth_2fa_groups', '_MD_AM_AUTH2FAGROUPS', '', '_MD_AM_AUTH2FAGROUPSDESC', 'group_multi', 'array', 1)";
             }
         }
         $sql = "SELECT * FROM ".$xoopsDB->prefix("config")." WHERE conf_name = 'auth_okta'";
-        if($res = $xoopsDB->query($sql)) {
+        if($res = $xoopsDB->queryF($sql)) {
             if($xoopsDB->getRowsNum($res)==0) {
                 $newConfigSQL[] = "INSERT INTO ".$xoopsDB->prefix("config")." (`conf_modid`, `conf_catid`, `conf_name`, `conf_title`, `conf_value`, `conf_desc`, `conf_formtype`, `conf_valuetype`, `conf_order`) VALUES (0, 7, 'auth_okta', '_MD_AM_AUTHOKTA', '', '_MD_AM_AUTHOKTADESC', 'textbox', 'text', 1)";
             }
         }
         foreach($newConfigSQL as $sql) {
-            if(!$xoopsDB->query($sql)) {
+            if(!$xoopsDB->queryF($sql)) {
                 exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
             }
         }
         // get profile module ID
         $profileModIdSQL = "SELECT mid FROM ".$xoopsDB->prefix("modules")." WHERE dirname='profile'";
-        $profileModIdRes = $xoopsDB->query($profileModIdSQL);
+        $profileModIdRes = $xoopsDB->queryF($profileModIdSQL);
         $profileModIdRow = $xoopsDB->fetchRow($profileModIdRes);
         $profileModId = $profileModIdRow[0];
         $sql = "SELECT * FROM ".$xoopsDB->prefix("profile_field")." WHERE field_name = '2famethod'";
-        if($res = $xoopsDB->query($sql)) {
+        if($res = $xoopsDB->queryF($sql)) {
             if($xoopsDB->getRowsNum($res)==0) {
                 $sql = "INSERT INTO ".$xoopsDB->prefix("profile_field")." (`catid`, `field_type`, `field_valuetype`, `field_name`, `field_title`, `url`, `field_description`, `field_required`, `field_maxlength`, `field_weight`, `field_default`, `field_notnull`, `field_edit`, `field_show`, `field_options`, `exportable`, `step_id`, `system`) VALUES (0, 'select', '3', '2famethod', '2-factor authentication method', '', '', 0, '0', 7, '', 1, 1, 1, 'a:4:{i:0;s:8:\"--None--\";i:1;s:14:\"Text me a code\";i:2;s:15:\"Email me a code\";i:3;s:24:\"Use an authenticator app\";}', 1, 1, 1)";
-                if($res = $xoopsDB->query($sql)) {
+                if($res = $xoopsDB->queryF($sql)) {
                     $profileId = $xoopsDB->getInsertId();
                     $sql = "INSERT INTO ".$xoopsDB->prefix("profile_visibility")." (`fieldid`, `user_group`, `profile_group`) VALUES ($profileId, 1, 0)";
-                    if(!$res = $xoopsDB->query($sql)) {
+                    if(!$res = $xoopsDB->queryF($sql)) {
                         exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                     }
                     $sql = "INSERT INTO ".$xoopsDB->prefix("group_permission")." (`gperm_groupid`, `gperm_itemid`, `gperm_modid`, `gperm_name`) VALUES (2, $profileId, $profileModId, 'profile_edit')";
                     $sql = "ALTER TABLE ".$xoopsDB->prefix("profile_profile")." ADD `2famethod` INT NULL DEFAULT NULL";
-                    if(!$res = $xoopsDB->query($sql)) {
+                    if(!$res = $xoopsDB->queryF($sql)) {
                         exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                     }
                 } else {
@@ -959,17 +959,17 @@ function patch40() {
             }
         }
         $sql = "SELECT * FROM ".$xoopsDB->prefix("profile_field")." WHERE field_name = '2faphone'";
-        if($res = $xoopsDB->query($sql)) {
+        if($res = $xoopsDB->queryF($sql)) {
             if($xoopsDB->getRowsNum($res)==0) {
                 $sql = "INSERT INTO ".$xoopsDB->prefix("profile_field")." (`catid`, `field_type`, `field_valuetype`, `field_name`, `field_title`, `url`, `field_description`, `field_required`, `field_maxlength`, `field_weight`, `field_default`, `field_notnull`, `field_edit`, `field_show`, `field_options`, `exportable`, `step_id`, `system`) VALUES (0, 'textbox', '1', '2faphone', 'Phone Number', '', '', 0, '255', 8, '', 1, 1, 1, 'a:0:{}', 1, 2, 1)";
-                if($res = $xoopsDB->query($sql)) {
+                if($res = $xoopsDB->queryF($sql)) {
                     $profileId = $xoopsDB->getInsertId();
                     $sql = "INSERT INTO ".$xoopsDB->prefix("profile_visibility")." (`fieldid`, `user_group`, `profile_group`) VALUES ($profileId, 1, 0)";
-                    if(!$res = $xoopsDB->query($sql)) {
+                    if(!$res = $xoopsDB->queryF($sql)) {
                         exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                     }
                     $sql = "ALTER TABLE ".$xoopsDB->prefix("profile_profile")." ADD `2faphone` VARCHAR(15) NULL DEFAULT NULL";
-                    if(!$res = $xoopsDB->query($sql)) {
+                    if(!$res = $xoopsDB->queryF($sql)) {
                         exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                     }
                 } else {
@@ -978,12 +978,12 @@ function patch40() {
             }
         }
         $sql = "SELECT * FROM ".$xoopsDB->prefix("profile_field")." WHERE field_name = '2fadevices'";
-        if($res = $xoopsDB->query($sql)) {
+        if($res = $xoopsDB->queryF($sql)) {
             if($xoopsDB->getRowsNum($res)==0) {
                 $sql = "INSERT INTO ".$xoopsDB->prefix("profile_field")." (`catid`, `field_type`, `field_valuetype`, `field_name`, `field_title`, `url`, `field_description`, `field_required`, `field_maxlength`, `field_weight`, `field_default`, `field_notnull`, `field_edit`, `field_show`, `field_options`, `exportable`, `step_id`, `system`) VALUES (0, 'textarea', '2', '2fadevices', 'Devices', '', '', 0, '0', 9, '', 1, 1, 0, 'a:0:{}', 1, 2, 1)";
-                if($res = $xoopsDB->query($sql)) {
+                if($res = $xoopsDB->queryF($sql)) {
                     $sql = "ALTER TABLE ".$xoopsDB->prefix("profile_profile")." ADD `2fadevices` TEXT NULL DEFAULT NULL";
-                    if(!$res = $xoopsDB->query($sql)) {
+                    if(!$res = $xoopsDB->queryF($sql)) {
                         exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                     }
                 } else {
@@ -994,21 +994,21 @@ function patch40() {
 
         // ADD FONT SIZE OPTION TO PROFILE
         $sql = "SELECT * FROM ".$xoopsDB->prefix("profile_field")." WHERE field_name = 'fontsize'";
-        if($res = $xoopsDB->query($sql)) {
+        if($res = $xoopsDB->queryF($sql)) {
             if($xoopsDB->getRowsNum($res)==0) {
                 $sql = "INSERT INTO ".$xoopsDB->prefix("profile_field")." (`catid`, `field_type`, `field_valuetype`, `field_name`, `field_title`, `url`, `field_description`, `field_required`, `field_maxlength`, `field_weight`, `field_default`, `field_notnull`, `field_edit`, `field_show`, `field_options`, `exportable`, `step_id`, `system`) VALUES (0, 'textbox', '1', 'fontsize', 'Font Size', '', '', 0, '255', 7, '', 1, 1, 1, '', 1, 1, 1)";
-                if($res = $xoopsDB->query($sql)) {
+                if($res = $xoopsDB->queryF($sql)) {
                     $profileId = $xoopsDB->getInsertId();
                     $sql = "INSERT INTO ".$xoopsDB->prefix("profile_visibility")." (`fieldid`, `user_group`, `profile_group`) VALUES ($profileId, 2, 0)";
-                    if(!$res = $xoopsDB->query($sql)) {
+                    if(!$res = $xoopsDB->queryF($sql)) {
                         exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                     }
                     $sql = "INSERT INTO ".$xoopsDB->prefix("group_permission")." (`gperm_groupid`, `gperm_itemid`, `gperm_modid`, `gperm_name`) VALUES (2, $profileId, $profileModId, 'profile_edit')";
-                    if(!$res = $xoopsDB->query($sql)) {
+                    if(!$res = $xoopsDB->queryF($sql)) {
                         exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                     }
                     $sql = "ALTER TABLE ".$xoopsDB->prefix("profile_profile")." ADD `fontsize` varchar(255) NULL DEFAULT NULL";
-                    if(!$res = $xoopsDB->query($sql)) {
+                    if(!$res = $xoopsDB->queryF($sql)) {
                         exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                     }
                 } else {
@@ -1020,21 +1020,21 @@ function patch40() {
         // if this is the first time we're adding the saveandleave and printable view options... set the values to the language constants
         if($needToSetSaveAndLeave) {
             $sql = "UPDATE ".$xoopsDB->prefix("formulize_screen_form"). " SET saveandleavebuttontext = '"._formulize_SAVE_AND_LEAVE."'";
-            $xoopsDB->query($sql);
+            $xoopsDB->queryF($sql);
         }
         if($needToSetPrintableView) {
             $sql = "UPDATE ".$xoopsDB->prefix("formulize_screen_form"). " SET printableviewbuttontext = '"._formulize_PRINTVIEW."'";
-            $xoopsDB->query($sql);
+            $xoopsDB->queryF($sql);
         }
 
 
         // change any non-serialized array defaultview settings for list of entries screens, into serialized arrays indicating the view for Registered Users (group 2)
         $sql1 = "UPDATE ".$xoopsDB->prefix("formulize_screen_listofentries")." SET defaultview = CONCAT('a:1:{i:2;i:',defaultview,';}') WHERE defaultview NOT LIKE '%{%' AND defaultview != 'b:0;' AND concat('',defaultview * 1) = defaultview"; //concat in where isolates numbers
-        if(!$res = $xoopsDB->query($sql1)) {
+        if(!$res = $xoopsDB->queryF($sql1)) {
             exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql1 . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
         }
         $sql2 = "UPDATE ".$xoopsDB->prefix("formulize_screen_listofentries")." SET defaultview = CONCAT('a:1:{i:2;s:',CHAR_LENGTH(defaultview),':\"',defaultview,'\";}') WHERE defaultview NOT LIKE '%{%'"; // all remaining values will not be numbers
-        if(!$res = $xoopsDB->query($sql2)) {
+        if(!$res = $xoopsDB->queryF($sql2)) {
             exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql2 . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
         }
 
@@ -1042,7 +1042,7 @@ function patch40() {
         if (in_array(strtolower($xoopsDB->prefix("formulize_framework_elements")), $existingTables)) {
             // need to change rules...framework handles must now be globally unique, so we can disambiguate them from each other when we are passed just a framework handle
             $uniqueSQL = "SELECT elements.ele_caption, elements.ele_id, elements.ele_handle, handles.fe_handle, handles.fe_frame_id FROM ".$xoopsDB->prefix("formulize")." as elements, ".$xoopsDB->prefix("formulize_framework_elements")." as handles WHERE EXISTS (SELECT 1 FROM ".$xoopsDB->prefix("formulize_framework_elements")." as checkhandles WHERE handles.fe_handle = checkhandles.fe_handle AND handles.fe_element_id != checkhandles.fe_element_id) AND handles.fe_element_id = elements.ele_id AND handles.fe_handle != \"\" ORDER BY handles.fe_handle";
-            $uniqueRes = $xoopsDB->query($uniqueSQL);
+            $uniqueRes = $xoopsDB->queryF($uniqueSQL);
             $haveWarning = false;
             $warningIdentifier = array();
             $warningContents = array();
@@ -1077,7 +1077,7 @@ function patch40() {
             // So look up all the elements that have a data handle that matches a framework handle, which is not referring to the same element
 
             $handleSQL = "SELECT elements.ele_id, elements.ele_caption, elements.ele_handle, handles.fe_frame_id, handles.fe_handle, handles.fe_element_id, e2.ele_caption as handlecap, e2.ele_handle as newhandle FROM ".$xoopsDB->prefix("formulize")." AS elements, ".$xoopsDB->prefix("formulize_framework_elements")." AS handles, ".$xoopsDB->prefix("formulize")." AS e2 WHERE elements.ele_handle = handles.fe_handle AND handles.fe_element_id != elements.ele_id AND handles.fe_element_id = e2.ele_id ORDER BY elements.id_form, elements.ele_order";
-            $handleRes = $xoopsDB->query($handleSQL);
+            $handleRes = $xoopsDB->queryF($handleSQL);
             if ($xoopsDB->getRowsNum($handleRes) > 0) {
                 $haveWarning = true;
                 $warningIdentifier[] = "<li>You have some \"data handles\" which are identical to the \"framework handles\" of other elements.</li>";
@@ -1136,7 +1136,7 @@ function patch40() {
             print("Creating new menu_links and menu_permissions tables...<br>");
             foreach($menusql as $key=>$thissql) {
 
-                if (!$result = $xoopsDB->query($thissql)) {
+                if (!$result = $xoopsDB->queryF($thissql)) {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
             }
@@ -1173,7 +1173,7 @@ function patch40() {
         // $xoopsDB->prefix("formulize")
         // 1. get a list of all elements that are linked selectboxes that support only single values
         $selectBoxesSQL = "SELECT e.id_form as id_form, e.ele_id as ele_id, e.ele_handle as ele_handle, f.form_handle as form_handle FROM " . $xoopsDB->prefix("formulize") . " AS e LEFT JOIN ". $xoopsDB->prefix("formulize_id") . " AS f ON e.id_form = f.id_form WHERE ele_type = 'select'";
-        $selectBoxRes = $xoopsDB->query($selectBoxesSQL);
+        $selectBoxRes = $xoopsDB->queryF($selectBoxesSQL);
         if ($xoopsDB->getRowsNum($selectBoxRes) > 0) {
             while ($handleArray = $xoopsDB->fetchArray($selectBoxRes)) {
                 $metaData = formulize_getElementMetaData($handleArray['ele_id']);
@@ -1190,12 +1190,12 @@ function patch40() {
         }
 
         // if the relationship link option, unified_delete, does not exist, create the field and default to the unified_display setting value
-        $sql = $xoopsDB->query("show columns from ".$xoopsDB->prefix("formulize_framework_links")." where Field = 'fl_unified_delete'");
+        $sql = $xoopsDB->queryF("show columns from ".$xoopsDB->prefix("formulize_framework_links")." where Field = 'fl_unified_delete'");
         if (0 == $xoopsDB->getRowsNum($sql)) {
             $sql = "ALTER TABLE " . $xoopsDB->prefix("formulize_framework_links") . " ADD `fl_unified_delete` smallint(5)";
-            if ($udres1 = $xoopsDB->query($sql)) {
+            if ($udres1 = $xoopsDB->queryF($sql)) {
             $sql = "update " . $xoopsDB->prefix("formulize_framework_links") . " set `fl_unified_delete` = `fl_unified_display`";
-            $udres2 = $xoopsDB->query($sql);
+            $udres2 = $xoopsDB->queryF($sql);
             }
             if (!$udres1 OR !$udres2) {
             print "Error updating relationships with unified delete option.  SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
@@ -1216,7 +1216,7 @@ function patch40() {
         $templateSQL = "SELECT l.sid as sid, l.toptemplate as toptemplate, l.listtemplate as listtemplate, l.bottomtemplate as bottomtemplate, s.theme as theme
             FROM ".$xoopsDB->prefix("formulize")."_screen_listofentries AS l
             LEFT JOIN ".$xoopsDB->prefix("formulize")."_screen AS s ON l.sid = s.sid";
-        if($templateRes = $xoopsDB->query($templateSQL)) {
+        if($templateRes = $xoopsDB->queryF($templateSQL)) {
             if ($xoopsDB->getRowsNum($templateRes) > 0) {
                 while($handleArray = $xoopsDB->fetchArray($templateRes)) {
                     if (!file_exists($screenpathname.$handleArray['sid'])) {
@@ -1250,7 +1250,7 @@ function patch40() {
         $multitemplateSQL = "SELECT m.sid as sid, m.toptemplate as toptemplate, m.elementtemplate as elementtemplate, m.bottomtemplate as bottomtemplate, s.theme as theme
             FROM ".$xoopsDB->prefix("formulize")."_screen_multipage AS m
             LEFT JOIN ".$xoopsDB->prefix("formulize")."_screen AS s ON m.sid = s.sid";
-        if($multitemplateRes = $xoopsDB->query($multitemplateSQL)) {
+        if($multitemplateRes = $xoopsDB->queryF($multitemplateSQL)) {
             if ($xoopsDB->getRowsNum($multitemplateRes) > 0) {
                 while($handleArray = $xoopsDB->fetchArray($multitemplateRes)) {
                     if (!file_exists($screenpathname.$handleArray['sid'])) {
@@ -1337,7 +1337,7 @@ function patch40() {
                 $elementsForPage = $formScreenObject->getVar('formelements');
                 if(!is_array($elementsForPage) OR count((array) $elementsForPage)==0) {
                     $sql = "SELECT ele_id FROM ".$xoopsDB->prefix('formulize')." WHERE id_form = ".$formScreenObject->getVar('fid')." ORDER BY ele_order";
-                    $res = $xoopsDB->query($sql);
+                    $res = $xoopsDB->queryF($sql);
                     $elementsForPage = array();
                     while($row = $xoopsDB->fetchRow($res)) {
                         $elementsForPage[] = $row[0];
@@ -1458,12 +1458,12 @@ function patch40() {
         $sql[] = "ALTER TABLE " . $xoopsDB->prefix("formulize")."_screen_multipage DROP `elementtemplate`";
         $sql[] = "ALTER TABLE " . $xoopsDB->prefix("formulize")."_screen_multipage DROP `bottomtemplate`";
         foreach($sql as $thisSql) {
-            $xoopsDB->query($thisSql);
+            $xoopsDB->queryF($thisSql);
         }
 
 				// check for ele_forcehidden elements, and flag them to the user
 				$sql = "SELECT f.desc_form, e.ele_caption, e.ele_colhead FROM ".$xoopsDB->prefix("formulize")." AS e LEFT JOIN ".$xoopsDB->prefix("formulize_id")." AS f ON f.id_form = e.id_form WHERE e.ele_forcehidden = 1 AND e.ele_type != 'anonPasscode' ORDER BY f.desc_form, e.ele_colhead, e.ele_caption";
-				$res = $xoopsDB->query($sql);
+				$res = $xoopsDB->queryF($sql);
 				$forceHiddenElements = "";
 				$formTitle = "";
 				while($array = $xoopsDB->fetchArray($res)) {
@@ -1537,7 +1537,7 @@ function saveMenuEntryAndPermissionsSQL($formid, $appid, $i, $menuText) {
 
     $menuText = html_entity_decode($menuText, ENT_QUOTES) == "Use the form's title" ? '' : $menuText;
     $thissql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_links")."` VALUES (null,". $appid.",'fid=".$formid."',".$i.",null,'".$menuText."','');";//.$permissionsql.";";
-    if (!$result = $xoopsDB->query($thissql)) {
+    if (!$result = $xoopsDB->queryF($thissql)) {
         exit("Error inserting Menus. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
     } else {
         foreach($groupsThatCanView as $groupid) {
@@ -1548,7 +1548,7 @@ function saveMenuEntryAndPermissionsSQL($formid, $appid, $i, $menuText) {
             }
         }
         if ($permissionsql){
-            if (!$result = $xoopsDB->query($permissionsql)) {
+            if (!$result = $xoopsDB->queryF($permissionsql)) {
                 exit("Error inserting Menu permissions. SQL dump:<br>" . $permissionsql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
             }
         }
