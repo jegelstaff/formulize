@@ -141,7 +141,7 @@ class icms_module_Handler extends icms_core_ObjectHandler {
 	 * @param   object  &$module reference to a {@link icms_module_Object}
 	 * @return  bool
 	 */
-	public function insert(&$module) {
+	public function insert(&$module, $force=false) {
 		if (get_class($module) != 'icms_module_Object') return FALSE;
 		if (!$module->isDirty()) return TRUE;
 		if (!$module->cleanVars()) return FALSE;
@@ -178,7 +178,15 @@ class icms_module_Handler extends icms_core_ObjectHandler {
 			$sql .= " WHERE " . $whereclause;
 		}
 
-		if (!$result = $this->db->query($sql)) return FALSE;
+		if($force) {
+			if (!$result = $this->db->queryF($sql)) {
+				return false;
+			}
+		} else {
+			if (!$result = $this->db->query($sql)) {
+				return false;
+			}
+		}
 		if ($module->isNew()) { $module->assignVar('mid', $this->db->getInsertId()); }
 		if (!empty($this->_cachedModule[$module->getVar('dirname')])) {
 			unset($this->_cachedModule[$module->getVar('dirname')]);

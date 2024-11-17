@@ -121,8 +121,8 @@ class icms_config_Handler {
 	 * @param	object  &$config    reference to the {@link icms_config_Item_Object}
 	 * @return	true|false if inserting config succeeded or not
 	 */
-	public function insertConfig(&$config) {
-		if (!$this->_cHandler->insert($config)) {
+	public function insertConfig(&$config, $force=false) {
+		if (!$this->_cHandler->insert($config, $force)) {
 			return false;
 		}
 		$options =& $config->getConfOptions();
@@ -130,7 +130,7 @@ class icms_config_Handler {
 		$conf_id = $config->getVar('conf_id');
 		for ( $i = 0; $i < $count; $i++) {
 			$options[$i]->setVar('conf_id', $conf_id);
-			if (!$this->_oHandler->insert($options[$i])) {
+			if (!$this->_oHandler->insert($options[$i], $force)) {
 				foreach ( $options[$i]->getErrors() as $msg) {
 					$config->setErrors($msg);
 				}
@@ -149,8 +149,8 @@ class icms_config_Handler {
 	 * @param	object  &$config    reference to a {@link icms_config_Item_Object}
 	 * @return	true|false if deleting config item succeeded or not
 	 */
-	public function deleteConfig(&$config) {
-		if (!$this->_cHandler->delete($config)) {
+	public function deleteConfig(&$config, $force=false) {
+		if (!$this->_cHandler->delete($config, $force)) {
 			return false;
 		}
 		$options =& $config->getConfOptions();
@@ -161,7 +161,7 @@ class icms_config_Handler {
 		}
 		if (is_array($options) && $count > 0) {
 			for ( $i = 0; $i < $count; $i++) {
-				$this->_oHandler->delete($options[$i]);
+				$this->_oHandler->delete($options[$i], $force);
 			}
 		}
 		if (!empty($this->_cachedConfigs[$config->getVar('conf_modid')][$config->getVar('conf_catid')])) {

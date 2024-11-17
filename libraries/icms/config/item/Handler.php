@@ -93,7 +93,7 @@ class icms_config_Item_Handler extends icms_core_ObjectHandler {
 	 * @param	object  &$config    {@link icms_config_Item_Object} object
 	 * @return  mixed   FALSE on fail.
 	 */
-	public function insert(&$config) {
+	public function insert(&$config, $force=true) {
 		/* As of PHP5.3.0, is_a() is no longer deprecated, no need to replace this */
 		if (!is_a($config, 'icms_config_Item_Object')) {
 			return false;
@@ -180,8 +180,14 @@ class icms_config_Item_Handler extends icms_core_ObjectHandler {
 				(int) $conf_id
 			);
 		}
-		if (!$result = $this->db->query($sql)) {
-			return false;
+		if($force) {
+			if (!$result = $this->db->queryF($sql)) {
+				return false;
+			}
+		} else {
+			if (!$result = $this->db->query($sql)) {
+				return false;
+			}
 		}
 		if (empty($conf_id)) {
 			$conf_id = $this->db->getInsertId();
@@ -196,7 +202,7 @@ class icms_config_Item_Handler extends icms_core_ObjectHandler {
 	 * @param	object  &$config    Config to delete
 	 * @return	bool    Successful?
 	 */
-	public function delete(&$config) {
+	public function delete(&$config, $force=false) {
 		/* As of PHP5.3.0, is_as() is no longer deprecated, there is no need to replace it */
 		if (!is_a($config, 'icms_config_Item_Object')) {
 			return false;
@@ -205,8 +211,14 @@ class icms_config_Item_Handler extends icms_core_ObjectHandler {
 			"DELETE FROM %s WHERE conf_id = '%u'",
 			$this->db->prefix('config'), (int) $config->getVar('conf_id')
 		);
-		if (!$result = $this->db->query($sql)) {
-			return false;
+		if($force) {
+			if (!$result = $this->db->queryF($sql)) {
+				return false;
+			}
+		} else {
+			if (!$result = $this->db->query($sql)) {
+				return false;
+			}
 		}
 		return true;
 	}

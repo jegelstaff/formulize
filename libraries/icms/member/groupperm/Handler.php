@@ -74,7 +74,7 @@ class icms_member_groupperm_Handler extends icms_core_ObjectHandler {
 	 * @return	bool    TRUE on success
 	 *
 	 */
-	public function insert(&$perm) {
+	public function insert(&$perm, $force=false) {
 		/* As of PHP5.3.0, is_a() is no longer deprecated and there is no need to replace it */
 		if (!is_a($perm, 'icms_member_groupperm_Object')) {
 			return false;
@@ -110,8 +110,14 @@ class icms_member_groupperm_Handler extends icms_core_ObjectHandler {
 				(int) $gperm_id
 				);
 		}
-		if (!$result = icms::$xoopsDB->query($sql)) {
-			return false;
+		if($force) {
+			if (!$result = $this->db->queryF($sql)) {
+				return false;
+			}
+		} else {
+			if (!$result = $this->db->query($sql)) {
+				return false;
+			}
 		}
 		if (empty($gperm_id)) {
 			$gperm_id = icms::$xoopsDB->getInsertId();
