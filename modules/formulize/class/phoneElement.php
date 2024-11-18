@@ -157,7 +157,7 @@ class formulizePhoneElementHandler extends formulizeElementsHandler {
             }
         }
 
-        return $number;
+        return trim($number);
     }
 
     // this method will handle any final actions that have to happen after data has been saved
