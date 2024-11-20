@@ -44,4 +44,4 @@ Here is an example of how you could use the configuation-as-code functionality w
 	1. revert the selected changes if you aren't happy with them
 	1. Perform a new export and overwrite the file in the config directory
 
-![Configuration as code example](./images/configuration-as-code.png)
+![Configuration as code example](../../images/configuration-as-code.png)
