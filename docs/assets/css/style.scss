@@ -2,3 +2,38 @@
 ---
 
 @import "jekyll-theme-minimal";
+
+li.slack {
+	padding-left: 2em;
+	background: transparent url(../img/slack-icon.png) 1em 50% no-repeat;
+}
+
+li.github {
+	padding-left: 2em;
+	background: transparent url(../img/octocat-icon.png) 1em 50% no-repeat;
+}
+
+li.zip {
+	padding-left: 2em;
+	background: transparent url(../img/zip-icon.png) 1em 50% no-repeat;
+}
+
+ul.downloads {
+	width: 353px;
+}
+
+header {
+	width: 353px;
+}
+
+.wrapper {
+	width: 910px;
+}
+
+.center {
+	text-align: center;
+}
+
+.tagline {
+	font-size: 120%;
+}
