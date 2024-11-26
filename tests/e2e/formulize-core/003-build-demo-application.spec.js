@@ -18,7 +18,7 @@ test.describe('Build museum application', () => {
 		await page.getByRole('button', { name: 'Create New Group' }).click();
 		await expect(page.getByRole('table')).toContainText('Edit GroupsWebmastersModifyRegistered UsersModifyAnonymous UsersModifyAncient HistoryModify DeleteModern HistoryModify DeleteCurratorModify Delete');
 	});
-	test.describe('Artifacts form', () => {
+	test.describe('Artifacts', () => {
 		test('Create Artifacts form', async ({ page }) => {
 			await page.click('text=Admin');
 			await page.click('text=Create a new form');
@@ -229,9 +229,12 @@ test.describe('Build museum application', () => {
 			await page.getByRole('link', { name: 'Artifacts' }).click();
 			await expect(page.locator('#drawer-2-10')).toContainText('Year-EraValue derived from other elements - artifacts_year_era');
 		});
+		test('Multipage artifacts form', async ({ page }) => {
+
+		})
 	});
 
-	test.describe('Collections form', () => {
+	test.describe('Collections', () => {
 		test('Create Collections form', async ({ page }) => {
 			await page.click('text=Admin');
 			await page.getByRole('link', { name: 'Home', exact: true }).click();
@@ -303,7 +306,7 @@ test.describe('Build museum application', () => {
 		});
 	});
 
-	test.describe('Exhibits form', () => {
+	test.describe('Exhibits', () => {
 		test('Create Exhibits form', async ({ page }) => {
 			await page.click('text=Admin');
    		await page.getByRole('link', { name: 'Create a new form' }).click();
@@ -392,7 +395,7 @@ test.describe('Build museum application', () => {
 		});
 	});
 
-	test.describe('Survey form', () => {
+	test.describe('Survey', () => {
 		test('Create Survey form', async ({ page }) => {
 			await page.click('text=Admin');
    		await page.getByRole('link', { name: 'Create a new form' }).click();
@@ -492,4 +495,37 @@ test.describe('Build museum application', () => {
    		await expect(page.locator('#drawer-2-4')).toContainText('Which artifact was your favourite?Dropdown box - survey_fav_artifact');
 		});
 	});
+
+	test.describe('Relationships', () => {
+		test('Create relationship between Artifacts and Collections', async ({ page }) => {
+			await page.getByRole('link', { name: 'Admin' }).click();
+			await page.getByRole('link', { name: ' Relationships' }).first().click();
+			await expect(page.locator('#tabs-4')).toContainText('Create a new relationship');
+			await page.getByRole('link', { name: 'Create a new relationship' }).click();
+			await page.locator('select[name="relationships-fid1"]').selectOption('2');
+			await page.getByRole('button', { name: 'Add Forms!' }).click();
+			await page.locator('select[name*="relationships-rel"]').selectOption('2');
+			await page.getByRole('cell', { name: 'User ID of the person who' }).click();
+			await page.locator('select[name*="relationships-linkages"]').selectOption('12+1');
+			await page.getByRole('button', { name: 'Save your changes' }).click();
+			await page.getByRole('link', { name: 'Museum' }).click();
+			await expect(page.getByRole('tab').first()).toContainText('Collections + Artifacts');
+			await expect(page.getByRole('tabpanel')).toContainText('Configure this relationship Delete this relationship Links between forms in this relationship: Collections + Artifacts - One to Many');
+		})
+		test('Create relationship between Artifacts and Exhibits', async ({ page }) => {
+			await page.getByRole('link', { name: 'Admin' }).click();
+			await page.getByRole('link', { name: ' Relationships' }).first().click();
+			await expect(page.getByRole('tabpanel')).toContainText('Configure this relationship Delete this relationship Links between forms in this relationship: Collections + Artifacts - One to Many');
+			await page.getByRole('link', { name: 'Configure this relationship' }).click();
+			await page.locator('select[name*="relationships-fid"]').first().selectOption('3');
+			await page.getByRole('button', { name: 'Add Forms!' }).click();
+			await page.locator('select[name*="relationships-rel"]').nth(1).selectOption('2');
+			await page.locator('select[name*="relationships-linkages"]').nth(1).selectOption('14+1');
+			await page.getByRole('button', { name: 'Save your changes' }).click();
+			await page.getByRole('link', { name: 'Museum' }).click();
+			await expect(page.getByRole('tab').first()).toContainText('Collections + Artifacts');
+			await expect(page.getByRole('tabpanel')).toContainText('Configure this relationship Delete this relationship Links between forms in this relationship: Collections + Artifacts - One to Many Exhibits + Artifacts - One to Many');
+		})
+
+	})
 });
