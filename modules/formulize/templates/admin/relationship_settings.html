@@ -4,7 +4,7 @@ jQuery(document).ready(function() {
 });
 
 $.ajaxSetup({
-    cache: false  
+    cache: false
 });
 
 function checkForCommon(Obj, form1, form2, lid) {
@@ -32,7 +32,7 @@ function checkForCommon(Obj, form1, form2, lid) {
 <input type="hidden" name="formulize_admin_key" value="<{$content.frid}>">
 <input type="hidden" name="formulize_admin_op" value="">
 <input type="hidden" name="formulize_admin_lid" value="">
-<input type="hidden" name="aid" value="<{$content.aid}>">  
+<input type="hidden" name="aid" value="<{$content.aid}>">
 <input type="hidden" name="fid" value="<{$content.fid}>">
 <input type="hidden" name="sid" value="<{$content.sid}>">
 
@@ -107,6 +107,14 @@ function checkForCommon(Obj, form1, form2, lid) {
                     <td style="white-space:nowrap;">
                         <input type="checkbox"<{if $link->unifiedDisplay}> checked="checked"<{/if}> value="1" name="relationships-display<{$link->lid}>" id="relationships-display<{$link->lid}>"><label for="relationships-display<{$link->lid}>">Display as a single form</label>
                         <input type="checkbox"<{if $link->unified_delete}> checked="checked"<{/if}> value="1" name="relationships-delete<{$link->lid}>" id="relationships-delete<{$link->lid}>"><label for="relationships-delete<{$link->lid}>">Delete linked entries</label>
+												<br>
+												<{if $link->relationship eq 1}>
+													<input type="checkbox"<{if $link->one2one_conditional}> checked="checked"<{/if}> value="1" name="relationships-conditional<{$link->lid}>" id="relationships-conditional<{$link->lid}>"><label for="relationships-conditional<{$link->lid}>">When you display the forms together, dynamically change the entry displayed, if the linking value changes</label>
+													<br>
+													<input type="checkbox"<{if $link->one2one_bookkeeping}> checked="checked"<{/if}> value="1" name="relationships-bookkeeping<{$link->lid}>" id="relationships-bookkeeping<{$link->lid}>"><label for="relationships-bookkeeping<{$link->lid}>">When you save an entry in one form, automatically create an entry in the other</label>
+												<{else}>
+													&nbsp;<br>&nbsp;
+												<{/if}>
                     </td>
                 </tr>
             <{/foreach}>

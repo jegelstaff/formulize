@@ -83,8 +83,9 @@ function patch40() {
      *
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
-    $checkThisTable = 'formulize_screen';
-		$checkThisField = 'screen_handle';
+
+    $checkThisTable = 'formulize_framework_links';
+		$checkThisField = 'fl_one2one_conditional';
 		$checkThisProperty = '';
 		$checkPropertyForValue = '';
 
@@ -478,6 +479,8 @@ function patch40() {
         $sql['searches_are_fundamental'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " ADD `sv_searches_are_fundamental` tinyint(1) NULL default NULL";
         $sql['add_screen_handle'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen")." ADD `screen_handle` text NOT NULL default ''";
         $sql['add_screen_handle_index'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen")." ADD FULLTEXT i_screen_handle (`screen_handle`)";
+				$sql['add_one2one_conditional'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_framework_links")." ADD fl_one2one_conditional smallint(5) NULL default 1";
+				$sql['add_one2one_bookkeeping'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_framework_links")." ADD fl_one2one_bookkeeping smallint(5) NULL default 1";
 
         $needToSetSaveAndLeave = true;
         $needToSetPrintableView = true;
@@ -599,6 +602,10 @@ function patch40() {
                     print "Screen handles already added. result: OK<br>";
                 } elseif($key === "add_screen_handle_index") {
                     print "Screen handle index already added. result: OK<br>";
+								} elseif($key === "add_one2one_conditional") {
+                  	print "One-to-one link conditional flag already added. result: OK<br>";
+								} elseif($key === "add_one2one_bookkeeping") {
+                    print "One-to-one link bookkeeping flag already added. result: OK<br>";
                 }else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
@@ -619,6 +626,16 @@ function patch40() {
 										print "Error: could not set the initial handle for screen ".intval($row[0]).", '".$row[1]."'. This may not be critical, unless you have custom buttons with PHP code. You should manually set a handle for the screen. Contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
 									}
 								}
+							}
+						} elseif($key == "add_one2one_bookkeeping") {
+							// adding one2one flags to relationship links successful, populate conditional based on the unifiedDisplay option, populate bookkeeping to 1
+							$linkSql = "UPDATE ".$xoopsDB->prefix("formulize_framework_links")." SET fl_one2one_conditional = fl_unified_display";
+							if(!$xoopsDB->queryF($linkSql)) {
+								print "Error: could not initialize one-to-one conditional flag based on unified display.<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
+							}
+							$linkSql = "UPDATE ".$xoopsDB->prefix("formulize_framework_links")." SET fl_one2one_bookkeeping = 1";
+							if(!$xoopsDB->queryF($linkSql)) {
+								print "Error: could not initialize one-to-one bookkeeping flag.<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
 							}
 						}
         }

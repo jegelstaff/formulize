@@ -356,6 +356,8 @@ CREATE TABLE formulize_framework_links (
   fl_unified_display smallint(5),
   fl_unified_delete smallint(5),
   fl_common_value tinyint(1) NOT NULL default '0',
+	fl_one2one_conditional smallint(5) NULL default 1,
+	fl_one2one_bookkeeping smallint(5) NULL default 1,
   PRIMARY KEY (`fl_id`)
 ) ENGINE=InnoDB;
 
