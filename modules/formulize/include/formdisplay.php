@@ -1544,39 +1544,43 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		}
 		// add in any onetoone elements that we need to deal with at the same time (in case their joining key value changes on the fly)
 		if(count((array) $fids)>1) {
-            foreach($fids as $thisFid) {
-                $relationship_handler = xoops_getmodulehandler('frameworks', 'formulize');
-                $relationship = $relationship_handler->get($frid);
-                foreach($relationship->getVar('links') as $thisLink) {
-												if($thisLink->getVar('relationship') !=1 ) { continue; } // this loop will always land on the first one-to-one linkage involving the given form. If there are multiple one-to-one linkages involving the given from, only the first will be taken into account.
-                  			if($thisLink->getVar('form1') == $thisFid) {
-                                $keyElement = $thisLink->getVar('key2');
-                                break;
-                        } elseif($thisLink->getVar('form2') == $thisFid) {
-                                $keyElement = $thisLink->getVar('key1');
-                                break;
-                        }
-                }
-                if($keyElementObject = _getElementObject($keyElement)) {
-                    // prepare to loop through elements for the rendered entry, or 'new', if there is no rendered entry
-                    $entryToLoop = isset($entries[$thisFid][0]) ? $entries[$thisFid][0] : null;
-                    if(!$entryToLoop AND isset($GLOBALS['formulize_renderedElementsForForm'][$thisFid]['new'])) {
-                        $entryToLoop = 'new';
-                    }
-                    foreach($GLOBALS['formulize_renderedElementsForForm'][$thisFid][$entryToLoop] as $renderedMarkupName => $thisElement) {
-                            $GLOBALS['formulize_renderedElementHasConditions'][$renderedMarkupName] = $thisElement; // super ugly and kludgy, normally an array would be set here, but from this point forward, it's actually only the keys of this array that matter, so setting a single value is okay. Yuck. :(
-					        $governingElements2 = _compileGoverningElements($entries, $keyElementObject, $renderedMarkupName, true); // last true marks it as one to one compiling, when matching entry ids between governed and governing elements doesn't matter
-                            foreach($governingElements2 as $key=>$value) {
-                                    $formulize_oneToOneElements[$key] = true;
-                                    $formulize_oneToOneMetaData[$key] = array('onetoonefrid' => $frid, 'onetoonefid' => $fid, 'onetooneentries' => urlencode(serialize($entries)), 'onetoonefids'=>urlencode(serialize($fids)));
-                            }
-                            $formulize_governingElements = mergeGoverningElements($formulize_governingElements, $governingElements2);
-                    }
-                }
-            }
+			foreach($fids as $thisFid) {
+				$relationship_handler = xoops_getmodulehandler('frameworks', 'formulize');
+				$relationship = $relationship_handler->get($frid);
+				$keyElement = false;
+				foreach($relationship->getVar('links') as $thisLink) {
+					if($thisLink->getVar('relationship') != 1 OR $thisLink->getVar('one2one_conditional') != 1 ) {
+						// this loop will always land on the first one-to-one linkage involving the given form. If there are multiple one-to-one linkages involving the given from, only the first will be taken into account.
+						continue;
+					}
+					if($thisLink->getVar('form1') == $thisFid) {
+						$keyElement = $thisLink->getVar('key2');
+						break;
+					} elseif($thisLink->getVar('form2') == $thisFid) {
+						$keyElement = $thisLink->getVar('key1');
+						break;
+					}
+				}
+				if($keyElement AND $keyElementObject = _getElementObject($keyElement)) {
+					// prepare to loop through elements for the rendered entry, or 'new', if there is no rendered entry
+					$entryToLoop = isset($entries[$thisFid][0]) ? $entries[$thisFid][0] : null;
+					if(!$entryToLoop AND isset($GLOBALS['formulize_renderedElementsForForm'][$thisFid]['new'])) {
+							$entryToLoop = 'new';
+					}
+					foreach($GLOBALS['formulize_renderedElementsForForm'][$thisFid][$entryToLoop] as $renderedMarkupName => $thisElement) {
+						$GLOBALS['formulize_renderedElementHasConditions'][$renderedMarkupName] = $thisElement; // super ugly and kludgy, normally an array would be set here, but from this point forward, it's actually only the keys of this array that matter, so setting a single value is okay. Yuck. :(
+						$governingElements2 = _compileGoverningElements($entries, $keyElementObject, $renderedMarkupName, true); // last true marks it as one to one compiling, when matching entry ids between governed and governing elements doesn't matter
+						foreach($governingElements2 as $key=>$value) {
+							$formulize_oneToOneElements[$key] = true;
+							$formulize_oneToOneMetaData[$key] = array('onetoonefrid' => $frid, 'onetoonefid' => $fid, 'onetooneentries' => urlencode(serialize($entries)), 'onetoonefids'=>urlencode(serialize($fids)));
+						}
+						$formulize_governingElements = mergeGoverningElements($formulize_governingElements, $governingElements2);
+					}
+				}
+			}
 		}
-        // if there are elements we need to pay attention to, draw the necessary javascript code
-        // unless we're doing an embedded 'elements only form' -- unless we're doing that for displaying a subform entry specifically as its own thing (as part of a modal for example (and only example right now))
+		// if there are elements we need to pay attention to, draw the necessary javascript code
+		// unless we're doing an embedded 'elements only form' -- unless we're doing that for displaying a subform entry specifically as its own thing (as part of a modal for example (and only example right now))
 		if(count((array) $formulize_governingElements)> 0 AND (!$formElementsOnly OR (isset($formulize_displayingSubform) AND $formulize_displayingSubform == true))) {
 			drawJavascriptForConditionalElements(array_keys($GLOBALS['formulize_renderedElementHasConditions']), $formulize_governingElements, $formulize_oneToOneElements, $formulize_oneToOneMetaData);
 		}

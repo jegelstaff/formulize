@@ -136,11 +136,15 @@ function updateframe($relationship_id) {
     // update the frame with the settings specified on the main modframe page
     $links = array();
     $unified_delete = array();  // track the delete checkboxes that are saved on, so we know which ones to to save as off
+		$one2one_conditional = array();
+		$one2one_bookkeeping = array();
     foreach($processedValues['relationships'] as $key => $value) {
         if(substr($key, 0, 3) == "rel") {
             $fl_id = substr($key, 3);
             $links[$fl_id] = '';
             $unified_delete[$fl_id] = '';
+						$one2one_conditional[$fl_id] = '';
+						$one2one_bookkeeping[$fl_id] = '';
             updaterels($fl_id, $value);
         }
 
@@ -161,6 +165,18 @@ function updateframe($relationship_id) {
             $unified_delete[$fl_id] = '*';
             updatedeletes($fl_id, $value);
         }
+
+				if(substr($key, 0, 11) == "conditional") {
+					$fl_id = substr($key, 11);
+					$one2one_conditional[$fl_id] = '*';
+					updateconditionals($fl_id, $value);
+				}
+
+				if(substr($key, 0, 11) == "bookkeeping") {
+					$fl_id = substr($key, 11);
+					$one2one_bookkeeping[$fl_id] = '*';
+					updatebookkeepings($fl_id, $value);
+				}
 
         if(substr($key, 0, 4) == "name") {
             $relationship_handler = xoops_getmodulehandler('frameworks', 'formulize');
@@ -185,6 +201,18 @@ function updateframe($relationship_id) {
             updatedeletes($key, 0);
         }
     }
+
+    foreach ($one2one_conditional as $key => $value) {
+			if (!$value == '*') {
+					updateconditionals($key, 0);
+			}
+		}
+
+		foreach ($one2one_bookkeeping as $key => $value) {
+			if (!$value == '*') {
+					updatebookkeepings($key, 0);
+			}
+		}
 }
 
 
@@ -207,7 +235,7 @@ function updatelinks($fl_id, $value) {
     } else {
         $common = $processedValues['relationships']['preservecommon'.$fl_id] == $value ? 1 : 0;
     }
-    
+
     // if the elements are actually linked together, discard the common flag!
     // also set indexes if necessary
     $element_handler = xoops_getmodulehandler('elements','formulize');
@@ -225,7 +253,7 @@ function updatelinks($fl_id, $value) {
         if($common) {
             print "/* eval */ reloadWithScrollPosition();"; // reload since we're changing what the user has chosen so need to update display
         }
-        $common = 0;   
+        $common = 0;
     }
 
     $sql = "UPDATE " . $xoopsDB->prefix("formulize_framework_links") . " SET fl_key1='" . $keys[0] . "', fl_key2='" . $keys[1] . "', fl_common_value='$common' WHERE fl_id='$fl_id'";
@@ -245,7 +273,7 @@ function elementsAreLinked($element1, $element2) {
     return false;
 }
 
-// element must be an element object 
+// element must be an element object
 function sourceHandleForElement($element) {
     $sourceHandle = false;
     $ele_value = $element->getVar('ele_value');
@@ -278,6 +306,22 @@ function updatedeletes($fl_id, $value) {
     if(!$res = $xoopsDB->query($sql)) {
         print "Error: could not update unified display setting for framework link $fl_id";
     }
+}
+
+function updateconditionals($fl_id, $value) {
+	global $xoopsDB;
+	$sql = "UPDATE " . $xoopsDB->prefix("formulize_framework_links") . " SET fl_one2one_conditional='$value' WHERE fl_id='$fl_id'";
+	if(!$res = $xoopsDB->query($sql)) {
+			print "Error: could not update conditional flag for framework link $fl_id";
+	}
+}
+
+function updatebookkeepings($fl_id, $value) {
+	global $xoopsDB;
+	$sql = "UPDATE " . $xoopsDB->prefix("formulize_framework_links") . " SET fl_one2one_bookkeeping='$value' WHERE fl_id='$fl_id'";
+	if(!$res = $xoopsDB->query($sql)) {
+			print "Error: could not update bookkeeping flag for framework link $fl_id";
+	}
 }
 
 

@@ -6605,7 +6605,7 @@ function formulize_makeOneToOneLinks($frid, $fid) {
         $frameworkHandler = xoops_getmodulehandler('frameworks', 'formulize');
         $frameworkObject = $frameworkHandler->get($frid);
         foreach($frameworkObject->getVar('links') as $thisLink) {
-            if($thisLink->getVar('relationship') == 1 AND $thisLink->getVar('unifiedDisplay')) { // 1 signifies one to one relationships
+            if($thisLink->getVar('relationship') == 1 AND $thisLink->getVar('unifiedDisplay') AND $thisLink->getVar('one2one_bookkeeping') == 1) { // 1 signifies one to one relationships
                 $form1 = $thisLink->getVar('form1');
                 $form2 = $thisLink->getVar('form2');
                 $key1 = $thisLink->getVar('key1');
