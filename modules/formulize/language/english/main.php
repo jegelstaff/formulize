@@ -155,6 +155,7 @@ define("_AM_FRAME_COMMONLINK", "Common value in two elements [pick elements]");
 define("_AM_FRAME_WHICH_ELEMENTS", "Choose the two elements that are meant to have common values");
 define("_AM_FRAME_SELECT_COMMON", "Common element for ");
 define("_AM_FRAME_COMMON_VALUES", "Common values in: ");
+define("_AM_FRAME_KEY_ENTRYID", 'Entry ID (experimental!)');
 define("_AM_FRAME_COMMON_WARNING", "<b>IMPORTANT NOTE:</b> Frameworks that use the 'common value' setting are still experimental.  Not all framework features are supported for frameworks that use this setting.  Currently, this setting is only recognized by the getData function, so you can get results from queries on this framework.  However, unified display of forms, subforms, and using displayForm to present all columns in the entire framework, are not currently supported.");
 
 define("_AM_FRAME_FORMHANDLE", "Handle for this form:");
