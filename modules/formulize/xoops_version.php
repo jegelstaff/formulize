@@ -722,12 +722,6 @@ $modversion['templates'][] = array(
 		'file' => 'admin/variable_template_help.html',
 		'description' => '');
 
-		$modversion['templates'][] = array(
-			'file' => 'admin/application_forms_ii.html',
-			'description' => '');
-			$modversion['templates'][] = array(
-				'file' => 'admin/form_listing_ii.html',
-				'description' => '');
 //	Module Configs
 // $xoopsModuleConfig['t_width']
 $modversion['config'][1] = array(
