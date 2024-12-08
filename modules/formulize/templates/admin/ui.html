@@ -161,7 +161,7 @@ $(document).ready(function() {
   var newhandle = "";
   var formdata = new Array();
 
-  $("input").change(function() {
+  $("input:not(input[name=organize-toggle])").change(function() {
     setDisplay('savewarning','block');
     });
   $("input[type=text]").keydown(function() {
@@ -385,7 +385,9 @@ $(document).ready(function() {
 			$('div.dockable-box').draggable({
 				snap: true,
 				snapMode: 'outer',
-				snapTolerance: 20
+				snapTolerance: 20,
+				cursor: 'move',
+				stop: function( event, ui ) { setDisplay('savewarning','block'); }
 			});
 			<{php}>if(!isset($_COOKIE['currentOrganize']) OR $_COOKIE['currentOrganize'] == 'by-name') {<{/php}>
 			organizeAlpha();
@@ -403,6 +405,7 @@ $(document).ready(function() {
 				$(this).css('left', 0);
 			});
 			$( "div.dockable-box" ).draggable( "destroy" );
+			$("div.accordion-box").css('cursor', 'auto');
 			$('input[type=checkbox][class=organize-toggle-custom]').each(function() {
 				$(this).removeAttr('checked');
 			});
@@ -419,8 +422,11 @@ $(document).ready(function() {
 			$( "div.dockable-box" ).draggable({
 				snap: true,
 				snapMode: 'outer',
-				snapTolerance: 20
+				snapTolerance: 20,
+				cursor: 'move',
+				stop: function( event, ui ) { setDisplay('savewarning','block'); }
 			});
+			$("div.accordion-box").css('cursor', 'move');
 			$('input[type=checkbox][class=organize-toggle-by-name]').each(function() {
 				$(this).removeAttr('checked');
 			});
@@ -442,6 +448,10 @@ $(document).ready(function() {
 				date.setTime(date.getTime() + (180 * 24 * 60 * 60 * 1000)); // Set the cookie to expire in 180 days
 				let expires = "expires=" + date.toUTCString();
 				document.cookie = "currentOrganize="+currentOrganize+"; "+expires+"; path=/";
+			} else {
+				$('input[type=checkbox][class=organize-toggle-'+classToSet+']').each(function() {
+					$(this).attr('checked', 'checked');
+				});
 			}
 		});
 
