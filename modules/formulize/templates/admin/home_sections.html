@@ -9,9 +9,7 @@
 <{if count((array) $sectionContent.forms) == 0}>
 <p>No forms.</p>
 <{else}>
-<div class="form-listing-container">
-	<{include file="db:admin/form_listing.html" sectionContent=$sectionContent}>
-</div>
+<{include file="db:admin/form_listing.html" sectionContent=$sectionContent}>
 <{/if}>
 
 
