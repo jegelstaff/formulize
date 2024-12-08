@@ -358,4 +358,54 @@ $(document).ready(function() {
         reloadWithScrollPosition();
     });
 
+		$(".savebutton").click(function (event) {
+			$("div[id^='form-details-box-']").each(function() {
+				$("input[name=formTop["+$(this).attr('appid')+"."+$(this).attr('formid')+"]]").val($(this).css('top'));
+				$("input[name=formLeft["+$(this).attr('appid')+"."+$(this).attr('formid')+"]]").val($(this).css('left'));
+			});
+		});
+
+		let tops = [];
+		let lefts = [];
+		function organizeAlpha() {
+			$("div[id^='form-details-box-']").each(function() {
+				tops[$(this).attr('appid')+"."+$(this).attr('formid')] = $(this).css('top');
+				lefts[$(this).attr('appid')+"."+$(this).attr('formid')] = $(this).css('left');
+				$(this).css('top', 0);
+				$(this).css('left', 0);
+			});
+		}
+
+		function organizeCustom() {
+			$("div[id^='form-details-box-']").each(function() {
+				$(this).css('top', tops[$(this).attr('appid')+"."+$(this).attr('formid')]);
+				$(this).css('left', lefts[$(this).attr('appid')+"."+$(this).attr('formid')]);
+			});
+		}
+
+		$('input[name=organize-toggle]').change(function() {
+			var classToSet = $(this).attr('value');
+			if(classToSet == 'custom') {
+				var classToClear = 'by-name';
+				organizeCustom();
+				$( "div.dockable-box" ).draggable({
+            snap: true,
+            snapMode: 'outer',
+            snapTolerance: 20
+        });
+			} else {
+				var classToClear = 'custom';
+				organizeAlpha();
+				$( "div.dockable-box" ).draggable( "destroy" );
+			}
+			$('input[type=checkbox][class=organize-toggle-'+classToSet+']').each(function() {
+				$(this).attr('checked', 'checked');
+			});
+			$('input[type=checkbox][class=organize-toggle-'+classToClear+']').each(function() {
+				$(this).removeAttr('checked');
+			});
+
+
+    });
+
 </script>
