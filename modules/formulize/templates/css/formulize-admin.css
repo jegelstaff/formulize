@@ -908,7 +908,6 @@ a.tooltip {
   text-transform: none;
   -webkit-font-smoothing: antialiased;
   text-decoration: inherit;
-  font-size: 11pt;
   cursor: help;
   position: relative;
   background: transparent;
@@ -916,7 +915,7 @@ a.tooltip {
 
 a.tooltip:before {
   content: "\f110";
-  font-size: 15pt;
+  font-size: 13pt;
   color: #59a7d4; }
 
 a.tooltip > span {
@@ -939,7 +938,6 @@ a.tooltip:hover > span {
   color: #000;
   padding: 1.5em;
   line-height: 1.5em;
-  opacity: 0.95;
   border: 2px solid #59a7d4;
   border-radius: 6px;
   -moz-border-radius: 6px;
