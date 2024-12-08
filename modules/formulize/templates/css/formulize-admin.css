@@ -1310,7 +1310,9 @@ label {
   padding-left: 38px; }
 
 #formlisting {
-  overflow: hidden; }
+  overflow: hidden;
+	position: relative;
+}
 
 .paging {
   overflow: auto;
@@ -1793,9 +1795,14 @@ div.flex-box {
 	height: 700px;
 	overflow: auto;
 	margin-left: 1.5em;
+	margin-top: 1em;
 }
 
 .organize-toggle {
-	text-align: right;
-	margin-right: 1em;
+	position: absolute;
+	right: 4em;
+	top: 3em;
+}
+.organize-toggle-title {
+	font-weight: bold;
 }
