@@ -455,4 +455,22 @@ $(document).ready(function() {
 			}
 		});
 
+		$('.form-admin-link').click(function() {
+			var formid = $(this).attr('formid');
+			var appid = $(this).attr('appid');
+			$('div[id^=form-details-box]').removeClass('selected-form');
+			$('#form-details-box-'+formid).toggleClass('selected-form');
+			$('#form-listing-details-'+appid).show(250);
+			return false;
+		});
+
+		$('.form-listing-details-close').click(function() {
+			var appid = $(this).attr('appid');
+			$('#form-listing-details-'+appid).hide(250);
+			$('div[id^=form-details-box]').removeClass('selected-form');
+			return false;
+		})
+
+
+
 </script>
