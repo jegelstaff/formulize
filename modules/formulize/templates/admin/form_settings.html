@@ -18,17 +18,17 @@
         	<fieldset>
                 <legend>Form Name and Labels</legend>
 								<p><label for="forms-title" class="question"><{$smarty.const._AM_SETTINGS_FORM_TITLE}></label>
-								<input type="text" id="forms-title" name="forms-title" class="required_formulize_element" value="<{$content.name}>" <{if $content.name == ""}>placeholder="<{$smarty.const._AM_APP_NEWFORM}>"<{/if}> onkeyup="fillHandle()" /><a class="tooltip"><span><{$smarty.const._AM_SETTINGS_FORM_TITLE_EXPLAIN}></span></a></p>
+								<input type="text" id="forms-title" name="forms-title" class="required_formulize_element" value="<{$content.name}>" <{if $content.name == ""}>placeholder="<{$smarty.const._AM_APP_NEWFORM}>"<{/if}> onkeyup="fillHandle()" /> <a class="tooltip"><span><{$smarty.const._AM_SETTINGS_FORM_TITLE_EXPLAIN}></span></a></p>
 								<div id="form-names-flex">
 									<div class='spacer-line'></div>
 									<p><label for="forms-singular" class="question"><{$smarty.const._AM_SETTINGS_FORM_SINGULAR}></label>
-									<input type="text" id="forms-singular" name="forms-singular" value="<{$content.singular}>" <{if $content.name == ""}>placeholder="<{$smarty.const._AM_APP_NEWSINGULAR}>"<{/if}>/><a claSs="tooltip"><span><{$smarty.const._AM_SETTINGS_FORM_SINGULAR_EXPLAIN}></span></a></p>
+									<input type="text" id="forms-singular" name="forms-singular" value="<{$content.singular}>" <{if $content.name == ""}>placeholder="<{$smarty.const._AM_APP_NEWSINGULAR}>"<{/if}>/> <a class="tooltip"><span><{$smarty.const._AM_SETTINGS_FORM_SINGULAR_EXPLAIN}></span></a></p>
 									<div class='spacer'></div>
 									<p><label for="forms-plural" class="question"><{$smarty.const._AM_SETTINGS_FORM_PLURAL}></label>
-									<input type="text" id="forms-plural" name="forms-plural" value="<{$content.plural}>" <{if $content.name == ""}>placeholder="<{$smarty.const._AM_APP_NEWPLURAL}>"<{/if}>/><a class="tooltip"><span><{$smarty.const._AM_SETTINGS_FORM_PLURAL_EXPLAIN}></span></a></p>
+									<input type="text" id="forms-plural" name="forms-plural" value="<{$content.plural}>" <{if $content.name == ""}>placeholder="<{$smarty.const._AM_APP_NEWPLURAL}>"<{/if}>/> <a class="tooltip"><span><{$smarty.const._AM_SETTINGS_FORM_PLURAL_EXPLAIN}></span></a></p>
 									<div class='spacer'></div>
 									<P><label for="forms-form_handle" class="question"><{$smarty.const._AM_SETTINGS_FORM_HANDLE}></label>
-									<input type="text" name="forms-form_handle" value="<{$content.form_handle}>" ><a class="tooltip"><span><{$smarty.const._AM_SETTINGS_FORM_HANDLE_EXPLAIN}></span></a></P>
+									<input type="text" name="forms-form_handle" value="<{$content.form_handle}>" > <a class="tooltip"><span><{$smarty.const._AM_SETTINGS_FORM_HANDLE_EXPLAIN}></span></a></P>
 								</div>
             </fieldset>
 		</div>
