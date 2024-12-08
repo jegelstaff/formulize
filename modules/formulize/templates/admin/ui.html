@@ -379,6 +379,19 @@ $(document).ready(function() {
 			});
 		});
 
+		let currentOrganize = 'custom';
+		$(window).load(function() {
+			$('div.dockable-box').draggable({
+				snap: true,
+				snapMode: 'outer',
+				snapTolerance: 20
+			});
+			<{php}>if(!isset($_COOKIE['currentOrganize']) OR $_COOKIE['currentOrganize'] == 'by-name') {<{/php}>
+			organizeAlpha();
+			currentOrganize = 'by-name';
+			<{php}>}<{/php}>
+    });
+
 		let tops = [];
 		let lefts = [];
 		function organizeAlpha() {
@@ -388,6 +401,13 @@ $(document).ready(function() {
 				$(this).css('top', 0);
 				$(this).css('left', 0);
 			});
+			$( "div.dockable-box" ).draggable( "destroy" );
+			$('input[type=checkbox][class=organize-toggle-custom]').each(function() {
+				$(this).removeAttr('checked');
+			});
+			$('input[type=checkbox][class=organize-toggle-by-name]').each(function() {
+				$(this).attr('checked', 'checked');
+			})
 		}
 
 		function organizeCustom() {
@@ -395,31 +415,33 @@ $(document).ready(function() {
 				$(this).css('top', tops[$(this).attr('appid')+"."+$(this).attr('formid')]);
 				$(this).css('left', lefts[$(this).attr('appid')+"."+$(this).attr('formid')]);
 			});
+			$( "div.dockable-box" ).draggable({
+				snap: true,
+				snapMode: 'outer',
+				snapTolerance: 20
+			});
+			$('input[type=checkbox][class=organize-toggle-by-name]').each(function() {
+				$(this).removeAttr('checked');
+			});
+			$('input[type=checkbox][class=organize-toggle-custom]').each(function() {
+				$(this).attr('checked', 'checked');
+			});
 		}
 
 		$('input[name=organize-toggle]').change(function() {
 			var classToSet = $(this).attr('value');
-			if(classToSet == 'custom') {
-				var classToClear = 'by-name';
-				organizeCustom();
-				$( "div.dockable-box" ).draggable({
-            snap: true,
-            snapMode: 'outer',
-            snapTolerance: 20
-        });
-			} else {
-				var classToClear = 'custom';
-				organizeAlpha();
-				$( "div.dockable-box" ).draggable( "destroy" );
+			if(currentOrganize != classToSet) {
+				if(classToSet == 'custom') {
+					organizeCustom();
+				} else {
+					organizeAlpha();
+				}
+				currentOrganize = classToSet;
+				let date = new Date();
+				date.setTime(date.getTime() + (180 * 24 * 60 * 60 * 1000)); // Set the cookie to expire in 180 days
+				let expires = "expires=" + date.toUTCString();
+				document.cookie = "currentOrganize="+currentOrganize+"; "+expires+"; path=/";
 			}
-			$('input[type=checkbox][class=organize-toggle-'+classToSet+']').each(function() {
-				$(this).attr('checked', 'checked');
-			});
-			$('input[type=checkbox][class=organize-toggle-'+classToClear+']').each(function() {
-				$(this).removeAttr('checked');
-			});
-
-
 		});
 
 </script>
