@@ -1302,13 +1302,6 @@ ul.admin-application-form-list li {
 label {
   text-align: left !important; }
 
-.form-screen-list .imageicon {
-  clear: both;
-  float: left; }
-
-.form-screen-list .formaction {
-  padding-left: 38px; }
-
 #formlisting {
   overflow: hidden;
 	position: relative;
@@ -1330,8 +1323,10 @@ label {
   font-style: normal; }
 
 div.accordion-box {
-  width: 385px;
-  margin: 0 2em 1.5em 0; }
+  width: 340px;
+  margin: 0 2em 1.5em 0;
+	cursor: move;
+}
 
 div.accordion-box-wide {
   float: left;
@@ -1341,10 +1336,15 @@ div.accordion-box-wide {
 div.accordion-box .form-name {
   margin: 0;
   padding: 0.5em;
-  font-weight: bold;
   background-color: #0085b6;
   border: 1px solid #94daf2;
-  border-bottom: 0; }
+  border-bottom: 0;
+	color: #FFF;
+	display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+	align-items: center;
+}
 
 div.accordion-box .form-name a {
   display: block;
@@ -1358,14 +1358,24 @@ div.accordion-box .form-name a {
   text-decoration: none; }
 
 div.accordion-box .form-name a:hover {
-  color: #aee7f9;
+  color: #FFF;
   text-decoration: none; }
 
 div.accordion-box .form-screen-list {
   margin: 0;
   padding: 0.5em;
   border: 1px solid #94daf2;
-  border-top: 0; }
+  border-top: 0;
+	display: flex;
+	align-items: center;
+	justify-content: space-evenly;
+	flex-direction: row;
+	background-color: #FFF;
+}
+
+.form-id-number {
+	text-wrap: nowrap;
+}
 
 .formbox-title {
   font-weight: bold; }
