@@ -1326,6 +1326,8 @@ div.accordion-box {
   width: 340px;
   margin: 0 2em 1.5em 0;
 	cursor: move;
+	border: 3px solid white;
+	border-radius: 7px;
 }
 
 div.accordion-box-wide {
@@ -1367,7 +1369,7 @@ div.accordion-box .form-screen-list {
   border: 1px solid #94daf2;
   border-top: 0;
 	display: flex;
-	align-items: center;
+	align-items: top;
 	justify-content: space-evenly;
 	flex-direction: row;
 	background-color: #FFF;
@@ -1815,4 +1817,22 @@ div.flex-box {
 }
 .organize-toggle-title {
 	font-weight: bold;
+}
+
+.selected-form {
+	border: 3px solid #6eac2c !important;
+}
+
+.form-listing-details {
+	display: none;
+	position: absolute;
+	top: 10em;
+	right: 4em;
+	min-width: 250px;
+	border: 3px solid #6eac2c;
+	border-radius: 7px;
+	padding: 0.5em;
+	z-index: 100;
+	background-color: #fff;
+	min-height: 550px;
 }
