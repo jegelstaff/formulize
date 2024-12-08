@@ -17,6 +17,8 @@ define("_AM_APP_NAMEQUESTION","Quel est le nom de ce regroupement?");
 define("_AM_APP_DESCQUESTION","Description de ce regroupement:");
 define("_AM_APP_FORMSIN","Formulaire(s) dans ce regroupement:");
 define("_AM_APP_CONFIGURE","Configurer");
+define("_AM_APP_VIEW","Voir");
+define("_AM_APP_OPS","Actions");
 define("_AM_APP_VIEW_DEFAULT_SCREEN","Voir (avec les options du screen par défaut)");
 define("_AM_APP_VIEW_OPTIONS_SCREEN","Voir (avec toutes les options du screen activées)");
 define("_AM_APP_CLONE_SIMPLY","Cloner");

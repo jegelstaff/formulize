@@ -20,6 +20,8 @@ define("_AM_APP_NAMEQUESTION","What is the name of this Application?");
 define("_AM_APP_DESCQUESTION","Description of this application:");
 define("_AM_APP_FORMSIN","Forms in this application:");
 define("_AM_APP_CONFIGURE","Configure");
+define("_AM_APP_VIEW","View");
+define("_AM_APP_OPS","Ops");
 define("_AM_APP_VIEW_DEFAULT_SCREEN","View (with the Default Screen's options)");
 define("_AM_APP_VIEW_OPTIONS_SCREEN","View (with all screen options on)");
 define("_AM_APP_CLONE_SIMPLY","Clone");
