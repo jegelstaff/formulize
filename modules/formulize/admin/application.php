@@ -284,12 +284,6 @@ if (is_object($appObject)){
     $adminPage['tabs'][$i]['content']['custom_code'] = $appObject->getVar("custom_code");
 }
 
-$i++;
-$adminPage['tabs'][$i]['name'] = "Forms II";
-$adminPage['tabs'][$i]['template'] = "db:admin/application_forms_ii.html";
-$adminPage['tabs'][$i]['content'] = $common;
-$adminPage['tabs'][$i]['content']['forms'] = $formsInApp;
-
 $adminPage['pagetitle'] = _AM_APP_APPLICATION.$appName;
 $adminPage['needsave'] = true;
 
