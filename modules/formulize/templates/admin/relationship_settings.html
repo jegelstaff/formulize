@@ -105,7 +105,6 @@ function checkForCommon(Obj, form1, form2, lid) {
                         <{/if}>
                     </td>
                     <td style="white-space:nowrap;">
-                        <input type="checkbox"<{if $link->unifiedDisplay}> checked="checked"<{/if}> value="1" name="relationships-display<{$link->lid}>" id="relationships-display<{$link->lid}>"><label for="relationships-display<{$link->lid}>">Display as a single form</label>
                         <input type="checkbox"<{if $link->unified_delete}> checked="checked"<{/if}> value="1" name="relationships-delete<{$link->lid}>" id="relationships-delete<{$link->lid}>"><label for="relationships-delete<{$link->lid}>">Delete linked entries</label>
 												<br>
 												<{if $link->relationship eq 1}>

@@ -2,7 +2,6 @@
 <script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/jquery/jquery-ui-1.8.2.custom.min.js"></script>
 <script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/codemirror/codemirror-compressed.js"></script>
 <script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/formulize-admin.js?v=2"></script>
-<script type="text/javascript" src="<{$xoops_url}>/modules/formulize/selenium_debug.js"></script>
 
 <link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/libraries/jquery/css/start/jquery-ui-1.8.2.custom.css">
 <link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/templates/css/formulize-admin.css">
@@ -68,7 +67,21 @@ $(document).ready(function() {
 	<link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/templates/css/ie6.css" />
 <![endif]-->
 
-<div class="admin-ui">
+<div class="admin-ui" style="display: none;">
+
+<{if $adminPage.template == 'db:admin/home.html'}>
+<div style="float: right;">
+	<p style="text-align: right;"><a href="../../system/admin.php?fct=preferences&op=showmod&mod=<{$adminPage.formulizeModId}>"><img src="../images/kedit.png"> <{$smarty.const._AM_HOME_PREF}></a></p>
+		<p style="text-align: right;"><a  href="ui.php?page=managepermissions">Copy Group Permissions</a></p>
+	<p style="text-align: right;"><a  href="ui.php?page=synchronize">Synchronize With Another System</a></p>
+	<p style="text-align: right;"><a  href="ui.php?page=config-sync">Configuration Synchronization</a></p>
+		<p style="text-align: right;"><a href="ui.php?page=managekeys">Manage API keys</a></p>
+		<!--<p style="text-align: right;"><a href="ui.php?page=manageaccess">Manage Access to Forms</a></p>-->
+		<p style="text-align: right;"><a href="ui.php?page=managetokens">Manage Account Creation Tokens</a></p>
+		<p style="text-align: right;"><a href="ui.php?page=mailusers">Email Users</a></p>
+		<br>
+</div>
+<{/if}>
 
 <{if $opResults}>
 <div id="formulize-patch-panel"><{$opResults}><p><a href='<{$xoops_url}>/modules/formulize/admin/'><{$smarty.const._CLOSE}></a></p></div>
@@ -148,7 +161,7 @@ $(document).ready(function() {
   var newhandle = "";
   var formdata = new Array();
 
-  $("input").change(function() {
+  $("input:not(input[name=organize-toggle])").change(function() {
     setDisplay('savewarning','block');
     });
   $("input[type=text]").keydown(function() {
@@ -294,7 +307,8 @@ $(document).ready(function() {
     var requiredok = true;
     $(".required_formulize_element").each(function () {
       if(($(this).val().length) == 0) {
-        requiredok = false;
+        requiredok = false
+				$('.admin-ui').fadeTo(1, 1)
       }
     });
     return requiredok;
@@ -357,5 +371,106 @@ $(document).ready(function() {
         window.document.scrollposition.seedtemplates.value = 1;
         reloadWithScrollPosition();
     });
+
+		$(".savebutton").click(function (event) {
+			$("div[id^='form-details-box-']").each(function() {
+				$("input[name=formTop["+$(this).attr('appid')+"."+$(this).attr('formid')+"]]").val($(this).css('top'));
+				$("input[name=formLeft["+$(this).attr('appid')+"."+$(this).attr('formid')+"]]").val($(this).css('left'));
+			});
+		});
+
+		let currentOrganize = 'custom';
+		$(window).load(function() {
+			$('.admin-ui').show(250);
+			$('div.dockable-box').draggable({
+				snap: true,
+				snapMode: 'outer',
+				snapTolerance: 20,
+				cursor: 'move',
+				stop: function( event, ui ) { setDisplay('savewarning','block'); }
+			});
+			<{php}>if(!isset($_COOKIE['currentOrganize']) OR $_COOKIE['currentOrganize'] == 'by-name') {<{/php}>
+			organizeAlpha();
+			currentOrganize = 'by-name';
+			<{php}>}<{/php}>
+    });
+
+		let tops = [];
+		let lefts = [];
+		function organizeAlpha() {
+			$("div[id^='form-details-box-']").each(function() {
+				tops[$(this).attr('appid')+"."+$(this).attr('formid')] = $(this).css('top');
+				lefts[$(this).attr('appid')+"."+$(this).attr('formid')] = $(this).css('left');
+				$(this).css('top', 0);
+				$(this).css('left', 0);
+			});
+			$( "div.dockable-box" ).draggable( "destroy" );
+			$("div.accordion-box").css('cursor', 'auto');
+			$('input[type=checkbox][class=organize-toggle-custom]').each(function() {
+				$(this).removeAttr('checked');
+			});
+			$('input[type=checkbox][class=organize-toggle-by-name]').each(function() {
+				$(this).attr('checked', 'checked');
+			})
+		}
+
+		function organizeCustom() {
+			$("div[id^='form-details-box-']").each(function() {
+				$(this).css('top', tops[$(this).attr('appid')+"."+$(this).attr('formid')]);
+				$(this).css('left', lefts[$(this).attr('appid')+"."+$(this).attr('formid')]);
+			});
+			$( "div.dockable-box" ).draggable({
+				snap: true,
+				snapMode: 'outer',
+				snapTolerance: 20,
+				cursor: 'move',
+				stop: function( event, ui ) { setDisplay('savewarning','block'); }
+			});
+			$("div.accordion-box").css('cursor', 'move');
+			$('input[type=checkbox][class=organize-toggle-by-name]').each(function() {
+				$(this).removeAttr('checked');
+			});
+			$('input[type=checkbox][class=organize-toggle-custom]').each(function() {
+				$(this).attr('checked', 'checked');
+			});
+		}
+
+		$('input[name=organize-toggle]').change(function() {
+			var classToSet = $(this).attr('value');
+			if(currentOrganize != classToSet) {
+				if(classToSet == 'custom') {
+					organizeCustom();
+				} else {
+					organizeAlpha();
+				}
+				currentOrganize = classToSet;
+				let date = new Date();
+				date.setTime(date.getTime() + (180 * 24 * 60 * 60 * 1000)); // Set the cookie to expire in 180 days
+				let expires = "expires=" + date.toUTCString();
+				document.cookie = "currentOrganize="+currentOrganize+"; "+expires+"; path=/";
+			} else {
+				$('input[type=checkbox][class=organize-toggle-'+classToSet+']').each(function() {
+					$(this).attr('checked', 'checked');
+				});
+			}
+		});
+
+		$('.form-admin-link').click(function() {
+			var formid = $(this).attr('formid');
+			var appid = $(this).attr('appid');
+			$('div[id^=form-details-box]').removeClass('selected-form');
+			$('#form-details-box-'+formid).toggleClass('selected-form');
+			$('#form-listing-details-'+appid).show(250);
+			return false;
+		});
+
+		$('.form-listing-details-close').click(function() {
+			var appid = $(this).attr('appid');
+			$('#form-listing-details-'+appid).hide(250);
+			$('div[id^=form-details-box]').removeClass('selected-form');
+			return false;
+		})
+
+
 
 </script>
