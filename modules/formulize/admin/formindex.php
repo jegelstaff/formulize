@@ -83,7 +83,7 @@ function patch40() {
      *
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
-    $checkThisTable = 'formulize_id';
+    $checkThisTable = 'formulize_application_form_link';
     $checkThisField = 'top';
     $checkThisProperty = '';
     $checkPropertyForValue = '';
@@ -486,8 +486,8 @@ function patch40() {
 				$sql['add_one2one_bookkeeping'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_framework_links")." ADD fl_one2one_bookkeeping smallint(5) NULL default 1";
 				$sql['singular'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `singular` varchar(255) NULL default ''";
 				$sql['plural'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `plural` varchar(255) NULL default ''";
-        $sql['add_form_top'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `top` varchar(255) NOT NULL default ''";
-        $sql['add_form_left'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `left` varchar(255) NOT NULL default ''";
+        $sql['add_form_top'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_application_form_link"). " ADD `top` varchar(255) NOT NULL default ''";
+        $sql['add_form_left'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_application_form_link"). " ADD `left` varchar(255) NOT NULL default ''";
 
 				unlink(XOOPS_ROOT_PATH.'/cache/adminmenu_english.php');
 

@@ -74,4 +74,6 @@ if(isset($_POST['lockdown']) AND $_POST['lockdown'] > 0 AND $gperm_handler->chec
     print "Error: this form is locked!";
   }
 }
-?>
+
+$application_handler = xoops_getmodulehandler('applications', 'formulize');
+$application_handler->setAdminLayoutTopAndLeftForForms();

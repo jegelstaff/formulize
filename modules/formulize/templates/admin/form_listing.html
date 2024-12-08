@@ -1,14 +1,18 @@
+<p class="organize-toggle">Organize forms: <input type='checkbox' name='organize-toggle' id='otbn<{$sectionContent.aid}>' class='organize-toggle-by-name' value='by-name'> <label for='otbn<{$sectionContent.aid}>'>By Name</label> &nbsp; <input type='checkbox' name='organize-toggle' class='organize-toggle-custom' id='otc<{$sectionContent.aid}>' value='custom'> <label for='otc<{$sectionContent.aid}>'>Custom</label></p>
+
 <{foreach from=$sectionContent.forms item=form}>
-  
+
 <{if $form.istableform}>
 <{assign var="defaulttab" value="settings"}>
 <{else}>
-<{assign var="defaulttab" value="elements"}>    
+<{assign var="defaulttab" value="elements"}>
 <{/if}>
-  
-<div class="accordion-box">
-  <p class="form-name ui-corner-top"><{if $form.lockedform != 1}><a href="ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=<{$defaulttab}>" class="form-name-icon"><{/if}>Form: <{$form.name}> (id: <{$form.fid}>)<{if $form.lockedform != 1}></a><{/if}></p>
-  <div class="form-screen-list ui-corner-bottom">
+
+<div class="dockable-box accordion-box" formid='<{$form.fid}>' appid='<{$sectionContent.aid}>' id="form-details-box-<{$form.fid}>" style="position: relative; top: <{$form.top}>; left: <{$form.left}>;">
+<input type='hidden' name='formTop[<{$sectionContent.aid}>.<{$form.fid}>]' value=''>
+<input type='hidden' name='formLeft[<{$sectionContent.aid}>.<{$form.fid}>]' value=''>
+  <p class="form-name ui-corner-top ui-corner-bottom"><{if $form.lockedform != 1}><a href="ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=<{$defaulttab}>" class="form-name-icon"><{/if}><{$form.name}> (id: <{$form.fid}>)<{if $form.lockedform != 1}></a><{/if}></p>
+  <!-- <div class="form-screen-list ui-corner-bottom">
 		<p class="formbox-title">Actions:</p>
 		<div class="formactions-list">
 		<{if $form.lockedform != 1}>
@@ -35,12 +39,22 @@
 		<{if $form.defaultlistscreenid}>
 		<a href="ui.php?page=screen&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&sid=<{$form.defaultlistscreenid}>"><div class="imageicon"><img src="../images/kedit.png"></div><div class="formaction"><{$form.defaultlistscreenname}></div></a><br />
 		<{/if}>
-		<{if $form.defaultformscreenid}>  
+		<{if $form.defaultformscreenid}>
 		<a href="ui.php?page=screen&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&sid=<{$form.defaultformscreenid}>"><div class="imageicon"><img src="../images/kedit.png"></div><div class="formaction"><{$form.defaultformscreenname}></div></a><br />
 		<{/if}>
 		<a href="ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=screens"><div class="formaction"><i><{$smarty.const._AM_APP_MORESCREENS}></i></div></a>
-		</div>	
+		</div>
     <{/if}>
-	</div>
+	</div> -->
 </div>
 <{/foreach}>
+
+<script>
+    $(window).load(function() {
+        $('div.dockable-box').draggable({
+            snap: true,
+            snapMode: 'outer',
+            snapTolerance: 20
+        });
+    });
+</script>
