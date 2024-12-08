@@ -11,7 +11,7 @@
         <p><{$link.each}> <em><{$link.form1}></em>...
         <{assign var=prevOne value=$link.form1}>
       <{/if}>
-      <br>&nbsp;&nbsp;&nbsp;<{$link.has}> <em><{$link.form2}></em>
+      <br>&nbsp;&nbsp;&nbsp;<{$link.has}> <em><{$link.form2}></em> <a class="tooltip"><span><{$link.help}></span></a>
   	<{/foreach}>
     <{if $prevOne}>
       </p>
