@@ -315,12 +315,12 @@ class formulizeFrameworkLink extends XoopsObject {
             if (is_object($ele1)) {
                 $name1 = $ele1->getVar('ele_colhead') ? printSmart($ele1->getVar('ele_colhead')) : printSmart($ele1->getVar('ele_caption'));
             } else {
-                $name1 = $this->getVar('key1') == -1 ? 'Entry ID (experimental!)' : '';
+                $name1 = $this->getVar('key1') == -1 ? _AM_FRAME_KEY_ENTRYID : '';
             }
             if (is_object($ele2)) {
                 $name2 = $ele2->getVar('ele_colhead') ? printSmart($ele2->getVar('ele_colhead')) : printSmart($ele2->getVar('ele_caption'));
             } else {
-                $name2 = $this->getVar('key2') == -1 ? 'Entry ID (experimental!)' : '';
+                $name2 = $this->getVar('key2') == -1 ? _AM_FRAME_KEY_ENTRYID : '';
             }
             $link_options[$loi]['value'] = $this->getVar('key1') . "+" . $this->getVar('key2');
             $link_options[$loi]['name'] = _AM_FRAME_COMMON_VALUES . printSmart($name1,20) . " & " . printSmart($name2,20);
@@ -492,14 +492,18 @@ class formulizeFrameworksHandler {
 					$normalizedLinks[$link->getVar('form2')][] = array(
 						'form1' => $link->getVar('form2'),
 						'form2' => $link->getVar('form1'),
-						'type' => 3
+						'type' => 3,
+						'key1' => $link->getVar('key2'),
+						'key2' => $link->getVar('key1')
 					);
 					break;
 				default:
 					$normalizedLinks[$link->getVar('form1')][] = array(
 						'form1' => $link->getVar('form1'),
 						'form2' => $link->getVar('form2'),
-						'type' => $link->getVar('relationship')
+						'type' => $link->getVar('relationship'),
+						'key1' => $link->getVar('key1'),
+						'key2' => $link->getVar('key2')
 					);
 			}
 		}
@@ -508,44 +512,75 @@ class formulizeFrameworksHandler {
 	}
 
     function formatFrameworksAsRelationships($frameworks) {
-		$form_handler = xoops_getmodulehandler('forms', 'formulize');
-        $relationships = array();
-        $relationshipIndices = array();
-        $i = 1;
-        foreach($frameworks as $framework) {
-            $frid = $framework->getVar('frid');
-            if (isset($relationshipIndices[$frid])) { continue; }
-			$frameworkLinks = $this->getLinksGroupedByForm($framework);
-			$links = array();
-            foreach($frameworkLinks as $fid=>$fidLinks) {
-				foreach($fidLinks as $link) {
-					$form1Object = $form_handler->get($link['form1']);
-					$form2Object = $form_handler->get($link['form2']);
-					$form1Text = $form1Object->getSingular();
-					$form2Text = $link['type'] == 1 ? $form2Object->getSingular() : $form2Object->getPlural();
-					$connectionText = $link['type'] == 1 ? _AM_FRAME_ONE : _AM_FRAME_MANY;
-					$links[] = array(
-						'each'=>ucfirst(_AM_FRAME_EACH),
-						'form1'=>$form1Text,
-						'has'=>_AM_FRAME_HAS.' '.$connectionText,
-						'form2'=>$form2Text
-					);
+			$form_handler = xoops_getmodulehandler('forms', 'formulize');
+			$element_handler = xoops_getmodulehandler('elements', 'formulize');
+			$relationships = array();
+			$relationshipIndices = array();
+			$i = 1;
+			foreach($frameworks as $framework) {
+				$frid = $framework->getVar('frid');
+				if (isset($relationshipIndices[$frid])) { continue; }
+				$frameworkLinks = $this->getLinksGroupedByForm($framework);
+				$links = array();
+				foreach($frameworkLinks as $fid=>$fidLinks) {
+					foreach($fidLinks as $link) {
+						$form1Object = $form_handler->get($link['form1']);
+						$form2Object = $form_handler->get($link['form2']);
+						$form1Text = $form1Object->getSingular();
+						$form2TextSingular = $form2Object->getSingular();
+						$form2Text = $link['type'] == 1 ? $form2TextSingular : $form2Object->getPlural();
+						$connectionText = $link['type'] == 1 ? _AM_FRAME_ONE : _AM_FRAME_MANY;
+						if(!$link['key1'] AND !$link['key2']) {
+							$helpText = _AM_FRAME_UIDLINK;
+						} else {
+							$element1Text = $this->getElementDescriptor($link['key1']);
+							$element2Text = $this->getElementDescriptor($link['key2']);
+							$helpText = "> $form1Text: $element1Text<br>> $form2TextSingular: $element2Text";
+						}
+						$links[] = array(
+							'each'=>ucfirst(_AM_FRAME_EACH),
+							'form1'=>$form1Text,
+							'has'=>_AM_FRAME_HAS.' '.$connectionText,
+							'form2'=>$form2Text,
+							'help'=>$helpText
+						);
+					}
 				}
-            }
-			$relationships[$i]['name'] = $framework->getVar('name') . ' (id: '.$framework->getVar('frid').')';
-            $relationships[$i]['content']['frid'] = $frid;
-            $relationships[$i]['content']['links'] = $links;
-            $relationshipIndices[$frid] = true;
-            $i++;
-        }
-        return $relationships;
+				$relationships[$i]['name'] = $framework->getVar('name') . ' (id: '.$framework->getVar('frid').')';
+				$relationships[$i]['content']['frid'] = $frid;
+				$relationships[$i]['content']['links'] = $links;
+				$relationshipIndices[$frid] = true;
+				$i++;
+			}
+			return $relationships;
     }
+
+	/**
+	 * Return the descriptor of the passed element ID
+	 * @param mixed elementIdentifier The element ID number, or handle, or the full element object. Or -1 to indicate the Entry ID of the record, instead of a regular element.
+	 * @return string The readable descriptor to use for this element, or false if the elementIdentifier is invalid
+	 */
+	function getElementDescriptor($elementIndentifier) {
+		if(!$elementIndentifier) {
+			return false;
+		}
+		if($elementIndentifier == -1) {
+			return _AM_FRAME_KEY_ENTRYID;
+		}
+		if(!$elementObject = _getElementObject($elementIndentifier)) {
+			return false;
+		}
+		return $elementObject->getVar('ele_colhead') ? $elementObject->getVar('ele_colhead') : printSmart($elementObject->getVar('ele_caption'));
+	}
+
 }
+
+
 
 /**
  * Insert/Update relationship links between two forms/form elements. Only operates on one-to-many (2) and many-to-one (3) connections,
  * that are not common value. When passed a form/element id pair, and a source for the link (the element the options are being drawn from),
- * this function will create the link in the primary relationship if no link exists yet, or if it will update all links for the form/element id
+ * this function will create the link in the primary relationship if no link exists yet, or it will update all links for the form/element id
  * pair and any previously connected source that may have been updated to the new source.
  * @param int fid The form id where the linked element exists
  * @param int elementId The element id of the linked element
